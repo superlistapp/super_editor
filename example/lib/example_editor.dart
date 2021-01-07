@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -33,16 +34,23 @@ class _ExampleEditorState extends State<ExampleEditor> {
     // Display Material that covers all available space.
     // Display content at 500px wide, horizontally centered.
     return Material(
-      child: SizedBox.expand(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxWidth: 500,
-            ),
-            child: SizedBox(
-              width: double.infinity,
-              child: _buildPage(),
-            ),
+      child: Scrollbar(
+        child: SingleChildScrollView(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: 500,
+                  minWidth: 500,
+                ),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: _buildPage(),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -51,6 +59,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
 
   Widget _buildPage() {
     return Column(
+      mainAxisAlignment: MainAxisAlignment.start,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         SizedBox(height: 70),
@@ -113,6 +122,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
             fontWeight: FontWeight.bold,
           ),
           border: InputBorder.none,
+          isDense: true,
         ),
         cursorColor: Colors.black,
       ),
