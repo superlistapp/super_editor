@@ -130,7 +130,11 @@ class _EditorState extends State<Editor> {
         final editorComponent = displayNode.key.currentState as EditorParagraphState;
         if (_cursorIntersects(editorComponent, details.localPosition)) {
           final componentOffset = _localCursorOffset(editorComponent, details.localPosition);
-          final selection = editorComponent.getSelectionAtOffset(componentOffset);
+          final selection = ParagraphEditorComponentSelection(
+            selection: TextSelection.collapsed(
+              offset: editorComponent.selectableText.getPositionAtOffset(componentOffset).offset,
+            ),
+          );
           displayNode.selection = selection;
 
           _editorSelection.baseOffsetNode = displayNode;
@@ -202,7 +206,12 @@ class _EditorState extends State<Editor> {
       if (dragIntersection != null) {
         print('Drag intersects: ${displayNode.key}');
         print('Intersection: $dragIntersection');
-        final selection = editorComponent.getSelectionInRect(dragIntersection, isDraggingDown);
+        final textLayout = (displayNode.key.currentState as EditorParagraphState).selectableText;
+        final textSelection = textLayout.getSelectionInRect(dragIntersection, isDraggingDown);
+        final selection = ParagraphEditorComponentSelection(
+          selection: textSelection,
+        );
+        // final selection = editorComponent.getSelectionInRect(dragIntersection, isDraggingDown);
         print('Drag selection: ${selection.componentSelection}');
         print('');
         displayNode.selection = selection;
@@ -262,10 +271,12 @@ class _EditorState extends State<Editor> {
   void _updateCursorStyle(Offset cursorOffset) {
     for (final displayNode in _editorSelection.displayNodes) {
       final editorComponent = displayNode.key.currentState as EditorParagraphState;
+      final textLayout = (displayNode.key.currentState as EditorParagraphState).selectableText;
 
       if (_cursorIntersects(editorComponent, cursorOffset)) {
         final localCursorOffset = _localCursorOffset(editorComponent, cursorOffset);
-        final desiredCursor = editorComponent.getCursorForOffset(localCursorOffset);
+        final isCursorOverText = textLayout.isTextAtOffset(localCursorOffset);
+        final desiredCursor = isCursorOverText ? SystemMouseCursors.text : null;
         if (desiredCursor != null && desiredCursor != _cursorStyle.value) {
           _cursorStyle.value = desiredCursor;
         } else if (desiredCursor == null && _cursorStyle.value != SystemMouseCursors.basic) {

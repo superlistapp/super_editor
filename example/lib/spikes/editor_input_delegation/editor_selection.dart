@@ -1,10 +1,13 @@
 import 'dart:math';
 
+import 'package:example/spikes/editor_input_delegation/paragraph/editor_paragraph.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
 import 'editor_layout_model.dart';
+import 'paragraph/editor_paragraph_component.dart';
+import 'paragraph/selectable_text.dart';
 
 class EditorSelection with ChangeNotifier {
   EditorSelection({
@@ -39,12 +42,15 @@ class EditorSelection with ChangeNotifier {
       final previousNode = displayNodes[currentNodeIndex - 1];
       EditorComponentSelection previousNodeSelection;
       if (previousCursorOffset == null) {
-        previousNodeSelection = (previousNode.key.currentState as EditorComponent).moveSelectionToEnd(
+        previousNodeSelection = moveSelectionToEnd(
+          text: (previousNode.key.currentState as EditorParagraphState).selectableText.widget.text,
           currentSelection: previousNode.selection,
           expandSelection: expandSelection,
         );
       } else {
-        previousNodeSelection = (previousNode.key.currentState as EditorComponent).moveSelectionFromEndToOffset(
+        previousNodeSelection = moveSelectionFromEndToOffset(
+          selectableText: (previousNode.key.currentState as EditorParagraphState).selectableText,
+          text: (previousNode.key.currentState as EditorParagraphState).selectableText.widget.text,
           currentSelection: previousNode.selection,
           expandSelection: expandSelection,
           localOffset: previousCursorOffset,
@@ -73,6 +79,51 @@ class EditorSelection with ChangeNotifier {
     }
   }
 
+  ParagraphEditorComponentSelection moveSelectionToEnd({
+    String text,
+    EditorComponentSelection currentSelection,
+    bool expandSelection = false,
+  }) {
+    if (currentSelection != null && currentSelection is ParagraphEditorComponentSelection) {
+      return ParagraphEditorComponentSelection(
+        selection: TextSelection(
+          baseOffset: expandSelection ? currentSelection.componentSelection.baseOffset : text.length,
+          extentOffset: text.length,
+        ),
+      );
+    } else {
+      return ParagraphEditorComponentSelection(
+        selection: TextSelection.collapsed(offset: text.length),
+      );
+    }
+  }
+
+  ParagraphEditorComponentSelection moveSelectionFromEndToOffset({
+    @required TextLayout selectableText,
+    @required String text,
+    EditorComponentSelection currentSelection,
+    @required bool expandSelection,
+    @required Offset localOffset,
+  }) {
+    final extentOffset = selectableText.getPositionInLastLineAtX(localOffset.dx).offset;
+
+    if (currentSelection != null && currentSelection is ParagraphEditorComponentSelection) {
+      return ParagraphEditorComponentSelection(
+        selection: TextSelection(
+          baseOffset: expandSelection ? currentSelection.componentSelection.baseOffset : extentOffset,
+          extentOffset: extentOffset,
+        ),
+      );
+    } else {
+      return ParagraphEditorComponentSelection(
+        selection: TextSelection(
+          baseOffset: expandSelection ? text.length : extentOffset,
+          extentOffset: extentOffset,
+        ),
+      );
+    }
+  }
+
   // previousCursorOffset: if non-null, the cursor is positioned in
   //      the next component at the same horizontal location. If
   //      null then cursor is placed at beginning of next component.
@@ -87,12 +138,13 @@ class EditorSelection with ChangeNotifier {
       print(' - current selection: ${nextNode.selection?.componentSelection}');
       EditorComponentSelection nextNodeSelection;
       if (previousCursorOffset == null) {
-        nextNodeSelection = (nextNode.key.currentState as EditorComponent).moveSelectionToStart(
+        nextNodeSelection = moveSelectionToStart(
           currentSelection: nextNode.selection,
           expandSelection: expandSelection,
         );
       } else {
-        nextNodeSelection = (nextNode.key.currentState as EditorComponent).moveSelectionFromStartToOffset(
+        nextNodeSelection = moveSelectionFromStartToOffset(
+          selectableText: (nextNode.key.currentState as EditorParagraphState).selectableText,
           currentSelection: nextNode.selection,
           expandSelection: expandSelection,
           localOffset: previousCursorOffset,
@@ -123,6 +175,50 @@ class EditorSelection with ChangeNotifier {
       return true;
     } else {
       return false;
+    }
+  }
+
+  ParagraphEditorComponentSelection moveSelectionToStart({
+    EditorComponentSelection currentSelection,
+    bool expandSelection = false,
+  }) {
+    print('Move selection to start. Current selection: ${currentSelection?.componentSelection}');
+    if (currentSelection != null && currentSelection is ParagraphEditorComponentSelection) {
+      return ParagraphEditorComponentSelection(
+        selection: TextSelection(
+          baseOffset: expandSelection ? currentSelection.componentSelection.baseOffset : 0,
+          extentOffset: 0,
+        ),
+      );
+    } else {
+      return ParagraphEditorComponentSelection(
+        selection: TextSelection.collapsed(offset: 0),
+      );
+    }
+  }
+
+  ParagraphEditorComponentSelection moveSelectionFromStartToOffset({
+    TextLayout selectableText,
+    EditorComponentSelection currentSelection,
+    @required bool expandSelection,
+    @required Offset localOffset,
+  }) {
+    final extentOffset = selectableText.getPositionInFirstLineAtX(localOffset.dx).offset;
+
+    if (currentSelection != null && currentSelection is ParagraphEditorComponentSelection) {
+      return ParagraphEditorComponentSelection(
+        selection: TextSelection(
+          baseOffset: expandSelection ? currentSelection.componentSelection.baseOffset : extentOffset,
+          extentOffset: extentOffset,
+        ),
+      );
+    } else {
+      return ParagraphEditorComponentSelection(
+        selection: TextSelection(
+          baseOffset: expandSelection ? 0 : extentOffset,
+          extentOffset: extentOffset,
+        ),
+      );
     }
   }
 
@@ -281,39 +377,41 @@ class EditorSelection with ChangeNotifier {
 }
 
 abstract class EditorComponent {
-  EditorComponentSelection getSelectionAtOffset(Offset localOffset);
-
-  EditorComponentSelection moveSelectionFromStartToOffset({
-    @required Offset localOffset,
-    EditorComponentSelection currentSelection,
-    @required bool expandSelection,
-  });
-
-  EditorComponentSelection moveSelectionFromEndToOffset({
-    @required Offset localOffset,
-    EditorComponentSelection currentSelection,
-    @required bool expandSelection,
-  });
-
-  EditorComponentSelection moveSelectionToStart({
-    EditorComponentSelection currentSelection,
-    bool expandSelection = false,
-  });
-
-  EditorComponentSelection moveSelectionToEnd({
-    EditorComponentSelection currentSelection,
-    bool expandSelection = false,
-  });
-
-  EditorComponentSelection getSelectionInRect(Rect dragIntersection, bool isDraggingDown);
-
-  MouseCursor getCursorForOffset(Offset localOffset);
-
   void onKeyPressed({
     @required RawKeyEvent keyEvent,
     @required EditorSelection editorSelection,
     @required EditorComponentSelection currentComponentSelection,
   });
+}
+
+abstract class TextLayout {
+  TextPosition getPositionAtOffset(Offset localOffset);
+
+  Offset getOffsetForPosition(TextPosition position);
+
+  TextPosition getPositionAtStartOfLine({
+    TextPosition currentPosition,
+  });
+
+  TextPosition getPositionAtEndOfLine({
+    TextPosition currentPosition,
+  });
+
+  TextPosition getPositionOneLineUp({
+    TextPosition currentPosition,
+  });
+
+  TextPosition getPositionOneLineDown({
+    TextPosition currentPosition,
+  });
+
+  TextPosition getPositionInFirstLineAtX(double x);
+
+  TextPosition getPositionInLastLineAtX(double x);
+
+  bool isTextAtOffset(Offset localOffset);
+
+  TextSelection getSelectionInRect(Rect selectionArea, bool isDraggingDown);
 }
 
 abstract class EditorComponentSelection {

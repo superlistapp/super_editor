@@ -33,6 +33,13 @@ import 'editor.dart';
 ///    the hypothetical newline happens after the selection. However, the
 ///    current implementation shows a selection on every empty line that
 ///    participates in the selection.
+///
+///  - when drag-selecting text within a single line, the y-position is
+///    used to determine direction. Instead, the x-position should be
+///    used when selecting within a single line.
+///
+///  - there is some weird measurement glitch with the SingleChildScrollView
+///    and IntrinsicHeight where we overflow the bottom sometimes.
 
 void main() {
   runApp(

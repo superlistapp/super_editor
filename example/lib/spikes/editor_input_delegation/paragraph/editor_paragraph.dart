@@ -37,157 +37,8 @@ class EditorParagraph extends StatefulWidget {
 
 class EditorParagraphState extends State<EditorParagraph> implements EditorComponent {
   final GlobalKey<SelectableTextState> _textKey = GlobalKey();
-  TextEditingController _editingController;
-  FocusNode _focusNode;
 
-  @override
-  void initState() {
-    super.initState();
-    _editingController = TextEditingController(text: widget.text)
-      ..selection = widget.textSelection ?? TextSelection.collapsed(offset: -1);
-    _focusNode = FocusNode();
-  }
-
-  @override
-  void didUpdateWidget(EditorParagraph oldWidget) {
-    super.didUpdateWidget(oldWidget);
-
-    if (widget.text != oldWidget.text) {
-      _editingController
-        ..text = widget.text
-        ..selection = widget.textSelection ?? TextSelection.collapsed(offset: -1);
-    } else if (widget.textSelection != oldWidget.textSelection) {
-      _editingController.selection = widget.textSelection ?? TextSelection.collapsed(offset: -1);
-    }
-  }
-
-  @override
-  void dispose() {
-    _focusNode.dispose();
-    super.dispose();
-  }
-
-  SelectableTextState get _selectableText => _textKey.currentState;
-
-  @override
-  ParagraphEditorComponentSelection getSelectionAtOffset(Offset localOffset) {
-    return ParagraphEditorComponentSelection(
-      selection: TextSelection.collapsed(
-        offset: _selectableText.getPositionAtOffset(localOffset).offset,
-      ),
-    );
-  }
-
-  @override
-  ParagraphEditorComponentSelection moveSelectionFromStartToOffset({
-    EditorComponentSelection currentSelection,
-    @required bool expandSelection,
-    @required Offset localOffset,
-  }) {
-    final extentOffset = _selectableText
-        .getPositionAtOffset(
-          Offset(localOffset.dx, 0.0),
-        )
-        .offset;
-
-    if (currentSelection != null && currentSelection is ParagraphEditorComponentSelection) {
-      return ParagraphEditorComponentSelection(
-        selection: TextSelection(
-          baseOffset: expandSelection ? currentSelection.componentSelection.baseOffset : extentOffset,
-          extentOffset: extentOffset,
-        ),
-      );
-    } else {
-      return ParagraphEditorComponentSelection(
-        selection: TextSelection(
-          baseOffset: expandSelection ? 0 : extentOffset,
-          extentOffset: extentOffset,
-        ),
-      );
-    }
-  }
-
-  @override
-  ParagraphEditorComponentSelection moveSelectionFromEndToOffset({
-    EditorComponentSelection currentSelection,
-    @required bool expandSelection,
-    @required Offset localOffset,
-  }) {
-    final extentOffset = _selectableText
-        .getPositionAtOffset(
-          Offset(localOffset.dx, _selectableText.size.height),
-        )
-        .offset;
-
-    if (currentSelection != null && currentSelection is ParagraphEditorComponentSelection) {
-      return ParagraphEditorComponentSelection(
-        selection: TextSelection(
-          baseOffset: expandSelection ? currentSelection.componentSelection.baseOffset : extentOffset,
-          extentOffset: extentOffset,
-        ),
-      );
-    } else {
-      return ParagraphEditorComponentSelection(
-        selection: TextSelection(
-          baseOffset: expandSelection ? widget.text.length : extentOffset,
-          extentOffset: extentOffset,
-        ),
-      );
-    }
-  }
-
-  @override
-  ParagraphEditorComponentSelection getSelectionInRect(Rect selectionArea, bool isDraggingDown) {
-    final selection = _selectableText.getSelectionInRect(selectionArea, isDraggingDown);
-
-    return ParagraphEditorComponentSelection(
-      selection: selection,
-    );
-  }
-
-  @override
-  ParagraphEditorComponentSelection moveSelectionToStart({
-    EditorComponentSelection currentSelection,
-    bool expandSelection = false,
-  }) {
-    print('Move selection to start. Current selection: ${currentSelection?.componentSelection}');
-    if (currentSelection != null && currentSelection is ParagraphEditorComponentSelection) {
-      return ParagraphEditorComponentSelection(
-        selection: TextSelection(
-          baseOffset: expandSelection ? currentSelection.componentSelection.baseOffset : 0,
-          extentOffset: 0,
-        ),
-      );
-    } else {
-      return ParagraphEditorComponentSelection(
-        selection: TextSelection.collapsed(offset: 0),
-      );
-    }
-  }
-
-  @override
-  ParagraphEditorComponentSelection moveSelectionToEnd({
-    EditorComponentSelection currentSelection,
-    bool expandSelection = false,
-  }) {
-    if (currentSelection != null && currentSelection is ParagraphEditorComponentSelection) {
-      return ParagraphEditorComponentSelection(
-        selection: TextSelection(
-          baseOffset: expandSelection ? currentSelection.componentSelection.baseOffset : widget.text.length,
-          extentOffset: widget.text.length,
-        ),
-      );
-    } else {
-      return ParagraphEditorComponentSelection(
-        selection: TextSelection.collapsed(offset: widget.text.length),
-      );
-    }
-  }
-
-  @override
-  MouseCursor getCursorForOffset(Offset localCursorOffset) {
-    return _selectableText.isTextAtOffset(localCursorOffset) ? SystemMouseCursors.text : null;
-  }
+  SelectableTextState get selectableText => _textKey.currentState;
 
   @override
   void onKeyPressed({
@@ -305,17 +156,17 @@ class EditorParagraphState extends State<EditorParagraph> implements EditorCompo
     } else if (keyEvent.logicalKey == LogicalKeyboardKey.arrowLeft) {
       dynamic newSelection;
       if (keyEvent.isMetaPressed) {
-        newSelection = moveToStartOfLine(
+        newSelection = _moveToStartOfLine(
           currentSelection: editorSelection.nodeWithCursor.selection,
           expandSelection: keyEvent.isShiftPressed,
         );
       } else if (keyEvent.isAltPressed) {
-        newSelection = moveBackOneWord(
+        newSelection = _moveBackOneWord(
           currentSelection: editorSelection.nodeWithCursor.selection,
           expandSelection: keyEvent.isShiftPressed,
         );
       } else {
-        newSelection = moveBackOneCharacter(
+        newSelection = _moveBackOneCharacter(
           currentSelection: editorSelection.nodeWithCursor.selection,
           expandSelection: keyEvent.isShiftPressed,
         );
@@ -325,17 +176,17 @@ class EditorParagraphState extends State<EditorParagraph> implements EditorCompo
     } else if (keyEvent.logicalKey == LogicalKeyboardKey.arrowRight) {
       dynamic newSelection;
       if (keyEvent.isMetaPressed) {
-        newSelection = moveToEndOfLine(
+        newSelection = _moveToEndOfLine(
           currentSelection: editorSelection.nodeWithCursor.selection,
           expandSelection: keyEvent.isShiftPressed,
         );
       } else if (keyEvent.isAltPressed) {
-        newSelection = moveForwardOneWord(
+        newSelection = _moveForwardOneWord(
           currentSelection: editorSelection.nodeWithCursor.selection,
           expandSelection: keyEvent.isShiftPressed,
         );
       } else {
-        newSelection = moveForwardOneCharacter(
+        newSelection = _moveForwardOneCharacter(
           currentSelection: editorSelection.nodeWithCursor.selection,
           expandSelection: keyEvent.isShiftPressed,
         );
@@ -343,13 +194,13 @@ class EditorParagraphState extends State<EditorParagraph> implements EditorCompo
 
       editorSelection.updateCursorComponentSelection(newSelection);
     } else if (keyEvent.logicalKey == LogicalKeyboardKey.arrowUp) {
-      moveUpOneLine(
+      _moveUpOneLine(
         editorSelection: editorSelection,
         currentSelection: currentComponentSelection,
         expandSelection: keyEvent.isShiftPressed,
       );
     } else if (keyEvent.logicalKey == LogicalKeyboardKey.arrowDown) {
-      moveDownOneLine(
+      _moveDownOneLine(
         editorSelection: editorSelection,
         currentSelection: currentComponentSelection,
         expandSelection: keyEvent.isShiftPressed,
@@ -357,14 +208,14 @@ class EditorParagraphState extends State<EditorParagraph> implements EditorCompo
     }
   }
 
-  void moveUpOneLine({
+  void _moveUpOneLine({
     EditorSelection editorSelection,
     ParagraphEditorComponentSelection currentSelection,
     bool expandSelection = false,
   }) {
-    final oneLineUpPosition = _selectableText.getPositionOneLineUp(
+    final oneLineUpPosition = selectableText.getPositionOneLineUp(
       currentPosition: TextPosition(
-        offset: _editingController.selection.extentOffset,
+        offset: widget.textSelection.extentOffset,
       ),
     );
 
@@ -382,7 +233,7 @@ class EditorParagraphState extends State<EditorParagraph> implements EditorCompo
       }
 
       // Move up to the previous component in the editor.
-      final currentSelectionOffset = _selectableText.getOffsetForPosition(
+      final currentSelectionOffset = selectableText.getOffsetForPosition(
         TextPosition(
           offset: currentSelection.componentSelection.extentOffset,
         ),
@@ -410,7 +261,7 @@ class EditorParagraphState extends State<EditorParagraph> implements EditorCompo
 
     final newSelection = ParagraphEditorComponentSelection(
       selection: currentSelection.componentSelection.copyWith(
-        baseOffset: expandSelection ? _editingController.selection.baseOffset : oneLineUpPosition.offset,
+        baseOffset: expandSelection ? widget.textSelection.baseOffset : oneLineUpPosition.offset,
         extentOffset: oneLineUpPosition.offset,
       ),
     );
@@ -418,14 +269,14 @@ class EditorParagraphState extends State<EditorParagraph> implements EditorCompo
     editorSelection.updateCursorComponentSelection(newSelection);
   }
 
-  void moveDownOneLine({
+  void _moveDownOneLine({
     EditorSelection editorSelection,
     ParagraphEditorComponentSelection currentSelection,
     bool expandSelection = false,
   }) {
-    final oneLineDownPosition = _selectableText.getPositionOneLineDown(
+    final oneLineDownPosition = selectableText.getPositionOneLineDown(
       currentPosition: TextPosition(
-        offset: _editingController.selection.extentOffset,
+        offset: widget.textSelection.extentOffset,
       ),
     );
 
@@ -443,7 +294,7 @@ class EditorParagraphState extends State<EditorParagraph> implements EditorCompo
       }
 
       // Move down to next component in editor.
-      final currentSelectionOffset = _selectableText.getOffsetForPosition(
+      final currentSelectionOffset = selectableText.getOffsetForPosition(
         TextPosition(
           offset: currentSelection.componentSelection.extentOffset,
         ),
@@ -471,7 +322,7 @@ class EditorParagraphState extends State<EditorParagraph> implements EditorCompo
 
     final newSelection = ParagraphEditorComponentSelection(
       selection: currentSelection.componentSelection.copyWith(
-        baseOffset: expandSelection ? _editingController.selection.baseOffset : oneLineDownPosition.offset,
+        baseOffset: expandSelection ? widget.textSelection.baseOffset : oneLineDownPosition.offset,
         extentOffset: oneLineDownPosition.offset,
       ),
     );
@@ -479,7 +330,7 @@ class EditorParagraphState extends State<EditorParagraph> implements EditorCompo
     editorSelection.updateCursorComponentSelection(newSelection);
   }
 
-  ParagraphEditorComponentSelection moveBackOneCharacter({
+  ParagraphEditorComponentSelection _moveBackOneCharacter({
     ParagraphEditorComponentSelection currentSelection,
     bool expandSelection = false,
   }) {
@@ -499,7 +350,7 @@ class EditorParagraphState extends State<EditorParagraph> implements EditorCompo
     );
   }
 
-  ParagraphEditorComponentSelection moveBackOneWord({
+  ParagraphEditorComponentSelection _moveBackOneWord({
     ParagraphEditorComponentSelection currentSelection,
     bool expandSelection = false,
   }) {
@@ -516,7 +367,7 @@ class EditorParagraphState extends State<EditorParagraph> implements EditorCompo
     }
     newExtent -= 1; // we always want to jump at least 1 character.
 
-    while (newExtent > 0 && latinCharacters.contains(_editingController.text[newExtent])) {
+    while (newExtent > 0 && _latinCharacters.contains(widget.text[newExtent])) {
       newExtent -= 1;
     }
 
@@ -528,7 +379,7 @@ class EditorParagraphState extends State<EditorParagraph> implements EditorCompo
     );
   }
 
-  ParagraphEditorComponentSelection moveToStartOfLine({
+  ParagraphEditorComponentSelection _moveToStartOfLine({
     ParagraphEditorComponentSelection currentSelection,
     bool expandSelection = false,
   }) {
@@ -538,7 +389,7 @@ class EditorParagraphState extends State<EditorParagraph> implements EditorCompo
       return null;
     }
     final textSelection = currentSelection.componentSelection;
-    final startOfLinePosition = _selectableText.getPositionAtStartOfLine(
+    final startOfLinePosition = selectableText.getPositionAtStartOfLine(
       currentPosition: TextPosition(offset: textSelection.extentOffset),
     );
 
@@ -550,7 +401,7 @@ class EditorParagraphState extends State<EditorParagraph> implements EditorCompo
     );
   }
 
-  ParagraphEditorComponentSelection moveForwardOneCharacter({
+  ParagraphEditorComponentSelection _moveForwardOneCharacter({
     ParagraphEditorComponentSelection currentSelection,
     bool expandSelection = false,
   }) {
@@ -570,7 +421,7 @@ class EditorParagraphState extends State<EditorParagraph> implements EditorCompo
     );
   }
 
-  ParagraphEditorComponentSelection moveForwardOneWord({
+  ParagraphEditorComponentSelection _moveForwardOneWord({
     ParagraphEditorComponentSelection currentSelection,
     bool expandSelection = false,
   }) {
@@ -587,7 +438,7 @@ class EditorParagraphState extends State<EditorParagraph> implements EditorCompo
     }
     newExtent += 1; // we always want to jump at least 1 character.
 
-    while (newExtent < widget.text.length - 1 && latinCharacters.contains(widget.text[newExtent])) {
+    while (newExtent < widget.text.length - 1 && _latinCharacters.contains(widget.text[newExtent])) {
       newExtent += 1;
     }
 
@@ -599,7 +450,7 @@ class EditorParagraphState extends State<EditorParagraph> implements EditorCompo
     );
   }
 
-  ParagraphEditorComponentSelection moveToEndOfLine({
+  ParagraphEditorComponentSelection _moveToEndOfLine({
     ParagraphEditorComponentSelection currentSelection,
     bool expandSelection = false,
   }) {
@@ -611,7 +462,7 @@ class EditorParagraphState extends State<EditorParagraph> implements EditorCompo
     final textSelection = currentSelection.componentSelection;
 
     final text = widget.text;
-    final endOfLineTextPosition = _selectableText.getPositionAtEndOfLine(
+    final endOfLineTextPosition = selectableText.getPositionAtEndOfLine(
       currentPosition: TextPosition(offset: textSelection.extentOffset),
     );
     final isAutoWrapLine =
@@ -636,7 +487,7 @@ class EditorParagraphState extends State<EditorParagraph> implements EditorCompo
     );
   }
 
-  static const latinCharacters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  static const _latinCharacters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
   String _insertStringInString({
     int index,
@@ -686,40 +537,14 @@ class EditorParagraphState extends State<EditorParagraph> implements EditorCompo
 
   @override
   Widget build(BuildContext context) {
-    return _buildFocusDecoration(
-      child: _buildText(),
-    );
-  }
-
-  Widget _buildFocusDecoration({
-    Widget child,
-  }) {
-    return AnimatedBuilder(
-      animation: FocusManager.instance,
-      builder: (context, child) {
-        return Focus(
-          focusNode: _focusNode,
-          child: child,
-        );
-      },
-      child: child,
-    );
-  }
-
-  Widget _buildText() {
-    return AnimatedBuilder(
-      animation: _editingController,
-      builder: (context, child) {
-        return SelectableText(
-          key: _textKey,
-          text: widget.text,
-          textSelection: widget.textSelection,
-          hasCursor: widget.hasCursor,
-          style: widget.style,
-          highlightWhenEmpty: widget.highlightWhenEmpty,
-          showDebugPaint: widget.showDebugPaint,
-        );
-      },
+    return SelectableText(
+      key: _textKey,
+      text: widget.text,
+      textSelection: widget.textSelection,
+      hasCursor: widget.hasCursor,
+      style: widget.style,
+      highlightWhenEmpty: widget.highlightWhenEmpty,
+      showDebugPaint: widget.showDebugPaint,
     );
   }
 }

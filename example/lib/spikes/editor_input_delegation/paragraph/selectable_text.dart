@@ -1,3 +1,4 @@
+import 'package:example/spikes/editor_input_delegation/editor_selection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -25,12 +26,10 @@ class SelectableText extends StatefulWidget {
   SelectableTextState createState() => SelectableTextState();
 }
 
-class SelectableTextState extends State<SelectableText> {
+class SelectableTextState extends State<SelectableText> implements TextLayout {
   final GlobalKey _textKey = GlobalKey();
 
   RenderParagraph get _renderParagraph => _textKey.currentContext?.findRenderObject() as RenderParagraph;
-
-  Size get size => _renderParagraph.size;
 
   TextPosition getPositionAtOffset(Offset localOffset) {
     return _renderParagraph.getPositionForOffset(localOffset);
@@ -38,21 +37,6 @@ class SelectableTextState extends State<SelectableText> {
 
   Offset getOffsetForPosition(TextPosition position) {
     return _renderParagraph.getOffsetForCaret(position, Rect.zero);
-  }
-
-  TextSelection getSelectionInRect(Rect selectionArea, bool isDraggingDown) {
-    int startOffset =
-        selectionArea.topLeft.dy < 0 ? 0 : _renderParagraph.getPositionForOffset(selectionArea.topLeft).offset;
-    int endOffset = selectionArea.bottomRight.dy > _renderParagraph.size.height
-        ? widget.text.length
-        : _renderParagraph.getPositionForOffset(selectionArea.bottomRight).offset;
-
-    final selection = TextSelection(
-      baseOffset: isDraggingDown ? startOffset : endOffset,
-      extentOffset: isDraggingDown ? endOffset : startOffset,
-    );
-
-    return selection;
   }
 
   TextPosition getPositionAtStartOfLine({
@@ -109,6 +93,18 @@ class SelectableTextState extends State<SelectableText> {
     return _renderParagraph.getPositionForOffset(oneLineDownOffset);
   }
 
+  TextPosition getPositionInFirstLineAtX(double x) {
+    return getPositionAtOffset(
+      Offset(x, 0),
+    );
+  }
+
+  TextPosition getPositionInLastLineAtX(double x) {
+    return getPositionAtOffset(
+      Offset(x, _renderParagraph.size.height),
+    );
+  }
+
   bool isTextAtOffset(Offset localOffset) {
     final textOffset = _renderParagraph.getPositionForOffset(localOffset);
 
@@ -128,6 +124,21 @@ class SelectableTextState extends State<SelectableText> {
     }
 
     return false;
+  }
+
+  TextSelection getSelectionInRect(Rect selectionArea, bool isDraggingDown) {
+    int startOffset =
+        selectionArea.topLeft.dy < 0 ? 0 : _renderParagraph.getPositionForOffset(selectionArea.topLeft).offset;
+    int endOffset = selectionArea.bottomRight.dy > _renderParagraph.size.height
+        ? widget.text.length
+        : _renderParagraph.getPositionForOffset(selectionArea.bottomRight).offset;
+
+    final selection = TextSelection(
+      baseOffset: isDraggingDown ? startOffset : endOffset,
+      extentOffset: isDraggingDown ? endOffset : startOffset,
+    );
+
+    return selection;
   }
 
   @override
