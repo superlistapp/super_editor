@@ -28,20 +28,24 @@ class SelectableText extends StatefulWidget {
 class SelectableTextState extends State<SelectableText> {
   final GlobalKey _textKey = GlobalKey();
 
-  RenderParagraph get renderParagraph => _textKey.currentContext?.findRenderObject() as RenderParagraph;
+  RenderParagraph get _renderParagraph => _textKey.currentContext?.findRenderObject() as RenderParagraph;
 
-  TextSelection getSelectionAtOffset(Offset localOffset) {
-    return TextSelection.collapsed(
-      offset: renderParagraph.getPositionForOffset(localOffset).offset,
-    );
+  Size get size => _renderParagraph.size;
+
+  TextPosition getPositionAtOffset(Offset localOffset) {
+    return _renderParagraph.getPositionForOffset(localOffset);
+  }
+
+  Offset getOffsetForPosition(TextPosition position) {
+    return _renderParagraph.getOffsetForCaret(position, Rect.zero);
   }
 
   TextSelection getSelectionInRect(Rect selectionArea, bool isDraggingDown) {
     int startOffset =
-        selectionArea.topLeft.dy < 0 ? 0 : renderParagraph.getPositionForOffset(selectionArea.topLeft).offset;
-    int endOffset = selectionArea.bottomRight.dy > renderParagraph.size.height
+        selectionArea.topLeft.dy < 0 ? 0 : _renderParagraph.getPositionForOffset(selectionArea.topLeft).offset;
+    int endOffset = selectionArea.bottomRight.dy > _renderParagraph.size.height
         ? widget.text.length
-        : renderParagraph.getPositionForOffset(selectionArea.bottomRight).offset;
+        : _renderParagraph.getPositionForOffset(selectionArea.bottomRight).offset;
 
     final selection = TextSelection(
       baseOffset: isDraggingDown ? startOffset : endOffset,
@@ -51,9 +55,84 @@ class SelectableTextState extends State<SelectableText> {
     return selection;
   }
 
+  TextPosition getPositionAtStartOfLine({
+    TextPosition currentPosition,
+  }) {
+    final positionOffset = _renderParagraph.getOffsetForCaret(currentPosition, Rect.zero);
+    final endOfLineOffset = Offset(0, positionOffset.dy);
+    return _renderParagraph.getPositionForOffset(endOfLineOffset);
+  }
+
+  TextPosition getPositionAtEndOfLine({
+    TextPosition currentPosition,
+  }) {
+    final positionOffset = _renderParagraph.getOffsetForCaret(currentPosition, Rect.zero);
+    final endOfLineOffset = Offset(_renderParagraph.size.width, positionOffset.dy);
+    return _renderParagraph.getPositionForOffset(endOfLineOffset);
+  }
+
+  TextPosition getPositionOneLineUp({
+    TextPosition currentPosition,
+  }) {
+    // TODO: use TextPainter to get real line height.
+    final lineHeight = widget.style.fontSize * widget.style.height;
+    // Note: add half the line height to the current offset to help deal with
+    //       line heights that aren't accurate.
+    final currentSelectionOffset =
+        _renderParagraph.getOffsetForCaret(currentPosition, Rect.zero) + Offset(0, lineHeight / 2);
+    final oneLineUpOffset = currentSelectionOffset - Offset(0, lineHeight);
+
+    if (oneLineUpOffset.dy < 0) {
+      // The first line is selected. There is no line above this.
+      return null;
+    }
+
+    return _renderParagraph.getPositionForOffset(oneLineUpOffset);
+  }
+
+  TextPosition getPositionOneLineDown({
+    TextPosition currentPosition,
+  }) {
+    // TODO: use TextPainter to get real line height.
+    final lineHeight = widget.style.fontSize * widget.style.height;
+    // Note: add half the line height to the current offset to help deal with
+    //       line heights that aren't accurate.
+    final currentSelectionOffset =
+        _renderParagraph.getOffsetForCaret(currentPosition, Rect.zero) + Offset(0, lineHeight / 2);
+    final oneLineDownOffset = currentSelectionOffset + Offset(0, lineHeight);
+
+    if (oneLineDownOffset.dy > _renderParagraph.size.height) {
+      // The last line is selected. There is no line below that.
+      return null;
+    }
+
+    return _renderParagraph.getPositionForOffset(oneLineDownOffset);
+  }
+
+  bool isTextAtOffset(Offset localOffset) {
+    final textOffset = _renderParagraph.getPositionForOffset(localOffset);
+
+    if (textOffset != null) {
+      List<TextBox> boxes = _renderParagraph.getBoxesForSelection(
+        TextSelection(
+          baseOffset: 0,
+          extentOffset: widget.text.length,
+        ),
+      );
+
+      for (final box in boxes) {
+        if (box.toRect().contains(localOffset)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
-    if (renderParagraph == null) {
+    if (_renderParagraph == null) {
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         setState(() {
           // Force another frame so that we can use the renderParagraph.
@@ -74,7 +153,7 @@ class SelectableTextState extends State<SelectableText> {
           Positioned.fill(
             child: CustomPaint(
               painter: DebugTextPainter(
-                paragraph: renderParagraph,
+                paragraph: _renderParagraph,
                 text: widget.text,
               ),
               size: Size.infinite,
@@ -83,7 +162,7 @@ class SelectableTextState extends State<SelectableText> {
         CustomPaint(
           painter: TextSelectionPainter(
             text: widget.text,
-            renderParagraph: renderParagraph,
+            renderParagraph: _renderParagraph,
             selection: widget.textSelection,
             emptySelectionHeight: widget.style.fontSize * widget.style.height,
             highlightWhenEmpty: widget.highlightWhenEmpty,
@@ -96,7 +175,7 @@ class SelectableTextState extends State<SelectableText> {
         ),
         CustomPaint(
           painter: CursorPainter(
-            paragraph: renderParagraph,
+            paragraph: _renderParagraph,
             cursorOffset: widget.textSelection != null ? widget.textSelection.extentOffset : -1,
             lineHeight: widget.style.fontSize * widget.style.height,
             caretHeight: (widget.style.fontSize * widget.style.height) * (widget.showDebugPaint ? 1.2 : 0.8),

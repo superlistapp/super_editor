@@ -312,73 +312,81 @@ class _EditorState extends State<Editor> {
     @required Widget editorComponents,
   }) {
     print('Show debug paint? ${widget.showDebugPaint}');
-    return Shortcuts(
-      shortcuts: <LogicalKeySet, Intent>{
-        // Up arrow
-        LogicalKeySet(LogicalKeyboardKey.arrowUp): DoNothingIntent(),
-        LogicalKeySet(LogicalKeyboardKey.arrowUp, LogicalKeyboardKey.shift): DoNothingIntent(),
-        LogicalKeySet(LogicalKeyboardKey.arrowUp, LogicalKeyboardKey.alt): DoNothingIntent(),
-        LogicalKeySet(LogicalKeyboardKey.arrowUp, LogicalKeyboardKey.shift, LogicalKeyboardKey.alt): DoNothingIntent(),
-        LogicalKeySet(LogicalKeyboardKey.arrowUp, LogicalKeyboardKey.meta): DoNothingIntent(),
-        LogicalKeySet(LogicalKeyboardKey.arrowUp, LogicalKeyboardKey.meta, LogicalKeyboardKey.alt): DoNothingIntent(),
-        LogicalKeySet(LogicalKeyboardKey.arrowUp, LogicalKeyboardKey.shift, LogicalKeyboardKey.meta): DoNothingIntent(),
-        // Down arrow
-        LogicalKeySet(LogicalKeyboardKey.arrowDown): DoNothingIntent(),
-        LogicalKeySet(LogicalKeyboardKey.arrowDown, LogicalKeyboardKey.shift): DoNothingIntent(),
-        LogicalKeySet(LogicalKeyboardKey.arrowDown, LogicalKeyboardKey.alt): DoNothingIntent(),
-        LogicalKeySet(LogicalKeyboardKey.arrowDown, LogicalKeyboardKey.shift, LogicalKeyboardKey.alt):
-            DoNothingIntent(),
-        LogicalKeySet(LogicalKeyboardKey.arrowDown, LogicalKeyboardKey.meta): DoNothingIntent(),
-        LogicalKeySet(LogicalKeyboardKey.arrowDown, LogicalKeyboardKey.meta, LogicalKeyboardKey.alt): DoNothingIntent(),
-        LogicalKeySet(LogicalKeyboardKey.arrowDown, LogicalKeyboardKey.shift, LogicalKeyboardKey.meta):
-            DoNothingIntent(),
-        // Left arrow
-        LogicalKeySet(LogicalKeyboardKey.arrowLeft): DoNothingIntent(),
-        LogicalKeySet(LogicalKeyboardKey.arrowLeft, LogicalKeyboardKey.shift): DoNothingIntent(),
-        LogicalKeySet(LogicalKeyboardKey.arrowLeft, LogicalKeyboardKey.alt): DoNothingIntent(),
-        LogicalKeySet(LogicalKeyboardKey.arrowLeft, LogicalKeyboardKey.shift, LogicalKeyboardKey.alt):
-            DoNothingIntent(),
-        LogicalKeySet(LogicalKeyboardKey.arrowLeft, LogicalKeyboardKey.meta): DoNothingIntent(),
-        LogicalKeySet(LogicalKeyboardKey.arrowLeft, LogicalKeyboardKey.meta, LogicalKeyboardKey.alt): DoNothingIntent(),
-        LogicalKeySet(LogicalKeyboardKey.arrowLeft, LogicalKeyboardKey.shift, LogicalKeyboardKey.meta):
-            DoNothingIntent(),
-        // Right arrow
-        LogicalKeySet(LogicalKeyboardKey.arrowRight): DoNothingIntent(),
-        LogicalKeySet(LogicalKeyboardKey.arrowRight, LogicalKeyboardKey.shift): DoNothingIntent(),
-        LogicalKeySet(LogicalKeyboardKey.arrowRight, LogicalKeyboardKey.alt): DoNothingIntent(),
-        LogicalKeySet(LogicalKeyboardKey.arrowRight, LogicalKeyboardKey.shift, LogicalKeyboardKey.alt):
-            DoNothingIntent(),
-        LogicalKeySet(LogicalKeyboardKey.arrowRight, LogicalKeyboardKey.meta): DoNothingIntent(),
-        LogicalKeySet(LogicalKeyboardKey.arrowRight, LogicalKeyboardKey.meta, LogicalKeyboardKey.alt):
-            DoNothingIntent(),
-        LogicalKeySet(LogicalKeyboardKey.arrowRight, LogicalKeyboardKey.shift, LogicalKeyboardKey.meta):
-            DoNothingIntent(),
-        LogicalKeySet(LogicalKeyboardKey.enter): DoNothingIntent(),
-        LogicalKeySet(LogicalKeyboardKey.backspace): DoNothingIntent(),
-        LogicalKeySet(LogicalKeyboardKey.delete): DoNothingIntent(),
-      },
-      child: _buildCursorStyle(
-        child: RawKeyboardListener(
-          focusNode: _rootFocusNode,
-          onKey: _onKeyPressed,
-          autofocus: true,
-          child: GestureDetector(
-            onTapDown: _onTapDown,
-            onPanStart: _onPanStart,
-            onPanUpdate: _onPanUpdate,
-            onPanEnd: _onPanEnd,
-            onPanCancel: _onPanCancel,
-            behavior: HitTestBehavior.translucent,
-            child: Stack(
-              children: [
-                Center(
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(maxWidth: 1000),
-                    child: editorComponents,
+    return SingleChildScrollView(
+      child: Shortcuts(
+        shortcuts: <LogicalKeySet, Intent>{
+          // Up arrow
+          LogicalKeySet(LogicalKeyboardKey.arrowUp): DoNothingIntent(),
+          LogicalKeySet(LogicalKeyboardKey.arrowUp, LogicalKeyboardKey.shift): DoNothingIntent(),
+          LogicalKeySet(LogicalKeyboardKey.arrowUp, LogicalKeyboardKey.alt): DoNothingIntent(),
+          LogicalKeySet(LogicalKeyboardKey.arrowUp, LogicalKeyboardKey.shift, LogicalKeyboardKey.alt):
+              DoNothingIntent(),
+          LogicalKeySet(LogicalKeyboardKey.arrowUp, LogicalKeyboardKey.meta): DoNothingIntent(),
+          LogicalKeySet(LogicalKeyboardKey.arrowUp, LogicalKeyboardKey.meta, LogicalKeyboardKey.alt): DoNothingIntent(),
+          LogicalKeySet(LogicalKeyboardKey.arrowUp, LogicalKeyboardKey.shift, LogicalKeyboardKey.meta):
+              DoNothingIntent(),
+          // Down arrow
+          LogicalKeySet(LogicalKeyboardKey.arrowDown): DoNothingIntent(),
+          LogicalKeySet(LogicalKeyboardKey.arrowDown, LogicalKeyboardKey.shift): DoNothingIntent(),
+          LogicalKeySet(LogicalKeyboardKey.arrowDown, LogicalKeyboardKey.alt): DoNothingIntent(),
+          LogicalKeySet(LogicalKeyboardKey.arrowDown, LogicalKeyboardKey.shift, LogicalKeyboardKey.alt):
+              DoNothingIntent(),
+          LogicalKeySet(LogicalKeyboardKey.arrowDown, LogicalKeyboardKey.meta): DoNothingIntent(),
+          LogicalKeySet(LogicalKeyboardKey.arrowDown, LogicalKeyboardKey.meta, LogicalKeyboardKey.alt):
+              DoNothingIntent(),
+          LogicalKeySet(LogicalKeyboardKey.arrowDown, LogicalKeyboardKey.shift, LogicalKeyboardKey.meta):
+              DoNothingIntent(),
+          // Left arrow
+          LogicalKeySet(LogicalKeyboardKey.arrowLeft): DoNothingIntent(),
+          LogicalKeySet(LogicalKeyboardKey.arrowLeft, LogicalKeyboardKey.shift): DoNothingIntent(),
+          LogicalKeySet(LogicalKeyboardKey.arrowLeft, LogicalKeyboardKey.alt): DoNothingIntent(),
+          LogicalKeySet(LogicalKeyboardKey.arrowLeft, LogicalKeyboardKey.shift, LogicalKeyboardKey.alt):
+              DoNothingIntent(),
+          LogicalKeySet(LogicalKeyboardKey.arrowLeft, LogicalKeyboardKey.meta): DoNothingIntent(),
+          LogicalKeySet(LogicalKeyboardKey.arrowLeft, LogicalKeyboardKey.meta, LogicalKeyboardKey.alt):
+              DoNothingIntent(),
+          LogicalKeySet(LogicalKeyboardKey.arrowLeft, LogicalKeyboardKey.shift, LogicalKeyboardKey.meta):
+              DoNothingIntent(),
+          // Right arrow
+          LogicalKeySet(LogicalKeyboardKey.arrowRight): DoNothingIntent(),
+          LogicalKeySet(LogicalKeyboardKey.arrowRight, LogicalKeyboardKey.shift): DoNothingIntent(),
+          LogicalKeySet(LogicalKeyboardKey.arrowRight, LogicalKeyboardKey.alt): DoNothingIntent(),
+          LogicalKeySet(LogicalKeyboardKey.arrowRight, LogicalKeyboardKey.shift, LogicalKeyboardKey.alt):
+              DoNothingIntent(),
+          LogicalKeySet(LogicalKeyboardKey.arrowRight, LogicalKeyboardKey.meta): DoNothingIntent(),
+          LogicalKeySet(LogicalKeyboardKey.arrowRight, LogicalKeyboardKey.meta, LogicalKeyboardKey.alt):
+              DoNothingIntent(),
+          LogicalKeySet(LogicalKeyboardKey.arrowRight, LogicalKeyboardKey.shift, LogicalKeyboardKey.meta):
+              DoNothingIntent(),
+          LogicalKeySet(LogicalKeyboardKey.enter): DoNothingIntent(),
+          LogicalKeySet(LogicalKeyboardKey.backspace): DoNothingIntent(),
+          LogicalKeySet(LogicalKeyboardKey.delete): DoNothingIntent(),
+        },
+        child: _buildCursorStyle(
+          child: RawKeyboardListener(
+            focusNode: _rootFocusNode,
+            onKey: _onKeyPressed,
+            autofocus: true,
+            child: GestureDetector(
+              onTapDown: _onTapDown,
+              onPanStart: _onPanStart,
+              onPanUpdate: _onPanUpdate,
+              onPanEnd: _onPanEnd,
+              onPanCancel: _onPanCancel,
+              behavior: HitTestBehavior.translucent,
+              child: Stack(
+                children: [
+                  IntrinsicHeight(
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(maxWidth: 1000),
+                        child: editorComponents,
+                      ),
+                    ),
                   ),
-                ),
-                _buildDragSelection(),
-              ],
+                  _buildDragSelection(),
+                ],
+              ),
             ),
           ),
         ),

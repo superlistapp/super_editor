@@ -68,18 +68,14 @@ class EditorParagraphState extends State<EditorParagraph> implements EditorCompo
   }
 
   SelectableTextState get _selectableText => _textKey.currentState;
-  RenderParagraph get _renderParagraph => _textKey.currentState.renderParagraph;
 
   @override
   ParagraphEditorComponentSelection getSelectionAtOffset(Offset localOffset) {
     return ParagraphEditorComponentSelection(
-      selection: _selectableText.getSelectionAtOffset(localOffset),
+      selection: TextSelection.collapsed(
+        offset: _selectableText.getPositionAtOffset(localOffset).offset,
+      ),
     );
-    // return ParagraphEditorComponentSelection(
-    //   selection: TextSelection.collapsed(
-    //     offset: _renderParagraph.getPositionForOffset(localOffset).offset,
-    //   ),
-    // );
   }
 
   @override
@@ -88,11 +84,12 @@ class EditorParagraphState extends State<EditorParagraph> implements EditorCompo
     @required bool expandSelection,
     @required Offset localOffset,
   }) {
-    final extentOffset = _renderParagraph
-        .getPositionForOffset(
+    final extentOffset = _selectableText
+        .getPositionAtOffset(
           Offset(localOffset.dx, 0.0),
         )
         .offset;
+
     if (currentSelection != null && currentSelection is ParagraphEditorComponentSelection) {
       return ParagraphEditorComponentSelection(
         selection: TextSelection(
@@ -116,11 +113,12 @@ class EditorParagraphState extends State<EditorParagraph> implements EditorCompo
     @required bool expandSelection,
     @required Offset localOffset,
   }) {
-    final extentOffset = _renderParagraph
-        .getPositionForOffset(
-          Offset(localOffset.dx, _renderParagraph.size.height),
+    final extentOffset = _selectableText
+        .getPositionAtOffset(
+          Offset(localOffset.dx, _selectableText.size.height),
         )
         .offset;
+
     if (currentSelection != null && currentSelection is ParagraphEditorComponentSelection) {
       return ParagraphEditorComponentSelection(
         selection: TextSelection(
@@ -140,17 +138,10 @@ class EditorParagraphState extends State<EditorParagraph> implements EditorCompo
 
   @override
   ParagraphEditorComponentSelection getSelectionInRect(Rect selectionArea, bool isDraggingDown) {
-    int startOffset =
-        selectionArea.topLeft.dy < 0 ? 0 : _renderParagraph.getPositionForOffset(selectionArea.topLeft).offset;
-    int endOffset = selectionArea.bottomRight.dy > _renderParagraph.size.height
-        ? _editingController.text.length
-        : _renderParagraph.getPositionForOffset(selectionArea.bottomRight).offset;
+    final selection = _selectableText.getSelectionInRect(selectionArea, isDraggingDown);
 
     return ParagraphEditorComponentSelection(
-      selection: TextSelection(
-        baseOffset: isDraggingDown ? startOffset : endOffset,
-        extentOffset: isDraggingDown ? endOffset : startOffset,
-      ),
+      selection: selection,
     );
   }
 
@@ -195,24 +186,7 @@ class EditorParagraphState extends State<EditorParagraph> implements EditorCompo
 
   @override
   MouseCursor getCursorForOffset(Offset localCursorOffset) {
-    final hoveredTextOffset = _renderParagraph.getPositionForOffset(localCursorOffset);
-
-    if (hoveredTextOffset != null) {
-      List<TextBox> boxes = _renderParagraph.getBoxesForSelection(
-        TextSelection(
-          baseOffset: 0,
-          extentOffset: _editingController.text.length,
-        ),
-      );
-
-      for (final box in boxes) {
-        if (box.toRect().contains(localCursorOffset)) {
-          return SystemMouseCursors.text;
-        }
-      }
-    }
-
-    return null;
+    return _selectableText.isTextAtOffset(localCursorOffset) ? SystemMouseCursors.text : null;
   }
 
   @override
@@ -388,16 +362,13 @@ class EditorParagraphState extends State<EditorParagraph> implements EditorCompo
     ParagraphEditorComponentSelection currentSelection,
     bool expandSelection = false,
   }) {
-    // TODO: use TextPainter to get real line height.
-    final lineHeight = widget.style.fontSize * widget.style.height;
-    // Note: add half the line height to the current offset to help deal with
-    //       line heights that aren't accurate.
-    final currentSelectionOffset =
-        _renderParagraph.getOffsetForCaret(TextPosition(offset: _editingController.selection.extentOffset), Rect.zero) +
-            Offset(0, lineHeight / 2);
-    final oneLineUpOffset = currentSelectionOffset - Offset(0, lineHeight);
+    final oneLineUpPosition = _selectableText.getPositionOneLineUp(
+      currentPosition: TextPosition(
+        offset: _editingController.selection.extentOffset,
+      ),
+    );
 
-    if (oneLineUpOffset.dy < 0) {
+    if (oneLineUpPosition == null) {
       // The first line is selected. There is no line above that.
       // Select any remaining text on this line.
       if (expandSelection) {
@@ -411,6 +382,11 @@ class EditorParagraphState extends State<EditorParagraph> implements EditorCompo
       }
 
       // Move up to the previous component in the editor.
+      final currentSelectionOffset = _selectableText.getOffsetForPosition(
+        TextPosition(
+          offset: currentSelection.componentSelection.extentOffset,
+        ),
+      );
       final didMove = editorSelection.moveCursorToPreviousComponent(
         expandSelection: expandSelection,
         previousCursorOffset: currentSelectionOffset,
@@ -432,12 +408,10 @@ class EditorParagraphState extends State<EditorParagraph> implements EditorCompo
       return;
     }
 
-    final oneLineUpTextPosition = _renderParagraph.getPositionForOffset(oneLineUpOffset);
-
     final newSelection = ParagraphEditorComponentSelection(
       selection: currentSelection.componentSelection.copyWith(
-        baseOffset: expandSelection ? _editingController.selection.baseOffset : oneLineUpTextPosition.offset,
-        extentOffset: oneLineUpTextPosition.offset,
+        baseOffset: expandSelection ? _editingController.selection.baseOffset : oneLineUpPosition.offset,
+        extentOffset: oneLineUpPosition.offset,
       ),
     );
 
@@ -449,16 +423,13 @@ class EditorParagraphState extends State<EditorParagraph> implements EditorCompo
     ParagraphEditorComponentSelection currentSelection,
     bool expandSelection = false,
   }) {
-    // TODO: use TextPainter to get real line height.
-    final lineHeight = widget.style.fontSize * widget.style.height;
-    // Note: add half the line height to the current offset to help deal with
-    //       line heights that aren't accurate.
-    final currentSelectionOffset =
-        _renderParagraph.getOffsetForCaret(TextPosition(offset: _editingController.selection.extentOffset), Rect.zero) +
-            Offset(0, lineHeight / 2);
-    final oneLineDownOffset = currentSelectionOffset + Offset(0, lineHeight);
+    final oneLineDownPosition = _selectableText.getPositionOneLineDown(
+      currentPosition: TextPosition(
+        offset: _editingController.selection.extentOffset,
+      ),
+    );
 
-    if (oneLineDownOffset.dy > _renderParagraph.size.height) {
+    if (oneLineDownPosition == null) {
       // The last line is selected. There is no line below that.
       if (expandSelection) {
         // Select any remaining text on this line.
@@ -472,6 +443,11 @@ class EditorParagraphState extends State<EditorParagraph> implements EditorCompo
       }
 
       // Move down to next component in editor.
+      final currentSelectionOffset = _selectableText.getOffsetForPosition(
+        TextPosition(
+          offset: currentSelection.componentSelection.extentOffset,
+        ),
+      );
       final didMove = editorSelection.moveCursorToNextComponent(
         expandSelection: expandSelection,
         previousCursorOffset: currentSelectionOffset,
@@ -493,12 +469,10 @@ class EditorParagraphState extends State<EditorParagraph> implements EditorCompo
       return;
     }
 
-    final oneLineDownTextPosition = _renderParagraph.getPositionForOffset(oneLineDownOffset);
-
     final newSelection = ParagraphEditorComponentSelection(
       selection: currentSelection.componentSelection.copyWith(
-        baseOffset: expandSelection ? _editingController.selection.baseOffset : oneLineDownTextPosition.offset,
-        extentOffset: oneLineDownTextPosition.offset,
+        baseOffset: expandSelection ? _editingController.selection.baseOffset : oneLineDownPosition.offset,
+        extentOffset: oneLineDownPosition.offset,
       ),
     );
 
@@ -564,16 +538,14 @@ class EditorParagraphState extends State<EditorParagraph> implements EditorCompo
       return null;
     }
     final textSelection = currentSelection.componentSelection;
-
-    final cursorOffset =
-        _renderParagraph.getOffsetForCaret(TextPosition(offset: textSelection.extentOffset), Rect.zero);
-    final endOfLineOffset = Offset(0, cursorOffset.dy);
-    final newExtent = _renderParagraph.getPositionForOffset(endOfLineOffset).offset;
+    final startOfLinePosition = _selectableText.getPositionAtStartOfLine(
+      currentPosition: TextPosition(offset: textSelection.extentOffset),
+    );
 
     return ParagraphEditorComponentSelection(
       selection: textSelection.copyWith(
-        baseOffset: expandSelection ? textSelection.baseOffset : newExtent,
-        extentOffset: newExtent,
+        baseOffset: expandSelection ? textSelection.baseOffset : startOfLinePosition.offset,
+        extentOffset: startOfLinePosition.offset,
       ),
     );
   }
@@ -639,10 +611,9 @@ class EditorParagraphState extends State<EditorParagraph> implements EditorCompo
     final textSelection = currentSelection.componentSelection;
 
     final text = widget.text;
-    final cursorOffset =
-        _renderParagraph.getOffsetForCaret(TextPosition(offset: textSelection.extentOffset), Rect.zero);
-    final endOfLineOffset = Offset(_renderParagraph.size.width, cursorOffset.dy);
-    final endOfLineTextPosition = _renderParagraph.getPositionForOffset(endOfLineOffset);
+    final endOfLineTextPosition = _selectableText.getPositionAtEndOfLine(
+      currentPosition: TextPosition(offset: textSelection.extentOffset),
+    );
     final isAutoWrapLine =
         endOfLineTextPosition.offset < text.length && (text.isNotEmpty && text[endOfLineTextPosition.offset] != '\n');
 

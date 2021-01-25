@@ -126,8 +126,13 @@ class EditorSelection with ChangeNotifier {
     }
   }
 
+  // TODO: what does it mean if selection is null? that's not collapsed, because
+  //       it's not a selection.
   bool get isCollapsed =>
-      isEmpty || (baseOffsetNode != null && baseOffsetNode == extentOffsetNode && baseOffsetNode.selection.isCollapsed);
+      isEmpty ||
+      (baseOffsetNode != null &&
+          baseOffsetNode == extentOffsetNode &&
+          (baseOffsetNode.selection == null || baseOffsetNode.selection.isCollapsed));
 
   void collapse() {
     if (isCollapsed) {
