@@ -6,16 +6,20 @@ import 'package:flutter/widgets.dart';
 class SelectableText extends StatefulWidget {
   const SelectableText({
     @required Key key,
-    this.text,
-    this.textSelection,
+    this.text = '',
+    this.textSelection = const TextSelection.collapsed(offset: -1),
     this.hasCursor = false,
     this.style,
+    this.highlightWhenEmpty = false,
+    this.showDebugPaint = false,
   }) : super(key: key);
 
   final String text;
   final TextSelection textSelection;
   final bool hasCursor;
   final TextStyle style;
+  final bool highlightWhenEmpty;
+  final bool showDebugPaint;
 
   @override
   SelectableTextState createState() => SelectableTextState();
@@ -49,25 +53,54 @@ class SelectableTextState extends State<SelectableText> {
 
   @override
   Widget build(BuildContext context) {
+    if (renderParagraph == null) {
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+        setState(() {
+          // Force another frame so that we can use the renderParagraph.
+        });
+      });
+    }
+
+    final desiredTextStyle = widget.style ?? Theme.of(context).textTheme.bodyText1;
+    final textStyle = widget.showDebugPaint
+        ? desiredTextStyle.copyWith(
+            color: const Color(0xFF444444),
+          )
+        : desiredTextStyle;
+
     return Stack(
       children: [
+        if (widget.showDebugPaint)
+          Positioned.fill(
+            child: CustomPaint(
+              painter: DebugTextPainter(
+                paragraph: renderParagraph,
+                text: widget.text,
+              ),
+              size: Size.infinite,
+            ),
+          ),
         CustomPaint(
           painter: TextSelectionPainter(
-            paragraph: renderParagraph,
+            text: widget.text,
+            renderParagraph: renderParagraph,
             selection: widget.textSelection,
+            emptySelectionHeight: widget.style.fontSize * widget.style.height,
+            highlightWhenEmpty: widget.highlightWhenEmpty,
           ),
         ),
         Text(
           widget.text,
           key: _textKey,
-          style: widget.style ?? Theme.of(context).textTheme.bodyText1,
+          style: textStyle,
         ),
         CustomPaint(
           painter: CursorPainter(
             paragraph: renderParagraph,
-            cursorOffset: widget.textSelection.extentOffset,
+            cursorOffset: widget.textSelection != null ? widget.textSelection.extentOffset : -1,
             lineHeight: widget.style.fontSize * widget.style.height,
-            caretHeight: (widget.style.fontSize * widget.style.height) * 0.8,
+            caretHeight: (widget.style.fontSize * widget.style.height) * (widget.showDebugPaint ? 1.2 : 0.8),
+            caretColor: widget.showDebugPaint ? Colors.red : Colors.black,
             isTextEmpty: widget.text == null || widget.text.isEmpty,
             showCursor: widget.hasCursor,
           ),
@@ -79,21 +112,38 @@ class SelectableTextState extends State<SelectableText> {
 
 class TextSelectionPainter extends CustomPainter {
   TextSelectionPainter({
-    @required this.paragraph,
+    @required this.text,
+    @required this.renderParagraph,
     @required this.selection,
+    @required this.emptySelectionHeight,
+    this.highlightWhenEmpty = false,
   });
 
-  final RenderParagraph paragraph;
+  final String text;
+  final RenderParagraph renderParagraph;
   final TextSelection selection;
+  final emptySelectionHeight;
+  // When true, an empty, collapsed selection will be highlighted
+  // for the purpose of showing a highlighted empty line.
+  final bool highlightWhenEmpty;
   final Paint selectionPaint = Paint()..color = Colors.lightGreenAccent;
 
   @override
   void paint(Canvas canvas, Size size) {
-    if (paragraph == null || selection == null || selection.baseOffset == selection.extentOffset) {
+    if (renderParagraph == null || selection == null) {
       return;
     }
 
-    final selectionBoxes = paragraph.getBoxesForSelection(selection);
+    if (text.isEmpty && highlightWhenEmpty && selection.isCollapsed && selection.extentOffset == 0) {
+      //&& highlightWhenEmpty) {
+      // This is an empty paragraph, which is selected. Paint a small selection.
+      canvas.drawRect(
+        Rect.fromLTWH(0, 0, 5, 20),
+        selectionPaint,
+      );
+    }
+
+    final selectionBoxes = renderParagraph.getBoxesForSelection(selection);
 
     for (final box in selectionBoxes) {
       final rect = box.toRect();
@@ -108,7 +158,7 @@ class TextSelectionPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(TextSelectionPainter oldDelegate) {
-    return paragraph != oldDelegate.paragraph || selection != oldDelegate.selection;
+    return renderParagraph != oldDelegate.renderParagraph || selection != oldDelegate.selection;
   }
 }
 
@@ -118,9 +168,10 @@ class CursorPainter extends CustomPainter {
     @required this.cursorOffset,
     @required this.caretHeight,
     @required this.lineHeight,
+    @required Color caretColor,
     @required this.isTextEmpty,
     @required this.showCursor,
-  });
+  }) : caretPaint = Paint()..color = caretColor;
 
   final RenderParagraph paragraph;
   final int cursorOffset;
@@ -128,7 +179,7 @@ class CursorPainter extends CustomPainter {
   final double lineHeight; // TODO: this should probably also come from the TextPainter.
   final bool isTextEmpty;
   final bool showCursor;
-  final Paint cursorPaint = Paint()..color = Colors.black54;
+  final Paint caretPaint;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -136,9 +187,10 @@ class CursorPainter extends CustomPainter {
       return;
     }
 
-    final caretOffset = isTextEmpty
-        ? paragraph.getOffsetForCaret(TextPosition(offset: cursorOffset), Rect.zero)
-        : Offset(0, (lineHeight - caretHeight) / 2);
+    Offset caretOffset = isTextEmpty
+        ? Offset(0, (lineHeight - caretHeight) / 2)
+        : paragraph.getOffsetForCaret(TextPosition(offset: cursorOffset), Rect.zero);
+    caretOffset = caretOffset.translate(0, -(caretHeight - lineHeight) / 2);
     canvas.drawRect(
       Rect.fromLTWH(
         caretOffset.dx.roundToDouble(),
@@ -146,7 +198,7 @@ class CursorPainter extends CustomPainter {
         1,
         caretHeight.roundToDouble(),
       ),
-      cursorPaint,
+      caretPaint,
     );
   }
 
@@ -156,5 +208,52 @@ class CursorPainter extends CustomPainter {
         cursorOffset != oldDelegate.cursorOffset ||
         isTextEmpty != oldDelegate.isTextEmpty ||
         showCursor != oldDelegate.showCursor;
+  }
+}
+
+class DebugTextPainter extends CustomPainter {
+  DebugTextPainter({
+    @required this.paragraph,
+    @required this.text,
+  });
+
+  final RenderParagraph paragraph;
+  final String text;
+  final Paint leftBoundaryPaint = Paint()..color = const Color(0xFFCCCCCC);
+  final Paint textBoxesPaint = Paint()
+    ..color = const Color(0xFFCCCCCC)
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 1;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (paragraph == null || text == null) {
+      return;
+    }
+
+    // Paint boxes.
+    final textBoxes = paragraph.getBoxesForSelection(TextSelection(
+      baseOffset: 0,
+      extentOffset: text.length,
+    ));
+
+    for (final box in textBoxes) {
+      final rect = box.toRect();
+      canvas.drawRect(
+        rect,
+        textBoxesPaint,
+      );
+    }
+
+    // Paint left boundary.
+    canvas.drawRect(
+      Rect.fromLTWH(-6, 0, 2, size.height),
+      leftBoundaryPaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(DebugTextPainter oldDelegate) {
+    return paragraph != oldDelegate.paragraph || text != oldDelegate.text;
   }
 }

@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 
-import 'editor_paragraph.dart';
+import 'editor_layout_model.dart';
+import 'editor_selection.dart';
+import 'paragraph/editor_paragraph.dart';
+import 'paragraph/editor_paragraph_component.dart';
 
 const _loremIpsum1 =
     'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.';
@@ -12,13 +15,19 @@ const _loremIpsum3 =
     'Phasellus non gravida arcu. Pellentesque posuere orci et lorem fermentum, sed interdum metus vestibulum. Maecenas suscipit mollis sagittis. Mauris quis est blandit libero vehicula fringilla eget in augue. Etiam mi lectus, ullamcorper ac odio nec, maximus ultricies enim. Aenean nec est non nunc tincidunt rhoncus. Proin laoreet vitae libero ut faucibus. Donec bibendum laoreet dolor eu varius. Pellentesque ullamcorper turpis quis viverra semper.';
 
 class Editor extends StatefulWidget {
+  const Editor({
+    Key key,
+    this.showDebugPaint = false,
+  }) : super(key: key);
+
+  final showDebugPaint;
+
   @override
   _EditorState createState() => _EditorState();
 }
 
 class _EditorState extends State<Editor> {
   FocusNode _rootFocusNode;
-  bool _hasFocus = false;
 
   final _displayNodes = <DocDisplayNode>[
     DocDisplayNode(
@@ -35,94 +44,98 @@ class _EditorState extends State<Editor> {
     ),
   ];
 
-  TextEditingController _paragraph1Controller;
-  TextEditingController _paragraph2Controller;
-  TextEditingController _paragraph3Controller;
-
-  EditorController _editorController;
-
   Offset _dragStart;
   Rect _dragRect;
 
-  MouseCursor _cursorStyle = SystemMouseCursors.basic;
+  final _cursorStyle = ValueNotifier(SystemMouseCursors.basic);
 
-  EditorSelection _editorSelection = EditorSelection();
-  DocDisplayNode _nodeWithCursor;
+  EditorSelection _editorSelection;
 
   @override
   void initState() {
     super.initState();
-    _rootFocusNode = FocusNode()
-      ..addListener(_onFocusChange)
-      ..requestFocus();
+    _rootFocusNode = FocusNode();
 
-    _paragraph1Controller = TextEditingController(text: _loremIpsum1);
-    _paragraph2Controller = TextEditingController(text: _loremIpsum2);
-    _paragraph3Controller = TextEditingController(text: _loremIpsum3);
-    _editorController = EditorController();
+    _editorSelection = EditorSelection(
+      displayNodes: _displayNodes,
+    );
   }
 
   @override
   void dispose() {
-    _editorController.dispose();
-    _paragraph1Controller.dispose();
-    _paragraph2Controller.dispose();
-    _paragraph3Controller.dispose();
     _rootFocusNode.dispose();
     super.dispose();
   }
 
-  void _onFocusChange() {
-    print('_onFocusChange(), hasFocus: ${_rootFocusNode.hasFocus}');
-    if (_rootFocusNode.hasFocus && !_hasFocus) {
-      _hasFocus = true;
-      RawKeyboard.instance.addListener(_onKeyPressed);
-    } else if (!_rootFocusNode.hasFocus) {
-      _hasFocus = false;
-      RawKeyboard.instance.removeListener(_onKeyPressed);
+  KeyEventResult _onKeyPressed(RawKeyEvent keyEvent) {
+    if (keyEvent is! RawKeyDownEvent) {
+      return KeyEventResult.handled;
     }
-  }
 
-  void _onKeyPressed(RawKeyEvent event) {
     print('Key pressed');
 
-    // if (_editorController.selectedComponentKey != null) {
-    //   print('Forwarding key event to: ${_editorController.selectedComponentKey}');
-    //   final wasHandled = _editorController.selectedComponentKey.currentState.onKeyPressed(event);
-    //
-    //   if (!wasHandled) {
-    //     print('Key was not handled');
-    //     print('Is down event? ${event is RawKeyDownEvent}: $event');
-    //     if (event.logicalKey == LogicalKeyboardKey.arrowDown && event is RawKeyDownEvent) {
-    //       final currentComponentIndex = _docKeys.indexOf(_editorController.selectedComponentKey);
-    //       if (currentComponentIndex < _docKeys.length - 1) {
-    //         _docKeys[currentComponentIndex + 1].currentState.acceptSelection(true);
-    //       }
-    //     } else if (event.logicalKey == LogicalKeyboardKey.arrowUp && event is RawKeyDownEvent) {
-    //       final currentComponentIndex = _docKeys.indexOf(_editorController.selectedComponentKey);
-    //       if (currentComponentIndex > 0) {
-    //         _docKeys[currentComponentIndex - 1].currentState.acceptSelection(false);
-    //       }
-    //     }
-    //   }
-    // }
+    if (_editorSelection.nodeWithCursor == null) {
+      print(' - no node with cursor. Returning.');
+      return KeyEventResult.handled;
+    }
+
+    final isDirectionalKey = keyEvent.logicalKey == LogicalKeyboardKey.arrowLeft ||
+        keyEvent.logicalKey == LogicalKeyboardKey.arrowRight ||
+        keyEvent.logicalKey == LogicalKeyboardKey.arrowUp ||
+        keyEvent.logicalKey == LogicalKeyboardKey.arrowDown;
+    print(' - is directional key? $isDirectionalKey');
+    print(' - is editor selection collapsed? ${_editorSelection.isCollapsed}');
+    print(' - is shift pressed? ${keyEvent.isShiftPressed}');
+    if (isDirectionalKey && !_editorSelection.isCollapsed && !keyEvent.isShiftPressed && !keyEvent.isMetaPressed) {
+      print('Collapsing editor selection, then returning.');
+      _editorSelection.collapse();
+      return KeyEventResult.handled;
+    }
+
+    // Handle delete and backspace for a selection.
+    // TODO: add all characters to this condition.
+    final isDestructiveKey =
+        keyEvent.logicalKey == LogicalKeyboardKey.backspace || keyEvent.logicalKey == LogicalKeyboardKey.delete;
+    final shouldDeleteSelection = isDestructiveKey;
+    if (!_editorSelection.isCollapsed && shouldDeleteSelection) {
+      _editorSelection.deleteSelection();
+
+      if (isDestructiveKey) {
+        // Destructive keys only want deletion. The deletion is done.
+        // Return.
+        return KeyEventResult.handled;
+      }
+    }
+
+    // Delegate key processing to the component with the cursor.
+    final componentWithCursor = (_editorSelection.nodeWithCursor?.key?.currentState);
+    if (componentWithCursor != null) {
+      print('Delegating key press');
+      (componentWithCursor as EditorComponent).onKeyPressed(
+        keyEvent: keyEvent,
+        editorSelection: _editorSelection,
+        currentComponentSelection: _editorSelection.nodeWithCursor.selection,
+      );
+    }
+
+    return KeyEventResult.handled;
   }
 
   void _onTapDown(TapDownDetails details) {
     setState(() {
-      for (final displayNode in _displayNodes) {
-        displayNode.selection = null;
-      }
+      _clearSelection();
 
       bool nodeTapped = false;
-      for (final displayNode in _displayNodes) {
+      for (final displayNode in _editorSelection.displayNodes) {
         final editorComponent = displayNode.key.currentState as EditorParagraphState;
         if (_cursorIntersects(editorComponent, details.localPosition)) {
           final componentOffset = _localCursorOffset(editorComponent, details.localPosition);
           final selection = editorComponent.getSelectionAtOffset(componentOffset);
           displayNode.selection = selection;
 
-          _nodeWithCursor = displayNode;
+          _editorSelection.baseOffsetNode = displayNode;
+          _editorSelection.extentOffsetNode = displayNode;
+          _editorSelection.nodeWithCursor = displayNode;
 
           nodeTapped = true;
         }
@@ -132,7 +145,7 @@ class _EditorState extends State<Editor> {
       // Give focus back to the root of the editor.
       if (!nodeTapped) {
         _rootFocusNode.requestFocus();
-        _nodeWithCursor = null;
+        _editorSelection.nodeWithCursor = null;
       }
     });
   }
@@ -140,23 +153,20 @@ class _EditorState extends State<Editor> {
   void _onPanStart(DragStartDetails details) {
     _dragStart = details.localPosition;
     setState(() {
+      _clearSelection();
       _dragRect = Rect.fromLTWH(_dragStart.dx, _dragStart.dy, 1, 1);
     });
   }
 
   void _onPanUpdate(DragUpdateDetails details) {
     _dragRect = Rect.fromPoints(_dragStart, details.localPosition);
-    _updateCursor(details.localPosition);
+    _updateCursorStyle(details.localPosition);
     _updateDragSelection();
 
     setState(() {
       // empty because the drag rect update needs to happen before
       // update selection.
     });
-    //
-    // // Forward this message on to the method that determines the
-    // // desired cursor style.
-    // _configureMouseStyle(details.localPosition);
   }
 
   void _onPanEnd(DragEndDetails details) {
@@ -171,6 +181,12 @@ class _EditorState extends State<Editor> {
     });
   }
 
+  void _clearSelection() {
+    for (final displayNode in _editorSelection.displayNodes) {
+      displayNode.selection = null;
+    }
+  }
+
   void _updateDragSelection() {
     DocDisplayNode firstSelectedNode;
     DocDisplayNode lastSelectedNode;
@@ -179,14 +195,15 @@ class _EditorState extends State<Editor> {
     // top or bottom of the drag rect.
     final isDraggingDown = _dragStart.dy < _dragRect.bottom;
 
-    for (final displayNode in _displayNodes) {
-      final editorComponent = displayNode.key.currentState as EditorParagraphState;
+    for (final displayNode in _editorSelection.displayNodes) {
+      final editorComponent = displayNode.key.currentState as EditorComponent;
 
       final dragIntersection = _getDragIntersectionWith(editorComponent);
       if (dragIntersection != null) {
         print('Drag intersects: ${displayNode.key}');
+        print('Intersection: $dragIntersection');
         final selection = editorComponent.getSelectionInRect(dragIntersection, isDraggingDown);
-        print('Drag selection: $selection');
+        print('Drag selection: ${selection.componentSelection}');
         print('');
         displayNode.selection = selection;
 
@@ -194,32 +211,30 @@ class _EditorState extends State<Editor> {
           firstSelectedNode = displayNode;
         }
         lastSelectedNode = displayNode;
-      } else {
-        editorComponent.clearSelection();
       }
     }
 
-    _editorSelection.clear();
+    // _editorSelection.clear();
     if (firstSelectedNode != null) {
       if (isDraggingDown) {
-        _editorSelection.baseOffsetKey = firstSelectedNode.key;
-        _editorSelection.baseOffsetSelection = firstSelectedNode.selection;
+        _editorSelection.baseOffsetNode = firstSelectedNode;
       } else {
-        _editorSelection.extentOffsetKey = firstSelectedNode.key;
-        _editorSelection.extentOffsetSelection = firstSelectedNode.selection;
+        _editorSelection.extentOffsetNode = firstSelectedNode;
       }
     }
     if (lastSelectedNode != null) {
       if (isDraggingDown) {
-        _editorSelection.extentOffsetKey = lastSelectedNode.key;
-        _editorSelection.extentOffsetSelection = lastSelectedNode.selection;
+        _editorSelection.extentOffsetNode = lastSelectedNode;
       } else {
-        _editorSelection.baseOffsetKey = lastSelectedNode.key;
-        _editorSelection.baseOffsetSelection = lastSelectedNode.selection;
+        _editorSelection.baseOffsetNode = lastSelectedNode;
       }
     }
+    print('Base node: ${_editorSelection.baseOffsetNode.key}');
+    print('Base selection: ${_editorSelection.baseOffsetNode.selection.componentSelection}');
+    print('Extent node: ${_editorSelection.extentOffsetNode.key}');
+    print('Extent selection: ${_editorSelection.extentOffsetNode.selection.componentSelection}');
 
-    _nodeWithCursor = isDraggingDown ? lastSelectedNode : firstSelectedNode;
+    _editorSelection.nodeWithCursor = isDraggingDown ? lastSelectedNode : firstSelectedNode;
 
     // TODO: is there a more appropriate place to setState()?
     setState(() {});
@@ -241,24 +256,20 @@ class _EditorState extends State<Editor> {
   }
 
   void _onMouseMove(PointerEvent pointerEvent) {
-    _updateCursor(pointerEvent.localPosition);
+    _updateCursorStyle(pointerEvent.localPosition);
   }
 
-  void _updateCursor(Offset cursorOffset) {
-    for (final displayNode in _displayNodes) {
+  void _updateCursorStyle(Offset cursorOffset) {
+    for (final displayNode in _editorSelection.displayNodes) {
       final editorComponent = displayNode.key.currentState as EditorParagraphState;
 
       if (_cursorIntersects(editorComponent, cursorOffset)) {
         final localCursorOffset = _localCursorOffset(editorComponent, cursorOffset);
-        final desiredCursor = editorComponent.cursorForOffset(localCursorOffset);
-        if (desiredCursor != null && desiredCursor != _cursorStyle) {
-          setState(() {
-            _cursorStyle = desiredCursor;
-          });
-        } else if (desiredCursor == null && _cursorStyle != SystemMouseCursors.basic) {
-          setState(() {
-            _cursorStyle = SystemMouseCursors.basic;
-          });
+        final desiredCursor = editorComponent.getCursorForOffset(localCursorOffset);
+        if (desiredCursor != null && desiredCursor != _cursorStyle.value) {
+          _cursorStyle.value = desiredCursor;
+        } else if (desiredCursor == null && _cursorStyle.value != SystemMouseCursors.basic) {
+          _cursorStyle.value = SystemMouseCursors.basic;
         }
 
         // The cursor can't intersect multiple components, so
@@ -267,9 +278,7 @@ class _EditorState extends State<Editor> {
       }
     }
 
-    setState(() {
-      _cursorStyle = SystemMouseCursors.basic;
-    });
+    _cursorStyle.value = SystemMouseCursors.basic;
   }
 
   bool _cursorIntersects(EditorParagraphState editorComponent, Offset cursorOffset) {
@@ -300,30 +309,72 @@ class _EditorState extends State<Editor> {
 
   Widget _buildEditorChrome({
     @required BuildContext context,
-    @required List<Widget> editorComponents,
+    @required Widget editorComponents,
   }) {
-    return Listener(
-      onPointerHover: _onMouseMove,
-      child: MouseRegion(
-        cursor: _cursorStyle,
-        child: GestureDetector(
-          onTapDown: _onTapDown,
-          onPanStart: _onPanStart,
-          onPanUpdate: _onPanUpdate,
-          onPanEnd: _onPanEnd,
-          onPanCancel: _onPanCancel,
-          behavior: HitTestBehavior.translucent,
-          child: Focus(
-            focusNode: _rootFocusNode,
+    print('Show debug paint? ${widget.showDebugPaint}');
+    return Shortcuts(
+      shortcuts: <LogicalKeySet, Intent>{
+        // Up arrow
+        LogicalKeySet(LogicalKeyboardKey.arrowUp): DoNothingIntent(),
+        LogicalKeySet(LogicalKeyboardKey.arrowUp, LogicalKeyboardKey.shift): DoNothingIntent(),
+        LogicalKeySet(LogicalKeyboardKey.arrowUp, LogicalKeyboardKey.alt): DoNothingIntent(),
+        LogicalKeySet(LogicalKeyboardKey.arrowUp, LogicalKeyboardKey.shift, LogicalKeyboardKey.alt): DoNothingIntent(),
+        LogicalKeySet(LogicalKeyboardKey.arrowUp, LogicalKeyboardKey.meta): DoNothingIntent(),
+        LogicalKeySet(LogicalKeyboardKey.arrowUp, LogicalKeyboardKey.meta, LogicalKeyboardKey.alt): DoNothingIntent(),
+        LogicalKeySet(LogicalKeyboardKey.arrowUp, LogicalKeyboardKey.shift, LogicalKeyboardKey.meta): DoNothingIntent(),
+        // Down arrow
+        LogicalKeySet(LogicalKeyboardKey.arrowDown): DoNothingIntent(),
+        LogicalKeySet(LogicalKeyboardKey.arrowDown, LogicalKeyboardKey.shift): DoNothingIntent(),
+        LogicalKeySet(LogicalKeyboardKey.arrowDown, LogicalKeyboardKey.alt): DoNothingIntent(),
+        LogicalKeySet(LogicalKeyboardKey.arrowDown, LogicalKeyboardKey.shift, LogicalKeyboardKey.alt):
+            DoNothingIntent(),
+        LogicalKeySet(LogicalKeyboardKey.arrowDown, LogicalKeyboardKey.meta): DoNothingIntent(),
+        LogicalKeySet(LogicalKeyboardKey.arrowDown, LogicalKeyboardKey.meta, LogicalKeyboardKey.alt): DoNothingIntent(),
+        LogicalKeySet(LogicalKeyboardKey.arrowDown, LogicalKeyboardKey.shift, LogicalKeyboardKey.meta):
+            DoNothingIntent(),
+        // Left arrow
+        LogicalKeySet(LogicalKeyboardKey.arrowLeft): DoNothingIntent(),
+        LogicalKeySet(LogicalKeyboardKey.arrowLeft, LogicalKeyboardKey.shift): DoNothingIntent(),
+        LogicalKeySet(LogicalKeyboardKey.arrowLeft, LogicalKeyboardKey.alt): DoNothingIntent(),
+        LogicalKeySet(LogicalKeyboardKey.arrowLeft, LogicalKeyboardKey.shift, LogicalKeyboardKey.alt):
+            DoNothingIntent(),
+        LogicalKeySet(LogicalKeyboardKey.arrowLeft, LogicalKeyboardKey.meta): DoNothingIntent(),
+        LogicalKeySet(LogicalKeyboardKey.arrowLeft, LogicalKeyboardKey.meta, LogicalKeyboardKey.alt): DoNothingIntent(),
+        LogicalKeySet(LogicalKeyboardKey.arrowLeft, LogicalKeyboardKey.shift, LogicalKeyboardKey.meta):
+            DoNothingIntent(),
+        // Right arrow
+        LogicalKeySet(LogicalKeyboardKey.arrowRight): DoNothingIntent(),
+        LogicalKeySet(LogicalKeyboardKey.arrowRight, LogicalKeyboardKey.shift): DoNothingIntent(),
+        LogicalKeySet(LogicalKeyboardKey.arrowRight, LogicalKeyboardKey.alt): DoNothingIntent(),
+        LogicalKeySet(LogicalKeyboardKey.arrowRight, LogicalKeyboardKey.shift, LogicalKeyboardKey.alt):
+            DoNothingIntent(),
+        LogicalKeySet(LogicalKeyboardKey.arrowRight, LogicalKeyboardKey.meta): DoNothingIntent(),
+        LogicalKeySet(LogicalKeyboardKey.arrowRight, LogicalKeyboardKey.meta, LogicalKeyboardKey.alt):
+            DoNothingIntent(),
+        LogicalKeySet(LogicalKeyboardKey.arrowRight, LogicalKeyboardKey.shift, LogicalKeyboardKey.meta):
+            DoNothingIntent(),
+        LogicalKeySet(LogicalKeyboardKey.enter): DoNothingIntent(),
+        LogicalKeySet(LogicalKeyboardKey.backspace): DoNothingIntent(),
+        LogicalKeySet(LogicalKeyboardKey.delete): DoNothingIntent(),
+      },
+      child: _buildCursorStyle(
+        child: RawKeyboardListener(
+          focusNode: _rootFocusNode,
+          onKey: _onKeyPressed,
+          autofocus: true,
+          child: GestureDetector(
+            onTapDown: _onTapDown,
+            onPanStart: _onPanStart,
+            onPanUpdate: _onPanUpdate,
+            onPanEnd: _onPanEnd,
+            onPanCancel: _onPanCancel,
+            behavior: HitTestBehavior.translucent,
             child: Stack(
               children: [
                 Center(
                   child: ConstrainedBox(
                     constraints: BoxConstraints(maxWidth: 1000),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: editorComponents,
-                    ),
+                    child: editorComponents,
                   ),
                 ),
                 _buildDragSelection(),
@@ -332,6 +383,24 @@ class _EditorState extends State<Editor> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildCursorStyle({
+    Widget child,
+  }) {
+    return AnimatedBuilder(
+      animation: _cursorStyle,
+      builder: (context, child) {
+        return Listener(
+          onPointerHover: _onMouseMove,
+          child: MouseRegion(
+            cursor: _cursorStyle.value,
+            child: child,
+          ),
+        );
+      },
+      child: child,
     );
   }
 
@@ -346,7 +415,7 @@ class _EditorState extends State<Editor> {
     );
   }
 
-  List<Widget> _buildContentComponents(BuildContext context) {
+  Widget _buildContentComponents(BuildContext context) {
     const textStyle = TextStyle(
       color: Color(0xFF312F2C),
       fontSize: 16,
@@ -354,42 +423,37 @@ class _EditorState extends State<Editor> {
       height: 1.4,
     );
 
-    return [
-      for (final displayNode in _displayNodes) ...[
-        EditorParagraph(
-          key: displayNode.key,
-          text: displayNode.paragraph,
-          textSelection: displayNode.selection,
-          style: textStyle,
-          hasCursor: displayNode == _nodeWithCursor,
-        ),
-        SizedBox(height: 16),
-      ],
-    ];
-  }
-}
+    return AnimatedBuilder(
+        animation: _editorSelection,
+        builder: (context, child) {
+          print('Building editor components:');
+          for (final displayNode in _editorSelection.displayNodes) {
+            print(' - ${displayNode.key}: ${displayNode.selection?.componentSelection}');
+            if (displayNode == _editorSelection.nodeWithCursor) {
+              print('   - ^ has cursor');
+            }
+          }
 
-class EditorController with ChangeNotifier {
-  GlobalKey<EditorParagraphState> _selectedComponentKey;
-  GlobalKey<EditorParagraphState> get selectedComponentKey => _selectedComponentKey;
-
-  TextEditingController _activeTextController;
-  TextEditingController get activeTextController => _activeTextController;
-
-  void setSelection({
-    @required GlobalKey<EditorParagraphState> newComponentKey,
-    @required TextEditingController newTextController,
-  }) {
-    print('Setting selected component key to: ${newComponentKey}');
-    if (_selectedComponentKey != null && newComponentKey != _selectedComponentKey) {
-      print('Clearing selection from $_selectedComponentKey');
-      _selectedComponentKey.currentState.clearSelection();
-    }
-
-    _selectedComponentKey = newComponentKey;
-    _activeTextController = newTextController;
-    print('Selected component key is now: $selectedComponentKey');
-    notifyListeners();
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (final displayNode in _editorSelection.displayNodes) ...[
+                EditorParagraph(
+                  key: displayNode.key,
+                  text: displayNode.paragraph,
+                  textSelection: (displayNode.selection as ParagraphEditorComponentSelection)?.componentSelection,
+                  style: textStyle,
+                  hasCursor: displayNode == _editorSelection.nodeWithCursor,
+                  highlightWhenEmpty: !_editorSelection.isCollapsed &&
+                      (displayNode.selection as ParagraphEditorComponentSelection)?.componentSelection != null,
+                  showDebugPaint: widget.showDebugPaint,
+                ),
+                SizedBox(height: 16),
+              ],
+            ],
+          );
+        });
   }
 }
 
@@ -414,38 +478,5 @@ class DragRectanglePainter extends CustomPainter {
   @override
   bool shouldRepaint(DragRectanglePainter oldDelegate) {
     return oldDelegate.selectionRect != selectionRect;
-  }
-}
-
-class DocDisplayNode {
-  DocDisplayNode({
-    @required this.key,
-    @required this.paragraph,
-  });
-
-  final GlobalKey key;
-  final String paragraph;
-  dynamic selection;
-}
-
-class EditorSelection {
-  EditorSelection({
-    this.baseOffsetKey,
-    this.baseOffsetSelection,
-    this.extentOffsetKey,
-    this.extentOffsetSelection,
-  });
-
-  GlobalKey baseOffsetKey;
-  dynamic baseOffsetSelection;
-
-  GlobalKey extentOffsetKey;
-  dynamic extentOffsetSelection;
-
-  void clear() {
-    baseOffsetKey = null;
-    baseOffsetSelection = null;
-    extentOffsetKey = null;
-    extentOffsetSelection = null;
   }
 }
