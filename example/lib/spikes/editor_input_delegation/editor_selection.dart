@@ -1,6 +1,5 @@
 import 'dart:math';
 
-import 'package:example/spikes/editor_input_delegation/paragraph/editor_paragraph.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -43,14 +42,14 @@ class EditorSelection with ChangeNotifier {
       EditorComponentSelection previousNodeSelection;
       if (previousCursorOffset == null) {
         previousNodeSelection = moveSelectionToEnd(
-          text: (previousNode.key.currentState as EditorParagraphState).selectableText.widget.text,
+          text: (previousNode.key.currentState as SelectableTextState).widget.text,
           currentSelection: previousNode.selection,
           expandSelection: expandSelection,
         );
       } else {
         previousNodeSelection = moveSelectionFromEndToOffset(
-          selectableText: (previousNode.key.currentState as EditorParagraphState).selectableText,
-          text: (previousNode.key.currentState as EditorParagraphState).selectableText.widget.text,
+          selectableText: previousNode.key.currentState as TextLayout,
+          text: (previousNode.key.currentState as SelectableTextState).widget.text,
           currentSelection: previousNode.selection,
           expandSelection: expandSelection,
           localOffset: previousCursorOffset,
@@ -144,7 +143,7 @@ class EditorSelection with ChangeNotifier {
         );
       } else {
         nextNodeSelection = moveSelectionFromStartToOffset(
-          selectableText: (nextNode.key.currentState as EditorParagraphState).selectableText,
+          selectableText: nextNode.key.currentState as TextLayout,
           currentSelection: nextNode.selection,
           expandSelection: expandSelection,
           localOffset: previousCursorOffset,
@@ -376,14 +375,6 @@ class EditorSelection with ChangeNotifier {
   }
 }
 
-abstract class EditorComponent {
-  void onKeyPressed({
-    @required RawKeyEvent keyEvent,
-    @required EditorSelection editorSelection,
-    @required EditorComponentSelection currentComponentSelection,
-  });
-}
-
 abstract class TextLayout {
   TextPosition getPositionAtOffset(Offset localOffset);
 
@@ -410,6 +401,11 @@ abstract class TextLayout {
   TextPosition getPositionInLastLineAtX(double x);
 
   bool isTextAtOffset(Offset localOffset);
+
+  Rect calculateLocalOverlap({
+    Rect region,
+    RenderObject ancestorCoordinateSpace,
+  });
 
   TextSelection getSelectionInRect(Rect selectionArea, bool isDraggingDown);
 }

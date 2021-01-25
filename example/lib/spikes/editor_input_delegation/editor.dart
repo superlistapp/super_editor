@@ -1,11 +1,11 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide SelectableText;
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 
 import 'editor_layout_model.dart';
 import 'editor_selection.dart';
-import 'paragraph/editor_paragraph.dart';
 import 'paragraph/editor_paragraph_component.dart';
+import 'paragraph/selectable_text.dart';
 
 const _loremIpsum1 =
     'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.';
@@ -111,7 +111,8 @@ class _EditorState extends State<Editor> {
     final componentWithCursor = (_editorSelection.nodeWithCursor?.key?.currentState);
     if (componentWithCursor != null) {
       print('Delegating key press');
-      (componentWithCursor as EditorComponent).onKeyPressed(
+      onParagraphKeyPressed(
+        displayNode: _editorSelection.nodeWithCursor,
         keyEvent: keyEvent,
         editorSelection: _editorSelection,
         currentComponentSelection: _editorSelection.nodeWithCursor.selection,
@@ -121,18 +122,544 @@ class _EditorState extends State<Editor> {
     return KeyEventResult.handled;
   }
 
+  // ------------------- START EditorParagraph onKeyPressed
+  void onParagraphKeyPressed({
+    @required DocDisplayNode displayNode,
+    @required RawKeyEvent keyEvent,
+    @required EditorSelection editorSelection,
+    @required EditorComponentSelection currentComponentSelection,
+  }) {
+    if (keyEvent is! RawKeyDownEvent) {
+      return;
+    }
+
+    final selectableText = displayNode.key.currentState as TextLayout;
+    final text = displayNode.paragraph;
+    final textSelection = displayNode.selection.componentSelection as TextSelection;
+
+    if (_isCharacterKey(keyEvent.logicalKey)) {
+      final newParagraph = _insertStringInString(
+        index: (currentComponentSelection.componentSelection as TextSelection).extentOffset,
+        existing: text,
+        addition: keyEvent.character,
+      );
+
+      editorSelection.nodeWithCursor.paragraph = newParagraph;
+
+      final currentSelection = (currentComponentSelection.componentSelection as TextSelection);
+      editorSelection.updateCursorComponentSelection(
+        ParagraphEditorComponentSelection(
+          selection: TextSelection(
+            baseOffset: currentSelection.extentOffset + 1,
+            extentOffset: currentSelection.extentOffset + 1,
+          ),
+        ),
+      );
+    } else if (keyEvent.logicalKey == LogicalKeyboardKey.enter) {
+      final textSelection = (currentComponentSelection.componentSelection as TextSelection);
+
+      final cursorIndex = textSelection.start;
+      final startText = text.substring(0, cursorIndex);
+      final endText = cursorIndex < text.length ? text.substring(textSelection.end) : '';
+      print('Splitting paragraph:');
+      print(' - start text: "$startText"');
+      print(' - end text: "$endText"');
+
+      final newNode = editorSelection.insertNewNodeAfter(editorSelection.nodeWithCursor);
+
+      editorSelection.nodeWithCursor.paragraph = startText;
+      newNode.paragraph = endText;
+
+      editorSelection.nodeWithCursor.selection = null;
+      editorSelection.baseOffsetNode = newNode;
+      editorSelection.extentOffsetNode = newNode;
+      editorSelection.nodeWithCursor = newNode;
+      editorSelection.updateCursorComponentSelection(
+        ParagraphEditorComponentSelection(
+          selection: TextSelection.collapsed(
+            offset: 0,
+          ),
+        ),
+      );
+    } else if (keyEvent.logicalKey == LogicalKeyboardKey.backspace) {
+      final currentSelection = currentComponentSelection.componentSelection as TextSelection;
+      if (currentSelection.extentOffset > 0) {
+        final newParagraph = _removeStringSubsection(
+          from: currentSelection.extentOffset - 1,
+          to: currentSelection.extentOffset,
+          text: text,
+        );
+
+        editorSelection.nodeWithCursor.paragraph = newParagraph;
+
+        editorSelection.updateCursorComponentSelection(
+          ParagraphEditorComponentSelection(
+            selection: TextSelection(
+              baseOffset: currentSelection.extentOffset - 1,
+              extentOffset: currentSelection.extentOffset - 1,
+            ),
+          ),
+        );
+      } else {
+        print('Combining node with previous.');
+        final originalParagraphLength = editorSelection.nodeWithCursor.paragraph.length;
+
+        editorSelection.combineCursorNodeWithPrevious();
+
+        editorSelection.updateCursorComponentSelection(
+          ParagraphEditorComponentSelection(
+            selection: TextSelection.collapsed(
+              offset: editorSelection.nodeWithCursor.paragraph.length - originalParagraphLength,
+            ),
+          ),
+        );
+      }
+    } else if (keyEvent.logicalKey == LogicalKeyboardKey.delete) {
+      final currentSelection = currentComponentSelection.componentSelection as TextSelection;
+      if (currentSelection.extentOffset < text.length - 1) {
+        final newParagraph = _removeStringSubsection(
+          from: currentSelection.extentOffset,
+          to: currentSelection.extentOffset + 1,
+          text: text,
+        );
+
+        editorSelection.nodeWithCursor.paragraph = newParagraph;
+
+        editorSelection.notifyListeners();
+      } else {
+        print('Combining node with next.');
+        final originalParagraphLength = editorSelection.nodeWithCursor.paragraph.length;
+
+        editorSelection.combineCursorNodeWithNext();
+
+        editorSelection.updateCursorComponentSelection(
+          ParagraphEditorComponentSelection(
+            selection: TextSelection.collapsed(
+              offset: originalParagraphLength,
+            ),
+          ),
+        );
+      }
+    } else if (keyEvent.logicalKey == LogicalKeyboardKey.arrowLeft) {
+      dynamic newSelection;
+      if (keyEvent.isMetaPressed) {
+        newSelection = _moveToStartOfLine(
+          selectableText: selectableText,
+          currentSelection: editorSelection.nodeWithCursor.selection,
+          expandSelection: keyEvent.isShiftPressed,
+        );
+      } else if (keyEvent.isAltPressed) {
+        newSelection = _moveBackOneWord(
+          text: text,
+          currentSelection: editorSelection.nodeWithCursor.selection,
+          expandSelection: keyEvent.isShiftPressed,
+        );
+      } else {
+        newSelection = _moveBackOneCharacter(
+          text: text,
+          currentSelection: editorSelection.nodeWithCursor.selection,
+          expandSelection: keyEvent.isShiftPressed,
+        );
+      }
+
+      editorSelection.updateCursorComponentSelection(newSelection);
+    } else if (keyEvent.logicalKey == LogicalKeyboardKey.arrowRight) {
+      dynamic newSelection;
+      if (keyEvent.isMetaPressed) {
+        newSelection = _moveToEndOfLine(
+          text: text,
+          currentSelection: editorSelection.nodeWithCursor.selection,
+          expandSelection: keyEvent.isShiftPressed,
+        );
+      } else if (keyEvent.isAltPressed) {
+        newSelection = _moveForwardOneWord(
+          text: text,
+          currentSelection: editorSelection.nodeWithCursor.selection,
+          expandSelection: keyEvent.isShiftPressed,
+        );
+      } else {
+        newSelection = _moveForwardOneCharacter(
+          text: text,
+          currentSelection: editorSelection.nodeWithCursor.selection,
+          expandSelection: keyEvent.isShiftPressed,
+        );
+      }
+
+      editorSelection.updateCursorComponentSelection(newSelection);
+    } else if (keyEvent.logicalKey == LogicalKeyboardKey.arrowUp) {
+      _moveUpOneLine(
+        selectableText: selectableText,
+        textSelection: textSelection,
+        editorSelection: editorSelection,
+        currentSelection: currentComponentSelection,
+        expandSelection: keyEvent.isShiftPressed,
+      );
+    } else if (keyEvent.logicalKey == LogicalKeyboardKey.arrowDown) {
+      _moveDownOneLine(
+        text: text,
+        selectableText: selectableText,
+        textSelection: textSelection,
+        editorSelection: editorSelection,
+        currentSelection: currentComponentSelection,
+        expandSelection: keyEvent.isShiftPressed,
+      );
+    }
+  }
+
+  void _moveUpOneLine({
+    @required TextLayout selectableText,
+    @required TextSelection textSelection,
+    EditorSelection editorSelection,
+    ParagraphEditorComponentSelection currentSelection,
+    bool expandSelection = false,
+  }) {
+    final oneLineUpPosition = selectableText.getPositionOneLineUp(
+      currentPosition: TextPosition(
+        offset: textSelection.extentOffset,
+      ),
+    );
+
+    if (oneLineUpPosition == null) {
+      // The first line is selected. There is no line above that.
+      // Select any remaining text on this line.
+      if (expandSelection) {
+        editorSelection.updateCursorComponentSelection(
+          ParagraphEditorComponentSelection(
+            selection: currentSelection.componentSelection.copyWith(
+              extentOffset: 0,
+            ),
+          ),
+        );
+      }
+
+      // Move up to the previous component in the editor.
+      final currentSelectionOffset = selectableText.getOffsetForPosition(
+        TextPosition(
+          offset: currentSelection.componentSelection.extentOffset,
+        ),
+      );
+      final didMove = editorSelection.moveCursorToPreviousComponent(
+        expandSelection: expandSelection,
+        previousCursorOffset: currentSelectionOffset,
+      );
+
+      if (!didMove) {
+        // There is no component above us. Move our selection to the
+        // beginning of the paragraph.
+        final newSelection = ParagraphEditorComponentSelection(
+          selection: TextSelection(
+            baseOffset: expandSelection ? currentSelection.componentSelection.baseOffset : 0,
+            extentOffset: 0,
+          ),
+        );
+
+        editorSelection.updateCursorComponentSelection(newSelection);
+      }
+
+      return;
+    }
+
+    final newSelection = ParagraphEditorComponentSelection(
+      selection: currentSelection.componentSelection.copyWith(
+        baseOffset: expandSelection ? textSelection.baseOffset : oneLineUpPosition.offset,
+        extentOffset: oneLineUpPosition.offset,
+      ),
+    );
+
+    editorSelection.updateCursorComponentSelection(newSelection);
+  }
+
+  void _moveDownOneLine({
+    @required String text,
+    @required TextLayout selectableText,
+    @required TextSelection textSelection,
+    EditorSelection editorSelection,
+    ParagraphEditorComponentSelection currentSelection,
+    bool expandSelection = false,
+  }) {
+    final oneLineDownPosition = selectableText.getPositionOneLineDown(
+      currentPosition: TextPosition(
+        offset: textSelection.extentOffset,
+      ),
+    );
+
+    if (oneLineDownPosition == null) {
+      // The last line is selected. There is no line below that.
+      if (expandSelection) {
+        // Select any remaining text on this line.
+        editorSelection.updateCursorComponentSelection(
+          ParagraphEditorComponentSelection(
+            selection: currentSelection.componentSelection.copyWith(
+              extentOffset: text.length,
+            ),
+          ),
+        );
+      }
+
+      // Move down to next component in editor.
+      final currentSelectionOffset = selectableText.getOffsetForPosition(
+        TextPosition(
+          offset: currentSelection.componentSelection.extentOffset,
+        ),
+      );
+      final didMove = editorSelection.moveCursorToNextComponent(
+        expandSelection: expandSelection,
+        previousCursorOffset: currentSelectionOffset,
+      );
+
+      if (!didMove) {
+        // There is no component below us. Move our selection to the
+        // end of the paragraph.
+        final newSelection = ParagraphEditorComponentSelection(
+          selection: TextSelection(
+            baseOffset: expandSelection ? currentSelection.componentSelection.baseOffset : text.length,
+            extentOffset: text.length,
+          ),
+        );
+
+        editorSelection.updateCursorComponentSelection(newSelection);
+      }
+
+      return;
+    }
+
+    final newSelection = ParagraphEditorComponentSelection(
+      selection: currentSelection.componentSelection.copyWith(
+        baseOffset: expandSelection ? textSelection.baseOffset : oneLineDownPosition.offset,
+        extentOffset: oneLineDownPosition.offset,
+      ),
+    );
+
+    editorSelection.updateCursorComponentSelection(newSelection);
+  }
+
+  ParagraphEditorComponentSelection _moveBackOneCharacter({
+    @required String text,
+    ParagraphEditorComponentSelection currentSelection,
+    bool expandSelection = false,
+  }) {
+    if (currentSelection is! ParagraphEditorComponentSelection) {
+      print(
+          'Received incompatible selection. Wanted TextEditorComponentSelection but was given ${currentSelection?.runtimeType}');
+      return null;
+    }
+    final textSelection = currentSelection.componentSelection;
+
+    final newExtent = (textSelection.extentOffset - 1).clamp(0.0, text.length).toInt();
+    return ParagraphEditorComponentSelection(
+      selection: textSelection.copyWith(
+        baseOffset: expandSelection ? textSelection.baseOffset : newExtent,
+        extentOffset: newExtent,
+      ),
+    );
+  }
+
+  ParagraphEditorComponentSelection _moveBackOneWord({
+    @required String text,
+    ParagraphEditorComponentSelection currentSelection,
+    bool expandSelection = false,
+  }) {
+    if (currentSelection is! ParagraphEditorComponentSelection) {
+      print(
+          'Received incompatible selection. Wanted TextEditorComponentSelection but was given ${currentSelection?.runtimeType}');
+      return null;
+    }
+    final textSelection = currentSelection.componentSelection;
+
+    int newExtent = textSelection.extentOffset;
+    if (newExtent == 0) {
+      return currentSelection;
+    }
+    newExtent -= 1; // we always want to jump at least 1 character.
+
+    while (newExtent > 0 && _latinCharacters.contains(text[newExtent])) {
+      newExtent -= 1;
+    }
+
+    return ParagraphEditorComponentSelection(
+      selection: textSelection.copyWith(
+        baseOffset: expandSelection ? textSelection.baseOffset : newExtent,
+        extentOffset: newExtent,
+      ),
+    );
+  }
+
+  ParagraphEditorComponentSelection _moveToStartOfLine({
+    @required TextLayout selectableText,
+    ParagraphEditorComponentSelection currentSelection,
+    bool expandSelection = false,
+  }) {
+    if (currentSelection is! ParagraphEditorComponentSelection) {
+      print(
+          'Received incompatible selection. Wanted TextEditorComponentSelection but was given ${currentSelection?.runtimeType}');
+      return null;
+    }
+    final textSelection = currentSelection.componentSelection;
+    final startOfLinePosition = selectableText.getPositionAtStartOfLine(
+      currentPosition: TextPosition(offset: textSelection.extentOffset),
+    );
+
+    return ParagraphEditorComponentSelection(
+      selection: textSelection.copyWith(
+        baseOffset: expandSelection ? textSelection.baseOffset : startOfLinePosition.offset,
+        extentOffset: startOfLinePosition.offset,
+      ),
+    );
+  }
+
+  ParagraphEditorComponentSelection _moveForwardOneCharacter({
+    @required String text,
+    ParagraphEditorComponentSelection currentSelection,
+    bool expandSelection = false,
+  }) {
+    if (currentSelection is! ParagraphEditorComponentSelection) {
+      print(
+          'Received incompatible selection. Wanted TextEditorComponentSelection but was given ${currentSelection?.runtimeType}');
+      return null;
+    }
+    final textSelection = currentSelection.componentSelection;
+
+    final newExtent = (textSelection.extentOffset + 1).clamp(0.0, text.length).toInt();
+    return ParagraphEditorComponentSelection(
+      selection: textSelection.copyWith(
+        baseOffset: expandSelection ? textSelection.baseOffset : newExtent,
+        extentOffset: newExtent,
+      ),
+    );
+  }
+
+  ParagraphEditorComponentSelection _moveForwardOneWord({
+    @required String text,
+    ParagraphEditorComponentSelection currentSelection,
+    bool expandSelection = false,
+  }) {
+    if (currentSelection is! ParagraphEditorComponentSelection) {
+      print(
+          'Received incompatible selection. Wanted TextEditorComponentSelection but was given ${currentSelection?.runtimeType}');
+      return null;
+    }
+    final textSelection = currentSelection.componentSelection;
+
+    int newExtent = currentSelection.componentSelection.extentOffset;
+    if (newExtent == text.length) {
+      return currentSelection;
+    }
+    newExtent += 1; // we always want to jump at least 1 character.
+
+    while (newExtent < text.length - 1 && _latinCharacters.contains(text[newExtent])) {
+      newExtent += 1;
+    }
+
+    return ParagraphEditorComponentSelection(
+      selection: textSelection.copyWith(
+        baseOffset: expandSelection ? textSelection.baseOffset : newExtent,
+        extentOffset: newExtent,
+      ),
+    );
+  }
+
+  ParagraphEditorComponentSelection _moveToEndOfLine({
+    @required String text,
+    TextLayout selectableText,
+    ParagraphEditorComponentSelection currentSelection,
+    bool expandSelection = false,
+  }) {
+    if (currentSelection is! ParagraphEditorComponentSelection) {
+      print(
+          'Received incompatible selection. Wanted TextEditorComponentSelection but was given ${currentSelection?.runtimeType}');
+      return null;
+    }
+    final textSelection = currentSelection.componentSelection;
+
+    final endOfLineTextPosition = selectableText.getPositionAtEndOfLine(
+      currentPosition: TextPosition(offset: textSelection.extentOffset),
+    );
+    final isAutoWrapLine =
+        endOfLineTextPosition.offset < text.length && (text.isNotEmpty && text[endOfLineTextPosition.offset] != '\n');
+
+    // Note: For lines that auto-wrap, moving the cursor to `offset` causes the
+    //       cursor to jump to the next line because the cursor is placed after
+    //       the final selected character. We don't want this, so in this case
+    //       we `-1`.
+    //
+    //       However, if the line that is selected ends with an explicit `\n`,
+    //       or if the line is the terminal line for the paragraph then we don't
+    //       want to `-1` because that would leave a dangling character after the
+    //       selection.
+    final newExtent = (isAutoWrapLine) ? endOfLineTextPosition.offset - 1 : endOfLineTextPosition.offset;
+
+    return ParagraphEditorComponentSelection(
+      selection: textSelection.copyWith(
+        baseOffset: expandSelection ? textSelection.baseOffset : newExtent,
+        extentOffset: newExtent,
+      ),
+    );
+  }
+
+  static const _latinCharacters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+  String _insertStringInString({
+    int index,
+    int replaceFrom,
+    int replaceTo,
+    String existing,
+    String addition,
+  }) {
+    assert(index == null || (replaceFrom == null && replaceTo == null));
+    assert((replaceFrom == null && replaceTo == null) || (replaceFrom < replaceTo));
+
+    if (index == 0) {
+      return addition + existing;
+    } else if (index == existing.length) {
+      return existing + addition;
+    } else if (index != null) {
+      return existing.substring(0, index) + addition + existing.substring(index);
+    } else {
+      return existing.substring(0, replaceFrom) + addition + existing.substring(replaceTo);
+    }
+  }
+
+  String _removeStringSubsection({
+    int from,
+    int to,
+    String text,
+  }) {
+    String left = '';
+    String right = '';
+    if (from > 0) {
+      left = text.substring(0, from);
+    }
+    if (to < text.length - 1) {
+      right = text.substring(to, text.length);
+    }
+    return left + right;
+  }
+
+  bool _isCharacterKey(LogicalKeyboardKey key) {
+    // keyLabel for a character should be: 'a', 'b',...,'A','B',...
+    if (key.keyLabel.length != 1) {
+      return false;
+    }
+    return 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ 1234567890.,/;\'[]\\`~!@#\$%^&*()_+<>?:"{}|'
+        .contains(key.keyLabel);
+  }
+  // ------------------- END EditorParagraph onKeyPressed
+
   void _onTapDown(TapDownDetails details) {
+    print('_onTapDown');
     setState(() {
       _clearSelection();
 
       bool nodeTapped = false;
       for (final displayNode in _editorSelection.displayNodes) {
-        final editorComponent = displayNode.key.currentState as EditorParagraphState;
-        if (_cursorIntersects(editorComponent, details.localPosition)) {
-          final componentOffset = _localCursorOffset(editorComponent, details.localPosition);
+        final editorComponent = displayNode.key.currentState as TextLayout;
+        final componentBox = displayNode.key.currentContext.findRenderObject() as RenderBox;
+        if (_cursorIntersects(componentBox, details.localPosition)) {
+          print('Found tapped node: $editorComponent');
+          final componentOffset = _localCursorOffset(componentBox, details.localPosition);
           final selection = ParagraphEditorComponentSelection(
             selection: TextSelection.collapsed(
-              offset: editorComponent.selectableText.getPositionAtOffset(componentOffset).offset,
+              offset: editorComponent.getPositionAtOffset(componentOffset).offset,
             ),
           );
           displayNode.selection = selection;
@@ -200,18 +727,18 @@ class _EditorState extends State<Editor> {
     final isDraggingDown = _dragStart.dy < _dragRect.bottom;
 
     for (final displayNode in _editorSelection.displayNodes) {
-      final editorComponent = displayNode.key.currentState as EditorComponent;
+      final textLayout = displayNode.key.currentState as SelectableTextState;
 
-      final dragIntersection = _getDragIntersectionWith(editorComponent);
+      final dragIntersection = _getDragIntersectionWith(textLayout);
       if (dragIntersection != null) {
         print('Drag intersects: ${displayNode.key}');
         print('Intersection: $dragIntersection');
-        final textLayout = (displayNode.key.currentState as EditorParagraphState).selectableText;
+        final textLayout = displayNode.key.currentState as TextLayout;
         final textSelection = textLayout.getSelectionInRect(dragIntersection, isDraggingDown);
         final selection = ParagraphEditorComponentSelection(
           selection: textSelection,
         );
-        // final selection = editorComponent.getSelectionInRect(dragIntersection, isDraggingDown);
+        // final selection = textLayout.getSelectionInRect(dragIntersection, isDraggingDown);
         print('Drag selection: ${selection.componentSelection}');
         print('');
         displayNode.selection = selection;
@@ -249,19 +776,11 @@ class _EditorState extends State<Editor> {
     setState(() {});
   }
 
-  Rect _getDragIntersectionWith(EditorParagraphState editorComponent) {
-    final containerBox = context.findRenderObject() as RenderBox;
-    final contentBox = editorComponent.context.findRenderObject() as RenderBox;
-    final contentOffset = contentBox.localToGlobal(Offset.zero, ancestor: containerBox);
-    final contentRect = contentOffset & contentBox.size;
-
-    if (_dragRect.overlaps(contentRect)) {
-      // Report the drag rectangle based at (0, 0) so that the
-      // editor component can treat it as local coords.
-      return _dragRect.translate(-contentOffset.dx, -contentOffset.dy);
-    } else {
-      return null;
-    }
+  Rect _getDragIntersectionWith(TextLayout textLayout) {
+    return textLayout.calculateLocalOverlap(
+      region: _dragRect,
+      ancestorCoordinateSpace: context.findRenderObject(),
+    );
   }
 
   void _onMouseMove(PointerEvent pointerEvent) {
@@ -270,11 +789,11 @@ class _EditorState extends State<Editor> {
 
   void _updateCursorStyle(Offset cursorOffset) {
     for (final displayNode in _editorSelection.displayNodes) {
-      final editorComponent = displayNode.key.currentState as EditorParagraphState;
-      final textLayout = (displayNode.key.currentState as EditorParagraphState).selectableText;
+      final componentBox = displayNode.key.currentContext.findRenderObject() as RenderBox;
+      final textLayout = displayNode.key.currentState as TextLayout;
 
-      if (_cursorIntersects(editorComponent, cursorOffset)) {
-        final localCursorOffset = _localCursorOffset(editorComponent, cursorOffset);
+      if (_cursorIntersects(componentBox, cursorOffset)) {
+        final localCursorOffset = _localCursorOffset(componentBox, cursorOffset);
         final isCursorOverText = textLayout.isTextAtOffset(localCursorOffset);
         final desiredCursor = isCursorOverText ? SystemMouseCursors.text : null;
         if (desiredCursor != null && desiredCursor != _cursorStyle.value) {
@@ -292,18 +811,16 @@ class _EditorState extends State<Editor> {
     _cursorStyle.value = SystemMouseCursors.basic;
   }
 
-  bool _cursorIntersects(EditorParagraphState editorComponent, Offset cursorOffset) {
+  bool _cursorIntersects(RenderBox contentBox, Offset cursorOffset) {
     final containerBox = context.findRenderObject() as RenderBox;
-    final contentBox = editorComponent.context.findRenderObject() as RenderBox;
     final contentOffset = contentBox.localToGlobal(Offset.zero, ancestor: containerBox);
     final contentRect = contentOffset & contentBox.size;
 
     return contentRect.contains(cursorOffset);
   }
 
-  Offset _localCursorOffset(EditorParagraphState editorComponent, Offset cursorOffset) {
+  Offset _localCursorOffset(RenderBox contentBox, Offset cursorOffset) {
     final containerBox = context.findRenderObject() as RenderBox;
-    final contentBox = editorComponent.context.findRenderObject() as RenderBox;
     final contentOffset = contentBox.localToGlobal(Offset.zero, ancestor: containerBox);
     final contentRect = contentOffset & contentBox.size;
 
@@ -458,16 +975,26 @@ class _EditorState extends State<Editor> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               for (final displayNode in _editorSelection.displayNodes) ...[
-                EditorParagraph(
+                SelectableText(
                   key: displayNode.key,
                   text: displayNode.paragraph,
                   textSelection: (displayNode.selection as ParagraphEditorComponentSelection)?.componentSelection,
-                  style: textStyle,
                   hasCursor: displayNode == _editorSelection.nodeWithCursor,
+                  style: textStyle,
                   highlightWhenEmpty: !_editorSelection.isCollapsed &&
                       (displayNode.selection as ParagraphEditorComponentSelection)?.componentSelection != null,
                   showDebugPaint: widget.showDebugPaint,
                 ),
+                // EditorParagraph(
+                //   key: displayNode.key,
+                //   text: displayNode.paragraph,
+                //   textSelection: (displayNode.selection as ParagraphEditorComponentSelection)?.componentSelection,
+                //   style: textStyle,
+                //   hasCursor: displayNode == _editorSelection.nodeWithCursor,
+                //   highlightWhenEmpty: !_editorSelection.isCollapsed &&
+                //       (displayNode.selection as ParagraphEditorComponentSelection)?.componentSelection != null,
+                //   showDebugPaint: widget.showDebugPaint,
+                // ),
                 SizedBox(height: 16),
               ],
             ],

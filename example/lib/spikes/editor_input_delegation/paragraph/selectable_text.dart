@@ -126,6 +126,24 @@ class SelectableTextState extends State<SelectableText> implements TextLayout {
     return false;
   }
 
+  // TODO: can we avoid exposing RenderObject knowledge? If not, maybe we have
+  //       two different roles combined into one. Perhaps an EditorComponent and
+  //       a TextLayout.
+  Rect calculateLocalOverlap({
+    Rect region,
+    RenderObject ancestorCoordinateSpace,
+  }) {
+    final contentOffset = _renderParagraph.localToGlobal(Offset.zero, ancestor: ancestorCoordinateSpace);
+    final textRect = contentOffset & _renderParagraph.size;
+
+    if (region.overlaps(textRect)) {
+      // Report the overlap in our local coordinate space.
+      return region.translate(-contentOffset.dx, -contentOffset.dy);
+    } else {
+      return null;
+    }
+  }
+
   TextSelection getSelectionInRect(Rect selectionArea, bool isDraggingDown) {
     int startOffset =
         selectionArea.topLeft.dy < 0 ? 0 : _renderParagraph.getPositionForOffset(selectionArea.topLeft).offset;
