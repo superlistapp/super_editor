@@ -2,8 +2,8 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
-import 'editor_selection.dart';
-import 'paragraph/editor_paragraph_component.dart';
+import 'components/paragraph/editor_paragraph_component.dart';
+import 'selection/editor_selection.dart';
 
 class DocDisplayNode {
   DocDisplayNode({

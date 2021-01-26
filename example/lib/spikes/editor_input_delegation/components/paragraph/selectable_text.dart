@@ -1,8 +1,9 @@
-import 'package:example/spikes/editor_input_delegation/editor_selection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+
+import '../../selection/editor_selection.dart';
 
 class SelectableText extends StatefulWidget {
   const SelectableText({

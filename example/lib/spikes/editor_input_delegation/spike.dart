@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'editor.dart';
+import 'editor_layout_model.dart';
 
 /// Spike:
 /// How should we delegate input so that keys like arrows, backspace,
@@ -56,13 +57,21 @@ class EditorSpike extends StatefulWidget {
 }
 
 class _EditorSpikeState extends State<EditorSpike> {
+  List<DocDisplayNode> _doc;
   bool _showDebugPaint = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _doc = _createLoremIpsumDoc();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: _buildAppBar(),
       body: Editor(
+        initialDocument: _doc,
         showDebugPaint: _showDebugPaint,
       ),
     );
@@ -72,6 +81,28 @@ class _EditorSpikeState extends State<EditorSpike> {
     return AppBar(
       backgroundColor: Colors.transparent,
       elevation: 0,
+      title: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          FlatButton(
+            onPressed: () {
+              setState(() {
+                _doc = _createEmptyDoc();
+              });
+            },
+            child: Text('Empty Doc'),
+          ),
+          FlatButton(
+            onPressed: () {
+              setState(() {
+                _doc = _createLoremIpsumDoc();
+              });
+            },
+            child: Text('Lorem Ipsum Doc'),
+          ),
+        ],
+      ),
+      centerTitle: true,
       actions: [
         Switch(
           value: _showDebugPaint,
@@ -84,4 +115,37 @@ class _EditorSpikeState extends State<EditorSpike> {
       ],
     );
   }
+
+  List<DocDisplayNode> _createEmptyDoc() {
+    return <DocDisplayNode>[
+      DocDisplayNode(
+        key: GlobalKey(),
+        paragraph: '',
+      ),
+    ];
+  }
+
+  List<DocDisplayNode> _createLoremIpsumDoc() {
+    return <DocDisplayNode>[
+      DocDisplayNode(
+        key: GlobalKey(),
+        paragraph: _loremIpsum1,
+      ),
+      DocDisplayNode(
+        key: GlobalKey(),
+        paragraph: _loremIpsum2,
+      ),
+      DocDisplayNode(
+        key: GlobalKey(),
+        paragraph: _loremIpsum3,
+      ),
+    ];
+  }
 }
+
+const _loremIpsum1 =
+    'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.';
+const _loremIpsum2 =
+    'Nullam id elementum felis. Morbi ullamcorper gravida vulputate. Nulla sed gravida lorem. Nam tincidunt, arcu sit amet sodales aliquet, lectus magna volutpat felis, non pharetra risus risus dignissim mauris. Fusce diam massa, semper eu elementum in, dictum vel nulla. Etiam porta luctus augue, porttitor porta nibh. Donec risus arcu, viverra sed tincidunt id, lobortis non nulla. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Aenean vel lobortis quam, ac pulvinar risus. Praesent laoreet tempor ex. Nunc eu ante nisl. Integer in magna ligula.';
+const _loremIpsum3 =
+    'Phasellus non gravida arcu. Pellentesque posuere orci et lorem fermentum, sed interdum metus vestibulum. Maecenas suscipit mollis sagittis. Mauris quis est blandit libero vehicula fringilla eget in augue. Etiam mi lectus, ullamcorper ac odio nec, maximus ultricies enim. Aenean nec est non nunc tincidunt rhoncus. Proin laoreet vitae libero ut faucibus. Donec bibendum laoreet dolor eu varius. Pellentesque ullamcorper turpis quis viverra semper.';

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../editor_selection.dart';
+import '../../selection/editor_selection.dart';
 
 class ParagraphEditorComponentSelection implements EditorComponentSelection {
   ParagraphEditorComponentSelection({

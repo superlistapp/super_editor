@@ -4,9 +4,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
-import 'editor_layout_model.dart';
-import 'paragraph/editor_paragraph_component.dart';
-import 'paragraph/selectable_text.dart';
+import '../components/paragraph/editor_paragraph_component.dart';
+import '../components/paragraph/selectable_text.dart';
+import '../editor_layout_model.dart';
 
 class EditorSelection with ChangeNotifier {
   EditorSelection({
