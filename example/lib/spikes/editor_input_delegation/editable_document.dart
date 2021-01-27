@@ -1,9 +1,11 @@
+import 'package:example/spikes/editor_input_delegation/document/rich_text_document.dart';
+import 'package:example/spikes/editor_input_delegation/layout/document_layout.dart';
 import 'package:flutter/material.dart' hide SelectableText;
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 
-import 'components/paragraph/editor_paragraph_component.dart';
-import 'components/paragraph/selectable_text.dart';
+import 'layout/components/paragraph/editor_paragraph_component.dart';
+import 'layout/components/paragraph/selectable_text.dart';
 import 'editor_layout_model.dart';
 import 'selection/editor_selection.dart';
 
@@ -22,6 +24,10 @@ class EditableDocument extends StatefulWidget {
 }
 
 class _EditableDocumentState extends State<EditableDocument> {
+  final _docLayoutKey = GlobalKey<DocumentLayoutState>();
+  RichTextDocument _document;
+  ValueNotifier<List<DocumentNodeSelection>> _documentSelection = ValueNotifier([]);
+
   FocusNode _rootFocusNode;
 
   final _displayNodes = <DocDisplayNode>[];
@@ -42,7 +48,12 @@ class _EditableDocumentState extends State<EditableDocument> {
 
     _editorSelection = EditorSelection(
       displayNodes: _displayNodes,
-    );
+    )..addListener(() {
+        _documentSelection.value = _buildDocumentSelection(_document);
+        print('Updating document selection: $_documentSelection');
+      });
+    _document = RichTextDocument.fromOldImplementation(_editorSelection);
+    _documentSelection.value = _buildDocumentSelection(_document);
   }
 
   @override
@@ -242,21 +253,16 @@ class _EditableDocumentState extends State<EditableDocument> {
       if (keyEvent.isMetaPressed) {
         newSelection = _moveToStartOfLine(
           selectableText: selectableText,
-          currentSelection: editorSelection.nodeWithCursor.selection,
           expandSelection: keyEvent.isShiftPressed,
         );
       } else if (keyEvent.isAltPressed) {
         newSelection = _moveBackOneWord(
           text: text,
-          editorSelection: editorSelection,
-          currentSelection: editorSelection.nodeWithCursor.selection,
           expandSelection: keyEvent.isShiftPressed,
         );
       } else {
         newSelection = _moveBackOneCharacter(
           text: text,
-          editorSelection: editorSelection,
-          currentSelection: editorSelection.nodeWithCursor.selection,
           expandSelection: keyEvent.isShiftPressed,
         );
       }
@@ -268,21 +274,16 @@ class _EditableDocumentState extends State<EditableDocument> {
         newSelection = _moveToEndOfLine(
           text: text,
           selectableText: selectableText,
-          currentSelection: editorSelection.nodeWithCursor.selection,
           expandSelection: keyEvent.isShiftPressed,
         );
       } else if (keyEvent.isAltPressed) {
         newSelection = _moveForwardOneWord(
           text: text,
-          editorSelection: editorSelection,
-          currentSelection: editorSelection.nodeWithCursor.selection,
           expandSelection: keyEvent.isShiftPressed,
         );
       } else {
         newSelection = _moveForwardOneCharacter(
           text: text,
-          editorSelection: editorSelection,
-          currentSelection: editorSelection.nodeWithCursor.selection,
           expandSelection: keyEvent.isShiftPressed,
         );
       }
@@ -292,8 +293,6 @@ class _EditableDocumentState extends State<EditableDocument> {
       _moveUpOneLine(
         selectableText: selectableText,
         textSelection: textSelection,
-        editorSelection: editorSelection,
-        currentSelection: currentComponentSelection,
         expandSelection: keyEvent.isShiftPressed,
       );
     } else if (keyEvent.logicalKey == LogicalKeyboardKey.arrowDown) {
@@ -301,8 +300,6 @@ class _EditableDocumentState extends State<EditableDocument> {
         text: text,
         selectableText: selectableText,
         textSelection: textSelection,
-        editorSelection: editorSelection,
-        currentSelection: currentComponentSelection,
         expandSelection: keyEvent.isShiftPressed,
       );
     }
@@ -311,10 +308,10 @@ class _EditableDocumentState extends State<EditableDocument> {
   void _moveUpOneLine({
     @required TextLayout selectableText,
     @required TextSelection textSelection,
-    EditorSelection editorSelection,
-    ParagraphEditorComponentSelection currentSelection,
     bool expandSelection = false,
   }) {
+    final editorSelection = _editorSelection;
+    final currentSelection = _editorSelection.nodeWithCursor.selection as ParagraphEditorComponentSelection;
     final oneLineUpPosition = selectableText.getPositionOneLineUp(
       currentPosition: TextPosition(
         offset: textSelection.extentOffset,
@@ -375,10 +372,10 @@ class _EditableDocumentState extends State<EditableDocument> {
     @required String text,
     @required TextLayout selectableText,
     @required TextSelection textSelection,
-    EditorSelection editorSelection,
-    ParagraphEditorComponentSelection currentSelection,
     bool expandSelection = false,
   }) {
+    final editorSelection = _editorSelection;
+    final currentSelection = _editorSelection.nodeWithCursor.selection as ParagraphEditorComponentSelection;
     final oneLineDownPosition = selectableText.getPositionOneLineDown(
       currentPosition: TextPosition(
         offset: textSelection.extentOffset,
@@ -437,10 +434,10 @@ class _EditableDocumentState extends State<EditableDocument> {
 
   ParagraphEditorComponentSelection _moveBackOneCharacter({
     @required String text,
-    @required EditorSelection editorSelection,
-    @required ParagraphEditorComponentSelection currentSelection,
     bool expandSelection = false,
   }) {
+    final editorSelection = _editorSelection;
+    final currentSelection = _editorSelection.nodeWithCursor.selection;
     if (currentSelection is! ParagraphEditorComponentSelection) {
       print(
           'Received incompatible selection. Wanted TextEditorComponentSelection but was given ${currentSelection?.runtimeType}');
@@ -467,10 +464,10 @@ class _EditableDocumentState extends State<EditableDocument> {
 
   ParagraphEditorComponentSelection _moveBackOneWord({
     @required String text,
-    @required EditorSelection editorSelection,
-    ParagraphEditorComponentSelection currentSelection,
     bool expandSelection = false,
   }) {
+    final editorSelection = _editorSelection;
+    final currentSelection = _editorSelection.nodeWithCursor.selection;
     if (currentSelection is! ParagraphEditorComponentSelection) {
       print(
           'Received incompatible selection. Wanted TextEditorComponentSelection but was given ${currentSelection?.runtimeType}');
@@ -506,9 +503,9 @@ class _EditableDocumentState extends State<EditableDocument> {
 
   ParagraphEditorComponentSelection _moveToStartOfLine({
     @required TextLayout selectableText,
-    ParagraphEditorComponentSelection currentSelection,
     bool expandSelection = false,
   }) {
+    final currentSelection = _editorSelection.nodeWithCursor.selection;
     if (currentSelection is! ParagraphEditorComponentSelection) {
       print(
           'Received incompatible selection. Wanted TextEditorComponentSelection but was given ${currentSelection?.runtimeType}');
@@ -529,10 +526,10 @@ class _EditableDocumentState extends State<EditableDocument> {
 
   ParagraphEditorComponentSelection _moveForwardOneCharacter({
     @required String text,
-    @required EditorSelection editorSelection,
-    ParagraphEditorComponentSelection currentSelection,
     bool expandSelection = false,
   }) {
+    final editorSelection = _editorSelection;
+    final currentSelection = _editorSelection.nodeWithCursor.selection;
     if (currentSelection is! ParagraphEditorComponentSelection) {
       print(
           'Received incompatible selection. Wanted TextEditorComponentSelection but was given ${currentSelection?.runtimeType}');
@@ -559,10 +556,10 @@ class _EditableDocumentState extends State<EditableDocument> {
 
   ParagraphEditorComponentSelection _moveForwardOneWord({
     @required String text,
-    @required EditorSelection editorSelection,
-    ParagraphEditorComponentSelection currentSelection,
     bool expandSelection = false,
   }) {
+    final editorSelection = _editorSelection;
+    final currentSelection = _editorSelection.nodeWithCursor.selection;
     if (currentSelection is! ParagraphEditorComponentSelection) {
       print(
           'Received incompatible selection. Wanted TextEditorComponentSelection but was given ${currentSelection?.runtimeType}');
@@ -598,10 +595,10 @@ class _EditableDocumentState extends State<EditableDocument> {
   ParagraphEditorComponentSelection _moveToEndOfLine({
     @required String text,
     @required TextLayout selectableText,
-    ParagraphEditorComponentSelection currentSelection,
     bool expandSelection = false,
   }) {
     print('Moving cursor to end of line');
+    final currentSelection = _editorSelection.nodeWithCursor.selection;
     if (currentSelection is! ParagraphEditorComponentSelection) {
       print(
           'Received incompatible selection. Wanted TextEditorComponentSelection but was given ${currentSelection?.runtimeType}');
@@ -687,57 +684,52 @@ class _EditableDocumentState extends State<EditableDocument> {
 
   void _onTapDown(TapDownDetails details) {
     print('_onTapDown');
-    setState(() {
-      _clearSelection();
+    _clearSelection();
 
-      bool nodeTapped = false;
-      for (final displayNode in _editorSelection.displayNodes) {
-        final editorComponent = displayNode.key.currentState as TextLayout;
-        final componentBox = displayNode.key.currentContext.findRenderObject() as RenderBox;
-        if (_cursorIntersects(componentBox, details.localPosition)) {
-          print('Found tapped node: $editorComponent');
-          final componentOffset = _localCursorOffset(componentBox, details.localPosition);
-          final selection = ParagraphEditorComponentSelection(
-            selection: TextSelection.collapsed(
-              offset: editorComponent.getPositionAtOffset(componentOffset).offset,
-            ),
-          );
-          displayNode.selection = selection;
+    final docBox = _docLayoutKey.currentContext.findRenderObject() as RenderBox;
+    final docOffset = docBox.globalToLocal(
+      details.localPosition,
+      ancestor: context.findRenderObject(),
+    );
+    final docPosition = _docLayoutKey.currentState.getDocumentPositionAtOffset(docOffset);
+    print('Tapped doc position: $docPosition');
 
-          _editorSelection.baseOffsetNode = displayNode;
-          _editorSelection.extentOffsetNode = displayNode;
-          _editorSelection.nodeWithCursor = displayNode;
+    if (docPosition != null) {
+      final tappedNode =
+          _editorSelection.displayNodes.firstWhere((element) => element.key.toString() == docPosition.nodeId);
+      print('Tapped display node: $tappedNode');
 
-          nodeTapped = true;
-        }
-      }
+      final backwardsCompatibleSelection = ParagraphEditorComponentSelection(
+        selection: TextSelection.collapsed(
+          offset: (docPosition.nodePosition as TextPosition).offset,
+        ),
+      );
+      tappedNode.selection = backwardsCompatibleSelection;
 
+      _editorSelection.baseOffsetNode = tappedNode;
+      _editorSelection.extentOffsetNode = tappedNode;
+      _editorSelection.nodeWithCursor = tappedNode;
+      print('Done with tap');
+    } else {
       // The user tapped in an area of the editor where there is no content node.
       // Give focus back to the root of the editor.
-      if (!nodeTapped) {
-        _rootFocusNode.requestFocus();
-        _editorSelection.nodeWithCursor = null;
-      }
-    });
+      _rootFocusNode.requestFocus();
+      _editorSelection.nodeWithCursor = null;
+    }
+    _editorSelection.notifyListeners();
   }
 
   void _onPanStart(DragStartDetails details) {
     _dragStart = details.localPosition;
-    setState(() {
-      _clearSelection();
-      _dragRect = Rect.fromLTWH(_dragStart.dx, _dragStart.dy, 1, 1);
-    });
+
+    _clearSelection();
+    _dragRect = Rect.fromLTWH(_dragStart.dx, _dragStart.dy, 1, 1);
   }
 
   void _onPanUpdate(DragUpdateDetails details) {
     _dragRect = Rect.fromPoints(_dragStart, details.localPosition);
     _updateCursorStyle(details.localPosition);
     _updateDragSelection();
-
-    setState(() {
-      // empty because the drag rect update needs to happen before
-      // update selection.
-    });
   }
 
   void _onPanEnd(DragEndDetails details) {
@@ -759,68 +751,41 @@ class _EditableDocumentState extends State<EditableDocument> {
   }
 
   void _updateDragSelection() {
-    DocDisplayNode firstSelectedNode;
-    DocDisplayNode lastSelectedNode;
-
     // Drag direction determines whether the extent offset is at the
     // top or bottom of the drag rect.
     final isDraggingDown = _dragStart.dy < _dragRect.bottom;
 
-    for (final displayNode in _editorSelection.displayNodes) {
-      final textLayout = displayNode.key.currentState as SelectableTextState;
+    final docBox = _docLayoutKey.currentContext.findRenderObject() as RenderBox;
+    final docStartDrag = docBox.globalToLocal(_dragStart, ancestor: context.findRenderObject());
+    final docEndDrag = docBox.globalToLocal(isDraggingDown ? _dragRect.bottomRight : _dragRect.topLeft,
+        ancestor: context.findRenderObject());
+    final docSelection = _docLayoutKey.currentState.getDocumentSelectionInRegion(docStartDrag, docEndDrag);
+    print('Drag doc selection: $docSelection');
+    final List<DocumentNodeSelection> selectedNodes = docSelection.computeNodeSelections(document: _document);
+    print('Selected nodes: $selectedNodes');
+    for (final selectedDocNode in selectedNodes) {
+      final selectedDisplayNode =
+          _editorSelection.displayNodes.firstWhere((element) => element.key.toString() == selectedDocNode.nodeId);
+      print(' - found corresponding display node: $selectedDisplayNode');
+      selectedDisplayNode.selection = ParagraphEditorComponentSelection(
+        selection: selectedDocNode.nodeSelection,
+      );
 
-      final dragIntersection = _getDragIntersectionWith(textLayout);
-      if (dragIntersection != null) {
-        print('Drag intersects: ${displayNode.key}');
-        print('Intersection: $dragIntersection');
-        final textLayout = displayNode.key.currentState as TextLayout;
-        final textSelection = textLayout.getSelectionInRect(dragIntersection, isDraggingDown);
-        final selection = ParagraphEditorComponentSelection(
-          selection: textSelection,
-        );
-        // final selection = textLayout.getSelectionInRect(dragIntersection, isDraggingDown);
-        print('Drag selection: ${selection.componentSelection}');
-        print('');
-        displayNode.selection = selection;
-
-        if (firstSelectedNode == null) {
-          firstSelectedNode = displayNode;
-        }
-        lastSelectedNode = displayNode;
+      if (selectedDocNode.isBase) {
+        _editorSelection.baseOffsetNode = selectedDisplayNode;
+      }
+      if (selectedDocNode.isExtent) {
+        _editorSelection.extentOffsetNode = selectedDisplayNode;
       }
     }
 
-    // _editorSelection.clear();
-    if (firstSelectedNode != null) {
-      if (isDraggingDown) {
-        _editorSelection.baseOffsetNode = firstSelectedNode;
-      } else {
-        _editorSelection.extentOffsetNode = firstSelectedNode;
-      }
-    }
-    if (lastSelectedNode != null) {
-      if (isDraggingDown) {
-        _editorSelection.extentOffsetNode = lastSelectedNode;
-      } else {
-        _editorSelection.baseOffsetNode = lastSelectedNode;
-      }
-    }
     print('Base node: ${_editorSelection.baseOffsetNode.key}');
     print('Base selection: ${_editorSelection.baseOffsetNode.selection.componentSelection}');
     print('Extent node: ${_editorSelection.extentOffsetNode.key}');
     print('Extent selection: ${_editorSelection.extentOffsetNode.selection.componentSelection}');
 
-    _editorSelection.nodeWithCursor = isDraggingDown ? lastSelectedNode : firstSelectedNode;
-
-    // TODO: is there a more appropriate place to setState()?
-    setState(() {});
-  }
-
-  Rect _getDragIntersectionWith(TextLayout textLayout) {
-    return textLayout.calculateLocalOverlap(
-      region: _dragRect,
-      ancestorCoordinateSpace: context.findRenderObject(),
-    );
+    _editorSelection.nodeWithCursor = _editorSelection.extentOffsetNode;
+    _editorSelection.notifyListeners();
   }
 
   void _onMouseMove(PointerEvent pointerEvent) {
@@ -828,43 +793,15 @@ class _EditableDocumentState extends State<EditableDocument> {
   }
 
   void _updateCursorStyle(Offset cursorOffset) {
-    for (final displayNode in _editorSelection.displayNodes) {
-      final componentBox = displayNode.key.currentContext.findRenderObject() as RenderBox;
-      final textLayout = displayNode.key.currentState as TextLayout;
+    final docBox = _docLayoutKey.currentContext.findRenderObject() as RenderBox;
+    final docOffset = docBox.globalToLocal(cursorOffset, ancestor: context.findRenderObject());
+    final desiredCursor = _docLayoutKey.currentState.getDesiredCursorAtOffset(docOffset);
 
-      if (_cursorIntersects(componentBox, cursorOffset)) {
-        final localCursorOffset = _localCursorOffset(componentBox, cursorOffset);
-        final isCursorOverText = textLayout.isTextAtOffset(localCursorOffset);
-        final desiredCursor = isCursorOverText ? SystemMouseCursors.text : null;
-        if (desiredCursor != null && desiredCursor != _cursorStyle.value) {
-          _cursorStyle.value = desiredCursor;
-        } else if (desiredCursor == null && _cursorStyle.value != SystemMouseCursors.basic) {
-          _cursorStyle.value = SystemMouseCursors.basic;
-        }
-
-        // The cursor can't intersect multiple components, so
-        // there is nothing more for us to do. Return.
-        return;
-      }
+    if (desiredCursor != null && desiredCursor != _cursorStyle.value) {
+      _cursorStyle.value = desiredCursor;
+    } else if (desiredCursor == null && _cursorStyle.value != SystemMouseCursors.basic) {
+      _cursorStyle.value = SystemMouseCursors.basic;
     }
-
-    _cursorStyle.value = SystemMouseCursors.basic;
-  }
-
-  bool _cursorIntersects(RenderBox contentBox, Offset cursorOffset) {
-    final containerBox = context.findRenderObject() as RenderBox;
-    final contentOffset = contentBox.localToGlobal(Offset.zero, ancestor: containerBox);
-    final contentRect = contentOffset & contentBox.size;
-
-    return contentRect.contains(cursorOffset);
-  }
-
-  Offset _localCursorOffset(RenderBox contentBox, Offset cursorOffset) {
-    final containerBox = context.findRenderObject() as RenderBox;
-    final contentOffset = contentBox.localToGlobal(Offset.zero, ancestor: containerBox);
-    final contentRect = contentOffset & contentBox.size;
-
-    return cursorOffset - contentRect.topLeft;
   }
 
   @override
@@ -875,7 +812,18 @@ class _EditableDocumentState extends State<EditableDocument> {
           child: Stack(
             children: [
               _buildDocumentContainer(
-                child: _buildDocument(context),
+                child: AnimatedBuilder(
+                    animation: _documentSelection,
+                    builder: (context, child) {
+                      print('Document selection: $_documentSelection');
+
+                      return DocumentLayout(
+                        key: _docLayoutKey,
+                        document: _document,
+                        documentSelection: _documentSelection.value, //_buildDocumentSelection(_document),
+                        showDebugPaint: widget.showDebugPaint,
+                      );
+                    }),
               ),
               _buildDragSelection(),
             ],
@@ -883,6 +831,44 @@ class _EditableDocumentState extends State<EditableDocument> {
         ),
       ),
     );
+  }
+
+  List<DocumentNodeSelection> _buildDocumentSelection(
+    RichTextDocument document,
+  ) {
+    if (_editorSelection.baseOffsetNode == null || _editorSelection.baseOffsetNode.selection == null) {
+      print('No selection to build');
+      return const [];
+    }
+
+    print('Editor base selection: ${_editorSelection.baseOffsetNode?.selection}');
+    print('Editor extent selection: ${_editorSelection.extentOffsetNode?.selection}');
+
+    final base = DocumentPosition(
+      nodeId: _editorSelection.baseOffsetNode.key.toString(),
+      nodePosition: (_editorSelection.baseOffsetNode.selection.componentSelection as TextSelection).base,
+    );
+    print('Base doc position: $base');
+    final extent = DocumentPosition(
+      nodeId: _editorSelection.extentOffsetNode.key.toString(),
+      nodePosition: (_editorSelection.extentOffsetNode.selection.componentSelection as TextSelection).extent,
+    );
+    print('Extent doc position: $extent');
+
+    final docSelection = DocumentSelection(
+      base: base,
+      extent: extent,
+    );
+
+    final selectedNodes = docSelection.computeNodeSelections(
+      document: document,
+    );
+    print('Selected Nodes:');
+    for (final node in selectedNodes) {
+      print(' - $node');
+    }
+
+    return selectedNodes;
   }
 
   /// Wraps the `child` with a `Shortcuts` widget that ignores arrow keys,
@@ -990,7 +976,7 @@ class _EditableDocumentState extends State<EditableDocument> {
         Spacer(),
         ConstrainedBox(
           constraints: BoxConstraints(maxWidth: 400),
-          child: _buildDocument(context),
+          child: child,
         ),
         Spacer(),
       ],
@@ -1006,57 +992,6 @@ class _EditableDocumentState extends State<EditableDocument> {
         size: Size.infinite,
       ),
     );
-  }
-
-  Widget _buildDocument(BuildContext context) {
-    const textStyle = TextStyle(
-      color: Color(0xFF312F2C),
-      fontSize: 16,
-      fontWeight: FontWeight.bold,
-      height: 1.4,
-    );
-
-    return AnimatedBuilder(
-        animation: _editorSelection,
-        builder: (context, child) {
-          print('Building editor components:');
-          for (final displayNode in _editorSelection.displayNodes) {
-            print(' - ${displayNode.key}: ${displayNode.selection?.componentSelection}');
-            if (displayNode == _editorSelection.nodeWithCursor) {
-              print('   - ^ has cursor');
-            }
-          }
-
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              for (final displayNode in _editorSelection.displayNodes) ...[
-                SelectableText(
-                  key: displayNode.key,
-                  text: displayNode.paragraph,
-                  textSelection: (displayNode.selection as ParagraphEditorComponentSelection)?.componentSelection,
-                  hasCursor: displayNode == _editorSelection.nodeWithCursor,
-                  style: textStyle,
-                  highlightWhenEmpty: !_editorSelection.isCollapsed &&
-                      (displayNode.selection as ParagraphEditorComponentSelection)?.componentSelection != null,
-                  showDebugPaint: widget.showDebugPaint,
-                ),
-                // EditorParagraph(
-                //   key: displayNode.key,
-                //   text: displayNode.paragraph,
-                //   textSelection: (displayNode.selection as ParagraphEditorComponentSelection)?.componentSelection,
-                //   style: textStyle,
-                //   hasCursor: displayNode == _editorSelection.nodeWithCursor,
-                //   highlightWhenEmpty: !_editorSelection.isCollapsed &&
-                //       (displayNode.selection as ParagraphEditorComponentSelection)?.componentSelection != null,
-                //   showDebugPaint: widget.showDebugPaint,
-                // ),
-                SizedBox(height: 16),
-              ],
-            ],
-          );
-        });
   }
 }
 

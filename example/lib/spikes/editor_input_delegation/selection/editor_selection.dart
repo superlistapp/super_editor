@@ -1,12 +1,191 @@
 import 'dart:math';
 
+import 'package:example/spikes/editor_input_delegation/document/rich_text_document.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
-import '../components/paragraph/editor_paragraph_component.dart';
-import '../components/paragraph/selectable_text.dart';
+import '../layout/components/paragraph/editor_paragraph_component.dart';
+import '../layout/components/paragraph/selectable_text.dart';
 import '../editor_layout_model.dart';
+
+// TODO: I'm not sure this class should exist like this. It might make
+//       more sense as the full list of selected nodes. I'm not sure
+//       what value there is in passing around a data structure that can't
+//       actually provide useful selection info. Compare this class with
+//       DocumentRange. Do we need both?
+class DocumentSelection {
+  DocumentSelection.collapsed({
+    @required DocumentPosition position,
+  })  : assert(position != null),
+        base = position,
+        extent = position;
+
+  DocumentSelection({
+    @required this.base,
+    @required this.extent,
+  })  : assert(base != null),
+        assert(extent != null);
+
+  final DocumentPosition<dynamic> base;
+  final DocumentPosition<dynamic> extent;
+
+  bool get isCollapsed => base == extent;
+
+  List<DocumentNodeSelection> computeNodeSelections({
+    @required RichTextDocument document,
+  }) {
+    print('Computing document node selections.');
+    print(' - base position: $base');
+    print(' - extent position: $extent');
+    if (isCollapsed) {
+      final docNode = document.getNode(base);
+      if (docNode is ParagraphNode) {
+        // One paragraph node is selected. The selection within
+        // the node is collapsed.
+        return [
+          DocumentNodeSelection(
+            nodeId: docNode.id,
+            nodeSelection: TextSelection.collapsed(
+              offset: (base.nodePosition as TextPosition).offset,
+            ),
+            isBase: true,
+            isExtent: true,
+          ),
+        ];
+      } else {
+        print(' - Unknown document node: $docNode');
+        return [];
+      }
+    } else if (base.nodeId == extent.nodeId) {
+      final docNode = document.getNode(base);
+      if (docNode is ParagraphNode) {
+        // One paragraph node is selected. The selection within
+        // the paragraph has a start and end.
+        final baseTextPosition = base.nodePosition as TextPosition;
+        final extentTextPosition = extent.nodePosition as TextPosition;
+
+        return [
+          DocumentNodeSelection(
+            nodeId: docNode.id,
+            nodeSelection: TextSelection(
+              baseOffset: baseTextPosition.offset,
+              extentOffset: extentTextPosition.offset,
+            ),
+            isBase: true,
+            isExtent: true,
+          ),
+        ];
+      } else {
+        print(' - Unknown document node: $docNode');
+        return [];
+      }
+    } else {
+      final selectedNodes = document.getNodesInside(base, extent);
+      final nodeSelections = <DocumentNodeSelection>[];
+      for (int i = 0; i < selectedNodes.length; ++i) {
+        final selectedNode = selectedNodes[i];
+
+        // TODO: support other nodes.
+        if (selectedNode is! ParagraphNode) {
+          continue;
+        }
+
+        // Note: we know there are at least 2 selected nodes, so
+        //       we don't need to handle the special case where
+        //       the first node is the same as the last.
+        if (i == 0) {
+          // This is the first node. Select from the current position
+          // to the end of the paragraph.
+          final isBase = selectedNode.id == base.nodeId;
+
+          final midParagraph =
+              isBase ? (base.nodePosition as TextPosition).offset : (extent.nodePosition as TextPosition).offset;
+          final endParagraph = (selectedNode as ParagraphNode).paragraph.length;
+
+          nodeSelections.add(
+            DocumentNodeSelection(
+              nodeId: selectedNode.id,
+              nodeSelection: TextSelection(
+                baseOffset: isBase ? midParagraph : endParagraph,
+                extentOffset: isBase ? endParagraph : midParagraph,
+              ),
+              isBase: isBase,
+              isExtent: !isBase,
+              highlightWhenEmpty: true,
+            ),
+          );
+        } else if (i == selectedNodes.length - 1) {
+          // This is the last node. Select from the beginning of
+          // the node to the extent position.
+          final isExtent = selectedNode.id == extent.nodeId;
+
+          final midParagraph =
+              isExtent ? (extent.nodePosition as TextPosition).offset : (base.nodePosition as TextPosition).offset;
+
+          nodeSelections.add(
+            DocumentNodeSelection(
+              nodeId: selectedNode.id,
+              nodeSelection: TextSelection(
+                baseOffset: isExtent ? 0 : midParagraph,
+                extentOffset: isExtent ? midParagraph : 0,
+              ),
+              isBase: !isExtent,
+              isExtent: isExtent,
+            ),
+          );
+        } else {
+          // This node is in between the first and last in the
+          // selection. Select everything.
+          nodeSelections.add(
+            DocumentNodeSelection(
+              nodeId: selectedNode.id,
+              nodeSelection: TextSelection(
+                baseOffset: 0,
+                extentOffset: (selectedNode as ParagraphNode).paragraph.length,
+              ),
+              highlightWhenEmpty: true,
+            ),
+          );
+        }
+      }
+
+      return nodeSelections;
+    }
+  }
+}
+
+class DocumentNodeSelection<SelectionType> {
+  DocumentNodeSelection({
+    @required this.nodeId,
+    @required this.nodeSelection,
+    this.isBase = false,
+    this.isExtent = false,
+    this.highlightWhenEmpty = false,
+  });
+
+  final String nodeId;
+  final SelectionType nodeSelection;
+  final bool isBase;
+  final bool isExtent;
+  final bool highlightWhenEmpty;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is DocumentNodeSelection &&
+          runtimeType == other.runtimeType &&
+          nodeId == other.nodeId &&
+          nodeSelection == other.nodeSelection;
+
+  @override
+  int get hashCode => nodeId.hashCode ^ nodeSelection.hashCode;
+
+  @override
+  String toString() {
+    return '[DocumentNodeSelection] - node: "$nodeId", selection: ($nodeSelection)';
+  }
+}
 
 class EditorSelection with ChangeNotifier {
   EditorSelection({
