@@ -1,8 +1,11 @@
+import 'package:example/spikes/editor_input_delegation/document/rich_text_document.dart';
 import 'package:example/spikes/editor_input_delegation/editable_document.dart';
 import 'package:flutter/material.dart' hide SelectableText;
 
-import 'editor_layout_model.dart';
-
+/// Editor for a `RichTextDocument`.
+///
+/// An `Editor` places document content within a scrollable and
+/// adds any further chrome or overlays that are desired.
 class Editor extends StatefulWidget {
   const Editor({
     Key key,
@@ -10,7 +13,7 @@ class Editor extends StatefulWidget {
     this.showDebugPaint = false,
   }) : super(key: key);
 
-  final List<DocDisplayNode> initialDocument;
+  final RichTextDocument initialDocument;
   final showDebugPaint;
 
   @override
@@ -22,7 +25,7 @@ class _EditorState extends State<Editor> {
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       child: EditableDocument(
-        initialDocument: widget.initialDocument,
+        document: widget.initialDocument,
         showDebugPaint: widget.showDebugPaint,
       ),
     );

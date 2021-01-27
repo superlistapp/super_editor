@@ -5,6 +5,26 @@ import '../document/rich_text_document.dart';
 import '../selection/editor_selection.dart';
 import 'components/paragraph/selectable_text.dart';
 
+/// Displays a `RichTextDocument`.
+///
+/// `DocumentLayout` displays a visual "component" for each
+/// type of node in a given `RichTextDocument`. The components
+/// are positioned vertically in a column with some space in between.
+///
+/// To get the `DocumentPosition` at a given (x,y) coordinate, see
+/// `getDocumentPositionAtOffset()`.
+///
+/// To get the `DocumentSelection` within a rectangular region, see
+/// `getDocumentSelectionInRegion()`.
+///
+/// To get the `MouseCursor` that should be displayed for the content
+/// at a given (x,y) coordinate, see `getDesiredCursorAtOffset()`.
+///
+/// To get the `SelectableTextState` that corresponds to a given
+/// `RichTextDocument` node, see `getSelectableTextByNodeId()`
+/// WARNING: this method will eventually disappear and be replaced
+/// by a version that returns a generic "document component". This
+/// is needed to facilitate visual components other than text.
 class DocumentLayout extends StatefulWidget {
   const DocumentLayout({
     Key key,
@@ -44,30 +64,6 @@ class DocumentLayoutState extends State<DocumentLayout> {
       return selectionAtOffset;
     }
 
-    // for (final componentKey in _nodeIdsToComponentKeys.values) {
-    //   print(' - considering component "$componentKey"');
-    //   if (componentKey.currentState is! TextLayout) {
-    //     print(' - found unknown component: ${componentKey.currentState}');
-    //     continue;
-    //   }
-    //
-    //   final textLayout = componentKey.currentState as TextLayout;
-    //   final textBox = componentKey.currentContext.findRenderObject() as RenderBox;
-    //
-    //   if (_isOffsetInComponent(textBox, documentOffset)) {
-    //     print(' - found tapped node: $textLayout');
-    //     final componentOffset = _componentOffset(textBox, documentOffset);
-    //     final textPosition = textLayout.getPositionAtOffset(componentOffset);
-    //
-    //     final selectionAtOffset = DocumentPosition<TextPosition>(
-    //       nodeId: _nodeIdsToComponentKeys.entries.firstWhere((element) => element.value == componentKey).key,
-    //       nodePosition: textPosition,
-    //     );
-    //     print(' - selection at offset: $selectionAtOffset');
-    //     return selectionAtOffset;
-    //   }
-    // }
-
     return null;
   }
 
@@ -75,6 +71,7 @@ class DocumentLayoutState extends State<DocumentLayout> {
     print('getDocumentSelectionInRegion() - from: $baseOffset, to: $extentOffset');
     // Drag direction determines whether the extent offset is at the
     // top or bottom of the drag rect.
+    // TODO: this condition is wrong when the user is dragging within a single line of text
     final isDraggingDown = baseOffset.dy < extentOffset.dy;
 
     final region = Rect.fromPoints(baseOffset, extentOffset);
@@ -97,7 +94,15 @@ class DocumentLayoutState extends State<DocumentLayout> {
       if (dragIntersection != null) {
         print(' - drag intersects: $componentKey}');
         print(' - intersection: $dragIntersection');
-        final textSelection = textLayout.getSelectionInRect(dragIntersection, isDraggingDown);
+        final componentBaseOffset = _componentOffset(
+          componentKey.currentContext.findRenderObject() as RenderBox,
+          baseOffset,
+        );
+        final componentExtentOffset = _componentOffset(
+          componentKey.currentContext.findRenderObject() as RenderBox,
+          extentOffset,
+        );
+        final textSelection = textLayout.getSelectionInRect(componentBaseOffset, componentExtentOffset);
 
         if (topTextSelection == null) {
           topNodeId = _nodeIdsToComponentKeys.entries.firstWhere((element) => element.value == componentKey).key;
@@ -127,18 +132,15 @@ class DocumentLayoutState extends State<DocumentLayout> {
       );
     } else {
       // Region covers multiple paragraphs.
-      final topPosition = DocumentPosition(
-        nodeId: topNodeId,
-        nodePosition: TextPosition(offset: topTextSelection.baseOffset),
-      );
-      final bottomPosition = DocumentPosition(
-        nodeId: bottomNodeId,
-        nodePosition: TextPosition(offset: bottomTextSelection.extentOffset),
-      );
-
       return DocumentSelection(
-        base: isDraggingDown ? topPosition : bottomPosition,
-        extent: isDraggingDown ? bottomPosition : topPosition,
+        base: DocumentPosition(
+          nodeId: isDraggingDown ? topNodeId : bottomNodeId,
+          nodePosition: isDraggingDown ? topTextSelection.base : bottomTextSelection.base,
+        ),
+        extent: DocumentPosition(
+          nodeId: isDraggingDown ? bottomNodeId : topNodeId,
+          nodePosition: isDraggingDown ? bottomTextSelection.extent : topTextSelection.extent,
+        ),
       );
     }
   }
@@ -165,17 +167,17 @@ class DocumentLayoutState extends State<DocumentLayout> {
   }
 
   GlobalKey _findComponentAtOffset(Offset documentOffset) {
-    print('Finding document node at offset: $documentOffset');
+    // print('Finding document node at offset: $documentOffset');
     for (final componentKey in _nodeIdsToComponentKeys.values) {
-      print(' - considering component "$componentKey"');
+      // print(' - considering component "$componentKey"');
       if (componentKey.currentState is! TextLayout) {
-        print(' - found unknown component: ${componentKey.currentState}');
+        // print(' - found unknown component: ${componentKey.currentState}');
         continue;
       }
 
       final textBox = componentKey.currentContext.findRenderObject() as RenderBox;
       if (_isOffsetInComponent(textBox, documentOffset)) {
-        print(' - found component at offset: $componentKey');
+        // print(' - found component at offset: $componentKey');
         return componentKey;
       }
     }
@@ -196,6 +198,12 @@ class DocumentLayoutState extends State<DocumentLayout> {
     final contentRect = contentOffset & componentBox.size;
 
     return documentOffset - contentRect.topLeft;
+  }
+
+  // TODO: genericize component access instead of always assuming its a text layout
+  SelectableTextState getSelectableTextByNodeId(String nodeId) {
+    final key = _nodeIdsToComponentKeys[nodeId];
+    return key != null && key.currentState is SelectableTextState ? key.currentState as SelectableTextState : null;
   }
 
   @override
@@ -220,19 +228,16 @@ class DocumentLayoutState extends State<DocumentLayout> {
     final newComponentKeys = <String, GlobalKey>{};
     _topToBottomComponentKeys.clear();
     for (final docNode in widget.document.nodes) {
-      newComponentKeys[docNode.id] = (docNode as ParagraphNode).key;
-      final componentKey = newComponentKeys[docNode.id];
+      final componentKey = _createOrTransferComponentKey(
+        newComponentKeyMap: newComponentKeys,
+        nodeId: docNode.id,
+      );
+      // print('Node -> Key: ${docNode.id} -> $componentKey');
+
       _topToBottomComponentKeys.add(componentKey);
 
-      // TODO: when other areas no longer depend upon display node key
-      //       generate all the keys here.
-      // final componentKey = _createOrTransferComponentKey(
-      //   newComponentKeyMap: newComponentKeys,
-      //   nodeId: docNode.id,
-      // );
-
       docComponents.add(
-        _buildDocNode(
+        _buildDocumentComponent(
           key: componentKey,
           docNode: docNode,
           selectedNode: widget.documentSelection.firstWhere(
@@ -250,11 +255,12 @@ class DocumentLayoutState extends State<DocumentLayout> {
     return docComponents;
   }
 
-  Widget _buildDocNode({
+  Widget _buildDocumentComponent({
     GlobalKey key,
     @required DocumentNode docNode,
     DocumentNodeSelection selectedNode,
   }) {
+    // print(' - building document component with key: $key');
     if (docNode is ParagraphNode) {
       final textSelection = selectedNode == null ? null : selectedNode.nodeSelection as TextSelection;
       final hasCursor = selectedNode != null ? selectedNode.isExtent : false;
@@ -287,9 +293,6 @@ class DocumentLayoutState extends State<DocumentLayout> {
     }
   }
 
-  // TODO: when we no longer need to have keys in the display node
-  //       use this method to refresh the global keys tht we track
-  //       because some nodes may be deleted.
   GlobalKey _createOrTransferComponentKey({
     Map<String, GlobalKey> newComponentKeyMap,
     String nodeId,

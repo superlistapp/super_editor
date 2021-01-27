@@ -3,8 +3,6 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
-import '../../../selection/editor_selection.dart';
-
 class SelectableText extends StatefulWidget {
   const SelectableText({
     @required Key key,
@@ -145,16 +143,30 @@ class SelectableTextState extends State<SelectableText> implements TextLayout {
     }
   }
 
-  TextSelection getSelectionInRect(Rect selectionArea, bool isDraggingDown) {
-    int startOffset =
-        selectionArea.topLeft.dy < 0 ? 0 : _renderParagraph.getPositionForOffset(selectionArea.topLeft).offset;
-    int endOffset = selectionArea.bottomRight.dy > _renderParagraph.size.height
-        ? widget.text.length
-        : _renderParagraph.getPositionForOffset(selectionArea.bottomRight).offset;
+  @override
+  TextSelection getSelectionInRect(Offset baseOffset, Offset extentOffset) {
+    final contentHeight = _renderParagraph.size.height;
+    final textLength = widget.text.length;
+
+    // We don't know whether the base offset is higher or lower than the
+    // extent offset. Regardless, if either offset is above the top of
+    // the text then that text position should be 0. If either offset
+    // is below the bottom of the text then that offset should be the
+    // total length of the text.
+    final basePosition = baseOffset.dy < 0
+        ? 0
+        : baseOffset.dy > contentHeight
+            ? textLength
+            : _renderParagraph.getPositionForOffset(baseOffset).offset;
+    final extentPosition = extentOffset.dy < 0
+        ? 0
+        : extentOffset.dy > contentHeight
+            ? textLength
+            : _renderParagraph.getPositionForOffset(extentOffset).offset;
 
     final selection = TextSelection(
-      baseOffset: isDraggingDown ? startOffset : endOffset,
-      extentOffset: isDraggingDown ? endOffset : startOffset,
+      baseOffset: basePosition,
+      extentOffset: extentPosition,
     );
 
     return selection;
@@ -217,6 +229,41 @@ class SelectableTextState extends State<SelectableText> implements TextLayout {
       ],
     );
   }
+}
+
+abstract class TextLayout {
+  TextPosition getPositionAtOffset(Offset localOffset);
+
+  Offset getOffsetForPosition(TextPosition position);
+
+  TextPosition getPositionAtStartOfLine({
+    TextPosition currentPosition,
+  });
+
+  TextPosition getPositionAtEndOfLine({
+    TextPosition currentPosition,
+  });
+
+  TextPosition getPositionOneLineUp({
+    TextPosition currentPosition,
+  });
+
+  TextPosition getPositionOneLineDown({
+    TextPosition currentPosition,
+  });
+
+  TextPosition getPositionInFirstLineAtX(double x);
+
+  TextPosition getPositionInLastLineAtX(double x);
+
+  bool isTextAtOffset(Offset localOffset);
+
+  Rect calculateLocalOverlap({
+    Rect region,
+    RenderObject ancestorCoordinateSpace,
+  });
+
+  TextSelection getSelectionInRect(Offset baseOffset, Offset extentOffset);
 }
 
 class TextSelectionPainter extends CustomPainter {

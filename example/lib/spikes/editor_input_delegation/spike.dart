@@ -1,7 +1,7 @@
+import 'package:example/spikes/editor_input_delegation/document/rich_text_document.dart';
 import 'package:flutter/material.dart';
 
 import 'editor.dart';
-import 'editor_layout_model.dart';
 
 /// Spike:
 /// How should we delegate input so that keys like arrows, backspace,
@@ -57,7 +57,7 @@ class EditorSpike extends StatefulWidget {
 }
 
 class _EditorSpikeState extends State<EditorSpike> {
-  List<DocDisplayNode> _doc;
+  RichTextDocument _doc;
   bool _showDebugPaint = false;
 
   @override
@@ -116,30 +116,33 @@ class _EditorSpikeState extends State<EditorSpike> {
     );
   }
 
-  List<DocDisplayNode> _createEmptyDoc() {
-    return <DocDisplayNode>[
-      DocDisplayNode(
-        key: GlobalKey(),
-        paragraph: '',
-      ),
-    ];
+  RichTextDocument _createEmptyDoc() {
+    return RichTextDocument(
+      nodes: [
+        ParagraphNode(
+          // TODO: I don't like how the client has to provide an ID...
+          id: RichTextDocument.createNodeId(),
+          paragraph: '',
+        ),
+      ],
+    );
   }
 
-  List<DocDisplayNode> _createLoremIpsumDoc() {
-    return <DocDisplayNode>[
-      DocDisplayNode(
-        key: GlobalKey(),
+  RichTextDocument _createLoremIpsumDoc() {
+    return RichTextDocument(nodes: [
+      ParagraphNode(
+        id: RichTextDocument.createNodeId(),
         paragraph: _loremIpsum1,
       ),
-      DocDisplayNode(
-        key: GlobalKey(),
+      ParagraphNode(
+        id: RichTextDocument.createNodeId(),
         paragraph: _loremIpsum2,
       ),
-      DocDisplayNode(
-        key: GlobalKey(),
+      ParagraphNode(
+        id: RichTextDocument.createNodeId(),
         paragraph: _loremIpsum3,
       ),
-    ];
+    ]);
   }
 }
 
