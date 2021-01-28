@@ -25,8 +25,32 @@ class SelectableText extends StatefulWidget {
   SelectableTextState createState() => SelectableTextState();
 }
 
-class SelectableTextState extends State<SelectableText> implements TextLayout {
+class SelectableTextState extends State<SelectableText> with SingleTickerProviderStateMixin implements TextLayout {
   final GlobalKey _textKey = GlobalKey();
+
+  CursorBlinkController _cursorBlinkController;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _cursorBlinkController = CursorBlinkController(
+      tickerProvider: this,
+    );
+    _cursorBlinkController.caretPosition = widget.textSelection?.extent;
+  }
+
+  @override
+  void didUpdateWidget(SelectableText oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _cursorBlinkController.caretPosition = widget.textSelection?.extent;
+  }
+
+  @override
+  void dispose() {
+    _cursorBlinkController.dispose();
+    super.dispose();
+  }
 
   RenderParagraph get _renderParagraph => _textKey.currentContext?.findRenderObject() as RenderParagraph;
 
@@ -203,12 +227,12 @@ class SelectableTextState extends State<SelectableText> implements TextLayout {
           ),
         CustomPaint(
           painter: TextSelectionPainter(
-            text: widget.text,
-            renderParagraph: _renderParagraph,
-            selection: widget.textSelection,
-            emptySelectionHeight: widget.style.fontSize * widget.style.height,
-            highlightWhenEmpty: widget.highlightWhenEmpty,
-          ),
+              text: widget.text,
+              renderParagraph: _renderParagraph,
+              selection: widget.textSelection,
+              emptySelectionHeight: widget.style.fontSize * widget.style.height,
+              highlightWhenEmpty: widget.highlightWhenEmpty,
+              selectionColor: widget.showDebugPaint ? Colors.lightGreenAccent : Colors.lightBlueAccent),
         ),
         Text(
           widget.text,
@@ -217,6 +241,7 @@ class SelectableTextState extends State<SelectableText> implements TextLayout {
         ),
         CustomPaint(
           painter: CursorPainter(
+            blinkController: _cursorBlinkController,
             paragraph: _renderParagraph,
             cursorOffset: widget.textSelection != null ? widget.textSelection.extentOffset : -1,
             lineHeight: widget.style.fontSize * widget.style.height,
@@ -272,8 +297,9 @@ class TextSelectionPainter extends CustomPainter {
     @required this.renderParagraph,
     @required this.selection,
     @required this.emptySelectionHeight,
+    @required this.selectionColor,
     this.highlightWhenEmpty = false,
-  });
+  }) : selectionPaint = Paint()..color = selectionColor;
 
   final String text;
   final RenderParagraph renderParagraph;
@@ -282,7 +308,8 @@ class TextSelectionPainter extends CustomPainter {
   // When true, an empty, collapsed selection will be highlighted
   // for the purpose of showing a highlighted empty line.
   final bool highlightWhenEmpty;
-  final Paint selectionPaint = Paint()..color = Colors.lightGreenAccent;
+  final Color selectionColor;
+  final Paint selectionPaint;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -320,21 +347,25 @@ class TextSelectionPainter extends CustomPainter {
 
 class CursorPainter extends CustomPainter {
   CursorPainter({
+    @required this.blinkController,
     @required this.paragraph,
     @required this.cursorOffset,
     @required this.caretHeight,
     @required this.lineHeight,
-    @required Color caretColor,
+    @required this.caretColor,
     @required this.isTextEmpty,
     @required this.showCursor,
-  }) : caretPaint = Paint()..color = caretColor;
+  })  : caretPaint = Paint()..color = caretColor,
+        super(repaint: blinkController);
 
+  final CursorBlinkController blinkController;
   final RenderParagraph paragraph;
   final int cursorOffset;
   final double caretHeight; // TODO: find a way to get this from the TextPainter, which is the correct place to get it.
   final double lineHeight; // TODO: this should probably also come from the TextPainter.
   final bool isTextEmpty;
   final bool showCursor;
+  final Color caretColor;
   final Paint caretPaint;
 
   @override
@@ -342,6 +373,8 @@ class CursorPainter extends CustomPainter {
     if (!showCursor || paragraph == null || cursorOffset == null) {
       return;
     }
+
+    caretPaint..color = caretColor.withOpacity(blinkController.opacity);
 
     Offset caretOffset = isTextEmpty
         ? Offset(0, (lineHeight - caretHeight) / 2)
@@ -351,7 +384,7 @@ class CursorPainter extends CustomPainter {
       Rect.fromLTWH(
         caretOffset.dx.roundToDouble(),
         caretOffset.dy.roundToDouble(),
-        1,
+        2,
         caretHeight.roundToDouble(),
       ),
       caretPaint,
@@ -364,6 +397,51 @@ class CursorPainter extends CustomPainter {
         cursorOffset != oldDelegate.cursorOffset ||
         isTextEmpty != oldDelegate.isTextEmpty ||
         showCursor != oldDelegate.showCursor;
+  }
+}
+
+class CursorBlinkController with ChangeNotifier {
+  CursorBlinkController({
+    @required TickerProvider tickerProvider,
+    Duration flashPeriod = const Duration(milliseconds: 500),
+  }) : _animationController = AnimationController(
+          vsync: tickerProvider,
+          duration: flashPeriod,
+        ) {
+    print('Creating CursorBlinkController');
+    _animationController
+      ..addListener(() {
+        notifyListeners();
+      })
+      ..addStatusListener((status) {
+        if (status == AnimationStatus.completed) {
+          _animationController.reverse();
+        } else if (status == AnimationStatus.dismissed) {
+          _animationController.forward();
+        }
+      });
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  AnimationController _animationController;
+  double get opacity => 1.0 - _animationController.value.roundToDouble();
+
+  TextPosition _caretPosition;
+  set caretPosition(TextPosition newPosition) {
+    if (newPosition != _caretPosition) {
+      _caretPosition = newPosition;
+
+      if (newPosition == null) {
+        _animationController.stop();
+      } else {
+        _animationController.forward(from: 0.0);
+      }
+    }
   }
 }
 

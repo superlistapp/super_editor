@@ -104,7 +104,7 @@ class DocumentComposer with ChangeNotifier {
 
     final selectableText = documentLayout.getSelectableTextByNodeId(extentPosition.nodeId);
 
-    _onParagraphKeyPressed(
+    _handleKeyForParagraph(
       keyEvent: keyEvent,
       documentLayout: documentLayout,
       paragraphNode: extentNode as ParagraphNode,
@@ -235,8 +235,7 @@ class DocumentComposer with ChangeNotifier {
     }
   }
 
-  // ------------------- START EditorParagraph onKeyPressed
-  void _onParagraphKeyPressed({
+  void _handleKeyForParagraph({
     @required RawKeyEvent keyEvent,
     @required DocumentLayoutState documentLayout,
     @required ParagraphNode paragraphNode,
@@ -253,35 +252,23 @@ class DocumentComposer with ChangeNotifier {
 
     if (_isCharacterKey(keyEvent.logicalKey)) {
       print(' - handling a character key');
-      final newParagraph = _insertStringInString(
-        index: textSelection.extentOffset,
-        existing: text,
-        addition: keyEvent.character,
+      _insertCharacter(
+        paragraphNode: paragraphNode,
+        textSelection: textSelection,
+        character: keyEvent.character,
       );
-
-      // Add the character to the paragraph.
-      paragraphNode.paragraph = newParagraph;
-
-      // Update the selection to place the caret after the new character.
-      selection = DocumentSelection.collapsed(
-        position: DocumentPosition(
-          nodeId: nodeSelection.nodeId,
-          nodePosition: TextPosition(
-            offset: textSelection.extentOffset + 1,
-          ),
-        ),
-      );
-
-      // editorSelection.updateCursorComponentSelection(
-      //   ParagraphEditorComponentSelection(
-      //     selection: TextSelection(
-      //       baseOffset: currentSelection.extentOffset + 1,
-      //       extentOffset: currentSelection.extentOffset + 1,
-      //     ),
-      //   ),
-      // );
     } else if (keyEvent.logicalKey == LogicalKeyboardKey.enter) {
       print(' - handling enter key');
+      if (keyEvent.isShiftPressed) {
+        print(' - shift is pressed. Inserting newline instead of new node.');
+        _insertCharacter(
+          paragraphNode: paragraphNode,
+          textSelection: textSelection,
+          character: '\n',
+        );
+        return;
+      }
+
       final cursorIndex = textSelection.start;
       final startText = text.substring(0, cursorIndex);
       final endText = cursorIndex < text.length ? text.substring(textSelection.end) : '';
@@ -325,15 +312,6 @@ class DocumentComposer with ChangeNotifier {
             ),
           ),
         );
-
-        // editorSelection.updateCursorComponentSelection(
-        //   ParagraphEditorComponentSelection(
-        //     selection: TextSelection(
-        //       baseOffset: currentSelection.extentOffset - 1,
-        //       extentOffset: currentSelection.extentOffset - 1,
-        //     ),
-        //   ),
-        // );
       } else {
         print('Combining node with previous.');
 
@@ -468,6 +446,31 @@ class DocumentComposer with ChangeNotifier {
     }
   }
 
+  void _insertCharacter({
+    @required ParagraphNode paragraphNode,
+    @required TextSelection textSelection,
+    @required String character,
+  }) {
+    final newParagraph = _insertStringInString(
+      index: textSelection.extentOffset,
+      existing: paragraphNode.paragraph,
+      addition: character,
+    );
+
+    // Add the character to the paragraph.
+    paragraphNode.paragraph = newParagraph;
+
+    // Update the selection to place the caret after the new character.
+    selection = DocumentSelection.collapsed(
+      position: DocumentPosition(
+        nodeId: paragraphNode.id,
+        nodePosition: TextPosition(
+          offset: textSelection.extentOffset + 1,
+        ),
+      ),
+    );
+  }
+
   void _moveUpOneLine({
     @required DocumentLayoutState documentLayout,
     @required DocumentNode selectedNode,
@@ -495,10 +498,6 @@ class DocumentComposer with ChangeNotifier {
         );
 
         if (offsetToMatch == null) {
-          // TODO: this situation doesn't look like it's possible. It was copied
-          //       from different logic. See if we still need it. Maybe the
-          //       situation where you get to the beginning of a paragraph and
-          //       press left.
           // No (x,y) offset was provided. Place the selection at the
           // end of the node.
           oneLineUpPosition = TextPosition(offset: nodeAbove.paragraph.length);
@@ -551,10 +550,6 @@ class DocumentComposer with ChangeNotifier {
     }
     print(' - node above: ${nodeAbove.id}');
 
-    // final existingSelectionForNodeAbove = _getNodeSelectionByNodeId(nodeAbove.id).nodeSelection;
-    // assert(existingSelectionForNodeAbove is TextSelection);
-    // print(' - existing selection for node above: $existingSelectionForNodeAbove');
-
     if (nodeAbove == null) {
       return;
     }
@@ -564,24 +559,12 @@ class DocumentComposer with ChangeNotifier {
       // No (x,y) offset was provided. Place the selection at the
       // end of the node.
       newTextPosition = TextPosition(offset: nodeAbove.paragraph.length);
-      // nodeAboveSelection = moveSelectionToEnd(
-      //   text: nodeAbove.paragraph,
-      //   previousSelection: existingSelectionForNodeAbove,
-      //   expandSelection: expandSelection,
-      // );
     } else {
       // An (x,y) offset was provided. Place the selection as close
       // to the given x-value as possible within the node.
       final selectableText = documentLayout.getSelectableTextByNodeId(nodeAbove.id);
 
       newTextPosition = selectableText.getPositionInLastLineAtX(previousCursorOffset.dx);
-      // nodeAboveSelection = moveSelectionFromEndToOffset(
-      //   selectableText: selectableText,
-      //   text: nodeAbove.paragraph,
-      //   currentSelection: existingSelectionForNodeAbove,
-      //   expandSelection: expandSelection,
-      //   localOffset: previousCursorOffset,
-      // );
     }
 
     if (expandSelection) {
@@ -600,27 +583,6 @@ class DocumentComposer with ChangeNotifier {
         ),
       );
     }
-
-    // final isCurrentNodeTheExtent = nodeWithCursor == extentOffsetNode;
-    // final isSelectionGoingDownward = displayNodes.indexOf(baseOffsetNode) < displayNodes.indexOf(extentOffsetNode);
-    //
-    // previousNode.selection = nodeAboveSelection;
-    //
-    // extentOffsetNode = previousNode;
-    // if (!expandSelection) {
-    //   baseOffsetNode = extentOffsetNode;
-    //   nodeWithCursor.selection = null;
-    // } else if (isCurrentNodeTheExtent && isSelectionGoingDownward) {
-    //   nodeWithCursor.selection = null;
-    // }
-    // return true;
-  }
-
-  DocumentNodeSelection _getNodeSelectionByNodeId(String nodeId) {
-    return _nodeSelections.firstWhere(
-      (element) => element.nodeId == nodeId,
-      orElse: () => null,
-    );
   }
 
   TextSelection moveSelectionToEnd({
@@ -689,10 +651,6 @@ class DocumentComposer with ChangeNotifier {
         );
 
         if (offsetToMatch == null) {
-          // TODO: this situation doesn't look like it's possible. It was copied
-          //       from different logic. See if we still need it. Maybe the
-          //       situation where you get to the end of a paragraph and
-          //       press right.
           // No (x,y) offset was provided. Place the selection at the
           // beginning of the node.
           oneLineDownPosition = TextPosition(offset: 0);
@@ -889,10 +847,6 @@ class DocumentComposer with ChangeNotifier {
     final nodeBelow = document.getNodeAfter(moveFromNode) as ParagraphNode;
     print(' - node above: $nodeBelow');
 
-    // final existingSelectionForNodeBelow = _getNodeSelectionByNodeId(nodeBelow.id).nodeSelection;
-    // assert(existingSelectionForNodeBelow is TextSelection);
-    // print(' - existing selection for node above: $existingSelectionForNodeBelow');
-
     if (nodeBelow == null) {
       return;
     }
@@ -1061,5 +1015,4 @@ class DocumentComposer with ChangeNotifier {
     return 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ 1234567890.,/;\'[]\\`~!@#\$%^&*()_+<>?:"{}|'
         .contains(key.keyLabel);
   }
-// ------------------- END EditorParagraph onKeyPressed
 }

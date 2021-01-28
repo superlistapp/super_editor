@@ -203,17 +203,18 @@ class _EditableDocumentState extends State<EditableDocument> {
             children: [
               _buildDocumentContainer(
                 child: AnimatedBuilder(
-                    animation: _documentComposer,
-                    builder: (context, child) {
-                      return DocumentLayout(
-                        key: _docLayoutKey,
-                        document: _documentComposer.document,
-                        documentSelection: _documentComposer.nodeSelections,
-                        showDebugPaint: widget.showDebugPaint,
-                      );
-                    }),
+                  animation: _documentComposer,
+                  builder: (context, child) {
+                    return DocumentLayout(
+                      key: _docLayoutKey,
+                      document: _documentComposer.document,
+                      documentSelection: _documentComposer.nodeSelections,
+                      showDebugPaint: widget.showDebugPaint,
+                    );
+                  },
+                ),
               ),
-              _buildDragSelection(),
+              if (widget.showDebugPaint) _buildDragSelection(),
             ],
           ),
         ),
