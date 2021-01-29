@@ -1,8 +1,13 @@
+import 'dart:ui';
+
 import 'package:example/spikes/editor_input_delegation/composition/document_composer.dart';
 import 'package:example/spikes/editor_input_delegation/document/rich_text_document.dart';
+import 'package:example/spikes/editor_input_delegation/gestures/multi_tap_gesture.dart';
 import 'package:example/spikes/editor_input_delegation/layout/document_layout.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart' hide SelectableText;
 import 'package:flutter/rendering.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 
 import 'selection/editor_selection.dart';
@@ -13,7 +18,7 @@ import 'selection/editor_selection.dart';
 /// to display a user-editable rich text document:
 ///  * document model
 ///  * document layout
-///  * document interaction (tapping, dragging, typing)
+///  * document interaction (tapping, dragging, typing, scrolling)
 ///  * document composer
 ///
 /// The document model is responsible for holding the content of a
@@ -32,14 +37,11 @@ import 'selection/editor_selection.dart';
 /// Document composer is responsible for owning and altering document
 /// selection, as well as manipulating the logical document, e.g.,
 /// typing new characters, deleting characters, deleting selections.
-///
-/// An `EditableDocument` displays the entire document, and therefore
-/// it does not handle any scrolling concerns. That responsibility
-/// is left to the parent of an `EditableDocument`.
 class EditableDocument extends StatefulWidget {
   const EditableDocument({
     Key key,
     this.document,
+    this.scrollController,
     this.showDebugPaint = false,
   }) : super(key: key);
 
@@ -47,6 +49,8 @@ class EditableDocument extends StatefulWidget {
   /// user selection and replace the entire previous document
   /// with the new one.
   final RichTextDocument document;
+
+  final ScrollController scrollController;
 
   /// Paints some extra visual ornamentation to help with
   /// debugging, when true.
@@ -56,7 +60,10 @@ class EditableDocument extends StatefulWidget {
   _EditableDocumentState createState() => _EditableDocumentState();
 }
 
-class _EditableDocumentState extends State<EditableDocument> {
+class _EditableDocumentState extends State<EditableDocument> with SingleTickerProviderStateMixin {
+  final _dragGutterExtent = 100;
+  final _maxDragSpeed = 20;
+
   // Holds a reference to the current `RichTextDocument` and
   // maintains a `DocumentSelection`. The `DocumentComposer`
   // is responsible for editing the `RichTextDocument` based on
@@ -69,10 +76,19 @@ class _EditableDocumentState extends State<EditableDocument> {
 
   FocusNode _rootFocusNode;
 
+  ScrollController _scrollController;
+
   // Tracks user drag gestures for selection purposes.
-  Offset _dragStart;
-  Offset _dragEnd;
-  Rect _dragRect;
+  SelectionType _selectionType = SelectionType.position;
+  Offset _dragStartInViewport;
+  Offset _dragStartInDoc;
+  Offset _dragEndInViewport;
+  Offset _dragEndInDoc;
+  Rect _dragRectInViewport;
+
+  bool _scrollUpOnTick = false;
+  bool _scrollDownOnTick = false;
+  Ticker _ticker;
 
   // Determines the current mouse cursor style displayed on screen.
   final _cursorStyle = ValueNotifier(SystemMouseCursors.basic);
@@ -82,6 +98,9 @@ class _EditableDocumentState extends State<EditableDocument> {
     super.initState();
     _rootFocusNode = FocusNode();
     _documentComposer.document = widget.document;
+    _ticker = createTicker(_onTick);
+    _scrollController =
+        _scrollController = (widget.scrollController ?? ScrollController())..addListener(_updateDragSelection);
   }
 
   @override
@@ -91,10 +110,21 @@ class _EditableDocumentState extends State<EditableDocument> {
       _documentComposer.selection = null;
       _documentComposer.document = widget.document;
     }
+    if (widget.scrollController != oldWidget.scrollController) {
+      _scrollController.removeListener(_updateDragSelection);
+      if (oldWidget.scrollController == null) {
+        _scrollController.dispose();
+      }
+      _scrollController = (widget.scrollController ?? ScrollController())..addListener(_updateDragSelection);
+    }
   }
 
   @override
   void dispose() {
+    _ticker.dispose();
+    if (widget.scrollController == null) {
+      _scrollController.dispose();
+    }
     _rootFocusNode.dispose();
     super.dispose();
   }
@@ -112,6 +142,7 @@ class _EditableDocumentState extends State<EditableDocument> {
   void _onTapDown(TapDownDetails details) {
     print('EditableDocument: onTapDown()');
     _clearSelection();
+    _selectionType = SelectionType.position;
 
     final docOffset = _getDocOffset(details.localPosition);
     final docPosition = _docLayoutKey.currentState.getDocumentPositionAtOffset(docOffset);
@@ -130,50 +161,139 @@ class _EditableDocumentState extends State<EditableDocument> {
     }
   }
 
+  void _onDoubleTapDown(TapDownDetails details) {
+    _selectionType = SelectionType.word;
+
+    print('EditableDocument: onDoubleTap()');
+    _clearSelection();
+
+    final docOffset = _getDocOffset(details.localPosition);
+    final docPosition = _docLayoutKey.currentState.getDocumentPositionAtOffset(docOffset);
+    print(' - tapped document position: $docPosition');
+
+    if (docPosition != null) {
+      final didSelectWord = _documentComposer.selectWordAt(
+        docPosition: docPosition,
+        docLayout: _docLayoutKey.currentState,
+      );
+      if (!didSelectWord) {
+        // Place the document selection at the location where the
+        // user tapped.
+        _documentComposer.selection = DocumentSelection.collapsed(
+          position: docPosition,
+        );
+      }
+    } else {
+      // The user tapped in an area of the editor where there is no content node.
+      // Give focus back to the root of the editor.
+      _rootFocusNode.requestFocus();
+    }
+  }
+
+  void _onDoubleTap() {
+    _selectionType = SelectionType.position;
+  }
+
+  void _onTripleTapDown(TapDownDetails details) {
+    _selectionType = SelectionType.paragraph;
+
+    print('EditableDocument: onTripleTapDown()');
+    _clearSelection();
+
+    final docOffset = _getDocOffset(details.localPosition);
+    final docPosition = _docLayoutKey.currentState.getDocumentPositionAtOffset(docOffset);
+    print(' - tapped document position: $docPosition');
+
+    if (docPosition != null) {
+      final didSelectParagraph = _documentComposer.selectParagraphAt(
+        docPosition: docPosition,
+        docLayout: _docLayoutKey.currentState,
+      );
+      if (!didSelectParagraph) {
+        // Place the document selection at the location where the
+        // user tapped.
+        _documentComposer.selection = DocumentSelection.collapsed(
+          position: docPosition,
+        );
+      }
+    } else {
+      // The user tapped in an area of the editor where there is no content node.
+      // Give focus back to the root of the editor.
+      _rootFocusNode.requestFocus();
+    }
+  }
+
+  void _onTripleTap() {
+    _selectionType = SelectionType.position;
+  }
+
   void _onPanStart(DragStartDetails details) {
-    _dragStart = details.localPosition;
+    print('_onPanStart()');
+    _dragStartInViewport = details.localPosition;
+    _dragStartInDoc =
+        _getDocOffset(_dragStartInViewport); //_dragStartInViewport + Offset(0.0, _scrollController.offset);
 
     _clearSelection();
-    _dragRect = Rect.fromLTWH(_dragStart.dx, _dragStart.dy, 1, 1);
+    _dragRectInViewport = Rect.fromLTWH(_dragStartInViewport.dx, _dragStartInViewport.dy, 1, 1);
   }
 
   void _onPanUpdate(DragUpdateDetails details) {
+    print('_onPanUpdate()');
     setState(() {
-      _dragEnd = details.localPosition;
-      _dragRect = Rect.fromPoints(_dragStart, details.localPosition);
+      _dragEndInViewport = details.localPosition;
+      _dragEndInDoc = _getDocOffset(_dragEndInViewport); //_dragEndInViewport + Offset(0.0, _scrollController.offset);
+      _dragRectInViewport = Rect.fromPoints(_dragStartInViewport, _dragEndInViewport);
+      print(' - drag rect: $_dragRectInViewport');
       _updateCursorStyle(details.localPosition);
       _updateDragSelection();
+
+      _scrollIfNearBoundary();
     });
   }
 
   void _onPanEnd(DragEndDetails details) {
     setState(() {
-      _dragRect = null;
+      _dragStartInDoc = null;
+      _dragEndInDoc = null;
+      _dragRectInViewport = null;
     });
+
+    _stopScrollingUp();
+    _stopScrollingDown();
   }
 
   void _onPanCancel() {
     setState(() {
-      _dragRect = null;
+      _dragStartInDoc = null;
+      _dragEndInDoc = null;
+      _dragRectInViewport = null;
     });
-  }
 
-  void _clearSelection() {
-    _documentComposer.selection = null;
-  }
-
-  void _updateDragSelection() {
-    final docStartDrag = _getDocOffset(_dragStart);
-    final docEndDrag = _getDocOffset(_dragEnd);
-
-    final docSelection = _docLayoutKey.currentState.getDocumentSelectionInRegion(docStartDrag, docEndDrag);
-    print('Drag document selection: $docSelection');
-
-    _documentComposer.selection = docSelection;
+    _stopScrollingUp();
+    _stopScrollingDown();
   }
 
   void _onMouseMove(PointerEvent pointerEvent) {
     _updateCursorStyle(pointerEvent.localPosition);
+  }
+
+  void _updateDragSelection() {
+    if (_dragStartInDoc == null) {
+      return;
+    }
+
+    _dragEndInDoc = _getDocOffset(_dragEndInViewport);
+
+    _documentComposer.selectRegion(
+      documentLayout: _docLayoutKey.currentState,
+      baseOffset: _dragStartInDoc,
+      extentOffset: _dragEndInDoc,
+      selectionType: _selectionType,
+    );
+  }
+
+  void _clearSelection() {
+    _documentComposer.selection = null;
   }
 
   void _updateCursorStyle(Offset cursorOffset) {
@@ -192,6 +312,106 @@ class _EditableDocumentState extends State<EditableDocument> {
   Offset _getDocOffset(Offset offset) {
     final docBox = _docLayoutKey.currentContext.findRenderObject() as RenderBox;
     return docBox.globalToLocal(offset, ancestor: context.findRenderObject());
+  }
+
+  // ------ scrolling -------
+  /// We prevent SingleChildScrollView from processing mouse events because
+  /// it scrolls by drag by default, which we don't want. However, we do
+  /// still want mouse scrolling. This method re-implements a primitive
+  /// form of mouse scrolling.
+  void _onPointerSignal(PointerSignalEvent event) {
+    if (event is PointerScrollEvent) {
+      final newScrollOffset =
+          (_scrollController.offset + event.scrollDelta.dy).clamp(0.0, _scrollController.position.maxScrollExtent);
+      _scrollController.jumpTo(newScrollOffset);
+
+      _updateDragSelection();
+    }
+  }
+
+  void _scrollIfNearBoundary() {
+    final editorBox = context.findRenderObject() as RenderBox;
+
+    if (_dragEndInViewport.dy < _dragGutterExtent) {
+      _startScrollingUp();
+    } else {
+      _stopScrollingUp();
+    }
+    if (editorBox.size.height - _dragEndInViewport.dy < _dragGutterExtent) {
+      _startScrollingDown();
+    } else {
+      _stopScrollingDown();
+    }
+  }
+
+  void _startScrollingUp() {
+    if (_scrollUpOnTick) {
+      return;
+    }
+
+    _scrollUpOnTick = true;
+    _ticker.start();
+  }
+
+  void _stopScrollingUp() {
+    if (!_scrollUpOnTick) {
+      return;
+    }
+
+    _scrollUpOnTick = false;
+    _ticker.stop();
+  }
+
+  void _scrollUp() {
+    if (_scrollController.offset <= 0) {
+      return;
+    }
+
+    final gutterAmount = _dragEndInViewport.dy.clamp(0.0, _dragGutterExtent);
+    final speedPercent = 1.0 - (gutterAmount / _dragGutterExtent);
+    final scrollAmount = lerpDouble(0, _maxDragSpeed, speedPercent);
+
+    _scrollController.position.jumpTo(_scrollController.offset - scrollAmount);
+  }
+
+  void _startScrollingDown() {
+    if (_scrollDownOnTick) {
+      return;
+    }
+
+    _scrollDownOnTick = true;
+    _ticker.start();
+  }
+
+  void _stopScrollingDown() {
+    if (!_scrollDownOnTick) {
+      return;
+    }
+
+    _scrollDownOnTick = false;
+    _ticker.stop();
+  }
+
+  void _scrollDown() {
+    if (_scrollController.offset >= _scrollController.position.maxScrollExtent) {
+      return;
+    }
+
+    final editorBox = context.findRenderObject() as RenderBox;
+    final gutterAmount = (editorBox.size.height - _dragEndInViewport.dy).clamp(0.0, _dragGutterExtent);
+    final speedPercent = 1.0 - (gutterAmount / _dragGutterExtent);
+    final scrollAmount = lerpDouble(0, _maxDragSpeed, speedPercent);
+
+    _scrollController.position.jumpTo(_scrollController.offset + scrollAmount);
+  }
+
+  void _onTick(elapsedTime) {
+    if (_scrollUpOnTick) {
+      _scrollUp();
+    }
+    if (_scrollDownOnTick) {
+      _scrollDown();
+    }
   }
 
   @override
@@ -214,7 +434,9 @@ class _EditableDocumentState extends State<EditableDocument> {
                   },
                 ),
               ),
-              if (widget.showDebugPaint) _buildDragSelection(),
+              Positioned.fill(
+                child: widget.showDebugPaint ? _buildDragSelection() : SizedBox(),
+              ),
             ],
           ),
         ),
@@ -303,18 +525,38 @@ class _EditableDocumentState extends State<EditableDocument> {
   Widget _buildKeyboardAndMouseInput({
     Widget child,
   }) {
-    return RawKeyboardListener(
-      focusNode: _rootFocusNode,
-      onKey: _onKeyPressed,
-      autofocus: true,
-      child: GestureDetector(
-        onTapDown: _onTapDown,
-        onPanStart: _onPanStart,
-        onPanUpdate: _onPanUpdate,
-        onPanEnd: _onPanEnd,
-        onPanCancel: _onPanCancel,
-        behavior: HitTestBehavior.translucent,
-        child: child,
+    return Listener(
+      onPointerSignal: _onPointerSignal,
+      child: RawKeyboardListener(
+        focusNode: _rootFocusNode,
+        onKey: _onKeyPressed,
+        autofocus: true,
+        child: RawGestureDetector(
+          gestures: <Type, GestureRecognizerFactory>{
+            TapSequenceGestureRecognizer: GestureRecognizerFactoryWithHandlers<TapSequenceGestureRecognizer>(
+              () => TapSequenceGestureRecognizer(),
+              (TapSequenceGestureRecognizer recognizer) {
+                recognizer
+                  ..onTapDown = _onTapDown
+                  ..onDoubleTapDown = _onDoubleTapDown
+                  ..onDoubleTap = _onDoubleTap
+                  ..onTripleTapDown = _onTripleTapDown
+                  ..onTripleTap = _onTripleTap;
+              },
+            ),
+            PanGestureRecognizer: GestureRecognizerFactoryWithHandlers<PanGestureRecognizer>(
+              () => PanGestureRecognizer(),
+              (PanGestureRecognizer recognizer) {
+                recognizer
+                  ..onStart = _onPanStart
+                  ..onUpdate = _onPanUpdate
+                  ..onEnd = _onPanEnd
+                  ..onCancel = _onPanCancel;
+              },
+            ),
+          },
+          child: child,
+        ),
       ),
     );
   }
@@ -322,26 +564,28 @@ class _EditableDocumentState extends State<EditableDocument> {
   Widget _buildDocumentContainer({
     Widget child,
   }) {
-    return Row(
-      children: [
-        Spacer(),
-        ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: 400),
-          child: child,
-        ),
-        Spacer(),
-      ],
+    return SingleChildScrollView(
+      controller: _scrollController,
+      physics: NeverScrollableScrollPhysics(),
+      child: Row(
+        children: [
+          Spacer(),
+          ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: 400),
+            child: child,
+          ),
+          Spacer(),
+        ],
+      ),
     );
   }
 
   Widget _buildDragSelection() {
-    return Positioned.fill(
-      child: CustomPaint(
-        painter: DragRectanglePainter(
-          selectionRect: _dragRect,
-        ),
-        size: Size.infinite,
+    return CustomPaint(
+      painter: DragRectanglePainter(
+        selectionRect: _dragRectInViewport,
       ),
+      size: Size.infinite,
     );
   }
 }
@@ -361,6 +605,7 @@ class DragRectanglePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     if (selectionRect != null) {
+      print('Painting drag rect: $selectionRect');
       canvas.drawRect(selectionRect, _selectionPaint);
     }
   }

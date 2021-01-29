@@ -45,7 +45,18 @@ class DocumentLayoutState extends State<DocumentLayout> {
   final Map<String, GlobalKey> _nodeIdsToComponentKeys = {};
   final List<GlobalKey> _topToBottomComponentKeys = [];
 
-  DocumentPosition getDocumentPositionAtOffset(Offset documentOffset) {
+  DocumentPosition getDocumentPositionAtOffset(Offset rawDocumentOffset) {
+    // Constrain the incoming offset to sit within the width
+    // of this document layout.
+    final docBox = context.findRenderObject() as RenderBox;
+    final documentOffset = Offset(
+      // Notice the -1. Experimentally, I determined that if we confine
+      // to the exact width, that x-value is considered outside the
+      // component RenderBox's. However, 1px less than that is
+      // considered to be within the component RenderBox's.
+      rawDocumentOffset.dx.clamp(0.0, docBox.size.width - 1),
+      rawDocumentOffset.dy,
+    );
     print('Getting document position at offset: $documentOffset');
 
     final componentKey = _findComponentAtOffset(documentOffset);
@@ -208,7 +219,7 @@ class DocumentLayoutState extends State<DocumentLayout> {
 
   @override
   Widget build(BuildContext context) {
-    print('Building document layout:');
+    // print('Building document layout:');
     final docComponents = _buildDocComponents();
 
     return Column(
@@ -266,10 +277,10 @@ class DocumentLayoutState extends State<DocumentLayout> {
       final hasCursor = selectedNode != null ? selectedNode.isExtent : false;
       final highlightWhenEmpty = selectedNode == null ? false : selectedNode.highlightWhenEmpty;
 
-      print(' - ${docNode.id}: ${selectedNode?.nodeSelection}');
-      if (hasCursor) {
-        print('   - ^ has cursor');
-      }
+      // print(' - ${docNode.id}: ${selectedNode?.nodeSelection}');
+      // if (hasCursor) {
+      //   print('   - ^ has cursor');
+      // }
 
       const textStyle = TextStyle(
         color: Color(0xFF312F2C),

@@ -128,6 +128,14 @@ class SelectableTextState extends State<SelectableText> with SingleTickerProvide
     );
   }
 
+  TextSelection getWordSelectionAt(TextPosition position) {
+    final wordRange = _renderParagraph.getWordBoundary(position);
+    return TextSelection(
+      baseOffset: wordRange.start,
+      extentOffset: wordRange.end,
+    );
+  }
+
   bool isTextAtOffset(Offset localOffset) {
     final textOffset = _renderParagraph.getPositionForOffset(localOffset);
 

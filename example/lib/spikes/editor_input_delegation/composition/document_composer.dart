@@ -17,6 +17,8 @@ class DocumentComposer with ChangeNotifier {
     if (newValue != _document) {
       _document = newValue;
 
+      // TODO: I think we should clear out the selection here because the
+      //       new doc has nothing to do with the previous one.
       _nodeSelections = _selection != null && _document != null
           ? _selection.computeNodeSelections(
               document: _document,
@@ -45,6 +47,148 @@ class DocumentComposer with ChangeNotifier {
 
   List<DocumentNodeSelection> _nodeSelections = const [];
   List<DocumentNodeSelection> get nodeSelections => List.from(_nodeSelections);
+
+  bool selectWordAt({
+    @required DocumentPosition docPosition,
+    @required DocumentLayoutState docLayout,
+  }) {
+    final newSelection = _getWordSelection(
+      docPosition: docPosition,
+      docLayout: docLayout,
+    );
+    if (newSelection != null) {
+      selection = newSelection;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  DocumentSelection _getWordSelection({
+    @required DocumentPosition docPosition,
+    @required DocumentLayoutState docLayout,
+  }) {
+    print(' - doc position: $docPosition');
+    final docNode = _document.getNodeById(docPosition.nodeId);
+    print(' - doc node: ${docNode?.id}');
+    if (docNode is ParagraphNode) {
+      final textComponent = docLayout.getSelectableTextByNodeId(docNode.id);
+      final TextSelection wordSelection = textComponent.getWordSelectionAt(docPosition.nodePosition);
+
+      print(' - word selection: $wordSelection');
+      return DocumentSelection(
+        base: DocumentPosition(
+          nodeId: docPosition.nodeId,
+          nodePosition: wordSelection.base,
+        ),
+        extent: DocumentPosition(
+          nodeId: docPosition.nodeId,
+          nodePosition: wordSelection.extent,
+        ),
+      );
+    } else {
+      return null;
+    }
+  }
+
+  bool selectParagraphAt({
+    @required DocumentPosition docPosition,
+    @required DocumentLayoutState docLayout,
+  }) {
+    final newSelection = _getParagraphSelection(docPosition: docPosition);
+    if (newSelection != null) {
+      selection = newSelection;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  DocumentSelection _getParagraphSelection({
+    @required DocumentPosition docPosition,
+  }) {
+    final docNode = _document.getNodeById(docPosition.nodeId);
+    if (docNode is ParagraphNode) {
+      // final textComponent = docLayout.getSelectableTextByNodeId(docNode.id);
+      final TextSelection wordSelection = _expandPositionToParagraph(
+        text: docNode.paragraph,
+        textPosition: docPosition.nodePosition as TextPosition,
+      );
+
+      return DocumentSelection(
+        base: DocumentPosition(
+          nodeId: docPosition.nodeId,
+          nodePosition: wordSelection.base,
+        ),
+        extent: DocumentPosition(
+          nodeId: docPosition.nodeId,
+          nodePosition: wordSelection.extent,
+        ),
+      );
+    } else {
+      return null;
+    }
+  }
+
+  void selectRegion({
+    @required DocumentLayoutState documentLayout,
+    @required Offset baseOffset,
+    @required Offset extentOffset,
+    @required SelectionType selectionType,
+  }) {
+    print('Composer: selectionRegion(). Mode: $selectionType');
+    DocumentPosition basePosition = documentLayout.getDocumentPositionAtOffset(baseOffset);
+    DocumentPosition extentPosition = documentLayout.getDocumentPositionAtOffset(extentOffset);
+
+    if (selectionType == SelectionType.paragraph) {
+      final baseParagraphSelection = _getParagraphSelection(
+        docPosition: basePosition,
+      );
+      basePosition = baseOffset.dy < extentOffset.dy ? baseParagraphSelection.base : baseParagraphSelection.extent;
+      final extentParagraphSelection = _getParagraphSelection(
+        docPosition: extentPosition,
+      );
+      extentPosition =
+          baseOffset.dy < extentOffset.dy ? extentParagraphSelection.extent : extentParagraphSelection.base;
+    } else if (selectionType == SelectionType.word) {
+      print(' - selecting a word');
+      final baseWordSelection = _getWordSelection(
+        docPosition: basePosition,
+        docLayout: documentLayout,
+      );
+      basePosition = baseWordSelection.base;
+
+      final extentWordSelection = _getWordSelection(
+        docPosition: extentPosition,
+        docLayout: documentLayout,
+      );
+      extentPosition = extentWordSelection.extent;
+    }
+
+    selection = DocumentSelection(
+      base: basePosition ?? selection.base,
+      extent: extentPosition ?? selection.extent,
+    );
+    print('Region selection: $selection');
+  }
+
+  TextSelection _expandPositionToParagraph({
+    @required String text,
+    @required TextPosition textPosition,
+  }) {
+    int start = textPosition.offset;
+    int end = textPosition.offset;
+    while (start > 0 && text[start] != '\n') {
+      start -= 1;
+    }
+    while (end < text.length && text[end] != '\n') {
+      end += 1;
+    }
+    return TextSelection(
+      baseOffset: start,
+      extentOffset: end,
+    );
+  }
 
   KeyEventResult onKeyPressed({
     @required RawKeyEvent keyEvent,
@@ -1015,4 +1159,10 @@ class DocumentComposer with ChangeNotifier {
     return 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ 1234567890.,/;\'[]\\`~!@#\$%^&*()_+<>?:"{}|'
         .contains(key.keyLabel);
   }
+}
+
+enum SelectionType {
+  position,
+  word,
+  paragraph,
 }

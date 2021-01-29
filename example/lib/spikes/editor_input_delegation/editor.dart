@@ -1,5 +1,6 @@
 import 'package:example/spikes/editor_input_delegation/document/rich_text_document.dart';
 import 'package:example/spikes/editor_input_delegation/editable_document.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' hide SelectableText;
 
 /// Editor for a `RichTextDocument`.
@@ -20,14 +21,12 @@ class Editor extends StatefulWidget {
   _EditorState createState() => _EditorState();
 }
 
-class _EditorState extends State<Editor> {
+class _EditorState extends State<Editor> with SingleTickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: EditableDocument(
-        document: widget.initialDocument,
-        showDebugPaint: widget.showDebugPaint,
-      ),
+    return EditableDocument(
+      document: widget.initialDocument,
+      showDebugPaint: widget.showDebugPaint,
     );
   }
 }
