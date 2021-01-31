@@ -4,13 +4,14 @@ import 'package:example/spikes/editor_input_delegation/composition/document_comp
 import 'package:example/spikes/editor_input_delegation/document/rich_text_document.dart';
 import 'package:example/spikes/editor_input_delegation/gestures/multi_tap_gesture.dart';
 import 'package:example/spikes/editor_input_delegation/layout/document_layout.dart';
+import 'package:example/spikes/editor_input_delegation/selection/editor_selection.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart' hide SelectableText;
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 
-import 'selection/editor_selection.dart';
+import 'document/document_editor.dart';
 
 /// A user-editable rich text document.
 ///
@@ -41,14 +42,21 @@ class EditableDocument extends StatefulWidget {
   const EditableDocument({
     Key key,
     this.document,
+    @required this.editor,
     this.scrollController,
     this.showDebugPaint = false,
   }) : super(key: key);
 
+  /// The rich text document to be edited within this `EditableDocument`.
+  ///
   /// Changing the `document` instance will clear any existing
   /// user selection and replace the entire previous document
   /// with the new one.
   final RichTextDocument document;
+
+  /// The `editor` is responsible for performing all content
+  /// manipulation operations on the supplied `document`.
+  final DocumentEditor editor;
 
   final ScrollController scrollController;
 
@@ -68,11 +76,12 @@ class _EditableDocumentState extends State<EditableDocument> with SingleTickerPr
   // maintains a `DocumentSelection`. The `DocumentComposer`
   // is responsible for editing the `RichTextDocument` based on
   // the current `DocumentSelection`.
-  final DocumentComposer _documentComposer = DocumentComposer();
+  DocumentComposer _documentComposer;
 
   // GlobalKey used to access the `DocumentLayoutState` to figure
   // out where in the document the user taps or drags.
   final _docLayoutKey = GlobalKey<DocumentLayoutState>();
+  final _nodeSelections = <DocumentNodeSelection>[];
 
   FocusNode _rootFocusNode;
 
@@ -97,7 +106,6 @@ class _EditableDocumentState extends State<EditableDocument> with SingleTickerPr
   void initState() {
     super.initState();
     _rootFocusNode = FocusNode();
-    _documentComposer.document = widget.document;
     _ticker = createTicker(_onTick);
     _scrollController =
         _scrollController = (widget.scrollController ?? ScrollController())..addListener(_updateDragSelection);
@@ -107,8 +115,7 @@ class _EditableDocumentState extends State<EditableDocument> with SingleTickerPr
   void didUpdateWidget(EditableDocument oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.document != oldWidget.document) {
-      _documentComposer.selection = null;
-      _documentComposer.document = widget.document;
+      _createDocumentComposer();
     }
     if (widget.scrollController != oldWidget.scrollController) {
       _scrollController.removeListener(_updateDragSelection);
@@ -129,11 +136,41 @@ class _EditableDocumentState extends State<EditableDocument> with SingleTickerPr
     super.dispose();
   }
 
+  void _createDocumentComposer() {
+    print('Creating the document composer');
+    if (_documentComposer != null) {
+      _documentComposer.selection.removeListener(_onSelectionChange);
+    }
+    setState(() {
+      _documentComposer = DocumentComposer(
+        document: widget.document,
+        editor: widget.editor,
+        layout: _docLayoutKey.currentState,
+      );
+      _documentComposer.selection.addListener(_onSelectionChange);
+      _onSelectionChange();
+    });
+  }
+
+  void _onSelectionChange() {
+    print('EditableDocument: _onSelectionChange()');
+    setState(() {
+      _nodeSelections
+        ..clear()
+        ..addAll(
+          _documentComposer.selection.value != null
+              ? _documentComposer.selection.value.computeNodeSelections(
+                  document: widget.document,
+                )
+              : const [],
+        );
+    });
+  }
+
   KeyEventResult _onKeyPressed(RawKeyEvent keyEvent) {
     print('EditableDocument: onKeyPressed()');
     _documentComposer.onKeyPressed(
       keyEvent: keyEvent,
-      documentLayout: _docLayoutKey.currentState,
     );
 
     return KeyEventResult.handled;
@@ -151,9 +188,7 @@ class _EditableDocumentState extends State<EditableDocument> with SingleTickerPr
     if (docPosition != null) {
       // Place the document selection at the location where the
       // user tapped.
-      _documentComposer.selection = DocumentSelection.collapsed(
-        position: docPosition,
-      );
+      _documentComposer.selectPosition(docPosition);
     } else {
       // The user tapped in an area of the editor where there is no content node.
       // Give focus back to the root of the editor.
@@ -179,9 +214,7 @@ class _EditableDocumentState extends State<EditableDocument> with SingleTickerPr
       if (!didSelectWord) {
         // Place the document selection at the location where the
         // user tapped.
-        _documentComposer.selection = DocumentSelection.collapsed(
-          position: docPosition,
-        );
+        _documentComposer.selectPosition(docPosition);
       }
     } else {
       // The user tapped in an area of the editor where there is no content node.
@@ -212,9 +245,7 @@ class _EditableDocumentState extends State<EditableDocument> with SingleTickerPr
       if (!didSelectParagraph) {
         // Place the document selection at the location where the
         // user tapped.
-        _documentComposer.selection = DocumentSelection.collapsed(
-          position: docPosition,
-        );
+        _documentComposer.selectPosition(docPosition);
       }
     } else {
       // The user tapped in an area of the editor where there is no content node.
@@ -293,7 +324,7 @@ class _EditableDocumentState extends State<EditableDocument> with SingleTickerPr
   }
 
   void _clearSelection() {
-    _documentComposer.selection = null;
+    _documentComposer.clearSelection();
   }
 
   void _updateCursorStyle(Offset cursorOffset) {
@@ -416,21 +447,34 @@ class _EditableDocumentState extends State<EditableDocument> with SingleTickerPr
 
   @override
   Widget build(BuildContext context) {
+    if (_documentComposer == null) {
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+        _createDocumentComposer();
+      });
+    }
+
     return _buildIgnoreKeyPresses(
       child: _buildCursorStyle(
         child: _buildKeyboardAndMouseInput(
           child: Stack(
             children: [
               _buildDocumentContainer(
-                child: AnimatedBuilder(
-                  animation: _documentComposer,
-                  builder: (context, child) {
-                    return DocumentLayout(
-                      key: _docLayoutKey,
-                      document: _documentComposer.document,
-                      documentSelection: _documentComposer.nodeSelections,
-                      showDebugPaint: widget.showDebugPaint,
-                    );
+                child: ValueListenableBuilder(
+                  valueListenable: _documentComposer?.selection ?? AlwaysStoppedAnimation(0),
+                  builder: (context, value, child) {
+                    print('Creating document layout with selection:');
+                    print(' - ${_documentComposer?.selection?.value}');
+                    print(' - node selections: $_nodeSelections');
+                    return AnimatedBuilder(
+                        animation: widget.document,
+                        builder: (context, child) {
+                          return DocumentLayout(
+                            key: _docLayoutKey,
+                            document: widget.document,
+                            documentSelection: _nodeSelections,
+                            showDebugPaint: widget.showDebugPaint,
+                          );
+                        });
                   },
                 ),
               ),

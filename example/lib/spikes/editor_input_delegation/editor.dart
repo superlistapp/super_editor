@@ -1,3 +1,4 @@
+import 'package:example/spikes/editor_input_delegation/document/document_editor.dart';
 import 'package:example/spikes/editor_input_delegation/document/rich_text_document.dart';
 import 'package:example/spikes/editor_input_delegation/editable_document.dart';
 import 'package:flutter/foundation.dart';
@@ -26,6 +27,7 @@ class _EditorState extends State<Editor> with SingleTickerProviderStateMixin {
   Widget build(BuildContext context) {
     return EditableDocument(
       document: widget.initialDocument,
+      editor: DocumentEditor(),
       showDebugPaint: widget.showDebugPaint,
     );
   }

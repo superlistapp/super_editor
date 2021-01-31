@@ -17,7 +17,7 @@ import 'package:uuid/uuid.dart';
 ///
 /// To represent a specific location within a `RichTextDocument`,
 /// see `DocumentPosition`.
-class RichTextDocument {
+class RichTextDocument with ChangeNotifier {
   static Uuid _uuid = Uuid();
   static String createNodeId() => _uuid.v4();
 
@@ -56,6 +56,8 @@ class RichTextDocument {
   void insertNodeAt(int index, DocumentNode node) {
     if (index <= _nodes.length) {
       _nodes.insert(index, node);
+      node.addListener(_forwardNodeChange);
+      notifyListeners();
     }
   }
 
@@ -66,18 +68,23 @@ class RichTextDocument {
     final nodeIndex = _nodes.indexOf(previousNode);
     if (nodeIndex >= 0 && nodeIndex < _nodes.length) {
       _nodes.insert(nodeIndex + 1, newNode);
+      newNode.addListener(_forwardNodeChange);
+      notifyListeners();
     }
   }
 
   void deleteNodeAt(int index) {
     if (index >= 0 && index < _nodes.length) {
-      _nodes.removeAt(index);
+      final removedNode = _nodes.removeAt(index);
+      removedNode.removeListener(_forwardNodeChange);
+      notifyListeners();
     } else {
       print('Could not delete node. Index out of range: $index');
     }
   }
 
   bool deleteNode(DocumentNode node) {
+    node.removeListener(_forwardNodeChange);
     return _nodes.remove(node);
   }
 
@@ -120,6 +127,10 @@ class RichTextDocument {
     final to = max(index1, index2);
 
     return _nodes.sublist(from, to + 1);
+  }
+
+  void _forwardNodeChange() {
+    notifyListeners();
   }
 }
 
@@ -186,21 +197,29 @@ class DocumentPosition<PositionType> {
 }
 
 /// A single content node within a `RichTextDocument`.
-abstract class DocumentNode {
+abstract class DocumentNode implements ChangeNotifier {
   String get id;
 
   bool tryToCombineWithOtherNode(DocumentNode other);
 }
 
-class ParagraphNode implements DocumentNode {
+class ParagraphNode with ChangeNotifier implements DocumentNode {
   ParagraphNode({
     @required this.id,
-    this.paragraph = '',
-  });
+    String paragraph = '',
+  }) : _paragraph = paragraph;
 
   final String id;
 
-  String paragraph;
+  String _paragraph;
+  String get paragraph => _paragraph;
+  set paragraph(String newParagraph) {
+    if (newParagraph != _paragraph) {
+      print('Paragraph changed. Notifying listeners.');
+      _paragraph = newParagraph;
+      notifyListeners();
+    }
+  }
 
   bool tryToCombineWithOtherNode(DocumentNode other) {
     // TODO: need to be able to list items into paragraphs somehow.
