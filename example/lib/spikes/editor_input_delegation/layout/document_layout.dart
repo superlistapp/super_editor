@@ -1,3 +1,5 @@
+import 'package:example/spikes/editor_input_delegation/document/document_nodes.dart';
+import 'package:example/spikes/editor_input_delegation/layout/components/list_items.dart';
 import 'package:flutter/material.dart' hide SelectableText;
 import 'package:flutter/rendering.dart';
 
@@ -30,11 +32,15 @@ class DocumentLayout extends StatefulWidget {
     Key key,
     @required this.document,
     @required this.documentSelection,
+    @required this.componentBuilder,
+    this.componentDecorator,
     this.showDebugPaint = false,
   }) : super(key: key);
 
   final RichTextDocument document;
   final List<DocumentNodeSelection> documentSelection;
+  final ComponentBuilder componentBuilder;
+  final ComponentDecorator componentDecorator;
   final bool showDebugPaint;
 
   @override
@@ -45,7 +51,34 @@ class DocumentLayoutState extends State<DocumentLayout> {
   final Map<String, GlobalKey> _nodeIdsToComponentKeys = {};
   final List<GlobalKey> _topToBottomComponentKeys = [];
 
+  /// Returns the `DocumentPosition` at the given `rawDocumentOffset`,
+  /// but only if the offset truly wits within a document component.
+  ///
+  /// To find a `DocumentPosition` based only on y-value, use
+  /// `getDocumentPositionNearestToOffset`.
   DocumentPosition getDocumentPositionAtOffset(Offset rawDocumentOffset) {
+    print('Getting document position at exact offset: $rawDocumentOffset');
+
+    final componentKey = _findComponentAtOffset(rawDocumentOffset);
+    if (componentKey != null) {
+      final textLayout = componentKey.currentState as TextLayout;
+      final textBox = componentKey.currentContext.findRenderObject() as RenderBox;
+      print(' - found tapped node: $textLayout');
+      final componentOffset = _componentOffset(textBox, rawDocumentOffset);
+      final textPosition = textLayout.getPositionAtOffset(componentOffset);
+
+      final selectionAtOffset = DocumentPosition<TextPosition>(
+        nodeId: _nodeIdsToComponentKeys.entries.firstWhere((element) => element.value == componentKey).key,
+        nodePosition: textPosition,
+      );
+      print(' - selection at offset: $selectionAtOffset');
+      return selectionAtOffset;
+    }
+
+    return null;
+  }
+
+  DocumentPosition getDocumentPositionNearestToOffset(Offset rawDocumentOffset) {
     // Constrain the incoming offset to sit within the width
     // of this document layout.
     final docBox = context.findRenderObject() as RenderBox;
@@ -59,23 +92,7 @@ class DocumentLayoutState extends State<DocumentLayout> {
     );
     print('Getting document position at offset: $documentOffset');
 
-    final componentKey = _findComponentAtOffset(documentOffset);
-    if (componentKey != null) {
-      final textLayout = componentKey.currentState as TextLayout;
-      final textBox = componentKey.currentContext.findRenderObject() as RenderBox;
-      print(' - found tapped node: $textLayout');
-      final componentOffset = _componentOffset(textBox, documentOffset);
-      final textPosition = textLayout.getPositionAtOffset(componentOffset);
-
-      final selectionAtOffset = DocumentPosition<TextPosition>(
-        nodeId: _nodeIdsToComponentKeys.entries.firstWhere((element) => element.value == componentKey).key,
-        nodePosition: textPosition,
-      );
-      print(' - selection at offset: $selectionAtOffset');
-      return selectionAtOffset;
-    }
-
-    return null;
+    return getDocumentPositionAtOffset(documentOffset);
   }
 
   DocumentSelection getDocumentSelectionInRegion(Offset baseOffset, Offset extentOffset) {
@@ -222,15 +239,23 @@ class DocumentLayoutState extends State<DocumentLayout> {
     // print('Building document layout:');
     final docComponents = _buildDocComponents();
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        for (final docComponent in docComponents) ...[
-          docComponent,
-          SizedBox(height: 16),
+    return DefaultTextStyle(
+      style: const TextStyle(
+        color: Color(0xFF312F2C),
+        fontSize: 16,
+        fontWeight: FontWeight.bold,
+        height: 1.4,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (final docComponent in docComponents) ...[
+            docComponent,
+            SizedBox(height: 16),
+          ],
         ],
-      ],
+      ),
     );
   }
 
@@ -247,16 +272,30 @@ class DocumentLayoutState extends State<DocumentLayout> {
 
       _topToBottomComponentKeys.add(componentKey);
 
-      docComponents.add(
-        _buildDocumentComponent(
-          key: componentKey,
-          docNode: docNode,
-          selectedNode: widget.documentSelection.firstWhere(
-            (element) => element.nodeId == docNode.id,
-            orElse: () => null,
-          ),
+      final component = widget.componentBuilder(
+        context: context,
+        document: widget.document,
+        currentNode: docNode,
+        currentSelection: widget.documentSelection,
+        key: componentKey,
+        selectedNode: widget.documentSelection.firstWhere(
+          (element) => element.nodeId == docNode.id,
+          orElse: () => null,
         ),
+        showDebugPaint: widget.showDebugPaint,
       );
+
+      final decoratedComponent = widget.componentDecorator != null
+          ? widget.componentDecorator.call(
+              context: context,
+              document: widget.document,
+              currentNode: docNode,
+              currentSelection: widget.documentSelection,
+              child: component,
+            )
+          : component;
+
+      docComponents.add(decoratedComponent);
     }
 
     _nodeIdsToComponentKeys
@@ -264,44 +303,6 @@ class DocumentLayoutState extends State<DocumentLayout> {
       ..addAll(newComponentKeys);
 
     return docComponents;
-  }
-
-  Widget _buildDocumentComponent({
-    GlobalKey key,
-    @required DocumentNode docNode,
-    DocumentNodeSelection selectedNode,
-  }) {
-    // print(' - building document component with key: $key');
-    if (docNode is ParagraphNode) {
-      final textSelection = selectedNode == null ? null : selectedNode.nodeSelection as TextSelection;
-      final hasCursor = selectedNode != null ? selectedNode.isExtent : false;
-      final highlightWhenEmpty = selectedNode == null ? false : selectedNode.highlightWhenEmpty;
-
-      // print(' - ${docNode.id}: ${selectedNode?.nodeSelection}');
-      // if (hasCursor) {
-      //   print('   - ^ has cursor');
-      // }
-
-      const textStyle = TextStyle(
-        color: Color(0xFF312F2C),
-        fontSize: 16,
-        fontWeight: FontWeight.bold,
-        height: 1.4,
-      );
-
-      return SelectableText(
-        key: key,
-        text: docNode.paragraph,
-        textSelection: textSelection,
-        hasCursor: hasCursor,
-        style: textStyle,
-        highlightWhenEmpty: highlightWhenEmpty,
-        showDebugPaint: widget.showDebugPaint,
-      );
-    } else {
-      print('Unknown document node: $docNode');
-      return SizedBox();
-    }
   }
 
   GlobalKey _createOrTransferComponentKey({
@@ -316,3 +317,128 @@ class DocumentLayoutState extends State<DocumentLayout> {
     return newComponentKeyMap[nodeId];
   }
 }
+
+typedef ComponentBuilder = Widget Function({
+  @required BuildContext context,
+  @required RichTextDocument document,
+  @required DocumentNode currentNode,
+  @required List<DocumentNodeSelection> currentSelection,
+  // TODO: get rid of selectedNode param
+  @required DocumentNodeSelection selectedNode,
+  @required GlobalKey key,
+  bool showDebugPaint,
+});
+
+final ComponentBuilder defaultComponentBuilder = ({
+  @required BuildContext context,
+  @required RichTextDocument document,
+  @required DocumentNode currentNode,
+  @required List<DocumentNodeSelection> currentSelection,
+  // TODO: get rid of selectedNode param
+  @required DocumentNodeSelection selectedNode,
+  @required GlobalKey key,
+  bool showDebugPaint = false,
+}) {
+  if (currentNode is TextNode) {
+    final textSelection = selectedNode == null ? null : selectedNode.nodeSelection as TextSelection;
+    final hasCursor = selectedNode != null ? selectedNode.isExtent : false;
+    final highlightWhenEmpty = selectedNode == null ? false : selectedNode.highlightWhenEmpty;
+
+    // print(' - ${docNode.id}: ${selectedNode?.nodeSelection}');
+    // if (hasCursor) {
+    //   print('   - ^ has cursor');
+    // }
+
+    final selectableText = SelectableText(
+      key: key,
+      text: currentNode.text,
+      textSelection: textSelection,
+      hasCursor: hasCursor,
+      // TODO: figure out how to configure styles
+      style: TextStyle(
+        fontSize: 13,
+        height: 1.4,
+        color: const Color(0xFF312F2C),
+      ),
+      highlightWhenEmpty: highlightWhenEmpty,
+      showDebugPaint: showDebugPaint,
+    );
+
+    if (document.getNodeIndex(currentNode) == 0 && currentNode.text.isEmpty && !hasCursor) {
+      return MouseRegion(
+        cursor: SystemMouseCursors.text,
+        child: Stack(
+          children: [
+            Text(
+              'Enter your title',
+              style: Theme.of(context).textTheme.bodyText1.copyWith(
+                    color: const Color(0xFFC3C1C1),
+                  ),
+            ),
+            Positioned.fill(child: selectableText),
+          ],
+        ),
+      );
+    } else if (document.getNodeIndex(currentNode) == 1 && currentNode.text.isEmpty && !hasCursor) {
+      return MouseRegion(
+        cursor: SystemMouseCursors.text,
+        child: Stack(
+          children: [
+            Text(
+              'Enter your content...',
+              style: Theme.of(context).textTheme.bodyText1.copyWith(
+                    color: const Color(0xFFC3C1C1),
+                  ),
+            ),
+            Positioned.fill(child: selectableText),
+          ],
+        ),
+      );
+    } else {
+      return selectableText;
+    }
+  } else if (currentNode is ImageNode) {
+    return Center(
+      child: Image.network(
+        currentNode.imageUrl,
+        key: key,
+        fit: BoxFit.contain,
+      ),
+    );
+  } else if (currentNode is UnorderedListItemNode) {
+    return UnorderedListItemComponent(
+      key: key,
+      text: currentNode.text,
+      showDebugPaint: showDebugPaint,
+    );
+  } else if (currentNode is OrderedListItemNode) {
+    int index = 1;
+    DocumentNode nodeAbove = document.getNodeBefore(currentNode);
+    while (nodeAbove != null && nodeAbove is OrderedListItemNode) {
+      // TODO: handle possibility of indentation.
+      index += 1;
+      nodeAbove = document.getNodeBefore(nodeAbove);
+    }
+
+    return OrderedListItemComponent(
+      key: key,
+      listIndex: index,
+      text: currentNode.text,
+      showDebugPaint: showDebugPaint,
+    );
+  } else {
+    return SizedBox(
+      width: double.infinity,
+      height: 100,
+      child: Placeholder(),
+    );
+  }
+};
+
+typedef ComponentDecorator = Widget Function({
+  @required BuildContext context,
+  @required RichTextDocument document,
+  @required DocumentNode currentNode,
+  @required List<DocumentNodeSelection> currentSelection,
+  @required Widget child,
+});

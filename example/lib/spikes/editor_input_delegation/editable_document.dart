@@ -182,6 +182,7 @@ class _EditableDocumentState extends State<EditableDocument> with SingleTickerPr
     _selectionType = SelectionType.position;
 
     final docOffset = _getDocOffset(details.localPosition);
+    print(' - document offset: $docOffset');
     final docPosition = _docLayoutKey.currentState.getDocumentPositionAtOffset(docOffset);
     print(' - tapped document position: $docPosition');
 
@@ -456,32 +457,36 @@ class _EditableDocumentState extends State<EditableDocument> with SingleTickerPr
     return _buildIgnoreKeyPresses(
       child: _buildCursorStyle(
         child: _buildKeyboardAndMouseInput(
-          child: Stack(
-            children: [
-              _buildDocumentContainer(
-                child: ValueListenableBuilder(
-                  valueListenable: _documentComposer?.selection ?? AlwaysStoppedAnimation(0),
-                  builder: (context, value, child) {
-                    print('Creating document layout with selection:');
-                    print(' - ${_documentComposer?.selection?.value}');
-                    print(' - node selections: $_nodeSelections');
-                    return AnimatedBuilder(
-                        animation: widget.document,
-                        builder: (context, child) {
-                          return DocumentLayout(
-                            key: _docLayoutKey,
-                            document: widget.document,
-                            documentSelection: _nodeSelections,
-                            showDebugPaint: widget.showDebugPaint,
-                          );
-                        });
-                  },
+          child: SizedBox.expand(
+            child: Stack(
+              children: [
+                _buildDocumentContainer(
+                  child: ValueListenableBuilder(
+                    valueListenable: _documentComposer?.selection ?? AlwaysStoppedAnimation(0),
+                    builder: (context, value, child) {
+                      print('Creating document layout with selection:');
+                      print(' - ${_documentComposer?.selection?.value}');
+                      print(' - node selections: $_nodeSelections');
+                      return AnimatedBuilder(
+                          animation: widget.document,
+                          builder: (context, child) {
+                            return DocumentLayout(
+                              key: _docLayoutKey,
+                              document: widget.document,
+                              documentSelection: _nodeSelections,
+                              componentBuilder: defaultComponentBuilder,
+                              // componentDecorator: addHintTextToTitleAndFirstParagraph,
+                              showDebugPaint: widget.showDebugPaint,
+                            );
+                          });
+                    },
+                  ),
                 ),
-              ),
-              Positioned.fill(
-                child: widget.showDebugPaint ? _buildDragSelection() : SizedBox(),
-              ),
-            ],
+                Positioned.fill(
+                  child: widget.showDebugPaint ? _buildDragSelection() : SizedBox(),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -576,6 +581,7 @@ class _EditableDocumentState extends State<EditableDocument> with SingleTickerPr
         onKey: _onKeyPressed,
         autofocus: true,
         child: RawGestureDetector(
+          behavior: HitTestBehavior.translucent,
           gestures: <Type, GestureRecognizerFactory>{
             TapSequenceGestureRecognizer: GestureRecognizerFactoryWithHandlers<TapSequenceGestureRecognizer>(
               () => TapSequenceGestureRecognizer(),
@@ -633,6 +639,67 @@ class _EditableDocumentState extends State<EditableDocument> with SingleTickerPr
     );
   }
 }
+
+// Widget addHintTextToTitleAndFirstParagraph({
+//   @required BuildContext context,
+//   @required RichTextDocument document,
+//   @required DocumentNode currentNode,
+//   @required List<DocumentNodeSelection> currentSelection,
+//   @required Widget child,
+// }) {
+//   final nodeIndex = document.getNodeIndex(currentNode);
+//   if (nodeIndex == 0) {
+//     if (currentNode is ParagraphNode && currentNode.paragraph.isEmpty) {
+//       final selectedNode =
+//           currentSelection.firstWhere((element) => element.nodeId == currentNode.id, orElse: () => null);
+//       if (selectedNode != null) {
+//         // Don't display hint text when the caret is in the field.
+//         return child;
+//       }
+//
+//       return MouseRegion(
+//         cursor: SystemMouseCursors.text,
+//         child: Stack(
+//           children: [
+//             Text(
+//               'Enter your title',
+//               style: Theme.of(context).textTheme.bodyText1.copyWith(
+//                     color: const Color(0xFFC3C1C1),
+//                   ),
+//             ),
+//             Positioned.fill(child: child),
+//           ],
+//         ),
+//       );
+//     }
+//   } else if (nodeIndex == 1) {
+//     if (currentNode is ParagraphNode && currentNode.paragraph.isEmpty && document.nodes.length == 2) {
+//       final selectedNode =
+//           currentSelection.firstWhere((element) => element.nodeId == currentNode.id, orElse: () => null);
+//       if (selectedNode != null) {
+//         // Don't display hint text when the caret is in the field.
+//         return child;
+//       }
+//
+//       return MouseRegion(
+//         cursor: SystemMouseCursors.text,
+//         child: Stack(
+//           children: [
+//             Text(
+//               'Enter your content...',
+//               style: Theme.of(context).textTheme.bodyText1.copyWith(
+//                     color: const Color(0xFFC3C1C1),
+//                   ),
+//             ),
+//             Positioned.fill(child: child),
+//           ],
+//         ),
+//       );
+//     }
+//   }
+//
+//   return child;
+// }
 
 /// Paints a rectangle border around the given `selectionRect`.
 class DragRectanglePainter extends CustomPainter {

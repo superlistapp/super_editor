@@ -1,4 +1,5 @@
 import 'package:example/spikes/editor_input_delegation/document/document_editor.dart';
+import 'package:example/spikes/editor_input_delegation/document/document_nodes.dart';
 import 'package:example/spikes/editor_input_delegation/document/rich_text_document.dart';
 import 'package:example/spikes/editor_input_delegation/layout/components/paragraph/selectable_text.dart';
 import 'package:example/spikes/editor_input_delegation/layout/document_layout.dart';
@@ -62,6 +63,123 @@ typedef SimpleComposerKeyboardAction = ExecutionInstruction Function({
 enum ExecutionInstruction {
   continueExecution,
   haltExecution,
+}
+
+// TODO: restricting what the user can do probably makes sense after an
+//       action takes place, but before the action is applied, e.g. by
+//       inspecting an event-sourced change before applying it to the doc.
+//
+//       or, consider a post-edit action that "heals" the document.
+ExecutionInstruction preventDeletionOfFirstParagraph({
+  @required RichTextDocument document,
+  @required DocumentEditor editor,
+  @required DocumentLayoutState documentLayout,
+  @required ValueNotifier<DocumentSelection> currentSelection,
+  @required List<DocumentNodeSelection> nodeSelections,
+  @required RawKeyEvent keyEvent,
+}) {
+  if (currentSelection.value == null) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (document.nodes.length < 2) {
+    // We are already in a bad state. Let the user do whatever.
+    print('WARNING: Cannot prevent deletion of 1st paragraph because it doesn\'t exist.');
+    return ExecutionInstruction.continueExecution;
+  }
+
+  final titleNode = document.nodes.first;
+  final titleSelection = nodeSelections.firstWhere((element) => element.nodeId == titleNode.id, orElse: () => null);
+
+  final firstParagraphNode = document.nodes[1];
+  final firstParagraphSelection =
+      nodeSelections.firstWhere((element) => element.nodeId == firstParagraphNode.id, orElse: () => null);
+
+  if (titleSelection == null && firstParagraphSelection == null) {
+    // Title isn't selected, nor is the first paragraph. Whatever the
+    // user is doing won't effect the title.
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (currentSelection.value.isCollapsed) {
+    if (document.nodes.length > 2) {
+      // With more than 2 nodes, and a collapsed selection, no
+      // matter what the user does, there will be at least 2 nodes
+      // remaining. So we don't care.
+      return ExecutionInstruction.continueExecution;
+    }
+
+    // With a collapsed selection, the only possible situations we
+    // care about are:
+    //
+    // 1. The user pressed delete at the end of the title node, which
+    //    would normally pull the first paragraph up into the title.
+    //
+    // 2. The user pressed backspace at the beginning of the first
+    //    paragraph, which will combine it with the title, and there
+    //    are no paragraphs after the first one.
+    final title = (titleNode as TextNode).text;
+    if (titleSelection != null &&
+        (titleSelection.nodeSelection as TextSelection).extentOffset == title.length &&
+        keyEvent.logicalKey == LogicalKeyboardKey.delete) {
+      // Prevent this operation.
+      return ExecutionInstruction.haltExecution;
+    }
+
+    if (firstParagraphSelection != null &&
+        (firstParagraphSelection.nodeSelection as TextSelection).extentOffset == 0 &&
+        keyEvent.logicalKey == LogicalKeyboardKey.backspace) {
+      // Prevent this operation.
+      return ExecutionInstruction.haltExecution;
+    }
+
+    // We don't care about this interaction.
+    return ExecutionInstruction.continueExecution;
+  } else {
+    // With an expanded selection, the only deletion that's a concern is
+    // one that selects all but one node.
+    if (nodeSelections.length < document.nodes.length) {
+      return ExecutionInstruction.continueExecution;
+    }
+
+    // This is a selection that covers all but one node. If this
+    // key would result in a deletion, and that deletion fully removes
+    // at least n-1 nodes, then we should prevent the operation.
+    if (keyEvent.logicalKey == LogicalKeyboardKey.backspace ||
+        keyEvent.logicalKey == LogicalKeyboardKey.delete ||
+        _isCharacterKey(keyEvent.logicalKey)) {
+      // This event will cause a deletion. If it will delete too many nodes
+      // then we need to prevent the operation.
+      final fullySelectedNodeCount = nodeSelections.fold(0, (previousValue, element) {
+        final textSelection = element.nodeSelection as TextSelection;
+        final paragraphNode = document.getNodeById(element.nodeId) as TextNode;
+
+        // If there is no TextSelection then this isn't a ParagraphNode
+        // and we don't know how to count it. We know it's selected, but
+        // we don't know what the selection means. Assume its fully selected.
+        if (textSelection == null || paragraphNode == null) {
+          return previousValue + 1;
+        }
+
+        if (textSelection.start == 0 && textSelection.end == paragraphNode.text.length) {
+          // The entire paragraph is selected. +1.
+          return previousValue + 1;
+        }
+
+        return previousValue;
+      });
+
+      if (fullySelectedNodeCount >= document.nodes.length - 1) {
+        // Prevent this operation.
+        return ExecutionInstruction.haltExecution;
+      } else {
+        // Allow this operation.
+        return ExecutionInstruction.continueExecution;
+      }
+    }
+
+    return ExecutionInstruction.continueExecution;
+  }
 }
 
 ExecutionInstruction doNothingWhenThereIsNoSelection({
@@ -187,13 +305,13 @@ ExecutionInstruction splitParagraphWhenEnterPressed({
       keyEvent.logicalKey == LogicalKeyboardKey.enter &&
       currentSelection.value.isCollapsed) {
     final node = document.getNodeById(currentSelection.value.extent.nodeId);
-    if (node is! ParagraphNode) {
+    if (node is! TextNode) {
       print('WARNING: Cannot split node of type: $node');
       return ExecutionInstruction.continueExecution;
     }
-    final paragraphNode = node as ParagraphNode;
+    final paragraphNode = node as TextNode;
 
-    final text = paragraphNode.paragraph;
+    final text = paragraphNode.text;
     final caretIndex = (currentSelection.value.extent.nodePosition as TextPosition).offset;
     final startText = text.substring(0, caretIndex);
     final endText = caretIndex < text.length ? text.substring(caretIndex) : '';
@@ -202,13 +320,13 @@ ExecutionInstruction splitParagraphWhenEnterPressed({
     print(' - end text: "$endText"');
 
     // Change the current nodes content to just the text before the caret.
-    paragraphNode.paragraph = startText;
+    paragraphNode.text = startText;
 
     // Create a new node that will follow the current node. Set its text
     // to the text that was removed from the current node.
-    final newNode = ParagraphNode(
+    final newNode = TextNode(
       id: RichTextDocument.createNodeId(),
-      paragraph: endText,
+      text: endText,
     );
 
     // Insert the new node after the current node.
@@ -288,27 +406,27 @@ ExecutionInstruction mergeNodeWithPreviousWhenBackspaceIsPressed({
   }
 
   final node = document.getNodeById(currentSelection.value.extent.nodeId);
-  if (node is! ParagraphNode) {
+  if (node is! TextNode) {
     print('WARNING: Cannot combine node of type: $node');
     return ExecutionInstruction.continueExecution;
   }
-  final paragraphNode = node as ParagraphNode;
+  final paragraphNode = node as TextNode;
 
   final nodeAbove = document.getNodeBefore(paragraphNode);
   if (nodeAbove == null) {
     print('At top of document. Cannot merge with node above.');
     return ExecutionInstruction.continueExecution;
   }
-  if (nodeAbove is! ParagraphNode) {
+  if (nodeAbove is! TextNode) {
     print('Cannot merge ParagraphNode into node of type: $nodeAbove');
     return ExecutionInstruction.continueExecution;
   }
 
-  final paragraphNodeAbove = nodeAbove as ParagraphNode;
-  final aboveParagraphLength = paragraphNodeAbove.paragraph.length;
+  final paragraphNodeAbove = nodeAbove as TextNode;
+  final aboveParagraphLength = paragraphNodeAbove.text.length;
 
   // Combine the text and delete the currently selected node.
-  paragraphNodeAbove.paragraph += paragraphNode.paragraph;
+  paragraphNodeAbove.text += paragraphNode.text;
   bool didRemove = document.deleteNode(paragraphNode);
   if (!didRemove) {
     print('ERROR: Failed to delete the currently selected node from the document.');
@@ -346,7 +464,7 @@ ExecutionInstruction deleteCharacterWhenDeleteIsPressed({
   if (!currentSelection.value.isCollapsed) {
     return ExecutionInstruction.continueExecution;
   }
-  final text = (document.getNodeById(currentSelection.value.extent.nodeId) as ParagraphNode).paragraph;
+  final text = (document.getNodeById(currentSelection.value.extent.nodeId) as TextNode).text;
   final textPosition = (currentSelection.value.extent.nodePosition as TextPosition);
   if (textPosition.offset >= text.length) {
     return ExecutionInstruction.continueExecution;
@@ -385,28 +503,28 @@ ExecutionInstruction mergeNodeWithNextWhenBackspaceIsPressed({
   }
 
   final node = document.getNodeById(currentSelection.value.extent.nodeId);
-  if (node is! ParagraphNode) {
+  if (node is! TextNode) {
     print('WARNING: Cannot combine node of type: $node');
     return ExecutionInstruction.continueExecution;
   }
-  final paragraphNode = node as ParagraphNode;
+  final paragraphNode = node as TextNode;
 
   final nodeBelow = document.getNodeAfter(paragraphNode);
   if (nodeBelow == null) {
     print('At bottom of document. Cannot merge with node above.');
     return ExecutionInstruction.continueExecution;
   }
-  if (nodeBelow is! ParagraphNode) {
+  if (nodeBelow is! TextNode) {
     print('Cannot merge ParagraphNode into node of type: $nodeBelow');
     return ExecutionInstruction.continueExecution;
   }
-  final paragraphNodeBelow = nodeBelow as ParagraphNode;
+  final paragraphNodeBelow = nodeBelow as TextNode;
 
   print('Combining node with next.');
-  final currentParagraphLength = paragraphNode.paragraph.length;
+  final currentParagraphLength = paragraphNode.text.length;
 
   // Combine the text and delete the currently selected node.
-  paragraphNode.paragraph += paragraphNodeBelow.paragraph;
+  paragraphNode.text += paragraphNodeBelow.text;
   final didRemove = document.deleteNode(nodeBelow);
   if (!didRemove) {
     print('ERROR: failed to remove next node from document.');
@@ -486,6 +604,7 @@ ExecutionInstruction moveUpDownLeftAndRightWithArrowKeys({
     } else {
       _moveForwardOneCharacter(
         document: document,
+        documentLayout: documentLayout,
         currentSelection: currentSelection,
         expandSelection: keyEvent.isShiftPressed,
       );
@@ -524,7 +643,7 @@ void _moveUpOneLine({
   final extentSelection =
       nodeSelections.first.isExtent ? nodeSelections.first.nodeSelection : nodeSelections.last.nodeSelection;
   if (extentSelection is! TextSelection) {
-    print('WARNING: Cannot move to beginning of line for a selection of type: $extentSelection');
+    print('WARNING: Cannot move up a line for a selection of type: $extentSelection');
     return;
   }
   final textSelection = extentSelection as TextSelection;
@@ -540,7 +659,7 @@ void _moveUpOneLine({
   );
   if (oneLineUpPosition == null) {
     // The first line is selected. Move up to the component above.
-    final nodeAbove = document.getNodeBefore(selectedNode) as ParagraphNode;
+    final nodeAbove = document.getNodeBefore(selectedNode) as TextNode;
 
     if (nodeAbove != null) {
       final offsetToMatch = selectableText.getOffsetForPosition(
@@ -552,7 +671,7 @@ void _moveUpOneLine({
       if (offsetToMatch == null) {
         // No (x,y) offset was provided. Place the selection at the
         // end of the node.
-        oneLineUpPosition = TextPosition(offset: nodeAbove.paragraph.length);
+        oneLineUpPosition = TextPosition(offset: nodeAbove.text.length);
       } else {
         // An (x,y) offset was provided. Place the selection as close
         // to the given x-value as possible within the node.
@@ -598,9 +717,10 @@ void moveCursorToPreviousComponent({
 }) {
   print('Moving to previous node');
   print(' - move from node: $moveFromNode');
-  final nodeAbove = document.getNodeBefore(moveFromNode) as ParagraphNode;
+  final nodeAbove = document.getNodeBefore(moveFromNode) as TextNode;
   if (nodeAbove == null) {
     print(' - at top of document. Can\'t move up to node above.');
+    return;
   }
   print(' - node above: ${nodeAbove.id}');
 
@@ -612,7 +732,7 @@ void moveCursorToPreviousComponent({
   if (previousCursorOffset == null) {
     // No (x,y) offset was provided. Place the selection at the
     // end of the node.
-    newTextPosition = TextPosition(offset: nodeAbove.paragraph.length);
+    newTextPosition = TextPosition(offset: nodeAbove.text.length);
   } else {
     // An (x,y) offset was provided. Place the selection as close
     // to the given x-value as possible within the node.
@@ -689,16 +809,16 @@ void _moveDownOneLine({
   final selectedNode = document.getNodeById(currentSelection.value.extent.nodeId);
   print(' - selected node: $selectedNode');
 
-  if (selectedNode is! ParagraphNode) {
+  if (selectedNode is! TextNode) {
     print('WARNING: cannot move down one line in node of type: $selectedNode');
     return;
   }
-  final paragraphNode = selectedNode as ParagraphNode;
+  final paragraphNode = selectedNode as TextNode;
 
   final extentSelection =
       nodeSelections.first.isExtent ? nodeSelections.first.nodeSelection : nodeSelections.last.nodeSelection;
   if (extentSelection is! TextSelection) {
-    print('WARNING: Cannot move to beginning of line for a selection of type: $extentSelection');
+    print('WARNING: Cannot move down a line for a selection of type: $extentSelection');
     return;
   }
 
@@ -720,7 +840,7 @@ void _moveDownOneLine({
   if (oneLineDownPosition == null) {
     print(' - at bottom of paragraph. Moving to next node.');
     // The last line is selected. Move down to the component below.
-    final nodeBelow = document.getNodeAfter(selectedNode) as ParagraphNode;
+    final nodeBelow = document.getNodeAfter(selectedNode) as TextNode;
 
     if (nodeBelow != null) {
       final offsetToMatch = selectableText.getOffsetForPosition(
@@ -744,7 +864,7 @@ void _moveDownOneLine({
       print(' - there is no next node. Ignoring.');
       // We're at the bottom of the document. Move the cursor to the end
       // of the paragraph.
-      oneLineDownPosition = TextPosition(offset: paragraphNode.paragraph.length);
+      oneLineDownPosition = TextPosition(offset: paragraphNode.text.length);
     }
   }
 
@@ -780,7 +900,7 @@ void _moveBackOneCharacter({
   }
 
   final node = document.getNodeById(currentSelection.value.extent.nodeId);
-  if (node is! ParagraphNode) {
+  if (node is! TextNode) {
     print('WARNING: Cannot move back one word in node of type: $node');
     return;
   }
@@ -831,12 +951,12 @@ void _moveBackOneWord({
   }
 
   final node = document.getNodeById(currentSelection.value.extent.nodeId);
-  if (node is! ParagraphNode) {
+  if (node is! TextNode) {
     print('WARNING: Cannot move back one word in node of type: $node');
     return;
   }
-  final paragraphNode = node as ParagraphNode;
-  final text = paragraphNode.paragraph;
+  final paragraphNode = node as TextNode;
+  final text = paragraphNode.text;
 
   if (extentTextPosition.offset > 0) {
     int newOffset = extentTextPosition.offset;
@@ -882,12 +1002,13 @@ void _moveToStartOfLine({
   bool expandSelection = false,
 }) {
   final node = document.getNodeById(currentSelection.value.extent.nodeId);
-  if (node is! ParagraphNode) {
+  if (node is! TextNode) {
     print('WARNING: Cannot split node of type: $node');
     return;
   }
-  final selectedNode = node as ParagraphNode;
-  final extentSelection = nodeSelections.first.isExtent ? nodeSelections.first : nodeSelections.last;
+  final selectedNode = node as TextNode;
+  final extentSelection =
+      nodeSelections.first.isExtent ? nodeSelections.first.nodeSelection : nodeSelections.last.nodeSelection;
   if (extentSelection is! TextSelection) {
     print('WARNING: Cannot move to beginning of line for a selection of type: $extentSelection');
     return;
@@ -920,6 +1041,7 @@ void _moveToStartOfLine({
 
 void _moveForwardOneCharacter({
   @required RichTextDocument document,
+  @required DocumentLayoutState documentLayout,
   @required ValueNotifier<DocumentSelection> currentSelection,
   bool expandSelection = false,
 }) {
@@ -931,12 +1053,12 @@ void _moveForwardOneCharacter({
   }
 
   final node = document.getNodeById(currentSelection.value.extent.nodeId);
-  if (node is! ParagraphNode) {
+  if (node is! TextNode) {
     print('WARNING: Cannot move back one word in node of type: $node');
     return;
   }
-  final paragraphNode = node as ParagraphNode;
-  final text = paragraphNode.paragraph;
+  final paragraphNode = node as TextNode;
+  final text = paragraphNode.text;
 
   if (extentTextPosition.offset < text.length) {
     final newPosition = TextPosition(offset: extentTextPosition.offset + 1);
@@ -960,6 +1082,9 @@ void _moveForwardOneCharacter({
   } else {
     final moveFromNode = document.getNodeById(currentSelection.value.extent.nodeId);
     _moveCursorToNextComponent(
+      document: document,
+      documentLayout: documentLayout,
+      currentSelection: currentSelection,
       moveFromNode: moveFromNode,
       expandSelection: expandSelection,
     );
@@ -978,7 +1103,7 @@ void _moveCursorToNextComponent({
   Offset previousCursorOffset,
 }) {
   print('Moving to next node');
-  final nodeBelow = document.getNodeAfter(moveFromNode) as ParagraphNode;
+  final nodeBelow = document.getNodeAfter(moveFromNode) as TextNode;
   print(' - node above: $nodeBelow');
 
   if (nodeBelow == null) {
@@ -1031,12 +1156,12 @@ void _moveForwardOneWord({
   }
 
   final node = document.getNodeById(currentSelection.value.extent.nodeId);
-  if (node is! ParagraphNode) {
+  if (node is! TextNode) {
     print('WARNING: Cannot move back one word in node of type: $node');
     return;
   }
-  final paragraphNode = node as ParagraphNode;
-  final text = paragraphNode.paragraph;
+  final paragraphNode = node as TextNode;
+  final text = paragraphNode.text;
 
   if (extentTextPosition.offset < text.length) {
     int newOffset = extentTextPosition.offset;
@@ -1082,14 +1207,15 @@ void _moveToEndOfLine({
   bool expandSelection = false,
 }) {
   final node = document.getNodeById(currentSelection.value.extent.nodeId);
-  if (node is! ParagraphNode) {
+  if (node is! TextNode) {
     print('WARNING: Cannot split node of type: $node');
     return;
   }
-  final selectedNode = node as ParagraphNode;
-  final extentSelection = nodeSelections.first.isExtent ? nodeSelections.first : nodeSelections.last;
+  final selectedNode = node as TextNode;
+  final extentSelection =
+      nodeSelections.first.isExtent ? nodeSelections.first.nodeSelection : nodeSelections.last.nodeSelection;
   if (extentSelection is! TextSelection) {
-    print('WARNING: Cannot move to beginning of line for a selection of type: $extentSelection');
+    print('WARNING: Cannot move to end of line for a selection of type: $extentSelection');
     return;
   }
   final textSelection = extentSelection as TextSelection;
@@ -1099,8 +1225,8 @@ void _moveToEndOfLine({
   TextPosition newPosition = selectableText.getPositionAtEndOfLine(
     currentPosition: TextPosition(offset: textSelection.extentOffset),
   );
-  final isAutoWrapLine = newPosition.offset < selectedNode.paragraph.length &&
-      (selectedNode.paragraph.isNotEmpty && selectedNode.paragraph[newPosition.offset] != '\n');
+  final isAutoWrapLine = newPosition.offset < selectedNode.text.length &&
+      (selectedNode.text.isNotEmpty && selectedNode.text[newPosition.offset] != '\n');
 
   // Note: For lines that auto-wrap, moving the cursor to `offset` causes the
   //       cursor to jump to the next line because the cursor is placed after
@@ -1138,7 +1264,7 @@ bool _isTextEntryNode({
 }) {
   final extentPosition = selection.value.extent;
   final extentNode = document.getNodeById(extentPosition.nodeId);
-  return extentNode is ParagraphNode;
+  return extentNode is TextNode;
 }
 
 const _latinCharacters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';

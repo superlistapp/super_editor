@@ -1,6 +1,7 @@
 import 'package:example/spikes/editor_input_delegation/document/rich_text_document.dart';
 import 'package:flutter/material.dart';
 
+import 'document/document_nodes.dart';
 import 'editor.dart';
 
 /// Spike:
@@ -95,10 +96,26 @@ class _EditorSpikeState extends State<EditorSpike> {
           FlatButton(
             onPressed: () {
               setState(() {
+                _doc = _createStartingPointDoc();
+              });
+            },
+            child: Text('Starter Doc'),
+          ),
+          FlatButton(
+            onPressed: () {
+              setState(() {
                 _doc = _createLoremIpsumDoc();
               });
             },
             child: Text('Lorem Ipsum Doc'),
+          ),
+          FlatButton(
+            onPressed: () {
+              setState(() {
+                _doc = _createRichContentDoc();
+              });
+            },
+            child: Text('Rich Text Doc'),
           ),
         ],
       ),
@@ -119,10 +136,26 @@ class _EditorSpikeState extends State<EditorSpike> {
   RichTextDocument _createEmptyDoc() {
     return RichTextDocument(
       nodes: [
-        ParagraphNode(
+        TextNode(
           // TODO: I don't like how the client has to provide an ID...
           id: RichTextDocument.createNodeId(),
-          paragraph: '',
+          text: '',
+        ),
+      ],
+    );
+  }
+
+  // TODO: add hint text to these nodes
+  RichTextDocument _createStartingPointDoc() {
+    return RichTextDocument(
+      nodes: [
+        TextNode(
+          id: RichTextDocument.createNodeId(),
+          text: '',
+        ),
+        TextNode(
+          id: RichTextDocument.createNodeId(),
+          text: '',
         ),
       ],
     );
@@ -130,17 +163,63 @@ class _EditorSpikeState extends State<EditorSpike> {
 
   RichTextDocument _createLoremIpsumDoc() {
     return RichTextDocument(nodes: [
-      ParagraphNode(
+      TextNode(
         id: RichTextDocument.createNodeId(),
-        paragraph: _loremIpsum1,
+        text: _loremIpsum1,
       ),
-      ParagraphNode(
+      TextNode(
         id: RichTextDocument.createNodeId(),
-        paragraph: _loremIpsum2,
+        text: _loremIpsum2,
       ),
-      ParagraphNode(
+      TextNode(
         id: RichTextDocument.createNodeId(),
-        paragraph: _loremIpsum3,
+        text: _loremIpsum3,
+      ),
+    ]);
+  }
+
+  RichTextDocument _createRichContentDoc() {
+    return RichTextDocument(nodes: [
+      TextNode(
+        id: RichTextDocument.createNodeId(),
+        text: _loremIpsum1,
+      ),
+      UnorderedListItemNode(
+        id: RichTextDocument.createNodeId(),
+        text: 'This is the 1st list item.',
+      ),
+      UnorderedListItemNode(
+        id: RichTextDocument.createNodeId(),
+        text: 'This is the 2nd list item.',
+      ),
+      UnorderedListItemNode(
+        id: RichTextDocument.createNodeId(),
+        text: 'This is the 3rd list item.',
+      ),
+      OrderedListItemNode(
+        id: RichTextDocument.createNodeId(),
+        text: 'This is the 1st list item.',
+      ),
+      OrderedListItemNode(
+        id: RichTextDocument.createNodeId(),
+        text: 'This is the 2nd list item.',
+      ),
+      OrderedListItemNode(
+        id: RichTextDocument.createNodeId(),
+        text: 'This is the 3rd list item.',
+      ),
+      TextNode(
+        id: RichTextDocument.createNodeId(),
+        text: _loremIpsum2,
+      ),
+      ImageNode(
+        id: RichTextDocument.createNodeId(),
+        imageUrl:
+            'https://images.unsplash.com/photo-1612099453097-26a809f51e96?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=1050&q=80',
+      ),
+      TextNode(
+        id: RichTextDocument.createNodeId(),
+        text: _loremIpsum3,
       ),
     ]);
   }

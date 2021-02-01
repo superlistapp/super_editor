@@ -1,4 +1,5 @@
 import 'package:example/spikes/editor_input_delegation/document/document_editor.dart';
+import 'package:example/spikes/editor_input_delegation/document/document_nodes.dart';
 import 'package:example/spikes/editor_input_delegation/document/rich_text_document.dart';
 import 'package:example/spikes/editor_input_delegation/layout/document_layout.dart';
 import 'package:example/spikes/editor_input_delegation/selection/editor_selection.dart';
@@ -69,7 +70,7 @@ class DocumentComposer {
     print(' - doc position: $docPosition');
     final docNode = _document.getNodeById(docPosition.nodeId);
     print(' - doc node: ${docNode?.id}');
-    if (docNode is ParagraphNode) {
+    if (docNode is TextNode) {
       final textComponent = docLayout.getSelectableTextByNodeId(docNode.id);
       final TextSelection wordSelection = textComponent.getWordSelectionAt(docPosition.nodePosition);
 
@@ -106,10 +107,10 @@ class DocumentComposer {
     @required DocumentPosition docPosition,
   }) {
     final docNode = _document.getNodeById(docPosition.nodeId);
-    if (docNode is ParagraphNode) {
+    if (docNode is TextNode) {
       // final textComponent = docLayout.getSelectableTextByNodeId(docNode.id);
       final TextSelection wordSelection = _expandPositionToParagraph(
-        text: docNode.paragraph,
+        text: docNode.text,
         textPosition: docPosition.nodePosition as TextPosition,
       );
 
@@ -135,8 +136,8 @@ class DocumentComposer {
     @required SelectionType selectionType,
   }) {
     print('Composer: selectionRegion(). Mode: $selectionType');
-    DocumentPosition basePosition = documentLayout.getDocumentPositionAtOffset(baseOffset);
-    DocumentPosition extentPosition = documentLayout.getDocumentPositionAtOffset(extentOffset);
+    DocumentPosition basePosition = documentLayout.getDocumentPositionNearestToOffset(baseOffset);
+    DocumentPosition extentPosition = documentLayout.getDocumentPositionNearestToOffset(extentOffset);
 
     if (selectionType == SelectionType.paragraph) {
       final baseParagraphSelection = _getParagraphSelection(
@@ -206,7 +207,9 @@ class DocumentComposer {
 
     // TODO: move this outside this method.
     final _composerKeyActions = <ComposerKeyboardAction>[
-      // Ignore keys when no selection.
+      ComposerKeyboardAction.simple(
+        action: preventDeletionOfFirstParagraph,
+      ),
       ComposerKeyboardAction.simple(
         action: doNothingWhenThereIsNoSelection,
       ),

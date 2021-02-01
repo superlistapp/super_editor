@@ -202,33 +202,3 @@ abstract class DocumentNode implements ChangeNotifier {
 
   bool tryToCombineWithOtherNode(DocumentNode other);
 }
-
-class ParagraphNode with ChangeNotifier implements DocumentNode {
-  ParagraphNode({
-    @required this.id,
-    String paragraph = '',
-  }) : _paragraph = paragraph;
-
-  final String id;
-
-  String _paragraph;
-  String get paragraph => _paragraph;
-  set paragraph(String newParagraph) {
-    if (newParagraph != _paragraph) {
-      print('Paragraph changed. Notifying listeners.');
-      _paragraph = newParagraph;
-      notifyListeners();
-    }
-  }
-
-  bool tryToCombineWithOtherNode(DocumentNode other) {
-    // TODO: need to be able to list items into paragraphs somehow.
-    if (other is! ParagraphNode) {
-      return false;
-    }
-
-    final otherParagraph = other as ParagraphNode;
-    this.paragraph += otherParagraph.paragraph;
-    return true;
-  }
-}

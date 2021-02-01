@@ -27,6 +27,7 @@ class SelectableText extends StatefulWidget {
 
 class SelectableTextState extends State<SelectableText> with SingleTickerProviderStateMixin implements TextLayout {
   final GlobalKey _textKey = GlobalKey();
+  TextStyle _textStyle;
 
   CursorBlinkController _cursorBlinkController;
 
@@ -41,8 +42,17 @@ class SelectableTextState extends State<SelectableText> with SingleTickerProvide
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _updateTextStyle();
+  }
+
+  @override
   void didUpdateWidget(SelectableText oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (widget.style != oldWidget.style) {
+      _updateTextStyle();
+    }
     _cursorBlinkController.caretPosition = widget.textSelection?.extent;
   }
 
@@ -50,6 +60,15 @@ class SelectableTextState extends State<SelectableText> with SingleTickerProvide
   void dispose() {
     _cursorBlinkController.dispose();
     super.dispose();
+  }
+
+  void _updateTextStyle() {
+    setState(() {
+      _textStyle = widget.style ?? Theme.of(context).textTheme.bodyText1;
+      if (_textStyle.height == null) {
+        _textStyle = _textStyle.copyWith(height: 1.0);
+      }
+    });
   }
 
   RenderParagraph get _renderParagraph => _textKey.currentContext?.findRenderObject() as RenderParagraph;
@@ -82,7 +101,7 @@ class SelectableTextState extends State<SelectableText> with SingleTickerProvide
     TextPosition currentPosition,
   }) {
     // TODO: use TextPainter to get real line height.
-    final lineHeight = widget.style.fontSize * widget.style.height;
+    final lineHeight = _textStyle.fontSize * _textStyle.height;
     // Note: add half the line height to the current offset to help deal with
     //       line heights that aren't accurate.
     final currentSelectionOffset =
@@ -101,7 +120,7 @@ class SelectableTextState extends State<SelectableText> with SingleTickerProvide
     TextPosition currentPosition,
   }) {
     // TODO: use TextPainter to get real line height.
-    final lineHeight = widget.style.fontSize * widget.style.height;
+    final lineHeight = _textStyle.fontSize * _textStyle.height;
     // Note: add half the line height to the current offset to help deal with
     //       line heights that aren't accurate.
     final currentSelectionOffset =
@@ -214,7 +233,7 @@ class SelectableTextState extends State<SelectableText> with SingleTickerProvide
       });
     }
 
-    final desiredTextStyle = widget.style ?? Theme.of(context).textTheme.bodyText1;
+    final desiredTextStyle = _textStyle;
     final textStyle = widget.showDebugPaint
         ? desiredTextStyle.copyWith(
             color: const Color(0xFF444444),
@@ -238,7 +257,7 @@ class SelectableTextState extends State<SelectableText> with SingleTickerProvide
               text: widget.text,
               renderParagraph: _renderParagraph,
               selection: widget.textSelection,
-              emptySelectionHeight: widget.style.fontSize * widget.style.height,
+              emptySelectionHeight: _textStyle.fontSize * _textStyle.height,
               highlightWhenEmpty: widget.highlightWhenEmpty,
               selectionColor: widget.showDebugPaint ? Colors.lightGreenAccent : Colors.lightBlueAccent),
         ),
@@ -252,8 +271,8 @@ class SelectableTextState extends State<SelectableText> with SingleTickerProvide
             blinkController: _cursorBlinkController,
             paragraph: _renderParagraph,
             cursorOffset: widget.textSelection != null ? widget.textSelection.extentOffset : -1,
-            lineHeight: widget.style.fontSize * widget.style.height,
-            caretHeight: (widget.style.fontSize * widget.style.height) * (widget.showDebugPaint ? 1.2 : 0.8),
+            lineHeight: _textStyle.fontSize * _textStyle.height,
+            caretHeight: (_textStyle.fontSize * _textStyle.height) * (widget.showDebugPaint ? 1.2 : 0.8),
             caretColor: widget.showDebugPaint ? Colors.red : Colors.black,
             isTextEmpty: widget.text == null || widget.text.isEmpty,
             showCursor: widget.hasCursor,
@@ -416,7 +435,6 @@ class CursorBlinkController with ChangeNotifier {
           vsync: tickerProvider,
           duration: flashPeriod,
         ) {
-    print('Creating CursorBlinkController');
     _animationController
       ..addListener(() {
         notifyListeners();

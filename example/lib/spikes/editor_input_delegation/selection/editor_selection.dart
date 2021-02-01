@@ -1,3 +1,4 @@
+import 'package:example/spikes/editor_input_delegation/document/document_nodes.dart';
 import 'package:example/spikes/editor_input_delegation/document/rich_text_document.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -78,7 +79,7 @@ class DocumentSelection {
     print(' - extent position: $extent');
     if (isCollapsed) {
       final docNode = document.getNode(base);
-      if (docNode is ParagraphNode) {
+      if (docNode is TextNode) {
         // One paragraph node is selected. The selection within
         // the node is collapsed.
         return [
@@ -97,7 +98,7 @@ class DocumentSelection {
       }
     } else if (base.nodeId == extent.nodeId) {
       final docNode = document.getNode(base);
-      if (docNode is ParagraphNode) {
+      if (docNode is TextNode) {
         // One paragraph node is selected. The selection within
         // the paragraph has a start and end.
         final baseTextPosition = base.nodePosition as TextPosition;
@@ -125,7 +126,7 @@ class DocumentSelection {
         final selectedNode = selectedNodes[i];
 
         // TODO: support other nodes.
-        if (selectedNode is! ParagraphNode) {
+        if (selectedNode is! TextNode) {
           continue;
         }
 
@@ -139,7 +140,7 @@ class DocumentSelection {
 
           final midParagraph =
               isBase ? (base.nodePosition as TextPosition).offset : (extent.nodePosition as TextPosition).offset;
-          final endParagraph = (selectedNode as ParagraphNode).paragraph.length;
+          final endParagraph = (selectedNode as TextNode).text.length;
 
           nodeSelections.add(
             DocumentNodeSelection(
@@ -180,7 +181,7 @@ class DocumentSelection {
               nodeId: selectedNode.id,
               nodeSelection: TextSelection(
                 baseOffset: 0,
-                extentOffset: (selectedNode as ParagraphNode).paragraph.length,
+                extentOffset: (selectedNode as TextNode).text.length,
               ),
               highlightWhenEmpty: true,
             ),

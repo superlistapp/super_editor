@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
+import 'document_nodes.dart';
 import 'rich_text_document.dart';
 import '../selection/editor_selection.dart';
 
@@ -13,20 +14,20 @@ class DocumentEditor {
     @required String character,
   }) {
     final docNode = document.getNodeById(position.nodeId);
-    if (docNode is! ParagraphNode) {
+    if (docNode is! TextNode) {
       return DocumentSelection.collapsed(position: position);
     }
 
-    final paragraphNode = docNode as ParagraphNode;
+    final paragraphNode = docNode as TextNode;
     final textOffset = (position.nodePosition as TextPosition).offset;
     final newParagraph = _insertStringInString(
       index: textOffset,
-      existing: paragraphNode.paragraph,
+      existing: paragraphNode.text,
       addition: character,
     );
 
     // Add the character to the paragraph.
-    paragraphNode.paragraph = newParagraph;
+    paragraphNode.text = newParagraph;
 
     // Update the selection to place the caret after the new character.
     return DocumentSelection.collapsed(
@@ -79,11 +80,11 @@ class DocumentEditor {
       final nodeSelection = nodeSelections.first;
       assert(nodeSelection.nodeSelection is TextSelection);
       final textSelection = nodeSelection.nodeSelection as TextSelection;
-      final paragraphNode = document.getNodeById(nodeSelection.nodeId) as ParagraphNode;
-      paragraphNode.paragraph = _removeStringSubsection(
+      final paragraphNode = document.getNodeById(nodeSelection.nodeId) as TextNode;
+      paragraphNode.text = _removeStringSubsection(
         from: textSelection.start,
         to: textSelection.end,
-        text: paragraphNode.paragraph,
+        text: paragraphNode.text,
       );
 
       print('Done deleting selection. Returning new document selection.');
@@ -160,7 +161,7 @@ class DocumentEditor {
     @required dynamic nodeSelection,
   }) {
     // TODO: support other nodes
-    if (docNode is! ParagraphNode) {
+    if (docNode is! TextNode) {
       print(' - unknown node type: $docNode');
       return;
     }
@@ -169,19 +170,19 @@ class DocumentEditor {
     assert(index >= 0 && index < document.nodes.length);
 
     print('Deleting selection within node $index');
-    final paragraphNode = docNode as ParagraphNode;
+    final paragraphNode = docNode as TextNode;
     if (nodeSelection is TextSelection) {
       print(' - deleting TextSelection within ParagraphNode');
       final from = min(nodeSelection.baseOffset, nodeSelection.extentOffset);
       final to = max(nodeSelection.baseOffset, nodeSelection.extentOffset);
-      print(' - from: $from, to: $to, text: ${paragraphNode.paragraph}');
+      print(' - from: $from, to: $to, text: ${paragraphNode.text}');
 
-      paragraphNode.paragraph = _removeStringSubsection(
+      paragraphNode.text = _removeStringSubsection(
         from: from,
         to: to,
-        text: paragraphNode.paragraph,
+        text: paragraphNode.text,
       );
-      print(' - remaining text: ${paragraphNode.paragraph}');
+      print(' - remaining text: ${paragraphNode.text}');
     } else {
       print('ParagraphNode cannot delete unknown selection type: $nodeSelection');
     }
