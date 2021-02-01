@@ -152,6 +152,7 @@ class _EditorSpikeState extends State<EditorSpike> {
         TextNode(
           id: RichTextDocument.createNodeId(),
           text: '',
+          textType: 'header1',
         ),
         TextNode(
           id: RichTextDocument.createNodeId(),
@@ -182,7 +183,22 @@ class _EditorSpikeState extends State<EditorSpike> {
     return RichTextDocument(nodes: [
       TextNode(
         id: RichTextDocument.createNodeId(),
+        text: 'This is rich text',
+        textType: 'header1',
+      ),
+      TextNode(
+        id: RichTextDocument.createNodeId(),
         text: _loremIpsum1,
+      ),
+      TextNode(
+        id: RichTextDocument.createNodeId(),
+        text: _loremIpsum1,
+        textAlign: TextAlign.center,
+      ),
+      TextNode(
+        id: RichTextDocument.createNodeId(),
+        text: _loremIpsum1,
+        textAlign: TextAlign.right,
       ),
       UnorderedListItemNode(
         id: RichTextDocument.createNodeId(),
@@ -206,6 +222,7 @@ class _EditorSpikeState extends State<EditorSpike> {
         id: RichTextDocument.createNodeId(),
         text: 'This is the 5th list item.',
       ),
+      HorizontalRuleNode(id: RichTextDocument.createNodeId()),
       OrderedListItemNode(
         id: RichTextDocument.createNodeId(),
         text: 'This is the 1st list item.',

@@ -5,6 +5,7 @@ import 'package:example/spikes/editor_input_delegation/document/rich_text_docume
 import 'package:example/spikes/editor_input_delegation/gestures/multi_tap_gesture.dart';
 import 'package:example/spikes/editor_input_delegation/layout/document_layout.dart';
 import 'package:example/spikes/editor_input_delegation/selection/editor_selection.dart';
+import 'package:example/spikes/editor_input_delegation/ui_components/horizontal_rule.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart' hide SelectableText;
 import 'package:flutter/rendering.dart';
@@ -12,6 +13,10 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 
 import 'document/document_editor.dart';
+import 'document/document_nodes.dart';
+import 'ui_components/image.dart';
+import 'ui_components/list_items.dart';
+import 'ui_components/text.dart';
 
 /// A user-editable rich text document.
 ///
@@ -640,66 +645,118 @@ class _EditableDocumentState extends State<EditableDocument> with SingleTickerPr
   }
 }
 
-// Widget addHintTextToTitleAndFirstParagraph({
-//   @required BuildContext context,
-//   @required RichTextDocument document,
-//   @required DocumentNode currentNode,
-//   @required List<DocumentNodeSelection> currentSelection,
-//   @required Widget child,
-// }) {
-//   final nodeIndex = document.getNodeIndex(currentNode);
-//   if (nodeIndex == 0) {
-//     if (currentNode is ParagraphNode && currentNode.paragraph.isEmpty) {
-//       final selectedNode =
-//           currentSelection.firstWhere((element) => element.nodeId == currentNode.id, orElse: () => null);
-//       if (selectedNode != null) {
-//         // Don't display hint text when the caret is in the field.
-//         return child;
-//       }
-//
-//       return MouseRegion(
-//         cursor: SystemMouseCursors.text,
-//         child: Stack(
-//           children: [
-//             Text(
-//               'Enter your title',
-//               style: Theme.of(context).textTheme.bodyText1.copyWith(
-//                     color: const Color(0xFFC3C1C1),
-//                   ),
-//             ),
-//             Positioned.fill(child: child),
-//           ],
-//         ),
-//       );
-//     }
-//   } else if (nodeIndex == 1) {
-//     if (currentNode is ParagraphNode && currentNode.paragraph.isEmpty && document.nodes.length == 2) {
-//       final selectedNode =
-//           currentSelection.firstWhere((element) => element.nodeId == currentNode.id, orElse: () => null);
-//       if (selectedNode != null) {
-//         // Don't display hint text when the caret is in the field.
-//         return child;
-//       }
-//
-//       return MouseRegion(
-//         cursor: SystemMouseCursors.text,
-//         child: Stack(
-//           children: [
-//             Text(
-//               'Enter your content...',
-//               style: Theme.of(context).textTheme.bodyText1.copyWith(
-//                     color: const Color(0xFFC3C1C1),
-//                   ),
-//             ),
-//             Positioned.fill(child: child),
-//           ],
-//         ),
-//       );
-//     }
-//   }
-//
-//   return child;
-// }
+final ComponentBuilder defaultComponentBuilder = ({
+  @required BuildContext context,
+  @required RichTextDocument document,
+  @required DocumentNode currentNode,
+  @required List<DocumentNodeSelection> currentSelection,
+  // TODO: get rid of selectedNode param
+  @required DocumentNodeSelection selectedNode,
+  @required GlobalKey key,
+  bool showDebugPaint = false,
+}) {
+  if (currentNode is TextNode) {
+    final textSelection = selectedNode == null ? null : selectedNode.nodeSelection as TextSelection;
+    final hasCursor = selectedNode != null ? selectedNode.isExtent : false;
+    final highlightWhenEmpty = selectedNode == null ? false : selectedNode.highlightWhenEmpty;
+
+    // print(' - ${docNode.id}: ${selectedNode?.nodeSelection}');
+    // if (hasCursor) {
+    //   print('   - ^ has cursor');
+    // }
+
+    if (document.getNodeIndex(currentNode) == 0 && currentNode.text.isEmpty && !hasCursor) {
+      return TextWithHintComponent(
+        textKey: key,
+        text: currentNode.text,
+        textType: currentNode.textType,
+        hintText: 'Enter your title',
+        textAlign: currentNode.textAlign,
+        textSelection: textSelection,
+        hasCursor: hasCursor,
+        // TODO: figure out how to configure styles
+        textStyle: TextStyle(
+          fontSize: 13,
+          height: 1.4,
+          color: const Color(0xFF312F2C),
+        ),
+        highlightWhenEmpty: highlightWhenEmpty,
+        showDebugPaint: showDebugPaint,
+      );
+    } else if (document.getNodeIndex(currentNode) == 1 && currentNode.text.isEmpty && !hasCursor) {
+      return TextWithHintComponent(
+        textKey: key,
+        text: currentNode.text,
+        textType: currentNode.textType,
+        hintText: 'Enter your content...',
+        textAlign: currentNode.textAlign,
+        textSelection: textSelection,
+        hasCursor: hasCursor,
+        // TODO: figure out how to configure styles
+        textStyle: TextStyle(
+          fontSize: 13,
+          height: 1.4,
+          color: const Color(0xFF312F2C),
+        ),
+        highlightWhenEmpty: highlightWhenEmpty,
+        showDebugPaint: showDebugPaint,
+      );
+    } else {
+      return TextComponent(
+        textKey: key,
+        text: currentNode.text,
+        textType: currentNode.textType,
+        textAlign: currentNode.textAlign,
+        textSelection: textSelection,
+        hasCursor: hasCursor,
+        // TODO: figure out how to configure styles
+        textStyle: TextStyle(
+          fontSize: 13,
+          height: 1.4,
+          color: const Color(0xFF312F2C),
+        ),
+        highlightWhenEmpty: highlightWhenEmpty,
+        showDebugPaint: showDebugPaint,
+      );
+    }
+  } else if (currentNode is ImageNode) {
+    return ImageComponent(
+      imageUrl: currentNode.imageUrl,
+    );
+  } else if (currentNode is UnorderedListItemNode) {
+    return UnorderedListItemComponent(
+      textKey: key,
+      text: currentNode.text,
+      indent: currentNode.indent,
+      showDebugPaint: showDebugPaint,
+    );
+  } else if (currentNode is OrderedListItemNode) {
+    int index = 1;
+    DocumentNode nodeAbove = document.getNodeBefore(currentNode);
+    while (nodeAbove != null && nodeAbove is OrderedListItemNode && nodeAbove.indent >= currentNode.indent) {
+      if ((nodeAbove as OrderedListItemNode).indent == currentNode.indent) {
+        index += 1;
+      }
+      nodeAbove = document.getNodeBefore(nodeAbove);
+    }
+
+    return OrderedListItemComponent(
+      textKey: key,
+      listIndex: index,
+      text: currentNode.text,
+      indent: currentNode.indent,
+      showDebugPaint: showDebugPaint,
+    );
+  } else if (currentNode is HorizontalRuleNode) {
+    return HorizontalRuleComponent();
+  } else {
+    return SizedBox(
+      width: double.infinity,
+      height: 100,
+      child: Placeholder(),
+    );
+  }
+};
 
 /// Paints a rectangle border around the given `selectionRect`.
 class DragRectanglePainter extends CustomPainter {

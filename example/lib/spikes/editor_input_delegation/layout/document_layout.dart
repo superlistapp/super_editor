@@ -1,11 +1,9 @@
-import 'package:example/spikes/editor_input_delegation/document/document_nodes.dart';
-import 'package:example/spikes/editor_input_delegation/ui_components/list_items.dart';
 import 'package:flutter/material.dart' hide SelectableText;
 import 'package:flutter/rendering.dart';
 
 import '../document/rich_text_document.dart';
-import '../selection/editor_selection.dart';
 import '../selectable_text/selectable_text.dart';
+import '../selection/editor_selection.dart';
 
 /// Displays a `RichTextDocument`.
 ///
@@ -33,14 +31,12 @@ class DocumentLayout extends StatefulWidget {
     @required this.document,
     @required this.documentSelection,
     @required this.componentBuilder,
-    this.componentDecorator,
     this.showDebugPaint = false,
   }) : super(key: key);
 
   final RichTextDocument document;
   final List<DocumentNodeSelection> documentSelection;
   final ComponentBuilder componentBuilder;
-  final ComponentDecorator componentDecorator;
   final bool showDebugPaint;
 
   @override
@@ -285,17 +281,7 @@ class DocumentLayoutState extends State<DocumentLayout> {
         showDebugPaint: widget.showDebugPaint,
       );
 
-      final decoratedComponent = widget.componentDecorator != null
-          ? widget.componentDecorator.call(
-              context: context,
-              document: widget.document,
-              currentNode: docNode,
-              currentSelection: widget.documentSelection,
-              child: component,
-            )
-          : component;
-
-      docComponents.add(decoratedComponent);
+      docComponents.add(component);
     }
 
     _nodeIdsToComponentKeys
@@ -327,121 +313,4 @@ typedef ComponentBuilder = Widget Function({
   @required DocumentNodeSelection selectedNode,
   @required GlobalKey key,
   bool showDebugPaint,
-});
-
-final ComponentBuilder defaultComponentBuilder = ({
-  @required BuildContext context,
-  @required RichTextDocument document,
-  @required DocumentNode currentNode,
-  @required List<DocumentNodeSelection> currentSelection,
-  // TODO: get rid of selectedNode param
-  @required DocumentNodeSelection selectedNode,
-  @required GlobalKey key,
-  bool showDebugPaint = false,
-}) {
-  if (currentNode is TextNode) {
-    final textSelection = selectedNode == null ? null : selectedNode.nodeSelection as TextSelection;
-    final hasCursor = selectedNode != null ? selectedNode.isExtent : false;
-    final highlightWhenEmpty = selectedNode == null ? false : selectedNode.highlightWhenEmpty;
-
-    // print(' - ${docNode.id}: ${selectedNode?.nodeSelection}');
-    // if (hasCursor) {
-    //   print('   - ^ has cursor');
-    // }
-
-    final selectableText = SelectableText(
-      key: key,
-      text: currentNode.text,
-      textSelection: textSelection,
-      hasCursor: hasCursor,
-      // TODO: figure out how to configure styles
-      style: TextStyle(
-        fontSize: 13,
-        height: 1.4,
-        color: const Color(0xFF312F2C),
-      ),
-      highlightWhenEmpty: highlightWhenEmpty,
-      showDebugPaint: showDebugPaint,
-    );
-
-    if (document.getNodeIndex(currentNode) == 0 && currentNode.text.isEmpty && !hasCursor) {
-      return MouseRegion(
-        cursor: SystemMouseCursors.text,
-        child: Stack(
-          children: [
-            Text(
-              'Enter your title',
-              style: Theme.of(context).textTheme.bodyText1.copyWith(
-                    color: const Color(0xFFC3C1C1),
-                  ),
-            ),
-            Positioned.fill(child: selectableText),
-          ],
-        ),
-      );
-    } else if (document.getNodeIndex(currentNode) == 1 && currentNode.text.isEmpty && !hasCursor) {
-      return MouseRegion(
-        cursor: SystemMouseCursors.text,
-        child: Stack(
-          children: [
-            Text(
-              'Enter your content...',
-              style: Theme.of(context).textTheme.bodyText1.copyWith(
-                    color: const Color(0xFFC3C1C1),
-                  ),
-            ),
-            Positioned.fill(child: selectableText),
-          ],
-        ),
-      );
-    } else {
-      return selectableText;
-    }
-  } else if (currentNode is ImageNode) {
-    return Center(
-      child: Image.network(
-        currentNode.imageUrl,
-        key: key,
-        fit: BoxFit.contain,
-      ),
-    );
-  } else if (currentNode is UnorderedListItemNode) {
-    return UnorderedListItemComponent(
-      key: key,
-      text: currentNode.text,
-      indent: currentNode.indent,
-      showDebugPaint: showDebugPaint,
-    );
-  } else if (currentNode is OrderedListItemNode) {
-    int index = 1;
-    DocumentNode nodeAbove = document.getNodeBefore(currentNode);
-    while (nodeAbove != null && nodeAbove is OrderedListItemNode && nodeAbove.indent >= currentNode.indent) {
-      if ((nodeAbove as OrderedListItemNode).indent == currentNode.indent) {
-        index += 1;
-      }
-      nodeAbove = document.getNodeBefore(nodeAbove);
-    }
-
-    return OrderedListItemComponent(
-      key: key,
-      listIndex: index,
-      text: currentNode.text,
-      indent: currentNode.indent,
-      showDebugPaint: showDebugPaint,
-    );
-  } else {
-    return SizedBox(
-      width: double.infinity,
-      height: 100,
-      child: Placeholder(),
-    );
-  }
-};
-
-typedef ComponentDecorator = Widget Function({
-  @required BuildContext context,
-  @required RichTextDocument document,
-  @required DocumentNode currentNode,
-  @required List<DocumentNodeSelection> currentSelection,
-  @required Widget child,
 });

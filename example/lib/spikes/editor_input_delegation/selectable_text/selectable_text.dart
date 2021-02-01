@@ -7,6 +7,7 @@ class SelectableText extends StatefulWidget {
   const SelectableText({
     @required Key key,
     this.text = '',
+    this.textAlign = TextAlign.left,
     this.textSelection = const TextSelection.collapsed(offset: -1),
     this.hasCursor = false,
     this.style,
@@ -15,6 +16,7 @@ class SelectableText extends StatefulWidget {
   }) : super(key: key);
 
   final String text;
+  final TextAlign textAlign;
   final TextSelection textSelection;
   final bool hasCursor;
   final TextStyle style;
@@ -264,6 +266,7 @@ class SelectableTextState extends State<SelectableText> with SingleTickerProvide
         Text(
           widget.text,
           key: _textKey,
+          textAlign: widget.textAlign,
           style: textStyle,
         ),
         CustomPaint(

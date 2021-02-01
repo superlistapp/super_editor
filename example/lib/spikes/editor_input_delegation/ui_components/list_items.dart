@@ -6,12 +6,14 @@ import '../selectable_text/selectable_text.dart';
 class UnorderedListItemComponent extends StatelessWidget {
   const UnorderedListItemComponent({
     Key key,
+    @required this.textKey,
     this.text = '',
     this.textStyle,
     this.indent = 0,
     this.showDebugPaint = false,
   }) : super(key: key);
 
+  final GlobalKey textKey;
   final String text;
   final TextStyle textStyle;
   final int indent;
@@ -57,6 +59,7 @@ class UnorderedListItemComponent extends StatelessWidget {
 class OrderedListItemComponent extends StatelessWidget {
   const OrderedListItemComponent({
     Key key,
+    @required this.textKey,
     @required this.listIndex,
     this.text = '',
     this.numeralTextStyle,
@@ -65,6 +68,7 @@ class OrderedListItemComponent extends StatelessWidget {
     this.showDebugPaint = false,
   }) : super(key: key);
 
+  final GlobalKey textKey;
   final int listIndex;
   final String text;
   final TextStyle numeralTextStyle;
@@ -86,6 +90,7 @@ class OrderedListItemComponent extends StatelessWidget {
               padding: const EdgeInsets.only(right: 15.0),
               child: Text(
                 '$listIndex',
+                key: textKey,
                 style: numeralTextStyle,
               ),
             ),

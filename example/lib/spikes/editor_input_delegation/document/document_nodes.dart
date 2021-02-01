@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/rendering.dart';
 
 import 'rich_text_document.dart';
 
@@ -6,7 +7,11 @@ class TextNode with ChangeNotifier implements DocumentNode {
   TextNode({
     @required this.id,
     String text = '',
-  }) : _text = text;
+    TextAlign textAlign = TextAlign.left,
+    String textType = 'paragraph',
+  })  : _text = text,
+        _textAlign = textAlign,
+        _textType = textType;
 
   final String id;
 
@@ -16,6 +21,24 @@ class TextNode with ChangeNotifier implements DocumentNode {
     if (newText != _text) {
       print('Text changed. Notifying listeners.');
       _text = newText;
+      notifyListeners();
+    }
+  }
+
+  TextAlign _textAlign;
+  TextAlign get textAlign => _textAlign;
+  set textAlign(TextAlign newAlign) {
+    if (newAlign != _textAlign) {
+      _textAlign = newAlign;
+      notifyListeners();
+    }
+  }
+
+  String _textType;
+  String get textType => _textType;
+  set textType(String newTextType) {
+    if (newTextType != _textType) {
+      _textType = newTextType;
       notifyListeners();
     }
   }
@@ -124,6 +147,19 @@ class ImageNode with ChangeNotifier implements DocumentNode {
 
   bool tryToCombineWithOtherNode(DocumentNode other) {
     // Images can't be combined with anything else.
+    return false;
+  }
+}
+
+class HorizontalRuleNode with ChangeNotifier implements DocumentNode {
+  HorizontalRuleNode({
+    @required this.id,
+  });
+
+  final String id;
+
+  bool tryToCombineWithOtherNode(DocumentNode other) {
+    // Horizontal rules can't be combined with anything else.
     return false;
   }
 }
