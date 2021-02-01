@@ -1,11 +1,11 @@
 import 'package:example/spikes/editor_input_delegation/document/document_nodes.dart';
-import 'package:example/spikes/editor_input_delegation/layout/components/list_items.dart';
+import 'package:example/spikes/editor_input_delegation/ui_components/list_items.dart';
 import 'package:flutter/material.dart' hide SelectableText;
 import 'package:flutter/rendering.dart';
 
 import '../document/rich_text_document.dart';
 import '../selection/editor_selection.dart';
-import 'components/paragraph/selectable_text.dart';
+import '../selectable_text/selectable_text.dart';
 
 /// Displays a `RichTextDocument`.
 ///
@@ -409,14 +409,16 @@ final ComponentBuilder defaultComponentBuilder = ({
     return UnorderedListItemComponent(
       key: key,
       text: currentNode.text,
+      indent: currentNode.indent,
       showDebugPaint: showDebugPaint,
     );
   } else if (currentNode is OrderedListItemNode) {
     int index = 1;
     DocumentNode nodeAbove = document.getNodeBefore(currentNode);
-    while (nodeAbove != null && nodeAbove is OrderedListItemNode) {
-      // TODO: handle possibility of indentation.
-      index += 1;
+    while (nodeAbove != null && nodeAbove is OrderedListItemNode && nodeAbove.indent >= currentNode.indent) {
+      if ((nodeAbove as OrderedListItemNode).indent == currentNode.indent) {
+        index += 1;
+      }
       nodeAbove = document.getNodeBefore(nodeAbove);
     }
 
@@ -424,6 +426,7 @@ final ComponentBuilder defaultComponentBuilder = ({
       key: key,
       listIndex: index,
       text: currentNode.text,
+      indent: currentNode.indent,
       showDebugPaint: showDebugPaint,
     );
   } else {

@@ -195,6 +195,16 @@ class _EditorSpikeState extends State<EditorSpike> {
       UnorderedListItemNode(
         id: RichTextDocument.createNodeId(),
         text: 'This is the 3rd list item.',
+        indent: 1,
+      ),
+      UnorderedListItemNode(
+        id: RichTextDocument.createNodeId(),
+        text: 'This is the 4th list item.',
+        indent: 1,
+      ),
+      UnorderedListItemNode(
+        id: RichTextDocument.createNodeId(),
+        text: 'This is the 5th list item.',
       ),
       OrderedListItemNode(
         id: RichTextDocument.createNodeId(),
@@ -207,6 +217,26 @@ class _EditorSpikeState extends State<EditorSpike> {
       OrderedListItemNode(
         id: RichTextDocument.createNodeId(),
         text: 'This is the 3rd list item.',
+        indent: 1,
+      ),
+      OrderedListItemNode(
+        id: RichTextDocument.createNodeId(),
+        text: 'This is the 4th list item.',
+        indent: 1,
+      ),
+      OrderedListItemNode(
+        id: RichTextDocument.createNodeId(),
+        text: 'This is the 5th list item.',
+        indent: 2,
+      ),
+      OrderedListItemNode(
+        id: RichTextDocument.createNodeId(),
+        text: 'This is the 6th list item.',
+        indent: 2,
+      ),
+      OrderedListItemNode(
+        id: RichTextDocument.createNodeId(),
+        text: 'This is the 7th list item.',
       ),
       TextNode(
         id: RichTextDocument.createNodeId(),

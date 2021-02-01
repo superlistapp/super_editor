@@ -36,9 +36,20 @@ class UnorderedListItemNode with ChangeNotifier implements DocumentNode {
   UnorderedListItemNode({
     @required this.id,
     String text = '',
-  }) : _text = text;
+    int indent = 0,
+  })  : _text = text,
+        _indent = indent;
 
   final String id;
+
+  int _indent;
+  int get indent => _indent;
+  set indent(int newIndent) {
+    if (newIndent != _indent) {
+      _indent = newIndent;
+      notifyListeners();
+    }
+  }
 
   String _text;
   String get text => _text;
@@ -61,9 +72,20 @@ class OrderedListItemNode with ChangeNotifier implements DocumentNode {
   OrderedListItemNode({
     @required this.id,
     String text = '',
-  }) : _text = text;
+    int indent = 0,
+  })  : _text = text,
+        _indent = indent;
 
   final String id;
+
+  int _indent;
+  int get indent => _indent;
+  set indent(int newIndent) {
+    if (newIndent != _indent) {
+      _indent = newIndent;
+      notifyListeners();
+    }
+  }
 
   String _text;
   String get text => _text;
