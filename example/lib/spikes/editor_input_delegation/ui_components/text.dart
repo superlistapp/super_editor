@@ -2,6 +2,8 @@ import 'package:example/spikes/editor_input_delegation/selectable_text/selectabl
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
+/// Displays text in a document, and given `hintText` when there
+/// is no content text and this component does not have the caret.
 class TextWithHintComponent extends StatelessWidget {
   const TextWithHintComponent({
     Key key,
@@ -71,6 +73,9 @@ class TextWithHintComponent extends StatelessWidget {
   }
 }
 
+/// Displays text in a document.
+///
+/// This is the standard component for text display.
 class TextComponent extends StatelessWidget {
   const TextComponent({
     Key key,

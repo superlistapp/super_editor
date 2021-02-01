@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+/// Displays a horizontal rule in a document.
 class HorizontalRuleComponent extends StatelessWidget {
   const HorizontalRuleComponent({
     this.color = Colors.grey,

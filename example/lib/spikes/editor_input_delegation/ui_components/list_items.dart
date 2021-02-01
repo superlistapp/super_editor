@@ -3,6 +3,9 @@ import 'package:flutter/widgets.dart';
 
 import '../selectable_text/selectable_text.dart';
 
+/// Displays a un-ordered list item in a document.
+///
+/// Supports various indentation levels, e.g., 1, 2, 3, ...
 class UnorderedListItemComponent extends StatelessWidget {
   const UnorderedListItemComponent({
     Key key,
@@ -56,6 +59,9 @@ class UnorderedListItemComponent extends StatelessWidget {
   }
 }
 
+/// Displays an ordered list item in a document.
+///
+/// Supports various indentation levels, e.g., 1, 2, 3, ...
 class OrderedListItemComponent extends StatelessWidget {
   const OrderedListItemComponent({
     Key key,

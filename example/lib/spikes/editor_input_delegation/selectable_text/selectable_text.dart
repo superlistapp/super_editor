@@ -3,6 +3,19 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
+/// Displays text with an optional selection area.
+///
+/// `textSelection` determines the span of text to be painted
+/// with a selection highlight.
+///
+/// `hasCursor` should be true when the text editing caret is sitting
+/// within this text area. This information is used to make certain
+/// widget decisions.
+///
+/// If `text` is empty, a `textSelection` with an extent >= 0 is provided, and
+/// `highlightWhenEmpty` is `true`, then `SelectableText` will paint a small
+/// highlight, despite having no content. This is useful when showing that
+/// one or more empty text areas are selected.
 class SelectableText extends StatefulWidget {
   const SelectableText({
     @required Key key,

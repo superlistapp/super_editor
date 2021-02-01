@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 
+/// Displays an image in a document.
 class ImageComponent extends StatelessWidget {
   const ImageComponent({
     Key key,
