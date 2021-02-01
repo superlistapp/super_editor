@@ -1,7 +1,7 @@
-import 'package:example/spikes/editor_abstractions/document/rich_text_document.dart';
 import 'package:flutter/material.dart';
 
-import 'document/document_nodes.dart';
+import 'core/document/rich_text_document.dart';
+import 'core/document/document_nodes.dart';
 import 'editor.dart';
 
 /// Spike:

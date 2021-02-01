@@ -2,8 +2,10 @@ import 'package:flutter/material.dart' hide SelectableText;
 import 'package:flutter/rendering.dart';
 
 import '../document/rich_text_document.dart';
-import '../selectable_text/selectable_text.dart';
 import '../selection/editor_selection.dart';
+
+// TODO: get rid of this import
+import '../../selectable_text/selectable_text.dart';
 
 /// Displays a `RichTextDocument`.
 ///

@@ -1,13 +1,15 @@
-import 'package:example/spikes/editor_abstractions/document/document_editor.dart';
-import 'package:example/spikes/editor_abstractions/document/document_nodes.dart';
-import 'package:example/spikes/editor_abstractions/document/rich_text_document.dart';
-import 'package:example/spikes/editor_abstractions/layout/document_layout.dart';
-import 'package:example/spikes/editor_abstractions/selection/editor_selection.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 import 'document_composer_actions.dart';
+import '../document/rich_text_document.dart';
+import '../document/document_editor.dart';
+import '../layout/document_layout.dart';
+import '../selection/editor_selection.dart';
+
+// TODO: should nodes be in core?
+import '../document/document_nodes.dart';
 
 /// Maintains a `DocumentSelection` within a `RichTextDocument` and
 /// uses that selection to edit the document.

@@ -1,8 +1,9 @@
-import 'package:example/spikes/editor_abstractions/document/document_editor.dart';
-import 'package:example/spikes/editor_abstractions/document/rich_text_document.dart';
-import 'package:example/spikes/editor_abstractions/editable_document.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' hide SelectableText;
+
+import 'core/document/rich_text_document.dart';
+import 'core/document/document_editor.dart';
+import 'editable_document.dart';
 
 /// Editor for a `RichTextDocument`.
 ///

@@ -1,10 +1,5 @@
 import 'dart:ui';
 
-import 'package:example/spikes/editor_abstractions/composition/document_composer.dart';
-import 'package:example/spikes/editor_abstractions/document/rich_text_document.dart';
-import 'package:example/spikes/editor_abstractions/gestures/multi_tap_gesture.dart';
-import 'package:example/spikes/editor_abstractions/layout/document_layout.dart';
-import 'package:example/spikes/editor_abstractions/selection/editor_selection.dart';
 import 'package:example/spikes/editor_abstractions/ui_components/horizontal_rule.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart' hide SelectableText;
@@ -12,11 +7,17 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 
-import 'document/document_editor.dart';
-import 'document/document_nodes.dart';
+import 'core/document/rich_text_document.dart';
+import 'core/document/document_editor.dart';
+import 'core/document/document_nodes.dart';
+import 'core/composition/document_composer.dart';
+import 'core/layout/document_layout.dart';
+import 'core/selection/editor_selection.dart';
+
 import 'ui_components/image.dart';
 import 'ui_components/list_items.dart';
 import 'ui_components/text.dart';
+import 'gestures/multi_tap_gesture.dart';
 
 /// A user-editable rich text document.
 ///
