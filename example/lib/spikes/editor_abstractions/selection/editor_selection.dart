@@ -1,5 +1,5 @@
-import 'package:example/spikes/editor_input_delegation/document/document_nodes.dart';
-import 'package:example/spikes/editor_input_delegation/document/rich_text_document.dart';
+import 'package:example/spikes/editor_abstractions/document/document_nodes.dart';
+import 'package:example/spikes/editor_abstractions/document/rich_text_document.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';

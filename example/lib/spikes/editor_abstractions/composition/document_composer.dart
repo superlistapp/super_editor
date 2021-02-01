@@ -1,8 +1,8 @@
-import 'package:example/spikes/editor_input_delegation/document/document_editor.dart';
-import 'package:example/spikes/editor_input_delegation/document/document_nodes.dart';
-import 'package:example/spikes/editor_input_delegation/document/rich_text_document.dart';
-import 'package:example/spikes/editor_input_delegation/layout/document_layout.dart';
-import 'package:example/spikes/editor_input_delegation/selection/editor_selection.dart';
+import 'package:example/spikes/editor_abstractions/document/document_editor.dart';
+import 'package:example/spikes/editor_abstractions/document/document_nodes.dart';
+import 'package:example/spikes/editor_abstractions/document/rich_text_document.dart';
+import 'package:example/spikes/editor_abstractions/layout/document_layout.dart';
+import 'package:example/spikes/editor_abstractions/selection/editor_selection.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';

@@ -1,6 +1,6 @@
-import 'package:example/spikes/editor_input_delegation/document/document_editor.dart';
-import 'package:example/spikes/editor_input_delegation/document/rich_text_document.dart';
-import 'package:example/spikes/editor_input_delegation/editable_document.dart';
+import 'package:example/spikes/editor_abstractions/document/document_editor.dart';
+import 'package:example/spikes/editor_abstractions/document/rich_text_document.dart';
+import 'package:example/spikes/editor_abstractions/editable_document.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' hide SelectableText;
 

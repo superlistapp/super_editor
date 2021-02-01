@@ -1,4 +1,4 @@
-import 'package:example/spikes/editor_input_delegation/document/rich_text_document.dart';
+import 'package:example/spikes/editor_abstractions/document/rich_text_document.dart';
 import 'package:flutter/material.dart';
 
 import 'document/document_nodes.dart';

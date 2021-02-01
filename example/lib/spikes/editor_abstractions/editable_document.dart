@@ -1,11 +1,11 @@
 import 'dart:ui';
 
-import 'package:example/spikes/editor_input_delegation/composition/document_composer.dart';
-import 'package:example/spikes/editor_input_delegation/document/rich_text_document.dart';
-import 'package:example/spikes/editor_input_delegation/gestures/multi_tap_gesture.dart';
-import 'package:example/spikes/editor_input_delegation/layout/document_layout.dart';
-import 'package:example/spikes/editor_input_delegation/selection/editor_selection.dart';
-import 'package:example/spikes/editor_input_delegation/ui_components/horizontal_rule.dart';
+import 'package:example/spikes/editor_abstractions/composition/document_composer.dart';
+import 'package:example/spikes/editor_abstractions/document/rich_text_document.dart';
+import 'package:example/spikes/editor_abstractions/gestures/multi_tap_gesture.dart';
+import 'package:example/spikes/editor_abstractions/layout/document_layout.dart';
+import 'package:example/spikes/editor_abstractions/selection/editor_selection.dart';
+import 'package:example/spikes/editor_abstractions/ui_components/horizontal_rule.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart' hide SelectableText;
 import 'package:flutter/rendering.dart';

@@ -1,4 +1,4 @@
-import 'package:example/spikes/editor_input_delegation/selectable_text/selectable_text.dart';
+import 'package:example/spikes/editor_abstractions/selectable_text/selectable_text.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
