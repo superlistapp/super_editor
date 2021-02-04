@@ -1,9 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 
-import '../document/document_nodes.dart';
 import '../document/rich_text_document.dart';
+import '../layout/document_layout.dart';
 
 /// A selection within a `RichTextDocument`.
 ///
@@ -74,82 +73,82 @@ class DocumentSelection {
 
   List<DocumentNodeSelection> computeNodeSelections({
     @required RichTextDocument document,
+    @required DocumentLayoutState documentLayout,
   }) {
     print('Computing document node selections.');
     print(' - base position: $base');
     print(' - extent position: $extent');
     if (isCollapsed) {
+      print(' - the document selection is collapsed');
       final docNode = document.getNode(base);
-      if (docNode is TextNode) {
-        // One paragraph node is selected. The selection within
-        // the node is collapsed.
-        return [
-          DocumentNodeSelection(
-            nodeId: docNode.id,
-            nodeSelection: TextSelection.collapsed(
-              offset: (base.nodePosition as TextPosition).offset,
-            ),
-            isBase: true,
-            isExtent: true,
-          ),
-        ];
-      } else {
-        print(' - Unknown document node: $docNode');
-        return [];
+      final component = documentLayout.getComponentByNodeId(docNode.id);
+      if (component == null) {
+        throw Exception(
+            'Cannot compute node selections. Cannot find visual component for selected node: ${docNode.id}');
       }
-    } else if (base.nodeId == extent.nodeId) {
-      final docNode = document.getNode(base);
-      if (docNode is TextNode) {
-        // One paragraph node is selected. The selection within
-        // the paragraph has a start and end.
-        final baseTextPosition = base.nodePosition as TextPosition;
-        final extentTextPosition = extent.nodePosition as TextPosition;
+      final selection = component.getCollapsedSelectionAt(extent.nodePosition);
 
-        return [
-          DocumentNodeSelection(
-            nodeId: docNode.id,
-            nodeSelection: TextSelection(
-              baseOffset: baseTextPosition.offset,
-              extentOffset: extentTextPosition.offset,
-            ),
-            isBase: true,
-            isExtent: true,
-          ),
-        ];
-      } else {
-        print(' - Unknown document node: $docNode');
-        return [];
+      return [
+        DocumentNodeSelection(
+          nodeId: docNode.id,
+          nodeSelection: selection,
+          isBase: true,
+          isExtent: true,
+        ),
+      ];
+    } else if (base.nodeId == extent.nodeId) {
+      print(' - the document selection is within 1 node');
+      final docNode = document.getNode(base);
+      final component = documentLayout.getComponentByNodeId(docNode.id);
+      if (component == null) {
+        throw Exception(
+            'Cannot compute node selections. Cannot find visual component for selected node: ${docNode.id}');
       }
+      final selection = component.getSelectionBetween(
+        basePosition: base.nodePosition,
+        extentPosition: extent.nodePosition,
+      );
+
+      return [
+        DocumentNodeSelection(
+          nodeId: docNode.id,
+          nodeSelection: selection,
+          isBase: true,
+          isExtent: true,
+        ),
+      ];
     } else {
+      print(' - the document selection spans multiple nodes');
       final selectedNodes = document.getNodesInside(base, extent);
       final nodeSelections = <DocumentNodeSelection>[];
       for (int i = 0; i < selectedNodes.length; ++i) {
         final selectedNode = selectedNodes[i];
-
-        // TODO: support other nodes.
-        if (selectedNode is! TextNode) {
-          continue;
-        }
 
         // Note: we know there are at least 2 selected nodes, so
         //       we don't need to handle the special case where
         //       the first node is the same as the last.
         if (i == 0) {
           // This is the first node. Select from the current position
-          // to the end of the paragraph.
+          // to the end of the node.
           final isBase = selectedNode.id == base.nodeId;
 
-          final midParagraph =
-              isBase ? (base.nodePosition as TextPosition).offset : (extent.nodePosition as TextPosition).offset;
-          final endParagraph = (selectedNode as TextNode).text.length;
+          final component = documentLayout.getComponentByNodeId(selectedNode.id);
+          if (component == null) {
+            throw Exception(
+                'Cannot compute node selections. Cannot find visual component for selected node: ${selectedNode.id}');
+          }
+
+          final selectedPosition = isBase ? base.nodePosition : extent.nodePosition;
+          final endPosition = component.getEndPosition();
+          final selection = component.getSelectionBetween(
+            basePosition: isBase ? selectedPosition : endPosition,
+            extentPosition: isBase ? endPosition : selectedPosition,
+          );
 
           nodeSelections.add(
             DocumentNodeSelection(
               nodeId: selectedNode.id,
-              nodeSelection: TextSelection(
-                baseOffset: isBase ? midParagraph : endParagraph,
-                extentOffset: isBase ? endParagraph : midParagraph,
-              ),
+              nodeSelection: selection,
               isBase: isBase,
               isExtent: !isBase,
               highlightWhenEmpty: true,
@@ -160,16 +159,23 @@ class DocumentSelection {
           // the node to the extent position.
           final isExtent = selectedNode.id == extent.nodeId;
 
-          final midParagraph =
-              isExtent ? (extent.nodePosition as TextPosition).offset : (base.nodePosition as TextPosition).offset;
+          final component = documentLayout.getComponentByNodeId(selectedNode.id);
+          if (component == null) {
+            throw Exception(
+                'Cannot compute node selections. Cannot find visual component for selected node: ${selectedNode.id}');
+          }
+
+          final selectedPosition = isExtent ? extent.nodePosition : base.nodePosition;
+          final beginningPosition = component.getBeginningPosition();
+          final selection = component.getSelectionBetween(
+            basePosition: isExtent ? beginningPosition : selectedPosition,
+            extentPosition: isExtent ? selectedPosition : beginningPosition,
+          );
 
           nodeSelections.add(
             DocumentNodeSelection(
               nodeId: selectedNode.id,
-              nodeSelection: TextSelection(
-                baseOffset: isExtent ? 0 : midParagraph,
-                extentOffset: isExtent ? midParagraph : 0,
-              ),
+              nodeSelection: selection,
               isBase: !isExtent,
               isExtent: isExtent,
             ),
@@ -177,13 +183,16 @@ class DocumentSelection {
         } else {
           // This node is in between the first and last in the
           // selection. Select everything.
+          final component = documentLayout.getComponentByNodeId(selectedNode.id);
+          if (component == null) {
+            throw Exception(
+                'Cannot compute node selections. Cannot find visual component for selected node: ${selectedNode.id}');
+          }
+
           nodeSelections.add(
             DocumentNodeSelection(
               nodeId: selectedNode.id,
-              nodeSelection: TextSelection(
-                baseOffset: 0,
-                extentOffset: (selectedNode as TextNode).text.length,
-              ),
+              nodeSelection: component.getSelectionOfEverything(),
               highlightWhenEmpty: true,
             ),
           );

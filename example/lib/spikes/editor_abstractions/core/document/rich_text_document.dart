@@ -23,7 +23,12 @@ class RichTextDocument with ChangeNotifier {
 
   RichTextDocument({
     List<DocumentNode> nodes = const [],
-  }) : _nodes = nodes;
+  }) : _nodes = nodes {
+    // Register listeners for all initial nodes.
+    for (final node in _nodes) {
+      node.addListener(_forwardNodeChange);
+    }
+  }
 
   final List<DocumentNode> _nodes;
   List<DocumentNode> get nodes => _nodes;
@@ -199,6 +204,4 @@ class DocumentPosition<PositionType> {
 /// A single content node within a `RichTextDocument`.
 abstract class DocumentNode implements ChangeNotifier {
   String get id;
-
-  bool tryToCombineWithOtherNode(DocumentNode other);
 }

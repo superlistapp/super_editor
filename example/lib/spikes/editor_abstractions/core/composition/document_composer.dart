@@ -2,14 +2,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
-import 'document_composer_actions.dart';
 import '../document/rich_text_document.dart';
 import '../document/document_editor.dart';
 import '../layout/document_layout.dart';
 import '../selection/editor_selection.dart';
-
-// TODO: should nodes be in core?
-import '../document/document_nodes.dart';
 
 /// Maintains a `DocumentSelection` within a `RichTextDocument` and
 /// uses that selection to edit the document.
@@ -18,11 +14,13 @@ class DocumentComposer {
     @required RichTextDocument document,
     @required DocumentEditor editor,
     @required DocumentLayoutState layout,
-    DocumentSelection selection,
+    @required List<ComposerKeyboardAction> keyboardActions,
+    DocumentSelection initialSelection,
   })  : _document = document,
         _editor = editor,
         _documentLayout = layout,
-        _selection = ValueNotifier(selection) {
+        _keyboardActions = keyboardActions,
+        _selection = ValueNotifier(initialSelection) {
     _selection.addListener(() {
       print('DocumentComposer: selection changed.');
     });
@@ -31,6 +29,7 @@ class DocumentComposer {
   final RichTextDocument _document;
   final DocumentEditor _editor;
   final DocumentLayoutState _documentLayout;
+  final List<ComposerKeyboardAction> _keyboardActions;
 
   final ValueNotifier<DocumentSelection> _selection;
   ValueNotifier<DocumentSelection> get selection => _selection;
@@ -69,12 +68,12 @@ class DocumentComposer {
     @required DocumentPosition docPosition,
     @required DocumentLayoutState docLayout,
   }) {
+    print('_getWordSelection()');
     print(' - doc position: $docPosition');
-    final docNode = _document.getNodeById(docPosition.nodeId);
-    print(' - doc node: ${docNode?.id}');
-    if (docNode is TextNode) {
-      final textComponent = docLayout.getSelectableTextByNodeId(docNode.id);
-      final TextSelection wordSelection = textComponent.getWordSelectionAt(docPosition.nodePosition);
+
+    final component = docLayout.getComponentByNodeId(docPosition.nodeId);
+    if (component is TextComposable) {
+      final TextSelection wordSelection = (component as TextComposable).getWordSelectionAt(docPosition.nodePosition);
 
       print(' - word selection: $wordSelection');
       return DocumentSelection(
@@ -96,7 +95,10 @@ class DocumentComposer {
     @required DocumentPosition docPosition,
     @required DocumentLayoutState docLayout,
   }) {
-    final newSelection = _getParagraphSelection(docPosition: docPosition);
+    final newSelection = _getParagraphSelection(
+      docPosition: docPosition,
+      docLayout: docLayout,
+    );
     if (newSelection != null) {
       _selection.value = newSelection;
       return true;
@@ -107,12 +109,15 @@ class DocumentComposer {
 
   DocumentSelection _getParagraphSelection({
     @required DocumentPosition docPosition,
+    @required DocumentLayoutState docLayout,
   }) {
-    final docNode = _document.getNodeById(docPosition.nodeId);
-    if (docNode is TextNode) {
-      // final textComponent = docLayout.getSelectableTextByNodeId(docNode.id);
+    print('_getWordSelection()');
+    print(' - doc position: $docPosition');
+
+    final component = docLayout.getComponentByNodeId(docPosition.nodeId);
+    if (component is TextComposable) {
       final TextSelection wordSelection = _expandPositionToParagraph(
-        text: docNode.text,
+        text: (component as TextComposable).getContiguousTextAt(docPosition.nodePosition),
         textPosition: docPosition.nodePosition as TextPosition,
       );
 
@@ -144,10 +149,12 @@ class DocumentComposer {
     if (selectionType == SelectionType.paragraph) {
       final baseParagraphSelection = _getParagraphSelection(
         docPosition: basePosition,
+        docLayout: documentLayout,
       );
       basePosition = baseOffset.dy < extentOffset.dy ? baseParagraphSelection.base : baseParagraphSelection.extent;
       final extentParagraphSelection = _getParagraphSelection(
         docPosition: extentPosition,
+        docLayout: documentLayout,
       );
       extentPosition =
           baseOffset.dy < extentOffset.dy ? extentParagraphSelection.extent : extentParagraphSelection.base;
@@ -204,53 +211,16 @@ class DocumentComposer {
     //       for key handlers. Figure out the best place to recompute
     //       node selections.
     if (_selection.value != null) {
-      _nodeSelections = _selection.value.computeNodeSelections(document: _document);
+      _nodeSelections = _selection.value.computeNodeSelections(
+        document: _document,
+        documentLayout: _documentLayout,
+      );
     }
-
-    // TODO: move this outside this method.
-    final _composerKeyActions = <ComposerKeyboardAction>[
-      ComposerKeyboardAction.simple(
-        action: preventDeletionOfFirstParagraph,
-      ),
-      ComposerKeyboardAction.simple(
-        action: doNothingWhenThereIsNoSelection,
-      ),
-      ComposerKeyboardAction.simple(
-        action: collapseSelectionWhenDirectionalKeyIsPressed,
-      ),
-      ComposerKeyboardAction.simple(
-        action: deleteExpandedSelectionWhenCharacterOrDestructiveKeyPressed,
-      ),
-      ComposerKeyboardAction.simple(
-        action: insertCharacterInParagraph,
-      ),
-      ComposerKeyboardAction.simple(
-        action: insertNewlineInParagraph,
-      ),
-      ComposerKeyboardAction.simple(
-        action: splitParagraphWhenEnterPressed,
-      ),
-      ComposerKeyboardAction.simple(
-        action: deleteCharacterWhenBackspaceIsPressed,
-      ),
-      ComposerKeyboardAction.simple(
-        action: mergeNodeWithPreviousWhenBackspaceIsPressed,
-      ),
-      ComposerKeyboardAction.simple(
-        action: deleteCharacterWhenDeleteIsPressed,
-      ),
-      ComposerKeyboardAction.simple(
-        action: mergeNodeWithNextWhenBackspaceIsPressed,
-      ),
-      ComposerKeyboardAction.simple(
-        action: moveUpDownLeftAndRightWithArrowKeys,
-      ),
-    ];
 
     ExecutionInstruction instruction = ExecutionInstruction.continueExecution;
     int index = 0;
-    while (instruction == ExecutionInstruction.continueExecution && index < _composerKeyActions.length) {
-      instruction = _composerKeyActions[index].execute(
+    while (instruction == ExecutionInstruction.continueExecution && index < _keyboardActions.length) {
+      instruction = _keyboardActions[index].execute(
         document: _document,
         editor: _editor,
         documentLayout: _documentLayout,
@@ -269,4 +239,62 @@ enum SelectionType {
   position,
   word,
   paragraph,
+}
+
+class ComposerKeyboardAction {
+  const ComposerKeyboardAction.simple({
+    @required SimpleComposerKeyboardAction action,
+  }) : _action = action;
+
+  final SimpleComposerKeyboardAction _action;
+
+  /// Executes this action, if the action wants to run, and returns
+  /// a desired `ExecutionInstruction` to either continue or halt
+  /// execution of actions.
+  ///
+  /// It is possible that an action makes changes and then returns
+  /// `ExecutionInstruction.continueExecution` to continue execution.
+  ///
+  /// It is possible that an action does nothing and then returns
+  /// `ExecutionInstruction.haltExecution` to prevent further execution.
+  ExecutionInstruction execute({
+    @required RichTextDocument document,
+    @required DocumentEditor editor,
+    @required DocumentLayoutState documentLayout,
+    @required ValueNotifier<DocumentSelection> currentSelection,
+    @required List<DocumentNodeSelection> nodeSelections,
+    @required RawKeyEvent keyEvent,
+  }) {
+    return _action(
+      document: document,
+      editor: editor,
+      documentLayout: documentLayout,
+      currentSelection: currentSelection,
+      nodeSelections: nodeSelections,
+      keyEvent: keyEvent,
+    );
+  }
+}
+
+/// Executes an action, if the action wants to run, and returns
+/// `true` if further execution should stop, or `false` if further
+/// execution should continue.
+///
+/// It is possible that an action makes changes and then returns
+/// `false` to continue execution.
+///
+/// It is possible that an action does nothing and then returns
+/// `true` to prevent further execution.
+typedef SimpleComposerKeyboardAction = ExecutionInstruction Function({
+  @required RichTextDocument document,
+  @required DocumentEditor editor,
+  @required DocumentLayoutState documentLayout,
+  @required ValueNotifier<DocumentSelection> currentSelection,
+  @required List<DocumentNodeSelection> nodeSelections,
+  @required RawKeyEvent keyEvent,
+});
+
+enum ExecutionInstruction {
+  continueExecution,
+  haltExecution,
 }

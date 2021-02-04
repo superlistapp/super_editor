@@ -1,11 +1,17 @@
 import 'dart:math';
 
+import 'package:example/spikes/editor_abstractions/default_editor/box_component.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
-import 'document_nodes.dart';
 import 'rich_text_document.dart';
 import '../selection/editor_selection.dart';
+import '../layout/document_layout.dart';
+
+// TODO: get rid of these imports
+import '../../default_editor/text.dart';
+import '../../default_editor/paragraph.dart';
+import '../../default_editor/list_items.dart';
 
 class DocumentEditor {
   DocumentSelection addCharacter({
@@ -61,39 +67,63 @@ class DocumentEditor {
     }
   }
 
-//   DocumentNode insertNewNodeAfter({
-//   @required RichTextDocument document,
-//     @required DocumentNode nodeBefore,
-// }) {
-//     //
-//   }
+  bool tryToCombineNodes({
+    @required RichTextDocument document,
+    @required DocumentNode destination,
+    @required DocumentNode toMerge,
+  }) {
+    if (destination is ParagraphNode || destination is ListItemNode) {
+      if (toMerge is ParagraphNode || toMerge is ListItemNode) {
+        (destination as TextNode).text += (toMerge as TextNode).text;
+        return true;
+      }
+    }
+    return false;
+  }
 
   DocumentSelection deleteSelection({
     @required RichTextDocument document,
+    @required DocumentLayoutState documentLayout,
     @required DocumentSelection selection,
   }) {
     print('DocumentEditor: deleting selection: $selection');
-    final nodeSelections = selection.computeNodeSelections(document: document);
+    final nodeSelections = selection.computeNodeSelections(
+      document: document,
+      documentLayout: documentLayout,
+    );
 
     if (nodeSelections.length == 1) {
       // This is a selection within a single node.
       final nodeSelection = nodeSelections.first;
-      assert(nodeSelection.nodeSelection is TextSelection);
-      final textSelection = nodeSelection.nodeSelection as TextSelection;
-      final paragraphNode = document.getNodeById(nodeSelection.nodeId) as TextNode;
-      paragraphNode.text = _removeStringSubsection(
-        from: textSelection.start,
-        to: textSelection.end,
-        text: paragraphNode.text,
-      );
 
-      print('Done deleting selection. Returning new document selection.');
-      return DocumentSelection.collapsed(
-        position: DocumentPosition(
-          nodeId: paragraphNode.id,
-          nodePosition: TextPosition(offset: textSelection.start),
-        ),
-      );
+      if (nodeSelection.nodeSelection is BinarySelection) {
+        final node = document.getNodeById(nodeSelection.nodeId);
+        final deletedNodeIndex = document.getNodeIndex(node);
+        document.deleteNode(node);
+
+        final newSelectionPosition = _getAnotherSelectionAfterNodeDeletion(
+          document: document,
+          documentLayout: documentLayout,
+          deletedNodeIndex: deletedNodeIndex,
+        );
+        return newSelectionPosition != null ? DocumentSelection.collapsed(position: newSelectionPosition) : null;
+      } else if (nodeSelection.nodeSelection is TextSelection) {
+        final textSelection = nodeSelection.nodeSelection as TextSelection;
+        final textNode = document.getNodeById(nodeSelection.nodeId) as TextNode;
+        textNode.text = _removeStringSubsection(
+          from: textSelection.start,
+          to: textSelection.end,
+          text: textNode.text,
+        );
+
+        print('Done deleting selection. Returning new document selection.');
+        return DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: textNode.id,
+            nodePosition: TextPosition(offset: textSelection.start),
+          ),
+        );
+      }
     }
 
     final range = document.getRangeBetween(selection.base, selection.extent);
@@ -121,23 +151,32 @@ class DocumentEditor {
     }
 
     print(' - deleting partial selection within the starting node.');
-    _deleteSelectionWithinNodeAt(
+    final newStartPosition = _deleteSelectionWithinNodeAt(
       document: document,
       docNode: startNode,
       nodeSelection: nodeSelections.first.nodeSelection,
     );
 
     print(' - deleting partial selection within ending node.');
-    _deleteSelectionWithinNodeAt(
+    final newEndPosition = _deleteSelectionWithinNodeAt(
       document: document,
       docNode: endNode,
       nodeSelection: nodeSelections.last.nodeSelection,
     );
 
-    final shouldTryToCombineNodes = nodeSelections.length > 1;
+    final doesFirstNodeStillExist = document.getNodeById(startNode.id) != null;
+    final doesSecondNodeStillExist = document.getNodeById(endNode.id) != null;
+
+    final shouldTryToCombineNodes = doesFirstNodeStillExist && doesSecondNodeStillExist;
+
+    DocumentPosition newPosition;
     if (shouldTryToCombineNodes) {
       print(' - trying to combine nodes');
-      final didCombine = startNode.tryToCombineWithOtherNode(endNode);
+      final didCombine = tryToCombineNodes(
+        document: document,
+        destination: startNode,
+        toMerge: endNode,
+      );
       if (didCombine) {
         print(' - nodes were successfully combined');
         print(' - deleting end node $endIndex');
@@ -145,32 +184,70 @@ class DocumentEditor {
         print(' - did remove ending node? $didRemoveLast');
         print(' - finally ${document.nodes.length} nodes');
       }
+      newPosition = startPosition;
+    } else if (doesFirstNodeStillExist) {
+      // First node still has some content and still exists.
+      // Place the new selection position there.
+      newPosition = newStartPosition;
+    } else if (doesSecondNodeStillExist) {
+      // The first node was deleted, but the second node
+      // still has some content. Place the new selection
+      // position there.
+      newPosition = newEndPosition;
+    } else {
+      // Both the start and end nodes were deleted. Get
+      // a new node position for the selection.
+      newPosition = _getAnotherSelectionAfterNodeDeletion(
+        document: document,
+        documentLayout: documentLayout,
+        deletedNodeIndex: startIndex,
+      );
     }
 
-    final newSelection = DocumentSelection.collapsed(
-      position: startPosition,
-    );
+    final newSelection = newPosition != null
+        ? DocumentSelection.collapsed(
+            position: newPosition,
+          )
+        : null;
     print(' - returning new selection: $newSelection');
 
     return newSelection;
   }
 
-  void _deleteSelectionWithinNodeAt({
+  DocumentPosition _deleteSelectionWithinNodeAt({
     @required RichTextDocument document,
     @required DocumentNode docNode,
     @required dynamic nodeSelection,
   }) {
-    // TODO: support other nodes
-    if (docNode is! TextNode) {
-      print(' - unknown node type: $docNode');
-      return;
+    if (nodeSelection is BinarySelection) {
+      if (nodeSelection.position.isIncluded) {
+        // This is something like an image or horizontal rule.
+        // Delete the node.
+        document.deleteNode(docNode);
+        return null;
+      }
+    } else if (docNode is TextNode) {
+      return _deleteSelectionWithinTextNodeAt(
+        document: document,
+        docNode: docNode,
+        nodeSelection: nodeSelection,
+      );
     }
 
+    print('WARNING: Cannot delete partial content in node of type: $docNode');
+    return null;
+  }
+
+  DocumentPosition _deleteSelectionWithinTextNodeAt({
+    @required RichTextDocument document,
+    @required TextNode docNode,
+    @required dynamic nodeSelection,
+  }) {
     final index = document.getNodeIndex(docNode);
     assert(index >= 0 && index < document.nodes.length);
 
     print('Deleting selection within node $index');
-    final paragraphNode = docNode as TextNode;
+    final paragraphNode = docNode;
     if (nodeSelection is TextSelection) {
       print(' - deleting TextSelection within ParagraphNode');
       final from = min(nodeSelection.baseOffset, nodeSelection.extentOffset);
@@ -183,8 +260,43 @@ class DocumentEditor {
         text: paragraphNode.text,
       );
       print(' - remaining text: ${paragraphNode.text}');
+
+      return DocumentPosition(
+        nodeId: docNode.id,
+        nodePosition: TextPosition(offset: from),
+      );
     } else {
       print('ParagraphNode cannot delete unknown selection type: $nodeSelection');
+      return null;
+    }
+  }
+
+  DocumentPosition _getAnotherSelectionAfterNodeDeletion({
+    @required RichTextDocument document,
+    @required DocumentLayoutState documentLayout,
+    @required int deletedNodeIndex,
+  }) {
+    if (deletedNodeIndex > 0) {
+      final newSelectionNodeIndex = deletedNodeIndex - 1;
+      final newSelectionNode = document.getNodeAt(newSelectionNodeIndex);
+      final component = documentLayout.getComponentByNodeId(newSelectionNode.id);
+      return DocumentPosition(
+        nodeId: newSelectionNode.id,
+        nodePosition: component.getEndPosition(),
+      );
+    } else if (document.nodes.isNotEmpty) {
+      // There is no node above the start node. It's at the top
+      // of the document. Try to place the selection in whatever
+      // is now the first node in the document.
+      final newSelectionNode = document.getNodeAt(0);
+      final component = documentLayout.getComponentByNodeId(newSelectionNode.id);
+      return DocumentPosition(
+        nodeId: newSelectionNode.id,
+        nodePosition: component.getEndPosition(),
+      );
+    } else {
+      // The document is empty. Null out the position.
+      return null;
     }
   }
 

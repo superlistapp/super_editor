@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 
 import 'core/document/rich_text_document.dart';
-import 'core/document/document_nodes.dart';
+import 'default_editor/paragraph.dart';
+import 'default_editor/list_items.dart';
+import 'default_editor/image.dart';
+import 'default_editor/horizontal_rule.dart';
 import 'editor.dart';
 
 /// Spike:
@@ -117,6 +120,14 @@ class _EditorSpikeState extends State<EditorSpike> {
             },
             child: Text('Rich Text Doc'),
           ),
+          FlatButton(
+            onPressed: () {
+              setState(() {
+                _doc = _createListItemsDoc();
+              });
+            },
+            child: Text('List Items Doc'),
+          ),
         ],
       ),
       centerTitle: true,
@@ -136,7 +147,7 @@ class _EditorSpikeState extends State<EditorSpike> {
   RichTextDocument _createEmptyDoc() {
     return RichTextDocument(
       nodes: [
-        TextNode(
+        ParagraphNode(
           // TODO: I don't like how the client has to provide an ID...
           id: RichTextDocument.createNodeId(),
           text: '',
@@ -149,12 +160,12 @@ class _EditorSpikeState extends State<EditorSpike> {
   RichTextDocument _createStartingPointDoc() {
     return RichTextDocument(
       nodes: [
-        TextNode(
+        ParagraphNode(
           id: RichTextDocument.createNodeId(),
           text: '',
           textType: 'header1',
         ),
-        TextNode(
+        ParagraphNode(
           id: RichTextDocument.createNodeId(),
           text: '',
         ),
@@ -164,15 +175,15 @@ class _EditorSpikeState extends State<EditorSpike> {
 
   RichTextDocument _createLoremIpsumDoc() {
     return RichTextDocument(nodes: [
-      TextNode(
+      ParagraphNode(
         id: RichTextDocument.createNodeId(),
         text: _loremIpsum1,
       ),
-      TextNode(
+      ParagraphNode(
         id: RichTextDocument.createNodeId(),
         text: _loremIpsum2,
       ),
-      TextNode(
+      ParagraphNode(
         id: RichTextDocument.createNodeId(),
         text: _loremIpsum3,
       ),
@@ -181,21 +192,21 @@ class _EditorSpikeState extends State<EditorSpike> {
 
   RichTextDocument _createRichContentDoc() {
     return RichTextDocument(nodes: [
-      TextNode(
+      ParagraphNode(
         id: RichTextDocument.createNodeId(),
         text: 'This is rich text',
         textType: 'header1',
       ),
-      TextNode(
+      ParagraphNode(
         id: RichTextDocument.createNodeId(),
         text: _loremIpsum1,
       ),
-      TextNode(
+      ParagraphNode(
         id: RichTextDocument.createNodeId(),
         text: _loremIpsum1,
         textAlign: TextAlign.center,
       ),
-      TextNode(
+      ParagraphNode(
         id: RichTextDocument.createNodeId(),
         text: _loremIpsum1,
         textAlign: TextAlign.right,
@@ -255,7 +266,7 @@ class _EditorSpikeState extends State<EditorSpike> {
         id: RichTextDocument.createNodeId(),
         text: 'This is the 7th list item.',
       ),
-      TextNode(
+      ParagraphNode(
         id: RichTextDocument.createNodeId(),
         text: _loremIpsum2,
       ),
@@ -264,9 +275,68 @@ class _EditorSpikeState extends State<EditorSpike> {
         imageUrl:
             'https://images.unsplash.com/photo-1612099453097-26a809f51e96?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=1050&q=80',
       ),
-      TextNode(
+      ParagraphNode(
         id: RichTextDocument.createNodeId(),
         text: _loremIpsum3,
+      ),
+    ]);
+  }
+
+  RichTextDocument _createListItemsDoc() {
+    return RichTextDocument(nodes: [
+      UnorderedListItemNode(
+        id: RichTextDocument.createNodeId(),
+        text: 'This is the 1st list item.',
+      ),
+      UnorderedListItemNode(
+        id: RichTextDocument.createNodeId(),
+        text: 'This is the 2nd list item.',
+      ),
+      UnorderedListItemNode(
+        id: RichTextDocument.createNodeId(),
+        text: 'This is the 3rd list item.',
+        indent: 1,
+      ),
+      UnorderedListItemNode(
+        id: RichTextDocument.createNodeId(),
+        text: 'This is the 4th list item.',
+        indent: 1,
+      ),
+      UnorderedListItemNode(
+        id: RichTextDocument.createNodeId(),
+        text: 'This is the 5th list item.',
+      ),
+      OrderedListItemNode(
+        id: RichTextDocument.createNodeId(),
+        text: 'This is the 1st list item.',
+      ),
+      OrderedListItemNode(
+        id: RichTextDocument.createNodeId(),
+        text: 'This is the 2nd list item.',
+      ),
+      OrderedListItemNode(
+        id: RichTextDocument.createNodeId(),
+        text: 'This is the 3rd list item.',
+        indent: 1,
+      ),
+      OrderedListItemNode(
+        id: RichTextDocument.createNodeId(),
+        text: 'This is the 4th list item.',
+        indent: 1,
+      ),
+      OrderedListItemNode(
+        id: RichTextDocument.createNodeId(),
+        text: 'This is the 5th list item.',
+        indent: 2,
+      ),
+      OrderedListItemNode(
+        id: RichTextDocument.createNodeId(),
+        text: 'This is the 6th list item.',
+        indent: 2,
+      ),
+      OrderedListItemNode(
+        id: RichTextDocument.createNodeId(),
+        text: 'This is the 7th list item.',
       ),
     ]);
   }

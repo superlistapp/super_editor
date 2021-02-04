@@ -1,6 +1,6 @@
 import 'dart:ui';
 
-import 'package:example/spikes/editor_abstractions/ui_components/horizontal_rule.dart';
+import 'package:example/spikes/editor_abstractions/default_editor/box_component.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart' hide SelectableText;
 import 'package:flutter/rendering.dart';
@@ -9,14 +9,17 @@ import 'package:flutter/services.dart';
 
 import 'core/document/rich_text_document.dart';
 import 'core/document/document_editor.dart';
-import 'core/document/document_nodes.dart';
 import 'core/composition/document_composer.dart';
 import 'core/layout/document_layout.dart';
 import 'core/selection/editor_selection.dart';
 
-import 'ui_components/image.dart';
-import 'ui_components/list_items.dart';
-import 'ui_components/text.dart';
+import 'default_editor/document_composer_actions.dart';
+import 'default_editor/text.dart';
+import 'default_editor/paragraph.dart';
+import 'default_editor/list_items.dart';
+import 'default_editor/image.dart';
+import 'default_editor/horizontal_rule.dart';
+import 'custom_components/text_with_hint.dart';
 import 'gestures/multi_tap_gesture.dart';
 
 /// A user-editable rich text document.
@@ -152,6 +155,7 @@ class _EditableDocumentState extends State<EditableDocument> with SingleTickerPr
         document: widget.document,
         editor: widget.editor,
         layout: _docLayoutKey.currentState,
+        keyboardActions: _composerKeyboardActions,
       );
       _documentComposer.selection.addListener(_onSelectionChange);
       _onSelectionChange();
@@ -161,15 +165,26 @@ class _EditableDocumentState extends State<EditableDocument> with SingleTickerPr
   void _onSelectionChange() {
     print('EditableDocument: _onSelectionChange()');
     setState(() {
-      _nodeSelections
-        ..clear()
-        ..addAll(
-          _documentComposer.selection.value != null
-              ? _documentComposer.selection.value.computeNodeSelections(
-                  document: widget.document,
-                )
-              : const [],
-        );
+      // TODO: node selections are recomputed in a post frame callback
+      //       because the composer uses the doc layout to map to visual
+      //       components, which may not exist until the next frame.
+      //
+      //       This still results in a bad selection position when
+      //       paragraphs are split. The overall use and timing of
+      //       node selections needs to be reconsidered.
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+        _nodeSelections
+          ..clear()
+          ..addAll(
+            _documentComposer.selection.value != null
+                ? _documentComposer.selection.value.computeNodeSelections(
+                    document: widget.document,
+                    documentLayout: _docLayoutKey.currentState,
+                  )
+                : const [],
+          );
+        setState(() {});
+      });
     });
   }
 
@@ -551,9 +566,11 @@ class _EditableDocumentState extends State<EditableDocument> with SingleTickerPr
             DoNothingIntent(),
         LogicalKeySet(LogicalKeyboardKey.arrowRight, LogicalKeyboardKey.shift, LogicalKeyboardKey.meta):
             DoNothingIntent(),
+        // Misc keys
         LogicalKeySet(LogicalKeyboardKey.enter): DoNothingIntent(),
         LogicalKeySet(LogicalKeyboardKey.backspace): DoNothingIntent(),
         LogicalKeySet(LogicalKeyboardKey.delete): DoNothingIntent(),
+        LogicalKeySet(LogicalKeyboardKey.tab): DoNothingIntent(),
       },
       child: child,
     );
@@ -656,7 +673,7 @@ final ComponentBuilder defaultComponentBuilder = ({
   @required GlobalKey key,
   bool showDebugPaint = false,
 }) {
-  if (currentNode is TextNode) {
+  if (currentNode is ParagraphNode) {
     final textSelection = selectedNode == null ? null : selectedNode.nodeSelection as TextSelection;
     final hasCursor = selectedNode != null ? selectedNode.isExtent : false;
     final highlightWhenEmpty = selectedNode == null ? false : selectedNode.highlightWhenEmpty;
@@ -721,14 +738,24 @@ final ComponentBuilder defaultComponentBuilder = ({
       );
     }
   } else if (currentNode is ImageNode) {
+    final selection = selectedNode == null ? null : selectedNode.nodeSelection as BinarySelection;
+    final isSelected = selection != null && selection.position.isIncluded;
+
     return ImageComponent(
+      componentKey: key,
       imageUrl: currentNode.imageUrl,
+      isSelected: isSelected,
     );
   } else if (currentNode is UnorderedListItemNode) {
+    final textSelection = selectedNode == null ? null : selectedNode.nodeSelection as TextSelection;
+    final hasCursor = selectedNode != null ? selectedNode.isExtent : false;
+
     return UnorderedListItemComponent(
       textKey: key,
       text: currentNode.text,
       indent: currentNode.indent,
+      textSelection: textSelection,
+      hasCursor: hasCursor,
       showDebugPaint: showDebugPaint,
     );
   } else if (currentNode is OrderedListItemNode) {
@@ -741,23 +768,89 @@ final ComponentBuilder defaultComponentBuilder = ({
       nodeAbove = document.getNodeBefore(nodeAbove);
     }
 
+    final textSelection = selectedNode == null ? null : selectedNode.nodeSelection as TextSelection;
+    final hasCursor = selectedNode != null ? selectedNode.isExtent : false;
+
     return OrderedListItemComponent(
       textKey: key,
       listIndex: index,
       text: currentNode.text,
+      textSelection: textSelection,
+      hasCursor: hasCursor,
       indent: currentNode.indent,
       showDebugPaint: showDebugPaint,
     );
   } else if (currentNode is HorizontalRuleNode) {
-    return HorizontalRuleComponent();
+    final selection = selectedNode == null ? null : selectedNode.nodeSelection as BinarySelection;
+    final isSelected = selection != null && selection.position.isIncluded;
+
+    return HorizontalRuleComponent(
+      componentKey: key,
+      isSelected: isSelected,
+    );
   } else {
     return SizedBox(
+      key: key,
       width: double.infinity,
       height: 100,
       child: Placeholder(),
     );
   }
 };
+
+final _composerKeyboardActions = <ComposerKeyboardAction>[
+  ComposerKeyboardAction.simple(
+    action: preventDeletionOfFirstParagraph,
+  ),
+  ComposerKeyboardAction.simple(
+    action: doNothingWhenThereIsNoSelection,
+  ),
+  ComposerKeyboardAction.simple(
+    action: indentListItemWhenBackspaceIsPressed,
+  ),
+  ComposerKeyboardAction.simple(
+    action: unindentListItemWhenBackspaceIsPressed,
+  ),
+  ComposerKeyboardAction.simple(
+    action: splitListItemWhenEnterPressed,
+  ),
+  ComposerKeyboardAction.simple(
+    action: collapseSelectionWhenDirectionalKeyIsPressed,
+  ),
+  ComposerKeyboardAction.simple(
+    action: deleteExpandedSelectionWhenCharacterOrDestructiveKeyPressed,
+  ),
+  ComposerKeyboardAction.simple(
+    action: deleteBoxWhenBackspaceOrDeleteIsPressed,
+  ),
+  ComposerKeyboardAction.simple(
+    action: insertCharacterInParagraph,
+  ),
+  ComposerKeyboardAction.simple(
+    action: insertCharacterInTextComposable,
+  ),
+  ComposerKeyboardAction.simple(
+    action: insertNewlineInParagraph,
+  ),
+  ComposerKeyboardAction.simple(
+    action: splitParagraphWhenEnterPressed,
+  ),
+  ComposerKeyboardAction.simple(
+    action: deleteCharacterWhenBackspaceIsPressed,
+  ),
+  ComposerKeyboardAction.simple(
+    action: mergeNodeWithPreviousWhenBackspaceIsPressed,
+  ),
+  ComposerKeyboardAction.simple(
+    action: deleteCharacterWhenDeleteIsPressed,
+  ),
+  ComposerKeyboardAction.simple(
+    action: mergeNodeWithNextWhenBackspaceIsPressed,
+  ),
+  ComposerKeyboardAction.simple(
+    action: moveUpDownLeftAndRightWithArrowKeys,
+  ),
+];
 
 /// Paints a rectangle border around the given `selectionRect`.
 class DragRectanglePainter extends CustomPainter {
