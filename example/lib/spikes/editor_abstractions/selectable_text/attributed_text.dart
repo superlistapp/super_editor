@@ -25,7 +25,7 @@ class AttributedText {
   }) {
     TextAttributionMarker markerBefore = _getStartingMarkerAtOrBefore(offset, name: name);
     if (markerBefore == null) {
-      print(' - there is no start marker for "$name" before $offset');
+      // print(' - there is no start marker for "$name" before $offset');
       return false;
     }
     TextAttributionMarker markerAfter =
@@ -34,7 +34,7 @@ class AttributedText {
       throw Exception('Found an open-ended attribution. It starts with: $markerBefore');
     }
 
-    print('Looking for "$name" at $offset. Before: ${markerBefore.offset}, After: ${markerAfter.offset}');
+    // print('Looking for "$name" at $offset. Before: ${markerBefore.offset}, After: ${markerAfter.offset}');
 
     return (markerBefore.offset <= offset) && (offset <= markerAfter.offset);
   }
@@ -251,11 +251,11 @@ class AttributedText {
   // TODO: move this behavior to another class and make it extensible
   //       so that attributions can be interpreted as desired.
   TextSpan computeTextSpan([TextStyle baseStyle]) {
-    print('computeTextSpan()');
-    print(' - base style line height: ${baseStyle?.height}');
+    // print('computeTextSpan()');
+    // print(' - base style line height: ${baseStyle?.height}');
     if (text.isEmpty) {
       // There is no text and therefore no attributions.
-      print(' - text is empty. Returning empty TextSpan.');
+      // print(' - text is empty. Returning empty TextSpan.');
       return TextSpan(text: '', style: baseStyle);
     }
 
@@ -267,13 +267,13 @@ class AttributedText {
     final startPoints = <int>[0]; // we always start at zero
     final endPoints = <int>[];
 
-    print(' - accumulating start and end points:');
+    // print(' - accumulating start and end points:');
     for (final marker in attributions) {
-      print(' - marker at ${marker.offset}');
+      // print(' - marker at ${marker.offset}');
       if (marker.isStart) {
         // Add a `start` point.
         if (!startPoints.contains(marker.offset)) {
-          print(' - adding start point at ${marker.offset}');
+          // print(' - adding start point at ${marker.offset}');
           startPoints.add(marker.offset);
         }
 
@@ -281,14 +281,14 @@ class AttributedText {
         // then there won't be an `end` just before this
         // `start` point. Insert one.
         if (marker.offset > 0 && !endPoints.contains(marker.offset - 1)) {
-          print(' - going back one and adding end point at: ${marker.offset - 1}');
+          // print(' - going back one and adding end point at: ${marker.offset - 1}');
           endPoints.add(marker.offset - 1);
         }
       }
       if (marker.isEnd) {
         // Add an `end` point.
         if (!endPoints.contains(marker.offset)) {
-          print(' - adding an end point at: ${marker.offset}');
+          // print(' - adding an end point at: ${marker.offset}');
           endPoints.add(marker.offset);
         }
 
@@ -297,7 +297,7 @@ class AttributedText {
         // guaranteed to have another `start` marker after this
         // `end` marker.
         if (marker.offset < text.length - 1 && !startPoints.contains(marker.offset + 1)) {
-          print(' - jumping forward one to add a start point at: ${marker.offset + 1}');
+          // print(' - jumping forward one to add a start point at: ${marker.offset + 1}');
           startPoints.add(marker.offset + 1);
         }
       }
@@ -305,7 +305,7 @@ class AttributedText {
     if (!endPoints.contains(text.length - 1)) {
       // This condition occurs when there are no style spans, or
       // when the final span is un-styled.
-      print(' - adding a final endpoint at end of text');
+      // print(' - adding a final endpoint at end of text');
       endPoints.add(text.length - 1);
     }
 
@@ -329,12 +329,12 @@ class AttributedText {
         start: startPoints[i],
         end: endPoints[i],
       ));
-      print(' - span range: ${ranges[i]}');
+      // print(' - span range: ${ranges[i]}');
     }
 
     // Iterate through the ranges and build a TextSpan.
     for (final range in ranges) {
-      print(' - styling range: $range');
+      // print(' - styling range: $range');
       spanBuilder
         ..start(style: _computeStyleAt(range.start, baseStyle))
         ..end(offset: range.end);
@@ -344,7 +344,7 @@ class AttributedText {
 
   TextStyle _computeStyleAt(int offset, [TextStyle baseStyle]) {
     final attributions = _getAllAttributionsAt(offset);
-    print(' - attributions at $offset: $attributions');
+    // print(' - attributions at $offset: $attributions');
     return _addStyles(baseStyle ?? TextStyle(), attributions);
   }
 
@@ -353,7 +353,7 @@ class AttributedText {
     final attributionsAtOffset = <String>{};
     for (final name in allNames) {
       final hasAttribution = hasAttributionAt(offset, name: name);
-      print(' - has "$name" attribution at $offset? ${hasAttribution}');
+      // print(' - has "$name" attribution at $offset? ${hasAttribution}');
       if (hasAttribution) {
         attributionsAtOffset.add(name);
       }
@@ -498,9 +498,22 @@ class AttributedText {
     @required int startOffset,
     @required int count,
   }) {
-    return attributions
-        .map((marker) => marker.offset >= startOffset ? marker.copyWith(offset: marker.offset + count) : marker)
-        .toList();
+    print('Inserting startOffset: $startOffset');
+    return attributions.map(
+      (marker) {
+        print(' - looking at marker at ${marker.offset}');
+        // The rule here for expansion is that if text is inserted
+        // at the very beginning of a span, or immediately after a
+        // span, the text should be included in the span.
+        if (marker.offset > startOffset || (marker.isEnd && marker.offset == startOffset - 1)) {
+          print(' - pushing it forward');
+          return marker.copyWith(offset: marker.offset + count);
+        } else {
+          print(' - leaving it alone');
+          return marker;
+        }
+      },
+    ).toList();
   }
 
   /// `startOffset` inclusive, `endOffset` exclusive
@@ -536,16 +549,18 @@ class AttributedText {
     final contractedAttributions = <TextAttributionMarker>[];
 
     // Add all the markers that are unchanged.
-    contractedAttributions.addAll(attributions.where((marker) => marker.offset < startOffset));
+    contractedAttributions.addAll(attributions.where((marker) => marker.offset <= startOffset));
 
+    print('Removing $count characters starting at $startOffset');
     final needToEndAttributions = <String>{};
     final needToStartAttributions = <String>{};
     attributions
-        .where((marker) => (startOffset <= marker.offset) && (marker.offset < startOffset + count))
+        .where((marker) => (startOffset < marker.offset) && (marker.offset < startOffset + count))
         .forEach((marker) {
       // Get rid of this marker and keep track of
       // any open-ended attributions that need to
       // be closed.
+      print(' - removing ${marker.markerType} at ${marker.offset}');
       if (marker.isStart) {
         if (needToEndAttributions.contains(marker.name)) {
           // We've already removed an `end` marker so now
@@ -572,6 +587,7 @@ class AttributedText {
     // Re-insert any markers that are needed to retain
     // symmetry after the deletions above.
     needToStartAttributions.forEach((name) {
+      print(' - adding back a start marker at ${startOffset + count}');
       contractedAttributions.add(TextAttributionMarker(
         name: name,
         offset: startOffset + count,
@@ -579,6 +595,7 @@ class AttributedText {
       ));
     });
     needToEndAttributions.forEach((name) {
+      print(' - adding back an end marker at ${startOffset + count}');
       contractedAttributions.add(TextAttributionMarker(
         name: name,
         offset: startOffset + count,
@@ -674,7 +691,7 @@ class TextSpanBuilder {
       throw Exception(
           'Cannot start a new span beyond the end of the given text. Offset: $_currentOffset, Text: "$text"');
     }
-    print(' - starting span at $_currentOffset');
+    // print(' - starting span at $_currentOffset');
     _expectsStart = false;
 
     _currentStyle = style;
@@ -686,10 +703,9 @@ class TextSpanBuilder {
     if (_expectsStart) {
       throw Exception('Expected a span `start` but was told to `end()`. Offset: $offset');
     }
-    print(' - ending span at $offset');
+    // print(' - ending span at $offset');
     _expectsStart = true;
 
-    print(' - text style at end, font weight: ${_currentStyle.fontWeight}');
     _spans.add(TextSpan(
       text: text.substring(_currentOffset, offset + 1),
       style: _currentStyle,

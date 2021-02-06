@@ -86,10 +86,8 @@ class SelectableTextState extends State<SelectableText> with SingleTickerProvide
   // TODO: make this work for real.
   double get _lineHeight {
     if (widget.richText.style != null) {
-      print('Line height from real style: height: ${widget.richText.style.height}');
       return widget.richText.style.fontSize * widget.richText.style.height;
     } else {
-      print('Line height from hard coded value');
       return 16;
     }
   }

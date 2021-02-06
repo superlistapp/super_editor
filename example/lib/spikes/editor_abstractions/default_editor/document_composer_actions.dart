@@ -168,6 +168,28 @@ ExecutionInstruction collapseSelectionWhenDirectionalKeyIsPressed({
   }
 }
 
+ExecutionInstruction applyBoldWhenCmdBIsPressed({
+  @required RichTextDocument document,
+  @required DocumentEditor editor,
+  @required DocumentLayoutState documentLayout,
+  @required ValueNotifier<DocumentSelection> currentSelection,
+  @required List<DocumentNodeSelection> nodeSelections,
+  @required RawKeyEvent keyEvent,
+}) {
+  // TODO:
+}
+
+ExecutionInstruction applyItalicsWhenCmdIIsPressed({
+  @required RichTextDocument document,
+  @required DocumentEditor editor,
+  @required DocumentLayoutState documentLayout,
+  @required ValueNotifier<DocumentSelection> currentSelection,
+  @required List<DocumentNodeSelection> nodeSelections,
+  @required RawKeyEvent keyEvent,
+}) {
+  // TODO:
+}
+
 ExecutionInstruction deleteExpandedSelectionWhenCharacterOrDestructiveKeyPressed({
   @required RichTextDocument document,
   @required DocumentEditor editor,
