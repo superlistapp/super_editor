@@ -107,13 +107,11 @@ ExecutionInstruction splitParagraphWhenEnterPressed({
   if (node is ParagraphNode && keyEvent.logicalKey == LogicalKeyboardKey.enter && currentSelection.value.isCollapsed) {
     final text = node.text;
     final caretIndex = (currentSelection.value.extent.nodePosition as TextPosition).offset;
-    // final startText = text.text.substring(0, caretIndex);
     final startText = text.copyText(0, caretIndex);
-    // final endText = caretIndex < text.text.length ? text.text.substring(caretIndex) : '';
-    final endText = caretIndex < text.text.length ? text.copyText(caretIndex) : AttributedText();
+    final endText = text.copyText(caretIndex);
     print('Splitting paragraph:');
-    print(' - start text: "$startText"');
-    print(' - end text: "$endText"');
+    print(' - start text: "${startText.text}"');
+    print(' - end text: "${endText.text}"');
 
     // Change the current nodes content to just the text before the caret.
     print(' - changing the original paragraph text due to split');

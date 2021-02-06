@@ -797,6 +797,12 @@ final _composerKeyboardActions = <ComposerKeyboardAction>[
     action: splitListItemWhenEnterPressed,
   ),
   ComposerKeyboardAction.simple(
+    action: applyBoldWhenCmdBIsPressed,
+  ),
+  ComposerKeyboardAction.simple(
+    action: applyItalicsWhenCmdIIsPressed,
+  ),
+  ComposerKeyboardAction.simple(
     action: collapseSelectionWhenDirectionalKeyIsPressed,
   ),
   ComposerKeyboardAction.simple(

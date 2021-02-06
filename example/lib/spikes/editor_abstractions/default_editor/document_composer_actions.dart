@@ -176,7 +176,33 @@ ExecutionInstruction applyBoldWhenCmdBIsPressed({
   @required List<DocumentNodeSelection> nodeSelections,
   @required RawKeyEvent keyEvent,
 }) {
-  // TODO:
+  if (keyEvent.character?.toLowerCase() == 'b' && keyEvent.isMetaPressed) {
+    if (currentSelection.value.isCollapsed) {
+      // TODO: configure text entry to be bold
+      return ExecutionInstruction.haltExecution;
+    }
+
+    for (final nodeSelection in nodeSelections) {
+      final node = document.getNodeById(nodeSelection.nodeId);
+      if (node is TextNode) {
+        final textSelection = nodeSelection.nodeSelection as TextSelection;
+        // -1 on `end` because text selection uses an exclusive `end` but
+        // attributions use inclusive `end`.
+        final textRange = TextRange(start: textSelection.start, end: textSelection.end - 1);
+        node.text.toggleAttribution('bold', textRange);
+
+        // TODO: create an appropriate change notification mechanism
+        //       instead of hijacking the current selection.
+        //       The reason this action hijacks the selection is
+        //       because selection doesn't change, and altering an
+        //       attribution doesn't currently trigger a doc change event.
+        currentSelection.notifyListeners();
+      }
+    }
+
+    return ExecutionInstruction.haltExecution;
+  }
+  return ExecutionInstruction.continueExecution;
 }
 
 ExecutionInstruction applyItalicsWhenCmdIIsPressed({
@@ -187,7 +213,33 @@ ExecutionInstruction applyItalicsWhenCmdIIsPressed({
   @required List<DocumentNodeSelection> nodeSelections,
   @required RawKeyEvent keyEvent,
 }) {
-  // TODO:
+  if (keyEvent.character?.toLowerCase() == 'i' && keyEvent.isMetaPressed) {
+    if (currentSelection.value.isCollapsed) {
+      // TODO: configure text entry to be italics
+      return ExecutionInstruction.haltExecution;
+    }
+
+    for (final nodeSelection in nodeSelections) {
+      final node = document.getNodeById(nodeSelection.nodeId);
+      if (node is TextNode) {
+        final textSelection = nodeSelection.nodeSelection as TextSelection;
+        // -1 on `end` because text selection uses an exclusive `end` but
+        // attributions use inclusive `end`.
+        final textRange = TextRange(start: textSelection.start, end: textSelection.end - 1);
+        node.text.toggleAttribution('italics', textRange);
+
+        // TODO: create an appropriate change notification mechanism
+        //       instead of hijacking the current selection.
+        //       The reason this action hijacks the selection is
+        //       because selection doesn't change, and altering an
+        //       attribution doesn't currently trigger a doc change event.
+        currentSelection.notifyListeners();
+      }
+    }
+
+    return ExecutionInstruction.haltExecution;
+  }
+  return ExecutionInstruction.continueExecution;
 }
 
 ExecutionInstruction deleteExpandedSelectionWhenCharacterOrDestructiveKeyPressed({

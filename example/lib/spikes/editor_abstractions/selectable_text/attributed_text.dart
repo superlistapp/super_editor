@@ -9,6 +9,10 @@ class AttributedText {
     int previousOffset = -1;
     for (final attribution in this.attributions) {
       if (attribution.offset < previousOffset) {
+        print('Attributions:');
+        for (final attribution in this.attributions) {
+          print(' - $attribution');
+        }
         throw Exception('The given attributions are not in the correct order.');
       }
       previousOffset = attribution.offset;
@@ -39,12 +43,16 @@ class AttributedText {
     return (markerBefore.offset <= offset) && (offset <= markerAfter.offset);
   }
 
+  /// `range` end is `inclusive`.
   void addAttribution(String name, TextRange range) {
     if (!range.isValid) {
       return;
     }
+    if (range.end >= text.length) {
+      throw Exception('Attribution range exceeds text length. Text length: ${text.length}, given range: $range');
+    }
 
-    print('addAttribution()');
+    print('addAttribution(): $range');
     if (!hasAttributionAt(range.start, name: name)) {
       print(' - adding start marker at: ${range.start}');
       _insertMarker(TextAttributionMarker(
@@ -95,11 +103,16 @@ class AttributedText {
     if (!range.isValid) {
       return;
     }
+    if (range.end >= text.length) {
+      throw Exception('Attribution range exceeds text length.');
+    }
 
+    print('removeAttribution(): $range');
     if (hasAttributionAt(range.start, name: name)) {
       final markerAtStart = _getMarkerAt(name, range.start);
 
       if (markerAtStart == null) {
+        print(' - inserting new `end` marker at start of range');
         _insertMarker(TextAttributionMarker(
           name: name,
           // Note: if `range.start` is zero, then markerAtStart
@@ -108,6 +121,7 @@ class AttributedText {
           markerType: AttributionMarkerType.end,
         ));
       } else if (markerAtStart.isStart) {
+        print(' - removing a `start` marker at start of range');
         _removeMarker(markerAtStart);
       } else {
         throw Exception(
@@ -122,6 +136,7 @@ class AttributedText {
         .where((attribution) => attribution.offset > range.start)
         .where((attribution) => attribution.offset <= range.end)
         .toList();
+    print(' - removing ${markersToDelete.length} markers between ${range.start} and ${range.end}');
     // TODO: ideally we'd say "remove all" but that method doesn't
     //       seem to exist?
     attributions.removeWhere((element) => markersToDelete.contains(element));
@@ -130,6 +145,11 @@ class AttributedText {
       // If the range ends at the end of the text, we don't need to
       // insert any `start` markers because there can't be any
       // other `end` markers later in the text.
+      print(' - this range goes to the end of the text, so we don\'t need to insert any more markers.');
+      print(' - all attributions after:');
+      attributions.where((element) => element.name == name).forEach((element) {
+        print(' - $element');
+      });
       return;
     }
 
@@ -139,12 +159,18 @@ class AttributedText {
       // The last marker we deleted was a `start` marker.
       // Therefore, an `end` marker appears somewhere down the line.
       // We can't leave it dangling. Add a `start` marker back.
+      print(' - inserting a final `start` marker at the end to keep symmetry');
       _insertMarker(TextAttributionMarker(
         name: name,
         offset: range.end + 1,
         markerType: AttributionMarkerType.start,
       ));
     }
+
+    print(' - all attributions after:');
+    attributions.where((element) => element.name == name).forEach((element) {
+      print(' - $element');
+    });
   }
 
   /// If ALL of the text in `range` contains the given
@@ -160,7 +186,9 @@ class AttributedText {
   }
 
   bool _isContinuousAttribution(String name, TextRange range) {
-    TextAttributionMarker markerBefore = _getNearestMarkerBefore(range.start, name: name);
+    print('_isContinousAttribution(): "$name", range: $range');
+    TextAttributionMarker markerBefore = _getNearestMarkerAtOrBefore(range.start, name: name);
+    print(' - marker before: $markerBefore');
 
     if (markerBefore == null || markerBefore.isEnd) {
       return false;
@@ -169,7 +197,8 @@ class AttributedText {
     final indexBefore = attributions.indexOf(markerBefore);
     final nextMarker = attributions
         .sublist(indexBefore)
-        .firstWhere((marker) => marker.name == name && marker.offset > indexBefore, orElse: () => null);
+        .firstWhere((marker) => marker.name == name && marker.offset > markerBefore.offset, orElse: () => null);
+    print(' - next marker: $nextMarker');
 
     if (nextMarker == null) {
       throw Exception('Inconsistent attributions state. Found a `start` marker with no matching `end`.');
@@ -210,7 +239,7 @@ class AttributedText {
     attributions.removeAt(index);
   }
 
-  TextAttributionMarker _getNearestMarkerBefore(
+  TextAttributionMarker _getNearestMarkerAtOrBefore(
     int offset, {
     String name,
   }) {
@@ -221,7 +250,7 @@ class AttributedText {
       if (marker.offset <= offset) {
         markerBefore = marker;
       }
-      if (marker.offset >= offset) {
+      if (marker.offset > offset) {
         break;
       }
     }
@@ -251,11 +280,11 @@ class AttributedText {
   // TODO: move this behavior to another class and make it extensible
   //       so that attributions can be interpreted as desired.
   TextSpan computeTextSpan([TextStyle baseStyle]) {
-    // print('computeTextSpan()');
+    print('computeTextSpan() - text length: ${text.length}');
     // print(' - base style line height: ${baseStyle?.height}');
     if (text.isEmpty) {
       // There is no text and therefore no attributions.
-      // print(' - text is empty. Returning empty TextSpan.');
+      print(' - text is empty. Returning empty TextSpan.');
       return TextSpan(text: '', style: baseStyle);
     }
 
@@ -267,13 +296,16 @@ class AttributedText {
     final startPoints = <int>[0]; // we always start at zero
     final endPoints = <int>[];
 
-    // print(' - accumulating start and end points:');
+    print(' - accumulating start and end points:');
     for (final marker in attributions) {
-      // print(' - marker at ${marker.offset}');
+      print(' - marker at ${marker.offset}');
+      print(' - start points before change: $startPoints');
+      print(' - end points before change: $endPoints');
+
       if (marker.isStart) {
         // Add a `start` point.
         if (!startPoints.contains(marker.offset)) {
-          // print(' - adding start point at ${marker.offset}');
+          print(' - adding start point at ${marker.offset}');
           startPoints.add(marker.offset);
         }
 
@@ -281,14 +313,14 @@ class AttributedText {
         // then there won't be an `end` just before this
         // `start` point. Insert one.
         if (marker.offset > 0 && !endPoints.contains(marker.offset - 1)) {
-          // print(' - going back one and adding end point at: ${marker.offset - 1}');
+          print(' - going back one and adding end point at: ${marker.offset - 1}');
           endPoints.add(marker.offset - 1);
         }
       }
       if (marker.isEnd) {
         // Add an `end` point.
         if (!endPoints.contains(marker.offset)) {
-          // print(' - adding an end point at: ${marker.offset}');
+          print(' - adding an end point at: ${marker.offset}');
           endPoints.add(marker.offset);
         }
 
@@ -297,15 +329,18 @@ class AttributedText {
         // guaranteed to have another `start` marker after this
         // `end` marker.
         if (marker.offset < text.length - 1 && !startPoints.contains(marker.offset + 1)) {
-          // print(' - jumping forward one to add a start point at: ${marker.offset + 1}');
+          print(' - jumping forward one to add a start point at: ${marker.offset + 1}');
           startPoints.add(marker.offset + 1);
         }
       }
+
+      print(' - start points after change: $startPoints');
+      print(' - end points after change: $endPoints');
     }
     if (!endPoints.contains(text.length - 1)) {
       // This condition occurs when there are no style spans, or
       // when the final span is un-styled.
-      // print(' - adding a final endpoint at end of text');
+      print(' - adding a final endpoint at end of text');
       endPoints.add(text.length - 1);
     }
 
@@ -313,7 +348,7 @@ class AttributedText {
       print(' - start points: $startPoints');
       print(' - end points: $endPoints');
       throw Exception(
-          ' - mismatch between number of start points and end points. Start: ${startPoints.length}, End: ${endPoints.length}');
+          ' - mismatch between number of start points and end points. Start: ${startPoints.length} -> ${startPoints}, End: ${endPoints.length} -> ${endPoints}');
     }
 
     // Sort the start and end points so that they can be
@@ -329,12 +364,12 @@ class AttributedText {
         start: startPoints[i],
         end: endPoints[i],
       ));
-      // print(' - span range: ${ranges[i]}');
+      print(' - span range: ${ranges[i]}');
     }
 
     // Iterate through the ranges and build a TextSpan.
     for (final range in ranges) {
-      // print(' - styling range: $range');
+      print(' - styling range: $range');
       spanBuilder
         ..start(style: _computeStyleAt(range.start, baseStyle))
         ..end(offset: range.end);
@@ -386,62 +421,101 @@ class AttributedText {
   }
 
   AttributedText copyText(int startOffset, [int endOffset]) {
+    print('copyText() - start: $startOffset, end: $endOffset');
+
+    // Note: -1 because copyText() uses an exclusive `start` and `end` but
+    // _copyAttributionRegion() uses an inclusive `start` and `end`.
+    final startCopyOffset = startOffset < text.length ? startOffset : text.length - 1;
+    int endCopyOffset;
+    if (endOffset == startOffset) {
+      endCopyOffset = startCopyOffset;
+    } else if (endOffset != null) {
+      endCopyOffset = endOffset - 1;
+    } else {
+      endCopyOffset = text.length - 1;
+    }
+    print(' - copy offsets, start: $startCopyOffset, end: $endCopyOffset');
+
     return AttributedText(
       text: text.substring(startOffset, endOffset),
-      attributions: _copyAttributionRegion(startOffset, endOffset),
+      attributions: _copyAttributionRegion(startCopyOffset, endCopyOffset),
     );
   }
 
   List<TextAttributionMarker> _copyAttributionRegion(int startOffset, [int endOffset]) {
-    endOffset = endOffset ?? text.length;
+    endOffset = endOffset ?? text.length - 1;
+    print('_copyAttributionRegion() - start: $startOffset, end: $endOffset');
 
     final List<TextAttributionMarker> cutAttributions = [];
 
+    print(' - inspecting existing markers in full text');
     final Set<String> neededStartMarkers = {};
     final Set<String> neededEndMarkers = {};
-    for (int i = 0; i < attributions.length; ++i) {
-      final marker = attributions[i];
 
-      if (marker.offset < startOffset) {
-        // Track any markers that begin before the `startOffset`
-        // and continue beyond `startOffset`.
-        if (marker.isStart) {
-          neededStartMarkers.add(marker.name);
-        } else {
-          neededStartMarkers.remove(marker.name);
-        }
-      } else if (marker.offset == startOffset) {
-        // At the very beginning of the copied region,
-        // re-insert any unmatched `start` markers that
-        // were removed.
-        for (final startMarkerName in neededStartMarkers) {
-          cutAttributions.add(TextAttributionMarker(
-            name: startMarkerName,
-            offset: marker.offset,
-            markerType: AttributionMarkerType.start,
-          ));
-        }
-      } else if (startOffset <= marker.offset && marker.offset < endOffset) {
-        cutAttributions.add(marker);
-
-        // Track any markers that begin between `startOffset`
-        // and `endOffset` and continue beyond `endOffset`.
-        if (marker.markerType == AttributionMarkerType.start) {
-          neededEndMarkers.add(marker.name);
-        } else {
-          neededEndMarkers.remove(marker.name);
-        }
-      } else if (marker.offset == endOffset - 1) {
-        // At the very end of the copy region, replace
-        // any `end` markers that fell beyond the range.
-        for (final endMarkerName in neededEndMarkers) {
-          cutAttributions.add(TextAttributionMarker(
-            name: endMarkerName,
-            offset: marker.offset,
-            markerType: AttributionMarkerType.end,
-          ));
-        }
+    // Analyze all markers that appear before the start of
+    // the copy range so that we can insert any appropriate
+    // `start` markers at the beginning of the copy range.
+    attributions //
+        .where((marker) => marker.offset < startOffset) //
+        .forEach((marker) {
+      print(' - marker before the copy region: $marker');
+      // Track any markers that begin before the `startOffset`
+      // and continue beyond `startOffset`.
+      if (marker.isStart) {
+        print(' - remembering this marker to insert in copied region');
+        neededStartMarkers.add(marker.name);
+      } else {
+        print(
+            ' - this marker counters an earlier one we found. We will not re-insert this marker in the copied region');
+        neededStartMarkers.remove(marker.name);
       }
+    });
+
+    // Insert any `start` markers at the start of the copy region
+    // so that we maintain attribution symmetry.
+    neededStartMarkers.forEach((markerName) {
+      print(' - inserting "$markerName" marker at start of copy region to maintain symmetry.');
+      cutAttributions.add(TextAttributionMarker(
+        name: markerName,
+        offset: 0,
+        markerType: AttributionMarkerType.start,
+      ));
+    });
+
+    // Directly copy every marker that appears within the cut
+    // region. Also track any attributions that cross the end
+    // boundary of the copy range.
+    attributions //
+        .where((marker) => startOffset <= marker.offset && marker.offset <= endOffset) //
+        .forEach((marker) {
+      print(' - copying "${marker.name}" at ${marker.offset} from original text to copy region.');
+      cutAttributions.add(marker.copyWith(
+        offset: marker.offset - startOffset,
+      ));
+
+      // Track any markers that begin between `startOffset`
+      // and `endOffset` and continue beyond `endOffset`.
+      if (marker.markerType == AttributionMarkerType.start) {
+        neededEndMarkers.add(marker.name);
+      } else {
+        neededEndMarkers.remove(marker.name);
+      }
+    });
+
+    // Insert any `end` markers at the end of the copy region
+    // so that we maintain attribution symmetry.
+    neededEndMarkers.forEach((markerName) {
+      print(' - inserting "$markerName" marker at end of copy region to maintain symmetry.');
+      cutAttributions.add(TextAttributionMarker(
+        name: markerName,
+        offset: endOffset - startOffset,
+        markerType: AttributionMarkerType.end,
+      ));
+    });
+
+    print(' - copied attributions:');
+    for (final attribution in cutAttributions) {
+      print('   - $attribution');
     }
 
     return cutAttributions;
@@ -522,6 +596,10 @@ class AttributedText {
     @required int endOffset,
   }) {
     print('Removing text region from $startOffset to $endOffset');
+    print(' - initial attributions:');
+    for (final attribution in attributions) {
+      print('   - ${attribution.name} - ${attribution.markerType}: ${attribution.offset}');
+    }
     final reducedText = (startOffset > 0 ? text.substring(0, startOffset) : '') +
         (endOffset < text.length ? text.substring(endOffset) : '');
 
@@ -530,9 +608,10 @@ class AttributedText {
       startOffset: startOffset,
       count: endOffset - startOffset,
     );
+    print(' - reduced text length: ${reducedText.length}');
     print(' - remaining attributions:');
     for (final attribution in contractedAttributions) {
-      print(' - ${attribution.name} - ${attribution.markerType}: ${attribution.offset}');
+      print('   - ${attribution.name} - ${attribution.markerType}: ${attribution.offset}');
     }
 
     return AttributedText(
@@ -549,13 +628,13 @@ class AttributedText {
     final contractedAttributions = <TextAttributionMarker>[];
 
     // Add all the markers that are unchanged.
-    contractedAttributions.addAll(attributions.where((marker) => marker.offset <= startOffset));
+    contractedAttributions.addAll(attributions.where((marker) => marker.offset < startOffset));
 
-    print('Removing $count characters starting at $startOffset');
+    print(' - removing $count characters starting at $startOffset');
     final needToEndAttributions = <String>{};
     final needToStartAttributions = <String>{};
     attributions
-        .where((marker) => (startOffset < marker.offset) && (marker.offset < startOffset + count))
+        .where((marker) => (startOffset <= marker.offset) && (marker.offset < startOffset + count))
         .forEach((marker) {
       // Get rid of this marker and keep track of
       // any open-ended attributions that need to
@@ -587,18 +666,20 @@ class AttributedText {
     // Re-insert any markers that are needed to retain
     // symmetry after the deletions above.
     needToStartAttributions.forEach((name) {
-      print(' - adding back a start marker at ${startOffset + count}');
+      final offset = startOffset > 0 ? startOffset - 1 : 0;
+      print(' - adding back a start marker at $offset');
       contractedAttributions.add(TextAttributionMarker(
         name: name,
-        offset: startOffset + count,
+        offset: offset,
         markerType: AttributionMarkerType.start,
       ));
     });
     needToEndAttributions.forEach((name) {
-      print(' - adding back an end marker at ${startOffset + count}');
+      final offset = startOffset > 0 ? startOffset - 1 : 0;
+      print(' - adding back an end marker at $offset');
       contractedAttributions.add(TextAttributionMarker(
         name: name,
-        offset: startOffset + count,
+        offset: offset,
         markerType: AttributionMarkerType.end,
       ));
     });

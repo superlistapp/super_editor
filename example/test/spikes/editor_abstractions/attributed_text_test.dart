@@ -5,28 +5,18 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   group('Attributed Text', () {
     group('Single attribution tests', () {
-      // test('plays nice with empty text', () {
-      //   final emptyText = AttributedText(
-      //     text: '',
-      //   );
-      //
-      //   expect(() {
-      //     emptyText.addAttribution('bold', TextRange.collapsed(0));
-      //   }, throwsException);
-      // });
-
       test('applies attribution to full text', () {
         final text = AttributedText(
           text: 'this is some text',
         );
 
-        text.addAttribution('bold', TextRange(start: 0, end: 17));
+        text.addAttribution('bold', TextRange(start: 0, end: 16));
 
         expect(text.attributions.length, 2);
         expect(text.attributions[0],
             TextAttributionMarker(name: 'bold', offset: 0, markerType: AttributionMarkerType.start));
         expect(text.attributions[1],
-            TextAttributionMarker(name: 'bold', offset: 17, markerType: AttributionMarkerType.end));
+            TextAttributionMarker(name: 'bold', offset: 16, markerType: AttributionMarkerType.end));
       });
 
       test('applies attribution to beginning text span', () {
@@ -62,22 +52,22 @@ void main() {
           text: 'this is some text',
         );
 
-        text.addAttribution('bold', TextRange(start: 7, end: 17));
+        text.addAttribution('bold', TextRange(start: 7, end: 16));
 
         expect(text.attributions.length, 2);
         expect(text.attributions[0],
             TextAttributionMarker(name: 'bold', offset: 7, markerType: AttributionMarkerType.start));
         expect(text.attributions[1],
-            TextAttributionMarker(name: 'bold', offset: 17, markerType: AttributionMarkerType.end));
+            TextAttributionMarker(name: 'bold', offset: 16, markerType: AttributionMarkerType.end));
       });
 
       test('removes attribution from full text', () {
         final text = AttributedText(text: 'this is some text', attributions: [
           TextAttributionMarker(name: 'bold', offset: 0, markerType: AttributionMarkerType.start),
-          TextAttributionMarker(name: 'bold', offset: 17, markerType: AttributionMarkerType.end)
+          TextAttributionMarker(name: 'bold', offset: 16, markerType: AttributionMarkerType.end)
         ]);
 
-        text.removeAttribution('bold', TextRange(start: 0, end: 17));
+        text.removeAttribution('bold', TextRange(start: 0, end: 16));
 
         expect(text.attributions.length, 0);
       });
@@ -145,25 +135,25 @@ void main() {
       test('applies attribution when mixed span is toggled', () {
         final text = AttributedText(text: 'this is some text', attributions: [
           TextAttributionMarker(name: 'bold', offset: 8, markerType: AttributionMarkerType.start),
-          TextAttributionMarker(name: 'bold', offset: 17, markerType: AttributionMarkerType.end)
+          TextAttributionMarker(name: 'bold', offset: 16, markerType: AttributionMarkerType.end)
         ]);
 
-        text.toggleAttribution('bold', TextRange(start: 0, end: 17));
+        text.toggleAttribution('bold', TextRange(start: 0, end: 16));
 
         expect(text.attributions.length, 2);
         expect(text.attributions[0],
             TextAttributionMarker(name: 'bold', offset: 0, markerType: AttributionMarkerType.start));
         expect(text.attributions[1],
-            TextAttributionMarker(name: 'bold', offset: 17, markerType: AttributionMarkerType.end));
+            TextAttributionMarker(name: 'bold', offset: 16, markerType: AttributionMarkerType.end));
       });
 
       test('removes attribution when contiguous span is toggled', () {
         final text = AttributedText(text: 'this is some text', attributions: [
           TextAttributionMarker(name: 'bold', offset: 0, markerType: AttributionMarkerType.start),
-          TextAttributionMarker(name: 'bold', offset: 17, markerType: AttributionMarkerType.end)
+          TextAttributionMarker(name: 'bold', offset: 16, markerType: AttributionMarkerType.end)
         ]);
 
-        text.toggleAttribution('bold', TextRange(start: 0, end: 17));
+        text.toggleAttribution('bold', TextRange(start: 0, end: 16));
 
         expect(text.attributions.length, 0);
       });
