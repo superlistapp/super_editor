@@ -1,4 +1,6 @@
+import 'package:example/spikes/editor_abstractions/selectable_text/attributed_text.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
@@ -14,7 +16,7 @@ import 'text.dart';
 abstract class ListItemNode extends TextNode {
   ListItemNode({
     @required String id,
-    String text = '',
+    AttributedText text,
     int indent = 0,
   })  : _indent = indent,
         super(
@@ -43,7 +45,7 @@ abstract class ListItemNode extends TextNode {
 class UnorderedListItemNode extends ListItemNode {
   UnorderedListItemNode({
     @required String id,
-    String text = '',
+    AttributedText text,
     int indent = 0,
   }) : super(
           id: id,
@@ -55,7 +57,7 @@ class UnorderedListItemNode extends ListItemNode {
 class OrderedListItemNode extends ListItemNode {
   OrderedListItemNode({
     @required String id,
-    String text = '',
+    AttributedText text,
     int indent = 0,
   }) : super(
           id: id,
@@ -71,7 +73,7 @@ class UnorderedListItemComponent extends StatelessWidget {
   const UnorderedListItemComponent({
     Key key,
     @required this.textKey,
-    this.text = '',
+    this.text,
     this.textStyle,
     this.indent = 0,
     this.textSelection,
@@ -80,7 +82,7 @@ class UnorderedListItemComponent extends StatelessWidget {
   }) : super(key: key);
 
   final GlobalKey textKey;
-  final String text;
+  final AttributedText text;
   final TextStyle textStyle;
   final int indent;
   final TextSelection textSelection;
@@ -98,8 +100,11 @@ class UnorderedListItemComponent extends StatelessWidget {
           width: 25 + indentSpace,
           child: Align(
             alignment: Alignment.centerRight,
-            child: Padding(
+            child: Container(
               padding: const EdgeInsets.only(right: 15.0),
+              decoration: BoxDecoration(
+                border: Border.all(width: 1, color: showDebugPaint ? Colors.grey : Colors.transparent),
+              ),
               child: Container(
                 width: 4,
                 height: 4,
@@ -134,7 +139,7 @@ class OrderedListItemComponent extends StatelessWidget {
     Key key,
     @required this.textKey,
     @required this.listIndex,
-    this.text = '',
+    this.text,
     this.numeralTextStyle,
     this.textStyle,
     this.indent = 0,
@@ -145,7 +150,7 @@ class OrderedListItemComponent extends StatelessWidget {
 
   final GlobalKey textKey;
   final int listIndex;
-  final String text;
+  final AttributedText text;
   final TextStyle numeralTextStyle;
   final TextStyle textStyle;
   final int indent;
@@ -164,8 +169,11 @@ class OrderedListItemComponent extends StatelessWidget {
           width: 25 + indentSpace,
           child: Align(
             alignment: Alignment.centerRight,
-            child: Padding(
+            child: Container(
               padding: const EdgeInsets.only(right: 15.0),
+              decoration: BoxDecoration(
+                border: Border.all(width: 1, color: showDebugPaint ? Colors.grey : Colors.transparent),
+              ),
               child: Text(
                 '$listIndex',
                 style: numeralTextStyle,
@@ -280,8 +288,10 @@ ExecutionInstruction splitListItemWhenEnterPressed({
   if (node is ListItemNode && keyEvent.logicalKey == LogicalKeyboardKey.enter && currentSelection.value.isCollapsed) {
     final text = node.text;
     final caretIndex = (currentSelection.value.extent.nodePosition as TextPosition).offset;
-    final startText = text.substring(0, caretIndex);
-    final endText = caretIndex < text.length ? text.substring(caretIndex) : '';
+    // final startText = text.text.substring(0, caretIndex);
+    final startText = text.copyText(0, caretIndex);
+    // final endText = caretIndex < text.text.length ? text.text.substring(caretIndex) : '';
+    final endText = caretIndex < text.text.length ? text.copyText(caretIndex) : AttributedText();
     print('Splitting list item:');
     print(' - start text: "$startText"');
     print(' - end text: "$endText"');

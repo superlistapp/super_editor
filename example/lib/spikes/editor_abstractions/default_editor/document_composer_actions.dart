@@ -66,7 +66,7 @@ ExecutionInstruction preventDeletionOfFirstParagraph({
     //    are no paragraphs after the first one.
     final title = (titleNode as TextNode).text;
     if (titleSelection != null &&
-        (titleSelection.nodeSelection as TextSelection).extentOffset == title.length &&
+        (titleSelection.nodeSelection as TextSelection).extentOffset == title.text.length &&
         keyEvent.logicalKey == LogicalKeyboardKey.delete) {
       // Prevent this operation.
       return ExecutionInstruction.haltExecution;
@@ -107,7 +107,7 @@ ExecutionInstruction preventDeletionOfFirstParagraph({
           return previousValue + 1;
         }
 
-        if (textSelection.start == 0 && textSelection.end == paragraphNode.text.length) {
+        if (textSelection.start == 0 && textSelection.end == paragraphNode.text.text.length) {
           // The entire paragraph is selected. +1.
           return previousValue + 1;
         }
@@ -227,10 +227,10 @@ ExecutionInstruction mergeNodeWithPreviousWhenBackspaceIsPressed({
   }
 
   final paragraphNodeAbove = nodeAbove as TextNode;
-  final aboveParagraphLength = paragraphNodeAbove.text.length;
+  final aboveParagraphLength = paragraphNodeAbove.text.text.length;
 
   // Combine the text and delete the currently selected node.
-  paragraphNodeAbove.text += paragraphNode.text;
+  paragraphNodeAbove.text = paragraphNodeAbove.text.copyAndAppend(paragraphNode.text);
   bool didRemove = document.deleteNode(paragraphNode);
   if (!didRemove) {
     print('ERROR: Failed to delete the currently selected node from the document.');
@@ -282,10 +282,10 @@ ExecutionInstruction mergeNodeWithNextWhenBackspaceIsPressed({
   final paragraphNodeBelow = nodeBelow as TextNode;
 
   print('Combining node with next.');
-  final currentParagraphLength = paragraphNode.text.length;
+  final currentParagraphLength = paragraphNode.text.text.length;
 
   // Combine the text and delete the currently selected node.
-  paragraphNode.text += paragraphNodeBelow.text;
+  paragraphNode.text.copyAndAppend(paragraphNodeBelow.text);
   final didRemove = document.deleteNode(nodeBelow);
   if (!didRemove) {
     print('ERROR: failed to remove next node from document.');

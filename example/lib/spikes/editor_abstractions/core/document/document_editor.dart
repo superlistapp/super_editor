@@ -26,10 +26,9 @@ class DocumentEditor {
 
     final paragraphNode = docNode as TextNode;
     final textOffset = (position.nodePosition as TextPosition).offset;
-    final newParagraph = _insertStringInString(
-      index: textOffset,
-      existing: paragraphNode.text,
-      addition: character,
+    final newParagraph = paragraphNode.text.insertString(
+      textToInsert: character,
+      startOffset: textOffset,
     );
 
     // Add the character to the paragraph.
@@ -46,27 +45,6 @@ class DocumentEditor {
     );
   }
 
-  String _insertStringInString({
-    int index,
-    int replaceFrom,
-    int replaceTo,
-    String existing,
-    String addition,
-  }) {
-    assert(index == null || (replaceFrom == null && replaceTo == null));
-    assert((replaceFrom == null && replaceTo == null) || (replaceFrom < replaceTo));
-
-    if (index == 0) {
-      return addition + existing;
-    } else if (index == existing.length) {
-      return existing + addition;
-    } else if (index != null) {
-      return existing.substring(0, index) + addition + existing.substring(index);
-    } else {
-      return existing.substring(0, replaceFrom) + addition + existing.substring(replaceTo);
-    }
-  }
-
   bool tryToCombineNodes({
     @required RichTextDocument document,
     @required DocumentNode destination,
@@ -74,7 +52,9 @@ class DocumentEditor {
   }) {
     if (destination is ParagraphNode || destination is ListItemNode) {
       if (toMerge is ParagraphNode || toMerge is ListItemNode) {
-        (destination as TextNode).text += (toMerge as TextNode).text;
+        final destinationTextNode = destination as TextNode;
+        final toMergeTextNode = toMerge as TextNode;
+        destinationTextNode.text = destinationTextNode.text.copyAndAppend(toMergeTextNode.text);
         return true;
       }
     }
@@ -110,10 +90,9 @@ class DocumentEditor {
       } else if (nodeSelection.nodeSelection is TextSelection) {
         final textSelection = nodeSelection.nodeSelection as TextSelection;
         final textNode = document.getNodeById(nodeSelection.nodeId) as TextNode;
-        textNode.text = _removeStringSubsection(
-          from: textSelection.start,
-          to: textSelection.end,
-          text: textNode.text,
+        textNode.text = textNode.text.removeRegion(
+          startOffset: textSelection.start,
+          endOffset: textSelection.end,
         );
 
         print('Done deleting selection. Returning new document selection.');
@@ -252,14 +231,13 @@ class DocumentEditor {
       print(' - deleting TextSelection within ParagraphNode');
       final from = min(nodeSelection.baseOffset, nodeSelection.extentOffset);
       final to = max(nodeSelection.baseOffset, nodeSelection.extentOffset);
-      print(' - from: $from, to: $to, text: ${paragraphNode.text}');
+      print(' - from: $from, to: $to, text: ${paragraphNode.text.text}');
 
-      paragraphNode.text = _removeStringSubsection(
-        from: from,
-        to: to,
-        text: paragraphNode.text,
+      paragraphNode.text = paragraphNode.text.removeRegion(
+        startOffset: from,
+        endOffset: to,
       );
-      print(' - remaining text: ${paragraphNode.text}');
+      print(' - remaining text: ${paragraphNode.text.text}');
 
       return DocumentPosition(
         nodeId: docNode.id,
@@ -298,21 +276,5 @@ class DocumentEditor {
       // The document is empty. Null out the position.
       return null;
     }
-  }
-
-  String _removeStringSubsection({
-    @required int from,
-    @required int to,
-    @required String text,
-  }) {
-    String left = '';
-    String right = '';
-    if (from > 0) {
-      left = text.substring(0, from);
-    }
-    if (to < text.length - 1) {
-      right = text.substring(to, text.length);
-    }
-    return left + right;
   }
 }

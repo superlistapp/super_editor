@@ -17,22 +17,36 @@ import 'package:flutter/widgets.dart';
 /// highlight, despite having no content. This is useful when showing that
 /// one or more empty text areas are selected.
 class SelectableText extends StatefulWidget {
-  const SelectableText({
+  SelectableText.plain({
     @required Key key,
-    this.text = '',
+    String text,
     this.textAlign = TextAlign.left,
     this.textSelection = const TextSelection.collapsed(offset: -1),
     this.hasCursor = false,
-    this.style,
+    TextStyle style,
     this.highlightWhenEmpty = false,
     this.showDebugPaint = false,
-  }) : super(key: key);
+  })  : richText = TextSpan(text: text, style: style),
+        textLength = text.length,
+        super(key: key);
 
-  final String text;
+  SelectableText({
+    @required Key key,
+    TextSpan richText,
+    this.textAlign = TextAlign.left,
+    this.textSelection = const TextSelection.collapsed(offset: -1),
+    this.hasCursor = false,
+    this.highlightWhenEmpty = false,
+    this.showDebugPaint = false,
+  })  : richText = richText,
+        this.textLength = richText.toPlainText().length,
+        super(key: key);
+
+  final TextSpan richText;
+  final int textLength;
   final TextAlign textAlign;
   final TextSelection textSelection;
   final bool hasCursor;
-  final TextStyle style;
   final bool highlightWhenEmpty;
   final bool showDebugPaint;
 
@@ -42,7 +56,6 @@ class SelectableText extends StatefulWidget {
 
 class SelectableTextState extends State<SelectableText> with SingleTickerProviderStateMixin implements TextLayout {
   final GlobalKey _textKey = GlobalKey();
-  TextStyle _textStyle;
 
   CursorBlinkController _cursorBlinkController;
 
@@ -57,17 +70,8 @@ class SelectableTextState extends State<SelectableText> with SingleTickerProvide
   }
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _updateTextStyle();
-  }
-
-  @override
   void didUpdateWidget(SelectableText oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.style != oldWidget.style) {
-      _updateTextStyle();
-    }
     _cursorBlinkController.caretPosition = widget.textSelection?.extent;
   }
 
@@ -77,16 +81,18 @@ class SelectableTextState extends State<SelectableText> with SingleTickerProvide
     super.dispose();
   }
 
-  void _updateTextStyle() {
-    setState(() {
-      _textStyle = widget.style ?? Theme.of(context).textTheme.bodyText1;
-      if (_textStyle.height == null) {
-        _textStyle = _textStyle.copyWith(height: 1.0);
-      }
-    });
-  }
-
   RenderParagraph get _renderParagraph => _textKey.currentContext?.findRenderObject() as RenderParagraph;
+
+  // TODO: make this work for real.
+  double get _lineHeight {
+    if (widget.richText.style != null) {
+      print('Line height from real style: height: ${widget.richText.style.height}');
+      return widget.richText.style.fontSize * widget.richText.style.height;
+    } else {
+      print('Line height from hard coded value');
+      return 16;
+    }
+  }
 
   TextPosition getPositionAtOffset(Offset localOffset) {
     return _renderParagraph.getPositionForOffset(localOffset);
@@ -116,7 +122,7 @@ class SelectableTextState extends State<SelectableText> with SingleTickerProvide
     TextPosition currentPosition,
   }) {
     // TODO: use TextPainter to get real line height.
-    final lineHeight = _textStyle.fontSize * _textStyle.height;
+    final lineHeight = _lineHeight;
     // Note: add half the line height to the current offset to help deal with
     //       line heights that aren't accurate.
     final currentSelectionOffset =
@@ -135,7 +141,7 @@ class SelectableTextState extends State<SelectableText> with SingleTickerProvide
     TextPosition currentPosition,
   }) {
     // TODO: use TextPainter to get real line height.
-    final lineHeight = _textStyle.fontSize * _textStyle.height;
+    final lineHeight = _lineHeight;
     // Note: add half the line height to the current offset to help deal with
     //       line heights that aren't accurate.
     final currentSelectionOffset =
@@ -177,7 +183,7 @@ class SelectableTextState extends State<SelectableText> with SingleTickerProvide
       List<TextBox> boxes = _renderParagraph.getBoxesForSelection(
         TextSelection(
           baseOffset: 0,
-          extentOffset: widget.text.length,
+          extentOffset: widget.textLength,
         ),
       );
 
@@ -212,7 +218,7 @@ class SelectableTextState extends State<SelectableText> with SingleTickerProvide
   @override
   TextSelection getSelectionInRect(Offset baseOffset, Offset extentOffset) {
     final contentHeight = _renderParagraph.size.height;
-    final textLength = widget.text.length;
+    final textLength = widget.textLength;
 
     // We don't know whether the base offset is higher or lower than the
     // extent offset. Regardless, if either offset is above the top of
@@ -248,7 +254,7 @@ class SelectableTextState extends State<SelectableText> with SingleTickerProvide
       });
     }
 
-    final desiredTextStyle = _textStyle;
+    final desiredTextStyle = widget.richText.style;
     final textStyle = widget.showDebugPaint
         ? desiredTextStyle.copyWith(
             color: const Color(0xFF444444),
@@ -262,35 +268,34 @@ class SelectableTextState extends State<SelectableText> with SingleTickerProvide
             child: CustomPaint(
               painter: DebugTextPainter(
                 paragraph: _renderParagraph,
-                text: widget.text,
+                text: widget.richText.toPlainText(),
               ),
               size: Size.infinite,
             ),
           ),
         CustomPaint(
           painter: TextSelectionPainter(
-              text: widget.text,
+              text: widget.richText.toPlainText(),
               renderParagraph: _renderParagraph,
               selection: widget.textSelection,
-              emptySelectionHeight: _textStyle.fontSize * _textStyle.height,
+              emptySelectionHeight: _lineHeight,
               highlightWhenEmpty: widget.highlightWhenEmpty,
               selectionColor: widget.showDebugPaint ? Colors.lightGreenAccent : Colors.lightBlueAccent),
         ),
-        Text(
-          widget.text,
+        RichText(
           key: _textKey,
-          textAlign: widget.textAlign,
-          style: textStyle,
+          text: widget.richText,
+          textAlign: widget.textAlign ?? TextAlign.left,
         ),
         CustomPaint(
           painter: CursorPainter(
             blinkController: _cursorBlinkController,
             paragraph: _renderParagraph,
             cursorOffset: widget.textSelection != null ? widget.textSelection.extentOffset : -1,
-            lineHeight: _textStyle.fontSize * _textStyle.height,
-            caretHeight: (_textStyle.fontSize * _textStyle.height) * (widget.showDebugPaint ? 1.2 : 0.8),
+            lineHeight: _lineHeight,
+            caretHeight: (_lineHeight) * (widget.showDebugPaint ? 1.2 : 0.8),
             caretColor: widget.showDebugPaint ? Colors.red : Colors.black,
-            isTextEmpty: widget.text == null || widget.text.isEmpty,
+            isTextEmpty: widget.richText == null || widget.richText.toPlainText().isEmpty,
             showCursor: widget.hasCursor,
           ),
         ),

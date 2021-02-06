@@ -1,4 +1,5 @@
 import 'package:example/spikes/editor_abstractions/default_editor/list_items.dart';
+import 'package:example/spikes/editor_abstractions/selectable_text/attributed_text.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -14,7 +15,7 @@ import 'text.dart';
 class ParagraphNode extends TextNode {
   ParagraphNode({
     @required String id,
-    String text = '',
+    AttributedText text,
     TextAlign textAlign = TextAlign.left,
     String textType = 'paragraph',
   }) : super(
@@ -50,7 +51,7 @@ ExecutionInstruction insertCharacterInParagraph({
     final textSelection = currentSelection.value.extent.nodePosition as TextPosition;
 
     // TODO: refactor to make prefix matching extensible
-    final textBeforeCaret = text.substring(0, textSelection.offset);
+    final textBeforeCaret = text.text.substring(0, textSelection.offset);
 
     final unorderedListItemMatch = RegExp(r'^\s*[\*-]\s+$');
     final hasUnorderedListItemMatch = unorderedListItemMatch.hasMatch(textBeforeCaret);
@@ -62,10 +63,11 @@ ExecutionInstruction insertCharacterInParagraph({
     if (hasUnorderedListItemMatch || hasOrderedListItemMatch) {
       print(' - found unordered list item prefix');
       int startOfNewText = textBeforeCaret.length;
-      while (startOfNewText < node.text.length && node.text[startOfNewText] == ' ') {
+      while (startOfNewText < node.text.text.length && node.text.text[startOfNewText] == ' ') {
         startOfNewText += 1;
       }
-      final adjustedText = node.text.substring(startOfNewText);
+      // final adjustedText = node.text.text.substring(startOfNewText);
+      final adjustedText = node.text.copyText(startOfNewText);
       final newNode = hasUnorderedListItemMatch
           ? UnorderedListItemNode(id: node.id, text: adjustedText)
           : OrderedListItemNode(id: node.id, text: adjustedText);
@@ -105,8 +107,10 @@ ExecutionInstruction splitParagraphWhenEnterPressed({
   if (node is ParagraphNode && keyEvent.logicalKey == LogicalKeyboardKey.enter && currentSelection.value.isCollapsed) {
     final text = node.text;
     final caretIndex = (currentSelection.value.extent.nodePosition as TextPosition).offset;
-    final startText = text.substring(0, caretIndex);
-    final endText = caretIndex < text.length ? text.substring(caretIndex) : '';
+    // final startText = text.text.substring(0, caretIndex);
+    final startText = text.copyText(0, caretIndex);
+    // final endText = caretIndex < text.text.length ? text.text.substring(caretIndex) : '';
+    final endText = caretIndex < text.text.length ? text.copyText(caretIndex) : AttributedText();
     print('Splitting paragraph:');
     print(' - start text: "$startText"');
     print(' - end text: "$endText"');

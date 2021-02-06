@@ -1,3 +1,4 @@
+import 'package:example/spikes/editor_abstractions/selectable_text/attributed_text.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
@@ -13,7 +14,7 @@ class TextWithHintComponent extends StatelessWidget {
     this.textType,
     this.hintText,
     this.textAlign,
-    this.textStyle,
+    this.textStyle = const TextStyle(),
     this.textSelection,
     this.hasCursor,
     this.highlightWhenEmpty,
@@ -21,7 +22,7 @@ class TextWithHintComponent extends StatelessWidget {
   }) : super(key: key);
 
   final GlobalKey textKey;
-  final String text;
+  final AttributedText text;
   final String textType;
   final String hintText;
   final TextAlign textAlign;

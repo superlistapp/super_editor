@@ -683,7 +683,7 @@ final ComponentBuilder defaultComponentBuilder = ({
     //   print('   - ^ has cursor');
     // }
 
-    if (document.getNodeIndex(currentNode) == 0 && currentNode.text.isEmpty && !hasCursor) {
+    if (document.getNodeIndex(currentNode) == 0 && currentNode.text.text.isEmpty && !hasCursor) {
       return TextWithHintComponent(
         textKey: key,
         text: currentNode.text,
@@ -692,16 +692,10 @@ final ComponentBuilder defaultComponentBuilder = ({
         textAlign: currentNode.textAlign,
         textSelection: textSelection,
         hasCursor: hasCursor,
-        // TODO: figure out how to configure styles
-        textStyle: TextStyle(
-          fontSize: 13,
-          height: 1.4,
-          color: const Color(0xFF312F2C),
-        ),
         highlightWhenEmpty: highlightWhenEmpty,
         showDebugPaint: showDebugPaint,
       );
-    } else if (document.getNodeIndex(currentNode) == 1 && currentNode.text.isEmpty && !hasCursor) {
+    } else if (document.getNodeIndex(currentNode) == 1 && currentNode.text.text.isEmpty && !hasCursor) {
       return TextWithHintComponent(
         textKey: key,
         text: currentNode.text,
@@ -710,12 +704,6 @@ final ComponentBuilder defaultComponentBuilder = ({
         textAlign: currentNode.textAlign,
         textSelection: textSelection,
         hasCursor: hasCursor,
-        // TODO: figure out how to configure styles
-        textStyle: TextStyle(
-          fontSize: 13,
-          height: 1.4,
-          color: const Color(0xFF312F2C),
-        ),
         highlightWhenEmpty: highlightWhenEmpty,
         showDebugPaint: showDebugPaint,
       );
@@ -727,12 +715,6 @@ final ComponentBuilder defaultComponentBuilder = ({
         textAlign: currentNode.textAlign,
         textSelection: textSelection,
         hasCursor: hasCursor,
-        // TODO: figure out how to configure styles
-        textStyle: TextStyle(
-          fontSize: 13,
-          height: 1.4,
-          color: const Color(0xFF312F2C),
-        ),
         highlightWhenEmpty: highlightWhenEmpty,
         showDebugPaint: showDebugPaint,
       );

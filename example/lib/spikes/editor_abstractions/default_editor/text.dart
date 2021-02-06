@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart' hide SelectableText;
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
@@ -9,12 +10,13 @@ import '../core/layout/document_layout.dart';
 import '../core/selection/editor_selection.dart';
 import '../core/composition/document_composer.dart';
 import '_text_tools.dart';
+import '../selectable_text/attributed_text.dart';
 import '../selectable_text/selectable_text.dart';
 
 class TextNode with ChangeNotifier implements DocumentNode {
   TextNode({
     @required this.id,
-    String text = '',
+    AttributedText text,
     TextAlign textAlign = TextAlign.left,
     String textType = 'paragraph',
   })  : _text = text,
@@ -23,9 +25,9 @@ class TextNode with ChangeNotifier implements DocumentNode {
 
   final String id;
 
-  String _text;
-  String get text => _text;
-  set text(String newText) {
+  AttributedText _text;
+  AttributedText get text => _text;
+  set text(AttributedText newText) {
     if (newText != _text) {
       print('Text changed. Notifying listeners.');
       _text = newText;
@@ -50,17 +52,6 @@ class TextNode with ChangeNotifier implements DocumentNode {
       notifyListeners();
     }
   }
-
-  bool tryToCombineWithOtherNode(DocumentNode other) {
-    // TODO: need to be able to list items into paragraphs somehow.
-    if (other is! TextNode) {
-      return false;
-    }
-
-    final otherParagraph = other as TextNode;
-    this.text += otherParagraph.text;
-    return true;
-  }
 }
 
 /// Displays text in a document.
@@ -82,7 +73,7 @@ class TextComponent extends StatefulWidget {
 
   // TODO: go back to just taking a single key
   final GlobalKey textKey;
-  final String text;
+  final AttributedText text;
   final String textType;
   final TextAlign textAlign;
   final TextStyle textStyle;
@@ -124,7 +115,7 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
 
   @override
   TextPosition getEndPosition() {
-    return TextPosition(offset: widget.text.length);
+    return TextPosition(offset: widget.text.text.length);
   }
 
   @override
@@ -166,7 +157,7 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
   TextSelection getSelectionOfEverything() {
     return TextSelection(
       baseOffset: 0,
-      extentOffset: widget.text.length,
+      extentOffset: widget.text.text.length,
     );
   }
 
@@ -193,7 +184,7 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
 
     // This component only displays a single contiguous span of text.
     // Therefore, all of our text is contiguous regardless of position.
-    return widget.text;
+    return widget.text.text;
   }
 
   TextPosition getPositionOneLineUp(dynamic nodePosition) {
@@ -234,25 +225,29 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
 
   @override
   Widget build(BuildContext context) {
-    TextStyle style = widget.textStyle;
+    TextStyle baseStyle = (widget.textStyle ?? Theme.of(context).textTheme.bodyText1).copyWith(
+      height: 1.4,
+    );
     switch (widget.textType) {
       case 'header1':
-        style = widget.textStyle.copyWith(
+        baseStyle = baseStyle.copyWith(
           fontSize: 24,
           fontWeight: FontWeight.bold,
+          height: 1.0,
         );
         break;
       default:
         break;
     }
 
+    final richText = widget.text.computeTextSpan(baseStyle);
+
     return SelectableText(
       key: _selectableTextKey,
-      text: widget.text,
+      richText: richText,
       textAlign: widget.textAlign,
       textSelection: widget.textSelection,
       hasCursor: widget.hasCursor,
-      style: style,
       highlightWhenEmpty: widget.highlightWhenEmpty,
       showDebugPaint: widget.showDebugPaint,
     );
@@ -345,7 +340,7 @@ ExecutionInstruction deleteCharacterWhenDeleteIsPressed({
   }
   final text = (document.getNodeById(currentSelection.value.extent.nodeId) as TextNode).text;
   final textPosition = (currentSelection.value.extent.nodePosition as TextPosition);
-  if (textPosition.offset >= text.length) {
+  if (textPosition.offset >= text.text.length) {
     return ExecutionInstruction.continueExecution;
   }
 
