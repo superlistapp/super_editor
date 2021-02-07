@@ -1,3 +1,6 @@
+import 'dart:collection';
+import 'dart:math';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' hide SelectableText;
 import 'package:flutter/rendering.dart';
@@ -12,6 +15,7 @@ import '../core/composition/document_composer.dart';
 import '_text_tools.dart';
 import '../selectable_text/attributed_text.dart';
 import '../selectable_text/selectable_text.dart';
+import 'multi_node_editing.dart';
 
 class TextNode with ChangeNotifier implements DocumentNode {
   TextNode({
@@ -254,6 +258,132 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
   }
 }
 
+/// Applies the given `attributions` to the given `documentSelection`,
+/// if none of the content in the selection contains any of the
+/// given `attributions`. Otherwise, all the given `attributions`
+/// are removed from the content within the `documentSelection`.
+class ToggleTextAttributionsCommand implements EditorCommand {
+  ToggleTextAttributionsCommand({
+    @required this.documentSelection,
+    @required this.attributions,
+  }) : assert(documentSelection != null);
+
+  final DocumentSelection documentSelection;
+  final Set<String> attributions;
+
+  void execute(RichTextDocument document) {
+    print('Executing ToggleTextAttributionsCommand');
+    final nodes = document.getNodesInside(documentSelection.base, documentSelection.extent);
+    if (nodes == null) {
+      print(' - Bad DocumentSelection. Could not get range of nodes. Selection: $documentSelection');
+      return;
+    }
+
+    // Calculate a DocumentRange so we know which DocumentPosition
+    // belongs to the first node, and which belongs to the last node.
+    final nodeRange = document.getRangeBetween(documentSelection.base, documentSelection.extent);
+    print(' - node range: $nodeRange');
+
+    final nodesAndSelections = LinkedHashMap<TextNode, TextRange>();
+    bool alreadyHasAttributions = false;
+
+    for (final node in nodes) {
+      if (node is! TextNode) {
+        continue;
+      }
+
+      final textNode = node as TextNode;
+      int startOffset = -1;
+      int endOffset = -1;
+
+      if (textNode == nodes.first && textNode == nodes.last) {
+        // Handle selection within a single node
+        print(' - the selection is within a single node: ${node.id}');
+        final baseOffset = (documentSelection.base.nodePosition as TextPosition).offset;
+        final extentOffset = (documentSelection.extent.nodePosition as TextPosition).offset;
+        startOffset = baseOffset < extentOffset ? baseOffset : extentOffset;
+        endOffset = baseOffset < extentOffset ? extentOffset : baseOffset;
+      } else if (textNode == nodes.first) {
+        // Handle partial node selection in first node.
+        print(' - selecting part of the first node: ${node.id}');
+        startOffset = (nodeRange.start.nodePosition as TextPosition).offset;
+        endOffset = max(textNode.text.text.length - 1, 0);
+      } else if (textNode == nodes.last) {
+        // Handle partial node selection in last node.
+        print(' - toggling part of the last node: ${node.id}');
+        startOffset = 0;
+        endOffset = (nodeRange.end.nodePosition as TextPosition).offset;
+      } else {
+        // Handle full node selection.
+        print(' - toggling full node: ${node.id}');
+        startOffset = 0;
+        endOffset = max(textNode.text.text.length - 1, 0);
+      }
+
+      // The attribution range needs the `start` and `end` to
+      // be inclusive. Make sure the `endOffset` isn't equal
+      // to the text length.
+      if (endOffset == textNode.text.text.length) {
+        endOffset = textNode.text.text.length - 1;
+      }
+
+      final selectionRange = TextRange(start: startOffset, end: endOffset);
+
+      alreadyHasAttributions = alreadyHasAttributions ||
+          textNode.text.hasAttributionsWithin(
+            attributions: attributions,
+            range: selectionRange,
+          );
+
+      nodesAndSelections.putIfAbsent(node, () => selectionRange);
+    }
+
+    // Toggle attributions.
+    for (final entry in nodesAndSelections.entries) {
+      for (String attribution in attributions) {
+        final node = entry.key;
+        final range = entry.value;
+        print(' - toggling attribution: $attribution. Range: $range');
+        node.text.toggleAttribution(
+          attribution,
+          range,
+        );
+      }
+    }
+
+    print(' - done toggling attributions');
+  }
+}
+
+class InsertTextCommand implements EditorCommand {
+  InsertTextCommand({
+    @required this.documentPosition,
+    @required this.textToInsert,
+    @required this.attributions,
+  })  : assert(documentPosition != null),
+        assert(documentPosition.nodePosition is TextPosition);
+
+  final DocumentPosition documentPosition;
+  final String textToInsert;
+  final Set<String> attributions;
+
+  void execute(RichTextDocument document) {
+    final node = document.getNodeById(documentPosition.nodeId);
+    if (node is! TextNode) {
+      print('ERROR: can\'t insert text in a node that isn\'t a TextNode: $node');
+      return;
+    }
+
+    final textNode = node as TextNode;
+    final textOffset = (documentPosition.nodePosition as TextPosition).offset;
+    textNode.text = textNode.text.insertString(
+      textToInsert: textToInsert,
+      startOffset: textOffset,
+      applyAttributions: attributions,
+    );
+  }
+}
+
 ExecutionInstruction insertCharacterInTextComposable({
   @required ComposerContext composerContext,
   @required RawKeyEvent keyEvent,
@@ -261,11 +391,24 @@ ExecutionInstruction insertCharacterInTextComposable({
   if (isTextEntryNode(document: composerContext.document, selection: composerContext.currentSelection) &&
       isCharacterKey(keyEvent.logicalKey) &&
       composerContext.currentSelection.value.isCollapsed) {
-    composerContext.currentSelection.value = composerContext.editor.addCharacter(
-      document: composerContext.document,
-      position: composerContext.currentSelection.value.extent,
-      character: keyEvent.character,
-      styles: composerContext.composerPreferences.currentStyles.toList(),
+    final textNode = composerContext.document.getNode(composerContext.currentSelection.value.extent) as TextNode;
+    final initialTextOffset = (composerContext.currentSelection.value.extent.nodePosition as TextPosition).offset;
+
+    composerContext.editor.executeCommand(
+      InsertTextCommand(
+        documentPosition: composerContext.currentSelection.value.extent,
+        textToInsert: keyEvent.character,
+        attributions: composerContext.composerPreferences.currentStyles,
+      ),
+    );
+
+    composerContext.currentSelection.value = DocumentSelection.collapsed(
+      position: DocumentPosition(
+        nodeId: textNode.id,
+        nodePosition: TextPosition(
+          offset: initialTextOffset + 1,
+        ),
+      ),
     );
 
     return ExecutionInstruction.haltExecution;
@@ -294,19 +437,31 @@ ExecutionInstruction deleteCharacterWhenBackspaceIsPressed({
     return ExecutionInstruction.continueExecution;
   }
 
-  composerContext.currentSelection.value = composerContext.editor.deleteSelection(
-    document: composerContext.document,
-    documentLayout: composerContext.documentLayout,
-    selection: DocumentSelection(
-      base: composerContext.currentSelection.value.base,
-      extent: DocumentPosition(
-        nodeId: composerContext.currentSelection.value.base.nodeId,
-        nodePosition: TextPosition(
-          offset: (composerContext.currentSelection.value.base.nodePosition as TextPosition).offset - 1,
+  final textNode = composerContext.document.getNode(composerContext.currentSelection.value.extent) as TextNode;
+  final currentTextPosition = composerContext.currentSelection.value.extent.nodePosition as TextPosition;
+  final newSelectionPosition = DocumentPosition(
+    nodeId: textNode.id,
+    nodePosition: TextPosition(offset: currentTextPosition.offset - 1),
+  );
+
+  // Delete the selected content.
+  composerContext.editor.executeCommand(
+    DeleteSelectionCommand(
+      documentSelection: DocumentSelection(
+        base: DocumentPosition(
+          nodeId: textNode.id,
+          nodePosition: currentTextPosition,
+        ),
+        extent: DocumentPosition(
+          nodeId: textNode.id,
+          nodePosition: TextPosition(offset: currentTextPosition.offset - 1),
         ),
       ),
     ),
   );
+
+  print(' - new document selection position: ${newSelectionPosition.nodePosition}');
+  composerContext.currentSelection.value = DocumentSelection.collapsed(position: newSelectionPosition);
 
   return ExecutionInstruction.haltExecution;
 }
@@ -328,22 +483,24 @@ ExecutionInstruction deleteCharacterWhenDeleteIsPressed({
   if (!composerContext.currentSelection.value.isCollapsed) {
     return ExecutionInstruction.continueExecution;
   }
-  final text =
-      (composerContext.document.getNodeById(composerContext.currentSelection.value.extent.nodeId) as TextNode).text;
-  final textPosition = (composerContext.currentSelection.value.extent.nodePosition as TextPosition);
-  if (textPosition.offset >= text.text.length) {
+  final textNode = composerContext.document.getNode(composerContext.currentSelection.value.extent) as TextNode;
+  final text = textNode.text;
+  final currentTextPosition = (composerContext.currentSelection.value.extent.nodePosition as TextPosition);
+  if (currentTextPosition.offset >= text.text.length) {
     return ExecutionInstruction.continueExecution;
   }
 
-  composerContext.currentSelection.value = composerContext.editor.deleteSelection(
-    document: composerContext.document,
-    documentLayout: composerContext.documentLayout,
-    selection: DocumentSelection(
-      base: composerContext.currentSelection.value.base,
-      extent: DocumentPosition(
-        nodeId: composerContext.currentSelection.value.base.nodeId,
-        nodePosition: TextPosition(
-          offset: (composerContext.currentSelection.value.base.nodePosition as TextPosition).offset + 1,
+  // Delete the selected content.
+  composerContext.editor.executeCommand(
+    DeleteSelectionCommand(
+      documentSelection: DocumentSelection(
+        base: DocumentPosition(
+          nodeId: textNode.id,
+          nodePosition: currentTextPosition,
+        ),
+        extent: DocumentPosition(
+          nodeId: textNode.id,
+          nodePosition: TextPosition(offset: currentTextPosition.offset + 1),
         ),
       ),
     ),
@@ -360,11 +517,26 @@ ExecutionInstruction insertNewlineInParagraph({
       keyEvent.logicalKey == LogicalKeyboardKey.enter &&
       keyEvent.isShiftPressed &&
       composerContext.currentSelection.value.isCollapsed) {
-    composerContext.currentSelection.value = composerContext.editor.addCharacter(
-      document: composerContext.document,
-      position: composerContext.currentSelection.value.extent,
-      character: '\n',
+    final textNode = composerContext.document.getNode(composerContext.currentSelection.value.extent) as TextNode;
+    final initialTextOffset = (composerContext.currentSelection.value.extent.nodePosition as TextPosition).offset;
+
+    composerContext.editor.executeCommand(
+      InsertTextCommand(
+        documentPosition: composerContext.currentSelection.value.extent,
+        textToInsert: '\n',
+        attributions: composerContext.composerPreferences.currentStyles,
+      ),
     );
+
+    composerContext.currentSelection.value = DocumentSelection.collapsed(
+      position: DocumentPosition(
+        nodeId: textNode.id,
+        nodePosition: TextPosition(
+          offset: initialTextOffset + 1,
+        ),
+      ),
+    );
+
     return ExecutionInstruction.haltExecution;
   } else {
     return ExecutionInstruction.continueExecution;

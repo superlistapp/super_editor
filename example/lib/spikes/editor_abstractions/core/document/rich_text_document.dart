@@ -50,6 +50,7 @@ class RichTextDocument with ChangeNotifier {
 
   DocumentNode getNodeBefore(DocumentNode node) {
     final nodeIndex = getNodeIndex(node);
+    print('Index of "${node.id}": $nodeIndex');
     return nodeIndex > 0 ? getNodeAt(nodeIndex - 1) : null;
   }
 
@@ -93,6 +94,10 @@ class RichTextDocument with ChangeNotifier {
     return _nodes.remove(node);
   }
 
+  // TODO: this method is misleading because if `position1` and
+  //       `position2` are in the same node, they may be returned
+  //       in the wrong order because the document doesn't know
+  //       how to interpret positions within a node.
   DocumentRange getRangeBetween(DocumentPosition position1, DocumentPosition position2) {
     final node1 = getNode(position1);
     if (node1 == null) {

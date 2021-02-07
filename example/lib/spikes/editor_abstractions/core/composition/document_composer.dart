@@ -273,6 +273,22 @@ class DocumentComposer {
       index += 1;
     }
 
+    // TODO: I added this here when I implemented the selection deletion
+    //       command. Without immediately recomputing the node selections,
+    //       it looks like the layout will attempt to render with the
+    //       previous ones, which creates a problem when an Image is deleted
+    //       and replaced with a ParagraphNode, which has a different
+    //       selection type.
+    //
+    //       In general, these node selections either need to be removed
+    //       entirely, or a clear pipeline of events needs to be setup
+    //       where these selections are recomputed at a specific time and
+    //       only at that time.
+    _nodeSelections = _selection.value.computeNodeSelections(
+      document: _document,
+      documentLayout: _documentLayout,
+    );
+
     return instruction == ExecutionInstruction.haltExecution ? KeyEventResult.handled : KeyEventResult.ignored;
   }
 }

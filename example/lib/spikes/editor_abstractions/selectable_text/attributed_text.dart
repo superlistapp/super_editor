@@ -45,6 +45,28 @@ class AttributedText {
     return (markerBefore.offset <= offset) && (offset <= markerAfter.offset);
   }
 
+  /// Returns true if this `AttributedText` contains at least one
+  /// character of attribution for each of the given `attributions`
+  /// within the given `range`.
+  bool hasAttributionsWithin({
+    @required Set<String> attributions,
+    @required TextRange range,
+  }) {
+    final attributionsToFind = Set.from(attributions);
+    for (int i = range.start; i <= range.end; ++i) {
+      for (final attribution in attributionsToFind) {
+        if (hasAttributionAt(i, name: attribution)) {
+          attributionsToFind.remove(attribution);
+        }
+
+        if (attributionsToFind.isEmpty) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   /// `range` end is `inclusive`.
   void addAttribution(String name, TextRange range) {
     if (!range.isValid) {
@@ -642,7 +664,7 @@ class AttributedText {
   AttributedText insertString({
     @required String textToInsert,
     @required int startOffset,
-    List<String> applyAttributions = const [],
+    Set<String> applyAttributions = const {},
   }) {
     print('insertString() - text: "$textToInsert", start: $startOffset, attributions: $applyAttributions');
 

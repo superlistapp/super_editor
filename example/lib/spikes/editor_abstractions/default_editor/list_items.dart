@@ -5,11 +5,10 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
-import '../core/document/rich_text_document.dart';
-import '../core/document/document_editor.dart';
-import '../core/layout/document_layout.dart';
-import '../core/selection/editor_selection.dart';
 import '../core/composition/document_composer.dart';
+import '../core/document/document_editor.dart';
+import '../core/document/rich_text_document.dart';
+import '../core/selection/editor_selection.dart';
 import 'paragraph.dart';
 import 'text.dart';
 
@@ -196,6 +195,105 @@ class OrderedListItemComponent extends StatelessWidget {
   }
 }
 
+class IndentListItemCommand implements EditorCommand {
+  IndentListItemCommand({
+    @required this.nodeId,
+  }) : assert(nodeId != null);
+
+  final String nodeId;
+
+  @override
+  void execute(RichTextDocument document) {
+    final node = document.getNodeById(nodeId);
+    final listItem = node as ListItemNode;
+    if (listItem.indent >= 6) {
+      print('WARNING: Editor does not support an indent level beyond 6.');
+      return;
+    }
+
+    listItem.indent += 1;
+  }
+}
+
+class UnIndentListItemCommand implements EditorCommand {
+  UnIndentListItemCommand({
+    @required this.nodeId,
+  }) : assert(nodeId != null);
+
+  final String nodeId;
+
+  @override
+  void execute(RichTextDocument document) {
+    final node = document.getNodeById(nodeId);
+    final listItem = node as ListItemNode;
+    if (listItem.indent > 0) {
+      listItem.indent -= 1;
+    } else {
+      // TODO: move node replacement to its own command.
+      final newParagraphNode = ParagraphNode(
+        id: listItem.id,
+        text: listItem.text,
+      );
+      final listItemIndex = document.getNodeIndex(listItem);
+      document
+        ..deleteNodeAt(listItemIndex)
+        ..insertNodeAt(listItemIndex, newParagraphNode);
+    }
+  }
+}
+
+class SplitListItemCommand implements EditorCommand {
+  SplitListItemCommand({
+    @required this.nodeId,
+    @required this.textPosition,
+    @required this.newNodeId,
+  })  : assert(nodeId != null),
+        assert(textPosition != null);
+
+  final String nodeId;
+  final TextPosition textPosition;
+  final String newNodeId;
+
+  @override
+  void execute(RichTextDocument document) {
+    final node = document.getNodeById(nodeId);
+    final listItemNode = node as ListItemNode;
+    final text = listItemNode.text;
+    final startText = text.copyText(0, textPosition.offset);
+    final endText = textPosition.offset < text.text.length ? text.copyText(textPosition.offset) : AttributedText();
+    print('Splitting list item:');
+    print(' - start text: "$startText"');
+    print(' - end text: "$endText"');
+
+    // Change the current node's content to just the text before the caret.
+    print(' - changing the original list item text due to split');
+    listItemNode.text = startText;
+
+    // Create a new node that will follow the current node. Set its text
+    // to the text that was removed from the current node.
+    final newNode = node is OrderedListItemNode
+        ? OrderedListItemNode(
+            id: newNodeId,
+            text: endText,
+            indent: node.indent,
+          )
+        : UnorderedListItemNode(
+            id: newNodeId,
+            text: endText,
+            indent: listItemNode.indent,
+          );
+
+    // Insert the new node after the current node.
+    print(' - inserting new node in document');
+    document.insertNodeAfter(
+      previousNode: node,
+      newNode: newNode,
+    );
+
+    print(' - inserted new node: ${newNode.id} after old one: ${node.id}');
+  }
+}
+
 ExecutionInstruction indentListItemWhenBackspaceIsPressed({
   @required ComposerContext composerContext,
   @required RawKeyEvent keyEvent,
@@ -218,13 +316,9 @@ ExecutionInstruction indentListItemWhenBackspaceIsPressed({
     return ExecutionInstruction.continueExecution;
   }
 
-  final listItem = node as ListItemNode;
-  if (listItem.indent >= 6) {
-    print('WARNING: Editor does not support an indent level beyond 6.');
-    return ExecutionInstruction.continueExecution;
-  }
-
-  listItem.indent += 1;
+  composerContext.editor.executeCommand(
+    IndentListItemCommand(nodeId: node.id),
+  );
 
   return ExecutionInstruction.haltExecution;
 }
@@ -251,19 +345,9 @@ ExecutionInstruction unindentListItemWhenBackspaceIsPressed({
     return ExecutionInstruction.continueExecution;
   }
 
-  final listItem = node as ListItemNode;
-  if (listItem.indent > 0) {
-    listItem.indent -= 1;
-  } else {
-    final newParagraphNode = ParagraphNode(
-      id: listItem.id,
-      text: listItem.text,
-    );
-    final listItemIndex = composerContext.document.getNodeIndex(listItem);
-    composerContext.document
-      ..deleteNodeAt(listItemIndex)
-      ..insertNodeAt(listItemIndex, newParagraphNode);
-  }
+  composerContext.editor.executeCommand(
+    UnIndentListItemCommand(nodeId: node.id),
+  );
 
   return ExecutionInstruction.haltExecution;
 }
@@ -272,58 +356,35 @@ ExecutionInstruction splitListItemWhenEnterPressed({
   @required ComposerContext composerContext,
   @required RawKeyEvent keyEvent,
 }) {
-  final node = composerContext.document.getNodeById(composerContext.currentSelection.value.extent.nodeId);
-  if (node is ListItemNode &&
-      keyEvent.logicalKey == LogicalKeyboardKey.enter &&
-      composerContext.currentSelection.value.isCollapsed) {
-    final text = node.text;
-    final caretIndex = (composerContext.currentSelection.value.extent.nodePosition as TextPosition).offset;
-    // final startText = text.text.substring(0, caretIndex);
-    final startText = text.copyText(0, caretIndex);
-    // final endText = caretIndex < text.text.length ? text.text.substring(caretIndex) : '';
-    final endText = caretIndex < text.text.length ? text.copyText(caretIndex) : AttributedText();
-    print('Splitting list item:');
-    print(' - start text: "$startText"');
-    print(' - end text: "$endText"');
-
-    // Change the current node's content to just the text before the caret.
-    print(' - changing the original list item text due to split');
-    node.text = startText;
-
-    // Create a new node that will follow the current node. Set its text
-    // to the text that was removed from the current node.
-    final newNode = node is OrderedListItemNode
-        ? OrderedListItemNode(
-            id: RichTextDocument.createNodeId(),
-            text: endText,
-            indent: node.indent,
-          )
-        : UnorderedListItemNode(
-            id: RichTextDocument.createNodeId(),
-            text: endText,
-            indent: node.indent,
-          );
-
-    // Insert the new node after the current node.
-    print(' - inserting new node in document');
-    composerContext.document.insertNodeAfter(
-      previousNode: node,
-      newNode: newNode,
-    );
-
-    print(' - inserted new node: ${newNode.id} after old one: ${node.id}');
-
-    // Place the caret at the beginning of the new paragraph node.
-    composerContext.currentSelection.value = DocumentSelection.collapsed(
-      position: DocumentPosition(
-        nodeId: newNode.id,
-        // TODO: change this from TextPosition to a generic node position
-        nodePosition: TextPosition(offset: 0),
-      ),
-    );
-
-    return ExecutionInstruction.haltExecution;
-  } else {
+  if (keyEvent.logicalKey != LogicalKeyboardKey.enter) {
     return ExecutionInstruction.continueExecution;
   }
+  if (!composerContext.currentSelection.value.isCollapsed) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  final node = composerContext.document.getNodeById(composerContext.currentSelection.value.extent.nodeId);
+  if (node is! ListItemNode) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  final newNodeId = RichTextDocument.createNodeId();
+
+  composerContext.editor.executeCommand(
+    SplitListItemCommand(
+      nodeId: node.id,
+      textPosition: composerContext.currentSelection.value.extent.nodePosition as TextPosition,
+      newNodeId: newNodeId,
+    ),
+  );
+
+  // Place the caret at the beginning of the new paragraph node.
+  composerContext.currentSelection.value = DocumentSelection.collapsed(
+    position: DocumentPosition(
+      nodeId: newNodeId,
+      nodePosition: TextPosition(offset: 0),
+    ),
+  );
+
+  return ExecutionInstruction.haltExecution;
 }

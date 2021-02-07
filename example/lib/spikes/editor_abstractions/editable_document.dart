@@ -674,7 +674,12 @@ final ComponentBuilder defaultComponentBuilder = ({
   bool showDebugPaint = false,
 }) {
   if (currentNode is ParagraphNode) {
-    final textSelection = selectedNode == null ? null : selectedNode.nodeSelection as TextSelection;
+    final textSelection = selectedNode == null || selectedNode.nodeSelection is! TextSelection
+        ? null
+        : selectedNode.nodeSelection as TextSelection;
+    if (selectedNode != null && selectedNode.nodeSelection is! TextSelection) {
+      print('ERROR: Building a paragraph component but the selection is not a TextSelection: ${currentNode.id}');
+    }
     final hasCursor = selectedNode != null ? selectedNode.isExtent : false;
     final highlightWhenEmpty = selectedNode == null ? false : selectedNode.highlightWhenEmpty;
 
@@ -833,7 +838,7 @@ final _composerKeyboardActions = <ComposerKeyboardAction>[
     action: deleteCharacterWhenDeleteIsPressed,
   ),
   ComposerKeyboardAction.simple(
-    action: mergeNodeWithNextWhenBackspaceIsPressed,
+    action: mergeNodeWithNextWhenDeleteIsPressed,
   ),
   ComposerKeyboardAction.simple(
     action: moveUpDownLeftAndRightWithArrowKeys,

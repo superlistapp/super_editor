@@ -28,7 +28,9 @@ class _EditorState extends State<Editor> with SingleTickerProviderStateMixin {
   Widget build(BuildContext context) {
     return EditableDocument(
       document: widget.initialDocument,
-      editor: DocumentEditor(),
+      editor: DocumentEditor(
+        document: widget.initialDocument,
+      ),
       showDebugPaint: widget.showDebugPaint,
     );
   }
