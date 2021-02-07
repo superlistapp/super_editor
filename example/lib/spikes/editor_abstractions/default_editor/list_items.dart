@@ -197,28 +197,23 @@ class OrderedListItemComponent extends StatelessWidget {
 }
 
 ExecutionInstruction indentListItemWhenBackspaceIsPressed({
-  @required RichTextDocument document,
-  @required DocumentEditor editor,
-  @required DocumentLayoutState documentLayout,
-  @required ValueNotifier<DocumentSelection> currentSelection,
-  @required List<DocumentNodeSelection> nodeSelections,
-  @required ComposerPreferences composerPreferences,
+  @required ComposerContext composerContext,
   @required RawKeyEvent keyEvent,
 }) {
   if (keyEvent.logicalKey != LogicalKeyboardKey.tab) {
     return ExecutionInstruction.continueExecution;
   }
 
-  final node = document.getNodeById(currentSelection.value.extent.nodeId);
+  final node = composerContext.document.getNodeById(composerContext.currentSelection.value.extent.nodeId);
   if (node is! ListItemNode) {
     return ExecutionInstruction.continueExecution;
   }
 
-  if (!currentSelection.value.isCollapsed) {
+  if (!composerContext.currentSelection.value.isCollapsed) {
     return ExecutionInstruction.continueExecution;
   }
 
-  final textPosition = currentSelection.value.extent.nodePosition;
+  final textPosition = composerContext.currentSelection.value.extent.nodePosition;
   if (textPosition is! TextPosition || textPosition.offset > 0) {
     return ExecutionInstruction.continueExecution;
   }
@@ -235,28 +230,23 @@ ExecutionInstruction indentListItemWhenBackspaceIsPressed({
 }
 
 ExecutionInstruction unindentListItemWhenBackspaceIsPressed({
-  @required RichTextDocument document,
-  @required DocumentEditor editor,
-  @required DocumentLayoutState documentLayout,
-  @required ValueNotifier<DocumentSelection> currentSelection,
-  @required List<DocumentNodeSelection> nodeSelections,
-  @required ComposerPreferences composerPreferences,
+  @required ComposerContext composerContext,
   @required RawKeyEvent keyEvent,
 }) {
   if (keyEvent.logicalKey != LogicalKeyboardKey.backspace) {
     return ExecutionInstruction.continueExecution;
   }
 
-  final node = document.getNodeById(currentSelection.value.extent.nodeId);
+  final node = composerContext.document.getNodeById(composerContext.currentSelection.value.extent.nodeId);
   if (node is! ListItemNode) {
     return ExecutionInstruction.continueExecution;
   }
 
-  if (!currentSelection.value.isCollapsed) {
+  if (!composerContext.currentSelection.value.isCollapsed) {
     return ExecutionInstruction.continueExecution;
   }
 
-  final textPosition = currentSelection.value.extent.nodePosition;
+  final textPosition = composerContext.currentSelection.value.extent.nodePosition;
   if (textPosition is! TextPosition || textPosition.offset > 0) {
     return ExecutionInstruction.continueExecution;
   }
@@ -269,8 +259,8 @@ ExecutionInstruction unindentListItemWhenBackspaceIsPressed({
       id: listItem.id,
       text: listItem.text,
     );
-    final listItemIndex = document.getNodeIndex(listItem);
-    document
+    final listItemIndex = composerContext.document.getNodeIndex(listItem);
+    composerContext.document
       ..deleteNodeAt(listItemIndex)
       ..insertNodeAt(listItemIndex, newParagraphNode);
   }
@@ -279,18 +269,15 @@ ExecutionInstruction unindentListItemWhenBackspaceIsPressed({
 }
 
 ExecutionInstruction splitListItemWhenEnterPressed({
-  @required RichTextDocument document,
-  @required DocumentEditor editor,
-  @required DocumentLayoutState documentLayout,
-  @required ValueNotifier<DocumentSelection> currentSelection,
-  @required List<DocumentNodeSelection> nodeSelections,
-  @required ComposerPreferences composerPreferences,
+  @required ComposerContext composerContext,
   @required RawKeyEvent keyEvent,
 }) {
-  final node = document.getNodeById(currentSelection.value.extent.nodeId);
-  if (node is ListItemNode && keyEvent.logicalKey == LogicalKeyboardKey.enter && currentSelection.value.isCollapsed) {
+  final node = composerContext.document.getNodeById(composerContext.currentSelection.value.extent.nodeId);
+  if (node is ListItemNode &&
+      keyEvent.logicalKey == LogicalKeyboardKey.enter &&
+      composerContext.currentSelection.value.isCollapsed) {
     final text = node.text;
-    final caretIndex = (currentSelection.value.extent.nodePosition as TextPosition).offset;
+    final caretIndex = (composerContext.currentSelection.value.extent.nodePosition as TextPosition).offset;
     // final startText = text.text.substring(0, caretIndex);
     final startText = text.copyText(0, caretIndex);
     // final endText = caretIndex < text.text.length ? text.text.substring(caretIndex) : '';
@@ -319,7 +306,7 @@ ExecutionInstruction splitListItemWhenEnterPressed({
 
     // Insert the new node after the current node.
     print(' - inserting new node in document');
-    document.insertNodeAfter(
+    composerContext.document.insertNodeAfter(
       previousNode: node,
       newNode: newNode,
     );
@@ -327,7 +314,7 @@ ExecutionInstruction splitListItemWhenEnterPressed({
     print(' - inserted new node: ${newNode.id} after old one: ${node.id}');
 
     // Place the caret at the beginning of the new paragraph node.
-    currentSelection.value = DocumentSelection.collapsed(
+    composerContext.currentSelection.value = DocumentSelection.collapsed(
       position: DocumentPosition(
         nodeId: newNode.id,
         // TODO: change this from TextPosition to a generic node position

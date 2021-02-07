@@ -2,12 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
-import '../core/document/rich_text_document.dart';
-import '../core/document/document_editor.dart';
-import '../core/layout/document_layout.dart';
 import '../core/composition/document_composer.dart';
+import '../core/document/rich_text_document.dart';
 import '../core/selection/editor_selection.dart';
-
 import '_text_tools.dart';
 import 'text.dart';
 
@@ -17,30 +14,26 @@ import 'text.dart';
 //
 //       or, consider a post-edit action that "heals" the document.
 ExecutionInstruction preventDeletionOfFirstParagraph({
-  @required RichTextDocument document,
-  @required DocumentEditor editor,
-  @required DocumentLayoutState documentLayout,
-  @required ValueNotifier<DocumentSelection> currentSelection,
-  @required List<DocumentNodeSelection> nodeSelections,
-  @required ComposerPreferences composerPreferences,
+  @required ComposerContext composerContext,
   @required RawKeyEvent keyEvent,
 }) {
-  if (currentSelection.value == null) {
+  if (composerContext.currentSelection.value == null) {
     return ExecutionInstruction.continueExecution;
   }
 
-  if (document.nodes.length < 2) {
+  if (composerContext.document.nodes.length < 2) {
     // We are already in a bad state. Let the user do whatever.
     print('WARNING: Cannot prevent deletion of 1st paragraph because it doesn\'t exist.');
     return ExecutionInstruction.continueExecution;
   }
 
-  final titleNode = document.nodes.first;
-  final titleSelection = nodeSelections.firstWhere((element) => element.nodeId == titleNode.id, orElse: () => null);
+  final titleNode = composerContext.document.nodes.first;
+  final titleSelection =
+      composerContext.nodeSelections.firstWhere((element) => element.nodeId == titleNode.id, orElse: () => null);
 
-  final firstParagraphNode = document.nodes[1];
-  final firstParagraphSelection =
-      nodeSelections.firstWhere((element) => element.nodeId == firstParagraphNode.id, orElse: () => null);
+  final firstParagraphNode = composerContext.document.nodes[1];
+  final firstParagraphSelection = composerContext.nodeSelections
+      .firstWhere((element) => element.nodeId == firstParagraphNode.id, orElse: () => null);
 
   if (titleSelection == null && firstParagraphSelection == null) {
     // Title isn't selected, nor is the first paragraph. Whatever the
@@ -48,8 +41,8 @@ ExecutionInstruction preventDeletionOfFirstParagraph({
     return ExecutionInstruction.continueExecution;
   }
 
-  if (currentSelection.value.isCollapsed) {
-    if (document.nodes.length > 2) {
+  if (composerContext.currentSelection.value.isCollapsed) {
+    if (composerContext.document.nodes.length > 2) {
       // With more than 2 nodes, and a collapsed selection, no
       // matter what the user does, there will be at least 2 nodes
       // remaining. So we don't care.
@@ -85,7 +78,7 @@ ExecutionInstruction preventDeletionOfFirstParagraph({
   } else {
     // With an expanded selection, the only deletion that's a concern is
     // one that selects all but one node.
-    if (nodeSelections.length < document.nodes.length) {
+    if (composerContext.nodeSelections.length < composerContext.document.nodes.length) {
       return ExecutionInstruction.continueExecution;
     }
 
@@ -97,9 +90,9 @@ ExecutionInstruction preventDeletionOfFirstParagraph({
         isCharacterKey(keyEvent.logicalKey)) {
       // This event will cause a deletion. If it will delete too many nodes
       // then we need to prevent the operation.
-      final fullySelectedNodeCount = nodeSelections.fold(0, (previousValue, element) {
+      final fullySelectedNodeCount = composerContext.nodeSelections.fold(0, (previousValue, element) {
         final textSelection = element.nodeSelection as TextSelection;
-        final paragraphNode = document.getNodeById(element.nodeId) as TextNode;
+        final paragraphNode = composerContext.document.getNodeById(element.nodeId) as TextNode;
 
         // If there is no TextSelection then this isn't a ParagraphNode
         // and we don't know how to count it. We know it's selected, but
@@ -116,7 +109,7 @@ ExecutionInstruction preventDeletionOfFirstParagraph({
         return previousValue;
       });
 
-      if (fullySelectedNodeCount >= document.nodes.length - 1) {
+      if (fullySelectedNodeCount >= composerContext.document.nodes.length - 1) {
         // Prevent this operation.
         return ExecutionInstruction.haltExecution;
       } else {
@@ -130,15 +123,10 @@ ExecutionInstruction preventDeletionOfFirstParagraph({
 }
 
 ExecutionInstruction doNothingWhenThereIsNoSelection({
-  @required RichTextDocument document,
-  @required DocumentEditor editor,
-  @required DocumentLayoutState documentLayout,
-  @required ValueNotifier<DocumentSelection> currentSelection,
-  @required List<DocumentNodeSelection> nodeSelections,
-  @required ComposerPreferences composerPreferences,
+  @required ComposerContext composerContext,
   @required RawKeyEvent keyEvent,
 }) {
-  if (currentSelection.value == null) {
+  if (composerContext.currentSelection.value == null) {
     print(' - no selection. Returning.');
     return ExecutionInstruction.haltExecution;
   } else {
@@ -147,12 +135,7 @@ ExecutionInstruction doNothingWhenThereIsNoSelection({
 }
 
 ExecutionInstruction collapseSelectionWhenDirectionalKeyIsPressed({
-  @required RichTextDocument document,
-  @required DocumentEditor editor,
-  @required DocumentLayoutState documentLayout,
-  @required ValueNotifier<DocumentSelection> currentSelection,
-  @required List<DocumentNodeSelection> nodeSelections,
-  @required ComposerPreferences composerPreferences,
+  @required ComposerContext composerContext,
   @required RawKeyEvent keyEvent,
 }) {
   final isDirectionalKey = keyEvent.logicalKey == LogicalKeyboardKey.arrowLeft ||
@@ -160,11 +143,14 @@ ExecutionInstruction collapseSelectionWhenDirectionalKeyIsPressed({
       keyEvent.logicalKey == LogicalKeyboardKey.arrowUp ||
       keyEvent.logicalKey == LogicalKeyboardKey.arrowDown;
   print(' - is directional key? $isDirectionalKey');
-  print(' - is editor selection collapsed? ${currentSelection.value.isCollapsed}');
+  print(' - is editor selection collapsed? ${composerContext.currentSelection.value.isCollapsed}');
   print(' - is shift pressed? ${keyEvent.isShiftPressed}');
-  if (isDirectionalKey && !currentSelection.value.isCollapsed && !keyEvent.isShiftPressed && !keyEvent.isMetaPressed) {
+  if (isDirectionalKey &&
+      !composerContext.currentSelection.value.isCollapsed &&
+      !keyEvent.isShiftPressed &&
+      !keyEvent.isMetaPressed) {
     print('Collapsing editor selection, then returning.');
-    currentSelection.value = currentSelection.value.collapse();
+    composerContext.currentSelection.value = composerContext.currentSelection.value.collapse();
 
     return ExecutionInstruction.haltExecution;
   } else {
@@ -173,22 +159,17 @@ ExecutionInstruction collapseSelectionWhenDirectionalKeyIsPressed({
 }
 
 ExecutionInstruction applyBoldWhenCmdBIsPressed({
-  @required RichTextDocument document,
-  @required DocumentEditor editor,
-  @required DocumentLayoutState documentLayout,
-  @required ValueNotifier<DocumentSelection> currentSelection,
-  @required List<DocumentNodeSelection> nodeSelections,
-  @required ComposerPreferences composerPreferences,
+  @required ComposerContext composerContext,
   @required RawKeyEvent keyEvent,
 }) {
   if (keyEvent.character?.toLowerCase() == 'b' && keyEvent.isMetaPressed) {
-    if (currentSelection.value.isCollapsed) {
-      composerPreferences.toggleStyle('bold');
+    if (composerContext.currentSelection.value.isCollapsed) {
+      composerContext.composerPreferences.toggleStyle('bold');
       return ExecutionInstruction.haltExecution;
     }
 
-    for (final nodeSelection in nodeSelections) {
-      final node = document.getNodeById(nodeSelection.nodeId);
+    for (final nodeSelection in composerContext.nodeSelections) {
+      final node = composerContext.document.getNodeById(nodeSelection.nodeId);
       if (node is TextNode) {
         final textSelection = nodeSelection.nodeSelection as TextSelection;
         // -1 on `end` because text selection uses an exclusive `end` but
@@ -201,7 +182,7 @@ ExecutionInstruction applyBoldWhenCmdBIsPressed({
         //       The reason this action hijacks the selection is
         //       because selection doesn't change, and altering an
         //       attribution doesn't currently trigger a doc change event.
-        currentSelection.notifyListeners();
+        composerContext.currentSelection.notifyListeners();
       }
     }
 
@@ -211,22 +192,17 @@ ExecutionInstruction applyBoldWhenCmdBIsPressed({
 }
 
 ExecutionInstruction applyItalicsWhenCmdIIsPressed({
-  @required RichTextDocument document,
-  @required DocumentEditor editor,
-  @required DocumentLayoutState documentLayout,
-  @required ValueNotifier<DocumentSelection> currentSelection,
-  @required List<DocumentNodeSelection> nodeSelections,
-  @required ComposerPreferences composerPreferences,
+  @required ComposerContext composerContext,
   @required RawKeyEvent keyEvent,
 }) {
   if (keyEvent.character?.toLowerCase() == 'i' && keyEvent.isMetaPressed) {
-    if (currentSelection.value.isCollapsed) {
-      composerPreferences.toggleStyle('italics');
+    if (composerContext.currentSelection.value.isCollapsed) {
+      composerContext.composerPreferences.toggleStyle('italics');
       return ExecutionInstruction.haltExecution;
     }
 
-    for (final nodeSelection in nodeSelections) {
-      final node = document.getNodeById(nodeSelection.nodeId);
+    for (final nodeSelection in composerContext.nodeSelections) {
+      final node = composerContext.document.getNodeById(nodeSelection.nodeId);
       if (node is TextNode) {
         final textSelection = nodeSelection.nodeSelection as TextSelection;
         // -1 on `end` because text selection uses an exclusive `end` but
@@ -239,7 +215,7 @@ ExecutionInstruction applyItalicsWhenCmdIIsPressed({
         //       The reason this action hijacks the selection is
         //       because selection doesn't change, and altering an
         //       attribution doesn't currently trigger a doc change event.
-        currentSelection.notifyListeners();
+        composerContext.currentSelection.notifyListeners();
       }
     }
 
@@ -249,12 +225,7 @@ ExecutionInstruction applyItalicsWhenCmdIIsPressed({
 }
 
 ExecutionInstruction deleteExpandedSelectionWhenCharacterOrDestructiveKeyPressed({
-  @required RichTextDocument document,
-  @required DocumentEditor editor,
-  @required DocumentLayoutState documentLayout,
-  @required ValueNotifier<DocumentSelection> currentSelection,
-  @required List<DocumentNodeSelection> nodeSelections,
-  @required ComposerPreferences composerPreferences,
+  @required ComposerContext composerContext,
   @required RawKeyEvent keyEvent,
 }) {
 // Handle delete and backspace for a selection.
@@ -262,11 +233,11 @@ ExecutionInstruction deleteExpandedSelectionWhenCharacterOrDestructiveKeyPressed
   final isDestructiveKey =
       keyEvent.logicalKey == LogicalKeyboardKey.backspace || keyEvent.logicalKey == LogicalKeyboardKey.delete;
   final shouldDeleteSelection = isDestructiveKey || isCharacterKey(keyEvent.logicalKey);
-  if (!currentSelection.value.isCollapsed && shouldDeleteSelection) {
-    currentSelection.value = editor.deleteSelection(
-      document: document,
-      documentLayout: documentLayout,
-      selection: currentSelection.value,
+  if (!composerContext.currentSelection.value.isCollapsed && shouldDeleteSelection) {
+    composerContext.currentSelection.value = composerContext.editor.deleteSelection(
+      document: composerContext.document,
+      documentLayout: composerContext.documentLayout,
+      selection: composerContext.currentSelection.value,
     );
 
     return isDestructiveKey ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
@@ -275,30 +246,25 @@ ExecutionInstruction deleteExpandedSelectionWhenCharacterOrDestructiveKeyPressed
 }
 
 ExecutionInstruction mergeNodeWithPreviousWhenBackspaceIsPressed({
-  @required RichTextDocument document,
-  @required DocumentEditor editor,
-  @required DocumentLayoutState documentLayout,
-  @required ValueNotifier<DocumentSelection> currentSelection,
-  @required List<DocumentNodeSelection> nodeSelections,
-  @required ComposerPreferences composerPreferences,
+  @required ComposerContext composerContext,
   @required RawKeyEvent keyEvent,
 }) {
   if (keyEvent.logicalKey != LogicalKeyboardKey.backspace) {
     return ExecutionInstruction.continueExecution;
   }
 
-  if (currentSelection.value == null) {
+  if (composerContext.currentSelection.value == null) {
     return ExecutionInstruction.continueExecution;
   }
 
-  final node = document.getNodeById(currentSelection.value.extent.nodeId);
+  final node = composerContext.document.getNodeById(composerContext.currentSelection.value.extent.nodeId);
   if (node is! TextNode) {
     print('WARNING: Cannot merge node of type: $node into node above.');
     return ExecutionInstruction.continueExecution;
   }
   final paragraphNode = node as TextNode;
 
-  final nodeAbove = document.getNodeBefore(paragraphNode);
+  final nodeAbove = composerContext.document.getNodeBefore(paragraphNode);
   if (nodeAbove == null) {
     print('At top of document. Cannot merge with node above.');
     return ExecutionInstruction.continueExecution;
@@ -313,13 +279,13 @@ ExecutionInstruction mergeNodeWithPreviousWhenBackspaceIsPressed({
 
   // Combine the text and delete the currently selected node.
   paragraphNodeAbove.text = paragraphNodeAbove.text.copyAndAppend(paragraphNode.text);
-  bool didRemove = document.deleteNode(paragraphNode);
+  bool didRemove = composerContext.document.deleteNode(paragraphNode);
   if (!didRemove) {
     print('ERROR: Failed to delete the currently selected node from the document.');
   }
 
   // Place the cursor at the point where the text came together.
-  currentSelection.value = DocumentSelection.collapsed(
+  composerContext.currentSelection.value = DocumentSelection.collapsed(
     position: DocumentPosition(
       nodeId: nodeAbove.id,
       nodePosition: TextPosition(offset: aboveParagraphLength),
@@ -330,30 +296,25 @@ ExecutionInstruction mergeNodeWithPreviousWhenBackspaceIsPressed({
 }
 
 ExecutionInstruction mergeNodeWithNextWhenBackspaceIsPressed({
-  @required RichTextDocument document,
-  @required DocumentEditor editor,
-  @required DocumentLayoutState documentLayout,
-  @required ValueNotifier<DocumentSelection> currentSelection,
-  @required List<DocumentNodeSelection> nodeSelections,
-  @required ComposerPreferences composerPreferences,
+  @required ComposerContext composerContext,
   @required RawKeyEvent keyEvent,
 }) {
   if (keyEvent.logicalKey != LogicalKeyboardKey.delete) {
     return ExecutionInstruction.continueExecution;
   }
 
-  if (currentSelection.value == null) {
+  if (composerContext.currentSelection.value == null) {
     return ExecutionInstruction.continueExecution;
   }
 
-  final node = document.getNodeById(currentSelection.value.extent.nodeId);
+  final node = composerContext.document.getNodeById(composerContext.currentSelection.value.extent.nodeId);
   if (node is! TextNode) {
     print('WARNING: Cannot combine node of type: $node');
     return ExecutionInstruction.continueExecution;
   }
   final paragraphNode = node as TextNode;
 
-  final nodeBelow = document.getNodeAfter(paragraphNode);
+  final nodeBelow = composerContext.document.getNodeAfter(paragraphNode);
   if (nodeBelow == null) {
     print('At bottom of document. Cannot merge with node above.');
     return ExecutionInstruction.continueExecution;
@@ -369,13 +330,13 @@ ExecutionInstruction mergeNodeWithNextWhenBackspaceIsPressed({
 
   // Combine the text and delete the currently selected node.
   paragraphNode.text.copyAndAppend(paragraphNodeBelow.text);
-  final didRemove = document.deleteNode(nodeBelow);
+  final didRemove = composerContext.document.deleteNode(nodeBelow);
   if (!didRemove) {
     print('ERROR: failed to remove next node from document.');
   }
 
   // Place the cursor at the point where the text came together.
-  currentSelection.value = DocumentSelection.collapsed(
+  composerContext.currentSelection.value = DocumentSelection.collapsed(
     position: DocumentPosition(
       nodeId: paragraphNode.id,
       nodePosition: TextPosition(offset: currentParagraphLength),
@@ -386,12 +347,7 @@ ExecutionInstruction mergeNodeWithNextWhenBackspaceIsPressed({
 }
 
 ExecutionInstruction moveUpDownLeftAndRightWithArrowKeys({
-  @required RichTextDocument document,
-  @required DocumentEditor editor,
-  @required DocumentLayoutState documentLayout,
-  @required ValueNotifier<DocumentSelection> currentSelection,
-  @required List<DocumentNodeSelection> nodeSelections,
-  @required ComposerPreferences composerPreferences,
+  @required ComposerContext composerContext,
   @required RawKeyEvent keyEvent,
 }) {
   const arrowKeys = [
@@ -408,24 +364,24 @@ ExecutionInstruction moveUpDownLeftAndRightWithArrowKeys({
     print(' - handling left arrow key');
     if (keyEvent.isMetaPressed) {
       moveToStartOfLine(
-        document: document,
-        documentLayout: documentLayout,
-        currentSelection: currentSelection,
-        nodeSelections: nodeSelections,
+        document: composerContext.document,
+        documentLayout: composerContext.documentLayout,
+        currentSelection: composerContext.currentSelection,
+        nodeSelections: composerContext.nodeSelections,
         expandSelection: keyEvent.isShiftPressed,
       );
     } else if (keyEvent.isAltPressed) {
       moveBackOneWord(
-        document: document,
-        documentLayout: documentLayout,
-        currentSelection: currentSelection,
+        document: composerContext.document,
+        documentLayout: composerContext.documentLayout,
+        currentSelection: composerContext.currentSelection,
         expandSelection: keyEvent.isShiftPressed,
       );
     } else {
       moveBackOneCharacter(
-        document: document,
-        documentLayout: documentLayout,
-        currentSelection: currentSelection,
+        document: composerContext.document,
+        documentLayout: composerContext.documentLayout,
+        currentSelection: composerContext.currentSelection,
         expandSelection: keyEvent.isShiftPressed,
       );
     }
@@ -433,43 +389,43 @@ ExecutionInstruction moveUpDownLeftAndRightWithArrowKeys({
     print(' - handling right arrow key');
     if (keyEvent.isMetaPressed) {
       moveToEndOfLine(
-        document: document,
-        documentLayout: documentLayout,
-        currentSelection: currentSelection,
-        nodeSelections: nodeSelections,
+        document: composerContext.document,
+        documentLayout: composerContext.documentLayout,
+        currentSelection: composerContext.currentSelection,
+        nodeSelections: composerContext.nodeSelections,
         expandSelection: keyEvent.isShiftPressed,
       );
     } else if (keyEvent.isAltPressed) {
       moveForwardOneWord(
-        document: document,
-        documentLayout: documentLayout,
-        currentSelection: currentSelection,
+        document: composerContext.document,
+        documentLayout: composerContext.documentLayout,
+        currentSelection: composerContext.currentSelection,
         expandSelection: keyEvent.isShiftPressed,
       );
     } else {
       moveForwardOneCharacter(
-        document: document,
-        documentLayout: documentLayout,
-        currentSelection: currentSelection,
+        document: composerContext.document,
+        documentLayout: composerContext.documentLayout,
+        currentSelection: composerContext.currentSelection,
         expandSelection: keyEvent.isShiftPressed,
       );
     }
   } else if (keyEvent.logicalKey == LogicalKeyboardKey.arrowUp) {
     print(' - handling up arrow key');
     moveUpOneLine(
-      document: document,
-      documentLayout: documentLayout,
-      currentSelection: currentSelection,
-      nodeSelections: nodeSelections,
+      document: composerContext.document,
+      documentLayout: composerContext.documentLayout,
+      currentSelection: composerContext.currentSelection,
+      nodeSelections: composerContext.nodeSelections,
       expandSelection: keyEvent.isShiftPressed,
     );
   } else if (keyEvent.logicalKey == LogicalKeyboardKey.arrowDown) {
     print(' - handling down arrow key');
     moveDownOneLine(
-      document: document,
-      documentLayout: documentLayout,
-      currentSelection: currentSelection,
-      nodeSelections: nodeSelections,
+      document: composerContext.document,
+      documentLayout: composerContext.documentLayout,
+      currentSelection: composerContext.currentSelection,
+      nodeSelections: composerContext.nodeSelections,
       expandSelection: keyEvent.isShiftPressed,
     );
   }

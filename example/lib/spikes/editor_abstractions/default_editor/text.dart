@@ -255,22 +255,17 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
 }
 
 ExecutionInstruction insertCharacterInTextComposable({
-  @required RichTextDocument document,
-  @required DocumentEditor editor,
-  @required DocumentLayoutState documentLayout,
-  @required ValueNotifier<DocumentSelection> currentSelection,
-  @required List<DocumentNodeSelection> nodeSelections,
-  @required ComposerPreferences composerPreferences,
+  @required ComposerContext composerContext,
   @required RawKeyEvent keyEvent,
 }) {
-  if (isTextEntryNode(document: document, selection: currentSelection) &&
+  if (isTextEntryNode(document: composerContext.document, selection: composerContext.currentSelection) &&
       isCharacterKey(keyEvent.logicalKey) &&
-      currentSelection.value.isCollapsed) {
-    currentSelection.value = editor.addCharacter(
-      document: document,
-      position: currentSelection.value.extent,
+      composerContext.currentSelection.value.isCollapsed) {
+    composerContext.currentSelection.value = composerContext.editor.addCharacter(
+      document: composerContext.document,
+      position: composerContext.currentSelection.value.extent,
       character: keyEvent.character,
-      styles: composerPreferences.currentStyles.toList(),
+      styles: composerContext.composerPreferences.currentStyles.toList(),
     );
 
     return ExecutionInstruction.haltExecution;
@@ -280,39 +275,34 @@ ExecutionInstruction insertCharacterInTextComposable({
 }
 
 ExecutionInstruction deleteCharacterWhenBackspaceIsPressed({
-  @required RichTextDocument document,
-  @required DocumentEditor editor,
-  @required DocumentLayoutState documentLayout,
-  @required ValueNotifier<DocumentSelection> currentSelection,
-  @required List<DocumentNodeSelection> nodeSelections,
-  @required ComposerPreferences composerPreferences,
+  @required ComposerContext composerContext,
   @required RawKeyEvent keyEvent,
 }) {
   if (keyEvent.logicalKey != LogicalKeyboardKey.backspace) {
     return ExecutionInstruction.continueExecution;
   }
-  if (currentSelection.value == null) {
+  if (composerContext.currentSelection.value == null) {
     return ExecutionInstruction.continueExecution;
   }
-  if (!isTextEntryNode(document: document, selection: currentSelection)) {
+  if (!isTextEntryNode(document: composerContext.document, selection: composerContext.currentSelection)) {
     return ExecutionInstruction.continueExecution;
   }
-  if (!currentSelection.value.isCollapsed) {
+  if (!composerContext.currentSelection.value.isCollapsed) {
     return ExecutionInstruction.continueExecution;
   }
-  if ((currentSelection.value.extent.nodePosition as TextPosition).offset <= 0) {
+  if ((composerContext.currentSelection.value.extent.nodePosition as TextPosition).offset <= 0) {
     return ExecutionInstruction.continueExecution;
   }
 
-  currentSelection.value = editor.deleteSelection(
-    document: document,
-    documentLayout: documentLayout,
+  composerContext.currentSelection.value = composerContext.editor.deleteSelection(
+    document: composerContext.document,
+    documentLayout: composerContext.documentLayout,
     selection: DocumentSelection(
-      base: currentSelection.value.base,
+      base: composerContext.currentSelection.value.base,
       extent: DocumentPosition(
-        nodeId: currentSelection.value.base.nodeId,
+        nodeId: composerContext.currentSelection.value.base.nodeId,
         nodePosition: TextPosition(
-          offset: (currentSelection.value.base.nodePosition as TextPosition).offset - 1,
+          offset: (composerContext.currentSelection.value.base.nodePosition as TextPosition).offset - 1,
         ),
       ),
     ),
@@ -322,42 +312,38 @@ ExecutionInstruction deleteCharacterWhenBackspaceIsPressed({
 }
 
 ExecutionInstruction deleteCharacterWhenDeleteIsPressed({
-  @required RichTextDocument document,
-  @required DocumentEditor editor,
-  @required DocumentLayoutState documentLayout,
-  @required ValueNotifier<DocumentSelection> currentSelection,
-  @required List<DocumentNodeSelection> nodeSelections,
-  @required ComposerPreferences composerPreferences,
+  @required ComposerContext composerContext,
   @required RawKeyEvent keyEvent,
 }) {
   if (keyEvent.logicalKey != LogicalKeyboardKey.delete) {
     return ExecutionInstruction.continueExecution;
   }
 
-  if (currentSelection.value == null) {
+  if (composerContext.currentSelection.value == null) {
     return ExecutionInstruction.continueExecution;
   }
-  if (!isTextEntryNode(document: document, selection: currentSelection)) {
+  if (!isTextEntryNode(document: composerContext.document, selection: composerContext.currentSelection)) {
     return ExecutionInstruction.continueExecution;
   }
-  if (!currentSelection.value.isCollapsed) {
+  if (!composerContext.currentSelection.value.isCollapsed) {
     return ExecutionInstruction.continueExecution;
   }
-  final text = (document.getNodeById(currentSelection.value.extent.nodeId) as TextNode).text;
-  final textPosition = (currentSelection.value.extent.nodePosition as TextPosition);
+  final text =
+      (composerContext.document.getNodeById(composerContext.currentSelection.value.extent.nodeId) as TextNode).text;
+  final textPosition = (composerContext.currentSelection.value.extent.nodePosition as TextPosition);
   if (textPosition.offset >= text.text.length) {
     return ExecutionInstruction.continueExecution;
   }
 
-  currentSelection.value = editor.deleteSelection(
-    document: document,
-    documentLayout: documentLayout,
+  composerContext.currentSelection.value = composerContext.editor.deleteSelection(
+    document: composerContext.document,
+    documentLayout: composerContext.documentLayout,
     selection: DocumentSelection(
-      base: currentSelection.value.base,
+      base: composerContext.currentSelection.value.base,
       extent: DocumentPosition(
-        nodeId: currentSelection.value.base.nodeId,
+        nodeId: composerContext.currentSelection.value.base.nodeId,
         nodePosition: TextPosition(
-          offset: (currentSelection.value.base.nodePosition as TextPosition).offset + 1,
+          offset: (composerContext.currentSelection.value.base.nodePosition as TextPosition).offset + 1,
         ),
       ),
     ),
@@ -367,21 +353,16 @@ ExecutionInstruction deleteCharacterWhenDeleteIsPressed({
 }
 
 ExecutionInstruction insertNewlineInParagraph({
-  @required RichTextDocument document,
-  @required DocumentEditor editor,
-  @required DocumentLayoutState documentLayout,
-  @required ValueNotifier<DocumentSelection> currentSelection,
-  @required List<DocumentNodeSelection> nodeSelections,
-  @required ComposerPreferences composerPreferences,
+  @required ComposerContext composerContext,
   @required RawKeyEvent keyEvent,
 }) {
-  if (isTextEntryNode(document: document, selection: currentSelection) &&
+  if (isTextEntryNode(document: composerContext.document, selection: composerContext.currentSelection) &&
       keyEvent.logicalKey == LogicalKeyboardKey.enter &&
       keyEvent.isShiftPressed &&
-      currentSelection.value.isCollapsed) {
-    currentSelection.value = editor.addCharacter(
-      document: document,
-      position: currentSelection.value.extent,
+      composerContext.currentSelection.value.isCollapsed) {
+    composerContext.currentSelection.value = composerContext.editor.addCharacter(
+      document: composerContext.document,
+      position: composerContext.currentSelection.value.extent,
       character: '\n',
     );
     return ExecutionInstruction.haltExecution;

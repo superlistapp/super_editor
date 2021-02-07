@@ -260,12 +260,14 @@ class DocumentComposer {
     int index = 0;
     while (instruction == ExecutionInstruction.continueExecution && index < _keyboardActions.length) {
       instruction = _keyboardActions[index].execute(
-        document: _document,
-        editor: _editor,
-        documentLayout: _documentLayout,
-        currentSelection: _selection,
-        nodeSelections: nodeSelections,
-        composerPreferences: _composerPreferences,
+        composerContext: ComposerContext(
+          document: _document,
+          editor: _editor,
+          documentLayout: _documentLayout,
+          currentSelection: _selection,
+          nodeSelections: nodeSelections,
+          composerPreferences: _composerPreferences,
+        ),
         keyEvent: keyEvent,
       );
       index += 1;
@@ -324,6 +326,29 @@ class ComposerPreferences with ChangeNotifier {
   }
 }
 
+/// Collection of core artifacts related to composition
+/// behavior.
+///
+/// A `ComposerContext` is made available to each key
+/// press action.
+class ComposerContext {
+  ComposerContext({
+    @required this.document,
+    @required this.editor,
+    @required this.documentLayout,
+    @required this.currentSelection,
+    @required this.nodeSelections,
+    @required this.composerPreferences,
+  });
+
+  final RichTextDocument document;
+  final DocumentEditor editor;
+  final DocumentLayoutState documentLayout;
+  final ValueNotifier<DocumentSelection> currentSelection;
+  final List<DocumentNodeSelection> nodeSelections;
+  final ComposerPreferences composerPreferences;
+}
+
 class ComposerKeyboardAction {
   const ComposerKeyboardAction.simple({
     @required SimpleComposerKeyboardAction action,
@@ -341,21 +366,11 @@ class ComposerKeyboardAction {
   /// It is possible that an action does nothing and then returns
   /// `ExecutionInstruction.haltExecution` to prevent further execution.
   ExecutionInstruction execute({
-    @required RichTextDocument document,
-    @required DocumentEditor editor,
-    @required DocumentLayoutState documentLayout,
-    @required ValueNotifier<DocumentSelection> currentSelection,
-    @required List<DocumentNodeSelection> nodeSelections,
-    @required ComposerPreferences composerPreferences,
+    @required ComposerContext composerContext,
     @required RawKeyEvent keyEvent,
   }) {
     return _action(
-      document: document,
-      editor: editor,
-      documentLayout: documentLayout,
-      currentSelection: currentSelection,
-      nodeSelections: nodeSelections,
-      composerPreferences: composerPreferences,
+      composerContext: composerContext,
       keyEvent: keyEvent,
     );
   }
@@ -371,12 +386,7 @@ class ComposerKeyboardAction {
 /// It is possible that an action does nothing and then returns
 /// `true` to prevent further execution.
 typedef SimpleComposerKeyboardAction = ExecutionInstruction Function({
-  @required RichTextDocument document,
-  @required DocumentEditor editor,
-  @required DocumentLayoutState documentLayout,
-  @required ValueNotifier<DocumentSelection> currentSelection,
-  @required List<DocumentNodeSelection> nodeSelections,
-  @required ComposerPreferences composerPreferences,
+  @required ComposerContext composerContext,
   @required RawKeyEvent keyEvent,
 });
 

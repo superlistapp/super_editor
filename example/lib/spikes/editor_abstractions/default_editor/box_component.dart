@@ -127,41 +127,36 @@ class BinarySelection {
 }
 
 ExecutionInstruction deleteBoxWhenBackspaceOrDeleteIsPressed({
-  @required RichTextDocument document,
-  @required DocumentEditor editor,
-  @required DocumentLayoutState documentLayout,
-  @required ValueNotifier<DocumentSelection> currentSelection,
-  @required List<DocumentNodeSelection> nodeSelections,
-  @required ComposerPreferences composerPreferences,
+  @required ComposerContext composerContext,
   @required RawKeyEvent keyEvent,
 }) {
   print('Considering deleting box');
   if (keyEvent.logicalKey != LogicalKeyboardKey.backspace && keyEvent.logicalKey != LogicalKeyboardKey.delete) {
     return ExecutionInstruction.continueExecution;
   }
-  if (currentSelection.value == null) {
+  if (composerContext.currentSelection.value == null) {
     print(' - current selection is null. Returning');
     return ExecutionInstruction.continueExecution;
   }
-  if (!currentSelection.value.isCollapsed) {
+  if (!composerContext.currentSelection.value.isCollapsed) {
     print(' - current selection is not collapsed. Returning.');
     return ExecutionInstruction.continueExecution;
   }
-  if (currentSelection.value.extent.nodePosition is! BinaryPosition) {
+  if (composerContext.currentSelection.value.extent.nodePosition is! BinaryPosition) {
     print(' - current extent is not a BinaryPosition. Returning.');
     return ExecutionInstruction.continueExecution;
   }
-  if (!(currentSelection.value.extent.nodePosition as BinaryPosition).isIncluded) {
+  if (!(composerContext.currentSelection.value.extent.nodePosition as BinaryPosition).isIncluded) {
     print(' - current position does not include the box. Returning.');
     return ExecutionInstruction.continueExecution;
   }
 
   print('Deleting a box component');
-  currentSelection.value = editor.deleteSelection(
-    document: document,
-    documentLayout: documentLayout,
+  composerContext.currentSelection.value = composerContext.editor.deleteSelection(
+    document: composerContext.document,
+    documentLayout: composerContext.documentLayout,
     selection: DocumentSelection.collapsed(
-      position: currentSelection.value.extent,
+      position: composerContext.currentSelection.value.extent,
     ),
   );
 

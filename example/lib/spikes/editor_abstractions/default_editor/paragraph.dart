@@ -4,11 +4,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 
-import '../core/document/rich_text_document.dart';
-import '../core/document/document_editor.dart';
-import '../core/layout/document_layout.dart';
-import '../core/selection/editor_selection.dart';
 import '../core/composition/document_composer.dart';
+import '../core/document/rich_text_document.dart';
+import '../core/selection/editor_selection.dart';
 import '_text_tools.dart';
 import 'text.dart';
 
@@ -27,30 +25,22 @@ class ParagraphNode extends TextNode {
 }
 
 ExecutionInstruction insertCharacterInParagraph({
-  @required RichTextDocument document,
-  @required DocumentEditor editor,
-  @required DocumentLayoutState documentLayout,
-  @required ValueNotifier<DocumentSelection> currentSelection,
-  @required List<DocumentNodeSelection> nodeSelections,
-  @required ComposerPreferences composerPreferences,
+  @required ComposerContext composerContext,
   @required RawKeyEvent keyEvent,
 }) {
-  final node = document.getNodeById(currentSelection.value.extent.nodeId);
-  if (node is ParagraphNode && isCharacterKey(keyEvent.logicalKey) && currentSelection.value.isCollapsed) {
+  final node = composerContext.document.getNodeById(composerContext.currentSelection.value.extent.nodeId);
+  if (node is ParagraphNode &&
+      isCharacterKey(keyEvent.logicalKey) &&
+      composerContext.currentSelection.value.isCollapsed) {
     print(' - this is a paragraph');
     // Delegate the action to the standard insert-character behavior.
     insertCharacterInTextComposable(
-      document: document,
-      editor: editor,
-      documentLayout: documentLayout,
-      currentSelection: currentSelection,
-      nodeSelections: nodeSelections,
-      composerPreferences: composerPreferences,
+      composerContext: composerContext,
       keyEvent: keyEvent,
     );
 
     final text = node.text;
-    final textSelection = currentSelection.value.extent.nodePosition as TextPosition;
+    final textSelection = composerContext.currentSelection.value.extent.nodePosition as TextPosition;
 
     // TODO: refactor to make prefix matching extensible
     final textBeforeCaret = text.text.substring(0, textSelection.offset);
@@ -73,15 +63,15 @@ ExecutionInstruction insertCharacterInParagraph({
       final newNode = hasUnorderedListItemMatch
           ? UnorderedListItemNode(id: node.id, text: adjustedText)
           : OrderedListItemNode(id: node.id, text: adjustedText);
-      final nodeIndex = document.getNodeIndex(node);
-      document
+      final nodeIndex = composerContext.document.getNodeIndex(node);
+      composerContext.document
         ..deleteNodeAt(nodeIndex)
         ..insertNodeAt(nodeIndex, newNode);
 
       // We removed some text at the beginning of the list item.
       // Move the selection back by that same amount.
-      final textPosition = currentSelection.value.extent.nodePosition as TextPosition;
-      currentSelection.value = DocumentSelection.collapsed(
+      final textPosition = composerContext.currentSelection.value.extent.nodePosition as TextPosition;
+      composerContext.currentSelection.value = DocumentSelection.collapsed(
         position: DocumentPosition(
           nodeId: node.id,
           nodePosition: TextPosition(offset: textPosition.offset - startOfNewText),
@@ -98,18 +88,15 @@ ExecutionInstruction insertCharacterInParagraph({
 }
 
 ExecutionInstruction splitParagraphWhenEnterPressed({
-  @required RichTextDocument document,
-  @required DocumentEditor editor,
-  @required DocumentLayoutState documentLayout,
-  @required ValueNotifier<DocumentSelection> currentSelection,
-  @required List<DocumentNodeSelection> nodeSelections,
-  @required ComposerPreferences composerPreferences,
+  @required ComposerContext composerContext,
   @required RawKeyEvent keyEvent,
 }) {
-  final node = document.getNodeById(currentSelection.value.extent.nodeId);
-  if (node is ParagraphNode && keyEvent.logicalKey == LogicalKeyboardKey.enter && currentSelection.value.isCollapsed) {
+  final node = composerContext.document.getNodeById(composerContext.currentSelection.value.extent.nodeId);
+  if (node is ParagraphNode &&
+      keyEvent.logicalKey == LogicalKeyboardKey.enter &&
+      composerContext.currentSelection.value.isCollapsed) {
     final text = node.text;
-    final caretIndex = (currentSelection.value.extent.nodePosition as TextPosition).offset;
+    final caretIndex = (composerContext.currentSelection.value.extent.nodePosition as TextPosition).offset;
     final startText = text.copyText(0, caretIndex);
     final endText = text.copyText(caretIndex);
     print('Splitting paragraph:');
@@ -130,7 +117,7 @@ ExecutionInstruction splitParagraphWhenEnterPressed({
 
     // Insert the new node after the current node.
     print(' - inserting new node in document');
-    document.insertNodeAfter(
+    composerContext.document.insertNodeAfter(
       previousNode: node,
       newNode: newNode,
     );
@@ -138,7 +125,7 @@ ExecutionInstruction splitParagraphWhenEnterPressed({
     print(' - inserted new node: ${newNode.id} after old one: ${node.id}');
 
     // Place the caret at the beginning of the new paragraph node.
-    currentSelection.value = DocumentSelection.collapsed(
+    composerContext.currentSelection.value = DocumentSelection.collapsed(
       position: DocumentPosition(
         nodeId: newNode.id,
         // TODO: change this from TextPosition to a generic node position
