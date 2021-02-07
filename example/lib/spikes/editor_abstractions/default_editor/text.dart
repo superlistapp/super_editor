@@ -260,6 +260,7 @@ ExecutionInstruction insertCharacterInTextComposable({
   @required DocumentLayoutState documentLayout,
   @required ValueNotifier<DocumentSelection> currentSelection,
   @required List<DocumentNodeSelection> nodeSelections,
+  @required ComposerPreferences composerPreferences,
   @required RawKeyEvent keyEvent,
 }) {
   if (isTextEntryNode(document: document, selection: currentSelection) &&
@@ -269,7 +270,9 @@ ExecutionInstruction insertCharacterInTextComposable({
       document: document,
       position: currentSelection.value.extent,
       character: keyEvent.character,
+      styles: composerPreferences.currentStyles.toList(),
     );
+
     return ExecutionInstruction.haltExecution;
   } else {
     return ExecutionInstruction.continueExecution;
@@ -282,6 +285,7 @@ ExecutionInstruction deleteCharacterWhenBackspaceIsPressed({
   @required DocumentLayoutState documentLayout,
   @required ValueNotifier<DocumentSelection> currentSelection,
   @required List<DocumentNodeSelection> nodeSelections,
+  @required ComposerPreferences composerPreferences,
   @required RawKeyEvent keyEvent,
 }) {
   if (keyEvent.logicalKey != LogicalKeyboardKey.backspace) {
@@ -323,6 +327,7 @@ ExecutionInstruction deleteCharacterWhenDeleteIsPressed({
   @required DocumentLayoutState documentLayout,
   @required ValueNotifier<DocumentSelection> currentSelection,
   @required List<DocumentNodeSelection> nodeSelections,
+  @required ComposerPreferences composerPreferences,
   @required RawKeyEvent keyEvent,
 }) {
   if (keyEvent.logicalKey != LogicalKeyboardKey.delete) {
@@ -367,6 +372,7 @@ ExecutionInstruction insertNewlineInParagraph({
   @required DocumentLayoutState documentLayout,
   @required ValueNotifier<DocumentSelection> currentSelection,
   @required List<DocumentNodeSelection> nodeSelections,
+  @required ComposerPreferences composerPreferences,
   @required RawKeyEvent keyEvent,
 }) {
   if (isTextEntryNode(document: document, selection: currentSelection) &&

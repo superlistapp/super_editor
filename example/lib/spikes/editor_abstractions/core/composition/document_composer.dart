@@ -7,6 +7,9 @@ import '../document/document_editor.dart';
 import '../layout/document_layout.dart';
 import '../selection/editor_selection.dart';
 
+// TODO: get rid of this import
+import '../../default_editor/text.dart';
+
 /// Maintains a `DocumentSelection` within a `RichTextDocument` and
 /// uses that selection to edit the document.
 class DocumentComposer {
@@ -23,6 +26,7 @@ class DocumentComposer {
         _selection = ValueNotifier(initialSelection) {
     _selection.addListener(() {
       print('DocumentComposer: selection changed.');
+      _updateComposerPreferencesAtSelection();
     });
   }
 
@@ -32,20 +36,53 @@ class DocumentComposer {
   final List<ComposerKeyboardAction> _keyboardActions;
 
   final ValueNotifier<DocumentSelection> _selection;
+  // TODO: only the selection should be visible. Showing the ValueNotifier
+  //       allows clients to change the value
   ValueNotifier<DocumentSelection> get selection => _selection;
 
   List<DocumentNodeSelection> _nodeSelections = const [];
   List<DocumentNodeSelection> get nodeSelections => List.from(_nodeSelections);
 
+  final ComposerPreferences _composerPreferences = ComposerPreferences();
+
+  void _setSelection(DocumentSelection newSelection) {
+    _selection.value = newSelection;
+  }
+
+  // TODO: this text selection logic probably belongs in some place
+  //       that is specific to text content
+  void _updateComposerPreferencesAtSelection() {
+    _composerPreferences.clearStyles();
+
+    if (_selection.value == null || !_selection.value.isCollapsed) {
+      return;
+    }
+
+    final node = _document.getNodeById(_selection.value.extent.nodeId);
+    if (node is! TextNode) {
+      return;
+    }
+
+    final textPosition = _selection.value.extent.nodePosition as TextPosition;
+    if (textPosition.offset == 0) {
+      return;
+    }
+
+    print('Looking up styles. Caret at: ${textPosition.offset}, looking back one place at: ${textPosition.offset - 1}');
+    final allStyles = (node as TextNode).text.getAllAttributionsAt(textPosition.offset - 1);
+    print(' - styles: $allStyles');
+    _composerPreferences.addStyles(allStyles);
+  }
+
   void clearSelection() {
-    _selection.value = null;
+    _setSelection(null);
   }
 
   void selectPosition(DocumentPosition position) {
     print('Setting document selection to $position');
-    _selection.value = DocumentSelection.collapsed(
+    _setSelection(DocumentSelection.collapsed(
       position: position,
-    );
+    ));
   }
 
   bool selectWordAt({
@@ -56,8 +93,9 @@ class DocumentComposer {
       docPosition: docPosition,
       docLayout: docLayout,
     );
+
     if (newSelection != null) {
-      _selection.value = newSelection;
+      _setSelection(newSelection);
       return true;
     } else {
       return false;
@@ -99,8 +137,9 @@ class DocumentComposer {
       docPosition: docPosition,
       docLayout: docLayout,
     );
+
     if (newSelection != null) {
-      _selection.value = newSelection;
+      _setSelection(newSelection);
       return true;
     } else {
       return false;
@@ -173,10 +212,10 @@ class DocumentComposer {
       extentPosition = extentWordSelection.extent;
     }
 
-    _selection.value = DocumentSelection(
+    _setSelection(DocumentSelection(
       base: basePosition ?? _selection.value.base,
       extent: extentPosition ?? _selection.value.extent,
-    );
+    ));
     print('Region selection: $_selection');
   }
 
@@ -226,6 +265,7 @@ class DocumentComposer {
         documentLayout: _documentLayout,
         currentSelection: _selection,
         nodeSelections: nodeSelections,
+        composerPreferences: _composerPreferences,
         keyEvent: keyEvent,
       );
       index += 1;
@@ -239,6 +279,49 @@ enum SelectionType {
   position,
   word,
   paragraph,
+}
+
+/// Holds preferences about user input, to be used for the
+/// next character that is entered. This facilitates things
+/// like a "bold mode" or "italics mode" when there is no
+/// bold or italics text around the caret.
+class ComposerPreferences with ChangeNotifier {
+  final Set<String> _currentStyles = {};
+  Set<String> get currentStyles => _currentStyles;
+
+  void addStyle(String name) {
+    _currentStyles.add(name);
+    notifyListeners();
+  }
+
+  void addStyles(Set<String> names) {
+    _currentStyles.addAll(names);
+    notifyListeners();
+  }
+
+  void removeStyle(String name) {
+    _currentStyles.remove(name);
+    notifyListeners();
+  }
+
+  void removeStyles(Set<String> names) {
+    _currentStyles.removeAll(names);
+    notifyListeners();
+  }
+
+  void toggleStyle(String name) {
+    if (_currentStyles.contains(name)) {
+      _currentStyles.remove(name);
+    } else {
+      _currentStyles.add(name);
+    }
+    notifyListeners();
+  }
+
+  void clearStyles() {
+    _currentStyles.clear();
+    notifyListeners();
+  }
 }
 
 class ComposerKeyboardAction {
@@ -263,6 +346,7 @@ class ComposerKeyboardAction {
     @required DocumentLayoutState documentLayout,
     @required ValueNotifier<DocumentSelection> currentSelection,
     @required List<DocumentNodeSelection> nodeSelections,
+    @required ComposerPreferences composerPreferences,
     @required RawKeyEvent keyEvent,
   }) {
     return _action(
@@ -271,6 +355,7 @@ class ComposerKeyboardAction {
       documentLayout: documentLayout,
       currentSelection: currentSelection,
       nodeSelections: nodeSelections,
+      composerPreferences: composerPreferences,
       keyEvent: keyEvent,
     );
   }
@@ -291,6 +376,7 @@ typedef SimpleComposerKeyboardAction = ExecutionInstruction Function({
   @required DocumentLayoutState documentLayout,
   @required ValueNotifier<DocumentSelection> currentSelection,
   @required List<DocumentNodeSelection> nodeSelections,
+  @required ComposerPreferences composerPreferences,
   @required RawKeyEvent keyEvent,
 });
 

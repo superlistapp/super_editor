@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart';
 
@@ -281,7 +283,11 @@ class AttributedText {
   //       so that attributions can be interpreted as desired.
   TextSpan computeTextSpan([TextStyle baseStyle]) {
     print('computeTextSpan() - text length: ${text.length}');
-    // print(' - base style line height: ${baseStyle?.height}');
+    print(' - attributions used to compute spans:');
+    for (final marker in attributions) {
+      print('   - $marker');
+    }
+
     if (text.isEmpty) {
       // There is no text and therefore no attributions.
       print(' - text is empty. Returning empty TextSpan.');
@@ -348,7 +354,7 @@ class AttributedText {
       print(' - start points: $startPoints');
       print(' - end points: $endPoints');
       throw Exception(
-          ' - mismatch between number of start points and end points. Start: ${startPoints.length} -> ${startPoints}, End: ${endPoints.length} -> ${endPoints}');
+          ' - mismatch between number of start points and end points. Text length: ${text.length}, Start: ${startPoints.length} -> ${startPoints}, End: ${endPoints.length} -> ${endPoints}, from attributions: $attributions');
     }
 
     // Sort the start and end points so that they can be
@@ -378,12 +384,12 @@ class AttributedText {
   }
 
   TextStyle _computeStyleAt(int offset, [TextStyle baseStyle]) {
-    final attributions = _getAllAttributionsAt(offset);
+    final attributions = getAllAttributionsAt(offset);
     // print(' - attributions at $offset: $attributions');
     return _addStyles(baseStyle ?? TextStyle(), attributions);
   }
 
-  Set<String> _getAllAttributionsAt(int offset) {
+  Set<String> getAllAttributionsAt(int offset) {
     final allNames = attributions.fold(<String>{}, (allNames, marker) => allNames..add(marker.name));
     final attributionsAtOffset = <String>{};
     for (final name in allNames) {
@@ -449,8 +455,16 @@ class AttributedText {
     final List<TextAttributionMarker> cutAttributions = [];
 
     print(' - inspecting existing markers in full text');
-    final Set<String> neededStartMarkers = {};
-    final Set<String> neededEndMarkers = {};
+    // TODO: this logic was adjusted to use count maps instead of Set's
+    //       with added/removed names. This was done if a `start` and
+    //       `end` marker exist at the same offset, the order is not
+    //       guaranteed to be `start` then `end`. The reverse order results
+    //       in incorrect belief that we need to insert start and end nodes.
+    //       This map count solution solves that problem. It needs to be
+    //       replicated in the other areas of this class that do the same
+    //       thing.
+    final Map<String, int> foundStartMarkers = {};
+    final Map<String, int> foundEndMarkers = {};
 
     // Analyze all markers that appear before the start of
     // the copy range so that we can insert any appropriate
@@ -463,28 +477,35 @@ class AttributedText {
       // and continue beyond `startOffset`.
       if (marker.isStart) {
         print(' - remembering this marker to insert in copied region');
-        neededStartMarkers.add(marker.name);
+        foundStartMarkers.putIfAbsent(marker.name, () => 0);
+        foundStartMarkers[marker.name] += 1;
       } else {
         print(
             ' - this marker counters an earlier one we found. We will not re-insert this marker in the copied region');
-        neededStartMarkers.remove(marker.name);
+        foundStartMarkers.putIfAbsent(marker.name, () => 0);
+        foundStartMarkers[marker.name] -= 1;
       }
     });
 
     // Insert any `start` markers at the start of the copy region
     // so that we maintain attribution symmetry.
-    neededStartMarkers.forEach((markerName) {
-      print(' - inserting "$markerName" marker at start of copy region to maintain symmetry.');
-      cutAttributions.add(TextAttributionMarker(
-        name: markerName,
-        offset: 0,
-        markerType: AttributionMarkerType.start,
-      ));
+    foundStartMarkers.forEach((markerName, count) {
+      if (count == 1) {
+        // Found an unmatched `start` marker. Replace it.
+        print(' - inserting "$markerName" marker at start of copy region to maintain symmetry.');
+        cutAttributions.add(TextAttributionMarker(
+          name: markerName,
+          offset: 0,
+          markerType: AttributionMarkerType.start,
+        ));
+      } else if (count < 0 || count > 1) {
+        throw Exception(
+            'Found an unbalanced number of `start` and `end` markers before offset: $startOffset - $attributions');
+      }
     });
 
     // Directly copy every marker that appears within the cut
-    // region. Also track any attributions that cross the end
-    // boundary of the copy range.
+    // region.
     attributions //
         .where((marker) => startOffset <= marker.offset && marker.offset <= endOffset) //
         .forEach((marker) {
@@ -492,25 +513,45 @@ class AttributedText {
       cutAttributions.add(marker.copyWith(
         offset: marker.offset - startOffset,
       ));
+    });
 
-      // Track any markers that begin between `startOffset`
-      // and `endOffset` and continue beyond `endOffset`.
-      if (marker.markerType == AttributionMarkerType.start) {
-        neededEndMarkers.add(marker.name);
+    // Analyze all markers that appear after the end of
+    // the copy range so that we can insert any appropriate
+    // `end` markers at the end of the copy range.
+    attributions //
+        .reversed //
+        .where((marker) => marker.offset > endOffset) //
+        .forEach((marker) {
+      print(' - marker after the copy region: $marker');
+      // Track any markers that end after the `endOffset`
+      // and start before `endOffset`.
+      if (marker.isEnd) {
+        print(' - remembering this marker to insert in copied region');
+        foundEndMarkers.putIfAbsent(marker.name, () => 0);
+        foundEndMarkers[marker.name] += 1;
       } else {
-        neededEndMarkers.remove(marker.name);
+        print(
+            ' - this marker counters an earlier one we found. We will not re-insert this marker in the copied region');
+        foundEndMarkers.putIfAbsent(marker.name, () => 0);
+        foundEndMarkers[marker.name] -= 1;
       }
     });
 
     // Insert any `end` markers at the end of the copy region
     // so that we maintain attribution symmetry.
-    neededEndMarkers.forEach((markerName) {
-      print(' - inserting "$markerName" marker at end of copy region to maintain symmetry.');
-      cutAttributions.add(TextAttributionMarker(
-        name: markerName,
-        offset: endOffset - startOffset,
-        markerType: AttributionMarkerType.end,
-      ));
+    foundEndMarkers.forEach((markerName, count) {
+      if (count == 1) {
+        // Found an unmatched `end` marker. Replace it.
+        print(' - inserting "$markerName" marker at end of copy region to maintain symmetry.');
+        cutAttributions.add(TextAttributionMarker(
+          name: markerName,
+          offset: endOffset - startOffset,
+          markerType: AttributionMarkerType.end,
+        ));
+      } else if (count < 0 || count > 1) {
+        throw Exception(
+            'Found an unbalanced number of `start` and `end` markers after offset: $endOffset - $attributions');
+      }
     });
 
     print(' - copied attributions:');
@@ -522,8 +563,49 @@ class AttributedText {
   }
 
   AttributedText copyAndAppend(AttributedText other) {
-    final List<TextAttributionMarker> combinedAttributions = List.from(attributions)..addAll(other.attributions);
+    print('copyAndAppend()');
+    print(' - our attributions before pushing them:');
+    for (final marker in attributions) {
+      print('   - $marker');
+    }
+    if (other.text.isEmpty) {
+      print(' - `other` has no text. Returning a direct copy of ourselves.');
+      return AttributedText(
+        text: text,
+        attributions: List.from(attributions),
+      );
+    }
+
+    // Push back all the `other` markers to make room for the
+    // text we're putting in front of them.
+
+    final pushDistance = text.length;
+    print(' - pushing `other` markers by text length: $pushDistance');
+    print(' - `other` attributions before pushing them:');
+    for (final marker in other.attributions) {
+      print('   - $marker');
+    }
+    final List<TextAttributionMarker> appendedAttributions = other.attributions
+        .map(
+          (marker) => marker.copyWith(offset: marker.offset + pushDistance),
+        )
+        .toList();
+
+    // Combine `this` and `other` attributions into one list.
+    final List<TextAttributionMarker> combinedAttributions = List.from(attributions)..addAll(appendedAttributions);
+    print(' - combined attributions before merge:');
+    for (final marker in combinedAttributions) {
+      print('   - $marker');
+    }
+
+    // Clean up the boundary between the two lists of attributions
+    // by merging compatible attributions that meet at teh boundary.
     _mergeBackToBackAttributions(combinedAttributions, text.length - 1);
+
+    print(' - combined attributions after merge:');
+    for (final marker in combinedAttributions) {
+      print('   - $marker');
+    }
 
     return AttributedText(
       text: text + other.text,
@@ -531,17 +613,27 @@ class AttributedText {
     );
   }
 
+  bool _hasMarker(TextAttributionMarker marker) {
+    final matchingMarker = attributions.firstWhere((existingMarker) => existingMarker == marker, orElse: () => null);
+    return matchingMarker != null;
+  }
+
   void _mergeBackToBackAttributions(List<TextAttributionMarker> attributions, int mergePoint) {
+    print(' - merging attributions at $mergePoint');
     // Look for any compatible attributions at
     // `mergePoint` and `mergePoint+1` and combine them.
     final startEdgeMarkers = attributions.where((marker) => marker.offset == mergePoint).toList();
     final endEdgeMarkers = attributions.where((marker) => marker.offset == mergePoint + 1).toList();
     for (final startEdgeMarker in startEdgeMarkers) {
-      final matchingEndEdgeMarker = endEdgeMarkers.firstWhere((marker) => marker.name == startEdgeMarker.name);
-      if (startEdgeMarker.isEnd && matchingEndEdgeMarker.isStart) {
+      print(' - marker on left side: $startEdgeMarker');
+      final matchingEndEdgeMarker = endEdgeMarkers
+          .firstWhere((marker) => marker.name == startEdgeMarker.name && marker.isStart, orElse: () => null);
+      print(' - matching marker on right side? $matchingEndEdgeMarker');
+      if (startEdgeMarker.isEnd && matchingEndEdgeMarker != null) {
         // These two attributions should be combined into one.
         // To do this, delete these two markers from the original
         // attribution list.
+        print(' - removing both markers because they offset each other');
         attributions..remove(startEdgeMarker)..remove(matchingEndEdgeMarker);
       }
     }
@@ -550,21 +642,27 @@ class AttributedText {
   AttributedText insertString({
     @required String textToInsert,
     @required int startOffset,
+    List<String> applyAttributions = const [],
   }) {
-    final combinedText = (startOffset > 0 ? text.substring(0, startOffset) : '') +
-        textToInsert +
-        (startOffset < text.length ? text.substring(startOffset) : '');
+    print('insertString() - text: "$textToInsert", start: $startOffset, attributions: $applyAttributions');
 
-    List<TextAttributionMarker> expandedAttributions = _expandAttributions(
-      attributions: attributions,
-      startOffset: startOffset,
-      count: textToInsert.length,
-    );
+    print(' - copying text to the left');
+    final startText = this.copyText(0, startOffset);
 
-    return AttributedText(
-      text: combinedText,
-      attributions: expandedAttributions,
+    print(' - copying text to the right');
+    final endText = this.copyText(startOffset);
+
+    print(' - creating new attributed text for insertion');
+    final insertedText = AttributedText(
+      text: textToInsert,
     );
+    final insertTextRange = TextRange(start: 0, end: textToInsert.length - 1);
+    for (String name in applyAttributions) {
+      insertedText.addAttribution(name, insertTextRange);
+    }
+
+    print(' - combining left text, insertion text, and right text');
+    return startText.copyAndAppend(insertedText).copyAndAppend(endText);
   }
 
   List<TextAttributionMarker> _expandAttributions({

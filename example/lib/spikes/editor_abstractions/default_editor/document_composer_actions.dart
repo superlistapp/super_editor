@@ -22,6 +22,7 @@ ExecutionInstruction preventDeletionOfFirstParagraph({
   @required DocumentLayoutState documentLayout,
   @required ValueNotifier<DocumentSelection> currentSelection,
   @required List<DocumentNodeSelection> nodeSelections,
+  @required ComposerPreferences composerPreferences,
   @required RawKeyEvent keyEvent,
 }) {
   if (currentSelection.value == null) {
@@ -134,6 +135,7 @@ ExecutionInstruction doNothingWhenThereIsNoSelection({
   @required DocumentLayoutState documentLayout,
   @required ValueNotifier<DocumentSelection> currentSelection,
   @required List<DocumentNodeSelection> nodeSelections,
+  @required ComposerPreferences composerPreferences,
   @required RawKeyEvent keyEvent,
 }) {
   if (currentSelection.value == null) {
@@ -150,6 +152,7 @@ ExecutionInstruction collapseSelectionWhenDirectionalKeyIsPressed({
   @required DocumentLayoutState documentLayout,
   @required ValueNotifier<DocumentSelection> currentSelection,
   @required List<DocumentNodeSelection> nodeSelections,
+  @required ComposerPreferences composerPreferences,
   @required RawKeyEvent keyEvent,
 }) {
   final isDirectionalKey = keyEvent.logicalKey == LogicalKeyboardKey.arrowLeft ||
@@ -162,6 +165,7 @@ ExecutionInstruction collapseSelectionWhenDirectionalKeyIsPressed({
   if (isDirectionalKey && !currentSelection.value.isCollapsed && !keyEvent.isShiftPressed && !keyEvent.isMetaPressed) {
     print('Collapsing editor selection, then returning.');
     currentSelection.value = currentSelection.value.collapse();
+
     return ExecutionInstruction.haltExecution;
   } else {
     return ExecutionInstruction.continueExecution;
@@ -174,11 +178,12 @@ ExecutionInstruction applyBoldWhenCmdBIsPressed({
   @required DocumentLayoutState documentLayout,
   @required ValueNotifier<DocumentSelection> currentSelection,
   @required List<DocumentNodeSelection> nodeSelections,
+  @required ComposerPreferences composerPreferences,
   @required RawKeyEvent keyEvent,
 }) {
   if (keyEvent.character?.toLowerCase() == 'b' && keyEvent.isMetaPressed) {
     if (currentSelection.value.isCollapsed) {
-      // TODO: configure text entry to be bold
+      composerPreferences.toggleStyle('bold');
       return ExecutionInstruction.haltExecution;
     }
 
@@ -211,11 +216,12 @@ ExecutionInstruction applyItalicsWhenCmdIIsPressed({
   @required DocumentLayoutState documentLayout,
   @required ValueNotifier<DocumentSelection> currentSelection,
   @required List<DocumentNodeSelection> nodeSelections,
+  @required ComposerPreferences composerPreferences,
   @required RawKeyEvent keyEvent,
 }) {
   if (keyEvent.character?.toLowerCase() == 'i' && keyEvent.isMetaPressed) {
     if (currentSelection.value.isCollapsed) {
-      // TODO: configure text entry to be italics
+      composerPreferences.toggleStyle('italics');
       return ExecutionInstruction.haltExecution;
     }
 
@@ -248,6 +254,7 @@ ExecutionInstruction deleteExpandedSelectionWhenCharacterOrDestructiveKeyPressed
   @required DocumentLayoutState documentLayout,
   @required ValueNotifier<DocumentSelection> currentSelection,
   @required List<DocumentNodeSelection> nodeSelections,
+  @required ComposerPreferences composerPreferences,
   @required RawKeyEvent keyEvent,
 }) {
 // Handle delete and backspace for a selection.
@@ -273,6 +280,7 @@ ExecutionInstruction mergeNodeWithPreviousWhenBackspaceIsPressed({
   @required DocumentLayoutState documentLayout,
   @required ValueNotifier<DocumentSelection> currentSelection,
   @required List<DocumentNodeSelection> nodeSelections,
+  @required ComposerPreferences composerPreferences,
   @required RawKeyEvent keyEvent,
 }) {
   if (keyEvent.logicalKey != LogicalKeyboardKey.backspace) {
@@ -327,6 +335,7 @@ ExecutionInstruction mergeNodeWithNextWhenBackspaceIsPressed({
   @required DocumentLayoutState documentLayout,
   @required ValueNotifier<DocumentSelection> currentSelection,
   @required List<DocumentNodeSelection> nodeSelections,
+  @required ComposerPreferences composerPreferences,
   @required RawKeyEvent keyEvent,
 }) {
   if (keyEvent.logicalKey != LogicalKeyboardKey.delete) {
@@ -382,6 +391,7 @@ ExecutionInstruction moveUpDownLeftAndRightWithArrowKeys({
   @required DocumentLayoutState documentLayout,
   @required ValueNotifier<DocumentSelection> currentSelection,
   @required List<DocumentNodeSelection> nodeSelections,
+  @required ComposerPreferences composerPreferences,
   @required RawKeyEvent keyEvent,
 }) {
   const arrowKeys = [

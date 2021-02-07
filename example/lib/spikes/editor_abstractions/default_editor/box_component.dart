@@ -132,6 +132,7 @@ ExecutionInstruction deleteBoxWhenBackspaceOrDeleteIsPressed({
   @required DocumentLayoutState documentLayout,
   @required ValueNotifier<DocumentSelection> currentSelection,
   @required List<DocumentNodeSelection> nodeSelections,
+  @required ComposerPreferences composerPreferences,
   @required RawKeyEvent keyEvent,
 }) {
   print('Considering deleting box');

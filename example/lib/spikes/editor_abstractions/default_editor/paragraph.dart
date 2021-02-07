@@ -32,6 +32,7 @@ ExecutionInstruction insertCharacterInParagraph({
   @required DocumentLayoutState documentLayout,
   @required ValueNotifier<DocumentSelection> currentSelection,
   @required List<DocumentNodeSelection> nodeSelections,
+  @required ComposerPreferences composerPreferences,
   @required RawKeyEvent keyEvent,
 }) {
   final node = document.getNodeById(currentSelection.value.extent.nodeId);
@@ -44,6 +45,7 @@ ExecutionInstruction insertCharacterInParagraph({
       documentLayout: documentLayout,
       currentSelection: currentSelection,
       nodeSelections: nodeSelections,
+      composerPreferences: composerPreferences,
       keyEvent: keyEvent,
     );
 
@@ -101,6 +103,7 @@ ExecutionInstruction splitParagraphWhenEnterPressed({
   @required DocumentLayoutState documentLayout,
   @required ValueNotifier<DocumentSelection> currentSelection,
   @required List<DocumentNodeSelection> nodeSelections,
+  @required ComposerPreferences composerPreferences,
   @required RawKeyEvent keyEvent,
 }) {
   final node = document.getNodeById(currentSelection.value.extent.nodeId);

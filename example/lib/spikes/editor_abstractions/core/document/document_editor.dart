@@ -18,26 +18,28 @@ class DocumentEditor {
     @required RichTextDocument document,
     @required DocumentPosition position,
     @required String character,
+    List<String> styles = const [],
   }) {
     final docNode = document.getNodeById(position.nodeId);
     if (docNode is! TextNode) {
       return DocumentSelection.collapsed(position: position);
     }
 
-    final paragraphNode = docNode as TextNode;
+    final textNode = docNode as TextNode;
     final textOffset = (position.nodePosition as TextPosition).offset;
-    final newParagraph = paragraphNode.text.insertString(
+    final newTextNode = textNode.text.insertString(
       textToInsert: character,
       startOffset: textOffset,
+      applyAttributions: styles,
     );
 
     // Add the character to the paragraph.
-    paragraphNode.text = newParagraph;
+    textNode.text = newTextNode;
 
     // Update the selection to place the caret after the new character.
     return DocumentSelection.collapsed(
       position: DocumentPosition(
-        nodeId: paragraphNode.id,
+        nodeId: textNode.id,
         nodePosition: TextPosition(
           offset: textOffset + 1,
         ),
