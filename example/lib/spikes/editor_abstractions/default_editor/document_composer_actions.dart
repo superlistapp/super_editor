@@ -13,121 +13,110 @@ import 'multi_node_editing.dart';
 import 'paragraph.dart';
 import 'text.dart';
 
-// TODO: restricting what the user can do probably makes sense after an
-//       action takes place, but before the action is applied, e.g. by
-//       inspecting an event-sourced change before applying it to the doc.
+// TODO: this composer action was commented out so that I could remove
+//       the computing of node selections, because that capability was
+//       causing other issues. I stopped fixing this action halfway
+//       through because it doesn't seem to belong here. Turn this into
+//       some kind of post-edit healing action instead of a prohibitive
+//       composer action.
+// ExecutionInstruction preventDeletionOfFirstParagraph({
+//   @required ComposerContext composerContext,
+//   @required RawKeyEvent keyEvent,
+// }) {
+//   if (composerContext.currentSelection.value == null) {
+//     return ExecutionInstruction.continueExecution;
+//   }
 //
-//       or, consider a post-edit action that "heals" the document.
-ExecutionInstruction preventDeletionOfFirstParagraph({
-  @required ComposerContext composerContext,
-  @required RawKeyEvent keyEvent,
-}) {
-  if (composerContext.currentSelection.value == null) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  if (composerContext.document.nodes.length < 2) {
-    // We are already in a bad state. Let the user do whatever.
-    print('WARNING: Cannot prevent deletion of 1st paragraph because it doesn\'t exist.');
-    return ExecutionInstruction.continueExecution;
-  }
-
-  final nodeSelections = composerContext.documentLayout.computeNodeSelections(
-    selection: composerContext.currentSelection.value,
-  );
-  final titleNode = composerContext.document.nodes.first;
-  final titleSelection = nodeSelections.firstWhere((element) => element.nodeId == titleNode.id, orElse: () => null);
-
-  final firstParagraphNode = composerContext.document.nodes[1];
-  final firstParagraphSelection =
-      nodeSelections.firstWhere((element) => element.nodeId == firstParagraphNode.id, orElse: () => null);
-
-  if (titleSelection == null && firstParagraphSelection == null) {
-    // Title isn't selected, nor is the first paragraph. Whatever the
-    // user is doing won't effect the title.
-    return ExecutionInstruction.continueExecution;
-  }
-
-  if (composerContext.currentSelection.value.isCollapsed) {
-    if (composerContext.document.nodes.length > 2) {
-      // With more than 2 nodes, and a collapsed selection, no
-      // matter what the user does, there will be at least 2 nodes
-      // remaining. So we don't care.
-      return ExecutionInstruction.continueExecution;
-    }
-
-    // With a collapsed selection, the only possible situations we
-    // care about are:
-    //
-    // 1. The user pressed delete at the end of the title node, which
-    //    would normally pull the first paragraph up into the title.
-    //
-    // 2. The user pressed backspace at the beginning of the first
-    //    paragraph, which will combine it with the title, and there
-    //    are no paragraphs after the first one.
-    final title = (titleNode as TextNode).text;
-    if (titleSelection != null &&
-        (titleSelection.nodeSelection as TextSelection).extentOffset == title.text.length &&
-        keyEvent.logicalKey == LogicalKeyboardKey.delete) {
-      // Prevent this operation.
-      return ExecutionInstruction.haltExecution;
-    }
-
-    if (firstParagraphSelection != null &&
-        (firstParagraphSelection.nodeSelection as TextSelection).extentOffset == 0 &&
-        keyEvent.logicalKey == LogicalKeyboardKey.backspace) {
-      // Prevent this operation.
-      return ExecutionInstruction.haltExecution;
-    }
-
-    // We don't care about this interaction.
-    return ExecutionInstruction.continueExecution;
-  } else {
-    // With an expanded selection, the only deletion that's a concern is
-    // one that selects all but one node.
-    if (nodeSelections.length < composerContext.document.nodes.length) {
-      return ExecutionInstruction.continueExecution;
-    }
-
-    // This is a selection that covers all but one node. If this
-    // key would result in a deletion, and that deletion fully removes
-    // at least n-1 nodes, then we should prevent the operation.
-    if (keyEvent.logicalKey == LogicalKeyboardKey.backspace ||
-        keyEvent.logicalKey == LogicalKeyboardKey.delete ||
-        isCharacterKey(keyEvent.logicalKey)) {
-      // This event will cause a deletion. If it will delete too many nodes
-      // then we need to prevent the operation.
-      final fullySelectedNodeCount = nodeSelections.fold(0, (previousValue, element) {
-        final textSelection = element.nodeSelection as TextSelection;
-        final paragraphNode = composerContext.document.getNodeById(element.nodeId) as TextNode;
-
-        // If there is no TextSelection then this isn't a ParagraphNode
-        // and we don't know how to count it. We know it's selected, but
-        // we don't know what the selection means. Assume its fully selected.
-        if (textSelection == null || paragraphNode == null) {
-          return previousValue + 1;
-        }
-
-        if (textSelection.start == 0 && textSelection.end == paragraphNode.text.text.length) {
-          // The entire paragraph is selected. +1.
-          return previousValue + 1;
-        }
-
-        return previousValue;
-      });
-
-      if (fullySelectedNodeCount >= composerContext.document.nodes.length - 1) {
-        // Prevent this operation.
-        return ExecutionInstruction.haltExecution;
-      } else {
-        // Allow this operation.
-        return ExecutionInstruction.continueExecution;
-      }
-    }
-
-    return ExecutionInstruction.continueExecution;
-  }
-}
+//   if (composerContext.document.nodes.length < 2) {
+//     // We are already in a bad state. Let the user do whatever.
+//     print('WARNING: Cannot prevent deletion of 1st paragraph because it doesn\'t exist.');
+//     return ExecutionInstruction.continueExecution;
+//   }
+//
+//   final baseDocPosition = composerContext.currentSelection.value.base;
+//   final extentDocPosition = composerContext.currentSelection.value.extent;
+//   final selectedNodes = composerContext.document.getNodesInside(baseDocPosition, extentDocPosition);
+//
+//   final titleNode = composerContext.document.nodes.first;
+//   final isTitleInSelection = selectedNodes.firstWhere((node) => node.id == titleNode.id, orElse: () => null) != null;
+//
+//   final firstParagraphNode = composerContext.document.nodes[1];
+//   final isFirstParagraphInSelection =
+//       selectedNodes.firstWhere((node) => node.id == firstParagraphNode.id, orElse: () => null) != null;
+//
+//   if (!isTitleInSelection && !isFirstParagraphInSelection) {
+//     // Title isn't selected, nor is the first paragraph. Whatever the
+//     // user is doing won't effect the title.
+//     return ExecutionInstruction.continueExecution;
+//   }
+//
+//   if (composerContext.currentSelection.value.isCollapsed) {
+//     if (composerContext.document.nodes.length > 2) {
+//       // With more than 2 nodes, and a collapsed selection, no
+//       // matter what the user does, there will be at least 2 nodes
+//       // remaining. So we don't care.
+//       return ExecutionInstruction.continueExecution;
+//     }
+//
+//     // With a collapsed selection, the only possible situations we
+//     // care about are:
+//     //
+//     // 1. The user pressed delete at the end of the title node, which
+//     //    would normally pull the first paragraph up into the title.
+//     //
+//     // 2. The user pressed backspace at the beginning of the first
+//     //    paragraph, which will combine it with the title, and there
+//     //    are no paragraphs after the first one.
+//     final title = (titleNode as TextNode).text;
+//     final titleTextPosition = composerContext.currentSelection.value.extent.nodePosition as TextPosition;
+//     if (isTitleInSelection &&
+//         titleTextPosition.offset == title.text.length &&
+//         keyEvent.logicalKey == LogicalKeyboardKey.delete) {
+//       // Prevent this operation.
+//       return ExecutionInstruction.haltExecution;
+//     }
+//
+//     final firstParagraphTextPosition = composerContext.currentSelection.value.extent.nodePosition as TextPosition;
+//     if (isFirstParagraphInSelection &&
+//         firstParagraphTextPosition.offset == 0 &&
+//         keyEvent.logicalKey == LogicalKeyboardKey.backspace) {
+//       // Prevent this operation.
+//       return ExecutionInstruction.haltExecution;
+//     }
+//
+//     // We don't care about this interaction.
+//     return ExecutionInstruction.continueExecution;
+//   } else {
+//     // With an expanded selection, the only deletion that's a concern is
+//     // one that selects all but one node.
+//     if (selectedNodes.length < composerContext.document.nodes.length) {
+//       return ExecutionInstruction.continueExecution;
+//     }
+//
+//     // This is a selection that covers all but one node. If this
+//     // key would result in a deletion, and that deletion fully removes
+//     // at least n-1 nodes, then we should prevent the operation.
+//     if (keyEvent.logicalKey == LogicalKeyboardKey.backspace ||
+//         keyEvent.logicalKey == LogicalKeyboardKey.delete ||
+//         isCharacterKey(keyEvent.logicalKey)) {
+//       // This event will cause a deletion. If it will delete too many nodes
+//       // then we need to prevent the operation.
+//
+//       // The selection spans all nodes. The only question is how much of
+//       // the first and last nodes are selected. TODO:
+//
+//       if (fullySelectedNodeCount >= composerContext.document.nodes.length - 1) {
+//         // Prevent this operation.
+//         return ExecutionInstruction.haltExecution;
+//       } else {
+//         // Allow this operation.
+//         return ExecutionInstruction.continueExecution;
+//       }
+//     }
+//
+//     return ExecutionInstruction.continueExecution;
+//   }
+// }
 
 ExecutionInstruction doNothingWhenThereIsNoSelection({
   @required ComposerContext composerContext,
@@ -221,8 +210,8 @@ ExecutionInstruction deleteExpandedSelectionWhenCharacterOrDestructiveKeyPressed
   @required ComposerContext composerContext,
   @required RawKeyEvent keyEvent,
 }) {
-// Handle delete and backspace for a selection.
-// TODO: add all characters to this condition.
+  // Handle delete and backspace for a selection.
+  // TODO: add all characters to this condition.
   final isDestructiveKey =
       keyEvent.logicalKey == LogicalKeyboardKey.backspace || keyEvent.logicalKey == LogicalKeyboardKey.delete;
   final shouldDeleteSelection = isDestructiveKey || isCharacterKey(keyEvent.logicalKey);
@@ -234,8 +223,8 @@ ExecutionInstruction deleteExpandedSelectionWhenCharacterOrDestructiveKeyPressed
   // Figure out where the caret should appear after the
   // deletion.
   // TODO: This calculation depends upon the first
-  // selected node still existing after the deletion. This
-  // is a fragile expectation and should be revisited.
+  //       selected node still existing after the deletion. This
+  //       is a fragile expectation and should be revisited.
   final basePosition = composerContext.currentSelection.value.base;
   final baseNode = composerContext.document.getNode(basePosition);
   final baseNodeIndex = composerContext.document.getNodeIndex(baseNode);
@@ -596,6 +585,7 @@ void _moveVertically({
     final nextNode =
         moveUp ? composerContext.document.getNodeBefore(node) : composerContext.document.getNodeAfter(node);
     if (nextNode != null) {
+      print(' - next node is at offset ${composerContext.document.getNodeIndex(nextNode)}, id: ${nextNode.id}');
       newExtentNodeId = nextNode.id;
       final nextComponent = composerContext.documentLayout.getComponentByNodeId(nextNode.id);
       final offsetToMatch = extentComponent.getOffsetForPosition(currentExtent.nodePosition);

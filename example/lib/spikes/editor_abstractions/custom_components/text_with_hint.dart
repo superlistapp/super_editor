@@ -9,7 +9,7 @@ import '../default_editor/text.dart';
 class TextWithHintComponent extends StatelessWidget {
   const TextWithHintComponent({
     Key key,
-    this.textKey,
+    @required this.documentComponentKey,
     this.text,
     this.textType,
     this.hintText,
@@ -21,7 +21,7 @@ class TextWithHintComponent extends StatelessWidget {
     this.showDebugPaint,
   }) : super(key: key);
 
-  final GlobalKey textKey;
+  final GlobalKey documentComponentKey;
   final AttributedText text;
   final String textType;
   final String hintText;
@@ -46,12 +46,13 @@ class TextWithHintComponent extends StatelessWidget {
         break;
     }
 
+    print('Building TextWithHintComponent with key: $documentComponentKey');
     return MouseRegion(
       cursor: SystemMouseCursors.text,
       child: Stack(
         children: [
           Text(
-            'Enter your title',
+            hintText,
             textAlign: textAlign,
             style: style.copyWith(
               color: const Color(0xFFC3C1C1),
@@ -59,7 +60,7 @@ class TextWithHintComponent extends StatelessWidget {
           ),
           Positioned.fill(
             child: TextComponent(
-              key: textKey,
+              key: documentComponentKey,
               text: text,
               textAlign: textAlign,
               textSelection: textSelection,

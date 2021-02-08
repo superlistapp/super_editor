@@ -81,7 +81,6 @@ class TextNode with ChangeNotifier implements DocumentNode {
 class TextComponent extends StatefulWidget {
   const TextComponent({
     Key key,
-    this.textKey,
     this.text,
     this.textType,
     this.textAlign,
@@ -90,10 +89,8 @@ class TextComponent extends StatefulWidget {
     this.hasCursor = false,
     this.highlightWhenEmpty = false,
     this.showDebugPaint = false,
-  }) : super(key: textKey);
+  }) : super(key: key);
 
-  // TODO: go back to just taking a single key
-  final GlobalKey textKey;
   final AttributedText text;
   final String textType;
   final TextAlign textAlign;
@@ -355,6 +352,8 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
 
   @override
   Widget build(BuildContext context) {
+    print('Building a TextComponent with key: ${widget.key}');
+
     TextStyle baseStyle = (widget.textStyle ?? Theme.of(context).textTheme.bodyText1).copyWith(
       height: 1.4,
     );

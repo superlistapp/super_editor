@@ -642,22 +642,21 @@ final ComponentBuilder defaultComponentBuilder = ({
   @required BuildContext context,
   @required RichTextDocument document,
   @required DocumentNode currentNode,
-  @required List<DocumentNodeSelection> currentSelection,
   // TODO: get rid of selectedNode param
-  @required DocumentNodeSelection selectedNode,
+  @required DocumentNodeSelection nodeSelection,
   @required GlobalKey key,
   bool showDebugPaint = false,
 }) {
   print('Building a document component for node: ${currentNode.id}');
   if (currentNode is ParagraphNode) {
-    final textSelection = selectedNode == null || selectedNode.nodeSelection is! TextSelection
+    final textSelection = nodeSelection == null || nodeSelection.nodeSelection is! TextSelection
         ? null
-        : selectedNode.nodeSelection as TextSelection;
-    if (selectedNode != null && selectedNode.nodeSelection is! TextSelection) {
+        : nodeSelection.nodeSelection as TextSelection;
+    if (nodeSelection != null && nodeSelection.nodeSelection is! TextSelection) {
       print('ERROR: Building a paragraph component but the selection is not a TextSelection: ${currentNode.id}');
     }
-    final hasCursor = selectedNode != null ? selectedNode.isExtent : false;
-    final highlightWhenEmpty = selectedNode == null ? false : selectedNode.highlightWhenEmpty;
+    final hasCursor = nodeSelection != null ? nodeSelection.isExtent : false;
+    final highlightWhenEmpty = nodeSelection == null ? false : nodeSelection.highlightWhenEmpty;
 
     // print(' - ${docNode.id}: ${selectedNode?.nodeSelection}');
     // if (hasCursor) {
@@ -669,8 +668,9 @@ final ComponentBuilder defaultComponentBuilder = ({
     print('   - extent: ${textSelection?.extent}');
 
     if (document.getNodeIndex(currentNode) == 0 && currentNode.text.text.isEmpty && !hasCursor) {
+      print(' - this is the title node');
       return TextWithHintComponent(
-        textKey: key,
+        documentComponentKey: key,
         text: currentNode.text,
         textType: currentNode.textType,
         hintText: 'Enter your title',
@@ -680,9 +680,13 @@ final ComponentBuilder defaultComponentBuilder = ({
         highlightWhenEmpty: highlightWhenEmpty,
         showDebugPaint: showDebugPaint,
       );
-    } else if (document.getNodeIndex(currentNode) == 1 && currentNode.text.text.isEmpty && !hasCursor) {
+    } else if (document.nodes.length <= 2 &&
+        document.getNodeIndex(currentNode) == 1 &&
+        currentNode.text.text.isEmpty &&
+        !hasCursor) {
+      print(' - this is the 1st paragraph node');
       return TextWithHintComponent(
-        textKey: key,
+        documentComponentKey: key,
         text: currentNode.text,
         textType: currentNode.textType,
         hintText: 'Enter your content...',
@@ -694,7 +698,7 @@ final ComponentBuilder defaultComponentBuilder = ({
       );
     } else {
       return TextComponent(
-        textKey: key,
+        key: key,
         text: currentNode.text,
         textType: currentNode.textType,
         textAlign: currentNode.textAlign,
@@ -705,7 +709,7 @@ final ComponentBuilder defaultComponentBuilder = ({
       );
     }
   } else if (currentNode is ImageNode) {
-    final selection = selectedNode == null ? null : selectedNode.nodeSelection as BinarySelection;
+    final selection = nodeSelection == null ? null : nodeSelection.nodeSelection as BinarySelection;
     final isSelected = selection != null && selection.position.isIncluded;
 
     return ImageComponent(
@@ -714,8 +718,8 @@ final ComponentBuilder defaultComponentBuilder = ({
       isSelected: isSelected,
     );
   } else if (currentNode is ListItemNode && currentNode.type == ListItemType.unordered) {
-    final textSelection = selectedNode == null ? null : selectedNode.nodeSelection as TextSelection;
-    final hasCursor = selectedNode != null ? selectedNode.isExtent : false;
+    final textSelection = nodeSelection == null ? null : nodeSelection.nodeSelection as TextSelection;
+    final hasCursor = nodeSelection != null ? nodeSelection.isExtent : false;
 
     return UnorderedListItemComponent(
       textKey: key,
@@ -738,8 +742,8 @@ final ComponentBuilder defaultComponentBuilder = ({
       nodeAbove = document.getNodeBefore(nodeAbove);
     }
 
-    final textSelection = selectedNode == null ? null : selectedNode.nodeSelection as TextSelection;
-    final hasCursor = selectedNode != null ? selectedNode.isExtent : false;
+    final textSelection = nodeSelection == null ? null : nodeSelection.nodeSelection as TextSelection;
+    final hasCursor = nodeSelection != null ? nodeSelection.isExtent : false;
 
     return OrderedListItemComponent(
       textKey: key,
@@ -751,7 +755,7 @@ final ComponentBuilder defaultComponentBuilder = ({
       showDebugPaint: showDebugPaint,
     );
   } else if (currentNode is HorizontalRuleNode) {
-    final selection = selectedNode == null ? null : selectedNode.nodeSelection as BinarySelection;
+    final selection = nodeSelection == null ? null : nodeSelection.nodeSelection as BinarySelection;
     final isSelected = selection != null && selection.position.isIncluded;
 
     return HorizontalRuleComponent(
@@ -769,9 +773,6 @@ final ComponentBuilder defaultComponentBuilder = ({
 };
 
 final _composerKeyboardActions = <ComposerKeyboardAction>[
-  ComposerKeyboardAction.simple(
-    action: preventDeletionOfFirstParagraph,
-  ),
   ComposerKeyboardAction.simple(
     action: doNothingWhenThereIsNoSelection,
   ),

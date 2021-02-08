@@ -121,7 +121,7 @@ class UnorderedListItemComponent extends StatelessWidget {
         ),
         Expanded(
           child: TextComponent(
-            textKey: textKey,
+            key: textKey,
             text: text,
             textStyle: textStyle,
             textSelection: textSelection,
@@ -186,7 +186,7 @@ class OrderedListItemComponent extends StatelessWidget {
         ),
         Expanded(
           child: TextComponent(
-            textKey: textKey,
+            key: textKey,
             text: text,
             textStyle: textStyle,
             textSelection: textSelection,
