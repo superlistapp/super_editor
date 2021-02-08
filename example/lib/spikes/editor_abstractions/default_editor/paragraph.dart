@@ -226,6 +226,29 @@ ExecutionInstruction insertCharacterInParagraph({
   }
 }
 
+class DeleteParagraphsCommand implements EditorCommand {
+  DeleteParagraphsCommand({
+    this.nodeId,
+  }) : assert(nodeId != null);
+
+  final String nodeId;
+
+  void execute(RichTextDocument document) {
+    print('Executing DeleteParagraphsCommand');
+    print(' - deleting "$nodeId"');
+    final node = document.getNodeById(nodeId);
+    if (node is! TextNode) {
+      print('WARNING: Cannot delete node of type: $node.');
+      return;
+    }
+
+    bool didRemove = document.deleteNode(node);
+    if (!didRemove) {
+      print('ERROR: Failed to delete node "$node" from the document.');
+    }
+  }
+}
+
 ExecutionInstruction splitParagraphWhenEnterPressed({
   @required ComposerContext composerContext,
   @required RawKeyEvent keyEvent,
@@ -261,6 +284,90 @@ ExecutionInstruction splitParagraphWhenEnterPressed({
       nodeId: newNodeId,
       nodePosition: TextPosition(offset: 0),
     ),
+  );
+
+  return ExecutionInstruction.haltExecution;
+}
+
+ExecutionInstruction deleteEmptyParagraphWhenBackspaceIsPressed({
+  @required ComposerContext composerContext,
+  @required RawKeyEvent keyEvent,
+}) {
+  if (keyEvent.logicalKey != LogicalKeyboardKey.backspace) {
+    return ExecutionInstruction.continueExecution;
+  }
+  if (composerContext.currentSelection.value == null) {
+    return ExecutionInstruction.continueExecution;
+  }
+  if (!composerContext.currentSelection.value.isCollapsed) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  final node = composerContext.document.getNodeById(composerContext.currentSelection.value.extent.nodeId);
+  if (node is! ParagraphNode) {
+    return ExecutionInstruction.continueExecution;
+  }
+  final paragraphNode = node as ParagraphNode;
+
+  if (paragraphNode.text.text.isNotEmpty) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  final nodeAbove = composerContext.document.getNodeBefore(paragraphNode);
+  if (nodeAbove == null) {
+    return ExecutionInstruction.continueExecution;
+  }
+  final newDocumentPosition = DocumentPosition(
+    nodeId: nodeAbove.id,
+    nodePosition: nodeAbove.endPosition,
+  );
+
+  composerContext.editor.executeCommand(
+    DeleteParagraphsCommand(nodeId: node.id),
+  );
+
+  composerContext.currentSelection.value = DocumentSelection.collapsed(
+    position: newDocumentPosition,
+  );
+
+  return ExecutionInstruction.haltExecution;
+}
+
+ExecutionInstruction moveParagraphSelectionUpWhenBackspaceIsPressed({
+  @required ComposerContext composerContext,
+  @required RawKeyEvent keyEvent,
+}) {
+  if (keyEvent.logicalKey != LogicalKeyboardKey.backspace) {
+    return ExecutionInstruction.continueExecution;
+  }
+  if (composerContext.currentSelection.value == null) {
+    return ExecutionInstruction.continueExecution;
+  }
+  if (!composerContext.currentSelection.value.isCollapsed) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  final node = composerContext.document.getNodeById(composerContext.currentSelection.value.extent.nodeId);
+  if (node is! ParagraphNode) {
+    return ExecutionInstruction.continueExecution;
+  }
+  final paragraphNode = node as ParagraphNode;
+
+  if (paragraphNode.text.text.isEmpty) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  final nodeAbove = composerContext.document.getNodeBefore(paragraphNode);
+  if (nodeAbove == null) {
+    return ExecutionInstruction.continueExecution;
+  }
+  final newDocumentPosition = DocumentPosition(
+    nodeId: nodeAbove.id,
+    nodePosition: nodeAbove.endPosition,
+  );
+
+  composerContext.currentSelection.value = DocumentSelection.collapsed(
+    position: newDocumentPosition,
   );
 
   return ExecutionInstruction.haltExecution;

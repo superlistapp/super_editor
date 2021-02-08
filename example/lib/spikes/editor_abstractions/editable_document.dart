@@ -339,6 +339,12 @@ final _composerKeyboardActions = <ComposerKeyboardAction>[
     action: mergeNodeWithPreviousWhenBackspaceIsPressed,
   ),
   ComposerKeyboardAction.simple(
+    action: deleteEmptyParagraphWhenBackspaceIsPressed,
+  ),
+  ComposerKeyboardAction.simple(
+    action: moveParagraphSelectionUpWhenBackspaceIsPressed,
+  ),
+  ComposerKeyboardAction.simple(
     action: deleteCharacterWhenDeleteIsPressed,
   ),
   ComposerKeyboardAction.simple(
