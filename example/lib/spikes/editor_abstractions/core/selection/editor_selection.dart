@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../document/rich_text_document.dart';
-import '../layout/document_layout.dart';
 
 /// A selection within a `RichTextDocument`.
 ///
@@ -76,138 +75,6 @@ class DocumentSelection {
       extent: newExtent,
     );
   }
-
-  List<DocumentNodeSelection> computeNodeSelections({
-    @required RichTextDocument document,
-    @required DocumentLayoutState documentLayout,
-  }) {
-    print('Computing document node selections.');
-    print(' - base position: $base');
-    print(' - extent position: $extent');
-    if (isCollapsed) {
-      print(' - the document selection is collapsed');
-      final docNode = document.getNode(base);
-      final component = documentLayout.getComponentByNodeId(docNode.id);
-      if (component == null) {
-        throw Exception(
-            'Cannot compute node selections. Cannot find visual component for selected node: ${docNode.id}');
-      }
-      final selection = component.getCollapsedSelectionAt(extent.nodePosition);
-
-      return [
-        DocumentNodeSelection(
-          nodeId: docNode.id,
-          nodeSelection: selection,
-          isBase: true,
-          isExtent: true,
-        ),
-      ];
-    } else if (base.nodeId == extent.nodeId) {
-      print(' - the document selection is within 1 node');
-      final docNode = document.getNode(base);
-      final component = documentLayout.getComponentByNodeId(docNode.id);
-      if (component == null) {
-        throw Exception(
-            'Cannot compute node selections. Cannot find visual component for selected node: ${docNode.id}');
-      }
-      final selection = component.getSelectionBetween(
-        basePosition: base.nodePosition,
-        extentPosition: extent.nodePosition,
-      );
-
-      return [
-        DocumentNodeSelection(
-          nodeId: docNode.id,
-          nodeSelection: selection,
-          isBase: true,
-          isExtent: true,
-        ),
-      ];
-    } else {
-      print(' - the document selection spans multiple nodes');
-      final selectedNodes = document.getNodesInside(base, extent);
-      final nodeSelections = <DocumentNodeSelection>[];
-      for (int i = 0; i < selectedNodes.length; ++i) {
-        final selectedNode = selectedNodes[i];
-
-        // Note: we know there are at least 2 selected nodes, so
-        //       we don't need to handle the special case where
-        //       the first node is the same as the last.
-        if (i == 0) {
-          // This is the first node. Select from the current position
-          // to the end of the node.
-          final isBase = selectedNode.id == base.nodeId;
-
-          final component = documentLayout.getComponentByNodeId(selectedNode.id);
-          if (component == null) {
-            throw Exception(
-                'Cannot compute node selections. Cannot find visual component for selected node: ${selectedNode.id}');
-          }
-
-          final selectedPosition = isBase ? base.nodePosition : extent.nodePosition;
-          final endPosition = component.getEndPosition();
-          final selection = component.getSelectionBetween(
-            basePosition: isBase ? selectedPosition : endPosition,
-            extentPosition: isBase ? endPosition : selectedPosition,
-          );
-
-          nodeSelections.add(
-            DocumentNodeSelection(
-              nodeId: selectedNode.id,
-              nodeSelection: selection,
-              isBase: isBase,
-              isExtent: !isBase,
-              highlightWhenEmpty: true,
-            ),
-          );
-        } else if (i == selectedNodes.length - 1) {
-          // This is the last node. Select from the beginning of
-          // the node to the extent position.
-          final isExtent = selectedNode.id == extent.nodeId;
-
-          final component = documentLayout.getComponentByNodeId(selectedNode.id);
-          if (component == null) {
-            throw Exception(
-                'Cannot compute node selections. Cannot find visual component for selected node: ${selectedNode.id}');
-          }
-
-          final selectedPosition = isExtent ? extent.nodePosition : base.nodePosition;
-          final beginningPosition = component.getBeginningPosition();
-          final selection = component.getSelectionBetween(
-            basePosition: isExtent ? beginningPosition : selectedPosition,
-            extentPosition: isExtent ? selectedPosition : beginningPosition,
-          );
-
-          nodeSelections.add(
-            DocumentNodeSelection(
-              nodeId: selectedNode.id,
-              nodeSelection: selection,
-              isBase: !isExtent,
-              isExtent: isExtent,
-            ),
-          );
-        } else {
-          // This node is in between the first and last in the
-          // selection. Select everything.
-          final component = documentLayout.getComponentByNodeId(selectedNode.id);
-          if (component == null) {
-            throw Exception(
-                'Cannot compute node selections. Cannot find visual component for selected node: ${selectedNode.id}');
-          }
-
-          nodeSelections.add(
-            DocumentNodeSelection(
-              nodeId: selectedNode.id,
-              nodeSelection: component.getSelectionOfEverything(),
-              highlightWhenEmpty: true,
-            ),
-          );
-        }
-      }
-
-      return nodeSelections;
-    }
-  }
 }
 
 class DocumentNodeSelection<SelectionType> {
@@ -216,6 +83,9 @@ class DocumentNodeSelection<SelectionType> {
     @required this.nodeSelection,
     this.isBase = false,
     this.isExtent = false,
+    // TODO: either remove highlightWhenEmpty from this class, or move
+    //       this class to a different place. Visual preferences don't
+    //       belong here.
     this.highlightWhenEmpty = false,
   });
 

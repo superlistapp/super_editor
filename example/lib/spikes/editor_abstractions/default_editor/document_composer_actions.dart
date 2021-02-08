@@ -32,13 +32,15 @@ ExecutionInstruction preventDeletionOfFirstParagraph({
     return ExecutionInstruction.continueExecution;
   }
 
+  final nodeSelections = composerContext.documentLayout.computeNodeSelections(
+    selection: composerContext.currentSelection.value,
+  );
   final titleNode = composerContext.document.nodes.first;
-  final titleSelection =
-      composerContext.nodeSelections.firstWhere((element) => element.nodeId == titleNode.id, orElse: () => null);
+  final titleSelection = nodeSelections.firstWhere((element) => element.nodeId == titleNode.id, orElse: () => null);
 
   final firstParagraphNode = composerContext.document.nodes[1];
-  final firstParagraphSelection = composerContext.nodeSelections
-      .firstWhere((element) => element.nodeId == firstParagraphNode.id, orElse: () => null);
+  final firstParagraphSelection =
+      nodeSelections.firstWhere((element) => element.nodeId == firstParagraphNode.id, orElse: () => null);
 
   if (titleSelection == null && firstParagraphSelection == null) {
     // Title isn't selected, nor is the first paragraph. Whatever the
@@ -83,7 +85,7 @@ ExecutionInstruction preventDeletionOfFirstParagraph({
   } else {
     // With an expanded selection, the only deletion that's a concern is
     // one that selects all but one node.
-    if (composerContext.nodeSelections.length < composerContext.document.nodes.length) {
+    if (nodeSelections.length < composerContext.document.nodes.length) {
       return ExecutionInstruction.continueExecution;
     }
 
@@ -95,7 +97,7 @@ ExecutionInstruction preventDeletionOfFirstParagraph({
         isCharacterKey(keyEvent.logicalKey)) {
       // This event will cause a deletion. If it will delete too many nodes
       // then we need to prevent the operation.
-      final fullySelectedNodeCount = composerContext.nodeSelections.fold(0, (previousValue, element) {
+      final fullySelectedNodeCount = nodeSelections.fold(0, (previousValue, element) {
         final textSelection = element.nodeSelection as TextSelection;
         final paragraphNode = composerContext.document.getNodeById(element.nodeId) as TextNode;
 

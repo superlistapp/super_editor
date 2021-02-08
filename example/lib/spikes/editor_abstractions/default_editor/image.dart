@@ -23,9 +23,15 @@ class ImageNode with ChangeNotifier implements DocumentNode {
     }
   }
 
-  bool tryToCombineWithOtherNode(DocumentNode other) {
-    // Images can't be combined with anything else.
-    return false;
+  BinaryPosition get beginningPosition => BinaryPosition.included();
+
+  BinaryPosition get endPosition => BinaryPosition.included();
+
+  BinarySelection computeSelection({
+    @required dynamic base,
+    @required dynamic extent,
+  }) {
+    return BinarySelection.all();
   }
 }
 

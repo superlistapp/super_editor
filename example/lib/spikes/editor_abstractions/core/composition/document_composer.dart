@@ -40,9 +40,6 @@ class DocumentComposer {
   //       allows clients to change the value
   ValueNotifier<DocumentSelection> get selection => _selection;
 
-  List<DocumentNodeSelection> _nodeSelections = const [];
-  List<DocumentNodeSelection> get nodeSelections => List.from(_nodeSelections);
-
   final ComposerPreferences _composerPreferences = ComposerPreferences();
 
   void _setSelection(DocumentSelection newSelection) {
@@ -78,6 +75,10 @@ class DocumentComposer {
     _setSelection(null);
   }
 
+  // TODO: have each component report a DocumentPosition with optional
+  //       selectionModifiers like 'word' and 'paragraph', then
+  //       run those calculations in the EditableDocument, expose only
+  //       this capability in the composer.
   void selectPosition(DocumentPosition position) {
     print('Setting document selection to $position');
     _setSelection(DocumentSelection.collapsed(
@@ -246,16 +247,6 @@ class DocumentComposer {
 
     print('Key pressed');
 
-    // TODO: this is here as a quick fix to ensure we have node selections
-    //       for key handlers. Figure out the best place to recompute
-    //       node selections.
-    if (_selection.value != null) {
-      _nodeSelections = _selection.value.computeNodeSelections(
-        document: _document,
-        documentLayout: _documentLayout,
-      );
-    }
-
     ExecutionInstruction instruction = ExecutionInstruction.continueExecution;
     int index = 0;
     while (instruction == ExecutionInstruction.continueExecution && index < _keyboardActions.length) {
@@ -265,29 +256,12 @@ class DocumentComposer {
           editor: _editor,
           documentLayout: _documentLayout,
           currentSelection: _selection,
-          nodeSelections: nodeSelections,
           composerPreferences: _composerPreferences,
         ),
         keyEvent: keyEvent,
       );
       index += 1;
     }
-
-    // TODO: I added this here when I implemented the selection deletion
-    //       command. Without immediately recomputing the node selections,
-    //       it looks like the layout will attempt to render with the
-    //       previous ones, which creates a problem when an Image is deleted
-    //       and replaced with a ParagraphNode, which has a different
-    //       selection type.
-    //
-    //       In general, these node selections either need to be removed
-    //       entirely, or a clear pipeline of events needs to be setup
-    //       where these selections are recomputed at a specific time and
-    //       only at that time.
-    _nodeSelections = _selection.value.computeNodeSelections(
-      document: _document,
-      documentLayout: _documentLayout,
-    );
 
     return instruction == ExecutionInstruction.haltExecution ? KeyEventResult.handled : KeyEventResult.ignored;
   }
@@ -353,7 +327,6 @@ class ComposerContext {
     @required this.editor,
     @required this.documentLayout,
     @required this.currentSelection,
-    @required this.nodeSelections,
     @required this.composerPreferences,
   });
 
@@ -361,7 +334,6 @@ class ComposerContext {
   final DocumentEditor editor;
   final DocumentLayoutState documentLayout;
   final ValueNotifier<DocumentSelection> currentSelection;
-  final List<DocumentNodeSelection> nodeSelections;
   final ComposerPreferences composerPreferences;
 }
 

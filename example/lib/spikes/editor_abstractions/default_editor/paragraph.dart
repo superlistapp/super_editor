@@ -1,3 +1,4 @@
+import 'package:example/spikes/editor_abstractions/default_editor/horizontal_rule.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -191,8 +192,32 @@ ExecutionInstruction insertCharacterInParagraph({
           nodePosition: TextPosition(offset: textPosition.offset - startOfNewText),
         ),
       );
-    } else {
-      print(' - prefix match');
+    }
+
+    final hrMatch = RegExp(r'^---*\s$');
+    final hasHrMatch = hrMatch.hasMatch(textBeforeCaret);
+    if (hasHrMatch) {
+      print('Paragraph has an HR match');
+      // Insert an HR before this paragraph and then clear the
+      // paragraph's content.
+      final document = composerContext.document;
+      final paragraphNodeIndex = document.getNodeIndex(node);
+
+      document.insertNodeAt(
+        paragraphNodeIndex,
+        HorizontalRuleNode(
+          id: RichTextDocument.createNodeId(),
+        ),
+      );
+
+      node.text = AttributedText();
+
+      composerContext.currentSelection.value = DocumentSelection.collapsed(
+        position: DocumentPosition(
+          nodeId: node.id,
+          nodePosition: TextPosition(offset: 0),
+        ),
+      );
     }
 
     return ExecutionInstruction.haltExecution;

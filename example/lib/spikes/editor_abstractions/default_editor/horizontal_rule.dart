@@ -12,9 +12,15 @@ class HorizontalRuleNode with ChangeNotifier implements DocumentNode {
 
   final String id;
 
-  bool tryToCombineWithOtherNode(DocumentNode other) {
-    // Horizontal rules can't be combined with anything else.
-    return false;
+  BinaryPosition get beginningPosition => BinaryPosition.included();
+
+  BinaryPosition get endPosition => BinaryPosition.included();
+
+  BinarySelection computeSelection({
+    @required dynamic base,
+    @required dynamic extent,
+  }) {
+    return BinarySelection.all();
   }
 }
 

@@ -209,4 +209,13 @@ class DocumentPosition<PositionType> {
 /// A single content node within a `RichTextDocument`.
 abstract class DocumentNode implements ChangeNotifier {
   String get id;
+
+  dynamic get beginningPosition;
+
+  dynamic get endPosition;
+
+  dynamic computeSelection({
+    @required dynamic base,
+    @required dynamic extent,
+  });
 }

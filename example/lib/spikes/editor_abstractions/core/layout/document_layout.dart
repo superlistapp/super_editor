@@ -34,7 +34,7 @@ class DocumentLayout extends StatefulWidget {
   }) : super(key: key);
 
   final RichTextDocument document;
-  final List<DocumentNodeSelection> documentSelection;
+  final DocumentSelection documentSelection;
   final ComponentBuilder componentBuilder;
   final bool showDebugPaint;
 
@@ -236,6 +236,229 @@ class DocumentLayoutState extends State<DocumentLayout> {
     return key != null && key.currentState is DocumentComponent ? key.currentState as DocumentComponent : null;
   }
 
+  List<DocumentNodeSelection> computeNodeSelections({
+    @required DocumentSelection selection,
+  }) {
+    if (selection == null) {
+      return const [];
+    }
+
+    print('Computing document node selections.');
+    print(' - base position: ${selection.base}');
+    print(' - extent position: ${selection.extent}');
+    if (selection.isCollapsed) {
+      print(' - the document selection is collapsed');
+      final docNode = widget.document.getNode(selection.base);
+      final component = getComponentByNodeId(docNode.id);
+      if (component == null) {
+        throw Exception(
+            'Cannot compute node selections. Cannot find visual component for selected node: ${docNode.id}');
+      }
+      final nodeSelection = component.getCollapsedSelectionAt(selection.extent.nodePosition);
+
+      return [
+        DocumentNodeSelection(
+          nodeId: docNode.id,
+          nodeSelection: nodeSelection,
+          isBase: true,
+          isExtent: true,
+        ),
+      ];
+    } else if (selection.base.nodeId == selection.extent.nodeId) {
+      print(' - the document selection is within 1 node');
+      final docNode = widget.document.getNode(selection.base);
+      final component = getComponentByNodeId(docNode.id);
+      if (component == null) {
+        throw Exception(
+            'Cannot compute node selections. Cannot find visual component for selected node: ${docNode.id}');
+      }
+      final nodeSelection = component.getSelectionBetween(
+        basePosition: selection.base.nodePosition,
+        extentPosition: selection.extent.nodePosition,
+      );
+
+      return [
+        DocumentNodeSelection(
+          nodeId: docNode.id,
+          nodeSelection: nodeSelection,
+          isBase: true,
+          isExtent: true,
+        ),
+      ];
+    } else {
+      print(' - the document selection spans multiple nodes');
+      final selectedNodes = widget.document.getNodesInside(selection.base, selection.extent);
+      final nodeSelections = <DocumentNodeSelection>[];
+      for (int i = 0; i < selectedNodes.length; ++i) {
+        final selectedNode = selectedNodes[i];
+
+        // Note: we know there are at least 2 selected nodes, so
+        //       we don't need to handle the special case where
+        //       the first node is the same as the last.
+        if (i == 0) {
+          // This is the first node. Select from the current position
+          // to the end of the node.
+          final isBase = selectedNode.id == selection.base.nodeId;
+
+          final component = getComponentByNodeId(selectedNode.id);
+          if (component == null) {
+            throw Exception(
+                'Cannot compute node selections. Cannot find visual component for selected node: ${selectedNode.id}');
+          }
+
+          final selectedPosition = isBase ? selection.base.nodePosition : selection.extent.nodePosition;
+          final endPosition = component.getEndPosition();
+          final nodeSelection = component.getSelectionBetween(
+            basePosition: isBase ? selectedPosition : endPosition,
+            extentPosition: isBase ? endPosition : selectedPosition,
+          );
+
+          nodeSelections.add(
+            DocumentNodeSelection(
+              nodeId: selectedNode.id,
+              nodeSelection: nodeSelection,
+              isBase: isBase,
+              isExtent: !isBase,
+              highlightWhenEmpty: true,
+            ),
+          );
+        } else if (i == selectedNodes.length - 1) {
+          // This is the last node. Select from the beginning of
+          // the node to the extent position.
+          final isExtent = selectedNode.id == selection.extent.nodeId;
+
+          final component = getComponentByNodeId(selectedNode.id);
+          if (component == null) {
+            throw Exception(
+                'Cannot compute node selections. Cannot find visual component for selected node: ${selectedNode.id}');
+          }
+
+          final selectedPosition = isExtent ? selection.extent.nodePosition : selection.base.nodePosition;
+          final beginningPosition = component.getBeginningPosition();
+          final nodeSelection = component.getSelectionBetween(
+            basePosition: isExtent ? beginningPosition : selectedPosition,
+            extentPosition: isExtent ? selectedPosition : beginningPosition,
+          );
+
+          nodeSelections.add(
+            DocumentNodeSelection(
+              nodeId: selectedNode.id,
+              nodeSelection: nodeSelection,
+              isBase: !isExtent,
+              isExtent: isExtent,
+            ),
+          );
+        } else {
+          // This node is in between the first and last in the
+          // selection. Select everything.
+          final component = getComponentByNodeId(selectedNode.id);
+          if (component == null) {
+            throw Exception(
+                'Cannot compute node selections. Cannot find visual component for selected node: ${selectedNode.id}');
+          }
+
+          nodeSelections.add(
+            DocumentNodeSelection(
+              nodeId: selectedNode.id,
+              nodeSelection: component.getSelectionOfEverything(),
+              highlightWhenEmpty: true,
+            ),
+          );
+        }
+      }
+
+      return nodeSelections;
+    }
+  }
+
+  DocumentNodeSelection _computeNodeSelection({
+    @required List<DocumentNode> selectedNodes,
+    @required String nodeId,
+  }) {
+    if (widget.documentSelection == null) {
+      return null;
+    }
+
+    print('_computeNodeSelection(): $nodeId');
+    print(' - base: ${widget.documentSelection.base.nodeId}');
+    print(' - extent: ${widget.documentSelection.extent.nodeId}');
+
+    final node = widget.document.getNodeById(nodeId);
+    if (widget.documentSelection.base.nodeId == widget.documentSelection.extent.nodeId) {
+      print(' - selection is within 1 node.');
+      if (widget.documentSelection.base.nodeId != nodeId) {
+        print(' - this node is not selected. Returning null.');
+        return null;
+      }
+
+      print(' - this node has the selection');
+      final baseNodePosition = widget.documentSelection.base.nodePosition;
+      final extentNodePosition = widget.documentSelection.extent.nodePosition;
+      final nodeSelection = node.computeSelection(base: baseNodePosition, extent: extentNodePosition);
+      print(' - node selection: $nodeSelection');
+
+      return DocumentNodeSelection(
+        nodeId: nodeId,
+        nodeSelection: nodeSelection,
+        isBase: true,
+        isExtent: true,
+      );
+    } else {
+      print(' - selection contains multiple nodes:');
+      for (final node in selectedNodes) {
+        print('   - ${node.id}');
+      }
+
+      if (selectedNodes.firstWhere((selectedNode) => selectedNode.id == nodeId, orElse: () => null) == null) {
+        print(' - this node is not in the selection');
+        return null;
+      }
+
+      // TODO: we currently operate with "selections" within a node, but this
+      //       is superfluous for nodes that are fully selected. They have no
+      //       base and no extent, but we're reporting selections instead of
+      //       ranges. Change DocumentNodeSelection to report a range, and
+      //       then optionally a base and/or extent node position.
+      if (selectedNodes.first.id == nodeId) {
+        print(' - this is the first node in the selection');
+        // This node is selected from a position down to its bottom.
+        final isBase = nodeId == widget.documentSelection.base.nodeId;
+        return DocumentNodeSelection(
+          nodeId: nodeId,
+          nodeSelection: node.computeSelection(
+            base: isBase ? widget.documentSelection.base.nodePosition : node.endPosition,
+            extent: isBase ? node.endPosition : widget.documentSelection.extent.nodePosition,
+          ),
+          isBase: isBase,
+          isExtent: !isBase,
+        );
+      } else if (selectedNodes.last.id == nodeId) {
+        print(' - this is the last node in the selection');
+        // This node is selected from its top down to a position.
+        final isBase = nodeId == widget.documentSelection.base.nodeId;
+        return DocumentNodeSelection(
+          nodeId: nodeId,
+          nodeSelection: node.computeSelection(
+            base: isBase ? node.beginningPosition : widget.documentSelection.extent.nodePosition,
+            extent: isBase ? widget.documentSelection.base.nodePosition : node.beginningPosition,
+          ),
+          isBase: isBase,
+          isExtent: !isBase,
+        );
+      } else {
+        print(' - this node is fully selected within the selection');
+        // This entire node is selected.
+        return DocumentNodeSelection(
+          nodeId: nodeId,
+          nodeSelection: node.computeSelection(
+            base: node.beginningPosition,
+            extent: node.endPosition,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // print('Building document layout:');
@@ -267,7 +490,13 @@ class DocumentLayoutState extends State<DocumentLayout> {
     _topToBottomComponentKeys.clear();
 
     print('_buildDocComponents()');
-    print(' - doc selection: ${widget.documentSelection}');
+
+    final selectedNodes = widget.documentSelection != null
+        ? widget.document.getNodesInside(
+            widget.documentSelection.base,
+            widget.documentSelection.extent,
+          )
+        : const <DocumentNode>[];
 
     for (final docNode in widget.document.nodes) {
       final componentKey = _createOrTransferComponentKey(
@@ -278,16 +507,22 @@ class DocumentLayoutState extends State<DocumentLayout> {
 
       _topToBottomComponentKeys.add(componentKey);
 
+      final nodeSelection = _computeNodeSelection(
+        selectedNodes: selectedNodes,
+        nodeId: docNode.id,
+      );
+
       final component = widget.componentBuilder(
         context: context,
         document: widget.document,
         currentNode: docNode,
-        currentSelection: widget.documentSelection,
+        // TODO: I temporarily changed this to an empty list to get things
+        //       to compile. Once things are working with an empty list,
+        //       remove `currentSelection` from the API.
+        currentSelection: const [],
         key: componentKey,
-        selectedNode: widget.documentSelection.firstWhere(
-          (element) => element.nodeId == docNode.id,
-          orElse: () => null,
-        ),
+        // TODO: renamed this property to `nodeSelection`
+        selectedNode: nodeSelection,
         showDebugPaint: widget.showDebugPaint,
       );
 

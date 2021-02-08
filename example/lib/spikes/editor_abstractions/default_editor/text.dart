@@ -56,6 +56,23 @@ class TextNode with ChangeNotifier implements DocumentNode {
       notifyListeners();
     }
   }
+
+  TextPosition get beginningPosition => TextPosition(offset: 0);
+
+  TextPosition get endPosition => TextPosition(offset: text.text.length);
+
+  TextSelection computeSelection({
+    @required dynamic base,
+    @required dynamic extent,
+  }) {
+    assert(base is TextPosition);
+    assert(extent is TextPosition);
+
+    return TextSelection(
+      baseOffset: (base as TextPosition).offset,
+      extentOffset: (extent as TextPosition).offset,
+    );
+  }
 }
 
 /// Displays text in a document.

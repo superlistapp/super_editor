@@ -90,7 +90,6 @@ class _EditableDocumentState extends State<EditableDocument> with SingleTickerPr
   // GlobalKey used to access the `DocumentLayoutState` to figure
   // out where in the document the user taps or drags.
   final _docLayoutKey = GlobalKey<DocumentLayoutState>();
-  final _nodeSelections = <DocumentNodeSelection>[];
 
   FocusNode _rootFocusNode;
 
@@ -164,28 +163,7 @@ class _EditableDocumentState extends State<EditableDocument> with SingleTickerPr
 
   void _onSelectionChange() {
     print('EditableDocument: _onSelectionChange()');
-    setState(() {
-      // TODO: node selections are recomputed in a post frame callback
-      //       because the composer uses the doc layout to map to visual
-      //       components, which may not exist until the next frame.
-      //
-      //       This still results in a bad selection position when
-      //       paragraphs are split. The overall use and timing of
-      //       node selections needs to be reconsidered.
-      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-        _nodeSelections
-          ..clear()
-          ..addAll(
-            _documentComposer.selection.value != null
-                ? _documentComposer.selection.value.computeNodeSelections(
-                    document: widget.document,
-                    documentLayout: _docLayoutKey.currentState,
-                  )
-                : const [],
-          );
-        setState(() {});
-      });
-    });
+    setState(() {});
   }
 
   KeyEventResult _onKeyPressed(RawKeyEvent keyEvent) {
@@ -283,8 +261,7 @@ class _EditableDocumentState extends State<EditableDocument> with SingleTickerPr
   void _onPanStart(DragStartDetails details) {
     print('_onPanStart()');
     _dragStartInViewport = details.localPosition;
-    _dragStartInDoc =
-        _getDocOffset(_dragStartInViewport); //_dragStartInViewport + Offset(0.0, _scrollController.offset);
+    _dragStartInDoc = _getDocOffset(_dragStartInViewport);
 
     _clearSelection();
     _dragRectInViewport = Rect.fromLTWH(_dragStartInViewport.dx, _dragStartInViewport.dy, 1, 1);
@@ -294,7 +271,7 @@ class _EditableDocumentState extends State<EditableDocument> with SingleTickerPr
     print('_onPanUpdate()');
     setState(() {
       _dragEndInViewport = details.localPosition;
-      _dragEndInDoc = _getDocOffset(_dragEndInViewport); //_dragEndInViewport + Offset(0.0, _scrollController.offset);
+      _dragEndInDoc = _getDocOffset(_dragEndInViewport);
       _dragRectInViewport = Rect.fromPoints(_dragStartInViewport, _dragEndInViewport);
       print(' - drag rect: $_dragRectInViewport');
       _updateCursorStyle(details.localPosition);
@@ -487,16 +464,14 @@ class _EditableDocumentState extends State<EditableDocument> with SingleTickerPr
                     builder: (context, value, child) {
                       print('Creating document layout with selection:');
                       print(' - ${_documentComposer?.selection?.value}');
-                      print(' - node selections: $_nodeSelections');
                       return AnimatedBuilder(
                           animation: widget.document,
                           builder: (context, child) {
                             return DocumentLayout(
                               key: _docLayoutKey,
                               document: widget.document,
-                              documentSelection: _nodeSelections,
+                              documentSelection: _documentComposer?.selection?.value,
                               componentBuilder: defaultComponentBuilder,
-                              // componentDecorator: addHintTextToTitleAndFirstParagraph,
                               showDebugPaint: widget.showDebugPaint,
                             );
                           });
@@ -673,6 +648,7 @@ final ComponentBuilder defaultComponentBuilder = ({
   @required GlobalKey key,
   bool showDebugPaint = false,
 }) {
+  print('Building a document component for node: ${currentNode.id}');
   if (currentNode is ParagraphNode) {
     final textSelection = selectedNode == null || selectedNode.nodeSelection is! TextSelection
         ? null
@@ -687,6 +663,10 @@ final ComponentBuilder defaultComponentBuilder = ({
     // if (hasCursor) {
     //   print('   - ^ has cursor');
     // }
+
+    print(' - building a paragraph with selection:');
+    print('   - base: ${textSelection?.base}');
+    print('   - extent: ${textSelection?.extent}');
 
     if (document.getNodeIndex(currentNode) == 0 && currentNode.text.text.isEmpty && !hasCursor) {
       return TextWithHintComponent(
