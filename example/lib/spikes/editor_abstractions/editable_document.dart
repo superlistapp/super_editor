@@ -733,7 +733,7 @@ final ComponentBuilder defaultComponentBuilder = ({
       imageUrl: currentNode.imageUrl,
       isSelected: isSelected,
     );
-  } else if (currentNode is UnorderedListItemNode) {
+  } else if (currentNode is ListItemNode && currentNode.type == ListItemType.unordered) {
     final textSelection = selectedNode == null ? null : selectedNode.nodeSelection as TextSelection;
     final hasCursor = selectedNode != null ? selectedNode.isExtent : false;
 
@@ -745,11 +745,14 @@ final ComponentBuilder defaultComponentBuilder = ({
       hasCursor: hasCursor,
       showDebugPaint: showDebugPaint,
     );
-  } else if (currentNode is OrderedListItemNode) {
+  } else if (currentNode is ListItemNode && currentNode.type == ListItemType.ordered) {
     int index = 1;
     DocumentNode nodeAbove = document.getNodeBefore(currentNode);
-    while (nodeAbove != null && nodeAbove is OrderedListItemNode && nodeAbove.indent >= currentNode.indent) {
-      if ((nodeAbove as OrderedListItemNode).indent == currentNode.indent) {
+    while (nodeAbove != null &&
+        nodeAbove is ListItemNode &&
+        nodeAbove.type == ListItemType.ordered &&
+        nodeAbove.indent >= currentNode.indent) {
+      if ((nodeAbove as ListItemNode).indent == currentNode.indent) {
         index += 1;
       }
       nodeAbove = document.getNodeBefore(nodeAbove);

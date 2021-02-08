@@ -175,8 +175,8 @@ ExecutionInstruction insertCharacterInParagraph({
       // final adjustedText = node.text.text.substring(startOfNewText);
       final adjustedText = node.text.copyText(startOfNewText);
       final newNode = hasUnorderedListItemMatch
-          ? UnorderedListItemNode(id: node.id, text: adjustedText)
-          : OrderedListItemNode(id: node.id, text: adjustedText);
+          ? ListItemNode.unordered(id: node.id, text: adjustedText)
+          : ListItemNode.ordered(id: node.id, text: adjustedText);
       final nodeIndex = composerContext.document.getNodeIndex(node);
       composerContext.document
         ..deleteNodeAt(nodeIndex)

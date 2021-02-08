@@ -233,58 +233,58 @@ class _EditorSpikeState extends State<EditorSpike> {
         text: AttributedText(text: _loremIpsum1),
         textAlign: TextAlign.right,
       ),
-      UnorderedListItemNode(
+      ListItemNode.unordered(
         id: RichTextDocument.createNodeId(),
         text: AttributedText(text: 'This is the 1st list item.'),
       ),
-      UnorderedListItemNode(
+      ListItemNode.unordered(
         id: RichTextDocument.createNodeId(),
         text: AttributedText(text: 'This is the 2nd list item.'),
       ),
-      UnorderedListItemNode(
+      ListItemNode.unordered(
         id: RichTextDocument.createNodeId(),
         text: AttributedText(text: 'This is the 3rd list item.'),
         indent: 1,
       ),
-      UnorderedListItemNode(
+      ListItemNode.unordered(
         id: RichTextDocument.createNodeId(),
         text: AttributedText(text: 'This is the 4th list item.'),
         indent: 1,
       ),
-      UnorderedListItemNode(
+      ListItemNode.unordered(
         id: RichTextDocument.createNodeId(),
         text: AttributedText(text: 'This is the 5th list item.'),
       ),
       HorizontalRuleNode(id: RichTextDocument.createNodeId()),
-      OrderedListItemNode(
+      ListItemNode.ordered(
         id: RichTextDocument.createNodeId(),
         text: AttributedText(text: 'This is the 1st list item.'),
       ),
-      OrderedListItemNode(
+      ListItemNode.ordered(
         id: RichTextDocument.createNodeId(),
         text: AttributedText(text: 'This is the 2nd list item.'),
       ),
-      OrderedListItemNode(
+      ListItemNode.ordered(
         id: RichTextDocument.createNodeId(),
         text: AttributedText(text: 'This is the 3rd list item.'),
         indent: 1,
       ),
-      OrderedListItemNode(
+      ListItemNode.ordered(
         id: RichTextDocument.createNodeId(),
         text: AttributedText(text: 'This is the 4th list item.'),
         indent: 1,
       ),
-      OrderedListItemNode(
+      ListItemNode.ordered(
         id: RichTextDocument.createNodeId(),
         text: AttributedText(text: 'This is the 5th list item.'),
         indent: 2,
       ),
-      OrderedListItemNode(
+      ListItemNode.ordered(
         id: RichTextDocument.createNodeId(),
         text: AttributedText(text: 'This is the 6th list item.'),
         indent: 2,
       ),
-      OrderedListItemNode(
+      ListItemNode.ordered(
         id: RichTextDocument.createNodeId(),
         text: AttributedText(text: 'This is the 7th list item.'),
       ),
@@ -306,57 +306,57 @@ class _EditorSpikeState extends State<EditorSpike> {
 
   RichTextDocument _createListItemsDoc() {
     return RichTextDocument(nodes: [
-      UnorderedListItemNode(
+      ListItemNode.unordered(
         id: RichTextDocument.createNodeId(),
         text: AttributedText(text: 'This is the 1st list item.'),
       ),
-      UnorderedListItemNode(
+      ListItemNode.unordered(
         id: RichTextDocument.createNodeId(),
         text: AttributedText(text: 'This is the 2nd list item.'),
       ),
-      UnorderedListItemNode(
+      ListItemNode.unordered(
         id: RichTextDocument.createNodeId(),
         text: AttributedText(text: 'This is the 3rd list item.'),
         indent: 1,
       ),
-      UnorderedListItemNode(
+      ListItemNode.unordered(
         id: RichTextDocument.createNodeId(),
         text: AttributedText(text: 'This is the 4th list item.'),
         indent: 1,
       ),
-      UnorderedListItemNode(
+      ListItemNode.unordered(
         id: RichTextDocument.createNodeId(),
         text: AttributedText(text: 'This is the 5th list item.'),
       ),
-      OrderedListItemNode(
+      ListItemNode.ordered(
         id: RichTextDocument.createNodeId(),
         text: AttributedText(text: 'This is the 1st list item.'),
       ),
-      OrderedListItemNode(
+      ListItemNode.ordered(
         id: RichTextDocument.createNodeId(),
         text: AttributedText(text: 'This is the 2nd list item.'),
       ),
-      OrderedListItemNode(
+      ListItemNode.ordered(
         id: RichTextDocument.createNodeId(),
         text: AttributedText(text: 'This is the 3rd list item.'),
         indent: 1,
       ),
-      OrderedListItemNode(
+      ListItemNode.ordered(
         id: RichTextDocument.createNodeId(),
         text: AttributedText(text: 'This is the 4th list item.'),
         indent: 1,
       ),
-      OrderedListItemNode(
+      ListItemNode.ordered(
         id: RichTextDocument.createNodeId(),
         text: AttributedText(text: 'This is the 5th list item.'),
         indent: 2,
       ),
-      OrderedListItemNode(
+      ListItemNode.ordered(
         id: RichTextDocument.createNodeId(),
         text: AttributedText(text: 'This is the 6th list item.'),
         indent: 2,
       ),
-      OrderedListItemNode(
+      ListItemNode.ordered(
         id: RichTextDocument.createNodeId(),
         text: AttributedText(text: 'This is the 7th list item.'),
       ),

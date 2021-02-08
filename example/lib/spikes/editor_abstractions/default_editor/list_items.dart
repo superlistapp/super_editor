@@ -12,9 +12,36 @@ import '../core/selection/editor_selection.dart';
 import 'paragraph.dart';
 import 'text.dart';
 
-abstract class ListItemNode extends TextNode {
+class ListItemNode extends TextNode {
+  ListItemNode.ordered({
+    @required String id,
+    AttributedText text,
+    int indent = 0,
+  })  : type = ListItemType.ordered,
+        _indent = indent,
+        super(
+          id: id,
+          text: text,
+          textAlign: TextAlign.left,
+          textType: 'paragraph',
+        );
+
+  ListItemNode.unordered({
+    @required String id,
+    AttributedText text,
+    int indent = 0,
+  })  : type = ListItemType.unordered,
+        _indent = indent,
+        super(
+          id: id,
+          text: text,
+          textAlign: TextAlign.left,
+          textType: 'paragraph',
+        );
+
   ListItemNode({
     @required String id,
+    @required this.type,
     AttributedText text,
     int indent = 0,
   })  : _indent = indent,
@@ -25,6 +52,8 @@ abstract class ListItemNode extends TextNode {
           textType: 'paragraph',
         );
 
+  final ListItemType type;
+
   int _indent;
   int get indent => _indent;
   set indent(int newIndent) {
@@ -33,36 +62,11 @@ abstract class ListItemNode extends TextNode {
       notifyListeners();
     }
   }
-
-  bool tryToCombineWithOtherNode(DocumentNode other) {
-    // TODO: implement node combinations
-    print('WARNING: UnorderedListItemNode combining is not yet implemented.');
-    return false;
-  }
 }
 
-class UnorderedListItemNode extends ListItemNode {
-  UnorderedListItemNode({
-    @required String id,
-    AttributedText text,
-    int indent = 0,
-  }) : super(
-          id: id,
-          text: text,
-          indent: indent,
-        );
-}
-
-class OrderedListItemNode extends ListItemNode {
-  OrderedListItemNode({
-    @required String id,
-    AttributedText text,
-    int indent = 0,
-  }) : super(
-          id: id,
-          text: text,
-          indent: indent,
-        );
+enum ListItemType {
+  ordered,
+  unordered,
 }
 
 /// Displays a un-ordered list item in a document.
@@ -271,13 +275,13 @@ class SplitListItemCommand implements EditorCommand {
 
     // Create a new node that will follow the current node. Set its text
     // to the text that was removed from the current node.
-    final newNode = node is OrderedListItemNode
-        ? OrderedListItemNode(
+    final newNode = listItemNode.type == ListItemType.ordered
+        ? ListItemNode.ordered(
             id: newNodeId,
             text: endText,
-            indent: node.indent,
+            indent: listItemNode.indent,
           )
-        : UnorderedListItemNode(
+        : ListItemNode.unordered(
             id: newNodeId,
             text: endText,
             indent: listItemNode.indent,
