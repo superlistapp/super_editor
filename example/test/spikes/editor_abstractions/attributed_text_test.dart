@@ -1,4 +1,4 @@
-import 'package:example/spikes/editor_abstractions/selectable_text/attributed_text.dart';
+import 'package:example/spikes/editor_abstractions/core/attributed_text.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter_test/flutter_test.dart';
 
