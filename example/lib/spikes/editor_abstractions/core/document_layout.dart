@@ -90,6 +90,19 @@ class DocumentLayoutState extends State<DocumentLayout> {
     return getDocumentPositionAtOffset(documentOffset);
   }
 
+  Rect getRectForPosition(DocumentPosition position) {
+    final component = getComponentByNodeId(position.nodeId);
+    final componentRect = component.getRectForPosition(position.nodePosition);
+    if (componentRect == null) {
+      return null;
+    }
+
+    final componentBox = component.context.findRenderObject() as RenderBox;
+    final docOffset = componentBox.localToGlobal(Offset.zero, ancestor: context.findRenderObject());
+
+    return componentRect.translate(docOffset.dx, docOffset.dy);
+  }
+
   DocumentSelection getDocumentSelectionInRegion(Offset baseOffset, Offset extentOffset) {
     print('getDocumentSelectionInRegion() - from: $baseOffset, to: $extentOffset');
     // Drag direction determines whether the extent offset is at the
@@ -424,6 +437,8 @@ mixin DocumentComponent<T extends StatefulWidget> on State<T> {
   dynamic getPositionAtOffset(Offset localOffset);
 
   Offset getOffsetForPosition(dynamic nodePosition);
+
+  Rect getRectForPosition(dynamic nodePosition);
 
   dynamic getBeginningPosition();
 

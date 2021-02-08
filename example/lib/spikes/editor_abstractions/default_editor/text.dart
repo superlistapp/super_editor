@@ -122,6 +122,17 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
   }
 
   @override
+  Rect getRectForPosition(dynamic nodePosition) {
+    if (nodePosition is! TextPosition) {
+      return null;
+    }
+
+    // TODO: factor in line height for position rect
+    final offset = getOffsetForPosition(nodePosition);
+    return Rect.fromLTWH(offset.dx, offset.dy, 0, 0);
+  }
+
+  @override
   TextPosition getBeginningPosition() {
     return TextPosition(offset: 0);
   }
