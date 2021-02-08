@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Spike: editor input delegation" type="FlutterRunConfigurationType" factoryName="Flutter">
-    <option name="filePath" value="$PROJECT_DIR$/example/lib/spikes/editor_input_delegation/spike.dart" />
+  <configuration default="false" name="Spike: editor abstractions" type="FlutterRunConfigurationType" factoryName="Flutter">
+    <option name="filePath" value="$PROJECT_DIR$/example/lib/spikes/editor_abstractions/spike.dart" />
     <method v="2" />
   </configuration>
 </component>

@@ -5,10 +5,10 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
-import '../core/composition/document_composer.dart';
-import '../core/document/document_editor.dart';
-import '../core/document/rich_text_document.dart';
-import '../core/selection/editor_selection.dart';
+import '../core/document_composer.dart';
+import '../core/document_editor.dart';
+import '../core/document.dart';
+import '../core/document_selection.dart';
 import 'paragraph.dart';
 import 'text.dart';
 

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart' hide SelectableText;
 import 'package:flutter/rendering.dart';
 
-import '../document/rich_text_document.dart';
-import '../selection/editor_selection.dart';
+import 'document_selection.dart';
+import 'document.dart';
 
 /// Displays a `RichTextDocument`.
 ///

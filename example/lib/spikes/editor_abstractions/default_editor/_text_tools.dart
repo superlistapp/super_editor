@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
-import '../core/document/rich_text_document.dart';
-import '../core/selection/editor_selection.dart';
+import '../core/document.dart';
+import '../core/document_selection.dart';
 import 'text.dart';
 
 bool isTextEntryNode({

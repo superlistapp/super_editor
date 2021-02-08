@@ -5,9 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
-import '../core/composition/document_composer.dart';
-import '../core/document/rich_text_document.dart';
-import '../core/selection/editor_selection.dart';
+import '../core/document_composer.dart';
+import '../core/document.dart';
+import '../core/document_selection.dart';
 import '_text_tools.dart';
 import 'multi_node_editing.dart';
 import 'paragraph.dart';

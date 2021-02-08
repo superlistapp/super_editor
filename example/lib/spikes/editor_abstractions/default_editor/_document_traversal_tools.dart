@@ -4,9 +4,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart';
 
-import '../core/document/rich_text_document.dart';
-import '../core/layout/document_layout.dart';
-import '../core/selection/editor_selection.dart';
+import '../core/document.dart';
+import '../core/document_layout.dart';
+import '../core/document_selection.dart';
 
 // previousCursorOffset: if non-null, the cursor is positioned in
 //      the previous component at the same horizontal location. If

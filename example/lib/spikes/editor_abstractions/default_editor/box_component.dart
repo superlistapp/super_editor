@@ -1,11 +1,11 @@
-import 'package:example/spikes/editor_abstractions/core/composition/document_composer.dart';
-import 'package:example/spikes/editor_abstractions/core/document/rich_text_document.dart';
-import 'package:example/spikes/editor_abstractions/core/layout/document_layout.dart';
-import 'package:example/spikes/editor_abstractions/core/selection/editor_selection.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/src/rendering/mouse_cursor.dart';
 import 'package:flutter/widgets.dart';
 
+import '../core/document_composer.dart';
+import '../core/document.dart';
+import '../core/document_layout.dart';
+import '../core/document_selection.dart';
 import 'multi_node_editing.dart';
 
 class BoxComponent extends StatefulWidget {

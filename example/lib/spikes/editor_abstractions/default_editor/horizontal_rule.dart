@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 
-import '../core/document/rich_text_document.dart';
+import '../core/document.dart';
 import 'box_component.dart';
 
 class HorizontalRuleNode with ChangeNotifier implements DocumentNode {

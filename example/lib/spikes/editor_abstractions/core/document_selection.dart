@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-import '../document/rich_text_document.dart';
+import 'document.dart';
 
 /// A selection within a `RichTextDocument`.
 ///

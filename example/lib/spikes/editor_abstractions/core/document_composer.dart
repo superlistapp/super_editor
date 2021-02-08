@@ -2,13 +2,13 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
-import '../document/rich_text_document.dart';
-import '../document/document_editor.dart';
-import '../layout/document_layout.dart';
-import '../selection/editor_selection.dart';
+import 'document_editor.dart';
+import 'document_layout.dart';
+import 'document_selection.dart';
+import 'document.dart';
 
 // TODO: get rid of this import
-import '../../default_editor/text.dart';
+import 'package:example/spikes/editor_abstractions/default_editor/text.dart';
 
 /// Maintains a `DocumentSelection` within a `RichTextDocument` and
 /// uses that selection to edit the document.

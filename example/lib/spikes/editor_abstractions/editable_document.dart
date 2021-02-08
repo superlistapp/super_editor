@@ -7,11 +7,11 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 
-import 'core/document/rich_text_document.dart';
-import 'core/document/document_editor.dart';
-import 'core/composition/document_composer.dart';
-import 'core/layout/document_layout.dart';
-import 'core/selection/editor_selection.dart';
+import 'core/document.dart';
+import 'core/document_editor.dart';
+import 'core/document_composer.dart';
+import 'core/document_layout.dart';
+import 'core/document_selection.dart';
 
 import 'default_editor/document_composer_actions.dart';
 import 'default_editor/text.dart';
