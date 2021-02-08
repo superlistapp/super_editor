@@ -1,7 +1,7 @@
-import 'package:example/spikes/editor_abstractions/selectable_text/attributed_text.dart';
 import 'package:flutter/material.dart';
 
 import 'core/document.dart';
+import 'core/attributed_text.dart';
 import 'default_editor/paragraph.dart';
 import 'default_editor/list_items.dart';
 import 'default_editor/image.dart';

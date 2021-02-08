@@ -1,7 +1,7 @@
-import 'package:example/spikes/editor_abstractions/selectable_text/attributed_text.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
+import '../core/attributed_text.dart';
 import '../default_editor/text.dart';
 
 /// Displays text in a document, and given `hintText` when there

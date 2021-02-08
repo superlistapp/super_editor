@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import '../core/document.dart';
 import '../core/document_editor.dart';
 import '../core/document_selection.dart';
-import '../selectable_text/attributed_text.dart';
+import '../core/attributed_text.dart';
 import 'text.dart';
 import 'box_component.dart';
 import 'paragraph.dart';

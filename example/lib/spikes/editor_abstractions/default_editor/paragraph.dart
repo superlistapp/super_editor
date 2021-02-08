@@ -7,7 +7,7 @@ import '../core/document_editor.dart';
 import '../core/document_composer.dart';
 import '../core/document.dart';
 import '../core/document_selection.dart';
-import '../selectable_text/attributed_text.dart';
+import '../core/attributed_text.dart';
 import '_text_tools.dart';
 import 'text.dart';
 import 'list_items.dart';

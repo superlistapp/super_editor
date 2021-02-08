@@ -12,8 +12,8 @@ import '../core/document_editor.dart';
 import '../core/document_layout.dart';
 import '../core/document_selection.dart';
 import '../core/document_composer.dart';
+import '../core/attributed_text.dart';
 import '_text_tools.dart';
-import '../selectable_text/attributed_text.dart';
 import '../selectable_text/selectable_text.dart';
 import 'multi_node_editing.dart';
 
