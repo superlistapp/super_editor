@@ -71,6 +71,12 @@ class DocumentSelection {
     );
   }
 
+  DocumentSelection expandTo(DocumentPosition newExtent) {
+    return copyWith(
+      extent: newExtent,
+    );
+  }
+
   List<DocumentNodeSelection> computeNodeSelections({
     @required RichTextDocument document,
     @required DocumentLayoutState documentLayout,

@@ -325,6 +325,58 @@ mixin DocumentComponent<T extends StatefulWidget> on State<T> {
 
   dynamic getBeginningPositionNearX(double x);
 
+  /// Returns a new position within this component's node that
+  /// corresponds to the `currentPosition` moved left one unit,
+  /// as interpreted by this component/node, in conjunction with
+  /// any relevant `movementModifier`.
+  ///
+  /// The structure and options for `movementModifier`s is
+  /// determined by each component/node combination.
+  ///
+  /// Returns null if the concept of horizontal movement does not
+  /// make sense for this component.
+  ///
+  /// Returns null if there is nowhere to move left within this
+  /// component.
+  dynamic movePositionLeft(dynamic currentPosition, [Map<String, dynamic> movementModifiers]);
+
+  /// Returns a new position within this component's node that
+  /// corresponds to the `currentPosition` moved right one unit,
+  /// as interpreted by this component/node, in conjunction with
+  /// any relevant `movementModifier`.
+  ///
+  /// The structure and options for `movementModifier`s is
+  /// determined by each component/node combination.
+  ///
+  /// Returns null if the concept of horizontal movement does not
+  /// make sense for this component.
+  ///
+  /// Returns null if there is nowhere to move right within this
+  /// component.
+  dynamic movePositionRight(dynamic currentPosition, [Map<String, dynamic> movementModifiers]);
+
+  /// Returns a new position within this component's node that
+  /// corresponds to the `currentPosition` moved up one unit,
+  /// as interpreted by this component/node.
+  ///
+  /// Returns null if the concept of vertical movement does not
+  /// make sense for this component.
+  ///
+  /// Returns null if there is nowhere to move up within this
+  /// component.
+  dynamic movePositionUp(dynamic currentPosition);
+
+  /// Returns a new position within this component's node that
+  /// corresponds to the `currentPosition` moved down one unit,
+  /// as interpreted by this component/node.
+  ///
+  /// Returns null if the concept of vertical movement does not
+  /// make sense for this component.
+  ///
+  /// Returns null if there is nowhere to move down within this
+  /// component.
+  dynamic movePositionDown(dynamic currentPosition);
+
   dynamic getEndPosition();
 
   dynamic getEndPositionNearX(double x);

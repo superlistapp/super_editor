@@ -118,6 +118,115 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
   }
 
   @override
+  TextPosition movePositionLeft(dynamic currentPosition, [Map<String, dynamic> movementModifiers]) {
+    if (currentPosition is! TextPosition) {
+      // We don't know how to interpret a non-text position.
+      return null;
+    }
+
+    final textPosition = currentPosition as TextPosition;
+    if (textPosition.offset < 1 || textPosition.offset > widget.text.text.length) {
+      // This text position does not represent a position within our text.
+      return null;
+    }
+
+    if (movementModifiers['movement_unit'] == 'line') {
+      return getPositionAtStartOfLine(
+        TextPosition(offset: textPosition.offset),
+      );
+    } else if (movementModifiers['movement_unit'] == 'word') {
+      final text = getContiguousTextAt(textPosition);
+      int newOffset = textPosition.offset;
+      newOffset -= 1; // we always want to jump at least 1 character.
+      while (newOffset > 0 && latinCharacters.contains(text[newOffset])) {
+        newOffset -= 1;
+      }
+      return TextPosition(offset: newOffset);
+    } else {
+      return TextPosition(offset: textPosition.offset - 1);
+    }
+  }
+
+  @override
+  TextPosition movePositionRight(dynamic currentPosition, [Map<String, dynamic> movementModifiers]) {
+    if (currentPosition is! TextPosition) {
+      // We don't know how to interpret a non-text position.
+      return null;
+    }
+
+    final textPosition = currentPosition as TextPosition;
+    if (textPosition.offset >= widget.text.text.length) {
+      // Can't move further forward.
+      return null;
+    }
+
+    if (movementModifiers['movement_unit'] == 'line') {
+      final endOfLine = getPositionAtEndOfLine(
+        TextPosition(offset: textPosition.offset),
+      );
+
+      final TextPosition endPosition = getEndPosition();
+      final String text = getContiguousTextAt(endOfLine);
+      // Note: we compare offset values because we don't care if the affinitys are equal
+      final isAutoWrapLine = endOfLine.offset != endPosition.offset && (text[endOfLine.offset] != '\n');
+
+      // Note: For lines that auto-wrap, moving the cursor to `offset` causes the
+      //       cursor to jump to the next line because the cursor is placed after
+      //       the final selected character. We don't want this, so in this case
+      //       we `-1`.
+      //
+      //       However, if the line that is selected ends with an explicit `\n`,
+      //       or if the line is the terminal line for the paragraph then we don't
+      //       want to `-1` because that would leave a dangling character after the
+      //       selection.
+      // TODO: this is the concept of text affinity. Implement support for affinity.
+      return isAutoWrapLine ? TextPosition(offset: endOfLine.offset - 1) : endOfLine;
+    } else if (movementModifiers['movement_unit'] == 'word') {
+      final text = getContiguousTextAt(textPosition);
+      int newOffset = textPosition.offset;
+      newOffset += 1; // we always want to jump at least 1 character.
+      while (newOffset < text.length && latinCharacters.contains(text[newOffset])) {
+        newOffset += 1;
+      }
+      return TextPosition(offset: newOffset);
+    } else {
+      return TextPosition(offset: textPosition.offset + 1);
+    }
+  }
+
+  @override
+  TextPosition movePositionUp(dynamic currentPosition) {
+    if (currentPosition is! TextPosition) {
+      // We don't know how to interpret a non-text position.
+      return null;
+    }
+
+    final textPosition = currentPosition as TextPosition;
+    if (textPosition.offset < 0 || textPosition.offset > widget.text.text.length) {
+      // This text position does not represent a position within our text.
+      return null;
+    }
+
+    return getPositionOneLineUp(textPosition);
+  }
+
+  @override
+  TextPosition movePositionDown(dynamic currentPosition) {
+    if (currentPosition is! TextPosition) {
+      // We don't know how to interpret a non-text position.
+      return null;
+    }
+
+    final textPosition = currentPosition as TextPosition;
+    if (textPosition.offset < 0 || textPosition.offset > widget.text.text.length) {
+      // This text position does not represent a position within our text.
+      return null;
+    }
+
+    return getPositionOneLineDown(textPosition);
+  }
+
+  @override
   TextPosition getEndPosition() {
     return TextPosition(offset: widget.text.text.length);
   }

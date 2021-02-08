@@ -415,78 +415,225 @@ ExecutionInstruction moveUpDownLeftAndRightWithArrowKeys({
   if (!arrowKeys.contains(keyEvent.logicalKey)) {
     return ExecutionInstruction.continueExecution;
   }
+  if (composerContext.currentSelection.value == null) {
+    return ExecutionInstruction.continueExecution;
+  }
 
   if (keyEvent.logicalKey == LogicalKeyboardKey.arrowLeft) {
     print(' - handling left arrow key');
+
+    final movementModifiers = <String, dynamic>{
+      'movement_unit': 'character',
+    };
     if (keyEvent.isMetaPressed) {
-      moveToStartOfLine(
-        document: composerContext.document,
-        documentLayout: composerContext.documentLayout,
-        currentSelection: composerContext.currentSelection,
-        nodeSelections: composerContext.nodeSelections,
-        expandSelection: keyEvent.isShiftPressed,
-      );
+      movementModifiers['movement_unit'] = 'line';
     } else if (keyEvent.isAltPressed) {
-      moveBackOneWord(
-        document: composerContext.document,
-        documentLayout: composerContext.documentLayout,
-        currentSelection: composerContext.currentSelection,
-        expandSelection: keyEvent.isShiftPressed,
-      );
-    } else {
-      moveBackOneCharacter(
-        document: composerContext.document,
-        documentLayout: composerContext.documentLayout,
-        currentSelection: composerContext.currentSelection,
-        expandSelection: keyEvent.isShiftPressed,
-      );
+      movementModifiers['movement_unit'] = 'word';
     }
+
+    _moveHorizontally(
+      composerContext: composerContext,
+      expandSelection: keyEvent.isShiftPressed,
+      moveLeft: true,
+      movementModifiers: movementModifiers,
+    );
+
+    // if (keyEvent.isMetaPressed) {
+    //   moveToStartOfLine(
+    //     document: composerContext.document,
+    //     documentLayout: composerContext.documentLayout,
+    //     currentSelection: composerContext.currentSelection,
+    //     nodeSelections: composerContext.nodeSelections,
+    //     expandSelection: keyEvent.isShiftPressed,
+    //   );
+    // } else if (keyEvent.isAltPressed) {
+    //   moveBackOneWord(
+    //     document: composerContext.document,
+    //     documentLayout: composerContext.documentLayout,
+    //     currentSelection: composerContext.currentSelection,
+    //     expandSelection: keyEvent.isShiftPressed,
+    //   );
+    // } else {
+    //   moveBackOneCharacter(
+    //     document: composerContext.document,
+    //     documentLayout: composerContext.documentLayout,
+    //     currentSelection: composerContext.currentSelection,
+    //     expandSelection: keyEvent.isShiftPressed,
+    //   );
+    // }
   } else if (keyEvent.logicalKey == LogicalKeyboardKey.arrowRight) {
     print(' - handling right arrow key');
+
+    final movementModifiers = <String, dynamic>{
+      'movement_unit': 'character',
+    };
     if (keyEvent.isMetaPressed) {
-      moveToEndOfLine(
-        document: composerContext.document,
-        documentLayout: composerContext.documentLayout,
-        currentSelection: composerContext.currentSelection,
-        nodeSelections: composerContext.nodeSelections,
-        expandSelection: keyEvent.isShiftPressed,
-      );
+      movementModifiers['movement_unit'] = 'line';
     } else if (keyEvent.isAltPressed) {
-      moveForwardOneWord(
-        document: composerContext.document,
-        documentLayout: composerContext.documentLayout,
-        currentSelection: composerContext.currentSelection,
-        expandSelection: keyEvent.isShiftPressed,
-      );
-    } else {
-      moveForwardOneCharacter(
-        document: composerContext.document,
-        documentLayout: composerContext.documentLayout,
-        currentSelection: composerContext.currentSelection,
-        expandSelection: keyEvent.isShiftPressed,
-      );
+      movementModifiers['movement_unit'] = 'word';
     }
+
+    _moveHorizontally(
+      composerContext: composerContext,
+      expandSelection: keyEvent.isShiftPressed,
+      moveLeft: false,
+      movementModifiers: movementModifiers,
+    );
+
+    // if (keyEvent.isMetaPressed) {
+    //   moveToEndOfLine(
+    //     document: composerContext.document,
+    //     documentLayout: composerContext.documentLayout,
+    //     currentSelection: composerContext.currentSelection,
+    //     nodeSelections: composerContext.nodeSelections,
+    //     expandSelection: keyEvent.isShiftPressed,
+    //   );
+    // } else if (keyEvent.isAltPressed) {
+    //   moveForwardOneWord(
+    //     document: composerContext.document,
+    //     documentLayout: composerContext.documentLayout,
+    //     currentSelection: composerContext.currentSelection,
+    //     expandSelection: keyEvent.isShiftPressed,
+    //   );
+    // } else {
+    //   moveForwardOneCharacter(
+    //     document: composerContext.document,
+    //     documentLayout: composerContext.documentLayout,
+    //     currentSelection: composerContext.currentSelection,
+    //     expandSelection: keyEvent.isShiftPressed,
+    //   );
+    // }
   } else if (keyEvent.logicalKey == LogicalKeyboardKey.arrowUp) {
     print(' - handling up arrow key');
-    moveUpOneLine(
-      document: composerContext.document,
-      documentLayout: composerContext.documentLayout,
-      currentSelection: composerContext.currentSelection,
-      nodeSelections: composerContext.nodeSelections,
+    _moveVertically(
+      composerContext: composerContext,
       expandSelection: keyEvent.isShiftPressed,
+      moveUp: true,
     );
   } else if (keyEvent.logicalKey == LogicalKeyboardKey.arrowDown) {
     print(' - handling down arrow key');
-    moveDownOneLine(
-      document: composerContext.document,
-      documentLayout: composerContext.documentLayout,
-      currentSelection: composerContext.currentSelection,
-      nodeSelections: composerContext.nodeSelections,
+    _moveVertically(
+      composerContext: composerContext,
       expandSelection: keyEvent.isShiftPressed,
+      moveUp: false,
     );
   }
 
   return ExecutionInstruction.haltExecution;
+}
+
+void _moveHorizontally({
+  @required ComposerContext composerContext,
+  @required bool expandSelection,
+  @required bool moveLeft,
+  Map<String, dynamic> movementModifiers,
+}) {
+  final currentExtent = composerContext.currentSelection.value.extent;
+  final nodeId = currentExtent.nodeId;
+  final node = composerContext.document.getNodeById(nodeId);
+  final extentComponent = composerContext.documentLayout.getComponentByNodeId(nodeId);
+
+  String newExtentNodeId = nodeId;
+  dynamic newExtentNodePosition = moveLeft
+      ? extentComponent.movePositionLeft(currentExtent.nodePosition, movementModifiers)
+      : extentComponent.movePositionRight(currentExtent.nodePosition, movementModifiers);
+
+  if (newExtentNodePosition == null) {
+    print(' - moving to next node');
+    // Move to next node
+    final nextNode =
+        moveLeft ? composerContext.document.getNodeBefore(node) : composerContext.document.getNodeAfter(node);
+
+    if (nextNode == null) {
+      // We're at the beginning/end of the document and can't go
+      // anywhere.
+      return;
+    }
+
+    newExtentNodeId = nextNode.id;
+    final nextComponent = composerContext.documentLayout.getComponentByNodeId(nextNode.id);
+    newExtentNodePosition = moveLeft ? nextComponent.getEndPosition() : nextComponent.getBeginningPosition();
+  }
+
+  final newExtent = DocumentPosition(
+    nodeId: newExtentNodeId,
+    nodePosition: newExtentNodePosition,
+  );
+
+  if (expandSelection) {
+    // Selection should be expanded.
+    composerContext.currentSelection.value = composerContext.currentSelection.value.expandTo(
+      newExtent,
+    );
+  } else {
+    // Selection should be replaced by new collapsed position.
+    composerContext.currentSelection.value = DocumentSelection.collapsed(
+      position: newExtent,
+    );
+  }
+}
+
+void _moveVertically({
+  @required ComposerContext composerContext,
+  @required bool expandSelection,
+  @required bool moveUp,
+}) {
+  final currentExtent = composerContext.currentSelection.value.extent;
+  final nodeId = currentExtent.nodeId;
+  final node = composerContext.document.getNodeById(nodeId);
+  final extentComponent = composerContext.documentLayout.getComponentByNodeId(nodeId);
+
+  String newExtentNodeId = nodeId;
+  dynamic newExtentNodePosition = moveUp
+      ? extentComponent.movePositionUp(currentExtent.nodePosition)
+      : extentComponent.movePositionDown(currentExtent.nodePosition);
+
+  if (newExtentNodePosition == null) {
+    print(' - moving to next node');
+    // Move to next node
+    final nextNode =
+        moveUp ? composerContext.document.getNodeBefore(node) : composerContext.document.getNodeAfter(node);
+    if (nextNode != null) {
+      newExtentNodeId = nextNode.id;
+      final nextComponent = composerContext.documentLayout.getComponentByNodeId(nextNode.id);
+      final offsetToMatch = extentComponent.getOffsetForPosition(currentExtent.nodePosition);
+      print(' - offset to match');
+
+      if (offsetToMatch == null) {
+        // No (x,y) offset was provided. Place the selection at the
+        // beginning or end of the node, depending on direction.
+        newExtentNodePosition = moveUp ? nextComponent.getEndPosition() : nextComponent.getBeginningPosition();
+      } else {
+        // An (x,y) offset was provided. Place the selection as close
+        // to the given x-value as possible within the node.
+        newExtentNodePosition = moveUp
+            ? nextComponent.getEndPositionNearX(offsetToMatch.dx)
+            : nextComponent.getBeginningPositionNearX(offsetToMatch.dx);
+      }
+    } else {
+      print(' - there is no next node. Ignoring.');
+      // We're at the top/bottom of the document. Move the cursor to the
+      // beginning/end of the current node.
+      newExtentNodePosition = moveUp ? extentComponent.getBeginningPosition() : extentComponent.getEndPosition();
+    }
+  }
+
+  final newExtent = DocumentPosition(
+    nodeId: newExtentNodeId,
+    nodePosition: newExtentNodePosition,
+  );
+
+  if (expandSelection) {
+    // Selection should be expanded.
+    composerContext.currentSelection.value = composerContext.currentSelection.value.expandTo(
+      newExtent,
+    );
+  } else {
+    // Selection should be replaced by new collapsed position.
+    composerContext.currentSelection.value = DocumentSelection.collapsed(
+      position: newExtent,
+    );
+  }
 }
 
 TextSelection moveSelectionToEnd({

@@ -32,6 +32,30 @@ class _BoxComponentState extends State<BoxComponent> with DocumentComponent {
   }
 
   @override
+  BinaryPosition movePositionLeft(dynamic currentPosition, [Map<String, dynamic> movementModifiers]) {
+    // BoxComponents don't support internal movement.
+    return null;
+  }
+
+  @override
+  BinaryPosition movePositionRight(dynamic currentPosition, [Map<String, dynamic> movementModifiers]) {
+    // BoxComponents don't support internal movement.
+    return null;
+  }
+
+  @override
+  BinaryPosition movePositionUp(dynamic currentPosition) {
+    // BoxComponents don't support internal movement.
+    return null;
+  }
+
+  @override
+  BinaryPosition movePositionDown(dynamic currentPosition) {
+    // BoxComponents don't support internal movement.
+    return null;
+  }
+
+  @override
   BinarySelection getCollapsedSelectionAt(nodePosition) {
     if (nodePosition is! BinaryPosition) {
       return null;
