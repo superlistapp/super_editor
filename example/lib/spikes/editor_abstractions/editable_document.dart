@@ -162,7 +162,6 @@ final ComponentBuilder defaultComponentBuilder = ({
   @required BuildContext context,
   @required RichTextDocument document,
   @required DocumentNode currentNode,
-  // TODO: get rid of selectedNode param
   @required DocumentNodeSelection nodeSelection,
   @required GlobalKey key,
   bool showDebugPaint = false,

@@ -410,8 +410,8 @@ class DocumentLayoutState extends State<DocumentLayout> {
         return DocumentNodeSelection(
           nodeId: nodeId,
           nodeSelection: node.computeSelection(
-            base: isBase ? node.beginningPosition : widget.documentSelection.extent.nodePosition,
-            extent: isBase ? widget.documentSelection.base.nodePosition : node.beginningPosition,
+            base: isBase ? node.beginningPosition : node.beginningPosition,
+            extent: isBase ? widget.documentSelection.base.nodePosition : widget.documentSelection.extent.nodePosition,
           ),
           isBase: isBase,
           isExtent: !isBase,
