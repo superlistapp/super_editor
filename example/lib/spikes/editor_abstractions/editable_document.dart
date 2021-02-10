@@ -135,6 +135,7 @@ class _EditableDocumentState extends State<EditableDocument> {
     return DocumentInteractor(
       documentLayoutKey: _docLayoutKey,
       composer: _documentComposer,
+      showDebugPaint: widget.showDebugPaint,
       // TODO: combine the ValueListenableBuilder and AnimatedBuilder
       //       into a single rebuilder on either event.
       child: ValueListenableBuilder(

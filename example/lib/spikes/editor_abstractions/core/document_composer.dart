@@ -183,8 +183,15 @@ class DocumentComposer {
     @required SelectionType selectionType,
   }) {
     print('Composer: selectionRegion(). Mode: $selectionType');
-    DocumentPosition basePosition = documentLayout.getDocumentPositionNearestToOffset(baseOffset);
-    DocumentPosition extentPosition = documentLayout.getDocumentPositionNearestToOffset(extentOffset);
+    DocumentSelection selection = documentLayout.getDocumentSelectionInRegion(baseOffset, extentOffset);
+    DocumentPosition basePosition = selection?.base;
+    DocumentPosition extentPosition = selection?.extent;
+    print(' - base: $basePosition, extent: $extentPosition');
+
+    if (basePosition == null || extentPosition == null) {
+      _setSelection(null);
+      return;
+    }
 
     if (selectionType == SelectionType.paragraph) {
       final baseParagraphSelection = _getParagraphSelection(

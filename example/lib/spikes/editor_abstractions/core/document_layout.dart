@@ -58,7 +58,7 @@ class DocumentLayoutState extends State<DocumentLayout> {
     if (componentKey != null) {
       final component = componentKey.currentState as DocumentComponent;
       final componentBox = componentKey.currentContext.findRenderObject() as RenderBox;
-      print(' - found tapped node: $component');
+      print(' - found node at position: $component');
       final componentOffset = _componentOffset(componentBox, rawDocumentOffset);
       final componentPosition = component.getPositionAtOffset(componentOffset);
 
@@ -78,11 +78,11 @@ class DocumentLayoutState extends State<DocumentLayout> {
     // of this document layout.
     final docBox = context.findRenderObject() as RenderBox;
     final documentOffset = Offset(
-      // Notice the -1. Experimentally, I determined that if we confine
+      // Notice the +1/-1. Experimentally, I determined that if we confine
       // to the exact width, that x-value is considered outside the
       // component RenderBox's. However, 1px less than that is
       // considered to be within the component RenderBox's.
-      rawDocumentOffset.dx.clamp(0.0, docBox.size.width - 1),
+      rawDocumentOffset.dx.clamp(1.0, docBox.size.width - 1),
       rawDocumentOffset.dy,
     );
     print('Getting document position at offset: $documentOffset');
@@ -113,9 +113,13 @@ class DocumentLayoutState extends State<DocumentLayout> {
     final region = Rect.fromPoints(baseOffset, extentOffset);
 
     String topNodeId;
-    TextSelection topTextSelection;
+    dynamic topNodeBasePosition;
+    dynamic topNodeExtentPosition;
+
     String bottomNodeId;
-    TextSelection bottomTextSelection;
+    dynamic bottomNodeBasePosition;
+    dynamic bottomNodeExtentPosition;
+
     for (final componentKey in _topToBottomComponentKeys) {
       print(' - considering component "$componentKey"');
       if (componentKey.currentState is! DocumentComponent) {
@@ -138,44 +142,42 @@ class DocumentLayoutState extends State<DocumentLayout> {
           componentKey.currentContext.findRenderObject() as RenderBox,
           extentOffset,
         );
-        final textSelection = component.getSelectionInRange(componentBaseOffset, componentExtentOffset);
 
-        if (topTextSelection == null) {
+        if (topNodeId == null) {
           topNodeId = _nodeIdsToComponentKeys.entries.firstWhere((element) => element.value == componentKey).key;
-          topTextSelection = textSelection;
+          topNodeBasePosition = component.getPositionAtOffset(componentBaseOffset);
+          topNodeExtentPosition = component.getPositionAtOffset(componentExtentOffset);
         }
         bottomNodeId = _nodeIdsToComponentKeys.entries.firstWhere((element) => element.value == componentKey).key;
-        bottomTextSelection = textSelection;
+        bottomNodeBasePosition = component.getPositionAtOffset(componentBaseOffset);
+        bottomNodeExtentPosition = component.getPositionAtOffset(componentExtentOffset);
       }
     }
 
-    print(' - top text selection: $topTextSelection');
-    print(' - bottom text selection: $bottomTextSelection');
-
-    if (topTextSelection == null) {
+    if (topNodeId == null) {
       return null;
     } else if (topNodeId == bottomNodeId) {
-      // Region sits within a paragraph.
+      // Region sits within a single component.
       return DocumentSelection(
         base: DocumentPosition(
           nodeId: topNodeId,
-          nodePosition: TextPosition(offset: topTextSelection.baseOffset),
+          nodePosition: topNodeBasePosition,
         ),
         extent: DocumentPosition(
           nodeId: bottomNodeId,
-          nodePosition: TextPosition(offset: topTextSelection.extentOffset),
+          nodePosition: topNodeExtentPosition,
         ),
       );
     } else {
-      // Region covers multiple paragraphs.
+      // Region covers multiple components.
       return DocumentSelection(
         base: DocumentPosition(
           nodeId: isDraggingDown ? topNodeId : bottomNodeId,
-          nodePosition: isDraggingDown ? topTextSelection.base : bottomTextSelection.base,
+          nodePosition: isDraggingDown ? topNodeBasePosition : bottomNodeBasePosition,
         ),
         extent: DocumentPosition(
           nodeId: isDraggingDown ? bottomNodeId : topNodeId,
-          nodePosition: isDraggingDown ? bottomTextSelection.extent : topTextSelection.extent,
+          nodePosition: isDraggingDown ? bottomNodeExtentPosition : topNodeExtentPosition,
         ),
       );
     }
