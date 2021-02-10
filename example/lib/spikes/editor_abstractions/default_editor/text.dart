@@ -27,6 +27,7 @@ class TextNode with ChangeNotifier implements DocumentNode {
         _textAlign = textAlign,
         _textType = textType;
 
+  @override
   final String id;
 
   AttributedText _text;
@@ -39,6 +40,8 @@ class TextNode with ChangeNotifier implements DocumentNode {
     }
   }
 
+  // TODO: textAlign should probably be moved to Paragraph. It doesn't make
+  //       sense for list items, and doesn't necessarily apply to blockquotes, etc.
   TextAlign _textAlign;
   TextAlign get textAlign => _textAlign;
   set textAlign(TextAlign newAlign) {
@@ -48,6 +51,9 @@ class TextNode with ChangeNotifier implements DocumentNode {
     }
   }
 
+  // TODO: textType is a half-measure to bring in styling. We really need to
+  //       figure out the full story of block-level theming styles vs
+  //       block-level semantics vs inline styles.
   String _textType;
   String get textType => _textType;
   set textType(String newTextType) {
@@ -57,10 +63,13 @@ class TextNode with ChangeNotifier implements DocumentNode {
     }
   }
 
+  @override
   TextPosition get beginningPosition => TextPosition(offset: 0);
 
+  @override
   TextPosition get endPosition => TextPosition(offset: text.text.length);
 
+  @override
   TextSelection computeSelection({
     @required dynamic base,
     @required dynamic extent,

@@ -60,23 +60,18 @@ class DeleteSelectionCommand implements EditorCommand {
       nodePosition: endNodePosition,
     );
 
-    // If the start node and end nodes are both `ParagraphNode`s
+    // If the start node and end nodes are both `TextNode`s
     // then we need to consider merging them if one or both are
     // empty.
-    if (startNode is! ParagraphNode || endNode is! ParagraphNode) {
+    if (startNode is! TextNode || endNode is! TextNode) {
       return;
     }
 
-    final shouldCombineParagraphs = (startNode is ParagraphNode) && (endNode is ParagraphNode);
-    print(' - combining first and last node? $shouldCombineParagraphs');
-    if (shouldCombineParagraphs) {
-      print(' - combining last node text with first node text');
-      (startNode as ParagraphNode).text =
-          (startNode as ParagraphNode).text.copyAndAppend((endNode as ParagraphNode).text);
+    print(' - combining last node text with first node text');
+    (startNode as TextNode).text = (startNode as TextNode).text.copyAndAppend((endNode as TextNode).text);
 
-      print(' - deleting last node');
-      document.deleteNode(endNode);
-    }
+    print(' - deleting last node');
+    document.deleteNode(endNode);
 
     print(' - done with selection deletion');
   }
