@@ -25,7 +25,7 @@ class DocumentInteractor extends StatefulWidget {
     this.showDebugPaint = false,
   }) : super(key: key);
 
-  final GlobalKey<DocumentLayoutState> documentLayoutKey;
+  final GlobalKey documentLayoutKey;
 
   final DocumentComposer composer;
 
@@ -102,6 +102,8 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
     super.dispose();
   }
 
+  DocumentLayout get _layout => widget.documentLayoutKey.currentState as DocumentLayout;
+
   void _onSelectionChange() {
     print('EditableDocument: _onSelectionChange()');
     setState(() {
@@ -119,7 +121,7 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
     // because things like Images an Horizontal Rules don't have
     // a clear selection offset. They are either entirely selected,
     // or not selected at all.
-    final extentRect = widget.documentLayoutKey.currentState.getRectForPosition(
+    final extentRect = _layout.getRectForPosition(
       selection.extent,
     );
 
@@ -172,7 +174,7 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
 
     final docOffset = _getDocOffset(details.localPosition);
     print(' - document offset: $docOffset');
-    final docPosition = widget.documentLayoutKey.currentState.getDocumentPositionAtOffset(docOffset);
+    final docPosition = _layout.getDocumentPositionAtOffset(docOffset);
     print(' - tapped document position: $docPosition');
 
     if (docPosition != null) {
@@ -193,13 +195,13 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
     _clearSelection();
 
     final docOffset = _getDocOffset(details.localPosition);
-    final docPosition = widget.documentLayoutKey.currentState.getDocumentPositionAtOffset(docOffset);
+    final docPosition = _layout.getDocumentPositionAtOffset(docOffset);
     print(' - tapped document position: $docPosition');
 
     if (docPosition != null) {
       final didSelectWord = widget.composer.selectWordAt(
         docPosition: docPosition,
-        docLayout: widget.documentLayoutKey.currentState,
+        docLayout: _layout,
       );
       if (!didSelectWord) {
         // Place the document selection at the location where the
@@ -224,13 +226,13 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
     _clearSelection();
 
     final docOffset = _getDocOffset(details.localPosition);
-    final docPosition = widget.documentLayoutKey.currentState.getDocumentPositionAtOffset(docOffset);
+    final docPosition = _layout.getDocumentPositionAtOffset(docOffset);
     print(' - tapped document position: $docPosition');
 
     if (docPosition != null) {
       final didSelectParagraph = widget.composer.selectParagraphAt(
         docPosition: docPosition,
-        docLayout: widget.documentLayoutKey.currentState,
+        docLayout: _layout,
       );
       if (!didSelectParagraph) {
         // Place the document selection at the location where the
@@ -305,7 +307,7 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
     _dragEndInDoc = _getDocOffset(_dragEndInViewport);
 
     widget.composer.selectRegion(
-      documentLayout: widget.documentLayoutKey.currentState,
+      documentLayout: _layout,
       baseOffset: _dragStartInDoc,
       extentOffset: _dragEndInDoc,
       selectionType: _selectionType,
@@ -318,7 +320,7 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
 
   void _updateCursorStyle(Offset cursorOffset) {
     final docOffset = _getDocOffset(cursorOffset);
-    final desiredCursor = widget.documentLayoutKey.currentState.getDesiredCursorAtOffset(docOffset);
+    final desiredCursor = _layout.getDesiredCursorAtOffset(docOffset);
 
     if (desiredCursor != null && desiredCursor != _cursorStyle.value) {
       _cursorStyle.value = desiredCursor;

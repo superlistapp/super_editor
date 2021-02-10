@@ -6,7 +6,7 @@ import 'document.dart';
 
 /// Displays a `RichTextDocument`.
 ///
-/// `DocumentLayout` displays a visual "component" for each
+/// `DefaultDocumentLayout` displays a visual "component" for each
 /// type of node in a given `RichTextDocument`. The components
 /// are positioned vertically in a column with some space in between.
 ///
@@ -24,8 +24,8 @@ import 'document.dart';
 /// WARNING: this method will eventually disappear and be replaced
 /// by a version that returns a generic "document component". This
 /// is needed to facilitate visual components other than text.
-class DocumentLayout extends StatefulWidget {
-  const DocumentLayout({
+class DefaultDocumentLayout extends StatefulWidget {
+  const DefaultDocumentLayout({
     Key key,
     @required this.document,
     @required this.documentSelection,
@@ -39,10 +39,10 @@ class DocumentLayout extends StatefulWidget {
   final bool showDebugPaint;
 
   @override
-  DocumentLayoutState createState() => DocumentLayoutState();
+  _DefaultDocumentLayoutState createState() => _DefaultDocumentLayoutState();
 }
 
-class DocumentLayoutState extends State<DocumentLayout> {
+class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> with DocumentLayout {
   final Map<String, GlobalKey> _nodeIdsToComponentKeys = {};
   final List<GlobalKey> _topToBottomComponentKeys = [];
 
@@ -431,6 +431,20 @@ class DocumentLayoutState extends State<DocumentLayout> {
       }
     }
   }
+}
+
+abstract class DocumentLayout {
+  DocumentPosition getDocumentPositionAtOffset(Offset rawDocumentOffset);
+
+  DocumentPosition getDocumentPositionNearestToOffset(Offset rawDocumentOffset);
+
+  Rect getRectForPosition(DocumentPosition position);
+
+  DocumentSelection getDocumentSelectionInRegion(Offset baseOffset, Offset extentOffset);
+
+  MouseCursor getDesiredCursorAtOffset(Offset documentOffset);
+
+  DocumentComponent getComponentByNodeId(String nodeId);
 }
 
 /// Contract for all widgets that operate as document components

@@ -81,7 +81,8 @@ class _EditableDocumentState extends State<EditableDocument> {
 
   // GlobalKey used to access the `DocumentLayoutState` to figure
   // out where in the document the user taps or drags.
-  final _docLayoutKey = GlobalKey<DocumentLayoutState>();
+  final _docLayoutKey = GlobalKey();
+  DocumentLayout get _layout => _docLayoutKey.currentState as DocumentLayout;
 
   @override
   void initState() {
@@ -110,7 +111,7 @@ class _EditableDocumentState extends State<EditableDocument> {
       _documentComposer = DocumentComposer(
         document: widget.document,
         editor: widget.editor,
-        layout: _docLayoutKey.currentState,
+        layout: _layout,
         keyboardActions: _composerKeyboardActions,
       );
       _documentComposer.selection.addListener(_onSelectionChange);
@@ -144,7 +145,7 @@ class _EditableDocumentState extends State<EditableDocument> {
           return AnimatedBuilder(
             animation: widget.document,
             builder: (context, child) {
-              return DocumentLayout(
+              return DefaultDocumentLayout(
                 key: _docLayoutKey,
                 document: widget.document,
                 documentSelection: _documentComposer?.selection?.value,

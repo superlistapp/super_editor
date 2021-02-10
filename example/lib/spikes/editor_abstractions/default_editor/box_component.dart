@@ -205,7 +205,7 @@ ExecutionInstruction deleteBoxWhenBackspaceOrDeleteIsPressed({
 
 DocumentPosition _getAnotherSelectionAfterNodeDeletion({
   @required RichTextDocument document,
-  @required DocumentLayoutState documentLayout,
+  @required DocumentLayout documentLayout,
   @required int deletedNodeIndex,
 }) {
   if (deletedNodeIndex > 0) {

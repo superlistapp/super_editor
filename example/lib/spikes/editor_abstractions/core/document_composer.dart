@@ -16,7 +16,7 @@ class DocumentComposer {
   DocumentComposer({
     @required RichTextDocument document,
     @required DocumentEditor editor,
-    @required DocumentLayoutState layout,
+    @required DocumentLayout layout,
     @required List<ComposerKeyboardAction> keyboardActions,
     DocumentSelection initialSelection,
   })  : _document = document,
@@ -32,7 +32,7 @@ class DocumentComposer {
 
   final RichTextDocument _document;
   final DocumentEditor _editor;
-  final DocumentLayoutState _documentLayout;
+  final DocumentLayout _documentLayout;
   final List<ComposerKeyboardAction> _keyboardActions;
 
   final ValueNotifier<DocumentSelection> _selection;
@@ -88,7 +88,7 @@ class DocumentComposer {
 
   bool selectWordAt({
     @required DocumentPosition docPosition,
-    @required DocumentLayoutState docLayout,
+    @required DocumentLayout docLayout,
   }) {
     final newSelection = _getWordSelection(
       docPosition: docPosition,
@@ -105,7 +105,7 @@ class DocumentComposer {
 
   DocumentSelection _getWordSelection({
     @required DocumentPosition docPosition,
-    @required DocumentLayoutState docLayout,
+    @required DocumentLayout docLayout,
   }) {
     print('_getWordSelection()');
     print(' - doc position: $docPosition');
@@ -132,7 +132,7 @@ class DocumentComposer {
 
   bool selectParagraphAt({
     @required DocumentPosition docPosition,
-    @required DocumentLayoutState docLayout,
+    @required DocumentLayout docLayout,
   }) {
     final newSelection = _getParagraphSelection(
       docPosition: docPosition,
@@ -149,7 +149,7 @@ class DocumentComposer {
 
   DocumentSelection _getParagraphSelection({
     @required DocumentPosition docPosition,
-    @required DocumentLayoutState docLayout,
+    @required DocumentLayout docLayout,
   }) {
     print('_getWordSelection()');
     print(' - doc position: $docPosition');
@@ -177,7 +177,7 @@ class DocumentComposer {
   }
 
   void selectRegion({
-    @required DocumentLayoutState documentLayout,
+    @required DocumentLayout documentLayout,
     @required Offset baseOffset,
     @required Offset extentOffset,
     @required SelectionType selectionType,
@@ -339,7 +339,7 @@ class ComposerContext {
 
   final RichTextDocument document;
   final DocumentEditor editor;
-  final DocumentLayoutState documentLayout;
+  final DocumentLayout documentLayout;
   final ValueNotifier<DocumentSelection> currentSelection;
   final ComposerPreferences composerPreferences;
 }
