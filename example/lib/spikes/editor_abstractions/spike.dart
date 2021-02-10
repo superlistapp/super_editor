@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'core/attributed_spans.dart';
 import 'core/document.dart';
 import 'core/attributed_text.dart';
 import 'default_editor/paragraph.dart';
@@ -189,10 +190,10 @@ class _EditorSpikeState extends State<EditorSpike> {
         id: RichTextDocument.createNodeId(),
         text: AttributedText(
           text: _loremIpsum1,
-          attributions: [
-            TextAttributionMarker(name: 'bold', offset: 20, markerType: AttributionMarkerType.start),
-            TextAttributionMarker(name: 'bold', offset: 80, markerType: AttributionMarkerType.end),
-          ],
+          spans: AttributedSpans(attributions: [
+            SpanMarker(name: 'bold', offset: 20, markerType: SpanMarkerType.start),
+            SpanMarker(name: 'bold', offset: 80, markerType: SpanMarkerType.end),
+          ]),
         ),
       ),
       ParagraphNode(
@@ -217,10 +218,10 @@ class _EditorSpikeState extends State<EditorSpike> {
         id: RichTextDocument.createNodeId(),
         text: AttributedText(
           text: _loremIpsum1,
-          attributions: [
-            TextAttributionMarker(name: 'bold', offset: 20, markerType: AttributionMarkerType.start),
-            TextAttributionMarker(name: 'bold', offset: 80, markerType: AttributionMarkerType.end),
-          ],
+          spans: AttributedSpans(attributions: [
+            SpanMarker(name: 'bold', offset: 20, markerType: SpanMarkerType.start),
+            SpanMarker(name: 'bold', offset: 80, markerType: SpanMarkerType.end),
+          ]),
         ),
       ),
       ParagraphNode(
