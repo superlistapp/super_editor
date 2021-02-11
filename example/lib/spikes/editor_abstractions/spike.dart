@@ -174,7 +174,9 @@ class _EditorSpikeState extends State<EditorSpike> {
         ParagraphNode(
           id: RichTextDocument.createNodeId(),
           text: AttributedText(text: ''),
-          textType: 'header1',
+          metadata: {
+            'blockType': 'header1',
+          },
         ),
         ParagraphNode(
           id: RichTextDocument.createNodeId(),
@@ -212,27 +214,35 @@ class _EditorSpikeState extends State<EditorSpike> {
       ParagraphNode(
         id: RichTextDocument.createNodeId(),
         text: AttributedText(text: 'This is rich text'),
-        textType: 'header1',
+        metadata: {
+          'blockType': 'header1',
+        },
       ),
       ParagraphNode(
+          id: RichTextDocument.createNodeId(),
+          text: AttributedText(
+            text: _loremIpsum1,
+            attributions: [
+              SpanMarker(attribution: 'bold', offset: 20, markerType: SpanMarkerType.start),
+              SpanMarker(attribution: 'bold', offset: 80, markerType: SpanMarkerType.end),
+            ],
+          ),
+          metadata: {
+            'textAlign': 'justify',
+          }),
+      ParagraphNode(
         id: RichTextDocument.createNodeId(),
-        text: AttributedText(
-          text: _loremIpsum1,
-          attributions: [
-            SpanMarker(attribution: 'bold', offset: 20, markerType: SpanMarkerType.start),
-            SpanMarker(attribution: 'bold', offset: 80, markerType: SpanMarkerType.end),
-          ],
-        ),
+        text: AttributedText(text: _loremIpsum1),
+        metadata: {
+          'textAlign': 'center',
+        },
       ),
       ParagraphNode(
         id: RichTextDocument.createNodeId(),
         text: AttributedText(text: _loremIpsum1),
-        textAlign: TextAlign.center,
-      ),
-      ParagraphNode(
-        id: RichTextDocument.createNodeId(),
-        text: AttributedText(text: _loremIpsum1),
-        textAlign: TextAlign.right,
+        metadata: {
+          'textAlign': 'right',
+        },
       ),
       ListItemNode.unordered(
         id: RichTextDocument.createNodeId(),

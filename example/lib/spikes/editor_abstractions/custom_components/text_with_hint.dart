@@ -11,11 +11,11 @@ class TextWithHintComponent extends StatelessWidget {
   const TextWithHintComponent({
     Key key,
     @required this.documentComponentKey,
-    this.text,
-    this.textType,
-    this.hintText,
+    @required this.text,
+    @required this.styleBuilder,
+    this.metadata = const {},
+    @required this.hintText,
     this.textAlign,
-    this.textStyle = const TextStyle(),
     this.textSelection,
     this.hasCursor,
     this.highlightWhenEmpty,
@@ -24,10 +24,10 @@ class TextWithHintComponent extends StatelessWidget {
 
   final GlobalKey documentComponentKey;
   final AttributedText text;
-  final String textType;
+  final AttributionStyleBuilder styleBuilder;
+  final Map<String, dynamic> metadata;
   final String hintText;
   final TextAlign textAlign;
-  final TextStyle textStyle;
   final TextSelection textSelection;
   final bool hasCursor;
   final bool highlightWhenEmpty;
@@ -35,17 +35,8 @@ class TextWithHintComponent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    TextStyle style = textStyle;
-    switch (textType) {
-      case 'header1':
-        style = textStyle.copyWith(
-          fontSize: 24,
-          fontWeight: FontWeight.bold,
-        );
-        break;
-      default:
-        break;
-    }
+    final blockType = metadata['blockType'];
+    final blockLevelStyleBuilder = createBlockLevelStyleBuilder(blockType);
 
     print('Building TextWithHintComponent with key: $documentComponentKey');
     return MouseRegion(
@@ -55,7 +46,7 @@ class TextWithHintComponent extends StatelessWidget {
           Text(
             hintText,
             textAlign: textAlign,
-            style: style.copyWith(
+            style: blockLevelStyleBuilder({}).copyWith(
               color: const Color(0xFFC3C1C1),
             ),
           ),
@@ -66,7 +57,7 @@ class TextWithHintComponent extends StatelessWidget {
               textAlign: textAlign,
               textSelection: textSelection,
               hasCursor: hasCursor,
-              styleBuilder: defaultStyleBuilder,
+              styleBuilder: blockLevelStyleBuilder,
               highlightWhenEmpty: highlightWhenEmpty,
               showDebugPaint: showDebugPaint,
             ),

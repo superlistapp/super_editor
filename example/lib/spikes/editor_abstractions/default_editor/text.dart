@@ -1,6 +1,7 @@
 import 'dart:collection';
 import 'dart:math';
 
+import 'package:example/spikes/editor_abstractions/default_editor/styles.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' hide SelectableText;
 import 'package:flutter/rendering.dart';
@@ -21,11 +22,9 @@ class TextNode with ChangeNotifier implements DocumentNode {
   TextNode({
     @required this.id,
     AttributedText text,
-    TextAlign textAlign = TextAlign.left,
-    String textType = 'paragraph',
+    Map<String, dynamic> metadata,
   })  : _text = text,
-        _textAlign = textAlign,
-        _textType = textType;
+        _metadata = metadata ?? {};
 
   @override
   final String id;
@@ -40,28 +39,8 @@ class TextNode with ChangeNotifier implements DocumentNode {
     }
   }
 
-  // TODO: textAlign should probably be moved to Paragraph. It doesn't make
-  //       sense for list items, and doesn't necessarily apply to blockquotes, etc.
-  TextAlign _textAlign;
-  TextAlign get textAlign => _textAlign;
-  set textAlign(TextAlign newAlign) {
-    if (newAlign != _textAlign) {
-      _textAlign = newAlign;
-      notifyListeners();
-    }
-  }
-
-  // TODO: textType is a half-measure to bring in styling. We really need to
-  //       figure out the full story of block-level theming styles vs
-  //       block-level semantics vs inline styles.
-  String _textType;
-  String get textType => _textType;
-  set textType(String newTextType) {
-    if (newTextType != _textType) {
-      _textType = newTextType;
-      notifyListeners();
-    }
-  }
+  final Map<String, dynamic> _metadata;
+  Map<String, dynamic> get metadata => _metadata;
 
   @override
   TextPosition get beginningPosition => TextPosition(offset: 0);
@@ -91,9 +70,9 @@ class TextComponent extends StatefulWidget {
   const TextComponent({
     Key key,
     this.text,
-    this.textType,
     this.textAlign,
     @required this.styleBuilder,
+    this.metadata = const {},
     this.textSelection,
     this.hasCursor = false,
     this.highlightWhenEmpty = false,
@@ -101,9 +80,9 @@ class TextComponent extends StatefulWidget {
   }) : super(key: key);
 
   final AttributedText text;
-  final String textType;
   final TextAlign textAlign;
   final AttributionStyleBuilder styleBuilder;
+  final Map<String, dynamic> metadata;
   final TextSelection textSelection;
   final bool hasCursor;
   final bool highlightWhenEmpty;
@@ -374,20 +353,10 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
   Widget build(BuildContext context) {
     print('Building a TextComponent with key: ${widget.key}');
 
-    TextStyle baseStyle = widget.styleBuilder({});
-    switch (widget.textType) {
-      case 'header1':
-        baseStyle = baseStyle.copyWith(
-          fontSize: 24,
-          fontWeight: FontWeight.bold,
-          height: 1.0,
-        );
-        break;
-      default:
-        break;
-    }
+    final blockType = widget.metadata['blockType'];
+    final blockLevelStyleBuilder = createBlockLevelStyleBuilder(blockType);
 
-    final richText = widget.text.computeTextSpan(widget.styleBuilder);
+    final richText = widget.text.computeTextSpan(blockLevelStyleBuilder);
 
     return SelectableText(
       key: _selectableTextKey,

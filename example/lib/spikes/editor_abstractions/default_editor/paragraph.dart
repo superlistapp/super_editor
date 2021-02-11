@@ -16,13 +16,11 @@ class ParagraphNode extends TextNode {
   ParagraphNode({
     @required String id,
     AttributedText text,
-    TextAlign textAlign = TextAlign.left,
-    String textType = 'paragraph',
+    Map<String, dynamic> metadata,
   }) : super(
           id: id,
           text: text,
-          textAlign: textAlign,
-          textType: textType,
+          metadata: metadata,
         );
 }
 
@@ -125,7 +123,6 @@ class SplitParagraphCommand implements EditorCommand {
     final newNode = ParagraphNode(
       id: newNodeId,
       text: endText,
-      textAlign: paragraphNode.textAlign,
     );
 
     // Insert the new node after the current node.

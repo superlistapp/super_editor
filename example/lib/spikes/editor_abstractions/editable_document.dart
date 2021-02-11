@@ -189,14 +189,32 @@ final ComponentBuilder defaultComponentBuilder = ({
     print('   - base: ${textSelection?.base}');
     print('   - extent: ${textSelection?.extent}');
 
+    TextAlign textAlign = TextAlign.left;
+    final textAlignName = currentNode.metadata['textAlign'];
+    switch (textAlignName) {
+      case 'left':
+        textAlign = TextAlign.left;
+        break;
+      case 'center':
+        textAlign = TextAlign.center;
+        break;
+      case 'right':
+        textAlign = TextAlign.right;
+        break;
+      case 'justify':
+        textAlign = TextAlign.justify;
+        break;
+    }
+
     if (document.getNodeIndex(currentNode) == 0 && currentNode.text.text.isEmpty && !hasCursor) {
       print(' - this is the title node');
       return TextWithHintComponent(
         documentComponentKey: key,
         text: currentNode.text,
-        textType: currentNode.textType,
+        styleBuilder: defaultStyleBuilder,
+        metadata: currentNode.metadata,
         hintText: 'Enter your title',
-        textAlign: currentNode.textAlign,
+        textAlign: textAlign,
         textSelection: textSelection,
         hasCursor: hasCursor,
         highlightWhenEmpty: highlightWhenEmpty,
@@ -210,9 +228,10 @@ final ComponentBuilder defaultComponentBuilder = ({
       return TextWithHintComponent(
         documentComponentKey: key,
         text: currentNode.text,
-        textType: currentNode.textType,
+        styleBuilder: defaultStyleBuilder,
+        metadata: currentNode.metadata,
         hintText: 'Enter your content...',
-        textAlign: currentNode.textAlign,
+        textAlign: textAlign,
         textSelection: textSelection,
         hasCursor: hasCursor,
         highlightWhenEmpty: highlightWhenEmpty,
@@ -223,8 +242,8 @@ final ComponentBuilder defaultComponentBuilder = ({
         key: key,
         text: currentNode.text,
         styleBuilder: defaultStyleBuilder,
-        textType: currentNode.textType,
-        textAlign: currentNode.textAlign,
+        metadata: currentNode.metadata,
+        textAlign: textAlign,
         textSelection: textSelection,
         hasCursor: hasCursor,
         highlightWhenEmpty: highlightWhenEmpty,

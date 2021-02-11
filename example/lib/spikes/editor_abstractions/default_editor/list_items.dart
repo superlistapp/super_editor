@@ -17,40 +17,40 @@ class ListItemNode extends TextNode {
   ListItemNode.ordered({
     @required String id,
     AttributedText text,
+    Map<String, dynamic> metadata,
     int indent = 0,
   })  : type = ListItemType.ordered,
         _indent = indent,
         super(
           id: id,
           text: text,
-          textAlign: TextAlign.left,
-          textType: 'paragraph',
+          metadata: metadata,
         );
 
   ListItemNode.unordered({
     @required String id,
     AttributedText text,
+    Map<String, dynamic> metadata,
     int indent = 0,
   })  : type = ListItemType.unordered,
         _indent = indent,
         super(
           id: id,
           text: text,
-          textAlign: TextAlign.left,
-          textType: 'paragraph',
+          metadata: metadata,
         );
 
   ListItemNode({
     @required String id,
     @required this.type,
     AttributedText text,
+    Map<String, dynamic> metadata,
     int indent = 0,
   })  : _indent = indent,
         super(
           id: id,
           text: text,
-          textAlign: TextAlign.left,
-          textType: 'paragraph',
+          metadata: metadata,
         );
 
   final ListItemType type;
