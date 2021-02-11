@@ -44,9 +44,33 @@ class _InlineStyleExampleScreenState extends State<InlineStyleExampleScreen> {
     }
 
     setState(() {
-      _richText = _text.computeTextSpan(TextStyle(
-        fontSize: 24,
-      ));
+      _richText = _text.computeTextSpan((Set<dynamic> attributions) {
+        TextStyle newStyle = const TextStyle();
+        for (final attribution in attributions) {
+          if (attribution is! String) {
+            continue;
+          }
+
+          switch (attribution) {
+            case 'bold':
+              newStyle = newStyle.copyWith(
+                fontWeight: FontWeight.bold,
+              );
+              break;
+            case 'italics':
+              newStyle = newStyle.copyWith(
+                fontStyle: FontStyle.italic,
+              );
+              break;
+            case 'strikethrough':
+              newStyle = newStyle.copyWith(
+                decoration: TextDecoration.lineThrough,
+              );
+              break;
+          }
+        }
+        return newStyle;
+      });
       _plainText = _richText.toPlainText();
     });
   }

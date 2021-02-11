@@ -1,3 +1,4 @@
+import 'package:example/spikes/editor_abstractions/default_editor/styles.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
@@ -65,7 +66,7 @@ class TextWithHintComponent extends StatelessWidget {
               textAlign: textAlign,
               textSelection: textSelection,
               hasCursor: hasCursor,
-              textStyle: style,
+              styleBuilder: defaultStyleBuilder,
               highlightWhenEmpty: highlightWhenEmpty,
               showDebugPaint: showDebugPaint,
             ),

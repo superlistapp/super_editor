@@ -1,3 +1,4 @@
+import 'package:example/spikes/editor_abstractions/default_editor/styles.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -123,7 +124,7 @@ class UnorderedListItemComponent extends StatelessWidget {
           child: TextComponent(
             key: textKey,
             text: text,
-            textStyle: textStyle,
+            styleBuilder: defaultStyleBuilder,
             textSelection: textSelection,
             hasCursor: hasCursor,
             showDebugPaint: showDebugPaint,
@@ -188,7 +189,7 @@ class OrderedListItemComponent extends StatelessWidget {
           child: TextComponent(
             key: textKey,
             text: text,
-            textStyle: textStyle,
+            styleBuilder: defaultStyleBuilder,
             textSelection: textSelection,
             hasCursor: hasCursor,
             showDebugPaint: showDebugPaint,

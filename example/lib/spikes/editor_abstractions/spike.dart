@@ -190,10 +190,10 @@ class _EditorSpikeState extends State<EditorSpike> {
         id: RichTextDocument.createNodeId(),
         text: AttributedText(
           text: _loremIpsum1,
-          spans: AttributedSpans(attributions: [
-            SpanMarker(name: 'bold', offset: 20, markerType: SpanMarkerType.start),
-            SpanMarker(name: 'bold', offset: 80, markerType: SpanMarkerType.end),
-          ]),
+          attributions: [
+            SpanMarker(attribution: 'bold', offset: 20, markerType: SpanMarkerType.start),
+            SpanMarker(attribution: 'bold', offset: 80, markerType: SpanMarkerType.end),
+          ],
         ),
       ),
       ParagraphNode(
@@ -218,10 +218,10 @@ class _EditorSpikeState extends State<EditorSpike> {
         id: RichTextDocument.createNodeId(),
         text: AttributedText(
           text: _loremIpsum1,
-          spans: AttributedSpans(attributions: [
-            SpanMarker(name: 'bold', offset: 20, markerType: SpanMarkerType.start),
-            SpanMarker(name: 'bold', offset: 80, markerType: SpanMarkerType.end),
-          ]),
+          attributions: [
+            SpanMarker(attribution: 'bold', offset: 20, markerType: SpanMarkerType.start),
+            SpanMarker(attribution: 'bold', offset: 80, markerType: SpanMarkerType.end),
+          ],
         ),
       ),
       ParagraphNode(

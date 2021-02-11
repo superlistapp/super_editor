@@ -15,6 +15,7 @@ import 'default_editor/horizontal_rule.dart';
 import 'default_editor/image.dart';
 import 'default_editor/list_items.dart';
 import 'default_editor/paragraph.dart';
+import 'default_editor/styles.dart';
 import 'default_editor/text.dart';
 
 /// A user-editable rich text document.
@@ -221,6 +222,7 @@ final ComponentBuilder defaultComponentBuilder = ({
       return TextComponent(
         key: key,
         text: currentNode.text,
+        styleBuilder: defaultStyleBuilder,
         textType: currentNode.textType,
         textAlign: currentNode.textAlign,
         textSelection: textSelection,

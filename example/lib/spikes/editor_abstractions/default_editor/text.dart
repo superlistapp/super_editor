@@ -93,7 +93,7 @@ class TextComponent extends StatefulWidget {
     this.text,
     this.textType,
     this.textAlign,
-    this.textStyle,
+    @required this.styleBuilder,
     this.textSelection,
     this.hasCursor = false,
     this.highlightWhenEmpty = false,
@@ -103,7 +103,7 @@ class TextComponent extends StatefulWidget {
   final AttributedText text;
   final String textType;
   final TextAlign textAlign;
-  final TextStyle textStyle;
+  final AttributionStyleBuilder styleBuilder;
   final TextSelection textSelection;
   final bool hasCursor;
   final bool highlightWhenEmpty;
@@ -374,9 +374,7 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
   Widget build(BuildContext context) {
     print('Building a TextComponent with key: ${widget.key}');
 
-    TextStyle baseStyle = (widget.textStyle ?? Theme.of(context).textTheme.bodyText1).copyWith(
-      height: 1.4,
-    );
+    TextStyle baseStyle = widget.styleBuilder({});
     switch (widget.textType) {
       case 'header1':
         baseStyle = baseStyle.copyWith(
@@ -389,7 +387,7 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
         break;
     }
 
-    final richText = widget.text.computeTextSpan(baseStyle);
+    final richText = widget.text.computeTextSpan(widget.styleBuilder);
 
     return SelectableText(
       key: _selectableTextKey,
