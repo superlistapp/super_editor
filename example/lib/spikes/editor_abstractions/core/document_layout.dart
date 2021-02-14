@@ -92,6 +92,10 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> with Docu
 
   Rect getRectForPosition(DocumentPosition position) {
     final component = getComponentByNodeId(position.nodeId);
+    if (component == null) {
+      print('Could not find any component for node position: $position');
+      return null;
+    }
     final componentRect = component.getRectForPosition(position.nodePosition);
     if (componentRect == null) {
       return null;

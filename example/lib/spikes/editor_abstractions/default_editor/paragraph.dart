@@ -1,7 +1,10 @@
 import 'package:example/spikes/editor_abstractions/default_editor/horizontal_rule.dart';
+import 'package:example/spikes/editor_abstractions/default_editor/image.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:linkify/linkify.dart';
+import 'package:http/http.dart' as http;
 
 import '../core/document_editor.dart';
 import '../core/document_composer.dart';
@@ -148,69 +151,11 @@ ExecutionInstruction insertCharacterInParagraph({
       keyEvent: keyEvent,
     );
 
-    final text = node.text;
-    final textSelection = composerContext.currentSelection.value.extent.nodePosition as TextPosition;
-
-    // TODO: refactor to make prefix matching extensible
-    final textBeforeCaret = text.text.substring(0, textSelection.offset);
-
-    final unorderedListItemMatch = RegExp(r'^\s*[\*-]\s+$');
-    final hasUnorderedListItemMatch = unorderedListItemMatch.hasMatch(textBeforeCaret);
-
-    final orderedListItemMatch = RegExp(r'^\s*[1].*\s+$');
-    final hasOrderedListItemMatch = orderedListItemMatch.hasMatch(textBeforeCaret);
-
-    print(' - text before caret: "$textBeforeCaret"');
-    if (hasUnorderedListItemMatch || hasOrderedListItemMatch) {
-      print(' - found unordered list item prefix');
-      int startOfNewText = textBeforeCaret.length;
-      while (startOfNewText < node.text.text.length && node.text.text[startOfNewText] == ' ') {
-        startOfNewText += 1;
-      }
-      // final adjustedText = node.text.text.substring(startOfNewText);
-      final adjustedText = node.text.copyText(startOfNewText);
-      final newNode = hasUnorderedListItemMatch
-          ? ListItemNode.unordered(id: node.id, text: adjustedText)
-          : ListItemNode.ordered(id: node.id, text: adjustedText);
-      final nodeIndex = composerContext.document.getNodeIndex(node);
-      composerContext.document
-        ..deleteNodeAt(nodeIndex)
-        ..insertNodeAt(nodeIndex, newNode);
-
-      // We removed some text at the beginning of the list item.
-      // Move the selection back by that same amount.
-      final textPosition = composerContext.currentSelection.value.extent.nodePosition as TextPosition;
-      composerContext.currentSelection.value = DocumentSelection.collapsed(
-        position: DocumentPosition(
-          nodeId: node.id,
-          nodePosition: TextPosition(offset: textPosition.offset - startOfNewText),
-        ),
-      );
-    }
-
-    final hrMatch = RegExp(r'^---*\s$');
-    final hasHrMatch = hrMatch.hasMatch(textBeforeCaret);
-    if (hasHrMatch) {
-      print('Paragraph has an HR match');
-      // Insert an HR before this paragraph and then clear the
-      // paragraph's content.
-      final document = composerContext.document;
-      final paragraphNodeIndex = document.getNodeIndex(node);
-
-      document.insertNodeAt(
-        paragraphNodeIndex,
-        HorizontalRuleNode(
-          id: RichTextDocument.createNodeId(),
-        ),
-      );
-
-      node.text = AttributedText();
-
-      composerContext.currentSelection.value = DocumentSelection.collapsed(
-        position: DocumentPosition(
-          nodeId: node.id,
-          nodePosition: TextPosition(offset: 0),
-        ),
+    if (keyEvent.character == ' ') {
+      _convertParagraphIfDesired(
+        document: composerContext.document,
+        currentSelection: composerContext.currentSelection,
+        node: node,
       );
     }
 
@@ -218,6 +163,155 @@ ExecutionInstruction insertCharacterInParagraph({
   } else {
     return ExecutionInstruction.continueExecution;
   }
+}
+
+// TODO: refactor to make prefix matching extensible
+bool _convertParagraphIfDesired({
+  @required RichTextDocument document,
+  @required ValueNotifier<DocumentSelection> currentSelection,
+  @required ParagraphNode node,
+}) {
+  final text = node.text;
+  final textSelection = currentSelection.value.extent.nodePosition as TextPosition;
+  final textBeforeCaret = text.text.substring(0, textSelection.offset);
+
+  final unorderedListItemMatch = RegExp(r'^\s*[\*-]\s+$');
+  final hasUnorderedListItemMatch = unorderedListItemMatch.hasMatch(textBeforeCaret);
+
+  final orderedListItemMatch = RegExp(r'^\s*[1].*\s+$');
+  final hasOrderedListItemMatch = orderedListItemMatch.hasMatch(textBeforeCaret);
+
+  print(' - text before caret: "$textBeforeCaret"');
+  if (hasUnorderedListItemMatch || hasOrderedListItemMatch) {
+    print(' - found unordered list item prefix');
+    int startOfNewText = textBeforeCaret.length;
+    while (startOfNewText < node.text.text.length && node.text.text[startOfNewText] == ' ') {
+      startOfNewText += 1;
+    }
+    // final adjustedText = node.text.text.substring(startOfNewText);
+    final adjustedText = node.text.copyText(startOfNewText);
+    final newNode = hasUnorderedListItemMatch
+        ? ListItemNode.unordered(id: node.id, text: adjustedText)
+        : ListItemNode.ordered(id: node.id, text: adjustedText);
+    final nodeIndex = document.getNodeIndex(node);
+    document
+      ..deleteNodeAt(nodeIndex)
+      ..insertNodeAt(nodeIndex, newNode);
+
+    // We removed some text at the beginning of the list item.
+    // Move the selection back by that same amount.
+    final textPosition = currentSelection.value.extent.nodePosition as TextPosition;
+    currentSelection.value = DocumentSelection.collapsed(
+      position: DocumentPosition(
+        nodeId: node.id,
+        nodePosition: TextPosition(offset: textPosition.offset - startOfNewText),
+      ),
+    );
+
+    return true;
+  }
+
+  final hrMatch = RegExp(r'^---*\s$');
+  final hasHrMatch = hrMatch.hasMatch(textBeforeCaret);
+  if (hasHrMatch) {
+    print('Paragraph has an HR match');
+    // Insert an HR before this paragraph and then clear the
+    // paragraph's content.
+    final paragraphNodeIndex = document.getNodeIndex(node);
+
+    document.insertNodeAt(
+      paragraphNodeIndex,
+      HorizontalRuleNode(
+        id: RichTextDocument.createNodeId(),
+      ),
+    );
+
+    node.text = AttributedText();
+
+    currentSelection.value = DocumentSelection.collapsed(
+      position: DocumentPosition(
+        nodeId: node.id,
+        nodePosition: TextPosition(offset: 0),
+      ),
+    );
+
+    return true;
+  }
+
+  // URL match, e.g., images, social, etc.
+  print('Looking for URL match...');
+  final extractedLinks = linkify(node.text.text,
+      options: LinkifyOptions(
+        humanize: false,
+      ));
+  final int linkCount = extractedLinks.fold(0, (value, element) => element is UrlElement ? value + 1 : value);
+  final String nonEmptyText =
+      extractedLinks.fold('', (value, element) => element is TextElement ? value + element.text.trim() : value);
+  if (linkCount == 1 && nonEmptyText.isEmpty) {
+    // This node's text is just a URL, try to interpret it
+    // as a known type.
+    final link = extractedLinks.firstWhere((element) => element is UrlElement, orElse: () => null)?.text;
+    _processUrlNode(
+      document: document,
+      nodeId: node.id,
+      originalText: node.text.text,
+      url: link,
+    );
+    return true;
+  }
+
+  return false;
+}
+
+Future<void> _processUrlNode({
+  @required RichTextDocument document,
+  @required String nodeId,
+  @required String originalText,
+  @required String url,
+}) async {
+  final response = await http.get(url);
+
+  if (response.statusCode < 200 || response.statusCode >= 300) {
+    print('Failed to load URL: ${response.statusCode} - ${response.reasonPhrase}');
+    return;
+  }
+
+  print('Headers:');
+  for (final entry in response.headers.entries) {
+    print('${entry.key}: ${entry.value}');
+  }
+
+  final contentType = response.headers['content-type'];
+  if (contentType == null) {
+    print('Failed to determine URL content type.');
+    return;
+  }
+  if (!contentType.startsWith('image/')) {
+    print('URL is not an image. Ignoring');
+    return;
+  }
+
+  // The URL is an image. Convert the node.
+  print('The URL is an image. Converting the ParagraphNode to an ImageNode.');
+  final node = document.getNodeById(nodeId);
+  if (node is! ParagraphNode) {
+    print('The node has become something other than a ParagraphNode ($node). Can\'t convert ndoe.');
+    return;
+  }
+  final currentText = (node as ParagraphNode).text.text;
+  if (currentText.trim() != originalText.trim()) {
+    print('The node content changed in a non-trivial way. Aborting node conversion.');
+    return;
+  }
+
+  final imageNode = ImageNode(
+    id: node.id,
+    imageUrl: url,
+  );
+  final nodeIndex = document.getNodeIndex(node);
+  document
+    ..deleteNodeAt(nodeIndex)
+    ..insertNodeAt(nodeIndex, imageNode);
 }
 
 class DeleteParagraphsCommand implements EditorCommand {
@@ -278,6 +372,12 @@ ExecutionInstruction splitParagraphWhenEnterPressed({
       nodeId: newNodeId,
       nodePosition: TextPosition(offset: 0),
     ),
+  );
+
+  _convertParagraphIfDesired(
+    document: composerContext.document,
+    currentSelection: composerContext.currentSelection,
+    node: node,
   );
 
   return ExecutionInstruction.haltExecution;

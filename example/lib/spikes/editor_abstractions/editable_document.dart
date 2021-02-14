@@ -131,7 +131,6 @@ class _EditableDocumentState extends State<EditableDocument> {
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         _createDocumentComposer();
       });
-      return SizedBox();
     }
 
     return DocumentInteractor(
@@ -146,6 +145,10 @@ class _EditableDocumentState extends State<EditableDocument> {
           return AnimatedBuilder(
             animation: widget.document,
             builder: (context, child) {
+              WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+                print('Doc layout key state: ${_docLayoutKey.currentState}');
+              });
+
               return DefaultDocumentLayout(
                 key: _docLayoutKey,
                 document: widget.document,

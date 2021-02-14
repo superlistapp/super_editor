@@ -24,6 +24,7 @@ class DocumentComposer {
         _documentLayout = layout,
         _keyboardActions = keyboardActions,
         _selection = ValueNotifier(initialSelection) {
+    print('Initial document layout: $_documentLayout');
     _selection.addListener(() {
       print('DocumentComposer: selection changed.');
       _updateComposerPreferencesAtSelection();
@@ -253,6 +254,7 @@ class DocumentComposer {
     }
 
     print('Key pressed');
+    print(' - document layout: $_documentLayout');
 
     ExecutionInstruction instruction = ExecutionInstruction.continueExecution;
     int index = 0;
