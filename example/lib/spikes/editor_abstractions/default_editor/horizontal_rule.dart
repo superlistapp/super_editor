@@ -22,6 +22,13 @@ class HorizontalRuleNode with ChangeNotifier implements DocumentNode {
   }) {
     return BinarySelection.all();
   }
+
+  @override
+  String copyContent(dynamic selection) {
+    assert(selection is BinarySelection);
+
+    return (selection as BinarySelection).position == BinaryPosition.included() ? '---' : null;
+  }
 }
 
 /// Displays a horizontal rule in a document.

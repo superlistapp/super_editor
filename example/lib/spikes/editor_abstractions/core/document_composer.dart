@@ -285,30 +285,30 @@ enum SelectionType {
 /// like a "bold mode" or "italics mode" when there is no
 /// bold or italics text around the caret.
 class ComposerPreferences with ChangeNotifier {
-  final Set<String> _currentStyles = {};
-  Set<String> get currentStyles => _currentStyles;
+  final Set<dynamic> _currentStyles = {};
+  Set<dynamic> get currentStyles => _currentStyles;
 
-  void addStyle(String name) {
+  void addStyle(dynamic name) {
     _currentStyles.add(name);
     notifyListeners();
   }
 
-  void addStyles(Set<String> names) {
+  void addStyles(Set<dynamic> names) {
     _currentStyles.addAll(names);
     notifyListeners();
   }
 
-  void removeStyle(String name) {
+  void removeStyle(dynamic name) {
     _currentStyles.remove(name);
     notifyListeners();
   }
 
-  void removeStyles(Set<String> names) {
+  void removeStyles(Set<dynamic> names) {
     _currentStyles.removeAll(names);
     notifyListeners();
   }
 
-  void toggleStyle(String name) {
+  void toggleStyle(dynamic name) {
     if (_currentStyles.contains(name)) {
       _currentStyles.remove(name);
     } else {

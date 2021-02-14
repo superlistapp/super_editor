@@ -77,13 +77,10 @@ class CombineParagraphsCommand implements EditorCommand {
   }
 }
 
-/// Combines two consecutive `ParagraphNode`s, indicated by `firstNodeId`
-/// and `secondNodeId`, respectively.
-///
-/// If the specified nodes are not sequential, or are sequential
-/// in reverse order, the command fizzles.
-///
-/// If both nodes are not `ParagraphNode`s, the command fizzles.
+/// Splits the `ParagraphNode` affiliated with the given `nodeId` at the
+/// given `splitPosition`, placing all text after `splitPosition` in a
+/// new `ParagraphNode` with the given `newNodeId`, inserted after the
+/// original node.
 class SplitParagraphCommand implements EditorCommand {
   SplitParagraphCommand({
     @required this.nodeId,

@@ -250,13 +250,13 @@ class UnIndentListItemCommand implements EditorCommand {
 class SplitListItemCommand implements EditorCommand {
   SplitListItemCommand({
     @required this.nodeId,
-    @required this.textPosition,
+    @required this.splitPosition,
     @required this.newNodeId,
   })  : assert(nodeId != null),
-        assert(textPosition != null);
+        assert(splitPosition != null);
 
   final String nodeId;
-  final TextPosition textPosition;
+  final TextPosition splitPosition;
   final String newNodeId;
 
   @override
@@ -264,8 +264,8 @@ class SplitListItemCommand implements EditorCommand {
     final node = document.getNodeById(nodeId);
     final listItemNode = node as ListItemNode;
     final text = listItemNode.text;
-    final startText = text.copyText(0, textPosition.offset);
-    final endText = textPosition.offset < text.text.length ? text.copyText(textPosition.offset) : AttributedText();
+    final startText = text.copyText(0, splitPosition.offset);
+    final endText = splitPosition.offset < text.text.length ? text.copyText(splitPosition.offset) : AttributedText();
     print('Splitting list item:');
     print(' - start text: "$startText"');
     print(' - end text: "$endText"');
@@ -378,7 +378,7 @@ ExecutionInstruction splitListItemWhenEnterPressed({
   composerContext.editor.executeCommand(
     SplitListItemCommand(
       nodeId: node.id,
-      textPosition: composerContext.currentSelection.value.extent.nodePosition as TextPosition,
+      splitPosition: composerContext.currentSelection.value.extent.nodePosition as TextPosition,
       newNodeId: newNodeId,
     ),
   );

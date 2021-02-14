@@ -61,6 +61,13 @@ class TextNode with ChangeNotifier implements DocumentNode {
       extentOffset: (extent as TextPosition).offset,
     );
   }
+
+  @override
+  String copyContent(dynamic selection) {
+    assert(selection is TextSelection);
+
+    return (selection as TextSelection).textInside(text.text);
+  }
 }
 
 /// Displays text in a document.
@@ -477,7 +484,7 @@ class InsertTextCommand implements EditorCommand {
 
   final DocumentPosition documentPosition;
   final String textToInsert;
-  final Set<String> attributions;
+  final Set<dynamic> attributions;
 
   void execute(RichTextDocument document) {
     final node = document.getNodeById(documentPosition.nodeId);
@@ -500,6 +507,10 @@ ExecutionInstruction insertCharacterInTextComposable({
   @required ComposerContext composerContext,
   @required RawKeyEvent keyEvent,
 }) {
+  if (keyEvent.isMetaPressed || keyEvent.isAltPressed || keyEvent.isControlPressed) {
+    return ExecutionInstruction.continueExecution;
+  }
+
   if (isTextEntryNode(document: composerContext.document, selection: composerContext.currentSelection) &&
       isCharacterKey(keyEvent.logicalKey) &&
       composerContext.currentSelection.value.isCollapsed) {

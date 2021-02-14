@@ -328,6 +328,12 @@ final _composerKeyboardActions = <ComposerKeyboardAction>[
     action: splitListItemWhenEnterPressed,
   ),
   ComposerKeyboardAction.simple(
+    action: pasteWhenCmdVIsPressed,
+  ),
+  ComposerKeyboardAction.simple(
+    action: copyWhenCmdVIsPressed,
+  ),
+  ComposerKeyboardAction.simple(
     action: applyBoldWhenCmdBIsPressed,
   ),
   ComposerKeyboardAction.simple(

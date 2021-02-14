@@ -1,6 +1,9 @@
 import 'dart:math';
 
+import 'package:example/spikes/editor_abstractions/core/attributed_text.dart';
+import 'package:example/spikes/editor_abstractions/core/document_editor.dart';
 import 'package:example/spikes/editor_abstractions/default_editor/box_component.dart';
+import 'package:example/spikes/editor_abstractions/default_editor/list_items.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
@@ -154,6 +157,235 @@ ExecutionInstruction collapseSelectionWhenDirectionalKeyIsPressed({
   }
 }
 
+ExecutionInstruction pasteWhenCmdVIsPressed({
+  @required ComposerContext composerContext,
+  @required RawKeyEvent keyEvent,
+}) {
+  if (!keyEvent.isMetaPressed || keyEvent.character?.toLowerCase() != 'v') {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  print('Pasting clipboard content...');
+  DocumentPosition pastePosition = composerContext.currentSelection.value.extent;
+
+  // Delete all currently selected content.
+  if (!composerContext.currentSelection.value.isCollapsed) {
+    pastePosition = _getDocumentPositionAfterDeletion(
+      document: composerContext.document,
+      selection: composerContext.currentSelection.value,
+    );
+
+    // Delete the selected content.
+    composerContext.editor.executeCommand(
+      DeleteSelectionCommand(documentSelection: composerContext.currentSelection.value),
+    );
+  }
+
+  // TODO: figure out a general approach for asynchronous behaviors that
+  //       need to be carried out in response to user input.
+  _paste(
+    document: composerContext.document,
+    editor: composerContext.editor,
+    pastePosition: pastePosition,
+    currentSelection: composerContext.currentSelection,
+  );
+}
+
+Future<void> _paste({
+  @required RichTextDocument document,
+  @required DocumentEditor editor,
+  @required DocumentPosition pastePosition,
+  @required ValueNotifier<DocumentSelection> currentSelection,
+}) async {
+  final content = (await Clipboard.getData('text/plain')).text;
+  print('Content from clipboard:');
+  print(content);
+
+  final splitContent = content.split('\n\n');
+  print('Split content:');
+  for (final piece in splitContent) {
+    print(' - "$piece"');
+  }
+
+  final currentNodeWithSelection = document.getNodeById(pastePosition.nodeId);
+
+  DocumentPosition newSelectionPosition;
+
+  if (currentNodeWithSelection is TextNode) {
+    final textNode = document.getNode(pastePosition) as TextNode;
+    final pasteTextOffset = (pastePosition.nodePosition as TextPosition).offset;
+    final attributionsAtPasteOffset = textNode.text.getAllAttributionsAt(pasteTextOffset);
+
+    if (splitContent.length > 1 && pasteTextOffset < textNode.endPosition.offset) {
+      // There is more than 1 node of content being pasted. Therefore,
+      // new nodes will need to be added, which means that the currently
+      // selected text node will be split at the current text offset.
+      // Configure a new node to be added at the end of the pasted content
+      // which contains the trailing text from the currently selected
+      // node.
+      if (currentNodeWithSelection is ParagraphNode) {
+        editor.executeCommand(
+          SplitParagraphCommand(
+            nodeId: currentNodeWithSelection.id,
+            splitPosition: TextPosition(offset: pasteTextOffset),
+            newNodeId: RichTextDocument.createNodeId(),
+          ),
+        );
+      } else if (currentNodeWithSelection is ListItemNode) {
+        editor.executeCommand(
+          SplitListItemCommand(
+            nodeId: currentNodeWithSelection.id,
+            splitPosition: TextPosition(offset: pasteTextOffset),
+            newNodeId: RichTextDocument.createNodeId(),
+          ),
+        );
+      } else {
+        throw Exception('Can\'t handle pasting text within node of type: $currentNodeWithSelection');
+      }
+    }
+
+    // Paste the first piece of content into the selected TextNode.
+    editor.executeCommand(
+      InsertTextCommand(
+        documentPosition: pastePosition,
+        textToInsert: splitContent.first,
+        attributions: attributionsAtPasteOffset,
+      ),
+    );
+
+    // At this point in the paste process, the document selection
+    // position is at the end of the text that was just pasted.
+    newSelectionPosition = DocumentPosition(
+      nodeId: currentNodeWithSelection.id,
+      nodePosition: TextPosition(
+        offset: pasteTextOffset + splitContent.first.length,
+      ),
+    );
+
+    // Remove the pasted text from the list of pieces of text
+    // to paste.
+    splitContent.removeAt(0);
+  }
+
+  final newNodes = splitContent
+      .map(
+        // TODO: create nodes based on content inspection.
+        (nodeText) => ParagraphNode(
+          id: RichTextDocument.createNodeId(),
+          text: AttributedText(
+            text: nodeText,
+          ),
+        ),
+      )
+      .toList();
+  print(' - new nodes: $newNodes');
+
+  int newNodeToMergeIndex = 0;
+  DocumentNode mergeAfterNode;
+
+  final nodeWithSelection = document.getNodeById(pastePosition.nodeId);
+  mergeAfterNode = nodeWithSelection;
+
+  for (int i = newNodeToMergeIndex; i < newNodes.length; ++i) {
+    // TODO: refactor this document manipulation to use editor instead
+    document.insertNodeAfter(
+      previousNode: mergeAfterNode,
+      newNode: newNodes[i],
+    );
+    mergeAfterNode = newNodes[i];
+
+    newSelectionPosition = DocumentPosition(
+      nodeId: mergeAfterNode.id,
+      nodePosition: mergeAfterNode.endPosition,
+    );
+  }
+
+  currentSelection.value = DocumentSelection.collapsed(
+    position: newSelectionPosition,
+  );
+  print(' - new selection: ${currentSelection.value}');
+
+  print('Done with paste command.');
+}
+
+ExecutionInstruction copyWhenCmdVIsPressed({
+  @required ComposerContext composerContext,
+  @required RawKeyEvent keyEvent,
+}) {
+  if (!keyEvent.isMetaPressed || keyEvent.character?.toLowerCase() != 'c') {
+    return ExecutionInstruction.continueExecution;
+  }
+  if (composerContext.currentSelection.value.isCollapsed) {
+    // Nothing to copy, but we technically handled the task.
+    return ExecutionInstruction.haltExecution;
+  }
+
+  // TODO: figure out a general approach for asynchronous behaviors that
+  //       need to be carried out in response to user input.
+  _copy(
+    document: composerContext.document,
+    documentSelection: composerContext.currentSelection.value,
+  );
+}
+
+Future<void> _copy({
+  @required RichTextDocument document,
+  @required DocumentSelection documentSelection,
+}) async {
+  final selectedNodes = document.getNodesInside(
+    documentSelection.base,
+    documentSelection.extent,
+  );
+
+  final buffer = StringBuffer();
+  for (int i = 0; i < selectedNodes.length; ++i) {
+    final selectedNode = selectedNodes[i];
+    dynamic nodeSelection;
+
+    if (i == 0) {
+      // This is the first node and it may be partially selected.
+      final nodePosition = selectedNode.id == documentSelection.base.nodeId
+          ? documentSelection.base.nodePosition
+          : documentSelection.extent.nodePosition;
+
+      nodeSelection = selectedNode.computeSelection(
+        base: nodePosition,
+        extent: selectedNode.endPosition,
+      );
+    } else if (i == selectedNodes.length - 1) {
+      // This is the last node and it may be partially selected.
+      final nodePosition = selectedNode.id == documentSelection.base.nodeId
+          ? documentSelection.base.nodePosition
+          : documentSelection.extent.nodePosition;
+
+      nodeSelection = selectedNode.computeSelection(
+        base: selectedNode.beginningPosition,
+        extent: nodePosition,
+      );
+    } else {
+      // This node is fully selected. Copy the whole thing.
+      nodeSelection = selectedNode.computeSelection(
+        base: selectedNode.beginningPosition,
+        extent: selectedNode.endPosition,
+      );
+    }
+
+    final nodeContent = selectedNode.copyContent(nodeSelection);
+    if (nodeContent != null) {
+      buffer.writeln(nodeContent);
+      if (i < selectedNodes.length - 1) {
+        buffer.writeln();
+      }
+    }
+  }
+
+  await Clipboard.setData(
+    ClipboardData(
+      text: buffer.toString(),
+    ),
+  );
+}
+
 ExecutionInstruction applyBoldWhenCmdBIsPressed({
   @required ComposerContext composerContext,
   @required RawKeyEvent keyEvent,
@@ -220,26 +452,44 @@ ExecutionInstruction deleteExpandedSelectionWhenCharacterOrDestructiveKeyPressed
     return ExecutionInstruction.continueExecution;
   }
 
+  final newSelectionPosition = _getDocumentPositionAfterDeletion(
+    document: composerContext.document,
+    selection: composerContext.currentSelection.value,
+  );
+
+  // Delete the selected content.
+  composerContext.editor.executeCommand(
+    DeleteSelectionCommand(documentSelection: composerContext.currentSelection.value),
+  );
+
+  print(' - new document selection position: ${newSelectionPosition.nodePosition}');
+  composerContext.currentSelection.value = DocumentSelection.collapsed(position: newSelectionPosition);
+
+  return isDestructiveKey ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
+}
+
+DocumentPosition _getDocumentPositionAfterDeletion({
+  @required RichTextDocument document,
+  @required DocumentSelection selection,
+}) {
   // Figure out where the caret should appear after the
   // deletion.
   // TODO: This calculation depends upon the first
   //       selected node still existing after the deletion. This
   //       is a fragile expectation and should be revisited.
-  final basePosition = composerContext.currentSelection.value.base;
-  final baseNode = composerContext.document.getNode(basePosition);
-  final baseNodeIndex = composerContext.document.getNodeIndex(baseNode);
+  final basePosition = selection.base;
+  final baseNode = document.getNode(basePosition);
+  final baseNodeIndex = document.getNodeIndex(baseNode);
 
-  final extentPosition = composerContext.currentSelection.value.extent;
-  final extentNode = composerContext.document.getNode(extentPosition);
-  final extentNodeIndex = composerContext.document.getNodeIndex(extentNode);
+  final extentPosition = selection.extent;
+  final extentNode = document.getNode(extentPosition);
+  final extentNodeIndex = document.getNodeIndex(extentNode);
   DocumentPosition newSelectionPosition;
 
   if (baseNodeIndex != extentNodeIndex) {
     // Place the caret at the current position within the
     // first node in the selection.
-    newSelectionPosition = baseNodeIndex <= extentNodeIndex
-        ? composerContext.currentSelection.value.base
-        : composerContext.currentSelection.value.extent;
+    newSelectionPosition = baseNodeIndex <= extentNodeIndex ? selection.base : selection.extent;
 
     // If it's a binary selection node then that node will
     // be replaced by a ParagraphNode with the same ID.
@@ -272,19 +522,11 @@ ExecutionInstruction deleteExpandedSelectionWhenCharacterOrDestructiveKeyPressed
       );
     } else {
       throw Exception(
-          'Unknown selection position type: $basePosition, for node: $baseNode, within document selection: ${composerContext.currentSelection.value}');
+          'Unknown selection position type: $basePosition, for node: $baseNode, within document selection: $selection');
     }
   }
 
-  // Delete the selected content.
-  composerContext.editor.executeCommand(
-    DeleteSelectionCommand(documentSelection: composerContext.currentSelection.value),
-  );
-
-  print(' - new document selection position: ${newSelectionPosition.nodePosition}');
-  composerContext.currentSelection.value = DocumentSelection.collapsed(position: newSelectionPosition);
-
-  return isDestructiveKey ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
+  return newSelectionPosition;
 }
 
 ExecutionInstruction mergeNodeWithPreviousWhenBackspaceIsPressed({

@@ -152,9 +152,11 @@ class AttributedText {
 
     print(' - copying text to the left');
     final startText = this.copyText(0, startOffset);
+    print(' - startText: $startText');
 
     print(' - copying text to the right');
     final endText = this.copyText(startOffset);
+    print(' - endText: $endText');
 
     print(' - creating new attributed text for insertion');
     final insertedText = AttributedText(
@@ -164,6 +166,7 @@ class AttributedText {
     for (dynamic attribution in applyAttributions) {
       insertedText.addAttribution(attribution, insertTextRange);
     }
+    print(' - insertedText: $insertedText');
 
     print(' - combining left text, insertion text, and right text');
     return startText.copyAndAppend(insertedText).copyAndAppend(endText);
@@ -194,6 +197,11 @@ class AttributedText {
       text: reducedText,
       attributions: contractedAttributions.attributions,
     );
+  }
+
+  @override
+  String toString() {
+    return '[AttributedText] - "$text"\n' + _spans.toString();
   }
 }
 

@@ -633,6 +633,7 @@ class AttributedSpans {
   /// Returns a copy of this `AttributedSpans`.
   AttributedSpans copy() {
     return AttributedSpans(
+      length: _length,
       attributions: List.from(attributions),
     );
   }
@@ -734,9 +735,9 @@ class AttributedSpans {
 
   @override
   String toString() {
-    final buffer = StringBuffer();
+    final buffer = StringBuffer('[AttributedSpans] (${(attributions.length / 2).round()} spans):');
     for (final marker in attributions) {
-      print(' - $marker');
+      buffer.write('\n - $marker');
     }
     return buffer.toString();
   }

@@ -33,6 +33,13 @@ class ImageNode with ChangeNotifier implements DocumentNode {
   }) {
     return BinarySelection.all();
   }
+
+  @override
+  String copyContent(dynamic selection) {
+    assert(selection is BinarySelection);
+
+    return (selection as BinarySelection).position == BinaryPosition.included() ? _imageUrl : null;
+  }
 }
 
 /// Displays an image in a document.

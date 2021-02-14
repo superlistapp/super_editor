@@ -214,8 +214,15 @@ abstract class DocumentNode implements ChangeNotifier {
 
   dynamic get endPosition;
 
+  /// Returns a node-specific representation of a selection from
+  /// `base` to `extent`.
   dynamic computeSelection({
     @required dynamic base,
     @required dynamic extent,
   });
+
+  /// Returns a plain-text version of the content in this node
+  /// within `selection`, or null if the given selection does
+  /// not make sense as plain-text.
+  String copyContent(dynamic selection);
 }
