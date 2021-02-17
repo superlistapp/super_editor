@@ -36,7 +36,7 @@ class TextWithHintComponent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final blockType = metadata['blockType'];
-    final blockLevelStyleBuilder = createBlockLevelStyleBuilder(blockType);
+    final blockLevelStyleBuilder = createBlockLevelStyleBuilder(defaultStyleBuilder, blockType);
 
     print('Building TextWithHintComponent with key: $documentComponentKey');
     return MouseRegion(

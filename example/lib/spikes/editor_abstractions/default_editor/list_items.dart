@@ -79,7 +79,7 @@ class UnorderedListItemComponent extends StatelessWidget {
     Key key,
     @required this.textKey,
     this.text,
-    this.textStyle,
+    @required this.styleBuilder,
     this.indent = 0,
     this.textSelection,
     this.hasCursor = false,
@@ -88,7 +88,7 @@ class UnorderedListItemComponent extends StatelessWidget {
 
   final GlobalKey textKey;
   final AttributedText text;
-  final TextStyle textStyle;
+  final AttributionStyleBuilder styleBuilder;
   final int indent;
   final TextSelection textSelection;
   final bool hasCursor;
@@ -97,6 +97,7 @@ class UnorderedListItemComponent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final indentSpace = 25.0 * indent;
+    final dotTopPadding = defaultStyleBuilder({}).fontSize / 2;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -106,7 +107,7 @@ class UnorderedListItemComponent extends StatelessWidget {
           child: Align(
             alignment: Alignment.centerRight,
             child: Container(
-              padding: const EdgeInsets.only(right: 15.0),
+              padding: EdgeInsets.only(top: dotTopPadding, right: 15.0),
               decoration: BoxDecoration(
                 border: Border.all(width: 1, color: showDebugPaint ? Colors.grey : Colors.transparent),
               ),
@@ -115,7 +116,7 @@ class UnorderedListItemComponent extends StatelessWidget {
                 height: 4,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: const Color(0xFF000000),
+                  color: styleBuilder({}).color,
                 ),
               ),
             ),
@@ -125,7 +126,7 @@ class UnorderedListItemComponent extends StatelessWidget {
           child: TextComponent(
             key: textKey,
             text: text,
-            styleBuilder: defaultStyleBuilder,
+            styleBuilder: styleBuilder,
             textSelection: textSelection,
             hasCursor: hasCursor,
             showDebugPaint: showDebugPaint,
@@ -145,8 +146,7 @@ class OrderedListItemComponent extends StatelessWidget {
     @required this.textKey,
     @required this.listIndex,
     this.text,
-    this.numeralTextStyle,
-    this.textStyle,
+    @required this.styleBuilder,
     this.indent = 0,
     this.textSelection,
     this.hasCursor = false,
@@ -156,8 +156,7 @@ class OrderedListItemComponent extends StatelessWidget {
   final GlobalKey textKey;
   final int listIndex;
   final AttributedText text;
-  final TextStyle numeralTextStyle;
-  final TextStyle textStyle;
+  final AttributionStyleBuilder styleBuilder;
   final int indent;
   final TextSelection textSelection;
   final bool hasCursor;
@@ -170,27 +169,21 @@ class OrderedListItemComponent extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(
-          width: 25 + indentSpace,
-          child: Align(
-            alignment: Alignment.centerRight,
-            child: Container(
-              padding: const EdgeInsets.only(right: 15.0),
-              decoration: BoxDecoration(
-                border: Border.all(width: 1, color: showDebugPaint ? Colors.grey : Colors.transparent),
-              ),
-              child: Text(
-                '$listIndex',
-                style: numeralTextStyle,
-              ),
-            ),
+        Container(
+          padding: EdgeInsets.only(left: indentSpace, right: 15.0),
+          decoration: BoxDecoration(
+            border: Border.all(width: 1, color: showDebugPaint ? Colors.grey : Colors.transparent),
+          ),
+          child: Text(
+            '$listIndex.',
+            style: styleBuilder({}).copyWith(),
           ),
         ),
         Expanded(
           child: TextComponent(
             key: textKey,
             text: text,
-            styleBuilder: defaultStyleBuilder,
+            styleBuilder: styleBuilder,
             textSelection: textSelection,
             hasCursor: hasCursor,
             showDebugPaint: showDebugPaint,

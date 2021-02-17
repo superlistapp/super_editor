@@ -1,14 +1,8 @@
+import 'package:example/spikes/editor_abstractions/example_editors.dart';
 import 'package:flutter/material.dart';
 
-import 'core/attributed_spans.dart';
-import 'core/attributed_text.dart';
 import 'core/document.dart';
-import 'core/document_editor.dart';
-import 'default_editor/horizontal_rule.dart';
-import 'default_editor/image.dart';
-import 'default_editor/list_items.dart';
-import 'default_editor/paragraph.dart';
-import 'editor.dart';
+import 'example_docs.dart';
 
 /// Spike:
 /// How should we delegate input so that keys like arrows, backspace,
@@ -16,7 +10,16 @@ import 'editor.dart';
 /// with multiple document widgets?
 ///
 /// Conclusion:
-/// TODO:
+/// Through a lot of hacking work and refactoring, the following
+/// abstractions have appeared:
+///  - Document
+///  - DocumentPosition
+///  - DocumentSelection
+///  - DocumentEditor
+///  - DocumentLayout
+///  - DocumentInteractor
+///  - DocumentComposer
+///  - Editor
 ///
 /// Thoughts:
 ///  - We can't allow individual document widgets to respond to user
@@ -31,23 +34,6 @@ import 'editor.dart';
 ///    comes to EditableText, which prevented us from using existing widgets.
 ///    We should see if we can create more highly composable text selection
 ///    and editing tools to achieve grater versatility.
-///
-/// Known Issues:
-///  - empty line selection isn't quite right. When selecting empty lines,
-///    there should be a concept of an invisible newline. The invisible
-///    newlines should receive a small selection. Of course, the newlines
-///    aren't real, so this an explicit effect that's added. When selecting
-///    multiple empty lines, the last line should not show a selection because
-///    the hypothetical newline happens after the selection. However, the
-///    current implementation shows a selection on every empty line that
-///    participates in the selection.
-///
-///  - when drag-selecting text within a single line, the y-position is
-///    used to determine direction. Instead, the x-position should be
-///    used when selecting within a single line.
-///
-///  - there is some weird measurement glitch with the SingleChildScrollView
-///    and IntrinsicHeight where we overflow the bottom sometimes.
 
 void main() {
   runApp(
@@ -74,25 +60,39 @@ class EditorSpike extends StatefulWidget {
 
 class _EditorSpikeState extends State<EditorSpike> {
   Document _doc;
+  _EditorType _editorType = _EditorType.standard;
   bool _showDebugPaint = false;
 
   @override
   void initState() {
     super.initState();
-    _doc = _createLoremIpsumDoc();
+    _doc = createLoremIpsumDoc();
   }
 
   @override
   Widget build(BuildContext context) {
+    Widget editor;
+    switch (_editorType) {
+      case _EditorType.plainText:
+        editor = createPlainTextEditor(_doc, _showDebugPaint);
+        break;
+      case _EditorType.dark:
+        // editor = createStyledEditor(_doc, _showDebugPaint);
+        editor = createDarkStyledEditor(_doc, _showDebugPaint);
+        break;
+      case _EditorType.standard:
+      default:
+        // editor = createDarkStyledEditor(_doc, _showDebugPaint);
+        editor = createStyledEditor(_doc, _showDebugPaint);
+        break;
+    }
+
     return Scaffold(
       appBar: _buildAppBar(),
-      body: Editor(
-        document: _doc,
-        editor: DocumentEditor(
-          document: _doc,
-        ),
-        showDebugPaint: _showDebugPaint,
-      ),
+      body: editor,
+      drawer: _buildDrawer(),
+      backgroundColor:
+          _editorType == _EditorType.dark ? const Color(0xFF222222) : Theme.of(context).scaffoldBackgroundColor,
     );
   }
 
@@ -100,45 +100,52 @@ class _EditorSpikeState extends State<EditorSpike> {
     return AppBar(
       backgroundColor: Colors.transparent,
       elevation: 0,
+      iconTheme: Theme.of(context).iconTheme.copyWith(
+            color: _editorType == _EditorType.dark ? Colors.white : Colors.black,
+          ),
       title: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          FlatButton(
+          TextButton(
             onPressed: () {
               setState(() {
-                _doc = _createEmptyDoc();
+                _doc = createEmptyDoc();
               });
             },
             child: Text('Empty Doc'),
           ),
-          FlatButton(
+          SizedBox(width: 16),
+          TextButton(
             onPressed: () {
               setState(() {
-                _doc = _createStartingPointDoc();
+                _doc = createStartingPointDoc();
               });
             },
             child: Text('Starter Doc'),
           ),
-          FlatButton(
+          SizedBox(width: 16),
+          TextButton(
             onPressed: () {
               setState(() {
-                _doc = _createLoremIpsumDoc();
+                _doc = createLoremIpsumDoc();
               });
             },
             child: Text('Lorem Ipsum Doc'),
           ),
-          FlatButton(
+          SizedBox(width: 16),
+          TextButton(
             onPressed: () {
               setState(() {
-                _doc = _createRichContentDoc();
+                _doc = createRichContentDoc();
               });
             },
             child: Text('Rich Text Doc'),
           ),
-          FlatButton(
+          SizedBox(width: 16),
+          TextButton(
             onPressed: () {
               setState(() {
-                _doc = _createListItemsDoc();
+                _doc = createListItemsDoc();
               });
             },
             child: Text('List Items Doc'),
@@ -159,229 +166,52 @@ class _EditorSpikeState extends State<EditorSpike> {
     );
   }
 
-  Document _createEmptyDoc() {
-    return Document(
-      nodes: [
-        ParagraphNode(
-          // TODO: I don't like how the client has to provide an ID...
-          id: Document.createNodeId(),
-          text: AttributedText(text: ''),
-        ),
-      ],
-    );
-  }
-
-  // TODO: add hint text to these nodes
-  Document _createStartingPointDoc() {
-    return Document(
-      nodes: [
-        ParagraphNode(
-          id: Document.createNodeId(),
-          text: AttributedText(text: ''),
-          metadata: {
-            'blockType': 'header1',
-          },
-        ),
-        ParagraphNode(
-          id: Document.createNodeId(),
-          text: AttributedText(text: ''),
-        ),
-      ],
-    );
-  }
-
-  Document _createLoremIpsumDoc() {
-    return Document(nodes: [
-      ParagraphNode(
-        id: Document.createNodeId(),
-        text: AttributedText(
-          text: _loremIpsum1,
-          attributions: [
-            SpanMarker(attribution: 'bold', offset: 20, markerType: SpanMarkerType.start),
-            SpanMarker(attribution: 'bold', offset: 80, markerType: SpanMarkerType.end),
+  Widget _buildDrawer() {
+    return Drawer(
+      child: SingleChildScrollView(
+        child: Column(
+          children: [
+            SizedBox(height: 24),
+            Divider(),
+            ListTile(
+              title: Text('Plain Text Editor'),
+              onTap: () {
+                setState(() {
+                  _editorType = _EditorType.plainText;
+                  Navigator.of(context).pop();
+                });
+              },
+            ),
+            Divider(),
+            ListTile(
+              title: Text('Styled Text Editor'),
+              onTap: () {
+                setState(() {
+                  _editorType = _EditorType.standard;
+                  Navigator.of(context).pop();
+                });
+              },
+            ),
+            Divider(),
+            ListTile(
+              title: Text('Dark Text Editor'),
+              onTap: () {
+                setState(() {
+                  _editorType = _EditorType.dark;
+                  Navigator.of(context).pop();
+                });
+              },
+            ),
+            Divider(),
           ],
         ),
       ),
-      ParagraphNode(
-        id: Document.createNodeId(),
-        text: AttributedText(text: _loremIpsum2),
-      ),
-      ParagraphNode(
-        id: Document.createNodeId(),
-        text: AttributedText(text: _loremIpsum3),
-      ),
-    ]);
-  }
-
-  Document _createRichContentDoc() {
-    return Document(nodes: [
-      ParagraphNode(
-        id: Document.createNodeId(),
-        text: AttributedText(text: 'This is rich text'),
-        metadata: {
-          'blockType': 'header1',
-        },
-      ),
-      ParagraphNode(
-          id: Document.createNodeId(),
-          text: AttributedText(
-            text: _loremIpsum1,
-            attributions: [
-              SpanMarker(attribution: 'bold', offset: 20, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: 'bold', offset: 80, markerType: SpanMarkerType.end),
-            ],
-          ),
-          metadata: {
-            'textAlign': 'justify',
-          }),
-      ParagraphNode(
-        id: Document.createNodeId(),
-        text: AttributedText(text: _loremIpsum1),
-        metadata: {
-          'textAlign': 'center',
-        },
-      ),
-      ParagraphNode(
-        id: Document.createNodeId(),
-        text: AttributedText(text: _loremIpsum1),
-        metadata: {
-          'textAlign': 'right',
-        },
-      ),
-      ListItemNode.unordered(
-        id: Document.createNodeId(),
-        text: AttributedText(text: 'This is the 1st list item.'),
-      ),
-      ListItemNode.unordered(
-        id: Document.createNodeId(),
-        text: AttributedText(text: 'This is the 2nd list item.'),
-      ),
-      ListItemNode.unordered(
-        id: Document.createNodeId(),
-        text: AttributedText(text: 'This is the 3rd list item.'),
-        indent: 1,
-      ),
-      ListItemNode.unordered(
-        id: Document.createNodeId(),
-        text: AttributedText(text: 'This is the 4th list item.'),
-        indent: 1,
-      ),
-      ListItemNode.unordered(
-        id: Document.createNodeId(),
-        text: AttributedText(text: 'This is the 5th list item.'),
-      ),
-      HorizontalRuleNode(id: Document.createNodeId()),
-      ListItemNode.ordered(
-        id: Document.createNodeId(),
-        text: AttributedText(text: 'This is the 1st list item.'),
-      ),
-      ListItemNode.ordered(
-        id: Document.createNodeId(),
-        text: AttributedText(text: 'This is the 2nd list item.'),
-      ),
-      ListItemNode.ordered(
-        id: Document.createNodeId(),
-        text: AttributedText(text: 'This is the 3rd list item.'),
-        indent: 1,
-      ),
-      ListItemNode.ordered(
-        id: Document.createNodeId(),
-        text: AttributedText(text: 'This is the 4th list item.'),
-        indent: 1,
-      ),
-      ListItemNode.ordered(
-        id: Document.createNodeId(),
-        text: AttributedText(text: 'This is the 5th list item.'),
-        indent: 2,
-      ),
-      ListItemNode.ordered(
-        id: Document.createNodeId(),
-        text: AttributedText(text: 'This is the 6th list item.'),
-        indent: 2,
-      ),
-      ListItemNode.ordered(
-        id: Document.createNodeId(),
-        text: AttributedText(text: 'This is the 7th list item.'),
-      ),
-      ParagraphNode(
-        id: Document.createNodeId(),
-        text: AttributedText(text: _loremIpsum2),
-      ),
-      ImageNode(
-        id: Document.createNodeId(),
-        imageUrl:
-            'https://images.unsplash.com/photo-1612099453097-26a809f51e96?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=1050&q=80',
-      ),
-      ParagraphNode(
-        id: Document.createNodeId(),
-        text: AttributedText(text: _loremIpsum3),
-      ),
-    ]);
-  }
-
-  Document _createListItemsDoc() {
-    return Document(nodes: [
-      ListItemNode.unordered(
-        id: Document.createNodeId(),
-        text: AttributedText(text: 'This is the 1st list item.'),
-      ),
-      ListItemNode.unordered(
-        id: Document.createNodeId(),
-        text: AttributedText(text: 'This is the 2nd list item.'),
-      ),
-      ListItemNode.unordered(
-        id: Document.createNodeId(),
-        text: AttributedText(text: 'This is the 3rd list item.'),
-        indent: 1,
-      ),
-      ListItemNode.unordered(
-        id: Document.createNodeId(),
-        text: AttributedText(text: 'This is the 4th list item.'),
-        indent: 1,
-      ),
-      ListItemNode.unordered(
-        id: Document.createNodeId(),
-        text: AttributedText(text: 'This is the 5th list item.'),
-      ),
-      ListItemNode.ordered(
-        id: Document.createNodeId(),
-        text: AttributedText(text: 'This is the 1st list item.'),
-      ),
-      ListItemNode.ordered(
-        id: Document.createNodeId(),
-        text: AttributedText(text: 'This is the 2nd list item.'),
-      ),
-      ListItemNode.ordered(
-        id: Document.createNodeId(),
-        text: AttributedText(text: 'This is the 3rd list item.'),
-        indent: 1,
-      ),
-      ListItemNode.ordered(
-        id: Document.createNodeId(),
-        text: AttributedText(text: 'This is the 4th list item.'),
-        indent: 1,
-      ),
-      ListItemNode.ordered(
-        id: Document.createNodeId(),
-        text: AttributedText(text: 'This is the 5th list item.'),
-        indent: 2,
-      ),
-      ListItemNode.ordered(
-        id: Document.createNodeId(),
-        text: AttributedText(text: 'This is the 6th list item.'),
-        indent: 2,
-      ),
-      ListItemNode.ordered(
-        id: Document.createNodeId(),
-        text: AttributedText(text: 'This is the 7th list item.'),
-      ),
-    ]);
+    );
   }
 }
 
-const _loremIpsum1 =
-    'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.';
-const _loremIpsum2 =
-    'Nullam id elementum felis. Morbi ullamcorper gravida vulputate. Nulla sed gravida lorem. Nam tincidunt, arcu sit amet sodales aliquet, lectus magna volutpat felis, non pharetra risus risus dignissim mauris. Fusce diam massa, semper eu elementum in, dictum vel nulla. Etiam porta luctus augue, porttitor porta nibh. Donec risus arcu, viverra sed tincidunt id, lobortis non nulla. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Aenean vel lobortis quam, ac pulvinar risus. Praesent laoreet tempor ex. Nunc eu ante nisl. Integer in magna ligula.';
-const _loremIpsum3 =
-    'Phasellus non gravida arcu. Pellentesque posuere orci et lorem fermentum, sed interdum metus vestibulum. Maecenas suscipit mollis sagittis. Mauris quis est blandit libero vehicula fringilla eget in augue. Etiam mi lectus, ullamcorper ac odio nec, maximus ultricies enim. Aenean nec est non nunc tincidunt rhoncus. Proin laoreet vitae libero ut faucibus. Donec bibendum laoreet dolor eu varius. Pellentesque ullamcorper turpis quis viverra semper.';
+enum _EditorType {
+  plainText,
+  standard,
+  dark,
+}

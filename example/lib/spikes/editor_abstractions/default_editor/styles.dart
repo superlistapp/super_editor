@@ -2,12 +2,13 @@ import 'package:example/spikes/editor_abstractions/core/attributed_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
 
-/// Wraps `defaultStyleBuilder` with adjustments on a per-block
+/// Wraps `standardStyleBuilder` with adjustments on a per-block
 /// basis, i.e., takes the standard style and increases the size
 /// for a 'header1'.
-AttributionStyleBuilder createBlockLevelStyleBuilder(String blockType) {
+AttributionStyleBuilder createBlockLevelStyleBuilder(
+    TextStyle Function(Set<dynamic> attributions) standardStyleBuilder, String blockType) {
   return (Set<dynamic> attributions) {
-    final baseStyle = defaultStyleBuilder(attributions);
+    final baseStyle = standardStyleBuilder(attributions);
 
     if (blockType == null) {
       return baseStyle;
@@ -29,6 +30,7 @@ AttributionStyleBuilder createBlockLevelStyleBuilder(String blockType) {
 TextStyle defaultStyleBuilder(Set<dynamic> attributions) {
   TextStyle newStyle = TextStyle(
     color: Colors.black,
+    fontSize: 13,
     height: 1.4,
   );
 
@@ -38,6 +40,13 @@ TextStyle defaultStyleBuilder(Set<dynamic> attributions) {
     }
 
     switch (attribution) {
+      case 'header1':
+        newStyle = newStyle.copyWith(
+          fontSize: 24,
+          fontWeight: FontWeight.bold,
+          height: 1.0,
+        );
+        break;
       case 'bold':
         newStyle = newStyle.copyWith(
           fontWeight: FontWeight.bold,

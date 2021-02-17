@@ -4,19 +4,19 @@ import 'package:flutter/material.dart' hide SelectableText;
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 
-import 'core/document.dart';
-import 'core/document_composer.dart';
-import 'core/document_editor.dart';
-import 'core/document_layout.dart';
-import 'core/document_selection.dart';
-import 'custom_components/text_with_hint.dart';
-import 'default_editor/document_keyboard_actions.dart';
-import 'default_editor/horizontal_rule.dart';
-import 'default_editor/image.dart';
-import 'default_editor/list_items.dart';
-import 'default_editor/paragraph.dart';
-import 'default_editor/styles.dart';
-import 'default_editor/text.dart';
+import '../core/document.dart';
+import '../core/document_composer.dart';
+import '../core/document_editor.dart';
+import '../core/document_layout.dart';
+import '../core/document_selection.dart';
+import '../custom_components/text_with_hint.dart';
+import '../default_editor/document_keyboard_actions.dart';
+import '../default_editor/horizontal_rule.dart';
+import '../default_editor/image.dart';
+import '../default_editor/list_items.dart';
+import '../default_editor/paragraph.dart';
+import '../default_editor/styles.dart';
+import '../default_editor/text.dart';
 
 /// A text editor for styled text and multi-media elements.
 ///
@@ -44,13 +44,34 @@ import 'default_editor/text.dart';
 /// Document composer is responsible for owning document
 /// selection.
 class Editor extends StatefulWidget {
+  factory Editor.standard({
+    Key key,
+    @required Document document,
+    @required DocumentEditor editor,
+    ScrollController scrollController,
+    bool showDebugPaint = false,
+  }) {
+    return Editor(
+      key: key,
+      document: document,
+      editor: editor,
+      componentBuilder: defaultComponentBuilder,
+      scrollController: scrollController,
+      showDebugPaint: showDebugPaint,
+    );
+  }
+
   const Editor({
     Key key,
-    this.document,
+    @required this.document,
     @required this.editor,
+    @required this.componentBuilder,
     this.scrollController,
     this.showDebugPaint = false,
-  }) : super(key: key);
+  })  : assert(document != null),
+        assert(editor != null),
+        assert(componentBuilder != null),
+        super(key: key);
 
   /// The rich text document to be edited within this `EditableDocument`.
   ///
@@ -62,6 +83,11 @@ class Editor extends StatefulWidget {
   /// The `editor` is responsible for performing all content
   /// manipulation operations on the supplied `document`.
   final DocumentEditor editor;
+
+  /// Factory that creates instances of each visual component
+  /// displayed in the document layout, e.g., paragraph
+  /// component, image component, horizontal rule component, etc.
+  final ComponentBuilder componentBuilder;
 
   final ScrollController scrollController;
 
@@ -151,7 +177,7 @@ class _EditorState extends State<Editor> {
                 key: _docLayoutKey,
                 document: widget.document,
                 documentSelection: _documentComposer?.selection,
-                componentBuilder: defaultComponentBuilder,
+                componentBuilder: widget.componentBuilder,
                 showDebugPaint: widget.showDebugPaint,
               );
             },
@@ -267,6 +293,7 @@ final ComponentBuilder defaultComponentBuilder = ({
     return UnorderedListItemComponent(
       textKey: key,
       text: currentNode.text,
+      styleBuilder: defaultStyleBuilder,
       indent: currentNode.indent,
       textSelection: textSelection,
       hasCursor: hasCursor,
@@ -292,6 +319,7 @@ final ComponentBuilder defaultComponentBuilder = ({
       textKey: key,
       listIndex: index,
       text: currentNode.text,
+      styleBuilder: defaultStyleBuilder,
       textSelection: textSelection,
       hasCursor: hasCursor,
       indent: currentNode.indent,
