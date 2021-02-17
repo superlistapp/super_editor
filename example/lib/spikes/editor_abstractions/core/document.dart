@@ -59,41 +59,6 @@ class RichTextDocument with ChangeNotifier {
     return nodeIndex >= 0 && nodeIndex < nodes.length - 1 ? getNodeAt(nodeIndex + 1) : null;
   }
 
-  void insertNodeAt(int index, DocumentNode node) {
-    if (index <= _nodes.length) {
-      _nodes.insert(index, node);
-      node.addListener(_forwardNodeChange);
-      notifyListeners();
-    }
-  }
-
-  void insertNodeAfter({
-    @required DocumentNode previousNode,
-    @required DocumentNode newNode,
-  }) {
-    final nodeIndex = _nodes.indexOf(previousNode);
-    if (nodeIndex >= 0 && nodeIndex < _nodes.length) {
-      _nodes.insert(nodeIndex + 1, newNode);
-      newNode.addListener(_forwardNodeChange);
-      notifyListeners();
-    }
-  }
-
-  void deleteNodeAt(int index) {
-    if (index >= 0 && index < _nodes.length) {
-      final removedNode = _nodes.removeAt(index);
-      removedNode.removeListener(_forwardNodeChange);
-      notifyListeners();
-    } else {
-      print('Could not delete node. Index out of range: $index');
-    }
-  }
-
-  bool deleteNode(DocumentNode node) {
-    node.removeListener(_forwardNodeChange);
-    return _nodes.remove(node);
-  }
-
   // TODO: this method is misleading because if `position1` and
   //       `position2` are in the same node, they may be returned
   //       in the wrong order because the document doesn't know
@@ -137,6 +102,15 @@ class RichTextDocument with ChangeNotifier {
     final to = max(index1, index2);
 
     return _nodes.sublist(from, to + 1);
+  }
+
+  /// Don't invoke this from any place but DocumentEditor
+  /// TODO: figure out a holistic solution to allow editing of documents
+  ///       without exposing mutation from the document interface
+  @visibleForTesting
+  void mutateDocument(void Function(VoidCallback onNodeChange) operation) {
+    operation.call(_forwardNodeChange);
+    notifyListeners();
   }
 
   void _forwardNodeChange() {

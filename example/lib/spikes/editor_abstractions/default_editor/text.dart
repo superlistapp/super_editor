@@ -201,6 +201,8 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
       //       want to `-1` because that would leave a dangling character after the
       //       selection.
       // TODO: this is the concept of text affinity. Implement support for affinity.
+      // TODO: with affinity, ensure it works as expected for right-aligned text
+      // TODO: this logic fails for justified text - find a solution for that
       return isAutoWrapLine ? TextPosition(offset: endOfLine.offset - 1) : endOfLine;
     } else if (movementModifiers['movement_unit'] == 'word') {
       final text = getContiguousTextAt(textPosition);
@@ -391,7 +393,7 @@ class ToggleTextAttributionsCommand implements EditorCommand {
   final DocumentSelection documentSelection;
   final Set<String> attributions;
 
-  void execute(RichTextDocument document) {
+  void execute(RichTextDocument document, DocumentEditor editor) {
     print('Executing ToggleTextAttributionsCommand');
     final nodes = document.getNodesInside(documentSelection.base, documentSelection.extent);
     if (nodes == null) {
@@ -487,7 +489,7 @@ class InsertTextCommand implements EditorCommand {
   final String textToInsert;
   final Set<dynamic> attributions;
 
-  void execute(RichTextDocument document) {
+  void execute(RichTextDocument document, DocumentEditor editor) {
     final node = document.getNodeById(documentPosition.nodeId);
     if (node is! TextNode) {
       print('ERROR: can\'t insert text in a node that isn\'t a TextNode: $node');

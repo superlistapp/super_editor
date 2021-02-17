@@ -288,8 +288,7 @@ Future<void> _paste({
   mergeAfterNode = nodeWithSelection;
 
   for (int i = newNodeToMergeIndex; i < newNodes.length; ++i) {
-    // TODO: refactor this document manipulation to use editor instead
-    document.insertNodeAfter(
+    editor.insertNodeAfter(
       previousNode: mergeAfterNode,
       newNode: newNodes[i],
     );

@@ -16,7 +16,7 @@ class DeleteSelectionCommand implements EditorCommand {
 
   final DocumentSelection documentSelection;
 
-  void execute(RichTextDocument document) {
+  void execute(RichTextDocument document, DocumentEditor editor) {
     print('DocumentEditor: deleting selection: $documentSelection');
     final nodes = document.getNodesInside(documentSelection.base, documentSelection.extent);
 
@@ -25,6 +25,7 @@ class DeleteSelectionCommand implements EditorCommand {
       _deleteSelectionWithinSingleNode(
         document: document,
         documentSelection: documentSelection,
+        editor: editor,
         node: nodes.first,
       );
 
@@ -44,13 +45,14 @@ class DeleteSelectionCommand implements EditorCommand {
         ? documentSelection.extent.nodePosition
         : documentSelection.base.nodePosition;
 
-    _deleteNodesBetweenFirstAndLast(document, range);
+    _deleteNodesBetweenFirstAndLast(document, range, editor);
 
     print(' - deleting partial selection within the starting node.');
     _deleteSelectionWithinNodeFromPositionToEnd(
       document: document,
       node: startNode,
       nodePosition: startNodePosition,
+      editor: editor,
     );
 
     print(' - deleting partial selection within ending node.');
@@ -58,6 +60,7 @@ class DeleteSelectionCommand implements EditorCommand {
       document: document,
       node: endNode,
       nodePosition: endNodePosition,
+      editor: editor,
     );
 
     // If the start node and end nodes are both `TextNode`s
@@ -71,7 +74,7 @@ class DeleteSelectionCommand implements EditorCommand {
     (startNode as TextNode).text = (startNode as TextNode).text.copyAndAppend((endNode as TextNode).text);
 
     print(' - deleting last node');
-    document.deleteNode(endNode);
+    editor.deleteNode(endNode);
 
     print(' - done with selection deletion');
   }
@@ -79,6 +82,7 @@ class DeleteSelectionCommand implements EditorCommand {
   void _deleteSelectionWithinSingleNode({
     @required RichTextDocument document,
     @required DocumentSelection documentSelection,
+    @required DocumentEditor editor,
     @required DocumentNode node,
   }) {
     print(' - deleting selection withing single node');
@@ -88,7 +92,7 @@ class DeleteSelectionCommand implements EditorCommand {
     if (basePosition is BinaryPosition) {
       // Binary positions are all-or-nothing. Therefore, partial
       // selection means delete the whole node.
-      document.deleteNode(node);
+      editor.deleteNode(node);
     } else if (node is TextNode) {
       print(' - its a TextNode');
       final baseOffset = (basePosition as TextPosition).offset;
@@ -104,7 +108,7 @@ class DeleteSelectionCommand implements EditorCommand {
     }
   }
 
-  void _deleteNodesBetweenFirstAndLast(RichTextDocument document, DocumentRange range) {
+  void _deleteNodesBetweenFirstAndLast(RichTextDocument document, DocumentRange range, DocumentEditor editor) {
     // Delete all nodes between the first node and the last node.
     final startPosition = range.start;
     final startNode = document.getNodeById(startPosition.nodeId);
@@ -124,7 +128,7 @@ class DeleteSelectionCommand implements EditorCommand {
     // screwed up during removal.
     for (int i = endIndex - 1; i > startIndex; --i) {
       print(' - deleting node $i: ${document.getNodeAt(i).id}');
-      document.deleteNodeAt(i);
+      editor.deleteNodeAt(i);
     }
   }
 
@@ -132,9 +136,14 @@ class DeleteSelectionCommand implements EditorCommand {
     @required RichTextDocument document,
     @required DocumentNode node,
     @required dynamic nodePosition,
+    @required DocumentEditor editor,
   }) {
     if (nodePosition is BinaryPosition) {
-      _deleteBinaryNode(document: document, node: node);
+      _deleteBinaryNode(
+        document: document,
+        node: node,
+        editor: editor,
+      );
     } else if (nodePosition is TextPosition && node is TextNode) {
       node.text = node.text.removeRegion(
         startOffset: nodePosition.offset,
@@ -149,9 +158,14 @@ class DeleteSelectionCommand implements EditorCommand {
     @required RichTextDocument document,
     @required DocumentNode node,
     @required dynamic nodePosition,
+    @required DocumentEditor editor,
   }) {
     if (nodePosition is BinaryPosition) {
-      _deleteBinaryNode(document: document, node: node);
+      _deleteBinaryNode(
+        document: document,
+        node: node,
+        editor: editor,
+      );
     } else if (nodePosition is TextPosition && node is TextNode) {
       node.text = node.text.removeRegion(
         startOffset: 0,
@@ -165,6 +179,7 @@ class DeleteSelectionCommand implements EditorCommand {
   void _deleteBinaryNode({
     @required RichTextDocument document,
     @required DocumentNode node,
+    @required DocumentEditor editor,
   }) {
     // TODO: for now deleting a binary node simply means replacing
     //       it with an empty ParagraphNode because after doing that,
@@ -178,13 +193,13 @@ class DeleteSelectionCommand implements EditorCommand {
     //       composer and the editor and needs to be addressed.
     print(' - replacing BinaryNode with a ParagraphNode: ${node.id}');
     final nodeIndex = document.getNodeIndex(node);
-    document.insertNodeAt(
+    editor.insertNodeAt(
       nodeIndex,
       ParagraphNode(
         id: node.id,
         text: AttributedText(),
       ),
     );
-    document.deleteNode(node);
+    editor.deleteNode(node);
   }
 }

@@ -209,7 +209,7 @@ class IndentListItemCommand implements EditorCommand {
   final String nodeId;
 
   @override
-  void execute(RichTextDocument document) {
+  void execute(RichTextDocument document, DocumentEditor editor) {
     final node = document.getNodeById(nodeId);
     final listItem = node as ListItemNode;
     if (listItem.indent >= 6) {
@@ -229,7 +229,7 @@ class UnIndentListItemCommand implements EditorCommand {
   final String nodeId;
 
   @override
-  void execute(RichTextDocument document) {
+  void execute(RichTextDocument document, DocumentEditor editor) {
     final node = document.getNodeById(nodeId);
     final listItem = node as ListItemNode;
     if (listItem.indent > 0) {
@@ -241,7 +241,7 @@ class UnIndentListItemCommand implements EditorCommand {
         text: listItem.text,
       );
       final listItemIndex = document.getNodeIndex(listItem);
-      document
+      editor
         ..deleteNodeAt(listItemIndex)
         ..insertNodeAt(listItemIndex, newParagraphNode);
     }
@@ -261,7 +261,7 @@ class SplitListItemCommand implements EditorCommand {
   final String newNodeId;
 
   @override
-  void execute(RichTextDocument document) {
+  void execute(RichTextDocument document, DocumentEditor editor) {
     final node = document.getNodeById(nodeId);
     final listItemNode = node as ListItemNode;
     final text = listItemNode.text;
@@ -291,7 +291,7 @@ class SplitListItemCommand implements EditorCommand {
 
     // Insert the new node after the current node.
     print(' - inserting new node in document');
-    document.insertNodeAfter(
+    editor.insertNodeAfter(
       previousNode: node,
       newNode: newNode,
     );

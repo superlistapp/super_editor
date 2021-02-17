@@ -74,7 +74,7 @@ class EditableDocument extends StatefulWidget {
 }
 
 class _EditableDocumentState extends State<EditableDocument> {
-  // Holds a reference to the current `RichTextDocument` and
+  // Holds a reference to the current `Document` and
   // maintains a `DocumentSelection`. The `DocumentComposer`
   // is responsible for editing the `RichTextDocument` based on
   // the current `DocumentSelection`.
@@ -137,8 +137,6 @@ class _EditableDocumentState extends State<EditableDocument> {
       composer: _documentComposer,
       keyboardActions: _composerKeyboardActions,
       showDebugPaint: widget.showDebugPaint,
-      // TODO: combine the ValueListenableBuilder and AnimatedBuilder
-      //       into a single rebuilder on either event.
       child: AnimatedBuilder(
         animation: _documentComposer ?? AlwaysStoppedAnimation(0),
         builder: (context, child) {

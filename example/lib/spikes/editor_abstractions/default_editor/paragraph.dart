@@ -46,7 +46,7 @@ class CombineParagraphsCommand implements EditorCommand {
   final String firstNodeId;
   final String secondNodeId;
 
-  void execute(RichTextDocument document) {
+  void execute(RichTextDocument document, DocumentEditor editor) {
     print('Executing CombineParagraphsCommand');
     print(' - merging "$firstNodeId" <- "$secondNodeId"');
     final secondNode = document.getNodeById(secondNodeId);
@@ -74,7 +74,7 @@ class CombineParagraphsCommand implements EditorCommand {
 
     // Combine the text and delete the currently selected node.
     paragraphNodeAbove.text = paragraphNodeAbove.text.copyAndAppend(paragraphNode.text);
-    bool didRemove = document.deleteNode(paragraphNode);
+    bool didRemove = editor.deleteNode(paragraphNode);
     if (!didRemove) {
       print('ERROR: Failed to delete the currently selected node from the document.');
     }
@@ -98,7 +98,7 @@ class SplitParagraphCommand implements EditorCommand {
   final TextPosition splitPosition;
   final String newNodeId;
 
-  void execute(RichTextDocument document) {
+  void execute(RichTextDocument document, DocumentEditor editor) {
     print('Executing SplitParagraphCommand');
 
     final node = document.getNodeById(nodeId);
@@ -128,7 +128,7 @@ class SplitParagraphCommand implements EditorCommand {
 
     // Insert the new node after the current node.
     print(' - inserting new node in document');
-    document.insertNodeAfter(
+    editor.insertNodeAfter(
       previousNode: node,
       newNode: newNode,
     );
@@ -157,6 +157,7 @@ ExecutionInstruction insertCharacterInParagraph({
         document: composerContext.document,
         currentSelection: composerContext.currentSelection,
         node: node,
+        editor: composerContext.editor,
       );
     }
 
@@ -171,6 +172,7 @@ bool _convertParagraphIfDesired({
   @required RichTextDocument document,
   @required ValueNotifier<DocumentSelection> currentSelection,
   @required ParagraphNode node,
+  @required DocumentEditor editor,
 }) {
   final text = node.text;
   final textSelection = currentSelection.value.extent.nodePosition as TextPosition;
@@ -195,7 +197,7 @@ bool _convertParagraphIfDesired({
         ? ListItemNode.unordered(id: node.id, text: adjustedText)
         : ListItemNode.ordered(id: node.id, text: adjustedText);
     final nodeIndex = document.getNodeIndex(node);
-    document
+    editor
       ..deleteNodeAt(nodeIndex)
       ..insertNodeAt(nodeIndex, newNode);
 
@@ -220,7 +222,7 @@ bool _convertParagraphIfDesired({
     // paragraph's content.
     final paragraphNodeIndex = document.getNodeIndex(node);
 
-    document.insertNodeAt(
+    editor.insertNodeAt(
       paragraphNodeIndex,
       HorizontalRuleNode(
         id: RichTextDocument.createNodeId(),
@@ -254,6 +256,7 @@ bool _convertParagraphIfDesired({
     final link = extractedLinks.firstWhere((element) => element is UrlElement, orElse: () => null)?.text;
     _processUrlNode(
       document: document,
+      editor: editor,
       nodeId: node.id,
       originalText: node.text.text,
       url: link,
@@ -266,6 +269,7 @@ bool _convertParagraphIfDesired({
 
 Future<void> _processUrlNode({
   @required RichTextDocument document,
+  @required DocumentEditor editor,
   @required String nodeId,
   @required String originalText,
   @required String url,
@@ -310,7 +314,7 @@ Future<void> _processUrlNode({
     imageUrl: url,
   );
   final nodeIndex = document.getNodeIndex(node);
-  document
+  editor
     ..deleteNodeAt(nodeIndex)
     ..insertNodeAt(nodeIndex, imageNode);
 }
@@ -322,7 +326,7 @@ class DeleteParagraphsCommand implements EditorCommand {
 
   final String nodeId;
 
-  void execute(RichTextDocument document) {
+  void execute(RichTextDocument document, DocumentEditor editor) {
     print('Executing DeleteParagraphsCommand');
     print(' - deleting "$nodeId"');
     final node = document.getNodeById(nodeId);
@@ -331,7 +335,7 @@ class DeleteParagraphsCommand implements EditorCommand {
       return;
     }
 
-    bool didRemove = document.deleteNode(node);
+    bool didRemove = editor.deleteNode(node);
     if (!didRemove) {
       print('ERROR: Failed to delete node "$node" from the document.');
     }
@@ -377,6 +381,7 @@ ExecutionInstruction splitParagraphWhenEnterPressed({
 
   _convertParagraphIfDesired(
     document: composerContext.document,
+    editor: composerContext.editor,
     currentSelection: composerContext.currentSelection,
     node: node,
   );
