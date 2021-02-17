@@ -6,6 +6,7 @@ import '../core/document_composer.dart';
 import '../core/document.dart';
 import '../core/document_layout.dart';
 import '../core/document_selection.dart';
+import 'document_interaction.dart';
 import 'multi_node_editing.dart';
 
 class BoxComponent extends StatefulWidget {

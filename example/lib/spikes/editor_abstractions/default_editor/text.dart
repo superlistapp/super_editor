@@ -16,6 +16,7 @@ import '../core/document_composer.dart';
 import '../core/attributed_text.dart';
 import '_text_tools.dart';
 import '../selectable_text/selectable_text.dart';
+import 'document_interaction.dart';
 import 'multi_node_editing.dart';
 
 class TextNode with ChangeNotifier implements DocumentNode {

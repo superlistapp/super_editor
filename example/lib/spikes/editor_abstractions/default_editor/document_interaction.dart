@@ -7,9 +7,12 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 
+import '../core/document.dart';
+import '../core/document_selection.dart';
 import '../core/document_composer.dart';
 import '../core/document_layout.dart';
 import '../gestures/multi_tap_gesture.dart';
+import '_text_tools.dart';
 
 /// Composes and edits a rich text document based on user
 /// gestures and keyboard input.
@@ -20,6 +23,7 @@ class DocumentInteractor extends StatefulWidget {
     Key key,
     @required this.documentLayoutKey,
     @required this.composer,
+    @required this.keyboardActions,
     @required this.child,
     this.scrollController,
     this.showDebugPaint = false,
@@ -28,6 +32,8 @@ class DocumentInteractor extends StatefulWidget {
   final GlobalKey documentLayoutKey;
 
   final DocumentComposer composer;
+
+  final List<ComposerKeyboardAction> keyboardActions;
 
   final ScrollController scrollController;
 
@@ -72,15 +78,15 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
     _scrollController =
         _scrollController = (widget.scrollController ?? ScrollController())..addListener(_updateDragSelection);
 
-    widget.composer?.selection?.addListener(_onSelectionChange);
+    widget.composer?.addListener(_onSelectionChange);
   }
 
   @override
   void didUpdateWidget(DocumentInteractor oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.composer != oldWidget.composer) {
-      oldWidget.composer?.selection?.removeListener(_onSelectionChange);
-      widget.composer?.selection?.addListener(_onSelectionChange);
+      oldWidget.composer?.removeListener(_onSelectionChange);
+      widget.composer?.addListener(_onSelectionChange);
     }
     if (widget.scrollController != oldWidget.scrollController) {
       _scrollController.removeListener(_updateDragSelection);
@@ -93,7 +99,7 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
 
   @override
   void dispose() {
-    widget.composer?.selection?.removeListener(_onSelectionChange);
+    widget.composer?.removeListener(_onSelectionChange);
     _ticker.dispose();
     if (widget.scrollController == null) {
       _scrollController.dispose();
@@ -112,7 +118,7 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
   }
 
   void _ensureSelectionExtentIsVisible() {
-    final selection = widget.composer.selection.value;
+    final selection = widget.composer.selection;
     if (selection == null) {
       return;
     }
@@ -160,11 +166,21 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
 
   KeyEventResult _onKeyPressed(RawKeyEvent keyEvent) {
     print('EditableDocument: onKeyPressed()');
-    widget.composer.onKeyPressed(
-      keyEvent: keyEvent,
-    );
+    if (keyEvent is! RawKeyDownEvent) {
+      return KeyEventResult.handled;
+    }
 
-    return KeyEventResult.handled;
+    ExecutionInstruction instruction = ExecutionInstruction.continueExecution;
+    int index = 0;
+    while (instruction == ExecutionInstruction.continueExecution && index < widget.keyboardActions.length) {
+      instruction = widget.keyboardActions[index].execute(
+        composerContext: widget.composer.composerContext,
+        keyEvent: keyEvent,
+      );
+      index += 1;
+    }
+
+    return instruction == ExecutionInstruction.haltExecution ? KeyEventResult.handled : KeyEventResult.ignored;
   }
 
   void _onTapDown(TapDownDetails details) {
@@ -180,7 +196,7 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
     if (docPosition != null) {
       // Place the document selection at the location where the
       // user tapped.
-      widget.composer.selectPosition(docPosition);
+      _selectPosition(docPosition);
     } else {
       // The user tapped in an area of the editor where there is no content node.
       // Give focus back to the root of the editor.
@@ -199,14 +215,14 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
     print(' - tapped document position: $docPosition');
 
     if (docPosition != null) {
-      final didSelectWord = widget.composer.selectWordAt(
+      final didSelectWord = _selectWordAt(
         docPosition: docPosition,
         docLayout: _layout,
       );
       if (!didSelectWord) {
         // Place the document selection at the location where the
         // user tapped.
-        widget.composer.selectPosition(docPosition);
+        _selectPosition(docPosition);
       }
     } else {
       // The user tapped in an area of the editor where there is no content node.
@@ -230,14 +246,14 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
     print(' - tapped document position: $docPosition');
 
     if (docPosition != null) {
-      final didSelectParagraph = widget.composer.selectParagraphAt(
+      final didSelectParagraph = _selectParagraphAt(
         docPosition: docPosition,
         docLayout: _layout,
       );
       if (!didSelectParagraph) {
         // Place the document selection at the location where the
         // user tapped.
-        widget.composer.selectPosition(docPosition);
+        _selectPosition(docPosition);
       }
     } else {
       // The user tapped in an area of the editor where there is no content node.
@@ -299,6 +315,39 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
     _updateCursorStyle(pointerEvent.localPosition);
   }
 
+  bool _selectWordAt({
+    @required DocumentPosition docPosition,
+    @required DocumentLayout docLayout,
+  }) {
+    final newSelection = getWordSelection(docPosition: docPosition, docLayout: docLayout);
+    if (newSelection != null) {
+      widget.composer.selection = newSelection;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  bool _selectParagraphAt({
+    @required DocumentPosition docPosition,
+    @required DocumentLayout docLayout,
+  }) {
+    final newSelection = getParagraphSelection(docPosition: docPosition, docLayout: docLayout);
+    if (newSelection != null) {
+      widget.composer.selection = newSelection;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  void _selectPosition(DocumentPosition position) {
+    print('Setting document selection to $position');
+    widget.composer.selection = DocumentSelection.collapsed(
+      position: position,
+    );
+  }
+
   void _updateDragSelection() {
     if (_dragStartInDoc == null) {
       return;
@@ -306,12 +355,63 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
 
     _dragEndInDoc = _getDocOffset(_dragEndInViewport);
 
-    widget.composer.selectRegion(
+    _selectRegion(
       documentLayout: _layout,
       baseOffset: _dragStartInDoc,
       extentOffset: _dragEndInDoc,
       selectionType: _selectionType,
     );
+  }
+
+  void _selectRegion({
+    @required DocumentLayout documentLayout,
+    @required Offset baseOffset,
+    @required Offset extentOffset,
+    @required SelectionType selectionType,
+  }) {
+    print('Composer: selectionRegion(). Mode: $selectionType');
+    DocumentSelection selection = documentLayout.getDocumentSelectionInRegion(baseOffset, extentOffset);
+    DocumentPosition basePosition = selection?.base;
+    DocumentPosition extentPosition = selection?.extent;
+    print(' - base: $basePosition, extent: $extentPosition');
+
+    if (basePosition == null || extentPosition == null) {
+      widget.composer.selection = null;
+      return;
+    }
+
+    if (selectionType == SelectionType.paragraph) {
+      final baseParagraphSelection = getParagraphSelection(
+        docPosition: basePosition,
+        docLayout: documentLayout,
+      );
+      basePosition = baseOffset.dy < extentOffset.dy ? baseParagraphSelection.base : baseParagraphSelection.extent;
+      final extentParagraphSelection = getParagraphSelection(
+        docPosition: extentPosition,
+        docLayout: documentLayout,
+      );
+      extentPosition =
+          baseOffset.dy < extentOffset.dy ? extentParagraphSelection.extent : extentParagraphSelection.base;
+    } else if (selectionType == SelectionType.word) {
+      print(' - selecting a word');
+      final baseWordSelection = getWordSelection(
+        docPosition: basePosition,
+        docLayout: documentLayout,
+      );
+      basePosition = baseWordSelection.base;
+
+      final extentWordSelection = getWordSelection(
+        docPosition: extentPosition,
+        docLayout: documentLayout,
+      );
+      extentPosition = extentWordSelection.extent;
+    }
+
+    widget.composer.selection = (DocumentSelection(
+      base: basePosition ?? widget.composer.selection.base,
+      extent: extentPosition ?? widget.composer.selection.extent,
+    ));
+    print('Region selection: ${widget.composer.selection}');
   }
 
   void _clearSelection() {
@@ -605,6 +705,58 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
       size: Size.infinite,
     );
   }
+}
+
+enum SelectionType {
+  position,
+  word,
+  paragraph,
+}
+
+class ComposerKeyboardAction {
+  const ComposerKeyboardAction.simple({
+    @required SimpleComposerKeyboardAction action,
+  }) : _action = action;
+
+  final SimpleComposerKeyboardAction _action;
+
+  /// Executes this action, if the action wants to run, and returns
+  /// a desired `ExecutionInstruction` to either continue or halt
+  /// execution of actions.
+  ///
+  /// It is possible that an action makes changes and then returns
+  /// `ExecutionInstruction.continueExecution` to continue execution.
+  ///
+  /// It is possible that an action does nothing and then returns
+  /// `ExecutionInstruction.haltExecution` to prevent further execution.
+  ExecutionInstruction execute({
+    @required ComposerContext composerContext,
+    @required RawKeyEvent keyEvent,
+  }) {
+    return _action(
+      composerContext: composerContext,
+      keyEvent: keyEvent,
+    );
+  }
+}
+
+/// Executes an action, if the action wants to run, and returns
+/// `true` if further execution should stop, or `false` if further
+/// execution should continue.
+///
+/// It is possible that an action makes changes and then returns
+/// `false` to continue execution.
+///
+/// It is possible that an action does nothing and then returns
+/// `true` to prevent further execution.
+typedef SimpleComposerKeyboardAction = ExecutionInstruction Function({
+  @required ComposerContext composerContext,
+  @required RawKeyEvent keyEvent,
+});
+
+enum ExecutionInstruction {
+  continueExecution,
+  haltExecution,
 }
 
 /// Paints a rectangle border around the given `selectionRect`.

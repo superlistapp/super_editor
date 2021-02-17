@@ -10,7 +10,7 @@ import 'core/document_editor.dart';
 import 'core/document_layout.dart';
 import 'core/document_selection.dart';
 import 'custom_components/text_with_hint.dart';
-import 'default_editor/document_composer_actions.dart';
+import 'default_editor/document_keyboard_actions.dart';
 import 'default_editor/horizontal_rule.dart';
 import 'default_editor/image.dart';
 import 'default_editor/list_items.dart';
@@ -106,16 +106,15 @@ class _EditableDocumentState extends State<EditableDocument> {
   void _createDocumentComposer() {
     print('Creating the document composer');
     if (_documentComposer != null) {
-      _documentComposer.selection.removeListener(_onSelectionChange);
+      _documentComposer.removeListener(_onSelectionChange);
     }
     setState(() {
       _documentComposer = DocumentComposer(
         document: widget.document,
         editor: widget.editor,
         layout: _layout,
-        keyboardActions: _composerKeyboardActions,
       );
-      _documentComposer.selection.addListener(_onSelectionChange);
+      _documentComposer.addListener(_onSelectionChange);
       _onSelectionChange();
     });
   }
@@ -136,12 +135,13 @@ class _EditableDocumentState extends State<EditableDocument> {
     return DocumentInteractor(
       documentLayoutKey: _docLayoutKey,
       composer: _documentComposer,
+      keyboardActions: _composerKeyboardActions,
       showDebugPaint: widget.showDebugPaint,
       // TODO: combine the ValueListenableBuilder and AnimatedBuilder
       //       into a single rebuilder on either event.
-      child: ValueListenableBuilder(
-        valueListenable: _documentComposer?.selection ?? AlwaysStoppedAnimation(0),
-        builder: (context, value, child) {
+      child: AnimatedBuilder(
+        animation: _documentComposer ?? AlwaysStoppedAnimation(0),
+        builder: (context, child) {
           return AnimatedBuilder(
             animation: widget.document,
             builder: (context, child) {
@@ -152,7 +152,7 @@ class _EditableDocumentState extends State<EditableDocument> {
               return DefaultDocumentLayout(
                 key: _docLayoutKey,
                 document: widget.document,
-                documentSelection: _documentComposer?.selection?.value,
+                documentSelection: _documentComposer?.selection,
                 componentBuilder: defaultComponentBuilder,
                 showDebugPaint: widget.showDebugPaint,
               );

@@ -12,6 +12,7 @@ import '../core/document.dart';
 import '../core/document_selection.dart';
 import '../core/attributed_text.dart';
 import '_text_tools.dart';
+import 'document_interaction.dart';
 import 'text.dart';
 import 'list_items.dart';
 

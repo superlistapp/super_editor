@@ -12,6 +12,7 @@ import '../core/document_composer.dart';
 import '../core/document.dart';
 import '../core/document_selection.dart';
 import '_text_tools.dart';
+import 'document_interaction.dart';
 import 'multi_node_editing.dart';
 import 'paragraph.dart';
 import 'text.dart';

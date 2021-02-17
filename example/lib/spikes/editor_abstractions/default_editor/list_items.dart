@@ -10,6 +10,7 @@ import '../core/document_composer.dart';
 import '../core/document_editor.dart';
 import '../core/document.dart';
 import '../core/document_selection.dart';
+import 'document_interaction.dart';
 import 'paragraph.dart';
 import 'text.dart';
 
