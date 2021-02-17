@@ -33,7 +33,7 @@ class DefaultDocumentLayout extends StatefulWidget {
     this.showDebugPaint = false,
   }) : super(key: key);
 
-  final RichTextDocument document;
+  final Document document;
   final DocumentSelection documentSelection;
   final ComponentBuilder componentBuilder;
   final bool showDebugPaint;
@@ -553,7 +553,7 @@ abstract class TextComposable {
 
 typedef ComponentBuilder = Widget Function({
   @required BuildContext context,
-  @required RichTextDocument document,
+  @required Document document,
   @required DocumentNode currentNode,
   @required DocumentNodeSelection nodeSelection,
   @required GlobalKey key,

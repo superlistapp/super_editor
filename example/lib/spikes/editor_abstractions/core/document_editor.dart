@@ -4,10 +4,10 @@ import 'document.dart';
 
 class DocumentEditor {
   DocumentEditor({
-    @required RichTextDocument document,
+    @required Document document,
   }) : _document = document;
 
-  final RichTextDocument _document;
+  final Document _document;
 
   void executeCommand(EditorCommand command) {
     command.execute(_document, this);
@@ -63,5 +63,5 @@ class DocumentEditor {
 }
 
 abstract class EditorCommand {
-  void execute(RichTextDocument document, DocumentEditor editor);
+  void execute(Document document, DocumentEditor editor);
 }

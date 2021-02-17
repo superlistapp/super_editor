@@ -13,7 +13,7 @@ import 'document_selection.dart';
 /// uses that selection to edit the document.
 class DocumentComposer with ChangeNotifier {
   DocumentComposer({
-    @required RichTextDocument document,
+    @required Document document,
     @required DocumentEditor editor,
     @required DocumentLayout layout,
     DocumentSelection initialSelection,
@@ -29,7 +29,7 @@ class DocumentComposer with ChangeNotifier {
     });
   }
 
-  final RichTextDocument _document;
+  final Document _document;
   final DocumentEditor _editor;
   final DocumentLayout _documentLayout;
 
@@ -140,7 +140,7 @@ class ComposerContext {
     @required this.composerPreferences,
   });
 
-  final RichTextDocument document;
+  final Document document;
   final DocumentEditor editor;
   final DocumentLayout documentLayout;
   final ValueNotifier<DocumentSelection> currentSelection;

@@ -4,24 +4,20 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:uuid/uuid.dart';
 
-/// A rich text document.
+/// A document with styled text and multimedia elements.
 ///
-/// A `RichTextDocument` is comprised of a list of `DocumentNode`s,
+/// A `Document` is comprised of a list of `DocumentNode`s,
 /// which describe the type and substance of a piece of content
 /// within the document. For example, a `ParagraphNode` holds a
 /// single paragraph of text within the document.
 ///
-/// The purpose of the `RichTextDocument` is to facilitate the
-/// traversal of content within a rich text document, and edit
-/// the contents.
-///
-/// To represent a specific location within a `RichTextDocument`,
+/// To represent a specific location within a `Document`,
 /// see `DocumentPosition`.
-class RichTextDocument with ChangeNotifier {
+class Document with ChangeNotifier {
   static Uuid _uuid = Uuid();
   static String createNodeId() => _uuid.v4();
 
-  RichTextDocument({
+  Document({
     List<DocumentNode> nodes = const [],
   }) : _nodes = nodes {
     // Register listeners for all initial nodes.

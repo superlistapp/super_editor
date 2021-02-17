@@ -57,7 +57,7 @@ class EditableDocument extends StatefulWidget {
   /// Changing the `document` instance will clear any existing
   /// user selection and replace the entire previous document
   /// with the new one.
-  final RichTextDocument document;
+  final Document document;
 
   /// The `editor` is responsible for performing all content
   /// manipulation operations on the supplied `document`.
@@ -164,7 +164,7 @@ class _EditableDocumentState extends State<EditableDocument> {
 
 final ComponentBuilder defaultComponentBuilder = ({
   @required BuildContext context,
-  @required RichTextDocument document,
+  @required Document document,
   @required DocumentNode currentNode,
   @required DocumentNodeSelection nodeSelection,
   @required GlobalKey key,

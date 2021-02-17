@@ -12,7 +12,7 @@ import '../core/document_selection.dart';
 //      the previous component at the same horizontal location. If
 //      null then cursor is placed at end of previous component.
 void moveCursorToPreviousComponent({
-  @required RichTextDocument document,
+  @required Document document,
   @required DocumentLayout documentLayout,
   @required ValueNotifier<DocumentSelection> currentSelection,
   @required DocumentNode moveFromNode,
@@ -64,7 +64,7 @@ void moveCursorToPreviousComponent({
 }
 
 void moveCursorToNextComponent({
-  @required RichTextDocument document,
+  @required Document document,
   @required DocumentLayout documentLayout,
   @required ValueNotifier<DocumentSelection> currentSelection,
   @required DocumentNode moveFromNode,

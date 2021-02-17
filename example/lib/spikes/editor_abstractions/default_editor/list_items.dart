@@ -209,7 +209,7 @@ class IndentListItemCommand implements EditorCommand {
   final String nodeId;
 
   @override
-  void execute(RichTextDocument document, DocumentEditor editor) {
+  void execute(Document document, DocumentEditor editor) {
     final node = document.getNodeById(nodeId);
     final listItem = node as ListItemNode;
     if (listItem.indent >= 6) {
@@ -229,7 +229,7 @@ class UnIndentListItemCommand implements EditorCommand {
   final String nodeId;
 
   @override
-  void execute(RichTextDocument document, DocumentEditor editor) {
+  void execute(Document document, DocumentEditor editor) {
     final node = document.getNodeById(nodeId);
     final listItem = node as ListItemNode;
     if (listItem.indent > 0) {
@@ -261,7 +261,7 @@ class SplitListItemCommand implements EditorCommand {
   final String newNodeId;
 
   @override
-  void execute(RichTextDocument document, DocumentEditor editor) {
+  void execute(Document document, DocumentEditor editor) {
     final node = document.getNodeById(nodeId);
     final listItemNode = node as ListItemNode;
     final text = listItemNode.text;
@@ -374,7 +374,7 @@ ExecutionInstruction splitListItemWhenEnterPressed({
     return ExecutionInstruction.continueExecution;
   }
 
-  final newNodeId = RichTextDocument.createNodeId();
+  final newNodeId = Document.createNodeId();
 
   composerContext.editor.executeCommand(
     SplitListItemCommand(

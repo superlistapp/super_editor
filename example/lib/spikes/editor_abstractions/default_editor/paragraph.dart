@@ -46,7 +46,7 @@ class CombineParagraphsCommand implements EditorCommand {
   final String firstNodeId;
   final String secondNodeId;
 
-  void execute(RichTextDocument document, DocumentEditor editor) {
+  void execute(Document document, DocumentEditor editor) {
     print('Executing CombineParagraphsCommand');
     print(' - merging "$firstNodeId" <- "$secondNodeId"');
     final secondNode = document.getNodeById(secondNodeId);
@@ -98,7 +98,7 @@ class SplitParagraphCommand implements EditorCommand {
   final TextPosition splitPosition;
   final String newNodeId;
 
-  void execute(RichTextDocument document, DocumentEditor editor) {
+  void execute(Document document, DocumentEditor editor) {
     print('Executing SplitParagraphCommand');
 
     final node = document.getNodeById(nodeId);
@@ -169,7 +169,7 @@ ExecutionInstruction insertCharacterInParagraph({
 
 // TODO: refactor to make prefix matching extensible
 bool _convertParagraphIfDesired({
-  @required RichTextDocument document,
+  @required Document document,
   @required ValueNotifier<DocumentSelection> currentSelection,
   @required ParagraphNode node,
   @required DocumentEditor editor,
@@ -225,7 +225,7 @@ bool _convertParagraphIfDesired({
     editor.insertNodeAt(
       paragraphNodeIndex,
       HorizontalRuleNode(
-        id: RichTextDocument.createNodeId(),
+        id: Document.createNodeId(),
       ),
     );
 
@@ -268,7 +268,7 @@ bool _convertParagraphIfDesired({
 }
 
 Future<void> _processUrlNode({
-  @required RichTextDocument document,
+  @required Document document,
   @required DocumentEditor editor,
   @required String nodeId,
   @required String originalText,
@@ -326,7 +326,7 @@ class DeleteParagraphsCommand implements EditorCommand {
 
   final String nodeId;
 
-  void execute(RichTextDocument document, DocumentEditor editor) {
+  void execute(Document document, DocumentEditor editor) {
     print('Executing DeleteParagraphsCommand');
     print(' - deleting "$nodeId"');
     final node = document.getNodeById(nodeId);
@@ -361,7 +361,7 @@ ExecutionInstruction splitParagraphWhenEnterPressed({
     return ExecutionInstruction.continueExecution;
   }
 
-  final newNodeId = RichTextDocument.createNodeId();
+  final newNodeId = Document.createNodeId();
 
   composerContext.editor.executeCommand(
     SplitParagraphCommand(

@@ -16,7 +16,7 @@ class Editor extends StatefulWidget {
     this.showDebugPaint = false,
   }) : super(key: key);
 
-  final RichTextDocument initialDocument;
+  final Document initialDocument;
   final showDebugPaint;
 
   @override

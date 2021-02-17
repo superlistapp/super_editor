@@ -7,7 +7,7 @@ import '../core/document_selection.dart';
 import 'text.dart';
 
 bool isTextEntryNode({
-  @required RichTextDocument document,
+  @required Document document,
   @required ValueNotifier<DocumentSelection> selection,
 }) {
   final extentPosition = selection.value.extent;

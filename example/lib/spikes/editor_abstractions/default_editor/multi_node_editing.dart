@@ -16,7 +16,7 @@ class DeleteSelectionCommand implements EditorCommand {
 
   final DocumentSelection documentSelection;
 
-  void execute(RichTextDocument document, DocumentEditor editor) {
+  void execute(Document document, DocumentEditor editor) {
     print('DocumentEditor: deleting selection: $documentSelection');
     final nodes = document.getNodesInside(documentSelection.base, documentSelection.extent);
 
@@ -80,7 +80,7 @@ class DeleteSelectionCommand implements EditorCommand {
   }
 
   void _deleteSelectionWithinSingleNode({
-    @required RichTextDocument document,
+    @required Document document,
     @required DocumentSelection documentSelection,
     @required DocumentEditor editor,
     @required DocumentNode node,
@@ -108,7 +108,7 @@ class DeleteSelectionCommand implements EditorCommand {
     }
   }
 
-  void _deleteNodesBetweenFirstAndLast(RichTextDocument document, DocumentRange range, DocumentEditor editor) {
+  void _deleteNodesBetweenFirstAndLast(Document document, DocumentRange range, DocumentEditor editor) {
     // Delete all nodes between the first node and the last node.
     final startPosition = range.start;
     final startNode = document.getNodeById(startPosition.nodeId);
@@ -133,7 +133,7 @@ class DeleteSelectionCommand implements EditorCommand {
   }
 
   void _deleteSelectionWithinNodeFromPositionToEnd({
-    @required RichTextDocument document,
+    @required Document document,
     @required DocumentNode node,
     @required dynamic nodePosition,
     @required DocumentEditor editor,
@@ -155,7 +155,7 @@ class DeleteSelectionCommand implements EditorCommand {
   }
 
   void _deleteSelectionWithinNodeFromStartToPosition({
-    @required RichTextDocument document,
+    @required Document document,
     @required DocumentNode node,
     @required dynamic nodePosition,
     @required DocumentEditor editor,
@@ -177,7 +177,7 @@ class DeleteSelectionCommand implements EditorCommand {
   }
 
   void _deleteBinaryNode({
-    @required RichTextDocument document,
+    @required Document document,
     @required DocumentNode node,
     @required DocumentEditor editor,
   }) {

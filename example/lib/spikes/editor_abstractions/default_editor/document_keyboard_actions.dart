@@ -193,7 +193,7 @@ ExecutionInstruction pasteWhenCmdVIsPressed({
 }
 
 Future<void> _paste({
-  @required RichTextDocument document,
+  @required Document document,
   @required DocumentEditor editor,
   @required DocumentPosition pastePosition,
   @required ValueNotifier<DocumentSelection> currentSelection,
@@ -229,7 +229,7 @@ Future<void> _paste({
           SplitParagraphCommand(
             nodeId: currentNodeWithSelection.id,
             splitPosition: TextPosition(offset: pasteTextOffset),
-            newNodeId: RichTextDocument.createNodeId(),
+            newNodeId: Document.createNodeId(),
           ),
         );
       } else if (currentNodeWithSelection is ListItemNode) {
@@ -237,7 +237,7 @@ Future<void> _paste({
           SplitListItemCommand(
             nodeId: currentNodeWithSelection.id,
             splitPosition: TextPosition(offset: pasteTextOffset),
-            newNodeId: RichTextDocument.createNodeId(),
+            newNodeId: Document.createNodeId(),
           ),
         );
       } else {
@@ -272,7 +272,7 @@ Future<void> _paste({
       .map(
         // TODO: create nodes based on content inspection.
         (nodeText) => ParagraphNode(
-          id: RichTextDocument.createNodeId(),
+          id: Document.createNodeId(),
           text: AttributedText(
             text: nodeText,
           ),
@@ -329,7 +329,7 @@ ExecutionInstruction copyWhenCmdVIsPressed({
 }
 
 Future<void> _copy({
-  @required RichTextDocument document,
+  @required Document document,
   @required DocumentSelection documentSelection,
 }) async {
   final selectedNodes = document.getNodesInside(
@@ -469,7 +469,7 @@ ExecutionInstruction deleteExpandedSelectionWhenCharacterOrDestructiveKeyPressed
 }
 
 DocumentPosition _getDocumentPositionAfterDeletion({
-  @required RichTextDocument document,
+  @required Document document,
   @required DocumentSelection selection,
 }) {
   // Figure out where the caret should appear after the
