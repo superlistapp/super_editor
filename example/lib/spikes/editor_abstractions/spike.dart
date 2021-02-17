@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 
 import 'core/attributed_spans.dart';
-import 'core/document.dart';
 import 'core/attributed_text.dart';
-import 'default_editor/paragraph.dart';
-import 'default_editor/list_items.dart';
-import 'default_editor/image.dart';
+import 'core/document.dart';
+import 'core/document_editor.dart';
 import 'default_editor/horizontal_rule.dart';
+import 'default_editor/image.dart';
+import 'default_editor/list_items.dart';
+import 'default_editor/paragraph.dart';
 import 'editor.dart';
 
 /// Spike:
@@ -86,7 +87,10 @@ class _EditorSpikeState extends State<EditorSpike> {
     return Scaffold(
       appBar: _buildAppBar(),
       body: Editor(
-        initialDocument: _doc,
+        document: _doc,
+        editor: DocumentEditor(
+          document: _doc,
+        ),
         showDebugPaint: _showDebugPaint,
       ),
     );
