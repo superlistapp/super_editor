@@ -38,14 +38,14 @@ class HorizontalRuleComponent extends StatelessWidget {
     @required this.componentKey,
     this.color = Colors.grey,
     this.thickness = 1,
-    this.selectedColor = Colors.blue,
+    this.selectionColor = Colors.blue,
     this.isSelected = false,
   }) : super(key: key);
 
   final GlobalKey componentKey;
   final Color color;
   final double thickness;
-  final Color selectedColor;
+  final Color selectionColor;
   final bool isSelected;
 
   @override
@@ -56,7 +56,7 @@ class HorizontalRuleComponent extends StatelessWidget {
         decoration: BoxDecoration(
           border: Border.all(
             width: 1,
-            color: isSelected ? selectedColor : Colors.transparent,
+            color: isSelected ? selectionColor : Colors.transparent,
           ),
         ),
         child: Divider(

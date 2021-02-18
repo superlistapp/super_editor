@@ -1,3 +1,5 @@
+import 'package:example/spikes/editor_abstractions/core/attributed_text.dart';
+import 'package:example/spikes/editor_abstractions/core/edit_context.dart';
 import 'package:example/spikes/editor_abstractions/default_editor/box_component.dart';
 import 'package:example/spikes/editor_abstractions/default_editor/document_interaction.dart';
 import 'package:flutter/material.dart' hide SelectableText;
@@ -8,14 +10,12 @@ import '../core/document.dart';
 import '../core/document_composer.dart';
 import '../core/document_editor.dart';
 import '../core/document_layout.dart';
-import '../core/document_selection.dart';
 import '../custom_components/text_with_hint.dart';
 import '../default_editor/document_keyboard_actions.dart';
 import '../default_editor/horizontal_rule.dart';
 import '../default_editor/image.dart';
 import '../default_editor/list_items.dart';
 import '../default_editor/paragraph.dart';
-import '../default_editor/styles.dart';
 import '../default_editor/text.dart';
 
 /// A text editor for styled text and multi-media elements.
@@ -48,29 +48,67 @@ class Editor extends StatefulWidget {
     Key key,
     @required Document document,
     @required DocumentEditor editor,
+    @required DocumentComposer composer,
     ScrollController scrollController,
     bool showDebugPaint = false,
   }) {
-    return Editor(
+    return Editor._(
       key: key,
       document: document,
       editor: editor,
+      composer: composer,
       componentBuilder: defaultComponentBuilder,
+      textStyleBuilder: defaultStyleBuilder,
+      selectionStyle: defaultSelectionStyle,
+      keyboardActions: defaultKeyboardActions,
       scrollController: scrollController,
       showDebugPaint: showDebugPaint,
     );
   }
 
-  const Editor({
+  factory Editor.custom({
+    Key key,
+    @required Document document,
+    @required DocumentEditor editor,
+    @required DocumentComposer composer,
+    AttributionStyleBuilder textStyleBuilder,
+    SelectionStyle selectionStyle,
+    List<DocumentKeyboardAction> keyboardActions,
+    ComponentBuilder componentBuilder,
+    ScrollController scrollController,
+    bool showDebugPaint = false,
+  }) {
+    return Editor._(
+      key: key,
+      document: document,
+      editor: editor,
+      composer: composer,
+      componentBuilder: componentBuilder ?? defaultComponentBuilder,
+      textStyleBuilder: textStyleBuilder ?? defaultStyleBuilder,
+      selectionStyle: selectionStyle ?? defaultSelectionStyle,
+      keyboardActions: keyboardActions ?? defaultKeyboardActions,
+      scrollController: scrollController,
+      showDebugPaint: showDebugPaint,
+    );
+  }
+
+  const Editor._({
     Key key,
     @required this.document,
     @required this.editor,
+    @required this.composer,
     @required this.componentBuilder,
+    @required this.textStyleBuilder,
+    @required this.selectionStyle,
+    @required this.keyboardActions,
     this.scrollController,
     this.showDebugPaint = false,
   })  : assert(document != null),
         assert(editor != null),
+        assert(composer != null),
         assert(componentBuilder != null),
+        assert(textStyleBuilder != null),
+        assert(keyboardActions != null),
         super(key: key);
 
   /// The rich text document to be edited within this `EditableDocument`.
@@ -84,10 +122,26 @@ class Editor extends StatefulWidget {
   /// manipulation operations on the supplied `document`.
   final DocumentEditor editor;
 
+  final DocumentComposer composer;
+
   /// Factory that creates instances of each visual component
   /// displayed in the document layout, e.g., paragraph
   /// component, image component, horizontal rule component, etc.
   final ComponentBuilder componentBuilder;
+
+  /// Factory that creates `TextStyle`s based on given
+  /// attributions. An attribution can be anything. It is up
+  /// to the `textStyleBuilder` to interpret attributions
+  /// as desired to produce corresponding styles.
+  final AttributionStyleBuilder textStyleBuilder;
+
+  /// Styles to be applied to selected text.
+  final SelectionStyle selectionStyle;
+
+  /// All actions that this editor takes in response to key
+  /// events, e.g., text entry, newlines, character deletion,
+  /// copy, paste, etc.
+  final List<DocumentKeyboardAction> keyboardActions;
 
   final ScrollController scrollController;
 
@@ -100,71 +154,24 @@ class Editor extends StatefulWidget {
 }
 
 class _EditorState extends State<Editor> {
-  // Holds a reference to the current `Document` and
-  // maintains a `DocumentSelection`. The `DocumentComposer`
-  // is responsible for editing the `RichTextDocument` based on
-  // the current `DocumentSelection`.
-  DocumentComposer _documentComposer;
-
   // GlobalKey used to access the `DocumentLayoutState` to figure
   // out where in the document the user taps or drags.
   final _docLayoutKey = GlobalKey();
-  DocumentLayout get _layout => _docLayoutKey.currentState as DocumentLayout;
-
-  @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
-  void didUpdateWidget(Editor oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.document != oldWidget.document) {
-      _createDocumentComposer();
-    }
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-  }
-
-  void _createDocumentComposer() {
-    print('Creating the document composer');
-    if (_documentComposer != null) {
-      _documentComposer.removeListener(_onSelectionChange);
-    }
-    setState(() {
-      _documentComposer = DocumentComposer(
-        document: widget.document,
-        editor: widget.editor,
-        layout: _layout,
-      );
-      _documentComposer.addListener(_onSelectionChange);
-      _onSelectionChange();
-    });
-  }
-
-  void _onSelectionChange() {
-    print('EditableDocument: _onSelectionChange()');
-    setState(() {});
-  }
 
   @override
   Widget build(BuildContext context) {
-    if (_documentComposer == null) {
-      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-        _createDocumentComposer();
-      });
-    }
-
     return DocumentInteractor(
       documentLayoutKey: _docLayoutKey,
-      composer: _documentComposer,
-      keyboardActions: _composerKeyboardActions,
+      editContext: EditContext(
+        document: widget.document,
+        editor: widget.editor,
+        composer: widget.composer,
+        documentLayout: _docLayoutKey.currentState as DocumentLayout,
+      ),
+      keyboardActions: widget.keyboardActions,
       showDebugPaint: widget.showDebugPaint,
       child: AnimatedBuilder(
-        animation: _documentComposer ?? AlwaysStoppedAnimation(0),
+        animation: widget.composer,
         builder: (context, child) {
           return AnimatedBuilder(
             animation: widget.document,
@@ -176,8 +183,12 @@ class _EditorState extends State<Editor> {
               return DefaultDocumentLayout(
                 key: _docLayoutKey,
                 document: widget.document,
-                documentSelection: _documentComposer?.selection,
+                documentSelection: widget.composer.selection,
                 componentBuilder: widget.componentBuilder,
+                extensions: {
+                  textStylesExtensionKey: widget.textStyleBuilder,
+                  selectionStylesExtensionKey: widget.selectionStyle,
+                },
                 showDebugPaint: widget.showDebugPaint,
               );
             },
@@ -188,24 +199,86 @@ class _EditorState extends State<Editor> {
   }
 }
 
-final ComponentBuilder defaultComponentBuilder = ({
-  @required BuildContext context,
-  @required Document document,
-  @required DocumentNode currentNode,
-  @required DocumentNodeSelection nodeSelection,
-  @required GlobalKey key,
-  bool showDebugPaint = false,
-}) {
-  print('Building a document component for node: ${currentNode.id}');
-  if (currentNode is ParagraphNode) {
-    final textSelection = nodeSelection == null || nodeSelection.nodeSelection is! TextSelection
-        ? null
-        : nodeSelection.nodeSelection as TextSelection;
-    if (nodeSelection != null && nodeSelection.nodeSelection is! TextSelection) {
-      print('ERROR: Building a paragraph component but the selection is not a TextSelection: ${currentNode.id}');
+/// The key in the `extensions` map that corresponds to the
+/// text style builder within the `ComponentContext` that
+/// is used to build each component in the document layout.
+final String textStylesExtensionKey = 'editor.text_styles';
+
+/// The key in the `extensions` map that corresponds to the
+/// styles applied to selected content.
+final String selectionStylesExtensionKey = 'editor.selection_styles';
+
+class SelectionStyle {
+  const SelectionStyle({
+    this.textCaretColor,
+    this.selectionColor,
+  });
+
+  final Color textCaretColor;
+  final Color selectionColor;
+}
+
+final defaultSelectionStyle = const SelectionStyle(
+  textCaretColor: Colors.black,
+  selectionColor: Colors.lightBlueAccent,
+);
+
+/// Creates `TextStyles` for the standard `Editor`.
+TextStyle defaultStyleBuilder(Set<dynamic> attributions) {
+  TextStyle newStyle = TextStyle(
+    color: Colors.black,
+    fontSize: 13,
+    height: 1.4,
+  );
+
+  for (final attribution in attributions) {
+    if (attribution is! String) {
+      continue;
     }
-    final hasCursor = nodeSelection != null ? nodeSelection.isExtent : false;
-    final highlightWhenEmpty = nodeSelection == null ? false : nodeSelection.highlightWhenEmpty;
+
+    switch (attribution) {
+      case 'header1':
+        newStyle = newStyle.copyWith(
+          fontSize: 24,
+          fontWeight: FontWeight.bold,
+          height: 1.0,
+        );
+        break;
+      case 'bold':
+        newStyle = newStyle.copyWith(
+          fontWeight: FontWeight.bold,
+        );
+        break;
+      case 'italics':
+        newStyle = newStyle.copyWith(
+          fontStyle: FontStyle.italic,
+        );
+        break;
+      case 'strikethrough':
+        newStyle = newStyle.copyWith(
+          decoration: TextDecoration.lineThrough,
+        );
+        break;
+    }
+  }
+  return newStyle;
+}
+
+/// Creates visual components for the standard `Editor`.
+final ComponentBuilder defaultComponentBuilder = (componentContext) {
+  print('Building a document component for node: ${componentContext.currentNode.id}');
+  if (componentContext.currentNode is ParagraphNode) {
+    final textSelection =
+        componentContext.nodeSelection == null || componentContext.nodeSelection.nodeSelection is! TextSelection
+            ? null
+            : componentContext.nodeSelection.nodeSelection as TextSelection;
+    if (componentContext.nodeSelection != null && componentContext.nodeSelection.nodeSelection is! TextSelection) {
+      print(
+          'ERROR: Building a paragraph component but the selection is not a TextSelection: ${componentContext.currentNode.id}');
+    }
+    final hasCursor = componentContext.nodeSelection != null ? componentContext.nodeSelection.isExtent : false;
+    final highlightWhenEmpty =
+        componentContext.nodeSelection == null ? false : componentContext.nodeSelection.highlightWhenEmpty;
 
     // print(' - ${docNode.id}: ${selectedNode?.nodeSelection}');
     // if (hasCursor) {
@@ -217,7 +290,7 @@ final ComponentBuilder defaultComponentBuilder = ({
     print('   - extent: ${textSelection?.extent}');
 
     TextAlign textAlign = TextAlign.left;
-    final textAlignName = currentNode.metadata['textAlign'];
+    final textAlignName = (componentContext.currentNode as TextNode).metadata['textAlign'];
     switch (textAlignName) {
       case 'left':
         textAlign = TextAlign.left;
@@ -233,109 +306,128 @@ final ComponentBuilder defaultComponentBuilder = ({
         break;
     }
 
-    if (document.getNodeIndex(currentNode) == 0 && currentNode.text.text.isEmpty && !hasCursor) {
+    if (componentContext.document.getNodeIndex(componentContext.currentNode) == 0 &&
+        (componentContext.currentNode as TextNode).text.text.isEmpty &&
+        !hasCursor) {
       print(' - this is the title node');
       return TextWithHintComponent(
-        documentComponentKey: key,
-        text: currentNode.text,
-        styleBuilder: defaultStyleBuilder,
-        metadata: currentNode.metadata,
+        documentComponentKey: componentContext.componentKey,
+        text: (componentContext.currentNode as TextNode).text,
+        styleBuilder: componentContext.extensions[textStylesExtensionKey],
+        metadata: (componentContext.currentNode as TextNode).metadata,
         hintText: 'Enter your title',
         textAlign: textAlign,
         textSelection: textSelection,
         hasCursor: hasCursor,
         highlightWhenEmpty: highlightWhenEmpty,
-        showDebugPaint: showDebugPaint,
+        showDebugPaint: componentContext.showDebugPaint,
       );
-    } else if (document.nodes.length <= 2 &&
-        document.getNodeIndex(currentNode) == 1 &&
-        currentNode.text.text.isEmpty &&
+    } else if (componentContext.document.nodes.length <= 2 &&
+        componentContext.document.getNodeIndex(componentContext.currentNode) == 1 &&
+        (componentContext.currentNode as TextNode).text.text.isEmpty &&
         !hasCursor) {
       print(' - this is the 1st paragraph node');
       return TextWithHintComponent(
-        documentComponentKey: key,
-        text: currentNode.text,
-        styleBuilder: defaultStyleBuilder,
-        metadata: currentNode.metadata,
+        documentComponentKey: componentContext.componentKey,
+        text: (componentContext.currentNode as TextNode).text,
+        styleBuilder: componentContext.extensions[textStylesExtensionKey],
+        metadata: (componentContext.currentNode as TextNode).metadata,
         hintText: 'Enter your content...',
         textAlign: textAlign,
         textSelection: textSelection,
         hasCursor: hasCursor,
         highlightWhenEmpty: highlightWhenEmpty,
-        showDebugPaint: showDebugPaint,
+        showDebugPaint: componentContext.showDebugPaint,
       );
     } else {
+      print(
+          'Building text component with caret color: ${(componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle).textCaretColor}');
+
       return TextComponent(
-        key: key,
-        text: currentNode.text,
-        styleBuilder: defaultStyleBuilder,
-        metadata: currentNode.metadata,
+        key: componentContext.componentKey,
+        text: (componentContext.currentNode as TextNode).text,
+        textStyleBuilder: componentContext.extensions[textStylesExtensionKey],
+        metadata: (componentContext.currentNode as TextNode).metadata,
         textAlign: textAlign,
         textSelection: textSelection,
-        hasCursor: hasCursor,
+        selectionColor: (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle).selectionColor,
+        hasCaret: hasCursor,
+        caretColor: (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle).textCaretColor,
         highlightWhenEmpty: highlightWhenEmpty,
-        showDebugPaint: showDebugPaint,
+        showDebugPaint: componentContext.showDebugPaint,
       );
     }
-  } else if (currentNode is ImageNode) {
-    final selection = nodeSelection == null ? null : nodeSelection.nodeSelection as BinarySelection;
+  } else if (componentContext.currentNode is ImageNode) {
+    final selection =
+        componentContext.nodeSelection == null ? null : componentContext.nodeSelection.nodeSelection as BinarySelection;
     final isSelected = selection != null && selection.position.isIncluded;
 
     return ImageComponent(
-      componentKey: key,
-      imageUrl: currentNode.imageUrl,
+      componentKey: componentContext.componentKey,
+      imageUrl: (componentContext.currentNode as ImageNode).imageUrl,
       isSelected: isSelected,
+      selectionColor: (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle).selectionColor,
     );
-  } else if (currentNode is ListItemNode && currentNode.type == ListItemType.unordered) {
-    final textSelection = nodeSelection == null ? null : nodeSelection.nodeSelection as TextSelection;
-    final hasCursor = nodeSelection != null ? nodeSelection.isExtent : false;
+  } else if (componentContext.currentNode is ListItemNode &&
+      (componentContext.currentNode as ListItemNode).type == ListItemType.unordered) {
+    final textSelection =
+        componentContext.nodeSelection == null ? null : componentContext.nodeSelection.nodeSelection as TextSelection;
+    final hasCursor = componentContext.nodeSelection != null ? componentContext.nodeSelection.isExtent : false;
 
     return UnorderedListItemComponent(
-      textKey: key,
-      text: currentNode.text,
-      styleBuilder: defaultStyleBuilder,
-      indent: currentNode.indent,
+      textKey: componentContext.componentKey,
+      text: (componentContext.currentNode as ListItemNode).text,
+      styleBuilder: componentContext.extensions[textStylesExtensionKey],
+      indent: (componentContext.currentNode as ListItemNode).indent,
       textSelection: textSelection,
-      hasCursor: hasCursor,
-      showDebugPaint: showDebugPaint,
+      selectionColor: (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle).selectionColor,
+      hasCaret: hasCursor,
+      caretColor: (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle).textCaretColor,
+      showDebugPaint: componentContext.showDebugPaint,
     );
-  } else if (currentNode is ListItemNode && currentNode.type == ListItemType.ordered) {
+  } else if (componentContext.currentNode is ListItemNode &&
+      (componentContext.currentNode as ListItemNode).type == ListItemType.ordered) {
     int index = 1;
-    DocumentNode nodeAbove = document.getNodeBefore(currentNode);
+    DocumentNode nodeAbove = componentContext.document.getNodeBefore(componentContext.currentNode);
     while (nodeAbove != null &&
         nodeAbove is ListItemNode &&
         nodeAbove.type == ListItemType.ordered &&
-        nodeAbove.indent >= currentNode.indent) {
-      if ((nodeAbove as ListItemNode).indent == currentNode.indent) {
+        nodeAbove.indent >= (componentContext.currentNode as ListItemNode).indent) {
+      if ((nodeAbove as ListItemNode).indent == (componentContext.currentNode as ListItemNode).indent) {
         index += 1;
       }
-      nodeAbove = document.getNodeBefore(nodeAbove);
+      nodeAbove = componentContext.document.getNodeBefore(nodeAbove);
     }
 
-    final textSelection = nodeSelection == null ? null : nodeSelection.nodeSelection as TextSelection;
-    final hasCursor = nodeSelection != null ? nodeSelection.isExtent : false;
+    final textSelection =
+        componentContext.nodeSelection == null ? null : componentContext.nodeSelection.nodeSelection as TextSelection;
+    final hasCursor = componentContext.nodeSelection != null ? componentContext.nodeSelection.isExtent : false;
 
     return OrderedListItemComponent(
-      textKey: key,
+      textKey: componentContext.componentKey,
       listIndex: index,
-      text: currentNode.text,
-      styleBuilder: defaultStyleBuilder,
+      text: (componentContext.currentNode as ListItemNode).text,
+      styleBuilder: componentContext.extensions[textStylesExtensionKey],
       textSelection: textSelection,
-      hasCursor: hasCursor,
-      indent: currentNode.indent,
-      showDebugPaint: showDebugPaint,
+      selectionColor: (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle).selectionColor,
+      hasCaret: hasCursor,
+      caretColor: (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle).textCaretColor,
+      indent: (componentContext.currentNode as ListItemNode).indent,
+      showDebugPaint: componentContext.showDebugPaint,
     );
-  } else if (currentNode is HorizontalRuleNode) {
-    final selection = nodeSelection == null ? null : nodeSelection.nodeSelection as BinarySelection;
+  } else if (componentContext.currentNode is HorizontalRuleNode) {
+    final selection =
+        componentContext.nodeSelection == null ? null : componentContext.nodeSelection.nodeSelection as BinarySelection;
     final isSelected = selection != null && selection.position.isIncluded;
 
     return HorizontalRuleComponent(
-      componentKey: key,
+      componentKey: componentContext.componentKey,
       isSelected: isSelected,
+      selectionColor: (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle).selectionColor,
     );
   } else {
     return SizedBox(
-      key: key,
+      key: componentContext.componentKey,
       width: double.infinity,
       height: 100,
       child: Placeholder(),
@@ -343,71 +435,72 @@ final ComponentBuilder defaultComponentBuilder = ({
   }
 };
 
-final _composerKeyboardActions = <ComposerKeyboardAction>[
-  ComposerKeyboardAction.simple(
+/// Keyboard actions for the standard `Editor`.
+final defaultKeyboardActions = <DocumentKeyboardAction>[
+  DocumentKeyboardAction.simple(
     action: doNothingWhenThereIsNoSelection,
   ),
-  ComposerKeyboardAction.simple(
+  DocumentKeyboardAction.simple(
     action: indentListItemWhenBackspaceIsPressed,
   ),
-  ComposerKeyboardAction.simple(
+  DocumentKeyboardAction.simple(
     action: unindentListItemWhenBackspaceIsPressed,
   ),
-  ComposerKeyboardAction.simple(
+  DocumentKeyboardAction.simple(
     action: splitListItemWhenEnterPressed,
   ),
-  ComposerKeyboardAction.simple(
+  DocumentKeyboardAction.simple(
     action: pasteWhenCmdVIsPressed,
   ),
-  ComposerKeyboardAction.simple(
+  DocumentKeyboardAction.simple(
     action: copyWhenCmdVIsPressed,
   ),
-  ComposerKeyboardAction.simple(
+  DocumentKeyboardAction.simple(
     action: applyBoldWhenCmdBIsPressed,
   ),
-  ComposerKeyboardAction.simple(
+  DocumentKeyboardAction.simple(
     action: applyItalicsWhenCmdIIsPressed,
   ),
-  ComposerKeyboardAction.simple(
+  DocumentKeyboardAction.simple(
     action: collapseSelectionWhenDirectionalKeyIsPressed,
   ),
-  ComposerKeyboardAction.simple(
+  DocumentKeyboardAction.simple(
     action: deleteExpandedSelectionWhenCharacterOrDestructiveKeyPressed,
   ),
-  ComposerKeyboardAction.simple(
+  DocumentKeyboardAction.simple(
     action: deleteBoxWhenBackspaceOrDeleteIsPressed,
   ),
-  ComposerKeyboardAction.simple(
+  DocumentKeyboardAction.simple(
     action: insertCharacterInParagraph,
   ),
-  ComposerKeyboardAction.simple(
+  DocumentKeyboardAction.simple(
     action: insertCharacterInTextComposable,
   ),
-  ComposerKeyboardAction.simple(
+  DocumentKeyboardAction.simple(
     action: insertNewlineInParagraph,
   ),
-  ComposerKeyboardAction.simple(
+  DocumentKeyboardAction.simple(
     action: splitParagraphWhenEnterPressed,
   ),
-  ComposerKeyboardAction.simple(
+  DocumentKeyboardAction.simple(
     action: deleteCharacterWhenBackspaceIsPressed,
   ),
-  ComposerKeyboardAction.simple(
+  DocumentKeyboardAction.simple(
     action: mergeNodeWithPreviousWhenBackspaceIsPressed,
   ),
-  ComposerKeyboardAction.simple(
+  DocumentKeyboardAction.simple(
     action: deleteEmptyParagraphWhenBackspaceIsPressed,
   ),
-  ComposerKeyboardAction.simple(
+  DocumentKeyboardAction.simple(
     action: moveParagraphSelectionUpWhenBackspaceIsPressed,
   ),
-  ComposerKeyboardAction.simple(
+  DocumentKeyboardAction.simple(
     action: deleteCharacterWhenDeleteIsPressed,
   ),
-  ComposerKeyboardAction.simple(
+  DocumentKeyboardAction.simple(
     action: mergeNodeWithNextWhenDeleteIsPressed,
   ),
-  ComposerKeyboardAction.simple(
+  DocumentKeyboardAction.simple(
     action: moveUpDownLeftAndRightWithArrowKeys,
   ),
 ];

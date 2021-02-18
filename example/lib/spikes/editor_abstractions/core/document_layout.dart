@@ -30,12 +30,20 @@ class DefaultDocumentLayout extends StatefulWidget {
     @required this.document,
     @required this.documentSelection,
     @required this.componentBuilder,
+    this.extensions = const {},
     this.showDebugPaint = false,
   }) : super(key: key);
 
   final Document document;
   final DocumentSelection documentSelection;
   final ComponentBuilder componentBuilder;
+
+  /// Tools that components might use to build themselves.
+  ///
+  /// `extensions` is used to provide text components with
+  /// a default text styler. `extensions` can be used to
+  /// pass anything else that a component might expect.
+  final Map<String, dynamic> extensions;
   final bool showDebugPaint;
 
   @override
@@ -312,14 +320,15 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> with Docu
         nodeId: docNode.id,
       );
 
-      final component = widget.componentBuilder(
+      final component = widget.componentBuilder(ComponentContext(
         context: context,
         document: widget.document,
         currentNode: docNode,
-        key: componentKey,
+        componentKey: componentKey,
         nodeSelection: nodeSelection,
+        extensions: widget.extensions,
         showDebugPaint: widget.showDebugPaint,
-      );
+      ));
 
       docComponents.add(component);
     }
@@ -551,11 +560,24 @@ abstract class TextComposable {
   dynamic getPositionAtStartOfLine(dynamic nodePosition);
 }
 
-typedef ComponentBuilder = Widget Function({
-  @required BuildContext context,
-  @required Document document,
-  @required DocumentNode currentNode,
-  @required DocumentNodeSelection nodeSelection,
-  @required GlobalKey key,
-  bool showDebugPaint,
-});
+typedef ComponentBuilder = Widget Function(ComponentContext);
+
+class ComponentContext {
+  const ComponentContext({
+    @required this.context,
+    @required this.document,
+    @required this.currentNode,
+    @required this.nodeSelection,
+    @required this.componentKey,
+    this.extensions = const {},
+    @required this.showDebugPaint,
+  });
+
+  final BuildContext context;
+  final Document document;
+  final DocumentNode currentNode;
+  final DocumentNodeSelection nodeSelection;
+  final GlobalKey componentKey;
+  final Map<String, dynamic> extensions;
+  final bool showDebugPaint;
+}

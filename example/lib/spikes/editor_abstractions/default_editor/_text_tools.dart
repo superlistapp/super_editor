@@ -8,9 +8,9 @@ import 'text.dart';
 
 bool isTextEntryNode({
   @required Document document,
-  @required ValueNotifier<DocumentSelection> selection,
+  @required DocumentSelection selection,
 }) {
-  final extentPosition = selection.value.extent;
+  final extentPosition = selection.extent;
   final extentNode = document.getNodeById(extentPosition.nodeId);
   return extentNode is TextNode;
 }

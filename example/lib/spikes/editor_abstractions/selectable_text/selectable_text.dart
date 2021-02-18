@@ -22,7 +22,9 @@ class SelectableText extends StatefulWidget {
     String text,
     this.textAlign = TextAlign.left,
     this.textSelection = const TextSelection.collapsed(offset: -1),
-    this.hasCursor = false,
+    this.selectionColor = Colors.lightBlueAccent,
+    this.hasCaret = false,
+    this.caretColor = Colors.black,
     TextStyle style,
     this.highlightWhenEmpty = false,
     this.showDebugPaint = false,
@@ -35,7 +37,9 @@ class SelectableText extends StatefulWidget {
     TextSpan richText,
     this.textAlign = TextAlign.left,
     this.textSelection = const TextSelection.collapsed(offset: -1),
-    this.hasCursor = false,
+    this.selectionColor = Colors.lightBlueAccent,
+    this.hasCaret = false,
+    this.caretColor = Colors.black,
     this.highlightWhenEmpty = false,
     this.showDebugPaint = false,
   })  : richText = richText,
@@ -46,7 +50,9 @@ class SelectableText extends StatefulWidget {
   final int textLength;
   final TextAlign textAlign;
   final TextSelection textSelection;
-  final bool hasCursor;
+  final Color selectionColor;
+  final bool hasCaret;
+  final Color caretColor;
   final bool highlightWhenEmpty;
   final bool showDebugPaint;
 
@@ -278,7 +284,8 @@ class SelectableTextState extends State<SelectableText> with SingleTickerProvide
               selection: widget.textSelection,
               emptySelectionHeight: _lineHeight,
               highlightWhenEmpty: widget.highlightWhenEmpty,
-              selectionColor: widget.showDebugPaint ? Colors.lightGreenAccent : Colors.lightBlueAccent),
+              // TODO: remove debug paint concept out of widget and let parent provide differences
+              selectionColor: widget.showDebugPaint ? Colors.lightGreenAccent : widget.selectionColor),
         ),
         RichText(
           key: _textKey,
@@ -292,9 +299,10 @@ class SelectableTextState extends State<SelectableText> with SingleTickerProvide
             cursorOffset: widget.textSelection != null ? widget.textSelection.extentOffset : -1,
             lineHeight: _lineHeight,
             caretHeight: (_lineHeight) * (widget.showDebugPaint ? 1.2 : 0.8),
-            caretColor: widget.showDebugPaint ? Colors.red : Colors.black,
+            // TODO: remove debug paint concept out of widget and let parent provide differences
+            caretColor: widget.showDebugPaint ? Colors.red : widget.caretColor,
             isTextEmpty: widget.richText == null || widget.richText.toPlainText().isEmpty,
-            showCursor: widget.hasCursor,
+            showCursor: widget.hasCaret,
           ),
         ),
       ],

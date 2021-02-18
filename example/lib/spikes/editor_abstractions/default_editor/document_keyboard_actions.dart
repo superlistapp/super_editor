@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:example/spikes/editor_abstractions/core/attributed_text.dart';
 import 'package:example/spikes/editor_abstractions/core/document_editor.dart';
+import 'package:example/spikes/editor_abstractions/core/edit_context.dart';
 import 'package:example/spikes/editor_abstractions/default_editor/box_component.dart';
 import 'package:example/spikes/editor_abstractions/default_editor/list_items.dart';
 import 'package:flutter/material.dart';
@@ -27,7 +28,7 @@ import 'text.dart';
 //   @required ComposerContext composerContext,
 //   @required RawKeyEvent keyEvent,
 // }) {
-//   if (composerContext.currentSelection.value == null) {
+//   if (composerContext.composer.selection == null) {
 //     return ExecutionInstruction.continueExecution;
 //   }
 //
@@ -37,8 +38,8 @@ import 'text.dart';
 //     return ExecutionInstruction.continueExecution;
 //   }
 //
-//   final baseDocPosition = composerContext.currentSelection.value.base;
-//   final extentDocPosition = composerContext.currentSelection.value.extent;
+//   final baseDocPosition = composerContext.composer.selection.base;
+//   final extentDocPosition = composerContext.composer.selection.extent;
 //   final selectedNodes = composerContext.document.getNodesInside(baseDocPosition, extentDocPosition);
 //
 //   final titleNode = composerContext.document.nodes.first;
@@ -54,7 +55,7 @@ import 'text.dart';
 //     return ExecutionInstruction.continueExecution;
 //   }
 //
-//   if (composerContext.currentSelection.value.isCollapsed) {
+//   if (composerContext.composer.selection.isCollapsed) {
 //     if (composerContext.document.nodes.length > 2) {
 //       // With more than 2 nodes, and a collapsed selection, no
 //       // matter what the user does, there will be at least 2 nodes
@@ -72,7 +73,7 @@ import 'text.dart';
 //     //    paragraph, which will combine it with the title, and there
 //     //    are no paragraphs after the first one.
 //     final title = (titleNode as TextNode).text;
-//     final titleTextPosition = composerContext.currentSelection.value.extent.nodePosition as TextPosition;
+//     final titleTextPosition = composerContext.composer.selection.extent.nodePosition as TextPosition;
 //     if (isTitleInSelection &&
 //         titleTextPosition.offset == title.text.length &&
 //         keyEvent.logicalKey == LogicalKeyboardKey.delete) {
@@ -80,7 +81,7 @@ import 'text.dart';
 //       return ExecutionInstruction.haltExecution;
 //     }
 //
-//     final firstParagraphTextPosition = composerContext.currentSelection.value.extent.nodePosition as TextPosition;
+//     final firstParagraphTextPosition = composerContext.composer.selection.extent.nodePosition as TextPosition;
 //     if (isFirstParagraphInSelection &&
 //         firstParagraphTextPosition.offset == 0 &&
 //         keyEvent.logicalKey == LogicalKeyboardKey.backspace) {
@@ -123,10 +124,10 @@ import 'text.dart';
 // }
 
 ExecutionInstruction doNothingWhenThereIsNoSelection({
-  @required ComposerContext composerContext,
+  @required EditContext editContext,
   @required RawKeyEvent keyEvent,
 }) {
-  if (composerContext.currentSelection.value == null) {
+  if (editContext.composer.selection == null) {
     print(' - no selection. Returning.');
     return ExecutionInstruction.haltExecution;
   } else {
@@ -135,7 +136,7 @@ ExecutionInstruction doNothingWhenThereIsNoSelection({
 }
 
 ExecutionInstruction collapseSelectionWhenDirectionalKeyIsPressed({
-  @required ComposerContext composerContext,
+  @required EditContext editContext,
   @required RawKeyEvent keyEvent,
 }) {
   final isDirectionalKey = keyEvent.logicalKey == LogicalKeyboardKey.arrowLeft ||
@@ -143,14 +144,14 @@ ExecutionInstruction collapseSelectionWhenDirectionalKeyIsPressed({
       keyEvent.logicalKey == LogicalKeyboardKey.arrowUp ||
       keyEvent.logicalKey == LogicalKeyboardKey.arrowDown;
   print(' - is directional key? $isDirectionalKey');
-  print(' - is editor selection collapsed? ${composerContext.currentSelection.value.isCollapsed}');
+  print(' - is editor selection collapsed? ${editContext.composer.selection.isCollapsed}');
   print(' - is shift pressed? ${keyEvent.isShiftPressed}');
   if (isDirectionalKey &&
-      !composerContext.currentSelection.value.isCollapsed &&
+      !editContext.composer.selection.isCollapsed &&
       !keyEvent.isShiftPressed &&
       !keyEvent.isMetaPressed) {
     print('Collapsing editor selection, then returning.');
-    composerContext.currentSelection.value = composerContext.currentSelection.value.collapse();
+    editContext.composer.selection = editContext.composer.selection.collapse();
 
     return ExecutionInstruction.haltExecution;
   } else {
@@ -159,7 +160,7 @@ ExecutionInstruction collapseSelectionWhenDirectionalKeyIsPressed({
 }
 
 ExecutionInstruction pasteWhenCmdVIsPressed({
-  @required ComposerContext composerContext,
+  @required EditContext editContext,
   @required RawKeyEvent keyEvent,
 }) {
   if (!keyEvent.isMetaPressed || keyEvent.character?.toLowerCase() != 'v') {
@@ -167,36 +168,36 @@ ExecutionInstruction pasteWhenCmdVIsPressed({
   }
 
   print('Pasting clipboard content...');
-  DocumentPosition pastePosition = composerContext.currentSelection.value.extent;
+  DocumentPosition pastePosition = editContext.composer.selection.extent;
 
   // Delete all currently selected content.
-  if (!composerContext.currentSelection.value.isCollapsed) {
+  if (!editContext.composer.selection.isCollapsed) {
     pastePosition = _getDocumentPositionAfterDeletion(
-      document: composerContext.document,
-      selection: composerContext.currentSelection.value,
+      document: editContext.document,
+      selection: editContext.composer.selection,
     );
 
     // Delete the selected content.
-    composerContext.editor.executeCommand(
-      DeleteSelectionCommand(documentSelection: composerContext.currentSelection.value),
+    editContext.editor.executeCommand(
+      DeleteSelectionCommand(documentSelection: editContext.composer.selection),
     );
   }
 
   // TODO: figure out a general approach for asynchronous behaviors that
   //       need to be carried out in response to user input.
   _paste(
-    document: composerContext.document,
-    editor: composerContext.editor,
+    document: editContext.document,
+    editor: editContext.editor,
+    composer: editContext.composer,
     pastePosition: pastePosition,
-    currentSelection: composerContext.currentSelection,
   );
 }
 
 Future<void> _paste({
   @required Document document,
   @required DocumentEditor editor,
+  @required DocumentComposer composer,
   @required DocumentPosition pastePosition,
-  @required ValueNotifier<DocumentSelection> currentSelection,
 }) async {
   final content = (await Clipboard.getData('text/plain')).text;
   print('Content from clipboard:');
@@ -300,22 +301,22 @@ Future<void> _paste({
     );
   }
 
-  currentSelection.value = DocumentSelection.collapsed(
+  composer.selection = DocumentSelection.collapsed(
     position: newSelectionPosition,
   );
-  print(' - new selection: ${currentSelection.value}');
+  print(' - new selection: ${composer.selection}');
 
   print('Done with paste command.');
 }
 
 ExecutionInstruction copyWhenCmdVIsPressed({
-  @required ComposerContext composerContext,
+  @required EditContext editContext,
   @required RawKeyEvent keyEvent,
 }) {
   if (!keyEvent.isMetaPressed || keyEvent.character?.toLowerCase() != 'c') {
     return ExecutionInstruction.continueExecution;
   }
-  if (composerContext.currentSelection.value.isCollapsed) {
+  if (editContext.composer.selection.isCollapsed) {
     // Nothing to copy, but we technically handled the task.
     return ExecutionInstruction.haltExecution;
   }
@@ -323,9 +324,11 @@ ExecutionInstruction copyWhenCmdVIsPressed({
   // TODO: figure out a general approach for asynchronous behaviors that
   //       need to be carried out in response to user input.
   _copy(
-    document: composerContext.document,
-    documentSelection: composerContext.currentSelection.value,
+    document: editContext.document,
+    documentSelection: editContext.composer.selection,
   );
+
+  return ExecutionInstruction.haltExecution;
 }
 
 Future<void> _copy({
@@ -387,59 +390,59 @@ Future<void> _copy({
 }
 
 ExecutionInstruction applyBoldWhenCmdBIsPressed({
-  @required ComposerContext composerContext,
+  @required EditContext editContext,
   @required RawKeyEvent keyEvent,
 }) {
   if (keyEvent.character?.toLowerCase() != 'b' || !keyEvent.isMetaPressed) {
     return ExecutionInstruction.continueExecution;
   }
 
-  if (composerContext.currentSelection.value.isCollapsed) {
-    composerContext.composerPreferences.toggleStyle('bold');
+  if (editContext.composer.selection.isCollapsed) {
+    editContext.composer.preferences.toggleStyle('bold');
     return ExecutionInstruction.haltExecution;
   }
 
   // Toggle the selected content with a bold attribution.
-  composerContext.editor.executeCommand(
+  editContext.editor.executeCommand(
     ToggleTextAttributionsCommand(
-      documentSelection: composerContext.currentSelection.value,
+      documentSelection: editContext.composer.selection,
       attributions: {'bold'},
     ),
   );
 
-  composerContext.currentSelection.notifyListeners();
+  editContext.composer.notifyListeners();
 
   return ExecutionInstruction.haltExecution;
 }
 
 ExecutionInstruction applyItalicsWhenCmdIIsPressed({
-  @required ComposerContext composerContext,
+  @required EditContext editContext,
   @required RawKeyEvent keyEvent,
 }) {
   if (keyEvent.character?.toLowerCase() != 'i' || !keyEvent.isMetaPressed) {
     return ExecutionInstruction.continueExecution;
   }
 
-  if (composerContext.currentSelection.value.isCollapsed) {
-    composerContext.composerPreferences.toggleStyle('italics');
+  if (editContext.composer.selection.isCollapsed) {
+    editContext.composer.preferences.toggleStyle('italics');
     return ExecutionInstruction.haltExecution;
   }
 
   // Toggle the selected content with a bold attribution.
-  composerContext.editor.executeCommand(
+  editContext.editor.executeCommand(
     ToggleTextAttributionsCommand(
-      documentSelection: composerContext.currentSelection.value,
+      documentSelection: editContext.composer.selection,
       attributions: {'italics'},
     ),
   );
 
-  composerContext.currentSelection.notifyListeners();
+  editContext.composer.notifyListeners();
 
   return ExecutionInstruction.haltExecution;
 }
 
 ExecutionInstruction deleteExpandedSelectionWhenCharacterOrDestructiveKeyPressed({
-  @required ComposerContext composerContext,
+  @required EditContext editContext,
   @required RawKeyEvent keyEvent,
 }) {
   // Handle delete and backspace for a selection.
@@ -448,22 +451,22 @@ ExecutionInstruction deleteExpandedSelectionWhenCharacterOrDestructiveKeyPressed
       keyEvent.logicalKey == LogicalKeyboardKey.backspace || keyEvent.logicalKey == LogicalKeyboardKey.delete;
   final shouldDeleteSelection = isDestructiveKey || isCharacterKey(keyEvent.logicalKey);
 
-  if (composerContext.currentSelection.value.isCollapsed || !shouldDeleteSelection) {
+  if (editContext.composer.selection.isCollapsed || !shouldDeleteSelection) {
     return ExecutionInstruction.continueExecution;
   }
 
   final newSelectionPosition = _getDocumentPositionAfterDeletion(
-    document: composerContext.document,
-    selection: composerContext.currentSelection.value,
+    document: editContext.document,
+    selection: editContext.composer.selection,
   );
 
   // Delete the selected content.
-  composerContext.editor.executeCommand(
-    DeleteSelectionCommand(documentSelection: composerContext.currentSelection.value),
+  editContext.editor.executeCommand(
+    DeleteSelectionCommand(documentSelection: editContext.composer.selection),
   );
 
   print(' - new document selection position: ${newSelectionPosition.nodePosition}');
-  composerContext.currentSelection.value = DocumentSelection.collapsed(position: newSelectionPosition);
+  editContext.composer.selection = DocumentSelection.collapsed(position: newSelectionPosition);
 
   return isDestructiveKey ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
 }
@@ -530,29 +533,29 @@ DocumentPosition _getDocumentPositionAfterDeletion({
 }
 
 ExecutionInstruction mergeNodeWithPreviousWhenBackspaceIsPressed({
-  @required ComposerContext composerContext,
+  @required EditContext editContext,
   @required RawKeyEvent keyEvent,
 }) {
   if (keyEvent.logicalKey != LogicalKeyboardKey.backspace) {
     return ExecutionInstruction.continueExecution;
   }
 
-  if (composerContext.currentSelection.value == null) {
+  if (editContext.composer.selection == null) {
     return ExecutionInstruction.continueExecution;
   }
 
-  final node = composerContext.document.getNodeById(composerContext.currentSelection.value.extent.nodeId);
+  final node = editContext.document.getNodeById(editContext.composer.selection.extent.nodeId);
   if (node is! TextNode) {
     print('WARNING: Cannot merge node of type: $node into node above.');
     return ExecutionInstruction.continueExecution;
   }
 
   print('All nodes in order:');
-  composerContext.document.nodes.forEach((aNode) {
+  editContext.document.nodes.forEach((aNode) {
     print(' - node: ${aNode.id}');
   });
   print('Looking for node above: ${node.id}');
-  final nodeAbove = composerContext.document.getNodeBefore(node);
+  final nodeAbove = editContext.document.getNodeBefore(node);
   if (nodeAbove == null) {
     print('At top of document. Cannot merge with node above.');
     return ExecutionInstruction.continueExecution;
@@ -566,7 +569,7 @@ ExecutionInstruction mergeNodeWithPreviousWhenBackspaceIsPressed({
   final aboveParagraphLength = paragraphNodeAbove.text.text.length;
 
   // Send edit command.
-  composerContext.editor.executeCommand(
+  editContext.editor.executeCommand(
     CombineParagraphsCommand(
       firstNodeId: nodeAbove.id,
       secondNodeId: node.id,
@@ -574,7 +577,7 @@ ExecutionInstruction mergeNodeWithPreviousWhenBackspaceIsPressed({
   );
 
   // Place the cursor at the point where the text came together.
-  composerContext.currentSelection.value = DocumentSelection.collapsed(
+  editContext.composer.selection = DocumentSelection.collapsed(
     position: DocumentPosition(
       nodeId: nodeAbove.id,
       nodePosition: TextPosition(offset: aboveParagraphLength),
@@ -585,25 +588,25 @@ ExecutionInstruction mergeNodeWithPreviousWhenBackspaceIsPressed({
 }
 
 ExecutionInstruction mergeNodeWithNextWhenDeleteIsPressed({
-  @required ComposerContext composerContext,
+  @required EditContext editContext,
   @required RawKeyEvent keyEvent,
 }) {
   if (keyEvent.logicalKey != LogicalKeyboardKey.delete) {
     return ExecutionInstruction.continueExecution;
   }
 
-  if (composerContext.currentSelection.value == null) {
+  if (editContext.composer.selection == null) {
     return ExecutionInstruction.continueExecution;
   }
 
-  final node = composerContext.document.getNodeById(composerContext.currentSelection.value.extent.nodeId);
+  final node = editContext.document.getNodeById(editContext.composer.selection.extent.nodeId);
   if (node is! TextNode) {
     print('WARNING: Cannot combine node of type: $node');
     return ExecutionInstruction.continueExecution;
   }
   final paragraphNode = node as TextNode;
 
-  final nodeBelow = composerContext.document.getNodeAfter(paragraphNode);
+  final nodeBelow = editContext.document.getNodeAfter(paragraphNode);
   if (nodeBelow == null) {
     print('At bottom of document. Cannot merge with node above.');
     return ExecutionInstruction.continueExecution;
@@ -617,7 +620,7 @@ ExecutionInstruction mergeNodeWithNextWhenDeleteIsPressed({
   final currentParagraphLength = paragraphNode.text.text.length;
 
   // Send edit command.
-  composerContext.editor.executeCommand(
+  editContext.editor.executeCommand(
     CombineParagraphsCommand(
       firstNodeId: node.id,
       secondNodeId: nodeBelow.id,
@@ -625,7 +628,7 @@ ExecutionInstruction mergeNodeWithNextWhenDeleteIsPressed({
   );
 
   // Place the cursor at the point where the text came together.
-  composerContext.currentSelection.value = DocumentSelection.collapsed(
+  editContext.composer.selection = DocumentSelection.collapsed(
     position: DocumentPosition(
       nodeId: paragraphNode.id,
       nodePosition: TextPosition(offset: currentParagraphLength),
@@ -636,7 +639,7 @@ ExecutionInstruction mergeNodeWithNextWhenDeleteIsPressed({
 }
 
 ExecutionInstruction moveUpDownLeftAndRightWithArrowKeys({
-  @required ComposerContext composerContext,
+  @required EditContext editContext,
   @required RawKeyEvent keyEvent,
 }) {
   const arrowKeys = [
@@ -648,7 +651,7 @@ ExecutionInstruction moveUpDownLeftAndRightWithArrowKeys({
   if (!arrowKeys.contains(keyEvent.logicalKey)) {
     return ExecutionInstruction.continueExecution;
   }
-  if (composerContext.currentSelection.value == null) {
+  if (editContext.composer.selection == null) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -665,7 +668,7 @@ ExecutionInstruction moveUpDownLeftAndRightWithArrowKeys({
     }
 
     _moveHorizontally(
-      composerContext: composerContext,
+      editContext: editContext,
       expandSelection: keyEvent.isShiftPressed,
       moveLeft: true,
       movementModifiers: movementModifiers,
@@ -707,7 +710,7 @@ ExecutionInstruction moveUpDownLeftAndRightWithArrowKeys({
     }
 
     _moveHorizontally(
-      composerContext: composerContext,
+      editContext: editContext,
       expandSelection: keyEvent.isShiftPressed,
       moveLeft: false,
       movementModifiers: movementModifiers,
@@ -739,14 +742,14 @@ ExecutionInstruction moveUpDownLeftAndRightWithArrowKeys({
   } else if (keyEvent.logicalKey == LogicalKeyboardKey.arrowUp) {
     print(' - handling up arrow key');
     _moveVertically(
-      composerContext: composerContext,
+      editContext: editContext,
       expandSelection: keyEvent.isShiftPressed,
       moveUp: true,
     );
   } else if (keyEvent.logicalKey == LogicalKeyboardKey.arrowDown) {
     print(' - handling down arrow key');
     _moveVertically(
-      composerContext: composerContext,
+      editContext: editContext,
       expandSelection: keyEvent.isShiftPressed,
       moveUp: false,
     );
@@ -756,15 +759,15 @@ ExecutionInstruction moveUpDownLeftAndRightWithArrowKeys({
 }
 
 void _moveHorizontally({
-  @required ComposerContext composerContext,
+  @required EditContext editContext,
   @required bool expandSelection,
   @required bool moveLeft,
   Map<String, dynamic> movementModifiers,
 }) {
-  final currentExtent = composerContext.currentSelection.value.extent;
+  final currentExtent = editContext.composer.selection.extent;
   final nodeId = currentExtent.nodeId;
-  final node = composerContext.document.getNodeById(nodeId);
-  final extentComponent = composerContext.documentLayout.getComponentByNodeId(nodeId);
+  final node = editContext.document.getNodeById(nodeId);
+  final extentComponent = editContext.documentLayout.getComponentByNodeId(nodeId);
 
   String newExtentNodeId = nodeId;
   dynamic newExtentNodePosition = moveLeft
@@ -774,8 +777,7 @@ void _moveHorizontally({
   if (newExtentNodePosition == null) {
     print(' - moving to next node');
     // Move to next node
-    final nextNode =
-        moveLeft ? composerContext.document.getNodeBefore(node) : composerContext.document.getNodeAfter(node);
+    final nextNode = moveLeft ? editContext.document.getNodeBefore(node) : editContext.document.getNodeAfter(node);
 
     if (nextNode == null) {
       // We're at the beginning/end of the document and can't go
@@ -784,7 +786,7 @@ void _moveHorizontally({
     }
 
     newExtentNodeId = nextNode.id;
-    final nextComponent = composerContext.documentLayout.getComponentByNodeId(nextNode.id);
+    final nextComponent = editContext.documentLayout.getComponentByNodeId(nextNode.id);
     newExtentNodePosition = moveLeft ? nextComponent.getEndPosition() : nextComponent.getBeginningPosition();
   }
 
@@ -795,26 +797,26 @@ void _moveHorizontally({
 
   if (expandSelection) {
     // Selection should be expanded.
-    composerContext.currentSelection.value = composerContext.currentSelection.value.expandTo(
+    editContext.composer.selection = editContext.composer.selection.expandTo(
       newExtent,
     );
   } else {
     // Selection should be replaced by new collapsed position.
-    composerContext.currentSelection.value = DocumentSelection.collapsed(
+    editContext.composer.selection = DocumentSelection.collapsed(
       position: newExtent,
     );
   }
 }
 
 void _moveVertically({
-  @required ComposerContext composerContext,
+  @required EditContext editContext,
   @required bool expandSelection,
   @required bool moveUp,
 }) {
-  final currentExtent = composerContext.currentSelection.value.extent;
+  final currentExtent = editContext.composer.selection.extent;
   final nodeId = currentExtent.nodeId;
-  final node = composerContext.document.getNodeById(nodeId);
-  final extentComponent = composerContext.documentLayout.getComponentByNodeId(nodeId);
+  final node = editContext.document.getNodeById(nodeId);
+  final extentComponent = editContext.documentLayout.getComponentByNodeId(nodeId);
 
   String newExtentNodeId = nodeId;
   dynamic newExtentNodePosition = moveUp
@@ -824,12 +826,11 @@ void _moveVertically({
   if (newExtentNodePosition == null) {
     print(' - moving to next node');
     // Move to next node
-    final nextNode =
-        moveUp ? composerContext.document.getNodeBefore(node) : composerContext.document.getNodeAfter(node);
+    final nextNode = moveUp ? editContext.document.getNodeBefore(node) : editContext.document.getNodeAfter(node);
     if (nextNode != null) {
-      print(' - next node is at offset ${composerContext.document.getNodeIndex(nextNode)}, id: ${nextNode.id}');
+      print(' - next node is at offset ${editContext.document.getNodeIndex(nextNode)}, id: ${nextNode.id}');
       newExtentNodeId = nextNode.id;
-      final nextComponent = composerContext.documentLayout.getComponentByNodeId(nextNode.id);
+      final nextComponent = editContext.documentLayout.getComponentByNodeId(nextNode.id);
       final offsetToMatch = extentComponent.getOffsetForPosition(currentExtent.nodePosition);
       print(' - offset to match');
 
@@ -859,12 +860,12 @@ void _moveVertically({
 
   if (expandSelection) {
     // Selection should be expanded.
-    composerContext.currentSelection.value = composerContext.currentSelection.value.expandTo(
+    editContext.composer.selection = editContext.composer.selection.expandTo(
       newExtent,
     );
   } else {
     // Selection should be replaced by new collapsed position.
-    composerContext.currentSelection.value = DocumentSelection.collapsed(
+    editContext.composer.selection = DocumentSelection.collapsed(
       position: newExtent,
     );
   }

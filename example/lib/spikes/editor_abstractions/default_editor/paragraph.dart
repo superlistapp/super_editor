@@ -1,20 +1,21 @@
+import 'package:example/spikes/editor_abstractions/core/document_composer.dart';
+import 'package:example/spikes/editor_abstractions/core/edit_context.dart';
 import 'package:example/spikes/editor_abstractions/default_editor/horizontal_rule.dart';
 import 'package:example/spikes/editor_abstractions/default_editor/image.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
-import 'package:linkify/linkify.dart';
 import 'package:http/http.dart' as http;
+import 'package:linkify/linkify.dart';
 
-import '../core/document_editor.dart';
-import '../core/document_composer.dart';
-import '../core/document.dart';
-import '../core/document_selection.dart';
 import '../core/attributed_text.dart';
+import '../core/document.dart';
+import '../core/document_editor.dart';
+import '../core/document_selection.dart';
 import '_text_tools.dart';
 import 'document_interaction.dart';
-import 'text.dart';
 import 'list_items.dart';
+import 'text.dart';
 
 class ParagraphNode extends TextNode {
   ParagraphNode({
@@ -138,26 +139,24 @@ class SplitParagraphCommand implements EditorCommand {
 }
 
 ExecutionInstruction insertCharacterInParagraph({
-  @required ComposerContext composerContext,
+  @required EditContext editContext,
   @required RawKeyEvent keyEvent,
 }) {
-  final node = composerContext.document.getNodeById(composerContext.currentSelection.value.extent.nodeId);
-  if (node is ParagraphNode &&
-      isCharacterKey(keyEvent.logicalKey) &&
-      composerContext.currentSelection.value.isCollapsed) {
+  final node = editContext.document.getNodeById(editContext.composer.selection.extent.nodeId);
+  if (node is ParagraphNode && isCharacterKey(keyEvent.logicalKey) && editContext.composer.selection.isCollapsed) {
     print(' - this is a paragraph');
     // Delegate the action to the standard insert-character behavior.
     insertCharacterInTextComposable(
-      composerContext: composerContext,
+      editContext: editContext,
       keyEvent: keyEvent,
     );
 
     if (keyEvent.character == ' ') {
       _convertParagraphIfDesired(
-        document: composerContext.document,
-        currentSelection: composerContext.currentSelection,
+        document: editContext.document,
+        composer: editContext.composer,
         node: node,
-        editor: composerContext.editor,
+        editor: editContext.editor,
       );
     }
 
@@ -170,12 +169,12 @@ ExecutionInstruction insertCharacterInParagraph({
 // TODO: refactor to make prefix matching extensible
 bool _convertParagraphIfDesired({
   @required Document document,
-  @required ValueNotifier<DocumentSelection> currentSelection,
+  @required DocumentComposer composer,
   @required ParagraphNode node,
   @required DocumentEditor editor,
 }) {
   final text = node.text;
-  final textSelection = currentSelection.value.extent.nodePosition as TextPosition;
+  final textSelection = composer.selection.extent.nodePosition as TextPosition;
   final textBeforeCaret = text.text.substring(0, textSelection.offset);
 
   final unorderedListItemMatch = RegExp(r'^\s*[\*-]\s+$');
@@ -203,8 +202,8 @@ bool _convertParagraphIfDesired({
 
     // We removed some text at the beginning of the list item.
     // Move the selection back by that same amount.
-    final textPosition = currentSelection.value.extent.nodePosition as TextPosition;
-    currentSelection.value = DocumentSelection.collapsed(
+    final textPosition = composer.selection.extent.nodePosition as TextPosition;
+    composer.selection = DocumentSelection.collapsed(
       position: DocumentPosition(
         nodeId: node.id,
         nodePosition: TextPosition(offset: textPosition.offset - startOfNewText),
@@ -231,7 +230,7 @@ bool _convertParagraphIfDesired({
 
     node.text = AttributedText();
 
-    currentSelection.value = DocumentSelection.collapsed(
+    composer.selection = DocumentSelection.collapsed(
       position: DocumentPosition(
         nodeId: node.id,
         nodePosition: TextPosition(offset: 0),
@@ -343,36 +342,36 @@ class DeleteParagraphsCommand implements EditorCommand {
 }
 
 ExecutionInstruction splitParagraphWhenEnterPressed({
-  @required ComposerContext composerContext,
+  @required EditContext editContext,
   @required RawKeyEvent keyEvent,
 }) {
   if (keyEvent.logicalKey != LogicalKeyboardKey.enter) {
     return ExecutionInstruction.continueExecution;
   }
-  if (composerContext.currentSelection.value == null) {
+  if (editContext.composer.selection == null) {
     return ExecutionInstruction.continueExecution;
   }
-  if (!composerContext.currentSelection.value.isCollapsed) {
+  if (!editContext.composer.selection.isCollapsed) {
     return ExecutionInstruction.continueExecution;
   }
 
-  final node = composerContext.document.getNodeById(composerContext.currentSelection.value.extent.nodeId);
+  final node = editContext.document.getNodeById(editContext.composer.selection.extent.nodeId);
   if (node is! ParagraphNode) {
     return ExecutionInstruction.continueExecution;
   }
 
   final newNodeId = Document.createNodeId();
 
-  composerContext.editor.executeCommand(
+  editContext.editor.executeCommand(
     SplitParagraphCommand(
       nodeId: node.id,
-      splitPosition: composerContext.currentSelection.value.extent.nodePosition as TextPosition,
+      splitPosition: editContext.composer.selection.extent.nodePosition as TextPosition,
       newNodeId: newNodeId,
     ),
   );
 
   // Place the caret at the beginning of the new paragraph node.
-  composerContext.currentSelection.value = DocumentSelection.collapsed(
+  editContext.composer.selection = DocumentSelection.collapsed(
     position: DocumentPosition(
       nodeId: newNodeId,
       nodePosition: TextPosition(offset: 0),
@@ -380,9 +379,9 @@ ExecutionInstruction splitParagraphWhenEnterPressed({
   );
 
   _convertParagraphIfDesired(
-    document: composerContext.document,
-    editor: composerContext.editor,
-    currentSelection: composerContext.currentSelection,
+    document: editContext.document,
+    editor: editContext.editor,
+    composer: editContext.composer,
     node: node,
   );
 
@@ -390,20 +389,20 @@ ExecutionInstruction splitParagraphWhenEnterPressed({
 }
 
 ExecutionInstruction deleteEmptyParagraphWhenBackspaceIsPressed({
-  @required ComposerContext composerContext,
+  @required EditContext editContext,
   @required RawKeyEvent keyEvent,
 }) {
   if (keyEvent.logicalKey != LogicalKeyboardKey.backspace) {
     return ExecutionInstruction.continueExecution;
   }
-  if (composerContext.currentSelection.value == null) {
+  if (editContext.composer.selection == null) {
     return ExecutionInstruction.continueExecution;
   }
-  if (!composerContext.currentSelection.value.isCollapsed) {
+  if (!editContext.composer.selection.isCollapsed) {
     return ExecutionInstruction.continueExecution;
   }
 
-  final node = composerContext.document.getNodeById(composerContext.currentSelection.value.extent.nodeId);
+  final node = editContext.document.getNodeById(editContext.composer.selection.extent.nodeId);
   if (node is! ParagraphNode) {
     return ExecutionInstruction.continueExecution;
   }
@@ -413,7 +412,7 @@ ExecutionInstruction deleteEmptyParagraphWhenBackspaceIsPressed({
     return ExecutionInstruction.continueExecution;
   }
 
-  final nodeAbove = composerContext.document.getNodeBefore(paragraphNode);
+  final nodeAbove = editContext.document.getNodeBefore(paragraphNode);
   if (nodeAbove == null) {
     return ExecutionInstruction.continueExecution;
   }
@@ -422,11 +421,11 @@ ExecutionInstruction deleteEmptyParagraphWhenBackspaceIsPressed({
     nodePosition: nodeAbove.endPosition,
   );
 
-  composerContext.editor.executeCommand(
+  editContext.editor.executeCommand(
     DeleteParagraphsCommand(nodeId: node.id),
   );
 
-  composerContext.currentSelection.value = DocumentSelection.collapsed(
+  editContext.composer.selection = DocumentSelection.collapsed(
     position: newDocumentPosition,
   );
 
@@ -434,20 +433,20 @@ ExecutionInstruction deleteEmptyParagraphWhenBackspaceIsPressed({
 }
 
 ExecutionInstruction moveParagraphSelectionUpWhenBackspaceIsPressed({
-  @required ComposerContext composerContext,
+  @required EditContext editContext,
   @required RawKeyEvent keyEvent,
 }) {
   if (keyEvent.logicalKey != LogicalKeyboardKey.backspace) {
     return ExecutionInstruction.continueExecution;
   }
-  if (composerContext.currentSelection.value == null) {
+  if (editContext.composer.selection == null) {
     return ExecutionInstruction.continueExecution;
   }
-  if (!composerContext.currentSelection.value.isCollapsed) {
+  if (!editContext.composer.selection.isCollapsed) {
     return ExecutionInstruction.continueExecution;
   }
 
-  final node = composerContext.document.getNodeById(composerContext.currentSelection.value.extent.nodeId);
+  final node = editContext.document.getNodeById(editContext.composer.selection.extent.nodeId);
   if (node is! ParagraphNode) {
     return ExecutionInstruction.continueExecution;
   }
@@ -457,7 +456,7 @@ ExecutionInstruction moveParagraphSelectionUpWhenBackspaceIsPressed({
     return ExecutionInstruction.continueExecution;
   }
 
-  final nodeAbove = composerContext.document.getNodeBefore(paragraphNode);
+  final nodeAbove = editContext.document.getNodeBefore(paragraphNode);
   if (nodeAbove == null) {
     return ExecutionInstruction.continueExecution;
   }
@@ -466,7 +465,7 @@ ExecutionInstruction moveParagraphSelectionUpWhenBackspaceIsPressed({
     nodePosition: nodeAbove.endPosition,
   );
 
-  composerContext.currentSelection.value = DocumentSelection.collapsed(
+  editContext.composer.selection = DocumentSelection.collapsed(
     position: newDocumentPosition,
   );
 

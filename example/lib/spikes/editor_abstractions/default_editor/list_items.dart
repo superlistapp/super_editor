@@ -1,4 +1,4 @@
-import 'package:example/spikes/editor_abstractions/default_editor/styles.dart';
+import 'package:example/spikes/editor_abstractions/core/edit_context.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -6,9 +6,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
 import '../core/attributed_text.dart';
-import '../core/document_composer.dart';
-import '../core/document_editor.dart';
 import '../core/document.dart';
+import '../core/document_editor.dart';
 import '../core/document_selection.dart';
 import 'document_interaction.dart';
 import 'paragraph.dart';
@@ -82,7 +81,9 @@ class UnorderedListItemComponent extends StatelessWidget {
     @required this.styleBuilder,
     this.indent = 0,
     this.textSelection,
-    this.hasCursor = false,
+    this.selectionColor = Colors.lightBlueAccent,
+    this.hasCaret = false,
+    this.caretColor = Colors.black,
     this.showDebugPaint = false,
   }) : super(key: key);
 
@@ -91,13 +92,15 @@ class UnorderedListItemComponent extends StatelessWidget {
   final AttributionStyleBuilder styleBuilder;
   final int indent;
   final TextSelection textSelection;
-  final bool hasCursor;
+  final Color selectionColor;
+  final bool hasCaret;
+  final Color caretColor;
   final bool showDebugPaint;
 
   @override
   Widget build(BuildContext context) {
     final indentSpace = 25.0 * indent;
-    final dotTopPadding = defaultStyleBuilder({}).fontSize / 2;
+    final dotTopPadding = styleBuilder({}).fontSize / 2;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -126,9 +129,11 @@ class UnorderedListItemComponent extends StatelessWidget {
           child: TextComponent(
             key: textKey,
             text: text,
-            styleBuilder: styleBuilder,
+            textStyleBuilder: styleBuilder,
             textSelection: textSelection,
-            hasCursor: hasCursor,
+            selectionColor: selectionColor,
+            hasCaret: hasCaret,
+            caretColor: caretColor,
             showDebugPaint: showDebugPaint,
           ),
         ),
@@ -149,7 +154,9 @@ class OrderedListItemComponent extends StatelessWidget {
     @required this.styleBuilder,
     this.indent = 0,
     this.textSelection,
-    this.hasCursor = false,
+    this.selectionColor = Colors.lightBlueAccent,
+    this.hasCaret = false,
+    this.caretColor = Colors.black,
     this.showDebugPaint = false,
   }) : super(key: key);
 
@@ -159,7 +166,9 @@ class OrderedListItemComponent extends StatelessWidget {
   final AttributionStyleBuilder styleBuilder;
   final int indent;
   final TextSelection textSelection;
-  final bool hasCursor;
+  final Color selectionColor;
+  final bool hasCaret;
+  final Color caretColor;
   final bool showDebugPaint;
 
   @override
@@ -183,9 +192,11 @@ class OrderedListItemComponent extends StatelessWidget {
           child: TextComponent(
             key: textKey,
             text: text,
-            styleBuilder: styleBuilder,
+            textStyleBuilder: styleBuilder,
             textSelection: textSelection,
-            hasCursor: hasCursor,
+            selectionColor: selectionColor,
+            hasCaret: hasCaret,
+            caretColor: caretColor,
             showDebugPaint: showDebugPaint,
           ),
         ),
@@ -294,28 +305,28 @@ class SplitListItemCommand implements EditorCommand {
 }
 
 ExecutionInstruction indentListItemWhenBackspaceIsPressed({
-  @required ComposerContext composerContext,
+  @required EditContext editContext,
   @required RawKeyEvent keyEvent,
 }) {
   if (keyEvent.logicalKey != LogicalKeyboardKey.tab) {
     return ExecutionInstruction.continueExecution;
   }
 
-  final node = composerContext.document.getNodeById(composerContext.currentSelection.value.extent.nodeId);
+  final node = editContext.document.getNodeById(editContext.composer.selection.extent.nodeId);
   if (node is! ListItemNode) {
     return ExecutionInstruction.continueExecution;
   }
 
-  if (!composerContext.currentSelection.value.isCollapsed) {
+  if (!editContext.composer.selection.isCollapsed) {
     return ExecutionInstruction.continueExecution;
   }
 
-  final textPosition = composerContext.currentSelection.value.extent.nodePosition;
+  final textPosition = editContext.composer.selection.extent.nodePosition;
   if (textPosition is! TextPosition || textPosition.offset > 0) {
     return ExecutionInstruction.continueExecution;
   }
 
-  composerContext.editor.executeCommand(
+  editContext.editor.executeCommand(
     IndentListItemCommand(nodeId: node.id),
   );
 
@@ -323,28 +334,28 @@ ExecutionInstruction indentListItemWhenBackspaceIsPressed({
 }
 
 ExecutionInstruction unindentListItemWhenBackspaceIsPressed({
-  @required ComposerContext composerContext,
+  @required EditContext editContext,
   @required RawKeyEvent keyEvent,
 }) {
   if (keyEvent.logicalKey != LogicalKeyboardKey.backspace) {
     return ExecutionInstruction.continueExecution;
   }
 
-  final node = composerContext.document.getNodeById(composerContext.currentSelection.value.extent.nodeId);
+  final node = editContext.document.getNodeById(editContext.composer.selection.extent.nodeId);
   if (node is! ListItemNode) {
     return ExecutionInstruction.continueExecution;
   }
 
-  if (!composerContext.currentSelection.value.isCollapsed) {
+  if (!editContext.composer.selection.isCollapsed) {
     return ExecutionInstruction.continueExecution;
   }
 
-  final textPosition = composerContext.currentSelection.value.extent.nodePosition;
+  final textPosition = editContext.composer.selection.extent.nodePosition;
   if (textPosition is! TextPosition || textPosition.offset > 0) {
     return ExecutionInstruction.continueExecution;
   }
 
-  composerContext.editor.executeCommand(
+  editContext.editor.executeCommand(
     UnIndentListItemCommand(nodeId: node.id),
   );
 
@@ -352,33 +363,33 @@ ExecutionInstruction unindentListItemWhenBackspaceIsPressed({
 }
 
 ExecutionInstruction splitListItemWhenEnterPressed({
-  @required ComposerContext composerContext,
+  @required EditContext editContext,
   @required RawKeyEvent keyEvent,
 }) {
   if (keyEvent.logicalKey != LogicalKeyboardKey.enter) {
     return ExecutionInstruction.continueExecution;
   }
-  if (!composerContext.currentSelection.value.isCollapsed) {
+  if (!editContext.composer.selection.isCollapsed) {
     return ExecutionInstruction.continueExecution;
   }
 
-  final node = composerContext.document.getNodeById(composerContext.currentSelection.value.extent.nodeId);
+  final node = editContext.document.getNodeById(editContext.composer.selection.extent.nodeId);
   if (node is! ListItemNode) {
     return ExecutionInstruction.continueExecution;
   }
 
   final newNodeId = Document.createNodeId();
 
-  composerContext.editor.executeCommand(
+  editContext.editor.executeCommand(
     SplitListItemCommand(
       nodeId: node.id,
-      splitPosition: composerContext.currentSelection.value.extent.nodePosition as TextPosition,
+      splitPosition: editContext.composer.selection.extent.nodePosition as TextPosition,
       newNodeId: newNodeId,
     ),
   );
 
   // Place the caret at the beginning of the new paragraph node.
-  composerContext.currentSelection.value = DocumentSelection.collapsed(
+  editContext.composer.selection = DocumentSelection.collapsed(
     position: DocumentPosition(
       nodeId: newNodeId,
       nodePosition: TextPosition(offset: 0),

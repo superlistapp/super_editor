@@ -48,13 +48,13 @@ class ImageComponent extends StatelessWidget {
     Key key,
     @required this.componentKey,
     @required this.imageUrl,
-    this.selectedColor = Colors.blue,
+    this.selectionColor = Colors.blue,
     this.isSelected = false,
   }) : super(key: key);
 
   final GlobalKey componentKey;
   final String imageUrl;
-  final Color selectedColor;
+  final Color selectionColor;
   final bool isSelected;
 
   @override
@@ -66,7 +66,7 @@ class ImageComponent extends StatelessWidget {
           decoration: BoxDecoration(
             border: Border.all(
               width: 1,
-              color: isSelected ? selectedColor : Colors.transparent,
+              color: isSelected ? selectionColor : Colors.transparent,
             ),
           ),
           child: Image.network(

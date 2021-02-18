@@ -1,21 +1,20 @@
 import 'dart:collection';
 import 'dart:math';
 
-import 'package:example/spikes/editor_abstractions/default_editor/styles.dart';
+import 'package:example/spikes/editor_abstractions/core/edit_context.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' hide SelectableText;
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
+import '../core/attributed_text.dart';
 import '../core/document.dart';
 import '../core/document_editor.dart';
 import '../core/document_layout.dart';
 import '../core/document_selection.dart';
-import '../core/document_composer.dart';
-import '../core/attributed_text.dart';
-import '_text_tools.dart';
 import '../selectable_text/selectable_text.dart';
+import '_text_tools.dart';
 import 'document_interaction.dart';
 import 'multi_node_editing.dart';
 
@@ -79,20 +78,24 @@ class TextComponent extends StatefulWidget {
     Key key,
     this.text,
     this.textAlign,
-    @required this.styleBuilder,
+    @required this.textStyleBuilder,
     this.metadata = const {},
     this.textSelection,
-    this.hasCursor = false,
+    this.selectionColor = Colors.lightBlueAccent,
+    this.hasCaret = false,
+    this.caretColor = Colors.black,
     this.highlightWhenEmpty = false,
     this.showDebugPaint = false,
   }) : super(key: key);
 
   final AttributedText text;
   final TextAlign textAlign;
-  final AttributionStyleBuilder styleBuilder;
+  final AttributionStyleBuilder textStyleBuilder;
   final Map<String, dynamic> metadata;
   final TextSelection textSelection;
-  final bool hasCursor;
+  final Color selectionColor;
+  final bool hasCaret;
+  final Color caretColor;
   final bool highlightWhenEmpty;
   final bool showDebugPaint;
 
@@ -372,7 +375,7 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
         blockType,
         TextRange(start: 0, end: widget.text.text.length - 1),
       );
-    final richText = blockText.computeTextSpan(widget.styleBuilder);
+    final richText = blockText.computeTextSpan(widget.textStyleBuilder);
 
     // final richText = widget.text.computeTextSpan(blockLevelStyleBuilder);
 
@@ -381,7 +384,9 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
       richText: richText,
       textAlign: widget.textAlign,
       textSelection: widget.textSelection,
-      hasCursor: widget.hasCursor,
+      selectionColor: widget.selectionColor,
+      hasCaret: widget.hasCaret,
+      caretColor: widget.caretColor,
       highlightWhenEmpty: widget.highlightWhenEmpty,
       showDebugPaint: widget.showDebugPaint,
     );
@@ -515,28 +520,28 @@ class InsertTextCommand implements EditorCommand {
 }
 
 ExecutionInstruction insertCharacterInTextComposable({
-  @required ComposerContext composerContext,
+  @required EditContext editContext,
   @required RawKeyEvent keyEvent,
 }) {
   if (keyEvent.isMetaPressed || keyEvent.isAltPressed || keyEvent.isControlPressed) {
     return ExecutionInstruction.continueExecution;
   }
 
-  if (isTextEntryNode(document: composerContext.document, selection: composerContext.currentSelection) &&
+  if (isTextEntryNode(document: editContext.document, selection: editContext.composer.selection) &&
       isCharacterKey(keyEvent.logicalKey) &&
-      composerContext.currentSelection.value.isCollapsed) {
-    final textNode = composerContext.document.getNode(composerContext.currentSelection.value.extent) as TextNode;
-    final initialTextOffset = (composerContext.currentSelection.value.extent.nodePosition as TextPosition).offset;
+      editContext.composer.selection.isCollapsed) {
+    final textNode = editContext.document.getNode(editContext.composer.selection.extent) as TextNode;
+    final initialTextOffset = (editContext.composer.selection.extent.nodePosition as TextPosition).offset;
 
-    composerContext.editor.executeCommand(
+    editContext.editor.executeCommand(
       InsertTextCommand(
-        documentPosition: composerContext.currentSelection.value.extent,
+        documentPosition: editContext.composer.selection.extent,
         textToInsert: keyEvent.character,
-        attributions: composerContext.composerPreferences.currentStyles,
+        attributions: editContext.composer.preferences.currentStyles,
       ),
     );
 
-    composerContext.currentSelection.value = DocumentSelection.collapsed(
+    editContext.composer.selection = DocumentSelection.collapsed(
       position: DocumentPosition(
         nodeId: textNode.id,
         nodePosition: TextPosition(
@@ -552,34 +557,34 @@ ExecutionInstruction insertCharacterInTextComposable({
 }
 
 ExecutionInstruction deleteCharacterWhenBackspaceIsPressed({
-  @required ComposerContext composerContext,
+  @required EditContext editContext,
   @required RawKeyEvent keyEvent,
 }) {
   if (keyEvent.logicalKey != LogicalKeyboardKey.backspace) {
     return ExecutionInstruction.continueExecution;
   }
-  if (composerContext.currentSelection.value == null) {
+  if (editContext.composer.selection == null) {
     return ExecutionInstruction.continueExecution;
   }
-  if (!isTextEntryNode(document: composerContext.document, selection: composerContext.currentSelection)) {
+  if (!isTextEntryNode(document: editContext.document, selection: editContext.composer.selection)) {
     return ExecutionInstruction.continueExecution;
   }
-  if (!composerContext.currentSelection.value.isCollapsed) {
+  if (!editContext.composer.selection.isCollapsed) {
     return ExecutionInstruction.continueExecution;
   }
-  if ((composerContext.currentSelection.value.extent.nodePosition as TextPosition).offset <= 0) {
+  if ((editContext.composer.selection.extent.nodePosition as TextPosition).offset <= 0) {
     return ExecutionInstruction.continueExecution;
   }
 
-  final textNode = composerContext.document.getNode(composerContext.currentSelection.value.extent) as TextNode;
-  final currentTextPosition = composerContext.currentSelection.value.extent.nodePosition as TextPosition;
+  final textNode = editContext.document.getNode(editContext.composer.selection.extent) as TextNode;
+  final currentTextPosition = editContext.composer.selection.extent.nodePosition as TextPosition;
   final newSelectionPosition = DocumentPosition(
     nodeId: textNode.id,
     nodePosition: TextPosition(offset: currentTextPosition.offset - 1),
   );
 
   // Delete the selected content.
-  composerContext.editor.executeCommand(
+  editContext.editor.executeCommand(
     DeleteSelectionCommand(
       documentSelection: DocumentSelection(
         base: DocumentPosition(
@@ -595,37 +600,37 @@ ExecutionInstruction deleteCharacterWhenBackspaceIsPressed({
   );
 
   print(' - new document selection position: ${newSelectionPosition.nodePosition}');
-  composerContext.currentSelection.value = DocumentSelection.collapsed(position: newSelectionPosition);
+  editContext.composer.selection = DocumentSelection.collapsed(position: newSelectionPosition);
 
   return ExecutionInstruction.haltExecution;
 }
 
 ExecutionInstruction deleteCharacterWhenDeleteIsPressed({
-  @required ComposerContext composerContext,
+  @required EditContext editContext,
   @required RawKeyEvent keyEvent,
 }) {
   if (keyEvent.logicalKey != LogicalKeyboardKey.delete) {
     return ExecutionInstruction.continueExecution;
   }
 
-  if (composerContext.currentSelection.value == null) {
+  if (editContext.composer.selection == null) {
     return ExecutionInstruction.continueExecution;
   }
-  if (!isTextEntryNode(document: composerContext.document, selection: composerContext.currentSelection)) {
+  if (!isTextEntryNode(document: editContext.document, selection: editContext.composer.selection)) {
     return ExecutionInstruction.continueExecution;
   }
-  if (!composerContext.currentSelection.value.isCollapsed) {
+  if (!editContext.composer.selection.isCollapsed) {
     return ExecutionInstruction.continueExecution;
   }
-  final textNode = composerContext.document.getNode(composerContext.currentSelection.value.extent) as TextNode;
+  final textNode = editContext.document.getNode(editContext.composer.selection.extent) as TextNode;
   final text = textNode.text;
-  final currentTextPosition = (composerContext.currentSelection.value.extent.nodePosition as TextPosition);
+  final currentTextPosition = (editContext.composer.selection.extent.nodePosition as TextPosition);
   if (currentTextPosition.offset >= text.text.length) {
     return ExecutionInstruction.continueExecution;
   }
 
   // Delete the selected content.
-  composerContext.editor.executeCommand(
+  editContext.editor.executeCommand(
     DeleteSelectionCommand(
       documentSelection: DocumentSelection(
         base: DocumentPosition(
@@ -644,25 +649,25 @@ ExecutionInstruction deleteCharacterWhenDeleteIsPressed({
 }
 
 ExecutionInstruction insertNewlineInParagraph({
-  @required ComposerContext composerContext,
+  @required EditContext editContext,
   @required RawKeyEvent keyEvent,
 }) {
-  if (isTextEntryNode(document: composerContext.document, selection: composerContext.currentSelection) &&
+  if (isTextEntryNode(document: editContext.document, selection: editContext.composer.selection) &&
       keyEvent.logicalKey == LogicalKeyboardKey.enter &&
       keyEvent.isShiftPressed &&
-      composerContext.currentSelection.value.isCollapsed) {
-    final textNode = composerContext.document.getNode(composerContext.currentSelection.value.extent) as TextNode;
-    final initialTextOffset = (composerContext.currentSelection.value.extent.nodePosition as TextPosition).offset;
+      editContext.composer.selection.isCollapsed) {
+    final textNode = editContext.document.getNode(editContext.composer.selection.extent) as TextNode;
+    final initialTextOffset = (editContext.composer.selection.extent.nodePosition as TextPosition).offset;
 
-    composerContext.editor.executeCommand(
+    editContext.editor.executeCommand(
       InsertTextCommand(
-        documentPosition: composerContext.currentSelection.value.extent,
+        documentPosition: editContext.composer.selection.extent,
         textToInsert: '\n',
-        attributions: composerContext.composerPreferences.currentStyles,
+        attributions: editContext.composer.preferences.currentStyles,
       ),
     );
 
-    composerContext.currentSelection.value = DocumentSelection.collapsed(
+    editContext.composer.selection = DocumentSelection.collapsed(
       position: DocumentPosition(
         nodeId: textNode.id,
         nodePosition: TextPosition(

@@ -1,4 +1,3 @@
-import 'package:example/spikes/editor_abstractions/default_editor/styles.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
@@ -36,7 +35,10 @@ class TextWithHintComponent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final blockType = metadata['blockType'];
-    final blockLevelStyleBuilder = createBlockLevelStyleBuilder(defaultStyleBuilder, blockType);
+
+    final blockLevelText = text
+      ..copyText(0)
+      ..addAttribution(blockType, TextRange(start: 0, end: text.text.length - 1));
 
     print('Building TextWithHintComponent with key: $documentComponentKey');
     return MouseRegion(
@@ -46,18 +48,18 @@ class TextWithHintComponent extends StatelessWidget {
           Text(
             hintText,
             textAlign: textAlign,
-            style: blockLevelStyleBuilder({}).copyWith(
+            style: styleBuilder({blockType}).copyWith(
               color: const Color(0xFFC3C1C1),
             ),
           ),
           Positioned.fill(
             child: TextComponent(
               key: documentComponentKey,
-              text: text,
+              text: blockLevelText,
               textAlign: textAlign,
               textSelection: textSelection,
-              hasCursor: hasCursor,
-              styleBuilder: blockLevelStyleBuilder,
+              hasCaret: hasCursor,
+              textStyleBuilder: styleBuilder,
               highlightWhenEmpty: highlightWhenEmpty,
               showDebugPaint: showDebugPaint,
             ),

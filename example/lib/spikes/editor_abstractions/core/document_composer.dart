@@ -5,8 +5,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 import 'document.dart';
-import 'document_editor.dart';
-import 'document_layout.dart';
 import 'document_selection.dart';
 
 /// Maintains a `DocumentSelection` within a `Document` and
@@ -14,14 +12,9 @@ import 'document_selection.dart';
 class DocumentComposer with ChangeNotifier {
   DocumentComposer({
     @required Document document,
-    @required DocumentEditor editor,
-    @required DocumentLayout layout,
     DocumentSelection initialSelection,
   })  : _document = document,
-        _editor = editor,
-        _documentLayout = layout,
         _selection = ValueNotifier(initialSelection) {
-    print('Initial document layout: $_documentLayout');
     _selection.addListener(() {
       print('DocumentComposer: selection changed.');
       _updateComposerPreferencesAtSelection();
@@ -30,8 +23,6 @@ class DocumentComposer with ChangeNotifier {
   }
 
   final Document _document;
-  final DocumentEditor _editor;
-  final DocumentLayout _documentLayout;
 
   final ValueNotifier<DocumentSelection> _selection;
 
@@ -47,20 +38,14 @@ class DocumentComposer with ChangeNotifier {
     selection = null;
   }
 
-  final ComposerPreferences _composerPreferences = ComposerPreferences();
+  final ComposerPreferences _preferences = ComposerPreferences();
 
-  ComposerContext get composerContext => ComposerContext(
-        document: _document,
-        editor: _editor,
-        documentLayout: _documentLayout,
-        currentSelection: _selection,
-        composerPreferences: _composerPreferences,
-      );
+  ComposerPreferences get preferences => _preferences;
 
   // TODO: this text selection logic probably belongs in some place
   //       that is specific to text content
   void _updateComposerPreferencesAtSelection() {
-    _composerPreferences.clearStyles();
+    _preferences.clearStyles();
 
     if (_selection.value == null || !_selection.value.isCollapsed) {
       return;
@@ -79,7 +64,7 @@ class DocumentComposer with ChangeNotifier {
     print('Looking up styles. Caret at: ${textPosition.offset}, looking back one place at: ${textPosition.offset - 1}');
     final allStyles = (node as TextNode).text.getAllAttributionsAt(textPosition.offset - 1);
     print(' - styles: $allStyles');
-    _composerPreferences.addStyles(allStyles);
+    _preferences.addStyles(allStyles);
   }
 }
 
@@ -124,25 +109,4 @@ class ComposerPreferences with ChangeNotifier {
     _currentStyles.clear();
     notifyListeners();
   }
-}
-
-/// Collection of core artifacts related to composition
-/// behavior.
-///
-/// A `ComposerContext` is made available to each key
-/// press action.
-class ComposerContext {
-  ComposerContext({
-    @required this.document,
-    @required this.editor,
-    @required this.documentLayout,
-    @required this.currentSelection,
-    @required this.composerPreferences,
-  });
-
-  final Document document;
-  final DocumentEditor editor;
-  final DocumentLayout documentLayout;
-  final ValueNotifier<DocumentSelection> currentSelection;
-  final ComposerPreferences composerPreferences;
 }

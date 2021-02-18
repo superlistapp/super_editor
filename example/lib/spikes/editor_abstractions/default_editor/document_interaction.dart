@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'dart:ui';
 
+import 'package:example/spikes/editor_abstractions/core/edit_context.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart' hide SelectableText;
 import 'package:flutter/rendering.dart';
@@ -9,7 +10,6 @@ import 'package:flutter/services.dart';
 
 import '../core/document.dart';
 import '../core/document_selection.dart';
-import '../core/document_composer.dart';
 import '../core/document_layout.dart';
 import '../gestures/multi_tap_gesture.dart';
 import '_text_tools.dart';
@@ -22,7 +22,7 @@ class DocumentInteractor extends StatefulWidget {
   const DocumentInteractor({
     Key key,
     @required this.documentLayoutKey,
-    @required this.composer,
+    @required this.editContext,
     @required this.keyboardActions,
     @required this.child,
     this.scrollController,
@@ -31,9 +31,9 @@ class DocumentInteractor extends StatefulWidget {
 
   final GlobalKey documentLayoutKey;
 
-  final DocumentComposer composer;
+  final EditContext editContext;
 
-  final List<ComposerKeyboardAction> keyboardActions;
+  final List<DocumentKeyboardAction> keyboardActions;
 
   final ScrollController scrollController;
 
@@ -78,15 +78,15 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
     _scrollController =
         _scrollController = (widget.scrollController ?? ScrollController())..addListener(_updateDragSelection);
 
-    widget.composer?.addListener(_onSelectionChange);
+    widget.editContext.composer.addListener(_onSelectionChange);
   }
 
   @override
   void didUpdateWidget(DocumentInteractor oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.composer != oldWidget.composer) {
-      oldWidget.composer?.removeListener(_onSelectionChange);
-      widget.composer?.addListener(_onSelectionChange);
+    if (widget.editContext.composer != oldWidget.editContext.composer) {
+      oldWidget.editContext.composer?.removeListener(_onSelectionChange);
+      widget.editContext.composer?.addListener(_onSelectionChange);
     }
     if (widget.scrollController != oldWidget.scrollController) {
       _scrollController.removeListener(_updateDragSelection);
@@ -99,7 +99,7 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
 
   @override
   void dispose() {
-    widget.composer?.removeListener(_onSelectionChange);
+    widget.editContext.composer?.removeListener(_onSelectionChange);
     _ticker.dispose();
     if (widget.scrollController == null) {
       _scrollController.dispose();
@@ -118,7 +118,7 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
   }
 
   void _ensureSelectionExtentIsVisible() {
-    final selection = widget.composer.selection;
+    final selection = widget.editContext.composer.selection;
     if (selection == null) {
       return;
     }
@@ -174,7 +174,7 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
     int index = 0;
     while (instruction == ExecutionInstruction.continueExecution && index < widget.keyboardActions.length) {
       instruction = widget.keyboardActions[index].execute(
-        composerContext: widget.composer.composerContext,
+        editContext: widget.editContext,
         keyEvent: keyEvent,
       );
       index += 1;
@@ -321,7 +321,7 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
   }) {
     final newSelection = getWordSelection(docPosition: docPosition, docLayout: docLayout);
     if (newSelection != null) {
-      widget.composer.selection = newSelection;
+      widget.editContext.composer.selection = newSelection;
       return true;
     } else {
       return false;
@@ -334,7 +334,7 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
   }) {
     final newSelection = getParagraphSelection(docPosition: docPosition, docLayout: docLayout);
     if (newSelection != null) {
-      widget.composer.selection = newSelection;
+      widget.editContext.composer.selection = newSelection;
       return true;
     } else {
       return false;
@@ -343,7 +343,7 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
 
   void _selectPosition(DocumentPosition position) {
     print('Setting document selection to $position');
-    widget.composer.selection = DocumentSelection.collapsed(
+    widget.editContext.composer.selection = DocumentSelection.collapsed(
       position: position,
     );
   }
@@ -376,7 +376,7 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
     print(' - base: $basePosition, extent: $extentPosition');
 
     if (basePosition == null || extentPosition == null) {
-      widget.composer.selection = null;
+      widget.editContext.composer.selection = null;
       return;
     }
 
@@ -407,15 +407,15 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
       extentPosition = extentWordSelection.extent;
     }
 
-    widget.composer.selection = (DocumentSelection(
-      base: basePosition ?? widget.composer.selection.base,
-      extent: extentPosition ?? widget.composer.selection.extent,
+    widget.editContext.composer.selection = (DocumentSelection(
+      base: basePosition ?? widget.editContext.composer.selection.base,
+      extent: extentPosition ?? widget.editContext.composer.selection.extent,
     ));
-    print('Region selection: ${widget.composer.selection}');
+    print('Region selection: ${widget.editContext.composer.selection}');
   }
 
   void _clearSelection() {
-    widget.composer.clearSelection();
+    widget.editContext.composer.clearSelection();
   }
 
   void _updateCursorStyle(Offset cursorOffset) {
@@ -713,12 +713,12 @@ enum SelectionType {
   paragraph,
 }
 
-class ComposerKeyboardAction {
-  const ComposerKeyboardAction.simple({
-    @required SimpleComposerKeyboardAction action,
+class DocumentKeyboardAction {
+  const DocumentKeyboardAction.simple({
+    @required SimpleDocumentKeyboardAction action,
   }) : _action = action;
 
-  final SimpleComposerKeyboardAction _action;
+  final SimpleDocumentKeyboardAction _action;
 
   /// Executes this action, if the action wants to run, and returns
   /// a desired `ExecutionInstruction` to either continue or halt
@@ -730,11 +730,11 @@ class ComposerKeyboardAction {
   /// It is possible that an action does nothing and then returns
   /// `ExecutionInstruction.haltExecution` to prevent further execution.
   ExecutionInstruction execute({
-    @required ComposerContext composerContext,
+    @required EditContext editContext,
     @required RawKeyEvent keyEvent,
   }) {
     return _action(
-      composerContext: composerContext,
+      editContext: editContext,
       keyEvent: keyEvent,
     );
   }
@@ -749,8 +749,8 @@ class ComposerKeyboardAction {
 ///
 /// It is possible that an action does nothing and then returns
 /// `true` to prevent further execution.
-typedef SimpleComposerKeyboardAction = ExecutionInstruction Function({
-  @required ComposerContext composerContext,
+typedef SimpleDocumentKeyboardAction = ExecutionInstruction Function({
+  @required EditContext editContext,
   @required RawKeyEvent keyEvent,
 });
 

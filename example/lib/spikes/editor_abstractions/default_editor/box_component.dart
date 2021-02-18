@@ -1,8 +1,8 @@
+import 'package:example/spikes/editor_abstractions/core/edit_context.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/src/rendering/mouse_cursor.dart';
 import 'package:flutter/widgets.dart';
 
-import '../core/document_composer.dart';
 import '../core/document.dart';
 import '../core/document_layout.dart';
 import '../core/document_selection.dart';
@@ -163,41 +163,41 @@ class BinarySelection {
 }
 
 ExecutionInstruction deleteBoxWhenBackspaceOrDeleteIsPressed({
-  @required ComposerContext composerContext,
+  @required EditContext editContext,
   @required RawKeyEvent keyEvent,
 }) {
   if (keyEvent.logicalKey != LogicalKeyboardKey.backspace && keyEvent.logicalKey != LogicalKeyboardKey.delete) {
     return ExecutionInstruction.continueExecution;
   }
-  if (composerContext.currentSelection.value == null) {
+  if (editContext.composer.selection == null) {
     return ExecutionInstruction.continueExecution;
   }
-  if (!composerContext.currentSelection.value.isCollapsed) {
+  if (!editContext.composer.selection.isCollapsed) {
     return ExecutionInstruction.continueExecution;
   }
-  if (composerContext.currentSelection.value.extent.nodePosition is! BinaryPosition) {
+  if (editContext.composer.selection.extent.nodePosition is! BinaryPosition) {
     return ExecutionInstruction.continueExecution;
   }
-  if (!(composerContext.currentSelection.value.extent.nodePosition as BinaryPosition).isIncluded) {
+  if (!(editContext.composer.selection.extent.nodePosition as BinaryPosition).isIncluded) {
     return ExecutionInstruction.continueExecution;
   }
 
   print('Deleting a box component');
 
-  final node = composerContext.document.getNode(composerContext.currentSelection.value.extent);
+  final node = editContext.document.getNode(editContext.composer.selection.extent);
   final newSelectionPosition = _getAnotherSelectionAfterNodeDeletion(
-    document: composerContext.document,
-    documentLayout: composerContext.documentLayout,
-    deletedNodeIndex: composerContext.document.getNodeIndex(node),
+    document: editContext.document,
+    documentLayout: editContext.documentLayout,
+    deletedNodeIndex: editContext.document.getNodeIndex(node),
   );
 
-  composerContext.editor.executeCommand(
+  editContext.editor.executeCommand(
     DeleteSelectionCommand(
-      documentSelection: composerContext.currentSelection.value,
+      documentSelection: editContext.composer.selection,
     ),
   );
 
-  composerContext.currentSelection.value = DocumentSelection.collapsed(
+  editContext.composer.selection = DocumentSelection.collapsed(
     position: newSelectionPosition,
   );
 
