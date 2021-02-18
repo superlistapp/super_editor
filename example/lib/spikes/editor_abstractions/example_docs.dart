@@ -62,9 +62,16 @@ Document createRichContentDoc() {
   return Document(nodes: [
     ParagraphNode(
       id: Document.createNodeId(),
-      text: AttributedText(text: 'This is rich text'),
+      text: AttributedText(text: 'Super Editor'),
       metadata: {
         'blockType': 'header1',
+      },
+    ),
+    ParagraphNode(
+      id: Document.createNodeId(),
+      text: AttributedText(text: 'Rich text and multimedia'),
+      metadata: {
+        'blockType': 'header2',
       },
     ),
     ParagraphNode(
@@ -84,6 +91,13 @@ Document createRichContentDoc() {
       text: AttributedText(text: _loremIpsum1),
       metadata: {
         'textAlign': 'center',
+      },
+    ),
+    ParagraphNode(
+      id: Document.createNodeId(),
+      text: AttributedText(text: 'This is some important quotation about something.'),
+      metadata: {
+        'blockType': 'blockquote',
       },
     ),
     ParagraphNode(

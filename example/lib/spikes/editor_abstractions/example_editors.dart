@@ -4,6 +4,7 @@ import 'package:example/spikes/editor_abstractions/default_editor/horizontal_rul
 import 'package:example/spikes/editor_abstractions/default_editor/paragraph.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'core/document.dart';
 import 'core/document_editor.dart';
@@ -87,6 +88,8 @@ Widget createDarkStyledEditor(Document doc, [bool showDebugPaint = false]) {
       final style = defaultStyleBuilder(attributions);
       return style.copyWith(
         color: Colors.white,
+        fontFamily: GoogleFonts.merriweather().fontFamily,
+        height: 1.8,
       );
     },
     selectionStyle: SelectionStyle(

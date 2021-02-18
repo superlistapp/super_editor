@@ -1,10 +1,10 @@
 Configuration Use-Cases:
 
- * Header 1 and Header 2 styling
- * Blockquote styling
- * Global font family change
+ * DONE: Header 1 and Header 2 styling
+ * DONE: Blockquote styling
+ * DONE: Global font family change
+ * DONE: Text selection color + HR and image selection color
  * Custom OL and LI indicator painting
- * Text selection color + HR and image selection color
  * Title + 1st paragraph hints, pressing enter in title moves to 1st paragraph
 
 Open Questions:
