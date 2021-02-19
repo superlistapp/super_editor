@@ -227,7 +227,7 @@ bool _convertParagraphIfDesired({
     editor.insertNodeAt(
       paragraphNodeIndex,
       HorizontalRuleNode(
-        id: Document.createNodeId(),
+        id: DocumentEditor.createNodeId(),
       ),
     );
 
@@ -363,7 +363,7 @@ ExecutionInstruction splitParagraphWhenEnterPressed({
     return ExecutionInstruction.continueExecution;
   }
 
-  final newNodeId = Document.createNodeId();
+  final newNodeId = DocumentEditor.createNodeId();
 
   editContext.editor.executeCommand(
     SplitParagraphCommand(

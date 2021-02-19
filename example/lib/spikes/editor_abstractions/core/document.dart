@@ -1,8 +1,5 @@
-import 'dart:math';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
-import 'package:uuid/uuid.dart';
 
 /// A document with styled text and multimedia elements.
 ///
@@ -13,105 +10,28 @@ import 'package:uuid/uuid.dart';
 ///
 /// To represent a specific location within a `Document`,
 /// see `DocumentPosition`.
-class Document with ChangeNotifier {
-  static Uuid _uuid = Uuid();
-  static String createNodeId() => _uuid.v4();
+abstract class Document with ChangeNotifier {
+  List<DocumentNode> get nodes;
 
-  Document({
-    List<DocumentNode> nodes = const [],
-  }) : _nodes = nodes {
-    // Register listeners for all initial nodes.
-    for (final node in _nodes) {
-      node.addListener(_forwardNodeChange);
-    }
-  }
+  DocumentNode getNodeById(String nodeId);
 
-  final List<DocumentNode> _nodes;
-  List<DocumentNode> get nodes => _nodes;
+  DocumentNode getNodeAt(int index);
 
-  DocumentNode getNodeById(String nodeId) {
-    return _nodes.firstWhere(
-      (element) => element.id == nodeId,
-      orElse: () => null,
-    );
-  }
+  int getNodeIndex(DocumentNode node);
 
-  DocumentNode getNodeAt(int index) {
-    return _nodes[index];
-  }
+  DocumentNode getNodeBefore(DocumentNode node);
 
-  int getNodeIndex(DocumentNode node) {
-    return _nodes.indexOf(node);
-  }
-
-  DocumentNode getNodeBefore(DocumentNode node) {
-    final nodeIndex = getNodeIndex(node);
-    print('Index of "${node.id}": $nodeIndex');
-    return nodeIndex > 0 ? getNodeAt(nodeIndex - 1) : null;
-  }
-
-  DocumentNode getNodeAfter(DocumentNode node) {
-    final nodeIndex = getNodeIndex(node);
-    return nodeIndex >= 0 && nodeIndex < nodes.length - 1 ? getNodeAt(nodeIndex + 1) : null;
-  }
+  DocumentNode getNodeAfter(DocumentNode node);
 
   // TODO: this method is misleading because if `position1` and
   //       `position2` are in the same node, they may be returned
   //       in the wrong order because the document doesn't know
   //       how to interpret positions within a node.
-  DocumentRange getRangeBetween(DocumentPosition position1, DocumentPosition position2) {
-    final node1 = getNode(position1);
-    if (node1 == null) {
-      throw Exception('No such position in document: $position1');
-    }
-    final index1 = _nodes.indexOf(node1);
+  DocumentRange getRangeBetween(DocumentPosition position1, DocumentPosition position2);
 
-    final node2 = getNode(position2);
-    if (node2 == null) {
-      throw Exception('No such position in document: $position2');
-    }
-    final index2 = _nodes.indexOf(node2);
+  DocumentNode getNode(DocumentPosition position);
 
-    return DocumentRange(
-      start: index1 < index2 ? position1 : position2,
-      end: index1 < index2 ? position2 : position1,
-    );
-  }
-
-  DocumentNode getNode(DocumentPosition position) =>
-      _nodes.firstWhere((element) => element.id == position.nodeId, orElse: () => null);
-
-  List<DocumentNode> getNodesInside(DocumentPosition position1, DocumentPosition position2) {
-    final node1 = getNode(position1);
-    if (node1 == null) {
-      throw Exception('No such position in document: $position1');
-    }
-    final index1 = _nodes.indexOf(node1);
-
-    final node2 = getNode(position2);
-    if (node2 == null) {
-      throw Exception('No such position in document: $position2');
-    }
-    final index2 = _nodes.indexOf(node2);
-
-    final from = min(index1, index2);
-    final to = max(index1, index2);
-
-    return _nodes.sublist(from, to + 1);
-  }
-
-  /// Don't invoke this from any place but DocumentEditor
-  /// TODO: figure out a holistic solution to allow editing of documents
-  ///       without exposing mutation from the document interface
-  @visibleForTesting
-  void mutateDocument(void Function(VoidCallback onNodeChange) operation) {
-    operation.call(_forwardNodeChange);
-    notifyListeners();
-  }
-
-  void _forwardNodeChange() {
-    notifyListeners();
-  }
+  List<DocumentNode> getNodesInside(DocumentPosition position1, DocumentPosition position2);
 }
 
 /// A span within a `RichTextDocument` that begins at `start` and

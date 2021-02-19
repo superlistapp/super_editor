@@ -1,16 +1,17 @@
 import 'core/attributed_spans.dart';
 import 'core/attributed_text.dart';
 import 'core/document.dart';
+import 'core/document_editor.dart';
 import 'default_editor/horizontal_rule.dart';
 import 'default_editor/image.dart';
 import 'default_editor/list_items.dart';
 import 'default_editor/paragraph.dart';
 
 Document createEmptyDoc() {
-  return Document(
+  return MutableDocument(
     nodes: [
       ParagraphNode(
-        id: Document.createNodeId(),
+        id: DocumentEditor.createNodeId(),
         text: AttributedText(text: ''),
       ),
     ],
@@ -18,17 +19,17 @@ Document createEmptyDoc() {
 }
 
 Document createStartingPointDoc() {
-  return Document(
+  return MutableDocument(
     nodes: [
       ParagraphNode(
-        id: Document.createNodeId(),
+        id: DocumentEditor.createNodeId(),
         text: AttributedText(text: ''),
         metadata: {
           'blockType': 'header1',
         },
       ),
       ParagraphNode(
-        id: Document.createNodeId(),
+        id: DocumentEditor.createNodeId(),
         text: AttributedText(text: ''),
       ),
     ],
@@ -36,9 +37,9 @@ Document createStartingPointDoc() {
 }
 
 Document createLoremIpsumDoc() {
-  return Document(nodes: [
+  return MutableDocument(nodes: [
     ParagraphNode(
-      id: Document.createNodeId(),
+      id: DocumentEditor.createNodeId(),
       text: AttributedText(
         text: _loremIpsum1,
         attributions: [
@@ -48,34 +49,34 @@ Document createLoremIpsumDoc() {
       ),
     ),
     ParagraphNode(
-      id: Document.createNodeId(),
+      id: DocumentEditor.createNodeId(),
       text: AttributedText(text: _loremIpsum2),
     ),
     ParagraphNode(
-      id: Document.createNodeId(),
+      id: DocumentEditor.createNodeId(),
       text: AttributedText(text: _loremIpsum3),
     ),
   ]);
 }
 
 Document createRichContentDoc() {
-  return Document(nodes: [
+  return MutableDocument(nodes: [
     ParagraphNode(
-      id: Document.createNodeId(),
+      id: DocumentEditor.createNodeId(),
       text: AttributedText(text: 'Super Editor'),
       metadata: {
         'blockType': 'header1',
       },
     ),
     ParagraphNode(
-      id: Document.createNodeId(),
+      id: DocumentEditor.createNodeId(),
       text: AttributedText(text: 'Rich text and multimedia'),
       metadata: {
         'blockType': 'header2',
       },
     ),
     ParagraphNode(
-        id: Document.createNodeId(),
+        id: DocumentEditor.createNodeId(),
         text: AttributedText(
           text: _loremIpsum1,
           attributions: [
@@ -87,151 +88,151 @@ Document createRichContentDoc() {
           'textAlign': 'justify',
         }),
     ParagraphNode(
-      id: Document.createNodeId(),
+      id: DocumentEditor.createNodeId(),
       text: AttributedText(text: _loremIpsum1),
       metadata: {
         'textAlign': 'center',
       },
     ),
     ParagraphNode(
-      id: Document.createNodeId(),
+      id: DocumentEditor.createNodeId(),
       text: AttributedText(text: 'This is some important quotation about something.'),
       metadata: {
         'blockType': 'blockquote',
       },
     ),
     ParagraphNode(
-      id: Document.createNodeId(),
+      id: DocumentEditor.createNodeId(),
       text: AttributedText(text: _loremIpsum1),
       metadata: {
         'textAlign': 'right',
       },
     ),
     ListItemNode.unordered(
-      id: Document.createNodeId(),
+      id: DocumentEditor.createNodeId(),
       text: AttributedText(text: 'This is the 1st list item.'),
     ),
     ListItemNode.unordered(
-      id: Document.createNodeId(),
+      id: DocumentEditor.createNodeId(),
       text: AttributedText(text: 'This is the 2nd list item.'),
     ),
     ListItemNode.unordered(
-      id: Document.createNodeId(),
+      id: DocumentEditor.createNodeId(),
       text: AttributedText(text: 'This is the 3rd list item.'),
       indent: 1,
     ),
     ListItemNode.unordered(
-      id: Document.createNodeId(),
+      id: DocumentEditor.createNodeId(),
       text: AttributedText(text: 'This is the 4th list item.'),
       indent: 1,
     ),
     ListItemNode.unordered(
-      id: Document.createNodeId(),
+      id: DocumentEditor.createNodeId(),
       text: AttributedText(text: 'This is the 5th list item.'),
     ),
-    HorizontalRuleNode(id: Document.createNodeId()),
+    HorizontalRuleNode(id: DocumentEditor.createNodeId()),
     ListItemNode.ordered(
-      id: Document.createNodeId(),
+      id: DocumentEditor.createNodeId(),
       text: AttributedText(text: 'This is the 1st list item.'),
     ),
     ListItemNode.ordered(
-      id: Document.createNodeId(),
+      id: DocumentEditor.createNodeId(),
       text: AttributedText(text: 'This is the 2nd list item.'),
     ),
     ListItemNode.ordered(
-      id: Document.createNodeId(),
+      id: DocumentEditor.createNodeId(),
       text: AttributedText(text: 'This is the 3rd list item.'),
       indent: 1,
     ),
     ListItemNode.ordered(
-      id: Document.createNodeId(),
+      id: DocumentEditor.createNodeId(),
       text: AttributedText(text: 'This is the 4th list item.'),
       indent: 1,
     ),
     ListItemNode.ordered(
-      id: Document.createNodeId(),
+      id: DocumentEditor.createNodeId(),
       text: AttributedText(text: 'This is the 5th list item.'),
       indent: 2,
     ),
     ListItemNode.ordered(
-      id: Document.createNodeId(),
+      id: DocumentEditor.createNodeId(),
       text: AttributedText(text: 'This is the 6th list item.'),
       indent: 2,
     ),
     ListItemNode.ordered(
-      id: Document.createNodeId(),
+      id: DocumentEditor.createNodeId(),
       text: AttributedText(text: 'This is the 7th list item.'),
     ),
     ParagraphNode(
-      id: Document.createNodeId(),
+      id: DocumentEditor.createNodeId(),
       text: AttributedText(text: _loremIpsum2),
     ),
     ImageNode(
-      id: Document.createNodeId(),
+      id: DocumentEditor.createNodeId(),
       imageUrl:
           'https://images.unsplash.com/photo-1612099453097-26a809f51e96?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=1050&q=80',
     ),
     ParagraphNode(
-      id: Document.createNodeId(),
+      id: DocumentEditor.createNodeId(),
       text: AttributedText(text: _loremIpsum3),
     ),
   ]);
 }
 
 Document createListItemsDoc() {
-  return Document(nodes: [
+  return MutableDocument(nodes: [
     ListItemNode.unordered(
-      id: Document.createNodeId(),
+      id: DocumentEditor.createNodeId(),
       text: AttributedText(text: 'This is the 1st list item.'),
     ),
     ListItemNode.unordered(
-      id: Document.createNodeId(),
+      id: DocumentEditor.createNodeId(),
       text: AttributedText(text: 'This is the 2nd list item.'),
     ),
     ListItemNode.unordered(
-      id: Document.createNodeId(),
+      id: DocumentEditor.createNodeId(),
       text: AttributedText(text: 'This is the 3rd list item.'),
       indent: 1,
     ),
     ListItemNode.unordered(
-      id: Document.createNodeId(),
+      id: DocumentEditor.createNodeId(),
       text: AttributedText(text: 'This is the 4th list item.'),
       indent: 1,
     ),
     ListItemNode.unordered(
-      id: Document.createNodeId(),
+      id: DocumentEditor.createNodeId(),
       text: AttributedText(text: 'This is the 5th list item.'),
     ),
     ListItemNode.ordered(
-      id: Document.createNodeId(),
+      id: DocumentEditor.createNodeId(),
       text: AttributedText(text: 'This is the 1st list item.'),
     ),
     ListItemNode.ordered(
-      id: Document.createNodeId(),
+      id: DocumentEditor.createNodeId(),
       text: AttributedText(text: 'This is the 2nd list item.'),
     ),
     ListItemNode.ordered(
-      id: Document.createNodeId(),
+      id: DocumentEditor.createNodeId(),
       text: AttributedText(text: 'This is the 3rd list item.'),
       indent: 1,
     ),
     ListItemNode.ordered(
-      id: Document.createNodeId(),
+      id: DocumentEditor.createNodeId(),
       text: AttributedText(text: 'This is the 4th list item.'),
       indent: 1,
     ),
     ListItemNode.ordered(
-      id: Document.createNodeId(),
+      id: DocumentEditor.createNodeId(),
       text: AttributedText(text: 'This is the 5th list item.'),
       indent: 2,
     ),
     ListItemNode.ordered(
-      id: Document.createNodeId(),
+      id: DocumentEditor.createNodeId(),
       text: AttributedText(text: 'This is the 6th list item.'),
       indent: 2,
     ),
     ListItemNode.ordered(
-      id: Document.createNodeId(),
+      id: DocumentEditor.createNodeId(),
       text: AttributedText(text: 'This is the 7th list item.'),
     ),
   ]);

@@ -421,7 +421,7 @@ ExecutionInstruction splitListItemWhenEnterPressed({
     return ExecutionInstruction.continueExecution;
   }
 
-  final newNodeId = Document.createNodeId();
+  final newNodeId = DocumentEditor.createNodeId();
 
   editContext.editor.executeCommand(
     SplitListItemCommand(

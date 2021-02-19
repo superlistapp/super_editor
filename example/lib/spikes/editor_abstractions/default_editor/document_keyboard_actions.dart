@@ -230,7 +230,7 @@ Future<void> _paste({
           SplitParagraphCommand(
             nodeId: currentNodeWithSelection.id,
             splitPosition: TextPosition(offset: pasteTextOffset),
-            newNodeId: Document.createNodeId(),
+            newNodeId: DocumentEditor.createNodeId(),
           ),
         );
       } else if (currentNodeWithSelection is ListItemNode) {
@@ -238,7 +238,7 @@ Future<void> _paste({
           SplitListItemCommand(
             nodeId: currentNodeWithSelection.id,
             splitPosition: TextPosition(offset: pasteTextOffset),
-            newNodeId: Document.createNodeId(),
+            newNodeId: DocumentEditor.createNodeId(),
           ),
         );
       } else {
@@ -273,7 +273,7 @@ Future<void> _paste({
       .map(
         // TODO: create nodes based on content inspection.
         (nodeText) => ParagraphNode(
-          id: Document.createNodeId(),
+          id: DocumentEditor.createNodeId(),
           text: AttributedText(
             text: nodeText,
           ),
