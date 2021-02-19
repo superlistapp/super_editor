@@ -81,7 +81,9 @@ class UnorderedListItemComponent extends StatelessWidget {
     @required this.textKey,
     this.text,
     @required this.styleBuilder,
+    this.dotBuilder = _defaultUnorderedListItemDotBuilder,
     this.indent = 0,
+    this.indentExtent = 25,
     this.textSelection,
     this.selectionColor = Colors.lightBlueAccent,
     this.hasCaret = false,
@@ -92,7 +94,9 @@ class UnorderedListItemComponent extends StatelessWidget {
   final GlobalKey textKey;
   final AttributedText text;
   final AttributionStyleBuilder styleBuilder;
+  final UnorderedListItemDotBuilder dotBuilder;
   final int indent;
+  final double indentExtent;
   final TextSelection textSelection;
   final Color selectionColor;
   final bool hasCaret;
@@ -101,30 +105,22 @@ class UnorderedListItemComponent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final indentSpace = 25.0 * indent;
-    final dotTopPadding = styleBuilder({}).fontSize / 2;
+    final indentSpace = indentExtent * (indent + 1);
+    final firstLineHeight = styleBuilder({}).fontSize;
+    final manualVerticalAdjustment = 2.0;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(
-          width: 25 + indentSpace,
-          child: Align(
-            alignment: Alignment.centerRight,
-            child: Container(
-              padding: EdgeInsets.only(top: dotTopPadding, right: 15.0),
-              decoration: BoxDecoration(
-                border: Border.all(width: 1, color: showDebugPaint ? Colors.grey : Colors.transparent),
-              ),
-              child: Container(
-                width: 4,
-                height: 4,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: styleBuilder({}).color,
-                ),
-              ),
-            ),
+        Container(
+          margin: EdgeInsets.only(top: manualVerticalAdjustment),
+          decoration: BoxDecoration(
+            border: Border.all(width: 1, color: showDebugPaint ? Colors.grey : Colors.transparent),
+          ),
+          child: SizedBox(
+            width: indentSpace,
+            height: firstLineHeight,
+            child: dotBuilder(context, this),
           ),
         ),
         Expanded(
@@ -144,6 +140,23 @@ class UnorderedListItemComponent extends StatelessWidget {
   }
 }
 
+typedef UnorderedListItemDotBuilder = Widget Function(BuildContext, UnorderedListItemComponent);
+
+Widget _defaultUnorderedListItemDotBuilder(BuildContext context, UnorderedListItemComponent component) {
+  return Align(
+    alignment: Alignment.centerRight,
+    child: Container(
+      width: 4,
+      height: 4,
+      margin: const EdgeInsets.only(right: 10),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: component.styleBuilder({}).color,
+      ),
+    ),
+  );
+}
+
 /// Displays an ordered list item in a document.
 ///
 /// Supports various indentation levels, e.g., 1, 2, 3, ...
@@ -154,7 +167,9 @@ class OrderedListItemComponent extends StatelessWidget {
     @required this.listIndex,
     this.text,
     @required this.styleBuilder,
+    this.numeralBuilder = _defaultOrderedListItemNumeralBuilder,
     this.indent = 0,
+    this.indentExtent = 25,
     this.textSelection,
     this.selectionColor = Colors.lightBlueAccent,
     this.hasCaret = false,
@@ -166,7 +181,9 @@ class OrderedListItemComponent extends StatelessWidget {
   final int listIndex;
   final AttributedText text;
   final AttributionStyleBuilder styleBuilder;
+  final OrderedListItemNumeralBuilder numeralBuilder;
   final int indent;
+  final double indentExtent;
   final TextSelection textSelection;
   final Color selectionColor;
   final bool hasCaret;
@@ -175,19 +192,25 @@ class OrderedListItemComponent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final indentSpace = 25.0 * indent;
+    final indentSpace = indentExtent * (indent + 1);
+    final firstLineHeight = styleBuilder({}).fontSize;
+    final manualVerticalAdjustment = 2.0;
+    final manualHeightAdjustment = firstLineHeight * 0.15;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          padding: EdgeInsets.only(left: indentSpace, right: 15.0),
+          width: indentSpace,
+          height: firstLineHeight + manualHeightAdjustment,
+          margin: EdgeInsets.only(top: manualVerticalAdjustment),
           decoration: BoxDecoration(
             border: Border.all(width: 1, color: showDebugPaint ? Colors.grey : Colors.transparent),
           ),
-          child: Text(
-            '$listIndex.',
-            style: styleBuilder({}).copyWith(),
+          child: SizedBox(
+            width: indentSpace,
+            height: firstLineHeight,
+            child: numeralBuilder(context, this),
           ),
         ),
         Expanded(
@@ -205,6 +228,24 @@ class OrderedListItemComponent extends StatelessWidget {
       ],
     );
   }
+}
+
+typedef OrderedListItemNumeralBuilder = Widget Function(BuildContext, OrderedListItemComponent);
+
+Widget _defaultOrderedListItemNumeralBuilder(BuildContext context, OrderedListItemComponent component) {
+  return OverflowBox(
+    maxHeight: double.infinity,
+    child: Align(
+      alignment: Alignment.centerRight,
+      child: Padding(
+        padding: const EdgeInsets.only(right: 5.0),
+        child: Text(
+          '${component.listIndex}.',
+          style: component.styleBuilder({}).copyWith(),
+        ),
+      ),
+    ),
+  );
 }
 
 class IndentListItemCommand implements EditorCommand {

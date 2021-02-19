@@ -1,6 +1,7 @@
 import 'package:example/spikes/editor_abstractions/core/document_composer.dart';
 import 'package:example/spikes/editor_abstractions/core/document_layout.dart';
 import 'package:example/spikes/editor_abstractions/default_editor/horizontal_rule.dart';
+import 'package:example/spikes/editor_abstractions/default_editor/list_items.dart';
 import 'package:example/spikes/editor_abstractions/default_editor/paragraph.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
@@ -111,6 +112,38 @@ Widget createDarkStyledEditor(Document doc, [bool showDebugPaint = false]) {
           color: Colors.lightGreenAccent,
           isSelected: standardHr.isSelected,
           selectionColor: standardHr.selectionColor,
+        );
+      },
+      (ComponentContext componentContext) {
+        if (componentContext.currentNode is! ListItemNode ||
+            (componentContext.currentNode as ListItemNode).type != ListItemType.unordered) {
+          return null;
+        }
+        final standardUl = unorderedListItemBuilder(componentContext) as UnorderedListItemComponent;
+
+        return UnorderedListItemComponent(
+          textKey: componentContext.componentKey,
+          text: standardUl.text,
+          styleBuilder: standardUl.styleBuilder,
+          dotBuilder: (context, component) {
+            return Align(
+              alignment: Alignment.centerRight,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 10),
+                child: Icon(
+                  Icons.opacity,
+                  size: 12,
+                  color: component.styleBuilder({}).color,
+                ),
+              ),
+            );
+          },
+          indent: standardUl.indent,
+          textSelection: standardUl.textSelection,
+          selectionColor: standardUl.selectionColor,
+          hasCaret: standardUl.hasCaret,
+          caretColor: standardUl.caretColor,
+          showDebugPaint: standardUl.showDebugPaint,
         );
       },
       ...defaultComponentBuilders,
