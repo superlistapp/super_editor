@@ -1,3 +1,6 @@
+import 'package:example/spikes/editor_abstractions/core/document_layout.dart';
+import 'package:example/spikes/editor_abstractions/default_editor/paragraph.dart';
+import 'package:example/spikes/editor_abstractions/default_editor/styles.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
@@ -68,4 +71,134 @@ class TextWithHintComponent extends StatelessWidget {
       ),
     );
   }
+}
+
+Widget titleHintBuilder(ComponentContext componentContext) {
+  if (componentContext.currentNode is! ParagraphNode) {
+    return null;
+  }
+
+  final hasCursor = componentContext.nodeSelection != null ? componentContext.nodeSelection.isExtent : false;
+  if (componentContext.document.getNodeIndex(componentContext.currentNode) != 0 ||
+      (componentContext.currentNode as TextNode).text.text.isNotEmpty ||
+      hasCursor) {
+    return null;
+  }
+
+  final textSelection =
+      componentContext.nodeSelection == null || componentContext.nodeSelection.nodeSelection is! TextSelection
+          ? null
+          : componentContext.nodeSelection.nodeSelection as TextSelection;
+  if (componentContext.nodeSelection != null && componentContext.nodeSelection.nodeSelection is! TextSelection) {
+    print(
+        'ERROR: Building a paragraph component but the selection is not a TextSelection: ${componentContext.currentNode.id}');
+  }
+
+  final highlightWhenEmpty =
+      componentContext.nodeSelection == null ? false : componentContext.nodeSelection.highlightWhenEmpty;
+
+  // print(' - ${docNode.id}: ${selectedNode?.nodeSelection}');
+  // if (hasCursor) {
+  //   print('   - ^ has cursor');
+  // }
+
+  print(' - building a paragraph with selection:');
+  print('   - base: ${textSelection?.base}');
+  print('   - extent: ${textSelection?.extent}');
+
+  TextAlign textAlign = TextAlign.left;
+  final textAlignName = (componentContext.currentNode as TextNode).metadata['textAlign'];
+  switch (textAlignName) {
+    case 'left':
+      textAlign = TextAlign.left;
+      break;
+    case 'center':
+      textAlign = TextAlign.center;
+      break;
+    case 'right':
+      textAlign = TextAlign.right;
+      break;
+    case 'justify':
+      textAlign = TextAlign.justify;
+      break;
+  }
+
+  print(' - this is the title node');
+  return TextWithHintComponent(
+    documentComponentKey: componentContext.componentKey,
+    text: (componentContext.currentNode as TextNode).text,
+    styleBuilder: componentContext.extensions[textStylesExtensionKey],
+    metadata: (componentContext.currentNode as TextNode).metadata,
+    hintText: 'Enter your title',
+    textAlign: textAlign,
+    textSelection: textSelection,
+    hasCursor: hasCursor,
+    highlightWhenEmpty: highlightWhenEmpty,
+    showDebugPaint: componentContext.showDebugPaint,
+  );
+}
+
+Widget firstParagraphHintBuilder(ComponentContext componentContext) {
+  if (componentContext.currentNode is! ParagraphNode) {
+    return null;
+  }
+
+  final hasCursor = componentContext.nodeSelection != null ? componentContext.nodeSelection.isExtent : false;
+  if (componentContext.document.nodes.length > 2 ||
+      componentContext.document.getNodeIndex(componentContext.currentNode) != 1 ||
+      (componentContext.currentNode as TextNode).text.text.isNotEmpty ||
+      hasCursor) {
+    return null;
+  }
+
+  final textSelection =
+      componentContext.nodeSelection == null || componentContext.nodeSelection.nodeSelection is! TextSelection
+          ? null
+          : componentContext.nodeSelection.nodeSelection as TextSelection;
+  if (componentContext.nodeSelection != null && componentContext.nodeSelection.nodeSelection is! TextSelection) {
+    print(
+        'ERROR: Building a paragraph component but the selection is not a TextSelection: ${componentContext.currentNode.id}');
+  }
+  final highlightWhenEmpty =
+      componentContext.nodeSelection == null ? false : componentContext.nodeSelection.highlightWhenEmpty;
+
+  // print(' - ${docNode.id}: ${selectedNode?.nodeSelection}');
+  // if (hasCursor) {
+  //   print('   - ^ has cursor');
+  // }
+
+  print(' - building a paragraph with selection:');
+  print('   - base: ${textSelection?.base}');
+  print('   - extent: ${textSelection?.extent}');
+
+  TextAlign textAlign = TextAlign.left;
+  final textAlignName = (componentContext.currentNode as TextNode).metadata['textAlign'];
+  switch (textAlignName) {
+    case 'left':
+      textAlign = TextAlign.left;
+      break;
+    case 'center':
+      textAlign = TextAlign.center;
+      break;
+    case 'right':
+      textAlign = TextAlign.right;
+      break;
+    case 'justify':
+      textAlign = TextAlign.justify;
+      break;
+  }
+
+  print(' - this is the 1st paragraph node');
+  return TextWithHintComponent(
+    documentComponentKey: componentContext.componentKey,
+    text: (componentContext.currentNode as TextNode).text,
+    styleBuilder: componentContext.extensions[textStylesExtensionKey],
+    metadata: (componentContext.currentNode as TextNode).metadata,
+    hintText: 'Enter your content...',
+    textAlign: textAlign,
+    textSelection: textSelection,
+    hasCursor: hasCursor,
+    highlightWhenEmpty: highlightWhenEmpty,
+    showDebugPaint: componentContext.showDebugPaint,
+  );
 }

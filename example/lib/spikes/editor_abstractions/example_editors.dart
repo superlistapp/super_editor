@@ -9,6 +9,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'core/document.dart';
 import 'core/document_editor.dart';
 import 'default_editor/editor.dart';
+import 'default_editor/styles.dart';
 
 /// Configures an editor that only displays un-styled text.
 ///
@@ -30,13 +31,15 @@ Widget createPlainTextEditor(Document doc, [bool showDebugPaint = false]) {
         fontWeight: FontWeight.normal,
       );
     },
-    componentBuilder: (ComponentContext componentContext) {
-      if (componentContext.currentNode is ParagraphNode) {
-        return defaultComponentBuilder(componentContext);
-      } else {
-        return NotRecognizedComponent();
+    componentBuilders: [
+      (ComponentContext componentContext) {
+        if (componentContext.currentNode is ParagraphNode) {
+          return paragraphBuilder(componentContext);
+        } else {
+          return NotRecognizedComponent();
+        }
       }
-    },
+    ],
     showDebugPaint: showDebugPaint,
   );
 }
@@ -96,9 +99,12 @@ Widget createDarkStyledEditor(Document doc, [bool showDebugPaint = false]) {
       textCaretColor: Colors.yellow,
       selectionColor: Colors.yellow.withOpacity(0.3),
     ),
-    componentBuilder: (ComponentContext componentContext) {
-      if (componentContext.currentNode is HorizontalRuleNode) {
-        final standardHr = defaultComponentBuilder(componentContext) as HorizontalRuleComponent;
+    componentBuilders: [
+      (ComponentContext componentContext) {
+        if (componentContext.currentNode is! HorizontalRuleNode) {
+          return null;
+        }
+        final standardHr = horizontalRuleBuilder(componentContext) as HorizontalRuleComponent;
 
         return HorizontalRuleComponent(
           componentKey: standardHr.componentKey,
@@ -106,10 +112,9 @@ Widget createDarkStyledEditor(Document doc, [bool showDebugPaint = false]) {
           isSelected: standardHr.isSelected,
           selectionColor: standardHr.selectionColor,
         );
-      } else {
-        return defaultComponentBuilder(componentContext);
-      }
-    },
+      },
+      ...defaultComponentBuilders,
+    ],
     showDebugPaint: showDebugPaint,
   );
 }

@@ -29,14 +29,14 @@ class DefaultDocumentLayout extends StatefulWidget {
     Key key,
     @required this.document,
     @required this.documentSelection,
-    @required this.componentBuilder,
+    @required this.componentBuilders,
     this.extensions = const {},
     this.showDebugPaint = false,
   }) : super(key: key);
 
   final Document document;
   final DocumentSelection documentSelection;
-  final ComponentBuilder componentBuilder;
+  final List<ComponentBuilder> componentBuilders;
 
   /// Tools that components might use to build themselves.
   ///
@@ -320,7 +320,7 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> with Docu
         nodeId: docNode.id,
       );
 
-      final component = widget.componentBuilder(ComponentContext(
+      final component = _buildComponent(ComponentContext(
         context: context,
         document: widget.document,
         currentNode: docNode,
@@ -443,6 +443,16 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> with Docu
         );
       }
     }
+  }
+
+  Widget _buildComponent(ComponentContext componentContext) {
+    for (final componentBuilder in widget.componentBuilders) {
+      final component = componentBuilder(componentContext);
+      if (component != null) {
+        return component;
+      }
+    }
+    return null;
   }
 }
 

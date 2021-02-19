@@ -1,10 +1,12 @@
 import 'package:example/spikes/editor_abstractions/core/document_composer.dart';
+import 'package:example/spikes/editor_abstractions/core/document_layout.dart';
 import 'package:example/spikes/editor_abstractions/core/edit_context.dart';
 import 'package:example/spikes/editor_abstractions/default_editor/horizontal_rule.dart';
 import 'package:example/spikes/editor_abstractions/default_editor/image.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:http/http.dart' as http;
 import 'package:linkify/linkify.dart';
 
@@ -15,6 +17,7 @@ import '../core/document_selection.dart';
 import '_text_tools.dart';
 import 'document_interaction.dart';
 import 'list_items.dart';
+import 'styles.dart';
 import 'text.dart';
 
 class ParagraphNode extends TextNode {
@@ -470,4 +473,65 @@ ExecutionInstruction moveParagraphSelectionUpWhenBackspaceIsPressed({
   );
 
   return ExecutionInstruction.haltExecution;
+}
+
+Widget paragraphBuilder(ComponentContext componentContext) {
+  if (componentContext.currentNode is! ParagraphNode) {
+    return null;
+  }
+
+  final textSelection =
+      componentContext.nodeSelection == null || componentContext.nodeSelection.nodeSelection is! TextSelection
+          ? null
+          : componentContext.nodeSelection.nodeSelection as TextSelection;
+  if (componentContext.nodeSelection != null && componentContext.nodeSelection.nodeSelection is! TextSelection) {
+    print(
+        'ERROR: Building a paragraph component but the selection is not a TextSelection: ${componentContext.currentNode.id}');
+  }
+  final hasCursor = componentContext.nodeSelection != null ? componentContext.nodeSelection.isExtent : false;
+  final highlightWhenEmpty =
+      componentContext.nodeSelection == null ? false : componentContext.nodeSelection.highlightWhenEmpty;
+
+  // print(' - ${docNode.id}: ${selectedNode?.nodeSelection}');
+  // if (hasCursor) {
+  //   print('   - ^ has cursor');
+  // }
+
+  print(' - building a paragraph with selection:');
+  print('   - base: ${textSelection?.base}');
+  print('   - extent: ${textSelection?.extent}');
+
+  TextAlign textAlign = TextAlign.left;
+  final textAlignName = (componentContext.currentNode as TextNode).metadata['textAlign'];
+  switch (textAlignName) {
+    case 'left':
+      textAlign = TextAlign.left;
+      break;
+    case 'center':
+      textAlign = TextAlign.center;
+      break;
+    case 'right':
+      textAlign = TextAlign.right;
+      break;
+    case 'justify':
+      textAlign = TextAlign.justify;
+      break;
+  }
+
+  print(
+      'Building text component with caret color: ${(componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle).textCaretColor}');
+
+  return TextComponent(
+    key: componentContext.componentKey,
+    text: (componentContext.currentNode as TextNode).text,
+    textStyleBuilder: componentContext.extensions[textStylesExtensionKey],
+    metadata: (componentContext.currentNode as TextNode).metadata,
+    textAlign: textAlign,
+    textSelection: textSelection,
+    selectionColor: (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle).selectionColor,
+    hasCaret: hasCursor,
+    caretColor: (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle).textCaretColor,
+    highlightWhenEmpty: highlightWhenEmpty,
+    showDebugPaint: componentContext.showDebugPaint,
+  );
 }

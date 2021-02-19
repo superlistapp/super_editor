@@ -1,9 +1,11 @@
+import 'package:example/spikes/editor_abstractions/core/document_layout.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 
 import '../core/document.dart';
 import 'box_component.dart';
+import 'styles.dart';
 
 class ImageNode with ChangeNotifier implements DocumentNode {
   ImageNode({
@@ -77,4 +79,21 @@ class ImageComponent extends StatelessWidget {
       ),
     );
   }
+}
+
+Widget imageBuilder(ComponentContext componentContext) {
+  if (componentContext.currentNode is! ImageNode) {
+    return null;
+  }
+
+  final selection =
+      componentContext.nodeSelection == null ? null : componentContext.nodeSelection.nodeSelection as BinarySelection;
+  final isSelected = selection != null && selection.position.isIncluded;
+
+  return ImageComponent(
+    componentKey: componentContext.componentKey,
+    imageUrl: (componentContext.currentNode as ImageNode).imageUrl,
+    isSelected: isSelected,
+    selectionColor: (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle).selectionColor,
+  );
 }

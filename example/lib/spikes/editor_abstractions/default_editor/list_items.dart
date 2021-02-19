@@ -1,3 +1,4 @@
+import 'package:example/spikes/editor_abstractions/core/document_layout.dart';
 import 'package:example/spikes/editor_abstractions/core/edit_context.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -11,6 +12,7 @@ import '../core/document_editor.dart';
 import '../core/document_selection.dart';
 import 'document_interaction.dart';
 import 'paragraph.dart';
+import 'styles.dart';
 import 'text.dart';
 
 class ListItemNode extends TextNode {
@@ -397,4 +399,62 @@ ExecutionInstruction splitListItemWhenEnterPressed({
   );
 
   return ExecutionInstruction.haltExecution;
+}
+
+Widget unorderedListItemBuilder(ComponentContext componentContext) {
+  if (componentContext.currentNode is! ListItemNode ||
+      (componentContext.currentNode as ListItemNode).type != ListItemType.unordered) {
+    return null;
+  }
+  final textSelection =
+      componentContext.nodeSelection == null ? null : componentContext.nodeSelection.nodeSelection as TextSelection;
+  final hasCursor = componentContext.nodeSelection != null ? componentContext.nodeSelection.isExtent : false;
+
+  return UnorderedListItemComponent(
+    textKey: componentContext.componentKey,
+    text: (componentContext.currentNode as ListItemNode).text,
+    styleBuilder: componentContext.extensions[textStylesExtensionKey],
+    indent: (componentContext.currentNode as ListItemNode).indent,
+    textSelection: textSelection,
+    selectionColor: (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle).selectionColor,
+    hasCaret: hasCursor,
+    caretColor: (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle).textCaretColor,
+    showDebugPaint: componentContext.showDebugPaint,
+  );
+}
+
+Widget orderedListItemBuilder(ComponentContext componentContext) {
+  if (componentContext.currentNode is! ListItemNode ||
+      (componentContext.currentNode as ListItemNode).type != ListItemType.ordered) {
+    return null;
+  }
+
+  int index = 1;
+  DocumentNode nodeAbove = componentContext.document.getNodeBefore(componentContext.currentNode);
+  while (nodeAbove != null &&
+      nodeAbove is ListItemNode &&
+      nodeAbove.type == ListItemType.ordered &&
+      nodeAbove.indent >= (componentContext.currentNode as ListItemNode).indent) {
+    if ((nodeAbove as ListItemNode).indent == (componentContext.currentNode as ListItemNode).indent) {
+      index += 1;
+    }
+    nodeAbove = componentContext.document.getNodeBefore(nodeAbove);
+  }
+
+  final textSelection =
+      componentContext.nodeSelection == null ? null : componentContext.nodeSelection.nodeSelection as TextSelection;
+  final hasCursor = componentContext.nodeSelection != null ? componentContext.nodeSelection.isExtent : false;
+
+  return OrderedListItemComponent(
+    textKey: componentContext.componentKey,
+    listIndex: index,
+    text: (componentContext.currentNode as ListItemNode).text,
+    styleBuilder: componentContext.extensions[textStylesExtensionKey],
+    textSelection: textSelection,
+    selectionColor: (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle).selectionColor,
+    hasCaret: hasCursor,
+    caretColor: (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle).textCaretColor,
+    indent: (componentContext.currentNode as ListItemNode).indent,
+    showDebugPaint: componentContext.showDebugPaint,
+  );
 }

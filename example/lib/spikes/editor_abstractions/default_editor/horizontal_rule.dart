@@ -1,9 +1,11 @@
+import 'package:example/spikes/editor_abstractions/core/document_layout.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 
 import '../core/document.dart';
 import 'box_component.dart';
+import 'styles.dart';
 
 class HorizontalRuleNode with ChangeNotifier implements DocumentNode {
   HorizontalRuleNode({
@@ -66,4 +68,20 @@ class HorizontalRuleComponent extends StatelessWidget {
       ),
     );
   }
+}
+
+Widget horizontalRuleBuilder(ComponentContext componentContext) {
+  if (componentContext.currentNode is! HorizontalRuleNode) {
+    return null;
+  }
+
+  final selection =
+      componentContext.nodeSelection == null ? null : componentContext.nodeSelection.nodeSelection as BinarySelection;
+  final isSelected = selection != null && selection.position.isIncluded;
+
+  return HorizontalRuleComponent(
+    componentKey: componentContext.componentKey,
+    isSelected: isSelected,
+    selectionColor: (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle).selectionColor,
+  );
 }
