@@ -5,7 +5,7 @@ Configuration Use-Cases:
  * DONE: Global font family change
  * DONE: Text selection color + HR and image selection color
  * DONE: Custom OL and LI indicator painting
- * Title + 1st paragraph hints, pressing enter in title moves to 1st paragraph
+ * DONE: Title + 1st paragraph hints, pressing enter in title moves to 1st paragraph
 
 Open Questions:
 

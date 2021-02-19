@@ -1,7 +1,12 @@
+import 'package:example/spikes/editor_abstractions/core/document.dart';
 import 'package:example/spikes/editor_abstractions/core/document_layout.dart';
+import 'package:example/spikes/editor_abstractions/core/document_selection.dart';
+import 'package:example/spikes/editor_abstractions/core/edit_context.dart';
+import 'package:example/spikes/editor_abstractions/default_editor/document_interaction.dart';
 import 'package:example/spikes/editor_abstractions/default_editor/paragraph.dart';
 import 'package:example/spikes/editor_abstractions/default_editor/styles.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
 import '../core/attributed_text.dart';
@@ -201,4 +206,53 @@ Widget firstParagraphHintBuilder(ComponentContext componentContext) {
     highlightWhenEmpty: highlightWhenEmpty,
     showDebugPaint: componentContext.showDebugPaint,
   );
+}
+
+ExecutionInstruction moveCaretFromTitleToFirstParagraph({
+  @required EditContext editContext,
+  @required RawKeyEvent keyEvent,
+}) {
+  if (keyEvent.logicalKey != LogicalKeyboardKey.enter) {
+    return ExecutionInstruction.continueExecution;
+  }
+  if (editContext.composer.selection == null) {
+    return ExecutionInstruction.continueExecution;
+  }
+  if (!editContext.composer.selection.isCollapsed) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  final node = editContext.document.getNodeById(editContext.composer.selection.extent.nodeId);
+  if (node is! ParagraphNode) {
+    return ExecutionInstruction.continueExecution;
+  }
+  final nodeIndex = editContext.document.getNodeIndex(node);
+  if (nodeIndex != 0) {
+    // This is not the title node.
+    return ExecutionInstruction.continueExecution;
+  }
+
+  final nodeCount = editContext.document.nodes.length;
+  if (nodeCount != 2) {
+    // There is some amount of existing content. Process the
+    // enter key like normal.
+    return ExecutionInstruction.continueExecution;
+  }
+
+  final nextNode = editContext.document.getNodeAt(1);
+  if (nextNode is! ParagraphNode || (nextNode as ParagraphNode).text.text.isNotEmpty) {
+    // There's existing content. Process the enter key like
+    // normal.
+    return ExecutionInstruction.continueExecution;
+  }
+
+  // Move the document selection from the title to 1st paragraph.
+  editContext.composer.selection = DocumentSelection.collapsed(
+    position: DocumentPosition(
+      nodeId: nextNode.id,
+      nodePosition: TextPosition(offset: 0),
+    ),
+  );
+
+  return ExecutionInstruction.haltExecution;
 }

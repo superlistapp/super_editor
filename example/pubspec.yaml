@@ -31,6 +31,11 @@ dependencies:
 
   charcode: ^1.1.3
 
+  linkify: ^3.0.0
+  http: ^0.12.2
+
+  google_fonts: ^1.1.2
+
   flutter_richtext:
     path: ../
 

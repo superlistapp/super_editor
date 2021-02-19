@@ -9,8 +9,10 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'core/document.dart';
 import 'core/document_editor.dart';
+import 'custom_components/text_with_hint.dart';
 import 'default_editor/editor.dart';
 import 'default_editor/styles.dart';
+import 'default_editor/unknown_component.dart';
 
 /// Configures an editor that only displays un-styled text.
 ///
@@ -24,7 +26,10 @@ Widget createPlainTextEditor(Document doc, [bool showDebugPaint = false]) {
     composer: DocumentComposer(
       document: doc,
     ),
-    keyboardActions: defaultKeyboardActions,
+    keyboardActions: [
+      moveCaretFromTitleToFirstParagraph,
+      ...defaultKeyboardActions,
+    ],
     textStyleBuilder: (attributions) {
       return TextStyle(
         color: Colors.black,
@@ -37,7 +42,7 @@ Widget createPlainTextEditor(Document doc, [bool showDebugPaint = false]) {
         if (componentContext.currentNode is ParagraphNode) {
           return paragraphBuilder(componentContext);
         } else {
-          return NotRecognizedComponent();
+          return UnknownComponent();
         }
       }
     ],
@@ -45,21 +50,9 @@ Widget createPlainTextEditor(Document doc, [bool showDebugPaint = false]) {
   );
 }
 
-// TODO: turn into real component in default editor
-class NotRecognizedComponent extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: 54,
-      child: Placeholder(),
-    );
-  }
-}
-
 /// Configures a standard editor.
 Widget createStyledEditor(Document doc, [bool showDebugPaint = false]) {
-  return Editor.standard(
+  return Editor.custom(
     document: doc,
     editor: DocumentEditor(
       document: doc,
@@ -67,6 +60,10 @@ Widget createStyledEditor(Document doc, [bool showDebugPaint = false]) {
     composer: DocumentComposer(
       document: doc,
     ),
+    keyboardActions: [
+      moveCaretFromTitleToFirstParagraph,
+      ...defaultKeyboardActions,
+    ],
     showDebugPaint: showDebugPaint,
   );
 }
@@ -87,7 +84,10 @@ Widget createDarkStyledEditor(Document doc, [bool showDebugPaint = false]) {
     composer: DocumentComposer(
       document: doc,
     ),
-    keyboardActions: defaultKeyboardActions,
+    keyboardActions: [
+      moveCaretFromTitleToFirstParagraph,
+      ...defaultKeyboardActions,
+    ],
     textStyleBuilder: (attributions) {
       final style = defaultStyleBuilder(attributions);
       return style.copyWith(

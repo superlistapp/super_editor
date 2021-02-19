@@ -9,3 +9,15 @@ Widget unknownComponentBuilder(ComponentContext componentContext) {
     child: Placeholder(),
   );
 }
+
+// TODO: turn into real component in default editor
+class UnknownComponent extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 54,
+      child: Placeholder(),
+    );
+  }
+}
