@@ -299,70 +299,26 @@ final defaultComponentBuilders = <ComponentBuilder>[
 
 /// Keyboard actions for the standard `Editor`.
 final defaultKeyboardActions = <DocumentKeyboardAction>[
-  DocumentKeyboardAction.simple(
-    action: doNothingWhenThereIsNoSelection,
-  ),
-  DocumentKeyboardAction.simple(
-    action: indentListItemWhenBackspaceIsPressed,
-  ),
-  DocumentKeyboardAction.simple(
-    action: unindentListItemWhenBackspaceIsPressed,
-  ),
-  DocumentKeyboardAction.simple(
-    action: splitListItemWhenEnterPressed,
-  ),
-  DocumentKeyboardAction.simple(
-    action: pasteWhenCmdVIsPressed,
-  ),
-  DocumentKeyboardAction.simple(
-    action: copyWhenCmdVIsPressed,
-  ),
-  DocumentKeyboardAction.simple(
-    action: applyBoldWhenCmdBIsPressed,
-  ),
-  DocumentKeyboardAction.simple(
-    action: applyItalicsWhenCmdIIsPressed,
-  ),
-  DocumentKeyboardAction.simple(
-    action: collapseSelectionWhenDirectionalKeyIsPressed,
-  ),
-  DocumentKeyboardAction.simple(
-    action: deleteExpandedSelectionWhenCharacterOrDestructiveKeyPressed,
-  ),
-  DocumentKeyboardAction.simple(
-    action: deleteBoxWhenBackspaceOrDeleteIsPressed,
-  ),
-  DocumentKeyboardAction.simple(
-    action: insertCharacterInParagraph,
-  ),
-  DocumentKeyboardAction.simple(
-    action: insertCharacterInTextComposable,
-  ),
-  DocumentKeyboardAction.simple(
-    action: insertNewlineInParagraph,
-  ),
-  DocumentKeyboardAction.simple(
-    action: splitParagraphWhenEnterPressed,
-  ),
-  DocumentKeyboardAction.simple(
-    action: deleteCharacterWhenBackspaceIsPressed,
-  ),
-  DocumentKeyboardAction.simple(
-    action: mergeNodeWithPreviousWhenBackspaceIsPressed,
-  ),
-  DocumentKeyboardAction.simple(
-    action: deleteEmptyParagraphWhenBackspaceIsPressed,
-  ),
-  DocumentKeyboardAction.simple(
-    action: moveParagraphSelectionUpWhenBackspaceIsPressed,
-  ),
-  DocumentKeyboardAction.simple(
-    action: deleteCharacterWhenDeleteIsPressed,
-  ),
-  DocumentKeyboardAction.simple(
-    action: mergeNodeWithNextWhenDeleteIsPressed,
-  ),
-  DocumentKeyboardAction.simple(
-    action: moveUpDownLeftAndRightWithArrowKeys,
-  ),
+  doNothingWhenThereIsNoSelection,
+  indentListItemWhenBackspaceIsPressed,
+  unindentListItemWhenBackspaceIsPressed,
+  splitListItemWhenEnterPressed,
+  pasteWhenCmdVIsPressed,
+  copyWhenCmdVIsPressed,
+  applyBoldWhenCmdBIsPressed,
+  applyItalicsWhenCmdIIsPressed,
+  collapseSelectionWhenDirectionalKeyIsPressed,
+  deleteExpandedSelectionWhenCharacterOrDestructiveKeyPressed,
+  deleteBoxWhenBackspaceOrDeleteIsPressed,
+  insertCharacterInParagraph,
+  insertCharacterInTextComposable,
+  insertNewlineInParagraph,
+  splitParagraphWhenEnterPressed,
+  deleteCharacterWhenBackspaceIsPressed,
+  mergeNodeWithPreviousWhenBackspaceIsPressed,
+  deleteEmptyParagraphWhenBackspaceIsPressed,
+  moveParagraphSelectionUpWhenBackspaceIsPressed,
+  deleteCharacterWhenDeleteIsPressed,
+  mergeNodeWithNextWhenDeleteIsPressed,
+  moveUpDownLeftAndRightWithArrowKeys,
 ];

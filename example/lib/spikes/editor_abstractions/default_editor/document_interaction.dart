@@ -173,7 +173,7 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
     ExecutionInstruction instruction = ExecutionInstruction.continueExecution;
     int index = 0;
     while (instruction == ExecutionInstruction.continueExecution && index < widget.keyboardActions.length) {
-      instruction = widget.keyboardActions[index].execute(
+      instruction = widget.keyboardActions[index](
         editContext: widget.editContext,
         keyEvent: keyEvent,
       );
@@ -713,43 +713,16 @@ enum SelectionType {
   paragraph,
 }
 
-class DocumentKeyboardAction {
-  const DocumentKeyboardAction.simple({
-    @required SimpleDocumentKeyboardAction action,
-  }) : _action = action;
-
-  final SimpleDocumentKeyboardAction _action;
-
-  /// Executes this action, if the action wants to run, and returns
-  /// a desired `ExecutionInstruction` to either continue or halt
-  /// execution of actions.
-  ///
-  /// It is possible that an action makes changes and then returns
-  /// `ExecutionInstruction.continueExecution` to continue execution.
-  ///
-  /// It is possible that an action does nothing and then returns
-  /// `ExecutionInstruction.haltExecution` to prevent further execution.
-  ExecutionInstruction execute({
-    @required EditContext editContext,
-    @required RawKeyEvent keyEvent,
-  }) {
-    return _action(
-      editContext: editContext,
-      keyEvent: keyEvent,
-    );
-  }
-}
-
-/// Executes an action, if the action wants to run, and returns
-/// `true` if further execution should stop, or `false` if further
-/// execution should continue.
+/// Executes this action, if the action wants to run, and returns
+/// a desired `ExecutionInstruction` to either continue or halt
+/// execution of actions.
 ///
 /// It is possible that an action makes changes and then returns
-/// `false` to continue execution.
+/// `ExecutionInstruction.continueExecution` to continue execution.
 ///
 /// It is possible that an action does nothing and then returns
-/// `true` to prevent further execution.
-typedef SimpleDocumentKeyboardAction = ExecutionInstruction Function({
+/// `ExecutionInstruction.haltExecution` to prevent further execution.
+typedef DocumentKeyboardAction = ExecutionInstruction Function({
   @required EditContext editContext,
   @required RawKeyEvent keyEvent,
 });
