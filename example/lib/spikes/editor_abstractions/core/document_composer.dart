@@ -1,28 +1,33 @@
 // TODO: get rid of this import
-import 'package:example/spikes/editor_abstractions/default_editor/text.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
 
-import 'document.dart';
 import 'document_selection.dart';
 
 /// Maintains a `DocumentSelection` within a `Document` and
 /// uses that selection to edit the document.
 class DocumentComposer with ChangeNotifier {
   DocumentComposer({
-    @required Document document,
     DocumentSelection initialSelection,
-  })  : _document = document,
-        _selection = ValueNotifier(initialSelection) {
+  })  : _selection = ValueNotifier(initialSelection),
+        _preferences = ComposerPreferences() {
     _selection.addListener(() {
       print('DocumentComposer: selection changed.');
-      _updateComposerPreferencesAtSelection();
+      // _updateComposerPreferencesAtSelection();
+      notifyListeners();
+    });
+
+    _preferences.addListener(() {
       notifyListeners();
     });
   }
 
-  final Document _document;
+  @override
+  void dispose() {
+    _selection.dispose();
+    _preferences.dispose();
+    super.dispose();
+  }
 
   final ValueNotifier<DocumentSelection> _selection;
 
@@ -38,34 +43,9 @@ class DocumentComposer with ChangeNotifier {
     selection = null;
   }
 
-  final ComposerPreferences _preferences = ComposerPreferences();
+  final ComposerPreferences _preferences;
 
   ComposerPreferences get preferences => _preferences;
-
-  // TODO: this text selection logic probably belongs in some place
-  //       that is specific to text content
-  void _updateComposerPreferencesAtSelection() {
-    _preferences.clearStyles();
-
-    if (_selection.value == null || !_selection.value.isCollapsed) {
-      return;
-    }
-
-    final node = _document.getNodeById(_selection.value.extent.nodeId);
-    if (node is! TextNode) {
-      return;
-    }
-
-    final textPosition = _selection.value.extent.nodePosition as TextPosition;
-    if (textPosition.offset == 0) {
-      return;
-    }
-
-    print('Looking up styles. Caret at: ${textPosition.offset}, looking back one place at: ${textPosition.offset - 1}');
-    final allStyles = (node as TextNode).text.getAllAttributionsAt(textPosition.offset - 1);
-    print(' - styles: $allStyles');
-    _preferences.addStyles(allStyles);
-  }
 }
 
 /// Holds preferences about user input, to be used for the

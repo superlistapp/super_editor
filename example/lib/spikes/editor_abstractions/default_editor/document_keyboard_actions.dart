@@ -173,7 +173,7 @@ ExecutionInstruction pasteWhenCmdVIsPressed({
   // Delete all currently selected content.
   if (!editContext.composer.selection.isCollapsed) {
     pastePosition = _getDocumentPositionAfterDeletion(
-      document: editContext.document,
+      document: editContext.editor.document,
       selection: editContext.composer.selection,
     );
 
@@ -186,11 +186,13 @@ ExecutionInstruction pasteWhenCmdVIsPressed({
   // TODO: figure out a general approach for asynchronous behaviors that
   //       need to be carried out in response to user input.
   _paste(
-    document: editContext.document,
+    document: editContext.editor.document,
     editor: editContext.editor,
     composer: editContext.composer,
     pastePosition: pastePosition,
   );
+
+  return ExecutionInstruction.haltExecution;
 }
 
 Future<void> _paste({
@@ -324,7 +326,7 @@ ExecutionInstruction copyWhenCmdVIsPressed({
   // TODO: figure out a general approach for asynchronous behaviors that
   //       need to be carried out in response to user input.
   _copy(
-    document: editContext.document,
+    document: editContext.editor.document,
     documentSelection: editContext.composer.selection,
   );
 
@@ -456,7 +458,7 @@ ExecutionInstruction deleteExpandedSelectionWhenCharacterOrDestructiveKeyPressed
   }
 
   final newSelectionPosition = _getDocumentPositionAfterDeletion(
-    document: editContext.document,
+    document: editContext.editor.document,
     selection: editContext.composer.selection,
   );
 
@@ -544,18 +546,18 @@ ExecutionInstruction mergeNodeWithPreviousWhenBackspaceIsPressed({
     return ExecutionInstruction.continueExecution;
   }
 
-  final node = editContext.document.getNodeById(editContext.composer.selection.extent.nodeId);
+  final node = editContext.editor.document.getNodeById(editContext.composer.selection.extent.nodeId);
   if (node is! TextNode) {
     print('WARNING: Cannot merge node of type: $node into node above.');
     return ExecutionInstruction.continueExecution;
   }
 
   print('All nodes in order:');
-  editContext.document.nodes.forEach((aNode) {
+  editContext.editor.document.nodes.forEach((aNode) {
     print(' - node: ${aNode.id}');
   });
   print('Looking for node above: ${node.id}');
-  final nodeAbove = editContext.document.getNodeBefore(node);
+  final nodeAbove = editContext.editor.document.getNodeBefore(node);
   if (nodeAbove == null) {
     print('At top of document. Cannot merge with node above.');
     return ExecutionInstruction.continueExecution;
@@ -599,14 +601,14 @@ ExecutionInstruction mergeNodeWithNextWhenDeleteIsPressed({
     return ExecutionInstruction.continueExecution;
   }
 
-  final node = editContext.document.getNodeById(editContext.composer.selection.extent.nodeId);
+  final node = editContext.editor.document.getNodeById(editContext.composer.selection.extent.nodeId);
   if (node is! TextNode) {
     print('WARNING: Cannot combine node of type: $node');
     return ExecutionInstruction.continueExecution;
   }
   final paragraphNode = node as TextNode;
 
-  final nodeBelow = editContext.document.getNodeAfter(paragraphNode);
+  final nodeBelow = editContext.editor.document.getNodeAfter(paragraphNode);
   if (nodeBelow == null) {
     print('At bottom of document. Cannot merge with node above.');
     return ExecutionInstruction.continueExecution;
@@ -766,7 +768,7 @@ void _moveHorizontally({
 }) {
   final currentExtent = editContext.composer.selection.extent;
   final nodeId = currentExtent.nodeId;
-  final node = editContext.document.getNodeById(nodeId);
+  final node = editContext.editor.document.getNodeById(nodeId);
   final extentComponent = editContext.documentLayout.getComponentByNodeId(nodeId);
 
   String newExtentNodeId = nodeId;
@@ -777,7 +779,8 @@ void _moveHorizontally({
   if (newExtentNodePosition == null) {
     print(' - moving to next node');
     // Move to next node
-    final nextNode = moveLeft ? editContext.document.getNodeBefore(node) : editContext.document.getNodeAfter(node);
+    final nextNode =
+        moveLeft ? editContext.editor.document.getNodeBefore(node) : editContext.editor.document.getNodeAfter(node);
 
     if (nextNode == null) {
       // We're at the beginning/end of the document and can't go
@@ -815,7 +818,7 @@ void _moveVertically({
 }) {
   final currentExtent = editContext.composer.selection.extent;
   final nodeId = currentExtent.nodeId;
-  final node = editContext.document.getNodeById(nodeId);
+  final node = editContext.editor.document.getNodeById(nodeId);
   final extentComponent = editContext.documentLayout.getComponentByNodeId(nodeId);
 
   String newExtentNodeId = nodeId;
@@ -826,9 +829,10 @@ void _moveVertically({
   if (newExtentNodePosition == null) {
     print(' - moving to next node');
     // Move to next node
-    final nextNode = moveUp ? editContext.document.getNodeBefore(node) : editContext.document.getNodeAfter(node);
+    final nextNode =
+        moveUp ? editContext.editor.document.getNodeBefore(node) : editContext.editor.document.getNodeAfter(node);
     if (nextNode != null) {
-      print(' - next node is at offset ${editContext.document.getNodeIndex(nextNode)}, id: ${nextNode.id}');
+      print(' - next node is at offset ${editContext.editor.document.getNodeIndex(nextNode)}, id: ${nextNode.id}');
       newExtentNodeId = nextNode.id;
       final nextComponent = editContext.documentLayout.getComponentByNodeId(nextNode.id);
       final offsetToMatch = extentComponent.getOffsetForPosition(currentExtent.nodePosition);

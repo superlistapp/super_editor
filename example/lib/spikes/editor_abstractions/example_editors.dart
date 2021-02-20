@@ -1,4 +1,3 @@
-import 'package:example/spikes/editor_abstractions/core/document_composer.dart';
 import 'package:example/spikes/editor_abstractions/core/document_layout.dart';
 import 'package:example/spikes/editor_abstractions/default_editor/horizontal_rule.dart';
 import 'package:example/spikes/editor_abstractions/default_editor/list_items.dart';
@@ -19,13 +18,7 @@ import 'default_editor/unknown_component.dart';
 /// Any node that isn't a `ParagraphNode` is displayed as an "x" placeholder.
 Widget createPlainTextEditor(Document doc, [bool showDebugPaint = false]) {
   return Editor.custom(
-    document: doc,
-    editor: DocumentEditor(
-      document: doc,
-    ),
-    composer: DocumentComposer(
-      document: doc,
-    ),
+    editor: DocumentEditor(document: doc),
     keyboardActions: [
       moveCaretFromTitleToFirstParagraph,
       ...defaultKeyboardActions,
@@ -53,13 +46,7 @@ Widget createPlainTextEditor(Document doc, [bool showDebugPaint = false]) {
 /// Configures a standard editor.
 Widget createStyledEditor(Document doc, [bool showDebugPaint = false]) {
   return Editor.custom(
-    document: doc,
-    editor: DocumentEditor(
-      document: doc,
-    ),
-    composer: DocumentComposer(
-      document: doc,
-    ),
+    editor: DocumentEditor(document: doc),
     keyboardActions: [
       moveCaretFromTitleToFirstParagraph,
       ...defaultKeyboardActions,
@@ -77,13 +64,7 @@ Widget createStyledEditor(Document doc, [bool showDebugPaint = false]) {
 ///  - HRs are painted green
 Widget createDarkStyledEditor(Document doc, [bool showDebugPaint = false]) {
   return Editor.custom(
-    document: doc,
-    editor: DocumentEditor(
-      document: doc,
-    ),
-    composer: DocumentComposer(
-      document: doc,
-    ),
+    editor: DocumentEditor(document: doc),
     keyboardActions: [
       moveCaretFromTitleToFirstParagraph,
       ...defaultKeyboardActions,

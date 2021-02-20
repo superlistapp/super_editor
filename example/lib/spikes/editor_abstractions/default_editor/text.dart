@@ -527,10 +527,10 @@ ExecutionInstruction insertCharacterInTextComposable({
     return ExecutionInstruction.continueExecution;
   }
 
-  if (isTextEntryNode(document: editContext.document, selection: editContext.composer.selection) &&
+  if (isTextEntryNode(document: editContext.editor.document, selection: editContext.composer.selection) &&
       isCharacterKey(keyEvent.logicalKey) &&
       editContext.composer.selection.isCollapsed) {
-    final textNode = editContext.document.getNode(editContext.composer.selection.extent) as TextNode;
+    final textNode = editContext.editor.document.getNode(editContext.composer.selection.extent) as TextNode;
     final initialTextOffset = (editContext.composer.selection.extent.nodePosition as TextPosition).offset;
 
     editContext.editor.executeCommand(
@@ -566,7 +566,7 @@ ExecutionInstruction deleteCharacterWhenBackspaceIsPressed({
   if (editContext.composer.selection == null) {
     return ExecutionInstruction.continueExecution;
   }
-  if (!isTextEntryNode(document: editContext.document, selection: editContext.composer.selection)) {
+  if (!isTextEntryNode(document: editContext.editor.document, selection: editContext.composer.selection)) {
     return ExecutionInstruction.continueExecution;
   }
   if (!editContext.composer.selection.isCollapsed) {
@@ -576,7 +576,7 @@ ExecutionInstruction deleteCharacterWhenBackspaceIsPressed({
     return ExecutionInstruction.continueExecution;
   }
 
-  final textNode = editContext.document.getNode(editContext.composer.selection.extent) as TextNode;
+  final textNode = editContext.editor.document.getNode(editContext.composer.selection.extent) as TextNode;
   final currentTextPosition = editContext.composer.selection.extent.nodePosition as TextPosition;
   final newSelectionPosition = DocumentPosition(
     nodeId: textNode.id,
@@ -616,13 +616,13 @@ ExecutionInstruction deleteCharacterWhenDeleteIsPressed({
   if (editContext.composer.selection == null) {
     return ExecutionInstruction.continueExecution;
   }
-  if (!isTextEntryNode(document: editContext.document, selection: editContext.composer.selection)) {
+  if (!isTextEntryNode(document: editContext.editor.document, selection: editContext.composer.selection)) {
     return ExecutionInstruction.continueExecution;
   }
   if (!editContext.composer.selection.isCollapsed) {
     return ExecutionInstruction.continueExecution;
   }
-  final textNode = editContext.document.getNode(editContext.composer.selection.extent) as TextNode;
+  final textNode = editContext.editor.document.getNode(editContext.composer.selection.extent) as TextNode;
   final text = textNode.text;
   final currentTextPosition = (editContext.composer.selection.extent.nodePosition as TextPosition);
   if (currentTextPosition.offset >= text.text.length) {
@@ -652,11 +652,11 @@ ExecutionInstruction insertNewlineInParagraph({
   @required EditContext editContext,
   @required RawKeyEvent keyEvent,
 }) {
-  if (isTextEntryNode(document: editContext.document, selection: editContext.composer.selection) &&
+  if (isTextEntryNode(document: editContext.editor.document, selection: editContext.composer.selection) &&
       keyEvent.logicalKey == LogicalKeyboardKey.enter &&
       keyEvent.isShiftPressed &&
       editContext.composer.selection.isCollapsed) {
-    final textNode = editContext.document.getNode(editContext.composer.selection.extent) as TextNode;
+    final textNode = editContext.editor.document.getNode(editContext.composer.selection.extent) as TextNode;
     final initialTextOffset = (editContext.composer.selection.extent.nodePosition as TextPosition).offset;
 
     editContext.editor.executeCommand(

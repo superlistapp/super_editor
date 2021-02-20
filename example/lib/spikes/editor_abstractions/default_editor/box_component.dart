@@ -184,11 +184,11 @@ ExecutionInstruction deleteBoxWhenBackspaceOrDeleteIsPressed({
 
   print('Deleting a box component');
 
-  final node = editContext.document.getNode(editContext.composer.selection.extent);
+  final node = editContext.editor.document.getNode(editContext.composer.selection.extent);
   final newSelectionPosition = _getAnotherSelectionAfterNodeDeletion(
-    document: editContext.document,
+    document: editContext.editor.document,
     documentLayout: editContext.documentLayout,
-    deletedNodeIndex: editContext.document.getNodeIndex(node),
+    deletedNodeIndex: editContext.editor.document.getNodeIndex(node),
   );
 
   editContext.editor.executeCommand(

@@ -14,6 +14,7 @@ class DocumentEditor {
   }) : _document = document;
 
   final MutableDocument _document;
+  Document get document => _document;
 
   void executeCommand(EditorCommand command) {
     command.execute(_document, this);

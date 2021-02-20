@@ -222,24 +222,24 @@ ExecutionInstruction moveCaretFromTitleToFirstParagraph({
     return ExecutionInstruction.continueExecution;
   }
 
-  final node = editContext.document.getNodeById(editContext.composer.selection.extent.nodeId);
+  final node = editContext.editor.document.getNodeById(editContext.composer.selection.extent.nodeId);
   if (node is! ParagraphNode) {
     return ExecutionInstruction.continueExecution;
   }
-  final nodeIndex = editContext.document.getNodeIndex(node);
+  final nodeIndex = editContext.editor.document.getNodeIndex(node);
   if (nodeIndex != 0) {
     // This is not the title node.
     return ExecutionInstruction.continueExecution;
   }
 
-  final nodeCount = editContext.document.nodes.length;
+  final nodeCount = editContext.editor.document.nodes.length;
   if (nodeCount != 2) {
     // There is some amount of existing content. Process the
     // enter key like normal.
     return ExecutionInstruction.continueExecution;
   }
 
-  final nextNode = editContext.document.getNodeAt(1);
+  final nextNode = editContext.editor.document.getNodeAt(1);
   if (nextNode is! ParagraphNode || (nextNode as ParagraphNode).text.text.isNotEmpty) {
     // There's existing content. Process the enter key like
     // normal.

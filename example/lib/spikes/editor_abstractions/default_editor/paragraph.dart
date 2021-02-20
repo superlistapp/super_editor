@@ -145,7 +145,7 @@ ExecutionInstruction insertCharacterInParagraph({
   @required EditContext editContext,
   @required RawKeyEvent keyEvent,
 }) {
-  final node = editContext.document.getNodeById(editContext.composer.selection.extent.nodeId);
+  final node = editContext.editor.document.getNodeById(editContext.composer.selection.extent.nodeId);
   if (node is ParagraphNode && isCharacterKey(keyEvent.logicalKey) && editContext.composer.selection.isCollapsed) {
     print(' - this is a paragraph');
     // Delegate the action to the standard insert-character behavior.
@@ -156,7 +156,7 @@ ExecutionInstruction insertCharacterInParagraph({
 
     if (keyEvent.character == ' ') {
       _convertParagraphIfDesired(
-        document: editContext.document,
+        document: editContext.editor.document,
         composer: editContext.composer,
         node: node,
         editor: editContext.editor,
@@ -358,7 +358,7 @@ ExecutionInstruction splitParagraphWhenEnterPressed({
     return ExecutionInstruction.continueExecution;
   }
 
-  final node = editContext.document.getNodeById(editContext.composer.selection.extent.nodeId);
+  final node = editContext.editor.document.getNodeById(editContext.composer.selection.extent.nodeId);
   if (node is! ParagraphNode) {
     return ExecutionInstruction.continueExecution;
   }
@@ -382,7 +382,7 @@ ExecutionInstruction splitParagraphWhenEnterPressed({
   );
 
   _convertParagraphIfDesired(
-    document: editContext.document,
+    document: editContext.editor.document,
     editor: editContext.editor,
     composer: editContext.composer,
     node: node,
@@ -405,7 +405,7 @@ ExecutionInstruction deleteEmptyParagraphWhenBackspaceIsPressed({
     return ExecutionInstruction.continueExecution;
   }
 
-  final node = editContext.document.getNodeById(editContext.composer.selection.extent.nodeId);
+  final node = editContext.editor.document.getNodeById(editContext.composer.selection.extent.nodeId);
   if (node is! ParagraphNode) {
     return ExecutionInstruction.continueExecution;
   }
@@ -415,7 +415,7 @@ ExecutionInstruction deleteEmptyParagraphWhenBackspaceIsPressed({
     return ExecutionInstruction.continueExecution;
   }
 
-  final nodeAbove = editContext.document.getNodeBefore(paragraphNode);
+  final nodeAbove = editContext.editor.document.getNodeBefore(paragraphNode);
   if (nodeAbove == null) {
     return ExecutionInstruction.continueExecution;
   }
@@ -449,7 +449,7 @@ ExecutionInstruction moveParagraphSelectionUpWhenBackspaceIsPressed({
     return ExecutionInstruction.continueExecution;
   }
 
-  final node = editContext.document.getNodeById(editContext.composer.selection.extent.nodeId);
+  final node = editContext.editor.document.getNodeById(editContext.composer.selection.extent.nodeId);
   if (node is! ParagraphNode) {
     return ExecutionInstruction.continueExecution;
   }
@@ -459,7 +459,7 @@ ExecutionInstruction moveParagraphSelectionUpWhenBackspaceIsPressed({
     return ExecutionInstruction.continueExecution;
   }
 
-  final nodeAbove = editContext.document.getNodeBefore(paragraphNode);
+  final nodeAbove = editContext.editor.document.getNodeBefore(paragraphNode);
   if (nodeAbove == null) {
     return ExecutionInstruction.continueExecution;
   }

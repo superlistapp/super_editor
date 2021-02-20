@@ -1,4 +1,5 @@
 import 'package:example/spikes/editor_abstractions/core/attributed_text.dart';
+import 'package:example/spikes/editor_abstractions/core/document.dart';
 import 'package:example/spikes/editor_abstractions/core/edit_context.dart';
 import 'package:example/spikes/editor_abstractions/default_editor/box_component.dart';
 import 'package:example/spikes/editor_abstractions/default_editor/document_interaction.dart';
@@ -6,7 +7,6 @@ import 'package:example/spikes/editor_abstractions/default_editor/unknown_compon
 import 'package:flutter/material.dart' hide SelectableText;
 import 'package:flutter/rendering.dart';
 
-import '../core/document.dart';
 import '../core/document_composer.dart';
 import '../core/document_editor.dart';
 import '../core/document_layout.dart';
@@ -64,17 +64,15 @@ import 'styles.dart';
 class Editor extends StatefulWidget {
   factory Editor.standard({
     Key key,
-    @required Document document,
     @required DocumentEditor editor,
-    @required DocumentComposer composer,
+    DocumentComposer composer,
     ScrollController scrollController,
     bool showDebugPaint = false,
   }) {
     return Editor._(
       key: key,
-      document: document,
       editor: editor,
-      composer: composer,
+      composer: composer ?? DocumentComposer(),
       componentBuilders: defaultComponentBuilders,
       textStyleBuilder: defaultStyleBuilder,
       selectionStyle: defaultSelectionStyle,
@@ -86,9 +84,8 @@ class Editor extends StatefulWidget {
 
   factory Editor.custom({
     Key key,
-    @required Document document,
     @required DocumentEditor editor,
-    @required DocumentComposer composer,
+    DocumentComposer composer,
     AttributionStyleBuilder textStyleBuilder,
     SelectionStyle selectionStyle,
     List<DocumentKeyboardAction> keyboardActions,
@@ -98,9 +95,8 @@ class Editor extends StatefulWidget {
   }) {
     return Editor._(
       key: key,
-      document: document,
       editor: editor,
-      composer: composer,
+      composer: composer ?? DocumentComposer(),
       componentBuilders: componentBuilders ?? defaultComponentBuilders,
       textStyleBuilder: textStyleBuilder ?? defaultStyleBuilder,
       selectionStyle: selectionStyle ?? defaultSelectionStyle,
@@ -112,7 +108,6 @@ class Editor extends StatefulWidget {
 
   const Editor._({
     Key key,
-    @required this.document,
     @required this.editor,
     @required this.composer,
     @required this.componentBuilders,
@@ -121,23 +116,14 @@ class Editor extends StatefulWidget {
     @required this.keyboardActions,
     this.scrollController,
     this.showDebugPaint = false,
-  })  : assert(document != null),
-        assert(editor != null),
+  })  : assert(editor != null),
         assert(composer != null),
         assert(componentBuilders != null),
         assert(textStyleBuilder != null),
         assert(keyboardActions != null),
         super(key: key);
 
-  /// The rich text document to be edited within this `EditableDocument`.
-  ///
-  /// Changing the `document` instance will clear any existing
-  /// user selection and replace the entire previous document
-  /// with the new one.
-  final Document document;
-
-  /// The `editor` is responsible for performing all content
-  /// manipulation operations on the supplied `document`.
+  /// Contains a `Document` and alters that document as desired.
   final DocumentEditor editor;
 
   final DocumentComposer composer;
@@ -177,12 +163,54 @@ class _EditorState extends State<Editor> {
   // out where in the document the user taps or drags.
   final _docLayoutKey = GlobalKey();
 
+  DocumentPosition _previousSelectionExtent;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.composer.addListener(_updateComposerPreferencesAtSelection);
+  }
+
+  @override
+  void didUpdateWidget(Editor oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.composer != oldWidget.composer) {
+      oldWidget.composer.removeListener(_updateComposerPreferencesAtSelection);
+      widget.composer.addListener(_updateComposerPreferencesAtSelection);
+    }
+  }
+
+  void _updateComposerPreferencesAtSelection() {
+    if (widget.composer.selection?.extent == _previousSelectionExtent) {
+      return;
+    }
+    _previousSelectionExtent = widget.composer.selection?.extent;
+
+    widget.composer.preferences.clearStyles();
+
+    if (widget.composer.selection == null || !widget.composer.selection.isCollapsed) {
+      return;
+    }
+
+    final node = widget.editor.document.getNodeById(widget.composer.selection.extent.nodeId);
+    if (node is! TextNode) {
+      return;
+    }
+
+    final textPosition = widget.composer.selection.extent.nodePosition as TextPosition;
+    if (textPosition.offset == 0) {
+      return;
+    }
+
+    final allStyles = (node as TextNode).text.getAllAttributionsAt(textPosition.offset - 1);
+    widget.composer.preferences.addStyles(allStyles);
+  }
+
   @override
   Widget build(BuildContext context) {
     return DocumentInteractor(
       documentLayoutKey: _docLayoutKey,
       editContext: EditContext(
-        document: widget.document,
         editor: widget.editor,
         composer: widget.composer,
         documentLayout: _docLayoutKey.currentState as DocumentLayout,
@@ -193,7 +221,7 @@ class _EditorState extends State<Editor> {
         animation: widget.composer,
         builder: (context, child) {
           return AnimatedBuilder(
-            animation: widget.document,
+            animation: widget.editor.document,
             builder: (context, child) {
               WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
                 print('Doc layout key state: ${_docLayoutKey.currentState}');
@@ -201,7 +229,7 @@ class _EditorState extends State<Editor> {
 
               return DefaultDocumentLayout(
                 key: _docLayoutKey,
-                document: widget.document,
+                document: widget.editor.document,
                 documentSelection: widget.composer.selection,
                 componentBuilders: widget.componentBuilders,
                 extensions: {
