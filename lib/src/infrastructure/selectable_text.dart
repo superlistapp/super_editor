@@ -98,9 +98,8 @@ abstract class TextLayout {
 /// `highlightWhenEmpty` is `true`, then `SelectableText` will paint a small
 /// highlight, despite having no content. This is useful when showing that
 /// one or more empty text areas are selected.
-// TODO: find a way to require fewer parameter for selection and caret painting
 class SelectableText extends StatefulWidget {
-  /// `SelectableText` that displays plain text (no text styles).
+  /// `SelectableText` that displays plain text (only one text style).
   SelectableText.plain({
     Key? key,
     required String text,
@@ -123,7 +122,7 @@ class SelectableText extends StatefulWidget {
   /// `SelectableText` that displays styled text.
   SelectableText({
     Key? key,
-    required TextSpan richText,
+    required TextSpan textSpan,
     this.textAlign = TextAlign.left,
     this.textSelection = const TextSelection.collapsed(offset: -1),
     this.textSelectionDecoration = const TextSelectionDecoration(
@@ -136,7 +135,7 @@ class SelectableText extends StatefulWidget {
       width: 1,
       borderRadius: BorderRadius.zero,
     ),
-  })  : richText = richText,
+  })  : richText = textSpan,
         super(key: key);
 
   /// The text to display in this `SelectableText` widget.
@@ -206,7 +205,7 @@ class SelectableTextState extends State<SelectableText> implements TextLayout {
 
   RenderParagraph? get _renderParagraph => _textKey.currentContext?.findRenderObject() as RenderParagraph;
 
-  // TODO: use TextPainter line height when Flutter makes the info available.
+  // TODO: use TextPainter line height when Flutter makes the info available. (#46)
   double get _lineHeight {
     final fontSize = widget.richText.style?.fontSize;
     final lineHeight = widget.richText.style?.height;
@@ -464,28 +463,16 @@ class SelectableTextState extends State<SelectableText> implements TextLayout {
       return SizedBox();
     }
 
-    return widget.textCaretFactory.build(
-      context: context,
-      renderParagraph: _renderParagraph!,
-      position: widget.textSelection.extent,
-      lineHeight: _lineHeight,
-      isTextEmpty: _textLength == 0,
-      showCaret: widget.showCaret,
+    return RepaintBoundary(
+      child: widget.textCaretFactory.build(
+        context: context,
+        renderParagraph: _renderParagraph!,
+        position: widget.textSelection.extent,
+        lineHeight: _lineHeight,
+        isTextEmpty: _textLength == 0,
+        showCaret: widget.showCaret,
+      ),
     );
-
-    // return CustomPaint(
-    //   painter: _CursorPainter(
-    //     blinkController: _caretBlinkController,
-    //     paragraph: _renderParagraph!,
-    //     caretTextPosition: widget.textSelection.extentOffset,
-    //     lineHeight: _lineHeight,
-    //     // caretHeight: (_lineHeight) * (widget.showDebugPaint ? 1.2 : 0.8),
-    //     // TODO: remove debug paint concept out of widget and let parent provide differences
-    //     caretColor: widget.showDebugPaint ? Colors.red : widget.caretColor,
-    //     isTextEmpty: widget.richText.toPlainText().isEmpty,
-    //     showCursor: widget.showCaret,
-    //   ),
-    // );
   }
 }
 
@@ -689,7 +676,7 @@ class _CursorPainter extends CustomPainter {
   final int caretTextPosition;
   final double width;
   final BorderRadius borderRadius;
-  final double lineHeight; // TODO: this should probably also come from the TextPainter.
+  final double lineHeight; // TODO: this should probably also come from the TextPainter (#46).
   final bool isTextEmpty;
   final bool showCursor;
   final Color caretColor;
@@ -780,7 +767,7 @@ class _CaretBlinkController with ChangeNotifier {
     if (newPosition != _caretPosition) {
       _caretPosition = newPosition;
 
-      if (newPosition == null) {
+      if (newPosition == null || newPosition.offset < 0) {
         _animationController.stop();
       } else {
         _animationController.forward(from: 0.0);

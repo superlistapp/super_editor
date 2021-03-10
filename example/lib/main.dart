@@ -225,7 +225,7 @@ class _DrawerButton extends StatelessWidget {
                 MaterialStateColor.resolveWith((states) => isSelected ? Colors.white : const Color(0xFFBBBBBB)),
             elevation: MaterialStateProperty.resolveWith((states) => 0),
             padding: MaterialStateProperty.resolveWith(
-                (states) => const EdgeInsets.symmetric(horizontal: 16, vertical: 16))),
+                (states) => const EdgeInsets.all(16))),
         onPressed: isSelected ? null : onPressed,
         child: Row(
           children: [

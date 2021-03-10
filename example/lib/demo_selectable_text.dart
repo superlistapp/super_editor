@@ -61,14 +61,14 @@ class _SelectableTextDemoState extends State<SelectableTextDemo> {
                 _buildDemo(
                   title: 'TEXT WITHOUT SELECTION OR CARET',
                   demo: SelectableText(
-                    richText: _demoText1,
+                    textSpan: _demoText1,
                   ),
                 ),
                 SizedBox(height: 24),
                 _buildDemo(
                   title: 'TEXT WITH CARET + COLLAPSED SELECTION',
                   demo: SelectableText(
-                    richText: _demoText1,
+                    textSpan: _demoText1,
                     textSelection: TextSelection.collapsed(offset: _demoText1.toPlainText().length),
                     showCaret: true,
                   ),
@@ -77,7 +77,7 @@ class _SelectableTextDemoState extends State<SelectableTextDemo> {
                 _buildDemo(
                   title: 'TEXT WITH LEFT-TO-RIGHT SELECTION + CARET',
                   demo: SelectableText(
-                    richText: _demoText1,
+                    textSpan: _demoText1,
                     textSelection: const TextSelection(baseOffset: 0, extentOffset: 12),
                     showCaret: true,
                   ),
@@ -86,7 +86,7 @@ class _SelectableTextDemoState extends State<SelectableTextDemo> {
                 _buildDemo(
                   title: 'TEXT WITH RIGHT-TO-LEFT SELECTION + CARET',
                   demo: SelectableText(
-                    richText: _demoText1,
+                    textSpan: _demoText1,
                     textSelection: TextSelection(
                         baseOffset: _demoText1.toPlainText().length,
                         extentOffset: _demoText1.toPlainText().length - 17),
@@ -102,7 +102,7 @@ class _SelectableTextDemoState extends State<SelectableTextDemo> {
                     showDebugPaint: true,
                     child: SelectableText(
                       key: _debugTextKey,
-                      richText: _demoText1,
+                      textSpan: _demoText1,
                       textSelection: TextSelection(baseOffset: 0, extentOffset: _demoText1.toPlainText().length),
                       textSelectionDecoration: TextSelectionDecoration(
                         selectionColor: Colors.yellow,
@@ -146,9 +146,8 @@ class _SelectableTextDemoState extends State<SelectableTextDemo> {
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
               color: Colors.red,
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(4),
-                topRight: Radius.circular(4),
+              borderRadius: BorderRadius.vertical(
+                top: Radius.circular(4),
               )),
           child: Text(
             title,
