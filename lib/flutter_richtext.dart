@@ -1,3 +1,3 @@
 library flutter_richtext;
 
-// TODO:
+export 'src/infrastructure/selectable_text.dart';
