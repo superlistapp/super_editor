@@ -5,95 +5,83 @@ import 'attributed_spans.dart';
 /// Text with attributions applied to desired spans of text.
 ///
 /// An attribution can be any object as long as each attribution
-/// object implements equality such that any two instances of an
-/// equivalent attribution are considered equal. A `String` is
-/// typically a good choice to use as an attribution type.
+/// object implements equality. A `String` is typically a good
+/// choice to use as an attribution type.
+///
+/// `AttributedText` is a convenient way to store and manipulate
+/// text that might have overlapping styles and/or non-style
+/// attributions. A common Flutter alternative is `TextSpan`, but
+/// `TextSpan` does not support overlapping styles, and `TextSpan`
+/// is exclusively intended for visual text styles.
+///
+/// To style Flutter text, `AttributedText` produces a
+/// corresponding `TextSpan` with `computeTextSpan()`. Clients
+/// style the text by providing an `AttributionStyleBuilder`,
+/// which is responsible for interpreting the meaning of all
+/// attributions applied to this `AttributedText`.
 class AttributedText {
   AttributedText({
     this.text = '',
-    List<SpanMarker>? attributions,
-  }) : _spans = AttributedSpans(length: text.length, attributions: attributions ?? []);
+    AttributedSpans? spans,
+  }) : spans = spans ?? AttributedSpans();
 
+  /// The text that this `AttributedText` attributes.
   final String text;
-  final AttributedSpans _spans;
 
-  /// Returns true if the text has the given attribution at
-  /// `offset`, or false otherwise.
+  /// The attributes applied to `text`.
+  final AttributedSpans spans;
+
+  /// Returns true if the given `attribution` is applied at `offset`.
+  ///
+  /// If the given `attribution` is null, returns `true` if any attribution
+  /// exists at the given `offset`.
   bool hasAttributionAt(
     int offset, {
     dynamic attribution,
   }) {
-    return _spans.hasAttributionAt(offset, attribution: attribution);
+    return spans.hasAttributionAt(offset, attribution: attribution);
   }
 
-  /// Returns true if the text contains at least one character of
-  /// attribution for each of the given `attributions` within the
-  /// given `range`, returns false otherwise.
+  /// Returns true if this `AttributedText` contains at least one
+  /// character with each of the given `attributions` within the
+  /// given `range` (inclusive).
   bool hasAttributionsWithin({
     required Set<dynamic> attributions,
     required TextRange range,
   }) {
-    return _spans.hasAttributionsWithin(
+    return spans.hasAttributionsWithin(
       attributions: attributions,
       start: range.start,
       end: range.end,
     );
   }
 
-  /// Returns all attributions that cover the given `offset` within
-  /// the text.
+  /// Returns all attributions applied to the given `offset`.
   Set<dynamic> getAllAttributionsAt(int offset) {
-    return _spans.getAllAttributionsAt(offset);
+    return spans.getAllAttributionsAt(offset);
   }
 
   /// Adds the given attribution to all characters within the given
   /// `range`, inclusive.
   void addAttribution(dynamic attribution, TextRange range) {
-    _spans.addAttribution(newAttribution: attribution, start: range.start, end: range.end);
+    spans.addAttribution(newAttribution: attribution, start: range.start, end: range.end);
   }
 
   /// Removes the given attribution from all characters within the
   /// given `range`, inclusive.
   void removeAttribution(dynamic attribution, TextRange range) {
-    _spans.addAttribution(newAttribution: attribution, start: range.start, end: range.end);
+    spans.addAttribution(newAttribution: attribution, start: range.start, end: range.end);
   }
 
-  /// If ALL of the text in `range` contains the given `attribution`,
-  /// that attribution is removed from the text in `range`.
-  /// Otherwise, all of the text in `range` is given the `attribution`.
+  /// If ALL of the text in `range`, inclusive, contains the given `attribution`,
+  /// that attribution is removed from the text in `range`, inclusive.
+  /// Otherwise, all of the text in `range`, inclusive, is given the `attribution`.
   void toggleAttribution(dynamic attribution, TextRange range) {
-    _spans.toggleAttribution(attribution: attribution, start: range.start, end: range.end);
-  }
-
-  TextSpan computeTextSpan(AttributionStyleBuilder styleBuilder) {
-    print('computeTextSpan() - text length: ${text.length}');
-    print(' - attributions used to compute spans:');
-    print(_spans);
-
-    if (text.isEmpty) {
-      // There is no text and therefore no attributions.
-      print(' - text is empty. Returning empty TextSpan.');
-      return TextSpan(text: '', style: styleBuilder({}));
-    }
-
-    final collapsedSpans = _spans.collapseSpans();
-    final textSpans = collapsedSpans
-        .map((attributedSpan) => TextSpan(
-              text: text.substring(attributedSpan.start, attributedSpan.end + 1),
-              style: styleBuilder(attributedSpan.attributions),
-            ))
-        .toList();
-
-    return textSpans.length == 1
-        ? textSpans.first
-        : TextSpan(
-            children: textSpans,
-            style: styleBuilder({}),
-          );
+    spans.toggleAttribution(attribution: attribution, start: range.start, end: range.end);
   }
 
   /// Copies all text and attributions from `startOffset` to
-  /// `endOffset`, inclusive.
+  /// `endOffset`, inclusive, and returns them as a new `AttributedText`.
   AttributedText copyText(int startOffset, [int? endOffset]) {
     print('copyText() - start: $startOffset, end: $endOffset');
 
@@ -112,36 +100,36 @@ class AttributedText {
 
     return AttributedText(
       text: text.substring(startOffset, endOffset),
-      attributions: _spans.copyAttributionRegion(startCopyOffset, endCopyOffset).attributions,
+      spans: spans.copyAttributionRegion(startCopyOffset, endCopyOffset),
     );
   }
 
-  /// Copies this `AttributedText` and appends the text and spans
-  /// in the `other` AttributedText` to the end of the copy.
+  /// Returns a copy of this `AttributedText` with the `other` text
+  /// and attributions appended to the end.
   AttributedText copyAndAppend(AttributedText other) {
     print('copyAndAppend()');
     print(' - our attributions before pushing them:');
-    print(_spans);
+    print(spans);
     if (other.text.isEmpty) {
       print(' - `other` has no text. Returning a direct copy of ourselves.');
       return AttributedText(
         text: text,
-        attributions: _spans.copy().attributions,
+        spans: spans.copy(),
       );
     }
 
-    final newSpans = _spans.copy()..addToEnd(other._spans);
+    final newSpans = spans.copy()..addAt(other: other.spans, index: text.length);
     return AttributedText(
       text: text + other.text,
-      attributions: newSpans.attributions,
+      spans: newSpans,
     );
   }
 
   /// Returns a copy of this `AttributedText` with `textToInsert`
   /// inserted at `startOffset`.
   ///
-  /// Any attributions that spanned `startOffset` are applied to
-  /// the inserted text. All spans that start after `startOffset`
+  /// Any attributions that span `startOffset` are applied to all
+  /// of the inserted text. All spans that start after `startOffset`
   /// are pushed back by the length of `textToInsert`.
   AttributedText insertString({
     required String textToInsert,
@@ -172,19 +160,20 @@ class AttributedText {
     return startText.copyAndAppend(insertedText).copyAndAppend(endText);
   }
 
-  /// Cuts a region of text and attributions from `startOffset`,
-  /// inclusive, to `endOffset`, exclusive.
+  /// Copies this `AttributedText` and removes  a region of text
+  /// and attributions from `startOffset`, inclusive,
+  /// to `endOffset`, exclusive.
   AttributedText removeRegion({
     required int startOffset,
     required int endOffset,
   }) {
     print('Removing text region from $startOffset to $endOffset');
     print(' - initial attributions:');
-    print(_spans);
+    print(spans);
     final reducedText = (startOffset > 0 ? text.substring(0, startOffset) : '') +
         (endOffset < text.length ? text.substring(endOffset) : '');
 
-    AttributedSpans contractedAttributions = _spans.copy()
+    AttributedSpans contractedAttributions = spans.copy()
       ..contractAttributions(
         startOffset: startOffset,
         count: endOffset - startOffset,
@@ -195,13 +184,45 @@ class AttributedText {
 
     return AttributedText(
       text: reducedText,
-      attributions: contractedAttributions.attributions,
+      spans: contractedAttributions,
     );
+  }
+
+  /// Returns a Flutter `TextSpan` that is styled based on the
+  /// attributions within this `AttributedText`.
+  ///
+  /// The given `styleBuilder` interprets the meaning of every
+  /// attribution and constructs `TextStyle`s accordingly.
+  TextSpan computeTextSpan(AttributionStyleBuilder styleBuilder) {
+    print('computeTextSpan() - text length: ${text.length}');
+    print(' - attributions used to compute spans:');
+    print(spans);
+
+    if (text.isEmpty) {
+      // There is no text and therefore no attributions.
+      print(' - text is empty. Returning empty TextSpan.');
+      return TextSpan(text: '', style: styleBuilder({}));
+    }
+
+    final collapsedSpans = spans.collapseSpans(contentLength: text.length);
+    final textSpans = collapsedSpans
+        .map((attributedSpan) => TextSpan(
+              text: text.substring(attributedSpan.start, attributedSpan.end + 1),
+              style: styleBuilder(attributedSpan.attributions),
+            ))
+        .toList();
+
+    return textSpans.length == 1
+        ? textSpans.first
+        : TextSpan(
+            children: textSpans,
+            style: styleBuilder({}),
+          );
   }
 
   @override
   String toString() {
-    return '[AttributedText] - "$text"\n' + _spans.toString();
+    return '[AttributedText] - "$text"\n' + spans.toString();
   }
 }
 
