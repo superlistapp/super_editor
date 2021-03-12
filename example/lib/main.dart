@@ -2,6 +2,8 @@ import 'package:example/demo_selectable_text.dart';
 import 'package:example/example_editor.dart';
 import 'package:flutter/material.dart';
 
+import 'demo_attributed_text.dart';
+
 /// Demo of a basic text editor, as well as various widgets that
 /// are available in this package.
 Future<void> main() async {
@@ -139,6 +141,13 @@ final _menu = <_MenuGroup>[
           return SelectableTextDemo();
         },
       ),
+      _MenuItem(
+        icon: Icons.text_fields,
+        title: 'Attributed Text',
+        pageBuilder: (context) {
+          return AttributedTextDemo();
+        },
+      ),
     ],
   ),
 ];
@@ -220,12 +229,11 @@ class _DrawerButton extends StatelessWidget {
 
               return Colors.transparent;
             }),
-            splashFactory: NoSplash.splashFactory,
+            // splashFactory: NoSplash.splashFactory,
             foregroundColor:
                 MaterialStateColor.resolveWith((states) => isSelected ? Colors.white : const Color(0xFFBBBBBB)),
             elevation: MaterialStateProperty.resolveWith((states) => 0),
-            padding: MaterialStateProperty.resolveWith(
-                (states) => const EdgeInsets.all(16))),
+            padding: MaterialStateProperty.resolveWith((states) => const EdgeInsets.all(16))),
         onPressed: isSelected ? null : onPressed,
         child: Row(
           children: [
