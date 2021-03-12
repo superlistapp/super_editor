@@ -255,11 +255,6 @@ class _TextRangeSelectorState extends State<TextRangeSelector> {
       ranges.add(TextRange(start: rangeStart, end: widget.cellCount - 1));
     }
 
-    print('Reporting ranges:');
-    for (final range in ranges) {
-      print(' - $range');
-    }
-
     widget.onRangesChange(ranges);
   }
 

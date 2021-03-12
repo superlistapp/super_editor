@@ -1,6 +1,9 @@
 import 'package:flutter/painting.dart';
 
 import 'attributed_spans.dart';
+import '_logging.dart';
+
+final _log = Logger(scope: 'AttributedText');
 
 /// Text with attributions applied to desired spans of text.
 ///
@@ -83,7 +86,7 @@ class AttributedText {
   /// Copies all text and attributions from `startOffset` to
   /// `endOffset`, inclusive, and returns them as a new `AttributedText`.
   AttributedText copyText(int startOffset, [int? endOffset]) {
-    print('copyText() - start: $startOffset, end: $endOffset');
+    _log.log('copyText', 'start: $startOffset, end: $endOffset');
 
     // Note: -1 because copyText() uses an exclusive `start` and `end` but
     // _copyAttributionRegion() uses an inclusive `start` and `end`.
@@ -96,7 +99,7 @@ class AttributedText {
     } else {
       endCopyOffset = text.length - 1;
     }
-    print(' - copy offsets, start: $startCopyOffset, end: $endCopyOffset');
+    _log.log('copyText', 'offsets, start: $startCopyOffset, end: $endCopyOffset');
 
     return AttributedText(
       text: text.substring(startOffset, endOffset),
@@ -107,11 +110,10 @@ class AttributedText {
   /// Returns a copy of this `AttributedText` with the `other` text
   /// and attributions appended to the end.
   AttributedText copyAndAppend(AttributedText other) {
-    print('copyAndAppend()');
-    print(' - our attributions before pushing them:');
-    print(spans);
+    _log.log('copyAndAppend', 'our attributions before pushing them:');
+    _log.log('copyAndAppend', spans.toString());
     if (other.text.isEmpty) {
-      print(' - `other` has no text. Returning a direct copy of ourselves.');
+      _log.log('copyAndAppend', '`other` has no text. Returning a direct copy of ourselves.');
       return AttributedText(
         text: text,
         spans: spans.copy(),
@@ -136,17 +138,17 @@ class AttributedText {
     required int startOffset,
     Set<dynamic> applyAttributions = const {},
   }) {
-    print('insertString() - text: "$textToInsert", start: $startOffset, attributions: $applyAttributions');
+    _log.log('insertString', 'text: "$textToInsert", start: $startOffset, attributions: $applyAttributions');
 
-    print(' - copying text to the left');
+    _log.log('insertString', 'copying text to the left');
     final startText = this.copyText(0, startOffset);
-    print(' - startText: $startText');
+    _log.log('insertString', 'startText: $startText');
 
-    print(' - copying text to the right');
+    _log.log('insertString', 'copying text to the right');
     final endText = this.copyText(startOffset);
-    print(' - endText: $endText');
+    _log.log('insertString', 'endText: $endText');
 
-    print(' - creating new attributed text for insertion');
+    _log.log('insertString', 'creating new attributed text for insertion');
     final insertedText = AttributedText(
       text: textToInsert,
     );
@@ -154,9 +156,9 @@ class AttributedText {
     for (dynamic attribution in applyAttributions) {
       insertedText.addAttribution(attribution, insertTextRange);
     }
-    print(' - insertedText: $insertedText');
+    _log.log('insertString', 'insertedText: $insertedText');
 
-    print(' - combining left text, insertion text, and right text');
+    _log.log('insertString', 'combining left text, insertion text, and right text');
     return startText.copyAndAppend(insertedText).copyAndAppend(endText);
   }
 
@@ -167,9 +169,9 @@ class AttributedText {
     required int startOffset,
     required int endOffset,
   }) {
-    print('Removing text region from $startOffset to $endOffset');
-    print(' - initial attributions:');
-    print(spans);
+    _log.log('removeRegion', 'Removing text region from $startOffset to $endOffset');
+    _log.log('removeRegion', 'initial attributions:');
+    _log.log('removeRegion', spans.toString());
     final reducedText = (startOffset > 0 ? text.substring(0, startOffset) : '') +
         (endOffset < text.length ? text.substring(endOffset) : '');
 
@@ -178,9 +180,9 @@ class AttributedText {
         startOffset: startOffset,
         count: endOffset - startOffset,
       );
-    print(' - reduced text length: ${reducedText.length}');
-    print(' - remaining attributions:');
-    print(contractedAttributions);
+    _log.log('removeRegion', 'reduced text length: ${reducedText.length}');
+    _log.log('removeRegion', 'remaining attributions:');
+    _log.log('removeRegion', contractedAttributions.toString());
 
     return AttributedText(
       text: reducedText,
@@ -194,13 +196,13 @@ class AttributedText {
   /// The given `styleBuilder` interprets the meaning of every
   /// attribution and constructs `TextStyle`s accordingly.
   TextSpan computeTextSpan(AttributionStyleBuilder styleBuilder) {
-    print('computeTextSpan() - text length: ${text.length}');
-    print(' - attributions used to compute spans:');
-    print(spans);
+    _log.log('computeTextSpan', 'text length: ${text.length}');
+    _log.log('computeTextSpan', 'attributions used to compute spans:');
+    _log.log('computeTextSpan', spans.toString());
 
     if (text.isEmpty) {
       // There is no text and therefore no attributions.
-      print(' - text is empty. Returning empty TextSpan.');
+      _log.log('computeTextSpan', 'text is empty. Returning empty TextSpan.');
       return TextSpan(text: '', style: styleBuilder({}));
     }
 

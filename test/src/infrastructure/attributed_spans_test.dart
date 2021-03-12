@@ -314,12 +314,9 @@ class _ExpectedSpans {
   void expectSpans(AttributedSpans spans) {
     for (int characterIndex = 0; characterIndex < _combinedSpans.length; ++characterIndex) {
       for (int attributionIndex = 0; attributionIndex < _combinedSpans[characterIndex].length; ++attributionIndex) {
-        print('Checking character $characterIndex');
         // The attribution name is just a letter, like 'b', 'i', or 's'.
         final attributionName = _combinedSpans[characterIndex][attributionIndex];
-        print(' - looking for attribution: "$attributionName"');
         if (attributionName == '_') {
-          print(' - skipping empty template character');
           continue;
         }
 
