@@ -30,16 +30,16 @@ abstract class TextLayout {
   });
 
   /// Returns the `TextPosition` that's one line above the
-  /// given `currentPosition`, or -1 if there is no line
+  /// given `currentPosition`, or `null` if there is no line
   /// above `currentPosition` or the text is not laid out yet.
-  TextPosition getPositionOneLineUp({
+  TextPosition? getPositionOneLineUp({
     required TextPosition currentPosition,
   });
 
   /// Returns the `TextPosition` that's one line below the
-  /// given `currentPosition`, or -1 if there is no line
+  /// given `currentPosition`, or `null` if there is no line
   /// below `currentPosition` or the text is not laid out yet.
-  TextPosition getPositionOneLineDown({
+  TextPosition? getPositionOneLineDown({
     required TextPosition currentPosition,
   });
 
@@ -226,9 +226,9 @@ class SelectableTextState extends State<SelectableText> implements TextLayout {
   }
 
   @override
-  Offset? getOffsetForPosition(TextPosition position) {
+  Offset getOffsetForPosition(TextPosition position) {
     if (_renderParagraph == null) {
-      return null;
+      throw Exception('SelectableText does not yet have a RenderParagraph. Can\'t getOffsetForPosition().');
     }
 
     return _renderParagraph!.getOffsetForCaret(position, Rect.zero);
@@ -263,11 +263,13 @@ class SelectableTextState extends State<SelectableText> implements TextLayout {
   }
 
   @override
-  TextPosition getPositionOneLineUp({
+  TextPosition? getPositionOneLineUp({
     required TextPosition currentPosition,
   }) {
+    print('getPositionOneLineUp');
     if (_renderParagraph == null) {
-      return TextPosition(offset: -1);
+      print(' - no RenderParagraph');
+      return null;
     }
 
     final renderParagraph = _renderParagraph!;
@@ -280,18 +282,18 @@ class SelectableTextState extends State<SelectableText> implements TextLayout {
 
     if (oneLineUpOffset.dy < 0) {
       // The first line is selected. There is no line above this.
-      return TextPosition(offset: -1);
+      return null;
     }
 
     return renderParagraph.getPositionForOffset(oneLineUpOffset);
   }
 
   @override
-  TextPosition getPositionOneLineDown({
+  TextPosition? getPositionOneLineDown({
     required TextPosition currentPosition,
   }) {
     if (_renderParagraph == null) {
-      return TextPosition(offset: -1);
+      return null;
     }
 
     final renderParagraph = _renderParagraph!;
@@ -304,7 +306,7 @@ class SelectableTextState extends State<SelectableText> implements TextLayout {
 
     if (oneLineDownOffset.dy > renderParagraph.size.height) {
       // The last line is selected. There is no line below that.
-      return TextPosition(offset: -1);
+      return null;
     }
 
     return renderParagraph.getPositionForOffset(oneLineDownOffset);
@@ -651,7 +653,7 @@ class _BlinkingCaretState extends State<_BlinkingCaret> with SingleTickerProvide
         lineHeight: widget.lineHeight,
         caretColor: widget.color,
         isTextEmpty: widget.isTextEmpty,
-        showCursor: widget.showCaret,
+        showCaret: widget.showCaret,
       ),
     );
   }
@@ -667,7 +669,7 @@ class _CursorPainter extends CustomPainter {
     required this.lineHeight,
     required this.caretColor,
     required this.isTextEmpty,
-    required this.showCursor,
+    required this.showCaret,
   })   : caretPaint = Paint()..color = caretColor,
         super(repaint: blinkController);
 
@@ -678,12 +680,16 @@ class _CursorPainter extends CustomPainter {
   final BorderRadius borderRadius;
   final double lineHeight; // TODO: this should probably also come from the TextPainter (#46).
   final bool isTextEmpty;
-  final bool showCursor;
+  final bool showCaret;
   final Color caretColor;
   final Paint caretPaint;
 
   @override
   void paint(Canvas canvas, Size size) {
+    if (!showCaret) {
+      return;
+    }
+
     if (caretTextPosition < 0) {
       return;
     }
@@ -728,7 +734,7 @@ class _CursorPainter extends CustomPainter {
     return paragraph != oldDelegate.paragraph ||
         caretTextPosition != oldDelegate.caretTextPosition ||
         isTextEmpty != oldDelegate.isTextEmpty ||
-        showCursor != oldDelegate.showCursor;
+        showCaret != oldDelegate.showCaret;
   }
 }
 

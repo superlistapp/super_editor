@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart' hide SelectableText;
+import 'package:flutter/widgets.dart';
 import 'package:flutter/rendering.dart';
 
 import 'document_selection.dart';
@@ -46,6 +46,14 @@ abstract class DocumentLayout {
   /// Returns the `DocumentComponent` that renders the `DocumentNode` with
   /// the given `nodeId`, or `null` if no such component exists.
   DocumentComponent? getComponentByNodeId(String nodeId);
+
+  /// Converts [ancestorOffset] from the [ancestor]'s coordinate space to the
+  /// same location on the screen within this [DocumentLayout]'s coordinate space.
+  Offset getDocumentOffsetFromAncestorOffset(Offset ancestorOffset, RenderObject ancestor);
+
+  /// Converts [documentOffset] from this [DocumentLayout]'s coordinate space
+  /// to the same location on the screen within the [ancestor]'s coordinate space.
+  Offset getAncestorOffsetFromDocumentOffset(Offset documentOffset, RenderObject ancestor);
 }
 
 /// Contract for all widgets that operate as document components
@@ -59,7 +67,9 @@ mixin DocumentComponent<T extends StatefulWidget> on State<T> {
   /// node positions.
   dynamic? getPositionAtOffset(Offset localOffset);
 
-  /// Returns the (x,y) `Offset` for the given `nodePosition`.
+  /// Returns the (x,y) `Offset` for the given `nodePosition`, or throws
+  /// an exception if the given `nodePosition` is not compatible
+  /// with this component's node type.
   ///
   /// If the given `nodePosition` corresponds to a component where
   /// a position is ambiguous with regard to an (x,y) `Offset`, like
@@ -70,7 +80,9 @@ mixin DocumentComponent<T extends StatefulWidget> on State<T> {
   /// node positions.
   Offset getOffsetForPosition(dynamic nodePosition);
 
-  /// Returns a `Rect` for the given `nodePosition`.
+  /// Returns a `Rect` for the given `nodePosition`, or throws
+  /// an exception if the given `nodePosition` is not compatible
+  /// with this component's node type.
   ///
   /// If the given `nodePosition` corresponds to a single (x,y)
   /// offset rather than a `Rect`, a `Rect` with zero width and
@@ -78,7 +90,7 @@ mixin DocumentComponent<T extends StatefulWidget> on State<T> {
   ///
   /// See `Document` for more information about `DocumentNode`s and
   /// node positions.
-  Rect? getRectForPosition(dynamic nodePosition);
+  Rect getRectForPosition(dynamic nodePosition);
 
   /// Returns the node position that represents the "beginning" of
   /// the content within this component, such as the first character
@@ -110,7 +122,7 @@ mixin DocumentComponent<T extends StatefulWidget> on State<T> {
   /// Returns `null` if there is nowhere to move left within this
   /// component, such as when the `currentPosition` is the first
   /// character within a paragraph.
-  dynamic movePositionLeft(dynamic currentPosition, [Map<String, dynamic> movementModifiers]);
+  dynamic? movePositionLeft(dynamic currentPosition, [Map<String, dynamic> movementModifiers]);
 
   /// Returns a new position within this component's node that
   /// corresponds to the `currentPosition` moved right one unit,
@@ -126,7 +138,7 @@ mixin DocumentComponent<T extends StatefulWidget> on State<T> {
   /// Returns null if there is nowhere to move right within this
   /// component, such as when the `currentPosition` refers to the
   /// last character in a paragraph.
-  dynamic movePositionRight(dynamic currentPosition, [Map<String, dynamic> movementModifiers]);
+  dynamic? movePositionRight(dynamic currentPosition, [Map<String, dynamic> movementModifiers]);
 
   /// Returns a new position within this component's node that
   /// corresponds to the `currentPosition` moved up one unit,
@@ -138,7 +150,7 @@ mixin DocumentComponent<T extends StatefulWidget> on State<T> {
   /// Returns null if there is nowhere to move up within this
   /// component, such as when the `currentPosition` refers to
   /// the first line of a paragraph.
-  dynamic movePositionUp(dynamic currentPosition);
+  dynamic? movePositionUp(dynamic currentPosition);
 
   /// Returns a new position within this component's node that
   /// corresponds to the `currentPosition` moved down one unit,
@@ -150,7 +162,7 @@ mixin DocumentComponent<T extends StatefulWidget> on State<T> {
   /// Returns null if there is nowhere to move down within this
   /// component, such as when the `currentPosition` refers to
   /// the last line of a paragraph.
-  dynamic movePositionDown(dynamic currentPosition);
+  dynamic? movePositionDown(dynamic currentPosition);
 
   /// Returns the node position that represents the "end" of
   /// the content within this component, such as the last character
@@ -169,21 +181,27 @@ mixin DocumentComponent<T extends StatefulWidget> on State<T> {
   dynamic getEndPositionNearX(double x);
 
   /// Returns a selection of content that appears between the `localBaseOffset`
-  /// and the `localExtentOffset`.
+  /// and the `localExtentOffset`, or `null` if the given region does not
+  /// include any of the content within this component.
   ///
   /// The selection type depends on the type of `DocumentNode` that this
   /// component displays.
-  dynamic getSelectionInRange(Offset localBaseOffset, Offset localExtentOffset);
+  dynamic? getSelectionInRange(Offset localBaseOffset, Offset localExtentOffset);
 
   /// Returns a node selection within this component's `DocumentNode` that
-  /// is collapsed at the given `nodePosition`.
+  /// is collapsed at the given `nodePosition`, or throws an exception if
+  /// the given `nodePosition` is not compatible with this component's
+  /// node type.
   dynamic getCollapsedSelectionAt(dynamic nodePosition);
 
   /// Returns a node selection within this component's `DocumentNode` that
   /// spans from `basePosition` to `extentPosition`.
+  ///
+  /// Throws an exception if `basePosition` or `extentPosition` are
+  /// incompatible with this component's node type.
   dynamic getSelectionBetween({
-    @required dynamic basePosition,
-    @required dynamic extentPosition,
+    required dynamic basePosition,
+    required dynamic extentPosition,
   });
 
   /// Returns a node selection that includes all content within the node.
@@ -206,10 +224,16 @@ mixin DocumentComponent<T extends StatefulWidget> on State<T> {
 abstract class TextComposable {
   /// Returns a `TextSelection` that encompasses the entire word
   /// found at the given `nodePosition`.
+  ///
+  /// Throws an exception if `nodePosition` is not the right type
+  /// for this `TextComposable`.
   TextSelection getWordSelectionAt(dynamic nodePosition);
 
   /// Returns all text surrounding `nodePosition` that is not
   /// broken by white space.
+  ///
+  /// Throws an exception if `nodePosition` is not the right type
+  /// for this `TextComposable`.
   String getContiguousTextAt(dynamic nodePosition);
 
   /// Returns the node position that corresponds to a text location
@@ -224,11 +248,11 @@ abstract class TextComposable {
 
   /// Returns the node position that corresponds to the first character
   /// in the line of text that contains the given `nodePosition`.
-  dynamic getPositionAtStartOfLine(dynamic nodePosition);
+  dynamic? getPositionAtStartOfLine(dynamic nodePosition);
 
   /// Returns the node position that corresponds to the last character
   /// in the line of text that contains the given `nodePosition`.
-  dynamic getPositionAtEndOfLine(dynamic nodePosition);
+  dynamic? getPositionAtEndOfLine(dynamic nodePosition);
 }
 
 /// Builds a widget that renders the desired UI for one or

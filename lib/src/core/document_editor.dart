@@ -58,12 +58,7 @@ class DocumentEditorTransaction {
 
   /// Inserts the given `node` into the `Document` at the given `index`.
   void insertNodeAt(int index, DocumentNode node) {
-    if (index <= _document.nodes.length) {
-      _document._mutateDocument((onNodeChange) {
-        _document.nodes.insert(index, node);
-        node.addListener(onNodeChange);
-      });
-    }
+    _document.insertNodeAt(index, node);
   }
 
   /// Inserts `newNode` immediately after the given `previousNode`.
@@ -71,37 +66,17 @@ class DocumentEditorTransaction {
     required DocumentNode previousNode,
     required DocumentNode newNode,
   }) {
-    final nodeIndex = _document.nodes.indexOf(previousNode);
-    if (nodeIndex >= 0 && nodeIndex < _document.nodes.length) {
-      _document._mutateDocument((onNodeChange) {
-        _document.nodes.insert(nodeIndex + 1, newNode);
-        newNode.addListener(onNodeChange);
-      });
-    }
+    _document.insertNodeAfter(previousNode: previousNode, newNode: newNode);
   }
 
   /// Deletes the node at the given `index`.
   void deleteNodeAt(int index) {
-    if (index >= 0 && index < _document.nodes.length) {
-      _document._mutateDocument((onNodeChange) {
-        final removedNode = _document.nodes.removeAt(index);
-        removedNode.removeListener(onNodeChange);
-      });
-    } else {
-      print('Could not delete node. Index out of range: $index');
-    }
+    _document.deleteNodeAt(index);
   }
 
   /// Deletes the given `node` from the `Document`.
   bool deleteNode(DocumentNode node) {
-    bool isRemoved = false;
-
-    _document._mutateDocument((onNodeChange) {
-      node.removeListener(onNodeChange);
-      isRemoved = _document.nodes.remove(node);
-    });
-
-    return isRemoved;
+    return _document.deleteNode(node);
   }
 }
 
@@ -198,9 +173,46 @@ class MutableDocument with ChangeNotifier implements Document {
     return _nodes.sublist(from, to + 1);
   }
 
-  void _mutateDocument(void Function(VoidCallback onNodeChange) operation) {
-    operation.call(_forwardNodeChange);
+  /// Inserts the given `node` into the `Document` at the given `index`.
+  void insertNodeAt(int index, DocumentNode node) {
+    if (index <= nodes.length) {
+      nodes.insert(index, node);
+      node.addListener(_forwardNodeChange);
+    }
+  }
+
+  /// Inserts `newNode` immediately after the given `previousNode`.
+  void insertNodeAfter({
+    required DocumentNode previousNode,
+    required DocumentNode newNode,
+  }) {
+    final nodeIndex = nodes.indexOf(previousNode);
+    if (nodeIndex >= 0 && nodeIndex < nodes.length) {
+      nodes.insert(nodeIndex + 1, newNode);
+      newNode.addListener(_forwardNodeChange);
+    }
+  }
+
+  /// Deletes the node at the given `index`.
+  void deleteNodeAt(int index) {
+    if (index >= 0 && index < nodes.length) {
+      final removedNode = nodes.removeAt(index);
+      removedNode.removeListener(_forwardNodeChange);
+    } else {
+      print('Could not delete node. Index out of range: $index');
+    }
+  }
+
+  /// Deletes the given `node` from the `Document`.
+  bool deleteNode(DocumentNode node) {
+    bool isRemoved = false;
+
+    node.removeListener(_forwardNodeChange);
+    isRemoved = nodes.remove(node);
+
     notifyListeners();
+
+    return isRemoved;
   }
 
   void _forwardNodeChange() {

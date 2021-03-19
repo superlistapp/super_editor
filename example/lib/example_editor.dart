@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter_richtext/flutter_richtext.dart';
 
 /// Example of a rich text editor.
 ///
@@ -12,120 +12,70 @@ class ExampleEditor extends StatefulWidget {
 }
 
 class _ExampleEditorState extends State<ExampleEditor> {
-  FocusNode _titleFocusNode;
-  FocusNode _contentFocusNode;
+  Document _doc;
+  DocumentEditor _docEditor;
 
   @override
   void initState() {
     super.initState();
-    _titleFocusNode = FocusNode();
-    _contentFocusNode = FocusNode();
+    _doc = _createInitialDocument();
+    _docEditor = DocumentEditor(document: _doc);
   }
 
   @override
   void dispose() {
-    _titleFocusNode.dispose();
-    _contentFocusNode.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    // Display Material that covers all available space.
-    // Display content at 500px wide, horizontally centered.
-    return Material(
-      child: Scrollbar(
-        child: SingleChildScrollView(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxWidth: 500,
-                  minWidth: 500,
-                ),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: _buildPage(),
-                ),
-              ),
-            ],
-          ),
+    return Editor.standard(
+      editor: _docEditor,
+      maxWidth: 600,
+      padding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),
+    );
+  }
+}
+
+Document _createInitialDocument() {
+  return MutableDocument(
+    nodes: [
+      ParagraphNode(
+        id: DocumentEditor.createNodeId(),
+        text: AttributedText(
+          text: 'Example Document',
+        ),
+        metadata: {
+          'blockType': 'header1',
+        },
+      ),
+      ParagraphNode(
+        id: DocumentEditor.createNodeId(),
+        text: AttributedText(
+          text:
+              'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus sed sagittis urna. Aenean mattis ante justo, quis sollicitudin metus interdum id. Aenean ornare urna ac enim consequat mollis. In aliquet convallis efficitur. Phasellus convallis purus in fringilla scelerisque. Ut ac orci a turpis egestas lobortis. Morbi aliquam dapibus sem, vitae sodales arcu ultrices eu. Duis vulputate mauris quam, eleifend pulvinar quam blandit eget.',
         ),
       ),
-    );
-  }
-
-  Widget _buildPage() {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.start,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        SizedBox(height: 70),
-        _buildTitle(),
-        _buildContent(),
-      ],
-    );
-  }
-
-  Widget _buildTitle() {
-    return RawKeyboardListener(
-      focusNode: _titleFocusNode,
-      onKey: (RawKeyEvent event) {
-        if (event.logicalKey == LogicalKeyboardKey.escape) {
-          _titleFocusNode.unfocus();
-        } else if (event.logicalKey == LogicalKeyboardKey.tab) {
-          _contentFocusNode.requestFocus();
-        }
-      },
-      child: TextField(
-        style: TextStyle(
-          color: const Color(0xFF312F2C),
-          fontSize: 34,
-          fontWeight: FontWeight.bold,
-        ),
-        decoration: InputDecoration(
-          hintText: 'Enter your title',
-          hintStyle: TextStyle(
-            color: const Color(0xFFC3C1C1),
-            fontSize: 34,
-            fontWeight: FontWeight.bold,
-          ),
-          border: InputBorder.none,
-        ),
-        cursorColor: Colors.black,
+      ParagraphNode(
+        id: DocumentEditor.createNodeId(),
+        text: AttributedText(
+            text:
+                'Cras vitae sodales nisi. Vivamus dignissim vel purus vel aliquet. Sed viverra diam vel nisi rhoncus pharetra. Donec gravida ut ligula euismod pharetra. Etiam sed urna scelerisque, efficitur mauris vel, semper arcu. Nullam sed vehicula sapien. Donec id tellus volutpat, eleifend nulla eget, rutrum mauris.'),
       ),
-    );
-  }
-
-  Widget _buildContent() {
-    return RawKeyboardListener(
-      focusNode: _contentFocusNode,
-      onKey: (RawKeyEvent event) {
-        if (event.logicalKey == LogicalKeyboardKey.escape) {
-          _contentFocusNode.unfocus();
-        }
-      },
-      child: TextField(
-        maxLines: null, // adds lines as content requires
-        style: TextStyle(
-          color: const Color(0xFF312F2C),
-          fontSize: 13,
-          fontWeight: FontWeight.bold,
+      ParagraphNode(
+        id: DocumentEditor.createNodeId(),
+        text: AttributedText(
+          text:
+              'Nam hendrerit vitae elit ut placerat. Maecenas nec congue neque. Fusce eget tortor pulvinar, cursus neque vitae, sagittis lectus. Duis mollis libero eu scelerisque ullamcorper. Pellentesque eleifend arcu nec augue molestie, at iaculis dui rutrum. Etiam lobortis magna at magna pellentesque ornare. Sed accumsan, libero vel porta molestie, tortor lorem eleifend ante, at egestas leo felis sed nunc. Quisque mi neque, molestie vel dolor a, eleifend tempor odio.',
         ),
-        decoration: InputDecoration(
-          hintText: 'Enter your content',
-          hintStyle: TextStyle(
-            color: const Color(0xFFC3C1C1),
-            fontSize: 13,
-            fontWeight: FontWeight.bold,
-          ),
-          border: InputBorder.none,
-          isDense: true,
-        ),
-        cursorColor: Colors.black,
       ),
-    );
-  }
+      ParagraphNode(
+        id: DocumentEditor.createNodeId(),
+        text: AttributedText(
+          text:
+              'Etiam id lacus interdum, efficitur ex convallis, accumsan ipsum. Integer faucibus mollis mauris, a suscipit ante mollis vitae. Fusce justo metus, congue non lectus ac, luctus rhoncus tellus. Phasellus vitae fermentum orci, sit amet sodales orci. Fusce at ante iaculis nunc aliquet pharetra. Nam placerat, nisl in gravida lacinia, nisl nibh feugiat nunc, in sagittis nisl sapien nec arcu. Nunc gravida faucibus massa, sit amet accumsan dolor feugiat in. Mauris ut elementum leo.',
+        ),
+      ),
+    ],
+  );
 }

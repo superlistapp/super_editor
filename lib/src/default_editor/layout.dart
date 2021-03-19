@@ -301,6 +301,16 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
   }
 
   @override
+  Offset getDocumentOffsetFromAncestorOffset(Offset ancestorOffset, RenderObject ancestor) {
+    return (context.findRenderObject() as RenderBox).globalToLocal(ancestorOffset, ancestor: ancestor);
+  }
+
+  @override
+  Offset getAncestorOffsetFromDocumentOffset(Offset documentOffset, RenderObject ancestor) {
+    return (context.findRenderObject() as RenderBox).localToGlobal(documentOffset, ancestor: ancestor);
+  }
+
+  @override
   Widget build(BuildContext context) {
     final docComponents = _buildDocComponents();
 
