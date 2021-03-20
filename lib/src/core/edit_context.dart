@@ -6,11 +6,14 @@ import 'document_layout.dart';
 class EditContext {
   EditContext({
     required this.editor,
-    required this.documentLayout,
+    required DocumentLayout Function() getDocumentLayout,
     required this.composer,
-  });
+  }) : _getDocumentLayout = getDocumentLayout;
 
   final DocumentEditor editor;
-  final DocumentLayout documentLayout;
+
+  DocumentLayout Function() _getDocumentLayout;
+  DocumentLayout get documentLayout => _getDocumentLayout();
+
   final DocumentComposer composer;
 }
