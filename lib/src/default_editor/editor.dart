@@ -70,6 +70,7 @@ class Editor extends StatefulWidget {
     double maxWidth = 600,
     EdgeInsets padding = EdgeInsets.zero,
     bool showDebugPaint = false,
+    FocusNode? focusNode,
   }) {
     return Editor._(
       key: key,
@@ -83,6 +84,7 @@ class Editor extends StatefulWidget {
       maxWidth: maxWidth,
       padding: padding,
       showDebugPaint: showDebugPaint,
+      focusNode: focusNode,
     );
   }
 
@@ -98,6 +100,7 @@ class Editor extends StatefulWidget {
     double maxWidth = 600,
     EdgeInsets padding = EdgeInsets.zero,
     bool showDebugPaint = false,
+    FocusNode? focusNode,
   }) {
     return Editor._(
       key: key,
@@ -110,6 +113,7 @@ class Editor extends StatefulWidget {
       scrollController: scrollController,
       maxWidth: maxWidth,
       padding: padding,
+      focusNode: focusNode,
       showDebugPaint: showDebugPaint,
     );
   }
@@ -122,11 +126,15 @@ class Editor extends StatefulWidget {
     required this.textStyleBuilder,
     required this.selectionStyle,
     required this.keyboardActions,
+    required this.focusNode,
     this.scrollController,
     this.maxWidth = 600,
     this.padding = EdgeInsets.zero,
     this.showDebugPaint = false,
   }) : super(key: key);
+
+  /// FocusNode to be used to define the editor in the focus tree
+  final FocusNode? focusNode;
 
   /// Contains a `Document` and alters that document as desired.
   final DocumentEditor editor;
@@ -197,16 +205,19 @@ class _EditorState extends State<Editor> {
 
     widget.composer.preferences.clearStyles();
 
-    if (widget.composer.selection == null || !widget.composer.selection!.isCollapsed) {
+    if (widget.composer.selection == null ||
+        !widget.composer.selection!.isCollapsed) {
       return;
     }
 
-    final node = widget.editor.document.getNodeById(widget.composer.selection!.extent.nodeId);
+    final node = widget.editor.document
+        .getNodeById(widget.composer.selection!.extent.nodeId);
     if (node is! TextNode) {
       return;
     }
 
-    final textPosition = widget.composer.selection!.extent.nodePosition as TextPosition;
+    final textPosition =
+        widget.composer.selection!.extent.nodePosition as TextPosition;
     if (textPosition.offset == 0) {
       return;
     }
@@ -223,6 +234,7 @@ class _EditorState extends State<Editor> {
         composer: widget.composer,
         getDocumentLayout: () => _docLayoutKey.currentState as DocumentLayout,
       ),
+      focusNode: widget.focusNode,
       keyboardActions: widget.keyboardActions,
       showDebugPaint: widget.showDebugPaint,
       document: ConstrainedBox(
