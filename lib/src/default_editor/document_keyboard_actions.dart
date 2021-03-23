@@ -429,8 +429,29 @@ DocumentPosition _getDocumentPositionAfterDeletion({
     // Place the caret at the current position within the
     // first node in the selection.
     newSelectionPosition = baseNodeIndex <= extentNodeIndex ? selection.base : selection.extent;
+
+    // If it's a binary selection node then that node will
+    // be replaced by a ParagraphNode with the same ID.
+    if (newSelectionPosition.nodePosition is BinaryPosition) {
+      // Assume that the node was replaced with an empty paragraph.
+      newSelectionPosition = DocumentPosition(
+        nodeId: newSelectionPosition.nodeId,
+        nodePosition: TextPosition(offset: 0),
+      );
+    }
   } else {
-    if (basePosition.nodePosition is TextPosition) {
+    // Selection is within a single node. If it's a binary
+    // selection node then that node will be replaced by
+    // a ParagraphNode with the same ID. Otherwise, it must
+    // be a TextNode, in which case we need to figure out
+    // which DocumentPosition contains the earlier TextPosition.
+    if (basePosition.nodePosition is BinaryPosition) {
+      // Assume that the node was replace with an empty paragraph.
+      newSelectionPosition = DocumentPosition(
+        nodeId: baseNode.id,
+        nodePosition: TextPosition(offset: 0),
+      );
+    } else if (basePosition.nodePosition is TextPosition) {
       final baseOffset = (basePosition.nodePosition as TextPosition).offset;
       final extentOffset = (extentPosition.nodePosition as TextPosition).offset;
 
