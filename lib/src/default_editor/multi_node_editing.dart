@@ -1,4 +1,5 @@
 import 'package:flutter/services.dart';
+import 'package:flutter_richtext/flutter_richtext.dart';
 import 'package:flutter_richtext/src/core/document.dart';
 import 'package:flutter_richtext/src/core/document_editor.dart';
 import 'package:flutter_richtext/src/core/document_selection.dart';
@@ -99,7 +100,11 @@ class DeleteSelectionCommand implements EditorCommand {
     final basePosition = documentSelection.base.nodePosition;
     final extentPosition = documentSelection.extent.nodePosition;
 
-    if (node is TextNode) {
+    if (basePosition is BinaryPosition) {
+      // Binary positions are all-or-nothing. Therefore, partial
+      // selection means delete the whole node.
+      transaction.deleteNode(node);
+    } else if (node is TextNode) {
       _log.log('_deleteSelectionWithinSingleNode', ' - its a TextNode');
       final baseOffset = (basePosition as TextPosition).offset;
       final extentOffset = (extentPosition as TextPosition).offset;
@@ -142,7 +147,13 @@ class DeleteSelectionCommand implements EditorCommand {
     required dynamic nodePosition,
     required DocumentEditorTransaction transaction,
   }) {
-    if (nodePosition is TextPosition && node is TextNode) {
+    if (nodePosition is BinaryPosition) {
+      _deleteBinaryNode(
+        document: document,
+        node: node,
+        transaction: transaction,
+      );
+    } else if (nodePosition is TextPosition && node is TextNode) {
       node.text = node.text.removeRegion(
         startOffset: nodePosition.offset,
         endOffset: node.text.text.length,
@@ -158,7 +169,13 @@ class DeleteSelectionCommand implements EditorCommand {
     required dynamic nodePosition,
     required DocumentEditorTransaction transaction,
   }) {
-    if (nodePosition is TextPosition && node is TextNode) {
+    if (nodePosition is BinaryPosition) {
+      _deleteBinaryNode(
+        document: document,
+        node: node,
+        transaction: transaction,
+      );
+    } else if (nodePosition is TextPosition && node is TextNode) {
       node.text = node.text.removeRegion(
         startOffset: 0,
         endOffset: nodePosition.offset,
@@ -166,5 +183,32 @@ class DeleteSelectionCommand implements EditorCommand {
     } else {
       throw Exception('Unknown node position type: $nodePosition, for node: $node');
     }
+  }
+
+  void _deleteBinaryNode({
+    required Document document,
+    required DocumentNode node,
+    required DocumentEditorTransaction transaction,
+  }) {
+    // TODO: for now deleting a binary node simply means replacing
+    //       it with an empty ParagraphNode because after doing that,
+    //       the general deletion logic that called this function will
+    //       collapse empty paragraphs together, which gives the
+    //       result we want.
+    //
+    //       We avoid deleting the node because the composer is
+    //       depending on the first node still existing at the end of
+    //       the deletion. This is a fragile relationship between the
+    //       composer and the editor and needs to be addressed.
+    _log.log('_deleteBinaryNode', ' - replacing BinaryNode with a ParagraphNode: ${node.id}');
+    final nodeIndex = document.getNodeIndex(node);
+    transaction.insertNodeAt(
+      nodeIndex,
+      ParagraphNode(
+        id: node.id,
+        text: AttributedText(),
+      ),
+    );
+    transaction.deleteNode(node);
   }
 }
