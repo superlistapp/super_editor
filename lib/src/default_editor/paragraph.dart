@@ -2,6 +2,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_richtext/src/core/document.dart';
+import 'package:flutter_richtext/src/core/document_composer.dart';
 import 'package:flutter_richtext/src/core/document_editor.dart';
 import 'package:flutter_richtext/src/core/document_layout.dart';
 import 'package:flutter_richtext/src/core/document_selection.dart';
@@ -11,7 +12,13 @@ import 'package:flutter_richtext/src/default_editor/document_interaction.dart';
 import 'package:flutter_richtext/src/default_editor/text.dart';
 import 'package:flutter_richtext/src/infrastructure/_logging.dart';
 import 'package:flutter_richtext/src/infrastructure/attributed_text.dart';
+import 'package:collection/collection.dart';
+import 'package:http/http.dart' as http;
+import 'package:linkify/linkify.dart';
 
+import 'horizontal_rule.dart';
+import 'image.dart';
+import 'list_items.dart';
 import 'styles.dart';
 
 final _log = Logger(scope: 'paragraph.dart');
@@ -156,7 +163,185 @@ ExecutionInstruction insertCharacterInParagraph({
     keyEvent: keyEvent,
   );
 
+  if (keyEvent.character == ' ') {
+    _convertParagraphIfDesired(
+      document: editContext.editor.document,
+      composer: editContext.composer,
+      node: node,
+      editor: editContext.editor,
+    );
+  }
+
   return ExecutionInstruction.haltExecution;
+}
+
+// TODO: refactor to make prefix matching extensible (#68)
+bool _convertParagraphIfDesired({
+  required Document document,
+  required DocumentComposer composer,
+  required ParagraphNode node,
+  required DocumentEditor editor,
+}) {
+  if (composer.selection == null) {
+    // This method shouldn't be invoked if the given node
+    // doesn't have the caret, but we check just in case.
+    return false;
+  }
+
+  final text = node.text;
+  final textSelection = composer.selection!.extent.nodePosition as TextPosition;
+  final textBeforeCaret = text.text.substring(0, textSelection.offset);
+
+  final unorderedListItemMatch = RegExp(r'^\s*[\*-]\s+$');
+  final hasUnorderedListItemMatch = unorderedListItemMatch.hasMatch(textBeforeCaret);
+
+  final orderedListItemMatch = RegExp(r'^\s*[1].*\s+$');
+  final hasOrderedListItemMatch = orderedListItemMatch.hasMatch(textBeforeCaret);
+
+  _log.log('_convertParagraphIfDesired', ' - text before caret: "$textBeforeCaret"');
+  if (hasUnorderedListItemMatch || hasOrderedListItemMatch) {
+    _log.log('_convertParagraphIfDesired', ' - found unordered list item prefix');
+    int startOfNewText = textBeforeCaret.length;
+    while (startOfNewText < node.text.text.length && node.text.text[startOfNewText] == ' ') {
+      startOfNewText += 1;
+    }
+    // final adjustedText = node.text.text.substring(startOfNewText);
+    final adjustedText = node.text.copyText(startOfNewText);
+    final newNode = hasUnorderedListItemMatch
+        ? ListItemNode.unordered(id: node.id, text: adjustedText)
+        : ListItemNode.ordered(id: node.id, text: adjustedText);
+    final nodeIndex = document.getNodeIndex(node);
+
+    editor.executeCommand(
+      EditorCommandFunction((document, transaction) {
+        transaction
+          ..deleteNodeAt(nodeIndex)
+          ..insertNodeAt(nodeIndex, newNode);
+      }),
+    );
+
+    // We removed some text at the beginning of the list item.
+    // Move the selection back by that same amount.
+    final textPosition = composer.selection!.extent.nodePosition as TextPosition;
+    composer.selection = DocumentSelection.collapsed(
+      position: DocumentPosition(
+        nodeId: node.id,
+        nodePosition: TextPosition(offset: textPosition.offset - startOfNewText),
+      ),
+    );
+
+    return true;
+  }
+
+  final hrMatch = RegExp(r'^---*\s$');
+  final hasHrMatch = hrMatch.hasMatch(textBeforeCaret);
+  if (hasHrMatch) {
+    _log.log('_convertParagraphIfDesired', 'Paragraph has an HR match');
+    // Insert an HR before this paragraph and then clear the
+    // paragraph's content.
+    final paragraphNodeIndex = document.getNodeIndex(node);
+
+    editor.executeCommand(
+      EditorCommandFunction((document, transaction) {
+        transaction.insertNodeAt(
+          paragraphNodeIndex,
+          HorizontalRuleNode(
+            id: DocumentEditor.createNodeId(),
+          ),
+        );
+      }),
+    );
+
+    node.text = AttributedText();
+
+    composer.selection = DocumentSelection.collapsed(
+      position: DocumentPosition(
+        nodeId: node.id,
+        nodePosition: TextPosition(offset: 0),
+      ),
+    );
+
+    return true;
+  }
+
+  // URL match, e.g., images, social, etc.
+  _log.log('_convertParagraphIfDesired', 'Looking for URL match...');
+  final extractedLinks = linkify(node.text.text,
+      options: LinkifyOptions(
+        humanize: false,
+      ));
+  final int linkCount = extractedLinks.fold(0, (value, element) => element is UrlElement ? value + 1 : value);
+  final String nonEmptyText =
+      extractedLinks.fold('', (value, element) => element is TextElement ? value + element.text.trim() : value);
+  if (linkCount == 1 && nonEmptyText.isEmpty) {
+    // This node's text is just a URL, try to interpret it
+    // as a known type.
+    final link = extractedLinks.firstWhereOrNull((element) => element is UrlElement)!.text;
+    _processUrlNode(
+      document: document,
+      editor: editor,
+      nodeId: node.id,
+      originalText: node.text.text,
+      url: link,
+    );
+    return true;
+  }
+
+  // No pattern match was found
+  return false;
+}
+
+Future<void> _processUrlNode({
+  required Document document,
+  required DocumentEditor editor,
+  required String nodeId,
+  required String originalText,
+  required String url,
+}) async {
+  final response = await http.get(url);
+
+  if (response.statusCode < 200 || response.statusCode >= 300) {
+    _log.log('_processUrlNode', 'Failed to load URL: ${response.statusCode} - ${response.reasonPhrase}');
+    return;
+  }
+
+  final contentType = response.headers['content-type'];
+  if (contentType == null) {
+    _log.log('_processUrlNode', 'Failed to determine URL content type.');
+    return;
+  }
+  if (!contentType.startsWith('image/')) {
+    _log.log('_processUrlNode', 'URL is not an image. Ignoring');
+    return;
+  }
+
+  // The URL is an image. Convert the node.
+  _log.log('_processUrlNode', 'The URL is an image. Converting the ParagraphNode to an ImageNode.');
+  final node = document.getNodeById(nodeId);
+  if (node is! ParagraphNode) {
+    _log.log(
+        '_processUrlNode', 'The node has become something other than a ParagraphNode ($node). Can\'t convert ndoe.');
+    return;
+  }
+  final currentText = node.text.text;
+  if (currentText.trim() != originalText.trim()) {
+    _log.log('_processUrlNode', 'The node content changed in a non-trivial way. Aborting node conversion.');
+    return;
+  }
+
+  final imageNode = ImageNode(
+    id: node.id,
+    imageUrl: url,
+  );
+  final nodeIndex = document.getNodeIndex(node);
+
+  editor.executeCommand(
+    EditorCommandFunction((document, transaction) {
+      transaction
+        ..deleteNodeAt(nodeIndex)
+        ..insertNodeAt(nodeIndex, imageNode);
+    }),
+  );
 }
 
 class DeleteParagraphsCommand implements EditorCommand {
