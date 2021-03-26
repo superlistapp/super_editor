@@ -48,6 +48,19 @@ abstract class EditorCommand {
   void execute(Document document, DocumentEditorTransaction transaction);
 }
 
+/// Functional version of an `EditorCommand` for commands that
+/// don't require variables or private functions.
+class EditorCommandFunction implements EditorCommand {
+  EditorCommandFunction(this._execute);
+
+  final void Function(Document, DocumentEditorTransaction) _execute;
+
+  @override
+  void execute(Document document, DocumentEditorTransaction transaction) {
+    _execute(document, transaction);
+  }
+}
+
 /// Accumulates changes to a document to facilitate editing actions.
 class DocumentEditorTransaction {
   DocumentEditorTransaction._(
@@ -178,6 +191,7 @@ class MutableDocument with ChangeNotifier implements Document {
     if (index <= nodes.length) {
       nodes.insert(index, node);
       node.addListener(_forwardNodeChange);
+      notifyListeners();
     }
   }
 
@@ -190,6 +204,7 @@ class MutableDocument with ChangeNotifier implements Document {
     if (nodeIndex >= 0 && nodeIndex < nodes.length) {
       nodes.insert(nodeIndex + 1, newNode);
       newNode.addListener(_forwardNodeChange);
+      notifyListeners();
     }
   }
 
@@ -198,6 +213,7 @@ class MutableDocument with ChangeNotifier implements Document {
     if (index >= 0 && index < nodes.length) {
       final removedNode = nodes.removeAt(index);
       removedNode.removeListener(_forwardNodeChange);
+      notifyListeners();
     } else {
       print('Could not delete node. Index out of range: $index');
     }

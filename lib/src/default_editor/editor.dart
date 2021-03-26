@@ -7,6 +7,7 @@ import 'package:flutter_richtext/src/core/document_layout.dart';
 import 'package:flutter_richtext/src/core/edit_context.dart';
 import 'package:flutter_richtext/src/default_editor/horizontal_rule.dart';
 import 'package:flutter_richtext/src/default_editor/image.dart';
+import 'package:flutter_richtext/src/default_editor/list_items.dart';
 import 'package:flutter_richtext/src/infrastructure/_listenable_builder.dart';
 import 'package:flutter_richtext/src/infrastructure/attributed_text.dart';
 
@@ -326,6 +327,8 @@ TextStyle defaultStyleBuilder(Set<dynamic> attributions) {
 /// `unknownComponentBuilder` always returns a component.
 final defaultComponentBuilders = <ComponentBuilder>[
   paragraphBuilder,
+  unorderedListItemBuilder,
+  orderedListItemBuilder,
   imageBuilder,
   horizontalRuleBuilder,
   unknownComponentBuilder,
@@ -334,6 +337,9 @@ final defaultComponentBuilders = <ComponentBuilder>[
 /// Keyboard actions for the standard `Editor`.
 final defaultKeyboardActions = <DocumentKeyboardAction>[
   doNothingWhenThereIsNoSelection,
+  indentListItemWhenBackspaceIsPressed,
+  unindentListItemWhenBackspaceIsPressed,
+  splitListItemWhenEnterPressed,
   pasteWhenCmdVIsPressed,
   copyWhenCmdVIsPressed,
   applyBoldWhenCmdBIsPressed,
