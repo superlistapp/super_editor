@@ -61,11 +61,47 @@ Document _createInitialDocument() {
               'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus sed sagittis urna. Aenean mattis ante justo, quis sollicitudin metus interdum id. Aenean ornare urna ac enim consequat mollis. In aliquet convallis efficitur. Phasellus convallis purus in fringilla scelerisque. Ut ac orci a turpis egestas lobortis. Morbi aliquam dapibus sem, vitae sodales arcu ultrices eu. Duis vulputate mauris quam, eleifend pulvinar quam blandit eget.',
         ),
       ),
+      ListItemNode.unordered(
+        id: DocumentEditor.createNodeId(),
+        text: AttributedText(
+          text: 'This is an unordered list item',
+        ),
+      ),
+      ListItemNode.unordered(
+        id: DocumentEditor.createNodeId(),
+        text: AttributedText(
+          text: 'This is another list item',
+        ),
+      ),
+      ListItemNode.unordered(
+        id: DocumentEditor.createNodeId(),
+        text: AttributedText(
+          text: 'This is a 3rd list item',
+        ),
+      ),
       ParagraphNode(
         id: DocumentEditor.createNodeId(),
         text: AttributedText(
             text:
                 'Cras vitae sodales nisi. Vivamus dignissim vel purus vel aliquet. Sed viverra diam vel nisi rhoncus pharetra. Donec gravida ut ligula euismod pharetra. Etiam sed urna scelerisque, efficitur mauris vel, semper arcu. Nullam sed vehicula sapien. Donec id tellus volutpat, eleifend nulla eget, rutrum mauris.'),
+      ),
+      ListItemNode.ordered(
+        id: DocumentEditor.createNodeId(),
+        text: AttributedText(
+          text: 'First thing to do',
+        ),
+      ),
+      ListItemNode.ordered(
+        id: DocumentEditor.createNodeId(),
+        text: AttributedText(
+          text: 'Second thing to do',
+        ),
+      ),
+      ListItemNode.ordered(
+        id: DocumentEditor.createNodeId(),
+        text: AttributedText(
+          text: 'Third thing to do',
+        ),
       ),
       ParagraphNode(
         id: DocumentEditor.createNodeId(),

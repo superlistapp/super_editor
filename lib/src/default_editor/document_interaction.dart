@@ -36,6 +36,7 @@ class DocumentInteractor extends StatefulWidget {
     required this.editContext,
     required this.keyboardActions,
     this.scrollController,
+    this.focusNode,
     required this.document,
     this.showDebugPaint = false,
   }) : super(key: key);
@@ -51,6 +52,8 @@ class DocumentInteractor extends StatefulWidget {
   /// If no `scrollController` is provided, then one is created
   /// internally.
   final ScrollController? scrollController;
+
+  final FocusNode? focusNode;
 
   /// The document to display within this [DocumentInteractor].
   final Widget document;
@@ -69,7 +72,7 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
 
   final _documentWrapperKey = GlobalKey();
 
-  late FocusNode _rootFocusNode;
+  late FocusNode _focusNode;
 
   late ScrollController _scrollController;
 
@@ -91,7 +94,7 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
   @override
   void initState() {
     super.initState();
-    _rootFocusNode = FocusNode();
+    _focusNode = widget.focusNode ?? FocusNode();
     _ticker = createTicker(_onTick);
     _scrollController =
         _scrollController = (widget.scrollController ?? ScrollController())..addListener(_updateDragSelection);
@@ -113,6 +116,9 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
       }
       _scrollController = (widget.scrollController ?? ScrollController())..addListener(_updateDragSelection);
     }
+    if (widget.focusNode != oldWidget.focusNode) {
+      _focusNode = widget.focusNode ?? FocusNode();
+    }
   }
 
   @override
@@ -122,7 +128,9 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
     if (widget.scrollController == null) {
       _scrollController.dispose();
     }
-    _rootFocusNode.dispose();
+    if (widget.focusNode == null) {
+      _focusNode.dispose();
+    }
     super.dispose();
   }
 
@@ -221,11 +229,9 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
       // Place the document selection at the location where the
       // user tapped.
       _selectPosition(docPosition);
-    } else {
-      // The user tapped in an area of the editor where there is no content node.
-      // Give focus back to the root of the editor.
-      _rootFocusNode.requestFocus();
     }
+
+    _focusNode.requestFocus();
   }
 
   void _onDoubleTapDown(TapDownDetails details) {
@@ -248,11 +254,9 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
         // user tapped.
         _selectPosition(docPosition);
       }
-    } else {
-      // The user tapped in an area of the editor where there is no content node.
-      // Give focus back to the root of the editor.
-      _rootFocusNode.requestFocus();
     }
+
+    _focusNode.requestFocus();
   }
 
   void _onDoubleTap() {
@@ -279,11 +283,9 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
         // user tapped.
         _selectPosition(docPosition);
       }
-    } else {
-      // The user tapped in an area of the editor where there is no content node.
-      // Give focus back to the root of the editor.
-      _rootFocusNode.requestFocus();
     }
+
+    _focusNode.requestFocus();
   }
 
   void _onTripleTap() {
@@ -297,6 +299,8 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
 
     _clearSelection();
     _dragRectInViewport = Rect.fromLTWH(_dragStartInViewport!.dx, _dragStartInViewport!.dy, 1, 1);
+
+    _focusNode.requestFocus();
   }
 
   void _onPanUpdate(DragUpdateDetails details) {
@@ -704,7 +708,7 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
     return Listener(
       onPointerSignal: _onPointerSignal,
       child: RawKeyboardListener(
-        focusNode: _rootFocusNode,
+        focusNode: _focusNode,
         onKey: _onKeyPressed,
         autofocus: true,
         child: RawGestureDetector(

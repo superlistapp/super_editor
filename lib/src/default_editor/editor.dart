@@ -124,6 +124,7 @@ class Editor extends StatefulWidget {
     required this.selectionStyle,
     required this.keyboardActions,
     this.scrollController,
+    this.focusNode,
     this.maxWidth = 600,
     this.padding = EdgeInsets.zero,
     this.showDebugPaint = false,
@@ -156,6 +157,8 @@ class Editor extends StatefulWidget {
 
   final ScrollController? scrollController;
 
+  final FocusNode? focusNode;
+
   final double maxWidth;
 
   final EdgeInsets padding;
@@ -173,11 +176,16 @@ class _EditorState extends State<Editor> {
   // out where in the document the user taps or drags.
   final _docLayoutKey = GlobalKey();
 
+  late FocusNode _focusNode;
+
   DocumentPosition? _previousSelectionExtent;
 
   @override
   void initState() {
     super.initState();
+
+    _focusNode = widget.focusNode ?? FocusNode();
+
     widget.composer.addListener(_updateComposerPreferencesAtSelection);
   }
 
@@ -188,6 +196,19 @@ class _EditorState extends State<Editor> {
       oldWidget.composer.removeListener(_updateComposerPreferencesAtSelection);
       widget.composer.addListener(_updateComposerPreferencesAtSelection);
     }
+    if (widget.focusNode != oldWidget.focusNode) {
+      _focusNode = widget.focusNode ?? FocusNode();
+    }
+  }
+
+  @override
+  void dispose() {
+    if (widget.focusNode == null) {
+      // We are using our own private FocusNode. Dispose it.
+      _focusNode.dispose();
+    }
+
+    super.dispose();
   }
 
   void _updateComposerPreferencesAtSelection() {
@@ -219,6 +240,7 @@ class _EditorState extends State<Editor> {
   @override
   Widget build(BuildContext context) {
     return DocumentInteractor(
+      focusNode: _focusNode,
       editContext: EditContext(
         editor: widget.editor,
         composer: widget.composer,
