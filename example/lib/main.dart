@@ -1,5 +1,6 @@
 import 'package:example/demo_selectable_text.dart';
 import 'package:example/example_editor.dart';
+import 'package:example/sliver_example_editor.dart';
 import 'package:flutter/material.dart';
 
 import 'demo_attributed_text.dart';
@@ -129,6 +130,13 @@ final _menu = <_MenuGroup>[
           return ExampleEditor();
         },
       ),
+      _MenuItem(
+        icon: Icons.description,
+        title: 'Sliver Editor Demo',
+        pageBuilder: (context) {
+          return SliverExampleEditor();
+        },
+      ),
     ],
   ),
   _MenuGroup(
@@ -230,10 +238,11 @@ class _DrawerButton extends StatelessWidget {
               return Colors.transparent;
             }),
             // splashFactory: NoSplash.splashFactory,
-            foregroundColor:
-                MaterialStateColor.resolveWith((states) => isSelected ? Colors.white : const Color(0xFFBBBBBB)),
+            foregroundColor: MaterialStateColor.resolveWith((states) =>
+                isSelected ? Colors.white : const Color(0xFFBBBBBB)),
             elevation: MaterialStateProperty.resolveWith((states) => 0),
-            padding: MaterialStateProperty.resolveWith((states) => const EdgeInsets.all(16))),
+            padding: MaterialStateProperty.resolveWith(
+                (states) => const EdgeInsets.all(16))),
         onPressed: isSelected ? null : onPressed,
         child: Row(
           children: [
