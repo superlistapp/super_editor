@@ -2,10 +2,10 @@ import 'package:flutter/foundation.dart';
 
 import 'document_selection.dart';
 
-/// Maintains a `DocumentSelection` within a `Document` and
+/// Maintains a [DocumentSelection] within a `Document` and
 /// uses that selection to edit the document.
 class DocumentComposer with ChangeNotifier {
-  /// Constructs a `DocumentComposer` with the given `initialSelection`.
+  /// Constructs a [DocumentComposer] with the given `initialSelection`.
   ///
   /// The `initialSelection` may be omitted if no initial selection is
   /// desired.
@@ -13,9 +13,7 @@ class DocumentComposer with ChangeNotifier {
     DocumentSelection? initialSelection,
   })  : _selection = initialSelection,
         _preferences = ComposerPreferences() {
-    _preferences.addListener(() {
-      notifyListeners();
-    });
+    _preferences.addListener(() => notifyListeners());
   }
 
   @override
@@ -26,7 +24,7 @@ class DocumentComposer with ChangeNotifier {
 
   DocumentSelection? _selection;
 
-  /// Returns the current `DocumentSelection` for a `Document`.
+  /// Returns the current [DocumentSelection] for a `Document`.
   DocumentSelection? get selection => _selection;
 
   /// Sets the current `selection` for a `Document`.

@@ -6,34 +6,34 @@ import 'package:uuid/uuid.dart';
 
 import 'document.dart';
 
-/// Editor for a `Document`.
+/// Editor for a [Document].
 ///
-/// A `DocumentEditor` executes commands that alter the structure
-/// of a `Document`. Commands are used so that document changes
+/// A [DocumentEditor] executes commands that alter the structure
+/// of a [Document]. Commands are used so that document changes
 /// can be event-sourced, allowing for undo/redo behavior.
 // TODO: design and implement comprehensive event-sourced editing API (#49)
 class DocumentEditor {
   static Uuid _uuid = Uuid();
 
-  /// Generates a new ID for a `DocumentNode`.
+  /// Generates a new ID for a [DocumentNode].
   ///
   /// Each generated node ID is universally unique.
   static String createNodeId() => _uuid.v4();
 
-  /// Constructs a `DocumentEditor` that makes changes to the given
-  /// `MutableDocument`.
+  /// Constructs a [DocumentEditor] that makes changes to the given
+  /// [MutableDocument].
   DocumentEditor({
     required MutableDocument document,
   }) : _document = document;
 
   final MutableDocument _document;
 
-  /// Returns a read-only version of the `Document` that this editor
+  /// Returns a read-only version of the [Document] that this editor
   /// is editing.
   Document get document => _document;
 
-  /// Executes the given `command` to alter the `Document` that is tied
-  /// to this `DocumentEditor`.
+  /// Executes the given `command` to alter the [Document] that is tied
+  /// to this [DocumentEditor].
   void executeCommand(EditorCommand command) {
     command.execute(_document, DocumentEditorTransaction._(_document));
   }
@@ -48,7 +48,7 @@ abstract class EditorCommand {
   void execute(Document document, DocumentEditorTransaction transaction);
 }
 
-/// Functional version of an `EditorCommand` for commands that
+/// Functional version of an [EditorCommand] for commands that
 /// don't require variables or private functions.
 class EditorCommandFunction implements EditorCommand {
   EditorCommandFunction(this._execute);
@@ -69,7 +69,7 @@ class DocumentEditorTransaction {
 
   final MutableDocument _document;
 
-  /// Inserts the given `node` into the `Document` at the given `index`.
+  /// Inserts the given `node` into the [Document] at the given `index`.
   void insertNodeAt(int index, DocumentNode node) {
     _document.insertNodeAt(index, node);
   }
@@ -93,7 +93,7 @@ class DocumentEditorTransaction {
   }
 }
 
-/// An in-memory, mutable `Document`.
+/// An in-memory, mutable [Document].
 class MutableDocument with ChangeNotifier implements Document {
   MutableDocument({
     List<DocumentNode> nodes = const [],
@@ -186,7 +186,7 @@ class MutableDocument with ChangeNotifier implements Document {
     return _nodes.sublist(from, to + 1);
   }
 
-  /// Inserts the given `node` into the `Document` at the given `index`.
+  /// Inserts the given `node` into the [Document] at the given `index`.
   void insertNodeAt(int index, DocumentNode node) {
     if (index <= nodes.length) {
       nodes.insert(index, node);
