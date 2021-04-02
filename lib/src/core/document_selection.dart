@@ -1,17 +1,17 @@
 
 import 'document.dart';
 
-/// A selection within a `Document`.
+/// A selection within a [Document].
 ///
-/// A `DocumentSelection` spans from a `base` position to an
+/// A [DocumentSelection] spans from a `base` position to an
 /// `extent` position, and includes all content in between.
 ///
-/// `base` and `extent` are instances of `DocumentPosition`,
-/// which represents a single position within a `Document`.
+/// `base` and `extent` are instances of [DocumentPosition],
+/// which represents a single position within a [Document].
 ///
-/// A `DocumentSelection` does not hold a reference to a
-/// `Document`, it only represents a directional selection
-/// within a `Document`. The `base` and `extent` positions must
+/// A [DocumentSelection] does not hold a reference to a
+/// [Document], it only represents a directional selection
+/// within a [Document]. The `base` and `extent` positions must
 /// be interpreted within the context of a specific `Document`
 /// to locate nodes between `base` and `extent`, and to identify
 /// partial content that is selected within the `base` and `extent`

@@ -219,7 +219,7 @@ class MutableDocument with ChangeNotifier implements Document {
     }
   }
 
-  /// Deletes the given `node` from the `Document`.
+  /// Deletes the given `node` from the [Document].
   bool deleteNode(DocumentNode node) {
     bool isRemoved = false;
 
