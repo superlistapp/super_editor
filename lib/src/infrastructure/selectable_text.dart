@@ -6,7 +6,7 @@ import 'package:flutter/widgets.dart';
 /// Queries and calculates text position and offset details
 /// for a text display.
 abstract class TextLayout {
-  /// Returns the `TextPosition` within this `TextLayout` that
+  /// Returns the [TextPosition] within this [TextLayout] that
   /// is closest to the given `localOffset`, or -1 if the text
   /// is not laid out yet.
   TextPosition getPositionAtOffset(Offset localOffset);
@@ -15,58 +15,58 @@ abstract class TextLayout {
   /// `null` if the text is not laid out yet.
   Offset? getOffsetForPosition(TextPosition position);
 
-  /// Returns the `TextPosition` at the start of the line that
+  /// Returns the [TextPosition] at the start of the line that
   /// contains the given `currentPosition`, or -1 if the text
   /// is not laid out yet.
   TextPosition getPositionAtStartOfLine({
     required TextPosition currentPosition,
   });
 
-  /// Returns the `TextPosition` at the end of the line that
+  /// Returns the [TextPosition] at the end of the line that
   /// contains the given `currentPosition`, or -1 if the text
   /// is not laid out yet.
   TextPosition getPositionAtEndOfLine({
     required TextPosition currentPosition,
   });
 
-  /// Returns the `TextPosition` that's one line above the
+  /// Returns the [TextPosition] that's one line above the
   /// given `currentPosition`, or `null` if there is no line
   /// above `currentPosition` or the text is not laid out yet.
   TextPosition? getPositionOneLineUp({
     required TextPosition currentPosition,
   });
 
-  /// Returns the `TextPosition` that's one line below the
+  /// Returns the [TextPosition] that's one line below the
   /// given `currentPosition`, or `null` if there is no line
   /// below `currentPosition` or the text is not laid out yet.
   TextPosition? getPositionOneLineDown({
     required TextPosition currentPosition,
   });
 
-  /// Returns the `TextPosition` in the first line within this
-  /// `TextLayout` that is closest to the given `x`-value, or
+  /// Returns the [TextPosition] in the first line within this
+  /// [TextLayout] that is closest to the given `x`-value, or
   /// -1 if the text is not laid out yet.
   TextPosition getPositionInFirstLineAtX(double x);
 
-  /// Returns the `TextPosition` in the last line within this
-  /// `TextLayout` that is closest to the given `x`-value, or
+  /// Returns the [TextPosition] in the last line within this
+  /// [TextLayout] that is closest to the given `x`-value, or
   /// -1 if the text is not laid out yet.
   TextPosition getPositionInLastLineAtX(double x);
 
   /// Returns `true` if the given `localOffset` intersects any
-  /// text within this `TextLayout`, otherwise returns `false`.
+  /// text within this [TextLayout], otherwise returns `false`.
   bool isTextAtOffset(Offset localOffset);
 
-  /// Returns the local `Rect` that is formed by intersecting
+  /// Returns the local [Rect] that is formed by intersecting
   /// the given `region` in the `ancestorCoordinateSpace` with
-  /// this `TextLayout`, or `Rect.zero` if the text is not laid
+  /// this [TextLayout], or [Rect.zero] if the text is not laid
   /// out yet.
   Rect calculateLocalOverlap({
     required Rect region,
     required RenderObject ancestorCoordinateSpace,
   });
 
-  /// Returns the `TextSelection` that corresponds to a selection
+  /// Returns the [TextSelection] that corresponds to a selection
   /// rectangle formed by the span from `baseOffset` to `extentOffset`, or
   /// a collapsed selection at -1 if the text is not laid out yet.
   ///
@@ -77,7 +77,7 @@ abstract class TextLayout {
 
 /// Displays text with a selection highlight and a caret.
 ///
-/// `SelectableText` does not recognize any user interaction. It's the
+/// [SelectableText] does not recognize any user interaction. It's the
 /// responsibility of ancestor widgets to recognize interactions that
 /// should alter this widget's text selection and/or caret position.
 ///
@@ -90,12 +90,12 @@ abstract class TextLayout {
 /// false then no caret is displayed. If `textSelection` has a `baseOffset`
 /// or `extentOffset` that is >= zero and `showCaret` is true then a caret is
 /// displayed. An explicit `showCaret` control is offered because multiple
-/// `SelectableText` widgets might be displayed together with a selection
+/// [SelectableText] widgets might be displayed together with a selection
 /// spanning multiple `SelectableText` widgets, but only one of the
 /// `SelectableText` widgets displays a caret.
 ///
 /// If `text` is empty, and a `textSelection` with an extent >= 0 is provided, and
-/// `highlightWhenEmpty` is `true`, then `SelectableText` will paint a small
+/// `highlightWhenEmpty` is `true`, then [SelectableText] will paint a small
 /// highlight, despite having no content. This is useful when showing that
 /// one or more empty text areas are selected.
 class SelectableText extends StatefulWidget {
@@ -141,10 +141,10 @@ class SelectableText extends StatefulWidget {
   /// The text to display in this `SelectableText` widget.
   final TextSpan richText;
 
-  /// The alignment to use for `richText` display.
+  /// The alignment to use for [richText] display.
   final TextAlign textAlign;
 
-  /// The portion of `richText` to display with the
+  /// The portion of [richText] to display with the
   /// `textSelectionDecoration`.
   final TextSelection textSelection;
 
@@ -152,20 +152,20 @@ class SelectableText extends StatefulWidget {
   final TextSelectionDecoration textSelectionDecoration;
 
   /// Builds the visual representation of the caret in this
-  /// `SelectableText` widget.
+  /// [SelectableText] widget.
   final TextCaretFactory textCaretFactory;
 
-  /// True to show a thin selection highlight when `richText`
+  /// True to show a thin selection highlight when [richText]
   /// is empty, or false to avoid showing a selection highlight
-  /// when `richText` is empty.
+  /// when [richText] is empty.
   ///
   /// This is useful when multiple `SelectableText` widgets
-  /// are selected and some of the selected `SelectableText`
+  /// are selected and some of the selected [SelectableText]
   /// widgets are empty.
   final bool highlightWhenEmpty;
 
-  /// True to display a caret in this `SelectableText` at
-  /// the `extent` of `textSelection`, or false to avoid
+  /// True to display a caret in this [SelectableText] at
+  /// the `extent` of [textSelection], or false to avoid
   /// displaying a caret.
   final bool showCaret;
 
@@ -782,7 +782,7 @@ class _CaretBlinkController with ChangeNotifier {
   }
 }
 
-/// Wraps a given `SelectableText` and paints extra decoration
+/// Wraps a given [SelectableText] and paints extra decoration
 /// to visualize text boundaries.
 class DebugSelectableTextDecorator extends StatefulWidget {
   const DebugSelectableTextDecorator({

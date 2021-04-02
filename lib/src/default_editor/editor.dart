@@ -130,7 +130,7 @@ class Editor extends StatefulWidget {
     this.showDebugPaint = false,
   }) : super(key: key);
 
-  /// Contains a `Document` and alters that document as desired.
+  /// Contains a [Document] and alters that document as desired.
   final DocumentEditor editor;
 
   final DocumentComposer composer;
@@ -141,7 +141,7 @@ class Editor extends StatefulWidget {
   /// horizontal rule component, etc.
   final List<ComponentBuilder> componentBuilders;
 
-  /// Factory that creates `TextStyle`s based on given
+  /// Factory that creates [TextStyle]`s based on given
   /// attributions. An attribution can be anything. It is up
   /// to the `textStyleBuilder` to interpret attributions
   /// as desired to produce corresponding styles.

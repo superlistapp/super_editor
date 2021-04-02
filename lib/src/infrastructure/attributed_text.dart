@@ -11,15 +11,15 @@ final _log = Logger(scope: 'AttributedText');
 /// object implements equality. A `String` is typically a good
 /// choice to use as an attribution type.
 ///
-/// `AttributedText` is a convenient way to store and manipulate
+/// [AttributedText] is a convenient way to store and manipulate
 /// text that might have overlapping styles and/or non-style
 /// attributions. A common Flutter alternative is `TextSpan`, but
-/// `TextSpan` does not support overlapping styles, and `TextSpan`
+/// [TextSpan] does not support overlapping styles, and `TextSpan`
 /// is exclusively intended for visual text styles.
 ///
 /// To style Flutter text, `AttributedText` produces a
 /// corresponding `TextSpan` with `computeTextSpan()`. Clients
-/// style the text by providing an `AttributionStyleBuilder`,
+/// style the text by providing an [AttributionStyleBuilder],
 /// which is responsible for interpreting the meaning of all
 /// attributions applied to this `AttributedText`.
 class AttributedText {
@@ -228,7 +228,7 @@ class AttributedText {
   }
 }
 
-/// Creates the desired `TextStyle` given the `attributions` associated
+/// Creates the desired [TextStyle] given the `attributions` associated
 /// with a span of text.
 ///
 /// The `attributions` set may be empty.

@@ -8,17 +8,17 @@ import 'package:flutter_richtext/src/infrastructure/_logging.dart';
 
 final _log = Logger(scope: 'DocumentLayout');
 
-/// Displays a `Document` as a single column.
+/// Displays a [Document] as a single column.
 ///
-/// `DefaultDocumentLayout` displays a visual "component" for each
-/// type of node in a given `Document`. The components are positioned
+/// [DefaultDocumentLayout] displays a visual "component" for each
+/// type of node in a given [Document]. The components are positioned
 /// vertically in a column with some space in between.
 ///
-/// `DefaultDocumentLayout`'s `State` object implements `DocumentLayout`,
+/// [DefaultDocumentLayout]'s `State` object implements [DocumentLayout],
 /// which establishes a contract for querying many document layout
-/// properties. To use the `DocumentLayout` API, assign a `GlobalKey`
-/// to a `DefaultDocumentLayout`, obtain its `State` object, and then
-/// cast that `State` object to a `DocumentLayout`.
+/// properties. To use the [DocumentLayout] API, assign a `GlobalKey`
+/// to a [DefaultDocumentLayout], obtain its `State` object, and then
+/// cast that `State` object to a [DocumentLayout].
 class DefaultDocumentLayout extends StatefulWidget {
   const DefaultDocumentLayout({
     Key? key,
@@ -39,8 +39,8 @@ class DefaultDocumentLayout extends StatefulWidget {
 
   /// Builders for every type of component that this layout displays.
   ///
-  /// Every type of `DocumentNode` that might appear in the displayed
-  /// `document` should have a `ComponentBuilder` that knows how to
+  /// Every type of [DocumentNode] that might appear in the displayed
+  /// `document` should have a [ComponentBuilder] that knows how to
   /// render that piece of content.
   final List<ComponentBuilder> componentBuilders;
 
@@ -118,6 +118,7 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
       return null;
     }
     final componentRect = component.getRectForPosition(position.nodePosition);
+    // TODO verify if this condition can be null to remove if not 'if' below can be remove
     if (componentRect == null) {
       return null;
     }

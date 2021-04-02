@@ -6,7 +6,7 @@ final _log = Logger(scope: 'AttributedSpans');
 /// A set of spans, each with an associated attribution, that take
 /// up some amount of space in a discrete range.
 ///
-/// `AttributedSpans` are useful when implementing attributed text
+/// [AttributedSpans] are useful when implementing attributed text
 /// for the purpose of markup and styling.
 ///
 /// You can think of `AttributedSpans` like a set of lanes. Each
@@ -23,7 +23,7 @@ final _log = Logger(scope: 'AttributedSpans');
 /// For text styling, a client might choose `String` values like
 /// 'bold' and 'italics'.
 ///
-/// Each attributed span is represented by two `SpanMarker`s, one
+/// Each attributed span is represented by two [SpanMarker]`s, one
 /// with type `SpanMarkerType.start` and one with type
 /// `SpanMarkerType.end`.
 ///
@@ -756,10 +756,10 @@ class AttributedSpans {
 
 /// Marks the start or end of an attribution span.
 ///
-/// The given `AttributionType` must implement equality for
+/// The given [AttributionType] must implement equality for
 /// span management to work correctly.
 class SpanMarker<AttributionType> implements Comparable<SpanMarker<AttributionType>> {
-  /// Constructs a `SpanMarker` with the given `attribution`, `offset` within
+  /// Constructs a [SpanMarker] with the given `attribution`, `offset` within
   /// some discrete content, and `markerType` of `start` or `end`.
   const SpanMarker({
     required this.attribution,
@@ -767,7 +767,7 @@ class SpanMarker<AttributionType> implements Comparable<SpanMarker<AttributionTy
     required this.markerType,
   });
 
-  /// The attribution that exists between this `SpanMarker` and its
+  /// The attribution that exists between this [SpanMarker] and its
   /// other endpoint.
   final AttributionType attribution;
 
@@ -777,10 +777,10 @@ class SpanMarker<AttributionType> implements Comparable<SpanMarker<AttributionTy
   /// The type of `SpanMarker`, either `start` or `end`.
   final SpanMarkerType markerType;
 
-  /// Returns true if this marker is a `SpanMarkerType.start` marker.
+  /// Returns true if this marker is a [SpanMarkerType.start] marker.
   bool get isStart => markerType == SpanMarkerType.start;
 
-  /// Returns true if this marker is a `SpanMarkerType.end` marker.
+  /// Returns true if this marker is a [SpanMarkerType.end] marker.
   bool get isEnd => markerType == SpanMarkerType.end;
 
   /// Returns a copy of this `SpanMarker` with optional new values

@@ -35,7 +35,7 @@ class ParagraphNode extends TextNode {
         );
 }
 
-/// Combines two consecutive `ParagraphNode`s, indicated by `firstNodeId`
+/// Combines two consecutive [ParagraphNode]`s, indicated by `firstNodeId`
 /// and `secondNodeId`, respectively.
 ///
 /// If the specified nodes are not sequential, or are sequential

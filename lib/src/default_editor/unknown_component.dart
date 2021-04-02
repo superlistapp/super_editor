@@ -1,9 +1,9 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_richtext/src/core/document_layout.dart';
 
-/// Builds an `UnknownComponent` for any given `componentContext`.
+/// Builds an [UnknownComponent] for any given `componentContext`.
 ///
-/// This builder always returns an `UnknownComponent`. It never
+/// This builder always returns an [UnknownComponent]. It never
 /// returns `null`.
 Widget unknownComponentBuilder(ComponentContext componentContext) {
   return SizedBox(
@@ -14,7 +14,7 @@ Widget unknownComponentBuilder(ComponentContext componentContext) {
   );
 }
 
-/// Displays a `Placeholder` widget within a document layout.
+/// Displays a [Placeholder] widget within a document layout.
 ///
 /// An `UnknownComponent` is intended to represent any
 /// `DocumentNode` for which there is no corresponding

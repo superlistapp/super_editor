@@ -12,7 +12,7 @@ const Duration kTapMinTime = Duration(milliseconds: 40);
 /// e.g., a double-tap, does not prevent callbacks for other tap sequences,
 /// e.g., a single-tap or triple-tap.
 ///
-/// This implementation is based on Flutter's `DoubleTapGestureRecognizer`
+/// This implementation is based on Flutter's [DoubleTapGestureRecognizer]
 /// implementation. I don't know how correct this implementation is, but
 /// it seems to work where it's used.
 class TapSequenceGestureRecognizer extends GestureRecognizer {

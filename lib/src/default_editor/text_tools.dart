@@ -5,7 +5,7 @@ import 'package:flutter_richtext/src/core/document_selection.dart';
 import 'package:flutter_richtext/src/infrastructure/_logging.dart';
 
 /// Collection of generic text inspection behavior that does not belong
-/// to any particular `DocumentNode` or `Component`.
+/// to any particular [DocumentNode] or `Component`.
 
 final _log = Logger(scope: 'text_tools.dart');
 
