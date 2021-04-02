@@ -12,7 +12,9 @@ class ImageNode with ChangeNotifier implements DocumentNode {
   ImageNode({
     required this.id,
     required String imageUrl,
-  }) : _imageUrl = imageUrl;
+    String altText = '',
+  })  : _imageUrl = imageUrl,
+        _altText = altText;
 
   final String id;
 
@@ -21,6 +23,15 @@ class ImageNode with ChangeNotifier implements DocumentNode {
   set imageUrl(String newImageUrl) {
     if (newImageUrl != _imageUrl) {
       _imageUrl = newImageUrl;
+      notifyListeners();
+    }
+  }
+
+  String _altText;
+  String get altText => _altText;
+  set altText(String newAltText) {
+    if (newAltText != _altText) {
+      _altText = newAltText;
       notifyListeners();
     }
   }
