@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_richtext/flutter_richtext.dart';
 import 'package:markdown/markdown.dart' as md;
@@ -7,7 +9,7 @@ import 'package:markdown/markdown.dart' as md;
 //       requires one. When the editing system matures, there should
 //       be a way to return something here that is not concrete.
 MutableDocument deserializeMarkdownToDocument(String markdown) {
-  final markdownLines = markdown.split('\n');
+  final markdownLines = LineSplitter().convert(markdown);
 
   final markdownDoc = md.Document();
   final blockParser = md.BlockParser(markdownLines, markdownDoc);
