@@ -190,11 +190,20 @@ class AttributedText {
     );
   }
 
+  void visitAttributions(AttributionVisitor visitor) {
+    final collapsedSpans = spans.collapseSpans(contentLength: text.length);
+    for (final span in collapsedSpans) {
+      visitor(this, span.start, span.attributions, AttributionVisitEvent.start);
+      visitor(this, span.end, span.attributions, AttributionVisitEvent.end);
+    }
+  }
+
   /// Returns a Flutter `TextSpan` that is styled based on the
   /// attributions within this `AttributedText`.
   ///
   /// The given `styleBuilder` interprets the meaning of every
   /// attribution and constructs `TextStyle`s accordingly.
+  // TODO: remove this method and use [visitAttributions()] to compute TextSpan
   TextSpan computeTextSpan(AttributionStyleBuilder styleBuilder) {
     _log.log('computeTextSpan', 'text length: ${text.length}');
     _log.log('computeTextSpan', 'attributions used to compute spans:');
@@ -228,7 +237,22 @@ class AttributedText {
   }
 }
 
-/// Creates the desired [TextStyle] given the `attributions` associated
+/// Visits the [start] and [end] of every span of attributions in
+/// the given [AttributedText].
+///
+/// The [index] is the [String] index of the character where the span
+/// either begins or ends. Note: most range-based operations expect the
+/// closing index to be exclusive, but that is not how this callback
+/// works. Both the [start] and [end] [index]es are inclusive.
+typedef AttributionVisitor = void Function(
+    AttributedText fullText, int index, Set<dynamic> attributions, AttributionVisitEvent event);
+
+enum AttributionVisitEvent {
+  start,
+  end,
+}
+
+/// Creates the desired `TextStyle` given the `attributions` associated
 /// with a span of text.
 ///
 /// The `attributions` set may be empty.

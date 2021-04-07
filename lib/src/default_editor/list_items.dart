@@ -45,6 +45,20 @@ class ListItemNode extends TextNode {
           metadata: metadata,
         );
 
+  ListItemNode({
+    required String id,
+    required ListItemType itemType,
+    required AttributedText text,
+    Map<String, dynamic>? metadata,
+    int indent = 0,
+  })  : type = itemType,
+        _indent = indent,
+        super(
+          id: id,
+          text: text,
+          metadata: metadata,
+        );
+
   final ListItemType type;
 
   int _indent;

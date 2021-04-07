@@ -24,3 +24,6 @@ export 'src/default_editor/styles.dart';
 export 'src/default_editor/text.dart';
 export 'src/default_editor/text_tools.dart';
 export 'src/default_editor/unknown_component.dart';
+
+// TODO: move to separate package
+export 'src/serialization/markdown.dart';

@@ -602,7 +602,7 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
 
   @override
   Widget build(BuildContext context) {
-    return _buildIgnoreKeyPresses(
+    return _buildSuppressUnhandledKeySound(
       child: _buildCursorStyle(
         child: _buildKeyboardAndMouseInput(
           child: SizedBox.expand(
@@ -622,64 +622,13 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
     );
   }
 
-  /// Wraps the `child` with a `Shortcuts` widget that ignores arrow keys,
-  /// enter, backspace, and delete.
-  ///
-  /// This doesn't prevent the editor from responding to these keys, it just
-  /// prevents Flutter from attempting to do anything with them. I put this
-  /// here because I was getting recurring sounds from the Mac window as
-  /// I pressed various key combinations. This hack prevents most of them.
-  /// TODO: figure out the correct way to deal with this situation.
-  Widget _buildIgnoreKeyPresses({
+  /// Wraps the [child] with a [Focus] node that reports to handle
+  /// any and all keys so that no error sound plays on desktop.
+  Widget _buildSuppressUnhandledKeySound({
     required Widget child,
   }) {
-    return Shortcuts(
-      shortcuts: <LogicalKeySet, Intent>{
-        // Up arrow
-        LogicalKeySet(LogicalKeyboardKey.arrowUp): DoNothingIntent(),
-        LogicalKeySet(LogicalKeyboardKey.arrowUp, LogicalKeyboardKey.shift): DoNothingIntent(),
-        LogicalKeySet(LogicalKeyboardKey.arrowUp, LogicalKeyboardKey.alt): DoNothingIntent(),
-        LogicalKeySet(LogicalKeyboardKey.arrowUp, LogicalKeyboardKey.shift, LogicalKeyboardKey.alt): DoNothingIntent(),
-        LogicalKeySet(LogicalKeyboardKey.arrowUp, LogicalKeyboardKey.meta): DoNothingIntent(),
-        LogicalKeySet(LogicalKeyboardKey.arrowUp, LogicalKeyboardKey.meta, LogicalKeyboardKey.alt): DoNothingIntent(),
-        LogicalKeySet(LogicalKeyboardKey.arrowUp, LogicalKeyboardKey.shift, LogicalKeyboardKey.meta): DoNothingIntent(),
-        // Down arrow
-        LogicalKeySet(LogicalKeyboardKey.arrowDown): DoNothingIntent(),
-        LogicalKeySet(LogicalKeyboardKey.arrowDown, LogicalKeyboardKey.shift): DoNothingIntent(),
-        LogicalKeySet(LogicalKeyboardKey.arrowDown, LogicalKeyboardKey.alt): DoNothingIntent(),
-        LogicalKeySet(LogicalKeyboardKey.arrowDown, LogicalKeyboardKey.shift, LogicalKeyboardKey.alt):
-            DoNothingIntent(),
-        LogicalKeySet(LogicalKeyboardKey.arrowDown, LogicalKeyboardKey.meta): DoNothingIntent(),
-        LogicalKeySet(LogicalKeyboardKey.arrowDown, LogicalKeyboardKey.meta, LogicalKeyboardKey.alt): DoNothingIntent(),
-        LogicalKeySet(LogicalKeyboardKey.arrowDown, LogicalKeyboardKey.shift, LogicalKeyboardKey.meta):
-            DoNothingIntent(),
-        // Left arrow
-        LogicalKeySet(LogicalKeyboardKey.arrowLeft): DoNothingIntent(),
-        LogicalKeySet(LogicalKeyboardKey.arrowLeft, LogicalKeyboardKey.shift): DoNothingIntent(),
-        LogicalKeySet(LogicalKeyboardKey.arrowLeft, LogicalKeyboardKey.alt): DoNothingIntent(),
-        LogicalKeySet(LogicalKeyboardKey.arrowLeft, LogicalKeyboardKey.shift, LogicalKeyboardKey.alt):
-            DoNothingIntent(),
-        LogicalKeySet(LogicalKeyboardKey.arrowLeft, LogicalKeyboardKey.meta): DoNothingIntent(),
-        LogicalKeySet(LogicalKeyboardKey.arrowLeft, LogicalKeyboardKey.meta, LogicalKeyboardKey.alt): DoNothingIntent(),
-        LogicalKeySet(LogicalKeyboardKey.arrowLeft, LogicalKeyboardKey.shift, LogicalKeyboardKey.meta):
-            DoNothingIntent(),
-        // Right arrow
-        LogicalKeySet(LogicalKeyboardKey.arrowRight): DoNothingIntent(),
-        LogicalKeySet(LogicalKeyboardKey.arrowRight, LogicalKeyboardKey.shift): DoNothingIntent(),
-        LogicalKeySet(LogicalKeyboardKey.arrowRight, LogicalKeyboardKey.alt): DoNothingIntent(),
-        LogicalKeySet(LogicalKeyboardKey.arrowRight, LogicalKeyboardKey.shift, LogicalKeyboardKey.alt):
-            DoNothingIntent(),
-        LogicalKeySet(LogicalKeyboardKey.arrowRight, LogicalKeyboardKey.meta): DoNothingIntent(),
-        LogicalKeySet(LogicalKeyboardKey.arrowRight, LogicalKeyboardKey.meta, LogicalKeyboardKey.alt):
-            DoNothingIntent(),
-        LogicalKeySet(LogicalKeyboardKey.arrowRight, LogicalKeyboardKey.shift, LogicalKeyboardKey.meta):
-            DoNothingIntent(),
-        // Misc keys
-        LogicalKeySet(LogicalKeyboardKey.enter): DoNothingIntent(),
-        LogicalKeySet(LogicalKeyboardKey.backspace): DoNothingIntent(),
-        LogicalKeySet(LogicalKeyboardKey.delete): DoNothingIntent(),
-        LogicalKeySet(LogicalKeyboardKey.tab): DoNothingIntent(),
-      },
+    return Focus(
+      onKey: (node, event) => true,
       child: child,
     );
   }

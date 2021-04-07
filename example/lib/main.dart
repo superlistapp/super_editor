@@ -1,9 +1,10 @@
-import 'package:example/demo_selectable_text.dart';
-import 'package:example/example_editor.dart';
-import 'package:example/sliver_example_editor.dart';
+import 'package:example/demos/demo_markdown_serialization.dart';
+import 'package:example/demos/demo_selectable_text.dart';
+import 'package:example/demos/example_editor.dart';
+import 'package:example/demos/sliver_example_editor.dart';
 import 'package:flutter/material.dart';
 
-import 'demo_attributed_text.dart';
+import 'demos/demo_attributed_text.dart';
 
 /// Demo of a basic text editor, as well as various widgets that
 /// are available in this package.
@@ -137,6 +138,13 @@ final _menu = <_MenuGroup>[
           return SliverExampleEditor();
         },
       ),
+      _MenuItem(
+        icon: Icons.description,
+        title: 'Markdown Serialization Demo',
+        pageBuilder: (context) {
+          return MarkdownSerializationDemo();
+        },
+      ),
     ],
   ),
   _MenuGroup(
@@ -238,11 +246,10 @@ class _DrawerButton extends StatelessWidget {
               return Colors.transparent;
             }),
             // splashFactory: NoSplash.splashFactory,
-            foregroundColor: MaterialStateColor.resolveWith((states) =>
-                isSelected ? Colors.white : const Color(0xFFBBBBBB)),
+            foregroundColor:
+                MaterialStateColor.resolveWith((states) => isSelected ? Colors.white : const Color(0xFFBBBBBB)),
             elevation: MaterialStateProperty.resolveWith((states) => 0),
-            padding: MaterialStateProperty.resolveWith(
-                (states) => const EdgeInsets.all(16))),
+            padding: MaterialStateProperty.resolveWith((states) => const EdgeInsets.all(16))),
         onPressed: isSelected ? null : onPressed,
         child: Row(
           children: [
@@ -251,8 +258,9 @@ class _DrawerButton extends StatelessWidget {
               icon,
             ),
             SizedBox(width: 16),
-            Text(title),
-            Spacer(),
+            Expanded(
+              child: Text(title),
+            ),
           ],
         ),
       ),
