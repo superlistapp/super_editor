@@ -2,9 +2,7 @@
 
 Super Editor is an open source, configurable, extensible text editor and document renderer for Flutter apps.
 
-`super_editor` is supported by [Superlist](https://superlistapp.com).
-
-`super_editor` was implemented, and is led by [SuperDeclarative!](https://superdeclarative.com).
+`super_editor` was initiated by [Superlist](https://superlist.com) and is being implemented and maintained by [SuperDeclarative!](https://superdeclarative.com), Superlist, and the contributors.
 
 ## Display an editor
 

@@ -19,6 +19,7 @@ If you're interested in contributing to `super_editor`, please adhere to the fol
 * The `core` package should only include the project's fundamental abstractions. Nothing in the `core` package should depend on any code outside the `core` package, except (rarely) something in the `infrastructure` package.
 * Meaningless names like "manager", "helper", "utility", "data", "model" will not be accepted unless there is a strong contextual reason to do so.
 * If the term "controller" is used, it must specifically refer to the Flutter concept of a controller.
+* `super_editor` is a Dart-only solution. Do not contribute platform code.
 
 ## Bug tickets must include reproduction steps
 
