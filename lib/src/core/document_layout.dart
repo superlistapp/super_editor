@@ -109,7 +109,7 @@ mixin DocumentComponent<T extends StatefulWidget> on State<T> {
   dynamic getBeginningPositionNearX(double x);
 
   /// Returns a new position within this component's node that
-  /// corresponds to the `currentPosition` moved left one unit,
+  /// corresponds to the [currentPosition] moved left one unit,
   /// as interpreted by this component/node, in conjunction with
   /// any relevant `movementModifier`.
   ///

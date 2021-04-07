@@ -23,7 +23,7 @@ bool isCharacterKey(LogicalKeyboardKey key) {
 }
 
 /// Returns the word of text that contains the given `docPosition`, or `null` if
-/// no text exists at the given `docPosition`.
+/// no text exists at the given [docPosition].
 ///
 /// A word is defined by `TextComposable#getWordSelectionAt()`.
 DocumentSelection? getWordSelection({

@@ -30,19 +30,19 @@ import 'unknown_component.dart';
 ///  * document interaction (tapping, dragging, typing, scrolling)
 ///  * document composer
 ///
-/// An `Editor` determines the visual styling by way of:
-///  * `componentBuilders`, which produce individual components
+/// An [Editor] determines the visual styling by way of:
+///  * [componentBuilders], which produce individual components
 ///     within the document layout
-///  * `textStyleBuilder`, which vends `TextStyle`s for every
+///  * [textStyleBuilder], which vends [TextStyle]`s for every
 ///     combination of text attributions
-///  * `selectionStyle`, which dictates the color of the caret
+///  * [selectionStyle], which dictates the color of the caret
 ///     and the color of selected text and components
 ///
-/// An `Editor` determines how the keyboard interacts with the
-/// document by way of `keyboardActions`.
+/// An [Editor] determines how the keyboard interacts with the
+/// document by way of [keyboardActions].
 ///
 /// All styling artifacts and `keyboardActions` are configurable
-/// via the `Editor.custom` constructor.
+/// via the [Editor.custom] constructor.
 ///
 /// ## Deeper explanation of core artifacts:
 ///
@@ -355,11 +355,11 @@ TextStyle defaultStyleBuilder(Set<dynamic> attributions) {
   return newStyle;
 }
 
-/// Creates visual components for the standard `Editor`.
+/// Creates visual components for the standard [Editor].
 ///
 /// These builders are in priority order. The first builder
 /// to return a non-null component is used. The final
-/// `unknownComponentBuilder` always returns a component.
+/// [unknownComponentBuilder] always returns a component.
 final defaultComponentBuilders = <ComponentBuilder>[
   paragraphBuilder,
   unorderedListItemBuilder,

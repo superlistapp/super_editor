@@ -70,8 +70,8 @@ abstract class TextLayout {
   /// rectangle formed by the span from `baseOffset` to `extentOffset`, or
   /// a collapsed selection at -1 if the text is not laid out yet.
   ///
-  /// The `baseOffset` determines where the selection begins. The
-  /// `extentOffset` determines where the selection ends.
+  /// The [baseOffset] determines where the selection begins. The
+  /// [extentOffset] determines where the selection ends.
   TextSelection getSelectionInRect(Offset baseOffset, Offset extentOffset);
 }
 
@@ -81,21 +81,21 @@ abstract class TextLayout {
 /// responsibility of ancestor widgets to recognize interactions that
 /// should alter this widget's text selection and/or caret position.
 ///
-/// `textSelection` determines the span of text to be painted
+/// [textSelection] determines the span of text to be painted
 /// with a selection highlight.
 ///
-/// `showCaret` and `textSelection` together determine whether or not the
+/// [showCaret] and `textSelection` together determine whether or not the
 /// caret is painted in this `SelectableText`. If `textSelection` is collapsed
 /// with an offset less than 0 then no caret is displayed. If `showCaret` is
-/// false then no caret is displayed. If `textSelection` has a `baseOffset`
-/// or `extentOffset` that is >= zero and `showCaret` is true then a caret is
+/// false then no caret is displayed. If `textSelection` has a [baseOffset]
+/// or [extentOffset] that is >= zero and `showCaret` is true then a caret is
 /// displayed. An explicit `showCaret` control is offered because multiple
 /// [SelectableText] widgets might be displayed together with a selection
 /// spanning multiple `SelectableText` widgets, but only one of the
 /// `SelectableText` widgets displays a caret.
 ///
-/// If `text` is empty, and a `textSelection` with an extent >= 0 is provided, and
-/// `highlightWhenEmpty` is `true`, then [SelectableText] will paint a small
+/// If [text] is empty, and a `textSelection` with an extent >= 0 is provided, and
+/// [highlightWhenEmpty] is `true`, then [SelectableText] will paint a small
 /// highlight, despite having no content. This is useful when showing that
 /// one or more empty text areas are selected.
 class SelectableText extends StatefulWidget {

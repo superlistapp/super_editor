@@ -220,8 +220,8 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
     }
   }
 
-  /// Returns the overlapping `Rect` between the given `region` and the given
-  /// `component`'s bounding box.
+  /// Returns the overlapping [Rect] between the given [region] and the given
+  /// [component]'s bounding box.
   ///
   /// Returns `null` if there is no overlap.
   Rect? _getLocalOverlapWithComponent(Rect region, DocumentComponent component) {
@@ -401,7 +401,7 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
     return newComponentKeyMap[nodeId]!;
   }
 
-  /// Computes the `DocumentNodeSelection` for the individual `nodeId` based on
+  /// Computes the [DocumentNodeSelection] for the individual [nodeId] based on
   /// the total list of selected nodes.
   DocumentNodeSelection? _computeNodeSelection({
     required List<DocumentNode> selectedNodes,

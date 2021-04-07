@@ -66,7 +66,7 @@ abstract class Document with ChangeNotifier {
 /// A span within a [Document] that begins at `start` and
 /// ends at `end`.
 ///
-/// The `start` position must come before the `end` position in
+/// The [start] position must come before the [end] position in
 /// the document.
 class DocumentRange {
   DocumentRange({
@@ -93,13 +93,13 @@ class DocumentRange {
 
 /// A specific position within a [Document].
 ///
-/// A  [DocumentPosition] points to a specific node by way of a `nodeId`,
+/// A  [DocumentPosition] points to a specific node by way of a [nodeId],
 /// and points to a specific position within the node by way of a
-/// `nodePosition`.
+/// [nodePosition].
 ///
 /// The type of the `nodePosition` depends upon the type of [DocumentNode]
 /// that this position points to. For example, a `ParagraphNode`
-/// uses a `TextPosition` to represent a `nodePosition`.
+/// uses a [TextPosition] to represent a `nodePosition`.
 class DocumentPosition<PositionType> {
   const DocumentPosition({
     required this.nodeId,

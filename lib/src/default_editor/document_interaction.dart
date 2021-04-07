@@ -723,14 +723,14 @@ enum SelectionType {
 }
 
 /// Executes this action, if the action wants to run, and returns
-/// a desired `ExecutionInstruction` to either continue or halt
+/// a desired [ExecutionInstruction] to either continue or halt
 /// execution of actions.
 ///
 /// It is possible that an action makes changes and then returns
-/// `ExecutionInstruction.continueExecution` to continue execution.
+/// [ExecutionInstruction.continueExecution] to continue execution.
 ///
 /// It is possible that an action does nothing and then returns
-/// `ExecutionInstruction.haltExecution` to prevent further execution.
+/// [ExecutionInstruction.haltExecution] to prevent further execution.
 typedef DocumentKeyboardAction = ExecutionInstruction Function({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
@@ -741,7 +741,7 @@ enum ExecutionInstruction {
   haltExecution,
 }
 
-/// Paints a rectangle border around the given `selectionRect`.
+/// Paints a rectangle border around the given [selectionRect].
 class DragRectanglePainter extends CustomPainter {
   DragRectanglePainter({
     this.selectionRect,

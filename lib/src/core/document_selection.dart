@@ -6,7 +6,7 @@ import 'document.dart';
 /// A [DocumentSelection] spans from a `base` position to an
 /// `extent` position, and includes all content in between.
 ///
-/// `base` and `extent` are instances of [DocumentPosition],
+/// [base] and [extent] are instances of [DocumentPosition],
 /// which represents a single position within a [Document].
 ///
 /// A [DocumentSelection] does not hold a reference to a

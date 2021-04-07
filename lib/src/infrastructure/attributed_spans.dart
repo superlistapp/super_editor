@@ -24,8 +24,8 @@ final _log = Logger(scope: 'AttributedSpans');
 /// 'bold' and 'italics'.
 ///
 /// Each attributed span is represented by two [SpanMarker]`s, one
-/// with type `SpanMarkerType.start` and one with type
-/// `SpanMarkerType.end`.
+/// with type [SpanMarkerType.start] and one with type
+/// [SpanMarkerType.end].
 ///
 /// Spans with the same attribution cannot overlap each other, but
 /// spans with different attributions can overlap each other.

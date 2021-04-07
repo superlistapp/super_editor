@@ -410,7 +410,7 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
   }
 }
 
-/// Applies the given `attributions` to the given `documentSelection`,
+/// Applies the given [attributions] to the given [documentSelection],
 /// if none of the content in the selection contains any of the
 /// given `attributions`. Otherwise, all the given `attributions`
 /// are removed from the content within the `documentSelection`.

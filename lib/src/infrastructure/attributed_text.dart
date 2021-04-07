@@ -21,7 +21,7 @@ final _log = Logger(scope: 'AttributedText');
 /// corresponding `TextSpan` with `computeTextSpan()`. Clients
 /// style the text by providing an [AttributionStyleBuilder],
 /// which is responsible for interpreting the meaning of all
-/// attributions applied to this `AttributedText`.
+/// attributions applied to this [AttributedText].
 class AttributedText {
   AttributedText({
     this.text = '',
@@ -127,8 +127,8 @@ class AttributedText {
     );
   }
 
-  /// Returns a copy of this `AttributedText` with `textToInsert`
-  /// inserted at `startOffset`.
+  /// Returns a copy of this [AttributedText] with [textToInsert]
+  /// inserted at [startOffset].
   ///
   /// Any attributions that span `startOffset` are applied to all
   /// of the inserted text. All spans that start after `startOffset`
@@ -237,13 +237,13 @@ class AttributedText {
   }
 }
 
-/// Visits the [start] and [end] of every span of attributions in
+/// Visits the `start` and `end` of every span of attributions in
 /// the given [AttributedText].
 ///
 /// The [index] is the [String] index of the character where the span
 /// either begins or ends. Note: most range-based operations expect the
 /// closing index to be exclusive, but that is not how this callback
-/// works. Both the [start] and [end] [index]es are inclusive.
+/// works. Both the `start` and `end` [index]es are inclusive.
 typedef AttributionVisitor = void Function(
     AttributedText fullText, int index, Set<dynamic> attributions, AttributionVisitEvent event);
 
