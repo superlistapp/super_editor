@@ -76,7 +76,7 @@ class Editor extends StatefulWidget {
     return Editor._(
       key: key,
       editor: editor,
-      composer: composer ?? DocumentComposer(),
+      composer: composer,
       componentBuilders: defaultComponentBuilders,
       textStyleBuilder: defaultStyleBuilder,
       selectionStyle: defaultSelectionStyle,
@@ -106,7 +106,7 @@ class Editor extends StatefulWidget {
     return Editor._(
       key: key,
       editor: editor,
-      composer: composer ?? DocumentComposer(),
+      composer: composer,
       componentBuilders: componentBuilders ?? defaultComponentBuilders,
       textStyleBuilder: textStyleBuilder ?? defaultStyleBuilder,
       selectionStyle: selectionStyle ?? defaultSelectionStyle,
@@ -122,7 +122,7 @@ class Editor extends StatefulWidget {
   const Editor._({
     Key? key,
     required this.editor,
-    required this.composer,
+    this.composer,
     required this.componentBuilders,
     required this.textStyleBuilder,
     required this.selectionStyle,
@@ -137,7 +137,7 @@ class Editor extends StatefulWidget {
   /// Contains a `Document` and alters that document as desired.
   final DocumentEditor editor;
 
-  final DocumentComposer composer;
+  final DocumentComposer? composer;
 
   /// Priority list of widget factories that creates instances of
   /// each visual component displayed in the document layout, e.g.,
@@ -181,6 +181,7 @@ class _EditorState extends State<Editor> {
   final _docLayoutKey = GlobalKey();
 
   late FocusNode _focusNode;
+  late DocumentComposer _composer;
 
   DocumentPosition? _previousSelectionExtent;
 
@@ -188,17 +189,21 @@ class _EditorState extends State<Editor> {
   void initState() {
     super.initState();
 
-    _focusNode = widget.focusNode ?? FocusNode();
+    _composer = widget.composer ?? DocumentComposer();
+    _composer.addListener(_updateComposerPreferencesAtSelection);
 
-    widget.composer.addListener(_updateComposerPreferencesAtSelection);
+    _focusNode = widget.focusNode ?? FocusNode();
   }
 
   @override
   void didUpdateWidget(Editor oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.composer != oldWidget.composer) {
-      oldWidget.composer.removeListener(_updateComposerPreferencesAtSelection);
-      widget.composer.addListener(_updateComposerPreferencesAtSelection);
+      print('Composer changed!');
+      _composer.removeListener(_updateComposerPreferencesAtSelection);
+
+      _composer = widget.composer ?? DocumentComposer();
+      _composer.addListener(_updateComposerPreferencesAtSelection);
     }
     if (widget.focusNode != oldWidget.focusNode) {
       _focusNode = widget.focusNode ?? FocusNode();
@@ -207,6 +212,10 @@ class _EditorState extends State<Editor> {
 
   @override
   void dispose() {
+    if (widget.composer == null) {
+      _composer.dispose();
+    }
+
     if (widget.focusNode == null) {
       // We are using our own private FocusNode. Dispose it.
       _focusNode.dispose();
@@ -216,29 +225,29 @@ class _EditorState extends State<Editor> {
   }
 
   void _updateComposerPreferencesAtSelection() {
-    if (widget.composer.selection?.extent == _previousSelectionExtent) {
+    if (_composer.selection?.extent == _previousSelectionExtent) {
       return;
     }
-    _previousSelectionExtent = widget.composer.selection?.extent;
+    _previousSelectionExtent = _composer.selection?.extent;
 
-    widget.composer.preferences.clearStyles();
+    _composer.preferences.clearStyles();
 
-    if (widget.composer.selection == null || !widget.composer.selection!.isCollapsed) {
+    if (_composer.selection == null || !_composer.selection!.isCollapsed) {
       return;
     }
 
-    final node = widget.editor.document.getNodeById(widget.composer.selection!.extent.nodeId);
+    final node = widget.editor.document.getNodeById(_composer.selection!.extent.nodeId);
     if (node is! TextNode) {
       return;
     }
 
-    final textPosition = widget.composer.selection!.extent.nodePosition as TextPosition;
+    final textPosition = _composer.selection!.extent.nodePosition as TextPosition;
     if (textPosition.offset == 0) {
       return;
     }
 
     final allStyles = node.text.getAllAttributionsAt(textPosition.offset - 1);
-    widget.composer.preferences.addStyles(allStyles);
+    _composer.preferences.addStyles(allStyles);
   }
 
   @override
@@ -247,7 +256,7 @@ class _EditorState extends State<Editor> {
       focusNode: _focusNode,
       editContext: EditContext(
         editor: widget.editor,
-        composer: widget.composer,
+        composer: _composer,
         getDocumentLayout: () => _docLayoutKey.currentState as DocumentLayout,
       ),
       keyboardActions: widget.keyboardActions,
@@ -260,14 +269,14 @@ class _EditorState extends State<Editor> {
           padding: widget.padding,
           child: MultiListenableBuilder(
             listenables: {
-              widget.composer,
+              _composer,
               widget.editor.document,
             },
             builder: (context) {
               return DefaultDocumentLayout(
                 key: _docLayoutKey,
                 document: widget.editor.document,
-                documentSelection: widget.composer.selection,
+                documentSelection: _composer.selection,
                 componentBuilders: widget.componentBuilders,
                 extensions: {
                   textStylesExtensionKey: widget.textStyleBuilder,

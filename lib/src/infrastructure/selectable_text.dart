@@ -266,9 +266,7 @@ class SelectableTextState extends State<SelectableText> implements TextLayout {
   TextPosition? getPositionOneLineUp({
     required TextPosition currentPosition,
   }) {
-    print('getPositionOneLineUp');
     if (_renderParagraph == null) {
-      print(' - no RenderParagraph');
       return null;
     }
 
