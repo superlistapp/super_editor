@@ -1,5 +1,7 @@
+import 'package:example/demos/demo_document_loses_focus.dart';
 import 'package:example/demos/demo_markdown_serialization.dart';
 import 'package:example/demos/demo_selectable_text.dart';
+import 'package:example/demos/demo_switch_document_content.dart';
 import 'package:example/demos/example_editor.dart';
 import 'package:example/demos/sliver_example_editor.dart';
 import 'package:flutter/material.dart';
@@ -143,6 +145,20 @@ final _menu = <_MenuGroup>[
         title: 'Markdown Serialization Demo',
         pageBuilder: (context) {
           return MarkdownSerializationDemo();
+        },
+      ),
+      _MenuItem(
+        icon: Icons.description,
+        title: 'Switch Docs Demo',
+        pageBuilder: (context) {
+          return SwitchDocumentDemo();
+        },
+      ),
+      _MenuItem(
+        icon: Icons.description,
+        title: 'Lose Focus Demo',
+        pageBuilder: (context) {
+          return LoseFocusDemo();
         },
       ),
     ],

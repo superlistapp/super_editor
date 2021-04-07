@@ -24,6 +24,7 @@ class DefaultDocumentLayout extends StatefulWidget {
     Key? key,
     required this.document,
     this.documentSelection,
+    required this.showCaret,
     required this.componentBuilders,
     this.componentVerticalSpacing = 16,
     this.extensions = const {},
@@ -36,6 +37,10 @@ class DefaultDocumentLayout extends StatefulWidget {
   /// The selection of a region of a `Document`, used when
   /// rendering document content, e.g., painting a text selection.
   final DocumentSelection? documentSelection;
+
+  /// [true] if the document UI should display a caret at the
+  /// selection extent.
+  final bool showCaret;
 
   /// Builders for every type of component that this layout displays.
   ///
@@ -118,10 +123,6 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
       return null;
     }
     final componentRect = component.getRectForPosition(position.nodePosition);
-    if (componentRect == null) {
-      return null;
-    }
-
     final componentBox = component.context.findRenderObject() as RenderBox;
     final docOffset = componentBox.localToGlobal(Offset.zero, ancestor: context.findRenderObject());
 
@@ -362,6 +363,7 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
         document: widget.document,
         documentNode: docNode,
         componentKey: componentKey,
+        showCaret: widget.showCaret,
         nodeSelection: nodeSelection,
         extensions: widget.extensions,
       ));

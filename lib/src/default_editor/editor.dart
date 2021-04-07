@@ -205,6 +205,12 @@ class _EditorState extends State<Editor> {
       _composer = widget.composer ?? DocumentComposer();
       _composer.addListener(_updateComposerPreferencesAtSelection);
     }
+    if (widget.editor != oldWidget.editor) {
+      // The content displayed in this Editor was switched
+      // out. Remove any content selection from the previous
+      // document.
+      _composer.selection = null;
+    }
     if (widget.focusNode != oldWidget.focusNode) {
       _focusNode = widget.focusNode ?? FocusNode();
     }
@@ -269,6 +275,7 @@ class _EditorState extends State<Editor> {
           padding: widget.padding,
           child: MultiListenableBuilder(
             listenables: {
+              _focusNode,
               _composer,
               widget.editor.document,
             },
@@ -277,6 +284,7 @@ class _EditorState extends State<Editor> {
                 key: _docLayoutKey,
                 document: widget.editor.document,
                 documentSelection: _composer.selection,
+                showCaret: _focusNode.hasFocus,
                 componentBuilders: widget.componentBuilders,
                 extensions: {
                   textStylesExtensionKey: widget.textStyleBuilder,
