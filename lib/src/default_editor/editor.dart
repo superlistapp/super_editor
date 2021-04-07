@@ -70,7 +70,7 @@ class Editor extends StatefulWidget {
     ScrollController? scrollController,
     FocusNode? focusNode,
     double maxWidth = 600,
-    EdgeInsets padding = EdgeInsets.zero,
+    EdgeInsetsGeometry padding = EdgeInsets.zero,
     bool showDebugPaint = false,
   }) {
     return Editor._(
@@ -100,7 +100,7 @@ class Editor extends StatefulWidget {
     ScrollController? scrollController,
     FocusNode? focusNode,
     double maxWidth = 600,
-    EdgeInsets padding = EdgeInsets.zero,
+    EdgeInsetsGeometry padding = EdgeInsets.zero,
     bool showDebugPaint = false,
   }) {
     return Editor._(
@@ -165,7 +165,7 @@ class Editor extends StatefulWidget {
 
   final double maxWidth;
 
-  final EdgeInsets padding;
+  final EdgeInsetsGeometry padding;
 
   /// Paints some extra visual ornamentation to help with
   /// debugging, when true.
