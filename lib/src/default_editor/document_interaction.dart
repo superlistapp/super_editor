@@ -134,7 +134,6 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
     super.dispose();
   }
 
-  // DocumentLayout get _layout => widget.documentLayoutKey.currentState as DocumentLayout;
   DocumentLayout get _layout => widget.editContext.documentLayout;
 
   void _onSelectionChange() {
