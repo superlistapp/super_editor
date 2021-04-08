@@ -11,7 +11,7 @@ dependencies:
   flutter:
     sdk: flutter
 
-  pedantic: ^1.9.2
+  pedantic: ^1.11.0
 
 #  uuid: ^2.2.2
   uuid: ^3.0.3
