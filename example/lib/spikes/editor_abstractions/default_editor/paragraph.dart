@@ -276,7 +276,7 @@ Future<void> _processUrlNode({
   @required String originalText,
   @required String url,
 }) async {
-  final response = await http.get(url);
+  final response = await http.get(Uri.parse(url));
 
   if (response.statusCode < 200 || response.statusCode >= 300) {
     print('Failed to load URL: ${response.statusCode} - ${response.reasonPhrase}');
