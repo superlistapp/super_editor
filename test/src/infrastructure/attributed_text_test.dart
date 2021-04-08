@@ -111,6 +111,41 @@ void main() {
       expect(textSpan.children![2].toPlainText(), 'ij');
     });
 
+    test('add styled character to existing styled text', () {
+      final initialText = AttributedText(
+        text: 'abcdefghij',
+        spans: AttributedSpans(
+          attributions: [
+            SpanMarker(attribution: 'bold', offset: 9, markerType: SpanMarkerType.start),
+            SpanMarker(attribution: 'bold', offset: 9, markerType: SpanMarkerType.end),
+          ],
+        ),
+      );
+
+      final newText = initialText.copyAndAppend(AttributedText(
+        text: 'k',
+        spans: AttributedSpans(
+          attributions: [
+            SpanMarker(attribution: 'bold', offset: 0, markerType: SpanMarkerType.start),
+            SpanMarker(attribution: 'bold', offset: 0, markerType: SpanMarkerType.end),
+          ],
+        ),
+      ));
+
+      final textSpan = newText.computeTextSpan(_styleBuilder);
+
+      expect(textSpan.text, null);
+      expect(textSpan.children!.length, 2);
+      expect(textSpan.children![0].toPlainText(), 'abcdefghi');
+
+      // Ensures that typing a styled character at the end of text
+      // results in a single expanded span, rather than 2 independent
+      // spans with the same style.
+      expect(textSpan.children![1].toPlainText(), 'jk');
+      expect(textSpan.children![1].style!.fontWeight, FontWeight.bold);
+      expect(textSpan.children![1].style!.fontStyle, null);
+    });
+
     test('non-mingled varying styles', () {
       final text = AttributedText(
         text: 'abcdefghij',
