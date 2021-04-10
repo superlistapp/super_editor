@@ -393,7 +393,9 @@ class AttributedSpans {
     // Combine `this` and `other` attributions into one list.
     final List<SpanMarker> combinedAttributions = List.from(_attributions)..addAll(pushedSpans._attributions);
     _log.log('addAt', 'combined attributions before merge:');
-    _log.log('addAt', combinedAttributions.toString());
+    for (final marker in combinedAttributions) {
+      _log.log('addAt', '   - $marker');
+    }
 
     // Clean up the boundary between the two lists of attributions
     // by merging compatible attributions that meet at the boundary.
@@ -415,21 +417,26 @@ class AttributedSpans {
   void _mergeBackToBackAttributions(List<SpanMarker> attributions, int mergePoint) {
     _log.log('_mergeBackToBackAttributions', 'merging attributions at $mergePoint');
     // Look for any compatible attributions at
-    // `mergePoint` and `mergePoint+1` and combine them.
-    final startEdgeMarkers = attributions.where((marker) => marker.offset == mergePoint).toList();
-    final endEdgeMarkers = attributions.where((marker) => marker.offset == mergePoint + 1).toList();
-    for (final startEdgeMarker in startEdgeMarkers) {
-      _log.log('_mergeBackToBackAttributions', 'marker on left side: $startEdgeMarker');
-      final matchingEndEdgeMarker = endEdgeMarkers.firstWhereOrNull(
-        (marker) => marker.attribution == startEdgeMarker.attribution && marker.isStart,
+    // `mergePoint - 1` and `mergePoint` and combine them.
+    final endAtMergePointMarkers =
+        attributions.where((marker) => marker.isEnd && marker.offset == mergePoint - 1).toList();
+    final startAtMergePointMarkers =
+        attributions.where((marker) => marker.isStart && marker.offset == mergePoint).toList();
+    for (final startMarker in startAtMergePointMarkers) {
+      _log.log('_mergeBackToBackAttributions', 'marker on right side: $startMarker');
+      final endMarker = endAtMergePointMarkers.firstWhereOrNull(
+        (marker) => marker.attribution == startMarker.attribution,
       );
-      _log.log('_mergeBackToBackAttributions', 'matching marker on right side? $matchingEndEdgeMarker');
-      if (startEdgeMarker.isEnd && matchingEndEdgeMarker != null) {
+      _log.log('_mergeBackToBackAttributions', 'matching marker on left side? $endMarker');
+      if (endMarker != null) {
         // These two attributions should be combined into one.
         // To do this, delete these two markers from the original
         // attribution list.
-        _log.log('_mergeBackToBackAttributions', 'removing both markers because they offset each other');
-        attributions..remove(startEdgeMarker)..remove(matchingEndEdgeMarker);
+        _log.log('_mergeBackToBackAttributions', 'combining left/right spans at edge at index $mergePoint');
+        _log.log('_mergeBackToBackAttributions', 'Removing markers:');
+        _log.log('_mergeBackToBackAttributions', ' - $startMarker');
+        _log.log('_mergeBackToBackAttributions', ' - $endMarker');
+        attributions..remove(startMarker)..remove(endMarker);
       }
     }
   }
