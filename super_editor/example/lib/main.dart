@@ -1,0 +1,269 @@
+import 'package:example/demos/demo_markdown_serialization.dart';
+import 'package:example/demos/demo_selectable_text.dart';
+import 'package:example/demos/example_editor.dart';
+import 'package:example/demos/sliver_example_editor.dart';
+import 'package:flutter/material.dart';
+
+import 'demos/demo_attributed_text.dart';
+
+/// Demo of a basic text editor, as well as various widgets that
+/// are available in this package.
+Future<void> main() async {
+  runApp(SuperEditorDemoApp());
+}
+
+class SuperEditorDemoApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Super Editor Demo App',
+      theme: ThemeData(
+        primarySwatch: Colors.red,
+      ),
+      home: HomeScreen(),
+      debugShowCheckedModeBanner: false,
+    );
+  }
+}
+
+/// Displays various demos that are selected from a list of
+/// options in a drawer.
+class HomeScreen extends StatefulWidget {
+  @override
+  _HomeScreenState createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  _MenuItem _selectedMenuItem;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _selectedMenuItem = _menu[0].items[0];
+  }
+
+  void _toggleDrawer() {
+    if (_scaffoldKey.currentState.isDrawerOpen) {
+      Navigator.of(context).pop();
+    } else {
+      _scaffoldKey.currentState.openDrawer();
+    }
+  }
+
+  void _closeDrawer() {
+    if (_scaffoldKey.currentState.isDrawerOpen) {
+      Navigator.of(context).pop();
+    }
+  }
+
+  void _selectMenuItem(_MenuItem item) {
+    setState(() {
+      _selectedMenuItem = item;
+      _closeDrawer();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      key: _scaffoldKey,
+      appBar: _buildAppBar(context),
+      extendBodyBehindAppBar: true,
+      body: _selectedMenuItem.pageBuilder(context),
+      drawer: _buildDrawer(),
+    );
+  }
+
+  PreferredSizeWidget _buildAppBar(BuildContext context) {
+    return AppBar(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      leading: IconButton(
+        icon: Icon(Icons.menu),
+        color: Theme.of(context).colorScheme.onSurface,
+        splashRadius: 24,
+        onPressed: _toggleDrawer,
+      ),
+    );
+  }
+
+  Widget _buildDrawer() {
+    return Drawer(
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 48),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (final group in _menu) ...[
+                if (group.title != null) _DrawerHeader(title: group.title),
+                for (final item in group.items) ...[
+                  _DrawerButton(
+                    icon: item.icon,
+                    title: item.title,
+                    isSelected: item == _selectedMenuItem,
+                    onPressed: () {
+                      _selectMenuItem(item);
+                    },
+                  ),
+                ],
+                SizedBox(height: 24),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// Demo options that are shown in the `HomeScreen` drawer.
+final _menu = <_MenuGroup>[
+  _MenuGroup(
+    items: [
+      _MenuItem(
+        icon: Icons.description,
+        title: 'Editor Demo',
+        pageBuilder: (context) {
+          return ExampleEditor();
+        },
+      ),
+      _MenuItem(
+        icon: Icons.description,
+        title: 'Sliver Editor Demo',
+        pageBuilder: (context) {
+          return SliverExampleEditor();
+        },
+      ),
+      _MenuItem(
+        icon: Icons.description,
+        title: 'Markdown Serialization Demo',
+        pageBuilder: (context) {
+          return MarkdownSerializationDemo();
+        },
+      ),
+    ],
+  ),
+  _MenuGroup(
+    title: 'INFRASTRUCTURE',
+    items: [
+      _MenuItem(
+        icon: Icons.text_fields,
+        title: 'Selectable Text',
+        pageBuilder: (context) {
+          return SelectableTextDemo();
+        },
+      ),
+      _MenuItem(
+        icon: Icons.text_fields,
+        title: 'Attributed Text',
+        pageBuilder: (context) {
+          return AttributedTextDemo();
+        },
+      ),
+    ],
+  ),
+];
+
+class _MenuGroup {
+  const _MenuGroup({
+    this.title,
+    @required this.items,
+  });
+
+  final String title;
+  final List<_MenuItem> items;
+}
+
+class _MenuItem {
+  const _MenuItem({
+    @required this.icon,
+    @required this.title,
+    @required this.pageBuilder,
+  });
+
+  final IconData icon;
+  final String title;
+  final WidgetBuilder pageBuilder;
+}
+
+class _DrawerHeader extends StatelessWidget {
+  const _DrawerHeader({
+    Key key,
+    @required this.title,
+  }) : super(key: key);
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 16, bottom: 4),
+      child: Text(
+        title,
+        style: TextStyle(
+          color: const Color(0xFF444444),
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+}
+
+class _DrawerButton extends StatelessWidget {
+  const _DrawerButton({
+    Key key,
+    @required this.icon,
+    @required this.title,
+    this.isSelected = false,
+    @required this.onPressed,
+  }) : super(key: key);
+
+  final IconData icon;
+  final String title;
+  final bool isSelected;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        style: ButtonStyle(
+            backgroundColor: MaterialStateColor.resolveWith((states) {
+              if (isSelected) {
+                return const Color(0xFFBBBBBB);
+              }
+
+              if (states.contains(MaterialState.hovered)) {
+                return Colors.grey.withOpacity(0.1);
+              }
+
+              return Colors.transparent;
+            }),
+            // splashFactory: NoSplash.splashFactory,
+            foregroundColor:
+                MaterialStateColor.resolveWith((states) => isSelected ? Colors.white : const Color(0xFFBBBBBB)),
+            elevation: MaterialStateProperty.resolveWith((states) => 0),
+            padding: MaterialStateProperty.resolveWith((states) => const EdgeInsets.all(16))),
+        onPressed: isSelected ? null : onPressed,
+        child: Row(
+          children: [
+            SizedBox(width: 8),
+            Icon(
+              icon,
+            ),
+            SizedBox(width: 16),
+            Expanded(
+              child: Text(title),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
