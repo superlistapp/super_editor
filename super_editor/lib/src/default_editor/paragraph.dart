@@ -77,7 +77,7 @@ class CombineParagraphsCommand implements EditorCommand {
 
     // Combine the text and delete the currently selected node.
     nodeAbove.text = nodeAbove.text.copyAndAppend(secondNode.text);
-    bool didRemove = transaction.deleteNode(secondNode);
+    final didRemove = transaction.deleteNode(secondNode);
     if (!didRemove) {
       _log.log('CombineParagraphsCommand', 'ERROR: Failed to delete the currently selected node from the document.');
     }
@@ -201,7 +201,7 @@ bool _convertParagraphIfDesired({
   _log.log('_convertParagraphIfDesired', ' - text before caret: "$textBeforeCaret"');
   if (hasUnorderedListItemMatch || hasOrderedListItemMatch) {
     _log.log('_convertParagraphIfDesired', ' - found unordered list item prefix');
-    int startOfNewText = textBeforeCaret.length;
+    var startOfNewText = textBeforeCaret.length;
     while (startOfNewText < node.text.text.length && node.text.text[startOfNewText] == ' ') {
       startOfNewText += 1;
     }
@@ -270,9 +270,9 @@ bool _convertParagraphIfDesired({
       options: LinkifyOptions(
         humanize: false,
       ));
-  final int linkCount = extractedLinks.fold(0, (value, element) => element is UrlElement ? value + 1 : value);
-  final String nonEmptyText =
-      extractedLinks.fold('', (value, element) => element is TextElement ? value + element.text.trim() : value);
+  final linkCount = extractedLinks.fold(0, (int? value, element) => element is UrlElement ? value! + 1 : value);
+  final nonEmptyText =
+      extractedLinks.fold('', (String value, element) => element is TextElement ? value + element.text.trim() : value);
   if (linkCount == 1 && nonEmptyText.isEmpty) {
     // This node's text is just a URL, try to interpret it
     // as a known type.
@@ -361,7 +361,7 @@ class DeleteParagraphsCommand implements EditorCommand {
       return;
     }
 
-    bool didRemove = transaction.deleteNode(node);
+    final didRemove = transaction.deleteNode(node);
     if (!didRemove) {
       _log.log('DeleteParagraphsCommand', 'ERROR: Failed to delete node "$node" from the document.');
     }
@@ -516,7 +516,7 @@ Widget? paragraphBuilder(ComponentContext componentContext) {
   _log.log('paragraphBuilder', '   - base: ${textSelection?.base}');
   _log.log('paragraphBuilder', '   - extent: ${textSelection?.extent}');
 
-  TextAlign textAlign = TextAlign.left;
+  var textAlign = TextAlign.left;
   final textAlignName = (componentContext.documentNode as TextNode).metadata['textAlign'];
   switch (textAlignName) {
     case 'left':

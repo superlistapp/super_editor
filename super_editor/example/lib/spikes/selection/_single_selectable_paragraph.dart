@@ -121,8 +121,8 @@ class _SelectableParagraphState extends State<SelectableParagraph> {
   }
 
   TextRange _getParagraphBoundary(String text, TextPosition textPosition) {
-    int startIndex = textPosition.offset;
-    int endIndex = textPosition.offset;
+    var startIndex = textPosition.offset;
+    var endIndex = textPosition.offset;
 
     while (startIndex > 0 && text[startIndex] != '\n') {
       startIndex -= 1;

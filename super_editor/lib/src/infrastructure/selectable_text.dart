@@ -340,12 +340,13 @@ class SelectableTextState extends State<SelectableText> implements TextLayout {
     );
   }
 
+  @override
   bool isTextAtOffset(Offset localOffset) {
     if (_renderParagraph == null) {
       return false;
     }
 
-    List<TextBox> boxes = _renderParagraph!.getBoxesForSelection(
+    final boxes = _renderParagraph!.getBoxesForSelection(
       TextSelection(
         baseOffset: 0,
         extentOffset: _textLength,
@@ -692,11 +693,11 @@ class _CursorPainter extends CustomPainter {
       return;
     }
 
-    caretPaint..color = caretColor.withOpacity(blinkController.opacity);
+    caretPaint.color = caretColor.withOpacity(blinkController.opacity);
 
     final caretHeight = paragraph.getFullHeightForCaret(TextPosition(offset: caretTextPosition)) ?? lineHeight;
 
-    Offset caretOffset = isTextEmpty
+    final caretOffset = isTextEmpty
         ? Offset(0, (lineHeight - caretHeight) / 2)
         : paragraph.getOffsetForCaret(TextPosition(offset: caretTextPosition), Rect.zero);
 
@@ -763,7 +764,7 @@ class _CaretBlinkController with ChangeNotifier {
     super.dispose();
   }
 
-  AnimationController _animationController;
+  final AnimationController _animationController;
   double get opacity => 1.0 - _animationController.value.roundToDouble();
 
   TextPosition? _caretPosition;

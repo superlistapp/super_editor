@@ -43,7 +43,7 @@ class SelectableText extends StatefulWidget {
     this.highlightWhenEmpty = false,
     this.showDebugPaint = false,
   })  : richText = richText,
-        this.textLength = richText.toPlainText().length,
+        textLength = richText.toPlainText().length,
         super(key: key);
 
   final TextSpan richText;
@@ -98,14 +98,17 @@ class SelectableTextState extends State<SelectableText> with SingleTickerProvide
     }
   }
 
+  @override
   TextPosition getPositionAtOffset(Offset localOffset) {
     return _renderParagraph.getPositionForOffset(localOffset);
   }
 
+  @override
   Offset getOffsetForPosition(TextPosition position) {
     return _renderParagraph.getOffsetForCaret(position, Rect.zero);
   }
 
+  @override
   TextPosition getPositionAtStartOfLine({
     TextPosition currentPosition,
   }) {
@@ -114,6 +117,7 @@ class SelectableTextState extends State<SelectableText> with SingleTickerProvide
     return _renderParagraph.getPositionForOffset(endOfLineOffset);
   }
 
+  @override
   TextPosition getPositionAtEndOfLine({
     TextPosition currentPosition,
   }) {
@@ -122,6 +126,7 @@ class SelectableTextState extends State<SelectableText> with SingleTickerProvide
     return _renderParagraph.getPositionForOffset(endOfLineOffset);
   }
 
+  @override
   TextPosition getPositionOneLineUp({
     TextPosition currentPosition,
   }) {
@@ -141,6 +146,7 @@ class SelectableTextState extends State<SelectableText> with SingleTickerProvide
     return _renderParagraph.getPositionForOffset(oneLineUpOffset);
   }
 
+  @override
   TextPosition getPositionOneLineDown({
     TextPosition currentPosition,
   }) {
@@ -160,12 +166,14 @@ class SelectableTextState extends State<SelectableText> with SingleTickerProvide
     return _renderParagraph.getPositionForOffset(oneLineDownOffset);
   }
 
+  @override
   TextPosition getPositionInFirstLineAtX(double x) {
     return getPositionAtOffset(
       Offset(x, 0),
     );
   }
 
+  @override
   TextPosition getPositionInLastLineAtX(double x) {
     return getPositionAtOffset(
       Offset(x, _renderParagraph.size.height),
@@ -180,11 +188,12 @@ class SelectableTextState extends State<SelectableText> with SingleTickerProvide
     );
   }
 
+  @override
   bool isTextAtOffset(Offset localOffset) {
     final textOffset = _renderParagraph.getPositionForOffset(localOffset);
 
     if (textOffset != null) {
-      List<TextBox> boxes = _renderParagraph.getBoxesForSelection(
+      final boxes = _renderParagraph.getBoxesForSelection(
         TextSelection(
           baseOffset: 0,
           extentOffset: widget.textLength,
@@ -201,6 +210,7 @@ class SelectableTextState extends State<SelectableText> with SingleTickerProvide
     return false;
   }
 
+  @override
   // TODO: can we avoid exposing RenderObject knowledge? If not, maybe we have
   //       two different roles combined into one. Perhaps an EditorComponent and
   //       a TextLayout.
@@ -258,12 +268,12 @@ class SelectableTextState extends State<SelectableText> with SingleTickerProvide
       });
     }
 
-    final desiredTextStyle = widget.richText.style;
-    final textStyle = widget.showDebugPaint
-        ? desiredTextStyle.copyWith(
-            color: const Color(0xFF444444),
-          )
-        : desiredTextStyle;
+    // final desiredTextStyle = widget.richText.style;
+    // final textStyle = widget.showDebugPaint  // Not used
+    //     ? desiredTextStyle.copyWith(
+    //         color: const Color(0xFF444444),
+    //       )
+    //     : desiredTextStyle;
 
     return Stack(
       children: [
@@ -428,9 +438,9 @@ class CursorPainter extends CustomPainter {
       return;
     }
 
-    caretPaint..color = caretColor.withOpacity(blinkController.opacity);
+    caretPaint.color = caretColor.withOpacity(blinkController.opacity);
 
-    Offset caretOffset = isTextEmpty
+    var caretOffset = isTextEmpty
         ? Offset(0, (lineHeight - caretHeight) / 2)
         : paragraph.getOffsetForCaret(TextPosition(offset: cursorOffset), Rect.zero);
     caretOffset = caretOffset.translate(0, -(caretHeight - lineHeight) / 2);
@@ -481,7 +491,7 @@ class CursorBlinkController with ChangeNotifier {
     super.dispose();
   }
 
-  AnimationController _animationController;
+  final AnimationController _animationController;
   double get opacity => 1.0 - _animationController.value.roundToDouble();
 
   TextPosition _caretPosition;

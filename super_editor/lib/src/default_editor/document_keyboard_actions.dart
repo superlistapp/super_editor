@@ -68,7 +68,7 @@ ExecutionInstruction pasteWhenCmdVIsPressed({
   }
 
   _log.log('pasteWhenCmdVIsPressed', 'Pasting clipboard content...');
-  DocumentPosition pastePosition = editContext.composer.selection!.extent;
+  var pastePosition = editContext.composer.selection!.extent;
 
   // Delete all currently selected content.
   if (!editContext.composer.selection!.isCollapsed) {
@@ -196,7 +196,7 @@ class _PasteEditorCommand implements EditorCommand {
         .toList();
     _log.log('_PasteEditorCommand', ' - new nodes: $newNodes');
 
-    int newNodeToMergeIndex = 0;
+    var newNodeToMergeIndex = 0;
     DocumentNode mergeAfterNode;
 
     final nodeWithSelection = document.getNodeById(_pastePosition.nodeId);
@@ -206,7 +206,7 @@ class _PasteEditorCommand implements EditorCommand {
     }
     mergeAfterNode = nodeWithSelection;
 
-    for (int i = newNodeToMergeIndex; i < newNodes.length; ++i) {
+    for (var i = newNodeToMergeIndex; i < newNodes.length; ++i) {
       transaction.insertNodeAfter(
         previousNode: mergeAfterNode,
         newNode: newNodes[i],
@@ -263,7 +263,7 @@ Future<void> _copy({
   );
 
   final buffer = StringBuffer();
-  for (int i = 0; i < selectedNodes.length; ++i) {
+  for (var i = 0; i < selectedNodes.length; ++i) {
     final selectedNode = selectedNodes[i];
     dynamic nodeSelection;
 
@@ -666,7 +666,7 @@ void _moveHorizontally({
     throw Exception('Could not find a component for the document node at "$nodeId"');
   }
 
-  String newExtentNodeId = nodeId;
+  var newExtentNodeId = nodeId;
   dynamic newExtentNodePosition = moveLeft
       ? extentComponent.movePositionLeft(currentExtent.nodePosition, movementModifiers)
       : extentComponent.movePositionRight(currentExtent.nodePosition, movementModifiers);
@@ -729,7 +729,7 @@ void _moveVertically({
     throw Exception('Could not find a component for the document node at "$nodeId"');
   }
 
-  String newExtentNodeId = nodeId;
+  var newExtentNodeId = nodeId;
   dynamic newExtentNodePosition = moveUp
       ? extentComponent.movePositionUp(currentExtent.nodePosition)
       : extentComponent.movePositionDown(currentExtent.nodePosition);

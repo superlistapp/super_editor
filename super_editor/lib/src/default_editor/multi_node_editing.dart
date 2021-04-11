@@ -135,7 +135,7 @@ class DeleteSelectionCommand implements EditorCommand {
 
     // Remove nodes from last to first so that indices don't get
     // screwed up during removal.
-    for (int i = endIndex - 1; i > startIndex; --i) {
+    for (var i = endIndex - 1; i > startIndex; --i) {
       _log.log('_deleteNodesBetweenFirstAndLast', ' - deleting node $i: ${document.getNodeAt(i)?.id}');
       transaction.deleteNodeAt(i);
     }

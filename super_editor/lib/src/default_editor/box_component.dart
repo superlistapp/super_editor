@@ -82,7 +82,7 @@ class _BoxComponentState extends State<BoxComponent> with DocumentComponent {
   }
 
   @override
-  getEndPositionNearX(double x) {
+  BinaryPosition getEndPositionNearX(double x) {
     return BinaryPosition.included();
   }
 
@@ -244,7 +244,7 @@ DocumentPosition? _getAnotherSelectionAfterNodeDeletion({
     final newSelectionNode = document.getNodeAt(newSelectionNodeIndex);
     if (newSelectionNode == null) {
       throw Exception(
-          'Tried to access document node at index ${newSelectionNodeIndex} but the document returned null.');
+          'Tried to access document node at index $newSelectionNodeIndex but the document returned null.');
     }
     final component = documentLayout.getComponentByNodeId(newSelectionNode.id);
     if (component == null) {

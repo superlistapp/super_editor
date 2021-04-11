@@ -262,7 +262,7 @@ class _ExpectedSpans {
     // list of character collections representing the
     // set of attributions at a given index.
     _combinedSpans = List.filled(templateLength, '');
-    for (int i = 0; i < templateLength; ++i) {
+    for (var i = 0; i < templateLength; ++i) {
       for (final template in spanTemplates) {
         if (_combinedSpans[i].isEmpty) {
           _combinedSpans[i] = template[i];
@@ -278,8 +278,8 @@ class _ExpectedSpans {
   List<String> _combinedSpans;
 
   void expectSpans(AttributedSpans spans) {
-    for (int characterIndex = 0; characterIndex < _combinedSpans.length; ++characterIndex) {
-      for (int attributionIndex = 0; attributionIndex < _combinedSpans[characterIndex].length; ++attributionIndex) {
+    for (var characterIndex = 0; characterIndex < _combinedSpans.length; ++characterIndex) {
+      for (var attributionIndex = 0; attributionIndex < _combinedSpans[characterIndex].length; ++attributionIndex) {
         print('Checking character $characterIndex');
         // The attribution name is just a letter, like 'b', 'i', or 's'.
         final attributionName = _combinedSpans[characterIndex][attributionIndex];

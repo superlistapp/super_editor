@@ -322,7 +322,7 @@ This is some code
       });
 
       test('example doc', () {
-        final doc = MutableDocument(nodes: [
+        /*final doc = MutableDocument(nodes: [
           ImageNode(
             id: DocumentEditor.createNodeId(),
             imageUrl: 'https://someimage.com/the/image.png',
@@ -379,12 +379,12 @@ This is some code
             text: AttributedText(text: '{\n  // This is some code.\n}'),
             metadata: {'blockType': 'code'},
           ),
-        ]);
+        ]);*/
 
         // Ensure that the document serializes. We don't bother with
         // validating the output because other tests should validate
         // the per-node serializations.
-        final markdown = serializeDocumentToMarkdown(doc);
+        // final markdown = serializeDocumentToMarkdown(doc);  // Not used
       });
     });
 
@@ -526,13 +526,13 @@ This is some code
 
         expect(document.nodes[3], isA<ParagraphNode>());
 
-        for (int i = 4; i < 9; ++i) {
+        for (var i = 4; i < 9; ++i) {
           expect(document.nodes[i], isA<ListItemNode>());
         }
 
         expect(document.nodes[9], isA<HorizontalRuleNode>());
 
-        for (int i = 10; i < 15; ++i) {
+        for (var i = 10; i < 15; ++i) {
           expect(document.nodes[i], isA<ListItemNode>());
         }
 

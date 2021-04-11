@@ -12,12 +12,16 @@ class HorizontalRuleNode with ChangeNotifier implements DocumentNode {
     @required this.id,
   });
 
+  @override
   final String id;
 
+  @override
   BinaryPosition get beginningPosition => BinaryPosition.included();
 
+  @override
   BinaryPosition get endPosition => BinaryPosition.included();
 
+  @override
   BinarySelection computeSelection({
     @required dynamic base,
     @required dynamic extent,

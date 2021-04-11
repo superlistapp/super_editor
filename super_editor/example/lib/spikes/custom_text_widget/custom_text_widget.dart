@@ -148,7 +148,7 @@ class _CustomTextState extends State<CustomText> {
     }
 
     final cursorPosition = _editingController.selection.extent.offset;
-    String newText = _editingController.text;
+    var newText = _editingController.text;
     TextSelection newSelection;
 
     final key = keyEvent.logicalKey;
@@ -338,8 +338,8 @@ class _CustomTextState extends State<CustomText> {
     int to,
     String text,
   }) {
-    String left = '';
-    String right = '';
+    var left = '';
+    var right = '';
     if (from > 0) {
       left = text.substring(0, from);
     }
@@ -377,7 +377,7 @@ class _CustomTextState extends State<CustomText> {
   }
 
   int _moveToStartOfWord() {
-    int index = _editingController.selection.extentOffset;
+    var index = _editingController.selection.extentOffset;
     if (index == 0) {
       return index;
     }
@@ -405,7 +405,7 @@ class _CustomTextState extends State<CustomText> {
 
   static const latinCharacters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
   int _moveToEndOfWord() {
-    int index = _editingController.selection.extentOffset;
+    var index = _editingController.selection.extentOffset;
     if (index == _editingController.text.length) {
       return index;
     }
@@ -478,7 +478,7 @@ class _CustomTextState extends State<CustomText> {
     final hoveredTextOffset = hoveredParagraph.getPositionForOffset(positionInParagraph);
 
     if (hoveredTextOffset != null) {
-      List<TextBox> boxes = hoveredParagraph.getBoxesForSelection(
+      final boxes = hoveredParagraph.getBoxesForSelection(
         TextSelection(
           baseOffset: 0,
           extentOffset: _editingController.text.length,

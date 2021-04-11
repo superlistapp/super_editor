@@ -119,7 +119,7 @@ class TripleTapGestureRecognizer extends GestureRecognizer {
         _reset();
         return _trackTap(event);
       } else if (onTripleTapDown != null) {
-        final TapDownDetails details = TapDownDetails(
+        final details = TapDownDetails(
           globalPosition: event.position,
           localPosition: event.localPosition,
           kind: getKindForPointer(event.pointer),
@@ -143,7 +143,7 @@ class TripleTapGestureRecognizer extends GestureRecognizer {
 
   void _trackTap(PointerDownEvent event) {
     _stopDoubleTapTimer();
-    final _TapTracker tracker = _TapTracker(
+    final tracker = _TapTracker(
       event: event,
       entry: GestureBinding.instance.gestureArena.add(event.pointer, this),
       doubleTapMinTime: kDoubleTapMinTime,
@@ -153,7 +153,7 @@ class TripleTapGestureRecognizer extends GestureRecognizer {
   }
 
   void _handleEvent(PointerEvent event) {
-    final _TapTracker tracker = _trackers[event.pointer];
+    final tracker = _trackers[event.pointer];
     if (event is PointerUpEvent) {
       if (_firstTap == null) {
         _registerFirstTap(tracker);
@@ -176,7 +176,7 @@ class TripleTapGestureRecognizer extends GestureRecognizer {
 
   @override
   void rejectGesture(int pointer) {
-    _TapTracker tracker = _trackers[pointer];
+    var tracker = _trackers[pointer];
     // If tracker isn't in the list, check if this is the first tap tracker
     if (tracker == null && _firstTap != null && _firstTap.pointer == pointer) {
       tracker = _firstTap;
@@ -221,7 +221,7 @@ class TripleTapGestureRecognizer extends GestureRecognizer {
       }
       // Note, order is important below in order for the resolve -> reject logic
       // to work properly.
-      final _TapTracker tracker = _secondTap;
+      final tracker = _secondTap;
       _secondTap = null;
       _reject(tracker);
       GestureBinding.instance.gestureArena.release(tracker.pointer);
@@ -232,7 +232,7 @@ class TripleTapGestureRecognizer extends GestureRecognizer {
       }
       // Note, order is important below in order for the resolve -> reject logic
       // to work properly.
-      final _TapTracker tracker = _firstTap;
+      final tracker = _firstTap;
       _firstTap = null;
       _reject(tracker);
       GestureBinding.instance.gestureArena.release(tracker.pointer);
@@ -348,7 +348,7 @@ class _TapTracker {
   }
 
   bool isWithinGlobalTolerance(PointerEvent event, double tolerance) {
-    final Offset offset = event.position - _initialGlobalPosition;
+    final offset = event.position - _initialGlobalPosition;
     return offset.distance <= tolerance;
   }
 

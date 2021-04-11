@@ -54,6 +54,7 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> with Docu
   final Map<String, GlobalKey> _nodeIdsToComponentKeys = {};
   final List<GlobalKey> _topToBottomComponentKeys = [];
 
+  @override
   /// Returns the `DocumentPosition` at the given `rawDocumentOffset`,
   /// but only if the offset truly wits within a document component.
   ///
@@ -81,6 +82,7 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> with Docu
     return null;
   }
 
+  @override
   DocumentPosition getDocumentPositionNearestToOffset(Offset rawDocumentOffset) {
     // Constrain the incoming offset to sit within the width
     // of this document layout.
@@ -98,6 +100,7 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> with Docu
     return getDocumentPositionAtOffset(documentOffset);
   }
 
+  @override
   Rect getRectForPosition(DocumentPosition position) {
     final component = getComponentByNodeId(position.nodeId);
     if (component == null) {
@@ -115,6 +118,7 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> with Docu
     return componentRect.translate(docOffset.dx, docOffset.dy);
   }
 
+  @override
   DocumentSelection getDocumentSelectionInRegion(Offset baseOffset, Offset extentOffset) {
     print('getDocumentSelectionInRegion() - from: $baseOffset, to: $extentOffset');
     // Drag direction determines whether the extent offset is at the
@@ -208,6 +212,7 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> with Docu
     }
   }
 
+  @override
   MouseCursor getDesiredCursorAtOffset(Offset documentOffset) {
     final componentKey = _findComponentAtOffset(documentOffset);
     if (componentKey != null) {
@@ -254,6 +259,7 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> with Docu
     return documentOffset - contentRect.topLeft;
   }
 
+  @override
   DocumentComponent getComponentByNodeId(String nodeId) {
     final key = _nodeIdsToComponentKeys[nodeId];
     if (key == null) {

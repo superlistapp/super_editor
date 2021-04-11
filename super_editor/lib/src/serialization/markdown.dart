@@ -27,9 +27,9 @@ MutableDocument deserializeMarkdownToDocument(String markdown) {
 }
 
 String serializeDocumentToMarkdown(Document doc) {
-  StringBuffer buffer = StringBuffer();
+  final buffer = StringBuffer();
 
-  for (int i = 0; i < doc.nodes.length; ++i) {
+  for (var i = 0; i < doc.nodes.length; ++i) {
     final node = doc.nodes[i];
 
     if (node is ImageNode) {
@@ -419,7 +419,7 @@ extension on AttributedText {
 
   String toMarkdown() {
     final buffer = StringBuffer();
-    int spanStart = 0;
+    var spanStart = 0;
 
     visitAttributions((fullText, index, attributions, event) {
       final markdownStyles = _sortAndSerializeAttributions(attributions, event);

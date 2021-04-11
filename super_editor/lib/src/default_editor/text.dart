@@ -1,4 +1,3 @@
-import 'dart:collection';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
@@ -170,7 +169,7 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
     if (movementModifiers?['movement_unit'] == 'word') {
       final text = getContiguousTextAt(textPosition);
 
-      int newOffset = textPosition.offset;
+      var newOffset = textPosition.offset;
       newOffset -= 1; // we always want to jump at least 1 character.
       while (newOffset > 0 && latinCharacters.contains(text[newOffset])) {
         newOffset -= 1;
@@ -203,7 +202,7 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
         return null;
       }
 
-      final TextPosition endPosition = getEndPosition();
+      final endPosition = getEndPosition();
       final text = getContiguousTextAt(endOfLine);
 
       // Note: we compare offset values because we don't care if the affinitys are equal
@@ -227,7 +226,7 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
     if (movementModifiers?['movement_unit'] == 'word') {
       final text = getContiguousTextAt(textPosition);
 
-      int newOffset = textPosition.offset;
+      var newOffset = textPosition.offset;
       newOffset += 1; // we always want to jump at least 1 character.
       while (newOffset < text.length && latinCharacters.contains(text[newOffset])) {
         newOffset += 1;
@@ -347,6 +346,7 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
     return widget.text.text;
   }
 
+  @override
   TextPosition? getPositionOneLineUp(dynamic textPosition) {
     if (textPosition is! TextPosition) {
       return null;
@@ -357,6 +357,7 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
     );
   }
 
+  @override
   TextPosition? getPositionOneLineDown(dynamic textPosition) {
     if (textPosition is! TextPosition) {
       return null;
@@ -438,16 +439,16 @@ class ToggleTextAttributionsCommand implements EditorCommand {
     final nodeRange = document.getRangeBetween(documentSelection.base, documentSelection.extent);
     _log.log('ToggleTextAttributionsCommand', ' - node range: $nodeRange');
 
-    final nodesAndSelections = LinkedHashMap<TextNode, TextRange>();
-    bool alreadyHasAttributions = false;
+    final nodesAndSelections = <TextNode, TextRange>{};
+    var alreadyHasAttributions = false;
 
     for (final textNode in nodes) {
       if (textNode is! TextNode) {
         continue;
       }
 
-      int startOffset = -1;
-      int endOffset = -1;
+      var startOffset = -1;
+      var endOffset = -1;
 
       if (textNode == nodes.first && textNode == nodes.last) {
         // Handle selection within a single node
@@ -493,7 +494,7 @@ class ToggleTextAttributionsCommand implements EditorCommand {
 
     // Toggle attributions.
     for (final entry in nodesAndSelections.entries) {
-      for (String attribution in attributions) {
+      for (final attribution in attributions) {
         final node = entry.key;
         final range = entry.value;
         _log.log('ToggleTextAttributionsCommand', ' - toggling attribution: $attribution. Range: $range');

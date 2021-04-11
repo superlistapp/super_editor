@@ -76,7 +76,7 @@ class _BoxComponentState extends State<BoxComponent> with DocumentComponent {
   }
 
   @override
-  getEndPositionNearX(double x) {
+  BinaryPosition getEndPositionNearX(double x) {
     return BinaryPosition.included();
   }
 

@@ -211,7 +211,7 @@ void main() {
 
 /// Creates styles based on the given `attributions`.
 TextStyle _styleBuilder(Set<dynamic> attributions) {
-  TextStyle newStyle = const TextStyle();
+  var newStyle = const TextStyle();
   for (final attribution in attributions) {
     if (attribution is! String) {
       continue;

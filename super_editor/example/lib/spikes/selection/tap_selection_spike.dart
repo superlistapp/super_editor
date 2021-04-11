@@ -104,10 +104,10 @@ class _TapSelectionSpikeState extends State<TapSelectionSpike> {
 
   void _updateDragSelection() {
     SelectedParagraph startSelectParagraph;
-    List<SelectedParagraph> wholeSelectParagraphs = [];
+    var wholeSelectParagraphs = <SelectedParagraph>[];
     SelectedParagraph endSelectParagraph;
 
-    for (int i = 0; i < _paragraphKeys.length; ++i) {
+    for (var i = 0; i < _paragraphKeys.length; ++i) {
       final currentParagraph = _paragraphKeys[i].currentContext.findRenderObject() as RenderParagraph;
       final currentParagraphTopLeft = currentParagraph.localToGlobal(Offset.zero, ancestor: context.findRenderObject());
       final currentParagraphBottomRight = currentParagraph.localToGlobal(currentParagraph.size.bottomRight(Offset.zero),
@@ -336,7 +336,7 @@ class _TapSelectionSpikeState extends State<TapSelectionSpike> {
   }
 
   SelectedParagraph _findParagraphAtPosition(Offset position) {
-    for (int i = 0; i < _paragraphKeys.length; ++i) {
+    for (var i = 0; i < _paragraphKeys.length; ++i) {
       final renderParagraph = _paragraphKeys[i].currentContext.findRenderObject() as RenderParagraph;
       final paragraphRect =
           renderParagraph.localToGlobal(Offset.zero, ancestor: context.findRenderObject()) & renderParagraph.size;
@@ -353,8 +353,8 @@ class _TapSelectionSpikeState extends State<TapSelectionSpike> {
   }
 
   TextRange _getParagraphBoundary(String text, TextPosition textPosition) {
-    int startIndex = textPosition.offset;
-    int endIndex = textPosition.offset;
+    var startIndex = textPosition.offset;
+    var endIndex = textPosition.offset;
 
     while (startIndex > 0 && text[startIndex] != '\n') {
       startIndex -= 1;
@@ -380,7 +380,7 @@ class _TapSelectionSpikeState extends State<TapSelectionSpike> {
       final hoveredTextOffset = hoveredParagraph.renderParagraph.getPositionForOffset(positionInParagraph);
 
       if (hoveredTextOffset != null) {
-        List<TextBox> boxes = hoveredParagraph.renderParagraph.getBoxesForSelection(
+        final boxes = hoveredParagraph.renderParagraph.getBoxesForSelection(
           TextSelection(
             baseOffset: 0,
             extentOffset: hoveredParagraph.paragraph.length,

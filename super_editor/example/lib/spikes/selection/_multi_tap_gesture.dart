@@ -46,7 +46,9 @@ class TapSequenceGestureRecognizer extends GestureRecognizer {
     if (_firstTap == null) {
       switch (event.buttons) {
         case kPrimaryButton:
-          if (onTripleTapDown == null && onTripleTap == null && onTripleTapCancel == null) return false;
+          if (onTripleTapDown == null &&
+              onTripleTap == null &&
+              onTripleTapCancel == null) return false;
           break;
         default:
           return false;
@@ -61,13 +63,14 @@ class TapSequenceGestureRecognizer extends GestureRecognizer {
       if (!_secondTap.isWithinGlobalTolerance(event, kDoubleTapSlop)) {
         // Ignore out-of-bounds second taps.
         return;
-      } else if (!_secondTap.hasElapsedMinTime() || !_secondTap.hasSameButton(event)) {
+      } else if (!_secondTap.hasElapsedMinTime() ||
+          !_secondTap.hasSameButton(event)) {
         // Restart when the third tap is too close to the second (touch screens
         // often detect touches intermittently), or when buttons mismatch.
         _reset();
         return _trackTap(event);
       } else if (onTripleTapDown != null) {
-        final TapDownDetails details = TapDownDetails(
+        final details = TapDownDetails(
           globalPosition: event.position,
           localPosition: event.localPosition,
           kind: getKindForPointer(event.pointer),
@@ -78,13 +81,14 @@ class TapSequenceGestureRecognizer extends GestureRecognizer {
       if (!_firstTap.isWithinGlobalTolerance(event, kDoubleTapSlop)) {
         // Ignore out-of-bounds second taps.
         return;
-      } else if (!_firstTap.hasElapsedMinTime() || !_firstTap.hasSameButton(event)) {
+      } else if (!_firstTap.hasElapsedMinTime() ||
+          !_firstTap.hasSameButton(event)) {
         // Restart when the second tap is too close to the first (touch screens
         // often detect touches intermittently), or when buttons mismatch.
         _reset();
         return _trackTap(event);
       } else if (onDoubleTapDown != null) {
-        final TapDownDetails details = TapDownDetails(
+        final details = TapDownDetails(
           globalPosition: event.position,
           localPosition: event.localPosition,
           kind: getKindForPointer(event.pointer),
@@ -92,7 +96,7 @@ class TapSequenceGestureRecognizer extends GestureRecognizer {
         invokeCallback<void>('onDoubleTapDown', () => onDoubleTapDown(details));
       }
     } else if (onTapDown != null) {
-      final TapDownDetails details = TapDownDetails(
+      final details = TapDownDetails(
         globalPosition: event.position,
         localPosition: event.localPosition,
         kind: getKindForPointer(event.pointer),
@@ -105,7 +109,7 @@ class TapSequenceGestureRecognizer extends GestureRecognizer {
 
   void _trackTap(PointerDownEvent event) {
     _stopTapTimer();
-    final _TapTracker tracker = _TapTracker(
+    final tracker = _TapTracker(
       event: event,
       entry: GestureBinding.instance.gestureArena.add(event.pointer, this),
       doubleTapMinTime: kTapMinTime,
@@ -115,7 +119,7 @@ class TapSequenceGestureRecognizer extends GestureRecognizer {
   }
 
   void _handleEvent(PointerEvent event) {
-    final _TapTracker tracker = _trackers[event.pointer];
+    final tracker = _trackers[event.pointer];
     if (event is PointerUpEvent) {
       if (_firstTap == null) {
         _registerFirstTap(tracker);
@@ -138,13 +142,15 @@ class TapSequenceGestureRecognizer extends GestureRecognizer {
 
   @override
   void rejectGesture(int pointer) {
-    _TapTracker tracker = _trackers[pointer];
+    var tracker = _trackers[pointer];
     // If tracker isn't in the list, check if this is the first tap tracker
     if (tracker == null && _firstTap != null && _firstTap.pointer == pointer) {
       tracker = _firstTap;
     }
     // If tracker is still null, check if this is the first tap tracker
-    if (tracker == null && _secondTap != null && _secondTap.pointer == pointer) {
+    if (tracker == null &&
+        _secondTap != null &&
+        _secondTap.pointer == pointer) {
       tracker = _secondTap;
     }
     // If tracker is still null, we rejected ourselves already
@@ -183,7 +189,7 @@ class TapSequenceGestureRecognizer extends GestureRecognizer {
       }
       // Note, order is important below in order for the resolve -> reject logic
       // to work properly.
-      final _TapTracker tracker = _secondTap;
+      final tracker = _secondTap;
       _secondTap = null;
       _reject(tracker);
       GestureBinding.instance.gestureArena.release(tracker.pointer);
@@ -194,7 +200,7 @@ class TapSequenceGestureRecognizer extends GestureRecognizer {
       }
       // Note, order is important below in order for the resolve -> reject logic
       // to work properly.
-      final _TapTracker tracker = _firstTap;
+      final tracker = _firstTap;
       _firstTap = null;
       _reject(tracker);
       GestureBinding.instance.gestureArena.release(tracker.pointer);
@@ -299,7 +305,8 @@ class _TapTracker {
         pointer = event.pointer,
         _initialGlobalPosition = event.position,
         initialButtons = event.buttons,
-        _doubleTapMinTimeCountdown = _CountdownZoned(duration: doubleTapMinTime);
+        _doubleTapMinTimeCountdown =
+            _CountdownZoned(duration: doubleTapMinTime);
 
   final int pointer;
   final GestureArenaEntry entry;
@@ -324,7 +331,7 @@ class _TapTracker {
   }
 
   bool isWithinGlobalTolerance(PointerEvent event, double tolerance) {
-    final Offset offset = event.position - _initialGlobalPosition;
+    final offset = event.position - _initialGlobalPosition;
     return offset.distance <= tolerance;
   }
 

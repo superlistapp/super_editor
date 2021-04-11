@@ -168,7 +168,7 @@ ExecutionInstruction pasteWhenCmdVIsPressed({
   }
 
   print('Pasting clipboard content...');
-  DocumentPosition pastePosition = editContext.composer.selection.extent;
+  var pastePosition = editContext.composer.selection.extent;
 
   // Delete all currently selected content.
   if (!editContext.composer.selection.isCollapsed) {
@@ -284,13 +284,13 @@ Future<void> _paste({
       .toList();
   print(' - new nodes: $newNodes');
 
-  int newNodeToMergeIndex = 0;
+  var newNodeToMergeIndex = 0;
   DocumentNode mergeAfterNode;
 
   final nodeWithSelection = document.getNodeById(pastePosition.nodeId);
   mergeAfterNode = nodeWithSelection;
 
-  for (int i = newNodeToMergeIndex; i < newNodes.length; ++i) {
+  for (var i = newNodeToMergeIndex; i < newNodes.length; ++i) {
     editor.insertNodeAfter(
       previousNode: mergeAfterNode,
       newNode: newNodes[i],
@@ -343,7 +343,7 @@ Future<void> _copy({
   );
 
   final buffer = StringBuffer();
-  for (int i = 0; i < selectedNodes.length; ++i) {
+  for (var i = 0; i < selectedNodes.length; ++i) {
     final selectedNode = selectedNodes[i];
     dynamic nodeSelection;
 
@@ -771,7 +771,7 @@ void _moveHorizontally({
   final node = editContext.editor.document.getNodeById(nodeId);
   final extentComponent = editContext.documentLayout.getComponentByNodeId(nodeId);
 
-  String newExtentNodeId = nodeId;
+  var newExtentNodeId = nodeId;
   dynamic newExtentNodePosition = moveLeft
       ? extentComponent.movePositionLeft(currentExtent.nodePosition, movementModifiers)
       : extentComponent.movePositionRight(currentExtent.nodePosition, movementModifiers);
@@ -821,7 +821,7 @@ void _moveVertically({
   final node = editContext.editor.document.getNodeById(nodeId);
   final extentComponent = editContext.documentLayout.getComponentByNodeId(nodeId);
 
-  String newExtentNodeId = nodeId;
+  var newExtentNodeId = nodeId;
   dynamic newExtentNodePosition = moveUp
       ? extentComponent.movePositionUp(currentExtent.nodePosition)
       : extentComponent.movePositionDown(currentExtent.nodePosition);

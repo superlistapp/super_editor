@@ -111,7 +111,7 @@ Widget titleHintBuilder(ComponentContext componentContext) {
   print('   - base: ${textSelection?.base}');
   print('   - extent: ${textSelection?.extent}');
 
-  TextAlign textAlign = TextAlign.left;
+  var textAlign = TextAlign.left;
   final textAlignName = (componentContext.currentNode as TextNode).metadata['textAlign'];
   switch (textAlignName) {
     case 'left':
@@ -176,7 +176,7 @@ Widget firstParagraphHintBuilder(ComponentContext componentContext) {
   print('   - base: ${textSelection?.base}');
   print('   - extent: ${textSelection?.extent}');
 
-  TextAlign textAlign = TextAlign.left;
+  var textAlign = TextAlign.left;
   final textAlignName = (componentContext.currentNode as TextNode).metadata['textAlign'];
   switch (textAlignName) {
     case 'left':

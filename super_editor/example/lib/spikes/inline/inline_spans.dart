@@ -189,7 +189,7 @@ class InlineSpanController extends TextEditingController {
   }
 
   int nextTransition(int index) {
-    int limit = text.length;
+    var limit = text.length;
     for (final item in _inserts) {
       if (item.start > index && item.start < limit) {
         limit = item.start;
@@ -273,15 +273,15 @@ class InlineSpanController extends TextEditingController {
 
 class InlineSpanInsert {
   const InlineSpanInsert.widget(this.start, this.child)
-      : this.end = start + 1,
-        this.style = InlineSpanStyle.Widget,
+      : end = start + 1,
+        style = InlineSpanStyle.Widget,
         textStyle = null;
 
   const InlineSpanInsert.width(this.start, int width, this.style, [this.textStyle])
-      : this.end = start + 1 + width,
-        this.child = null;
+      : end = start + 1 + width,
+        child = null;
 
-  const InlineSpanInsert(this.start, this.end, this.style, [this.textStyle]) : this.child = null;
+  const InlineSpanInsert(this.start, this.end, this.style, [this.textStyle]) : child = null;
 
   final int start;
   final int end;

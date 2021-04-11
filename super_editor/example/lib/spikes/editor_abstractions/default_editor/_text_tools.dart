@@ -35,7 +35,7 @@ DocumentSelection getWordSelection({
 
   final component = docLayout.getComponentByNodeId(docPosition.nodeId);
   if (component is TextComposable) {
-    final TextSelection wordSelection = (component as TextComposable).getWordSelectionAt(docPosition.nodePosition);
+    final wordSelection = (component as TextComposable).getWordSelectionAt(docPosition.nodePosition);
 
     print(' - word selection: $wordSelection');
     return DocumentSelection(
@@ -62,7 +62,7 @@ DocumentSelection getParagraphSelection({
 
   final component = docLayout.getComponentByNodeId(docPosition.nodeId);
   if (component is TextComposable) {
-    final TextSelection wordSelection = _expandPositionToParagraph(
+    final wordSelection = _expandPositionToParagraph(
       text: (component as TextComposable).getContiguousTextAt(docPosition.nodePosition),
       textPosition: docPosition.nodePosition as TextPosition,
     );
@@ -86,8 +86,8 @@ TextSelection _expandPositionToParagraph({
   @required String text,
   @required TextPosition textPosition,
 }) {
-  int start = textPosition.offset;
-  int end = textPosition.offset;
+  var start = textPosition.offset;
+  var end = textPosition.offset;
   while (start > 0 && text[start] != '\n') {
     start -= 1;
   }

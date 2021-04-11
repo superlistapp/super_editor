@@ -141,11 +141,11 @@ class AttributedText {
     _log.log('insertString', 'text: "$textToInsert", start: $startOffset, attributions: $applyAttributions');
 
     _log.log('insertString', 'copying text to the left');
-    final startText = this.copyText(0, startOffset);
+    final startText = copyText(0, startOffset);
     _log.log('insertString', 'startText: $startText');
 
     _log.log('insertString', 'copying text to the right');
-    final endText = this.copyText(startOffset);
+    final endText = copyText(startOffset);
     _log.log('insertString', 'endText: $endText');
 
     _log.log('insertString', 'creating new attributed text for insertion');
@@ -175,7 +175,7 @@ class AttributedText {
     final reducedText = (startOffset > 0 ? text.substring(0, startOffset) : '') +
         (endOffset < text.length ? text.substring(endOffset) : '');
 
-    AttributedSpans contractedAttributions = spans.copy()
+    final contractedAttributions = spans.copy()
       ..contractAttributions(
         startOffset: startOffset,
         count: endOffset - startOffset,

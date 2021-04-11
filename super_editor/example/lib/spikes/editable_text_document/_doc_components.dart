@@ -79,6 +79,7 @@ class _EditorTitleComponentState extends State<EditorTitleComponent> with Editor
     _editorTextKey.currentState.onDragSelectionEnd();
   }
 
+  @override
   void clearContentSelection() {
     _editorTextKey.currentState.clearContentSelection();
   }
@@ -150,6 +151,7 @@ class _EditorParagraphComponentState extends State<EditorParagraphComponent> wit
     _editorTextKey.currentState.onDragSelectionEnd();
   }
 
+  @override
   void clearContentSelection() {
     _editorTextKey.currentState.clearContentSelection();
   }
@@ -221,6 +223,7 @@ class _EditorListItemComponentState extends State<EditorListItemComponent> with 
     _editorTextKey.currentState.onDragSelectionEnd();
   }
 
+  @override
   void clearContentSelection() {
     _editorTextKey.currentState.clearContentSelection();
   }
@@ -410,6 +413,7 @@ class _EditorTextState extends State<_EditorText> implements EditorComponent {
     });
   }
 
+  @override
   void clearContentSelection() {
     // print('Clearing paragraph selection: $this');
     widget.textController.selection = TextSelection.collapsed(offset: -1);

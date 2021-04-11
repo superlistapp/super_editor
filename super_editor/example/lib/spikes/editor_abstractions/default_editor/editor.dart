@@ -254,7 +254,7 @@ final defaultSelectionStyle = const SelectionStyle(
 
 /// Creates `TextStyles` for the standard `Editor`.
 TextStyle defaultStyleBuilder(Set<dynamic> attributions) {
-  TextStyle newStyle = TextStyle(
+  var newStyle = TextStyle(
     color: Colors.black,
     fontSize: 13,
     height: 1.4,

@@ -499,8 +499,8 @@ Widget? orderedListItemBuilder(ComponentContext componentContext) {
     return null;
   }
 
-  int index = 1;
-  DocumentNode? nodeAbove = componentContext.document.getNodeBefore(listItemNode);
+  var index = 1;
+  var nodeAbove = componentContext.document.getNodeBefore(listItemNode);
   while (nodeAbove != null &&
       nodeAbove is ListItemNode &&
       nodeAbove.type == ListItemType.ordered &&

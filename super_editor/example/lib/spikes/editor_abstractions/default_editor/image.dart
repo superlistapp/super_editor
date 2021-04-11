@@ -13,6 +13,7 @@ class ImageNode with ChangeNotifier implements DocumentNode {
     @required String imageUrl,
   }) : _imageUrl = imageUrl;
 
+  @override
   final String id;
 
   String _imageUrl;
@@ -25,10 +26,13 @@ class ImageNode with ChangeNotifier implements DocumentNode {
     }
   }
 
+  @override
   BinaryPosition get beginningPosition => BinaryPosition.included();
 
+  @override
   BinaryPosition get endPosition => BinaryPosition.included();
 
+  @override
   BinarySelection computeSelection({
     @required dynamic base,
     @required dynamic extent,

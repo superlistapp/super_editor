@@ -38,7 +38,8 @@ DocumentSelection? getWordSelection({
     return null;
   }
 
-  final TextSelection wordSelection = (component as TextComposable).getWordSelectionAt(docPosition.nodePosition);
+  final wordSelection = (component as TextComposable)
+      .getWordSelectionAt(docPosition.nodePosition);
 
   _log.log('getWordSelection', ' - word selection: $wordSelection');
   return DocumentSelection(
@@ -70,8 +71,9 @@ DocumentSelection? getParagraphSelection({
     return null;
   }
 
-  final TextSelection wordSelection = _expandPositionToParagraph(
-    text: (component as TextComposable).getContiguousTextAt(docPosition.nodePosition),
+  final wordSelection = _expandPositionToParagraph(
+    text: (component as TextComposable)
+        .getContiguousTextAt(docPosition.nodePosition),
     textPosition: docPosition.nodePosition as TextPosition,
   );
 
@@ -91,8 +93,8 @@ TextSelection _expandPositionToParagraph({
   required String text,
   required TextPosition textPosition,
 }) {
-  int start = textPosition.offset;
-  int end = textPosition.offset;
+  var start = textPosition.offset;
+  var end = textPosition.offset;
   while (start > 0 && text[start] != '\n') {
     start -= 1;
   }

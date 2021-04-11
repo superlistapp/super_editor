@@ -6,7 +6,7 @@ import 'package:uuid/uuid.dart';
 import 'document.dart';
 
 class DocumentEditor {
-  static Uuid _uuid = Uuid();
+  static final Uuid _uuid = Uuid();
   static String createNodeId() => _uuid.v4();
 
   DocumentEditor({
@@ -14,6 +14,7 @@ class DocumentEditor {
   }) : _document = document;
 
   final MutableDocument _document;
+
   Document get document => _document;
 
   void executeCommand(EditorCommand command) {
@@ -84,8 +85,11 @@ class MutableDocument with ChangeNotifier implements Document {
   }
 
   final List<DocumentNode> _nodes;
+
+  @override
   List<DocumentNode> get nodes => _nodes;
 
+  @override
   DocumentNode getNodeById(String nodeId) {
     return _nodes.firstWhere(
       (element) => element.id == nodeId,
@@ -93,30 +97,38 @@ class MutableDocument with ChangeNotifier implements Document {
     );
   }
 
+  @override
   DocumentNode getNodeAt(int index) {
     return _nodes[index];
   }
 
+  @override
   int getNodeIndex(DocumentNode node) {
     return _nodes.indexOf(node);
   }
 
+  @override
   DocumentNode getNodeBefore(DocumentNode node) {
     final nodeIndex = getNodeIndex(node);
     print('Index of "${node.id}": $nodeIndex');
     return nodeIndex > 0 ? getNodeAt(nodeIndex - 1) : null;
   }
 
+  @override
   DocumentNode getNodeAfter(DocumentNode node) {
     final nodeIndex = getNodeIndex(node);
-    return nodeIndex >= 0 && nodeIndex < nodes.length - 1 ? getNodeAt(nodeIndex + 1) : null;
+    return nodeIndex >= 0 && nodeIndex < nodes.length - 1
+        ? getNodeAt(nodeIndex + 1)
+        : null;
   }
 
+  @override
   // TODO: this method is misleading because if `position1` and
   //       `position2` are in the same node, they may be returned
   //       in the wrong order because the document doesn't know
   //       how to interpret positions within a node.
-  DocumentRange getRangeBetween(DocumentPosition position1, DocumentPosition position2) {
+  DocumentRange getRangeBetween(
+      DocumentPosition position1, DocumentPosition position2) {
     final node1 = getNode(position1);
     if (node1 == null) {
       throw Exception('No such position in document: $position1');
@@ -135,10 +147,14 @@ class MutableDocument with ChangeNotifier implements Document {
     );
   }
 
+  @override
   DocumentNode getNode(DocumentPosition position) =>
-      _nodes.firstWhere((element) => element.id == position.nodeId, orElse: () => null);
+      _nodes.firstWhere((element) => element.id == position.nodeId,
+          orElse: () => null);
 
-  List<DocumentNode> getNodesInside(DocumentPosition position1, DocumentPosition position2) {
+  @override
+  List<DocumentNode> getNodesInside(
+      DocumentPosition position1, DocumentPosition position2) {
     final node1 = getNode(position1);
     if (node1 == null) {
       throw Exception('No such position in document: $position1');

@@ -41,8 +41,8 @@ class ParagraphNode extends TextNode {
 /// If both nodes are not `ParagraphNode`s, the command fizzles.
 class CombineParagraphsCommand implements EditorCommand {
   CombineParagraphsCommand({
-    this.firstNodeId,
-    this.secondNodeId,
+    @required this.firstNodeId,
+    @required this.secondNodeId,
   })  : assert(firstNodeId != null),
         assert(secondNodeId != null),
         assert(firstNodeId != secondNodeId);
@@ -50,6 +50,7 @@ class CombineParagraphsCommand implements EditorCommand {
   final String firstNodeId;
   final String secondNodeId;
 
+  @override
   void execute(Document document, DocumentEditor editor) {
     print('Executing CombineParagraphsCommand');
     print(' - merging "$firstNodeId" <- "$secondNodeId"');
@@ -78,7 +79,7 @@ class CombineParagraphsCommand implements EditorCommand {
 
     // Combine the text and delete the currently selected node.
     paragraphNodeAbove.text = paragraphNodeAbove.text.copyAndAppend(paragraphNode.text);
-    bool didRemove = editor.deleteNode(paragraphNode);
+    final didRemove = editor.deleteNode(paragraphNode);
     if (!didRemove) {
       print('ERROR: Failed to delete the currently selected node from the document.');
     }
@@ -102,6 +103,7 @@ class SplitParagraphCommand implements EditorCommand {
   final TextPosition splitPosition;
   final String newNodeId;
 
+  @override
   void execute(Document document, DocumentEditor editor) {
     print('Executing SplitParagraphCommand');
 
@@ -189,7 +191,7 @@ bool _convertParagraphIfDesired({
   print(' - text before caret: "$textBeforeCaret"');
   if (hasUnorderedListItemMatch || hasOrderedListItemMatch) {
     print(' - found unordered list item prefix');
-    int startOfNewText = textBeforeCaret.length;
+    var startOfNewText = textBeforeCaret.length;
     while (startOfNewText < node.text.text.length && node.text.text[startOfNewText] == ' ') {
       startOfNewText += 1;
     }
@@ -249,8 +251,8 @@ bool _convertParagraphIfDesired({
       options: LinkifyOptions(
         humanize: false,
       ));
-  final int linkCount = extractedLinks.fold(0, (value, element) => element is UrlElement ? value + 1 : value);
-  final String nonEmptyText =
+  final linkCount = extractedLinks.fold(0, (value, element) => element is UrlElement ? value + 1 : value);
+  final nonEmptyText =
       extractedLinks.fold('', (value, element) => element is TextElement ? value + element.text.trim() : value);
   if (linkCount == 1 && nonEmptyText.isEmpty) {
     // This node's text is just a URL, try to interpret it
@@ -323,11 +325,12 @@ Future<void> _processUrlNode({
 
 class DeleteParagraphsCommand implements EditorCommand {
   DeleteParagraphsCommand({
-    this.nodeId,
+    @required this.nodeId,
   }) : assert(nodeId != null);
 
   final String nodeId;
 
+  @override
   void execute(Document document, DocumentEditor editor) {
     print('Executing DeleteParagraphsCommand');
     print(' - deleting "$nodeId"');
@@ -337,7 +340,7 @@ class DeleteParagraphsCommand implements EditorCommand {
       return;
     }
 
-    bool didRemove = editor.deleteNode(node);
+    final didRemove = editor.deleteNode(node);
     if (!didRemove) {
       print('ERROR: Failed to delete node "$node" from the document.');
     }
@@ -501,7 +504,7 @@ Widget paragraphBuilder(ComponentContext componentContext) {
   print('   - base: ${textSelection?.base}');
   print('   - extent: ${textSelection?.extent}');
 
-  TextAlign textAlign = TextAlign.left;
+  var textAlign = TextAlign.left;
   final textAlignName = (componentContext.currentNode as TextNode).metadata['textAlign'];
   switch (textAlignName) {
     case 'left':

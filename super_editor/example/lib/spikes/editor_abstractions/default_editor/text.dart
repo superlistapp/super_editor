@@ -1,4 +1,3 @@
-import 'dart:collection';
 import 'dart:math';
 
 import 'package:example/spikes/editor_abstractions/core/edit_context.dart';
@@ -160,7 +159,7 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
       );
     } else if (movementModifiers['movement_unit'] == 'word') {
       final text = getContiguousTextAt(textPosition);
-      int newOffset = textPosition.offset;
+      var newOffset = textPosition.offset;
       newOffset -= 1; // we always want to jump at least 1 character.
       while (newOffset > 0 && latinCharacters.contains(text[newOffset])) {
         newOffset -= 1;
@@ -189,8 +188,8 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
         TextPosition(offset: textPosition.offset),
       );
 
-      final TextPosition endPosition = getEndPosition();
-      final String text = getContiguousTextAt(endOfLine);
+      final endPosition = getEndPosition();
+      final text = getContiguousTextAt(endOfLine);
       // Note: we compare offset values because we don't care if the affinitys are equal
       final isAutoWrapLine = endOfLine.offset != endPosition.offset && (text[endOfLine.offset] != '\n');
 
@@ -209,7 +208,7 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
       return isAutoWrapLine ? TextPosition(offset: endOfLine.offset - 1) : endOfLine;
     } else if (movementModifiers['movement_unit'] == 'word') {
       final text = getContiguousTextAt(textPosition);
-      int newOffset = textPosition.offset;
+      var newOffset = textPosition.offset;
       newOffset += 1; // we always want to jump at least 1 character.
       while (newOffset < text.length && latinCharacters.contains(text[newOffset])) {
         newOffset += 1;
@@ -326,6 +325,7 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
     return widget.text.text;
   }
 
+  @override
   TextPosition getPositionOneLineUp(dynamic nodePosition) {
     if (nodePosition is! TextPosition) {
       return null;
@@ -336,6 +336,7 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
     );
   }
 
+  @override
   TextPosition getPositionOneLineDown(dynamic nodePosition) {
     if (nodePosition is! TextPosition) {
       return null;
@@ -406,6 +407,7 @@ class ToggleTextAttributionsCommand implements EditorCommand {
   final DocumentSelection documentSelection;
   final Set<String> attributions;
 
+  @override
   void execute(Document document, DocumentEditor editor) {
     print('Executing ToggleTextAttributionsCommand');
     final nodes = document.getNodesInside(documentSelection.base, documentSelection.extent);
@@ -419,8 +421,8 @@ class ToggleTextAttributionsCommand implements EditorCommand {
     final nodeRange = document.getRangeBetween(documentSelection.base, documentSelection.extent);
     print(' - node range: $nodeRange');
 
-    final nodesAndSelections = LinkedHashMap<TextNode, TextRange>();
-    bool alreadyHasAttributions = false;
+    final nodesAndSelections = <TextNode, TextRange>{};
+    var alreadyHasAttributions = false;
 
     for (final node in nodes) {
       if (node is! TextNode) {
@@ -428,8 +430,8 @@ class ToggleTextAttributionsCommand implements EditorCommand {
       }
 
       final textNode = node as TextNode;
-      int startOffset = -1;
-      int endOffset = -1;
+      var startOffset = -1;
+      var endOffset = -1;
 
       if (textNode == nodes.first && textNode == nodes.last) {
         // Handle selection within a single node
@@ -475,7 +477,7 @@ class ToggleTextAttributionsCommand implements EditorCommand {
 
     // Toggle attributions.
     for (final entry in nodesAndSelections.entries) {
-      for (String attribution in attributions) {
+      for (final attribution in attributions) {
         final node = entry.key;
         final range = entry.value;
         print(' - toggling attribution: $attribution. Range: $range');
@@ -502,6 +504,7 @@ class InsertTextCommand implements EditorCommand {
   final String textToInsert;
   final Set<dynamic> attributions;
 
+  @override
   void execute(Document document, DocumentEditor editor) {
     final node = document.getNodeById(documentPosition.nodeId);
     if (node is! TextNode) {

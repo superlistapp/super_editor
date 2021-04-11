@@ -29,7 +29,7 @@ class _InlineStyleExampleScreenState extends State<InlineStyleExampleScreen> {
   }
 
   void _computeStyledText() {
-    AttributedText _text = AttributedText(
+    var _text = AttributedText(
       text: 'This is some text for testing',
     );
 
@@ -45,7 +45,7 @@ class _InlineStyleExampleScreenState extends State<InlineStyleExampleScreen> {
 
     setState(() {
       _richText = _text.computeTextSpan((Set<dynamic> attributions) {
-        TextStyle newStyle = const TextStyle();
+        var newStyle = const TextStyle();
         for (final attribution in attributions) {
           if (attribution is! String) {
             continue;
@@ -225,8 +225,8 @@ class _TextRangeSelectorState extends State<TextRangeSelector> {
     }
 
     final ranges = <TextRange>[];
-    int rangeStart = -1;
-    for (int i = 0; i < _selectedCells.length; ++i) {
+    var rangeStart = -1;
+    for (var i = 0; i < _selectedCells.length; ++i) {
       if (_selectedCells[i]) {
         if (rangeStart < 0) {
           rangeStart = i;

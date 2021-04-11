@@ -209,8 +209,8 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
       return KeyEventResult.handled;
     }
 
-    ExecutionInstruction instruction = ExecutionInstruction.continueExecution;
-    int index = 0;
+    var instruction = ExecutionInstruction.continueExecution;
+    var index = 0;
     while (instruction == ExecutionInstruction.continueExecution && index < widget.keyboardActions.length) {
       instruction = widget.keyboardActions[index](
         editContext: widget.editContext,
@@ -405,9 +405,9 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
     required SelectionType selectionType,
   }) {
     _log.log('_selectionRegion', 'Composer: selectionRegion(). Mode: $selectionType');
-    DocumentSelection? selection = documentLayout.getDocumentSelectionInRegion(baseOffset, extentOffset);
-    DocumentPosition? basePosition = selection?.base;
-    DocumentPosition? extentPosition = selection?.extent;
+    final selection = documentLayout.getDocumentSelectionInRegion(baseOffset, extentOffset);
+    var basePosition = selection?.base;
+    var extentPosition = selection?.extent;
     _log.log('_selectionRegion', ' - base: $basePosition, extent: $extentPosition');
 
     if (basePosition == null || extentPosition == null) {

@@ -137,15 +137,15 @@ class _TextInputClientExampleState extends State<TextInputClientExample> impleme
 
       // TODO: why is style being set on the input connection? does the platform make text layout decisions, too?
       // final TextStyle style = widget.style;
+      // ..setStyle(
+      //   fontFamily: style.fontFamily,
+      //   fontSize: style.fontSize,
+      //   fontWeight: style.fontWeight,
+      //   textDirection: _textDirection,
+      //   textAlign: widget.textAlign,
+      // )
       _textInputConnection
-        // ..setStyle(
-        //   fontFamily: style.fontFamily,
-        //   fontSize: style.fontSize,
-        //   fontWeight: style.fontWeight,
-        //   textDirection: _textDirection,
-        //   textAlign: widget.textAlign,
-        // )
-        ..setEditingState(_editingController.value);
+        .setEditingState(_editingController.value);
     } else {
       _textInputConnection.show();
     }
@@ -206,7 +206,7 @@ class _TextInputClientExampleState extends State<TextInputClientExample> impleme
   }
 
   void _onKeyPressed(RawKeyEvent keyEvent) {
-    print('Key pressed: ${keyEvent}');
+    print('Key pressed: $keyEvent');
     if (keyEvent.logicalKey == LogicalKeyboardKey.backspace && keyEvent is RawKeyUpEvent) {
       // print(' - its backspace');
       final currentText = _editingController.text;
@@ -307,7 +307,7 @@ class _RawKeyboardExampleState extends State<RawKeyboardExample> {
       return;
     }
 
-    print('Key pressed: ${keyEvent}');
+    print('Key pressed: $keyEvent');
 
     if (_isCharacterKey(keyEvent.logicalKey)) {
       _editingController.value = TextEditingValue(
