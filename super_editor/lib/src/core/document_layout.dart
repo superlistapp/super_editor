@@ -279,6 +279,7 @@ class ComponentContext {
     required this.document,
     required this.documentNode,
     required this.componentKey,
+    required this.showCaret,
     this.nodeSelection,
     this.extensions = const {},
   });
@@ -299,6 +300,14 @@ class ComponentContext {
   /// The `componentKey` is used by the `DocumentLayout` to query for
   /// node-specific information, like node positions and selections.
   final GlobalKey componentKey;
+
+  /// [true] if the extent component should display a caret,
+  /// [false] otherwise.
+  ///
+  /// Not every component has a caret to display, e.g., an
+  /// image, but the components that do have a caret, e.g.,
+  /// a paragraph, should respect this property.
+  final bool showCaret;
 
   /// The current selected region within the `documentNode`.
   ///

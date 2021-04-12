@@ -503,7 +503,9 @@ Widget? paragraphBuilder(ComponentContext componentContext) {
     _log.log('paragraphBuilder',
         'ERROR: Building a paragraph component but the selection is not a TextSelection: ${componentContext.documentNode.id}');
   }
-  final showCaret = componentContext.nodeSelection != null ? componentContext.nodeSelection!.isExtent : false;
+  final showCaret = componentContext.showCaret && componentContext.nodeSelection != null
+      ? componentContext.nodeSelection!.isExtent
+      : false;
   final highlightWhenEmpty =
       componentContext.nodeSelection == null ? false : componentContext.nodeSelection!.highlightWhenEmpty;
 

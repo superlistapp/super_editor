@@ -5,6 +5,8 @@ import 'package:example/demos/sliver_example_editor.dart';
 import 'package:flutter/material.dart';
 
 import 'demos/demo_attributed_text.dart';
+import 'demos/demo_document_loses_focus.dart';
+import 'demos/demo_switch_document_content.dart';
 
 /// Demo of a basic text editor, as well as various widgets that
 /// are available in this package.
@@ -136,6 +138,20 @@ final _menu = <_MenuGroup>[
         title: 'Sliver Editor Demo',
         pageBuilder: (context) {
           return SliverExampleEditor();
+        },
+      ),
+      _MenuItem(
+        icon: Icons.description,
+        title: 'Switch Docs Demo',
+        pageBuilder: (context) {
+          return SwitchDocumentDemo();
+        },
+      ),
+      _MenuItem(
+        icon: Icons.description,
+        title: 'Lose Focus Demo',
+        pageBuilder: (context) {
+          return LoseFocusDemo();
         },
       ),
       _MenuItem(
