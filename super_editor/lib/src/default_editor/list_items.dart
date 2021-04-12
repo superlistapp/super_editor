@@ -475,7 +475,7 @@ Widget? unorderedListItemBuilder(ComponentContext componentContext) {
   }
 
   final textSelection = componentContext.nodeSelection?.nodeSelection as TextSelection;
-  final hasCaret = componentContext.nodeSelection?.isExtent ?? false;
+  final showCaret = componentContext.showCaret && (componentContext.nodeSelection?.isExtent ?? false);
 
   return UnorderedListItemComponent(
     textKey: componentContext.componentKey,
@@ -484,7 +484,7 @@ Widget? unorderedListItemBuilder(ComponentContext componentContext) {
     indent: listItemNode.indent,
     textSelection: textSelection,
     selectionColor: (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle).selectionColor,
-    showCaret: hasCaret,
+    showCaret: showCaret,
     caretColor: (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle).textCaretColor,
   );
 }
@@ -512,7 +512,7 @@ Widget? orderedListItemBuilder(ComponentContext componentContext) {
   }
 
   final textSelection = componentContext.nodeSelection?.nodeSelection as TextSelection;
-  final hasCaret = componentContext.nodeSelection?.isExtent ?? false;
+  final showCaret = componentContext.showCaret && (componentContext.nodeSelection?.isExtent ?? false);
 
   return OrderedListItemComponent(
     textKey: componentContext.componentKey,
@@ -521,7 +521,7 @@ Widget? orderedListItemBuilder(ComponentContext componentContext) {
     styleBuilder: componentContext.extensions[textStylesExtensionKey],
     textSelection: textSelection,
     selectionColor: (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle).selectionColor,
-    showCaret: hasCaret,
+    showCaret: showCaret,
     caretColor: (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle).textCaretColor,
     indent: listItemNode.indent,
   );
