@@ -27,7 +27,15 @@ class TextNode with ChangeNotifier implements DocumentNode {
     required AttributedText text,
     Map<String, dynamic>? metadata,
   })  : _text = text,
-        _metadata = metadata ?? {};
+        _metadata = metadata ?? {} {
+    _text.addListener(notifyListeners);
+  }
+
+  @override
+  void dispose() {
+    _text.removeListener(notifyListeners);
+    super.dispose();
+  }
 
   @override
   final String id;
@@ -37,7 +45,11 @@ class TextNode with ChangeNotifier implements DocumentNode {
   set text(AttributedText newText) {
     if (newText != _text) {
       _log.log('set text', 'Text changed. Notifying listeners.');
+
+      _text.removeListener(notifyListeners);
       _text = newText;
+      _text.addListener(notifyListeners);
+
       notifyListeners();
     }
   }

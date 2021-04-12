@@ -206,6 +206,19 @@ void main() {
       expect(textSpan.children![4].style!.fontWeight, null);
       expect(textSpan.children![4].style!.fontStyle, null);
     });
+
+    test('notifies listeners when style changes', () {
+      bool listenerCalled = false;
+
+      final text = AttributedText(text: 'abcdefghij');
+      text.addListener(() {
+        listenerCalled = true;
+      });
+
+      text.addAttribution('bold', TextRange(start: 1, end: 1));
+
+      expect(listenerCalled, isTrue);
+    });
   });
 }
 
