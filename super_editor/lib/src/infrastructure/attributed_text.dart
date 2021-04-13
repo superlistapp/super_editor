@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/painting.dart';
 
 import 'attributed_spans.dart';
@@ -22,7 +23,9 @@ final _log = Logger(scope: 'AttributedText');
 /// style the text by providing an `AttributionStyleBuilder`,
 /// which is responsible for interpreting the meaning of all
 /// attributions applied to this `AttributedText`.
-class AttributedText {
+// TODO: there is a mixture of mutable and immutable behavior in this class.
+//       Pick one or the other, or offer 2 classes: mutable and immutable (#113)
+class AttributedText with ChangeNotifier {
   AttributedText({
     this.text = '',
     AttributedSpans? spans,
@@ -68,12 +71,14 @@ class AttributedText {
   /// `range`, inclusive.
   void addAttribution(dynamic attribution, TextRange range) {
     spans.addAttribution(newAttribution: attribution, start: range.start, end: range.end);
+    notifyListeners();
   }
 
   /// Removes the given attribution from all characters within the
   /// given `range`, inclusive.
   void removeAttribution(dynamic attribution, TextRange range) {
     spans.addAttribution(newAttribution: attribution, start: range.start, end: range.end);
+    notifyListeners();
   }
 
   /// If ALL of the text in `range`, inclusive, contains the given `attribution`,
@@ -81,6 +86,7 @@ class AttributedText {
   /// Otherwise, all of the text in `range`, inclusive, is given the `attribution`.
   void toggleAttribution(dynamic attribution, TextRange range) {
     spans.toggleAttribution(attribution: attribution, start: range.start, end: range.end);
+    notifyListeners();
   }
 
   /// Copies all text and attributions from `startOffset` to
