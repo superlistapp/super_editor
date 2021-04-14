@@ -9,19 +9,6 @@ import 'package:super_editor/src/infrastructure/_logging.dart';
 
 final _log = Logger(scope: 'text_tools.dart');
 
-const latinCharacters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-
-/// Returns `true` if the given `key` represents a latin character, digit, or a
-/// symbol.
-bool isCharacterKey(LogicalKeyboardKey key) {
-  // keyLabel for a character should be: 'a', 'b',...,'A','B',...
-  if (key.keyLabel.length != 1) {
-    return false;
-  }
-  return 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ 1234567890.,/;\'[]\\`~!@#\$%^&*()-=_+<>?:"{}|'
-      .contains(key.keyLabel);
-}
-
 /// Returns the word of text that contains the given `docPosition`, or `null` if
 /// no text exists at the given `docPosition`.
 ///
