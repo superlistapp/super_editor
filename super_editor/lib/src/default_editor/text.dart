@@ -184,7 +184,7 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
 
       int newOffset = textPosition.offset;
       newOffset -= 1; // we always want to jump at least 1 character.
-      while (newOffset > 0 && latinCharacters.contains(text[newOffset])) {
+      while (newOffset > 0 && text[newOffset - 1] != ' ') {
         newOffset -= 1;
       }
       return TextPosition(offset: newOffset);
@@ -241,7 +241,7 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
 
       int newOffset = textPosition.offset;
       newOffset += 1; // we always want to jump at least 1 character.
-      while (newOffset < text.length && latinCharacters.contains(text[newOffset])) {
+      while (newOffset < text.length && text[newOffset] != ' ') {
         newOffset += 1;
       }
       return TextPosition(offset: newOffset);
@@ -552,20 +552,20 @@ ExecutionInstruction insertCharacterInTextComposable({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
-  if (keyEvent.isMetaPressed || keyEvent.isAltPressed || keyEvent.isControlPressed) {
+  if (keyEvent.isMetaPressed || keyEvent.isControlPressed) {
     return ExecutionInstruction.continueExecution;
   }
 
   if (editContext.composer.selection == null) {
     return ExecutionInstruction.continueExecution;
   }
+  if (!editContext.composer.selection!.isCollapsed) {
+    return ExecutionInstruction.continueExecution;
+  }
   if (!_isTextEntryNode(document: editContext.editor.document, selection: editContext.composer.selection!)) {
     return ExecutionInstruction.continueExecution;
   }
-  if (!isCharacterKey(keyEvent.logicalKey)) {
-    return ExecutionInstruction.continueExecution;
-  }
-  if (!editContext.composer.selection!.isCollapsed) {
+  if (keyEvent.character == null || keyEvent.character == '') {
     return ExecutionInstruction.continueExecution;
   }
 

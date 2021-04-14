@@ -204,8 +204,9 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
   }
 
   KeyEventResult _onKeyPressed(RawKeyEvent keyEvent) {
-    _log.log('_onKeyPressed', 'EditableDocument: onKeyPressed()');
+    _log.log('_onKeyPressed', 'keyEvent: ${keyEvent.character}');
     if (keyEvent is! RawKeyDownEvent) {
+      _log.log('_onKeyPressed', ' - not a "down" event. Ignoring.');
       return KeyEventResult.handled;
     }
 

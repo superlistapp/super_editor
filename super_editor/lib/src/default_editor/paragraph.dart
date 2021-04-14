@@ -150,7 +150,7 @@ ExecutionInstruction insertCharacterInParagraph({
   if (node is! ParagraphNode) {
     return ExecutionInstruction.continueExecution;
   }
-  if (!isCharacterKey(keyEvent.logicalKey)) {
+  if (keyEvent.character == null || keyEvent.character == '') {
     return ExecutionInstruction.continueExecution;
   }
   if (!editContext.composer.selection!.isCollapsed) {

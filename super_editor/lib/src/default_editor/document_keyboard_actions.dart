@@ -379,7 +379,7 @@ ExecutionInstruction deleteExpandedSelectionWhenCharacterOrDestructiveKeyPressed
 
   final isDestructiveKey =
       keyEvent.logicalKey == LogicalKeyboardKey.backspace || keyEvent.logicalKey == LogicalKeyboardKey.delete;
-  final shouldDeleteSelection = isDestructiveKey || isCharacterKey(keyEvent.logicalKey);
+  final shouldDeleteSelection = isDestructiveKey || (keyEvent.character != null && keyEvent.character != '');
   if (!shouldDeleteSelection) {
     return ExecutionInstruction.continueExecution;
   }

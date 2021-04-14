@@ -390,8 +390,6 @@ final defaultKeyboardActions = <DocumentKeyboardAction>[
   collapseSelectionWhenDirectionalKeyIsPressed,
   deleteExpandedSelectionWhenCharacterOrDestructiveKeyPressed,
   deleteBoxWhenBackspaceOrDeleteIsPressed,
-  insertCharacterInParagraph,
-  insertCharacterInTextComposable,
   insertNewlineInParagraph,
   splitParagraphWhenEnterPressed,
   deleteCharacterWhenBackspaceIsPressed,
@@ -401,4 +399,6 @@ final defaultKeyboardActions = <DocumentKeyboardAction>[
   deleteCharacterWhenDeleteIsPressed,
   mergeNodeWithNextWhenDeleteIsPressed,
   moveUpDownLeftAndRightWithArrowKeys,
+  insertCharacterInParagraph,
+  insertCharacterInTextComposable,
 ];
