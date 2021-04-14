@@ -1,5 +1,4 @@
 #!/bin/bash
-cd website
 
 # Use the same Flutter channel as the current project does
 FLUTTER_CHANNEL=`grep channel: .metadata | sed 's/  channel: //g'`
