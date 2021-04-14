@@ -36,6 +36,7 @@ class SuperSelectableText extends StatefulWidget {
     required String text,
     required TextStyle style,
     this.textAlign = TextAlign.left,
+    this.textDirection = TextDirection.ltr,
     this.textSelection = const TextSelection.collapsed(offset: -1),
     this.textSelectionDecoration = const TextSelectionDecoration(
       selectionColor: Color(0xFFACCEF7),
@@ -55,6 +56,7 @@ class SuperSelectableText extends StatefulWidget {
     Key? key,
     required TextSpan textSpan,
     this.textAlign = TextAlign.left,
+    this.textDirection = TextDirection.ltr,
     this.textSelection = const TextSelection.collapsed(offset: -1),
     this.textSelectionDecoration = const TextSelectionDecoration(
       selectionColor: Color(0xFFACCEF7),
@@ -74,6 +76,9 @@ class SuperSelectableText extends StatefulWidget {
 
   /// The alignment to use for [richText] display.
   final TextAlign textAlign;
+
+  /// The text direction to use for [richText] display.
+  final TextDirection textDirection;
 
   /// The portion of [richText] to display with the
   /// [textSelectionDecoration].
@@ -445,6 +450,7 @@ class SuperSelectableTextState extends State<SuperSelectableText> implements Tex
       key: _textKey,
       text: widget.richText,
       textAlign: widget.textAlign,
+      textDirection: widget.textDirection,
     );
   }
 
