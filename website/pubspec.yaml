@@ -8,7 +8,10 @@ dependencies:
   flutter:
     sdk: flutter
   super_editor:
-    path: ../super_editor
+    git:
+      url: https://github.com/superlistapp/super_editor.git
+      ref: 82e011a
+      path: super_editor
 
 dev_dependencies:
   flutter_test:
