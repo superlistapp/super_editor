@@ -166,9 +166,11 @@ packages:
   super_editor:
     dependency: "direct main"
     description:
-      path: "../super_editor"
-      relative: true
-    source: path
+      path: super_editor
+      ref: "82e011a"
+      resolved-ref: "82e011a68fdb926a21e3a40e7986dfaaf4551ea6"
+      url: "https://github.com/superlistapp/super_editor.git"
+    source: git
     version: "0.1.0"
   term_glyph:
     dependency: transitive
