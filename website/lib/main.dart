@@ -97,10 +97,6 @@ class _MyHomePageState extends State<MyHomePage> {
 Document _createInitialDocument() {
   return MutableDocument(
     nodes: [
-      ImageNode(
-        id: DocumentEditor.createNodeId(),
-        imageUrl: 'https://picsum.photos/200/300',
-      ),
       ParagraphNode(
         id: DocumentEditor.createNodeId(),
         text: AttributedText(
