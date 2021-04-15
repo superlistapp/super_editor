@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class Footer extends StatelessWidget {
   const Footer();
@@ -39,7 +40,8 @@ class Footer extends StatelessWidget {
                             child: MouseRegion(
                               cursor: SystemMouseCursors.click,
                               child: GestureDetector(
-                                onTap: () => print('tappy tap'),
+                                behavior: HitTestBehavior.opaque,
+                                onTap: () => launch('https://superlist.recruitee.com/'),
                                 child: Text(
                                   'Join us',
                                   style: TextStyle(
@@ -86,7 +88,8 @@ class Footer extends StatelessWidget {
                 MouseRegion(
                   cursor: SystemMouseCursors.click,
                   child: GestureDetector(
-                    onTap: () => print('twitter'),
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => launch('https://twitter.com/SuperlistHQ'),
                     child: Text(
                       'Twitter',
                       style: TextStyle(decoration: TextDecoration.underline),
@@ -97,7 +100,8 @@ class Footer extends StatelessWidget {
                 MouseRegion(
                   cursor: SystemMouseCursors.click,
                   child: GestureDetector(
-                    onTap: () => print('twitter'),
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => launch('https://superlist.com'),
                     child: Text(
                       'Superlist.com',
                       style: TextStyle(decoration: TextDecoration.underline),

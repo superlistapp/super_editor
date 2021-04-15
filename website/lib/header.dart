@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class Header extends StatelessWidget {
   const Header();
@@ -23,9 +25,26 @@ class Header extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Text('Github'),
+                MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () =>
+                        launch('https://github.com/superlistapp/super_editor'),
+                    child: Text('Github'),
+                  ),
+                ),
                 const SizedBox(width: 26),
-                Text('Docs'),
+                MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => launch(
+                      'https://github.com/superlistapp/super_editor/wiki',
+                    ),
+                    child: Text('Docs'),
+                  ),
+                ),
                 const SizedBox(width: 26),
                 _SmallButton(child: Text('Download')),
               ],
