@@ -95,6 +95,29 @@ ExecutionInstruction pasteWhenCmdVIsPressed({
   return ExecutionInstruction.haltExecution;
 }
 
+
+ExecutionInstruction selectAllWhenCmdAIsPressed({
+  required EditContext editContext,
+  required RawKeyEvent keyEvent,
+}) {
+  if (!keyEvent.isMetaPressed || keyEvent.character?.toLowerCase() != 'a') {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  editContext.composer.selection = DocumentSelection(
+    base: DocumentPosition(
+      nodeId: editContext.editor.document.nodes.first.id,
+      nodePosition: editContext.editor.document.nodes.first.beginningPosition,
+    ),
+    extent: DocumentPosition(
+      nodeId: editContext.editor.document.nodes.last.id,
+      nodePosition: editContext.editor.document.nodes.last.endPosition,
+    ),
+  );
+
+  return ExecutionInstruction.haltExecution;
+}
+
 Future<void> _paste({
   required Document document,
   required DocumentEditor editor,

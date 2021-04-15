@@ -385,6 +385,7 @@ final defaultKeyboardActions = <DocumentKeyboardAction>[
   splitListItemWhenEnterPressed,
   pasteWhenCmdVIsPressed,
   copyWhenCmdVIsPressed,
+  selectAllWhenCmdAIsPressed,
   applyBoldWhenCmdBIsPressed,
   applyItalicsWhenCmdIIsPressed,
   collapseSelectionWhenDirectionalKeyIsPressed,
