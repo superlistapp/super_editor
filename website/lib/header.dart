@@ -6,7 +6,7 @@ class Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ConstrainedBox(
-      constraints: BoxConstraints(maxWidth: 1112),
+      constraints: BoxConstraints(maxWidth: 1113),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [

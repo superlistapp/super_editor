@@ -7,52 +7,79 @@ class Features extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       color: const Color(0xFF003F51),
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.only(bottom: 80),
+      padding: const EdgeInsets.only(left: 20, right: 20, bottom: 80),
       child: Transform.translate(
         offset: Offset(0, -49),
-        child: Center(
-          child: Column(
-            children: [
-              ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: 1112),
+        child: Column(
+          children: [
+            Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: 1113),
                 child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(child: const _Feature()),
-                    const SizedBox(width: 24),
-                    Expanded(child: const _Feature()),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 117),
-              ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: 544),
-                child: Column(
-                  children: [
-                    Text(
-                      'other great things about this babyyyyyyyyyy',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 38,
-                        height: 46 / 38,
+                    Expanded(
+                      child: Align(
+                        alignment: Alignment.topLeft,
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(maxWidth: 499),
+                          child: const _Feature(
+                            iconPath: 'assets/ic_customize.png',
+                            title: 'Fully customizable',
+                            description:
+                                'Easy to extend and very detailed access to all component, designed to and build for developer, allow you to adjust the editor to your specific needs',
+                          ),
+                        ),
                       ),
-                      textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 37),
-                    SizedBox(
-                      width: 544,
-                      height: 307,
-                      child: Placeholder(),
-                    ),
-                    const SizedBox(height: 31),
-                    Text(
-                      'Lorem ipsum home school stay-at-home order Blursday. Staycation stimulus essential. Dr. Fauci remote learning WHO isolation mail-in vote. Virtual happy hour Quibi four seasons total landscaping monolith home office.',
+                    const SizedBox(width: 32),
+                    Expanded(
+                      child: Align(
+                        alignment: Alignment.topRight,
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(maxWidth: 515),
+                          child: const _Feature(
+                            iconPath: 'assets/dart_logo.png',
+                            title: 'Fully written in Dart',
+                            description:
+                                'A true cross platform editor written from scratch to deliver the performance and stability you expect',
+                          ),
+                        ),
+                      ),
                     ),
                   ],
                 ),
               ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 117),
+            ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: 544),
+              child: Column(
+                children: [
+                  Text(
+                    'other great things about this babyyyyyyyyyy',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 38,
+                      height: 46 / 38,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 37),
+                  SizedBox(
+                    width: 544,
+                    height: 307,
+                    child: Placeholder(),
+                  ),
+                  const SizedBox(height: 31),
+                  Text(
+                    'Lorem ipsum home school stay-at-home order Blursday. Staycation stimulus essential. Dr. Fauci remote learning WHO isolation mail-in vote. Virtual happy hour Quibi four seasons total landscaping monolith home office.',
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -60,7 +87,17 @@ class Features extends StatelessWidget {
 }
 
 class _Feature extends StatelessWidget {
-  const _Feature();
+  const _Feature({
+    @required this.iconPath,
+    @required this.title,
+    @required this.description,
+  })  : assert(iconPath != null),
+        assert(title != null),
+        assert(description != null);
+
+  final String iconPath;
+  final String title;
+  final String description;
 
   @override
   Widget build(BuildContext context) {
@@ -73,14 +110,14 @@ class _Feature extends StatelessWidget {
           ),
           padding: const EdgeInsets.all(24),
           child: Image.asset(
-            'assets/ic_customize.png',
+            iconPath,
             width: 48,
             height: 48,
           ),
         ),
         const SizedBox(height: 12),
         Text(
-          'Fully customizable',
+          title,
           style: TextStyle(
             fontWeight: FontWeight.w700,
             fontSize: 38,
@@ -90,7 +127,7 @@ class _Feature extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         Text(
-          'Easy to extend and very detailed access to all component, designed to and build for developer, allow you to adjust the editor to your specific needs',
+          description,
           textAlign: TextAlign.center,
         ),
       ],

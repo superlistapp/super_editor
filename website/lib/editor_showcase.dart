@@ -109,7 +109,7 @@ class _EditorState extends State<EditorShowcase> {
   Widget build(BuildContext context) {
     return Center(
       child: Container(
-        constraints: BoxConstraints(maxWidth: 800).tighten(height: 622),
+        constraints: BoxConstraints(maxWidth: 1113).tighten(height: 622),
         decoration: BoxDecoration(
           color: Colors.white.withOpacity(0.9),
           borderRadius: BorderRadius.circular(20),
