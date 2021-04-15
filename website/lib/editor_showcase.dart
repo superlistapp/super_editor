@@ -31,7 +31,7 @@ class _EditorState extends State<EditorShowcase> {
         ParagraphNode(
           id: DocumentEditor.createNodeId(),
           text: AttributedText(
-            text: 'A supercharged rich text\neditor for Flutter',
+            text: 'A supercharged rich text editor for Flutter',
           ),
           metadata: {
             'blockType': 'header1',
@@ -117,7 +117,7 @@ class _EditorState extends State<EditorShowcase> {
         child: Editor.custom(
           editor: _docEditor,
           maxWidth: 800,
-          padding: const EdgeInsets.symmetric(horizontal: 95, vertical: 61),
+          padding: const EdgeInsets.symmetric(horizontal: 80, vertical: 61),
           textStyleBuilder: _textStyleBuilder,
           componentBuilders: [
             _centeredHeaderBuilder,
