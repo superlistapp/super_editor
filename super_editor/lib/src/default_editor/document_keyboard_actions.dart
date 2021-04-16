@@ -100,18 +100,19 @@ ExecutionInstruction selectAllWhenCmdAIsPressed({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
-  if (!keyEvent.isMetaPressed || keyEvent.character?.toLowerCase() != 'a') {
+  final nodes = editContext.editor.document.nodes;
+  if (!keyEvent.isMetaPressed || keyEvent.character?.toLowerCase() != 'a' || nodes.isEmpty) {
     return ExecutionInstruction.continueExecution;
   }
 
   editContext.composer.selection = DocumentSelection(
     base: DocumentPosition(
-      nodeId: editContext.editor.document.nodes.first.id,
-      nodePosition: editContext.editor.document.nodes.first.beginningPosition,
+      nodeId: nodes.first.id,
+      nodePosition: nodes.first.beginningPosition,
     ),
     extent: DocumentPosition(
-      nodeId: editContext.editor.document.nodes.last.id,
-      nodePosition: editContext.editor.document.nodes.last.endPosition,
+      nodeId: nodes.last.id,
+      nodePosition: nodes.last.endPosition,
     ),
   );
 
