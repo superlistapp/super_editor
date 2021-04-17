@@ -468,6 +468,10 @@ class ToggleTextAttributionsCommand implements EditorCommand {
         final extentOffset = (documentSelection.extent.nodePosition as TextPosition).offset;
         startOffset = baseOffset < extentOffset ? baseOffset : extentOffset;
         endOffset = baseOffset < extentOffset ? extentOffset : baseOffset;
+
+        // -1 because TextPosition's offset indexes the character after the
+        // selection, not the final character in the selection.
+        endOffset -= 1;
       } else if (textNode == nodes.first) {
         // Handle partial node selection in first node.
         _log.log('ToggleTextAttributionsCommand', ' - selecting part of the first node: ${textNode.id}');
@@ -477,19 +481,15 @@ class ToggleTextAttributionsCommand implements EditorCommand {
         // Handle partial node selection in last node.
         _log.log('ToggleTextAttributionsCommand', ' - toggling part of the last node: ${textNode.id}');
         startOffset = 0;
-        endOffset = (nodeRange.end.nodePosition as TextPosition).offset;
+
+        // -1 because TextPosition's offset indexes the character after the
+        // selection, not the final character in the selection.
+        endOffset = (nodeRange.end.nodePosition as TextPosition).offset - 1;
       } else {
         // Handle full node selection.
         _log.log('ToggleTextAttributionsCommand', ' - toggling full node: ${textNode.id}');
         startOffset = 0;
         endOffset = max(textNode.text.text.length - 1, 0);
-      }
-
-      // The attribution range needs the `start` and `end` to
-      // be inclusive. Make sure the `endOffset` isn't equal
-      // to the text length.
-      if (endOffset == textNode.text.text.length) {
-        endOffset = textNode.text.text.length - 1;
       }
 
       final selectionRange = TextRange(start: startOffset, end: endOffset);

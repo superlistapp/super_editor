@@ -18,6 +18,47 @@ import '_text_entry_test_tools.dart';
 
 void main() {
   group('text.dart', () {
+    group('ToggleTextAttributionsCommand', () {
+      test('it toggles selected text and nothing more', () {
+        final document = MutableDocument(
+          nodes: [
+            ParagraphNode(
+              id: 'paragraph',
+              text: AttributedText(text: ' make me bold '),
+            )
+          ],
+        );
+        final editor = DocumentEditor(document: document);
+
+        final command = ToggleTextAttributionsCommand(
+          documentSelection: DocumentSelection(
+            base: DocumentPosition(
+              nodeId: 'paragraph',
+              nodePosition: TextPosition(offset: 1),
+            ),
+            extent: DocumentPosition(
+              nodeId: 'paragraph',
+              // IMPORTANT: we want to end the bold at the 'd' character but
+              // the TextPosition indexes the ' ' after the 'd'. This is because
+              // TextPosition references the character after the selection, not
+              // the last character in the selection. See the TextPosition class
+              // definition for more information.
+              nodePosition: TextPosition(offset: 13),
+            ),
+          ),
+          attributions: {'bold'},
+        );
+
+        editor.executeCommand(command);
+
+        final boldedText = (document.nodes.first as ParagraphNode).text;
+        expect(boldedText.getAllAttributionsAt(0), <dynamic>{});
+        expect(boldedText.getAllAttributionsAt(1), {'bold'});
+        expect(boldedText.getAllAttributionsAt(12), {'bold'});
+        expect(boldedText.getAllAttributionsAt(13), <dynamic>{});
+      });
+    });
+
     group('TextComposable text entry', () {
       test('it does nothing when meta is pressed', () {
         final editContext = _createEditContext();
