@@ -95,13 +95,16 @@ ExecutionInstruction pasteWhenCmdVIsPressed({
   return ExecutionInstruction.haltExecution;
 }
 
-
 ExecutionInstruction selectAllWhenCmdAIsPressed({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
+  if (!keyEvent.isMetaPressed || keyEvent.character?.toLowerCase() != 'a') {
+    return ExecutionInstruction.continueExecution;
+  }
+
   final nodes = editContext.editor.document.nodes;
-  if (!keyEvent.isMetaPressed || keyEvent.character?.toLowerCase() != 'a' || nodes.isEmpty) {
+  if (nodes.isEmpty) {
     return ExecutionInstruction.continueExecution;
   }
 

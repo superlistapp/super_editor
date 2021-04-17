@@ -117,10 +117,7 @@ class DocumentPosition<PositionType> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is DocumentPosition &&
-          runtimeType == other.runtimeType &&
-          nodeId == other.nodeId &&
-          nodePosition == other.nodePosition;
+      other is DocumentPosition && nodeId == other.nodeId && nodePosition == other.nodePosition;
 
   @override
   int get hashCode => nodeId.hashCode ^ nodePosition.hashCode;
