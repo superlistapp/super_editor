@@ -400,13 +400,22 @@ ExecutionInstruction deleteExpandedSelectionWhenCharacterOrDestructiveKeyPressed
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
+  _log.log('deleteExpandedSelectionWhenCharacterOrDestructiveKeyPressed', 'Running...');
   if (editContext.composer.selection == null || editContext.composer.selection!.isCollapsed) {
     return ExecutionInstruction.continueExecution;
   }
 
+  // Specifically exclude situations where shift is pressed because shift
+  // needs to alter the selection, not delete content. We have to explicitly
+  // look for this because when shift is pressed along with an arrow key,
+  // Flutter reports a non-null character.
+  final isShiftPressed = keyEvent.isShiftPressed;
+
   final isDestructiveKey =
       keyEvent.logicalKey == LogicalKeyboardKey.backspace || keyEvent.logicalKey == LogicalKeyboardKey.delete;
-  final shouldDeleteSelection = isDestructiveKey || (keyEvent.character != null && keyEvent.character != '');
+
+  final shouldDeleteSelection =
+      !isShiftPressed && (isDestructiveKey || (keyEvent.character != null && keyEvent.character != ''));
   if (!shouldDeleteSelection) {
     return ExecutionInstruction.continueExecution;
   }
@@ -617,6 +626,7 @@ ExecutionInstruction moveUpDownLeftAndRightWithArrowKeys({
     return ExecutionInstruction.continueExecution;
   }
 
+  print('Running moveUpDownLeftAndRightWithArrowKeys');
   if (keyEvent.logicalKey == LogicalKeyboardKey.arrowLeft) {
     _log.log('moveUpDownLeftAndRightWithArrowKeys', ' - handling left arrow key');
 
