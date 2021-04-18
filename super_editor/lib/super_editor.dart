@@ -10,6 +10,7 @@ export 'src/core/document_editor.dart';
 export 'src/core/document_layout.dart';
 export 'src/core/document_selection.dart';
 export 'src/core/edit_context.dart';
+export 'src/default_editor/blockquote.dart';
 export 'src/default_editor/box_component.dart';
 export 'src/default_editor/document_interaction.dart';
 export 'src/default_editor/document_keyboard_actions.dart';

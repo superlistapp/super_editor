@@ -61,6 +61,15 @@ Document _createInitialDocument() {
               'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus sed sagittis urna. Aenean mattis ante justo, quis sollicitudin metus interdum id. Aenean ornare urna ac enim consequat mollis. In aliquet convallis efficitur. Phasellus convallis purus in fringilla scelerisque. Ut ac orci a turpis egestas lobortis. Morbi aliquam dapibus sem, vitae sodales arcu ultrices eu. Duis vulputate mauris quam, eleifend pulvinar quam blandit eget.',
         ),
       ),
+      ParagraphNode(
+        id: DocumentEditor.createNodeId(),
+        text: AttributedText(
+          text: 'This is a blockquote!',
+        ),
+        metadata: {
+          'blockType': 'blockquote',
+        },
+      ),
       ListItemNode.unordered(
         id: DocumentEditor.createNodeId(),
         text: AttributedText(
