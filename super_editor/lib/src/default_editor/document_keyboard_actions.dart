@@ -130,7 +130,6 @@ Future<void> _paste({
 }) async {
   final content = (await Clipboard.getData('text/plain'))?.text ?? '';
   _log.log('_paste', 'Content from clipboard:');
-  print(content);
 
   editor.executeCommand(
     _PasteEditorCommand(
@@ -626,7 +625,6 @@ ExecutionInstruction moveUpDownLeftAndRightWithArrowKeys({
     return ExecutionInstruction.continueExecution;
   }
 
-  print('Running moveUpDownLeftAndRightWithArrowKeys');
   if (keyEvent.logicalKey == LogicalKeyboardKey.arrowLeft) {
     _log.log('moveUpDownLeftAndRightWithArrowKeys', ' - handling left arrow key');
 
