@@ -5,6 +5,7 @@ import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_editor.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/edit_context.dart';
+import 'package:super_editor/src/default_editor/blockquote.dart';
 import 'package:super_editor/src/default_editor/horizontal_rule.dart';
 import 'package:super_editor/src/default_editor/image.dart';
 import 'package:super_editor/src/default_editor/list_items.dart';
@@ -372,6 +373,7 @@ final defaultComponentBuilders = <ComponentBuilder>[
   paragraphBuilder,
   unorderedListItemBuilder,
   orderedListItemBuilder,
+  blockquoteBuilder,
   imageBuilder,
   horizontalRuleBuilder,
   unknownComponentBuilder,
@@ -383,6 +385,9 @@ final defaultKeyboardActions = <DocumentKeyboardAction>[
   indentListItemWhenBackspaceIsPressed,
   unindentListItemWhenBackspaceIsPressed,
   splitListItemWhenEnterPressed,
+  convertBlockquoteToParagraphWhenBackspaceIsPressed,
+  insertNewlineInBlockquote,
+  splitBlockquoteWhenEnterPressed,
   pasteWhenCmdVIsPressed,
   copyWhenCmdVIsPressed,
   selectAllWhenCmdAIsPressed,

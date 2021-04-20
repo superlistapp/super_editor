@@ -130,7 +130,6 @@ Future<void> _paste({
 }) async {
   final content = (await Clipboard.getData('text/plain'))?.text ?? '';
   _log.log('_paste', 'Content from clipboard:');
-  print(content);
 
   editor.executeCommand(
     _PasteEditorCommand(
@@ -400,13 +399,22 @@ ExecutionInstruction deleteExpandedSelectionWhenCharacterOrDestructiveKeyPressed
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
+  _log.log('deleteExpandedSelectionWhenCharacterOrDestructiveKeyPressed', 'Running...');
   if (editContext.composer.selection == null || editContext.composer.selection!.isCollapsed) {
     return ExecutionInstruction.continueExecution;
   }
 
+  // Specifically exclude situations where shift is pressed because shift
+  // needs to alter the selection, not delete content. We have to explicitly
+  // look for this because when shift is pressed along with an arrow key,
+  // Flutter reports a non-null character.
+  final isShiftPressed = keyEvent.isShiftPressed;
+
   final isDestructiveKey =
       keyEvent.logicalKey == LogicalKeyboardKey.backspace || keyEvent.logicalKey == LogicalKeyboardKey.delete;
-  final shouldDeleteSelection = isDestructiveKey || (keyEvent.character != null && keyEvent.character != '');
+
+  final shouldDeleteSelection =
+      !isShiftPressed && (isDestructiveKey || (keyEvent.character != null && keyEvent.character != ''));
   if (!shouldDeleteSelection) {
     return ExecutionInstruction.continueExecution;
   }
