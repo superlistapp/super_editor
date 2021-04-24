@@ -428,9 +428,18 @@ class SelectableTextState extends State<SelectableText> implements TextLayout {
 
     return Stack(
       children: [
-        _buildTextSelection(),
-        _buildText(),
-        _buildTextCaret(),
+        SizedBox(
+          width: double.infinity,
+          child: _buildTextSelection(),
+        ),
+        SizedBox(
+          width: double.infinity,
+          child: _buildText(),
+        ),
+        SizedBox(
+          width: double.infinity,
+          child: _buildTextCaret(),
+        ),
       ],
     );
   }
@@ -668,7 +677,7 @@ class _CursorPainter extends CustomPainter {
     required this.caretColor,
     required this.isTextEmpty,
     required this.showCaret,
-  })   : caretPaint = Paint()..color = caretColor,
+  })  : caretPaint = Paint()..color = caretColor,
         super(repaint: blinkController);
 
   final _CaretBlinkController blinkController;
