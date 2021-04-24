@@ -145,7 +145,7 @@ class _PasteEditorCommand implements EditorCommand {
     required String content,
     required DocumentPosition pastePosition,
     required DocumentComposer composer,
-  })   : _content = content,
+  })  : _content = content,
         _pastePosition = pastePosition,
         _composer = composer;
 
@@ -295,13 +295,16 @@ Future<void> _copy({
 
     if (i == 0) {
       // This is the first node and it may be partially selected.
-      final nodePosition = selectedNode.id == documentSelection.base.nodeId
+      final baseSelectionPosition = selectedNode.id == documentSelection.base.nodeId
           ? documentSelection.base.nodePosition
           : documentSelection.extent.nodePosition;
 
+      final extentSelectionPosition =
+          selectedNodes.length > 1 ? selectedNode.endPosition : documentSelection.extent.nodePosition;
+
       nodeSelection = selectedNode.computeSelection(
-        base: nodePosition,
-        extent: selectedNode.endPosition,
+        base: baseSelectionPosition,
+        extent: extentSelectionPosition,
       );
     } else if (i == selectedNodes.length - 1) {
       // This is the last node and it may be partially selected.
@@ -323,7 +326,7 @@ Future<void> _copy({
 
     final nodeContent = selectedNode.copyContent(nodeSelection);
     if (nodeContent != null) {
-      buffer.writeln(nodeContent);
+      buffer.write(nodeContent);
       if (i < selectedNodes.length - 1) {
         buffer.writeln();
       }
