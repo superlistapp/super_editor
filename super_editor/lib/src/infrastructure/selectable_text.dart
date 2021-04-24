@@ -547,7 +547,9 @@ class _TextSelectionPainter extends CustomPainter {
     final selectionBoxes = renderParagraph.getBoxesForSelection(selection);
 
     for (final box in selectionBoxes) {
-      final rect = box.toRect();
+      final rawRect = box.toRect();
+      final rect = Rect.fromLTWH(rawRect.left, rawRect.top - 2, rawRect.width, rawRect.height + 4);
+
       canvas.drawRect(
         // Note: If the rect has no width then we've selected an empty line. Give
         //       that line a slight width for visibility.
