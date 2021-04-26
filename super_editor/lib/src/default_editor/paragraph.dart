@@ -251,7 +251,7 @@ bool _convertParagraphIfDesired({
       }),
     );
 
-    node.text = AttributedText();
+    node.text = node.text.removeRegion(startOffset: 0, endOffset: hrMatch.firstMatch(textBeforeCaret)!.end);
 
     composer.selection = DocumentSelection.collapsed(
       position: DocumentPosition(

@@ -428,9 +428,18 @@ class SelectableTextState extends State<SelectableText> implements TextLayout {
 
     return Stack(
       children: [
-        _buildTextSelection(),
-        _buildText(),
-        _buildTextCaret(),
+        SizedBox(
+          width: double.infinity,
+          child: _buildTextSelection(),
+        ),
+        SizedBox(
+          width: double.infinity,
+          child: _buildText(),
+        ),
+        SizedBox(
+          width: double.infinity,
+          child: _buildTextCaret(),
+        ),
       ],
     );
   }
@@ -538,7 +547,9 @@ class _TextSelectionPainter extends CustomPainter {
     final selectionBoxes = renderParagraph.getBoxesForSelection(selection);
 
     for (final box in selectionBoxes) {
-      final rect = box.toRect();
+      final rawRect = box.toRect();
+      final rect = Rect.fromLTWH(rawRect.left, rawRect.top - 2, rawRect.width, rawRect.height + 4);
+
       canvas.drawRect(
         // Note: If the rect has no width then we've selected an empty line. Give
         //       that line a slight width for visibility.
@@ -668,7 +679,7 @@ class _CursorPainter extends CustomPainter {
     required this.caretColor,
     required this.isTextEmpty,
     required this.showCaret,
-  })   : caretPaint = Paint()..color = caretColor,
+  })  : caretPaint = Paint()..color = caretColor,
         super(repaint: blinkController);
 
   final _CaretBlinkController blinkController;
