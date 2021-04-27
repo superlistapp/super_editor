@@ -1,6 +1,7 @@
 import 'package:example/demos/demo_markdown_serialization.dart';
 import 'package:example/demos/demo_paragraphs.dart';
 import 'package:example/demos/demo_selectable_text.dart';
+import 'package:example/demos/demo_textfield.dart';
 import 'package:example/demos/example_editor.dart';
 import 'package:example/demos/sliver_example_editor.dart';
 import 'package:flutter/material.dart';
@@ -191,6 +192,13 @@ final _menu = <_MenuGroup>[
   _MenuGroup(
     title: 'INFRASTRUCTURE',
     items: [
+      _MenuItem(
+        icon: Icons.text_fields,
+        title: 'SuperTextField',
+        pageBuilder: (context) {
+          return TextFieldDemo();
+        },
+      ),
       _MenuItem(
         icon: Icons.text_fields,
         title: 'Selectable Text',
