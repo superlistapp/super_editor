@@ -9,25 +9,17 @@ class TextFieldDemo extends StatefulWidget {
 }
 
 class _TextFieldDemoState extends State<TextFieldDemo> {
-  final _demoText1 = TextSpan(
-    text: 'Super Editor',
-    style: TextStyle(
-      color: const Color(0xFF444444),
-      fontSize: 18,
-      height: 1.4,
-      fontWeight: FontWeight.bold,
-    ),
-    children: [
-      TextSpan(
-        text: ' is an open source text editor for Flutter projects.',
-        style: TextStyle(
-          color: const Color(0xFF444444),
-          fontSize: 18,
-          height: 1.4,
-          fontWeight: FontWeight.normal,
-        ),
+  final _textFieldController = AttributedTextEditingController(
+    text: AttributedText(
+      text:
+          'Super Editor is an open source text editor for Flutter projects.\n\nThis is paragraph 2\n\nThis is paragraph 3',
+      spans: AttributedSpans(
+        attributions: [
+          SpanMarker(attribution: 'bold', offset: 0, markerType: SpanMarkerType.start),
+          SpanMarker(attribution: 'bold', offset: 11, markerType: SpanMarkerType.end),
+        ],
       ),
-    ],
+    ),
   );
 
   OverlayEntry _popupEntry;
@@ -150,6 +142,7 @@ class _TextFieldDemoState extends State<TextFieldDemo> {
                     child: SizedBox(
                       width: double.infinity,
                       child: SuperTextField(
+                        controller: _textFieldController,
                         focusNode: _focusNode,
                         hintBuilder: (context) {
                           return Text(
@@ -161,18 +154,6 @@ class _TextFieldDemoState extends State<TextFieldDemo> {
                         },
                         hintBehavior: HintBehavior.displayHintUntilTextEntered,
                         onRightClick: _onRightClick,
-                        controller: AttributedTextEditingController(
-                          text: AttributedText(
-                            text:
-                                'Super Editor is an open source text editor for Flutter projects.\n\nThis is paragraph 2\n\nThis is paragraph 3',
-                            spans: AttributedSpans(
-                              attributions: [
-                                SpanMarker(attribution: 'bold', offset: 0, markerType: SpanMarkerType.start),
-                                SpanMarker(attribution: 'bold', offset: 11, markerType: SpanMarkerType.end),
-                              ],
-                            ),
-                          ),
-                        ),
                       ),
                     ),
                   ),
