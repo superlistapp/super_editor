@@ -34,6 +34,7 @@ class SuperTextField extends StatefulWidget {
     ),
     this.hintBuilder,
     this.hintBehavior = HintBehavior.displayHintUntilFocus,
+    this.onRightClick,
     this.keyboardActions = defaultTextfieldKeyboardActions,
   }) : super(key: key);
 
@@ -53,6 +54,8 @@ class SuperTextField extends StatefulWidget {
 
   final WidgetBuilder? hintBuilder;
   final HintBehavior hintBehavior;
+
+  final RightClickListener? onRightClick;
 
   final List<TextfieldKeyboardAction> keyboardActions;
 
@@ -284,6 +287,10 @@ class _SuperTextFieldState extends State<SuperTextField> implements TextComposab
     _selectionType = _SelectionType.position;
   }
 
+  void _onRightClick(TapUpDetails details) {
+    widget.onRightClick?.call(context, _controller, details.localPosition);
+  }
+
   void _onPanStart(DragStartDetails details) {
     _log.log('_onPanStart', '_onPanStart()');
     _dragStartInViewport = details.localPosition;
@@ -427,75 +434,78 @@ class _SuperTextFieldState extends State<SuperTextField> implements TextComposab
       child: RawKeyboardListener(
         focusNode: _focusNode,
         onKey: _onKeyPressed,
-        child: RawGestureDetector(
-          behavior: HitTestBehavior.translucent,
-          gestures: <Type, GestureRecognizerFactory>{
-            TapSequenceGestureRecognizer: GestureRecognizerFactoryWithHandlers<TapSequenceGestureRecognizer>(
-              () => TapSequenceGestureRecognizer(),
-              (TapSequenceGestureRecognizer recognizer) {
-                recognizer
-                  ..onTapDown = _onTapDown
-                  ..onDoubleTapDown = _onDoubleTapDown
-                  ..onDoubleTap = _onDoubleTap
-                  ..onTripleTapDown = _onTripleTapDown
-                  ..onTripleTap = _onTripleTap;
-              },
-            ),
-            PanGestureRecognizer: GestureRecognizerFactoryWithHandlers<PanGestureRecognizer>(
-              () => PanGestureRecognizer(),
-              (PanGestureRecognizer recognizer) {
-                recognizer
-                  ..onStart = _onPanStart
-                  ..onUpdate = _onPanUpdate
-                  ..onEnd = _onPanEnd
-                  ..onCancel = _onPanCancel;
-              },
-            ),
-          },
-          child: Listener(
-            onPointerHover: _onMouseMove,
-            child: MouseRegion(
-              cursor: _cursorStyle.value,
-              child: ListenableBuilder(
-                  listenable: _focusNode,
-                  builder: (context) {
-                    return Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(4),
-                        border: Border.all(
-                          color: _focusNode.hasFocus ? Colors.blue : Colors.grey.shade300,
-                          width: 1,
+        child: GestureDetector(
+          onSecondaryTapUp: _onRightClick,
+          child: RawGestureDetector(
+            behavior: HitTestBehavior.translucent,
+            gestures: <Type, GestureRecognizerFactory>{
+              TapSequenceGestureRecognizer: GestureRecognizerFactoryWithHandlers<TapSequenceGestureRecognizer>(
+                () => TapSequenceGestureRecognizer(),
+                (TapSequenceGestureRecognizer recognizer) {
+                  recognizer
+                    ..onTapDown = _onTapDown
+                    ..onDoubleTapDown = _onDoubleTapDown
+                    ..onDoubleTap = _onDoubleTap
+                    ..onTripleTapDown = _onTripleTapDown
+                    ..onTripleTap = _onTripleTap;
+                },
+              ),
+              PanGestureRecognizer: GestureRecognizerFactoryWithHandlers<PanGestureRecognizer>(
+                () => PanGestureRecognizer(),
+                (PanGestureRecognizer recognizer) {
+                  recognizer
+                    ..onStart = _onPanStart
+                    ..onUpdate = _onPanUpdate
+                    ..onEnd = _onPanEnd
+                    ..onCancel = _onPanCancel;
+                },
+              ),
+            },
+            child: Listener(
+              onPointerHover: _onMouseMove,
+              child: MouseRegion(
+                cursor: _cursorStyle.value,
+                child: ListenableBuilder(
+                    listenable: _focusNode,
+                    builder: (context) {
+                      return Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(
+                            color: _focusNode.hasFocus ? Colors.blue : Colors.grey.shade300,
+                            width: 1,
+                          ),
                         ),
-                      ),
-                      child: ListenableBuilder(
-                          listenable: _controller,
-                          builder: (context) {
-                            final isTextEmpty = _controller.text.text.isEmpty;
-                            final showHint = widget.hintBuilder != null &&
-                                ((isTextEmpty && widget.hintBehavior == HintBehavior.displayHintUntilTextEntered) ||
-                                    (isTextEmpty &&
-                                        !_focusNode.hasFocus &&
-                                        widget.hintBehavior == HintBehavior.displayHintUntilFocus));
+                        child: ListenableBuilder(
+                            listenable: _controller,
+                            builder: (context) {
+                              final isTextEmpty = _controller.text.text.isEmpty;
+                              final showHint = widget.hintBuilder != null &&
+                                  ((isTextEmpty && widget.hintBehavior == HintBehavior.displayHintUntilTextEntered) ||
+                                      (isTextEmpty &&
+                                          !_focusNode.hasFocus &&
+                                          widget.hintBehavior == HintBehavior.displayHintUntilFocus));
 
-                            return Stack(
-                              children: [
-                                if (showHint) widget.hintBuilder!(context),
-                                SelectableText(
-                                  key: _selectableTextKey,
-                                  textSpan: _controller.text
-                                      .computeTextSpan((attributions) => defaultStyleBuilder(attributions)),
-                                  textAlign: widget.textAlign,
-                                  textSelection: _controller.selection,
-                                  textSelectionDecoration: widget.textSelectionDecoration,
-                                  showCaret: _focusNode.hasFocus,
-                                  textCaretFactory: widget.textCaretFactory,
-                                ),
-                              ],
-                            );
-                          }),
-                    );
-                  }),
+                              return Stack(
+                                children: [
+                                  if (showHint) widget.hintBuilder!(context),
+                                  SelectableText(
+                                    key: _selectableTextKey,
+                                    textSpan: _controller.text
+                                        .computeTextSpan((attributions) => defaultStyleBuilder(attributions)),
+                                    textAlign: widget.textAlign,
+                                    textSelection: _controller.selection,
+                                    textSelectionDecoration: widget.textSelectionDecoration,
+                                    showCaret: _focusNode.hasFocus,
+                                    textCaretFactory: widget.textCaretFactory,
+                                  ),
+                                ],
+                              );
+                            }),
+                      );
+                    }),
+              ),
             ),
           ),
         ),
@@ -516,6 +526,9 @@ enum HintBehavior {
   /// Do not display a hint.
   noHint,
 }
+
+typedef RightClickListener = void Function(
+    BuildContext textFieldContext, AttributedTextEditingController textController, Offset textFieldOffset);
 
 enum _SelectionType {
   position,

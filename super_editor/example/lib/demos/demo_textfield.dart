@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart' hide SelectableText;
+import 'package:flutter/services.dart';
 import 'package:super_editor/super_editor.dart';
 
 /// Demo of a variety of [SuperTextField]
@@ -29,6 +30,9 @@ class _TextFieldDemoState extends State<TextFieldDemo> {
     ],
   );
 
+  OverlayEntry _popupEntry;
+  Offset _popupOffset = Offset.zero;
+
   FocusNode _focusNode;
 
   @override
@@ -41,6 +45,82 @@ class _TextFieldDemoState extends State<TextFieldDemo> {
   void dispose() {
     _focusNode.dispose();
     super.dispose();
+  }
+
+  void _onRightClick(
+      BuildContext textFieldContext, AttributedTextEditingController textController, Offset localOffset) {
+    // Only show menu if some text is selected
+    if (textController.selection.isCollapsed) {
+      return;
+    }
+
+    final overlay = Overlay.of(context);
+    final overlayBox = overlay.context.findRenderObject() as RenderBox;
+    final textFieldBox = textFieldContext.findRenderObject() as RenderBox;
+    _popupOffset = textFieldBox.localToGlobal(localOffset, ancestor: overlayBox);
+
+    if (_popupEntry == null) {
+      _popupEntry = OverlayEntry(builder: (context) {
+        return GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onTapDown: (_) {
+            _closePopup();
+          },
+          child: Container(
+            width: double.infinity,
+            height: double.infinity,
+            color: Colors.transparent,
+            child: Stack(
+              children: [
+                Positioned(
+                  left: _popupOffset.dx,
+                  top: _popupOffset.dy,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(4),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.3),
+                          blurRadius: 5,
+                          offset: const Offset(3, 3),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        TextButton(
+                          onPressed: () {
+                            Clipboard.setData(ClipboardData(
+                              text: textController.selection.textInside(textController.text.text),
+                            ));
+                            _closePopup();
+                          },
+                          child: Text('Copy'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      });
+
+      overlay.insert(_popupEntry);
+    } else {
+      _popupEntry.markNeedsBuild();
+    }
+  }
+
+  void _closePopup() {
+    if (_popupEntry == null) {
+      return;
+    }
+
+    _popupEntry.remove();
+    _popupEntry = null;
   }
 
   @override
@@ -80,6 +160,7 @@ class _TextFieldDemoState extends State<TextFieldDemo> {
                           );
                         },
                         hintBehavior: HintBehavior.displayHintUntilTextEntered,
+                        onRightClick: _onRightClick,
                         controller: AttributedTextEditingController(
                           text: AttributedText(
                             text:
