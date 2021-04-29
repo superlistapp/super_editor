@@ -1,7 +1,9 @@
 import 'dart:math';
+import 'dart:ui';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart' hide SelectableText;
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/default_editor/editor.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
@@ -32,6 +34,9 @@ class SuperTextField extends StatefulWidget {
       width: 1,
       borderRadius: BorderRadius.zero,
     ),
+    this.padding = EdgeInsets.zero,
+    this.minLines,
+    this.maxLines = 1,
     this.hintBuilder,
     this.hintBehavior = HintBehavior.displayHintUntilFocus,
     this.onRightClick,
@@ -52,6 +57,11 @@ class SuperTextField extends StatefulWidget {
   /// `SelectableText` widget.
   final TextCaretFactory textCaretFactory;
 
+  final EdgeInsetsGeometry padding;
+
+  final int? minLines;
+  final int? maxLines;
+
   final WidgetBuilder? hintBuilder;
   final HintBehavior hintBehavior;
 
@@ -63,13 +73,15 @@ class SuperTextField extends StatefulWidget {
   _SuperTextFieldState createState() => _SuperTextFieldState();
 }
 
-class _SuperTextFieldState extends State<SuperTextField> implements TextComposable {
+class _SuperTextFieldState extends State<SuperTextField> with SingleTickerProviderStateMixin implements TextComposable {
   final _selectableTextKey = GlobalKey<SelectableTextState>();
   late FocusNode _focusNode;
 
   late AttributedTextEditingController _controller;
 
   final _cursorStyle = ValueNotifier<MouseCursor>(SystemMouseCursors.basic);
+
+  double? _viewportHeight;
 
   _SelectionType _selectionType = _SelectionType.position;
   Offset? _dragStartInViewport;
@@ -78,12 +90,21 @@ class _SuperTextFieldState extends State<SuperTextField> implements TextComposab
   Offset? _dragEndInText;
   Rect? _dragRectInViewport;
 
+  final _dragGutterExtent = 24;
+  final _maxDragSpeed = 20;
+  late ScrollController _scrollController;
+  bool _scrollUpOnTick = false;
+  bool _scrollDownOnTick = false;
+  late Ticker _ticker;
+
   @override
   void initState() {
     super.initState();
 
     _focusNode = widget.focusNode ?? FocusNode();
-    _controller = widget.controller ?? AttributedTextEditingController();
+    _controller = (widget.controller ?? AttributedTextEditingController())..addListener(_onSelectionOrContentChange);
+    _scrollController = ScrollController();
+    _ticker = createTicker(_onTick);
   }
 
   @override
@@ -98,18 +119,28 @@ class _SuperTextFieldState extends State<SuperTextField> implements TextComposab
     }
 
     if (widget.controller != oldWidget.controller) {
+      _controller.removeListener(_onSelectionOrContentChange);
       if (oldWidget.controller == null) {
         _controller.dispose();
       }
-      _controller = widget.controller ?? AttributedTextEditingController();
+      _controller = (widget.controller ?? AttributedTextEditingController())..addListener(_onSelectionOrContentChange);
+    }
+
+    if (widget.padding != oldWidget.padding ||
+        widget.minLines != oldWidget.minLines ||
+        widget.maxLines != oldWidget.maxLines) {
+      _onSelectionOrContentChange();
     }
   }
 
   @override
   void dispose() {
+    _ticker.dispose();
+    _scrollController.dispose();
     if (widget.focusNode == null) {
       _focusNode.dispose();
     }
+    _controller.removeListener(_onSelectionOrContentChange);
     if (widget.controller == null) {
       _controller.dispose();
     }
@@ -205,6 +236,34 @@ class _SuperTextFieldState extends State<SuperTextField> implements TextComposab
       return null;
     }
     return _selectableTextKey.currentState!.getPositionAtStartOfLine(currentPosition: textPosition);
+  }
+
+  double _getEstimatedLineHeight() {
+    final defaultStyle = defaultStyleBuilder({});
+    return defaultStyle.height! * defaultStyle.fontSize!;
+  }
+
+  int _getEstimatedLinesOfText() {
+    if (_controller.text.text.isEmpty) {
+      print(' - text is empty');
+      return 0;
+    }
+
+    if (_selectableTextKey.currentState == null) {
+      print(' - selectable text state is null');
+      return 0;
+    }
+
+    final offsetAtEndOfText =
+        _selectableTextKey.currentState!.getOffsetForPosition(TextPosition(offset: _controller.text.text.length));
+    print(' - offset at end of text: $offsetAtEndOfText');
+    int lineCount = (offsetAtEndOfText.dy / _getEstimatedLineHeight()).ceil();
+
+    if (_controller.text.text.endsWith('\n')) {
+      lineCount += 1;
+    }
+
+    return lineCount;
   }
 
   KeyEventResult _onKeyPressed(RawKeyEvent keyEvent) {
@@ -311,7 +370,7 @@ class _SuperTextFieldState extends State<SuperTextField> implements TextComposab
       _updateCursorStyle(details.localPosition);
       _updateDragSelection();
 
-      // _scrollIfNearBoundary();
+      _scrollIfNearBoundary();
     });
   }
 
@@ -322,8 +381,8 @@ class _SuperTextFieldState extends State<SuperTextField> implements TextComposab
       _dragRectInViewport = null;
     });
 
-    // _stopScrollingUp();
-    // _stopScrollingDown();
+    _stopScrollingUp();
+    _stopScrollingDown();
   }
 
   void _onPanCancel() {
@@ -333,8 +392,8 @@ class _SuperTextFieldState extends State<SuperTextField> implements TextComposab
       _dragRectInViewport = null;
     });
 
-    // _stopScrollingUp();
-    // _stopScrollingDown();
+    _stopScrollingUp();
+    _stopScrollingDown();
   }
 
   Offset _getTextOffset(Offset textFieldOffset) {
@@ -427,67 +486,311 @@ class _SuperTextFieldState extends State<SuperTextField> implements TextComposab
     }
   }
 
+  void _onSelectionOrContentChange() {
+    // Use a post-frame callback to "ensure selection extent is visible"
+    // so that any pending visual document changes can happen before
+    // attempting to calculate the visual position of the selection extent.
+    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      final didViewportChange = _updateViewportHeight();
+
+      if (didViewportChange) {
+        WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+          _ensureSelectionExtentIsVisible();
+        });
+      } else {
+        _ensureSelectionExtentIsVisible();
+      }
+    });
+  }
+
+  /// Returns true if the viewport height changed, false otherwise.
+  bool _updateViewportHeight() {
+    final estimatedLineHeight = _getEstimatedLineHeight();
+    final estimatedLinesOfText = _getEstimatedLinesOfText();
+    final estimatedContentHeight = estimatedLinesOfText * estimatedLineHeight;
+    final minHeight = widget.minLines != null ? widget.minLines! * estimatedLineHeight + widget.padding.vertical : null;
+    final maxHeight = widget.maxLines != null ? widget.maxLines! * estimatedLineHeight + widget.padding.vertical : null;
+    double? viewportHeight;
+    if (maxHeight != null && estimatedContentHeight > maxHeight) {
+      viewportHeight = maxHeight;
+    } else if (minHeight != null && estimatedContentHeight < minHeight) {
+      viewportHeight = minHeight;
+    }
+    print('Viewport lines: $estimatedLinesOfText, content height: $estimatedContentHeight');
+
+    if (viewportHeight == _viewportHeight) {
+      // The height of the viewport hasn't changed. Return.
+      return false;
+    }
+
+    setState(() {
+      _viewportHeight = viewportHeight;
+    });
+
+    return true;
+  }
+
+  void _ensureSelectionExtentIsVisible() {
+    print('_ensureSelectionExtentIsVisible()');
+    final selection = _controller.selection;
+    if (selection.extentOffset == -1) {
+      return;
+    }
+
+    final extentOffset = _selectableTextKey.currentState!.getOffsetForPosition(selection.extent);
+    print(' - extent offset: $extentOffset');
+
+    final gutterExtent = 0; // _dragGutterExtent
+    final extentLineIndex = (extentOffset.dy / _getEstimatedLineHeight()).round();
+    print('Line index: $extentLineIndex');
+
+    final myBox = context.findRenderObject() as RenderBox;
+    final beyondTopExtent = min(extentOffset.dy - _scrollController.offset - gutterExtent, 0).abs();
+    final beyondBottomExtent = max(
+        ((extentLineIndex + 1) * _getEstimatedLineHeight()) -
+            myBox.size.height -
+            _scrollController.offset +
+            gutterExtent +
+            (_getEstimatedLineHeight() / 2) + // manual adjustment to avoid line getting half cut off
+            widget.padding.vertical / 2,
+        0);
+    print(
+        '${((extentLineIndex + 1) * _getEstimatedLineHeight()) - myBox.size.height - _scrollController.offset + gutterExtent}');
+    print('beyondBottomExtent: $beyondBottomExtent');
+
+    _log.log('_ensureSelectionExtentIsVisible', 'Ensuring extent is visible.');
+    _log.log('_ensureSelectionExtentIsVisible', ' - interaction size: ${myBox.size}');
+    _log.log('_ensureSelectionExtentIsVisible', ' - scroll extent: ${_scrollController.offset}');
+    _log.log('_ensureSelectionExtentIsVisible', ' - extent rect: $extentOffset');
+    _log.log('_ensureSelectionExtentIsVisible', ' - beyond top: $beyondTopExtent');
+    _log.log('_ensureSelectionExtentIsVisible', ' - beyond bottom: $beyondBottomExtent');
+
+    if (beyondTopExtent > 0) {
+      print(' - Auto-scrolling up');
+      final newScrollPosition =
+          (_scrollController.offset - beyondTopExtent).clamp(0.0, _scrollController.position.maxScrollExtent);
+
+      _scrollController.animateTo(
+        newScrollPosition,
+        duration: const Duration(milliseconds: 100),
+        curve: Curves.easeOut,
+      );
+    } else if (beyondBottomExtent > 0) {
+      print(' - Auto-scrolling down');
+      final newScrollPosition =
+          (beyondBottomExtent + _scrollController.offset).clamp(0.0, _scrollController.position.maxScrollExtent);
+
+      _scrollController.animateTo(
+        newScrollPosition,
+        duration: const Duration(milliseconds: 100),
+        curve: Curves.easeOut,
+      );
+    }
+  }
+
+  // ------ scrolling -------
+  /// We prevent SingleChildScrollView from processing mouse events because
+  /// it scrolls by drag by default, which we don't want. However, we do
+  /// still want mouse scrolling. This method re-implements a primitive
+  /// form of mouse scrolling.
+  void _onPointerSignal(PointerSignalEvent event) {
+    if (event is PointerScrollEvent) {
+      final newScrollOffset =
+          (_scrollController.offset + event.scrollDelta.dy).clamp(0.0, _scrollController.position.maxScrollExtent);
+      _scrollController.jumpTo(newScrollOffset);
+
+      _updateDragSelection();
+    }
+  }
+
+  // Preconditions:
+  // - _dragEndInViewport must be non-null
+  void _scrollIfNearBoundary() {
+    if (_dragEndInViewport == null) {
+      _log.log('_scrollIfNearBoundary', "Can't scroll near boundary because _dragEndInViewport is null");
+      assert(_dragEndInViewport != null);
+      return;
+    }
+
+    final editorBox = context.findRenderObject() as RenderBox;
+
+    if (_dragEndInViewport!.dy < _dragGutterExtent) {
+      _startScrollingUp();
+    } else {
+      _stopScrollingUp();
+    }
+    if (editorBox.size.height - _dragEndInViewport!.dy < _dragGutterExtent) {
+      _startScrollingDown();
+    } else {
+      _stopScrollingDown();
+    }
+  }
+
+  void _startScrollingUp() {
+    if (_scrollUpOnTick) {
+      return;
+    }
+
+    print('Start scrolling up');
+    _scrollUpOnTick = true;
+    _ticker.start();
+  }
+
+  void _stopScrollingUp() {
+    if (!_scrollUpOnTick) {
+      return;
+    }
+
+    print('Stop scrolling up');
+    _scrollUpOnTick = false;
+    _ticker.stop();
+  }
+
+  void _scrollUp() {
+    if (_dragEndInViewport == null) {
+      _log.log('_scrollUp', "Can't scroll up because _dragEndInViewport is null");
+      assert(_dragEndInViewport != null);
+      return;
+    }
+
+    if (_scrollController.offset <= 0) {
+      return;
+    }
+
+    final gutterAmount = _dragEndInViewport!.dy.clamp(0.0, _dragGutterExtent);
+    final speedPercent = 1.0 - (gutterAmount / _dragGutterExtent);
+    final scrollAmount = lerpDouble(0, _maxDragSpeed, speedPercent);
+
+    _scrollController.position.jumpTo(_scrollController.offset - scrollAmount!);
+  }
+
+  void _startScrollingDown() {
+    if (_scrollDownOnTick) {
+      return;
+    }
+
+    print('Start scrolling down');
+    _scrollDownOnTick = true;
+    _ticker.start();
+  }
+
+  void _stopScrollingDown() {
+    if (!_scrollDownOnTick) {
+      return;
+    }
+
+    print('Stop scrolling down');
+    _scrollDownOnTick = false;
+    _ticker.stop();
+  }
+
+  void _scrollDown() {
+    if (_dragEndInViewport == null) {
+      _log.log('_scrollDown', "Can't scroll down because _dragEndInViewport is null");
+      assert(_dragEndInViewport != null);
+      return;
+    }
+
+    if (_scrollController.offset >= _scrollController.position.maxScrollExtent) {
+      return;
+    }
+
+    final editorBox = context.findRenderObject() as RenderBox;
+    final gutterAmount = (editorBox.size.height - _dragEndInViewport!.dy).clamp(0.0, _dragGutterExtent);
+    final speedPercent = 1.0 - (gutterAmount / _dragGutterExtent);
+    final scrollAmount = lerpDouble(0, _maxDragSpeed, speedPercent);
+
+    _scrollController.position.jumpTo(_scrollController.offset + scrollAmount!);
+  }
+
+  void _onTick(elapsedTime) {
+    if (_scrollUpOnTick) {
+      _scrollUp();
+    }
+    if (_scrollDownOnTick) {
+      _scrollDown();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (_selectableTextKey.currentContext == null) {
+      // The text hasn't been laid out yet, which means our calculations
+      // for text height is probably wrong. Schedule a post frame callback
+      // to re-calculate the height.
+      WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+        setState(() {
+          _updateViewportHeight();
+        });
+      });
+    }
+
     return Focus(
       onKey: (_, __) => true,
-      child: RawKeyboardListener(
-        focusNode: _focusNode,
-        onKey: _onKeyPressed,
-        child: GestureDetector(
-          onSecondaryTapUp: _onRightClick,
-          child: RawGestureDetector(
-            behavior: HitTestBehavior.translucent,
-            gestures: <Type, GestureRecognizerFactory>{
-              TapSequenceGestureRecognizer: GestureRecognizerFactoryWithHandlers<TapSequenceGestureRecognizer>(
-                () => TapSequenceGestureRecognizer(),
-                (TapSequenceGestureRecognizer recognizer) {
-                  recognizer
-                    ..onTapDown = _onTapDown
-                    ..onDoubleTapDown = _onDoubleTapDown
-                    ..onDoubleTap = _onDoubleTap
-                    ..onTripleTapDown = _onTripleTapDown
-                    ..onTripleTap = _onTripleTap;
-                },
-              ),
-              PanGestureRecognizer: GestureRecognizerFactoryWithHandlers<PanGestureRecognizer>(
-                () => PanGestureRecognizer(),
-                (PanGestureRecognizer recognizer) {
-                  recognizer
-                    ..onStart = _onPanStart
-                    ..onUpdate = _onPanUpdate
-                    ..onEnd = _onPanEnd
-                    ..onCancel = _onPanCancel;
-                },
-              ),
-            },
-            child: Listener(
-              onPointerHover: _onMouseMove,
-              child: MouseRegion(
-                cursor: _cursorStyle.value,
-                child: ListenableBuilder(
-                    listenable: _focusNode,
-                    builder: (context) {
-                      return Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(4),
-                          border: Border.all(
-                            color: _focusNode.hasFocus ? Colors.blue : Colors.grey.shade300,
-                            width: 1,
-                          ),
-                        ),
-                        child: ListenableBuilder(
-                            listenable: _controller,
-                            builder: (context) {
-                              final isTextEmpty = _controller.text.text.isEmpty;
-                              final showHint = widget.hintBuilder != null &&
-                                  ((isTextEmpty && widget.hintBehavior == HintBehavior.displayHintUntilTextEntered) ||
-                                      (isTextEmpty &&
-                                          !_focusNode.hasFocus &&
-                                          widget.hintBehavior == HintBehavior.displayHintUntilFocus));
+      child: Listener(
+        onPointerSignal: _onPointerSignal,
+        child: RawKeyboardListener(
+          focusNode: _focusNode,
+          onKey: _onKeyPressed,
+          child: GestureDetector(
+            onSecondaryTapUp: _onRightClick,
+            child: RawGestureDetector(
+              behavior: HitTestBehavior.translucent,
+              gestures: <Type, GestureRecognizerFactory>{
+                TapSequenceGestureRecognizer: GestureRecognizerFactoryWithHandlers<TapSequenceGestureRecognizer>(
+                  () => TapSequenceGestureRecognizer(),
+                  (TapSequenceGestureRecognizer recognizer) {
+                    recognizer
+                      ..onTapDown = _onTapDown
+                      ..onDoubleTapDown = _onDoubleTapDown
+                      ..onDoubleTap = _onDoubleTap
+                      ..onTripleTapDown = _onTripleTapDown
+                      ..onTripleTap = _onTripleTap;
+                  },
+                ),
+                PanGestureRecognizer: GestureRecognizerFactoryWithHandlers<PanGestureRecognizer>(
+                  () => PanGestureRecognizer(),
+                  (PanGestureRecognizer recognizer) {
+                    recognizer
+                      ..onStart = _onPanStart
+                      ..onUpdate = _onPanUpdate
+                      ..onEnd = _onPanEnd
+                      ..onCancel = _onPanCancel;
+                  },
+                ),
+              },
+              child: Listener(
+                onPointerHover: _onMouseMove,
+                child: MouseRegion(
+                  cursor: _cursorStyle.value,
+                  child: MultiListenableBuilder(
+                      listenables: {
+                        _focusNode,
+                        _controller,
+                      },
+                      builder: (context) {
+                        final isTextEmpty = _controller.text.text.isEmpty;
+                        final showHint = widget.hintBuilder != null &&
+                            ((isTextEmpty && widget.hintBehavior == HintBehavior.displayHintUntilTextEntered) ||
+                                (isTextEmpty &&
+                                    !_focusNode.hasFocus &&
+                                    widget.hintBehavior == HintBehavior.displayHintUntilFocus));
 
-                              return Stack(
+                        return Container(
+                          height: _viewportHeight,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(
+                              color: _focusNode.hasFocus ? Colors.blue : Colors.grey.shade300,
+                              width: 1,
+                            ),
+                          ),
+                          child: SingleChildScrollView(
+                            controller: _scrollController,
+                            physics: NeverScrollableScrollPhysics(),
+                            child: Padding(
+                              padding: widget.padding,
+                              child: Stack(
                                 children: [
                                   if (showHint) widget.hintBuilder!(context),
                                   SelectableText(
@@ -501,10 +804,12 @@ class _SuperTextFieldState extends State<SuperTextField> implements TextComposab
                                     textCaretFactory: widget.textCaretFactory,
                                   ),
                                 ],
-                              );
-                            }),
-                      );
-                    }),
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
+                ),
               ),
             ),
           ),

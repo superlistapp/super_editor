@@ -230,6 +230,13 @@ class SelectableTextState extends State<SelectableText> implements TextLayout {
     if (_renderParagraph == null) {
       throw Exception('SelectableText does not yet have a RenderParagraph. Can\'t getOffsetForPosition().');
     }
+    if (_renderParagraph!.debugNeedsLayout) {
+      // This condition was added because getOffsetForCaret() was throwing
+      // an exception when debugNeedsLayout is true. It's unclear what we're
+      // supposed to do at our level to ensure that condition doesn't happen
+      // so until we figure it out, we'll just return a zero Offset.
+      return Offset.zero;
+    }
 
     return _renderParagraph!.getOffsetForCaret(position, Rect.zero);
   }

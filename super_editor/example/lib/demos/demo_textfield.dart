@@ -144,6 +144,7 @@ class _TextFieldDemoState extends State<TextFieldDemo> {
                       child: SuperTextField(
                         controller: _textFieldController,
                         focusNode: _focusNode,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         hintBuilder: (context) {
                           return Text(
                             'enter some text',
@@ -153,6 +154,8 @@ class _TextFieldDemoState extends State<TextFieldDemo> {
                           );
                         },
                         hintBehavior: HintBehavior.displayHintUntilTextEntered,
+                        minLines: 1,
+                        maxLines: 4,
                         onRightClick: _onRightClick,
                       ),
                     ),
