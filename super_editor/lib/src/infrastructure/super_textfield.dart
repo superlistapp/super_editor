@@ -70,10 +70,10 @@ class SuperTextField extends StatefulWidget {
   final List<TextfieldKeyboardAction> keyboardActions;
 
   @override
-  _SuperTextFieldState createState() => _SuperTextFieldState();
+  SuperTextFieldState createState() => SuperTextFieldState();
 }
 
-class _SuperTextFieldState extends State<SuperTextField> with SingleTickerProviderStateMixin implements TextComposable {
+class SuperTextFieldState extends State<SuperTextField> with SingleTickerProviderStateMixin implements TextComposable {
   final _selectableTextKey = GlobalKey<SelectableTextState>();
   late FocusNode _focusNode;
 
@@ -93,8 +93,8 @@ class _SuperTextFieldState extends State<SuperTextField> with SingleTickerProvid
   final _dragGutterExtent = 24;
   final _maxDragSpeed = 20;
   late ScrollController _scrollController;
-  bool _scrollUpOnTick = false;
-  bool _scrollDownOnTick = false;
+  bool _scrollToStartOnTick = false;
+  bool _scrollToEndOnTick = false;
   late Ticker _ticker;
 
   @override
@@ -148,20 +148,13 @@ class _SuperTextFieldState extends State<SuperTextField> with SingleTickerProvid
     super.dispose();
   }
 
+  //-------- START TEXT LAYOUT ---------
   @override
   TextSelection getWordSelectionAt(dynamic textPosition) {
-    if (textPosition is! TextPosition) {
-      throw Exception('Expected a node position of type TextPosition but received: $textPosition');
-    }
-
     return _selectableTextKey.currentState!.getWordSelectionAt(textPosition);
   }
 
-  TextSelection getParagraphSelectionAt(dynamic textPosition, TextAffinity affinity) {
-    if (textPosition is! TextPosition) {
-      throw Exception('Expected a node position of type TextPosition but received: $textPosition');
-    }
-
+  TextSelection getParagraphSelectionAt(TextPosition textPosition, TextAffinity affinity) {
     final plainText = _controller.text.text;
 
     // If the given position falls directly on a newline then return
@@ -266,6 +259,30 @@ class _SuperTextFieldState extends State<SuperTextField> with SingleTickerProvid
     return lineCount;
   }
 
+  Offset _getTextOffset(Offset textFieldOffset) {
+    final textFieldBox = context.findRenderObject() as RenderBox;
+    final textBox = _selectableTextKey.currentContext!.findRenderObject() as RenderBox;
+    return textBox.globalToLocal(textFieldOffset, ancestor: textFieldBox);
+  }
+
+  TextPosition? _getPositionAtOffset(Offset textFieldOffset) {
+    final textOffset = _getTextOffset(textFieldOffset);
+    final textBox = _selectableTextKey.currentContext!.findRenderObject() as RenderBox;
+
+    return textBox.size.contains(textOffset) ? _selectableTextKey.currentState!.getPositionAtOffset(textOffset) : null;
+  }
+
+  TextPosition _getPositionNearestToTextOffset(Offset textOffset) {
+    return _selectableTextKey.currentState!.getPositionAtOffset(textOffset);
+  }
+
+  bool _isTextAtOffset(Offset textFieldOffset) {
+    final textOffset = _getTextOffset(textFieldOffset);
+    return _selectableTextKey.currentState!.isTextAtOffset(textOffset);
+  }
+  //-------- END TEXT LAYOUT ---------
+
+  //-------- START KEYBOARD ---------
   KeyEventResult _onKeyPressed(RawKeyEvent keyEvent) {
     _log.log('_onKeyPressed', 'keyEvent: ${keyEvent.character}');
     if (keyEvent is! RawKeyDownEvent) {
@@ -286,7 +303,9 @@ class _SuperTextFieldState extends State<SuperTextField> with SingleTickerProvid
 
     return instruction == TextFieldActionResult.handled ? KeyEventResult.handled : KeyEventResult.ignored;
   }
+  //-------- END KEYBOARD ---------
 
+  //-------- START GESTURES ---------
   void _onTapDown(TapDownDetails details) {
     _log.log('_onTapDown', 'EditableDocument: onTapDown()');
     _clearSelection();
@@ -381,8 +400,8 @@ class _SuperTextFieldState extends State<SuperTextField> with SingleTickerProvid
       _dragRectInViewport = null;
     });
 
-    _stopScrollingUp();
-    _stopScrollingDown();
+    _stopScrollingToStart();
+    _stopScrollingToEnd();
   }
 
   void _onPanCancel() {
@@ -392,25 +411,8 @@ class _SuperTextFieldState extends State<SuperTextField> with SingleTickerProvid
       _dragRectInViewport = null;
     });
 
-    _stopScrollingUp();
-    _stopScrollingDown();
-  }
-
-  Offset _getTextOffset(Offset textFieldOffset) {
-    final textFieldBox = context.findRenderObject() as RenderBox;
-    final textBox = _selectableTextKey.currentContext!.findRenderObject() as RenderBox;
-    return textBox.globalToLocal(textFieldOffset, ancestor: textFieldBox);
-  }
-
-  TextPosition? _getPositionAtOffset(Offset textFieldOffset) {
-    final textOffset = _getTextOffset(textFieldOffset);
-    final textBox = _selectableTextKey.currentContext!.findRenderObject() as RenderBox;
-
-    return textBox.size.contains(textOffset) ? _selectableTextKey.currentState!.getPositionAtOffset(textOffset) : null;
-  }
-
-  TextPosition _getPositionNearestToTextOffset(Offset textOffset) {
-    return _selectableTextKey.currentState!.getPositionAtOffset(textOffset);
+    _stopScrollingToStart();
+    _stopScrollingToEnd();
   }
 
   void _updateDragSelection() {
@@ -450,88 +452,79 @@ class _SuperTextFieldState extends State<SuperTextField> with SingleTickerProvid
     });
   }
 
-  TextSelection _combineSelections(
-    TextSelection selection1,
-    TextSelection selection2,
-    TextAffinity affinity,
-  ) {
-    return affinity == TextAffinity.downstream
-        ? TextSelection(
-            baseOffset: min(selection1.start, selection2.start),
-            extentOffset: max(selection1.end, selection2.end),
-          )
-        : TextSelection(
-            baseOffset: max(selection1.end, selection2.end),
-            extentOffset: min(selection1.start, selection2.start),
-          );
-  }
-
-  void _clearSelection() {
-    setState(() {
-      _controller.selection = TextSelection.collapsed(offset: -1);
-    });
-  }
-
   void _onMouseMove(PointerEvent pointerEvent) {
     _updateCursorStyle(pointerEvent.localPosition);
   }
 
-  void _updateCursorStyle(Offset cursorOffset) {
-    final textPositionAtOffset = _getPositionAtOffset(cursorOffset);
+  /// We prevent SingleChildScrollView from processing mouse events because
+  /// it scrolls by drag by default, which we don't want. However, we do
+  /// still want mouse scrolling. This method re-implements a primitive
+  /// form of mouse scrolling.
+  void _onPointerSignal(PointerSignalEvent event) {
+    if (event is PointerScrollEvent) {
+      final newScrollOffset =
+          (_scrollController.offset + event.scrollDelta.dy).clamp(0.0, _scrollController.position.maxScrollExtent);
+      _scrollController.jumpTo(newScrollOffset);
 
-    if (textPositionAtOffset != null) {
-      _cursorStyle.value = SystemMouseCursors.text;
-    } else {
-      _cursorStyle.value = SystemMouseCursors.basic;
+      _updateDragSelection();
     }
   }
+  //-------- END GESTURES ---------
 
-  void _onSelectionOrContentChange() {
-    // Use a post-frame callback to "ensure selection extent is visible"
-    // so that any pending visual document changes can happen before
-    // attempting to calculate the visual position of the selection extent.
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
-      final didViewportChange = _updateViewportHeight();
-
-      if (didViewportChange) {
-        WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
-          _ensureSelectionExtentIsVisible();
-        });
-      } else {
-        _ensureSelectionExtentIsVisible();
-      }
-    });
-  }
-
-  /// Returns true if the viewport height changed, false otherwise.
-  bool _updateViewportHeight() {
-    final estimatedLineHeight = _getEstimatedLineHeight();
-    final estimatedLinesOfText = _getEstimatedLinesOfText();
-    final estimatedContentHeight = estimatedLinesOfText * estimatedLineHeight;
-    final minHeight = widget.minLines != null ? widget.minLines! * estimatedLineHeight + widget.padding.vertical : null;
-    final maxHeight = widget.maxLines != null ? widget.maxLines! * estimatedLineHeight + widget.padding.vertical : null;
-    double? viewportHeight;
-    if (maxHeight != null && estimatedContentHeight > maxHeight) {
-      viewportHeight = maxHeight;
-    } else if (minHeight != null && estimatedContentHeight < minHeight) {
-      viewportHeight = minHeight;
-    }
-    print('Viewport lines: $estimatedLinesOfText, content height: $estimatedContentHeight');
-
-    if (viewportHeight == _viewportHeight) {
-      // The height of the viewport hasn't changed. Return.
-      return false;
-    }
-
-    setState(() {
-      _viewportHeight = viewportHeight;
-    });
-
-    return true;
-  }
-
+  //-------- START SCROLLING ---------
   void _ensureSelectionExtentIsVisible() {
-    print('_ensureSelectionExtentIsVisible()');
+    if (_isSingleLineTextField()) {
+      _ensureSelectionExtentIsVisibleInSingleLineTextField();
+    } else {
+      _ensureSelectionExtentIsVisibleInMultilineTextField();
+    }
+  }
+
+  void _ensureSelectionExtentIsVisibleInSingleLineTextField() {
+    print('_ensureSelectionExtentIsVisibleInSingleLineTextField()');
+    print(' - selection: ${_controller.selection}');
+    final selection = _controller.selection;
+    if (selection.extentOffset == -1) {
+      return;
+    }
+
+    final extentOffset = _selectableTextKey.currentState!.getOffsetForPosition(selection.extent);
+    print(' - extent offset: $extentOffset');
+
+    final gutterExtent = 0; // _dragGutterExtent
+
+    final myBox = context.findRenderObject() as RenderBox;
+    final beyondLeftExtent = min(extentOffset.dx - _scrollController.offset - gutterExtent, 0).abs();
+    final beyondRightExtent = max(
+        extentOffset.dx - myBox.size.width - _scrollController.offset + gutterExtent + widget.padding.horizontal, 0);
+    print(
+        'Right extent: ${extentOffset.dx}, needed scroll: ${extentOffset.dx - myBox.size.width - _scrollController.offset}, with padding: ${extentOffset.dx - myBox.size.width - _scrollController.offset + widget.padding.horizontal}');
+
+    if (beyondLeftExtent > 0) {
+      print(' - Auto-scrolling left');
+      final newScrollPosition =
+          (_scrollController.offset - beyondLeftExtent).clamp(0.0, _scrollController.position.maxScrollExtent);
+
+      _scrollController.animateTo(
+        newScrollPosition,
+        duration: const Duration(milliseconds: 100),
+        curve: Curves.easeOut,
+      );
+    } else if (beyondRightExtent > 0) {
+      print(' - Auto-scrolling right');
+      final newScrollPosition =
+          (beyondRightExtent + _scrollController.offset).clamp(0.0, _scrollController.position.maxScrollExtent);
+
+      _scrollController.animateTo(
+        newScrollPosition,
+        duration: const Duration(milliseconds: 100),
+        curve: Curves.easeOut,
+      );
+    }
+  }
+
+  void _ensureSelectionExtentIsVisibleInMultilineTextField() {
+    print('_ensureSelectionExtentIsVisibleInMultilineTextField()');
     final selection = _controller.selection;
     if (selection.extentOffset == -1) {
       return;
@@ -588,23 +581,6 @@ class _SuperTextFieldState extends State<SuperTextField> with SingleTickerProvid
     }
   }
 
-  // ------ scrolling -------
-  /// We prevent SingleChildScrollView from processing mouse events because
-  /// it scrolls by drag by default, which we don't want. However, we do
-  /// still want mouse scrolling. This method re-implements a primitive
-  /// form of mouse scrolling.
-  void _onPointerSignal(PointerSignalEvent event) {
-    if (event is PointerScrollEvent) {
-      final newScrollOffset =
-          (_scrollController.offset + event.scrollDelta.dy).clamp(0.0, _scrollController.position.maxScrollExtent);
-      _scrollController.jumpTo(newScrollOffset);
-
-      _updateDragSelection();
-    }
-  }
-
-  // Preconditions:
-  // - _dragEndInViewport must be non-null
   void _scrollIfNearBoundary() {
     if (_dragEndInViewport == null) {
       _log.log('_scrollIfNearBoundary', "Can't scroll near boundary because _dragEndInViewport is null");
@@ -612,41 +588,64 @@ class _SuperTextFieldState extends State<SuperTextField> with SingleTickerProvid
       return;
     }
 
-    final editorBox = context.findRenderObject() as RenderBox;
-
-    if (_dragEndInViewport!.dy < _dragGutterExtent) {
-      _startScrollingUp();
+    if (_isSingleLineTextField()) {
+      _scrollIfNearHorizontalBoundary();
     } else {
-      _stopScrollingUp();
-    }
-    if (editorBox.size.height - _dragEndInViewport!.dy < _dragGutterExtent) {
-      _startScrollingDown();
-    } else {
-      _stopScrollingDown();
+      _scrollIfNearVerticalBoundary();
     }
   }
 
-  void _startScrollingUp() {
-    if (_scrollUpOnTick) {
+  void _scrollIfNearHorizontalBoundary() {
+    final editorBox = context.findRenderObject() as RenderBox;
+
+    if (_dragEndInViewport!.dx < _dragGutterExtent) {
+      _startScrollingToStart();
+    } else {
+      _stopScrollingToStart();
+    }
+    if (editorBox.size.width - _dragEndInViewport!.dx < _dragGutterExtent) {
+      _startScrollingToEnd();
+    } else {
+      _stopScrollingToEnd();
+    }
+  }
+
+  void _scrollIfNearVerticalBoundary() {
+    final editorBox = context.findRenderObject() as RenderBox;
+
+    if (_dragEndInViewport!.dy < _dragGutterExtent) {
+      _startScrollingToStart();
+    } else {
+      _stopScrollingToStart();
+    }
+    if (editorBox.size.height - _dragEndInViewport!.dy < _dragGutterExtent) {
+      _startScrollingToEnd();
+    } else {
+      _stopScrollingToEnd();
+    }
+  }
+
+  void _startScrollingToStart() {
+    if (_scrollToStartOnTick) {
       return;
     }
 
     print('Start scrolling up');
-    _scrollUpOnTick = true;
+    _scrollToStartOnTick = true;
     _ticker.start();
   }
 
-  void _stopScrollingUp() {
-    if (!_scrollUpOnTick) {
+  void _stopScrollingToStart() {
+    if (!_scrollToStartOnTick) {
       return;
     }
 
     print('Stop scrolling up');
-    _scrollUpOnTick = false;
+    _scrollToStartOnTick = false;
     _ticker.stop();
   }
 
-  void _scrollUp() {
+  void _scrollToStart() {
     if (_dragEndInViewport == null) {
       _log.log('_scrollUp', "Can't scroll up because _dragEndInViewport is null");
       assert(_dragEndInViewport != null);
@@ -664,27 +663,27 @@ class _SuperTextFieldState extends State<SuperTextField> with SingleTickerProvid
     _scrollController.position.jumpTo(_scrollController.offset - scrollAmount!);
   }
 
-  void _startScrollingDown() {
-    if (_scrollDownOnTick) {
+  void _startScrollingToEnd() {
+    if (_scrollToEndOnTick) {
       return;
     }
 
     print('Start scrolling down');
-    _scrollDownOnTick = true;
+    _scrollToEndOnTick = true;
     _ticker.start();
   }
 
-  void _stopScrollingDown() {
-    if (!_scrollDownOnTick) {
+  void _stopScrollingToEnd() {
+    if (!_scrollToEndOnTick) {
       return;
     }
 
     print('Stop scrolling down');
-    _scrollDownOnTick = false;
+    _scrollToEndOnTick = false;
     _ticker.stop();
   }
 
-  void _scrollDown() {
+  void _scrollToEnd() {
     if (_dragEndInViewport == null) {
       _log.log('_scrollDown', "Can't scroll down because _dragEndInViewport is null");
       assert(_dragEndInViewport != null);
@@ -704,12 +703,91 @@ class _SuperTextFieldState extends State<SuperTextField> with SingleTickerProvid
   }
 
   void _onTick(elapsedTime) {
-    if (_scrollUpOnTick) {
-      _scrollUp();
+    if (_scrollToStartOnTick) {
+      _scrollToStart();
     }
-    if (_scrollDownOnTick) {
-      _scrollDown();
+    if (_scrollToEndOnTick) {
+      _scrollToEnd();
     }
+  }
+  //-------- END SCROLLING ---------
+
+  TextSelection _combineSelections(
+    TextSelection selection1,
+    TextSelection selection2,
+    TextAffinity affinity,
+  ) {
+    return affinity == TextAffinity.downstream
+        ? TextSelection(
+            baseOffset: min(selection1.start, selection2.start),
+            extentOffset: max(selection1.end, selection2.end),
+          )
+        : TextSelection(
+            baseOffset: max(selection1.end, selection2.end),
+            extentOffset: min(selection1.start, selection2.start),
+          );
+  }
+
+  void _clearSelection() {
+    setState(() {
+      _controller.selection = TextSelection.collapsed(offset: -1);
+    });
+  }
+
+  void _updateCursorStyle(Offset cursorOffset) {
+    if (_isTextAtOffset(cursorOffset)) {
+      _cursorStyle.value = SystemMouseCursors.text;
+    } else {
+      _cursorStyle.value = SystemMouseCursors.basic;
+    }
+  }
+
+  void _onSelectionOrContentChange() {
+    // Use a post-frame callback to "ensure selection extent is visible"
+    // so that any pending visual document changes can happen before
+    // attempting to calculate the visual position of the selection extent.
+    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      final didViewportChange = _updateViewportHeight();
+
+      if (didViewportChange) {
+        WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+          _ensureSelectionExtentIsVisible();
+        });
+      } else {
+        _ensureSelectionExtentIsVisible();
+      }
+    });
+  }
+
+  /// Returns true if the viewport height changed, false otherwise.
+  bool _updateViewportHeight() {
+    final estimatedLineHeight = _getEstimatedLineHeight();
+    final estimatedLinesOfText = _getEstimatedLinesOfText();
+    final estimatedContentHeight = estimatedLinesOfText * estimatedLineHeight;
+    final minHeight = widget.minLines != null ? widget.minLines! * estimatedLineHeight + widget.padding.vertical : null;
+    final maxHeight = widget.maxLines != null ? widget.maxLines! * estimatedLineHeight + widget.padding.vertical : null;
+    double? viewportHeight;
+    if (maxHeight != null && estimatedContentHeight > maxHeight) {
+      viewportHeight = maxHeight;
+    } else if (minHeight != null && estimatedContentHeight < minHeight) {
+      viewportHeight = minHeight;
+    }
+    print('Viewport lines: $estimatedLinesOfText, content height: $estimatedContentHeight');
+
+    if (viewportHeight == _viewportHeight) {
+      // The height of the viewport hasn't changed. Return.
+      return false;
+    }
+
+    setState(() {
+      _viewportHeight = viewportHeight;
+    });
+
+    return true;
+  }
+
+  bool _isSingleLineTextField() {
+    return widget.minLines == 1 && widget.maxLines == 1;
   }
 
   @override
@@ -717,7 +795,7 @@ class _SuperTextFieldState extends State<SuperTextField> with SingleTickerProvid
     if (_selectableTextKey.currentContext == null) {
       // The text hasn't been laid out yet, which means our calculations
       // for text height is probably wrong. Schedule a post frame callback
-      // to re-calculate the height.
+      // to re-calculate the height after initial layout.
       WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
         setState(() {
           _updateViewportHeight();
@@ -761,55 +839,60 @@ class _SuperTextFieldState extends State<SuperTextField> with SingleTickerProvid
               },
               child: Listener(
                 onPointerHover: _onMouseMove,
-                child: MouseRegion(
-                  cursor: _cursorStyle.value,
-                  child: MultiListenableBuilder(
-                      listenables: {
-                        _focusNode,
-                        _controller,
-                      },
-                      builder: (context) {
-                        final isTextEmpty = _controller.text.text.isEmpty;
-                        final showHint = widget.hintBuilder != null &&
-                            ((isTextEmpty && widget.hintBehavior == HintBehavior.displayHintUntilTextEntered) ||
-                                (isTextEmpty &&
-                                    !_focusNode.hasFocus &&
-                                    widget.hintBehavior == HintBehavior.displayHintUntilFocus));
+                child: ListenableBuilder(
+                    listenable: _cursorStyle,
+                    builder: (context) {
+                      return MouseRegion(
+                        cursor: _cursorStyle.value,
+                        child: MultiListenableBuilder(
+                            listenables: {
+                              _focusNode,
+                              _controller,
+                            },
+                            builder: (context) {
+                              final isTextEmpty = _controller.text.text.isEmpty;
+                              final showHint = widget.hintBuilder != null &&
+                                  ((isTextEmpty && widget.hintBehavior == HintBehavior.displayHintUntilTextEntered) ||
+                                      (isTextEmpty &&
+                                          !_focusNode.hasFocus &&
+                                          widget.hintBehavior == HintBehavior.displayHintUntilFocus));
 
-                        return Container(
-                          height: _viewportHeight,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(4),
-                            border: Border.all(
-                              color: _focusNode.hasFocus ? Colors.blue : Colors.grey.shade300,
-                              width: 1,
-                            ),
-                          ),
-                          child: SingleChildScrollView(
-                            controller: _scrollController,
-                            physics: NeverScrollableScrollPhysics(),
-                            child: Padding(
-                              padding: widget.padding,
-                              child: Stack(
-                                children: [
-                                  if (showHint) widget.hintBuilder!(context),
-                                  SelectableText(
-                                    key: _selectableTextKey,
-                                    textSpan: _controller.text
-                                        .computeTextSpan((attributions) => defaultStyleBuilder(attributions)),
-                                    textAlign: widget.textAlign,
-                                    textSelection: _controller.selection,
-                                    textSelectionDecoration: widget.textSelectionDecoration,
-                                    showCaret: _focusNode.hasFocus,
-                                    textCaretFactory: widget.textCaretFactory,
+                              return Container(
+                                height: _viewportHeight,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(4),
+                                  border: Border.all(
+                                    color: _focusNode.hasFocus ? Colors.blue : Colors.grey.shade300,
+                                    width: 1,
                                   ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
-                      }),
-                ),
+                                ),
+                                child: SingleChildScrollView(
+                                  controller: _scrollController,
+                                  physics: NeverScrollableScrollPhysics(),
+                                  scrollDirection: _isSingleLineTextField() ? Axis.horizontal : Axis.vertical,
+                                  child: Padding(
+                                    padding: widget.padding,
+                                    child: Stack(
+                                      children: [
+                                        if (showHint) widget.hintBuilder!(context),
+                                        SelectableText(
+                                          key: _selectableTextKey,
+                                          textSpan: _controller.text
+                                              .computeTextSpan((attributions) => defaultStyleBuilder(attributions)),
+                                          textAlign: widget.textAlign,
+                                          textSelection: _controller.selection,
+                                          textSelectionDecoration: widget.textSelectionDecoration,
+                                          showCaret: _focusNode.hasFocus,
+                                          textCaretFactory: widget.textCaretFactory,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }),
+                      );
+                    }),
               ),
             ),
           ),
@@ -848,7 +931,7 @@ enum TextFieldActionResult {
 
 typedef TextfieldKeyboardAction = TextFieldActionResult Function({
   required AttributedTextEditingController controller,
-  required _SuperTextFieldState textFieldState,
+  required SuperTextFieldState textFieldState,
   required RawKeyEvent keyEvent,
 });
 
@@ -863,7 +946,7 @@ const defaultTextfieldKeyboardActions = <TextfieldKeyboardAction>[
 
 TextFieldActionResult copyTextWhenCmdCIsPressed({
   required AttributedTextEditingController controller,
-  required _SuperTextFieldState textFieldState,
+  required SuperTextFieldState textFieldState,
   required RawKeyEvent keyEvent,
 }) {
   if (!keyEvent.isMetaPressed) {
@@ -882,7 +965,7 @@ TextFieldActionResult copyTextWhenCmdCIsPressed({
 
 TextFieldActionResult pasteTextWhenCmdVIsPressed({
   required AttributedTextEditingController controller,
-  required _SuperTextFieldState textFieldState,
+  required SuperTextFieldState textFieldState,
   required RawKeyEvent keyEvent,
 }) {
   if (!keyEvent.isMetaPressed) {
@@ -907,7 +990,7 @@ TextFieldActionResult pasteTextWhenCmdVIsPressed({
 
 TextFieldActionResult moveUpDownLeftAndRightWithArrowKeysInTextField({
   required AttributedTextEditingController controller,
-  required _SuperTextFieldState textFieldState,
+  required SuperTextFieldState textFieldState,
   required RawKeyEvent keyEvent,
 }) {
   const arrowKeys = [
@@ -984,7 +1067,7 @@ TextFieldActionResult moveUpDownLeftAndRightWithArrowKeysInTextField({
 
 void _moveHorizontally({
   required AttributedTextEditingController controller,
-  required _SuperTextFieldState textFieldState,
+  required SuperTextFieldState textFieldState,
   required bool expandSelection,
   required bool moveLeft,
   Map<String, dynamic> movementModifiers = const {},
@@ -992,6 +1075,11 @@ void _moveHorizontally({
   int newExtent;
 
   if (moveLeft) {
+    if (controller.selection.extentOffset <= 0) {
+      // Can't move further left.
+      return null;
+    }
+
     if (movementModifiers['movement_unit'] == 'line') {
       newExtent = textFieldState
           .getPositionAtStartOfLine(
@@ -1066,7 +1154,7 @@ void _moveHorizontally({
 
 void _moveVertically({
   required AttributedTextEditingController controller,
-  required _SuperTextFieldState textFieldState,
+  required SuperTextFieldState textFieldState,
   required bool expandSelection,
   required bool moveUp,
 }) {
@@ -1094,7 +1182,7 @@ void _moveVertically({
 
 TextFieldActionResult insertCharacterInTextField({
   required AttributedTextEditingController controller,
-  required _SuperTextFieldState textFieldState,
+  required SuperTextFieldState textFieldState,
   required RawKeyEvent keyEvent,
 }) {
   if (keyEvent.isMetaPressed || keyEvent.isControlPressed) {
@@ -1118,7 +1206,7 @@ TextFieldActionResult insertCharacterInTextField({
 
 TextFieldActionResult deleteTextWhenBackspaceOrDeleteIsPressedInTextField({
   required AttributedTextEditingController controller,
-  required _SuperTextFieldState textFieldState,
+  required SuperTextFieldState textFieldState,
   required RawKeyEvent keyEvent,
 }) {
   final isBackspace = keyEvent.logicalKey == LogicalKeyboardKey.backspace;
@@ -1157,7 +1245,7 @@ TextFieldActionResult deleteTextWhenBackspaceOrDeleteIsPressedInTextField({
 
 TextFieldActionResult insertNewlineInTextField({
   required AttributedTextEditingController controller,
-  required _SuperTextFieldState textFieldState,
+  required SuperTextFieldState textFieldState,
   required RawKeyEvent keyEvent,
 }) {
   if (keyEvent.logicalKey != LogicalKeyboardKey.enter) {

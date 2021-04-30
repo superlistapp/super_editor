@@ -1,24 +1,16 @@
-import 'package:flutter/material.dart' hide SelectableText;
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/super_editor.dart';
 
-/// Demo of a variety of [SuperTextField]
-class TextFieldDemo extends StatefulWidget {
+class InteractiveTextFieldDemo extends StatefulWidget {
   @override
-  _TextFieldDemoState createState() => _TextFieldDemoState();
+  _InteractiveTextFieldDemoState createState() => _InteractiveTextFieldDemoState();
 }
 
-class _TextFieldDemoState extends State<TextFieldDemo> {
+class _InteractiveTextFieldDemoState extends State<InteractiveTextFieldDemo> {
   final _textFieldController = AttributedTextEditingController(
     text: AttributedText(
-      text:
-          'Super Editor is an open source text editor for Flutter projects.\n\nThis is paragraph 2\n\nThis is paragraph 3',
-      spans: AttributedSpans(
-        attributions: [
-          SpanMarker(attribution: 'bold', offset: 0, markerType: SpanMarkerType.start),
-          SpanMarker(attribution: 'bold', offset: 11, markerType: SpanMarkerType.end),
-        ],
-      ),
+      text: 'Super Editor is an open source text editor for Flutter projects.',
     ),
   );
 
@@ -124,57 +116,34 @@ class _TextFieldDemoState extends State<TextFieldDemo> {
         _focusNode.unfocus();
       },
       child: Center(
-        child: SingleChildScrollView(
-          child: SizedBox(
-            width: 600,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 48.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildTitle('SuperTextField'),
-                  SizedBox(height: 24),
-                  GestureDetector(
-                    onTap: () {
-                      // no-op. Prevents unfocus from happening when text field is tapped.
-                    },
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: SuperTextField(
-                        controller: _textFieldController,
-                        focusNode: _focusNode,
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        hintBuilder: (context) {
-                          return Text(
-                            'enter some text',
-                            style: TextStyle(
-                              color: Colors.grey,
-                            ),
-                          );
-                        },
-                        hintBehavior: HintBehavior.displayHintUntilTextEntered,
-                        minLines: 1,
-                        maxLines: 4,
-                        onRightClick: _onRightClick,
-                      ),
+        child: SizedBox(
+          width: 400,
+          child: GestureDetector(
+            onTap: () {
+              // no-op. Prevents unfocus from happening when text field is tapped.
+            },
+            child: SizedBox(
+              width: double.infinity,
+              child: SuperTextField(
+                controller: _textFieldController,
+                focusNode: _focusNode,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                hintBuilder: (context) {
+                  return Text(
+                    'enter some text',
+                    style: TextStyle(
+                      color: Colors.grey,
                     ),
-                  ),
-                ],
+                  );
+                },
+                hintBehavior: HintBehavior.displayHintUntilTextEntered,
+                minLines: 5,
+                maxLines: 5,
+                onRightClick: _onRightClick,
               ),
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildTitle(String title) {
-    return Text(
-      title,
-      style: TextStyle(
-        color: const Color(0xFF444444),
-        fontSize: 32,
       ),
     );
   }
