@@ -8,7 +8,7 @@ class StaticMultiLineTextFieldDemo extends StatefulWidget {
   _StaticMultiLineTextFieldDemoState createState() => _StaticMultiLineTextFieldDemoState();
 }
 
-class _StaticMultiLineTextFieldDemoState extends State<StaticMultiLineTextFieldDemo> {
+class _StaticMultiLineTextFieldDemoState extends State<StaticMultiLineTextFieldDemo> with TickerProviderStateMixin {
   final _textFieldController = AttributedTextEditingController(
     text: AttributedText(
         // text:
@@ -32,19 +32,14 @@ class _StaticMultiLineTextFieldDemoState extends State<StaticMultiLineTextFieldD
     super.initState();
     _focusNode = FocusNode();
     _demoRobot = TextFieldDemoRobot(
+      focusNode: _focusNode,
+      tickerProvider: this,
       textController: _textFieldController,
       textKey: _textKey,
     );
 
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      _textFieldController.selection = TextSelection.collapsed(offset: 0);
-      _demoRobot
-        ..typeText(AttributedText(text: 'Hello World!'))
-        ..pause(const Duration(milliseconds: 500))
-        ..typeText(AttributedText(text: '\n\nThis is a robot typing'))
-        ..pause(const Duration(milliseconds: 500))
-        ..typeText(AttributedText(text: '\nsome text into a SuperTextField.'))
-        ..start();
+      _startDemo();
     });
   }
 
@@ -53,6 +48,24 @@ class _StaticMultiLineTextFieldDemoState extends State<StaticMultiLineTextFieldD
     _demoRobot.dispose();
     _focusNode.dispose();
     super.dispose();
+  }
+
+  void _startDemo() {
+    _textFieldController
+      ..selection = TextSelection.collapsed(offset: 0)
+      ..text = AttributedText();
+    _demoRobot
+      ..typeText(AttributedText(text: 'Hello World!'))
+      ..pause(const Duration(milliseconds: 500))
+      ..typeText(AttributedText(text: '\n\nThis is a robot typing'))
+      ..pause(const Duration(milliseconds: 500))
+      ..typeText(AttributedText(text: '\nsome text into a SuperTextField.'))
+      ..start();
+  }
+
+  void _restartDemo() {
+    _demoRobot.cancelActions();
+    _startDemo();
   }
 
   @override
@@ -66,30 +79,47 @@ class _StaticMultiLineTextFieldDemoState extends State<StaticMultiLineTextFieldD
       child: Center(
         child: SizedBox(
           width: 400,
-          child: GestureDetector(
-            onTap: () {
-              // no-op. Prevents unfocus from happening when text field is tapped.
-            },
-            child: SizedBox(
-              width: double.infinity,
-              child: SuperTextField(
-                key: _textKey,
-                controller: _textFieldController,
-                focusNode: _focusNode,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                hintBuilder: (context) {
-                  return Text(
-                    'enter some text',
-                    style: TextStyle(
-                      color: Colors.grey,
-                    ),
-                  );
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              GestureDetector(
+                onTap: () {
+                  // no-op. Prevents unfocus from happening when text field is tapped.
                 },
-                hintBehavior: HintBehavior.displayHintUntilTextEntered,
-                minLines: 5,
-                maxLines: 5,
+                child: SizedBox(
+                  width: double.infinity,
+                  child: SuperTextField(
+                    key: _textKey,
+                    textController: _textFieldController,
+                    focusNode: _focusNode,
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decorationBuilder: (context, child) {
+                      return Material(
+                        borderRadius: BorderRadius.circular(4),
+                        elevation: 5,
+                        child: child,
+                      );
+                    },
+                    hintBuilder: (context) {
+                      return Text(
+                        'enter some text',
+                        style: TextStyle(
+                          color: Colors.grey,
+                        ),
+                      );
+                    },
+                    hintBehavior: HintBehavior.displayHintUntilTextEntered,
+                    minLines: 5,
+                    maxLines: 5,
+                  ),
+                ),
               ),
-            ),
+              SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: _restartDemo,
+                child: Text('Restart Demo'),
+              ),
+            ],
           ),
         ),
       ),

@@ -1,12 +1,15 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
 import 'package:super_editor/super_editor.dart';
 
 class TextFieldDemoRobot {
   TextFieldDemoRobot({
-    // @required this.ticker,
+    @required this.focusNode,
+    @required this.tickerProvider,
     @required this.textController,
     @required this.textKey,
   });
@@ -15,15 +18,19 @@ class TextFieldDemoRobot {
     cancelActions();
   }
 
-  // final Ticker ticker;
+  final FocusNode focusNode;
+  final TickerProvider tickerProvider;
   final AttributedTextEditingController textController;
   final GlobalKey<SuperTextFieldState> textKey;
 
   final List<RobotCommand> _commands = [];
+  bool _executionDesired = false;
   bool _isExecuting = false;
+  RobotCommand _activeCommand;
 
   Future<void> typeText(AttributedText text) async {
     _commands.add(TypeTextCommand(
+      tickerProvider: tickerProvider,
       textToType: text,
     ));
   }
@@ -41,46 +48,71 @@ class TextFieldDemoRobot {
   }
 
   Future<void> pause(Duration duration) async {
-    _commands.add(PauseCommand(duration: duration));
+    _commands.add(PauseCommand(
+      tickerProvider: tickerProvider,
+      duration: duration,
+    ));
   }
 
-  Future<void> start() async {
+  void start() {
+    if (!_executionDesired) {
+      _executionDesired = true;
+      _run();
+    }
+  }
+
+  Future<void> _run() async {
     if (_isExecuting) {
       return;
     }
-
     _isExecuting = true;
 
     while (_commands.isNotEmpty) {
-      final command = _commands.removeAt(0);
-      await command.run(textController, textKey);
+      _activeCommand = _commands.removeAt(0);
+      await _activeCommand.run(focusNode, textController, textKey);
+
+      if (!_executionDesired) {
+        break;
+      }
     }
 
     _isExecuting = false;
   }
 
   void cancelActions() {
-    _isExecuting = false;
     _commands.clear();
+    _activeCommand?.cancel();
+    _activeCommand = null;
+    _executionDesired = false;
   }
 }
 
 abstract class RobotCommand {
   Future<void> run(
+    FocusNode focusNode,
     AttributedTextEditingController textController,
     GlobalKey<SuperTextFieldState> textKey,
   );
+
+  void cancel();
 }
 
 class TypeTextCommand implements RobotCommand {
   TypeTextCommand({
+    @required this.tickerProvider,
     @required this.textToType,
   });
 
+  final TickerProvider tickerProvider;
   final AttributedText textToType;
+  bool isCancelled = false;
+  Completer _characterCompleter;
+  Duration _characterDelay;
+  Ticker _characterDelayTicker;
 
   @override
   Future<void> run(
+    FocusNode focusNode,
     AttributedTextEditingController textController,
     GlobalKey<SuperTextFieldState> textKey,
   ) async {
@@ -89,23 +121,60 @@ class TypeTextCommand implements RobotCommand {
       return;
     }
 
-    final random = Random();
+    focusNode.requestFocus();
+
     for (int i = 0; i < textToType.text.length; ++i) {
-      print('Text before typing: ${textController.text.text}. Typing character $i');
+      _typeCharacter(textController, i);
 
-      textController.text = textController.text.insertString(
-        textToInsert: textToType.text[i], // TODO: support insertion of attributed text
-        startOffset: textController.selection.extentOffset,
-      );
+      await _waitForCharacterDelay();
 
-      final previousSelection = textController.selection;
-      textController.selection = TextSelection(
-        baseOffset: previousSelection.isCollapsed ? previousSelection.extentOffset + 1 : previousSelection.baseOffset,
-        extentOffset: previousSelection.extentOffset + 1,
-      );
-
-      await Future.delayed(Duration(milliseconds: random.nextInt(250)));
+      if (isCancelled) {
+        return;
+      }
     }
+  }
+
+  void _typeCharacter(AttributedTextEditingController textController, int offset) {
+    textController.text = textController.text.insertString(
+      textToInsert: textToType.text[offset], // TODO: support insertion of attributed text
+      startOffset: textController.selection.extentOffset,
+    );
+
+    final previousSelection = textController.selection;
+    textController.selection = TextSelection(
+      baseOffset: previousSelection.isCollapsed ? previousSelection.extentOffset + 1 : previousSelection.baseOffset,
+      extentOffset: previousSelection.extentOffset + 1,
+    );
+  }
+
+  Future<void> _waitForCharacterDelay() async {
+    final random = Random();
+    _characterDelay = Duration(milliseconds: random.nextInt(250));
+    _characterCompleter = Completer();
+    _characterDelayTicker = tickerProvider.createTicker(_onTick);
+    _characterDelayTicker.start(); // ignore: unawaited_futures
+    await _characterCompleter.future;
+  }
+
+  void _onTick(Duration elapsedTime) {
+    if (elapsedTime >= _characterDelay) {
+      _stopTickerAndComplete();
+    }
+  }
+
+  void _stopTickerAndComplete() {
+    _characterDelayTicker?.stop();
+    _characterDelayTicker?.dispose();
+    _characterDelayTicker = null;
+    if (!_characterCompleter.isCompleted) {
+      _characterCompleter?.complete();
+    }
+  }
+
+  @override
+  void cancel() {
+    isCancelled = true;
+    _stopTickerAndComplete();
   }
 }
 
@@ -118,11 +187,16 @@ class InsertCaretCommand implements RobotCommand {
 
   @override
   Future<void> run(
+    FocusNode focusNode,
     AttributedTextEditingController textController,
     GlobalKey<SuperTextFieldState> textKey,
   ) async {
+    focusNode.requestFocus();
     textController.selection = TextSelection.collapsed(offset: caretPosition.offset);
   }
+
+  @override
+  void cancel() {}
 }
 
 class SelectTextCommand implements RobotCommand {
@@ -134,25 +208,60 @@ class SelectTextCommand implements RobotCommand {
 
   @override
   Future<void> run(
+    FocusNode focusNode,
     AttributedTextEditingController textController,
     GlobalKey<SuperTextFieldState> textKey,
   ) async {
+    focusNode.requestFocus();
     textController.selection = selection;
   }
+
+  @override
+  void cancel() {}
 }
 
 class PauseCommand implements RobotCommand {
   PauseCommand({
+    @required this.tickerProvider,
     @required this.duration,
   });
 
+  final TickerProvider tickerProvider;
   final Duration duration;
+  Completer _completer;
+  Ticker _ticker;
 
   @override
   Future<void> run(
+    FocusNode focusNode,
     AttributedTextEditingController textController,
     GlobalKey<SuperTextFieldState> textKey,
   ) async {
-    await Future.delayed(duration);
+    _completer = Completer();
+
+    _ticker = tickerProvider.createTicker(_onTick);
+    _ticker.start(); // ignore: unawaited_futures
+
+    await _completer.future;
+  }
+
+  void _onTick(Duration elapsedTime) {
+    if (elapsedTime >= duration) {
+      _stopTickerAndComplete();
+    }
+  }
+
+  void _stopTickerAndComplete() {
+    _ticker?.stop();
+    _ticker?.dispose();
+    _ticker = null;
+    if (!_completer.isCompleted) {
+      _completer.complete();
+    }
+  }
+
+  @override
+  void cancel() {
+    _stopTickerAndComplete();
   }
 }

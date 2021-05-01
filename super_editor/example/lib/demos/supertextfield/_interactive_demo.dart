@@ -125,9 +125,21 @@ class _InteractiveTextFieldDemoState extends State<InteractiveTextFieldDemo> {
             child: SizedBox(
               width: double.infinity,
               child: SuperTextField(
-                controller: _textFieldController,
+                textController: _textFieldController,
                 focusNode: _focusNode,
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decorationBuilder: (context, child) {
+                  return Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(
+                        color: _focusNode.hasFocus ? Colors.blue : Colors.grey.shade300,
+                        width: 1,
+                      ),
+                    ),
+                    child: child,
+                  );
+                },
                 hintBuilder: (context) {
                   return Text(
                     'enter some text',

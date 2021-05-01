@@ -1,0 +1,8 @@
+include: package:pedantic/analysis_options.yaml
+
+analyzer:
+  exclude: [lib/spikes]
+
+linter:
+  rules:
+    omit_local_variable_types: false

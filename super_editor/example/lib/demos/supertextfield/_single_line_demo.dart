@@ -8,7 +8,7 @@ class SingleLineTextFieldDemo extends StatefulWidget {
   _SingleLineTextFieldDemoState createState() => _SingleLineTextFieldDemoState();
 }
 
-class _SingleLineTextFieldDemoState extends State<SingleLineTextFieldDemo> {
+class _SingleLineTextFieldDemoState extends State<SingleLineTextFieldDemo> with TickerProviderStateMixin {
   final _textFieldController = AttributedTextEditingController(
     text: AttributedText(
         // text:
@@ -32,15 +32,14 @@ class _SingleLineTextFieldDemoState extends State<SingleLineTextFieldDemo> {
     super.initState();
     _focusNode = FocusNode();
     _demoRobot = TextFieldDemoRobot(
+      focusNode: _focusNode,
+      tickerProvider: this,
       textController: _textFieldController,
       textKey: _textKey,
     );
 
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      _textFieldController.selection = TextSelection.collapsed(offset: 0);
-      _demoRobot
-        ..typeText(AttributedText(text: 'Hello World! This is a robot typing some text into a SuperTextField.'))
-        ..start();
+      _startDemo();
     });
   }
 
@@ -49,6 +48,20 @@ class _SingleLineTextFieldDemoState extends State<SingleLineTextFieldDemo> {
     _demoRobot.dispose();
     _focusNode.dispose();
     super.dispose();
+  }
+
+  void _startDemo() {
+    _textFieldController
+      ..selection = TextSelection.collapsed(offset: 0)
+      ..text = AttributedText();
+    _demoRobot
+      ..typeText(AttributedText(text: 'Hello World! This is a robot typing some text into a SuperTextField.'))
+      ..start();
+  }
+
+  void _restartDemo() {
+    _demoRobot.cancelActions();
+    _startDemo();
   }
 
   @override
@@ -62,30 +75,52 @@ class _SingleLineTextFieldDemoState extends State<SingleLineTextFieldDemo> {
       child: Center(
         child: SizedBox(
           width: 400,
-          child: GestureDetector(
-            onTap: () {
-              // no-op. Prevents unfocus from happening when text field is tapped.
-            },
-            child: SizedBox(
-              width: double.infinity,
-              child: SuperTextField(
-                key: _textKey,
-                controller: _textFieldController,
-                focusNode: _focusNode,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                hintBuilder: (context) {
-                  return Text(
-                    'enter some text',
-                    style: TextStyle(
-                      color: Colors.grey,
-                    ),
-                  );
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              GestureDetector(
+                onTap: () {
+                  // no-op. Prevents unfocus from happening when text field is tapped.
                 },
-                hintBehavior: HintBehavior.displayHintUntilTextEntered,
-                minLines: 1,
-                maxLines: 1,
+                child: SizedBox(
+                  width: double.infinity,
+                  child: SuperTextField(
+                    key: _textKey,
+                    textController: _textFieldController,
+                    focusNode: _focusNode,
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decorationBuilder: (context, child) {
+                      return Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(
+                            color: _focusNode.hasFocus ? Colors.blue : Colors.grey.shade300,
+                            width: 1,
+                          ),
+                        ),
+                        child: child,
+                      );
+                    },
+                    hintBuilder: (context) {
+                      return Text(
+                        'enter some text',
+                        style: TextStyle(
+                          color: Colors.grey,
+                        ),
+                      );
+                    },
+                    hintBehavior: HintBehavior.displayHintUntilTextEntered,
+                    minLines: 1,
+                    maxLines: 1,
+                  ),
+                ),
               ),
-            ),
+              SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: _restartDemo,
+                child: Text('Restart Demo'),
+              ),
+            ],
           ),
         ),
       ),

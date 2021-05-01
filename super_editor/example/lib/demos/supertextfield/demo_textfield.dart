@@ -29,7 +29,7 @@ class _TextFieldDemoState extends State<TextFieldDemo> {
   void initState() {
     super.initState();
 
-    _demoBuilder = (_) => SingleLineTextFieldDemo();
+    _demoBuilder = (_) => InteractiveTextFieldDemo();
   }
 
   @override
