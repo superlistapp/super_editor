@@ -1067,9 +1067,9 @@ TextFieldActionResult pasteTextWhenCmdVIsPressed({
   }
 
   final insertionOffset = controller.selection.extentOffset;
-  Clipboard.getData('utf8').then((clipboardData) {
+  Clipboard.getData('text/plain').then((clipboardData) {
     if (clipboardData != null && clipboardData.text != null) {
-      controller.text.insertString(
+      controller.text = controller.text.insertString(
         textToInsert: clipboardData.text!,
         startOffset: insertionOffset,
       );
