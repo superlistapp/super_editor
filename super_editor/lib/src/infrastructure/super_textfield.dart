@@ -21,6 +21,7 @@ class SuperTextField extends StatefulWidget {
     Key? key,
     this.focusNode,
     this.textController,
+    this.textStyleBuilder = defaultStyleBuilder,
     this.textAlign = TextAlign.left,
     this.textSelectionDecoration = const TextSelectionDecoration(
       selectionColor: Color(0xFFACCEF7),
@@ -43,6 +44,8 @@ class SuperTextField extends StatefulWidget {
   final FocusNode? focusNode;
 
   final AttributedTextEditingController? textController;
+
+  final AttributionStyleBuilder textStyleBuilder;
 
   /// The alignment to use for `richText` display.
   final TextAlign textAlign;
@@ -138,7 +141,9 @@ class SuperTextFieldState extends State<SuperTextField> {
     // so that any pending visual content changes can happen before
     // attempting to calculate the visual position of the selection extent.
     WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
-      _updateViewportHeight();
+      if (mounted) {
+        _updateViewportHeight();
+      }
     });
   }
 
@@ -189,8 +194,8 @@ class SuperTextFieldState extends State<SuperTextField> {
   }
 
   double _getEstimatedLineHeight() {
-    final defaultStyle = defaultStyleBuilder({});
-    return defaultStyle.height! * defaultStyle.fontSize!;
+    final defaultStyle = widget.textStyleBuilder({});
+    return (defaultStyle.height ?? 1.0) * defaultStyle.fontSize!;
   }
 
   @override
@@ -200,9 +205,11 @@ class SuperTextFieldState extends State<SuperTextField> {
       // for text height is probably wrong. Schedule a post frame callback
       // to re-calculate the height after initial layout.
       WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
-        setState(() {
-          _updateViewportHeight();
-        });
+        if (mounted) {
+          setState(() {
+            _updateViewportHeight();
+          });
+        }
       });
     }
 
@@ -270,7 +277,7 @@ class SuperTextFieldState extends State<SuperTextField> {
   Widget _buildSelectableText() {
     return SelectableText(
       key: _selectableTextKey,
-      textSpan: _controller.text.computeTextSpan((attributions) => defaultStyleBuilder(attributions)),
+      textSpan: _controller.text.computeTextSpan(widget.textStyleBuilder),
       textAlign: widget.textAlign,
       textSelection: _controller.selection,
       textSelectionDecoration: widget.textSelectionDecoration,
@@ -791,7 +798,9 @@ class SuperTextFieldScrollviewState extends State<SuperTextFieldScrollview> with
       // After the current layout, ensure that the current text
       // selection is visible.
       WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
-        _ensureSelectionExtentIsVisible();
+        if (mounted) {
+          _ensureSelectionExtentIsVisible();
+        }
       });
     }
   }
@@ -809,7 +818,9 @@ class SuperTextFieldScrollviewState extends State<SuperTextFieldScrollview> with
     // so that any pending visual content changes can happen before
     // attempting to calculate the visual position of the selection extent.
     WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
-      _ensureSelectionExtentIsVisible();
+      if (mounted) {
+        _ensureSelectionExtentIsVisible();
+      }
     });
   }
 
@@ -1017,6 +1028,7 @@ typedef TextfieldKeyboardAction = TextFieldActionResult Function({
 const defaultTextfieldKeyboardActions = <TextfieldKeyboardAction>[
   copyTextWhenCmdCIsPressed,
   pasteTextWhenCmdVIsPressed,
+  selectAllTextFieldWhenCmdAIsPressed,
   moveUpDownLeftAndRightWithArrowKeysInTextField,
   deleteTextWhenBackspaceOrDeleteIsPressedInTextField,
   insertNewlineInTextField,
@@ -1063,6 +1075,26 @@ TextFieldActionResult pasteTextWhenCmdVIsPressed({
       );
     }
   });
+
+  return TextFieldActionResult.handled;
+}
+
+TextFieldActionResult selectAllTextFieldWhenCmdAIsPressed({
+  required AttributedTextEditingController controller,
+  required SelectableTextState selectableTextState,
+  required RawKeyEvent keyEvent,
+}) {
+  if (!keyEvent.isMetaPressed) {
+    return TextFieldActionResult.notHandled;
+  }
+  if (keyEvent.logicalKey != LogicalKeyboardKey.keyA) {
+    return TextFieldActionResult.notHandled;
+  }
+
+  controller.selection = TextSelection(
+    baseOffset: 0,
+    extentOffset: controller.text.text.length,
+  );
 
   return TextFieldActionResult.handled;
 }
@@ -1268,7 +1300,12 @@ TextFieldActionResult insertCharacterInTextField({
 
   final initialTextOffset = controller.selection.extentOffset;
 
-  controller.text = controller.text.insertString(textToInsert: keyEvent.character!, startOffset: initialTextOffset);
+  final existingAttributions = controller.text.getAllAttributionsAt(initialTextOffset);
+  controller.text = controller.text.insertString(
+    textToInsert: keyEvent.character!,
+    startOffset: initialTextOffset,
+    applyAttributions: existingAttributions,
+  );
   controller.selection = TextSelection.collapsed(offset: initialTextOffset + 1);
 
   return TextFieldActionResult.handled;
@@ -1343,11 +1380,31 @@ class AttributedTextEditingController with ChangeNotifier {
   })  : _text = text ?? AttributedText(),
         _selection = selection ?? TextSelection.collapsed(offset: -1);
 
+  void updateTextAndSelection({
+    required AttributedText text,
+    required TextSelection selection,
+  }) {
+    this.text = text;
+    this.selection = selection;
+  }
+
   AttributedText _text;
   AttributedText get text => _text;
   set text(AttributedText newValue) {
     if (newValue != _text) {
+      _text.removeListener(notifyListeners);
       _text = newValue;
+      _text.addListener(notifyListeners);
+
+      // Ensure that the existing selection does not overshoot
+      // the end of the new text value
+      if (_selection.end > _text.text.length) {
+        _selection = _selection.copyWith(
+          baseOffset: _selection.affinity == TextAffinity.downstream ? _selection.baseOffset : _text.text.length,
+          extentOffset: _selection.affinity == TextAffinity.downstream ? _text.text.length : _selection.extentOffset,
+        );
+      }
+
       notifyListeners();
     }
   }
@@ -1359,5 +1416,18 @@ class AttributedTextEditingController with ChangeNotifier {
       _selection = newValue;
       notifyListeners();
     }
+  }
+
+  bool isSelectionWithinTextBounds(TextSelection selection) {
+    return selection.start <= text.text.length && selection.end <= text.text.length;
+  }
+
+  TextSpan buildTextSpan(AttributionStyleBuilder styleBuilder) {
+    return text.computeTextSpan(styleBuilder);
+  }
+
+  void clear() {
+    _text = AttributedText();
+    _selection = TextSelection.collapsed(offset: -1);
   }
 }

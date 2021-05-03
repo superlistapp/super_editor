@@ -10,8 +10,13 @@ class InteractiveTextFieldDemo extends StatefulWidget {
 class _InteractiveTextFieldDemoState extends State<InteractiveTextFieldDemo> {
   final _textFieldController = AttributedTextEditingController(
     text: AttributedText(
-      text: 'Super Editor is an open source text editor for Flutter projects.',
-    ),
+        text: 'Super Editor is an open source text editor for Flutter projects.',
+        spans: AttributedSpans(attributions: [
+          SpanMarker(attribution: 'brand', offset: 0, markerType: SpanMarkerType.start),
+          SpanMarker(attribution: 'brand', offset: 11, markerType: SpanMarkerType.end),
+          SpanMarker(attribution: 'flutter', offset: 47, markerType: SpanMarkerType.start),
+          SpanMarker(attribution: 'flutter', offset: 53, markerType: SpanMarkerType.end),
+        ])),
   );
 
   OverlayEntry _popupEntry;
@@ -127,6 +132,7 @@ class _InteractiveTextFieldDemoState extends State<InteractiveTextFieldDemo> {
               child: SuperTextField(
                 textController: _textFieldController,
                 focusNode: _focusNode,
+                textStyleBuilder: _textStyleBuilder,
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decorationBuilder: (context, child) {
                   return Container(
@@ -158,5 +164,26 @@ class _InteractiveTextFieldDemoState extends State<InteractiveTextFieldDemo> {
         ),
       ),
     );
+  }
+
+  TextStyle _textStyleBuilder(Set<dynamic> attributions) {
+    TextStyle textStyle = TextStyle(
+      color: Colors.black,
+      fontSize: 14,
+    );
+
+    if (attributions.contains('brand')) {
+      textStyle = textStyle.copyWith(
+        color: Colors.red,
+        fontWeight: FontWeight.bold,
+      );
+    }
+    if (attributions.contains('flutter')) {
+      textStyle = textStyle.copyWith(
+        color: Colors.blue,
+      );
+    }
+
+    return textStyle;
   }
 }
