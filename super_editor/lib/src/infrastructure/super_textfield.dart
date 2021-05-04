@@ -215,54 +215,48 @@ class SuperTextFieldState extends State<SuperTextField> {
 
     final isMultiline = widget.minLines != 1 || widget.maxLines != 1;
 
-    return Focus(
-      // Prevents error sound when pressing keyboard keys.
-      onKey: (_, __) => true,
-      child: SuperTextFieldKeyboardInteractor(
+    return SuperTextFieldKeyboardInteractor(
+      focusNode: _focusNode,
+      controller: _controller,
+      textKey: _selectableTextKey,
+      keyboardActions: widget.keyboardActions,
+      child: SuperTextFieldGestureInteractor(
         focusNode: _focusNode,
         controller: _controller,
         textKey: _selectableTextKey,
-        keyboardActions: widget.keyboardActions,
-        child: SuperTextFieldGestureInteractor(
-          focusNode: _focusNode,
-          controller: _controller,
-          textKey: _selectableTextKey,
-          textScrollKey: _textScrollKey,
-          isMultiline: isMultiline,
-          onRightClick: widget.onRightClick,
-          child: MultiListenableBuilder(
-            listenables: {
-              _focusNode,
-              _controller,
-            },
-            builder: (context) {
-              final isTextEmpty = _controller.text.text.isEmpty;
-              final showHint = widget.hintBuilder != null &&
-                  ((isTextEmpty && widget.hintBehavior == HintBehavior.displayHintUntilTextEntered) ||
-                      (isTextEmpty &&
-                          !_focusNode.hasFocus &&
-                          widget.hintBehavior == HintBehavior.displayHintUntilFocus));
+        textScrollKey: _textScrollKey,
+        isMultiline: isMultiline,
+        onRightClick: widget.onRightClick,
+        child: MultiListenableBuilder(
+          listenables: {
+            _focusNode,
+            _controller,
+          },
+          builder: (context) {
+            final isTextEmpty = _controller.text.text.isEmpty;
+            final showHint = widget.hintBuilder != null &&
+                ((isTextEmpty && widget.hintBehavior == HintBehavior.displayHintUntilTextEntered) ||
+                    (isTextEmpty && !_focusNode.hasFocus && widget.hintBehavior == HintBehavior.displayHintUntilFocus));
 
-              return _buildDecoration(
-                child: SuperTextFieldScrollview(
-                  key: _textScrollKey,
-                  textKey: _selectableTextKey,
-                  textController: _controller,
-                  scrollController: _scrollController,
-                  viewportHeight: _viewportHeight,
-                  estimatedLineHeight: _getEstimatedLineHeight(),
-                  padding: widget.padding,
-                  isMultiline: isMultiline,
-                  child: Stack(
-                    children: [
-                      if (showHint) widget.hintBuilder!(context),
-                      _buildSelectableText(),
-                    ],
-                  ),
+            return _buildDecoration(
+              child: SuperTextFieldScrollview(
+                key: _textScrollKey,
+                textKey: _selectableTextKey,
+                textController: _controller,
+                scrollController: _scrollController,
+                viewportHeight: _viewportHeight,
+                estimatedLineHeight: _getEstimatedLineHeight(),
+                padding: widget.padding,
+                isMultiline: isMultiline,
+                child: Stack(
+                  children: [
+                    if (showHint) widget.hintBuilder!(context),
+                    _buildSelectableText(),
+                  ],
                 ),
-              );
-            },
-          ),
+              ),
+            );
+          },
         ),
       ),
     );
@@ -714,11 +708,11 @@ class SuperTextFieldKeyboardInteractor extends StatefulWidget {
 }
 
 class _SuperTextFieldKeyboardInteractorState extends State<SuperTextFieldKeyboardInteractor> {
-  KeyEventResult _onKeyPressed(RawKeyEvent keyEvent) {
+  KeyEventResult _onKeyPressed(FocusNode focusNode, RawKeyEvent keyEvent) {
     _log.log('_onKeyPressed', 'keyEvent: ${keyEvent.character}');
     if (keyEvent is! RawKeyDownEvent) {
       _log.log('_onKeyPressed', ' - not a "down" event. Ignoring.');
-      return KeyEventResult.handled;
+      return KeyEventResult.ignored;
     }
 
     TextFieldActionResult instruction = TextFieldActionResult.notHandled;
@@ -737,7 +731,7 @@ class _SuperTextFieldKeyboardInteractorState extends State<SuperTextFieldKeyboar
 
   @override
   Widget build(BuildContext context) {
-    return RawKeyboardListener(
+    return Focus(
       focusNode: widget.focusNode,
       onKey: _onKeyPressed,
       child: widget.child,
@@ -1295,6 +1289,13 @@ TextFieldActionResult insertCharacterInTextField({
     return TextFieldActionResult.notHandled;
   }
   if (keyEvent.character == null || keyEvent.character == '') {
+    return TextFieldActionResult.notHandled;
+  }
+  if (keyEvent.logicalKey.keyLabel == 'Escape') {
+    // The escape key reports a character of " ", which looks like
+    // a space, so we explicitly filter out Escape. If there is a
+    // general purpose mechanism for avoiding such characters, replace
+    // this approach with that one.
     return TextFieldActionResult.notHandled;
   }
 
