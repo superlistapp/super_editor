@@ -1291,11 +1291,7 @@ TextFieldActionResult insertCharacterInTextField({
   if (keyEvent.character == null || keyEvent.character == '') {
     return TextFieldActionResult.notHandled;
   }
-  if (keyEvent.logicalKey.keyLabel == 'Escape') {
-    // The escape key reports a character of " ", which looks like
-    // a space, so we explicitly filter out Escape. If there is a
-    // general purpose mechanism for avoiding such characters, replace
-    // this approach with that one.
+  if (LogicalKeyboardKey.isControlCharacter(keyEvent.character!)) {
     return TextFieldActionResult.notHandled;
   }
 
