@@ -263,7 +263,7 @@ bool _convertParagraphIfDesired({
     return true;
   }
 
-  final blockquoteMatch = RegExp(r'^>*\s$');
+  final blockquoteMatch = RegExp(r'^>\s$');
   final hasBlockquoteMatch = blockquoteMatch.hasMatch(textBeforeCaret);
   if (hasBlockquoteMatch) {
     int startOfNewText = textBeforeCaret.length;

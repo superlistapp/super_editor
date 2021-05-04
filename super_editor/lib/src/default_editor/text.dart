@@ -568,6 +568,12 @@ ExecutionInstruction insertCharacterInTextComposable({
   if (keyEvent.character == null || keyEvent.character == '') {
     return ExecutionInstruction.continueExecution;
   }
+  // On web, keys like shift and alt are sending their full name
+  // as a character, e.g., "Shift" and "Alt". This check prevents
+  // those keys from inserting their name into content.
+  if (keyEvent.character!.length > 1) {
+    return ExecutionInstruction.continueExecution;
+  }
 
   final textNode = editContext.editor.document.getNode(editContext.composer.selection!.extent) as TextNode;
   final initialTextOffset = (editContext.composer.selection!.extent.nodePosition as TextPosition).offset;
