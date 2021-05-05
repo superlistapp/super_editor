@@ -1,5 +1,4 @@
 import 'package:flutter/services.dart';
-import 'package:flutter/src/rendering/mouse_cursor.dart';
 import 'package:flutter/widgets.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
@@ -100,6 +99,19 @@ class _BoxComponentState extends State<BoxComponent> with DocumentComponent {
   Rect getRectForPosition(dynamic nodePosition) {
     if (nodePosition is! BinaryPosition) {
       throw Exception('Expected nodePosition of type BinaryPosition but received: $nodePosition');
+    }
+
+    final myBox = context.findRenderObject() as RenderBox;
+    return Offset.zero & myBox.size;
+  }
+
+  @override
+  Rect getRectForSelection(dynamic basePosition, dynamic extentPosition) {
+    if (basePosition is! BinaryPosition) {
+      throw Exception('Expected nodePosition of type BinaryPosition but received: $basePosition');
+    }
+    if (extentPosition is! BinaryPosition) {
+      throw Exception('Expected nodePosition of type BinaryPosition but received: $extentPosition');
     }
 
     final myBox = context.findRenderObject() as RenderBox;

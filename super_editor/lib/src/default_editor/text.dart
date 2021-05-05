@@ -16,7 +16,6 @@ import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text.dart';
 import 'package:super_editor/src/infrastructure/selectable_text.dart';
 
-import 'text_tools.dart';
 import 'multi_node_editing.dart';
 
 final _log = Logger(scope: 'text.dart');
@@ -144,6 +143,26 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
     // TODO: factor in line height for position rect
     final offset = getOffsetForPosition(nodePosition);
     return Rect.fromLTWH(offset.dx, offset.dy, 0, 0);
+  }
+
+  @override
+  Rect getRectForSelection(dynamic baseNodePosition, dynamic extentNodePosition) {
+    if (baseNodePosition is! TextPosition) {
+      throw Exception('Expected nodePosition of type TextPosition but received: $baseNodePosition');
+    }
+    if (extentNodePosition is! TextPosition) {
+      throw Exception('Expected nodePosition of type TextPosition but received: $extentNodePosition');
+    }
+
+    final selection = TextSelection(baseOffset: baseNodePosition.offset, extentOffset: extentNodePosition.offset);
+    final boxes = _selectableTextKey.currentState!.getBoxesForSelection(selection);
+
+    Rect boundingBox = boxes.isNotEmpty ? boxes.first.toRect() : Rect.zero;
+    for (int i = 1; i < boxes.length; ++i) {
+      boundingBox = boundingBox.expandToInclude(boxes[i].toRect());
+    }
+
+    return boundingBox;
   }
 
   @override
