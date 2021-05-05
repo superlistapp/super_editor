@@ -1,3 +1,4 @@
+import 'package:example/demos/supertextfield/_emojis_demo.dart';
 import 'package:example/demos/supertextfield/_interactive_demo.dart';
 import 'package:example/demos/supertextfield/_single_line_demo.dart';
 import 'package:example/demos/supertextfield/_expanding_multi_line_demo.dart';
@@ -65,6 +66,28 @@ class _TextFieldDemoState extends State<TextFieldDemo> {
           onPressed: () {
             setState(() {
               _demoBuilder = (_) => ExpandingMultiLineTextFieldDemo();
+            });
+          },
+        ),
+        DemoMenuItem(
+          label: 'Backspace emojis',
+          onPressed: () {
+            setState(() {
+              _demoBuilder = (_) => EmojisTextFieldDemo(
+                    key: ValueKey('backspace'),
+                    direction: TextAffinity.upstream,
+                  );
+            });
+          },
+        ),
+        DemoMenuItem(
+          label: 'Delete emojis',
+          onPressed: () {
+            setState(() {
+              _demoBuilder = (_) => EmojisTextFieldDemo(
+                    key: ValueKey('delete'),
+                    direction: TextAffinity.downstream,
+                  );
             });
           },
         ),

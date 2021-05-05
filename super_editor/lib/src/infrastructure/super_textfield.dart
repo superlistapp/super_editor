@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart' hide SelectableText;
+import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/default_editor/editor.dart';
@@ -1082,12 +1083,22 @@ TextFieldActionResult pasteTextWhenCmdVIsPressed({
     return TextFieldActionResult.notHandled;
   }
 
+  if (!controller.selection.isCollapsed) {
+    _deleteSelection(controller: controller);
+  }
+
   final insertionOffset = controller.selection.extentOffset;
   Clipboard.getData('text/plain').then((clipboardData) {
     if (clipboardData != null && clipboardData.text != null) {
+      final textToPaste = clipboardData.text!;
+
       controller.text = controller.text.insertString(
-        textToInsert: clipboardData.text!,
+        textToInsert: textToPaste,
         startOffset: insertionOffset,
+      );
+
+      controller.selection = TextSelection.collapsed(
+        offset: insertionOffset + textToPaste.length,
       );
     }
   });
@@ -1344,29 +1355,54 @@ TextFieldActionResult deleteTextWhenBackspaceOrDeleteIsPressedInTextField({
     return TextFieldActionResult.notHandled;
   }
 
-  // If the current selection is not collapsed, then delete that
-  // selection. If the selection is collapsed, calculate a selection
-  // that includes the next or previous character depending on
-  // whether the user pressed backspace or delete.
-  final deletionSelection = controller.selection.isCollapsed
-      ? TextSelection(
-          baseOffset: controller.selection.extentOffset,
-          extentOffset:
-              (controller.selection.extentOffset + (isBackspace ? -1 : 1)).clamp(0, controller.text.text.length),
-        )
-      : controller.selection;
-
-  final newSelectionExtent = isBackspace && controller.selection.isCollapsed
-      ? controller.selection.extentOffset - 1
-      : controller.selection.start;
-
-  controller.text = controller.text.removeRegion(
-    startOffset: min(deletionSelection.baseOffset, deletionSelection.extentOffset),
-    endOffset: max(deletionSelection.baseOffset, deletionSelection.extentOffset),
-  );
-  controller.selection = TextSelection.collapsed(offset: newSelectionExtent);
+  if (controller.selection.isCollapsed) {
+    _deleteCharacter(controller: controller, direction: isBackspace ? TextAffinity.upstream : TextAffinity.downstream);
+  } else {
+    _deleteSelection(controller: controller);
+  }
 
   return TextFieldActionResult.handled;
+}
+
+void _deleteCharacter({
+  required AttributedTextEditingController controller,
+  required TextAffinity direction,
+}) {
+  assert(controller.selection.isCollapsed);
+
+  int deleteStartIndex;
+  int deleteEndIndex;
+
+  if (direction == TextAffinity.upstream) {
+    // Delete the character before the caret
+    deleteEndIndex = controller.selection.extentOffset;
+    deleteStartIndex = getCharacterStartBounds(controller.text.text, deleteEndIndex);
+  } else {
+    // Delete the character after the caret
+    deleteStartIndex = controller.selection.extentOffset;
+    deleteEndIndex = getCharacterEndBounds(controller.text.text, deleteStartIndex);
+  }
+
+  controller.text = controller.text.removeRegion(
+    startOffset: deleteStartIndex,
+    endOffset: deleteEndIndex,
+  );
+  controller.selection = TextSelection.collapsed(offset: deleteStartIndex);
+}
+
+void _deleteSelection({
+  required AttributedTextEditingController controller,
+}) {
+  assert(!controller.selection.isCollapsed);
+
+  final deleteStartIndex = controller.selection.start;
+  final deleteEndIndex = controller.selection.end;
+
+  controller.text = controller.text.removeRegion(
+    startOffset: deleteStartIndex,
+    endOffset: deleteEndIndex,
+  );
+  controller.selection = TextSelection.collapsed(offset: deleteStartIndex);
 }
 
 TextFieldActionResult insertNewlineInTextField({
@@ -1449,4 +1485,52 @@ class AttributedTextEditingController with ChangeNotifier {
     _text = AttributedText();
     _selection = TextSelection.collapsed(offset: -1);
   }
+}
+
+/// Returns the code point index for the code point that ends the visual
+/// character that begins at [startingCodePointIndex].
+///
+/// A single visual character might be comprised of multiple code points.
+/// Each code point occupies a slot within a [String], which means that
+/// an index into a [String] might refer to a piece of a single visual
+/// character.
+///
+/// [startingCodePointIndex] is the traditional [String] index for the
+/// leading code point of a visual character.
+///
+/// This function starts at the given [startingCodePointIndex] and walks
+/// towards the end of [text] until it has accumulated an entire
+/// visual character. The [String] index of the final code point for
+/// the given character is returned.
+int getCharacterEndBounds(String text, int startingCodePointIndex) {
+  assert(startingCodePointIndex >= 0 && startingCodePointIndex <= text.length);
+
+  // TODO: copy the implementation of nextCharacter to this package because
+  //       it's marked as visible for testing
+  final startOffset = RenderEditable.nextCharacter(startingCodePointIndex, text);
+  return startOffset;
+}
+
+/// Returns the code point index for the code point that begins the visual
+/// character that ends at [endingCodePointIndex].
+///
+/// A single visual character might be comprised of multiple code points.
+/// Each code point occupies a slot within a [String], which means that
+/// an index into a [String] might refer to a piece of a single visual
+/// character.
+///
+/// [endingCodePointIndex] is the traditional [String] index for the
+/// trailing code point of a visual character.
+///
+/// This function starts at the given [endingCodePointIndex] and walks
+/// towards the beginning of [text] until it has accumulated an entire
+/// visual character. The [String] index of the initial code point for
+/// the given character is returned.
+int getCharacterStartBounds(String text, int endingCodePointIndex) {
+  assert(endingCodePointIndex >= 0 && endingCodePointIndex <= text.length);
+
+  // TODO: copy the implementation of previousCharacter to this package because
+  //       it's marked as visible for testing
+  final startOffset = RenderEditable.previousCharacter(endingCodePointIndex, text);
+  return startOffset;
 }

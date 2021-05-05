@@ -35,6 +35,22 @@ class TextFieldDemoRobot {
     ));
   }
 
+  Future<void> backspaceCharacters(int characterCount) async {
+    _commands.add(DeleteCharactersCommand(
+      tickerProvider: tickerProvider,
+      characterCount: characterCount,
+      direction: TextAffinity.upstream,
+    ));
+  }
+
+  Future<void> deleteCharacters(int characterCount) async {
+    _commands.add(DeleteCharactersCommand(
+      tickerProvider: tickerProvider,
+      characterCount: characterCount,
+      direction: TextAffinity.downstream,
+    ));
+  }
+
   Future<void> insertCaretAt(TextPosition position) async {
     _commands.add(InsertCaretCommand(caretPosition: position));
   }
@@ -168,6 +184,111 @@ class TypeTextCommand implements RobotCommand {
     _characterDelayTicker = null;
     if (!_characterCompleter.isCompleted) {
       _characterCompleter?.complete();
+    }
+  }
+
+  @override
+  void cancel() {
+    isCancelled = true;
+    _stopTickerAndComplete();
+  }
+}
+
+class DeleteCharactersCommand implements RobotCommand {
+  DeleteCharactersCommand({
+    @required this.tickerProvider,
+    @required this.characterCount,
+    @required this.direction,
+  });
+
+  final TickerProvider tickerProvider;
+  final int characterCount;
+  final TextAffinity direction;
+  bool isCancelled = false;
+  Completer _deleteCompleter;
+  Duration _deleteDelay;
+  Ticker _deleteDelayTicker;
+
+  @override
+  Future<void> run(
+    FocusNode focusNode,
+    AttributedTextEditingController textController,
+    GlobalKey<SuperTextFieldState> textKey,
+  ) async {
+    if (textController.selection.extentOffset == -1) {
+      print('Can\'t delete characters because the text field doesn\'t have a valid selection.');
+      return;
+    }
+
+    focusNode.requestFocus();
+
+    int currentOffset = textController.selection.extentOffset;
+    final finalLength = textController.text.text.length - characterCount;
+    while (textController.text.text.length > finalLength) {
+      final codePointsDeleted = _deleteCharacter(textController, currentOffset, direction);
+      if (direction == TextAffinity.upstream) {
+        currentOffset -= codePointsDeleted;
+      }
+
+      await _waitForDeleteDelay();
+
+      if (isCancelled) {
+        return;
+      }
+    }
+  }
+
+  int _deleteCharacter(AttributedTextEditingController textController, int offset, TextAffinity direction) {
+    int deleteStartIndex;
+    int deleteEndIndex;
+    int deletedCodePointCount;
+    int newSelectionIndex;
+
+    if (direction == TextAffinity.downstream) {
+      // Delete the character after the offset
+      deleteStartIndex = offset;
+      deleteEndIndex = getCharacterEndBounds(textController.text.text, offset);
+      deletedCodePointCount = deleteEndIndex - deleteStartIndex;
+      newSelectionIndex = deleteStartIndex;
+    } else {
+      // Delete the character before the offset
+      deleteStartIndex = getCharacterStartBounds(textController.text.text, offset);
+      deleteEndIndex = offset + 1;
+      deletedCodePointCount = offset - deleteStartIndex;
+      newSelectionIndex = deleteStartIndex;
+    }
+
+    textController.text = textController.text.removeRegion(
+      startOffset: deleteStartIndex,
+      endOffset: deleteEndIndex,
+    );
+
+    textController.selection = TextSelection.collapsed(offset: newSelectionIndex);
+
+    return deletedCodePointCount;
+  }
+
+  Future<void> _waitForDeleteDelay() async {
+    final random = Random();
+    _deleteDelay = Duration(milliseconds: random.nextInt(250));
+    _deleteCompleter = Completer();
+    _deleteDelayTicker = tickerProvider.createTicker(_onTick);
+    _deleteDelayTicker.start(); // ignore: unawaited_futures
+    await _deleteCompleter.future;
+  }
+
+  void _onTick(Duration elapsedTime) {
+    if (elapsedTime >= _deleteDelay) {
+      _stopTickerAndComplete();
+    }
+  }
+
+  void _stopTickerAndComplete() {
+    _deleteDelayTicker?.stop();
+    _deleteDelayTicker?.dispose();
+    _deleteDelayTicker = null;
+    if (!_deleteCompleter.isCompleted) {
+      _deleteCompleter?.complete();
     }
   }
 
