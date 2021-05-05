@@ -1009,7 +1009,29 @@ enum _SelectionType {
 }
 
 enum TextFieldActionResult {
+  /// The handler recognized the key event and chose to
+  /// take an action.
+  ///
+  /// No other handler should receive the key event.
+  ///
+  /// The key event **shouldn't** bubble up the tree.
   handled,
+
+  /// The handler recognized the key event but chose to
+  /// take no action.
+  ///
+  /// No other handler should receive the key event.
+  ///
+  /// The key event **should** bubble up the tree to
+  /// (possibly) be handled by other keyboard/shortcut
+  /// listeners.
+  blocked,
+
+  /// The handler has no relation to the key event and
+  /// took no action.
+  ///
+  /// Other handlers should be given a chance to act on
+  /// the key press.
   notHandled,
 }
 
