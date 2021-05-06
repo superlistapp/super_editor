@@ -17,6 +17,19 @@ import 'multi_tap_gesture.dart';
 
 final _log = Logger(scope: 'super_textfield.dart');
 
+/// Highly configurable textfield intended for web and desktop uses.
+///
+/// [SuperTextField] provides two advantages over a typical [TextField].
+/// First, [SuperTextField] is based on [AttributedText], which is a far
+/// more useful foundation for styled text display than [TextSpan]. Second,
+/// [SuperTextField] provides deeper control over various visual properties
+/// including selection painting, caret painting, hint display, and keyboard
+/// interaction.
+///
+/// If [SuperTextField] does not provide the desired level of configuration,
+/// look at its implementation. Unlike Flutter's [TextField], [SuperTextField]
+/// is composed of a few widgets that you can recompose to create your own
+/// flavor of a text field.
 class SuperTextField extends StatefulWidget {
   const SuperTextField({
     Key? key,
@@ -39,7 +52,7 @@ class SuperTextField extends StatefulWidget {
     this.hintBuilder,
     this.hintBehavior = HintBehavior.displayHintUntilFocus,
     this.onRightClick,
-    this.keyboardActions = defaultTextfieldKeyboardActions,
+    this.keyboardActions = defaultTextFieldKeyboardActions,
   }) : super(key: key);
 
   final FocusNode? focusNode;
@@ -218,12 +231,12 @@ class SuperTextFieldState extends State<SuperTextField> {
 
     return SuperTextFieldKeyboardInteractor(
       focusNode: _focusNode,
-      controller: _controller,
+      textController: _controller,
       textKey: _selectableTextKey,
       keyboardActions: widget.keyboardActions,
       child: SuperTextFieldGestureInteractor(
         focusNode: _focusNode,
-        controller: _controller,
+        textController: _controller,
         textKey: _selectableTextKey,
         textScrollKey: _textScrollKey,
         isMultiline: isMultiline,
@@ -297,11 +310,24 @@ enum HintBehavior {
   noHint,
 }
 
+/// Handles all user gesture interactions for text entry.
+///
+/// [SuperTextFieldGestureInteractor] is intended to operate as a piece within
+/// a larger composition that behaves as a text field. [SuperTextFieldGestureInteractor]
+/// is defined on its own so that it can be replaced with a widget that handles
+/// gestures differently.
+///
+/// The gestures are applied to a [SelectableText] widget that is
+/// tied to [textKey].
+///
+/// A [SuperTextFieldScrollview] must sit between this [SuperTextFieldGestureInteractor]
+/// and the underlying [SelectableText]. That [SuperTextFieldScrollview] must
+/// be tied to [textScrollKey].
 class SuperTextFieldGestureInteractor extends StatefulWidget {
   const SuperTextFieldGestureInteractor({
     Key? key,
     required this.focusNode,
-    required this.controller,
+    required this.textController,
     required this.textKey,
     required this.textScrollKey,
     required this.isMultiline,
@@ -309,12 +335,28 @@ class SuperTextFieldGestureInteractor extends StatefulWidget {
     required this.child,
   }) : super(key: key);
 
+  /// [FocusNode] for this text field.
   final FocusNode focusNode;
-  final AttributedTextEditingController controller;
+
+  /// [TextController] for the text/selection within this text field.
+  final AttributedTextEditingController textController;
+
+  /// [GlobalKey] that links this [SuperTextFieldGestureInteractor] to
+  /// the [SelectableText] widget that paints the text for this text field.
   final GlobalKey<SelectableTextState> textKey;
+
+  /// [GlobalKey] that links this [SuperTextFieldGestureInteractor] to
+  /// the [SuperTextFieldScrollview] that's responsible for scrolling
+  /// content that exceeds the available space within this text field.
   final GlobalKey<SuperTextFieldScrollviewState> textScrollKey;
+
+  /// Whether or not this text field supports multiple lines of text.
   final bool isMultiline;
+
+  /// Callback invoked when the user right clicks on this text field.
   final RightClickListener? onRightClick;
+
+  /// The rest of the subtree for this text field.
   final Widget child;
 
   @override
@@ -338,7 +380,6 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
 
   SuperTextFieldScrollviewState get _textScroll => widget.textScrollKey.currentState!;
 
-  //-------- START GESTURES ---------
   void _onTapDown(TapDownDetails details) {
     _log.log('_onTapDown', 'EditableDocument: onTapDown()');
     _clearSelection();
@@ -348,7 +389,7 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
     final tapTextPosition = _getPositionNearestToTextOffset(textOffset);
 
     setState(() {
-      widget.controller.selection = TextSelection.collapsed(offset: tapTextPosition.offset);
+      widget.textController.selection = TextSelection.collapsed(offset: tapTextPosition.offset);
     });
 
     widget.focusNode.requestFocus();
@@ -363,7 +404,7 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
 
     if (tapTextPosition != null) {
       setState(() {
-        widget.controller.selection = _text.getWordSelectionAt(tapTextPosition);
+        widget.textController.selection = _text.getWordSelectionAt(tapTextPosition);
       });
     } else {
       _clearSelection();
@@ -385,7 +426,7 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
 
     if (tapTextPosition != null) {
       setState(() {
-        widget.controller.selection = _getParagraphSelectionAt(tapTextPosition, TextAffinity.downstream);
+        widget.textController.selection = _getParagraphSelectionAt(tapTextPosition, TextAffinity.downstream);
       });
     } else {
       _clearSelection();
@@ -399,7 +440,7 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
   }
 
   void _onRightClick(TapUpDetails details) {
-    widget.onRightClick?.call(context, widget.controller, details.localPosition);
+    widget.onRightClick?.call(context, widget.textController, details.localPosition);
   }
 
   void _onPanStart(DragStartDetails details) {
@@ -462,7 +503,7 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
         final baseParagraphSelection = _getParagraphSelectionAt(TextPosition(offset: startDragOffset), affinity);
         final extentParagraphSelection = _getParagraphSelectionAt(TextPosition(offset: endDragOffset), affinity);
 
-        widget.controller.selection = _combineSelections(
+        widget.textController.selection = _combineSelections(
           baseParagraphSelection,
           extentParagraphSelection,
           affinity,
@@ -471,13 +512,13 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
         final baseParagraphSelection = _text.getWordSelectionAt(TextPosition(offset: startDragOffset));
         final extentParagraphSelection = _text.getWordSelectionAt(TextPosition(offset: endDragOffset));
 
-        widget.controller.selection = _combineSelections(
+        widget.textController.selection = _combineSelections(
           baseParagraphSelection,
           extentParagraphSelection,
           affinity,
         );
       } else {
-        widget.controller.selection = TextSelection(
+        widget.textController.selection = TextSelection(
           baseOffset: startDragOffset,
           extentOffset: endDragOffset,
         );
@@ -503,7 +544,7 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
 
   void _clearSelection() {
     setState(() {
-      widget.controller.selection = TextSelection.collapsed(offset: -1);
+      widget.textController.selection = TextSelection.collapsed(offset: -1);
     });
   }
 
@@ -688,20 +729,57 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
   }
 }
 
+/// Handles all keyboard interactions for text entry in a text field.
+///
+/// [SuperTextFieldKeyboardInteractor] is intended to operate as a piece within
+/// a larger composition that behaves as a text field. [SuperTextFieldKeyboardInteractor]
+/// is defined on its own so that it can be replaced with a widget that handles
+/// key events differently.
+///
+/// The key events are applied to a [SelectableText] widget that is tied to [textKey].
 class SuperTextFieldKeyboardInteractor extends StatefulWidget {
   const SuperTextFieldKeyboardInteractor({
     Key? key,
     required this.focusNode,
-    required this.controller,
+    required this.textController,
     required this.textKey,
     required this.keyboardActions,
     required this.child,
   }) : super(key: key);
 
+  /// [FocusNode] for this text field.
   final FocusNode focusNode;
-  final AttributedTextEditingController controller;
+
+  /// [TextController] for the text/selection within this text field.
+  final AttributedTextEditingController textController;
+
+  /// [GlobalKey] that links this [SuperTextFieldGestureInteractor] to
+  /// the [SelectableText] widget that paints the text for this text field.
   final GlobalKey<SelectableTextState> textKey;
+
+  /// Ordered list of actions that correspond to various key events.
+  ///
+  /// Each handler in the list may be given a key event from the keyboard. That
+  /// handler chooses to take an action, or not. A handler must respond with
+  /// a [TextFieldActionResult], which indicates how the key event was handled,
+  /// or not.
+  ///
+  /// When a handler reports [TextFieldActionResult.notHandled], the key event
+  /// is sent to the next handler.
+  ///
+  /// As soon as a handler reports [TextFieldActionResult.handled], no other
+  /// handler is executed and the key event is prevented from propagating up
+  /// the widget tree.
+  ///
+  /// When a handler reports [TextFieldActionResult.blocked], no other
+  /// handler is executed, but the key event **continues** to propagate up
+  /// the widget tree for other listeners to act upon.
+  ///
+  /// If all handlers report [TextFieldActionResult.notHandled], the key
+  /// event propagates up the widget tree for other listeners to act upon.
   final List<TextfieldKeyboardAction> keyboardActions;
+
+  /// The rest of the subtree for this text field.
   final Widget child;
 
   @override
@@ -720,7 +798,7 @@ class _SuperTextFieldKeyboardInteractorState extends State<SuperTextFieldKeyboar
     int index = 0;
     while (instruction == TextFieldActionResult.notHandled && index < widget.keyboardActions.length) {
       instruction = widget.keyboardActions[index](
-        controller: widget.controller,
+        controller: widget.textController,
         selectableTextState: widget.textKey.currentState!,
         keyEvent: keyEvent,
       );
@@ -740,6 +818,15 @@ class _SuperTextFieldKeyboardInteractorState extends State<SuperTextFieldKeyboar
   }
 }
 
+/// Handles all scrolling behavior for a text field.
+///
+/// [SuperTextFieldScrollview] is intended to operate as a piece within
+/// a larger composition that behaves as a text field. [SuperTextFieldScrollview]
+/// is defined on its own so that it can be replaced with a widget that handles
+/// scrolling differently.
+///
+/// [SuperTextFieldScrollview] determines when and where to scroll by working
+/// with a corresponding [SelectableText] widget that is tied to [textKey].
 class SuperTextFieldScrollview extends StatefulWidget {
   const SuperTextFieldScrollview({
     Key? key,
@@ -753,13 +840,33 @@ class SuperTextFieldScrollview extends StatefulWidget {
     required this.child,
   }) : super(key: key);
 
-  final GlobalKey<SelectableTextState> textKey;
+  /// [TextController] for the text/selection within this text field.
   final AttributedTextEditingController textController;
+
+  /// [GlobalKey] that links this [SuperTextFieldScrollview] to
+  /// the [SelectableText] widget that paints the text for this text field.
+  final GlobalKey<SelectableTextState> textKey;
+
+  /// [ScrollController] that controls the scroll offset of this [SuperTextFieldScrollview].
   final ScrollController scrollController;
+
+  /// Padding placed around the text content of this text field, but within the
+  /// scrollable viewport.
   final EdgeInsetsGeometry padding;
+
+  /// The height of the viewport for this text field.
+  ///
+  /// If [null] then the viewport is permitted to grow/shrink to any desired height.
   final double? viewportHeight;
+
+  /// An estimate for the height in pixels of a single line of text within this
+  /// text field.
   final double estimatedLineHeight;
+
+  /// Whether or not this text field allows multiple lines of text.
   final bool isMultiline;
+
+  /// The rest of the subtree for this text field.
   final Widget child;
 
   @override
@@ -1004,8 +1111,17 @@ typedef RightClickListener = void Function(
     BuildContext textFieldContext, AttributedTextEditingController textController, Offset textFieldOffset);
 
 enum _SelectionType {
+  /// The selection bound is set on a per-character basis.
+  ///
+  /// This is standard text selection behavior.
   position,
+
+  /// The selection bound expands to include any word that the
+  /// cursor touches.
   word,
+
+  /// The selection bound expands to include any paragraph that
+  /// the cursor touches.
   paragraph,
 }
 
@@ -1042,7 +1158,22 @@ typedef TextfieldKeyboardAction = TextFieldActionResult Function({
   required RawKeyEvent keyEvent,
 });
 
-const defaultTextfieldKeyboardActions = <TextfieldKeyboardAction>[
+/// The keyboard actions that a [SuperTextField] uses by default.
+///
+/// It's common for developers to want all of these actions, but also
+/// want to add more actions that take priority. To achieve that,
+/// add the new actions to the front of the list:
+///
+/// ```
+/// SuperTextField(
+///   keyboardActions: [
+///     myNewAction1,
+///     myNewAction2,
+///     ...defaultTextfieldKeyboardActions,
+///   ],
+/// );
+/// ```
+const defaultTextFieldKeyboardActions = <TextfieldKeyboardAction>[
   copyTextWhenCmdCIsPressed,
   pasteTextWhenCmdVIsPressed,
   selectAllTextFieldWhenCmdAIsPressed,
