@@ -261,12 +261,21 @@ class _EditorState extends State<Editor> {
     }
 
     final textPosition = _composer.selection!.extent.nodePosition as TextPosition;
-    if (textPosition.offset == 0) {
-      return;
-    }
 
-    final allStyles = node.text.getAllAttributionsAt(textPosition.offset - 1);
-    _composer.preferences.addStyles(allStyles);
+    if (textPosition.offset == 0) {
+      if (node.text.text.isEmpty) {
+        return;
+      }
+
+      // Inserted text at the very beginning of a text blob assumes the
+      // attributions immediately following it.
+      final allStyles = node.text.getAllAttributionsAt(textPosition.offset + 1);
+      _composer.preferences.addStyles(allStyles);
+    } else {
+      // Inserted text assumes the attributions immediately preceding it.
+      final allStyles = node.text.getAllAttributionsAt(textPosition.offset - 1);
+      _composer.preferences.addStyles(allStyles);
+    }
   }
 
   @override
