@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_layout.dart';
@@ -78,8 +80,12 @@ TextSelection _expandPositionToParagraph({
   required String text,
   required TextPosition textPosition,
 }) {
-  int start = textPosition.offset;
-  int end = textPosition.offset;
+  if (text.isEmpty) {
+    return TextSelection.collapsed(offset: -1);
+  }
+
+  int start = min(textPosition.offset, text.length - 1);
+  int end = min(textPosition.offset, text.length - 1);
   while (start > 0 && text[start] != '\n') {
     start -= 1;
   }
