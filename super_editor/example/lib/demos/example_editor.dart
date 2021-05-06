@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/super_editor.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 /// Example of a rich text editor.
 ///
@@ -167,12 +168,6 @@ class _TextFormatBarState extends State<TextFormatBar> {
           return TextType.header2;
         case 'header3':
           return TextType.header3;
-        case 'header4':
-          return TextType.header4;
-        case 'header5':
-          return TextType.header5;
-        case 'header6':
-          return TextType.header6;
         case 'blockquote':
           return TextType.blockquote;
         default:
@@ -266,12 +261,6 @@ class _TextFormatBarState extends State<TextFormatBar> {
         return 'header2';
       case TextType.header3:
         return 'header3';
-      case TextType.header4:
-        return 'header4';
-      case TextType.header5:
-        return 'header5';
-      case TextType.header6:
-        return 'header6';
       case TextType.blockquote:
         return 'blockquote';
       case TextType.paragraph:
@@ -337,25 +326,19 @@ class _TextFormatBarState extends State<TextFormatBar> {
   String _getTextTypeName(TextType textType) {
     switch (textType) {
       case TextType.header1:
-        return 'Header 1';
+        return AppLocalizations.of(context).labelHeader1;
       case TextType.header2:
-        return 'Header 2';
+        return AppLocalizations.of(context).labelHeader2;
       case TextType.header3:
-        return 'Header 3';
-      case TextType.header4:
-        return 'Header 4';
-      case TextType.header5:
-        return 'Header 5';
-      case TextType.header6:
-        return 'Header 6';
+        return AppLocalizations.of(context).labelHeader3;
       case TextType.paragraph:
-        return 'Paragraph';
+        return AppLocalizations.of(context).labelParagraph;
       case TextType.blockquote:
-        return 'Blockquote';
+        return AppLocalizations.of(context).labelBlockquote;
       case TextType.orderedListItem:
-        return 'Ordered List Item';
+        return AppLocalizations.of(context).labelOrderedListItem;
       case TextType.unorderedListItem:
-        return 'Unordered List Item';
+        return AppLocalizations.of(context).labelUnorderedListItem;
     }
   }
 
@@ -386,26 +369,29 @@ class _TextFormatBarState extends State<TextFormatBar> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 if (_isConvertibleNode()) ...[
-                  DropdownButton<TextType>(
-                    value: _getCurrentTextType(),
-                    items: TextType.values
-                        .map((textType) => DropdownMenuItem<TextType>(
-                              value: textType,
-                              child: Padding(
-                                padding: const EdgeInsets.only(left: 16.0),
-                                child: Text(_getTextTypeName(textType)),
-                              ),
-                            ))
-                        .toList(),
-                    icon: Icon(Icons.arrow_drop_down),
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 12,
+                  Tooltip(
+                    message: AppLocalizations.of(context).labelTextBlockType,
+                    child: DropdownButton<TextType>(
+                      value: _getCurrentTextType(),
+                      items: TextType.values
+                          .map((textType) => DropdownMenuItem<TextType>(
+                                value: textType,
+                                child: Padding(
+                                  padding: const EdgeInsets.only(left: 16.0),
+                                  child: Text(_getTextTypeName(textType)),
+                                ),
+                              ))
+                          .toList(),
+                      icon: Icon(Icons.arrow_drop_down),
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 12,
+                      ),
+                      underline: SizedBox(),
+                      elevation: 0,
+                      itemHeight: 48,
+                      onChanged: _convertTextToNewType,
                     ),
-                    underline: SizedBox(),
-                    elevation: 0,
-                    itemHeight: 48,
-                    onChanged: _convertTextToNewType,
                   ),
                   _buildVerticalDivider(),
                 ],
@@ -414,6 +400,7 @@ class _TextFormatBarState extends State<TextFormatBar> {
                     onPressed: _toggleBold,
                     icon: Icon(Icons.format_bold),
                     splashRadius: 16,
+                    tooltip: AppLocalizations.of(context).labelBold,
                   ),
                 ),
                 Center(
@@ -421,6 +408,7 @@ class _TextFormatBarState extends State<TextFormatBar> {
                     onPressed: _toggleItalics,
                     icon: Icon(Icons.format_italic),
                     splashRadius: 16,
+                    tooltip: AppLocalizations.of(context).labelItalics,
                   ),
                 ),
                 Center(
@@ -428,6 +416,7 @@ class _TextFormatBarState extends State<TextFormatBar> {
                     onPressed: _toggleStrikethrough,
                     icon: Icon(Icons.strikethrough_s),
                     splashRadius: 16,
+                    tooltip: AppLocalizations.of(context).labelStrikethrough,
                   ),
                 ),
                 Center(
@@ -435,30 +424,34 @@ class _TextFormatBarState extends State<TextFormatBar> {
                     onPressed: _toggleLink,
                     icon: Icon(Icons.link),
                     splashRadius: 16,
+                    tooltip: AppLocalizations.of(context).labelLink,
                   ),
                 ),
                 if (_isTextAlignable()) ...[
                   _buildVerticalDivider(),
-                  DropdownButton<TextAlign>(
-                    value: _getCurrentTextAlignment(),
-                    items: [TextAlign.left, TextAlign.center, TextAlign.right, TextAlign.justify]
-                        .map((textAlign) => DropdownMenuItem<TextAlign>(
-                              value: textAlign,
-                              child: Padding(
-                                padding: const EdgeInsets.only(left: 8.0),
-                                child: Icon(_buildTextAlignIcon(textAlign)),
-                              ),
-                            ))
-                        .toList(),
-                    icon: Icon(Icons.arrow_drop_down),
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 12,
+                  Tooltip(
+                    message: AppLocalizations.of(context).labelTextAlignment,
+                    child: DropdownButton<TextAlign>(
+                      value: _getCurrentTextAlignment(),
+                      items: [TextAlign.left, TextAlign.center, TextAlign.right, TextAlign.justify]
+                          .map((textAlign) => DropdownMenuItem<TextAlign>(
+                                value: textAlign,
+                                child: Padding(
+                                  padding: const EdgeInsets.only(left: 8.0),
+                                  child: Icon(_buildTextAlignIcon(textAlign)),
+                                ),
+                              ))
+                          .toList(),
+                      icon: Icon(Icons.arrow_drop_down),
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 12,
+                      ),
+                      underline: SizedBox(),
+                      elevation: 0,
+                      itemHeight: 48,
+                      onChanged: _changeAlignment,
                     ),
-                    underline: SizedBox(),
-                    elevation: 0,
-                    itemHeight: 48,
-                    onChanged: _changeAlignment,
                   ),
                 ],
                 _buildVerticalDivider(),
@@ -467,6 +460,7 @@ class _TextFormatBarState extends State<TextFormatBar> {
                     onPressed: () {},
                     icon: Icon(Icons.more_vert),
                     splashRadius: 16,
+                    tooltip: AppLocalizations.of(context).labelMoreOptions,
                   ),
                 ),
               ],
@@ -504,9 +498,6 @@ enum TextType {
   header1,
   header2,
   header3,
-  header4,
-  header5,
-  header6,
   paragraph,
   blockquote,
   orderedListItem,

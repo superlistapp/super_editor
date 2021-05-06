@@ -1,0 +1,16 @@
+{
+  "labelTextBlockType": "Tipo de bloque de texto",
+  "labelBold": "Negrita",
+  "labelItalics": "Cursiva",
+  "labelStrikethrough": "Tachado",
+  "labelTextAlignment": "Alineación de texto",
+  "labelLink": "Enlace",
+  "labelMoreOptions": "Más Opciones (no se implanta)",
+  "labelHeader1": "Encabezado 1",
+  "labelHeader2": "Encabezado 2",
+  "labelHeader3": "Encabezado 3",
+  "labelParagraph": "Párrafo",
+  "labelBlockquote": "Cita de bloque",
+  "labelOrderedListItem": "Elemento de lista cerrada",
+  "labelUnorderedListItem": "Elemento de lista no ordenada"
+}
