@@ -125,6 +125,13 @@ class AttributedText with ChangeNotifier {
         spans: spans.copy(),
       );
     }
+    if (text.isEmpty) {
+      _log.log('copyAndAppend', 'our `text` is empty. Returning a direct copy of the `other` text.');
+      return AttributedText(
+        text: other.text,
+        spans: other.spans.copy(),
+      );
+    }
 
     final newSpans = spans.copy()..addAt(other: other.spans, index: text.length);
     return AttributedText(

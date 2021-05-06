@@ -234,6 +234,14 @@ class SelectableTextState extends State<SelectableText> implements TextLayout {
     return _renderParagraph!.getOffsetForCaret(position, Rect.zero);
   }
 
+  List<TextBox> getBoxesForSelection(TextSelection selection) {
+    if (_renderParagraph == null) {
+      throw Exception('SelectableText does not yet have a RenderParagraph. Can\'t getBoxesForSelection().');
+    }
+
+    return _renderParagraph!.getBoxesForSelection(selection);
+  }
+
   @override
   TextPosition getPositionAtStartOfLine({
     required TextPosition currentPosition,
@@ -340,6 +348,7 @@ class SelectableTextState extends State<SelectableText> implements TextLayout {
     );
   }
 
+  @override
   bool isTextAtOffset(Offset localOffset) {
     if (_renderParagraph == null) {
       return false;

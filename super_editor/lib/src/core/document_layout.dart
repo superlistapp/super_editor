@@ -33,6 +33,10 @@ abstract class DocumentLayout {
   /// the corresponding component has not yet been laid out.
   Rect? getRectForPosition(DocumentPosition position);
 
+  /// Returns a [Rect] that bounds the content selected between
+  /// [basePosition] and [extentPosition].
+  Rect? getRectForSelection(DocumentPosition basePosition, DocumentPosition extentPosition);
+
   /// Returns a `DocumentSelection` that begins near `baseOffset` and extends
   /// to `extentOffset`, or `null` if no document content sits between the
   /// provided points.
@@ -91,6 +95,16 @@ mixin DocumentComponent<T extends StatefulWidget> on State<T> {
   /// See `Document` for more information about `DocumentNode`s and
   /// node positions.
   Rect getRectForPosition(dynamic nodePosition);
+
+  /// Returns a [Rect] that bounds the content selected between
+  /// [baseNodePosition] and [extentNodePosition].
+  ///
+  /// Throws an exception if [baseNodePosition] or [extentNodePosition] are
+  /// not an appropriate type of node position for this component.
+  ///
+  /// See [Document] for more information about [DocumentNode]s and
+  /// node positions.
+  Rect getRectForSelection(dynamic baseNodePosition, dynamic extentNodePosition);
 
   /// Returns the node position that represents the "beginning" of
   /// the content within this component, such as the first character

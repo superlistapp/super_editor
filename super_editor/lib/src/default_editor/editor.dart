@@ -72,6 +72,7 @@ class Editor extends StatefulWidget {
     FocusNode? focusNode,
     double maxWidth = 600,
     EdgeInsetsGeometry padding = EdgeInsets.zero,
+    GlobalKey? documentLayoutKey,
     bool showDebugPaint = false,
   }) {
     return Editor._(
@@ -86,6 +87,7 @@ class Editor extends StatefulWidget {
       focusNode: focusNode,
       maxWidth: maxWidth,
       padding: padding,
+      documentLayoutKey: documentLayoutKey,
       showDebugPaint: showDebugPaint,
     );
   }
@@ -102,6 +104,7 @@ class Editor extends StatefulWidget {
     FocusNode? focusNode,
     double maxWidth = 600,
     EdgeInsetsGeometry padding = EdgeInsets.zero,
+    GlobalKey? documentLayoutKey,
     bool showDebugPaint = false,
   }) {
     return Editor._(
@@ -116,6 +119,7 @@ class Editor extends StatefulWidget {
       focusNode: focusNode,
       maxWidth: maxWidth,
       padding: padding,
+      documentLayoutKey: documentLayoutKey,
       showDebugPaint: showDebugPaint,
     );
   }
@@ -132,6 +136,7 @@ class Editor extends StatefulWidget {
     this.focusNode,
     this.maxWidth = 600,
     this.padding = EdgeInsets.zero,
+    this.documentLayoutKey,
     this.showDebugPaint = false,
   }) : super(key: key);
 
@@ -162,6 +167,8 @@ class Editor extends StatefulWidget {
 
   final ScrollController? scrollController;
 
+  final GlobalKey? documentLayoutKey;
+
   final FocusNode? focusNode;
 
   final double maxWidth;
@@ -179,7 +186,7 @@ class Editor extends StatefulWidget {
 class _EditorState extends State<Editor> {
   // GlobalKey used to access the `DocumentLayoutState` to figure
   // out where in the document the user taps or drags.
-  final _docLayoutKey = GlobalKey();
+  late GlobalKey _docLayoutKey;
 
   late FocusNode _focusNode;
   late DocumentComposer _composer;
@@ -194,6 +201,8 @@ class _EditorState extends State<Editor> {
     _composer.addListener(_updateComposerPreferencesAtSelection);
 
     _focusNode = widget.focusNode ?? FocusNode();
+
+    _docLayoutKey = widget.documentLayoutKey ?? GlobalKey();
   }
 
   @override
@@ -214,6 +223,9 @@ class _EditorState extends State<Editor> {
     }
     if (widget.focusNode != oldWidget.focusNode) {
       _focusNode = widget.focusNode ?? FocusNode();
+    }
+    if (widget.documentLayoutKey != oldWidget.documentLayoutKey) {
+      _docLayoutKey = widget.documentLayoutKey ?? GlobalKey();
     }
   }
 
@@ -249,18 +261,28 @@ class _EditorState extends State<Editor> {
     }
 
     final textPosition = _composer.selection!.extent.nodePosition as TextPosition;
-    if (textPosition.offset == 0) {
-      return;
-    }
 
-    final allStyles = node.text.getAllAttributionsAt(textPosition.offset - 1);
-    _composer.preferences.addStyles(allStyles);
+    if (textPosition.offset == 0) {
+      if (node.text.text.isEmpty) {
+        return;
+      }
+
+      // Inserted text at the very beginning of a text blob assumes the
+      // attributions immediately following it.
+      final allStyles = node.text.getAllAttributionsAt(textPosition.offset + 1);
+      _composer.preferences.addStyles(allStyles);
+    } else {
+      // Inserted text assumes the attributions immediately preceding it.
+      final allStyles = node.text.getAllAttributionsAt(textPosition.offset - 1);
+      _composer.preferences.addStyles(allStyles);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return DocumentInteractor(
       focusNode: _focusNode,
+      scrollController: widget.scrollController,
       editContext: EditContext(
         editor: widget.editor,
         composer: _composer,

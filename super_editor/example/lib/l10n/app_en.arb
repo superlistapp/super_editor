@@ -1,0 +1,16 @@
+{
+  "labelTextBlockType": "Text block type",
+  "labelBold": "Bold",
+  "labelItalics": "Italics",
+  "labelStrikethrough": "Strikethrough",
+  "labelLink": "Link",
+  "labelTextAlignment": "Text Alignment",
+  "labelMoreOptions": "More Options (not implemented)",
+  "labelHeader1": "Header 1",
+  "labelHeader2": "Header 2",
+  "labelHeader3": "Header 3",
+  "labelParagraph": "Paragraph",
+  "labelBlockquote": "Blockquote",
+  "labelOrderedListItem": "Ordered List Item",
+  "labelUnorderedListItem": "Unordered List Item"
+}

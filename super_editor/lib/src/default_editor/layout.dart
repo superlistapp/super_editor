@@ -131,6 +131,72 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
   }
 
   @override
+  Rect? getRectForSelection(DocumentPosition base, DocumentPosition extent) {
+    final baseComponent = getComponentByNodeId(base.nodeId);
+    final extentComponent = getComponentByNodeId(extent.nodeId);
+    if (baseComponent == null || extentComponent == null) {
+      _log.log('getRectForSelection',
+          'Could not find base and/or extent position to calculate bounding box for selection. Base: $base -> $baseComponent, Extent: $extent -> $extentComponent');
+      return null;
+    }
+
+    DocumentComponent topComponent;
+    final componentBoundingBoxes = <Rect>[];
+
+    // Collect bounding boxes for all selected components.
+    if (base.nodeId == extent.nodeId) {
+      // Selection within a single node.
+      topComponent = extentComponent;
+      final componentBoundingBox = extentComponent.getRectForSelection(base.nodePosition, extent.nodePosition);
+      componentBoundingBoxes.add(componentBoundingBox);
+    } else {
+      // Selection across nodes.
+      final selectedNodes = widget.document.getNodesInside(base, extent);
+      topComponent = getComponentByNodeId(selectedNodes.first.id)!;
+      final startPosition = selectedNodes.first.id == base.nodeId ? base.nodePosition : extent.nodePosition;
+      final endPosition = selectedNodes.first.id == extent.nodeId ? extent.nodePosition : base.nodePosition;
+
+      for (int i = 0; i < selectedNodes.length; ++i) {
+        final component = getComponentByNodeId(selectedNodes[i].id)!;
+
+        if (i == 0) {
+          // This is the first node. The selection goes from
+          // startPosition to the end of the node.
+          final firstNodeEndPosition = component.getEndPosition();
+          componentBoundingBoxes.add(component.getRectForSelection(startPosition, firstNodeEndPosition));
+        } else if (i == selectedNodes.length - 1) {
+          // This is the last node. The selection goes from
+          // the beginning of the node to endPosition.
+          final lastNodeStartPosition = component.getBeginningPosition();
+          componentBoundingBoxes.add(component.getRectForSelection(lastNodeStartPosition, endPosition));
+        } else {
+          // This node sits between start and end. All content
+          // is selected.
+          componentBoundingBoxes.add(
+            component.getRectForSelection(
+              component.getBeginningPosition(),
+              component.getEndPosition(),
+            ),
+          );
+        }
+      }
+    }
+
+    // Combine all component boxes into one big bounding box.
+    Rect boundingBox = componentBoundingBoxes.first;
+    for (int i = 1; i < componentBoundingBoxes.length; ++i) {
+      boundingBox.expandToInclude(componentBoundingBoxes[i]);
+    }
+
+    // Translate the bounding box so that it's positioned in document coordinate space.
+    final topComponentBox = topComponent.context.findRenderObject() as RenderBox;
+    final docOffset = topComponentBox.localToGlobal(Offset.zero, ancestor: context.findRenderObject());
+    boundingBox = boundingBox.translate(docOffset.dx, docOffset.dy);
+
+    return boundingBox;
+  }
+
+  @override
   DocumentSelection? getDocumentSelectionInRegion(Offset baseOffset, Offset extentOffset) {
     _log.log('getDocumentSelectionInRegion', 'getDocumentSelectionInRegion() - from: $baseOffset, to: $extentOffset');
     // Drag direction determines whether the extent offset is at the

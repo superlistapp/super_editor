@@ -4,6 +4,8 @@ import 'package:example/demos/demo_selectable_text.dart';
 import 'package:example/demos/example_editor.dart';
 import 'package:example/demos/sliver_example_editor.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'demos/demo_attributed_text.dart';
 import 'demos/demo_document_loses_focus.dart';
@@ -24,6 +26,16 @@ class SuperEditorDemoApp extends StatelessWidget {
         primarySwatch: Colors.red,
       ),
       home: HomeScreen(),
+      supportedLocales: [
+        const Locale('en', ''),
+        const Locale('es', ''),
+      ],
+      localizationsDelegates: [
+        ...AppLocalizations.localizationsDelegates,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       debugShowCheckedModeBanner: false,
     );
   }

@@ -146,6 +146,30 @@ void main() {
       expect(textSpan.children![1].style!.fontStyle, null);
     });
 
+    test('Bug 145 - insert character at beginning of styled text', () {
+      final initialText = AttributedText(
+        text: 'abcdefghij',
+        spans: AttributedSpans(
+          attributions: [
+            SpanMarker(attribution: 'bold', offset: 0, markerType: SpanMarkerType.start),
+            SpanMarker(attribution: 'bold', offset: 9, markerType: SpanMarkerType.end),
+          ],
+        ),
+      );
+
+      final newText = initialText.insertString(
+        textToInsert: 'a',
+        startOffset: 0,
+        applyAttributions: {'bold'},
+      );
+
+      expect(newText.text, 'aabcdefghij');
+      expect(
+        newText.hasAttributionsWithin(attributions: {'bold'}, range: TextRange(start: 0, end: 10)),
+        true,
+      );
+    });
+
     test('non-mingled varying styles', () {
       final text = AttributedText(
         text: 'abcdefghij',

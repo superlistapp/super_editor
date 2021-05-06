@@ -107,6 +107,19 @@ class _BoxComponentState extends State<BoxComponent> with DocumentComponent {
   }
 
   @override
+  Rect getRectForSelection(dynamic basePosition, dynamic extentPosition) {
+    if (basePosition is! BinaryPosition) {
+      throw Exception('Expected nodePosition of type BinaryPosition but received: $basePosition');
+    }
+    if (extentPosition is! BinaryPosition) {
+      throw Exception('Expected nodePosition of type BinaryPosition but received: $extentPosition');
+    }
+
+    final myBox = context.findRenderObject() as RenderBox;
+    return Offset.zero & myBox.size;
+  }
+
+  @override
   BinaryPosition getPositionAtOffset(Offset localOffset) {
     return BinaryPosition.included();
   }
