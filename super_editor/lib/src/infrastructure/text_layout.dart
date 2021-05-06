@@ -20,8 +20,8 @@ abstract class TextLayout {
   /// Returns a [List] of [TextBox]es that contain the given [selection].
   List<TextBox> getBoxesForSelection(TextSelection selection);
 
-  /// Returns a bounding [Rect] for the character at the given [position].
-  Rect getCharacterBox(TextPosition position);
+  /// Returns a bounding [TextBox] for the character at the given [position].
+  TextBox getCharacterBox(TextPosition position);
 
   /// Returns the [TextPosition] that corresponds to a text location
   /// that is one line above the given [textPosition], or [null] if
@@ -66,8 +66,7 @@ abstract class TextLayout {
 
 typedef TextExpansion = TextSelection Function(String text, TextPosition startingPosition, TextAffinity affinity);
 
-const paragraphExpansionFilter = _paragraphExpansionFilter;
-TextSelection _paragraphExpansionFilter(String text, TextPosition startingPosition, TextAffinity affinity) {
+TextSelection paragraphExpansionFilter(String text, TextPosition startingPosition, TextAffinity affinity) {
   // If the given position falls directly on a newline then return
   // just the newline character as the paragraph selection.
   if (startingPosition.offset < text.length && text[startingPosition.offset] == '\n') {

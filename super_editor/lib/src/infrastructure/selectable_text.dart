@@ -196,12 +196,12 @@ class SelectableTextState extends State<SelectableText> implements TextLayout {
   }
 
   @override
-  Rect getCharacterBox(TextPosition position) {
+  TextBox getCharacterBox(TextPosition position) {
     if (_renderParagraph == null) {
-      return Rect.zero;
+      return TextBox.fromLTRBD(0, 0, 0, 0, TextDirection.ltr);
     }
 
-    return _renderParagraph!.getBoxesForSelection(TextSelection.collapsed(offset: position.offset)).first.toRect();
+    return _renderParagraph!.getBoxesForSelection(TextSelection.collapsed(offset: position.offset)).first;
   }
 
   @override
