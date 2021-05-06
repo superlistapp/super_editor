@@ -109,6 +109,9 @@ class _MarkdownToDocument implements md.NodeVisitor {
 
   @override
   bool visitElementBefore(md.Element element) {
+    // TODO: re-organize parsing such that visitElementBefore collects
+    //       the block type info and then visitText and visitElementAfter
+    //       take the action to create the node (#153)
     switch (element.tag) {
       case 'h1':
         _addHeader(element, level: 1);
@@ -143,7 +146,10 @@ class _MarkdownToDocument implements md.NodeVisitor {
         break;
       case 'blockquote':
         _addBlockquote(element);
-        break;
+
+        // Skip child elements within a blockquote so that we don't
+        // add another node for the paragraph that comprises the blockquote
+        return false;
       case 'code':
         _addCodeBlock(element);
         break;
