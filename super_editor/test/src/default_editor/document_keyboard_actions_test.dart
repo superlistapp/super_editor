@@ -10,7 +10,7 @@ import 'package:super_editor/src/default_editor/paragraph.dart';
 import 'package:super_editor/src/infrastructure/attributed_text.dart';
 
 import '../_document_test_tools.dart';
-import '_text_entry_test_tools.dart';
+import '../_text_entry_test_tools.dart';
 
 void main() {
   group(

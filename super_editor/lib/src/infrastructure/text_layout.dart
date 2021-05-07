@@ -93,3 +93,51 @@ TextSelection paragraphExpansionFilter(String text, TextPosition startingPositio
           extentOffset: start,
         );
 }
+
+/// Returns the code point index for the code point that ends the visual
+/// character that begins at [startingCodePointIndex].
+///
+/// A single visual character might be comprised of multiple code points.
+/// Each code point occupies a slot within a [String], which means that
+/// an index into a [String] might refer to a piece of a single visual
+/// character.
+///
+/// [startingCodePointIndex] is the traditional [String] index for the
+/// leading code point of a visual character.
+///
+/// This function starts at the given [startingCodePointIndex] and walks
+/// towards the end of [text] until it has accumulated an entire
+/// visual character. The [String] index of the final code point for
+/// the given character is returned.
+int getCharacterEndBounds(String text, int startingCodePointIndex) {
+  assert(startingCodePointIndex >= 0 && startingCodePointIndex <= text.length);
+
+  // TODO: copy the implementation of nextCharacter to this package because
+  //       it's marked as visible for testing
+  final startOffset = RenderEditable.nextCharacter(startingCodePointIndex, text);
+  return startOffset;
+}
+
+/// Returns the code point index for the code point that begins the visual
+/// character that ends at [endingCodePointIndex].
+///
+/// A single visual character might be comprised of multiple code points.
+/// Each code point occupies a slot within a [String], which means that
+/// an index into a [String] might refer to a piece of a single visual
+/// character.
+///
+/// [endingCodePointIndex] is the traditional [String] index for the
+/// trailing code point of a visual character.
+///
+/// This function starts at the given [endingCodePointIndex] and walks
+/// towards the beginning of [text] until it has accumulated an entire
+/// visual character. The [String] index of the initial code point for
+/// the given character is returned.
+int getCharacterStartBounds(String text, int endingCodePointIndex) {
+  assert(endingCodePointIndex >= 0 && endingCodePointIndex <= text.length);
+
+  // TODO: copy the implementation of previousCharacter to this package because
+  //       it's marked as visible for testing
+  final startOffset = RenderEditable.previousCharacter(endingCodePointIndex, text);
+  return startOffset;
+}

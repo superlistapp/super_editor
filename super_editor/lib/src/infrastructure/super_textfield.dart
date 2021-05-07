@@ -52,7 +52,7 @@ class SuperTextField extends StatefulWidget {
     this.hintBuilder,
     this.hintBehavior = HintBehavior.displayHintUntilFocus,
     this.onRightClick,
-    this.keyboardActions = defaultTextFieldKeyboardActions,
+    this.keyboardHandlers = defaultTextFieldKeyboardHandlers,
   }) : super(key: key);
 
   final FocusNode? focusNode;
@@ -83,7 +83,7 @@ class SuperTextField extends StatefulWidget {
 
   final RightClickListener? onRightClick;
 
-  final List<TextfieldKeyboardAction> keyboardActions;
+  final List<TextFieldKeyboardHandler> keyboardHandlers;
 
   @override
   SuperTextFieldState createState() => SuperTextFieldState();
@@ -233,7 +233,7 @@ class SuperTextFieldState extends State<SuperTextField> {
       focusNode: _focusNode,
       textController: _controller,
       textKey: _selectableTextKey,
-      keyboardActions: widget.keyboardActions,
+      keyboardActions: widget.keyboardHandlers,
       child: SuperTextFieldGestureInteractor(
         focusNode: _focusNode,
         textController: _controller,
@@ -761,23 +761,23 @@ class SuperTextFieldKeyboardInteractor extends StatefulWidget {
   ///
   /// Each handler in the list may be given a key event from the keyboard. That
   /// handler chooses to take an action, or not. A handler must respond with
-  /// a [TextFieldActionResult], which indicates how the key event was handled,
+  /// a [TextFieldKeyboardHandlerResult], which indicates how the key event was handled,
   /// or not.
   ///
-  /// When a handler reports [TextFieldActionResult.notHandled], the key event
+  /// When a handler reports [TextFieldKeyboardHandlerResult.notHandled], the key event
   /// is sent to the next handler.
   ///
-  /// As soon as a handler reports [TextFieldActionResult.handled], no other
+  /// As soon as a handler reports [TextFieldKeyboardHandlerResult.handled], no other
   /// handler is executed and the key event is prevented from propagating up
   /// the widget tree.
   ///
-  /// When a handler reports [TextFieldActionResult.blocked], no other
+  /// When a handler reports [TextFieldKeyboardHandlerResult.blocked], no other
   /// handler is executed, but the key event **continues** to propagate up
   /// the widget tree for other listeners to act upon.
   ///
-  /// If all handlers report [TextFieldActionResult.notHandled], the key
+  /// If all handlers report [TextFieldKeyboardHandlerResult.notHandled], the key
   /// event propagates up the widget tree for other listeners to act upon.
-  final List<TextfieldKeyboardAction> keyboardActions;
+  final List<TextFieldKeyboardHandler> keyboardActions;
 
   /// The rest of the subtree for this text field.
   final Widget child;
@@ -794,9 +794,9 @@ class _SuperTextFieldKeyboardInteractorState extends State<SuperTextFieldKeyboar
       return KeyEventResult.ignored;
     }
 
-    TextFieldActionResult instruction = TextFieldActionResult.notHandled;
+    TextFieldKeyboardHandlerResult instruction = TextFieldKeyboardHandlerResult.notHandled;
     int index = 0;
-    while (instruction == TextFieldActionResult.notHandled && index < widget.keyboardActions.length) {
+    while (instruction == TextFieldKeyboardHandlerResult.notHandled && index < widget.keyboardActions.length) {
       instruction = widget.keyboardActions[index](
         controller: widget.textController,
         selectableTextState: widget.textKey.currentState!,
@@ -805,7 +805,7 @@ class _SuperTextFieldKeyboardInteractorState extends State<SuperTextFieldKeyboar
       index += 1;
     }
 
-    return instruction == TextFieldActionResult.handled ? KeyEventResult.handled : KeyEventResult.ignored;
+    return instruction == TextFieldKeyboardHandlerResult.handled ? KeyEventResult.handled : KeyEventResult.ignored;
   }
 
   @override
@@ -1125,7 +1125,7 @@ enum _SelectionType {
   paragraph,
 }
 
-enum TextFieldActionResult {
+enum TextFieldKeyboardHandlerResult {
   /// The handler recognized the key event and chose to
   /// take an action.
   ///
@@ -1152,7 +1152,7 @@ enum TextFieldActionResult {
   notHandled,
 }
 
-typedef TextfieldKeyboardAction = TextFieldActionResult Function({
+typedef TextFieldKeyboardHandler = TextFieldKeyboardHandlerResult Function({
   required AttributedTextEditingController controller,
   required SelectableTextState selectableTextState,
   required RawKeyEvent keyEvent,
@@ -1173,390 +1173,208 @@ typedef TextfieldKeyboardAction = TextFieldActionResult Function({
 ///   ],
 /// );
 /// ```
-const defaultTextFieldKeyboardActions = <TextfieldKeyboardAction>[
-  copyTextWhenCmdCIsPressed,
-  pasteTextWhenCmdVIsPressed,
-  selectAllTextFieldWhenCmdAIsPressed,
-  moveUpDownLeftAndRightWithArrowKeysInTextField,
-  deleteTextWhenBackspaceOrDeleteIsPressedInTextField,
-  insertNewlineInTextField,
-  insertCharacterInTextField,
+const defaultTextFieldKeyboardHandlers = <TextFieldKeyboardHandler>[
+  DefaultSuperTextFieldKeyboardHandlers.copyTextWhenCmdCIsPressed,
+  DefaultSuperTextFieldKeyboardHandlers.pasteTextWhenCmdVIsPressed,
+  DefaultSuperTextFieldKeyboardHandlers.selectAllTextFieldWhenCmdAIsPressed,
+  DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys,
+  DefaultSuperTextFieldKeyboardHandlers.deleteTextWhenBackspaceOrDeleteIsPressed,
+  DefaultSuperTextFieldKeyboardHandlers.insertNewlineWhenEnterIsPressed,
+  DefaultSuperTextFieldKeyboardHandlers.insertCharacterWhenKeyIsPressed,
 ];
 
-TextFieldActionResult copyTextWhenCmdCIsPressed({
-  required AttributedTextEditingController controller,
-  required SelectableTextState selectableTextState,
-  required RawKeyEvent keyEvent,
-}) {
-  if (!keyEvent.isMetaPressed) {
-    return TextFieldActionResult.notHandled;
-  }
-  if (keyEvent.logicalKey != LogicalKeyboardKey.keyC) {
-    return TextFieldActionResult.notHandled;
-  }
-
-  Clipboard.setData(ClipboardData(
-    text: controller.selection.textInside(controller.text.text),
-  ));
-
-  return TextFieldActionResult.handled;
-}
-
-TextFieldActionResult pasteTextWhenCmdVIsPressed({
-  required AttributedTextEditingController controller,
-  required SelectableTextState selectableTextState,
-  required RawKeyEvent keyEvent,
-}) {
-  if (!keyEvent.isMetaPressed) {
-    return TextFieldActionResult.notHandled;
-  }
-  if (keyEvent.logicalKey != LogicalKeyboardKey.keyV) {
-    return TextFieldActionResult.notHandled;
-  }
-
-  if (!controller.selection.isCollapsed) {
-    _deleteSelection(controller: controller);
-  }
-
-  final insertionOffset = controller.selection.extentOffset;
-  Clipboard.getData('text/plain').then((clipboardData) {
-    if (clipboardData != null && clipboardData.text != null) {
-      final textToPaste = clipboardData.text!;
-
-      controller.text = controller.text.insertString(
-        textToInsert: textToPaste,
-        startOffset: insertionOffset,
-      );
-
-      controller.selection = TextSelection.collapsed(
-        offset: insertionOffset + textToPaste.length,
-      );
+class DefaultSuperTextFieldKeyboardHandlers {
+  static TextFieldKeyboardHandlerResult copyTextWhenCmdCIsPressed({
+    required AttributedTextEditingController controller,
+    SelectableTextState? selectableTextState,
+    required RawKeyEvent keyEvent,
+  }) {
+    if (!keyEvent.isMetaPressed) {
+      return TextFieldKeyboardHandlerResult.notHandled;
     }
-  });
-
-  return TextFieldActionResult.handled;
-}
-
-TextFieldActionResult selectAllTextFieldWhenCmdAIsPressed({
-  required AttributedTextEditingController controller,
-  required SelectableTextState selectableTextState,
-  required RawKeyEvent keyEvent,
-}) {
-  if (!keyEvent.isMetaPressed) {
-    return TextFieldActionResult.notHandled;
-  }
-  if (keyEvent.logicalKey != LogicalKeyboardKey.keyA) {
-    return TextFieldActionResult.notHandled;
-  }
-
-  controller.selection = TextSelection(
-    baseOffset: 0,
-    extentOffset: controller.text.text.length,
-  );
-
-  return TextFieldActionResult.handled;
-}
-
-TextFieldActionResult moveUpDownLeftAndRightWithArrowKeysInTextField({
-  required AttributedTextEditingController controller,
-  required SelectableTextState selectableTextState,
-  required RawKeyEvent keyEvent,
-}) {
-  const arrowKeys = [
-    LogicalKeyboardKey.arrowLeft,
-    LogicalKeyboardKey.arrowRight,
-    LogicalKeyboardKey.arrowUp,
-    LogicalKeyboardKey.arrowDown,
-  ];
-  if (!arrowKeys.contains(keyEvent.logicalKey)) {
-    return TextFieldActionResult.notHandled;
-  }
-  if (controller.selection.extentOffset == -1) {
-    return TextFieldActionResult.notHandled;
-  }
-
-  if (keyEvent.logicalKey == LogicalKeyboardKey.arrowLeft) {
-    _log.log('moveUpDownLeftAndRightWithArrowKeys', ' - handling left arrow key');
-
-    final movementModifiers = <String, dynamic>{
-      'movement_unit': 'character',
-    };
-    if (keyEvent.isMetaPressed) {
-      movementModifiers['movement_unit'] = 'line';
-    } else if (keyEvent.isAltPressed) {
-      movementModifiers['movement_unit'] = 'word';
+    if (keyEvent.logicalKey != LogicalKeyboardKey.keyC) {
+      return TextFieldKeyboardHandlerResult.notHandled;
     }
 
-    _moveHorizontally(
-      controller: controller,
-      selectableTextState: selectableTextState,
-      expandSelection: keyEvent.isShiftPressed,
-      moveLeft: true,
-      movementModifiers: movementModifiers,
-    );
-  } else if (keyEvent.logicalKey == LogicalKeyboardKey.arrowRight) {
-    _log.log('moveUpDownLeftAndRightWithArrowKeys', ' - handling right arrow key');
+    controller.copySelectedTextToClipboard();
 
-    final movementModifiers = <String, dynamic>{
-      'movement_unit': 'character',
-    };
-    if (keyEvent.isMetaPressed) {
-      movementModifiers['movement_unit'] = 'line';
-    } else if (keyEvent.isAltPressed) {
-      movementModifiers['movement_unit'] = 'word';
-    }
-
-    _moveHorizontally(
-      controller: controller,
-      selectableTextState: selectableTextState,
-      expandSelection: keyEvent.isShiftPressed,
-      moveLeft: false,
-      movementModifiers: movementModifiers,
-    );
-  } else if (keyEvent.logicalKey == LogicalKeyboardKey.arrowUp) {
-    _log.log('moveUpDownLeftAndRightWithArrowKeys', ' - handling up arrow key');
-    _moveVertically(
-      controller: controller,
-      selectableTextState: selectableTextState,
-      expandSelection: keyEvent.isShiftPressed,
-      moveUp: true,
-    );
-  } else if (keyEvent.logicalKey == LogicalKeyboardKey.arrowDown) {
-    _log.log('moveUpDownLeftAndRightWithArrowKeys', ' - handling down arrow key');
-    _moveVertically(
-      controller: controller,
-      selectableTextState: selectableTextState,
-      expandSelection: keyEvent.isShiftPressed,
-      moveUp: false,
-    );
+    return TextFieldKeyboardHandlerResult.handled;
   }
 
-  return TextFieldActionResult.handled;
-}
-
-void _moveHorizontally({
-  required AttributedTextEditingController controller,
-  required SelectableTextState selectableTextState,
-  required bool expandSelection,
-  required bool moveLeft,
-  Map<String, dynamic> movementModifiers = const {},
-}) {
-  int newExtent;
-
-  if (moveLeft) {
-    if (controller.selection.extentOffset <= 0) {
-      // Can't move further left.
-      return null;
+  static TextFieldKeyboardHandlerResult pasteTextWhenCmdVIsPressed({
+    required AttributedTextEditingController controller,
+    SelectableTextState? selectableTextState,
+    required RawKeyEvent keyEvent,
+  }) {
+    if (!keyEvent.isMetaPressed) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+    if (keyEvent.logicalKey != LogicalKeyboardKey.keyV) {
+      return TextFieldKeyboardHandlerResult.notHandled;
     }
 
-    if (movementModifiers['movement_unit'] == 'line') {
-      newExtent =
-          selectableTextState.getPositionAtStartOfLine(TextPosition(offset: controller.selection.extentOffset)).offset;
-    } else if (movementModifiers['movement_unit'] == 'word') {
-      final text = controller.text.text;
+    if (!controller.selection.isCollapsed) {
+      controller.deleteSelectedText();
+    }
 
-      newExtent = controller.selection.extentOffset;
-      newExtent -= 1; // we always want to jump at least 1 character.
-      while (newExtent > 0 && text[newExtent - 1] != ' ' && text[newExtent - 1] != '\n') {
-        newExtent -= 1;
+    controller.pasteClipboard();
+
+    return TextFieldKeyboardHandlerResult.handled;
+  }
+
+  static TextFieldKeyboardHandlerResult selectAllTextFieldWhenCmdAIsPressed({
+    required AttributedTextEditingController controller,
+    SelectableTextState? selectableTextState,
+    required RawKeyEvent keyEvent,
+  }) {
+    if (!keyEvent.isMetaPressed) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+    if (keyEvent.logicalKey != LogicalKeyboardKey.keyA) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    controller.selectAll();
+
+    return TextFieldKeyboardHandlerResult.handled;
+  }
+
+  static TextFieldKeyboardHandlerResult moveUpDownLeftAndRightWithArrowKeys({
+    required AttributedTextEditingController controller,
+    required SelectableTextState selectableTextState,
+    required RawKeyEvent keyEvent,
+  }) {
+    const arrowKeys = [
+      LogicalKeyboardKey.arrowLeft,
+      LogicalKeyboardKey.arrowRight,
+      LogicalKeyboardKey.arrowUp,
+      LogicalKeyboardKey.arrowDown,
+    ];
+    if (!arrowKeys.contains(keyEvent.logicalKey)) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+    if (controller.selection.extentOffset == -1) {
+      // The result is reported as "handled" because an arrow
+      // key was pressed, but we return early because there is
+      // nowhere to move without a selection.
+      return TextFieldKeyboardHandlerResult.handled;
+    }
+
+    if (keyEvent.logicalKey == LogicalKeyboardKey.arrowLeft) {
+      _log.log('moveUpDownLeftAndRightWithArrowKeys', ' - handling left arrow key');
+
+      final movementModifiers = <String, dynamic>{
+        'movement_unit': 'character',
+      };
+      if (keyEvent.isMetaPressed) {
+        movementModifiers['movement_unit'] = 'line';
+      } else if (keyEvent.isAltPressed) {
+        movementModifiers['movement_unit'] = 'word';
       }
-    } else {
-      newExtent = controller.selection.extentOffset - 1;
-    }
-  } else {
-    if (controller.selection.extentOffset >= controller.text.text.length) {
-      // Can't move further right.
-      return null;
-    }
 
-    if (movementModifiers['movement_unit'] == 'line') {
-      final endOfLine =
-          selectableTextState.getPositionAtEndOfLine(TextPosition(offset: controller.selection.extentOffset));
+      controller.moveCaretHorizontally(
+        selectableTextState: selectableTextState,
+        expandSelection: keyEvent.isShiftPressed,
+        moveLeft: true,
+        movementModifiers: movementModifiers,
+      );
+    } else if (keyEvent.logicalKey == LogicalKeyboardKey.arrowRight) {
+      _log.log('moveUpDownLeftAndRightWithArrowKeys', ' - handling right arrow key');
 
-      final endPosition = TextPosition(offset: controller.text.text.length);
-      final text = controller.text.text;
-
-      // Note: we compare offset values because we don't care if the affinitys are equal
-      final isAutoWrapLine = endOfLine.offset != endPosition.offset && (text[endOfLine.offset] != '\n');
-
-      // Note: For lines that auto-wrap, moving the cursor to `offset` causes the
-      //       cursor to jump to the next line because the cursor is placed after
-      //       the final selected character. We don't want this, so in this case
-      //       we `-1`.
-      //
-      //       However, if the line that is selected ends with an explicit `\n`,
-      //       or if the line is the terminal line for the paragraph then we don't
-      //       want to `-1` because that would leave a dangling character after the
-      //       selection.
-      // TODO: this is the concept of text affinity. Implement support for affinity.
-      // TODO: with affinity, ensure it works as expected for right-aligned text
-      // TODO: this logic fails for justified text - find a solution for that (#55)
-      newExtent = isAutoWrapLine ? endOfLine.offset - 1 : endOfLine.offset;
-    } else if (movementModifiers['movement_unit'] == 'word') {
-      final extentPosition = controller.selection.extent;
-      final text = controller.text.text;
-
-      newExtent = extentPosition.offset;
-      newExtent += 1; // we always want to jump at least 1 character.
-      while (newExtent < text.length && text[newExtent] != ' ' && text[newExtent] != '\n') {
-        newExtent += 1;
+      final movementModifiers = <String, dynamic>{
+        'movement_unit': 'character',
+      };
+      if (keyEvent.isMetaPressed) {
+        movementModifiers['movement_unit'] = 'line';
+      } else if (keyEvent.isAltPressed) {
+        movementModifiers['movement_unit'] = 'word';
       }
-    } else {
-      newExtent = controller.selection.extentOffset + 1;
+
+      controller.moveCaretHorizontally(
+        selectableTextState: selectableTextState,
+        expandSelection: keyEvent.isShiftPressed,
+        moveLeft: false,
+        movementModifiers: movementModifiers,
+      );
+    } else if (keyEvent.logicalKey == LogicalKeyboardKey.arrowUp) {
+      _log.log('moveUpDownLeftAndRightWithArrowKeys', ' - handling up arrow key');
+      controller.moveCaretVertically(
+        selectableTextState: selectableTextState,
+        expandSelection: keyEvent.isShiftPressed,
+        moveUp: true,
+      );
+    } else if (keyEvent.logicalKey == LogicalKeyboardKey.arrowDown) {
+      _log.log('moveUpDownLeftAndRightWithArrowKeys', ' - handling down arrow key');
+      controller.moveCaretVertically(
+        selectableTextState: selectableTextState,
+        expandSelection: keyEvent.isShiftPressed,
+        moveUp: false,
+      );
     }
+
+    return TextFieldKeyboardHandlerResult.handled;
   }
 
-  controller.selection = TextSelection(
-    baseOffset: expandSelection ? controller.selection.baseOffset : newExtent,
-    extentOffset: newExtent,
-  );
-}
+  static TextFieldKeyboardHandlerResult insertCharacterWhenKeyIsPressed({
+    required AttributedTextEditingController controller,
+    SelectableTextState? selectableTextState,
+    required RawKeyEvent keyEvent,
+  }) {
+    if (keyEvent.isMetaPressed || keyEvent.isControlPressed) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
 
-void _moveVertically({
-  required AttributedTextEditingController controller,
-  required SelectableTextState selectableTextState,
-  required bool expandSelection,
-  required bool moveUp,
-}) {
-  int? newExtent;
+    if (keyEvent.character == null || keyEvent.character == '') {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+    if (LogicalKeyboardKey.isControlCharacter(keyEvent.character!)) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
 
-  if (moveUp) {
-    newExtent = selectableTextState.getPositionOneLineUp(controller.selection.extent)?.offset;
+    controller.insertCharacter(keyEvent.character!);
 
-    // If there is no line above the current selection, move selection
-    // to the beginning of the available text.
-    newExtent ??= 0;
-  } else {
-    newExtent = selectableTextState.getPositionOneLineDown(controller.selection.extent)?.offset;
-
-    // If there is no line below the current selection, move selection
-    // to the end of the available text.
-    newExtent ??= controller.text.text.length;
+    return TextFieldKeyboardHandlerResult.handled;
   }
 
-  controller.selection = TextSelection(
-    baseOffset: expandSelection ? controller.selection.baseOffset : newExtent,
-    extentOffset: newExtent,
-  );
-}
+  static TextFieldKeyboardHandlerResult deleteTextWhenBackspaceOrDeleteIsPressed({
+    required AttributedTextEditingController controller,
+    SelectableTextState? selectableTextState,
+    required RawKeyEvent keyEvent,
+  }) {
+    final isBackspace = keyEvent.logicalKey == LogicalKeyboardKey.backspace;
+    final isDelete = keyEvent.logicalKey == LogicalKeyboardKey.delete;
+    if (!isBackspace && !isDelete) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+    if (controller.selection.extentOffset < 0) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
 
-TextFieldActionResult insertCharacterInTextField({
-  required AttributedTextEditingController controller,
-  required SelectableTextState selectableTextState,
-  required RawKeyEvent keyEvent,
-}) {
-  if (keyEvent.isMetaPressed || keyEvent.isControlPressed) {
-    return TextFieldActionResult.notHandled;
+    if (controller.selection.isCollapsed) {
+      controller.deleteCharacter(isBackspace ? TextAffinity.upstream : TextAffinity.downstream);
+    } else {
+      controller.deleteSelectedText();
+    }
+
+    return TextFieldKeyboardHandlerResult.handled;
   }
 
-  if (!controller.selection.isCollapsed) {
-    return TextFieldActionResult.notHandled;
+  static TextFieldKeyboardHandlerResult insertNewlineWhenEnterIsPressed({
+    required AttributedTextEditingController controller,
+    SelectableTextState? selectableTextState,
+    required RawKeyEvent keyEvent,
+  }) {
+    if (keyEvent.logicalKey != LogicalKeyboardKey.enter) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+    if (!controller.selection.isCollapsed) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    controller.insertNewline();
+
+    return TextFieldKeyboardHandlerResult.handled;
   }
-  if (keyEvent.character == null || keyEvent.character == '') {
-    return TextFieldActionResult.notHandled;
-  }
-  if (LogicalKeyboardKey.isControlCharacter(keyEvent.character!)) {
-    return TextFieldActionResult.notHandled;
-  }
-
-  final initialTextOffset = controller.selection.extentOffset;
-
-  final existingAttributions = controller.text.getAllAttributionsAt(initialTextOffset);
-  controller.text = controller.text.insertString(
-    textToInsert: keyEvent.character!,
-    startOffset: initialTextOffset,
-    applyAttributions: existingAttributions,
-  );
-  controller.selection = TextSelection.collapsed(offset: initialTextOffset + 1);
-
-  return TextFieldActionResult.handled;
-}
-
-TextFieldActionResult deleteTextWhenBackspaceOrDeleteIsPressedInTextField({
-  required AttributedTextEditingController controller,
-  required SelectableTextState selectableTextState,
-  required RawKeyEvent keyEvent,
-}) {
-  final isBackspace = keyEvent.logicalKey == LogicalKeyboardKey.backspace;
-  final isDelete = keyEvent.logicalKey == LogicalKeyboardKey.delete;
-  if (!isBackspace && !isDelete) {
-    return TextFieldActionResult.notHandled;
-  }
-  if (controller.selection.extentOffset < 0) {
-    return TextFieldActionResult.notHandled;
-  }
-
-  if (controller.selection.isCollapsed) {
-    _deleteCharacter(controller: controller, direction: isBackspace ? TextAffinity.upstream : TextAffinity.downstream);
-  } else {
-    _deleteSelection(controller: controller);
-  }
-
-  return TextFieldActionResult.handled;
-}
-
-void _deleteCharacter({
-  required AttributedTextEditingController controller,
-  required TextAffinity direction,
-}) {
-  assert(controller.selection.isCollapsed);
-
-  int deleteStartIndex;
-  int deleteEndIndex;
-
-  if (direction == TextAffinity.upstream) {
-    // Delete the character before the caret
-    deleteEndIndex = controller.selection.extentOffset;
-    deleteStartIndex = getCharacterStartBounds(controller.text.text, deleteEndIndex);
-  } else {
-    // Delete the character after the caret
-    deleteStartIndex = controller.selection.extentOffset;
-    deleteEndIndex = getCharacterEndBounds(controller.text.text, deleteStartIndex);
-  }
-
-  controller.text = controller.text.removeRegion(
-    startOffset: deleteStartIndex,
-    endOffset: deleteEndIndex,
-  );
-  controller.selection = TextSelection.collapsed(offset: deleteStartIndex);
-}
-
-void _deleteSelection({
-  required AttributedTextEditingController controller,
-}) {
-  assert(!controller.selection.isCollapsed);
-
-  final deleteStartIndex = controller.selection.start;
-  final deleteEndIndex = controller.selection.end;
-
-  controller.text = controller.text.removeRegion(
-    startOffset: deleteStartIndex,
-    endOffset: deleteEndIndex,
-  );
-  controller.selection = TextSelection.collapsed(offset: deleteStartIndex);
-}
-
-TextFieldActionResult insertNewlineInTextField({
-  required AttributedTextEditingController controller,
-  required SelectableTextState selectableTextState,
-  required RawKeyEvent keyEvent,
-}) {
-  if (keyEvent.logicalKey != LogicalKeyboardKey.enter) {
-    return TextFieldActionResult.notHandled;
-  }
-  if (!controller.selection.isCollapsed) {
-    return TextFieldActionResult.notHandled;
-  }
-
-  final currentSelectionExtent = controller.selection.extent;
-
-  controller.text = controller.text.insertString(
-    textToInsert: '\n',
-    startOffset: currentSelectionExtent.offset,
-  );
-  controller.selection = TextSelection.collapsed(offset: currentSelectionExtent.offset + 1);
-
-  return TextFieldActionResult.handled;
 }
 
 class AttributedTextEditingController with ChangeNotifier {
@@ -1618,50 +1436,215 @@ class AttributedTextEditingController with ChangeNotifier {
   }
 }
 
-/// Returns the code point index for the code point that ends the visual
-/// character that begins at [startingCodePointIndex].
-///
-/// A single visual character might be comprised of multiple code points.
-/// Each code point occupies a slot within a [String], which means that
-/// an index into a [String] might refer to a piece of a single visual
-/// character.
-///
-/// [startingCodePointIndex] is the traditional [String] index for the
-/// leading code point of a visual character.
-///
-/// This function starts at the given [startingCodePointIndex] and walks
-/// towards the end of [text] until it has accumulated an entire
-/// visual character. The [String] index of the final code point for
-/// the given character is returned.
-int getCharacterEndBounds(String text, int startingCodePointIndex) {
-  assert(startingCodePointIndex >= 0 && startingCodePointIndex <= text.length);
+extension DefaultSuperTextFieldActions on AttributedTextEditingController {
+  void copySelectedTextToClipboard() {
+    if (selection.extentOffset == -1) {
+      // Nothing selected to copy.
+      return;
+    }
 
-  // TODO: copy the implementation of nextCharacter to this package because
-  //       it's marked as visible for testing
-  final startOffset = RenderEditable.nextCharacter(startingCodePointIndex, text);
-  return startOffset;
-}
+    Clipboard.setData(ClipboardData(
+      text: selection.textInside(text.text),
+    ));
+  }
 
-/// Returns the code point index for the code point that begins the visual
-/// character that ends at [endingCodePointIndex].
-///
-/// A single visual character might be comprised of multiple code points.
-/// Each code point occupies a slot within a [String], which means that
-/// an index into a [String] might refer to a piece of a single visual
-/// character.
-///
-/// [endingCodePointIndex] is the traditional [String] index for the
-/// trailing code point of a visual character.
-///
-/// This function starts at the given [endingCodePointIndex] and walks
-/// towards the beginning of [text] until it has accumulated an entire
-/// visual character. The [String] index of the initial code point for
-/// the given character is returned.
-int getCharacterStartBounds(String text, int endingCodePointIndex) {
-  assert(endingCodePointIndex >= 0 && endingCodePointIndex <= text.length);
+  Future<void> pasteClipboard() async {
+    final insertionOffset = selection.extentOffset;
+    final clipboardData = await Clipboard.getData('text/plain');
 
-  // TODO: copy the implementation of previousCharacter to this package because
-  //       it's marked as visible for testing
-  final startOffset = RenderEditable.previousCharacter(endingCodePointIndex, text);
-  return startOffset;
+    if (clipboardData != null && clipboardData.text != null) {
+      final textToPaste = clipboardData.text!;
+
+      text = text.insertString(
+        textToInsert: textToPaste,
+        startOffset: insertionOffset,
+      );
+
+      selection = TextSelection.collapsed(
+        offset: insertionOffset + textToPaste.length,
+      );
+    }
+  }
+
+  void selectAll() {
+    selection = TextSelection(
+      baseOffset: 0,
+      extentOffset: text.text.length,
+    );
+  }
+
+  void moveCaretHorizontally({
+    required SelectableTextState selectableTextState,
+    required bool expandSelection,
+    required bool moveLeft,
+    Map<String, dynamic> movementModifiers = const {},
+  }) {
+    int newExtent;
+
+    if (moveLeft) {
+      if (selection.extentOffset <= 0 && selection.isCollapsed) {
+        // Can't move further left.
+        return;
+      }
+
+      if (!selection.isCollapsed) {
+        // The selection isn't collapsed. Move the extent to the
+        // left side of the selection.
+        newExtent = selection.start;
+      } else if (movementModifiers['movement_unit'] == 'line') {
+        newExtent = selectableTextState.getPositionAtStartOfLine(TextPosition(offset: selection.extentOffset)).offset;
+      } else if (movementModifiers['movement_unit'] == 'word') {
+        final plainText = text.text;
+
+        newExtent = selection.extentOffset;
+        newExtent -= 1; // we always want to jump at least 1 character.
+        while (newExtent > 0 && plainText[newExtent - 1] != ' ' && plainText[newExtent - 1] != '\n') {
+          newExtent -= 1;
+        }
+      } else {
+        newExtent = selection.extentOffset - 1;
+      }
+    } else {
+      if (selection.extentOffset >= text.text.length && selection.isCollapsed) {
+        // Can't move further right.
+        return;
+      }
+
+      if (!selection.isCollapsed) {
+        // The selection isn't collapsed. Move the extent to the
+        // right side of the selection.
+        newExtent = selection.end;
+      } else if (movementModifiers['movement_unit'] == 'line') {
+        final endOfLine = selectableTextState.getPositionAtEndOfLine(TextPosition(offset: selection.extentOffset));
+
+        final endPosition = TextPosition(offset: text.text.length);
+        final plainText = text.text;
+
+        // Note: we compare offset values because we don't care if the affinitys are equal
+        final isAutoWrapLine = endOfLine.offset != endPosition.offset && (plainText[endOfLine.offset] != '\n');
+
+        // Note: For lines that auto-wrap, moving the cursor to `offset` causes the
+        //       cursor to jump to the next line because the cursor is placed after
+        //       the final selected character. We don't want this, so in this case
+        //       we `-1`.
+        //
+        //       However, if the line that is selected ends with an explicit `\n`,
+        //       or if the line is the terminal line for the paragraph then we don't
+        //       want to `-1` because that would leave a dangling character after the
+        //       selection.
+        // TODO: this is the concept of text affinity. Implement support for affinity.
+        // TODO: with affinity, ensure it works as expected for right-aligned text
+        // TODO: this logic fails for justified text - find a solution for that (#55)
+        newExtent = isAutoWrapLine ? endOfLine.offset - 1 : endOfLine.offset;
+      } else if (movementModifiers['movement_unit'] == 'word') {
+        final extentPosition = selection.extent;
+        final plainText = text.text;
+
+        newExtent = extentPosition.offset;
+        newExtent += 1; // we always want to jump at least 1 character.
+        while (newExtent < plainText.length && plainText[newExtent] != ' ' && plainText[newExtent] != '\n') {
+          newExtent += 1;
+        }
+      } else {
+        newExtent = selection.extentOffset + 1;
+      }
+    }
+
+    selection = TextSelection(
+      baseOffset: expandSelection ? selection.baseOffset : newExtent,
+      extentOffset: newExtent,
+    );
+  }
+
+  void moveCaretVertically({
+    required SelectableTextState selectableTextState,
+    required bool expandSelection,
+    required bool moveUp,
+  }) {
+    int? newExtent;
+
+    if (moveUp) {
+      newExtent = selectableTextState.getPositionOneLineUp(selection.extent)?.offset;
+
+      // If there is no line above the current selection, move selection
+      // to the beginning of the available text.
+      newExtent ??= 0;
+    } else {
+      newExtent = selectableTextState.getPositionOneLineDown(selection.extent)?.offset;
+
+      // If there is no line below the current selection, move selection
+      // to the end of the available text.
+      newExtent ??= text.text.length;
+    }
+
+    selection = TextSelection(
+      baseOffset: expandSelection ? selection.baseOffset : newExtent,
+      extentOffset: newExtent,
+    );
+  }
+
+  void insertCharacter(String character) {
+    final initialTextOffset = selection.start;
+
+    final existingAttributions = text.getAllAttributionsAt(initialTextOffset);
+
+    if (!selection.isCollapsed) {
+      text = text.removeRegion(startOffset: selection.start, endOffset: selection.end);
+      selection = TextSelection.collapsed(offset: selection.start);
+    }
+
+    text = text.insertString(
+      textToInsert: character,
+      startOffset: initialTextOffset,
+      applyAttributions: existingAttributions,
+    );
+
+    selection = TextSelection.collapsed(offset: initialTextOffset + 1);
+  }
+
+  void deleteCharacter(TextAffinity direction) {
+    assert(selection.isCollapsed);
+
+    int deleteStartIndex;
+    int deleteEndIndex;
+
+    if (direction == TextAffinity.upstream) {
+      // Delete the character before the caret
+      deleteEndIndex = selection.extentOffset;
+      deleteStartIndex = getCharacterStartBounds(text.text, deleteEndIndex);
+    } else {
+      // Delete the character after the caret
+      deleteStartIndex = selection.extentOffset;
+      deleteEndIndex = getCharacterEndBounds(text.text, deleteStartIndex);
+    }
+
+    text = text.removeRegion(
+      startOffset: deleteStartIndex,
+      endOffset: deleteEndIndex,
+    );
+    selection = TextSelection.collapsed(offset: deleteStartIndex);
+  }
+
+  void deleteSelectedText() {
+    assert(!selection.isCollapsed);
+
+    final deleteStartIndex = selection.start;
+    final deleteEndIndex = selection.end;
+
+    text = text.removeRegion(
+      startOffset: deleteStartIndex,
+      endOffset: deleteEndIndex,
+    );
+    selection = TextSelection.collapsed(offset: deleteStartIndex);
+  }
+
+  void insertNewline() {
+    final currentSelectionExtent = selection.extent;
+
+    text = text.insertString(
+      textToInsert: '\n',
+      startOffset: currentSelectionExtent.offset,
+    );
+    selection = TextSelection.collapsed(offset: currentSelectionExtent.offset + 1);
+  }
 }

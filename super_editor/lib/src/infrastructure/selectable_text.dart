@@ -133,7 +133,8 @@ class SelectableTextState extends State<SelectableText> implements TextLayout {
     _cachedTextLength = widget.richText.toPlainText().length;
   }
 
-  RenderParagraph? get _renderParagraph => _textKey.currentContext?.findRenderObject() as RenderParagraph;
+  RenderParagraph? get _renderParagraph =>
+      _textKey.currentContext != null ? _textKey.currentContext!.findRenderObject() as RenderParagraph : null;
 
   // TODO: use TextPainter line height when Flutter makes the info available. (#46)
   double get _lineHeight {
@@ -201,7 +202,12 @@ class SelectableTextState extends State<SelectableText> implements TextLayout {
       return TextBox.fromLTRBD(0, 0, 0, 0, TextDirection.ltr);
     }
 
-    return _renderParagraph!.getBoxesForSelection(TextSelection.collapsed(offset: position.offset)).first;
+    return _renderParagraph!
+        .getBoxesForSelection(TextSelection(
+          baseOffset: position.offset,
+          extentOffset: position.offset + 1,
+        ))
+        .first;
   }
 
   @override
