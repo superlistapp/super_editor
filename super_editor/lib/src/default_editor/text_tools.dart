@@ -5,6 +5,7 @@ import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/composable_text.dart';
 
 /// Collection of generic text inspection behavior that does not belong
 /// to any particular `DocumentNode` or `Component`.

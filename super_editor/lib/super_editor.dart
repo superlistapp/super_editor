@@ -4,6 +4,8 @@ export 'src/infrastructure/selectable_text.dart';
 export 'src/infrastructure/attributed_text.dart';
 export 'src/infrastructure/attributed_spans.dart';
 export 'src/infrastructure/multi_tap_gesture.dart';
+export 'src/infrastructure/super_textfield.dart';
+export 'src/infrastructure/text_layout.dart';
 export 'src/core/document.dart';
 export 'src/core/document_composer.dart';
 export 'src/core/document_editor.dart';

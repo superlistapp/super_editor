@@ -226,49 +226,6 @@ mixin DocumentComponent<T extends StatefulWidget> on State<T> {
   MouseCursor? getDesiredCursorAtOffset(Offset localOffset);
 }
 
-/// Contract for document components that include editable text.
-///
-/// Examples: paragraphs, list items, images with captions.
-///
-/// The node positions accepted by a `TextComposable` are `dynamic`
-/// rather than `TextPosition`s because an editor might be configured
-/// to include complex text composition, like tables, which might
-/// choose to index positions based on cell IDs, or row and column
-/// indices.
-abstract class TextComposable {
-  /// Returns a `TextSelection` that encompasses the entire word
-  /// found at the given `nodePosition`.
-  ///
-  /// Throws an exception if `nodePosition` is not the right type
-  /// for this `TextComposable`.
-  TextSelection getWordSelectionAt(dynamic nodePosition);
-
-  /// Returns all text surrounding `nodePosition` that is not
-  /// broken by white space.
-  ///
-  /// Throws an exception if `nodePosition` is not the right type
-  /// for this `TextComposable`.
-  String getContiguousTextAt(dynamic nodePosition);
-
-  /// Returns the node position that corresponds to a text location
-  /// that is one line above the given `nodePosition`, or `null` if
-  /// there is no position one line up.
-  dynamic? getPositionOneLineUp(dynamic nodePosition);
-
-  /// Returns the node position that corresponds to a text location
-  /// that is one line below the given `nodePosition`, or `null` if
-  /// there is no position one line down.
-  dynamic? getPositionOneLineDown(dynamic nodePosition);
-
-  /// Returns the node position that corresponds to the first character
-  /// in the line of text that contains the given `nodePosition`.
-  dynamic? getPositionAtStartOfLine(dynamic nodePosition);
-
-  /// Returns the node position that corresponds to the last character
-  /// in the line of text that contains the given `nodePosition`.
-  dynamic? getPositionAtEndOfLine(dynamic nodePosition);
-}
-
 /// Builds a widget that renders the desired UI for one or
 /// more `DocumentNode`s.
 ///

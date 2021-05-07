@@ -14,6 +14,7 @@ import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/default_editor/document_interaction.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text.dart';
+import 'package:super_editor/src/infrastructure/composable_text.dart';
 import 'package:super_editor/src/infrastructure/selectable_text.dart';
 
 import 'multi_node_editing.dart';
@@ -131,7 +132,7 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
     if (nodePosition is! TextPosition) {
       throw Exception('Expected nodePosition of type TextPosition but received: $nodePosition');
     }
-    return _selectableTextKey.currentState!.getOffsetForPosition(nodePosition);
+    return _selectableTextKey.currentState!.getOffsetAtPosition(nodePosition);
   }
 
   @override
@@ -378,24 +379,22 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
     return widget.text.text;
   }
 
+  @override
   TextPosition? getPositionOneLineUp(dynamic textPosition) {
     if (textPosition is! TextPosition) {
       return null;
     }
 
-    return _selectableTextKey.currentState!.getPositionOneLineUp(
-      currentPosition: textPosition,
-    );
+    return _selectableTextKey.currentState!.getPositionOneLineUp(textPosition);
   }
 
+  @override
   TextPosition? getPositionOneLineDown(dynamic textPosition) {
     if (textPosition is! TextPosition) {
       return null;
     }
 
-    return _selectableTextKey.currentState!.getPositionOneLineDown(
-      currentPosition: textPosition,
-    );
+    return _selectableTextKey.currentState!.getPositionOneLineDown(textPosition);
   }
 
   @override
@@ -403,7 +402,7 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
     if (textPosition is! TextPosition) {
       return null;
     }
-    return _selectableTextKey.currentState!.getPositionAtEndOfLine(currentPosition: textPosition);
+    return _selectableTextKey.currentState!.getPositionAtEndOfLine(textPosition);
   }
 
   @override
@@ -411,7 +410,7 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
     if (textPosition is! TextPosition) {
       return null;
     }
-    return _selectableTextKey.currentState!.getPositionAtStartOfLine(currentPosition: textPosition);
+    return _selectableTextKey.currentState!.getPositionAtStartOfLine(textPosition);
   }
 
   @override

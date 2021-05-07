@@ -3,77 +3,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
-/// Queries and calculates text position and offset details
-/// for a text display.
-abstract class TextLayout {
-  /// Returns the `TextPosition` within this `TextLayout` that
-  /// is closest to the given `localOffset`, or -1 if the text
-  /// is not laid out yet.
-  TextPosition getPositionAtOffset(Offset localOffset);
-
-  /// Returns the (x, y) `Offset` closest to the given `position`, or
-  /// `null` if the text is not laid out yet.
-  Offset? getOffsetForPosition(TextPosition position);
-
-  /// Returns the `TextPosition` at the start of the line that
-  /// contains the given `currentPosition`, or -1 if the text
-  /// is not laid out yet.
-  TextPosition getPositionAtStartOfLine({
-    required TextPosition currentPosition,
-  });
-
-  /// Returns the `TextPosition` at the end of the line that
-  /// contains the given `currentPosition`, or -1 if the text
-  /// is not laid out yet.
-  TextPosition getPositionAtEndOfLine({
-    required TextPosition currentPosition,
-  });
-
-  /// Returns the `TextPosition` that's one line above the
-  /// given `currentPosition`, or `null` if there is no line
-  /// above `currentPosition` or the text is not laid out yet.
-  TextPosition? getPositionOneLineUp({
-    required TextPosition currentPosition,
-  });
-
-  /// Returns the `TextPosition` that's one line below the
-  /// given `currentPosition`, or `null` if there is no line
-  /// below `currentPosition` or the text is not laid out yet.
-  TextPosition? getPositionOneLineDown({
-    required TextPosition currentPosition,
-  });
-
-  /// Returns the `TextPosition` in the first line within this
-  /// `TextLayout` that is closest to the given `x`-value, or
-  /// -1 if the text is not laid out yet.
-  TextPosition getPositionInFirstLineAtX(double x);
-
-  /// Returns the `TextPosition` in the last line within this
-  /// `TextLayout` that is closest to the given `x`-value, or
-  /// -1 if the text is not laid out yet.
-  TextPosition getPositionInLastLineAtX(double x);
-
-  /// Returns `true` if the given `localOffset` intersects any
-  /// text within this `TextLayout`, otherwise returns `false`.
-  bool isTextAtOffset(Offset localOffset);
-
-  /// Returns the local `Rect` that is formed by intersecting
-  /// the given `region` in the `ancestorCoordinateSpace` with
-  /// this `TextLayout`, or `Rect.zero` if the text is not laid
-  /// out yet.
-  Rect calculateLocalOverlap({
-    required Rect region,
-    required RenderObject ancestorCoordinateSpace,
-  });
-
-  /// Returns the `TextSelection` that corresponds to a selection
-  /// rectangle formed by the span from `baseOffset` to `extentOffset`, or
-  /// a collapsed selection at -1 if the text is not laid out yet.
-  ///
-  /// The `baseOffset` determines where the selection begins. The
-  /// `extentOffset` determines where the selection ends.
-  TextSelection getSelectionInRect(Offset baseOffset, Offset extentOffset);
-}
+import 'text_layout.dart';
 
 /// Displays text with a selection highlight and a caret.
 ///
@@ -203,7 +133,8 @@ class SelectableTextState extends State<SelectableText> implements TextLayout {
     _cachedTextLength = widget.richText.toPlainText().length;
   }
 
-  RenderParagraph? get _renderParagraph => _textKey.currentContext?.findRenderObject() as RenderParagraph;
+  RenderParagraph? get _renderParagraph =>
+      _textKey.currentContext != null ? _textKey.currentContext!.findRenderObject() as RenderParagraph : null;
 
   // TODO: use TextPainter line height when Flutter makes the info available. (#46)
   double get _lineHeight {
@@ -222,18 +153,41 @@ class SelectableTextState extends State<SelectableText> implements TextLayout {
       return TextPosition(offset: -1);
     }
 
+    // TODO: bring back this condition by changing existing uses of
+    //       getPositionAtOffset to getPositionNearestToOffset
+    // if (!_renderParagraph!.size.contains(localOffset)) {
+    //   return TextPosition(offset: -1);
+    // }
+
     return _renderParagraph!.getPositionForOffset(localOffset);
   }
 
   @override
-  Offset getOffsetForPosition(TextPosition position) {
+  TextPosition getPositionNearestToOffset(Offset localOffset) {
+    if (_renderParagraph == null) {
+      return TextPosition(offset: -1);
+    }
+
+    return _renderParagraph!.getPositionForOffset(localOffset);
+  }
+
+  @override
+  Offset getOffsetAtPosition(TextPosition position) {
     if (_renderParagraph == null) {
       throw Exception('SelectableText does not yet have a RenderParagraph. Can\'t getOffsetForPosition().');
+    }
+    if (_renderParagraph!.debugNeedsLayout) {
+      // This condition was added because getOffsetForCaret() was throwing
+      // an exception when debugNeedsLayout is true. It's unclear what we're
+      // supposed to do at our level to ensure that condition doesn't happen
+      // so until we figure it out, we'll just return a zero Offset.
+      return Offset.zero;
     }
 
     return _renderParagraph!.getOffsetForCaret(position, Rect.zero);
   }
 
+  @override
   List<TextBox> getBoxesForSelection(TextSelection selection) {
     if (_renderParagraph == null) {
       throw Exception('SelectableText does not yet have a RenderParagraph. Can\'t getBoxesForSelection().');
@@ -243,9 +197,21 @@ class SelectableTextState extends State<SelectableText> implements TextLayout {
   }
 
   @override
-  TextPosition getPositionAtStartOfLine({
-    required TextPosition currentPosition,
-  }) {
+  TextBox getCharacterBox(TextPosition position) {
+    if (_renderParagraph == null) {
+      return TextBox.fromLTRBD(0, 0, 0, 0, TextDirection.ltr);
+    }
+
+    return _renderParagraph!
+        .getBoxesForSelection(TextSelection(
+          baseOffset: position.offset,
+          extentOffset: position.offset + 1,
+        ))
+        .first;
+  }
+
+  @override
+  TextPosition getPositionAtStartOfLine(TextPosition currentPosition) {
     if (_renderParagraph == null) {
       return TextPosition(offset: -1);
     }
@@ -257,9 +223,7 @@ class SelectableTextState extends State<SelectableText> implements TextLayout {
   }
 
   @override
-  TextPosition getPositionAtEndOfLine({
-    required TextPosition currentPosition,
-  }) {
+  TextPosition getPositionAtEndOfLine(TextPosition currentPosition) {
     if (_renderParagraph == null) {
       return TextPosition(offset: -1);
     }
@@ -271,9 +235,7 @@ class SelectableTextState extends State<SelectableText> implements TextLayout {
   }
 
   @override
-  TextPosition? getPositionOneLineUp({
-    required TextPosition currentPosition,
-  }) {
+  TextPosition? getPositionOneLineUp(TextPosition currentPosition) {
     if (_renderParagraph == null) {
       return null;
     }
@@ -295,9 +257,7 @@ class SelectableTextState extends State<SelectableText> implements TextLayout {
   }
 
   @override
-  TextPosition? getPositionOneLineDown({
-    required TextPosition currentPosition,
-  }) {
+  TextPosition? getPositionOneLineDown(TextPosition currentPosition) {
     if (_renderParagraph == null) {
       return null;
     }
@@ -349,6 +309,11 @@ class SelectableTextState extends State<SelectableText> implements TextLayout {
   }
 
   @override
+  TextSelection expandSelection(TextPosition position, TextExpansion expansion, TextAffinity affinity) {
+    return expansion(widget.richText.toPlainText(), position, affinity);
+  }
+
+  @override
   bool isTextAtOffset(Offset localOffset) {
     if (_renderParagraph == null) {
       return false;
@@ -370,7 +335,6 @@ class SelectableTextState extends State<SelectableText> implements TextLayout {
     return false;
   }
 
-  @override
   Rect calculateLocalOverlap({
     required Rect region,
     required RenderObject ancestorCoordinateSpace,
@@ -437,18 +401,9 @@ class SelectableTextState extends State<SelectableText> implements TextLayout {
 
     return Stack(
       children: [
-        SizedBox(
-          width: double.infinity,
-          child: _buildTextSelection(),
-        ),
-        SizedBox(
-          width: double.infinity,
-          child: _buildText(),
-        ),
-        SizedBox(
-          width: double.infinity,
-          child: _buildTextCaret(),
-        ),
+        _buildTextSelection(),
+        _buildText(),
+        _buildTextCaret(),
       ],
     );
   }
@@ -712,7 +667,7 @@ class _CursorPainter extends CustomPainter {
       return;
     }
 
-    caretPaint..color = caretColor.withOpacity(blinkController.opacity);
+    caretPaint.color = caretColor.withOpacity(blinkController.opacity);
 
     final caretHeight = paragraph.getFullHeightForCaret(TextPosition(offset: caretTextPosition)) ?? lineHeight;
 
@@ -783,7 +738,7 @@ class _CaretBlinkController with ChangeNotifier {
     super.dispose();
   }
 
-  AnimationController _animationController;
+  final AnimationController _animationController;
   double get opacity => 1.0 - _animationController.value.roundToDouble();
 
   TextPosition? _caretPosition;

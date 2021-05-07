@@ -21,7 +21,13 @@ class FakeRawKeyEvent extends RawKeyEvent {
   bool get isMetaPressed => data.isMetaPressed;
 
   @override
+  bool get isAltPressed => data.isAltPressed;
+
+  @override
   bool get isControlPressed => data.isControlPressed;
+
+  @override
+  bool get isShiftPressed => data.isShiftPressed;
 }
 
 /// Concrete version of [FakeRawKeyEventData] used to manually simulate
@@ -42,7 +48,9 @@ class FakeRawKeyEventData extends RawKeyEventData {
     required this.physicalKey,
     this.isMetaPressed = false,
     this.isControlPressed = false,
+    this.isAltPressed = false,
     this.isModifierKeyPressed = false,
+    this.isShiftPressed = false,
   });
 
   @override
@@ -60,7 +68,13 @@ class FakeRawKeyEventData extends RawKeyEventData {
   final bool isMetaPressed;
 
   @override
+  final bool isAltPressed;
+
+  @override
   final bool isControlPressed;
+
+  @override
+  final bool isShiftPressed;
 
   @override
   bool isModifierPressed(ModifierKey key, {KeyboardSide side = KeyboardSide.any}) {
