@@ -404,7 +404,8 @@ final defaultComponentBuilders = <ComponentBuilder>[
 /// Keyboard actions for the standard `Editor`.
 final defaultKeyboardActions = <DocumentKeyboardAction>[
   doNothingWhenThereIsNoSelection,
-  indentListItemWhenBackspaceIsPressed,
+  indentListItemWhenTabIsPressed,
+  unindentListItemWhenShiftTabIsPressed,
   unindentListItemWhenBackspaceIsPressed,
   splitListItemWhenEnterPressed,
   convertBlockquoteToParagraphWhenBackspaceIsPressed,
