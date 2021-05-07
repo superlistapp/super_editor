@@ -399,12 +399,42 @@ class SelectableTextState extends State<SelectableText> implements TextLayout {
       });
     }
 
-    return Stack(
-      children: [
-        _buildTextSelection(),
-        _buildText(),
-        _buildTextCaret(),
-      ],
+    // TODO: try to find a more performant option than LayoutBuilder
+    //       to accomplish the goal of expanding SelectableText to fill
+    //       all horizontal space when bounded vs intrinsic width then
+    //       unbounded. The performance hit is probably not significant
+    //       but it's better to avoid any unnecessary performance hit
+    //       in the lower level widgets that are used many places, like
+    //       this one.
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.hasBoundedWidth) {
+          return Stack(
+            children: [
+              SizedBox(
+                width: double.infinity,
+                child: _buildTextSelection(),
+              ),
+              SizedBox(
+                width: double.infinity,
+                child: _buildText(),
+              ),
+              SizedBox(
+                width: double.infinity,
+                child: _buildTextCaret(),
+              ),
+            ],
+          );
+        } else {
+          return Stack(
+            children: [
+              _buildTextSelection(),
+              _buildText(),
+              _buildTextCaret(),
+            ],
+          );
+        }
+      },
     );
   }
 
