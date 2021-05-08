@@ -43,7 +43,7 @@ Document _createInitialDocument() {
           text: 'Various paragraph formations',
         ),
         metadata: {
-          'blockType': 'header1',
+          'blockType': header1Attribution,
         },
       ),
       ParagraphNode(

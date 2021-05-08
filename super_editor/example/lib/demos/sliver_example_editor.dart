@@ -101,7 +101,7 @@ Document _createInitialDocument() {
           text: 'Example Document',
         ),
         metadata: {
-          'blockType': 'header1',
+          'blockType': header1Attribution,
         },
       ),
       HorizontalRuleNode(id: DocumentEditor.createNodeId()),

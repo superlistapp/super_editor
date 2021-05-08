@@ -8,21 +8,19 @@ final _log = Logger(scope: 'AttributedText');
 
 /// Text with attributions applied to desired spans of text.
 ///
-/// An attribution can be any object as long as each attribution
-/// object implements equality. A `String` is typically a good
-/// choice to use as an attribution type.
+/// An attribution can be any subclass of [Attribution].
 ///
-/// `AttributedText` is a convenient way to store and manipulate
+/// [AttributedText] is a convenient way to store and manipulate
 /// text that might have overlapping styles and/or non-style
-/// attributions. A common Flutter alternative is `TextSpan`, but
-/// `TextSpan` does not support overlapping styles, and `TextSpan`
+/// attributions. A common Flutter alternative is [TextSpan], but
+/// [TextSpan] does not support overlapping styles, and [TextSpan]
 /// is exclusively intended for visual text styles.
 ///
-/// To style Flutter text, `AttributedText` produces a
-/// corresponding `TextSpan` with `computeTextSpan()`. Clients
-/// style the text by providing an `AttributionStyleBuilder`,
+/// To style Flutter text, [AttributedText] produces a
+/// corresponding [TextSpan] with [computeTextSpan()]. Clients
+/// style the text by providing an [AttributionStyleBuilder],
 /// which is responsible for interpreting the meaning of all
-/// attributions applied to this `AttributedText`.
+/// attributions applied to this [AttributedText].
 // TODO: there is a mixture of mutable and immutable behavior in this class.
 //       Pick one or the other, or offer 2 classes: mutable and immutable (#113)
 class AttributedText with ChangeNotifier {
@@ -31,28 +29,28 @@ class AttributedText with ChangeNotifier {
     AttributedSpans? spans,
   }) : spans = spans ?? AttributedSpans();
 
-  /// The text that this `AttributedText` attributes.
+  /// The text that this [AttributedText] attributes.
   final String text;
 
-  /// The attributes applied to `text`.
+  /// The attributes applied to [text].
   final AttributedSpans spans;
 
-  /// Returns true if the given `attribution` is applied at `offset`.
+  /// Returns true if the given [attribution] is applied at [offset].
   ///
-  /// If the given `attribution` is null, returns `true` if any attribution
-  /// exists at the given `offset`.
+  /// If the given [attribution] is [null], returns [true] if any attribution
+  /// exists at the given [offset].
   bool hasAttributionAt(
     int offset, {
-    dynamic attribution,
+    Attribution? attribution,
   }) {
     return spans.hasAttributionAt(offset, attribution: attribution);
   }
 
-  /// Returns true if this `AttributedText` contains at least one
-  /// character with each of the given `attributions` within the
-  /// given `range` (inclusive).
+  /// Returns true if this [AttributedText] contains at least one
+  /// character with each of the given [attributions] within the
+  /// given [range] (inclusive).
   bool hasAttributionsWithin({
-    required Set<dynamic> attributions,
+    required Set<Attribution> attributions,
     required TextRange range,
   }) {
     return spans.hasAttributionsWithin(
@@ -62,35 +60,35 @@ class AttributedText with ChangeNotifier {
     );
   }
 
-  /// Returns all attributions applied to the given `offset`.
-  Set<dynamic> getAllAttributionsAt(int offset) {
+  /// Returns all attributions applied to the given [offset].
+  Set<Attribution> getAllAttributionsAt(int offset) {
     return spans.getAllAttributionsAt(offset);
   }
 
-  /// Adds the given attribution to all characters within the given
-  /// `range`, inclusive.
-  void addAttribution(dynamic attribution, TextRange range) {
+  /// Adds the given [attribution] to all characters within the given
+  /// [range], inclusive.
+  void addAttribution(Attribution attribution, TextRange range) {
     spans.addAttribution(newAttribution: attribution, start: range.start, end: range.end);
     notifyListeners();
   }
 
-  /// Removes the given attribution from all characters within the
-  /// given `range`, inclusive.
-  void removeAttribution(dynamic attribution, TextRange range) {
+  /// Removes the given [attribution] from all characters within the
+  /// given [range], inclusive.
+  void removeAttribution(Attribution attribution, TextRange range) {
     spans.addAttribution(newAttribution: attribution, start: range.start, end: range.end);
     notifyListeners();
   }
 
-  /// If ALL of the text in `range`, inclusive, contains the given `attribution`,
-  /// that attribution is removed from the text in `range`, inclusive.
-  /// Otherwise, all of the text in `range`, inclusive, is given the `attribution`.
-  void toggleAttribution(dynamic attribution, TextRange range) {
+  /// If ALL of the text in [range], inclusive, contains the given [attribution],
+  /// that [attribution] is removed from the text in [range], inclusive.
+  /// Otherwise, all of the text in [range], inclusive, is given the [attribution].
+  void toggleAttribution(Attribution attribution, TextRange range) {
     spans.toggleAttribution(attribution: attribution, start: range.start, end: range.end);
     notifyListeners();
   }
 
-  /// Copies all text and attributions from `startOffset` to
-  /// `endOffset`, inclusive, and returns them as a new `AttributedText`.
+  /// Copies all text and attributions from [startOffset] to
+  /// [endOffset], inclusive, and returns them as a new [AttributedText].
   AttributedText copyText(int startOffset, [int? endOffset]) {
     _log.log('copyText', 'start: $startOffset, end: $endOffset');
 
@@ -113,7 +111,7 @@ class AttributedText with ChangeNotifier {
     );
   }
 
-  /// Returns a copy of this `AttributedText` with the `other` text
+  /// Returns a copy of this [AttributedText] with the [other] text
   /// and attributions appended to the end.
   AttributedText copyAndAppend(AttributedText other) {
     _log.log('copyAndAppend', 'our attributions before pushing them:');
@@ -140,16 +138,16 @@ class AttributedText with ChangeNotifier {
     );
   }
 
-  /// Returns a copy of this `AttributedText` with `textToInsert`
-  /// inserted at `startOffset`.
+  /// Returns a copy of this [AttributedText] with [textToInsert]
+  /// inserted at [startOffset].
   ///
-  /// Any attributions that span `startOffset` are applied to all
-  /// of the inserted text. All spans that start after `startOffset`
-  /// are pushed back by the length of `textToInsert`.
+  /// Any attributions that span [startOffset] are applied to all
+  /// of the inserted text. All spans that start after [startOffset]
+  /// are pushed back by the length of [textToInsert].
   AttributedText insertString({
     required String textToInsert,
     required int startOffset,
-    Set<dynamic> applyAttributions = const {},
+    Set<Attribution> applyAttributions = const {},
   }) {
     _log.log('insertString', 'text: "$textToInsert", start: $startOffset, attributions: $applyAttributions');
 
@@ -175,9 +173,9 @@ class AttributedText with ChangeNotifier {
     return startText.copyAndAppend(insertedText).copyAndAppend(endText);
   }
 
-  /// Copies this `AttributedText` and removes  a region of text
-  /// and attributions from `startOffset`, inclusive,
-  /// to `endOffset`, exclusive.
+  /// Copies this [AttributedText] and removes  a region of text
+  /// and attributions from [startOffset], inclusive,
+  /// to [endOffset], exclusive.
   AttributedText removeRegion({
     required int startOffset,
     required int endOffset,
@@ -211,11 +209,11 @@ class AttributedText with ChangeNotifier {
     }
   }
 
-  /// Returns a Flutter `TextSpan` that is styled based on the
-  /// attributions within this `AttributedText`.
+  /// Returns a Flutter [TextSpan] that is styled based on the
+  /// attributions within this [AttributedText].
   ///
-  /// The given `styleBuilder` interprets the meaning of every
-  /// attribution and constructs `TextStyle`s accordingly.
+  /// The given [styleBuilder] interprets the meaning of every
+  /// attribution and constructs [TextStyle]s accordingly.
   // TODO: remove this method and use [visitAttributions()] to compute TextSpan
   TextSpan computeTextSpan(AttributionStyleBuilder styleBuilder) {
     _log.log('computeTextSpan', 'text length: ${text.length}');
@@ -258,15 +256,15 @@ class AttributedText with ChangeNotifier {
 /// closing index to be exclusive, but that is not how this callback
 /// works. Both the [start] and [end] [index]es are inclusive.
 typedef AttributionVisitor = void Function(
-    AttributedText fullText, int index, Set<dynamic> attributions, AttributionVisitEvent event);
+    AttributedText fullText, int index, Set<Attribution> attributions, AttributionVisitEvent event);
 
 enum AttributionVisitEvent {
   start,
   end,
 }
 
-/// Creates the desired `TextStyle` given the `attributions` associated
+/// Creates the desired [TextStyle] given the [attributions] associated
 /// with a span of text.
 ///
-/// The `attributions` set may be empty.
-typedef AttributionStyleBuilder = TextStyle Function(Set<dynamic> attributions);
+/// The [attributions] set may be empty.
+typedef AttributionStyleBuilder = TextStyle Function(Set<Attribution> attributions);

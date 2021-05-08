@@ -1,3 +1,4 @@
+import 'package:super_editor/src/default_editor/attributions.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/src/default_editor/paragraph.dart';
 import 'package:super_editor/src/serialization/markdown.dart';
@@ -14,22 +15,22 @@ void main() {
           ),
         ]);
 
-        (doc.nodes[0] as ParagraphNode).metadata['blockType'] = 'header1';
+        (doc.nodes[0] as ParagraphNode).metadata['blockType'] = header1Attribution;
         expect(serializeDocumentToMarkdown(doc).trim(), '# My Header');
 
-        (doc.nodes[0] as ParagraphNode).metadata['blockType'] = 'header2';
+        (doc.nodes[0] as ParagraphNode).metadata['blockType'] = header2Attribution;
         expect(serializeDocumentToMarkdown(doc).trim(), '## My Header');
 
-        (doc.nodes[0] as ParagraphNode).metadata['blockType'] = 'header3';
+        (doc.nodes[0] as ParagraphNode).metadata['blockType'] = header3Attribution;
         expect(serializeDocumentToMarkdown(doc).trim(), '### My Header');
 
-        (doc.nodes[0] as ParagraphNode).metadata['blockType'] = 'header4';
+        (doc.nodes[0] as ParagraphNode).metadata['blockType'] = header4Attribution;
         expect(serializeDocumentToMarkdown(doc).trim(), '#### My Header');
 
-        (doc.nodes[0] as ParagraphNode).metadata['blockType'] = 'header5';
+        (doc.nodes[0] as ParagraphNode).metadata['blockType'] = header5Attribution;
         expect(serializeDocumentToMarkdown(doc).trim(), '##### My Header');
 
-        (doc.nodes[0] as ParagraphNode).metadata['blockType'] = 'header6';
+        (doc.nodes[0] as ParagraphNode).metadata['blockType'] = header6Attribution;
         expect(serializeDocumentToMarkdown(doc).trim(), '###### My Header');
       });
 
@@ -41,12 +42,12 @@ void main() {
               text: 'My Header',
               spans: AttributedSpans(
                 attributions: [
-                  SpanMarker(attribution: 'bold', offset: 3, markerType: SpanMarkerType.start),
-                  SpanMarker(attribution: 'bold', offset: 8, markerType: SpanMarkerType.end),
+                  SpanMarker(attribution: boldAttribution, offset: 3, markerType: SpanMarkerType.start),
+                  SpanMarker(attribution: boldAttribution, offset: 8, markerType: SpanMarkerType.end),
                 ],
               ),
             ),
-            metadata: {'blockType': 'header1'},
+            metadata: {'blockType': header1Attribution},
           ),
         ]);
 
@@ -58,7 +59,7 @@ void main() {
           ParagraphNode(
             id: '1',
             text: AttributedText(text: 'This is a blockquote'),
-            metadata: {'blockType': 'blockquote'},
+            metadata: {'blockType': blockquoteAttribution},
           ),
         ]);
 
@@ -73,12 +74,12 @@ void main() {
               text: 'This is a blockquote',
               spans: AttributedSpans(
                 attributions: [
-                  SpanMarker(attribution: 'bold', offset: 10, markerType: SpanMarkerType.start),
-                  SpanMarker(attribution: 'bold', offset: 19, markerType: SpanMarkerType.end),
+                  SpanMarker(attribution: boldAttribution, offset: 10, markerType: SpanMarkerType.start),
+                  SpanMarker(attribution: boldAttribution, offset: 19, markerType: SpanMarkerType.end),
                 ],
               ),
             ),
-            metadata: {'blockType': 'blockquote'},
+            metadata: {'blockType': blockquoteAttribution},
           ),
         ]);
 
@@ -90,7 +91,7 @@ void main() {
           ParagraphNode(
             id: '1',
             text: AttributedText(text: 'This is some code'),
-            metadata: {'blockType': 'code'},
+            metadata: {'blockType': codeAttribution},
           ),
         ]);
 
@@ -122,8 +123,8 @@ This is some code
               text: 'This is a paragraph.',
               spans: AttributedSpans(
                 attributions: [
-                  SpanMarker(attribution: 'bold', offset: 5, markerType: SpanMarkerType.start),
-                  SpanMarker(attribution: 'bold', offset: 8, markerType: SpanMarkerType.end),
+                  SpanMarker(attribution: boldAttribution, offset: 5, markerType: SpanMarkerType.start),
+                  SpanMarker(attribution: boldAttribution, offset: 8, markerType: SpanMarkerType.end),
                 ],
               ),
             ),
@@ -141,10 +142,10 @@ This is some code
               text: 'This is a paragraph.',
               spans: AttributedSpans(
                 attributions: [
-                  SpanMarker(attribution: 'bold', offset: 5, markerType: SpanMarkerType.start),
-                  SpanMarker(attribution: 'bold', offset: 8, markerType: SpanMarkerType.end),
-                  SpanMarker(attribution: 'italics', offset: 5, markerType: SpanMarkerType.start),
-                  SpanMarker(attribution: 'italics', offset: 8, markerType: SpanMarkerType.end),
+                  SpanMarker(attribution: boldAttribution, offset: 5, markerType: SpanMarkerType.start),
+                  SpanMarker(attribution: boldAttribution, offset: 8, markerType: SpanMarkerType.end),
+                  SpanMarker(attribution: italicsAttribution, offset: 5, markerType: SpanMarkerType.start),
+                  SpanMarker(attribution: italicsAttribution, offset: 8, markerType: SpanMarkerType.end),
                 ],
               ),
             ),
@@ -162,10 +163,10 @@ This is some code
               text: 'This is a paragraph.',
               spans: AttributedSpans(
                 attributions: [
-                  SpanMarker(attribution: 'bold', offset: 5, markerType: SpanMarkerType.start),
-                  SpanMarker(attribution: 'bold', offset: 8, markerType: SpanMarkerType.end),
-                  SpanMarker(attribution: 'code', offset: 5, markerType: SpanMarkerType.start),
-                  SpanMarker(attribution: 'code', offset: 8, markerType: SpanMarkerType.end),
+                  SpanMarker(attribution: boldAttribution, offset: 5, markerType: SpanMarkerType.start),
+                  SpanMarker(attribution: boldAttribution, offset: 8, markerType: SpanMarkerType.end),
+                  SpanMarker(attribution: codeAttribution, offset: 5, markerType: SpanMarkerType.start),
+                  SpanMarker(attribution: codeAttribution, offset: 8, markerType: SpanMarkerType.end),
                 ],
               ),
             ),
@@ -248,8 +249,8 @@ This is some code
               text: 'Unordered 1',
               spans: AttributedSpans(
                 attributions: [
-                  SpanMarker(attribution: 'bold', offset: 0, markerType: SpanMarkerType.start),
-                  SpanMarker(attribution: 'bold', offset: 8, markerType: SpanMarkerType.end),
+                  SpanMarker(attribution: boldAttribution, offset: 0, markerType: SpanMarkerType.start),
+                  SpanMarker(attribution: boldAttribution, offset: 8, markerType: SpanMarkerType.end),
                 ],
               ),
             ),
@@ -310,8 +311,8 @@ This is some code
               text: 'Ordered 1',
               spans: AttributedSpans(
                 attributions: [
-                  SpanMarker(attribution: 'bold', offset: 0, markerType: SpanMarkerType.start),
-                  SpanMarker(attribution: 'bold', offset: 6, markerType: SpanMarkerType.end),
+                  SpanMarker(attribution: boldAttribution, offset: 0, markerType: SpanMarkerType.start),
+                  SpanMarker(attribution: boldAttribution, offset: 6, markerType: SpanMarkerType.end),
                 ],
               ),
             ),
@@ -330,7 +331,7 @@ This is some code
           ParagraphNode(
             id: DocumentEditor.createNodeId(),
             text: AttributedText(text: 'Example Doc'),
-            metadata: {'blockType': 'header1'},
+            metadata: {'blockType': header1Attribution},
           ),
           HorizontalRuleNode(id: DocumentEditor.createNodeId()),
           ParagraphNode(
@@ -368,7 +369,7 @@ This is some code
           ParagraphNode(
             id: DocumentEditor.createNodeId(),
             text: AttributedText(text: 'This is a blockquote.'),
-            metadata: {'blockType': 'blockquote'},
+            metadata: {'blockType': blockquoteAttribution},
           ),
           ParagraphNode(
             id: DocumentEditor.createNodeId(),
@@ -377,7 +378,7 @@ This is some code
           ParagraphNode(
             id: DocumentEditor.createNodeId(),
             text: AttributedText(text: '{\n  // This is some code.\n}'),
-            metadata: {'blockType': 'code'},
+            metadata: {'blockType': codeAttribution},
           ),
         ]);
 
@@ -391,29 +392,29 @@ This is some code
     group('deserialization', () {
       test('headers', () {
         final header1Doc = deserializeMarkdownToDocument('# Header 1');
-        expect((header1Doc.nodes.first as ParagraphNode).metadata['blockType'], 'header1');
+        expect((header1Doc.nodes.first as ParagraphNode).metadata['blockType'], header1Attribution);
 
         final header2Doc = deserializeMarkdownToDocument('## Header 2');
-        expect((header2Doc.nodes.first as ParagraphNode).metadata['blockType'], 'header2');
+        expect((header2Doc.nodes.first as ParagraphNode).metadata['blockType'], header2Attribution);
 
         final header3Doc = deserializeMarkdownToDocument('### Header 3');
-        expect((header3Doc.nodes.first as ParagraphNode).metadata['blockType'], 'header3');
+        expect((header3Doc.nodes.first as ParagraphNode).metadata['blockType'], header3Attribution);
 
         final header4Doc = deserializeMarkdownToDocument('#### Header 4');
-        expect((header4Doc.nodes.first as ParagraphNode).metadata['blockType'], 'header4');
+        expect((header4Doc.nodes.first as ParagraphNode).metadata['blockType'], header4Attribution);
 
         final header5Doc = deserializeMarkdownToDocument('##### Header 5');
-        expect((header5Doc.nodes.first as ParagraphNode).metadata['blockType'], 'header5');
+        expect((header5Doc.nodes.first as ParagraphNode).metadata['blockType'], header5Attribution);
 
         final header6Doc = deserializeMarkdownToDocument('###### Header 6');
-        expect((header6Doc.nodes.first as ParagraphNode).metadata['blockType'], 'header6');
+        expect((header6Doc.nodes.first as ParagraphNode).metadata['blockType'], header6Attribution);
       });
 
       test('blockquote', () {
         final blockquoteDoc = deserializeMarkdownToDocument('> This is a blockquote');
 
         final blockquote = blockquoteDoc.nodes.first as ParagraphNode;
-        expect(blockquote.metadata['blockType'], 'blockquote');
+        expect(blockquote.metadata['blockType'], blockquoteAttribution);
         expect(blockquote.text.text, 'This is a blockquote');
       });
 
@@ -424,7 +425,7 @@ This is some code
 ```''');
 
         final code = codeBlockDoc.nodes.first as ParagraphNode;
-        expect(code.metadata['blockType'], 'code');
+        expect(code.metadata['blockType'], codeAttribution);
         expect(code.text.text, 'This is some code\n');
       });
 
@@ -461,8 +462,8 @@ This is some code
         expect(styledText.text, 'This is some styled text to parse as markdown');
 
         expect(styledText.getAllAttributionsAt(0).isEmpty, true);
-        expect(styledText.getAllAttributionsAt(8).contains('bold'), true);
-        expect(styledText.getAllAttributionsAt(13).containsAll(['bold', 'italics']), true);
+        expect(styledText.getAllAttributionsAt(8).contains(boldAttribution), true);
+        expect(styledText.getAllAttributionsAt(13).containsAll([boldAttribution, italicsAttribution]), true);
         expect(styledText.getAllAttributionsAt(19).isEmpty, true);
       });
 
@@ -518,7 +519,7 @@ This is some code
         expect(document.nodes.length, 18);
 
         expect(document.nodes[0], isA<ParagraphNode>());
-        expect((document.nodes[0] as ParagraphNode).metadata['blockType'], 'header1');
+        expect((document.nodes[0] as ParagraphNode).metadata['blockType'], header1Attribution);
 
         expect(document.nodes[1], isA<HorizontalRuleNode>());
 

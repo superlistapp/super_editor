@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/edit_context.dart';
+import 'package:super_editor/src/default_editor/attributions.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text.dart';
 
@@ -79,7 +80,7 @@ ExecutionInstruction convertBlockquoteToParagraphWhenBackspaceIsPressed({
   if (node is! ParagraphNode) {
     return ExecutionInstruction.continueExecution;
   }
-  if (node.metadata['blockType'] != 'blockquote') {
+  if (node.metadata['blockType'] != blockquoteAttribution) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -145,7 +146,7 @@ ExecutionInstruction insertNewlineInBlockquote({
   if (node is! ParagraphNode) {
     return ExecutionInstruction.continueExecution;
   }
-  if (node.metadata['blockType'] != 'blockquote') {
+  if (node.metadata['blockType'] != blockquoteAttribution) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -192,7 +193,7 @@ ExecutionInstruction splitBlockquoteWhenEnterPressed({
   if (node is! ParagraphNode) {
     return ExecutionInstruction.continueExecution;
   }
-  if (node.metadata['blockType'] != 'blockquote') {
+  if (node.metadata['blockType'] != blockquoteAttribution) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -247,7 +248,7 @@ class SplitBlockquoteCommand implements EditorCommand {
     final newNode = ParagraphNode(
       id: newNodeId,
       text: endText,
-      metadata: isNewNodeABlockquote ? {'blockType': 'blockquote'} : {},
+      metadata: isNewNodeABlockquote ? {'blockType': blockquoteAttribution} : {},
     );
 
     // Insert the new node after the current node.
@@ -263,7 +264,7 @@ Widget? blockquoteBuilder(ComponentContext componentContext) {
   if (blockquoteNode is! ParagraphNode) {
     return null;
   }
-  if (blockquoteNode.metadata['blockType'] != 'blockquote') {
+  if (blockquoteNode.metadata['blockType'] != blockquoteAttribution) {
     return null;
   }
 

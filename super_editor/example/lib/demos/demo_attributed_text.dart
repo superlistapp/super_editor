@@ -25,13 +25,13 @@ class _AttributedTextDemoState extends State<AttributedTextDemo> {
     );
 
     for (final range in _boldRanges) {
-      _text.addAttribution('bold', range);
+      _text.addAttribution(boldAttribution, range);
     }
     for (final range in _italicsRanges) {
-      _text.addAttribution('italics', range);
+      _text.addAttribution(italicsAttribution, range);
     }
     for (final range in _strikethroughRanges) {
-      _text.addAttribution('strikethrough', range);
+      _text.addAttribution(strikethroughAttribution, range);
     }
 
     setState(() {

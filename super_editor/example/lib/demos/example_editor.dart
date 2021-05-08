@@ -37,6 +37,10 @@ class _ExampleEditorState extends State<ExampleEditor> {
 
   @override
   void dispose() {
+    if (_formatBarOverlayEntry != null) {
+      _formatBarOverlayEntry.remove();
+    }
+
     _scrollController.dispose();
     _composer.dispose();
     super.dispose();
@@ -161,17 +165,16 @@ class _TextFormatBarState extends State<TextFormatBar> {
     if (selectedNode is ParagraphNode) {
       final type = selectedNode.metadata['blockType'];
 
-      switch (type) {
-        case 'header1':
-          return TextType.header1;
-        case 'header2':
-          return TextType.header2;
-        case 'header3':
-          return TextType.header3;
-        case 'blockquote':
-          return TextType.blockquote;
-        default:
-          return TextType.paragraph;
+      if (type == header1Attribution) {
+        return TextType.header1;
+      } else if (type == header2Attribution) {
+        return TextType.header2;
+      } else if (type == header3Attribution) {
+        return TextType.header3;
+      } else if (type == blockquoteAttribution) {
+        return TextType.blockquote;
+      } else {
+        return TextType.paragraph;
       }
     } else if (selectedNode is ListItemNode) {
       return selectedNode.type == ListItemType.ordered ? TextType.orderedListItem : TextType.unorderedListItem;
@@ -231,7 +234,7 @@ class _TextFormatBarState extends State<TextFormatBar> {
         ConvertListItemToParagraphCommand(
           nodeId: widget.composer.selection.extent.nodeId,
           paragraphMetadata: {
-            'blockType': _getBlockTypeName(newType),
+            'blockType': _getBlockTypeAttribution(newType),
           },
         ),
       );
@@ -245,7 +248,7 @@ class _TextFormatBarState extends State<TextFormatBar> {
     } else {
       // Apply a new block type to an existing paragraph node.
       final existingNode = widget.editor.document.getNodeById(widget.composer.selection.extent.nodeId);
-      (existingNode as ParagraphNode).metadata['blockType'] = _getBlockTypeName(newType);
+      (existingNode as ParagraphNode).metadata['blockType'] = _getBlockTypeAttribution(newType);
     }
   }
 
@@ -253,16 +256,16 @@ class _TextFormatBarState extends State<TextFormatBar> {
     return type == TextType.orderedListItem || type == TextType.unorderedListItem;
   }
 
-  String _getBlockTypeName(TextType newType) {
+  Attribution _getBlockTypeAttribution(TextType newType) {
     switch (newType) {
       case TextType.header1:
-        return 'header1';
+        return header1Attribution;
       case TextType.header2:
-        return 'header2';
+        return header2Attribution;
       case TextType.header3:
-        return 'header3';
+        return header3Attribution;
       case TextType.blockquote:
-        return 'blockquote';
+        return blockquoteAttribution;
       case TextType.paragraph:
       default:
         return null;
@@ -273,7 +276,7 @@ class _TextFormatBarState extends State<TextFormatBar> {
     widget.editor.executeCommand(
       ToggleTextAttributionsCommand(
         documentSelection: widget.composer.selection,
-        attributions: {'bold'},
+        attributions: {boldAttribution},
       ),
     );
   }
@@ -282,7 +285,7 @@ class _TextFormatBarState extends State<TextFormatBar> {
     widget.editor.executeCommand(
       ToggleTextAttributionsCommand(
         documentSelection: widget.composer.selection,
-        attributions: {'italics'},
+        attributions: {italicsAttribution},
       ),
     );
   }
@@ -291,7 +294,7 @@ class _TextFormatBarState extends State<TextFormatBar> {
     widget.editor.executeCommand(
       ToggleTextAttributionsCommand(
         documentSelection: widget.composer.selection,
-        attributions: {'strikethrough'},
+        attributions: {strikethroughAttribution},
       ),
     );
   }
@@ -517,7 +520,7 @@ Document _createInitialDocument() {
           text: 'Example Document',
         ),
         metadata: {
-          'blockType': 'header1',
+          'blockType': header1Attribution,
         },
       ),
       HorizontalRuleNode(id: DocumentEditor.createNodeId()),
@@ -534,7 +537,7 @@ Document _createInitialDocument() {
           text: 'This is a blockquote!',
         ),
         metadata: {
-          'blockType': 'blockquote',
+          'blockType': blockquoteAttribution,
         },
       ),
       ListItemNode.unordered(

@@ -13,6 +13,7 @@ import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/default_editor/document_interaction.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/attributed_spans.dart';
 import 'package:super_editor/src/infrastructure/attributed_text.dart';
 import 'package:super_editor/src/infrastructure/composable_text.dart';
 import 'package:super_editor/src/infrastructure/selectable_text.dart';
@@ -451,7 +452,7 @@ class ToggleTextAttributionsCommand implements EditorCommand {
   });
 
   final DocumentSelection documentSelection;
-  final Set<String> attributions;
+  final Set<Attribution> attributions;
 
   @override
   void execute(Document document, DocumentEditorTransaction transaction) {
@@ -523,7 +524,7 @@ class ToggleTextAttributionsCommand implements EditorCommand {
 
     // Toggle attributions.
     for (final entry in nodesAndSelections.entries) {
-      for (String attribution in attributions) {
+      for (Attribution attribution in attributions) {
         final node = entry.key;
         final range = entry.value;
         _log.log('ToggleTextAttributionsCommand', ' - toggling attribution: $attribution. Range: $range');
@@ -547,7 +548,7 @@ class InsertTextCommand implements EditorCommand {
 
   final DocumentPosition documentPosition;
   final String textToInsert;
-  final Set<dynamic> attributions;
+  final Set<Attribution> attributions;
 
   @override
   void execute(Document document, DocumentEditorTransaction transaction) {
