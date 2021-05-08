@@ -78,6 +78,25 @@ class AttributedSpans {
     return false;
   }
 
+  Set<Attribution> getMatchingAttributionsWithin({
+    required Set<Attribution> attributions,
+    required int start,
+    required int end,
+  }) {
+    final matchingAttributions = <Attribution>{};
+    for (int i = start; i <= end; ++i) {
+      for (final attribution in attributions) {
+        final otherAttributions = getAllAttributionsAt(start);
+        for (final otherAttribution in otherAttributions) {
+          if (otherAttribution.id == attribution.id) {
+            matchingAttributions.add(otherAttribution);
+          }
+        }
+      }
+    }
+    return matchingAttributions;
+  }
+
   /// Returns true if the given [offset] has the given [attribution].
   ///
   /// If the given [attribution] is null, returns [true] if any attribution
@@ -122,7 +141,7 @@ class AttributedSpans {
   SpanMarker? _getStartingMarkerAtOrBefore(int offset, {Attribution? attribution}) {
     return _attributions //
         .reversed // search from the end so its the nearest start marker
-        .where((marker) => attribution == null || marker.attribution == attribution)
+        .where((marker) => attribution == null || marker.attribution.id == attribution.id)
         .firstWhereOrNull((marker) => marker.isStart && marker.offset <= offset);
   }
 
@@ -131,14 +150,18 @@ class AttributedSpans {
   /// the given [attribution].
   SpanMarker? _getEndingMarkerAtOrAfter(int offset, {Attribution? attribution}) {
     return _attributions
-        .where((marker) => attribution == null || marker.attribution == attribution)
+        .where((marker) => attribution == null || marker.attribution.id == attribution.id)
         .firstWhereOrNull((marker) => marker.isEnd && marker.offset >= offset);
   }
 
   /// Applies the [newAttribution] from [start] to [end], inclusive.
   ///
-  /// If [newAttribution] spans already exist at [start] or [end], those
-  /// spans are expanded to include the new region between [start] and [end].
+  /// If [newAttribution] spans already exist at [start] or [end], and those
+  /// spans are compatible, the spans are expanded to include the new region
+  /// between [start] and [end].
+  ///
+  /// It [newAttribution] overlaps a conflicting span, a
+  /// [IncompatibleOverlappingAttributionsException] is thrown.
   void addAttribution({
     required Attribution newAttribution,
     required int start,
@@ -146,6 +169,29 @@ class AttributedSpans {
   }) {
     if (start < 0 || start > end) {
       return;
+    }
+
+    // Ensure that no conflicting attribution overlaps the new attribution.
+    // If a conflict exists, throw an exception.
+    final matchingAttributions = getMatchingAttributionsWithin(attributions: {newAttribution}, start: start, end: end);
+    if (matchingAttributions.isNotEmpty) {
+      for (final matchingAttribution in matchingAttributions) {
+        if (!newAttribution.canMergeWith(matchingAttribution)) {
+          late int conflictStart;
+          for (int i = start; i <= end; ++i) {
+            if (hasAttributionAt(i, attribution: matchingAttribution)) {
+              conflictStart = i;
+              break;
+            }
+          }
+
+          throw IncompatibleOverlappingAttributionsException(
+            existingAttribution: matchingAttribution,
+            newAttribution: newAttribution,
+            conflictStart: conflictStart,
+          );
+        }
+      }
     }
 
     _log.log('addAttribution', 'start: $start -> end: $end');
@@ -895,4 +941,21 @@ class NamedAttribution implements Attribution {
 
   @override
   int get hashCode => id.hashCode;
+}
+
+class IncompatibleOverlappingAttributionsException implements Exception {
+  IncompatibleOverlappingAttributionsException({
+    required this.existingAttribution,
+    required this.newAttribution,
+    required this.conflictStart,
+  });
+
+  final Attribution existingAttribution;
+  final Attribution newAttribution;
+  final int conflictStart;
+
+  @override
+  String toString() {
+    return 'Tried to insert attribution ($newAttribution) over a conflicting existing attribution ($existingAttribution). The overlap began at index $conflictStart';
+  }
 }

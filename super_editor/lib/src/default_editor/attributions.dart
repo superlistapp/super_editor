@@ -55,7 +55,9 @@ class LinkAttribution implements Attribution {
   final Uri url;
 
   @override
-  bool canMergeWith(Attribution other) => this == other;
+  bool canMergeWith(Attribution other) {
+    return this == other;
+  }
 
   @override
   bool operator ==(Object other) =>
@@ -63,4 +65,9 @@ class LinkAttribution implements Attribution {
 
   @override
   int get hashCode => url.hashCode;
+
+  @override
+  String toString() {
+    return '[LinkAttribution]: $url';
+  }
 }

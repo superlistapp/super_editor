@@ -182,6 +182,47 @@ void main() {
           '____ss____',
         ]).expectSpans(spans);
       });
+
+      test('incompatible attributions cannot overlap', () {
+        final spans = AttributedSpans();
+
+        // Add link at beginning
+        spans.addAttribution(
+          newAttribution: _LinkAttribution(url: 'https://flutter.dev'),
+          start: 0,
+          end: 6,
+        );
+
+        // Try to add a different link at the end but overlapping
+        // the first link. Expect an exception.
+        expect(() {
+          spans.addAttribution(
+            newAttribution: _LinkAttribution(url: 'https://pub.dev'),
+            start: 4,
+            end: 12,
+          );
+        }, throwsA(isA<IncompatibleOverlappingAttributionsException>()));
+      });
+
+      test('compatible attributions are merged', () {
+        final spans = AttributedSpans();
+
+        // Add bold at beginning
+        spans.addAttribution(
+          newAttribution: bold,
+          start: 0,
+          end: 6,
+        );
+
+        // Add bold at end but overlapping earlier bold
+        spans.addAttribution(
+          newAttribution: bold,
+          start: 4,
+          end: 12,
+        );
+
+        expect(spans.hasAttributionsWithin(attributions: {bold}, start: 0, end: 12), true);
+      });
     });
 
     group('collapse spans', () {
