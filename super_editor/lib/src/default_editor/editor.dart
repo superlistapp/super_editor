@@ -372,6 +372,11 @@ TextStyle defaultStyleBuilder(Set<Attribution> attributions) {
       newStyle = newStyle.copyWith(
         decoration: TextDecoration.lineThrough,
       );
+    } else if (attribution is LinkAttribution) {
+      newStyle = newStyle.copyWith(
+        color: Colors.lightBlue,
+        decoration: TextDecoration.underline,
+      );
     }
   }
   return newStyle;

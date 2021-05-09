@@ -65,6 +65,31 @@ class AttributedText with ChangeNotifier {
     return spans.getAllAttributionsAt(offset);
   }
 
+  /// Returns spans for each attribution that (at least partially) appear
+  /// within the given [range], as selected by [attributionFilter].
+  ///
+  /// By default, the returned spans represent the full, contiguous span
+  /// of each attribution. This means that if a portion of an attribution
+  /// appears within the given [range], the entire attribution span is
+  /// returned, including the area that sits outside the given [range].
+  ///
+  /// To obtain attribution spans that are cut down and limited to the
+  /// given [range], pass [true] for [resizeSpansToFitInRange]. This setting
+  /// only effects the returned spans, it does not alter the attributions
+  /// within this [AttributedText].
+  Set<AttributionSpan> getAttributionSpansInRange({
+    required AttributionFilter attributionFilter,
+    required TextRange range,
+    bool resizeSpansToFitInRange = false,
+  }) {
+    return spans.getAttributionSpansInRange(
+      attributionFilter: attributionFilter,
+      start: range.start,
+      end: range.end,
+      resizeSpansToFitInRange: resizeSpansToFitInRange,
+    );
+  }
+
   /// Adds the given [attribution] to all characters within the given
   /// [range], inclusive.
   void addAttribution(Attribution attribution, TextRange range) {
@@ -75,7 +100,7 @@ class AttributedText with ChangeNotifier {
   /// Removes the given [attribution] from all characters within the
   /// given [range], inclusive.
   void removeAttribution(Attribution attribution, TextRange range) {
-    spans.addAttribution(newAttribution: attribution, start: range.start, end: range.end);
+    spans.removeAttribution(attributionToRemove: attribution, start: range.start, end: range.end);
     notifyListeners();
   }
 

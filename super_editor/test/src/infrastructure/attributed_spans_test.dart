@@ -8,6 +8,157 @@ final strikethrough = NamedAttribution('strikethrough');
 
 void main() {
   group('Spans', () {
+    group('attribution queries', () {
+      test('it expands a span from a given offset', () {
+        final spans = AttributedSpans()..addAttribution(newAttribution: bold, start: 3, end: 16);
+        final expandedSpan = spans.expandAttributionToSpan(attribution: bold, offset: 6);
+
+        expect(
+          expandedSpan,
+          equals(
+            AttributionSpan(
+              attribution: bold,
+              start: 3,
+              end: 16,
+            ),
+          ),
+        );
+      });
+
+      test('it returns spans that fit within a range', () {
+        final spans = AttributedSpans()
+          ..addAttribution(newAttribution: bold, start: 0, end: 2)
+          ..addAttribution(newAttribution: bold, start: 5, end: 10);
+        final attributionSpans = spans.getAttributionSpansInRange(
+          attributionFilter: (attribution) => attribution == bold,
+          start: 3,
+          end: 15,
+        );
+
+        expect(attributionSpans.length, 1);
+        expect(
+          attributionSpans.first,
+          equals(
+            AttributionSpan(
+              attribution: bold,
+              start: 5,
+              end: 10,
+            ),
+          ),
+        );
+      });
+
+      test('it returns spans that partially overlap range', () {
+        final spans = AttributedSpans()
+          ..addAttribution(newAttribution: bold, start: 3, end: 7)
+          ..addAttribution(newAttribution: bold, start: 10, end: 15);
+        final attributionSpans = spans.getAttributionSpansInRange(
+          attributionFilter: (attribution) => attribution == bold,
+          start: 5,
+          end: 12,
+        );
+
+        expect(attributionSpans.length, 2);
+        expect(
+          attributionSpans.first,
+          equals(
+            AttributionSpan(
+              attribution: bold,
+              start: 3,
+              end: 7,
+            ),
+          ),
+        );
+        expect(
+          attributionSpans.last,
+          equals(
+            AttributionSpan(
+              attribution: bold,
+              start: 10,
+              end: 15,
+            ),
+          ),
+        );
+      });
+
+      test('it returns spans that completely cover the range', () {
+        final spans = AttributedSpans()..addAttribution(newAttribution: bold, start: 0, end: 10);
+        final attributionSpans = spans.getAttributionSpansInRange(
+          attributionFilter: (attribution) => attribution == bold,
+          start: 3,
+          end: 8,
+        );
+
+        expect(attributionSpans.length, 1);
+        expect(
+          attributionSpans.first,
+          equals(
+            AttributionSpan(
+              attribution: bold,
+              start: 0,
+              end: 10,
+            ),
+          ),
+        );
+      });
+
+      test('it resizes spans that partially overlap range', () {
+        final spans = AttributedSpans()
+          ..addAttribution(newAttribution: bold, start: 3, end: 7)
+          ..addAttribution(newAttribution: bold, start: 10, end: 15);
+        final attributionSpans = spans.getAttributionSpansInRange(
+          attributionFilter: (attribution) => attribution == bold,
+          start: 5,
+          end: 12,
+          resizeSpansToFitInRange: true,
+        );
+
+        expect(attributionSpans.length, 2);
+        expect(
+          attributionSpans.first,
+          equals(
+            AttributionSpan(
+              attribution: bold,
+              start: 5,
+              end: 7,
+            ),
+          ),
+        );
+        expect(
+          attributionSpans.last,
+          equals(
+            AttributionSpan(
+              attribution: bold,
+              start: 10,
+              end: 12,
+            ),
+          ),
+        );
+      });
+
+      test('it resizes spans that completely cover the range', () {
+        final spans = AttributedSpans()..addAttribution(newAttribution: bold, start: 0, end: 10);
+        final attributionSpans = spans.getAttributionSpansInRange(
+          attributionFilter: (attribution) => attribution == bold,
+          start: 3,
+          end: 8,
+          resizeSpansToFitInRange: true,
+        );
+
+        expect(attributionSpans.length, 1);
+        expect(
+          attributionSpans.first,
+          equals(
+            AttributionSpan(
+              attribution: bold,
+              start: 3,
+              end: 8,
+            ),
+          ),
+        );
+      });
+    });
+
     group('single attribution', () {
       test('applies attribution to full span', () {
         final spans = AttributedSpans()..addAttribution(newAttribution: bold, start: 0, end: 16);

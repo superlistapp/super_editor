@@ -418,14 +418,16 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
   Widget build(BuildContext context) {
     _log.log('build', 'Building a TextComponent with key: ${widget.key}');
 
-    final blockType = widget.metadata['blockType'];
+    Attribution? blockType = widget.metadata['blockType'];
 
     // Surround the text with block level attributions.
-    final blockText = widget.text.copyText(0)
-      ..addAttribution(
+    final blockText = widget.text.copyText(0);
+    if (blockType != null) {
+      blockText.addAttribution(
         blockType,
         TextRange(start: 0, end: widget.text.text.length - 1),
       );
+    }
     final richText = blockText.computeTextSpan(widget.textStyleBuilder);
 
     return SelectableText(
