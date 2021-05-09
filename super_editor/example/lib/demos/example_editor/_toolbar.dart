@@ -584,14 +584,33 @@ class _EditorToolbarState extends State<EditorToolbar> {
         width: 400,
         height: 40,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: TextField(
-          focusNode: _urlFocusNode,
-          controller: _urlController,
-          decoration: InputDecoration(
-            hintText: 'enter url...',
-            border: InputBorder.none,
-          ),
-          onSubmitted: (newValue) => _applyLink(),
+        child: Row(
+          children: [
+            Expanded(
+              child: TextField(
+                focusNode: _urlFocusNode,
+                controller: _urlController,
+                decoration: InputDecoration(
+                  hintText: 'enter url...',
+                  border: InputBorder.none,
+                ),
+                onSubmitted: (newValue) => _applyLink(),
+              ),
+            ),
+            IconButton(
+              icon: Icon(Icons.close),
+              iconSize: 20,
+              splashRadius: 16,
+              padding: EdgeInsets.zero,
+              onPressed: () {
+                setState(() {
+                  _urlFocusNode.unfocus();
+                  _showUrlField = false;
+                  _urlController.clear();
+                });
+              },
+            ),
+          ],
         ),
       ),
     );
