@@ -1,159 +1,53 @@
 import 'dart:math';
-import 'dart:ui';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
-/// Example of a rich text editor.
+/// Small toolbar that is intended to display near some selected
+/// text and offer a few text formatting controls.
 ///
-/// This editor will expand in functionality as the rich text
-/// package expands.
-class ExampleEditor extends StatefulWidget {
-  @override
-  _ExampleEditorState createState() => _ExampleEditorState();
-}
-
-class _ExampleEditorState extends State<ExampleEditor> {
-  final GlobalKey _docLayoutKey = GlobalKey();
-
-  Document _doc;
-  DocumentEditor _docEditor;
-  DocumentComposer _composer;
-
-  ScrollController _scrollController;
-
-  OverlayEntry _formatBarOverlayEntry;
-  final _selectionAnchor = ValueNotifier<Offset>(null);
-
-  @override
-  void initState() {
-    super.initState();
-    _doc = _createInitialDocument()..addListener(_onDocChange);
-    _docEditor = DocumentEditor(document: _doc);
-    _composer = DocumentComposer()..addListener(_onDocChange);
-    _scrollController = ScrollController()..addListener(_onDocChange);
-  }
-
-  @override
-  void dispose() {
-    if (_formatBarOverlayEntry != null) {
-      _formatBarOverlayEntry.remove();
-    }
-
-    _scrollController.dispose();
-    _composer.dispose();
-    super.dispose();
-  }
-
-  void _onDocChange() {
-    final selection = _composer.selection;
-    if (selection == null) {
-      // Nothing is selected. We don't want to show anything
-      // in this case.
-      _hideFormatBar();
-
-      return;
-    }
-    if (selection.base.nodeId != selection.extent.nodeId) {
-      // More than one node is selected. We don't want to show
-      // anything in this case.
-      _hideFormatBar();
-
-      return;
-    }
-    if (selection.isCollapsed) {
-      // We only want to show format controls when a span of text
-      // is selected. Therefore, we ignore collapsed selections.
-      _hideFormatBar();
-
-      return;
-    }
-
-    final textNode = _doc.getNodeById(selection.extent.nodeId);
-    if (textNode is! TextNode) {
-      // The currently selected content is not a paragraph. We don't
-      // want to show anything in this case.
-      _hideFormatBar();
-
-      return;
-    }
-
-    _showFormatBar();
-
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      final docBoundingBox = (_docLayoutKey.currentState as DocumentLayout)
-          .getRectForSelection(_composer.selection.base, _composer.selection.extent);
-      final docBox = _docLayoutKey.currentContext.findRenderObject() as RenderBox;
-      final overlayBoundingBox = Rect.fromPoints(
-        docBox.localToGlobal(docBoundingBox.topLeft, ancestor: context.findRenderObject()),
-        docBox.localToGlobal(docBoundingBox.bottomRight, ancestor: context.findRenderObject()),
-      );
-
-      _selectionAnchor.value = overlayBoundingBox.topCenter;
-    });
-  }
-
-  void _showFormatBar() {
-    if (_formatBarOverlayEntry == null) {
-      _formatBarOverlayEntry ??= OverlayEntry(builder: (context) {
-        return TextFormatBar(
-          anchor: _selectionAnchor,
-          editor: _docEditor,
-          composer: _composer,
-          closeToolbar: _hideFormatBar,
-        );
-      });
-
-      final overlay = Overlay.of(context);
-      overlay.insert(_formatBarOverlayEntry);
-    }
-  }
-
-  void _hideFormatBar() {
-    // Null out the selection anchor so that when it re-appears,
-    // the bar doesn't momentarily "flash" at its old anchor position.
-    _selectionAnchor.value = null;
-
-    if (_formatBarOverlayEntry != null) {
-      _formatBarOverlayEntry.remove();
-      _formatBarOverlayEntry = null;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Editor.standard(
-      editor: _docEditor,
-      composer: _composer,
-      scrollController: _scrollController,
-      documentLayoutKey: _docLayoutKey,
-      maxWidth: 600,
-      padding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),
-    );
-  }
-}
-
-class TextFormatBar extends StatefulWidget {
-  const TextFormatBar({
+/// [EditorToolbar] expects to be displayed in a [Stack] where it
+/// will position itself based on the given [anchor]. This can be
+/// accomplished, for example, by adding [EditorToolbar] to the
+/// application [Overlay]. Any other [Stack] should work, too.
+class EditorToolbar extends StatefulWidget {
+  const EditorToolbar({
     Key key,
-    this.anchor,
+    @required this.anchor,
     @required this.editor,
     @required this.composer,
     @required this.closeToolbar,
   }) : super(key: key);
 
+  /// [EditorToolbar] displays itself horizontally centered and
+  /// slightly above the given [anchor] value.
+  ///
+  /// [anchor] is a [ValueNotifier] so that [EditorToolbar] can
+  /// reposition itself as the [Offset] value changes.
   final ValueNotifier<Offset> anchor;
+
+  /// The [editor] is used to alter document content, such as
+  /// when the user selects a different block format for a
+  /// text blob, e.g., paragraph, header, blockquote, or
+  /// to apply styles to text.
   final DocumentEditor editor;
+
+  /// The [composer] provides access to the user's current
+  /// selection within the document, which dictates the
+  /// content that is altered by the toolbar's options.
   final DocumentComposer composer;
+
+  /// Delegate that instructs the owner of this [EditorToolbar]
+  /// to close the toolbar, such as after submitting a URL
+  /// for some text.
   final VoidCallback closeToolbar;
 
   @override
-  _TextFormatBarState createState() => _TextFormatBarState();
+  _EditorToolbarState createState() => _EditorToolbarState();
 }
 
-class _TextFormatBarState extends State<TextFormatBar> {
+class _EditorToolbarState extends State<EditorToolbar> {
   bool _showUrlField = false;
   FocusNode _urlFocusNode;
   TextEditingController _urlController;
@@ -172,6 +66,10 @@ class _TextFormatBarState extends State<TextFormatBar> {
     super.dispose();
   }
 
+  /// Returns true if the currently selected text node is capable of being
+  /// transformed into a different type text node, returns false if
+  /// multiple nodes are selected, no node is selected, or the selected
+  /// node is not a standard text block.
   bool _isConvertibleNode() {
     final selection = widget.composer.selection;
     if (selection.base.nodeId != selection.extent.nodeId) {
@@ -182,29 +80,35 @@ class _TextFormatBarState extends State<TextFormatBar> {
     return selectedNode is ParagraphNode || selectedNode is ListItemNode;
   }
 
-  TextType _getCurrentTextType() {
+  /// Returns the block type of the currently selected text node.
+  ///
+  /// Throws an exception if the currently selected node is not a text node.
+  _TextType _getCurrentTextType() {
     final selectedNode = widget.editor.document.getNodeById(widget.composer.selection.extent.nodeId);
     if (selectedNode is ParagraphNode) {
       final type = selectedNode.metadata['blockType'];
 
       if (type == header1Attribution) {
-        return TextType.header1;
+        return _TextType.header1;
       } else if (type == header2Attribution) {
-        return TextType.header2;
+        return _TextType.header2;
       } else if (type == header3Attribution) {
-        return TextType.header3;
+        return _TextType.header3;
       } else if (type == blockquoteAttribution) {
-        return TextType.blockquote;
+        return _TextType.blockquote;
       } else {
-        return TextType.paragraph;
+        return _TextType.paragraph;
       }
     } else if (selectedNode is ListItemNode) {
-      return selectedNode.type == ListItemType.ordered ? TextType.orderedListItem : TextType.unorderedListItem;
+      return selectedNode.type == ListItemType.ordered ? _TextType.orderedListItem : _TextType.unorderedListItem;
     } else {
       throw Exception('Invalid node type: $selectedNode');
     }
   }
 
+  /// Returns the text alignment of the currently selected text node.
+  ///
+  /// Throws an exception if the currently selected node is not a text node.
   TextAlign _getCurrentTextAlignment() {
     final selectedNode = widget.editor.document.getNodeById(widget.composer.selection.extent.nodeId);
     if (selectedNode is ParagraphNode) {
@@ -226,6 +130,8 @@ class _TextFormatBarState extends State<TextFormatBar> {
     }
   }
 
+  /// Returns true if a single text node is selected and that text node
+  /// is capable of respecting alignment, returns false otherwise.
   bool _isTextAlignable() {
     final selection = widget.composer.selection;
     if (selection.base.nodeId != selection.extent.nodeId) {
@@ -236,7 +142,12 @@ class _TextFormatBarState extends State<TextFormatBar> {
     return selectedNode is ParagraphNode;
   }
 
-  void _convertTextToNewType(TextType newType) {
+  /// Converts the currently selected text node into a new type of
+  /// text node, represented by [newType].
+  ///
+  /// For example: convert a paragraph to a blockquote, or a header
+  /// to a list item.
+  void _convertTextToNewType(_TextType newType) {
     final existingTextType = _getCurrentTextType();
 
     if (existingTextType == newType) {
@@ -248,7 +159,7 @@ class _TextFormatBarState extends State<TextFormatBar> {
       widget.editor.executeCommand(
         ChangeListItemTypeCommand(
           nodeId: widget.composer.selection.extent.nodeId,
-          newType: newType == TextType.orderedListItem ? ListItemType.ordered : ListItemType.unordered,
+          newType: newType == _TextType.orderedListItem ? ListItemType.ordered : ListItemType.unordered,
         ),
       );
     } else if (_isListItem(existingTextType) && !_isListItem(newType)) {
@@ -264,7 +175,7 @@ class _TextFormatBarState extends State<TextFormatBar> {
       widget.editor.executeCommand(
         ConvertParagraphToListItemCommand(
           nodeId: widget.composer.selection.extent.nodeId,
-          type: newType == TextType.orderedListItem ? ListItemType.ordered : ListItemType.unordered,
+          type: newType == _TextType.orderedListItem ? ListItemType.ordered : ListItemType.unordered,
         ),
       );
     } else {
@@ -274,26 +185,31 @@ class _TextFormatBarState extends State<TextFormatBar> {
     }
   }
 
-  bool _isListItem(TextType type) {
-    return type == TextType.orderedListItem || type == TextType.unorderedListItem;
+  /// Returns true if the given [_TextType] represents an
+  /// ordered or unordered list item, returns false otherwise.
+  bool _isListItem(_TextType type) {
+    return type == _TextType.orderedListItem || type == _TextType.unorderedListItem;
   }
 
-  Attribution _getBlockTypeAttribution(TextType newType) {
+  /// Returns the text [Attribution] associated with the given
+  /// [_TextType], e.g., [_TextType.header1] -> [header1Attribution].
+  Attribution _getBlockTypeAttribution(_TextType newType) {
     switch (newType) {
-      case TextType.header1:
+      case _TextType.header1:
         return header1Attribution;
-      case TextType.header2:
+      case _TextType.header2:
         return header2Attribution;
-      case TextType.header3:
+      case _TextType.header3:
         return header3Attribution;
-      case TextType.blockquote:
+      case _TextType.blockquote:
         return blockquoteAttribution;
-      case TextType.paragraph:
+      case _TextType.paragraph:
       default:
         return null;
     }
   }
 
+  /// Toggles bold styling for the current selected text.
   void _toggleBold() {
     widget.editor.executeCommand(
       ToggleTextAttributionsCommand(
@@ -303,6 +219,7 @@ class _TextFormatBarState extends State<TextFormatBar> {
     );
   }
 
+  /// Toggles italic styling for the current selected text.
   void _toggleItalics() {
     widget.editor.executeCommand(
       ToggleTextAttributionsCommand(
@@ -312,6 +229,7 @@ class _TextFormatBarState extends State<TextFormatBar> {
     );
   }
 
+  /// Toggles strikethrough styling for the current selected text.
   void _toggleStrikethrough() {
     widget.editor.executeCommand(
       ToggleTextAttributionsCommand(
@@ -321,14 +239,21 @@ class _TextFormatBarState extends State<TextFormatBar> {
     );
   }
 
+  /// Returns true if the current text selection includes part
+  /// or all of a single link, returns false if zero links are
+  /// in the selection or if 2+ links are in the selection.
   bool _isSingleLinkSelected() {
     return _getSelectedLinkSpans().length == 1;
   }
 
+  /// Returns true if the current text selection includes 2+
+  /// links, returns false otherwise.
   bool _areMultipleLinksSelected() {
     return _getSelectedLinkSpans().length >= 2;
   }
 
+  /// Returns any link-based [AttributionSpan]s that appear partially
+  /// or wholly within the current text selection.
   Set<AttributionSpan> _getSelectedLinkSpans() {
     final selection = widget.composer.selection;
     final baseOffset = (selection.base.nodePosition as TextPosition).offset;
@@ -336,37 +261,29 @@ class _TextFormatBarState extends State<TextFormatBar> {
     final selectionStart = min(baseOffset, extentOffset);
     final selectionEnd = max(baseOffset, extentOffset);
     final selectionRange = TextRange(start: selectionStart, end: selectionEnd - 1);
-    print('Selection from: $baseOffset to $extentOffset');
 
     final textNode = widget.editor.document.getNodeById(selection.extent.nodeId) as TextNode;
-    print('Text node: $textNode');
     final text = textNode.text;
-    print('Selected text: "${text.text.substring(selectionStart, selectionEnd)}"');
 
     final overlappingLinkAttributions = text.getAttributionSpansInRange(
       attributionFilter: (Attribution attribution) => attribution is LinkAttribution,
       range: selectionRange,
     );
 
-    print('Found ${overlappingLinkAttributions.length} links');
-    for (final attributionSpan in overlappingLinkAttributions) {
-      print(' - ${attributionSpan.attribution}, ${attributionSpan.start} -> ${attributionSpan.end}');
-    }
     return overlappingLinkAttributions;
   }
 
+  /// Takes appropriate action when the toolbar's link button is
+  /// pressed.
   void _onLinkPressed() {
-    print('_onLinkPressed');
     final selection = widget.composer.selection;
     final baseOffset = (selection.base.nodePosition as TextPosition).offset;
     final extentOffset = (selection.extent.nodePosition as TextPosition).offset;
     final selectionStart = min(baseOffset, extentOffset);
     final selectionEnd = max(baseOffset, extentOffset);
     final selectionRange = TextRange(start: selectionStart, end: selectionEnd - 1);
-    print('Selection from: $baseOffset to $extentOffset');
 
     final textNode = widget.editor.document.getNodeById(selection.extent.nodeId) as TextNode;
-    print('Text node: $textNode');
     final text = textNode.text;
 
     final overlappingLinkAttributions = text.getAttributionSpansInRange(
@@ -376,7 +293,6 @@ class _TextFormatBarState extends State<TextFormatBar> {
 
     if (overlappingLinkAttributions.length >= 2) {
       // Do nothing when multiple links are selected.
-      print('There are 2+ links in the selection. Doing nothing.');
       return;
     }
 
@@ -390,12 +306,10 @@ class _TextFormatBarState extends State<TextFormatBar> {
       if (isLinkSelectionOnTrailingEdge) {
         // The selected text covers the beginning, or the end, or the entire
         // existing link. Remove the link attribution from the selected text.
-        print('Removing trailing edge of existing link');
         text.removeAttribution(overlappingLinkSpan.attribution, selectionRange);
       } else {
         // The selected text sits somewhere within the existing link. Remove
         // the entire link attribution.
-        print('Selection is within a link. Removing entire link.');
         text.removeAttribution(
           overlappingLinkSpan.attribution,
           TextRange(start: overlappingLinkSpan.start, end: overlappingLinkSpan.end),
@@ -410,6 +324,8 @@ class _TextFormatBarState extends State<TextFormatBar> {
     }
   }
 
+  /// Takes the text from the [urlController] and applies it as a link
+  /// attribution to the currently selected text.
   void _applyLink() {
     final url = _urlController.text;
 
@@ -419,16 +335,13 @@ class _TextFormatBarState extends State<TextFormatBar> {
     final selectionStart = min(baseOffset, extentOffset);
     final selectionEnd = max(baseOffset, extentOffset);
     final selectionRange = TextRange(start: selectionStart, end: selectionEnd - 1);
-    print('Selection from: $baseOffset to $extentOffset');
 
     final textNode = widget.editor.document.getNodeById(selection.extent.nodeId) as TextNode;
-    print('Text node: $textNode');
     final text = textNode.text;
 
     final trimmedRange = _trimTextRangeWhitespace(text, selectionRange);
 
     final linkAttribution = LinkAttribution(url: Uri.parse(url));
-    print('Adding $linkAttribution from ${trimmedRange.start} to ${trimmedRange.end}');
     text.addAttribution(
       linkAttribution,
       trimmedRange,
@@ -438,11 +351,14 @@ class _TextFormatBarState extends State<TextFormatBar> {
     _urlController.clear();
     setState(() {
       _showUrlField = false;
-      _urlFocusNode.unfocus();
+      _urlFocusNode.unfocus(disposition: UnfocusDisposition.previouslyFocusedChild);
       widget.closeToolbar();
     });
   }
 
+  /// Given [text] and a [range] within the [text], the [range] is
+  /// shortened on both sides to remove any trailing whitespace and
+  /// the new range is returned.
   TextRange _trimTextRangeWhitespace(AttributedText text, TextRange range) {
     int startOffset = range.start;
     int endOffset = range.end;
@@ -457,6 +373,8 @@ class _TextFormatBarState extends State<TextFormatBar> {
     return TextRange(start: startOffset, end: endOffset);
   }
 
+  /// Changes the alignment of the current selected text node
+  /// to reflect [newAlignment].
   void _changeAlignment(TextAlign newAlignment) {
     String newAlignmentValue;
     switch (newAlignment) {
@@ -480,21 +398,23 @@ class _TextFormatBarState extends State<TextFormatBar> {
     selectedNode.metadata['textAlign'] = newAlignmentValue;
   }
 
-  String _getTextTypeName(TextType textType) {
+  /// Returns the localized name for the given [_TextType], e.g.,
+  /// "Paragraph" or "Header 1".
+  String _getTextTypeName(_TextType textType) {
     switch (textType) {
-      case TextType.header1:
+      case _TextType.header1:
         return AppLocalizations.of(context).labelHeader1;
-      case TextType.header2:
+      case _TextType.header2:
         return AppLocalizations.of(context).labelHeader2;
-      case TextType.header3:
+      case _TextType.header3:
         return AppLocalizations.of(context).labelHeader3;
-      case TextType.paragraph:
+      case _TextType.paragraph:
         return AppLocalizations.of(context).labelParagraph;
-      case TextType.blockquote:
+      case _TextType.blockquote:
         return AppLocalizations.of(context).labelBlockquote;
-      case TextType.orderedListItem:
+      case _TextType.orderedListItem:
         return AppLocalizations.of(context).labelOrderedListItem;
-      case TextType.unorderedListItem:
+      case _TextType.unorderedListItem:
         return AppLocalizations.of(context).labelUnorderedListItem;
     }
   }
@@ -505,12 +425,16 @@ class _TextFormatBarState extends State<TextFormatBar> {
       valueListenable: widget.anchor,
       builder: (context, offset, child) {
         if (widget.anchor.value == null || widget.composer.selection == null) {
+          // When no anchor position is available, or the user hasn't
+          // selected any text, show nothing.
           return SizedBox();
         }
 
         return SizedBox.expand(
           child: Stack(
             children: [
+              // Conditionally display the URL text field below
+              // the standard toolbar.
               if (_showUrlField)
                 Positioned(
                   left: widget.anchor.value.dx,
@@ -545,13 +469,15 @@ class _TextFormatBarState extends State<TextFormatBar> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // Only allow the user to select a new type of text node if
+            // the currently selected node can be converted.
             if (_isConvertibleNode()) ...[
               Tooltip(
                 message: AppLocalizations.of(context).labelTextBlockType,
-                child: DropdownButton<TextType>(
+                child: DropdownButton<_TextType>(
                   value: _getCurrentTextType(),
-                  items: TextType.values
-                      .map((textType) => DropdownMenuItem<TextType>(
+                  items: _TextType.values
+                      .map((textType) => DropdownMenuItem<_TextType>(
                             value: textType,
                             child: Padding(
                               padding: const EdgeInsets.only(left: 16.0),
@@ -605,6 +531,8 @@ class _TextFormatBarState extends State<TextFormatBar> {
                 tooltip: AppLocalizations.of(context).labelLink,
               ),
             ),
+            // Only display alignment controls if the currently selected text
+            // node respects alignment. List items, for example, do not.
             if (_isTextAlignable()) ...[
               _buildVerticalDivider(),
               Tooltip(
@@ -648,7 +576,6 @@ class _TextFormatBarState extends State<TextFormatBar> {
   }
 
   Widget _buildUrlField() {
-    print('Building url field');
     return Material(
       shape: StadiumBorder(),
       elevation: 5,
@@ -693,7 +620,7 @@ class _TextFormatBarState extends State<TextFormatBar> {
   }
 }
 
-enum TextType {
+enum _TextType {
   header1,
   header2,
   header3,
@@ -701,97 +628,4 @@ enum TextType {
   blockquote,
   orderedListItem,
   unorderedListItem,
-}
-
-Document _createInitialDocument() {
-  return MutableDocument(
-    nodes: [
-      // ImageNode(
-      //   id: DocumentEditor.createNodeId(),
-      //   imageUrl: 'https://i.ytimg.com/vi/fq4N0hgOWzU/maxresdefault.jpg',
-      // ),
-      // ParagraphNode(
-      //   id: DocumentEditor.createNodeId(),
-      //   text: AttributedText(
-      //     text: 'Example Document',
-      //   ),
-      //   metadata: {
-      //     'blockType': header1Attribution,
-      //   },
-      // ),
-      // HorizontalRuleNode(id: DocumentEditor.createNodeId()),
-      ParagraphNode(
-        id: DocumentEditor.createNodeId(),
-        text: AttributedText(
-          text:
-              'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus sed sagittis urna. Aenean mattis ante justo, quis sollicitudin metus interdum id. Aenean ornare urna ac enim consequat mollis. In aliquet convallis efficitur. Phasellus convallis purus in fringilla scelerisque. Ut ac orci a turpis egestas lobortis. Morbi aliquam dapibus sem, vitae sodales arcu ultrices eu. Duis vulputate mauris quam, eleifend pulvinar quam blandit eget.',
-        ),
-      ),
-      // ParagraphNode(
-      //   id: DocumentEditor.createNodeId(),
-      //   text: AttributedText(
-      //     text: 'This is a blockquote!',
-      //   ),
-      //   metadata: {
-      //     'blockType': blockquoteAttribution,
-      //   },
-      // ),
-      // ListItemNode.unordered(
-      //   id: DocumentEditor.createNodeId(),
-      //   text: AttributedText(
-      //     text: 'This is an unordered list item',
-      //   ),
-      // ),
-      // ListItemNode.unordered(
-      //   id: DocumentEditor.createNodeId(),
-      //   text: AttributedText(
-      //     text: 'This is another list item',
-      //   ),
-      // ),
-      // ListItemNode.unordered(
-      //   id: DocumentEditor.createNodeId(),
-      //   text: AttributedText(
-      //     text: 'This is a 3rd list item',
-      //   ),
-      // ),
-      // ParagraphNode(
-      //   id: DocumentEditor.createNodeId(),
-      //   text: AttributedText(
-      //       text:
-      //           'Cras vitae sodales nisi. Vivamus dignissim vel purus vel aliquet. Sed viverra diam vel nisi rhoncus pharetra. Donec gravida ut ligula euismod pharetra. Etiam sed urna scelerisque, efficitur mauris vel, semper arcu. Nullam sed vehicula sapien. Donec id tellus volutpat, eleifend nulla eget, rutrum mauris.'),
-      // ),
-      // ListItemNode.ordered(
-      //   id: DocumentEditor.createNodeId(),
-      //   text: AttributedText(
-      //     text: 'First thing to do',
-      //   ),
-      // ),
-      // ListItemNode.ordered(
-      //   id: DocumentEditor.createNodeId(),
-      //   text: AttributedText(
-      //     text: 'Second thing to do',
-      //   ),
-      // ),
-      // ListItemNode.ordered(
-      //   id: DocumentEditor.createNodeId(),
-      //   text: AttributedText(
-      //     text: 'Third thing to do',
-      //   ),
-      // ),
-      // ParagraphNode(
-      //   id: DocumentEditor.createNodeId(),
-      //   text: AttributedText(
-      //     text:
-      //         'Nam hendrerit vitae elit ut placerat. Maecenas nec congue neque. Fusce eget tortor pulvinar, cursus neque vitae, sagittis lectus. Duis mollis libero eu scelerisque ullamcorper. Pellentesque eleifend arcu nec augue molestie, at iaculis dui rutrum. Etiam lobortis magna at magna pellentesque ornare. Sed accumsan, libero vel porta molestie, tortor lorem eleifend ante, at egestas leo felis sed nunc. Quisque mi neque, molestie vel dolor a, eleifend tempor odio.',
-      //   ),
-      // ),
-      // ParagraphNode(
-      //   id: DocumentEditor.createNodeId(),
-      //   text: AttributedText(
-      //     text:
-      //         'Etiam id lacus interdum, efficitur ex convallis, accumsan ipsum. Integer faucibus mollis mauris, a suscipit ante mollis vitae. Fusce justo metus, congue non lectus ac, luctus rhoncus tellus. Phasellus vitae fermentum orci, sit amet sodales orci. Fusce at ante iaculis nunc aliquet pharetra. Nam placerat, nisl in gravida lacinia, nisl nibh feugiat nunc, in sagittis nisl sapien nec arcu. Nunc gravida faucibus massa, sit amet accumsan dolor feugiat in. Mauris ut elementum leo.',
-      //   ),
-      // ),
-    ],
-  );
 }
