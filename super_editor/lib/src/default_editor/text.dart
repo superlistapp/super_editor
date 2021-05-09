@@ -15,6 +15,7 @@ import 'package:super_editor/src/default_editor/document_interaction.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text.dart';
 import 'package:super_editor/src/infrastructure/composable_text.dart';
+import 'package:super_editor/src/infrastructure/keyboard.dart';
 import 'package:super_editor/src/infrastructure/selectable_text.dart';
 import 'package:super_editor/src/infrastructure/text_layout.dart';
 
@@ -598,7 +599,7 @@ ExecutionInstruction insertCharacterInTextComposable({
   // catch any key that isn't explicitly listed. The eventual solution
   // to this is for the web to honor the standard key event contract,
   // but that's out of our control.
-  if (kIsWeb && _webBugBlacklistCharacters.contains(character)) {
+  if (kIsWeb && webBugBlacklistCharacters.contains(character)) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -780,37 +781,3 @@ bool _isTextEntryNode({
   final extentNode = document.getNodeById(extentPosition.nodeId);
   return extentNode is TextNode;
 }
-
-const _webBugBlacklistCharacters = {
-  'Shift',
-  'Alt',
-  'Escape',
-  'CapsLock',
-  'PageUp',
-  'PageDown',
-  'Home',
-  'End',
-  'Control',
-  'Meta',
-  'Enter',
-  'Backspace',
-  'Delete',
-  'F1',
-  'F2',
-  'F3',
-  'F4',
-  'F5',
-  'F6',
-  'F7',
-  'F8',
-  'F9',
-  'F10',
-  'F11',
-  'F12',
-  'Num Lock',
-  'Scroll Lock',
-  'Insert',
-  'Paste',
-  'Print Screen',
-  'Power',
-};

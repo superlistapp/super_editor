@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'dart:ui';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart' hide SelectableText;
 import 'package:flutter/rendering.dart';
@@ -13,6 +14,7 @@ import 'package:super_editor/src/infrastructure/selectable_text.dart';
 import 'package:super_editor/src/infrastructure/text_layout.dart';
 
 import 'attributed_text.dart';
+import 'keyboard.dart';
 import 'multi_tap_gesture.dart';
 
 final _log = Logger(scope: 'super_textfield.dart');
@@ -1328,6 +1330,18 @@ class DefaultSuperTextFieldKeyboardHandlers {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
     if (LogicalKeyboardKey.isControlCharacter(keyEvent.character!)) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    // On web, keys like shift and alt are sending their full name
+    // as a character, e.g., "Shift" and "Alt". This check prevents
+    // those keys from inserting their name into content.
+    //
+    // This filter is a blacklist, and therefore it will fail to
+    // catch any key that isn't explicitly listed. The eventual solution
+    // to this is for the web to honor the standard key event contract,
+    // but that's out of our control.
+    if (kIsWeb && webBugBlacklistCharacters.contains(keyEvent.character)) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 
