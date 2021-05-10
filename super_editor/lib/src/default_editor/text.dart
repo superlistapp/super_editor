@@ -15,7 +15,9 @@ import 'package:super_editor/src/default_editor/document_interaction.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text.dart';
 import 'package:super_editor/src/infrastructure/composable_text.dart';
+import 'package:super_editor/src/infrastructure/keyboard.dart';
 import 'package:super_editor/src/infrastructure/selectable_text.dart';
+import 'package:super_editor/src/infrastructure/text_layout.dart';
 
 import 'multi_node_editing.dart';
 
@@ -586,11 +588,24 @@ ExecutionInstruction insertCharacterInTextComposable({
   if (keyEvent.character == null || keyEvent.character == '') {
     return ExecutionInstruction.continueExecution;
   }
+
+  String character = keyEvent.character!;
+
   // On web, keys like shift and alt are sending their full name
   // as a character, e.g., "Shift" and "Alt". This check prevents
   // those keys from inserting their name into content.
-  if (keyEvent.character!.length > 1) {
+  //
+  // This filter is a blacklist, and therefore it will fail to
+  // catch any key that isn't explicitly listed. The eventual solution
+  // to this is for the web to honor the standard key event contract,
+  // but that's out of our control.
+  if (kIsWeb && webBugBlacklistCharacters.contains(character)) {
     return ExecutionInstruction.continueExecution;
+  }
+
+  // The web reports a tab as "Tab". Intercept it and translate it to a space.
+  if (character == 'Tab') {
+    character = ' ';
   }
 
   final textNode = editContext.editor.document.getNode(editContext.composer.selection!.extent) as TextNode;
@@ -599,7 +614,7 @@ ExecutionInstruction insertCharacterInTextComposable({
   editContext.editor.executeCommand(
     InsertTextCommand(
       documentPosition: editContext.composer.selection!.extent,
-      textToInsert: keyEvent.character!,
+      textToInsert: character,
       attributions: editContext.composer.preferences.currentStyles,
     ),
   );
@@ -608,7 +623,7 @@ ExecutionInstruction insertCharacterInTextComposable({
     position: DocumentPosition(
       nodeId: textNode.id,
       nodePosition: TextPosition(
-        offset: initialTextOffset + 1,
+        offset: initialTextOffset + character.length,
       ),
     ),
   );
@@ -638,9 +653,12 @@ ExecutionInstruction deleteCharacterWhenBackspaceIsPressed({
 
   final textNode = editContext.editor.document.getNode(editContext.composer.selection!.extent) as TextNode;
   final currentTextPosition = editContext.composer.selection!.extent.nodePosition as TextPosition;
+
+  final previousCharacterOffset = getCharacterStartBounds(textNode.text.text, currentTextPosition.offset);
+
   final newSelectionPosition = DocumentPosition(
     nodeId: textNode.id,
-    nodePosition: TextPosition(offset: currentTextPosition.offset - 1),
+    nodePosition: TextPosition(offset: previousCharacterOffset),
   );
 
   // Delete the selected content.
@@ -653,7 +671,7 @@ ExecutionInstruction deleteCharacterWhenBackspaceIsPressed({
         ),
         extent: DocumentPosition(
           nodeId: textNode.id,
-          nodePosition: TextPosition(offset: currentTextPosition.offset - 1),
+          nodePosition: TextPosition(offset: previousCharacterOffset),
         ),
       ),
     ),
@@ -690,6 +708,8 @@ ExecutionInstruction deleteCharacterWhenDeleteIsPressed({
     return ExecutionInstruction.continueExecution;
   }
 
+  final nextCharacterOffset = getCharacterEndBounds(text.text, currentTextPosition.offset + 1);
+
   // Delete the selected content.
   editContext.editor.executeCommand(
     DeleteSelectionCommand(
@@ -700,7 +720,7 @@ ExecutionInstruction deleteCharacterWhenDeleteIsPressed({
         ),
         extent: DocumentPosition(
           nodeId: textNode.id,
-          nodePosition: TextPosition(offset: currentTextPosition.offset + 1),
+          nodePosition: TextPosition(offset: nextCharacterOffset),
         ),
       ),
     ),
