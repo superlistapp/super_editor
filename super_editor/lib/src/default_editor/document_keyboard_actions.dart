@@ -81,6 +81,8 @@ ExecutionInstruction pasteWhenCmdVIsPressed({
     editContext.editor.executeCommand(
       DeleteSelectionCommand(documentSelection: editContext.composer.selection!),
     );
+
+    editContext.composer.selection = DocumentSelection.collapsed(position: pastePosition);
   }
 
   // TODO: figure out a general approach for asynchronous behaviors that
@@ -129,7 +131,7 @@ Future<void> _paste({
   required DocumentPosition pastePosition,
 }) async {
   final content = (await Clipboard.getData('text/plain'))?.text ?? '';
-  _log.log('_paste', 'Content from clipboard:');
+  _log.log('_paste', 'Content from clipboard: $content');
 
   editor.executeCommand(
     _PasteEditorCommand(
