@@ -427,11 +427,14 @@ class SplitListItemCommand implements EditorCommand {
   }
 }
 
-ExecutionInstruction indentListItemWhenBackspaceIsPressed({
+ExecutionInstruction indentListItemWhenTabIsPressed({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
   if (keyEvent.logicalKey != LogicalKeyboardKey.tab) {
+    return ExecutionInstruction.continueExecution;
+  }
+  if (keyEvent.isShiftPressed) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -455,6 +458,38 @@ ExecutionInstruction indentListItemWhenBackspaceIsPressed({
 
   editContext.editor.executeCommand(
     IndentListItemCommand(nodeId: node.id),
+  );
+
+  return ExecutionInstruction.haltExecution;
+}
+
+ExecutionInstruction unindentListItemWhenShiftTabIsPressed({
+  required EditContext editContext,
+  required RawKeyEvent keyEvent,
+}) {
+  if (keyEvent.logicalKey != LogicalKeyboardKey.tab) {
+    return ExecutionInstruction.continueExecution;
+  }
+  if (!keyEvent.isShiftPressed) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (editContext.composer.selection == null) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  final node = editContext.editor.document.getNodeById(editContext.composer.selection!.extent.nodeId);
+  if (node is! ListItemNode) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  final textPosition = editContext.composer.selection!.extent.nodePosition;
+  if (textPosition is! TextPosition) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  editContext.editor.executeCommand(
+    UnIndentListItemCommand(nodeId: node.id),
   );
 
   return ExecutionInstruction.haltExecution;
