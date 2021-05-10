@@ -1,15 +1,17 @@
+import 'dart:math';
+
 import 'package:collection/collection.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 
 final _log = Logger(scope: 'AttributedSpans');
 
-/// A set of spans, each with an associated attribution, that take
+/// A set of spans, each with an associated [Attribution], that take
 /// up some amount of space in a discrete range.
 ///
-/// `AttributedSpans` are useful when implementing attributed text
+/// [AttributedSpans] are useful when implementing attributed text
 /// for the purpose of markup and styling.
 ///
-/// You can think of `AttributedSpans` like a set of lanes. Each
+/// You can think of [AttributedSpans] like a set of lanes. Each
 /// lane may be occupied by some series of spans for a particular
 /// attribute:
 ///
@@ -19,25 +21,27 @@ final _log = Logger(scope: 'AttributedSpans');
 /// Link    :                              {xxxxx}
 /// ------------------------------------------------------
 ///
-/// The name of an attribution can be any value of any type.
-/// For text styling, a client might choose `String` values like
-/// 'bold' and 'italics'.
+/// An attribution can be any subclass of [Attribution]. Based
+/// on the type of [Attribution] that is used, two [Attributions]
+/// might occupy the same lane or different lanes. For example,
+/// any two [NamedAttribution]s occupy the same lane if-and-only-if
+/// the two attributions have the same name, like "bold".
 ///
 /// Each attributed span is represented by two `SpanMarker`s, one
 /// with type `SpanMarkerType.start` and one with type
 /// `SpanMarkerType.end`.
 ///
-/// Spans with the same attribution cannot overlap each other, but
-/// spans with different attributions can overlap each other.
+/// Spans with equivalent [Attribution]s cannot overlap each other, but
+/// spans with different [Attribution]s can overlap each other.
 ///
-/// When applying `AttributedSpans` to text as styles, you'll
-/// eventually want a single collapsed list of spans. Use `collapseSpans()`
+/// When applying [AttributedSpans] to text as styles, you'll
+/// eventually want a single collapsed list of spans. Use [collapseSpans()]
 /// to collapse the different attribution spans into a single
 /// series of multi-attribution spans.
 class AttributedSpans {
-  /// Constructs an `AttributedSpans` with the given `attributions`.
+  /// Constructs an [AttributedSpans] with the given [attributions].
   ///
-  /// `attributions` may be omitted to create an `AttributedSpans`
+  /// [attributions] may be omitted to create an [AttributedSpans]
   /// with no spans.
   AttributedSpans({
     List<SpanMarker>? attributions,
@@ -53,11 +57,11 @@ class AttributedSpans {
     _attributions.sort((m1, m2) => m1.offset - m2.offset);
   }
 
-  /// Returns true if this `AttributedSpans` contains at least one
-  /// unit of attribution for each of the given `attributions`
+  /// Returns true if this [AttributedSpans] contains at least one
+  /// unit of attribution for each of the given [attributions]
   /// within the given range (inclusive).
   bool hasAttributionsWithin({
-    required Set<dynamic> attributions,
+    required Set<Attribution> attributions,
     required int start,
     required int end,
   }) {
@@ -76,13 +80,32 @@ class AttributedSpans {
     return false;
   }
 
-  /// Returns true if the given `offset` has the given `attribution`.
+  Set<Attribution> getMatchingAttributionsWithin({
+    required Set<Attribution> attributions,
+    required int start,
+    required int end,
+  }) {
+    final matchingAttributions = <Attribution>{};
+    for (int i = start; i <= end; ++i) {
+      for (final attribution in attributions) {
+        final otherAttributions = getAllAttributionsAt(start);
+        for (final otherAttribution in otherAttributions) {
+          if (otherAttribution.id == attribution.id) {
+            matchingAttributions.add(otherAttribution);
+          }
+        }
+      }
+    }
+    return matchingAttributions;
+  }
+
+  /// Returns true if the given [offset] has the given [attribution].
   ///
-  /// If the given `attribution` is null, returns `true` if any attribution
-  /// exists at the given `offset`.
+  /// If the given [attribution] is null, returns [true] if any attribution
+  /// exists at the given [offset].
   bool hasAttributionAt(
     int offset, {
-    dynamic attribution,
+    Attribution? attribution,
   }) {
     SpanMarker? markerBefore = _getStartingMarkerAtOrBefore(offset, attribution: attribution);
     if (markerBefore == null) {
@@ -96,17 +119,43 @@ class AttributedSpans {
     return (markerBefore.offset <= offset) && (offset <= markerAfter.offset);
   }
 
-  /// Returns all attributions for spans that cover the given `offset`.
-  Set<dynamic> getAllAttributionsAt(int offset) {
-    final allAttributions = <dynamic>{};
+  AttributionSpan expandAttributionToSpan({
+    required Attribution attribution,
+    required int offset,
+  }) {
+    if (!hasAttributionAt(offset, attribution: attribution)) {
+      throw Exception(
+          'Tried to expand attribution ($attribution) at offset "$offset" but the given attribution does not exist at that offset.');
+    }
+
+    // The following methods should be guaranteed to produce non-null
+    // values because we already verified that the given attribution
+    // exists at the given offset.
+    SpanMarker markerBefore = _getStartingMarkerAtOrBefore(offset, attribution: attribution)!;
+    SpanMarker markerAfter = _getEndingMarkerAtOrAfter(markerBefore.offset, attribution: attribution)!;
+
+    return AttributionSpan(
+      attribution: attribution,
+      start: markerBefore.offset,
+      end: markerAfter.offset,
+    );
+  }
+
+  /// Returns all attributions for spans that cover the given [offset].
+  Set<Attribution> getAllAttributionsAt(int offset) {
+    _log.log('getAllAttributionsAt', 'offset: $offset');
+    _log.log('getAllAttributionsAt', ' - collecting all existing markers');
+    final allAttributions = <Attribution>{};
     for (final marker in _attributions) {
+      _log.log('getAllAttributionsAt', '   - marker: $marker');
       allAttributions.add(marker.attribution);
     }
 
-    final attributionsAtOffset = <dynamic>{};
+    final attributionsAtOffset = <Attribution>{};
     for (final attribution in allAttributions) {
       final hasAttribution = hasAttributionAt(offset, attribution: attribution);
       if (hasAttribution) {
+        _log.log('getAllAttributionsAt', ' - adding attribution: $attribution');
         attributionsAtOffset.add(attribution);
       }
     }
@@ -114,36 +163,116 @@ class AttributedSpans {
     return attributionsAtOffset;
   }
 
-  /// Finds and returns the nearest `start` marker that appears at or before the
-  /// given `offset`, optionally looking specifically for a marker with
-  /// the given `attribution`.
-  SpanMarker? _getStartingMarkerAtOrBefore(int offset, {dynamic attribution}) {
+  /// Returns spans for each attribution that (at least partially) appear
+  /// between [start] and [end], inclusive, as selected by [attributionFilter].
+  ///
+  /// By default, the returned spans represent the full, contiguous span
+  /// of each attribution. This means that if a portion of an attribution
+  /// appears between [start] and [end], the entire attribution span is
+  /// returned, including the area that sits before [start] or after [end].
+  ///
+  /// To obtain attribution spans that are cut down and limited to the
+  /// given [start]/[end] range, pass [true] for [resizeSpansToFitInRange].
+  /// This setting only effects the returned spans, it does not alter the
+  /// attributions within this [AttributedSpans].
+  Set<AttributionSpan> getAttributionSpansInRange({
+    required AttributionFilter attributionFilter,
+    required int start,
+    required int end,
+    bool resizeSpansToFitInRange = false,
+  }) {
+    final matchingAttributionSpans = <AttributionSpan>{};
+
+    // For every unit in the given range...
+    for (int i = start; i <= end; ++i) {
+      final attributionsAtOffset = getAllAttributionsAt(i);
+      // For every attribution overlaps this unit...
+      for (final attribution in attributionsAtOffset) {
+        // If the caller wants this attribution...
+        if (attributionFilter(attribution)) {
+          // Calculate the span for this attribution.
+          AttributionSpan span = expandAttributionToSpan(
+            attribution: attribution,
+            offset: i,
+          );
+
+          // If desired, resize the span to fit within the range.
+          if (resizeSpansToFitInRange) {
+            span = span.constrain(start: start, end: end);
+          }
+
+          // Add the span to the set. Duplicate are automatically ignored.
+          matchingAttributionSpans.add(span);
+        }
+      }
+    }
+
+    return matchingAttributionSpans;
+  }
+
+  /// Finds and returns the nearest [start] marker that appears at or before the
+  /// given [offset], optionally looking specifically for a marker with
+  /// the given [attribution].
+  SpanMarker? _getStartingMarkerAtOrBefore(int offset, {Attribution? attribution}) {
     return _attributions //
         .reversed // search from the end so its the nearest start marker
-        .where((marker) => attribution == null || marker.attribution == attribution)
+        .where((marker) {
+      return attribution == null ||
+          (marker.attribution.id == attribution.id && marker.attribution.canMergeWith(attribution));
+    })
+        // .where((marker) => attribution == null || marker.attribution.id == attribution.id)
         .firstWhereOrNull((marker) => marker.isStart && marker.offset <= offset);
   }
 
-  /// Finds and returns the nearest `end` marker that appears at or after the
-  /// given `offset`, optionally looking specifically for a marker with
-  /// the given `attribution`.
-  SpanMarker? _getEndingMarkerAtOrAfter(int offset, {dynamic attribution}) {
+  /// Finds and returns the nearest [end] marker that appears at or after the
+  /// given [offset], optionally looking specifically for a marker with
+  /// the given [attribution].
+  SpanMarker? _getEndingMarkerAtOrAfter(int offset, {Attribution? attribution}) {
     return _attributions
-        .where((marker) => attribution == null || marker.attribution == attribution)
+        .where((marker) =>
+            attribution == null ||
+            (marker.attribution.id == attribution.id && marker.attribution.canMergeWith(attribution)))
         .firstWhereOrNull((marker) => marker.isEnd && marker.offset >= offset);
   }
 
-  /// Applies the `newAttribution` from `start` to `end`, inclusive.
+  /// Applies the [newAttribution] from [start] to [end], inclusive.
   ///
-  /// If `newAttribution` spans already exist at `start` or `end`, those
-  /// spans are expanded to include the new region between `start` and `end`.
+  /// If [newAttribution] spans already exist at [start] or [end], and those
+  /// spans are compatible, the spans are expanded to include the new region
+  /// between [start] and [end].
+  ///
+  /// It [newAttribution] overlaps a conflicting span, a
+  /// [IncompatibleOverlappingAttributionsException] is thrown.
   void addAttribution({
-    required dynamic newAttribution,
+    required Attribution newAttribution,
     required int start,
     required int end,
   }) {
     if (start < 0 || start > end) {
       return;
+    }
+
+    // Ensure that no conflicting attribution overlaps the new attribution.
+    // If a conflict exists, throw an exception.
+    final matchingAttributions = getMatchingAttributionsWithin(attributions: {newAttribution}, start: start, end: end);
+    if (matchingAttributions.isNotEmpty) {
+      for (final matchingAttribution in matchingAttributions) {
+        if (!newAttribution.canMergeWith(matchingAttribution)) {
+          late int conflictStart;
+          for (int i = start; i <= end; ++i) {
+            if (hasAttributionAt(i, attribution: matchingAttribution)) {
+              conflictStart = i;
+              break;
+            }
+          }
+
+          throw IncompatibleOverlappingAttributionsException(
+            existingAttribution: matchingAttribution,
+            newAttribution: newAttribution,
+            conflictStart: conflictStart,
+          );
+        }
+      }
     }
 
     _log.log('addAttribution', 'start: $start -> end: $end');
@@ -191,61 +320,79 @@ class AttributedSpans {
     });
   }
 
-  /// Removes `attributionToRemove` between `start` and `end`, inclusive.
+  /// Removes [attributionToRemove] between [start] and [end], inclusive.
   void removeAttribution({
-    required dynamic attributionToRemove,
+    required Attribution attributionToRemove,
     required int start,
     required int end,
   }) {
     if (start < 0 || start > end) {
-      return;
+      throw Exception('removeAttribution() did not satisfy start < 0 and start > end, start: $start, end: $end');
     }
 
-    _log.log('removeAttribution', 'start: $start -> end: $end');
-    if (hasAttributionAt(start, attribution: attributionToRemove)) {
-      final markerAtStart = _getMarkerAt(attributionToRemove, start);
+    // It's possible that a span we want to remove was started before the
+    // removal region and/or ended after the removal region. Therefore,
+    // the first thing we do is cut off those outer spans one unit before
+    // and/or after the removal region.
+    //
+    // Example:
+    //    Starting spans + removal region:
+    //    ---[xxxxx]---[yyyyyy]----
+    //          |-remove-|
+    //
+    //    Spans after end cap adjustment:
+    //    ---[xx]|xxx]---[yy|[yyy]----
+    //
+    //    Notice that the above marker structure is illegal.
+    //    That's OK because the illegal configuration is only
+    //    temporary. By the end of this method it will look
+    //    like the following:
+    //
+    //    Spans after all inner markers are removed:
+    //    ---[xx]--------[yyy]----
+    final endCapMarkersToInsert = <SpanMarker>{};
 
-      if (markerAtStart == null) {
-        _log.log('removeAttribution', 'inserting new `end` marker at start of range');
-        _insertMarker(SpanMarker(
+    // Determine if we need to insert a new end-cap before
+    // the removal region.
+    if (hasAttributionAt(start, attribution: attributionToRemove)) {
+      final markersAtStart = _getMarkerAt(attributionToRemove, start);
+      if (markersAtStart.isEmpty) {
+        endCapMarkersToInsert.add(SpanMarker(
           attribution: attributionToRemove,
-          // Note: if `range.start` is zero, then markerAtStart
-          // must not be null, so offset can't be < 0 here.
           offset: start - 1,
           markerType: SpanMarkerType.end,
         ));
-      } else if (markerAtStart.isStart) {
-        _log.log('removeAttribution', 'removing a `start` marker at start of range');
-        _removeMarker(markerAtStart);
-      } else {
-        throw Exception(
-            '_hasAttributionAt() said there was an attribution for "$attributionToRemove" at offset "$start", but there is an `end` marker at that position.');
       }
     }
 
-    // Delete all matching attributions between `range.start`
-    // and `range.end`.
+    // Determine if we need to insert a new end-cap after the
+    // removal region.
+    if (hasAttributionAt(end, attribution: attributionToRemove)) {
+      final markersAtEnd = _getMarkerAt(attributionToRemove, end);
+      if (markersAtEnd.isEmpty) {
+        endCapMarkersToInsert.add(SpanMarker(
+          attribution: attributionToRemove,
+          offset: end + 1,
+          markerType: SpanMarkerType.start,
+        ));
+      }
+    }
+
+    // Insert new span end-caps immediately before and after
+    // the removal region, if needed.
+    for (final endCapMarker in endCapMarkersToInsert) {
+      _insertMarker(endCapMarker);
+    }
+
+    // Now that the end caps have been handled, remove all
+    // relevant attribution markers between [start, end].
     final markersToDelete = _attributions
         .where((attribution) => attribution.attribution == attributionToRemove)
-        .where((attribution) => attribution.offset > start)
+        .where((attribution) => attribution.offset >= start)
         .where((attribution) => attribution.offset <= end)
         .toList();
     _log.log('removeAttribution', 'removing ${markersToDelete.length} markers between $start and $end');
     _attributions.removeWhere((element) => markersToDelete.contains(element));
-
-    final lastDeletedMarker = markersToDelete.isNotEmpty ? markersToDelete.last : null;
-
-    if (lastDeletedMarker == null || lastDeletedMarker.markerType == SpanMarkerType.start) {
-      // The last marker we deleted was a `start` marker.
-      // Therefore, an `end` marker appears somewhere down the line.
-      // We can't leave it dangling. Add a `start` marker back.
-      _log.log('removeAttribution', 'inserting a final `start` marker at the end to keep symmetry');
-      _insertMarker(SpanMarker(
-        attribution: attributionToRemove,
-        offset: end + 1,
-        markerType: SpanMarkerType.start,
-      ));
-    }
 
     _log.log('removeAttribution', 'all attributions after:');
     _attributions.where((element) => element.attribution == attributionToRemove).forEach((element) {
@@ -253,10 +400,10 @@ class AttributedSpans {
     });
   }
 
-  /// If ALL of the units between `start` and `end`, inclusive, contain the
-  /// given `attribution`, that attribution is removed from those units.
-  /// Otherwise, all of the units between `start` and `end`, inclusive,
-  /// are assigned the `attribution`.
+  /// If ALL of the units between [start] and [end], inclusive, contain the
+  /// given [attribution], that attribution is removed from those units.
+  /// Otherwise, all of the units between [start] and [end], inclusive,
+  /// are assigned the [attribution].
   void toggleAttribution({
     required dynamic attribution,
     required int start,
@@ -269,11 +416,11 @@ class AttributedSpans {
     }
   }
 
-  /// Returns `true` if the given `attribution` exists from `start` to
-  /// `end`, inclusive, without any breaks in between. Otherwise, returns
-  /// `false`.
+  /// Returns [true] if the given [attribution] exists from [start] to
+  /// [end], inclusive, without any breaks in between. Otherwise, returns
+  /// [false].
   bool _isContinuousAttribution({
-    required dynamic attribution,
+    required Attribution attribution,
     required int start,
     required int end,
   }) {
@@ -305,11 +452,11 @@ class AttributedSpans {
   }
 
   /// Finds and returns the nearest marker that appears at or after the
-  /// given `offset`, optionally looking specifically for a marker with
-  /// the given `attribution`.
+  /// given [offset], optionally looking specifically for a marker with
+  /// the given [attribution].
   SpanMarker? _getNearestMarkerAtOrBefore(
     int offset, {
-    dynamic attribution,
+    Attribution? attribution,
   }) {
     SpanMarker? markerBefore;
     final markers =
@@ -327,16 +474,15 @@ class AttributedSpans {
     return markerBefore;
   }
 
-  /// Returns the marker at the given `offset` with the given `attribution`,
-  /// or `null` if no marker with the given `attribution` exists at the
-  /// given `offset`.
-  SpanMarker? _getMarkerAt(dynamic attribution, int offset) {
+  /// Returns the markers at the given [offset] with the given [attribution]..
+  Set<SpanMarker> _getMarkerAt(Attribution attribution, int offset) {
     return _attributions
         .where((marker) => marker.attribution == attribution)
-        .firstWhereOrNull((marker) => marker.offset == offset);
+        .where((marker) => marker.offset == offset)
+        .toSet();
   }
 
-  /// Inserts the `newMarker` into this `AttributedSpans`.
+  /// Inserts the [newMarker] into this [AttributedSpans].
   ///
   /// Precondition: There must not already exist a marker with
   /// the same attribution at the same offset.
@@ -353,22 +499,11 @@ class AttributedSpans {
     }
   }
 
-  /// Removes the given `marker` from this `AttributedSpans`.
+  /// Pushes back all the spans in [other] to [index], and then appends
+  /// the [other] spans to this [AttributedSpans].
   ///
-  /// Precondition: `marker` must exist in the `_attributions` list.
-  void _removeMarker(SpanMarker marker) {
-    final index = _attributions.indexOf(marker);
-    if (index < 0) {
-      throw Exception('Tried to remove a marker that isn\'t in attributions list: $marker');
-    }
-    _attributions.removeAt(index);
-  }
-
-  /// Pushes back all the spans in `other` to `index`, and then appends
-  /// the `other` spans to this `AttributedSpans`.
-  ///
-  /// The `index` must be greater than the offset of the final marker
-  /// within this `AttributedSpans`.
+  /// The [index] must be greater than the offset of the final marker
+  /// within this [AttributedSpans].
   void addAt({
     required AttributedSpans other,
     required int index,
@@ -411,9 +546,9 @@ class AttributedSpans {
       ..addAll(combinedAttributions);
   }
 
-  /// Given a list of `attributions`, which includes two different lists of
-  /// attributions concatenated together at `mergePoint`, merges any
-  /// attribution spans that exist back-to-back at the `mergePoint`.
+  /// Given a list of [attributions], which includes two different lists of
+  /// attributions concatenated together at [mergePoint], merges any
+  /// attribution spans that exist back-to-back at the [mergePoint].
   void _mergeBackToBackAttributions(List<SpanMarker> attributions, int mergePoint) {
     _log.log('_mergeBackToBackAttributions', 'merging attributions at $mergePoint');
     // Look for any compatible attributions at
@@ -441,11 +576,11 @@ class AttributedSpans {
     }
   }
 
-  /// Returns of a copy of this `AttributedSpans` between `startOffset`
-  /// and `endOffset`.
+  /// Returns of a copy of this [AttributedSpans] between [startOffset]
+  /// and [endOffset].
   ///
-  /// If no `endOffset` is provided, a copy is made from `startOffset`
-  /// to the `offset` of the last marker in this `AttributedSpans`.
+  /// If no [endOffset] is provided, a copy is made from [startOffset]
+  /// to the [offset] of the last marker in this [AttributedSpans].
   AttributedSpans copyAttributionRegion(int startOffset, [int? endOffset]) {
     endOffset = endOffset ?? _attributions.lastOrNull?.offset ?? 0;
     _log.log('copyAttributionRegion', 'start: $startOffset, end: $endOffset');
@@ -453,8 +588,8 @@ class AttributedSpans {
     final List<SpanMarker> cutAttributions = [];
 
     _log.log('copyAttributionRegion', 'inspecting existing markers in full AttributedSpans');
-    final Map<dynamic, int> foundStartMarkers = {};
-    final Map<dynamic, int> foundEndMarkers = {};
+    final Map<Attribution, int> foundStartMarkers = {};
+    final Map<Attribution, int> foundEndMarkers = {};
 
     // Analyze all markers that appear before the start of
     // the copy range so that we can insert any appropriate
@@ -555,8 +690,8 @@ class AttributedSpans {
     return AttributedSpans(attributions: cutAttributions);
   }
 
-  /// Changes all spans in this `AttributedSpans` by pushing
-  /// them back by `offset` amount.
+  /// Changes all spans in this [AttributedSpans] by pushing
+  /// them back by [offset] amount.
   void pushAttributionsBack(int offset) {
     final pushedAttributions = _attributions.map((marker) => marker.copyWith(offset: marker.offset + offset)).toList();
     _attributions
@@ -564,8 +699,8 @@ class AttributedSpans {
       ..addAll(pushedAttributions);
   }
 
-  /// Changes spans in this `AttributedSpans` by cutting out the
-  /// region from `startOffset` to `startOffset + count`, exclusive.
+  /// Changes spans in this [AttributedSpans] by cutting out the
+  /// region from [startOffset] to [startOffset + count], exclusive.
   void contractAttributions({
     required int startOffset,
     required int count,
@@ -642,7 +777,7 @@ class AttributedSpans {
       ..addAll(contractedAttributions);
   }
 
-  /// Returns a copy of this `AttributedSpans`.
+  /// Returns a copy of this [AttributedSpans].
   AttributedSpans copy() {
     return AttributedSpans(
       attributions: List.from(_attributions),
@@ -742,12 +877,16 @@ class AttributedSpans {
     List<MultiAttributionSpan> collapsedSpans = [];
     for (int i = 0; i < startPoints.length; ++i) {
       _log.log('collapseSpans', 'building span from ${startPoints[i]} -> ${endPoints[i]}');
+      _log.log('collapseSpans', ' - attributions in span: ${getAllAttributionsAt(startPoints[i])}');
+      final attributionsAtOffset = getAllAttributionsAt(startPoints[i]);
+
       collapsedSpans.add(MultiAttributionSpan(
         start: startPoints[i],
         end: endPoints[i],
-        attributions: getAllAttributionsAt(startPoints[i]),
+        attributions: attributionsAtOffset,
       ));
     }
+    _log.log('collapseSpans', 'returning collapsed spans: $collapsedSpans');
     return collapsedSpans;
   }
 
@@ -763,37 +902,37 @@ class AttributedSpans {
 
 /// Marks the start or end of an attribution span.
 ///
-/// The given `AttributionType` must implement equality for
+/// The given [AttributionType] must implement equality for
 /// span management to work correctly.
-class SpanMarker<AttributionType> implements Comparable<SpanMarker<AttributionType>> {
-  /// Constructs a `SpanMarker` with the given `attribution`, `offset` within
-  /// some discrete content, and `markerType` of `start` or `end`.
+class SpanMarker implements Comparable<SpanMarker> {
+  /// Constructs a [SpanMarker] with the given [attribution], [offset] within
+  /// some discrete content, and [markerType] of [start] or [end].
   const SpanMarker({
     required this.attribution,
     required this.offset,
     required this.markerType,
   });
 
-  /// The attribution that exists between this `SpanMarker` and its
+  /// The attribution that exists between this [SpanMarker] and its
   /// other endpoint.
-  final AttributionType attribution;
+  final Attribution attribution;
 
-  /// The position of this `SpanMarker` within some discrete content.
+  /// The position of this [SpanMarker] within some discrete content.
   final int offset;
 
-  /// The type of `SpanMarker`, either `start` or `end`.
+  /// The type of [SpanMarker], either [start] or [end].
   final SpanMarkerType markerType;
 
-  /// Returns true if this marker is a `SpanMarkerType.start` marker.
+  /// Returns true if this marker is a [SpanMarkerType.start] marker.
   bool get isStart => markerType == SpanMarkerType.start;
 
-  /// Returns true if this marker is a `SpanMarkerType.end` marker.
+  /// Returns true if this marker is a [SpanMarkerType.end] marker.
   bool get isEnd => markerType == SpanMarkerType.end;
 
-  /// Returns a copy of this `SpanMarker` with optional new values
-  /// for `attribution`, `offset`, and `markerType`.
+  /// Returns a copy of this [SpanMarker] with optional new values
+  /// for [attribution], [offset], and [markerType].
   SpanMarker copyWith({
-    AttributionType? attribution,
+    Attribution? attribution,
     int? offset,
     SpanMarkerType? markerType,
   }) =>
@@ -823,24 +962,150 @@ class SpanMarker<AttributionType> implements Comparable<SpanMarker<AttributionTy
   int get hashCode => attribution.hashCode ^ offset.hashCode ^ markerType.hashCode;
 }
 
-/// The type of a marker within a span, either `start` or `end`.
+/// The type of a marker within a span, either [start] or [end].
 enum SpanMarkerType {
   start,
   end,
 }
 
-/// A span that contains zero or more attributions.
-///
-/// An `AttributedSpans` can be collapsed to a single list
-/// of `MultiAttributionSpan`s with `AttributedSpans#collapseSpans()`.
-class MultiAttributionSpan {
-  const MultiAttributionSpan({
+/// An [Attribution] span from [start] to [end], inclusive.
+class AttributionSpan {
+  const AttributionSpan({
+    required this.attribution,
     required this.start,
     required this.end,
-    required this.attributions,
   });
 
+  final Attribution attribution;
   final int start;
   final int end;
-  final Set<dynamic> attributions;
+
+  AttributionSpan constrain({
+    required int start,
+    required int end,
+  }) {
+    return copyWith(
+      start: max(this.start, start),
+      end: min(this.end, end),
+    );
+  }
+
+  AttributionSpan copyWith({
+    Attribution? attribution,
+    int? start,
+    int? end,
+  }) {
+    return AttributionSpan(
+      attribution: attribution ?? this.attribution,
+      start: start ?? this.start,
+      end: end ?? this.end,
+    );
+  }
+
+  @override
+  String toString() {
+    return '[AttributionSpan] - $attribution, $start -> $end';
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is AttributionSpan &&
+          runtimeType == other.runtimeType &&
+          attribution == other.attribution &&
+          start == other.start &&
+          end == other.end;
+
+  @override
+  int get hashCode => attribution.hashCode ^ start.hashCode ^ end.hashCode;
+}
+
+/// A span that contains zero or more attributions.
+///
+/// An [AttributedSpans] can be collapsed to a single list
+/// of [MultiAttributionSpan]s with [AttributedSpans.collapseSpans].
+class MultiAttributionSpan {
+  const MultiAttributionSpan({
+    required this.attributions,
+    required this.start,
+    required this.end,
+  });
+
+  final Set<Attribution> attributions;
+  final int start;
+  final int end;
+}
+
+typedef AttributionFilter = bool Function(Attribution candidate);
+
+/// An attribution that can be associated with a span within
+/// an [AttributedSpan].
+///
+/// To attribute a span with a name, consider using a
+/// [NamedAttribution].
+abstract class Attribution {
+  /// Attributions with different IDs can overlap each
+  /// other, but attributions with the same ID cannot
+  /// overlap.
+  ///
+  /// For example, consider the use of attributions within
+  /// [AttributedText]. One attribution might have an ID
+  /// of "bold" and another might have an of "italics". Those
+  /// attributions can overlap at the same location. However,
+  /// two attributions both with the ID of "bold" cannot overlap.
+  /// The matching attributions can only be combined into a new,
+  /// larger attributed span.
+  String get id;
+
+  /// Returns [true] if this [Attribution] can be combined with
+  /// the [other] [Attribution], replacing both smaller attributions
+  /// with one larger attribution.
+  bool canMergeWith(Attribution other);
+}
+
+/// [Attribution] that is defined by a given [String].
+///
+/// Any two [NamedAttribution]s with the same [id]/[name] are
+/// considered equivalent and merge-able.
+class NamedAttribution implements Attribution {
+  const NamedAttribution(this.id);
+
+  @override
+  final String id;
+
+  String get name => id;
+
+  @override
+  bool canMergeWith(Attribution other) {
+    return this == other;
+  }
+
+  @override
+  String toString() {
+    return '[NamedAttribution]: $name';
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) || other is NamedAttribution && runtimeType == other.runtimeType && id == other.id;
+
+  @override
+  int get hashCode => id.hashCode;
+}
+
+class IncompatibleOverlappingAttributionsException implements Exception {
+  IncompatibleOverlappingAttributionsException({
+    required this.existingAttribution,
+    required this.newAttribution,
+    required this.conflictStart,
+  });
+
+  final Attribution existingAttribution;
+  final Attribution newAttribution;
+  final int conflictStart;
+
+  @override
+  String toString() {
+    return 'Tried to insert attribution ($newAttribution) over a conflicting existing attribution ($existingAttribution). The overlap began at index $conflictStart';
+  }
 }

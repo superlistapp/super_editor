@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/super_editor.dart';
 
+const brandAttribution = NamedAttribution('brand');
+const flutterAttribution = NamedAttribution('flutter');
+
 class InteractiveTextFieldDemo extends StatefulWidget {
   @override
   _InteractiveTextFieldDemoState createState() => _InteractiveTextFieldDemoState();
@@ -12,10 +15,10 @@ class _InteractiveTextFieldDemoState extends State<InteractiveTextFieldDemo> {
     text: AttributedText(
         text: 'Super Editor is an open source text editor for Flutter projects.',
         spans: AttributedSpans(attributions: [
-          SpanMarker(attribution: 'brand', offset: 0, markerType: SpanMarkerType.start),
-          SpanMarker(attribution: 'brand', offset: 11, markerType: SpanMarkerType.end),
-          SpanMarker(attribution: 'flutter', offset: 47, markerType: SpanMarkerType.start),
-          SpanMarker(attribution: 'flutter', offset: 53, markerType: SpanMarkerType.end),
+          SpanMarker(attribution: brandAttribution, offset: 0, markerType: SpanMarkerType.start),
+          SpanMarker(attribution: brandAttribution, offset: 11, markerType: SpanMarkerType.end),
+          SpanMarker(attribution: flutterAttribution, offset: 47, markerType: SpanMarkerType.start),
+          SpanMarker(attribution: flutterAttribution, offset: 53, markerType: SpanMarkerType.end),
         ])),
   );
 
@@ -166,19 +169,19 @@ class _InteractiveTextFieldDemoState extends State<InteractiveTextFieldDemo> {
     );
   }
 
-  TextStyle _textStyleBuilder(Set<dynamic> attributions) {
+  TextStyle _textStyleBuilder(Set<Attribution> attributions) {
     TextStyle textStyle = TextStyle(
       color: Colors.black,
       fontSize: 14,
     );
 
-    if (attributions.contains('brand')) {
+    if (attributions.contains(brandAttribution)) {
       textStyle = textStyle.copyWith(
         color: Colors.red,
         fontWeight: FontWeight.bold,
       );
     }
-    if (attributions.contains('flutter')) {
+    if (attributions.contains(flutterAttribution)) {
       textStyle = textStyle.copyWith(
         color: Colors.blue,
       );

@@ -67,7 +67,7 @@ final myDoc = MutableDocument(
       id: DocumentEditor.createNodeId(),
       text: AttributedText(text: 'This is a header'),
       metadata: {
-        'blockType': 'header1',
+        'blockType': header1Attribution,
       },
     ),
     ParagraphNode(

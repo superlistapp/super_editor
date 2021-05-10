@@ -1,94 +1,6 @@
-import 'package:flutter/material.dart';
 import 'package:super_editor/super_editor.dart';
 
-/// Example editor to show how the Rich Text Editor is working.
-///
-/// As the editor has an internal scrolling mechanism, for using it with Slivers
-/// you need to give them a finite height or space to fill itself. That is why
-/// the [Editor] has a [SizedBox] wrapped around it to give a height.
-class SliverExampleEditor extends StatefulWidget {
-  @override
-  _SliverExampleEditorState createState() => _SliverExampleEditorState();
-}
-
-class _SliverExampleEditorState extends State<SliverExampleEditor> {
-  Document _doc;
-  DocumentEditor _docEditor;
-
-  @override
-  void initState() {
-    super.initState();
-    _doc = _createInitialDocument();
-    _docEditor = DocumentEditor(document: _doc);
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomScrollView(
-      slivers: [
-        SliverAppBar(
-          title: Text(
-            'Rich Text Editor Sliver Example',
-          ),
-          expandedHeight: 200.0,
-          leading: SizedBox(),
-          flexibleSpace: FlexibleSpaceBar(
-            background: Image.network(
-              'https://i.ytimg.com/vi/fq4N0hgOWzU/maxresdefault.jpg',
-              fit: BoxFit.cover,
-            ),
-          ),
-        ),
-        SliverToBoxAdapter(
-          child: Text(
-            'Lorem Ipsum Dolor',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 72,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ),
-        SliverToBoxAdapter(
-          child: IntrinsicHeight(
-            child: Editor.standard(
-              editor: _docEditor,
-              padding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),
-            ),
-          ),
-        ),
-        SliverList(
-          delegate: SliverChildBuilderDelegate(
-            (BuildContext context, int index) {
-              return ListTile(
-                title: Text('$index'),
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'SliverList element tapped with index $index.',
-                      ),
-                      duration: Duration(milliseconds: 500),
-                    ),
-                  );
-                },
-              );
-            },
-            // Or, uncomment the following line:
-            // childCount: 3,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-Document _createInitialDocument() {
+Document createInitialDocument() {
   return MutableDocument(
     nodes: [
       ImageNode(
@@ -115,8 +27,53 @@ Document _createInitialDocument() {
       ParagraphNode(
         id: DocumentEditor.createNodeId(),
         text: AttributedText(
+          text: 'This is a blockquote!',
+        ),
+        metadata: {
+          'blockType': blockquoteAttribution,
+        },
+      ),
+      ListItemNode.unordered(
+        id: DocumentEditor.createNodeId(),
+        text: AttributedText(
+          text: 'This is an unordered list item',
+        ),
+      ),
+      ListItemNode.unordered(
+        id: DocumentEditor.createNodeId(),
+        text: AttributedText(
+          text: 'This is another list item',
+        ),
+      ),
+      ListItemNode.unordered(
+        id: DocumentEditor.createNodeId(),
+        text: AttributedText(
+          text: 'This is a 3rd list item',
+        ),
+      ),
+      ParagraphNode(
+        id: DocumentEditor.createNodeId(),
+        text: AttributedText(
             text:
                 'Cras vitae sodales nisi. Vivamus dignissim vel purus vel aliquet. Sed viverra diam vel nisi rhoncus pharetra. Donec gravida ut ligula euismod pharetra. Etiam sed urna scelerisque, efficitur mauris vel, semper arcu. Nullam sed vehicula sapien. Donec id tellus volutpat, eleifend nulla eget, rutrum mauris.'),
+      ),
+      ListItemNode.ordered(
+        id: DocumentEditor.createNodeId(),
+        text: AttributedText(
+          text: 'First thing to do',
+        ),
+      ),
+      ListItemNode.ordered(
+        id: DocumentEditor.createNodeId(),
+        text: AttributedText(
+          text: 'Second thing to do',
+        ),
+      ),
+      ListItemNode.ordered(
+        id: DocumentEditor.createNodeId(),
+        text: AttributedText(
+          text: 'Third thing to do',
+        ),
       ),
       ParagraphNode(
         id: DocumentEditor.createNodeId(),

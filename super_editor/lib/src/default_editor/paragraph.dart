@@ -10,6 +10,7 @@ import 'package:super_editor/src/core/document_editor.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/edit_context.dart';
+import 'package:super_editor/src/default_editor/attributions.dart';
 import 'package:super_editor/src/default_editor/document_interaction.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
@@ -274,7 +275,7 @@ bool _convertParagraphIfDesired({
     final newNode = ParagraphNode(
       id: node.id,
       text: adjustedText,
-      metadata: {'blockType': 'blockquote'},
+      metadata: {'blockType': blockquoteAttribution},
     );
     final nodeIndex = document.getNodeIndex(node);
 

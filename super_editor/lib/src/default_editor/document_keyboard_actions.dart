@@ -3,12 +3,12 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import 'package:super_editor/src/default_editor/attributions.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 
-import 'text_tools.dart';
 import 'document_interaction.dart';
 import 'multi_node_editing.dart';
 import 'paragraph.dart';
@@ -362,7 +362,7 @@ ExecutionInstruction applyBoldWhenCmdBIsPressed({
   editContext.editor.executeCommand(
     ToggleTextAttributionsCommand(
       documentSelection: editContext.composer.selection!,
-      attributions: {'bold'},
+      attributions: {boldAttribution},
     ),
   );
 
@@ -391,7 +391,7 @@ ExecutionInstruction applyItalicsWhenCmdIIsPressed({
   editContext.editor.executeCommand(
     ToggleTextAttributionsCommand(
       documentSelection: editContext.composer.selection!,
-      attributions: {'italics'},
+      attributions: {italicsAttribution},
     ),
   );
 

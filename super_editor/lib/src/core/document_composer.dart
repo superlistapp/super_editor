@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:super_editor/src/infrastructure/attributed_spans.dart';
 
 import 'document_selection.dart';
 
@@ -53,11 +54,11 @@ class DocumentComposer with ChangeNotifier {
 /// like a "bold mode" or "italics mode" when there is no
 /// bold or italics text around the caret.
 class ComposerPreferences with ChangeNotifier {
-  final Set<dynamic> _currentStyles = {};
+  final Set<Attribution> _currentStyles = {};
 
   /// Returns the styles that should be applied to the next
   /// character that is entered in a `Document`.
-  Set<dynamic> get currentStyles => _currentStyles;
+  Set<Attribution> get currentStyles => _currentStyles;
 
   /// Adds `name` to `currentStyles`.
   void addStyle(dynamic name) {
@@ -65,15 +66,15 @@ class ComposerPreferences with ChangeNotifier {
     notifyListeners();
   }
 
-  /// Adds all `names` to `currentStyles`.
-  void addStyles(Set<dynamic> names) {
-    _currentStyles.addAll(names);
+  /// Adds all [attributions] to [currentStyles].
+  void addStyles(Set<Attribution> attributions) {
+    _currentStyles.addAll(attributions);
     notifyListeners();
   }
 
-  /// Removes `name` from `currentStyles`.
-  void removeStyle(dynamic name) {
-    _currentStyles.remove(name);
+  /// Removes [attributions] from [currentStyles].
+  void removeStyle(Attribution attributions) {
+    _currentStyles.remove(attributions);
     notifyListeners();
   }
 

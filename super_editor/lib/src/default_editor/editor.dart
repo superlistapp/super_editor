@@ -5,11 +5,13 @@ import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_editor.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/edit_context.dart';
+import 'package:super_editor/src/default_editor/attributions.dart';
 import 'package:super_editor/src/default_editor/blockquote.dart';
 import 'package:super_editor/src/default_editor/horizontal_rule.dart';
 import 'package:super_editor/src/default_editor/image.dart';
 import 'package:super_editor/src/default_editor/list_items.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
+import 'package:super_editor/src/infrastructure/attributed_spans.dart';
 import 'package:super_editor/src/infrastructure/attributed_text.dart';
 
 import 'box_component.dart';
@@ -330,7 +332,7 @@ final defaultSelectionStyle = const SelectionStyle(
 );
 
 /// Creates `TextStyles` for the standard `Editor`.
-TextStyle defaultStyleBuilder(Set<dynamic> attributions) {
+TextStyle defaultStyleBuilder(Set<Attribution> attributions) {
   TextStyle newStyle = TextStyle(
     color: Colors.black,
     fontSize: 13,
@@ -338,49 +340,43 @@ TextStyle defaultStyleBuilder(Set<dynamic> attributions) {
   );
 
   for (final attribution in attributions) {
-    if (attribution is! String) {
-      continue;
-    }
-
-    switch (attribution) {
-      case 'header1':
-        newStyle = newStyle.copyWith(
-          fontSize: 24,
-          fontWeight: FontWeight.bold,
-          height: 1.0,
-        );
-        break;
-      case 'header2':
-        newStyle = newStyle.copyWith(
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
-          color: const Color(0xFF888888),
-          height: 1.0,
-        );
-        break;
-      case 'blockquote':
-        newStyle = newStyle.copyWith(
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-          height: 1.4,
-          color: Colors.grey,
-        );
-        break;
-      case 'bold':
-        newStyle = newStyle.copyWith(
-          fontWeight: FontWeight.bold,
-        );
-        break;
-      case 'italics':
-        newStyle = newStyle.copyWith(
-          fontStyle: FontStyle.italic,
-        );
-        break;
-      case 'strikethrough':
-        newStyle = newStyle.copyWith(
-          decoration: TextDecoration.lineThrough,
-        );
-        break;
+    if (attribution == header1Attribution) {
+      newStyle = newStyle.copyWith(
+        fontSize: 24,
+        fontWeight: FontWeight.bold,
+        height: 1.0,
+      );
+    } else if (attribution == header2Attribution) {
+      newStyle = newStyle.copyWith(
+        fontSize: 18,
+        fontWeight: FontWeight.bold,
+        color: const Color(0xFF888888),
+        height: 1.0,
+      );
+    } else if (attribution == blockquoteAttribution) {
+      newStyle = newStyle.copyWith(
+        fontSize: 20,
+        fontWeight: FontWeight.bold,
+        height: 1.4,
+        color: Colors.grey,
+      );
+    } else if (attribution == boldAttribution) {
+      newStyle = newStyle.copyWith(
+        fontWeight: FontWeight.bold,
+      );
+    } else if (attribution == italicsAttribution) {
+      newStyle = newStyle.copyWith(
+        fontStyle: FontStyle.italic,
+      );
+    } else if (attribution == strikethroughAttribution) {
+      newStyle = newStyle.copyWith(
+        decoration: TextDecoration.lineThrough,
+      );
+    } else if (attribution is LinkAttribution) {
+      newStyle = newStyle.copyWith(
+        color: Colors.lightBlue,
+        decoration: TextDecoration.underline,
+      );
     }
   }
   return newStyle;

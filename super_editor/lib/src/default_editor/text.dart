@@ -13,6 +13,7 @@ import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/default_editor/document_interaction.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/attributed_spans.dart';
 import 'package:super_editor/src/infrastructure/attributed_text.dart';
 import 'package:super_editor/src/infrastructure/composable_text.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
@@ -419,14 +420,16 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
   Widget build(BuildContext context) {
     _log.log('build', 'Building a TextComponent with key: ${widget.key}');
 
-    final blockType = widget.metadata['blockType'];
+    Attribution? blockType = widget.metadata['blockType'];
 
     // Surround the text with block level attributions.
-    final blockText = widget.text.copyText(0)
-      ..addAttribution(
+    final blockText = widget.text.copyText(0);
+    if (blockType != null) {
+      blockText.addAttribution(
         blockType,
         TextRange(start: 0, end: widget.text.text.length - 1),
       );
+    }
     final richText = blockText.computeTextSpan(widget.textStyleBuilder);
 
     return SelectableText(
@@ -453,7 +456,7 @@ class ToggleTextAttributionsCommand implements EditorCommand {
   });
 
   final DocumentSelection documentSelection;
-  final Set<String> attributions;
+  final Set<Attribution> attributions;
 
   @override
   void execute(Document document, DocumentEditorTransaction transaction) {
@@ -525,7 +528,7 @@ class ToggleTextAttributionsCommand implements EditorCommand {
 
     // Toggle attributions.
     for (final entry in nodesAndSelections.entries) {
-      for (String attribution in attributions) {
+      for (Attribution attribution in attributions) {
         final node = entry.key;
         final range = entry.value;
         _log.log('ToggleTextAttributionsCommand', ' - toggling attribution: $attribution. Range: $range');
@@ -549,7 +552,7 @@ class InsertTextCommand implements EditorCommand {
 
   final DocumentPosition documentPosition;
   final String textToInsert;
-  final Set<dynamic> attributions;
+  final Set<Attribution> attributions;
 
   @override
   void execute(Document document, DocumentEditorTransaction transaction) {
