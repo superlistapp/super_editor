@@ -1487,9 +1487,10 @@ extension DefaultSuperTextFieldActions on AttributedTextEditingController {
         return;
       }
 
-      if (!selection.isCollapsed) {
-        // The selection isn't collapsed. Move the extent to the
-        // left side of the selection.
+      if (!selection.isCollapsed && !expandSelection) {
+        // The selection isn't collapsed and the user doesn't
+        // want to continue expanding the selection. Move the
+        // extent to the left side of the selection.
         newExtent = selection.start;
       } else if (movementModifiers['movement_unit'] == 'line') {
         newExtent = selectableTextState.getPositionAtStartOfLine(TextPosition(offset: selection.extentOffset)).offset;
@@ -1502,7 +1503,7 @@ extension DefaultSuperTextFieldActions on AttributedTextEditingController {
           newExtent -= 1;
         }
       } else {
-        newExtent = selection.extentOffset - 1;
+        newExtent = max(selection.extentOffset - 1, 0);
       }
     } else {
       if (selection.extentOffset >= text.text.length && selection.isCollapsed) {
@@ -1510,9 +1511,10 @@ extension DefaultSuperTextFieldActions on AttributedTextEditingController {
         return;
       }
 
-      if (!selection.isCollapsed) {
-        // The selection isn't collapsed. Move the extent to the
-        // right side of the selection.
+      if (!selection.isCollapsed && !expandSelection) {
+        // The selection isn't collapsed and the user doesn't
+        // want to continue expanding the selection. Move the
+        // extent to the left side of the selection.
         newExtent = selection.end;
       } else if (movementModifiers['movement_unit'] == 'line') {
         final endOfLine = selectableTextState.getPositionAtEndOfLine(TextPosition(offset: selection.extentOffset));
@@ -1546,7 +1548,7 @@ extension DefaultSuperTextFieldActions on AttributedTextEditingController {
           newExtent += 1;
         }
       } else {
-        newExtent = selection.extentOffset + 1;
+        newExtent = min(selection.extentOffset + 1, text.text.length);
       }
     }
 
