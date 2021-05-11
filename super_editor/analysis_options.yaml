@@ -2,3 +2,7 @@ include: package:pedantic/analysis_options.1.11.0.yaml
 
 analyzer:
     exclude: [build/**]
+
+linter:
+    rules:
+        omit_local_variable_types: false

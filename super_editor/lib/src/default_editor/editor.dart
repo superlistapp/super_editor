@@ -5,10 +5,13 @@ import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_editor.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/edit_context.dart';
+import 'package:super_editor/src/default_editor/attributions.dart';
+import 'package:super_editor/src/default_editor/blockquote.dart';
 import 'package:super_editor/src/default_editor/horizontal_rule.dart';
 import 'package:super_editor/src/default_editor/image.dart';
 import 'package:super_editor/src/default_editor/list_items.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
+import 'package:super_editor/src/infrastructure/attributed_spans.dart';
 import 'package:super_editor/src/infrastructure/attributed_text.dart';
 
 import 'box_component.dart';
@@ -71,6 +74,7 @@ class Editor extends StatefulWidget {
     FocusNode? focusNode,
     double maxWidth = 600,
     EdgeInsetsGeometry padding = EdgeInsets.zero,
+    GlobalKey? documentLayoutKey,
     bool showDebugPaint = false,
   }) {
     return Editor._(
@@ -85,6 +89,7 @@ class Editor extends StatefulWidget {
       focusNode: focusNode,
       maxWidth: maxWidth,
       padding: padding,
+      documentLayoutKey: documentLayoutKey,
       showDebugPaint: showDebugPaint,
     );
   }
@@ -101,6 +106,7 @@ class Editor extends StatefulWidget {
     FocusNode? focusNode,
     double maxWidth = 600,
     EdgeInsetsGeometry padding = EdgeInsets.zero,
+    GlobalKey? documentLayoutKey,
     bool showDebugPaint = false,
   }) {
     return Editor._(
@@ -115,6 +121,7 @@ class Editor extends StatefulWidget {
       focusNode: focusNode,
       maxWidth: maxWidth,
       padding: padding,
+      documentLayoutKey: documentLayoutKey,
       showDebugPaint: showDebugPaint,
     );
   }
@@ -131,6 +138,7 @@ class Editor extends StatefulWidget {
     this.focusNode,
     this.maxWidth = 600,
     this.padding = EdgeInsets.zero,
+    this.documentLayoutKey,
     this.showDebugPaint = false,
   }) : super(key: key);
 
@@ -161,6 +169,8 @@ class Editor extends StatefulWidget {
 
   final ScrollController? scrollController;
 
+  final GlobalKey? documentLayoutKey;
+
   final FocusNode? focusNode;
 
   final double maxWidth;
@@ -178,7 +188,7 @@ class Editor extends StatefulWidget {
 class _EditorState extends State<Editor> {
   // GlobalKey used to access the `DocumentLayoutState` to figure
   // out where in the document the user taps or drags.
-  final _docLayoutKey = GlobalKey();
+  late GlobalKey _docLayoutKey;
 
   late FocusNode _focusNode;
   late DocumentComposer _composer;
@@ -193,6 +203,8 @@ class _EditorState extends State<Editor> {
     _composer.addListener(_updateComposerPreferencesAtSelection);
 
     _focusNode = widget.focusNode ?? FocusNode();
+
+    _docLayoutKey = widget.documentLayoutKey ?? GlobalKey();
   }
 
   @override
@@ -213,6 +225,9 @@ class _EditorState extends State<Editor> {
     }
     if (widget.focusNode != oldWidget.focusNode) {
       _focusNode = widget.focusNode ?? FocusNode();
+    }
+    if (widget.documentLayoutKey != oldWidget.documentLayoutKey) {
+      _docLayoutKey = widget.documentLayoutKey ?? GlobalKey();
     }
   }
 
@@ -248,18 +263,28 @@ class _EditorState extends State<Editor> {
     }
 
     final textPosition = _composer.selection!.extent.nodePosition as TextPosition;
-    if (textPosition.offset == 0) {
-      return;
-    }
 
-    final allStyles = node.text.getAllAttributionsAt(textPosition.offset - 1);
-    _composer.preferences.addStyles(allStyles);
+    if (textPosition.offset == 0) {
+      if (node.text.text.isEmpty) {
+        return;
+      }
+
+      // Inserted text at the very beginning of a text blob assumes the
+      // attributions immediately following it.
+      final allStyles = node.text.getAllAttributionsAt(textPosition.offset + 1);
+      _composer.preferences.addStyles(allStyles);
+    } else {
+      // Inserted text assumes the attributions immediately preceding it.
+      final allStyles = node.text.getAllAttributionsAt(textPosition.offset - 1);
+      _composer.preferences.addStyles(allStyles);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return DocumentInteractor(
       focusNode: _focusNode,
+      scrollController: widget.scrollController,
       editContext: EditContext(
         editor: widget.editor,
         composer: _composer,
@@ -307,7 +332,7 @@ final defaultSelectionStyle = const SelectionStyle(
 );
 
 /// Creates `TextStyles` for the standard `Editor`.
-TextStyle defaultStyleBuilder(Set<dynamic> attributions) {
+TextStyle defaultStyleBuilder(Set<Attribution> attributions) {
   TextStyle newStyle = TextStyle(
     color: Colors.black,
     fontSize: 13,
@@ -315,49 +340,43 @@ TextStyle defaultStyleBuilder(Set<dynamic> attributions) {
   );
 
   for (final attribution in attributions) {
-    if (attribution is! String) {
-      continue;
-    }
-
-    switch (attribution) {
-      case 'header1':
-        newStyle = newStyle.copyWith(
-          fontSize: 24,
-          fontWeight: FontWeight.bold,
-          height: 1.0,
-        );
-        break;
-      case 'header2':
-        newStyle = newStyle.copyWith(
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
-          color: const Color(0xFF888888),
-          height: 1.0,
-        );
-        break;
-      case 'blockquote':
-        newStyle = newStyle.copyWith(
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-          height: 1.4,
-          color: Colors.grey,
-        );
-        break;
-      case 'bold':
-        newStyle = newStyle.copyWith(
-          fontWeight: FontWeight.bold,
-        );
-        break;
-      case 'italics':
-        newStyle = newStyle.copyWith(
-          fontStyle: FontStyle.italic,
-        );
-        break;
-      case 'strikethrough':
-        newStyle = newStyle.copyWith(
-          decoration: TextDecoration.lineThrough,
-        );
-        break;
+    if (attribution == header1Attribution) {
+      newStyle = newStyle.copyWith(
+        fontSize: 24,
+        fontWeight: FontWeight.bold,
+        height: 1.0,
+      );
+    } else if (attribution == header2Attribution) {
+      newStyle = newStyle.copyWith(
+        fontSize: 18,
+        fontWeight: FontWeight.bold,
+        color: const Color(0xFF888888),
+        height: 1.0,
+      );
+    } else if (attribution == blockquoteAttribution) {
+      newStyle = newStyle.copyWith(
+        fontSize: 20,
+        fontWeight: FontWeight.bold,
+        height: 1.4,
+        color: Colors.grey,
+      );
+    } else if (attribution == boldAttribution) {
+      newStyle = newStyle.copyWith(
+        fontWeight: FontWeight.bold,
+      );
+    } else if (attribution == italicsAttribution) {
+      newStyle = newStyle.copyWith(
+        fontStyle: FontStyle.italic,
+      );
+    } else if (attribution == strikethroughAttribution) {
+      newStyle = newStyle.copyWith(
+        decoration: TextDecoration.lineThrough,
+      );
+    } else if (attribution is LinkAttribution) {
+      newStyle = newStyle.copyWith(
+        color: Colors.lightBlue,
+        decoration: TextDecoration.underline,
+      );
     }
   }
   return newStyle;
@@ -372,6 +391,7 @@ final defaultComponentBuilders = <ComponentBuilder>[
   paragraphBuilder,
   unorderedListItemBuilder,
   orderedListItemBuilder,
+  blockquoteBuilder,
   imageBuilder,
   horizontalRuleBuilder,
   unknownComponentBuilder,
@@ -380,18 +400,21 @@ final defaultComponentBuilders = <ComponentBuilder>[
 /// Keyboard actions for the standard `Editor`.
 final defaultKeyboardActions = <DocumentKeyboardAction>[
   doNothingWhenThereIsNoSelection,
-  indentListItemWhenBackspaceIsPressed,
+  indentListItemWhenTabIsPressed,
+  unindentListItemWhenShiftTabIsPressed,
   unindentListItemWhenBackspaceIsPressed,
   splitListItemWhenEnterPressed,
+  convertBlockquoteToParagraphWhenBackspaceIsPressed,
+  insertNewlineInBlockquote,
+  splitBlockquoteWhenEnterPressed,
   pasteWhenCmdVIsPressed,
   copyWhenCmdVIsPressed,
+  selectAllWhenCmdAIsPressed,
   applyBoldWhenCmdBIsPressed,
   applyItalicsWhenCmdIIsPressed,
   collapseSelectionWhenDirectionalKeyIsPressed,
   deleteExpandedSelectionWhenCharacterOrDestructiveKeyPressed,
   deleteBoxWhenBackspaceOrDeleteIsPressed,
-  insertCharacterInParagraph,
-  insertCharacterInTextComposable,
   insertNewlineInParagraph,
   splitParagraphWhenEnterPressed,
   deleteCharacterWhenBackspaceIsPressed,
@@ -401,4 +424,6 @@ final defaultKeyboardActions = <DocumentKeyboardAction>[
   deleteCharacterWhenDeleteIsPressed,
   mergeNodeWithNextWhenDeleteIsPressed,
   moveUpDownLeftAndRightWithArrowKeys,
+  insertCharacterInParagraph,
+  insertCharacterInTextComposable,
 ];

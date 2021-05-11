@@ -1,8 +1,12 @@
 import 'package:example/demos/demo_markdown_serialization.dart';
+import 'package:example/demos/demo_paragraphs.dart';
 import 'package:example/demos/demo_selectable_text.dart';
-import 'package:example/demos/example_editor.dart';
+import 'package:example/demos/supertextfield/demo_textfield.dart';
+import 'package:example/demos/example_editor/example_editor.dart';
 import 'package:example/demos/sliver_example_editor.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'demos/demo_attributed_text.dart';
 import 'demos/demo_document_loses_focus.dart';
@@ -23,6 +27,16 @@ class SuperEditorDemoApp extends StatelessWidget {
         primarySwatch: Colors.red,
       ),
       home: HomeScreen(),
+      supportedLocales: [
+        const Locale('en', ''),
+        const Locale('es', ''),
+      ],
+      localizationsDelegates: [
+        ...AppLocalizations.localizationsDelegates,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       debugShowCheckedModeBanner: false,
     );
   }
@@ -164,8 +178,27 @@ final _menu = <_MenuGroup>[
     ],
   ),
   _MenuGroup(
+    title: 'PIECES',
+    items: [
+      _MenuItem(
+        icon: Icons.text_snippet,
+        title: 'Paragraphs',
+        pageBuilder: (context) {
+          return ParagraphsDemo();
+        },
+      ),
+    ],
+  ),
+  _MenuGroup(
     title: 'INFRASTRUCTURE',
     items: [
+      _MenuItem(
+        icon: Icons.text_fields,
+        title: 'SuperTextField',
+        pageBuilder: (context) {
+          return TextFieldDemo();
+        },
+      ),
       _MenuItem(
         icon: Icons.text_fields,
         title: 'Selectable Text',

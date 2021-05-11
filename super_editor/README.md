@@ -4,6 +4,31 @@ Super Editor is an open source, configurable, extensible text editor and documen
 
 `super_editor` was initiated by [Superlist](https://superlist.com) and is being implemented and maintained by [SuperDeclarative!](https://superdeclarative.com), Superlist, and the contributors.
 
+## Supported Platforms
+
+Super Editor aims to support all platforms. For now, Super Editor supports the following:
+
+**Supported**
+
+Super Editor is actively developed against these platforms.
+
+ * Mac OS
+ * Web
+
+**Unverified**
+
+These platforms might work, but Super Editor is not developing against them.
+
+ * Windows
+ * Linux
+
+**Not Yet Supported**
+
+These platforms are explicitly not supported at this time because mobile input is fundamentally different than desktop input. 
+
+ * Android
+ * iOS
+
 ## Display an editor
 
 Display a default text editor with the `Editor` widget:
@@ -42,7 +67,7 @@ final myDoc = MutableDocument(
       id: DocumentEditor.createNodeId(),
       text: AttributedText(text: 'This is a header'),
       metadata: {
-        'blockType': 'header1',
+        'blockType': header1Attribution,
       },
     ),
     ParagraphNode(

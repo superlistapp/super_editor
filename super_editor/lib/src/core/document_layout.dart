@@ -33,6 +33,10 @@ abstract class DocumentLayout {
   /// the corresponding component has not yet been laid out.
   Rect? getRectForPosition(DocumentPosition position);
 
+  /// Returns a [Rect] that bounds the content selected between
+  /// [basePosition] and [extentPosition].
+  Rect? getRectForSelection(DocumentPosition basePosition, DocumentPosition extentPosition);
+
   /// Returns a `DocumentSelection` that begins near `baseOffset` and extends
   /// to `extentOffset`, or `null` if no document content sits between the
   /// provided points.
@@ -91,6 +95,16 @@ mixin DocumentComponent<T extends StatefulWidget> on State<T> {
   /// See `Document` for more information about `DocumentNode`s and
   /// node positions.
   Rect getRectForPosition(dynamic nodePosition);
+
+  /// Returns a [Rect] that bounds the content selected between
+  /// [baseNodePosition] and [extentNodePosition].
+  ///
+  /// Throws an exception if [baseNodePosition] or [extentNodePosition] are
+  /// not an appropriate type of node position for this component.
+  ///
+  /// See [Document] for more information about [DocumentNode]s and
+  /// node positions.
+  Rect getRectForSelection(dynamic baseNodePosition, dynamic extentNodePosition);
 
   /// Returns the node position that represents the "beginning" of
   /// the content within this component, such as the first character
@@ -210,49 +224,6 @@ mixin DocumentComponent<T extends StatefulWidget> on State<T> {
   /// Returns the desired `MouseCursor` at the given (x,y) `localOffset`, or
   /// `null` if this component has no preference for the cursor style.
   MouseCursor? getDesiredCursorAtOffset(Offset localOffset);
-}
-
-/// Contract for document components that include editable text.
-///
-/// Examples: paragraphs, list items, images with captions.
-///
-/// The node positions accepted by a `TextComposable` are `dynamic`
-/// rather than `TextPosition`s because an editor might be configured
-/// to include complex text composition, like tables, which might
-/// choose to index positions based on cell IDs, or row and column
-/// indices.
-abstract class TextComposable {
-  /// Returns a `TextSelection` that encompasses the entire word
-  /// found at the given `nodePosition`.
-  ///
-  /// Throws an exception if `nodePosition` is not the right type
-  /// for this `TextComposable`.
-  TextSelection getWordSelectionAt(dynamic nodePosition);
-
-  /// Returns all text surrounding `nodePosition` that is not
-  /// broken by white space.
-  ///
-  /// Throws an exception if `nodePosition` is not the right type
-  /// for this `TextComposable`.
-  String getContiguousTextAt(dynamic nodePosition);
-
-  /// Returns the node position that corresponds to a text location
-  /// that is one line above the given `nodePosition`, or `null` if
-  /// there is no position one line up.
-  dynamic? getPositionOneLineUp(dynamic nodePosition);
-
-  /// Returns the node position that corresponds to a text location
-  /// that is one line below the given `nodePosition`, or `null` if
-  /// there is no position one line down.
-  dynamic? getPositionOneLineDown(dynamic nodePosition);
-
-  /// Returns the node position that corresponds to the first character
-  /// in the line of text that contains the given `nodePosition`.
-  dynamic? getPositionAtStartOfLine(dynamic nodePosition);
-
-  /// Returns the node position that corresponds to the last character
-  /// in the line of text that contains the given `nodePosition`.
-  dynamic? getPositionAtEndOfLine(dynamic nodePosition);
 }
 
 /// Builds a widget that renders the desired UI for one or

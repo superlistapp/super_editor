@@ -3,6 +3,11 @@ import 'package:super_editor/src/infrastructure/attributed_spans.dart';
 import 'package:super_editor/src/infrastructure/attributed_text.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+// Attributions used throughout this test suite.
+final bold = NamedAttribution('bold');
+final italics = NamedAttribution('italics');
+final strikethrough = NamedAttribution('strikethrough');
+
 void main() {
   group('Attributed Text', () {
     test('no styles', () {
@@ -20,8 +25,8 @@ void main() {
         text: 'abcdefghij',
         spans: AttributedSpans(
           attributions: [
-            SpanMarker(attribution: 'bold', offset: 0, markerType: SpanMarkerType.start),
-            SpanMarker(attribution: 'bold', offset: 9, markerType: SpanMarkerType.end),
+            SpanMarker(attribution: bold, offset: 0, markerType: SpanMarkerType.start),
+            SpanMarker(attribution: bold, offset: 9, markerType: SpanMarkerType.end),
           ],
         ),
       );
@@ -37,8 +42,8 @@ void main() {
         text: 'abcdefghij',
         spans: AttributedSpans(
           attributions: [
-            SpanMarker(attribution: 'bold', offset: 1, markerType: SpanMarkerType.start),
-            SpanMarker(attribution: 'bold', offset: 1, markerType: SpanMarkerType.end),
+            SpanMarker(attribution: bold, offset: 1, markerType: SpanMarkerType.start),
+            SpanMarker(attribution: bold, offset: 1, markerType: SpanMarkerType.end),
           ],
         ),
       );
@@ -61,8 +66,8 @@ void main() {
             // Notice that the markers are provided in reverse order:
             // end then start. Order shouldn't matter within a single
             // position index. This test ensures that.
-            SpanMarker(attribution: 'bold', offset: 1, markerType: SpanMarkerType.end),
-            SpanMarker(attribution: 'bold', offset: 1, markerType: SpanMarkerType.start),
+            SpanMarker(attribution: bold, offset: 1, markerType: SpanMarkerType.end),
+            SpanMarker(attribution: bold, offset: 1, markerType: SpanMarkerType.start),
           ],
         ),
       );
@@ -79,7 +84,7 @@ void main() {
 
     test('add single character style', () {
       final text = AttributedText(text: 'abcdefghij');
-      text.addAttribution('bold', TextRange(start: 1, end: 1));
+      text.addAttribution(bold, TextRange(start: 1, end: 1));
       final textSpan = text.computeTextSpan(_styleBuilder);
 
       expect(textSpan.text, null);
@@ -96,8 +101,8 @@ void main() {
         text: 'abcdefghij',
         spans: AttributedSpans(
           attributions: [
-            SpanMarker(attribution: 'bold', offset: 2, markerType: SpanMarkerType.start),
-            SpanMarker(attribution: 'bold', offset: 7, markerType: SpanMarkerType.end),
+            SpanMarker(attribution: bold, offset: 2, markerType: SpanMarkerType.start),
+            SpanMarker(attribution: bold, offset: 7, markerType: SpanMarkerType.end),
           ],
         ),
       );
@@ -116,8 +121,8 @@ void main() {
         text: 'abcdefghij',
         spans: AttributedSpans(
           attributions: [
-            SpanMarker(attribution: 'bold', offset: 9, markerType: SpanMarkerType.start),
-            SpanMarker(attribution: 'bold', offset: 9, markerType: SpanMarkerType.end),
+            SpanMarker(attribution: bold, offset: 9, markerType: SpanMarkerType.start),
+            SpanMarker(attribution: bold, offset: 9, markerType: SpanMarkerType.end),
           ],
         ),
       );
@@ -126,8 +131,8 @@ void main() {
         text: 'k',
         spans: AttributedSpans(
           attributions: [
-            SpanMarker(attribution: 'bold', offset: 0, markerType: SpanMarkerType.start),
-            SpanMarker(attribution: 'bold', offset: 0, markerType: SpanMarkerType.end),
+            SpanMarker(attribution: bold, offset: 0, markerType: SpanMarkerType.start),
+            SpanMarker(attribution: bold, offset: 0, markerType: SpanMarkerType.end),
           ],
         ),
       ));
@@ -146,15 +151,39 @@ void main() {
       expect(textSpan.children![1].style!.fontStyle, null);
     });
 
+    test('Bug 145 - insert character at beginning of styled text', () {
+      final initialText = AttributedText(
+        text: 'abcdefghij',
+        spans: AttributedSpans(
+          attributions: [
+            SpanMarker(attribution: bold, offset: 0, markerType: SpanMarkerType.start),
+            SpanMarker(attribution: bold, offset: 9, markerType: SpanMarkerType.end),
+          ],
+        ),
+      );
+
+      final newText = initialText.insertString(
+        textToInsert: 'a',
+        startOffset: 0,
+        applyAttributions: {bold},
+      );
+
+      expect(newText.text, 'aabcdefghij');
+      expect(
+        newText.hasAttributionsWithin(attributions: {bold}, range: TextRange(start: 0, end: 10)),
+        true,
+      );
+    });
+
     test('non-mingled varying styles', () {
       final text = AttributedText(
         text: 'abcdefghij',
         spans: AttributedSpans(
           attributions: [
-            SpanMarker(attribution: 'bold', offset: 0, markerType: SpanMarkerType.start),
-            SpanMarker(attribution: 'bold', offset: 4, markerType: SpanMarkerType.end),
-            SpanMarker(attribution: 'italics', offset: 5, markerType: SpanMarkerType.start),
-            SpanMarker(attribution: 'italics', offset: 9, markerType: SpanMarkerType.end),
+            SpanMarker(attribution: bold, offset: 0, markerType: SpanMarkerType.start),
+            SpanMarker(attribution: bold, offset: 4, markerType: SpanMarkerType.end),
+            SpanMarker(attribution: italics, offset: 5, markerType: SpanMarkerType.start),
+            SpanMarker(attribution: italics, offset: 9, markerType: SpanMarkerType.end),
           ],
         ),
       );
@@ -175,10 +204,10 @@ void main() {
         text: 'abcdefghij',
         spans: AttributedSpans(
           attributions: [
-            SpanMarker(attribution: 'bold', offset: 2, markerType: SpanMarkerType.start),
-            SpanMarker(attribution: 'italics', offset: 4, markerType: SpanMarkerType.start),
-            SpanMarker(attribution: 'bold', offset: 5, markerType: SpanMarkerType.end),
-            SpanMarker(attribution: 'italics', offset: 7, markerType: SpanMarkerType.end),
+            SpanMarker(attribution: bold, offset: 2, markerType: SpanMarkerType.start),
+            SpanMarker(attribution: italics, offset: 4, markerType: SpanMarkerType.start),
+            SpanMarker(attribution: bold, offset: 5, markerType: SpanMarkerType.end),
+            SpanMarker(attribution: italics, offset: 7, markerType: SpanMarkerType.end),
           ],
         ),
       );
@@ -215,7 +244,7 @@ void main() {
         listenerCalled = true;
       });
 
-      text.addAttribution('bold', TextRange(start: 1, end: 1));
+      text.addAttribution(bold, TextRange(start: 1, end: 1));
 
       expect(listenerCalled, isTrue);
     });
@@ -223,29 +252,21 @@ void main() {
 }
 
 /// Creates styles based on the given `attributions`.
-TextStyle _styleBuilder(Set<dynamic> attributions) {
+TextStyle _styleBuilder(Set<Attribution> attributions) {
   TextStyle newStyle = const TextStyle();
   for (final attribution in attributions) {
-    if (attribution is! String) {
-      continue;
-    }
-
-    switch (attribution) {
-      case 'bold':
-        newStyle = newStyle.copyWith(
-          fontWeight: FontWeight.bold,
-        );
-        break;
-      case 'italics':
-        newStyle = newStyle.copyWith(
-          fontStyle: FontStyle.italic,
-        );
-        break;
-      case 'strikethrough':
-        newStyle = newStyle.copyWith(
-          decoration: TextDecoration.lineThrough,
-        );
-        break;
+    if (attribution == bold) {
+      newStyle = newStyle.copyWith(
+        fontWeight: FontWeight.bold,
+      );
+    } else if (attribution == italics) {
+      newStyle = newStyle.copyWith(
+        fontStyle: FontStyle.italic,
+      );
+    } else if (attribution == strikethrough) {
+      newStyle = newStyle.copyWith(
+        decoration: TextDecoration.lineThrough,
+      );
     }
   }
   return newStyle;

@@ -90,7 +90,7 @@ Document _createDocument1() {
           text: 'Document #1',
         ),
         metadata: {
-          'blockType': 'header1',
+          'blockType': header1Attribution,
         },
       ),
       ParagraphNode(
@@ -113,7 +113,7 @@ Document _createDocument2() {
           text: 'Document #2',
         ),
         metadata: {
-          'blockType': 'header1',
+          'blockType': header1Attribution,
         },
       ),
       ParagraphNode(

@@ -290,16 +290,87 @@ class UnIndentListItemCommand implements EditorCommand {
       //       a DocumentEditorTransaction (#67)
       listItem.indent -= 1;
     } else {
-      // TODO: move node replacement to its own command.
-      final newParagraphNode = ParagraphNode(
-        id: listItem.id,
-        text: listItem.text,
-      );
-      final listItemIndex = document.getNodeIndex(listItem);
-      transaction
-        ..deleteNodeAt(listItemIndex)
-        ..insertNodeAt(listItemIndex, newParagraphNode);
+      ConvertListItemToParagraphCommand(
+        nodeId: nodeId,
+      ).execute(document, transaction);
     }
+  }
+}
+
+class ConvertListItemToParagraphCommand implements EditorCommand {
+  ConvertListItemToParagraphCommand({
+    required this.nodeId,
+    this.paragraphMetadata,
+  });
+
+  final String nodeId;
+  final Map<String, dynamic>? paragraphMetadata;
+
+  @override
+  void execute(Document document, DocumentEditorTransaction transaction) {
+    final node = document.getNodeById(nodeId);
+    final listItem = node as ListItemNode;
+
+    final newParagraphNode = ParagraphNode(
+      id: listItem.id,
+      text: listItem.text,
+      metadata: paragraphMetadata ?? {},
+    );
+    final listItemIndex = document.getNodeIndex(listItem);
+    transaction
+      ..deleteNodeAt(listItemIndex)
+      ..insertNodeAt(listItemIndex, newParagraphNode);
+  }
+}
+
+class ConvertParagraphToListItemCommand implements EditorCommand {
+  ConvertParagraphToListItemCommand({
+    required this.nodeId,
+    required this.type,
+  });
+
+  final String nodeId;
+  final ListItemType type;
+
+  @override
+  void execute(Document document, DocumentEditorTransaction transaction) {
+    final node = document.getNodeById(nodeId);
+    final paragraphNode = node as ParagraphNode;
+
+    final newListItemNode = ListItemNode(
+      id: paragraphNode.id,
+      itemType: type,
+      text: paragraphNode.text,
+    );
+    final paragraphIndex = document.getNodeIndex(paragraphNode);
+    transaction
+      ..deleteNodeAt(paragraphIndex)
+      ..insertNodeAt(paragraphIndex, newListItemNode);
+  }
+}
+
+class ChangeListItemTypeCommand implements EditorCommand {
+  ChangeListItemTypeCommand({
+    required this.nodeId,
+    required this.newType,
+  });
+
+  final String nodeId;
+  final ListItemType newType;
+
+  @override
+  void execute(Document document, DocumentEditorTransaction transaction) {
+    final existingListItem = document.getNodeById(nodeId) as ListItemNode;
+
+    final newListItemNode = ListItemNode(
+      id: existingListItem.id,
+      itemType: newType,
+      text: existingListItem.text,
+    );
+    final nodeIndex = document.getNodeIndex(existingListItem);
+    transaction
+      ..deleteNodeAt(nodeIndex)
+      ..insertNodeAt(nodeIndex, newListItemNode);
   }
 }
 
@@ -356,11 +427,14 @@ class SplitListItemCommand implements EditorCommand {
   }
 }
 
-ExecutionInstruction indentListItemWhenBackspaceIsPressed({
+ExecutionInstruction indentListItemWhenTabIsPressed({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
   if (keyEvent.logicalKey != LogicalKeyboardKey.tab) {
+    return ExecutionInstruction.continueExecution;
+  }
+  if (keyEvent.isShiftPressed) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -384,6 +458,38 @@ ExecutionInstruction indentListItemWhenBackspaceIsPressed({
 
   editContext.editor.executeCommand(
     IndentListItemCommand(nodeId: node.id),
+  );
+
+  return ExecutionInstruction.haltExecution;
+}
+
+ExecutionInstruction unindentListItemWhenShiftTabIsPressed({
+  required EditContext editContext,
+  required RawKeyEvent keyEvent,
+}) {
+  if (keyEvent.logicalKey != LogicalKeyboardKey.tab) {
+    return ExecutionInstruction.continueExecution;
+  }
+  if (!keyEvent.isShiftPressed) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (editContext.composer.selection == null) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  final node = editContext.editor.document.getNodeById(editContext.composer.selection!.extent.nodeId);
+  if (node is! ListItemNode) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  final textPosition = editContext.composer.selection!.extent.nodePosition;
+  if (textPosition is! TextPosition) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  editContext.editor.executeCommand(
+    UnIndentListItemCommand(nodeId: node.id),
   );
 
   return ExecutionInstruction.haltExecution;

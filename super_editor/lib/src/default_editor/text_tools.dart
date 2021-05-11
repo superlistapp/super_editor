@@ -1,26 +1,16 @@
+import 'dart:math';
+
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/composable_text.dart';
 
 /// Collection of generic text inspection behavior that does not belong
 /// to any particular `DocumentNode` or `Component`.
 
 final _log = Logger(scope: 'text_tools.dart');
-
-const latinCharacters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-
-/// Returns `true` if the given `key` represents a latin character, digit, or a
-/// symbol.
-bool isCharacterKey(LogicalKeyboardKey key) {
-  // keyLabel for a character should be: 'a', 'b',...,'A','B',...
-  if (key.keyLabel.length != 1) {
-    return false;
-  }
-  return 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ 1234567890.,/;\'[]\\`~!@#\$%^&*()-=_+<>?:"{}|'
-      .contains(key.keyLabel);
-}
 
 /// Returns the word of text that contains the given `docPosition`, or `null` if
 /// no text exists at the given `docPosition`.
@@ -91,8 +81,12 @@ TextSelection _expandPositionToParagraph({
   required String text,
   required TextPosition textPosition,
 }) {
-  int start = textPosition.offset;
-  int end = textPosition.offset;
+  if (text.isEmpty) {
+    return TextSelection.collapsed(offset: -1);
+  }
+
+  int start = min(textPosition.offset, text.length - 1);
+  int end = min(textPosition.offset, text.length - 1);
   while (start > 0 && text[start] != '\n') {
     start -= 1;
   }

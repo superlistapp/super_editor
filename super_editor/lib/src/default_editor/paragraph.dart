@@ -1,20 +1,20 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import 'package:http/http.dart' as http;
+import 'package:linkify/linkify.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_editor.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/edit_context.dart';
-import 'package:super_editor/src/default_editor/text_tools.dart';
+import 'package:super_editor/src/default_editor/attributions.dart';
 import 'package:super_editor/src/default_editor/document_interaction.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text.dart';
-import 'package:collection/collection.dart';
-import 'package:http/http.dart' as http;
-import 'package:linkify/linkify.dart';
 
 import 'horizontal_rule.dart';
 import 'image.dart';
@@ -150,7 +150,7 @@ ExecutionInstruction insertCharacterInParagraph({
   if (node is! ParagraphNode) {
     return ExecutionInstruction.continueExecution;
   }
-  if (!isCharacterKey(keyEvent.logicalKey)) {
+  if (keyEvent.character == null || keyEvent.character == '') {
     return ExecutionInstruction.continueExecution;
   }
   if (!editContext.composer.selection!.isCollapsed) {
@@ -252,12 +252,48 @@ bool _convertParagraphIfDesired({
       }),
     );
 
-    node.text = AttributedText();
+    node.text = node.text.removeRegion(startOffset: 0, endOffset: hrMatch.firstMatch(textBeforeCaret)!.end);
 
     composer.selection = DocumentSelection.collapsed(
       position: DocumentPosition(
         nodeId: node.id,
         nodePosition: TextPosition(offset: 0),
+      ),
+    );
+
+    return true;
+  }
+
+  final blockquoteMatch = RegExp(r'^>\s$');
+  final hasBlockquoteMatch = blockquoteMatch.hasMatch(textBeforeCaret);
+  if (hasBlockquoteMatch) {
+    int startOfNewText = textBeforeCaret.length;
+    while (startOfNewText < node.text.text.length && node.text.text[startOfNewText] == ' ') {
+      startOfNewText += 1;
+    }
+    final adjustedText = node.text.copyText(startOfNewText);
+    final newNode = ParagraphNode(
+      id: node.id,
+      text: adjustedText,
+      metadata: {'blockType': blockquoteAttribution},
+    );
+    final nodeIndex = document.getNodeIndex(node);
+
+    editor.executeCommand(
+      EditorCommandFunction((document, transaction) {
+        transaction
+          ..deleteNodeAt(nodeIndex)
+          ..insertNodeAt(nodeIndex, newNode);
+      }),
+    );
+
+    // We removed some text at the beginning of the list item.
+    // Move the selection back by that same amount.
+    final textPosition = composer.selection!.extent.nodePosition as TextPosition;
+    composer.selection = DocumentSelection.collapsed(
+      position: DocumentPosition(
+        nodeId: node.id,
+        nodePosition: TextPosition(offset: textPosition.offset - startOfNewText),
       ),
     );
 

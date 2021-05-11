@@ -3,12 +3,12 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import 'package:super_editor/src/default_editor/attributions.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 
-import 'text_tools.dart';
 import 'document_interaction.dart';
 import 'multi_node_editing.dart';
 import 'paragraph.dart';
@@ -81,6 +81,8 @@ ExecutionInstruction pasteWhenCmdVIsPressed({
     editContext.editor.executeCommand(
       DeleteSelectionCommand(documentSelection: editContext.composer.selection!),
     );
+
+    editContext.composer.selection = DocumentSelection.collapsed(position: pastePosition);
   }
 
   // TODO: figure out a general approach for asynchronous behaviors that
@@ -95,6 +97,33 @@ ExecutionInstruction pasteWhenCmdVIsPressed({
   return ExecutionInstruction.haltExecution;
 }
 
+ExecutionInstruction selectAllWhenCmdAIsPressed({
+  required EditContext editContext,
+  required RawKeyEvent keyEvent,
+}) {
+  if (!keyEvent.isMetaPressed || keyEvent.character?.toLowerCase() != 'a') {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  final nodes = editContext.editor.document.nodes;
+  if (nodes.isEmpty) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  editContext.composer.selection = DocumentSelection(
+    base: DocumentPosition(
+      nodeId: nodes.first.id,
+      nodePosition: nodes.first.beginningPosition,
+    ),
+    extent: DocumentPosition(
+      nodeId: nodes.last.id,
+      nodePosition: nodes.last.endPosition,
+    ),
+  );
+
+  return ExecutionInstruction.haltExecution;
+}
+
 Future<void> _paste({
   required Document document,
   required DocumentEditor editor,
@@ -102,8 +131,7 @@ Future<void> _paste({
   required DocumentPosition pastePosition,
 }) async {
   final content = (await Clipboard.getData('text/plain'))?.text ?? '';
-  _log.log('_paste', 'Content from clipboard:');
-  print(content);
+  _log.log('_paste', 'Content from clipboard: $content');
 
   editor.executeCommand(
     _PasteEditorCommand(
@@ -119,7 +147,7 @@ class _PasteEditorCommand implements EditorCommand {
     required String content,
     required DocumentPosition pastePosition,
     required DocumentComposer composer,
-  })   : _content = content,
+  })  : _content = content,
         _pastePosition = pastePosition,
         _composer = composer;
 
@@ -269,13 +297,16 @@ Future<void> _copy({
 
     if (i == 0) {
       // This is the first node and it may be partially selected.
-      final nodePosition = selectedNode.id == documentSelection.base.nodeId
+      final baseSelectionPosition = selectedNode.id == documentSelection.base.nodeId
           ? documentSelection.base.nodePosition
           : documentSelection.extent.nodePosition;
 
+      final extentSelectionPosition =
+          selectedNodes.length > 1 ? selectedNode.endPosition : documentSelection.extent.nodePosition;
+
       nodeSelection = selectedNode.computeSelection(
-        base: nodePosition,
-        extent: selectedNode.endPosition,
+        base: baseSelectionPosition,
+        extent: extentSelectionPosition,
       );
     } else if (i == selectedNodes.length - 1) {
       // This is the last node and it may be partially selected.
@@ -297,7 +328,7 @@ Future<void> _copy({
 
     final nodeContent = selectedNode.copyContent(nodeSelection);
     if (nodeContent != null) {
-      buffer.writeln(nodeContent);
+      buffer.write(nodeContent);
       if (i < selectedNodes.length - 1) {
         buffer.writeln();
       }
@@ -331,7 +362,7 @@ ExecutionInstruction applyBoldWhenCmdBIsPressed({
   editContext.editor.executeCommand(
     ToggleTextAttributionsCommand(
       documentSelection: editContext.composer.selection!,
-      attributions: {'bold'},
+      attributions: {boldAttribution},
     ),
   );
 
@@ -360,7 +391,7 @@ ExecutionInstruction applyItalicsWhenCmdIIsPressed({
   editContext.editor.executeCommand(
     ToggleTextAttributionsCommand(
       documentSelection: editContext.composer.selection!,
-      attributions: {'italics'},
+      attributions: {italicsAttribution},
     ),
   );
 
@@ -373,13 +404,22 @@ ExecutionInstruction deleteExpandedSelectionWhenCharacterOrDestructiveKeyPressed
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
+  _log.log('deleteExpandedSelectionWhenCharacterOrDestructiveKeyPressed', 'Running...');
   if (editContext.composer.selection == null || editContext.composer.selection!.isCollapsed) {
     return ExecutionInstruction.continueExecution;
   }
 
+  // Specifically exclude situations where shift is pressed because shift
+  // needs to alter the selection, not delete content. We have to explicitly
+  // look for this because when shift is pressed along with an arrow key,
+  // Flutter reports a non-null character.
+  final isShiftPressed = keyEvent.isShiftPressed;
+
   final isDestructiveKey =
       keyEvent.logicalKey == LogicalKeyboardKey.backspace || keyEvent.logicalKey == LogicalKeyboardKey.delete;
-  final shouldDeleteSelection = isDestructiveKey || isCharacterKey(keyEvent.logicalKey);
+
+  final shouldDeleteSelection =
+      !isShiftPressed && (isDestructiveKey || (keyEvent.character != null && keyEvent.character != ''));
   if (!shouldDeleteSelection) {
     return ExecutionInstruction.continueExecution;
   }

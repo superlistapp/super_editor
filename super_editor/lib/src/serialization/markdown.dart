@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
+import 'package:super_editor/src/default_editor/attributions.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:markdown/markdown.dart' as md;
 
@@ -50,40 +51,31 @@ String serializeDocumentToMarkdown(Document doc) {
       }
     } else if (node is ParagraphNode) {
       final metadata = node.metadata;
+      final Attribution? blockType = metadata['blockType'];
 
-      switch (metadata['blockType']) {
-        case 'header1':
-          buffer..writeln('# ${node.text.toMarkdown()}')..writeln('');
-          break;
-        case 'header2':
-          buffer..writeln('## ${node.text.toMarkdown()}')..writeln('');
-          break;
-        case 'header3':
-          buffer..writeln('### ${node.text.toMarkdown()}')..writeln('');
-          break;
-        case 'header4':
-          buffer..writeln('#### ${node.text.toMarkdown()}')..writeln('');
-          break;
-        case 'header5':
-          buffer..writeln('##### ${node.text.toMarkdown()}')..writeln('');
-          break;
-        case 'header6':
-          buffer..writeln('###### ${node.text.toMarkdown()}')..writeln('');
-          break;
-        case 'blockquote':
-          // TODO: handle multiline
-          buffer..writeln('> ${node.text.toMarkdown()}')..writeln();
-          break;
-        case 'code':
-          buffer //
-            ..writeln('```') //
-            ..writeln(node.text.toMarkdown()) //
-            ..writeln('```')
-            ..writeln('');
-          break;
-        default:
-          buffer..writeln(node.text.toMarkdown())..writeln('');
-          break;
+      if (blockType == header1Attribution) {
+        buffer..writeln('# ${node.text.toMarkdown()}')..writeln('');
+      } else if (blockType == header2Attribution) {
+        buffer..writeln('## ${node.text.toMarkdown()}')..writeln('');
+      } else if (blockType == header3Attribution) {
+        buffer..writeln('### ${node.text.toMarkdown()}')..writeln('');
+      } else if (blockType == header4Attribution) {
+        buffer..writeln('#### ${node.text.toMarkdown()}')..writeln('');
+      } else if (blockType == header5Attribution) {
+        buffer..writeln('##### ${node.text.toMarkdown()}')..writeln('');
+      } else if (blockType == header6Attribution) {
+        buffer..writeln('###### ${node.text.toMarkdown()}')..writeln('');
+      } else if (blockType == blockquoteAttribution) {
+        // TODO: handle multiline
+        buffer..writeln('> ${node.text.toMarkdown()}')..writeln();
+      } else if (blockType == codeAttribution) {
+        buffer //
+          ..writeln('```') //
+          ..writeln(node.text.toMarkdown()) //
+          ..writeln('```')
+          ..writeln('');
+      } else {
+        buffer..writeln(node.text.toMarkdown())..writeln('');
       }
     }
   }
@@ -109,6 +101,9 @@ class _MarkdownToDocument implements md.NodeVisitor {
 
   @override
   bool visitElementBefore(md.Element element) {
+    // TODO: re-organize parsing such that visitElementBefore collects
+    //       the block type info and then visitText and visitElementAfter
+    //       take the action to create the node (#153)
     switch (element.tag) {
       case 'h1':
         _addHeader(element, level: 1);
@@ -143,7 +138,10 @@ class _MarkdownToDocument implements md.NodeVisitor {
         break;
       case 'blockquote':
         _addBlockquote(element);
-        break;
+
+        // Skip child elements within a blockquote so that we don't
+        // add another node for the paragraph that comprises the blockquote
+        return false;
       case 'code':
         _addCodeBlock(element);
         break;
@@ -191,12 +189,34 @@ class _MarkdownToDocument implements md.NodeVisitor {
   }
 
   void _addHeader(md.Element element, {required int level}) {
+    Attribution? headerAttribution;
+    switch (level) {
+      case 1:
+        headerAttribution = header1Attribution;
+        break;
+      case 2:
+        headerAttribution = header2Attribution;
+        break;
+      case 3:
+        headerAttribution = header3Attribution;
+        break;
+      case 4:
+        headerAttribution = header4Attribution;
+        break;
+      case 5:
+        headerAttribution = header5Attribution;
+        break;
+      case 6:
+        headerAttribution = header6Attribution;
+        break;
+    }
+
     _content.add(
       ParagraphNode(
         id: DocumentEditor.createNodeId(),
         text: _parseInlineText(element),
         metadata: {
-          'blockType': 'header$level',
+          'blockType': headerAttribution,
         },
       ),
     );
@@ -217,7 +237,7 @@ class _MarkdownToDocument implements md.NodeVisitor {
         id: DocumentEditor.createNodeId(),
         text: _parseInlineText(element),
         metadata: {
-          'blockType': 'blockquote',
+          'blockType': blockquoteAttribution,
         },
       ),
     );
@@ -239,7 +259,7 @@ class _MarkdownToDocument implements md.NodeVisitor {
           text: element.textContent,
         ),
         metadata: {
-          'blockType': 'code',
+          'blockType': codeAttribution,
         },
       ),
     );
@@ -354,7 +374,7 @@ class _InlineMarkdownToDocument implements md.NodeVisitor {
 
     if (element.tag == 'strong') {
       styledText.addAttribution(
-        'bold',
+        boldAttribution,
         TextRange(
           start: 0,
           end: styledText.text.length - 1,
@@ -362,7 +382,7 @@ class _InlineMarkdownToDocument implements md.NodeVisitor {
       );
     } else if (element.tag == 'em') {
       styledText.addAttribution(
-        'italics',
+        italicsAttribution,
         TextRange(
           start: 0,
           end: styledText.text.length - 1,
@@ -383,8 +403,8 @@ extension on AttributedText {
   /// Serializes style attributions into markdown syntax in a repeatable
   /// order such that opening and closing styles match each other on
   /// the opening and closing ends of a span.
-  static String _sortAndSerializeAttributions(Set<dynamic> attributions, AttributionVisitEvent event) {
-    const startOrder = ['code', 'bold', 'italics', 'strikethrough'];
+  static String _sortAndSerializeAttributions(Set<Attribution> attributions, AttributionVisitEvent event) {
+    const startOrder = [codeAttribution, boldAttribution, italicsAttribution, strikethroughAttribution];
 
     final buffer = StringBuffer();
     final encodingOrder = event == AttributionVisitEvent.start ? startOrder : startOrder.reversed;
@@ -398,22 +418,17 @@ extension on AttributedText {
     return buffer.toString();
   }
 
-  static String _encodeMarkdownStyle(dynamic attribution) {
-    if (attribution is! String) {
+  static String _encodeMarkdownStyle(Attribution attribution) {
+    if (attribution == codeAttribution) {
+      return '`';
+    } else if (attribution == boldAttribution) {
+      return '**';
+    } else if (attribution == italicsAttribution) {
+      return '*';
+    } else if (attribution == strikethroughAttribution) {
+      return '~';
+    } else {
       return '';
-    }
-
-    switch (attribution) {
-      case 'code':
-        return '`';
-      case 'bold':
-        return '**';
-      case 'italics':
-        return '*';
-      case 'strikethrough':
-        return '~';
-      default:
-        return '';
     }
   }
 

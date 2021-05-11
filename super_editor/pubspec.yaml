@@ -13,13 +13,10 @@ dependencies:
 
   pedantic: ^1.11.0
 
-#  uuid: ^2.2.2
   uuid: ^3.0.3
 
-#  http: ^0.12.2
   http: ^0.13.1
 
-#  linkify: ^3.0.0
   linkify: ^4.0.0
 
   # TODO: move markdown serialization to a separate package and
@@ -29,6 +26,8 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+
+  mockito: ^5.0.4
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

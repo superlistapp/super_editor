@@ -96,8 +96,8 @@ class DocumentEditorTransaction {
 /// An in-memory, mutable `Document`.
 class MutableDocument with ChangeNotifier implements Document {
   MutableDocument({
-    List<DocumentNode> nodes = const [],
-  }) : _nodes = nodes {
+    List<DocumentNode>? nodes,
+  }) : _nodes = nodes ?? [] {
     // Register listeners for all initial nodes.
     for (final node in _nodes) {
       node.addListener(_forwardNodeChange);

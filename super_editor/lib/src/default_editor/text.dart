@@ -13,10 +13,13 @@ import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/default_editor/document_interaction.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/attributed_spans.dart';
 import 'package:super_editor/src/infrastructure/attributed_text.dart';
+import 'package:super_editor/src/infrastructure/composable_text.dart';
+import 'package:super_editor/src/infrastructure/keyboard.dart';
 import 'package:super_editor/src/infrastructure/selectable_text.dart';
+import 'package:super_editor/src/infrastructure/text_layout.dart';
 
-import 'text_tools.dart';
 import 'multi_node_editing.dart';
 
 final _log = Logger(scope: 'text.dart');
@@ -132,7 +135,7 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
     if (nodePosition is! TextPosition) {
       throw Exception('Expected nodePosition of type TextPosition but received: $nodePosition');
     }
-    return _selectableTextKey.currentState!.getOffsetForPosition(nodePosition);
+    return _selectableTextKey.currentState!.getOffsetAtPosition(nodePosition);
   }
 
   @override
@@ -144,6 +147,26 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
     // TODO: factor in line height for position rect
     final offset = getOffsetForPosition(nodePosition);
     return Rect.fromLTWH(offset.dx, offset.dy, 0, 0);
+  }
+
+  @override
+  Rect getRectForSelection(dynamic baseNodePosition, dynamic extentNodePosition) {
+    if (baseNodePosition is! TextPosition) {
+      throw Exception('Expected nodePosition of type TextPosition but received: $baseNodePosition');
+    }
+    if (extentNodePosition is! TextPosition) {
+      throw Exception('Expected nodePosition of type TextPosition but received: $extentNodePosition');
+    }
+
+    final selection = TextSelection(baseOffset: baseNodePosition.offset, extentOffset: extentNodePosition.offset);
+    final boxes = _selectableTextKey.currentState!.getBoxesForSelection(selection);
+
+    Rect boundingBox = boxes.isNotEmpty ? boxes.first.toRect() : Rect.zero;
+    for (int i = 1; i < boxes.length; ++i) {
+      boundingBox = boundingBox.expandToInclude(boxes[i].toRect());
+    }
+
+    return boundingBox;
   }
 
   @override
@@ -184,7 +207,7 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
 
       int newOffset = textPosition.offset;
       newOffset -= 1; // we always want to jump at least 1 character.
-      while (newOffset > 0 && latinCharacters.contains(text[newOffset])) {
+      while (newOffset > 0 && text[newOffset - 1] != ' ') {
         newOffset -= 1;
       }
       return TextPosition(offset: newOffset);
@@ -241,7 +264,7 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
 
       int newOffset = textPosition.offset;
       newOffset += 1; // we always want to jump at least 1 character.
-      while (newOffset < text.length && latinCharacters.contains(text[newOffset])) {
+      while (newOffset < text.length && text[newOffset] != ' ') {
         newOffset += 1;
       }
       return TextPosition(offset: newOffset);
@@ -359,24 +382,22 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
     return widget.text.text;
   }
 
+  @override
   TextPosition? getPositionOneLineUp(dynamic textPosition) {
     if (textPosition is! TextPosition) {
       return null;
     }
 
-    return _selectableTextKey.currentState!.getPositionOneLineUp(
-      currentPosition: textPosition,
-    );
+    return _selectableTextKey.currentState!.getPositionOneLineUp(textPosition);
   }
 
+  @override
   TextPosition? getPositionOneLineDown(dynamic textPosition) {
     if (textPosition is! TextPosition) {
       return null;
     }
 
-    return _selectableTextKey.currentState!.getPositionOneLineDown(
-      currentPosition: textPosition,
-    );
+    return _selectableTextKey.currentState!.getPositionOneLineDown(textPosition);
   }
 
   @override
@@ -384,7 +405,7 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
     if (textPosition is! TextPosition) {
       return null;
     }
-    return _selectableTextKey.currentState!.getPositionAtEndOfLine(currentPosition: textPosition);
+    return _selectableTextKey.currentState!.getPositionAtEndOfLine(textPosition);
   }
 
   @override
@@ -392,21 +413,23 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
     if (textPosition is! TextPosition) {
       return null;
     }
-    return _selectableTextKey.currentState!.getPositionAtStartOfLine(currentPosition: textPosition);
+    return _selectableTextKey.currentState!.getPositionAtStartOfLine(textPosition);
   }
 
   @override
   Widget build(BuildContext context) {
     _log.log('build', 'Building a TextComponent with key: ${widget.key}');
 
-    final blockType = widget.metadata['blockType'];
+    Attribution? blockType = widget.metadata['blockType'];
 
     // Surround the text with block level attributions.
-    final blockText = widget.text.copyText(0)
-      ..addAttribution(
+    final blockText = widget.text.copyText(0);
+    if (blockType != null) {
+      blockText.addAttribution(
         blockType,
         TextRange(start: 0, end: widget.text.text.length - 1),
       );
+    }
     final richText = blockText.computeTextSpan(widget.textStyleBuilder);
 
     return SelectableText(
@@ -433,7 +456,7 @@ class ToggleTextAttributionsCommand implements EditorCommand {
   });
 
   final DocumentSelection documentSelection;
-  final Set<String> attributions;
+  final Set<Attribution> attributions;
 
   @override
   void execute(Document document, DocumentEditorTransaction transaction) {
@@ -468,6 +491,10 @@ class ToggleTextAttributionsCommand implements EditorCommand {
         final extentOffset = (documentSelection.extent.nodePosition as TextPosition).offset;
         startOffset = baseOffset < extentOffset ? baseOffset : extentOffset;
         endOffset = baseOffset < extentOffset ? extentOffset : baseOffset;
+
+        // -1 because TextPosition's offset indexes the character after the
+        // selection, not the final character in the selection.
+        endOffset -= 1;
       } else if (textNode == nodes.first) {
         // Handle partial node selection in first node.
         _log.log('ToggleTextAttributionsCommand', ' - selecting part of the first node: ${textNode.id}');
@@ -477,19 +504,15 @@ class ToggleTextAttributionsCommand implements EditorCommand {
         // Handle partial node selection in last node.
         _log.log('ToggleTextAttributionsCommand', ' - toggling part of the last node: ${textNode.id}');
         startOffset = 0;
-        endOffset = (nodeRange.end.nodePosition as TextPosition).offset;
+
+        // -1 because TextPosition's offset indexes the character after the
+        // selection, not the final character in the selection.
+        endOffset = (nodeRange.end.nodePosition as TextPosition).offset - 1;
       } else {
         // Handle full node selection.
         _log.log('ToggleTextAttributionsCommand', ' - toggling full node: ${textNode.id}');
         startOffset = 0;
         endOffset = max(textNode.text.text.length - 1, 0);
-      }
-
-      // The attribution range needs the `start` and `end` to
-      // be inclusive. Make sure the `endOffset` isn't equal
-      // to the text length.
-      if (endOffset == textNode.text.text.length) {
-        endOffset = textNode.text.text.length - 1;
       }
 
       final selectionRange = TextRange(start: startOffset, end: endOffset);
@@ -505,7 +528,7 @@ class ToggleTextAttributionsCommand implements EditorCommand {
 
     // Toggle attributions.
     for (final entry in nodesAndSelections.entries) {
-      for (String attribution in attributions) {
+      for (Attribution attribution in attributions) {
         final node = entry.key;
         final range = entry.value;
         _log.log('ToggleTextAttributionsCommand', ' - toggling attribution: $attribution. Range: $range');
@@ -529,7 +552,7 @@ class InsertTextCommand implements EditorCommand {
 
   final DocumentPosition documentPosition;
   final String textToInsert;
-  final Set<dynamic> attributions;
+  final Set<Attribution> attributions;
 
   @override
   void execute(Document document, DocumentEditorTransaction transaction) {
@@ -552,21 +575,40 @@ ExecutionInstruction insertCharacterInTextComposable({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
-  if (keyEvent.isMetaPressed || keyEvent.isAltPressed || keyEvent.isControlPressed) {
+  if (keyEvent.isMetaPressed || keyEvent.isControlPressed) {
     return ExecutionInstruction.continueExecution;
   }
 
   if (editContext.composer.selection == null) {
     return ExecutionInstruction.continueExecution;
   }
+  if (!editContext.composer.selection!.isCollapsed) {
+    return ExecutionInstruction.continueExecution;
+  }
   if (!_isTextEntryNode(document: editContext.editor.document, selection: editContext.composer.selection!)) {
     return ExecutionInstruction.continueExecution;
   }
-  if (!isCharacterKey(keyEvent.logicalKey)) {
+  if (keyEvent.character == null || keyEvent.character == '') {
     return ExecutionInstruction.continueExecution;
   }
-  if (!editContext.composer.selection!.isCollapsed) {
+
+  String character = keyEvent.character!;
+
+  // On web, keys like shift and alt are sending their full name
+  // as a character, e.g., "Shift" and "Alt". This check prevents
+  // those keys from inserting their name into content.
+  //
+  // This filter is a blacklist, and therefore it will fail to
+  // catch any key that isn't explicitly listed. The eventual solution
+  // to this is for the web to honor the standard key event contract,
+  // but that's out of our control.
+  if (kIsWeb && webBugBlacklistCharacters.contains(character)) {
     return ExecutionInstruction.continueExecution;
+  }
+
+  // The web reports a tab as "Tab". Intercept it and translate it to a space.
+  if (character == 'Tab') {
+    character = ' ';
   }
 
   final textNode = editContext.editor.document.getNode(editContext.composer.selection!.extent) as TextNode;
@@ -575,7 +617,7 @@ ExecutionInstruction insertCharacterInTextComposable({
   editContext.editor.executeCommand(
     InsertTextCommand(
       documentPosition: editContext.composer.selection!.extent,
-      textToInsert: keyEvent.character!,
+      textToInsert: character,
       attributions: editContext.composer.preferences.currentStyles,
     ),
   );
@@ -584,7 +626,7 @@ ExecutionInstruction insertCharacterInTextComposable({
     position: DocumentPosition(
       nodeId: textNode.id,
       nodePosition: TextPosition(
-        offset: initialTextOffset + 1,
+        offset: initialTextOffset + character.length,
       ),
     ),
   );
@@ -614,9 +656,12 @@ ExecutionInstruction deleteCharacterWhenBackspaceIsPressed({
 
   final textNode = editContext.editor.document.getNode(editContext.composer.selection!.extent) as TextNode;
   final currentTextPosition = editContext.composer.selection!.extent.nodePosition as TextPosition;
+
+  final previousCharacterOffset = getCharacterStartBounds(textNode.text.text, currentTextPosition.offset);
+
   final newSelectionPosition = DocumentPosition(
     nodeId: textNode.id,
-    nodePosition: TextPosition(offset: currentTextPosition.offset - 1),
+    nodePosition: TextPosition(offset: previousCharacterOffset),
   );
 
   // Delete the selected content.
@@ -629,7 +674,7 @@ ExecutionInstruction deleteCharacterWhenBackspaceIsPressed({
         ),
         extent: DocumentPosition(
           nodeId: textNode.id,
-          nodePosition: TextPosition(offset: currentTextPosition.offset - 1),
+          nodePosition: TextPosition(offset: previousCharacterOffset),
         ),
       ),
     ),
@@ -666,6 +711,8 @@ ExecutionInstruction deleteCharacterWhenDeleteIsPressed({
     return ExecutionInstruction.continueExecution;
   }
 
+  final nextCharacterOffset = getCharacterEndBounds(text.text, currentTextPosition.offset + 1);
+
   // Delete the selected content.
   editContext.editor.executeCommand(
     DeleteSelectionCommand(
@@ -676,7 +723,7 @@ ExecutionInstruction deleteCharacterWhenDeleteIsPressed({
         ),
         extent: DocumentPosition(
           nodeId: textNode.id,
-          nodePosition: TextPosition(offset: currentTextPosition.offset + 1),
+          nodePosition: TextPosition(offset: nextCharacterOffset),
         ),
       ),
     ),
