@@ -44,7 +44,7 @@ class _Home extends StatelessWidget {
                   right: 0,
                   child: Image.asset(
                     'assets/images/background.png',
-                    fit: BoxFit.contain,
+                    fit: BoxFit.cover,
                   ),
                 ),
                 Column(
