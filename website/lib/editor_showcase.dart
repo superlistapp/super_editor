@@ -33,16 +33,12 @@ class _EditorState extends State<EditorShowcase> {
           text: AttributedText(
             text: 'A supercharged rich text editor for Flutter',
           ),
-          metadata: {
-            'blockType': header1Attribution,
-            'textAlign': 'center',
-          },
         ),
       ],
     );
   }
 
-  static TextStyle _textStyleBuilder(Set<dynamic> attributions) {
+  static TextStyle _textStyleBuilder(Set<Attribution> attributions) {
     var result = TextStyle(
       fontFamily: 'Aeonik',
       fontWeight: FontWeight.w300,
