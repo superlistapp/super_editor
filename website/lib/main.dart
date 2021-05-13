@@ -14,10 +14,8 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Flutter Demo',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: _Home(),
+      theme: ThemeData(primarySwatch: Colors.blue, fontFamily: 'Aeonik'),
+      home:  _Home(),
     );
   }
 }
@@ -31,7 +29,7 @@ class _Home extends StatelessWidget {
       backgroundColor: const Color(0xFF003F51),
       body: Scrollbar(
         child: SingleChildScrollView(
-          child: DefaultTextStyle(
+          child: DefaultTextStyle.merge(
             style: TextStyle(
               fontWeight: FontWeight.w400,
               fontSize: 18,
@@ -45,7 +43,7 @@ class _Home extends StatelessWidget {
                   left: 0,
                   right: 0,
                   child: Image.asset(
-                    'assets/background.png',
+                    'assets/images/background.png',
                     fit: BoxFit.contain,
                   ),
                 ),

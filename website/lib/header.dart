@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:url_launcher/link.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class Header extends StatelessWidget {
@@ -13,42 +14,24 @@ class Header extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Image.asset(
-            'assets/logo.gif',
+            'assets/images/logo.gif',
             width: 188,
             height: 44,
           ),
-          DefaultTextStyle(
-            style: TextStyle(
-              fontWeight: FontWeight.normal,
-              fontSize: 16,
-              color: Colors.white,
-            ),
-            child: Row(
-              children: [
-                MouseRegion(
-                  cursor: SystemMouseCursors.click,
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: () =>
-                        launch('https://github.com/superlistapp/super_editor'),
-                    child: Text('Github'),
-                  ),
-                ),
-                const SizedBox(width: 26),
-                MouseRegion(
-                  cursor: SystemMouseCursors.click,
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: () => launch(
-                      'https://github.com/superlistapp/super_editor/wiki',
-                    ),
-                    child: Text('Docs'),
-                  ),
-                ),
-                const SizedBox(width: 26),
-                _SmallButton(child: Text('Download')),
-              ],
-            ),
+          Row(
+            children: [
+              _Link(
+                url: 'https://github.com/superlistapp/super_editor',
+                child: Text('Github'),
+              ),
+              const SizedBox(width: 8),
+              _Link(
+                url: 'https://github.com/superlistapp/super_editor/wiki',
+                child: Text('Docs'),
+              ),
+              const SizedBox(width: 16),
+              const _DownloadButton(),
+            ],
           ),
         ],
       ),
@@ -56,27 +39,52 @@ class Header extends StatelessWidget {
   }
 }
 
-class _SmallButton extends StatelessWidget {
-  _SmallButton({@required this.child}) : assert(child != null);
+class _Link extends StatelessWidget {
+  const _Link({@required this.url, @required this.child})
+      : assert(url != null),
+        assert(child != null);
+
+  final String url;
   final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton(
+      onPressed: () => launch(url),
+      style: ButtonStyle(
+        foregroundColor: MaterialStateProperty.all(Colors.white),
+        minimumSize: MaterialStateProperty.all(const Size(72, 48)),
+        textStyle: MaterialStateProperty.all(
+          TextStyle(
+            fontFamily: 'Aeonik',
+            fontSize: 16,
+          ),
+        ),
+      ),
+      child: child,
+    );
+  }
+}
+
+class _DownloadButton extends StatelessWidget {
+  const _DownloadButton();
 
   @override
   Widget build(BuildContext context) {
     return MaterialButton(
       color: const Color(0xFFFAE74F),
       onPressed: () {},
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 32),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(64)),
-      height: 42,
+      height: 52,
       elevation: 0,
-      child: DefaultTextStyle(
+      child: Text(
+        'Download',
         style: TextStyle(
           fontWeight: FontWeight.bold,
           fontSize: 16,
-          height: 1.4,
           color: const Color(0xFF0D2C3A),
         ),
-        child: child,
       ),
     );
   }

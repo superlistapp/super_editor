@@ -9,10 +9,7 @@ dependencies:
     sdk: flutter
   url_launcher:
   super_editor:
-    git:
-      url: https://github.com/superlistapp/super_editor.git
-      ref: 82e011a
-      path: super_editor
+    path: ../super_editor
 
 dev_dependencies:
   flutter_test:
@@ -20,4 +17,15 @@ dev_dependencies:
 
 flutter:
   assets:
-    - assets/
+    - assets/images/
+    - assets/fonts/
+  fonts:
+    - family: Aeonik
+      fonts:
+        - asset: assets/fonts/Aeonik-Regular.woff
+        - asset: assets/fonts/Aeonik-Bold.woff
+          weight: 700
+        - asset: assets/fonts/Aeonik-Light.woff
+          weight: 300
+        - asset: assets/fonts/Aeonik-Thin.woff
+          weight: 100

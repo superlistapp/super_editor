@@ -25,7 +25,7 @@ class Features extends StatelessWidget {
                         child: ConstrainedBox(
                           constraints: BoxConstraints(maxWidth: 499),
                           child: const _Feature(
-                            iconPath: 'assets/ic_customize.png',
+                            iconPath: 'assets/images/ic_customize.png',
                             title: 'Fully customizable',
                             description:
                                 'Easy to extend and very detailed access to all component, designed to and build for developer, allow you to adjust the editor to your specific needs',
@@ -40,7 +40,7 @@ class Features extends StatelessWidget {
                         child: ConstrainedBox(
                           constraints: BoxConstraints(maxWidth: 515),
                           child: const _Feature(
-                            iconPath: 'assets/dart_logo.png',
+                            iconPath: 'assets/images/dart_logo.png',
                             title: 'Fully written in Dart',
                             description:
                                 'A true cross platform editor written from scratch to deliver the performance and stability you expect',
@@ -75,6 +75,8 @@ class Features extends StatelessWidget {
                   const SizedBox(height: 31),
                   Text(
                     'Lorem ipsum home school stay-at-home order Blursday. Staycation stimulus essential. Dr. Fauci remote learning WHO isolation mail-in vote. Virtual happy hour Quibi four seasons total landscaping monolith home office.',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 19),
                   ),
                 ],
               ),
@@ -119,7 +121,7 @@ class _Feature extends StatelessWidget {
         Text(
           title,
           style: TextStyle(
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.bold,
             fontSize: 38,
             height: 46 / 38,
           ),
