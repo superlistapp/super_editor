@@ -33,6 +33,10 @@ class _EditorState extends State<EditorShowcase> {
           text: AttributedText(
             text: 'A supercharged rich text editor for Flutter',
           ),
+          metadata: {
+            'blockType': header1Attribution,
+            'textAlign': 'center',
+          },
         ),
       ],
     );
