@@ -50,7 +50,7 @@ class Features extends StatelessWidget {
                       children: [
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 32),
-                          child: Text(
+                          child: SelectableText(
                             'Other great things about this babyyyyyy',
                             style: TextStyle(
                               fontWeight: FontWeight.w700,
@@ -76,7 +76,7 @@ class Features extends StatelessWidget {
                         const SizedBox(height: 31),
                         ConstrainedBox(
                           constraints: BoxConstraints(maxWidth: 544),
-                          child: Text(
+                          child: SelectableText(
                             'Lorem ipsum home school stay-at-home order Blursday. Staycation stimulus essential. Dr. Fauci remote learning WHO isolation mail-in vote. Virtual happy hour Quibi four seasons total landscaping monolith home office.',
                             textAlign: TextAlign.center,
                             style: const TextStyle(fontSize: 19),
@@ -125,7 +125,7 @@ class _Feature extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        Text(
+        SelectableText(
           title,
           style: TextStyle(
             fontWeight: FontWeight.bold,
@@ -135,7 +135,7 @@ class _Feature extends StatelessWidget {
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 12),
-        Text(
+        SelectableText(
           description,
           textAlign: TextAlign.center,
         ),

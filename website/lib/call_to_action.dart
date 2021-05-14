@@ -16,7 +16,7 @@ class CallToAction extends StatelessWidget {
       child: Column(
         children: [
           SizedBox(height: isNarrowScreen ? 28 : 76),
-          Text(
+          SelectableText(
             'Get started with SuperEditor',
             textAlign: TextAlign.center,
             style: TextStyle(

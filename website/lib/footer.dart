@@ -47,7 +47,7 @@ class _LeftPart extends StatelessWidget {
             ? CrossAxisAlignment.center
             : CrossAxisAlignment.start,
         children: [
-          Text(
+          SelectableText(
             'Sponsored by the Superlist Team',
             style: TextStyle(
               fontWeight: FontWeight.w700,
@@ -105,7 +105,7 @@ class _RightPart extends StatelessWidget {
             ? CrossAxisAlignment.center
             : CrossAxisAlignment.start,
         children: [
-          Text(
+          SelectableText(
             'Keep up to date:',
             style: TextStyle(
               fontWeight: FontWeight.bold,
