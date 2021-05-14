@@ -21,14 +21,7 @@ class Header extends StatelessWidget {
             width: 188,
             height: 44,
           ),
-          if (isNarrowScreen)
-            IconButton(
-              icon: Icon(Icons.menu_rounded),
-              iconSize: 28,
-              color: Colors.white,
-              onPressed: () => DrawerLayout.show(context),
-            )
-          else
+          if (!isNarrowScreen)
             Row(
               children: [
                 _Link(
@@ -54,10 +47,6 @@ class DrawerLayout extends StatefulWidget {
   DrawerLayout({@required this.child}) : assert(child != null);
   final Widget child;
 
-  static void show(BuildContext context) {
-    context.findAncestorStateOfType<_DrawerLayoutState>()._show();
-  }
-
   @override
   _DrawerLayoutState createState() => _DrawerLayoutState();
 }
@@ -65,15 +54,9 @@ class DrawerLayout extends StatefulWidget {
 class _DrawerLayoutState extends State<DrawerLayout> {
   bool _open = false;
 
-  void _show() {
+  void _toggle() {
     setState(() {
-      _open = true;
-    });
-  }
-
-  void _hide() {
-    setState(() {
-      _open = false;
+      _open = !_open;
     });
   }
 
@@ -109,46 +92,54 @@ class _DrawerLayoutState extends State<DrawerLayout> {
           height: size.height,
           child: Container(color: const Color(0xFF003F51)),
         ),
-        if (_open) ...[
-          Positioned(
-            top: 30,
-            left: 20,
-            right: 20,
-            bottom: 0,
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Image.asset(
+        Positioned(
+          top: 30,
+          left: 20,
+          right: 20,
+          bottom: 0,
+          child: IgnorePointer(
+            ignoring: !_open,
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.ease,
+              opacity: _open ? 1 : 0,
+              child: Column(
+                children: [
+                  Align(
+                    alignment: Alignment.topLeft,
+                    child: Image.asset(
                       'assets/images/logo.gif',
                       width: 188,
                       height: 44,
                     ),
-                    IconButton(
-                      icon: Icon(Icons.close),
-                      iconSize: 28,
-                      color: Colors.white,
-                      onPressed: _hide,
-                    )
-                  ],
-                ),
-                const SizedBox(height: 16),
-                _Link(
-                  url: 'https://github.com/superlistapp/super_editor',
-                  child: Text('Github'),
-                ),
-                const SizedBox(height: 8),
-                _Link(
-                  url: 'https://github.com/superlistapp/super_editor/wiki',
-                  child: Text('Docs'),
-                ),
-                const SizedBox(height: 16),
-                const _DownloadButton(),
-              ],
+                  ),
+                  const SizedBox(height: 16),
+                  _Link(
+                    url: 'https://github.com/superlistapp/super_editor',
+                    child: Text('Github'),
+                  ),
+                  const SizedBox(height: 8),
+                  _Link(
+                    url: 'https://github.com/superlistapp/super_editor/wiki',
+                    child: Text('Docs'),
+                  ),
+                  const SizedBox(height: 16),
+                  const _DownloadButton(),
+                ],
+              ),
             ),
           ),
-        ],
+        ),
+        Positioned(
+          top: 30,
+          right: 20,
+          child: IconButton(
+            icon: _open ? Icon(Icons.close) : Icon(Icons.menu_rounded),
+            iconSize: 28,
+            color: Colors.white,
+            onPressed: _toggle,
+          ),
+        ),
       ],
     );
   }
