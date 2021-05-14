@@ -354,7 +354,7 @@ ExecutionInstruction applyBoldWhenCmdBIsPressed({
   }
 
   if (editContext.composer.selection!.isCollapsed) {
-    editContext.composer.preferences.toggleStyle('bold');
+    editContext.composer.preferences.toggleStyle(boldAttribution);
     return ExecutionInstruction.haltExecution;
   }
 
@@ -383,7 +383,7 @@ ExecutionInstruction applyItalicsWhenCmdIIsPressed({
   }
 
   if (editContext.composer.selection!.isCollapsed) {
-    editContext.composer.preferences.toggleStyle('italics');
+    editContext.composer.preferences.toggleStyle(italicsAttribution);
     return ExecutionInstruction.haltExecution;
   }
 
