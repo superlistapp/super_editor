@@ -108,23 +108,27 @@ class _DrawerLayoutState extends State<DrawerLayout> {
                   Align(
                     alignment: Alignment.topLeft,
                     child: Image.asset(
-                      'assets/images/logo.gif',
+                      'assets/images/logo_light_bg.gif',
                       width: 188,
                       height: 44,
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  _Link(
-                    url: 'https://github.com/superlistapp/super_editor',
-                    child: Text('Github'),
+                  Column(
+                    children: [
+                      const SizedBox(height: 16),
+                      _Link(
+                        url: 'https://github.com/superlistapp/super_editor',
+                        child: Text('Github'),
+                      ),
+                      const SizedBox(height: 8),
+                      _Link(
+                        url: 'https://github.com/superlistapp/super_editor/wiki',
+                        child: Text('Docs'),
+                      ),
+                      const SizedBox(height: 16),
+                      const _DownloadButton(),
+                    ],
                   ),
-                  const SizedBox(height: 8),
-                  _Link(
-                    url: 'https://github.com/superlistapp/super_editor/wiki',
-                    child: Text('Docs'),
-                  ),
-                  const SizedBox(height: 16),
-                  const _DownloadButton(),
                 ],
               ),
             ),
