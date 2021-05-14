@@ -79,7 +79,13 @@ class _DrawerLayoutState extends State<DrawerLayout> {
 
   @override
   Widget build(BuildContext context) {
-    final height = MediaQuery.of(context).size.height;
+    final size = MediaQuery.of(context).size;
+    final isNarrowScreen = size.width <= _breakpoint;
+
+    if (!isNarrowScreen) {
+      _open = false;
+      return widget.child;
+    }
 
     return Stack(
       children: [
@@ -97,10 +103,10 @@ class _DrawerLayoutState extends State<DrawerLayout> {
         AnimatedPositioned(
           duration: const Duration(milliseconds: 350),
           curve: Curves.fastOutSlowIn,
-          top: _open ? 0 : -height,
+          top: _open ? 0 : -size.height,
           left: 0,
           right: 0,
-          height: height,
+          height: size.height,
           child: Container(color: const Color(0xFF003F51)),
         ),
         if (_open) ...[
