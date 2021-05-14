@@ -95,6 +95,7 @@ class SuperTextFieldState extends State<SuperTextField> {
   final _selectableTextKey = GlobalKey<SelectableTextState>();
   final _textScrollKey = GlobalKey<SuperTextFieldScrollviewState>();
   late FocusNode _focusNode;
+  bool _hasFocus = false; // cache whether we have focus so we know when it changes
 
   late AttributedTextEditingController _controller;
   late ScrollController _scrollController;
@@ -105,7 +106,9 @@ class SuperTextFieldState extends State<SuperTextField> {
   void initState() {
     super.initState();
 
-    _focusNode = widget.focusNode ?? FocusNode();
+    _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
+    _hasFocus = _focusNode.hasFocus;
+
     _controller = (widget.textController ?? AttributedTextEditingController())
       ..addListener(_onSelectionOrContentChange);
     _scrollController = ScrollController();
@@ -116,10 +119,12 @@ class SuperTextFieldState extends State<SuperTextField> {
     super.didUpdateWidget(oldWidget);
 
     if (widget.focusNode != oldWidget.focusNode) {
+      _focusNode.removeListener(_onFocusChange);
       if (oldWidget.focusNode == null) {
         _focusNode.dispose();
       }
-      _focusNode = widget.focusNode ?? FocusNode();
+      _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
+      _hasFocus = _focusNode.hasFocus;
     }
 
     if (widget.textController != oldWidget.textController) {
@@ -141,6 +146,7 @@ class SuperTextFieldState extends State<SuperTextField> {
   @override
   void dispose() {
     _scrollController.dispose();
+    _focusNode.removeListener(_onFocusChange);
     if (widget.focusNode == null) {
       _focusNode.dispose();
     }
@@ -150,6 +156,17 @@ class SuperTextFieldState extends State<SuperTextField> {
     }
 
     super.dispose();
+  }
+
+  void _onFocusChange() {
+    // If our FocusNode just received focus, automatically set our
+    // controller's text position to the end of the available content.
+    //
+    // This behavior matches Flutter's standard behavior.
+    if (_focusNode.hasFocus && !_hasFocus) {
+      _controller.selection = TextSelection.collapsed(offset: _controller.text.text.length);
+    }
+    _hasFocus = _focusNode.hasFocus;
   }
 
   void _onSelectionOrContentChange() {
