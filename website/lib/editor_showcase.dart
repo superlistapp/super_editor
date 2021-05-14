@@ -42,7 +42,9 @@ class _EditorState extends State<EditorShowcase> {
     );
   }
 
-  static TextStyle _textStyleBuilder(Set<Attribution> attributions) {
+  static TextStyle Function(Set<Attribution> attributions) _textStyleBuilder(
+    bool isNarrowScreen,
+  ) {
     var result = TextStyle(
       fontFamily: 'Aeonik',
       fontWeight: FontWeight.w300,
@@ -51,44 +53,39 @@ class _EditorState extends State<EditorShowcase> {
       color: const Color(0xFF003F51),
     );
 
-    for (final attribution in attributions) {
-      if (attribution is NamedAttribution) {
-        switch (attribution.name) {
-          case 'header1':
-            result = result.copyWith(
-              fontSize: 68,
-              fontWeight: FontWeight.w700,
-              height: 1.2,
-            );
-            break;
-          case 'header2':
-            result = result.copyWith(
-              fontSize: 52,
-              fontWeight: FontWeight.bold,
-              height: 1.2,
-            );
-            break;
-          case 'blockquote':
-            result = result.copyWith(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              height: 1.4,
-              color: Colors.grey,
-            );
-            break;
-          case 'bold':
-            result = result.copyWith(fontWeight: FontWeight.bold);
-            break;
-          case 'italics':
-            result = result.copyWith(fontStyle: FontStyle.italic);
-            break;
-          case 'strikethrough':
-            result = result.copyWith(decoration: TextDecoration.lineThrough);
-            break;
+    return (Set<Attribution> attributions) {
+      for (final attribution in attributions) {
+        if (attribution is NamedAttribution) {
+          switch (attribution.name) {
+            case 'header1':
+              result = result.copyWith(
+                fontSize: isNarrowScreen ? 40 : 68,
+                fontWeight: FontWeight.w700,
+                height: 1.2,
+              );
+              break;
+            case 'blockquote':
+              result = result.copyWith(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                height: 1.4,
+                color: Colors.grey,
+              );
+              break;
+            case 'bold':
+              result = result.copyWith(fontWeight: FontWeight.bold);
+              break;
+            case 'italics':
+              result = result.copyWith(fontStyle: FontStyle.italic);
+              break;
+            case 'strikethrough':
+              result = result.copyWith(decoration: TextDecoration.lineThrough);
+              break;
+          }
         }
       }
-    }
-    return result;
+      return result;
+    };
   }
 
   static Widget _centeredHeaderBuilder(ComponentContext context) {
@@ -107,29 +104,38 @@ class _EditorState extends State<EditorShowcase> {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Container(
-        constraints: BoxConstraints(maxWidth: 1112).tighten(height: 632),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.9),
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              offset: const Offset(0, 10),
-              color: Colors.black.withOpacity(0.79),
-              blurRadius: 75,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isNarrowScreen = constraints.biggest.width <= 768;
+
+          return Container(
+            constraints: BoxConstraints(maxWidth: 1112)
+                .tighten(height: isNarrowScreen ? 400 : 632),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.9),
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  offset: const Offset(0, 10),
+                  color: Colors.black.withOpacity(0.79),
+                  blurRadius: 75,
+                ),
+              ],
             ),
-          ],
-        ),
-        child: Editor.custom(
-          editor: _docEditor,
-          maxWidth: 1112,
-          padding: const EdgeInsets.symmetric(horizontal: 96, vertical: 60),
-          textStyleBuilder: _textStyleBuilder,
-          componentBuilders: [
-            _centeredHeaderBuilder,
-            ...defaultComponentBuilders,
-          ],
-        ),
+            child: Editor.custom(
+              editor: _docEditor,
+              maxWidth: 1112,
+              padding: isNarrowScreen
+                  ? const EdgeInsets.all(16)
+                  : const EdgeInsets.symmetric(horizontal: 96, vertical: 60),
+              textStyleBuilder: _textStyleBuilder(isNarrowScreen),
+              componentBuilders: [
+                _centeredHeaderBuilder,
+                ...defaultComponentBuilders,
+              ],
+            ),
+          );
+        },
       ),
     );
   }
