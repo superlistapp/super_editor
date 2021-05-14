@@ -45,43 +45,34 @@ class _EditorState extends State<EditorShowcase> {
   static TextStyle Function(Set<Attribution> attributions) _textStyleBuilder(
     bool isNarrowScreen,
   ) {
-    var result = TextStyle(
-      fontFamily: 'Aeonik',
-      fontWeight: FontWeight.w300,
-      fontSize: 18,
-      height: 27 / 18,
-      color: const Color(0xFF003F51),
-    );
-
     return (Set<Attribution> attributions) {
+      var result = TextStyle(
+        fontFamily: 'Aeonik',
+        fontWeight: FontWeight.w400,
+        fontSize: 18,
+        height: 27 / 18,
+        color: const Color(0xFF003F51),
+      );
+
       for (final attribution in attributions) {
-        if (attribution is NamedAttribution) {
-          switch (attribution.name) {
-            case 'header1':
-              result = result.copyWith(
-                fontSize: isNarrowScreen ? 40 : 68,
-                fontWeight: FontWeight.w700,
-                height: 1.2,
-              );
-              break;
-            case 'blockquote':
-              result = result.copyWith(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                height: 1.4,
-                color: Colors.grey,
-              );
-              break;
-            case 'bold':
-              result = result.copyWith(fontWeight: FontWeight.bold);
-              break;
-            case 'italics':
-              result = result.copyWith(fontStyle: FontStyle.italic);
-              break;
-            case 'strikethrough':
-              result = result.copyWith(decoration: TextDecoration.lineThrough);
-              break;
-          }
+        if (attribution == header1Attribution) {
+          result = result.copyWith(
+            fontSize: isNarrowScreen ? 40 : 68,
+            fontWeight: FontWeight.w700,
+            height: 1.2,
+          );
+        } else if (attribution == blockquoteAttribution) {
+          result = result.copyWith(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.black54,
+          );
+        } else if (attribution == boldAttribution) {
+          result = result.copyWith(fontWeight: FontWeight.bold);
+        } else if (attribution == italicsAttribution) {
+          result = result.copyWith(fontStyle: FontStyle.italic);
+        } else if (attribution == strikethroughAttribution) {
+          result = result.copyWith(decoration: TextDecoration.lineThrough);
         }
       }
       return result;
@@ -89,16 +80,35 @@ class _EditorState extends State<EditorShowcase> {
   }
 
   static Widget _centeredHeaderBuilder(ComponentContext context) {
-    var result = paragraphBuilder(context);
     final node = context.documentNode;
 
-    if (node is ParagraphNode) {
-      if (node.metadata['blockType'] == 'header1') {
-        return Center(child: result);
-      }
+    if (node is ParagraphNode && node.metadata['blockType'] == 'header1') {
+      return Center(child: paragraphBuilder(context));
     }
 
-    return result;
+    return null;
+  }
+
+  static Widget _blockquoteBuilder(ComponentContext context) {
+    final node = context.documentNode;
+
+    if (node is ParagraphNode &&
+        node.metadata['blockType'] == blockquoteAttribution) {
+      return Container(
+        decoration: BoxDecoration(
+          border: Border(
+            left: BorderSide(
+              color: Colors.black26,
+              width: 4,
+            ),
+          ),
+        ),
+        padding: const EdgeInsets.only(left: 8),
+        child: paragraphBuilder(context),
+      );
+    }
+
+    return null;
   }
 
   @override
@@ -131,6 +141,7 @@ class _EditorState extends State<EditorShowcase> {
               textStyleBuilder: _textStyleBuilder(isNarrowScreen),
               componentBuilders: [
                 _centeredHeaderBuilder,
+                _blockquoteBuilder,
                 ...defaultComponentBuilders,
               ],
             ),
