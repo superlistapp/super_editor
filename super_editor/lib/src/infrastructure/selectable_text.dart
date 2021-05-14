@@ -217,7 +217,9 @@ class SelectableTextState extends State<SelectableText> implements TextLayout {
     }
 
     final renderParagraph = _renderParagraph!;
-    final positionOffset = renderParagraph.getOffsetForCaret(currentPosition, Rect.zero);
+    // Note: add half the line height to the current offset to help deal with
+    //       line heights that aren't accurate.
+    final positionOffset = renderParagraph.getOffsetForCaret(currentPosition, Rect.zero) + Offset(0, _lineHeight / 2);
     final endOfLineOffset = Offset(0, positionOffset.dy);
     return renderParagraph.getPositionForOffset(endOfLineOffset);
   }
@@ -229,7 +231,9 @@ class SelectableTextState extends State<SelectableText> implements TextLayout {
     }
 
     final renderParagraph = _renderParagraph!;
-    final positionOffset = renderParagraph.getOffsetForCaret(currentPosition, Rect.zero);
+    // Note: add half the line height to the current offset to help deal with
+    //       line heights that aren't accurate.
+    final positionOffset = renderParagraph.getOffsetForCaret(currentPosition, Rect.zero) + Offset(0, _lineHeight / 2);
     final endOfLineOffset = Offset(renderParagraph.size.width, positionOffset.dy);
     return renderParagraph.getPositionForOffset(endOfLineOffset);
   }
