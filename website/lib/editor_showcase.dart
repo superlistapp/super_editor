@@ -107,23 +107,28 @@ class _EditorState extends State<EditorShowcase> {
       // bounds on the screen and display the toolbar near the selected
       // text.
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-        final docBoundingBox = (_docLayoutKey.currentState as DocumentLayout)
-            .getRectForSelection(
-              _composer.selection.base,
-              _composer.selection.extent,
-            )
-            .translate(0, 120);
+        final windowWidth = MediaQuery.of(context).size.width;
+        final docBoundingBox =
+            (_docLayoutKey.currentState as DocumentLayout).getRectForSelection(
+          _composer.selection.base,
+          _composer.selection.extent,
+        );
         final parentBox = context.findRenderObject() as RenderBox;
         final docBox =
             _docLayoutKey.currentContext.findRenderObject() as RenderBox;
         var overlayBoundingBox = Rect.fromPoints(
           docBox.localToGlobal(docBoundingBox.topLeft, ancestor: parentBox),
           docBox.localToGlobal(docBoundingBox.bottomRight, ancestor: parentBox),
-        );
+        ).translate(0, windowWidth < 540 ? 90 : 120);
 
+        // A hacky piece of code that tries to ensure the editor toolbar doesn't
+        // go out of window bounds. Assumes that the editor toolbar is fixed height.
         var offset = overlayBoundingBox.topCenter;
-
-        print(offset);
+        if (offset.dx < 172) {
+          offset = offset.translate(172, 0);
+        } else if (offset.dx > windowWidth - 132) {
+          offset = offset.translate(-132, 0);
+        }
 
         _selectionAnchor.value = offset;
       });
@@ -186,6 +191,18 @@ class _EditorState extends State<EditorShowcase> {
         if (attribution == header1Attribution) {
           result = result.copyWith(
             fontSize: isNarrowScreen ? 40 : 68,
+            fontWeight: FontWeight.w700,
+            height: 1.2,
+          );
+        } else if (attribution == header2Attribution) {
+          result = result.copyWith(
+            fontSize: isNarrowScreen ? 32 : 56,
+            fontWeight: FontWeight.w700,
+            height: 1.2,
+          );
+        } else if (attribution == header3Attribution) {
+          result = result.copyWith(
+            fontSize: isNarrowScreen ? 26 : 36,
             fontWeight: FontWeight.w700,
             height: 1.2,
           );
