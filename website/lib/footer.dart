@@ -64,22 +64,16 @@ class _LeftPart extends StatelessWidget {
                   child: Transform.translate(
                     // A pretty ugly hack to align this to match the text vertically.
                     offset: const Offset(0, 2),
-                    child: MouseRegion(
-                      cursor: SystemMouseCursors.click,
-                      child: GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap: () => launch('https://superlist.recruitee.com/'),
-                        child: _UnderlinedText(
-                          'Join us',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 16,
-                          ),
-                          underlineWidth: 2,
-                          underlineColor: Colors.white,
-                          underlineSpacing: 2,
-                        ),
+                    child: _Link(
+                      'Join us',
+                      url: 'https://superlist.recruitee.com',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
                       ),
+                      underlineWidth: 2,
+                      underlineColor: Colors.white,
+                      underlineSpacing: 2,
                     ),
                   ),
                 ),
@@ -119,23 +113,9 @@ class _RightPart extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 4),
-          MouseRegion(
-            cursor: SystemMouseCursors.click,
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () => launch('https://twitter.com/SuperlistHQ'),
-              child: _UnderlinedText('Twitter'),
-            ),
-          ),
+          _Link('Superlist.com', url: 'https://superlist.com'),
           const SizedBox(height: 4),
-          MouseRegion(
-            cursor: SystemMouseCursors.click,
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () => launch('https://superlist.com'),
-              child: _UnderlinedText('Superlist.com'),
-            ),
-          ),
+          _Link('Twitter', url: 'https://twitter.com/SuperlistHQ'),
         ],
       ),
     );
@@ -146,16 +126,18 @@ class _RightPart extends StatelessWidget {
 
 // A widget that allows specifying a margin between the provided text and the
 // line that's drawn under it.
-class _UnderlinedText extends StatelessWidget {
-  const _UnderlinedText(
+class _Link extends StatelessWidget {
+  const _Link(
     this.text, {
+    @required this.url,
     this.style,
     this.underlineColor = const Color(0xAAFFFFFF),
     this.underlineWidth = 1.5,
     this.underlineSpacing = 1,
-  });
+  }) : assert(url != null);
 
   final String text;
+  final String url;
   final TextStyle style;
   final Color underlineColor;
   final double underlineWidth;
@@ -163,21 +145,28 @@ class _UnderlinedText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return IntrinsicWidth(
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Text(text, style: style),
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: -underlineSpacing,
-            height: underlineWidth,
-            child: DecoratedBox(
-              decoration: BoxDecoration(color: underlineColor),
-            ),
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => launch(url),
+        child: IntrinsicWidth(
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Text(text, style: style),
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: -underlineSpacing,
+                height: underlineWidth,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(color: underlineColor),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 
+const _breakpoint = 768;
+
 class Features extends StatelessWidget {
   const Features();
 
   @override
   Widget build(BuildContext context) {
+    final isNarrowScreen = MediaQuery.of(context).size.width <= _breakpoint;
+
     return Container(
       color: const Color(0xFF003F51),
       padding: const EdgeInsets.only(left: 20, right: 20, bottom: 80),
@@ -38,36 +42,47 @@ class Features extends StatelessWidget {
                             'A true cross platform editor written from scratch to deliver the performance and stability you expect',
                       ),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 44),
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(maxWidth: 544),
-                        child: Column(
-                          children: [
-                            Text(
-                              'Other great things about this babyyyyyyyyyy',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w700,
-                                fontSize: 38,
-                                height: 46 / 38,
-                              ),
-                              textAlign: TextAlign.center,
+                    SizedBox(
+                      width: double.infinity,
+                      height: isNarrowScreen ? 45 : 85,
+                    ),
+                    Column(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 32),
+                          child: Text(
+                            'Other great things about this babyyyyyy',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 38,
+                              height: 46 / 38,
                             ),
-                            const SizedBox(height: 37),
-                            SizedBox(
-                              width: 544,
-                              height: 307,
-                              child: Placeholder(),
-                            ),
-                            const SizedBox(height: 31),
-                            Text(
-                              'Lorem ipsum home school stay-at-home order Blursday. Staycation stimulus essential. Dr. Fauci remote learning WHO isolation mail-in vote. Virtual happy hour Quibi four seasons total landscaping monolith home office.',
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(fontSize: 19),
-                            ),
-                          ],
+                            textAlign: TextAlign.center,
+                          ),
                         ),
-                      ),
+                        SizedBox(height: isNarrowScreen ? 22 : 37),
+                        Container(
+                          constraints: BoxConstraints(maxWidth: 544)
+                              .tighten(height: isNarrowScreen ? 212 : 307),
+                          margin: const EdgeInsets.only(top: 44),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF053239),
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          child: Center(
+                            child: FlutterLogo(size: 64),
+                          ),
+                        ),
+                        const SizedBox(height: 31),
+                        ConstrainedBox(
+                          constraints: BoxConstraints(maxWidth: 544),
+                          child: Text(
+                            'Lorem ipsum home school stay-at-home order Blursday. Staycation stimulus essential. Dr. Fauci remote learning WHO isolation mail-in vote. Virtual happy hour Quibi four seasons total landscaping monolith home office.',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(fontSize: 19),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
