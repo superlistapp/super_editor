@@ -15,7 +15,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(primarySwatch: Colors.blue, fontFamily: 'Aeonik'),
-      home:  _Home(),
+      home: _Home(),
     );
   }
 }
@@ -27,49 +27,51 @@ class _Home extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF003F51),
-      body: Scrollbar(
-        child: SingleChildScrollView(
-          child: DefaultTextStyle.merge(
-            style: TextStyle(
-              fontWeight: FontWeight.w400,
-              fontSize: 18,
-              height: 27 / 18,
-              color: Colors.white.withOpacity(0.9),
-            ),
-            child: Stack(
-              children: [
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  child: Image.asset(
-                    'assets/images/background.png',
-                    fit: BoxFit.cover,
+      body: DrawerLayout(
+        child: Scrollbar(
+          child: SingleChildScrollView(
+            child: DefaultTextStyle.merge(
+              style: TextStyle(
+                fontWeight: FontWeight.w400,
+                fontSize: 18,
+                height: 27 / 18,
+                color: Colors.white.withOpacity(0.9),
+              ),
+              child: Stack(
+                children: [
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    child: Image.asset(
+                      'assets/images/background.png',
+                      fit: BoxFit.cover,
+                    ),
                   ),
-                ),
-                Column(
-                  children: [
-                    SizedBox(height: 30),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Header(),
-                    ),
-                    SizedBox(height: 52),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: EditorShowcase(),
-                    ),
-                    SizedBox(height: 135),
-                    Features(),
-                    CallToAction(),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Footer(),
-                    ),
-                  ],
-                ),
-              ],
+                  Column(
+                    children: [
+                      SizedBox(height: 30),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: Header(),
+                      ),
+                      SizedBox(height: 52),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: EditorShowcase(),
+                      ),
+                      SizedBox(height: 135),
+                      Features(),
+                      CallToAction(),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: Footer(),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
