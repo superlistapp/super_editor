@@ -26,8 +26,13 @@ class Features extends StatelessWidget {
                   children: [
                     ConstrainedBox(
                       constraints: BoxConstraints(maxWidth: 499),
-                      child: const _Feature(
-                        iconPath: 'assets/images/ic_customize.png',
+                      child: _Feature(
+                        image: Image.asset(
+                          'assets/images/ic_customize.png',
+                          fit: BoxFit.cover,
+                          width: 48,
+                          height: 48,
+                        ),
                         title: 'Fully customizable',
                         description:
                             'Easy to extend and very detailed access to all component, designed to and build for developer, allow you to adjust the editor to your specific needs',
@@ -35,8 +40,13 @@ class Features extends StatelessWidget {
                     ),
                     ConstrainedBox(
                       constraints: BoxConstraints(maxWidth: 515),
-                      child: const _Feature(
-                        iconPath: 'assets/images/dart_logo.png',
+                      child: _Feature(
+                        image: Image.asset(
+                          'assets/images/dart_logo.png',
+                          fit: BoxFit.cover,
+                          width: 64,
+                          height: 64,
+                        ),
                         title: 'Fully written in Dart',
                         description:
                             'A true cross platform editor written from scratch to deliver the performance and stability you expect',
@@ -97,14 +107,14 @@ class Features extends StatelessWidget {
 
 class _Feature extends StatelessWidget {
   const _Feature({
-    @required this.iconPath,
+    @required this.image,
     @required this.title,
     @required this.description,
-  })  : assert(iconPath != null),
+  })  : assert(image != null),
         assert(title != null),
         assert(description != null);
 
-  final String iconPath;
+  final Widget image;
   final String title;
   final String description;
 
@@ -113,16 +123,14 @@ class _Feature extends StatelessWidget {
     return Column(
       children: [
         Container(
+          width: 96,
+          height: 96,
           decoration: BoxDecoration(
             color: const Color(0xFF053239),
             borderRadius: BorderRadius.circular(30),
           ),
-          padding: const EdgeInsets.all(24),
-          child: Image.asset(
-            iconPath,
-            width: 48,
-            height: 48,
-          ),
+          alignment: Alignment.center,
+          child: image,
         ),
         const SizedBox(height: 12),
         SelectableText(
