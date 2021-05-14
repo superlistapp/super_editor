@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-const _breakpoint = 530;
+const _breakpoint = 540;
 
 class Header extends StatelessWidget {
   const Header();

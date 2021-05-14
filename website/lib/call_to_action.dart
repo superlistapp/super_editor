@@ -1,28 +1,33 @@
 import 'package:flutter/material.dart';
 
+const _breakpoint = 768;
+
 class CallToAction extends StatelessWidget {
   const CallToAction();
 
   @override
   Widget build(BuildContext context) {
+    final isNarrowScreen = MediaQuery.of(context).size.width <= _breakpoint;
+
     return Container(
       color: const Color(0xFF14AEBE),
       width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 40),
       child: Column(
         children: [
-          const SizedBox(height: 76),
-          Text(
+          SizedBox(height: isNarrowScreen ? 28 : 76),
+          SelectableText(
             'Get started with SuperEditor',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontWeight: FontWeight.bold,
-              fontSize: 51,
+              fontSize: isNarrowScreen ? 38 : 51,
               color: const Color(0xFF003F51),
             ),
           ),
           const SizedBox(height: 29),
           const _DownloadButton(),
-          const SizedBox(height: 104),
+          SizedBox(height: isNarrowScreen ? 60 : 104),
         ],
       ),
     );
@@ -34,10 +39,14 @@ class _DownloadButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isNarrowScreen = MediaQuery.of(context).size.width <= _breakpoint;
+
     return MaterialButton(
       color: const Color(0xFFFAE74F),
       onPressed: () {},
-      padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 24),
+      padding: isNarrowScreen
+          ? const EdgeInsets.symmetric(horizontal: 32, vertical: 20)
+          : const EdgeInsets.symmetric(horizontal: 48, vertical: 24),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(64)),
       height: 42,
       elevation: 0,

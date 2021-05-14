@@ -20,11 +20,16 @@ class MyApp extends StatelessWidget {
   }
 }
 
+// Should match whatever is in header.dart
+const _breakpoint = 540;
+
 class _Home extends StatelessWidget {
   const _Home();
 
   @override
   Widget build(BuildContext context) {
+    final isNarrowScreen = MediaQuery.of(context).size.width <= _breakpoint;
+
     return Scaffold(
       backgroundColor: const Color(0xFF003F51),
       body: DrawerLayout(
@@ -56,12 +61,12 @@ class _Home extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 20),
                         child: Header(),
                       ),
-                      SizedBox(height: 52),
+                      SizedBox(height: isNarrowScreen ? 16 : 52),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 20),
                         child: EditorShowcase(),
                       ),
-                      SizedBox(height: 135),
+                      SizedBox(height: isNarrowScreen ? 92 : 135),
                       Features(),
                       CallToAction(),
                       Padding(
