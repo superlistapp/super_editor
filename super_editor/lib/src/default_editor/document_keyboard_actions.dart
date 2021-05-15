@@ -3,11 +3,12 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
-import 'package:super_editor/src/default_editor/attributions.dart';
-import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/edit_context.dart';
+import 'package:super_editor/src/default_editor/attributions.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/keyboard.dart';
+import 'package:super_editor/super_editor.dart';
 
 import 'document_interaction.dart';
 import 'multi_node_editing.dart';
@@ -35,7 +36,7 @@ ExecutionInstruction collapseSelectionWhenDirectionalKeyIsPressed({
   if (keyEvent.isShiftPressed) {
     return ExecutionInstruction.continueExecution;
   }
-  if (keyEvent.isMetaPressed) {
+  if (keyEvent.isMetaPressed || keyEvent.isControlPressed) {
     return ExecutionInstruction.continueExecution;
   }
   if (editContext.composer.selection == null || editContext.composer.selection!.isCollapsed) {
@@ -60,7 +61,7 @@ ExecutionInstruction pasteWhenCmdVIsPressed({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
-  if (!keyEvent.isMetaPressed || keyEvent.character?.toLowerCase() != 'v') {
+  if (!keyEvent.isPrimaryShortcutKeyPressed || keyEvent.character?.toLowerCase() != 'v') {
     return ExecutionInstruction.continueExecution;
   }
   if (editContext.composer.selection == null) {
@@ -101,7 +102,7 @@ ExecutionInstruction selectAllWhenCmdAIsPressed({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
-  if (!keyEvent.isMetaPressed || keyEvent.character?.toLowerCase() != 'a') {
+  if (!keyEvent.isPrimaryShortcutKeyPressed || keyEvent.character?.toLowerCase() != 'a') {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -260,7 +261,7 @@ ExecutionInstruction copyWhenCmdVIsPressed({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
-  if (!keyEvent.isMetaPressed || keyEvent.character?.toLowerCase() != 'c') {
+  if (!keyEvent.isPrimaryShortcutKeyPressed || keyEvent.character?.toLowerCase() != 'c') {
     return ExecutionInstruction.continueExecution;
   }
   if (editContext.composer.selection == null) {
@@ -346,7 +347,7 @@ ExecutionInstruction applyBoldWhenCmdBIsPressed({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
-  if (keyEvent.character?.toLowerCase() != 'b' || !keyEvent.isMetaPressed) {
+  if (!keyEvent.isPrimaryShortcutKeyPressed || keyEvent.character?.toLowerCase() != 'b') {
     return ExecutionInstruction.continueExecution;
   }
   if (editContext.composer.selection == null) {
@@ -375,7 +376,7 @@ ExecutionInstruction applyItalicsWhenCmdIIsPressed({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
-  if (keyEvent.character?.toLowerCase() != 'i' || !keyEvent.isMetaPressed) {
+  if (!keyEvent.isPrimaryShortcutKeyPressed || keyEvent.character?.toLowerCase() != 'i') {
     return ExecutionInstruction.continueExecution;
   }
   if (editContext.composer.selection == null) {
@@ -636,7 +637,7 @@ ExecutionInstruction moveUpDownLeftAndRightWithArrowKeys({
     final movementModifiers = <String, dynamic>{
       'movement_unit': 'character',
     };
-    if (keyEvent.isMetaPressed) {
+    if (keyEvent.isPrimaryShortcutKeyPressed) {
       movementModifiers['movement_unit'] = 'line';
     } else if (keyEvent.isAltPressed) {
       movementModifiers['movement_unit'] = 'word';
@@ -654,7 +655,7 @@ ExecutionInstruction moveUpDownLeftAndRightWithArrowKeys({
     final movementModifiers = <String, dynamic>{
       'movement_unit': 'character',
     };
-    if (keyEvent.isMetaPressed) {
+    if (keyEvent.isPrimaryShortcutKeyPressed) {
       movementModifiers['movement_unit'] = 'line';
     } else if (keyEvent.isAltPressed) {
       movementModifiers['movement_unit'] = 'word';

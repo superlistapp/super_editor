@@ -1,3 +1,12 @@
+import 'package:flutter/services.dart';
+
+import 'platform_detector.dart';
+
+extension PrimaryShortcutKey on RawKeyEvent {
+  bool get isPrimaryShortcutKeyPressed =>
+      (Platform.instance.isMac && isMetaPressed) || (!Platform.instance.isMac && isControlPressed);
+}
+
 /// On web, Flutter reports control character labels as
 /// the [RawKeyEvent.character], which we don't want.
 /// Until Flutter fixes the problem, this blacklist
