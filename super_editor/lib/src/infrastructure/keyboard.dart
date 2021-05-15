@@ -13,6 +13,7 @@ extension PrimaryShortcutKey on RawKeyEvent {
 /// identifies the keys that we should ignore for the
 /// purpose of text/character entry.
 const webBugBlacklistCharacters = {
+  'Dead',
   'Shift',
   'Alt',
   'Escape',
