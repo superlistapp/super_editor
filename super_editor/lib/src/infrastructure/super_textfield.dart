@@ -10,6 +10,7 @@ import 'package:flutter/services.dart';
 import 'package:super_editor/src/default_editor/editor.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/platform_detector.dart';
 import 'package:super_editor/src/infrastructure/selectable_text.dart';
 import 'package:super_editor/src/infrastructure/text_layout.dart';
 
@@ -1191,7 +1192,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
     SelectableTextState? selectableTextState,
     required RawKeyEvent keyEvent,
   }) {
-    if (!keyEvent.isMetaPressed) {
+    if (!keyEvent.isPrimaryShortcutKeyPressed) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
     if (keyEvent.logicalKey != LogicalKeyboardKey.keyC) {
@@ -1208,7 +1209,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
     SelectableTextState? selectableTextState,
     required RawKeyEvent keyEvent,
   }) {
-    if (!keyEvent.isMetaPressed) {
+    if (!keyEvent.isPrimaryShortcutKeyPressed) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
     if (keyEvent.logicalKey != LogicalKeyboardKey.keyV) {
@@ -1229,7 +1230,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
     SelectableTextState? selectableTextState,
     required RawKeyEvent keyEvent,
   }) {
-    if (!keyEvent.isMetaPressed) {
+    if (!keyEvent.isPrimaryShortcutKeyPressed) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
     if (keyEvent.logicalKey != LogicalKeyboardKey.keyA) {
@@ -1268,7 +1269,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
       final movementModifiers = <String, dynamic>{
         'movement_unit': 'character',
       };
-      if (keyEvent.isMetaPressed) {
+      if (keyEvent.isPrimaryShortcutKeyPressed) {
         movementModifiers['movement_unit'] = 'line';
       } else if (keyEvent.isAltPressed) {
         movementModifiers['movement_unit'] = 'word';
@@ -1286,7 +1287,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
       final movementModifiers = <String, dynamic>{
         'movement_unit': 'character',
       };
-      if (keyEvent.isMetaPressed) {
+      if (keyEvent.isPrimaryShortcutKeyPressed) {
         movementModifiers['movement_unit'] = 'line';
       } else if (keyEvent.isAltPressed) {
         movementModifiers['movement_unit'] = 'word';

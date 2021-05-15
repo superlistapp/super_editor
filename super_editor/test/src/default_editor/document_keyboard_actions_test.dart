@@ -8,9 +8,11 @@ import 'package:super_editor/src/default_editor/document_keyboard_actions.dart';
 import 'package:super_editor/src/default_editor/image.dart';
 import 'package:super_editor/src/default_editor/paragraph.dart';
 import 'package:super_editor/src/infrastructure/attributed_text.dart';
+import 'package:super_editor/src/infrastructure/platform_detector.dart';
 
 import '../_document_test_tools.dart';
 import '../_text_entry_test_tools.dart';
+import '../infrastructure/_platform_test_tools.dart';
 
 void main() {
   group(
@@ -22,6 +24,8 @@ void main() {
           test(
             'it does nothing when meta key is pressed but A-key is not pressed',
             () {
+              Platform.setTestInstance(MacPlatform());
+
               final _editContext = createEditContext(document: MutableDocument());
               var result = selectAllWhenCmdAIsPressed(
                 editContext: _editContext,
@@ -38,12 +42,16 @@ void main() {
 
               // The handler should pass on handling the key.
               expect(result, ExecutionInstruction.continueExecution);
+
+              Platform.setTestInstance(null);
             },
           );
 
           test(
             'it does nothing when A-key is pressed but meta key is not pressed',
             () {
+              Platform.setTestInstance(MacPlatform());
+
               final _editContext = createEditContext(document: MutableDocument());
               var result = selectAllWhenCmdAIsPressed(
                 editContext: _editContext,
@@ -60,12 +68,16 @@ void main() {
 
               // The handler should pass on handling the key.
               expect(result, ExecutionInstruction.continueExecution);
+
+              Platform.setTestInstance(null);
             },
           );
 
           test(
             'it does nothing when CMD+A is pressed but the document is empty',
             () {
+              Platform.setTestInstance(MacPlatform());
+
               final _editContext = createEditContext(document: MutableDocument());
               var result = selectAllWhenCmdAIsPressed(
                 editContext: _editContext,
@@ -81,12 +93,16 @@ void main() {
 
               // The handler should pass on handling the key.
               expect(result, ExecutionInstruction.continueExecution);
+
+              Platform.setTestInstance(null);
             },
           );
 
           test(
             'it selects all when CMD+A is pressed with a single-node document',
             () {
+              Platform.setTestInstance(MacPlatform());
+
               final _editContext = createEditContext(
                 document: MutableDocument(
                   nodes: [
@@ -125,11 +141,15 @@ void main() {
                   nodePosition: TextPosition(offset: 'This is some text'.length),
                 ),
               );
+
+              Platform.setTestInstance(null);
             },
           );
           test(
             'it selects all when CMD+A is pressed with a two-node document',
             () {
+              Platform.setTestInstance(MacPlatform());
+
               final _editContext = createEditContext(
                 document: MutableDocument(
                   nodes: [
@@ -172,11 +192,15 @@ void main() {
                   nodePosition: TextPosition(offset: 'This is some text'.length),
                 ),
               );
+
+              Platform.setTestInstance(null);
             },
           );
           test(
             'it selects all when CMD+A is pressed with a three-node document',
             () {
+              Platform.setTestInstance(MacPlatform());
+
               final _editContext = createEditContext(
                 document: MutableDocument(
                   nodes: [
@@ -223,6 +247,8 @@ void main() {
                   nodePosition: BinaryPosition.included(),
                 ),
               );
+
+              Platform.setTestInstance(null);
             },
           );
         },
