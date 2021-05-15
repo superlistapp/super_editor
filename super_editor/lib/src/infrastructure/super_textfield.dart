@@ -384,14 +384,22 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
 
   void _onTapDown(TapDownDetails details) {
     _log.log('_onTapDown', 'EditableDocument: onTapDown()');
-    _clearSelection();
     _selectionType = _SelectionType.position;
 
     final textOffset = _getTextOffset(details.localPosition);
     final tapTextPosition = _getPositionNearestToTextOffset(textOffset);
 
+    final expandSelection = RawKeyboard.instance.keysPressed.contains(LogicalKeyboardKey.shiftLeft) ||
+        RawKeyboard.instance.keysPressed.contains(LogicalKeyboardKey.shiftRight) ||
+        RawKeyboard.instance.keysPressed.contains(LogicalKeyboardKey.shift);
+
     setState(() {
-      widget.textController.selection = TextSelection.collapsed(offset: tapTextPosition.offset);
+      widget.textController.selection = expandSelection
+          ? TextSelection(
+              baseOffset: widget.textController.selection.baseOffset,
+              extentOffset: tapTextPosition.offset,
+            )
+          : TextSelection.collapsed(offset: tapTextPosition.offset);
     });
 
     widget.focusNode.requestFocus();
