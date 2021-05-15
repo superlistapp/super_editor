@@ -636,7 +636,7 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
     required Widget child,
   }) {
     return Focus(
-      onKey: (node, event) => true,
+      onKey: (node, event) => KeyEventResult.handled,
       child: child,
     );
   }
