@@ -346,7 +346,12 @@ void main() {
             //
             // The given offset is "16", which represents selection of the 17th
             // character.
-            expect(selectableTextState.getCharacterBox(TextPosition(offset: 16)).top, 0);
+            //
+            // We give a tiny bit of wiggle room on the value because when this test
+            // is run on Windows and Linux CI, there is some kind of precision error
+            // that results in a tiny positive number instead of zero.
+            expect(selectableTextState.getCharacterBox(TextPosition(offset: 16)).top, lessThan(0.1));
+            expect(selectableTextState.getCharacterBox(TextPosition(offset: 16)).top, greaterThanOrEqualTo(0));
           });
 
           testWidgets('it expands left by character', (tester) async {
