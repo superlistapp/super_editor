@@ -1648,6 +1648,460 @@ void main() {
         });
       });
 
+      group('delete line before caret', () {
+        group('Mac', () {
+          testWidgets('cmd + backspace deletes partial line before caret (flowed multiline)', (tester) async {
+            Platform.setTestInstance(MacPlatform());
+
+            // Note: this test depends on a multi-line text layout, therefore
+            // the layout width and the text content must be precise.
+            final controller = AttributedTextEditingController(
+              text: AttributedText(text: _multilineLayoutText),
+              selection: TextSelection.collapsed(offset: 28), // midway through 2nd line
+            );
+
+            final selectableTextState = await _pumpMultilineLayout(tester);
+
+            final result =
+                DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
+              controller: controller,
+              selectableTextState: selectableTextState,
+              keyEvent: FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.backspace,
+                  physicalKey: PhysicalKeyboardKey.backspace,
+                  isMetaPressed: true,
+                ),
+                character: null,
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.handled);
+            expect(controller.selection.isCollapsed, true);
+            expect(controller.selection.extentOffset, 18);
+            expect(controller.text.text, 'this text is long be multiline in the available space');
+
+            Platform.setTestInstance(null);
+          });
+
+          testWidgets('cmd + backspace deletes entire line (flowed multiline)', (tester) async {
+            Platform.setTestInstance(MacPlatform());
+
+            // Note: this test depends on a multi-line text layout, therefore
+            // the layout width and the text content must be precise.
+            final controller = AttributedTextEditingController(
+              text: AttributedText(text: _multilineLayoutText),
+              selection: TextSelection.collapsed(offset: 31, affinity: TextAffinity.upstream), // end of 2nd line
+            );
+
+            final selectableTextState = await _pumpMultilineLayout(tester);
+
+            final result =
+                DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
+              controller: controller,
+              selectableTextState: selectableTextState,
+              keyEvent: FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.backspace,
+                  physicalKey: PhysicalKeyboardKey.backspace,
+                  isMetaPressed: true,
+                ),
+                character: null,
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.handled);
+            expect(controller.selection.isCollapsed, true);
+            expect(controller.selection.extentOffset, 18);
+            expect(controller.text.text, 'this text is long multiline in the available space');
+
+            Platform.setTestInstance(null);
+          });
+
+          testWidgets('cmd + backspace deletes partial line before caret (explicit newlines)', (tester) async {
+            Platform.setTestInstance(MacPlatform());
+
+            final controller = AttributedTextEditingController(
+              text: AttributedText(text: 'This is line 1\nThis is line 2\nThis is line 3'),
+              selection: TextSelection.collapsed(offset: 23), // midway through 2nd line
+            );
+
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+
+            final result =
+                DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
+              controller: controller,
+              selectableTextState: selectableTextState,
+              keyEvent: FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.backspace,
+                  physicalKey: PhysicalKeyboardKey.backspace,
+                  isMetaPressed: true,
+                ),
+                character: null,
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.handled);
+            expect(controller.selection.isCollapsed, true);
+            expect(controller.selection.extentOffset, 15);
+            expect(controller.text.text, 'This is line 1\nline 2\nThis is line 3');
+
+            Platform.setTestInstance(null);
+          });
+
+          testWidgets('cmd + backspace deletes entire line (explicit newlines)', (tester) async {
+            Platform.setTestInstance(MacPlatform());
+
+            final controller = AttributedTextEditingController(
+              text: AttributedText(text: 'This is line 1\nThis is line 2\nThis is line 3'),
+              selection: TextSelection.collapsed(offset: 29, affinity: TextAffinity.upstream), // end of 2nd line
+            );
+
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+
+            final result =
+                DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
+              controller: controller,
+              selectableTextState: selectableTextState,
+              keyEvent: FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.backspace,
+                  physicalKey: PhysicalKeyboardKey.backspace,
+                  isMetaPressed: true,
+                ),
+                character: null,
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.handled);
+            expect(controller.selection.isCollapsed, true);
+            expect(controller.selection.extentOffset, 15);
+            expect(controller.text.text, 'This is line 1\n\nThis is line 3');
+
+            Platform.setTestInstance(null);
+          });
+
+          testWidgets('it does nothing when selection is expanded', (tester) async {
+            Platform.setTestInstance(MacPlatform());
+
+            final controller = AttributedTextEditingController(
+              text: AttributedText(text: 'This is some text that doesn\'t matter for this test.'),
+              selection: TextSelection(
+                baseOffset: 0,
+                extentOffset: 10,
+              ),
+            );
+
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+
+            final result =
+                DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
+              controller: controller,
+              selectableTextState: selectableTextState,
+              keyEvent: FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.backspace,
+                  physicalKey: PhysicalKeyboardKey.backspace,
+                  isMetaPressed: true,
+                ),
+                character: null,
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.notHandled);
+
+            Platform.setTestInstance(null);
+          });
+
+          testWidgets('it does nothing when selection extent is < 0', (tester) async {
+            Platform.setTestInstance(MacPlatform());
+
+            final controller = AttributedTextEditingController(
+              text: AttributedText(text: 'This is some text that doesn\'t matter for this test.'),
+              selection: TextSelection.collapsed(offset: -1),
+            );
+
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+
+            final result =
+                DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
+              controller: controller,
+              selectableTextState: selectableTextState,
+              keyEvent: FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.backspace,
+                  physicalKey: PhysicalKeyboardKey.backspace,
+                  isMetaPressed: true,
+                ),
+                character: null,
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.notHandled);
+
+            Platform.setTestInstance(null);
+          });
+
+          testWidgets('it does nothing when selection is at start of line', (tester) async {
+            Platform.setTestInstance(MacPlatform());
+
+            // Note: this test depends on a multi-line text layout, therefore
+            // the layout width and the text content must be precise.
+            final controller = AttributedTextEditingController(
+              text: AttributedText(text: _multilineLayoutText),
+              selection: TextSelection.collapsed(offset: 18), // start of 2nd line
+            );
+
+            final selectableTextState = await _pumpMultilineLayout(tester);
+
+            final result =
+                DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
+              controller: controller,
+              selectableTextState: selectableTextState,
+              keyEvent: FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.backspace,
+                  physicalKey: PhysicalKeyboardKey.backspace,
+                  isMetaPressed: true,
+                ),
+                character: null,
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.notHandled);
+
+            Platform.setTestInstance(null);
+          });
+        });
+
+        group('Windows + Linux', () {
+          testWidgets('control + backspace deletes partial line before caret (flowed multiline)', (tester) async {
+            Platform.setTestInstance(WindowsPlatform());
+
+            // Note: this test depends on a multi-line text layout, therefore
+            // the layout width and the text content must be precise.
+            final controller = AttributedTextEditingController(
+              text: AttributedText(text: _multilineLayoutText),
+              selection: TextSelection.collapsed(offset: 28), // midway through 2nd line
+            );
+
+            final selectableTextState = await _pumpMultilineLayout(tester);
+
+            final result =
+                DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
+              controller: controller,
+              selectableTextState: selectableTextState,
+              keyEvent: FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.backspace,
+                  physicalKey: PhysicalKeyboardKey.backspace,
+                  isControlPressed: true,
+                ),
+                character: null,
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.handled);
+            expect(controller.selection.isCollapsed, true);
+            expect(controller.selection.extentOffset, 18);
+            expect(controller.text.text, 'this text is long be multiline in the available space');
+
+            Platform.setTestInstance(null);
+          });
+
+          testWidgets('control + backspace deletes entire line (flowed multiline)', (tester) async {
+            Platform.setTestInstance(WindowsPlatform());
+
+            // Note: this test depends on a multi-line text layout, therefore
+            // the layout width and the text content must be precise.
+            final controller = AttributedTextEditingController(
+              text: AttributedText(text: _multilineLayoutText),
+              selection: TextSelection.collapsed(offset: 31, affinity: TextAffinity.upstream), // end of 2nd line
+            );
+
+            final selectableTextState = await _pumpMultilineLayout(tester);
+
+            final result =
+                DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
+              controller: controller,
+              selectableTextState: selectableTextState,
+              keyEvent: FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.backspace,
+                  physicalKey: PhysicalKeyboardKey.backspace,
+                  isControlPressed: true,
+                ),
+                character: null,
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.handled);
+            expect(controller.selection.isCollapsed, true);
+            expect(controller.selection.extentOffset, 18);
+            expect(controller.text.text, 'this text is long multiline in the available space');
+
+            Platform.setTestInstance(null);
+          });
+
+          testWidgets('control + backspace deletes partial line before caret (explicit newlines)', (tester) async {
+            Platform.setTestInstance(WindowsPlatform());
+
+            final controller = AttributedTextEditingController(
+              text: AttributedText(text: 'This is line 1\nThis is line 2\nThis is line 3'),
+              selection: TextSelection.collapsed(offset: 23), // midway through 2nd line
+            );
+
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+
+            final result =
+                DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
+              controller: controller,
+              selectableTextState: selectableTextState,
+              keyEvent: FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.backspace,
+                  physicalKey: PhysicalKeyboardKey.backspace,
+                  isControlPressed: true,
+                ),
+                character: null,
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.handled);
+            expect(controller.selection.isCollapsed, true);
+            expect(controller.selection.extentOffset, 15);
+            expect(controller.text.text, 'This is line 1\nline 2\nThis is line 3');
+
+            Platform.setTestInstance(null);
+          });
+
+          testWidgets('control + backspace deletes entire line (explicit newlines)', (tester) async {
+            Platform.setTestInstance(WindowsPlatform());
+
+            final controller = AttributedTextEditingController(
+              text: AttributedText(text: 'This is line 1\nThis is line 2\nThis is line 3'),
+              selection: TextSelection.collapsed(offset: 29, affinity: TextAffinity.upstream), // end of 2nd line
+            );
+
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+
+            final result =
+                DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
+              controller: controller,
+              selectableTextState: selectableTextState,
+              keyEvent: FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.backspace,
+                  physicalKey: PhysicalKeyboardKey.backspace,
+                  isControlPressed: true,
+                ),
+                character: null,
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.handled);
+            expect(controller.selection.isCollapsed, true);
+            expect(controller.selection.extentOffset, 15);
+            expect(controller.text.text, 'This is line 1\n\nThis is line 3');
+
+            Platform.setTestInstance(null);
+          });
+
+          testWidgets('it does nothing when selection is expanded', (tester) async {
+            Platform.setTestInstance(WindowsPlatform());
+
+            final controller = AttributedTextEditingController(
+              text: AttributedText(text: 'This is some text that doesn\'t matter for this test.'),
+              selection: TextSelection(
+                baseOffset: 0,
+                extentOffset: 10,
+              ),
+            );
+
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+
+            final result =
+                DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
+              controller: controller,
+              selectableTextState: selectableTextState,
+              keyEvent: FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.backspace,
+                  physicalKey: PhysicalKeyboardKey.backspace,
+                  isControlPressed: true,
+                ),
+                character: null,
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.notHandled);
+
+            Platform.setTestInstance(null);
+          });
+
+          testWidgets('it does nothing when selection extent is < 0', (tester) async {
+            Platform.setTestInstance(WindowsPlatform());
+
+            final controller = AttributedTextEditingController(
+              text: AttributedText(text: 'This is some text that doesn\'t matter for this test.'),
+              selection: TextSelection.collapsed(offset: -1),
+            );
+
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+
+            final result =
+                DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
+              controller: controller,
+              selectableTextState: selectableTextState,
+              keyEvent: FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.backspace,
+                  physicalKey: PhysicalKeyboardKey.backspace,
+                  isControlPressed: true,
+                ),
+                character: null,
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.notHandled);
+
+            Platform.setTestInstance(null);
+          });
+
+          testWidgets('it does nothing when selection is at start of line', (tester) async {
+            Platform.setTestInstance(WindowsPlatform());
+
+            // Note: this test depends on a multi-line text layout, therefore
+            // the layout width and the text content must be precise.
+            final controller = AttributedTextEditingController(
+              text: AttributedText(text: _multilineLayoutText),
+              selection: TextSelection.collapsed(offset: 18), // start of 2nd line
+            );
+
+            final selectableTextState = await _pumpMultilineLayout(tester);
+
+            final result =
+                DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
+              controller: controller,
+              selectableTextState: selectableTextState,
+              keyEvent: FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.backspace,
+                  physicalKey: PhysicalKeyboardKey.backspace,
+                  isControlPressed: true,
+                ),
+                character: null,
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.notHandled);
+
+            Platform.setTestInstance(null);
+          });
+        });
+      });
+
       group('backspace pressed', () {
         test('it does nothing when text is empty', () {
           final controller = AttributedTextEditingController(
@@ -2014,10 +2468,10 @@ final _multilineLayoutText = 'this text is long enough to be multiline in the av
 
 // Based on experiments, the text is laid out as follows:
 //
-//  (0)this text is long (17)
-// (18)enough to be (31)
-// (32)multiline in the (49)
-// (50)available space(65)
+//  (0)this text is long (18 - upstream)
+// (18)enough to be (31 - upstream)
+// (31)multiline in the (48 - upstream)
+// (48)available space(63)
 Future<SelectableTextState> _pumpMultilineLayout(
   WidgetTester tester,
 ) async {

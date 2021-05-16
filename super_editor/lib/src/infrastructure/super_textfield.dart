@@ -10,7 +10,6 @@ import 'package:flutter/services.dart';
 import 'package:super_editor/src/default_editor/editor.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
-import 'package:super_editor/src/infrastructure/platform_detector.dart';
 import 'package:super_editor/src/infrastructure/selectable_text.dart';
 import 'package:super_editor/src/infrastructure/text_layout.dart';
 
@@ -1206,6 +1205,7 @@ const defaultTextFieldKeyboardHandlers = <TextFieldKeyboardHandler>[
   DefaultSuperTextFieldKeyboardHandlers.pasteTextWhenCmdVIsPressed,
   DefaultSuperTextFieldKeyboardHandlers.selectAllTextFieldWhenCmdAIsPressed,
   DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys,
+  DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed,
   DefaultSuperTextFieldKeyboardHandlers.deleteTextWhenBackspaceOrDeleteIsPressed,
   DefaultSuperTextFieldKeyboardHandlers.insertNewlineWhenEnterIsPressed,
   DefaultSuperTextFieldKeyboardHandlers.insertCharacterWhenKeyIsPressed,
@@ -1372,6 +1372,30 @@ class DefaultSuperTextFieldKeyboardHandlers {
     }
 
     controller.insertCharacter(keyEvent.character!);
+
+    return TextFieldKeyboardHandlerResult.handled;
+  }
+
+  static TextFieldKeyboardHandlerResult deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed({
+    required AttributedTextEditingController controller,
+    required SelectableTextState selectableTextState,
+    required RawKeyEvent keyEvent,
+  }) {
+    if (!keyEvent.isPrimaryShortcutKeyPressed || keyEvent.logicalKey != LogicalKeyboardKey.backspace) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+    if (!controller.selection.isCollapsed) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+    if (controller.selection.extentOffset < 0) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+    if (selectableTextState.getPositionAtStartOfLine(controller.selection.extent).offset ==
+        controller.selection.extentOffset) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    controller.deleteTextOnLineBeforeCaret(selectableTextState: selectableTextState);
 
     return TextFieldKeyboardHandlerResult.handled;
   }
@@ -1665,6 +1689,22 @@ extension DefaultSuperTextFieldActions on AttributedTextEditingController {
       endOffset: deleteEndIndex,
     );
     selection = TextSelection.collapsed(offset: deleteStartIndex);
+  }
+
+  void deleteTextOnLineBeforeCaret({
+    required SelectableTextState selectableTextState,
+  }) {
+    assert(selection.isCollapsed);
+
+    final startOfLinePosition = selectableTextState.getPositionAtStartOfLine(selection.extent);
+    selection = TextSelection(
+      baseOffset: selection.extentOffset,
+      extentOffset: startOfLinePosition.offset,
+    );
+
+    if (!selection.isCollapsed) {
+      deleteSelectedText();
+    }
   }
 
   void deleteSelectedText() {
