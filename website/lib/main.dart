@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:website/call_to_action.dart';
-import 'package:website/editor_showcase.dart';
+import 'package:website/editor_demo.dart';
 import 'package:website/features.dart';
 import 'package:website/footer.dart';
 import 'package:website/header.dart';
@@ -44,11 +44,7 @@ class _Home extends StatelessWidget {
               ),
               child: Stack(
                 children: [
-                  Positioned(
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
+                  Positioned.fill(
                     child: Image.asset(
                       'assets/images/background.png',
                       fit: BoxFit.cover,
@@ -57,22 +53,13 @@ class _Home extends StatelessWidget {
                   Column(
                     children: [
                       const SizedBox(height: 30),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 20),
-                        child: Header(),
-                      ),
+                      const Header(),
                       SizedBox(height: isNarrowScreen ? 16 : 52),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 20),
-                        child: EditorShowcase(),
-                      ),
+                      const EditorDemo(),
                       SizedBox(height: isNarrowScreen ? 92 : 135),
                       const Features(),
                       const CallToAction(),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 20),
-                        child: Footer(),
-                      ),
+                      const Footer(),
                     ],
                   ),
                 ],

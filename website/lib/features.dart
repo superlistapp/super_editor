@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:website/editor_video_showcase.dart';
 
 const _breakpoint = 768;
 
@@ -56,44 +57,7 @@ class Features extends StatelessWidget {
                       width: double.infinity,
                       height: isNarrowScreen ? 45 : 85,
                     ),
-                    Column(
-                      children: [
-                        const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 32),
-                          child: SelectableText(
-                            'Other great things about this babyyyyyy',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 38,
-                              height: 46 / 38,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                        SizedBox(height: isNarrowScreen ? 22 : 37),
-                        Container(
-                          constraints: const BoxConstraints(maxWidth: 544)
-                              .tighten(height: isNarrowScreen ? 212 : 307),
-                          margin: const EdgeInsets.only(top: 44),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF053239),
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                          child: const Center(
-                            child: FlutterLogo(size: 64),
-                          ),
-                        ),
-                        const SizedBox(height: 31),
-                        ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 544),
-                          child: const SelectableText(
-                            'Lorem ipsum home school stay-at-home order Blursday. Staycation stimulus essential. Dr. Fauci remote learning WHO isolation mail-in vote. Virtual happy hour Quibi four seasons total landscaping monolith home office.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(fontSize: 19),
-                          ),
-                        ),
-                      ],
-                    ),
+                    const EditorVideoShowcase(),
                   ],
                 ),
               ),

@@ -13,6 +13,7 @@ class Footer extends StatelessWidget {
 
     return Container(
       constraints: const BoxConstraints(maxWidth: 1113),
+      margin: const EdgeInsets.symmetric(horizontal: 20),
       padding: const EdgeInsets.symmetric(vertical: 24),
       child: isNarrowScreen
           ? Column(

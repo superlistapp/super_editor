@@ -11,8 +11,9 @@ class Header extends StatelessWidget {
   Widget build(BuildContext context) {
     final isNarrowScreen = MediaQuery.of(context).size.width <= _breakpoint;
 
-    return ConstrainedBox(
+    return Container(
       constraints: const BoxConstraints(maxWidth: 1113),
+      margin: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -186,13 +187,14 @@ class _DownloadButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialButton(
       color: const Color(0xFFFAE74F),
-      onPressed: () {},
+      onPressed: () =>
+          launch('https://pub.dev/publishers/superlist.com/packages'),
       padding: const EdgeInsets.symmetric(horizontal: 32),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(64)),
       height: 52,
       elevation: 0,
       child: const Text(
-        'Download',
+        'pub.dev',
         style: TextStyle(
           fontWeight: FontWeight.bold,
           fontSize: 16,
