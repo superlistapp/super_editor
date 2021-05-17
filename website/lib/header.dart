@@ -12,7 +12,7 @@ class Header extends StatelessWidget {
     final isNarrowScreen = MediaQuery.of(context).size.width <= _breakpoint;
 
     return ConstrainedBox(
-      constraints: BoxConstraints(maxWidth: 1113),
+      constraints: const BoxConstraints(maxWidth: 1113),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -23,18 +23,18 @@ class Header extends StatelessWidget {
           ),
           if (!isNarrowScreen)
             Row(
-              children: [
+              children: const [
                 _Link(
                   url: 'https://github.com/superlistapp/super_editor',
                   child: Text('Github'),
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 _Link(
                   url: 'https://github.com/superlistapp/super_editor/wiki',
                   child: Text('Docs'),
                 ),
-                const SizedBox(width: 16),
-                const _DownloadButton(),
+                SizedBox(width: 16),
+                _DownloadButton(),
               ],
             ),
         ],
@@ -44,7 +44,7 @@ class Header extends StatelessWidget {
 }
 
 class DrawerLayout extends StatefulWidget {
-  DrawerLayout({@required this.child}) : assert(child != null);
+  const DrawerLayout({@required this.child}) : assert(child != null);
   final Widget child;
 
   @override
@@ -114,19 +114,20 @@ class _DrawerLayoutState extends State<DrawerLayout> {
                     ),
                   ),
                   Column(
-                    children: [
-                      const SizedBox(height: 16),
+                    children: const [
+                      SizedBox(height: 16),
                       _Link(
                         url: 'https://github.com/superlistapp/super_editor',
                         child: Text('Github'),
                       ),
-                      const SizedBox(height: 8),
+                      SizedBox(height: 8),
                       _Link(
-                        url: 'https://github.com/superlistapp/super_editor/wiki',
+                        url:
+                            'https://github.com/superlistapp/super_editor/wiki',
                         child: Text('Docs'),
                       ),
-                      const SizedBox(height: 16),
-                      const _DownloadButton(),
+                      SizedBox(height: 16),
+                      _DownloadButton(),
                     ],
                   ),
                 ],
@@ -138,7 +139,9 @@ class _DrawerLayoutState extends State<DrawerLayout> {
           top: 30,
           right: 20,
           child: IconButton(
-            icon: _open ? Icon(Icons.close) : Icon(Icons.menu_rounded),
+            icon: _open
+                ? const Icon(Icons.close)
+                : const Icon(Icons.menu_rounded),
             iconSize: 28,
             color: Colors.white,
             onPressed: _toggle,
@@ -165,7 +168,7 @@ class _Link extends StatelessWidget {
         foregroundColor: MaterialStateProperty.all(Colors.white),
         minimumSize: MaterialStateProperty.all(const Size(72, 48)),
         textStyle: MaterialStateProperty.all(
-          TextStyle(
+          const TextStyle(
             fontFamily: 'Aeonik',
             fontSize: 16,
           ),
@@ -188,12 +191,12 @@ class _DownloadButton extends StatelessWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(64)),
       height: 52,
       elevation: 0,
-      child: Text(
+      child: const Text(
         'Download',
         style: TextStyle(
           fontWeight: FontWeight.bold,
           fontSize: 16,
-          color: const Color(0xFF0D2C3A),
+          color: Color(0xFF0D2C3A),
         ),
       ),
     );

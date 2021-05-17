@@ -12,7 +12,7 @@ class EditorShowcase extends StatefulWidget {
 class _EditorState extends State<EditorShowcase> {
   final _docLayoutKey = GlobalKey();
 
-  Document _doc;
+  MutableDocument _doc;
   DocumentEditor _docEditor;
   DocumentComposer _composer;
 
@@ -116,7 +116,7 @@ class _EditorState extends State<EditorShowcase> {
         final parentBox = context.findRenderObject() as RenderBox;
         final docBox =
             _docLayoutKey.currentContext.findRenderObject() as RenderBox;
-        var overlayBoundingBox = Rect.fromPoints(
+        final overlayBoundingBox = Rect.fromPoints(
           docBox.localToGlobal(docBoundingBox.topLeft, ancestor: parentBox),
           docBox.localToGlobal(docBoundingBox.bottomRight, ancestor: parentBox),
         ).translate(0, windowWidth < 540 ? 90 : 120);
@@ -158,7 +158,7 @@ class _EditorState extends State<EditorShowcase> {
     _editorFocusNode.requestFocus();
   }
 
-  static Document _createInitialDocument() {
+  static MutableDocument _createInitialDocument() {
     return MutableDocument(
       nodes: [
         ParagraphNode(
@@ -179,12 +179,12 @@ class _EditorState extends State<EditorShowcase> {
     bool isNarrowScreen,
   ) {
     return (Set<Attribution> attributions) {
-      var result = TextStyle(
+      var result = const TextStyle(
         fontFamily: 'Aeonik',
         fontWeight: FontWeight.w400,
         fontSize: 18,
         height: 27 / 18,
-        color: const Color(0xFF003F51),
+        color: Color(0xFF003F51),
       );
 
       for (final attribution in attributions) {
@@ -240,7 +240,7 @@ class _EditorState extends State<EditorShowcase> {
     if (node is ParagraphNode &&
         node.metadata['blockType'] == blockquoteAttribution) {
       return Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           border: Border(
             left: BorderSide(
               color: Colors.black26,
@@ -264,7 +264,7 @@ class _EditorState extends State<EditorShowcase> {
           final isNarrowScreen = constraints.biggest.width <= 768;
 
           return Container(
-            constraints: BoxConstraints(maxWidth: 1112)
+            constraints: const BoxConstraints(maxWidth: 1112)
                 .tighten(height: isNarrowScreen ? 400 : 632),
             decoration: BoxDecoration(
               color: Colors.white.withOpacity(0.9),

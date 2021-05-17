@@ -7,13 +7,14 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  url_launcher:
   super_editor:
     path: ../super_editor
+  url_launcher:
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  lint: ^1.0.0
 
 flutter:
   uses-material-design: true

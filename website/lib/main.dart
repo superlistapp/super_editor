@@ -15,7 +15,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'SuperEditor - A supercharged rich text editor for Flutter',
       theme: ThemeData(primarySwatch: Colors.blue, fontFamily: 'Aeonik'),
-      home: _Home(),
+      home: const _Home(),
     );
   }
 }
@@ -56,21 +56,21 @@ class _Home extends StatelessWidget {
                   ),
                   Column(
                     children: [
-                      SizedBox(height: 30),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                      const SizedBox(height: 30),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 20),
                         child: Header(),
                       ),
                       SizedBox(height: isNarrowScreen ? 16 : 52),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 20),
                         child: EditorShowcase(),
                       ),
                       SizedBox(height: isNarrowScreen ? 92 : 135),
-                      Features(),
-                      CallToAction(),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                      const Features(),
+                      const CallToAction(),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 20),
                         child: Footer(),
                       ),
                     ],

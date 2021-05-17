@@ -12,21 +12,21 @@ class Footer extends StatelessWidget {
     final isNarrowScreen = MediaQuery.of(context).size.width <= _breakpoint;
 
     return Container(
-      constraints: BoxConstraints(maxWidth: 1113),
+      constraints: const BoxConstraints(maxWidth: 1113),
       padding: const EdgeInsets.symmetric(vertical: 24),
       child: isNarrowScreen
           ? Column(
-              children: [
-                const _LeftPart(),
-                const SizedBox(height: 28),
-                const _RightPart(),
+              children: const [
+                _LeftPart(),
+                SizedBox(height: 28),
+                _RightPart(),
               ],
             )
           : Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const _LeftPart(),
-                const _RightPart(),
+              children: const [
+                _LeftPart(),
+                _RightPart(),
               ],
             ),
     );
@@ -40,14 +40,14 @@ class _LeftPart extends StatelessWidget {
   Widget build(BuildContext context) {
     final isNarrowScreen = MediaQuery.of(context).size.width <= _breakpoint;
 
-    Widget result = ConstrainedBox(
-      constraints: BoxConstraints(maxWidth: 539),
+    final Widget result = ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 539),
       child: Column(
         crossAxisAlignment: isNarrowScreen
             ? CrossAxisAlignment.center
             : CrossAxisAlignment.start,
         children: [
-          SelectableText(
+          const SelectableText(
             'Sponsored by the Superlist Team',
             style: TextStyle(
               fontWeight: FontWeight.w700,
@@ -58,13 +58,13 @@ class _LeftPart extends StatelessWidget {
           Text.rich(
             TextSpan(
               text:
-                  'Superlist is building a new task manager for individuals and teams and we\'re doing it all in Flutter. ',
+                  "Superlist is building a new task manager for individuals and teams and we're doing it all in Flutter. ",
               children: [
                 WidgetSpan(
                   child: Transform.translate(
                     // A pretty ugly hack to align this to match the text vertically.
                     offset: const Offset(0, 2),
-                    child: _Link(
+                    child: const _Link(
                       'Join us',
                       url: 'https://superlist.recruitee.com',
                       style: TextStyle(
@@ -79,7 +79,7 @@ class _LeftPart extends StatelessWidget {
                 ),
               ],
             ),
-            style: TextStyle(fontSize: 16),
+            style: const TextStyle(fontSize: 16),
             textAlign: isNarrowScreen ? TextAlign.center : TextAlign.start,
           ),
         ],
@@ -97,14 +97,14 @@ class _RightPart extends StatelessWidget {
   Widget build(BuildContext context) {
     final isNarrowScreen = MediaQuery.of(context).size.width <= _breakpoint;
 
-    Widget result = DefaultTextStyle.merge(
-      style: TextStyle(fontSize: 16),
+    final Widget result = DefaultTextStyle.merge(
+      style: const TextStyle(fontSize: 16),
       textAlign: isNarrowScreen ? TextAlign.center : TextAlign.start,
       child: Column(
         crossAxisAlignment: isNarrowScreen
             ? CrossAxisAlignment.center
             : CrossAxisAlignment.start,
-        children: [
+        children: const [
           SelectableText(
             'Keep up to date:',
             style: TextStyle(
@@ -112,9 +112,9 @@ class _RightPart extends StatelessWidget {
               fontSize: 16,
             ),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4),
           _Link('Superlist.com', url: 'https://superlist.com'),
-          const SizedBox(height: 4),
+          SizedBox(height: 4),
           _Link('Twitter', url: 'https://twitter.com/SuperlistHQ'),
         ],
       ),

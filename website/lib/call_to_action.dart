@@ -50,12 +50,12 @@ class _DownloadButton extends StatelessWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(64)),
       height: 42,
       elevation: 0,
-      child: Text(
+      child: const Text(
         'Download Now',
         style: TextStyle(
           fontWeight: FontWeight.bold,
           fontSize: 29,
-          color: const Color(0xFF0D2C3A),
+          color: Color(0xFF0D2C3A),
         ),
       ),
     );
