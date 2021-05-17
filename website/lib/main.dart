@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:website/breakpoints.dart';
 import 'package:website/call_to_action.dart';
 import 'package:website/editor_demo.dart';
 import 'package:website/features.dart';
@@ -20,15 +21,12 @@ class MyApp extends StatelessWidget {
   }
 }
 
-// Should match whatever is in header.dart
-const _breakpoint = 540;
-
 class _Home extends StatelessWidget {
   const _Home();
 
   @override
   Widget build(BuildContext context) {
-    final isNarrowScreen = MediaQuery.of(context).size.width <= _breakpoint;
+    final collapsedNavigation = Breakpoints.collapsedNavigation(context);
 
     return Scaffold(
       backgroundColor: const Color(0xFF003F51),
@@ -54,9 +52,9 @@ class _Home extends StatelessWidget {
                     children: [
                       const SizedBox(height: 30),
                       const Header(),
-                      SizedBox(height: isNarrowScreen ? 16 : 52),
+                      SizedBox(height: collapsedNavigation ? 16 : 52),
                       const EditorDemo(),
-                      SizedBox(height: isNarrowScreen ? 92 : 135),
+                      SizedBox(height: collapsedNavigation ? 92 : 135),
                       const Features(),
                       const CallToAction(),
                       const Footer(),

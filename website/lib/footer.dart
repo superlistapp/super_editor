@@ -1,21 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:url_launcher/url_launcher.dart';
-
-const _breakpoint = 768;
+import 'package:website/breakpoints.dart';
 
 class Footer extends StatelessWidget {
   const Footer();
 
   @override
   Widget build(BuildContext context) {
-    final isNarrowScreen = MediaQuery.of(context).size.width <= _breakpoint;
+    final singleColumnLayout = Breakpoints.singleColumnLayout(context);
 
     return Container(
       constraints: const BoxConstraints(maxWidth: 1113),
       margin: const EdgeInsets.symmetric(horizontal: 20),
       padding: const EdgeInsets.symmetric(vertical: 24),
-      child: isNarrowScreen
+      child: singleColumnLayout
           ? Column(
               children: const [
                 _LeftPart(),
@@ -39,12 +38,12 @@ class _LeftPart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isNarrowScreen = MediaQuery.of(context).size.width <= _breakpoint;
+    final singleColumnLayout = Breakpoints.singleColumnLayout(context);
 
     final Widget result = ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 539),
       child: Column(
-        crossAxisAlignment: isNarrowScreen
+        crossAxisAlignment: singleColumnLayout
             ? CrossAxisAlignment.center
             : CrossAxisAlignment.start,
         children: [
@@ -81,13 +80,13 @@ class _LeftPart extends StatelessWidget {
               ],
             ),
             style: const TextStyle(fontSize: 16),
-            textAlign: isNarrowScreen ? TextAlign.center : TextAlign.start,
+            textAlign: singleColumnLayout ? TextAlign.center : TextAlign.start,
           ),
         ],
       ),
     );
 
-    return isNarrowScreen ? Center(child: result) : result;
+    return singleColumnLayout ? Center(child: result) : result;
   }
 }
 
@@ -96,13 +95,13 @@ class _RightPart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isNarrowScreen = MediaQuery.of(context).size.width <= _breakpoint;
+    final singleColumnLayout = Breakpoints.singleColumnLayout(context);
 
     final Widget result = DefaultTextStyle.merge(
       style: const TextStyle(fontSize: 16),
-      textAlign: isNarrowScreen ? TextAlign.center : TextAlign.start,
+      textAlign: singleColumnLayout ? TextAlign.center : TextAlign.start,
       child: Column(
-        crossAxisAlignment: isNarrowScreen
+        crossAxisAlignment: singleColumnLayout
             ? CrossAxisAlignment.center
             : CrossAxisAlignment.start,
         children: const [
@@ -121,7 +120,7 @@ class _RightPart extends StatelessWidget {
       ),
     );
 
-    return isNarrowScreen ? Center(child: result) : result;
+    return singleColumnLayout ? Center(child: result) : result;
   }
 }
 

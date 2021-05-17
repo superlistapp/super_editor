@@ -176,11 +176,11 @@ class _EditorDemoState extends State<EditorDemo> {
       child: Center(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final isNarrowScreen = constraints.biggest.width <= 768;
+            final singleColumnLayout = constraints.biggest.width <= 768;
 
             return Container(
               constraints: const BoxConstraints(maxWidth: 1112)
-                  .tighten(height: isNarrowScreen ? 400 : 632),
+                  .tighten(height: singleColumnLayout ? 400 : 632),
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.9),
                 borderRadius: BorderRadius.circular(20),
@@ -198,10 +198,10 @@ class _EditorDemoState extends State<EditorDemo> {
                 documentLayoutKey: _docLayoutKey,
                 focusNode: _editorFocusNode,
                 maxWidth: 1112,
-                padding: isNarrowScreen
+                padding: singleColumnLayout
                     ? const EdgeInsets.all(16)
                     : const EdgeInsets.symmetric(horizontal: 96, vertical: 60),
-                textStyleBuilder: _textStyleBuilder(isNarrowScreen),
+                textStyleBuilder: _textStyleBuilder(singleColumnLayout),
                 componentBuilders: [
                   _centeredHeaderBuilder,
                   _blockquoteBuilder,
@@ -271,7 +271,7 @@ MutableDocument _createInitialDocument() {
 }
 
 TextStyle Function(Set<Attribution> attributions) _textStyleBuilder(
-  bool isNarrowScreen,
+  bool singleColumnLayout,
 ) {
   return (Set<Attribution> attributions) {
     var result = const TextStyle(
@@ -285,19 +285,19 @@ TextStyle Function(Set<Attribution> attributions) _textStyleBuilder(
     for (final attribution in attributions) {
       if (attribution == header1Attribution) {
         result = result.copyWith(
-          fontSize: isNarrowScreen ? 40 : 68,
+          fontSize: singleColumnLayout ? 40 : 68,
           fontWeight: FontWeight.w700,
           height: 1.2,
         );
       } else if (attribution == header2Attribution) {
         result = result.copyWith(
-          fontSize: isNarrowScreen ? 32 : 56,
+          fontSize: singleColumnLayout ? 32 : 56,
           fontWeight: FontWeight.w700,
           height: 1.2,
         );
       } else if (attribution == header3Attribution) {
         result = result.copyWith(
-          fontSize: isNarrowScreen ? 26 : 36,
+          fontSize: singleColumnLayout ? 26 : 36,
           fontWeight: FontWeight.w700,
           height: 1.2,
         );

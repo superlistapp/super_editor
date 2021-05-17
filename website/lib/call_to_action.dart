@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-
-const _breakpoint = 768;
+import 'package:website/breakpoints.dart';
 
 class CallToAction extends StatelessWidget {
   const CallToAction();
 
   @override
   Widget build(BuildContext context) {
-    final isNarrowScreen = MediaQuery.of(context).size.width <= _breakpoint;
+    final singleColumnLayout = Breakpoints.singleColumnLayout(context);
 
     return Container(
       color: const Color(0xFF14AEBE),
@@ -16,19 +15,19 @@ class CallToAction extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 40),
       child: Column(
         children: [
-          SizedBox(height: isNarrowScreen ? 28 : 76),
+          SizedBox(height: singleColumnLayout ? 28 : 76),
           SelectableText(
             'Get started with SuperEditor',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontWeight: FontWeight.bold,
-              fontSize: isNarrowScreen ? 38 : 51,
+              fontSize: singleColumnLayout ? 38 : 51,
               color: const Color(0xFF003F51),
             ),
           ),
           const SizedBox(height: 29),
           const _DocumentationButton(),
-          SizedBox(height: isNarrowScreen ? 60 : 104),
+          SizedBox(height: singleColumnLayout ? 60 : 104),
         ],
       ),
     );
@@ -40,14 +39,14 @@ class _DocumentationButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isNarrowScreen = MediaQuery.of(context).size.width <= _breakpoint;
+    final singleColumnLayout = Breakpoints.singleColumnLayout(context);
 
     return MaterialButton(
       color: const Color(0xFFFAE74F),
       onPressed: () => launch(
         'https://github.com/superlistapp/super_editor/blob/main/super_editor/README.md',
       ),
-      padding: isNarrowScreen
+      padding: singleColumnLayout
           ? const EdgeInsets.symmetric(horizontal: 32, vertical: 20)
           : const EdgeInsets.symmetric(horizontal: 48, vertical: 24),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(64)),

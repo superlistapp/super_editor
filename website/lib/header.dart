@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:url_launcher/url_launcher.dart';
-
-const _breakpoint = 540;
+import 'package:website/breakpoints.dart';
 
 class Header extends StatelessWidget {
   const Header();
 
   @override
   Widget build(BuildContext context) {
-    final isNarrowScreen = MediaQuery.of(context).size.width <= _breakpoint;
+    final collapsedNavigation = Breakpoints.collapsedNavigation(context);
 
     return Container(
       constraints: const BoxConstraints(maxWidth: 1113),
@@ -22,7 +21,7 @@ class Header extends StatelessWidget {
             width: 188,
             height: 44,
           ),
-          if (!isNarrowScreen)
+          if (!collapsedNavigation)
             Row(
               children: const [
                 _Link(
@@ -64,9 +63,9 @@ class _DrawerLayoutState extends State<DrawerLayout> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    final isNarrowScreen = size.width <= _breakpoint;
+    final collapsedNavigation = Breakpoints.collapsedNavigation(context);
 
-    if (!isNarrowScreen) {
+    if (!collapsedNavigation) {
       _open = false;
       return widget.child;
     }

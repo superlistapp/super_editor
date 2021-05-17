@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:website/breakpoints.dart';
 import 'package:website/editor_video_showcase.dart';
-
-const _breakpoint = 768;
 
 class Features extends StatelessWidget {
   const Features();
 
   @override
   Widget build(BuildContext context) {
-    final isNarrowScreen = MediaQuery.of(context).size.width <= _breakpoint;
+    final singleColumnLayout = Breakpoints.singleColumnLayout(context);
 
     return Container(
       color: const Color(0xFF003F51),
@@ -55,7 +54,7 @@ class Features extends StatelessWidget {
                     ),
                     SizedBox(
                       width: double.infinity,
-                      height: isNarrowScreen ? 45 : 85,
+                      height: singleColumnLayout ? 45 : 85,
                     ),
                     const EditorVideoShowcase(),
                   ],
