@@ -4,224 +4,649 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/src/infrastructure/attributed_text.dart';
+import 'package:super_editor/src/infrastructure/platform_detector.dart';
 import 'package:super_editor/src/infrastructure/selectable_text.dart';
 import 'package:super_editor/src/infrastructure/super_textfield.dart';
 
 import '../_text_entry_test_tools.dart';
+import '_platform_test_tools.dart';
 
 void main() {
   group('SuperTextField', () {
     group('Keyboard handlers and actions', () {
-      group('copy text when command+c is pressed', () {
-        testWidgets('it copies selected text', (tester) async {
-          // Note: this is a widget test because we access the Clipboard.
-          final controller = AttributedTextEditingController(
-            text: AttributedText(text: 'This is some text'),
-            selection: TextSelection(
-              baseOffset: 5,
-              extentOffset: 12,
-            ),
-          );
+      group('copy shortcut', () {
+        group('Mac', () {
+          testWidgets('cmd+c copies selected text', (tester) async {
+            Platform.setTestInstance(MacPlatform());
 
-          // The Clipboard requires a platform response, which doesn't exist
-          // for widget tests. Pretend that we're the platform and record
-          // the incoming clipboard call.
-          String clipboardText = '';
-          SystemChannels.platform.setMockMethodCallHandler((call) async {
-            if (call.method == 'Clipboard.setData') {
-              clipboardText = call.arguments['text'];
-            }
+            // Note: this is a widget test because we access the Clipboard.
+            final controller = AttributedTextEditingController(
+              text: AttributedText(text: 'This is some text'),
+              selection: TextSelection(
+                baseOffset: 5,
+                extentOffset: 12,
+              ),
+            );
+
+            // The Clipboard requires a platform response, which doesn't exist
+            // for widget tests. Pretend that we're the platform and record
+            // the incoming clipboard call.
+            String clipboardText = '';
+            SystemChannels.platform.setMockMethodCallHandler((call) async {
+              if (call.method == 'Clipboard.setData') {
+                clipboardText = call.arguments['text'];
+              }
+            });
+
+            final result = DefaultSuperTextFieldKeyboardHandlers.copyTextWhenCmdCIsPressed(
+              controller: controller,
+              keyEvent: FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.keyC,
+                  physicalKey: PhysicalKeyboardKey.keyC,
+                  isMetaPressed: true,
+                ),
+                character: 'c',
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.handled);
+            expect(clipboardText, 'is some');
+
+            Platform.setTestInstance(null);
           });
 
-          final result = DefaultSuperTextFieldKeyboardHandlers.copyTextWhenCmdCIsPressed(
-            controller: controller,
-            keyEvent: FakeRawKeyEvent(
-              data: FakeRawKeyEventData(
-                logicalKey: LogicalKeyboardKey.keyC,
-                physicalKey: PhysicalKeyboardKey.keyC,
-                isMetaPressed: true,
-              ),
-              character: 'c',
-            ),
-          );
+          test('control+c does NOT copy selected text', () {
+            Platform.setTestInstance(MacPlatform());
 
-          expect(result, TextFieldKeyboardHandlerResult.handled);
-          expect(clipboardText, 'is some');
+            final controller = AttributedTextEditingController();
+
+            final result = DefaultSuperTextFieldKeyboardHandlers.copyTextWhenCmdCIsPressed(
+              controller: controller,
+              keyEvent: FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.keyC,
+                  physicalKey: PhysicalKeyboardKey.keyC,
+                  isControlPressed: true,
+                ),
+                character: 'c',
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.notHandled);
+
+            Platform.setTestInstance(null);
+          });
+
+          test('it ignores c-key without cmd', () {
+            Platform.setTestInstance(MacPlatform());
+
+            final controller = AttributedTextEditingController();
+
+            final result = DefaultSuperTextFieldKeyboardHandlers.copyTextWhenCmdCIsPressed(
+              controller: controller,
+              keyEvent: FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.keyC,
+                  physicalKey: PhysicalKeyboardKey.keyC,
+                ),
+                character: 'c',
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.notHandled);
+
+            Platform.setTestInstance(null);
+          });
+
+          test('it ignores cmd without c-key', () {
+            Platform.setTestInstance(MacPlatform());
+
+            final controller = AttributedTextEditingController();
+
+            final result = DefaultSuperTextFieldKeyboardHandlers.copyTextWhenCmdCIsPressed(
+              controller: controller,
+              keyEvent: FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.metaLeft,
+                  physicalKey: PhysicalKeyboardKey.metaLeft,
+                  isMetaPressed: true,
+                ),
+                character: null,
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.notHandled);
+
+            Platform.setTestInstance(null);
+          });
         });
 
-        test('it ignores c-key without cmd', () {
-          final controller = AttributedTextEditingController();
+        group('Windows + Linux', () {
+          testWidgets('control+c copies selected text', (tester) async {
+            Platform.setTestInstance(WindowsPlatform());
 
-          final result = DefaultSuperTextFieldKeyboardHandlers.copyTextWhenCmdCIsPressed(
-            controller: controller,
-            keyEvent: FakeRawKeyEvent(
-              data: FakeRawKeyEventData(
-                logicalKey: LogicalKeyboardKey.keyC,
-                physicalKey: PhysicalKeyboardKey.keyC,
+            // Note: this is a widget test because we access the Clipboard.
+            final controller = AttributedTextEditingController(
+              text: AttributedText(text: 'This is some text'),
+              selection: TextSelection(
+                baseOffset: 5,
+                extentOffset: 12,
               ),
-              character: 'c',
-            ),
-          );
+            );
 
-          expect(result, TextFieldKeyboardHandlerResult.notHandled);
-        });
+            // The Clipboard requires a platform response, which doesn't exist
+            // for widget tests. Pretend that we're the platform and record
+            // the incoming clipboard call.
+            String clipboardText = '';
+            SystemChannels.platform.setMockMethodCallHandler((call) async {
+              if (call.method == 'Clipboard.setData') {
+                clipboardText = call.arguments['text'];
+              }
+            });
 
-        test('it ignores cmd without c-key', () {
-          final controller = AttributedTextEditingController();
-
-          final result = DefaultSuperTextFieldKeyboardHandlers.copyTextWhenCmdCIsPressed(
-            controller: controller,
-            keyEvent: FakeRawKeyEvent(
-              data: FakeRawKeyEventData(
-                logicalKey: LogicalKeyboardKey.metaLeft,
-                physicalKey: PhysicalKeyboardKey.metaLeft,
-                isMetaPressed: true,
+            final result = DefaultSuperTextFieldKeyboardHandlers.copyTextWhenCmdCIsPressed(
+              controller: controller,
+              keyEvent: FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.keyC,
+                  physicalKey: PhysicalKeyboardKey.keyC,
+                  isControlPressed: true,
+                ),
+                character: 'c',
               ),
-              character: null,
-            ),
-          );
+            );
 
-          expect(result, TextFieldKeyboardHandlerResult.notHandled);
+            expect(result, TextFieldKeyboardHandlerResult.handled);
+            expect(clipboardText, 'is some');
+
+            Platform.setTestInstance(null);
+          });
+
+          test('cmd+c does NOT copy selected text', () {
+            Platform.setTestInstance(WindowsPlatform());
+
+            final controller = AttributedTextEditingController();
+
+            final result = DefaultSuperTextFieldKeyboardHandlers.copyTextWhenCmdCIsPressed(
+              controller: controller,
+              keyEvent: FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.keyC,
+                  physicalKey: PhysicalKeyboardKey.keyC,
+                  isMetaPressed: true,
+                ),
+                character: 'c',
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.notHandled);
+
+            Platform.setTestInstance(null);
+          });
+
+          test('it ignores c-key without control', () {
+            Platform.setTestInstance(WindowsPlatform());
+
+            final controller = AttributedTextEditingController();
+
+            final result = DefaultSuperTextFieldKeyboardHandlers.copyTextWhenCmdCIsPressed(
+              controller: controller,
+              keyEvent: FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.keyC,
+                  physicalKey: PhysicalKeyboardKey.keyC,
+                ),
+                character: 'c',
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.notHandled);
+
+            Platform.setTestInstance(null);
+          });
+
+          test('it ignores control without c-key', () {
+            Platform.setTestInstance(WindowsPlatform());
+
+            final controller = AttributedTextEditingController();
+
+            final result = DefaultSuperTextFieldKeyboardHandlers.copyTextWhenCmdCIsPressed(
+              controller: controller,
+              keyEvent: FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.metaLeft,
+                  physicalKey: PhysicalKeyboardKey.metaLeft,
+                  isControlPressed: true,
+                ),
+                character: null,
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.notHandled);
+
+            Platform.setTestInstance(null);
+          });
         });
       });
 
-      group('paste text when command+v is pressed', () {
-        testWidgets('it pastes clipboard text', (tester) async {
-          // Note: this is a widget test because we access the Clipboard.
-          final controller = AttributedTextEditingController(
-            text: AttributedText(text: 'Pasted content: '),
-            selection: TextSelection.collapsed(offset: 16),
-          );
+      group('paste shortcut', () {
+        group('Mac', () {
+          testWidgets('cmd+v pastes clipboard text', (tester) async {
+            Platform.setTestInstance(MacPlatform());
 
-          // The Clipboard requires a platform response, which doesn't exist
-          // for widget tests. Pretend that we're the platform and handle
-          // the incoming clipboard call.
-          SystemChannels.platform.setMockMethodCallHandler((call) async {
-            if (call.method == 'Clipboard.getData') {
-              return {
-                'text': 'this is clipboard text',
-              };
-            }
+            // Note: this is a widget test because we access the Clipboard.
+            final controller = AttributedTextEditingController(
+              text: AttributedText(text: 'Pasted content: '),
+              selection: TextSelection.collapsed(offset: 16),
+            );
+
+            // The Clipboard requires a platform response, which doesn't exist
+            // for widget tests. Pretend that we're the platform and handle
+            // the incoming clipboard call.
+            SystemChannels.platform.setMockMethodCallHandler((call) async {
+              if (call.method == 'Clipboard.getData') {
+                return {
+                  'text': 'this is clipboard text',
+                };
+              }
+            });
+
+            final result = DefaultSuperTextFieldKeyboardHandlers.pasteTextWhenCmdVIsPressed(
+              controller: controller,
+              keyEvent: FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.keyV,
+                  physicalKey: PhysicalKeyboardKey.keyV,
+                  isMetaPressed: true,
+                ),
+                character: 'v',
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.handled);
+
+            WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+              // We have to run these expectations in the next frame
+              // so that the async paste operation has time to complete.
+              expect(controller.text.text, 'Pasted content: this is clipboard text');
+              expect(controller.selection.isCollapsed, true);
+              expect(controller.selection.extentOffset, 38);
+            });
+
+            Platform.setTestInstance(null);
           });
 
-          final result = DefaultSuperTextFieldKeyboardHandlers.pasteTextWhenCmdVIsPressed(
-            controller: controller,
-            keyEvent: FakeRawKeyEvent(
-              data: FakeRawKeyEventData(
-                logicalKey: LogicalKeyboardKey.keyV,
-                physicalKey: PhysicalKeyboardKey.keyV,
-                isMetaPressed: true,
+          test('control+v does NOT paste clipboard text', () {
+            Platform.setTestInstance(MacPlatform());
+
+            final controller = AttributedTextEditingController();
+
+            final result = DefaultSuperTextFieldKeyboardHandlers.pasteTextWhenCmdVIsPressed(
+              controller: controller,
+              keyEvent: FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.keyV,
+                  physicalKey: PhysicalKeyboardKey.keyV,
+                  isControlPressed: true,
+                ),
+                character: 'v',
               ),
-              character: 'v',
-            ),
-          );
+            );
 
-          expect(result, TextFieldKeyboardHandlerResult.handled);
+            expect(result, TextFieldKeyboardHandlerResult.notHandled);
 
-          WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
-            // We have to run these expectations in the next frame
-            // so that the async paste operation has time to complete.
-            expect(controller.text.text, 'Pasted content: this is clipboard text');
-            expect(controller.selection.isCollapsed, true);
-            expect(controller.selection.extentOffset, 38);
+            Platform.setTestInstance(null);
+          });
+
+          test('it ignores v-key without cmd', () {
+            Platform.setTestInstance(MacPlatform());
+
+            final controller = AttributedTextEditingController();
+
+            final result = DefaultSuperTextFieldKeyboardHandlers.pasteTextWhenCmdVIsPressed(
+              controller: controller,
+              keyEvent: FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.keyV,
+                  physicalKey: PhysicalKeyboardKey.keyV,
+                  isMetaPressed: false,
+                ),
+                character: 'v',
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.notHandled);
+
+            Platform.setTestInstance(null);
+          });
+
+          test('it ignores cmd without v-key', () {
+            Platform.setTestInstance(MacPlatform());
+
+            final controller = AttributedTextEditingController();
+
+            final result = DefaultSuperTextFieldKeyboardHandlers.pasteTextWhenCmdVIsPressed(
+              controller: controller,
+              keyEvent: FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.metaLeft,
+                  physicalKey: PhysicalKeyboardKey.metaLeft,
+                  isMetaPressed: true,
+                ),
+                character: null,
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.notHandled);
+
+            Platform.setTestInstance(null);
           });
         });
 
-        test('it ignores v-key without cmd', () {
-          final controller = AttributedTextEditingController();
+        group('Windows + Linux', () {
+          testWidgets('control+v pastes clipboard text', (tester) async {
+            Platform.setTestInstance(WindowsPlatform());
 
-          final result = DefaultSuperTextFieldKeyboardHandlers.pasteTextWhenCmdVIsPressed(
-            controller: controller,
-            keyEvent: FakeRawKeyEvent(
-              data: FakeRawKeyEventData(
-                logicalKey: LogicalKeyboardKey.keyV,
-                physicalKey: PhysicalKeyboardKey.keyV,
-                isMetaPressed: false,
+            // Note: this is a widget test because we access the Clipboard.
+            final controller = AttributedTextEditingController(
+              text: AttributedText(text: 'Pasted content: '),
+              selection: TextSelection.collapsed(offset: 16),
+            );
+
+            // The Clipboard requires a platform response, which doesn't exist
+            // for widget tests. Pretend that we're the platform and handle
+            // the incoming clipboard call.
+            SystemChannels.platform.setMockMethodCallHandler((call) async {
+              if (call.method == 'Clipboard.getData') {
+                return {
+                  'text': 'this is clipboard text',
+                };
+              }
+            });
+
+            final result = DefaultSuperTextFieldKeyboardHandlers.pasteTextWhenCmdVIsPressed(
+              controller: controller,
+              keyEvent: FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.keyV,
+                  physicalKey: PhysicalKeyboardKey.keyV,
+                  isControlPressed: true,
+                ),
+                character: 'v',
               ),
-              character: 'v',
-            ),
-          );
+            );
 
-          expect(result, TextFieldKeyboardHandlerResult.notHandled);
-        });
+            expect(result, TextFieldKeyboardHandlerResult.handled);
 
-        test('it ignores cmd without v-key', () {
-          final controller = AttributedTextEditingController();
+            WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+              // We have to run these expectations in the next frame
+              // so that the async paste operation has time to complete.
+              expect(controller.text.text, 'Pasted content: this is clipboard text');
+              expect(controller.selection.isCollapsed, true);
+              expect(controller.selection.extentOffset, 38);
+            });
 
-          final result = DefaultSuperTextFieldKeyboardHandlers.pasteTextWhenCmdVIsPressed(
-            controller: controller,
-            keyEvent: FakeRawKeyEvent(
-              data: FakeRawKeyEventData(
-                logicalKey: LogicalKeyboardKey.metaLeft,
-                physicalKey: PhysicalKeyboardKey.metaLeft,
-                isMetaPressed: true,
+            Platform.setTestInstance(null);
+          });
+
+          test('cmd+v does NOT paste clipboard text', () {
+            Platform.setTestInstance(WindowsPlatform());
+
+            final controller = AttributedTextEditingController();
+
+            final result = DefaultSuperTextFieldKeyboardHandlers.pasteTextWhenCmdVIsPressed(
+              controller: controller,
+              keyEvent: FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.keyV,
+                  physicalKey: PhysicalKeyboardKey.keyV,
+                  isMetaPressed: true,
+                ),
+                character: 'v',
               ),
-              character: null,
-            ),
-          );
+            );
 
-          expect(result, TextFieldKeyboardHandlerResult.notHandled);
+            expect(result, TextFieldKeyboardHandlerResult.notHandled);
+
+            Platform.setTestInstance(null);
+          });
+
+          test('it ignores v-key without control', () {
+            Platform.setTestInstance(WindowsPlatform());
+
+            final controller = AttributedTextEditingController();
+
+            final result = DefaultSuperTextFieldKeyboardHandlers.pasteTextWhenCmdVIsPressed(
+              controller: controller,
+              keyEvent: FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.keyV,
+                  physicalKey: PhysicalKeyboardKey.keyV,
+                  isControlPressed: false,
+                ),
+                character: 'v',
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.notHandled);
+
+            Platform.setTestInstance(null);
+          });
+
+          test('it ignores control without v-key', () {
+            Platform.setTestInstance(WindowsPlatform());
+
+            final controller = AttributedTextEditingController();
+
+            final result = DefaultSuperTextFieldKeyboardHandlers.pasteTextWhenCmdVIsPressed(
+              controller: controller,
+              keyEvent: FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.metaLeft,
+                  physicalKey: PhysicalKeyboardKey.metaLeft,
+                  isControlPressed: true,
+                ),
+                character: null,
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.notHandled);
+
+            Platform.setTestInstance(null);
+          });
         });
       });
 
-      group('select all when command+a is pressed', () {
-        test('it selects all text', () {
-          final controller = AttributedTextEditingController(
-            text: AttributedText(text: 'this is some text'),
-            selection: TextSelection.collapsed(offset: 5),
-          );
+      group('select all', () {
+        group('Mac', () {
+          test('cmd+a selects all text', () {
+            Platform.setTestInstance(MacPlatform());
 
-          final result = DefaultSuperTextFieldKeyboardHandlers.selectAllTextFieldWhenCmdAIsPressed(
-            controller: controller,
-            keyEvent: FakeRawKeyEvent(
-              data: FakeRawKeyEventData(
-                logicalKey: LogicalKeyboardKey.keyA,
-                physicalKey: PhysicalKeyboardKey.keyA,
-                isMetaPressed: true,
+            final controller = AttributedTextEditingController(
+              text: AttributedText(text: 'this is some text'),
+              selection: TextSelection.collapsed(offset: 5),
+            );
+
+            final result = DefaultSuperTextFieldKeyboardHandlers.selectAllTextFieldWhenCmdAIsPressed(
+              controller: controller,
+              keyEvent: FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.keyA,
+                  physicalKey: PhysicalKeyboardKey.keyA,
+                  isMetaPressed: true,
+                ),
+                character: 'a',
               ),
-              character: 'a',
-            ),
-          );
+            );
 
-          expect(result, TextFieldKeyboardHandlerResult.handled);
-          expect(controller.selection.baseOffset, 0);
-          expect(controller.selection.extentOffset, 17);
+            expect(result, TextFieldKeyboardHandlerResult.handled);
+            expect(controller.selection.baseOffset, 0);
+            expect(controller.selection.extentOffset, 17);
+
+            Platform.setTestInstance(null);
+          });
+
+          test('control+a does NOT select all', () {
+            Platform.setTestInstance(MacPlatform());
+
+            final controller = AttributedTextEditingController();
+
+            final result = DefaultSuperTextFieldKeyboardHandlers.selectAllTextFieldWhenCmdAIsPressed(
+              controller: controller,
+              keyEvent: FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.keyA,
+                  physicalKey: PhysicalKeyboardKey.keyA,
+                  isControlPressed: true,
+                ),
+                character: 'a',
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.notHandled);
+
+            Platform.setTestInstance(null);
+          });
+
+          test('it ignores a-key without cmd', () {
+            Platform.setTestInstance(MacPlatform());
+
+            final controller = AttributedTextEditingController();
+
+            final result = DefaultSuperTextFieldKeyboardHandlers.selectAllTextFieldWhenCmdAIsPressed(
+              controller: controller,
+              keyEvent: FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.keyA,
+                  physicalKey: PhysicalKeyboardKey.keyA,
+                  isMetaPressed: false,
+                ),
+                character: 'a',
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.notHandled);
+
+            Platform.setTestInstance(null);
+          });
+
+          test('it ignores cmd without a-key', () {
+            Platform.setTestInstance(MacPlatform());
+
+            final controller = AttributedTextEditingController();
+
+            final result = DefaultSuperTextFieldKeyboardHandlers.selectAllTextFieldWhenCmdAIsPressed(
+              controller: controller,
+              keyEvent: FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.metaLeft,
+                  physicalKey: PhysicalKeyboardKey.metaLeft,
+                  isMetaPressed: true,
+                ),
+                character: null,
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.notHandled);
+
+            Platform.setTestInstance(null);
+          });
         });
 
-        test('it ignores a-key without cmd', () {
-          final controller = AttributedTextEditingController();
+        group('Windows + Linux', () {
+          test('control+a selects all text', () {
+            Platform.setTestInstance(WindowsPlatform());
 
-          final result = DefaultSuperTextFieldKeyboardHandlers.selectAllTextFieldWhenCmdAIsPressed(
-            controller: controller,
-            keyEvent: FakeRawKeyEvent(
-              data: FakeRawKeyEventData(
-                logicalKey: LogicalKeyboardKey.keyA,
-                physicalKey: PhysicalKeyboardKey.keyA,
-                isMetaPressed: false,
+            final controller = AttributedTextEditingController(
+              text: AttributedText(text: 'this is some text'),
+              selection: TextSelection.collapsed(offset: 5),
+            );
+
+            final result = DefaultSuperTextFieldKeyboardHandlers.selectAllTextFieldWhenCmdAIsPressed(
+              controller: controller,
+              keyEvent: FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.keyA,
+                  physicalKey: PhysicalKeyboardKey.keyA,
+                  isControlPressed: true,
+                ),
+                character: 'a',
               ),
-              character: 'a',
-            ),
-          );
+            );
 
-          expect(result, TextFieldKeyboardHandlerResult.notHandled);
-        });
+            expect(result, TextFieldKeyboardHandlerResult.handled);
+            expect(controller.selection.baseOffset, 0);
+            expect(controller.selection.extentOffset, 17);
 
-        test('it ignores cmd without a-key', () {
-          final controller = AttributedTextEditingController();
+            Platform.setTestInstance(null);
+          });
 
-          final result = DefaultSuperTextFieldKeyboardHandlers.selectAllTextFieldWhenCmdAIsPressed(
-            controller: controller,
-            keyEvent: FakeRawKeyEvent(
-              data: FakeRawKeyEventData(
-                logicalKey: LogicalKeyboardKey.metaLeft,
-                physicalKey: PhysicalKeyboardKey.metaLeft,
-                isMetaPressed: true,
+          test('cmd+a does NOT select all', () {
+            Platform.setTestInstance(WindowsPlatform());
+
+            final controller = AttributedTextEditingController();
+
+            final result = DefaultSuperTextFieldKeyboardHandlers.selectAllTextFieldWhenCmdAIsPressed(
+              controller: controller,
+              keyEvent: FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.keyA,
+                  physicalKey: PhysicalKeyboardKey.keyA,
+                  isMetaPressed: true,
+                ),
+                character: 'a',
               ),
-              character: null,
-            ),
-          );
+            );
 
-          expect(result, TextFieldKeyboardHandlerResult.notHandled);
+            expect(result, TextFieldKeyboardHandlerResult.notHandled);
+
+            Platform.setTestInstance(null);
+          });
+
+          test('it ignores a-key without control', () {
+            Platform.setTestInstance(WindowsPlatform());
+
+            final controller = AttributedTextEditingController();
+
+            final result = DefaultSuperTextFieldKeyboardHandlers.selectAllTextFieldWhenCmdAIsPressed(
+              controller: controller,
+              keyEvent: FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.keyA,
+                  physicalKey: PhysicalKeyboardKey.keyA,
+                  isControlPressed: false,
+                ),
+                character: 'a',
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.notHandled);
+
+            Platform.setTestInstance(null);
+          });
+
+          test('it ignores control without a-key', () {
+            Platform.setTestInstance(WindowsPlatform());
+
+            final controller = AttributedTextEditingController();
+
+            final result = DefaultSuperTextFieldKeyboardHandlers.selectAllTextFieldWhenCmdAIsPressed(
+              controller: controller,
+              keyEvent: FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.metaLeft,
+                  physicalKey: PhysicalKeyboardKey.metaLeft,
+                  isControlPressed: true,
+                ),
+                character: null,
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.notHandled);
+
+            Platform.setTestInstance(null);
+          });
         });
       });
 
@@ -346,7 +771,12 @@ void main() {
             //
             // The given offset is "16", which represents selection of the 17th
             // character.
-            expect(selectableTextState.getCharacterBox(TextPosition(offset: 16)).top, 0);
+            //
+            // We give a tiny bit of wiggle room on the value because when this test
+            // is run on Windows and Linux CI, there is some kind of precision error
+            // that results in a tiny positive number instead of zero.
+            expect(selectableTextState.getCharacterBox(TextPosition(offset: 16)).top, lessThan(0.1));
+            expect(selectableTextState.getCharacterBox(TextPosition(offset: 16)).top, greaterThanOrEqualTo(0));
           });
 
           testWidgets('it expands left by character', (tester) async {
@@ -430,7 +860,9 @@ void main() {
             expect(controller.selection.extentOffset, 6);
           });
 
-          testWidgets('it moves left to beginning of line', (tester) async {
+          testWidgets('Mac: cmd+left moves left to beginning of line', (tester) async {
+            Platform.setTestInstance(MacPlatform());
+
             final controller = AttributedTextEditingController(
               text: AttributedText(text: 'super text field'),
               selection: TextSelection.collapsed(offset: 10),
@@ -454,9 +886,43 @@ void main() {
             expect(result, TextFieldKeyboardHandlerResult.handled);
             expect(controller.selection.extentOffset, 0);
             expect(controller.selection.isCollapsed, true);
+
+            Platform.setTestInstance(null);
           });
 
-          testWidgets('it expands left to beginning of line', (tester) async {
+          testWidgets('Windows + Linux: control + left moves left to beginning of line', (tester) async {
+            Platform.setTestInstance(WindowsPlatform());
+
+            final controller = AttributedTextEditingController(
+              text: AttributedText(text: 'super text field'),
+              selection: TextSelection.collapsed(offset: 10),
+            );
+
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+
+            final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
+              controller: controller,
+              selectableTextState: selectableTextState,
+              keyEvent: FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.arrowLeft,
+                  physicalKey: PhysicalKeyboardKey.arrowLeft,
+                  isControlPressed: true,
+                ),
+                character: null,
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.handled);
+            expect(controller.selection.extentOffset, 0);
+            expect(controller.selection.isCollapsed, true);
+
+            Platform.setTestInstance(null);
+          });
+
+          testWidgets('Mac: cmd + shift + left expands left to beginning of line', (tester) async {
+            Platform.setTestInstance(MacPlatform());
+
             final controller = AttributedTextEditingController(
               text: AttributedText(text: 'super text field'),
               selection: TextSelection.collapsed(offset: 10),
@@ -482,6 +948,40 @@ void main() {
             expect(controller.selection.isCollapsed, false);
             expect(controller.selection.baseOffset, 10);
             expect(controller.selection.extentOffset, 0);
+
+            Platform.setTestInstance(null);
+          });
+
+          testWidgets('Windows + Linux: control + shift + left expands left to beginning of line', (tester) async {
+            Platform.setTestInstance(WindowsPlatform());
+
+            final controller = AttributedTextEditingController(
+              text: AttributedText(text: 'super text field'),
+              selection: TextSelection.collapsed(offset: 10),
+            );
+
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+
+            final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
+              controller: controller,
+              selectableTextState: selectableTextState,
+              keyEvent: FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.arrowLeft,
+                  physicalKey: PhysicalKeyboardKey.arrowLeft,
+                  isControlPressed: true,
+                  isShiftPressed: true,
+                ),
+                character: null,
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.handled);
+            expect(controller.selection.isCollapsed, false);
+            expect(controller.selection.baseOffset, 10);
+            expect(controller.selection.extentOffset, 0);
+
+            Platform.setTestInstance(null);
           });
 
           testWidgets('it collapses downstream selection on left side', (tester) async {
@@ -742,7 +1242,9 @@ void main() {
             expect(controller.selection.extentOffset, 10);
           });
 
-          testWidgets('it moves right to end of line', (tester) async {
+          testWidgets('Mac: cmd + right moves right to end of line', (tester) async {
+            Platform.setTestInstance(MacPlatform());
+
             final controller = AttributedTextEditingController(
               text: AttributedText(text: 'super text field'),
               selection: TextSelection.collapsed(offset: 6),
@@ -766,9 +1268,43 @@ void main() {
             expect(result, TextFieldKeyboardHandlerResult.handled);
             expect(controller.selection.isCollapsed, true);
             expect(controller.selection.extentOffset, 16);
+
+            Platform.setTestInstance(null);
           });
 
-          testWidgets('it expands right to end of line', (tester) async {
+          testWidgets('Windows + Linux: control + right moves right to end of line', (tester) async {
+            Platform.setTestInstance(WindowsPlatform());
+
+            final controller = AttributedTextEditingController(
+              text: AttributedText(text: 'super text field'),
+              selection: TextSelection.collapsed(offset: 6),
+            );
+
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+
+            final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
+              controller: controller,
+              selectableTextState: selectableTextState,
+              keyEvent: FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.arrowRight,
+                  physicalKey: PhysicalKeyboardKey.arrowRight,
+                  isControlPressed: true,
+                ),
+                character: null,
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.handled);
+            expect(controller.selection.isCollapsed, true);
+            expect(controller.selection.extentOffset, 16);
+
+            Platform.setTestInstance(null);
+          });
+
+          testWidgets('Mac: cmd + shift + right expands right to end of line', (tester) async {
+            Platform.setTestInstance(MacPlatform());
+
             final controller = AttributedTextEditingController(
               text: AttributedText(text: 'super text field'),
               selection: TextSelection.collapsed(offset: 6),
@@ -794,6 +1330,40 @@ void main() {
             expect(controller.selection.isCollapsed, false);
             expect(controller.selection.baseOffset, 6);
             expect(controller.selection.extentOffset, 16);
+
+            Platform.setTestInstance(null);
+          });
+
+          testWidgets('Windows + Linux: control + shift + right expands right to end of line', (tester) async {
+            Platform.setTestInstance(WindowsPlatform());
+
+            final controller = AttributedTextEditingController(
+              text: AttributedText(text: 'super text field'),
+              selection: TextSelection.collapsed(offset: 6),
+            );
+
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+
+            final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
+              controller: controller,
+              selectableTextState: selectableTextState,
+              keyEvent: FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.arrowRight,
+                  physicalKey: PhysicalKeyboardKey.arrowRight,
+                  isControlPressed: true,
+                  isShiftPressed: true,
+                ),
+                character: null,
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.handled);
+            expect(controller.selection.isCollapsed, false);
+            expect(controller.selection.baseOffset, 6);
+            expect(controller.selection.extentOffset, 16);
+
+            Platform.setTestInstance(null);
           });
 
           testWidgets('it collapses downstream selection on right side', (tester) async {
@@ -1074,6 +1644,460 @@ void main() {
             expect(result, TextFieldKeyboardHandlerResult.handled);
             expect(controller.selection.isCollapsed, true);
             expect(controller.selection.extentOffset, 23);
+          });
+        });
+      });
+
+      group('delete line before caret', () {
+        group('Mac', () {
+          testWidgets('cmd + backspace deletes partial line before caret (flowed multiline)', (tester) async {
+            Platform.setTestInstance(MacPlatform());
+
+            // Note: this test depends on a multi-line text layout, therefore
+            // the layout width and the text content must be precise.
+            final controller = AttributedTextEditingController(
+              text: AttributedText(text: _multilineLayoutText),
+              selection: TextSelection.collapsed(offset: 28), // midway through 2nd line
+            );
+
+            final selectableTextState = await _pumpMultilineLayout(tester);
+
+            final result =
+                DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
+              controller: controller,
+              selectableTextState: selectableTextState,
+              keyEvent: FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.backspace,
+                  physicalKey: PhysicalKeyboardKey.backspace,
+                  isMetaPressed: true,
+                ),
+                character: null,
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.handled);
+            expect(controller.selection.isCollapsed, true);
+            expect(controller.selection.extentOffset, 18);
+            expect(controller.text.text, 'this text is long be multiline in the available space');
+
+            Platform.setTestInstance(null);
+          });
+
+          testWidgets('cmd + backspace deletes entire line (flowed multiline)', (tester) async {
+            Platform.setTestInstance(MacPlatform());
+
+            // Note: this test depends on a multi-line text layout, therefore
+            // the layout width and the text content must be precise.
+            final controller = AttributedTextEditingController(
+              text: AttributedText(text: _multilineLayoutText),
+              selection: TextSelection.collapsed(offset: 31, affinity: TextAffinity.upstream), // end of 2nd line
+            );
+
+            final selectableTextState = await _pumpMultilineLayout(tester);
+
+            final result =
+                DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
+              controller: controller,
+              selectableTextState: selectableTextState,
+              keyEvent: FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.backspace,
+                  physicalKey: PhysicalKeyboardKey.backspace,
+                  isMetaPressed: true,
+                ),
+                character: null,
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.handled);
+            expect(controller.selection.isCollapsed, true);
+            expect(controller.selection.extentOffset, 18);
+            expect(controller.text.text, 'this text is long multiline in the available space');
+
+            Platform.setTestInstance(null);
+          });
+
+          testWidgets('cmd + backspace deletes partial line before caret (explicit newlines)', (tester) async {
+            Platform.setTestInstance(MacPlatform());
+
+            final controller = AttributedTextEditingController(
+              text: AttributedText(text: 'This is line 1\nThis is line 2\nThis is line 3'),
+              selection: TextSelection.collapsed(offset: 23), // midway through 2nd line
+            );
+
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+
+            final result =
+                DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
+              controller: controller,
+              selectableTextState: selectableTextState,
+              keyEvent: FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.backspace,
+                  physicalKey: PhysicalKeyboardKey.backspace,
+                  isMetaPressed: true,
+                ),
+                character: null,
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.handled);
+            expect(controller.selection.isCollapsed, true);
+            expect(controller.selection.extentOffset, 15);
+            expect(controller.text.text, 'This is line 1\nline 2\nThis is line 3');
+
+            Platform.setTestInstance(null);
+          });
+
+          testWidgets('cmd + backspace deletes entire line (explicit newlines)', (tester) async {
+            Platform.setTestInstance(MacPlatform());
+
+            final controller = AttributedTextEditingController(
+              text: AttributedText(text: 'This is line 1\nThis is line 2\nThis is line 3'),
+              selection: TextSelection.collapsed(offset: 29, affinity: TextAffinity.upstream), // end of 2nd line
+            );
+
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+
+            final result =
+                DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
+              controller: controller,
+              selectableTextState: selectableTextState,
+              keyEvent: FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.backspace,
+                  physicalKey: PhysicalKeyboardKey.backspace,
+                  isMetaPressed: true,
+                ),
+                character: null,
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.handled);
+            expect(controller.selection.isCollapsed, true);
+            expect(controller.selection.extentOffset, 15);
+            expect(controller.text.text, 'This is line 1\n\nThis is line 3');
+
+            Platform.setTestInstance(null);
+          });
+
+          testWidgets('it does nothing when selection is expanded', (tester) async {
+            Platform.setTestInstance(MacPlatform());
+
+            final controller = AttributedTextEditingController(
+              text: AttributedText(text: 'This is some text that doesn\'t matter for this test.'),
+              selection: TextSelection(
+                baseOffset: 0,
+                extentOffset: 10,
+              ),
+            );
+
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+
+            final result =
+                DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
+              controller: controller,
+              selectableTextState: selectableTextState,
+              keyEvent: FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.backspace,
+                  physicalKey: PhysicalKeyboardKey.backspace,
+                  isMetaPressed: true,
+                ),
+                character: null,
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.notHandled);
+
+            Platform.setTestInstance(null);
+          });
+
+          testWidgets('it does nothing when selection extent is < 0', (tester) async {
+            Platform.setTestInstance(MacPlatform());
+
+            final controller = AttributedTextEditingController(
+              text: AttributedText(text: 'This is some text that doesn\'t matter for this test.'),
+              selection: TextSelection.collapsed(offset: -1),
+            );
+
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+
+            final result =
+                DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
+              controller: controller,
+              selectableTextState: selectableTextState,
+              keyEvent: FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.backspace,
+                  physicalKey: PhysicalKeyboardKey.backspace,
+                  isMetaPressed: true,
+                ),
+                character: null,
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.notHandled);
+
+            Platform.setTestInstance(null);
+          });
+
+          testWidgets('it does nothing when selection is at start of line', (tester) async {
+            Platform.setTestInstance(MacPlatform());
+
+            // Note: this test depends on a multi-line text layout, therefore
+            // the layout width and the text content must be precise.
+            final controller = AttributedTextEditingController(
+              text: AttributedText(text: _multilineLayoutText),
+              selection: TextSelection.collapsed(offset: 18), // start of 2nd line
+            );
+
+            final selectableTextState = await _pumpMultilineLayout(tester);
+
+            final result =
+                DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
+              controller: controller,
+              selectableTextState: selectableTextState,
+              keyEvent: FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.backspace,
+                  physicalKey: PhysicalKeyboardKey.backspace,
+                  isMetaPressed: true,
+                ),
+                character: null,
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.notHandled);
+
+            Platform.setTestInstance(null);
+          });
+        });
+
+        group('Windows + Linux', () {
+          testWidgets('control + backspace deletes partial line before caret (flowed multiline)', (tester) async {
+            Platform.setTestInstance(WindowsPlatform());
+
+            // Note: this test depends on a multi-line text layout, therefore
+            // the layout width and the text content must be precise.
+            final controller = AttributedTextEditingController(
+              text: AttributedText(text: _multilineLayoutText),
+              selection: TextSelection.collapsed(offset: 28), // midway through 2nd line
+            );
+
+            final selectableTextState = await _pumpMultilineLayout(tester);
+
+            final result =
+                DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
+              controller: controller,
+              selectableTextState: selectableTextState,
+              keyEvent: FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.backspace,
+                  physicalKey: PhysicalKeyboardKey.backspace,
+                  isControlPressed: true,
+                ),
+                character: null,
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.handled);
+            expect(controller.selection.isCollapsed, true);
+            expect(controller.selection.extentOffset, 18);
+            expect(controller.text.text, 'this text is long be multiline in the available space');
+
+            Platform.setTestInstance(null);
+          });
+
+          testWidgets('control + backspace deletes entire line (flowed multiline)', (tester) async {
+            Platform.setTestInstance(WindowsPlatform());
+
+            // Note: this test depends on a multi-line text layout, therefore
+            // the layout width and the text content must be precise.
+            final controller = AttributedTextEditingController(
+              text: AttributedText(text: _multilineLayoutText),
+              selection: TextSelection.collapsed(offset: 31, affinity: TextAffinity.upstream), // end of 2nd line
+            );
+
+            final selectableTextState = await _pumpMultilineLayout(tester);
+
+            final result =
+                DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
+              controller: controller,
+              selectableTextState: selectableTextState,
+              keyEvent: FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.backspace,
+                  physicalKey: PhysicalKeyboardKey.backspace,
+                  isControlPressed: true,
+                ),
+                character: null,
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.handled);
+            expect(controller.selection.isCollapsed, true);
+            expect(controller.selection.extentOffset, 18);
+            expect(controller.text.text, 'this text is long multiline in the available space');
+
+            Platform.setTestInstance(null);
+          });
+
+          testWidgets('control + backspace deletes partial line before caret (explicit newlines)', (tester) async {
+            Platform.setTestInstance(WindowsPlatform());
+
+            final controller = AttributedTextEditingController(
+              text: AttributedText(text: 'This is line 1\nThis is line 2\nThis is line 3'),
+              selection: TextSelection.collapsed(offset: 23), // midway through 2nd line
+            );
+
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+
+            final result =
+                DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
+              controller: controller,
+              selectableTextState: selectableTextState,
+              keyEvent: FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.backspace,
+                  physicalKey: PhysicalKeyboardKey.backspace,
+                  isControlPressed: true,
+                ),
+                character: null,
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.handled);
+            expect(controller.selection.isCollapsed, true);
+            expect(controller.selection.extentOffset, 15);
+            expect(controller.text.text, 'This is line 1\nline 2\nThis is line 3');
+
+            Platform.setTestInstance(null);
+          });
+
+          testWidgets('control + backspace deletes entire line (explicit newlines)', (tester) async {
+            Platform.setTestInstance(WindowsPlatform());
+
+            final controller = AttributedTextEditingController(
+              text: AttributedText(text: 'This is line 1\nThis is line 2\nThis is line 3'),
+              selection: TextSelection.collapsed(offset: 29, affinity: TextAffinity.upstream), // end of 2nd line
+            );
+
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+
+            final result =
+                DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
+              controller: controller,
+              selectableTextState: selectableTextState,
+              keyEvent: FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.backspace,
+                  physicalKey: PhysicalKeyboardKey.backspace,
+                  isControlPressed: true,
+                ),
+                character: null,
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.handled);
+            expect(controller.selection.isCollapsed, true);
+            expect(controller.selection.extentOffset, 15);
+            expect(controller.text.text, 'This is line 1\n\nThis is line 3');
+
+            Platform.setTestInstance(null);
+          });
+
+          testWidgets('it does nothing when selection is expanded', (tester) async {
+            Platform.setTestInstance(WindowsPlatform());
+
+            final controller = AttributedTextEditingController(
+              text: AttributedText(text: 'This is some text that doesn\'t matter for this test.'),
+              selection: TextSelection(
+                baseOffset: 0,
+                extentOffset: 10,
+              ),
+            );
+
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+
+            final result =
+                DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
+              controller: controller,
+              selectableTextState: selectableTextState,
+              keyEvent: FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.backspace,
+                  physicalKey: PhysicalKeyboardKey.backspace,
+                  isControlPressed: true,
+                ),
+                character: null,
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.notHandled);
+
+            Platform.setTestInstance(null);
+          });
+
+          testWidgets('it does nothing when selection extent is < 0', (tester) async {
+            Platform.setTestInstance(WindowsPlatform());
+
+            final controller = AttributedTextEditingController(
+              text: AttributedText(text: 'This is some text that doesn\'t matter for this test.'),
+              selection: TextSelection.collapsed(offset: -1),
+            );
+
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+
+            final result =
+                DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
+              controller: controller,
+              selectableTextState: selectableTextState,
+              keyEvent: FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.backspace,
+                  physicalKey: PhysicalKeyboardKey.backspace,
+                  isControlPressed: true,
+                ),
+                character: null,
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.notHandled);
+
+            Platform.setTestInstance(null);
+          });
+
+          testWidgets('it does nothing when selection is at start of line', (tester) async {
+            Platform.setTestInstance(WindowsPlatform());
+
+            // Note: this test depends on a multi-line text layout, therefore
+            // the layout width and the text content must be precise.
+            final controller = AttributedTextEditingController(
+              text: AttributedText(text: _multilineLayoutText),
+              selection: TextSelection.collapsed(offset: 18), // start of 2nd line
+            );
+
+            final selectableTextState = await _pumpMultilineLayout(tester);
+
+            final result =
+                DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
+              controller: controller,
+              selectableTextState: selectableTextState,
+              keyEvent: FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.backspace,
+                  physicalKey: PhysicalKeyboardKey.backspace,
+                  isControlPressed: true,
+                ),
+                character: null,
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.notHandled);
+
+            Platform.setTestInstance(null);
           });
         });
       });
@@ -1444,10 +2468,10 @@ final _multilineLayoutText = 'this text is long enough to be multiline in the av
 
 // Based on experiments, the text is laid out as follows:
 //
-//  (0)this text is long (17)
-// (18)enough to be (31)
-// (32)multiline in the (49)
-// (50)available space(65)
+//  (0)this text is long (18 - upstream)
+// (18)enough to be (31 - upstream)
+// (31)multiline in the (48 - upstream)
+// (48)available space(63)
 Future<SelectableTextState> _pumpMultilineLayout(
   WidgetTester tester,
 ) async {

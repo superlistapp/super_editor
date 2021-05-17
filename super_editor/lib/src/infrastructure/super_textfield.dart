@@ -95,6 +95,7 @@ class SuperTextFieldState extends State<SuperTextField> {
   final _selectableTextKey = GlobalKey<SelectableTextState>();
   final _textScrollKey = GlobalKey<SuperTextFieldScrollviewState>();
   late FocusNode _focusNode;
+  bool _hasFocus = false; // cache whether we have focus so we know when it changes
 
   late AttributedTextEditingController _controller;
   late ScrollController _scrollController;
@@ -105,7 +106,9 @@ class SuperTextFieldState extends State<SuperTextField> {
   void initState() {
     super.initState();
 
-    _focusNode = widget.focusNode ?? FocusNode();
+    _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
+    _hasFocus = _focusNode.hasFocus;
+
     _controller = (widget.textController ?? AttributedTextEditingController())
       ..addListener(_onSelectionOrContentChange);
     _scrollController = ScrollController();
@@ -116,10 +119,12 @@ class SuperTextFieldState extends State<SuperTextField> {
     super.didUpdateWidget(oldWidget);
 
     if (widget.focusNode != oldWidget.focusNode) {
+      _focusNode.removeListener(_onFocusChange);
       if (oldWidget.focusNode == null) {
         _focusNode.dispose();
       }
-      _focusNode = widget.focusNode ?? FocusNode();
+      _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
+      _hasFocus = _focusNode.hasFocus;
     }
 
     if (widget.textController != oldWidget.textController) {
@@ -141,6 +146,7 @@ class SuperTextFieldState extends State<SuperTextField> {
   @override
   void dispose() {
     _scrollController.dispose();
+    _focusNode.removeListener(_onFocusChange);
     if (widget.focusNode == null) {
       _focusNode.dispose();
     }
@@ -150,6 +156,17 @@ class SuperTextFieldState extends State<SuperTextField> {
     }
 
     super.dispose();
+  }
+
+  void _onFocusChange() {
+    // If our FocusNode just received focus, automatically set our
+    // controller's text position to the end of the available content.
+    //
+    // This behavior matches Flutter's standard behavior.
+    if (_focusNode.hasFocus && !_hasFocus) {
+      _controller.selection = TextSelection.collapsed(offset: _controller.text.text.length);
+    }
+    _hasFocus = _focusNode.hasFocus;
   }
 
   void _onSelectionOrContentChange() {
@@ -384,14 +401,22 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
 
   void _onTapDown(TapDownDetails details) {
     _log.log('_onTapDown', 'EditableDocument: onTapDown()');
-    _clearSelection();
     _selectionType = _SelectionType.position;
 
     final textOffset = _getTextOffset(details.localPosition);
     final tapTextPosition = _getPositionNearestToTextOffset(textOffset);
 
+    final expandSelection = RawKeyboard.instance.keysPressed.contains(LogicalKeyboardKey.shiftLeft) ||
+        RawKeyboard.instance.keysPressed.contains(LogicalKeyboardKey.shiftRight) ||
+        RawKeyboard.instance.keysPressed.contains(LogicalKeyboardKey.shift);
+
     setState(() {
-      widget.textController.selection = TextSelection.collapsed(offset: tapTextPosition.offset);
+      widget.textController.selection = expandSelection
+          ? TextSelection(
+              baseOffset: widget.textController.selection.baseOffset,
+              extentOffset: tapTextPosition.offset,
+            )
+          : TextSelection.collapsed(offset: tapTextPosition.offset);
     });
 
     widget.focusNode.requestFocus();
@@ -1180,6 +1205,7 @@ const defaultTextFieldKeyboardHandlers = <TextFieldKeyboardHandler>[
   DefaultSuperTextFieldKeyboardHandlers.pasteTextWhenCmdVIsPressed,
   DefaultSuperTextFieldKeyboardHandlers.selectAllTextFieldWhenCmdAIsPressed,
   DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys,
+  DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed,
   DefaultSuperTextFieldKeyboardHandlers.deleteTextWhenBackspaceOrDeleteIsPressed,
   DefaultSuperTextFieldKeyboardHandlers.insertNewlineWhenEnterIsPressed,
   DefaultSuperTextFieldKeyboardHandlers.insertCharacterWhenKeyIsPressed,
@@ -1191,7 +1217,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
     SelectableTextState? selectableTextState,
     required RawKeyEvent keyEvent,
   }) {
-    if (!keyEvent.isMetaPressed) {
+    if (!keyEvent.isPrimaryShortcutKeyPressed) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
     if (keyEvent.logicalKey != LogicalKeyboardKey.keyC) {
@@ -1208,7 +1234,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
     SelectableTextState? selectableTextState,
     required RawKeyEvent keyEvent,
   }) {
-    if (!keyEvent.isMetaPressed) {
+    if (!keyEvent.isPrimaryShortcutKeyPressed) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
     if (keyEvent.logicalKey != LogicalKeyboardKey.keyV) {
@@ -1229,7 +1255,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
     SelectableTextState? selectableTextState,
     required RawKeyEvent keyEvent,
   }) {
-    if (!keyEvent.isMetaPressed) {
+    if (!keyEvent.isPrimaryShortcutKeyPressed) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
     if (keyEvent.logicalKey != LogicalKeyboardKey.keyA) {
@@ -1268,7 +1294,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
       final movementModifiers = <String, dynamic>{
         'movement_unit': 'character',
       };
-      if (keyEvent.isMetaPressed) {
+      if (keyEvent.isPrimaryShortcutKeyPressed) {
         movementModifiers['movement_unit'] = 'line';
       } else if (keyEvent.isAltPressed) {
         movementModifiers['movement_unit'] = 'word';
@@ -1286,7 +1312,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
       final movementModifiers = <String, dynamic>{
         'movement_unit': 'character',
       };
-      if (keyEvent.isMetaPressed) {
+      if (keyEvent.isPrimaryShortcutKeyPressed) {
         movementModifiers['movement_unit'] = 'line';
       } else if (keyEvent.isAltPressed) {
         movementModifiers['movement_unit'] = 'word';
@@ -1346,6 +1372,30 @@ class DefaultSuperTextFieldKeyboardHandlers {
     }
 
     controller.insertCharacter(keyEvent.character!);
+
+    return TextFieldKeyboardHandlerResult.handled;
+  }
+
+  static TextFieldKeyboardHandlerResult deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed({
+    required AttributedTextEditingController controller,
+    required SelectableTextState selectableTextState,
+    required RawKeyEvent keyEvent,
+  }) {
+    if (!keyEvent.isPrimaryShortcutKeyPressed || keyEvent.logicalKey != LogicalKeyboardKey.backspace) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+    if (!controller.selection.isCollapsed) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+    if (controller.selection.extentOffset < 0) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+    if (selectableTextState.getPositionAtStartOfLine(controller.selection.extent).offset ==
+        controller.selection.extentOffset) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    controller.deleteTextOnLineBeforeCaret(selectableTextState: selectableTextState);
 
     return TextFieldKeyboardHandlerResult.handled;
   }
@@ -1639,6 +1689,22 @@ extension DefaultSuperTextFieldActions on AttributedTextEditingController {
       endOffset: deleteEndIndex,
     );
     selection = TextSelection.collapsed(offset: deleteStartIndex);
+  }
+
+  void deleteTextOnLineBeforeCaret({
+    required SelectableTextState selectableTextState,
+  }) {
+    assert(selection.isCollapsed);
+
+    final startOfLinePosition = selectableTextState.getPositionAtStartOfLine(selection.extent);
+    selection = TextSelection(
+      baseOffset: selection.extentOffset,
+      extentOffset: startOfLinePosition.offset,
+    );
+
+    if (!selection.isCollapsed) {
+      deleteSelectedText();
+    }
   }
 
   void deleteSelectedText() {
