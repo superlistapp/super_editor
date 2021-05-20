@@ -119,7 +119,6 @@ class _FeaturedEditorState extends State<FeaturedEditor> {
       return;
     }
 
-    final windowWidth = MediaQuery.of(context).size.width;
     final docBoundingBox = (_docLayoutKey.currentState as DocumentLayout).getRectForSelection(
       _composer.selection.base,
       _composer.selection.extent,
@@ -132,14 +131,6 @@ class _FeaturedEditorState extends State<FeaturedEditor> {
       docBox.localToGlobal(docBoundingBox.bottomRight, ancestor: parentBox),
     ).translate(parentInOverlayOffset.dx, parentInOverlayOffset.dy);
 
-    // A hacky piece of code that tries to ensure the editor toolbar doesn't
-    // go out of window bounds. Assumes that the editor toolbar is fixed height.
-    // var offset = overlayBoundingBox.topCenter;
-    // if (offset.dx < 172) {
-    //   offset = offset.translate(172, 0);
-    // } else if (offset.dx > windowWidth - 132) {
-    //   offset = offset.translate(-132, 0);
-    // }
     final offset = overlayBoundingBox.topCenter;
 
     _selectionAnchor.value = offset;
@@ -262,10 +253,6 @@ enum DisplayMode {
 // we style the text ourselves in the "text style builders" that we
 // provide to the Editor widget.
 const _underlineAttribution = NamedAttribution('underline');
-
-const _initialBodyParagraphText = 'The missing WYSIWYG editor for Flutter. Open source and written '
-    'entirely in Dart. Comes with a modular architecture that allows '
-    'you to customize it to your needs. Try it right here >>';
 
 MutableDocument _createInitialDocument() {
   return MutableDocument(

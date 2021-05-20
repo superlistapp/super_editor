@@ -31,7 +31,7 @@ class _HomePageState extends State<HomePage> {
           style: const TextStyle(
             fontWeight: FontWeight.w400,
             fontSize: 18,
-            height: 27 / 18, // TODO: why is this division happening here?
+            height: 1.5,
             color: Colors.white,
           ),
           child: _buildContent(
