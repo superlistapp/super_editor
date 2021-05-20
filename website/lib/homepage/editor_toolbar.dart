@@ -75,8 +75,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
       return false;
     }
 
-    final selectedNode =
-        widget.editor.document.getNodeById(selection.extent.nodeId);
+    final selectedNode = widget.editor.document.getNodeById(selection.extent.nodeId);
     return selectedNode is ParagraphNode || selectedNode is ListItemNode;
   }
 
@@ -84,8 +83,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
   ///
   /// Throws an exception if the currently selected node is not a text node.
   _TextType _getCurrentTextType() {
-    final selectedNode = widget.editor.document
-        .getNodeById(widget.composer.selection.extent.nodeId);
+    final selectedNode = widget.editor.document.getNodeById(widget.composer.selection.extent.nodeId);
     if (selectedNode is ParagraphNode) {
       final type = selectedNode.metadata['blockType'];
 
@@ -101,9 +99,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
         return _TextType.paragraph;
       }
     } else if (selectedNode is ListItemNode) {
-      return selectedNode.type == ListItemType.ordered
-          ? _TextType.orderedListItem
-          : _TextType.unorderedListItem;
+      return selectedNode.type == ListItemType.ordered ? _TextType.orderedListItem : _TextType.unorderedListItem;
     } else {
       throw Exception('Invalid node type: $selectedNode');
     }
@@ -113,8 +109,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
   ///
   /// Throws an exception if the currently selected node is not a text node.
   TextAlign _getCurrentTextAlignment() {
-    final selectedNode = widget.editor.document
-        .getNodeById(widget.composer.selection.extent.nodeId);
+    final selectedNode = widget.editor.document.getNodeById(widget.composer.selection.extent.nodeId);
     if (selectedNode is ParagraphNode) {
       final align = selectedNode.metadata['textAlign'] as String;
       switch (align) {
@@ -130,8 +125,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
           return TextAlign.left;
       }
     } else {
-      throw Exception(
-          'Alignment does not apply to node of type: $selectedNode');
+      throw Exception('Alignment does not apply to node of type: $selectedNode');
     }
   }
 
@@ -143,8 +137,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
       return false;
     }
 
-    final selectedNode =
-        widget.editor.document.getNodeById(selection.extent.nodeId);
+    final selectedNode = widget.editor.document.getNodeById(selection.extent.nodeId);
     return selectedNode is ParagraphNode;
   }
 
@@ -165,9 +158,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
       widget.editor.executeCommand(
         ChangeListItemTypeCommand(
           nodeId: widget.composer.selection.extent.nodeId,
-          newType: newType == _TextType.orderedListItem
-              ? ListItemType.ordered
-              : ListItemType.unordered,
+          newType: newType == _TextType.orderedListItem ? ListItemType.ordered : ListItemType.unordered,
         ),
       );
     } else if (_isListItem(existingTextType) && !_isListItem(newType)) {
@@ -183,25 +174,20 @@ class _EditorToolbarState extends State<EditorToolbar> {
       widget.editor.executeCommand(
         ConvertParagraphToListItemCommand(
           nodeId: widget.composer.selection.extent.nodeId,
-          type: newType == _TextType.orderedListItem
-              ? ListItemType.ordered
-              : ListItemType.unordered,
+          type: newType == _TextType.orderedListItem ? ListItemType.ordered : ListItemType.unordered,
         ),
       );
     } else {
       // Apply a new block type to an existing paragraph node.
-      final existingNode = widget.editor.document
-          .getNodeById(widget.composer.selection.extent.nodeId);
-      (existingNode as ParagraphNode).metadata['blockType'] =
-          _getBlockTypeAttribution(newType);
+      final existingNode = widget.editor.document.getNodeById(widget.composer.selection.extent.nodeId);
+      (existingNode as ParagraphNode).metadata['blockType'] = _getBlockTypeAttribution(newType);
     }
   }
 
   /// Returns true if the given [_TextType] represents an
   /// ordered or unordered list item, returns false otherwise.
   bool _isListItem(_TextType type) {
-    return type == _TextType.orderedListItem ||
-        type == _TextType.unorderedListItem;
+    return type == _TextType.orderedListItem || type == _TextType.unorderedListItem;
   }
 
   /// Returns the text [Attribution] associated with the given
@@ -273,16 +259,13 @@ class _EditorToolbarState extends State<EditorToolbar> {
     final extentOffset = (selection.extent.nodePosition as TextPosition).offset;
     final selectionStart = min(baseOffset, extentOffset);
     final selectionEnd = max(baseOffset, extentOffset);
-    final selectionRange =
-        TextRange(start: selectionStart, end: selectionEnd - 1);
+    final selectionRange = TextRange(start: selectionStart, end: selectionEnd - 1);
 
-    final textNode =
-        widget.editor.document.getNodeById(selection.extent.nodeId) as TextNode;
+    final textNode = widget.editor.document.getNodeById(selection.extent.nodeId) as TextNode;
     final text = textNode.text;
 
     final overlappingLinkAttributions = text.getAttributionSpansInRange(
-      attributionFilter: (Attribution attribution) =>
-          attribution is LinkAttribution,
+      attributionFilter: (Attribution attribution) => attribution is LinkAttribution,
       range: selectionRange,
     );
 
@@ -297,16 +280,13 @@ class _EditorToolbarState extends State<EditorToolbar> {
     final extentOffset = (selection.extent.nodePosition as TextPosition).offset;
     final selectionStart = min(baseOffset, extentOffset);
     final selectionEnd = max(baseOffset, extentOffset);
-    final selectionRange =
-        TextRange(start: selectionStart, end: selectionEnd - 1);
+    final selectionRange = TextRange(start: selectionStart, end: selectionEnd - 1);
 
-    final textNode =
-        widget.editor.document.getNodeById(selection.extent.nodeId) as TextNode;
+    final textNode = widget.editor.document.getNodeById(selection.extent.nodeId) as TextNode;
     final text = textNode.text;
 
     final overlappingLinkAttributions = text.getAttributionSpansInRange(
-      attributionFilter: (Attribution attribution) =>
-          attribution is LinkAttribution,
+      attributionFilter: (Attribution attribution) => attribution is LinkAttribution,
       range: selectionRange,
     );
 
@@ -319,10 +299,8 @@ class _EditorToolbarState extends State<EditorToolbar> {
       // The selected text contains one other link.
       final overlappingLinkSpan = overlappingLinkAttributions.first;
       final isLinkSelectionOnTrailingEdge =
-          (overlappingLinkSpan.start >= selectionRange.start &&
-                  overlappingLinkSpan.start <= selectionRange.end) ||
-              (overlappingLinkSpan.end >= selectionRange.start &&
-                  overlappingLinkSpan.end <= selectionRange.end);
+          (overlappingLinkSpan.start >= selectionRange.start && overlappingLinkSpan.start <= selectionRange.end) ||
+              (overlappingLinkSpan.end >= selectionRange.start && overlappingLinkSpan.end <= selectionRange.end);
 
       if (isLinkSelectionOnTrailingEdge) {
         // The selected text covers the beginning, or the end, or the entire
@@ -333,8 +311,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
         // the entire link attribution.
         text.removeAttribution(
           overlappingLinkSpan.attribution,
-          TextRange(
-              start: overlappingLinkSpan.start, end: overlappingLinkSpan.end),
+          TextRange(start: overlappingLinkSpan.start, end: overlappingLinkSpan.end),
         );
       }
     } else {
@@ -356,11 +333,9 @@ class _EditorToolbarState extends State<EditorToolbar> {
     final extentOffset = (selection.extent.nodePosition as TextPosition).offset;
     final selectionStart = min(baseOffset, extentOffset);
     final selectionEnd = max(baseOffset, extentOffset);
-    final selectionRange =
-        TextRange(start: selectionStart, end: selectionEnd - 1);
+    final selectionRange = TextRange(start: selectionStart, end: selectionEnd - 1);
 
-    final textNode =
-        widget.editor.document.getNodeById(selection.extent.nodeId) as TextNode;
+    final textNode = widget.editor.document.getNodeById(selection.extent.nodeId) as TextNode;
     final text = textNode.text;
 
     final trimmedRange = _trimTextRangeWhitespace(text, selectionRange);
@@ -375,8 +350,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
     _urlController.clear();
     setState(() {
       _showUrlField = false;
-      _urlFocusNode.unfocus(
-          disposition: UnfocusDisposition.previouslyFocusedChild);
+      _urlFocusNode.unfocus(disposition: UnfocusDisposition.previouslyFocusedChild);
       widget.closeToolbar();
     });
   }
@@ -419,8 +393,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
         break;
     }
 
-    final selectedNode = widget.editor.document
-        .getNodeById(widget.composer.selection.extent.nodeId) as ParagraphNode;
+    final selectedNode = widget.editor.document.getNodeById(widget.composer.selection.extent.nodeId) as ParagraphNode;
     selectedNode.metadata['textAlign'] = newAlignmentValue;
   }
 
@@ -473,7 +446,10 @@ class _EditorToolbarState extends State<EditorToolbar> {
                   ),
                 ),
               Positioned(
-                left: widget.anchor.value.dx,
+                // The hard-coded clamp values are based on empirical checks
+                // with the marketing website. The clamping behavior should be
+                // generalized to use this toolbar in an app.
+                left: widget.anchor.value.dx.clamp(165, MediaQuery.of(context).size.width - 165).toDouble(),
                 top: widget.anchor.value.dy,
                 child: FractionalTranslation(
                   translation: const Offset(-0.5, -1.4),
@@ -568,12 +544,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
                 message: 'Text Alignment',
                 child: DropdownButton<TextAlign>(
                   value: _getCurrentTextAlignment(),
-                  items: [
-                    TextAlign.left,
-                    TextAlign.center,
-                    TextAlign.right,
-                    TextAlign.justify
-                  ]
+                  items: [TextAlign.left, TextAlign.center, TextAlign.right, TextAlign.justify]
                       .map((textAlign) => DropdownMenuItem<TextAlign>(
                             value: textAlign,
                             child: Padding(
