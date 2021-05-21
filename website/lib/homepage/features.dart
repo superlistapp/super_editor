@@ -1,16 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:website/breakpoints.dart';
-import 'package:website/editor_video_showcase.dart';
 
 class Features extends StatelessWidget {
   const Features();
 
   @override
   Widget build(BuildContext context) {
-    final singleColumnLayout = Breakpoints.singleColumnLayout(context);
-
     return Container(
-      color: const Color(0xFF003F51),
       padding: const EdgeInsets.only(left: 20, right: 20, bottom: 80),
       child: Transform.translate(
         offset: const Offset(0, -49),
@@ -18,14 +13,14 @@ class Features extends StatelessWidget {
           children: [
             Center(
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1113),
+                constraints: const BoxConstraints(maxWidth: 1400),
                 child: Wrap(
                   spacing: 64,
                   runSpacing: 32,
                   alignment: WrapAlignment.center,
                   children: [
                     ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 499),
+                      constraints: const BoxConstraints(maxWidth: 400),
                       child: _Feature(
                         image: Image.asset(
                           'assets/images/ic_customize.png',
@@ -33,13 +28,25 @@ class Features extends StatelessWidget {
                           width: 48,
                           height: 48,
                         ),
-                        title: 'Fully customizable',
-                        description:
-                            'Easy to extend and very detailed access to all component, designed to and build for developer, allow you to adjust the editor to your specific needs',
+                        title: 'Ready to go!',
+                        description: 'Want a typical editor experience? Drop in the default editor and go!',
                       ),
                     ),
                     ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 515),
+                      constraints: const BoxConstraints(maxWidth: 400),
+                      child: _Feature(
+                        image: Image.asset(
+                          'assets/images/ic_customize.png',
+                          fit: BoxFit.cover,
+                          width: 48,
+                          height: 48,
+                        ),
+                        title: 'Customizable',
+                        description: 'Your styles. Your interactions. Your editor. Compose it your way.',
+                      ),
+                    ),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 400),
                       child: _Feature(
                         image: Image.asset(
                           'assets/images/dart_logo.png',
@@ -47,16 +54,11 @@ class Features extends StatelessWidget {
                           width: 64,
                           height: 64,
                         ),
-                        title: 'Fully written in Dart',
+                        title: 'Pure Dart',
                         description:
-                            'A true cross platform editor written from scratch to deliver the performance and stability you expect',
+                            'No plugins. No platform code. Anywhere you can take Flutter and Dart, you can take Super Editor',
                       ),
                     ),
-                    SizedBox(
-                      width: double.infinity,
-                      height: singleColumnLayout ? 45 : 85,
-                    ),
-                    const EditorVideoShowcase(),
                   ],
                 ),
               ),
@@ -100,7 +102,7 @@ class _Feature extends StatelessWidget {
           title,
           style: const TextStyle(
             fontWeight: FontWeight.bold,
-            fontSize: 38,
+            fontSize: 32,
             height: 46 / 38,
           ),
           textAlign: TextAlign.center,

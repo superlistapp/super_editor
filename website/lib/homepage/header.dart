@@ -4,47 +4,62 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:website/breakpoints.dart';
 
 class Header extends StatelessWidget {
-  const Header();
+  const Header({
+    @required this.displayCollapsedNavigation,
+  });
+
+  final bool displayCollapsedNavigation;
 
   @override
   Widget build(BuildContext context) {
-    final collapsedNavigation = Breakpoints.collapsedNavigation(context);
-
     return Container(
+      // TODO: move magic number to a named constant
       constraints: const BoxConstraints(maxWidth: 1113),
       margin: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Image.asset(
-            'assets/images/logo.gif',
-            width: 188,
-            height: 44,
-          ),
-          if (!collapsedNavigation)
-            Row(
-              children: const [
-                _Link(
-                  url: 'https://github.com/superlistapp/super_editor',
-                  child: Text('Github'),
-                ),
-                SizedBox(width: 8),
-                _Link(
-                  url: 'https://github.com/superlistapp/super_editor/wiki',
-                  child: Text('Docs'),
-                ),
-                SizedBox(width: 16),
-                _DownloadButton(),
-              ],
-            ),
+          _buildLogo(),
+          if (!displayCollapsedNavigation) _buildNavBar(),
         ],
       ),
+    );
+  }
+
+  Widget _buildLogo() {
+    return Image.asset(
+      'assets/images/logo.gif',
+      width: 188,
+      height: 44,
+    );
+  }
+
+  Widget _buildNavBar() {
+    return Row(
+      children: const [
+        _Link(
+          url: 'https://github.com/superlistapp/super_editor',
+          child: Text('Github'),
+        ),
+        SizedBox(width: 8),
+        _Link(
+          url: 'https://github.com/superlistapp/super_editor/wiki',
+          child: Text('Docs'),
+        ),
+        SizedBox(width: 16),
+        _DownloadButton(),
+      ],
     );
   }
 }
 
 class DrawerLayout extends StatefulWidget {
-  const DrawerLayout({@required this.child}) : assert(child != null);
+  const DrawerLayout({
+    @required this.isNavigationCollapsed,
+    @required this.child,
+  }) : assert(child != null);
+
+  final bool isNavigationCollapsed;
   final Widget child;
 
   @override
@@ -63,9 +78,8 @@ class _DrawerLayoutState extends State<DrawerLayout> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    final collapsedNavigation = Breakpoints.collapsedNavigation(context);
 
-    if (!collapsedNavigation) {
+    if (!widget.isNavigationCollapsed) {
       _open = false;
       return widget.child;
     }
@@ -122,8 +136,7 @@ class _DrawerLayoutState extends State<DrawerLayout> {
                       ),
                       SizedBox(height: 8),
                       _Link(
-                        url:
-                            'https://github.com/superlistapp/super_editor/wiki',
+                        url: 'https://github.com/superlistapp/super_editor/wiki',
                         child: Text('Docs'),
                       ),
                       SizedBox(height: 16),
@@ -139,9 +152,7 @@ class _DrawerLayoutState extends State<DrawerLayout> {
           top: 30,
           right: 20,
           child: IconButton(
-            icon: _open
-                ? const Icon(Icons.close)
-                : const Icon(Icons.menu_rounded),
+            icon: _open ? const Icon(Icons.close) : const Icon(Icons.menu_rounded),
             iconSize: 28,
             color: Colors.white,
             onPressed: _toggle,
@@ -186,8 +197,7 @@ class _DownloadButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialButton(
       color: const Color(0xFFFAE74F),
-      onPressed: () =>
-          launch('https://pub.dev/publishers/superlist.com/packages'),
+      onPressed: () => launch('https://pub.dev/publishers/superlist.com/packages'),
       padding: const EdgeInsets.symmetric(horizontal: 32),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(64)),
       height: 52,
