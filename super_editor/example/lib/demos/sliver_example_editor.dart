@@ -39,7 +39,7 @@ class _SliverExampleEditorState extends State<SliverExampleEditor> {
           leading: SizedBox(),
           flexibleSpace: FlexibleSpaceBar(
             background: Image.network(
-              'https://i.ytimg.com/vi/fq4N0hgOWzU/maxresdefault.jpg',
+              'https://i.imgur.com/fSZwM7G.jpg',
               fit: BoxFit.cover,
             ),
           ),
@@ -93,7 +93,7 @@ Document _createInitialDocument() {
     nodes: [
       ImageNode(
         id: DocumentEditor.createNodeId(),
-        imageUrl: 'https://i.ytimg.com/vi/fq4N0hgOWzU/maxresdefault.jpg',
+        imageUrl: 'https://i.imgur.com/fSZwM7G.jpg',
       ),
       ParagraphNode(
         id: DocumentEditor.createNodeId(),
