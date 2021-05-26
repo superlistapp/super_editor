@@ -29,6 +29,19 @@ These platforms are explicitly not supported at this time because mobile input i
  * Android
  * iOS
 
+## Run the example implementation
+
+Super Editor comes with an example implementation to showcase the core functionality. It also exposes example UI elements on how to interact with the Editor.
+It currently supports MacOS and Web and will be expanded along the way, as we will support more platforms. You can run the example editor from the example directory:
+
+```bash
+cd example
+flutter run -d macos
+```
+
+The example implementation is only a proof of concept. Expect separate packages to implement various UIs on top of the editor.
+
+
 ## Display an editor
 
 Display a default text editor with the `Editor` widget:
