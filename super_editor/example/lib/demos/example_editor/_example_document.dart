@@ -5,7 +5,7 @@ Document createInitialDocument() {
     nodes: [
       ImageNode(
         id: DocumentEditor.createNodeId(),
-        imageUrl: 'https://i.ytimg.com/vi/fq4N0hgOWzU/maxresdefault.jpg',
+        imageUrl: 'https://i.imgur.com/fSZwM7G.jpg',
       ),
       ParagraphNode(
         id: DocumentEditor.createNodeId(),
