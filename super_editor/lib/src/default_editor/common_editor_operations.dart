@@ -650,8 +650,6 @@ class CommonEditorOperations {
       return false;
     }
 
-    print('Merging node with next text node');
-
     final firstNodeTextLength = node.text.text.length;
 
     // Send edit command.
@@ -1195,8 +1193,7 @@ class CommonEditorOperations {
     return true;
   }
 
-  /// Inserts the given [character] like [insertPlainText()] except that this
-  /// [character] can contain [Attribution]s.
+  /// Inserts the given [character] at the current extent position.
   ///
   /// By default, the current [DocumentComposer] input mode's [Attribution]s
   /// are added to the given [character]. To insert [character] exactly as it's provided,
@@ -1213,7 +1210,7 @@ class CommonEditorOperations {
     }
 
     final node = editor.document.getNodeById(composer.selection!.extent.nodeId);
-    if (node is! ParagraphNode) {
+    if (node is! TextNode) {
       return false;
     }
 
@@ -1227,28 +1224,16 @@ class CommonEditorOperations {
       return false;
     }
 
-    if (character == ' ') {
-      _convertParagraphIfDesired(
-        document: editor.document,
-        editor: editor,
-        composer: composer,
-        node: node,
-      );
-    }
-
     return true;
   }
 
   // TODO: refactor to make prefix matching extensible (#68)
-  bool _convertParagraphIfDesired({
-    required Document document,
-    required DocumentComposer composer,
-    required ParagraphNode node,
-    required DocumentEditor editor,
-  }) {
-    if (composer.selection == null) {
-      // This method shouldn't be invoked if the given node
-      // doesn't have the caret, but we check just in case.
+  bool convertParagraphByPatternMatching(String nodeId) {
+    final node = editor.document.getNodeById(nodeId);
+    if (node == null) {
+      return false;
+    }
+    if (node is! ParagraphNode) {
       return false;
     }
 
@@ -1273,7 +1258,7 @@ class CommonEditorOperations {
       final newNode = hasUnorderedListItemMatch
           ? ListItemNode.unordered(id: node.id, text: adjustedText)
           : ListItemNode.ordered(id: node.id, text: adjustedText);
-      final nodeIndex = document.getNodeIndex(node);
+      final nodeIndex = editor.document.getNodeIndex(node);
 
       editor.executeCommand(
         EditorCommandFunction((document, transaction) {
@@ -1302,7 +1287,7 @@ class CommonEditorOperations {
       _log.log('_convertParagraphIfDesired', 'Paragraph has an HR match');
       // Insert an HR before this paragraph and then clear the
       // paragraph's content.
-      final paragraphNodeIndex = document.getNodeIndex(node);
+      final paragraphNodeIndex = editor.document.getNodeIndex(node);
 
       editor.executeCommand(
         EditorCommandFunction((document, transaction) {
@@ -1340,7 +1325,7 @@ class CommonEditorOperations {
         text: adjustedText,
         metadata: {'blockType': blockquoteAttribution},
       );
-      final nodeIndex = document.getNodeIndex(node);
+      final nodeIndex = editor.document.getNodeIndex(node);
 
       editor.executeCommand(
         EditorCommandFunction((document, transaction) {
@@ -1377,7 +1362,7 @@ class CommonEditorOperations {
       // as a known type.
       final link = extractedLinks.firstWhereOrNull((element) => element is UrlElement)!.text;
       _processUrlNode(
-        document: document,
+        document: editor.document,
         editor: editor,
         nodeId: node.id,
         originalText: node.text.text,
@@ -1529,11 +1514,15 @@ class CommonEditorOperations {
     } else if (extentNode is ParagraphNode) {
       // Split the paragraph into two. This includes headers, blockquotes, and
       // any other block-level paragraph.
+      final currentExtentPosition = composer.selection!.extent.nodePosition as TextPosition;
+      final endOfParagraph = extentNode.endPosition;
+
       editor.executeCommand(
         SplitParagraphCommand(
           nodeId: extentNode.id,
-          splitPosition: composer.selection!.extent.nodePosition as TextPosition,
+          splitPosition: currentExtentPosition,
           newNodeId: newNodeId,
+          replicateExistingMetdata: currentExtentPosition.offset != endOfParagraph.offset,
         ),
       );
     }
@@ -1779,7 +1768,7 @@ class CommonEditorOperations {
 
     final baseNode = editor.document.getNodeById(composer.selection!.base.nodeId);
     final extentNode = editor.document.getNodeById(composer.selection!.extent.nodeId);
-    if (baseNode is! ListItemNode || extentNode is! ListItemNode) {
+    if (baseNode!.id != extentNode!.id) {
       return false;
     }
 
@@ -1893,18 +1882,28 @@ class CommonEditorOperations {
     if (extentNode is! TextNode) {
       return false;
     }
+    if (extentNode is ParagraphNode && !extentNode.metadata.containsKey('blockType')) {
+      // This content is already a regular paragraph.
+      return false;
+    }
 
     editor.executeCommand(
       EditorCommandFunction((document, transaction) {
-        final newParagraphNode = ParagraphNode(
-          id: extentNode.id,
-          text: extentNode.text,
-        );
-        final extentNodeIndex = document.getNodeIndex(extentNode);
+        if (extentNode is ParagraphNode) {
+          extentNode.metadata.remove('blockType');
+          // TODO: find a way to alter nodes that automatically notifies listeners
+          extentNode.notifyListeners();
+        } else {
+          final newParagraphNode = ParagraphNode(
+            id: extentNode.id,
+            text: extentNode.text,
+          );
+          final extentNodeIndex = document.getNodeIndex(extentNode);
 
-        transaction
-          ..deleteNodeAt(extentNodeIndex)
-          ..insertNodeAt(extentNodeIndex, newParagraphNode);
+          transaction
+            ..deleteNodeAt(extentNodeIndex)
+            ..insertNodeAt(extentNodeIndex, newParagraphNode);
+        }
       }),
     );
 

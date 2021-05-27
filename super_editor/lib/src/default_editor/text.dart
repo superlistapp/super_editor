@@ -89,6 +89,9 @@ class TextNode with ChangeNotifier implements DocumentNode {
   bool hasEquivalentContent(DocumentNode other) {
     return other is TextNode && text == other.text && DeepCollectionEquality().equals(metadata, other.metadata);
   }
+
+  @override
+  String toString() => '[TextNode] - text: $text, metadata: $metadata';
 }
 
 /// Displays text in a document.
@@ -749,7 +752,7 @@ class InsertTextCommand implements EditorCommand {
   }
 }
 
-ExecutionInstruction insertCharacterInTextComposable({
+ExecutionInstruction anyCharacterToInsertInTextContent({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
@@ -819,7 +822,7 @@ ExecutionInstruction deleteCharacterWhenBackspaceIsPressed({
   return didDelete ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
 }
 
-ExecutionInstruction deleteCharacterWhenDeleteIsPressed({
+ExecutionInstruction deleteToRemoveDownstreamContent({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
@@ -832,7 +835,7 @@ ExecutionInstruction deleteCharacterWhenDeleteIsPressed({
   return didDelete ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
 }
 
-ExecutionInstruction insertNewlineInParagraph({
+ExecutionInstruction shiftEnterToInsertNewlineInBlock({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
@@ -840,15 +843,6 @@ ExecutionInstruction insertNewlineInParagraph({
     return ExecutionInstruction.continueExecution;
   }
   if (!keyEvent.isShiftPressed) {
-    return ExecutionInstruction.continueExecution;
-  }
-  if (editContext.composer.selection == null) {
-    return ExecutionInstruction.continueExecution;
-  }
-  if (!_isTextEntryNode(document: editContext.editor.document, selection: editContext.composer.selection!)) {
-    return ExecutionInstruction.continueExecution;
-  }
-  if (!editContext.composer.selection!.isCollapsed) {
     return ExecutionInstruction.continueExecution;
   }
 

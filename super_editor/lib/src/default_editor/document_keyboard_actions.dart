@@ -30,34 +30,6 @@ ExecutionInstruction doNothingWhenThereIsNoSelection({
   }
 }
 
-ExecutionInstruction collapseSelectionWhenDirectionalKeyIsPressed({
-  required EditContext editContext,
-  required RawKeyEvent keyEvent,
-}) {
-  if (keyEvent.isShiftPressed) {
-    return ExecutionInstruction.continueExecution;
-  }
-  if (keyEvent.isMetaPressed || keyEvent.isControlPressed) {
-    return ExecutionInstruction.continueExecution;
-  }
-  if (editContext.composer.selection == null || editContext.composer.selection!.isCollapsed) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  final isDirectionalKey = keyEvent.logicalKey == LogicalKeyboardKey.arrowLeft ||
-      keyEvent.logicalKey == LogicalKeyboardKey.arrowRight ||
-      keyEvent.logicalKey == LogicalKeyboardKey.arrowUp ||
-      keyEvent.logicalKey == LogicalKeyboardKey.arrowDown;
-  if (!isDirectionalKey) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  _log.log('collapseSelectionWhenDirectionalKeyIsPressed', 'Collapsing editor selection, then returning.');
-  editContext.composer.selection = editContext.composer.selection!.collapse();
-
-  return ExecutionInstruction.haltExecution;
-}
-
 ExecutionInstruction pasteWhenCmdVIsPressed({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
@@ -106,24 +78,6 @@ ExecutionInstruction selectAllWhenCmdAIsPressed({
   if (!keyEvent.isPrimaryShortcutKeyPressed || keyEvent.character?.toLowerCase() != 'a') {
     return ExecutionInstruction.continueExecution;
   }
-
-  // final nodes = editContext.editor.document.nodes;
-  // if (nodes.isEmpty) {
-  //   return ExecutionInstruction.continueExecution;
-  // }
-  //
-  // editContext.composer.selection = DocumentSelection(
-  //   base: DocumentPosition(
-  //     nodeId: nodes.first.id,
-  //     nodePosition: nodes.first.beginningPosition,
-  //   ),
-  //   extent: DocumentPosition(
-  //     nodeId: nodes.last.id,
-  //     nodePosition: nodes.last.endPosition,
-  //   ),
-  // );
-  //
-  // return ExecutionInstruction.haltExecution;
 
   final didSelectAll = editContext.commonOps.selectAll();
   return didSelectAll ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
@@ -189,6 +143,7 @@ class _PasteEditorCommand implements EditorCommand {
             nodeId: currentNodeWithSelection.id,
             splitPosition: TextPosition(offset: pasteTextOffset),
             newNodeId: DocumentEditor.createNodeId(),
+            replicateExistingMetdata: false,
           ).execute(document, transaction);
         } else {
           throw Exception('Can\'t handle pasting text within node of type: $currentNodeWithSelection');
@@ -347,7 +302,7 @@ Future<void> _copy({
   );
 }
 
-ExecutionInstruction applyBoldWhenCmdBIsPressed({
+ExecutionInstruction cmdBToToggleBold({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
@@ -364,7 +319,7 @@ ExecutionInstruction applyBoldWhenCmdBIsPressed({
   }
 }
 
-ExecutionInstruction applyItalicsWhenCmdIIsPressed({
+ExecutionInstruction cmdIToToggleItalics({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
@@ -381,7 +336,7 @@ ExecutionInstruction applyItalicsWhenCmdIIsPressed({
   }
 }
 
-ExecutionInstruction deleteExpandedSelectionWhenCharacterOrDestructiveKeyPressed({
+ExecutionInstruction anyCharacterOrDestructiveKeyToDeleteSelection({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
@@ -476,7 +431,7 @@ DocumentPosition _getDocumentPositionAfterDeletion({
   return newSelectionPosition;
 }
 
-ExecutionInstruction mergeNodeWithPreviousWhenBackspaceIsPressed({
+ExecutionInstruction backspaceToRemoveUpstreamContent({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
@@ -484,51 +439,6 @@ ExecutionInstruction mergeNodeWithPreviousWhenBackspaceIsPressed({
     return ExecutionInstruction.continueExecution;
   }
 
-  if (editContext.composer.selection == null) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  // final node = editContext.editor.document.getNodeById(editContext.composer.selection!.extent.nodeId);
-  // if (node is! TextNode) {
-  //   _log.log(
-  //       'mergeNodeWithPreviousWhenBackspaceIsPressed', 'WARNING: Cannot merge node of type: $node into node above.');
-  //   return ExecutionInstruction.continueExecution;
-  // }
-  //
-  // _log.log('mergeNodeWithPreviousWhenBackspaceIsPressed', 'All nodes in order:');
-  // editContext.editor.document.nodes.forEach((aNode) {
-  //   _log.log('mergeNodeWithPreviousWhenBackspaceIsPressed', ' - node: ${aNode.id}');
-  // });
-  // _log.log('mergeNodeWithPreviousWhenBackspaceIsPressed', 'Looking for node above: ${node.id}');
-  // final nodeAbove = editContext.editor.document.getNodeBefore(node);
-  // if (nodeAbove == null) {
-  //   _log.log('mergeNodeWithPreviousWhenBackspaceIsPressed', 'At top of document. Cannot merge with node above.');
-  //   return ExecutionInstruction.continueExecution;
-  // }
-  // if (nodeAbove is! TextNode) {
-  //   _log.log('mergeNodeWithPreviousWhenBackspaceIsPressed', 'Cannot merge ParagraphNode into node of type: $nodeAbove');
-  //   return ExecutionInstruction.continueExecution;
-  // }
-  //
-  // final aboveParagraphLength = nodeAbove.text.text.length;
-  //
-  // // Send edit command.
-  // editContext.editor.executeCommand(
-  //   CombineParagraphsCommand(
-  //     firstNodeId: nodeAbove.id,
-  //     secondNodeId: node.id,
-  //   ),
-  // );
-  //
-  // // Place the cursor at the point where the text came together.
-  // editContext.composer.selection = DocumentSelection.collapsed(
-  //   position: DocumentPosition(
-  //     nodeId: nodeAbove.id,
-  //     nodePosition: TextPosition(offset: aboveParagraphLength),
-  //   ),
-  // );
-
-  print('Merging node with previous node');
   final didDelete = editContext.commonOps.deleteUpstream();
 
   return didDelete ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
@@ -595,9 +505,6 @@ ExecutionInstruction moveUpDownLeftAndRightWithArrowKeys({
     LogicalKeyboardKey.arrowDown,
   ];
   if (!arrowKeys.contains(keyEvent.logicalKey)) {
-    return ExecutionInstruction.continueExecution;
-  }
-  if (editContext.composer.selection == null) {
     return ExecutionInstruction.continueExecution;
   }
 

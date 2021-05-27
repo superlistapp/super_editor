@@ -15,7 +15,6 @@ import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/attributed_spans.dart';
 import 'package:super_editor/src/infrastructure/attributed_text.dart';
 
-import 'box_component.dart';
 import 'document_interaction.dart';
 import 'document_keyboard_actions.dart';
 import 'layout.dart';
@@ -406,28 +405,21 @@ final defaultComponentBuilders = <ComponentBuilder>[
 /// Keyboard actions for the standard `Editor`.
 final defaultKeyboardActions = <DocumentKeyboardAction>[
   doNothingWhenThereIsNoSelection,
-  indentListItemWhenTabIsPressed,
-  unindentListItemWhenShiftTabIsPressed,
-  unindentListItemWhenBackspaceIsPressed,
-  splitListItemWhenEnterPressed,
-  convertBlockquoteToParagraphWhenBackspaceIsPressed,
-  insertNewlineInBlockquote,
-  splitBlockquoteWhenEnterPressed,
   pasteWhenCmdVIsPressed,
   copyWhenCmdVIsPressed,
   selectAllWhenCmdAIsPressed,
-  applyBoldWhenCmdBIsPressed,
-  applyItalicsWhenCmdIIsPressed,
-  // TODO: see if collapse can be replaced by directional control
-  collapseSelectionWhenDirectionalKeyIsPressed,
-  deleteExpandedSelectionWhenCharacterOrDestructiveKeyPressed,
-  deleteBoxWhenBackspaceOrDeleteIsPressed,
-  insertNewlineInParagraph,
-  splitParagraphWhenEnterPressed,
-  deleteCharacterWhenBackspaceIsPressed,
-  mergeNodeWithPreviousWhenBackspaceIsPressed,
-  deleteCharacterWhenDeleteIsPressed,
   moveUpDownLeftAndRightWithArrowKeys,
-  insertCharacterInParagraph,
-  insertCharacterInTextComposable,
+  tabToIndentListItem,
+  shiftTabToUnIndentListItem,
+  backspaceToUnIndentListItem,
+  backspaceToClearParagraphBlockType,
+  cmdBToToggleBold,
+  cmdIToToggleItalics,
+  shiftEnterToInsertNewlineInBlock,
+  enterToInsertBlockNewline,
+  backspaceToRemoveUpstreamContent,
+  deleteToRemoveDownstreamContent,
+  anyCharacterOrDestructiveKeyToDeleteSelection,
+  anyCharacterToInsertInParagraph,
+  anyCharacterToInsertInTextContent,
 ];

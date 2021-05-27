@@ -432,7 +432,7 @@ class SplitListItemCommand implements EditorCommand {
   }
 }
 
-ExecutionInstruction indentListItemWhenTabIsPressed({
+ExecutionInstruction tabToIndentListItem({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
@@ -448,7 +448,7 @@ ExecutionInstruction indentListItemWhenTabIsPressed({
   return wasIndented ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
 }
 
-ExecutionInstruction unindentListItemWhenShiftTabIsPressed({
+ExecutionInstruction shiftTabToUnIndentListItem({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
@@ -464,7 +464,7 @@ ExecutionInstruction unindentListItemWhenShiftTabIsPressed({
   return wasIndented ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
 }
 
-ExecutionInstruction unindentListItemWhenBackspaceIsPressed({
+ExecutionInstruction backspaceToUnIndentListItem({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {

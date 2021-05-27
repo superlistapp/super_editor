@@ -64,39 +64,6 @@ class BlockquoteComponent extends StatelessWidget {
   }
 }
 
-ExecutionInstruction convertBlockquoteToParagraphWhenBackspaceIsPressed({
-  required EditContext editContext,
-  required RawKeyEvent keyEvent,
-}) {
-  if (keyEvent.logicalKey != LogicalKeyboardKey.backspace) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  if (editContext.composer.selection == null) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  if (!editContext.composer.selection!.isCollapsed) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  final node = editContext.editor.document.getNodeById(editContext.composer.selection!.extent.nodeId);
-  if (node is! ParagraphNode) {
-    return ExecutionInstruction.continueExecution;
-  }
-  if (node.metadata['blockType'] != blockquoteAttribution) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  final textPosition = editContext.composer.selection!.extent.nodePosition;
-  if (textPosition is! TextPosition || textPosition.offset > 0) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  final didConvertToParagraph = editContext.commonOps.convertToParagraph();
-  return didConvertToParagraph ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
-}
-
 class ConvertBlockquoteToParagraphCommand implements EditorCommand {
   ConvertBlockquoteToParagraphCommand({
     required this.nodeId,

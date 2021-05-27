@@ -87,11 +87,13 @@ class SplitParagraphCommand implements EditorCommand {
     required this.nodeId,
     required this.splitPosition,
     required this.newNodeId,
+    required this.replicateExistingMetdata,
   });
 
   final String nodeId;
   final TextPosition splitPosition;
   final String newNodeId;
+  final bool replicateExistingMetdata;
 
   @override
   void execute(Document document, DocumentEditorTransaction transaction) {
@@ -119,7 +121,7 @@ class SplitParagraphCommand implements EditorCommand {
     final newNode = ParagraphNode(
       id: newNodeId,
       text: endText,
-      metadata: node.metadata,
+      metadata: replicateExistingMetdata ? node.metadata : {},
     );
 
     // Insert the new node after the current node.
@@ -133,7 +135,7 @@ class SplitParagraphCommand implements EditorCommand {
   }
 }
 
-ExecutionInstruction insertCharacterInParagraph({
+ExecutionInstruction anyCharacterToInsertInParagraph({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
@@ -162,7 +164,13 @@ ExecutionInstruction insertCharacterInParagraph({
     character = ' ';
   }
 
-  final didInsertCharacter = editContext.commonOps.insertPlainText(character);
+  final didInsertCharacter = editContext.commonOps.insertCharacter(character);
+
+  if (didInsertCharacter && character == ' ') {
+    editContext.commonOps.convertParagraphByPatternMatching(
+      editContext.composer.selection!.extent.nodeId,
+    );
+  }
 
   return didInsertCharacter ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
 }
@@ -191,23 +199,50 @@ class DeleteParagraphsCommand implements EditorCommand {
   }
 }
 
-ExecutionInstruction splitParagraphWhenEnterPressed({
+/// When the caret is collapsed at the beginning of a ParagraphNode
+/// and backspace is pressed, clear any existing block type, e.g.,
+/// header 1, header 2, blockquote.
+ExecutionInstruction backspaceToClearParagraphBlockType({
+  required EditContext editContext,
+  required RawKeyEvent keyEvent,
+}) {
+  if (keyEvent.logicalKey != LogicalKeyboardKey.backspace) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (editContext.composer.selection == null) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (!editContext.composer.selection!.isCollapsed) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  final node = editContext.editor.document.getNodeById(editContext.composer.selection!.extent.nodeId);
+  if (node is! ParagraphNode) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  final textPosition = editContext.composer.selection!.extent.nodePosition;
+  if (textPosition is! TextPosition || textPosition.offset > 0) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  final didClearBlockType = editContext.commonOps.convertToParagraph();
+  return didClearBlockType ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
+}
+
+ExecutionInstruction enterToInsertBlockNewline({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
   if (keyEvent.logicalKey != LogicalKeyboardKey.enter) {
     return ExecutionInstruction.continueExecution;
   }
-  if (editContext.composer.selection == null) {
-    return ExecutionInstruction.continueExecution;
-  }
-  if (!editContext.composer.selection!.isCollapsed) {
-    return ExecutionInstruction.continueExecution;
-  }
 
-  final didSplitParagraph = editContext.commonOps.insertBlockLevelNewline();
+  final didInsertBlockNewline = editContext.commonOps.insertBlockLevelNewline();
 
-  return didSplitParagraph ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
+  return didInsertBlockNewline ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
 }
 
 ExecutionInstruction moveParagraphSelectionUpWhenBackspaceIsPressed({

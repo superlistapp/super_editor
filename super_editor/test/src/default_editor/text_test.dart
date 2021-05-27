@@ -66,7 +66,7 @@ void main() {
         final editContext = _createEditContext();
 
         // Press just the meta key.
-        var result = insertCharacterInTextComposable(
+        var result = anyCharacterToInsertInTextContent(
           editContext: editContext,
           keyEvent: FakeRawKeyEvent(
             data: FakeRawKeyEventData(
@@ -82,7 +82,7 @@ void main() {
         expect(result, ExecutionInstruction.continueExecution);
 
         // Press "a" + meta key
-        result = insertCharacterInTextComposable(
+        result = anyCharacterToInsertInTextContent(
           editContext: editContext,
           keyEvent: FakeRawKeyEvent(
             data: FakeRawKeyEventData(
@@ -102,7 +102,7 @@ void main() {
         final editContext = _createEditContext();
 
         // Try to type a character.
-        var result = insertCharacterInTextComposable(
+        var result = anyCharacterToInsertInTextContent(
           editContext: editContext,
           keyEvent: FakeRawKeyEvent(
             data: FakeRawKeyEventData(
@@ -140,7 +140,7 @@ void main() {
         );
 
         // Try to type a character.
-        var result = insertCharacterInTextComposable(
+        var result = anyCharacterToInsertInTextContent(
           editContext: editContext,
           keyEvent: FakeRawKeyEvent(
             data: FakeRawKeyEventData(
@@ -171,7 +171,7 @@ void main() {
         );
 
         // Try to type a character.
-        var result = insertCharacterInTextComposable(
+        var result = anyCharacterToInsertInTextContent(
           editContext: editContext,
           keyEvent: FakeRawKeyEvent(
             data: FakeRawKeyEventData(
@@ -205,7 +205,7 @@ void main() {
         );
 
         // Press the "alt" key
-        var result = insertCharacterInTextComposable(
+        var result = anyCharacterToInsertInTextContent(
           editContext: editContext,
           keyEvent: FakeRawKeyEvent(
             character: null,
@@ -221,7 +221,7 @@ void main() {
         expect(result, ExecutionInstruction.continueExecution);
 
         // Press the "enter" key
-        result = insertCharacterInTextComposable(
+        result = anyCharacterToInsertInTextContent(
           editContext: editContext,
           keyEvent: FakeRawKeyEvent(
             character: '', // Empirically, pressing enter sends '' as the character instead of null
@@ -256,7 +256,7 @@ void main() {
         );
 
         // Press the "a" key
-        var result = insertCharacterInTextComposable(
+        var result = anyCharacterToInsertInTextContent(
           editContext: editContext,
           keyEvent: FakeRawKeyEvent(
             character: 'a',
@@ -295,7 +295,7 @@ void main() {
         );
 
         // Type a non-English character
-        var result = insertCharacterInTextComposable(
+        var result = anyCharacterToInsertInTextContent(
           editContext: editContext,
           keyEvent: FakeRawKeyEvent(
             character: 'ß',

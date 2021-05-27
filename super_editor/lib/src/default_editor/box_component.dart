@@ -193,30 +193,3 @@ class BinarySelection {
   @override
   int get hashCode => position.hashCode;
 }
-
-/// Deletes the [DocumentNode] behind a selected [BoxComponent], if the
-/// current [DocumentSelection] is collapsed on a [BinarySelection].
-ExecutionInstruction deleteBoxWhenBackspaceOrDeleteIsPressed({
-  required EditContext editContext,
-  required RawKeyEvent keyEvent,
-}) {
-  if (keyEvent.logicalKey != LogicalKeyboardKey.backspace && keyEvent.logicalKey != LogicalKeyboardKey.delete) {
-    return ExecutionInstruction.continueExecution;
-  }
-  if (editContext.composer.selection == null) {
-    return ExecutionInstruction.continueExecution;
-  }
-  if (!editContext.composer.selection!.isCollapsed) {
-    return ExecutionInstruction.continueExecution;
-  }
-  if (editContext.composer.selection!.extent.nodePosition is! BinaryPosition) {
-    return ExecutionInstruction.continueExecution;
-  }
-  if (!(editContext.composer.selection!.extent.nodePosition as BinaryPosition).isIncluded) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  final didDeleteSelection = editContext.commonOps.deleteSelection();
-
-  return didDeleteSelection ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
-}

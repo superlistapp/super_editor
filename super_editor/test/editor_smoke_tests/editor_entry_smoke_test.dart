@@ -81,6 +81,18 @@ void main() {
       composer.selection = null;
       await tester.pumpAndSettle();
 
+      // Print statements are for debugging until we have a useful document
+      // comparison matcher to show what doesn't match.
+      // print('Actual document:');
+      // for (final node in documentEditor.document.nodes) {
+      //   print(' - $node');
+      // }
+      // print('------------');
+      // print('Expected document:');
+      // for (final node in expectedDocument.nodes) {
+      //   print(' - $node');
+      // }
+
       expect(documentEditor.document.hasEquivalentContent(expectedDocument), true);
     });
   });
