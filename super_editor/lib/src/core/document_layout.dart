@@ -4,6 +4,15 @@ import 'package:flutter/rendering.dart';
 import 'document_selection.dart';
 import 'document.dart';
 
+/// Obtains a [DocumentLayout].
+///
+/// This typedef is provided because a [DocumentLayout] typically
+/// comes from a [State] object, which can change over time, and must
+/// be obtained via [GlobalKey]. Therefore, a resolver function like
+/// this is passed around, instead of a direct reference to a
+/// [DocumentLayout].
+typedef DocumentLayoutResolver = DocumentLayout Function();
+
 /// Abstract representation of a document layout.
 ///
 /// Regardless of how a document is displayed, a `DocumentLayout` needs
@@ -136,7 +145,7 @@ mixin DocumentComponent<T extends StatefulWidget> on State<T> {
   /// Returns `null` if there is nowhere to move left within this
   /// component, such as when the `currentPosition` is the first
   /// character within a paragraph.
-  dynamic? movePositionLeft(dynamic currentPosition, [Map<String, dynamic> movementModifiers]);
+  dynamic? movePositionLeft(dynamic currentPosition, [Set<MovementModifier> movementModifiers]);
 
   /// Returns a new position within this component's node that
   /// corresponds to the `currentPosition` moved right one unit,
@@ -152,7 +161,7 @@ mixin DocumentComponent<T extends StatefulWidget> on State<T> {
   /// Returns null if there is nowhere to move right within this
   /// component, such as when the `currentPosition` refers to the
   /// last character in a paragraph.
-  dynamic? movePositionRight(dynamic currentPosition, [Map<String, dynamic> movementModifiers]);
+  dynamic? movePositionRight(dynamic currentPosition, [Set<MovementModifier> movementModifiers]);
 
   /// Returns a new position within this component's node that
   /// corresponds to the `currentPosition` moved up one unit,
@@ -224,6 +233,32 @@ mixin DocumentComponent<T extends StatefulWidget> on State<T> {
   /// Returns the desired `MouseCursor` at the given (x,y) `localOffset`, or
   /// `null` if this component has no preference for the cursor style.
   MouseCursor? getDesiredCursorAtOffset(Offset localOffset);
+}
+
+/// Preferences for how the document selection should change, e.g.,
+/// move word-by-word instead of character-by-character.
+///
+/// Default values are provided, such as [MovementModifier.word]. These
+/// defaults are understood by the default node implementations. If you
+/// introduce custom nodes/content, you can create your own
+/// [MovementModifier]s by instantiating them with [id]s of your choice,
+/// so long as those [id]s don't conflict with existing [id]s. You're
+/// responsible for implementing whatever behavior those custom
+/// [MovementModifier]s represent.
+class MovementModifier {
+  static const word = MovementModifier('word');
+  static const line = MovementModifier('line');
+
+  const MovementModifier(this.id);
+
+  final String id;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) || other is MovementModifier && runtimeType == other.runtimeType && id == other.id;
+
+  @override
+  int get hashCode => id.hashCode;
 }
 
 /// Builds a widget that renders the desired UI for one or

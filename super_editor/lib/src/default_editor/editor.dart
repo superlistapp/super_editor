@@ -7,6 +7,7 @@ import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
 import 'package:super_editor/src/default_editor/blockquote.dart';
+import 'package:super_editor/src/default_editor/common_editor_operations.dart';
 import 'package:super_editor/src/default_editor/horizontal_rule.dart';
 import 'package:super_editor/src/default_editor/image.dart';
 import 'package:super_editor/src/default_editor/list_items.dart';
@@ -289,6 +290,11 @@ class _EditorState extends State<Editor> {
         editor: widget.editor,
         composer: _composer,
         getDocumentLayout: () => _docLayoutKey.currentState as DocumentLayout,
+        commonOps: CommonEditorOperations(
+          editor: widget.editor,
+          composer: _composer,
+          documentLayoutResolver: () => _docLayoutKey.currentState as DocumentLayout,
+        ),
       ),
       keyboardActions: widget.keyboardActions,
       showDebugPaint: widget.showDebugPaint,
@@ -412,6 +418,7 @@ final defaultKeyboardActions = <DocumentKeyboardAction>[
   selectAllWhenCmdAIsPressed,
   applyBoldWhenCmdBIsPressed,
   applyItalicsWhenCmdIIsPressed,
+  // TODO: see if collapse can be replaced by directional control
   collapseSelectionWhenDirectionalKeyIsPressed,
   deleteExpandedSelectionWhenCharacterOrDestructiveKeyPressed,
   deleteBoxWhenBackspaceOrDeleteIsPressed,
@@ -419,10 +426,7 @@ final defaultKeyboardActions = <DocumentKeyboardAction>[
   splitParagraphWhenEnterPressed,
   deleteCharacterWhenBackspaceIsPressed,
   mergeNodeWithPreviousWhenBackspaceIsPressed,
-  deleteEmptyParagraphWhenBackspaceIsPressed,
-  moveParagraphSelectionUpWhenBackspaceIsPressed,
   deleteCharacterWhenDeleteIsPressed,
-  mergeNodeWithNextWhenDeleteIsPressed,
   moveUpDownLeftAndRightWithArrowKeys,
   insertCharacterInParagraph,
   insertCharacterInTextComposable,

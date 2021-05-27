@@ -8,6 +8,7 @@ import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
 import 'package:super_editor/src/default_editor/box_component.dart';
+import 'package:super_editor/src/default_editor/common_editor_operations.dart';
 import 'package:super_editor/src/default_editor/document_interaction.dart';
 import 'package:super_editor/src/default_editor/horizontal_rule.dart';
 import 'package:super_editor/src/default_editor/paragraph.dart';
@@ -325,5 +326,10 @@ EditContext _createEditContext() {
     editor: documentEditor,
     getDocumentLayout: () => fakeLayout,
     composer: composer,
+    commonOps: CommonEditorOperations(
+      editor: documentEditor,
+      composer: composer,
+      documentLayoutResolver: () => fakeLayout,
+    ),
   );
 }

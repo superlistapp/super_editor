@@ -1,7 +1,7 @@
 import 'dart:math';
 
-import 'package:flutter/foundation.dart';
 import 'package:collection/collection.dart';
+import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 
 import 'document.dart';
@@ -234,4 +234,33 @@ class MutableDocument with ChangeNotifier implements Document {
   void _forwardNodeChange() {
     notifyListeners();
   }
+
+  /// Returns [true] if the content of the [other] [Document] is equivalent
+  /// to the content of this [Document].
+  ///
+  /// Content equivalency compares types of content nodes, and the content
+  /// within them, like the text of a paragraph, but ignores node IDs and
+  /// ignores the runtime type of the [Document], itself.
+  @override
+  bool hasEquivalentContent(Document other) {
+    if (_nodes.length != other.nodes.length) {
+      return false;
+    }
+
+    for (int i = 0; i < _nodes.length; ++i) {
+      if (!_nodes[i].hasEquivalentContent(other.nodes[i])) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is MutableDocument && runtimeType == other.runtimeType && DeepCollectionEquality().equals(_nodes, nodes);
+
+  @override
+  int get hashCode => _nodes.hashCode;
 }

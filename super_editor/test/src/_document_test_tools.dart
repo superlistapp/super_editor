@@ -1,4 +1,5 @@
 import 'package:mockito/mockito.dart';
+import 'package:super_editor/src/default_editor/common_editor_operations.dart';
 import 'package:super_editor/super_editor.dart';
 
 /// Fake [DocumentLayout], intended for tests that interact with
@@ -11,10 +12,21 @@ EditContext createEditContext({
   DocumentEditor? documentEditor,
   DocumentLayout? documentLayout,
   DocumentComposer? documentComposer,
+  CommonEditorOperations? commonOps,
 }) {
+  final editor = documentEditor ?? DocumentEditor(document: document);
+  final layoutResolver = () => documentLayout ?? FakeDocumentLayout();
+  final composer = documentComposer ?? DocumentComposer();
+
   return EditContext(
-    editor: documentEditor ?? DocumentEditor(document: document),
-    getDocumentLayout: () => documentLayout ?? FakeDocumentLayout(),
-    composer: documentComposer ?? DocumentComposer(),
+    editor: editor,
+    getDocumentLayout: layoutResolver,
+    composer: composer,
+    commonOps: commonOps ??
+        CommonEditorOperations(
+          editor: editor,
+          composer: composer,
+          documentLayoutResolver: layoutResolver,
+        ),
   );
 }
