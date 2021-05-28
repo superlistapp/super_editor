@@ -54,50 +54,63 @@ class DocumentComposer with ChangeNotifier {
 /// like a "bold mode" or "italics mode" when there is no
 /// bold or italics text around the caret.
 class ComposerPreferences with ChangeNotifier {
-  final Set<Attribution> _currentStyles = {};
+  final Set<Attribution> _currentAttributions = {};
 
   /// Returns the styles that should be applied to the next
   /// character that is entered in a `Document`.
-  Set<Attribution> get currentStyles => _currentStyles;
+  Set<Attribution> get currentAttributions => _currentAttributions;
 
-  /// Adds `name` to `currentStyles`.
-  void addStyle(dynamic name) {
-    _currentStyles.add(name);
+  /// Adds [attribution] to [currentAttributions].
+  void addStyle(Attribution attribution) {
+    _currentAttributions.add(attribution);
     notifyListeners();
   }
 
-  /// Adds all [attributions] to [currentStyles].
+  /// Adds all [attributions] to [currentAttributions].
   void addStyles(Set<Attribution> attributions) {
-    _currentStyles.addAll(attributions);
+    _currentAttributions.addAll(attributions);
     notifyListeners();
   }
 
-  /// Removes [attributions] from [currentStyles].
+  /// Removes [attributions] from [currentAttributions].
   void removeStyle(Attribution attributions) {
-    _currentStyles.remove(attributions);
+    _currentAttributions.remove(attributions);
     notifyListeners();
   }
 
-  /// Removes all `names` from `currentStyles`.
-  void removeStyles(Set<dynamic> names) {
-    _currentStyles.removeAll(names);
+  /// Removes all [attributions] from [currentAttributions].
+  void removeStyles(Set<Attribution> attributions) {
+    _currentAttributions.removeAll(attributions);
     notifyListeners();
   }
 
-  /// Adds or removes `name` to/from `currentStyles` depending
-  /// on whether `name` is already in `currentStyles`.
-  void toggleStyle(dynamic name) {
-    if (_currentStyles.contains(name)) {
-      _currentStyles.remove(name);
+  /// Adds or removes [attribution] to/from [currentAttributions] depending
+  /// on whether [attribution] is already in [currentAttributions].
+  void toggleStyle(Attribution attribution) {
+    if (_currentAttributions.contains(attribution)) {
+      _currentAttributions.remove(attribution);
     } else {
-      _currentStyles.add(name);
+      _currentAttributions.add(attribution);
+    }
+    notifyListeners();
+  }
+
+  /// Adds or removes all [attributions] to/from [currentAttributions] depending
+  /// on whether each attribution is already in [currentAttributions].
+  void toggleStyles(Set<Attribution> attributions) {
+    for (final attribution in attributions) {
+      if (_currentAttributions.contains(attribution)) {
+        _currentAttributions.remove(attribution);
+      } else {
+        _currentAttributions.add(attribution);
+      }
     }
     notifyListeners();
   }
 
   /// Removes all styles from `currentStyles`.
   void clearStyles() {
-    _currentStyles.clear();
+    _currentAttributions.clear();
     notifyListeners();
   }
 }

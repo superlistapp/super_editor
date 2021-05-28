@@ -891,6 +891,16 @@ class AttributedSpans {
   }
 
   @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is AttributedSpans &&
+          runtimeType == other.runtimeType &&
+          DeepCollectionEquality().equals(_attributions, other._attributions);
+
+  @override
+  int get hashCode => _attributions.hashCode;
+
+  @override
   String toString() {
     final buffer = StringBuffer('[AttributedSpans] (${(_attributions.length / 2).round()} spans):');
     for (final marker in _attributions) {

@@ -7,10 +7,10 @@ import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text.dart';
+import 'package:super_editor/super_editor.dart';
 
 import '../core/document.dart';
 import '../core/document_editor.dart';
-import '../core/document_selection.dart';
 import 'document_interaction.dart';
 import 'paragraph.dart';
 import 'styles.dart';
@@ -68,6 +68,11 @@ class ListItemNode extends TextNode {
       _indent = newIndent;
       notifyListeners();
     }
+  }
+
+  @override
+  bool hasEquivalentContent(DocumentNode other) {
+    return other is ListItemNode && type == other.type && indent == other.indent && text == other.text;
   }
 }
 
@@ -427,7 +432,7 @@ class SplitListItemCommand implements EditorCommand {
   }
 }
 
-ExecutionInstruction indentListItemWhenTabIsPressed({
+ExecutionInstruction tabToIndentListItem({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
@@ -438,32 +443,12 @@ ExecutionInstruction indentListItemWhenTabIsPressed({
     return ExecutionInstruction.continueExecution;
   }
 
-  if (editContext.composer.selection == null) {
-    return ExecutionInstruction.continueExecution;
-  }
+  final wasIndented = editContext.commonOps.indentListItem();
 
-  final node = editContext.editor.document.getNodeById(editContext.composer.selection!.extent.nodeId);
-  if (node is! ListItemNode) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  if (!editContext.composer.selection!.isCollapsed) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  final textPosition = editContext.composer.selection!.extent.nodePosition;
-  if (textPosition is! TextPosition || textPosition.offset > 0) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  editContext.editor.executeCommand(
-    IndentListItemCommand(nodeId: node.id),
-  );
-
-  return ExecutionInstruction.haltExecution;
+  return wasIndented ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
 }
 
-ExecutionInstruction unindentListItemWhenShiftTabIsPressed({
+ExecutionInstruction shiftTabToUnIndentListItem({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
@@ -474,28 +459,12 @@ ExecutionInstruction unindentListItemWhenShiftTabIsPressed({
     return ExecutionInstruction.continueExecution;
   }
 
-  if (editContext.composer.selection == null) {
-    return ExecutionInstruction.continueExecution;
-  }
+  final wasIndented = editContext.commonOps.unindentListItem();
 
-  final node = editContext.editor.document.getNodeById(editContext.composer.selection!.extent.nodeId);
-  if (node is! ListItemNode) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  final textPosition = editContext.composer.selection!.extent.nodePosition;
-  if (textPosition is! TextPosition) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  editContext.editor.executeCommand(
-    UnIndentListItemCommand(nodeId: node.id),
-  );
-
-  return ExecutionInstruction.haltExecution;
+  return wasIndented ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
 }
 
-ExecutionInstruction unindentListItemWhenBackspaceIsPressed({
+ExecutionInstruction backspaceToUnIndentListItem({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
@@ -506,26 +475,21 @@ ExecutionInstruction unindentListItemWhenBackspaceIsPressed({
   if (editContext.composer.selection == null) {
     return ExecutionInstruction.continueExecution;
   }
+  if (!editContext.composer.selection!.isCollapsed) {
+    return ExecutionInstruction.continueExecution;
+  }
 
   final node = editContext.editor.document.getNodeById(editContext.composer.selection!.extent.nodeId);
   if (node is! ListItemNode) {
     return ExecutionInstruction.continueExecution;
   }
-
-  if (!editContext.composer.selection!.isCollapsed) {
+  if ((editContext.composer.selection!.extent.nodePosition as TextPosition).offset > 0) {
     return ExecutionInstruction.continueExecution;
   }
 
-  final textPosition = editContext.composer.selection!.extent.nodePosition;
-  if (textPosition is! TextPosition || textPosition.offset > 0) {
-    return ExecutionInstruction.continueExecution;
-  }
+  final wasIndented = editContext.commonOps.unindentListItem();
 
-  editContext.editor.executeCommand(
-    UnIndentListItemCommand(nodeId: node.id),
-  );
-
-  return ExecutionInstruction.haltExecution;
+  return wasIndented ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
 }
 
 ExecutionInstruction splitListItemWhenEnterPressed({
@@ -536,38 +500,13 @@ ExecutionInstruction splitListItemWhenEnterPressed({
     return ExecutionInstruction.continueExecution;
   }
 
-  if (editContext.composer.selection == null) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  if (!editContext.composer.selection!.isCollapsed) {
-    return ExecutionInstruction.continueExecution;
-  }
-
   final node = editContext.editor.document.getNodeById(editContext.composer.selection!.extent.nodeId);
   if (node is! ListItemNode) {
     return ExecutionInstruction.continueExecution;
   }
 
-  final newNodeId = DocumentEditor.createNodeId();
-
-  editContext.editor.executeCommand(
-    SplitListItemCommand(
-      nodeId: node.id,
-      splitPosition: editContext.composer.selection!.extent.nodePosition as TextPosition,
-      newNodeId: newNodeId,
-    ),
-  );
-
-  // Place the caret at the beginning of the new paragraph node.
-  editContext.composer.selection = DocumentSelection.collapsed(
-    position: DocumentPosition(
-      nodeId: newNodeId,
-      nodePosition: TextPosition(offset: 0),
-    ),
-  );
-
-  return ExecutionInstruction.haltExecution;
+  final didSplitListItem = editContext.commonOps.insertBlockLevelNewline();
+  return didSplitListItem ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
 }
 
 Widget? unorderedListItemBuilder(ComponentContext componentContext) {

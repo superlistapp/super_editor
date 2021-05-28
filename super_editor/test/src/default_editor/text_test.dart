@@ -8,6 +8,7 @@ import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
 import 'package:super_editor/src/default_editor/box_component.dart';
+import 'package:super_editor/src/default_editor/common_editor_operations.dart';
 import 'package:super_editor/src/default_editor/document_interaction.dart';
 import 'package:super_editor/src/default_editor/horizontal_rule.dart';
 import 'package:super_editor/src/default_editor/paragraph.dart';
@@ -65,7 +66,7 @@ void main() {
         final editContext = _createEditContext();
 
         // Press just the meta key.
-        var result = insertCharacterInTextComposable(
+        var result = anyCharacterToInsertInTextContent(
           editContext: editContext,
           keyEvent: FakeRawKeyEvent(
             data: FakeRawKeyEventData(
@@ -81,7 +82,7 @@ void main() {
         expect(result, ExecutionInstruction.continueExecution);
 
         // Press "a" + meta key
-        result = insertCharacterInTextComposable(
+        result = anyCharacterToInsertInTextContent(
           editContext: editContext,
           keyEvent: FakeRawKeyEvent(
             data: FakeRawKeyEventData(
@@ -101,7 +102,7 @@ void main() {
         final editContext = _createEditContext();
 
         // Try to type a character.
-        var result = insertCharacterInTextComposable(
+        var result = anyCharacterToInsertInTextContent(
           editContext: editContext,
           keyEvent: FakeRawKeyEvent(
             data: FakeRawKeyEventData(
@@ -139,7 +140,7 @@ void main() {
         );
 
         // Try to type a character.
-        var result = insertCharacterInTextComposable(
+        var result = anyCharacterToInsertInTextContent(
           editContext: editContext,
           keyEvent: FakeRawKeyEvent(
             data: FakeRawKeyEventData(
@@ -170,7 +171,7 @@ void main() {
         );
 
         // Try to type a character.
-        var result = insertCharacterInTextComposable(
+        var result = anyCharacterToInsertInTextContent(
           editContext: editContext,
           keyEvent: FakeRawKeyEvent(
             data: FakeRawKeyEventData(
@@ -204,7 +205,7 @@ void main() {
         );
 
         // Press the "alt" key
-        var result = insertCharacterInTextComposable(
+        var result = anyCharacterToInsertInTextContent(
           editContext: editContext,
           keyEvent: FakeRawKeyEvent(
             character: null,
@@ -220,7 +221,7 @@ void main() {
         expect(result, ExecutionInstruction.continueExecution);
 
         // Press the "enter" key
-        result = insertCharacterInTextComposable(
+        result = anyCharacterToInsertInTextContent(
           editContext: editContext,
           keyEvent: FakeRawKeyEvent(
             character: '', // Empirically, pressing enter sends '' as the character instead of null
@@ -255,7 +256,7 @@ void main() {
         );
 
         // Press the "a" key
-        var result = insertCharacterInTextComposable(
+        var result = anyCharacterToInsertInTextContent(
           editContext: editContext,
           keyEvent: FakeRawKeyEvent(
             character: 'a',
@@ -294,7 +295,7 @@ void main() {
         );
 
         // Type a non-English character
-        var result = insertCharacterInTextComposable(
+        var result = anyCharacterToInsertInTextContent(
           editContext: editContext,
           keyEvent: FakeRawKeyEvent(
             character: 'ß',
@@ -325,5 +326,10 @@ EditContext _createEditContext() {
     editor: documentEditor,
     getDocumentLayout: () => fakeLayout,
     composer: composer,
+    commonOps: CommonEditorOperations(
+      editor: documentEditor,
+      composer: composer,
+      documentLayoutResolver: () => fakeLayout,
+    ),
   );
 }

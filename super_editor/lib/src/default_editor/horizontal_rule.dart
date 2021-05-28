@@ -35,6 +35,11 @@ class HorizontalRuleNode with ChangeNotifier implements DocumentNode {
 
     return selection.position == BinaryPosition.included() ? '---' : null;
   }
+
+  @override
+  bool hasEquivalentContent(DocumentNode other) {
+    return other is HorizontalRuleNode;
+  }
 }
 
 /// Displays a horizontal rule in a document.

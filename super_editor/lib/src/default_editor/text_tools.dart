@@ -43,6 +43,30 @@ DocumentSelection? getWordSelection({
   );
 }
 
+/// Expands a selection in both directions starting at [textPosition] until
+/// the selection reaches a space, or the end of the available text.
+TextSelection expandPositionToWord({
+  required String text,
+  required TextPosition textPosition,
+}) {
+  if (text.isEmpty) {
+    return TextSelection.collapsed(offset: -1);
+  }
+
+  int start = min(textPosition.offset, text.length - 1);
+  int end = min(textPosition.offset, text.length - 1);
+  while (start > 0 && text[start] != ' ') {
+    start -= 1;
+  }
+  while (end < text.length && text[end] != ' ') {
+    end += 1;
+  }
+  return TextSelection(
+    baseOffset: start,
+    extentOffset: end,
+  );
+}
+
 /// Returns the paragraph of text that contains the given `docPosition`, or `null`
 /// if there is no text at the given `docPosition`.
 ///
@@ -60,7 +84,7 @@ DocumentSelection? getParagraphSelection({
     return null;
   }
 
-  final TextSelection wordSelection = _expandPositionToParagraph(
+  final TextSelection paragraphSelection = expandPositionToParagraph(
     text: (component as TextComposable).getContiguousTextAt(docPosition.nodePosition),
     textPosition: docPosition.nodePosition as TextPosition,
   );
@@ -68,16 +92,18 @@ DocumentSelection? getParagraphSelection({
   return DocumentSelection(
     base: DocumentPosition(
       nodeId: docPosition.nodeId,
-      nodePosition: wordSelection.base,
+      nodePosition: paragraphSelection.base,
     ),
     extent: DocumentPosition(
       nodeId: docPosition.nodeId,
-      nodePosition: wordSelection.extent,
+      nodePosition: paragraphSelection.extent,
     ),
   );
 }
 
-TextSelection _expandPositionToParagraph({
+/// Expands a selection in both directions starting at [textPosition] until
+/// the selection reaches a newline, or the end of the available text.
+TextSelection expandPositionToParagraph({
   required String text,
   required TextPosition textPosition,
 }) {

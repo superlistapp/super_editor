@@ -61,6 +61,13 @@ abstract class Document with ChangeNotifier {
   /// Returns all `DocumentNode`s from `position1` to `position2`, including
   /// the nodes at `position1` and `position2`.
   List<DocumentNode> getNodesInside(DocumentPosition position1, DocumentPosition position2);
+
+  /// Returns [true] if the content in the [other] document is equivalent to
+  /// the content in this document, ignoring any details that are unrelated
+  /// to content, such as individual node IDs.
+  ///
+  /// To compare [Document] equality, use the standard [==] operator.
+  bool hasEquivalentContent(Document other);
 }
 
 /// A span within a `Document` that begins at `start` and
@@ -159,4 +166,10 @@ abstract class DocumentNode implements ChangeNotifier {
   /// within `selection`, or null if the given selection does
   /// not make sense as plain-text.
   String? copyContent(dynamic selection);
+
+  /// Returns true of the [other] node is the same type as this
+  /// node, and contains the same content.
+  ///
+  /// Content equivalency ignores the node ID.
+  bool hasEquivalentContent(DocumentNode other);
 }

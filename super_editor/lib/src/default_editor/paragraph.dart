@@ -1,24 +1,18 @@
-import 'package:collection/collection.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
-import 'package:http/http.dart' as http;
-import 'package:linkify/linkify.dart';
 import 'package:super_editor/src/core/document.dart';
-import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_editor.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/edit_context.dart';
-import 'package:super_editor/src/default_editor/attributions.dart';
 import 'package:super_editor/src/default_editor/document_interaction.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text.dart';
+import 'package:super_editor/src/infrastructure/keyboard.dart';
 
-import 'horizontal_rule.dart';
-import 'image.dart';
-import 'list_items.dart';
 import 'styles.dart';
 
 final _log = Logger(scope: 'paragraph.dart');
@@ -93,11 +87,13 @@ class SplitParagraphCommand implements EditorCommand {
     required this.nodeId,
     required this.splitPosition,
     required this.newNodeId,
+    required this.replicateExistingMetdata,
   });
 
   final String nodeId;
   final TextPosition splitPosition;
   final String newNodeId;
+  final bool replicateExistingMetdata;
 
   @override
   void execute(Document document, DocumentEditorTransaction transaction) {
@@ -125,6 +121,7 @@ class SplitParagraphCommand implements EditorCommand {
     final newNode = ParagraphNode(
       id: newNodeId,
       text: endText,
+      metadata: replicateExistingMetdata ? node.metadata : {},
     );
 
     // Insert the new node after the current node.
@@ -138,7 +135,7 @@ class SplitParagraphCommand implements EditorCommand {
   }
 }
 
-ExecutionInstruction insertCharacterInParagraph({
+ExecutionInstruction anyCharacterToInsertInParagraph({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
@@ -146,238 +143,36 @@ ExecutionInstruction insertCharacterInParagraph({
     return ExecutionInstruction.continueExecution;
   }
 
-  final node = editContext.editor.document.getNodeById(editContext.composer.selection!.extent.nodeId);
-  if (node is! ParagraphNode) {
+  var character = keyEvent.character;
+  if (character == null || character == '') {
     return ExecutionInstruction.continueExecution;
   }
-  if (keyEvent.character == null || keyEvent.character == '') {
+  // On web, keys like shift and alt are sending their full name
+  // as a character, e.g., "Shift" and "Alt". This check prevents
+  // those keys from inserting their name into content.
+  //
+  // This filter is a blacklist, and therefore it will fail to
+  // catch any key that isn't explicitly listed. The eventual solution
+  // to this is for the web to honor the standard key event contract,
+  // but that's out of our control.
+  if (kIsWeb && webBugBlacklistCharacters.contains(character)) {
     return ExecutionInstruction.continueExecution;
   }
-  if (!editContext.composer.selection!.isCollapsed) {
-    return ExecutionInstruction.continueExecution;
+
+  // The web reports a tab as "Tab". Intercept it and translate it to a space.
+  if (character == 'Tab') {
+    character = ' ';
   }
 
-  // Delegate the action to the standard insert-character behavior.
-  insertCharacterInTextComposable(
-    editContext: editContext,
-    keyEvent: keyEvent,
-  );
+  final didInsertCharacter = editContext.commonOps.insertCharacter(character);
 
-  if (keyEvent.character == ' ') {
-    _convertParagraphIfDesired(
-      document: editContext.editor.document,
-      composer: editContext.composer,
-      node: node,
-      editor: editContext.editor,
+  if (didInsertCharacter && character == ' ') {
+    editContext.commonOps.convertParagraphByPatternMatching(
+      editContext.composer.selection!.extent.nodeId,
     );
   }
 
-  return ExecutionInstruction.haltExecution;
-}
-
-// TODO: refactor to make prefix matching extensible (#68)
-bool _convertParagraphIfDesired({
-  required Document document,
-  required DocumentComposer composer,
-  required ParagraphNode node,
-  required DocumentEditor editor,
-}) {
-  if (composer.selection == null) {
-    // This method shouldn't be invoked if the given node
-    // doesn't have the caret, but we check just in case.
-    return false;
-  }
-
-  final text = node.text;
-  final textSelection = composer.selection!.extent.nodePosition as TextPosition;
-  final textBeforeCaret = text.text.substring(0, textSelection.offset);
-
-  final unorderedListItemMatch = RegExp(r'^\s*[\*-]\s+$');
-  final hasUnorderedListItemMatch = unorderedListItemMatch.hasMatch(textBeforeCaret);
-
-  final orderedListItemMatch = RegExp(r'^\s*[1].*\s+$');
-  final hasOrderedListItemMatch = orderedListItemMatch.hasMatch(textBeforeCaret);
-
-  _log.log('_convertParagraphIfDesired', ' - text before caret: "$textBeforeCaret"');
-  if (hasUnorderedListItemMatch || hasOrderedListItemMatch) {
-    _log.log('_convertParagraphIfDesired', ' - found unordered list item prefix');
-    int startOfNewText = textBeforeCaret.length;
-    while (startOfNewText < node.text.text.length && node.text.text[startOfNewText] == ' ') {
-      startOfNewText += 1;
-    }
-    // final adjustedText = node.text.text.substring(startOfNewText);
-    final adjustedText = node.text.copyText(startOfNewText);
-    final newNode = hasUnorderedListItemMatch
-        ? ListItemNode.unordered(id: node.id, text: adjustedText)
-        : ListItemNode.ordered(id: node.id, text: adjustedText);
-    final nodeIndex = document.getNodeIndex(node);
-
-    editor.executeCommand(
-      EditorCommandFunction((document, transaction) {
-        transaction
-          ..deleteNodeAt(nodeIndex)
-          ..insertNodeAt(nodeIndex, newNode);
-      }),
-    );
-
-    // We removed some text at the beginning of the list item.
-    // Move the selection back by that same amount.
-    final textPosition = composer.selection!.extent.nodePosition as TextPosition;
-    composer.selection = DocumentSelection.collapsed(
-      position: DocumentPosition(
-        nodeId: node.id,
-        nodePosition: TextPosition(offset: textPosition.offset - startOfNewText),
-      ),
-    );
-
-    return true;
-  }
-
-  final hrMatch = RegExp(r'^---*\s$');
-  final hasHrMatch = hrMatch.hasMatch(textBeforeCaret);
-  if (hasHrMatch) {
-    _log.log('_convertParagraphIfDesired', 'Paragraph has an HR match');
-    // Insert an HR before this paragraph and then clear the
-    // paragraph's content.
-    final paragraphNodeIndex = document.getNodeIndex(node);
-
-    editor.executeCommand(
-      EditorCommandFunction((document, transaction) {
-        transaction.insertNodeAt(
-          paragraphNodeIndex,
-          HorizontalRuleNode(
-            id: DocumentEditor.createNodeId(),
-          ),
-        );
-      }),
-    );
-
-    node.text = node.text.removeRegion(startOffset: 0, endOffset: hrMatch.firstMatch(textBeforeCaret)!.end);
-
-    composer.selection = DocumentSelection.collapsed(
-      position: DocumentPosition(
-        nodeId: node.id,
-        nodePosition: TextPosition(offset: 0),
-      ),
-    );
-
-    return true;
-  }
-
-  final blockquoteMatch = RegExp(r'^>\s$');
-  final hasBlockquoteMatch = blockquoteMatch.hasMatch(textBeforeCaret);
-  if (hasBlockquoteMatch) {
-    int startOfNewText = textBeforeCaret.length;
-    while (startOfNewText < node.text.text.length && node.text.text[startOfNewText] == ' ') {
-      startOfNewText += 1;
-    }
-    final adjustedText = node.text.copyText(startOfNewText);
-    final newNode = ParagraphNode(
-      id: node.id,
-      text: adjustedText,
-      metadata: {'blockType': blockquoteAttribution},
-    );
-    final nodeIndex = document.getNodeIndex(node);
-
-    editor.executeCommand(
-      EditorCommandFunction((document, transaction) {
-        transaction
-          ..deleteNodeAt(nodeIndex)
-          ..insertNodeAt(nodeIndex, newNode);
-      }),
-    );
-
-    // We removed some text at the beginning of the list item.
-    // Move the selection back by that same amount.
-    final textPosition = composer.selection!.extent.nodePosition as TextPosition;
-    composer.selection = DocumentSelection.collapsed(
-      position: DocumentPosition(
-        nodeId: node.id,
-        nodePosition: TextPosition(offset: textPosition.offset - startOfNewText),
-      ),
-    );
-
-    return true;
-  }
-
-  // URL match, e.g., images, social, etc.
-  _log.log('_convertParagraphIfDesired', 'Looking for URL match...');
-  final extractedLinks = linkify(node.text.text,
-      options: LinkifyOptions(
-        humanize: false,
-      ));
-  final int linkCount = extractedLinks.fold(0, (value, element) => element is UrlElement ? value + 1 : value);
-  final String nonEmptyText =
-      extractedLinks.fold('', (value, element) => element is TextElement ? value + element.text.trim() : value);
-  if (linkCount == 1 && nonEmptyText.isEmpty) {
-    // This node's text is just a URL, try to interpret it
-    // as a known type.
-    final link = extractedLinks.firstWhereOrNull((element) => element is UrlElement)!.text;
-    _processUrlNode(
-      document: document,
-      editor: editor,
-      nodeId: node.id,
-      originalText: node.text.text,
-      url: link,
-    );
-    return true;
-  }
-
-  // No pattern match was found
-  return false;
-}
-
-Future<void> _processUrlNode({
-  required Document document,
-  required DocumentEditor editor,
-  required String nodeId,
-  required String originalText,
-  required String url,
-}) async {
-  final response = await http.get(Uri.parse(url));
-
-  if (response.statusCode < 200 || response.statusCode >= 300) {
-    _log.log('_processUrlNode', 'Failed to load URL: ${response.statusCode} - ${response.reasonPhrase}');
-    return;
-  }
-
-  final contentType = response.headers['content-type'];
-  if (contentType == null) {
-    _log.log('_processUrlNode', 'Failed to determine URL content type.');
-    return;
-  }
-  if (!contentType.startsWith('image/')) {
-    _log.log('_processUrlNode', 'URL is not an image. Ignoring');
-    return;
-  }
-
-  // The URL is an image. Convert the node.
-  _log.log('_processUrlNode', 'The URL is an image. Converting the ParagraphNode to an ImageNode.');
-  final node = document.getNodeById(nodeId);
-  if (node is! ParagraphNode) {
-    _log.log(
-        '_processUrlNode', 'The node has become something other than a ParagraphNode ($node). Can\'t convert ndoe.');
-    return;
-  }
-  final currentText = node.text.text;
-  if (currentText.trim() != originalText.trim()) {
-    _log.log('_processUrlNode', 'The node content changed in a non-trivial way. Aborting node conversion.');
-    return;
-  }
-
-  final imageNode = ImageNode(
-    id: node.id,
-    imageUrl: url,
-  );
-  final nodeIndex = document.getNodeIndex(node);
-
-  editor.executeCommand(
-    EditorCommandFunction((document, transaction) {
-      transaction
-        ..deleteNodeAt(nodeIndex)
-        ..insertNodeAt(nodeIndex, imageNode);
-    }),
-  );
+  return didInsertCharacter ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
 }
 
 class DeleteParagraphsCommand implements EditorCommand {
@@ -404,56 +199,21 @@ class DeleteParagraphsCommand implements EditorCommand {
   }
 }
 
-ExecutionInstruction splitParagraphWhenEnterPressed({
-  required EditContext editContext,
-  required RawKeyEvent keyEvent,
-}) {
-  if (keyEvent.logicalKey != LogicalKeyboardKey.enter) {
-    return ExecutionInstruction.continueExecution;
-  }
-  if (editContext.composer.selection == null) {
-    return ExecutionInstruction.continueExecution;
-  }
-  if (!editContext.composer.selection!.isCollapsed) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  final node = editContext.editor.document.getNodeById(editContext.composer.selection!.extent.nodeId);
-  if (node is! ParagraphNode) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  final newNodeId = DocumentEditor.createNodeId();
-
-  editContext.editor.executeCommand(
-    SplitParagraphCommand(
-      nodeId: node.id,
-      splitPosition: editContext.composer.selection!.extent.nodePosition as TextPosition,
-      newNodeId: newNodeId,
-    ),
-  );
-
-  // Place the caret at the beginning of the new paragraph node.
-  editContext.composer.selection = DocumentSelection.collapsed(
-    position: DocumentPosition(
-      nodeId: newNodeId,
-      nodePosition: TextPosition(offset: 0),
-    ),
-  );
-
-  return ExecutionInstruction.haltExecution;
-}
-
-ExecutionInstruction deleteEmptyParagraphWhenBackspaceIsPressed({
+/// When the caret is collapsed at the beginning of a ParagraphNode
+/// and backspace is pressed, clear any existing block type, e.g.,
+/// header 1, header 2, blockquote.
+ExecutionInstruction backspaceToClearParagraphBlockType({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
   if (keyEvent.logicalKey != LogicalKeyboardKey.backspace) {
     return ExecutionInstruction.continueExecution;
   }
+
   if (editContext.composer.selection == null) {
     return ExecutionInstruction.continueExecution;
   }
+
   if (!editContext.composer.selection!.isCollapsed) {
     return ExecutionInstruction.continueExecution;
   }
@@ -463,28 +223,26 @@ ExecutionInstruction deleteEmptyParagraphWhenBackspaceIsPressed({
     return ExecutionInstruction.continueExecution;
   }
 
-  if (node.text.text.isNotEmpty) {
+  final textPosition = editContext.composer.selection!.extent.nodePosition;
+  if (textPosition is! TextPosition || textPosition.offset > 0) {
     return ExecutionInstruction.continueExecution;
   }
 
-  final nodeAbove = editContext.editor.document.getNodeBefore(node);
-  if (nodeAbove == null) {
+  final didClearBlockType = editContext.commonOps.convertToParagraph();
+  return didClearBlockType ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
+}
+
+ExecutionInstruction enterToInsertBlockNewline({
+  required EditContext editContext,
+  required RawKeyEvent keyEvent,
+}) {
+  if (keyEvent.logicalKey != LogicalKeyboardKey.enter) {
     return ExecutionInstruction.continueExecution;
   }
-  final newDocumentPosition = DocumentPosition(
-    nodeId: nodeAbove.id,
-    nodePosition: nodeAbove.endPosition,
-  );
 
-  editContext.editor.executeCommand(
-    DeleteParagraphsCommand(nodeId: node.id),
-  );
+  final didInsertBlockNewline = editContext.commonOps.insertBlockLevelNewline();
 
-  editContext.composer.selection = DocumentSelection.collapsed(
-    position: newDocumentPosition,
-  );
-
-  return ExecutionInstruction.haltExecution;
+  return didInsertBlockNewline ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
 }
 
 ExecutionInstruction moveParagraphSelectionUpWhenBackspaceIsPressed({

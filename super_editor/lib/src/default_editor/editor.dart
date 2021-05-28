@@ -7,6 +7,7 @@ import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
 import 'package:super_editor/src/default_editor/blockquote.dart';
+import 'package:super_editor/src/default_editor/common_editor_operations.dart';
 import 'package:super_editor/src/default_editor/horizontal_rule.dart';
 import 'package:super_editor/src/default_editor/image.dart';
 import 'package:super_editor/src/default_editor/list_items.dart';
@@ -14,7 +15,6 @@ import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/attributed_spans.dart';
 import 'package:super_editor/src/infrastructure/attributed_text.dart';
 
-import 'box_component.dart';
 import 'document_interaction.dart';
 import 'document_keyboard_actions.dart';
 import 'layout.dart';
@@ -289,6 +289,11 @@ class _EditorState extends State<Editor> {
         editor: widget.editor,
         composer: _composer,
         getDocumentLayout: () => _docLayoutKey.currentState as DocumentLayout,
+        commonOps: CommonEditorOperations(
+          editor: widget.editor,
+          composer: _composer,
+          documentLayoutResolver: () => _docLayoutKey.currentState as DocumentLayout,
+        ),
       ),
       keyboardActions: widget.keyboardActions,
       showDebugPaint: widget.showDebugPaint,
@@ -400,30 +405,21 @@ final defaultComponentBuilders = <ComponentBuilder>[
 /// Keyboard actions for the standard `Editor`.
 final defaultKeyboardActions = <DocumentKeyboardAction>[
   doNothingWhenThereIsNoSelection,
-  indentListItemWhenTabIsPressed,
-  unindentListItemWhenShiftTabIsPressed,
-  unindentListItemWhenBackspaceIsPressed,
-  splitListItemWhenEnterPressed,
-  convertBlockquoteToParagraphWhenBackspaceIsPressed,
-  insertNewlineInBlockquote,
-  splitBlockquoteWhenEnterPressed,
   pasteWhenCmdVIsPressed,
   copyWhenCmdVIsPressed,
   selectAllWhenCmdAIsPressed,
-  applyBoldWhenCmdBIsPressed,
-  applyItalicsWhenCmdIIsPressed,
-  collapseSelectionWhenDirectionalKeyIsPressed,
-  deleteExpandedSelectionWhenCharacterOrDestructiveKeyPressed,
-  deleteBoxWhenBackspaceOrDeleteIsPressed,
-  insertNewlineInParagraph,
-  splitParagraphWhenEnterPressed,
-  deleteCharacterWhenBackspaceIsPressed,
-  mergeNodeWithPreviousWhenBackspaceIsPressed,
-  deleteEmptyParagraphWhenBackspaceIsPressed,
-  moveParagraphSelectionUpWhenBackspaceIsPressed,
-  deleteCharacterWhenDeleteIsPressed,
-  mergeNodeWithNextWhenDeleteIsPressed,
   moveUpDownLeftAndRightWithArrowKeys,
-  insertCharacterInParagraph,
-  insertCharacterInTextComposable,
+  tabToIndentListItem,
+  shiftTabToUnIndentListItem,
+  backspaceToUnIndentListItem,
+  backspaceToClearParagraphBlockType,
+  cmdBToToggleBold,
+  cmdIToToggleItalics,
+  shiftEnterToInsertNewlineInBlock,
+  enterToInsertBlockNewline,
+  backspaceToRemoveUpstreamContent,
+  deleteToRemoveDownstreamContent,
+  anyCharacterOrDestructiveKeyToDeleteSelection,
+  anyCharacterToInsertInParagraph,
+  anyCharacterToInsertInTextContent,
 ];

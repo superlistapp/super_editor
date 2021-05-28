@@ -39,13 +39,13 @@ class _BoxComponentState extends State<BoxComponent> with DocumentComponent {
   }
 
   @override
-  BinaryPosition? movePositionLeft(dynamic currentPosition, [Map<String, dynamic>? movementModifiers]) {
+  BinaryPosition? movePositionLeft(dynamic currentPosition, [Set<MovementModifier>? movementModifiers]) {
     // BoxComponents don't support internal movement.
     return null;
   }
 
   @override
-  BinaryPosition? movePositionRight(dynamic currentPosition, [Map<String, dynamic>? movementModifiers]) {
+  BinaryPosition? movePositionRight(dynamic currentPosition, [Set<MovementModifier>? movementModifiers]) {
     // BoxComponents don't support internal movement.
     return null;
   }
@@ -192,99 +192,4 @@ class BinarySelection {
 
   @override
   int get hashCode => position.hashCode;
-}
-
-/// Deletes the [DocumentNode] behind a selected [BoxComponent], if the
-/// current [DocumentSelection] is collapsed on a [BinarySelection].
-ExecutionInstruction deleteBoxWhenBackspaceOrDeleteIsPressed({
-  required EditContext editContext,
-  required RawKeyEvent keyEvent,
-}) {
-  if (keyEvent.logicalKey != LogicalKeyboardKey.backspace && keyEvent.logicalKey != LogicalKeyboardKey.delete) {
-    return ExecutionInstruction.continueExecution;
-  }
-  if (editContext.composer.selection == null) {
-    return ExecutionInstruction.continueExecution;
-  }
-  if (!editContext.composer.selection!.isCollapsed) {
-    return ExecutionInstruction.continueExecution;
-  }
-  if (editContext.composer.selection!.extent.nodePosition is! BinaryPosition) {
-    return ExecutionInstruction.continueExecution;
-  }
-  if (!(editContext.composer.selection!.extent.nodePosition as BinaryPosition).isIncluded) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  _log.log('deleteBoxWhenBackspaceOrDeleteIsPressed', 'Deleting a box component');
-
-  final node = editContext.editor.document.getNode(editContext.composer.selection!.extent);
-  if (node == null) {
-    throw Exception(
-        'Tried to delete a node but the selection extent doesn\'t exist in the document. Extent node: ${editContext.composer.selection!.extent}');
-  }
-  final deletedNodeIndex = editContext.editor.document.getNodeIndex(node);
-
-  editContext.editor.executeCommand(
-    DeleteSelectionCommand(
-      documentSelection: editContext.composer.selection!,
-    ),
-  );
-
-  final newSelectionPosition = _getAnotherSelectionAfterNodeDeletion(
-    document: editContext.editor.document,
-    documentLayout: editContext.documentLayout,
-    deletedNodeIndex: deletedNodeIndex,
-  );
-  _log.log('deleteBoxWhenBackspaceOrDeleteIsPressed', 'New selection position after deletion: $newSelectionPosition');
-
-  editContext.composer.selection = newSelectionPosition != null
-      ? DocumentSelection.collapsed(
-          position: newSelectionPosition,
-        )
-      : null;
-
-  return ExecutionInstruction.haltExecution;
-}
-
-DocumentPosition? _getAnotherSelectionAfterNodeDeletion({
-  required Document document,
-  required DocumentLayout documentLayout,
-  required int deletedNodeIndex,
-}) {
-  if (deletedNodeIndex > 0) {
-    final newSelectionNodeIndex = deletedNodeIndex - 1;
-    final newSelectionNode = document.getNodeAt(newSelectionNodeIndex);
-    if (newSelectionNode == null) {
-      throw Exception(
-          'Tried to access document node at index ${newSelectionNodeIndex} but the document returned null.');
-    }
-    final component = documentLayout.getComponentByNodeId(newSelectionNode.id);
-    if (component == null) {
-      throw Exception('Couldn\'t find editor component for node: ${newSelectionNode.id}');
-    }
-    return DocumentPosition(
-      nodeId: newSelectionNode.id,
-      nodePosition: component.getEndPosition(),
-    );
-  } else if (document.nodes.isNotEmpty) {
-    // There is no node above the deleted node. It's at the top
-    // of the document. Try to place the selection in whatever
-    // is now the first node in the document.
-    final newSelectionNode = document.getNodeAt(0);
-    if (newSelectionNode == null) {
-      throw Exception('Could not obtain the first node in a non-empty document.');
-    }
-    final component = documentLayout.getComponentByNodeId(newSelectionNode.id);
-    if (component == null) {
-      throw Exception('Couldn\'t find editor component for node: ${newSelectionNode.id}');
-    }
-    return DocumentPosition(
-      nodeId: newSelectionNode.id,
-      nodePosition: component.getBeginningPosition(),
-    );
-  } else {
-    // The document is empty. Null out the position.
-    return null;
-  }
 }

@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/painting.dart';
 
@@ -266,6 +267,15 @@ class AttributedText with ChangeNotifier {
             style: styleBuilder({}),
           );
   }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        other is AttributedText && runtimeType == other.runtimeType && text == other.text && spans == other.spans;
+  }
+
+  @override
+  int get hashCode => text.hashCode ^ spans.hashCode;
 
   @override
   String toString() {

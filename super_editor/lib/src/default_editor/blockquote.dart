@@ -64,42 +64,6 @@ class BlockquoteComponent extends StatelessWidget {
   }
 }
 
-ExecutionInstruction convertBlockquoteToParagraphWhenBackspaceIsPressed({
-  required EditContext editContext,
-  required RawKeyEvent keyEvent,
-}) {
-  if (keyEvent.logicalKey != LogicalKeyboardKey.backspace) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  if (editContext.composer.selection == null) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  final node = editContext.editor.document.getNodeById(editContext.composer.selection!.extent.nodeId);
-  if (node is! ParagraphNode) {
-    return ExecutionInstruction.continueExecution;
-  }
-  if (node.metadata['blockType'] != blockquoteAttribution) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  if (!editContext.composer.selection!.isCollapsed) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  final textPosition = editContext.composer.selection!.extent.nodePosition;
-  if (textPosition is! TextPosition || textPosition.offset > 0) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  editContext.editor.executeCommand(
-    ConvertBlockquoteToParagraphCommand(nodeId: node.id),
-  );
-
-  return ExecutionInstruction.haltExecution;
-}
-
 class ConvertBlockquoteToParagraphCommand implements EditorCommand {
   ConvertBlockquoteToParagraphCommand({
     required this.nodeId,
@@ -138,39 +102,20 @@ ExecutionInstruction insertNewlineInBlockquote({
     return ExecutionInstruction.continueExecution;
   }
 
-  if (!editContext.composer.selection!.isCollapsed) {
+  final baseNode = editContext.editor.document.getNodeById(editContext.composer.selection!.base.nodeId)!;
+  final extentNode = editContext.editor.document.getNodeById(editContext.composer.selection!.extent.nodeId)!;
+  if (baseNode.id != extentNode.id) {
+    return ExecutionInstruction.continueExecution;
+  }
+  if (extentNode is! ParagraphNode) {
+    return ExecutionInstruction.continueExecution;
+  }
+  if (extentNode.metadata['blockType'] != blockquoteAttribution) {
     return ExecutionInstruction.continueExecution;
   }
 
-  final node = editContext.editor.document.getNodeById(editContext.composer.selection!.extent.nodeId);
-  if (node is! ParagraphNode) {
-    return ExecutionInstruction.continueExecution;
-  }
-  if (node.metadata['blockType'] != blockquoteAttribution) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  final textNode = editContext.editor.document.getNode(editContext.composer.selection!.extent) as TextNode;
-  final initialTextOffset = (editContext.composer.selection!.extent.nodePosition as TextPosition).offset;
-
-  editContext.editor.executeCommand(
-    InsertTextCommand(
-      documentPosition: editContext.composer.selection!.extent,
-      textToInsert: '\n',
-      attributions: editContext.composer.preferences.currentStyles,
-    ),
-  );
-
-  editContext.composer.selection = DocumentSelection.collapsed(
-    position: DocumentPosition(
-      nodeId: textNode.id,
-      nodePosition: TextPosition(
-        offset: initialTextOffset + 1,
-      ),
-    ),
-  );
-
-  return ExecutionInstruction.haltExecution;
+  final didInsertNewline = editContext.commonOps.insertPlainText('\n');
+  return didInsertNewline ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
 }
 
 ExecutionInstruction splitBlockquoteWhenEnterPressed({
@@ -185,37 +130,20 @@ ExecutionInstruction splitBlockquoteWhenEnterPressed({
     return ExecutionInstruction.continueExecution;
   }
 
-  if (!editContext.composer.selection!.isCollapsed) {
+  final baseNode = editContext.editor.document.getNodeById(editContext.composer.selection!.base.nodeId)!;
+  final extentNode = editContext.editor.document.getNodeById(editContext.composer.selection!.extent.nodeId)!;
+  if (baseNode.id != extentNode.id) {
+    return ExecutionInstruction.continueExecution;
+  }
+  if (extentNode is! ParagraphNode) {
+    return ExecutionInstruction.continueExecution;
+  }
+  if (extentNode.metadata['blockType'] != blockquoteAttribution) {
     return ExecutionInstruction.continueExecution;
   }
 
-  final node = editContext.editor.document.getNodeById(editContext.composer.selection!.extent.nodeId);
-  if (node is! ParagraphNode) {
-    return ExecutionInstruction.continueExecution;
-  }
-  if (node.metadata['blockType'] != blockquoteAttribution) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  final newNodeId = DocumentEditor.createNodeId();
-
-  editContext.editor.executeCommand(
-    SplitBlockquoteCommand(
-      nodeId: node.id,
-      splitPosition: editContext.composer.selection!.extent.nodePosition as TextPosition,
-      newNodeId: newNodeId,
-    ),
-  );
-
-  // Place the caret at the beginning of the new paragraph node.
-  editContext.composer.selection = DocumentSelection.collapsed(
-    position: DocumentPosition(
-      nodeId: newNodeId,
-      nodePosition: TextPosition(offset: 0),
-    ),
-  );
-
-  return ExecutionInstruction.haltExecution;
+  final didSplit = editContext.commonOps.insertBlockLevelNewline();
+  return didSplit ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
 }
 
 class SplitBlockquoteCommand implements EditorCommand {

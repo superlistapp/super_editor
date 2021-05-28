@@ -55,6 +55,11 @@ class ImageNode with ChangeNotifier implements DocumentNode {
 
     return selection.position == BinaryPosition.included() ? _imageUrl : null;
   }
+
+  @override
+  bool hasEquivalentContent(DocumentNode other) {
+    return other is ImageNode && imageUrl == other.imageUrl && altText == other.altText;
+  }
 }
 
 /// Displays an image in a document.
