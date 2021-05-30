@@ -727,7 +727,16 @@ class CommonEditorOperations {
     if (!composer.selection!.isCollapsed || composer.selection!.extent.nodePosition is BinaryPosition) {
       // A span of content is selected. Delete the selection.
       return deleteSelection();
-    } else if (composer.selection!.extent.nodePosition is TextPosition) {
+    }
+
+    final node = editor.document.getNodeById(composer.selection!.extent.nodeId);
+
+    // If the caret is at the beginning of a list item, unindent the list item.
+    if (node is ListItemNode && (composer.selection!.extent.nodePosition as TextPosition).offset == 0) {
+      return unindentListItem();
+    }
+
+    if (composer.selection!.extent.nodePosition is TextPosition) {
       final textPosition = composer.selection!.extent.nodePosition as TextPosition;
       if (textPosition.offset == 0) {
         final node = editor.document.getNodeById(composer.selection!.extent.nodeId)!;
@@ -1199,6 +1208,9 @@ class CommonEditorOperations {
   /// are added to the given [character]. To insert [character] exactly as it's provided,
   /// set [ignoreComposerAttributions] to [true].
   ///
+  /// If the current selection is expanded, the current selection is deleted
+  /// before the character is inserted.
+  ///
   /// Returns [true] if the [character] was successfully inserted, or [false]
   /// if it wasn't, e.g., the currently selected node is not a [TextNode].
   bool insertCharacter(
@@ -1215,7 +1227,7 @@ class CommonEditorOperations {
     }
 
     if (!composer.selection!.isCollapsed) {
-      return false;
+      deleteSelection();
     }
 
     // Delegate the action to the standard insert-character behavior.
@@ -1426,6 +1438,13 @@ class CommonEditorOperations {
           ..insertNodeAt(nodeIndex, imageNode);
       }),
     );
+
+    composer.selection = DocumentSelection.collapsed(
+      position: DocumentPosition(
+        nodeId: node.id,
+        nodePosition: imageNode.endPosition,
+      ),
+    );
   }
 
   bool _insertCharacterInTextComposable(
@@ -1525,6 +1544,18 @@ class CommonEditorOperations {
           replicateExistingMetdata: currentExtentPosition.offset != endOfParagraph.offset,
         ),
       );
+    } else {
+      // The selection extent might be an image, HR, etc. Insert a new
+      // node after it.
+      editor.executeCommand(EditorCommandFunction((doc, transaction) {
+        transaction.insertNodeAfter(
+          previousNode: extentNode,
+          newNode: ParagraphNode(
+            id: newNodeId,
+            text: AttributedText(text: ''),
+          ),
+        );
+      }));
     }
 
     // Place the caret at the beginning of the second node.

@@ -1,9 +1,8 @@
-import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/painting.dart';
 
-import 'attributed_spans.dart';
 import '_logging.dart';
+import 'attributed_spans.dart';
 
 final _log = Logger(scope: 'AttributedText');
 

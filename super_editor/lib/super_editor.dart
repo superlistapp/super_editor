@@ -15,6 +15,7 @@ export 'src/core/edit_context.dart';
 export 'src/default_editor/attributions.dart';
 export 'src/default_editor/blockquote.dart';
 export 'src/default_editor/box_component.dart';
+export 'src/default_editor/common_editor_operations.dart';
 export 'src/default_editor/document_interaction.dart';
 export 'src/default_editor/document_keyboard_actions.dart';
 export 'src/default_editor/editor.dart';
