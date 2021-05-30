@@ -140,14 +140,11 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
   void _onSelectionChange() {
     _log.log('_onSelectionChange', 'EditableDocument: _onSelectionChange()');
     if (mounted) {
-      setState(() {
+      // Use a post-frame callback to "ensure selection extent is visible"
+      // so that any pending visual document changes can happen before
+      // attempting to calculate the visual position of the selection extent.
+      WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
         _ensureSelectionExtentIsVisible();
-        // Use a post-frame callback to "ensure selection extent is visible"
-        // so that any pending visual document changes can happen before
-        // attempting to calculate the visual position of the selection extent.
-        WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
-          _ensureSelectionExtentIsVisible();
-        });
       });
     }
   }

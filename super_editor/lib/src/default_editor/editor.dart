@@ -73,6 +73,7 @@ class Editor extends StatefulWidget {
     ScrollController? scrollController,
     FocusNode? focusNode,
     double maxWidth = 600,
+    double componentVerticalSpacing = 16,
     EdgeInsetsGeometry padding = EdgeInsets.zero,
     GlobalKey? documentLayoutKey,
     bool showDebugPaint = false,
@@ -88,6 +89,7 @@ class Editor extends StatefulWidget {
       scrollController: scrollController,
       focusNode: focusNode,
       maxWidth: maxWidth,
+      componentVerticalSpacing: componentVerticalSpacing,
       padding: padding,
       documentLayoutKey: documentLayoutKey,
       showDebugPaint: showDebugPaint,
@@ -105,6 +107,7 @@ class Editor extends StatefulWidget {
     ScrollController? scrollController,
     FocusNode? focusNode,
     double maxWidth = 600,
+    double componentVerticalSpacing = 16,
     EdgeInsetsGeometry padding = EdgeInsets.zero,
     GlobalKey? documentLayoutKey,
     bool showDebugPaint = false,
@@ -120,6 +123,7 @@ class Editor extends StatefulWidget {
       scrollController: scrollController,
       focusNode: focusNode,
       maxWidth: maxWidth,
+      componentVerticalSpacing: componentVerticalSpacing,
       padding: padding,
       documentLayoutKey: documentLayoutKey,
       showDebugPaint: showDebugPaint,
@@ -137,6 +141,7 @@ class Editor extends StatefulWidget {
     this.scrollController,
     this.focusNode,
     this.maxWidth = 600,
+    this.componentVerticalSpacing = 16,
     this.padding = EdgeInsets.zero,
     this.documentLayoutKey,
     this.showDebugPaint = false,
@@ -174,6 +179,8 @@ class Editor extends StatefulWidget {
   final FocusNode? focusNode;
 
   final double maxWidth;
+
+  final double componentVerticalSpacing;
 
   final EdgeInsetsGeometry padding;
 
@@ -316,6 +323,7 @@ class _EditorState extends State<Editor> {
                 documentSelection: _composer.selection,
                 componentBuilders: widget.componentBuilders,
                 showCaret: _focusNode.hasFocus,
+                componentVerticalSpacing: widget.componentVerticalSpacing,
                 extensions: {
                   textStylesExtensionKey: widget.textStyleBuilder,
                   selectionStylesExtensionKey: widget.selectionStyle,

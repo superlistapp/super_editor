@@ -354,8 +354,11 @@ ExecutionInstruction anyCharacterOrDestructiveKeyToDeleteSelection({
   final isDestructiveKey =
       keyEvent.logicalKey == LogicalKeyboardKey.backspace || keyEvent.logicalKey == LogicalKeyboardKey.delete;
 
-  final shouldDeleteSelection =
-      !isShiftPressed && (isDestructiveKey || (keyEvent.character != null && keyEvent.character != ''));
+  final shouldDeleteSelection = !isShiftPressed &&
+      (isDestructiveKey ||
+          (keyEvent.character != null &&
+              keyEvent.character != '' &&
+              !webBugBlacklistCharacters.contains(keyEvent.character)));
   if (!shouldDeleteSelection) {
     return ExecutionInstruction.continueExecution;
   }
