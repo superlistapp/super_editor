@@ -1522,6 +1522,11 @@ class CommonEditorOperations {
     final newNodeId = DocumentEditor.createNodeId();
 
     if (extentNode is ListItemNode) {
+      if (extentNode.text.text.isEmpty) {
+        // The list item is empty. Convert it to a paragraph.
+        return convertToParagraph();
+      }
+
       // Split the list item into two.
       editor.executeCommand(
         SplitListItemCommand(
