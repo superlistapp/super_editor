@@ -38,10 +38,10 @@ class ImageNode with ChangeNotifier implements DocumentNode {
   }
 
   @override
-  BinaryPosition get beginningPosition => BinaryPosition.included();
+  BinaryNodePosition get beginningPosition => BinaryNodePosition.included();
 
   @override
-  BinaryPosition get endPosition => BinaryPosition.included();
+  BinaryNodePosition get endPosition => BinaryNodePosition.included();
 
   @override
   BinarySelection computeSelection({
@@ -57,7 +57,7 @@ class ImageNode with ChangeNotifier implements DocumentNode {
       throw Exception('ImageNode can only copy content from a BinarySelection.');
     }
 
-    return selection.position == BinaryPosition.included() ? _imageUrl : null;
+    return selection.position == BinaryNodePosition.included() ? _imageUrl : null;
   }
 
   @override

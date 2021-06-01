@@ -160,7 +160,7 @@ class _PasteEditorCommand implements EditorCommand {
       // position is at the end of the text that was just pasted.
       newSelectionPosition = DocumentPosition(
         nodeId: currentNodeWithSelection.id,
-        nodePosition: TextPosition(
+        nodePosition: TextNodePosition(
           offset: pasteTextOffset + splitContent.first.length,
         ),
       );
@@ -397,11 +397,11 @@ DocumentPosition _getDocumentPositionAfterDeletion({
 
     // If it's a binary selection node then that node will
     // be replaced by a ParagraphNode with the same ID.
-    if (newSelectionPosition.nodePosition is BinaryPosition) {
+    if (newSelectionPosition.nodePosition is BinaryNodePosition) {
       // Assume that the node was replaced with an empty paragraph.
       newSelectionPosition = DocumentPosition(
         nodeId: newSelectionPosition.nodeId,
-        nodePosition: TextPosition(offset: 0),
+        nodePosition: TextNodePosition(offset: 0),
       );
     }
   } else {
@@ -410,11 +410,11 @@ DocumentPosition _getDocumentPositionAfterDeletion({
     // a ParagraphNode with the same ID. Otherwise, it must
     // be a TextNode, in which case we need to figure out
     // which DocumentPosition contains the earlier TextPosition.
-    if (basePosition.nodePosition is BinaryPosition) {
+    if (basePosition.nodePosition is BinaryNodePosition) {
       // Assume that the node was replace with an empty paragraph.
       newSelectionPosition = DocumentPosition(
         nodeId: baseNode.id,
-        nodePosition: TextPosition(offset: 0),
+        nodePosition: TextNodePosition(offset: 0),
       );
     } else if (basePosition.nodePosition is TextPosition) {
       final baseOffset = (basePosition.nodePosition as TextPosition).offset;
@@ -422,7 +422,7 @@ DocumentPosition _getDocumentPositionAfterDeletion({
 
       newSelectionPosition = DocumentPosition(
         nodeId: baseNode.id,
-        nodePosition: TextPosition(offset: min(baseOffset, extentOffset)),
+        nodePosition: TextNodePosition(offset: min(baseOffset, extentOffset)),
       );
     } else {
       throw Exception(
@@ -489,7 +489,7 @@ ExecutionInstruction mergeNodeWithNextWhenDeleteIsPressed({
   editContext.composer.selection = DocumentSelection.collapsed(
     position: DocumentPosition(
       nodeId: node.id,
-      nodePosition: TextPosition(offset: currentParagraphLength),
+      nodePosition: TextNodePosition(offset: currentParagraphLength),
     ),
   );
 

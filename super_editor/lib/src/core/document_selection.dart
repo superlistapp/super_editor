@@ -1,4 +1,3 @@
-
 import 'document.dart';
 
 /// A selection within a `Document`.
@@ -27,8 +26,8 @@ class DocumentSelection {
     required this.extent,
   });
 
-  final DocumentPosition<dynamic> base;
-  final DocumentPosition<dynamic> extent;
+  final DocumentPosition base;
+  final DocumentPosition extent;
 
   bool get isCollapsed => base == extent;
 

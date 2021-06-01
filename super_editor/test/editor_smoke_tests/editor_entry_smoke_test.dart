@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/src/core/document.dart';
@@ -12,6 +11,7 @@ import 'package:super_editor/src/default_editor/common_editor_operations.dart';
 import 'package:super_editor/src/default_editor/paragraph.dart';
 import 'package:super_editor/src/default_editor/super_editor.dart';
 import 'package:super_editor/src/infrastructure/attributed_text.dart';
+import 'package:super_editor/super_editor.dart';
 
 // TODO: Create a fake keyboard that operates at the system channel level
 //       - typeCharacter('m')
@@ -58,7 +58,7 @@ void main() {
       composer.selection = DocumentSelection.collapsed(
           position: DocumentPosition(
         nodeId: documentEditor.document.nodes.first.id,
-        nodePosition: TextPosition(offset: 0),
+        nodePosition: TextNodePosition(offset: 0),
       ));
 
       final header = 'Smoke Test';

@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/src/core/document.dart';
@@ -36,7 +35,7 @@ void main() {
           documentSelection: DocumentSelection(
             base: DocumentPosition(
               nodeId: 'paragraph',
-              nodePosition: TextPosition(offset: 1),
+              nodePosition: TextNodePosition(offset: 1),
             ),
             extent: DocumentPosition(
               nodeId: 'paragraph',
@@ -45,7 +44,7 @@ void main() {
               // TextPosition references the character after the selection, not
               // the last character in the selection. See the TextPosition class
               // definition for more information.
-              nodePosition: TextPosition(offset: 13),
+              nodePosition: TextNodePosition(offset: 13),
             ),
           ),
           attributions: {boldAttribution},
@@ -131,11 +130,11 @@ void main() {
         editContext.composer.selection = DocumentSelection(
           base: DocumentPosition(
             nodeId: 'paragraph',
-            nodePosition: TextPosition(offset: 0),
+            nodePosition: TextNodePosition(offset: 0),
           ),
           extent: DocumentPosition(
             nodeId: 'paragraph',
-            nodePosition: TextPosition(offset: 1),
+            nodePosition: TextNodePosition(offset: 1),
           ),
         );
 
@@ -166,7 +165,7 @@ void main() {
         editContext.composer.selection = DocumentSelection.collapsed(
           position: DocumentPosition(
             nodeId: 'horizontal_rule',
-            nodePosition: BinaryPosition.notIncluded(),
+            nodePosition: BinaryNodePosition.notIncluded(),
           ),
         );
 
@@ -200,7 +199,7 @@ void main() {
         editContext.composer.selection = DocumentSelection.collapsed(
           position: DocumentPosition(
             nodeId: 'paragraph',
-            nodePosition: TextPosition(offset: 0),
+            nodePosition: TextNodePosition(offset: 0),
           ),
         );
 
@@ -251,7 +250,7 @@ void main() {
         editContext.composer.selection = DocumentSelection.collapsed(
           position: DocumentPosition(
             nodeId: 'paragraph',
-            nodePosition: TextPosition(offset: 0),
+            nodePosition: TextNodePosition(offset: 0),
           ),
         );
 
@@ -290,7 +289,7 @@ void main() {
         editContext.composer.selection = DocumentSelection.collapsed(
           position: DocumentPosition(
             nodeId: 'paragraph',
-            nodePosition: TextPosition(offset: 0),
+            nodePosition: TextNodePosition(offset: 0),
           ),
         );
 

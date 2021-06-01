@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
+import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/composable_text.dart';
 
@@ -28,17 +29,23 @@ DocumentSelection? getWordSelection({
     return null;
   }
 
-  final TextSelection wordSelection = (component as TextComposable).getWordSelectionAt(docPosition.nodePosition);
+  final nodePosition = docPosition.nodePosition;
+  if (nodePosition is! TextNodePosition) {
+    return null;
+  }
 
-  _log.log('getWordSelection', ' - word selection: $wordSelection');
+  final TextSelection wordTextSelection = (component as TextComposable).getWordSelectionAt(nodePosition);
+  final wordNodeSelection = TextNodeSelection.fromTextSelection(wordTextSelection);
+
+  _log.log('getWordSelection', ' - word selection: $wordNodeSelection');
   return DocumentSelection(
     base: DocumentPosition(
       nodeId: docPosition.nodeId,
-      nodePosition: wordSelection.base,
+      nodePosition: wordNodeSelection.base,
     ),
     extent: DocumentPosition(
       nodeId: docPosition.nodeId,
-      nodePosition: wordSelection.extent,
+      nodePosition: wordNodeSelection.extent,
     ),
   );
 }
@@ -84,19 +91,25 @@ DocumentSelection? getParagraphSelection({
     return null;
   }
 
-  final TextSelection paragraphSelection = expandPositionToParagraph(
-    text: (component as TextComposable).getContiguousTextAt(docPosition.nodePosition),
+  final nodePosition = docPosition.nodePosition;
+  if (nodePosition is! TextNodePosition) {
+    return null;
+  }
+
+  final TextSelection paragraphTextSelection = expandPositionToParagraph(
+    text: (component as TextComposable).getContiguousTextAt(nodePosition),
     textPosition: docPosition.nodePosition as TextPosition,
   );
+  final paragraphNodeSelection = TextNodeSelection.fromTextSelection(paragraphTextSelection);
 
   return DocumentSelection(
     base: DocumentPosition(
       nodeId: docPosition.nodeId,
-      nodePosition: paragraphSelection.base,
+      nodePosition: paragraphNodeSelection.base,
     ),
     extent: DocumentPosition(
       nodeId: docPosition.nodeId,
-      nodePosition: paragraphSelection.extent,
+      nodePosition: paragraphNodeSelection.extent,
     ),
   );
 }

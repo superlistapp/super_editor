@@ -224,7 +224,7 @@ ExecutionInstruction backspaceToClearParagraphBlockType({
   }
 
   final textPosition = editContext.composer.selection!.extent.nodePosition;
-  if (textPosition is! TextPosition || textPosition.offset > 0) {
+  if (textPosition is! TextNodePosition || textPosition.offset > 0) {
     return ExecutionInstruction.continueExecution;
   }
 

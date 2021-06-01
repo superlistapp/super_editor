@@ -100,7 +100,7 @@ class DeleteSelectionCommand implements EditorCommand {
     final basePosition = documentSelection.base.nodePosition;
     final extentPosition = documentSelection.extent.nodePosition;
 
-    if (basePosition is BinaryPosition) {
+    if (basePosition is BinaryNodePosition) {
       // Binary positions are all-or-nothing. Therefore, partial
       // selection means delete the whole node.
       transaction.deleteNode(node);
@@ -147,7 +147,7 @@ class DeleteSelectionCommand implements EditorCommand {
     required dynamic nodePosition,
     required DocumentEditorTransaction transaction,
   }) {
-    if (nodePosition is BinaryPosition) {
+    if (nodePosition is BinaryNodePosition) {
       _deleteBinaryNode(
         document: document,
         node: node,
@@ -169,7 +169,7 @@ class DeleteSelectionCommand implements EditorCommand {
     required dynamic nodePosition,
     required DocumentEditorTransaction transaction,
   }) {
-    if (nodePosition is BinaryPosition) {
+    if (nodePosition is BinaryNodePosition) {
       _deleteBinaryNode(
         document: document,
         node: node,

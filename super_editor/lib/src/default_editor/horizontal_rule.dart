@@ -18,10 +18,10 @@ class HorizontalRuleNode with ChangeNotifier implements DocumentNode {
   final String id;
 
   @override
-  BinaryPosition get beginningPosition => BinaryPosition.included();
+  BinaryNodePosition get beginningPosition => BinaryNodePosition.included();
 
   @override
-  BinaryPosition get endPosition => BinaryPosition.included();
+  BinaryNodePosition get endPosition => BinaryNodePosition.included();
 
   @override
   BinarySelection computeSelection({
@@ -37,7 +37,7 @@ class HorizontalRuleNode with ChangeNotifier implements DocumentNode {
       throw Exception('HorizontalRuleNode can only copy content from a BinarySelection.');
     }
 
-    return selection.position == BinaryPosition.included() ? '---' : null;
+    return selection.position == BinaryNodePosition.included() ? '---' : null;
   }
 
   @override
