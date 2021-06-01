@@ -52,7 +52,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  _MenuItem _selectedMenuItem;
+  _MenuItem? _selectedMenuItem;
 
   @override
   void initState() {
@@ -62,15 +62,15 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _toggleDrawer() {
-    if (_scaffoldKey.currentState.isDrawerOpen) {
+    if (_scaffoldKey.currentState!.isDrawerOpen) {
       Navigator.of(context).pop();
     } else {
-      _scaffoldKey.currentState.openDrawer();
+      _scaffoldKey.currentState!.openDrawer();
     }
   }
 
   void _closeDrawer() {
-    if (_scaffoldKey.currentState.isDrawerOpen) {
+    if (_scaffoldKey.currentState!.isDrawerOpen) {
       Navigator.of(context).pop();
     }
   }
@@ -88,7 +88,7 @@ class _HomeScreenState extends State<HomeScreen> {
       key: _scaffoldKey,
       appBar: _buildAppBar(context),
       extendBodyBehindAppBar: true,
-      body: _selectedMenuItem.pageBuilder(context),
+      body: _selectedMenuItem!.pageBuilder(context),
       drawer: _buildDrawer(),
     );
   }
@@ -220,18 +220,18 @@ final _menu = <_MenuGroup>[
 class _MenuGroup {
   const _MenuGroup({
     this.title,
-    @required this.items,
+    required this.items,
   });
 
-  final String title;
+  final String? title;
   final List<_MenuItem> items;
 }
 
 class _MenuItem {
   const _MenuItem({
-    @required this.icon,
-    @required this.title,
-    @required this.pageBuilder,
+    required this.icon,
+    required this.title,
+    required this.pageBuilder,
   });
 
   final IconData icon;
@@ -241,18 +241,18 @@ class _MenuItem {
 
 class _DrawerHeader extends StatelessWidget {
   const _DrawerHeader({
-    Key key,
-    @required this.title,
+    Key? key,
+    required this.title,
   }) : super(key: key);
 
-  final String title;
+  final String? title;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(left: 16, bottom: 4),
       child: Text(
-        title,
+        title!,
         style: TextStyle(
           color: const Color(0xFF444444),
           fontSize: 10,
@@ -265,11 +265,11 @@ class _DrawerHeader extends StatelessWidget {
 
 class _DrawerButton extends StatelessWidget {
   const _DrawerButton({
-    Key key,
-    @required this.icon,
-    @required this.title,
+    Key? key,
+    required this.icon,
+    required this.title,
     this.isSelected = false,
-    @required this.onPressed,
+    required this.onPressed,
   }) : super(key: key);
 
   final IconData icon;

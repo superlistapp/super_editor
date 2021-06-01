@@ -12,14 +12,14 @@ class LoseFocusDemo extends StatefulWidget {
 }
 
 class _LoseFocusDemoState extends State<LoseFocusDemo> {
-  Document _doc;
-  DocumentEditor _docEditor;
+  late Document _doc;
+  late DocumentEditor _docEditor;
 
   @override
   void initState() {
     super.initState();
     _doc = _createDocument1();
-    _docEditor = DocumentEditor(document: _doc);
+    _docEditor = DocumentEditor(document: _doc as MutableDocument);
   }
 
   @override

@@ -22,10 +22,10 @@ class _StaticMultiLineTextFieldDemoState extends State<StaticMultiLineTextFieldD
         ),
   );
 
-  GlobalKey<SuperTextFieldState> _textKey;
-  TextFieldDemoRobot _demoRobot;
+  GlobalKey<SuperTextFieldState>? _textKey;
+  late TextFieldDemoRobot _demoRobot;
 
-  FocusNode _focusNode;
+  FocusNode? _focusNode;
 
   @override
   void initState() {
@@ -38,7 +38,7 @@ class _StaticMultiLineTextFieldDemoState extends State<StaticMultiLineTextFieldD
       textKey: _textKey,
     );
 
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
       _startDemo();
     });
   }
@@ -46,7 +46,7 @@ class _StaticMultiLineTextFieldDemoState extends State<StaticMultiLineTextFieldD
   @override
   void dispose() {
     _demoRobot.dispose();
-    _focusNode.dispose();
+    _focusNode!.dispose();
     super.dispose();
   }
 
@@ -74,7 +74,7 @@ class _StaticMultiLineTextFieldDemoState extends State<StaticMultiLineTextFieldD
       behavior: HitTestBehavior.opaque,
       onTap: () {
         // Remove focus from text field when the user taps anywhere else.
-        _focusNode.unfocus();
+        _focusNode!.unfocus();
       },
       child: Center(
         child: SizedBox(

@@ -16,19 +16,19 @@ class MarkdownSerializationDemo extends StatefulWidget {
 
 class _MarkdownSerializationDemoState extends State<MarkdownSerializationDemo> {
   final _docKey = GlobalKey();
-  Document _doc;
-  DocumentEditor _docEditor;
+  late Document _doc;
+  late DocumentEditor _docEditor;
 
   String _markdown = '';
 
-  Timer _updateTimer;
+  Timer? _updateTimer;
   final _markdownUpdateWaitTime = const Duration(milliseconds: 250);
 
   @override
   void initState() {
     super.initState();
     _doc = _createInitialDocument()..addListener(_onDocumentChange);
-    _docEditor = DocumentEditor(document: _doc);
+    _docEditor = DocumentEditor(document: _doc as MutableDocument);
 
     _updateMarkdown();
   }

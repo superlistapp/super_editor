@@ -1,14 +1,11 @@
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
-import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/super_editor.dart';
 
 import '../core/document.dart';
 import '../core/document_layout.dart';
-import '../core/document_selection.dart';
-import 'document_interaction.dart';
-import 'multi_node_editing.dart';
 
 final _log = Logger(scope: 'box_component.dart');
 
@@ -82,7 +79,7 @@ class _BoxComponentState extends State<BoxComponent> with DocumentComponent {
   }
 
   @override
-  getEndPositionNearX(double x) {
+  BinaryPosition getEndPositionNearX(double x) {
     return BinaryPosition.included();
   }
 

@@ -10,8 +10,8 @@ class _AttributedTextDemoState extends State<AttributedTextDemo> {
   final List<TextRange> _boldRanges = [];
   final List<TextRange> _italicsRanges = [];
   final List<TextRange> _strikethroughRanges = [];
-  TextSpan _richText;
-  String _plainText;
+  TextSpan? _richText;
+  late String _plainText;
 
   @override
   void initState() {
@@ -65,7 +65,7 @@ class _AttributedTextDemoState extends State<AttributedTextDemo> {
         }
         return newStyle;
       });
-      _plainText = _richText.toPlainText();
+      _plainText = _richText!.toPlainText();
     });
   }
 
@@ -179,8 +179,8 @@ Try it yourself by adding and removing attributions to characters in a string...
 
 class TextRangeSelector extends StatefulWidget {
   const TextRangeSelector({
-    Key key,
-    @required this.cellCount,
+    Key? key,
+    required this.cellCount,
     this.cellWidth = 10,
     this.cellHeight = 10,
     this.onRangesChange,
@@ -189,15 +189,15 @@ class TextRangeSelector extends StatefulWidget {
   final int cellCount;
   final double cellWidth;
   final double cellHeight;
-  final void Function(List<TextRange>) onRangesChange;
+  final void Function(List<TextRange>)? onRangesChange;
 
   @override
   _TextRangeSelectorState createState() => _TextRangeSelectorState();
 }
 
 class _TextRangeSelectorState extends State<TextRangeSelector> {
-  List<bool> _selectedCells;
-  String _selectionMode;
+  late List<bool> _selectedCells;
+  String? _selectionMode;
 
   @override
   void initState() {
@@ -255,7 +255,7 @@ class _TextRangeSelectorState extends State<TextRangeSelector> {
       ranges.add(TextRange(start: rangeStart, end: widget.cellCount - 1));
     }
 
-    widget.onRangesChange(ranges);
+    widget.onRangesChange!(ranges);
   }
 
   @override

@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
@@ -11,8 +9,8 @@ import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
 import 'package:super_editor/src/default_editor/common_editor_operations.dart';
-import 'package:super_editor/src/default_editor/super_editor.dart';
 import 'package:super_editor/src/default_editor/paragraph.dart';
+import 'package:super_editor/src/default_editor/super_editor.dart';
 import 'package:super_editor/src/infrastructure/attributed_text.dart';
 
 // TODO: Create a fake keyboard that operates at the system channel level

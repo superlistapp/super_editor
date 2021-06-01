@@ -13,7 +13,7 @@ import 'document.dart';
 /// can be event-sourced, allowing for undo/redo behavior.
 // TODO: design and implement comprehensive event-sourced editing API (#49)
 class DocumentEditor {
-  static Uuid _uuid = Uuid();
+  static final Uuid _uuid = Uuid();
 
   /// Generates a new ID for a `DocumentNode`.
   ///

@@ -19,8 +19,8 @@ class MarketingVideo extends StatefulWidget {
 
 class _MarketingVideoState extends State<MarketingVideo> {
   final _docLayoutKey = GlobalKey();
-  DocumentEditor _editor;
-  DocumentComposer _composer;
+  late DocumentEditor _editor;
+  DocumentComposer? _composer;
 
   @override
   void initState() {
@@ -48,15 +48,15 @@ class _MarketingVideoState extends State<MarketingVideo> {
 
   @override
   void dispose() {
-    _composer.dispose();
+    _composer!.dispose();
     super.dispose();
   }
 
   Future<void> _startRobot() async {
     final robot = DocumentEditingRobot(
       editor: _editor,
-      composer: _composer,
-      documentLayoutFinder: () => _docLayoutKey.currentState as DocumentLayout,
+      composer: _composer!,
+      documentLayoutFinder: () => _docLayoutKey.currentState as DocumentLayout?,
     );
 
     robot
@@ -241,14 +241,14 @@ final headerAttribution = NamedAttribution('header');
 
 class DocumentEditingRobot {
   DocumentEditingRobot({
-    @required DocumentEditor editor,
-    @required DocumentComposer composer,
-    @required DocumentLayoutFinder documentLayoutFinder,
-    int randomSeed,
+    required DocumentEditor editor,
+    required DocumentComposer composer,
+    required DocumentLayoutFinder documentLayoutFinder,
+    int? randomSeed,
   })  : _editor = editor,
         _composer = composer,
         _editorOps =
-            CommonEditorOperations(editor: editor, composer: composer, documentLayoutResolver: documentLayoutFinder),
+            CommonEditorOperations(editor: editor, composer: composer, documentLayoutResolver: documentLayoutFinder as DocumentLayout Function()),
         _random = Random(randomSeed);
 
   final DocumentEditor _editor;
@@ -354,7 +354,7 @@ class DocumentEditingRobot {
             _editorOps.insertCharacter(character);
 
             if (character == ' ') {
-              _editorOps.convertParagraphByPatternMatching(_composer.selection.extent.nodeId);
+              _editorOps.convertParagraphByPatternMatching(_composer.selection!.extent.nodeId);
             }
           },
         ),
@@ -370,7 +370,7 @@ class DocumentEditingRobot {
             _editorOps.insertCharacter(character);
 
             if (character == ' ') {
-              _editorOps.convertParagraphByPatternMatching(_composer.selection.extent.nodeId);
+              _editorOps.convertParagraphByPatternMatching(_composer.selection!.extent.nodeId);
             }
           },
           true,
@@ -464,4 +464,4 @@ class DocumentEditingRobot {
 
 typedef RobotAction = FutureOr<void> Function();
 
-typedef DocumentLayoutFinder = DocumentLayout Function();
+typedef DocumentLayoutFinder = DocumentLayout? Function();

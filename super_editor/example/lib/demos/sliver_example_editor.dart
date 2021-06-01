@@ -12,14 +12,14 @@ class SliverExampleEditor extends StatefulWidget {
 }
 
 class _SliverExampleEditorState extends State<SliverExampleEditor> {
-  Document _doc;
-  DocumentEditor _docEditor;
+  late Document _doc;
+  late DocumentEditor _docEditor;
 
   @override
   void initState() {
     super.initState();
     _doc = _createInitialDocument();
-    _docEditor = DocumentEditor(document: _doc);
+    _docEditor = DocumentEditor(document: _doc as MutableDocument);
   }
 
   @override

@@ -385,6 +385,8 @@ This is some code
         // Ensure that the document serializes. We don't bother with
         // validating the output because other tests should validate
         // the per-node serializations.
+
+        // ignore: unused_local_variable
         final markdown = serializeDocumentToMarkdown(doc);
       });
     });

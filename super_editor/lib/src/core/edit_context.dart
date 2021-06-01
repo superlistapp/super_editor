@@ -15,7 +15,7 @@ class EditContext {
 
   final DocumentEditor editor;
 
-  DocumentLayout Function() _getDocumentLayout;
+  final DocumentLayout Function() _getDocumentLayout;
   DocumentLayout get documentLayout => _getDocumentLayout();
 
   final DocumentComposer composer;

@@ -24,7 +24,7 @@ class TextFieldDemo extends StatefulWidget {
 }
 
 class _TextFieldDemoState extends State<TextFieldDemo> {
-  WidgetBuilder _demoBuilder;
+  late WidgetBuilder _demoBuilder;
 
   @override
   void initState() {

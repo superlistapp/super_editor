@@ -8,7 +8,6 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/document.dart';
-import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_editor.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
@@ -476,6 +475,7 @@ class AddTextAttributionsCommand implements EditorCommand {
     final nodeRange = document.getRangeBetween(documentSelection.base, documentSelection.extent);
     _log.log('AddTextAttributionsCommand', ' - node range: $nodeRange');
 
+    // ignore: prefer_collection_literals
     final nodesAndSelections = LinkedHashMap<TextNode, TextRange>();
 
     for (final textNode in nodes) {
@@ -564,6 +564,7 @@ class RemoveTextAttributionsCommand implements EditorCommand {
     final nodeRange = document.getRangeBetween(documentSelection.base, documentSelection.extent);
     _log.log('RemoveTextAttributionsCommand', ' - node range: $nodeRange');
 
+    // ignore: prefer_collection_literals
     final nodesAndSelections = LinkedHashMap<TextNode, TextRange>();
 
     for (final textNode in nodes) {
@@ -655,6 +656,7 @@ class ToggleTextAttributionsCommand implements EditorCommand {
     final nodeRange = document.getRangeBetween(documentSelection.base, documentSelection.extent);
     _log.log('ToggleTextAttributionsCommand', ' - node range: $nodeRange');
 
+    // ignore: prefer_collection_literals
     final nodesAndSelections = LinkedHashMap<TextNode, TextRange>();
     bool alreadyHasAttributions = false;
 

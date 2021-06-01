@@ -12,22 +12,22 @@ class SwitchDocumentDemo extends StatefulWidget {
 }
 
 class _SwitchDocumentDemoState extends State<SwitchDocumentDemo> {
-  Document _doc1;
-  DocumentEditor _docEditor1;
+  late Document _doc1;
+  DocumentEditor? _docEditor1;
 
-  Document _doc2;
-  DocumentEditor _docEditor2;
+  late Document _doc2;
+  DocumentEditor? _docEditor2;
 
-  DocumentEditor _activeDocumentEditor;
+  DocumentEditor? _activeDocumentEditor;
 
   @override
   void initState() {
     super.initState();
     _doc1 = _createDocument1();
-    _docEditor1 = DocumentEditor(document: _doc1);
+    _docEditor1 = DocumentEditor(document: _doc1 as MutableDocument);
 
     _doc2 = _createDocument2();
-    _docEditor2 = DocumentEditor(document: _doc2);
+    _docEditor2 = DocumentEditor(document: _doc2 as MutableDocument);
 
     _activeDocumentEditor = _docEditor1;
   }
@@ -45,7 +45,7 @@ class _SwitchDocumentDemoState extends State<SwitchDocumentDemo> {
           _buildDocSelector(),
           Expanded(
             child: SuperEditor.standard(
-              editor: _activeDocumentEditor,
+              editor: _activeDocumentEditor!,
               maxWidth: 600,
               padding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),
             ),
