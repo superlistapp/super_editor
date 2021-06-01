@@ -1,6 +1,6 @@
 library super_editor;
 
-export 'src/infrastructure/selectable_text.dart';
+export 'src/infrastructure/super_selectable_text.dart';
 export 'src/infrastructure/attributed_text.dart';
 export 'src/infrastructure/attributed_spans.dart';
 export 'src/infrastructure/multi_tap_gesture.dart';
@@ -18,7 +18,7 @@ export 'src/default_editor/box_component.dart';
 export 'src/default_editor/common_editor_operations.dart';
 export 'src/default_editor/document_interaction.dart';
 export 'src/default_editor/document_keyboard_actions.dart';
-export 'src/default_editor/editor.dart';
+export 'src/default_editor/super_editor.dart';
 export 'src/default_editor/horizontal_rule.dart';
 export 'src/default_editor/image.dart';
 export 'src/default_editor/layout.dart';

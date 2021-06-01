@@ -8,30 +8,30 @@ import 'text_layout.dart';
 
 /// Displays text with a selection highlight and a caret.
 ///
-/// `SelectableText` does not recognize any user interaction. It's the
+/// [SuperSelectableText] does not recognize any user interaction. It's the
 /// responsibility of ancestor widgets to recognize interactions that
 /// should alter this widget's text selection and/or caret position.
 ///
-/// `textSelection` determines the span of text to be painted
+/// [textSelection] determines the span of text to be painted
 /// with a selection highlight.
 ///
-/// `showCaret` and `textSelection` together determine whether or not the
-/// caret is painted in this `SelectableText`. If `textSelection` is collapsed
-/// with an offset less than 0 then no caret is displayed. If `showCaret` is
-/// false then no caret is displayed. If `textSelection` has a `baseOffset`
-/// or `extentOffset` that is >= zero and `showCaret` is true then a caret is
-/// displayed. An explicit `showCaret` control is offered because multiple
-/// `SelectableText` widgets might be displayed together with a selection
-/// spanning multiple `SelectableText` widgets, but only one of the
-/// `SelectableText` widgets displays a caret.
+/// [showCaret] and [textSelection] together determine whether or not the
+/// caret is painted in this [SuperSelectableText]. If [textSelection] is collapsed
+/// with an offset less than 0 then no caret is displayed. If [showCaret] is
+/// false then no caret is displayed. If [textSelection] has a [baseOffset]
+/// or [extentOffset] that is >= zero and [showCaret] is true then a caret is
+/// displayed. An explicit [showCaret] control is offered because multiple
+/// [SuperSelectableText] widgets might be displayed together with a selection
+/// spanning multiple [SuperSelectableText] widgets, but only one of the
+/// [SuperSelectableTex]` widgets displays a caret.
 ///
-/// If `text` is empty, and a `textSelection` with an extent >= 0 is provided, and
-/// `highlightWhenEmpty` is `true`, then `SelectableText` will paint a small
+/// If [text] is empty, and a [textSelection] with an extent >= 0 is provided, and
+/// [highlightWhenEmpty] is [true], then [SuperSelectableText] will paint a small
 /// highlight, despite having no content. This is useful when showing that
 /// one or more empty text areas are selected.
-class SelectableText extends StatefulWidget {
-  /// `SelectableText` that displays plain text (only one text style).
-  SelectableText.plain({
+class SuperSelectableText extends StatefulWidget {
+  /// [SuperSelectableText] that displays plain text (only one text style).
+  SuperSelectableText.plain({
     Key? key,
     required String text,
     required TextStyle style,
@@ -50,8 +50,8 @@ class SelectableText extends StatefulWidget {
   })  : richText = TextSpan(text: text, style: style),
         super(key: key);
 
-  /// `SelectableText` that displays styled text.
-  SelectableText({
+  /// [SuperSelectableText] that displays styled text.
+  SuperSelectableText({
     Key? key,
     required TextSpan textSpan,
     this.textAlign = TextAlign.left,
@@ -69,44 +69,44 @@ class SelectableText extends StatefulWidget {
   })  : richText = textSpan,
         super(key: key);
 
-  /// The text to display in this `SelectableText` widget.
+  /// The text to display in this [SuperSelectableText] widget.
   final TextSpan richText;
 
-  /// The alignment to use for `richText` display.
+  /// The alignment to use for [richText] display.
   final TextAlign textAlign;
 
-  /// The portion of `richText` to display with the
-  /// `textSelectionDecoration`.
+  /// The portion of [richText] to display with the
+  /// [textSelectionDecoration].
   final TextSelection textSelection;
 
-  /// The visual decoration to apply to the `textSelection`.
+  /// The visual decoration to apply to the [textSelection].
   final TextSelectionDecoration textSelectionDecoration;
 
   /// Builds the visual representation of the caret in this
-  /// `SelectableText` widget.
+  /// [SuperSelectableText] widget.
   final TextCaretFactory textCaretFactory;
 
-  /// True to show a thin selection highlight when `richText`
+  /// True to show a thin selection highlight when [richText]
   /// is empty, or false to avoid showing a selection highlight
-  /// when `richText` is empty.
+  /// when [richText] is empty.
   ///
-  /// This is useful when multiple `SelectableText` widgets
-  /// are selected and some of the selected `SelectableText`
+  /// This is useful when multiple [SuperSelectableText] widgets
+  /// are selected and some of the selected [SuperSelectableText]
   /// widgets are empty.
   final bool highlightWhenEmpty;
 
-  /// True to display a caret in this `SelectableText` at
-  /// the `extent` of `textSelection`, or false to avoid
+  /// True to display a caret in this [SuperSelectableText] at
+  /// the [extent] of [textSelection], or false to avoid
   /// displaying a caret.
   final bool showCaret;
 
   @override
-  SelectableTextState createState() => SelectableTextState();
+  SuperSelectableTextState createState() => SuperSelectableTextState();
 }
 
-class SelectableTextState extends State<SelectableText> implements TextLayout {
-  // `GlobalKey` that provides access to the `RenderParagraph` associated
-  // with the text that this `SelectableText` widget displays.
+class SuperSelectableTextState extends State<SuperSelectableText> implements TextLayout {
+  // [GlobalKey] that provides access to the [RenderParagraph] associated
+  // with the text that this [SuperSelectableText] widget displays.
   final GlobalKey _textKey = GlobalKey();
 
   @override
@@ -117,7 +117,7 @@ class SelectableTextState extends State<SelectableText> implements TextLayout {
   }
 
   @override
-  void didUpdateWidget(SelectableText oldWidget) {
+  void didUpdateWidget(SuperSelectableText oldWidget) {
     super.didUpdateWidget(oldWidget);
 
     if (widget.richText != oldWidget.richText) {
@@ -772,7 +772,7 @@ class _CaretBlinkController with ChangeNotifier {
   }
 }
 
-/// Wraps a given `SelectableText` and paints extra decoration
+/// Wraps a given [SuperSelectableText] and paints extra decoration
 /// to visualize text boundaries.
 class DebugSelectableTextDecorator extends StatefulWidget {
   const DebugSelectableTextDecorator({
@@ -785,7 +785,7 @@ class DebugSelectableTextDecorator extends StatefulWidget {
 
   final GlobalKey selectableTextKey;
   final int textLength;
-  final SelectableText child;
+  final SuperSelectableText child;
   final bool showDebugPaint;
 
   @override
@@ -793,7 +793,8 @@ class DebugSelectableTextDecorator extends StatefulWidget {
 }
 
 class _DebugSelectableTextDecoratorState extends State<DebugSelectableTextDecorator> {
-  SelectableTextState? get _selectableTextState => widget.selectableTextKey.currentState as SelectableTextState;
+  SuperSelectableTextState? get _selectableTextState =>
+      widget.selectableTextKey.currentState as SuperSelectableTextState;
 
   RenderParagraph? get _renderParagraph => _selectableTextState?._renderParagraph;
 

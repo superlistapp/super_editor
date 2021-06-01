@@ -149,7 +149,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
 
   @override
   Widget build(BuildContext context) {
-    return Editor.standard(
+    return SuperEditor.standard(
       editor: _docEditor,
       composer: _composer,
       focusNode: _editorFocusNode,

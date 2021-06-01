@@ -25,7 +25,7 @@ import 'unknown_component.dart';
 
 /// A text editor for styled text and multi-media elements.
 ///
-/// An `Editor` brings together the key pieces needed
+/// An [SuperEditor] brings together the key pieces needed
 /// to display a user-editable document:
 ///  * document model
 ///  * document editor
@@ -33,19 +33,19 @@ import 'unknown_component.dart';
 ///  * document interaction (tapping, dragging, typing, scrolling)
 ///  * document composer
 ///
-/// An `Editor` determines the visual styling by way of:
-///  * `componentBuilders`, which produce individual components
+/// An [SuperEditor] determines the visual styling by way of:
+///  * [componentBuilders], which produce individual components
 ///     within the document layout
-///  * `textStyleBuilder`, which vends `TextStyle`s for every
+///  * [textStyleBuilder], which vends [TextStyle]s for every
 ///     combination of text attributions
-///  * `selectionStyle`, which dictates the color of the caret
+///  * [selectionStyle], which dictates the color of the caret
 ///     and the color of selected text and components
 ///
-/// An `Editor` determines how the keyboard interacts with the
-/// document by way of `keyboardActions`.
+/// An [SuperEditor] determines how the keyboard interacts with the
+/// document by way of [keyboardActions].
 ///
-/// All styling artifacts and `keyboardActions` are configurable
-/// via the `Editor.custom` constructor.
+/// All styling artifacts and [keyboardActions] are configurable
+/// via the [SuperEditor.custom] constructor.
 ///
 /// ## Deeper explanation of core artifacts:
 ///
@@ -65,8 +65,8 @@ import 'unknown_component.dart';
 ///
 /// Document composer is responsible for owning document
 /// selection and the current text entry mode.
-class Editor extends StatefulWidget {
-  factory Editor.standard({
+class SuperEditor extends StatefulWidget {
+  factory SuperEditor.standard({
     Key? key,
     required DocumentEditor editor,
     DocumentComposer? composer,
@@ -78,7 +78,7 @@ class Editor extends StatefulWidget {
     GlobalKey? documentLayoutKey,
     bool showDebugPaint = false,
   }) {
-    return Editor._(
+    return SuperEditor._(
       key: key,
       editor: editor,
       composer: composer,
@@ -96,7 +96,7 @@ class Editor extends StatefulWidget {
     );
   }
 
-  factory Editor.custom({
+  factory SuperEditor.custom({
     Key? key,
     required DocumentEditor editor,
     DocumentComposer? composer,
@@ -112,7 +112,7 @@ class Editor extends StatefulWidget {
     GlobalKey? documentLayoutKey,
     bool showDebugPaint = false,
   }) {
-    return Editor._(
+    return SuperEditor._(
       key: key,
       editor: editor,
       composer: composer,
@@ -130,7 +130,7 @@ class Editor extends StatefulWidget {
     );
   }
 
-  const Editor._({
+  const SuperEditor._({
     Key? key,
     required this.editor,
     this.composer,
@@ -147,7 +147,7 @@ class Editor extends StatefulWidget {
     this.showDebugPaint = false,
   }) : super(key: key);
 
-  /// Contains a `Document` and alters that document as desired.
+  /// Contains a [Document] and alters that document as desired.
   final DocumentEditor editor;
 
   final DocumentComposer? composer;
@@ -158,9 +158,9 @@ class Editor extends StatefulWidget {
   /// horizontal rule component, etc.
   final List<ComponentBuilder> componentBuilders;
 
-  /// Factory that creates `TextStyle`s based on given
+  /// Factory that creates [TextStyle]s based on given
   /// attributions. An attribution can be anything. It is up
-  /// to the `textStyleBuilder` to interpret attributions
+  /// to the [textStyleBuilder] to interpret attributions
   /// as desired to produce corresponding styles.
   final AttributionStyleBuilder textStyleBuilder;
 
@@ -189,11 +189,11 @@ class Editor extends StatefulWidget {
   final showDebugPaint;
 
   @override
-  _EditorState createState() => _EditorState();
+  _SuperEditorState createState() => _SuperEditorState();
 }
 
-class _EditorState extends State<Editor> {
-  // GlobalKey used to access the `DocumentLayoutState` to figure
+class _SuperEditorState extends State<SuperEditor> {
+  // GlobalKey used to access the [DocumentLayoutState] to figure
   // out where in the document the user taps or drags.
   late GlobalKey _docLayoutKey;
 
@@ -215,10 +215,9 @@ class _EditorState extends State<Editor> {
   }
 
   @override
-  void didUpdateWidget(Editor oldWidget) {
+  void didUpdateWidget(SuperEditor oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.composer != oldWidget.composer) {
-      print('Composer changed!');
       _composer.removeListener(_updateComposerPreferencesAtSelection);
 
       _composer = widget.composer ?? DocumentComposer();
@@ -344,7 +343,7 @@ final defaultSelectionStyle = const SelectionStyle(
   selectionColor: Color(0xFFACCEF7),
 );
 
-/// Creates `TextStyles` for the standard `Editor`.
+/// Creates [TextStyles] for the standard [SuperEditor].
 TextStyle defaultStyleBuilder(Set<Attribution> attributions) {
   TextStyle newStyle = TextStyle(
     color: Colors.black,
@@ -395,7 +394,7 @@ TextStyle defaultStyleBuilder(Set<Attribution> attributions) {
   return newStyle;
 }
 
-/// Creates visual components for the standard `Editor`.
+/// Creates visual components for the standard [SuperEditor].
 ///
 /// These builders are in priority order. The first builder
 /// to return a non-null component is used. The final
@@ -410,7 +409,7 @@ final defaultComponentBuilders = <ComponentBuilder>[
   unknownComponentBuilder,
 ];
 
-/// Keyboard actions for the standard `Editor`.
+/// Keyboard actions for the standard [SuperEditor].
 final defaultKeyboardActions = <DocumentKeyboardAction>[
   doNothingWhenThereIsNoSelection,
   pasteWhenCmdVIsPressed,

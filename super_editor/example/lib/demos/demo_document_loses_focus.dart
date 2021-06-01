@@ -2,8 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/super_editor.dart';
 
-/// Demo of an [Editor] widget that can lose focus to a nearby
-/// [TextField] to ensure that the [Editor] correctly removes
+/// Demo of an [SuperEditor] widget that can lose focus to a nearby
+/// [TextField] to ensure that the [SuperEditor] correctly removes
 /// its caret.
 // TODO: Add widget tests for focus interaction verifications
 class LoseFocusDemo extends StatefulWidget {
@@ -34,7 +34,7 @@ class _LoseFocusDemoState extends State<LoseFocusDemo> {
         children: [
           _buildDocSelector(),
           Expanded(
-            child: Editor.standard(
+            child: SuperEditor.standard(
               editor: _docEditor,
               maxWidth: 600,
               padding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),

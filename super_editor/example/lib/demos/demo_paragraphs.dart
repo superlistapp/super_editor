@@ -26,7 +26,7 @@ class _ParagraphsDemoState extends State<ParagraphsDemo> {
 
   @override
   Widget build(BuildContext context) {
-    return Editor.standard(
+    return SuperEditor.standard(
       editor: _docEditor,
       maxWidth: 600,
       padding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),

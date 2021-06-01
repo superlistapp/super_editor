@@ -5,7 +5,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/src/infrastructure/attributed_text.dart';
 import 'package:super_editor/src/infrastructure/platform_detector.dart';
-import 'package:super_editor/src/infrastructure/selectable_text.dart';
+import 'package:super_editor/src/infrastructure/super_selectable_text.dart';
 import 'package:super_editor/src/infrastructure/super_textfield.dart';
 
 import '../_text_entry_test_tools.dart';
@@ -2472,7 +2472,7 @@ final _multilineLayoutText = 'this text is long enough to be multiline in the av
 // (18)enough to be (31 - upstream)
 // (31)multiline in the (48 - upstream)
 // (48)available space(63)
-Future<SelectableTextState> _pumpMultilineLayout(
+Future<SuperSelectableTextState> _pumpMultilineLayout(
   WidgetTester tester,
 ) async {
   final selectableText = await _pumpAndReturnSelectableText(
@@ -2496,14 +2496,14 @@ Future<SelectableTextState> _pumpMultilineLayout(
   return selectableText;
 }
 
-Future<SelectableTextState> _pumpAndReturnSelectableText(
+Future<SuperSelectableTextState> _pumpAndReturnSelectableText(
   WidgetTester tester,
   String text, [
   Widget Function(Widget child)? decorator,
 ]) async {
-  final textKey = GlobalKey<SelectableTextState>();
+  final textKey = GlobalKey<SuperSelectableTextState>();
 
-  final selectableText = SelectableText.plain(
+  final selectableText = SuperSelectableText.plain(
     key: textKey,
     text: text,
     style: TextStyle(),

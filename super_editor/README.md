@@ -44,14 +44,14 @@ The example implementation is only a proof of concept. Expect separate packages 
 
 ## Display an editor
 
-Display a default text editor with the `Editor` widget:
+Display a default text editor with the `SuperEditor` widget:
 
 ```dart
 class _MyAppState extends State<MyApp> {
     void build(context) {
         // Display a visual, editable document.
         //
-        // An Editor does not include any app bar controls or popup
+        // A SuperEditor does not include any app bar controls or popup
         // controls. If you want such controls, you need to implement
         // them yourself.
         //
@@ -59,14 +59,14 @@ class _MyAppState extends State<MyApp> {
         // ordered and unordered lists, images, and horizontal rules. 
         // Paragraphs know how to display bold, italics, and strikethrough.
         // Key combinations are provided for bold (cmd+b) and italics (cmd+i).
-        return Editor.standard(
+        return SuperEditor.standard(
             editor: _myDocumentEditor,
         );
     }
 }
 ```
 
-An `Editor` widget requires a `DocumentEditor`, which is a pure-Dart class that's responsible for applying changes to a `Document`. A `DocumentEditor`, in turn, requires a reference to the `Document` that it will alter. Specifically, a `DocumentEditor` requires a `MutableDocument`.
+A `SuperEditor` widget requires a `DocumentEditor`, which is a pure-Dart class that's responsible for applying changes to a `Document`. A `DocumentEditor`, in turn, requires a reference to the `Document` that it will alter. Specifically, a `DocumentEditor` requires a `MutableDocument`.
 
 ```dart
 // A MutableDocument is an in-memory Document. Create the starting
@@ -97,12 +97,12 @@ final docEditor = DocumentEditor(document: myDoc);
 // Next: pass the docEditor to your Editor widget.
 ```
 
-The `Editor` widget can be customized.
+The `SuperEditor` widget can be customized.
 
 ```dart
 class _MyAppState extends State<MyApp> {
     void build(context) {
-        return Editor.custom(
+        return SuperEditor.custom(
             editor: _myDocumentEditor,
             textStyleBuilder: /** INSERT CUSTOMIZATION **/ null,
             selectionStyle: /** INSERT CUSTOMIZATION **/ null,
@@ -113,7 +113,7 @@ class _MyAppState extends State<MyApp> {
 }
 ```
 
-If your app requires deeper customization than `Editor` provides, you can construct your own version of the `Editor` widget by using lower level tools within the `super_editor` package.
+If your app requires deeper customization than `SuperEditor` provides, you can construct your own version of the `SuperEditor` widget by using lower level tools within the `super_editor` package.
 
 See the wiki for more information about how to customize an editor experience.
 

@@ -5,7 +5,7 @@ import 'package:super_editor/super_editor.dart';
 ///
 /// As the editor has an internal scrolling mechanism, for using it with Slivers
 /// you need to give them a finite height or space to fill itself. That is why
-/// the [Editor] has a [SizedBox] wrapped around it to give a height.
+/// the [SuperEditor] has a [SizedBox] wrapped around it to give a height.
 class SliverExampleEditor extends StatefulWidget {
   @override
   _SliverExampleEditorState createState() => _SliverExampleEditorState();
@@ -56,7 +56,7 @@ class _SliverExampleEditorState extends State<SliverExampleEditor> {
         ),
         SliverToBoxAdapter(
           child: IntrinsicHeight(
-            child: Editor.standard(
+            child: SuperEditor.standard(
               editor: _docEditor,
               padding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),
             ),

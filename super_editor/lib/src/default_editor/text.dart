@@ -19,7 +19,7 @@ import 'package:super_editor/src/infrastructure/attributed_spans.dart';
 import 'package:super_editor/src/infrastructure/attributed_text.dart';
 import 'package:super_editor/src/infrastructure/composable_text.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
-import 'package:super_editor/src/infrastructure/selectable_text.dart';
+import 'package:super_editor/src/infrastructure/super_selectable_text.dart';
 
 final _log = Logger(scope: 'text.dart');
 
@@ -129,7 +129,7 @@ class TextComponent extends StatefulWidget {
 }
 
 class _TextComponentState extends State<TextComponent> with DocumentComponent implements TextComposable {
-  final _selectableTextKey = GlobalKey<SelectableTextState>();
+  final _selectableTextKey = GlobalKey<SuperSelectableTextState>();
 
   @override
   TextPosition? getPositionAtOffset(Offset localOffset) {
@@ -436,7 +436,7 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
     }
     final richText = blockText.computeTextSpan(widget.textStyleBuilder);
 
-    return SelectableText(
+    return SuperSelectableText(
       key: _selectableTextKey,
       textSpan: richText,
       textAlign: widget.textAlign ?? TextAlign.left,

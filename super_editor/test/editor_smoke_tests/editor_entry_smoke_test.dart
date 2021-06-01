@@ -11,7 +11,7 @@ import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
 import 'package:super_editor/src/default_editor/common_editor_operations.dart';
-import 'package:super_editor/src/default_editor/editor.dart';
+import 'package:super_editor/src/default_editor/super_editor.dart';
 import 'package:super_editor/src/default_editor/paragraph.dart';
 import 'package:super_editor/src/infrastructure/attributed_text.dart';
 
@@ -47,7 +47,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: Editor.standard(
+            body: SuperEditor.standard(
               editor: documentEditor,
               composer: composer,
               documentLayoutKey: layoutKey,

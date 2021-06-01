@@ -142,7 +142,7 @@ Try it yourself by adding and removing attributions to characters in a string...
               TableRow(
                 children: [
                   _buildRowTitle('Attributed Text'),
-                  SelectableText(
+                  SuperSelectableText(
                     key: GlobalKey(),
                     textSpan: _richText ?? TextSpan(text: 'error'),
                   ),
