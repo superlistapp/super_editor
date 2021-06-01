@@ -22,10 +22,10 @@ class _InteractiveTextFieldDemoState extends State<InteractiveTextFieldDemo> {
         ])),
   );
 
-  OverlayEntry _popupEntry;
+  OverlayEntry? _popupEntry;
   Offset _popupOffset = Offset.zero;
 
-  FocusNode _focusNode;
+  FocusNode? _focusNode;
 
   @override
   void initState() {
@@ -35,7 +35,7 @@ class _InteractiveTextFieldDemoState extends State<InteractiveTextFieldDemo> {
 
   @override
   void dispose() {
-    _focusNode.dispose();
+    _focusNode!.dispose();
     super.dispose();
   }
 
@@ -46,8 +46,8 @@ class _InteractiveTextFieldDemoState extends State<InteractiveTextFieldDemo> {
       return;
     }
 
-    final overlay = Overlay.of(context);
-    final overlayBox = overlay.context.findRenderObject() as RenderBox;
+    final overlay = Overlay.of(context)!;
+    final overlayBox = overlay.context.findRenderObject() as RenderBox?;
     final textFieldBox = textFieldContext.findRenderObject() as RenderBox;
     _popupOffset = textFieldBox.localToGlobal(localOffset, ancestor: overlayBox);
 
@@ -100,9 +100,9 @@ class _InteractiveTextFieldDemoState extends State<InteractiveTextFieldDemo> {
         );
       });
 
-      overlay.insert(_popupEntry);
+      overlay.insert(_popupEntry!);
     } else {
-      _popupEntry.markNeedsBuild();
+      _popupEntry!.markNeedsBuild();
     }
   }
 
@@ -111,7 +111,7 @@ class _InteractiveTextFieldDemoState extends State<InteractiveTextFieldDemo> {
       return;
     }
 
-    _popupEntry.remove();
+    _popupEntry!.remove();
     _popupEntry = null;
   }
 
@@ -121,7 +121,7 @@ class _InteractiveTextFieldDemoState extends State<InteractiveTextFieldDemo> {
       behavior: HitTestBehavior.opaque,
       onTap: () {
         // Remove focus from text field when the user taps anywhere else.
-        _focusNode.unfocus();
+        _focusNode!.unfocus();
       },
       child: Center(
         child: SizedBox(
@@ -142,7 +142,7 @@ class _InteractiveTextFieldDemoState extends State<InteractiveTextFieldDemo> {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(4),
                       border: Border.all(
-                        color: _focusNode.hasFocus ? Colors.blue : Colors.grey.shade300,
+                        color: _focusNode!.hasFocus ? Colors.blue : Colors.grey.shade300,
                         width: 1,
                       ),
                     ),

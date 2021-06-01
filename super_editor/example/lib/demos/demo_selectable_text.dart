@@ -135,8 +135,8 @@ class _SelectableTextDemoState extends State<SelectableTextDemo> {
   }
 
   Widget _buildDemo({
-    @required String title,
-    @required Widget demo,
+    required String title,
+    required Widget demo,
   }) {
     return Column(
       mainAxisSize: MainAxisSize.min,

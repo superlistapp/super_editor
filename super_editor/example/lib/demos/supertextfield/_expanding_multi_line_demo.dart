@@ -23,10 +23,10 @@ class _ExpandingMultiLineTextFieldDemoState extends State<ExpandingMultiLineText
         ),
   );
 
-  GlobalKey<SuperTextFieldState> _textKey;
-  TextFieldDemoRobot _demoRobot;
+  GlobalKey<SuperTextFieldState>? _textKey;
+  late TextFieldDemoRobot _demoRobot;
 
-  FocusNode _focusNode;
+  FocusNode? _focusNode;
 
   @override
   void initState() {
@@ -39,7 +39,7 @@ class _ExpandingMultiLineTextFieldDemoState extends State<ExpandingMultiLineText
       textKey: _textKey,
     );
 
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
       _startDemo();
     });
   }
@@ -47,7 +47,7 @@ class _ExpandingMultiLineTextFieldDemoState extends State<ExpandingMultiLineText
   @override
   void dispose() {
     _demoRobot.dispose();
-    _focusNode.dispose();
+    _focusNode!.dispose();
     super.dispose();
   }
 
@@ -75,7 +75,7 @@ class _ExpandingMultiLineTextFieldDemoState extends State<ExpandingMultiLineText
       behavior: HitTestBehavior.opaque,
       onTap: () {
         // Remove focus from text field when the user taps anywhere else.
-        _focusNode.unfocus();
+        _focusNode!.unfocus();
       },
       child: Center(
         child: SizedBox(

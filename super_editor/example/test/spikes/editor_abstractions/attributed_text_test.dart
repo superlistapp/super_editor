@@ -23,7 +23,7 @@ void main() {
       final textSpan = text.computeTextSpan(_styleBuilder);
 
       expect(textSpan.text, 'abcdefghij');
-      expect(textSpan.style.fontWeight, FontWeight.bold);
+      expect(textSpan.style!.fontWeight, FontWeight.bold);
       expect(textSpan.children, null);
     });
 
@@ -35,12 +35,12 @@ void main() {
       final textSpan = text.computeTextSpan(_styleBuilder);
 
       expect(textSpan.text, null);
-      expect(textSpan.children.length, 3);
-      expect(textSpan.children[0].toPlainText(), 'a');
-      expect(textSpan.children[1].toPlainText(), 'b');
-      expect(textSpan.children[1].style.fontWeight, FontWeight.bold);
-      expect(textSpan.children[2].toPlainText(), 'cdefghij');
-      expect(textSpan.children[2].style.fontWeight, null);
+      expect(textSpan.children!.length, 3);
+      expect(textSpan.children![0].toPlainText(), 'a');
+      expect(textSpan.children![1].toPlainText(), 'b');
+      expect(textSpan.children![1].style!.fontWeight, FontWeight.bold);
+      expect(textSpan.children![2].toPlainText(), 'cdefghij');
+      expect(textSpan.children![2].style!.fontWeight, null);
     });
 
     test('single character style - reverse order', () {
@@ -54,12 +54,12 @@ void main() {
       final textSpan = text.computeTextSpan(_styleBuilder);
 
       expect(textSpan.text, null);
-      expect(textSpan.children.length, 3);
-      expect(textSpan.children[0].toPlainText(), 'a');
-      expect(textSpan.children[1].toPlainText(), 'b');
-      expect(textSpan.children[1].style.fontWeight, FontWeight.bold);
-      expect(textSpan.children[2].toPlainText(), 'cdefghij');
-      expect(textSpan.children[2].style.fontWeight, null);
+      expect(textSpan.children!.length, 3);
+      expect(textSpan.children![0].toPlainText(), 'a');
+      expect(textSpan.children![1].toPlainText(), 'b');
+      expect(textSpan.children![1].style!.fontWeight, FontWeight.bold);
+      expect(textSpan.children![2].toPlainText(), 'cdefghij');
+      expect(textSpan.children![2].style!.fontWeight, null);
     });
 
     test('add single character style', () {
@@ -68,12 +68,12 @@ void main() {
       final textSpan = text.computeTextSpan(_styleBuilder);
 
       expect(textSpan.text, null);
-      expect(textSpan.children.length, 3);
-      expect(textSpan.children[0].toPlainText(), 'a');
-      expect(textSpan.children[1].toPlainText(), 'b');
-      expect(textSpan.children[1].style.fontWeight, FontWeight.bold);
-      expect(textSpan.children[2].toPlainText(), 'cdefghij');
-      expect(textSpan.children[2].style.fontWeight, null);
+      expect(textSpan.children!.length, 3);
+      expect(textSpan.children![0].toPlainText(), 'a');
+      expect(textSpan.children![1].toPlainText(), 'b');
+      expect(textSpan.children![1].style!.fontWeight, FontWeight.bold);
+      expect(textSpan.children![2].toPlainText(), 'cdefghij');
+      expect(textSpan.children![2].style!.fontWeight, null);
     });
 
     test('partial style', () {
@@ -84,11 +84,11 @@ void main() {
       final textSpan = text.computeTextSpan(_styleBuilder);
 
       expect(textSpan.text, null);
-      expect(textSpan.children.length, 3);
-      expect(textSpan.children[0].toPlainText(), 'ab');
-      expect(textSpan.children[1].toPlainText(), 'cdefgh');
-      expect(textSpan.children[1].style.fontWeight, FontWeight.bold);
-      expect(textSpan.children[2].toPlainText(), 'ij');
+      expect(textSpan.children!.length, 3);
+      expect(textSpan.children![0].toPlainText(), 'ab');
+      expect(textSpan.children![1].toPlainText(), 'cdefgh');
+      expect(textSpan.children![1].style!.fontWeight, FontWeight.bold);
+      expect(textSpan.children![2].toPlainText(), 'ij');
     });
 
     test('non-mingled varying styles', () {
@@ -101,13 +101,13 @@ void main() {
       final textSpan = text.computeTextSpan(_styleBuilder);
 
       expect(textSpan.text, null);
-      expect(textSpan.children.length, 2);
-      expect(textSpan.children[0].toPlainText(), 'abcde');
-      expect(textSpan.children[0].style.fontWeight, FontWeight.bold);
-      expect(textSpan.children[0].style.fontStyle, null);
-      expect(textSpan.children[1].toPlainText(), 'fghij');
-      expect(textSpan.children[1].style.fontWeight, null);
-      expect(textSpan.children[1].style.fontStyle, FontStyle.italic);
+      expect(textSpan.children!.length, 2);
+      expect(textSpan.children![0].toPlainText(), 'abcde');
+      expect(textSpan.children![0].style!.fontWeight, FontWeight.bold);
+      expect(textSpan.children![0].style!.fontStyle, null);
+      expect(textSpan.children![1].toPlainText(), 'fghij');
+      expect(textSpan.children![1].style!.fontWeight, null);
+      expect(textSpan.children![1].style!.fontStyle, FontStyle.italic);
     });
 
     test('intermingled varying styles', () {
@@ -120,26 +120,26 @@ void main() {
       final textSpan = text.computeTextSpan(_styleBuilder);
 
       expect(textSpan.text, null);
-      expect(textSpan.children.length, 5);
-      expect(textSpan.children[0].toPlainText(), 'ab');
-      expect(textSpan.children[0].style.fontWeight, null);
-      expect(textSpan.children[0].style.fontStyle, null);
+      expect(textSpan.children!.length, 5);
+      expect(textSpan.children![0].toPlainText(), 'ab');
+      expect(textSpan.children![0].style!.fontWeight, null);
+      expect(textSpan.children![0].style!.fontStyle, null);
 
-      expect(textSpan.children[1].toPlainText(), 'cd');
-      expect(textSpan.children[1].style.fontWeight, FontWeight.bold);
-      expect(textSpan.children[1].style.fontStyle, null);
+      expect(textSpan.children![1].toPlainText(), 'cd');
+      expect(textSpan.children![1].style!.fontWeight, FontWeight.bold);
+      expect(textSpan.children![1].style!.fontStyle, null);
 
-      expect(textSpan.children[2].toPlainText(), 'ef');
-      expect(textSpan.children[2].style.fontWeight, FontWeight.bold);
-      expect(textSpan.children[2].style.fontStyle, FontStyle.italic);
+      expect(textSpan.children![2].toPlainText(), 'ef');
+      expect(textSpan.children![2].style!.fontWeight, FontWeight.bold);
+      expect(textSpan.children![2].style!.fontStyle, FontStyle.italic);
 
-      expect(textSpan.children[3].toPlainText(), 'gh');
-      expect(textSpan.children[3].style.fontWeight, null);
-      expect(textSpan.children[3].style.fontStyle, FontStyle.italic);
+      expect(textSpan.children![3].toPlainText(), 'gh');
+      expect(textSpan.children![3].style!.fontWeight, null);
+      expect(textSpan.children![3].style!.fontStyle, FontStyle.italic);
 
-      expect(textSpan.children[4].toPlainText(), 'ij');
-      expect(textSpan.children[4].style.fontWeight, null);
-      expect(textSpan.children[4].style.fontStyle, null);
+      expect(textSpan.children![4].toPlainText(), 'ij');
+      expect(textSpan.children![4].style!.fontWeight, null);
+      expect(textSpan.children![4].style!.fontStyle, null);
     });
   });
 }

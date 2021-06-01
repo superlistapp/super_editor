@@ -22,10 +22,10 @@ class _SingleLineTextFieldDemoState extends State<SingleLineTextFieldDemo> with 
         ),
   );
 
-  GlobalKey<SuperTextFieldState> _textKey;
-  TextFieldDemoRobot _demoRobot;
+  GlobalKey<SuperTextFieldState>? _textKey;
+  late TextFieldDemoRobot _demoRobot;
 
-  FocusNode _focusNode;
+  FocusNode? _focusNode;
 
   @override
   void initState() {
@@ -38,7 +38,7 @@ class _SingleLineTextFieldDemoState extends State<SingleLineTextFieldDemo> with 
       textKey: _textKey,
     );
 
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
       _startDemo();
     });
   }
@@ -46,7 +46,7 @@ class _SingleLineTextFieldDemoState extends State<SingleLineTextFieldDemo> with 
   @override
   void dispose() {
     _demoRobot.dispose();
-    _focusNode.dispose();
+    _focusNode!.dispose();
     super.dispose();
   }
 
@@ -70,7 +70,7 @@ class _SingleLineTextFieldDemoState extends State<SingleLineTextFieldDemo> with 
       behavior: HitTestBehavior.opaque,
       onTap: () {
         // Remove focus from text field when the user taps anywhere else.
-        _focusNode.unfocus();
+        _focusNode!.unfocus();
       },
       child: Center(
         child: SizedBox(
@@ -94,7 +94,7 @@ class _SingleLineTextFieldDemoState extends State<SingleLineTextFieldDemo> with 
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(4),
                           border: Border.all(
-                            color: _focusNode.hasFocus ? Colors.blue : Colors.grey.shade300,
+                            color: _focusNode!.hasFocus ? Colors.blue : Colors.grey.shade300,
                             width: 1,
                           ),
                         ),

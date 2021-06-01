@@ -865,7 +865,7 @@ class AttributedSpans {
       _log.log('collapseSpans', 'start points: $startPoints');
       _log.log('collapseSpans', 'end points: $endPoints');
       throw Exception(
-          ' - mismatch between number of start points and end points. Content length: $contentLength, Start: ${startPoints.length} -> ${startPoints}, End: ${endPoints.length} -> ${endPoints}, from attributions: ${_attributions}');
+          ' - mismatch between number of start points and end points. Content length: $contentLength, Start: ${startPoints.length} -> $startPoints, End: ${endPoints.length} -> $endPoints, from attributions: $_attributions');
     }
 
     // Sort the start and end points so that they can be

@@ -275,7 +275,7 @@ class _ExpectedSpans {
     }
   }
 
-  List<String> _combinedSpans;
+  late List<String> _combinedSpans;
 
   void expectSpans(AttributedSpans spans) {
     for (int characterIndex = 0; characterIndex < _combinedSpans.length; ++characterIndex) {

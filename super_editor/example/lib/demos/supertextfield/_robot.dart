@@ -1,32 +1,31 @@
 import 'dart:async';
 import 'dart:math';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
 import 'package:super_editor/super_editor.dart';
 
 class TextFieldDemoRobot {
   TextFieldDemoRobot({
-    @required this.focusNode,
-    @required this.tickerProvider,
-    @required this.textController,
-    @required this.textKey,
+    required this.focusNode,
+    required this.tickerProvider,
+    required this.textController,
+    required this.textKey,
   });
 
   void dispose() {
     cancelActions();
   }
 
-  final FocusNode focusNode;
+  final FocusNode? focusNode;
   final TickerProvider tickerProvider;
   final AttributedTextEditingController textController;
-  final GlobalKey<SuperTextFieldState> textKey;
+  final GlobalKey<SuperTextFieldState>? textKey;
 
   final List<RobotCommand> _commands = [];
   bool _executionDesired = false;
   bool _isExecuting = false;
-  RobotCommand _activeCommand;
+  RobotCommand? _activeCommand;
 
   Future<void> typeText(AttributedText text) async {
     _commands.add(TypeTextCommand(
@@ -85,7 +84,7 @@ class TextFieldDemoRobot {
 
     while (_commands.isNotEmpty) {
       _activeCommand = _commands.removeAt(0);
-      await _activeCommand.run(focusNode, textController, textKey);
+      await _activeCommand!.run(focusNode, textController, textKey);
 
       if (!_executionDesired) {
         break;
@@ -105,9 +104,9 @@ class TextFieldDemoRobot {
 
 abstract class RobotCommand {
   Future<void> run(
-    FocusNode focusNode,
+    FocusNode? focusNode,
     AttributedTextEditingController textController,
-    GlobalKey<SuperTextFieldState> textKey,
+    GlobalKey<SuperTextFieldState>? textKey,
   );
 
   void cancel();
@@ -115,29 +114,29 @@ abstract class RobotCommand {
 
 class TypeTextCommand implements RobotCommand {
   TypeTextCommand({
-    @required this.tickerProvider,
-    @required this.textToType,
+    required this.tickerProvider,
+    required this.textToType,
   });
 
   final TickerProvider tickerProvider;
   final AttributedText textToType;
   bool isCancelled = false;
-  Completer _characterCompleter;
-  Duration _characterDelay;
-  Ticker _characterDelayTicker;
+  Completer? _characterCompleter;
+  late Duration _characterDelay;
+  Ticker? _characterDelayTicker;
 
   @override
   Future<void> run(
-    FocusNode focusNode,
+    FocusNode? focusNode,
     AttributedTextEditingController textController,
-    GlobalKey<SuperTextFieldState> textKey,
+    GlobalKey<SuperTextFieldState>? textKey,
   ) async {
     if (textController.selection.extentOffset == -1) {
       print('Can\'t type text because the text field doesn\'t have a valid selection.');
       return;
     }
 
-    focusNode.requestFocus();
+    focusNode!.requestFocus();
 
     for (int i = 0; i < textToType.text.length; ++i) {
       _typeCharacter(textController, i);
@@ -168,8 +167,8 @@ class TypeTextCommand implements RobotCommand {
     _characterDelay = Duration(milliseconds: random.nextInt(250));
     _characterCompleter = Completer();
     _characterDelayTicker = tickerProvider.createTicker(_onTick);
-    _characterDelayTicker.start(); // ignore: unawaited_futures
-    await _characterCompleter.future;
+    _characterDelayTicker!.start(); // ignore: unawaited_futures
+    await _characterCompleter!.future;
   }
 
   void _onTick(Duration elapsedTime) {
@@ -182,7 +181,7 @@ class TypeTextCommand implements RobotCommand {
     _characterDelayTicker?.stop();
     _characterDelayTicker?.dispose();
     _characterDelayTicker = null;
-    if (!_characterCompleter.isCompleted) {
+    if (!_characterCompleter!.isCompleted) {
       _characterCompleter?.complete();
     }
   }
@@ -196,31 +195,31 @@ class TypeTextCommand implements RobotCommand {
 
 class DeleteCharactersCommand implements RobotCommand {
   DeleteCharactersCommand({
-    @required this.tickerProvider,
-    @required this.characterCount,
-    @required this.direction,
+    required this.tickerProvider,
+    required this.characterCount,
+    required this.direction,
   });
 
   final TickerProvider tickerProvider;
   final int characterCount;
   final TextAffinity direction;
   bool isCancelled = false;
-  Completer _deleteCompleter;
-  Duration _deleteDelay;
-  Ticker _deleteDelayTicker;
+  Completer? _deleteCompleter;
+  late Duration _deleteDelay;
+  Ticker? _deleteDelayTicker;
 
   @override
   Future<void> run(
-    FocusNode focusNode,
+    FocusNode? focusNode,
     AttributedTextEditingController textController,
-    GlobalKey<SuperTextFieldState> textKey,
+    GlobalKey<SuperTextFieldState>? textKey,
   ) async {
     if (textController.selection.extentOffset == -1) {
       print('Can\'t delete characters because the text field doesn\'t have a valid selection.');
       return;
     }
 
-    focusNode.requestFocus();
+    focusNode!.requestFocus();
 
     int currentOffset = textController.selection.extentOffset;
     final finalLength = textController.text.text.length - characterCount;
@@ -273,8 +272,8 @@ class DeleteCharactersCommand implements RobotCommand {
     _deleteDelay = Duration(milliseconds: random.nextInt(250));
     _deleteCompleter = Completer();
     _deleteDelayTicker = tickerProvider.createTicker(_onTick);
-    _deleteDelayTicker.start(); // ignore: unawaited_futures
-    await _deleteCompleter.future;
+    _deleteDelayTicker!.start(); // ignore: unawaited_futures
+    await _deleteCompleter!.future;
   }
 
   void _onTick(Duration elapsedTime) {
@@ -287,7 +286,7 @@ class DeleteCharactersCommand implements RobotCommand {
     _deleteDelayTicker?.stop();
     _deleteDelayTicker?.dispose();
     _deleteDelayTicker = null;
-    if (!_deleteCompleter.isCompleted) {
+    if (!_deleteCompleter!.isCompleted) {
       _deleteCompleter?.complete();
     }
   }
@@ -301,18 +300,18 @@ class DeleteCharactersCommand implements RobotCommand {
 
 class InsertCaretCommand implements RobotCommand {
   InsertCaretCommand({
-    @required this.caretPosition,
+    required this.caretPosition,
   });
 
   final TextPosition caretPosition;
 
   @override
   Future<void> run(
-    FocusNode focusNode,
+    FocusNode? focusNode,
     AttributedTextEditingController textController,
-    GlobalKey<SuperTextFieldState> textKey,
+    GlobalKey<SuperTextFieldState>? textKey,
   ) async {
-    focusNode.requestFocus();
+    focusNode!.requestFocus();
     textController.selection = TextSelection.collapsed(offset: caretPosition.offset);
   }
 
@@ -322,18 +321,18 @@ class InsertCaretCommand implements RobotCommand {
 
 class SelectTextCommand implements RobotCommand {
   SelectTextCommand({
-    @required this.selection,
+    required this.selection,
   });
 
   final TextSelection selection;
 
   @override
   Future<void> run(
-    FocusNode focusNode,
+    FocusNode? focusNode,
     AttributedTextEditingController textController,
-    GlobalKey<SuperTextFieldState> textKey,
+    GlobalKey<SuperTextFieldState>? textKey,
   ) async {
-    focusNode.requestFocus();
+    focusNode!.requestFocus();
     textController.selection = selection;
   }
 
@@ -343,25 +342,25 @@ class SelectTextCommand implements RobotCommand {
 
 class PauseCommand implements RobotCommand {
   PauseCommand({
-    @required this.tickerProvider,
-    @required this.duration,
+    required this.tickerProvider,
+    required this.duration,
   });
 
   final TickerProvider tickerProvider;
   final Duration duration;
-  Completer _completer;
-  Ticker _ticker;
+  late Completer _completer;
+  Ticker? _ticker;
 
   @override
   Future<void> run(
-    FocusNode focusNode,
+    FocusNode? focusNode,
     AttributedTextEditingController textController,
-    GlobalKey<SuperTextFieldState> textKey,
+    GlobalKey<SuperTextFieldState>? textKey,
   ) async {
     _completer = Completer();
 
     _ticker = tickerProvider.createTicker(_onTick);
-    _ticker.start(); // ignore: unawaited_futures
+    _ticker!.start(); // ignore: unawaited_futures
 
     await _completer.future;
   }
