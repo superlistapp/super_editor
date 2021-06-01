@@ -89,6 +89,10 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
     final componentOffset = _componentOffset(componentBox, documentOffset);
     final componentPosition = component.getPositionAtOffset(componentOffset);
 
+    if (componentPosition == null) {
+      return null;
+    }
+
     final selectionAtOffset = DocumentPosition(
       nodeId: _nodeIdsToComponentKeys.entries.firstWhere((element) => element.value == componentKey).key,
       nodePosition: componentPosition,

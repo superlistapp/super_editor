@@ -156,19 +156,20 @@ class CommonEditorOperations {
       return false;
     }
 
-    final wordSelection = expandPositionToWord(
+    final wordTextSelection = expandPositionToWord(
       text: selectedNode.text.text,
       textPosition: TextPosition(offset: (docSelection.extent.nodePosition as TextPosition).offset),
     );
+    final wordNodeSelection = TextNodeSelection.fromTextSelection(wordTextSelection);
 
     composer.selection = DocumentSelection(
       base: DocumentPosition(
         nodeId: selectedNode.id,
-        nodePosition: wordSelection.base,
+        nodePosition: wordNodeSelection.base,
       ),
       extent: DocumentPosition(
         nodeId: selectedNode.id,
-        nodePosition: wordSelection.extent,
+        nodePosition: wordNodeSelection.extent,
       ),
     );
 
@@ -208,19 +209,20 @@ class CommonEditorOperations {
       return false;
     }
 
-    final paragraphSelection = expandPositionToParagraph(
+    final paragraphTextSelection = expandPositionToParagraph(
       text: selectedNode.text.text,
       textPosition: TextPosition(offset: (docSelection.extent.nodePosition as TextPosition).offset),
     );
+    final paragraphNodeSelection = TextNodeSelection.fromTextSelection(paragraphTextSelection);
 
     composer.selection = DocumentSelection(
       base: DocumentPosition(
         nodeId: selectedNode.id,
-        nodePosition: paragraphSelection.base,
+        nodePosition: paragraphNodeSelection.base,
       ),
       extent: DocumentPosition(
         nodeId: selectedNode.id,
-        nodePosition: paragraphSelection.extent,
+        nodePosition: paragraphNodeSelection.extent,
       ),
     );
 
@@ -580,7 +582,7 @@ class CommonEditorOperations {
       return false;
     }
 
-    if (!composer.selection!.isCollapsed || composer.selection!.extent.nodePosition is BinaryPosition) {
+    if (!composer.selection!.isCollapsed || composer.selection!.extent.nodePosition is BinaryNodePosition) {
       // A span of content is selected. Delete the selection.
       return deleteSelection();
     } else if (composer.selection!.extent.nodePosition is TextPosition) {
@@ -664,7 +666,7 @@ class CommonEditorOperations {
     composer.selection = DocumentSelection.collapsed(
       position: DocumentPosition(
         nodeId: node.id,
-        nodePosition: TextPosition(offset: firstNodeTextLength),
+        nodePosition: TextNodePosition(offset: firstNodeTextLength),
       ),
     );
 
@@ -684,7 +686,7 @@ class CommonEditorOperations {
 
     final textNode = editor.document.getNode(composer.selection!.extent) as TextNode;
     final text = textNode.text;
-    final currentTextPosition = (composer.selection!.extent.nodePosition as TextPosition);
+    final currentTextPosition = (composer.selection!.extent.nodePosition as TextNodePosition);
     if (currentTextPosition.offset >= text.text.length) {
       return false;
     }
@@ -701,7 +703,7 @@ class CommonEditorOperations {
           ),
           extent: DocumentPosition(
             nodeId: textNode.id,
-            nodePosition: TextPosition(offset: nextCharacterOffset),
+            nodePosition: TextNodePosition(offset: nextCharacterOffset),
           ),
         ),
       ),
@@ -724,7 +726,7 @@ class CommonEditorOperations {
       return false;
     }
 
-    if (!composer.selection!.isCollapsed || composer.selection!.extent.nodePosition is BinaryPosition) {
+    if (!composer.selection!.isCollapsed || composer.selection!.extent.nodePosition is BinaryNodePosition) {
       // A span of content is selected. Delete the selection.
       return deleteSelection();
     }
@@ -813,7 +815,7 @@ class CommonEditorOperations {
     composer.selection = DocumentSelection.collapsed(
       position: DocumentPosition(
         nodeId: nodeAbove.id,
-        nodePosition: TextPosition(offset: aboveParagraphLength),
+        nodePosition: TextNodePosition(offset: aboveParagraphLength),
       ),
     );
 
@@ -832,13 +834,13 @@ class CommonEditorOperations {
     }
 
     final textNode = editor.document.getNode(composer.selection!.extent) as TextNode;
-    final currentTextPosition = composer.selection!.extent.nodePosition as TextPosition;
+    final currentTextPosition = composer.selection!.extent.nodePosition as TextNodePosition;
 
     final previousCharacterOffset = getCharacterStartBounds(textNode.text.text, currentTextPosition.offset);
 
     final newSelectionPosition = DocumentPosition(
       nodeId: textNode.id,
-      nodePosition: TextPosition(offset: previousCharacterOffset),
+      nodePosition: TextNodePosition(offset: previousCharacterOffset),
     );
 
     // Delete the selected content.
@@ -851,7 +853,7 @@ class CommonEditorOperations {
           ),
           extent: DocumentPosition(
             nodeId: textNode.id,
-            nodePosition: TextPosition(offset: previousCharacterOffset),
+            nodePosition: TextNodePosition(offset: previousCharacterOffset),
           ),
         ),
       ),
@@ -872,10 +874,10 @@ class CommonEditorOperations {
     }
 
     if (composer.selection!.isCollapsed) {
-      if (composer.selection!.extent.nodePosition is! BinaryPosition) {
+      if (composer.selection!.extent.nodePosition is! BinaryNodePosition) {
         return false;
       }
-      if (!(composer.selection!.extent.nodePosition as BinaryPosition).isIncluded) {
+      if (!(composer.selection!.extent.nodePosition as BinaryNodePosition).isIncluded) {
         return false;
       }
 
@@ -1005,11 +1007,11 @@ class CommonEditorOperations {
 
       // If it's a binary selection node then that node will
       // be replaced by a ParagraphNode with the same ID.
-      if (newSelectionPosition.nodePosition is BinaryPosition) {
+      if (newSelectionPosition.nodePosition is BinaryNodePosition) {
         // Assume that the node was replaced with an empty paragraph.
         newSelectionPosition = DocumentPosition(
           nodeId: newSelectionPosition.nodeId,
-          nodePosition: TextPosition(offset: 0),
+          nodePosition: TextNodePosition(offset: 0),
         );
       }
     } else {
@@ -1018,11 +1020,11 @@ class CommonEditorOperations {
       // a ParagraphNode with the same ID. Otherwise, it must
       // be a TextNode, in which case we need to figure out
       // which DocumentPosition contains the earlier TextPosition.
-      if (basePosition.nodePosition is BinaryPosition) {
+      if (basePosition.nodePosition is BinaryNodePosition) {
         // Assume that the node was replace with an empty paragraph.
         newSelectionPosition = DocumentPosition(
           nodeId: baseNode.id,
-          nodePosition: TextPosition(offset: 0),
+          nodePosition: TextNodePosition(offset: 0),
         );
       } else if (basePosition.nodePosition is TextPosition) {
         final baseOffset = (basePosition.nodePosition as TextPosition).offset;
@@ -1030,7 +1032,7 @@ class CommonEditorOperations {
 
         newSelectionPosition = DocumentPosition(
           nodeId: baseNode.id,
-          nodePosition: TextPosition(offset: min(baseOffset, extentOffset)),
+          nodePosition: TextNodePosition(offset: min(baseOffset, extentOffset)),
         );
       } else {
         throw Exception(
@@ -1193,7 +1195,7 @@ class CommonEditorOperations {
     composer.selection = DocumentSelection.collapsed(
       position: DocumentPosition(
         nodeId: textNode.id,
-        nodePosition: TextPosition(
+        nodePosition: TextNodePosition(
           offset: initialTextOffset + 1,
         ),
       ),
@@ -1286,7 +1288,7 @@ class CommonEditorOperations {
       composer.selection = DocumentSelection.collapsed(
         position: DocumentPosition(
           nodeId: node.id,
-          nodePosition: TextPosition(offset: textPosition.offset - startOfNewText),
+          nodePosition: TextNodePosition(offset: textPosition.offset - startOfNewText),
         ),
       );
 
@@ -1317,7 +1319,7 @@ class CommonEditorOperations {
       composer.selection = DocumentSelection.collapsed(
         position: DocumentPosition(
           nodeId: node.id,
-          nodePosition: TextPosition(offset: 0),
+          nodePosition: TextNodePosition(offset: 0),
         ),
       );
 
@@ -1353,7 +1355,7 @@ class CommonEditorOperations {
       composer.selection = DocumentSelection.collapsed(
         position: DocumentPosition(
           nodeId: node.id,
-          nodePosition: TextPosition(offset: textPosition.offset - startOfNewText),
+          nodePosition: TextNodePosition(offset: textPosition.offset - startOfNewText),
         ),
       );
 
@@ -1475,7 +1477,7 @@ class CommonEditorOperations {
     composer.selection = DocumentSelection.collapsed(
       position: DocumentPosition(
         nodeId: textNode.id,
-        nodePosition: TextPosition(
+        nodePosition: TextNodePosition(
           offset: initialTextOffset + character.length,
         ),
       ),
@@ -1567,7 +1569,7 @@ class CommonEditorOperations {
     composer.selection = DocumentSelection.collapsed(
       position: DocumentPosition(
         nodeId: newNodeId,
-        nodePosition: TextPosition(offset: 0),
+        nodePosition: TextNodePosition(offset: 0),
       ),
     );
 

@@ -26,43 +26,43 @@ class BoxComponent extends StatefulWidget {
 
 class _BoxComponentState extends State<BoxComponent> with DocumentComponent {
   @override
-  BinaryPosition getBeginningPosition() {
-    return BinaryPosition.included();
+  BinaryNodePosition getBeginningPosition() {
+    return BinaryNodePosition.included();
   }
 
   @override
-  BinaryPosition getBeginningPositionNearX(double x) {
-    return BinaryPosition.included();
+  BinaryNodePosition getBeginningPositionNearX(double x) {
+    return BinaryNodePosition.included();
   }
 
   @override
-  BinaryPosition? movePositionLeft(dynamic currentPosition, [Set<MovementModifier>? movementModifiers]) {
+  BinaryNodePosition? movePositionLeft(dynamic currentPosition, [Set<MovementModifier>? movementModifiers]) {
     // BoxComponents don't support internal movement.
     return null;
   }
 
   @override
-  BinaryPosition? movePositionRight(dynamic currentPosition, [Set<MovementModifier>? movementModifiers]) {
+  BinaryNodePosition? movePositionRight(dynamic currentPosition, [Set<MovementModifier>? movementModifiers]) {
     // BoxComponents don't support internal movement.
     return null;
   }
 
   @override
-  BinaryPosition? movePositionUp(dynamic currentPosition) {
+  BinaryNodePosition? movePositionUp(dynamic currentPosition) {
     // BoxComponents don't support internal movement.
     return null;
   }
 
   @override
-  BinaryPosition? movePositionDown(dynamic currentPosition) {
+  BinaryNodePosition? movePositionDown(dynamic currentPosition) {
     // BoxComponents don't support internal movement.
     return null;
   }
 
   @override
-  BinarySelection? getCollapsedSelectionAt(nodePosition) {
-    if (nodePosition is! BinaryPosition) {
-      return null;
+  BinarySelection getCollapsedSelectionAt(nodePosition) {
+    if (nodePosition is! BinaryNodePosition) {
+      throw Exception('The given nodePosition ($nodePosition) is not compatible with BoxComponent');
     }
 
     return BinarySelection.all();
@@ -74,18 +74,18 @@ class _BoxComponentState extends State<BoxComponent> with DocumentComponent {
   }
 
   @override
-  BinaryPosition getEndPosition() {
-    return BinaryPosition.included();
+  BinaryNodePosition getEndPosition() {
+    return BinaryNodePosition.included();
   }
 
   @override
-  BinaryPosition getEndPositionNearX(double x) {
-    return BinaryPosition.included();
+  BinaryNodePosition getEndPositionNearX(double x) {
+    return BinaryNodePosition.included();
   }
 
   @override
   Offset getOffsetForPosition(nodePosition) {
-    if (nodePosition is! BinaryPosition) {
+    if (nodePosition is! BinaryNodePosition) {
       throw Exception('Expected nodePosition of type BinaryPosition but received: $nodePosition');
     }
 
@@ -95,7 +95,7 @@ class _BoxComponentState extends State<BoxComponent> with DocumentComponent {
 
   @override
   Rect getRectForPosition(dynamic nodePosition) {
-    if (nodePosition is! BinaryPosition) {
+    if (nodePosition is! BinaryNodePosition) {
       throw Exception('Expected nodePosition of type BinaryPosition but received: $nodePosition');
     }
 
@@ -105,10 +105,10 @@ class _BoxComponentState extends State<BoxComponent> with DocumentComponent {
 
   @override
   Rect getRectForSelection(dynamic basePosition, dynamic extentPosition) {
-    if (basePosition is! BinaryPosition) {
+    if (basePosition is! BinaryNodePosition) {
       throw Exception('Expected nodePosition of type BinaryPosition but received: $basePosition');
     }
-    if (extentPosition is! BinaryPosition) {
+    if (extentPosition is! BinaryNodePosition) {
       throw Exception('Expected nodePosition of type BinaryPosition but received: $extentPosition');
     }
 
@@ -117,14 +117,17 @@ class _BoxComponentState extends State<BoxComponent> with DocumentComponent {
   }
 
   @override
-  BinaryPosition getPositionAtOffset(Offset localOffset) {
-    return BinaryPosition.included();
+  BinaryNodePosition getPositionAtOffset(Offset localOffset) {
+    return BinaryNodePosition.included();
   }
 
   @override
-  BinarySelection? getSelectionBetween({basePosition, extentPosition}) {
-    if (basePosition is! BinaryPosition || extentPosition is! BinaryPosition) {
-      return null;
+  BinarySelection getSelectionBetween({required basePosition, required extentPosition}) {
+    if (basePosition is! BinaryNodePosition) {
+      throw Exception('The given basePosition ($basePosition) is not compatible with BoxComponent');
+    }
+    if (extentPosition is! BinaryNodePosition) {
+      throw Exception('The given extentPosition ($extentPosition) is not compatible with BoxComponent');
     }
 
     return BinarySelection.all();
@@ -148,16 +151,16 @@ class _BoxComponentState extends State<BoxComponent> with DocumentComponent {
 
 /// Document position for a [DocumentNode] that is either fully selected
 /// or unselected, like an image or a horizontal rule.
-class BinaryPosition {
-  const BinaryPosition.included() : isIncluded = true;
-  const BinaryPosition.notIncluded() : isIncluded = false;
+class BinaryNodePosition implements NodePosition {
+  const BinaryNodePosition.included() : isIncluded = true;
+  const BinaryNodePosition.notIncluded() : isIncluded = false;
 
   final bool isIncluded;
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is BinaryPosition && runtimeType == other.runtimeType && isIncluded == other.isIncluded;
+      other is BinaryNodePosition && runtimeType == other.runtimeType && isIncluded == other.isIncluded;
 
   @override
   int get hashCode => isIncluded.hashCode;
@@ -166,16 +169,16 @@ class BinaryPosition {
 /// Document selection for a [DocumentNode] that is either fully selected
 /// or unselected, like an image or a horizontal rule.
 ///
-/// Technically, a [BinarySelection] represents the same thing as a [BinaryPosition],
+/// Technically, a [BinarySelection] represents the same thing as a [BinaryNodePosition],
 /// because a binary selectable node is either completely selected or unselected.
 /// However, participation within a generic editor requires that binary selectable
 /// nodes behave like all other nodes, i.e., offering a "position" type and a
 /// "selection" type.
-class BinarySelection {
-  const BinarySelection.all() : position = const BinaryPosition.included();
-  const BinarySelection.none() : position = const BinaryPosition.notIncluded();
+class BinarySelection implements NodeSelection {
+  const BinarySelection.all() : position = const BinaryNodePosition.included();
+  const BinarySelection.none() : position = const BinaryNodePosition.notIncluded();
 
-  final BinaryPosition position;
+  final BinaryNodePosition position;
 
   /// A [BinarySelection] is always collapsed because there is no distinction
   /// between the "beginning" or "end" of a [BinarySelection], therefore, there

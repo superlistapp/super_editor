@@ -3,63 +3,63 @@ import 'package:flutter/widgets.dart';
 
 /// A read-only document with styled text and multimedia elements.
 ///
-/// A `Document` is comprised of a list of `DocumentNode`s,
+/// A [Document] is comprised of a list of [DocumentNode]s,
 /// which describe the type and substance of a piece of content
-/// within the document. For example, a `ParagraphNode` holds a
+/// within the document. For example, a [ParagraphNode] holds a
 /// single paragraph of text within the document.
 ///
-/// New types of content can be added by subclassing `DocumentNode`.
+/// New types of content can be added by subclassing [DocumentNode].
 ///
-/// To represent a specific location within a `Document`,
-/// see `DocumentPosition`.
+/// To represent a specific location within a [Document],
+/// see [DocumentPosition].
 ///
-/// A `Document` has no opinion on the visual presentation of its
+/// A [Document] has no opinion on the visual presentation of its
 /// content.
 ///
-/// To edit the content of a document, see `DocumentEditor`.
+/// To edit the content of a document, see [DocumentEditor].
 abstract class Document with ChangeNotifier {
   /// Returns all of the content within the document as a list
-  /// of `DocumentNode`s.
+  /// of [DocumentNode]s.
   List<DocumentNode> get nodes;
 
-  /// Returns the `DocumentNode` with the given `nodeId`, or `null`
+  /// Returns the [DocumentNode] with the given [nodeId], or [null]
   /// if no such node exists.
   DocumentNode? getNodeById(String nodeId);
 
-  /// Returns the `DocumentNode` at the given `index`, or `null`
+  /// Returns the [DocumentNode] at the given [index], or [null]
   /// if no such node exists.
   DocumentNode? getNodeAt(int index);
 
-  /// Returns the index of the given `node`, or `-1` if the `node`
-  /// does not exist within this `Document`.
+  /// Returns the index of the given [node], or [-1] if the [node]
+  /// does not exist within this [Document].
   int getNodeIndex(DocumentNode node);
 
-  /// Returns the `DocumentNode` that appears immediately before the
-  /// given `node` in this `Document`, or null if the given `node`
-  /// is the first node, or the given `node` does not exist in this
-  /// `Document`.
+  /// Returns the [DocumentNode] that appears immediately before the
+  /// given [node] in this [Document], or null if the given [node]
+  /// is the first node, or the given [node] does not exist in this
+  /// [Document].
   DocumentNode? getNodeBefore(DocumentNode node);
 
-  /// Returns the `DocumentNode` that appears immediately after the
-  /// given `node` in this `Document`, or null if the given `node`
-  /// is the last node, or the given `node` does not exist in this
-  /// `Document`.
+  /// Returns the [DocumentNode] that appears immediately after the
+  /// given [node] in this [Document], or null if the given [node]
+  /// is the last node, or the given [node] does not exist in this
+  /// [Document].
   DocumentNode? getNodeAfter(DocumentNode node);
 
-  /// Returns the `DocumentNode` at the given `position`, or `null` if
-  /// no such node exists in this `Document`.
+  /// Returns the [DocumentNode] at the given [position], or [null] if
+  /// no such node exists in this [Document].
   DocumentNode? getNode(DocumentPosition position);
 
-  /// Returns a `DocumentRange` that ranges from `position1` to
-  /// `position2`, including `position1` and `position2`.
+  /// Returns a [DocumentRange] that ranges from [position1] to
+  /// [position2], including [position1] and [position2].
   // TODO: this method is misleading (#48) because if `position1` and
   //       `position2` are in the same node, they may be returned
   //       in the wrong order because the document doesn't know
   //       how to interpret positions within a node.
   DocumentRange getRangeBetween(DocumentPosition position1, DocumentPosition position2);
 
-  /// Returns all `DocumentNode`s from `position1` to `position2`, including
-  /// the nodes at `position1` and `position2`.
+  /// Returns all [DocumentNode]s from [position1] to [position2], including
+  /// the nodes at [position1] and [position2].
   List<DocumentNode> getNodesInside(DocumentPosition position1, DocumentPosition position2);
 
   /// Returns [true] if the content in the [other] document is equivalent to
@@ -70,10 +70,10 @@ abstract class Document with ChangeNotifier {
   bool hasEquivalentContent(Document other);
 }
 
-/// A span within a `Document` that begins at `start` and
-/// ends at `end`.
+/// A span within a [Document] that begins at [start] and
+/// ends at [end].
 ///
-/// The `start` position must come before the `end` position in
+/// The [start] position must come before the [end] position in
 /// the document.
 class DocumentRange {
   DocumentRange({
@@ -81,8 +81,8 @@ class DocumentRange {
     required this.end,
   });
 
-  final DocumentPosition<dynamic> start;
-  final DocumentPosition<dynamic> end;
+  final DocumentPosition start;
+  final DocumentPosition end;
 
   @override
   bool operator ==(Object other) =>
@@ -98,28 +98,28 @@ class DocumentRange {
   }
 }
 
-/// A specific position within a `Document`.
+/// A logical position within a [Document].
 ///
-/// A `DocumentPosition` points to a specific node by way of a `nodeId`,
+/// A [DocumentPosition] points to a specific node by way of a [nodeId],
 /// and points to a specific position within the node by way of a
-/// `nodePosition`.
+/// [nodePosition].
 ///
-/// The type of the `nodePosition` depends upon the type of `DocumentNode`
-/// that this position points to. For example, a `ParagraphNode`
-/// uses a `TextPosition` to represent a `nodePosition`.
-class DocumentPosition<PositionType> {
+/// The type of the [nodePosition] depends upon the type of [DocumentNode]
+/// that this position points to. For example, a [ParagraphNode]
+/// uses a [TextPosition] to represent a [nodePosition].
+class DocumentPosition {
   const DocumentPosition({
     required this.nodeId,
     required this.nodePosition,
   });
 
-  /// ID of a `DocumentNode` within a `Document`.
+  /// ID of a [DocumentNode] within a [Document].
   final String nodeId;
 
   /// Node-specific representation of a position.
   ///
-  /// For example: a paragraph node might use a `TextPosition`.
-  final PositionType nodePosition;
+  /// For example: a paragraph node might use a [TextNodePosition].
+  final NodePosition nodePosition;
 
   @override
   bool operator ==(Object other) =>
@@ -135,41 +135,55 @@ class DocumentPosition<PositionType> {
   }
 }
 
-/// A single content node within a `Document`.
+/// A single content node within a [Document].
 abstract class DocumentNode implements ChangeNotifier {
-  /// ID that is unique within a `Document`.
+  /// ID that is unique within a [Document].
   String get id;
 
-  /// Returns the node position that corresponds to the beginning
+  /// Returns the [NodePosition] that corresponds to the beginning
   /// of content in this node.
   ///
-  /// For example, a `ParagraphNode` would return `TextPosition(offset: 0)`.
-  dynamic get beginningPosition;
+  /// For example, a [ParagraphNode] would return [TextNodePosition(offset: 0)].
+  NodePosition get beginningPosition;
 
-  /// Returns the node position that corresponds to the end of the
+  /// Returns the [NodePosition] that corresponds to the end of the
   /// content in this node.
   ///
-  /// For example, a `ParagraphNode` would return
-  /// `TextPosition(offset: text.length)`.
-  dynamic get endPosition;
+  /// For example, a [ParagraphNode] would return
+  /// [TextNodePosition(offset: text.length)].
+  NodePosition get endPosition;
 
   /// Returns a node-specific representation of a selection from
-  /// `base` to `extent`.
+  /// [base] to [extent].
   ///
-  /// For example, a `ParagraphNode` would return a `TextSelection`.
-  dynamic computeSelection({
-    @required dynamic base,
-    @required dynamic extent,
+  /// For example, a [ParagraphNode] would return a [TextNodeSelection].
+  NodeSelection computeSelection({
+    required NodePosition base,
+    required NodePosition extent,
   });
 
   /// Returns a plain-text version of the content in this node
-  /// within `selection`, or null if the given selection does
+  /// within [selection], or null if the given selection does
   /// not make sense as plain-text.
-  String? copyContent(dynamic selection);
+  String? copyContent(NodeSelection selection);
 
   /// Returns true of the [other] node is the same type as this
   /// node, and contains the same content.
   ///
   /// Content equivalency ignores the node ID.
   bool hasEquivalentContent(DocumentNode other);
+}
+
+/// Marker interface for a selection within a [DocumentNode].
+abstract class NodeSelection {
+  // marker interface
+}
+
+/// Marker interface for all node positions.
+///
+/// A node position is a logical position within a [DocumentNode],
+/// e.g., a [TextNodePosition] within a [ParagraphNode], or a [BinaryNodePosition]
+/// within an [ImageNode].
+abstract class NodePosition {
+  // marker interface
 }

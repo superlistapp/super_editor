@@ -59,22 +59,22 @@ class TextNode with ChangeNotifier implements DocumentNode {
   Map<String, dynamic> get metadata => _metadata;
 
   @override
-  TextPosition get beginningPosition => TextPosition(offset: 0);
+  TextNodePosition get beginningPosition => TextNodePosition(offset: 0);
 
   @override
-  TextPosition get endPosition => TextPosition(offset: text.text.length);
+  TextNodePosition get endPosition => TextNodePosition(offset: text.text.length);
 
   @override
-  TextSelection computeSelection({
-    @required dynamic base,
-    @required dynamic extent,
+  TextNodeSelection computeSelection({
+    required NodePosition base,
+    required NodePosition extent,
   }) {
-    assert(base is TextPosition);
-    assert(extent is TextPosition);
+    assert(base is TextNodePosition);
+    assert(extent is TextNodePosition);
 
-    return TextSelection(
-      baseOffset: (base as TextPosition).offset,
-      extentOffset: (extent as TextPosition).offset,
+    return TextNodeSelection(
+      baseOffset: (base as TextNodePosition).offset,
+      extentOffset: (extent as TextNodePosition).offset,
     );
   }
 
@@ -92,6 +92,57 @@ class TextNode with ChangeNotifier implements DocumentNode {
 
   @override
   String toString() => '[TextNode] - text: $text, metadata: $metadata';
+}
+
+/// A logical selection within a [TextNode].
+///
+/// The selection begins at [baseOffset] and ends at [extentOffset].
+class TextNodeSelection extends TextSelection implements NodeSelection {
+  TextNodeSelection.fromTextSelection(TextSelection textSelection)
+      : super(
+          baseOffset: textSelection.baseOffset,
+          extentOffset: textSelection.extentOffset,
+          affinity: textSelection.affinity,
+          isDirectional: textSelection.isDirectional,
+        );
+
+  const TextNodeSelection.collapsed({
+    required int offset,
+    TextAffinity affinity = TextAffinity.downstream,
+  }) : super(
+          baseOffset: offset,
+          extentOffset: offset,
+          affinity: affinity,
+        );
+
+  const TextNodeSelection({
+    required int baseOffset,
+    required int extentOffset,
+    TextAffinity affinity = TextAffinity.downstream,
+    bool isDirectional = false,
+  }) : super(
+          baseOffset: baseOffset,
+          extentOffset: extentOffset,
+          affinity: affinity,
+          isDirectional: isDirectional,
+        );
+
+  @override
+  TextNodePosition get base => TextNodePosition(offset: baseOffset);
+
+  @override
+  TextNodePosition get extent => TextNodePosition(offset: extentOffset);
+}
+
+/// A logical position within a [TextNode].
+class TextNodePosition extends TextPosition implements NodePosition {
+  TextNodePosition.fromTextPosition(TextPosition position)
+      : super(offset: position.offset, affinity: position.affinity);
+
+  const TextNodePosition({
+    required int offset,
+    TextAffinity affinity = TextAffinity.downstream,
+  }) : super(offset: offset, affinity: affinity);
 }
 
 /// Displays text in a document.
@@ -131,9 +182,13 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
   final _selectableTextKey = GlobalKey<SuperSelectableTextState>();
 
   @override
-  TextPosition? getPositionAtOffset(Offset localOffset) {
+  TextNodePosition? getPositionAtOffset(Offset localOffset) {
     final textLayout = _selectableTextKey.currentState;
-    return textLayout?.getPositionAtOffset(localOffset);
+    final textPosition = textLayout?.getPositionAtOffset(localOffset);
+    if (textPosition == null) {
+      return null;
+    }
+    return TextNodePosition.fromTextPosition(textPosition);
   }
 
   @override
@@ -176,18 +231,20 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
   }
 
   @override
-  TextPosition getBeginningPosition() {
-    return TextPosition(offset: 0);
+  TextNodePosition getBeginningPosition() {
+    return TextNodePosition(offset: 0);
   }
 
   @override
-  TextPosition getBeginningPositionNearX(double x) {
-    return _selectableTextKey.currentState!.getPositionInFirstLineAtX(x);
+  TextNodePosition getBeginningPositionNearX(double x) {
+    return TextNodePosition.fromTextPosition(
+      _selectableTextKey.currentState!.getPositionInFirstLineAtX(x),
+    );
   }
 
   @override
-  TextPosition? movePositionLeft(dynamic textPosition, [Set<MovementModifier>? movementModifiers]) {
-    if (textPosition is! TextPosition) {
+  TextNodePosition? movePositionLeft(NodePosition textPosition, [Set<MovementModifier>? movementModifiers]) {
+    if (textPosition is! TextNodePosition) {
       // We don't know how to interpret a non-text position.
       return null;
     }
@@ -204,7 +261,7 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
 
     if (movementModifiers != null && movementModifiers.contains(MovementModifier.line)) {
       return getPositionAtStartOfLine(
-        TextPosition(offset: textPosition.offset),
+        TextNodePosition(offset: textPosition.offset),
       );
     } else if (movementModifiers != null && movementModifiers.contains(MovementModifier.word)) {
       final text = getContiguousTextAt(textPosition);
@@ -214,15 +271,15 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
       while (newOffset > 0 && text[newOffset - 1] != ' ') {
         newOffset -= 1;
       }
-      return TextPosition(offset: newOffset);
+      return TextNodePosition(offset: newOffset);
     }
 
-    return TextPosition(offset: textPosition.offset - 1);
+    return TextNodePosition(offset: textPosition.offset - 1);
   }
 
   @override
-  TextPosition? movePositionRight(dynamic textPosition, [Set<MovementModifier>? movementModifiers]) {
-    if (textPosition is! TextPosition) {
+  TextNodePosition? movePositionRight(NodePosition textPosition, [Set<MovementModifier>? movementModifiers]) {
+    if (textPosition is! TextNodePosition) {
       // We don't know how to interpret a non-text position.
       return null;
     }
@@ -234,13 +291,8 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
 
     if (movementModifiers != null && movementModifiers.contains(MovementModifier.line)) {
       final endOfLine = getPositionAtEndOfLine(
-        TextPosition(offset: textPosition.offset),
+        TextNodePosition(offset: textPosition.offset),
       );
-      if (endOfLine == null) {
-        _log.log('movePositionRight',
-            'Tried to move text position right to end of line but getPositionAtEndOfLine() returned null');
-        return null;
-      }
 
       final TextPosition endPosition = getEndPosition();
       final text = getContiguousTextAt(endOfLine);
@@ -260,7 +312,9 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
       // TODO: this is the concept of text affinity. Implement support for affinity.
       // TODO: with affinity, ensure it works as expected for right-aligned text
       // TODO: this logic fails for justified text - find a solution for that (#55)
-      return isAutoWrapLine ? TextPosition(offset: endOfLine.offset - 1) : endOfLine;
+      return isAutoWrapLine
+          ? TextNodePosition(offset: endOfLine.offset - 1)
+          : TextNodePosition.fromTextPosition(endOfLine);
     }
     if (movementModifiers != null && movementModifiers.contains(MovementModifier.word)) {
       final text = getContiguousTextAt(textPosition);
@@ -270,87 +324,96 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
       while (newOffset < text.length && text[newOffset] != ' ') {
         newOffset += 1;
       }
-      return TextPosition(offset: newOffset);
+      return TextNodePosition(offset: newOffset);
     }
 
-    return TextPosition(offset: textPosition.offset + 1);
+    return TextNodePosition(offset: textPosition.offset + 1);
   }
 
   @override
-  TextPosition? movePositionUp(dynamic textPosition) {
-    if (textPosition is! TextPosition) {
+  TextNodePosition? movePositionUp(NodePosition textNodePosition) {
+    if (textNodePosition is! TextNodePosition) {
       // We don't know how to interpret a non-text position.
       return null;
     }
 
-    if (textPosition.offset < 0 || textPosition.offset > widget.text.text.length) {
+    if (textNodePosition.offset < 0 || textNodePosition.offset > widget.text.text.length) {
       // This text position does not represent a position within our text.
       return null;
     }
 
-    return getPositionOneLineUp(textPosition);
+    final positionOneLineUp = getPositionOneLineUp(textNodePosition);
+    if (positionOneLineUp == null) {
+      return null;
+    }
+    return TextNodePosition.fromTextPosition(positionOneLineUp);
   }
 
   @override
-  TextPosition? movePositionDown(dynamic textPosition) {
-    if (textPosition is! TextPosition) {
+  TextNodePosition? movePositionDown(NodePosition textNodePosition) {
+    if (textNodePosition is! TextNodePosition) {
       // We don't know how to interpret a non-text position.
       return null;
     }
 
-    if (textPosition.offset < 0 || textPosition.offset > widget.text.text.length) {
+    if (textNodePosition.offset < 0 || textNodePosition.offset > widget.text.text.length) {
       // This text position does not represent a position within our text.
       return null;
     }
 
-    return getPositionOneLineDown(textPosition);
-  }
-
-  @override
-  TextPosition getEndPosition() {
-    return TextPosition(offset: widget.text.text.length);
-  }
-
-  @override
-  TextPosition getEndPositionNearX(double x) {
-    return _selectableTextKey.currentState!.getPositionInLastLineAtX(x);
-  }
-
-  @override
-  TextSelection getSelectionInRange(Offset localBaseOffset, Offset localExtentOffset) {
-    return _selectableTextKey.currentState!.getSelectionInRect(localBaseOffset, localExtentOffset);
-  }
-
-  @override
-  TextSelection? getCollapsedSelectionAt(dynamic textPosition) {
-    if (textPosition is! TextPosition) {
+    final positionOneLineDown = getPositionOneLineDown(textNodePosition);
+    if (positionOneLineDown == null) {
       return null;
     }
-
-    return TextSelection.fromPosition(textPosition);
+    return TextNodePosition.fromTextPosition(positionOneLineDown);
   }
 
   @override
-  TextSelection getSelectionBetween({
-    required dynamic basePosition,
-    required dynamic extentPosition,
+  TextNodePosition getEndPosition() {
+    return TextNodePosition(offset: widget.text.text.length);
+  }
+
+  @override
+  TextNodePosition getEndPositionNearX(double x) {
+    return TextNodePosition.fromTextPosition(_selectableTextKey.currentState!.getPositionInLastLineAtX(x));
+  }
+
+  @override
+  TextNodeSelection getSelectionInRange(Offset localBaseOffset, Offset localExtentOffset) {
+    return TextNodeSelection.fromTextSelection(
+        _selectableTextKey.currentState!.getSelectionInRect(localBaseOffset, localExtentOffset));
+  }
+
+  @override
+  TextNodeSelection getCollapsedSelectionAt(NodePosition textNodePosition) {
+    if (textNodePosition is! TextNodePosition) {
+      throw Exception('The given node position ($textNodePosition) is not compatible with TextComponent');
+    }
+
+    return TextNodeSelection.collapsed(offset: textNodePosition.offset);
+  }
+
+  @override
+  TextNodeSelection getSelectionBetween({
+    required NodePosition basePosition,
+    required NodePosition extentPosition,
   }) {
-    if (basePosition is! TextPosition) {
-      throw Exception('Expected a basePosition of type TextPosition but received: $basePosition');
+    if (basePosition is! TextNodePosition) {
+      throw Exception('Expected a basePosition of type TextNodePosition but received: $basePosition');
     }
-    if (extentPosition is! TextPosition) {
-      throw Exception('Expected a extentPosition of type TextPosition but received: $extentPosition');
+    if (extentPosition is! TextNodePosition) {
+      throw Exception('Expected an extentPosition of type TextNodePosition but received: $extentPosition');
     }
 
-    return TextSelection(
+    return TextNodeSelection(
       baseOffset: basePosition.offset,
       extentOffset: extentPosition.offset,
     );
   }
 
   @override
-  TextSelection getSelectionOfEverything() {
-    return TextSelection(
+  TextNodeSelection getSelectionOfEverything() {
+    return TextNodeSelection(
       baseOffset: 0,
       extentOffset: widget.text.text.length,
     );
@@ -362,20 +425,14 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
   }
 
   @override
-  TextSelection getWordSelectionAt(dynamic textPosition) {
-    if (textPosition is! TextPosition) {
-      throw Exception('Expected a node position of type TextPosition but received: $textPosition');
-    }
-
-    return _selectableTextKey.currentState!.getWordSelectionAt(textPosition);
+  TextNodeSelection getWordSelectionAt(TextNodePosition textPosition) {
+    return TextNodeSelection.fromTextSelection(
+      _selectableTextKey.currentState!.getWordSelectionAt(textPosition),
+    );
   }
 
   @override
-  String getContiguousTextAt(dynamic textPosition) {
-    if (textPosition is! TextPosition) {
-      throw Exception('Expected a node position of type TextPosition but received: $textPosition');
-    }
-
+  String getContiguousTextAt(TextNodePosition textPosition) {
     // This component only displays a single contiguous span of text.
     // Therefore, all of our text is contiguous regardless of position.
     // TODO: This assumption isn't true in the case that multiline text
@@ -386,37 +443,43 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
   }
 
   @override
-  TextPosition? getPositionOneLineUp(dynamic textPosition) {
-    if (textPosition is! TextPosition) {
-      return null;
+  TextNodePosition? getPositionOneLineUp(NodePosition textPosition) {
+    if (textPosition is! TextNodePosition) {
+      throw Exception('Expected position of type NodePosition but received ${textPosition.runtimeType}');
     }
 
-    return _selectableTextKey.currentState!.getPositionOneLineUp(textPosition);
+    final positionOneLineUp = _selectableTextKey.currentState!.getPositionOneLineUp(textPosition);
+    if (positionOneLineUp == null) {
+      return null;
+    }
+    return TextNodePosition.fromTextPosition(positionOneLineUp);
   }
 
   @override
-  TextPosition? getPositionOneLineDown(dynamic textPosition) {
-    if (textPosition is! TextPosition) {
-      return null;
+  TextNodePosition? getPositionOneLineDown(NodePosition textPosition) {
+    if (textPosition is! TextNodePosition) {
+      throw Exception('Expected position of type NodePosition but received ${textPosition.runtimeType}');
     }
 
-    return _selectableTextKey.currentState!.getPositionOneLineDown(textPosition);
+    final positionOneLineDown = _selectableTextKey.currentState!.getPositionOneLineDown(textPosition);
+    if (positionOneLineDown == null) {
+      return null;
+    }
+    return TextNodePosition.fromTextPosition(positionOneLineDown);
   }
 
   @override
-  TextPosition? getPositionAtEndOfLine(dynamic textPosition) {
-    if (textPosition is! TextPosition) {
-      return null;
-    }
-    return _selectableTextKey.currentState!.getPositionAtEndOfLine(textPosition);
+  TextNodePosition getPositionAtEndOfLine(TextNodePosition textPosition) {
+    return TextNodePosition.fromTextPosition(
+      _selectableTextKey.currentState!.getPositionAtEndOfLine(textPosition),
+    );
   }
 
   @override
-  TextPosition? getPositionAtStartOfLine(dynamic textPosition) {
-    if (textPosition is! TextPosition) {
-      return null;
-    }
-    return _selectableTextKey.currentState!.getPositionAtStartOfLine(textPosition);
+  TextNodePosition getPositionAtStartOfLine(TextNodePosition textNodePosition) {
+    return TextNodePosition.fromTextPosition(
+      _selectableTextKey.currentState!.getPositionAtStartOfLine(textNodePosition),
+    );
   }
 
   @override

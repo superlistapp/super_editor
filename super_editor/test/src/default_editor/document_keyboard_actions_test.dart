@@ -7,6 +7,7 @@ import 'package:super_editor/src/default_editor/document_interaction.dart';
 import 'package:super_editor/src/default_editor/document_keyboard_actions.dart';
 import 'package:super_editor/src/default_editor/image.dart';
 import 'package:super_editor/src/default_editor/paragraph.dart';
+import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/attributed_text.dart';
 import 'package:super_editor/src/infrastructure/platform_detector.dart';
 
@@ -131,14 +132,14 @@ void main() {
                 _editContext.composer.selection!.base,
                 DocumentPosition(
                   nodeId: 'paragraph',
-                  nodePosition: TextPosition(offset: 0),
+                  nodePosition: TextNodePosition(offset: 0),
                 ),
               );
               expect(
                 _editContext.composer.selection!.extent,
                 DocumentPosition(
                   nodeId: 'paragraph',
-                  nodePosition: TextPosition(offset: 'This is some text'.length),
+                  nodePosition: TextNodePosition(offset: 'This is some text'.length),
                 ),
               );
 
@@ -182,14 +183,14 @@ void main() {
                 _editContext.composer.selection!.base,
                 DocumentPosition(
                   nodeId: 'paragraph_1',
-                  nodePosition: TextPosition(offset: 0),
+                  nodePosition: TextNodePosition(offset: 0),
                 ),
               );
               expect(
                 _editContext.composer.selection!.extent,
                 DocumentPosition(
                   nodeId: 'paragraph_2',
-                  nodePosition: TextPosition(offset: 'This is some text'.length),
+                  nodePosition: TextNodePosition(offset: 'This is some text'.length),
                 ),
               );
 
@@ -237,14 +238,14 @@ void main() {
                 _editContext.composer.selection!.base,
                 DocumentPosition(
                   nodeId: 'image_1',
-                  nodePosition: BinaryPosition.included(),
+                  nodePosition: BinaryNodePosition.included(),
                 ),
               );
               expect(
                 _editContext.composer.selection!.extent,
                 DocumentPosition(
                   nodeId: 'image_2',
-                  nodePosition: BinaryPosition.included(),
+                  nodePosition: BinaryNodePosition.included(),
                 ),
               );
 
