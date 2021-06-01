@@ -86,7 +86,7 @@ class DocumentNodeSelection<SelectionType> {
   });
 
   final String nodeId;
-  final SelectionType nodeSelection;
+  final SelectionType? nodeSelection;
   final bool isBase;
   final bool isExtent;
   final bool highlightWhenEmpty;

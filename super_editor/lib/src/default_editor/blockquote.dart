@@ -197,7 +197,7 @@ Widget? blockquoteBuilder(ComponentContext componentContext) {
     return null;
   }
 
-  final textSelection = componentContext.nodeSelection?.nodeSelection as TextSelection;
+  final textSelection = componentContext.nodeSelection?.nodeSelection as TextSelection?;
   final showCaret = componentContext.showCaret && (componentContext.nodeSelection?.isExtent ?? false);
 
   return BlockquoteComponent(

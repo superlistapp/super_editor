@@ -520,7 +520,7 @@ Widget? unorderedListItemBuilder(ComponentContext componentContext) {
     return null;
   }
 
-  final textSelection = componentContext.nodeSelection?.nodeSelection as TextSelection;
+  final textSelection = componentContext.nodeSelection?.nodeSelection as TextSelection?;
   final showCaret = componentContext.showCaret && (componentContext.nodeSelection?.isExtent ?? false);
 
   return UnorderedListItemComponent(
@@ -557,7 +557,7 @@ Widget? orderedListItemBuilder(ComponentContext componentContext) {
     nodeAbove = componentContext.document.getNodeBefore(nodeAbove);
   }
 
-  final textSelection = componentContext.nodeSelection?.nodeSelection as TextSelection;
+  final textSelection = componentContext.nodeSelection?.nodeSelection as TextSelection?;
   final showCaret = componentContext.showCaret && (componentContext.nodeSelection?.isExtent ?? false);
 
   return OrderedListItemComponent(
