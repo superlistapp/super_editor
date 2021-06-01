@@ -2,9 +2,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/super_editor.dart';
 
-/// Demo of an [Editor] widget where the [DocumentEditor] changes.
+/// Demo of an [SuperEditor] widget where the [DocumentEditor] changes.
 ///
-/// This demo ensures that [Editor] state resets where appropriate
+/// This demo ensures that [SuperEditor] state resets where appropriate
 /// when its content is replaced.
 class SwitchDocumentDemo extends StatefulWidget {
   @override
@@ -44,7 +44,7 @@ class _SwitchDocumentDemoState extends State<SwitchDocumentDemo> {
         children: [
           _buildDocSelector(),
           Expanded(
-            child: Editor.standard(
+            child: SuperEditor.standard(
               editor: _activeDocumentEditor,
               maxWidth: 600,
               padding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),

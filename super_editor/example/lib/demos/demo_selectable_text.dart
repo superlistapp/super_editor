@@ -46,7 +46,7 @@ class _SelectableTextDemoState extends State<SelectableTextDemo> {
                 SizedBox(height: 24),
                 _buildDemo(
                   title: 'EMPTY TEXT WITH CARET',
-                  demo: SelectableText.plain(
+                  demo: SuperSelectableText.plain(
                     text: '',
                     textSelection: TextSelection.collapsed(offset: 0),
                     showCaret: true,
@@ -60,14 +60,14 @@ class _SelectableTextDemoState extends State<SelectableTextDemo> {
                 SizedBox(height: 24),
                 _buildDemo(
                   title: 'TEXT WITHOUT SELECTION OR CARET',
-                  demo: SelectableText(
+                  demo: SuperSelectableText(
                     textSpan: _demoText1,
                   ),
                 ),
                 SizedBox(height: 24),
                 _buildDemo(
                   title: 'TEXT WITH CARET + COLLAPSED SELECTION',
-                  demo: SelectableText(
+                  demo: SuperSelectableText(
                     textSpan: _demoText1,
                     textSelection: TextSelection.collapsed(offset: _demoText1.toPlainText().length),
                     showCaret: true,
@@ -76,7 +76,7 @@ class _SelectableTextDemoState extends State<SelectableTextDemo> {
                 SizedBox(height: 24),
                 _buildDemo(
                   title: 'TEXT WITH LEFT-TO-RIGHT SELECTION + CARET',
-                  demo: SelectableText(
+                  demo: SuperSelectableText(
                     textSpan: _demoText1,
                     textSelection: const TextSelection(baseOffset: 0, extentOffset: 12),
                     showCaret: true,
@@ -85,7 +85,7 @@ class _SelectableTextDemoState extends State<SelectableTextDemo> {
                 SizedBox(height: 24),
                 _buildDemo(
                   title: 'TEXT WITH RIGHT-TO-LEFT SELECTION + CARET',
-                  demo: SelectableText(
+                  demo: SuperSelectableText(
                     textSpan: _demoText1,
                     textSelection: TextSelection(
                         baseOffset: _demoText1.toPlainText().length,
@@ -100,7 +100,7 @@ class _SelectableTextDemoState extends State<SelectableTextDemo> {
                     selectableTextKey: _debugTextKey,
                     textLength: _demoText1.toPlainText().length,
                     showDebugPaint: true,
-                    child: SelectableText(
+                    child: SuperSelectableText(
                       key: _debugTextKey,
                       textSpan: _demoText1,
                       textSelection: TextSelection(baseOffset: 0, extentOffset: _demoText1.toPlainText().length),

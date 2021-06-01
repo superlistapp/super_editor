@@ -7,10 +7,10 @@ import 'package:flutter/material.dart' hide SelectableText;
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
-import 'package:super_editor/src/default_editor/editor.dart';
+import 'package:super_editor/src/default_editor/super_editor.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
-import 'package:super_editor/src/infrastructure/selectable_text.dart';
+import 'package:super_editor/src/infrastructure/super_selectable_text.dart';
 import 'package:super_editor/src/infrastructure/text_layout.dart';
 
 import 'attributed_text.dart';
@@ -92,7 +92,7 @@ class SuperTextField extends StatefulWidget {
 }
 
 class SuperTextFieldState extends State<SuperTextField> {
-  final _selectableTextKey = GlobalKey<SelectableTextState>();
+  final _selectableTextKey = GlobalKey<SuperSelectableTextState>();
   final _textScrollKey = GlobalKey<SuperTextFieldScrollviewState>();
   late FocusNode _focusNode;
   bool _hasFocus = false; // cache whether we have focus so we know when it changes
@@ -302,7 +302,7 @@ class SuperTextFieldState extends State<SuperTextField> {
   }
 
   Widget _buildSelectableText() {
-    return SelectableText(
+    return SuperSelectableText(
       key: _selectableTextKey,
       textSpan: _controller.text.computeTextSpan(widget.textStyleBuilder),
       textAlign: widget.textAlign,
@@ -336,11 +336,11 @@ enum HintBehavior {
 /// is defined on its own so that it can be replaced with a widget that handles
 /// gestures differently.
 ///
-/// The gestures are applied to a [SelectableText] widget that is
+/// The gestures are applied to a [SuperSelectableText] widget that is
 /// tied to [textKey].
 ///
 /// A [SuperTextFieldScrollview] must sit between this [SuperTextFieldGestureInteractor]
-/// and the underlying [SelectableText]. That [SuperTextFieldScrollview] must
+/// and the underlying [SuperSelectableText]. That [SuperTextFieldScrollview] must
 /// be tied to [textScrollKey].
 class SuperTextFieldGestureInteractor extends StatefulWidget {
   const SuperTextFieldGestureInteractor({
@@ -361,8 +361,8 @@ class SuperTextFieldGestureInteractor extends StatefulWidget {
   final AttributedTextEditingController textController;
 
   /// [GlobalKey] that links this [SuperTextFieldGestureInteractor] to
-  /// the [SelectableText] widget that paints the text for this text field.
-  final GlobalKey<SelectableTextState> textKey;
+  /// the [SuperSelectableText] widget that paints the text for this text field.
+  final GlobalKey<SuperSelectableTextState> textKey;
 
   /// [GlobalKey] that links this [SuperTextFieldGestureInteractor] to
   /// the [SuperTextFieldScrollview] that's responsible for scrolling
@@ -395,7 +395,7 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
   final _dragGutterExtent = 24;
   final _maxDragSpeed = 20;
 
-  SelectableTextState get _text => widget.textKey.currentState!;
+  SuperSelectableTextState get _text => widget.textKey.currentState!;
 
   SuperTextFieldScrollviewState get _textScroll => widget.textScrollKey.currentState!;
 
@@ -763,7 +763,7 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
 /// is defined on its own so that it can be replaced with a widget that handles
 /// key events differently.
 ///
-/// The key events are applied to a [SelectableText] widget that is tied to [textKey].
+/// The key events are applied to a [SuperSelectableText] widget that is tied to [textKey].
 class SuperTextFieldKeyboardInteractor extends StatefulWidget {
   const SuperTextFieldKeyboardInteractor({
     Key? key,
@@ -781,8 +781,8 @@ class SuperTextFieldKeyboardInteractor extends StatefulWidget {
   final AttributedTextEditingController textController;
 
   /// [GlobalKey] that links this [SuperTextFieldGestureInteractor] to
-  /// the [SelectableText] widget that paints the text for this text field.
-  final GlobalKey<SelectableTextState> textKey;
+  /// the [SuperSelectableText] widget that paints the text for this text field.
+  final GlobalKey<SuperSelectableTextState> textKey;
 
   /// Ordered list of actions that correspond to various key events.
   ///
@@ -853,7 +853,7 @@ class _SuperTextFieldKeyboardInteractorState extends State<SuperTextFieldKeyboar
 /// scrolling differently.
 ///
 /// [SuperTextFieldScrollview] determines when and where to scroll by working
-/// with a corresponding [SelectableText] widget that is tied to [textKey].
+/// with a corresponding [SuperSelectableText] widget that is tied to [textKey].
 class SuperTextFieldScrollview extends StatefulWidget {
   const SuperTextFieldScrollview({
     Key? key,
@@ -871,8 +871,8 @@ class SuperTextFieldScrollview extends StatefulWidget {
   final AttributedTextEditingController textController;
 
   /// [GlobalKey] that links this [SuperTextFieldScrollview] to
-  /// the [SelectableText] widget that paints the text for this text field.
-  final GlobalKey<SelectableTextState> textKey;
+  /// the [SuperSelectableText] widget that paints the text for this text field.
+  final GlobalKey<SuperSelectableTextState> textKey;
 
   /// [ScrollController] that controls the scroll offset of this [SuperTextFieldScrollview].
   final ScrollController scrollController;
@@ -940,7 +940,7 @@ class SuperTextFieldScrollviewState extends State<SuperTextFieldScrollview> with
     super.dispose();
   }
 
-  SelectableTextState get _text => widget.textKey.currentState!;
+  SuperSelectableTextState get _text => widget.textKey.currentState!;
 
   void _onSelectionOrContentChange() {
     // Use a post-frame callback to "ensure selection extent is visible"
@@ -1181,7 +1181,7 @@ enum TextFieldKeyboardHandlerResult {
 
 typedef TextFieldKeyboardHandler = TextFieldKeyboardHandlerResult Function({
   required AttributedTextEditingController controller,
-  required SelectableTextState selectableTextState,
+  required SuperSelectableTextState selectableTextState,
   required RawKeyEvent keyEvent,
 });
 
@@ -1214,7 +1214,7 @@ const defaultTextFieldKeyboardHandlers = <TextFieldKeyboardHandler>[
 class DefaultSuperTextFieldKeyboardHandlers {
   static TextFieldKeyboardHandlerResult copyTextWhenCmdCIsPressed({
     required AttributedTextEditingController controller,
-    SelectableTextState? selectableTextState,
+    SuperSelectableTextState? selectableTextState,
     required RawKeyEvent keyEvent,
   }) {
     if (!keyEvent.isPrimaryShortcutKeyPressed) {
@@ -1231,7 +1231,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
 
   static TextFieldKeyboardHandlerResult pasteTextWhenCmdVIsPressed({
     required AttributedTextEditingController controller,
-    SelectableTextState? selectableTextState,
+    SuperSelectableTextState? selectableTextState,
     required RawKeyEvent keyEvent,
   }) {
     if (!keyEvent.isPrimaryShortcutKeyPressed) {
@@ -1252,7 +1252,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
 
   static TextFieldKeyboardHandlerResult selectAllTextFieldWhenCmdAIsPressed({
     required AttributedTextEditingController controller,
-    SelectableTextState? selectableTextState,
+    SuperSelectableTextState? selectableTextState,
     required RawKeyEvent keyEvent,
   }) {
     if (!keyEvent.isPrimaryShortcutKeyPressed) {
@@ -1269,7 +1269,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
 
   static TextFieldKeyboardHandlerResult moveUpDownLeftAndRightWithArrowKeys({
     required AttributedTextEditingController controller,
-    required SelectableTextState selectableTextState,
+    required SuperSelectableTextState selectableTextState,
     required RawKeyEvent keyEvent,
   }) {
     const arrowKeys = [
@@ -1345,7 +1345,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
 
   static TextFieldKeyboardHandlerResult insertCharacterWhenKeyIsPressed({
     required AttributedTextEditingController controller,
-    SelectableTextState? selectableTextState,
+    SuperSelectableTextState? selectableTextState,
     required RawKeyEvent keyEvent,
   }) {
     if (keyEvent.isMetaPressed || keyEvent.isControlPressed) {
@@ -1378,7 +1378,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
 
   static TextFieldKeyboardHandlerResult deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed({
     required AttributedTextEditingController controller,
-    required SelectableTextState selectableTextState,
+    required SuperSelectableTextState selectableTextState,
     required RawKeyEvent keyEvent,
   }) {
     if (!keyEvent.isPrimaryShortcutKeyPressed || keyEvent.logicalKey != LogicalKeyboardKey.backspace) {
@@ -1402,7 +1402,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
 
   static TextFieldKeyboardHandlerResult deleteTextWhenBackspaceOrDeleteIsPressed({
     required AttributedTextEditingController controller,
-    SelectableTextState? selectableTextState,
+    SuperSelectableTextState? selectableTextState,
     required RawKeyEvent keyEvent,
   }) {
     final isBackspace = keyEvent.logicalKey == LogicalKeyboardKey.backspace;
@@ -1425,7 +1425,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
 
   static TextFieldKeyboardHandlerResult insertNewlineWhenEnterIsPressed({
     required AttributedTextEditingController controller,
-    SelectableTextState? selectableTextState,
+    SuperSelectableTextState? selectableTextState,
     required RawKeyEvent keyEvent,
   }) {
     if (keyEvent.logicalKey != LogicalKeyboardKey.enter) {
@@ -1538,7 +1538,7 @@ extension DefaultSuperTextFieldActions on AttributedTextEditingController {
   }
 
   void moveCaretHorizontally({
-    required SelectableTextState selectableTextState,
+    required SuperSelectableTextState selectableTextState,
     required bool expandSelection,
     required bool moveLeft,
     Map<String, dynamic> movementModifiers = const {},
@@ -1623,7 +1623,7 @@ extension DefaultSuperTextFieldActions on AttributedTextEditingController {
   }
 
   void moveCaretVertically({
-    required SelectableTextState selectableTextState,
+    required SuperSelectableTextState selectableTextState,
     required bool expandSelection,
     required bool moveUp,
   }) {
@@ -1692,7 +1692,7 @@ extension DefaultSuperTextFieldActions on AttributedTextEditingController {
   }
 
   void deleteTextOnLineBeforeCaret({
-    required SelectableTextState selectableTextState,
+    required SuperSelectableTextState selectableTextState,
   }) {
     assert(selection.isCollapsed);
 
