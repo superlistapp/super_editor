@@ -65,6 +65,30 @@ class TextNode with ChangeNotifier implements DocumentNode {
   TextNodePosition get endPosition => TextNodePosition(offset: text.text.length);
 
   @override
+  NodePosition selectUpstreamPosition(NodePosition position1, NodePosition position2) {
+    if (position1 is! TextNodePosition) {
+      throw Exception('Expected a TextNodePosition for position1 but received a ${position1.runtimeType}');
+    }
+    if (position2 is! TextNodePosition) {
+      throw Exception('Expected a TextNodePosition for position2 but received a ${position2.runtimeType}');
+    }
+
+    return position1.offset < position2.offset ? position1 : position2;
+  }
+
+  @override
+  NodePosition selectDownstreamPosition(NodePosition position1, NodePosition position2) {
+    if (position1 is! TextNodePosition) {
+      throw Exception('Expected a TextNodePosition for position1 but received a ${position1.runtimeType}');
+    }
+    if (position2 is! TextNodePosition) {
+      throw Exception('Expected a TextNodePosition for position2 but received a ${position2.runtimeType}');
+    }
+
+    return position1.offset > position2.offset ? position1 : position2;
+  }
+
+  @override
   TextNodeSelection computeSelection({
     required NodePosition base,
     required NodePosition extent,

@@ -42,7 +42,7 @@ class _SelectableTextDemoState extends State<SelectableTextDemo> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildTitle('Selectable Text Widget'),
+                _buildTitle('SuperSelectableText Widget'),
                 SizedBox(height: 24),
                 _buildDemo(
                   title: 'EMPTY TEXT WITH CARET',
