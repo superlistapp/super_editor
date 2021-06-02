@@ -129,6 +129,16 @@ class DocumentPosition {
   @override
   int get hashCode => nodeId.hashCode ^ nodePosition.hashCode;
 
+  DocumentPosition copyWith({
+    String? nodeId,
+    NodePosition? nodePosition,
+  }) {
+    return DocumentPosition(
+      nodeId: nodeId ?? this.nodeId,
+      nodePosition: nodePosition ?? this.nodePosition,
+    );
+  }
+
   @override
   String toString() {
     return '[DocumentPosition] - node: "$nodeId", position: ($nodePosition)';
@@ -152,6 +162,26 @@ abstract class DocumentNode implements ChangeNotifier {
   /// For example, a [ParagraphNode] would return
   /// [TextNodePosition(offset: text.length)].
   NodePosition get endPosition;
+
+  /// Inspects [position1] and [position2] and returns the one that's
+  /// positioned further upstream in this [DocumentNode].
+  ///
+  /// For example, in a [TextNode], this returns the [TextPosition]
+  /// for the character that appears earlier in the block of text.
+  NodePosition selectUpstreamPosition(
+    NodePosition position1,
+    NodePosition position2,
+  );
+
+  /// Inspects [position1] and [position2] and returns the one that's
+  /// positioned further downstream in this [DocumentNode].
+  ///
+  /// For example, in a [TextNode], this returns the [TextPosition]
+  /// for the character that appears later in the block of text.
+  NodePosition selectDownstreamPosition(
+    NodePosition position1,
+    NodePosition position2,
+  );
 
   /// Returns a node-specific representation of a selection from
   /// [base] to [extent].

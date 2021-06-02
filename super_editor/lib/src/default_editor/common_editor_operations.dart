@@ -146,8 +146,8 @@ class CommonEditorOperations {
 
     final docSelection = composer.selection!;
     final currentSelection = TextSelection(
-      baseOffset: (docSelection.base.nodePosition as TextPosition).offset,
-      extentOffset: (docSelection.extent.nodePosition as TextPosition).offset,
+      baseOffset: (docSelection.base.nodePosition as TextNodePosition).offset,
+      extentOffset: (docSelection.extent.nodePosition as TextNodePosition).offset,
     );
     final selectedText = currentSelection.textInside(selectedNode.text.text);
 
@@ -158,7 +158,7 @@ class CommonEditorOperations {
 
     final wordTextSelection = expandPositionToWord(
       text: selectedNode.text.text,
-      textPosition: TextPosition(offset: (docSelection.extent.nodePosition as TextPosition).offset),
+      textPosition: TextPosition(offset: (docSelection.extent.nodePosition as TextNodePosition).offset),
     );
     final wordNodeSelection = TextNodeSelection.fromTextSelection(wordTextSelection);
 
@@ -199,8 +199,8 @@ class CommonEditorOperations {
 
     final docSelection = composer.selection!;
     final currentSelection = TextSelection(
-      baseOffset: (docSelection.base.nodePosition as TextPosition).offset,
-      extentOffset: (docSelection.extent.nodePosition as TextPosition).offset,
+      baseOffset: (docSelection.base.nodePosition as TextNodePosition).offset,
+      extentOffset: (docSelection.extent.nodePosition as TextNodePosition).offset,
     );
     final selectedText = currentSelection.textInside(selectedNode.text.text);
 
@@ -211,7 +211,7 @@ class CommonEditorOperations {
 
     final paragraphTextSelection = expandPositionToParagraph(
       text: selectedNode.text.text,
-      textPosition: TextPosition(offset: (docSelection.extent.nodePosition as TextPosition).offset),
+      textPosition: TextPosition(offset: (docSelection.extent.nodePosition as TextNodePosition).offset),
     );
     final paragraphNodeSelection = TextNodeSelection.fromTextSelection(paragraphTextSelection);
 
@@ -290,6 +290,11 @@ class CommonEditorOperations {
       return false;
     }
 
+    if (!composer.selection!.isCollapsed && !expand) {
+      composer.selection = composer.selection!.collapseUpstream(editor.document);
+      return true;
+    }
+
     final currentExtent = composer.selection!.extent;
     final nodeId = currentExtent.nodeId;
     final node = editor.document.getNodeById(nodeId);
@@ -361,6 +366,11 @@ class CommonEditorOperations {
   }) {
     if (composer.selection == null) {
       return false;
+    }
+
+    if (!composer.selection!.isCollapsed && !expand) {
+      composer.selection = composer.selection!.collapseDownstream(editor.document);
+      return true;
     }
 
     final currentExtent = composer.selection!.extent;
@@ -585,8 +595,8 @@ class CommonEditorOperations {
     if (!composer.selection!.isCollapsed || composer.selection!.extent.nodePosition is BinaryNodePosition) {
       // A span of content is selected. Delete the selection.
       return deleteSelection();
-    } else if (composer.selection!.extent.nodePosition is TextPosition) {
-      final textPosition = composer.selection!.extent.nodePosition as TextPosition;
+    } else if (composer.selection!.extent.nodePosition is TextNodePosition) {
+      final textPosition = composer.selection!.extent.nodePosition as TextNodePosition;
       final text = (editor.document.getNodeById(composer.selection!.extent.nodeId) as TextNode).text.text;
       if (textPosition.offset == text.length) {
         final node = editor.document.getNodeById(composer.selection!.extent.nodeId)!;
@@ -680,7 +690,7 @@ class CommonEditorOperations {
     if (!_isTextEntryNode(document: editor.document, selection: composer.selection!)) {
       return false;
     }
-    if (composer.selection!.isCollapsed && (composer.selection!.extent.nodePosition as TextPosition).offset <= 0) {
+    if (composer.selection!.isCollapsed && (composer.selection!.extent.nodePosition as TextNodePosition).offset <= 0) {
       return false;
     }
 
@@ -731,26 +741,34 @@ class CommonEditorOperations {
       return deleteSelection();
     }
 
-    final node = editor.document.getNodeById(composer.selection!.extent.nodeId);
+    final node = editor.document.getNodeById(composer.selection!.extent.nodeId)!;
 
     // If the caret is at the beginning of a list item, unindent the list item.
-    if (node is ListItemNode && (composer.selection!.extent.nodePosition as TextPosition).offset == 0) {
+    if (node is ListItemNode && (composer.selection!.extent.nodePosition as TextNodePosition).offset == 0) {
       return unindentListItem();
     }
 
-    if (composer.selection!.extent.nodePosition is TextPosition) {
-      final textPosition = composer.selection!.extent.nodePosition as TextPosition;
+    if (composer.selection!.extent.nodePosition is TextNodePosition) {
+      final textPosition = composer.selection!.extent.nodePosition as TextNodePosition;
       if (textPosition.offset == 0) {
-        final node = editor.document.getNodeById(composer.selection!.extent.nodeId)!;
         final nodeBefore = editor.document.getNodeBefore(node);
 
         if (nodeBefore is TextNode) {
           // The caret is at the beginning of one TextNode and is preceded by
           // another TextNode. Merge the two TextNodes.
           return _mergeTextNodeWithUpstreamTextNode();
+        } else if ((node as TextNode).text.text.isEmpty) {
+          // The caret is at the beginning of an empty TextNode and the preceding
+          // node is not a TextNode. Delete the current TextNode and move the
+          // selection up to the preceding node.
+          _moveSelectionToEndOfPrecedingNode();
+          editor.executeCommand(EditorCommandFunction((doc, transaction) {
+            transaction.deleteNode(node);
+          }));
+          return true;
         } else {
-          // The caret is at the beginning of a TextNode, but the preceding node
-          // is not a TextNode. Move the document selection to the
+          // The caret is at the beginning of a non-empty TextNode, and the
+          // preceding node is not a TextNode. Move the document selection to the
           // preceding node.
           return _moveSelectionToEndOfPrecedingNode();
         }
@@ -829,7 +847,7 @@ class CommonEditorOperations {
     if (!_isTextEntryNode(document: editor.document, selection: composer.selection!)) {
       return false;
     }
-    if (composer.selection!.isCollapsed && (composer.selection!.extent.nodePosition as TextPosition).offset <= 0) {
+    if (composer.selection!.isCollapsed && (composer.selection!.extent.nodePosition as TextNodePosition).offset <= 0) {
       return false;
     }
 
@@ -1019,16 +1037,16 @@ class CommonEditorOperations {
       // selection node then that node will be replaced by
       // a ParagraphNode with the same ID. Otherwise, it must
       // be a TextNode, in which case we need to figure out
-      // which DocumentPosition contains the earlier TextPosition.
+      // which DocumentPosition contains the earlier TextNodePosition.
       if (basePosition.nodePosition is BinaryNodePosition) {
         // Assume that the node was replace with an empty paragraph.
         newSelectionPosition = DocumentPosition(
           nodeId: baseNode.id,
           nodePosition: TextNodePosition(offset: 0),
         );
-      } else if (basePosition.nodePosition is TextPosition) {
-        final baseOffset = (basePosition.nodePosition as TextPosition).offset;
-        final extentOffset = (extentPosition.nodePosition as TextPosition).offset;
+      } else if (basePosition.nodePosition is TextNodePosition) {
+        final baseOffset = (basePosition.nodePosition as TextNodePosition).offset;
+        final extentOffset = (extentPosition.nodePosition as TextNodePosition).offset;
 
         newSelectionPosition = DocumentPosition(
           nodeId: baseNode.id,
@@ -1182,7 +1200,7 @@ class CommonEditorOperations {
     }
 
     final textNode = editor.document.getNode(composer.selection!.extent) as TextNode;
-    final initialTextOffset = (composer.selection!.extent.nodePosition as TextPosition).offset;
+    final initialTextOffset = (composer.selection!.extent.nodePosition as TextNodePosition).offset;
 
     editor.executeCommand(
       InsertTextCommand(
@@ -1252,7 +1270,7 @@ class CommonEditorOperations {
     }
 
     final text = node.text;
-    final textSelection = composer.selection!.extent.nodePosition as TextPosition;
+    final textSelection = composer.selection!.extent.nodePosition as TextNodePosition;
     final textBeforeCaret = text.text.substring(0, textSelection.offset);
 
     final unorderedListItemMatch = RegExp(r'^\s*[\*-]\s+$');
@@ -1284,7 +1302,7 @@ class CommonEditorOperations {
 
       // We removed some text at the beginning of the list item.
       // Move the selection back by that same amount.
-      final textPosition = composer.selection!.extent.nodePosition as TextPosition;
+      final textPosition = composer.selection!.extent.nodePosition as TextNodePosition;
       composer.selection = DocumentSelection.collapsed(
         position: DocumentPosition(
           nodeId: node.id,
@@ -1351,7 +1369,7 @@ class CommonEditorOperations {
 
       // We removed some text at the beginning of the list item.
       // Move the selection back by that same amount.
-      final textPosition = composer.selection!.extent.nodePosition as TextPosition;
+      final textPosition = composer.selection!.extent.nodePosition as TextNodePosition;
       composer.selection = DocumentSelection.collapsed(
         position: DocumentPosition(
           nodeId: node.id,
@@ -1464,7 +1482,7 @@ class CommonEditorOperations {
     }
 
     final textNode = editor.document.getNode(composer.selection!.extent) as TextNode;
-    final initialTextOffset = (composer.selection!.extent.nodePosition as TextPosition).offset;
+    final initialTextOffset = (composer.selection!.extent.nodePosition as TextNodePosition).offset;
 
     editor.executeCommand(
       InsertTextCommand(
@@ -1533,14 +1551,14 @@ class CommonEditorOperations {
       editor.executeCommand(
         SplitListItemCommand(
           nodeId: extentNode.id,
-          splitPosition: composer.selection!.extent.nodePosition as TextPosition,
+          splitPosition: composer.selection!.extent.nodePosition as TextNodePosition,
           newNodeId: newNodeId,
         ),
       );
     } else if (extentNode is ParagraphNode) {
       // Split the paragraph into two. This includes headers, blockquotes, and
       // any other block-level paragraph.
-      final currentExtentPosition = composer.selection!.extent.nodePosition as TextPosition;
+      final currentExtentPosition = composer.selection!.extent.nodePosition as TextNodePosition;
       final endOfParagraph = extentNode.endPosition;
 
       editor.executeCommand(
@@ -1610,7 +1628,7 @@ class CommonEditorOperations {
 
     editor.executeCommand(
       EditorCommandFunction((document, transaction) {
-        final paragraphPosition = composer.selection!.extent.nodePosition as TextPosition;
+        final paragraphPosition = composer.selection!.extent.nodePosition as TextNodePosition;
         final endOfParagraph = node.endPosition;
 
         final nodeIndex = editor.document.getNodeIndex(node);
@@ -1707,7 +1725,7 @@ class CommonEditorOperations {
 
     editor.executeCommand(
       EditorCommandFunction((document, transaction) {
-        final paragraphPosition = composer.selection!.extent.nodePosition as TextPosition;
+        final paragraphPosition = composer.selection!.extent.nodePosition as TextNodePosition;
         final endOfParagraph = node.endPosition;
 
         var newSelection;

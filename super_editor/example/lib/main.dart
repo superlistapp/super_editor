@@ -201,7 +201,7 @@ final _menu = <_MenuGroup>[
       ),
       _MenuItem(
         icon: Icons.text_fields,
-        title: 'Selectable Text',
+        title: 'SuperSelectableText',
         pageBuilder: (context) {
           return SelectableTextDemo();
         },

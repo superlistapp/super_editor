@@ -35,32 +35,24 @@ class _AttributedTextDemoState extends State<AttributedTextDemo> {
     }
 
     setState(() {
-      _richText = _text.computeTextSpan((Set<dynamic> attributions) {
+      _richText = _text.computeTextSpan((Set<Attribution> attributions) {
         TextStyle newStyle = const TextStyle(
           color: Colors.black,
           fontSize: 30,
         );
         for (final attribution in attributions) {
-          if (attribution is! String) {
-            continue;
-          }
-
-          switch (attribution) {
-            case 'bold':
-              newStyle = newStyle.copyWith(
-                fontWeight: FontWeight.bold,
-              );
-              break;
-            case 'italics':
-              newStyle = newStyle.copyWith(
-                fontStyle: FontStyle.italic,
-              );
-              break;
-            case 'strikethrough':
-              newStyle = newStyle.copyWith(
-                decoration: TextDecoration.lineThrough,
-              );
-              break;
+          if (attribution == boldAttribution) {
+            newStyle = newStyle.copyWith(
+              fontWeight: FontWeight.bold,
+            );
+          } else if (attribution == italicsAttribution) {
+            newStyle = newStyle.copyWith(
+              fontStyle: FontStyle.italic,
+            );
+          } else if (attribution == strikethroughAttribution) {
+            newStyle = newStyle.copyWith(
+              decoration: TextDecoration.lineThrough,
+            );
           }
         }
         return newStyle;

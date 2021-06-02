@@ -44,6 +44,34 @@ class ImageNode with ChangeNotifier implements DocumentNode {
   BinaryNodePosition get endPosition => BinaryNodePosition.included();
 
   @override
+  NodePosition selectUpstreamPosition(NodePosition position1, NodePosition position2) {
+    if (position1 is! BinaryNodePosition) {
+      throw Exception('Expected a BinaryNodePosition for position1 but received a ${position1.runtimeType}');
+    }
+    if (position2 is! BinaryNodePosition) {
+      throw Exception('Expected a BinaryNodePosition for position2 but received a ${position2.runtimeType}');
+    }
+
+    // BinaryNodePosition's don't disambiguate between upstream and downstream so
+    // it doesn't matter which one we return.
+    return position1;
+  }
+
+  @override
+  NodePosition selectDownstreamPosition(NodePosition position1, NodePosition position2) {
+    if (position1 is! BinaryNodePosition) {
+      throw Exception('Expected a BinaryNodePosition for position1 but received a ${position1.runtimeType}');
+    }
+    if (position2 is! BinaryNodePosition) {
+      throw Exception('Expected a BinaryNodePosition for position2 but received a ${position2.runtimeType}');
+    }
+
+    // BinaryNodePosition's don't disambiguate between upstream and downstream so
+    // it doesn't matter which one we return.
+    return position1;
+  }
+
+  @override
   BinarySelection computeSelection({
     @required dynamic base,
     @required dynamic extent,

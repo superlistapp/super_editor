@@ -1,19 +1,19 @@
 import 'document.dart';
 
-/// A selection within a `Document`.
+/// A selection within a [Document].
 ///
-/// A `DocumentSelection` spans from a `base` position to an
-/// `extent` position, and includes all content in between.
+/// A [DocumentSelection] spans from a [base] position to an
+/// [extent] position, and includes all content in between.
 ///
-/// `base` and `extent` are instances of `DocumentPosition`,
-/// which represents a single position within a `Document`.
+/// [base] and [extent] are instances of [DocumentPosition],
+/// which represents a single position within a [Document].
 ///
-/// A `DocumentSelection` does not hold a reference to a
-/// `Document`, it only represents a directional selection
-/// within a `Document`. The `base` and `extent` positions must
-/// be interpreted within the context of a specific `Document`
-/// to locate nodes between `base` and `extent`, and to identify
-/// partial content that is selected within the `base` and `extent`
+/// A [DocumentSelection] does not hold a reference to a
+/// [Document], it only represents a directional selection
+/// within a [Document]. The [base] and [extent] positions must
+/// be interpreted within the context of a specific [Document]
+/// to locate nodes between [base] and [extent], and to identify
+/// partial content that is selected within the [base] and [extent]
 /// nodes within the document.
 class DocumentSelection {
   const DocumentSelection.collapsed({
@@ -45,6 +45,68 @@ class DocumentSelection {
         extent: extent,
       );
     }
+  }
+
+  /// Returns a version of this [DocumentSelection] that is collapsed
+  /// in the upstream (start) direction.
+  ///
+  /// The source [Document] is required so that the upstream [DocumentPosition]
+  /// can be selected from [base] and [extent].
+  DocumentSelection collapseUpstream(Document document) {
+    if (isCollapsed) {
+      // The selection is already collapsed. Therefore, the collapsed
+      // version of this selection is the same as this selection.
+      return this;
+    }
+
+    final baseNode = document.getNodeById(base.nodeId)!;
+    final extentNode = document.getNodeById(extent.nodeId)!;
+
+    if (baseNode == extentNode) {
+      // The selection is expanded, but it sits within a single node.
+      final upstreamNodePosition = extentNode.selectUpstreamPosition(
+        base.nodePosition,
+        extent.nodePosition,
+      );
+      return DocumentSelection.collapsed(
+        position: extent.copyWith(nodePosition: upstreamNodePosition),
+      );
+    }
+
+    return document.getNodeIndex(baseNode) < document.getNodeIndex(extentNode)
+        ? DocumentSelection.collapsed(position: base)
+        : DocumentSelection.collapsed(position: extent);
+  }
+
+  /// Returns a version of this [DocumentSelection] that is collapsed
+  /// in the downstream (end) direction.
+  ///
+  /// The source [Document] is required so that the downstream [DocumentPosition]
+  /// can be selected from [base] and [extent].
+  DocumentSelection collapseDownstream(Document document) {
+    if (isCollapsed) {
+      // The selection is already collapsed. Therefore, the collapsed
+      // version of this selection is the same as this selection.
+      return this;
+    }
+
+    final baseNode = document.getNodeById(base.nodeId)!;
+    final extentNode = document.getNodeById(extent.nodeId)!;
+
+    if (baseNode == extentNode) {
+      // The selection is expanded, but it sits within a single node.
+      final downstreamNodePosition = extentNode.selectDownstreamPosition(
+        base.nodePosition,
+        extent.nodePosition,
+      );
+      return DocumentSelection.collapsed(
+        position: extent.copyWith(nodePosition: downstreamNodePosition),
+      );
+    }
+
+    return document.getNodeIndex(baseNode) > document.getNodeIndex(extentNode)
+        ? DocumentSelection.collapsed(position: base)
+        : DocumentSelection.collapsed(position: extent);
   }
 
   @override

@@ -33,11 +33,11 @@ class _ExampleEditorState extends State<ExampleEditor> {
   @override
   void initState() {
     super.initState();
-    _doc = createInitialDocument()..addListener(_updateToolbarDisplay);
+    _doc = createInitialDocument()..addListener(_hideOrShowToolbar);
     _docEditor = DocumentEditor(document: _doc as MutableDocument);
-    _composer = DocumentComposer()..addListener(_updateToolbarDisplay);
+    _composer = DocumentComposer()..addListener(_hideOrShowToolbar);
     _editorFocusNode = FocusNode();
-    _scrollController = ScrollController()..addListener(_updateToolbarDisplay);
+    _scrollController = ScrollController()..addListener(_hideOrShowToolbar);
   }
 
   @override
@@ -52,7 +52,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
     super.dispose();
   }
 
-  void _updateToolbarDisplay() {
+  void _hideOrShowToolbar() {
     final selection = _composer!.selection;
     if (selection == null) {
       // Nothing is selected. We don't want to show a toolbar
@@ -106,22 +106,26 @@ class _ExampleEditorState extends State<ExampleEditor> {
       // Display the toolbar in the application overlay.
       final overlay = Overlay.of(context)!;
       overlay.insert(_formatBarOverlayEntry!);
-
-      // Schedule a callback after this frame to locate the selection
-      // bounds on the screen and display the toolbar near the selected
-      // text.
-      WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
-        final docBoundingBox = (_docLayoutKey.currentState as DocumentLayout)
-            .getRectForSelection(_composer!.selection!.base, _composer!.selection!.extent)!;
-        final docBox = _docLayoutKey.currentContext!.findRenderObject() as RenderBox;
-        final overlayBoundingBox = Rect.fromPoints(
-          docBox.localToGlobal(docBoundingBox.topLeft, ancestor: context.findRenderObject()),
-          docBox.localToGlobal(docBoundingBox.bottomRight, ancestor: context.findRenderObject()),
-        );
-
-        _selectionAnchor.value = overlayBoundingBox.topCenter;
-      });
     }
+
+    // Schedule a callback after this frame to locate the selection
+    // bounds on the screen and display the toolbar near the selected
+    // text.
+    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      if (_formatBarOverlayEntry == null) {
+        return;
+      }
+
+      final docBoundingBox = (_docLayoutKey.currentState as DocumentLayout)
+          .getRectForSelection(_composer!.selection!.base, _composer!.selection!.extent)!;
+      final docBox = _docLayoutKey.currentContext!.findRenderObject() as RenderBox;
+      final overlayBoundingBox = Rect.fromPoints(
+        docBox.localToGlobal(docBoundingBox.topLeft, ancestor: context.findRenderObject()),
+        docBox.localToGlobal(docBoundingBox.bottomRight, ancestor: context.findRenderObject()),
+      );
+
+      _selectionAnchor.value = overlayBoundingBox.topCenter;
+    });
   }
 
   void _hideEditorToolbar() {

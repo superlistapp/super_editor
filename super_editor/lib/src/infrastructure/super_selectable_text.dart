@@ -794,7 +794,7 @@ class DebugSelectableTextDecorator extends StatefulWidget {
 
 class _DebugSelectableTextDecoratorState extends State<DebugSelectableTextDecorator> {
   SuperSelectableTextState? get _selectableTextState =>
-      widget.selectableTextKey.currentState as SuperSelectableTextState;
+      widget.selectableTextKey.currentState as SuperSelectableTextState?;
 
   RenderParagraph? get _renderParagraph => _selectableTextState?._renderParagraph;
 
