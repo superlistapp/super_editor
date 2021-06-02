@@ -1,6 +1,0 @@
-<component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Spike: Tap Selection" type="FlutterRunConfigurationType" factoryName="Flutter">
-    <option name="filePath" value="$PROJECT_DIR$/example/lib/spikes/selection/tap_selection_spike.dart" />
-    <method v="2" />
-  </configuration>
-</component>
