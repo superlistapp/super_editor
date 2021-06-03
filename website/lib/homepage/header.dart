@@ -196,7 +196,7 @@ class _DownloadButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialButton(
       color: const Color(0xFFFAE74F),
-      onPressed: () => launch('https://pub.dev/publishers/superlist.com/packages'),
+      onPressed: () => launch('https://pub.dev/packages/super_editor'),
       padding: const EdgeInsets.symmetric(horizontal: 32),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(64)),
       height: 52,
