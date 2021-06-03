@@ -246,12 +246,41 @@ mixin DocumentComponent<T extends StatefulWidget> on State<T> {
 /// so long as those [id]s don't conflict with existing [id]s. You're
 /// responsible for implementing whatever behavior those custom
 /// [MovementModifier]s represent.
+///
+/// There is no default value for character-by-character movement because that
+/// is the default movement that occurs when **no** movement modifiers are at
+/// play.
 class MovementModifier {
+  /// The default identifier for word-by-word selection movement.
+  ///
+  /// This is understood by the default node implementations.
+  ///
+  /// See also:
+  ///
+  ///  * [line], which is the default value for line-by-line selection movement.
   static const word = MovementModifier('word');
+
+  /// The default identifier for line-by-line selection movement.
+  ///
+  /// This is understood by the default node implementations.
+  ///
+  /// See also:
+  ///
+  ///  * [word], which is the default value for word-by-word selection movement.
   static const line = MovementModifier('line');
 
+  /// Creates a movement modifier from an [id] that is either understood by the
+  /// default node implementation or implemented by your own nodes.
   const MovementModifier(this.id);
 
+  /// The identifier of this modifier.
+  ///
+  /// This is the singular identity of this modifier, which determines how
+  /// document selection should change.
+  ///
+  /// The ID needs to either be understood by the default node implementations
+  /// or by your custom node implementations.
+  /// A single ID can only be used once.
   final String id;
 
   @override
@@ -281,6 +310,13 @@ typedef ComponentBuilder = Widget? Function(ComponentContext);
 /// Information that is provided to a [ComponentBuilder] to
 /// construct an appropriate [DocumentComponent] widget.
 class ComponentContext {
+  /// Creates a context for a [ComponentBuilder] to build a [DocumentComponent]
+  /// widget based on general information and node-specific additional
+  /// information.
+  ///
+  /// The general information, i.e. [context], [document], [documentNode],
+  /// [componentKey], and [showCaret] is mandatory while the node-specific
+  /// information, i.e. the [nodeSelection] and [extensions] are optional.
   const ComponentContext({
     required this.context,
     required this.document,
