@@ -10,14 +10,9 @@ import 'features.dart';
 import 'footer.dart';
 import 'header.dart';
 
-class HomePage extends StatefulWidget {
+class HomePage extends StatelessWidget {
   const HomePage();
 
-  @override
-  _HomePageState createState() => _HomePageState();
-}
-
-class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     final isSingleColumnLayout = Breakpoints.collapsedNavigation(context);
@@ -63,7 +58,9 @@ class _HomePageState extends State<HomePage> {
                 ),
                 SizedBox(height: isSingleColumnLayout ? 16 : 52),
                 _buildFeaturedEditor(
-                  displayMode: isSingleColumnLayout ? DisplayMode.compact : DisplayMode.wide,
+                  displayMode: isSingleColumnLayout
+                      ? DisplayMode.compact
+                      : DisplayMode.wide,
                 ),
                 SizedBox(height: isSingleColumnLayout ? 92 : 135),
                 Container(
@@ -73,6 +70,7 @@ class _HomePageState extends State<HomePage> {
                     children: [
                       const Features(),
                       EditorVideoShowcase(
+                        url: 'https://www.youtube.com/embed/o133j87UWcM',
                         isCompact: isSingleColumnLayout,
                       ),
                       const InsideTheToolbox(),
