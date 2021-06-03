@@ -70,7 +70,7 @@ class HomePage extends StatelessWidget {
                     children: [
                       const Features(),
                       EditorVideoShowcase(
-                        url: 'https://www.youtube.com/embed/o133j87UWcM',
+                        url: 'https://www.youtube.com/embed/nZ9pWg_QOwM',
                         isCompact: isSingleColumnLayout,
                       ),
                       const InsideTheToolbox(),
