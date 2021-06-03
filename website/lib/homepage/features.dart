@@ -23,7 +23,7 @@ class Features extends StatelessWidget {
                       constraints: const BoxConstraints(maxWidth: 400),
                       child: _Feature(
                         image: Image.asset(
-                          'assets/images/ic_customize.png',
+                          'assets/images/ic_ready_to_go.png',
                           fit: BoxFit.cover,
                           width: 48,
                           height: 48,
