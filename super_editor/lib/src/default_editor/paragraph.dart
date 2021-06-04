@@ -147,6 +147,10 @@ ExecutionInstruction anyCharacterToInsertInParagraph({
   if (character == null || character == '') {
     return ExecutionInstruction.continueExecution;
   }
+  if (keyEvent.character!.codeUnits
+      .any((el) => el < 9 || (13 < el && el < 32))) {
+    return ExecutionInstruction.continueExecution;
+  }
   // On web, keys like shift and alt are sending their full name
   // as a character, e.g., "Shift" and "Alt". This check prevents
   // those keys from inserting their name into content.

@@ -862,6 +862,11 @@ ExecutionInstruction anyCharacterToInsertInTextContent({
   if (keyEvent.character == null || keyEvent.character == '') {
     return ExecutionInstruction.continueExecution;
   }
+  if (keyEvent.character!.codeUnits
+      .any((el) => el < 9 || (13 < el && el < 32))) {
+    return ExecutionInstruction.continueExecution;
+  }
+
 
   String character = keyEvent.character!;
 
