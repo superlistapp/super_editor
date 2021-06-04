@@ -8,10 +8,10 @@ class SelectableTextDemo extends StatefulWidget {
 }
 
 class _SelectableTextDemoState extends State<SelectableTextDemo> {
-  final _demoText1 = TextSpan(
+  final _demoText1 = const TextSpan(
     text: 'Super Editor',
     style: TextStyle(
-      color: const Color(0xFF444444),
+      color: Color(0xFF444444),
       fontSize: 18,
       height: 1.4,
       fontWeight: FontWeight.bold,
@@ -20,7 +20,7 @@ class _SelectableTextDemoState extends State<SelectableTextDemo> {
       TextSpan(
         text: ' is an open source text editor for Flutter projects.',
         style: TextStyle(
-          color: const Color(0xFF444444),
+          color: Color(0xFF444444),
           fontSize: 18,
           height: 1.4,
           fontWeight: FontWeight.normal,
@@ -43,46 +43,48 @@ class _SelectableTextDemoState extends State<SelectableTextDemo> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildTitle('SuperSelectableText Widget'),
-                SizedBox(height: 24),
+                const SizedBox(height: 24),
                 _buildDemo(
                   title: 'EMPTY TEXT WITH CARET',
                   demo: SuperSelectableText.plain(
                     text: '',
-                    textSelection: TextSelection.collapsed(offset: 0),
+                    textSelection: const TextSelection.collapsed(offset: 0),
                     showCaret: true,
-                    style: TextStyle(
-                      color: const Color(0xFF444444),
+                    style: const TextStyle(
+                      color: Color(0xFF444444),
                       fontSize: 18,
                       height: 1.4,
                     ),
                   ),
                 ),
-                SizedBox(height: 24),
+                const SizedBox(height: 24),
                 _buildDemo(
                   title: 'TEXT WITHOUT SELECTION OR CARET',
                   demo: SuperSelectableText(
                     textSpan: _demoText1,
                   ),
                 ),
-                SizedBox(height: 24),
+                const SizedBox(height: 24),
                 _buildDemo(
                   title: 'TEXT WITH CARET + COLLAPSED SELECTION',
                   demo: SuperSelectableText(
                     textSpan: _demoText1,
-                    textSelection: TextSelection.collapsed(offset: _demoText1.toPlainText().length),
+                    textSelection: TextSelection.collapsed(
+                        offset: _demoText1.toPlainText().length),
                     showCaret: true,
                   ),
                 ),
-                SizedBox(height: 24),
+                const SizedBox(height: 24),
                 _buildDemo(
                   title: 'TEXT WITH LEFT-TO-RIGHT SELECTION + CARET',
                   demo: SuperSelectableText(
                     textSpan: _demoText1,
-                    textSelection: const TextSelection(baseOffset: 0, extentOffset: 12),
+                    textSelection:
+                        const TextSelection(baseOffset: 0, extentOffset: 12),
                     showCaret: true,
                   ),
                 ),
-                SizedBox(height: 24),
+                const SizedBox(height: 24),
                 _buildDemo(
                   title: 'TEXT WITH RIGHT-TO-LEFT SELECTION + CARET',
                   demo: SuperSelectableText(
@@ -93,9 +95,10 @@ class _SelectableTextDemoState extends State<SelectableTextDemo> {
                     showCaret: true,
                   ),
                 ),
-                SizedBox(height: 24),
+                const SizedBox(height: 24),
                 _buildDemo(
-                  title: 'TEXT WITH FULL SELECTION + CARET, CUSTOM COLORS, CARET SHAPE, DEBUG PAINT',
+                  title:
+                      'TEXT WITH FULL SELECTION + CARET, CUSTOM COLORS, CARET SHAPE, DEBUG PAINT',
                   demo: DebugSelectableTextDecorator(
                     selectableTextKey: _debugTextKey,
                     textLength: _demoText1.toPlainText().length,
@@ -103,8 +106,10 @@ class _SelectableTextDemoState extends State<SelectableTextDemo> {
                     child: SuperSelectableText(
                       key: _debugTextKey,
                       textSpan: _demoText1,
-                      textSelection: TextSelection(baseOffset: 0, extentOffset: _demoText1.toPlainText().length),
-                      textSelectionDecoration: TextSelectionDecoration(
+                      textSelection: TextSelection(
+                          baseOffset: 0,
+                          extentOffset: _demoText1.toPlainText().length),
+                      textSelectionDecoration: const TextSelectionDecoration(
                         selectionColor: Colors.yellow,
                       ),
                       showCaret: true,
@@ -127,8 +132,8 @@ class _SelectableTextDemoState extends State<SelectableTextDemo> {
   Widget _buildTitle(String title) {
     return Text(
       title,
-      style: TextStyle(
-        color: const Color(0xFF444444),
+      style: const TextStyle(
+        color: Color(0xFF444444),
         fontSize: 32,
       ),
     );
@@ -144,21 +149,21 @@ class _SelectableTextDemoState extends State<SelectableTextDemo> {
       children: [
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
               color: Colors.red,
               borderRadius: BorderRadius.vertical(
                 top: Radius.circular(4),
               )),
           child: Text(
             title,
-            style: TextStyle(
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 10,
               fontWeight: FontWeight.bold,
             ),
           ),
         ),
-        SizedBox(height: 4),
+        const SizedBox(height: 4),
         demo,
       ],
     );

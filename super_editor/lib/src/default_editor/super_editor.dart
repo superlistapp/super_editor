@@ -186,7 +186,7 @@ class SuperEditor extends StatefulWidget {
 
   /// Paints some extra visual ornamentation to help with
   /// debugging, when true.
-  final showDebugPaint;
+  final bool showDebugPaint;
 
   @override
   _SuperEditorState createState() => _SuperEditorState();
@@ -263,12 +263,14 @@ class _SuperEditorState extends State<SuperEditor> {
       return;
     }
 
-    final node = widget.editor.document.getNodeById(_composer.selection!.extent.nodeId);
+    final node =
+        widget.editor.document.getNodeById(_composer.selection!.extent.nodeId);
     if (node is! TextNode) {
       return;
     }
 
-    final textPosition = _composer.selection!.extent.nodePosition as TextPosition;
+    final textPosition =
+        _composer.selection!.extent.nodePosition as TextPosition;
 
     if (textPosition.offset == 0) {
       if (node.text.text.isEmpty) {
@@ -298,7 +300,8 @@ class _SuperEditorState extends State<SuperEditor> {
         commonOps: CommonEditorOperations(
           editor: widget.editor,
           composer: _composer,
-          documentLayoutResolver: () => _docLayoutKey.currentState as DocumentLayout,
+          documentLayoutResolver: () =>
+              _docLayoutKey.currentState as DocumentLayout,
         ),
       ),
       keyboardActions: widget.keyboardActions,
@@ -338,14 +341,14 @@ class _SuperEditorState extends State<SuperEditor> {
 }
 
 /// Default visual styles related to content selection.
-final defaultSelectionStyle = const SelectionStyle(
+const defaultSelectionStyle = SelectionStyle(
   textCaretColor: Colors.black,
   selectionColor: Color(0xFFACCEF7),
 );
 
 /// Creates [TextStyles] for the standard [SuperEditor].
 TextStyle defaultStyleBuilder(Set<Attribution> attributions) {
-  TextStyle newStyle = TextStyle(
+  TextStyle newStyle = const TextStyle(
     color: Colors.black,
     fontSize: 13,
     height: 1.4,

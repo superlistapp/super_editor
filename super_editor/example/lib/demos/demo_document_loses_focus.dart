@@ -46,8 +46,8 @@ class _LoseFocusDemoState extends State<LoseFocusDemo> {
   }
 
   Widget _buildDocSelector() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 48.0),
+    return const Padding(
+      padding: EdgeInsets.symmetric(horizontal: 48.0),
       child: TextField(
         decoration: InputDecoration(
           hintText: 'tap to give focus to this TextField',

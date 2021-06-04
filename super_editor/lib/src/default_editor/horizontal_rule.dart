@@ -18,18 +18,22 @@ class HorizontalRuleNode with ChangeNotifier implements DocumentNode {
   final String id;
 
   @override
-  BinaryNodePosition get beginningPosition => BinaryNodePosition.included();
+  BinaryNodePosition get beginningPosition =>
+      const BinaryNodePosition.included();
 
   @override
-  BinaryNodePosition get endPosition => BinaryNodePosition.included();
+  BinaryNodePosition get endPosition => const BinaryNodePosition.included();
 
   @override
-  NodePosition selectUpstreamPosition(NodePosition position1, NodePosition position2) {
+  NodePosition selectUpstreamPosition(
+      NodePosition position1, NodePosition position2) {
     if (position1 is! BinaryNodePosition) {
-      throw Exception('Expected a BinaryNodePosition for position1 but received a ${position1.runtimeType}');
+      throw Exception(
+          'Expected a BinaryNodePosition for position1 but received a ${position1.runtimeType}');
     }
     if (position2 is! BinaryNodePosition) {
-      throw Exception('Expected a BinaryNodePosition for position2 but received a ${position2.runtimeType}');
+      throw Exception(
+          'Expected a BinaryNodePosition for position2 but received a ${position2.runtimeType}');
     }
 
     // BinaryNodePosition's don't disambiguate between upstream and downstream so
@@ -38,12 +42,15 @@ class HorizontalRuleNode with ChangeNotifier implements DocumentNode {
   }
 
   @override
-  NodePosition selectDownstreamPosition(NodePosition position1, NodePosition position2) {
+  NodePosition selectDownstreamPosition(
+      NodePosition position1, NodePosition position2) {
     if (position1 is! BinaryNodePosition) {
-      throw Exception('Expected a BinaryNodePosition for position1 but received a ${position1.runtimeType}');
+      throw Exception(
+          'Expected a BinaryNodePosition for position1 but received a ${position1.runtimeType}');
     }
     if (position2 is! BinaryNodePosition) {
-      throw Exception('Expected a BinaryNodePosition for position2 but received a ${position2.runtimeType}');
+      throw Exception(
+          'Expected a BinaryNodePosition for position2 but received a ${position2.runtimeType}');
     }
 
     // BinaryNodePosition's don't disambiguate between upstream and downstream so
@@ -56,16 +63,19 @@ class HorizontalRuleNode with ChangeNotifier implements DocumentNode {
     @required dynamic base,
     @required dynamic extent,
   }) {
-    return BinarySelection.all();
+    return const BinarySelection.all();
   }
 
   @override
   String? copyContent(dynamic selection) {
     if (selection is! BinarySelection) {
-      throw Exception('HorizontalRuleNode can only copy content from a BinarySelection.');
+      throw Exception(
+          'HorizontalRuleNode can only copy content from a BinarySelection.');
     }
 
-    return selection.position == BinaryNodePosition.included() ? '---' : null;
+    return selection.position == const BinaryNodePosition.included()
+        ? '---'
+        : null;
   }
 
   @override
@@ -118,13 +128,16 @@ Widget? horizontalRuleBuilder(ComponentContext componentContext) {
     return null;
   }
 
-  final selection =
-      componentContext.nodeSelection == null ? null : componentContext.nodeSelection!.nodeSelection as BinarySelection;
+  final selection = componentContext.nodeSelection == null
+      ? null
+      : componentContext.nodeSelection!.nodeSelection as BinarySelection;
   final isSelected = selection != null && selection.position.isIncluded;
 
   return HorizontalRuleComponent(
     componentKey: componentContext.componentKey,
     isSelected: isSelected,
-    selectionColor: (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle).selectionColor,
+    selectionColor: (componentContext.extensions[selectionStylesExtensionKey]
+            as SelectionStyle)
+        .selectionColor,
   );
 }

@@ -17,7 +17,7 @@ dependencies:
   # TODO: move markdown serialization to a separate package and
   #       then remove this dependency.
   markdown: ^4.0.0
-  pedantic: ^1.11.0
+  flutter_lints: ^1.0.0
   uuid: ^3.0.3
 
 dev_dependencies:

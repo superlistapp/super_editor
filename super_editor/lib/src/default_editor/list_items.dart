@@ -72,7 +72,10 @@ class ListItemNode extends TextNode {
 
   @override
   bool hasEquivalentContent(DocumentNode other) {
-    return other is ListItemNode && type == other.type && indent == other.indent && text == other.text;
+    return other is ListItemNode &&
+        type == other.type &&
+        indent == other.indent &&
+        text == other.text;
   }
 }
 
@@ -116,15 +119,17 @@ class UnorderedListItemComponent extends StatelessWidget {
   Widget build(BuildContext context) {
     final indentSpace = indentExtent * (indent + 1);
     final firstLineHeight = styleBuilder({}).fontSize;
-    final manualVerticalAdjustment = 2.0;
+    const manualVerticalAdjustment = 2.0;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          margin: EdgeInsets.only(top: manualVerticalAdjustment),
+          margin: const EdgeInsets.only(top: manualVerticalAdjustment),
           decoration: BoxDecoration(
-            border: Border.all(width: 1, color: showDebugPaint ? Colors.grey : Colors.transparent),
+            border: Border.all(
+                width: 1,
+                color: showDebugPaint ? Colors.grey : Colors.transparent),
           ),
           child: SizedBox(
             width: indentSpace,
@@ -149,9 +154,11 @@ class UnorderedListItemComponent extends StatelessWidget {
   }
 }
 
-typedef UnorderedListItemDotBuilder = Widget Function(BuildContext, UnorderedListItemComponent);
+typedef UnorderedListItemDotBuilder = Widget Function(
+    BuildContext, UnorderedListItemComponent);
 
-Widget _defaultUnorderedListItemDotBuilder(BuildContext context, UnorderedListItemComponent component) {
+Widget _defaultUnorderedListItemDotBuilder(
+    BuildContext context, UnorderedListItemComponent component) {
   return Align(
     alignment: Alignment.centerRight,
     child: Container(
@@ -203,7 +210,7 @@ class OrderedListItemComponent extends StatelessWidget {
   Widget build(BuildContext context) {
     final indentSpace = indentExtent * (indent + 1);
     final firstLineHeight = styleBuilder({}).fontSize!;
-    final manualVerticalAdjustment = 2.0;
+    const manualVerticalAdjustment = 2.0;
     final manualHeightAdjustment = firstLineHeight * 0.15;
 
     return Row(
@@ -212,9 +219,11 @@ class OrderedListItemComponent extends StatelessWidget {
         Container(
           width: indentSpace,
           height: firstLineHeight + manualHeightAdjustment,
-          margin: EdgeInsets.only(top: manualVerticalAdjustment),
+          margin: const EdgeInsets.only(top: manualVerticalAdjustment),
           decoration: BoxDecoration(
-            border: Border.all(width: 1, color: showDebugPaint ? Colors.grey : Colors.transparent),
+            border: Border.all(
+                width: 1,
+                color: showDebugPaint ? Colors.grey : Colors.transparent),
           ),
           child: SizedBox(
             width: indentSpace,
@@ -239,9 +248,11 @@ class OrderedListItemComponent extends StatelessWidget {
   }
 }
 
-typedef OrderedListItemNumeralBuilder = Widget Function(BuildContext, OrderedListItemComponent);
+typedef OrderedListItemNumeralBuilder = Widget Function(
+    BuildContext, OrderedListItemComponent);
 
-Widget _defaultOrderedListItemNumeralBuilder(BuildContext context, OrderedListItemComponent component) {
+Widget _defaultOrderedListItemNumeralBuilder(
+    BuildContext context, OrderedListItemComponent component) {
   return OverflowBox(
     maxHeight: double.infinity,
     child: Align(
@@ -271,7 +282,8 @@ class IndentListItemCommand implements EditorCommand {
     final node = document.getNodeById(nodeId);
     final listItem = node as ListItemNode;
     if (listItem.indent >= 6) {
-      _log.log('IndentListItemCommand', 'WARNING: Editor does not support an indent level beyond 6.');
+      _log.log('IndentListItemCommand',
+          'WARNING: Editor does not support an indent level beyond 6.');
       return;
     }
 
@@ -396,13 +408,16 @@ class SplitListItemCommand implements EditorCommand {
     final listItemNode = node as ListItemNode;
     final text = listItemNode.text;
     final startText = text.copyText(0, splitPosition.offset);
-    final endText = splitPosition.offset < text.text.length ? text.copyText(splitPosition.offset) : AttributedText();
+    final endText = splitPosition.offset < text.text.length
+        ? text.copyText(splitPosition.offset)
+        : AttributedText();
     _log.log('SplitListItemCommand', 'Splitting list item:');
     _log.log('SplitListItemCommand', ' - start text: "$startText"');
     _log.log('SplitListItemCommand', ' - end text: "$endText"');
 
     // Change the current node's content to just the text before the caret.
-    _log.log('SplitListItemCommand', ' - changing the original list item text due to split');
+    _log.log('SplitListItemCommand',
+        ' - changing the original list item text due to split');
     // TODO: figure out how node changes should work in terms of
     //       a DocumentEditorTransaction (#67)
     listItemNode.text = startText;
@@ -428,7 +443,8 @@ class SplitListItemCommand implements EditorCommand {
       newNode: newNode,
     );
 
-    _log.log('SplitListItemCommand', ' - inserted new node: ${newNode.id} after old one: ${node.id}');
+    _log.log('SplitListItemCommand',
+        ' - inserted new node: ${newNode.id} after old one: ${node.id}');
   }
 }
 
@@ -445,7 +461,9 @@ ExecutionInstruction tabToIndentListItem({
 
   final wasIndented = editContext.commonOps.indentListItem();
 
-  return wasIndented ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
+  return wasIndented
+      ? ExecutionInstruction.haltExecution
+      : ExecutionInstruction.continueExecution;
 }
 
 ExecutionInstruction shiftTabToUnIndentListItem({
@@ -461,7 +479,9 @@ ExecutionInstruction shiftTabToUnIndentListItem({
 
   final wasIndented = editContext.commonOps.unindentListItem();
 
-  return wasIndented ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
+  return wasIndented
+      ? ExecutionInstruction.haltExecution
+      : ExecutionInstruction.continueExecution;
 }
 
 ExecutionInstruction backspaceToUnIndentListItem({
@@ -479,17 +499,22 @@ ExecutionInstruction backspaceToUnIndentListItem({
     return ExecutionInstruction.continueExecution;
   }
 
-  final node = editContext.editor.document.getNodeById(editContext.composer.selection!.extent.nodeId);
+  final node = editContext.editor.document
+      .getNodeById(editContext.composer.selection!.extent.nodeId);
   if (node is! ListItemNode) {
     return ExecutionInstruction.continueExecution;
   }
-  if ((editContext.composer.selection!.extent.nodePosition as TextPosition).offset > 0) {
+  if ((editContext.composer.selection!.extent.nodePosition as TextPosition)
+          .offset >
+      0) {
     return ExecutionInstruction.continueExecution;
   }
 
   final wasIndented = editContext.commonOps.unindentListItem();
 
-  return wasIndented ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
+  return wasIndented
+      ? ExecutionInstruction.haltExecution
+      : ExecutionInstruction.continueExecution;
 }
 
 ExecutionInstruction splitListItemWhenEnterPressed({
@@ -500,13 +525,16 @@ ExecutionInstruction splitListItemWhenEnterPressed({
     return ExecutionInstruction.continueExecution;
   }
 
-  final node = editContext.editor.document.getNodeById(editContext.composer.selection!.extent.nodeId);
+  final node = editContext.editor.document
+      .getNodeById(editContext.composer.selection!.extent.nodeId);
   if (node is! ListItemNode) {
     return ExecutionInstruction.continueExecution;
   }
 
   final didSplitListItem = editContext.commonOps.insertBlockLevelNewline();
-  return didSplitListItem ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
+  return didSplitListItem
+      ? ExecutionInstruction.haltExecution
+      : ExecutionInstruction.continueExecution;
 }
 
 Widget? unorderedListItemBuilder(ComponentContext componentContext) {
@@ -519,8 +547,10 @@ Widget? unorderedListItemBuilder(ComponentContext componentContext) {
     return null;
   }
 
-  final textSelection = componentContext.nodeSelection?.nodeSelection as TextSelection?;
-  final showCaret = componentContext.showCaret && (componentContext.nodeSelection?.isExtent ?? false);
+  final textSelection =
+      componentContext.nodeSelection?.nodeSelection as TextSelection?;
+  final showCaret = componentContext.showCaret &&
+      (componentContext.nodeSelection?.isExtent ?? false);
 
   return UnorderedListItemComponent(
     textKey: componentContext.componentKey,
@@ -528,9 +558,13 @@ Widget? unorderedListItemBuilder(ComponentContext componentContext) {
     styleBuilder: componentContext.extensions[textStylesExtensionKey],
     indent: listItemNode.indent,
     textSelection: textSelection,
-    selectionColor: (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle).selectionColor,
+    selectionColor: (componentContext.extensions[selectionStylesExtensionKey]
+            as SelectionStyle)
+        .selectionColor,
     showCaret: showCaret,
-    caretColor: (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle).textCaretColor,
+    caretColor: (componentContext.extensions[selectionStylesExtensionKey]
+            as SelectionStyle)
+        .textCaretColor,
   );
 }
 
@@ -545,7 +579,8 @@ Widget? orderedListItemBuilder(ComponentContext componentContext) {
   }
 
   int index = 1;
-  DocumentNode? nodeAbove = componentContext.document.getNodeBefore(listItemNode);
+  DocumentNode? nodeAbove =
+      componentContext.document.getNodeBefore(listItemNode);
   while (nodeAbove != null &&
       nodeAbove is ListItemNode &&
       nodeAbove.type == ListItemType.ordered &&
@@ -556,8 +591,10 @@ Widget? orderedListItemBuilder(ComponentContext componentContext) {
     nodeAbove = componentContext.document.getNodeBefore(nodeAbove);
   }
 
-  final textSelection = componentContext.nodeSelection?.nodeSelection as TextSelection?;
-  final showCaret = componentContext.showCaret && (componentContext.nodeSelection?.isExtent ?? false);
+  final textSelection =
+      componentContext.nodeSelection?.nodeSelection as TextSelection?;
+  final showCaret = componentContext.showCaret &&
+      (componentContext.nodeSelection?.isExtent ?? false);
 
   return OrderedListItemComponent(
     textKey: componentContext.componentKey,
@@ -565,9 +602,13 @@ Widget? orderedListItemBuilder(ComponentContext componentContext) {
     text: listItemNode.text,
     styleBuilder: componentContext.extensions[textStylesExtensionKey],
     textSelection: textSelection,
-    selectionColor: (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle).selectionColor,
+    selectionColor: (componentContext.extensions[selectionStylesExtensionKey]
+            as SelectionStyle)
+        .selectionColor,
     showCaret: showCaret,
-    caretColor: (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle).textCaretColor,
+    caretColor: (componentContext.extensions[selectionStylesExtensionKey]
+            as SelectionStyle)
+        .textCaretColor,
     indent: listItemNode.indent,
   );
 }

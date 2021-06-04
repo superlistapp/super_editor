@@ -59,7 +59,8 @@ class TextFieldDemoRobot {
   }
 
   Future<void> deselect() async {
-    _commands.add(SelectTextCommand(selection: TextSelection.collapsed(offset: -1)));
+    _commands.add(SelectTextCommand(
+        selection: const TextSelection.collapsed(offset: -1)));
   }
 
   Future<void> pause(Duration duration) async {
@@ -132,7 +133,8 @@ class TypeTextCommand implements RobotCommand {
     GlobalKey<SuperTextFieldState>? textKey,
   ) async {
     if (textController.selection.extentOffset == -1) {
-      print('Can\'t type text because the text field doesn\'t have a valid selection.');
+      print(
+          'Can\'t type text because the text field doesn\'t have a valid selection.');
       return;
     }
 
@@ -149,15 +151,19 @@ class TypeTextCommand implements RobotCommand {
     }
   }
 
-  void _typeCharacter(AttributedTextEditingController textController, int offset) {
+  void _typeCharacter(
+      AttributedTextEditingController textController, int offset) {
     textController.text = textController.text.insertString(
-      textToInsert: textToType.text[offset], // TODO: support insertion of attributed text
+      textToInsert:
+          textToType.text[offset], // TODO: support insertion of attributed text
       startOffset: textController.selection.extentOffset,
     );
 
     final previousSelection = textController.selection;
     textController.selection = TextSelection(
-      baseOffset: previousSelection.isCollapsed ? previousSelection.extentOffset + 1 : previousSelection.baseOffset,
+      baseOffset: previousSelection.isCollapsed
+          ? previousSelection.extentOffset + 1
+          : previousSelection.baseOffset,
       extentOffset: previousSelection.extentOffset + 1,
     );
   }
@@ -215,7 +221,8 @@ class DeleteCharactersCommand implements RobotCommand {
     GlobalKey<SuperTextFieldState>? textKey,
   ) async {
     if (textController.selection.extentOffset == -1) {
-      print('Can\'t delete characters because the text field doesn\'t have a valid selection.');
+      print(
+          'Can\'t delete characters because the text field doesn\'t have a valid selection.');
       return;
     }
 
@@ -224,7 +231,8 @@ class DeleteCharactersCommand implements RobotCommand {
     int currentOffset = textController.selection.extentOffset;
     final finalLength = textController.text.text.length - characterCount;
     while (textController.text.text.length > finalLength) {
-      final codePointsDeleted = _deleteCharacter(textController, currentOffset, direction);
+      final codePointsDeleted =
+          _deleteCharacter(textController, currentOffset, direction);
       if (direction == TextAffinity.upstream) {
         currentOffset -= codePointsDeleted;
       }
@@ -237,7 +245,8 @@ class DeleteCharactersCommand implements RobotCommand {
     }
   }
 
-  int _deleteCharacter(AttributedTextEditingController textController, int offset, TextAffinity direction) {
+  int _deleteCharacter(AttributedTextEditingController textController,
+      int offset, TextAffinity direction) {
     int deleteStartIndex;
     int deleteEndIndex;
     int deletedCodePointCount;
@@ -251,7 +260,8 @@ class DeleteCharactersCommand implements RobotCommand {
       newSelectionIndex = deleteStartIndex;
     } else {
       // Delete the character before the offset
-      deleteStartIndex = getCharacterStartBounds(textController.text.text, offset);
+      deleteStartIndex =
+          getCharacterStartBounds(textController.text.text, offset);
       deleteEndIndex = offset + 1;
       deletedCodePointCount = offset - deleteStartIndex;
       newSelectionIndex = deleteStartIndex;
@@ -262,7 +272,8 @@ class DeleteCharactersCommand implements RobotCommand {
       endOffset: deleteEndIndex,
     );
 
-    textController.selection = TextSelection.collapsed(offset: newSelectionIndex);
+    textController.selection =
+        TextSelection.collapsed(offset: newSelectionIndex);
 
     return deletedCodePointCount;
   }
@@ -312,7 +323,8 @@ class InsertCaretCommand implements RobotCommand {
     GlobalKey<SuperTextFieldState>? textKey,
   ) async {
     focusNode!.requestFocus();
-    textController.selection = TextSelection.collapsed(offset: caretPosition.offset);
+    textController.selection =
+        TextSelection.collapsed(offset: caretPosition.offset);
   }
 
   @override

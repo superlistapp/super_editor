@@ -15,7 +15,7 @@ EditContext createEditContext({
   CommonEditorOperations? commonOps,
 }) {
   final editor = documentEditor ?? DocumentEditor(document: document);
-  final layoutResolver = () => documentLayout ?? FakeDocumentLayout();
+  DocumentLayout layoutResolver() => documentLayout ?? FakeDocumentLayout();
   final composer = documentComposer ?? DocumentComposer();
 
   return EditContext(

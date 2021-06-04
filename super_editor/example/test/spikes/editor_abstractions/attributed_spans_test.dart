@@ -10,8 +10,18 @@ void main() {
         spans.addAttribution(newAttribution: 'bold', start: 0, end: 16);
 
         expect(spans.attributions.length, 2);
-        expect(spans.attributions[0], SpanMarker(attribution: 'bold', offset: 0, markerType: SpanMarkerType.start));
-        expect(spans.attributions[1], SpanMarker(attribution: 'bold', offset: 16, markerType: SpanMarkerType.end));
+        expect(
+            spans.attributions[0],
+            const SpanMarker(
+                attribution: 'bold',
+                offset: 0,
+                markerType: SpanMarkerType.start));
+        expect(
+            spans.attributions[1],
+            const SpanMarker(
+                attribution: 'bold',
+                offset: 16,
+                markerType: SpanMarkerType.end));
       });
 
       test('applies attribution to beginning of span', () {
@@ -20,8 +30,18 @@ void main() {
         spans.addAttribution(newAttribution: 'bold', start: 0, end: 7);
 
         expect(spans.attributions.length, 2);
-        expect(spans.attributions[0], SpanMarker(attribution: 'bold', offset: 0, markerType: SpanMarkerType.start));
-        expect(spans.attributions[1], SpanMarker(attribution: 'bold', offset: 7, markerType: SpanMarkerType.end));
+        expect(
+            spans.attributions[0],
+            const SpanMarker(
+                attribution: 'bold',
+                offset: 0,
+                markerType: SpanMarkerType.start));
+        expect(
+            spans.attributions[1],
+            const SpanMarker(
+                attribution: 'bold',
+                offset: 7,
+                markerType: SpanMarkerType.end));
       });
 
       test('applies attribution to inner span', () {
@@ -30,8 +50,18 @@ void main() {
         spans.addAttribution(newAttribution: 'bold', start: 2, end: 7);
 
         expect(spans.attributions.length, 2);
-        expect(spans.attributions[0], SpanMarker(attribution: 'bold', offset: 2, markerType: SpanMarkerType.start));
-        expect(spans.attributions[1], SpanMarker(attribution: 'bold', offset: 7, markerType: SpanMarkerType.end));
+        expect(
+            spans.attributions[0],
+            const SpanMarker(
+                attribution: 'bold',
+                offset: 2,
+                markerType: SpanMarkerType.start));
+        expect(
+            spans.attributions[1],
+            const SpanMarker(
+                attribution: 'bold',
+                offset: 7,
+                markerType: SpanMarkerType.end));
       });
 
       test('applies attribution to end of span', () {
@@ -40,8 +70,18 @@ void main() {
         spans.addAttribution(newAttribution: 'bold', start: 7, end: 16);
 
         expect(spans.attributions.length, 2);
-        expect(spans.attributions[0], SpanMarker(attribution: 'bold', offset: 7, markerType: SpanMarkerType.start));
-        expect(spans.attributions[1], SpanMarker(attribution: 'bold', offset: 16, markerType: SpanMarkerType.end));
+        expect(
+            spans.attributions[0],
+            const SpanMarker(
+                attribution: 'bold',
+                offset: 7,
+                markerType: SpanMarkerType.start));
+        expect(
+            spans.attributions[1],
+            const SpanMarker(
+                attribution: 'bold',
+                offset: 16,
+                markerType: SpanMarkerType.end));
       });
 
       test('applies exotic span', () {
@@ -54,10 +94,18 @@ void main() {
         spans.addAttribution(newAttribution: linkAttribution, start: 2, end: 7);
 
         expect(spans.attributions.length, 2);
-        expect(spans.attributions[0],
-            SpanMarker(attribution: linkAttribution, offset: 2, markerType: SpanMarkerType.start));
         expect(
-            spans.attributions[1], SpanMarker(attribution: linkAttribution, offset: 7, markerType: SpanMarkerType.end));
+            spans.attributions[0],
+            SpanMarker(
+                attribution: linkAttribution,
+                offset: 2,
+                markerType: SpanMarkerType.start));
+        expect(
+            spans.attributions[1],
+            SpanMarker(
+                attribution: linkAttribution,
+                offset: 7,
+                markerType: SpanMarkerType.end));
         expect(spans.getAllAttributionsAt(4).first, equals(linkAttribution));
       });
 
@@ -65,8 +113,12 @@ void main() {
         final spans = AttributedSpans(
           length: 17,
           attributions: [
-            SpanMarker(attribution: 'bold', offset: 0, markerType: SpanMarkerType.start),
-            SpanMarker(attribution: 'bold', offset: 16, markerType: SpanMarkerType.end)
+            const SpanMarker(
+                attribution: 'bold',
+                offset: 0,
+                markerType: SpanMarkerType.start),
+            const SpanMarker(
+                attribution: 'bold', offset: 16, markerType: SpanMarkerType.end)
           ],
         );
 
@@ -79,8 +131,12 @@ void main() {
         final spans = AttributedSpans(
           length: 17,
           attributions: [
-            SpanMarker(attribution: 'bold', offset: 2, markerType: SpanMarkerType.start),
-            SpanMarker(attribution: 'bold', offset: 7, markerType: SpanMarkerType.end)
+            const SpanMarker(
+                attribution: 'bold',
+                offset: 2,
+                markerType: SpanMarkerType.start),
+            const SpanMarker(
+                attribution: 'bold', offset: 7, markerType: SpanMarkerType.end)
           ],
         );
 
@@ -93,74 +149,144 @@ void main() {
         final spans = AttributedSpans(
           length: 17,
           attributions: [
-            SpanMarker(attribution: 'bold', offset: 2, markerType: SpanMarkerType.start),
-            SpanMarker(attribution: 'bold', offset: 7, markerType: SpanMarkerType.end)
+            const SpanMarker(
+                attribution: 'bold',
+                offset: 2,
+                markerType: SpanMarkerType.start),
+            const SpanMarker(
+                attribution: 'bold', offset: 7, markerType: SpanMarkerType.end)
           ],
         );
 
         spans.removeAttribution(attributionToRemove: 'bold', start: 2, end: 4);
 
         expect(spans.attributions.length, 2);
-        expect(spans.attributions[0], SpanMarker(attribution: 'bold', offset: 5, markerType: SpanMarkerType.start));
-        expect(spans.attributions[1], SpanMarker(attribution: 'bold', offset: 7, markerType: SpanMarkerType.end));
+        expect(
+            spans.attributions[0],
+            const SpanMarker(
+                attribution: 'bold',
+                offset: 5,
+                markerType: SpanMarkerType.start));
+        expect(
+            spans.attributions[1],
+            const SpanMarker(
+                attribution: 'bold',
+                offset: 7,
+                markerType: SpanMarkerType.end));
       });
 
       test('removes attribution from partial inner span', () {
         final spans = AttributedSpans(
           length: 17,
           attributions: [
-            SpanMarker(attribution: 'bold', offset: 2, markerType: SpanMarkerType.start),
-            SpanMarker(attribution: 'bold', offset: 7, markerType: SpanMarkerType.end)
+            const SpanMarker(
+                attribution: 'bold',
+                offset: 2,
+                markerType: SpanMarkerType.start),
+            const SpanMarker(
+                attribution: 'bold', offset: 7, markerType: SpanMarkerType.end)
           ],
         );
 
         spans.removeAttribution(attributionToRemove: 'bold', start: 4, end: 5);
 
         expect(spans.attributions.length, 4);
-        expect(spans.attributions[0], SpanMarker(attribution: 'bold', offset: 2, markerType: SpanMarkerType.start));
-        expect(spans.attributions[1], SpanMarker(attribution: 'bold', offset: 3, markerType: SpanMarkerType.end));
-        expect(spans.attributions[2], SpanMarker(attribution: 'bold', offset: 6, markerType: SpanMarkerType.start));
-        expect(spans.attributions[3], SpanMarker(attribution: 'bold', offset: 7, markerType: SpanMarkerType.end));
+        expect(
+            spans.attributions[0],
+            const SpanMarker(
+                attribution: 'bold',
+                offset: 2,
+                markerType: SpanMarkerType.start));
+        expect(
+            spans.attributions[1],
+            const SpanMarker(
+                attribution: 'bold',
+                offset: 3,
+                markerType: SpanMarkerType.end));
+        expect(
+            spans.attributions[2],
+            const SpanMarker(
+                attribution: 'bold',
+                offset: 6,
+                markerType: SpanMarkerType.start));
+        expect(
+            spans.attributions[3],
+            const SpanMarker(
+                attribution: 'bold',
+                offset: 7,
+                markerType: SpanMarkerType.end));
       });
 
       test('removes attribution from partial ending span', () {
         final spans = AttributedSpans(
           length: 17,
           attributions: [
-            SpanMarker(attribution: 'bold', offset: 2, markerType: SpanMarkerType.start),
-            SpanMarker(attribution: 'bold', offset: 7, markerType: SpanMarkerType.end)
+            const SpanMarker(
+                attribution: 'bold',
+                offset: 2,
+                markerType: SpanMarkerType.start),
+            const SpanMarker(
+                attribution: 'bold', offset: 7, markerType: SpanMarkerType.end)
           ],
         );
 
         spans.removeAttribution(attributionToRemove: 'bold', start: 5, end: 7);
 
         expect(spans.attributions.length, 2);
-        expect(spans.attributions[0], SpanMarker(attribution: 'bold', offset: 2, markerType: SpanMarkerType.start));
-        expect(spans.attributions[1], SpanMarker(attribution: 'bold', offset: 4, markerType: SpanMarkerType.end));
+        expect(
+            spans.attributions[0],
+            const SpanMarker(
+                attribution: 'bold',
+                offset: 2,
+                markerType: SpanMarkerType.start));
+        expect(
+            spans.attributions[1],
+            const SpanMarker(
+                attribution: 'bold',
+                offset: 4,
+                markerType: SpanMarkerType.end));
       });
 
       test('applies attribution when mixed span is toggled', () {
         final spans = AttributedSpans(
           length: 17,
           attributions: [
-            SpanMarker(attribution: 'bold', offset: 8, markerType: SpanMarkerType.start),
-            SpanMarker(attribution: 'bold', offset: 16, markerType: SpanMarkerType.end)
+            const SpanMarker(
+                attribution: 'bold',
+                offset: 8,
+                markerType: SpanMarkerType.start),
+            const SpanMarker(
+                attribution: 'bold', offset: 16, markerType: SpanMarkerType.end)
           ],
         );
 
         spans.toggleAttribution(attribution: 'bold', start: 0, end: 16);
 
         expect(spans.attributions.length, 2);
-        expect(spans.attributions[0], SpanMarker(attribution: 'bold', offset: 0, markerType: SpanMarkerType.start));
-        expect(spans.attributions[1], SpanMarker(attribution: 'bold', offset: 16, markerType: SpanMarkerType.end));
+        expect(
+            spans.attributions[0],
+            const SpanMarker(
+                attribution: 'bold',
+                offset: 0,
+                markerType: SpanMarkerType.start));
+        expect(
+            spans.attributions[1],
+            const SpanMarker(
+                attribution: 'bold',
+                offset: 16,
+                markerType: SpanMarkerType.end));
       });
 
       test('removes attribution when contiguous span is toggled', () {
         final spans = AttributedSpans(
           length: 17,
           attributions: [
-            SpanMarker(attribution: 'bold', offset: 0, markerType: SpanMarkerType.start),
-            SpanMarker(attribution: 'bold', offset: 16, markerType: SpanMarkerType.end)
+            const SpanMarker(
+                attribution: 'bold',
+                offset: 0,
+                markerType: SpanMarkerType.start),
+            const SpanMarker(
+                attribution: 'bold', offset: 16, markerType: SpanMarkerType.end)
           ],
         );
 
@@ -278,18 +404,26 @@ class _ExpectedSpans {
   late List<String> _combinedSpans;
 
   void expectSpans(AttributedSpans spans) {
-    for (int characterIndex = 0; characterIndex < _combinedSpans.length; ++characterIndex) {
-      for (int attributionIndex = 0; attributionIndex < _combinedSpans[characterIndex].length; ++attributionIndex) {
+    for (int characterIndex = 0;
+        characterIndex < _combinedSpans.length;
+        ++characterIndex) {
+      for (int attributionIndex = 0;
+          attributionIndex < _combinedSpans[characterIndex].length;
+          ++attributionIndex) {
         print('Checking character $characterIndex');
         // The attribution name is just a letter, like 'b', 'i', or 's'.
-        final attributionName = _combinedSpans[characterIndex][attributionIndex];
+        final attributionName =
+            _combinedSpans[characterIndex][attributionIndex];
         print(' - looking for attribution: "$attributionName"');
         if (attributionName == '_') {
           print(' - skipping empty template character');
           continue;
         }
 
-        expect(spans.hasAttributionAt(characterIndex, attribution: attributionName), true);
+        expect(
+            spans.hasAttributionAt(characterIndex,
+                attribution: attributionName),
+            true);
       }
     }
   }

@@ -27,10 +27,11 @@ void main() {
             () {
               Platform.setTestInstance(MacPlatform());
 
-              final _editContext = createEditContext(document: MutableDocument());
+              final _editContext =
+                  createEditContext(document: MutableDocument());
               var result = selectAllWhenCmdAIsPressed(
                 editContext: _editContext,
-                keyEvent: FakeRawKeyEvent(
+                keyEvent: const FakeRawKeyEvent(
                   data: FakeRawKeyEventData(
                     logicalKey: LogicalKeyboardKey.meta,
                     physicalKey: PhysicalKeyboardKey.keyC,
@@ -53,10 +54,11 @@ void main() {
             () {
               Platform.setTestInstance(MacPlatform());
 
-              final _editContext = createEditContext(document: MutableDocument());
+              final _editContext =
+                  createEditContext(document: MutableDocument());
               var result = selectAllWhenCmdAIsPressed(
                 editContext: _editContext,
-                keyEvent: FakeRawKeyEvent(
+                keyEvent: const FakeRawKeyEvent(
                   data: FakeRawKeyEventData(
                     logicalKey: LogicalKeyboardKey.keyA,
                     physicalKey: PhysicalKeyboardKey.keyA,
@@ -79,10 +81,11 @@ void main() {
             () {
               Platform.setTestInstance(MacPlatform());
 
-              final _editContext = createEditContext(document: MutableDocument());
+              final _editContext =
+                  createEditContext(document: MutableDocument());
               var result = selectAllWhenCmdAIsPressed(
                 editContext: _editContext,
-                keyEvent: FakeRawKeyEvent(
+                keyEvent: const FakeRawKeyEvent(
                     data: FakeRawKeyEventData(
                       logicalKey: LogicalKeyboardKey.meta,
                       physicalKey: PhysicalKeyboardKey.keyA,
@@ -116,7 +119,7 @@ void main() {
               );
               var result = selectAllWhenCmdAIsPressed(
                 editContext: _editContext,
-                keyEvent: FakeRawKeyEvent(
+                keyEvent: const FakeRawKeyEvent(
                   data: FakeRawKeyEventData(
                     logicalKey: LogicalKeyboardKey.meta,
                     physicalKey: PhysicalKeyboardKey.keyA,
@@ -130,16 +133,17 @@ void main() {
               expect(result, ExecutionInstruction.haltExecution);
               expect(
                 _editContext.composer.selection!.base,
-                DocumentPosition(
+                const DocumentPosition(
                   nodeId: 'paragraph',
                   nodePosition: TextNodePosition(offset: 0),
                 ),
               );
               expect(
                 _editContext.composer.selection!.extent,
-                DocumentPosition(
+                const DocumentPosition(
                   nodeId: 'paragraph',
-                  nodePosition: TextNodePosition(offset: 'This is some text'.length),
+                  nodePosition:
+                      TextNodePosition(offset: 'This is some text'.length),
                 ),
               );
 
@@ -167,7 +171,7 @@ void main() {
               );
               var result = selectAllWhenCmdAIsPressed(
                 editContext: _editContext,
-                keyEvent: FakeRawKeyEvent(
+                keyEvent: const FakeRawKeyEvent(
                   data: FakeRawKeyEventData(
                     logicalKey: LogicalKeyboardKey.meta,
                     physicalKey: PhysicalKeyboardKey.keyA,
@@ -181,16 +185,17 @@ void main() {
               expect(result, ExecutionInstruction.haltExecution);
               expect(
                 _editContext.composer.selection!.base,
-                DocumentPosition(
+                const DocumentPosition(
                   nodeId: 'paragraph_1',
                   nodePosition: TextNodePosition(offset: 0),
                 ),
               );
               expect(
                 _editContext.composer.selection!.extent,
-                DocumentPosition(
+                const DocumentPosition(
                   nodeId: 'paragraph_2',
-                  nodePosition: TextNodePosition(offset: 'This is some text'.length),
+                  nodePosition:
+                      TextNodePosition(offset: 'This is some text'.length),
                 ),
               );
 
@@ -222,7 +227,7 @@ void main() {
               );
               var result = selectAllWhenCmdAIsPressed(
                 editContext: _editContext,
-                keyEvent: FakeRawKeyEvent(
+                keyEvent: const FakeRawKeyEvent(
                   data: FakeRawKeyEventData(
                     logicalKey: LogicalKeyboardKey.meta,
                     physicalKey: PhysicalKeyboardKey.keyA,
@@ -236,14 +241,14 @@ void main() {
               expect(result, ExecutionInstruction.haltExecution);
               expect(
                 _editContext.composer.selection!.base,
-                DocumentPosition(
+                const DocumentPosition(
                   nodeId: 'image_1',
                   nodePosition: BinaryNodePosition.included(),
                 ),
               );
               expect(
                 _editContext.composer.selection!.extent,
-                DocumentPosition(
+                const DocumentPosition(
                   nodeId: 'image_2',
                   nodePosition: BinaryNodePosition.included(),
                 ),

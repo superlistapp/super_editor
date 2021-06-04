@@ -51,7 +51,7 @@ class SuperSelectableText extends StatefulWidget {
         super(key: key);
 
   /// [SuperSelectableText] that displays styled text.
-  SuperSelectableText({
+  const SuperSelectableText({
     Key? key,
     required TextSpan textSpan,
     this.textAlign = TextAlign.left,
@@ -104,7 +104,8 @@ class SuperSelectableText extends StatefulWidget {
   SuperSelectableTextState createState() => SuperSelectableTextState();
 }
 
-class SuperSelectableTextState extends State<SuperSelectableText> implements TextLayout {
+class SuperSelectableTextState extends State<SuperSelectableText>
+    implements TextLayout {
   // [GlobalKey] that provides access to the [RenderParagraph] associated
   // with the text that this [SuperSelectableText] widget displays.
   final GlobalKey _textKey = GlobalKey();
@@ -134,8 +135,9 @@ class SuperSelectableTextState extends State<SuperSelectableText> implements Tex
     _cachedTextLength = widget.richText.toPlainText().length;
   }
 
-  RenderParagraph? get _renderParagraph =>
-      _textKey.currentContext != null ? _textKey.currentContext!.findRenderObject() as RenderParagraph : null;
+  RenderParagraph? get _renderParagraph => _textKey.currentContext != null
+      ? _textKey.currentContext!.findRenderObject() as RenderParagraph
+      : null;
 
   // TODO: use TextPainter line height when Flutter makes the info available. (#46)
   double get _lineHeight {
@@ -151,7 +153,7 @@ class SuperSelectableTextState extends State<SuperSelectableText> implements Tex
   @override
   TextPosition getPositionAtOffset(Offset localOffset) {
     if (_renderParagraph == null) {
-      return TextPosition(offset: -1);
+      return const TextPosition(offset: -1);
     }
 
     // TODO: bring back this condition by changing existing uses of
@@ -166,7 +168,7 @@ class SuperSelectableTextState extends State<SuperSelectableText> implements Tex
   @override
   TextPosition getPositionNearestToOffset(Offset localOffset) {
     if (_renderParagraph == null) {
-      return TextPosition(offset: -1);
+      return const TextPosition(offset: -1);
     }
 
     return _renderParagraph!.getPositionForOffset(localOffset);
@@ -175,10 +177,12 @@ class SuperSelectableTextState extends State<SuperSelectableText> implements Tex
   @override
   Offset getOffsetAtPosition(TextPosition position) {
     if (_renderParagraph == null) {
-      throw Exception('SelectableText does not yet have a RenderParagraph. Can\'t getOffsetForPosition().');
+      throw Exception(
+          'SelectableText does not yet have a RenderParagraph. Can\'t getOffsetForPosition().');
     }
 
-    if (_renderParagraph!.hasSize && (kDebugMode && _renderParagraph!.debugNeedsLayout)) {
+    if (_renderParagraph!.hasSize &&
+        (kDebugMode && _renderParagraph!.debugNeedsLayout)) {
       // This condition was added because getOffsetForCaret() was throwing
       // an exception when debugNeedsLayout is true. It's unclear what we're
       // supposed to do at our level to ensure that condition doesn't happen
@@ -197,7 +201,8 @@ class SuperSelectableTextState extends State<SuperSelectableText> implements Tex
   @override
   List<TextBox> getBoxesForSelection(TextSelection selection) {
     if (_renderParagraph == null) {
-      throw Exception('SelectableText does not yet have a RenderParagraph. Can\'t getBoxesForSelection().');
+      throw Exception(
+          'SelectableText does not yet have a RenderParagraph. Can\'t getBoxesForSelection().');
     }
 
     return _renderParagraph!.getBoxesForSelection(selection);
@@ -206,7 +211,7 @@ class SuperSelectableTextState extends State<SuperSelectableText> implements Tex
   @override
   TextBox getCharacterBox(TextPosition position) {
     if (_renderParagraph == null) {
-      return TextBox.fromLTRBD(0, 0, 0, 0, TextDirection.ltr);
+      return const TextBox.fromLTRBD(0, 0, 0, 0, TextDirection.ltr);
     }
 
     return _renderParagraph!
@@ -220,13 +225,15 @@ class SuperSelectableTextState extends State<SuperSelectableText> implements Tex
   @override
   TextPosition getPositionAtStartOfLine(TextPosition currentPosition) {
     if (_renderParagraph == null) {
-      return TextPosition(offset: -1);
+      return const TextPosition(offset: -1);
     }
 
     final renderParagraph = _renderParagraph!;
     // Note: add half the line height to the current offset to help deal with
     //       line heights that aren't accurate.
-    final positionOffset = renderParagraph.getOffsetForCaret(currentPosition, Rect.zero) + Offset(0, _lineHeight / 2);
+    final positionOffset =
+        renderParagraph.getOffsetForCaret(currentPosition, Rect.zero) +
+            Offset(0, _lineHeight / 2);
     final endOfLineOffset = Offset(0, positionOffset.dy);
     return renderParagraph.getPositionForOffset(endOfLineOffset);
   }
@@ -234,14 +241,17 @@ class SuperSelectableTextState extends State<SuperSelectableText> implements Tex
   @override
   TextPosition getPositionAtEndOfLine(TextPosition currentPosition) {
     if (_renderParagraph == null) {
-      return TextPosition(offset: -1);
+      return const TextPosition(offset: -1);
     }
 
     final renderParagraph = _renderParagraph!;
     // Note: add half the line height to the current offset to help deal with
     //       line heights that aren't accurate.
-    final positionOffset = renderParagraph.getOffsetForCaret(currentPosition, Rect.zero) + Offset(0, _lineHeight / 2);
-    final endOfLineOffset = Offset(renderParagraph.size.width, positionOffset.dy);
+    final positionOffset =
+        renderParagraph.getOffsetForCaret(currentPosition, Rect.zero) +
+            Offset(0, _lineHeight / 2);
+    final endOfLineOffset =
+        Offset(renderParagraph.size.width, positionOffset.dy);
     return renderParagraph.getPositionForOffset(endOfLineOffset);
   }
 
@@ -256,7 +266,8 @@ class SuperSelectableTextState extends State<SuperSelectableText> implements Tex
     // Note: add half the line height to the current offset to help deal with
     //       line heights that aren't accurate.
     final currentSelectionOffset =
-        renderParagraph.getOffsetForCaret(currentPosition, Rect.zero) + Offset(0, lineHeight / 2);
+        renderParagraph.getOffsetForCaret(currentPosition, Rect.zero) +
+            Offset(0, lineHeight / 2);
     final oneLineUpOffset = currentSelectionOffset - Offset(0, lineHeight);
 
     if (oneLineUpOffset.dy < 0) {
@@ -278,7 +289,8 @@ class SuperSelectableTextState extends State<SuperSelectableText> implements Tex
     // Note: add half the line height to the current offset to help deal with
     //       line heights that aren't accurate.
     final currentSelectionOffset =
-        renderParagraph.getOffsetForCaret(currentPosition, Rect.zero) + Offset(0, lineHeight / 2);
+        renderParagraph.getOffsetForCaret(currentPosition, Rect.zero) +
+            Offset(0, lineHeight / 2);
     final oneLineDownOffset = currentSelectionOffset + Offset(0, lineHeight);
 
     if (oneLineDownOffset.dy > renderParagraph.size.height) {
@@ -299,7 +311,7 @@ class SuperSelectableTextState extends State<SuperSelectableText> implements Tex
   @override
   TextPosition getPositionInLastLineAtX(double x) {
     if (_renderParagraph == null) {
-      return TextPosition(offset: -1);
+      return const TextPosition(offset: -1);
     }
 
     return getPositionAtOffset(
@@ -309,7 +321,7 @@ class SuperSelectableTextState extends State<SuperSelectableText> implements Tex
 
   TextSelection getWordSelectionAt(TextPosition position) {
     if (_renderParagraph == null) {
-      return TextSelection.collapsed(offset: -1);
+      return const TextSelection.collapsed(offset: -1);
     }
 
     final wordRange = _renderParagraph!.getWordBoundary(position);
@@ -320,7 +332,8 @@ class SuperSelectableTextState extends State<SuperSelectableText> implements Tex
   }
 
   @override
-  TextSelection expandSelection(TextPosition position, TextExpansion expansion, TextAffinity affinity) {
+  TextSelection expandSelection(
+      TextPosition position, TextExpansion expansion, TextAffinity affinity) {
     return expansion(widget.richText.toPlainText(), position, affinity);
   }
 
@@ -355,7 +368,8 @@ class SuperSelectableTextState extends State<SuperSelectableText> implements Tex
     }
 
     final renderParagraph = _renderParagraph!;
-    final contentOffset = renderParagraph.localToGlobal(Offset.zero, ancestor: ancestorCoordinateSpace);
+    final contentOffset = renderParagraph.localToGlobal(Offset.zero,
+        ancestor: ancestorCoordinateSpace);
     final textRect = contentOffset & renderParagraph.size;
 
     if (region.overlaps(textRect)) {
@@ -369,7 +383,7 @@ class SuperSelectableTextState extends State<SuperSelectableText> implements Tex
   @override
   TextSelection getSelectionInRect(Offset baseOffset, Offset extentOffset) {
     if (_renderParagraph == null) {
-      return TextSelection.collapsed(offset: -1);
+      return const TextSelection.collapsed(offset: -1);
     }
 
     final renderParagraph = _renderParagraph!;
@@ -427,7 +441,7 @@ class SuperSelectableTextState extends State<SuperSelectableText> implements Tex
 
   Widget _buildTextSelection() {
     if (_renderParagraph == null) {
-      return SizedBox();
+      return const SizedBox();
     }
 
     return widget.textSelectionDecoration.build(
@@ -450,7 +464,7 @@ class SuperSelectableTextState extends State<SuperSelectableText> implements Tex
 
   Widget _buildTextCaret() {
     if (_renderParagraph == null) {
-      return SizedBox();
+      return const SizedBox();
     }
 
     return RepaintBoundary(
@@ -507,7 +521,7 @@ class _TextSelectionPainter extends CustomPainter {
   final bool isTextEmpty;
   final RenderParagraph renderParagraph;
   final TextSelection selection;
-  final emptySelectionHeight;
+  final double emptySelectionHeight;
   // When true, an empty, collapsed selection will be highlighted
   // for the purpose of showing a highlighted empty line.
   final bool highlightWhenEmpty;
@@ -516,11 +530,14 @@ class _TextSelectionPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    if (isTextEmpty && highlightWhenEmpty && selection.isCollapsed && selection.extentOffset == 0) {
+    if (isTextEmpty &&
+        highlightWhenEmpty &&
+        selection.isCollapsed &&
+        selection.extentOffset == 0) {
       //&& highlightWhenEmpty) {
       // This is an empty paragraph, which is selected. Paint a small selection.
       canvas.drawRect(
-        Rect.fromLTWH(0, 0, 5, 20),
+        const Rect.fromLTWH(0, 0, 5, 20),
         selectionPaint,
       );
     }
@@ -529,12 +546,15 @@ class _TextSelectionPainter extends CustomPainter {
 
     for (final box in selectionBoxes) {
       final rawRect = box.toRect();
-      final rect = Rect.fromLTWH(rawRect.left, rawRect.top - 2, rawRect.width, rawRect.height + 4);
+      final rect = Rect.fromLTWH(
+          rawRect.left, rawRect.top - 2, rawRect.width, rawRect.height + 4);
 
       canvas.drawRect(
         // Note: If the rect has no width then we've selected an empty line. Give
         //       that line a slight width for visibility.
-        rect.width > 0 ? rect : Rect.fromLTWH(rect.left, rect.top, 5, rect.height),
+        rect.width > 0
+            ? rect
+            : Rect.fromLTWH(rect.left, rect.top, 5, rect.height),
         selectionPaint,
       );
     }
@@ -542,7 +562,8 @@ class _TextSelectionPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_TextSelectionPainter oldDelegate) {
-    return renderParagraph != oldDelegate.renderParagraph || selection != oldDelegate.selection;
+    return renderParagraph != oldDelegate.renderParagraph ||
+        selection != oldDelegate.selection;
   }
 }
 
@@ -604,7 +625,8 @@ class _BlinkingCaret extends StatefulWidget {
   _BlinkingCaretState createState() => _BlinkingCaretState();
 }
 
-class _BlinkingCaretState extends State<_BlinkingCaret> with SingleTickerProviderStateMixin {
+class _BlinkingCaretState extends State<_BlinkingCaret>
+    with SingleTickerProviderStateMixin {
   // Controls the blinking caret animation.
   late _CaretBlinkController _caretBlinkController;
 
@@ -668,7 +690,8 @@ class _CursorPainter extends CustomPainter {
   final int caretTextPosition;
   final double width;
   final BorderRadius borderRadius;
-  final double lineHeight; // TODO: this should probably also come from the TextPainter (#46).
+  final double
+      lineHeight; // TODO: this should probably also come from the TextPainter (#46).
   final bool isTextEmpty;
   final bool showCaret;
   final Color caretColor;
@@ -686,11 +709,14 @@ class _CursorPainter extends CustomPainter {
 
     caretPaint.color = caretColor.withOpacity(blinkController.opacity);
 
-    final caretHeight = paragraph.getFullHeightForCaret(TextPosition(offset: caretTextPosition)) ?? lineHeight;
+    final caretHeight = paragraph
+            .getFullHeightForCaret(TextPosition(offset: caretTextPosition)) ??
+        lineHeight;
 
     Offset caretOffset = isTextEmpty
         ? Offset(0, (lineHeight - caretHeight) / 2)
-        : paragraph.getOffsetForCaret(TextPosition(offset: caretTextPosition), Rect.zero);
+        : paragraph.getOffsetForCaret(
+            TextPosition(offset: caretTextPosition), Rect.zero);
 
     if (borderRadius == BorderRadius.zero) {
       canvas.drawRect(
@@ -789,14 +815,17 @@ class DebugSelectableTextDecorator extends StatefulWidget {
   final bool showDebugPaint;
 
   @override
-  _DebugSelectableTextDecoratorState createState() => _DebugSelectableTextDecoratorState();
+  _DebugSelectableTextDecoratorState createState() =>
+      _DebugSelectableTextDecoratorState();
 }
 
-class _DebugSelectableTextDecoratorState extends State<DebugSelectableTextDecorator> {
+class _DebugSelectableTextDecoratorState
+    extends State<DebugSelectableTextDecorator> {
   SuperSelectableTextState? get _selectableTextState =>
       widget.selectableTextKey.currentState as SuperSelectableTextState?;
 
-  RenderParagraph? get _renderParagraph => _selectableTextState?._renderParagraph;
+  RenderParagraph? get _renderParagraph =>
+      _selectableTextState?._renderParagraph;
 
   List<Rect> _computeTextRectangles(RenderParagraph renderParagraph) {
     return renderParagraph
@@ -824,21 +853,22 @@ class _DebugSelectableTextDecoratorState extends State<DebugSelectableTextDecora
       WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
         setState(() {});
       });
-      return SizedBox();
+      return const SizedBox();
     }
     if (_renderParagraph == null) {
       // Schedule another frame so we can compute the debug paint.
       WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
         setState(() {});
       });
-      return SizedBox();
+      return const SizedBox();
     }
-    if (_renderParagraph!.hasSize && (kDebugMode && _renderParagraph!.debugNeedsLayout)) {
+    if (_renderParagraph!.hasSize &&
+        (kDebugMode && _renderParagraph!.debugNeedsLayout)) {
       // Schedule another frame so we can compute the debug paint.
       WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
         setState(() {});
       });
-      return SizedBox();
+      return const SizedBox();
     }
 
     return Positioned.fill(
@@ -893,7 +923,7 @@ class _DebugTextPainter extends CustomPainter {
 /// If there is an existing widget that does this, get rid of this
 /// widget and use the standard widget.
 class _FillWidthIfConstrained extends SingleChildRenderObjectWidget {
-  _FillWidthIfConstrained({
+  const _FillWidthIfConstrained({
     required Widget child,
   }) : super(child: child);
 

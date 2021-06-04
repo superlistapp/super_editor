@@ -5,10 +5,12 @@ import '_robot.dart';
 
 class ExpandingMultiLineTextFieldDemo extends StatefulWidget {
   @override
-  _ExpandingMultiLineTextFieldDemoState createState() => _ExpandingMultiLineTextFieldDemoState();
+  _ExpandingMultiLineTextFieldDemoState createState() =>
+      _ExpandingMultiLineTextFieldDemoState();
 }
 
-class _ExpandingMultiLineTextFieldDemoState extends State<ExpandingMultiLineTextFieldDemo>
+class _ExpandingMultiLineTextFieldDemoState
+    extends State<ExpandingMultiLineTextFieldDemo>
     with TickerProviderStateMixin {
   final _textFieldController = AttributedTextEditingController(
     text: AttributedText(
@@ -53,7 +55,7 @@ class _ExpandingMultiLineTextFieldDemoState extends State<ExpandingMultiLineText
 
   void _startDemo() {
     _textFieldController
-      ..selection = TextSelection.collapsed(offset: 0)
+      ..selection = const TextSelection.collapsed(offset: 0)
       ..text = AttributedText();
     _demoRobot
       ..typeText(AttributedText(text: 'Hello World!'))
@@ -93,7 +95,8 @@ class _ExpandingMultiLineTextFieldDemoState extends State<ExpandingMultiLineText
                     key: _textKey,
                     textController: _textFieldController,
                     focusNode: _focusNode,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decorationBuilder: (context, child) {
                       return Material(
                         borderRadius: BorderRadius.circular(4),
@@ -102,7 +105,7 @@ class _ExpandingMultiLineTextFieldDemoState extends State<ExpandingMultiLineText
                       );
                     },
                     hintBuilder: (context) {
-                      return Text(
+                      return const Text(
                         'enter some text',
                         style: TextStyle(
                           color: Colors.grey,
@@ -115,10 +118,10 @@ class _ExpandingMultiLineTextFieldDemoState extends State<ExpandingMultiLineText
                   ),
                 ),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: _restartDemo,
-                child: Text('Restart Demo'),
+                child: const Text('Restart Demo'),
               ),
             ],
           ),

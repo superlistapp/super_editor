@@ -7,18 +7,32 @@ const flutterAttribution = NamedAttribution('flutter');
 
 class InteractiveTextFieldDemo extends StatefulWidget {
   @override
-  _InteractiveTextFieldDemoState createState() => _InteractiveTextFieldDemoState();
+  _InteractiveTextFieldDemoState createState() =>
+      _InteractiveTextFieldDemoState();
 }
 
 class _InteractiveTextFieldDemoState extends State<InteractiveTextFieldDemo> {
   final _textFieldController = AttributedTextEditingController(
     text: AttributedText(
-        text: 'Super Editor is an open source text editor for Flutter projects.',
-        spans: AttributedSpans(attributions: [
-          SpanMarker(attribution: brandAttribution, offset: 0, markerType: SpanMarkerType.start),
-          SpanMarker(attribution: brandAttribution, offset: 11, markerType: SpanMarkerType.end),
-          SpanMarker(attribution: flutterAttribution, offset: 47, markerType: SpanMarkerType.start),
-          SpanMarker(attribution: flutterAttribution, offset: 53, markerType: SpanMarkerType.end),
+        text:
+            'Super Editor is an open source text editor for Flutter projects.',
+        spans: AttributedSpans(attributions: const [
+          SpanMarker(
+              attribution: brandAttribution,
+              offset: 0,
+              markerType: SpanMarkerType.start),
+          SpanMarker(
+              attribution: brandAttribution,
+              offset: 11,
+              markerType: SpanMarkerType.end),
+          SpanMarker(
+              attribution: flutterAttribution,
+              offset: 47,
+              markerType: SpanMarkerType.start),
+          SpanMarker(
+              attribution: flutterAttribution,
+              offset: 53,
+              markerType: SpanMarkerType.end),
         ])),
   );
 
@@ -39,8 +53,8 @@ class _InteractiveTextFieldDemoState extends State<InteractiveTextFieldDemo> {
     super.dispose();
   }
 
-  void _onRightClick(
-      BuildContext textFieldContext, AttributedTextEditingController textController, Offset localOffset) {
+  void _onRightClick(BuildContext textFieldContext,
+      AttributedTextEditingController textController, Offset localOffset) {
     // Only show menu if some text is selected
     if (textController.selection.isCollapsed) {
       return;
@@ -49,7 +63,8 @@ class _InteractiveTextFieldDemoState extends State<InteractiveTextFieldDemo> {
     final overlay = Overlay.of(context)!;
     final overlayBox = overlay.context.findRenderObject() as RenderBox?;
     final textFieldBox = textFieldContext.findRenderObject() as RenderBox;
-    _popupOffset = textFieldBox.localToGlobal(localOffset, ancestor: overlayBox);
+    _popupOffset =
+        textFieldBox.localToGlobal(localOffset, ancestor: overlayBox);
 
     if (_popupEntry == null) {
       _popupEntry = OverlayEntry(builder: (context) {
@@ -84,11 +99,12 @@ class _InteractiveTextFieldDemoState extends State<InteractiveTextFieldDemo> {
                         TextButton(
                           onPressed: () {
                             Clipboard.setData(ClipboardData(
-                              text: textController.selection.textInside(textController.text.text),
+                              text: textController.selection
+                                  .textInside(textController.text.text),
                             ));
                             _closePopup();
                           },
-                          child: Text('Copy'),
+                          child: const Text('Copy'),
                         ),
                       ],
                     ),
@@ -136,13 +152,16 @@ class _InteractiveTextFieldDemoState extends State<InteractiveTextFieldDemo> {
                 textController: _textFieldController,
                 focusNode: _focusNode,
                 textStyleBuilder: _textStyleBuilder,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decorationBuilder: (context, child) {
                   return Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(4),
                       border: Border.all(
-                        color: _focusNode!.hasFocus ? Colors.blue : Colors.grey.shade300,
+                        color: _focusNode!.hasFocus
+                            ? Colors.blue
+                            : Colors.grey.shade300,
                         width: 1,
                       ),
                     ),
@@ -150,7 +169,7 @@ class _InteractiveTextFieldDemoState extends State<InteractiveTextFieldDemo> {
                   );
                 },
                 hintBuilder: (context) {
-                  return Text(
+                  return const Text(
                     'enter some text',
                     style: TextStyle(
                       color: Colors.grey,
@@ -170,7 +189,7 @@ class _InteractiveTextFieldDemoState extends State<InteractiveTextFieldDemo> {
   }
 
   TextStyle _textStyleBuilder(Set<Attribution> attributions) {
-    TextStyle textStyle = TextStyle(
+    TextStyle textStyle = const TextStyle(
       color: Colors.black,
       fontSize: 14,
     );

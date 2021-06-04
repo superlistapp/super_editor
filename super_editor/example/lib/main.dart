@@ -27,11 +27,11 @@ class SuperEditorDemoApp extends StatelessWidget {
         primarySwatch: Colors.red,
       ),
       home: HomeScreen(),
-      supportedLocales: [
-        const Locale('en', ''),
-        const Locale('es', ''),
+      supportedLocales: const [
+        Locale('en', ''),
+        Locale('es', ''),
       ],
-      localizationsDelegates: [
+      localizationsDelegates: const [
         ...AppLocalizations.localizationsDelegates,
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
@@ -98,7 +98,7 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: Colors.transparent,
       elevation: 0,
       leading: IconButton(
-        icon: Icon(Icons.menu),
+        icon: const Icon(Icons.menu),
         color: Theme.of(context).colorScheme.onSurface,
         splashRadius: 24,
         onPressed: _toggleDrawer,
@@ -126,7 +126,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     },
                   ),
                 ],
-                SizedBox(height: 24),
+                const SizedBox(height: 24),
               ],
             ],
           ),
@@ -253,8 +253,8 @@ class _DrawerHeader extends StatelessWidget {
       padding: const EdgeInsets.only(left: 16, bottom: 4),
       child: Text(
         title!,
-        style: TextStyle(
-          color: const Color(0xFF444444),
+        style: const TextStyle(
+          color: Color(0xFF444444),
           fontSize: 10,
           fontWeight: FontWeight.bold,
         ),
@@ -295,18 +295,19 @@ class _DrawerButton extends StatelessWidget {
               return Colors.transparent;
             }),
             // splashFactory: NoSplash.splashFactory,
-            foregroundColor:
-                MaterialStateColor.resolveWith((states) => isSelected ? Colors.white : const Color(0xFFBBBBBB)),
+            foregroundColor: MaterialStateColor.resolveWith((states) =>
+                isSelected ? Colors.white : const Color(0xFFBBBBBB)),
             elevation: MaterialStateProperty.resolveWith((states) => 0),
-            padding: MaterialStateProperty.resolveWith((states) => const EdgeInsets.all(16))),
+            padding: MaterialStateProperty.resolveWith(
+                (states) => const EdgeInsets.all(16))),
         onPressed: isSelected ? null : onPressed,
         child: Row(
           children: [
-            SizedBox(width: 8),
+            const SizedBox(width: 8),
             Icon(
               icon,
             ),
-            SizedBox(width: 16),
+            const SizedBox(width: 16),
             Expanded(
               child: Text(title),
             ),

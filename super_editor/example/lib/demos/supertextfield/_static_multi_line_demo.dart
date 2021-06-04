@@ -5,10 +5,12 @@ import '_robot.dart';
 
 class StaticMultiLineTextFieldDemo extends StatefulWidget {
   @override
-  _StaticMultiLineTextFieldDemoState createState() => _StaticMultiLineTextFieldDemoState();
+  _StaticMultiLineTextFieldDemoState createState() =>
+      _StaticMultiLineTextFieldDemoState();
 }
 
-class _StaticMultiLineTextFieldDemoState extends State<StaticMultiLineTextFieldDemo> with TickerProviderStateMixin {
+class _StaticMultiLineTextFieldDemoState
+    extends State<StaticMultiLineTextFieldDemo> with TickerProviderStateMixin {
   final _textFieldController = AttributedTextEditingController(
     text: AttributedText(
         // text:
@@ -52,7 +54,7 @@ class _StaticMultiLineTextFieldDemoState extends State<StaticMultiLineTextFieldD
 
   void _startDemo() {
     _textFieldController
-      ..selection = TextSelection.collapsed(offset: 0)
+      ..selection = const TextSelection.collapsed(offset: 0)
       ..text = AttributedText();
     _demoRobot
       ..typeText(AttributedText(text: 'Hello World!'))
@@ -92,7 +94,8 @@ class _StaticMultiLineTextFieldDemoState extends State<StaticMultiLineTextFieldD
                     key: _textKey,
                     textController: _textFieldController,
                     focusNode: _focusNode,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decorationBuilder: (context, child) {
                       return Material(
                         borderRadius: BorderRadius.circular(4),
@@ -101,7 +104,7 @@ class _StaticMultiLineTextFieldDemoState extends State<StaticMultiLineTextFieldD
                       );
                     },
                     hintBuilder: (context) {
-                      return Text(
+                      return const Text(
                         'enter some text',
                         style: TextStyle(
                           color: Colors.grey,
@@ -114,10 +117,10 @@ class _StaticMultiLineTextFieldDemoState extends State<StaticMultiLineTextFieldD
                   ),
                 ),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: _restartDemo,
-                child: Text('Restart Demo'),
+                child: const Text('Restart Demo'),
               ),
             ],
           ),

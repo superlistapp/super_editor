@@ -10,7 +10,7 @@ import 'package:markdown/markdown.dart' as md;
 //       requires one. When the editing system matures, there should
 //       be a way to return something here that is not concrete.
 MutableDocument deserializeMarkdownToDocument(String markdown) {
-  final markdownLines = LineSplitter().convert(markdown);
+  final markdownLines = const LineSplitter().convert(markdown);
 
   final markdownDoc = md.Document();
   final blockParser = md.BlockParser(markdownLines, markdownDoc);
@@ -155,7 +155,8 @@ class _MarkdownToDocument implements md.NodeVisitor {
         break;
       case 'li':
         if (_listItemTypeStack.isEmpty) {
-          throw Exception('Tried to parse a markdown list item but the list item type was null');
+          throw Exception(
+              'Tried to parse a markdown list item but the list item type was null');
         }
 
         _addListItem(
@@ -363,7 +364,8 @@ class _InlineMarkdownToDocument implements md.NodeVisitor {
   @override
   void visitText(md.Text text) {
     final attributedText = _textStack.removeLast();
-    _textStack.add(attributedText.copyAndAppend(AttributedText(text: text.text)));
+    _textStack
+        .add(attributedText.copyAndAppend(AttributedText(text: text.text)));
   }
 
   @override
@@ -403,11 +405,18 @@ extension on AttributedText {
   /// Serializes style attributions into markdown syntax in a repeatable
   /// order such that opening and closing styles match each other on
   /// the opening and closing ends of a span.
-  static String _sortAndSerializeAttributions(Set<Attribution> attributions, AttributionVisitEvent event) {
-    const startOrder = [codeAttribution, boldAttribution, italicsAttribution, strikethroughAttribution];
+  static String _sortAndSerializeAttributions(
+      Set<Attribution> attributions, AttributionVisitEvent event) {
+    const startOrder = [
+      codeAttribution,
+      boldAttribution,
+      italicsAttribution,
+      strikethroughAttribution
+    ];
 
     final buffer = StringBuffer();
-    final encodingOrder = event == AttributionVisitEvent.start ? startOrder : startOrder.reversed;
+    final encodingOrder =
+        event == AttributionVisitEvent.start ? startOrder : startOrder.reversed;
 
     for (final markdownStyleAttribution in encodingOrder) {
       if (attributions.contains(markdownStyleAttribution)) {
@@ -447,7 +456,9 @@ extension on AttributedText {
         case AttributionVisitEvent.end:
           // +1 on end index because this visitor has inclusive indices
           // whereas substring() expects an exclusive ending index.
-          buffer..write(fullText.text.substring(spanStart, index + 1))..write(markdownStyles);
+          buffer
+            ..write(fullText.text.substring(spanStart, index + 1))
+            ..write(markdownStyles);
           break;
       }
     });

@@ -73,7 +73,7 @@ class _TextFieldDemoState extends State<TextFieldDemo> {
           label: 'Backspace emojis',
           onPressed: () {
             setState(() {
-              _demoBuilder = (_) => EmojisTextFieldDemo(
+              _demoBuilder = (_) => const EmojisTextFieldDemo(
                     key: ValueKey('backspace'),
                     direction: TextAffinity.upstream,
                   );
@@ -84,7 +84,7 @@ class _TextFieldDemoState extends State<TextFieldDemo> {
           label: 'Delete emojis',
           onPressed: () {
             setState(() {
-              _demoBuilder = (_) => EmojisTextFieldDemo(
+              _demoBuilder = (_) => const EmojisTextFieldDemo(
                     key: ValueKey('delete'),
                     direction: TextAffinity.downstream,
                   );

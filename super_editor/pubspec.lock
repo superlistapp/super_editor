@@ -93,7 +93,7 @@ packages:
     source: hosted
     version: "3.7.0"
   collection:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: collection
       url: "https://pub.dartlang.org"
@@ -146,6 +146,13 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  flutter_lints:
+    dependency: "direct main"
+    description:
+      name: flutter_lints
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.0.3"
   flutter_test:
     dependency: "direct dev"
     description: flutter
@@ -179,6 +186,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "4.0.0"
+  lints:
+    dependency: transitive
+    description:
+      name: lints
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.0.1"
   logging:
     dependency: transitive
     description:
@@ -229,7 +243,7 @@ packages:
     source: hosted
     version: "1.8.0"
   pedantic:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: pedantic
       url: "https://pub.dartlang.org"

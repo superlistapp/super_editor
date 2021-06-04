@@ -15,7 +15,8 @@ class EmojisTextFieldDemo extends StatefulWidget {
   _EmojisTextFieldDemoState createState() => _EmojisTextFieldDemoState();
 }
 
-class _EmojisTextFieldDemoState extends State<EmojisTextFieldDemo> with TickerProviderStateMixin {
+class _EmojisTextFieldDemoState extends State<EmojisTextFieldDemo>
+    with TickerProviderStateMixin {
   final _textFieldController = AttributedTextEditingController();
 
   GlobalKey<SuperTextFieldState>? _textKey;
@@ -48,7 +49,7 @@ class _EmojisTextFieldDemoState extends State<EmojisTextFieldDemo> with TickerPr
 
   void _startDemo() {
     _textFieldController
-      ..selection = TextSelection.collapsed(offset: 0)
+      ..selection = const TextSelection.collapsed(offset: 0)
       ..text = AttributedText(
         text: 'turtle 🐢 bomb 💣 skull ☠',
       );
@@ -56,14 +57,15 @@ class _EmojisTextFieldDemoState extends State<EmojisTextFieldDemo> with TickerPr
     if (widget.direction == TextAffinity.upstream) {
       // simulate pressing backspace
       _demoRobot
-        ..insertCaretAt(TextPosition(offset: _textFieldController.text.text.length))
+        ..insertCaretAt(
+            TextPosition(offset: _textFieldController.text.text.length))
         ..pause(const Duration(seconds: 1))
         ..backspaceCharacters(_textFieldController.text.text.length)
         ..start();
     } else {
       // simulate pressing delete
       _demoRobot
-        ..insertCaretAt(TextPosition(offset: 0))
+        ..insertCaretAt(const TextPosition(offset: 0))
         ..pause(const Duration(seconds: 1))
         ..deleteCharacters(_textFieldController.text.text.length)
         ..start();
@@ -99,13 +101,16 @@ class _EmojisTextFieldDemoState extends State<EmojisTextFieldDemo> with TickerPr
                     key: _textKey,
                     textController: _textFieldController,
                     focusNode: _focusNode,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decorationBuilder: (context, child) {
                       return Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(4),
                           border: Border.all(
-                            color: _focusNode!.hasFocus ? Colors.blue : Colors.grey.shade300,
+                            color: _focusNode!.hasFocus
+                                ? Colors.blue
+                                : Colors.grey.shade300,
                             width: 1,
                           ),
                         ),
@@ -113,7 +118,7 @@ class _EmojisTextFieldDemoState extends State<EmojisTextFieldDemo> with TickerPr
                       );
                     },
                     hintBuilder: (context) {
-                      return Text(
+                      return const Text(
                         'enter some text',
                         style: TextStyle(
                           color: Colors.grey,
@@ -126,10 +131,10 @@ class _EmojisTextFieldDemoState extends State<EmojisTextFieldDemo> with TickerPr
                   ),
                 ),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: _restartDemo,
-                child: Text('Restart Demo'),
+                child: const Text('Restart Demo'),
               ),
             ],
           ),
