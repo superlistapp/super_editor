@@ -27,8 +27,7 @@ void main() {
             () {
               Platform.setTestInstance(MacPlatform());
 
-              final _editContext =
-                  createEditContext(document: MutableDocument());
+              final _editContext = createEditContext(document: MutableDocument());
               var result = selectAllWhenCmdAIsPressed(
                 editContext: _editContext,
                 keyEvent: const FakeRawKeyEvent(
@@ -54,8 +53,7 @@ void main() {
             () {
               Platform.setTestInstance(MacPlatform());
 
-              final _editContext =
-                  createEditContext(document: MutableDocument());
+              final _editContext = createEditContext(document: MutableDocument());
               var result = selectAllWhenCmdAIsPressed(
                 editContext: _editContext,
                 keyEvent: const FakeRawKeyEvent(
@@ -81,8 +79,7 @@ void main() {
             () {
               Platform.setTestInstance(MacPlatform());
 
-              final _editContext =
-                  createEditContext(document: MutableDocument());
+              final _editContext = createEditContext(document: MutableDocument());
               var result = selectAllWhenCmdAIsPressed(
                 editContext: _editContext,
                 keyEvent: const FakeRawKeyEvent(
@@ -142,8 +139,7 @@ void main() {
                 _editContext.composer.selection!.extent,
                 const DocumentPosition(
                   nodeId: 'paragraph',
-                  nodePosition:
-                      TextNodePosition(offset: 'This is some text'.length),
+                  nodePosition: TextNodePosition(offset: 'This is some text'.length),
                 ),
               );
 
@@ -194,8 +190,7 @@ void main() {
                 _editContext.composer.selection!.extent,
                 const DocumentPosition(
                   nodeId: 'paragraph_2',
-                  nodePosition:
-                      TextNodePosition(offset: 'This is some text'.length),
+                  nodePosition: TextNodePosition(offset: 'This is some text'.length),
                 ),
               );
 

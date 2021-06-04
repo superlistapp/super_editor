@@ -139,9 +139,7 @@ class MutableDocument with ChangeNotifier implements Document {
   @override
   DocumentNode? getNodeAfter(DocumentNode node) {
     final nodeIndex = getNodeIndex(node);
-    return nodeIndex >= 0 && nodeIndex < nodes.length - 1
-        ? getNodeAt(nodeIndex + 1)
-        : null;
+    return nodeIndex >= 0 && nodeIndex < nodes.length - 1 ? getNodeAt(nodeIndex + 1) : null;
   }
 
   @override
@@ -149,8 +147,7 @@ class MutableDocument with ChangeNotifier implements Document {
       _nodes.firstWhereOrNull((element) => element.id == position.nodeId);
 
   @override
-  DocumentRange getRangeBetween(
-      DocumentPosition position1, DocumentPosition position2) {
+  DocumentRange getRangeBetween(DocumentPosition position1, DocumentPosition position2) {
     final node1 = getNode(position1);
     if (node1 == null) {
       throw Exception('No such position in document: $position1');
@@ -170,8 +167,7 @@ class MutableDocument with ChangeNotifier implements Document {
   }
 
   @override
-  List<DocumentNode> getNodesInside(
-      DocumentPosition position1, DocumentPosition position2) {
+  List<DocumentNode> getNodesInside(DocumentPosition position1, DocumentPosition position2) {
     final node1 = getNode(position1);
     if (node1 == null) {
       throw Exception('No such position in document: $position1');

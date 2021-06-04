@@ -10,10 +10,8 @@ void main() {
   group('Spans', () {
     group('attribution queries', () {
       test('it expands a span from a given offset', () {
-        final spans = AttributedSpans()
-          ..addAttribution(newAttribution: bold, start: 3, end: 16);
-        final expandedSpan =
-            spans.expandAttributionToSpan(attribution: bold, offset: 6);
+        final spans = AttributedSpans()..addAttribution(newAttribution: bold, start: 3, end: 16);
+        final expandedSpan = spans.expandAttributionToSpan(attribution: bold, offset: 6);
 
         expect(
           expandedSpan,
@@ -84,8 +82,7 @@ void main() {
       });
 
       test('it returns spans that completely cover the range', () {
-        final spans = AttributedSpans()
-          ..addAttribution(newAttribution: bold, start: 0, end: 10);
+        final spans = AttributedSpans()..addAttribution(newAttribution: bold, start: 0, end: 10);
         final attributionSpans = spans.getAttributionSpansInRange(
           attributionFilter: (attribution) => attribution == bold,
           start: 3,
@@ -140,8 +137,7 @@ void main() {
       });
 
       test('it resizes spans that completely cover the range', () {
-        final spans = AttributedSpans()
-          ..addAttribution(newAttribution: bold, start: 0, end: 10);
+        final spans = AttributedSpans()..addAttribution(newAttribution: bold, start: 0, end: 10);
         final attributionSpans = spans.getAttributionSpansInRange(
           attributionFilter: (attribution) => attribution == bold,
           start: 3,
@@ -165,165 +161,114 @@ void main() {
 
     group('single attribution', () {
       test('applies attribution to full span', () {
-        final spans = AttributedSpans()
-          ..addAttribution(newAttribution: bold, start: 0, end: 16);
+        final spans = AttributedSpans()..addAttribution(newAttribution: bold, start: 0, end: 16);
 
-        expect(
-            spans
-                .hasAttributionsWithin(attributions: {bold}, start: 0, end: 16),
-            true);
+        expect(spans.hasAttributionsWithin(attributions: {bold}, start: 0, end: 16), true);
       });
 
       test('applies attribution to beginning of span', () {
-        final spans = AttributedSpans()
-          ..addAttribution(newAttribution: bold, start: 0, end: 7);
+        final spans = AttributedSpans()..addAttribution(newAttribution: bold, start: 0, end: 7);
 
-        expect(
-            spans.hasAttributionsWithin(attributions: {bold}, start: 0, end: 7),
-            true);
+        expect(spans.hasAttributionsWithin(attributions: {bold}, start: 0, end: 7), true);
       });
 
       test('applies attribution to inner span', () {
-        final spans = AttributedSpans()
-          ..addAttribution(newAttribution: bold, start: 2, end: 7);
+        final spans = AttributedSpans()..addAttribution(newAttribution: bold, start: 2, end: 7);
 
-        expect(
-            spans.hasAttributionsWithin(attributions: {bold}, start: 2, end: 7),
-            true);
+        expect(spans.hasAttributionsWithin(attributions: {bold}, start: 2, end: 7), true);
       });
 
       test('applies attribution to end of span', () {
-        final spans = AttributedSpans()
-          ..addAttribution(newAttribution: bold, start: 7, end: 16);
+        final spans = AttributedSpans()..addAttribution(newAttribution: bold, start: 7, end: 16);
 
-        expect(
-            spans
-                .hasAttributionsWithin(attributions: {bold}, start: 7, end: 16),
-            true);
+        expect(spans.hasAttributionsWithin(attributions: {bold}, start: 7, end: 16), true);
       });
 
       test('applies exotic span', () {
         final linkAttribution = _LinkAttribution(
           url: 'https://youtube.com/c/superdeclarative',
         );
-        final spans = AttributedSpans()
-          ..addAttribution(newAttribution: linkAttribution, start: 2, end: 7);
+        final spans = AttributedSpans()..addAttribution(newAttribution: linkAttribution, start: 2, end: 7);
 
-        expect(
-            spans.hasAttributionsWithin(
-                attributions: {linkAttribution}, start: 2, end: 7),
-            true);
+        expect(spans.hasAttributionsWithin(attributions: {linkAttribution}, start: 2, end: 7), true);
       });
 
       test('removes attribution from full span', () {
         final spans = AttributedSpans(
           attributions: [
-            const SpanMarker(
-                attribution: bold, offset: 0, markerType: SpanMarkerType.start),
-            const SpanMarker(
-                attribution: bold, offset: 16, markerType: SpanMarkerType.end)
+            const SpanMarker(attribution: bold, offset: 0, markerType: SpanMarkerType.start),
+            const SpanMarker(attribution: bold, offset: 16, markerType: SpanMarkerType.end)
           ],
         )..removeAttribution(attributionToRemove: bold, start: 0, end: 16);
 
-        expect(
-            spans
-                .hasAttributionsWithin(attributions: {bold}, start: 0, end: 16),
-            false);
+        expect(spans.hasAttributionsWithin(attributions: {bold}, start: 0, end: 16), false);
       });
 
       test('removes attribution from inner text span', () {
         final spans = AttributedSpans(
           attributions: const [
-            SpanMarker(
-                attribution: bold, offset: 2, markerType: SpanMarkerType.start),
-            SpanMarker(
-                attribution: bold, offset: 7, markerType: SpanMarkerType.end)
+            SpanMarker(attribution: bold, offset: 2, markerType: SpanMarkerType.start),
+            SpanMarker(attribution: bold, offset: 7, markerType: SpanMarkerType.end)
           ],
         )..removeAttribution(attributionToRemove: bold, start: 2, end: 7);
 
-        expect(
-            spans.hasAttributionsWithin(attributions: {bold}, start: 2, end: 7),
-            false);
+        expect(spans.hasAttributionsWithin(attributions: {bold}, start: 2, end: 7), false);
       });
 
       test('removes attribution from partial beginning span', () {
         final spans = AttributedSpans(
           attributions: const [
-            SpanMarker(
-                attribution: bold, offset: 2, markerType: SpanMarkerType.start),
-            SpanMarker(
-                attribution: bold, offset: 7, markerType: SpanMarkerType.end)
+            SpanMarker(attribution: bold, offset: 2, markerType: SpanMarkerType.start),
+            SpanMarker(attribution: bold, offset: 7, markerType: SpanMarkerType.end)
           ],
         )..removeAttribution(attributionToRemove: bold, start: 2, end: 4);
 
-        expect(
-            spans.hasAttributionsWithin(attributions: {bold}, start: 5, end: 7),
-            true);
+        expect(spans.hasAttributionsWithin(attributions: {bold}, start: 5, end: 7), true);
       });
 
       test('removes attribution from partial inner span', () {
         final spans = AttributedSpans(
           attributions: const [
-            SpanMarker(
-                attribution: bold, offset: 2, markerType: SpanMarkerType.start),
-            SpanMarker(
-                attribution: bold, offset: 7, markerType: SpanMarkerType.end)
+            SpanMarker(attribution: bold, offset: 2, markerType: SpanMarkerType.start),
+            SpanMarker(attribution: bold, offset: 7, markerType: SpanMarkerType.end)
           ],
         )..removeAttribution(attributionToRemove: bold, start: 4, end: 5);
 
-        expect(
-            spans.hasAttributionsWithin(attributions: {bold}, start: 2, end: 3),
-            true);
-        expect(
-            spans.hasAttributionsWithin(attributions: {bold}, start: 6, end: 7),
-            true);
+        expect(spans.hasAttributionsWithin(attributions: {bold}, start: 2, end: 3), true);
+        expect(spans.hasAttributionsWithin(attributions: {bold}, start: 6, end: 7), true);
       });
 
       test('removes attribution from partial ending span', () {
         final spans = AttributedSpans(
           attributions: const [
-            SpanMarker(
-                attribution: bold, offset: 2, markerType: SpanMarkerType.start),
-            SpanMarker(
-                attribution: bold, offset: 7, markerType: SpanMarkerType.end)
+            SpanMarker(attribution: bold, offset: 2, markerType: SpanMarkerType.start),
+            SpanMarker(attribution: bold, offset: 7, markerType: SpanMarkerType.end)
           ],
         )..removeAttribution(attributionToRemove: bold, start: 5, end: 7);
 
-        expect(
-            spans.hasAttributionsWithin(attributions: {bold}, start: 2, end: 4),
-            true);
+        expect(spans.hasAttributionsWithin(attributions: {bold}, start: 2, end: 4), true);
       });
 
       test('applies attribution when mixed span is toggled', () {
         final spans = AttributedSpans(
           attributions: const [
-            SpanMarker(
-                attribution: bold, offset: 8, markerType: SpanMarkerType.start),
-            SpanMarker(
-                attribution: bold, offset: 16, markerType: SpanMarkerType.end)
+            SpanMarker(attribution: bold, offset: 8, markerType: SpanMarkerType.start),
+            SpanMarker(attribution: bold, offset: 16, markerType: SpanMarkerType.end)
           ],
         )..toggleAttribution(attribution: bold, start: 0, end: 16);
 
-        expect(
-            spans
-                .hasAttributionsWithin(attributions: {bold}, start: 0, end: 16),
-            true);
+        expect(spans.hasAttributionsWithin(attributions: {bold}, start: 0, end: 16), true);
       });
 
       test('removes attribution when contiguous span is toggled', () {
         final spans = AttributedSpans(
           attributions: const [
-            SpanMarker(
-                attribution: bold, offset: 0, markerType: SpanMarkerType.start),
-            SpanMarker(
-                attribution: bold, offset: 16, markerType: SpanMarkerType.end)
+            SpanMarker(attribution: bold, offset: 0, markerType: SpanMarkerType.start),
+            SpanMarker(attribution: bold, offset: 16, markerType: SpanMarkerType.end)
           ],
         )..toggleAttribution(attribution: bold, start: 0, end: 16);
 
-        expect(
-            spans
-                .hasAttributionsWithin(attributions: {bold}, start: 0, end: 16),
-            false);
+        expect(spans.hasAttributionsWithin(attributions: {bold}, start: 0, end: 16), false);
       });
     });
 
@@ -427,10 +372,7 @@ void main() {
           end: 12,
         );
 
-        expect(
-            spans
-                .hasAttributionsWithin(attributions: {bold}, start: 0, end: 12),
-            true);
+        expect(spans.hasAttributionsWithin(attributions: {bold}, start: 0, end: 12), true);
       });
     });
 
@@ -444,10 +386,8 @@ void main() {
       test('single continuous attribution', () {
         final collapsedSpans = AttributedSpans(
           attributions: const [
-            SpanMarker(
-                attribution: bold, offset: 0, markerType: SpanMarkerType.start),
-            SpanMarker(
-                attribution: bold, offset: 16, markerType: SpanMarkerType.end),
+            SpanMarker(attribution: bold, offset: 0, markerType: SpanMarkerType.start),
+            SpanMarker(attribution: bold, offset: 16, markerType: SpanMarkerType.end),
           ],
         ).collapseSpans(contentLength: 17);
 
@@ -461,14 +401,10 @@ void main() {
       test('single fractured attribution', () {
         final collapsedSpans = AttributedSpans(
           attributions: const [
-            SpanMarker(
-                attribution: bold, offset: 0, markerType: SpanMarkerType.start),
-            SpanMarker(
-                attribution: bold, offset: 3, markerType: SpanMarkerType.end),
-            SpanMarker(
-                attribution: bold, offset: 7, markerType: SpanMarkerType.start),
-            SpanMarker(
-                attribution: bold, offset: 10, markerType: SpanMarkerType.end),
+            SpanMarker(attribution: bold, offset: 0, markerType: SpanMarkerType.start),
+            SpanMarker(attribution: bold, offset: 3, markerType: SpanMarkerType.end),
+            SpanMarker(attribution: bold, offset: 7, markerType: SpanMarkerType.start),
+            SpanMarker(attribution: bold, offset: 10, markerType: SpanMarkerType.end),
           ],
         ).collapseSpans(contentLength: 17);
 
@@ -492,18 +428,10 @@ void main() {
       test('multiple non-overlapping attributions', () {
         final collapsedSpans = AttributedSpans(
           attributions: const [
-            SpanMarker(
-                attribution: bold, offset: 0, markerType: SpanMarkerType.start),
-            SpanMarker(
-                attribution: bold, offset: 3, markerType: SpanMarkerType.end),
-            SpanMarker(
-                attribution: italics,
-                offset: 7,
-                markerType: SpanMarkerType.start),
-            SpanMarker(
-                attribution: italics,
-                offset: 10,
-                markerType: SpanMarkerType.end),
+            SpanMarker(attribution: bold, offset: 0, markerType: SpanMarkerType.start),
+            SpanMarker(attribution: bold, offset: 3, markerType: SpanMarkerType.end),
+            SpanMarker(attribution: italics, offset: 7, markerType: SpanMarkerType.start),
+            SpanMarker(attribution: italics, offset: 10, markerType: SpanMarkerType.end),
           ],
         ).collapseSpans(contentLength: 17);
 
@@ -527,18 +455,10 @@ void main() {
       test('multiple overlapping attributions', () {
         final collapsedSpans = AttributedSpans(
           attributions: const [
-            SpanMarker(
-                attribution: bold, offset: 0, markerType: SpanMarkerType.start),
-            SpanMarker(
-                attribution: bold, offset: 8, markerType: SpanMarkerType.end),
-            SpanMarker(
-                attribution: italics,
-                offset: 6,
-                markerType: SpanMarkerType.start),
-            SpanMarker(
-                attribution: italics,
-                offset: 16,
-                markerType: SpanMarkerType.end),
+            SpanMarker(attribution: bold, offset: 0, markerType: SpanMarkerType.start),
+            SpanMarker(attribution: bold, offset: 8, markerType: SpanMarkerType.end),
+            SpanMarker(attribution: italics, offset: 6, markerType: SpanMarkerType.start),
+            SpanMarker(attribution: italics, offset: 16, markerType: SpanMarkerType.end),
           ],
         ).collapseSpans(contentLength: 17);
 
@@ -589,15 +509,10 @@ class _ExpectedSpans {
   List<String> _combinedSpans;
 
   void expectSpans(AttributedSpans spans) {
-    for (int characterIndex = 0;
-        characterIndex < _combinedSpans.length;
-        ++characterIndex) {
-      for (int attributionIndex = 0;
-          attributionIndex < _combinedSpans[characterIndex].length;
-          ++attributionIndex) {
+    for (int characterIndex = 0; characterIndex < _combinedSpans.length; ++characterIndex) {
+      for (int attributionIndex = 0; attributionIndex < _combinedSpans[characterIndex].length; ++attributionIndex) {
         // The attribution name is just a letter, like 'b', 'i', or 's'.
-        final attributionName =
-            _combinedSpans[characterIndex][attributionIndex];
+        final attributionName = _combinedSpans[characterIndex][attributionIndex];
         if (attributionName == '_') {
           continue;
         }
@@ -614,14 +529,10 @@ class _ExpectedSpans {
             namedAttribution = strikethrough;
             break;
           default:
-            throw Exception(
-                'Unknown span template character: $attributionName');
+            throw Exception('Unknown span template character: $attributionName');
         }
 
-        expect(
-            spans.hasAttributionAt(characterIndex,
-                attribution: namedAttribution),
-            true);
+        expect(spans.hasAttributionAt(characterIndex, attribution: namedAttribution), true);
       }
     }
   }
@@ -644,10 +555,7 @@ class _LinkAttribution implements Attribution {
 
   @override
   bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is _LinkAttribution &&
-          runtimeType == other.runtimeType &&
-          url == other.url;
+      identical(this, other) || other is _LinkAttribution && runtimeType == other.runtimeType && url == other.url;
 
   @override
   int get hashCode => url.hashCode;

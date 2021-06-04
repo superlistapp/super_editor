@@ -223,8 +223,7 @@ void main() {
         result = anyCharacterToInsertInTextContent(
           editContext: editContext,
           keyEvent: const FakeRawKeyEvent(
-            character:
-                '', // Empirically, pressing enter sends '' as the character instead of null
+            character: '', // Empirically, pressing enter sends '' as the character instead of null
             data: FakeRawKeyEventData(
               logicalKey: LogicalKeyboardKey.enter,
               physicalKey: PhysicalKeyboardKey.enter,

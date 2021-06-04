@@ -33,8 +33,7 @@ ExecutionInstruction pasteWhenCmdVIsPressed({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
-  if (!keyEvent.isPrimaryShortcutKeyPressed ||
-      keyEvent.character?.toLowerCase() != 'v') {
+  if (!keyEvent.isPrimaryShortcutKeyPressed || keyEvent.character?.toLowerCase() != 'v') {
     return ExecutionInstruction.continueExecution;
   }
   if (editContext.composer.selection == null) {
@@ -53,12 +52,10 @@ ExecutionInstruction pasteWhenCmdVIsPressed({
 
     // Delete the selected content.
     editContext.editor.executeCommand(
-      DeleteSelectionCommand(
-          documentSelection: editContext.composer.selection!),
+      DeleteSelectionCommand(documentSelection: editContext.composer.selection!),
     );
 
-    editContext.composer.selection =
-        DocumentSelection.collapsed(position: pastePosition);
+    editContext.composer.selection = DocumentSelection.collapsed(position: pastePosition);
   }
 
   // TODO: figure out a general approach for asynchronous behaviors that
@@ -77,15 +74,12 @@ ExecutionInstruction selectAllWhenCmdAIsPressed({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
-  if (!keyEvent.isPrimaryShortcutKeyPressed ||
-      keyEvent.character?.toLowerCase() != 'a') {
+  if (!keyEvent.isPrimaryShortcutKeyPressed || keyEvent.character?.toLowerCase() != 'a') {
     return ExecutionInstruction.continueExecution;
   }
 
   final didSelectAll = editContext.commonOps.selectAll();
-  return didSelectAll
-      ? ExecutionInstruction.haltExecution
-      : ExecutionInstruction.continueExecution;
+  return didSelectAll ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
 }
 
 Future<void> _paste({
@@ -127,20 +121,16 @@ class _PasteEditorCommand implements EditorCommand {
       _log.log('_PasteEditorCommand', ' - "$piece"');
     }
 
-    final currentNodeWithSelection =
-        document.getNodeById(_pastePosition.nodeId);
+    final currentNodeWithSelection = document.getNodeById(_pastePosition.nodeId);
 
     DocumentPosition? newSelectionPosition;
 
     if (currentNodeWithSelection is TextNode) {
       final textNode = document.getNode(_pastePosition) as TextNode;
-      final pasteTextOffset =
-          (_pastePosition.nodePosition as TextPosition).offset;
-      final attributionsAtPasteOffset =
-          textNode.text.getAllAttributionsAt(pasteTextOffset);
+      final pasteTextOffset = (_pastePosition.nodePosition as TextPosition).offset;
+      final attributionsAtPasteOffset = textNode.text.getAllAttributionsAt(pasteTextOffset);
 
-      if (splitContent.length > 1 &&
-          pasteTextOffset < textNode.endPosition.offset) {
+      if (splitContent.length > 1 && pasteTextOffset < textNode.endPosition.offset) {
         // There is more than 1 node of content being pasted. Therefore,
         // new nodes will need to be added, which means that the currently
         // selected text node will be split at the current text offset.
@@ -155,8 +145,7 @@ class _PasteEditorCommand implements EditorCommand {
             replicateExistingMetdata: false,
           ).execute(document, transaction);
         } else {
-          throw Exception(
-              'Can\'t handle pasting text within node of type: $currentNodeWithSelection');
+          throw Exception('Can\'t handle pasting text within node of type: $currentNodeWithSelection');
         }
       }
 
@@ -230,8 +219,7 @@ ExecutionInstruction copyWhenCmdVIsPressed({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
-  if (!keyEvent.isPrimaryShortcutKeyPressed ||
-      keyEvent.character?.toLowerCase() != 'c') {
+  if (!keyEvent.isPrimaryShortcutKeyPressed || keyEvent.character?.toLowerCase() != 'c') {
     return ExecutionInstruction.continueExecution;
   }
   if (editContext.composer.selection == null) {
@@ -268,14 +256,12 @@ Future<void> _copy({
 
     if (i == 0) {
       // This is the first node and it may be partially selected.
-      final baseSelectionPosition =
-          selectedNode.id == documentSelection.base.nodeId
-              ? documentSelection.base.nodePosition
-              : documentSelection.extent.nodePosition;
-
-      final extentSelectionPosition = selectedNodes.length > 1
-          ? selectedNode.endPosition
+      final baseSelectionPosition = selectedNode.id == documentSelection.base.nodeId
+          ? documentSelection.base.nodePosition
           : documentSelection.extent.nodePosition;
+
+      final extentSelectionPosition =
+          selectedNodes.length > 1 ? selectedNode.endPosition : documentSelection.extent.nodePosition;
 
       nodeSelection = selectedNode.computeSelection(
         base: baseSelectionPosition,
@@ -319,8 +305,7 @@ ExecutionInstruction cmdBToToggleBold({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
-  if (!keyEvent.isPrimaryShortcutKeyPressed ||
-      keyEvent.character?.toLowerCase() != 'b') {
+  if (!keyEvent.isPrimaryShortcutKeyPressed || keyEvent.character?.toLowerCase() != 'b') {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -337,8 +322,7 @@ ExecutionInstruction cmdIToToggleItalics({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
-  if (!keyEvent.isPrimaryShortcutKeyPressed ||
-      keyEvent.character?.toLowerCase() != 'i') {
+  if (!keyEvent.isPrimaryShortcutKeyPressed || keyEvent.character?.toLowerCase() != 'i') {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -355,10 +339,8 @@ ExecutionInstruction anyCharacterOrDestructiveKeyToDeleteSelection({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
-  _log.log('deleteExpandedSelectionWhenCharacterOrDestructiveKeyPressed',
-      'Running...');
-  if (editContext.composer.selection == null ||
-      editContext.composer.selection!.isCollapsed) {
+  _log.log('deleteExpandedSelectionWhenCharacterOrDestructiveKeyPressed', 'Running...');
+  if (editContext.composer.selection == null || editContext.composer.selection!.isCollapsed) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -369,8 +351,7 @@ ExecutionInstruction anyCharacterOrDestructiveKeyToDeleteSelection({
   final isShiftPressed = keyEvent.isShiftPressed;
 
   final isDestructiveKey =
-      keyEvent.logicalKey == LogicalKeyboardKey.backspace ||
-          keyEvent.logicalKey == LogicalKeyboardKey.delete;
+      keyEvent.logicalKey == LogicalKeyboardKey.backspace || keyEvent.logicalKey == LogicalKeyboardKey.delete;
 
   final shouldDeleteSelection = !isShiftPressed &&
       (isDestructiveKey ||
@@ -397,16 +378,14 @@ DocumentPosition _getDocumentPositionAfterDeletion({
   final basePosition = selection.base;
   final baseNode = document.getNode(basePosition);
   if (baseNode == null) {
-    throw Exception(
-        'Failed to _getDocumentPositionAfterDeletion because the base node no longer exists.');
+    throw Exception('Failed to _getDocumentPositionAfterDeletion because the base node no longer exists.');
   }
   final baseNodeIndex = document.getNodeIndex(baseNode);
 
   final extentPosition = selection.extent;
   final extentNode = document.getNode(extentPosition);
   if (extentNode == null) {
-    throw Exception(
-        'Failed to _getDocumentPositionAfterDeletion because the extent node no longer exists.');
+    throw Exception('Failed to _getDocumentPositionAfterDeletion because the extent node no longer exists.');
   }
   final extentNodeIndex = document.getNodeIndex(extentNode);
   DocumentPosition newSelectionPosition;
@@ -414,8 +393,7 @@ DocumentPosition _getDocumentPositionAfterDeletion({
   if (baseNodeIndex != extentNodeIndex) {
     // Place the caret at the current position within the
     // first node in the selection.
-    newSelectionPosition =
-        baseNodeIndex <= extentNodeIndex ? selection.base : selection.extent;
+    newSelectionPosition = baseNodeIndex <= extentNodeIndex ? selection.base : selection.extent;
 
     // If it's a binary selection node then that node will
     // be replaced by a ParagraphNode with the same ID.
@@ -465,9 +443,7 @@ ExecutionInstruction backspaceToRemoveUpstreamContent({
 
   final didDelete = editContext.commonOps.deleteUpstream();
 
-  return didDelete
-      ? ExecutionInstruction.haltExecution
-      : ExecutionInstruction.continueExecution;
+  return didDelete ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
 }
 
 ExecutionInstruction mergeNodeWithNextWhenDeleteIsPressed({
@@ -482,23 +458,19 @@ ExecutionInstruction mergeNodeWithNextWhenDeleteIsPressed({
     return ExecutionInstruction.continueExecution;
   }
 
-  final node = editContext.editor.document
-      .getNodeById(editContext.composer.selection!.extent.nodeId);
+  final node = editContext.editor.document.getNodeById(editContext.composer.selection!.extent.nodeId);
   if (node is! TextNode) {
-    _log.log('mergeNodeWithNextWhenDeleteIsPressed',
-        'WARNING: Cannot combine node of type: $node');
+    _log.log('mergeNodeWithNextWhenDeleteIsPressed', 'WARNING: Cannot combine node of type: $node');
     return ExecutionInstruction.continueExecution;
   }
 
   final nextNode = editContext.editor.document.getNodeAfter(node);
   if (nextNode == null) {
-    _log.log('mergeNodeWithNextWhenDeleteIsPressed',
-        'At bottom of document. Cannot merge with node above.');
+    _log.log('mergeNodeWithNextWhenDeleteIsPressed', 'At bottom of document. Cannot merge with node above.');
     return ExecutionInstruction.continueExecution;
   }
   if (nextNode is! TextNode) {
-    _log.log('mergeNodeWithNextWhenDeleteIsPressed',
-        'Cannot merge ParagraphNode into node of type: $nextNode');
+    _log.log('mergeNodeWithNextWhenDeleteIsPressed', 'Cannot merge ParagraphNode into node of type: $nextNode');
     return ExecutionInstruction.continueExecution;
   }
 
@@ -539,10 +511,8 @@ ExecutionInstruction moveUpDownLeftAndRightWithArrowKeys({
   }
 
   bool didMove = false;
-  if (keyEvent.logicalKey == LogicalKeyboardKey.arrowLeft ||
-      keyEvent.logicalKey == LogicalKeyboardKey.arrowRight) {
-    _log.log(
-        'moveUpDownLeftAndRightWithArrowKeys', ' - handling left arrow key');
+  if (keyEvent.logicalKey == LogicalKeyboardKey.arrowLeft || keyEvent.logicalKey == LogicalKeyboardKey.arrowRight) {
+    _log.log('moveUpDownLeftAndRightWithArrowKeys', ' - handling left arrow key');
 
     final movementModifiers = <MovementModifier>{};
     if (keyEvent.isPrimaryShortcutKeyPressed) {
@@ -567,17 +537,12 @@ ExecutionInstruction moveUpDownLeftAndRightWithArrowKeys({
   } else if (keyEvent.logicalKey == LogicalKeyboardKey.arrowUp) {
     _log.log('moveUpDownLeftAndRightWithArrowKeys', ' - handling up arrow key');
 
-    didMove =
-        editContext.commonOps.moveCaretUp(expand: keyEvent.isShiftPressed);
+    didMove = editContext.commonOps.moveCaretUp(expand: keyEvent.isShiftPressed);
   } else if (keyEvent.logicalKey == LogicalKeyboardKey.arrowDown) {
-    _log.log(
-        'moveUpDownLeftAndRightWithArrowKeys', ' - handling down arrow key');
+    _log.log('moveUpDownLeftAndRightWithArrowKeys', ' - handling down arrow key');
 
-    didMove =
-        editContext.commonOps.moveCaretDown(expand: keyEvent.isShiftPressed);
+    didMove = editContext.commonOps.moveCaretDown(expand: keyEvent.isShiftPressed);
   }
 
-  return didMove
-      ? ExecutionInstruction.haltExecution
-      : ExecutionInstruction.continueExecution;
+  return didMove ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
 }

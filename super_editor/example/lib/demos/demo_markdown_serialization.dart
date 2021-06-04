@@ -11,8 +11,7 @@ import 'package:super_editor/super_editor.dart';
 /// current structure of the document in the editor.
 class MarkdownSerializationDemo extends StatefulWidget {
   @override
-  _MarkdownSerializationDemoState createState() =>
-      _MarkdownSerializationDemoState();
+  _MarkdownSerializationDemoState createState() => _MarkdownSerializationDemoState();
 }
 
 class _MarkdownSerializationDemoState extends State<MarkdownSerializationDemo> {
@@ -76,8 +75,7 @@ class _MarkdownSerializationDemoState extends State<MarkdownSerializationDemo> {
             color: const Color(0xFF222222),
             child: SingleChildScrollView(
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
                 child: Text(
                   _markdown,
                   style: const TextStyle(

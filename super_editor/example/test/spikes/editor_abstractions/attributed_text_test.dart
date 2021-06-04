@@ -17,10 +17,8 @@ void main() {
 
     test('full-span style', () {
       final text = AttributedText(text: 'abcdefghij', attributions: const [
-        SpanMarker(
-            attribution: 'bold', offset: 0, markerType: SpanMarkerType.start),
-        SpanMarker(
-            attribution: 'bold', offset: 9, markerType: SpanMarkerType.end),
+        SpanMarker(attribution: 'bold', offset: 0, markerType: SpanMarkerType.start),
+        SpanMarker(attribution: 'bold', offset: 9, markerType: SpanMarkerType.end),
       ]);
       final textSpan = text.computeTextSpan(_styleBuilder);
 
@@ -31,10 +29,8 @@ void main() {
 
     test('single character style', () {
       final text = AttributedText(text: 'abcdefghij', attributions: const [
-        SpanMarker(
-            attribution: 'bold', offset: 1, markerType: SpanMarkerType.start),
-        SpanMarker(
-            attribution: 'bold', offset: 1, markerType: SpanMarkerType.end),
+        SpanMarker(attribution: 'bold', offset: 1, markerType: SpanMarkerType.start),
+        SpanMarker(attribution: 'bold', offset: 1, markerType: SpanMarkerType.end),
       ]);
       final textSpan = text.computeTextSpan(_styleBuilder);
 
@@ -52,10 +48,8 @@ void main() {
         // Notice that the markers are provided in reverse order:
         // end then start. Order shouldn't matter within a single
         // position index. This test ensures that.
-        SpanMarker(
-            attribution: 'bold', offset: 1, markerType: SpanMarkerType.end),
-        SpanMarker(
-            attribution: 'bold', offset: 1, markerType: SpanMarkerType.start),
+        SpanMarker(attribution: 'bold', offset: 1, markerType: SpanMarkerType.end),
+        SpanMarker(attribution: 'bold', offset: 1, markerType: SpanMarkerType.start),
       ]);
       final textSpan = text.computeTextSpan(_styleBuilder);
 
@@ -84,10 +78,8 @@ void main() {
 
     test('partial style', () {
       final text = AttributedText(text: 'abcdefghij', attributions: const [
-        SpanMarker(
-            attribution: 'bold', offset: 2, markerType: SpanMarkerType.start),
-        SpanMarker(
-            attribution: 'bold', offset: 7, markerType: SpanMarkerType.end),
+        SpanMarker(attribution: 'bold', offset: 2, markerType: SpanMarkerType.start),
+        SpanMarker(attribution: 'bold', offset: 7, markerType: SpanMarkerType.end),
       ]);
       final textSpan = text.computeTextSpan(_styleBuilder);
 
@@ -101,16 +93,10 @@ void main() {
 
     test('non-mingled varying styles', () {
       final text = AttributedText(text: 'abcdefghij', attributions: const [
-        SpanMarker(
-            attribution: 'bold', offset: 0, markerType: SpanMarkerType.start),
-        SpanMarker(
-            attribution: 'bold', offset: 4, markerType: SpanMarkerType.end),
-        SpanMarker(
-            attribution: 'italics',
-            offset: 5,
-            markerType: SpanMarkerType.start),
-        SpanMarker(
-            attribution: 'italics', offset: 9, markerType: SpanMarkerType.end),
+        SpanMarker(attribution: 'bold', offset: 0, markerType: SpanMarkerType.start),
+        SpanMarker(attribution: 'bold', offset: 4, markerType: SpanMarkerType.end),
+        SpanMarker(attribution: 'italics', offset: 5, markerType: SpanMarkerType.start),
+        SpanMarker(attribution: 'italics', offset: 9, markerType: SpanMarkerType.end),
       ]);
       final textSpan = text.computeTextSpan(_styleBuilder);
 
@@ -126,16 +112,10 @@ void main() {
 
     test('intermingled varying styles', () {
       final text = AttributedText(text: 'abcdefghij', attributions: const [
-        SpanMarker(
-            attribution: 'bold', offset: 2, markerType: SpanMarkerType.start),
-        SpanMarker(
-            attribution: 'italics',
-            offset: 4,
-            markerType: SpanMarkerType.start),
-        SpanMarker(
-            attribution: 'bold', offset: 5, markerType: SpanMarkerType.end),
-        SpanMarker(
-            attribution: 'italics', offset: 7, markerType: SpanMarkerType.end),
+        SpanMarker(attribution: 'bold', offset: 2, markerType: SpanMarkerType.start),
+        SpanMarker(attribution: 'italics', offset: 4, markerType: SpanMarkerType.start),
+        SpanMarker(attribution: 'bold', offset: 5, markerType: SpanMarkerType.end),
+        SpanMarker(attribution: 'italics', offset: 7, markerType: SpanMarkerType.end),
       ]);
       final textSpan = text.computeTextSpan(_styleBuilder);
 

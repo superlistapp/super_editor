@@ -37,15 +37,13 @@ class _BoxComponentState extends State<BoxComponent> with DocumentComponent {
   }
 
   @override
-  BinaryNodePosition? movePositionLeft(dynamic currentPosition,
-      [Set<MovementModifier>? movementModifiers]) {
+  BinaryNodePosition? movePositionLeft(dynamic currentPosition, [Set<MovementModifier>? movementModifiers]) {
     // BoxComponents don't support internal movement.
     return null;
   }
 
   @override
-  BinaryNodePosition? movePositionRight(dynamic currentPosition,
-      [Set<MovementModifier>? movementModifiers]) {
+  BinaryNodePosition? movePositionRight(dynamic currentPosition, [Set<MovementModifier>? movementModifiers]) {
     // BoxComponents don't support internal movement.
     return null;
   }
@@ -65,8 +63,7 @@ class _BoxComponentState extends State<BoxComponent> with DocumentComponent {
   @override
   BinarySelection getCollapsedSelectionAt(nodePosition) {
     if (nodePosition is! BinaryNodePosition) {
-      throw Exception(
-          'The given nodePosition ($nodePosition) is not compatible with BoxComponent');
+      throw Exception('The given nodePosition ($nodePosition) is not compatible with BoxComponent');
     }
 
     return const BinarySelection.all();
@@ -90,8 +87,7 @@ class _BoxComponentState extends State<BoxComponent> with DocumentComponent {
   @override
   Offset getOffsetForPosition(nodePosition) {
     if (nodePosition is! BinaryNodePosition) {
-      throw Exception(
-          'Expected nodePosition of type BinaryPosition but received: $nodePosition');
+      throw Exception('Expected nodePosition of type BinaryPosition but received: $nodePosition');
     }
 
     final myBox = context.findRenderObject() as RenderBox;
@@ -101,8 +97,7 @@ class _BoxComponentState extends State<BoxComponent> with DocumentComponent {
   @override
   Rect getRectForPosition(dynamic nodePosition) {
     if (nodePosition is! BinaryNodePosition) {
-      throw Exception(
-          'Expected nodePosition of type BinaryPosition but received: $nodePosition');
+      throw Exception('Expected nodePosition of type BinaryPosition but received: $nodePosition');
     }
 
     final myBox = context.findRenderObject() as RenderBox;
@@ -112,12 +107,10 @@ class _BoxComponentState extends State<BoxComponent> with DocumentComponent {
   @override
   Rect getRectForSelection(dynamic basePosition, dynamic extentPosition) {
     if (basePosition is! BinaryNodePosition) {
-      throw Exception(
-          'Expected nodePosition of type BinaryPosition but received: $basePosition');
+      throw Exception('Expected nodePosition of type BinaryPosition but received: $basePosition');
     }
     if (extentPosition is! BinaryNodePosition) {
-      throw Exception(
-          'Expected nodePosition of type BinaryPosition but received: $extentPosition');
+      throw Exception('Expected nodePosition of type BinaryPosition but received: $extentPosition');
     }
 
     final myBox = context.findRenderObject() as RenderBox;
@@ -130,23 +123,19 @@ class _BoxComponentState extends State<BoxComponent> with DocumentComponent {
   }
 
   @override
-  BinarySelection getSelectionBetween(
-      {required basePosition, required extentPosition}) {
+  BinarySelection getSelectionBetween({required basePosition, required extentPosition}) {
     if (basePosition is! BinaryNodePosition) {
-      throw Exception(
-          'The given basePosition ($basePosition) is not compatible with BoxComponent');
+      throw Exception('The given basePosition ($basePosition) is not compatible with BoxComponent');
     }
     if (extentPosition is! BinaryNodePosition) {
-      throw Exception(
-          'The given extentPosition ($extentPosition) is not compatible with BoxComponent');
+      throw Exception('The given extentPosition ($extentPosition) is not compatible with BoxComponent');
     }
 
     return const BinarySelection.all();
   }
 
   @override
-  BinarySelection getSelectionInRange(
-      Offset localBaseOffset, Offset localExtentOffset) {
+  BinarySelection getSelectionInRange(Offset localBaseOffset, Offset localExtentOffset) {
     return const BinarySelection.all();
   }
 
@@ -172,9 +161,7 @@ class BinaryNodePosition implements NodePosition {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is BinaryNodePosition &&
-          runtimeType == other.runtimeType &&
-          isIncluded == other.isIncluded;
+      other is BinaryNodePosition && runtimeType == other.runtimeType && isIncluded == other.isIncluded;
 
   @override
   int get hashCode => isIncluded.hashCode;
@@ -190,8 +177,7 @@ class BinaryNodePosition implements NodePosition {
 /// "selection" type.
 class BinarySelection implements NodeSelection {
   const BinarySelection.all() : position = const BinaryNodePosition.included();
-  const BinarySelection.none()
-      : position = const BinaryNodePosition.notIncluded();
+  const BinarySelection.none() : position = const BinaryNodePosition.notIncluded();
 
   final BinaryNodePosition position;
 
@@ -203,9 +189,7 @@ class BinarySelection implements NodeSelection {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is BinarySelection &&
-          runtimeType == other.runtimeType &&
-          position == other.position;
+      other is BinarySelection && runtimeType == other.runtimeType && position == other.position;
 
   @override
   int get hashCode => position.hashCode;

@@ -34,8 +34,7 @@ void main() {
           text: 'one two three',
         );
 
-        final linkAttribution =
-            LinkAttribution(url: Uri.parse('https://flutter.dev'));
+        final linkAttribution = LinkAttribution(url: Uri.parse('https://flutter.dev'));
 
         // Add link across "one two"
         text.addAttribution(
@@ -48,10 +47,7 @@ void main() {
           const TextRange(start: 4, end: 12),
         );
 
-        expect(
-            text.spans.hasAttributionsWithin(
-                attributions: {linkAttribution}, start: 0, end: 12),
-            true);
+        expect(text.spans.hasAttributionsWithin(attributions: {linkAttribution}, start: 0, end: 12), true);
       });
     });
   });

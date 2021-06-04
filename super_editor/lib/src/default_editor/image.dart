@@ -38,22 +38,18 @@ class ImageNode with ChangeNotifier implements DocumentNode {
   }
 
   @override
-  BinaryNodePosition get beginningPosition =>
-      const BinaryNodePosition.included();
+  BinaryNodePosition get beginningPosition => const BinaryNodePosition.included();
 
   @override
   BinaryNodePosition get endPosition => const BinaryNodePosition.included();
 
   @override
-  NodePosition selectUpstreamPosition(
-      NodePosition position1, NodePosition position2) {
+  NodePosition selectUpstreamPosition(NodePosition position1, NodePosition position2) {
     if (position1 is! BinaryNodePosition) {
-      throw Exception(
-          'Expected a BinaryNodePosition for position1 but received a ${position1.runtimeType}');
+      throw Exception('Expected a BinaryNodePosition for position1 but received a ${position1.runtimeType}');
     }
     if (position2 is! BinaryNodePosition) {
-      throw Exception(
-          'Expected a BinaryNodePosition for position2 but received a ${position2.runtimeType}');
+      throw Exception('Expected a BinaryNodePosition for position2 but received a ${position2.runtimeType}');
     }
 
     // BinaryNodePosition's don't disambiguate between upstream and downstream so
@@ -62,15 +58,12 @@ class ImageNode with ChangeNotifier implements DocumentNode {
   }
 
   @override
-  NodePosition selectDownstreamPosition(
-      NodePosition position1, NodePosition position2) {
+  NodePosition selectDownstreamPosition(NodePosition position1, NodePosition position2) {
     if (position1 is! BinaryNodePosition) {
-      throw Exception(
-          'Expected a BinaryNodePosition for position1 but received a ${position1.runtimeType}');
+      throw Exception('Expected a BinaryNodePosition for position1 but received a ${position1.runtimeType}');
     }
     if (position2 is! BinaryNodePosition) {
-      throw Exception(
-          'Expected a BinaryNodePosition for position2 but received a ${position2.runtimeType}');
+      throw Exception('Expected a BinaryNodePosition for position2 but received a ${position2.runtimeType}');
     }
 
     // BinaryNodePosition's don't disambiguate between upstream and downstream so
@@ -89,20 +82,15 @@ class ImageNode with ChangeNotifier implements DocumentNode {
   @override
   String? copyContent(dynamic selection) {
     if (selection is! BinarySelection) {
-      throw Exception(
-          'ImageNode can only copy content from a BinarySelection.');
+      throw Exception('ImageNode can only copy content from a BinarySelection.');
     }
 
-    return selection.position == const BinaryNodePosition.included()
-        ? _imageUrl
-        : null;
+    return selection.position == const BinaryNodePosition.included() ? _imageUrl : null;
   }
 
   @override
   bool hasEquivalentContent(DocumentNode other) {
-    return other is ImageNode &&
-        imageUrl == other.imageUrl &&
-        altText == other.altText;
+    return other is ImageNode && imageUrl == other.imageUrl && altText == other.altText;
   }
 }
 
@@ -150,17 +138,14 @@ Widget? imageBuilder(ComponentContext componentContext) {
     return null;
   }
 
-  final selection = componentContext.nodeSelection == null
-      ? null
-      : componentContext.nodeSelection!.nodeSelection as BinarySelection;
+  final selection =
+      componentContext.nodeSelection == null ? null : componentContext.nodeSelection!.nodeSelection as BinarySelection;
   final isSelected = selection != null && selection.position.isIncluded;
 
   return ImageComponent(
     componentKey: componentContext.componentKey,
     imageUrl: (componentContext.documentNode as ImageNode).imageUrl,
     isSelected: isSelected,
-    selectionColor: (componentContext.extensions[selectionStylesExtensionKey]
-            as SelectionStyle)
-        .selectionColor,
+    selectionColor: (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle).selectionColor,
   );
 }

@@ -25,10 +25,8 @@ void main() {
         text: 'abcdefghij',
         spans: AttributedSpans(
           attributions: const [
-            SpanMarker(
-                attribution: bold, offset: 0, markerType: SpanMarkerType.start),
-            SpanMarker(
-                attribution: bold, offset: 9, markerType: SpanMarkerType.end),
+            SpanMarker(attribution: bold, offset: 0, markerType: SpanMarkerType.start),
+            SpanMarker(attribution: bold, offset: 9, markerType: SpanMarkerType.end),
           ],
         ),
       );
@@ -44,10 +42,8 @@ void main() {
         text: 'abcdefghij',
         spans: AttributedSpans(
           attributions: const [
-            SpanMarker(
-                attribution: bold, offset: 1, markerType: SpanMarkerType.start),
-            SpanMarker(
-                attribution: bold, offset: 1, markerType: SpanMarkerType.end),
+            SpanMarker(attribution: bold, offset: 1, markerType: SpanMarkerType.start),
+            SpanMarker(attribution: bold, offset: 1, markerType: SpanMarkerType.end),
           ],
         ),
       );
@@ -70,10 +66,8 @@ void main() {
             // Notice that the markers are provided in reverse order:
             // end then start. Order shouldn't matter within a single
             // position index. This test ensures that.
-            SpanMarker(
-                attribution: bold, offset: 1, markerType: SpanMarkerType.end),
-            SpanMarker(
-                attribution: bold, offset: 1, markerType: SpanMarkerType.start),
+            SpanMarker(attribution: bold, offset: 1, markerType: SpanMarkerType.end),
+            SpanMarker(attribution: bold, offset: 1, markerType: SpanMarkerType.start),
           ],
         ),
       );
@@ -107,10 +101,8 @@ void main() {
         text: 'abcdefghij',
         spans: AttributedSpans(
           attributions: const [
-            SpanMarker(
-                attribution: bold, offset: 2, markerType: SpanMarkerType.start),
-            SpanMarker(
-                attribution: bold, offset: 7, markerType: SpanMarkerType.end),
+            SpanMarker(attribution: bold, offset: 2, markerType: SpanMarkerType.start),
+            SpanMarker(attribution: bold, offset: 7, markerType: SpanMarkerType.end),
           ],
         ),
       );
@@ -129,10 +121,8 @@ void main() {
         text: 'abcdefghij',
         spans: AttributedSpans(
           attributions: const [
-            SpanMarker(
-                attribution: bold, offset: 9, markerType: SpanMarkerType.start),
-            SpanMarker(
-                attribution: bold, offset: 9, markerType: SpanMarkerType.end),
+            SpanMarker(attribution: bold, offset: 9, markerType: SpanMarkerType.start),
+            SpanMarker(attribution: bold, offset: 9, markerType: SpanMarkerType.end),
           ],
         ),
       );
@@ -141,10 +131,8 @@ void main() {
         text: 'k',
         spans: AttributedSpans(
           attributions: const [
-            SpanMarker(
-                attribution: bold, offset: 0, markerType: SpanMarkerType.start),
-            SpanMarker(
-                attribution: bold, offset: 0, markerType: SpanMarkerType.end),
+            SpanMarker(attribution: bold, offset: 0, markerType: SpanMarkerType.start),
+            SpanMarker(attribution: bold, offset: 0, markerType: SpanMarkerType.end),
           ],
         ),
       ));
@@ -168,10 +156,8 @@ void main() {
         text: 'abcdefghij',
         spans: AttributedSpans(
           attributions: const [
-            SpanMarker(
-                attribution: bold, offset: 0, markerType: SpanMarkerType.start),
-            SpanMarker(
-                attribution: bold, offset: 9, markerType: SpanMarkerType.end),
+            SpanMarker(attribution: bold, offset: 0, markerType: SpanMarkerType.start),
+            SpanMarker(attribution: bold, offset: 9, markerType: SpanMarkerType.end),
           ],
         ),
       );
@@ -184,8 +170,7 @@ void main() {
 
       expect(newText.text, 'aabcdefghij');
       expect(
-        newText.hasAttributionsWithin(
-            attributions: {bold}, range: const TextRange(start: 0, end: 10)),
+        newText.hasAttributionsWithin(attributions: {bold}, range: const TextRange(start: 0, end: 10)),
         true,
       );
     });
@@ -195,18 +180,10 @@ void main() {
         text: 'abcdefghij',
         spans: AttributedSpans(
           attributions: const [
-            SpanMarker(
-                attribution: bold, offset: 0, markerType: SpanMarkerType.start),
-            SpanMarker(
-                attribution: bold, offset: 4, markerType: SpanMarkerType.end),
-            SpanMarker(
-                attribution: italics,
-                offset: 5,
-                markerType: SpanMarkerType.start),
-            SpanMarker(
-                attribution: italics,
-                offset: 9,
-                markerType: SpanMarkerType.end),
+            SpanMarker(attribution: bold, offset: 0, markerType: SpanMarkerType.start),
+            SpanMarker(attribution: bold, offset: 4, markerType: SpanMarkerType.end),
+            SpanMarker(attribution: italics, offset: 5, markerType: SpanMarkerType.start),
+            SpanMarker(attribution: italics, offset: 9, markerType: SpanMarkerType.end),
           ],
         ),
       );
@@ -227,18 +204,10 @@ void main() {
         text: 'abcdefghij',
         spans: AttributedSpans(
           attributions: const [
-            SpanMarker(
-                attribution: bold, offset: 2, markerType: SpanMarkerType.start),
-            SpanMarker(
-                attribution: italics,
-                offset: 4,
-                markerType: SpanMarkerType.start),
-            SpanMarker(
-                attribution: bold, offset: 5, markerType: SpanMarkerType.end),
-            SpanMarker(
-                attribution: italics,
-                offset: 7,
-                markerType: SpanMarkerType.end),
+            SpanMarker(attribution: bold, offset: 2, markerType: SpanMarkerType.start),
+            SpanMarker(attribution: italics, offset: 4, markerType: SpanMarkerType.start),
+            SpanMarker(attribution: bold, offset: 5, markerType: SpanMarkerType.end),
+            SpanMarker(attribution: italics, offset: 7, markerType: SpanMarkerType.end),
           ],
         ),
       );

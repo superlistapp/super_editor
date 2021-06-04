@@ -15,8 +15,7 @@ class EmojisTextFieldDemo extends StatefulWidget {
   _EmojisTextFieldDemoState createState() => _EmojisTextFieldDemoState();
 }
 
-class _EmojisTextFieldDemoState extends State<EmojisTextFieldDemo>
-    with TickerProviderStateMixin {
+class _EmojisTextFieldDemoState extends State<EmojisTextFieldDemo> with TickerProviderStateMixin {
   final _textFieldController = AttributedTextEditingController();
 
   GlobalKey<SuperTextFieldState>? _textKey;
@@ -57,8 +56,7 @@ class _EmojisTextFieldDemoState extends State<EmojisTextFieldDemo>
     if (widget.direction == TextAffinity.upstream) {
       // simulate pressing backspace
       _demoRobot
-        ..insertCaretAt(
-            TextPosition(offset: _textFieldController.text.text.length))
+        ..insertCaretAt(TextPosition(offset: _textFieldController.text.text.length))
         ..pause(const Duration(seconds: 1))
         ..backspaceCharacters(_textFieldController.text.text.length)
         ..start();
@@ -101,16 +99,13 @@ class _EmojisTextFieldDemoState extends State<EmojisTextFieldDemo>
                     key: _textKey,
                     textController: _textFieldController,
                     focusNode: _focusNode,
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decorationBuilder: (context, child) {
                       return Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(4),
                           border: Border.all(
-                            color: _focusNode!.hasFocus
-                                ? Colors.blue
-                                : Colors.grey.shade300,
+                            color: _focusNode!.hasFocus ? Colors.blue : Colors.grey.shade300,
                             width: 1,
                           ),
                         ),

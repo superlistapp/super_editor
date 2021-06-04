@@ -202,8 +202,7 @@ class _TextRangeSelectorState extends State<TextRangeSelector> {
   }
 
   void _onTapUp(TapUpDetails details) {
-    final selectedCellIndex =
-        _getCellIndexFromLocalOffset(details.localPosition);
+    final selectedCellIndex = _getCellIndexFromLocalOffset(details.localPosition);
     setState(() {
       _selectedCells[selectedCellIndex] = !_selectedCells[selectedCellIndex];
       _reportSelectedRanges();
@@ -211,14 +210,12 @@ class _TextRangeSelectorState extends State<TextRangeSelector> {
   }
 
   void _onPanStart(DragStartDetails details) {
-    final selectedCellIndex =
-        _getCellIndexFromLocalOffset(details.localPosition);
+    final selectedCellIndex = _getCellIndexFromLocalOffset(details.localPosition);
     _selectionMode = _selectedCells[selectedCellIndex] ? 'deselect' : 'select';
   }
 
   void _onPanUpdate(DragUpdateDetails details) {
-    final selectedCellIndex =
-        _getCellIndexFromLocalOffset(details.localPosition);
+    final selectedCellIndex = _getCellIndexFromLocalOffset(details.localPosition);
     setState(() {
       _selectedCells[selectedCellIndex] = _selectionMode == 'select';
       _reportSelectedRanges();
@@ -226,9 +223,7 @@ class _TextRangeSelectorState extends State<TextRangeSelector> {
   }
 
   int _getCellIndexFromLocalOffset(Offset localOffset) {
-    return ((localOffset.dx / widget.cellWidth).floor())
-        .clamp(0.0, widget.cellCount - 1)
-        .toInt();
+    return ((localOffset.dx / widget.cellWidth).floor()).clamp(0.0, widget.cellCount - 1).toInt();
   }
 
   void _reportSelectedRanges() {
@@ -269,12 +264,8 @@ class _TextRangeSelectorState extends State<TextRangeSelector> {
             width: widget.cellWidth,
             height: widget.cellHeight,
             decoration: BoxDecoration(
-              border: Border.all(
-                  width: 1,
-                  color: _isSelected(index) ? Colors.red : Colors.grey),
-              color: _isSelected(index)
-                  ? Colors.red.withOpacity(0.7)
-                  : Colors.grey.withOpacity(0.7),
+              border: Border.all(width: 1, color: _isSelected(index) ? Colors.red : Colors.grey),
+              color: _isSelected(index) ? Colors.red.withOpacity(0.7) : Colors.grey.withOpacity(0.7),
             ),
           ),
         ),

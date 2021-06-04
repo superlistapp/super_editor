@@ -35,8 +35,7 @@ void main() {
       );
       final composer = DocumentComposer();
       final layoutKey = GlobalKey();
-      DocumentLayout documentLayoutResolver() =>
-          layoutKey.currentState as DocumentLayout;
+      DocumentLayout documentLayoutResolver() => layoutKey.currentState as DocumentLayout;
       final commonOps = CommonEditorOperations(
         editor: documentEditor,
         composer: composer,
@@ -92,8 +91,7 @@ void main() {
       //   print(' - $node');
       // }
 
-      expect(
-          documentEditor.document.hasEquivalentContent(expectedDocument), true);
+      expect(documentEditor.document.hasEquivalentContent(expectedDocument), true);
     });
   });
 }

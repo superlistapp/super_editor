@@ -38,8 +38,7 @@ void main() {
               }
             });
 
-            final result =
-                DefaultSuperTextFieldKeyboardHandlers.copyTextWhenCmdCIsPressed(
+            final result = DefaultSuperTextFieldKeyboardHandlers.copyTextWhenCmdCIsPressed(
               controller: controller,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
@@ -62,8 +61,7 @@ void main() {
 
             final controller = AttributedTextEditingController();
 
-            final result =
-                DefaultSuperTextFieldKeyboardHandlers.copyTextWhenCmdCIsPressed(
+            final result = DefaultSuperTextFieldKeyboardHandlers.copyTextWhenCmdCIsPressed(
               controller: controller,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
@@ -85,8 +83,7 @@ void main() {
 
             final controller = AttributedTextEditingController();
 
-            final result =
-                DefaultSuperTextFieldKeyboardHandlers.copyTextWhenCmdCIsPressed(
+            final result = DefaultSuperTextFieldKeyboardHandlers.copyTextWhenCmdCIsPressed(
               controller: controller,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
@@ -107,8 +104,7 @@ void main() {
 
             final controller = AttributedTextEditingController();
 
-            final result =
-                DefaultSuperTextFieldKeyboardHandlers.copyTextWhenCmdCIsPressed(
+            final result = DefaultSuperTextFieldKeyboardHandlers.copyTextWhenCmdCIsPressed(
               controller: controller,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
@@ -149,8 +145,7 @@ void main() {
               }
             });
 
-            final result =
-                DefaultSuperTextFieldKeyboardHandlers.copyTextWhenCmdCIsPressed(
+            final result = DefaultSuperTextFieldKeyboardHandlers.copyTextWhenCmdCIsPressed(
               controller: controller,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
@@ -173,8 +168,7 @@ void main() {
 
             final controller = AttributedTextEditingController();
 
-            final result =
-                DefaultSuperTextFieldKeyboardHandlers.copyTextWhenCmdCIsPressed(
+            final result = DefaultSuperTextFieldKeyboardHandlers.copyTextWhenCmdCIsPressed(
               controller: controller,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
@@ -196,8 +190,7 @@ void main() {
 
             final controller = AttributedTextEditingController();
 
-            final result =
-                DefaultSuperTextFieldKeyboardHandlers.copyTextWhenCmdCIsPressed(
+            final result = DefaultSuperTextFieldKeyboardHandlers.copyTextWhenCmdCIsPressed(
               controller: controller,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
@@ -218,8 +211,7 @@ void main() {
 
             final controller = AttributedTextEditingController();
 
-            final result =
-                DefaultSuperTextFieldKeyboardHandlers.copyTextWhenCmdCIsPressed(
+            final result = DefaultSuperTextFieldKeyboardHandlers.copyTextWhenCmdCIsPressed(
               controller: controller,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
@@ -260,8 +252,7 @@ void main() {
               }
             });
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .pasteTextWhenCmdVIsPressed(
+            final result = DefaultSuperTextFieldKeyboardHandlers.pasteTextWhenCmdVIsPressed(
               controller: controller,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
@@ -278,8 +269,7 @@ void main() {
             WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
               // We have to run these expectations in the next frame
               // so that the async paste operation has time to complete.
-              expect(controller.text.text,
-                  'Pasted content: this is clipboard text');
+              expect(controller.text.text, 'Pasted content: this is clipboard text');
               expect(controller.selection.isCollapsed, true);
               expect(controller.selection.extentOffset, 38);
             });
@@ -292,8 +282,7 @@ void main() {
 
             final controller = AttributedTextEditingController();
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .pasteTextWhenCmdVIsPressed(
+            final result = DefaultSuperTextFieldKeyboardHandlers.pasteTextWhenCmdVIsPressed(
               controller: controller,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
@@ -315,8 +304,7 @@ void main() {
 
             final controller = AttributedTextEditingController();
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .pasteTextWhenCmdVIsPressed(
+            final result = DefaultSuperTextFieldKeyboardHandlers.pasteTextWhenCmdVIsPressed(
               controller: controller,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
@@ -338,8 +326,7 @@ void main() {
 
             final controller = AttributedTextEditingController();
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .pasteTextWhenCmdVIsPressed(
+            final result = DefaultSuperTextFieldKeyboardHandlers.pasteTextWhenCmdVIsPressed(
               controller: controller,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
@@ -378,8 +365,7 @@ void main() {
               }
             });
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .pasteTextWhenCmdVIsPressed(
+            final result = DefaultSuperTextFieldKeyboardHandlers.pasteTextWhenCmdVIsPressed(
               controller: controller,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
@@ -396,8 +382,7 @@ void main() {
             WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
               // We have to run these expectations in the next frame
               // so that the async paste operation has time to complete.
-              expect(controller.text.text,
-                  'Pasted content: this is clipboard text');
+              expect(controller.text.text, 'Pasted content: this is clipboard text');
               expect(controller.selection.isCollapsed, true);
               expect(controller.selection.extentOffset, 38);
             });
@@ -410,8 +395,7 @@ void main() {
 
             final controller = AttributedTextEditingController();
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .pasteTextWhenCmdVIsPressed(
+            final result = DefaultSuperTextFieldKeyboardHandlers.pasteTextWhenCmdVIsPressed(
               controller: controller,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
@@ -433,8 +417,7 @@ void main() {
 
             final controller = AttributedTextEditingController();
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .pasteTextWhenCmdVIsPressed(
+            final result = DefaultSuperTextFieldKeyboardHandlers.pasteTextWhenCmdVIsPressed(
               controller: controller,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
@@ -456,8 +439,7 @@ void main() {
 
             final controller = AttributedTextEditingController();
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .pasteTextWhenCmdVIsPressed(
+            final result = DefaultSuperTextFieldKeyboardHandlers.pasteTextWhenCmdVIsPressed(
               controller: controller,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
@@ -486,8 +468,7 @@ void main() {
               selection: const TextSelection.collapsed(offset: 5),
             );
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .selectAllTextFieldWhenCmdAIsPressed(
+            final result = DefaultSuperTextFieldKeyboardHandlers.selectAllTextFieldWhenCmdAIsPressed(
               controller: controller,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
@@ -511,8 +492,7 @@ void main() {
 
             final controller = AttributedTextEditingController();
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .selectAllTextFieldWhenCmdAIsPressed(
+            final result = DefaultSuperTextFieldKeyboardHandlers.selectAllTextFieldWhenCmdAIsPressed(
               controller: controller,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
@@ -534,8 +514,7 @@ void main() {
 
             final controller = AttributedTextEditingController();
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .selectAllTextFieldWhenCmdAIsPressed(
+            final result = DefaultSuperTextFieldKeyboardHandlers.selectAllTextFieldWhenCmdAIsPressed(
               controller: controller,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
@@ -557,8 +536,7 @@ void main() {
 
             final controller = AttributedTextEditingController();
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .selectAllTextFieldWhenCmdAIsPressed(
+            final result = DefaultSuperTextFieldKeyboardHandlers.selectAllTextFieldWhenCmdAIsPressed(
               controller: controller,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
@@ -585,8 +563,7 @@ void main() {
               selection: const TextSelection.collapsed(offset: 5),
             );
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .selectAllTextFieldWhenCmdAIsPressed(
+            final result = DefaultSuperTextFieldKeyboardHandlers.selectAllTextFieldWhenCmdAIsPressed(
               controller: controller,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
@@ -610,8 +587,7 @@ void main() {
 
             final controller = AttributedTextEditingController();
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .selectAllTextFieldWhenCmdAIsPressed(
+            final result = DefaultSuperTextFieldKeyboardHandlers.selectAllTextFieldWhenCmdAIsPressed(
               controller: controller,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
@@ -633,8 +609,7 @@ void main() {
 
             final controller = AttributedTextEditingController();
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .selectAllTextFieldWhenCmdAIsPressed(
+            final result = DefaultSuperTextFieldKeyboardHandlers.selectAllTextFieldWhenCmdAIsPressed(
               controller: controller,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
@@ -656,8 +631,7 @@ void main() {
 
             final controller = AttributedTextEditingController();
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .selectAllTextFieldWhenCmdAIsPressed(
+            final result = DefaultSuperTextFieldKeyboardHandlers.selectAllTextFieldWhenCmdAIsPressed(
               controller: controller,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
@@ -678,19 +652,16 @@ void main() {
 
       group('move caret when arrow key is pressed', () {
         group('left arrow', () {
-          testWidgets('it does nothing at beginning of text blob',
-              (tester) async {
+          testWidgets('it does nothing at beginning of text blob', (tester) async {
             final controller = AttributedTextEditingController(
               text: AttributedText(text: 'super text field'),
               selection: const TextSelection.collapsed(offset: 0),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(
-                tester, controller.text.text);
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
 
             // Move by character
-            final characterResult = DefaultSuperTextFieldKeyboardHandlers
-                .moveUpDownLeftAndRightWithArrowKeys(
+            final characterResult = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
               selectableTextState: selectableTextState,
               keyEvent: const FakeRawKeyEvent(
@@ -707,8 +678,7 @@ void main() {
             expect(controller.selection.extentOffset, 0);
 
             // Move by word
-            final wordResult = DefaultSuperTextFieldKeyboardHandlers
-                .moveUpDownLeftAndRightWithArrowKeys(
+            final wordResult = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
               selectableTextState: selectableTextState,
               keyEvent: const FakeRawKeyEvent(
@@ -726,8 +696,7 @@ void main() {
             expect(controller.selection.extentOffset, 0);
 
             // Move to end of line
-            final lineResult = DefaultSuperTextFieldKeyboardHandlers
-                .moveUpDownLeftAndRightWithArrowKeys(
+            final lineResult = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
               selectableTextState: selectableTextState,
               keyEvent: const FakeRawKeyEvent(
@@ -751,11 +720,9 @@ void main() {
               selection: const TextSelection.collapsed(offset: 2),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(
-                tester, controller.text.text);
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .moveUpDownLeftAndRightWithArrowKeys(
+            final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
               selectableTextState: selectableTextState,
               keyEvent: const FakeRawKeyEvent(
@@ -782,8 +749,7 @@ void main() {
 
             final selectableTextState = await _pumpMultilineLayout(tester);
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .moveUpDownLeftAndRightWithArrowKeys(
+            final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
               selectableTextState: selectableTextState,
               keyEvent: const FakeRawKeyEvent(
@@ -809,16 +775,8 @@ void main() {
             // We give a tiny bit of wiggle room on the value because when this test
             // is run on Windows and Linux CI, there is some kind of precision error
             // that results in a tiny positive number instead of zero.
-            expect(
-                selectableTextState
-                    .getCharacterBox(const TextPosition(offset: 16))
-                    .top,
-                lessThan(0.1));
-            expect(
-                selectableTextState
-                    .getCharacterBox(const TextPosition(offset: 16))
-                    .top,
-                greaterThanOrEqualTo(0));
+            expect(selectableTextState.getCharacterBox(const TextPosition(offset: 16)).top, lessThan(0.1));
+            expect(selectableTextState.getCharacterBox(const TextPosition(offset: 16)).top, greaterThanOrEqualTo(0));
           });
 
           testWidgets('it expands left by character', (tester) async {
@@ -827,11 +785,9 @@ void main() {
               selection: const TextSelection.collapsed(offset: 2),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(
-                tester, controller.text.text);
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .moveUpDownLeftAndRightWithArrowKeys(
+            final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
               selectableTextState: selectableTextState,
               keyEvent: const FakeRawKeyEvent(
@@ -856,11 +812,9 @@ void main() {
               selection: const TextSelection.collapsed(offset: 10),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(
-                tester, controller.text.text);
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .moveUpDownLeftAndRightWithArrowKeys(
+            final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
               selectableTextState: selectableTextState,
               keyEvent: const FakeRawKeyEvent(
@@ -884,11 +838,9 @@ void main() {
               selection: const TextSelection.collapsed(offset: 10),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(
-                tester, controller.text.text);
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .moveUpDownLeftAndRightWithArrowKeys(
+            final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
               selectableTextState: selectableTextState,
               keyEvent: const FakeRawKeyEvent(
@@ -908,8 +860,7 @@ void main() {
             expect(controller.selection.extentOffset, 6);
           });
 
-          testWidgets('Mac: cmd+left moves left to beginning of line',
-              (tester) async {
+          testWidgets('Mac: cmd+left moves left to beginning of line', (tester) async {
             Platform.setTestInstance(MacPlatform());
 
             final controller = AttributedTextEditingController(
@@ -917,11 +868,9 @@ void main() {
               selection: const TextSelection.collapsed(offset: 10),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(
-                tester, controller.text.text);
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .moveUpDownLeftAndRightWithArrowKeys(
+            final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
               selectableTextState: selectableTextState,
               keyEvent: const FakeRawKeyEvent(
@@ -941,9 +890,7 @@ void main() {
             Platform.setTestInstance(null);
           });
 
-          testWidgets(
-              'Windows + Linux: control + left moves left to beginning of line',
-              (tester) async {
+          testWidgets('Windows + Linux: control + left moves left to beginning of line', (tester) async {
             Platform.setTestInstance(WindowsPlatform());
 
             final controller = AttributedTextEditingController(
@@ -951,11 +898,9 @@ void main() {
               selection: const TextSelection.collapsed(offset: 10),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(
-                tester, controller.text.text);
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .moveUpDownLeftAndRightWithArrowKeys(
+            final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
               selectableTextState: selectableTextState,
               keyEvent: const FakeRawKeyEvent(
@@ -975,9 +920,7 @@ void main() {
             Platform.setTestInstance(null);
           });
 
-          testWidgets(
-              'Mac: cmd + shift + left expands left to beginning of line',
-              (tester) async {
+          testWidgets('Mac: cmd + shift + left expands left to beginning of line', (tester) async {
             Platform.setTestInstance(MacPlatform());
 
             final controller = AttributedTextEditingController(
@@ -985,11 +928,9 @@ void main() {
               selection: const TextSelection.collapsed(offset: 10),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(
-                tester, controller.text.text);
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .moveUpDownLeftAndRightWithArrowKeys(
+            final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
               selectableTextState: selectableTextState,
               keyEvent: const FakeRawKeyEvent(
@@ -1011,9 +952,7 @@ void main() {
             Platform.setTestInstance(null);
           });
 
-          testWidgets(
-              'Windows + Linux: control + shift + left expands left to beginning of line',
-              (tester) async {
+          testWidgets('Windows + Linux: control + shift + left expands left to beginning of line', (tester) async {
             Platform.setTestInstance(WindowsPlatform());
 
             final controller = AttributedTextEditingController(
@@ -1021,11 +960,9 @@ void main() {
               selection: const TextSelection.collapsed(offset: 10),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(
-                tester, controller.text.text);
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .moveUpDownLeftAndRightWithArrowKeys(
+            final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
               selectableTextState: selectableTextState,
               keyEvent: const FakeRawKeyEvent(
@@ -1047,8 +984,7 @@ void main() {
             Platform.setTestInstance(null);
           });
 
-          testWidgets('it collapses downstream selection on left side',
-              (tester) async {
+          testWidgets('it collapses downstream selection on left side', (tester) async {
             final controller = AttributedTextEditingController(
               text: AttributedText(text: 'super text field'),
               selection: const TextSelection(
@@ -1057,11 +993,9 @@ void main() {
               ),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(
-                tester, controller.text.text);
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .moveUpDownLeftAndRightWithArrowKeys(
+            final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
               selectableTextState: selectableTextState,
               keyEvent: const FakeRawKeyEvent(
@@ -1078,8 +1012,7 @@ void main() {
             expect(controller.selection.extentOffset, 6);
           });
 
-          testWidgets('it collapses upstream selection on left side',
-              (tester) async {
+          testWidgets('it collapses upstream selection on left side', (tester) async {
             final controller = AttributedTextEditingController(
               text: AttributedText(text: 'super text field'),
               selection: const TextSelection(
@@ -1088,11 +1021,9 @@ void main() {
               ),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(
-                tester, controller.text.text);
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .moveUpDownLeftAndRightWithArrowKeys(
+            final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
               selectableTextState: selectableTextState,
               keyEvent: const FakeRawKeyEvent(
@@ -1117,12 +1048,10 @@ void main() {
               selection: const TextSelection.collapsed(offset: 16),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(
-                tester, controller.text.text);
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
 
             // Move by character
-            final characterResult = DefaultSuperTextFieldKeyboardHandlers
-                .moveUpDownLeftAndRightWithArrowKeys(
+            final characterResult = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
               selectableTextState: selectableTextState,
               keyEvent: const FakeRawKeyEvent(
@@ -1139,8 +1068,7 @@ void main() {
             expect(controller.selection.extentOffset, 16);
 
             // Move by word
-            final wordResult = DefaultSuperTextFieldKeyboardHandlers
-                .moveUpDownLeftAndRightWithArrowKeys(
+            final wordResult = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
               selectableTextState: selectableTextState,
               keyEvent: const FakeRawKeyEvent(
@@ -1158,8 +1086,7 @@ void main() {
             expect(controller.selection.extentOffset, 16);
 
             // Move to end of line
-            final lineResult = DefaultSuperTextFieldKeyboardHandlers
-                .moveUpDownLeftAndRightWithArrowKeys(
+            final lineResult = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
               selectableTextState: selectableTextState,
               keyEvent: const FakeRawKeyEvent(
@@ -1183,11 +1110,9 @@ void main() {
               selection: const TextSelection.collapsed(offset: 2),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(
-                tester, controller.text.text);
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .moveUpDownLeftAndRightWithArrowKeys(
+            final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
               selectableTextState: selectableTextState,
               keyEvent: const FakeRawKeyEvent(
@@ -1214,8 +1139,7 @@ void main() {
 
             final selectableTextState = await _pumpMultilineLayout(tester);
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .moveUpDownLeftAndRightWithArrowKeys(
+            final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
               selectableTextState: selectableTextState,
               keyEvent: const FakeRawKeyEvent(
@@ -1234,11 +1158,7 @@ void main() {
             // We should have gone from line 1 to line 2. Make double sure by
             // checking that the bounding box for the character that's now selected
             // does not sit at the top of the text box.
-            expect(
-                selectableTextState
-                    .getCharacterBox(const TextPosition(offset: 18))
-                    .top,
-                isNonZero);
+            expect(selectableTextState.getCharacterBox(const TextPosition(offset: 18)).top, isNonZero);
           });
 
           testWidgets('it expands right by character', (tester) async {
@@ -1247,11 +1167,9 @@ void main() {
               selection: const TextSelection.collapsed(offset: 2),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(
-                tester, controller.text.text);
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .moveUpDownLeftAndRightWithArrowKeys(
+            final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
               selectableTextState: selectableTextState,
               keyEvent: const FakeRawKeyEvent(
@@ -1276,11 +1194,9 @@ void main() {
               selection: const TextSelection.collapsed(offset: 6),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(
-                tester, controller.text.text);
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .moveUpDownLeftAndRightWithArrowKeys(
+            final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
               selectableTextState: selectableTextState,
               keyEvent: const FakeRawKeyEvent(
@@ -1304,11 +1220,9 @@ void main() {
               selection: const TextSelection.collapsed(offset: 6),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(
-                tester, controller.text.text);
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .moveUpDownLeftAndRightWithArrowKeys(
+            final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
               selectableTextState: selectableTextState,
               keyEvent: const FakeRawKeyEvent(
@@ -1328,8 +1242,7 @@ void main() {
             expect(controller.selection.extentOffset, 10);
           });
 
-          testWidgets('Mac: cmd + right moves right to end of line',
-              (tester) async {
+          testWidgets('Mac: cmd + right moves right to end of line', (tester) async {
             Platform.setTestInstance(MacPlatform());
 
             final controller = AttributedTextEditingController(
@@ -1337,11 +1250,9 @@ void main() {
               selection: const TextSelection.collapsed(offset: 6),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(
-                tester, controller.text.text);
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .moveUpDownLeftAndRightWithArrowKeys(
+            final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
               selectableTextState: selectableTextState,
               keyEvent: const FakeRawKeyEvent(
@@ -1361,9 +1272,7 @@ void main() {
             Platform.setTestInstance(null);
           });
 
-          testWidgets(
-              'Windows + Linux: control + right moves right to end of line',
-              (tester) async {
+          testWidgets('Windows + Linux: control + right moves right to end of line', (tester) async {
             Platform.setTestInstance(WindowsPlatform());
 
             final controller = AttributedTextEditingController(
@@ -1371,11 +1280,9 @@ void main() {
               selection: const TextSelection.collapsed(offset: 6),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(
-                tester, controller.text.text);
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .moveUpDownLeftAndRightWithArrowKeys(
+            final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
               selectableTextState: selectableTextState,
               keyEvent: const FakeRawKeyEvent(
@@ -1395,8 +1302,7 @@ void main() {
             Platform.setTestInstance(null);
           });
 
-          testWidgets('Mac: cmd + shift + right expands right to end of line',
-              (tester) async {
+          testWidgets('Mac: cmd + shift + right expands right to end of line', (tester) async {
             Platform.setTestInstance(MacPlatform());
 
             final controller = AttributedTextEditingController(
@@ -1404,11 +1310,9 @@ void main() {
               selection: const TextSelection.collapsed(offset: 6),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(
-                tester, controller.text.text);
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .moveUpDownLeftAndRightWithArrowKeys(
+            final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
               selectableTextState: selectableTextState,
               keyEvent: const FakeRawKeyEvent(
@@ -1430,9 +1334,7 @@ void main() {
             Platform.setTestInstance(null);
           });
 
-          testWidgets(
-              'Windows + Linux: control + shift + right expands right to end of line',
-              (tester) async {
+          testWidgets('Windows + Linux: control + shift + right expands right to end of line', (tester) async {
             Platform.setTestInstance(WindowsPlatform());
 
             final controller = AttributedTextEditingController(
@@ -1440,11 +1342,9 @@ void main() {
               selection: const TextSelection.collapsed(offset: 6),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(
-                tester, controller.text.text);
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .moveUpDownLeftAndRightWithArrowKeys(
+            final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
               selectableTextState: selectableTextState,
               keyEvent: const FakeRawKeyEvent(
@@ -1466,8 +1366,7 @@ void main() {
             Platform.setTestInstance(null);
           });
 
-          testWidgets('it collapses downstream selection on right side',
-              (tester) async {
+          testWidgets('it collapses downstream selection on right side', (tester) async {
             final controller = AttributedTextEditingController(
               text: AttributedText(text: 'super text field'),
               selection: const TextSelection(
@@ -1476,11 +1375,9 @@ void main() {
               ),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(
-                tester, controller.text.text);
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .moveUpDownLeftAndRightWithArrowKeys(
+            final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
               selectableTextState: selectableTextState,
               keyEvent: const FakeRawKeyEvent(
@@ -1497,8 +1394,7 @@ void main() {
             expect(controller.selection.extentOffset, 10);
           });
 
-          testWidgets('it collapses upstream selection on right side',
-              (tester) async {
+          testWidgets('it collapses upstream selection on right side', (tester) async {
             final controller = AttributedTextEditingController(
               text: AttributedText(text: 'super text field'),
               selection: const TextSelection(
@@ -1507,11 +1403,9 @@ void main() {
               ),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(
-                tester, controller.text.text);
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .moveUpDownLeftAndRightWithArrowKeys(
+            final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
               selectableTextState: selectableTextState,
               keyEvent: const FakeRawKeyEvent(
@@ -1530,8 +1424,7 @@ void main() {
         });
 
         group('up arrow', () {
-          testWidgets('it moves to start of text when in first line',
-              (tester) async {
+          testWidgets('it moves to start of text when in first line', (tester) async {
             // Note: this test depends on a multi-line text layout, therefore
             // the layout width and the text content must be precise.
             final controller = AttributedTextEditingController(
@@ -1541,8 +1434,7 @@ void main() {
 
             final selectableTextState = await _pumpMultilineLayout(tester);
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .moveUpDownLeftAndRightWithArrowKeys(
+            final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
               selectableTextState: selectableTextState,
               keyEvent: const FakeRawKeyEvent(
@@ -1569,8 +1461,7 @@ void main() {
 
             final selectableTextState = await _pumpMultilineLayout(tester);
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .moveUpDownLeftAndRightWithArrowKeys(
+            final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
               selectableTextState: selectableTextState,
               keyEvent: const FakeRawKeyEvent(
@@ -1597,8 +1488,7 @@ void main() {
 
             final selectableTextState = await _pumpMultilineLayout(tester);
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .moveUpDownLeftAndRightWithArrowKeys(
+            final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
               selectableTextState: selectableTextState,
               keyEvent: const FakeRawKeyEvent(
@@ -1617,8 +1507,7 @@ void main() {
             expect(controller.selection.baseOffset, 18);
           });
 
-          testWidgets('it preserves horizontal position in previous line',
-              (tester) async {
+          testWidgets('it preserves horizontal position in previous line', (tester) async {
             // Note: this test depends on a multi-line text layout, therefore
             // the layout width and the text content must be precise.
             final controller = AttributedTextEditingController(
@@ -1628,8 +1517,7 @@ void main() {
 
             final selectableTextState = await _pumpMultilineLayout(tester);
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .moveUpDownLeftAndRightWithArrowKeys(
+            final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
               selectableTextState: selectableTextState,
               keyEvent: const FakeRawKeyEvent(
@@ -1648,8 +1536,7 @@ void main() {
         });
 
         group('down arrow', () {
-          testWidgets('it moves to end of text when in last line',
-              (tester) async {
+          testWidgets('it moves to end of text when in last line', (tester) async {
             // Note: this test depends on a multi-line text layout, therefore
             // the layout width and the text content must be precise.
             final controller = AttributedTextEditingController(
@@ -1659,8 +1546,7 @@ void main() {
 
             final selectableTextState = await _pumpMultilineLayout(tester);
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .moveUpDownLeftAndRightWithArrowKeys(
+            final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
               selectableTextState: selectableTextState,
               keyEvent: const FakeRawKeyEvent(
@@ -1674,8 +1560,7 @@ void main() {
 
             expect(result, TextFieldKeyboardHandlerResult.handled);
             expect(controller.selection.isCollapsed, true);
-            expect(
-                controller.selection.extentOffset, _multilineLayoutText.length);
+            expect(controller.selection.extentOffset, _multilineLayoutText.length);
           });
 
           testWidgets('it moves to next line', (tester) async {
@@ -1688,8 +1573,7 @@ void main() {
 
             final selectableTextState = await _pumpMultilineLayout(tester);
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .moveUpDownLeftAndRightWithArrowKeys(
+            final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
               selectableTextState: selectableTextState,
               keyEvent: const FakeRawKeyEvent(
@@ -1716,8 +1600,7 @@ void main() {
 
             final selectableTextState = await _pumpMultilineLayout(tester);
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .moveUpDownLeftAndRightWithArrowKeys(
+            final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
               selectableTextState: selectableTextState,
               keyEvent: const FakeRawKeyEvent(
@@ -1736,8 +1619,7 @@ void main() {
             expect(controller.selection.baseOffset, 0);
           });
 
-          testWidgets('it preserves horizontal position in next line',
-              (tester) async {
+          testWidgets('it preserves horizontal position in next line', (tester) async {
             // Note: this test depends on a multi-line text layout, therefore
             // the layout width and the text content must be precise.
             final controller = AttributedTextEditingController(
@@ -1747,8 +1629,7 @@ void main() {
 
             final selectableTextState = await _pumpMultilineLayout(tester);
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .moveUpDownLeftAndRightWithArrowKeys(
+            final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
               selectableTextState: selectableTextState,
               keyEvent: const FakeRawKeyEvent(
@@ -1769,23 +1650,20 @@ void main() {
 
       group('delete line before caret', () {
         group('Mac', () {
-          testWidgets(
-              'cmd + backspace deletes partial line before caret (flowed multiline)',
-              (tester) async {
+          testWidgets('cmd + backspace deletes partial line before caret (flowed multiline)', (tester) async {
             Platform.setTestInstance(MacPlatform());
 
             // Note: this test depends on a multi-line text layout, therefore
             // the layout width and the text content must be precise.
             final controller = AttributedTextEditingController(
               text: AttributedText(text: _multilineLayoutText),
-              selection: const TextSelection.collapsed(
-                  offset: 28), // midway through 2nd line
+              selection: const TextSelection.collapsed(offset: 28), // midway through 2nd line
             );
 
             final selectableTextState = await _pumpMultilineLayout(tester);
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
+            final result =
+                DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
               controller: controller,
               selectableTextState: selectableTextState,
               keyEvent: const FakeRawKeyEvent(
@@ -1801,29 +1679,25 @@ void main() {
             expect(result, TextFieldKeyboardHandlerResult.handled);
             expect(controller.selection.isCollapsed, true);
             expect(controller.selection.extentOffset, 18);
-            expect(controller.text.text,
-                'this text is long be multiline in the available space');
+            expect(controller.text.text, 'this text is long be multiline in the available space');
 
             Platform.setTestInstance(null);
           });
 
-          testWidgets('cmd + backspace deletes entire line (flowed multiline)',
-              (tester) async {
+          testWidgets('cmd + backspace deletes entire line (flowed multiline)', (tester) async {
             Platform.setTestInstance(MacPlatform());
 
             // Note: this test depends on a multi-line text layout, therefore
             // the layout width and the text content must be precise.
             final controller = AttributedTextEditingController(
               text: AttributedText(text: _multilineLayoutText),
-              selection: const TextSelection.collapsed(
-                  offset: 31,
-                  affinity: TextAffinity.upstream), // end of 2nd line
+              selection: const TextSelection.collapsed(offset: 31, affinity: TextAffinity.upstream), // end of 2nd line
             );
 
             final selectableTextState = await _pumpMultilineLayout(tester);
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
+            final result =
+                DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
               controller: controller,
               selectableTextState: selectableTextState,
               keyEvent: const FakeRawKeyEvent(
@@ -1839,29 +1713,23 @@ void main() {
             expect(result, TextFieldKeyboardHandlerResult.handled);
             expect(controller.selection.isCollapsed, true);
             expect(controller.selection.extentOffset, 18);
-            expect(controller.text.text,
-                'this text is long multiline in the available space');
+            expect(controller.text.text, 'this text is long multiline in the available space');
 
             Platform.setTestInstance(null);
           });
 
-          testWidgets(
-              'cmd + backspace deletes partial line before caret (explicit newlines)',
-              (tester) async {
+          testWidgets('cmd + backspace deletes partial line before caret (explicit newlines)', (tester) async {
             Platform.setTestInstance(MacPlatform());
 
             final controller = AttributedTextEditingController(
-              text: AttributedText(
-                  text: 'This is line 1\nThis is line 2\nThis is line 3'),
-              selection: const TextSelection.collapsed(
-                  offset: 23), // midway through 2nd line
+              text: AttributedText(text: 'This is line 1\nThis is line 2\nThis is line 3'),
+              selection: const TextSelection.collapsed(offset: 23), // midway through 2nd line
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(
-                tester, controller.text.text);
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
+            final result =
+                DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
               controller: controller,
               selectableTextState: selectableTextState,
               keyEvent: const FakeRawKeyEvent(
@@ -1877,29 +1745,23 @@ void main() {
             expect(result, TextFieldKeyboardHandlerResult.handled);
             expect(controller.selection.isCollapsed, true);
             expect(controller.selection.extentOffset, 15);
-            expect(
-                controller.text.text, 'This is line 1\nline 2\nThis is line 3');
+            expect(controller.text.text, 'This is line 1\nline 2\nThis is line 3');
 
             Platform.setTestInstance(null);
           });
 
-          testWidgets('cmd + backspace deletes entire line (explicit newlines)',
-              (tester) async {
+          testWidgets('cmd + backspace deletes entire line (explicit newlines)', (tester) async {
             Platform.setTestInstance(MacPlatform());
 
             final controller = AttributedTextEditingController(
-              text: AttributedText(
-                  text: 'This is line 1\nThis is line 2\nThis is line 3'),
-              selection: const TextSelection.collapsed(
-                  offset: 29,
-                  affinity: TextAffinity.upstream), // end of 2nd line
+              text: AttributedText(text: 'This is line 1\nThis is line 2\nThis is line 3'),
+              selection: const TextSelection.collapsed(offset: 29, affinity: TextAffinity.upstream), // end of 2nd line
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(
-                tester, controller.text.text);
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
+            final result =
+                DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
               controller: controller,
               selectableTextState: selectableTextState,
               keyEvent: const FakeRawKeyEvent(
@@ -1920,25 +1782,21 @@ void main() {
             Platform.setTestInstance(null);
           });
 
-          testWidgets('it does nothing when selection is expanded',
-              (tester) async {
+          testWidgets('it does nothing when selection is expanded', (tester) async {
             Platform.setTestInstance(MacPlatform());
 
             final controller = AttributedTextEditingController(
-              text: AttributedText(
-                  text:
-                      'This is some text that doesn\'t matter for this test.'),
+              text: AttributedText(text: 'This is some text that doesn\'t matter for this test.'),
               selection: const TextSelection(
                 baseOffset: 0,
                 extentOffset: 10,
               ),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(
-                tester, controller.text.text);
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
+            final result =
+                DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
               controller: controller,
               selectableTextState: selectableTextState,
               keyEvent: const FakeRawKeyEvent(
@@ -1956,22 +1814,18 @@ void main() {
             Platform.setTestInstance(null);
           });
 
-          testWidgets('it does nothing when selection extent is < 0',
-              (tester) async {
+          testWidgets('it does nothing when selection extent is < 0', (tester) async {
             Platform.setTestInstance(MacPlatform());
 
             final controller = AttributedTextEditingController(
-              text: AttributedText(
-                  text:
-                      'This is some text that doesn\'t matter for this test.'),
+              text: AttributedText(text: 'This is some text that doesn\'t matter for this test.'),
               selection: const TextSelection.collapsed(offset: -1),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(
-                tester, controller.text.text);
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
+            final result =
+                DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
               controller: controller,
               selectableTextState: selectableTextState,
               keyEvent: const FakeRawKeyEvent(
@@ -1989,22 +1843,20 @@ void main() {
             Platform.setTestInstance(null);
           });
 
-          testWidgets('it does nothing when selection is at start of line',
-              (tester) async {
+          testWidgets('it does nothing when selection is at start of line', (tester) async {
             Platform.setTestInstance(MacPlatform());
 
             // Note: this test depends on a multi-line text layout, therefore
             // the layout width and the text content must be precise.
             final controller = AttributedTextEditingController(
               text: AttributedText(text: _multilineLayoutText),
-              selection: const TextSelection.collapsed(
-                  offset: 18), // start of 2nd line
+              selection: const TextSelection.collapsed(offset: 18), // start of 2nd line
             );
 
             final selectableTextState = await _pumpMultilineLayout(tester);
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
+            final result =
+                DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
               controller: controller,
               selectableTextState: selectableTextState,
               keyEvent: const FakeRawKeyEvent(
@@ -2024,23 +1876,20 @@ void main() {
         });
 
         group('Windows + Linux', () {
-          testWidgets(
-              'control + backspace deletes partial line before caret (flowed multiline)',
-              (tester) async {
+          testWidgets('control + backspace deletes partial line before caret (flowed multiline)', (tester) async {
             Platform.setTestInstance(WindowsPlatform());
 
             // Note: this test depends on a multi-line text layout, therefore
             // the layout width and the text content must be precise.
             final controller = AttributedTextEditingController(
               text: AttributedText(text: _multilineLayoutText),
-              selection: const TextSelection.collapsed(
-                  offset: 28), // midway through 2nd line
+              selection: const TextSelection.collapsed(offset: 28), // midway through 2nd line
             );
 
             final selectableTextState = await _pumpMultilineLayout(tester);
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
+            final result =
+                DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
               controller: controller,
               selectableTextState: selectableTextState,
               keyEvent: const FakeRawKeyEvent(
@@ -2056,30 +1905,25 @@ void main() {
             expect(result, TextFieldKeyboardHandlerResult.handled);
             expect(controller.selection.isCollapsed, true);
             expect(controller.selection.extentOffset, 18);
-            expect(controller.text.text,
-                'this text is long be multiline in the available space');
+            expect(controller.text.text, 'this text is long be multiline in the available space');
 
             Platform.setTestInstance(null);
           });
 
-          testWidgets(
-              'control + backspace deletes entire line (flowed multiline)',
-              (tester) async {
+          testWidgets('control + backspace deletes entire line (flowed multiline)', (tester) async {
             Platform.setTestInstance(WindowsPlatform());
 
             // Note: this test depends on a multi-line text layout, therefore
             // the layout width and the text content must be precise.
             final controller = AttributedTextEditingController(
               text: AttributedText(text: _multilineLayoutText),
-              selection: const TextSelection.collapsed(
-                  offset: 31,
-                  affinity: TextAffinity.upstream), // end of 2nd line
+              selection: const TextSelection.collapsed(offset: 31, affinity: TextAffinity.upstream), // end of 2nd line
             );
 
             final selectableTextState = await _pumpMultilineLayout(tester);
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
+            final result =
+                DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
               controller: controller,
               selectableTextState: selectableTextState,
               keyEvent: const FakeRawKeyEvent(
@@ -2095,29 +1939,23 @@ void main() {
             expect(result, TextFieldKeyboardHandlerResult.handled);
             expect(controller.selection.isCollapsed, true);
             expect(controller.selection.extentOffset, 18);
-            expect(controller.text.text,
-                'this text is long multiline in the available space');
+            expect(controller.text.text, 'this text is long multiline in the available space');
 
             Platform.setTestInstance(null);
           });
 
-          testWidgets(
-              'control + backspace deletes partial line before caret (explicit newlines)',
-              (tester) async {
+          testWidgets('control + backspace deletes partial line before caret (explicit newlines)', (tester) async {
             Platform.setTestInstance(WindowsPlatform());
 
             final controller = AttributedTextEditingController(
-              text: AttributedText(
-                  text: 'This is line 1\nThis is line 2\nThis is line 3'),
-              selection: const TextSelection.collapsed(
-                  offset: 23), // midway through 2nd line
+              text: AttributedText(text: 'This is line 1\nThis is line 2\nThis is line 3'),
+              selection: const TextSelection.collapsed(offset: 23), // midway through 2nd line
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(
-                tester, controller.text.text);
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
+            final result =
+                DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
               controller: controller,
               selectableTextState: selectableTextState,
               keyEvent: const FakeRawKeyEvent(
@@ -2133,30 +1971,23 @@ void main() {
             expect(result, TextFieldKeyboardHandlerResult.handled);
             expect(controller.selection.isCollapsed, true);
             expect(controller.selection.extentOffset, 15);
-            expect(
-                controller.text.text, 'This is line 1\nline 2\nThis is line 3');
+            expect(controller.text.text, 'This is line 1\nline 2\nThis is line 3');
 
             Platform.setTestInstance(null);
           });
 
-          testWidgets(
-              'control + backspace deletes entire line (explicit newlines)',
-              (tester) async {
+          testWidgets('control + backspace deletes entire line (explicit newlines)', (tester) async {
             Platform.setTestInstance(WindowsPlatform());
 
             final controller = AttributedTextEditingController(
-              text: AttributedText(
-                  text: 'This is line 1\nThis is line 2\nThis is line 3'),
-              selection: const TextSelection.collapsed(
-                  offset: 29,
-                  affinity: TextAffinity.upstream), // end of 2nd line
+              text: AttributedText(text: 'This is line 1\nThis is line 2\nThis is line 3'),
+              selection: const TextSelection.collapsed(offset: 29, affinity: TextAffinity.upstream), // end of 2nd line
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(
-                tester, controller.text.text);
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
+            final result =
+                DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
               controller: controller,
               selectableTextState: selectableTextState,
               keyEvent: const FakeRawKeyEvent(
@@ -2177,25 +2008,21 @@ void main() {
             Platform.setTestInstance(null);
           });
 
-          testWidgets('it does nothing when selection is expanded',
-              (tester) async {
+          testWidgets('it does nothing when selection is expanded', (tester) async {
             Platform.setTestInstance(WindowsPlatform());
 
             final controller = AttributedTextEditingController(
-              text: AttributedText(
-                  text:
-                      'This is some text that doesn\'t matter for this test.'),
+              text: AttributedText(text: 'This is some text that doesn\'t matter for this test.'),
               selection: const TextSelection(
                 baseOffset: 0,
                 extentOffset: 10,
               ),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(
-                tester, controller.text.text);
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
+            final result =
+                DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
               controller: controller,
               selectableTextState: selectableTextState,
               keyEvent: const FakeRawKeyEvent(
@@ -2213,22 +2040,18 @@ void main() {
             Platform.setTestInstance(null);
           });
 
-          testWidgets('it does nothing when selection extent is < 0',
-              (tester) async {
+          testWidgets('it does nothing when selection extent is < 0', (tester) async {
             Platform.setTestInstance(WindowsPlatform());
 
             final controller = AttributedTextEditingController(
-              text: AttributedText(
-                  text:
-                      'This is some text that doesn\'t matter for this test.'),
+              text: AttributedText(text: 'This is some text that doesn\'t matter for this test.'),
               selection: const TextSelection.collapsed(offset: -1),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(
-                tester, controller.text.text);
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
+            final result =
+                DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
               controller: controller,
               selectableTextState: selectableTextState,
               keyEvent: const FakeRawKeyEvent(
@@ -2246,22 +2069,20 @@ void main() {
             Platform.setTestInstance(null);
           });
 
-          testWidgets('it does nothing when selection is at start of line',
-              (tester) async {
+          testWidgets('it does nothing when selection is at start of line', (tester) async {
             Platform.setTestInstance(WindowsPlatform());
 
             // Note: this test depends on a multi-line text layout, therefore
             // the layout width and the text content must be precise.
             final controller = AttributedTextEditingController(
               text: AttributedText(text: _multilineLayoutText),
-              selection: const TextSelection.collapsed(
-                  offset: 18), // start of 2nd line
+              selection: const TextSelection.collapsed(offset: 18), // start of 2nd line
             );
 
             final selectableTextState = await _pumpMultilineLayout(tester);
 
-            final result = DefaultSuperTextFieldKeyboardHandlers
-                .deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
+            final result =
+                DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
               controller: controller,
               selectableTextState: selectableTextState,
               keyEvent: const FakeRawKeyEvent(
@@ -2288,8 +2109,7 @@ void main() {
             selection: const TextSelection.collapsed(offset: 0),
           );
 
-          final result = DefaultSuperTextFieldKeyboardHandlers
-              .deleteTextWhenBackspaceOrDeleteIsPressed(
+          final result = DefaultSuperTextFieldKeyboardHandlers.deleteTextWhenBackspaceOrDeleteIsPressed(
             controller: controller,
             keyEvent: const FakeRawKeyEvent(
               data: FakeRawKeyEventData(
@@ -2312,8 +2132,7 @@ void main() {
             selection: const TextSelection.collapsed(offset: 0),
           );
 
-          final result = DefaultSuperTextFieldKeyboardHandlers
-              .deleteTextWhenBackspaceOrDeleteIsPressed(
+          final result = DefaultSuperTextFieldKeyboardHandlers.deleteTextWhenBackspaceOrDeleteIsPressed(
             controller: controller,
             keyEvent: const FakeRawKeyEvent(
               data: FakeRawKeyEventData(
@@ -2336,8 +2155,7 @@ void main() {
             selection: const TextSelection.collapsed(offset: 2),
           );
 
-          final result = DefaultSuperTextFieldKeyboardHandlers
-              .deleteTextWhenBackspaceOrDeleteIsPressed(
+          final result = DefaultSuperTextFieldKeyboardHandlers.deleteTextWhenBackspaceOrDeleteIsPressed(
             controller: controller,
             keyEvent: const FakeRawKeyEvent(
               data: FakeRawKeyEventData(
@@ -2363,8 +2181,7 @@ void main() {
             ),
           );
 
-          final result = DefaultSuperTextFieldKeyboardHandlers
-              .deleteTextWhenBackspaceOrDeleteIsPressed(
+          final result = DefaultSuperTextFieldKeyboardHandlers.deleteTextWhenBackspaceOrDeleteIsPressed(
             controller: controller,
             keyEvent: const FakeRawKeyEvent(
               data: FakeRawKeyEventData(
@@ -2389,8 +2206,7 @@ void main() {
             selection: const TextSelection.collapsed(offset: 0),
           );
 
-          final result = DefaultSuperTextFieldKeyboardHandlers
-              .deleteTextWhenBackspaceOrDeleteIsPressed(
+          final result = DefaultSuperTextFieldKeyboardHandlers.deleteTextWhenBackspaceOrDeleteIsPressed(
             controller: controller,
             keyEvent: const FakeRawKeyEvent(
               data: FakeRawKeyEventData(
@@ -2413,8 +2229,7 @@ void main() {
             selection: const TextSelection.collapsed(offset: 17),
           );
 
-          final result = DefaultSuperTextFieldKeyboardHandlers
-              .deleteTextWhenBackspaceOrDeleteIsPressed(
+          final result = DefaultSuperTextFieldKeyboardHandlers.deleteTextWhenBackspaceOrDeleteIsPressed(
             controller: controller,
             keyEvent: const FakeRawKeyEvent(
               data: FakeRawKeyEventData(
@@ -2437,8 +2252,7 @@ void main() {
             selection: const TextSelection.collapsed(offset: 2),
           );
 
-          final result = DefaultSuperTextFieldKeyboardHandlers
-              .deleteTextWhenBackspaceOrDeleteIsPressed(
+          final result = DefaultSuperTextFieldKeyboardHandlers.deleteTextWhenBackspaceOrDeleteIsPressed(
             controller: controller,
             keyEvent: const FakeRawKeyEvent(
               data: FakeRawKeyEventData(
@@ -2464,8 +2278,7 @@ void main() {
             ),
           );
 
-          final result = DefaultSuperTextFieldKeyboardHandlers
-              .deleteTextWhenBackspaceOrDeleteIsPressed(
+          final result = DefaultSuperTextFieldKeyboardHandlers.deleteTextWhenBackspaceOrDeleteIsPressed(
             controller: controller,
             keyEvent: const FakeRawKeyEvent(
               data: FakeRawKeyEventData(
@@ -2490,8 +2303,7 @@ void main() {
             selection: const TextSelection.collapsed(offset: 8),
           );
 
-          final result = DefaultSuperTextFieldKeyboardHandlers
-              .insertNewlineWhenEnterIsPressed(
+          final result = DefaultSuperTextFieldKeyboardHandlers.insertNewlineWhenEnterIsPressed(
             controller: controller,
             keyEvent: const FakeRawKeyEvent(
               data: FakeRawKeyEventData(
@@ -2514,8 +2326,7 @@ void main() {
             selection: const TextSelection.collapsed(offset: 0),
           );
 
-          final result = DefaultSuperTextFieldKeyboardHandlers
-              .insertNewlineWhenEnterIsPressed(
+          final result = DefaultSuperTextFieldKeyboardHandlers.insertNewlineWhenEnterIsPressed(
             controller: controller,
             keyEvent: const FakeRawKeyEvent(
               data: FakeRawKeyEventData(
@@ -2538,8 +2349,7 @@ void main() {
             selection: const TextSelection.collapsed(offset: 17),
           );
 
-          final result = DefaultSuperTextFieldKeyboardHandlers
-              .insertNewlineWhenEnterIsPressed(
+          final result = DefaultSuperTextFieldKeyboardHandlers.insertNewlineWhenEnterIsPressed(
             controller: controller,
             keyEvent: const FakeRawKeyEvent(
               data: FakeRawKeyEventData(
@@ -2564,8 +2374,7 @@ void main() {
             selection: const TextSelection.collapsed(offset: 0),
           );
 
-          final result = DefaultSuperTextFieldKeyboardHandlers
-              .insertCharacterWhenKeyIsPressed(
+          final result = DefaultSuperTextFieldKeyboardHandlers.insertCharacterWhenKeyIsPressed(
             controller: controller,
             keyEvent: const FakeRawKeyEvent(
               data: FakeRawKeyEventData(
@@ -2588,8 +2397,7 @@ void main() {
             selection: const TextSelection.collapsed(offset: 3),
           );
 
-          final result = DefaultSuperTextFieldKeyboardHandlers
-              .insertCharacterWhenKeyIsPressed(
+          final result = DefaultSuperTextFieldKeyboardHandlers.insertCharacterWhenKeyIsPressed(
             controller: controller,
             keyEvent: const FakeRawKeyEvent(
               data: FakeRawKeyEventData(
@@ -2612,8 +2420,7 @@ void main() {
             selection: const TextSelection.collapsed(offset: 3),
           );
 
-          final result = DefaultSuperTextFieldKeyboardHandlers
-              .insertCharacterWhenKeyIsPressed(
+          final result = DefaultSuperTextFieldKeyboardHandlers.insertCharacterWhenKeyIsPressed(
             controller: controller,
             keyEvent: const FakeRawKeyEvent(
               data: FakeRawKeyEventData(
@@ -2636,8 +2443,7 @@ void main() {
             selection: const TextSelection(baseOffset: 3, extentOffset: 10),
           );
 
-          final result = DefaultSuperTextFieldKeyboardHandlers
-              .insertCharacterWhenKeyIsPressed(
+          final result = DefaultSuperTextFieldKeyboardHandlers.insertCharacterWhenKeyIsPressed(
             controller: controller,
             keyEvent: const FakeRawKeyEvent(
               data: FakeRawKeyEventData(
@@ -2658,8 +2464,7 @@ void main() {
   });
 }
 
-const _multilineLayoutText =
-    'this text is long enough to be multiline in the available space';
+const _multilineLayoutText = 'this text is long enough to be multiline in the available space';
 
 // Based on experiments, the text is laid out as follows:
 //
@@ -2704,8 +2509,7 @@ Future<SuperSelectableTextState> _pumpAndReturnSelectableText(
     style: const TextStyle(),
   );
 
-  final decoratedText =
-      decorator == null ? selectableText : decorator(selectableText);
+  final decoratedText = decorator == null ? selectableText : decorator(selectableText);
 
   await tester.pumpWidget(
     MaterialApp(

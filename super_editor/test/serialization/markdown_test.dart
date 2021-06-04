@@ -15,28 +15,22 @@ void main() {
           ),
         ]);
 
-        (doc.nodes[0] as ParagraphNode).metadata['blockType'] =
-            header1Attribution;
+        (doc.nodes[0] as ParagraphNode).metadata['blockType'] = header1Attribution;
         expect(serializeDocumentToMarkdown(doc).trim(), '# My Header');
 
-        (doc.nodes[0] as ParagraphNode).metadata['blockType'] =
-            header2Attribution;
+        (doc.nodes[0] as ParagraphNode).metadata['blockType'] = header2Attribution;
         expect(serializeDocumentToMarkdown(doc).trim(), '## My Header');
 
-        (doc.nodes[0] as ParagraphNode).metadata['blockType'] =
-            header3Attribution;
+        (doc.nodes[0] as ParagraphNode).metadata['blockType'] = header3Attribution;
         expect(serializeDocumentToMarkdown(doc).trim(), '### My Header');
 
-        (doc.nodes[0] as ParagraphNode).metadata['blockType'] =
-            header4Attribution;
+        (doc.nodes[0] as ParagraphNode).metadata['blockType'] = header4Attribution;
         expect(serializeDocumentToMarkdown(doc).trim(), '#### My Header');
 
-        (doc.nodes[0] as ParagraphNode).metadata['blockType'] =
-            header5Attribution;
+        (doc.nodes[0] as ParagraphNode).metadata['blockType'] = header5Attribution;
         expect(serializeDocumentToMarkdown(doc).trim(), '##### My Header');
 
-        (doc.nodes[0] as ParagraphNode).metadata['blockType'] =
-            header6Attribution;
+        (doc.nodes[0] as ParagraphNode).metadata['blockType'] = header6Attribution;
         expect(serializeDocumentToMarkdown(doc).trim(), '###### My Header');
       });
 
@@ -48,14 +42,8 @@ void main() {
               text: 'My Header',
               spans: AttributedSpans(
                 attributions: [
-                  const SpanMarker(
-                      attribution: boldAttribution,
-                      offset: 3,
-                      markerType: SpanMarkerType.start),
-                  const SpanMarker(
-                      attribution: boldAttribution,
-                      offset: 8,
-                      markerType: SpanMarkerType.end),
+                  const SpanMarker(attribution: boldAttribution, offset: 3, markerType: SpanMarkerType.start),
+                  const SpanMarker(attribution: boldAttribution, offset: 8, markerType: SpanMarkerType.end),
                 ],
               ),
             ),
@@ -75,8 +63,7 @@ void main() {
           ),
         ]);
 
-        expect(
-            serializeDocumentToMarkdown(doc).trim(), '> This is a blockquote');
+        expect(serializeDocumentToMarkdown(doc).trim(), '> This is a blockquote');
       });
 
       test('blockquote with styles', () {
@@ -87,14 +74,8 @@ void main() {
               text: 'This is a blockquote',
               spans: AttributedSpans(
                 attributions: [
-                  const SpanMarker(
-                      attribution: boldAttribution,
-                      offset: 10,
-                      markerType: SpanMarkerType.start),
-                  const SpanMarker(
-                      attribution: boldAttribution,
-                      offset: 19,
-                      markerType: SpanMarkerType.end),
+                  const SpanMarker(attribution: boldAttribution, offset: 10, markerType: SpanMarkerType.start),
+                  const SpanMarker(attribution: boldAttribution, offset: 19, markerType: SpanMarkerType.end),
                 ],
               ),
             ),
@@ -102,8 +83,7 @@ void main() {
           ),
         ]);
 
-        expect(serializeDocumentToMarkdown(doc).trim(),
-            '> This is a **blockquote**');
+        expect(serializeDocumentToMarkdown(doc).trim(), '> This is a **blockquote**');
       });
 
       test('code', () {
@@ -143,22 +123,15 @@ This is some code
               text: 'This is a paragraph.',
               spans: AttributedSpans(
                 attributions: [
-                  const SpanMarker(
-                      attribution: boldAttribution,
-                      offset: 5,
-                      markerType: SpanMarkerType.start),
-                  const SpanMarker(
-                      attribution: boldAttribution,
-                      offset: 8,
-                      markerType: SpanMarkerType.end),
+                  const SpanMarker(attribution: boldAttribution, offset: 5, markerType: SpanMarkerType.start),
+                  const SpanMarker(attribution: boldAttribution, offset: 8, markerType: SpanMarkerType.end),
                 ],
               ),
             ),
           ),
         ]);
 
-        expect(serializeDocumentToMarkdown(doc).trim(),
-            'This **is a** paragraph.');
+        expect(serializeDocumentToMarkdown(doc).trim(), 'This **is a** paragraph.');
       });
 
       test('paragraph with overlapping bold and italics', () {
@@ -169,30 +142,17 @@ This is some code
               text: 'This is a paragraph.',
               spans: AttributedSpans(
                 attributions: [
-                  const SpanMarker(
-                      attribution: boldAttribution,
-                      offset: 5,
-                      markerType: SpanMarkerType.start),
-                  const SpanMarker(
-                      attribution: boldAttribution,
-                      offset: 8,
-                      markerType: SpanMarkerType.end),
-                  const SpanMarker(
-                      attribution: italicsAttribution,
-                      offset: 5,
-                      markerType: SpanMarkerType.start),
-                  const SpanMarker(
-                      attribution: italicsAttribution,
-                      offset: 8,
-                      markerType: SpanMarkerType.end),
+                  const SpanMarker(attribution: boldAttribution, offset: 5, markerType: SpanMarkerType.start),
+                  const SpanMarker(attribution: boldAttribution, offset: 8, markerType: SpanMarkerType.end),
+                  const SpanMarker(attribution: italicsAttribution, offset: 5, markerType: SpanMarkerType.start),
+                  const SpanMarker(attribution: italicsAttribution, offset: 8, markerType: SpanMarkerType.end),
                 ],
               ),
             ),
           ),
         ]);
 
-        expect(serializeDocumentToMarkdown(doc).trim(),
-            'This ***is a*** paragraph.');
+        expect(serializeDocumentToMarkdown(doc).trim(), 'This ***is a*** paragraph.');
       });
 
       test('paragraph with overlapping code and bold', () {
@@ -203,30 +163,17 @@ This is some code
               text: 'This is a paragraph.',
               spans: AttributedSpans(
                 attributions: const [
-                  SpanMarker(
-                      attribution: boldAttribution,
-                      offset: 5,
-                      markerType: SpanMarkerType.start),
-                  SpanMarker(
-                      attribution: boldAttribution,
-                      offset: 8,
-                      markerType: SpanMarkerType.end),
-                  SpanMarker(
-                      attribution: codeAttribution,
-                      offset: 5,
-                      markerType: SpanMarkerType.start),
-                  SpanMarker(
-                      attribution: codeAttribution,
-                      offset: 8,
-                      markerType: SpanMarkerType.end),
+                  SpanMarker(attribution: boldAttribution, offset: 5, markerType: SpanMarkerType.start),
+                  SpanMarker(attribution: boldAttribution, offset: 8, markerType: SpanMarkerType.end),
+                  SpanMarker(attribution: codeAttribution, offset: 5, markerType: SpanMarkerType.start),
+                  SpanMarker(attribution: codeAttribution, offset: 8, markerType: SpanMarkerType.end),
                 ],
               ),
             ),
           ),
         ]);
 
-        expect(serializeDocumentToMarkdown(doc).trim(),
-            'This `**is a**` paragraph.');
+        expect(serializeDocumentToMarkdown(doc).trim(), 'This `**is a**` paragraph.');
       });
 
       test('image', () {
@@ -238,8 +185,7 @@ This is some code
           ),
         ]);
 
-        expect(serializeDocumentToMarkdown(doc).trim(),
-            '![some alt text](https://someimage.com/the/image.png)');
+        expect(serializeDocumentToMarkdown(doc).trim(), '![some alt text](https://someimage.com/the/image.png)');
       });
 
       test('horizontal rule', () {
@@ -303,14 +249,8 @@ This is some code
               text: 'Unordered 1',
               spans: AttributedSpans(
                 attributions: [
-                  const SpanMarker(
-                      attribution: boldAttribution,
-                      offset: 0,
-                      markerType: SpanMarkerType.start),
-                  const SpanMarker(
-                      attribution: boldAttribution,
-                      offset: 8,
-                      markerType: SpanMarkerType.end),
+                  const SpanMarker(attribution: boldAttribution, offset: 0, markerType: SpanMarkerType.start),
+                  const SpanMarker(attribution: boldAttribution, offset: 8, markerType: SpanMarkerType.end),
                 ],
               ),
             ),
@@ -371,14 +311,8 @@ This is some code
               text: 'Ordered 1',
               spans: AttributedSpans(
                 attributions: [
-                  const SpanMarker(
-                      attribution: boldAttribution,
-                      offset: 0,
-                      markerType: SpanMarkerType.start),
-                  const SpanMarker(
-                      attribution: boldAttribution,
-                      offset: 6,
-                      markerType: SpanMarkerType.end),
+                  const SpanMarker(attribution: boldAttribution, offset: 0, markerType: SpanMarkerType.start),
+                  const SpanMarker(attribution: boldAttribution, offset: 6, markerType: SpanMarkerType.end),
                 ],
               ),
             ),
@@ -460,33 +394,26 @@ This is some code
     group('deserialization', () {
       test('headers', () {
         final header1Doc = deserializeMarkdownToDocument('# Header 1');
-        expect((header1Doc.nodes.first as ParagraphNode).metadata['blockType'],
-            header1Attribution);
+        expect((header1Doc.nodes.first as ParagraphNode).metadata['blockType'], header1Attribution);
 
         final header2Doc = deserializeMarkdownToDocument('## Header 2');
-        expect((header2Doc.nodes.first as ParagraphNode).metadata['blockType'],
-            header2Attribution);
+        expect((header2Doc.nodes.first as ParagraphNode).metadata['blockType'], header2Attribution);
 
         final header3Doc = deserializeMarkdownToDocument('### Header 3');
-        expect((header3Doc.nodes.first as ParagraphNode).metadata['blockType'],
-            header3Attribution);
+        expect((header3Doc.nodes.first as ParagraphNode).metadata['blockType'], header3Attribution);
 
         final header4Doc = deserializeMarkdownToDocument('#### Header 4');
-        expect((header4Doc.nodes.first as ParagraphNode).metadata['blockType'],
-            header4Attribution);
+        expect((header4Doc.nodes.first as ParagraphNode).metadata['blockType'], header4Attribution);
 
         final header5Doc = deserializeMarkdownToDocument('##### Header 5');
-        expect((header5Doc.nodes.first as ParagraphNode).metadata['blockType'],
-            header5Attribution);
+        expect((header5Doc.nodes.first as ParagraphNode).metadata['blockType'], header5Attribution);
 
         final header6Doc = deserializeMarkdownToDocument('###### Header 6');
-        expect((header6Doc.nodes.first as ParagraphNode).metadata['blockType'],
-            header6Attribution);
+        expect((header6Doc.nodes.first as ParagraphNode).metadata['blockType'], header6Attribution);
       });
 
       test('blockquote', () {
-        final blockquoteDoc =
-            deserializeMarkdownToDocument('> This is a blockquote');
+        final blockquoteDoc = deserializeMarkdownToDocument('> This is a blockquote');
 
         final blockquote = blockquoteDoc.nodes.first as ParagraphNode;
         expect(blockquote.metadata['blockType'], blockquoteAttribution);
@@ -505,8 +432,7 @@ This is some code
       });
 
       test('image', () {
-        final codeBlockDoc = deserializeMarkdownToDocument(
-            '![Image alt text](https://images.com/some/image.png)');
+        final codeBlockDoc = deserializeMarkdownToDocument('![Image alt text](https://images.com/some/image.png)');
 
         final image = codeBlockDoc.nodes.first as ImageNode;
         expect(image.imageUrl, 'https://images.com/some/image.png');
@@ -522,8 +448,7 @@ This is some code
         expect(document.nodes.first, isA<ParagraphNode>());
 
         final paragraph = document.nodes.first as ParagraphNode;
-        expect(paragraph.text.text,
-            'This is some unstyled text to parse as markdown');
+        expect(paragraph.text.text, 'This is some unstyled text to parse as markdown');
       });
 
       test('single styled paragraph', () {
@@ -536,17 +461,11 @@ This is some code
 
         final paragraph = document.nodes.first as ParagraphNode;
         final styledText = paragraph.text;
-        expect(
-            styledText.text, 'This is some styled text to parse as markdown');
+        expect(styledText.text, 'This is some styled text to parse as markdown');
 
         expect(styledText.getAllAttributionsAt(0).isEmpty, true);
-        expect(
-            styledText.getAllAttributionsAt(8).contains(boldAttribution), true);
-        expect(
-            styledText
-                .getAllAttributionsAt(13)
-                .containsAll([boldAttribution, italicsAttribution]),
-            true);
+        expect(styledText.getAllAttributionsAt(8).contains(boldAttribution), true);
+        expect(styledText.getAllAttributionsAt(13).containsAll([boldAttribution, italicsAttribution]), true);
         expect(styledText.getAllAttributionsAt(19).isEmpty, true);
       });
 
@@ -602,8 +521,7 @@ This is some code
         expect(document.nodes.length, 18);
 
         expect(document.nodes[0], isA<ParagraphNode>());
-        expect((document.nodes[0] as ParagraphNode).metadata['blockType'],
-            header1Attribution);
+        expect((document.nodes[0] as ParagraphNode).metadata['blockType'], header1Attribution);
 
         expect(document.nodes[1], isA<HorizontalRuleNode>());
 

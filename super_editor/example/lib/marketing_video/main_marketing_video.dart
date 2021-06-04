@@ -250,8 +250,7 @@ class DocumentEditingRobot {
         _editorOps = CommonEditorOperations(
             editor: editor,
             composer: composer,
-            documentLayoutResolver:
-                documentLayoutFinder as DocumentLayout Function()),
+            documentLayoutResolver: documentLayoutFinder as DocumentLayout Function()),
         _random = Random(randomSeed);
 
   final DocumentEditor _editor;
@@ -357,8 +356,7 @@ class DocumentEditingRobot {
             _editorOps.insertCharacter(character);
 
             if (character == ' ') {
-              _editorOps.convertParagraphByPatternMatching(
-                  _composer.selection!.extent.nodeId);
+              _editorOps.convertParagraphByPatternMatching(_composer.selection!.extent.nodeId);
             }
           },
         ),
@@ -374,8 +372,7 @@ class DocumentEditingRobot {
             _editorOps.insertCharacter(character);
 
             if (character == ' ') {
-              _editorOps.convertParagraphByPatternMatching(
-                  _composer.selection!.extent.nodeId);
+              _editorOps.convertParagraphByPatternMatching(_composer.selection!.extent.nodeId);
             }
           },
           true,
@@ -452,9 +449,7 @@ class DocumentEditingRobot {
   }
 
   Duration _randomWaitPeriod([bool fastMode = false]) {
-    return Duration(
-        milliseconds:
-            _random.nextInt(fastMode ? 45 : 200) + (fastMode ? 5 : 50));
+    return Duration(milliseconds: _random.nextInt(fastMode ? 45 : 200) + (fastMode ? 5 : 50));
   }
 
   Future<void> start() async {

@@ -102,10 +102,8 @@ ExecutionInstruction insertNewlineInBlockquote({
     return ExecutionInstruction.continueExecution;
   }
 
-  final baseNode = editContext.editor.document
-      .getNodeById(editContext.composer.selection!.base.nodeId)!;
-  final extentNode = editContext.editor.document
-      .getNodeById(editContext.composer.selection!.extent.nodeId)!;
+  final baseNode = editContext.editor.document.getNodeById(editContext.composer.selection!.base.nodeId)!;
+  final extentNode = editContext.editor.document.getNodeById(editContext.composer.selection!.extent.nodeId)!;
   if (baseNode.id != extentNode.id) {
     return ExecutionInstruction.continueExecution;
   }
@@ -117,9 +115,7 @@ ExecutionInstruction insertNewlineInBlockquote({
   }
 
   final didInsertNewline = editContext.commonOps.insertPlainText('\n');
-  return didInsertNewline
-      ? ExecutionInstruction.haltExecution
-      : ExecutionInstruction.continueExecution;
+  return didInsertNewline ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
 }
 
 ExecutionInstruction splitBlockquoteWhenEnterPressed({
@@ -134,10 +130,8 @@ ExecutionInstruction splitBlockquoteWhenEnterPressed({
     return ExecutionInstruction.continueExecution;
   }
 
-  final baseNode = editContext.editor.document
-      .getNodeById(editContext.composer.selection!.base.nodeId)!;
-  final extentNode = editContext.editor.document
-      .getNodeById(editContext.composer.selection!.extent.nodeId)!;
+  final baseNode = editContext.editor.document.getNodeById(editContext.composer.selection!.base.nodeId)!;
+  final extentNode = editContext.editor.document.getNodeById(editContext.composer.selection!.extent.nodeId)!;
   if (baseNode.id != extentNode.id) {
     return ExecutionInstruction.continueExecution;
   }
@@ -149,9 +143,7 @@ ExecutionInstruction splitBlockquoteWhenEnterPressed({
   }
 
   final didSplit = editContext.commonOps.insertBlockLevelNewline();
-  return didSplit
-      ? ExecutionInstruction.haltExecution
-      : ExecutionInstruction.continueExecution;
+  return didSplit ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
 }
 
 class SplitBlockquoteCommand implements EditorCommand {
@@ -171,9 +163,7 @@ class SplitBlockquoteCommand implements EditorCommand {
     final blockquote = node as ParagraphNode;
     final text = blockquote.text;
     final startText = text.copyText(0, splitPosition.offset);
-    final endText = splitPosition.offset < text.text.length
-        ? text.copyText(splitPosition.offset)
-        : AttributedText();
+    final endText = splitPosition.offset < text.text.length ? text.copyText(splitPosition.offset) : AttributedText();
 
     // Change the current node's content to just the text before the caret.
     // TODO: figure out how node changes should work in terms of
@@ -186,8 +176,7 @@ class SplitBlockquoteCommand implements EditorCommand {
     final newNode = ParagraphNode(
       id: newNodeId,
       text: endText,
-      metadata:
-          isNewNodeABlockquote ? {'blockType': blockquoteAttribution} : {},
+      metadata: isNewNodeABlockquote ? {'blockType': blockquoteAttribution} : {},
     );
 
     // Insert the new node after the current node.
@@ -207,22 +196,16 @@ Widget? blockquoteBuilder(ComponentContext componentContext) {
     return null;
   }
 
-  final textSelection =
-      componentContext.nodeSelection?.nodeSelection as TextSelection?;
-  final showCaret = componentContext.showCaret &&
-      (componentContext.nodeSelection?.isExtent ?? false);
+  final textSelection = componentContext.nodeSelection?.nodeSelection as TextSelection?;
+  final showCaret = componentContext.showCaret && (componentContext.nodeSelection?.isExtent ?? false);
 
   return BlockquoteComponent(
     textKey: componentContext.componentKey,
     text: blockquoteNode.text,
     styleBuilder: componentContext.extensions[textStylesExtensionKey],
     textSelection: textSelection,
-    selectionColor: (componentContext.extensions[selectionStylesExtensionKey]
-            as SelectionStyle)
-        .selectionColor,
+    selectionColor: (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle).selectionColor,
     showCaret: showCaret,
-    caretColor: (componentContext.extensions[selectionStylesExtensionKey]
-            as SelectionStyle)
-        .textCaretColor,
+    caretColor: (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle).textCaretColor,
   );
 }

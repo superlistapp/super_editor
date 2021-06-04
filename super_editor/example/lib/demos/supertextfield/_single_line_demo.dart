@@ -5,12 +5,10 @@ import '_robot.dart';
 
 class SingleLineTextFieldDemo extends StatefulWidget {
   @override
-  _SingleLineTextFieldDemoState createState() =>
-      _SingleLineTextFieldDemoState();
+  _SingleLineTextFieldDemoState createState() => _SingleLineTextFieldDemoState();
 }
 
-class _SingleLineTextFieldDemoState extends State<SingleLineTextFieldDemo>
-    with TickerProviderStateMixin {
+class _SingleLineTextFieldDemoState extends State<SingleLineTextFieldDemo> with TickerProviderStateMixin {
   final _textFieldController = AttributedTextEditingController(
     text: AttributedText(
         // text:
@@ -57,9 +55,7 @@ class _SingleLineTextFieldDemoState extends State<SingleLineTextFieldDemo>
       ..selection = const TextSelection.collapsed(offset: 0)
       ..text = AttributedText();
     _demoRobot
-      ..typeText(AttributedText(
-          text:
-              'Hello World! This is a robot typing some text into a SuperTextField.'))
+      ..typeText(AttributedText(text: 'Hello World! This is a robot typing some text into a SuperTextField.'))
       ..start();
   }
 
@@ -92,16 +88,13 @@ class _SingleLineTextFieldDemoState extends State<SingleLineTextFieldDemo>
                     key: _textKey,
                     textController: _textFieldController,
                     focusNode: _focusNode,
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decorationBuilder: (context, child) {
                       return Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(4),
                           border: Border.all(
-                            color: _focusNode!.hasFocus
-                                ? Colors.blue
-                                : Colors.grey.shade300,
+                            color: _focusNode!.hasFocus ? Colors.blue : Colors.grey.shade300,
                             width: 1,
                           ),
                         ),

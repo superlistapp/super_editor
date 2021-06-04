@@ -69,8 +69,7 @@ class _SelectableTextDemoState extends State<SelectableTextDemo> {
                   title: 'TEXT WITH CARET + COLLAPSED SELECTION',
                   demo: SuperSelectableText(
                     textSpan: _demoText1,
-                    textSelection: TextSelection.collapsed(
-                        offset: _demoText1.toPlainText().length),
+                    textSelection: TextSelection.collapsed(offset: _demoText1.toPlainText().length),
                     showCaret: true,
                   ),
                 ),
@@ -79,8 +78,7 @@ class _SelectableTextDemoState extends State<SelectableTextDemo> {
                   title: 'TEXT WITH LEFT-TO-RIGHT SELECTION + CARET',
                   demo: SuperSelectableText(
                     textSpan: _demoText1,
-                    textSelection:
-                        const TextSelection(baseOffset: 0, extentOffset: 12),
+                    textSelection: const TextSelection(baseOffset: 0, extentOffset: 12),
                     showCaret: true,
                   ),
                 ),
@@ -97,8 +95,7 @@ class _SelectableTextDemoState extends State<SelectableTextDemo> {
                 ),
                 const SizedBox(height: 24),
                 _buildDemo(
-                  title:
-                      'TEXT WITH FULL SELECTION + CARET, CUSTOM COLORS, CARET SHAPE, DEBUG PAINT',
+                  title: 'TEXT WITH FULL SELECTION + CARET, CUSTOM COLORS, CARET SHAPE, DEBUG PAINT',
                   demo: DebugSelectableTextDecorator(
                     selectableTextKey: _debugTextKey,
                     textLength: _demoText1.toPlainText().length,
@@ -106,9 +103,7 @@ class _SelectableTextDemoState extends State<SelectableTextDemo> {
                     child: SuperSelectableText(
                       key: _debugTextKey,
                       textSpan: _demoText1,
-                      textSelection: TextSelection(
-                          baseOffset: 0,
-                          extentOffset: _demoText1.toPlainText().length),
+                      textSelection: TextSelection(baseOffset: 0, extentOffset: _demoText1.toPlainText().length),
                       textSelectionDecoration: const TextSelectionDecoration(
                         selectionColor: Colors.yellow,
                       ),

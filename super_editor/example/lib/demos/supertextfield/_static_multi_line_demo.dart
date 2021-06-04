@@ -5,12 +5,10 @@ import '_robot.dart';
 
 class StaticMultiLineTextFieldDemo extends StatefulWidget {
   @override
-  _StaticMultiLineTextFieldDemoState createState() =>
-      _StaticMultiLineTextFieldDemoState();
+  _StaticMultiLineTextFieldDemoState createState() => _StaticMultiLineTextFieldDemoState();
 }
 
-class _StaticMultiLineTextFieldDemoState
-    extends State<StaticMultiLineTextFieldDemo> with TickerProviderStateMixin {
+class _StaticMultiLineTextFieldDemoState extends State<StaticMultiLineTextFieldDemo> with TickerProviderStateMixin {
   final _textFieldController = AttributedTextEditingController(
     text: AttributedText(
         // text:
@@ -94,8 +92,7 @@ class _StaticMultiLineTextFieldDemoState
                     key: _textKey,
                     textController: _textFieldController,
                     focusNode: _focusNode,
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decorationBuilder: (context, child) {
                       return Material(
                         borderRadius: BorderRadius.circular(4),
