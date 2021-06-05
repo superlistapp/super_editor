@@ -89,19 +89,15 @@ class DocumentRange {
   /// The start position of the range represented by its position within the
   /// document.
   ///
-  /// As the [start] position must strictly come before the [end] position,
-  /// this means that the node referenced by the start [DocumentPosition] will
-  /// always appear in the list of nodes in the document before the [end]
-  /// position.
+  /// The [start] position comes before the [end] position, or is equivalent to
+  /// the [end] position.
   final DocumentPosition start;
 
   /// The end position of the range represented by its position within the
   /// document.
   ///
-  /// As the [end] position must strictly come after the [start] position,
-  /// this means that the node referenced by the end [DocumentPosition] will
-  /// always appear in the list of nodes in the document after the [start]
-  /// position.
+  /// The [end] position comes after the [start] position, or is equivalent to
+  /// the [start] position.
   final DocumentPosition end;
 
   @override
@@ -164,8 +160,8 @@ class DocumentPosition {
   @override
   int get hashCode => nodeId.hashCode ^ nodePosition.hashCode;
 
-  /// Creates a copy of this position but with the given fields replaced with
-  /// the new values.
+  /// Creates a new [DocumentPosition] based on the current position, with the
+  /// provided parameters overridden.
   DocumentPosition copyWith({
     String? nodeId,
     NodePosition? nodePosition,
