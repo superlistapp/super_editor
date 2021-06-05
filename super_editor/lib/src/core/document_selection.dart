@@ -31,8 +31,8 @@ class DocumentSelection {
   })  : base = position,
         extent = position;
 
-  /// Creates a selection from the [base] position and [extent] position within
-  /// the document.
+  /// Creates a selection from the [base] position to the [extent] position
+  /// within the document.
   DocumentSelection({
     required this.base,
     required this.extent,
@@ -40,37 +40,31 @@ class DocumentSelection {
 
   /// The base position of the selection within the document.
   ///
-  /// If the [base] position comes before the [extent] position within the
-  /// document and the specific node that the position points to, the selection
-  /// is in the downstream direction.
-  /// If the [base] position and [extent] position are equal, the selection is
-  /// collapsed (see [isCollapsed] for details).
-  /// Otherwise, the selection is in the upstream direction.
+  /// If [base] equals [extent], the selection is collapsed.
+  ///
+  /// If [base] comes before [extent], the selection is expanded in the
+  /// downstream direction.
+  ///
+  /// If [base] comes after [extent], the selection is expanded in the upstream
+  /// direction.
   final DocumentPosition base;
 
   /// The extent position of the selection within the document.
   ///
-  /// If the [extent] position comes before the [base] position within the
-  /// document and the specific node that the position points to, the selection
-  /// is in the upstream direction.
-  /// If the [extent] position and [base] position are equal, the selection is
-  /// collapsed (see [isCollapsed] for details).
-  /// Otherwise, the selection is in the downstream direction.
+  /// If [extent] equals [base], the selection is collapsed.
+  ///
+  /// If [extent] comes after [base], the selection is expanded in the
+  /// downstream direction.
+  ///
+  /// If [extent] comes before [base], the selection is expanded in the upstream
+  /// direction.
   final DocumentPosition extent;
 
   /// Whether this selection is collapsed or not.
   ///
-  /// A collapsed document selection is one where the [base] position and
-  /// [extent] position are identical ([DocumentPosition.==] to be precise).
-  /// Semantically, a collapsed selection represents a single position and can
-  /// be understood as *nothing being selected*, i.e. the cursor not having
-  /// highlighted any node or character.
-  ///
-  /// A selection is **not collapsed** when the [base] and [extent] point to the
-  /// same node but only when they point to the same node **and** also point
-  /// to the same node-specific [DocumentPosition.nodePosition]. This means that
-  /// in a [ParagraphNode] e.g., the offset of the text position must also be
-  /// the same for the selection to be collapsed.
+  /// A [DocumentSelection] is "collapsed" when its [base] and [extent] are
+  /// equal ([DocumentPosition.==]). Otherwise, the [DocumentSelection] is
+  /// "expanded".
   bool get isCollapsed => base == extent;
 
   @override
@@ -80,13 +74,9 @@ class DocumentSelection {
 
   /// Returns a version of this that is collapsed at the [extent] position.
   ///
-  /// If this selection is already collapsed, returns this instance (i.e. the
-  /// [identical] object).
-  ///
-  /// Note that the relative position within the document does not play a role
-  /// in this case, i.e. the selection is always collapsed to the [extent]
-  /// position, regardless of whether it comes before or after the [base]
-  /// position.
+  /// Note, the returned [DocumentSelection] is collapsed at this selection's
+  /// [extent], regardless of whether this selection's [extent] comes before or
+  /// after its [base].
   ///
   /// See also:
   ///
@@ -112,9 +102,6 @@ class DocumentSelection {
   ///
   /// The source [Document] is required so that the upstream [DocumentPosition]
   /// can be selected from [base] and [extent].
-  ///
-  /// If this selection is already collapsed, returns this instance (i.e. the
-  /// [identical] object).
   ///
   /// See also:
   ///
@@ -154,9 +141,6 @@ class DocumentSelection {
   ///
   /// The source [Document] is required so that the downstream [DocumentPosition]
   /// can be selected from [base] and [extent].
-  ///
-  /// If this selection is already collapsed, returns this instance (i.e. the
-  /// [identical] object).
   ///
   /// See also:
   ///
@@ -199,8 +183,8 @@ class DocumentSelection {
   @override
   int get hashCode => base.hashCode ^ extent.hashCode;
 
-  /// Creates a copy of this selection but with the given fields replaced with
-  /// the new values.
+  /// Creates a new [DocumentSelection] based on the current selection, with the
+  /// provided parameters overridden.
   DocumentSelection copyWith({
     DocumentPosition? base,
     DocumentPosition? extent,
@@ -246,10 +230,10 @@ class DocumentNodeSelection<SelectionType extends NodeSelection> {
     this.highlightWhenEmpty = false,
   });
 
-  /// ID that points to the single node that the selection describes about.
+  /// The ID of the node that is selected.
   final String nodeId;
 
-  /// The actual node-specific selection data.
+  /// The selection within the given node.
   final SelectionType? nodeSelection;
 
   /// Whether this node selection is base in the context of the surrounding
