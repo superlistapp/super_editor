@@ -39,11 +39,8 @@ class DocumentEditor {
   }
 }
 
-/// A command that can be executed on a given document.
-///
-/// All commands need a [Document] and [DocumentEditorTransaction] for
-/// execution, which is defined by this abstract base class in the [execute]
-/// method.
+/// A command that alters a [Document] by applying changes in a
+/// [DocumentEditorTransaction].
 abstract class EditorCommand {
   /// Executes this command against the given [document], with changes
   /// applied to the given [transaction].
@@ -54,7 +51,7 @@ abstract class EditorCommand {
 }
 
 /// Functional version of an [EditorCommand] for commands that
-/// do not require variables or private functions.
+/// don't require variables or private functions.
 class EditorCommandFunction implements EditorCommand {
   /// Creates a functional editor command given the [EditorCommand.execute]
   /// function to be stored for execution.
@@ -104,8 +101,8 @@ class DocumentEditorTransaction {
 class MutableDocument with ChangeNotifier implements Document {
   /// Creates an in-memory, mutable version of a [Document].
   ///
-  /// Optionally, initial [nodes] can be given. If not specified, the list of
-  /// nodes is initialized empty.
+  /// Initializes the content of this [MutableDocument] with the given [nodes],
+  /// if provided, or empty content otherwise.
   MutableDocument({
     List<DocumentNode>? nodes,
   }) : _nodes = nodes ?? [] {
