@@ -1,8 +1,5 @@
 import 'package:super_editor/src/core/document.dart';
-import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/default_editor/common_editor_operations.dart';
-import 'package:super_editor/src/default_editor/document_interaction.dart';
-import 'package:super_editor/src/default_editor/layout.dart';
 
 import 'document_composer.dart';
 import 'document_editor.dart';
@@ -10,22 +7,16 @@ import 'document_layout.dart';
 
 /// Collection of core artifacts used to edit a document.
 ///
-/// This contains the [editor], the [composer], as well as access to the
-/// current [DocumentLayout] and the common editor operations.
-///
-/// Together, they are passed along to the [DocumentInteractor] or any other
-/// user that needs to perform editing actions.
+/// In particular, the context contains the [DocumentEditor],
+/// [DocumentComposer], and [DocumentLayout].
+/// In addition, [commonOps] are available for directly applying common, complex
+/// changes to the document using the artifacts.
 class EditContext {
   /// Creates an edit context that makes up a collection of core artifacts for
   /// editing a document.
   ///
-  /// In particular, the context contains the editor, composer, and layout.
-  /// While the [editor] and [composer] are passed directly, the
-  /// [documentLayout] shall be provided via a [getDocumentLayout] callback that
-  /// should return the current layout state.
-  ///
-  /// The [commonOps] are also passed to the edit context for direct access to
-  /// common editor, composer, and layout operations.
+  /// The [documentLayout] is passed as a [getDocumentLayout] callback that
+  /// should return the current layout as it might change.
   EditContext({
     required this.editor,
     required DocumentLayout Function() getDocumentLayout,
@@ -37,17 +28,17 @@ class EditContext {
   /// structure of the document.
   final DocumentEditor editor;
 
-  /// The current document layout state.
+  /// The document layout that is a visual representation of the document.
   ///
-  /// The member will always give access to the current state of the document
-  /// layout, e.g. the state of the [DefaultDocumentLayout].
+  /// This member might change over time.
   DocumentLayout get documentLayout => _getDocumentLayout();
   final DocumentLayout Function() _getDocumentLayout;
 
-  /// The composer of the document that maintains the [DocumentSelection].
+  /// The [DocumentComposer] that maintain selection and attributions to work
+  /// in conjunction with the [editor] to apply changes to the document.
   final DocumentComposer composer;
 
-  /// The common operations that can be executed on the [editor], [composer],
-  /// and [documentLayout] without directly calling them.
+  /// Common operations that can be executed to apply common, complex changes to
+  /// the document.
   final CommonEditorOperations commonOps;
 }
