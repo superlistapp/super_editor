@@ -1,0 +1,35 @@
+name: website
+description: The marketing website for SuperEditor.
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+environment:
+  sdk: ">=2.7.0 <3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_web_plugins:
+    sdk: flutter
+  super_editor:
+    path: ../super_editor
+  url_launcher:
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  lint: ^1.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
+    - assets/fonts/
+  fonts:
+    - family: Aeonik
+      fonts:
+        - asset: assets/fonts/Aeonik-Regular.woff
+        - asset: assets/fonts/Aeonik-Bold.woff
+          weight: 700
+        - asset: assets/fonts/Aeonik-Light.woff
+          weight: 300
+        - asset: assets/fonts/Aeonik-Thin.woff
+          weight: 100
