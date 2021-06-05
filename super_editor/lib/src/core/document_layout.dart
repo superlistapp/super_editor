@@ -44,12 +44,14 @@ abstract class DocumentLayout {
 
   /// Returns a [Rect] that bounds the content selected between
   /// [basePosition] and [extentPosition].
-  Rect? getRectForSelection(DocumentPosition basePosition, DocumentPosition extentPosition);
+  Rect? getRectForSelection(
+      DocumentPosition basePosition, DocumentPosition extentPosition);
 
   /// Returns a [DocumentSelection] that begins near [baseOffset] and extends
   /// to [extentOffset], or [null] if no document content sits between the
   /// provided points.
-  DocumentSelection? getDocumentSelectionInRegion(Offset baseOffset, Offset extentOffset);
+  DocumentSelection? getDocumentSelectionInRegion(
+      Offset baseOffset, Offset extentOffset);
 
   /// Returns the [MouseCursor] that's desired by the component at [documentOffset], or
   /// [null] if the document has no preference for the [MouseCursor] at the given
@@ -62,11 +64,13 @@ abstract class DocumentLayout {
 
   /// Converts [ancestorOffset] from the [ancestor]'s coordinate space to the
   /// same location on the screen within this [DocumentLayout]'s coordinate space.
-  Offset getDocumentOffsetFromAncestorOffset(Offset ancestorOffset, RenderObject ancestor);
+  Offset getDocumentOffsetFromAncestorOffset(
+      Offset ancestorOffset, RenderObject ancestor);
 
   /// Converts [documentOffset] from this [DocumentLayout]'s coordinate space
   /// to the same location on the screen within the [ancestor]'s coordinate space.
-  Offset getAncestorOffsetFromDocumentOffset(Offset documentOffset, RenderObject ancestor);
+  Offset getAncestorOffsetFromDocumentOffset(
+      Offset documentOffset, RenderObject ancestor);
 }
 
 /// Contract for all widgets that operate as document components
@@ -113,7 +117,8 @@ mixin DocumentComponent<T extends StatefulWidget> on State<T> {
   ///
   /// See [Document] for more information about [DocumentNode]s and
   /// node positions.
-  Rect getRectForSelection(NodePosition baseNodePosition, NodePosition extentNodePosition);
+  Rect getRectForSelection(
+      NodePosition baseNodePosition, NodePosition extentNodePosition);
 
   /// Returns the node position that represents the "beginning" of
   /// the content within this component, such as the first character
@@ -145,7 +150,8 @@ mixin DocumentComponent<T extends StatefulWidget> on State<T> {
   /// Returns [null] if there is nowhere to move left within this
   /// component, such as when the [currentPosition] is the first
   /// character within a paragraph.
-  NodePosition? movePositionLeft(NodePosition currentPosition, [Set<MovementModifier> movementModifiers]);
+  NodePosition? movePositionLeft(NodePosition currentPosition,
+      [Set<MovementModifier> movementModifiers]);
 
   /// Returns a new position within this component's node that
   /// corresponds to the [currentPosition] moved right one unit,
@@ -161,7 +167,8 @@ mixin DocumentComponent<T extends StatefulWidget> on State<T> {
   /// Returns null if there is nowhere to move right within this
   /// component, such as when the [currentPosition] refers to the
   /// last character in a paragraph.
-  NodePosition? movePositionRight(NodePosition currentPosition, [Set<MovementModifier> movementModifiers]);
+  NodePosition? movePositionRight(NodePosition currentPosition,
+      [Set<MovementModifier> movementModifiers]);
 
   /// Returns a new position within this component's node that
   /// corresponds to the [currentPosition] moved up one unit,
@@ -209,7 +216,8 @@ mixin DocumentComponent<T extends StatefulWidget> on State<T> {
   ///
   /// The selection type depends on the type of [DocumentNode] that this
   /// component displays.
-  NodeSelection? getSelectionInRange(Offset localBaseOffset, Offset localExtentOffset);
+  NodeSelection? getSelectionInRange(
+      Offset localBaseOffset, Offset localExtentOffset);
 
   /// Returns a [NodeSelection] within this component's [DocumentNode] that
   /// is collapsed at the given [nodePosition]
@@ -251,41 +259,33 @@ mixin DocumentComponent<T extends StatefulWidget> on State<T> {
 /// is the default movement that occurs when **no** movement modifiers are at
 /// play.
 class MovementModifier {
-  /// The default identifier for word-by-word selection movement.
-  ///
-  /// This is understood by the default node implementations.
+  /// Move text selection word-by-word.
   ///
   /// See also:
   ///
-  ///  * [line], which is the default value for line-by-line selection movement.
+  ///  * [line], which moves text selection line-by-line.
   static const word = MovementModifier('word');
 
-  /// The default identifier for line-by-line selection movement.
-  ///
-  /// This is understood by the default node implementations.
+  /// Move text selection line-by-line.
   ///
   /// See also:
   ///
-  ///  * [word], which is the default value for word-by-word selection movement.
+  ///  * [word], which moves text selection word-by-word.
   static const line = MovementModifier('line');
 
-  /// Creates a movement modifier from an [id] that is either understood by the
-  /// default node implementation or implemented by your own nodes.
+  /// Creates a movement modifier that is globally uniquely identified by the
+  /// provided [id].
   const MovementModifier(this.id);
 
-  /// The identifier of this modifier.
-  ///
-  /// This is the singular identity of this modifier, which determines how
-  /// document selection should change.
-  ///
-  /// The ID needs to either be understood by the default node implementations
-  /// or by your custom node implementations.
-  /// A single ID can only be used once.
+  /// Identifier that uniquely identifies this [MovementModifier] globally.
   final String id;
 
   @override
   bool operator ==(Object other) =>
-      identical(this, other) || other is MovementModifier && runtimeType == other.runtimeType && id == other.id;
+      identical(this, other) ||
+      other is MovementModifier &&
+          runtimeType == other.runtimeType &&
+          id == other.id;
 
   @override
   int get hashCode => id.hashCode;
@@ -310,13 +310,7 @@ typedef ComponentBuilder = Widget? Function(ComponentContext);
 /// Information that is provided to a [ComponentBuilder] to
 /// construct an appropriate [DocumentComponent] widget.
 class ComponentContext {
-  /// Creates a context for a [ComponentBuilder] to build a [DocumentComponent]
-  /// widget based on general information and node-specific additional
-  /// information.
-  ///
-  /// The general information, i.e. [context], [document], [documentNode],
-  /// [componentKey], and [showCaret] is mandatory while the node-specific
-  /// information, i.e. the [nodeSelection] and [extensions] are optional.
+  /// Creates a component context.
   const ComponentContext({
     required this.context,
     required this.document,
