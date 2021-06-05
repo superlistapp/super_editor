@@ -34,7 +34,7 @@ class EditContext {
   DocumentLayout get documentLayout => _getDocumentLayout();
   final DocumentLayout Function() _getDocumentLayout;
 
-  /// The [DocumentComposer] that maintain selection and attributions to work
+  /// The [DocumentComposer] that maintains selection and attributions to work
   /// in conjunction with the [editor] to apply changes to the document.
   final DocumentComposer composer;
 
