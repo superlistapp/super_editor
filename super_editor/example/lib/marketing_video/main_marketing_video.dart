@@ -247,8 +247,10 @@ class DocumentEditingRobot {
     int? randomSeed,
   })  : _editor = editor,
         _composer = composer,
-        _editorOps =
-            CommonEditorOperations(editor: editor, composer: composer, documentLayoutResolver: documentLayoutFinder as DocumentLayout Function()),
+        _editorOps = CommonEditorOperations(
+            editor: editor,
+            composer: composer,
+            documentLayoutResolver: documentLayoutFinder as DocumentLayout Function()),
         _random = Random(randomSeed);
 
   final DocumentEditor _editor;

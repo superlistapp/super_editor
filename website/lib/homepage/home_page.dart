@@ -58,9 +58,7 @@ class HomePage extends StatelessWidget {
                 ),
                 SizedBox(height: isSingleColumnLayout ? 16 : 52),
                 _buildFeaturedEditor(
-                  displayMode: isSingleColumnLayout
-                      ? DisplayMode.compact
-                      : DisplayMode.wide,
+                  displayMode: isSingleColumnLayout ? DisplayMode.compact : DisplayMode.wide,
                 ),
                 SizedBox(height: isSingleColumnLayout ? 92 : 135),
                 Container(

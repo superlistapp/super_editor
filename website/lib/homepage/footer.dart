@@ -43,9 +43,7 @@ class _LeftPart extends StatelessWidget {
     final Widget result = ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 539),
       child: Column(
-        crossAxisAlignment: singleColumnLayout
-            ? CrossAxisAlignment.center
-            : CrossAxisAlignment.start,
+        crossAxisAlignment: singleColumnLayout ? CrossAxisAlignment.center : CrossAxisAlignment.start,
         children: [
           const SelectableText(
             'Sponsored by the Superlist Team',
@@ -101,9 +99,7 @@ class _RightPart extends StatelessWidget {
       style: const TextStyle(fontSize: 16),
       textAlign: singleColumnLayout ? TextAlign.center : TextAlign.start,
       child: Column(
-        crossAxisAlignment: singleColumnLayout
-            ? CrossAxisAlignment.center
-            : CrossAxisAlignment.start,
+        crossAxisAlignment: singleColumnLayout ? CrossAxisAlignment.center : CrossAxisAlignment.start,
         children: const [
           SelectableText(
             'Keep up to date:',
