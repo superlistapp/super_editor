@@ -162,11 +162,11 @@ This is some code
             text: AttributedText(
               text: 'This is a paragraph.',
               spans: AttributedSpans(
-                attributions: const [
-                  SpanMarker(attribution: boldAttribution, offset: 5, markerType: SpanMarkerType.start),
-                  SpanMarker(attribution: boldAttribution, offset: 8, markerType: SpanMarkerType.end),
-                  SpanMarker(attribution: codeAttribution, offset: 5, markerType: SpanMarkerType.start),
-                  SpanMarker(attribution: codeAttribution, offset: 8, markerType: SpanMarkerType.end),
+                attributions: [
+                  const SpanMarker(attribution: boldAttribution, offset: 5, markerType: SpanMarkerType.start),
+                  const SpanMarker(attribution: boldAttribution, offset: 8, markerType: SpanMarkerType.end),
+                  const SpanMarker(attribution: codeAttribution, offset: 5, markerType: SpanMarkerType.start),
+                  const SpanMarker(attribution: codeAttribution, offset: 8, markerType: SpanMarkerType.end),
                 ],
               ),
             ),
