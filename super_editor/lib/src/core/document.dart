@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
+import 'package:super_editor/src/default_editor/text.dart';
 
 /// A read-only document with styled text and multimedia elements.
 ///
@@ -76,12 +77,27 @@ abstract class Document with ChangeNotifier {
 /// The [start] position must come before the [end] position in
 /// the document.
 class DocumentRange {
+  /// Creates a document range from its start and end positions.
+  ///
+  /// The [start] position must come before the [end] position in
+  /// the document.
   DocumentRange({
     required this.start,
     required this.end,
   });
 
+  /// The start position of the range represented by its position within the
+  /// document.
+  ///
+  /// The [start] position comes before the [end] position, or is equivalent to
+  /// the [end] position.
   final DocumentPosition start;
+
+  /// The end position of the range represented by its position within the
+  /// document.
+  ///
+  /// The [end] position comes after the [start] position, or is equivalent to
+  /// the [start] position.
   final DocumentPosition end;
 
   @override
@@ -108,6 +124,21 @@ class DocumentRange {
 /// that this position points to. For example, a [ParagraphNode]
 /// uses a [TextPosition] to represent a [nodePosition].
 class DocumentPosition {
+  /// Creates a document position from its node ID and node-specific
+  /// representation of the position.
+  ///
+  /// The [nodeId] references a [DocumentNode] within the document and the
+  /// [nodePosition] adds node-specific context.
+  ///
+  /// For example, the following code creates a [DocumentPosition] that points
+  /// to a [TextNode] and a text offset of `1` within that text node:
+  ///
+  /// ```dart
+  /// final documentPosition = DocumentPosition(
+  ///   nodeId: documentEditor.document.nodes.first.id,
+  ///   nodePosition: TextNodePosition(offset: 1),
+  /// );
+  /// ```
   const DocumentPosition({
     required this.nodeId,
     required this.nodePosition,
@@ -129,6 +160,8 @@ class DocumentPosition {
   @override
   int get hashCode => nodeId.hashCode ^ nodePosition.hashCode;
 
+  /// Creates a new [DocumentPosition] based on the current position, with the
+  /// provided parameters overridden.
   DocumentPosition copyWith({
     String? nodeId,
     NodePosition? nodePosition,
