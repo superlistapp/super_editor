@@ -44,12 +44,14 @@ abstract class DocumentLayout {
 
   /// Returns a [Rect] that bounds the content selected between
   /// [basePosition] and [extentPosition].
-  Rect? getRectForSelection(DocumentPosition basePosition, DocumentPosition extentPosition);
+  Rect? getRectForSelection(
+      DocumentPosition basePosition, DocumentPosition extentPosition);
 
   /// Returns a [DocumentSelection] that begins near [baseOffset] and extends
   /// to [extentOffset], or [null] if no document content sits between the
   /// provided points.
-  DocumentSelection? getDocumentSelectionInRegion(Offset baseOffset, Offset extentOffset);
+  DocumentSelection? getDocumentSelectionInRegion(
+      Offset baseOffset, Offset extentOffset);
 
   /// Returns the [MouseCursor] that's desired by the component at [documentOffset], or
   /// [null] if the document has no preference for the [MouseCursor] at the given
@@ -62,11 +64,13 @@ abstract class DocumentLayout {
 
   /// Converts [ancestorOffset] from the [ancestor]'s coordinate space to the
   /// same location on the screen within this [DocumentLayout]'s coordinate space.
-  Offset getDocumentOffsetFromAncestorOffset(Offset ancestorOffset, RenderObject ancestor);
+  Offset getDocumentOffsetFromAncestorOffset(
+      Offset ancestorOffset, RenderObject ancestor);
 
   /// Converts [documentOffset] from this [DocumentLayout]'s coordinate space
   /// to the same location on the screen within the [ancestor]'s coordinate space.
-  Offset getAncestorOffsetFromDocumentOffset(Offset documentOffset, RenderObject ancestor);
+  Offset getAncestorOffsetFromDocumentOffset(
+      Offset documentOffset, RenderObject ancestor);
 }
 
 /// Contract for all widgets that operate as document components
@@ -113,7 +117,8 @@ mixin DocumentComponent<T extends StatefulWidget> on State<T> {
   ///
   /// See [Document] for more information about [DocumentNode]s and
   /// node positions.
-  Rect getRectForSelection(NodePosition baseNodePosition, NodePosition extentNodePosition);
+  Rect getRectForSelection(
+      NodePosition baseNodePosition, NodePosition extentNodePosition);
 
   /// Returns the node position that represents the "beginning" of
   /// the content within this component, such as the first character
@@ -145,7 +150,8 @@ mixin DocumentComponent<T extends StatefulWidget> on State<T> {
   /// Returns [null] if there is nowhere to move left within this
   /// component, such as when the [currentPosition] is the first
   /// character within a paragraph.
-  NodePosition? movePositionLeft(NodePosition currentPosition, [Set<MovementModifier> movementModifiers]);
+  NodePosition? movePositionLeft(NodePosition currentPosition,
+      [Set<MovementModifier> movementModifiers]);
 
   /// Returns a new position within this component's node that
   /// corresponds to the [currentPosition] moved right one unit,
@@ -161,7 +167,8 @@ mixin DocumentComponent<T extends StatefulWidget> on State<T> {
   /// Returns null if there is nowhere to move right within this
   /// component, such as when the [currentPosition] refers to the
   /// last character in a paragraph.
-  NodePosition? movePositionRight(NodePosition currentPosition, [Set<MovementModifier> movementModifiers]);
+  NodePosition? movePositionRight(NodePosition currentPosition,
+      [Set<MovementModifier> movementModifiers]);
 
   /// Returns a new position within this component's node that
   /// corresponds to the [currentPosition] moved up one unit,
@@ -209,7 +216,8 @@ mixin DocumentComponent<T extends StatefulWidget> on State<T> {
   ///
   /// The selection type depends on the type of [DocumentNode] that this
   /// component displays.
-  NodeSelection? getSelectionInRange(Offset localBaseOffset, Offset localExtentOffset);
+  NodeSelection? getSelectionInRange(
+      Offset localBaseOffset, Offset localExtentOffset);
 
   /// Returns a [NodeSelection] within this component's [DocumentNode] that
   /// is collapsed at the given [nodePosition]
@@ -246,17 +254,38 @@ mixin DocumentComponent<T extends StatefulWidget> on State<T> {
 /// so long as those [id]s don't conflict with existing [id]s. You're
 /// responsible for implementing whatever behavior those custom
 /// [MovementModifier]s represent.
+///
+/// There is no default value for character-by-character movement because that
+/// is the default movement that occurs when **no** movement modifiers are at
+/// play.
 class MovementModifier {
+  /// Move text selection word-by-word.
+  ///
+  /// See also:
+  ///
+  ///  * [line], which moves text selection line-by-line.
   static const word = MovementModifier('word');
+
+  /// Move text selection line-by-line.
+  ///
+  /// See also:
+  ///
+  ///  * [word], which moves text selection word-by-word.
   static const line = MovementModifier('line');
 
+  /// Creates a movement modifier that is globally uniquely identified by the
+  /// provided [id].
   const MovementModifier(this.id);
 
+  /// Identifier that uniquely identifies this [MovementModifier] globally.
   final String id;
 
   @override
   bool operator ==(Object other) =>
-      identical(this, other) || other is MovementModifier && runtimeType == other.runtimeType && id == other.id;
+      identical(this, other) ||
+      other is MovementModifier &&
+          runtimeType == other.runtimeType &&
+          id == other.id;
 
   @override
   int get hashCode => id.hashCode;
@@ -281,6 +310,7 @@ typedef ComponentBuilder = Widget? Function(ComponentContext);
 /// Information that is provided to a [ComponentBuilder] to
 /// construct an appropriate [DocumentComponent] widget.
 class ComponentContext {
+  /// Creates a component context.
   const ComponentContext({
     required this.context,
     required this.document,
