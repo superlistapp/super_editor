@@ -56,7 +56,7 @@ jobs:
       - run: flutter test
 
   test_linux:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     defaults:
       run:
         # Run everything from within the super_editor project directory
