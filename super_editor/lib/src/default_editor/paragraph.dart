@@ -147,8 +147,7 @@ ExecutionInstruction anyCharacterToInsertInParagraph({
   if (character == null || character == '') {
     return ExecutionInstruction.continueExecution;
   }
-  if (keyEvent.character!.codeUnits
-      .any((el) => el < 9 || (13 < el && el < 32))) {
+  if (LogicalKeyboardKey.isControlCharacter(keyEvent.character!)) {
     return ExecutionInstruction.continueExecution;
   }
   // On web, keys like shift and alt are sending their full name
