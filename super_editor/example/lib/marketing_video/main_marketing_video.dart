@@ -235,9 +235,9 @@ TextStyle _textStyleBuilder(Set<Attribution> attributions) {
   return textStyle;
 }
 
-final superlistBrandAttribution = NamedAttribution('superlist_brand');
-final titleAttribution = NamedAttribution('titleAttribution');
-final headerAttribution = NamedAttribution('header');
+const superlistBrandAttribution = NamedAttribution('superlist_brand');
+const titleAttribution = NamedAttribution('titleAttribution');
+const headerAttribution = NamedAttribution('header');
 
 class DocumentEditingRobot {
   DocumentEditingRobot({
@@ -257,7 +257,7 @@ class DocumentEditingRobot {
   final DocumentComposer _composer;
   final CommonEditorOperations _editorOps;
   final _actionQueue = <RobotAction>[];
-  final _random;
+  final Random _random;
 
   void placeCaret(DocumentPosition position) {
     _actionQueue.add(

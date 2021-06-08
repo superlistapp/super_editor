@@ -48,7 +48,7 @@ class _EmojisTextFieldDemoState extends State<EmojisTextFieldDemo> with TickerPr
 
   void _startDemo() {
     _textFieldController
-      ..selection = TextSelection.collapsed(offset: 0)
+      ..selection = const TextSelection.collapsed(offset: 0)
       ..text = AttributedText(
         text: 'turtle 🐢 bomb 💣 skull ☠',
       );
@@ -63,7 +63,7 @@ class _EmojisTextFieldDemoState extends State<EmojisTextFieldDemo> with TickerPr
     } else {
       // simulate pressing delete
       _demoRobot
-        ..insertCaretAt(TextPosition(offset: 0))
+        ..insertCaretAt(const TextPosition(offset: 0))
         ..pause(const Duration(seconds: 1))
         ..deleteCharacters(_textFieldController.text.text.length)
         ..start();
@@ -113,7 +113,7 @@ class _EmojisTextFieldDemoState extends State<EmojisTextFieldDemo> with TickerPr
                       );
                     },
                     hintBuilder: (context) {
-                      return Text(
+                      return const Text(
                         'enter some text',
                         style: TextStyle(
                           color: Colors.grey,
@@ -126,10 +126,10 @@ class _EmojisTextFieldDemoState extends State<EmojisTextFieldDemo> with TickerPr
                   ),
                 ),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: _restartDemo,
-                child: Text('Restart Demo'),
+                child: const Text('Restart Demo'),
               ),
             ],
           ),

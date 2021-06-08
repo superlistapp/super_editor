@@ -53,7 +53,7 @@ class _ExpandingMultiLineTextFieldDemoState extends State<ExpandingMultiLineText
 
   void _startDemo() {
     _textFieldController
-      ..selection = TextSelection.collapsed(offset: 0)
+      ..selection = const TextSelection.collapsed(offset: 0)
       ..text = AttributedText();
     _demoRobot
       ..typeText(AttributedText(text: 'Hello World!'))
@@ -102,7 +102,7 @@ class _ExpandingMultiLineTextFieldDemoState extends State<ExpandingMultiLineText
                       );
                     },
                     hintBuilder: (context) {
-                      return Text(
+                      return const Text(
                         'enter some text',
                         style: TextStyle(
                           color: Colors.grey,
@@ -115,10 +115,10 @@ class _ExpandingMultiLineTextFieldDemoState extends State<ExpandingMultiLineText
                   ),
                 ),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: _restartDemo,
-                child: Text('Restart Demo'),
+                child: const Text('Restart Demo'),
               ),
             ],
           ),

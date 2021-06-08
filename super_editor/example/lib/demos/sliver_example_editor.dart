@@ -32,11 +32,11 @@ class _SliverExampleEditorState extends State<SliverExampleEditor> {
     return CustomScrollView(
       slivers: [
         SliverAppBar(
-          title: Text(
+          title: const Text(
             'Rich Text Editor Sliver Example',
           ),
           expandedHeight: 200.0,
-          leading: SizedBox(),
+          leading: const SizedBox(),
           flexibleSpace: FlexibleSpaceBar(
             background: Image.network(
               'https://i.imgur.com/fSZwM7G.jpg',
@@ -44,7 +44,7 @@ class _SliverExampleEditorState extends State<SliverExampleEditor> {
             ),
           ),
         ),
-        SliverToBoxAdapter(
+        const SliverToBoxAdapter(
           child: Text(
             'Lorem Ipsum Dolor',
             style: TextStyle(
@@ -73,7 +73,7 @@ class _SliverExampleEditorState extends State<SliverExampleEditor> {
                       content: Text(
                         'SliverList element tapped with index $index.',
                       ),
-                      duration: Duration(milliseconds: 500),
+                      duration: const Duration(milliseconds: 500),
                     ),
                   );
                 },

@@ -13,7 +13,7 @@ import 'document.dart';
 /// can be event-sourced, allowing for undo/redo behavior.
 // TODO: design and implement comprehensive event-sourced editing API (#49)
 class DocumentEditor {
-  static final Uuid _uuid = Uuid();
+  static const Uuid _uuid = Uuid();
 
   /// Generates a new ID for a [DocumentNode].
   ///
@@ -267,7 +267,9 @@ class MutableDocument with ChangeNotifier implements Document {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is MutableDocument && runtimeType == other.runtimeType && DeepCollectionEquality().equals(_nodes, nodes);
+      other is MutableDocument &&
+          runtimeType == other.runtimeType &&
+          const DeepCollectionEquality().equals(_nodes, nodes);
 
   @override
   int get hashCode => _nodes.hashCode;

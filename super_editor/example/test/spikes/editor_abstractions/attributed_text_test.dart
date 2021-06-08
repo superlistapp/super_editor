@@ -16,7 +16,7 @@ void main() {
     });
 
     test('full-span style', () {
-      final text = AttributedText(text: 'abcdefghij', attributions: [
+      final text = AttributedText(text: 'abcdefghij', attributions: const [
         SpanMarker(attribution: 'bold', offset: 0, markerType: SpanMarkerType.start),
         SpanMarker(attribution: 'bold', offset: 9, markerType: SpanMarkerType.end),
       ]);
@@ -28,7 +28,7 @@ void main() {
     });
 
     test('single character style', () {
-      final text = AttributedText(text: 'abcdefghij', attributions: [
+      final text = AttributedText(text: 'abcdefghij', attributions: const [
         SpanMarker(attribution: 'bold', offset: 1, markerType: SpanMarkerType.start),
         SpanMarker(attribution: 'bold', offset: 1, markerType: SpanMarkerType.end),
       ]);
@@ -44,7 +44,7 @@ void main() {
     });
 
     test('single character style - reverse order', () {
-      final text = AttributedText(text: 'abcdefghij', attributions: [
+      final text = AttributedText(text: 'abcdefghij', attributions: const [
         // Notice that the markers are provided in reverse order:
         // end then start. Order shouldn't matter within a single
         // position index. This test ensures that.
@@ -64,7 +64,7 @@ void main() {
 
     test('add single character style', () {
       final text = AttributedText(text: 'abcdefghij');
-      text.addAttribution('bold', TextRange(start: 1, end: 1));
+      text.addAttribution('bold', const TextRange(start: 1, end: 1));
       final textSpan = text.computeTextSpan(_styleBuilder);
 
       expect(textSpan.text, null);
@@ -77,7 +77,7 @@ void main() {
     });
 
     test('partial style', () {
-      final text = AttributedText(text: 'abcdefghij', attributions: [
+      final text = AttributedText(text: 'abcdefghij', attributions: const [
         SpanMarker(attribution: 'bold', offset: 2, markerType: SpanMarkerType.start),
         SpanMarker(attribution: 'bold', offset: 7, markerType: SpanMarkerType.end),
       ]);
@@ -92,7 +92,7 @@ void main() {
     });
 
     test('non-mingled varying styles', () {
-      final text = AttributedText(text: 'abcdefghij', attributions: [
+      final text = AttributedText(text: 'abcdefghij', attributions: const [
         SpanMarker(attribution: 'bold', offset: 0, markerType: SpanMarkerType.start),
         SpanMarker(attribution: 'bold', offset: 4, markerType: SpanMarkerType.end),
         SpanMarker(attribution: 'italics', offset: 5, markerType: SpanMarkerType.start),
@@ -111,7 +111,7 @@ void main() {
     });
 
     test('intermingled varying styles', () {
-      final text = AttributedText(text: 'abcdefghij', attributions: [
+      final text = AttributedText(text: 'abcdefghij', attributions: const [
         SpanMarker(attribution: 'bold', offset: 2, markerType: SpanMarkerType.start),
         SpanMarker(attribution: 'italics', offset: 4, markerType: SpanMarkerType.start),
         SpanMarker(attribution: 'bold', offset: 5, markerType: SpanMarkerType.end),

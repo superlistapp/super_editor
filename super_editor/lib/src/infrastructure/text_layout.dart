@@ -114,7 +114,10 @@ int getCharacterEndBounds(String text, int startingCodePointIndex) {
 
   // TODO: copy the implementation of nextCharacter to this package because
   //       it's marked as visible for testing
-  final startOffset = RenderEditable.nextCharacter(startingCodePointIndex, text);
+  // ignore: invalid_use_of_visible_for_testing_member
+  final startOffset =
+      // ignore: invalid_use_of_visible_for_testing_member
+      RenderEditable.nextCharacter(startingCodePointIndex, text);
   return startOffset;
 }
 
@@ -138,6 +141,9 @@ int getCharacterStartBounds(String text, int endingCodePointIndex) {
 
   // TODO: copy the implementation of previousCharacter to this package because
   //       it's marked as visible for testing
-  final startOffset = RenderEditable.previousCharacter(endingCodePointIndex, text);
+  // ignore: invalid_use_of_visible_for_testing_member
+  final startOffset =
+      // ignore: invalid_use_of_visible_for_testing_member
+      RenderEditable.previousCharacter(endingCodePointIndex, text);
   return startOffset;
 }

@@ -57,7 +57,7 @@ TextSelection expandPositionToWord({
   required TextPosition textPosition,
 }) {
   if (text.isEmpty) {
-    return TextSelection.collapsed(offset: -1);
+    return const TextSelection.collapsed(offset: -1);
   }
 
   int start = min(textPosition.offset, text.length - 1);
@@ -121,7 +121,7 @@ TextSelection expandPositionToParagraph({
   required TextPosition textPosition,
 }) {
   if (text.isEmpty) {
-    return TextSelection.collapsed(offset: -1);
+    return const TextSelection.collapsed(offset: -1);
   }
 
   int start = min(textPosition.offset, text.length - 1);

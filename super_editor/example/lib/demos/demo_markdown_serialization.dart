@@ -78,8 +78,8 @@ class _MarkdownSerializationDemoState extends State<MarkdownSerializationDemo> {
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
                 child: Text(
                   _markdown,
-                  style: TextStyle(
-                    color: const Color(0xFFEEEEEE),
+                  style: const TextStyle(
+                    color: Color(0xFFEEEEEE),
                     height: 1.4,
                   ),
                 ),

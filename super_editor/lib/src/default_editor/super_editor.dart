@@ -186,7 +186,7 @@ class SuperEditor extends StatefulWidget {
 
   /// Paints some extra visual ornamentation to help with
   /// debugging, when true.
-  final showDebugPaint;
+  final bool showDebugPaint;
 
   @override
   _SuperEditorState createState() => _SuperEditorState();
@@ -338,14 +338,14 @@ class _SuperEditorState extends State<SuperEditor> {
 }
 
 /// Default visual styles related to content selection.
-final defaultSelectionStyle = const SelectionStyle(
+const defaultSelectionStyle = SelectionStyle(
   textCaretColor: Colors.black,
   selectionColor: Color(0xFFACCEF7),
 );
 
 /// Creates [TextStyles] for the standard [SuperEditor].
 TextStyle defaultStyleBuilder(Set<Attribution> attributions) {
-  TextStyle newStyle = TextStyle(
+  TextStyle newStyle = const TextStyle(
     color: Colors.black,
     fontSize: 13,
     height: 1.4,

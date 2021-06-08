@@ -30,15 +30,15 @@ class TextFieldDemoScreen extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     _buildTitle('SuperTextField'),
-                    SizedBox(height: 24),
+                    const SizedBox(height: 24),
                     for (final menuItem in menuItems) ...[
                       _buildButton(
                         label: menuItem.label,
                         onPressed: menuItem.onPressed,
                       ),
-                      SizedBox(height: 24),
+                      const SizedBox(height: 24),
                     ],
                   ],
                 ),
@@ -53,7 +53,7 @@ class TextFieldDemoScreen extends StatelessWidget {
   Widget _buildTitle(String title) {
     return Text(
       title,
-      style: TextStyle(
+      style: const TextStyle(
         color: Colors.white,
         fontSize: 18,
         fontWeight: FontWeight.bold,

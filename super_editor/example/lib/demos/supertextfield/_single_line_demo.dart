@@ -52,7 +52,7 @@ class _SingleLineTextFieldDemoState extends State<SingleLineTextFieldDemo> with 
 
   void _startDemo() {
     _textFieldController
-      ..selection = TextSelection.collapsed(offset: 0)
+      ..selection = const TextSelection.collapsed(offset: 0)
       ..text = AttributedText();
     _demoRobot
       ..typeText(AttributedText(text: 'Hello World! This is a robot typing some text into a SuperTextField.'))
@@ -102,7 +102,7 @@ class _SingleLineTextFieldDemoState extends State<SingleLineTextFieldDemo> with 
                       );
                     },
                     hintBuilder: (context) {
-                      return Text(
+                      return const Text(
                         'enter some text',
                         style: TextStyle(
                           color: Colors.grey,
@@ -115,10 +115,10 @@ class _SingleLineTextFieldDemoState extends State<SingleLineTextFieldDemo> with 
                   ),
                 ),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: _restartDemo,
-                child: Text('Restart Demo'),
+                child: const Text('Restart Demo'),
               ),
             ],
           ),

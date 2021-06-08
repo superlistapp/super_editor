@@ -116,13 +116,13 @@ class UnorderedListItemComponent extends StatelessWidget {
   Widget build(BuildContext context) {
     final indentSpace = indentExtent * (indent + 1);
     final firstLineHeight = styleBuilder({}).fontSize;
-    final manualVerticalAdjustment = 2.0;
+    const manualVerticalAdjustment = 2.0;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          margin: EdgeInsets.only(top: manualVerticalAdjustment),
+          margin: const EdgeInsets.only(top: manualVerticalAdjustment),
           decoration: BoxDecoration(
             border: Border.all(width: 1, color: showDebugPaint ? Colors.grey : Colors.transparent),
           ),
@@ -203,7 +203,7 @@ class OrderedListItemComponent extends StatelessWidget {
   Widget build(BuildContext context) {
     final indentSpace = indentExtent * (indent + 1);
     final firstLineHeight = styleBuilder({}).fontSize!;
-    final manualVerticalAdjustment = 2.0;
+    const manualVerticalAdjustment = 2.0;
     final manualHeightAdjustment = firstLineHeight * 0.15;
 
     return Row(
@@ -212,7 +212,7 @@ class OrderedListItemComponent extends StatelessWidget {
         Container(
           width: indentSpace,
           height: firstLineHeight + manualHeightAdjustment,
-          margin: EdgeInsets.only(top: manualVerticalAdjustment),
+          margin: const EdgeInsets.only(top: manualVerticalAdjustment),
           decoration: BoxDecoration(
             border: Border.all(width: 1, color: showDebugPaint ? Colors.grey : Colors.transparent),
           ),
