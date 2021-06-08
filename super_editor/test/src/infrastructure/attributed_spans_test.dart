@@ -2,9 +2,9 @@ import 'package:super_editor/src/infrastructure/attributed_spans.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 // Attributions used throughout this test suite.
-final bold = NamedAttribution('bold');
-final italics = NamedAttribution('italics');
-final strikethrough = NamedAttribution('strikethrough');
+const bold = NamedAttribution('bold');
+const italics = NamedAttribution('italics');
+const strikethrough = NamedAttribution('strikethrough');
 
 void main() {
   group('Spans', () {
@@ -16,7 +16,7 @@ void main() {
         expect(
           expandedSpan,
           equals(
-            AttributionSpan(
+            const AttributionSpan(
               attribution: bold,
               start: 3,
               end: 16,
@@ -39,7 +39,7 @@ void main() {
         expect(
           attributionSpans.first,
           equals(
-            AttributionSpan(
+            const AttributionSpan(
               attribution: bold,
               start: 5,
               end: 10,
@@ -62,7 +62,7 @@ void main() {
         expect(
           attributionSpans.first,
           equals(
-            AttributionSpan(
+            const AttributionSpan(
               attribution: bold,
               start: 3,
               end: 7,
@@ -72,7 +72,7 @@ void main() {
         expect(
           attributionSpans.last,
           equals(
-            AttributionSpan(
+            const AttributionSpan(
               attribution: bold,
               start: 10,
               end: 15,
@@ -93,7 +93,7 @@ void main() {
         expect(
           attributionSpans.first,
           equals(
-            AttributionSpan(
+            const AttributionSpan(
               attribution: bold,
               start: 0,
               end: 10,
@@ -117,7 +117,7 @@ void main() {
         expect(
           attributionSpans.first,
           equals(
-            AttributionSpan(
+            const AttributionSpan(
               attribution: bold,
               start: 5,
               end: 7,
@@ -127,7 +127,7 @@ void main() {
         expect(
           attributionSpans.last,
           equals(
-            AttributionSpan(
+            const AttributionSpan(
               attribution: bold,
               start: 10,
               end: 12,
@@ -149,7 +149,7 @@ void main() {
         expect(
           attributionSpans.first,
           equals(
-            AttributionSpan(
+            const AttributionSpan(
               attribution: bold,
               start: 3,
               end: 8,
@@ -196,8 +196,8 @@ void main() {
       test('removes attribution from full span', () {
         final spans = AttributedSpans(
           attributions: [
-            SpanMarker(attribution: bold, offset: 0, markerType: SpanMarkerType.start),
-            SpanMarker(attribution: bold, offset: 16, markerType: SpanMarkerType.end)
+            const SpanMarker(attribution: bold, offset: 0, markerType: SpanMarkerType.start),
+            const SpanMarker(attribution: bold, offset: 16, markerType: SpanMarkerType.end)
           ],
         )..removeAttribution(attributionToRemove: bold, start: 0, end: 16);
 
@@ -207,8 +207,8 @@ void main() {
       test('removes attribution from inner text span', () {
         final spans = AttributedSpans(
           attributions: [
-            SpanMarker(attribution: bold, offset: 2, markerType: SpanMarkerType.start),
-            SpanMarker(attribution: bold, offset: 7, markerType: SpanMarkerType.end)
+            const SpanMarker(attribution: bold, offset: 2, markerType: SpanMarkerType.start),
+            const SpanMarker(attribution: bold, offset: 7, markerType: SpanMarkerType.end)
           ],
         )..removeAttribution(attributionToRemove: bold, start: 2, end: 7);
 
@@ -218,8 +218,8 @@ void main() {
       test('removes attribution from partial beginning span', () {
         final spans = AttributedSpans(
           attributions: [
-            SpanMarker(attribution: bold, offset: 2, markerType: SpanMarkerType.start),
-            SpanMarker(attribution: bold, offset: 7, markerType: SpanMarkerType.end)
+            const SpanMarker(attribution: bold, offset: 2, markerType: SpanMarkerType.start),
+            const SpanMarker(attribution: bold, offset: 7, markerType: SpanMarkerType.end)
           ],
         )..removeAttribution(attributionToRemove: bold, start: 2, end: 4);
 
@@ -229,8 +229,8 @@ void main() {
       test('removes attribution from partial inner span', () {
         final spans = AttributedSpans(
           attributions: [
-            SpanMarker(attribution: bold, offset: 2, markerType: SpanMarkerType.start),
-            SpanMarker(attribution: bold, offset: 7, markerType: SpanMarkerType.end)
+            const SpanMarker(attribution: bold, offset: 2, markerType: SpanMarkerType.start),
+            const SpanMarker(attribution: bold, offset: 7, markerType: SpanMarkerType.end)
           ],
         )..removeAttribution(attributionToRemove: bold, start: 4, end: 5);
 
@@ -241,8 +241,8 @@ void main() {
       test('removes attribution from partial ending span', () {
         final spans = AttributedSpans(
           attributions: [
-            SpanMarker(attribution: bold, offset: 2, markerType: SpanMarkerType.start),
-            SpanMarker(attribution: bold, offset: 7, markerType: SpanMarkerType.end)
+            const SpanMarker(attribution: bold, offset: 2, markerType: SpanMarkerType.start),
+            const SpanMarker(attribution: bold, offset: 7, markerType: SpanMarkerType.end)
           ],
         )..removeAttribution(attributionToRemove: bold, start: 5, end: 7);
 
@@ -252,8 +252,8 @@ void main() {
       test('applies attribution when mixed span is toggled', () {
         final spans = AttributedSpans(
           attributions: [
-            SpanMarker(attribution: bold, offset: 8, markerType: SpanMarkerType.start),
-            SpanMarker(attribution: bold, offset: 16, markerType: SpanMarkerType.end)
+            const SpanMarker(attribution: bold, offset: 8, markerType: SpanMarkerType.start),
+            const SpanMarker(attribution: bold, offset: 16, markerType: SpanMarkerType.end)
           ],
         )..toggleAttribution(attribution: bold, start: 0, end: 16);
 
@@ -263,8 +263,8 @@ void main() {
       test('removes attribution when contiguous span is toggled', () {
         final spans = AttributedSpans(
           attributions: [
-            SpanMarker(attribution: bold, offset: 0, markerType: SpanMarkerType.start),
-            SpanMarker(attribution: bold, offset: 16, markerType: SpanMarkerType.end)
+            const SpanMarker(attribution: bold, offset: 0, markerType: SpanMarkerType.start),
+            const SpanMarker(attribution: bold, offset: 16, markerType: SpanMarkerType.end)
           ],
         )..toggleAttribution(attribution: bold, start: 0, end: 16);
 
@@ -386,8 +386,8 @@ void main() {
       test('single continuous attribution', () {
         final collapsedSpans = AttributedSpans(
           attributions: [
-            SpanMarker(attribution: bold, offset: 0, markerType: SpanMarkerType.start),
-            SpanMarker(attribution: bold, offset: 16, markerType: SpanMarkerType.end),
+            const SpanMarker(attribution: bold, offset: 0, markerType: SpanMarkerType.start),
+            const SpanMarker(attribution: bold, offset: 16, markerType: SpanMarkerType.end),
           ],
         ).collapseSpans(contentLength: 17);
 
@@ -401,10 +401,10 @@ void main() {
       test('single fractured attribution', () {
         final collapsedSpans = AttributedSpans(
           attributions: [
-            SpanMarker(attribution: bold, offset: 0, markerType: SpanMarkerType.start),
-            SpanMarker(attribution: bold, offset: 3, markerType: SpanMarkerType.end),
-            SpanMarker(attribution: bold, offset: 7, markerType: SpanMarkerType.start),
-            SpanMarker(attribution: bold, offset: 10, markerType: SpanMarkerType.end),
+            const SpanMarker(attribution: bold, offset: 0, markerType: SpanMarkerType.start),
+            const SpanMarker(attribution: bold, offset: 3, markerType: SpanMarkerType.end),
+            const SpanMarker(attribution: bold, offset: 7, markerType: SpanMarkerType.start),
+            const SpanMarker(attribution: bold, offset: 10, markerType: SpanMarkerType.end),
           ],
         ).collapseSpans(contentLength: 17);
 
@@ -428,10 +428,10 @@ void main() {
       test('multiple non-overlapping attributions', () {
         final collapsedSpans = AttributedSpans(
           attributions: [
-            SpanMarker(attribution: bold, offset: 0, markerType: SpanMarkerType.start),
-            SpanMarker(attribution: bold, offset: 3, markerType: SpanMarkerType.end),
-            SpanMarker(attribution: italics, offset: 7, markerType: SpanMarkerType.start),
-            SpanMarker(attribution: italics, offset: 10, markerType: SpanMarkerType.end),
+            const SpanMarker(attribution: bold, offset: 0, markerType: SpanMarkerType.start),
+            const SpanMarker(attribution: bold, offset: 3, markerType: SpanMarkerType.end),
+            const SpanMarker(attribution: italics, offset: 7, markerType: SpanMarkerType.start),
+            const SpanMarker(attribution: italics, offset: 10, markerType: SpanMarkerType.end),
           ],
         ).collapseSpans(contentLength: 17);
 
@@ -455,10 +455,10 @@ void main() {
       test('multiple overlapping attributions', () {
         final collapsedSpans = AttributedSpans(
           attributions: [
-            SpanMarker(attribution: bold, offset: 0, markerType: SpanMarkerType.start),
-            SpanMarker(attribution: bold, offset: 8, markerType: SpanMarkerType.end),
-            SpanMarker(attribution: italics, offset: 6, markerType: SpanMarkerType.start),
-            SpanMarker(attribution: italics, offset: 16, markerType: SpanMarkerType.end),
+            const SpanMarker(attribution: bold, offset: 0, markerType: SpanMarkerType.start),
+            const SpanMarker(attribution: bold, offset: 8, markerType: SpanMarkerType.end),
+            const SpanMarker(attribution: italics, offset: 6, markerType: SpanMarkerType.start),
+            const SpanMarker(attribution: italics, offset: 16, markerType: SpanMarkerType.end),
           ],
         ).collapseSpans(contentLength: 17);
 

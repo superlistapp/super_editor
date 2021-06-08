@@ -10,7 +10,7 @@ Widget unknownComponentBuilder(ComponentContext componentContext) {
     key: componentContext.componentKey,
     width: double.infinity,
     height: 100,
-    child: Placeholder(),
+    child: const Placeholder(),
   );
 }
 
@@ -22,7 +22,7 @@ Widget unknownComponentBuilder(ComponentContext componentContext) {
 class UnknownComponent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    return const SizedBox(
       width: double.infinity,
       height: 54,
       child: Placeholder(),

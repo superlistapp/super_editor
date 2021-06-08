@@ -246,12 +246,30 @@ mixin DocumentComponent<T extends StatefulWidget> on State<T> {
 /// so long as those [id]s don't conflict with existing [id]s. You're
 /// responsible for implementing whatever behavior those custom
 /// [MovementModifier]s represent.
+///
+/// There is no default value for character-by-character movement because that
+/// is the default movement that occurs when **no** movement modifiers are at
+/// play.
 class MovementModifier {
+  /// Move text selection word-by-word.
+  ///
+  /// See also:
+  ///
+  ///  * [line], which moves text selection line-by-line.
   static const word = MovementModifier('word');
+
+  /// Move text selection line-by-line.
+  ///
+  /// See also:
+  ///
+  ///  * [word], which moves text selection word-by-word.
   static const line = MovementModifier('line');
 
+  /// Creates a movement modifier that is globally uniquely identified by the
+  /// provided [id].
   const MovementModifier(this.id);
 
+  /// Identifier that uniquely identifies this [MovementModifier] globally.
   final String id;
 
   @override
@@ -281,6 +299,7 @@ typedef ComponentBuilder = Widget? Function(ComponentContext);
 /// Information that is provided to a [ComponentBuilder] to
 /// construct an appropriate [DocumentComponent] widget.
 class ComponentContext {
+  /// Creates a component context.
   const ComponentContext({
     required this.context,
     required this.document,

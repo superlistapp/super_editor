@@ -65,16 +65,16 @@ class _SwitchDocumentDemoState extends State<SwitchDocumentDemo> {
               _activeDocumentEditor = _docEditor1;
             });
           },
-          child: Text('Document 1'),
+          child: const Text('Document 1'),
         ),
-        SizedBox(width: 24),
+        const SizedBox(width: 24),
         TextButton(
           onPressed: () {
             setState(() {
               _activeDocumentEditor = _docEditor2;
             });
           },
-          child: Text('Document 2'),
+          child: const Text('Document 2'),
         ),
       ],
     );

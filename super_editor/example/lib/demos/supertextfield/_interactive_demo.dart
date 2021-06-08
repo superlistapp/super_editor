@@ -14,7 +14,7 @@ class _InteractiveTextFieldDemoState extends State<InteractiveTextFieldDemo> {
   final _textFieldController = AttributedTextEditingController(
     text: AttributedText(
         text: 'Super Editor is an open source text editor for Flutter projects.',
-        spans: AttributedSpans(attributions: [
+        spans: AttributedSpans(attributions: const [
           SpanMarker(attribution: brandAttribution, offset: 0, markerType: SpanMarkerType.start),
           SpanMarker(attribution: brandAttribution, offset: 11, markerType: SpanMarkerType.end),
           SpanMarker(attribution: flutterAttribution, offset: 47, markerType: SpanMarkerType.start),
@@ -88,7 +88,7 @@ class _InteractiveTextFieldDemoState extends State<InteractiveTextFieldDemo> {
                             ));
                             _closePopup();
                           },
-                          child: Text('Copy'),
+                          child: const Text('Copy'),
                         ),
                       ],
                     ),
@@ -150,7 +150,7 @@ class _InteractiveTextFieldDemoState extends State<InteractiveTextFieldDemo> {
                   );
                 },
                 hintBuilder: (context) {
-                  return Text(
+                  return const Text(
                     'enter some text',
                     style: TextStyle(
                       color: Colors.grey,
@@ -170,7 +170,7 @@ class _InteractiveTextFieldDemoState extends State<InteractiveTextFieldDemo> {
   }
 
   TextStyle _textStyleBuilder(Set<Attribution> attributions) {
-    TextStyle textStyle = TextStyle(
+    TextStyle textStyle = const TextStyle(
       color: Colors.black,
       fontSize: 14,
     );

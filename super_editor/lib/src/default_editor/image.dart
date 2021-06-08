@@ -38,10 +38,10 @@ class ImageNode with ChangeNotifier implements DocumentNode {
   }
 
   @override
-  BinaryNodePosition get beginningPosition => BinaryNodePosition.included();
+  BinaryNodePosition get beginningPosition => const BinaryNodePosition.included();
 
   @override
-  BinaryNodePosition get endPosition => BinaryNodePosition.included();
+  BinaryNodePosition get endPosition => const BinaryNodePosition.included();
 
   @override
   NodePosition selectUpstreamPosition(NodePosition position1, NodePosition position2) {
@@ -76,7 +76,7 @@ class ImageNode with ChangeNotifier implements DocumentNode {
     @required dynamic base,
     @required dynamic extent,
   }) {
-    return BinarySelection.all();
+    return const BinarySelection.all();
   }
 
   @override
@@ -85,7 +85,7 @@ class ImageNode with ChangeNotifier implements DocumentNode {
       throw Exception('ImageNode can only copy content from a BinarySelection.');
     }
 
-    return selection.position == BinaryNodePosition.included() ? _imageUrl : null;
+    return selection.position == const BinaryNodePosition.included() ? _imageUrl : null;
   }
 
   @override

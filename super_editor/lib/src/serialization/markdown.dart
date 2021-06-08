@@ -10,7 +10,7 @@ import 'package:markdown/markdown.dart' as md;
 //       requires one. When the editing system matures, there should
 //       be a way to return something here that is not concrete.
 MutableDocument deserializeMarkdownToDocument(String markdown) {
-  final markdownLines = LineSplitter().convert(markdown);
+  final markdownLines = const LineSplitter().convert(markdown);
 
   final markdownDoc = md.Document();
   final blockParser = md.BlockParser(markdownLines, markdownDoc);

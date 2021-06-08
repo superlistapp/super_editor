@@ -35,12 +35,10 @@ final _log = Logger(scope: 'common_editor_operations.dart');
 /// implemented within [CommonEditorOperations].
 class CommonEditorOperations {
   CommonEditorOperations({
-    required DocumentEditor editor,
-    required DocumentComposer composer,
-    required DocumentLayoutResolver documentLayoutResolver,
-  })  : editor = editor,
-        composer = composer,
-        documentLayoutResolver = documentLayoutResolver;
+    required this.editor,
+    required this.composer,
+    required this.documentLayoutResolver,
+  });
 
   // Marked as protected for extension methods and subclasses
   @protected
@@ -1029,7 +1027,7 @@ class CommonEditorOperations {
         // Assume that the node was replaced with an empty paragraph.
         newSelectionPosition = DocumentPosition(
           nodeId: newSelectionPosition.nodeId,
-          nodePosition: TextNodePosition(offset: 0),
+          nodePosition: const TextNodePosition(offset: 0),
         );
       }
     } else {
@@ -1042,7 +1040,7 @@ class CommonEditorOperations {
         // Assume that the node was replace with an empty paragraph.
         newSelectionPosition = DocumentPosition(
           nodeId: baseNode.id,
-          nodePosition: TextNodePosition(offset: 0),
+          nodePosition: const TextNodePosition(offset: 0),
         );
       } else if (basePosition.nodePosition is TextNodePosition) {
         final baseOffset = (basePosition.nodePosition as TextNodePosition).offset;
@@ -1337,7 +1335,7 @@ class CommonEditorOperations {
       composer.selection = DocumentSelection.collapsed(
         position: DocumentPosition(
           nodeId: node.id,
-          nodePosition: TextNodePosition(offset: 0),
+          nodePosition: const TextNodePosition(offset: 0),
         ),
       );
 
@@ -1383,7 +1381,7 @@ class CommonEditorOperations {
     // URL match, e.g., images, social, etc.
     _log.log('_convertParagraphIfDesired', 'Looking for URL match...');
     final extractedLinks = linkify(node.text.text,
-        options: LinkifyOptions(
+        options: const LinkifyOptions(
           humanize: false,
         ));
     final int linkCount = extractedLinks.fold(0, (value, element) => element is UrlElement ? value + 1 : value);
@@ -1587,7 +1585,7 @@ class CommonEditorOperations {
     composer.selection = DocumentSelection.collapsed(
       position: DocumentPosition(
         nodeId: newNodeId,
-        nodePosition: TextNodePosition(offset: 0),
+        nodePosition: const TextNodePosition(offset: 0),
       ),
     );
 
@@ -1633,7 +1631,7 @@ class CommonEditorOperations {
 
         final nodeIndex = editor.document.getNodeIndex(node);
 
-        var newSelection;
+        DocumentSelection newSelection;
         if (node.text.text.isEmpty) {
           // Convert empty paragraph to HR.
           final imageNode = ImageNode(id: nodeId, imageUrl: url);
@@ -1728,7 +1726,7 @@ class CommonEditorOperations {
         final paragraphPosition = composer.selection!.extent.nodePosition as TextNodePosition;
         final endOfParagraph = node.endPosition;
 
-        var newSelection;
+        DocumentSelection newSelection;
         if (node.text.text.isEmpty) {
           // Convert empty paragraph to HR.
           final hrNode = HorizontalRuleNode(id: nodeId);
@@ -1948,6 +1946,7 @@ class CommonEditorOperations {
         if (extentNode is ParagraphNode) {
           extentNode.metadata.remove('blockType');
           // TODO: find a way to alter nodes that automatically notifies listeners
+          // ignore: invalid_use_of_protected_member, invalid_use_of_visible_for_testing_member
           extentNode.notifyListeners();
         } else {
           final newParagraphNode = ParagraphNode(
