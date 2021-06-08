@@ -208,7 +208,7 @@ class _FeaturedEditorState extends State<FeaturedEditor> {
         borderRadius: BorderRadius.circular(8),
         boxShadow: widget.shadows,
       ),
-      child: Editor.custom(
+      child: SuperEditor.custom(
         editor: _docEditor,
         composer: _composer,
         documentLayoutKey: _docLayoutKey,
@@ -230,6 +230,8 @@ class _FeaturedEditorState extends State<FeaturedEditor> {
         return const EdgeInsets.symmetric(horizontal: 54, vertical: 60);
       case DisplayMode.compact:
         return const EdgeInsets.symmetric(horizontal: 32, vertical: 24);
+      default:
+        throw Exception('Invalid displayMode: ${widget.displayMode}');
     }
   }
 
@@ -239,6 +241,8 @@ class _FeaturedEditorState extends State<FeaturedEditor> {
         return _editorStyleBuilderWide;
       case DisplayMode.compact:
         return _editorStyleBuilderCompact;
+      default:
+        throw Exception('Invalid displayMode: ${widget.displayMode}');
     }
   }
 }
