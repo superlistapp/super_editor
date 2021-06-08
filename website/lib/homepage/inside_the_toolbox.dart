@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:super_editor/super_editor.dart' as supereditor;
+import 'package:super_editor/super_editor.dart';
 
 class InsideTheToolbox extends StatelessWidget {
   const InsideTheToolbox();
@@ -58,7 +58,7 @@ class InsideTheToolbox extends StatelessWidget {
           "SuperTextField is a custom implementation of a text field based on the same philosophy as Super Editor.",
       demo: SizedBox(
         width: double.infinity,
-        child: supereditor.SuperTextField(
+        child: SuperTextField(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           textStyleBuilder: _textfieldStyleBuilder,
           decorationBuilder: (context, child) {
@@ -78,7 +78,7 @@ class InsideTheToolbox extends StatelessWidget {
               ),
             );
           },
-          hintBehavior: supereditor.HintBehavior.displayHintUntilTextEntered,
+          hintBehavior: HintBehavior.displayHintUntilTextEntered,
         ),
       ),
     );
@@ -101,7 +101,7 @@ class InsideTheToolbox extends StatelessWidget {
             color: Colors.white,
             borderRadius: BorderRadius.circular(4),
           ),
-          child: supereditor.SelectableText.plain(
+          child: SuperSelectableText.plain(
             text: 'This text is selectable. The caret and selection rendering is custom.',
             textSelection: const TextSelection(
               baseOffset: 13,
@@ -143,7 +143,7 @@ class InsideTheToolbox extends StatelessWidget {
         children: [
           SelectableText(
             title,
-            style: TextStyle(
+            style: const TextStyle(
               fontWeight: FontWeight.w700,
               fontSize: 24,
               height: 1.4,
@@ -155,7 +155,7 @@ class InsideTheToolbox extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: 40),
             child: Center(
               child: ConstrainedBox(
-                constraints: BoxConstraints(
+                constraints: const BoxConstraints(
                   maxWidth: 600,
                 ),
                 child: demo,
@@ -168,12 +168,12 @@ class InsideTheToolbox extends StatelessWidget {
   }
 }
 
-final _textfieldStyleBuilder = (Set<supereditor.Attribution> attributions) {
-  return TextStyle(
+TextStyle _textfieldStyleBuilder(Set<Attribution> attributions) {
+  return const TextStyle(
     color: Colors.black,
     fontSize: 14,
   );
-};
+}
 
 class _AttributedTextDemo extends StatefulWidget {
   @override
@@ -194,36 +194,36 @@ class _AttributedTextDemoState extends State<_AttributedTextDemo> {
   }
 
   void _computeStyledText() {
-    supereditor.AttributedText _text = supereditor.AttributedText(
+    final _text = AttributedText(
       text: 'This is some text styled with AttributedText',
     );
 
     for (final range in _boldRanges) {
-      _text.addAttribution(supereditor.boldAttribution, range);
+      _text.addAttribution(boldAttribution, range);
     }
     for (final range in _italicsRanges) {
-      _text.addAttribution(supereditor.italicsAttribution, range);
+      _text.addAttribution(italicsAttribution, range);
     }
     for (final range in _strikethroughRanges) {
-      _text.addAttribution(supereditor.strikethroughAttribution, range);
+      _text.addAttribution(strikethroughAttribution, range);
     }
 
     setState(() {
-      _richText = _text.computeTextSpan((Set<supereditor.Attribution> attributions) {
+      _richText = _text.computeTextSpan((Set<Attribution> attributions) {
         TextStyle newStyle = const TextStyle(
           color: Colors.white,
           fontSize: 30,
         );
         for (final attribution in attributions) {
-          if (attribution == supereditor.boldAttribution) {
+          if (attribution == boldAttribution) {
             newStyle = newStyle.copyWith(
               fontWeight: FontWeight.bold,
             );
-          } else if (attribution == supereditor.italicsAttribution) {
+          } else if (attribution == italicsAttribution) {
             newStyle = newStyle.copyWith(
               fontStyle: FontStyle.italic,
             );
-          } else if (attribution == supereditor.strikethroughAttribution) {
+          } else if (attribution == strikethroughAttribution) {
             newStyle = newStyle.copyWith(
               decoration: TextDecoration.lineThrough,
             );
@@ -249,9 +249,9 @@ class _AttributedTextDemoState extends State<_AttributedTextDemo> {
           _buildRowTitle('Strikethrough'),
           _buildCellSelector(_strikethroughRanges),
           _buildRowTitle('Attributed Text'),
-          supereditor.SelectableText(
+          SuperSelectableText(
             key: GlobalKey(),
-            textSpan: _richText ?? TextSpan(text: 'error'),
+            textSpan: _richText ?? const TextSpan(text: 'error'),
           ),
         ],
       ),
@@ -263,7 +263,7 @@ class _AttributedTextDemoState extends State<_AttributedTextDemo> {
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Text(
         title,
-        style: TextStyle(
+        style: const TextStyle(
           color: Colors.tealAccent,
         ),
       ),
