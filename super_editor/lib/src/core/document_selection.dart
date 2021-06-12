@@ -251,8 +251,9 @@ class DocumentNodeSelection<SelectionType extends NodeSelection> {
   /// that [nodeId] points to, [isExtent] is `true`. Otherwise, it is `false`.
   final bool isExtent;
 
-  /// `true` if a thin selection highlight should be shown when the text is
-  /// empty, or `false` to avoid showing a selection highlight.
+  /// [true] if the component rendering this [DocumentNodeSelection] should
+  /// paint a highlight even when the given node has no content, [false]
+  /// otherwise.
   ///
   /// TODO: this is out-of-place here and should be removed.
   ///
