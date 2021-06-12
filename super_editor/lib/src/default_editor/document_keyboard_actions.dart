@@ -401,7 +401,7 @@ DocumentPosition _getDocumentPositionAfterDeletion({
       // Assume that the node was replaced with an empty paragraph.
       newSelectionPosition = DocumentPosition(
         nodeId: newSelectionPosition.nodeId,
-        nodePosition: TextNodePosition(offset: 0),
+        nodePosition: const TextNodePosition(offset: 0),
       );
     }
   } else {
@@ -414,7 +414,7 @@ DocumentPosition _getDocumentPositionAfterDeletion({
       // Assume that the node was replace with an empty paragraph.
       newSelectionPosition = DocumentPosition(
         nodeId: baseNode.id,
-        nodePosition: TextNodePosition(offset: 0),
+        nodePosition: const TextNodePosition(offset: 0),
       );
     } else if (basePosition.nodePosition is TextPosition) {
       final baseOffset = (basePosition.nodePosition as TextPosition).offset;

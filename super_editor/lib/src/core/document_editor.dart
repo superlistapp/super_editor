@@ -6,51 +6,55 @@ import 'package:uuid/uuid.dart';
 
 import 'document.dart';
 
-/// Editor for a `Document`.
+/// Editor for a [Document].
 ///
-/// A `DocumentEditor` executes commands that alter the structure
-/// of a `Document`. Commands are used so that document changes
+/// A [DocumentEditor] executes commands that alter the structure
+/// of a [Document]. Commands are used so that document changes
 /// can be event-sourced, allowing for undo/redo behavior.
 // TODO: design and implement comprehensive event-sourced editing API (#49)
 class DocumentEditor {
-  static final Uuid _uuid = Uuid();
+  static const Uuid _uuid = Uuid();
 
-  /// Generates a new ID for a `DocumentNode`.
+  /// Generates a new ID for a [DocumentNode].
   ///
   /// Each generated node ID is universally unique.
   static String createNodeId() => _uuid.v4();
 
-  /// Constructs a `DocumentEditor` that makes changes to the given
-  /// `MutableDocument`.
+  /// Constructs a [DocumentEditor] that makes changes to the given
+  /// [MutableDocument].
   DocumentEditor({
     required MutableDocument document,
   }) : _document = document;
 
   final MutableDocument _document;
 
-  /// Returns a read-only version of the `Document` that this editor
+  /// Returns a read-only version of the [Document] that this editor
   /// is editing.
   Document get document => _document;
 
-  /// Executes the given `command` to alter the `Document` that is tied
-  /// to this `DocumentEditor`.
+  /// Executes the given [command] to alter the [Document] that is tied
+  /// to this [DocumentEditor].
   void executeCommand(EditorCommand command) {
     command.execute(_document, DocumentEditorTransaction._(_document));
   }
 }
 
+/// A command that alters a [Document] by applying changes in a
+/// [DocumentEditorTransaction].
 abstract class EditorCommand {
-  /// Executes this command against the given `document`, with changes
-  /// applied to the given `transaction`.
+  /// Executes this command against the given [document], with changes
+  /// applied to the given [transaction].
   ///
-  /// The `document` is provided in case this command needs to query
-  /// the current content of the `document` to make appropriate changes.
+  /// The [document] is provided in case this command needs to query
+  /// the current content of the [document] to make appropriate changes.
   void execute(Document document, DocumentEditorTransaction transaction);
 }
 
-/// Functional version of an `EditorCommand` for commands that
+/// Functional version of an [EditorCommand] for commands that
 /// don't require variables or private functions.
 class EditorCommandFunction implements EditorCommand {
+  /// Creates a functional editor command given the [EditorCommand.execute]
+  /// function to be stored for execution.
   EditorCommandFunction(this._execute);
 
   final void Function(Document, DocumentEditorTransaction) _execute;
@@ -69,12 +73,12 @@ class DocumentEditorTransaction {
 
   final MutableDocument _document;
 
-  /// Inserts the given `node` into the `Document` at the given `index`.
+  /// Inserts the given [node] into the [Document] at the given [index].
   void insertNodeAt(int index, DocumentNode node) {
     _document.insertNodeAt(index, node);
   }
 
-  /// Inserts `newNode` immediately after the given `previousNode`.
+  /// Inserts [newNode] immediately after the given [previousNode].
   void insertNodeAfter({
     required DocumentNode previousNode,
     required DocumentNode newNode,
@@ -82,19 +86,23 @@ class DocumentEditorTransaction {
     _document.insertNodeAfter(previousNode: previousNode, newNode: newNode);
   }
 
-  /// Deletes the node at the given `index`.
+  /// Deletes the node at the given [index].
   void deleteNodeAt(int index) {
     _document.deleteNodeAt(index);
   }
 
-  /// Deletes the given `node` from the `Document`.
+  /// Deletes the given [node] from the [Document].
   bool deleteNode(DocumentNode node) {
     return _document.deleteNode(node);
   }
 }
 
-/// An in-memory, mutable `Document`.
+/// An in-memory, mutable [Document].
 class MutableDocument with ChangeNotifier implements Document {
+  /// Creates an in-memory, mutable version of a [Document].
+  ///
+  /// Initializes the content of this [MutableDocument] with the given [nodes],
+  /// if provided, or empty content otherwise.
   MutableDocument({
     List<DocumentNode>? nodes,
   }) : _nodes = nodes ?? [] {
@@ -186,7 +194,7 @@ class MutableDocument with ChangeNotifier implements Document {
     return _nodes.sublist(from, to + 1);
   }
 
-  /// Inserts the given `node` into the `Document` at the given `index`.
+  /// Inserts the given [node] into the [Document] at the given [index].
   void insertNodeAt(int index, DocumentNode node) {
     if (index <= nodes.length) {
       nodes.insert(index, node);
@@ -195,7 +203,7 @@ class MutableDocument with ChangeNotifier implements Document {
     }
   }
 
-  /// Inserts `newNode` immediately after the given `previousNode`.
+  /// Inserts [newNode] immediately after the given [previousNode].
   void insertNodeAfter({
     required DocumentNode previousNode,
     required DocumentNode newNode,
@@ -208,7 +216,7 @@ class MutableDocument with ChangeNotifier implements Document {
     }
   }
 
-  /// Deletes the node at the given `index`.
+  /// Deletes the node at the given [index].
   void deleteNodeAt(int index) {
     if (index >= 0 && index < nodes.length) {
       final removedNode = nodes.removeAt(index);
@@ -219,7 +227,7 @@ class MutableDocument with ChangeNotifier implements Document {
     }
   }
 
-  /// Deletes the given `node` from the `Document`.
+  /// Deletes the given [node] from the [Document].
   bool deleteNode(DocumentNode node) {
     bool isRemoved = false;
 
@@ -259,7 +267,9 @@ class MutableDocument with ChangeNotifier implements Document {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is MutableDocument && runtimeType == other.runtimeType && DeepCollectionEquality().equals(_nodes, nodes);
+      other is MutableDocument &&
+          runtimeType == other.runtimeType &&
+          const DeepCollectionEquality().equals(_nodes, nodes);
 
   @override
   int get hashCode => _nodes.hashCode;

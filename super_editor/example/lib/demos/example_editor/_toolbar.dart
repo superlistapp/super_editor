@@ -431,7 +431,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
         if (widget.anchor.value == null || widget.composer!.selection == null) {
           // When no anchor position is available, or the user hasn't
           // selected any text, show nothing.
-          return SizedBox();
+          return const SizedBox();
         }
 
         return SizedBox.expand(
@@ -452,7 +452,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
                 left: widget.anchor.value!.dx,
                 top: widget.anchor.value!.dy,
                 child: FractionalTranslation(
-                  translation: Offset(-0.5, -1.4),
+                  translation: const Offset(-0.5, -1.4),
                   child: _buildToolbar(),
                 ),
               ),
@@ -465,7 +465,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
 
   Widget _buildToolbar() {
     return Material(
-      shape: StadiumBorder(),
+      shape: const StadiumBorder(),
       elevation: 5,
       clipBehavior: Clip.hardEdge,
       child: SizedBox(
@@ -489,12 +489,12 @@ class _EditorToolbarState extends State<EditorToolbar> {
                             ),
                           ))
                       .toList(),
-                  icon: Icon(Icons.arrow_drop_down),
-                  style: TextStyle(
+                  icon: const Icon(Icons.arrow_drop_down),
+                  style: const TextStyle(
                     color: Colors.black,
                     fontSize: 12,
                   ),
-                  underline: SizedBox(),
+                  underline: const SizedBox(),
                   elevation: 0,
                   itemHeight: 48,
                   onChanged: _convertTextToNewType,
@@ -505,7 +505,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
             Center(
               child: IconButton(
                 onPressed: _toggleBold,
-                icon: Icon(Icons.format_bold),
+                icon: const Icon(Icons.format_bold),
                 splashRadius: 16,
                 tooltip: AppLocalizations.of(context)!.labelBold,
               ),
@@ -513,7 +513,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
             Center(
               child: IconButton(
                 onPressed: _toggleItalics,
-                icon: Icon(Icons.format_italic),
+                icon: const Icon(Icons.format_italic),
                 splashRadius: 16,
                 tooltip: AppLocalizations.of(context)!.labelItalics,
               ),
@@ -521,7 +521,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
             Center(
               child: IconButton(
                 onPressed: _toggleStrikethrough,
-                icon: Icon(Icons.strikethrough_s),
+                icon: const Icon(Icons.strikethrough_s),
                 splashRadius: 16,
                 tooltip: AppLocalizations.of(context)!.labelStrikethrough,
               ),
@@ -529,7 +529,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
             Center(
               child: IconButton(
                 onPressed: _areMultipleLinksSelected() ? null : _onLinkPressed,
-                icon: Icon(Icons.link),
+                icon: const Icon(Icons.link),
                 color: _isSingleLinkSelected() ? const Color(0xFF007AFF) : IconTheme.of(context).color,
                 splashRadius: 16,
                 tooltip: AppLocalizations.of(context)!.labelLink,
@@ -552,12 +552,12 @@ class _EditorToolbarState extends State<EditorToolbar> {
                             ),
                           ))
                       .toList(),
-                  icon: Icon(Icons.arrow_drop_down),
-                  style: TextStyle(
+                  icon: const Icon(Icons.arrow_drop_down),
+                  style: const TextStyle(
                     color: Colors.black,
                     fontSize: 12,
                   ),
-                  underline: SizedBox(),
+                  underline: const SizedBox(),
                   elevation: 0,
                   itemHeight: 48,
                   onChanged: _changeAlignment,
@@ -568,7 +568,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
             Center(
               child: IconButton(
                 onPressed: () {},
-                icon: Icon(Icons.more_vert),
+                icon: const Icon(Icons.more_vert),
                 splashRadius: 16,
                 tooltip: AppLocalizations.of(context)!.labelMoreOptions,
               ),
@@ -581,7 +581,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
 
   Widget _buildUrlField() {
     return Material(
-      shape: StadiumBorder(),
+      shape: const StadiumBorder(),
       elevation: 5,
       clipBehavior: Clip.hardEdge,
       child: Container(
@@ -594,7 +594,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
               child: TextField(
                 focusNode: _urlFocusNode,
                 controller: _urlController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   hintText: 'enter url...',
                   border: InputBorder.none,
                 ),
@@ -602,7 +602,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
               ),
             ),
             IconButton(
-              icon: Icon(Icons.close),
+              icon: const Icon(Icons.close),
               iconSize: 20,
               splashRadius: 16,
               padding: EdgeInsets.zero,

@@ -68,19 +68,19 @@ class _AttributedTextDemoState extends State<AttributedTextDemo> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.only(left: 20.0),
+          const Padding(
+            padding: EdgeInsets.only(left: 20.0),
             child: Text(
               'AttributedText',
               style: TextStyle(
-                color: const Color(0xFF888888),
+                color: Color(0xFF888888),
                 fontSize: 32,
               ),
             ),
           ),
-          SizedBox(height: 4),
-          Padding(
-            padding: const EdgeInsets.only(left: 20.0),
+          const SizedBox(height: 4),
+          const Padding(
+            padding: EdgeInsets.only(left: 20.0),
             child: Text(
               '''AttributedText is a data structure that supports an arbitrary number of 
 "attribution spans". These attributions can be anything, and mean anything.
@@ -90,21 +90,21 @@ That TextSpan can then be rendered by Flutter, as usual.
 
 Try it yourself by adding and removing attributions to characters in a string...''',
               style: TextStyle(
-                color: const Color(0xFF888888),
+                color: Color(0xFF888888),
                 fontSize: 14,
                 height: 1.4,
                 fontWeight: FontWeight.normal,
               ),
             ),
           ),
-          SizedBox(height: 24),
-          SizedBox(
+          const SizedBox(height: 24),
+          const SizedBox(
             width: 600,
             child: Divider(),
           ),
-          SizedBox(height: 24),
+          const SizedBox(height: 24),
           Table(
-            defaultColumnWidth: IntrinsicColumnWidth(),
+            defaultColumnWidth: const IntrinsicColumnWidth(),
             defaultVerticalAlignment: TableCellVerticalAlignment.middle,
             children: [
               TableRow(
@@ -125,7 +125,7 @@ Try it yourself by adding and removing attributions to characters in a string...
                   _buildCellSelector(_strikethroughRanges),
                 ],
               ),
-              TableRow(
+              const TableRow(
                 children: [
                   SizedBox(height: 24),
                   SizedBox(height: 24),
@@ -136,7 +136,7 @@ Try it yourself by adding and removing attributions to characters in a string...
                   _buildRowTitle('Attributed Text'),
                   SuperSelectableText(
                     key: GlobalKey(),
-                    textSpan: _richText ?? TextSpan(text: 'error'),
+                    textSpan: _richText ?? const TextSpan(text: 'error'),
                   ),
                 ],
               ),

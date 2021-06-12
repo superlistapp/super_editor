@@ -48,8 +48,7 @@ class _EditorVideoShowcaseState extends State<EditorVideoShowcase> {
           ),
           SizedBox(height: widget.isCompact ? 22 : 37),
           Container(
-            constraints: const BoxConstraints(maxWidth: 544)
-                .tighten(height: widget.isCompact ? 212 : 307),
+            constraints: const BoxConstraints(maxWidth: 544).tighten(height: widget.isCompact ? 212 : 307),
             margin: const EdgeInsets.only(top: 44),
             decoration: BoxDecoration(
               color: const Color(0xFF053239),

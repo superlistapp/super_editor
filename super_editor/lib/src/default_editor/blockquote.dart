@@ -16,6 +16,7 @@ import 'paragraph.dart';
 import 'styles.dart';
 import 'text.dart';
 
+// ignore: unused_element
 final _log = Logger(scope: 'blockquote.dart');
 
 /// Displays a blockquote in a document.

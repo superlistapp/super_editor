@@ -33,11 +33,11 @@ void main() {
 
         final command = ToggleTextAttributionsCommand(
           documentSelection: DocumentSelection(
-            base: DocumentPosition(
+            base: const DocumentPosition(
               nodeId: 'paragraph',
               nodePosition: TextNodePosition(offset: 1),
             ),
-            extent: DocumentPosition(
+            extent: const DocumentPosition(
               nodeId: 'paragraph',
               // IMPORTANT: we want to end the bold at the 'd' character but
               // the TextPosition indexes the ' ' after the 'd'. This is because
@@ -67,7 +67,7 @@ void main() {
         // Press just the meta key.
         var result = anyCharacterToInsertInTextContent(
           editContext: editContext,
-          keyEvent: FakeRawKeyEvent(
+          keyEvent: const FakeRawKeyEvent(
             data: FakeRawKeyEventData(
               logicalKey: LogicalKeyboardKey.meta,
               physicalKey: PhysicalKeyboardKey.metaLeft,
@@ -83,7 +83,7 @@ void main() {
         // Press "a" + meta key
         result = anyCharacterToInsertInTextContent(
           editContext: editContext,
-          keyEvent: FakeRawKeyEvent(
+          keyEvent: const FakeRawKeyEvent(
             data: FakeRawKeyEventData(
               logicalKey: LogicalKeyboardKey.keyA,
               physicalKey: PhysicalKeyboardKey.keyA,
@@ -103,7 +103,7 @@ void main() {
         // Try to type a character.
         var result = anyCharacterToInsertInTextContent(
           editContext: editContext,
-          keyEvent: FakeRawKeyEvent(
+          keyEvent: const FakeRawKeyEvent(
             data: FakeRawKeyEventData(
               logicalKey: LogicalKeyboardKey.keyA,
               physicalKey: PhysicalKeyboardKey.keyA,
@@ -128,11 +128,11 @@ void main() {
 
         // Select multiple characters in the paragraph
         editContext.composer.selection = DocumentSelection(
-          base: DocumentPosition(
+          base: const DocumentPosition(
             nodeId: 'paragraph',
             nodePosition: TextNodePosition(offset: 0),
           ),
-          extent: DocumentPosition(
+          extent: const DocumentPosition(
             nodeId: 'paragraph',
             nodePosition: TextNodePosition(offset: 1),
           ),
@@ -141,7 +141,7 @@ void main() {
         // Try to type a character.
         var result = anyCharacterToInsertInTextContent(
           editContext: editContext,
-          keyEvent: FakeRawKeyEvent(
+          keyEvent: const FakeRawKeyEvent(
             data: FakeRawKeyEventData(
               logicalKey: LogicalKeyboardKey.keyA,
               physicalKey: PhysicalKeyboardKey.keyA,
@@ -162,7 +162,7 @@ void main() {
             );
 
         // Select the horizontal rule node.
-        editContext.composer.selection = DocumentSelection.collapsed(
+        editContext.composer.selection = const DocumentSelection.collapsed(
           position: DocumentPosition(
             nodeId: 'horizontal_rule',
             nodePosition: BinaryNodePosition.notIncluded(),
@@ -172,7 +172,7 @@ void main() {
         // Try to type a character.
         var result = anyCharacterToInsertInTextContent(
           editContext: editContext,
-          keyEvent: FakeRawKeyEvent(
+          keyEvent: const FakeRawKeyEvent(
             data: FakeRawKeyEventData(
               logicalKey: LogicalKeyboardKey.keyA,
               physicalKey: PhysicalKeyboardKey.keyA,
@@ -196,7 +196,7 @@ void main() {
             );
 
         // Select multiple characters in the paragraph
-        editContext.composer.selection = DocumentSelection.collapsed(
+        editContext.composer.selection = const DocumentSelection.collapsed(
           position: DocumentPosition(
             nodeId: 'paragraph',
             nodePosition: TextNodePosition(offset: 0),
@@ -206,7 +206,7 @@ void main() {
         // Press the "alt" key
         var result = anyCharacterToInsertInTextContent(
           editContext: editContext,
-          keyEvent: FakeRawKeyEvent(
+          keyEvent: const FakeRawKeyEvent(
             character: null,
             data: FakeRawKeyEventData(
               logicalKey: LogicalKeyboardKey.alt,
@@ -222,7 +222,7 @@ void main() {
         // Press the "enter" key
         result = anyCharacterToInsertInTextContent(
           editContext: editContext,
-          keyEvent: FakeRawKeyEvent(
+          keyEvent: const FakeRawKeyEvent(
             character: '', // Empirically, pressing enter sends '' as the character instead of null
             data: FakeRawKeyEventData(
               logicalKey: LogicalKeyboardKey.enter,
@@ -247,7 +247,7 @@ void main() {
             );
 
         // Select multiple characters in the paragraph
-        editContext.composer.selection = DocumentSelection.collapsed(
+        editContext.composer.selection = const DocumentSelection.collapsed(
           position: DocumentPosition(
             nodeId: 'paragraph',
             nodePosition: TextNodePosition(offset: 0),
@@ -257,7 +257,7 @@ void main() {
         // Press the "a" key
         var result = anyCharacterToInsertInTextContent(
           editContext: editContext,
-          keyEvent: FakeRawKeyEvent(
+          keyEvent: const FakeRawKeyEvent(
             character: 'a',
             data: FakeRawKeyEventData(
               logicalKey: LogicalKeyboardKey.keyA,
@@ -286,7 +286,7 @@ void main() {
             );
 
         // Select multiple characters in the paragraph
-        editContext.composer.selection = DocumentSelection.collapsed(
+        editContext.composer.selection = const DocumentSelection.collapsed(
           position: DocumentPosition(
             nodeId: 'paragraph',
             nodePosition: TextNodePosition(offset: 0),
@@ -296,7 +296,7 @@ void main() {
         // Type a non-English character
         var result = anyCharacterToInsertInTextContent(
           editContext: editContext,
-          keyEvent: FakeRawKeyEvent(
+          keyEvent: const FakeRawKeyEvent(
             character: 'ß',
             data: FakeRawKeyEventData(
               logicalKey: LogicalKeyboardKey.keyA,

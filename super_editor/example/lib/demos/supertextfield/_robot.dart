@@ -59,7 +59,7 @@ class TextFieldDemoRobot {
   }
 
   Future<void> deselect() async {
-    _commands.add(SelectTextCommand(selection: TextSelection.collapsed(offset: -1)));
+    _commands.add(SelectTextCommand(selection: const TextSelection.collapsed(offset: -1)));
   }
 
   Future<void> pause(Duration duration) async {

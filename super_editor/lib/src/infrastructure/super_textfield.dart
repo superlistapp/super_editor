@@ -571,7 +571,7 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
 
   void _clearSelection() {
     setState(() {
-      widget.textController.selection = TextSelection.collapsed(offset: -1);
+      widget.textController.selection = const TextSelection.collapsed(offset: -1);
     });
   }
 
@@ -969,7 +969,7 @@ class SuperTextFieldScrollviewState extends State<SuperTextFieldScrollview> with
 
     final extentOffset = _text.getOffsetAtPosition(selection.extent);
 
-    final gutterExtent = 0; // _dragGutterExtent
+    const gutterExtent = 0; // _dragGutterExtent
 
     final myBox = context.findRenderObject() as RenderBox;
     final beyondLeftExtent = min(extentOffset.dx - widget.scrollController.offset - gutterExtent, 0).abs();
@@ -1006,7 +1006,7 @@ class SuperTextFieldScrollviewState extends State<SuperTextFieldScrollview> with
 
     final extentOffset = _text.getOffsetAtPosition(selection.extent);
 
-    final gutterExtent = 0; // _dragGutterExtent
+    const gutterExtent = 0; // _dragGutterExtent
     final extentLineIndex = (extentOffset.dy / widget.estimatedLineHeight).round();
 
     final myBox = context.findRenderObject() as RenderBox;
@@ -1123,7 +1123,7 @@ class SuperTextFieldScrollviewState extends State<SuperTextFieldScrollview> with
       height: widget.viewportHeight,
       child: SingleChildScrollView(
         controller: widget.scrollController,
-        physics: NeverScrollableScrollPhysics(),
+        physics: const NeverScrollableScrollPhysics(),
         scrollDirection: widget.isMultiline ? Axis.vertical : Axis.horizontal,
         child: Padding(
           padding: widget.padding,
@@ -1446,7 +1446,7 @@ class AttributedTextEditingController with ChangeNotifier {
     AttributedText? text,
     TextSelection? selection,
   })  : _text = text ?? AttributedText(),
-        _selection = selection ?? TextSelection.collapsed(offset: -1);
+        _selection = selection ?? const TextSelection.collapsed(offset: -1);
 
   void updateTextAndSelection({
     required AttributedText text,
@@ -1496,7 +1496,7 @@ class AttributedTextEditingController with ChangeNotifier {
 
   void clear() {
     _text = AttributedText();
-    _selection = TextSelection.collapsed(offset: -1);
+    _selection = const TextSelection.collapsed(offset: -1);
   }
 }
 

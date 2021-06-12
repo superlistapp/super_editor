@@ -60,7 +60,7 @@ class DocumentInteractor extends StatefulWidget {
 
   /// Paints some extra visual ornamentation to help with
   /// debugging, when true.
-  final showDebugPaint;
+  final bool showDebugPaint;
 
   @override
   _DocumentInteractorState createState() => _DocumentInteractorState();
@@ -619,7 +619,7 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
                   document: widget.document,
                 ),
                 Positioned.fill(
-                  child: widget.showDebugPaint ? _buildDragSelection() : SizedBox(),
+                  child: widget.showDebugPaint ? _buildDragSelection() : const SizedBox(),
                 ),
               ],
             ),
@@ -703,7 +703,7 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
   }) {
     return SingleChildScrollView(
       controller: _scrollController,
-      physics: NeverScrollableScrollPhysics(),
+      physics: const NeverScrollableScrollPhysics(),
       child: Center(
         child: SizedBox(
           key: _documentWrapperKey,

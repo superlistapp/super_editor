@@ -59,7 +59,7 @@ class TextNode with ChangeNotifier implements DocumentNode {
   Map<String, dynamic> get metadata => _metadata;
 
   @override
-  TextNodePosition get beginningPosition => TextNodePosition(offset: 0);
+  TextNodePosition get beginningPosition => const TextNodePosition(offset: 0);
 
   @override
   TextNodePosition get endPosition => TextNodePosition(offset: text.text.length);
@@ -111,7 +111,7 @@ class TextNode with ChangeNotifier implements DocumentNode {
 
   @override
   bool hasEquivalentContent(DocumentNode other) {
-    return other is TextNode && text == other.text && DeepCollectionEquality().equals(metadata, other.metadata);
+    return other is TextNode && text == other.text && const DeepCollectionEquality().equals(metadata, other.metadata);
   }
 
   @override
@@ -256,7 +256,7 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
 
   @override
   TextNodePosition getBeginningPosition() {
-    return TextNodePosition(offset: 0);
+    return const TextNodePosition(offset: 0);
   }
 
   @override
@@ -526,7 +526,7 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
       key: _selectableTextKey,
       textSpan: richText,
       textAlign: widget.textAlign ?? TextAlign.left,
-      textSelection: widget.textSelection ?? TextSelection.collapsed(offset: -1),
+      textSelection: widget.textSelection ?? const TextSelection.collapsed(offset: -1),
       textSelectionDecoration: TextSelectionDecoration(selectionColor: widget.selectionColor),
       showCaret: widget.showCaret,
       textCaretFactory: TextCaretFactory(color: widget.caretColor),

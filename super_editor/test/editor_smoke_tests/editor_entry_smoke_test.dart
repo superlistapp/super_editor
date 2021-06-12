@@ -35,7 +35,7 @@ void main() {
       );
       final composer = DocumentComposer();
       final layoutKey = GlobalKey();
-      final documentLayoutResolver = () => layoutKey.currentState as DocumentLayout;
+      DocumentLayout documentLayoutResolver() => layoutKey.currentState as DocumentLayout;
       final commonOps = CommonEditorOperations(
         editor: documentEditor,
         composer: composer,
@@ -58,17 +58,17 @@ void main() {
       composer.selection = DocumentSelection.collapsed(
           position: DocumentPosition(
         nodeId: documentEditor.document.nodes.first.id,
-        nodePosition: TextNodePosition(offset: 0),
+        nodePosition: const TextNodePosition(offset: 0),
       ));
 
-      final header = 'Smoke Test';
+      const header = 'Smoke Test';
       for (final character in header.characters) {
         commonOps.insertCharacter(character);
       }
 
       commonOps.insertBlockLevelNewline();
 
-      final p1 =
+      const p1 =
           'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus sed sagittis urna. Aenean mattis ante justo, quis sollicitudin metus interdum id.';
       for (final character in p1.characters) {
         commonOps.insertCharacter(character);
