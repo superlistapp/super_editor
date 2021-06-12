@@ -315,7 +315,7 @@ Widget? paragraphBuilder(ComponentContext componentContext) {
 
   final textDirection = getParagraphDirection((componentContext.documentNode as TextNode).text.text);
 
-  TextAlign textAlign =  (textDirection == TextDirection.ltr) ? TextAlign.left : TextAlign.right;
+  TextAlign textAlign = (textDirection == TextDirection.ltr) ? TextAlign.left : TextAlign.right;
   final textAlignName = (componentContext.documentNode as TextNode).metadata['textAlign'];
   switch (textAlignName) {
     case 'left':

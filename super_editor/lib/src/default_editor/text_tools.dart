@@ -144,8 +144,8 @@ TextSelection expandPositionToParagraph({
 final RegExp _rtlRegExp = RegExp(r'[\u0591-\u07FF\uFB1D-\uFDFD\uFE70-\uFEFC]');
 
 /// Returns the [TextDirection] of the text based on its first non-whitespace character.
-/// 
-/// The default value is [TextDirection.ltr] for any character that is not from an RTL language. 
+///
+/// The default value is [TextDirection.ltr] for any character that is not from an RTL language.
 TextDirection getParagraphDirection(String text) {
   text = text.trim();
 
