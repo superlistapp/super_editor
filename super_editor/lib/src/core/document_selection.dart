@@ -60,7 +60,8 @@ class DocumentSelection {
   /// direction.
   final DocumentPosition extent;
 
-  /// Whether this selection is collapsed or not.
+  /// Returns `true` if this selection is collapsed, or `false` if this
+  /// selection is expanded.
   ///
   /// A [DocumentSelection] is "collapsed" when its [base] and [extent] are
   /// equal ([DocumentPosition.==]). Otherwise, the [DocumentSelection] is
@@ -236,22 +237,22 @@ class DocumentNodeSelection<SelectionType extends NodeSelection> {
   /// The selection within the given node.
   final SelectionType? nodeSelection;
 
-  /// Whether this node selection is base in the context of the surrounding
-  /// [DocumentSelection].
+  /// `true` if this [DocumentNodeSelection] forms the base position of a larger
+  /// document selection, `false` otherwise.
   ///
   /// If the node that [DocumentSelection.base] points to is equal to the node
   /// that [nodeId] points to, [isBase] is `true`. Otherwise, it is `false`.
   final bool isBase;
 
-  /// Whether this node selection is extent in the context of the surrounding
-  /// [DocumentSelection].
+  /// `true` if this [DocumentNodeSelection] forms the extent position of a
+  /// larger document selection, `false` otherwise.
   ///
   /// If the node that [DocumentSelection.extent] points to is equal to the node
   /// that [nodeId] points to, [isExtent] is `true`. Otherwise, it is `false`.
   final bool isExtent;
 
-  /// Whether a thin selection highlight should be shown when the text is empty,
-  /// or false to avoid showing a selection highlight.
+  /// `true` if a thin selection highlight should be shown when the text is
+  /// empty, or `false` to avoid showing a selection highlight.
   ///
   /// TODO: this is out-of-place here and should be removed.
   ///
