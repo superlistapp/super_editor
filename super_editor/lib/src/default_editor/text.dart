@@ -849,7 +849,6 @@ ExecutionInstruction anyCharacterToInsertInTextContent({
   if (keyEvent.isMetaPressed || keyEvent.isControlPressed) {
     return ExecutionInstruction.continueExecution;
   }
-
   if (editContext.composer.selection == null) {
     return ExecutionInstruction.continueExecution;
   }

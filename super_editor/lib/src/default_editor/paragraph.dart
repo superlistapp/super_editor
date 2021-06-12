@@ -142,7 +142,6 @@ ExecutionInstruction anyCharacterToInsertInParagraph({
   if (editContext.composer.selection == null) {
     return ExecutionInstruction.continueExecution;
   }
-
   var character = keyEvent.character;
   if (character == null || character == '') {
     return ExecutionInstruction.continueExecution;
