@@ -177,6 +177,7 @@ class TextComponent extends StatefulWidget {
     Key? key,
     required this.text,
     this.textAlign,
+    this.textDirection,
     required this.textStyleBuilder,
     this.metadata = const {},
     this.textSelection,
@@ -189,6 +190,7 @@ class TextComponent extends StatefulWidget {
 
   final AttributedText text;
   final TextAlign? textAlign;
+  final TextDirection? textDirection;
   final AttributionStyleBuilder textStyleBuilder;
   final Map<String, dynamic> metadata;
   final TextSelection? textSelection;
@@ -526,6 +528,7 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
       key: _selectableTextKey,
       textSpan: richText,
       textAlign: widget.textAlign ?? TextAlign.left,
+      textDirection: widget.textDirection ?? TextDirection.ltr,
       textSelection: widget.textSelection ?? const TextSelection.collapsed(offset: -1),
       textSelectionDecoration: TextSelectionDecoration(selectionColor: widget.selectionColor),
       showCaret: widget.showCaret,

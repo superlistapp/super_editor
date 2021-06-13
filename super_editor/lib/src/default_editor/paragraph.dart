@@ -14,6 +14,7 @@ import 'package:super_editor/src/infrastructure/attributed_text.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
 
 import 'styles.dart';
+import 'text_tools.dart';
 
 final _log = Logger(scope: 'paragraph.dart');
 
@@ -312,7 +313,9 @@ Widget? paragraphBuilder(ComponentContext componentContext) {
   _log.log('paragraphBuilder', '   - base: ${textSelection?.base}');
   _log.log('paragraphBuilder', '   - extent: ${textSelection?.extent}');
 
-  TextAlign textAlign = TextAlign.left;
+  final textDirection = getParagraphDirection((componentContext.documentNode as TextNode).text.text);
+
+  TextAlign textAlign = (textDirection == TextDirection.ltr) ? TextAlign.left : TextAlign.right;
   final textAlignName = (componentContext.documentNode as TextNode).metadata['textAlign'];
   switch (textAlignName) {
     case 'left':
@@ -335,6 +338,7 @@ Widget? paragraphBuilder(ComponentContext componentContext) {
     textStyleBuilder: componentContext.extensions[textStylesExtensionKey],
     metadata: (componentContext.documentNode as TextNode).metadata,
     textAlign: textAlign,
+    textDirection: textDirection,
     textSelection: textSelection,
     selectionColor: (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle).selectionColor,
     showCaret: showCaret,

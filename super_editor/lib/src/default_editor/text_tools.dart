@@ -1,5 +1,5 @@
 import 'dart:math';
-
+import 'dart:ui';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_layout.dart';
@@ -136,4 +136,22 @@ TextSelection expandPositionToParagraph({
     baseOffset: start,
     extentOffset: end,
   );
+}
+
+// copied from: flutter/lib/src/widgets/editable_text.dart
+// RTL covers Arabic, Hebrew, and other RTL languages such as Urdu,
+// Aramic, Farsi, Dhivehi.
+final RegExp _rtlRegExp = RegExp(r'[\u0591-\u07FF\uFB1D-\uFDFD\uFE70-\uFEFC]');
+
+/// Returns the [TextDirection] of the text based on its first non-whitespace character.
+///
+/// The default value is [TextDirection.ltr] for any character that is not from an RTL language.
+TextDirection getParagraphDirection(String text) {
+  text = text.trim();
+
+  if (text.isNotEmpty && _rtlRegExp.hasMatch(String.fromCharCode(text.runes.first))) {
+    return TextDirection.rtl;
+  } else {
+    return TextDirection.ltr;
+  }
 }
