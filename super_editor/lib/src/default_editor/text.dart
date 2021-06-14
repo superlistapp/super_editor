@@ -865,7 +865,6 @@ ExecutionInstruction anyCharacterToInsertInTextContent({
     return ExecutionInstruction.continueExecution;
   }
 
-
   String character = keyEvent.character!;
 
   // On web, keys like shift and alt are sending their full name
