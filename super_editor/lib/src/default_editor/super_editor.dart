@@ -263,12 +263,14 @@ class _SuperEditorState extends State<SuperEditor> {
       return;
     }
 
-    final node = widget.editor.document.getNodeById(_composer.selection!.extent.nodeId);
+    final node =
+        widget.editor.document.getNodeById(_composer.selection!.extent.nodeId);
     if (node is! TextNode) {
       return;
     }
 
-    final textPosition = _composer.selection!.extent.nodePosition as TextPosition;
+    final textPosition =
+        _composer.selection!.extent.nodePosition as TextPosition;
 
     if (textPosition.offset == 0) {
       if (node.text.text.isEmpty) {
@@ -298,7 +300,8 @@ class _SuperEditorState extends State<SuperEditor> {
         commonOps: CommonEditorOperations(
           editor: widget.editor,
           composer: _composer,
-          documentLayoutResolver: () => _docLayoutKey.currentState as DocumentLayout,
+          documentLayoutResolver: () =>
+              _docLayoutKey.currentState as DocumentLayout,
         ),
       ),
       keyboardActions: widget.keyboardActions,

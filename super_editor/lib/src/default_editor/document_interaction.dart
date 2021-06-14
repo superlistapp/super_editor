@@ -66,7 +66,8 @@ class DocumentInteractor extends StatefulWidget {
   _DocumentInteractorState createState() => _DocumentInteractorState();
 }
 
-class _DocumentInteractorState extends State<DocumentInteractor> with SingleTickerProviderStateMixin {
+class _DocumentInteractorState extends State<DocumentInteractor>
+    with SingleTickerProviderStateMixin {
   final _dragGutterExtent = 100;
   final _maxDragSpeed = 20;
 
@@ -97,7 +98,8 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
     _focusNode = widget.focusNode ?? FocusNode();
     _ticker = createTicker(_onTick);
     _scrollController =
-        _scrollController = (widget.scrollController ?? ScrollController())..addListener(_updateDragSelection);
+        _scrollController = (widget.scrollController ?? ScrollController())
+          ..addListener(_updateDragSelection);
 
     widget.editContext.composer.addListener(_onSelectionChange);
   }
@@ -114,7 +116,8 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
       if (oldWidget.scrollController == null) {
         _scrollController.dispose();
       }
-      _scrollController = (widget.scrollController ?? ScrollController())..addListener(_updateDragSelection);
+      _scrollController = (widget.scrollController ?? ScrollController())
+        ..addListener(_updateDragSelection);
     }
     if (widget.focusNode != oldWidget.focusNode) {
       _focusNode = widget.focusNode ?? FocusNode();
@@ -150,7 +153,8 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
   }
 
   void _ensureSelectionExtentIsVisible() {
-    _log.log('_ensureSelectionExtentIsVisible', 'selection: ${widget.editContext.composer.selection}');
+    _log.log('_ensureSelectionExtentIsVisible',
+        'selection: ${widget.editContext.composer.selection}');
     final selection = widget.editContext.composer.selection;
     if (selection == null) {
       return;
@@ -170,20 +174,30 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
     }
 
     final myBox = context.findRenderObject() as RenderBox;
-    final beyondTopExtent = min(extentRect.top - _scrollController.offset - _dragGutterExtent, 0).abs();
-    final beyondBottomExtent =
-        max(extentRect.bottom - myBox.size.height - _scrollController.offset + _dragGutterExtent, 0);
+    final beyondTopExtent =
+        min(extentRect.top - _scrollController.offset - _dragGutterExtent, 0)
+            .abs();
+    final beyondBottomExtent = max(
+        extentRect.bottom -
+            myBox.size.height -
+            _scrollController.offset +
+            _dragGutterExtent,
+        0);
 
     _log.log('_ensureSelectionExtentIsVisible', 'Ensuring extent is visible.');
-    _log.log('_ensureSelectionExtentIsVisible', ' - interaction size: ${myBox.size}');
-    _log.log('_ensureSelectionExtentIsVisible', ' - scroll extent: ${_scrollController.offset}');
+    _log.log('_ensureSelectionExtentIsVisible',
+        ' - interaction size: ${myBox.size}');
+    _log.log('_ensureSelectionExtentIsVisible',
+        ' - scroll extent: ${_scrollController.offset}');
     _log.log('_ensureSelectionExtentIsVisible', ' - extent rect: $extentRect');
-    _log.log('_ensureSelectionExtentIsVisible', ' - beyond top: $beyondTopExtent');
-    _log.log('_ensureSelectionExtentIsVisible', ' - beyond bottom: $beyondBottomExtent');
+    _log.log(
+        '_ensureSelectionExtentIsVisible', ' - beyond top: $beyondTopExtent');
+    _log.log('_ensureSelectionExtentIsVisible',
+        ' - beyond bottom: $beyondBottomExtent');
 
     if (beyondTopExtent > 0) {
-      final newScrollPosition =
-          (_scrollController.offset - beyondTopExtent).clamp(0.0, _scrollController.position.maxScrollExtent);
+      final newScrollPosition = (_scrollController.offset - beyondTopExtent)
+          .clamp(0.0, _scrollController.position.maxScrollExtent);
 
       _scrollController.animateTo(
         newScrollPosition,
@@ -191,8 +205,8 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
         curve: Curves.easeOut,
       );
     } else if (beyondBottomExtent > 0) {
-      final newScrollPosition =
-          (beyondBottomExtent + _scrollController.offset).clamp(0.0, _scrollController.position.maxScrollExtent);
+      final newScrollPosition = (beyondBottomExtent + _scrollController.offset)
+          .clamp(0.0, _scrollController.position.maxScrollExtent);
 
       _scrollController.animateTo(
         newScrollPosition,
@@ -209,9 +223,10 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
       return KeyEventResult.handled;
     }
 
-    ExecutionInstruction instruction= ExecutionInstruction.continueExecution;
+    ExecutionInstruction instruction = ExecutionInstruction.continueExecution;
     int index = 0;
-    while (instruction == ExecutionInstruction.continueExecution && index < widget.keyboardActions.length) {
+    while (instruction == ExecutionInstruction.continueExecution &&
+        index < widget.keyboardActions.length) {
       instruction = widget.keyboardActions[index](
         editContext: widget.editContext,
         keyEvent: keyEvent,
@@ -219,7 +234,9 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
       index += 1;
     }
 
-    return instruction == ExecutionInstruction.haltExecution ? KeyEventResult.handled : KeyEventResult.ignored;
+    return instruction == ExecutionInstruction.haltExecution
+        ? KeyEventResult.handled
+        : KeyEventResult.ignored;
   }
 
   void _onTapDown(TapDownDetails details) {
@@ -305,7 +322,8 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
     _dragStartInDoc = _getDocOffset(_dragStartInViewport!);
 
     _clearSelection();
-    _dragRectInViewport = Rect.fromLTWH(_dragStartInViewport!.dx, _dragStartInViewport!.dy, 1, 1);
+    _dragRectInViewport =
+        Rect.fromLTWH(_dragStartInViewport!.dx, _dragStartInViewport!.dy, 1, 1);
 
     _focusNode.requestFocus();
   }
@@ -315,7 +333,8 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
     setState(() {
       _dragEndInViewport = details.localPosition;
       _dragEndInDoc = _getDocOffset(_dragEndInViewport!);
-      _dragRectInViewport = Rect.fromPoints(_dragStartInViewport!, _dragEndInViewport!);
+      _dragRectInViewport =
+          Rect.fromPoints(_dragStartInViewport!, _dragEndInViewport!);
       _log.log('_onPanUpdate', ' - drag rect: $_dragRectInViewport');
       _updateCursorStyle(details.localPosition);
       _updateDragSelection();
@@ -354,7 +373,8 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
     required DocumentPosition docPosition,
     required DocumentLayout docLayout,
   }) {
-    final newSelection = getWordSelection(docPosition: docPosition, docLayout: docLayout);
+    final newSelection =
+        getWordSelection(docPosition: docPosition, docLayout: docLayout);
     if (newSelection != null) {
       widget.editContext.composer.selection = newSelection;
       return true;
@@ -367,7 +387,8 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
     required DocumentPosition docPosition,
     required DocumentLayout docLayout,
   }) {
-    final newSelection = getParagraphSelection(docPosition: docPosition, docLayout: docLayout);
+    final newSelection =
+        getParagraphSelection(docPosition: docPosition, docLayout: docLayout);
     if (newSelection != null) {
       widget.editContext.composer.selection = newSelection;
       return true;
@@ -404,11 +425,14 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
     required Offset extentOffset,
     required SelectionType selectionType,
   }) {
-    _log.log('_selectionRegion', 'Composer: selectionRegion(). Mode: $selectionType');
-    DocumentSelection? selection = documentLayout.getDocumentSelectionInRegion(baseOffset, extentOffset);
+    _log.log('_selectionRegion',
+        'Composer: selectionRegion(). Mode: $selectionType');
+    DocumentSelection? selection =
+        documentLayout.getDocumentSelectionInRegion(baseOffset, extentOffset);
     DocumentPosition? basePosition = selection?.base;
     DocumentPosition? extentPosition = selection?.extent;
-    _log.log('_selectionRegion', ' - base: $basePosition, extent: $extentPosition');
+    _log.log(
+        '_selectionRegion', ' - base: $basePosition, extent: $extentPosition');
 
     if (basePosition == null || extentPosition == null) {
       widget.editContext.composer.selection = null;
@@ -424,7 +448,9 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
         widget.editContext.composer.selection = null;
         return;
       }
-      basePosition = baseOffset.dy < extentOffset.dy ? baseParagraphSelection.base : baseParagraphSelection.extent;
+      basePosition = baseOffset.dy < extentOffset.dy
+          ? baseParagraphSelection.base
+          : baseParagraphSelection.extent;
 
       final extentParagraphSelection = getParagraphSelection(
         docPosition: extentPosition,
@@ -434,8 +460,9 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
         widget.editContext.composer.selection = null;
         return;
       }
-      extentPosition =
-          baseOffset.dy < extentOffset.dy ? extentParagraphSelection.extent : extentParagraphSelection.base;
+      extentPosition = baseOffset.dy < extentOffset.dy
+          ? extentParagraphSelection.extent
+          : extentParagraphSelection.base;
     } else if (selectionType == SelectionType.word) {
       _log.log('_selectionRegion', ' - selecting a word');
       final baseWordSelection = getWordSelection(
@@ -463,7 +490,8 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
       base: basePosition,
       extent: extentPosition,
     ));
-    _log.log('_selectionRegion', 'Region selection: ${widget.editContext.composer.selection}');
+    _log.log('_selectionRegion',
+        'Region selection: ${widget.editContext.composer.selection}');
   }
 
   void _clearSelection() {
@@ -476,7 +504,8 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
 
     if (desiredCursor != null && desiredCursor != _cursorStyle.value) {
       _cursorStyle.value = desiredCursor;
-    } else if (desiredCursor == null && _cursorStyle.value != SystemMouseCursors.basic) {
+    } else if (desiredCursor == null &&
+        _cursorStyle.value != SystemMouseCursors.basic) {
       _cursorStyle.value = SystemMouseCursors.basic;
     }
   }
@@ -484,7 +513,8 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
   // Converts the given [offset] from the [DocumentInteractor]'s coordinate
   // space to the [DocumentLayout]'s coordinate space.
   Offset _getDocOffset(Offset offset) {
-    return _layout.getDocumentOffsetFromAncestorOffset(offset, context.findRenderObject()!);
+    return _layout.getDocumentOffsetFromAncestorOffset(
+        offset, context.findRenderObject()!);
   }
 
   // ------ scrolling -------
@@ -494,8 +524,8 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
   /// form of mouse scrolling.
   void _onPointerSignal(PointerSignalEvent event) {
     if (event is PointerScrollEvent) {
-      final newScrollOffset =
-          (_scrollController.offset + event.scrollDelta.dy).clamp(0.0, _scrollController.position.maxScrollExtent);
+      final newScrollOffset = (_scrollController.offset + event.scrollDelta.dy)
+          .clamp(0.0, _scrollController.position.maxScrollExtent);
       _scrollController.jumpTo(newScrollOffset);
 
       _updateDragSelection();
@@ -506,7 +536,8 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
   // - _dragEndInViewport must be non-null
   void _scrollIfNearBoundary() {
     if (_dragEndInViewport == null) {
-      _log.log('_scrollIfNearBoundary', "Can't scroll near boundary because _dragEndInViewport is null");
+      _log.log('_scrollIfNearBoundary',
+          "Can't scroll near boundary because _dragEndInViewport is null");
       assert(_dragEndInViewport != null);
       return;
     }
@@ -545,7 +576,8 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
 
   void _scrollUp() {
     if (_dragEndInViewport == null) {
-      _log.log('_scrollUp', "Can't scroll up because _dragEndInViewport is null");
+      _log.log(
+          '_scrollUp', "Can't scroll up because _dragEndInViewport is null");
       assert(_dragEndInViewport != null);
       return;
     }
@@ -581,17 +613,20 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
 
   void _scrollDown() {
     if (_dragEndInViewport == null) {
-      _log.log('_scrollDown', "Can't scroll down because _dragEndInViewport is null");
+      _log.log('_scrollDown',
+          "Can't scroll down because _dragEndInViewport is null");
       assert(_dragEndInViewport != null);
       return;
     }
 
-    if (_scrollController.offset >= _scrollController.position.maxScrollExtent) {
+    if (_scrollController.offset >=
+        _scrollController.position.maxScrollExtent) {
       return;
     }
 
     final editorBox = context.findRenderObject() as RenderBox;
-    final gutterAmount = (editorBox.size.height - _dragEndInViewport!.dy).clamp(0.0, _dragGutterExtent);
+    final gutterAmount = (editorBox.size.height - _dragEndInViewport!.dy)
+        .clamp(0.0, _dragGutterExtent);
     final speedPercent = 1.0 - (gutterAmount / _dragGutterExtent);
     final scrollAmount = lerpDouble(0, _maxDragSpeed, speedPercent);
 
@@ -619,7 +654,9 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
                   document: widget.document,
                 ),
                 Positioned.fill(
-                  child: widget.showDebugPaint ? _buildDragSelection() : const SizedBox(),
+                  child: widget.showDebugPaint
+                      ? _buildDragSelection()
+                      : const SizedBox(),
                 ),
               ],
             ),
@@ -670,7 +707,8 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
         child: RawGestureDetector(
           behavior: HitTestBehavior.translucent,
           gestures: <Type, GestureRecognizerFactory>{
-            TapSequenceGestureRecognizer: GestureRecognizerFactoryWithHandlers<TapSequenceGestureRecognizer>(
+            TapSequenceGestureRecognizer: GestureRecognizerFactoryWithHandlers<
+                TapSequenceGestureRecognizer>(
               () => TapSequenceGestureRecognizer(),
               (TapSequenceGestureRecognizer recognizer) {
                 recognizer
@@ -681,7 +719,8 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
                   ..onTripleTap = _onTripleTap;
               },
             ),
-            PanGestureRecognizer: GestureRecognizerFactoryWithHandlers<PanGestureRecognizer>(
+            PanGestureRecognizer:
+                GestureRecognizerFactoryWithHandlers<PanGestureRecognizer>(
               () => PanGestureRecognizer(),
               (PanGestureRecognizer recognizer) {
                 recognizer
