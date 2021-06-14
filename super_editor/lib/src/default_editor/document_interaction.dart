@@ -209,7 +209,7 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
       return KeyEventResult.handled;
     }
 
-    ExecutionInstruction instruction = ExecutionInstruction.continueExecution;
+    ExecutionInstruction instruction= ExecutionInstruction.continueExecution;
     int index = 0;
     while (instruction == ExecutionInstruction.continueExecution && index < widget.keyboardActions.length) {
       instruction = widget.keyboardActions[index](
