@@ -852,7 +852,6 @@ ExecutionInstruction anyCharacterToInsertInTextContent({
   if (keyEvent.isMetaPressed || keyEvent.isControlPressed) {
     return ExecutionInstruction.continueExecution;
   }
-
   if (editContext.composer.selection == null) {
     return ExecutionInstruction.continueExecution;
   }
@@ -863,6 +862,9 @@ ExecutionInstruction anyCharacterToInsertInTextContent({
     return ExecutionInstruction.continueExecution;
   }
   if (keyEvent.character == null || keyEvent.character == '') {
+    return ExecutionInstruction.continueExecution;
+  }
+  if (LogicalKeyboardKey.isControlCharacter(keyEvent.character!)) {
     return ExecutionInstruction.continueExecution;
   }
 
