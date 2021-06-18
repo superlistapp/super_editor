@@ -1,4 +1,3 @@
-import 'package:super_editor/src/default_editor/paragraph.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/super_selectable_text.dart';
 
