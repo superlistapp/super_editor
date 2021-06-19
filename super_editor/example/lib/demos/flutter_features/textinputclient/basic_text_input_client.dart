@@ -46,6 +46,9 @@ class _BareBonesTextFieldWithInputClientState extends State<_BareBonesTextFieldW
 
   TextInputConnection? _textInputConnection;
 
+  Offset? _floatingCursorStartOffset;
+  Offset? _floatingCursorCurrentOffset;
+
   @override
   void initState() {
     super.initState();
@@ -63,6 +66,11 @@ class _BareBonesTextFieldWithInputClientState extends State<_BareBonesTextFieldW
   TextPosition _getTextPositionAtOffset(Offset localOffset) {
     final superSelectableTextState = _textKey.currentState as SuperSelectableTextState;
     return superSelectableTextState.getPositionAtOffset(localOffset);
+  }
+
+  Offset _getOffsetAtTextPosition(TextPosition position) {
+    final superSelectableTextState = _textKey.currentState as SuperSelectableTextState;
+    return superSelectableTextState.getOffsetAtPosition(position);
   }
 
   void _onTextFieldTapUp(TapUpDetails details) {
@@ -187,9 +195,29 @@ class _BareBonesTextFieldWithInputClientState extends State<_BareBonesTextFieldW
 
   @override
   void updateFloatingCursor(RawFloatingCursorPoint point) {
-    print('My TextInputClient: updateFloatingCursor(): $point');
+    print('My TextInputClient: updateFloatingCursor(): ${point.state}, offset: ${point.offset}');
 
-    // I'm not sure what this is supposed to do.
+    switch (point.state) {
+      case FloatingCursorDragState.Start:
+        _floatingCursorStartOffset = _getOffsetAtTextPosition(_currentSelection.extent);
+        break;
+      case FloatingCursorDragState.Update:
+        _floatingCursorCurrentOffset = _floatingCursorStartOffset! + point.offset!;
+
+        _currentSelection = TextSelection.collapsed(
+          // Note: push the offset down by a few pixels so that we look up
+          // the text position based on the vertical center of the line, not
+          // the top of the line. TODO: calculate exactly half the line height.
+          offset: _getTextPositionAtOffset(_floatingCursorCurrentOffset! + const Offset(0, 10)).offset,
+        );
+        _textInputConnection!.setEditingState(currentTextEditingValue!);
+
+        break;
+      case FloatingCursorDragState.End:
+        _floatingCursorStartOffset = null;
+        _floatingCursorCurrentOffset = null;
+        break;
+    }
   }
 
   @override
@@ -211,17 +239,38 @@ class _BareBonesTextFieldWithInputClientState extends State<_BareBonesTextFieldW
           onTapUp: _onTextFieldTapUp,
           onPanStart: _focusNode.hasFocus ? _onPanStart : null,
           onPanUpdate: _focusNode.hasFocus ? _onPanUpdate : null,
-          child: SuperSelectableText.plain(
-            key: _textKey,
-            text: _currentText.isNotEmpty ? _currentText : 'enter text',
-            textSelection: _currentSelection,
-            showCaret: true,
-            style: TextStyle(
-              color: _currentText.isNotEmpty ? Colors.black : Colors.grey,
-              fontSize: 16,
-            ),
+          child: Stack(
+            children: [
+              SuperSelectableText.plain(
+                key: _textKey,
+                text: _currentText.isNotEmpty ? _currentText : 'enter text',
+                textSelection: _currentSelection,
+                showCaret: true,
+                style: TextStyle(
+                  color: _currentText.isNotEmpty ? Colors.black : Colors.grey,
+                  fontSize: 16,
+                ),
+              ),
+              _buildFloatingCaret(),
+            ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildFloatingCaret() {
+    if (_floatingCursorCurrentOffset == null) {
+      return const SizedBox();
+    }
+
+    return Positioned(
+      left: _floatingCursorCurrentOffset!.dx,
+      top: _floatingCursorCurrentOffset!.dy,
+      child: Container(
+        width: 2,
+        height: 20,
+        color: Colors.red,
       ),
     );
   }
