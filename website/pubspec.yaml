@@ -1,6 +1,6 @@
 name: website
 description: The marketing website for SuperEditor.
-publish_to: "none" # Remove this line if you wish to publish to pub.dev
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 environment:
   sdk: ">=2.7.0 <3.0.0"
 
