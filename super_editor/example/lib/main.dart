@@ -1,13 +1,14 @@
 import 'package:example/demos/demo_RTL.dart';
+import 'package:example/demos/demo_custom_elements.dart';
 import 'package:example/demos/demo_markdown_serialization.dart';
 import 'package:example/demos/demo_paragraphs.dart';
 import 'package:example/demos/demo_selectable_text.dart';
-import 'package:example/demos/supertextfield/demo_textfield.dart';
 import 'package:example/demos/example_editor/example_editor.dart';
 import 'package:example/demos/sliver_example_editor.dart';
+import 'package:example/demos/supertextfield/demo_textfield.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'demos/demo_attributed_text.dart';
 import 'demos/demo_document_loses_focus.dart';
@@ -153,6 +154,13 @@ final _menu = <_MenuGroup>[
         title: 'Sliver Editor Demo',
         pageBuilder: (context) {
           return SliverExampleEditor();
+        },
+      ),
+      _MenuItem(
+        icon: Icons.document_scanner,
+        title: 'Custom Elements Demo',
+        pageBuilder: (context) {
+          return CustomElementsExampleEditor();
         },
       ),
       _MenuItem(
@@ -303,10 +311,11 @@ class _DrawerButton extends StatelessWidget {
               return Colors.transparent;
             }),
             // splashFactory: NoSplash.splashFactory,
-            foregroundColor:
-                MaterialStateColor.resolveWith((states) => isSelected ? Colors.white : const Color(0xFFBBBBBB)),
+            foregroundColor: MaterialStateColor.resolveWith((states) =>
+                isSelected ? Colors.white : const Color(0xFFBBBBBB)),
             elevation: MaterialStateProperty.resolveWith((states) => 0),
-            padding: MaterialStateProperty.resolveWith((states) => const EdgeInsets.all(16))),
+            padding: MaterialStateProperty.resolveWith(
+                (states) => const EdgeInsets.all(16))),
         onPressed: isSelected ? null : onPressed,
         child: Row(
           children: [
