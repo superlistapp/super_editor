@@ -31,6 +31,7 @@ class TaskNodeVisitor implements CustomNodeVisitor {
       final taskId = element.attributes['id']!;
       return TaskItemNode(
         id: taskId,
+        text: AttributedText(),
         changes: _repository.watchTaskById(taskId),
         update: _repository.updateTask,
       );

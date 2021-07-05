@@ -7,6 +7,7 @@ import 'package:super_editor/super_editor.dart';
 class TaskItemNode extends ListItemNode {
   TaskItemNode({
     required String id,
+    required AttributedText text,
     required Stream<Task?> changes,
     required ValueSetter<Task> update,
     Map<String, dynamic>? metadata,
@@ -14,10 +15,14 @@ class TaskItemNode extends ListItemNode {
         super(
           id: id,
           itemType: ListItemType.unordered,
-          text: AttributedText(),
+          text: text,
           metadata: metadata,
         ) {
     _subscription = changes.listen((task) {
+      if (_task != null && task == null) {
+        _deleted = true;
+      }
+
       _task = task;
       notifyListeners();
     });
@@ -33,6 +38,9 @@ class TaskItemNode extends ListItemNode {
     _subscription.cancel();
     super.dispose();
   }
+
+  bool get deleted => _deleted;
+  bool _deleted = false;
 
   @override
   AttributedText get text => AttributedText(text: _task?.text ?? '');
@@ -63,6 +71,7 @@ class TaskItemComponent extends StatelessWidget {
     Key? key,
     required this.textKey,
     required this.checked,
+    required this.deleted,
     required this.text,
     required this.styleBuilder,
     this.indent = 0,
@@ -77,6 +86,7 @@ class TaskItemComponent extends StatelessWidget {
 
   final GlobalKey textKey;
   final bool checked;
+  final bool deleted;
   final AttributedText text;
   final AttributionStyleBuilder styleBuilder;
   final int indent;
@@ -101,20 +111,28 @@ class TaskItemComponent extends StatelessWidget {
     return Row(
       children: [
         SizedBox(width: indentSpace),
-        Checkbox(value: checked, onChanged: _handleValueChanged),
+        Checkbox(
+          value: checked,
+          onChanged: deleted ? null : _handleValueChanged,
+        ),
         Expanded(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: TextComponent(
-              key: textKey,
-              text: text,
-              textStyleBuilder: styleBuilder,
-              textSelection: textSelection,
-              selectionColor: selectionColor,
-              showCaret: showCaret,
-              caretColor: caretColor,
-              showDebugPaint: showDebugPaint,
-            ),
+            child: deleted
+                ? const Text(
+                    '(deleted)',
+                    style: TextStyle(color: Colors.black26),
+                  )
+                : TextComponent(
+                    key: textKey,
+                    text: text,
+                    textStyleBuilder: styleBuilder,
+                    textSelection: textSelection,
+                    selectionColor: selectionColor,
+                    showCaret: showCaret,
+                    caretColor: caretColor,
+                    showDebugPaint: showDebugPaint,
+                  ),
           ),
         ),
       ],
@@ -134,6 +152,7 @@ Widget? taskItemBuilder(ComponentContext componentContext) {
   return TaskItemComponent(
     textKey: componentContext.componentKey,
     checked: node.checked,
+    deleted: node.deleted,
     text: node.text,
     styleBuilder: componentContext.extensions[textStylesExtensionKey],
     onChanged: (value) => node.checked = value,
