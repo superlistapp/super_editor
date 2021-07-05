@@ -8,7 +8,18 @@ class TasksRepository {
   static final _tasksById = <String, Task>{
     'aaa111': const Task(id: 'aaa111', checked: true, text: 'First task.'),
     'bbb222': const Task(id: 'bbb222', checked: false, text: 'Second task.'),
-    'ccc333': const Task(id: 'ccc333', checked: true, text: 'Third task.'),
+    'ccc333': const Task(
+      id: 'ccc333',
+      checked: true,
+      text: 'Third task. Look, I\'m nested!',
+      indent: 1,
+    ),
+    'ddd444': const Task(
+      id: 'ddd444',
+      checked: true,
+      text: 'Fourth task. Look, I\'m even more nested!',
+      indent: 2,
+    ),
     'toggling-all-the-time': const Task(
       id: 'toggling-all-the-time',
       checked: false,

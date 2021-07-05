@@ -18,7 +18,7 @@ class ToggleCheckboxCheckedCommand extends EditorCommand {
   }
 }
 
-class CheckBoxListItemNode extends ParagraphNode {
+class CheckBoxListItemNode extends ListItemNode {
   CheckBoxListItemNode({
     required String id,
     required Stream<Task> changes,
@@ -27,6 +27,7 @@ class CheckBoxListItemNode extends ParagraphNode {
   })  : _update = update,
         super(
           id: id,
+          itemType: ListItemType.unordered,
           text: AttributedText(),
           metadata: metadata,
         ) {
@@ -58,20 +59,23 @@ class CheckBoxListItemNode extends ParagraphNode {
     }
   }
 
+  @override
+  int get indent => _task?.indent ?? 0;
+
+  @override
+  set indent(int value) {
+    final task = _task;
+    if (task != null) {
+      _update(task.copyWith(indent: value));
+    }
+  }
+
   bool get checked => _task?.checked ?? false;
   set checked(bool value) {
     final task = _task;
     if (task != null) {
       _update(task.copyWith(checked: value));
     }
-  }
-
-  int _indent = 0;
-  int get indent => _indent;
-  set indent(int newIndent) {
-    if (newIndent == _indent) return;
-    _indent = newIndent;
-    notifyListeners();
   }
 
   @override
@@ -101,7 +105,7 @@ class CheckBoxListItemComponent extends StatelessWidget {
   final AttributedText text;
   final AttributionStyleBuilder styleBuilder;
   final int indent;
-  final int indentExtent;
+  final double indentExtent;
   final TextSelection? textSelection;
   final Color selectionColor;
   final bool showCaret;
@@ -117,8 +121,11 @@ class CheckBoxListItemComponent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final indentSpace = indentExtent * (indent + 1);
+
     return Row(
       children: [
+        SizedBox(width: indentSpace),
         Checkbox(value: checked, onChanged: _handleValueChanged),
         Expanded(
           child: Padding(
