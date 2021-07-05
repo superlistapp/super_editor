@@ -21,22 +21,18 @@ class TaskSyntax extends md.BlockSyntax {
   }
 }
 
-class TaskNodeVisitor implements CustomNodeVisitor {
-  const TaskNodeVisitor(this._repository);
-  final TasksRepository _repository;
-
-  @override
-  DocumentNode? visitElementBefore(md.Element element) {
+CustomMarkdownToDocumentVisitor tasksMarkdownToDocumentVisitor(TasksRepository repository) {
+  return (md.Element element) {
     if (element.tag == 'task') {
       final taskId = element.attributes['id']!;
       return TaskItemNode(
         id: taskId,
         text: AttributedText(),
-        changes: _repository.watchTaskById(taskId),
-        update: _repository.updateTask,
+        changes: repository.watchTaskById(taskId),
+        update: repository.updateTask,
       );
     }
 
     return null;
-  }
+  };
 }

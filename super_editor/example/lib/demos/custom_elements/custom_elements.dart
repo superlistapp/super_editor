@@ -10,10 +10,10 @@ const _initialDocument = '''
 
 The following showcases how to embed custom widgets in the Super Editor.
 
-Let's imagine we're building a task management app that allows embedding tasks inside rich text content.
+Let's imagine we're building _a task management app_ that allows embedding tasks inside rich text content.
 
-Our app could store the tasks in an SQLite database. The tasks can be embedded as a part of the rich text document, but at
-the same time, they can also be edited in some other page in our app.
+Our app could store the tasks in an SQLite database. The tasks can be embedded as a part of the rich text document, but 
+at the same time, they can also be edited in some other page in our app.
 
 When editing a given task in the rich text editor, the changes should propagate to elsewhere in our app, and vice versa.
 
@@ -23,7 +23,11 @@ This is an example of just that.
 <@ task:bbb222 @>
 <@ task:ccc333 @>
 
+The tasks in the document are referenced by their id using a custom Markdown syntax.
+
 ---
+
+More **rich text content** here.
 ''';
 
 final _tasksRepository = TasksRepository()
@@ -50,7 +54,7 @@ class _CustomElementsExampleEditorState extends State<CustomElementsExampleEdito
     super.initState();
     _doc = deserializeMarkdownToDocument(
       _initialDocument,
-      customNodeVisitor: TaskNodeVisitor(_tasksRepository),
+      customNodeVisitor: tasksMarkdownToDocumentVisitor(_tasksRepository),
       customBlockSyntaxes: [const TaskSyntax()],
     );
 

@@ -5,13 +5,15 @@ import 'package:markdown/markdown.dart' as md;
 import 'package:super_editor/src/default_editor/attributions.dart';
 import 'package:super_editor/super_editor.dart';
 
+typedef CustomMarkdownToDocumentVisitor = DocumentNode? Function(md.Element);
+
 // TODO: return a regular Document instead of a MutableDocument.
 //       For now, we return MutableDocument because DocumentEditor
 //       requires one. When the editing system matures, there should
 //       be a way to return something here that is not concrete.
 MutableDocument deserializeMarkdownToDocument(
   String markdown, {
-  CustomNodeVisitor? customNodeVisitor,
+  CustomMarkdownToDocumentVisitor? customNodeVisitor,
   List<md.BlockSyntax>? customBlockSyntaxes,
 }) {
   final markdownLines = const LineSplitter().convert(markdown);
@@ -31,16 +33,13 @@ MutableDocument deserializeMarkdownToDocument(
   return MutableDocument(nodes: nodeVisitor.content);
 }
 
-String serializeDocumentToMarkdown(Document doc, {String? Function(DocumentNode)? customSerializer}) {
+String serializeDocumentToMarkdown(Document doc) {
   StringBuffer buffer = StringBuffer();
 
   for (int i = 0; i < doc.nodes.length; ++i) {
     final node = doc.nodes[i];
-    final customSerializationResult = customSerializer?.call(node);
 
-    if (customSerializationResult != null) {
-      buffer.writeln(customSerializationResult);
-    } else if (node is ImageNode) {
+    if (node is ImageNode) {
       buffer..writeln('![${node.altText}](${node.imageUrl})')..writeln('');
     } else if (node is HorizontalRuleNode) {
       buffer..writeln('---')..writeln('');
@@ -90,10 +89,6 @@ String serializeDocumentToMarkdown(Document doc, {String? Function(DocumentNode)
   return buffer.toString();
 }
 
-abstract class CustomNodeVisitor {
-  DocumentNode? visitElementBefore(md.Element element);
-}
-
 /// Converts structured markdown to a list of [DocumentNode]s.
 ///
 /// To use [_MarkdownToDocument], obtain a series of markdown
@@ -104,7 +99,7 @@ abstract class CustomNodeVisitor {
 /// markdown content.
 class _MarkdownToDocument implements md.NodeVisitor {
   _MarkdownToDocument(this._customVisitor);
-  final CustomNodeVisitor? _customVisitor;
+  final CustomMarkdownToDocumentVisitor? _customVisitor;
 
   final _content = <DocumentNode>[];
   List<DocumentNode> get content => _content;
@@ -113,15 +108,10 @@ class _MarkdownToDocument implements md.NodeVisitor {
 
   @override
   bool visitElementBefore(md.Element element) {
-    final customVisitor = _customVisitor;
-
-    if (customVisitor != null) {
-      final result = customVisitor.visitElementBefore(element);
-
-      if (result != null) {
-        _content.add(result);
-        return true;
-      }
+    final customVisitorResult = _customVisitor?.call(element);
+    if (customVisitorResult != null) {
+      _content.add(customVisitorResult);
+      return true;
     }
 
     // TODO: re-organize parsing such that visitElementBefore collects
