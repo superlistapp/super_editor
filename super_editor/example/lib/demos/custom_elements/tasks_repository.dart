@@ -11,9 +11,9 @@ class TasksRepository {
   Future<void> insertAll(Iterable<Task> tasks) async =>
       _tasksById.addAll(Map.fromEntries(tasks.map((e) => MapEntry(e.id, e))));
 
-  Stream<Task> watchTaskById(String id) {
+  Stream<Task?> watchTaskById(String id) {
     _subscriptions.putIfAbsent(id, () => StreamController.broadcast());
-    return _subscriptions[id]!.stream.transform(_StartWithTransformer(_tasksById[id]!));
+    return _subscriptions[id]!.stream.transform(_StartWithTransformer(_tasksById[id]));
   }
 
   Future<Task?> getTaskById(String id) async => _tasksById[id];
@@ -24,17 +24,17 @@ class TasksRepository {
   }
 }
 
-class _StartWithTransformer extends StreamTransformerBase<Task, Task> {
+class _StartWithTransformer extends StreamTransformerBase<Task, Task?> {
   _StartWithTransformer(this.lastValue);
-  final Task lastValue;
+  final Task? lastValue;
 
   @override
-  Stream<Task> bind(Stream<Task> stream) {
-    return StreamTransformer<Task, Task>((input, cancelOnError) {
-      late final StreamController<Task> controller;
-      late final StreamSubscription<Task> subscription;
+  Stream<Task?> bind(Stream<Task?> stream) {
+    return StreamTransformer<Task?, Task?>((input, cancelOnError) {
+      late final StreamController<Task?> controller;
+      late final StreamSubscription<Task?> subscription;
 
-      controller = StreamController<Task>(
+      controller = StreamController<Task?>(
         sync: true,
         onListen: () {
           controller.add(lastValue);

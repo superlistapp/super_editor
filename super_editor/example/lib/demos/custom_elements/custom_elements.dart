@@ -23,16 +23,14 @@ should watched carefully by those planning hanami as the blossoms only last a we
 
 <@ task:aaa111 @>
 <@ task:bbb222 @>
-<@ task:ccc333 @>
 <@ task:toggling-all-the-time @>
 
 ---
 ''';
 
 const _tasks = [
-  Task(id: 'aaa111', checked: true, text: 'First task.'),
+  Task(id: 'aaa111', checked: false, text: 'First task.'),
   Task(id: 'bbb222', checked: false, text: 'Second task.'),
-  Task(id: 'ccc333', checked: true, text: 'Third task.'),
   Task(
     id: 'toggling-all-the-time',
     checked: false,

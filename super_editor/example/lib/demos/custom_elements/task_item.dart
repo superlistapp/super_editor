@@ -7,7 +7,7 @@ import 'package:super_editor/super_editor.dart';
 class TaskItemNode extends ListItemNode {
   TaskItemNode({
     required String id,
-    required Stream<Task> changes,
+    required Stream<Task?> changes,
     required ValueSetter<Task> update,
     Map<String, dynamic>? metadata,
   })  : _update = update,
@@ -24,7 +24,7 @@ class TaskItemNode extends ListItemNode {
   }
 
   final ValueSetter<Task> _update;
-  late StreamSubscription<Task> _subscription;
+  late StreamSubscription<Task?> _subscription;
 
   Task? _task;
 
