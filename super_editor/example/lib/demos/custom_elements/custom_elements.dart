@@ -44,18 +44,21 @@ class _CustomElementsExampleEditorState extends State<CustomElementsExampleEdito
   @override
   void initState() {
     super.initState();
+    const repository = TasksRepository();
     _doc = deserializeMarkdownToDocument(
       _initialDocument,
-      customVisitor: const CustomVisitor(TasksRepository()),
+      customVisitor: const CustomVisitor(repository),
       customBlockSyntaxes: [const TaskSyntax()],
     );
 
     _docEditor = DocumentEditor(document: _doc as MutableDocument);
     _composer = DocumentComposer();
     _editorFocusNode = FocusNode();
-    _taskToggleTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (!mounted) return;
-      _docEditor.executeCommand(ToggleCheckboxCheckedCommand(id: 'toggling-all-the-time'));
+    _taskToggleTimer = Timer.periodic(const Duration(seconds: 1), (_) async {
+      final task = await repository.getTaskById('toggling-all-the-time');
+      if (task != null) {
+        repository.updateTask(task.copyWith(checked: !task.checked));
+      }
     });
   }
 

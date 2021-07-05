@@ -4,20 +4,6 @@ import 'package:example/demos/custom_elements/task.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/super_editor.dart';
 
-class ToggleCheckboxCheckedCommand extends EditorCommand {
-  ToggleCheckboxCheckedCommand({required this.id});
-  final String id;
-
-  @override
-  void execute(Document document, DocumentEditorTransaction transaction) {
-    final checkbox = document.getNodeById(id) as CheckBoxListItemNode?;
-
-    if (checkbox != null) {
-      checkbox.checked = !checkbox.checked;
-    }
-  }
-}
-
 class CheckBoxListItemNode extends ListItemNode {
   CheckBoxListItemNode({
     required String id,
