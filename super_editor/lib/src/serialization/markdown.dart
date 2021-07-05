@@ -9,17 +9,21 @@ import 'package:markdown/markdown.dart' as md;
 //       For now, we return MutableDocument because DocumentEditor
 //       requires one. When the editing system matures, there should
 //       be a way to return something here that is not concrete.
-MutableDocument deserializeMarkdownToDocument(String markdown) {
+MutableDocument deserializeMarkdownToDocument(
+  String markdown, {
+  CustomMarkdownVisitor? customVisitor,
+  List<md.BlockSyntax>? customBlockSyntaxes,
+}) {
   final markdownLines = const LineSplitter().convert(markdown);
 
-  final markdownDoc = md.Document();
+  final markdownDoc = md.Document(blockSyntaxes: customBlockSyntaxes);
   final blockParser = md.BlockParser(markdownLines, markdownDoc);
 
   // Parse markdown string to structured markdown.
   final markdownNodes = blockParser.parseLines();
 
   // Convert structured markdown to a Document.
-  final nodeVisitor = _MarkdownToDocument();
+  final nodeVisitor = _MarkdownToDocument(customVisitor);
   for (final node in markdownNodes) {
     node.accept(nodeVisitor);
   }
@@ -83,6 +87,10 @@ String serializeDocumentToMarkdown(Document doc) {
   return buffer.toString();
 }
 
+abstract class CustomMarkdownVisitor {
+  DocumentNode? visitElementBefore(md.Element element);
+}
+
 /// Converts structured markdown to a list of [DocumentNode]s.
 ///
 /// To use [_MarkdownToDocument], obtain a series of markdown
@@ -92,7 +100,8 @@ String serializeDocumentToMarkdown(Document doc) {
 /// contains [DocumentNode]s that correspond to the visited
 /// markdown content.
 class _MarkdownToDocument implements md.NodeVisitor {
-  _MarkdownToDocument();
+  _MarkdownToDocument(this._customVisitor);
+  final CustomMarkdownVisitor? _customVisitor;
 
   final _content = <DocumentNode>[];
   List<DocumentNode> get content => _content;
@@ -101,6 +110,15 @@ class _MarkdownToDocument implements md.NodeVisitor {
 
   @override
   bool visitElementBefore(md.Element element) {
+    if (_customVisitor != null) {
+      final result = _customVisitor!.visitElementBefore(element);
+
+      if (result != null) {
+        _content.add(result);
+        return true;
+      }
+    }
+
     // TODO: re-organize parsing such that visitElementBefore collects
     //       the block type info and then visitText and visitElementAfter
     //       take the action to create the node (#153)
