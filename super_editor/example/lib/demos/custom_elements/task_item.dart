@@ -4,8 +4,8 @@ import 'package:example/demos/custom_elements/task.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/super_editor.dart';
 
-class CheckBoxListItemNode extends ListItemNode {
-  CheckBoxListItemNode({
+class TaskItemNode extends ListItemNode {
+  TaskItemNode({
     required String id,
     required Stream<Task> changes,
     required ValueSetter<Task> update,
@@ -45,17 +45,6 @@ class CheckBoxListItemNode extends ListItemNode {
     }
   }
 
-  @override
-  int get indent => _task?.indent ?? 0;
-
-  @override
-  set indent(int value) {
-    final task = _task;
-    if (task != null) {
-      _update(task.copyWith(indent: value));
-    }
-  }
-
   bool get checked => _task?.checked ?? false;
   set checked(bool value) {
     final task = _task;
@@ -66,11 +55,11 @@ class CheckBoxListItemNode extends ListItemNode {
 
   @override
   bool hasEquivalentContent(Object other) =>
-      other is CheckBoxListItemNode && checked == other.checked && indent == other.indent;
+      other is TaskItemNode && checked == other.checked && indent == other.indent;
 }
 
-class CheckBoxListItemComponent extends StatelessWidget {
-  const CheckBoxListItemComponent({
+class TaskItemComponent extends StatelessWidget {
+  const TaskItemComponent({
     Key? key,
     required this.textKey,
     required this.checked,
@@ -133,16 +122,16 @@ class CheckBoxListItemComponent extends StatelessWidget {
   }
 }
 
-Widget? checkBoxListItemBuilder(ComponentContext componentContext) {
+Widget? taskItemBuilder(ComponentContext componentContext) {
   final node = componentContext.documentNode;
-  if (node is! CheckBoxListItemNode) {
+  if (node is! TaskItemNode) {
     return null;
   }
 
   final textSelection = componentContext.nodeSelection?.nodeSelection as TextSelection?;
   final showCaret = componentContext.showCaret && (componentContext.nodeSelection?.isExtent ?? false);
 
-  return CheckBoxListItemComponent(
+  return TaskItemComponent(
     textKey: componentContext.componentKey,
     checked: node.checked,
     text: node.text,
