@@ -5,6 +5,13 @@ import 'package:markdown/markdown.dart' as md;
 import 'package:super_editor/src/default_editor/attributions.dart';
 import 'package:super_editor/super_editor.dart';
 
+/// A type signature for a function that visits a [md.Element] and optionally
+/// returns a relevant [DocumentNode] that should become a part of the document.
+///
+/// Will be called before the built-in Markdown to document visitors.
+///
+/// If this returns a non-null value, the returned [DocumentNode] will be added
+/// to the final [Document] and the built-in visitors will be skipped.
 typedef CustomMarkdownToDocumentVisitor = DocumentNode? Function(md.Element);
 
 // TODO: return a regular Document instead of a MutableDocument.

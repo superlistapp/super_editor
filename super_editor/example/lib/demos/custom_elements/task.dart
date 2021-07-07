@@ -21,4 +21,16 @@ class Task {
       text: text ?? this.text,
     );
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Task &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          checked == other.checked &&
+          text == other.text;
+
+  @override
+  int get hashCode => id.hashCode ^ checked.hashCode ^ text.hashCode;
 }

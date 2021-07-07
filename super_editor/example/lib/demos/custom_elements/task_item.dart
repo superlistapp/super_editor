@@ -4,31 +4,41 @@ import 'package:example/demos/custom_elements/task.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/super_editor.dart';
 
-class TaskItemNode extends ListItemNode {
+/// A [DocumentNode] representing a [Task] in a [Document].
+///
+/// This [DocumentNode] is set up to update its state and notify
+/// its listeners each time the [taskUpdates] stream emits a [Task].
+class TaskItemNode extends TextNode {
   TaskItemNode({
     required String id,
-    required AttributedText text,
-    required Stream<Task?> changes,
-    required ValueSetter<Task> update,
+    required Stream<Task?> taskUpdates,
+    required ValueSetter<Task> updateTask,
     Map<String, dynamic>? metadata,
-  })  : _update = update,
+  })  : _updateTask = updateTask,
         super(
           id: id,
-          itemType: ListItemType.unordered,
-          text: text,
+
+          // Since we can't set up a StreamSubscription yet, which
+          // means we can't know what the text is going to be, we'll
+          // start with an empty text.
+          text: AttributedText(),
           metadata: metadata,
         ) {
-    _subscription = changes.listen((task) {
+    _subscription = taskUpdates.listen((task) {
       if (_task != null && task == null) {
         _deleted = true;
       }
 
-      _task = task;
-      notifyListeners();
+      if (_task != task) {
+        // If the task changed, update the internal state and notify listeners
+        // about the change.
+        _task = task;
+        notifyListeners();
+      }
     });
   }
 
-  final ValueSetter<Task> _update;
+  final ValueSetter<Task> _updateTask;
   late StreamSubscription<Task?> _subscription;
 
   Task? _task;
@@ -48,24 +58,24 @@ class TaskItemNode extends ListItemNode {
   @override
   set text(AttributedText value) {
     final task = _task;
-    if (task != null) {
-      _update(task.copyWith(text: value.text));
+    if (task != null && task.text != value.text) {
+      _updateTask(task.copyWith(text: value.text));
     }
   }
 
   bool get checked => _task?.checked ?? false;
   set checked(bool value) {
     final task = _task;
-    if (task != null) {
-      _update(task.copyWith(checked: value));
+    if (task != null && task.checked != value) {
+      _updateTask(task.copyWith(checked: value));
     }
   }
 
   @override
-  bool hasEquivalentContent(Object other) =>
-      other is TaskItemNode && checked == other.checked && indent == other.indent;
+  bool hasEquivalentContent(Object other) => other is TaskItemNode && id == other.id;
 }
 
+/// The widget that renders a [Task].
 class TaskItemComponent extends StatelessWidget {
   const TaskItemComponent({
     Key? key,
@@ -74,8 +84,6 @@ class TaskItemComponent extends StatelessWidget {
     required this.deleted,
     required this.text,
     required this.styleBuilder,
-    this.indent = 0,
-    this.indentExtent = 25,
     this.textSelection,
     this.selectionColor = Colors.lightBlueAccent,
     this.showCaret = false,
@@ -89,8 +97,6 @@ class TaskItemComponent extends StatelessWidget {
   final bool deleted;
   final AttributedText text;
   final AttributionStyleBuilder styleBuilder;
-  final int indent;
-  final double indentExtent;
   final TextSelection? textSelection;
   final Color selectionColor;
   final bool showCaret;
@@ -106,40 +112,36 @@ class TaskItemComponent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final indentSpace = indentExtent * (indent + 1);
-
     return Row(
       children: [
-        SizedBox(width: indentSpace),
         Checkbox(
           value: checked,
           onChanged: deleted ? null : _handleValueChanged,
         ),
+        const SizedBox(width: 4),
         Expanded(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: deleted
-                ? const Text(
-                    '(deleted)',
-                    style: TextStyle(color: Colors.black26),
-                  )
-                : TextComponent(
-                    key: textKey,
-                    text: text,
-                    textStyleBuilder: styleBuilder,
-                    textSelection: textSelection,
-                    selectionColor: selectionColor,
-                    showCaret: showCaret,
-                    caretColor: caretColor,
-                    showDebugPaint: showDebugPaint,
-                  ),
-          ),
+          child: deleted
+              ? const Text(
+                  '(deleted)',
+                  style: TextStyle(color: Colors.black26),
+                )
+              : TextComponent(
+                  key: textKey,
+                  text: text,
+                  textStyleBuilder: styleBuilder,
+                  textSelection: textSelection,
+                  selectionColor: selectionColor,
+                  showCaret: showCaret,
+                  caretColor: caretColor,
+                  showDebugPaint: showDebugPaint,
+                ),
         ),
       ],
     );
   }
 }
 
+/// Creates [TaskItemComponent]s from [TaskItemNode]s.
 Widget? taskItemBuilder(ComponentContext componentContext) {
   final node = componentContext.documentNode;
   if (node is! TaskItemNode) {
@@ -156,7 +158,6 @@ Widget? taskItemBuilder(ComponentContext componentContext) {
     text: node.text,
     styleBuilder: componentContext.extensions[textStylesExtensionKey],
     onChanged: (value) => node.checked = value,
-    indent: node.indent,
     textSelection: textSelection,
     selectionColor: (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle).selectionColor,
     showCaret: showCaret,
