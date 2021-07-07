@@ -72,8 +72,8 @@ class _CustomElementsExampleEditorState extends State<CustomElementsExampleEdito
     super.initState();
     _doc = deserializeMarkdownToDocument(
       _initialDocument,
-      customNodeVisitor: taskMarkdownToDocumentVisitor(_tasksRepository),
       customBlockSyntaxes: [const TaskSyntax()],
+      customMarkdownToDocumentVisitor: taskMarkdownToDocumentVisitor(_tasksRepository),
     );
 
     _docEditor = DocumentEditor(document: _doc as MutableDocument);

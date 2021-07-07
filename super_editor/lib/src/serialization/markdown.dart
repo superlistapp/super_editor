@@ -20,8 +20,8 @@ typedef CustomMarkdownToDocumentVisitor = DocumentNode? Function(md.Element);
 //       be a way to return something here that is not concrete.
 MutableDocument deserializeMarkdownToDocument(
   String markdown, {
-  CustomMarkdownToDocumentVisitor? customNodeVisitor,
   List<md.BlockSyntax>? customBlockSyntaxes,
+  CustomMarkdownToDocumentVisitor? customMarkdownToDocumentVisitor,
 }) {
   final markdownLines = const LineSplitter().convert(markdown);
 
@@ -32,7 +32,7 @@ MutableDocument deserializeMarkdownToDocument(
   final markdownNodes = blockParser.parseLines();
 
   // Convert structured markdown to a Document.
-  final nodeVisitor = _MarkdownToDocument(customNodeVisitor);
+  final nodeVisitor = _MarkdownToDocument(customMarkdownToDocumentVisitor);
   for (final node in markdownNodes) {
     node.accept(nodeVisitor);
   }
