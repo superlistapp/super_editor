@@ -36,7 +36,7 @@ class TaskSyntax extends md.BlockSyntax {
 
 /// A custom Markdown element visitor that creates [TaskItemNode]s
 /// from matching Markdown elements.
-/// 
+///
 /// Each [TaskItemNode] will automatically update itself when the
 /// underlying [Task] in the [TasksRepository] changes.
 CustomMarkdownToDocumentVisitor taskMarkdownToDocumentVisitor(TasksRepository repository) {
