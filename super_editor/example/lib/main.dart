@@ -157,10 +157,10 @@ final _menu = <_MenuGroup>[
         },
       ),
       _MenuItem(
-        icon: Icons.document_scanner,
+        icon: Icons.description,
         title: 'Custom Elements Demo',
         pageBuilder: (context) {
-          return CustomElementsExampleEditor();
+          return const CustomElementsExampleEditor();
         },
       ),
       _MenuItem(
