@@ -52,7 +52,7 @@ class TapSequenceGestureRecognizer extends GestureRecognizer {
           return false;
       }
     }
-    return super.isPointerAllowed(event);
+    return event.buttons == kPrimaryButton && super.isPointerAllowed(event);
   }
 
   @override
