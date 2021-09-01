@@ -740,32 +740,14 @@ class _CaretBlinkController with ChangeNotifier {
   _CaretBlinkController({
     required TickerProvider tickerProvider,
     Duration flashPeriod = const Duration(milliseconds: 500),
-  }) : _flashPeriod =
-            flashPeriod; /* : _animationController = AnimationController(
-          vsync: tickerProvider,
-          duration: flashPeriod,
-        ) {
-    _animationController
-      ..addListener(() {
-        notifyListeners();
-      })
-      ..addStatusListener((status) {
-        if (status == AnimationStatus.completed) {
-          _animationController.reverse();
-        } else if (status == AnimationStatus.dismissed) {
-          _animationController.forward();
-        }
-      });
-  }*/
+  }) : _flashPeriod = flashPeriod;
 
   @override
   void dispose() {
-    // _animationController.dispose();
     _timer?.cancel();
     super.dispose();
   }
 
-  // final AnimationController _animationController;
   final Duration _flashPeriod;
   Timer? _timer;
   bool _isVisible = true;
@@ -777,10 +759,8 @@ class _CaretBlinkController with ChangeNotifier {
       _caretPosition = newPosition;
 
       if (newPosition == null || newPosition.offset < 0) {
-        // _animationController.stop();
         _timer?.cancel();
       } else {
-        // _animationController.forward(from: 0.0);
         _timer?.cancel();
         _timer = Timer(_flashPeriod, _onToggleTimer);
       }
