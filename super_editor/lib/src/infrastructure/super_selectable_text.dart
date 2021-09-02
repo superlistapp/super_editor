@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -738,31 +740,18 @@ class _CaretBlinkController with ChangeNotifier {
   _CaretBlinkController({
     required TickerProvider tickerProvider,
     Duration flashPeriod = const Duration(milliseconds: 500),
-  }) : _animationController = AnimationController(
-          vsync: tickerProvider,
-          duration: flashPeriod,
-        ) {
-    _animationController
-      ..addListener(() {
-        notifyListeners();
-      })
-      ..addStatusListener((status) {
-        if (status == AnimationStatus.completed) {
-          _animationController.reverse();
-        } else if (status == AnimationStatus.dismissed) {
-          _animationController.forward();
-        }
-      });
-  }
+  }) : _flashPeriod = flashPeriod;
 
   @override
   void dispose() {
-    _animationController.dispose();
+    _timer?.cancel();
     super.dispose();
   }
 
-  final AnimationController _animationController;
-  double get opacity => 1.0 - _animationController.value.roundToDouble();
+  final Duration _flashPeriod;
+  Timer? _timer;
+  bool _isVisible = true;
+  double get opacity => _isVisible ? 1.0 : 0.0;
 
   TextPosition? _caretPosition;
   set caretPosition(TextPosition? newPosition) {
@@ -770,11 +759,19 @@ class _CaretBlinkController with ChangeNotifier {
       _caretPosition = newPosition;
 
       if (newPosition == null || newPosition.offset < 0) {
-        _animationController.stop();
+        _timer?.cancel();
       } else {
-        _animationController.forward(from: 0.0);
+        _timer?.cancel();
+        _timer = Timer(_flashPeriod, _onToggleTimer);
       }
     }
+  }
+
+  void _onToggleTimer() {
+    _isVisible = !_isVisible;
+    notifyListeners();
+
+    _timer = Timer(_flashPeriod, _onToggleTimer);
   }
 }
 
