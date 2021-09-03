@@ -21,5 +21,23 @@ void main() {
       // newNode exists at index 1
       expect(document.nodes.indexOf(newNode), 1);
     });
+
+    test('it is equal to a similar document with the same content', () {
+      final node = HorizontalRuleNode(id: '0');
+
+      final document1 = MutableDocument(nodes: [node]);
+      final document2 = MutableDocument(nodes: [node]);
+
+      expect(document1 == document2, isTrue);
+    });
+
+    test('it is NOT equal to a similar document with different content', () {
+      final node = HorizontalRuleNode(id: '0');
+
+      final document1 = MutableDocument(nodes: [node]);
+      final document2 = MutableDocument(nodes: [node, node]);
+
+      expect(document1 == document2, isFalse);
+    });
   });
 }
