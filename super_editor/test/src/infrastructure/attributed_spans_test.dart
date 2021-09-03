@@ -477,6 +477,21 @@ void main() {
         expect(collapsedSpans[2].attributions.first, italics);
       });
     });
+
+    group('equality', () {
+      test('it determines that spans with equivalent content in a different order are equal', () {
+        const boldStart = SpanMarker(attribution: bold, offset: 0, markerType: SpanMarkerType.start);
+        final boldEnd = boldStart.copyWith(markerType: SpanMarkerType.end, offset: 1);
+
+        const italicStart = SpanMarker(attribution: italics, offset: 0, markerType: SpanMarkerType.start);
+        final italicEnd = italicStart.copyWith(markerType: SpanMarkerType.end, offset: 1);
+
+        final boldBeforeItalicSpan = AttributedSpans(attributions: [boldStart, italicStart, boldEnd, italicEnd]);
+        final italicsBeforeBoldSpan = AttributedSpans(attributions: [italicStart, boldStart, italicEnd, boldEnd]);
+
+        expect(boldBeforeItalicSpan == italicsBeforeBoldSpan, isTrue);
+      });
+    });
   });
 }
 
