@@ -1,5 +1,5 @@
 import 'package:flutter/rendering.dart';
-import 'package:super_editor/src/infrastructure/utilities.dart';
+import './utilities.dart';
 
 /// Contract to interrogate the layout of a blob of text.
 abstract class TextLayout {
