@@ -1,4 +1,5 @@
 import 'package:flutter/rendering.dart';
+import 'package:super_editor/src/infrastructure/utilities.dart';
 
 /// Contract to interrogate the layout of a blob of text.
 abstract class TextLayout {
@@ -112,13 +113,7 @@ TextSelection paragraphExpansionFilter(String text, TextPosition startingPositio
 int getCharacterEndBounds(String text, int startingCodePointIndex) {
   assert(startingCodePointIndex >= 0 && startingCodePointIndex <= text.length);
 
-  // TODO: copy the implementation of nextCharacter to this package because
-  //       it's marked as visible for testing
-  // ignore: invalid_use_of_visible_for_testing_member
-  final startOffset =
-      // ignore: invalid_use_of_visible_for_testing_member
-      RenderEditable.nextCharacter(startingCodePointIndex, text);
-  return startOffset;
+  return Utilities.nextCharacter(startingCodePointIndex, text);
 }
 
 /// Returns the code point index for the code point that begins the visual
@@ -138,12 +133,5 @@ int getCharacterEndBounds(String text, int startingCodePointIndex) {
 /// the given character is returned.
 int getCharacterStartBounds(String text, int endingCodePointIndex) {
   assert(endingCodePointIndex >= 0 && endingCodePointIndex <= text.length);
-
-  // TODO: copy the implementation of previousCharacter to this package because
-  //       it's marked as visible for testing
-  // ignore: invalid_use_of_visible_for_testing_member
-  final startOffset =
-      // ignore: invalid_use_of_visible_for_testing_member
-      RenderEditable.previousCharacter(endingCodePointIndex, text);
-  return startOffset;
+  return Utilities.previousCharacter(endingCodePointIndex, text);
 }
