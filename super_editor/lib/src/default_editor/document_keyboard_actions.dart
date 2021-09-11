@@ -390,7 +390,7 @@ ExecutionInstruction anyCharacterOrDestructiveKeyToDeleteSelection({
   }
 
   editContext.commonOps.deleteSelection();
-  return ExecutionInstruction.haltExecution;
+  return ExecutionInstruction.continueExecution;
 }
 
 DocumentPosition _getDocumentPositionAfterDeletion({
