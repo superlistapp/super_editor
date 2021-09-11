@@ -224,18 +224,30 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
 
   void _onTapDown(TapDownDetails details) {
     _log.log('_onTapDown', 'EditableDocument: onTapDown()');
-    _clearSelection();
-    _selectionType = SelectionType.position;
-
     final docOffset = _getDocOffset(details.localPosition);
     _log.log('_onTapDown', ' - document offset: $docOffset');
     final docPosition = _layout.getDocumentPositionAtOffset(docOffset);
     _log.log('_onTapDown', ' - tapped document position: $docPosition');
 
+    // True if the user is holding down the shift key, and there is a non-null existing cursor position.
+    final expandSelection = RawKeyboard.instance.keysPressed.contains(LogicalKeyboardKey.shiftLeft) ||
+        RawKeyboard.instance.keysPressed.contains(LogicalKeyboardKey.shiftRight) ||
+        RawKeyboard.instance.keysPressed.contains(LogicalKeyboardKey.shift) &&
+            widget.editContext.composer.selection != null;
+
+    _log.log('_onTapDown', ' - should expand selection: $expandSelection');
+
     if (docPosition != null) {
-      // Place the document selection at the location where the
-      // user tapped.
-      _selectPosition(docPosition);
+      if (expandSelection) {
+        // Create or expand the selection so that the tapped location is set as the selection extent.
+        final newSelection = DocumentSelection(base: widget.editContext.composer.selection!.base, extent: docPosition);
+        widget.editContext.composer.selection = newSelection;
+      } else {
+        // Place the document selection at the location where the user tapped.
+        _clearSelection();
+        _selectionType = SelectionType.position;
+        _selectPosition(docPosition);
+      }
     }
 
     _focusNode.requestFocus();
