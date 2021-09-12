@@ -34,9 +34,13 @@ String serializeDocumentToMarkdown(Document doc) {
     final node = doc.nodes[i];
 
     if (node is ImageNode) {
-      buffer..writeln('![${node.altText}](${node.imageUrl})')..writeln('');
+      buffer
+        ..writeln('![${node.altText}](${node.imageUrl})')
+        ..writeln('');
     } else if (node is HorizontalRuleNode) {
-      buffer..writeln('---')..writeln('');
+      buffer
+        ..writeln('---')
+        ..writeln('');
     } else if (node is ListItemNode) {
       final indent = List.generate(node.indent + 1, (index) => '  ').join('');
       final symbol = node.type == ListItemType.unordered ? '*' : '1.';
@@ -54,20 +58,34 @@ String serializeDocumentToMarkdown(Document doc) {
       final Attribution? blockType = metadata['blockType'];
 
       if (blockType == header1Attribution) {
-        buffer..writeln('# ${node.text.toMarkdown()}')..writeln('');
+        buffer
+          ..writeln('# ${node.text.toMarkdown()}')
+          ..writeln('');
       } else if (blockType == header2Attribution) {
-        buffer..writeln('## ${node.text.toMarkdown()}')..writeln('');
+        buffer
+          ..writeln('## ${node.text.toMarkdown()}')
+          ..writeln('');
       } else if (blockType == header3Attribution) {
-        buffer..writeln('### ${node.text.toMarkdown()}')..writeln('');
+        buffer
+          ..writeln('### ${node.text.toMarkdown()}')
+          ..writeln('');
       } else if (blockType == header4Attribution) {
-        buffer..writeln('#### ${node.text.toMarkdown()}')..writeln('');
+        buffer
+          ..writeln('#### ${node.text.toMarkdown()}')
+          ..writeln('');
       } else if (blockType == header5Attribution) {
-        buffer..writeln('##### ${node.text.toMarkdown()}')..writeln('');
+        buffer
+          ..writeln('##### ${node.text.toMarkdown()}')
+          ..writeln('');
       } else if (blockType == header6Attribution) {
-        buffer..writeln('###### ${node.text.toMarkdown()}')..writeln('');
+        buffer
+          ..writeln('###### ${node.text.toMarkdown()}')
+          ..writeln('');
       } else if (blockType == blockquoteAttribution) {
         // TODO: handle multiline
-        buffer..writeln('> ${node.text.toMarkdown()}')..writeln();
+        buffer
+          ..writeln('> ${node.text.toMarkdown()}')
+          ..writeln();
       } else if (blockType == codeAttribution) {
         buffer //
           ..writeln('```') //
@@ -75,7 +93,9 @@ String serializeDocumentToMarkdown(Document doc) {
           ..writeln('```')
           ..writeln('');
       } else {
-        buffer..writeln(node.text.toMarkdown())..writeln('');
+        buffer
+          ..writeln(node.text.toMarkdown())
+          ..writeln('');
       }
     }
   }
@@ -447,7 +467,9 @@ extension on AttributedText {
         case AttributionVisitEvent.end:
           // +1 on end index because this visitor has inclusive indices
           // whereas substring() expects an exclusive ending index.
-          buffer..write(fullText.text.substring(spanStart, index + 1))..write(markdownStyles);
+          buffer
+            ..write(fullText.text.substring(spanStart, index + 1))
+            ..write(markdownStyles);
           break;
       }
     });

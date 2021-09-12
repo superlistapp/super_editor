@@ -571,7 +571,9 @@ class AttributedSpans {
         _log.log('_mergeBackToBackAttributions', 'Removing markers:');
         _log.log('_mergeBackToBackAttributions', ' - $startMarker');
         _log.log('_mergeBackToBackAttributions', ' - $endMarker');
-        attributions..remove(startMarker)..remove(endMarker);
+        attributions
+          ..remove(startMarker)
+          ..remove(endMarker);
       }
     }
   }
