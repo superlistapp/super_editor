@@ -1,5 +1,6 @@
 import 'package:super_editor/src/infrastructure/attributed_spans.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:super_editor/super_editor.dart';
 
 // Attributions used throughout this test suite.
 const bold = NamedAttribution('bold');
@@ -479,17 +480,38 @@ void main() {
     });
 
     group('equality', () {
-      test('it determines that spans with equivalent content in a different order are equal', () {
-        const boldStart = SpanMarker(attribution: bold, offset: 0, markerType: SpanMarkerType.start);
-        final boldEnd = boldStart.copyWith(markerType: SpanMarkerType.end, offset: 1);
+      const boldStart = SpanMarker(attribution: bold, offset: 0, markerType: SpanMarkerType.start);
+      final boldEnd = boldStart.copyWith(markerType: SpanMarkerType.end, offset: 1);
 
-        const italicStart = SpanMarker(attribution: italics, offset: 0, markerType: SpanMarkerType.start);
-        final italicEnd = italicStart.copyWith(markerType: SpanMarkerType.end, offset: 1);
+      const italicStart = SpanMarker(attribution: italics, offset: 0, markerType: SpanMarkerType.start);
+      final italicEnd = italicStart.copyWith(markerType: SpanMarkerType.end, offset: 1);
 
+      test('it is equal to another AttributedSpans with equivalent markers that are stored in the same order', () {
+        final span1 = AttributedSpans(attributions: [boldStart, italicStart, boldEnd, italicEnd]);
+        final span2 = AttributedSpans(attributions: [boldStart, italicStart, boldEnd, italicEnd]);
+
+        expect(span1 == span2, isTrue);
+      });
+
+      test('it is equal to another AttributedSpans with equivalent markers that are stored in a different order', () {
         final boldBeforeItalicSpan = AttributedSpans(attributions: [boldStart, italicStart, boldEnd, italicEnd]);
         final italicsBeforeBoldSpan = AttributedSpans(attributions: [italicStart, boldStart, italicEnd, boldEnd]);
 
         expect(boldBeforeItalicSpan == italicsBeforeBoldSpan, isTrue);
+      });
+
+      test('it is equal to another AttributedSpans with empty markers', () {
+        final span1 = AttributedSpans(attributions: []);
+        final span2 = AttributedSpans(attributions: []);
+
+        expect(span1 == span2, isTrue);
+      });
+
+      test('it is NOT equal to another AttributedSpans with different markers', () {
+        final span1 = AttributedSpans(attributions: [boldStart, boldEnd]);
+        final span2 = AttributedSpans(attributions: [italicStart, italicEnd]);
+
+        expect(span1 == span2, isFalse);
       });
     });
   });
