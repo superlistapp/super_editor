@@ -770,7 +770,7 @@ class _CaretBlinkController with ChangeNotifier {
   void _onToggleTimer() {
     _isVisible = !_isVisible;
     notifyListeners();
-
+    _timer?.cancel();
     _timer = Timer(_flashPeriod, _onToggleTimer);
   }
 }
