@@ -1,4 +1,4 @@
-import 'package:example/demos/demo_RTL.dart';
+import 'package:example/demos/demo_rtl.dart';
 import 'package:example/demos/demo_markdown_serialization.dart';
 import 'package:example/demos/demo_paragraphs.dart';
 import 'package:example/demos/demo_selectable_text.dart';
