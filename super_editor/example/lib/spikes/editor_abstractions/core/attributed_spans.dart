@@ -427,7 +427,9 @@ class AttributedSpans {
         // To do this, delete these two markers from the original
         // attribution list.
         print(' - removing both markers because they offset each other');
-        attributions..remove(startEdgeMarker)..remove(matchingEndEdgeMarker);
+        attributions
+          ..remove(startEdgeMarker)
+          ..remove(matchingEndEdgeMarker);
       }
     }
   }
