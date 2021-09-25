@@ -33,6 +33,9 @@
 .pub/
 build/
 
+# Ignore the pubspec.lock file for the super_editor library, but not the example app.
+/pubspec.lock
+
 # Android related
 **/android/**/gradle-wrapper.jar
 **/android/.gradle
