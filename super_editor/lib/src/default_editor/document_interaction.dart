@@ -137,6 +137,12 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
   // DocumentLayout get _layout => widget.documentLayoutKey.currentState as DocumentLayout;
   DocumentLayout get _layout => widget.editContext.documentLayout;
 
+  bool get _shouldExpandSelection =>
+      (RawKeyboard.instance.keysPressed.contains(LogicalKeyboardKey.shiftLeft) ||
+          RawKeyboard.instance.keysPressed.contains(LogicalKeyboardKey.shiftRight) ||
+          RawKeyboard.instance.keysPressed.contains(LogicalKeyboardKey.shift)) &&
+      widget.editContext.composer.selection != null;
+
   void _onSelectionChange() {
     _log.log('_onSelectionChange', 'EditableDocument: _onSelectionChange()');
     if (mounted) {
@@ -229,16 +235,10 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
     final docPosition = _layout.getDocumentPositionAtOffset(docOffset);
     _log.log('_onTapDown', ' - tapped document position: $docPosition');
 
-    // True if the user is holding down the shift key, and there is a non-null existing cursor position.
-    final expandSelection = RawKeyboard.instance.keysPressed.contains(LogicalKeyboardKey.shiftLeft) ||
-        RawKeyboard.instance.keysPressed.contains(LogicalKeyboardKey.shiftRight) ||
-        RawKeyboard.instance.keysPressed.contains(LogicalKeyboardKey.shift) &&
-            widget.editContext.composer.selection != null;
-
-    _log.log('_onTapDown', ' - should expand selection: $expandSelection');
+    _log.log('_onTapDown', ' - should expand selection: $_shouldExpandSelection');
 
     if (docPosition != null) {
-      if (expandSelection) {
+      if (_shouldExpandSelection) {
         // Create or expand the selection so that the tapped location is set as the selection extent.
         final newSelection = DocumentSelection(base: widget.editContext.composer.selection!.base, extent: docPosition);
         widget.editContext.composer.selection = newSelection;
@@ -316,7 +316,7 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
     _dragStartInViewport = details.localPosition;
     _dragStartInDoc = _getDocOffset(_dragStartInViewport!);
 
-    _clearSelection();
+    if (!_shouldExpandSelection) _clearSelection();
     _dragRectInViewport = Rect.fromLTWH(_dragStartInViewport!.dx, _dragStartInViewport!.dy, 1, 1);
 
     _focusNode.requestFocus();
@@ -470,11 +470,10 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
       }
       extentPosition = extentWordSelection.extent;
     }
+    basePosition = widget.editContext.composer.selection?.base ?? basePosition;
+    var newSelection = DocumentSelection(base: basePosition, extent: extentPosition);
 
-    widget.editContext.composer.selection = (DocumentSelection(
-      base: basePosition,
-      extent: extentPosition,
-    ));
+    widget.editContext.composer.selection = (newSelection);
     _log.log('_selectionRegion', 'Region selection: ${widget.editContext.composer.selection}');
   }
 
