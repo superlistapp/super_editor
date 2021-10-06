@@ -12,6 +12,7 @@ import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
+import 'package:super_editor/src/infrastructure/raw_key_event_extensions.dart';
 
 import 'styles.dart';
 import 'text_tools.dart';
@@ -159,6 +160,12 @@ ExecutionInstruction anyCharacterToInsertInParagraph({
   // to this is for the web to honor the standard key event contract,
   // but that's out of our control.
   if (kIsWeb && webBugBlacklistCharacters.contains(character)) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  // MacOS represents arrow keys with special characters. These special
+  // characters should not be inserted into the document.
+  if (keyEvent.isArrowKeyPressed) {
     return ExecutionInstruction.continueExecution;
   }
 
