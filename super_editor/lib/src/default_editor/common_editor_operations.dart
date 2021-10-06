@@ -313,7 +313,7 @@ class CommonEditorOperations {
 
       if (nextNode == null) {
         // We're at the beginning of the document and can't go anywhere.
-        return false;
+        return true;
       }
 
       newExtentNodeId = nextNode.id;
@@ -392,7 +392,7 @@ class CommonEditorOperations {
       if (nextNode == null) {
         // We're at the beginning/end of the document and can't go
         // anywhere.
-        return false;
+        return true;
       }
 
       newExtentNodeId = nextNode.id;
