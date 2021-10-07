@@ -850,7 +850,7 @@ ExecutionInstruction anyCharacterToInsertInTextContent({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
-  if (keyEvent.isMetaPressed || keyEvent.isControlPressed || keyEvent.isArrowKeyPressed) {
+  if (keyEvent.isMetaPressed || keyEvent.isControlPressed) {
     return ExecutionInstruction.continueExecution;
   }
   if (editContext.composer.selection == null) {
@@ -865,7 +865,7 @@ ExecutionInstruction anyCharacterToInsertInTextContent({
   if (keyEvent.character == null || keyEvent.character == '') {
     return ExecutionInstruction.continueExecution;
   }
-  if (LogicalKeyboardKey.isControlCharacter(keyEvent.character!)) {
+  if (LogicalKeyboardKey.isControlCharacter(keyEvent.character!) || keyEvent.isArrowKeyPressed) {
     return ExecutionInstruction.continueExecution;
   }
 

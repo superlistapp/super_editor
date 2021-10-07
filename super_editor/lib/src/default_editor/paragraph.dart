@@ -148,7 +148,7 @@ ExecutionInstruction anyCharacterToInsertInParagraph({
   if (character == null || character == '') {
     return ExecutionInstruction.continueExecution;
   }
-  if (LogicalKeyboardKey.isControlCharacter(keyEvent.character!)) {
+  if (LogicalKeyboardKey.isControlCharacter(keyEvent.character!) || keyEvent.isArrowKeyPressed) {
     return ExecutionInstruction.continueExecution;
   }
   // On web, keys like shift and alt are sending their full name
@@ -163,11 +163,6 @@ ExecutionInstruction anyCharacterToInsertInParagraph({
     return ExecutionInstruction.continueExecution;
   }
 
-  // MacOS represents arrow keys with special characters. These special
-  // characters should not be inserted into the document.
-  if (keyEvent.isArrowKeyPressed) {
-    return ExecutionInstruction.continueExecution;
-  }
 
   // The web reports a tab as "Tab". Intercept it and translate it to a space.
   if (character == 'Tab') {
