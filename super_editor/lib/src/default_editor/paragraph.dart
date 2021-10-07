@@ -12,6 +12,7 @@ import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
+import 'package:super_editor/src/infrastructure/raw_key_event_extensions.dart';
 
 import 'styles.dart';
 import 'text_tools.dart';
@@ -147,7 +148,7 @@ ExecutionInstruction anyCharacterToInsertInParagraph({
   if (character == null || character == '') {
     return ExecutionInstruction.continueExecution;
   }
-  if (LogicalKeyboardKey.isControlCharacter(keyEvent.character!)) {
+  if (LogicalKeyboardKey.isControlCharacter(keyEvent.character!) || keyEvent.isArrowKeyPressed) {
     return ExecutionInstruction.continueExecution;
   }
   // On web, keys like shift and alt are sending their full name
@@ -161,6 +162,7 @@ ExecutionInstruction anyCharacterToInsertInParagraph({
   if (kIsWeb && webBugBlacklistCharacters.contains(character)) {
     return ExecutionInstruction.continueExecution;
   }
+
 
   // The web reports a tab as "Tab". Intercept it and translate it to a space.
   if (character == 'Tab') {
