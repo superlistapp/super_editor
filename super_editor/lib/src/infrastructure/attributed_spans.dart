@@ -3,7 +3,7 @@ import 'dart:math';
 import 'package:collection/collection.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 
-final _log = Logger(scope: 'AttributedSpans');
+final _log = attributionsLog;
 
 /// A set of spans, each with an associated [Attribution], that take
 /// up some amount of space in a discrete range.
@@ -143,11 +143,11 @@ class AttributedSpans {
 
   /// Returns all attributions for spans that cover the given [offset].
   Set<Attribution> getAllAttributionsAt(int offset) {
-    _log.log('getAllAttributionsAt', 'offset: $offset');
-    _log.log('getAllAttributionsAt', ' - collecting all existing markers');
+    _log.fine('offset: $offset');
+    _log.fine(' - collecting all existing markers');
     final allAttributions = <Attribution>{};
     for (final marker in _attributions) {
-      _log.log('getAllAttributionsAt', '   - marker: $marker');
+      _log.fine('   - marker: $marker');
       allAttributions.add(marker.attribution);
     }
 
@@ -155,7 +155,7 @@ class AttributedSpans {
     for (final attribution in allAttributions) {
       final hasAttribution = hasAttributionAt(offset, attribution: attribution);
       if (hasAttribution) {
-        _log.log('getAllAttributionsAt', ' - adding attribution: $attribution');
+        _log.fine('getAllAttributionsAt', ' - adding attribution: $attribution');
         attributionsAtOffset.add(attribution);
       }
     }
@@ -275,9 +275,9 @@ class AttributedSpans {
       }
     }
 
-    _log.log('addAttribution', 'start: $start -> end: $end');
+    _log.fine('start: $start -> end: $end');
     if (!hasAttributionAt(start, attribution: newAttribution)) {
-      _log.log('addAttribution', 'adding start marker at: $start');
+      _log.fine('adding start marker at: $start');
       _insertMarker(SpanMarker(
         attribution: newAttribution,
         offset: start,
@@ -292,7 +292,7 @@ class AttributedSpans {
         .where((attribution) => attribution.offset > start)
         .where((attribution) => attribution.offset <= end)
         .toList();
-    _log.log('addAttribution', 'removing ${markersToDelete.length} markers between $start and $end');
+    _log.fine('removing ${markersToDelete.length} markers between $start and $end');
     _attributions.removeWhere((element) => markersToDelete.contains(element));
 
     final lastDeletedMarker = markersToDelete.isNotEmpty ? markersToDelete.last : null;
@@ -304,7 +304,7 @@ class AttributedSpans {
       // If we deleted some markers, but the last marker was an
       // `end` marker, we still have an open-ended span and we
       // need to cap it off.
-      _log.log('addAttribution', 'inserting ending marker at: $end');
+      _log.fine('inserting ending marker at: $end');
       _insertMarker(SpanMarker(
         attribution: newAttribution,
         offset: end,
@@ -314,9 +314,9 @@ class AttributedSpans {
     // Else, `range.end` is in the middle of larger span and
     // doesn't need to be inserted.
 
-    _log.log('addAttribution', 'all attributions after:');
+    _log.fine('all attributions after:');
     _attributions.where((element) => element.attribution == newAttribution).forEach((element) {
-      _log.log('addAttribution', '$element');
+      _log.fine('$element');
     });
   }
 
@@ -326,8 +326,14 @@ class AttributedSpans {
     required int start,
     required int end,
   }) {
+    _log.info('Removing attribution $attributionToRemove from $start to $end');
     if (start < 0 || start > end) {
       throw Exception('removeAttribution() did not satisfy start < 0 and start > end, start: $start, end: $end');
+    }
+
+    if (!hasAttributionsWithin(attributions: {attributionToRemove}, start: start, end: end)) {
+      _log.fine('No such attribution exists in the given span range');
+      return;
     }
 
     // It's possible that a span we want to remove was started before the
@@ -354,9 +360,10 @@ class AttributedSpans {
 
     // Determine if we need to insert a new end-cap before
     // the removal region.
-    if (hasAttributionAt(start, attribution: attributionToRemove)) {
-      final markersAtStart = _getMarkerAt(attributionToRemove, start);
+    if (hasAttributionAt(start - 1, attribution: attributionToRemove)) {
+      final markersAtStart = _getMarkerAt(attributionToRemove, start - 1, SpanMarkerType.end);
       if (markersAtStart.isEmpty) {
+        _log.finer('Creating a new "end" marker to appear before the removal range at ${start - 1}');
         endCapMarkersToInsert.add(SpanMarker(
           attribution: attributionToRemove,
           offset: start - 1,
@@ -367,9 +374,10 @@ class AttributedSpans {
 
     // Determine if we need to insert a new end-cap after the
     // removal region.
-    if (hasAttributionAt(end, attribution: attributionToRemove)) {
-      final markersAtEnd = _getMarkerAt(attributionToRemove, end);
+    if (hasAttributionAt(end + 1, attribution: attributionToRemove)) {
+      final markersAtEnd = _getMarkerAt(attributionToRemove, end + 1, SpanMarkerType.start);
       if (markersAtEnd.isEmpty) {
+        _log.finer('Creating a new "start" marker to appear after the removal range at ${end + 1}');
         endCapMarkersToInsert.add(SpanMarker(
           attribution: attributionToRemove,
           offset: end + 1,
@@ -381,6 +389,7 @@ class AttributedSpans {
     // Insert new span end-caps immediately before and after
     // the removal region, if needed.
     for (final endCapMarker in endCapMarkersToInsert) {
+      _log.finer('Inserting new cap marker: $endCapMarker');
       _insertMarker(endCapMarker);
     }
 
@@ -391,12 +400,12 @@ class AttributedSpans {
         .where((attribution) => attribution.offset >= start)
         .where((attribution) => attribution.offset <= end)
         .toList();
-    _log.log('removeAttribution', 'removing ${markersToDelete.length} markers between $start and $end');
+    _log.finer('removing ${markersToDelete.length} markers between $start and $end');
     _attributions.removeWhere((element) => markersToDelete.contains(element));
 
-    _log.log('removeAttribution', 'all attributions after:');
+    _log.finer('all attributions after:');
     _attributions.where((element) => element.attribution == attributionToRemove).forEach((element) {
-      _log.log('removeAttribution', ' - $element');
+      _log.finer(' - $element');
     });
   }
 
@@ -409,6 +418,7 @@ class AttributedSpans {
     required int start,
     required int end,
   }) {
+    _log.info('Toggling attribution $attribution from $start to $end');
     if (_isContinuousAttribution(attribution: attribution, start: start, end: end)) {
       removeAttribution(attributionToRemove: attribution, start: start, end: end);
     } else {
@@ -424,24 +434,29 @@ class AttributedSpans {
     required int start,
     required int end,
   }) {
-    _log.log('_isContinuousAttribution', 'attribution: "$attribution", range: $start -> $end');
-    SpanMarker? markerBefore = _getNearestMarkerAtOrBefore(start, attribution: attribution);
-    _log.log('_isContinuousAttribution', 'marker before: $markerBefore');
+    _log.fine('attribution: "$attribution", range: $start -> $end');
+    SpanMarker? markerBefore = _getNearestMarkerAtOrBefore(start, attribution: attribution, type: SpanMarkerType.start);
+    _log.fine('marker before: $markerBefore');
 
-    if (markerBefore == null || markerBefore.isEnd) {
+    if (markerBefore == null) {
       return false;
     }
 
     final indexBefore = _attributions.indexOf(markerBefore);
-    final nextMarker = _attributions.sublist(indexBefore).firstWhereOrNull(
-          (marker) => marker.attribution == attribution && marker.offset > markerBefore.offset,
-        );
-    _log.log('_isContinuousAttribution', 'next marker: $nextMarker');
+    final nextMarker = _attributions.sublist(indexBefore).firstWhereOrNull((marker) {
+      _log.finest('Comparing start marker $markerBefore to another marker $marker');
+      return marker.attribution == attribution && marker.offset >= markerBefore.offset && marker != markerBefore;
+    });
+    _log.fine('next marker: $nextMarker');
 
     if (nextMarker == null) {
+      _log.warning('Inconsistent attribution markers. Found a `start` marker with no matching `end`.');
+      _log.warning(this);
       throw Exception('Inconsistent attributions state. Found a `start` marker with no matching `end`.');
     }
     if (nextMarker.isStart) {
+      _log.warning('Inconsistent attributions state. Found a `start` marker following a `start` marker.');
+      _log.warning(this);
       throw Exception('Inconsistent attributions state. Found a `start` marker following a `start` marker.');
     }
 
@@ -451,16 +466,18 @@ class AttributedSpans {
     return nextMarker.offset >= end;
   }
 
-  /// Finds and returns the nearest marker that appears at or after the
+  /// Finds and returns the nearest marker that appears at or before the
   /// given [offset], optionally looking specifically for a marker with
-  /// the given [attribution].
+  /// the given [attribution] and given [type].
   SpanMarker? _getNearestMarkerAtOrBefore(
     int offset, {
     Attribution? attribution,
+    SpanMarkerType? type,
   }) {
     SpanMarker? markerBefore;
-    final markers =
-        attribution != null ? _attributions.where((marker) => marker.attribution == attribution) : _attributions;
+    final markers = _attributions
+        .where((marker) => attribution == null || marker.attribution == attribution)
+        .where((marker) => type == null || marker.markerType == type);
 
     for (final marker in markers) {
       if (marker.offset <= offset) {
@@ -475,10 +492,11 @@ class AttributedSpans {
   }
 
   /// Returns the markers at the given [offset] with the given [attribution]..
-  Set<SpanMarker> _getMarkerAt(Attribution attribution, int offset) {
+  Set<SpanMarker> _getMarkerAt(Attribution attribution, int offset, [SpanMarkerType? type]) {
     return _attributions
         .where((marker) => marker.attribution == attribution)
         .where((marker) => marker.offset == offset)
+        .where((marker) => type == null || marker.markerType == type)
         .toSet();
   }
 
@@ -513,32 +531,32 @@ class AttributedSpans {
           'Another AttributedSpans can only be appended after the final marker in this AttributedSpans. Final marker: ${_attributions.last}');
     }
 
-    _log.log('addAt', 'attributions before pushing them:');
-    _log.log('addAt', toString());
+    _log.fine('attributions before pushing them:');
+    _log.fine(toString());
 
     // Push back all the `other` markers to make room for the
     // spans we're putting in front of them.
 
     final pushDistance = index;
-    _log.log('addAt', 'pushing `other` markers by: $pushDistance');
-    _log.log('addAt', '`other` attributions before pushing them:');
-    _log.log('addAt', other.toString());
+    _log.fine('pushing `other` markers by: $pushDistance');
+    _log.fine('`other` attributions before pushing them:');
+    _log.fine(other.toString());
     final pushedSpans = other.copy()..pushAttributionsBack(pushDistance);
 
     // Combine `this` and `other` attributions into one list.
     final List<SpanMarker> combinedAttributions = List.from(_attributions)..addAll(pushedSpans._attributions);
-    _log.log('addAt', 'combined attributions before merge:');
+    _log.fine('combined attributions before merge:');
     for (final marker in combinedAttributions) {
-      _log.log('addAt', '   - $marker');
+      _log.fine('   - $marker');
     }
 
     // Clean up the boundary between the two lists of attributions
     // by merging compatible attributions that meet at the boundary.
     _mergeBackToBackAttributions(combinedAttributions, index);
 
-    _log.log('addAt', 'combined attributions after merge:');
+    _log.fine('combined attributions after merge:');
     for (final marker in combinedAttributions) {
-      _log.log('addAt', '   - $marker');
+      _log.fine('   - $marker');
     }
 
     _attributions
@@ -550,7 +568,7 @@ class AttributedSpans {
   /// attributions concatenated together at [mergePoint], merges any
   /// attribution spans that exist back-to-back at the [mergePoint].
   void _mergeBackToBackAttributions(List<SpanMarker> attributions, int mergePoint) {
-    _log.log('_mergeBackToBackAttributions', 'merging attributions at $mergePoint');
+    _log.fine('merging attributions at $mergePoint');
     // Look for any compatible attributions at
     // `mergePoint - 1` and `mergePoint` and combine them.
     final endAtMergePointMarkers =
@@ -558,20 +576,22 @@ class AttributedSpans {
     final startAtMergePointMarkers =
         attributions.where((marker) => marker.isStart && marker.offset == mergePoint).toList();
     for (final startMarker in startAtMergePointMarkers) {
-      _log.log('_mergeBackToBackAttributions', 'marker on right side: $startMarker');
+      _log.fine('marker on right side: $startMarker');
       final endMarker = endAtMergePointMarkers.firstWhereOrNull(
         (marker) => marker.attribution == startMarker.attribution,
       );
-      _log.log('_mergeBackToBackAttributions', 'matching marker on left side? $endMarker');
+      _log.fine('matching marker on left side? $endMarker');
       if (endMarker != null) {
         // These two attributions should be combined into one.
         // To do this, delete these two markers from the original
         // attribution list.
-        _log.log('_mergeBackToBackAttributions', 'combining left/right spans at edge at index $mergePoint');
-        _log.log('_mergeBackToBackAttributions', 'Removing markers:');
-        _log.log('_mergeBackToBackAttributions', ' - $startMarker');
-        _log.log('_mergeBackToBackAttributions', ' - $endMarker');
-        attributions..remove(startMarker)..remove(endMarker);
+        _log.fine('combining left/right spans at edge at index $mergePoint');
+        _log.fine('Removing markers:');
+        _log.fine(' - $startMarker');
+        _log.fine(' - $endMarker');
+        attributions
+          ..remove(startMarker)
+          ..remove(endMarker);
       }
     }
   }
@@ -583,11 +603,11 @@ class AttributedSpans {
   /// to the [offset] of the last marker in this [AttributedSpans].
   AttributedSpans copyAttributionRegion(int startOffset, [int? endOffset]) {
     endOffset = endOffset ?? _attributions.lastOrNull?.offset ?? 0;
-    _log.log('copyAttributionRegion', 'start: $startOffset, end: $endOffset');
+    _log.fine('start: $startOffset, end: $endOffset');
 
     final List<SpanMarker> cutAttributions = [];
 
-    _log.log('copyAttributionRegion', 'inspecting existing markers in full AttributedSpans');
+    _log.fine('inspecting existing markers in full AttributedSpans');
     final Map<Attribution, int> foundStartMarkers = {};
     final Map<Attribution, int> foundEndMarkers = {};
 
@@ -597,15 +617,15 @@ class AttributedSpans {
     _attributions //
         .where((marker) => marker.offset < startOffset) //
         .forEach((marker) {
-      _log.log('copyAttributionRegion', 'marker before the copy region: $marker');
+      _log.fine('marker before the copy region: $marker');
       // Track any markers that begin before the `startOffset`
       // and continue beyond `startOffset`.
       if (marker.isStart) {
-        _log.log('copyAttributionRegion', 'remembering this marker to insert in copied region');
+        _log.fine('remembering this marker to insert in copied region');
         foundStartMarkers.putIfAbsent(marker.attribution, () => 0);
         foundStartMarkers[marker.attribution] = foundStartMarkers[marker.attribution]! + 1;
       } else {
-        _log.log('copyAttributionRegion',
+        _log.fine(
             'this marker counters an earlier one we found. We will not re-insert this marker in the copied region');
         foundStartMarkers.putIfAbsent(marker.attribution, () => 0);
         foundStartMarkers[marker.attribution] = foundStartMarkers[marker.attribution]! - 1;
@@ -617,8 +637,7 @@ class AttributedSpans {
     foundStartMarkers.forEach((markerAttribution, count) {
       if (count == 1) {
         // Found an unmatched `start` marker. Replace it.
-        _log.log('copyAttributionRegion',
-            'inserting "$markerAttribution" marker at start of copy region to maintain symmetry.');
+        _log.fine('inserting "$markerAttribution" marker at start of copy region to maintain symmetry.');
         cutAttributions.add(SpanMarker(
           attribution: markerAttribution,
           offset: 0,
@@ -635,8 +654,7 @@ class AttributedSpans {
     _attributions //
         .where((marker) => startOffset <= marker.offset && marker.offset <= endOffset!) //
         .forEach((marker) {
-      _log.log('copyAttributionRegion',
-          'copying "${marker.attribution}" at ${marker.offset} from original AttributionSpans to copy region.');
+      _log.fine('copying "${marker.attribution}" at ${marker.offset} from original AttributionSpans to copy region.');
       cutAttributions.add(marker.copyWith(
         offset: marker.offset - startOffset,
       ));
@@ -649,15 +667,15 @@ class AttributedSpans {
         .reversed //
         .where((marker) => marker.offset > endOffset!) //
         .forEach((marker) {
-      _log.log('copyAttributionRegion', 'marker after the copy region: $marker');
+      _log.fine('marker after the copy region: $marker');
       // Track any markers that end after the `endOffset`
       // and start before `endOffset`.
       if (marker.isEnd) {
-        _log.log('copyAttributionRegion', 'remembering this marker to insert in copied region');
+        _log.fine('remembering this marker to insert in copied region');
         foundEndMarkers.putIfAbsent(marker.attribution, () => 0);
         foundEndMarkers[marker.attribution] = foundEndMarkers[marker.attribution]! + 1;
       } else {
-        _log.log('copyAttributionRegion',
+        _log.fine(
             'this marker counters an earlier one we found. We will not re-insert this marker in the copied region');
         foundEndMarkers.putIfAbsent(marker.attribution, () => 0);
         foundEndMarkers[marker.attribution] = foundEndMarkers[marker.attribution]! - 1;
@@ -669,8 +687,7 @@ class AttributedSpans {
     foundEndMarkers.forEach((markerAttribution, count) {
       if (count == 1) {
         // Found an unmatched `end` marker. Replace it.
-        _log.log('copyAttributionRegion',
-            'inserting "$markerAttribution" marker at end of copy region to maintain symmetry.');
+        _log.fine('inserting "$markerAttribution" marker at end of copy region to maintain symmetry.');
         cutAttributions.add(SpanMarker(
           attribution: markerAttribution,
           offset: endOffset! - startOffset,
@@ -682,9 +699,9 @@ class AttributedSpans {
       }
     });
 
-    _log.log('copyAttributionRegion', 'copied attributions:');
+    _log.fine('copied attributions:');
     for (final attribution in cutAttributions) {
-      _log.log('copyAttributionRegion', '   - $attribution');
+      _log.fine('   - $attribution');
     }
 
     return AttributedSpans(attributions: cutAttributions);
@@ -710,7 +727,7 @@ class AttributedSpans {
     // Add all the markers that are unchanged.
     contractedAttributions.addAll(_attributions.where((marker) => marker.offset < startOffset));
 
-    _log.log('contractAttributions', 'removing $count characters starting at $startOffset');
+    _log.fine('removing $count characters starting at $startOffset');
     final needToEndAttributions = <dynamic>{};
     final needToStartAttributions = <dynamic>{};
     _attributions
@@ -719,7 +736,7 @@ class AttributedSpans {
       // Get rid of this marker and keep track of
       // any open-ended attributions that need to
       // be closed.
-      _log.log('contractAttributions', 'removing ${marker.markerType} at ${marker.offset}');
+      _log.fine('removing ${marker.markerType} at ${marker.offset}');
       if (marker.isStart) {
         if (needToEndAttributions.contains(marker.attribution)) {
           // We've already removed an `end` marker so now
@@ -746,8 +763,8 @@ class AttributedSpans {
     // Re-insert any markers that are needed to retain
     // symmetry after the deletions above.
     for (final attribution in needToStartAttributions) {
-      final offset = startOffset > 0 ? startOffset - 1 : 0;
-      _log.log('contractAttributions', 'adding back a start marker at $offset');
+      final offset = startOffset;
+      _log.fine('adding back a start marker at $offset');
       contractedAttributions.add(SpanMarker(
         attribution: attribution,
         offset: offset,
@@ -756,7 +773,7 @@ class AttributedSpans {
     }
     for (final attribution in needToEndAttributions) {
       final offset = startOffset > 0 ? startOffset - 1 : 0;
-      _log.log('contractAttributions', 'adding back an end marker at $offset');
+      _log.fine('adding back an end marker at $offset');
       contractedAttributions.add(SpanMarker(
         attribution: attribution,
         offset: offset,
@@ -791,15 +808,15 @@ class AttributedSpans {
   List<MultiAttributionSpan> collapseSpans({
     required int contentLength,
   }) {
-    _log.log('collapseSpans', 'content length: $contentLength');
-    _log.log('collapseSpans', 'attributions used to compute spans:');
+    _log.fine('content length: $contentLength');
+    _log.fine('attributions used to compute spans:');
     for (final marker in _attributions) {
-      _log.log('collapseSpans', '   - $marker');
+      _log.fine('   - $marker');
     }
 
     if (contentLength == 0) {
       // There is no content and therefore no attributions.
-      _log.log('collapseSpans', 'content is empty. Returning empty span list.');
+      _log.fine('content is empty. Returning empty span list.');
       return [];
     }
 
@@ -809,21 +826,21 @@ class AttributedSpans {
     final startPoints = <int>[0]; // we always start at zero
     final endPoints = <int>[];
 
-    _log.log('collapseSpans', 'accumulating start and end points:');
+    _log.fine('accumulating start and end points:');
     for (final marker in _attributions) {
-      _log.log('collapseSpans', 'marker at ${marker.offset}');
-      _log.log('collapseSpans', 'start points before change: $startPoints');
-      _log.log('collapseSpans', 'end points before change: $endPoints');
+      _log.fine('marker at ${marker.offset}');
+      _log.fine('start points before change: $startPoints');
+      _log.fine('end points before change: $endPoints');
 
       if (marker.offset > contentLength - 1) {
-        _log.log('collapseSpans', 'this marker is beyond the desired content length. Breaking loop.');
+        _log.fine('this marker is beyond the desired content length. Breaking loop.');
         break;
       }
 
       if (marker.isStart) {
         // Add a `start` point.
         if (!startPoints.contains(marker.offset)) {
-          _log.log('collapseSpans', 'adding start point at ${marker.offset}');
+          _log.fine('adding start point at ${marker.offset}');
           startPoints.add(marker.offset);
         }
 
@@ -831,14 +848,14 @@ class AttributedSpans {
         // then there won't be an `end` just before this
         // `start` point. Insert one.
         if (marker.offset > 0 && !endPoints.contains(marker.offset - 1)) {
-          _log.log('collapseSpans', 'going back one and adding end point at: ${marker.offset - 1}');
+          _log.fine('going back one and adding end point at: ${marker.offset - 1}');
           endPoints.add(marker.offset - 1);
         }
       }
       if (marker.isEnd) {
         // Add an `end` point.
         if (!endPoints.contains(marker.offset)) {
-          _log.log('collapseSpans', 'adding an end point at: ${marker.offset}');
+          _log.fine('adding an end point at: ${marker.offset}');
           endPoints.add(marker.offset);
         }
 
@@ -847,23 +864,23 @@ class AttributedSpans {
         // guaranteed to have another `start` marker after this
         // `end` marker.
         if (marker.offset < contentLength - 1 && !startPoints.contains(marker.offset + 1)) {
-          _log.log('collapseSpans', 'jumping forward one to add a start point at: ${marker.offset + 1}');
+          _log.fine('jumping forward one to add a start point at: ${marker.offset + 1}');
           startPoints.add(marker.offset + 1);
         }
       }
 
-      _log.log('collapseSpans', 'start points after change: $startPoints');
-      _log.log('collapseSpans', 'end points after change: $endPoints');
+      _log.fine('start points after change: $startPoints');
+      _log.fine('end points after change: $endPoints');
     }
     if (!endPoints.contains(contentLength - 1)) {
       // This condition occurs when there are no attributions.
-      _log.log('collapseSpans', 'adding a final endpoint at end of text');
+      _log.fine('adding a final endpoint at end of text');
       endPoints.add(contentLength - 1);
     }
 
     if (startPoints.length != endPoints.length) {
-      _log.log('collapseSpans', 'start points: $startPoints');
-      _log.log('collapseSpans', 'end points: $endPoints');
+      _log.fine('start points: $startPoints');
+      _log.fine('end points: $endPoints');
       throw Exception(
           ' - mismatch between number of start points and end points. Content length: $contentLength, Start: ${startPoints.length} -> $startPoints, End: ${endPoints.length} -> $endPoints, from attributions: $_attributions');
     }
@@ -876,8 +893,8 @@ class AttributedSpans {
     // Create the collapsed spans.
     List<MultiAttributionSpan> collapsedSpans = [];
     for (int i = 0; i < startPoints.length; ++i) {
-      _log.log('collapseSpans', 'building span from ${startPoints[i]} -> ${endPoints[i]}');
-      _log.log('collapseSpans', ' - attributions in span: ${getAllAttributionsAt(startPoints[i])}');
+      _log.fine('building span from ${startPoints[i]} -> ${endPoints[i]}');
+      _log.fine(' - attributions in span: ${getAllAttributionsAt(startPoints[i])}');
       final attributionsAtOffset = getAllAttributionsAt(startPoints[i]);
 
       collapsedSpans.add(MultiAttributionSpan(
@@ -886,7 +903,7 @@ class AttributedSpans {
         attributions: attributionsAtOffset,
       ));
     }
-    _log.log('collapseSpans', 'returning collapsed spans: $collapsedSpans');
+    _log.fine('returning collapsed spans: $collapsedSpans');
     return collapsedSpans;
   }
 

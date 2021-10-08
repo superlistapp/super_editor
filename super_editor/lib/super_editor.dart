@@ -1,10 +1,13 @@
 library super_editor;
 
+export 'src/infrastructure/super_textfield/super_textfield.dart';
 export 'src/infrastructure/super_selectable_text.dart';
+export 'src/infrastructure/super_textfield/android/android_textfield.dart';
+export 'src/infrastructure/super_textfield/ios/ios_textfield.dart';
+export 'src/infrastructure/_logging.dart';
 export 'src/infrastructure/attributed_text.dart';
 export 'src/infrastructure/attributed_spans.dart';
 export 'src/infrastructure/multi_tap_gesture.dart';
-export 'src/infrastructure/super_textfield.dart';
 export 'src/infrastructure/text_layout.dart';
 export 'src/core/document.dart';
 export 'src/core/document_composer.dart';

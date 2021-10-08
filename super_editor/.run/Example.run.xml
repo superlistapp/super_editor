@@ -1,5 +1,6 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Example" type="FlutterRunConfigurationType" factoryName="Flutter">
+  <configuration default="false" name="Example - custom engine (android emulator)" type="FlutterRunConfigurationType" factoryName="Flutter">
+    <option name="additionalArgs" value="--local-engine=android_debug_unopt_x64" />
     <option name="filePath" value="$PROJECT_DIR$/example/lib/main.dart" />
     <method v="2" />
   </configuration>

@@ -1,5 +1,68 @@
+import 'package:logging/logging.dart' as logging;
+
+class LogNames {
+  static const editor = 'editor';
+
+  static const textField = 'textfield';
+  static const scrollingTextField = 'textfield.scrolling';
+  static const imeTextField = 'textfield.ime';
+  static const androidTextField = 'textfield.android';
+  static const iosTextField = 'textfield.ios';
+
+  static const infrastructure = 'infrastructure';
+  static const attributions = 'infrastructure.attributions';
+}
+
+final editorLog = logging.Logger(LogNames.editor);
+
+final textFieldLog = logging.Logger(LogNames.textField);
+final scrollingTextFieldLog = logging.Logger(LogNames.scrollingTextField);
+final imeTextFieldLog = logging.Logger(LogNames.imeTextField);
+final androidTextFieldLog = logging.Logger(LogNames.androidTextField);
+final iosTextFieldLog = logging.Logger(LogNames.iosTextField);
+
+final infrastructureLog = logging.Logger(LogNames.infrastructure);
+final attributionsLog = logging.Logger(LogNames.attributions);
+
+final _activeLoggers = <logging.Logger>{};
+
+void initAllLogs(logging.Level level) {
+  initLoggers(level, {logging.Logger.root});
+}
+
+void initLoggers(logging.Level level, Set<logging.Logger> loggers) {
+  logging.hierarchicalLoggingEnabled = true;
+
+  for (final logger in loggers) {
+    if (!_activeLoggers.contains(logger)) {
+      print('Initializing logger: ${logger.name}');
+      logger
+        ..level = level
+        ..onRecord.listen(printLog);
+
+      _activeLoggers.add(logger);
+    }
+  }
+}
+
+void deactivateLoggers(Set<logging.Logger> loggers) {
+  for (final logger in loggers) {
+    if (_activeLoggers.contains(logger)) {
+      print('Deactivating logger: ${logger.name}');
+      logger.clearListeners();
+
+      _activeLoggers.remove(logger);
+    }
+  }
+}
+
+void printLog(record) {
+  print('${record.level.name}: ${record.time}: ${record.message}');
+}
+
+// TODO: get rid of this custom Logger when all references are replaced with logging package
 class Logger {
-  static bool _printLogs = false;
+  static bool _printLogs = true;
   static void setLoggingMode(bool enabled) {
     _printLogs = enabled;
   }

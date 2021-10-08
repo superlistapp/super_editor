@@ -14,11 +14,11 @@ class _InteractiveTextFieldDemoState extends State<InteractiveTextFieldDemo> {
   final _textFieldController = AttributedTextEditingController(
     text: AttributedText(
         text: 'Super Editor is an open source text editor for Flutter projects.',
-        spans: AttributedSpans(attributions: const [
-          SpanMarker(attribution: brandAttribution, offset: 0, markerType: SpanMarkerType.start),
-          SpanMarker(attribution: brandAttribution, offset: 11, markerType: SpanMarkerType.end),
-          SpanMarker(attribution: flutterAttribution, offset: 47, markerType: SpanMarkerType.start),
-          SpanMarker(attribution: flutterAttribution, offset: 53, markerType: SpanMarkerType.end),
+        spans: AttributedSpans(attributions: [
+          const SpanMarker(attribution: brandAttribution, offset: 0, markerType: SpanMarkerType.start),
+          const SpanMarker(attribution: brandAttribution, offset: 11, markerType: SpanMarkerType.end),
+          const SpanMarker(attribution: flutterAttribution, offset: 47, markerType: SpanMarkerType.start),
+          const SpanMarker(attribution: flutterAttribution, offset: 53, markerType: SpanMarkerType.end),
         ])),
   );
 

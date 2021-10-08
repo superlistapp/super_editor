@@ -27,6 +27,9 @@ const boldAttribution = NamedAttribution('bold');
 /// Italics style attribution.
 const italicsAttribution = NamedAttribution('italics');
 
+/// Underline style attribution.
+const underlineAttribution = NamedAttribution('underline');
+
 /// Strikethrough style attribution.
 const strikethroughAttribution = NamedAttribution('strikethrough');
 
