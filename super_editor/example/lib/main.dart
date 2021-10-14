@@ -4,6 +4,7 @@ import 'package:example/demos/demo_paragraphs.dart';
 import 'package:example/demos/demo_selectable_text.dart';
 import 'package:example/demos/example_editor/example_editor.dart';
 import 'package:example/demos/flutter_features/textinputclient/basic_text_input_client.dart';
+import 'package:example/demos/scrolling/demo_task_and_chat.dart';
 import 'package:example/demos/supertextfield/ios/demo_superiostextfield.dart';
 import 'package:example/demos/flutter_features/textinputclient/textfield.dart';
 import 'package:example/demos/sliver_example_editor.dart';
@@ -158,6 +159,13 @@ final _menu = <_MenuGroup>[
         title: 'Sliver Editor Demo',
         pageBuilder: (context) {
           return SliverExampleEditor();
+        },
+      ),
+      _MenuItem(
+        icon: Icons.task,
+        title: 'Task and Chat Demo',
+        pageBuilder: (context) {
+          return TaskAndChatDemo();
         },
       ),
       _MenuItem(
