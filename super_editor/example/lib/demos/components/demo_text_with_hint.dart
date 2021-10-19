@@ -72,7 +72,9 @@ class _TextWithHintDemoState extends State<TextWithHintDemo> {
               ),
               const SizedBox(height: 24),
               TextWithHintComponent(
-                text: AttributedText(text: 'Regular text display without a hint'),
+                text: AttributedText(
+                    text:
+                        'orem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus sed sagittis urna. Aenean mattis ante justo, quis sollicitudin metus interdum id. Aenean ornare urna ac enim consequat mollis. In aliquet convallis efficitur. Phasellus convallis purus in fringilla scelerisque. Ut ac orci a turpis egestas lobortis. Morbi aliquam dapibus sem, vitae sodales arcu ultrices eu. Duis vulputate mauris quam, eleifend pulvinar quam blandit eget.'),
                 textAlign: TextAlign.left,
                 textStyleBuilder: (attributions) {
                   return const TextStyle(
