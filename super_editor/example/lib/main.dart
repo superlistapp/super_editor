@@ -1,3 +1,4 @@
+import 'package:example/demos/components/demo_text_with_hint.dart';
 import 'package:example/demos/demo_rtl.dart';
 import 'package:example/demos/demo_markdown_serialization.dart';
 import 'package:example/demos/demo_paragraphs.dart';
@@ -211,6 +212,18 @@ final _menu = <_MenuGroup>[
         title: 'Paragraphs',
         pageBuilder: (context) {
           return ParagraphsDemo();
+        },
+      ),
+    ],
+  ),
+  _MenuGroup(
+    title: 'DOC COMPONENTS',
+    items: [
+      _MenuItem(
+        icon: Icons.short_text,
+        title: 'Text with hint',
+        pageBuilder: (context) {
+          return TextWithHintDemo();
         },
       ),
     ],
