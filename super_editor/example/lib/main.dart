@@ -5,6 +5,7 @@ import 'package:example/demos/demo_selectable_text.dart';
 import 'package:example/demos/example_editor/example_editor.dart';
 import 'package:example/demos/flutter_features/textinputclient/basic_text_input_client.dart';
 import 'package:example/demos/scrolling/demo_task_and_chat.dart';
+import 'package:example/demos/spike_scrolling/header_footer_use_case.dart';
 import 'package:example/demos/supertextfield/ios/demo_superiostextfield.dart';
 import 'package:example/demos/flutter_features/textinputclient/textfield.dart';
 import 'package:example/demos/sliver_example_editor.dart';
@@ -166,6 +167,13 @@ final _menu = <_MenuGroup>[
         title: 'Task and Chat Demo',
         pageBuilder: (context) {
           return TaskAndChatDemo();
+        },
+      ),
+      _MenuItem(
+        icon: Icons.science,
+        title: 'Exploring: header/footer',
+        pageBuilder: (context) {
+          return HeaderFooterUseCase();
         },
       ),
       _MenuItem(
