@@ -831,6 +831,10 @@ class CaretBlinkController with ChangeNotifier {
       if (newPosition == null || newPosition.offset < 0) {
         _timer?.cancel();
       } else {
+        // Immediately make the caret visible whenever the position
+        // changes, e.g., when the user adds/removes a character.
+        _isVisible = true;
+
         _timer?.cancel();
         _timer = Timer(_flashPeriod, _onToggleTimer);
       }
