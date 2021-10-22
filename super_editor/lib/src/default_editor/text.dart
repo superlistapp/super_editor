@@ -232,9 +232,9 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
       throw Exception('Expected nodePosition of type TextPosition but received: $nodePosition');
     }
 
-    // TODO: factor in line height for position rect
     final offset = getOffsetForPosition(nodePosition);
-    return Rect.fromLTWH(offset.dx, offset.dy, 0, 0);
+    final lineHeight = _selectableTextKey.currentState!.getLineHeightAtPosition(nodePosition);
+    return Rect.fromLTWH(offset.dx, offset.dy, 0, lineHeight);
   }
 
   @override

@@ -36,6 +36,8 @@ class DocumentInteractor extends StatefulWidget {
     required this.editContext,
     required this.keyboardActions,
     this.scrollController,
+    this.selectionExtentAutoScrollBoundary = AxisOffset.zero,
+    this.dragAutoScrollBoundary = const AxisOffset.symmetric(100),
     this.focusNode,
     required this.document,
     this.showDebugPaint = false,
@@ -53,6 +55,44 @@ class DocumentInteractor extends StatefulWidget {
   /// internally.
   final ScrollController? scrollController;
 
+  /// The closest distance between the user's selection extent (caret)
+  /// and the boundary of a document before the document auto-scrolls
+  /// to make room for the caret.
+  ///
+  /// The default value is zero for the leading and trailing boundaries.
+  /// This means that the top of the caret is permitted to touch the top
+  /// of the scrolling region, but if the caret goes above the viewport
+  /// boundary then the document scrolls up. If the caret goes below the
+  /// bottom of the viewport boundary then the document scrolls down.
+  ///
+  /// A positive value for each boundary creates a buffer zone at each
+  /// edge of the viewport. For example, a value of `100.0` would cause
+  /// the document to auto-scroll whenever the caret sits within 100
+  /// pixels of the edge of a document.
+  ///
+  /// A negative value allows the caret to move outside the viewport
+  /// before auto-scrolling.
+  ///
+  /// See also:
+  ///
+  ///  * [dragAutoScrollBoundary], which defines how close the user's
+  ///    drag gesture can get to the document boundary before auto-scrolling.
+  final AxisOffset selectionExtentAutoScrollBoundary;
+
+  /// The closest that the user's selection drag gesture can get to the
+  /// document boundary before auto-scrolling.
+  ///
+  /// The default value is `100.0` pixels for both the leading and trailing
+  /// edges.
+  ///
+  /// See also:
+  ///
+  ///  * [selectionExtentAutoScrollBoundary], which defines how close the
+  ///    selection extent can get to the document boundary before
+  ///    auto-scrolling. For example, when the user taps into some text, or
+  ///    when the user presses up/down arrows to move the selection extent.
+  final AxisOffset dragAutoScrollBoundary;
+
   final FocusNode? focusNode;
 
   /// The document to display within this [DocumentInteractor].
@@ -67,7 +107,6 @@ class DocumentInteractor extends StatefulWidget {
 }
 
 class _DocumentInteractorState extends State<DocumentInteractor> with SingleTickerProviderStateMixin {
-  final _dragGutterExtent = 100;
   final _maxDragSpeed = 20;
 
   final _documentWrapperKey = GlobalKey();
@@ -157,27 +196,30 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
     }
 
     // The reason that a Rect is used instead of an Offset is
-    // because things like Images an Horizontal Rules don't have
+    // because things like Images and Horizontal Rules don't have
     // a clear selection offset. They are either entirely selected,
     // or not selected at all.
-    final extentRect = _layout.getRectForPosition(
+    final selectionExtentRect = _layout.getRectForPosition(
       selection.extent,
     );
-    if (extentRect == null) {
+    if (selectionExtentRect == null) {
       _log.log('_ensureSelectionExtentIsVisible',
           'Tried to ensure that position ${selection.extent} is visible on screen but no bounding box was returned for that position.');
       return;
     }
 
-    final myBox = context.findRenderObject() as RenderBox;
-    final beyondTopExtent = min(extentRect.top - _scrollController.offset - _dragGutterExtent, 0).abs();
-    final beyondBottomExtent =
-        max(extentRect.bottom - myBox.size.height - _scrollController.offset + _dragGutterExtent, 0);
+    final docBox = context.findRenderObject() as RenderBox;
+
+    final selectionTopInViewport = selectionExtentRect.top - _scrollController.offset;
+    final beyondTopExtent = min(selectionTopInViewport, 0).abs();
+
+    final selectionBottomInViewport = selectionExtentRect.bottom - _scrollController.offset;
+    final beyondBottomExtent = max(selectionBottomInViewport - docBox.size.height, 0);
 
     _log.log('_ensureSelectionExtentIsVisible', 'Ensuring extent is visible.');
-    _log.log('_ensureSelectionExtentIsVisible', ' - interaction size: ${myBox.size}');
-    _log.log('_ensureSelectionExtentIsVisible', ' - scroll extent: ${_scrollController.offset}');
-    _log.log('_ensureSelectionExtentIsVisible', ' - extent rect: $extentRect');
+    _log.log('_ensureSelectionExtentIsVisible', ' - interaction size: ${docBox.size}');
+    _log.log('_ensureSelectionExtentIsVisible', ' - scroll controller offset: ${_scrollController.offset}');
+    _log.log('_ensureSelectionExtentIsVisible', ' - selection extent rect: $selectionExtentRect');
     _log.log('_ensureSelectionExtentIsVisible', ' - beyond top: $beyondTopExtent');
     _log.log('_ensureSelectionExtentIsVisible', ' - beyond bottom: $beyondBottomExtent');
 
@@ -513,12 +555,12 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
 
     final editorBox = context.findRenderObject() as RenderBox;
 
-    if (_dragEndInViewport!.dy < _dragGutterExtent) {
+    if (_dragEndInViewport!.dy < widget.dragAutoScrollBoundary.leading) {
       _startScrollingUp();
     } else {
       _stopScrollingUp();
     }
-    if (editorBox.size.height - _dragEndInViewport!.dy < _dragGutterExtent) {
+    if (editorBox.size.height - _dragEndInViewport!.dy < widget.dragAutoScrollBoundary.trailing) {
       _startScrollingDown();
     } else {
       _stopScrollingDown();
@@ -554,8 +596,9 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
       return;
     }
 
-    final gutterAmount = _dragEndInViewport!.dy.clamp(0.0, _dragGutterExtent);
-    final speedPercent = 1.0 - (gutterAmount / _dragGutterExtent);
+    final leadingScrollBoundary = widget.dragAutoScrollBoundary.leading;
+    final gutterAmount = _dragEndInViewport!.dy.clamp(0.0, leadingScrollBoundary);
+    final speedPercent = 1.0 - (gutterAmount / leadingScrollBoundary);
     final scrollAmount = lerpDouble(0, _maxDragSpeed, speedPercent);
 
     _scrollController.position.jumpTo(_scrollController.offset - scrollAmount!);
@@ -590,9 +633,10 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
       return;
     }
 
+    final trailingScrollBoundary = widget.dragAutoScrollBoundary.trailing;
     final editorBox = context.findRenderObject() as RenderBox;
-    final gutterAmount = (editorBox.size.height - _dragEndInViewport!.dy).clamp(0.0, _dragGutterExtent);
-    final speedPercent = 1.0 - (gutterAmount / _dragGutterExtent);
+    final gutterAmount = (editorBox.size.height - _dragEndInViewport!.dy).clamp(0.0, trailingScrollBoundary);
+    final speedPercent = 1.0 - (gutterAmount / trailingScrollBoundary);
     final scrollAmount = lerpDouble(0, _maxDragSpeed, speedPercent);
 
     _scrollController.position.jumpTo(_scrollController.offset + scrollAmount!);
@@ -727,6 +771,40 @@ enum SelectionType {
   position,
   word,
   paragraph,
+}
+
+/// A distance from the leading and trailing boundaries of an
+/// axis-aligned area.
+class AxisOffset {
+  /// No offset from the leading/trailing edges.
+  static const zero = AxisOffset.symmetric(0);
+
+  /// Equal leading/trailing edge spacing equal to `amount`.
+  const AxisOffset.symmetric(num amount)
+      : leading = amount,
+        trailing = amount;
+
+  const AxisOffset({
+    required this.leading,
+    required this.trailing,
+  });
+
+  /// Distance from the leading edge of an axis-oriented area.
+  final num leading;
+
+  /// Distance from the trailing edge of an axis-oriented area.
+  final num trailing;
+
+  @override
+  String toString() => '[AxisOffset] - leading: $leading, trailing: $trailing';
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is AxisOffset && runtimeType == other.runtimeType && leading == other.leading && trailing == other.trailing;
+
+  @override
+  int get hashCode => leading.hashCode ^ trailing.hashCode;
 }
 
 /// Executes this action, if the action wants to run, and returns

@@ -307,30 +307,28 @@ class _SuperEditorState extends State<SuperEditor> {
         constraints: BoxConstraints(
           maxWidth: widget.maxWidth,
         ),
-        child: Padding(
-          padding: widget.padding,
-          child: MultiListenableBuilder(
-            listenables: {
-              _focusNode,
-              _composer,
-              widget.editor.document,
-            },
-            builder: (context) {
-              return DefaultDocumentLayout(
-                key: _docLayoutKey,
-                document: widget.editor.document,
-                documentSelection: _composer.selection,
-                componentBuilders: widget.componentBuilders,
-                showCaret: _focusNode.hasFocus,
-                componentVerticalSpacing: widget.componentVerticalSpacing,
-                extensions: {
-                  textStylesExtensionKey: widget.textStyleBuilder,
-                  selectionStylesExtensionKey: widget.selectionStyle,
-                },
-                showDebugPaint: widget.showDebugPaint,
-              );
-            },
-          ),
+        child: MultiListenableBuilder(
+          listenables: {
+            _focusNode,
+            _composer,
+            widget.editor.document,
+          },
+          builder: (context) {
+            return DefaultDocumentLayout(
+              key: _docLayoutKey,
+              document: widget.editor.document,
+              documentSelection: _composer.selection,
+              componentBuilders: widget.componentBuilders,
+              showCaret: _focusNode.hasFocus,
+              margin: widget.padding,
+              componentVerticalSpacing: widget.componentVerticalSpacing,
+              extensions: {
+                textStylesExtensionKey: widget.textStyleBuilder,
+                selectionStylesExtensionKey: widget.selectionStyle,
+              },
+              showDebugPaint: widget.showDebugPaint,
+            );
+          },
         ),
       ),
     );

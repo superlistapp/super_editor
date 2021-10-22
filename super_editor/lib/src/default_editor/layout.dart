@@ -26,6 +26,7 @@ class DefaultDocumentLayout extends StatefulWidget {
     this.documentSelection,
     required this.showCaret,
     required this.componentBuilders,
+    this.margin = EdgeInsets.zero,
     this.componentVerticalSpacing = 16,
     this.extensions = const {},
     this.showDebugPaint = false,
@@ -48,6 +49,9 @@ class DefaultDocumentLayout extends StatefulWidget {
   /// `document` should have a `ComponentBuilder` that knows how to
   /// render that piece of content.
   final List<ComponentBuilder> componentBuilders;
+
+  /// Space added around the outside of the document.
+  final EdgeInsetsGeometry margin;
 
   /// The space between sequential components.
   final double componentVerticalSpacing;
@@ -386,15 +390,18 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
   Widget build(BuildContext context) {
     final docComponents = _buildDocComponents();
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        for (final docComponent in docComponents) ...[
-          docComponent,
-          SizedBox(height: widget.componentVerticalSpacing),
+    return Padding(
+      padding: widget.margin,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (final docComponent in docComponents) ...[
+            docComponent,
+            SizedBox(height: widget.componentVerticalSpacing),
+          ],
         ],
-      ],
+      ),
     );
   }
 
