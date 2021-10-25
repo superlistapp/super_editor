@@ -935,7 +935,7 @@ ExecutionInstruction shiftEnterToInsertNewlineInBlock({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
-  if (keyEvent.logicalKey != LogicalKeyboardKey.enter) {
+  if (keyEvent.logicalKey != LogicalKeyboardKey.enter && keyEvent.logicalKey != LogicalKeyboardKey.numpadEnter) {
     return ExecutionInstruction.continueExecution;
   }
   if (!keyEvent.isShiftPressed) {
