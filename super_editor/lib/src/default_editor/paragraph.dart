@@ -163,7 +163,6 @@ ExecutionInstruction anyCharacterToInsertInParagraph({
     return ExecutionInstruction.continueExecution;
   }
 
-
   // The web reports a tab as "Tab". Intercept it and translate it to a space.
   if (character == 'Tab') {
     character = ' ';
@@ -241,7 +240,7 @@ ExecutionInstruction enterToInsertBlockNewline({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
-  if (keyEvent.logicalKey != LogicalKeyboardKey.enter) {
+  if (keyEvent.logicalKey != LogicalKeyboardKey.enter && keyEvent.logicalKey != LogicalKeyboardKey.numpadEnter) {
     return ExecutionInstruction.continueExecution;
   }
 
