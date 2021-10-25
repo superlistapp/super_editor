@@ -15,6 +15,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'demos/demo_attributed_text.dart';
 import 'demos/demo_document_loses_focus.dart';
 import 'demos/demo_switch_document_content.dart';
+import 'demos/super_document/demo_read_only_scrolling_document.dart';
 import 'demos/supertextfield/android/demo_superandroidtextfield.dart';
 
 /// Demo of a basic text editor, as well as various widgets that
@@ -186,6 +187,18 @@ final _menu = <_MenuGroup>[
         title: 'RTL Demo',
         pageBuilder: (context) {
           return RTLDemo();
+        },
+      ),
+    ],
+  ),
+  _MenuGroup(
+    title: 'READ-ONLY DOCS',
+    items: [
+      _MenuItem(
+        icon: Icons.text_snippet,
+        title: 'In CustomScrollView',
+        pageBuilder: (context) {
+          return ReadOnlyCustomScrollViewDemo();
         },
       ),
     ],

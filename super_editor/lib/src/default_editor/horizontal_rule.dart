@@ -125,6 +125,7 @@ Widget? horizontalRuleBuilder(ComponentContext componentContext) {
   return HorizontalRuleComponent(
     componentKey: componentContext.componentKey,
     isSelected: isSelected,
-    selectionColor: (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle).selectionColor,
+    selectionColor: (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle?)?.selectionColor ??
+        const Color(0x00000000),
   );
 }

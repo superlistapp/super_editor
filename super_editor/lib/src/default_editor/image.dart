@@ -146,6 +146,7 @@ Widget? imageBuilder(ComponentContext componentContext) {
     componentKey: componentContext.componentKey,
     imageUrl: (componentContext.documentNode as ImageNode).imageUrl,
     isSelected: isSelected,
-    selectionColor: (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle).selectionColor,
+    selectionColor: (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle?)?.selectionColor ??
+        Colors.transparent,
   );
 }

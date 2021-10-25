@@ -163,7 +163,6 @@ ExecutionInstruction anyCharacterToInsertInParagraph({
     return ExecutionInstruction.continueExecution;
   }
 
-
   // The web reports a tab as "Tab". Intercept it and translate it to a space.
   if (character == 'Tab') {
     character = ' ';
@@ -336,6 +335,10 @@ Widget? paragraphBuilder(ComponentContext componentContext) {
       break;
   }
 
+  final selectionColor =
+      (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle?)?.selectionColor ??
+          const Color(0x00000000);
+
   return TextComponent(
     key: componentContext.componentKey,
     text: (componentContext.documentNode as TextNode).text,
@@ -344,9 +347,9 @@ Widget? paragraphBuilder(ComponentContext componentContext) {
     textAlign: textAlign,
     textDirection: textDirection,
     textSelection: textSelection,
-    selectionColor: (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle).selectionColor,
+    selectionColor: selectionColor,
     showCaret: showCaret,
-    caretColor: (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle).textCaretColor,
+    caretColor: selectionColor,
     highlightWhenEmpty: highlightWhenEmpty,
   );
 }
