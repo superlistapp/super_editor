@@ -1275,7 +1275,8 @@ class CommonEditorOperations {
     final unorderedListItemMatch = RegExp(r'^\s*[\*-]\s+$');
     final hasUnorderedListItemMatch = unorderedListItemMatch.hasMatch(textBeforeCaret);
 
-    final orderedListItemMatch = RegExp(r'^\s*[1].*\s+$');
+    // We want to match "1 ", " 1 ", " 1. ".
+    final orderedListItemMatch = RegExp(r'^\s*[1]\.?\s+$');
     final hasOrderedListItemMatch = orderedListItemMatch.hasMatch(textBeforeCaret);
 
     _log.log('_convertParagraphIfDesired', ' - text before caret: "$textBeforeCaret"');
