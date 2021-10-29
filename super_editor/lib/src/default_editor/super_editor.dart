@@ -288,48 +288,60 @@ class _SuperEditorState extends State<SuperEditor> {
 
   @override
   Widget build(BuildContext context) {
-    return DocumentInteractor(
-      focusNode: _focusNode,
-      scrollController: widget.scrollController,
-      editContext: EditContext(
+    // TODO: create the editContext in didUpdateWidget - it looks like everything
+    //       is stable between widget changes
+    final editContext = EditContext(
+      editor: widget.editor,
+      composer: _composer,
+      getDocumentLayout: () => _docLayoutKey.currentState as DocumentLayout,
+      commonOps: CommonEditorOperations(
         editor: widget.editor,
         composer: _composer,
-        getDocumentLayout: () => _docLayoutKey.currentState as DocumentLayout,
-        commonOps: CommonEditorOperations(
-          editor: widget.editor,
-          composer: _composer,
-          documentLayoutResolver: () => _docLayoutKey.currentState as DocumentLayout,
-        ),
+        documentLayoutResolver: () => _docLayoutKey.currentState as DocumentLayout,
       ),
+    );
+
+    return DocumentKeyboardInteractor(
+      focusNode: _focusNode,
+      editContext: editContext,
       keyboardActions: widget.keyboardActions,
-      showDebugPaint: widget.showDebugPaint,
-      document: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxWidth: widget.maxWidth,
-        ),
-        child: MultiListenableBuilder(
-          listenables: {
-            _focusNode,
-            _composer,
-            widget.editor.document,
-          },
-          builder: (context) {
-            return DefaultDocumentLayout(
-              key: _docLayoutKey,
-              document: widget.editor.document,
-              documentSelection: _composer.selection,
-              componentBuilders: widget.componentBuilders,
-              showCaret: _focusNode.hasFocus,
-              margin: widget.padding,
-              componentVerticalSpacing: widget.componentVerticalSpacing,
-              extensions: {
-                textStylesExtensionKey: widget.textStyleBuilder,
-                selectionStylesExtensionKey: widget.selectionStyle,
-              },
-              showDebugPaint: widget.showDebugPaint,
-            );
-          },
-        ),
+      child: DocumentGestureInteractor(
+        focusNode: _focusNode,
+        editContext: editContext,
+        scrollController: widget.scrollController,
+        showDebugPaint: widget.showDebugPaint,
+        child: _buildDocumentLayout(),
+      ),
+    );
+  }
+
+  Widget _buildDocumentLayout() {
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+        maxWidth: widget.maxWidth,
+      ),
+      child: MultiListenableBuilder(
+        listenables: {
+          _focusNode,
+          _composer,
+          widget.editor.document,
+        },
+        builder: (context) {
+          return DefaultDocumentLayout(
+            key: _docLayoutKey,
+            document: widget.editor.document,
+            documentSelection: _composer.selection,
+            componentBuilders: widget.componentBuilders,
+            showCaret: _focusNode.hasFocus,
+            margin: widget.padding,
+            componentVerticalSpacing: widget.componentVerticalSpacing,
+            extensions: {
+              textStylesExtensionKey: widget.textStyleBuilder,
+              selectionStylesExtensionKey: widget.selectionStyle,
+            },
+            showDebugPaint: widget.showDebugPaint,
+          );
+        },
       ),
     );
   }

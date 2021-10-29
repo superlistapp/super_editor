@@ -15,14 +15,8 @@ import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 
 import 'text_tools.dart';
 
-final _log = Logger(scope: 'document_interaction.dart');
-
-/// Handles all keyboard and gesture input that is used to
-/// interact with a given [document].
+/// Handles all gesture input that is used to interact with a document.
 ///
-/// [DocumentInteractor] behaviors:
-///  - executes [keyboardActions] when the user presses corresponding
-///    keyboard keys.
 ///  - alters document selection on single, double, and triple taps
 ///  - alters document selection on drag, also account for single,
 ///    double, or triple taps to drag
@@ -30,26 +24,24 @@ final _log = Logger(scope: 'document_interaction.dart');
 ///    components
 ///  - automatically scrolls up or down when the user drags near
 ///    a boundary
-class DocumentInteractor extends StatefulWidget {
-  const DocumentInteractor({
+class DocumentGestureInteractor extends StatefulWidget {
+  const DocumentGestureInteractor({
     Key? key,
+    this.focusNode,
     required this.editContext,
-    required this.keyboardActions,
     this.scrollController,
     this.selectionExtentAutoScrollBoundary = AxisOffset.zero,
     this.dragAutoScrollBoundary = const AxisOffset.symmetric(100),
-    this.focusNode,
-    required this.document,
     this.showDebugPaint = false,
+    required this.child,
   }) : super(key: key);
 
-  /// Service locator for other editing components.
+  final FocusNode? focusNode;
+
+  /// Service locator for document editing dependencies.
   final EditContext editContext;
 
-  /// All the actions that the user can execute with keyboard keys.
-  final List<DocumentKeyboardAction> keyboardActions;
-
-  /// Controls the vertical scrolling of the given [document].
+  /// Controls the vertical scrolling of the given [child].
   ///
   /// If no `scrollController` is provided, then one is created
   /// internally.
@@ -93,20 +85,18 @@ class DocumentInteractor extends StatefulWidget {
   ///    when the user presses up/down arrows to move the selection extent.
   final AxisOffset dragAutoScrollBoundary;
 
-  final FocusNode? focusNode;
-
-  /// The document to display within this [DocumentInteractor].
-  final Widget document;
-
   /// Paints some extra visual ornamentation to help with
   /// debugging, when true.
   final bool showDebugPaint;
 
+  /// The document to display within this [DocumentGestureInteractor].
+  final Widget child;
+
   @override
-  _DocumentInteractorState createState() => _DocumentInteractorState();
+  _DocumentGestureInteractorState createState() => _DocumentGestureInteractorState();
 }
 
-class _DocumentInteractorState extends State<DocumentInteractor> with SingleTickerProviderStateMixin {
+class _DocumentGestureInteractorState extends State<DocumentGestureInteractor> with SingleTickerProviderStateMixin {
   final _maxDragSpeed = 20;
 
   final _documentWrapperKey = GlobalKey();
@@ -114,14 +104,18 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
   late FocusNode _focusNode;
 
   late ScrollController _scrollController;
+  ScrollPosition? _ancestorScrollPosition;
 
   // Tracks user drag gestures for selection purposes.
   SelectionType _selectionType = SelectionType.position;
-  Offset? _dragStartInViewport;
+  // Offset? _dragStartInViewport;
+  Offset? _dragStartInInteractor;
   Offset? _dragStartInDoc;
-  Offset? _dragEndInViewport;
+  double? _dragStartScrollOffset;
+  // Offset? _dragEndInViewport;
+  Offset? _dragEndInInteractor;
   Offset? _dragEndInDoc;
-  Rect? _dragRectInViewport;
+  // Rect? _dragRectInViewport;
 
   bool _scrollUpOnTick = false;
   bool _scrollDownOnTick = false;
@@ -142,7 +136,7 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
   }
 
   @override
-  void didUpdateWidget(DocumentInteractor oldWidget) {
+  void didUpdateWidget(DocumentGestureInteractor oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.editContext.composer != oldWidget.editContext.composer) {
       oldWidget.editContext.composer.removeListener(_onSelectionChange);
@@ -173,23 +167,63 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
     super.dispose();
   }
 
-  // DocumentLayout get _layout => widget.documentLayoutKey.currentState as DocumentLayout;
   DocumentLayout get _layout => widget.editContext.documentLayout;
 
+  /// Returns the `ScrollPosition` that controls the scroll offset of
+  /// this widget.
+  ///
+  /// If this widget has an ancestor `Scrollable`, then the returned
+  /// `ScrollPosition` belongs to that ancestor `Scrollable`, and this
+  /// widget doesn't include a `ScrollView`.
+  ///
+  /// If this widget doesn't have an ancestor `Scrollable`, then this
+  /// widget includes a `ScrollView` and the `ScrollView`'s position
+  /// is returned.
+  ScrollPosition get _scrollPosition => _ancestorScrollPosition ?? _scrollController.position;
+
+  /// Returns the `RenderBox` for the scrolling viewport.
+  ///
+  /// If this widget has an ancestor `Scrollable`, then the returned
+  /// `RenderBox` belongs to that ancestor `Scrollable`.
+  ///
+  /// If this widget doesn't have an ancestor `Scrollable`, then this
+  /// widget includes a `ScrollView` and this `State`'s render object
+  /// is the viewport `RenderBox`.
+  RenderBox get _viewport =>
+      (Scrollable.of(context)?.context.findRenderObject() ?? context.findRenderObject()) as RenderBox;
+
+  /// Maps the given [interactorOffset] within the interactor's coordinate space
+  /// to the same screen position in the viewport's coordinate space.
+  ///
+  /// When this interactor includes it's own `ScrollView`, the [interactorOffset]
+  /// if the same as the viewport offset.
+  ///
+  /// When this interactor defers to an ancestor `Scrollable`, then the
+  /// [interactorOffset] is transformed into the ancestor coordinate space.
+  Offset _interactorOffsetInViewport(Offset interactorOffset) {
+    // Viewport might be our box, or an ancestor box if we're inside someone
+    // else's Scrollable.
+    final viewportBox = _viewport;
+    final interactorBox = context.findRenderObject() as RenderBox;
+    return viewportBox.globalToLocal(
+      interactorBox.localToGlobal(interactorOffset),
+    );
+  }
+
   void _onSelectionChange() {
-    _log.log('_onSelectionChange', 'EditableDocument: _onSelectionChange()');
     if (mounted) {
       // Use a post-frame callback to "ensure selection extent is visible"
       // so that any pending visual document changes can happen before
       // attempting to calculate the visual position of the selection extent.
       WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+        editorGesturesLog.finer("Ensuring selection extent is visible because the doc selection changed");
         _ensureSelectionExtentIsVisible();
       });
     }
   }
 
   void _ensureSelectionExtentIsVisible() {
-    _log.log('_ensureSelectionExtentIsVisible', 'selection: ${widget.editContext.composer.selection}');
+    editorGesturesLog.finer("Ensuring extent is visible: ${widget.editContext.composer.selection}");
     final selection = widget.editContext.composer.selection;
     if (selection == null) {
       return;
@@ -199,44 +233,56 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
     // because things like Images and Horizontal Rules don't have
     // a clear selection offset. They are either entirely selected,
     // or not selected at all.
-    final selectionExtentRect = _layout.getRectForPosition(
+    final selectionExtentRectInDoc = _layout.getRectForPosition(
       selection.extent,
     );
-    if (selectionExtentRect == null) {
-      _log.log('_ensureSelectionExtentIsVisible',
-          'Tried to ensure that position ${selection.extent} is visible on screen but no bounding box was returned for that position.');
+    if (selectionExtentRectInDoc == null) {
+      editorGesturesLog.warning(
+          "Tried to ensure that position ${selection.extent} is visible on screen but no bounding box was returned for that position.");
       return;
     }
 
-    final docBox = context.findRenderObject() as RenderBox;
+    // Viewport might be our box, or an ancestor box if we're inside someone
+    // else's Scrollable.
+    final viewportBox = _viewport;
 
-    final selectionTopInViewport = selectionExtentRect.top - _scrollController.offset;
-    final beyondTopExtent = min(selectionTopInViewport, 0).abs();
+    final docBox = _documentWrapperKey.currentContext!.findRenderObject() as RenderBox;
 
-    final selectionBottomInViewport = selectionExtentRect.bottom - _scrollController.offset;
-    final beyondBottomExtent = max(selectionBottomInViewport - docBox.size.height, 0);
+    final docOffsetInViewport = viewportBox.globalToLocal(
+      docBox.localToGlobal(Offset.zero),
+    );
+    final selectionExtentRectInViewport = selectionExtentRectInDoc.translate(0, docOffsetInViewport.dy);
 
-    _log.log('_ensureSelectionExtentIsVisible', 'Ensuring extent is visible.');
-    _log.log('_ensureSelectionExtentIsVisible', ' - interaction size: ${docBox.size}');
-    _log.log('_ensureSelectionExtentIsVisible', ' - scroll controller offset: ${_scrollController.offset}');
-    _log.log('_ensureSelectionExtentIsVisible', ' - selection extent rect: $selectionExtentRect');
-    _log.log('_ensureSelectionExtentIsVisible', ' - beyond top: $beyondTopExtent');
-    _log.log('_ensureSelectionExtentIsVisible', ' - beyond bottom: $beyondBottomExtent');
+    // TODO: These two lines came from before the viewport coord change. Remove them when done.
+    // final selectionTopInViewport = selectionExtentRectInDoc.top - _scrollPosition.pixels;
+    // final beyondTopExtent = min(selectionTopInViewport, 0).abs();
+    final beyondTopExtent = min(selectionExtentRectInViewport.top, 0).abs();
+
+    // TODO: These two lines came from before the viewport coord change. Remove them when done.
+    // final selectionBottomInViewport = selectionExtentRectInDoc.bottom - _scrollPosition.pixels;
+    // final beyondBottomExtent = max(selectionBottomInViewport - viewportBox.size.height, 0);
+    final beyondBottomExtent = max(selectionExtentRectInViewport.bottom - viewportBox.size.height, 0);
+
+    editorGesturesLog.finest('Ensuring extent is visible.');
+    editorGesturesLog.finest(' - viewport size: ${viewportBox.size}');
+    editorGesturesLog.finest(' - scroll controller offset: ${_scrollPosition.pixels}');
+    editorGesturesLog.finest(' - selection extent rect: $selectionExtentRectInDoc');
+    editorGesturesLog.finest(' - beyond top: $beyondTopExtent');
+    editorGesturesLog.finest(' - beyond bottom: $beyondBottomExtent');
 
     if (beyondTopExtent > 0) {
-      final newScrollPosition =
-          (_scrollController.offset - beyondTopExtent).clamp(0.0, _scrollController.position.maxScrollExtent);
+      final newScrollPosition = (_scrollPosition.pixels - beyondTopExtent).clamp(0.0, _scrollPosition.maxScrollExtent);
 
-      _scrollController.animateTo(
+      _scrollPosition.animateTo(
         newScrollPosition,
         duration: const Duration(milliseconds: 100),
         curve: Curves.easeOut,
       );
     } else if (beyondBottomExtent > 0) {
       final newScrollPosition =
-          (beyondBottomExtent + _scrollController.offset).clamp(0.0, _scrollController.position.maxScrollExtent);
+          (beyondBottomExtent + _scrollPosition.pixels).clamp(0.0, _scrollPosition.maxScrollExtent);
 
-      _scrollController.animateTo(
+      _scrollPosition.animateTo(
         newScrollPosition,
         duration: const Duration(milliseconds: 100),
         curve: Curves.easeOut,
@@ -244,35 +290,15 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
     }
   }
 
-  KeyEventResult _onKeyPressed(RawKeyEvent keyEvent) {
-    _log.log('_onKeyPressed', 'keyEvent: ${keyEvent.character}');
-    if (keyEvent is! RawKeyDownEvent) {
-      _log.log('_onKeyPressed', ' - not a "down" event. Ignoring.');
-      return KeyEventResult.handled;
-    }
-
-    ExecutionInstruction instruction = ExecutionInstruction.continueExecution;
-    int index = 0;
-    while (instruction == ExecutionInstruction.continueExecution && index < widget.keyboardActions.length) {
-      instruction = widget.keyboardActions[index](
-        editContext: widget.editContext,
-        keyEvent: keyEvent,
-      );
-      index += 1;
-    }
-
-    return instruction == ExecutionInstruction.haltExecution ? KeyEventResult.handled : KeyEventResult.ignored;
-  }
-
   void _onTapDown(TapDownDetails details) {
-    _log.log('_onTapDown', 'EditableDocument: onTapDown()');
+    editorGesturesLog.info("Tap down on document");
+    final docOffset = _getDocOffset(details.localPosition);
+    editorGesturesLog.fine(" - document offset: $docOffset");
+    final docPosition = _layout.getDocumentPositionAtOffset(docOffset);
+    editorGesturesLog.fine(" - tapped document position: $docPosition");
+
     _clearSelection();
     _selectionType = SelectionType.position;
-
-    final docOffset = _getDocOffset(details.localPosition);
-    _log.log('_onTapDown', ' - document offset: $docOffset');
-    final docPosition = _layout.getDocumentPositionAtOffset(docOffset);
-    _log.log('_onTapDown', ' - tapped document position: $docPosition');
 
     if (docPosition != null) {
       // Place the document selection at the location where the
@@ -284,14 +310,14 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
   }
 
   void _onDoubleTapDown(TapDownDetails details) {
-    _selectionType = SelectionType.word;
-
-    _log.log('_onDoubleTapDown', 'EditableDocument: onDoubleTap()');
-    _clearSelection();
-
+    editorGesturesLog.info("Double tap down on document");
     final docOffset = _getDocOffset(details.localPosition);
+    editorGesturesLog.fine(" - document offset: $docOffset");
     final docPosition = _layout.getDocumentPositionAtOffset(docOffset);
-    _log.log('_onDoubleTapDown', ' - tapped document position: $docPosition');
+    editorGesturesLog.fine(" - tapped document position: $docPosition");
+
+    _selectionType = SelectionType.word;
+    _clearSelection();
 
     if (docPosition != null) {
       final didSelectWord = _selectWordAt(
@@ -309,18 +335,19 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
   }
 
   void _onDoubleTap() {
+    editorGesturesLog.info("Double tap up on document");
     _selectionType = SelectionType.position;
   }
 
   void _onTripleTapDown(TapDownDetails details) {
-    _selectionType = SelectionType.paragraph;
-
-    _log.log('_onTripleTapDown', 'EditableDocument: onTripleTapDown()');
-    _clearSelection();
-
+    editorGesturesLog.info("Triple down down on document");
     final docOffset = _getDocOffset(details.localPosition);
+    editorGesturesLog.fine(" - document offset: $docOffset");
     final docPosition = _layout.getDocumentPositionAtOffset(docOffset);
-    _log.log('_onTripleTapDown', ' - tapped document position: $docPosition');
+    editorGesturesLog.fine(" - tapped document position: $docPosition");
+
+    _selectionType = SelectionType.paragraph;
+    _clearSelection();
 
     if (docPosition != null) {
       final didSelectParagraph = _selectParagraphAt(
@@ -338,27 +365,37 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
   }
 
   void _onTripleTap() {
+    editorGesturesLog.info("Triple tap up on document");
     _selectionType = SelectionType.position;
   }
 
   void _onPanStart(DragStartDetails details) {
-    _log.log('_onPanStart', '_onPanStart()');
-    _dragStartInViewport = details.localPosition;
-    _dragStartInDoc = _getDocOffset(_dragStartInViewport!);
+    editorGesturesLog.info("Pan start on document");
+
+    _dragStartInInteractor = details.localPosition;
+    _dragStartInDoc = _getDocOffset(details.localPosition);
+
+    // We need to record the scroll offset at the beginning of
+    // a drag for the case that this interactor is embedded
+    // within an ancestor Scrollable. We need to use this value
+    // to calculate a scroll delta on every scroll frame to
+    // account for the fact that this interactor is moving within
+    // the ancestor scrollable, despite the fact that the user's
+    // finger/mouse position hasn't changed.
+    _dragStartScrollOffset = _scrollPosition.pixels;
 
     _clearSelection();
-    _dragRectInViewport = Rect.fromLTWH(_dragStartInViewport!.dx, _dragStartInViewport!.dy, 1, 1);
 
     _focusNode.requestFocus();
   }
 
   void _onPanUpdate(DragUpdateDetails details) {
-    _log.log('_onPanUpdate', '_onPanUpdate()');
     setState(() {
-      _dragEndInViewport = details.localPosition;
-      _dragEndInDoc = _getDocOffset(_dragEndInViewport!);
-      _dragRectInViewport = Rect.fromPoints(_dragStartInViewport!, _dragEndInViewport!);
-      _log.log('_onPanUpdate', ' - drag rect: $_dragRectInViewport');
+      editorGesturesLog.info("Pan update on document");
+
+      _dragEndInInteractor = details.localPosition;
+      _dragEndInDoc = _getDocOffset(details.localPosition);
+
       _updateCursorStyle(details.localPosition);
       _updateDragSelection();
 
@@ -368,9 +405,11 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
 
   void _onPanEnd(DragEndDetails details) {
     setState(() {
+      editorGesturesLog.info("Pan end on document");
+      _dragStartInInteractor = null;
       _dragStartInDoc = null;
+      _dragEndInInteractor = null;
       _dragEndInDoc = null;
-      _dragRectInViewport = null;
     });
 
     _stopScrollingUp();
@@ -379,9 +418,11 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
 
   void _onPanCancel() {
     setState(() {
+      editorGesturesLog.info("Pan cancel on document");
+      _dragStartInInteractor = null;
       _dragStartInDoc = null;
+      _dragEndInInteractor = null;
       _dragEndInDoc = null;
-      _dragRectInViewport = null;
     });
 
     _stopScrollingUp();
@@ -419,7 +460,7 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
   }
 
   void _selectPosition(DocumentPosition position) {
-    _log.log('_selectPosition', 'Setting document selection to $position');
+    editorGesturesLog.fine("Setting document selection to $position");
     widget.editContext.composer.selection = DocumentSelection.collapsed(
       position: position,
     );
@@ -430,12 +471,16 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
       return;
     }
 
-    _dragEndInDoc = _getDocOffset(_dragEndInViewport!);
+    // We have to re-calculate the drag end in the doc (instead of
+    // caching the value during the pan update) because the position
+    // in the document is impacted by auto-scrolling behavior.
+    final scrollDeltaWhileDragging = _dragStartScrollOffset! - _scrollPosition.pixels;
+    final dragEndInDoc = _getDocOffset(_dragEndInInteractor! - Offset(0, scrollDeltaWhileDragging));
 
     _selectRegion(
       documentLayout: _layout,
       baseOffset: _dragStartInDoc!,
-      extentOffset: _dragEndInDoc!,
+      extentOffset: dragEndInDoc,
       selectionType: _selectionType,
     );
   }
@@ -446,11 +491,11 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
     required Offset extentOffset,
     required SelectionType selectionType,
   }) {
-    _log.log('_selectionRegion', 'Composer: selectionRegion(). Mode: $selectionType');
+    editorGesturesLog.info("Selecting region with selection mode: $selectionType");
     DocumentSelection? selection = documentLayout.getDocumentSelectionInRegion(baseOffset, extentOffset);
     DocumentPosition? basePosition = selection?.base;
     DocumentPosition? extentPosition = selection?.extent;
-    _log.log('_selectionRegion', ' - base: $basePosition, extent: $extentPosition');
+    editorGesturesLog.fine(" - base: $basePosition, extent: $extentPosition");
 
     if (basePosition == null || extentPosition == null) {
       widget.editContext.composer.selection = null;
@@ -479,7 +524,6 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
       extentPosition =
           baseOffset.dy < extentOffset.dy ? extentParagraphSelection.extent : extentParagraphSelection.base;
     } else if (selectionType == SelectionType.word) {
-      _log.log('_selectionRegion', ' - selecting a word');
       final baseWordSelection = getWordSelection(
         docPosition: basePosition,
         docLayout: documentLayout,
@@ -505,10 +549,11 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
       base: basePosition,
       extent: extentPosition,
     ));
-    _log.log('_selectionRegion', 'Region selection: ${widget.editContext.composer.selection}');
+    editorGesturesLog.fine("Selected region: ${widget.editContext.composer.selection}");
   }
 
   void _clearSelection() {
+    editorGesturesLog.fine("Clearing document selection");
     widget.editContext.composer.clearSelection();
   }
 
@@ -537,8 +582,8 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
   void _onPointerSignal(PointerSignalEvent event) {
     if (event is PointerScrollEvent) {
       final newScrollOffset =
-          (_scrollController.offset + event.scrollDelta.dy).clamp(0.0, _scrollController.position.maxScrollExtent);
-      _scrollController.jumpTo(newScrollOffset);
+          (_scrollPosition.pixels + event.scrollDelta.dy).clamp(0.0, _scrollPosition.maxScrollExtent);
+      _scrollPosition.jumpTo(newScrollOffset);
 
       _updateDragSelection();
     }
@@ -547,20 +592,31 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
   // Preconditions:
   // - _dragEndInViewport must be non-null
   void _scrollIfNearBoundary() {
-    if (_dragEndInViewport == null) {
-      _log.log('_scrollIfNearBoundary', "Can't scroll near boundary because _dragEndInViewport is null");
-      assert(_dragEndInViewport != null);
+    if (_dragEndInInteractor == null) {
+      editorGesturesLog.warning("Tried to scroll near boundary but couldn't because _dragEndInViewport is null");
+      assert(_dragEndInInteractor != null);
       return;
     }
 
-    final editorBox = context.findRenderObject() as RenderBox;
+    final viewport = _viewport;
+    final scrollDeltaWhileDragging = _dragStartScrollOffset! - _scrollPosition.pixels;
+    final dragEndInViewport = _interactorOffsetInViewport(_dragEndInInteractor!) - Offset(0, scrollDeltaWhileDragging);
 
-    if (_dragEndInViewport!.dy < widget.dragAutoScrollBoundary.leading) {
+    print('Drag end in interactor: ${_dragEndInInteractor!.dy}');
+    print('Drag end in viewport: ${dragEndInViewport.dy}, viewport size: ${viewport.size}');
+    print('Distance to top of viewport: ${dragEndInViewport.dy}');
+    print('Distance to bottom of viewport: ${viewport.size.height - dragEndInViewport.dy}');
+    print('Auto-scroll distance: ${widget.dragAutoScrollBoundary.trailing}');
+    print('Auto-scroll diff: ${viewport.size.height - dragEndInViewport.dy < widget.dragAutoScrollBoundary.trailing}');
+    if (dragEndInViewport.dy < widget.dragAutoScrollBoundary.leading) {
+      print('Calling _startScrollingUp()');
       _startScrollingUp();
     } else {
       _stopScrollingUp();
     }
-    if (editorBox.size.height - _dragEndInViewport!.dy < widget.dragAutoScrollBoundary.trailing) {
+
+    if (viewport.size.height - dragEndInViewport.dy < widget.dragAutoScrollBoundary.trailing) {
+      print('Calling _startScrollingDown()');
       _startScrollingDown();
     } else {
       _stopScrollingDown();
@@ -572,6 +628,7 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
       return;
     }
 
+    editorGesturesLog.finest('Starting to auto-scroll up');
     _scrollUpOnTick = true;
     _ticker.start();
   }
@@ -581,34 +638,48 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
       return;
     }
 
+    editorGesturesLog.finest('Stopping auto-scroll up');
     _scrollUpOnTick = false;
     _ticker.stop();
   }
 
   void _scrollUp() {
-    if (_dragEndInViewport == null) {
-      _log.log('_scrollUp', "Can't scroll up because _dragEndInViewport is null");
-      assert(_dragEndInViewport != null);
+    if (_dragEndInInteractor == null) {
+      editorGesturesLog.warning("Tried to scroll up but couldn't because _dragEndInViewport is null");
+      assert(_dragEndInInteractor != null);
       return;
     }
 
-    if (_scrollController.offset <= 0) {
+    if (_scrollPosition.pixels <= 0) {
+      editorGesturesLog.finest("Tried to scroll up but the scroll position is already at the top");
       return;
     }
 
+    editorGesturesLog.finest("Scrolling up on tick");
+    final scrollDeltaWhileDragging = _dragStartScrollOffset! - _scrollPosition.pixels;
+    editorGesturesLog.finest("Scroll delta: $scrollDeltaWhileDragging");
+    final dragEndInViewport = _interactorOffsetInViewport(_dragEndInInteractor!) - Offset(0, scrollDeltaWhileDragging);
+    editorGesturesLog.finest("Drag end in viewport: $dragEndInViewport");
     final leadingScrollBoundary = widget.dragAutoScrollBoundary.leading;
-    final gutterAmount = _dragEndInViewport!.dy.clamp(0.0, leadingScrollBoundary);
+    final gutterAmount = dragEndInViewport.dy.clamp(0.0, leadingScrollBoundary);
     final speedPercent = 1.0 - (gutterAmount / leadingScrollBoundary);
     final scrollAmount = lerpDouble(0, _maxDragSpeed, speedPercent);
 
-    _scrollController.position.jumpTo(_scrollController.offset - scrollAmount!);
+    _scrollPosition.jumpTo(_scrollPosition.pixels - scrollAmount!);
+
+    // By changing the scroll offset, we may have changed the content
+    // selected by the user's current finger/mouse position. Update the
+    // document selection calculation.
+    _updateDragSelection();
   }
 
   void _startScrollingDown() {
     if (_scrollDownOnTick) {
+      print('Already scrolling down. Returning.');
       return;
     }
 
+    editorGesturesLog.finest('Starting to auto-scroll down');
     _scrollDownOnTick = true;
     _ticker.start();
   }
@@ -618,31 +689,42 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
       return;
     }
 
+    editorGesturesLog.finest('Stopping auto-scroll down');
     _scrollDownOnTick = false;
     _ticker.stop();
   }
 
   void _scrollDown() {
-    if (_dragEndInViewport == null) {
-      _log.log('_scrollDown', "Can't scroll down because _dragEndInViewport is null");
-      assert(_dragEndInViewport != null);
+    if (_dragEndInInteractor == null) {
+      editorGesturesLog.warning("Tried to scroll down but couldn't because _dragEndInViewport is null");
+      assert(_dragEndInInteractor != null);
       return;
     }
 
-    if (_scrollController.offset >= _scrollController.position.maxScrollExtent) {
+    if (_scrollPosition.pixels >= _scrollPosition.maxScrollExtent) {
+      editorGesturesLog.finest("Tried to scroll down but the scroll position is already beyond the max");
       return;
     }
 
+    editorGesturesLog.finest("Scrolling down on tick");
+    final scrollDeltaWhileDragging = _dragStartScrollOffset! - _scrollPosition.pixels;
+    final dragEndInViewport = _interactorOffsetInViewport(_dragEndInInteractor!) - Offset(0, scrollDeltaWhileDragging);
     final trailingScrollBoundary = widget.dragAutoScrollBoundary.trailing;
-    final editorBox = context.findRenderObject() as RenderBox;
-    final gutterAmount = (editorBox.size.height - _dragEndInViewport!.dy).clamp(0.0, trailingScrollBoundary);
+    final viewportBox = _viewport;
+    final gutterAmount = (viewportBox.size.height - dragEndInViewport.dy).clamp(0.0, trailingScrollBoundary);
     final speedPercent = 1.0 - (gutterAmount / trailingScrollBoundary);
     final scrollAmount = lerpDouble(0, _maxDragSpeed, speedPercent);
 
-    _scrollController.position.jumpTo(_scrollController.offset + scrollAmount!);
+    _scrollPosition.jumpTo(_scrollPosition.pixels + scrollAmount!);
+
+    // By changing the scroll offset, we may have changed the content
+    // selected by the user's current finger/mouse position. Update the
+    // document selection calculation.
+    _updateDragSelection();
   }
 
   void _onTick(elapsedTime) {
+    print('onTock, scroll down: $_scrollDownOnTick');
     if (_scrollUpOnTick) {
       _scrollUp();
     }
@@ -653,34 +735,25 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
 
   @override
   Widget build(BuildContext context) {
-    return _buildSuppressUnhandledKeySound(
-      child: _buildCursorStyle(
-        child: _buildKeyboardAndMouseInput(
-          child: SizedBox.expand(
-            child: Stack(
-              children: [
-                _buildDocumentContainer(
-                  document: widget.document,
-                ),
-                Positioned.fill(
-                  child: widget.showDebugPaint ? _buildDragSelection() : const SizedBox(),
-                ),
-              ],
-            ),
+    final ancestorScrollable = Scrollable.of(context);
+    _ancestorScrollPosition = ancestorScrollable?.position;
+
+    return _buildCursorStyle(
+      child: _buildGestureInput(
+        child: SizedBox.expand(
+          child: Stack(
+            children: [
+              _buildDocumentContainer(
+                document: widget.child,
+                addScrollView: ancestorScrollable == null,
+              ),
+              Positioned.fill(
+                child: widget.showDebugPaint ? _buildDragSelection() : const SizedBox(),
+              ),
+            ],
           ),
         ),
       ),
-    );
-  }
-
-  /// Wraps the [child] with a [Focus] node that reports to handle
-  /// any and all keys so that no error sound plays on desktop.
-  Widget _buildSuppressUnhandledKeySound({
-    required Widget child,
-  }) {
-    return Focus(
-      onKey: (node, event) => KeyEventResult.handled,
-      child: child,
     );
   }
 
@@ -702,67 +775,150 @@ class _DocumentInteractorState extends State<DocumentInteractor> with SingleTick
     );
   }
 
-  Widget _buildKeyboardAndMouseInput({
+  Widget _buildGestureInput({
     required Widget child,
   }) {
-    return Listener(
-      onPointerSignal: _onPointerSignal,
-      child: RawKeyboardListener(
-        focusNode: _focusNode,
-        onKey: _onKeyPressed,
-        autofocus: true,
-        child: RawGestureDetector(
-          behavior: HitTestBehavior.translucent,
-          gestures: <Type, GestureRecognizerFactory>{
-            TapSequenceGestureRecognizer: GestureRecognizerFactoryWithHandlers<TapSequenceGestureRecognizer>(
-              () => TapSequenceGestureRecognizer(),
-              (TapSequenceGestureRecognizer recognizer) {
-                recognizer
-                  ..onTapDown = _onTapDown
-                  ..onDoubleTapDown = _onDoubleTapDown
-                  ..onDoubleTap = _onDoubleTap
-                  ..onTripleTapDown = _onTripleTapDown
-                  ..onTripleTap = _onTripleTap;
-              },
-            ),
-            PanGestureRecognizer: GestureRecognizerFactoryWithHandlers<PanGestureRecognizer>(
-              () => PanGestureRecognizer(),
-              (PanGestureRecognizer recognizer) {
-                recognizer
-                  ..onStart = _onPanStart
-                  ..onUpdate = _onPanUpdate
-                  ..onEnd = _onPanEnd
-                  ..onCancel = _onPanCancel;
-              },
-            ),
+    return RawGestureDetector(
+      behavior: HitTestBehavior.translucent,
+      gestures: <Type, GestureRecognizerFactory>{
+        TapSequenceGestureRecognizer: GestureRecognizerFactoryWithHandlers<TapSequenceGestureRecognizer>(
+          () => TapSequenceGestureRecognizer(),
+          (TapSequenceGestureRecognizer recognizer) {
+            recognizer
+              ..onTapDown = _onTapDown
+              ..onDoubleTapDown = _onDoubleTapDown
+              ..onDoubleTap = _onDoubleTap
+              ..onTripleTapDown = _onTripleTapDown
+              ..onTripleTap = _onTripleTap;
           },
-          child: child,
         ),
-      ),
+        PanGestureRecognizer: GestureRecognizerFactoryWithHandlers<PanGestureRecognizer>(
+          () => PanGestureRecognizer(),
+          (PanGestureRecognizer recognizer) {
+            recognizer
+              ..onStart = _onPanStart
+              ..onUpdate = _onPanUpdate
+              ..onEnd = _onPanEnd
+              ..onCancel = _onPanCancel;
+          },
+        ),
+      },
+      child: child,
     );
   }
 
   Widget _buildDocumentContainer({
     required Widget document,
+    required bool addScrollView,
   }) {
-    return SingleChildScrollView(
-      controller: _scrollController,
-      physics: const NeverScrollableScrollPhysics(),
-      child: Center(
-        child: SizedBox(
-          key: _documentWrapperKey,
-          child: document,
-        ),
+    final documentWidget = Center(
+      child: SizedBox(
+        key: _documentWrapperKey,
+        child: document,
+      ),
+    );
+
+    return addScrollView
+        ? Listener(
+            onPointerSignal: _onPointerSignal,
+            child: SingleChildScrollView(
+              controller: _scrollController,
+              physics: const NeverScrollableScrollPhysics(),
+              child: documentWidget,
+            ),
+          )
+        : documentWidget;
+  }
+
+  Widget _buildDragSelection() {
+    final dragStartInViewport = _interactorOffsetInViewport(_dragStartInInteractor!);
+    final dragEndInViewport = _interactorOffsetInViewport(_dragEndInInteractor!);
+    final dragRectInViewport = Rect.fromPoints(dragStartInViewport, dragEndInViewport);
+
+    return CustomPaint(
+      painter: DragRectanglePainter(
+        selectionRect: dragRectInViewport,
+      ),
+      size: Size.infinite,
+    );
+  }
+}
+
+/// Receives all keyboard input, when focused, and invokes relevant document
+/// editing actions on the given [editContext.editor].
+///
+/// [keyboardActions] determines the mapping from keyboard key presses
+/// to document editing behaviors. [keyboardActions] operates as a
+/// Chain of Responsibility.
+class DocumentKeyboardInteractor extends StatelessWidget {
+  const DocumentKeyboardInteractor({
+    Key? key,
+    required this.focusNode,
+    required this.editContext,
+    required this.keyboardActions,
+    required this.child,
+  }) : super(key: key);
+
+  /// The source of all key events.
+  final FocusNode focusNode;
+
+  /// Service locator for document editing dependencies.
+  final EditContext editContext;
+
+  /// All the actions that the user can execute with keyboard keys.
+  ///
+  /// [keyboardActions] operates as a Chain of Responsibility. Starting
+  /// from the beginning of the list, a [DocumentKeyboardAction] is
+  /// given the opportunity to handle the currently pressed keys. If that
+  /// [DocumentKeyboardAction] reports the keys as handled, then execution
+  /// stops. Otherwise, execution continues to the next [DocumentKeyboardAction].
+  final List<DocumentKeyboardAction> keyboardActions;
+
+  /// The [child] widget, which is expected to include the document UI
+  /// somewhere in the sub-tree.
+  final Widget child;
+
+  KeyEventResult _onKeyPressed(RawKeyEvent keyEvent) {
+    if (keyEvent is! RawKeyDownEvent) {
+      editorKeyLog.finer("Received key event, but ignoring because it's not a down event: $keyEvent");
+      return KeyEventResult.handled;
+    }
+
+    editorKeyLog.info("Handling key press: $keyEvent");
+    ExecutionInstruction instruction = ExecutionInstruction.continueExecution;
+    int index = 0;
+    while (instruction == ExecutionInstruction.continueExecution && index < keyboardActions.length) {
+      instruction = keyboardActions[index](
+        editContext: editContext,
+        keyEvent: keyEvent,
+      );
+      index += 1;
+    }
+
+    return instruction == ExecutionInstruction.haltExecution ? KeyEventResult.handled : KeyEventResult.ignored;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _buildSuppressUnhandledKeySound(
+      // TODO: try to replace RawKeyboardListener with a regular FocusNode and onKey
+      child: RawKeyboardListener(
+        focusNode: focusNode,
+        onKey: _onKeyPressed,
+        autofocus: true,
+        child: child,
       ),
     );
   }
 
-  Widget _buildDragSelection() {
-    return CustomPaint(
-      painter: DragRectanglePainter(
-        selectionRect: _dragRectInViewport,
-      ),
-      size: Size.infinite,
+  /// Wraps the [child] with a [Focus] node that reports to handle
+  /// any and all keys so that no error sound plays on desktop.
+  Widget _buildSuppressUnhandledKeySound({
+    required Widget child,
+  }) {
+    return Focus(
+      onKey: (node, event) => KeyEventResult.handled,
+      child: child,
     );
   }
 }
@@ -841,7 +997,6 @@ class DragRectanglePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     if (selectionRect != null) {
-      _log.log('paint', 'Painting drag rect: $selectionRect');
       canvas.drawRect(selectionRect!, _selectionPaint);
     }
   }

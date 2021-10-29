@@ -2,6 +2,8 @@ import 'package:logging/logging.dart' as logging;
 
 class LogNames {
   static const editor = 'editor';
+  static const editorGestures = 'editor.gestures';
+  static const editorKeys = 'editor.keys';
 
   static const textField = 'textfield';
   static const scrollingTextField = 'textfield.scrolling';
@@ -14,6 +16,8 @@ class LogNames {
 }
 
 final editorLog = logging.Logger(LogNames.editor);
+final editorGesturesLog = logging.Logger(LogNames.editorGestures);
+final editorKeyLog = logging.Logger(LogNames.editorKeys);
 
 final textFieldLog = logging.Logger(LogNames.textField);
 final scrollingTextFieldLog = logging.Logger(LogNames.scrollingTextField);
