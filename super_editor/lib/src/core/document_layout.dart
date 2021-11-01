@@ -71,6 +71,10 @@ abstract class DocumentLayout {
 
 /// Contract for all widgets that operate as document components
 /// within a [DocumentLayout].
+///
+/// `DocumentComponent` is defined as a mixin on a `State<T>` because
+/// document layouts may require access to a `DocumentComponent`'s
+/// `RenderBox`.
 mixin DocumentComponent<T extends StatefulWidget> on State<T> {
   /// Returns the node position within this component at the given
   /// [localOffset], or [null] if the [localOffset] does not sit
@@ -145,7 +149,7 @@ mixin DocumentComponent<T extends StatefulWidget> on State<T> {
   /// Returns [null] if there is nowhere to move left within this
   /// component, such as when the [currentPosition] is the first
   /// character within a paragraph.
-  NodePosition? movePositionLeft(NodePosition currentPosition, [Set<MovementModifier> movementModifiers]);
+  NodePosition? movePositionLeft(NodePosition currentPosition, [Set<MovementModifier>? movementModifiers]);
 
   /// Returns a new position within this component's node that
   /// corresponds to the [currentPosition] moved right one unit,
@@ -161,7 +165,7 @@ mixin DocumentComponent<T extends StatefulWidget> on State<T> {
   /// Returns null if there is nowhere to move right within this
   /// component, such as when the [currentPosition] refers to the
   /// last character in a paragraph.
-  NodePosition? movePositionRight(NodePosition currentPosition, [Set<MovementModifier> movementModifiers]);
+  NodePosition? movePositionRight(NodePosition currentPosition, [Set<MovementModifier>? movementModifiers]);
 
   /// Returns a new position within this component's node that
   /// corresponds to the [currentPosition] moved up one unit,
@@ -234,6 +238,112 @@ mixin DocumentComponent<T extends StatefulWidget> on State<T> {
   /// Returns the desired [MouseCursor] at the given (x,y) [localOffset], or
   /// [null] if this component has no preference for the cursor style.
   MouseCursor? getDesiredCursorAtOffset(Offset localOffset);
+}
+
+/// A [DocumentComponent] that wraps, and defers to, another [DocumentComponent].
+///
+/// Consider a text component that displays hint text when it's empty. A `TextComponent`
+/// already exists. How do you add a hint to that? Create a new component called
+/// `TextWithHintComponent` that internally builds a `TextComponent` and adds a hint
+/// display when needed. The `TextWithHintComponent` needs to conform to the
+/// `DocumentComponent` contract, but `TextWithHintComponent` doesn't care about any
+/// of these details. It wants to forward all the `DocumentComponent` calls to
+/// its inner `TextComponent`.
+///
+/// `ProxyDocumentComponent` implements all [DocumentComponent] behaviors to forward
+/// to the component that's being wrapped. The only thing that the implementer needs
+/// to provide is [childDocumentComponentKey], which is a `GlobalKey` that provides
+/// access to the child [DocumentComponent].
+mixin ProxyDocumentComponent<T extends StatefulWidget> implements DocumentComponent<T> {
+  DocumentComponent get childDocumentComponentKey;
+
+  @override
+  NodePosition? getPositionAtOffset(Offset localOffset) {
+    return childDocumentComponentKey.getPositionAtOffset(localOffset);
+  }
+
+  @override
+  Offset getOffsetForPosition(NodePosition nodePosition) {
+    return childDocumentComponentKey.getOffsetForPosition(nodePosition);
+  }
+
+  @override
+  Rect getRectForPosition(NodePosition nodePosition) {
+    return childDocumentComponentKey.getRectForPosition(nodePosition);
+  }
+
+  @override
+  Rect getRectForSelection(NodePosition baseNodePosition, NodePosition extentNodePosition) {
+    return childDocumentComponentKey.getRectForSelection(baseNodePosition, extentNodePosition);
+  }
+
+  @override
+  NodePosition getBeginningPosition() {
+    return childDocumentComponentKey.getBeginningPosition();
+  }
+
+  @override
+  NodePosition getBeginningPositionNearX(double x) {
+    return childDocumentComponentKey.getBeginningPositionNearX(x);
+  }
+
+  @override
+  NodePosition? movePositionLeft(NodePosition currentPosition, [Set<MovementModifier>? movementModifiers]) {
+    return childDocumentComponentKey.movePositionLeft(currentPosition, movementModifiers);
+  }
+
+  @override
+  NodePosition? movePositionRight(NodePosition currentPosition, [Set<MovementModifier>? movementModifiers]) {
+    return childDocumentComponentKey.movePositionRight(currentPosition, movementModifiers);
+  }
+
+  @override
+  NodePosition? movePositionUp(NodePosition currentPosition) {
+    return childDocumentComponentKey.movePositionUp(currentPosition);
+  }
+
+  @override
+  NodePosition? movePositionDown(NodePosition currentPosition) {
+    return childDocumentComponentKey.movePositionDown(currentPosition);
+  }
+
+  @override
+  NodePosition getEndPosition() {
+    return childDocumentComponentKey.getEndPosition();
+  }
+
+  @override
+  NodePosition getEndPositionNearX(double x) {
+    return childDocumentComponentKey.getEndPositionNearX(x);
+  }
+
+  @override
+  NodeSelection? getSelectionInRange(Offset localBaseOffset, Offset localExtentOffset) {
+    return childDocumentComponentKey.getSelectionInRange(localBaseOffset, localExtentOffset);
+  }
+
+  @override
+  NodeSelection getCollapsedSelectionAt(NodePosition nodePosition) {
+    return childDocumentComponentKey.getCollapsedSelectionAt(nodePosition);
+  }
+
+  @override
+  NodeSelection getSelectionBetween({
+    required NodePosition basePosition,
+    required NodePosition extentPosition,
+  }) {
+    return childDocumentComponentKey.getSelectionBetween(basePosition: basePosition, extentPosition: extentPosition);
+  }
+
+  @override
+  NodeSelection getSelectionOfEverything() {
+    return childDocumentComponentKey.getSelectionOfEverything();
+  }
+
+  @override
+  MouseCursor? getDesiredCursorAtOffset(Offset localOffset) {
+    return childDocumentComponentKey.getDesiredCursorAtOffset(localOffset);
+  }
 }
 
 /// Preferences for how the document selection should change, e.g.,

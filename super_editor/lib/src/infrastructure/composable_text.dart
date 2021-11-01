@@ -30,3 +30,43 @@ abstract class TextComposable {
   /// in the line of text that contains the given [textNodePosition].
   TextNodePosition getPositionAtEndOfLine(TextNodePosition textNodePosition);
 }
+
+/// [TextComposable] that wraps, and defers to, a child [TextComposable].
+///
+/// [ProxyTextComposable] let's you apply decorations to a [childTextComposable]
+/// when those decorations don't alter the layout of the child's text.
+///
+/// Implementers need to provide [childTextComposable].
+mixin ProxyTextComposable implements TextComposable {
+  TextComposable get childTextComposable;
+
+  @override
+  TextNodeSelection getWordSelectionAt(TextNodePosition textNodePosition) {
+    return childTextComposable.getWordSelectionAt(textNodePosition);
+  }
+
+  @override
+  String getContiguousTextAt(TextNodePosition textPosition) {
+    return childTextComposable.getContiguousTextAt(textPosition);
+  }
+
+  @override
+  TextNodePosition? getPositionOneLineUp(TextNodePosition textNodePosition) {
+    return childTextComposable.getPositionOneLineUp(textNodePosition);
+  }
+
+  @override
+  TextNodePosition? getPositionOneLineDown(TextNodePosition textNodePosition) {
+    return childTextComposable.getPositionOneLineDown(textNodePosition);
+  }
+
+  @override
+  TextNodePosition getPositionAtStartOfLine(TextNodePosition textNodePosition) {
+    return childTextComposable.getPositionAtStartOfLine(textNodePosition);
+  }
+
+  @override
+  TextNodePosition getPositionAtEndOfLine(TextNodePosition textNodePosition) {
+    return childTextComposable.getPositionAtEndOfLine(textNodePosition);
+  }
+}

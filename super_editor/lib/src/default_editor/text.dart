@@ -170,6 +170,85 @@ class TextNodePosition extends TextPosition implements NodePosition {
   }) : super(offset: offset, affinity: affinity);
 }
 
+/// Document component that displays hint text when its content text
+/// is empty.
+///
+/// Internally uses a [TextComponent] to display the content text.
+class TextWithHintComponent extends StatefulWidget {
+  const TextWithHintComponent({
+    Key? key,
+    required this.text,
+    this.hintText,
+    this.textAlign,
+    this.textDirection,
+    required this.textStyleBuilder,
+    this.metadata = const {},
+    this.textSelection,
+    this.selectionColor = Colors.lightBlueAccent,
+    this.showCaret = false,
+    this.caretColor = Colors.black,
+    this.highlightWhenEmpty = false,
+    this.showDebugPaint = false,
+  }) : super(key: key);
+
+  final AttributedText text;
+  final AttributedText? hintText;
+  final TextAlign? textAlign;
+  final TextDirection? textDirection;
+  final AttributionStyleBuilder textStyleBuilder;
+  final Map<String, dynamic> metadata;
+  final TextSelection? textSelection;
+  final Color selectionColor;
+  final bool showCaret;
+  final Color caretColor;
+  final bool highlightWhenEmpty;
+  final bool showDebugPaint;
+
+  @override
+  _TextWithHintComponentState createState() => _TextWithHintComponentState();
+}
+
+class _TextWithHintComponentState extends State<TextWithHintComponent>
+    with ProxyDocumentComponent<TextWithHintComponent>, ProxyTextComposable {
+  final _childTextComponentKey = GlobalKey<_TextComponentState>();
+
+  @override
+  DocumentComponent<StatefulWidget> get childDocumentComponentKey => _childTextComponentKey.currentState!;
+
+  @override
+  TextComposable get childTextComposable => _childTextComponentKey.currentState!;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        if (widget.text.text.isEmpty)
+          Text(
+            widget.hintText?.text ?? '',
+            style: widget.textStyleBuilder({}).copyWith(
+              color: const Color(0xFFCCCCCC),
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        TextComponent(
+          key: _childTextComponentKey,
+          text: widget.text,
+          textAlign: widget.textAlign,
+          textDirection: widget.textDirection,
+          textStyleBuilder: widget.textStyleBuilder,
+          metadata: widget.metadata,
+          textSelection: widget.textSelection,
+          selectionColor: widget.selectionColor,
+          showCaret: widget.showCaret,
+          caretColor: widget.caretColor,
+          highlightWhenEmpty: widget.highlightWhenEmpty,
+          showDebugPaint: widget.showDebugPaint,
+        ),
+      ],
+    );
+  }
+}
+
 /// Displays text in a document.
 ///
 /// This is the standard component for text display.
