@@ -179,6 +179,7 @@ class TextWithHintComponent extends StatefulWidget {
     Key? key,
     required this.text,
     this.hintText,
+    this.hintStyleAdjustment,
     this.textAlign,
     this.textDirection,
     required this.textStyleBuilder,
@@ -193,6 +194,7 @@ class TextWithHintComponent extends StatefulWidget {
 
   final AttributedText text;
   final AttributedText? hintText;
+  final TextStyle? hintStyleAdjustment;
   final TextAlign? textAlign;
   final TextDirection? textDirection;
   final AttributionStyleBuilder textStyleBuilder;
@@ -225,9 +227,8 @@ class _TextWithHintComponentState extends State<TextWithHintComponent>
         if (widget.text.text.isEmpty)
           Text(
             widget.hintText?.text ?? '',
-            style: widget.textStyleBuilder({}).copyWith(
-              color: const Color(0xFFCCCCCC),
-              fontWeight: FontWeight.bold,
+            style: widget.textStyleBuilder({}).merge(
+              widget.hintStyleAdjustment ?? const TextStyle(),
             ),
           ),
         TextComponent(
