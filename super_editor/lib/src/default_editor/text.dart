@@ -276,6 +276,7 @@ class TextComponent extends StatefulWidget {
     this.caretColor = Colors.black,
     this.highlightWhenEmpty = false,
     this.showDebugPaint = false,
+    this.trailing,
   }) : super(key: key);
 
   final AttributedText text;
@@ -289,6 +290,7 @@ class TextComponent extends StatefulWidget {
   final Color caretColor;
   final bool highlightWhenEmpty;
   final bool showDebugPaint;
+  final WidgetSpan? trailing;
 
   @override
   _TextComponentState createState() => _TextComponentState();
@@ -612,7 +614,12 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
         TextRange(start: 0, end: widget.text.text.length - 1),
       );
     }
-    final richText = blockText.computeTextSpan(widget.textStyleBuilder);
+    final richText = TextSpan(
+      children: [
+        blockText.computeTextSpan(widget.textStyleBuilder),
+        if (widget.trailing != null) widget.trailing!
+      ],
+    );
 
     return SuperSelectableText(
       key: _selectableTextKey,
