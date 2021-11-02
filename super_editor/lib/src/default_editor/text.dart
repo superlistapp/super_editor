@@ -179,7 +179,7 @@ class TextWithHintComponent extends StatefulWidget {
     Key? key,
     required this.text,
     this.hintText,
-    this.hintStyleAdjustment,
+    this.hintStyleBuilder,
     this.textAlign,
     this.textDirection,
     required this.textStyleBuilder,
@@ -194,7 +194,7 @@ class TextWithHintComponent extends StatefulWidget {
 
   final AttributedText text;
   final AttributedText? hintText;
-  final TextStyle? hintStyleAdjustment;
+  final AttributionStyleBuilder? hintStyleBuilder;
   final TextAlign? textAlign;
   final TextDirection? textDirection;
   final AttributionStyleBuilder textStyleBuilder;
@@ -220,16 +220,25 @@ class _TextWithHintComponentState extends State<TextWithHintComponent>
   @override
   TextComposable get childTextComposable => _childTextComponentKey.currentState!;
 
+  TextStyle _styleBuilder(Set<Attribution> attributions) {
+    final attributionsWithBlock = Set.of(attributions);
+    final blockType = widget.metadata['blockType'];
+    if (blockType != null && blockType is Attribution) {
+      attributionsWithBlock.add(blockType);
+    }
+
+    final contentStyle = widget.textStyleBuilder(attributions);
+    final hintStyle = contentStyle.merge(widget.hintStyleBuilder?.call(attributions) ?? const TextStyle());
+    return hintStyle;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
         if (widget.text.text.isEmpty)
-          Text(
-            widget.hintText?.text ?? '',
-            style: widget.textStyleBuilder({}).merge(
-              widget.hintStyleAdjustment ?? const TextStyle(),
-            ),
+          Text.rich(
+            widget.hintText?.computeTextSpan(_styleBuilder) ?? const TextSpan(text: ''),
           ),
         TextComponent(
           key: _childTextComponentKey,

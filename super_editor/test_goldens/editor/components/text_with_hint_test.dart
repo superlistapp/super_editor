@@ -2,7 +2,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/src/widgets/basic.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:golden_toolkit/golden_toolkit.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/super_editor.dart';
 
@@ -20,14 +19,14 @@ void main() {
               text: AttributedText(text: ''),
               textStyleBuilder: _textStyleBuilder,
               hintText: AttributedText(text: "this is a hint..."),
-              hintStyleAdjustment: _hintStyle,
+              hintStyleBuilder: (_) => _hintStyle,
             ),
             const SizedBox(height: 24),
             TextWithHintComponent(
               text: AttributedText(text: 'This is content text.'),
               textStyleBuilder: _textStyleBuilder,
               hintText: AttributedText(text: "this is a hint..."),
-              hintStyleAdjustment: _hintStyle,
+              hintStyleBuilder: (_) => _hintStyle,
             ),
           ],
         ),
