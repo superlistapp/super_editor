@@ -439,6 +439,7 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
       final component = _buildComponent(ComponentContext(
         context: context,
         document: widget.document,
+        documentSelection: widget.documentSelection,
         documentNode: docNode,
         componentKey: componentKey,
         showCaret: widget.showCaret,

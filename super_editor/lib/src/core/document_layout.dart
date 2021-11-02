@@ -413,6 +413,7 @@ class ComponentContext {
   const ComponentContext({
     required this.context,
     required this.document,
+    this.documentSelection,
     required this.documentNode,
     required this.componentKey,
     required this.showCaret,
@@ -426,6 +427,9 @@ class ComponentContext {
 
   /// The [Document] that contains the [DocumentNode].
   final Document document;
+
+  /// The current user selection in the [document].
+  final DocumentSelection? documentSelection;
 
   /// The [DocumentNode] for which a component is needed.
   final DocumentNode documentNode;
