@@ -227,8 +227,8 @@ class _TextWithHintComponentState extends State<TextWithHintComponent>
       attributionsWithBlock.add(blockType);
     }
 
-    final contentStyle = widget.textStyleBuilder(attributions);
-    final hintStyle = contentStyle.merge(widget.hintStyleBuilder?.call(attributions) ?? const TextStyle());
+    final contentStyle = widget.textStyleBuilder(attributionsWithBlock);
+    final hintStyle = contentStyle.merge(widget.hintStyleBuilder?.call(attributionsWithBlock) ?? const TextStyle());
     return hintStyle;
   }
 
@@ -602,21 +602,9 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
   Widget build(BuildContext context) {
     _log.log('build', 'Building a TextComponent with key: ${widget.key}');
 
-    Attribution? blockType = widget.metadata['blockType'];
-
-    // Surround the text with block level attributions.
-    final blockText = widget.text.copyText(0);
-    if (blockType != null) {
-      blockText.addAttribution(
-        blockType,
-        TextRange(start: 0, end: widget.text.text.length - 1),
-      );
-    }
-    final richText = blockText.computeTextSpan(widget.textStyleBuilder);
-
     return SuperSelectableText(
       key: _selectableTextKey,
-      textSpan: richText,
+      textSpan: widget.text.computeTextSpan(_textStyleWithBlockType),
       textAlign: widget.textAlign ?? TextAlign.left,
       textDirection: widget.textDirection ?? TextDirection.ltr,
       textSelection: widget.textSelection ?? const TextSelection.collapsed(offset: -1),
@@ -625,6 +613,18 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
       textCaretFactory: TextCaretFactory(color: widget.caretColor),
       highlightWhenEmpty: widget.highlightWhenEmpty,
     );
+  }
+
+  /// Creates a `TextStyle` based on the given [attributions], plus any
+  /// "block type" that's specified in [widget.metadata].
+  TextStyle _textStyleWithBlockType(Set<Attribution> attributions) {
+    final attributionsWithBlockType = Set<Attribution>.from(attributions);
+    Attribution? blockType = widget.metadata['blockType'];
+    if (blockType != null) {
+      attributionsWithBlockType.add(blockType);
+    }
+
+    return widget.textStyleBuilder(attributionsWithBlockType);
   }
 }
 

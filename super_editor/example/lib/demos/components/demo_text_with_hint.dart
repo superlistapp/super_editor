@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/super_editor.dart';
 
@@ -7,14 +6,11 @@ import 'package:super_editor/super_editor.dart';
 /// To replicate behavior like this in your own code, ensure that you
 /// do the following:
 ///
-///  * Customize text styling as desired for various headers.
-///  * Add a custom [ComponentBuilder] that builds a widget capable
+///  * Specify how headers should be styled by defining a style
+///    builder function.
+///  * Define a custom [ComponentBuilder] that builds a widget capable
 ///    of rendering hint text and add it to the builders passed to
-///    [SuperEditor].
-///    * In your custom [ComponentBuilder], wrap the style builder
-///      function and explicitly add your desired block-level
-///      attribution to the attributions that are passed to the
-///      standard style builder
+///    [SuperEditor]. Consider using [TextWithHintComponent].
 ///
 /// Each of the above steps are demonstrated in this example.
 class TextWithHintDemo extends StatefulWidget {
@@ -90,7 +86,7 @@ class _TextWithHintDemoState extends State<TextWithHintDemo> {
   }
 }
 
-/// Our selection of styles to apply to all the text in the editor.
+/// Styles to apply to all the text in the editor.
 TextStyle _textStyleBuilder(Set<Attribution> attributions) {
   // We only care about altering a few styles. Start by getting
   // the standard styles for these attributions.
@@ -107,13 +103,13 @@ TextStyle _textStyleBuilder(Set<Attribution> attributions) {
     } else if (attribution == header2Attribution) {
       newStyle = newStyle.copyWith(
         color: const Color(0xFF444444),
-        fontSize: 38,
+        fontSize: 30,
         fontWeight: FontWeight.bold,
       );
     } else if (attribution == header3Attribution) {
       newStyle = newStyle.copyWith(
         color: const Color(0xFF444444),
-        fontSize: 28,
+        fontSize: 16,
         fontWeight: FontWeight.bold,
       );
     }
@@ -123,7 +119,7 @@ TextStyle _textStyleBuilder(Set<Attribution> attributions) {
 }
 
 /// SuperEditor [ComponentBuilder] that builds a component for Header 1, Header 2,
-/// and Header 3 `ParagraphNode`s, displays "hint text..." when the content
+/// and Header 3 `ParagraphNode`s, displays "header goes here..." when the content
 /// text is empty.
 ///
 /// [ComponentBuilder]s operate at the document level, which means that they can
@@ -160,53 +156,28 @@ Widget? _headerWithHintBuilder(ComponentContext componentContext) {
   final showCaret = componentContext.showCaret && componentContext.nodeSelection != null
       ? componentContext.nodeSelection!.isExtent
       : false;
-  final highlightWhenEmpty =
-      componentContext.nodeSelection == null ? false : componentContext.nodeSelection!.highlightWhenEmpty;
-
-  final textDirection = getParagraphDirection((componentContext.documentNode as TextNode).text.text);
-
-  TextAlign textAlign = (textDirection == TextDirection.ltr) ? TextAlign.left : TextAlign.right;
-  final textAlignName = (componentContext.documentNode as TextNode).metadata['textAlign'];
-  switch (textAlignName) {
-    case 'left':
-      textAlign = TextAlign.left;
-      break;
-    case 'center':
-      textAlign = TextAlign.center;
-      break;
-    case 'right':
-      textAlign = TextAlign.right;
-      break;
-    case 'justify':
-      textAlign = TextAlign.justify;
-      break;
-  }
-
-  final defaultStyleBuilder = (componentContext.extensions[textStylesExtensionKey] as AttributionStyleBuilder);
-
-  // We want this node's block attribution to impact the text styling. Therefore,
-  // when the style builder is called, we explicitly add the block attribution
-  // to any span attributions for the given text.
-  //
-  // ignore: prefer_function_declarations_over_variables
-  final headerStyleBuilder = (Set<Attribution> attributions) {
-    final adjustedAttributions = Set<Attribution>.from(attributions)..add(blockAttribution);
-
-    return defaultStyleBuilder(adjustedAttributions);
-  };
 
   return TextWithHintComponent(
     key: componentContext.componentKey,
     text: (componentContext.documentNode as TextNode).text,
-    textStyleBuilder: headerStyleBuilder,
+    textStyleBuilder: _textStyleBuilder,
     metadata: (componentContext.documentNode as TextNode).metadata,
-    hintText: AttributedText(text: 'hint text...'),
-    textAlign: textAlign,
-    textDirection: textDirection,
+    // This is the text displayed as a hint.
+    hintText: AttributedText(
+      text: 'header goes here...',
+      spans: AttributedSpans(
+        attributions: [
+          const SpanMarker(attribution: italicsAttribution, offset: 12, markerType: SpanMarkerType.start),
+          const SpanMarker(attribution: italicsAttribution, offset: 15, markerType: SpanMarkerType.end),
+        ],
+      ),
+    ),
+    // This is the function that selects styles for the hint text.
+    hintStyleBuilder: (Set<Attribution> attributions) => _textStyleBuilder(attributions).copyWith(
+      color: const Color(0xFFDDDDDD),
+    ),
     textSelection: textSelection,
     selectionColor: (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle).selectionColor,
     showCaret: showCaret,
-    caretColor: (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle).textCaretColor,
-    highlightWhenEmpty: highlightWhenEmpty,
   );
 }
