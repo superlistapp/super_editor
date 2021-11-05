@@ -18,6 +18,7 @@ import 'package:super_editor/super_editor.dart';
 import 'demos/demo_attributed_text.dart';
 import 'demos/demo_document_loses_focus.dart';
 import 'demos/demo_switch_document_content.dart';
+import 'demos/scrolling/demo_task_and_chat.dart';
 import 'demos/super_document/demo_read_only_scrolling_document.dart';
 import 'demos/supertextfield/android/demo_superandroidtextfield.dart';
 
@@ -164,6 +165,13 @@ final _menu = <_MenuGroup>[
         title: 'Sliver Editor Demo',
         pageBuilder: (context) {
           return SliverExampleEditor();
+        },
+      ),
+      _MenuItem(
+        icon: Icons.task,
+        title: 'Task and Chat Demo',
+        pageBuilder: (context) {
+          return TaskAndChatDemo();
         },
       ),
       _MenuItem(

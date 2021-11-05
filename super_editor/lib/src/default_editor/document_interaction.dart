@@ -740,7 +740,13 @@ class _DocumentGestureInteractorState extends State<DocumentGestureInteractor> w
 
     return _buildCursorStyle(
       child: _buildGestureInput(
-        child: SizedBox.expand(
+        child: SizedBox(
+          width: double.infinity,
+          // If there is no ancestor scrollable then we want the gesture area
+          // to fill all available height. If there is a scrollable ancestor,
+          // then expanding vertically would cause an infinite height, so in that
+          // case we let the gesture area take up whatever it can, naturally.
+          height: ancestorScrollable == null ? double.infinity : null,
           child: Stack(
             children: [
               _buildDocumentContainer(
