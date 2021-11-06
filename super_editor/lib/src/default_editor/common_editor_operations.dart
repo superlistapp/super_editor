@@ -1275,7 +1275,7 @@ class CommonEditorOperations {
     final unorderedListItemMatch = RegExp(r'^\s*[\*-]\s+$');
     final hasUnorderedListItemMatch = unorderedListItemMatch.hasMatch(textBeforeCaret);
 
-    // We want to match "1 ", " 1 ", " 1. ".
+    // We want to match "1. ", " 1. ".
     final orderedListItemMatch = RegExp(r'^\s*[1]\.\s+$');
     final hasOrderedListItemMatch = orderedListItemMatch.hasMatch(textBeforeCaret);
 
