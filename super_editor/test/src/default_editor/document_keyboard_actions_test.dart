@@ -1,7 +1,9 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/src/core/document.dart';
+import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_editor.dart';
+import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/default_editor/box_component.dart';
 import 'package:super_editor/src/default_editor/document_interaction.dart';
 import 'package:super_editor/src/default_editor/document_keyboard_actions.dart';
@@ -254,6 +256,177 @@ void main() {
           );
         },
       );
+
+      group('key pressed with selection', () {
+        test('deletes selection if backspace is pressed', () {
+          Platform.setTestInstance(MacPlatform());
+
+          final _editContext = createEditContext(
+            document: MutableDocument(
+              nodes: [
+                ParagraphNode(
+                  id: '1',
+                  text: AttributedText(text: 'Text with [DELETEME] selection'),
+                ),
+              ],
+            ),
+            documentComposer: DocumentComposer(
+              initialSelection: DocumentSelection(
+                base: const DocumentPosition(
+                  nodeId: '1',
+                  nodePosition: TextNodePosition(offset: 11),
+                ),
+                extent: const DocumentPosition(
+                  nodeId: '1',
+                  nodePosition: TextNodePosition(offset: 19),
+                ),
+              ),
+            ),
+          );
+
+          var result = anyCharacterOrDestructiveKeyToDeleteSelection(
+            editContext: _editContext,
+            keyEvent: const FakeRawKeyEvent(
+              data: FakeRawKeyEventData(
+                logicalKey: LogicalKeyboardKey.backspace,
+                physicalKey: PhysicalKeyboardKey.backspace,
+              ),
+            ),
+          );
+
+          expect(result, ExecutionInstruction.haltExecution);
+
+          final paragraph = _editContext.editor.document.nodes.first as ParagraphNode;
+          expect(paragraph.text.text, 'Text with [] selection');
+
+          expect(
+            _editContext.composer.selection,
+            equals(
+              const DocumentSelection.collapsed(
+                position: DocumentPosition(
+                  nodeId: '1',
+                  nodePosition: TextNodePosition(offset: 11),
+                ),
+              ),
+            ),
+          );
+
+          Platform.setTestInstance(null);
+        });
+
+        test('deletes selection if delete is pressed', () {
+          Platform.setTestInstance(MacPlatform());
+
+          final _editContext = createEditContext(
+            document: MutableDocument(
+              nodes: [
+                ParagraphNode(
+                  id: '1',
+                  text: AttributedText(text: 'Text with [DELETEME] selection'),
+                ),
+              ],
+            ),
+            documentComposer: DocumentComposer(
+              initialSelection: DocumentSelection(
+                base: const DocumentPosition(
+                  nodeId: '1',
+                  nodePosition: TextNodePosition(offset: 11),
+                ),
+                extent: const DocumentPosition(
+                  nodeId: '1',
+                  nodePosition: TextNodePosition(offset: 19),
+                ),
+              ),
+            ),
+          );
+
+          var result = anyCharacterOrDestructiveKeyToDeleteSelection(
+            editContext: _editContext,
+            keyEvent: const FakeRawKeyEvent(
+              data: FakeRawKeyEventData(
+                logicalKey: LogicalKeyboardKey.delete,
+                physicalKey: PhysicalKeyboardKey.delete,
+              ),
+            ),
+          );
+
+          expect(result, ExecutionInstruction.haltExecution);
+
+          final paragraph = _editContext.editor.document.nodes.first as ParagraphNode;
+          expect(paragraph.text.text, 'Text with [] selection');
+
+          expect(
+            _editContext.composer.selection,
+            equals(
+              const DocumentSelection.collapsed(
+                position: DocumentPosition(
+                  nodeId: '1',
+                  nodePosition: TextNodePosition(offset: 11),
+                ),
+              ),
+            ),
+          );
+
+          Platform.setTestInstance(null);
+        });
+
+        test('deletes selection and inserts character', () {
+          Platform.setTestInstance(MacPlatform());
+
+          final _editContext = createEditContext(
+            document: MutableDocument(
+              nodes: [
+                ParagraphNode(
+                  id: '1',
+                  text: AttributedText(text: 'Text with [DELETEME] selection'),
+                ),
+              ],
+            ),
+            documentComposer: DocumentComposer(
+              initialSelection: DocumentSelection(
+                base: const DocumentPosition(
+                  nodeId: '1',
+                  nodePosition: TextNodePosition(offset: 11),
+                ),
+                extent: const DocumentPosition(
+                  nodeId: '1',
+                  nodePosition: TextNodePosition(offset: 19),
+                ),
+              ),
+            ),
+          );
+
+          var result = anyCharacterOrDestructiveKeyToDeleteSelection(
+            editContext: _editContext,
+            keyEvent: const FakeRawKeyEvent(
+              data: FakeRawKeyEventData(
+                logicalKey: LogicalKeyboardKey.keyA,
+                physicalKey: PhysicalKeyboardKey.keyA,
+              ),
+              character: 'a',
+            ),
+          );
+
+          expect(result, ExecutionInstruction.haltExecution);
+
+          final paragraph = _editContext.editor.document.nodes.first as ParagraphNode;
+          expect(paragraph.text.text, 'Text with [a] selection');
+
+          expect(
+            _editContext.composer.selection,
+            equals(
+              const DocumentSelection.collapsed(
+                position: DocumentPosition(
+                  nodeId: '1',
+                  nodePosition: TextNodePosition(offset: 12),
+                ),
+              ),
+            ),
+          );
+
+          Platform.setTestInstance(null);
+        });
+      });
     },
   );
 }
