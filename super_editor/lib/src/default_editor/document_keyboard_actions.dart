@@ -1,15 +1,19 @@
 import 'dart:math';
 
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/document.dart';
+import 'package:super_editor/src/core/document_composer.dart';
+import 'package:super_editor/src/core/document_editor.dart';
+import 'package:super_editor/src/core/document_layout.dart';
+import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/attributed_text.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
-import 'package:super_editor/super_editor.dart';
 
+import 'box_component.dart';
 import 'document_interaction.dart';
 import 'multi_node_editing.dart';
 import 'paragraph.dart';
@@ -390,6 +394,26 @@ ExecutionInstruction anyCharacterOrDestructiveKeyToDeleteSelection({
   }
 
   editContext.commonOps.deleteSelection();
+
+  // If the user pressed a character, insert it.
+  String? character = keyEvent.character;
+  // On web, keys like shift and alt are sending their full name
+  // as a character, e.g., "Shift" and "Alt". This check prevents
+  // those keys from inserting their name into content.
+  //
+  // This filter is a blacklist, and therefore it will fail to
+  // catch any key that isn't explicitly listed. The eventual solution
+  // to this is for the web to honor the standard key event contract,
+  // but that's out of our control.
+  if (character != null && (!kIsWeb || webBugBlacklistCharacters.contains(character))) {
+    // The web reports a tab as "Tab". Intercept it and translate it to a space.
+    if (character == 'Tab') {
+      character = ' ';
+    }
+
+    editContext.commonOps.insertCharacter(character);
+  }
+
   return ExecutionInstruction.haltExecution;
 }
 
