@@ -21,13 +21,14 @@ import 'package:super_editor/super_editor.dart';
 /// placed directly below the content, like a `Column`.
 ///
 /// This was an exercise to determine if a `SuperEditor` could be combined with
-/// a conditionally docked widget without relying on `Sliver`s.
-class TaskAndChatDemo extends StatefulWidget {
+/// a conditionally docked widget without relying on `Sliver`s. The solution in
+/// this demo is a custom `RenderBox` that implements the desired layout behavior.
+class TaskAndChatWithRenderObjectDemo extends StatefulWidget {
   @override
-  _TaskAndChatDemoState createState() => _TaskAndChatDemoState();
+  _TaskAndChatWithRenderObjectDemoState createState() => _TaskAndChatWithRenderObjectDemoState();
 }
 
-class _TaskAndChatDemoState extends State<TaskAndChatDemo> {
+class _TaskAndChatWithRenderObjectDemoState extends State<TaskAndChatWithRenderObjectDemo> {
   final _scrollViewportKey = GlobalKey();
 
   late DocumentEditor _editor;
