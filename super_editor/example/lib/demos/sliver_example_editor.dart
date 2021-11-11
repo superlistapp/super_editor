@@ -55,11 +55,9 @@ class _SliverExampleEditorState extends State<SliverExampleEditor> {
           ),
         ),
         SliverToBoxAdapter(
-          child: IntrinsicHeight(
-            child: SuperEditor.standard(
-              editor: _docEditor,
-              padding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),
-            ),
+          child: SuperEditor.standard(
+            editor: _docEditor,
+            padding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),
           ),
         ),
         SliverList(

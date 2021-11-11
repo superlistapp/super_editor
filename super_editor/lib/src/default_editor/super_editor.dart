@@ -202,6 +202,8 @@ class _SuperEditorState extends State<SuperEditor> {
 
   DocumentPosition? _previousSelectionExtent;
 
+  late EditContext _editContext;
+
   @override
   void initState() {
     super.initState();
@@ -212,6 +214,8 @@ class _SuperEditorState extends State<SuperEditor> {
     _focusNode = widget.focusNode ?? FocusNode();
 
     _docLayoutKey = widget.documentLayoutKey ?? GlobalKey();
+
+    _createEditContext();
   }
 
   @override
@@ -235,6 +239,8 @@ class _SuperEditorState extends State<SuperEditor> {
     if (widget.documentLayoutKey != oldWidget.documentLayoutKey) {
       _docLayoutKey = widget.documentLayoutKey ?? GlobalKey();
     }
+
+    _createEditContext();
   }
 
   @override
@@ -249,6 +255,19 @@ class _SuperEditorState extends State<SuperEditor> {
     }
 
     super.dispose();
+  }
+
+  void _createEditContext() {
+    _editContext = EditContext(
+      editor: widget.editor,
+      composer: _composer,
+      getDocumentLayout: () => _docLayoutKey.currentState as DocumentLayout,
+      commonOps: CommonEditorOperations(
+        editor: widget.editor,
+        composer: _composer,
+        documentLayoutResolver: () => _docLayoutKey.currentState as DocumentLayout,
+      ),
+    );
   }
 
   void _updateComposerPreferencesAtSelection() {
@@ -288,48 +307,47 @@ class _SuperEditorState extends State<SuperEditor> {
 
   @override
   Widget build(BuildContext context) {
-    return DocumentInteractor(
+    return DocumentKeyboardInteractor(
       focusNode: _focusNode,
-      scrollController: widget.scrollController,
-      editContext: EditContext(
-        editor: widget.editor,
-        composer: _composer,
-        getDocumentLayout: () => _docLayoutKey.currentState as DocumentLayout,
-        commonOps: CommonEditorOperations(
-          editor: widget.editor,
-          composer: _composer,
-          documentLayoutResolver: () => _docLayoutKey.currentState as DocumentLayout,
-        ),
-      ),
+      editContext: _editContext,
       keyboardActions: widget.keyboardActions,
-      showDebugPaint: widget.showDebugPaint,
-      document: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxWidth: widget.maxWidth,
-        ),
-        child: MultiListenableBuilder(
-          listenables: {
-            _focusNode,
-            _composer,
-            widget.editor.document,
-          },
-          builder: (context) {
-            return DefaultDocumentLayout(
-              key: _docLayoutKey,
-              document: widget.editor.document,
-              documentSelection: _composer.selection,
-              componentBuilders: widget.componentBuilders,
-              showCaret: _focusNode.hasFocus,
-              margin: widget.padding,
-              componentVerticalSpacing: widget.componentVerticalSpacing,
-              extensions: {
-                textStylesExtensionKey: widget.textStyleBuilder,
-                selectionStylesExtensionKey: widget.selectionStyle,
-              },
-              showDebugPaint: widget.showDebugPaint,
-            );
-          },
-        ),
+      child: DocumentGestureInteractor(
+        focusNode: _focusNode,
+        editContext: _editContext,
+        scrollController: widget.scrollController,
+        showDebugPaint: widget.showDebugPaint,
+        child: _buildDocumentLayout(),
+      ),
+    );
+  }
+
+  Widget _buildDocumentLayout() {
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+        maxWidth: widget.maxWidth,
+      ),
+      child: MultiListenableBuilder(
+        listenables: {
+          _focusNode,
+          _composer,
+          widget.editor.document,
+        },
+        builder: (context) {
+          return DefaultDocumentLayout(
+            key: _docLayoutKey,
+            document: widget.editor.document,
+            documentSelection: _composer.selection,
+            componentBuilders: widget.componentBuilders,
+            showCaret: _focusNode.hasFocus,
+            margin: widget.padding,
+            componentVerticalSpacing: widget.componentVerticalSpacing,
+            extensions: {
+              textStylesExtensionKey: widget.textStyleBuilder,
+              selectionStylesExtensionKey: widget.selectionStyle,
+            },
+            showDebugPaint: widget.showDebugPaint,
+          );
+        },
       ),
     );
   }

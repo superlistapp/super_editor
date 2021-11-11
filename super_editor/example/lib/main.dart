@@ -5,6 +5,7 @@ import 'package:example/demos/demo_paragraphs.dart';
 import 'package:example/demos/demo_selectable_text.dart';
 import 'package:example/demos/example_editor/example_editor.dart';
 import 'package:example/demos/flutter_features/textinputclient/basic_text_input_client.dart';
+import 'package:example/demos/scrolling/demo_task_and_chat_with_customscrollview.dart';
 import 'package:example/demos/supertextfield/ios/demo_superiostextfield.dart';
 import 'package:example/demos/flutter_features/textinputclient/textfield.dart';
 import 'package:example/demos/sliver_example_editor.dart';
@@ -12,16 +13,21 @@ import 'package:example/demos/supertextfield/demo_textfield.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:logging/logging.dart';
+import 'package:super_editor/super_editor.dart';
 
 import 'demos/demo_attributed_text.dart';
 import 'demos/demo_document_loses_focus.dart';
 import 'demos/demo_switch_document_content.dart';
+import 'demos/scrolling/demo_task_and_chat_with_renderobject.dart';
 import 'demos/super_document/demo_read_only_scrolling_document.dart';
 import 'demos/supertextfield/android/demo_superandroidtextfield.dart';
 
 /// Demo of a basic text editor, as well as various widgets that
 /// are available in this package.
 Future<void> main() async {
+  initLoggers(Level.FINEST, {editorLog});
+
   runApp(SuperEditorDemoApp());
 }
 
@@ -200,6 +206,25 @@ final _menu = <_MenuGroup>[
         title: 'In CustomScrollView',
         pageBuilder: (context) {
           return ReadOnlyCustomScrollViewDemo();
+        },
+      ),
+    ],
+  ),
+  _MenuGroup(
+    title: 'SCROLLING',
+    items: [
+      _MenuItem(
+        icon: Icons.task,
+        title: 'Task and Chat Demo - RenderBox',
+        pageBuilder: (context) {
+          return TaskAndChatWithRenderObjectDemo();
+        },
+      ),
+      _MenuItem(
+        icon: Icons.task,
+        title: 'Task and Chat Demo - Slivers',
+        pageBuilder: (context) {
+          return TaskAndChatWithCustomScrollViewDemo();
         },
       ),
     ],
