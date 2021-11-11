@@ -3,7 +3,6 @@ import 'dart:ui';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart' hide SelectableText;
-import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document.dart';
@@ -108,20 +107,16 @@ class _DocumentGestureInteractorState extends State<DocumentGestureInteractor> w
 
   // Tracks user drag gestures for selection purposes.
   SelectionType _selectionType = SelectionType.position;
-  // Offset? _dragStartInViewport;
   Offset? _dragStartInInteractor;
   Offset? _dragStartInDoc;
   double? _dragStartScrollOffset;
-  // Offset? _dragEndInViewport;
   Offset? _dragEndInInteractor;
-  Offset? _dragEndInDoc;
-  // Rect? _dragRectInViewport;
 
   bool _scrollUpOnTick = false;
   bool _scrollDownOnTick = false;
   late Ticker _ticker;
 
-  // Determines the current mouse cursor style displayed on screen.
+  // Current mouse cursor style displayed on screen.
   final _cursorStyle = ValueNotifier<MouseCursor>(SystemMouseCursors.basic);
 
   @override
@@ -167,7 +162,9 @@ class _DocumentGestureInteractorState extends State<DocumentGestureInteractor> w
     super.dispose();
   }
 
-  DocumentLayout get _layout => widget.editContext.documentLayout;
+  /// Returns the layout for the current document, which answers questions
+  /// about the locations and sizes of visual components within the layout.
+  DocumentLayout get _docLayout => widget.editContext.documentLayout;
 
   /// Returns the `ScrollPosition` that controls the scroll offset of
   /// this widget.
@@ -233,7 +230,7 @@ class _DocumentGestureInteractorState extends State<DocumentGestureInteractor> w
     // because things like Images and Horizontal Rules don't have
     // a clear selection offset. They are either entirely selected,
     // or not selected at all.
-    final selectionExtentRectInDoc = _layout.getRectForPosition(
+    final selectionExtentRectInDoc = _docLayout.getRectForPosition(
       selection.extent,
     );
     if (selectionExtentRectInDoc == null) {
@@ -253,14 +250,8 @@ class _DocumentGestureInteractorState extends State<DocumentGestureInteractor> w
     );
     final selectionExtentRectInViewport = selectionExtentRectInDoc.translate(0, docOffsetInViewport.dy);
 
-    // TODO: These two lines came from before the viewport coord change. Remove them when done.
-    // final selectionTopInViewport = selectionExtentRectInDoc.top - _scrollPosition.pixels;
-    // final beyondTopExtent = min(selectionTopInViewport, 0).abs();
     final beyondTopExtent = min(selectionExtentRectInViewport.top, 0).abs();
 
-    // TODO: These two lines came from before the viewport coord change. Remove them when done.
-    // final selectionBottomInViewport = selectionExtentRectInDoc.bottom - _scrollPosition.pixels;
-    // final beyondBottomExtent = max(selectionBottomInViewport - viewportBox.size.height, 0);
     final beyondBottomExtent = max(selectionExtentRectInViewport.bottom - viewportBox.size.height, 0);
 
     editorGesturesLog.finest('Ensuring extent is visible.');
@@ -294,7 +285,7 @@ class _DocumentGestureInteractorState extends State<DocumentGestureInteractor> w
     editorGesturesLog.info("Tap down on document");
     final docOffset = _getDocOffset(details.localPosition);
     editorGesturesLog.fine(" - document offset: $docOffset");
-    final docPosition = _layout.getDocumentPositionAtOffset(docOffset);
+    final docPosition = _docLayout.getDocumentPositionAtOffset(docOffset);
     editorGesturesLog.fine(" - tapped document position: $docPosition");
 
     _clearSelection();
@@ -313,7 +304,7 @@ class _DocumentGestureInteractorState extends State<DocumentGestureInteractor> w
     editorGesturesLog.info("Double tap down on document");
     final docOffset = _getDocOffset(details.localPosition);
     editorGesturesLog.fine(" - document offset: $docOffset");
-    final docPosition = _layout.getDocumentPositionAtOffset(docOffset);
+    final docPosition = _docLayout.getDocumentPositionAtOffset(docOffset);
     editorGesturesLog.fine(" - tapped document position: $docPosition");
 
     _selectionType = SelectionType.word;
@@ -322,7 +313,7 @@ class _DocumentGestureInteractorState extends State<DocumentGestureInteractor> w
     if (docPosition != null) {
       final didSelectWord = _selectWordAt(
         docPosition: docPosition,
-        docLayout: _layout,
+        docLayout: _docLayout,
       );
       if (!didSelectWord) {
         // Place the document selection at the location where the
@@ -343,7 +334,7 @@ class _DocumentGestureInteractorState extends State<DocumentGestureInteractor> w
     editorGesturesLog.info("Triple down down on document");
     final docOffset = _getDocOffset(details.localPosition);
     editorGesturesLog.fine(" - document offset: $docOffset");
-    final docPosition = _layout.getDocumentPositionAtOffset(docOffset);
+    final docPosition = _docLayout.getDocumentPositionAtOffset(docOffset);
     editorGesturesLog.fine(" - tapped document position: $docPosition");
 
     _selectionType = SelectionType.paragraph;
@@ -352,7 +343,7 @@ class _DocumentGestureInteractorState extends State<DocumentGestureInteractor> w
     if (docPosition != null) {
       final didSelectParagraph = _selectParagraphAt(
         docPosition: docPosition,
-        docLayout: _layout,
+        docLayout: _docLayout,
       );
       if (!didSelectParagraph) {
         // Place the document selection at the location where the
@@ -394,7 +385,6 @@ class _DocumentGestureInteractorState extends State<DocumentGestureInteractor> w
       editorGesturesLog.info("Pan update on document");
 
       _dragEndInInteractor = details.localPosition;
-      _dragEndInDoc = _getDocOffset(details.localPosition);
 
       _updateCursorStyle(details.localPosition);
       _updateDragSelection();
@@ -409,7 +399,6 @@ class _DocumentGestureInteractorState extends State<DocumentGestureInteractor> w
       _dragStartInInteractor = null;
       _dragStartInDoc = null;
       _dragEndInInteractor = null;
-      _dragEndInDoc = null;
     });
 
     _stopScrollingUp();
@@ -422,7 +411,6 @@ class _DocumentGestureInteractorState extends State<DocumentGestureInteractor> w
       _dragStartInInteractor = null;
       _dragStartInDoc = null;
       _dragEndInInteractor = null;
-      _dragEndInDoc = null;
     });
 
     _stopScrollingUp();
@@ -478,7 +466,7 @@ class _DocumentGestureInteractorState extends State<DocumentGestureInteractor> w
     final dragEndInDoc = _getDocOffset(_dragEndInInteractor! - Offset(0, scrollDeltaWhileDragging));
 
     _selectRegion(
-      documentLayout: _layout,
+      documentLayout: _docLayout,
       baseOffset: _dragStartInDoc!,
       extentOffset: dragEndInDoc,
       selectionType: _selectionType,
@@ -559,7 +547,7 @@ class _DocumentGestureInteractorState extends State<DocumentGestureInteractor> w
 
   void _updateCursorStyle(Offset cursorOffset) {
     final docOffset = _getDocOffset(cursorOffset);
-    final desiredCursor = _layout.getDesiredCursorAtOffset(docOffset);
+    final desiredCursor = _docLayout.getDesiredCursorAtOffset(docOffset);
 
     if (desiredCursor != null && desiredCursor != _cursorStyle.value) {
       _cursorStyle.value = desiredCursor;
@@ -571,7 +559,7 @@ class _DocumentGestureInteractorState extends State<DocumentGestureInteractor> w
   // Converts the given [offset] from the [DocumentInteractor]'s coordinate
   // space to the [DocumentLayout]'s coordinate space.
   Offset _getDocOffset(Offset offset) {
-    return _layout.getDocumentOffsetFromAncestorOffset(offset, context.findRenderObject()!);
+    return _docLayout.getDocumentOffsetFromAncestorOffset(offset, context.findRenderObject()!);
   }
 
   // ------ scrolling -------
@@ -602,21 +590,23 @@ class _DocumentGestureInteractorState extends State<DocumentGestureInteractor> w
     final scrollDeltaWhileDragging = _dragStartScrollOffset! - _scrollPosition.pixels;
     final dragEndInViewport = _interactorOffsetInViewport(_dragEndInInteractor!) - Offset(0, scrollDeltaWhileDragging);
 
-    print('Drag end in interactor: ${_dragEndInInteractor!.dy}');
-    print('Drag end in viewport: ${dragEndInViewport.dy}, viewport size: ${viewport.size}');
-    print('Distance to top of viewport: ${dragEndInViewport.dy}');
-    print('Distance to bottom of viewport: ${viewport.size.height - dragEndInViewport.dy}');
-    print('Auto-scroll distance: ${widget.dragAutoScrollBoundary.trailing}');
-    print('Auto-scroll diff: ${viewport.size.height - dragEndInViewport.dy < widget.dragAutoScrollBoundary.trailing}');
+    editorGesturesLog.finest("Scrolling, if near boundary:");
+    editorGesturesLog.finest(' - Drag end in interactor: ${_dragEndInInteractor!.dy}');
+    editorGesturesLog.finest(' - Drag end in viewport: ${dragEndInViewport.dy}, viewport size: ${viewport.size}');
+    editorGesturesLog.finest(' - Distance to top of viewport: ${dragEndInViewport.dy}');
+    editorGesturesLog.finest(' - Distance to bottom of viewport: ${viewport.size.height - dragEndInViewport.dy}');
+    editorGesturesLog.finest(' - Auto-scroll distance: ${widget.dragAutoScrollBoundary.trailing}');
+    editorGesturesLog.finest(
+        ' - Auto-scroll diff: ${viewport.size.height - dragEndInViewport.dy < widget.dragAutoScrollBoundary.trailing}');
     if (dragEndInViewport.dy < widget.dragAutoScrollBoundary.leading) {
-      print('Calling _startScrollingUp()');
+      editorGesturesLog.finest('Metrics say we should try to scroll up');
       _startScrollingUp();
     } else {
       _stopScrollingUp();
     }
 
     if (viewport.size.height - dragEndInViewport.dy < widget.dragAutoScrollBoundary.trailing) {
-      print('Calling _startScrollingDown()');
+      editorGesturesLog.finest('Metrics say we should try to scroll down');
       _startScrollingDown();
     } else {
       _stopScrollingDown();
@@ -675,7 +665,6 @@ class _DocumentGestureInteractorState extends State<DocumentGestureInteractor> w
 
   void _startScrollingDown() {
     if (_scrollDownOnTick) {
-      print('Already scrolling down. Returning.');
       return;
     }
 
@@ -724,7 +713,6 @@ class _DocumentGestureInteractorState extends State<DocumentGestureInteractor> w
   }
 
   void _onTick(elapsedTime) {
-    print('onTock, scroll down: $_scrollDownOnTick');
     if (_scrollUpOnTick) {
       _scrollUp();
     }

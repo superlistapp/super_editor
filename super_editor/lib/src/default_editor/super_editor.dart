@@ -202,6 +202,8 @@ class _SuperEditorState extends State<SuperEditor> {
 
   DocumentPosition? _previousSelectionExtent;
 
+  late EditContext _editContext;
+
   @override
   void initState() {
     super.initState();
@@ -212,6 +214,8 @@ class _SuperEditorState extends State<SuperEditor> {
     _focusNode = widget.focusNode ?? FocusNode();
 
     _docLayoutKey = widget.documentLayoutKey ?? GlobalKey();
+
+    _createEditContext();
   }
 
   @override
@@ -235,6 +239,8 @@ class _SuperEditorState extends State<SuperEditor> {
     if (widget.documentLayoutKey != oldWidget.documentLayoutKey) {
       _docLayoutKey = widget.documentLayoutKey ?? GlobalKey();
     }
+
+    _createEditContext();
   }
 
   @override
@@ -249,6 +255,19 @@ class _SuperEditorState extends State<SuperEditor> {
     }
 
     super.dispose();
+  }
+
+  void _createEditContext() {
+    _editContext = EditContext(
+      editor: widget.editor,
+      composer: _composer,
+      getDocumentLayout: () => _docLayoutKey.currentState as DocumentLayout,
+      commonOps: CommonEditorOperations(
+        editor: widget.editor,
+        composer: _composer,
+        documentLayoutResolver: () => _docLayoutKey.currentState as DocumentLayout,
+      ),
+    );
   }
 
   void _updateComposerPreferencesAtSelection() {
@@ -288,26 +307,13 @@ class _SuperEditorState extends State<SuperEditor> {
 
   @override
   Widget build(BuildContext context) {
-    // TODO: create the editContext in didUpdateWidget - it looks like everything
-    //       is stable between widget changes
-    final editContext = EditContext(
-      editor: widget.editor,
-      composer: _composer,
-      getDocumentLayout: () => _docLayoutKey.currentState as DocumentLayout,
-      commonOps: CommonEditorOperations(
-        editor: widget.editor,
-        composer: _composer,
-        documentLayoutResolver: () => _docLayoutKey.currentState as DocumentLayout,
-      ),
-    );
-
     return DocumentKeyboardInteractor(
       focusNode: _focusNode,
-      editContext: editContext,
+      editContext: _editContext,
       keyboardActions: widget.keyboardActions,
       child: DocumentGestureInteractor(
         focusNode: _focusNode,
-        editContext: editContext,
+        editContext: _editContext,
         scrollController: widget.scrollController,
         showDebugPaint: widget.showDebugPaint,
         child: _buildDocumentLayout(),
