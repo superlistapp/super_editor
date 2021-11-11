@@ -61,7 +61,7 @@ class _MarkdownSerializationDemoState extends State<MarkdownSerializationDemo> {
         Expanded(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: SuperEditor.standard(
+            child: SuperEditor(
               key: _docKey,
               editor: _docEditor,
               maxWidth: 600,

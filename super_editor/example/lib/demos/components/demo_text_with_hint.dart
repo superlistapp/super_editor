@@ -68,7 +68,7 @@ class _TextWithHintDemoState extends State<TextWithHintDemo> {
 
   @override
   Widget build(BuildContext context) {
-    return SuperEditor.custom(
+    return SuperEditor(
       editor: _docEditor,
       padding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),
 

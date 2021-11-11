@@ -29,7 +29,7 @@ class _RTLDemoState extends State<RTLDemo> {
 
   @override
   Widget build(BuildContext context) {
-    return SuperEditor.standard(
+    return SuperEditor(
       editor: _docEditor,
       maxWidth: 600,
       padding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),

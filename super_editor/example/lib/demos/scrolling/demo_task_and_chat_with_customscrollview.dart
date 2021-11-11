@@ -61,7 +61,7 @@ class _TaskAndChatWithCustomScrollViewDemoState extends State<TaskAndChatWithCus
                   child: _buildHeader(),
                 ),
                 SliverToBoxAdapter(
-                  child: SuperEditor.standard(
+                  child: SuperEditor(
                     editor: _editor,
                     padding: const EdgeInsets.symmetric(horizontal: 48),
                   ),
