@@ -3,6 +3,7 @@ import 'package:example/demos/demo_rtl.dart';
 import 'package:example/demos/demo_markdown_serialization.dart';
 import 'package:example/demos/demo_paragraphs.dart';
 import 'package:example/demos/demo_selectable_text.dart';
+import 'package:example/demos/editor_configs/demo_mobile_editing.dart';
 import 'package:example/demos/example_editor/example_editor.dart';
 import 'package:example/demos/flutter_features/textinputclient/basic_text_input_client.dart';
 import 'package:example/demos/scrolling/demo_task_and_chat_with_customscrollview.dart';
@@ -194,6 +195,18 @@ final _menu = <_MenuGroup>[
         title: 'RTL Demo',
         pageBuilder: (context) {
           return RTLDemo();
+        },
+      ),
+    ],
+  ),
+  _MenuGroup(
+    title: 'EDITOR CONFIGS',
+    items: [
+      _MenuItem(
+        icon: Icons.phone_android,
+        title: 'Mobile Editing',
+        pageBuilder: (context) {
+          return MobileEditingDemo();
         },
       ),
     ],

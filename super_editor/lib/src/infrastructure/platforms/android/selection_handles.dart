@@ -2,8 +2,8 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
-class AndroidTextFieldHandle extends StatelessWidget {
-  const AndroidTextFieldHandle({
+class AndroidSelectionHandle extends StatelessWidget {
+  const AndroidSelectionHandle({
     Key? key,
     required this.handleType,
     required this.color,

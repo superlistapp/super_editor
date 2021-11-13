@@ -1,23 +1,25 @@
 import 'package:flutter/material.dart';
 
-class IOSTextfieldToolbar extends StatelessWidget {
-  const IOSTextfieldToolbar({
+class AndroidTextEditingFloatingToolbar extends StatelessWidget {
+  const AndroidTextEditingFloatingToolbar({
     Key? key,
     required this.onCutPressed,
     required this.onCopyPressed,
     required this.onPastePressed,
+    required this.onSelectAllPressed,
   }) : super(key: key);
 
   final VoidCallback onCutPressed;
   final VoidCallback onCopyPressed;
   final VoidCallback onPastePressed;
+  final VoidCallback onSelectAllPressed;
 
   @override
   Widget build(BuildContext context) {
     return Material(
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(4),
       elevation: 3,
-      color: const Color(0xFF222222),
+      color: Colors.white,
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -33,6 +35,10 @@ class IOSTextfieldToolbar extends StatelessWidget {
             onPressed: onPastePressed,
             title: 'Paste',
           ),
+          _buildButton(
+            onPressed: onSelectAllPressed,
+            title: 'Select All',
+          ),
         ],
       ),
     );
@@ -42,23 +48,18 @@ class IOSTextfieldToolbar extends StatelessWidget {
     required String title,
     required VoidCallback onPressed,
   }) {
-    return SizedBox(
-      height: 36,
-      child: TextButton(
-        onPressed: onPressed,
-        style: TextButton.styleFrom(
-          minimumSize: Size.zero,
-          padding: EdgeInsets.zero,
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12.0),
-          child: Text(
-            title,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 12,
-              fontWeight: FontWeight.w300,
-            ),
+    return TextButton(
+      onPressed: onPressed,
+      style: TextButton.styleFrom(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+        child: Text(
+          title,
+          style: const TextStyle(
+            color: Colors.black,
+            fontSize: 14,
           ),
         ),
       ),

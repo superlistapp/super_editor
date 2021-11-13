@@ -14,13 +14,13 @@ import '../../super_selectable_text.dart';
 import '../super_textfield.dart' hide SuperTextFieldScrollview, SuperTextFieldScrollviewState;
 import '_caret.dart';
 import '_floating_cursor.dart';
-import '_toolbar.dart';
+import '../../platforms/ios/toolbar.dart';
 import '_user_interaction.dart';
 
 export '../infrastructure/magnifier.dart';
 export '_caret.dart';
-export '_handles.dart';
-export '_toolbar.dart';
+export '../../platforms/ios/selection_handles.dart';
+export '../../platforms/ios/toolbar.dart';
 export '_user_interaction.dart';
 
 final _log = iosTextFieldLog;
@@ -397,7 +397,7 @@ class _SuperIOSTextFieldState extends State<SuperIOSTextField> with SingleTicker
 }
 
 Widget _defaultPopoverToolbarBuilder(BuildContext context, IOSEditingOverlayController controller) {
-  return IOSTextfieldToolbar(
+  return IOSTextEditingFloatingToolbar(
     onCutPressed: () {
       final textController = controller.textController;
       final selection = textController.selection;

@@ -10,14 +10,14 @@ import 'package:flutter/material.dart';
 /// caret with a circle on top of the caret. The downstream handle
 /// displays a vertical caret with a circle on the bottom of the caret.
 ///
-/// [IOSTextFieldHandle] doesn't handle any gestures. The responsibility
+/// [IOSSelectionHandle] doesn't handle any gestures. The responsibility
 /// of user interaction is left to the client for the following reasons:
 ///   * the touch area should be larger than the painted area because
 ///     the handle is very thin
 ///   * handle drag gestures may need to co-exist with other gestures
 ///     related to text interaction
-class IOSTextFieldHandle extends StatelessWidget {
-  const IOSTextFieldHandle.upstream({
+class IOSSelectionHandle extends StatelessWidget {
+  const IOSSelectionHandle.upstream({
     Key? key,
     required this.color,
     required this.caretHeight,
@@ -26,7 +26,7 @@ class IOSTextFieldHandle extends StatelessWidget {
     this.handleDirection = HandleDirection.upstream,
   }) : super(key: key);
 
-  const IOSTextFieldHandle.downstream({
+  const IOSSelectionHandle.downstream({
     Key? key,
     required this.color,
     required this.caretHeight,
@@ -35,7 +35,7 @@ class IOSTextFieldHandle extends StatelessWidget {
     this.handleDirection = HandleDirection.downstream,
   }) : super(key: key);
 
-  const IOSTextFieldHandle({
+  const IOSSelectionHandle({
     Key? key,
     required this.color,
     required this.caretHeight,
