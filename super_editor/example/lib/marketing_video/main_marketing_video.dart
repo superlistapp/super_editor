@@ -194,7 +194,7 @@ class _MarketingVideoState extends State<MarketingVideo> {
         width: double.infinity,
         height: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 96, vertical: 48),
-        child: SuperEditor.custom(
+        child: SuperEditor(
           documentLayoutKey: _docLayoutKey,
           editor: _editor,
           composer: _composer,

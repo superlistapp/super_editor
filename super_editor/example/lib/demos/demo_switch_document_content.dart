@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/super_editor.dart';
 
@@ -44,7 +43,7 @@ class _SwitchDocumentDemoState extends State<SwitchDocumentDemo> {
         children: [
           _buildDocSelector(),
           Expanded(
-            child: SuperEditor.standard(
+            child: SuperEditor(
               editor: _activeDocumentEditor!,
               maxWidth: 600,
               padding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),

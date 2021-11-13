@@ -14,7 +14,7 @@ import 'package:super_editor/src/infrastructure/attributed_text.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
 
 import 'box_component.dart';
-import 'document_interaction.dart';
+import 'document_input_keyboard.dart';
 import 'multi_node_editing.dart';
 import 'paragraph.dart';
 import 'text.dart';

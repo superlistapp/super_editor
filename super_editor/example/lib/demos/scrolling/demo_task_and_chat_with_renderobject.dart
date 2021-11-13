@@ -1,6 +1,5 @@
 import 'dart:math';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:super_editor/super_editor.dart';
@@ -128,7 +127,7 @@ class _TaskAndChatWithRenderObjectDemoState extends State<TaskAndChatWithRenderO
           _buildTaskHeader(),
           const SizedBox(height: 16),
           IntrinsicHeight(
-            child: SuperEditor.standard(editor: _editor),
+            child: SuperEditor(editor: _editor),
           ),
         ],
       ),

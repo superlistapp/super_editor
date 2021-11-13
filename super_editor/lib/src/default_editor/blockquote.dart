@@ -1,8 +1,5 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
@@ -11,7 +8,7 @@ import 'package:super_editor/src/infrastructure/attributed_text.dart';
 
 import '../core/document.dart';
 import '../core/document_editor.dart';
-import 'document_interaction.dart';
+import 'document_input_keyboard.dart';
 import 'paragraph.dart';
 import 'styles.dart';
 import 'text.dart';

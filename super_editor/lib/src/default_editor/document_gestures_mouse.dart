@@ -2,19 +2,24 @@ import 'dart:math';
 import 'dart:ui';
 
 import 'package:flutter/gestures.dart';
-import 'package:flutter/material.dart' hide SelectableText;
 import 'package:flutter/scheduler.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/edit_context.dart';
+import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 
-import 'text_tools.dart';
+/// Governs mouse gesture interaction with a document, such as scrolling
+/// a document with a scroll wheel, tapping to place a caret, and
+/// tap-and-dragging to create an expanded selection.
+///
+/// See also: super_editor's touch gesture support.
 
-/// Handles all gesture input that is used to interact with a document.
+/// Document gesture interactor that's designed for mouse input, e.g.,
+/// drag to select, and mouse wheel to scroll.
 ///
 ///  - alters document selection on single, double, and triple taps
 ///  - alters document selection on drag, also account for single,
@@ -23,8 +28,8 @@ import 'text_tools.dart';
 ///    components
 ///  - automatically scrolls up or down when the user drags near
 ///    a boundary
-class DocumentGestureInteractor extends StatefulWidget {
-  const DocumentGestureInteractor({
+class DocumentMouseInteractor extends StatefulWidget {
+  const DocumentMouseInteractor({
     Key? key,
     this.focusNode,
     required this.editContext,
@@ -88,14 +93,14 @@ class DocumentGestureInteractor extends StatefulWidget {
   /// debugging, when true.
   final bool showDebugPaint;
 
-  /// The document to display within this [DocumentGestureInteractor].
+  /// The document to display within this [DocumentMouseInteractor].
   final Widget child;
 
   @override
-  _DocumentGestureInteractorState createState() => _DocumentGestureInteractorState();
+  _DocumentMouseInteractorState createState() => _DocumentMouseInteractorState();
 }
 
-class _DocumentGestureInteractorState extends State<DocumentGestureInteractor> with SingleTickerProviderStateMixin {
+class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with SingleTickerProviderStateMixin {
   final _maxDragSpeed = 20;
 
   final _documentWrapperKey = GlobalKey();
@@ -131,7 +136,7 @@ class _DocumentGestureInteractorState extends State<DocumentGestureInteractor> w
   }
 
   @override
-  void didUpdateWidget(DocumentGestureInteractor oldWidget) {
+  void didUpdateWidget(DocumentMouseInteractor oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.editContext.composer != oldWidget.editContext.composer) {
       oldWidget.editContext.composer.removeListener(_onSelectionChange);
@@ -838,91 +843,6 @@ class _DocumentGestureInteractorState extends State<DocumentGestureInteractor> w
   }
 }
 
-/// Receives all keyboard input, when focused, and invokes relevant document
-/// editing actions on the given [editContext.editor].
-///
-/// [keyboardActions] determines the mapping from keyboard key presses
-/// to document editing behaviors. [keyboardActions] operates as a
-/// Chain of Responsibility.
-class DocumentKeyboardInteractor extends StatelessWidget {
-  const DocumentKeyboardInteractor({
-    Key? key,
-    required this.focusNode,
-    required this.editContext,
-    required this.keyboardActions,
-    required this.child,
-  }) : super(key: key);
-
-  /// The source of all key events.
-  final FocusNode focusNode;
-
-  /// Service locator for document editing dependencies.
-  final EditContext editContext;
-
-  /// All the actions that the user can execute with keyboard keys.
-  ///
-  /// [keyboardActions] operates as a Chain of Responsibility. Starting
-  /// from the beginning of the list, a [DocumentKeyboardAction] is
-  /// given the opportunity to handle the currently pressed keys. If that
-  /// [DocumentKeyboardAction] reports the keys as handled, then execution
-  /// stops. Otherwise, execution continues to the next [DocumentKeyboardAction].
-  final List<DocumentKeyboardAction> keyboardActions;
-
-  /// The [child] widget, which is expected to include the document UI
-  /// somewhere in the sub-tree.
-  final Widget child;
-
-  KeyEventResult _onKeyPressed(RawKeyEvent keyEvent) {
-    if (keyEvent is! RawKeyDownEvent) {
-      editorKeyLog.finer("Received key event, but ignoring because it's not a down event: $keyEvent");
-      return KeyEventResult.handled;
-    }
-
-    editorKeyLog.info("Handling key press: $keyEvent");
-    ExecutionInstruction instruction = ExecutionInstruction.continueExecution;
-    int index = 0;
-    while (instruction == ExecutionInstruction.continueExecution && index < keyboardActions.length) {
-      instruction = keyboardActions[index](
-        editContext: editContext,
-        keyEvent: keyEvent,
-      );
-      index += 1;
-    }
-
-    return instruction == ExecutionInstruction.haltExecution ? KeyEventResult.handled : KeyEventResult.ignored;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return _buildSuppressUnhandledKeySound(
-      // TODO: try to replace RawKeyboardListener with a regular FocusNode and onKey
-      child: RawKeyboardListener(
-        focusNode: focusNode,
-        onKey: _onKeyPressed,
-        autofocus: true,
-        child: child,
-      ),
-    );
-  }
-
-  /// Wraps the [child] with a [Focus] node that reports to handle
-  /// any and all keys so that no error sound plays on desktop.
-  Widget _buildSuppressUnhandledKeySound({
-    required Widget child,
-  }) {
-    return Focus(
-      onKey: (node, event) => KeyEventResult.handled,
-      child: child,
-    );
-  }
-}
-
-enum SelectionType {
-  position,
-  word,
-  paragraph,
-}
-
 /// A distance from the leading and trailing boundaries of an
 /// axis-aligned area.
 class AxisOffset {
@@ -957,23 +877,10 @@ class AxisOffset {
   int get hashCode => leading.hashCode ^ trailing.hashCode;
 }
 
-/// Executes this action, if the action wants to run, and returns
-/// a desired `ExecutionInstruction` to either continue or halt
-/// execution of actions.
-///
-/// It is possible that an action makes changes and then returns
-/// `ExecutionInstruction.continueExecution` to continue execution.
-///
-/// It is possible that an action does nothing and then returns
-/// `ExecutionInstruction.haltExecution` to prevent further execution.
-typedef DocumentKeyboardAction = ExecutionInstruction Function({
-  required EditContext editContext,
-  required RawKeyEvent keyEvent,
-});
-
-enum ExecutionInstruction {
-  continueExecution,
-  haltExecution,
+enum SelectionType {
+  position,
+  word,
+  paragraph,
 }
 
 /// Paints a rectangle border around the given `selectionRect`.
@@ -985,7 +892,7 @@ class DragRectanglePainter extends CustomPainter {
 
   final Rect? selectionRect;
   final Paint _selectionPaint = Paint()
-    ..color = Colors.red
+    ..color = const Color(0xFFFF0000)
     ..style = PaintingStyle.stroke;
 
   @override

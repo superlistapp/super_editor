@@ -1,6 +1,3 @@
-import 'dart:ui';
-
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/super_editor.dart';
 
@@ -153,7 +150,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
 
   @override
   Widget build(BuildContext context) {
-    return SuperEditor.standard(
+    return SuperEditor(
       editor: _docEditor!,
       composer: _composer,
       focusNode: _editorFocusNode,

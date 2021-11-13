@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart' hide SelectableText;
-import 'package:flutter/rendering.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_editor.dart';
@@ -15,7 +14,10 @@ import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/attributed_spans.dart';
 import 'package:super_editor/src/infrastructure/attributed_text.dart';
 
-import 'document_interaction.dart';
+import 'document_gestures_mouse.dart';
+import 'document_gestures_touch.dart';
+import 'document_input_ime.dart';
+import 'document_input_keyboard.dart';
 import 'document_keyboard_actions.dart';
 import 'layout.dart';
 import 'paragraph.dart';
@@ -25,15 +27,15 @@ import 'unknown_component.dart';
 
 /// A text editor for styled text and multi-media elements.
 ///
-/// An [SuperEditor] brings together the key pieces needed
+/// A [SuperEditor] brings together the key pieces needed
 /// to display a user-editable document:
 ///  * document model
 ///  * document editor
 ///  * document layout
 ///  * document interaction (tapping, dragging, typing, scrolling)
-///  * document composer
+///  * document composer (current selection, and styles to apply to next character)
 ///
-/// An [SuperEditor] determines the visual styling by way of:
+/// A [SuperEditor] determines the visual styling by way of:
 ///  * [componentBuilders], which produce individual components
 ///     within the document layout
 ///  * [textStyleBuilder], which vends [TextStyle]s for every
@@ -41,11 +43,8 @@ import 'unknown_component.dart';
 ///  * [selectionStyle], which dictates the color of the caret
 ///     and the color of selected text and components
 ///
-/// An [SuperEditor] determines how the keyboard interacts with the
+/// A [SuperEditor] determines how the keyboard interacts with the
 /// document by way of [keyboardActions].
-///
-/// All styling artifacts and [keyboardActions] are configurable
-/// via the [SuperEditor.custom] constructor.
 ///
 /// ## Deeper explanation of core artifacts:
 ///
@@ -63,93 +62,114 @@ import 'unknown_component.dart';
 /// Document interaction is responsible for taking appropriate actions
 /// in response to user taps, drags, and key presses.
 ///
-/// Document composer is responsible for owning document
-/// selection and the current text entry mode.
+/// Document composer is responsible for owning document selection and
+/// the current text entry mode.
 class SuperEditor extends StatefulWidget {
-  factory SuperEditor.standard({
+  @Deprecated("Use unnamed SuperEditor() constructor instead")
+  SuperEditor.standard({
     Key? key,
-    required DocumentEditor editor,
-    DocumentComposer? composer,
-    ScrollController? scrollController,
-    FocusNode? focusNode,
-    double maxWidth = 600,
-    double componentVerticalSpacing = 16,
-    EdgeInsetsGeometry padding = EdgeInsets.zero,
-    GlobalKey? documentLayoutKey,
-    bool showDebugPaint = false,
-  }) {
-    return SuperEditor._(
-      key: key,
-      editor: editor,
-      composer: composer,
-      componentBuilders: defaultComponentBuilders,
-      textStyleBuilder: defaultStyleBuilder,
-      selectionStyle: defaultSelectionStyle,
-      keyboardActions: defaultKeyboardActions,
-      scrollController: scrollController,
-      focusNode: focusNode,
-      maxWidth: maxWidth,
-      componentVerticalSpacing: componentVerticalSpacing,
-      padding: padding,
-      documentLayoutKey: documentLayoutKey,
-      showDebugPaint: showDebugPaint,
-    );
-  }
+    this.focusNode,
+    this.scrollController,
+    this.padding = EdgeInsets.zero,
+    this.documentLayoutKey,
+    this.maxWidth = 600,
+    this.inputSource = DocumentInputSource.keyboard,
+    this.gestureMode = DocumentGestureMode.mouse,
+    required this.editor,
+    this.composer,
+    this.componentVerticalSpacing = 16,
+    this.showDebugPaint = false,
+  })  : componentBuilders = defaultComponentBuilders,
+        keyboardActions = defaultKeyboardActions,
+        textStyleBuilder = defaultStyleBuilder,
+        selectionStyle = defaultSelectionStyle,
+        super(key: key);
 
-  factory SuperEditor.custom({
+  @Deprecated("Use unnamed SuperEditor() constructor instead")
+  SuperEditor.custom({
     Key? key,
-    required DocumentEditor editor,
-    DocumentComposer? composer,
+    this.focusNode,
+    this.padding = EdgeInsets.zero,
+    this.scrollController,
+    this.documentLayoutKey,
+    this.maxWidth = 600,
+    this.inputSource = DocumentInputSource.keyboard,
+    this.gestureMode = DocumentGestureMode.mouse,
+    required this.editor,
+    this.composer,
     AttributionStyleBuilder? textStyleBuilder,
     SelectionStyle? selectionStyle,
     List<DocumentKeyboardAction>? keyboardActions,
     List<ComponentBuilder>? componentBuilders,
-    ScrollController? scrollController,
-    FocusNode? focusNode,
-    double maxWidth = 600,
-    double componentVerticalSpacing = 16,
-    EdgeInsetsGeometry padding = EdgeInsets.zero,
-    GlobalKey? documentLayoutKey,
-    bool showDebugPaint = false,
-  }) {
-    return SuperEditor._(
-      key: key,
-      editor: editor,
-      composer: composer,
-      componentBuilders: componentBuilders ?? defaultComponentBuilders,
-      textStyleBuilder: textStyleBuilder ?? defaultStyleBuilder,
-      selectionStyle: selectionStyle ?? defaultSelectionStyle,
-      keyboardActions: keyboardActions ?? defaultKeyboardActions,
-      scrollController: scrollController,
-      focusNode: focusNode,
-      maxWidth: maxWidth,
-      componentVerticalSpacing: componentVerticalSpacing,
-      padding: padding,
-      documentLayoutKey: documentLayoutKey,
-      showDebugPaint: showDebugPaint,
-    );
-  }
+    this.componentVerticalSpacing = 16,
+    this.showDebugPaint = false,
+  })  : textStyleBuilder = textStyleBuilder ?? defaultStyleBuilder,
+        selectionStyle = selectionStyle ?? defaultSelectionStyle,
+        keyboardActions = keyboardActions ?? defaultKeyboardActions,
+        componentBuilders = componentBuilders ?? defaultComponentBuilders,
+        super(key: key);
 
-  const SuperEditor._({
+  /// Creates a `Super Editor` with common (but configurable) defaults for
+  /// visual components, text styles, and user interaction.
+  SuperEditor({
     Key? key,
+    this.focusNode,
+    this.padding = EdgeInsets.zero,
+    this.scrollController,
+    this.documentLayoutKey,
+    this.maxWidth = 600,
+    this.inputSource = DocumentInputSource.keyboard,
+    this.gestureMode = DocumentGestureMode.mouse,
     required this.editor,
     this.composer,
-    required this.componentBuilders,
-    required this.textStyleBuilder,
-    required this.selectionStyle,
-    required this.keyboardActions,
-    this.scrollController,
-    this.focusNode,
-    this.maxWidth = 600,
+    AttributionStyleBuilder? textStyleBuilder,
+    SelectionStyle? selectionStyle,
+    List<DocumentKeyboardAction>? keyboardActions,
+    List<ComponentBuilder>? componentBuilders,
     this.componentVerticalSpacing = 16,
-    this.padding = EdgeInsets.zero,
-    this.documentLayoutKey,
     this.showDebugPaint = false,
-  }) : super(key: key);
+  })  : textStyleBuilder = textStyleBuilder ?? defaultStyleBuilder,
+        selectionStyle = selectionStyle ?? defaultSelectionStyle,
+        keyboardActions = keyboardActions ?? defaultKeyboardActions,
+        componentBuilders = componentBuilders ?? defaultComponentBuilders,
+        super(key: key);
+
+  /// [FocusNode] for the entire `SuperEditor`.
+  final FocusNode? focusNode;
+
+  /// Padding between the boundary of this `SuperEditor` and its
+  /// document content, i.e., insets the content of this document
+  /// by the given amount.
+  final EdgeInsetsGeometry padding;
+
+  /// The [ScrollController] that governs this `SuperEditor`'s scroll
+  /// offset.
+  ///
+  /// `scrollController` is not used if this `SuperEditor` has an ancestor
+  /// `Scrollable`.
+  final ScrollController? scrollController;
+
+  /// [GlobalKey] that's bound to the [DocumentLayout] within
+  /// this `SuperEditor`.
+  ///
+  /// This key can be used to lookup visual components in the document
+  /// layout within this `SuperEditor`.
+  final GlobalKey? documentLayoutKey;
+
+  /// The maximum width for document content within this `SuperEditor`.
+  final double maxWidth;
+
+  /// The `SuperEditor` input source, e.g., keyboard or Input Method Engine.
+  final DocumentInputSource inputSource;
+
+  /// The `SuperEditor` gesture mode, e.g., mouse or touch.
+  final DocumentGestureMode gestureMode;
 
   /// Contains a [Document] and alters that document as desired.
   final DocumentEditor editor;
 
+  /// Owns the editor's current selection, the current attributions for
+  /// text input, and other transitive editor configurations.
   final DocumentComposer? composer;
 
   /// Priority list of widget factories that creates instances of
@@ -172,17 +192,8 @@ class SuperEditor extends StatefulWidget {
   /// copy, paste, etc.
   final List<DocumentKeyboardAction> keyboardActions;
 
-  final ScrollController? scrollController;
-
-  final GlobalKey? documentLayoutKey;
-
-  final FocusNode? focusNode;
-
-  final double maxWidth;
-
+  /// The vertical distance between visual components in the document layout.
   final double componentVerticalSpacing;
-
-  final EdgeInsetsGeometry padding;
 
   /// Paints some extra visual ornamentation to help with
   /// debugging, when true.
@@ -307,20 +318,63 @@ class _SuperEditorState extends State<SuperEditor> {
 
   @override
   Widget build(BuildContext context) {
-    return DocumentKeyboardInteractor(
-      focusNode: _focusNode,
-      editContext: _editContext,
-      keyboardActions: widget.keyboardActions,
-      child: DocumentGestureInteractor(
-        focusNode: _focusNode,
-        editContext: _editContext,
-        scrollController: widget.scrollController,
-        showDebugPaint: widget.showDebugPaint,
+    return _buildInputSystem(
+      child: _buildGestureSystem(
         child: _buildDocumentLayout(),
       ),
     );
   }
 
+  /// Builds the widget tree that applies user input, e.g., key
+  /// presses from a keyboard, or text deltas from the IME.
+  Widget _buildInputSystem({
+    required Widget child,
+  }) {
+    switch (widget.inputSource) {
+      case DocumentInputSource.keyboard:
+        return DocumentKeyboardInteractor(
+          focusNode: _focusNode,
+          editContext: _editContext,
+          keyboardActions: widget.keyboardActions,
+          child: child,
+        );
+      case DocumentInputSource.ime:
+        return DocumentImeInteractor(
+          focusNode: _focusNode,
+          editContext: _editContext,
+          child: child,
+        );
+    }
+  }
+
+  /// Builds the widget tree that handles user gesture interaction
+  /// with the document, e.g., mouse input on desktop, or touch input
+  /// on mobile.
+  Widget _buildGestureSystem({
+    required Widget child,
+  }) {
+    switch (widget.gestureMode) {
+      case DocumentGestureMode.mouse:
+        return DocumentMouseInteractor(
+          focusNode: _focusNode,
+          editContext: _editContext,
+          scrollController: widget.scrollController,
+          showDebugPaint: widget.showDebugPaint,
+          child: child,
+        );
+      case DocumentGestureMode.touch:
+        return DocumentTouchInteractor(
+          focusNode: _focusNode,
+          editContext: _editContext,
+          scrollController: widget.scrollController,
+          showDebugPaint: widget.showDebugPaint,
+          child: child,
+        );
+    }
+  }
+
+  /// Builds the `DocumentLayout` with a constrained width, and a builder
+  /// that re-runs when various artifacts change, e.g., the document changes.
   Widget _buildDocumentLayout() {
     return ConstrainedBox(
       constraints: BoxConstraints(
@@ -351,6 +405,16 @@ class _SuperEditorState extends State<SuperEditor> {
       ),
     );
   }
+}
+
+enum DocumentInputSource {
+  keyboard,
+  ime,
+}
+
+enum DocumentGestureMode {
+  mouse,
+  touch,
 }
 
 /// Default visual styles related to content selection.
