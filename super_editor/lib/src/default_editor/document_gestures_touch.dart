@@ -33,14 +33,19 @@ class DocumentTouchInteractor extends StatefulWidget {
   final Widget child;
 
   @override
-  _DocumentTouchInteractorState createState() => _DocumentTouchInteractorState();
+  _DocumentTouchInteractorState createState() =>
+      _DocumentTouchInteractorState();
 }
 
-class _DocumentTouchInteractorState extends State<DocumentTouchInteractor> with WidgetsBindingObserver {
+class _DocumentTouchInteractorState extends State<DocumentTouchInteractor>
+    with WidgetsBindingObserver {
   final _documentWrapperKey = GlobalKey();
+  final _documentLayerLink = LayerLink();
 
   late ScrollController _scrollController;
   ScrollPosition? _ancestorScrollPosition;
+
+  late EditingController _editingController;
 
   // OverlayEntry that displays the toolbar and magnifier, and
   // positions the invisible touch targets for base/extent
@@ -56,7 +61,12 @@ class _DocumentTouchInteractorState extends State<DocumentTouchInteractor> with 
       _showEditingControlsOverlay();
     }
 
-    _scrollController = _scrollController = (widget.scrollController ?? ScrollController());
+    _scrollController =
+        _scrollController = (widget.scrollController ?? ScrollController());
+
+    _editingController = EditingController();
+
+    widget.editContext.composer.addListener(_onSelectionChange);
 
     WidgetsBinding.instance!.addObserver(this);
   }
@@ -68,6 +78,11 @@ class _DocumentTouchInteractorState extends State<DocumentTouchInteractor> with 
     if (widget.focusNode != oldWidget.focusNode) {
       oldWidget.focusNode.removeListener(_onFocusChange);
       widget.focusNode.addListener(_onFocusChange);
+    }
+
+    if (widget.editContext.composer != oldWidget.editContext.composer) {
+      oldWidget.editContext.composer.removeListener(_onSelectionChange);
+      widget.editContext.composer.addListener(_onSelectionChange);
     }
   }
 
@@ -89,6 +104,8 @@ class _DocumentTouchInteractorState extends State<DocumentTouchInteractor> with 
   @override
   void dispose() {
     WidgetsBinding.instance!.removeObserver(this);
+
+    widget.editContext.composer.removeListener(_onSelectionChange);
 
     _removeEditingOverlayControls();
 
@@ -125,6 +142,10 @@ class _DocumentTouchInteractorState extends State<DocumentTouchInteractor> with 
     }
   }
 
+  void _onSelectionChange() {
+    _editingController.selection = widget.editContext.composer.selection;
+  }
+
   /// Returns the layout for the current document, which answers questions
   /// about the locations and sizes of visual components within the layout.
   DocumentLayout get _docLayout => widget.editContext.documentLayout;
@@ -139,7 +160,8 @@ class _DocumentTouchInteractorState extends State<DocumentTouchInteractor> with 
   /// If this widget doesn't have an ancestor `Scrollable`, then this
   /// widget includes a `ScrollView` and the `ScrollView`'s position
   /// is returned.
-  ScrollPosition get _scrollPosition => _ancestorScrollPosition ?? _scrollController.position;
+  ScrollPosition get _scrollPosition =>
+      _ancestorScrollPosition ?? _scrollController.position;
 
   /// Returns the `RenderBox` for the scrolling viewport.
   ///
@@ -150,12 +172,14 @@ class _DocumentTouchInteractorState extends State<DocumentTouchInteractor> with 
   /// widget includes a `ScrollView` and this `State`'s render object
   /// is the viewport `RenderBox`.
   RenderBox get _viewport =>
-      (Scrollable.of(context)?.context.findRenderObject() ?? context.findRenderObject()) as RenderBox;
+      (Scrollable.of(context)?.context.findRenderObject() ??
+          context.findRenderObject()) as RenderBox;
 
   // Converts the given [offset] from the [DocumentInteractor]'s coordinate
   // space to the [DocumentLayout]'s coordinate space.
   Offset _getDocOffset(Offset offset) {
-    return _docLayout.getDocumentOffsetFromAncestorOffset(offset, context.findRenderObject()!);
+    return _docLayout.getDocumentOffsetFromAncestorOffset(
+        offset, context.findRenderObject()!);
   }
 
   /// Maps the given [interactorOffset] within the interactor's coordinate space
@@ -258,7 +282,12 @@ class _DocumentTouchInteractorState extends State<DocumentTouchInteractor> with 
   void _showEditingControlsOverlay() {
     if (_controlsOverlayEntry == null) {
       _controlsOverlayEntry = OverlayEntry(builder: (overlayContext) {
-        return DocumentTouchEditingControls();
+        return DocumentTouchEditingControls(
+          editingController: _editingController,
+          documentLayerLink: _documentLayerLink,
+          documentLayout: _docLayout,
+          handleColor: Colors.red,
+        );
       });
 
       Overlay.of(context)!.insert(_controlsOverlayEntry!);
@@ -276,7 +305,8 @@ class _DocumentTouchInteractorState extends State<DocumentTouchInteractor> with 
     required DocumentPosition docPosition,
     required DocumentLayout docLayout,
   }) {
-    final newSelection = getWordSelection(docPosition: docPosition, docLayout: docLayout);
+    final newSelection =
+        getWordSelection(docPosition: docPosition, docLayout: docLayout);
     if (newSelection != null) {
       widget.editContext.composer.selection = newSelection;
       return true;
@@ -289,7 +319,8 @@ class _DocumentTouchInteractorState extends State<DocumentTouchInteractor> with 
     required DocumentPosition docPosition,
     required DocumentLayout docLayout,
   }) {
-    final newSelection = getParagraphSelection(docPosition: docPosition, docLayout: docLayout);
+    final newSelection =
+        getParagraphSelection(docPosition: docPosition, docLayout: docLayout);
     if (newSelection != null) {
       widget.editContext.composer.selection = newSelection;
       return true;
@@ -324,7 +355,10 @@ class _DocumentTouchInteractorState extends State<DocumentTouchInteractor> with 
         // case we let the gesture area take up whatever it can, naturally.
         height: ancestorScrollable == null ? double.infinity : null,
         child: _buildDocumentContainer(
-          document: widget.child,
+          document: CompositedTransformTarget(
+            link: _documentLayerLink,
+            child: widget.child,
+          ),
           addScrollView: ancestorScrollable == null,
         ),
       ),
@@ -337,7 +371,8 @@ class _DocumentTouchInteractorState extends State<DocumentTouchInteractor> with 
     return RawGestureDetector(
       behavior: HitTestBehavior.translucent,
       gestures: <Type, GestureRecognizerFactory>{
-        TapSequenceGestureRecognizer: GestureRecognizerFactoryWithHandlers<TapSequenceGestureRecognizer>(
+        TapSequenceGestureRecognizer:
+            GestureRecognizerFactoryWithHandlers<TapSequenceGestureRecognizer>(
           () => TapSequenceGestureRecognizer(),
           (TapSequenceGestureRecognizer recognizer) {
             recognizer
@@ -383,19 +418,25 @@ class DocumentTouchEditingControls extends StatefulWidget {
   const DocumentTouchEditingControls({
     Key? key,
     required this.editingController,
+    required this.documentLayerLink,
+    required this.documentLayout,
     required this.handleColor,
     this.showDebugPaint = false,
   }) : super(key: key);
 
   final EditingController editingController;
+  final LayerLink documentLayerLink;
+  final DocumentLayout documentLayout;
   final Color handleColor;
   final bool showDebugPaint;
 
   @override
-  _DocumentTouchEditingControlsState createState() => _DocumentTouchEditingControlsState();
+  _DocumentTouchEditingControlsState createState() =>
+      _DocumentTouchEditingControlsState();
 }
 
-class _DocumentTouchEditingControlsState extends State<DocumentTouchEditingControls> {
+class _DocumentTouchEditingControlsState
+    extends State<DocumentTouchEditingControls> {
   // These global keys are assigned to each draggable handle to
   // prevent a strange dragging issue.
   //
@@ -432,9 +473,11 @@ class _DocumentTouchEditingControlsState extends State<DocumentTouchEditingContr
     //   ..hideToolbar()
     //   ..cancelCollapsedHandleAutoHideCountdown();
 
-    // TODO: de-dup the calculation of the mid-line focal point
-    final globalOffsetInMiddleOfLine = _getGlobalOffsetOfMiddleOfLine(widget.editingController.selection.extent);
-    _touchHandleOffsetFromLineOfText = globalOffsetInMiddleOfLine - details.globalPosition;
+    // // TODO: de-dup the calculation of the mid-line focal point
+    // final globalOffsetInMiddleOfLine = _getGlobalOffsetOfMiddleOfLine(
+    //     widget.editingController.selection.extent);
+    // _touchHandleOffsetFromLineOfText =
+    //     globalOffsetInMiddleOfLine - details.globalPosition;
 
     // // TODO: de-dup the repeated calculations of the effective focal point: globalPosition + _touchHandleOffsetFromLineOfText
     // widget.textScrollController.updateAutoScrollingForTouchOffset(
@@ -450,7 +493,8 @@ class _DocumentTouchEditingControlsState extends State<DocumentTouchEditingContr
       _globalDragOffset = details.globalPosition;
       // We map global to local instead of using  details.localPosition because
       // this drag event started in a handle, not within this overall widget.
-      _localDragOffset = (context.findRenderObject() as RenderBox).globalToLocal(details.globalPosition);
+      _localDragOffset = (context.findRenderObject() as RenderBox)
+          .globalToLocal(details.globalPosition);
     });
   }
 
@@ -461,7 +505,8 @@ class _DocumentTouchEditingControlsState extends State<DocumentTouchEditingContr
     _globalDragOffset = details.globalPosition;
     editorGesturesLog.fine(' - global offset: $_globalDragOffset');
     _updateSelectionForNewDragHandleLocation();
-    editorGesturesLog.fine(' - done updating selection for new drag handle location');
+    editorGesturesLog
+        .fine(' - done updating selection for new drag handle location');
 
     // TODO: de-dup the repeated calculations of the effective focal point: globalPosition + _touchHandleOffsetFromLineOfText
     // widget.textScrollController.updateAutoScrollingForTouchOffset(
@@ -473,7 +518,8 @@ class _DocumentTouchEditingControlsState extends State<DocumentTouchEditingContr
     setState(() {
       _localDragOffset = _localDragOffset! + details.delta;
       // widget.editingController.showMagnifier(_localDragOffset!);
-      editorGesturesLog.fine(' - done updating all local state for drag update');
+      editorGesturesLog
+          .fine(' - done updating all local state for drag update');
     });
   }
 
@@ -551,10 +597,15 @@ class _DocumentTouchEditingControlsState extends State<DocumentTouchEditingContr
         width: double.infinity,
         height: double.infinity,
         color: Colors.yellow.withOpacity(0.2),
-        child: Stack(
-          children: [
-            ..._buildHandles(),
-          ],
+        child: AnimatedBuilder(
+          animation: widget.editingController,
+          builder: (context, child) {
+            return Stack(
+              children: [
+                ..._buildHandles(),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -562,52 +613,55 @@ class _DocumentTouchEditingControlsState extends State<DocumentTouchEditingContr
 
   List<Widget> _buildHandles() {
     if (!widget.editingController.areHandlesDesired) {
+      editorGesturesLog
+          .finer('Not building overlay handles because they aren\'t desired');
       return [];
     }
 
-    if (widget.editingController.hasSelection) {
-      editorGesturesLog.finer('Not building overlay handles because there is no selection');
+    if (!widget.editingController.hasSelection) {
+      editorGesturesLog
+          .finer('Not building overlay handles because there is no selection');
       // There is no selection. Draw nothing.
       return [];
     }
 
-    if (widget.editingController.selection!.isCollapsed && !_isDraggingBase && !_isDraggingExtent) {
+    // if (widget.editingController.selection!.isCollapsed &&
+    //     !_isDraggingBase &&
+    //     !_isDraggingExtent) {
+    if (widget.editingController.selection!.isCollapsed) {
       return [
         _buildCollapsedHandle(),
       ];
     } else {
-      // TODO:
-      // return _buildExpandedHandles();
-      return [];
+      return _buildExpandedHandles();
     }
   }
 
   Widget _buildCollapsedHandle() {
-    final extentTextPosition = widget.editingController.selection.extent;
-    editorGesturesLog.finer('Collapsed handle text position: $extentTextPosition');
-    final extentHandleOffsetInText = _textPositionToTextOffset(extentTextPosition);
-    editorGesturesLog.finer('Collapsed handle text offset: $extentHandleOffsetInText');
-    final extentLineHeight = widget.textContentKey.currentState!.getCharacterBox(extentTextPosition).toRect().height;
+    final extentRect = widget.documentLayout
+        .getRectForPosition(widget.editingController.selection!.extent);
 
-    if (extentHandleOffsetInText == const Offset(0, 0) && extentTextPosition.offset != 0) {
-      // The caret offset is (0, 0), but the caret text position isn't at the
-      // beginning of the text. This means that there's a layout timing
-      // issue and we should reschedule this calculation for the next frame.
-      _scheduleRebuildBecauseTextIsNotLaidOutYet();
-      return const SizedBox();
-    }
+    editorGesturesLog.fine("Selection extent rect: $extentRect");
 
-    if (extentLineHeight == 0) {
-      editorGesturesLog.finer('Not building collapsed handle because the text layout reported a zero line-height');
-      // A line height of zero indicates that the text isn't laid out yet.
-      // Schedule a rebuild to give the text a frame to layout.
-      _scheduleRebuildBecauseTextIsNotLaidOutYet();
-      return const SizedBox();
-    }
+    // if (extentHandleOffsetInText == const Offset(0, 0) && extentTextPosition.offset != 0) {
+    //   // The caret offset is (0, 0), but the caret text position isn't at the
+    //   // beginning of the text. This means that there's a layout timing
+    //   // issue and we should reschedule this calculation for the next frame.
+    //   _scheduleRebuildBecauseTextIsNotLaidOutYet();
+    //   return const SizedBox();
+    // }
+
+    // if (extentLineHeight == 0) {
+    //   editorGesturesLog.finer('Not building collapsed handle because the text layout reported a zero line-height');
+    //   // A line height of zero indicates that the text isn't laid out yet.
+    //   // Schedule a rebuild to give the text a frame to layout.
+    //   _scheduleRebuildBecauseTextIsNotLaidOutYet();
+    //   return const SizedBox();
+    // }
 
     return _buildHandle(
       handleKey: _collapsedHandleKey,
-      followerOffset: extentHandleOffsetInText + Offset(0, extentLineHeight),
+      followerOffset: extentRect!.bottomCenter,
       handleType: AndroidHandleType.collapsed,
       showHandle: true,
       debugColor: Colors.blue,
@@ -615,62 +669,46 @@ class _DocumentTouchEditingControlsState extends State<DocumentTouchEditingContr
     );
   }
 
-  // List<Widget> _buildExpandedHandles() {
-  //   // The selection is expanded. Draw 2 drag handles.
-  //   // TODO: handle the case with no text affinity and then query widget.selection!.affinity
-  //   // TODO: handle RTL text orientation
-  //   final selectionDirection =
-  //       widget.editingController.selection.extentOffset >= widget.editingController.selection.baseOffset
-  //           ? TextAffinity.downstream
-  //           : TextAffinity.upstream;
-  //
-  //   final upstreamTextPosition = selectionDirection == TextAffinity.downstream
-  //       ? widget.editingController.selection.base
-  //       : widget.editingController.selection.extent;
-  //   final upstreamLineHeight =
-  //       widget.textContentKey.currentState!.getCharacterBox(upstreamTextPosition).toRect().height;
-  //   final upstreamHandleOffsetInText = _textPositionToTextOffset(upstreamTextPosition) + Offset(0, upstreamLineHeight);
-  //
-  //   final downstreamTextPosition = selectionDirection == TextAffinity.downstream
-  //       ? widget.editingController.selection.extent
-  //       : widget.editingController.selection.base;
-  //   final downstreamLineHeight =
-  //       widget.textContentKey.currentState!.getCharacterBox(downstreamTextPosition).toRect().height;
-  //   final downstreamHandleOffsetInText =
-  //       _textPositionToTextOffset(downstreamTextPosition) + Offset(0, downstreamLineHeight);
-  //
-  //   if (upstreamLineHeight == 0 || downstreamLineHeight == 0) {
-  //     editorGesturesLog.finer('Not building expanded handles because the text layout reported a zero line-height');
-  //     // A line height of zero indicates that the text isn't laid out yet.
-  //     // Schedule a rebuild to give the text a frame to layout.
-  //     _scheduleRebuildBecauseTextIsNotLaidOutYet();
-  //     return [];
-  //   }
-  //
-  //   final showUpstreamHandle = widget.textScrollController.isTextPositionVisible(upstreamTextPosition);
-  //   final showDownstreamHandle = widget.textScrollController.isTextPositionVisible(downstreamTextPosition);
-  //
-  //   return [
-  //     // Left-bounding handle touch target
-  //     _buildHandle(
-  //       handleKey: _upstreamHandleKey,
-  //       followerOffset: upstreamHandleOffsetInText,
-  //       showHandle: showUpstreamHandle,
-  //       handleType: AndroidHandleType.upstream,
-  //       debugColor: Colors.green,
-  //       onPanStart: selectionDirection == TextAffinity.downstream ? _onBasePanStart : _onExtentPanStart,
-  //     ),
-  //     // right-bounding handle touch target
-  //     _buildHandle(
-  //       handleKey: _downstreamHandleKey,
-  //       followerOffset: downstreamHandleOffsetInText,
-  //       showHandle: showDownstreamHandle,
-  //       handleType: AndroidHandleType.downstream,
-  //       debugColor: Colors.red,
-  //       onPanStart: selectionDirection == TextAffinity.downstream ? _onExtentPanStart : _onBasePanStart,
-  //     ),
-  //   ];
-  // }
+  List<Widget> _buildExpandedHandles() {
+    // // The selection is expanded. Draw 2 drag handles.
+    // // TODO: handle the case with no text affinity and then query widget.selection!.affinity
+    // // TODO: handle RTL text orientation
+    // final selectionDirection =
+    //     widget.editingController.selection.extentOffset >= widget.editingController.selection.baseOffset
+    //         ? TextAffinity.downstream
+    //         : TextAffinity.upstream;
+
+    final baseRect = widget.documentLayout
+        .getRectForPosition(widget.editingController.selection!.base);
+    editorGesturesLog.fine("Selection base rect: $baseRect");
+
+    final extentRect = widget.documentLayout
+        .getRectForPosition(widget.editingController.selection!.extent);
+    editorGesturesLog.fine("Selection extent rect: $extentRect");
+
+    return [
+      // Left-bounding handle touch target
+      _buildHandle(
+        handleKey: _upstreamHandleKey,
+        followerOffset: baseRect!.bottomLeft,
+        showHandle: true,
+        handleType: AndroidHandleType.upstream,
+        debugColor: Colors.green,
+        onPanStart: (_) {},
+        // onPanStart: selectionDirection == TextAffinity.downstream ? _onBasePanStart : _onExtentPanStart,
+      ),
+      // right-bounding handle touch target
+      _buildHandle(
+        handleKey: _downstreamHandleKey,
+        followerOffset: extentRect!.bottomRight,
+        showHandle: true,
+        handleType: AndroidHandleType.downstream,
+        debugColor: Colors.red,
+        onPanStart: (_) {},
+        // onPanStart: selectionDirection == TextAffinity.downstream ? _onExtentPanStart : _onBasePanStart,
+      ),
+    ];
+  }
 
   Widget _buildHandle({
     required Key handleKey,
@@ -695,7 +733,7 @@ class _DocumentTouchEditingControlsState extends State<DocumentTouchEditingContr
 
     return CompositedTransformFollower(
       key: handleKey,
-      link: widget.textContentLayerLink,
+      link: widget.documentLayerLink,
       offset: followerOffset,
       child: FractionalTranslation(
         translation: fractionalTranslation,
