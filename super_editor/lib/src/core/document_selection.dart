@@ -178,7 +178,10 @@ class DocumentSelection {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is DocumentSelection && runtimeType == other.runtimeType && base == other.base && extent == other.extent;
+      other is DocumentSelection &&
+          runtimeType == other.runtimeType &&
+          base == other.base &&
+          extent == other.extent;
 
   @override
   int get hashCode => base.hashCode ^ extent.hashCode;
@@ -191,7 +194,7 @@ class DocumentSelection {
   }) {
     return DocumentSelection(
       base: base ?? this.base,
-      extent: extent ?? this.base,
+      extent: extent ?? this.extent,
     );
   }
 
