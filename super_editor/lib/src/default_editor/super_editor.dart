@@ -367,6 +367,7 @@ class _SuperEditorState extends State<SuperEditor> {
           focusNode: _focusNode,
           editContext: _editContext,
           scrollController: widget.scrollController,
+          documentKey: _docLayoutKey,
           showDebugPaint: widget.showDebugPaint,
           child: child,
         );
