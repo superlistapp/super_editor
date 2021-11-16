@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:super_editor/src/infrastructure/touch_controls.dart';
 
 class AndroidSelectionHandle extends StatelessWidget {
   const AndroidSelectionHandle({
@@ -10,18 +11,18 @@ class AndroidSelectionHandle extends StatelessWidget {
     this.radius = 10,
   }) : super(key: key);
 
-  final AndroidHandleType handleType;
+  final HandleType handleType;
   final Color color;
   final double radius;
 
   @override
   Widget build(BuildContext context) {
     switch (handleType) {
-      case AndroidHandleType.collapsed:
+      case HandleType.collapsed:
         return _buildCollapsed();
-      case AndroidHandleType.upstream:
+      case HandleType.upstream:
         return _buildUpstream();
-      case AndroidHandleType.downstream:
+      case HandleType.downstream:
         return _buildDownstream();
     }
   }
@@ -73,10 +74,4 @@ class AndroidSelectionHandle extends StatelessWidget {
       ),
     );
   }
-}
-
-enum AndroidHandleType {
-  collapsed,
-  upstream,
-  downstream,
 }

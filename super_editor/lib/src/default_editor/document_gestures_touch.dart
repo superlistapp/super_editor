@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/src/core/document.dart';
@@ -8,6 +10,8 @@ import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/selection_handles.dart';
+import 'package:super_editor/src/infrastructure/platforms/ios/selection_handles.dart';
+import 'package:super_editor/src/infrastructure/touch_controls.dart';
 
 /// Governs touch gesture interaction with a document, such as dragging
 /// to scroll a document, and dragging handles to expand a selection.
@@ -23,6 +27,7 @@ class DocumentTouchInteractor extends StatefulWidget {
     required this.editContext,
     this.scrollController,
     required this.documentKey,
+    this.style = ControlsStyle.android,
     this.showDebugPaint = false,
     required this.child,
   }) : super(key: key);
@@ -31,16 +36,15 @@ class DocumentTouchInteractor extends StatefulWidget {
   final EditContext editContext;
   final ScrollController? scrollController;
   final GlobalKey documentKey;
+  final ControlsStyle style;
   final bool showDebugPaint;
   final Widget child;
 
   @override
-  _DocumentTouchInteractorState createState() =>
-      _DocumentTouchInteractorState();
+  _DocumentTouchInteractorState createState() => _DocumentTouchInteractorState();
 }
 
-class _DocumentTouchInteractorState extends State<DocumentTouchInteractor>
-    with WidgetsBindingObserver {
+class _DocumentTouchInteractorState extends State<DocumentTouchInteractor> with WidgetsBindingObserver {
   final _documentWrapperKey = GlobalKey();
   final _documentLayerLink = LayerLink();
 
@@ -63,12 +67,10 @@ class _DocumentTouchInteractorState extends State<DocumentTouchInteractor>
       _showEditingControlsOverlay();
     }
 
-    _scrollController =
-        _scrollController = (widget.scrollController ?? ScrollController());
+    _scrollController = _scrollController = (widget.scrollController ?? ScrollController());
 
-    _editingController =
-        EditingController(document: widget.editContext.editor.document)
-          ..addListener(_onEditingControllerChange);
+    _editingController = EditingController(document: widget.editContext.editor.document)
+      ..addListener(_onEditingControllerChange);
 
     widget.editContext.composer.addListener(_onSelectionChange);
 
@@ -170,8 +172,7 @@ class _DocumentTouchInteractorState extends State<DocumentTouchInteractor>
   /// If this widget doesn't have an ancestor `Scrollable`, then this
   /// widget includes a `ScrollView` and the `ScrollView`'s position
   /// is returned.
-  ScrollPosition get _scrollPosition =>
-      _ancestorScrollPosition ?? _scrollController.position;
+  ScrollPosition get _scrollPosition => _ancestorScrollPosition ?? _scrollController.position;
 
   /// Returns the `RenderBox` for the scrolling viewport.
   ///
@@ -182,14 +183,12 @@ class _DocumentTouchInteractorState extends State<DocumentTouchInteractor>
   /// widget includes a `ScrollView` and this `State`'s render object
   /// is the viewport `RenderBox`.
   RenderBox get _viewport =>
-      (Scrollable.of(context)?.context.findRenderObject() ??
-          context.findRenderObject()) as RenderBox;
+      (Scrollable.of(context)?.context.findRenderObject() ?? context.findRenderObject()) as RenderBox;
 
   // Converts the given [offset] from the [DocumentInteractor]'s coordinate
   // space to the [DocumentLayout]'s coordinate space.
   Offset _getDocOffset(Offset offset) {
-    return _docLayout.getDocumentOffsetFromAncestorOffset(
-        offset, context.findRenderObject()!);
+    return _docLayout.getDocumentOffsetFromAncestorOffset(offset, context.findRenderObject()!);
   }
 
   /// Maps the given [interactorOffset] within the interactor's coordinate space
@@ -298,6 +297,7 @@ class _DocumentTouchInteractorState extends State<DocumentTouchInteractor>
           documentLayerLink: _documentLayerLink,
           documentLayout: _docLayout,
           handleColor: Colors.red,
+          style: widget.style,
           showDebugPaint: false,
         );
       });
@@ -317,8 +317,7 @@ class _DocumentTouchInteractorState extends State<DocumentTouchInteractor>
     required DocumentPosition docPosition,
     required DocumentLayout docLayout,
   }) {
-    final newSelection =
-        getWordSelection(docPosition: docPosition, docLayout: docLayout);
+    final newSelection = getWordSelection(docPosition: docPosition, docLayout: docLayout);
     if (newSelection != null) {
       widget.editContext.composer.selection = newSelection;
       return true;
@@ -331,8 +330,7 @@ class _DocumentTouchInteractorState extends State<DocumentTouchInteractor>
     required DocumentPosition docPosition,
     required DocumentLayout docLayout,
   }) {
-    final newSelection =
-        getParagraphSelection(docPosition: docPosition, docLayout: docLayout);
+    final newSelection = getParagraphSelection(docPosition: docPosition, docLayout: docLayout);
     if (newSelection != null) {
       widget.editContext.composer.selection = newSelection;
       return true;
@@ -383,8 +381,7 @@ class _DocumentTouchInteractorState extends State<DocumentTouchInteractor>
     return RawGestureDetector(
       behavior: HitTestBehavior.translucent,
       gestures: <Type, GestureRecognizerFactory>{
-        TapSequenceGestureRecognizer:
-            GestureRecognizerFactoryWithHandlers<TapSequenceGestureRecognizer>(
+        TapSequenceGestureRecognizer: GestureRecognizerFactoryWithHandlers<TapSequenceGestureRecognizer>(
           () => TapSequenceGestureRecognizer(),
           (TapSequenceGestureRecognizer recognizer) {
             recognizer
@@ -434,6 +431,7 @@ class DocumentTouchEditingControls extends StatefulWidget {
     required this.documentLayerLink,
     required this.documentLayout,
     required this.handleColor,
+    required this.style,
     this.showDebugPaint = false,
   }) : super(key: key);
 
@@ -442,15 +440,14 @@ class DocumentTouchEditingControls extends StatefulWidget {
   final LayerLink documentLayerLink;
   final DocumentLayout documentLayout;
   final Color handleColor;
+  final ControlsStyle style;
   final bool showDebugPaint;
 
   @override
-  _DocumentTouchEditingControlsState createState() =>
-      _DocumentTouchEditingControlsState();
+  _DocumentTouchEditingControlsState createState() => _DocumentTouchEditingControlsState();
 }
 
-class _DocumentTouchEditingControlsState
-    extends State<DocumentTouchEditingControls> {
+class _DocumentTouchEditingControlsState extends State<DocumentTouchEditingControls> {
   // These global keys are assigned to each draggable handle to
   // prevent a strange dragging issue.
   //
@@ -487,11 +484,10 @@ class _DocumentTouchEditingControlsState
     //   ..cancelCollapsedHandleAutoHideCountdown();
 
     _startDragPositionOffset = widget.documentLayout
-            .getRectForPosition(
-              widget.editingController.selection!.extent,
-            )!
-            .bottomCenter -
-        const Offset(0, 10);
+        .getRectForPosition(
+          widget.editingController.selection!.extent,
+        )!
+        .center;
 
     // // TODO: de-dup the repeated calculations of the effective focal point: globalPosition + _touchHandleOffsetFromLineOfText
     // widget.textScrollController.updateAutoScrollingForTouchOffset(
@@ -508,8 +504,7 @@ class _DocumentTouchEditingControlsState
       _globalDragOffset = details.globalPosition;
       // We map global to local instead of using  details.localPosition because
       // this drag event started in a handle, not within this overall widget.
-      _localDragOffset = (context.findRenderObject() as RenderBox)
-          .globalToLocal(details.globalPosition);
+      _localDragOffset = (context.findRenderObject() as RenderBox).globalToLocal(details.globalPosition);
     });
   }
 
@@ -522,7 +517,7 @@ class _DocumentTouchEditingControlsState
         .getRectForPosition(
           widget.editingController.selection!.base,
         )!
-        .bottomCenter;
+        .center;
 
     // widget.textScrollController.updateAutoScrollingForTouchOffset(
     //   userInteractionOffsetInViewport:
@@ -537,8 +532,7 @@ class _DocumentTouchEditingControlsState
       _globalDragOffset = details.globalPosition;
       // We map global to local instead of using  details.localPosition because
       // this drag event started in a handle, not within this overall widget.
-      _localDragOffset = (context.findRenderObject() as RenderBox)
-          .globalToLocal(details.globalPosition);
+      _localDragOffset = (context.findRenderObject() as RenderBox).globalToLocal(details.globalPosition);
     });
   }
 
@@ -551,7 +545,7 @@ class _DocumentTouchEditingControlsState
         .getRectForPosition(
           widget.editingController.selection!.extent,
         )!
-        .bottomCenter;
+        .center;
 
     // widget.textScrollController.updateAutoScrollingForTouchOffset(
     //   userInteractionOffsetInViewport:
@@ -564,8 +558,7 @@ class _DocumentTouchEditingControlsState
       _isDraggingExtent = true;
       _globalStartDragOffset = details.globalPosition;
       _globalDragOffset = details.globalPosition;
-      _localDragOffset = (context.findRenderObject() as RenderBox)
-          .globalToLocal(details.globalPosition);
+      _localDragOffset = (context.findRenderObject() as RenderBox).globalToLocal(details.globalPosition);
     });
   }
 
@@ -576,8 +569,7 @@ class _DocumentTouchEditingControlsState
     _globalDragOffset = details.globalPosition;
     editorGesturesLog.fine(' - global offset: $_globalDragOffset');
     _updateSelectionForNewDragHandleLocation();
-    editorGesturesLog
-        .fine(' - done updating selection for new drag handle location');
+    editorGesturesLog.fine(' - done updating selection for new drag handle location');
 
     // TODO: de-dup the repeated calculations of the effective focal point: globalPosition + _touchHandleOffsetFromLineOfText
     // widget.textScrollController.updateAutoScrollingForTouchOffset(
@@ -589,16 +581,14 @@ class _DocumentTouchEditingControlsState
     setState(() {
       _localDragOffset = _localDragOffset! + details.delta;
       // widget.editingController.showMagnifier(_localDragOffset!);
-      editorGesturesLog
-          .fine(' - done updating all local state for drag update');
+      editorGesturesLog.fine(' - done updating all local state for drag update');
     });
   }
 
   void _updateSelectionForNewDragHandleLocation() {
     final docDragDelta = _globalDragOffset! - _globalStartDragOffset!;
     print("DOC DRAG DELTA: $docDragDelta");
-    final docDragPosition = widget.documentLayout
-        .getDocumentPositionAtOffset(_startDragPositionOffset! + docDragDelta);
+    final docDragPosition = widget.documentLayout.getDocumentPositionAtOffset(_startDragPositionOffset! + docDragDelta);
 
     if (docDragPosition == null) {
       return;
@@ -609,13 +599,11 @@ class _DocumentTouchEditingControlsState
         position: docDragPosition,
       );
     } else if (_isDraggingBase) {
-      widget.editingController.selection =
-          widget.editingController.selection!.copyWith(
+      widget.editingController.selection = widget.editingController.selection!.copyWith(
         base: docDragPosition,
       );
     } else if (_isDraggingExtent) {
-      widget.editingController.selection =
-          widget.editingController.selection!.copyWith(
+      widget.editingController.selection = widget.editingController.selection!.copyWith(
         extent: docDragPosition,
       );
     }
@@ -685,14 +673,12 @@ class _DocumentTouchEditingControlsState
 
   List<Widget> _buildHandles() {
     if (!widget.editingController.areHandlesDesired) {
-      editorGesturesLog
-          .finer('Not building overlay handles because they aren\'t desired');
+      editorGesturesLog.finer('Not building overlay handles because they aren\'t desired');
       return [];
     }
 
     if (!widget.editingController.hasSelection) {
-      editorGesturesLog
-          .finer('Not building overlay handles because there is no selection');
+      editorGesturesLog.finer('Not building overlay handles because there is no selection');
       // There is no selection. Draw nothing.
       return [];
     }
@@ -701,9 +687,7 @@ class _DocumentTouchEditingControlsState
     //       the base or extent because, if we did, then when the user drags
     //       crosses the base and extent, we'd suddenly jump from an expanded
     //       selection to a collapsed selection.
-    if (widget.editingController.selection!.isCollapsed &&
-        !_isDraggingBase &&
-        !_isDraggingExtent) {
+    if (widget.editingController.selection!.isCollapsed && !_isDraggingBase && !_isDraggingExtent) {
       return [
         _buildCollapsedHandle(),
       ];
@@ -713,8 +697,7 @@ class _DocumentTouchEditingControlsState
   }
 
   Widget _buildCollapsedHandle() {
-    final extentRect = widget.documentLayout
-        .getRectForPosition(widget.editingController.selection!.extent);
+    final extentRect = widget.documentLayout.getRectForPosition(widget.editingController.selection!.extent);
 
     editorGesturesLog.fine("Selection extent rect: $extentRect");
 
@@ -736,8 +719,8 @@ class _DocumentTouchEditingControlsState
 
     return _buildHandle(
       handleKey: _collapsedHandleKey,
-      followerOffset: extentRect!.bottomCenter,
-      handleType: AndroidHandleType.collapsed,
+      positionRect: extentRect!,
+      handleType: HandleType.collapsed,
       showHandle: true,
       debugColor: Colors.blue,
       onPanStart: _onCollapsedPanStart,
@@ -766,9 +749,7 @@ class _DocumentTouchEditingControlsState
     } else {
       // The selection is within the same node. Ask the node which position
       // comes first.
-      if (base.nodePosition ==
-          extentNode.selectUpstreamPosition(
-              base.nodePosition, extent.nodePosition)) {
+      if (base.nodePosition == extentNode.selectUpstreamPosition(base.nodePosition, extent.nodePosition)) {
         selectionDirection = TextAffinity.downstream;
       } else {
         selectionDirection = TextAffinity.upstream;
@@ -785,53 +766,83 @@ class _DocumentTouchEditingControlsState
       // Left-bounding handle touch target
       _buildHandle(
         handleKey: _upstreamHandleKey,
-        followerOffset: baseRect!.bottomLeft,
+        positionRect: selectionDirection == TextAffinity.downstream ? baseRect! : extentRect!,
         showHandle: true,
-        handleType: AndroidHandleType.upstream,
+        handleType: HandleType.upstream,
         debugColor: Colors.green,
-        onPanStart: selectionDirection == TextAffinity.downstream
-            ? _onBasePanStart
-            : _onExtentPanStart,
+        onPanStart: selectionDirection == TextAffinity.downstream ? _onBasePanStart : _onExtentPanStart,
       ),
       // right-bounding handle touch target
       _buildHandle(
         handleKey: _downstreamHandleKey,
-        followerOffset: extentRect!.bottomRight,
+        positionRect: selectionDirection == TextAffinity.downstream ? extentRect! : baseRect!,
         showHandle: true,
-        handleType: AndroidHandleType.downstream,
+        handleType: HandleType.downstream,
         debugColor: Colors.red,
-        onPanStart: selectionDirection == TextAffinity.downstream
-            ? _onExtentPanStart
-            : _onBasePanStart,
+        onPanStart: selectionDirection == TextAffinity.downstream ? _onExtentPanStart : _onBasePanStart,
       ),
     ];
   }
 
   Widget _buildHandle({
     required Key handleKey,
-    required Offset followerOffset,
+    required Rect positionRect,
     required bool showHandle,
-    required AndroidHandleType handleType,
+    required HandleType handleType,
+    required Color debugColor,
+    required void Function(DragStartDetails) onPanStart,
+  }) {
+    switch (widget.style) {
+      case ControlsStyle.android:
+        return _buildAndroidHandle(
+          handleKey: handleKey,
+          positionRect: positionRect,
+          showHandle: showHandle,
+          handleType: handleType,
+          debugColor: debugColor,
+          onPanStart: onPanStart,
+        );
+      case ControlsStyle.iOS:
+        return _buildIOSHandle(
+          handleKey: handleKey,
+          positionRect: positionRect,
+          showHandle: showHandle,
+          handleType: handleType,
+          debugColor: debugColor,
+          onPanStart: onPanStart,
+        );
+    }
+  }
+
+  Widget _buildAndroidHandle({
+    required Key handleKey,
+    required Rect positionRect,
+    required bool showHandle,
+    required HandleType handleType,
     required Color debugColor,
     required void Function(DragStartDetails) onPanStart,
   }) {
     late Offset fractionalTranslation;
+    late Offset handleOrigin;
     switch (handleType) {
-      case AndroidHandleType.collapsed:
+      case HandleType.collapsed:
         fractionalTranslation = const Offset(-0.5, 0.0);
+        handleOrigin = positionRect.bottomCenter;
         break;
-      case AndroidHandleType.upstream:
+      case HandleType.upstream:
         fractionalTranslation = const Offset(-1.0, 0.0);
+        handleOrigin = positionRect.bottomLeft;
         break;
-      case AndroidHandleType.downstream:
+      case HandleType.downstream:
         fractionalTranslation = Offset.zero;
+        handleOrigin = positionRect.bottomRight;
         break;
     }
 
     return CompositedTransformFollower(
       key: handleKey,
       link: widget.documentLayerLink,
-      offset: followerOffset,
+      offset: handleOrigin,
       child: FractionalTranslation(
         translation: fractionalTranslation,
         child: GestureDetector(
@@ -844,15 +855,76 @@ class _DocumentTouchEditingControlsState
             color: widget.showDebugPaint ? Colors.green : Colors.transparent,
             child: showHandle
                 ? AnimatedOpacity(
-                    opacity: handleType == AndroidHandleType.collapsed &&
-                            widget.editingController.isCollapsedHandleAutoHidden
+                    opacity: handleType == HandleType.collapsed && widget.editingController.isCollapsedHandleAutoHidden
                         ? 0.0
                         : 1.0,
                     duration: const Duration(milliseconds: 150),
-                    child: AndroidSelectionHandle(
-                      handleType: handleType,
-                      color: widget.handleColor,
-                    ),
+                    child: widget.style == ControlsStyle.android
+                        ? AndroidSelectionHandle(
+                            handleType: handleType,
+                            color: widget.handleColor,
+                          )
+                        : IOSSelectionHandle(
+                            color: widget.handleColor,
+                            caretHeight: 20,
+                            handleDirection: HandleDirection.downstream,
+                          ),
+                  )
+                : const SizedBox(),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildIOSHandle({
+    required Key handleKey,
+    required Rect positionRect,
+    required bool showHandle,
+    required HandleType handleType,
+    required Color debugColor,
+    required void Function(DragStartDetails) onPanStart,
+  }) {
+    const ballDiameter = 8.0;
+
+    late Offset handleOrigin;
+    late Offset handleOffset;
+    switch (handleType) {
+      case HandleType.collapsed:
+        handleOrigin = positionRect.topRight;
+        handleOffset = Offset.zero;
+        break;
+      case HandleType.upstream:
+        handleOrigin = positionRect.topLeft;
+        handleOffset = const Offset(-ballDiameter / 2, -3 * ballDiameter / 4);
+        break;
+      case HandleType.downstream:
+        handleOrigin = positionRect.topRight;
+        handleOffset = const Offset(-ballDiameter / 2, -3 * ballDiameter / 4);
+        break;
+    }
+
+    return CompositedTransformFollower(
+      key: handleKey,
+      link: widget.documentLayerLink,
+      offset: handleOrigin,
+      child: Transform.translate(
+        offset: handleOffset,
+        child: GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onPanStart: onPanStart,
+          onPanUpdate: _onPanUpdate,
+          onPanEnd: _onPanEnd,
+          onPanCancel: _onPanCancel,
+          child: Container(
+            color: widget.showDebugPaint ? Colors.green : Colors.transparent,
+            child: showHandle && handleType != HandleType.collapsed
+                ? IOSSelectionHandle(
+                    color: widget.handleColor,
+                    caretHeight: max(positionRect.height - ballDiameter, 0),
+                    ballRadius: ballDiameter / 2,
+                    handleDirection:
+                        handleType == HandleType.upstream ? HandleDirection.upstream : HandleDirection.downstream,
                   )
                 : const SizedBox(),
           ),
@@ -884,4 +956,9 @@ class EditingController with ChangeNotifier {
 
     notifyListeners();
   }
+}
+
+enum ControlsStyle {
+  android,
+  iOS,
 }

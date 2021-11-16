@@ -368,6 +368,7 @@ class _SuperEditorState extends State<SuperEditor> {
           editContext: _editContext,
           scrollController: widget.scrollController,
           documentKey: _docLayoutKey,
+          style: ControlsStyle.iOS,
           showDebugPaint: widget.showDebugPaint,
           child: child,
         );
@@ -393,7 +394,7 @@ class _SuperEditorState extends State<SuperEditor> {
             document: widget.editor.document,
             documentSelection: _composer.selection,
             componentBuilders: widget.componentBuilders,
-            showCaret: _focusNode.hasFocus,
+            showCaret: _focusNode.hasFocus && widget.gestureMode != DocumentGestureMode.touch,
             margin: widget.padding,
             componentVerticalSpacing: widget.componentVerticalSpacing,
             extensions: {
