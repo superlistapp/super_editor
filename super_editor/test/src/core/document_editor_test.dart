@@ -62,5 +62,27 @@ void main() {
 
       expect(document1 == document2, isFalse);
     });
+
+    test('TextNode equality between two documents', () {
+      final node1 = TextNode(
+        id: '1',
+        text: AttributedText(
+          text: 'a',
+          spans: AttributedSpans(),
+        ),
+      );
+      final node2 = TextNode(
+        id: '1',
+        text: AttributedText(
+          text: 'a',
+          spans: AttributedSpans(),
+        ),
+      );
+
+      final document1 = MutableDocument(nodes: [node1]);
+      final document2 = MutableDocument(nodes: [node2]);
+
+      expect(document1, document2);
+    });
   });
 }
