@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/src/core/document.dart';
@@ -156,6 +158,15 @@ class _AndroidDocumentTouchInteractorState
 
   void _onSelectionChange() {
     _editingController.selection = widget.editContext.composer.selection;
+
+    if (_editingController.hasSelection &&
+        _editingController.selection!.isCollapsed) {
+      _editingController
+        ..unHideCollapsedHandle()
+        ..startCollapsedHandleAutoHideCountdown();
+    } else if (!_editingController.hasSelection) {
+      _editingController.cancelCollapsedHandleAutoHideCountdown();
+    }
   }
 
   /// Returns the layout for the current document, which answers questions
@@ -537,6 +548,11 @@ class _DocumentTouchEditingControlsState
     _caretBlinkController = CaretBlinkController(tickerProvider: this);
     _prevSelection = widget.editingController.selection;
     widget.editingController.addListener(_onEditingControllerChange);
+
+    if (widget.editingController.hasSelection &&
+        widget.editingController.selection!.isCollapsed) {
+      widget.editingController.startCollapsedHandleAutoHideCountdown();
+    }
   }
 
   @override
@@ -573,9 +589,9 @@ class _DocumentTouchEditingControlsState
   void _onCollapsedPanStart(DragStartDetails details) {
     editorGesturesLog.fine('_onCollapsedPanStart');
 
-    // widget.editingController
-    //   ..hideToolbar()
-    //   ..cancelCollapsedHandleAutoHideCountdown();
+    widget.editingController
+      //   ..hideToolbar()
+      ..cancelCollapsedHandleAutoHideCountdown();
 
     _startDragPositionOffset = widget.documentLayout
         .getRectForPosition(
@@ -739,9 +755,9 @@ class _DocumentTouchEditingControlsState
         // widget.editingController.showToolbar();
       } else {
         // The collapsed handle should disappear after some inactivity.
-        // widget.editingController
-        //   ..unHideCollapsedHandle()
-        //   ..startCollapsedHandleAutoHideCountdown();
+        widget.editingController
+          //   ..unHideCollapsedHandle()
+          ..startCollapsedHandleAutoHideCountdown();
       }
     });
   }
