@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import 'package:super_editor/src/infrastructure/caret.dart';
 import 'package:super_editor/src/infrastructure/super_selectable_text.dart';
 import 'package:super_editor/src/infrastructure/text_layout.dart';
 
@@ -75,13 +76,17 @@ class IOSTextFieldCaret extends StatefulWidget {
   _IOSTextFieldCaretState createState() => _IOSTextFieldCaretState();
 }
 
-class _IOSTextFieldCaretState extends State<IOSTextFieldCaret> with SingleTickerProviderStateMixin {
+class _IOSTextFieldCaretState extends State<IOSTextFieldCaret>
+    with SingleTickerProviderStateMixin {
   late CaretBlinkController _caretBlinkController;
 
   @override
   void initState() {
     super.initState();
     _caretBlinkController = CaretBlinkController(tickerProvider: this);
+    if (widget.selection.extent.offset >= 0) {
+      _caretBlinkController.onCaretPlaced();
+    }
   }
 
   @override
@@ -89,7 +94,11 @@ class _IOSTextFieldCaretState extends State<IOSTextFieldCaret> with SingleTicker
     super.didUpdateWidget(oldWidget);
 
     if (widget.selection != oldWidget.selection) {
-      _caretBlinkController.caretPosition = widget.selection.isCollapsed ? widget.selection.extent : null;
+      if (widget.selection.extent.offset >= 0) {
+        _caretBlinkController.onCaretMoved();
+      } else {
+        _caretBlinkController.onCaretRemoved();
+      }
     }
   }
 
@@ -160,9 +169,12 @@ class _IOSCursorPainter extends CustomPainter {
     caretPaint.color = caretColor.withOpacity(blinkController.opacity);
 
     final textPosition = selection.extent;
-    final caretHeight = textLayout.getCharacterBox(textPosition).toRect().height;
+    final caretHeight =
+        textLayout.getCharacterBox(textPosition).toRect().height;
 
-    Offset caretOffset = isTextEmpty ? Offset.zero : textLayout.getOffsetAtPosition(textPosition);
+    Offset caretOffset = isTextEmpty
+        ? Offset.zero
+        : textLayout.getOffsetAtPosition(textPosition);
 
     if (borderRadius == BorderRadius.zero) {
       canvas.drawRect(

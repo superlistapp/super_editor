@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import 'package:super_editor/src/infrastructure/caret.dart';
 import 'package:super_editor/src/infrastructure/super_selectable_text.dart';
 import 'package:super_editor/src/infrastructure/text_layout.dart';
 
@@ -81,13 +82,17 @@ class AndroidTextFieldCaret extends StatefulWidget {
   _AndroidTextFieldCaretState createState() => _AndroidTextFieldCaretState();
 }
 
-class _AndroidTextFieldCaretState extends State<AndroidTextFieldCaret> with SingleTickerProviderStateMixin {
+class _AndroidTextFieldCaretState extends State<AndroidTextFieldCaret>
+    with SingleTickerProviderStateMixin {
   late CaretBlinkController _caretBlinkController;
 
   @override
   void initState() {
     super.initState();
     _caretBlinkController = CaretBlinkController(tickerProvider: this);
+    if (widget.selection.extent.offset >= 0) {
+      _caretBlinkController.onCaretPlaced();
+    }
   }
 
   @override
@@ -95,7 +100,11 @@ class _AndroidTextFieldCaretState extends State<AndroidTextFieldCaret> with Sing
     super.didUpdateWidget(oldWidget);
 
     if (widget.selection != oldWidget.selection) {
-      _caretBlinkController.caretPosition = widget.selection.isCollapsed ? widget.selection.extent : null;
+      if (widget.selection.extent.offset >= 0) {
+        _caretBlinkController.onCaretMoved();
+      } else {
+        _caretBlinkController.onCaretRemoved();
+      }
     }
   }
 
@@ -168,7 +177,8 @@ class AndroidCursorPainter extends CustomPainter {
   }) {
     caretPaint.color = caretColor.withOpacity(blinkController.opacity);
 
-    double caretHeight = textLayout.getHeightForCaret(selection.extent) ?? emptyTextCaretHeight;
+    double caretHeight =
+        textLayout.getHeightForCaret(selection.extent) ?? emptyTextCaretHeight;
     final caretOffset = textLayout.getOffsetAtPosition(selection.extent);
 
     if (borderRadius == BorderRadius.zero) {

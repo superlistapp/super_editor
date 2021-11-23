@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart' hide SelectableText;
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
@@ -163,7 +165,7 @@ class SuperEditor extends StatefulWidget {
   final DocumentInputSource inputSource;
 
   /// The `SuperEditor` gesture mode, e.g., mouse or touch.
-  final DocumentGestureMode gestureMode;
+  final DocumentGestureMode? gestureMode;
 
   /// Contains a [Document] and alters that document as desired.
   final DocumentEditor editor;
@@ -276,7 +278,8 @@ class _SuperEditorState extends State<SuperEditor> {
       commonOps: CommonEditorOperations(
         editor: widget.editor,
         composer: _composer,
-        documentLayoutResolver: () => _docLayoutKey.currentState as DocumentLayout,
+        documentLayoutResolver: () =>
+            _docLayoutKey.currentState as DocumentLayout,
       ),
     );
   }
@@ -293,12 +296,14 @@ class _SuperEditorState extends State<SuperEditor> {
       return;
     }
 
-    final node = widget.editor.document.getNodeById(_composer.selection!.extent.nodeId);
+    final node =
+        widget.editor.document.getNodeById(_composer.selection!.extent.nodeId);
     if (node is! TextNode) {
       return;
     }
 
-    final textPosition = _composer.selection!.extent.nodePosition as TextPosition;
+    final textPosition =
+        _composer.selection!.extent.nodePosition as TextPosition;
 
     if (textPosition.offset == 0) {
       if (node.text.text.isEmpty) {
@@ -353,7 +358,18 @@ class _SuperEditorState extends State<SuperEditor> {
   Widget _buildGestureSystem({
     required Widget child,
   }) {
-    switch (widget.gestureMode) {
+    late DocumentGestureMode gestureMode;
+    if (widget.gestureMode != null) {
+      gestureMode = widget.gestureMode!;
+    } else if (Platform.isAndroid) {
+      gestureMode = DocumentGestureMode.android;
+    } else if (Platform.isIOS) {
+      gestureMode = DocumentGestureMode.iOS;
+    } else {
+      gestureMode = DocumentGestureMode.mouse;
+    }
+
+    switch (gestureMode) {
       case DocumentGestureMode.mouse:
         return DocumentMouseInteractor(
           focusNode: _focusNode,
@@ -362,13 +378,16 @@ class _SuperEditorState extends State<SuperEditor> {
           showDebugPaint: widget.showDebugPaint,
           child: child,
         );
-      case DocumentGestureMode.touch:
+      case DocumentGestureMode.android:
+      case DocumentGestureMode.iOS:
         return DocumentTouchInteractor(
           focusNode: _focusNode,
           editContext: _editContext,
           scrollController: widget.scrollController,
           documentKey: _docLayoutKey,
-          style: ControlsStyle.iOS,
+          style: widget.gestureMode == DocumentGestureMode.android
+              ? ControlsStyle.android
+              : ControlsStyle.iOS,
           showDebugPaint: widget.showDebugPaint,
           child: child,
         );
@@ -394,7 +413,8 @@ class _SuperEditorState extends State<SuperEditor> {
             document: widget.editor.document,
             documentSelection: _composer.selection,
             componentBuilders: widget.componentBuilders,
-            showCaret: _focusNode.hasFocus && widget.gestureMode != DocumentGestureMode.touch,
+            showCaret: _focusNode.hasFocus &&
+                widget.gestureMode == DocumentGestureMode.mouse,
             margin: widget.padding,
             componentVerticalSpacing: widget.componentVerticalSpacing,
             extensions: {
@@ -416,7 +436,8 @@ enum DocumentInputSource {
 
 enum DocumentGestureMode {
   mouse,
-  touch,
+  android,
+  iOS,
 }
 
 /// Default visual styles related to content selection.

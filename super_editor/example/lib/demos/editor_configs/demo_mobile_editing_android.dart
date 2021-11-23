@@ -3,16 +3,17 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:super_editor/super_editor.dart';
 
-/// Mobile document editing demo.
+/// Mobile Android document editing demo.
 ///
 /// This demo forces the editor into a mobile configuration,
 /// no matter which platform or form factor you use.
-class MobileEditingDemo extends StatefulWidget {
+class MobileEditingAndroidDemo extends StatefulWidget {
   @override
-  _MobileEditingDemoState createState() => _MobileEditingDemoState();
+  _MobileEditingAndroidDemoState createState() =>
+      _MobileEditingAndroidDemoState();
 }
 
-class _MobileEditingDemoState extends State<MobileEditingDemo> {
+class _MobileEditingAndroidDemoState extends State<MobileEditingAndroidDemo> {
   final GlobalKey _docLayoutKey = GlobalKey();
 
   late Document _doc;
@@ -43,7 +44,7 @@ class _MobileEditingDemoState extends State<MobileEditingDemo> {
       child: SuperEditor(
         focusNode: _editorFocusNode,
         documentLayoutKey: _docLayoutKey,
-        gestureMode: DocumentGestureMode.touch,
+        gestureMode: DocumentGestureMode.android,
         editor: _docEditor!,
         composer: _composer,
         padding: const EdgeInsets.all(16),
