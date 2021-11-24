@@ -7,6 +7,7 @@ import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/default_editor/text_tools.dart';
+import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/caret.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
@@ -114,6 +115,12 @@ class _AndroidDocumentTouchInteractorState
     WidgetsBinding.instance!.removeObserver(this);
 
     _editingController.removeListener(_onEditingControllerChange);
+    // We dispose the EditingController on the next frame because
+    // the ListenableBuilder that uses it throws an error if we
+    // dispose of it here.
+    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      _editingController.dispose();
+    });
 
     widget.editContext.composer.removeListener(_onSelectionChange);
 
@@ -769,9 +776,9 @@ class _DocumentTouchEditingControlsState
       child: SizedBox(
         width: double.infinity,
         height: double.infinity,
-        child: AnimatedBuilder(
-          animation: widget.editingController,
-          builder: (context, child) {
+        child: ListenableBuilder(
+          listenable: widget.editingController,
+          builder: (context) {
             return Stack(
               children: [
                 _buildCaret(),

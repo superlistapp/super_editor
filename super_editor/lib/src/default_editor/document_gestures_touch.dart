@@ -60,6 +60,12 @@ class EditingController with ChangeNotifier {
     required Document document,
   }) : _document = document;
 
+  @override
+  void dispose() {
+    _handleAutoHideTimer?.cancel();
+    super.dispose();
+  }
+
   final Document _document;
   Document get document => _document;
 
