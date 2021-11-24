@@ -92,6 +92,18 @@ class ImageNode with ChangeNotifier implements DocumentNode {
   bool hasEquivalentContent(DocumentNode other) {
     return other is ImageNode && imageUrl == other.imageUrl && altText == other.altText;
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ImageNode &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          _imageUrl == other._imageUrl &&
+          _altText == other._altText;
+
+  @override
+  int get hashCode => id.hashCode ^ _imageUrl.hashCode ^ _altText.hashCode;
 }
 
 /// Displays an image in a document.

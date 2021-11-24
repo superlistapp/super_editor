@@ -248,6 +248,91 @@ void main() {
 
       expect(listenerCalled, isTrue);
     });
+
+    group("equality", () {
+      test("equivalent AttributedText are equal", () {
+        expect(
+          AttributedText(
+            text: 'abcdefghij',
+            spans: AttributedSpans(
+              attributions: [
+                const SpanMarker(attribution: bold, offset: 2, markerType: SpanMarkerType.start),
+                const SpanMarker(attribution: italics, offset: 4, markerType: SpanMarkerType.start),
+                const SpanMarker(attribution: bold, offset: 5, markerType: SpanMarkerType.end),
+                const SpanMarker(attribution: italics, offset: 7, markerType: SpanMarkerType.end),
+              ],
+            ),
+          ),
+          equals(
+            AttributedText(
+              text: 'abcdefghij',
+              spans: AttributedSpans(
+                attributions: [
+                  const SpanMarker(attribution: bold, offset: 2, markerType: SpanMarkerType.start),
+                  const SpanMarker(attribution: italics, offset: 4, markerType: SpanMarkerType.start),
+                  const SpanMarker(attribution: bold, offset: 5, markerType: SpanMarkerType.end),
+                  const SpanMarker(attribution: italics, offset: 7, markerType: SpanMarkerType.end),
+                ],
+              ),
+            ),
+          ),
+        );
+      });
+
+      test("different text are not equal", () {
+        expect(
+          AttributedText(
+                text: 'jihgfedcba',
+                spans: AttributedSpans(
+                  attributions: [
+                    const SpanMarker(attribution: bold, offset: 2, markerType: SpanMarkerType.start),
+                    const SpanMarker(attribution: italics, offset: 4, markerType: SpanMarkerType.start),
+                    const SpanMarker(attribution: bold, offset: 5, markerType: SpanMarkerType.end),
+                    const SpanMarker(attribution: italics, offset: 7, markerType: SpanMarkerType.end),
+                  ],
+                ),
+              ) ==
+              AttributedText(
+                text: 'abcdefghij',
+                spans: AttributedSpans(
+                  attributions: [
+                    const SpanMarker(attribution: bold, offset: 2, markerType: SpanMarkerType.start),
+                    const SpanMarker(attribution: italics, offset: 4, markerType: SpanMarkerType.start),
+                    const SpanMarker(attribution: bold, offset: 5, markerType: SpanMarkerType.end),
+                    const SpanMarker(attribution: italics, offset: 7, markerType: SpanMarkerType.end),
+                  ],
+                ),
+              ),
+          isFalse,
+        );
+      });
+
+      test("different spans are not equal", () {
+        expect(
+          AttributedText(
+                text: 'abcdefghij',
+                spans: AttributedSpans(
+                  attributions: [
+                    const SpanMarker(attribution: bold, offset: 2, markerType: SpanMarkerType.start),
+                    const SpanMarker(attribution: italics, offset: 4, markerType: SpanMarkerType.start),
+                    const SpanMarker(attribution: bold, offset: 5, markerType: SpanMarkerType.end),
+                    const SpanMarker(attribution: italics, offset: 7, markerType: SpanMarkerType.end),
+                  ],
+                ),
+              ) ==
+              AttributedText(
+                text: 'abcdefghij',
+                spans: AttributedSpans(
+                  attributions: [
+                    const SpanMarker(attribution: bold, offset: 2, markerType: SpanMarkerType.start),
+                    const SpanMarker(attribution: bold, offset: 5, markerType: SpanMarkerType.end),
+                  ],
+                ),
+              ),
+          isFalse,
+        );
+      });
+    });
   });
 }
 

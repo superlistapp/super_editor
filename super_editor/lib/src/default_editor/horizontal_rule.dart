@@ -72,6 +72,13 @@ class HorizontalRuleNode with ChangeNotifier implements DocumentNode {
   bool hasEquivalentContent(DocumentNode other) {
     return other is HorizontalRuleNode;
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) || other is HorizontalRuleNode && runtimeType == other.runtimeType && id == other.id;
+
+  @override
+  int get hashCode => id.hashCode;
 }
 
 /// Displays a horizontal rule in a document.
