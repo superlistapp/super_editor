@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_layout.dart';
@@ -116,6 +117,7 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
   Offset? _dragStartInDoc;
   double? _dragStartScrollOffset;
   Offset? _dragEndInInteractor;
+  bool _expandSelectionDuringDrag = false;
 
   bool _scrollUpOnTick = false;
   bool _scrollDownOnTick = false;
@@ -193,6 +195,12 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
   /// is the viewport `RenderBox`.
   RenderBox get _viewport =>
       (Scrollable.of(context)?.context.findRenderObject() ?? context.findRenderObject()) as RenderBox;
+
+  bool get _isShiftPressed =>
+      (RawKeyboard.instance.keysPressed.contains(LogicalKeyboardKey.shiftLeft) ||
+          RawKeyboard.instance.keysPressed.contains(LogicalKeyboardKey.shiftRight) ||
+          RawKeyboard.instance.keysPressed.contains(LogicalKeyboardKey.shift)) &&
+      widget.editContext.composer.selection != null;
 
   /// Maps the given [interactorOffset] within the interactor's coordinate space
   /// to the same screen position in the viewport's coordinate space.
@@ -293,13 +301,20 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     final docPosition = _docLayout.getDocumentPositionAtOffset(docOffset);
     editorGesturesLog.fine(" - tapped document position: $docPosition");
 
-    _clearSelection();
-    _selectionType = SelectionType.position;
-
     if (docPosition != null) {
-      // Place the document selection at the location where the
-      // user tapped.
-      _selectPosition(docPosition);
+      if (_isShiftPressed && widget.editContext.composer.selection != null) {
+        // The user tapped while pressing shift and there's an existing
+        // selection. Move the extent of the selection to where the user tapped.
+        widget.editContext.composer.selection = widget.editContext.composer.selection!.copyWith(
+          extent: docPosition,
+        );
+      } else {
+        // Place the document selection at the location where the
+        // user tapped.
+        _clearSelection();
+        _selectionType = SelectionType.position;
+        _selectPosition(docPosition);
+      }
     }
 
     _focusNode.requestFocus();
@@ -380,7 +395,15 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     // finger/mouse position hasn't changed.
     _dragStartScrollOffset = _scrollPosition.pixels;
 
-    _clearSelection();
+    if (_isShiftPressed) {
+      _expandSelectionDuringDrag = true;
+    }
+
+    if (!_isShiftPressed) {
+      // Only clear the selection if the user isn't pressing shift. Shift is
+      // used to expand the current selection, not replace it.
+      _clearSelection();
+    }
 
     _focusNode.requestFocus();
   }
@@ -399,23 +422,21 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
   }
 
   void _onPanEnd(DragEndDetails details) {
-    setState(() {
-      editorGesturesLog.info("Pan end on document");
-      _dragStartInInteractor = null;
-      _dragStartInDoc = null;
-      _dragEndInInteractor = null;
-    });
-
-    _stopScrollingUp();
-    _stopScrollingDown();
+    editorGesturesLog.info("Pan end on document");
+    _onDragEnd();
   }
 
   void _onPanCancel() {
+    editorGesturesLog.info("Pan cancel on document");
+    _onDragEnd();
+  }
+
+  void _onDragEnd() {
     setState(() {
-      editorGesturesLog.info("Pan cancel on document");
       _dragStartInInteractor = null;
       _dragStartInDoc = null;
       _dragEndInInteractor = null;
+      _expandSelectionDuringDrag = false;
     });
 
     _stopScrollingUp();
@@ -475,6 +496,7 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
       baseOffset: _dragStartInDoc!,
       extentOffset: dragEndInDoc,
       selectionType: _selectionType,
+      expandSelection: _expandSelectionDuringDrag,
     );
   }
 
@@ -483,6 +505,7 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     required Offset baseOffset,
     required Offset extentOffset,
     required SelectionType selectionType,
+    bool expandSelection = false,
   }) {
     editorGesturesLog.info("Selecting region with selection mode: $selectionType");
     DocumentSelection? selection = documentLayout.getDocumentSelectionInRegion(baseOffset, extentOffset);
@@ -539,7 +562,8 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     }
 
     widget.editContext.composer.selection = (DocumentSelection(
-      base: basePosition,
+      // If desired, expand the selection instead of replacing it.
+      base: expandSelection ? widget.editContext.composer.selection?.base ?? basePosition : basePosition,
       extent: extentPosition,
     ));
     editorGesturesLog.fine("Selected region: ${widget.editContext.composer.selection}");
