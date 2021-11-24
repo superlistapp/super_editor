@@ -70,6 +70,18 @@ class ListItemNode extends TextNode {
   bool hasEquivalentContent(DocumentNode other) {
     return other is ListItemNode && type == other.type && indent == other.indent && text == other.text;
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      super == other &&
+          other is ListItemNode &&
+          runtimeType == other.runtimeType &&
+          type == other.type &&
+          _indent == other._indent;
+
+  @override
+  int get hashCode => super.hashCode ^ type.hashCode ^ _indent.hashCode;
 }
 
 enum ListItemType {

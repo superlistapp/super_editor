@@ -116,6 +116,18 @@ class TextNode with ChangeNotifier implements DocumentNode {
 
   @override
   String toString() => '[TextNode] - text: $text, metadata: $metadata';
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is TextNode &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          _text == other._text &&
+          const DeepCollectionEquality.unordered().equals(_metadata, other._metadata);
+
+  @override
+  int get hashCode => id.hashCode ^ _text.hashCode ^ _metadata.hashCode;
 }
 
 /// A logical selection within a [TextNode].
