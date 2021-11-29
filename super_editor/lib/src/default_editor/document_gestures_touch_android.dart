@@ -8,6 +8,7 @@ import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/default_editor/text_tools.dart';
+import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/caret.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
@@ -130,6 +131,12 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     WidgetsBinding.instance!.removeObserver(this);
 
     _editingController.removeListener(_onEditingControllerChange);
+    // We dispose the EditingController on the next frame because
+    // the ListenableBuilder that uses it throws an error if we
+    // dispose of it here.
+    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      _editingController.dispose();
+    });
 
     widget.editContext.composer.removeListener(_onSelectionChange);
 
@@ -174,6 +181,14 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
   void _onSelectionChange() {
     _editingController.selection = widget.editContext.composer.selection;
+
+    if (_editingController.hasSelection && _editingController.selection!.isCollapsed) {
+      _editingController
+        ..unHideCollapsedHandle()
+        ..startCollapsedHandleAutoHideCountdown();
+    } else if (!_editingController.hasSelection) {
+      _editingController.cancelCollapsedHandleAutoHideCountdown();
+    }
   }
 
   /// Returns the layout for the current document, which answers questions
@@ -726,6 +741,10 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
     _caretBlinkController = CaretBlinkController(tickerProvider: this);
     _prevSelection = widget.editingController.selection;
     widget.editingController.addListener(_onEditingControllerChange);
+
+    if (widget.editingController.hasSelection && widget.editingController.selection!.isCollapsed) {
+      widget.editingController.startCollapsedHandleAutoHideCountdown();
+    }
   }
 
   @override
@@ -762,9 +781,9 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
   void _onCollapsedPanStart(DragStartDetails details) {
     editorGesturesLog.fine('_onCollapsedPanStart');
 
-    // widget.editingController
-    //   ..hideToolbar()
-    //   ..cancelCollapsedHandleAutoHideCountdown();
+    widget.editingController
+      //   ..hideToolbar()
+      ..cancelCollapsedHandleAutoHideCountdown();
 
     _startDragPositionOffset = widget.documentLayout
         .getRectForPosition(
@@ -928,9 +947,9 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
         // widget.editingController.showToolbar();
       } else {
         // The collapsed handle should disappear after some inactivity.
-        // widget.editingController
-        //   ..unHideCollapsedHandle()
-        //   ..startCollapsedHandleAutoHideCountdown();
+        widget.editingController
+          //   ..unHideCollapsedHandle()
+          ..startCollapsedHandleAutoHideCountdown();
       }
     });
 
@@ -942,9 +961,9 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
     return SizedBox(
       width: double.infinity,
       height: double.infinity,
-      child: AnimatedBuilder(
-        animation: widget.editingController,
-        builder: (context, child) {
+      child: ListenableBuilder(
+        listenable: widget.editingController,
+        builder: (context) {
           return Stack(
             children: [
               _buildCaret(),

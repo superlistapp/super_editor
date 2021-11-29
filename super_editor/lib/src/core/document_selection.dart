@@ -32,7 +32,7 @@ class DocumentSelection {
 
   /// Creates a selection from the [base] position to the [extent] position
   /// within the document.
-  DocumentSelection({
+  const DocumentSelection({
     required this.base,
     required this.extent,
   });

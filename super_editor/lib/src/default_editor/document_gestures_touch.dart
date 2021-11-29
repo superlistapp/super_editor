@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_selection.dart';
@@ -58,19 +60,60 @@ class EditingController with ChangeNotifier {
     required Document document,
   }) : _document = document;
 
+  @override
+  void dispose() {
+    _handleAutoHideTimer?.cancel();
+    super.dispose();
+  }
+
   final Document _document;
   Document get document => _document;
 
   // TODO:
   bool get areHandlesDesired => true;
 
-  // TODO:
-  bool get isCollapsedHandleAutoHidden => false;
+  // The collapsed handle is auto-hidden on Android after a period of inactivity.
+  // We represent the auto-hidden status of the collapsed handle independently
+  // from the general visibility of all handles. This way, the expanded handles
+  // are not inadvertently hidden due to the collapsed handle being hidden. Also,
+  // this allows for fading out of the collapsed handle, rather than the abrupt
+  // disappearance of all handles.
+  final Duration _handleAutoHideDuration = const Duration(seconds: 4);
+  Timer? _handleAutoHideTimer;
+  bool _isCollapsedHandleAutoHidden = false;
+  bool get isCollapsedHandleAutoHidden => _isCollapsedHandleAutoHidden;
+
+  void unHideCollapsedHandle() {
+    if (_isCollapsedHandleAutoHidden) {
+      _isCollapsedHandleAutoHidden = false;
+      notifyListeners();
+    }
+  }
+
+  void startCollapsedHandleAutoHideCountdown() {
+    _handleAutoHideTimer?.cancel();
+    _handleAutoHideTimer = Timer(_handleAutoHideDuration, _hideCollapsedHandle);
+  }
+
+  void cancelCollapsedHandleAutoHideCountdown() {
+    _handleAutoHideTimer?.cancel();
+  }
+
+  void _hideCollapsedHandle() {
+    if (!_isCollapsedHandleAutoHidden) {
+      _isCollapsedHandleAutoHidden = true;
+      notifyListeners();
+    }
+  }
 
   DocumentSelection? _selection;
   bool get hasSelection => _selection != null;
   DocumentSelection? get selection => _selection;
   set selection(newSelection) {
+    if (newSelection == _selection) {
+      return;
+    }
+
     _selection = newSelection;
 
     notifyListeners();
