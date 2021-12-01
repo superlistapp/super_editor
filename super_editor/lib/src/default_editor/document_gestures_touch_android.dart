@@ -342,17 +342,32 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   }
 
   final _maxDragSpeed = 2;
+  Offset? _globalStartDragOffset;
   Offset? _dragStartInDoc;
+  Offset? _startDragPositionOffset;
   double? _dragStartScrollOffset;
+  Offset? _globalDragOffset;
   Offset? _dragEndInInteractor;
+  // TODO: HandleType is the wrong type here, we need collapsed/base/extent,
+  //       not collapsed/upstream/downstream. Change the type once it's working.
+  HandleType? _dragHandleType;
   bool _scrollUpOnTick = false;
   bool _scrollDownOnTick = false;
   late Ticker _ticker;
 
-  void _onHandleDragStart(Offset globalOffset) {
+  void _onHandleDragStart(HandleType handleType, Offset globalOffset) {
+    _dragHandleType = handleType;
+    _globalStartDragOffset = globalOffset;
+
     final interactorBox = context.findRenderObject() as RenderBox;
     final handleOffsetInInteractor = interactorBox.globalToLocal(globalOffset);
     _dragStartInDoc = _getDocOffset(handleOffsetInInteractor);
+
+    _startDragPositionOffset = _docLayout
+        .getRectForPosition(
+          handleType == HandleType.upstream ? _editingController.selection!.base : _editingController.selection!.extent,
+        )!
+        .center;
 
     // We need to record the scroll offset at the beginning of
     // a drag for the case that this interactor is embedded
@@ -365,6 +380,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   }
 
   void _onHandleDragUpdate(Offset globalOffset) {
+    _globalDragOffset = globalOffset;
     final interactorBox = context.findRenderObject() as RenderBox;
     _dragEndInInteractor = interactorBox.globalToLocal(globalOffset);
 
@@ -372,6 +388,8 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     final scrollDeltaWhileDragging = _dragStartScrollOffset! - _scrollPosition.pixels;
     final dragEndInViewport =
         _interactorOffsetInViewport(_dragEndInInteractor!); // - Offset(0, scrollDeltaWhileDragging);
+
+    _updateSelectionForNewDragHandleLocation();
 
     editorGesturesLog.finest("Scrolling, if near boundary:");
     editorGesturesLog.finest(' - Scroll delta while dragging: $scrollDeltaWhileDragging');
@@ -394,6 +412,31 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       _startScrollingDown();
     } else {
       _stopScrollingDown();
+    }
+  }
+
+  void _updateSelectionForNewDragHandleLocation() {
+    final docDragDelta = _globalDragOffset! - _globalStartDragOffset!;
+    final dragScrollDelta = _dragStartScrollOffset! - _scrollPosition.pixels;
+    final docDragPosition =
+        _docLayout.getDocumentPositionAtOffset(_startDragPositionOffset! + docDragDelta - Offset(0, dragScrollDelta));
+
+    if (docDragPosition == null) {
+      return;
+    }
+
+    if (_dragHandleType == HandleType.collapsed) {
+      _editingController.selection = DocumentSelection.collapsed(
+        position: docDragPosition,
+      );
+    } else if (_dragHandleType == HandleType.upstream) {
+      _editingController.selection = _editingController.selection!.copyWith(
+        base: docDragPosition,
+      );
+    } else if (_dragHandleType == HandleType.downstream) {
+      _editingController.selection = _editingController.selection!.copyWith(
+        extent: docDragPosition,
+      );
     }
   }
 
@@ -527,27 +570,31 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     final scrollDeltaWhileDragging = _dragStartScrollOffset! - _scrollPosition.pixels;
     final dragEndInDoc = _getDocOffset(_dragEndInInteractor! /* - Offset(0, scrollDeltaWhileDragging)*/);
 
-    _selectRegion(
-      documentLayout: _docLayout,
-      extentOffset: dragEndInDoc,
-    );
-  }
-
-  void _selectRegion({
-    required DocumentLayout documentLayout,
-    required Offset extentOffset,
-  }) {
     // TODO: I changed this behavior to get a collapsed handle working - update it
     //       to support base/extent selection
-    editorGesturesLog.info("Selecting region");
-    DocumentSelection? selection = documentLayout.getDocumentSelectionInRegion(extentOffset, extentOffset);
-    DocumentPosition? basePosition = selection?.base;
-    DocumentPosition? extentPosition = selection?.extent;
-    editorGesturesLog.fine(" - base: $basePosition, extent: $extentPosition");
+    final dragPosition = _docLayout.getDocumentPositionAtOffset(dragEndInDoc);
+    editorGesturesLog.info("Selecting new position during drag: $dragPosition");
 
-    if (basePosition == null || extentPosition == null) {
+    if (dragPosition == null) {
       // widget.editContext.composer.selection = null;
       return;
+    }
+
+    late DocumentPosition basePosition;
+    late DocumentPosition extentPosition;
+    switch (_dragHandleType!) {
+      case HandleType.collapsed:
+        basePosition = dragPosition;
+        extentPosition = dragPosition;
+        break;
+      case HandleType.upstream:
+        basePosition = dragPosition;
+        extentPosition = widget.editContext.composer.selection!.extent;
+        break;
+      case HandleType.downstream:
+        basePosition = widget.editContext.composer.selection!.base;
+        extentPosition = dragPosition;
+        break;
     }
 
     widget.editContext.composer.selection = DocumentSelection(
@@ -693,7 +740,7 @@ class AndroidDocumentTouchEditingControls extends StatefulWidget {
   final LayerLink documentLayerLink;
   final DocumentLayout documentLayout;
   final Color handleColor;
-  final void Function(Offset globalOffset)? onHandleDragStart;
+  final void Function(HandleType handleType, Offset globalOffset)? onHandleDragStart;
   final void Function(Offset globalOffset)? onHandleDragUpdate;
   final void Function()? onHandleDragEnd;
   final bool showDebugPaint;
@@ -721,16 +768,8 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
   final _upstreamHandleKey = GlobalKey();
   final _downstreamHandleKey = GlobalKey();
 
-  bool _isDraggingCollapsed = false;
   bool _isDraggingBase = false;
   bool _isDraggingExtent = false;
-  Offset? _globalStartDragOffset;
-  Offset? _globalDragOffset;
-  Offset? _localDragOffset;
-  // The (x,y) at the center of the content that was selected
-  // when the drag began, e.g., the center of a character, or the
-  // center of an image.
-  Offset? _startDragPositionOffset;
 
   late CaretBlinkController _caretBlinkController;
   DocumentSelection? _prevSelection;
@@ -785,31 +824,12 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
       //   ..hideToolbar()
       ..cancelCollapsedHandleAutoHideCountdown();
 
-    _startDragPositionOffset = widget.documentLayout
-        .getRectForPosition(
-          widget.editingController.selection!.extent,
-        )!
-        .center;
-
-    // // TODO: de-dup the repeated calculations of the effective focal point: globalPosition + _touchHandleOffsetFromLineOfText
-    // widget.textScrollController.updateAutoScrollingForTouchOffset(
-    //   userInteractionOffsetInViewport: (widget.textFieldKey.currentContext!.findRenderObject() as RenderBox)
-    //       .globalToLocal(globalOffsetInMiddleOfLine),
-    // );
-    // widget.textScrollController.addListener(_updateSelectionForNewDragHandleLocation);
-
     setState(() {
-      _isDraggingCollapsed = true;
       _isDraggingBase = false;
       _isDraggingExtent = false;
-      _globalStartDragOffset = details.globalPosition;
-      _globalDragOffset = details.globalPosition;
-      // We map global to local instead of using  details.localPosition because
-      // this drag event started in a handle, not within this overall widget.
-      _localDragOffset = (context.findRenderObject() as RenderBox).globalToLocal(details.globalPosition);
     });
 
-    widget.onHandleDragStart?.call(details.globalPosition);
+    widget.onHandleDragStart?.call(HandleType.collapsed, details.globalPosition);
   }
 
   void _onBasePanStart(DragStartDetails details) {
@@ -817,29 +837,12 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
 
     // widget.editingController.hideToolbar();
 
-    _startDragPositionOffset = widget.documentLayout
-        .getRectForPosition(
-          widget.editingController.selection!.base,
-        )!
-        .center;
-
-    // widget.textScrollController.updateAutoScrollingForTouchOffset(
-    //   userInteractionOffsetInViewport:
-    //   (widget.textFieldKey.currentContext!.findRenderObject() as RenderBox).globalToLocal(details.globalPosition),
-    // );
-    // widget.textScrollController.addListener(_updateSelectionForNewDragHandleLocation);
-
     setState(() {
       _isDraggingBase = true;
       _isDraggingExtent = false;
-      _globalStartDragOffset = details.globalPosition;
-      _globalDragOffset = details.globalPosition;
-      // We map global to local instead of using  details.localPosition because
-      // this drag event started in a handle, not within this overall widget.
-      _localDragOffset = (context.findRenderObject() as RenderBox).globalToLocal(details.globalPosition);
     });
 
-    widget.onHandleDragStart?.call(details.globalPosition);
+    widget.onHandleDragStart?.call(HandleType.upstream, details.globalPosition);
   }
 
   void _onExtentPanStart(DragStartDetails details) {
@@ -847,75 +850,18 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
 
     // widget.editingController.hideToolbar();
 
-    _startDragPositionOffset = widget.documentLayout
-        .getRectForPosition(
-          widget.editingController.selection!.extent,
-        )!
-        .center;
-
-    // widget.textScrollController.updateAutoScrollingForTouchOffset(
-    //   userInteractionOffsetInViewport:
-    //   (widget.textFieldKey.currentContext!.findRenderObject() as RenderBox).globalToLocal(details.globalPosition),
-    // );
-    // widget.textScrollController.addListener(_updateSelectionForNewDragHandleLocation);
-
     setState(() {
       _isDraggingBase = false;
       _isDraggingExtent = true;
-      _globalStartDragOffset = details.globalPosition;
-      _globalDragOffset = details.globalPosition;
-      _localDragOffset = (context.findRenderObject() as RenderBox).globalToLocal(details.globalPosition);
     });
 
-    widget.onHandleDragStart?.call(details.globalPosition);
+    widget.onHandleDragStart?.call(HandleType.downstream, details.globalPosition);
   }
 
   void _onPanUpdate(DragUpdateDetails details) {
     editorGesturesLog.fine('_onPanUpdate');
 
-    // Must set global drag offset before _updateSelectionForNewDragHandleLocation()
-    _globalDragOffset = details.globalPosition;
-    editorGesturesLog.fine(' - global offset: $_globalDragOffset');
-    _updateSelectionForNewDragHandleLocation();
-    editorGesturesLog.fine(' - done updating selection for new drag handle location');
-
-    // TODO: de-dup the repeated calculations of the effective focal point: globalPosition + _touchHandleOffsetFromLineOfText
-    // widget.textScrollController.updateAutoScrollingForTouchOffset(
-    //   userInteractionOffsetInViewport: (widget.textFieldKey.currentContext!.findRenderObject() as RenderBox)
-    //       .globalToLocal(details.globalPosition + _touchHandleOffsetFromLineOfText!),
-    // );
-    // editorGesturesLog.fine(' - updated auto scrolling for touch offset');
-
-    setState(() {
-      _localDragOffset = _localDragOffset! + details.delta;
-      // widget.editingController.showMagnifier(_localDragOffset!);
-      editorGesturesLog.fine(' - done updating all local state for drag update');
-    });
-
     widget.onHandleDragUpdate?.call(details.globalPosition);
-  }
-
-  void _updateSelectionForNewDragHandleLocation() {
-    final docDragDelta = _globalDragOffset! - _globalStartDragOffset!;
-    final docDragPosition = widget.documentLayout.getDocumentPositionAtOffset(_startDragPositionOffset! + docDragDelta);
-
-    if (docDragPosition == null) {
-      return;
-    }
-
-    if (_isDraggingCollapsed) {
-      widget.editingController.selection = DocumentSelection.collapsed(
-        position: docDragPosition,
-      );
-    } else if (_isDraggingBase) {
-      widget.editingController.selection = widget.editingController.selection!.copyWith(
-        base: docDragPosition,
-      );
-    } else if (_isDraggingExtent) {
-      widget.editingController.selection = widget.editingController.selection!.copyWith(
-        extent: docDragPosition,
-      );
-    }
   }
 
   void _onPanEnd(DragEndDetails details) {
@@ -930,13 +876,10 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
 
   void _onHandleDragEnd() {
     editorGesturesLog.fine('_onHandleDragEnd()');
-    // widget.textScrollController.stopScrolling();
-    // widget.textScrollController.removeListener(_updateSelectionForNewDragHandleLocation);
 
     // TODO: ensure that extent is visible
 
     setState(() {
-      _isDraggingCollapsed = false;
       _isDraggingBase = false;
       _isDraggingExtent = false;
       // widget.editingController.hideMagnifier();
@@ -1195,4 +1138,41 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
       ),
     );
   }
+}
+
+class HandleStartDragEvent {
+  const HandleStartDragEvent({
+    required this.handleType,
+    required this.globalHandleDragStartOffset,
+    required this.globalHandleDocPositionRect,
+  });
+
+  /// The type of handle that the user started to drag.
+  final HandleType handleType;
+
+  /// The global offset where the user started dragging.
+  ///
+  /// This offset sits somewhere within the handle that the
+  /// user is dragging.
+  final Offset globalHandleDragStartOffset;
+
+  /// The global rectangle that contains the content next to
+  /// the caret where the handle sits.
+  ///
+  /// This rectangle encapsulate a character, or an image, etc.
+  final Rect globalHandleDocPositionRect;
+}
+
+class HandleUpdateDragEvent {
+  const HandleUpdateDragEvent({
+    required this.handleType,
+    required this.globalHandleDragOffset,
+  });
+
+  /// The type of handle that the user started to drag.
+  final HandleType handleType;
+
+  /// The current global offset of the user's pointer during
+  /// a handle drag event.
+  final Offset globalHandleDragOffset;
 }
