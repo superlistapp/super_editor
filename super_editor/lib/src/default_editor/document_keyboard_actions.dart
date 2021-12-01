@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document.dart';
@@ -364,16 +365,6 @@ ExecutionInstruction cmdIToToggleItalics({
     editContext.commonOps.toggleAttributionsOnSelection({italicsAttribution});
     return ExecutionInstruction.haltExecution;
   }
-}
-
-/// Stops handler executions if the primary shortcut key is currently
-/// pressed, i.e., CMD on Mac, CTL on Windows/Linux.
-ExecutionInstruction ignoreUnhandledShortcuts({
-  required EditContext editContext,
-  required RawKeyEvent keyEvent,
-}) {
-  print("HELLO? Is shortcut pressed: ${keyEvent.isPrimaryShortcutKeyPressed}");
-  return keyEvent.isPrimaryShortcutKeyPressed ? ExecutionInstruction.blocked : ExecutionInstruction.continueExecution;
 }
 
 ExecutionInstruction anyCharacterOrDestructiveKeyToDeleteSelection({

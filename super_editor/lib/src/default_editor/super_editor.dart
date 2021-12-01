@@ -508,7 +508,6 @@ final defaultKeyboardActions = <DocumentKeyboardAction>[
   enterToInsertBlockNewline,
   backspaceToRemoveUpstreamContent,
   deleteToRemoveDownstreamContent,
-  ignoreUnhandledShortcuts,
   anyCharacterOrDestructiveKeyToDeleteSelection,
   anyCharacterToInsertInParagraph,
   anyCharacterToInsertInTextContent,
