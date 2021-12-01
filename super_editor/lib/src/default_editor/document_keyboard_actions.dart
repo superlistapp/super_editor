@@ -366,6 +366,16 @@ ExecutionInstruction cmdIToToggleItalics({
   }
 }
 
+/// Stops handler executions if the primary shortcut key is currently
+/// pressed, i.e., CMD on Mac, CTL on Windows/Linux.
+ExecutionInstruction ignoreUnhandledShortcuts({
+  required EditContext editContext,
+  required RawKeyEvent keyEvent,
+}) {
+  print("HELLO? Is shortcut pressed: ${keyEvent.isPrimaryShortcutKeyPressed}");
+  return keyEvent.isPrimaryShortcutKeyPressed ? ExecutionInstruction.blocked : ExecutionInstruction.continueExecution;
+}
+
 ExecutionInstruction anyCharacterOrDestructiveKeyToDeleteSelection({
   required EditContext editContext,
   required RawKeyEvent keyEvent,

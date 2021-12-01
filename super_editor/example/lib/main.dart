@@ -1,4 +1,5 @@
 import 'package:example/demos/components/demo_text_with_hint.dart';
+import 'package:example/demos/demo_app_shortcuts.dart';
 import 'package:example/demos/demo_rtl.dart';
 import 'package:example/demos/demo_markdown_serialization.dart';
 import 'package:example/demos/demo_paragraphs.dart';
@@ -180,6 +181,13 @@ final _menu = <_MenuGroup>[
         title: 'Lose Focus Demo',
         pageBuilder: (context) {
           return LoseFocusDemo();
+        },
+      ),
+      _MenuItem(
+        icon: Icons.shortcut,
+        title: 'App Shortcuts',
+        pageBuilder: (context) {
+          return AppShortcutsDemo();
         },
       ),
       _MenuItem(

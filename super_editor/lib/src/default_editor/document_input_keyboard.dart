@@ -44,7 +44,7 @@ class DocumentKeyboardInteractor extends StatelessWidget {
   /// somewhere in the sub-tree.
   final Widget child;
 
-  KeyEventResult _onKeyPressed(RawKeyEvent keyEvent) {
+  KeyEventResult _onRawKeyPressed(RawKeyEvent keyEvent) {
     if (keyEvent is! RawKeyDownEvent) {
       editorKeyLog.finer("Received key event, but ignoring because it's not a down event: $keyEvent");
       return KeyEventResult.handled;
@@ -58,23 +58,64 @@ class DocumentKeyboardInteractor extends StatelessWidget {
         editContext: editContext,
         keyEvent: keyEvent,
       );
+      print('Handler action: $instruction');
       index += 1;
     }
 
-    return instruction == ExecutionInstruction.haltExecution ? KeyEventResult.handled : KeyEventResult.ignored;
+    switch (instruction) {
+      case ExecutionInstruction.continueExecution:
+        return KeyEventResult.ignored;
+      case ExecutionInstruction.blocked:
+        return KeyEventResult.skipRemainingHandlers;
+      case ExecutionInstruction.haltExecution:
+        return KeyEventResult.handled;
+    }
+  }
+
+  KeyEventResult _onKeyPressed(FocusNode node, RawKeyEvent keyEvent) {
+    if (keyEvent is! RawKeyDownEvent) {
+      editorKeyLog.finer("Received key event, but ignoring because it's not a down event: $keyEvent");
+      return KeyEventResult.handled;
+    }
+
+    editorKeyLog.info("Handling key press: $keyEvent");
+    ExecutionInstruction instruction = ExecutionInstruction.continueExecution;
+    int index = 0;
+    while (instruction == ExecutionInstruction.continueExecution && index < keyboardActions.length) {
+      instruction = keyboardActions[index](
+        editContext: editContext,
+        keyEvent: keyEvent,
+      );
+      print('Handler action: $instruction');
+      index += 1;
+    }
+
+    switch (instruction) {
+      case ExecutionInstruction.haltExecution:
+        return KeyEventResult.handled;
+      case ExecutionInstruction.continueExecution:
+      case ExecutionInstruction.blocked:
+        return KeyEventResult.ignored;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return _buildSuppressUnhandledKeySound(
-      // TODO: try to replace RawKeyboardListener with a regular FocusNode and onKey
-      child: RawKeyboardListener(
-        focusNode: focusNode,
-        onKey: _onKeyPressed,
-        autofocus: true,
-        child: child,
-      ),
+    return Focus(
+      focusNode: focusNode,
+      onKey: _onKeyPressed,
+      autofocus: true,
+      child: child,
     );
+    // return _buildSuppressUnhandledKeySound(
+    //   // TODO: try to replace RawKeyboardListener with a regular FocusNode and onKey
+    //   child: RawKeyboardListener(
+    //     focusNode: focusNode,
+    //     onKey: _onKeyPressed,
+    //     autofocus: true,
+    //     child: child,
+    //   ),
+    // );
   }
 
   /// Wraps the [child] with a [Focus] node that reports to handle
@@ -104,6 +145,28 @@ typedef DocumentKeyboardAction = ExecutionInstruction Function({
 });
 
 enum ExecutionInstruction {
+  /// The handler recognized the key event and chose to
+  /// take an action.
+  ///
+  /// No other handler should receive the key event.
+  ///
+  /// The key event **shouldn't** bubble up the tree.
   continueExecution,
+
+  /// The handler recognized the key event but chose to
+  /// take no action.
+  ///
+  /// No other handler should receive the key event.
+  ///
+  /// The key event **should** bubble up the tree to
+  /// (possibly) be handled by other keyboard/shortcut
+  /// listeners.
+  blocked,
+
+  /// The handler has no relation to the key event and
+  /// took no action.
+  ///
+  /// Other handlers should be given a chance to act on
+  /// the key press.
   haltExecution,
 }
