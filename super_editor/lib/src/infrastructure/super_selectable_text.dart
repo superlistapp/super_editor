@@ -480,9 +480,11 @@ class SuperSelectableTextState extends State<SuperSelectableText> implements Tex
   Widget build(BuildContext context) {
     if (_renderParagraph == null) {
       WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
-        setState(() {
-          // Force another frame so that we can use the renderParagraph.
-        });
+        if (mounted) {
+          setState(() {
+            // Force another frame so that we can use the renderParagraph.
+          });
+        }
       });
     }
 

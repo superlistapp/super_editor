@@ -44,10 +44,21 @@ class DocumentKeyboardInteractor extends StatelessWidget {
   /// somewhere in the sub-tree.
   final Widget child;
 
-  KeyEventResult _onKeyPressed(RawKeyEvent keyEvent) {
+  KeyEventResult _onKeyPressed(FocusNode node, RawKeyEvent keyEvent) {
     if (keyEvent is! RawKeyDownEvent) {
       editorKeyLog.finer("Received key event, but ignoring because it's not a down event: $keyEvent");
       return KeyEventResult.handled;
+    }
+
+    // Try to execute an app shortcut for this key combo. If a shortcut
+    // runs, then return that result and skip editor handling. If no shortcut
+    // runs, then try to process this key in the editor.
+    final shortcuts = Shortcuts.maybeOf(node.context!);
+    if (shortcuts != null) {
+      final result = shortcuts.handleKeypress(node.context!, keyEvent);
+      if (result != KeyEventResult.ignored) {
+        return result;
+      }
     }
 
     editorKeyLog.info("Handling key press: $keyEvent");
@@ -61,29 +72,21 @@ class DocumentKeyboardInteractor extends StatelessWidget {
       index += 1;
     }
 
-    return instruction == ExecutionInstruction.haltExecution ? KeyEventResult.handled : KeyEventResult.ignored;
+    switch (instruction) {
+      case ExecutionInstruction.haltExecution:
+        return KeyEventResult.handled;
+      case ExecutionInstruction.continueExecution:
+      case ExecutionInstruction.blocked:
+        return KeyEventResult.ignored;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return _buildSuppressUnhandledKeySound(
-      // TODO: try to replace RawKeyboardListener with a regular FocusNode and onKey
-      child: RawKeyboardListener(
-        focusNode: focusNode,
-        onKey: _onKeyPressed,
-        autofocus: true,
-        child: child,
-      ),
-    );
-  }
-
-  /// Wraps the [child] with a [Focus] node that reports to handle
-  /// any and all keys so that no error sound plays on desktop.
-  Widget _buildSuppressUnhandledKeySound({
-    required Widget child,
-  }) {
     return Focus(
-      onKey: (node, event) => KeyEventResult.handled,
+      focusNode: focusNode,
+      onKey: _onKeyPressed,
+      autofocus: true,
       child: child,
     );
   }
@@ -104,6 +107,28 @@ typedef DocumentKeyboardAction = ExecutionInstruction Function({
 });
 
 enum ExecutionInstruction {
+  /// The handler recognized the key event and chose to
+  /// take an action.
+  ///
+  /// No other handler should receive the key event.
+  ///
+  /// The key event **shouldn't** bubble up the tree.
   continueExecution,
+
+  /// The handler recognized the key event but chose to
+  /// take no action.
+  ///
+  /// No other handler should receive the key event.
+  ///
+  /// The key event **should** bubble up the tree to
+  /// (possibly) be handled by other keyboard/shortcut
+  /// listeners.
+  blocked,
+
+  /// The handler has no relation to the key event and
+  /// took no action.
+  ///
+  /// Other handlers should be given a chance to act on
+  /// the key press.
   haltExecution,
 }
