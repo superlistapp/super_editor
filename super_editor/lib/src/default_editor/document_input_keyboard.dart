@@ -44,34 +44,6 @@ class DocumentKeyboardInteractor extends StatelessWidget {
   /// somewhere in the sub-tree.
   final Widget child;
 
-  KeyEventResult _onRawKeyPressed(RawKeyEvent keyEvent) {
-    if (keyEvent is! RawKeyDownEvent) {
-      editorKeyLog.finer("Received key event, but ignoring because it's not a down event: $keyEvent");
-      return KeyEventResult.handled;
-    }
-
-    editorKeyLog.info("Handling key press: $keyEvent");
-    ExecutionInstruction instruction = ExecutionInstruction.continueExecution;
-    int index = 0;
-    while (instruction == ExecutionInstruction.continueExecution && index < keyboardActions.length) {
-      instruction = keyboardActions[index](
-        editContext: editContext,
-        keyEvent: keyEvent,
-      );
-      print('Handler action: $instruction');
-      index += 1;
-    }
-
-    switch (instruction) {
-      case ExecutionInstruction.continueExecution:
-        return KeyEventResult.ignored;
-      case ExecutionInstruction.blocked:
-        return KeyEventResult.skipRemainingHandlers;
-      case ExecutionInstruction.haltExecution:
-        return KeyEventResult.handled;
-    }
-  }
-
   KeyEventResult _onKeyPressed(FocusNode node, RawKeyEvent keyEvent) {
     if (keyEvent is! RawKeyDownEvent) {
       editorKeyLog.finer("Received key event, but ignoring because it's not a down event: $keyEvent");
@@ -97,7 +69,6 @@ class DocumentKeyboardInteractor extends StatelessWidget {
         editContext: editContext,
         keyEvent: keyEvent,
       );
-      print('Handler action: $instruction');
       index += 1;
     }
 
@@ -116,26 +87,6 @@ class DocumentKeyboardInteractor extends StatelessWidget {
       focusNode: focusNode,
       onKey: _onKeyPressed,
       autofocus: true,
-      child: child,
-    );
-    // return _buildSuppressUnhandledKeySound(
-    //   // TODO: try to replace RawKeyboardListener with a regular FocusNode and onKey
-    //   child: RawKeyboardListener(
-    //     focusNode: focusNode,
-    //     onKey: _onKeyPressed,
-    //     autofocus: true,
-    //     child: child,
-    //   ),
-    // );
-  }
-
-  /// Wraps the [child] with a [Focus] node that reports to handle
-  /// any and all keys so that no error sound plays on desktop.
-  Widget _buildSuppressUnhandledKeySound({
-    required Widget child,
-  }) {
-    return Focus(
-      onKey: (node, event) => KeyEventResult.handled,
       child: child,
     );
   }
