@@ -57,7 +57,7 @@ class IOSDocumentTouchInteractor extends StatefulWidget {
 }
 
 class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
-    with WidgetsBindingObserver, SingleTickerProviderStateMixin {
+    with WidgetsBindingObserver, SingleTickerProviderStateMixin, DragHandleAutoScrolling {
   final _documentWrapperKey = GlobalKey();
   final _documentLayerLink = LayerLink();
 
@@ -90,6 +90,8 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   void initState() {
     super.initState();
 
+    initAutoScroller(this, widget.dragAutoScrollBoundary);
+
     widget.focusNode.addListener(_onFocusChange);
     if (widget.focusNode.hasFocus) {
       _showEditingControlsOverlay();
@@ -101,8 +103,6 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
       ..addListener(_onEditingControllerChange);
 
     widget.editContext.composer.addListener(_onSelectionChange);
-
-    _ticker = createTicker(_onTick);
 
     WidgetsBinding.instance!.addObserver(this);
   }
@@ -145,8 +145,6 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   void dispose() {
     WidgetsBinding.instance!.removeObserver(this);
 
-    _ticker.dispose();
-
     _editingController.removeListener(_onEditingControllerChange);
 
     widget.editContext.composer.removeListener(_onSelectionChange);
@@ -156,6 +154,8 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     if (widget.scrollController == null) {
       _scrollController.dispose();
     }
+
+    disposeAutoScroller();
 
     widget.focusNode.removeListener(_onFocusChange);
 
@@ -208,7 +208,8 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   /// If this widget doesn't have an ancestor `Scrollable`, then this
   /// widget includes a `ScrollView` and the `ScrollView`'s position
   /// is returned.
-  ScrollPosition get _scrollPosition => _ancestorScrollPosition ?? _scrollController.position;
+  @override
+  ScrollPosition get scrollPosition => _ancestorScrollPosition ?? _scrollController.position;
 
   /// Returns the `RenderBox` for the scrolling viewport.
   ///
@@ -218,8 +219,12 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   /// If this widget doesn't have an ancestor `Scrollable`, then this
   /// widget includes a `ScrollView` and this `State`'s render object
   /// is the viewport `RenderBox`.
-  RenderBox get _viewport =>
+  @override
+  RenderBox get viewportBox =>
       (Scrollable.of(context)?.context.findRenderObject() ?? context.findRenderObject()) as RenderBox;
+
+  @override
+  RenderBox get interactorBox => context.findRenderObject() as RenderBox;
 
   /// Converts the given [offset] from the [DocumentInteractor]'s coordinate
   /// space to the [DocumentLayout]'s coordinate space.
@@ -238,8 +243,6 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   Offset _interactorOffsetInViewport(Offset interactorOffset) {
     // Viewport might be our box, or an ancestor box if we're inside someone
     // else's Scrollable.
-    final viewportBox = _viewport;
-    final interactorBox = context.findRenderObject() as RenderBox;
     return viewportBox.globalToLocal(
       interactorBox.localToGlobal(interactorOffset),
     );
@@ -415,7 +418,8 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     // account for the fact that this interactor is moving within
     // the ancestor scrollable, despite the fact that the user's
     // finger/mouse position hasn't changed.
-    _dragStartScrollOffset = _scrollPosition.pixels;
+    onAutoScrollStartDragScrollOffsetChanged(scrollPosition.pixels);
+    _dragStartScrollOffset = scrollPosition.pixels;
   }
 
   bool _isOverCollapsedHandle(Offset interactorOffset) {
@@ -476,7 +480,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     // If the user isn't dragging a handle, then the user is trying to
     // scroll the document. Scroll it, accordingly.
     if (_dragMode == null) {
-      _scrollPosition.jumpTo(_scrollPosition.pixels - details.delta.dy);
+      scrollPosition.jumpTo(scrollPosition.pixels - details.delta.dy);
       return;
     }
 
@@ -491,8 +495,10 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     final interactorBox = context.findRenderObject() as RenderBox;
     _dragEndInInteractor = interactorBox.globalToLocal(details.globalPosition);
 
-    final viewport = _viewport;
-    final scrollDeltaWhileDragging = _dragStartScrollOffset! - _scrollPosition.pixels;
+    onAutoScrollDragOffsetChange(_dragEndInInteractor!);
+
+    final viewport = viewportBox;
+    final scrollDeltaWhileDragging = _dragStartScrollOffset! - scrollPosition.pixels;
     final dragEndInViewport =
         _interactorOffsetInViewport(_dragEndInInteractor!); // - Offset(0, scrollDeltaWhileDragging);
 
@@ -509,22 +515,22 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
         ' - Auto-scroll diff: ${viewport.size.height - dragEndInViewport.dy < widget.dragAutoScrollBoundary.trailing}');
     if (dragEndInViewport.dy < widget.dragAutoScrollBoundary.leading) {
       editorGesturesLog.finest('Metrics say we should try to scroll up');
-      _startScrollingUp();
+      startScrollingUp();
     } else {
-      _stopScrollingUp();
+      stopScrollingUp();
     }
 
     if (viewport.size.height - dragEndInViewport.dy < widget.dragAutoScrollBoundary.trailing) {
       editorGesturesLog.finest('Metrics say we should try to scroll down');
-      _startScrollingDown();
+      startScrollingDown();
     } else {
-      _stopScrollingDown();
+      stopScrollingDown();
     }
   }
 
   void _updateSelectionForNewDragHandleLocation() {
     final docDragDelta = _globalDragOffset! - _globalStartDragOffset!;
-    final dragScrollDelta = _dragStartScrollOffset! - _scrollPosition.pixels;
+    final dragScrollDelta = _dragStartScrollOffset! - scrollPosition.pixels;
     final docDragPosition =
         _docLayout.getDocumentPositionAtOffset(_startDragPositionOffset! + docDragDelta - Offset(0, dragScrollDelta));
 
@@ -550,13 +556,13 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   void _onPanEnd(DragEndDetails details) {
     if (_dragMode == null) {
       // User was dragging the scroll area. Go ballistic.
-      if (_scrollPosition is ScrollPositionWithSingleContext) {
-        (_scrollPosition as ScrollPositionWithSingleContext).goBallistic(-details.velocity.pixelsPerSecond.dy);
+      if (scrollPosition is ScrollPositionWithSingleContext) {
+        (scrollPosition as ScrollPositionWithSingleContext).goBallistic(-details.velocity.pixelsPerSecond.dy);
       }
     } else {
       // The user was dragging a handle. Stop any auto-scrolling that may have started.
-      _stopScrollingUp();
-      _stopScrollingDown();
+      stopScrollingUp();
+      stopScrollingDown();
     }
 
     _dragMode = null;
@@ -573,126 +579,121 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     });
   }
 
-  void _startScrollingUp() {
-    if (_scrollUpOnTick) {
-      return;
-    }
+  // void _startScrollingUp() {
+  //   if (_scrollUpOnTick) {
+  //     return;
+  //   }
+  //
+  //   editorGesturesLog.finest('Starting to auto-scroll up');
+  //   _scrollUpOnTick = true;
+  //   _ticker.start();
+  // }
+  //
+  // void _stopScrollingUp() {
+  //   if (!_scrollUpOnTick) {
+  //     return;
+  //   }
+  //
+  //   editorGesturesLog.finest('Stopping auto-scroll up');
+  //   _scrollUpOnTick = false;
+  //   _ticker.stop();
+  // }
+  //
+  // void _scrollUp() {
+  //   if (_dragEndInInteractor == null) {
+  //     editorGesturesLog.warning("Tried to scroll up but couldn't because _dragEndInViewport is null");
+  //     assert(_dragEndInInteractor != null);
+  //     return;
+  //   }
+  //
+  //   if (scrollPosition.pixels <= 0) {
+  //     editorGesturesLog.finest("Tried to scroll up but the scroll position is already at the top");
+  //     return;
+  //   }
+  //
+  //   editorGesturesLog.finest("Scrolling up on tick");
+  //   final scrollDeltaWhileDragging = _dragStartScrollOffset! - scrollPosition.pixels;
+  //   editorGesturesLog.finest("Scroll delta: $scrollDeltaWhileDragging");
+  //   final dragEndInViewport =
+  //       _interactorOffsetInViewport(_dragEndInInteractor!); // - Offset(0, scrollDeltaWhileDragging);
+  //   editorGesturesLog.finest("Drag end in viewport: $dragEndInViewport");
+  //   final leadingScrollBoundary = widget.dragAutoScrollBoundary.leading;
+  //   final gutterAmount = dragEndInViewport.dy.clamp(0.0, leadingScrollBoundary);
+  //   final speedPercent = (1.0 - (gutterAmount / leadingScrollBoundary)).clamp(0.0, 1.0);
+  //   final scrollAmount = lerpDouble(0, _maxDragSpeed, speedPercent);
+  //
+  //   scrollPosition.jumpTo(scrollPosition.pixels - scrollAmount!);
+  //
+  //   // By changing the scroll offset, we may have changed the content
+  //   // selected by the user's current finger/mouse position. Update the
+  //   // document selection calculation.
+  //   updateDragSelection();
+  // }
+  //
+  // void _startScrollingDown() {
+  //   if (_scrollDownOnTick) {
+  //     return;
+  //   }
+  //
+  //   editorGesturesLog.finest('Starting to auto-scroll down');
+  //   _scrollDownOnTick = true;
+  //   _ticker.start();
+  // }
+  //
+  // void _stopScrollingDown() {
+  //   if (!_scrollDownOnTick) {
+  //     return;
+  //   }
+  //
+  //   editorGesturesLog.finest('Stopping auto-scroll down');
+  //   _scrollDownOnTick = false;
+  //   _ticker.stop();
+  // }
+  //
+  // void _scrollDown() {
+  //   if (_dragEndInInteractor == null) {
+  //     editorGesturesLog.warning("Tried to scroll down but couldn't because _dragEndInViewport is null");
+  //     assert(_dragEndInInteractor != null);
+  //     return;
+  //   }
+  //
+  //   if (scrollPosition.pixels >= scrollPosition.maxScrollExtent) {
+  //     editorGesturesLog.finest("Tried to scroll down but the scroll position is already beyond the max");
+  //     return;
+  //   }
+  //
+  //   editorGesturesLog.finest("Scrolling down on tick");
+  //   final dragEndInViewport =
+  //       _interactorOffsetInViewport(_dragEndInInteractor!); // - Offset(0, scrollDeltaWhileDragging);
+  //   final trailingScrollBoundary = widget.dragAutoScrollBoundary.trailing;
+  //   final gutterAmount = (viewportBox.size.height - dragEndInViewport.dy).clamp(0.0, trailingScrollBoundary);
+  //   final speedPercent = 1.0 - (gutterAmount / trailingScrollBoundary);
+  //   final scrollAmount = lerpDouble(0, _maxDragSpeed, speedPercent);
+  //
+  //   scrollPosition.jumpTo(scrollPosition.pixels + scrollAmount!);
+  //
+  //   // By changing the scroll offset, we may have changed the content
+  //   // selected by the user's current finger/mouse position. Update the
+  //   // document selection calculation.
+  //   updateDragSelection();
+  // }
+  //
+  // void _onTick(elapsedTime) {
+  //   if (_scrollUpOnTick) {
+  //     _scrollUp();
+  //   }
+  //   if (_scrollDownOnTick) {
+  //     _scrollDown();
+  //   }
+  // }
 
-    editorGesturesLog.finest('Starting to auto-scroll up');
-    _scrollUpOnTick = true;
-    _ticker.start();
-  }
-
-  void _stopScrollingUp() {
-    if (!_scrollUpOnTick) {
-      return;
-    }
-
-    editorGesturesLog.finest('Stopping auto-scroll up');
-    _scrollUpOnTick = false;
-    _ticker.stop();
-  }
-
-  void _scrollUp() {
-    if (_dragEndInInteractor == null) {
-      editorGesturesLog.warning("Tried to scroll up but couldn't because _dragEndInViewport is null");
-      assert(_dragEndInInteractor != null);
-      return;
-    }
-
-    if (_scrollPosition.pixels <= 0) {
-      editorGesturesLog.finest("Tried to scroll up but the scroll position is already at the top");
-      return;
-    }
-
-    editorGesturesLog.finest("Scrolling up on tick");
-    final scrollDeltaWhileDragging = _dragStartScrollOffset! - _scrollPosition.pixels;
-    editorGesturesLog.finest("Scroll delta: $scrollDeltaWhileDragging");
-    final dragEndInViewport =
-        _interactorOffsetInViewport(_dragEndInInteractor!); // - Offset(0, scrollDeltaWhileDragging);
-    editorGesturesLog.finest("Drag end in viewport: $dragEndInViewport");
-    final leadingScrollBoundary = widget.dragAutoScrollBoundary.leading;
-    final gutterAmount = dragEndInViewport.dy.clamp(0.0, leadingScrollBoundary);
-    final speedPercent = (1.0 - (gutterAmount / leadingScrollBoundary)).clamp(0.0, 1.0);
-    final scrollAmount = lerpDouble(0, _maxDragSpeed, speedPercent);
-
-    _scrollPosition.jumpTo(_scrollPosition.pixels - scrollAmount!);
-
-    // By changing the scroll offset, we may have changed the content
-    // selected by the user's current finger/mouse position. Update the
-    // document selection calculation.
-    _updateDragSelection();
-  }
-
-  void _startScrollingDown() {
-    if (_scrollDownOnTick) {
-      return;
-    }
-
-    editorGesturesLog.finest('Starting to auto-scroll down');
-    _scrollDownOnTick = true;
-    _ticker.start();
-  }
-
-  void _stopScrollingDown() {
-    if (!_scrollDownOnTick) {
-      return;
-    }
-
-    editorGesturesLog.finest('Stopping auto-scroll down');
-    _scrollDownOnTick = false;
-    _ticker.stop();
-  }
-
-  void _scrollDown() {
-    if (_dragEndInInteractor == null) {
-      editorGesturesLog.warning("Tried to scroll down but couldn't because _dragEndInViewport is null");
-      assert(_dragEndInInteractor != null);
-      return;
-    }
-
-    if (_scrollPosition.pixels >= _scrollPosition.maxScrollExtent) {
-      editorGesturesLog.finest("Tried to scroll down but the scroll position is already beyond the max");
-      return;
-    }
-
-    editorGesturesLog.finest("Scrolling down on tick");
-    final scrollDeltaWhileDragging = _dragStartScrollOffset! - _scrollPosition.pixels;
-    final dragEndInViewport =
-        _interactorOffsetInViewport(_dragEndInInteractor!); // - Offset(0, scrollDeltaWhileDragging);
-    final trailingScrollBoundary = widget.dragAutoScrollBoundary.trailing;
-    final viewportBox = _viewport;
-    final gutterAmount = (viewportBox.size.height - dragEndInViewport.dy).clamp(0.0, trailingScrollBoundary);
-    final speedPercent = 1.0 - (gutterAmount / trailingScrollBoundary);
-    final scrollAmount = lerpDouble(0, _maxDragSpeed, speedPercent);
-
-    _scrollPosition.jumpTo(_scrollPosition.pixels + scrollAmount!);
-
-    // By changing the scroll offset, we may have changed the content
-    // selected by the user's current finger/mouse position. Update the
-    // document selection calculation.
-    _updateDragSelection();
-  }
-
-  void _onTick(elapsedTime) {
-    if (_scrollUpOnTick) {
-      _scrollUp();
-    }
-    if (_scrollDownOnTick) {
-      _scrollDown();
-    }
-  }
-
-  void _updateDragSelection() {
+  @override
+  void updateDragSelection() {
     if (_dragStartInDoc == null) {
       return;
     }
 
-    // We have to re-calculate the drag end in the doc (instead of
-    // caching the value during the pan update) because the position
-    // in the document is impacted by auto-scrolling behavior.
-    final scrollDeltaWhileDragging = _dragStartScrollOffset! - _scrollPosition.pixels;
-    final dragEndInDoc = _getDocOffset(_dragEndInInteractor! /* - Offset(0, scrollDeltaWhileDragging)*/);
+    final dragEndInDoc = _getDocOffset(_dragEndInInteractor!);
 
     // TODO: I changed this behavior to get a collapsed handle working - update it
     //       to support base/extent selection
@@ -753,35 +754,6 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     if (_controlsOverlayEntry != null) {
       _controlsOverlayEntry!.remove();
       _controlsOverlayEntry = null;
-    }
-  }
-
-  void _selectDragPositionAt(Offset interactorOffset) {
-    if (_dragMode == null) {
-      return;
-    }
-
-    final layoutOffset = _docLayout.getDocumentOffsetFromAncestorOffset(interactorOffset, context.findRenderObject()!);
-    final position = _docLayout.getDocumentPositionAtOffset(layoutOffset);
-
-    if (position != null) {
-      switch (_dragMode!) {
-        case _DragMode.collapsed:
-          _editingController.selection = DocumentSelection.collapsed(
-            position: position,
-          );
-          return;
-        case _DragMode.base:
-          _editingController.selection = _editingController.selection!.copyWith(
-            base: position,
-          );
-          return;
-        case _DragMode.extent:
-          _editingController.selection = _editingController.selection!.copyWith(
-            extent: position,
-          );
-          return;
-      }
     }
   }
 
