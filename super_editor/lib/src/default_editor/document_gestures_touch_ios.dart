@@ -11,6 +11,7 @@ import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/caret.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
+import 'package:super_editor/src/infrastructure/platforms/ios/magnifier.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/selection_handles.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
 
@@ -94,6 +95,8 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   //       not collapsed/upstream/downstream. Change the type once it's working.
   HandleType? _dragHandleType;
 
+  final _magnifierFocalPoint = LayerLink();
+
   @override
   void initState() {
     super.initState();
@@ -112,8 +115,10 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
 
     _scrollController = _scrollController = (widget.scrollController ?? ScrollController());
 
-    _editingController = EditingController(document: widget.editContext.editor.document)
-      ..addListener(_onEditingControllerChange);
+    _editingController = EditingController(
+      document: widget.editContext.editor.document,
+      magnifierFocalPoint: _magnifierFocalPoint,
+    )..addListener(_onEditingControllerChange);
 
     widget.editContext.composer.addListener(_onSelectionChange);
 
@@ -277,7 +282,6 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     editorGesturesLog.fine(" - tapped document position: $docPosition");
 
     _clearSelection();
-    // _selectionType = SelectionType.position;
 
     if (docPosition != null) {
       // Place the document selection at the location where the
@@ -301,7 +305,6 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     final docPosition = _docLayout.getDocumentPositionAtOffset(docOffset);
     editorGesturesLog.fine(" - tapped document position: $docPosition");
 
-    // _selectionType = SelectionType.word;
     _clearSelection();
 
     if (docPosition != null) {
@@ -321,7 +324,6 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
 
   void _onDoubleTap() {
     editorGesturesLog.info("Double tap up on document");
-    // _selectionType = SelectionType.position;
   }
 
   void _onTripleTapDown(TapDownDetails details) {
@@ -357,7 +359,6 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
 
   void _onTripleTap() {
     editorGesturesLog.info("Triple tap up on document");
-    // _selectionType = SelectionType.position;
   }
 
   void _onPanStart(DragStartDetails details) {
@@ -368,23 +369,17 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     if (_editingController.selection!.isCollapsed && _isOverCollapsedHandle(details.localPosition)) {
       _dragMode = _DragMode.collapsed;
       _dragHandleType = HandleType.collapsed;
-
-      // widget.editingController
-      //   ..hideToolbar()
-      //   ..cancelCollapsedHandleAutoHideCountdown();
     } else if (_isOverBaseHandle(details.localPosition)) {
       _dragMode = _DragMode.base;
       _dragHandleType = HandleType.upstream;
-
-      // widget.editingController.hideToolbar();
     } else if (_isOverExtentHandle(details.localPosition)) {
       _dragMode = _DragMode.extent;
       _dragHandleType = HandleType.downstream;
-
-      // widget.editingController.hideToolbar();
     } else {
       return;
     }
+
+    // widget.editingController.hideToolbar();
 
     _globalStartDragOffset = details.globalPosition;
     final interactorBox = context.findRenderObject() as RenderBox;
@@ -411,6 +406,8 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     _handleAutoScrolling.startAutoScrollHandleMonitoring();
 
     scrollPosition.addListener(_updateDragSelection);
+
+    _controlsOverlayEntry!.markNeedsBuild();
   }
 
   bool _isOverCollapsedHandle(Offset interactorOffset) {
@@ -419,15 +416,10 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
       return false;
     }
 
-    print('Is over collapsed handle?');
-    print(' - position: $collapsedPosition');
     final extentRect = _docLayout.getRectForPosition(collapsedPosition)!;
     final caretRect = Rect.fromLTWH(extentRect.left - 1, extentRect.center.dy, 1, 1).inflate(24);
-    print(" - caret rect: $caretRect");
 
     final docOffset = _docLayout.getDocumentOffsetFromAncestorOffset(interactorOffset, context.findRenderObject()!);
-    print(" - touch offset: $docOffset");
-    print(" - offset in caret? ${caretRect.contains(docOffset)}");
     return caretRect.contains(docOffset);
   }
 
@@ -437,15 +429,10 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
       return false;
     }
 
-    print('Is over base handle?');
-    print(' - position: $basePosition');
     final baseRect = _docLayout.getRectForPosition(basePosition)!;
     final caretRect = Rect.fromLTWH(baseRect.left - 1, baseRect.center.dy, 1, 1).inflate(24);
-    print(" - caret rect: $caretRect");
 
     final docOffset = _docLayout.getDocumentOffsetFromAncestorOffset(interactorOffset, context.findRenderObject()!);
-    print(" - touch offset: $docOffset");
-    print(" - offset in caret? ${caretRect.contains(docOffset)}");
     return caretRect.contains(docOffset);
   }
 
@@ -455,15 +442,10 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
       return false;
     }
 
-    print('Is over extent handle?');
-    print(' - position: $extentPosition');
     final extentRect = _docLayout.getRectForPosition(extentPosition)!;
     final caretRect = Rect.fromLTWH(extentRect.left - 1, extentRect.center.dy, 1, 1).inflate(24);
-    print(" - caret rect: $caretRect");
 
     final docOffset = _docLayout.getDocumentOffsetFromAncestorOffset(interactorOffset, context.findRenderObject()!);
-    print(" - touch offset: $docOffset");
-    print(" - offset in caret? ${caretRect.contains(docOffset)}");
     return caretRect.contains(docOffset);
   }
 
@@ -489,7 +471,9 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
       viewportHeight: viewportBox.size.height,
     );
 
-    // widget.editingController.showMagnifier(_localDragOffset!);
+    _editingController.showMagnifier();
+
+    _controlsOverlayEntry!.markNeedsBuild();
   }
 
   void _updateSelectionForNewDragHandleLocation() {
@@ -540,7 +524,9 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     scrollPosition.removeListener(_updateDragSelection);
     _dragMode = null;
 
-    // widget.editingController.hideMagnifier();
+    _editingController.hideMagnifier();
+
+    _controlsOverlayEntry!.markNeedsBuild();
 
     // if (widget.editingController.selection?.isCollapsed == false) {
     //   // We hid the toolbar while dragging a handle. If the selection is
@@ -613,6 +599,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
         style: ControlsStyle.iOS,
         onDoubleTapOnCaret: _selectWordAtCaret,
         onTripleTapOnCaret: _selectParagraphAtCaret,
+        magnifierFocalPointOffset: _globalDragOffset,
         disableGestureHandling: _waitingForMoreTaps,
         showDebugPaint: false,
       );
@@ -794,6 +781,7 @@ class DocumentTouchEditingControls extends StatefulWidget {
     required this.style,
     this.onDoubleTapOnCaret,
     this.onTripleTapOnCaret,
+    this.magnifierFocalPointOffset,
     this.disableGestureHandling = false,
     this.showDebugPaint = false,
   }) : super(key: key);
@@ -815,6 +803,12 @@ class DocumentTouchEditingControls extends StatefulWidget {
 
   /// Callback invoked on iOS when the user triple taps on the caret.
   final VoidCallback? onTripleTapOnCaret;
+
+  /// Offset where the magnifier should focus.
+  ///
+  /// The magnifier is displayed whenever this offset is non-null, otherwise
+  /// the magnifier is not shown.
+  final Offset? magnifierFocalPointOffset;
 
   /// Disables all gesture interaction for these editing controls,
   /// allowing gestures to pass through these controls to whatever
@@ -906,6 +900,10 @@ class _DocumentTouchEditingControlsState extends State<DocumentTouchEditingContr
               return Stack(
                 children: [
                   ..._buildHandles(),
+                  // Build the focal point for the magnifier
+                  if (widget.magnifierFocalPointOffset != null) _buildMagnifierFocalPoint(),
+                  // Build the magnifier
+                  if (widget.editingController.isMagnifierVisible) _buildMagnifier(),
                   if (widget.showDebugPaint)
                     IgnorePointer(
                       child: Container(
@@ -1068,6 +1066,33 @@ class _DocumentTouchEditingControlsState extends State<DocumentTouchEditingContr
           color: widget.showDebugPaint ? Colors.green : Colors.transparent,
           child: showHandle ? handle : const SizedBox(),
         ),
+      ),
+    );
+  }
+
+  Widget _buildMagnifierFocalPoint() {
+    // When the user is dragging a handle in this overlay, we
+    // are responsible for positioning the focal point for the
+    // magnifier to follow. We do that here.
+    return Positioned(
+      left: widget.magnifierFocalPointOffset!.dx,
+      top: widget.magnifierFocalPointOffset!.dy,
+      child: CompositedTransformTarget(
+        link: widget.editingController.magnifierFocalPoint,
+        child: const SizedBox(width: 1, height: 1),
+      ),
+    );
+  }
+
+  Widget _buildMagnifier() {
+    // Display a magnifier that tracks a focal point.
+    //
+    // When the user is dragging an overlay handle, we place a LayerLink
+    // target. This magnifier follows that target.
+    return Center(
+      child: IOSFollowingMagnifier.roundedRectangle(
+        layerLink: widget.editingController.magnifierFocalPoint,
+        offsetFromFocalPoint: const Offset(0, -72),
       ),
     );
   }

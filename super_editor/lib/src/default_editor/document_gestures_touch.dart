@@ -65,7 +65,9 @@ class DocumentTouchInteractor extends StatelessWidget {
 class EditingController with ChangeNotifier {
   EditingController({
     required Document document,
-  }) : _document = document;
+    required LayerLink magnifierFocalPoint,
+  })  : _document = document,
+        _magnifierFocalPoint = magnifierFocalPoint;
 
   @override
   void dispose() {
@@ -123,6 +125,25 @@ class EditingController with ChangeNotifier {
 
     _selection = newSelection;
 
+    notifyListeners();
+  }
+
+  final LayerLink _magnifierFocalPoint;
+  LayerLink get magnifierFocalPoint => _magnifierFocalPoint;
+
+  bool _isMagnifierVisible = false;
+  bool get isMagnifierVisible => _isMagnifierVisible;
+
+  void showMagnifier() {
+    // hideToolbar();
+
+    _isMagnifierVisible = true;
+
+    notifyListeners();
+  }
+
+  void hideMagnifier() {
+    _isMagnifierVisible = false;
     notifyListeners();
   }
 }

@@ -11,6 +11,7 @@ import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/caret.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
+import 'package:super_editor/src/infrastructure/platforms/android/magnifier.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/selection_handles.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
 
@@ -79,6 +80,8 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   //       not collapsed/upstream/downstream. Change the type once it's working.
   HandleType? _dragHandleType;
 
+  final _magnifierFocalPoint = LayerLink();
+
   @override
   void initState() {
     super.initState();
@@ -97,8 +100,10 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
     _scrollController = _scrollController = (widget.scrollController ?? ScrollController());
 
-    _editingController = EditingController(document: widget.editContext.editor.document)
-      ..addListener(_onEditingControllerChange);
+    _editingController = EditingController(
+      document: widget.editContext.editor.document,
+      magnifierFocalPoint: _magnifierFocalPoint,
+    )..addListener(_onEditingControllerChange);
 
     widget.editContext.composer.addListener(_onSelectionChange);
 
@@ -390,6 +395,8 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       dragEndInViewport: dragEndInViewport,
       viewportHeight: viewportBox.size.height,
     );
+
+    _editingController.showMagnifier();
   }
 
   void _updateSelectionForNewDragHandleLocation() {
@@ -420,6 +427,8 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   void _onHandleDragEnd() {
     _handleAutoScrolling.stopAutoScrollHandleMonitoring();
     scrollPosition.removeListener(_updateDragSelection);
+
+    _editingController.hideMagnifier();
 
     _dragStartScrollOffset = null;
     _dragStartInDoc = null;
@@ -634,6 +643,8 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
 
   bool _isDraggingBase = false;
   bool _isDraggingExtent = false;
+  bool _isDraggingHandle = false;
+  Offset? _localDragOffset;
 
   late CaretBlinkController _caretBlinkController;
   DocumentSelection? _prevSelection;
@@ -691,6 +702,10 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
     setState(() {
       _isDraggingBase = false;
       _isDraggingExtent = false;
+      _isDraggingHandle = true;
+      // We map global to local instead of using  details.localPosition because
+      // this drag event started in a handle, not within this overall widget.
+      _localDragOffset = (context.findRenderObject() as RenderBox).globalToLocal(details.globalPosition);
     });
 
     widget.onHandleDragStart?.call(HandleType.collapsed, details.globalPosition);
@@ -704,6 +719,10 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
     setState(() {
       _isDraggingBase = true;
       _isDraggingExtent = false;
+      _isDraggingHandle = true;
+      // We map global to local instead of using  details.localPosition because
+      // this drag event started in a handle, not within this overall widget.
+      _localDragOffset = (context.findRenderObject() as RenderBox).globalToLocal(details.globalPosition);
     });
 
     widget.onHandleDragStart?.call(HandleType.upstream, details.globalPosition);
@@ -717,6 +736,10 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
     setState(() {
       _isDraggingBase = false;
       _isDraggingExtent = true;
+      _isDraggingHandle = true;
+      // We map global to local instead of using  details.localPosition because
+      // this drag event started in a handle, not within this overall widget.
+      _localDragOffset = (context.findRenderObject() as RenderBox).globalToLocal(details.globalPosition);
     });
 
     widget.onHandleDragStart?.call(HandleType.downstream, details.globalPosition);
@@ -726,6 +749,10 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
     editorGesturesLog.fine('_onPanUpdate');
 
     widget.onHandleDragUpdate?.call(details.globalPosition);
+
+    setState(() {
+      _localDragOffset = _localDragOffset! + details.delta;
+    });
   }
 
   void _onPanEnd(DragEndDetails details) {
@@ -746,7 +773,8 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
     setState(() {
       _isDraggingBase = false;
       _isDraggingExtent = false;
-      // widget.editingController.hideMagnifier();
+      _isDraggingHandle = false;
+      _localDragOffset = null;
 
       if (widget.editingController.selection?.isCollapsed == false) {
         // We hid the toolbar while dragging a handle. If the selection is
@@ -773,8 +801,16 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
         builder: (context) {
           return Stack(
             children: [
+              // Build the caret
               _buildCaret(),
+              // Build the drag handles (if desired)
               ..._buildHandles(),
+              // Build the focal point for the magnifier
+              if (_isDraggingHandle) _buildMagnifierFocalPoint(),
+              // Build the magnifier (this needs to be done before building
+              // the handles so that the magnifier doesn't show the handles
+              if (widget.editingController.isMagnifierVisible) _buildMagnifier(),
+              // Build a UI that's useful for debugging, if desired.
               if (widget.showDebugPaint)
                 IgnorePointer(
                   child: Container(
@@ -983,6 +1019,34 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
                 : const SizedBox(),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildMagnifierFocalPoint() {
+    // When the user is dragging a handle in this overlay, we
+    // are responsible for positioning the focal point for the
+    // magnifier to follow. We do that here.
+    return Positioned(
+      left: _localDragOffset!.dx,
+      // TODO: select focal position based on type of content
+      top: _localDragOffset!.dy - 20,
+      child: CompositedTransformTarget(
+        link: widget.editingController.magnifierFocalPoint,
+        child: const SizedBox(width: 1, height: 1),
+      ),
+    );
+  }
+
+  Widget _buildMagnifier() {
+    // Display a magnifier that tracks a focal point.
+    //
+    // When the user is dragging an overlay handle, we place a LayerLink
+    // target. This magnifier follows that target.
+    return Center(
+      child: AndroidFollowingMagnifier(
+        layerLink: widget.editingController.magnifierFocalPoint,
+        offsetFromFocalPoint: const Offset(0, -72),
       ),
     );
   }
