@@ -13,6 +13,8 @@ import 'package:super_editor/src/infrastructure/caret.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/magnifier.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/selection_handles.dart';
+import 'package:super_editor/src/infrastructure/platforms/ios/toolbar.dart';
+import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/toolbar_position_delegate.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
 
 import 'document_gestures.dart';
@@ -281,12 +283,26 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     final docPosition = _docLayout.getDocumentPositionAtOffset(docOffset);
     editorGesturesLog.fine(" - tapped document position: $docPosition");
 
-    _clearSelection();
-
     if (docPosition != null) {
+      final didTapOnExistingSelection = _editingController.selection != null &&
+          _editingController.selection!.isCollapsed &&
+          _editingController.selection!.extent == docPosition;
+
+      if (didTapOnExistingSelection) {
+        // Toggle the toolbar display when the user taps on the collapsed caret,
+        // or on top of an existing selection.
+        _editingController.toggleToolbar();
+      } else {
+        // The user tapped somewhere else in the document. Hide the toolbar.
+        _editingController.hideToolbar();
+      }
+
       // Place the document selection at the location where the
       // user tapped.
       _selectPosition(docPosition);
+    } else {
+      _clearSelection();
+      _editingController.hideToolbar();
     }
 
     widget.focusNode.requestFocus();
@@ -319,6 +335,12 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
       }
     }
 
+    if (_editingController.selection == null || _editingController.selection!.isCollapsed) {
+      _editingController.hideToolbar();
+    } else {
+      _editingController.showToolbar();
+    }
+
     widget.focusNode.requestFocus();
   }
 
@@ -339,7 +361,6 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     final docPosition = _docLayout.getDocumentPositionAtOffset(docOffset);
     editorGesturesLog.fine(" - tapped document position: $docPosition");
 
-    // _selectionType = SelectionType.paragraph;
     _clearSelection();
 
     if (docPosition != null) {
@@ -352,6 +373,12 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
         // user tapped.
         _selectPosition(docPosition);
       }
+    }
+
+    if (_editingController.selection == null || _editingController.selection!.isCollapsed) {
+      _editingController.hideToolbar();
+    } else {
+      _editingController.showToolbar();
     }
 
     widget.focusNode.requestFocus();
@@ -379,7 +406,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
       return;
     }
 
-    // widget.editingController.hideToolbar();
+    _editingController.hideToolbar();
 
     _globalStartDragOffset = details.globalPosition;
     final interactorBox = context.findRenderObject() as RenderBox;
@@ -525,19 +552,11 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     _dragMode = null;
 
     _editingController.hideMagnifier();
+    if (!_editingController.selection!.isCollapsed) {
+      _editingController.showToolbar();
+    }
 
     _controlsOverlayEntry!.markNeedsBuild();
-
-    // if (widget.editingController.selection?.isCollapsed == false) {
-    //   // We hid the toolbar while dragging a handle. If the selection is
-    //   // expanded, show it again.
-    //   widget.editingController.showToolbar();
-    // } else {
-    //   // The collapsed handle should disappear after some inactivity.
-    //   widget.editingController
-    //     ..unHideCollapsedHandle()
-    //     ..startCollapsedHandleAutoHideCountdown();
-    // }
   }
 
   void _onTapTimeout() {
@@ -600,6 +619,17 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
         onDoubleTapOnCaret: _selectWordAtCaret,
         onTripleTapOnCaret: _selectParagraphAtCaret,
         magnifierFocalPointOffset: _globalDragOffset,
+        popoverToolbarBuilder: (_) => IOSTextEditingFloatingToolbar(
+          onCopyPressed: () {
+            // TODO:
+          },
+          onCutPressed: () {
+            // TODO:
+          },
+          onPastePressed: () {
+            // TODO:
+          },
+        ),
         disableGestureHandling: _waitingForMoreTaps,
         showDebugPaint: false,
       );
@@ -782,6 +812,7 @@ class DocumentTouchEditingControls extends StatefulWidget {
     this.onDoubleTapOnCaret,
     this.onTripleTapOnCaret,
     this.magnifierFocalPointOffset,
+    required this.popoverToolbarBuilder,
     this.disableGestureHandling = false,
     this.showDebugPaint = false,
   }) : super(key: key);
@@ -809,6 +840,12 @@ class DocumentTouchEditingControls extends StatefulWidget {
   /// The magnifier is displayed whenever this offset is non-null, otherwise
   /// the magnifier is not shown.
   final Offset? magnifierFocalPointOffset;
+
+  /// Builder that constructs the popover toolbar that's displayed above
+  /// selected text.
+  ///
+  /// Typically, this bar includes actions like "copy", "cut", "paste", etc.
+  final Widget Function(BuildContext) popoverToolbarBuilder;
 
   /// Disables all gesture interaction for these editing controls,
   /// allowing gestures to pass through these controls to whatever
@@ -900,6 +937,8 @@ class _DocumentTouchEditingControlsState extends State<DocumentTouchEditingContr
               return Stack(
                 children: [
                   ..._buildHandles(),
+                  // Build the editing toolbar
+                  if (widget.editingController.isToolbarVisible) _buildToolbar(),
                   // Build the focal point for the magnifier
                   if (widget.magnifierFocalPointOffset != null) _buildMagnifierFocalPoint(),
                   // Build the magnifier
@@ -1093,6 +1132,121 @@ class _DocumentTouchEditingControlsState extends State<DocumentTouchEditingContr
       child: IOSFollowingMagnifier.roundedRectangle(
         layerLink: widget.editingController.magnifierFocalPoint,
         offsetFromFocalPoint: const Offset(0, -72),
+      ),
+    );
+  }
+
+  Widget _buildToolbar() {
+    // On reassemble we end with a null render object here. I'm not sure how
+    // that's possible - build() shouldn't be called without a RenderObject.
+    // We return nothing when this happens, and we schedule another frame to
+    // try again (otherwise the toolbar will stay hidden).
+    if (context.findRenderObject() == null) {
+      WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+        if (mounted) {
+          setState(() {});
+        }
+      });
+
+      return const SizedBox();
+    }
+
+    const toolbarGap = 24.0;
+    late Rect selectionRect;
+    Offset toolbarTopAnchor;
+    Offset toolbarBottomAnchor;
+
+    if (widget.editingController.selection!.isCollapsed) {
+      final extentRectInDoc = widget.documentLayout.getRectForPosition(widget.editingController.selection!.extent)!;
+      selectionRect = Rect.fromPoints(
+        widget.documentLayout.getGlobalOffsetFromDocumentOffset(extentRectInDoc.topLeft),
+        widget.documentLayout.getGlobalOffsetFromDocumentOffset(extentRectInDoc.bottomRight),
+      );
+    } else {
+      final baseRectInDoc = widget.documentLayout.getRectForPosition(widget.editingController.selection!.base)!;
+      final extentRectInDoc = widget.documentLayout.getRectForPosition(widget.editingController.selection!.extent)!;
+      final selectionRectInDoc = Rect.fromPoints(
+        Offset(
+          min(baseRectInDoc.left, extentRectInDoc.left),
+          min(baseRectInDoc.top, extentRectInDoc.top),
+        ),
+        Offset(
+          max(baseRectInDoc.right, extentRectInDoc.right),
+          max(baseRectInDoc.bottom, extentRectInDoc.bottom),
+        ),
+      );
+      selectionRect = Rect.fromPoints(
+        widget.documentLayout.getGlobalOffsetFromDocumentOffset(selectionRectInDoc.topLeft),
+        widget.documentLayout.getGlobalOffsetFromDocumentOffset(selectionRectInDoc.bottomRight),
+      );
+    }
+
+    // TODO: fix the horizontal placement
+    //       The logic to position the toolbar horizontally is wrong.
+    //       The toolbar should appear horizontally centered between the
+    //       left-most and right-most edge of the selection. However, the
+    //       left-most and right-most edge of the selection may not match
+    //       the handle locations. Consider the situation where multiple
+    //       lines/blocks of content are selected, but both handles sit near
+    //       the left side of the screen. This logic will position the
+    //       toolbar near the left side of the content, when the toolbar should
+    //       instead be centered across the full width of the document.
+    toolbarTopAnchor = selectionRect.topCenter - const Offset(0, toolbarGap);
+    toolbarBottomAnchor = selectionRect.bottomCenter + const Offset(0, toolbarGap);
+
+    // The selection might start above the visible area on the screen.
+    // In that case, keep the toolbar on-screen.
+    toolbarTopAnchor = Offset(
+      toolbarTopAnchor.dx,
+      max(
+        toolbarTopAnchor.dy,
+        // TODO: choose a gap spacing that makes sense, e.g., what's the safe area?
+        24,
+      ),
+    );
+
+    // The selection might end below the visible area on the screen.
+    // In that case, keep the toolbar on-screen.
+    final screenHeight = (context.findRenderObject() as RenderBox).size.height;
+    toolbarTopAnchor = Offset(
+      toolbarTopAnchor.dx,
+      min(
+        toolbarTopAnchor.dy,
+        // TODO: choose a gap spacing that makes sense, e.g., what's the safe area?
+        screenHeight - 24,
+      ),
+    );
+
+    // TODO: figure out why this approach works. Why isn't the text field's
+    //       RenderBox offset stale when the keyboard opens or closes? Shouldn't
+    //       we end up with the previous offset because no rebuild happens?
+    //
+    //       Dis-proven theory: CompositedTransformFollower's link causes a rebuild of its
+    //       subtree whenever the linked transform changes.
+    //
+    //       Theory:
+    //         - Keyboard only effects vertical offsets, so global x offset
+    //           was never at risk
+    //         - The global y offset isn't used in the calculation at all
+    //         - If this same approach were used in a situation where the
+    //           distance between the left edge of the available space and the
+    //           text field changed, I think it would fail.
+    return CustomSingleChildLayout(
+      delegate: ToolbarPositionDelegate(
+        // TODO: handle situation where document isn't full screen
+        textFieldGlobalOffset: Offset.zero,
+        desiredTopAnchorInTextField: toolbarTopAnchor,
+        desiredBottomAnchorInTextField: toolbarBottomAnchor,
+      ),
+      child: IgnorePointer(
+        ignoring: !widget.editingController.isToolbarVisible,
+        child: AnimatedOpacity(
+          opacity: widget.editingController.isToolbarVisible ? 1.0 : 0.0,
+          duration: const Duration(milliseconds: 150),
+          child: Builder(builder: (context) {
+            return widget.popoverToolbarBuilder(context);
+          }),
+        ),
       ),
     );
   }

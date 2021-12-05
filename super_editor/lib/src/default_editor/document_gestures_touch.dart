@@ -135,7 +135,7 @@ class EditingController with ChangeNotifier {
   bool get isMagnifierVisible => _isMagnifierVisible;
 
   void showMagnifier() {
-    // hideToolbar();
+    hideToolbar();
 
     _isMagnifierVisible = true;
 
@@ -144,6 +144,32 @@ class EditingController with ChangeNotifier {
 
   void hideMagnifier() {
     _isMagnifierVisible = false;
+    notifyListeners();
+  }
+
+  bool _isToolbarVisible = false;
+  // We check if selection is null because the toolbar requires a
+  // selection to determine where it's placed on screen.
+  bool get isToolbarVisible => _isToolbarVisible && selection != null;
+
+  void toggleToolbar() {
+    if (isToolbarVisible) {
+      hideToolbar();
+    } else {
+      showToolbar();
+    }
+  }
+
+  void showToolbar() {
+    hideMagnifier();
+
+    _isToolbarVisible = true;
+
+    notifyListeners();
+  }
+
+  void hideToolbar() {
+    _isToolbarVisible = false;
     notifyListeners();
   }
 }

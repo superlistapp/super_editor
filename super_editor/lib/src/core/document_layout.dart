@@ -67,6 +67,10 @@ abstract class DocumentLayout {
   /// Converts [documentOffset] from this [DocumentLayout]'s coordinate space
   /// to the same location on the screen within the [ancestor]'s coordinate space.
   Offset getAncestorOffsetFromDocumentOffset(Offset documentOffset, RenderObject ancestor);
+
+  /// Converts [documentOffset] from this [DocumentLayout]'s coordinate space
+  /// to the same location on the screen the global coordinate space.
+  Offset getGlobalOffsetFromDocumentOffset(Offset documentOffset);
 }
 
 /// Contract for all widgets that operate as document components
