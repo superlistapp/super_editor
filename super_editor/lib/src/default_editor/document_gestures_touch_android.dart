@@ -2,7 +2,6 @@ import 'dart:ui';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
@@ -69,9 +68,27 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   // drag handles, magnifier, and toolbar.
   OverlayEntry? _controlsOverlayEntry;
 
+  late DragHandleAutoScrolling _handleAutoScrolling;
+  Offset? _globalStartDragOffset;
+  Offset? _dragStartInDoc;
+  Offset? _startDragPositionOffset;
+  double? _dragStartScrollOffset;
+  Offset? _globalDragOffset;
+  Offset? _dragEndInInteractor;
+  // TODO: HandleType is the wrong type here, we need collapsed/base/extent,
+  //       not collapsed/upstream/downstream. Change the type once it's working.
+  HandleType? _dragHandleType;
+
   @override
   void initState() {
     super.initState();
+
+    _handleAutoScrolling = DragHandleAutoScrolling(
+      vsync: this,
+      dragAutoScrollBoundary: widget.dragAutoScrollBoundary,
+      getScrollPosition: () => scrollPosition,
+      getViewportBox: () => viewportBox,
+    );
 
     widget.focusNode.addListener(_onFocusChange);
     if (widget.focusNode.hasFocus) {
@@ -84,8 +101,6 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       ..addListener(_onEditingControllerChange);
 
     widget.editContext.composer.addListener(_onSelectionChange);
-
-    _ticker = createTicker(_onTick);
 
     WidgetsBinding.instance!.addObserver(this);
   }
@@ -108,8 +123,6 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   @override
   void reassemble() {
     super.reassemble();
-
-    _ticker.dispose();
 
     if (widget.focusNode.hasFocus) {
       // On Hot Reload we need to remove any visible overlay controls and then
@@ -147,6 +160,8 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     }
 
     widget.focusNode.removeListener(_onFocusChange);
+
+    _handleAutoScrolling.dispose();
 
     super.dispose();
   }
@@ -205,7 +220,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   /// If this widget doesn't have an ancestor `Scrollable`, then this
   /// widget includes a `ScrollView` and the `ScrollView`'s position
   /// is returned.
-  ScrollPosition get _scrollPosition => _ancestorScrollPosition ?? _scrollController.position;
+  ScrollPosition get scrollPosition => _ancestorScrollPosition ?? _scrollController.position;
 
   /// Returns the `RenderBox` for the scrolling viewport.
   ///
@@ -215,7 +230,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   /// If this widget doesn't have an ancestor `Scrollable`, then this
   /// widget includes a `ScrollView` and this `State`'s render object
   /// is the viewport `RenderBox`.
-  RenderBox get _viewport =>
+  RenderBox get viewportBox =>
       (Scrollable.of(context)?.context.findRenderObject() ?? context.findRenderObject()) as RenderBox;
 
   /// Converts the given [offset] from the [DocumentInteractor]'s coordinate
@@ -235,7 +250,6 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   Offset _interactorOffsetInViewport(Offset interactorOffset) {
     // Viewport might be our box, or an ancestor box if we're inside someone
     // else's Scrollable.
-    final viewportBox = _viewport;
     final interactorBox = context.findRenderObject() as RenderBox;
     return viewportBox.globalToLocal(
       interactorBox.localToGlobal(interactorOffset),
@@ -250,7 +264,6 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     editorGesturesLog.fine(" - tapped document position: $docPosition");
 
     _clearSelection();
-    // _selectionType = SelectionType.position;
 
     if (docPosition != null) {
       // Place the document selection at the location where the
@@ -268,7 +281,6 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     final docPosition = _docLayout.getDocumentPositionAtOffset(docOffset);
     editorGesturesLog.fine(" - tapped document position: $docPosition");
 
-    // _selectionType = SelectionType.word;
     _clearSelection();
 
     if (docPosition != null) {
@@ -288,7 +300,6 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
   void _onDoubleTap() {
     editorGesturesLog.info("Double tap up on document");
-    // _selectionType = SelectionType.position;
   }
 
   void _onTripleTapDown(TapDownDetails details) {
@@ -298,7 +309,6 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     final docPosition = _docLayout.getDocumentPositionAtOffset(docOffset);
     editorGesturesLog.fine(" - tapped document position: $docPosition");
 
-    // _selectionType = SelectionType.paragraph;
     _clearSelection();
 
     if (docPosition != null) {
@@ -318,7 +328,6 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
   void _onTripleTap() {
     editorGesturesLog.info("Triple tap up on document");
-    // _selectionType = SelectionType.position;
   }
 
   void _showEditingControlsOverlay() {
@@ -341,20 +350,6 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     }
   }
 
-  final _maxDragSpeed = 2;
-  Offset? _globalStartDragOffset;
-  Offset? _dragStartInDoc;
-  Offset? _startDragPositionOffset;
-  double? _dragStartScrollOffset;
-  Offset? _globalDragOffset;
-  Offset? _dragEndInInteractor;
-  // TODO: HandleType is the wrong type here, we need collapsed/base/extent,
-  //       not collapsed/upstream/downstream. Change the type once it's working.
-  HandleType? _dragHandleType;
-  bool _scrollUpOnTick = false;
-  bool _scrollDownOnTick = false;
-  late Ticker _ticker;
-
   void _onHandleDragStart(HandleType handleType, Offset globalOffset) {
     _dragHandleType = handleType;
     _globalStartDragOffset = globalOffset;
@@ -376,48 +371,30 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     // account for the fact that this interactor is moving within
     // the ancestor scrollable, despite the fact that the user's
     // finger/mouse position hasn't changed.
-    _dragStartScrollOffset = _scrollPosition.pixels;
+    _dragStartScrollOffset = scrollPosition.pixels;
+
+    _handleAutoScrolling.startAutoScrollHandleMonitoring();
+
+    scrollPosition.addListener(_updateDragSelection);
   }
 
   void _onHandleDragUpdate(Offset globalOffset) {
     _globalDragOffset = globalOffset;
     final interactorBox = context.findRenderObject() as RenderBox;
     _dragEndInInteractor = interactorBox.globalToLocal(globalOffset);
-
-    final viewport = _viewport;
-    final scrollDeltaWhileDragging = _dragStartScrollOffset! - _scrollPosition.pixels;
-    final dragEndInViewport =
-        _interactorOffsetInViewport(_dragEndInInteractor!); // - Offset(0, scrollDeltaWhileDragging);
+    final dragEndInViewport = _interactorOffsetInViewport(_dragEndInInteractor!);
 
     _updateSelectionForNewDragHandleLocation();
 
-    editorGesturesLog.finest("Scrolling, if near boundary:");
-    editorGesturesLog.finest(' - Scroll delta while dragging: $scrollDeltaWhileDragging');
-    editorGesturesLog.finest(' - Drag end in interactor: ${_dragEndInInteractor!.dy}');
-    editorGesturesLog.finest(' - Drag end in viewport: ${dragEndInViewport.dy}, viewport size: ${viewport.size}');
-    editorGesturesLog.finest(' - Distance to top of viewport: ${dragEndInViewport.dy}');
-    editorGesturesLog.finest(' - Distance to bottom of viewport: ${viewport.size.height - dragEndInViewport.dy}');
-    editorGesturesLog.finest(' - Auto-scroll distance: ${widget.dragAutoScrollBoundary.trailing}');
-    editorGesturesLog.finest(
-        ' - Auto-scroll diff: ${viewport.size.height - dragEndInViewport.dy < widget.dragAutoScrollBoundary.trailing}');
-    if (dragEndInViewport.dy < widget.dragAutoScrollBoundary.leading) {
-      editorGesturesLog.finest('Metrics say we should try to scroll up');
-      _startScrollingUp();
-    } else {
-      _stopScrollingUp();
-    }
-
-    if (viewport.size.height - dragEndInViewport.dy < widget.dragAutoScrollBoundary.trailing) {
-      editorGesturesLog.finest('Metrics say we should try to scroll down');
-      _startScrollingDown();
-    } else {
-      _stopScrollingDown();
-    }
+    _handleAutoScrolling.updateAutoScrollHandleMonitoring(
+      dragEndInViewport: dragEndInViewport,
+      viewportHeight: viewportBox.size.height,
+    );
   }
 
   void _updateSelectionForNewDragHandleLocation() {
     final docDragDelta = _globalDragOffset! - _globalStartDragOffset!;
-    final dragScrollDelta = _dragStartScrollOffset! - _scrollPosition.pixels;
+    final dragScrollDelta = _dragStartScrollOffset! - scrollPosition.pixels;
     final docDragPosition =
         _docLayout.getDocumentPositionAtOffset(_startDragPositionOffset! + docDragDelta - Offset(0, dragScrollDelta));
 
@@ -441,122 +418,12 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   }
 
   void _onHandleDragEnd() {
-    _stopScrollingUp();
-    _stopScrollingDown();
+    _handleAutoScrolling.stopAutoScrollHandleMonitoring();
+    scrollPosition.removeListener(_updateDragSelection);
 
     _dragStartScrollOffset = null;
     _dragStartInDoc = null;
     _dragEndInInteractor = null;
-  }
-
-  void _startScrollingUp() {
-    if (_scrollUpOnTick) {
-      return;
-    }
-
-    editorGesturesLog.finest('Starting to auto-scroll up');
-    _scrollUpOnTick = true;
-    _ticker.start();
-  }
-
-  void _stopScrollingUp() {
-    if (!_scrollUpOnTick) {
-      return;
-    }
-
-    editorGesturesLog.finest('Stopping auto-scroll up');
-    _scrollUpOnTick = false;
-    _ticker.stop();
-  }
-
-  void _scrollUp() {
-    if (_dragEndInInteractor == null) {
-      editorGesturesLog.warning("Tried to scroll up but couldn't because _dragEndInViewport is null");
-      assert(_dragEndInInteractor != null);
-      return;
-    }
-
-    if (_scrollPosition.pixels <= 0) {
-      editorGesturesLog.finest("Tried to scroll up but the scroll position is already at the top");
-      return;
-    }
-
-    editorGesturesLog.finest("Scrolling up on tick");
-    final scrollDeltaWhileDragging = _dragStartScrollOffset! - _scrollPosition.pixels;
-    editorGesturesLog.finest("Scroll delta: $scrollDeltaWhileDragging");
-    final dragEndInViewport =
-        _interactorOffsetInViewport(_dragEndInInteractor!); // - Offset(0, scrollDeltaWhileDragging);
-    editorGesturesLog.finest("Drag end in viewport: $dragEndInViewport");
-    final leadingScrollBoundary = widget.dragAutoScrollBoundary.leading;
-    final gutterAmount = dragEndInViewport.dy.clamp(0.0, leadingScrollBoundary);
-    final speedPercent = (1.0 - (gutterAmount / leadingScrollBoundary)).clamp(0.0, 1.0);
-    final scrollAmount = lerpDouble(0, _maxDragSpeed, speedPercent);
-
-    _scrollPosition.jumpTo(_scrollPosition.pixels - scrollAmount!);
-
-    // By changing the scroll offset, we may have changed the content
-    // selected by the user's current finger/mouse position. Update the
-    // document selection calculation.
-    _updateDragSelection();
-  }
-
-  void _startScrollingDown() {
-    if (_scrollDownOnTick) {
-      return;
-    }
-
-    editorGesturesLog.finest('Starting to auto-scroll down');
-    _scrollDownOnTick = true;
-    _ticker.start();
-  }
-
-  void _stopScrollingDown() {
-    if (!_scrollDownOnTick) {
-      return;
-    }
-
-    editorGesturesLog.finest('Stopping auto-scroll down');
-    _scrollDownOnTick = false;
-    _ticker.stop();
-  }
-
-  void _scrollDown() {
-    if (_dragEndInInteractor == null) {
-      editorGesturesLog.warning("Tried to scroll down but couldn't because _dragEndInViewport is null");
-      assert(_dragEndInInteractor != null);
-      return;
-    }
-
-    if (_scrollPosition.pixels >= _scrollPosition.maxScrollExtent) {
-      editorGesturesLog.finest("Tried to scroll down but the scroll position is already beyond the max");
-      return;
-    }
-
-    editorGesturesLog.finest("Scrolling down on tick");
-    final scrollDeltaWhileDragging = _dragStartScrollOffset! - _scrollPosition.pixels;
-    final dragEndInViewport =
-        _interactorOffsetInViewport(_dragEndInInteractor!); // - Offset(0, scrollDeltaWhileDragging);
-    final trailingScrollBoundary = widget.dragAutoScrollBoundary.trailing;
-    final viewportBox = _viewport;
-    final gutterAmount = (viewportBox.size.height - dragEndInViewport.dy).clamp(0.0, trailingScrollBoundary);
-    final speedPercent = 1.0 - (gutterAmount / trailingScrollBoundary);
-    final scrollAmount = lerpDouble(0, _maxDragSpeed, speedPercent);
-
-    _scrollPosition.jumpTo(_scrollPosition.pixels + scrollAmount!);
-
-    // By changing the scroll offset, we may have changed the content
-    // selected by the user's current finger/mouse position. Update the
-    // document selection calculation.
-    _updateDragSelection();
-  }
-
-  void _onTick(elapsedTime) {
-    if (_scrollUpOnTick) {
-      _scrollUp();
-    }
-    if (_scrollDownOnTick) {
-      _scrollDown();
-    }
   }
 
   void _updateDragSelection() {
@@ -567,16 +434,13 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     // We have to re-calculate the drag end in the doc (instead of
     // caching the value during the pan update) because the position
     // in the document is impacted by auto-scrolling behavior.
-    final scrollDeltaWhileDragging = _dragStartScrollOffset! - _scrollPosition.pixels;
+    // final scrollDeltaWhileDragging = _dragStartScrollOffset! - scrollPosition.pixels;
     final dragEndInDoc = _getDocOffset(_dragEndInInteractor! /* - Offset(0, scrollDeltaWhileDragging)*/);
 
-    // TODO: I changed this behavior to get a collapsed handle working - update it
-    //       to support base/extent selection
     final dragPosition = _docLayout.getDocumentPositionAtOffset(dragEndInDoc);
     editorGesturesLog.info("Selecting new position during drag: $dragPosition");
 
     if (dragPosition == null) {
-      // widget.editContext.composer.selection = null;
       return;
     }
 
@@ -998,22 +862,6 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
     final extentRect = widget.documentLayout.getRectForPosition(widget.editingController.selection!.extent);
 
     editorGesturesLog.fine("Selection extent rect: $extentRect");
-
-    // if (extentHandleOffsetInText == const Offset(0, 0) && extentTextPosition.offset != 0) {
-    //   // The caret offset is (0, 0), but the caret text position isn't at the
-    //   // beginning of the text. This means that there's a layout timing
-    //   // issue and we should reschedule this calculation for the next frame.
-    //   _scheduleRebuildBecauseTextIsNotLaidOutYet();
-    //   return const SizedBox();
-    // }
-
-    // if (extentLineHeight == 0) {
-    //   editorGesturesLog.finer('Not building collapsed handle because the text layout reported a zero line-height');
-    //   // A line height of zero indicates that the text isn't laid out yet.
-    //   // Schedule a rebuild to give the text a frame to layout.
-    //   _scheduleRebuildBecauseTextIsNotLaidOutYet();
-    //   return const SizedBox();
-    // }
 
     return _buildHandle(
       handleKey: _collapsedHandleKey,
