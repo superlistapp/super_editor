@@ -174,6 +174,110 @@ class EditingController with ChangeNotifier {
   }
 }
 
+/// Controls the display and position of a magnifier and a floating toolbar.
+class MagnifierAndToolbarController with ChangeNotifier {
+  MagnifierAndToolbarController({
+    required LayerLink magnifierFocalPointLink,
+  }) : _magnifierFocalPointLink = magnifierFocalPointLink;
+
+  /// A `LayerLink` whose top-left corner sits at the location where the
+  /// magnifier should magnify.
+  LayerLink get magnifierFocalPointLink => _magnifierFocalPointLink;
+  final LayerLink _magnifierFocalPointLink;
+
+  /// Whether the magnifier should be displayed.
+  bool get shouldDisplayMagnifier => _isMagnifierVisible;
+  bool _isMagnifierVisible = false;
+
+  /// Shows the magnify, and hides the toolbar.
+  void showMagnifier() {
+    hideToolbar();
+
+    _isMagnifierVisible = true;
+
+    notifyListeners();
+  }
+
+  /// Hides the magnifier.
+  void hideMagnifier() {
+    _isMagnifierVisible = false;
+    notifyListeners();
+  }
+
+  /// Whether the toolbar should be displayed.
+  bool get shouldDisplayToolbar => _shouldDisplayToolbar;
+  bool _shouldDisplayToolbar = false;
+
+  /// Whether the toolbar currently has a designated display position.
+  ///
+  /// The toolbar should not be displayed if this is `false`, even if
+  /// [shouldDisplayToolbar] is `true`.
+  bool get isToolbarPositioned => _toolbarTopAnchor != null && _toolbarBottomAnchor != null;
+
+  /// The point about which the floating toolbar should focus, when the toolbar
+  /// appears above the selected content.
+  ///
+  /// It's the clients responsibility to determine whether there's room for the
+  /// toolbar above this point. If not, use [toolbarBottomAnchor].
+  Offset? get toolbarTopAnchor => _toolbarTopAnchor;
+  Offset? _toolbarTopAnchor;
+
+  /// The point about which the floating toolbar should focus, when the toolbar
+  /// appears below the selected content.
+  ///
+  /// It's the clients responsibility to determine whether there's room for the
+  /// toolbar below this point. If not, use [toolbarTopAnchor].
+  Offset? get toolbarBottomAnchor => _toolbarBottomAnchor;
+  Offset? _toolbarBottomAnchor;
+
+  /// Sets the toolbar's position to the given [topAnchor] and [bottomAnchor].
+  ///
+  /// Setting the position will not cause the toolbar to be displayed on it's own.
+  /// To display the toolbar, call [showToolbar], too.
+  void positionToolbar({
+    required Offset topAnchor,
+    required Offset bottomAnchor,
+  }) {
+    if (topAnchor != _toolbarTopAnchor || bottomAnchor != _toolbarBottomAnchor) {
+      _toolbarTopAnchor = topAnchor;
+      _toolbarBottomAnchor = bottomAnchor;
+      notifyListeners();
+    }
+  }
+
+  /// Toggles the toolbar from visible to not visible, or vis-a-versa.
+  void toggleToolbar() {
+    if (_shouldDisplayToolbar) {
+      hideToolbar();
+    } else {
+      showToolbar();
+    }
+  }
+
+  /// Shows the toolbar, and hides the magnifier.
+  void showToolbar() {
+    if (_shouldDisplayToolbar) {
+      return;
+    }
+
+    hideMagnifier();
+    _shouldDisplayToolbar = true;
+
+    notifyListeners();
+  }
+
+  /// Hides the toolbar.
+  void hideToolbar() {
+    if (!_shouldDisplayToolbar) {
+      return;
+    }
+
+    _shouldDisplayToolbar = false;
+
+    notifyListeners();
+  }
+}
+
 enum ControlsStyle {
   android,
   iOS,
