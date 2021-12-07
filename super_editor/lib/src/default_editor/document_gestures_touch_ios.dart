@@ -255,20 +255,28 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
       _editingController.collapsedHandleOffset = handleOffset;
     } else {
       // The selection is expanded
-      _positionExpandedCarets();
-
       // Calculate the new (x,y) offsets for the upstream and downstream handles.
-      final baseHandleOffset = _docLayout.getRectForPosition(newSelection.base)!.bottomLeft;
-      final extentHandleOffset = _docLayout.getRectForPosition(newSelection.extent)!.bottomRight;
-      final affinity = widget.document.getAffinityBetween(base: newSelection.base, extent: newSelection.extent);
-      late Offset upstreamHandleOffset = affinity == TextAffinity.downstream ? baseHandleOffset : extentHandleOffset;
-      late Offset downstreamHandleOffset = affinity == TextAffinity.downstream ? extentHandleOffset : baseHandleOffset;
+      final baseRect = _docLayout.getRectForPosition(newSelection.base)!;
+      final baseHandleOffset = baseRect.bottomLeft;
+
+      final extentRect = _docLayout.getRectForPosition(newSelection.extent)!;
+      final extentHandleOffset = extentRect.bottomRight;
+
+      final affinity = widget.document.getAffinityForSelection(newSelection);
+
+      final upstreamHandleOffset = affinity == TextAffinity.downstream ? baseHandleOffset : extentHandleOffset;
+      final upstreamHandleHeight = affinity == TextAffinity.downstream ? baseRect.height : extentRect.height;
+
+      final downstreamHandleOffset = affinity == TextAffinity.downstream ? extentHandleOffset : baseHandleOffset;
+      final downstreamHandleHeight = affinity == TextAffinity.downstream ? extentRect.height : baseRect.height;
 
       _editingController
         ..removeCaret()
         ..collapsedHandleOffset = null
         ..upstreamHandleOffset = upstreamHandleOffset
-        ..downstreamHandleOffset = downstreamHandleOffset;
+        ..upstreamCaretHeight = upstreamHandleHeight
+        ..downstreamHandleOffset = downstreamHandleOffset
+        ..downstreamCaretHeight = downstreamHandleHeight;
     }
   }
 
@@ -695,20 +703,6 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     );
   }
 
-  void _positionExpandedCarets() {
-    final baseRect = _docLayout.getRectForPosition(widget.composer.selection!.base)!;
-    final extentRect = _docLayout.getRectForPosition(widget.composer.selection!.extent)!;
-
-    final selectionAffinity = widget.document.getAffinityBetween(
-      base: widget.composer.selection!.base,
-      extent: widget.composer.selection!.extent,
-    );
-
-    _editingController
-      ..upstreamCaretHeight = selectionAffinity == TextAffinity.downstream ? baseRect.height : extentRect.height
-      ..downstreamCaretHeight = selectionAffinity == TextAffinity.downstream ? extentRect.height : baseRect.height;
-  }
-
   void _positionToolbar() {
     if (!_editingController.shouldDisplayToolbar) {
       return;
@@ -1122,7 +1116,7 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
         break;
       case HandleType.upstream:
         handleOffset = widget.editingController.upstreamHandleOffset! -
-            Offset(0, widget.editingController.downstreamCaretHeight!) +
+            Offset(0, widget.editingController.upstreamCaretHeight!) +
             const Offset(-ballDiameter / 2, -3 * ballDiameter / 4);
         handle = IOSSelectionHandle.upstream(
           color: widget.handleColor,

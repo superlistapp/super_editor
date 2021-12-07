@@ -89,9 +89,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   double? _dragStartScrollOffset;
   Offset? _globalDragOffset;
   Offset? _dragEndInInteractor;
-  // TODO: HandleType is the wrong type here, we need collapsed/base/extent,
-  //       not collapsed/upstream/downstream. Change the type once it's working.
-  HandleType? _dragHandleType;
+  SelectionType? _selectionType;
 
   @override
   void initState() {
@@ -375,8 +373,8 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       }
 
       if (!widget.composer.selection!.isCollapsed) {
-        _positionToolbar();
         _editingController.showToolbar();
+        _positionToolbar();
       } else {
         // The selection is collapsed. The collapsed handle should disappear
         // after some inactivity. Start the countdown (or restart an in-progress
@@ -435,16 +433,27 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   }
 
   void _onHandleDragStart(HandleType handleType, Offset globalOffset) {
-    _dragHandleType = handleType;
-    _globalStartDragOffset = globalOffset;
+    final selectionAffinity = widget.document.getAffinityForSelection(widget.composer.selection!);
+    switch (handleType) {
+      case HandleType.collapsed:
+        _selectionType = SelectionType.collapsed;
+        break;
+      case HandleType.upstream:
+        _selectionType = selectionAffinity == TextAffinity.downstream ? SelectionType.base : SelectionType.extent;
+        break;
+      case HandleType.downstream:
+        _selectionType = selectionAffinity == TextAffinity.downstream ? SelectionType.extent : SelectionType.base;
+        break;
+    }
 
+    _globalStartDragOffset = globalOffset;
     final interactorBox = context.findRenderObject() as RenderBox;
     final handleOffsetInInteractor = interactorBox.globalToLocal(globalOffset);
     _dragStartInDoc = _getDocOffset(handleOffsetInInteractor);
 
     _startDragPositionOffset = _docLayout
         .getRectForPosition(
-          handleType == HandleType.upstream ? widget.composer.selection!.base : widget.composer.selection!.extent,
+          _selectionType == SelectionType.base ? widget.composer.selection!.base : widget.composer.selection!.extent,
         )!
         .center;
 
@@ -459,7 +468,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
     _handleAutoScrolling.startAutoScrollHandleMonitoring();
 
-    if (handleType == HandleType.collapsed) {
+    if (_selectionType == SelectionType.collapsed) {
       // Don't let the handle fade out while dragging it.
       _editingController.cancelCollapsedHandleAutoHideCountdown();
     }
@@ -492,15 +501,15 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       return;
     }
 
-    if (_dragHandleType == HandleType.collapsed) {
+    if (_selectionType == SelectionType.collapsed) {
       widget.composer.selection = DocumentSelection.collapsed(
         position: docDragPosition,
       );
-    } else if (_dragHandleType == HandleType.upstream) {
+    } else if (_selectionType == SelectionType.base) {
       widget.composer.selection = widget.composer.selection!.copyWith(
         base: docDragPosition,
       );
-    } else if (_dragHandleType == HandleType.downstream) {
+    } else if (_selectionType == SelectionType.extent) {
       widget.composer.selection = widget.composer.selection!.copyWith(
         extent: docDragPosition,
       );
@@ -525,8 +534,8 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
         ..unHideCollapsedHandle()
         ..startCollapsedHandleAutoHideCountdown();
     } else {
-      _positionToolbar();
       _editingController.showToolbar();
+      _positionToolbar();
     }
   }
 
@@ -550,16 +559,16 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
     late DocumentPosition basePosition;
     late DocumentPosition extentPosition;
-    switch (_dragHandleType!) {
-      case HandleType.collapsed:
+    switch (_selectionType!) {
+      case SelectionType.collapsed:
         basePosition = dragPosition;
         extentPosition = dragPosition;
         break;
-      case HandleType.upstream:
+      case SelectionType.base:
         basePosition = dragPosition;
         extentPosition = widget.composer.selection!.extent;
         break;
-      case HandleType.downstream:
+      case SelectionType.extent:
         basePosition = widget.composer.selection!.base;
         extentPosition = dragPosition;
         break;
@@ -1130,13 +1139,13 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
 
 class HandleStartDragEvent {
   const HandleStartDragEvent({
-    required this.handleType,
+    required this.selectionType,
     required this.globalHandleDragStartOffset,
     required this.globalHandleDocPositionRect,
   });
 
-  /// The type of handle that the user started to drag.
-  final HandleType handleType;
+  /// The type of selection that the user started to drag, e.g., collapsed, base, extent.
+  final SelectionType selectionType;
 
   /// The global offset where the user started dragging.
   ///
@@ -1153,16 +1162,22 @@ class HandleStartDragEvent {
 
 class HandleUpdateDragEvent {
   const HandleUpdateDragEvent({
-    required this.handleType,
+    required this.selectionType,
     required this.globalHandleDragOffset,
   });
 
-  /// The type of handle that the user started to drag.
-  final HandleType handleType;
+  /// The type of selection that the user started to drag, e.g., collapsed, base, extent.
+  final SelectionType selectionType;
 
   /// The current global offset of the user's pointer during
   /// a handle drag event.
   final Offset globalHandleDragOffset;
+}
+
+enum SelectionType {
+  collapsed,
+  base,
+  extent,
 }
 
 /// Controls the display of drag handles, a magnifier, and a

@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/super_selectable_text.dart';
 
@@ -178,10 +180,7 @@ class DocumentSelection {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is DocumentSelection &&
-          runtimeType == other.runtimeType &&
-          base == other.base &&
-          extent == other.extent;
+      other is DocumentSelection && runtimeType == other.runtimeType && base == other.base && extent == other.extent;
 
   @override
   int get hashCode => base.hashCode ^ extent.hashCode;
@@ -207,6 +206,36 @@ class DocumentSelection {
     return copyWith(
       extent: newExtent,
     );
+  }
+}
+
+extension InspectDocumentAffinity on Document {
+  TextAffinity getAffinityForSelection(DocumentSelection selection) {
+    return getAffinityBetween(base: selection.base, extent: selection.extent);
+  }
+
+  /// Returns the affinity direction implied by the given [base] and [extent].
+  // TODO: Replace TextAffinity with a DocumentAffinity to avoid confusion.
+  TextAffinity getAffinityBetween({
+    required DocumentPosition base,
+    required DocumentPosition extent,
+  }) {
+    final baseIndex = getNodeIndex(getNode(base)!);
+    final extentNode = getNode(extent)!;
+    final extentIndex = getNodeIndex(extentNode);
+
+    late TextAffinity affinity;
+    if (extentIndex > baseIndex) {
+      affinity = TextAffinity.downstream;
+    } else if (extentIndex < baseIndex) {
+      affinity = TextAffinity.upstream;
+    } else {
+      // The selection is within the same node. Ask the node which position
+      // comes first.
+      affinity = extentNode.getAffinityBetween(base: base.nodePosition, extent: extent.nodePosition);
+    }
+
+    return affinity;
   }
 }
 

@@ -71,32 +71,6 @@ abstract class Document with ChangeNotifier {
   bool hasEquivalentContent(Document other);
 }
 
-extension InspectDocumentAffinity on Document {
-  /// Returns the affinity direction implied by the given [base] and [extent].
-  // TODO: Replace TextAffinity with a DocumentAffinity to avoid confusion.
-  TextAffinity getAffinityBetween({
-    required DocumentPosition base,
-    required DocumentPosition extent,
-  }) {
-    final baseIndex = getNodeIndex(getNode(base)!);
-    final extentNode = getNode(extent)!;
-    final extentIndex = getNodeIndex(extentNode);
-
-    late TextAffinity affinity;
-    if (extentIndex > baseIndex) {
-      affinity = TextAffinity.downstream;
-    } else if (extentIndex < baseIndex) {
-      affinity = TextAffinity.upstream;
-    } else {
-      // The selection is within the same node. Ask the node which position
-      // comes first.
-      affinity = extentNode.getAffinityBetween(base: base.nodePosition, extent: extent.nodePosition);
-    }
-
-    return affinity;
-  }
-}
-
 /// A span within a [Document] that begins at [start] and
 /// ends at [end].
 ///
