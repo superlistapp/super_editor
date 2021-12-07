@@ -67,9 +67,6 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   // The alternative case is the one in which this interactor defers to an
   // ancestor scrollable.
   late ScrollController _scrollController;
-  // The nearest ancestor scrollable, if one exists. This interactor defers
-  // to the ancestor scrollable when it exists.
-  ScrollableState? _ancestorScrollable;
   // The ScrollPosition attached to the _ancestorScrollable.
   ScrollPosition? _ancestorScrollPosition;
   // The actual ScrollPosition that's used for the document layout, either
@@ -141,8 +138,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    _ancestorScrollable = Scrollable.of(context);
-    _ancestorScrollPosition = _ancestorScrollable?.position;
+    _ancestorScrollPosition = Scrollable.of(context)?.position;
 
     // On the next frame, check if our active scroll position changed to a
     // different instance. If it did, move our listener to the new one.

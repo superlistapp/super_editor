@@ -71,7 +71,7 @@ abstract class Document with ChangeNotifier {
   bool hasEquivalentContent(Document other);
 }
 
-extension DocumentAffinity on Document {
+extension InspectDocumentAffinity on Document {
   /// Returns the affinity direction implied by the given [base] and [extent].
   // TODO: Replace TextAffinity with a DocumentAffinity to avoid confusion.
   TextAffinity getAffinityBetween({
@@ -263,7 +263,7 @@ abstract class DocumentNode implements ChangeNotifier {
   bool hasEquivalentContent(DocumentNode other);
 }
 
-extension NodeAffinity on DocumentNode {
+extension InspectNodeAffinity on DocumentNode {
   /// Returns the affinity direction implied by the given [base] and [extent].
   TextAffinity getAffinityBetween({
     required NodePosition base,

@@ -69,7 +69,7 @@ abstract class DocumentLayout {
   Offset getAncestorOffsetFromDocumentOffset(Offset documentOffset, RenderObject ancestor);
 
   /// Converts [documentOffset] from this [DocumentLayout]'s coordinate space
-  /// to the same location on the screen the global coordinate space.
+  /// to the same location on the screen in the global coordinate space.
   Offset getGlobalOffsetFromDocumentOffset(Offset documentOffset);
 }
 

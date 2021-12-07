@@ -68,10 +68,8 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   // The alternative case is the one in which this interactor defers to an
   // ancestor scrollable.
   late ScrollController _scrollController;
-  // The nearest ancestor scrollable, if one exists. This interactor defers
-  // to the ancestor scrollable when it exists.
-  ScrollableState? _ancestorScrollable;
-  // The ScrollPosition attached to the _ancestorScrollable.
+  // The ScrollPosition attached to the _ancestorScrollable, if there's an ancestor
+  // Scrollable.
   ScrollPosition? _ancestorScrollPosition;
   // The actual ScrollPosition that's used for the document layout, either
   // the Scrollable installed by this interactor, or an ancestor Scrollable.

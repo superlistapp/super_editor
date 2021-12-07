@@ -5,6 +5,8 @@ import 'package:flutter/widgets.dart';
 
 import '_logging.dart';
 
+/// Animates the scroll offset of a given [scrollPosition] based on a
+/// given speed percent.
 class AutoScroller {
   AutoScroller({
     required TickerProvider vsync,

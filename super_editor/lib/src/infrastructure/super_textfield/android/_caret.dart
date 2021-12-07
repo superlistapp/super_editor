@@ -82,8 +82,7 @@ class AndroidTextFieldCaret extends StatefulWidget {
   _AndroidTextFieldCaretState createState() => _AndroidTextFieldCaretState();
 }
 
-class _AndroidTextFieldCaretState extends State<AndroidTextFieldCaret>
-    with SingleTickerProviderStateMixin {
+class _AndroidTextFieldCaretState extends State<AndroidTextFieldCaret> with SingleTickerProviderStateMixin {
   late CaretBlinkController _caretBlinkController;
 
   @override
@@ -177,8 +176,7 @@ class AndroidCursorPainter extends CustomPainter {
   }) {
     caretPaint.color = caretColor.withOpacity(blinkController.opacity);
 
-    double caretHeight =
-        textLayout.getHeightForCaret(selection.extent) ?? emptyTextCaretHeight;
+    double caretHeight = textLayout.getHeightForCaret(selection.extent) ?? emptyTextCaretHeight;
     final caretOffset = textLayout.getOffsetAtPosition(selection.extent);
 
     if (borderRadius == BorderRadius.zero) {
