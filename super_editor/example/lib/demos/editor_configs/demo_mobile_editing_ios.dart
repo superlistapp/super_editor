@@ -44,6 +44,17 @@ class _MobileEditingIOSDemoState extends State<MobileEditingIOSDemo> {
         focusNode: _editorFocusNode,
         documentLayoutKey: _docLayoutKey,
         gestureMode: DocumentGestureMode.iOS,
+        iOSToolbarBuilder: (_) => IOSTextEditingFloatingToolbar(
+          onCopyPressed: () {
+            // TODO:
+          },
+          onCutPressed: () {
+            // TODO:
+          },
+          onPastePressed: () {
+            // TODO:
+          },
+        ),
         editor: _docEditor!,
         composer: _composer,
         padding: const EdgeInsets.all(16),

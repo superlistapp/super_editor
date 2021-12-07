@@ -9,8 +9,7 @@ import 'package:super_editor/super_editor.dart';
 /// no matter which platform or form factor you use.
 class MobileEditingAndroidDemo extends StatefulWidget {
   @override
-  _MobileEditingAndroidDemoState createState() =>
-      _MobileEditingAndroidDemoState();
+  _MobileEditingAndroidDemoState createState() => _MobileEditingAndroidDemoState();
 }
 
 class _MobileEditingAndroidDemoState extends State<MobileEditingAndroidDemo> {
@@ -45,6 +44,20 @@ class _MobileEditingAndroidDemoState extends State<MobileEditingAndroidDemo> {
         focusNode: _editorFocusNode,
         documentLayoutKey: _docLayoutKey,
         gestureMode: DocumentGestureMode.android,
+        androidToolbarBuilder: (_) => AndroidTextEditingFloatingToolbar(
+          onCutPressed: () {
+            // TODO:
+          },
+          onCopyPressed: () {
+            // TODO:
+          },
+          onPastePressed: () async {
+            // TODO:
+          },
+          onSelectAllPressed: () {
+            // TODO:
+          },
+        ),
         editor: _docEditor!,
         composer: _composer,
         padding: const EdgeInsets.all(16),

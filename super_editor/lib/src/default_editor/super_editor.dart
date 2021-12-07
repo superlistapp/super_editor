@@ -80,6 +80,8 @@ class SuperEditor extends StatefulWidget {
     this.maxWidth = 600,
     this.inputSource = DocumentInputSource.keyboard,
     this.gestureMode = DocumentGestureMode.mouse,
+    this.androidToolbarBuilder,
+    this.iOSToolbarBuilder,
     required this.editor,
     this.composer,
     this.componentVerticalSpacing = 16,
@@ -100,6 +102,8 @@ class SuperEditor extends StatefulWidget {
     this.maxWidth = 600,
     this.inputSource = DocumentInputSource.keyboard,
     this.gestureMode = DocumentGestureMode.mouse,
+    this.androidToolbarBuilder,
+    this.iOSToolbarBuilder,
     required this.editor,
     this.composer,
     AttributionStyleBuilder? textStyleBuilder,
@@ -125,6 +129,8 @@ class SuperEditor extends StatefulWidget {
     this.maxWidth = 600,
     this.inputSource = DocumentInputSource.keyboard,
     this.gestureMode = DocumentGestureMode.mouse,
+    this.androidToolbarBuilder,
+    this.iOSToolbarBuilder,
     required this.editor,
     this.composer,
     AttributionStyleBuilder? textStyleBuilder,
@@ -169,6 +175,12 @@ class SuperEditor extends StatefulWidget {
 
   /// The `SuperEditor` gesture mode, e.g., mouse or touch.
   final DocumentGestureMode? gestureMode;
+
+  /// Builder that creates a floating toolbar when running on Android.
+  final WidgetBuilder? androidToolbarBuilder;
+
+  /// Builder that creates a floating toolbar when running on iOS.
+  final WidgetBuilder? iOSToolbarBuilder;
 
   /// Contains a [Document] and alters that document as desired.
   final DocumentEditor editor;
@@ -386,20 +398,7 @@ class _SuperEditorState extends State<SuperEditor> {
           getDocumentLayout: () => _editContext.documentLayout,
           scrollController: widget.scrollController,
           documentKey: _docLayoutKey,
-          popoverToolbarBuilder: (_) => AndroidTextEditingFloatingToolbar(
-            onCutPressed: () {
-              // TODO:
-            },
-            onCopyPressed: () {
-              // TODO:
-            },
-            onPastePressed: () async {
-              // TODO:
-            },
-            onSelectAllPressed: () {
-              // TODO:
-            },
-          ),
+          popoverToolbarBuilder: widget.androidToolbarBuilder ?? (_) => const SizedBox(),
           showDebugPaint: widget.showDebugPaint,
           child: child,
         );
@@ -411,17 +410,7 @@ class _SuperEditorState extends State<SuperEditor> {
           getDocumentLayout: () => _editContext.documentLayout,
           scrollController: widget.scrollController,
           documentKey: _docLayoutKey,
-          popoverToolbarBuilder: (_) => IOSTextEditingFloatingToolbar(
-            onCopyPressed: () {
-              // TODO:
-            },
-            onCutPressed: () {
-              // TODO:
-            },
-            onPastePressed: () {
-              // TODO:
-            },
-          ),
+          popoverToolbarBuilder: widget.iOSToolbarBuilder ?? (_) => const SizedBox(),
           showDebugPaint: widget.showDebugPaint,
           child: child,
         );
