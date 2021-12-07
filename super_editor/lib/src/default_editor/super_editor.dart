@@ -9,15 +9,18 @@ import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
 import 'package:super_editor/src/default_editor/blockquote.dart';
 import 'package:super_editor/src/default_editor/common_editor_operations.dart';
+import 'package:super_editor/src/default_editor/document_gestures_touch_android.dart';
+import 'package:super_editor/src/default_editor/document_gestures_touch_ios.dart';
 import 'package:super_editor/src/default_editor/horizontal_rule.dart';
 import 'package:super_editor/src/default_editor/image.dart';
 import 'package:super_editor/src/default_editor/list_items.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/attributed_spans.dart';
 import 'package:super_editor/src/infrastructure/attributed_text.dart';
+import 'package:super_editor/src/infrastructure/platforms/android/toolbar.dart';
+import 'package:super_editor/src/infrastructure/platforms/ios/toolbar.dart';
 
 import 'document_gestures_mouse.dart';
-import 'document_gestures_touch.dart';
 import 'document_input_ime.dart';
 import 'document_input_keyboard.dart';
 import 'document_keyboard_actions.dart';
@@ -278,8 +281,7 @@ class _SuperEditorState extends State<SuperEditor> {
       commonOps: CommonEditorOperations(
         editor: widget.editor,
         composer: _composer,
-        documentLayoutResolver: () =>
-            _docLayoutKey.currentState as DocumentLayout,
+        documentLayoutResolver: () => _docLayoutKey.currentState as DocumentLayout,
       ),
     );
   }
@@ -296,14 +298,12 @@ class _SuperEditorState extends State<SuperEditor> {
       return;
     }
 
-    final node =
-        widget.editor.document.getNodeById(_composer.selection!.extent.nodeId);
+    final node = widget.editor.document.getNodeById(_composer.selection!.extent.nodeId);
     if (node is! TextNode) {
       return;
     }
 
-    final textPosition =
-        _composer.selection!.extent.nodePosition as TextPosition;
+    final textPosition = _composer.selection!.extent.nodePosition as TextPosition;
 
     if (textPosition.offset == 0) {
       if (node.text.text.isEmpty) {
@@ -379,15 +379,49 @@ class _SuperEditorState extends State<SuperEditor> {
           child: child,
         );
       case DocumentGestureMode.android:
-      case DocumentGestureMode.iOS:
-        return DocumentTouchInteractor(
+        return AndroidDocumentTouchInteractor(
           focusNode: _focusNode,
-          editContext: _editContext,
+          composer: _editContext.composer,
+          document: _editContext.editor.document,
+          getDocumentLayout: () => _editContext.documentLayout,
           scrollController: widget.scrollController,
           documentKey: _docLayoutKey,
-          style: widget.gestureMode == DocumentGestureMode.android
-              ? ControlsStyle.android
-              : ControlsStyle.iOS,
+          popoverToolbarBuilder: (_) => AndroidTextEditingFloatingToolbar(
+            onCutPressed: () {
+              // TODO:
+            },
+            onCopyPressed: () {
+              // TODO:
+            },
+            onPastePressed: () async {
+              // TODO:
+            },
+            onSelectAllPressed: () {
+              // TODO:
+            },
+          ),
+          showDebugPaint: widget.showDebugPaint,
+          child: child,
+        );
+      case DocumentGestureMode.iOS:
+        return IOSDocumentTouchInteractor(
+          focusNode: _focusNode,
+          composer: _editContext.composer,
+          document: _editContext.editor.document,
+          getDocumentLayout: () => _editContext.documentLayout,
+          scrollController: widget.scrollController,
+          documentKey: _docLayoutKey,
+          popoverToolbarBuilder: (_) => IOSTextEditingFloatingToolbar(
+            onCopyPressed: () {
+              // TODO:
+            },
+            onCutPressed: () {
+              // TODO:
+            },
+            onPastePressed: () {
+              // TODO:
+            },
+          ),
           showDebugPaint: widget.showDebugPaint,
           child: child,
         );
@@ -413,8 +447,7 @@ class _SuperEditorState extends State<SuperEditor> {
             document: widget.editor.document,
             documentSelection: _composer.selection,
             componentBuilders: widget.componentBuilders,
-            showCaret: _focusNode.hasFocus &&
-                widget.gestureMode == DocumentGestureMode.mouse,
+            showCaret: _focusNode.hasFocus && widget.gestureMode == DocumentGestureMode.mouse,
             margin: widget.padding,
             componentVerticalSpacing: widget.componentVerticalSpacing,
             extensions: {

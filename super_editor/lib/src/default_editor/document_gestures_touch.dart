@@ -1,176 +1,84 @@
-import 'dart:async';
-import 'dart:ui';
-import 'dart:ui';
-
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
-import 'package:super_editor/src/core/document.dart';
-import 'package:super_editor/src/core/document_selection.dart';
-import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/default_editor/document_gestures.dart';
-import 'package:super_editor/src/default_editor/document_gestures_touch_android.dart';
-import 'package:super_editor/src/default_editor/document_gestures_touch_ios.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/_scrolling.dart';
-import 'package:super_editor/src/infrastructure/touch_controls.dart';
 
-/// Governs touch gesture interaction with a document, such as dragging
-/// to scroll a document, and dragging handles to expand a selection.
+/// Platform independent tools for touch gesture interaction with a
+/// document, such as dragging to scroll a document, and dragging
+/// handles to expand a selection.
 ///
-/// See also: super_editor's mouse gesture support.
+/// See also:
+///  * document_gestures_touch_ios for iOS-specific touch gesture tools.
+///  * document_gestures_touch_android for Android-specific touch gesture tools.
+///  * super_editor's mouse gesture support.
 
-/// Document gesture interactor that's designed for touch input, e.g.,
-/// drag to scroll, and handles to control selection.
-class DocumentTouchInteractor extends StatelessWidget {
-  const DocumentTouchInteractor({
+/// Displays the given [child] document within a `Scrollable`, if and only
+/// if there is no ancestor `Scrollable` in the widget tree.
+///
+/// The given [scrollController] is attached to inner `Scrollable`, when
+/// a `Scrollable` is included in this widget tree.
+///
+/// The [documentLayerLink] is given a `CompositedTransformTarget` that
+/// surrounds the document.
+class ScrollableDocument extends StatelessWidget {
+  const ScrollableDocument({
     Key? key,
-    required this.focusNode,
-    required this.editContext,
     this.scrollController,
-    required this.documentKey,
-    this.style = ControlsStyle.android,
-    this.showDebugPaint = false,
+    this.disableDragScrolling = false,
+    required this.documentLayerLink,
     required this.child,
   }) : super(key: key);
 
-  final FocusNode focusNode;
-  final EditContext editContext;
+  /// `ScrollController` that's attached to the `Scrollable` in this
+  /// widget, if a `Scrollable` is added.
+  ///
+  /// A `Scrollable` is added if, and only if, there is no ancestor
+  /// `Scrollable` in the widget tree.
   final ScrollController? scrollController;
-  final GlobalKey documentKey;
-  final ControlsStyle style;
-  final bool showDebugPaint;
+
+  /// Whether to disable drag-based scrolling, for cases in which drag
+  /// behaviors are handled elsewhere, e.g., the user drags a handle that's
+  /// displayed within the document.
+  final bool disableDragScrolling;
+
+  /// `LayerLink` that will be aligned to the top-left of the document layout.
+  final LayerLink documentLayerLink;
+
+  /// The document layout widget.
   final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    switch (style) {
-      case ControlsStyle.android:
-        return AndroidDocumentTouchInteractor(
-          focusNode: focusNode,
-          editContext: editContext,
-          documentKey: documentKey,
-          child: child,
-        );
-      case ControlsStyle.iOS:
-        return IOSDocumentTouchInteractor(
-          focusNode: focusNode,
-          editContext: editContext,
-          documentKey: documentKey,
-          child: child,
-        );
-    }
-  }
-}
+    final ancestorScrollable = Scrollable.of(context);
+    final _ancestorScrollPosition = ancestorScrollable?.position;
+    final addScrollView = _ancestorScrollPosition == null;
 
-class EditingController with ChangeNotifier {
-  EditingController({
-    required Document document,
-    required LayerLink magnifierFocalPoint,
-  })  : _document = document,
-        _magnifierFocalPoint = magnifierFocalPoint;
-
-  @override
-  void dispose() {
-    _handleAutoHideTimer?.cancel();
-    super.dispose();
+    return addScrollView
+        ? SizedBox(
+            height: double.infinity,
+            child: ScrollConfiguration(
+              behavior: ScrollConfiguration.of(context).copyWith(dragDevices: {
+                PointerDeviceKind.touch,
+                PointerDeviceKind.mouse,
+              }),
+              child: SingleChildScrollView(
+                physics: disableDragScrolling ? const NeverScrollableScrollPhysics() : null,
+                controller: scrollController,
+                child: _buildDocument(),
+              ),
+            ),
+          )
+        : _buildDocument();
   }
 
-  final Document _document;
-  Document get document => _document;
-
-  // TODO:
-  bool get areHandlesDesired => true;
-
-  // The collapsed handle is auto-hidden on Android after a period of inactivity.
-  // We represent the auto-hidden status of the collapsed handle independently
-  // from the general visibility of all handles. This way, the expanded handles
-  // are not inadvertently hidden due to the collapsed handle being hidden. Also,
-  // this allows for fading out of the collapsed handle, rather than the abrupt
-  // disappearance of all handles.
-  final Duration _handleAutoHideDuration = const Duration(seconds: 4);
-  Timer? _handleAutoHideTimer;
-  bool _isCollapsedHandleAutoHidden = false;
-  bool get isCollapsedHandleAutoHidden => _isCollapsedHandleAutoHidden;
-
-  void unHideCollapsedHandle() {
-    if (_isCollapsedHandleAutoHidden) {
-      _isCollapsedHandleAutoHidden = false;
-      notifyListeners();
-    }
-  }
-
-  void startCollapsedHandleAutoHideCountdown() {
-    _handleAutoHideTimer?.cancel();
-    _handleAutoHideTimer = Timer(_handleAutoHideDuration, _hideCollapsedHandle);
-  }
-
-  void cancelCollapsedHandleAutoHideCountdown() {
-    _handleAutoHideTimer?.cancel();
-  }
-
-  void _hideCollapsedHandle() {
-    if (!_isCollapsedHandleAutoHidden) {
-      _isCollapsedHandleAutoHidden = true;
-      notifyListeners();
-    }
-  }
-
-  DocumentSelection? _selection;
-  bool get hasSelection => _selection != null;
-  DocumentSelection? get selection => _selection;
-  set selection(newSelection) {
-    if (newSelection == _selection) {
-      return;
-    }
-
-    _selection = newSelection;
-
-    notifyListeners();
-  }
-
-  final LayerLink _magnifierFocalPoint;
-  LayerLink get magnifierFocalPoint => _magnifierFocalPoint;
-
-  bool _isMagnifierVisible = false;
-  bool get isMagnifierVisible => _isMagnifierVisible;
-
-  void showMagnifier() {
-    hideToolbar();
-
-    _isMagnifierVisible = true;
-
-    notifyListeners();
-  }
-
-  void hideMagnifier() {
-    _isMagnifierVisible = false;
-    notifyListeners();
-  }
-
-  bool _isToolbarVisible = false;
-  // We check if selection is null because the toolbar requires a
-  // selection to determine where it's placed on screen.
-  bool get isToolbarVisible => _isToolbarVisible && selection != null;
-
-  void toggleToolbar() {
-    if (isToolbarVisible) {
-      hideToolbar();
-    } else {
-      showToolbar();
-    }
-  }
-
-  void showToolbar() {
-    hideMagnifier();
-
-    _isToolbarVisible = true;
-
-    notifyListeners();
-  }
-
-  void hideToolbar() {
-    _isToolbarVisible = false;
-    notifyListeners();
+  Widget _buildDocument() {
+    return CompositedTransformTarget(
+      link: documentLayerLink,
+      child: Center(
+        child: child,
+      ),
+    );
   }
 }
 
@@ -278,13 +186,16 @@ class MagnifierAndToolbarController with ChangeNotifier {
   }
 }
 
-enum ControlsStyle {
-  android,
-  iOS,
-}
-
-class DragHandleAutoScrolling {
-  DragHandleAutoScrolling({
+/// Auto-scrolls a given `ScrollPosition` based on the current position of
+/// a drag handle near the boundary of the scroll region.
+///
+/// Clients of this object provide access to a desired `ScrollPosition` and
+/// a viewport `RenderBox`. Clients also update this object whenever the
+/// drag handle moves. Then, this object starts/stops auto-scrolling the
+/// given `ScrollPosition` as needed, based on how close the drag handle
+/// position sits to the edge of the scrollable boundary.
+class DragHandleAutoScroller {
+  DragHandleAutoScroller({
     required TickerProvider vsync,
     required AxisOffset dragAutoScrollBoundary,
     required ScrollPosition Function() getScrollPosition,
@@ -301,24 +212,29 @@ class DragHandleAutoScrolling {
   final AutoScroller _autoScroller;
   final AxisOffset _dragAutoScrollBoundary;
 
-  /// Implementers need to return the `ScrollPosition` that this auto-scroller
-  /// controls.
+  /// Returns the `ScrollPosition` that this auto-scroller should control.
   final ScrollPosition Function() _getScrollPosition;
 
-  /// Implementers need to return the `RenderBox` associated with the viewport
-  /// of the scrollable that this auto-scroller controls.
-  ///
-  /// The viewport is the visual area of a scrollable that the user sees and
-  /// touches (as opposed to the content inside the viewport).
+  /// Returns the `RenderBox` of the viewport that belongs to the `Scrollable`
+  /// that this auto-scroller controls.
   final RenderBox Function() _getViewportBox;
 
+  /// Prepares this auto-scroller to automatically scroll its `ScrollPosition`
+  /// based on calls to [updateAutoScrollHandleMonitoring].
   void startAutoScrollHandleMonitoring() {
     _autoScroller.scrollPosition = _getScrollPosition();
   }
 
+  /// Starts/stops auto-scrolling as necessary, based on the given
+  /// [dragEndInViewport] and [viewportHeight].
+  ///
+  /// This method must be called in the following order:
+  ///
+  ///  1. [startAutoScrollHandleMonitoring]
+  ///  2. 1+ calls to [updateAutoScrollHandleMonitoring]
+  ///  3. [stopAutoScrollHandleMonitoring]
   void updateAutoScrollHandleMonitoring({
     required Offset dragEndInViewport,
-    required double viewportHeight,
   }) {
     if (dragEndInViewport.dy < _dragAutoScrollBoundary.leading) {
       editorGesturesLog.finest('Metrics say we should try to scroll up');
@@ -332,7 +248,7 @@ class DragHandleAutoScrolling {
       _autoScroller.stopScrollingUp();
     }
 
-    if (viewportHeight - dragEndInViewport.dy < _dragAutoScrollBoundary.trailing) {
+    if (_getViewportBox().size.height - dragEndInViewport.dy < _dragAutoScrollBoundary.trailing) {
       editorGesturesLog.finest('Metrics say we should try to scroll down');
 
       final trailingScrollBoundary = _dragAutoScrollBoundary.trailing;
@@ -345,6 +261,8 @@ class DragHandleAutoScrolling {
     }
   }
 
+  /// Stops any on-going auto-scrolling and removes references there were
+  /// setup in [startAutoScrollHandleMonitoring].
   void stopAutoScrollHandleMonitoring() {
     _autoScroller.stopScrolling();
     _autoScroller.scrollPosition = null;
