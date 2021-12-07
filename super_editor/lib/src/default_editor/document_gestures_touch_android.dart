@@ -140,12 +140,6 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
         newScrollPosition.addListener(_onScrollChange);
         _activeScrollPosition = newScrollPosition;
       }
-
-      if (_scrollController.hasClients) {
-        print("didChangeDependencies()");
-        print("Actual scroll position: ${scrollPosition.hashCode}");
-        print("Cached scroll position: ${_activeScrollPosition?.hashCode}");
-      }
     });
   }
 
@@ -277,10 +271,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   }
 
   void _onScrollChange() {
-    print("Android scroll change");
-    if (_editingController.shouldDisplayToolbar) {
-      _positionToolbar();
-    }
+    _positionToolbar();
   }
 
   /// Returns the layout for the current document, which answers questions
@@ -593,7 +584,10 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   }
 
   void _positionToolbar() {
-    print("Positioning toolbar");
+    if (!_editingController.shouldDisplayToolbar) {
+      return;
+    }
+
     const toolbarGap = 24.0;
     late Rect selectionRect;
     Offset toolbarTopAnchor;
@@ -714,15 +708,6 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
   @override
   Widget build(BuildContext context) {
-    // final ancestorScrollable = Scrollable.of(context);
-    // _ancestorScrollPosition = ancestorScrollable?.position;
-
-    if (_scrollController.hasClients) {
-      print("build()");
-      print("Actual scroll position: ${scrollPosition.hashCode}");
-      print("Cached scroll position: ${_activeScrollPosition?.hashCode}");
-    }
-
     return _buildGestureInput(
       child: ScrollableDocument(
         scrollController: _scrollController,
@@ -938,8 +923,6 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
       child: ListenableBuilder(
         listenable: widget.editingController,
         builder: (context) {
-          print(
-              "Building controls. Is toolbar visible? ${widget.editingController.shouldDisplayToolbar}, anchors: ${widget.editingController.toolbarTopAnchor}, ${widget.editingController.toolbarBottomAnchor}");
           return Stack(
             children: [
               // Build the caret

@@ -159,12 +159,6 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
           _activeScrollPosition = newScrollPosition;
         });
       }
-
-      if (_scrollController.hasClients) {
-        print("didChangeDependencies()");
-        print("Actual scroll position: ${scrollPosition.hashCode}");
-        print("Cached scroll position: ${_activeScrollPosition?.hashCode}");
-      }
     });
   }
 
@@ -283,7 +277,6 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   }
 
   void _onScrollChange() {
-    print("scroll change");
     _positionToolbar();
   }
 
@@ -547,7 +540,6 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     // If the user isn't dragging a handle, then the user is trying to
     // scroll the document. Scroll it, accordingly.
     if (_dragMode == null) {
-      print("Manually jumping scrollPosition: ${scrollPosition.hashCode}");
       scrollPosition.jumpTo(scrollPosition.pixels - details.delta.dy);
       _positionToolbar();
       return;
@@ -601,6 +593,10 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
       // User was dragging the scroll area. Go ballistic.
       if (scrollPosition is ScrollPositionWithSingleContext) {
         (scrollPosition as ScrollPositionWithSingleContext).goBallistic(-details.velocity.pixelsPerSecond.dy);
+
+        // We add the scroll change listener again, because going ballistic
+        // seems to switch out the scroll position.
+        scrollPosition.addListener(_onScrollChange);
       }
     } else {
       // The user was dragging a handle. Stop any auto-scrolling that may have started.
@@ -862,13 +858,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   @override
   Widget build(BuildContext context) {
     if (_scrollController.hasClients) {
-      print("build()");
-      print("Actual scroll position: ${scrollPosition.hashCode}");
-      print("Cached scroll position: ${_activeScrollPosition?.hashCode}");
-
       if (scrollPosition != _activeScrollPosition) {
-        print("Scroll positions have diverged, updating the actual scroll position");
-        // _activeScrollPosition?.removeListener(_onScrollChange);
         _activeScrollPosition = scrollPosition;
         _activeScrollPosition?.addListener(_onScrollChange);
       }
