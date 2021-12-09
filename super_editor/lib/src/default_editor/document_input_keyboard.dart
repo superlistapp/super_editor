@@ -23,10 +23,14 @@ class DocumentKeyboardInteractor extends StatelessWidget {
     required this.editContext,
     required this.keyboardActions,
     required this.child,
+    this.autofocus = false,
   }) : super(key: key);
 
   /// The source of all key events.
   final FocusNode focusNode;
+
+  /// Whether or not the [DocumentKeyboardInteractor] should autofocus
+  final bool autofocus;
 
   /// Service locator for document editing dependencies.
   final EditContext editContext;
@@ -86,7 +90,7 @@ class DocumentKeyboardInteractor extends StatelessWidget {
     return Focus(
       focusNode: focusNode,
       onKey: _onKeyPressed,
-      autofocus: true,
+      autofocus: autofocus,
       child: child,
     );
   }

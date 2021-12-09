@@ -84,6 +84,7 @@ class SuperEditor extends StatefulWidget {
     this.composer,
     this.componentVerticalSpacing = 16,
     this.showDebugPaint = false,
+    this.autofocus = false,
   })  : componentBuilders = defaultComponentBuilders,
         keyboardActions = defaultKeyboardActions,
         softwareKeyboardHandler = null,
@@ -113,6 +114,7 @@ class SuperEditor extends StatefulWidget {
     List<ComponentBuilder>? componentBuilders,
     this.componentVerticalSpacing = 16,
     this.showDebugPaint = false,
+    this.autofocus = false,
   })  : textStyleBuilder = textStyleBuilder ?? defaultStyleBuilder,
         selectionStyle = selectionStyle ?? defaultSelectionStyle,
         keyboardActions = keyboardActions ?? defaultKeyboardActions,
@@ -142,6 +144,7 @@ class SuperEditor extends StatefulWidget {
     List<ComponentBuilder>? componentBuilders,
     this.componentVerticalSpacing = 16,
     this.showDebugPaint = false,
+    this.autofocus = false,
   })  : textStyleBuilder = textStyleBuilder ?? defaultStyleBuilder,
         selectionStyle = selectionStyle ?? defaultSelectionStyle,
         keyboardActions = keyboardActions ?? defaultKeyboardActions,
@@ -150,6 +153,9 @@ class SuperEditor extends StatefulWidget {
 
   /// [FocusNode] for the entire `SuperEditor`.
   final FocusNode? focusNode;
+
+  /// Whether or not the [SuperEditor] should autofocus
+  final bool autofocus;
 
   /// Padding between the boundary of this `SuperEditor` and its
   /// document content, i.e., insets the content of this document
@@ -402,6 +408,7 @@ class _SuperEditorState extends State<SuperEditor> {
       case DocumentInputSource.keyboard:
         return DocumentKeyboardInteractor(
           focusNode: _focusNode,
+          autofocus: widget.autofocus,
           editContext: _editContext,
           keyboardActions: widget.keyboardActions,
           child: child,
@@ -409,6 +416,7 @@ class _SuperEditorState extends State<SuperEditor> {
       case DocumentInputSource.ime:
         return DocumentImeInteractor(
           focusNode: _focusNode,
+          autofocus: widget.autofocus,
           editContext: _editContext,
           softwareKeyboardHandler: _softwareKeyboardHandler,
           floatingCursorController: _floatingCursorController,

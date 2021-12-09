@@ -36,6 +36,7 @@ class DocumentImeInteractor extends StatefulWidget {
   const DocumentImeInteractor({
     Key? key,
     this.focusNode,
+    this.autofocus = false,
     required this.editContext,
     required this.softwareKeyboardHandler,
     this.floatingCursorController,
@@ -43,6 +44,7 @@ class DocumentImeInteractor extends StatefulWidget {
   }) : super(key: key);
 
   final FocusNode? focusNode;
+  final bool autofocus;
   final EditContext editContext;
   final SoftwareKeyboardHandler softwareKeyboardHandler;
   final FloatingCursorController? floatingCursorController;
@@ -317,6 +319,7 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
   Widget build(BuildContext context) {
     return Focus(
       focusNode: _focusNode,
+      autofocus: widget.autofocus,
       child: widget.child,
     );
   }
