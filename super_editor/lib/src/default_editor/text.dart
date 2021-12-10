@@ -321,7 +321,8 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
     }
 
     final offset = getOffsetForPosition(nodePosition);
-    final lineHeight = _selectableTextKey.currentState!.getHeightForCaret(nodePosition)!;
+    final lineHeight = _selectableTextKey.currentState!.getHeightForCaret(nodePosition) ??
+        _selectableTextKey.currentState!.getLineHeightAtPosition(nodePosition);
     return Rect.fromLTWH(offset.dx, offset.dy, 0, lineHeight);
   }
 
