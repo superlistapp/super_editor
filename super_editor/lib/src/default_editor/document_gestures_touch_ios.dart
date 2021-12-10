@@ -343,16 +343,25 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
       return;
     }
 
-    setState(() {
-      _waitingForMoreTaps = true;
-      _controlsOverlayEntry?.markNeedsBuild();
-    });
-
     editorGesturesLog.info("Tap down on document");
     final docOffset = _getDocOffset(details.localPosition);
     editorGesturesLog.fine(" - document offset: $docOffset");
     final docPosition = _docLayout.getDocumentPositionAtOffset(docOffset);
     editorGesturesLog.fine(" - tapped document position: $docPosition");
+
+    if (docPosition != null &&
+        selection != null &&
+        !selection.isCollapsed &&
+        widget.document.doesSelectionContainPosition(selection, docPosition)) {
+      // The user tapped on an expanded selection. Toggle the toolbar.
+      _editingController.toggleToolbar();
+      return;
+    }
+
+    setState(() {
+      _waitingForMoreTaps = true;
+      _controlsOverlayEntry?.markNeedsBuild();
+    });
 
     if (docPosition != null) {
       final didTapOnExistingSelection = selection != null && selection.isCollapsed && selection.extent == docPosition;
