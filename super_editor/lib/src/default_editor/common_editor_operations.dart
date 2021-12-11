@@ -331,7 +331,7 @@ class CommonEditorOperations {
 
     if (newExtentNodePosition == null) {
       // Move to next node
-      final nextNode = _getPreviousSelectableNodeBefore(node);
+      final nextNode = _getUpstreamSelectableNodeBefore(node);
 
       if (nextNode == null) {
         // We're at the beginning of the document and can't go anywhere.
@@ -412,8 +412,7 @@ class CommonEditorOperations {
 
     if (newExtentNodePosition == null) {
       // Move to next node
-      // final nextNode = editor.document.getNodeAfter(node);
-      final nextNode = _getNextSelectableNodeAfter(node);
+      final nextNode = _getDownstreamSelectableNodeAfter(node);
 
       if (nextNode == null) {
         // We're at the beginning/end of the document and can't go
@@ -492,7 +491,7 @@ class CommonEditorOperations {
 
     if (newExtentNodePosition == null) {
       // Move to next node
-      final nextNode = _getPreviousSelectableNodeBefore(node);
+      final nextNode = _getUpstreamSelectableNodeBefore(node);
       if (nextNode != null) {
         newExtentNodeId = nextNode.id;
         final nextComponent = documentLayoutResolver().getComponentByNodeId(nextNode.id);
@@ -550,7 +549,6 @@ class CommonEditorOperations {
   bool moveCaretDown({
     bool expand = false,
   }) {
-    print("moveCaretDown");
     if (composer.selection == null) {
       return false;
     }
@@ -571,8 +569,7 @@ class CommonEditorOperations {
 
     if (newExtentNodePosition == null) {
       // Move to next node
-      final nextNode = _getNextSelectableNodeAfter(node);
-      print("Next selectable node: $nextNode");
+      final nextNode = _getDownstreamSelectableNodeAfter(node);
       if (nextNode != null) {
         newExtentNodeId = nextNode.id;
         final nextComponent = documentLayoutResolver().getComponentByNodeId(nextNode.id);
@@ -610,7 +607,7 @@ class CommonEditorOperations {
 
   /// Returns the first [DocumentNode] before [startingNode] whose
   /// [DocumentComponent] is visually selectable.
-  DocumentNode? _getPreviousSelectableNodeBefore(DocumentNode startingNode) {
+  DocumentNode? _getUpstreamSelectableNodeBefore(DocumentNode startingNode) {
     bool foundSelectableNode = false;
     DocumentNode prevNode = startingNode;
     DocumentNode? selectableNode;
@@ -631,7 +628,7 @@ class CommonEditorOperations {
 
   /// Returns the first [DocumentNode] after [startingNode] whose
   /// [DocumentComponent] is visually selectable.
-  DocumentNode? _getNextSelectableNodeAfter(DocumentNode startingNode) {
+  DocumentNode? _getDownstreamSelectableNodeAfter(DocumentNode startingNode) {
     bool foundSelectableNode = false;
     DocumentNode prevNode = startingNode;
     DocumentNode? selectableNode;

@@ -26,8 +26,6 @@ class _UnselectableHrDemoState extends State<UnselectableHrDemo> {
     super.dispose();
   }
 
-  /// Creates a document with multiple levels of headers with hint text, and a
-  /// regular paragraph for comparison.
   MutableDocument _createDocument() {
     return MutableDocument(
       nodes: [

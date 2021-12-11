@@ -240,7 +240,7 @@ mixin DocumentComponent<T extends StatefulWidget> on State<T> {
   ///
   /// A component that doesn't support visual selection should never be
   /// allowed to appear at the boundary of a selection. The user should not
-  /// be able to tap this component to select it, nor should the use be
+  /// be able to tap this component to select it, nor should the user be
   /// able to expand a selection with this component as the base or extent.
   /// Implementation of these restrictions are the responsibility of the
   /// document layout.
