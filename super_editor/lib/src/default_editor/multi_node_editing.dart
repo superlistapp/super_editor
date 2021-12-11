@@ -206,3 +206,27 @@ class DeleteSelectionCommand implements EditorCommand {
     transaction.replaceNode(oldNode: node, newNode: newNode);
   }
 }
+
+class DeleteNodeCommand implements EditorCommand {
+  DeleteNodeCommand({
+    required this.nodeId,
+  });
+
+  final String nodeId;
+
+  @override
+  void execute(Document document, DocumentEditorTransaction transaction) {
+    _log.log('DeleteNodeCommand', 'DocumentEditor: deleting node: $nodeId');
+
+    final node = document.getNodeById(nodeId);
+    if (node == null) {
+      _log.log('DeleteNodeCommand', 'No such node. Returning.');
+      return;
+    }
+
+    _log.log('DeleteNodeCommand', ' - deleting node');
+    transaction.deleteNode(node);
+
+    _log.log('DeleteNodeCommand', ' - done with node deletion');
+  }
+}

@@ -16,9 +16,11 @@ final _log = Logger(scope: 'box_component.dart');
 class BoxComponent extends StatefulWidget {
   const BoxComponent({
     Key? key,
+    this.isVisuallySelectable = true,
     required this.child,
   }) : super(key: key);
 
+  final bool isVisuallySelectable;
   final Widget child;
 
   @override
@@ -143,6 +145,9 @@ class _BoxComponentState extends State<BoxComponent> with DocumentComponent {
   BinarySelection getSelectionOfEverything() {
     return const BinarySelection.all();
   }
+
+  @override
+  bool isVisualSelectionSupported() => widget.isVisuallySelectable;
 
   @override
   Widget build(BuildContext context) {

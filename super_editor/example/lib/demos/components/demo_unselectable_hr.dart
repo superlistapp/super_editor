@@ -72,8 +72,28 @@ Widget? _unselectableHrBuilder(ComponentContext componentContext) {
     return null;
   }
 
-  return HorizontalRuleComponent(
+  return _UnselectableHorizontalRuleComponent(
     componentKey: componentContext.componentKey,
-    selectionColor: (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle).selectionColor,
   );
+}
+
+class _UnselectableHorizontalRuleComponent extends StatelessWidget {
+  const _UnselectableHorizontalRuleComponent({
+    Key? key,
+    required this.componentKey,
+  }) : super(key: key);
+
+  final GlobalKey componentKey;
+
+  @override
+  Widget build(BuildContext context) {
+    return BoxComponent(
+      key: componentKey,
+      isVisuallySelectable: false,
+      child: const Divider(
+        color: Color(0xFF000000),
+        thickness: 1.0,
+      ),
+    );
+  }
 }

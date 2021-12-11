@@ -301,7 +301,14 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     final docPosition = _docLayout.getDocumentPositionAtOffset(docOffset);
     editorGesturesLog.fine(" - tapped document position: $docPosition");
 
+    _focusNode.requestFocus();
+
     if (docPosition != null) {
+      final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
+      if (!tappedComponent.isVisualSelectionSupported()) {
+        return;
+      }
+
       if (_isShiftPressed && widget.editContext.composer.selection != null) {
         // The user tapped while pressing shift and there's an existing
         // selection. Move the extent of the selection to where the user tapped.
@@ -316,8 +323,6 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
         _selectPosition(docPosition);
       }
     }
-
-    _focusNode.requestFocus();
   }
 
   void _onDoubleTapDown(TapDownDetails details) {
@@ -326,6 +331,13 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     editorGesturesLog.fine(" - document offset: $docOffset");
     final docPosition = _docLayout.getDocumentPositionAtOffset(docOffset);
     editorGesturesLog.fine(" - tapped document position: $docPosition");
+
+    if (docPosition != null) {
+      final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
+      if (!tappedComponent.isVisualSelectionSupported()) {
+        return;
+      }
+    }
 
     _selectionType = SelectionType.word;
     _clearSelection();
@@ -356,6 +368,13 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     editorGesturesLog.fine(" - document offset: $docOffset");
     final docPosition = _docLayout.getDocumentPositionAtOffset(docOffset);
     editorGesturesLog.fine(" - tapped document position: $docPosition");
+
+    if (docPosition != null) {
+      final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
+      if (!tappedComponent.isVisualSelectionSupported()) {
+        return;
+      }
+    }
 
     _selectionType = SelectionType.paragraph;
     _clearSelection();
