@@ -204,7 +204,9 @@ class SuperSelectableTextState extends State<SuperSelectableText> implements Tex
       throw Exception('SelectableText does not yet have a RenderParagraph. Can\'t getBoxesForSelection().');
     }
     if (kDebugMode && _renderParagraph!.debugNeedsLayout) {
-      return 0.0;
+      // We can't ask the RenderParagraph for metrics when it's dirty, so we have
+      // to estimate the line height based on the text style, if it exists.
+      return (widget.richText.style?.fontSize ?? 0.0) * (widget.richText.style?.height ?? 1.0);
     }
 
     final lineHeightMultiplier = widget.richText.style?.height ?? 1.0;

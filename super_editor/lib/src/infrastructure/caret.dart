@@ -35,12 +35,10 @@ class _BlinkingTextCaretState extends State<BlinkingTextCaret> {
       return const SizedBox();
     }
 
-    final lineHeight =
-        widget.textLayout.getLineHeightAtPosition(widget.textPosition);
+    final lineHeight = widget.textLayout.getLineHeightAtPosition(widget.textPosition);
     late double caretHeight;
     try {
-      caretHeight = widget.textLayout.getHeightForCaret(widget.textPosition) ??
-          lineHeight;
+      caretHeight = widget.textLayout.getHeightForCaret(widget.textPosition) ?? lineHeight;
     } catch (exception) {
       // In debug mode, if we try to getHeightForCaret() when RenderParagraph
       // is dirty, Flutter throws an assertion error. We have no way to query
@@ -53,8 +51,7 @@ class _BlinkingTextCaretState extends State<BlinkingTextCaret> {
     try {
       caretOffset = widget.isTextEmpty
           ? Offset(0, (lineHeight - caretHeight) / 2)
-          : widget.textLayout.getOffsetForCaret(
-              TextPosition(offset: widget.textPosition.offset));
+          : widget.textLayout.getOffsetForCaret(TextPosition(offset: widget.textPosition.offset));
     } catch (exception) {
       // In debug mode, if we try to getOffsetForCaret() when RenderParagraph
       // is dirty, Flutter throws an assertion error. We have no way to query
@@ -108,8 +105,7 @@ class BlinkingCaret extends StatefulWidget {
   BlinkingCaretState createState() => BlinkingCaretState();
 }
 
-class BlinkingCaretState extends State<BlinkingCaret>
-    with SingleTickerProviderStateMixin {
+class BlinkingCaretState extends State<BlinkingCaret> with SingleTickerProviderStateMixin {
   // Controls the blinking caret animation.
   late CaretBlinkController _caretBlinkController;
 
