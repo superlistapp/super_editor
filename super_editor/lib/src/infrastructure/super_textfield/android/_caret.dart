@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import 'package:super_editor/src/infrastructure/caret.dart';
 import 'package:super_editor/src/infrastructure/super_selectable_text.dart';
 import 'package:super_editor/src/infrastructure/text_layout.dart';
 
@@ -88,6 +89,9 @@ class _AndroidTextFieldCaretState extends State<AndroidTextFieldCaret> with Sing
   void initState() {
     super.initState();
     _caretBlinkController = CaretBlinkController(tickerProvider: this);
+    if (widget.selection.extent.offset >= 0) {
+      _caretBlinkController.onCaretPlaced();
+    }
   }
 
   @override
@@ -95,7 +99,11 @@ class _AndroidTextFieldCaretState extends State<AndroidTextFieldCaret> with Sing
     super.didUpdateWidget(oldWidget);
 
     if (widget.selection != oldWidget.selection) {
-      _caretBlinkController.caretPosition = widget.selection.isCollapsed ? widget.selection.extent : null;
+      if (widget.selection.extent.offset >= 0) {
+        _caretBlinkController.onCaretMoved();
+      } else {
+        _caretBlinkController.onCaretRemoved();
+      }
     }
   }
 

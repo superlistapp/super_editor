@@ -13,6 +13,8 @@ import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 
+import 'document_gestures.dart';
+
 /// Governs mouse gesture interaction with a document, such as scrolling
 /// a document with a scroll wheel, tapping to place a caret, and
 /// tap-and-dragging to create an expanded selection.
@@ -865,40 +867,6 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
       size: Size.infinite,
     );
   }
-}
-
-/// A distance from the leading and trailing boundaries of an
-/// axis-aligned area.
-class AxisOffset {
-  /// No offset from the leading/trailing edges.
-  static const zero = AxisOffset.symmetric(0);
-
-  /// Equal leading/trailing edge spacing equal to `amount`.
-  const AxisOffset.symmetric(num amount)
-      : leading = amount,
-        trailing = amount;
-
-  const AxisOffset({
-    required this.leading,
-    required this.trailing,
-  });
-
-  /// Distance from the leading edge of an axis-oriented area.
-  final num leading;
-
-  /// Distance from the trailing edge of an axis-oriented area.
-  final num trailing;
-
-  @override
-  String toString() => '[AxisOffset] - leading: $leading, trailing: $trailing';
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is AxisOffset && runtimeType == other.runtimeType && leading == other.leading && trailing == other.trailing;
-
-  @override
-  int get hashCode => leading.hashCode ^ trailing.hashCode;
 }
 
 enum SelectionType {

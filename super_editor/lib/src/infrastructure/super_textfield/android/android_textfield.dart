@@ -12,8 +12,8 @@ import 'package:super_editor/super_editor.dart';
 import '../input_method_engine/_ime_text_editing_controller.dart';
 
 export '_caret.dart';
-export '_handles.dart';
-export '_toolbar.dart';
+export '../../platforms/android/selection_handles.dart';
+export '../../platforms/android/toolbar.dart';
 
 final _log = androidTextFieldLog;
 
@@ -385,7 +385,7 @@ class _SuperAndroidTextfieldState extends State<SuperAndroidTextfield> with Sing
 }
 
 Widget _defaultAndroidToolbarBuilder(BuildContext context, AndroidEditingOverlayController controller) {
-  return AndroidTextFieldToolbar(
+  return AndroidTextEditingFloatingToolbar(
     onCutPressed: () {
       final textController = controller.textController;
 

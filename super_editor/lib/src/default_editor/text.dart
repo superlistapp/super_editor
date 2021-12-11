@@ -333,7 +333,8 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
     }
 
     final offset = getOffsetForPosition(nodePosition);
-    final lineHeight = _selectableTextKey.currentState!.getLineHeightAtPosition(nodePosition);
+    final lineHeight = _selectableTextKey.currentState!.getHeightForCaret(nodePosition) ??
+        _selectableTextKey.currentState!.getLineHeightAtPosition(nodePosition);
     return Rect.fromLTWH(offset.dx, offset.dy, 0, lineHeight);
   }
 
@@ -346,7 +347,10 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
       throw Exception('Expected nodePosition of type TextPosition but received: $extentNodePosition');
     }
 
-    final selection = TextSelection(baseOffset: baseNodePosition.offset, extentOffset: extentNodePosition.offset);
+    final selection = TextSelection(
+      baseOffset: baseNodePosition.offset,
+      extentOffset: extentNodePosition.offset,
+    );
     final boxes = _selectableTextKey.currentState!.getBoxesForSelection(selection);
 
     Rect boundingBox = boxes.isNotEmpty ? boxes.first.toRect() : Rect.zero;
@@ -959,7 +963,10 @@ ExecutionInstruction anyCharacterToInsertInTextContent({
   if (!editContext.composer.selection!.isCollapsed) {
     return ExecutionInstruction.continueExecution;
   }
-  if (!_isTextEntryNode(document: editContext.editor.document, selection: editContext.composer.selection!)) {
+  if (!_isTextEntryNode(
+    document: editContext.editor.document,
+    selection: editContext.composer.selection!,
+  )) {
     return ExecutionInstruction.continueExecution;
   }
   if (keyEvent.character == null || keyEvent.character == '') {
@@ -1003,7 +1010,10 @@ ExecutionInstruction deleteCharacterWhenBackspaceIsPressed({
   if (editContext.composer.selection == null) {
     return ExecutionInstruction.continueExecution;
   }
-  if (!_isTextEntryNode(document: editContext.editor.document, selection: editContext.composer.selection!)) {
+  if (!_isTextEntryNode(
+    document: editContext.editor.document,
+    selection: editContext.composer.selection!,
+  )) {
     return ExecutionInstruction.continueExecution;
   }
   if (!editContext.composer.selection!.isCollapsed) {

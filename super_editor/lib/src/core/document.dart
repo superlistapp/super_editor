@@ -237,6 +237,16 @@ abstract class DocumentNode implements ChangeNotifier {
   bool hasEquivalentContent(DocumentNode other);
 }
 
+extension InspectNodeAffinity on DocumentNode {
+  /// Returns the affinity direction implied by the given [base] and [extent].
+  TextAffinity getAffinityBetween({
+    required NodePosition base,
+    required NodePosition extent,
+  }) {
+    return base == selectUpstreamPosition(base, extent) ? TextAffinity.downstream : TextAffinity.upstream;
+  }
+}
+
 /// Marker interface for a selection within a [DocumentNode].
 abstract class NodeSelection {
   // marker interface

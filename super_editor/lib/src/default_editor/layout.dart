@@ -387,6 +387,11 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
   }
 
   @override
+  Offset getGlobalOffsetFromDocumentOffset(Offset documentOffset) {
+    return (context.findRenderObject() as RenderBox).localToGlobal(documentOffset);
+  }
+
+  @override
   Widget build(BuildContext context) {
     final docComponents = _buildDocComponents();
 
