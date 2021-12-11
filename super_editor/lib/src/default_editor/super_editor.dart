@@ -17,8 +17,6 @@ import 'package:super_editor/src/default_editor/list_items.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/attributed_spans.dart';
 import 'package:super_editor/src/infrastructure/attributed_text.dart';
-import 'package:super_editor/src/infrastructure/platforms/android/toolbar.dart';
-import 'package:super_editor/src/infrastructure/platforms/ios/toolbar.dart';
 
 import 'document_gestures_mouse.dart';
 import 'document_input_ime.dart';
@@ -79,7 +77,7 @@ class SuperEditor extends StatefulWidget {
     this.documentLayoutKey,
     this.maxWidth = 600,
     this.inputSource = DocumentInputSource.keyboard,
-    this.gestureMode = DocumentGestureMode.mouse,
+    this.gestureMode,
     this.androidToolbarBuilder,
     this.iOSToolbarBuilder,
     required this.editor,
@@ -101,7 +99,7 @@ class SuperEditor extends StatefulWidget {
     this.documentLayoutKey,
     this.maxWidth = 600,
     this.inputSource = DocumentInputSource.keyboard,
-    this.gestureMode = DocumentGestureMode.mouse,
+    this.gestureMode,
     this.androidToolbarBuilder,
     this.iOSToolbarBuilder,
     required this.editor,
@@ -128,7 +126,7 @@ class SuperEditor extends StatefulWidget {
     this.documentLayoutKey,
     this.maxWidth = 600,
     this.inputSource = DocumentInputSource.keyboard,
-    this.gestureMode = DocumentGestureMode.mouse,
+    this.gestureMode,
     this.androidToolbarBuilder,
     this.iOSToolbarBuilder,
     required this.editor,
