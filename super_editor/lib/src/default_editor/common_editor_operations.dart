@@ -1910,7 +1910,7 @@ class CommonEditorOperations {
 
     final baseNode = editor.document.getNodeById(composer.selection!.base.nodeId);
     final extentNode = editor.document.getNodeById(composer.selection!.extent.nodeId);
-    if (baseNode!.id != extentNode!.id) {
+    if (baseNode!.id != extentNode!.id || baseNode is! ListItemNode) {
       return false;
     }
 
