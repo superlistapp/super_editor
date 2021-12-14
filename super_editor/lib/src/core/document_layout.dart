@@ -239,6 +239,17 @@ mixin DocumentComponent<T extends StatefulWidget> on State<T> {
   /// Returns a [NodeSelection that includes all content within the node.
   NodeSelection getSelectionOfEverything();
 
+  /// Returns `true` if this component changes its visual appearance when
+  /// selected, or `false` otherwise.
+  ///
+  /// A component that doesn't support visual selection should never be
+  /// allowed to appear at the boundary of a selection. The user should not
+  /// be able to tap this component to select it, nor should the user be
+  /// able to expand a selection with this component as the base or extent.
+  /// Implementation of these restrictions are the responsibility of the
+  /// document layout.
+  bool isVisualSelectionSupported() => true;
+
   /// Returns the desired [MouseCursor] at the given (x,y) [localOffset], or
   /// [null] if this component has no preference for the cursor style.
   MouseCursor? getDesiredCursorAtOffset(Offset localOffset);
@@ -343,6 +354,9 @@ mixin ProxyDocumentComponent<T extends StatefulWidget> implements DocumentCompon
   NodeSelection getSelectionOfEverything() {
     return childDocumentComponentKey.getSelectionOfEverything();
   }
+
+  @override
+  bool isVisualSelectionSupported() => childDocumentComponentKey.isVisualSelectionSupported();
 
   @override
   MouseCursor? getDesiredCursorAtOffset(Offset localOffset) {

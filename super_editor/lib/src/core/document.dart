@@ -192,8 +192,7 @@ abstract class DocumentNode implements ChangeNotifier {
   /// Returns the [NodePosition] that corresponds to the end of the
   /// content in this node.
   ///
-  /// For example, a [ParagraphNode] would return
-  /// [TextNodePosition(offset: text.length)].
+  /// For example, a [ParagraphNode] would return [TextNodePosition(offset: text.length)].
   NodePosition get endPosition;
 
   /// Inspects [position1] and [position2] and returns the one that's
@@ -230,7 +229,7 @@ abstract class DocumentNode implements ChangeNotifier {
   /// not make sense as plain-text.
   String? copyContent(NodeSelection selection);
 
-  /// Returns true of the [other] node is the same type as this
+  /// Returns true if the [other] node is the same type as this
   /// node, and contains the same content.
   ///
   /// Content equivalency ignores the node ID.
