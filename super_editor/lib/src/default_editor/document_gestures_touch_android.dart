@@ -93,6 +93,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
   @override
   void initState() {
+    print("initState");
     super.initState();
 
     _handleAutoScrolling = DragHandleAutoScroller(
@@ -175,9 +176,12 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
   @override
   void dispose() {
+    print("Dispose");
     WidgetsBinding.instance!.removeObserver(this);
 
-    _activeScrollPosition?.removeListener(_onScrollChange);
+    // TODO: I commented this out because the scroll position is already
+    //       disposed by the time this runs and it causes an error.
+    // _activeScrollPosition?.removeListener(_onScrollChange);
 
     // We dispose the EditingController on the next frame because
     // the ListenableBuilder that uses it throws an error if we

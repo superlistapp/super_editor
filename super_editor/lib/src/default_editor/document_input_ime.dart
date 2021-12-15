@@ -1,6 +1,9 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/edit_context.dart';
+import 'package:super_editor/src/default_editor/paragraph.dart';
+import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 
 /// Governs document input that comes from the operating system's
@@ -42,6 +45,8 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
     _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
 
     widget.editContext.composer.addListener(_onComposerChange);
+
+    _attachToIme();
   }
 
   @override
@@ -61,6 +66,8 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
 
   @override
   void dispose() {
+    _detachFromIme();
+
     widget.editContext.composer.removeListener(_onComposerChange);
 
     if (widget.focusNode == null) {
@@ -89,6 +96,22 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
       // TODO: if within single text node, set normal text editing value
       // TODO: if multiple nodes and all text, maybe combine the text into text editing value
       // TODO: if multiple nodes and mixed content, figure out what makes sense
+
+      final selectedNode = widget.editContext.editor.document.getNodeById(selection.extent.nodeId);
+      if (selectedNode is ParagraphNode) {
+        editorImeLog.info("Doc selection: $selection");
+        final textSelection = TextSelection(
+          baseOffset: (selection.base.nodePosition as TextNodePosition).offset,
+          extentOffset: (selection.extent.nodePosition as TextNodePosition).offset,
+        );
+        editorImeLog.info("Text selection: $textSelection");
+        final text = selectedNode.text.text.substring(textSelection.baseOffset, textSelection.extentOffset);
+
+        _currentTextEditingValue = TextEditingValue(text: selectedNode.text.text, selection: textSelection);
+
+        editorImeLog.info("Updating text editing value: $_currentTextEditingValue");
+        _inputConnection!.setEditingState(_currentTextEditingValue!);
+      }
     }
   }
 
@@ -137,17 +160,25 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
   AutofillScope? get currentAutofillScope => throw UnimplementedError();
 
   @override
-  // TODO: implement currentTextEditingValue
-  TextEditingValue? get currentTextEditingValue => throw UnimplementedError();
+  TextEditingValue? get currentTextEditingValue => _currentTextEditingValue;
+  TextEditingValue? _currentTextEditingValue = const TextEditingValue();
 
   @override
   void updateEditingValue(TextEditingValue value) {
-    // TODO: implement updateEditingValue
+    setState(() {
+      _currentTextEditingValue = value;
+    });
   }
 
   @override
   void updateEditingValueWithDeltas(List<TextEditingDelta> textEditingDeltas) {
-    // TODO: implement updateEditingValueWithDeltas
+    if (_currentTextEditingValue == null) {
+      return;
+    }
+
+    for (final delta in textEditingDeltas) {
+      delta.apply(_currentTextEditingValue!);
+    }
   }
 
   @override

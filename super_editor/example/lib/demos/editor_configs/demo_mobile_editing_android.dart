@@ -44,6 +44,7 @@ class _MobileEditingAndroidDemoState extends State<MobileEditingAndroidDemo> {
         focusNode: _editorFocusNode,
         documentLayoutKey: _docLayoutKey,
         gestureMode: DocumentGestureMode.android,
+        inputSource: DocumentInputSource.ime,
         androidToolbarBuilder: (_) => AndroidTextEditingFloatingToolbar(
           onCutPressed: () {
             // TODO:
