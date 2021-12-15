@@ -77,7 +77,7 @@ class SuperEditor extends StatefulWidget {
     this.documentLayoutKey,
     this.maxWidth = 600,
     this.inputSource = DocumentInputSource.keyboard,
-    this.gestureMode,
+    this.gestureMode = DocumentGestureMode.mouse,
     this.androidToolbarBuilder,
     this.iOSToolbarBuilder,
     required this.editor,
@@ -99,7 +99,7 @@ class SuperEditor extends StatefulWidget {
     this.documentLayoutKey,
     this.maxWidth = 600,
     this.inputSource = DocumentInputSource.keyboard,
-    this.gestureMode,
+    this.gestureMode = DocumentGestureMode.mouse,
     this.androidToolbarBuilder,
     this.iOSToolbarBuilder,
     required this.editor,
@@ -126,7 +126,7 @@ class SuperEditor extends StatefulWidget {
     this.documentLayoutKey,
     this.maxWidth = 600,
     this.inputSource = DocumentInputSource.keyboard,
-    this.gestureMode,
+    this.gestureMode = DocumentGestureMode.mouse,
     this.androidToolbarBuilder,
     this.iOSToolbarBuilder,
     required this.editor,
@@ -468,7 +468,6 @@ const defaultSelectionStyle = SelectionStyle(
 
 /// Creates [TextStyles] for the standard [SuperEditor].
 TextStyle defaultStyleBuilder(Set<Attribution> attributions) {
-  print('Building styles for attributions: $attributions');
   TextStyle newStyle = const TextStyle(
     color: Colors.black,
     fontSize: 13,

@@ -44,6 +44,7 @@ class _MobileEditingIOSDemoState extends State<MobileEditingIOSDemo> {
         focusNode: _editorFocusNode,
         documentLayoutKey: _docLayoutKey,
         gestureMode: DocumentGestureMode.iOS,
+        inputSource: DocumentInputSource.ime,
         iOSToolbarBuilder: (_) => IOSTextEditingFloatingToolbar(
           onCopyPressed: () {
             // TODO:

@@ -29,7 +29,7 @@ import 'demos/supertextfield/android/demo_superandroidtextfield.dart';
 /// Demo of a basic text editor, as well as various widgets that
 /// are available in this package.
 Future<void> main() async {
-  initLoggers(Level.FINEST, {editorLog});
+  initLoggers(Level.FINEST, {editorGesturesLog, editorImeLog});
 
   runApp(SuperEditorDemoApp());
 }
@@ -426,11 +426,10 @@ class _DrawerButton extends StatelessWidget {
               return Colors.transparent;
             }),
             // splashFactory: NoSplash.splashFactory,
-            foregroundColor: MaterialStateColor.resolveWith((states) =>
-                isSelected ? Colors.white : const Color(0xFFBBBBBB)),
+            foregroundColor:
+                MaterialStateColor.resolveWith((states) => isSelected ? Colors.white : const Color(0xFFBBBBBB)),
             elevation: MaterialStateProperty.resolveWith((states) => 0),
-            padding: MaterialStateProperty.resolveWith(
-                (states) => const EdgeInsets.all(16))),
+            padding: MaterialStateProperty.resolveWith((states) => const EdgeInsets.all(16))),
         onPressed: isSelected ? null : onPressed,
         child: Row(
           children: [
