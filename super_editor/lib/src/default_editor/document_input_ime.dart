@@ -1,6 +1,10 @@
+import 'dart:math';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import 'package:super_editor/src/core/document.dart';
+import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/default_editor/paragraph.dart';
 import 'package:super_editor/src/default_editor/text.dart';
@@ -91,7 +95,7 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
     final selection = widget.editContext.composer.selection;
 
     if (selection == null) {
-      // TODO: null out the text editing value
+      _currentTextEditingValue = const TextEditingValue();
     } else {
       // TODO: if within single text node, set normal text editing value
       // TODO: if multiple nodes and all text, maybe combine the text into text editing value
@@ -110,7 +114,7 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
         _currentTextEditingValue = TextEditingValue(text: selectedNode.text.text, selection: textSelection);
 
         editorImeLog.info("Updating text editing value: $_currentTextEditingValue");
-        _inputConnection!.setEditingState(_currentTextEditingValue!);
+        _inputConnection!.setEditingState(_currentTextEditingValue);
       }
     }
   }
@@ -138,7 +142,7 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
 
     _inputConnection!
       ..show()
-      ..setEditingState(currentTextEditingValue!);
+      ..setEditingState(currentTextEditingValue);
 
     editorImeLog.fine('Is attached to input client? ${_inputConnection!.attached}');
   }
@@ -160,8 +164,14 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
   AutofillScope? get currentAutofillScope => throw UnimplementedError();
 
   @override
-  TextEditingValue? get currentTextEditingValue => _currentTextEditingValue;
-  TextEditingValue? _currentTextEditingValue = const TextEditingValue();
+  TextEditingValue get currentTextEditingValue => _currentTextEditingValue;
+  TextEditingValue _currentTextEditingValue = const TextEditingValue();
+  set currentTextEditingValue(TextEditingValue newValue) {
+    if (newValue != _currentTextEditingValue) {
+      _currentTextEditingValue = newValue;
+      _inputConnection?.setEditingState(_currentTextEditingValue);
+    }
+  }
 
   @override
   void updateEditingValue(TextEditingValue value) {
@@ -172,12 +182,8 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
 
   @override
   void updateEditingValueWithDeltas(List<TextEditingDelta> textEditingDeltas) {
-    if (_currentTextEditingValue == null) {
-      return;
-    }
-
     for (final delta in textEditingDeltas) {
-      delta.apply(_currentTextEditingValue!);
+      delta.apply(_currentTextEditingValue);
     }
   }
 
@@ -208,6 +214,80 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
 
   @override
   Widget build(BuildContext context) {
-    return widget.child;
+    return Focus(
+      focusNode: _focusNode,
+      child: widget.child,
+    );
   }
+}
+
+TextEditingValue selectedContentToTextEditingValue(Document doc, DocumentSelection selection) {
+  final baseNode = doc.getNodeById(selection.base.nodeId)!;
+  final baseNodeIndex = doc.getNodeIndex(baseNode);
+  final extentNode = doc.getNodeById(selection.extent.nodeId)!;
+  final extentNodeIndex = doc.getNodeIndex(extentNode);
+
+  final startNode = baseNodeIndex <= extentNodeIndex ? baseNode : extentNode;
+  final startPosition = baseNodeIndex <= extentNodeIndex ? selection.base.nodePosition : selection.extent.nodePosition;
+  final endNode = baseNodeIndex <= extentNodeIndex ? extentNode : baseNode;
+  final endPosition = baseNodeIndex <= extentNodeIndex ? selection.extent.nodePosition : selection.base.nodePosition;
+
+  if (startNode.id == endNode.id) {
+    // The document selection is all in one node.
+    if (startNode is! TextNode) {
+      // The only content selected is non-text, which we can't send to
+      // the IME. We'll treat that as an empty IME editing value.
+      return const TextEditingValue();
+    }
+
+    // Part of a single TextNode is selected. Configure the TextEditingValue
+    // to select part of a text blob.
+    return TextEditingValue(
+      text: startNode.text.text,
+      selection: TextSelection(
+        baseOffset: (startPosition as TextNodePosition).offset,
+        extentOffset: (endPosition as TextNodePosition).offset,
+      ),
+    );
+  }
+
+  // There are 2+ nodes selected. Collect the TextNodes and combine
+  // into a single text blob.
+  final startNodeIndex = doc.getNodeIndex(startNode);
+  final endNodeIndex = doc.getNodeIndex(endNode);
+  final textNodes = <TextNode>[];
+  for (int i = startNodeIndex; i <= endNodeIndex; i += 1) {
+    final node = doc.getNodeAt(i);
+    if (node is TextNode) {
+      textNodes.add(node);
+    }
+  }
+
+  if (textNodes.isEmpty) {
+    return const TextEditingValue();
+  }
+
+  final buffer = StringBuffer();
+  int charCountBeforeSelection = 0;
+  int charCountAfterSelection = 0;
+  for (int i = 0; i < textNodes.length; i += 1) {
+    if (textNodes[i].id == startNode.id) {
+      charCountBeforeSelection = (startPosition as TextNodePosition).offset;
+    } else if (i == textNodes.length - 1) {
+      charCountAfterSelection = textNodes[i].text.text.length - (endPosition as TextNodePosition).offset;
+    }
+
+    if (i > 0) {
+      buffer.write('\n');
+    }
+    buffer.write(textNodes[i].text.text);
+  }
+
+  return TextEditingValue(
+    text: buffer.toString(),
+    selection: TextSelection(
+      baseOffset: charCountBeforeSelection,
+      extentOffset: buffer.length - charCountAfterSelection,
+    ),
+  );
 }
