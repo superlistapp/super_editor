@@ -81,6 +81,8 @@ class _BlinkingTextCaretState extends State<BlinkingTextCaret> {
     // To deal with this (temporarily), we force the caret offset to be the same
     // for 2 frames before we draw anything. This causes flickering, but that
     // flickering is tolerable because carets blink, normally.
+    //
+    // See #370 for the ticket that aims to fix all similar timing issues.
     if (_caretOffset != caretOffset) {
       WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
         if (mounted) {
