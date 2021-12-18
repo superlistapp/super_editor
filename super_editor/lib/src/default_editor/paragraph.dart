@@ -338,6 +338,9 @@ Widget? paragraphBuilder(ComponentContext componentContext) {
       (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle?)?.selectionColor ??
           const Color(0x00000000);
 
+  final caretColor = (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle?)?.textCaretColor ??
+      const Color(0x00000000);
+
   return TextComponent(
     key: componentContext.componentKey,
     text: (componentContext.documentNode as TextNode).text,
@@ -348,7 +351,7 @@ Widget? paragraphBuilder(ComponentContext componentContext) {
     textSelection: textSelection,
     selectionColor: selectionColor,
     showCaret: showCaret,
-    caretColor: selectionColor,
+    caretColor: caretColor,
     highlightWhenEmpty: highlightWhenEmpty,
   );
 }
