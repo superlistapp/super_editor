@@ -331,6 +331,18 @@ class _SuperEditorState extends State<SuperEditor> {
     }
   }
 
+  DocumentGestureMode get _gestureMode {
+    if (widget.gestureMode != null) {
+      return widget.gestureMode!;
+    } else if (Platform.isAndroid) {
+      return DocumentGestureMode.android;
+    } else if (Platform.isIOS) {
+      return DocumentGestureMode.iOS;
+    } else {
+      return DocumentGestureMode.mouse;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return _buildInputSystem(
@@ -368,18 +380,7 @@ class _SuperEditorState extends State<SuperEditor> {
   Widget _buildGestureSystem({
     required Widget child,
   }) {
-    late DocumentGestureMode gestureMode;
-    if (widget.gestureMode != null) {
-      gestureMode = widget.gestureMode!;
-    } else if (Platform.isAndroid) {
-      gestureMode = DocumentGestureMode.android;
-    } else if (Platform.isIOS) {
-      gestureMode = DocumentGestureMode.iOS;
-    } else {
-      gestureMode = DocumentGestureMode.mouse;
-    }
-
-    switch (gestureMode) {
+    switch (_gestureMode) {
       case DocumentGestureMode.mouse:
         return DocumentMouseInteractor(
           focusNode: _focusNode,
@@ -434,7 +435,7 @@ class _SuperEditorState extends State<SuperEditor> {
             document: widget.editor.document,
             documentSelection: _composer.selection,
             componentBuilders: widget.componentBuilders,
-            showCaret: _focusNode.hasFocus && widget.gestureMode == DocumentGestureMode.mouse,
+            showCaret: _focusNode.hasFocus && _gestureMode == DocumentGestureMode.mouse,
             margin: widget.padding,
             componentVerticalSpacing: widget.componentVerticalSpacing,
             extensions: {
