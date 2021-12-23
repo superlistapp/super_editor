@@ -147,6 +147,12 @@ class MutableDocument with ChangeNotifier implements Document {
   }
 
   @override
+  int getNodeIndexById(String nodeId) {
+    final node = getNodeById(nodeId);
+    return node != null ? getNodeIndex(node) : -1;
+  }
+
+  @override
   DocumentNode? getNodeBefore(DocumentNode node) {
     final nodeIndex = getNodeIndex(node);
     return nodeIndex > 0 ? getNodeAt(nodeIndex - 1) : null;
