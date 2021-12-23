@@ -16,6 +16,7 @@ class DocumentComposer with ChangeNotifier {
   })  : _selection = initialSelection,
         _preferences = ComposerPreferences() {
     _preferences.addListener(() {
+      print("Composer preferences changed");
       notifyListeners();
     });
   }
@@ -34,10 +35,14 @@ class DocumentComposer with ChangeNotifier {
   /// Sets the current [selection] for a [Document].
   set selection(DocumentSelection? newSelection) {
     if (newSelection != _selection) {
+      print("Composer setting new selection");
       _selection = newSelection;
+      selectionNotifier.value = newSelection;
       notifyListeners();
     }
   }
+
+  final selectionNotifier = ValueNotifier<DocumentSelection?>(null);
 
   /// Clears the current [selection].
   void clearSelection() {
