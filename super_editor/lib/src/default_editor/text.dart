@@ -175,6 +175,14 @@ class TextNodePosition extends TextPosition implements NodePosition {
     required int offset,
     TextAffinity affinity = TextAffinity.downstream,
   }) : super(offset: offset, affinity: affinity);
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      super == other && other is TextNodePosition && runtimeType == other.runtimeType && offset == other.offset;
+
+  @override
+  int get hashCode => super.hashCode ^ super.offset.hashCode;
 }
 
 /// Document component that displays hint text when its content text

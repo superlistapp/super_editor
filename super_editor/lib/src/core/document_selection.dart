@@ -240,6 +240,17 @@ extension InspectDocumentAffinity on Document {
 }
 
 extension InspectDocumentSelection on Document {
+  /// Returns a list of all the `DocumentNodes` within the given [selection], ordered
+  /// from upstream to downstream.
+  List<DocumentNode> getNodesInContentOrder(DocumentSelection selection) {
+    final upstreamPosition = selectUpstreamPosition(selection.base, selection.extent);
+    final upstreamIndex = getNodeIndex(getNode(upstreamPosition)!);
+    final downstreamPosition = selectDownstreamPosition(selection.base, selection.extent);
+    final downstreamIndex = getNodeIndex(getNode(downstreamPosition)!);
+
+    return nodes.sublist(upstreamIndex, downstreamIndex + 1);
+  }
+
   /// Given [docPosition1] and [docPosition2], returns the `DocumentPosition` that
   /// appears first in the document.
   DocumentPosition selectUpstreamPosition(DocumentPosition docPosition1, DocumentPosition docPosition2) {

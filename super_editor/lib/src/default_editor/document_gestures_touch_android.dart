@@ -230,44 +230,49 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   }
 
   void _onSelectionChange() {
-    final newSelection = widget.composer.selection;
+    // The selection change might correspond to new content that's not
+    // laid out yet. Wait until the next frame to update visuals.
+    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      final newSelection = widget.composer.selection;
 
-    if (newSelection == null) {
-      _editingController
-        ..removeCaret()
-        ..collapsedHandleOffset = null
-        ..upstreamHandleOffset = null
-        ..downstreamHandleOffset = null
-        ..collapsedHandleOffset = null
-        ..cancelCollapsedHandleAutoHideCountdown();
-    } else if (newSelection.isCollapsed) {
-      _positionCaret();
+      if (newSelection == null) {
+        _editingController
+          ..removeCaret()
+          ..collapsedHandleOffset = null
+          ..upstreamHandleOffset = null
+          ..downstreamHandleOffset = null
+          ..collapsedHandleOffset = null
+          ..cancelCollapsedHandleAutoHideCountdown();
+      } else if (newSelection.isCollapsed) {
+        _positionCaret();
 
-      // Calculate the new (x,y) offset for the collapsed handle.
-      final extentRect = _docLayout.getRectForPosition(newSelection.extent);
-      late Offset handleOffset = extentRect!.bottomLeft;
+        // Calculate the new (x,y) offset for the collapsed handle.
+        final extentRect = _docLayout.getRectForPosition(newSelection.extent);
+        late Offset handleOffset = extentRect!.bottomLeft;
 
-      _editingController
-        ..collapsedHandleOffset = handleOffset
-        ..unHideCollapsedHandle()
-        ..startCollapsedHandleAutoHideCountdown();
-    } else {
-      // The selection is expanded
+        _editingController
+          ..collapsedHandleOffset = handleOffset
+          ..unHideCollapsedHandle()
+          ..startCollapsedHandleAutoHideCountdown();
+      } else {
+        // The selection is expanded
 
-      // Calculate the new (x,y) offsets for the upstream and downstream handles.
-      final baseHandleOffset = _docLayout.getRectForPosition(newSelection.base)!.bottomLeft;
-      final extentHandleOffset = _docLayout.getRectForPosition(newSelection.extent)!.bottomRight;
-      final affinity = widget.document.getAffinityBetween(base: newSelection.base, extent: newSelection.extent);
-      late Offset upstreamHandleOffset = affinity == TextAffinity.downstream ? baseHandleOffset : extentHandleOffset;
-      late Offset downstreamHandleOffset = affinity == TextAffinity.downstream ? extentHandleOffset : baseHandleOffset;
+        // Calculate the new (x,y) offsets for the upstream and downstream handles.
+        final baseHandleOffset = _docLayout.getRectForPosition(newSelection.base)!.bottomLeft;
+        final extentHandleOffset = _docLayout.getRectForPosition(newSelection.extent)!.bottomRight;
+        final affinity = widget.document.getAffinityBetween(base: newSelection.base, extent: newSelection.extent);
+        late Offset upstreamHandleOffset = affinity == TextAffinity.downstream ? baseHandleOffset : extentHandleOffset;
+        late Offset downstreamHandleOffset =
+            affinity == TextAffinity.downstream ? extentHandleOffset : baseHandleOffset;
 
-      _editingController
-        ..removeCaret()
-        ..collapsedHandleOffset = null
-        ..upstreamHandleOffset = upstreamHandleOffset
-        ..downstreamHandleOffset = downstreamHandleOffset
-        ..cancelCollapsedHandleAutoHideCountdown();
-    }
+        _editingController
+          ..removeCaret()
+          ..collapsedHandleOffset = null
+          ..upstreamHandleOffset = upstreamHandleOffset
+          ..downstreamHandleOffset = downstreamHandleOffset
+          ..cancelCollapsedHandleAutoHideCountdown();
+      }
+    });
   }
 
   void _onScrollChange() {

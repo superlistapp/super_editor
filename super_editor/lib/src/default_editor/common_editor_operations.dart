@@ -1213,10 +1213,11 @@ class CommonEditorOperations {
       position: DocumentPosition(
         nodeId: textNode.id,
         nodePosition: TextNodePosition(
-          offset: initialTextOffset + 1,
+          offset: initialTextOffset + text.length,
         ),
       ),
     );
+    print("Text offset was $initialTextOffset but now it's ${composer.selection}");
 
     return true;
   }
