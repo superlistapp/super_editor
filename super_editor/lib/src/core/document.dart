@@ -35,6 +35,10 @@ abstract class Document with ChangeNotifier {
   /// does not exist within this [Document].
   int getNodeIndex(DocumentNode node);
 
+  /// Returns the index of the `DocumentNode` in this `Document` that
+  /// has the given [nodeId], or `-1` if the node does not exist.
+  int getNodeIndexById(String nodeId);
+
   /// Returns the [DocumentNode] that appears immediately before the
   /// given [node] in this [Document], or null if the given [node]
   /// is the first node, or the given [node] does not exist in this

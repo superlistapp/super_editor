@@ -176,6 +176,15 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
       editorImeLog.info("Applying delta: $delta");
       if (delta is TextEditingDeltaInsertion) {
         editorImeLog.fine("Inserting text: ${delta.textInserted}");
+
+        final docSerializer = DocumentImeSerializer(
+          widget.editContext.editor.document,
+          widget.editContext.composer.selection!,
+        );
+        final insertionSelection =
+            docSerializer.imeToDocumentSelection(TextSelection.collapsed(offset: delta.insertionOffset));
+        widget.editContext.composer.selection = insertionSelection;
+
         if (delta.textInserted == "\n") {
           widget.editContext.commonOps.insertBlockLevelNewline();
           return;
@@ -186,6 +195,20 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
       } else if (delta is TextEditingDeltaReplacement) {
         editorImeLog.fine("Replacing text: ${delta.textReplaced}");
         editorImeLog.fine("With new text: ${delta.replacementText}");
+
+        final docSerializer = DocumentImeSerializer(
+          widget.editContext.editor.document,
+          widget.editContext.composer.selection!,
+        );
+        final replacementSelection = docSerializer.imeToDocumentSelection(TextSelection(
+          baseOffset: delta.replacedRange.start,
+          // TODO: the delta API is wrong for TextRange.end, it should be exclusive,
+          //       but it's implemented as inclusive. Change this code when Flutter
+          //       fixes the problem.
+          extentOffset: delta.replacedRange.end,
+        ));
+        widget.editContext.composer.selection = replacementSelection;
+
         if (delta.replacementText == "\n") {
           widget.editContext.commonOps.deleteSelection();
           widget.editContext.commonOps.insertBlockLevelNewline();
@@ -197,16 +220,6 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
         editorImeLog.fine("Deleting text: ${delta.textDeleted}");
         editorImeLog.fine("Deleted range: ${delta.deletedRange}");
 
-        if (delta.textDeleted.length == 1 &&
-            delta.deletedRange.start == currentTextEditingValue.selection.extentOffset - 1) {
-          // When the user presses the backspace button on a collapsed selection,
-          // bypass all the document selection conversion logic and just delete the
-          // upstream character. The document selection translation behavior can be
-          // intensive, so skipping that translation should provide a more responsive UI.
-          widget.editContext.commonOps.deleteUpstream();
-          return;
-        }
-
         final rangeToDelete = delta.deletedRange;
         final docSerializer = DocumentImeSerializer(
           widget.editContext.editor.document,
@@ -216,11 +229,26 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
           baseOffset: rangeToDelete.start,
           extentOffset: rangeToDelete.end,
         ));
+        editorImeLog.fine("Doc selection to delete: $docSelectionToDelete");
+
+        if (docSelectionToDelete == null) {
+          final selectedNodeIndex = widget.editContext.editor.document.getNodeIndexById(
+            widget.editContext.composer.selection!.extent.nodeId,
+          );
+          if (selectedNodeIndex > 0) {
+            // The user is trying to delete upstream at the start of a node.
+            // This action requires intervention because the IME doesn't know
+            // that there's more content before this node. Instruct the editor
+            // to run a delete action upstream, which will take the desired
+            // "backspace" behavior at the start of this node.
+            widget.editContext.commonOps.deleteUpstream();
+            return;
+          }
+        }
 
         widget.editContext.composer.selection = docSelectionToDelete;
         widget.editContext.commonOps.deleteSelection();
       } else if (delta is TextEditingDeltaNonTextUpdate) {
-        // No-op.
         editorImeLog.fine("Non-text change:");
         editorImeLog.fine("App-side selection - ${currentTextEditingValue.selection}");
         editorImeLog.fine("App-side composing - ${currentTextEditingValue.composing}");
@@ -295,9 +323,11 @@ class DocumentImeSerializer {
       //
       //     Text above...
       //     |The selected text node.
-      buffer.write("**");
-      characterCount = 2;
+      buffer.write("*");
+      characterCount = 1;
       _didPrependPlaceholder = true;
+    } else {
+      _didPrependPlaceholder = false;
     }
 
     final selectedNodes = _doc.getNodesInContentOrder(_selection);
@@ -346,7 +376,28 @@ class DocumentImeSerializer {
         _selection.extent.nodePosition == selectedNode.beginningPosition;
   }
 
-  DocumentSelection imeToDocumentSelection(TextSelection imeSelection) {
+  DocumentSelection? imeToDocumentSelection(TextSelection imeSelection) {
+    editorImeLog.fine("Creating doc selection from IME selection: $imeSelection");
+    if (_didPrependPlaceholder && imeSelection.start == 0) {
+      // The IME is trying to select our artificial prepended character.
+      // If that's the only character that the IME is trying to select, then
+      // return a null selection to indicate that there's nothing to select.
+      // If the selection is expanded, then remove the arbitrary character from
+      // the selection.
+      if (imeSelection.isCollapsed) {
+        editorImeLog.fine("Returning null doc selection");
+        return null;
+      }
+
+      editorImeLog.fine("Removing arbitrary character from IME selection");
+      imeSelection = imeSelection.copyWith(
+        baseOffset: imeSelection.affinity == TextAffinity.downstream ? 1 : imeSelection.baseOffset,
+        extentOffset: imeSelection.affinity == TextAffinity.downstream ? imeSelection.extentOffset : 1,
+      );
+    } else {
+      editorImeLog.fine("Returning doc selection without modification");
+    }
+
     return DocumentSelection(
       base: _imeToDocumentPosition(imeSelection.base),
       extent: _imeToDocumentPosition(imeSelection.extent),
