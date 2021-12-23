@@ -281,15 +281,42 @@ class SuperSelectableTextState extends State<SuperSelectableText> implements Tex
     }
 
     // Ensure that the given TextPosition does not exceed available text length.
-    final characterPosition =
-        position.offset >= plainText.length ? TextPosition(offset: plainText.length - 1) : position;
+    var characterPosition = position.offset >= plainText.length ? TextPosition(offset: plainText.length - 1) : position;
 
-    return _renderParagraph!
-        .getBoxesForSelection(TextSelection(
-          baseOffset: characterPosition.offset,
-          extentOffset: characterPosition.offset + 1,
-        ))
-        .first;
+    var boxes = _renderParagraph!.getBoxesForSelection(TextSelection(
+      baseOffset: characterPosition.offset,
+      extentOffset: characterPosition.offset + 1,
+    ));
+
+    // For any regular character, boxes should return exactly one box
+    // for the character. However, emojis don't return any boxes. In that
+    // case, we walk the characters up and down the text, hoping to find
+    // a non-emoji to measure. If all of the content is emojis, then we can't
+    // get a measurement from Flutter.
+    //
+    // If we don't have any boxes, walk backward in the text to find
+    // a character with a box.
+    while (boxes.isEmpty && characterPosition.offset > 0) {
+      characterPosition = TextPosition(offset: characterPosition.offset - 1);
+
+      boxes = _renderParagraph!.getBoxesForSelection(TextSelection(
+        baseOffset: characterPosition.offset,
+        extentOffset: characterPosition.offset + 1,
+      ));
+    }
+
+    // If we still don't have any boxes, walk forward in the text to find
+    // a character with a box.
+    while (boxes.isEmpty && characterPosition.offset < _textLength - 1) {
+      characterPosition = TextPosition(offset: characterPosition.offset + 1);
+
+      boxes = _renderParagraph!.getBoxesForSelection(TextSelection(
+        baseOffset: characterPosition.offset,
+        extentOffset: characterPosition.offset + 1,
+      ));
+    }
+
+    return boxes.first;
   }
 
   @override
