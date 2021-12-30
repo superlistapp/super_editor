@@ -1,7 +1,5 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart' hide SelectableText;
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_editor.dart';
@@ -334,13 +332,15 @@ class _SuperEditorState extends State<SuperEditor> {
 
   DocumentGestureMode get _gestureMode {
     if (widget.gestureMode != null) {
-      return widget.gestureMode!;
-    } else if (!kIsWeb && Platform.isAndroid) {
-      return DocumentGestureMode.android;
-    } else if (!kIsWeb && Platform.isIOS) {
-      return DocumentGestureMode.iOS;
-    } else {
-      return DocumentGestureMode.mouse;
+    return widget.gestureMode!;
+    }
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+        return DocumentGestureMode.android;
+      case TargetPlatform.iOS:
+        return DocumentGestureMode.iOS;
+      default:
+        return DocumentGestureMode.mouse;
     }
   }
 
