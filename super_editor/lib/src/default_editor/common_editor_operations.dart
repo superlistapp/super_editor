@@ -1845,13 +1845,6 @@ class CommonEditorOperations {
     editor.executeCommand(
       EditorCommandFunction((document, transaction) {
         transaction.replaceNode(oldNode: node, newNode: newNode);
-
-        composer.selection = DocumentSelection.collapsed(
-          position: DocumentPosition(
-            nodeId: nodeId,
-            nodePosition: newNode.endPosition,
-          ),
-        );
       }),
     );
 
@@ -1884,13 +1877,6 @@ class CommonEditorOperations {
     editor.executeCommand(
       EditorCommandFunction((document, transaction) {
         transaction.replaceNode(oldNode: node, newNode: newNode);
-
-        composer.selection = DocumentSelection.collapsed(
-          position: DocumentPosition(
-            nodeId: nodeId,
-            nodePosition: newNode.endPosition,
-          ),
-        );
       }),
     );
 

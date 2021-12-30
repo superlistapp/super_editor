@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_selection.dart';
@@ -95,10 +96,14 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
     editorImeLog.info("Document composer (${widget.editContext.composer.hashCode}) changed. New selection: $selection");
 
     if (selection == null) {
-      currentTextEditingValue = const TextEditingValue();
+      // currentTextEditingValue = const TextEditingValue();
+      _detachFromIme();
     } else {
-      currentTextEditingValue =
-          DocumentImeSerializer(widget.editContext.editor.document, selection).toTextEditingValue();
+      if (isAttachedToIme) {
+        _syncImeWithDocumentAndComposer();
+      } else {
+        _attachToIme();
+      }
     }
   }
 
@@ -122,6 +127,8 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
           // TODO: make this configurable
           inputAction: TextInputAction.newline,
         ));
+
+    _syncImeWithDocumentAndComposer();
 
     _inputConnection!
       ..show()
@@ -150,10 +157,23 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
   TextEditingValue get currentTextEditingValue => _currentTextEditingValue;
   TextEditingValue _currentTextEditingValue = const TextEditingValue();
   set currentTextEditingValue(TextEditingValue newValue) {
+    print("New text editing value: $newValue");
+    print("Existing text editing value: $_currentTextEditingValue");
     if (newValue != _currentTextEditingValue) {
       _currentTextEditingValue = newValue;
       editorImeLog.info("Sending new text editing value to OS: $_currentTextEditingValue");
       _inputConnection?.setEditingState(_currentTextEditingValue);
+    }
+  }
+
+  void _syncImeWithDocumentAndComposer() {
+    final selection = widget.editContext.composer.selection;
+    if (selection != null) {
+      print("Syncing IME with Doc and Composer");
+      currentTextEditingValue = DocumentImeSerializer(
+        widget.editContext.editor.document,
+        selection,
+      ).toTextEditingValue();
     }
   }
 
@@ -242,12 +262,15 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
             // to run a delete action upstream, which will take the desired
             // "backspace" behavior at the start of this node.
             widget.editContext.commonOps.deleteUpstream();
+            print("Deleted upstream. New selection: ${widget.editContext.composer.selection}");
+            _syncImeWithDocumentAndComposer();
             return;
           }
         }
 
         widget.editContext.composer.selection = docSelectionToDelete;
         widget.editContext.commonOps.deleteSelection();
+        _syncImeWithDocumentAndComposer();
       } else if (delta is TextEditingDeltaNonTextUpdate) {
         editorImeLog.fine("Non-text change:");
         editorImeLog.fine("App-side selection - ${currentTextEditingValue.selection}");
@@ -297,6 +320,14 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
 }
 
 class DocumentImeSerializer {
+  static const _leadingCharacters = ['*', '^', '~', '`'];
+  static int _nextLeadingCharacterIndex = 0;
+  static String _nextLeadingCharacter() {
+    final nextCharacter = _leadingCharacters[_nextLeadingCharacterIndex];
+    _nextLeadingCharacterIndex = (_nextLeadingCharacterIndex + 1) % _leadingCharacters.length;
+    return nextCharacter;
+  }
+
   DocumentImeSerializer(this._doc, this._selection) {
     _serialize();
   }
@@ -308,6 +339,7 @@ class DocumentImeSerializer {
   final _textNodes = <TextNode>[];
   late String _imeText;
   late bool _didPrependPlaceholder;
+  String? _prependedCharacter;
 
   void _serialize() {
     final buffer = StringBuffer();
@@ -323,11 +355,13 @@ class DocumentImeSerializer {
       //
       //     Text above...
       //     |The selected text node.
-      buffer.write("*");
+      _prependedCharacter = _nextLeadingCharacter();
+      buffer.write(_prependedCharacter);
       characterCount = 1;
       _didPrependPlaceholder = true;
     } else {
       _didPrependPlaceholder = false;
+      _prependedCharacter = null;
     }
 
     final selectedNodes = _doc.getNodesInContentOrder(_selection);
@@ -378,13 +412,16 @@ class DocumentImeSerializer {
 
   DocumentSelection? imeToDocumentSelection(TextSelection imeSelection) {
     editorImeLog.fine("Creating doc selection from IME selection: $imeSelection");
-    if (_didPrependPlaceholder && imeSelection.start == 0) {
+    if (_didPrependPlaceholder &&
+        ((!imeSelection.isCollapsed && imeSelection.start == 0) ||
+            (imeSelection.isCollapsed && imeSelection.extentOffset == 1))) {
       // The IME is trying to select our artificial prepended character.
       // If that's the only character that the IME is trying to select, then
       // return a null selection to indicate that there's nothing to select.
       // If the selection is expanded, then remove the arbitrary character from
       // the selection.
-      if (imeSelection.isCollapsed) {
+      if ((imeSelection.isCollapsed && imeSelection.extentOffset == 1) ||
+          (imeSelection.start == 0 && imeSelection.end == 1)) {
         editorImeLog.fine("Returning null doc selection");
         return null;
       }
@@ -581,5 +618,168 @@ class DocumentImeSerializer {
     }
 
     return buffer.toString();
+  }
+}
+
+class KeyboardEditingToolbar extends StatelessWidget {
+  const KeyboardEditingToolbar({
+    Key? key,
+    required this.document,
+    required this.composer,
+    required this.commonOps,
+  }) : super(key: key);
+
+  final Document document;
+  final DocumentComposer composer;
+  final CommonEditorOperations commonOps;
+
+  void _convertToHeader1() {
+    final selectedNode = document.getNodeById(composer.selection!.extent.nodeId)! as TextNode;
+
+    selectedNode.metadata['blockType'] = header1Attribution;
+    selectedNode.notifyListeners();
+  }
+
+  void _convertToHeader2() {
+    final selectedNode = document.getNodeById(composer.selection!.extent.nodeId)! as TextNode;
+
+    selectedNode.metadata['blockType'] = header2Attribution;
+    selectedNode.notifyListeners();
+  }
+
+  void _convertToParagraph() {
+    commonOps.convertToParagraph();
+  }
+
+  void _convertToOrderedListItem() {
+    final selectedNode = document.getNodeById(composer.selection!.extent.nodeId)! as TextNode;
+
+    commonOps.convertToListItem(ListItemType.ordered, selectedNode.text);
+  }
+
+  void _convertToUnorderedListItem() {
+    final selectedNode = document.getNodeById(composer.selection!.extent.nodeId)! as TextNode;
+
+    commonOps.convertToListItem(ListItemType.unordered, selectedNode.text);
+  }
+
+  void _convertToBlockquote() {
+    final selectedNode = document.getNodeById(composer.selection!.extent.nodeId)! as TextNode;
+
+    commonOps.convertToBlockquote(selectedNode.text);
+  }
+
+  void _convertToHr() {
+    final selectedNode = document.getNodeById(composer.selection!.extent.nodeId)! as TextNode;
+
+    selectedNode.text = AttributedText(text: '--- ');
+    composer.selection = DocumentSelection.collapsed(
+      position: DocumentPosition(
+        nodeId: selectedNode.id,
+        nodePosition: const TextNodePosition(offset: 4),
+      ),
+    );
+    commonOps.convertParagraphByPatternMatching(selectedNode.id);
+  }
+
+  void _closeKeyboard() {
+    composer.selection = null;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final selection = composer.selection;
+
+    if (selection == null) {
+      return const SizedBox();
+    }
+
+    final selectedNode = document.getNodeById(selection.extent.nodeId);
+
+    return Material(
+      child: Container(
+        width: double.infinity,
+        height: 48,
+        color: const Color(0xFFDDDDDD),
+        child: Row(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      onPressed: selection.isCollapsed &&
+                              (selectedNode is TextNode && selectedNode.metadata['blockType'] != header1Attribution)
+                          ? _convertToHeader1
+                          : null,
+                      icon: const Icon(Icons.title),
+                    ),
+                    IconButton(
+                      onPressed: selection.isCollapsed &&
+                              (selectedNode is TextNode && selectedNode.metadata['blockType'] != header2Attribution)
+                          ? _convertToHeader2
+                          : null,
+                      icon: const Icon(Icons.title),
+                      iconSize: 18,
+                    ),
+                    IconButton(
+                      onPressed: selection.isCollapsed &&
+                              ((selectedNode is ParagraphNode && selectedNode.metadata['blockType'] != null) ||
+                                  (selectedNode is TextNode && selectedNode is! ParagraphNode))
+                          ? _convertToParagraph
+                          : null,
+                      icon: const Icon(Icons.wrap_text),
+                    ),
+                    IconButton(
+                      onPressed: selection.isCollapsed &&
+                              (selectedNode is TextNode && selectedNode is! ListItemNode ||
+                                  (selectedNode is ListItemNode && selectedNode.type != ListItemType.ordered))
+                          ? _convertToOrderedListItem
+                          : null,
+                      icon: const Icon(Icons.looks_one_rounded),
+                    ),
+                    IconButton(
+                      onPressed: selection.isCollapsed &&
+                              (selectedNode is TextNode && selectedNode is! ListItemNode ||
+                                  (selectedNode is ListItemNode && selectedNode.type != ListItemType.unordered))
+                          ? _convertToUnorderedListItem
+                          : null,
+                      icon: const Icon(Icons.list),
+                    ),
+                    IconButton(
+                      onPressed: selection.isCollapsed &&
+                              selectedNode is TextNode &&
+                              (selectedNode is! ParagraphNode ||
+                                  selectedNode.metadata['blockType'] != blockquoteAttribution)
+                          ? _convertToBlockquote
+                          : null,
+                      icon: const Icon(Icons.format_quote),
+                    ),
+                    IconButton(
+                      onPressed:
+                          selection.isCollapsed && selectedNode is ParagraphNode && selectedNode.text.text.isEmpty
+                              ? _convertToHr
+                              : null,
+                      icon: const Icon(Icons.horizontal_rule),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Container(
+              width: 1,
+              height: 32,
+              color: const Color(0xFFCCCCCC),
+            ),
+            IconButton(
+              onPressed: _closeKeyboard,
+              icon: const Icon(Icons.keyboard_hide),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

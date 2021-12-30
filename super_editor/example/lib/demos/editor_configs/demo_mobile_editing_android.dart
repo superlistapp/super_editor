@@ -16,8 +16,8 @@ class _MobileEditingAndroidDemoState extends State<MobileEditingAndroidDemo> {
   final GlobalKey _docLayoutKey = GlobalKey();
 
   late Document _doc;
-  DocumentEditor? _docEditor;
-  DocumentComposer? _composer;
+  late DocumentEditor _docEditor;
+  late DocumentComposer _composer;
 
   FocusNode? _editorFocusNode;
 
@@ -33,35 +33,70 @@ class _MobileEditingAndroidDemoState extends State<MobileEditingAndroidDemo> {
   @override
   void dispose() {
     _editorFocusNode!.dispose();
-    _composer!.dispose();
+    _composer.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return _buildScaffold(
-      child: SuperEditor(
-        focusNode: _editorFocusNode,
-        documentLayoutKey: _docLayoutKey,
-        gestureMode: DocumentGestureMode.android,
-        inputSource: DocumentInputSource.ime,
-        androidToolbarBuilder: (_) => AndroidTextEditingFloatingToolbar(
-          onCutPressed: () {
-            // TODO:
-          },
-          onCopyPressed: () {
-            // TODO:
-          },
-          onPastePressed: () async {
-            // TODO:
-          },
-          onSelectAllPressed: () {
-            // TODO:
-          },
-        ),
-        editor: _docEditor!,
+      child: Column(
+        children: [
+          Expanded(
+            child: SuperEditor(
+              focusNode: _editorFocusNode,
+              documentLayoutKey: _docLayoutKey,
+              gestureMode: DocumentGestureMode.android,
+              inputSource: DocumentInputSource.ime,
+              androidToolbarBuilder: (_) => AndroidTextEditingFloatingToolbar(
+                onCutPressed: () {
+                  // TODO:
+                },
+                onCopyPressed: () {
+                  // TODO:
+                },
+                onPastePressed: () async {
+                  // TODO:
+                },
+                onSelectAllPressed: () {
+                  // TODO:
+                },
+              ),
+              editor: _docEditor,
+              composer: _composer,
+              padding: const EdgeInsets.all(16),
+            ),
+          ),
+          AnimatedBuilder(
+            animation: _doc,
+            builder: (context, child) {
+              return AnimatedBuilder(
+                animation: _composer.selectionNotifier,
+                builder: (context, child) {
+                  return _buildMountedToolbar();
+                },
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMountedToolbar() {
+    final selection = _composer.selection;
+
+    if (selection == null) {
+      return const SizedBox();
+    }
+
+    return KeyboardEditingToolbar(
+      document: _doc,
+      composer: _composer,
+      commonOps: CommonEditorOperations(
+        editor: _docEditor,
         composer: _composer,
-        padding: const EdgeInsets.all(16),
+        documentLayoutResolver: () => _docLayoutKey.currentState as DocumentLayout,
       ),
     );
   }
