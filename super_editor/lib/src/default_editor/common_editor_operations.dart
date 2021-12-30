@@ -6,11 +6,25 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:http/http.dart' as http;
 import 'package:linkify/linkify.dart';
+import 'package:super_editor/src/core/document.dart';
+import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_editor.dart';
+import 'package:super_editor/src/core/document_layout.dart';
+import 'package:super_editor/src/core/document_selection.dart';
+import 'package:super_editor/src/default_editor/box_component.dart';
+import 'package:super_editor/src/default_editor/list_items.dart';
+import 'package:super_editor/src/default_editor/paragraph.dart';
+import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
-import 'package:super_editor/super_editor.dart';
+import 'package:super_editor/src/infrastructure/attributed_spans.dart';
+import 'package:super_editor/src/infrastructure/attributed_text.dart';
+import 'package:super_editor/src/infrastructure/text_layout.dart';
 
-final _log = Logger(scope: 'common_editor_operations.dart');
+import 'attributions.dart';
+import 'horizontal_rule.dart';
+import 'image.dart';
+import 'multi_node_editing.dart';
+import 'text_tools.dart';
 
 /// Performs common, high-level editing and composition tasks
 /// with a simplified API.
@@ -1280,9 +1294,9 @@ class CommonEditorOperations {
     final orderedListItemMatch = RegExp(r'^\s*[1]\.?\s+$');
     final hasOrderedListItemMatch = orderedListItemMatch.hasMatch(textBeforeCaret);
 
-    _log.log('_convertParagraphIfDesired', ' - text before caret: "$textBeforeCaret"');
+    editorOpsLog.fine('_convertParagraphIfDesired', ' - text before caret: "$textBeforeCaret"');
     if (hasUnorderedListItemMatch || hasOrderedListItemMatch) {
-      _log.log('_convertParagraphIfDesired', ' - found unordered list item prefix');
+      editorOpsLog.fine('_convertParagraphIfDesired', ' - found unordered list item prefix');
       int startOfNewText = textBeforeCaret.length;
       while (startOfNewText < node.text.text.length && node.text.text[startOfNewText] == ' ') {
         startOfNewText += 1;
@@ -1314,7 +1328,7 @@ class CommonEditorOperations {
     final hrMatch = RegExp(r'^---*\s$');
     final hasHrMatch = hrMatch.hasMatch(textBeforeCaret);
     if (hasHrMatch) {
-      _log.log('_convertParagraphIfDesired', 'Paragraph has an HR match');
+      editorOpsLog.fine('Paragraph has an HR match');
       // Insert an HR before this paragraph and then clear the
       // paragraph's content.
       final paragraphNodeIndex = editor.document.getNodeIndex(node);
@@ -1376,7 +1390,7 @@ class CommonEditorOperations {
     }
 
     // URL match, e.g., images, social, etc.
-    _log.log('_convertParagraphIfDesired', 'Looking for URL match...');
+    editorOpsLog.fine('Looking for URL match...');
     final extractedLinks = linkify(node.text.text,
         options: const LinkifyOptions(
           humanize: false,
@@ -1412,31 +1426,30 @@ class CommonEditorOperations {
     final response = await http.get(Uri.parse(url));
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      _log.log('_processUrlNode', 'Failed to load URL: ${response.statusCode} - ${response.reasonPhrase}');
+      editorOpsLog.fine('Failed to load URL: ${response.statusCode} - ${response.reasonPhrase}');
       return;
     }
 
     final contentType = response.headers['content-type'];
     if (contentType == null) {
-      _log.log('_processUrlNode', 'Failed to determine URL content type.');
+      editorOpsLog.fine('Failed to determine URL content type.');
       return;
     }
     if (!contentType.startsWith('image/')) {
-      _log.log('_processUrlNode', 'URL is not an image. Ignoring');
+      editorOpsLog.fine('URL is not an image. Ignoring');
       return;
     }
 
     // The URL is an image. Convert the node.
-    _log.log('_processUrlNode', 'The URL is an image. Converting the ParagraphNode to an ImageNode.');
+    editorOpsLog.fine('The URL is an image. Converting the ParagraphNode to an ImageNode.');
     final node = document.getNodeById(nodeId);
     if (node is! ParagraphNode) {
-      _log.log(
-          '_processUrlNode', 'The node has become something other than a ParagraphNode ($node). Can\'t convert ndoe.');
+      editorOpsLog.fine('The node has become something other than a ParagraphNode ($node). Can\'t convert ndoe.');
       return;
     }
     final currentText = node.text.text;
     if (currentText.trim() != originalText.trim()) {
-      _log.log('_processUrlNode', 'The node content changed in a non-trivial way. Aborting node conversion.');
+      editorOpsLog.fine('The node content changed in a non-trivial way. Aborting node conversion.');
       return;
     }
 

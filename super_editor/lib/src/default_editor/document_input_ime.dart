@@ -4,11 +4,17 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document.dart';
+import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/edit_context.dart';
+import 'package:super_editor/src/default_editor/common_editor_operations.dart';
+import 'package:super_editor/src/default_editor/paragraph.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
-import 'package:super_editor/super_editor.dart';
+import 'package:super_editor/src/infrastructure/attributed_text.dart';
+
+import 'attributions.dart';
+import 'list_items.dart';
 
 /// Governs document input that comes from the operating system's
 /// Input Method Engine (IME).
@@ -621,6 +627,12 @@ class DocumentImeSerializer {
   }
 }
 
+/// Toolbar that provides document editing capabilities, like converting
+/// paragraphs to blockquotes and list items, and inserting horizontal
+/// rules.
+///
+/// This toolbar is intended to be placed just above the keyboard on a
+/// mobile device.
 class KeyboardEditingToolbar extends StatelessWidget {
   const KeyboardEditingToolbar({
     Key? key,
