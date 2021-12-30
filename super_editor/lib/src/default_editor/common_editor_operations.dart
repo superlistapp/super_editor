@@ -1914,6 +1914,10 @@ class CommonEditorOperations {
       return false;
     }
 
+    if (baseNode is! ListItemNode) {
+      return false;
+    }
+
     editor.executeCommand(
       UnIndentListItemCommand(nodeId: extentNode.id),
     );
