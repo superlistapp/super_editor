@@ -7,6 +7,7 @@ class LogNames {
   static const editorIme = 'editor.ime';
   static const editorLayout = 'editor.layout';
   static const editorDocument = 'editor.document';
+  static const editorCommonOps = 'editor.ops';
 
   static const textField = 'textfield';
   static const scrollingTextField = 'textfield.scrolling';
@@ -24,6 +25,7 @@ final editorKeyLog = logging.Logger(LogNames.editorKeys);
 final editorImeLog = logging.Logger(LogNames.editorIme);
 final editorLayoutLog = logging.Logger(LogNames.editorLayout);
 final editorDocLog = logging.Logger(LogNames.editorDocument);
+final editorOpsLog = logging.Logger(LogNames.editorCommonOps);
 
 final textFieldLog = logging.Logger(LogNames.textField);
 final scrollingTextFieldLog = logging.Logger(LogNames.scrollingTextField);

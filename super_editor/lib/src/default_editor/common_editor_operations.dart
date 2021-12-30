@@ -12,7 +12,9 @@ import 'package:super_editor/src/core/document_editor.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/default_editor/box_component.dart';
+import 'package:super_editor/src/default_editor/list_items.dart';
 import 'package:super_editor/src/default_editor/paragraph.dart';
+import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_spans.dart';
@@ -25,8 +27,7 @@ import 'image.dart';
 import 'list_items.dart';
 import 'multi_node_editing.dart';
 import 'text.dart';
-
-final _log = Logger(scope: 'common_editor_operations.dart');
+import 'text_tools.dart';
 
 /// Performs common, high-level editing and composition tasks
 /// with a simplified API.
@@ -77,7 +78,8 @@ class CommonEditorOperations {
       return false;
     }
 
-    composer.selection = DocumentSelection.collapsed(position: documentPosition);
+    composer.selection =
+        DocumentSelection.collapsed(position: documentPosition);
     return true;
   }
 
@@ -98,9 +100,11 @@ class CommonEditorOperations {
   }) {
     DocumentPosition? position;
     if (findNearestPosition) {
-      position = documentLayoutResolver().getDocumentPositionNearestToOffset(documentOffset);
+      position = documentLayoutResolver()
+          .getDocumentPositionNearestToOffset(documentOffset);
     } else {
-      position = documentLayoutResolver().getDocumentPositionAtOffset(documentOffset);
+      position =
+          documentLayoutResolver().getDocumentPositionAtOffset(documentOffset);
     }
 
     if (position != null) {
@@ -153,7 +157,8 @@ class CommonEditorOperations {
       return false;
     }
 
-    final selectedNode = editor.document.getNodeById(composer.selection!.extent.nodeId);
+    final selectedNode =
+        editor.document.getNodeById(composer.selection!.extent.nodeId);
     if (selectedNode is! TextNode) {
       return false;
     }
@@ -161,7 +166,8 @@ class CommonEditorOperations {
     final docSelection = composer.selection!;
     final currentSelection = TextSelection(
       baseOffset: (docSelection.base.nodePosition as TextNodePosition).offset,
-      extentOffset: (docSelection.extent.nodePosition as TextNodePosition).offset,
+      extentOffset:
+          (docSelection.extent.nodePosition as TextNodePosition).offset,
     );
     final selectedText = currentSelection.textInside(selectedNode.text.text);
 
@@ -172,9 +178,12 @@ class CommonEditorOperations {
 
     final wordTextSelection = expandPositionToWord(
       text: selectedNode.text.text,
-      textPosition: TextPosition(offset: (docSelection.extent.nodePosition as TextNodePosition).offset),
+      textPosition: TextPosition(
+          offset:
+              (docSelection.extent.nodePosition as TextNodePosition).offset),
     );
-    final wordNodeSelection = TextNodeSelection.fromTextSelection(wordTextSelection);
+    final wordNodeSelection =
+        TextNodeSelection.fromTextSelection(wordTextSelection);
 
     composer.selection = DocumentSelection(
       base: DocumentPosition(
@@ -206,7 +215,8 @@ class CommonEditorOperations {
       return false;
     }
 
-    final selectedNode = editor.document.getNodeById(composer.selection!.extent.nodeId);
+    final selectedNode =
+        editor.document.getNodeById(composer.selection!.extent.nodeId);
     if (selectedNode is! TextNode) {
       return false;
     }
@@ -214,7 +224,8 @@ class CommonEditorOperations {
     final docSelection = composer.selection!;
     final currentSelection = TextSelection(
       baseOffset: (docSelection.base.nodePosition as TextNodePosition).offset,
-      extentOffset: (docSelection.extent.nodePosition as TextNodePosition).offset,
+      extentOffset:
+          (docSelection.extent.nodePosition as TextNodePosition).offset,
     );
     final selectedText = currentSelection.textInside(selectedNode.text.text);
 
@@ -225,9 +236,12 @@ class CommonEditorOperations {
 
     final paragraphTextSelection = expandPositionToParagraph(
       text: selectedNode.text.text,
-      textPosition: TextPosition(offset: (docSelection.extent.nodePosition as TextNodePosition).offset),
+      textPosition: TextPosition(
+          offset:
+              (docSelection.extent.nodePosition as TextNodePosition).offset),
     );
-    final paragraphNodeSelection = TextNodeSelection.fromTextSelection(paragraphTextSelection);
+    final paragraphNodeSelection =
+        TextNodeSelection.fromTextSelection(paragraphTextSelection);
 
     composer.selection = DocumentSelection(
       base: DocumentPosition(
@@ -311,7 +325,8 @@ class CommonEditorOperations {
     }
 
     if (!composer.selection!.isCollapsed && !expand) {
-      composer.selection = composer.selection!.collapseUpstream(editor.document);
+      composer.selection =
+          composer.selection!.collapseUpstream(editor.document);
       return true;
     }
 
@@ -321,13 +336,15 @@ class CommonEditorOperations {
     if (node == null) {
       return false;
     }
-    final extentComponent = documentLayoutResolver().getComponentByNodeId(nodeId);
+    final extentComponent =
+        documentLayoutResolver().getComponentByNodeId(nodeId);
     if (extentComponent == null) {
       return false;
     }
 
     String newExtentNodeId = nodeId;
-    dynamic newExtentNodePosition = extentComponent.movePositionLeft(currentExtent.nodePosition, movementModifiers);
+    dynamic newExtentNodePosition = extentComponent.movePositionLeft(
+        currentExtent.nodePosition, movementModifiers);
 
     if (newExtentNodePosition == null) {
       // Move to next node
@@ -339,7 +356,8 @@ class CommonEditorOperations {
       }
 
       newExtentNodeId = nextNode.id;
-      final nextComponent = documentLayoutResolver().getComponentByNodeId(nextNode.id);
+      final nextComponent =
+          documentLayoutResolver().getComponentByNodeId(nextNode.id);
       if (nextComponent == null) {
         return false;
       }
@@ -391,7 +409,8 @@ class CommonEditorOperations {
     }
 
     if (!composer.selection!.isCollapsed && !expand) {
-      composer.selection = composer.selection!.collapseDownstream(editor.document);
+      composer.selection =
+          composer.selection!.collapseDownstream(editor.document);
       return true;
     }
 
@@ -401,14 +420,15 @@ class CommonEditorOperations {
     if (node == null) {
       return false;
     }
-    final extentComponent = documentLayoutResolver().getComponentByNodeId(nodeId);
+    final extentComponent =
+        documentLayoutResolver().getComponentByNodeId(nodeId);
     if (extentComponent == null) {
       return false;
     }
 
     String newExtentNodeId = nodeId;
-    NodePosition? newExtentNodePosition =
-        extentComponent.movePositionRight(currentExtent.nodePosition, movementModifiers);
+    NodePosition? newExtentNodePosition = extentComponent.movePositionRight(
+        currentExtent.nodePosition, movementModifiers);
 
     if (newExtentNodePosition == null) {
       // Move to next node
@@ -421,7 +441,8 @@ class CommonEditorOperations {
       }
 
       newExtentNodeId = nextNode.id;
-      final nextComponent = documentLayoutResolver().getComponentByNodeId(nextNode.id);
+      final nextComponent =
+          documentLayoutResolver().getComponentByNodeId(nextNode.id);
       if (nextComponent == null) {
         throw Exception(
             'Could not find next component to move the selection horizontally. Next node ID: ${nextNode.id}');
@@ -481,25 +502,30 @@ class CommonEditorOperations {
     if (node == null) {
       return false;
     }
-    final extentComponent = documentLayoutResolver().getComponentByNodeId(nodeId);
+    final extentComponent =
+        documentLayoutResolver().getComponentByNodeId(nodeId);
     if (extentComponent == null) {
       return false;
     }
 
     String newExtentNodeId = nodeId;
-    NodePosition? newExtentNodePosition = extentComponent.movePositionUp(currentExtent.nodePosition);
+    NodePosition? newExtentNodePosition =
+        extentComponent.movePositionUp(currentExtent.nodePosition);
 
     if (newExtentNodePosition == null) {
       // Move to next node
       final nextNode = _getUpstreamSelectableNodeBefore(node);
       if (nextNode != null) {
         newExtentNodeId = nextNode.id;
-        final nextComponent = documentLayoutResolver().getComponentByNodeId(nextNode.id);
+        final nextComponent =
+            documentLayoutResolver().getComponentByNodeId(nextNode.id);
         if (nextComponent == null) {
           return false;
         }
-        final offsetToMatch = extentComponent.getOffsetForPosition(currentExtent.nodePosition);
-        newExtentNodePosition = nextComponent.getEndPositionNearX(offsetToMatch.dx);
+        final offsetToMatch =
+            extentComponent.getOffsetForPosition(currentExtent.nodePosition);
+        newExtentNodePosition =
+            nextComponent.getEndPositionNearX(offsetToMatch.dx);
       } else {
         // We're at the top of the document. Move the cursor to the
         // beginning of the current node.
@@ -559,25 +585,30 @@ class CommonEditorOperations {
     if (node == null) {
       return false;
     }
-    final extentComponent = documentLayoutResolver().getComponentByNodeId(nodeId);
+    final extentComponent =
+        documentLayoutResolver().getComponentByNodeId(nodeId);
     if (extentComponent == null) {
       return false;
     }
 
     String newExtentNodeId = nodeId;
-    dynamic newExtentNodePosition = extentComponent.movePositionDown(currentExtent.nodePosition);
+    dynamic newExtentNodePosition =
+        extentComponent.movePositionDown(currentExtent.nodePosition);
 
     if (newExtentNodePosition == null) {
       // Move to next node
       final nextNode = _getDownstreamSelectableNodeAfter(node);
       if (nextNode != null) {
         newExtentNodeId = nextNode.id;
-        final nextComponent = documentLayoutResolver().getComponentByNodeId(nextNode.id);
+        final nextComponent =
+            documentLayoutResolver().getComponentByNodeId(nextNode.id);
         if (nextComponent == null) {
           return false;
         }
-        final offsetToMatch = extentComponent.getOffsetForPosition(currentExtent.nodePosition);
-        newExtentNodePosition = nextComponent.getBeginningPositionNearX(offsetToMatch.dx);
+        final offsetToMatch =
+            extentComponent.getOffsetForPosition(currentExtent.nodePosition);
+        newExtentNodePosition =
+            nextComponent.getBeginningPositionNearX(offsetToMatch.dx);
       } else {
         // We're at the bottom of the document. Move the cursor to the
         // end of the current node.
@@ -615,7 +646,8 @@ class CommonEditorOperations {
       selectableNode = editor.document.getNodeBefore(prevNode);
 
       if (selectableNode != null) {
-        final nextComponent = documentLayoutResolver().getComponentByNodeId(selectableNode.id);
+        final nextComponent =
+            documentLayoutResolver().getComponentByNodeId(selectableNode.id);
         if (nextComponent != null) {
           foundSelectableNode = nextComponent.isVisualSelectionSupported();
         }
@@ -636,7 +668,8 @@ class CommonEditorOperations {
       selectableNode = editor.document.getNodeAfter(prevNode);
 
       if (selectableNode != null) {
-        final nextComponent = documentLayoutResolver().getComponentByNodeId(selectableNode.id);
+        final nextComponent =
+            documentLayoutResolver().getComponentByNodeId(selectableNode.id);
         if (nextComponent != null) {
           foundSelectableNode = nextComponent.isVisualSelectionSupported();
         }
@@ -665,14 +698,20 @@ class CommonEditorOperations {
       return false;
     }
 
-    if (!composer.selection!.isCollapsed || composer.selection!.extent.nodePosition is BinaryNodePosition) {
+    if (!composer.selection!.isCollapsed ||
+        composer.selection!.extent.nodePosition is BinaryNodePosition) {
       // A span of content is selected. Delete the selection.
       return deleteSelection();
     } else if (composer.selection!.extent.nodePosition is TextNodePosition) {
-      final textPosition = composer.selection!.extent.nodePosition as TextNodePosition;
-      final text = (editor.document.getNodeById(composer.selection!.extent.nodeId) as TextNode).text.text;
+      final textPosition =
+          composer.selection!.extent.nodePosition as TextNodePosition;
+      final text = (editor.document
+              .getNodeById(composer.selection!.extent.nodeId) as TextNode)
+          .text
+          .text;
       if (textPosition.offset == text.length) {
-        final node = editor.document.getNodeById(composer.selection!.extent.nodeId)!;
+        final node =
+            editor.document.getNodeById(composer.selection!.extent.nodeId)!;
         final nodeAfter = editor.document.getNodeAfter(node);
 
         if (nodeAfter is TextNode) {
@@ -680,7 +719,8 @@ class CommonEditorOperations {
           // another TextNode. Merge the two TextNodes.
           return _mergeTextNodeWithDownstreamTextNode();
         } else if (nodeAfter != null) {
-          final componentAfter = documentLayoutResolver().getComponentByNodeId(nodeAfter.id)!;
+          final componentAfter =
+              documentLayoutResolver().getComponentByNodeId(nodeAfter.id)!;
 
           if (componentAfter.isVisualSelectionSupported()) {
             // The caret is at the end of a TextNode, but the next node
@@ -768,21 +808,27 @@ class CommonEditorOperations {
     if (composer.selection == null) {
       return false;
     }
-    if (!_isTextEntryNode(document: editor.document, selection: composer.selection!)) {
+    if (!_isTextEntryNode(
+        document: editor.document, selection: composer.selection!)) {
       return false;
     }
-    if (composer.selection!.isCollapsed && (composer.selection!.extent.nodePosition as TextNodePosition).offset < 0) {
+    if (composer.selection!.isCollapsed &&
+        (composer.selection!.extent.nodePosition as TextNodePosition).offset <
+            0) {
       return false;
     }
 
-    final textNode = editor.document.getNode(composer.selection!.extent) as TextNode;
+    final textNode =
+        editor.document.getNode(composer.selection!.extent) as TextNode;
     final text = textNode.text;
-    final currentTextPosition = (composer.selection!.extent.nodePosition as TextNodePosition);
+    final currentTextPosition =
+        (composer.selection!.extent.nodePosition as TextNodePosition);
     if (currentTextPosition.offset >= text.text.length) {
       return false;
     }
 
-    final nextCharacterOffset = getCharacterEndBounds(text.text, currentTextPosition.offset);
+    final nextCharacterOffset =
+        getCharacterEndBounds(text.text, currentTextPosition.offset);
 
     // Delete the selected content.
     editor.executeCommand(
@@ -821,27 +867,33 @@ class CommonEditorOperations {
       return false;
     }
 
-    if (!composer.selection!.isCollapsed || composer.selection!.extent.nodePosition is BinaryNodePosition) {
+    if (!composer.selection!.isCollapsed ||
+        composer.selection!.extent.nodePosition is BinaryNodePosition) {
       // A span of content is selected. Delete the selection.
       return deleteSelection();
     }
 
-    final node = editor.document.getNodeById(composer.selection!.extent.nodeId)!;
+    final node =
+        editor.document.getNodeById(composer.selection!.extent.nodeId)!;
 
     // If the caret is at the beginning of a list item, unindent the list item.
-    if (node is ListItemNode && (composer.selection!.extent.nodePosition as TextNodePosition).offset == 0) {
+    if (node is ListItemNode &&
+        (composer.selection!.extent.nodePosition as TextNodePosition).offset ==
+            0) {
       return unindentListItem();
     }
 
     if (composer.selection!.extent.nodePosition is TextNodePosition) {
-      final textPosition = composer.selection!.extent.nodePosition as TextNodePosition;
+      final textPosition =
+          composer.selection!.extent.nodePosition as TextNodePosition;
       if (textPosition.offset == 0) {
         final nodeBefore = editor.document.getNodeBefore(node);
         if (nodeBefore == null) {
           return false;
         }
 
-        final componentBefore = documentLayoutResolver().getComponentByNodeId(nodeBefore.id)!;
+        final componentBefore =
+            documentLayoutResolver().getComponentByNodeId(nodeBefore.id)!;
 
         if (nodeBefore is TextNode) {
           // The caret is at the beginning of one TextNode and is preceded by
@@ -939,17 +991,23 @@ class CommonEditorOperations {
     if (composer.selection == null) {
       return false;
     }
-    if (!_isTextEntryNode(document: editor.document, selection: composer.selection!)) {
+    if (!_isTextEntryNode(
+        document: editor.document, selection: composer.selection!)) {
       return false;
     }
-    if (composer.selection!.isCollapsed && (composer.selection!.extent.nodePosition as TextNodePosition).offset <= 0) {
+    if (composer.selection!.isCollapsed &&
+        (composer.selection!.extent.nodePosition as TextNodePosition).offset <=
+            0) {
       return false;
     }
 
-    final textNode = editor.document.getNode(composer.selection!.extent) as TextNode;
-    final currentTextPosition = composer.selection!.extent.nodePosition as TextNodePosition;
+    final textNode =
+        editor.document.getNode(composer.selection!.extent) as TextNode;
+    final currentTextPosition =
+        composer.selection!.extent.nodePosition as TextNodePosition;
 
-    final previousCharacterOffset = getCharacterStartBounds(textNode.text.text, currentTextPosition.offset);
+    final previousCharacterOffset =
+        getCharacterStartBounds(textNode.text.text, currentTextPosition.offset);
 
     final newSelectionPosition = DocumentPosition(
       nodeId: textNode.id,
@@ -972,7 +1030,8 @@ class CommonEditorOperations {
       ),
     );
 
-    composer.selection = DocumentSelection.collapsed(position: newSelectionPosition);
+    composer.selection =
+        DocumentSelection.collapsed(position: newSelectionPosition);
 
     return true;
   }
@@ -990,7 +1049,8 @@ class CommonEditorOperations {
       if (composer.selection!.extent.nodePosition is! BinaryNodePosition) {
         return false;
       }
-      if (!(composer.selection!.extent.nodePosition as BinaryNodePosition).isIncluded) {
+      if (!(composer.selection!.extent.nodePosition as BinaryNodePosition)
+          .isIncluded) {
         return false;
       }
 
@@ -1045,9 +1105,11 @@ class CommonEditorOperations {
         throw Exception(
             'Tried to access document node at index $newSelectionNodeIndex but the document returned null.');
       }
-      final component = documentLayout.getComponentByNodeId(newSelectionNode.id);
+      final component =
+          documentLayout.getComponentByNodeId(newSelectionNode.id);
       if (component == null) {
-        throw Exception('Couldn\'t find editor component for node: ${newSelectionNode.id}');
+        throw Exception(
+            'Couldn\'t find editor component for node: ${newSelectionNode.id}');
       }
       return DocumentPosition(
         nodeId: newSelectionNode.id,
@@ -1059,11 +1121,14 @@ class CommonEditorOperations {
       // is now the first node in the document.
       final newSelectionNode = document.getNodeAt(0);
       if (newSelectionNode == null) {
-        throw Exception('Could not obtain the first node in a non-empty document.');
+        throw Exception(
+            'Could not obtain the first node in a non-empty document.');
       }
-      final component = documentLayout.getComponentByNodeId(newSelectionNode.id);
+      final component =
+          documentLayout.getComponentByNodeId(newSelectionNode.id);
       if (component == null) {
-        throw Exception('Couldn\'t find editor component for node: ${newSelectionNode.id}');
+        throw Exception(
+            'Couldn\'t find editor component for node: ${newSelectionNode.id}');
       }
       return DocumentPosition(
         nodeId: newSelectionNode.id,
@@ -1086,7 +1151,8 @@ class CommonEditorOperations {
       DeleteSelectionCommand(documentSelection: composer.selection!),
     );
 
-    composer.selection = DocumentSelection.collapsed(position: newSelectionPosition);
+    composer.selection =
+        DocumentSelection.collapsed(position: newSelectionPosition);
   }
 
   DocumentPosition _getDocumentPositionAfterDeletion({
@@ -1101,14 +1167,16 @@ class CommonEditorOperations {
     final basePosition = selection.base;
     final baseNode = document.getNode(basePosition);
     if (baseNode == null) {
-      throw Exception('Failed to _getDocumentPositionAfterDeletion because the base node no longer exists.');
+      throw Exception(
+          'Failed to _getDocumentPositionAfterDeletion because the base node no longer exists.');
     }
     final baseNodeIndex = document.getNodeIndex(baseNode);
 
     final extentPosition = selection.extent;
     final extentNode = document.getNode(extentPosition);
     if (extentNode == null) {
-      throw Exception('Failed to _getDocumentPositionAfterDeletion because the extent node no longer exists.');
+      throw Exception(
+          'Failed to _getDocumentPositionAfterDeletion because the extent node no longer exists.');
     }
     final extentNodeIndex = document.getNodeIndex(extentNode);
     DocumentPosition newSelectionPosition;
@@ -1116,7 +1184,8 @@ class CommonEditorOperations {
     if (baseNodeIndex != extentNodeIndex) {
       // Place the caret at the current position within the
       // first node in the selection.
-      newSelectionPosition = baseNodeIndex <= extentNodeIndex ? selection.base : selection.extent;
+      newSelectionPosition =
+          baseNodeIndex <= extentNodeIndex ? selection.base : selection.extent;
 
       // If it's a binary selection node then that node will
       // be replaced by a ParagraphNode with the same ID.
@@ -1140,8 +1209,10 @@ class CommonEditorOperations {
           nodePosition: const TextNodePosition(offset: 0),
         );
       } else if (basePosition.nodePosition is TextNodePosition) {
-        final baseOffset = (basePosition.nodePosition as TextNodePosition).offset;
-        final extentOffset = (extentPosition.nodePosition as TextNodePosition).offset;
+        final baseOffset =
+            (basePosition.nodePosition as TextNodePosition).offset;
+        final extentOffset =
+            (extentPosition.nodePosition as TextNodePosition).offset;
 
         newSelectionPosition = DocumentPosition(
           nodeId: baseNode.id,
@@ -1286,8 +1357,10 @@ class CommonEditorOperations {
       return false;
     }
 
-    final baseNode = editor.document.getNodeById(composer.selection!.base.nodeId)!;
-    final extentNode = editor.document.getNodeById(composer.selection!.extent.nodeId)!;
+    final baseNode =
+        editor.document.getNodeById(composer.selection!.base.nodeId)!;
+    final extentNode =
+        editor.document.getNodeById(composer.selection!.extent.nodeId)!;
     if (baseNode.id != extentNode.id) {
       return false;
     }
@@ -1301,8 +1374,10 @@ class CommonEditorOperations {
       deleteSelection();
     }
 
-    final textNode = editor.document.getNode(composer.selection!.extent) as TextNode;
-    final initialTextOffset = (composer.selection!.extent.nodePosition as TextNodePosition).offset;
+    final textNode =
+        editor.document.getNode(composer.selection!.extent) as TextNode;
+    final initialTextOffset =
+        (composer.selection!.extent.nodePosition as TextNodePosition).offset;
 
     editor.executeCommand(
       InsertTextCommand(
@@ -1320,7 +1395,8 @@ class CommonEditorOperations {
         ),
       ),
     );
-    print("Text offset was $initialTextOffset but now it's ${composer.selection}");
+    print(
+        "Text offset was $initialTextOffset but now it's ${composer.selection}");
 
     return true;
   }
@@ -1376,21 +1452,27 @@ class CommonEditorOperations {
     }
 
     final text = node.text;
-    final textSelection = composer.selection!.extent.nodePosition as TextNodePosition;
+    final textSelection =
+        composer.selection!.extent.nodePosition as TextNodePosition;
     final textBeforeCaret = text.text.substring(0, textSelection.offset);
 
     final unorderedListItemMatch = RegExp(r'^\s*[\*-]\s+$');
-    final hasUnorderedListItemMatch = unorderedListItemMatch.hasMatch(textBeforeCaret);
+    final hasUnorderedListItemMatch =
+        unorderedListItemMatch.hasMatch(textBeforeCaret);
 
     // We want to match "1. ", " 1. ", "1) ", " 1) ".
     final orderedListItemMatch = RegExp(r'^\s*1[.)]\s+$');
-    final hasOrderedListItemMatch = orderedListItemMatch.hasMatch(textBeforeCaret);
+    final hasOrderedListItemMatch =
+        orderedListItemMatch.hasMatch(textBeforeCaret);
 
-    _log.log('_convertParagraphIfDesired', ' - text before caret: "$textBeforeCaret"');
+    editorOpsLog.fine('_convertParagraphIfDesired',
+        ' - text before caret: "$textBeforeCaret"');
     if (hasUnorderedListItemMatch || hasOrderedListItemMatch) {
-      _log.log('_convertParagraphIfDesired', ' - found unordered list item prefix');
+      editorOpsLog.fine(
+          '_convertParagraphIfDesired', ' - found unordered list item prefix');
       int startOfNewText = textBeforeCaret.length;
-      while (startOfNewText < node.text.text.length && node.text.text[startOfNewText] == ' ') {
+      while (startOfNewText < node.text.text.length &&
+          node.text.text[startOfNewText] == ' ') {
         startOfNewText += 1;
       }
       final adjustedText = node.text.copyText(startOfNewText);
@@ -1406,11 +1488,13 @@ class CommonEditorOperations {
 
       // We removed some text at the beginning of the list item.
       // Move the selection back by that same amount.
-      final textPosition = composer.selection!.extent.nodePosition as TextNodePosition;
+      final textPosition =
+          composer.selection!.extent.nodePosition as TextNodePosition;
       composer.selection = DocumentSelection.collapsed(
         position: DocumentPosition(
           nodeId: node.id,
-          nodePosition: TextNodePosition(offset: textPosition.offset - startOfNewText),
+          nodePosition:
+              TextNodePosition(offset: textPosition.offset - startOfNewText),
         ),
       );
 
@@ -1420,7 +1504,7 @@ class CommonEditorOperations {
     final hrMatch = RegExp(r'^---*\s$');
     final hasHrMatch = hrMatch.hasMatch(textBeforeCaret);
     if (hasHrMatch) {
-      _log.log('_convertParagraphIfDesired', 'Paragraph has an HR match');
+      editorOpsLog.fine('Paragraph has an HR match');
       // Insert an HR before this paragraph and then clear the
       // paragraph's content.
       final paragraphNodeIndex = editor.document.getNodeIndex(node);
@@ -1436,7 +1520,8 @@ class CommonEditorOperations {
         }),
       );
 
-      node.text = node.text.removeRegion(startOffset: 0, endOffset: hrMatch.firstMatch(textBeforeCaret)!.end);
+      node.text = node.text.removeRegion(
+          startOffset: 0, endOffset: hrMatch.firstMatch(textBeforeCaret)!.end);
 
       composer.selection = DocumentSelection.collapsed(
         position: DocumentPosition(
@@ -1452,7 +1537,8 @@ class CommonEditorOperations {
     final hasBlockquoteMatch = blockquoteMatch.hasMatch(textBeforeCaret);
     if (hasBlockquoteMatch) {
       int startOfNewText = textBeforeCaret.length;
-      while (startOfNewText < node.text.text.length && node.text.text[startOfNewText] == ' ') {
+      while (startOfNewText < node.text.text.length &&
+          node.text.text[startOfNewText] == ' ') {
         startOfNewText += 1;
       }
       final adjustedText = node.text.copyText(startOfNewText);
@@ -1470,11 +1556,13 @@ class CommonEditorOperations {
 
       // We removed some text at the beginning of the list item.
       // Move the selection back by that same amount.
-      final textPosition = composer.selection!.extent.nodePosition as TextNodePosition;
+      final textPosition =
+          composer.selection!.extent.nodePosition as TextNodePosition;
       composer.selection = DocumentSelection.collapsed(
         position: DocumentPosition(
           nodeId: node.id,
-          nodePosition: TextNodePosition(offset: textPosition.offset - startOfNewText),
+          nodePosition:
+              TextNodePosition(offset: textPosition.offset - startOfNewText),
         ),
       );
 
@@ -1482,18 +1570,23 @@ class CommonEditorOperations {
     }
 
     // URL match, e.g., images, social, etc.
-    _log.log('_convertParagraphIfDesired', 'Looking for URL match...');
+    editorOpsLog.fine('Looking for URL match...');
     final extractedLinks = linkify(node.text.text,
         options: const LinkifyOptions(
           humanize: false,
         ));
-    final int linkCount = extractedLinks.fold(0, (value, element) => element is UrlElement ? value + 1 : value);
-    final String nonEmptyText =
-        extractedLinks.fold('', (value, element) => element is TextElement ? value + element.text.trim() : value);
+    final int linkCount = extractedLinks.fold(
+        0, (value, element) => element is UrlElement ? value + 1 : value);
+    final String nonEmptyText = extractedLinks.fold(
+        '',
+        (value, element) =>
+            element is TextElement ? value + element.text.trim() : value);
     if (linkCount == 1 && nonEmptyText.isEmpty) {
       // This node's text is just a URL, try to interpret it
       // as a known type.
-      final link = extractedLinks.firstWhereOrNull((element) => element is UrlElement)!.text;
+      final link = extractedLinks
+          .firstWhereOrNull((element) => element is UrlElement)!
+          .text;
       _processUrlNode(
         document: editor.document,
         editor: editor,
@@ -1518,31 +1611,34 @@ class CommonEditorOperations {
     final response = await http.get(Uri.parse(url));
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      _log.log('_processUrlNode', 'Failed to load URL: ${response.statusCode} - ${response.reasonPhrase}');
+      editorOpsLog.fine(
+          'Failed to load URL: ${response.statusCode} - ${response.reasonPhrase}');
       return;
     }
 
     final contentType = response.headers['content-type'];
     if (contentType == null) {
-      _log.log('_processUrlNode', 'Failed to determine URL content type.');
+      editorOpsLog.fine('Failed to determine URL content type.');
       return;
     }
     if (!contentType.startsWith('image/')) {
-      _log.log('_processUrlNode', 'URL is not an image. Ignoring');
+      editorOpsLog.fine('URL is not an image. Ignoring');
       return;
     }
 
     // The URL is an image. Convert the node.
-    _log.log('_processUrlNode', 'The URL is an image. Converting the ParagraphNode to an ImageNode.');
+    editorOpsLog.fine(
+        'The URL is an image. Converting the ParagraphNode to an ImageNode.');
     final node = document.getNodeById(nodeId);
     if (node is! ParagraphNode) {
-      _log.log(
-          '_processUrlNode', 'The node has become something other than a ParagraphNode ($node). Can\'t convert ndoe.');
+      editorOpsLog.fine(
+          'The node has become something other than a ParagraphNode ($node). Can\'t convert ndoe.');
       return;
     }
     final currentText = node.text.text;
     if (currentText.trim() != originalText.trim()) {
-      _log.log('_processUrlNode', 'The node content changed in a non-trivial way. Aborting node conversion.');
+      editorOpsLog.fine(
+          'The node content changed in a non-trivial way. Aborting node conversion.');
       return;
     }
 
@@ -1575,18 +1671,23 @@ class CommonEditorOperations {
     if (!composer.selection!.isCollapsed) {
       return false;
     }
-    if (!_isTextEntryNode(document: editor.document, selection: composer.selection!)) {
+    if (!_isTextEntryNode(
+        document: editor.document, selection: composer.selection!)) {
       return false;
     }
 
-    final textNode = editor.document.getNode(composer.selection!.extent) as TextNode;
-    final initialTextOffset = (composer.selection!.extent.nodePosition as TextNodePosition).offset;
+    final textNode =
+        editor.document.getNode(composer.selection!.extent) as TextNode;
+    final initialTextOffset =
+        (composer.selection!.extent.nodePosition as TextNodePosition).offset;
 
     editor.executeCommand(
       InsertTextCommand(
         documentPosition: composer.selection!.extent,
         textToInsert: character,
-        attributions: ignoreComposerAttributions ? {} : composer.preferences.currentAttributions,
+        attributions: ignoreComposerAttributions
+            ? {}
+            : composer.preferences.currentAttributions,
       ),
     );
 
@@ -1625,8 +1726,10 @@ class CommonEditorOperations {
     }
 
     // Ensure that the entire selection sits within the same node.
-    final baseNode = editor.document.getNodeById(composer.selection!.base.nodeId)!;
-    final extentNode = editor.document.getNodeById(composer.selection!.extent.nodeId)!;
+    final baseNode =
+        editor.document.getNodeById(composer.selection!.base.nodeId)!;
+    final extentNode =
+        editor.document.getNodeById(composer.selection!.extent.nodeId)!;
     if (baseNode.id != extentNode.id) {
       return false;
     }
@@ -1649,14 +1752,16 @@ class CommonEditorOperations {
       editor.executeCommand(
         SplitListItemCommand(
           nodeId: extentNode.id,
-          splitPosition: composer.selection!.extent.nodePosition as TextNodePosition,
+          splitPosition:
+              composer.selection!.extent.nodePosition as TextNodePosition,
           newNodeId: newNodeId,
         ),
       );
     } else if (extentNode is ParagraphNode) {
       // Split the paragraph into two. This includes headers, blockquotes, and
       // any other block-level paragraph.
-      final currentExtentPosition = composer.selection!.extent.nodePosition as TextNodePosition;
+      final currentExtentPosition =
+          composer.selection!.extent.nodePosition as TextNodePosition;
       final endOfParagraph = extentNode.endPosition;
 
       editor.executeCommand(
@@ -1664,7 +1769,8 @@ class CommonEditorOperations {
           nodeId: extentNode.id,
           splitPosition: currentExtentPosition,
           newNodeId: newNodeId,
-          replicateExistingMetdata: currentExtentPosition.offset != endOfParagraph.offset,
+          replicateExistingMetdata:
+              currentExtentPosition.offset != endOfParagraph.offset,
         ),
       );
     } else {
@@ -1726,7 +1832,8 @@ class CommonEditorOperations {
 
     editor.executeCommand(
       EditorCommandFunction((document, transaction) {
-        final paragraphPosition = composer.selection!.extent.nodePosition as TextNodePosition;
+        final paragraphPosition =
+            composer.selection!.extent.nodePosition as TextNodePosition;
         final endOfParagraph = node.endPosition;
 
         DocumentSelection newSelection;
@@ -1744,7 +1851,8 @@ class CommonEditorOperations {
           );
         } else if (paragraphPosition == endOfParagraph) {
           // Insert HR after the paragraph.
-          final imageNode = ImageNode(id: DocumentEditor.createNodeId(), imageUrl: url);
+          final imageNode =
+              ImageNode(id: DocumentEditor.createNodeId(), imageUrl: url);
 
           transaction.insertNodeAfter(previousNode: node, newNode: imageNode);
 
@@ -1760,7 +1868,8 @@ class CommonEditorOperations {
           final textAfter = node.text.copyText(paragraphPosition.offset);
 
           final imageNode = ImageNode(id: nodeId, imageUrl: url);
-          final newParagraph = ParagraphNode(id: DocumentEditor.createNodeId(), text: textAfter);
+          final newParagraph =
+              ParagraphNode(id: DocumentEditor.createNodeId(), text: textAfter);
 
           // TODO: node operations need to be a part of a transaction, somehow.
           node.text = textBefore;
@@ -1817,7 +1926,8 @@ class CommonEditorOperations {
 
     editor.executeCommand(
       EditorCommandFunction((document, transaction) {
-        final paragraphPosition = composer.selection!.extent.nodePosition as TextNodePosition;
+        final paragraphPosition =
+            composer.selection!.extent.nodePosition as TextNodePosition;
         final endOfParagraph = node.endPosition;
 
         DocumentSelection newSelection;
@@ -1851,7 +1961,8 @@ class CommonEditorOperations {
           final textAfter = node.text.copyText(paragraphPosition.offset);
 
           final hrNode = HorizontalRuleNode(id: DocumentEditor.createNodeId());
-          final newParagraph = ParagraphNode(id: DocumentEditor.createNodeId(), text: textAfter);
+          final newParagraph =
+              ParagraphNode(id: DocumentEditor.createNodeId(), text: textAfter);
 
           // TODO: node operations need to be a part of a transaction, somehow.
           node.text = textBefore;
@@ -1885,8 +1996,10 @@ class CommonEditorOperations {
       return false;
     }
 
-    final baseNode = editor.document.getNodeById(composer.selection!.base.nodeId);
-    final extentNode = editor.document.getNodeById(composer.selection!.extent.nodeId);
+    final baseNode =
+        editor.document.getNodeById(composer.selection!.base.nodeId);
+    final extentNode =
+        editor.document.getNodeById(composer.selection!.extent.nodeId);
     if (baseNode is! ListItemNode || extentNode is! ListItemNode) {
       return false;
     }
@@ -1912,8 +2025,10 @@ class CommonEditorOperations {
       return false;
     }
 
-    final baseNode = editor.document.getNodeById(composer.selection!.base.nodeId);
-    final extentNode = editor.document.getNodeById(composer.selection!.extent.nodeId);
+    final baseNode =
+        editor.document.getNodeById(composer.selection!.base.nodeId);
+    final extentNode =
+        editor.document.getNodeById(composer.selection!.extent.nodeId);
     if (baseNode!.id != extentNode!.id) {
       return false;
     }
@@ -1982,7 +2097,8 @@ class CommonEditorOperations {
       return false;
     }
 
-    final newNode = ParagraphNode(id: nodeId, metadata: {'blockType': blockquoteAttribution}, text: text);
+    final newNode = ParagraphNode(
+        id: nodeId, metadata: {'blockType': blockquoteAttribution}, text: text);
 
     editor.executeCommand(
       EditorCommandFunction((document, transaction) {
@@ -2004,15 +2120,18 @@ class CommonEditorOperations {
       return false;
     }
 
-    final baseNode = editor.document.getNodeById(composer.selection!.base.nodeId)!;
-    final extentNode = editor.document.getNodeById(composer.selection!.extent.nodeId)!;
+    final baseNode =
+        editor.document.getNodeById(composer.selection!.base.nodeId)!;
+    final extentNode =
+        editor.document.getNodeById(composer.selection!.extent.nodeId)!;
     if (baseNode.id != extentNode.id) {
       return false;
     }
     if (extentNode is! TextNode) {
       return false;
     }
-    if (extentNode is ParagraphNode && !extentNode.metadata.containsKey('blockType')) {
+    if (extentNode is ParagraphNode &&
+        !extentNode.metadata.containsKey('blockType')) {
       // This content is already a regular paragraph.
       return false;
     }
@@ -2030,7 +2149,8 @@ class CommonEditorOperations {
             text: extentNode.text,
           );
 
-          transaction.replaceNode(oldNode: extentNode, newNode: newParagraphNode);
+          transaction.replaceNode(
+              oldNode: extentNode, newNode: newParagraphNode);
         }
       }),
     );
