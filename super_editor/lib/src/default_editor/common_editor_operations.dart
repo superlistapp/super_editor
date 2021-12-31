@@ -605,6 +605,47 @@ class CommonEditorOperations {
     return true;
   }
 
+  void _moveCaretToEndOfComponent(String nodeId, DocumentComponent component) {
+    final endOfComponent = component.getEndPosition();
+    final newPosition = DocumentPosition(
+      nodeId: nodeId,
+      nodePosition: endOfComponent,
+    );
+
+    composer.selection = DocumentSelection.collapsed(position: newPosition);
+  }
+
+  bool _selectNodeIfPossible(DocumentNode node) {
+    final component = documentLayoutResolver().getComponentByNodeId(node.id);
+
+    if (component != null && component.isVisualSelectionSupported() == true) {
+      _moveCaretToEndOfComponent(node.id, component);
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  /// Moves the caret to the last position of the last selectable [DocumentNode]
+  bool moveCaretToEnd() {
+    final lastNode = editor.document.nodes.last;
+    final isSelected = _selectNodeIfPossible(lastNode);
+
+    if (isSelected) {
+      return true;
+    } else {
+      final selectableNodeBefore = _getUpstreamSelectableNodeBefore(lastNode);
+      // There are no selectable nodes in the document if this is true
+      if (selectableNodeBefore == null) {
+        return false;
+      }
+
+      final previousIsSelected = _selectNodeIfPossible(selectableNodeBefore);
+
+      return previousIsSelected;
+    }
+  }
+
   /// Returns the first [DocumentNode] before [startingNode] whose
   /// [DocumentComponent] is visually selectable.
   DocumentNode? _getUpstreamSelectableNodeBefore(DocumentNode startingNode) {

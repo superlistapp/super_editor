@@ -224,11 +224,14 @@ class _SuperEditorState extends State<SuperEditor> {
   late GlobalKey _docLayoutKey;
 
   late FocusNode _focusNode;
+
   late DocumentComposer _composer;
 
   DocumentPosition? _previousSelectionExtent;
 
   late EditContext _editContext;
+
+  bool _hasFocus = false;
 
   @override
   void initState() {
@@ -237,7 +240,7 @@ class _SuperEditorState extends State<SuperEditor> {
     _composer = widget.composer ?? DocumentComposer();
     _composer.addListener(_updateComposerPreferencesAtSelection);
 
-    _focusNode = widget.focusNode ?? FocusNode();
+    _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
 
     _docLayoutKey = widget.documentLayoutKey ?? GlobalKey();
 
@@ -277,10 +280,21 @@ class _SuperEditorState extends State<SuperEditor> {
 
     if (widget.focusNode == null) {
       // We are using our own private FocusNode. Dispose it.
+      _focusNode.removeListener(_onFocusChange);
       _focusNode.dispose();
     }
 
     super.dispose();
+  }
+
+  void _onFocusChange() {
+    // If our FocusNode just received focus, automatically set our
+    // selection to the end of the document.
+
+    if (_focusNode.hasFocus && !_hasFocus) {
+      _editContext.commonOps.moveCaretToEnd();
+    }
+    _hasFocus = _focusNode.hasFocus;
   }
 
   void _createEditContext() {
