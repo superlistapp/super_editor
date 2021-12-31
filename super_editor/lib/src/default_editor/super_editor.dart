@@ -292,7 +292,9 @@ class _SuperEditorState extends State<SuperEditor> {
     // selection to the end of the document.
 
     if (_focusNode.hasFocus && !_hasFocus) {
-      _editContext.commonOps.moveCaretToEnd();
+      if (_editContext.composer.selection == null) {
+        _editContext.commonOps.moveCaretToEnd();
+      }
     }
     _hasFocus = _focusNode.hasFocus;
   }
