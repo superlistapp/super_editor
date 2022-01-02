@@ -1,7 +1,4 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/default_editor/super_editor.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
@@ -225,11 +222,21 @@ class _SuperIOSTextFieldState extends State<SuperIOSTextField> with SingleTicker
   void dispose() {
     _removeEditingOverlayControls();
 
+    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      // Dispose after the current frame so that other widgets have
+      // time to remove their listeners.
+      _editingOverlayController.dispose();
+    });
+
     _textEditingController
       ..removeListener(_onTextOrSelectionChange)
       ..onIOSFloatingCursorChange = null;
     if (widget.textController == null) {
-      _textEditingController.dispose();
+      WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+        // Dispose after the current frame so that other widgets have
+        // time to remove their listeners.
+        _textEditingController.dispose();
+      });
     }
 
     _focusNode.removeListener(_onFocusChange);

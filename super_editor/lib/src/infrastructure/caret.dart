@@ -273,6 +273,20 @@ class CaretBlinkController with ChangeNotifier {
 
   final Duration _flashPeriod;
   Timer? _timer;
+
+  bool _isBlinkingEnabled = true;
+  set isBlinkingEnabled(bool newValue) {
+    if (newValue == _isBlinkingEnabled) {
+      return;
+    }
+
+    _isBlinkingEnabled = newValue;
+    if (!_isBlinkingEnabled) {
+      _timer?.cancel();
+    }
+    notifyListeners();
+  }
+
   bool _isVisible = true;
   double get opacity => _isVisible ? 1.0 : 0.0;
 
@@ -292,7 +306,9 @@ class CaretBlinkController with ChangeNotifier {
     _isVisible = true;
 
     _timer?.cancel();
-    _timer = Timer(_flashPeriod, _onToggleTimer);
+    if (_isBlinkingEnabled) {
+      _timer = Timer(_flashPeriod, _onToggleTimer);
+    }
   }
 
   /// Clients should call this method when the caret is removed from
@@ -305,6 +321,8 @@ class CaretBlinkController with ChangeNotifier {
     _isVisible = !_isVisible;
     notifyListeners();
 
-    _timer = Timer(_flashPeriod, _onToggleTimer);
+    if (_isBlinkingEnabled) {
+      _timer = Timer(_flashPeriod, _onToggleTimer);
+    }
   }
 }
