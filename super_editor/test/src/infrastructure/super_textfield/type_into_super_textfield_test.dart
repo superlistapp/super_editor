@@ -17,13 +17,10 @@ void main() {
           "hello world",
         );
 
-        final superTextField = tester.state<SuperTextFieldState>(find.byType(SuperTextField));
-        print("Text: ${superTextField.controller.text.text}");
-
         expect(find.text("hello world", findRichText: true), findsOneWidget);
       });
 
-      testWidgets("in Android field", (tester) async {
+      testWidgets("doesn't support Android", (tester) async {
         await _pumpAndroidScaffold(tester);
 
         await tester.tap(find.byType(SuperAndroidTextfield));
@@ -37,7 +34,7 @@ void main() {
         }, throwsException);
       });
 
-      testWidgets("in iOS field", (tester) async {
+      testWidgets("doesn't support iOS", (tester) async {
         await _pumpIOSScaffold(tester);
 
         await tester.tap(find.byType(SuperIOSTextField));
@@ -59,17 +56,15 @@ void main() {
           ),
         );
 
-        await tester.tap(find.byType(SuperTextField));
+        final textFieldFinder = find.byType(SuperTextField);
+
+        await tester.tapAtSuperTextPosition(textFieldFinder, 6);
         await tester.pumpAndSettle();
 
         await tester.enterSuperTextPlain(
-          find.byType(SuperTextField),
-          // TODO: we can only send lowercase text until Flutter bug #96021 is resolved
+          textFieldFinder,
           "new ",
         );
-
-        final superTextField = tester.state<SuperTextFieldState>(find.byType(SuperTextField));
-        print("Text: ${superTextField.controller.text.text}");
 
         expect(find.text("hello new world", findRichText: true), findsOneWidget);
       });

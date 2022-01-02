@@ -159,6 +159,8 @@ class SuperTextFieldState extends State<SuperTextField> {
     super.dispose();
   }
 
+  TextLayout get textLayout => _selectableTextKey.currentState as TextLayout;
+
   FocusNode get focusNode => _focusNode;
 
   void requestFocus() {
@@ -170,7 +172,7 @@ class SuperTextFieldState extends State<SuperTextField> {
     // controller's text position to the end of the available content.
     //
     // This behavior matches Flutter's standard behavior.
-    if (_focusNode.hasFocus && !_hasFocus) {
+    if (_focusNode.hasFocus && !_hasFocus && _controller.selection.extentOffset == -1) {
       _controller.selection = TextSelection.collapsed(offset: _controller.text.text.length);
     }
     _hasFocus = _focusNode.hasFocus;
@@ -409,11 +411,12 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
   SuperTextFieldScrollviewState get _textScroll => widget.textScrollKey.currentState!;
 
   void _onTapDown(TapDownDetails details) {
-    _log.finer('_onTapDown: EditableDocument: onTapDown()');
+    _log.fine('Tap down on SuperTextField');
     _selectionType = _SelectionType.position;
 
     final textOffset = _getTextOffset(details.localPosition);
     final tapTextPosition = _getPositionNearestToTextOffset(textOffset);
+    _log.finer("Tap text position: $tapTextPosition");
 
     final expandSelection = RawKeyboard.instance.keysPressed.contains(LogicalKeyboardKey.shiftLeft) ||
         RawKeyboard.instance.keysPressed.contains(LogicalKeyboardKey.shiftRight) ||
@@ -426,6 +429,8 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
               extentOffset: tapTextPosition.offset,
             )
           : TextSelection.collapsed(offset: tapTextPosition.offset);
+
+      _log.finer("New text field selection: ${widget.textController.selection}");
     });
 
     widget.focusNode.requestFocus();

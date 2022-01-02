@@ -1,20 +1,48 @@
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/android/android_textfield.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/ios/ios_textfield.dart';
 import 'super_textfield.dart';
 
 extension SuperTextFieldTesting on WidgetTester {
-  Future<void> enterSuperTextPlain(Finder finder, String plainText) async {
-    final matches = finder.evaluate().toList();
-    if (matches.isEmpty) {
-      throw Exception("Couldn't find a SuperTextField with the given Finder: $finder");
-    }
-    if (matches.length > 1) {
-      throw Exception("Found multiple SuperTextField candidates with the given Finder: $finder");
+  Future<void> tapAtSuperTextPosition(Finder finder, int offset) async {
+    final match = _findSuperTextField(finder);
+
+    if (match.widget is SuperTextField) {
+      final didTap = await _tapAtTextPositionOnDesktop(state<SuperTextFieldState>(finder), offset);
+      if (!didTap) {
+        throw Exception("The desired text offset wasn't tappable in SuperTextField: $offset");
+      }
+      return;
     }
 
-    final match = matches.first;
+    if (match.widget is SuperAndroidTextfield) {
+      throw Exception("Entering text on an Android SuperTextField is not yet supported");
+    }
+
+    if (match.widget is SuperIOSTextField) {
+      throw Exception("Entering text on an iOS SuperTextField is not yet supported");
+    }
+
+    throw Exception("Couldn't find a SuperTextField with the given Finder: $finder");
+  }
+
+  Future<bool> _tapAtTextPositionOnDesktop(SuperTextFieldState textField, int offset) async {
+    final textPositionOffset = textField.textLayout.getOffsetForCaret(TextPosition(offset: offset));
+    final textFieldBox = textField.context.findRenderObject() as RenderBox;
+
+    if (!textFieldBox.size.contains(textPositionOffset)) {
+      return false;
+    }
+
+    final globalTapOffset = textPositionOffset + textFieldBox.localToGlobal(Offset.zero);
+    await tapAt(globalTapOffset);
+    return true;
+  }
+
+  Future<void> enterSuperTextPlain(Finder finder, String plainText) async {
+    final match = _findSuperTextField(finder);
 
     if (match.widget is SuperTextField) {
       await _enterTextOnDesktop(plainText);
@@ -22,12 +50,10 @@ extension SuperTextFieldTesting on WidgetTester {
     }
 
     if (match.widget is SuperAndroidTextfield) {
-      print("Found an Android text field, but we don't support it");
       throw Exception("Entering text on an Android SuperTextField is not yet supported");
     }
 
     if (match.widget is SuperIOSTextField) {
-      print("Found an iOS text field, but we don't support it");
       throw Exception("Entering text on an iOS SuperTextField is not yet supported");
     }
 
@@ -51,6 +77,18 @@ extension SuperTextFieldTesting on WidgetTester {
 
       await pump();
     }
+  }
+
+  Element _findSuperTextField(Finder finder) {
+    final matches = finder.evaluate().toList();
+    if (matches.isEmpty) {
+      throw Exception("Couldn't find a SuperTextField with the given Finder: $finder");
+    }
+    if (matches.length > 1) {
+      throw Exception("Found multiple SuperTextField candidates with the given Finder: $finder");
+    }
+
+    return matches.first;
   }
 
   _KeyboardCombo _keyCodeFromCharacter(String character) {
