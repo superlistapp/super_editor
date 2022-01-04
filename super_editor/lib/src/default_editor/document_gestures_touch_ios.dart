@@ -129,6 +129,8 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
       magnifierFocalPointLink: _magnifierFocalPointLink,
     );
 
+    widget.document.addListener(_onDocumentChange);
+
     widget.composer.addListener(_onSelectionChange);
 
     WidgetsBinding.instance!.addObserver(this);
@@ -167,6 +169,11 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
       widget.focusNode.addListener(_onFocusChange);
     }
 
+    if (widget.document != oldWidget.document) {
+      oldWidget.document.removeListener(_onDocumentChange);
+      widget.document.addListener(_onDocumentChange);
+    }
+
     if (widget.composer != oldWidget.composer) {
       oldWidget.composer.removeListener(_onSelectionChange);
       widget.composer.addListener(_onSelectionChange);
@@ -195,6 +202,8 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   @override
   void dispose() {
     WidgetsBinding.instance!.removeObserver(this);
+
+    widget.document.removeListener(_onDocumentChange);
 
     widget.composer.removeListener(_onSelectionChange);
 
@@ -233,6 +242,16 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     } else {
       _removeEditingOverlayControls();
     }
+  }
+
+  void _onDocumentChange() {
+    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      // The user may have changed the type of node, e.g., paragraph to
+      // blockquote, which impacts the caret size and position. Reposition
+      // the caret on the next frame.
+      // TODO: find a way to only do this when something relevant changes
+      _positionCaret();
+    });
   }
 
   void _onSelectionChange() {

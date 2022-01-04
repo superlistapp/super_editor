@@ -393,6 +393,7 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
 
   @override
   Widget build(BuildContext context) {
+    editorLayoutLog.fine("Building document layout");
     final docComponents = _buildDocComponents();
 
     return Padding(
@@ -415,7 +416,7 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
     final newComponentKeys = <String, GlobalKey>{};
     _topToBottomComponentKeys.clear();
 
-    editorLayoutLog.info('_buildDocComponents()');
+    editorLayoutLog.finer('_buildDocComponents()');
 
     final selectedNodes = widget.documentSelection != null
         ? widget.document.getNodesInside(
@@ -432,7 +433,7 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
         newComponentKeyMap: newComponentKeys,
         nodeId: docNode.id,
       );
-      editorLayoutLog.info('Node -> Key: ${docNode.id} -> $componentKey');
+      editorLayoutLog.finer('Node -> Key: ${docNode.id} -> $componentKey');
 
       _topToBottomComponentKeys.add(componentKey);
 
@@ -463,9 +464,9 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
       ..clear()
       ..addAll(newComponentKeys);
 
-    editorLayoutLog.info(' - keys -> IDs after building all components:');
+    editorLayoutLog.finer(' - keys -> IDs after building all components:');
     _nodeIdsToComponentKeys.forEach((key, value) {
-      editorLayoutLog.info('   - $key: $value');
+      editorLayoutLog.finer('   - $key: $value');
     });
 
     return docComponents;
@@ -497,9 +498,9 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
     }
     final documentSelection = widget.documentSelection!;
 
-    editorLayoutLog.info('_computeNodeSelection(): $nodeId');
-    editorLayoutLog.info(' - base: ${documentSelection.base.nodeId}');
-    editorLayoutLog.info(' - extent: ${documentSelection.extent.nodeId}');
+    editorLayoutLog.finer('_computeNodeSelection(): $nodeId');
+    editorLayoutLog.finer(' - base: ${documentSelection.base.nodeId}');
+    editorLayoutLog.finer(' - extent: ${documentSelection.extent.nodeId}');
 
     final node = widget.document.getNodeById(nodeId);
     if (node == null) {
@@ -507,18 +508,18 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
     }
 
     if (documentSelection.base.nodeId == documentSelection.extent.nodeId) {
-      editorLayoutLog.info(' - selection is within 1 node.');
+      editorLayoutLog.finer(' - selection is within 1 node.');
       if (documentSelection.base.nodeId != nodeId) {
         // Only 1 node is selected and its not the node we're interested in. Return.
-        editorLayoutLog.info(' - this node is not selected. Returning null.');
+        editorLayoutLog.finer(' - this node is not selected. Returning null.');
         return null;
       }
 
-      editorLayoutLog.info(' - this node has the selection');
+      editorLayoutLog.finer(' - this node has the selection');
       final baseNodePosition = documentSelection.base.nodePosition;
       final extentNodePosition = documentSelection.extent.nodePosition;
       final nodeSelection = node.computeSelection(base: baseNodePosition, extent: extentNodePosition);
-      editorLayoutLog.info(' - node selection: $nodeSelection');
+      editorLayoutLog.finer(' - node selection: $nodeSelection');
 
       return DocumentNodeSelection(
         nodeId: nodeId,
@@ -528,19 +529,19 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
       );
     } else {
       // Log all the selected nodes.
-      editorLayoutLog.info(' - selection contains multiple nodes:');
+      editorLayoutLog.finer(' - selection contains multiple nodes:');
       for (final node in selectedNodes) {
-        editorLayoutLog.info('   - ${node.id}');
+        editorLayoutLog.finer('   - ${node.id}');
       }
 
       if (selectedNodes.firstWhereOrNull((selectedNode) => selectedNode.id == nodeId) == null) {
         // The document selection does not contain the node we're interested in. Return.
-        editorLayoutLog.info(' - this node is not in the selection');
+        editorLayoutLog.finer(' - this node is not in the selection');
         return null;
       }
 
       if (selectedNodes.first.id == nodeId) {
-        editorLayoutLog.info(' - this is the first node in the selection');
+        editorLayoutLog.finer(' - this is the first node in the selection');
         // Multiple nodes are selected and the node that we're interested in
         // is the top node in that selection. Therefore, this node is
         // selected from a position down to its bottom.
@@ -555,7 +556,7 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
           isExtent: !isBase,
         );
       } else if (selectedNodes.last.id == nodeId) {
-        editorLayoutLog.info(' - this is the last node in the selection');
+        editorLayoutLog.finer(' - this is the last node in the selection');
         // Multiple nodes are selected and the node that we're interested in
         // is the bottom node in that selection. Therefore, this node is
         // selected from the beginning down to some position.
@@ -570,7 +571,7 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
           isExtent: !isBase,
         );
       } else {
-        editorLayoutLog.info(' - this node is fully selected within the selection');
+        editorLayoutLog.finer(' - this node is fully selected within the selection');
         // Multiple nodes are selected and this node is neither the top
         // or the bottom node, therefore this entire node is selected.
         return DocumentNodeSelection(

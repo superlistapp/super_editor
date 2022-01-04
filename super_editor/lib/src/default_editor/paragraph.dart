@@ -305,14 +305,14 @@ Widget? paragraphBuilder(ComponentContext componentContext) {
   final highlightWhenEmpty =
       componentContext.nodeSelection == null ? false : componentContext.nodeSelection!.highlightWhenEmpty;
 
-  editorLayoutLog.info(' - ${componentContext.documentNode.id}: ${componentContext.nodeSelection}');
+  editorLayoutLog.finer(' - ${componentContext.documentNode.id}: ${componentContext.nodeSelection}');
   if (showCaret) {
-    editorLayoutLog.info('   - ^ showing caret');
+    editorLayoutLog.finer('   - ^ showing caret');
   }
 
-  editorLayoutLog.info(' - building a paragraph with selection:');
-  editorLayoutLog.info('   - base: ${textSelection?.base}');
-  editorLayoutLog.info('   - extent: ${textSelection?.extent}');
+  editorLayoutLog.finer(' - building a paragraph with selection:');
+  editorLayoutLog.finer('   - base: ${textSelection?.base}');
+  editorLayoutLog.finer('   - extent: ${textSelection?.extent}');
 
   final textDirection = getParagraphDirection((componentContext.documentNode as TextNode).text.text);
 
