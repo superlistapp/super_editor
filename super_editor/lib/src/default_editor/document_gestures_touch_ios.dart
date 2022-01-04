@@ -255,48 +255,52 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   }
 
   void _onSelectionChange() {
-    final newSelection = widget.composer.selection;
+    // The selection change might correspond to new content that's not
+    // laid out yet. Wait until the next frame to update visuals.
+    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      final newSelection = widget.composer.selection;
 
-    if (newSelection == null) {
-      _editingController
-        ..removeCaret()
-        ..collapsedHandleOffset = null
-        ..upstreamHandleOffset = null
-        ..downstreamHandleOffset = null
-        ..collapsedHandleOffset = null;
-    } else if (newSelection.isCollapsed) {
-      _positionCaret();
+      if (newSelection == null) {
+        _editingController
+          ..removeCaret()
+          ..collapsedHandleOffset = null
+          ..upstreamHandleOffset = null
+          ..downstreamHandleOffset = null
+          ..collapsedHandleOffset = null;
+      } else if (newSelection.isCollapsed) {
+        _positionCaret();
 
-      // Calculate the new (x,y) offset for the collapsed handle.
-      final extentRect = _docLayout.getRectForPosition(newSelection.extent);
-      late Offset handleOffset = extentRect!.bottomLeft;
+        // Calculate the new (x,y) offset for the collapsed handle.
+        final extentRect = _docLayout.getRectForPosition(newSelection.extent);
+        late Offset handleOffset = extentRect!.bottomLeft;
 
-      _editingController.collapsedHandleOffset = handleOffset;
-    } else {
-      // The selection is expanded
-      // Calculate the new (x,y) offsets for the upstream and downstream handles.
-      final baseRect = _docLayout.getRectForPosition(newSelection.base)!;
-      final baseHandleOffset = baseRect.bottomLeft;
+        _editingController.collapsedHandleOffset = handleOffset;
+      } else {
+        // The selection is expanded
+        // Calculate the new (x,y) offsets for the upstream and downstream handles.
+        final baseRect = _docLayout.getRectForPosition(newSelection.base)!;
+        final baseHandleOffset = baseRect.bottomLeft;
 
-      final extentRect = _docLayout.getRectForPosition(newSelection.extent)!;
-      final extentHandleOffset = extentRect.bottomRight;
+        final extentRect = _docLayout.getRectForPosition(newSelection.extent)!;
+        final extentHandleOffset = extentRect.bottomRight;
 
-      final affinity = widget.document.getAffinityForSelection(newSelection);
+        final affinity = widget.document.getAffinityForSelection(newSelection);
 
-      final upstreamHandleOffset = affinity == TextAffinity.downstream ? baseHandleOffset : extentHandleOffset;
-      final upstreamHandleHeight = affinity == TextAffinity.downstream ? baseRect.height : extentRect.height;
+        final upstreamHandleOffset = affinity == TextAffinity.downstream ? baseHandleOffset : extentHandleOffset;
+        final upstreamHandleHeight = affinity == TextAffinity.downstream ? baseRect.height : extentRect.height;
 
-      final downstreamHandleOffset = affinity == TextAffinity.downstream ? extentHandleOffset : baseHandleOffset;
-      final downstreamHandleHeight = affinity == TextAffinity.downstream ? extentRect.height : baseRect.height;
+        final downstreamHandleOffset = affinity == TextAffinity.downstream ? extentHandleOffset : baseHandleOffset;
+        final downstreamHandleHeight = affinity == TextAffinity.downstream ? extentRect.height : baseRect.height;
 
-      _editingController
-        ..removeCaret()
-        ..collapsedHandleOffset = null
-        ..upstreamHandleOffset = upstreamHandleOffset
-        ..upstreamCaretHeight = upstreamHandleHeight
-        ..downstreamHandleOffset = downstreamHandleOffset
-        ..downstreamCaretHeight = downstreamHandleHeight;
-    }
+        _editingController
+          ..removeCaret()
+          ..collapsedHandleOffset = null
+          ..upstreamHandleOffset = upstreamHandleOffset
+          ..upstreamCaretHeight = upstreamHandleHeight
+          ..downstreamHandleOffset = downstreamHandleOffset
+          ..downstreamCaretHeight = downstreamHandleHeight;
+      }
+    });
   }
 
   void _onScrollChange() {
