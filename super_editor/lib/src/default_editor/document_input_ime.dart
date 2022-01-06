@@ -201,7 +201,7 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
     for (final delta in textEditingDeltas) {
       editorImeLog.info("Applying delta: $delta");
       if (delta is TextEditingDeltaInsertion) {
-        editorImeLog.fine("Inserting text: ${delta.textInserted}");
+        editorImeLog.fine("Inserting text: ${delta.textInserted}, insertion offset: ${delta.insertionOffset}");
 
         final docSerializer = DocumentImeSerializer(
           widget.editContext.editor.document,
@@ -426,7 +426,7 @@ class DocumentImeSerializer {
       // return a null selection to indicate that there's nothing to select.
       // If the selection is expanded, then remove the arbitrary character from
       // the selection.
-      if ((imeSelection.isCollapsed && imeSelection.extentOffset == 1) ||
+      if ((imeSelection.isCollapsed && imeSelection.extentOffset == 0) ||
           (imeSelection.start == 0 && imeSelection.end == 1)) {
         editorImeLog.fine("Returning null doc selection");
         return null;
