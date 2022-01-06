@@ -126,6 +126,70 @@ class TextNode with ChangeNotifier implements DocumentNode {
   int get hashCode => id.hashCode ^ _text.hashCode ^ _metadata.hashCode;
 }
 
+extension DocumentSelectionWithText on Document {
+  /// Returns `true` if all the text within the given [selection] contains at least
+  /// some characters with each of the given [attributions].
+  ///
+  /// All non-text content is ignored.
+  bool doesSelectedTextContainAttributions(DocumentSelection selection, Set<Attribution> attributions) {
+    final nodes = getNodesInside(selection.base, selection.extent);
+    if (nodes.isEmpty) {
+      return false;
+    }
+
+    // Calculate a DocumentRange so we know which DocumentPosition
+    // belongs to the first node, and which belongs to the last node.
+    final nodeRange = getRangeBetween(selection.base, selection.extent);
+
+    for (final textNode in nodes) {
+      if (textNode is! TextNode) {
+        continue;
+      }
+
+      int startOffset = -1;
+      int endOffset = -1;
+
+      if (textNode == nodes.first && textNode == nodes.last) {
+        // Handle selection within a single node
+        final baseOffset = (selection.base.nodePosition as TextPosition).offset;
+        final extentOffset = (selection.extent.nodePosition as TextPosition).offset;
+        startOffset = baseOffset < extentOffset ? baseOffset : extentOffset;
+        endOffset = baseOffset < extentOffset ? extentOffset : baseOffset;
+
+        // -1 because TextPosition's offset indexes the character after the
+        // selection, not the final character in the selection.
+        endOffset -= 1;
+      } else if (textNode == nodes.first) {
+        // Handle partial node selection in first node.
+        startOffset = (nodeRange.start.nodePosition as TextPosition).offset;
+        endOffset = max(textNode.text.text.length - 1, 0);
+      } else if (textNode == nodes.last) {
+        // Handle partial node selection in last node.
+        startOffset = 0;
+
+        // -1 because TextPosition's offset indexes the character after the
+        // selection, not the final character in the selection.
+        endOffset = (nodeRange.end.nodePosition as TextPosition).offset - 1;
+      } else {
+        // Handle full node selection.
+        startOffset = 0;
+        endOffset = max(textNode.text.text.length - 1, 0);
+      }
+
+      final selectionRange = TextRange(start: startOffset, end: endOffset);
+
+      if (textNode.text.hasAttributionsWithin(
+        attributions: attributions,
+        range: selectionRange,
+      )) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+}
+
 /// A logical selection within a [TextNode].
 ///
 /// The selection begins at [baseOffset] and ends at [extentOffset].
