@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:super_editor/src/core/document.dart';
+import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_spans.dart';
 
 import 'document_selection.dart';
@@ -16,7 +17,7 @@ class DocumentComposer with ChangeNotifier {
   })  : _selection = initialSelection,
         _preferences = ComposerPreferences() {
     _preferences.addListener(() {
-      print("Composer preferences changed");
+      editorLog.fine("Composer preferences changed");
       notifyListeners();
     });
   }
