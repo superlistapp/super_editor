@@ -11,6 +11,7 @@ import 'package:super_editor/src/default_editor/common_editor_operations.dart';
 import 'package:super_editor/src/default_editor/paragraph.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/attributed_spans.dart';
 import 'package:super_editor/src/infrastructure/attributed_text.dart';
 
 import 'attributions.dart';
@@ -645,6 +646,42 @@ class KeyboardEditingToolbar extends StatelessWidget {
   final DocumentComposer composer;
   final CommonEditorOperations commonOps;
 
+  bool get _isBoldActive => _doesSelectionHaveAttributions({boldAttribution});
+  void _toggleBold() => _toggleAttributions({boldAttribution});
+
+  bool get _isItalicsActive => _doesSelectionHaveAttributions({italicsAttribution});
+  void _toggleItalics() => _toggleAttributions({italicsAttribution});
+
+  bool get _isUnderlineActive => _doesSelectionHaveAttributions({underlineAttribution});
+  void _toggleUnderline() => _toggleAttributions({underlineAttribution});
+
+  bool get _isStrikethroughActive => _doesSelectionHaveAttributions({strikethroughAttribution});
+  void _toggleStrikethrough() => _toggleAttributions({strikethroughAttribution});
+
+  bool _doesSelectionHaveAttributions(Set<Attribution> attributions) {
+    final selection = composer.selection;
+    if (selection == null) {
+      return false;
+    }
+
+    if (selection.isCollapsed) {
+      return composer.preferences.currentAttributions.containsAll(attributions);
+    }
+
+    return document.doesSelectedTextContainAttributions(selection, attributions);
+  }
+
+  void _toggleAttributions(Set<Attribution> attributions) {
+    final selection = composer.selection;
+    if (selection == null) {
+      return;
+    }
+
+    selection.isCollapsed
+        ? commonOps.toggleComposerAttributions(attributions)
+        : commonOps.toggleAttributionsOnSelection(attributions);
+  }
+
   void _convertToHeader1() {
     final selectedNode = document.getNodeById(composer.selection!.extent.nodeId)! as TextNode;
 
@@ -721,6 +758,26 @@ class KeyboardEditingToolbar extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    IconButton(
+                      onPressed: selectedNode is TextNode ? _toggleBold : null,
+                      icon: const Icon(Icons.format_bold),
+                      color: _isBoldActive ? Theme.of(context).primaryColor : null,
+                    ),
+                    IconButton(
+                      onPressed: selectedNode is TextNode ? _toggleItalics : null,
+                      icon: const Icon(Icons.format_italic),
+                      color: _isItalicsActive ? Theme.of(context).primaryColor : null,
+                    ),
+                    IconButton(
+                      onPressed: selectedNode is TextNode ? _toggleUnderline : null,
+                      icon: const Icon(Icons.format_underline),
+                      color: _isUnderlineActive ? Theme.of(context).primaryColor : null,
+                    ),
+                    IconButton(
+                      onPressed: selectedNode is TextNode ? _toggleStrikethrough : null,
+                      icon: const Icon(Icons.strikethrough_s),
+                      color: _isStrikethroughActive ? Theme.of(context).primaryColor : null,
+                    ),
                     IconButton(
                       onPressed: selection.isCollapsed &&
                               (selectedNode is TextNode && selectedNode.metadata['blockType'] != header1Attribution)
