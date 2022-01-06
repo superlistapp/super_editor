@@ -1052,38 +1052,33 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
 
   @override
   Widget build(BuildContext context) {
-    return IgnorePointer(
-      // On iOS, we treat the handles like a painting without gestures so
-      // that the document interactor beneath us can handle all taps/drags.
-      ignoring: true,
-      child: SizedBox(
-        width: double.infinity,
-        height: double.infinity,
-        child: AnimatedBuilder(
-            animation: widget.editingController,
-            builder: (context, child) {
-              return Stack(
-                children: [
-                  ..._buildHandles(),
-                  // Build the editing toolbar
-                  if (widget.editingController.shouldDisplayToolbar && widget.editingController.isToolbarPositioned)
-                    _buildToolbar(),
-                  // Build the focal point for the magnifier
-                  if (widget.magnifierFocalPointOffset != null) _buildMagnifierFocalPoint(),
-                  // Build the magnifier
-                  if (widget.editingController.shouldDisplayMagnifier) _buildMagnifier(),
-                  if (widget.showDebugPaint)
-                    IgnorePointer(
-                      child: Container(
-                        width: double.infinity,
-                        height: double.infinity,
-                        color: Colors.yellow.withOpacity(0.2),
-                      ),
+    return SizedBox(
+      width: double.infinity,
+      height: double.infinity,
+      child: AnimatedBuilder(
+          animation: widget.editingController,
+          builder: (context, child) {
+            return Stack(
+              children: [
+                ..._buildHandles(),
+                // Build the editing toolbar
+                if (widget.editingController.shouldDisplayToolbar && widget.editingController.isToolbarPositioned)
+                  _buildToolbar(),
+                // Build the focal point for the magnifier
+                if (widget.magnifierFocalPointOffset != null) _buildMagnifierFocalPoint(),
+                // Build the magnifier
+                if (widget.editingController.shouldDisplayMagnifier) _buildMagnifier(),
+                if (widget.showDebugPaint)
+                  IgnorePointer(
+                    child: Container(
+                      width: double.infinity,
+                      height: double.infinity,
+                      color: Colors.yellow.withOpacity(0.2),
                     ),
-                ],
-              );
-            }),
-      ),
+                  ),
+              ],
+            );
+          }),
     );
   }
 
@@ -1188,10 +1183,12 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
       key: handleKey,
       link: widget.editingController.documentLayoutLink,
       offset: handleOffset + const Offset(-5, 0),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 5),
-        color: widget.showDebugPaint ? Colors.green : Colors.transparent,
-        child: handle,
+      child: IgnorePointer(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 5),
+          color: widget.showDebugPaint ? Colors.green : Colors.transparent,
+          child: handle,
+        ),
       ),
     );
   }
