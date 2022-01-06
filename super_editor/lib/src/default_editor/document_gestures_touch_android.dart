@@ -243,8 +243,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       // The user may have changed the type of node, e.g., paragraph to
       // blockquote, which impacts the caret size and position. Reposition
       // the caret on the next frame.
-      // TODO: find a way to only do this when something relevant changes
-      _positionCaret();
+      _updateHandlesAfterSelectionOrLayoutChange();
     });
   }
 
@@ -252,46 +251,28 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     // The selection change might correspond to new content that's not
     // laid out yet. Wait until the next frame to update visuals.
     WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
-      final newSelection = widget.composer.selection;
-
-      if (newSelection == null) {
-        _editingController
-          ..removeCaret()
-          ..collapsedHandleOffset = null
-          ..upstreamHandleOffset = null
-          ..downstreamHandleOffset = null
-          ..collapsedHandleOffset = null
-          ..cancelCollapsedHandleAutoHideCountdown();
-      } else if (newSelection.isCollapsed) {
-        _positionCaret();
-
-        // Calculate the new (x,y) offset for the collapsed handle.
-        final extentRect = _docLayout.getRectForPosition(newSelection.extent);
-        late Offset handleOffset = extentRect!.bottomLeft;
-
-        _editingController
-          ..collapsedHandleOffset = handleOffset
-          ..unHideCollapsedHandle()
-          ..startCollapsedHandleAutoHideCountdown();
-      } else {
-        // The selection is expanded
-
-        // Calculate the new (x,y) offsets for the upstream and downstream handles.
-        final baseHandleOffset = _docLayout.getRectForPosition(newSelection.base)!.bottomLeft;
-        final extentHandleOffset = _docLayout.getRectForPosition(newSelection.extent)!.bottomRight;
-        final affinity = widget.document.getAffinityBetween(base: newSelection.base, extent: newSelection.extent);
-        late Offset upstreamHandleOffset = affinity == TextAffinity.downstream ? baseHandleOffset : extentHandleOffset;
-        late Offset downstreamHandleOffset =
-            affinity == TextAffinity.downstream ? extentHandleOffset : baseHandleOffset;
-
-        _editingController
-          ..removeCaret()
-          ..collapsedHandleOffset = null
-          ..upstreamHandleOffset = upstreamHandleOffset
-          ..downstreamHandleOffset = downstreamHandleOffset
-          ..cancelCollapsedHandleAutoHideCountdown();
-      }
+      _updateHandlesAfterSelectionOrLayoutChange();
     });
+  }
+
+  void _updateHandlesAfterSelectionOrLayoutChange() {
+    final newSelection = widget.composer.selection;
+
+    if (newSelection == null) {
+      _editingController
+        ..removeCaret()
+        ..collapsedHandleOffset = null
+        ..upstreamHandleOffset = null
+        ..downstreamHandleOffset = null
+        ..collapsedHandleOffset = null
+        ..cancelCollapsedHandleAutoHideCountdown();
+    } else if (newSelection.isCollapsed) {
+      _positionCaret();
+      _positionCollapsedHandle();
+    } else {
+      // The selection is expanded
+      _positionExpandedHandles();
+    }
   }
 
   void _onScrollChange() {
@@ -607,6 +588,53 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       extent: extentPosition,
     );
     editorGesturesLog.fine("Selected region: ${widget.composer.selection}");
+  }
+
+  void _positionCollapsedHandle() {
+    final selection = widget.composer.selection;
+    if (selection == null) {
+      editorGesturesLog.shout("Tried to update collapsed handle offset but there is no document selection");
+      return;
+    }
+    if (!selection.isCollapsed) {
+      editorGesturesLog.shout("Tried to update collapsed handle offset but the selection is expanded");
+      return;
+    }
+
+    // Calculate the new (x,y) offset for the collapsed handle.
+    final extentRect = _docLayout.getRectForPosition(selection.extent);
+    late Offset handleOffset = extentRect!.bottomLeft;
+
+    _editingController
+      ..collapsedHandleOffset = handleOffset
+      ..unHideCollapsedHandle()
+      ..startCollapsedHandleAutoHideCountdown();
+  }
+
+  void _positionExpandedHandles() {
+    final selection = widget.composer.selection;
+    if (selection == null) {
+      editorGesturesLog.shout("Tried to update expanded handle offsets but there is no document selection");
+      return;
+    }
+    if (selection.isCollapsed) {
+      editorGesturesLog.shout("Tried to update expanded handle offsets but the selection is collapsed");
+      return;
+    }
+
+    // Calculate the new (x,y) offsets for the upstream and downstream handles.
+    final baseHandleOffset = _docLayout.getRectForPosition(selection.base)!.bottomLeft;
+    final extentHandleOffset = _docLayout.getRectForPosition(selection.extent)!.bottomRight;
+    final affinity = widget.document.getAffinityBetween(base: selection.base, extent: selection.extent);
+    late Offset upstreamHandleOffset = affinity == TextAffinity.downstream ? baseHandleOffset : extentHandleOffset;
+    late Offset downstreamHandleOffset = affinity == TextAffinity.downstream ? extentHandleOffset : baseHandleOffset;
+
+    _editingController
+      ..removeCaret()
+      ..collapsedHandleOffset = null
+      ..upstreamHandleOffset = upstreamHandleOffset
+      ..downstreamHandleOffset = downstreamHandleOffset
+      ..cancelCollapsedHandleAutoHideCountdown();
   }
 
   void _positionCaret() {

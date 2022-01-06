@@ -250,7 +250,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
       // blockquote, which impacts the caret size and position. Reposition
       // the caret on the next frame.
       // TODO: find a way to only do this when something relevant changes
-      _positionCaret();
+      _updateHandlesAfterSelectionOrLayoutChange();
     });
   }
 
@@ -258,49 +258,27 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     // The selection change might correspond to new content that's not
     // laid out yet. Wait until the next frame to update visuals.
     WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
-      final newSelection = widget.composer.selection;
-
-      if (newSelection == null) {
-        _editingController
-          ..removeCaret()
-          ..collapsedHandleOffset = null
-          ..upstreamHandleOffset = null
-          ..downstreamHandleOffset = null
-          ..collapsedHandleOffset = null;
-      } else if (newSelection.isCollapsed) {
-        _positionCaret();
-
-        // Calculate the new (x,y) offset for the collapsed handle.
-        final extentRect = _docLayout.getRectForPosition(newSelection.extent);
-        late Offset handleOffset = extentRect!.bottomLeft;
-
-        _editingController.collapsedHandleOffset = handleOffset;
-      } else {
-        // The selection is expanded
-        // Calculate the new (x,y) offsets for the upstream and downstream handles.
-        final baseRect = _docLayout.getRectForPosition(newSelection.base)!;
-        final baseHandleOffset = baseRect.bottomLeft;
-
-        final extentRect = _docLayout.getRectForPosition(newSelection.extent)!;
-        final extentHandleOffset = extentRect.bottomRight;
-
-        final affinity = widget.document.getAffinityForSelection(newSelection);
-
-        final upstreamHandleOffset = affinity == TextAffinity.downstream ? baseHandleOffset : extentHandleOffset;
-        final upstreamHandleHeight = affinity == TextAffinity.downstream ? baseRect.height : extentRect.height;
-
-        final downstreamHandleOffset = affinity == TextAffinity.downstream ? extentHandleOffset : baseHandleOffset;
-        final downstreamHandleHeight = affinity == TextAffinity.downstream ? extentRect.height : baseRect.height;
-
-        _editingController
-          ..removeCaret()
-          ..collapsedHandleOffset = null
-          ..upstreamHandleOffset = upstreamHandleOffset
-          ..upstreamCaretHeight = upstreamHandleHeight
-          ..downstreamHandleOffset = downstreamHandleOffset
-          ..downstreamCaretHeight = downstreamHandleHeight;
-      }
+      _updateHandlesAfterSelectionOrLayoutChange();
     });
+  }
+
+  void _updateHandlesAfterSelectionOrLayoutChange() {
+    final newSelection = widget.composer.selection;
+
+    if (newSelection == null) {
+      _editingController
+        ..removeCaret()
+        ..collapsedHandleOffset = null
+        ..upstreamHandleOffset = null
+        ..downstreamHandleOffset = null
+        ..collapsedHandleOffset = null;
+    } else if (newSelection.isCollapsed) {
+      _positionCaret();
+      _positionCollapsedHandle();
+    } else {
+      // The selection is expanded
+      _positionExpandedSelectionHandles();
+    }
   }
 
   void _onScrollChange() {
@@ -733,6 +711,59 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
       top: extentRect.topLeft,
       height: extentRect.height,
     );
+  }
+
+  void _positionCollapsedHandle() {
+    final selection = widget.composer.selection;
+    if (selection == null) {
+      editorGesturesLog.shout("Tried to update collapsed handle offset but there is no document selection");
+      return;
+    }
+    if (!selection.isCollapsed) {
+      editorGesturesLog.shout("Tried to update collapsed handle offset but the selection is expanded");
+      return;
+    }
+
+    // Calculate the new (x,y) offset for the collapsed handle.
+    final extentRect = _docLayout.getRectForPosition(selection.extent);
+    late Offset handleOffset = extentRect!.bottomLeft;
+
+    _editingController.collapsedHandleOffset = handleOffset;
+  }
+
+  void _positionExpandedSelectionHandles() {
+    final selection = widget.composer.selection;
+    if (selection == null) {
+      editorGesturesLog.shout("Tried to update expanded handle offsets but there is no document selection");
+      return;
+    }
+    if (selection.isCollapsed) {
+      editorGesturesLog.shout("Tried to update expanded handle offsets but the selection is collapsed");
+      return;
+    }
+
+    // Calculate the new (x,y) offsets for the upstream and downstream handles.
+    final baseRect = _docLayout.getRectForPosition(selection.base)!;
+    final baseHandleOffset = baseRect.bottomLeft;
+
+    final extentRect = _docLayout.getRectForPosition(selection.extent)!;
+    final extentHandleOffset = extentRect.bottomRight;
+
+    final affinity = widget.document.getAffinityForSelection(selection);
+
+    final upstreamHandleOffset = affinity == TextAffinity.downstream ? baseHandleOffset : extentHandleOffset;
+    final upstreamHandleHeight = affinity == TextAffinity.downstream ? baseRect.height : extentRect.height;
+
+    final downstreamHandleOffset = affinity == TextAffinity.downstream ? extentHandleOffset : baseHandleOffset;
+    final downstreamHandleHeight = affinity == TextAffinity.downstream ? extentRect.height : baseRect.height;
+
+    _editingController
+      ..removeCaret()
+      ..collapsedHandleOffset = null
+      ..upstreamHandleOffset = upstreamHandleOffset
+      ..upstreamCaretHeight = upstreamHandleHeight
+      ..downstreamHandleOffset = downstreamHandleOffset
+      ..downstreamCaretHeight = downstreamHandleHeight;
   }
 
   void _positionToolbar() {
