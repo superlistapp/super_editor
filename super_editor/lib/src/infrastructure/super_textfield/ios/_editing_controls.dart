@@ -120,7 +120,7 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
 
   @override
   void dispose() {
-    widget.editingController.textController.addListener(_rebuildOnNextFrame);
+    widget.editingController.textController.removeListener(_rebuildOnNextFrame);
 
     WidgetsBinding.instance!.removeObserver(this);
 

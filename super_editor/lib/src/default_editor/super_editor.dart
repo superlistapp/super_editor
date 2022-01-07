@@ -469,7 +469,6 @@ const defaultSelectionStyle = SelectionStyle(
 
 /// Creates [TextStyles] for the standard [SuperEditor].
 TextStyle defaultStyleBuilder(Set<Attribution> attributions) {
-  print('Building styles for attributions: $attributions');
   TextStyle newStyle = const TextStyle(
     color: Colors.black,
     fontSize: 13,
