@@ -35,9 +35,7 @@ class SuperAndroidTextfield extends StatefulWidget {
     this.popoverToolbarBuilder = _defaultAndroidToolbarBuilder,
     this.showDebugPaint = false,
     this.onPerformActionPressed,
-  })  : assert(minLines == null || minLines == 1 || lineHeight != null, 'minLines > 1 requires a non-null lineHeight'),
-        assert(maxLines == null || maxLines == 1 || lineHeight != null, 'maxLines > 1 requires a non-null lineHeight'),
-        super(key: key);
+  }) : super(key: key);
 
   /// [FocusNode] attached to this text field.
   final FocusNode? focusNode;
