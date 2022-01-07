@@ -164,8 +164,6 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
   TextEditingValue get currentTextEditingValue => _currentTextEditingValue;
   TextEditingValue _currentTextEditingValue = const TextEditingValue();
   set currentTextEditingValue(TextEditingValue newValue) {
-    print("New text editing value: $newValue");
-    print("Existing text editing value: $_currentTextEditingValue");
     if (newValue != _currentTextEditingValue) {
       _currentTextEditingValue = newValue;
       editorImeLog.info("Sending new text editing value to OS: $_currentTextEditingValue");
@@ -176,7 +174,7 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
   void _syncImeWithDocumentAndComposer() {
     final selection = widget.editContext.composer.selection;
     if (selection != null) {
-      print("Syncing IME with Doc and Composer");
+      editorImeLog.fine("Syncing IME with Doc and Composer");
       currentTextEditingValue = DocumentImeSerializer(
         widget.editContext.editor.document,
         selection,
@@ -269,15 +267,17 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
             // to run a delete action upstream, which will take the desired
             // "backspace" behavior at the start of this node.
             widget.editContext.commonOps.deleteUpstream();
-            print("Deleted upstream. New selection: ${widget.editContext.composer.selection}");
+            editorImeLog.fine("Deleted upstream. New selection: ${widget.editContext.composer.selection}");
             _syncImeWithDocumentAndComposer();
             return;
           }
         }
 
+        editorImeLog.fine("Running selection deletion operation");
         widget.editContext.composer.selection = docSelectionToDelete;
         widget.editContext.commonOps.deleteSelection();
         _syncImeWithDocumentAndComposer();
+        editorImeLog.fine("Deletion operation complete");
       } else if (delta is TextEditingDeltaNonTextUpdate) {
         editorImeLog.fine("Non-text change:");
         editorImeLog.fine("App-side selection - ${currentTextEditingValue.selection}");
@@ -458,6 +458,8 @@ class DocumentImeSerializer {
       }
     }
 
+    editorImeLog.shout(
+        "Couldn't map an IME position to a document position. IME position: $imePosition. The selected offset range is: ${_imeRangesToDocTextNodes.keys.last.start} -> ${_imeRangesToDocTextNodes.keys.last.end}");
     throw Exception("Couldn't map an IME position to a document position. IME position: $imePosition");
   }
 
@@ -475,7 +477,6 @@ class DocumentImeSerializer {
     }
 
     final imeRange = _docTextNodesToImeRanges[docPosition.nodeId];
-    print("Doc node ${docPosition.nodeId} has IME range: $imeRange");
     if (imeRange == null) {
       throw Exception("No such document position in the IME content: $docPosition");
     }
