@@ -56,6 +56,7 @@ class SuperTextField extends StatefulWidget {
     this.hintBehavior = HintBehavior.displayHintUntilFocus,
     this.onRightClick,
     this.keyboardHandlers = defaultTextFieldKeyboardHandlers,
+    this.cursor = SystemMouseCursors.basic,
   }) : super(key: key);
 
   final FocusNode? focusNode;
@@ -78,6 +79,9 @@ class SuperTextField extends StatefulWidget {
 
   final int? minLines;
   final int? maxLines;
+
+  /// Default cursor to be shown while the text is not focused or created
+  final MouseCursor cursor;
 
   final DecorationBuilder? decorationBuilder;
 
@@ -271,6 +275,7 @@ class SuperTextFieldState extends State<SuperTextField> {
         textScrollKey: _textScrollKey,
         isMultiline: isMultiline,
         onRightClick: widget.onRightClick,
+        cursor: widget.cursor,
         child: MultiListenableBuilder(
           listenables: {
             _focusNode,
@@ -363,6 +368,7 @@ class SuperTextFieldGestureInteractor extends StatefulWidget {
     required this.isMultiline,
     this.onRightClick,
     required this.child,
+    required this.cursor,
   }) : super(key: key);
 
   /// [FocusNode] for this text field.
@@ -389,12 +395,15 @@ class SuperTextFieldGestureInteractor extends StatefulWidget {
   /// The rest of the subtree for this text field.
   final Widget child;
 
+  /// Cursor to be shown while the text is not created or not focused.
+  final MouseCursor cursor;
+
   @override
   _SuperTextFieldGestureInteractorState createState() => _SuperTextFieldGestureInteractorState();
 }
 
 class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureInteractor> {
-  final _cursorStyle = ValueNotifier<MouseCursor>(SystemMouseCursors.basic);
+  late final ValueNotifier<MouseCursor> _cursorStyle;
 
   _SelectionType _selectionType = _SelectionType.position;
   Offset? _dragStartInViewport;
@@ -693,7 +702,7 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
     if (_isTextAtOffset(cursorOffset)) {
       _cursorStyle.value = SystemMouseCursors.text;
     } else {
-      _cursorStyle.value = SystemMouseCursors.basic;
+      _cursorStyle.value = widget.cursor;
     }
   }
 
@@ -721,6 +730,12 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
     final textFieldBox = context.findRenderObject() as RenderBox;
     final textBox = widget.textKey.currentContext!.findRenderObject() as RenderBox;
     return textBox.globalToLocal(textFieldOffset, ancestor: textFieldBox);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _cursorStyle = ValueNotifier<MouseCursor>(widget.cursor);
   }
 
   @override
