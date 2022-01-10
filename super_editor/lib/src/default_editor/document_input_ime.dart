@@ -723,17 +723,39 @@ class KeyboardEditingToolbar extends StatelessWidget {
   }
 
   void _convertToHeader1() {
-    final selectedNode = document.getNodeById(composer.selection!.extent.nodeId)! as TextNode;
+    final selectedNode = document.getNodeById(composer.selection!.extent.nodeId);
+    if (selectedNode is! TextNode) {
+      return;
+    }
 
-    selectedNode.metadata['blockType'] = header1Attribution;
-    selectedNode.notifyListeners();
+    if (selectedNode is ListItemNode) {
+      commonOps.convertToParagraph(
+        newMetadata: {
+          'blockType': header1Attribution,
+        },
+      );
+    } else {
+      selectedNode.metadata['blockType'] = header1Attribution;
+      selectedNode.notifyListeners();
+    }
   }
 
   void _convertToHeader2() {
-    final selectedNode = document.getNodeById(composer.selection!.extent.nodeId)! as TextNode;
+    final selectedNode = document.getNodeById(composer.selection!.extent.nodeId);
+    if (selectedNode is! TextNode) {
+      return;
+    }
 
-    selectedNode.metadata['blockType'] = header2Attribution;
-    selectedNode.notifyListeners();
+    if (selectedNode is ListItemNode) {
+      commonOps.convertToParagraph(
+        newMetadata: {
+          'blockType': header2Attribution,
+        },
+      );
+    } else {
+      selectedNode.metadata['blockType'] = header2Attribution;
+      selectedNode.notifyListeners();
+    }
   }
 
   void _convertToParagraph() {
