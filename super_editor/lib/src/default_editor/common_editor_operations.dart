@@ -2116,7 +2116,7 @@ class CommonEditorOperations {
   /// Returns [true] if the selected node was converted to a [ParagraphNode],
   /// or [false] if it wasn't.
   bool convertToParagraph({
-    Map<String, Attribution> newMetadata = const {},
+    Map<String, Attribution>? newMetadata,
   }) {
     if (composer.selection == null) {
       return false;
