@@ -159,6 +159,9 @@ class BinaryNodePosition implements NodePosition {
   final bool isIncluded;
 
   @override
+  String toString() => "[BinaryNodePosition] - is included: $isIncluded";
+
+  @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is BinaryNodePosition && runtimeType == other.runtimeType && isIncluded == other.isIncluded;

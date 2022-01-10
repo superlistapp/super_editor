@@ -152,6 +152,9 @@ class DeleteSelectionCommand implements EditorCommand {
         document: document,
         node: node,
         transaction: transaction,
+        // This is the first node in a selection. We can't delete it because
+        // the composer's selection depends on a stable ID for the first node.
+        replaceWithParagraph: true,
       );
     } else if (nodePosition is TextPosition && node is TextNode) {
       node.text = node.text.removeRegion(
@@ -174,6 +177,8 @@ class DeleteSelectionCommand implements EditorCommand {
         document: document,
         node: node,
         transaction: transaction,
+        // This is the last node in a selection. We can safely delete the node.
+        replaceWithParagraph: false,
       );
     } else if (nodePosition is TextPosition && node is TextNode) {
       node.text = node.text.removeRegion(
@@ -189,20 +194,26 @@ class DeleteSelectionCommand implements EditorCommand {
     required Document document,
     required DocumentNode node,
     required DocumentEditorTransaction transaction,
+    required bool replaceWithParagraph,
   }) {
-    // TODO: for now deleting a binary node simply means replacing
-    //       it with an empty ParagraphNode because after doing that,
-    //       the general deletion logic that called this function will
-    //       collapse empty paragraphs together, which gives the
-    //       result we want.
-    //
-    //       We avoid deleting the node because the composer is
-    //       depending on the first node still existing at the end of
-    //       the deletion. This is a fragile relationship between the
-    //       composer and the editor and needs to be addressed.
-    _log.log('_deleteBinaryNode', ' - replacing BinaryNode with a ParagraphNode: ${node.id}');
+    if (replaceWithParagraph) {
+      // TODO: for now deleting a binary node simply means replacing
+      //       it with an empty ParagraphNode because after doing that,
+      //       the general deletion logic that called this function will
+      //       collapse empty paragraphs together, which gives the
+      //       result we want.
+      //
+      //       We avoid deleting the node because the composer is
+      //       depending on the first node still existing at the end of
+      //       the deletion. This is a fragile relationship between the
+      //       composer and the editor and needs to be addressed.
+      _log.log('_deleteBinaryNode', ' - replacing BinaryNode with a ParagraphNode: ${node.id}');
 
-    final newNode = ParagraphNode(id: node.id, text: AttributedText());
-    transaction.replaceNode(oldNode: node, newNode: newNode);
+      final newNode = ParagraphNode(id: node.id, text: AttributedText());
+      transaction.replaceNode(oldNode: node, newNode: newNode);
+    } else {
+      _log.log('_deleteBinaryNode', ' - deleting BinaryNode');
+      transaction.deleteNode(node);
+    }
   }
 }

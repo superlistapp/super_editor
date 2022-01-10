@@ -343,7 +343,7 @@ class DocumentImeSerializer {
   final DocumentSelection _selection;
   final _imeRangesToDocTextNodes = <TextRange, String>{};
   final _docTextNodesToImeRanges = <String, TextRange>{};
-  final _textNodes = <TextNode>[];
+  final _selectedNodes = <DocumentNode>[];
   late String _imeText;
   late bool _didPrependPlaceholder;
   String? _prependedCharacter;
@@ -373,27 +373,34 @@ class DocumentImeSerializer {
       _prependedCharacter = null;
     }
 
-    final selectedNodes = _doc.getNodesInContentOrder(_selection);
-    for (int i = 0; i < selectedNodes.length; i += 1) {
-      final node = selectedNodes[i];
-      if (node is! TextNode) {
-        editorImeLog.fine("Skipping node because it's not a text node: $node");
-        continue;
-      }
-
-      editorImeLog.fine("Appending a text node to IME content: $node");
-      _textNodes.add(node);
-
+    _selectedNodes.clear();
+    _selectedNodes.addAll(_doc.getNodesInContentOrder(_selection));
+    for (int i = 0; i < _selectedNodes.length; i += 1) {
       // Append a newline character before appending another node's text.
       //
       // The choice to separate each node with a newline was a judgement call.
       // There is no OS-level expectation for how structured content should
       // collapse down to IME content.
-      if (node != _textNodes.first) {
+      if (i != 0) {
         buffer.write('\n');
         characterCount += 1;
       }
 
+      final node = _selectedNodes[i];
+      if (node is! TextNode) {
+        editorImeLog.fine("Appending a special character to represent a non-text node: $node");
+        buffer.write('~');
+        characterCount += 1;
+
+        final imeRange = TextRange(start: characterCount - 1, end: characterCount);
+        editorImeLog.fine("Node ${node.id} occupies the following IME range: $imeRange");
+        _imeRangesToDocTextNodes[imeRange] = node.id;
+        _docTextNodesToImeRanges[node.id] = imeRange;
+
+        continue;
+      }
+
+      editorImeLog.fine("Appending a text node to IME content: $node");
       // Cache mappings between the IME text range and the document position
       // so that we can easily convert between the two, when requested.
       final imeRange = TextRange(start: characterCount, end: characterCount + node.text.text.length);
@@ -407,6 +414,7 @@ class DocumentImeSerializer {
     }
 
     _imeText = buffer.toString();
+    editorImeLog.fine("IME serialization:\n'$_imeText'");
   }
 
   bool _shouldPrependPlaceholder() {
@@ -448,18 +456,36 @@ class DocumentImeSerializer {
     }
 
     return DocumentSelection(
-      base: _imeToDocumentPosition(imeSelection.base),
-      extent: _imeToDocumentPosition(imeSelection.extent),
+      base: _imeToDocumentPosition(imeSelection.base, isUpstream: true),
+      extent: _imeToDocumentPosition(imeSelection.extent, isUpstream: false),
     );
   }
 
-  DocumentPosition _imeToDocumentPosition(TextPosition imePosition) {
+  DocumentPosition _imeToDocumentPosition(TextPosition imePosition, {required bool isUpstream}) {
     for (final range in _imeRangesToDocTextNodes.keys) {
       if (imePosition.offset >= range.start && imePosition.offset <= range.end) {
-        return DocumentPosition(
-          nodeId: _imeRangesToDocTextNodes[range]!,
-          nodePosition: TextNodePosition(offset: imePosition.offset - range.start),
-        );
+        final node = _doc.getNodeById(_imeRangesToDocTextNodes[range]!)!;
+
+        if (node is TextNode) {
+          return DocumentPosition(
+            nodeId: _imeRangesToDocTextNodes[range]!,
+            nodePosition: TextNodePosition(offset: imePosition.offset - range.start),
+          );
+        } else {
+          if (isUpstream) {
+            // Return a position at the start of the node.
+            return DocumentPosition(
+              nodeId: node.id,
+              nodePosition: node.beginningPosition,
+            );
+          } else {
+            // Return a position at the end of the node.
+            return DocumentPosition(
+              nodeId: node.id,
+              nodePosition: node.endPosition,
+            );
+          }
+        }
       }
     }
 
@@ -469,44 +495,52 @@ class DocumentImeSerializer {
   }
 
   TextSelection documentToImeSelection(DocumentSelection docSelection) {
+    editorImeLog.fine("Converting doc selection to ime selection: $docSelection");
+    final selectionAffinity = _doc.getAffinityForSelection(docSelection);
+
+    final startPosition = selectionAffinity == TextAffinity.downstream ? docSelection.base : docSelection.extent;
+    final startOffset = _documentToImePosition(startPosition, isUpstream: true).offset;
+
+    final endPosition = selectionAffinity == TextAffinity.downstream ? docSelection.extent : docSelection.base;
+    final endOffset = _documentToImePosition(endPosition, isUpstream: false).offset;
+
+    editorImeLog.fine("Start offset: $startOffset");
+    editorImeLog.fine("End offset: $endOffset");
     return TextSelection(
-      baseOffset: _documentToImePosition(docSelection.base).offset,
-      extentOffset: _documentToImePosition(docSelection.extent).offset,
+      baseOffset: startOffset,
+      extentOffset: endOffset,
     );
   }
 
-  TextPosition _documentToImePosition(DocumentPosition docPosition) {
-    if (docPosition.nodePosition is! TextNodePosition) {
-      throw Exception(
-          "Can't map the given docPosition to an IME position because the docPosition.nodePosition is not a TextNodePosition: $docPosition");
-    }
-
+  TextPosition _documentToImePosition(DocumentPosition docPosition, {required bool isUpstream}) {
     final imeRange = _docTextNodesToImeRanges[docPosition.nodeId];
     if (imeRange == null) {
       throw Exception("No such document position in the IME content: $docPosition");
+    }
+
+    if (docPosition.nodePosition is! TextNodePosition) {
+      if (isUpstream) {
+        // Return the text position before the special character,
+        // e.g., "|~\n".
+        return TextPosition(offset: imeRange.start);
+      } else {
+        // Return the text position after the special character,
+        // e.g., "~\n|".
+        return TextPosition(offset: imeRange.start + 2);
+      }
     }
 
     return TextPosition(offset: imeRange.start + (docPosition.nodePosition as TextNodePosition).offset);
   }
 
   TextEditingValue toTextEditingValue() {
-    final docTextSelection = _constrictToTextSelectionEndCaps(_selection);
-
-    // Note: If there is no selected text, then only non-text content is
-    // selected. We still need to provide at least 1 character of IME content
-    // so that the IME will report a delete key press. We send a "*". The
-    // zero-width unicode character seemed more appropriate, but the IME wasn't
-    // sending delete deltas for that character.
-    final selectedContent = docTextSelection != null ? _imeText : "*";
-    final imeSelection = docTextSelection != null
-        ? TextSelection(
-            baseOffset: _documentToImePosition(docTextSelection.base).offset,
-            extentOffset: _documentToImePosition(docTextSelection.extent).offset,
-          )
-        : const TextSelection.collapsed(offset: 1);
+    editorImeLog.fine("Creating TextEditingValue from document. Selection: $_selection");
+    editorImeLog.fine("Text:\n$_imeText");
+    final imeSelection = documentToImeSelection(_selection);
+    editorImeLog.fine("Selection: $imeSelection");
 
     return TextEditingValue(
-      text: selectedContent,
+      text: _imeText,
       selection: imeSelection,
     );
   }
@@ -567,7 +601,7 @@ class DocumentImeSerializer {
       restrictedEndNode = endNode;
       restrictedEndPosition = endPosition as TextNodePosition;
     } else {
-      int restrictedEndNodeIndex = endNodeIndex + 1;
+      int restrictedEndNodeIndex = endNodeIndex - 1;
       while (_doc.getNodeAt(restrictedEndNodeIndex) is! TextNode && restrictedEndNodeIndex >= startNodeIndex) {
         restrictedEndNodeIndex -= 1;
       }
