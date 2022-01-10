@@ -1902,7 +1902,9 @@ class CommonEditorOperations {
   ///
   /// Returns [true] if the selected node was converted to a [ParagraphNode],
   /// or [false] if it wasn't.
-  bool convertToParagraph() {
+  bool convertToParagraph({
+    Map<String, Attribution> newMetadata = const {},
+  }) {
     if (composer.selection == null) {
       return false;
     }
@@ -1931,6 +1933,7 @@ class CommonEditorOperations {
           final newParagraphNode = ParagraphNode(
             id: extentNode.id,
             text: extentNode.text,
+            metadata: newMetadata,
           );
 
           transaction.replaceNode(oldNode: extentNode, newNode: newParagraphNode);
