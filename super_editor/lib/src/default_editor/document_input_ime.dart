@@ -349,11 +349,11 @@ class DocumentImeSerializer {
   String? _prependedCharacter;
 
   void _serialize() {
+    editorImeLog.fine("Creating an IME model from document and selection");
     final buffer = StringBuffer();
     int characterCount = 0;
 
     if (_shouldPrependPlaceholder()) {
-      editorImeLog.fine("Prepending upstream character for IME");
       // Put an arbitrary character at the front of the text so that
       // the IME will report backspace buttons when the caret sits at
       // the beginning of the node. For example, the caret is at the
@@ -363,10 +363,12 @@ class DocumentImeSerializer {
       //     Text above...
       //     |The selected text node.
       _prependedCharacter = _nextLeadingCharacter();
+      editorImeLog.fine("Prepending upstream character for IME: $_prependedCharacter");
       buffer.write(_prependedCharacter);
       characterCount = 1;
       _didPrependPlaceholder = true;
     } else {
+      editorImeLog.fine("No prepended upstream character is needed");
       _didPrependPlaceholder = false;
       _prependedCharacter = null;
     }
@@ -375,9 +377,11 @@ class DocumentImeSerializer {
     for (int i = 0; i < selectedNodes.length; i += 1) {
       final node = selectedNodes[i];
       if (node is! TextNode) {
+        editorImeLog.fine("Skipping node because it's not a text node: $node");
         continue;
       }
 
+      editorImeLog.fine("Appending a text node to IME content: $node");
       _textNodes.add(node);
 
       // Append a newline character before appending another node's text.
@@ -393,12 +397,13 @@ class DocumentImeSerializer {
       // Cache mappings between the IME text range and the document position
       // so that we can easily convert between the two, when requested.
       final imeRange = TextRange(start: characterCount, end: characterCount + node.text.text.length);
+      editorImeLog.fine("Node ${node.id} occupies the following IME range: $imeRange");
       _imeRangesToDocTextNodes[imeRange] = node.id;
       _docTextNodesToImeRanges[node.id] = imeRange;
 
       // Concatenate this node's text with the previous nodes.
       buffer.write(node.text.text);
-      characterCount += buffer.length;
+      characterCount += node.text.text.length;
     }
 
     _imeText = buffer.toString();
