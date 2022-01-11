@@ -21,9 +21,6 @@ import 'text.dart';
 
 final _log = Logger(scope: 'document_keyboard_actions.dart');
 
-bool _isShortcutPressed(RawKeyEvent keyEvent, LogicalKeyboardKey key) =>
-    keyEvent.isPrimaryShortcutKeyPressed && keyEvent.logicalKey == key;
-
 ExecutionInstruction doNothingWhenThereIsNoSelection({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
@@ -40,7 +37,7 @@ ExecutionInstruction pasteWhenCmdVIsPressed({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
-  if (!_isShortcutPressed(keyEvent, LogicalKeyboardKey.keyV)) {
+  if (!isShortcutPressed(keyEvent, LogicalKeyboardKey.keyV)) {
     return ExecutionInstruction.continueExecution;
   }
   if (editContext.composer.selection == null) {
@@ -81,7 +78,7 @@ ExecutionInstruction selectAllWhenCmdAIsPressed({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
-  if (!_isShortcutPressed(keyEvent, LogicalKeyboardKey.keyA)) {
+  if (!isShortcutPressed(keyEvent, LogicalKeyboardKey.keyA)) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -226,7 +223,7 @@ ExecutionInstruction copyWhenCmdCIsPressed({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
-  if (!_isShortcutPressed(keyEvent, LogicalKeyboardKey.keyC)) {
+  if (!isShortcutPressed(keyEvent, LogicalKeyboardKey.keyC)) {
     return ExecutionInstruction.continueExecution;
   }
   if (editContext.composer.selection == null) {
@@ -252,7 +249,7 @@ ExecutionInstruction cutWhenCmdXIsPressed({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
-  if (!_isShortcutPressed(keyEvent, LogicalKeyboardKey.keyX)) {
+  if (!isShortcutPressed(keyEvent, LogicalKeyboardKey.keyX)) {
     return ExecutionInstruction.continueExecution;
   }
   if (editContext.composer.selection == null) {
@@ -339,7 +336,7 @@ ExecutionInstruction cmdBToToggleBold({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
-  if (!_isShortcutPressed(keyEvent, LogicalKeyboardKey.keyB)) {
+  if (!isShortcutPressed(keyEvent, LogicalKeyboardKey.keyB)) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -356,7 +353,7 @@ ExecutionInstruction cmdIToToggleItalics({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
-  if (!_isShortcutPressed(keyEvent, LogicalKeyboardKey.keyI)) {
+  if (!isShortcutPressed(keyEvent, LogicalKeyboardKey.keyI)) {
     return ExecutionInstruction.continueExecution;
   }
 
