@@ -211,7 +211,20 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
         widget.editContext.composer.selection = insertionSelection;
 
         if (delta.textInserted == "\n") {
+          editorImeLog.fine("The user inserted a newline.");
+          final imeValueBeforeNewline = currentTextEditingValue;
+
           widget.editContext.commonOps.insertBlockLevelNewline();
+
+          if (imeValueBeforeNewline == currentTextEditingValue) {
+            // The newline action didn't change the current IME content or
+            // selection. This can happen, for example, when an empty list
+            // item is converted to a paragraph. Here, we explicitly reset
+            // the IME value to what it was before the newline so that the
+            // IME doesn't think there's a "\n" character in the content.
+            _inputConnection!.setEditingState(currentTextEditingValue);
+          }
+
           return;
         }
 
