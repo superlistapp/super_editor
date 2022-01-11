@@ -56,8 +56,6 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
     _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
 
     widget.editContext.composer.selectionNotifier.addListener(_onComposerChange);
-
-    _attachToIme();
   }
 
   @override
