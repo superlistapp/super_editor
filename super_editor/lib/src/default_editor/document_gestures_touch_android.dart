@@ -261,6 +261,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     if (newSelection == null) {
       _editingController
         ..removeCaret()
+        ..hideToolbar()
         ..collapsedHandleOffset = null
         ..upstreamHandleOffset = null
         ..downstreamHandleOffset = null

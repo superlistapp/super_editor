@@ -268,6 +268,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     if (newSelection == null) {
       _editingController
         ..removeCaret()
+        ..hideToolbar()
         ..collapsedHandleOffset = null
         ..upstreamHandleOffset = null
         ..downstreamHandleOffset = null
