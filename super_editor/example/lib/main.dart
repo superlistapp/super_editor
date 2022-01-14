@@ -8,6 +8,7 @@ import 'package:example/demos/demo_selectable_text.dart';
 import 'package:example/demos/editor_configs/demo_mobile_editing_android.dart';
 import 'package:example/demos/editor_configs/demo_mobile_editing_ios.dart';
 import 'package:example/demos/example_editor/example_editor.dart';
+import 'package:example/demos/flutter_features/demo_inline_widgets.dart';
 import 'package:example/demos/flutter_features/textinputclient/basic_text_input_client.dart';
 import 'package:example/demos/scrolling/demo_task_and_chat_with_customscrollview.dart';
 import 'package:example/demos/supertextfield/ios/demo_superiostextfield.dart';
@@ -352,6 +353,13 @@ final _menu = <_MenuGroup>[
           return BasicTextInputClientDemo();
         },
       ),
+      _MenuItem(
+        icon: Icons.image,
+        title: 'Text Inline Widgets',
+        pageBuilder: (context) {
+          return TextInlineWidgetDemo();
+        },
+      ),
     ],
   ),
 ];
@@ -434,11 +442,10 @@ class _DrawerButton extends StatelessWidget {
               return Colors.transparent;
             }),
             // splashFactory: NoSplash.splashFactory,
-            foregroundColor: MaterialStateColor.resolveWith((states) =>
-                isSelected ? Colors.white : const Color(0xFFBBBBBB)),
+            foregroundColor:
+                MaterialStateColor.resolveWith((states) => isSelected ? Colors.white : const Color(0xFFBBBBBB)),
             elevation: MaterialStateProperty.resolveWith((states) => 0),
-            padding: MaterialStateProperty.resolveWith(
-                (states) => const EdgeInsets.all(16))),
+            padding: MaterialStateProperty.resolveWith((states) => const EdgeInsets.all(16))),
         onPressed: isSelected ? null : onPressed,
         child: Row(
           children: [
