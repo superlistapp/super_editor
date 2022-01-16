@@ -379,6 +379,7 @@ Widget _buildEditorWithSelectableHrs(MutableDocument document, DocumentComposer 
       body: SuperEditor(
         editor: editor,
         composer: composer,
+        gestureMode: DocumentGestureMode.mouse,
       ),
     ),
   );
@@ -396,6 +397,7 @@ Widget _buildEditorWithUnselectableHrs(MutableDocument document, DocumentCompose
           _unselectableHrBuilder,
           ...defaultComponentBuilders,
         ],
+        gestureMode: DocumentGestureMode.mouse,
       ),
     ),
   );
