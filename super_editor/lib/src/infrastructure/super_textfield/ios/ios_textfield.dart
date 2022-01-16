@@ -1,7 +1,4 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/default_editor/super_editor.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
@@ -36,13 +33,11 @@ class SuperIOSTextField extends StatefulWidget {
     this.textStyleBuilder = defaultStyleBuilder,
     this.minLines,
     this.maxLines = 1,
-    this.lineHeight,
+    required this.lineHeight,
     this.textInputAction = TextInputAction.done,
     this.showDebugPaint = false,
     this.onPerformActionPressed,
-  })  : assert(minLines == null || minLines == 1 || lineHeight != null, 'minLines > 1 requires a non-null lineHeight'),
-        assert(maxLines == null || maxLines == 1 || lineHeight != null, 'maxLines > 1 requires a non-null lineHeight'),
-        super(key: key);
+  }) : super(key: key);
 
   /// [FocusNode] attached to this text field.
   final FocusNode? focusNode;
@@ -101,7 +96,7 @@ class SuperIOSTextField extends StatefulWidget {
   /// result in a constantly changing text field height during scrolling.
   /// To avoid that situation, a single, explicit [lineHeight] is
   /// provided and used for all text field height calculations.
-  final double? lineHeight;
+  final double lineHeight;
 
   /// The type of action associated with the action button on the mobile
   /// keyboard.
@@ -225,11 +220,21 @@ class _SuperIOSTextFieldState extends State<SuperIOSTextField> with SingleTicker
   void dispose() {
     _removeEditingOverlayControls();
 
+    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      // Dispose after the current frame so that other widgets have
+      // time to remove their listeners.
+      _editingOverlayController.dispose();
+    });
+
     _textEditingController
       ..removeListener(_onTextOrSelectionChange)
       ..onIOSFloatingCursorChange = null;
     if (widget.textController == null) {
-      _textEditingController.dispose();
+      WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+        // Dispose after the current frame so that other widgets have
+        // time to remove their listeners.
+        _textEditingController.dispose();
+      });
     }
 
     _focusNode.removeListener(_onFocusChange);

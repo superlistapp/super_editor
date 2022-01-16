@@ -1353,7 +1353,10 @@ class CommonEditorOperations {
     }
 
     // Delegate the action to the standard insert-character behavior.
-    final inserted = _insertCharacterInTextComposable(character);
+    final inserted = _insertCharacterInTextComposable(
+      character,
+      ignoreComposerAttributions: ignoreComposerAttributions,
+    );
     if (!inserted) {
       return false;
     }
@@ -1911,6 +1914,10 @@ class CommonEditorOperations {
     final baseNode = editor.document.getNodeById(composer.selection!.base.nodeId);
     final extentNode = editor.document.getNodeById(composer.selection!.extent.nodeId);
     if (baseNode!.id != extentNode!.id) {
+      return false;
+    }
+
+    if (baseNode is! ListItemNode) {
       return false;
     }
 
