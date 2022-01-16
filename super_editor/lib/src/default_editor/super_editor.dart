@@ -332,7 +332,7 @@ class _SuperEditorState extends State<SuperEditor> {
 
   DocumentGestureMode get _gestureMode {
     if (widget.gestureMode != null) {
-    return widget.gestureMode!;
+      return widget.gestureMode!;
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
