@@ -7,9 +7,6 @@ extension PrimaryShortcutKey on RawKeyEvent {
       (Platform.instance.isMac && isMetaPressed) || (!Platform.instance.isMac && isControlPressed);
 }
 
-bool isShortcutPressed(RawKeyEvent keyEvent, LogicalKeyboardKey key) =>
-    keyEvent.isPrimaryShortcutKeyPressed && keyEvent.logicalKey == key;
-
 /// On web, Flutter reports control character labels as
 /// the [RawKeyEvent.character], which we don't want.
 /// Until Flutter fixes the problem, this blacklist
