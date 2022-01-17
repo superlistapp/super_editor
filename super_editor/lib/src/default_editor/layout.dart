@@ -404,7 +404,6 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
         children: [
           for (final docComponent in docComponents) ...[
             docComponent,
-            SizedBox(height: widget.componentVerticalSpacing),
           ],
         ],
       ),
@@ -587,11 +586,25 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
 
   Widget? _buildComponent(ComponentContext componentContext) {
     for (final componentBuilder in widget.componentBuilders) {
-      final component = componentBuilder(componentContext);
+      Widget? component = componentBuilder(componentContext);
       if (component != null) {
-        return component;
+        component = Padding(
+          padding: EdgeInsets.symmetric(vertical: widget.componentVerticalSpacing / 2),
+          child: component,
+        );
+
+        return widget.showDebugPaint ? _wrapWithDebugWidget(component) : component;
       }
     }
     return null;
+  }
+
+  Widget _wrapWithDebugWidget(Widget component) {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: const Color(0xFFFF0000), width: 1),
+      ),
+      child: component,
+    );
   }
 }
