@@ -87,6 +87,33 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
       return null;
     }
 
+    return _getDocumentPositionInComponentNearOffset(componentKey, documentOffset);
+  }
+
+  @override
+  DocumentPosition? getDocumentPositionNearestToOffset(Offset rawDocumentOffset) {
+    // Constrain the incoming offset to sit within the width
+    // of this document layout.
+    final docBox = context.findRenderObject() as RenderBox;
+    final documentOffset = Offset(
+      // Notice the +1/-1. Experimentally, I determined that if we confine
+      // to the exact width, that x-value is considered outside the
+      // component RenderBox's. However, 1px less than that is
+      // considered to be within the component RenderBox's.
+      rawDocumentOffset.dx.clamp(1.0, docBox.size.width - 1),
+      rawDocumentOffset.dy,
+    );
+    editorLayoutLog.info('Getting document position near offset: $documentOffset');
+
+    final componentKey = _findComponentClosestToOffset(documentOffset);
+    if (componentKey == null || componentKey.currentContext == null) {
+      return null;
+    }
+
+    return _getDocumentPositionInComponentNearOffset(componentKey, documentOffset);
+  }
+
+  DocumentPosition? _getDocumentPositionInComponentNearOffset(GlobalKey componentKey, Offset documentOffset) {
     final component = componentKey.currentState as DocumentComponent;
     final componentBox = componentKey.currentContext!.findRenderObject() as RenderBox;
     editorLayoutLog.info(' - found node at position: $component');
@@ -103,24 +130,6 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
     );
     editorLayoutLog.info(' - selection at offset: $selectionAtOffset');
     return selectionAtOffset;
-  }
-
-  @override
-  DocumentPosition? getDocumentPositionNearestToOffset(Offset rawDocumentOffset) {
-    // Constrain the incoming offset to sit within the width
-    // of this document layout.
-    final docBox = context.findRenderObject() as RenderBox;
-    final documentOffset = Offset(
-      // Notice the +1/-1. Experimentally, I determined that if we confine
-      // to the exact width, that x-value is considered outside the
-      // component RenderBox's. However, 1px less than that is
-      // considered to be within the component RenderBox's.
-      rawDocumentOffset.dx.clamp(1.0, docBox.size.width - 1),
-      rawDocumentOffset.dy,
-    );
-    editorLayoutLog.info('Getting document position at offset: $documentOffset');
-
-    return getDocumentPositionAtOffset(documentOffset);
   }
 
   @override
@@ -345,12 +354,56 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
     return null;
   }
 
+  GlobalKey? _findComponentClosestToOffset(Offset documentOffset) {
+    GlobalKey? nearestComponentKey;
+    double nearestDistance = double.infinity;
+    for (final componentKey in _nodeIdsToComponentKeys.values) {
+      if (componentKey.currentState is! DocumentComponent) {
+        continue;
+      }
+      if (componentKey.currentContext == null || componentKey.currentContext!.findRenderObject() == null) {
+        continue;
+      }
+
+      final componentBox = componentKey.currentContext!.findRenderObject() as RenderBox;
+      if (_isOffsetInComponent(componentBox, documentOffset)) {
+        return componentKey;
+      }
+
+      final distance = _getDistanceToComponent(componentBox, documentOffset);
+      if (distance < nearestDistance) {
+        nearestDistance = distance;
+        nearestComponentKey = componentKey;
+      }
+    }
+    return nearestComponentKey;
+  }
+
   bool _isOffsetInComponent(RenderBox componentBox, Offset documentOffset) {
     final containerBox = context.findRenderObject() as RenderBox;
     final contentOffset = componentBox.localToGlobal(Offset.zero, ancestor: containerBox);
     final contentRect = contentOffset & componentBox.size;
 
     return contentRect.contains(documentOffset);
+  }
+
+  /// Returns the vertical distance between the given [documentOffset] and the
+  /// bounds of the given [componentBox].
+  double _getDistanceToComponent(RenderBox componentBox, Offset documentOffset) {
+    final documentLayoutBox = context.findRenderObject() as RenderBox;
+    final componentOffset = componentBox.localToGlobal(Offset.zero, ancestor: documentLayoutBox);
+    final componentRect = componentOffset & componentBox.size;
+
+    if (documentOffset.dy < componentRect.top) {
+      // The given offset is above the component's bounds.
+      return componentRect.top - documentOffset.dy;
+    } else if (documentOffset.dy > componentRect.bottom) {
+      // The given offset is below the component's bounds.
+      return documentOffset.dy - componentRect.bottom;
+    } else {
+      // The given offset sits within the component bounds.
+      return 0;
+    }
   }
 
   Offset _componentOffset(RenderBox componentBox, Offset documentOffset) {
@@ -404,6 +457,7 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
         children: [
           for (final docComponent in docComponents) ...[
             docComponent,
+            SizedBox(height: widget.componentVerticalSpacing),
           ],
         ],
       ),
@@ -586,13 +640,8 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
 
   Widget? _buildComponent(ComponentContext componentContext) {
     for (final componentBuilder in widget.componentBuilders) {
-      Widget? component = componentBuilder(componentContext);
+      final component = componentBuilder(componentContext);
       if (component != null) {
-        component = Padding(
-          padding: EdgeInsets.symmetric(vertical: widget.componentVerticalSpacing / 2),
-          child: component,
-        );
-
         return widget.showDebugPaint ? _wrapWithDebugWidget(component) : component;
       }
     }
