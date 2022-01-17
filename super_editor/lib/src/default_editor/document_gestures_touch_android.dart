@@ -334,7 +334,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     editorGesturesLog.info("Tap down on document");
     final docOffset = _getDocOffset(details.localPosition);
     editorGesturesLog.fine(" - document offset: $docOffset");
-    final docPosition = _docLayout.getDocumentPositionAtOffset(docOffset);
+    final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
     editorGesturesLog.fine(" - tapped document position: $docPosition");
 
     if (docPosition != null) {
@@ -366,7 +366,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     editorGesturesLog.info("Double tap down on document");
     final docOffset = _getDocOffset(details.localPosition);
     editorGesturesLog.fine(" - document offset: $docOffset");
-    final docPosition = _docLayout.getDocumentPositionAtOffset(docOffset);
+    final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
     editorGesturesLog.fine(" - tapped document position: $docPosition");
 
     _clearSelection();
@@ -402,7 +402,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     editorGesturesLog.info("Triple down down on document");
     final docOffset = _getDocOffset(details.localPosition);
     editorGesturesLog.fine(" - document offset: $docOffset");
-    final docPosition = _docLayout.getDocumentPositionAtOffset(docOffset);
+    final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
     editorGesturesLog.fine(" - tapped document position: $docPosition");
 
     _clearSelection();
@@ -504,8 +504,8 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   void _updateSelectionForNewDragHandleLocation() {
     final docDragDelta = _globalDragOffset! - _globalStartDragOffset!;
     final dragScrollDelta = _dragStartScrollOffset! - scrollPosition.pixels;
-    final docDragPosition =
-        _docLayout.getDocumentPositionAtOffset(_startDragPositionOffset! + docDragDelta - Offset(0, dragScrollDelta));
+    final docDragPosition = _docLayout
+        .getDocumentPositionNearestToOffset(_startDragPositionOffset! + docDragDelta - Offset(0, dragScrollDelta));
 
     if (docDragPosition == null) {
       return;
@@ -560,7 +560,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     // final scrollDeltaWhileDragging = _dragStartScrollOffset! - scrollPosition.pixels;
     final dragEndInDoc = _getDocOffset(_dragEndInInteractor! /* - Offset(0, scrollDeltaWhileDragging)*/);
 
-    final dragPosition = _docLayout.getDocumentPositionAtOffset(dragEndInDoc);
+    final dragPosition = _docLayout.getDocumentPositionNearestToOffset(dragEndInDoc);
     editorGesturesLog.info("Selecting new position during drag: $dragPosition");
 
     if (dragPosition == null) {
