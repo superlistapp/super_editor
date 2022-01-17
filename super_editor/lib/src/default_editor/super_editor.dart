@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' hide SelectableText;
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
@@ -334,6 +335,8 @@ class _SuperEditorState extends State<SuperEditor> {
   DocumentGestureMode get _gestureMode {
     if (widget.gestureMode != null) {
       return widget.gestureMode!;
+    } else if (kIsWeb) {
+      return DocumentGestureMode.mouse;
     } else if (Platform.isAndroid) {
       return DocumentGestureMode.android;
     } else if (Platform.isIOS) {
