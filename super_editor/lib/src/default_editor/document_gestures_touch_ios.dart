@@ -409,7 +409,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     widget.focusNode.requestFocus();
   }
 
-  void _onDoubleTapDown(TapDownDetails details) {
+  void _onDoubleTapUp(TapUpDetails details) {
     final selection = widget.composer.selection;
     if (selection != null &&
         !selection.isCollapsed &&
@@ -448,15 +448,9 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     widget.focusNode.requestFocus();
   }
 
-  void _onTripleTapDown(TapDownDetails details) {
-    final selection = widget.composer.selection;
-    if (selection != null &&
-        !selection.isCollapsed &&
-        (_isOverBaseHandle(details.localPosition) || _isOverExtentHandle(details.localPosition))) {
-      return;
-    }
-
+  void _onTripleTapUp(TapUpDetails details) {
     editorGesturesLog.info("Triple down down on document");
+
     final docOffset = _getDocOffset(details.localPosition);
     editorGesturesLog.fine(" - document offset: $docOffset");
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
@@ -476,10 +470,12 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
       }
     }
 
+    final selection = widget.composer.selection;
     if (selection == null || selection.isCollapsed) {
       _editingController.hideToolbar();
     } else {
       _editingController.showToolbar();
+      _positionToolbar();
     }
 
     widget.focusNode.requestFocus();
@@ -960,8 +956,8 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
           (TapSequenceGestureRecognizer recognizer) {
             recognizer
               ..onTapUp = _onTapUp
-              ..onDoubleTapDown = _onDoubleTapDown
-              ..onTripleTapDown = _onTripleTapDown
+              ..onDoubleTapUp = _onDoubleTapUp
+              ..onTripleTapUp = _onTripleTapUp
               ..onTimeout = _onTapTimeout;
           },
         ),
