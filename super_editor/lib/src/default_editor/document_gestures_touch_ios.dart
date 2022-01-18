@@ -222,7 +222,6 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
 
   @override
   void didChangeMetrics() {
-    print("didChangeMetrics");
     // The available screen dimensions may have changed, e.g., due to keyboard
     // appearance/disappearance. Reflow the layout. Use a post-frame callback
     // to give the rest of the UI a chance to reflow, first.
@@ -833,29 +832,6 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     //       instead be centered across the full width of the document.
     toolbarTopAnchor = selectionRect.topCenter - const Offset(0, toolbarGap);
     toolbarBottomAnchor = selectionRect.bottomCenter + const Offset(0, toolbarGap);
-
-    // The selection might start above the visible area on the screen.
-    // In that case, keep the toolbar on-screen.
-    toolbarTopAnchor = Offset(
-      toolbarTopAnchor.dx,
-      max(
-        toolbarTopAnchor.dy,
-        // TODO: choose a gap spacing that makes sense, e.g., what's the safe area?
-        24,
-      ),
-    );
-
-    // The selection might end below the visible area on the screen.
-    // In that case, keep the toolbar on-screen.
-    final screenHeight = (context.findRenderObject() as RenderBox).size.height;
-    toolbarTopAnchor = Offset(
-      toolbarTopAnchor.dx,
-      min(
-        toolbarTopAnchor.dy,
-        // TODO: choose a gap spacing that makes sense, e.g., what's the safe area?
-        screenHeight - 24,
-      ),
-    );
 
     _editingController.positionToolbar(
       topAnchor: toolbarTopAnchor,
