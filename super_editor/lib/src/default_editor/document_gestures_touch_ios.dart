@@ -363,6 +363,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     if (selection != null &&
         !selection.isCollapsed &&
         (_isOverBaseHandle(details.localPosition) || _isOverExtentHandle(details.localPosition))) {
+      _editingController.toggleToolbar();
       return;
     }
 
