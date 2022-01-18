@@ -93,7 +93,6 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
   @override
   void initState() {
-    print("initState");
     super.initState();
 
     _handleAutoScrolling = DragHandleAutoScroller(
@@ -109,6 +108,18 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     }
 
     _scrollController = _scrollController = (widget.scrollController ?? ScrollController());
+    // On the next frame, after our ScrollController is attached to the Scrollable,
+    // add a listener for scroll changes.
+    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      _updateScrollPositionListener();
+    });
+    // I added this listener directly to our ScrollController because the listener we added
+    // to the ScrollPosition wasn't triggering once the user makes an initial selection. I'm
+    // not sure why that happened. It's as if the ScrollPosition was replaced, but I don't
+    // know why the ScrollPosition would be replaced. In the meantime, adding this listener
+    // keeps the toolbar positioning logic working.
+    // TODO: rely solely on a ScrollPosition listener, not a ScrollController listener.
+    _scrollController.addListener(_onScrollChange);
 
     _editingController = AndroidDocumentGestureEditingController(
       documentLayoutLink: _documentLayoutLink,
@@ -133,12 +144,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     // runs, we haven't attached to our own ScrollController yet, so
     // this.scrollPosition might be null.
     WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
-      final newScrollPosition = scrollPosition;
-      if (newScrollPosition != _activeScrollPosition) {
-        _activeScrollPosition?.removeListener(_onScrollChange);
-        newScrollPosition.addListener(_onScrollChange);
-        _activeScrollPosition = newScrollPosition;
-      }
+      _updateScrollPositionListener();
     });
   }
 
@@ -183,7 +189,6 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
   @override
   void dispose() {
-    print("Dispose");
     WidgetsBinding.instance!.removeObserver(this);
 
     // TODO: I commented this out because the scroll position is already
@@ -290,6 +295,15 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     } else {
       // The selection is expanded
       _positionExpandedHandles();
+    }
+  }
+
+  void _updateScrollPositionListener() {
+    final newScrollPosition = scrollPosition;
+    if (newScrollPosition != _activeScrollPosition) {
+      _activeScrollPosition?.removeListener(_onScrollChange);
+      newScrollPosition.addListener(_onScrollChange);
+      _activeScrollPosition = newScrollPosition;
     }
   }
 
@@ -433,6 +447,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
         // Place the document selection at the location where the
         // user tapped.
         _selectPosition(docPosition);
+        _positionToolbar();
       }
     }
 
@@ -712,29 +727,6 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     //       instead be centered across the full width of the document.
     toolbarTopAnchor = selectionRect.topCenter - const Offset(0, toolbarGap);
     toolbarBottomAnchor = selectionRect.bottomCenter + const Offset(0, toolbarGap);
-
-    // The selection might start above the visible area on the screen.
-    // In that case, keep the toolbar on-screen.
-    toolbarTopAnchor = Offset(
-      toolbarTopAnchor.dx,
-      max(
-        toolbarTopAnchor.dy,
-        // TODO: choose a gap spacing that makes sense, e.g., what's the safe area?
-        24,
-      ),
-    );
-
-    // The selection might end below the visible area on the screen.
-    // In that case, keep the toolbar on-screen.
-    final screenHeight = (context.findRenderObject() as RenderBox).size.height;
-    toolbarTopAnchor = Offset(
-      toolbarTopAnchor.dx,
-      min(
-        toolbarTopAnchor.dy,
-        // TODO: choose a gap spacing that makes sense, e.g., what's the safe area?
-        screenHeight - 24,
-      ),
-    );
 
     _editingController.positionToolbar(
       topAnchor: toolbarTopAnchor,
