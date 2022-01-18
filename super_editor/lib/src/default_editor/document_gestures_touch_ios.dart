@@ -222,6 +222,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
 
   @override
   void didChangeMetrics() {
+    print("didChangeMetrics");
     // The available screen dimensions may have changed, e.g., due to keyboard
     // appearance/disappearance. Reflow the layout. Use a post-frame callback
     // to give the rest of the UI a chance to reflow, first.
@@ -237,6 +238,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   }
 
   void _ensureSelectionExtentIsVisible() {
+    editorGesturesLog.fine("Ensuring selection extent is visible");
     final collapsedHandleOffset = _editingController.collapsedHandleOffset;
     final extentHandleOffset = _editingController.downstreamHandleOffset;
     if (collapsedHandleOffset == null && extentHandleOffset == null) {
@@ -245,8 +247,10 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     }
 
     if (collapsedHandleOffset != null) {
+      editorGesturesLog.fine("The selection is collapsed");
       _handleAutoScrolling.ensureOffsetIsVisible(collapsedHandleOffset);
     } else {
+      editorGesturesLog.fine("The selection is expanded");
       _handleAutoScrolling.ensureOffsetIsVisible(extentHandleOffset!);
     }
   }
