@@ -219,22 +219,23 @@ class DragHandleAutoScroller {
   /// that this auto-scroller controls.
   final RenderBox Function() _getViewportBox;
 
-  /// Jumps to a scroll offset so that the given [offset] is visible within the
+  /// Jumps to a scroll offset so that the given [documentOffset] is visible within the
   /// scrollable.
   ///
-  /// Does nothing, if the given [offset] is already visible.
-  void ensureOffsetIsVisible(Offset offset) {
-    editorGesturesLog.fine("Ensuring document offset is visible in scrollable: $offset");
+  /// Does nothing, if the given [documentOffset] is already visible.
+  void ensureOffsetIsVisible(Offset documentOffset) {
+    editorGesturesLog.fine("Ensuring document offset is visible in scrollable: $documentOffset");
 
     final scrollPosition = _getScrollPosition();
     final currentScrollOffset = scrollPosition.pixels;
+    editorGesturesLog.fine("Current scroll offset: $currentScrollOffset");
 
-    if (currentScrollOffset + offset.dy < 0) {
+    if (documentOffset.dy < currentScrollOffset) {
       editorGesturesLog.fine("The scrollable needs to scroll up to make offset visible.");
-      scrollPosition.jumpTo(offset.dy + _dragAutoScrollBoundary.leading);
-    } else if (currentScrollOffset + offset.dy > _getViewportBox().size.height) {
+      scrollPosition.jumpTo(documentOffset.dy + _dragAutoScrollBoundary.leading);
+    } else if (documentOffset.dy > _getViewportBox().size.height + currentScrollOffset) {
       editorGesturesLog.fine('The scrollable needs to scroll down to make offset visible.');
-      scrollPosition.jumpTo(offset.dy + _dragAutoScrollBoundary.trailing - _getViewportBox().size.height);
+      scrollPosition.jumpTo(documentOffset.dy + _dragAutoScrollBoundary.trailing - _getViewportBox().size.height);
     }
   }
 
