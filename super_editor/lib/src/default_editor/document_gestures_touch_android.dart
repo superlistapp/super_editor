@@ -221,11 +221,28 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     // to give the rest of the UI a chance to reflow, first.
     WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
       if (mounted) {
+        _ensureSelectionExtentIsVisible();
+
         setState(() {
-          // no-op
+          // reflow document layout
         });
       }
     });
+  }
+
+  void _ensureSelectionExtentIsVisible() {
+    final collapsedHandleOffset = _editingController.collapsedHandleOffset;
+    final extentHandleOffset = _editingController.downstreamHandleOffset;
+    if (collapsedHandleOffset == null && extentHandleOffset == null) {
+      // There's no selection. We don't need to take any action.
+      return;
+    }
+
+    if (collapsedHandleOffset != null) {
+      _handleAutoScrolling.ensureOffsetIsVisible(collapsedHandleOffset);
+    } else {
+      _handleAutoScrolling.ensureOffsetIsVisible(extentHandleOffset!);
+    }
   }
 
   void _onFocusChange() {

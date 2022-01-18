@@ -219,6 +219,25 @@ class DragHandleAutoScroller {
   /// that this auto-scroller controls.
   final RenderBox Function() _getViewportBox;
 
+  /// Jumps to a scroll offset so that the given [offset] is visible within the
+  /// scrollable.
+  ///
+  /// Does nothing, if the given [offset] is already visible.
+  void ensureOffsetIsVisible(Offset offset) {
+    editorGesturesLog.fine("Ensuring document offset is visible in scrollable: $offset");
+
+    final scrollPosition = _getScrollPosition();
+    final currentScrollOffset = scrollPosition.pixels;
+
+    if (currentScrollOffset + offset.dy < 0) {
+      editorGesturesLog.fine("The scrollable needs to scroll up to make offset visible.");
+      scrollPosition.jumpTo(offset.dy + _dragAutoScrollBoundary.leading);
+    } else if (currentScrollOffset + offset.dy > _getViewportBox().size.height) {
+      editorGesturesLog.fine('The scrollable needs to scroll down to make offset visible.');
+      scrollPosition.jumpTo(offset.dy + _dragAutoScrollBoundary.trailing - _getViewportBox().size.height);
+    }
+  }
+
   /// Prepares this auto-scroller to automatically scroll its `ScrollPosition`
   /// based on calls to [updateAutoScrollHandleMonitoring].
   void startAutoScrollHandleMonitoring() {
