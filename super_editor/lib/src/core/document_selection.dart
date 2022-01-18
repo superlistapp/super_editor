@@ -338,7 +338,7 @@ extension InspectDocumentSelection on Document {
       // If and only if the given position comes before the downstream position,
       // and after the upstream cap, then the position is within the selection.
       return downstreamNode.selectDownstreamPosition(upstreamCap, position.nodePosition) ==
-          upstreamNode.selectUpstreamPosition(position.nodePosition, downstreamPosition.nodePosition);
+          downstreamNode.selectUpstreamPosition(position.nodePosition, downstreamPosition.nodePosition);
     }
 
     // If we got here, then the position is either before the upstream
