@@ -62,7 +62,6 @@ class _MobileEditingIOSDemoState extends State<MobileEditingIOSDemo> {
               editor: _docEditor,
               composer: _composer,
               padding: const EdgeInsets.all(16),
-              showDebugPaint: true,
             ),
           ),
           AnimatedBuilder(
