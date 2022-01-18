@@ -1,6 +1,5 @@
 import 'dart:math';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document.dart';
@@ -33,11 +32,13 @@ class DocumentImeInteractor extends StatefulWidget {
     Key? key,
     this.focusNode,
     required this.editContext,
+    this.keyboardBrightness,
     required this.child,
   }) : super(key: key);
 
   final FocusNode? focusNode;
   final EditContext editContext;
+  final Brightness? keyboardBrightness;
   final Widget child;
 
   @override
@@ -123,7 +124,7 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
     editorImeLog.info('Attaching TextInputClient to TextInput');
     _inputConnection = TextInput.attach(
         this,
-        const TextInputConfiguration(
+        TextInputConfiguration(
           // TODO: make this configurable
           autocorrect: true,
           enableDeltaModel: true,
@@ -131,6 +132,7 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
           enableSuggestions: true,
           // TODO: make this configurable
           inputAction: TextInputAction.newline,
+          keyboardAppearance: widget.keyboardBrightness ?? MediaQuery.of(context).platformBrightness,
         ));
 
     _syncImeWithDocumentAndComposer();
@@ -691,11 +693,13 @@ class KeyboardEditingToolbar extends StatelessWidget {
     required this.document,
     required this.composer,
     required this.commonOps,
+    this.brightness,
   }) : super(key: key);
 
   final Document document;
   final DocumentComposer composer;
   final CommonEditorOperations commonOps;
+  final Brightness? brightness;
 
   bool get _isBoldActive => _doesSelectionHaveAttributions({boldAttribution});
   void _toggleBold() => _toggleAttributions({boldAttribution});
@@ -817,109 +821,121 @@ class KeyboardEditingToolbar extends StatelessWidget {
     }
 
     final selectedNode = document.getNodeById(selection.extent.nodeId);
+    final brightness = this.brightness ?? MediaQuery.of(context).platformBrightness;
 
-    return Material(
-      child: Container(
-        width: double.infinity,
-        height: 48,
-        color: const Color(0xFFDDDDDD),
-        child: Row(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      onPressed: selectedNode is TextNode ? _toggleBold : null,
-                      icon: const Icon(Icons.format_bold),
-                      color: _isBoldActive ? Theme.of(context).primaryColor : null,
-                    ),
-                    IconButton(
-                      onPressed: selectedNode is TextNode ? _toggleItalics : null,
-                      icon: const Icon(Icons.format_italic),
-                      color: _isItalicsActive ? Theme.of(context).primaryColor : null,
-                    ),
-                    IconButton(
-                      onPressed: selectedNode is TextNode ? _toggleUnderline : null,
-                      icon: const Icon(Icons.format_underline),
-                      color: _isUnderlineActive ? Theme.of(context).primaryColor : null,
-                    ),
-                    IconButton(
-                      onPressed: selectedNode is TextNode ? _toggleStrikethrough : null,
-                      icon: const Icon(Icons.strikethrough_s),
-                      color: _isStrikethroughActive ? Theme.of(context).primaryColor : null,
-                    ),
-                    IconButton(
-                      onPressed: selection.isCollapsed &&
-                              (selectedNode is TextNode && selectedNode.metadata['blockType'] != header1Attribution)
-                          ? _convertToHeader1
-                          : null,
-                      icon: const Icon(Icons.title),
-                    ),
-                    IconButton(
-                      onPressed: selection.isCollapsed &&
-                              (selectedNode is TextNode && selectedNode.metadata['blockType'] != header2Attribution)
-                          ? _convertToHeader2
-                          : null,
-                      icon: const Icon(Icons.title),
-                      iconSize: 18,
-                    ),
-                    IconButton(
-                      onPressed: selection.isCollapsed &&
-                              ((selectedNode is ParagraphNode && selectedNode.metadata['blockType'] != null) ||
-                                  (selectedNode is TextNode && selectedNode is! ParagraphNode))
-                          ? _convertToParagraph
-                          : null,
-                      icon: const Icon(Icons.wrap_text),
-                    ),
-                    IconButton(
-                      onPressed: selection.isCollapsed &&
-                              (selectedNode is TextNode && selectedNode is! ListItemNode ||
-                                  (selectedNode is ListItemNode && selectedNode.type != ListItemType.ordered))
-                          ? _convertToOrderedListItem
-                          : null,
-                      icon: const Icon(Icons.looks_one_rounded),
-                    ),
-                    IconButton(
-                      onPressed: selection.isCollapsed &&
-                              (selectedNode is TextNode && selectedNode is! ListItemNode ||
-                                  (selectedNode is ListItemNode && selectedNode.type != ListItemType.unordered))
-                          ? _convertToUnorderedListItem
-                          : null,
-                      icon: const Icon(Icons.list),
-                    ),
-                    IconButton(
-                      onPressed: selection.isCollapsed &&
-                              selectedNode is TextNode &&
-                              (selectedNode is! ParagraphNode ||
-                                  selectedNode.metadata['blockType'] != blockquoteAttribution)
-                          ? _convertToBlockquote
-                          : null,
-                      icon: const Icon(Icons.format_quote),
-                    ),
-                    IconButton(
-                      onPressed:
-                          selection.isCollapsed && selectedNode is ParagraphNode && selectedNode.text.text.isEmpty
-                              ? _convertToHr
+    return Theme(
+      data: Theme.of(context).copyWith(
+        brightness: brightness,
+        disabledColor: brightness == Brightness.light ? Colors.black.withOpacity(0.5) : Colors.white.withOpacity(0.5),
+      ),
+      child: IconTheme(
+        data: IconThemeData(
+          color: brightness == Brightness.light ? Colors.black : Colors.white,
+        ),
+        child: Material(
+          child: Container(
+            width: double.infinity,
+            height: 48,
+            color: brightness == Brightness.light ? const Color(0xFFDDDDDD) : const Color(0xFF222222),
+            child: Row(
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          onPressed: selectedNode is TextNode ? _toggleBold : null,
+                          icon: const Icon(Icons.format_bold),
+                          color: _isBoldActive ? Theme.of(context).primaryColor : null,
+                        ),
+                        IconButton(
+                          onPressed: selectedNode is TextNode ? _toggleItalics : null,
+                          icon: const Icon(Icons.format_italic),
+                          color: _isItalicsActive ? Theme.of(context).primaryColor : null,
+                        ),
+                        IconButton(
+                          onPressed: selectedNode is TextNode ? _toggleUnderline : null,
+                          icon: const Icon(Icons.format_underline),
+                          color: _isUnderlineActive ? Theme.of(context).primaryColor : null,
+                        ),
+                        IconButton(
+                          onPressed: selectedNode is TextNode ? _toggleStrikethrough : null,
+                          icon: const Icon(Icons.strikethrough_s),
+                          color: _isStrikethroughActive ? Theme.of(context).primaryColor : null,
+                        ),
+                        IconButton(
+                          onPressed: selection.isCollapsed &&
+                                  (selectedNode is TextNode && selectedNode.metadata['blockType'] != header1Attribution)
+                              ? _convertToHeader1
                               : null,
-                      icon: const Icon(Icons.horizontal_rule),
+                          icon: const Icon(Icons.title),
+                        ),
+                        IconButton(
+                          onPressed: selection.isCollapsed &&
+                                  (selectedNode is TextNode && selectedNode.metadata['blockType'] != header2Attribution)
+                              ? _convertToHeader2
+                              : null,
+                          icon: const Icon(Icons.title),
+                          iconSize: 18,
+                        ),
+                        IconButton(
+                          onPressed: selection.isCollapsed &&
+                                  ((selectedNode is ParagraphNode && selectedNode.metadata['blockType'] != null) ||
+                                      (selectedNode is TextNode && selectedNode is! ParagraphNode))
+                              ? _convertToParagraph
+                              : null,
+                          icon: const Icon(Icons.wrap_text),
+                        ),
+                        IconButton(
+                          onPressed: selection.isCollapsed &&
+                                  (selectedNode is TextNode && selectedNode is! ListItemNode ||
+                                      (selectedNode is ListItemNode && selectedNode.type != ListItemType.ordered))
+                              ? _convertToOrderedListItem
+                              : null,
+                          icon: const Icon(Icons.looks_one_rounded),
+                        ),
+                        IconButton(
+                          onPressed: selection.isCollapsed &&
+                                  (selectedNode is TextNode && selectedNode is! ListItemNode ||
+                                      (selectedNode is ListItemNode && selectedNode.type != ListItemType.unordered))
+                              ? _convertToUnorderedListItem
+                              : null,
+                          icon: const Icon(Icons.list),
+                        ),
+                        IconButton(
+                          onPressed: selection.isCollapsed &&
+                                  selectedNode is TextNode &&
+                                  (selectedNode is! ParagraphNode ||
+                                      selectedNode.metadata['blockType'] != blockquoteAttribution)
+                              ? _convertToBlockquote
+                              : null,
+                          icon: const Icon(Icons.format_quote),
+                        ),
+                        IconButton(
+                          onPressed:
+                              selection.isCollapsed && selectedNode is ParagraphNode && selectedNode.text.text.isEmpty
+                                  ? _convertToHr
+                                  : null,
+                          icon: const Icon(Icons.horizontal_rule),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
+                Container(
+                  width: 1,
+                  height: 32,
+                  color: const Color(0xFFCCCCCC),
+                ),
+                IconButton(
+                  onPressed: _closeKeyboard,
+                  icon: const Icon(Icons.keyboard_hide),
+                ),
+              ],
             ),
-            Container(
-              width: 1,
-              height: 32,
-              color: const Color(0xFFCCCCCC),
-            ),
-            IconButton(
-              onPressed: _closeKeyboard,
-              icon: const Icon(Icons.keyboard_hide),
-            ),
-          ],
+          ),
         ),
       ),
     );
