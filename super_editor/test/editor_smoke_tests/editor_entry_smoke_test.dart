@@ -38,6 +38,7 @@ void main() {
               editor: documentEditor,
               composer: composer,
               documentLayoutKey: layoutKey,
+              gestureMode: DocumentGestureMode.mouse,
             ),
           ),
         ),
