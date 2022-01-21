@@ -71,9 +71,8 @@ class _TextInlineWidgetDemoState extends State<TextInlineWidgetDemo> {
   }
 
   Widget _buildImageExample() {
-    return RichText(
-      textAlign: TextAlign.start,
-      text: TextSpan(
+    return SelectableText.rich(
+      TextSpan(
         text: "Sponsored by ",
         style: const TextStyle(
           color: Colors.black,
@@ -88,13 +87,13 @@ class _TextInlineWidgetDemoState extends State<TextInlineWidgetDemo> {
           ),
         ],
       ),
+      textAlign: TextAlign.start,
     );
   }
 
   Widget _buildAvatarExample() {
-    return RichText(
-      textAlign: TextAlign.start,
-      text: TextSpan(
+    return SelectableText.rich(
+      TextSpan(
         text: "We asked ",
         style: const TextStyle(
           color: Colors.black,
@@ -132,13 +131,13 @@ class _TextInlineWidgetDemoState extends State<TextInlineWidgetDemo> {
           const TextSpan(text: " and he said we're good."),
         ],
       ),
+      textAlign: TextAlign.start,
     );
   }
 
   Widget _buildProgressExample() {
-    return RichText(
-      textAlign: TextAlign.start,
-      text: TextSpan(
+    return SelectableText.rich(
+      TextSpan(
         text: "This is a multi-step item with progress",
         style: const TextStyle(
           color: Colors.black,
@@ -165,14 +164,13 @@ class _TextInlineWidgetDemoState extends State<TextInlineWidgetDemo> {
           ),
         ],
       ),
+      textAlign: TextAlign.start,
     );
   }
 
   Widget _buildInlineCodeExample() {
-    return RichText(
-      key: _paragraphKey,
-      textAlign: TextAlign.start,
-      text: TextSpan(
+    return SelectableText.rich(
+      TextSpan(
         text: _inlineCodePrefix,
         style: const TextStyle(
           color: Colors.black,
@@ -200,6 +198,8 @@ class _TextInlineWidgetDemoState extends State<TextInlineWidgetDemo> {
           TextSpan(text: _inlineCodePostfix),
         ],
       ),
+      key: _paragraphKey,
+      textAlign: TextAlign.start,
     );
   }
 }
