@@ -131,7 +131,7 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
           // TODO: make this configurable
           enableSuggestions: true,
           // TODO: make this configurable
-          inputAction: TextInputAction.newline,
+          inputAction: TextInputAction.go,
           keyboardAppearance: widget.keyboardBrightness ?? MediaQuery.of(context).platformBrightness,
         ));
 
@@ -306,6 +306,7 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
 
   @override
   void performAction(TextInputAction action) {
+    editorImeLog.fine("IME says to perform action: $action");
     // TODO: implement performAction
   }
 

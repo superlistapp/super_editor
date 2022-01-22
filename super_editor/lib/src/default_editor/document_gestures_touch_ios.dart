@@ -482,6 +482,9 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   }
 
   void _onPanStart(DragStartDetails details) {
+    // TODO: to help the user drag handles instead of scrolling, try checking touch
+    //       placement during onTapDown, and then pick that up here. I think the little
+    //       bit of slop might be the problem.
     final selection = widget.composer.selection;
     if (selection == null) {
       return;
