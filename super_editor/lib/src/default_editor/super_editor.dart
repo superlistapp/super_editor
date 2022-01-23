@@ -86,6 +86,7 @@ class SuperEditor extends StatefulWidget {
     this.showDebugPaint = false,
   })  : componentBuilders = defaultComponentBuilders,
         keyboardActions = defaultKeyboardActions,
+        softwareKeyboardHandler = null,
         textStyleBuilder = defaultStyleBuilder,
         selectionStyle = defaultSelectionStyle,
         super(key: key);
@@ -107,6 +108,7 @@ class SuperEditor extends StatefulWidget {
     AttributionStyleBuilder? textStyleBuilder,
     SelectionStyle? selectionStyle,
     List<DocumentKeyboardAction>? keyboardActions,
+    this.softwareKeyboardHandler,
     List<ComponentBuilder>? componentBuilders,
     this.componentVerticalSpacing = 16,
     this.showDebugPaint = false,
@@ -134,6 +136,7 @@ class SuperEditor extends StatefulWidget {
     AttributionStyleBuilder? textStyleBuilder,
     SelectionStyle? selectionStyle,
     List<DocumentKeyboardAction>? keyboardActions,
+    this.softwareKeyboardHandler,
     List<ComponentBuilder>? componentBuilders,
     this.componentVerticalSpacing = 16,
     this.showDebugPaint = false,
@@ -205,7 +208,15 @@ class SuperEditor extends StatefulWidget {
   /// All actions that this editor takes in response to key
   /// events, e.g., text entry, newlines, character deletion,
   /// copy, paste, etc.
+  ///
+  /// These actions are only used when in [DocumentInputSource.keyboard]
+  /// mode.
   final List<DocumentKeyboardAction> keyboardActions;
+
+  /// Applies all software keyboard edits to the document.
+  ///
+  /// This handler is only used when in [DocumentInputSource.ime] mode.
+  final SoftwareKeyboardHandler? softwareKeyboardHandler;
 
   /// The vertical distance between visual components in the document layout.
   final double componentVerticalSpacing;
@@ -229,6 +240,7 @@ class _SuperEditorState extends State<SuperEditor> {
   DocumentPosition? _previousSelectionExtent;
 
   late EditContext _editContext;
+  late SoftwareKeyboardHandler _softwareKeyboardHandler;
 
   @override
   void initState() {
@@ -242,6 +254,13 @@ class _SuperEditorState extends State<SuperEditor> {
     _docLayoutKey = widget.documentLayoutKey ?? GlobalKey();
 
     _createEditContext();
+
+    _softwareKeyboardHandler = widget.softwareKeyboardHandler ??
+        SoftwareKeyboardHandler(
+          editor: _editContext.editor,
+          composer: _editContext.composer,
+          commonOps: _editContext.commonOps,
+        );
   }
 
   @override
@@ -264,6 +283,14 @@ class _SuperEditorState extends State<SuperEditor> {
     }
     if (widget.documentLayoutKey != oldWidget.documentLayoutKey) {
       _docLayoutKey = widget.documentLayoutKey ?? GlobalKey();
+    }
+    if (widget.softwareKeyboardHandler != oldWidget.softwareKeyboardHandler) {
+      _softwareKeyboardHandler = widget.softwareKeyboardHandler ??
+          SoftwareKeyboardHandler(
+            editor: _editContext.editor,
+            composer: _editContext.composer,
+            commonOps: _editContext.commonOps,
+          );
     }
 
     _createEditContext();
@@ -357,6 +384,7 @@ class _SuperEditorState extends State<SuperEditor> {
         return DocumentImeInteractor(
           focusNode: _focusNode,
           editContext: _editContext,
+          softwareKeyboardHandler: _softwareKeyboardHandler,
           child: child,
         );
     }

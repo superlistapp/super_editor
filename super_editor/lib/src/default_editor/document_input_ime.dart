@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
+import 'package:super_editor/src/core/document_editor.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/default_editor/common_editor_operations.dart';
@@ -32,13 +33,13 @@ class DocumentImeInteractor extends StatefulWidget {
     Key? key,
     this.focusNode,
     required this.editContext,
-    this.keyboardBrightness,
+    required this.softwareKeyboardHandler,
     required this.child,
   }) : super(key: key);
 
   final FocusNode? focusNode;
   final EditContext editContext;
-  final Brightness? keyboardBrightness;
+  final SoftwareKeyboardHandler softwareKeyboardHandler;
   final Widget child;
 
   @override
@@ -57,6 +58,7 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
     _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
 
     widget.editContext.composer.selectionNotifier.addListener(_onComposerChange);
+    widget.editContext.composer.imeConfiguration.addListener(_onClientWantsDifferentImeConfiguration);
   }
 
   @override
@@ -72,12 +74,17 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
       oldWidget.editContext.composer.selectionNotifier.removeListener(_onComposerChange);
       widget.editContext.composer.selectionNotifier.addListener(_onComposerChange);
     }
+    if (widget.editContext.composer.imeConfiguration != oldWidget.editContext.composer.imeConfiguration) {
+      oldWidget.editContext.composer.imeConfiguration.removeListener(_onClientWantsDifferentImeConfiguration);
+      oldWidget.editContext.composer.imeConfiguration.addListener(_onClientWantsDifferentImeConfiguration);
+    }
   }
 
   @override
   void dispose() {
     _detachFromIme();
 
+    widget.editContext.composer.imeConfiguration.removeListener(_onClientWantsDifferentImeConfiguration);
     widget.editContext.composer.selectionNotifier.removeListener(_onComposerChange);
 
     if (widget.focusNode == null) {
@@ -102,7 +109,6 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
     editorImeLog.info("Document composer (${widget.editContext.composer.hashCode}) changed. New selection: $selection");
 
     if (selection == null) {
-      // currentTextEditingValue = const TextEditingValue();
       _detachFromIme();
     } else {
       if (isAttachedToIme) {
@@ -111,6 +117,14 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
         _attachToIme();
       }
     }
+  }
+
+  void _onClientWantsDifferentImeConfiguration() {
+    if (!isAttachedToIme) {
+      return;
+    }
+
+    _inputConnection!.updateConfig(_createInputConfiguration());
   }
 
   bool get isAttachedToIme => _inputConnection?.attached == true;
@@ -122,18 +136,11 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
     }
 
     editorImeLog.info('Attaching TextInputClient to TextInput');
+
     _inputConnection = TextInput.attach(
-        this,
-        TextInputConfiguration(
-          // TODO: make this configurable
-          autocorrect: true,
-          enableDeltaModel: true,
-          // TODO: make this configurable
-          enableSuggestions: true,
-          // TODO: make this configurable
-          inputAction: TextInputAction.go,
-          keyboardAppearance: widget.keyboardBrightness ?? MediaQuery.of(context).platformBrightness,
-        ));
+      this,
+      _createInputConfiguration(),
+    );
 
     _syncImeWithDocumentAndComposer();
 
@@ -142,6 +149,20 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
       ..setEditingState(currentTextEditingValue);
 
     editorImeLog.fine('Is attached to input client? ${_inputConnection!.attached}');
+  }
+
+  TextInputConfiguration _createInputConfiguration() {
+    final imeConfig = widget.editContext.composer.imeConfiguration.value;
+
+    print("Action button: ${imeConfig.keyboardActionButton}");
+
+    return TextInputConfiguration(
+      enableDeltaModel: true,
+      autocorrect: imeConfig.enableAutocorrect,
+      enableSuggestions: imeConfig.enableSuggestions,
+      inputAction: imeConfig.keyboardActionButton,
+      keyboardAppearance: imeConfig.keyboardBrightness ?? MediaQuery.of(context).platformBrightness,
+    );
   }
 
   void _detachFromIme() {
@@ -200,95 +221,36 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
     for (final delta in textEditingDeltas) {
       editorImeLog.info("Applying delta: $delta");
       if (delta is TextEditingDeltaInsertion) {
-        editorImeLog.fine("Inserting text: ${delta.textInserted}, insertion offset: ${delta.insertionOffset}");
-
-        final docSerializer = DocumentImeSerializer(
-          widget.editContext.editor.document,
-          widget.editContext.composer.selection!,
-        );
-        final insertionSelection =
-            docSerializer.imeToDocumentSelection(TextSelection.collapsed(offset: delta.insertionOffset));
-        widget.editContext.composer.selection = insertionSelection;
-
         if (delta.textInserted == "\n") {
-          editorImeLog.fine("The user inserted a newline.");
-          final imeValueBeforeNewline = currentTextEditingValue;
-
-          widget.editContext.commonOps.insertBlockLevelNewline();
-
-          if (imeValueBeforeNewline == currentTextEditingValue) {
-            // The newline action didn't change the current IME content or
-            // selection. This can happen, for example, when an empty list
-            // item is converted to a paragraph. Here, we explicitly reset
-            // the IME value to what it was before the newline so that the
-            // IME doesn't think there's a "\n" character in the content.
-            _inputConnection!.setEditingState(currentTextEditingValue);
-          }
-
-          return;
+          // Newlines are also reported to performAction(). We handle it there.
+          editorImeLog.fine("Skipping insertion delta because its a newline");
+          continue;
         }
 
-        final didInsert = widget.editContext.commonOps.insertPlainText(delta.textInserted);
-        editorImeLog.fine("Insertion successful? $didInsert");
+        editorImeLog.fine("Inserting text: ${delta.textInserted}, insertion offset: ${delta.insertionOffset}");
+
+        final imeValueBeforeChange = currentTextEditingValue;
+        widget.softwareKeyboardHandler.insert(delta.insertionOffset, delta.textInserted);
+
+        if (delta.textInserted == "\n" && imeValueBeforeChange == currentTextEditingValue) {
+          // The newline action didn't change the current IME content or
+          // selection. This can happen, for example, when an empty list
+          // item is converted to a paragraph. Here, we explicitly reset
+          // the IME value to what it was before the newline so that the
+          // IME doesn't think there's a "\n" character in the content.
+          _inputConnection!.setEditingState(currentTextEditingValue);
+        }
       } else if (delta is TextEditingDeltaReplacement) {
         editorImeLog.fine("Replacing text: ${delta.textReplaced}");
         editorImeLog.fine("With new text: ${delta.replacementText}");
 
-        final docSerializer = DocumentImeSerializer(
-          widget.editContext.editor.document,
-          widget.editContext.composer.selection!,
-        );
-        final replacementSelection = docSerializer.imeToDocumentSelection(TextSelection(
-          baseOffset: delta.replacedRange.start,
-          // TODO: the delta API is wrong for TextRange.end, it should be exclusive,
-          //       but it's implemented as inclusive. Change this code when Flutter
-          //       fixes the problem.
-          extentOffset: delta.replacedRange.end,
-        ));
-        widget.editContext.composer.selection = replacementSelection;
-
-        if (delta.replacementText == "\n") {
-          widget.editContext.commonOps.deleteSelection();
-          widget.editContext.commonOps.insertBlockLevelNewline();
-          return;
-        }
-
-        widget.editContext.commonOps.insertPlainText(delta.replacementText);
+        widget.softwareKeyboardHandler.replace(delta.replacedRange, delta.replacementText);
       } else if (delta is TextEditingDeltaDeletion) {
         editorImeLog.fine("Deleting text: ${delta.textDeleted}");
         editorImeLog.fine("Deleted range: ${delta.deletedRange}");
 
-        final rangeToDelete = delta.deletedRange;
-        final docSerializer = DocumentImeSerializer(
-          widget.editContext.editor.document,
-          widget.editContext.composer.selection!,
-        );
-        final docSelectionToDelete = docSerializer.imeToDocumentSelection(TextSelection(
-          baseOffset: rangeToDelete.start,
-          extentOffset: rangeToDelete.end,
-        ));
-        editorImeLog.fine("Doc selection to delete: $docSelectionToDelete");
+        widget.softwareKeyboardHandler.delete(delta.deletedRange);
 
-        if (docSelectionToDelete == null) {
-          final selectedNodeIndex = widget.editContext.editor.document.getNodeIndexById(
-            widget.editContext.composer.selection!.extent.nodeId,
-          );
-          if (selectedNodeIndex > 0) {
-            // The user is trying to delete upstream at the start of a node.
-            // This action requires intervention because the IME doesn't know
-            // that there's more content before this node. Instruct the editor
-            // to run a delete action upstream, which will take the desired
-            // "backspace" behavior at the start of this node.
-            widget.editContext.commonOps.deleteUpstream();
-            editorImeLog.fine("Deleted upstream. New selection: ${widget.editContext.composer.selection}");
-            _syncImeWithDocumentAndComposer();
-            return;
-          }
-        }
-
-        editorImeLog.fine("Running selection deletion operation");
-        widget.editContext.composer.selection = docSelectionToDelete;
-        widget.editContext.commonOps.deleteSelection();
         _syncImeWithDocumentAndComposer();
         editorImeLog.fine("Deletion operation complete");
       } else if (delta is TextEditingDeltaNonTextUpdate) {
@@ -307,7 +269,7 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
   @override
   void performAction(TextInputAction action) {
     editorImeLog.fine("IME says to perform action: $action");
-    // TODO: implement performAction
+    widget.softwareKeyboardHandler.performAction(action);
   }
 
   @override
@@ -679,6 +641,180 @@ class DocumentImeSerializer {
     }
 
     return buffer.toString();
+  }
+}
+
+/// Input Method Engine (IME) configuration for document text input.
+///
+/// The IME is an operating system component that observes text that's
+/// being edited, and intercepts keyboard input to apply transforms to
+/// the user's input. The alternative to IME input is for an app to
+/// listen and respond to each individual keyboard key. On mobile, IME
+/// input is the only available input system because there is no physical
+/// keyboard.
+class ImeConfiguration {
+  const ImeConfiguration({
+    this.enableAutocorrect = true,
+    this.enableSuggestions = true,
+    this.keyboardBrightness,
+    this.keyboardActionButton = TextInputAction.newline,
+  });
+
+  /// Whether the OS should offer auto-correction options to the user.
+  final bool enableAutocorrect;
+
+  /// Whether the OS should offer text completion suggestions to the user.
+  final bool enableSuggestions;
+
+  /// The brightness of the software keyboard (only applies to platforms
+  /// with a software keyboard).
+  final Brightness? keyboardBrightness;
+
+  /// The action button that's displayed on a software keyboard, e.g.,
+  /// new-line, done, go, etc.
+  final TextInputAction keyboardActionButton;
+
+  ImeConfiguration copyWith({
+    bool? enableAutocorrect,
+    bool? enableSuggestions,
+    Brightness? keyboardBrightness,
+    TextInputAction? keyboardActionButton,
+  }) {
+    return ImeConfiguration(
+      enableAutocorrect: enableAutocorrect ?? this.enableAutocorrect,
+      enableSuggestions: enableSuggestions ?? this.enableSuggestions,
+      keyboardBrightness: keyboardBrightness ?? this.keyboardBrightness,
+      keyboardActionButton: keyboardActionButton ?? this.keyboardActionButton,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ImeConfiguration &&
+          runtimeType == other.runtimeType &&
+          enableAutocorrect == other.enableAutocorrect &&
+          enableSuggestions == other.enableSuggestions &&
+          keyboardBrightness == other.keyboardBrightness &&
+          keyboardActionButton == other.keyboardActionButton;
+
+  @override
+  int get hashCode =>
+      enableAutocorrect.hashCode ^
+      enableSuggestions.hashCode ^
+      keyboardBrightness.hashCode ^
+      keyboardActionButton.hashCode;
+}
+
+/// Applies software keyboard edits to a document.
+class SoftwareKeyboardHandler {
+  const SoftwareKeyboardHandler({
+    required this.editor,
+    required this.composer,
+    required this.commonOps,
+  });
+
+  final DocumentEditor editor;
+  final DocumentComposer composer;
+  final CommonEditorOperations commonOps;
+
+  void insert(int insertionOffset, String textInserted) {
+    if (textInserted == "\n") {
+      // Newlines are handled in performAction()
+      return;
+    }
+
+    final docSerializer = DocumentImeSerializer(
+      editor.document,
+      composer.selection!,
+    );
+    final insertionSelection = docSerializer.imeToDocumentSelection(
+      TextSelection.collapsed(offset: insertionOffset),
+    );
+    composer.selection = insertionSelection;
+
+    final didInsert = commonOps.insertPlainText(textInserted);
+    editorImeLog.fine("Insertion successful? $didInsert");
+  }
+
+  void replace(TextRange replacedRange, String replacementText) {
+    final docSerializer = DocumentImeSerializer(
+      editor.document,
+      composer.selection!,
+    );
+    final replacementSelection = docSerializer.imeToDocumentSelection(TextSelection(
+      baseOffset: replacedRange.start,
+      // TODO: the delta API is wrong for TextRange.end, it should be exclusive,
+      //       but it's implemented as inclusive. Change this code when Flutter
+      //       fixes the problem.
+      extentOffset: replacedRange.end,
+    ));
+    composer.selection = replacementSelection;
+
+    if (replacementText == "\n") {
+      commonOps.deleteSelection();
+      commonOps.insertBlockLevelNewline();
+      return;
+    }
+
+    commonOps.insertPlainText(replacementText);
+  }
+
+  void delete(TextRange deletedRange) {
+    final rangeToDelete = deletedRange;
+    final docSerializer = DocumentImeSerializer(
+      editor.document,
+      composer.selection!,
+    );
+    final docSelectionToDelete = docSerializer.imeToDocumentSelection(TextSelection(
+      baseOffset: rangeToDelete.start,
+      extentOffset: rangeToDelete.end,
+    ));
+    editorImeLog.fine("Doc selection to delete: $docSelectionToDelete");
+
+    if (docSelectionToDelete == null) {
+      final selectedNodeIndex = editor.document.getNodeIndexById(
+        composer.selection!.extent.nodeId,
+      );
+      if (selectedNodeIndex > 0) {
+        // The user is trying to delete upstream at the start of a node.
+        // This action requires intervention because the IME doesn't know
+        // that there's more content before this node. Instruct the editor
+        // to run a delete action upstream, which will take the desired
+        // "backspace" behavior at the start of this node.
+        commonOps.deleteUpstream();
+        editorImeLog.fine("Deleted upstream. New selection: ${composer.selection}");
+        return;
+      }
+    }
+
+    editorImeLog.fine("Running selection deletion operation");
+    composer.selection = docSelectionToDelete;
+    commonOps.deleteSelection();
+  }
+
+  void performAction(TextInputAction action) {
+    switch (action) {
+      case TextInputAction.newline:
+        commonOps.insertBlockLevelNewline();
+        break;
+      case TextInputAction.none:
+        // no-op
+        break;
+      case TextInputAction.done:
+      case TextInputAction.go:
+      case TextInputAction.search:
+      case TextInputAction.send:
+      case TextInputAction.next:
+      case TextInputAction.previous:
+      case TextInputAction.continueAction:
+      case TextInputAction.join:
+      case TextInputAction.route:
+      case TextInputAction.emergencyCall:
+      case TextInputAction.unspecified:
+        editorImeLog.warning("User pressed unhandled action button: $action");
+        break;
+    }
   }
 }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:super_editor/src/core/document.dart';
+import 'package:super_editor/src/default_editor/document_input_ime.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_spans.dart';
 
@@ -14,7 +15,9 @@ class DocumentComposer with ChangeNotifier {
   /// desired.
   DocumentComposer({
     DocumentSelection? initialSelection,
+    ImeConfiguration? imeConfiguration,
   })  : _selection = initialSelection,
+        imeConfiguration = ValueNotifier(imeConfiguration ?? const ImeConfiguration()),
         _preferences = ComposerPreferences() {
     _preferences.addListener(() {
       editorLog.fine("Composer preferences changed");
@@ -49,6 +52,8 @@ class DocumentComposer with ChangeNotifier {
   void clearSelection() {
     selection = null;
   }
+
+  final ValueNotifier<ImeConfiguration> imeConfiguration;
 
   final ComposerPreferences _preferences;
 

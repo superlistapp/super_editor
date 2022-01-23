@@ -18,6 +18,7 @@ class _MobileEditingAndroidDemoState extends State<MobileEditingAndroidDemo> {
   late Document _doc;
   late DocumentEditor _docEditor;
   late DocumentComposer _composer;
+  late SoftwareKeyboardHandler _softwareKeyboardHandler;
 
   FocusNode? _editorFocusNode;
 
@@ -26,7 +27,16 @@ class _MobileEditingAndroidDemoState extends State<MobileEditingAndroidDemo> {
     super.initState();
     _doc = _createInitialDocument();
     _docEditor = DocumentEditor(document: _doc as MutableDocument);
-    _composer = DocumentComposer();
+    _composer = DocumentComposer()..addListener(_configureImeActionButton);
+    _softwareKeyboardHandler = SoftwareKeyboardHandler(
+      editor: _docEditor,
+      composer: _composer,
+      commonOps: CommonEditorOperations(
+        editor: _docEditor,
+        composer: _composer,
+        documentLayoutResolver: () => _docLayoutKey.currentState as DocumentLayout,
+      ),
+    );
     _editorFocusNode = FocusNode();
   }
 
@@ -35,6 +45,27 @@ class _MobileEditingAndroidDemoState extends State<MobileEditingAndroidDemo> {
     _editorFocusNode!.dispose();
     _composer.dispose();
     super.dispose();
+  }
+
+  void _configureImeActionButton() {
+    if (_composer.selection == null || !_composer.selection!.isCollapsed) {
+      _composer.imeConfiguration.value = _composer.imeConfiguration.value.copyWith(
+        keyboardActionButton: TextInputAction.newline,
+      );
+      return;
+    }
+
+    final selectedNode = _doc.getNodeById(_composer.selection!.extent.nodeId);
+    if (selectedNode is ListItemNode) {
+      _composer.imeConfiguration.value = _composer.imeConfiguration.value.copyWith(
+        keyboardActionButton: TextInputAction.done,
+      );
+      return;
+    }
+
+    _composer.imeConfiguration.value = _composer.imeConfiguration.value.copyWith(
+      keyboardActionButton: TextInputAction.newline,
+    );
   }
 
   @override
@@ -64,6 +95,7 @@ class _MobileEditingAndroidDemoState extends State<MobileEditingAndroidDemo> {
               ),
               editor: _docEditor,
               composer: _composer,
+              softwareKeyboardHandler: _softwareKeyboardHandler,
               padding: const EdgeInsets.all(16),
             ),
           ),
