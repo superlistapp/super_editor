@@ -6,6 +6,7 @@ import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
+import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/caret.dart';
@@ -31,6 +32,7 @@ class IOSDocumentTouchInteractor extends StatefulWidget {
     this.scrollController,
     this.dragAutoScrollBoundary = const AxisOffset.symmetric(54),
     required this.popoverToolbarBuilder,
+    required this.floatingCursorController,
     this.showDebugPaint = false,
     required this.child,
   }) : super(key: key);
@@ -52,6 +54,10 @@ class IOSDocumentTouchInteractor extends StatefulWidget {
   final AxisOffset dragAutoScrollBoundary;
 
   final WidgetBuilder popoverToolbarBuilder;
+
+  /// Controller that reports the current offset of the iOS floating
+  /// cursor.
+  final FloatingCursorController floatingCursorController;
 
   final bool showDebugPaint;
 
@@ -335,10 +341,16 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
 
   RenderBox get interactorBox => context.findRenderObject() as RenderBox;
 
-  /// Converts the given [offset] from the [DocumentInteractor]'s coordinate
+  /// Converts the given [interactorOffset] from the [DocumentInteractor]'s coordinate
   /// space to the [DocumentLayout]'s coordinate space.
-  Offset _getDocOffset(Offset offset) {
-    return _docLayout.getDocumentOffsetFromAncestorOffset(offset, context.findRenderObject()!);
+  Offset _interactorOffsetToDocOffset(Offset interactorOffset) {
+    return _docLayout.getDocumentOffsetFromAncestorOffset(interactorOffset, context.findRenderObject()!);
+  }
+
+  /// Converts the given [documentOffset] to an `Offset` in the interactor's
+  /// coordinate space.
+  Offset _docOffsetToInteractorOffset(Offset documentOffset) {
+    return _docLayout.getAncestorOffsetFromDocumentOffset(documentOffset, context.findRenderObject()!);
   }
 
   /// Maps the given [interactorOffset] within the interactor's coordinate space
@@ -367,7 +379,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     }
 
     editorGesturesLog.info("Tap down on document");
-    final docOffset = _getDocOffset(details.localPosition);
+    final docOffset = _interactorOffsetToDocOffset(details.localPosition);
     editorGesturesLog.fine(" - document offset: $docOffset");
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
     editorGesturesLog.fine(" - tapped document position: $docPosition");
@@ -418,7 +430,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     }
 
     editorGesturesLog.info("Double tap down on document");
-    final docOffset = _getDocOffset(details.localPosition);
+    final docOffset = _interactorOffsetToDocOffset(details.localPosition);
     editorGesturesLog.fine(" - document offset: $docOffset");
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
     editorGesturesLog.fine(" - tapped document position: $docPosition");
@@ -451,7 +463,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   void _onTripleTapUp(TapUpDetails details) {
     editorGesturesLog.info("Triple down down on document");
 
-    final docOffset = _getDocOffset(details.localPosition);
+    final docOffset = _interactorOffsetToDocOffset(details.localPosition);
     editorGesturesLog.fine(" - document offset: $docOffset");
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
     editorGesturesLog.fine(" - tapped document position: $docPosition");
@@ -508,7 +520,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     _globalStartDragOffset = details.globalPosition;
     final interactorBox = context.findRenderObject() as RenderBox;
     final handleOffsetInInteractor = interactorBox.globalToLocal(details.globalPosition);
-    _dragStartInDoc = _getDocOffset(handleOffsetInInteractor);
+    _dragStartInDoc = _interactorOffsetToDocOffset(handleOffsetInInteractor);
 
     _startDragPositionOffset = _docLayout
         .getRectForPosition(
@@ -671,7 +683,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
       return;
     }
 
-    final dragEndInDoc = _getDocOffset(_dragEndInInteractor!);
+    final dragEndInDoc = _interactorOffsetToDocOffset(_dragEndInInteractor!);
     final dragPosition = _docLayout.getDocumentPositionNearestToOffset(dragEndInDoc);
     editorGesturesLog.info("Selecting new position during drag: $dragPosition");
 
@@ -711,10 +723,16 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     _controlsOverlayEntry = OverlayEntry(builder: (overlayContext) {
       return IosDocumentTouchEditingControls(
         editingController: _editingController,
+        floatingCursorController: widget.floatingCursorController,
         documentLayout: _docLayout,
+        document: widget.document,
+        composer: widget.composer,
         handleColor: Colors.red,
         onDoubleTapOnCaret: _selectWordAtCaret,
         onTripleTapOnCaret: _selectParagraphAtCaret,
+        onFloatingCursorStart: _onFloatingCursorStart,
+        onFloatingCursorMoved: _moveSelectionToFloatingCursor,
+        onFloatingCursorStop: _onFloatingCursorStop,
         magnifierFocalPointOffset: _globalDragOffset,
         popoverToolbarBuilder: widget.popoverToolbarBuilder,
         disableGestureHandling: _waitingForMoreTaps,
@@ -899,6 +917,22 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     }
   }
 
+  void _onFloatingCursorStart() {
+    _handleAutoScrolling.startAutoScrollHandleMonitoring();
+  }
+
+  void _moveSelectionToFloatingCursor(Offset documentOffset) {
+    final nearestDocumentPosition = _docLayout.getDocumentPositionNearestToOffset(documentOffset)!;
+    _selectPosition(nearestDocumentPosition);
+    _handleAutoScrolling.updateAutoScrollHandleMonitoring(
+      dragEndInViewport: _docOffsetToInteractorOffset(documentOffset),
+    );
+  }
+
+  void _onFloatingCursorStop() {
+    _handleAutoScrolling.stopAutoScrollHandleMonitoring();
+  }
+
   void _selectPosition(DocumentPosition position) {
     editorGesturesLog.fine("Setting document selection to $position");
     widget.composer.selection = DocumentSelection.collapsed(
@@ -957,6 +991,18 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   }
 }
 
+class FloatingCursorController with ChangeNotifier {
+  Offset? get offset => _offset;
+  Offset? _offset;
+  set offset(Offset? newOffset) {
+    if (newOffset == _offset) {
+      return;
+    }
+    _offset = newOffset;
+    notifyListeners();
+  }
+}
+
 enum _DragMode {
   // Dragging the collapsed handle
   collapsed,
@@ -970,10 +1016,16 @@ class IosDocumentTouchEditingControls extends StatefulWidget {
   const IosDocumentTouchEditingControls({
     Key? key,
     required this.editingController,
+    required this.floatingCursorController,
     required this.documentLayout,
+    required this.document,
+    required this.composer,
     required this.handleColor,
     this.onDoubleTapOnCaret,
     this.onTripleTapOnCaret,
+    this.onFloatingCursorStart,
+    this.onFloatingCursorMoved,
+    this.onFloatingCursorStop,
     this.magnifierFocalPointOffset,
     required this.popoverToolbarBuilder,
     this.disableGestureHandling = false,
@@ -981,6 +1033,12 @@ class IosDocumentTouchEditingControls extends StatefulWidget {
   }) : super(key: key);
 
   final IosDocumentGestureEditingController editingController;
+
+  final Document document;
+
+  final DocumentComposer composer;
+
+  final FloatingCursorController floatingCursorController;
 
   final DocumentLayout documentLayout;
 
@@ -991,6 +1049,16 @@ class IosDocumentTouchEditingControls extends StatefulWidget {
 
   /// Callback invoked on iOS when the user triple taps on the caret.
   final VoidCallback? onTripleTapOnCaret;
+
+  /// Callback invoked when the floating cursor becomes visible.
+  final VoidCallback? onFloatingCursorStart;
+
+  /// Callback invoked whenever the iOS floating cursor moves to a new
+  /// position.
+  final void Function(Offset)? onFloatingCursorMoved;
+
+  /// Callback invoked when the floating cursor disappears.
+  final VoidCallback? onFloatingCursorStop;
 
   /// Offset where the magnifier should focus.
   ///
@@ -1040,12 +1108,20 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
   late CaretBlinkController _caretBlinkController;
   Offset? _prevCaretOffset;
 
+  static const _defaultFloatingCursorHeight = 20.0;
+  final _isShowingFloatingCursor = ValueNotifier<bool>(false);
+  final _floatingCursorKey = GlobalKey();
+  Offset? _initialFloatingCursorOffset;
+  final _floatingCursorOffset = ValueNotifier<Offset?>(null);
+  double _floatingCursorHeight = _defaultFloatingCursorHeight;
+
   @override
   void initState() {
     super.initState();
     _caretBlinkController = CaretBlinkController(tickerProvider: this);
     _prevCaretOffset = widget.editingController.caretTop;
     widget.editingController.addListener(_onEditingControllerChange);
+    widget.floatingCursorController.addListener(_onFloatingCursorChange);
   }
 
   @override
@@ -1056,10 +1132,15 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
       oldWidget.editingController.removeListener(_onEditingControllerChange);
       widget.editingController.addListener(_onEditingControllerChange);
     }
+    if (widget.floatingCursorController != oldWidget.floatingCursorController) {
+      oldWidget.floatingCursorController.removeListener(_onFloatingCursorChange);
+      widget.floatingCursorController.addListener(_onFloatingCursorChange);
+    }
   }
 
   @override
   void dispose() {
+    widget.floatingCursorController.removeListener(_onFloatingCursorChange);
     widget.editingController.removeListener(_onEditingControllerChange);
     _caretBlinkController.dispose();
     super.dispose();
@@ -1079,6 +1160,62 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
     }
   }
 
+  void _onFloatingCursorChange() {
+    if (widget.floatingCursorController.offset == null) {
+      if (_floatingCursorOffset.value != null) {
+        _isShowingFloatingCursor.value = false;
+
+        _caretBlinkController.startBlinking();
+
+        _initialFloatingCursorOffset = null;
+        _floatingCursorOffset.value = null;
+        _floatingCursorHeight = _defaultFloatingCursorHeight;
+
+        widget.onFloatingCursorStop?.call();
+      }
+
+      return;
+    }
+
+    if (widget.composer.selection == null) {
+      // The floating cursor doesn't mean anything when nothing is selected.
+      return;
+    }
+
+    if (!widget.composer.selection!.isCollapsed) {
+      // The selection is expanded. First we need to collapse it, then
+      // we can start showing the floating cursor.
+      widget.composer.selection = widget.composer.selection!.collapseDownstream(widget.document);
+      WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+        _onFloatingCursorChange();
+      });
+    }
+
+    if (_floatingCursorOffset.value == null) {
+      // The floating cursor just started.
+      widget.onFloatingCursorStart?.call();
+    }
+
+    _caretBlinkController.stopBlinking();
+    widget.editingController.hideToolbar();
+    widget.editingController.hideMagnifier();
+
+    _initialFloatingCursorOffset ??=
+        widget.editingController.caretTop! + const Offset(-1, 0) + Offset(0, widget.editingController.caretHeight! / 2);
+    _floatingCursorOffset.value = _initialFloatingCursorOffset! + widget.floatingCursorController.offset!;
+
+    final nearestDocPosition = widget.documentLayout.getDocumentPositionNearestToOffset(_floatingCursorOffset.value!)!;
+    if (nearestDocPosition.nodePosition is TextNodePosition) {
+      final nearestComponent = widget.documentLayout.getComponentByNodeId(nearestDocPosition.nodeId)!;
+      _floatingCursorHeight = nearestComponent.getRectForPosition(nearestDocPosition.nodePosition).height;
+    } else {
+      final nearestComponent = widget.documentLayout.getComponentByNodeId(nearestDocPosition.nodeId)!;
+      _floatingCursorHeight = (nearestComponent.context.findRenderObject() as RenderBox).size.height;
+    }
+
+    widget.onFloatingCursorMoved?.call(_floatingCursorOffset.value!);
+  }
+
   @override
   Widget build(BuildContext context) {
     return SizedBox(
@@ -1089,7 +1226,10 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
           builder: (context, child) {
             return Stack(
               children: [
+                // Build caret or drag handles
                 ..._buildHandles(),
+                // Build the floating cursor
+                _buildFloatingCursor(),
                 // Build the editing toolbar
                 if (widget.editingController.shouldDisplayToolbar && widget.editingController.isToolbarPositioned)
                   _buildToolbar(),
@@ -1164,10 +1304,15 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
     switch (handleType) {
       case HandleType.collapsed:
         handleOffset = widget.editingController.caretTop! + const Offset(-1, 0);
-        handle = IOSCollapsedHandle(
-          controller: _caretBlinkController,
-          color: widget.handleColor,
-          caretHeight: widget.editingController.caretHeight!,
+        handle = ValueListenableBuilder<bool>(
+          valueListenable: _isShowingFloatingCursor,
+          builder: (context, isShowingFloatingCursor, child) {
+            return IOSCollapsedHandle(
+              controller: _caretBlinkController,
+              color: isShowingFloatingCursor ? Colors.grey : widget.handleColor,
+              caretHeight: widget.editingController.caretHeight!,
+            );
+          },
         );
         break;
       case HandleType.upstream:
@@ -1219,6 +1364,28 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
           child: handle,
         ),
       ),
+    );
+  }
+
+  Widget _buildFloatingCursor() {
+    return ValueListenableBuilder<Offset?>(
+      valueListenable: _floatingCursorOffset,
+      builder: (context, floatingCursorOffset, child) {
+        if (floatingCursorOffset == null) {
+          return const SizedBox();
+        }
+
+        return _buildHandle(
+          handleKey: _floatingCursorKey,
+          handleOffset: floatingCursorOffset - Offset(0, _floatingCursorHeight / 2),
+          handle: Container(
+            width: 2,
+            height: _floatingCursorHeight,
+            color: Colors.red,
+          ),
+          debugColor: Colors.blue,
+        );
+      },
     );
   }
 

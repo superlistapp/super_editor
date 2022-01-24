@@ -246,7 +246,19 @@ class CaretBlinkController with ChangeNotifier {
   final Duration _flashPeriod;
   Timer? _timer;
   bool _isVisible = true;
+  bool _isBlinking = true;
   double get opacity => _isVisible ? 1.0 : 0.0;
+
+  void startBlinking() {
+    _isBlinking = true;
+    _startTimer();
+  }
+
+  void stopBlinking() {
+    _isBlinking = false;
+    _isVisible = true; // If we're not blinking then we need to be visible
+    _stopTimer();
+  }
 
   /// Clients should call this method when the caret first appears
   /// in the content so that this controller immediately makes the
@@ -263,13 +275,25 @@ class CaretBlinkController with ChangeNotifier {
     // changes, e.g., when the user adds/removes a character.
     _isVisible = true;
 
-    _timer?.cancel();
-    _timer = Timer(_flashPeriod, _onToggleTimer);
+    if (!_isBlinking) {
+      return;
+    }
+
+    _startTimer();
   }
 
   /// Clients should call this method when the caret is removed from
   /// the content so that this controller can cancel the blink timer.
   void onCaretRemoved() {
+    _stopTimer();
+  }
+
+  void _startTimer() {
+    _timer?.cancel();
+    _timer = Timer(_flashPeriod, _onToggleTimer);
+  }
+
+  void _stopTimer() {
     _timer?.cancel();
   }
 
