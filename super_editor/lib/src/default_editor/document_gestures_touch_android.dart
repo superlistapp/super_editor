@@ -32,6 +32,7 @@ class AndroidDocumentTouchInteractor extends StatefulWidget {
     this.scrollController,
     this.dragAutoScrollBoundary = const AxisOffset.symmetric(54),
     required this.popoverToolbarBuilder,
+    this.createOverlayControlsClipper,
     this.showDebugPaint = false,
     required this.child,
   }) : super(key: key);
@@ -53,6 +54,15 @@ class AndroidDocumentTouchInteractor extends StatefulWidget {
   final AxisOffset dragAutoScrollBoundary;
 
   final WidgetBuilder popoverToolbarBuilder;
+
+  /// Creates a clipper that applies to overlay controls, preventing
+  /// the overlay controls from appearing outside the given clipping
+  /// region.
+  ///
+  /// If no clipper factory method is provided, then the overlay controls
+  /// will be allowed to appear anywhere in the overlay in which they sit
+  /// (probably the entire screen).
+  final CustomClipper<Rect> Function(BuildContext overlayContext)? createOverlayControlsClipper;
 
   final bool showDebugPaint;
 
@@ -461,6 +471,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
           editingController: _editingController,
           documentKey: widget.documentKey,
           documentLayout: _docLayout,
+          createOverlayControlsClipper: widget.createOverlayControlsClipper,
           handleColor: Colors.red,
           onHandleDragStart: _onHandleDragStart,
           onHandleDragUpdate: _onHandleDragUpdate,
@@ -822,6 +833,7 @@ class AndroidDocumentTouchEditingControls extends StatefulWidget {
     this.onHandleDragUpdate,
     this.onHandleDragEnd,
     required this.popoverToolbarBuilder,
+    this.createOverlayControlsClipper,
     this.showDebugPaint = false,
   }) : super(key: key);
 
@@ -830,6 +842,15 @@ class AndroidDocumentTouchEditingControls extends StatefulWidget {
   final GlobalKey documentKey;
 
   final DocumentLayout documentLayout;
+
+  /// Creates a clipper that applies to overlay controls, preventing
+  /// the overlay controls from appearing outside the given clipping
+  /// region.
+  ///
+  /// If no clipper factory method is provided, then the overlay controls
+  /// will be allowed to appear anywhere in the overlay in which they sit
+  /// (probably the entire screen).
+  final CustomClipper<Rect> Function(BuildContext overlayContext)? createOverlayControlsClipper;
 
   final Color handleColor;
 
@@ -990,39 +1011,51 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: double.infinity,
-      child: ListenableBuilder(
-        listenable: widget.editingController,
-        builder: (context) {
-          return Stack(
-            children: [
-              // Build the caret
-              _buildCaret(),
-              // Build the drag handles (if desired)
-              ..._buildHandles(),
-              // Build the focal point for the magnifier
-              if (_isDraggingHandle) _buildMagnifierFocalPoint(),
-              // Build the magnifier (this needs to be done before building
-              // the handles so that the magnifier doesn't show the handles
-              if (widget.editingController.shouldDisplayMagnifier) _buildMagnifier(),
-              // Build the editing toolbar
-              if (widget.editingController.shouldDisplayToolbar && widget.editingController.isToolbarPositioned)
-                _buildToolbar(context),
-              // Build a UI that's useful for debugging, if desired.
-              if (widget.showDebugPaint)
-                IgnorePointer(
-                  child: Container(
-                    width: double.infinity,
-                    height: double.infinity,
-                    color: Colors.yellow.withOpacity(0.2),
-                  ),
-                ),
-            ],
-          );
-        },
-      ),
+    return ListenableBuilder(
+      listenable: widget.editingController,
+      builder: (context) {
+        return Padding(
+          // Remove the keyboard from the space that we occupy so that
+          // clipping calculations apply to the expected visual borders,
+          // instead of applying underneath the keyboard.
+          padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+          child: ClipRect(
+            clipper: widget.createOverlayControlsClipper?.call(context),
+            child: SizedBox(
+              // ^ SizedBox tries to be as large as possible, because
+              // a Stack will collapse into nothing unless something
+              // expands it.
+              width: double.infinity,
+              height: double.infinity,
+              child: Stack(
+                children: [
+                  // Build the caret
+                  _buildCaret(),
+                  // Build the drag handles (if desired)
+                  ..._buildHandles(),
+                  // Build the focal point for the magnifier
+                  if (_isDraggingHandle) _buildMagnifierFocalPoint(),
+                  // Build the magnifier (this needs to be done before building
+                  // the handles so that the magnifier doesn't show the handles
+                  if (widget.editingController.shouldDisplayMagnifier) _buildMagnifier(),
+                  // Build the editing toolbar
+                  if (widget.editingController.shouldDisplayToolbar && widget.editingController.isToolbarPositioned)
+                    _buildToolbar(context),
+                  // Build a UI that's useful for debugging, if desired.
+                  if (widget.showDebugPaint)
+                    IgnorePointer(
+                      child: Container(
+                        width: double.infinity,
+                        height: double.infinity,
+                        color: Colors.yellow.withOpacity(0.2),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 

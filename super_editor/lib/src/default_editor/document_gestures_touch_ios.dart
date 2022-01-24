@@ -8,6 +8,7 @@ import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/default_editor/text_tools.dart';
+import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/caret.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
@@ -33,6 +34,7 @@ class IOSDocumentTouchInteractor extends StatefulWidget {
     this.dragAutoScrollBoundary = const AxisOffset.symmetric(54),
     required this.popoverToolbarBuilder,
     required this.floatingCursorController,
+    this.createOverlayControlsClipper,
     this.showDebugPaint = false,
     required this.child,
   }) : super(key: key);
@@ -58,6 +60,15 @@ class IOSDocumentTouchInteractor extends StatefulWidget {
   /// Controller that reports the current offset of the iOS floating
   /// cursor.
   final FloatingCursorController floatingCursorController;
+
+  /// Creates a clipper that applies to overlay controls, preventing
+  /// the overlay controls from appearing outside the given clipping
+  /// region.
+  ///
+  /// If no clipper factory method is provided, then the overlay controls
+  /// will be allowed to appear anywhere in the overlay in which they sit
+  /// (probably the entire screen).
+  final CustomClipper<Rect> Function(BuildContext overlayContext)? createOverlayControlsClipper;
 
   final bool showDebugPaint;
 
@@ -735,6 +746,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
         onFloatingCursorStop: _onFloatingCursorStop,
         magnifierFocalPointOffset: _globalDragOffset,
         popoverToolbarBuilder: widget.popoverToolbarBuilder,
+        createOverlayControlsClipper: widget.createOverlayControlsClipper,
         disableGestureHandling: _waitingForMoreTaps,
         showDebugPaint: false,
       );
@@ -1028,6 +1040,7 @@ class IosDocumentTouchEditingControls extends StatefulWidget {
     this.onFloatingCursorStop,
     this.magnifierFocalPointOffset,
     required this.popoverToolbarBuilder,
+    this.createOverlayControlsClipper,
     this.disableGestureHandling = false,
     this.showDebugPaint = false,
   }) : super(key: key);
@@ -1041,6 +1054,15 @@ class IosDocumentTouchEditingControls extends StatefulWidget {
   final FloatingCursorController floatingCursorController;
 
   final DocumentLayout documentLayout;
+
+  /// Creates a clipper that applies to overlay controls, preventing
+  /// the overlay controls from appearing outside the given clipping
+  /// region.
+  ///
+  /// If no clipper factory method is provided, then the overlay controls
+  /// will be allowed to appear anywhere in the overlay in which they sit
+  /// (probably the entire screen).
+  final CustomClipper<Rect> Function(BuildContext overlayContext)? createOverlayControlsClipper;
 
   final Color handleColor;
 
@@ -1218,37 +1240,50 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: double.infinity,
-      child: AnimatedBuilder(
-          animation: widget.editingController,
-          builder: (context, child) {
-            return Stack(
-              children: [
-                // Build caret or drag handles
-                ..._buildHandles(),
-                // Build the floating cursor
-                _buildFloatingCursor(),
-                // Build the editing toolbar
-                if (widget.editingController.shouldDisplayToolbar && widget.editingController.isToolbarPositioned)
-                  _buildToolbar(),
-                // Build the focal point for the magnifier
-                if (widget.magnifierFocalPointOffset != null) _buildMagnifierFocalPoint(),
-                // Build the magnifier
-                if (widget.editingController.shouldDisplayMagnifier) _buildMagnifier(),
-                if (widget.showDebugPaint)
-                  IgnorePointer(
-                    child: Container(
-                      width: double.infinity,
-                      height: double.infinity,
-                      color: Colors.yellow.withOpacity(0.2),
-                    ),
-                  ),
-              ],
-            );
-          }),
-    );
+    return ListenableBuilder(
+        listenable: widget.editingController,
+        builder: (context) {
+          print("Clipper method: ${widget.createOverlayControlsClipper}");
+          return Padding(
+            // Remove the keyboard from the space that we occupy so that
+            // clipping calculations apply to the expected visual borders,
+            // instead of applying underneath the keyboard.
+            padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+            child: ClipRect(
+              clipper: widget.createOverlayControlsClipper?.call(context),
+              child: SizedBox(
+                // ^ SizedBox tries to be as large as possible, because
+                // a Stack will collapse into nothing unless something
+                // expands it.
+                width: double.infinity,
+                height: double.infinity,
+                child: Stack(
+                  children: [
+                    // Build caret or drag handles
+                    ..._buildHandles(),
+                    // Build the floating cursor
+                    _buildFloatingCursor(),
+                    // Build the editing toolbar
+                    if (widget.editingController.shouldDisplayToolbar && widget.editingController.isToolbarPositioned)
+                      _buildToolbar(),
+                    // Build the focal point for the magnifier
+                    if (widget.magnifierFocalPointOffset != null) _buildMagnifierFocalPoint(),
+                    // Build the magnifier
+                    if (widget.editingController.shouldDisplayMagnifier) _buildMagnifier(),
+                    if (widget.showDebugPaint)
+                      IgnorePointer(
+                        child: Container(
+                          width: double.infinity,
+                          height: double.infinity,
+                          color: Colors.yellow.withOpacity(0.2),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        });
   }
 
   List<Widget> _buildHandles() {
