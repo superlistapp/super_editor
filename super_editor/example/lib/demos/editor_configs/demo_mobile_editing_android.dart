@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:super_editor/super_editor.dart';
 
+import 'keyboard_overlay_clipper.dart';
+
 /// Mobile Android document editing demo.
 ///
 /// This demo forces the editor into a mobile configuration,
@@ -97,6 +99,7 @@ class _MobileEditingAndroidDemoState extends State<MobileEditingAndroidDemo> {
               composer: _composer,
               softwareKeyboardHandler: _softwareKeyboardHandler,
               padding: const EdgeInsets.all(16),
+              createOverlayControlsClipper: (_) => const KeyboardToolbarClipper(),
             ),
           ),
           AnimatedBuilder(

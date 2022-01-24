@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:example/demos/editor_configs/keyboard_overlay_clipper.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/super_editor.dart';
 
@@ -62,6 +63,7 @@ class _MobileEditingIOSDemoState extends State<MobileEditingIOSDemo> {
               editor: _docEditor,
               composer: _composer,
               padding: const EdgeInsets.all(16),
+              createOverlayControlsClipper: (_) => const KeyboardToolbarClipper(),
             ),
           ),
           AnimatedBuilder(
