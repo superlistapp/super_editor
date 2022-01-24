@@ -37,10 +37,12 @@ class _BlinkingTextCaretState extends State<BlinkingTextCaret> {
       return const SizedBox();
     }
 
-    final lineHeight = widget.textLayout.getLineHeightAtPosition(widget.textPosition);
+    final lineHeight =
+        widget.textLayout.getLineHeightAtPosition(widget.textPosition);
     late double caretHeight;
     try {
-      caretHeight = widget.textLayout.getHeightForCaret(widget.textPosition) ?? lineHeight;
+      caretHeight = widget.textLayout.getHeightForCaret(widget.textPosition) ??
+          lineHeight;
     } catch (exception) {
       // In debug mode, if we try to getHeightForCaret() when RenderParagraph
       // is dirty, Flutter throws an assertion error. We have no way to query
@@ -53,7 +55,8 @@ class _BlinkingTextCaretState extends State<BlinkingTextCaret> {
     try {
       caretOffset = widget.isTextEmpty
           ? Offset(0, (lineHeight - caretHeight) / 2)
-          : widget.textLayout.getOffsetForCaret(TextPosition(offset: widget.textPosition.offset));
+          : widget.textLayout.getOffsetForCaret(
+              TextPosition(offset: widget.textPosition.offset));
     } catch (exception) {
       // In debug mode, if we try to getOffsetForCaret() when RenderParagraph
       // is dirty, Flutter throws an assertion error. We have no way to query
@@ -133,7 +136,8 @@ class BlinkingCaret extends StatefulWidget {
   BlinkingCaretState createState() => BlinkingCaretState();
 }
 
-class BlinkingCaretState extends State<BlinkingCaret> with SingleTickerProviderStateMixin {
+class BlinkingCaretState extends State<BlinkingCaret>
+    with SingleTickerProviderStateMixin {
   // Controls the blinking caret animation.
   late CaretBlinkController _caretBlinkController;
 
@@ -288,7 +292,19 @@ class CaretBlinkController with ChangeNotifier {
   }
 
   bool _isVisible = true;
+  bool _isBlinking = true;
   double get opacity => _isVisible ? 1.0 : 0.0;
+
+  void startBlinking() {
+    _isBlinking = true;
+    _startTimer();
+  }
+
+  void stopBlinking() {
+    _isBlinking = false;
+    _isVisible = true; // If we're not blinking then we need to be visible
+    _stopTimer();
+  }
 
   /// Clients should call this method when the caret first appears
   /// in the content so that this controller immediately makes the
@@ -305,6 +321,10 @@ class CaretBlinkController with ChangeNotifier {
     // changes, e.g., when the user adds/removes a character.
     _isVisible = true;
 
+    if (!_isBlinking) {
+      return;
+    }
+
     _timer?.cancel();
     if (_isBlinkingEnabled) {
       _timer = Timer(_flashPeriod, _onToggleTimer);
@@ -314,6 +334,15 @@ class CaretBlinkController with ChangeNotifier {
   /// Clients should call this method when the caret is removed from
   /// the content so that this controller can cancel the blink timer.
   void onCaretRemoved() {
+    _stopTimer();
+  }
+
+  void _startTimer() {
+    _timer?.cancel();
+    _timer = Timer(_flashPeriod, _onToggleTimer);
+  }
+
+  void _stopTimer() {
     _timer?.cancel();
   }
 

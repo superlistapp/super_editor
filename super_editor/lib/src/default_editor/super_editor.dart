@@ -240,6 +240,7 @@ class _SuperEditorState extends State<SuperEditor> {
 
   late EditContext _editContext;
   late SoftwareKeyboardHandler _softwareKeyboardHandler;
+  final _floatingCursorController = FloatingCursorController();
 
   @override
   void initState() {
@@ -398,6 +399,7 @@ class _SuperEditorState extends State<SuperEditor> {
           focusNode: _focusNode,
           editContext: _editContext,
           softwareKeyboardHandler: _softwareKeyboardHandler,
+          floatingCursorController: _floatingCursorController,
           child: child,
         );
     }
@@ -439,6 +441,7 @@ class _SuperEditorState extends State<SuperEditor> {
           scrollController: widget.scrollController,
           documentKey: _docLayoutKey,
           popoverToolbarBuilder: widget.iOSToolbarBuilder ?? (_) => const SizedBox(),
+          floatingCursorController: _floatingCursorController,
           showDebugPaint: widget.showDebugPaint,
           child: child,
         );

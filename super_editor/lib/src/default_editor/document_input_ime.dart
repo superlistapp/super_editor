@@ -8,6 +8,7 @@ import 'package:super_editor/src/core/document_editor.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/default_editor/common_editor_operations.dart';
+import 'package:super_editor/src/default_editor/document_gestures_touch_ios.dart';
 import 'package:super_editor/src/default_editor/paragraph.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
@@ -34,12 +35,14 @@ class DocumentImeInteractor extends StatefulWidget {
     this.focusNode,
     required this.editContext,
     required this.softwareKeyboardHandler,
+    this.floatingCursorController,
     required this.child,
   }) : super(key: key);
 
   final FocusNode? focusNode;
   final EditContext editContext;
   final SoftwareKeyboardHandler softwareKeyboardHandler;
+  final FloatingCursorController? floatingCursorController;
   final Widget child;
 
   @override
@@ -153,8 +156,6 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
 
   TextInputConfiguration _createInputConfiguration() {
     final imeConfig = widget.editContext.composer.imeConfiguration.value;
-
-    print("Action button: ${imeConfig.keyboardActionButton}");
 
     return TextInputConfiguration(
       enableDeltaModel: true,
@@ -284,7 +285,15 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
 
   @override
   void updateFloatingCursor(RawFloatingCursorPoint point) {
-    // TODO: implement updateFloatingCursor
+    switch (point.state) {
+      case FloatingCursorDragState.Start:
+      case FloatingCursorDragState.Update:
+        widget.floatingCursorController?.offset = point.offset;
+        break;
+      case FloatingCursorDragState.End:
+        widget.floatingCursorController?.offset = null;
+        break;
+    }
   }
 
   @override
