@@ -116,11 +116,12 @@ class SplitParagraphCommand implements EditorCommand {
     node.text = startText;
 
     // Create a new node that will follow the current node. Set its text
-    // to the text that was removed from the current node.
+    // to the text that was removed from the current node. And create a
+    // new copy of the metadata if `replicateExistingMetdata` is true. 
     final newNode = ParagraphNode(
       id: newNodeId,
       text: endText,
-      metadata: replicateExistingMetdata ? node.metadata : {},
+      metadata: replicateExistingMetdata ? {...node.metadata} : {},
     );
 
     // Insert the new node after the current node.
@@ -336,6 +337,9 @@ Widget? paragraphBuilder(ComponentContext componentContext) {
       (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle?)?.selectionColor ??
           const Color(0x00000000);
 
+  final caretColor = (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle?)?.textCaretColor ??
+      const Color(0x00000000);
+
   return TextComponent(
     key: componentContext.componentKey,
     text: (componentContext.documentNode as TextNode).text,
@@ -346,7 +350,7 @@ Widget? paragraphBuilder(ComponentContext componentContext) {
     textSelection: textSelection,
     selectionColor: selectionColor,
     showCaret: showCaret,
-    caretColor: selectionColor,
+    caretColor: caretColor,
     highlightWhenEmpty: highlightWhenEmpty,
   );
 }

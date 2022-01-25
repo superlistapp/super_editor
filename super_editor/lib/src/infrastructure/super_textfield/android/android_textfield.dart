@@ -30,14 +30,12 @@ class SuperAndroidTextfield extends StatefulWidget {
     required this.caretColor,
     required this.selectionColor,
     required this.handlesColor,
-    this.lineHeight,
+    required this.lineHeight,
     this.textInputAction = TextInputAction.done,
     this.popoverToolbarBuilder = _defaultAndroidToolbarBuilder,
     this.showDebugPaint = false,
     this.onPerformActionPressed,
-  })  : assert(minLines == null || minLines == 1 || lineHeight != null, 'minLines > 1 requires a non-null lineHeight'),
-        assert(maxLines == null || maxLines == 1 || lineHeight != null, 'maxLines > 1 requires a non-null lineHeight'),
-        super(key: key);
+  }) : super(key: key);
 
   /// [FocusNode] attached to this text field.
   final FocusNode? focusNode;
@@ -103,7 +101,7 @@ class SuperAndroidTextfield extends StatefulWidget {
   /// result in a constantly changing text field height during scrolling.
   /// To avoid that situation, a single, explicit [lineHeight] is
   /// provided and used for all text field height calculations.
-  final double? lineHeight;
+  final double lineHeight;
 
   /// The type of action associated with the action button on the mobile
   /// keyboard.
@@ -223,9 +221,19 @@ class _SuperAndroidTextfieldState extends State<SuperAndroidTextfield> with Sing
   void dispose() {
     _removeEditingOverlayControls();
 
+    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      // Dispose after the current frame so that other widgets have
+      // time to remove their listeners.
+      _editingOverlayController.dispose();
+    });
+
     _textEditingController.removeListener(_onTextOrSelectionChange);
     if (widget.textController == null) {
-      _textEditingController.dispose();
+      WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+        // Dispose after the current frame so that other widgets have
+        // time to remove their listeners.
+        _textEditingController.dispose();
+      });
     }
 
     _focusNode.removeListener(_onFocusChange);
@@ -288,6 +296,7 @@ class _SuperAndroidTextfieldState extends State<SuperAndroidTextfield> with Sing
           textFieldKey: _textFieldKey,
           textContentLayerLink: _textContentLayerLink,
           textContentKey: _textContentKey,
+          defaultLineHeight: widget.lineHeight,
           handleColor: widget.handlesColor,
           popoverToolbarBuilder: widget.popoverToolbarBuilder,
           showDebugPaint: widget.showDebugPaint,

@@ -29,6 +29,8 @@ class BlinkingTextCaret extends StatefulWidget {
 }
 
 class _BlinkingTextCaretState extends State<BlinkingTextCaret> {
+  Offset? _caretOffset;
+
   @override
   Widget build(BuildContext context) {
     if (widget.textPosition.offset < 0) {
@@ -64,6 +66,32 @@ class _BlinkingTextCaretState extends State<BlinkingTextCaret> {
         }
       });
 
+      return const SizedBox();
+    }
+
+    // This is a hack to solve super_editor bug #369.
+    //
+    // In profile/release mode, we don't get assertion errors when we try to
+    // measure against a dirty text layout. In fact, there's no signal at all
+    // that we measured against a dirty text layout. In practice, measuring
+    // while dirty results in the caret position thinking that the final word
+    // in a single-line of text is wrapped to a 2nd line, causing the caret to
+    // sit below the line of text.
+    //
+    // To deal with this (temporarily), we force the caret offset to be the same
+    // for 2 frames before we draw anything. This causes flickering, but that
+    // flickering is tolerable because carets blink, normally.
+    //
+    // See #370 for the ticket that aims to fix all similar timing issues.
+    if (_caretOffset != caretOffset) {
+      WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+        if (mounted) {
+          // Trigger another build after the current layout pass.
+          setState(() {
+            _caretOffset = caretOffset;
+          });
+        }
+      });
       return const SizedBox();
     }
 
@@ -245,17 +273,28 @@ class CaretBlinkController with ChangeNotifier {
 
   final Duration _flashPeriod;
   Timer? _timer;
+
+  bool _isBlinkingEnabled = true;
+  set isBlinkingEnabled(bool newValue) {
+    if (newValue == _isBlinkingEnabled) {
+      return;
+    }
+
+    _isBlinkingEnabled = newValue;
+    if (!_isBlinkingEnabled) {
+      _timer?.cancel();
+    }
+    notifyListeners();
+  }
+
   bool _isVisible = true;
-  bool _isBlinking = true;
   double get opacity => _isVisible ? 1.0 : 0.0;
 
   void startBlinking() {
-    _isBlinking = true;
     _startTimer();
   }
 
   void stopBlinking() {
-    _isBlinking = false;
     _isVisible = true; // If we're not blinking then we need to be visible
     _stopTimer();
   }
@@ -275,7 +314,9 @@ class CaretBlinkController with ChangeNotifier {
     // changes, e.g., when the user adds/removes a character.
     _isVisible = true;
 
-    if (!_isBlinking) {
+    _timer?.cancel();
+
+    if (!_isBlinkingEnabled) {
       return;
     }
 
@@ -301,6 +342,8 @@ class CaretBlinkController with ChangeNotifier {
     _isVisible = !_isVisible;
     notifyListeners();
 
-    _timer = Timer(_flashPeriod, _onToggleTimer);
+    if (_isBlinkingEnabled) {
+      _timer = Timer(_flashPeriod, _onToggleTimer);
+    }
   }
 }

@@ -1,4 +1,5 @@
 import 'package:example/demos/components/demo_text_with_hint.dart';
+import 'package:example/demos/components/demo_unselectable_hr.dart';
 import 'package:example/demos/demo_app_shortcuts.dart';
 import 'package:example/demos/demo_rtl.dart';
 import 'package:example/demos/demo_markdown_serialization.dart';
@@ -7,6 +8,7 @@ import 'package:example/demos/demo_selectable_text.dart';
 import 'package:example/demos/editor_configs/demo_mobile_editing_android.dart';
 import 'package:example/demos/editor_configs/demo_mobile_editing_ios.dart';
 import 'package:example/demos/example_editor/example_editor.dart';
+import 'package:example/demos/flutter_features/demo_inline_widgets.dart';
 import 'package:example/demos/flutter_features/textinputclient/basic_text_input_client.dart';
 import 'package:example/demos/scrolling/demo_task_and_chat_with_customscrollview.dart';
 import 'package:example/demos/supertextfield/ios/demo_superiostextfield.dart';
@@ -280,6 +282,13 @@ final _menu = <_MenuGroup>[
           return TextWithHintDemo();
         },
       ),
+      _MenuItem(
+        icon: Icons.short_text,
+        title: 'Unselectable HR',
+        pageBuilder: (context) {
+          return UnselectableHrDemo();
+        },
+      ),
     ],
   ),
   _MenuGroup(
@@ -342,6 +351,13 @@ final _menu = <_MenuGroup>[
         title: 'Basic TextInputClient',
         pageBuilder: (context) {
           return BasicTextInputClientDemo();
+        },
+      ),
+      _MenuItem(
+        icon: Icons.image,
+        title: 'Text Inline Widgets',
+        pageBuilder: (context) {
+          return TextInlineWidgetDemo();
         },
       ),
     ],

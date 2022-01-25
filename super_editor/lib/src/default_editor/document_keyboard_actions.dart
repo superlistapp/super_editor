@@ -37,7 +37,7 @@ ExecutionInstruction pasteWhenCmdVIsPressed({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
-  if (!keyEvent.isPrimaryShortcutKeyPressed || keyEvent.character?.toLowerCase() != 'v') {
+  if (!keyEvent.isPrimaryShortcutKeyPressed || keyEvent.logicalKey != LogicalKeyboardKey.keyV) {
     return ExecutionInstruction.continueExecution;
   }
   if (editContext.composer.selection == null) {
@@ -78,7 +78,7 @@ ExecutionInstruction selectAllWhenCmdAIsPressed({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
-  if (!keyEvent.isPrimaryShortcutKeyPressed || keyEvent.character?.toLowerCase() != 'a') {
+  if (!keyEvent.isPrimaryShortcutKeyPressed || keyEvent.logicalKey != LogicalKeyboardKey.keyA) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -223,7 +223,7 @@ ExecutionInstruction copyWhenCmdCIsPressed({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
-  if (!keyEvent.isPrimaryShortcutKeyPressed || keyEvent.character?.toLowerCase() != 'c') {
+  if (!keyEvent.isPrimaryShortcutKeyPressed || keyEvent.logicalKey != LogicalKeyboardKey.keyC) {
     return ExecutionInstruction.continueExecution;
   }
   if (editContext.composer.selection == null) {
@@ -249,7 +249,7 @@ ExecutionInstruction cutWhenCmdXIsPressed({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
-  if (!keyEvent.isPrimaryShortcutKeyPressed || keyEvent.character?.toLowerCase() != 'x') {
+  if (!keyEvent.isPrimaryShortcutKeyPressed || keyEvent.logicalKey != LogicalKeyboardKey.keyX) {
     return ExecutionInstruction.continueExecution;
   }
   if (editContext.composer.selection == null) {
@@ -336,7 +336,7 @@ ExecutionInstruction cmdBToToggleBold({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
-  if (!keyEvent.isPrimaryShortcutKeyPressed || keyEvent.character?.toLowerCase() != 'b') {
+  if (!keyEvent.isPrimaryShortcutKeyPressed || keyEvent.logicalKey != LogicalKeyboardKey.keyB) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -353,7 +353,7 @@ ExecutionInstruction cmdIToToggleItalics({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
-  if (!keyEvent.isPrimaryShortcutKeyPressed || keyEvent.character?.toLowerCase() != 'i') {
+  if (!keyEvent.isPrimaryShortcutKeyPressed || keyEvent.logicalKey != LogicalKeyboardKey.keyI) {
     return ExecutionInstruction.continueExecution;
   }
 

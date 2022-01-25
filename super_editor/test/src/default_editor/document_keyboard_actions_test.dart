@@ -24,7 +24,7 @@ void main() {
                 editContext: _editContext,
                 keyEvent: const FakeRawKeyEvent(
                   data: FakeRawKeyEventData(
-                    logicalKey: LogicalKeyboardKey.meta,
+                    logicalKey: LogicalKeyboardKey.keyC,
                     physicalKey: PhysicalKeyboardKey.keyC,
                     isMetaPressed: true,
                     isModifierKeyPressed: false,
@@ -76,7 +76,7 @@ void main() {
                 editContext: _editContext,
                 keyEvent: const FakeRawKeyEvent(
                     data: FakeRawKeyEventData(
-                      logicalKey: LogicalKeyboardKey.meta,
+                      logicalKey: LogicalKeyboardKey.keyA,
                       physicalKey: PhysicalKeyboardKey.keyA,
                       isMetaPressed: true,
                       isModifierKeyPressed: false,
@@ -110,7 +110,7 @@ void main() {
                 editContext: _editContext,
                 keyEvent: const FakeRawKeyEvent(
                   data: FakeRawKeyEventData(
-                    logicalKey: LogicalKeyboardKey.meta,
+                    logicalKey: LogicalKeyboardKey.keyA,
                     physicalKey: PhysicalKeyboardKey.keyA,
                     isMetaPressed: true,
                     isModifierKeyPressed: false,
@@ -161,7 +161,7 @@ void main() {
                 editContext: _editContext,
                 keyEvent: const FakeRawKeyEvent(
                   data: FakeRawKeyEventData(
-                    logicalKey: LogicalKeyboardKey.meta,
+                    logicalKey: LogicalKeyboardKey.keyA,
                     physicalKey: PhysicalKeyboardKey.keyA,
                     isMetaPressed: true,
                     isModifierKeyPressed: false,
@@ -216,7 +216,7 @@ void main() {
                 editContext: _editContext,
                 keyEvent: const FakeRawKeyEvent(
                   data: FakeRawKeyEventData(
-                    logicalKey: LogicalKeyboardKey.meta,
+                    logicalKey: LogicalKeyboardKey.keyA,
                     physicalKey: PhysicalKeyboardKey.keyA,
                     isMetaPressed: true,
                     isModifierKeyPressed: false,

@@ -15,6 +15,7 @@ import 'package:super_editor/src/default_editor/box_component.dart';
 import 'package:super_editor/src/default_editor/list_items.dart';
 import 'package:super_editor/src/default_editor/paragraph.dart';
 import 'package:super_editor/src/default_editor/text.dart';
+import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_spans.dart';
 import 'package:super_editor/src/infrastructure/attributed_text.dart';
@@ -23,7 +24,9 @@ import 'package:super_editor/src/infrastructure/text_layout.dart';
 import 'attributions.dart';
 import 'horizontal_rule.dart';
 import 'image.dart';
+import 'list_items.dart';
 import 'multi_node_editing.dart';
+import 'text.dart';
 import 'text_tools.dart';
 
 /// Performs common, high-level editing and composition tasks
@@ -283,6 +286,12 @@ class CommonEditorOperations {
   /// Moves the [DocumentComposer]'s selection extent position in the
   /// upstream direction (to the left for left-to-right languages).
   ///
+  /// {@template skip_unselectable_components}
+  /// This selection movement skips any node whose visual component is
+  /// not visually selectable, e.g., a horizontal rule that doesn't
+  /// change it's visual state when it's selected.
+  /// {@endtemplate}
+  ///
   /// Expands/contracts the selection if [expand] is [true], otherwise
   /// collapses the selection or keeps it collapsed.
   ///
@@ -323,7 +332,7 @@ class CommonEditorOperations {
 
     if (newExtentNodePosition == null) {
       // Move to next node
-      final nextNode = editor.document.getNodeBefore(node);
+      final nextNode = _getUpstreamSelectableNodeBefore(node);
 
       if (nextNode == null) {
         // We're at the beginning of the document and can't go anywhere.
@@ -361,6 +370,8 @@ class CommonEditorOperations {
   /// Moves the [DocumentComposer]'s selection extent position in the
   /// downstream direction (to the right for left-to-right languages).
   ///
+  /// {@macro skip_unselectable_components}
+  ///
   /// Expands/contracts the selection if [expand] is [true], otherwise
   /// collapses the selection or keeps it collapsed.
   ///
@@ -397,11 +408,12 @@ class CommonEditorOperations {
     }
 
     String newExtentNodeId = nodeId;
-    dynamic newExtentNodePosition = extentComponent.movePositionRight(currentExtent.nodePosition, movementModifiers);
+    NodePosition? newExtentNodePosition =
+        extentComponent.movePositionRight(currentExtent.nodePosition, movementModifiers);
 
     if (newExtentNodePosition == null) {
       // Move to next node
-      final nextNode = editor.document.getNodeAfter(node);
+      final nextNode = _getDownstreamSelectableNodeAfter(node);
 
       if (nextNode == null) {
         // We're at the beginning/end of the document and can't go
@@ -449,6 +461,8 @@ class CommonEditorOperations {
   /// moves from the middle of the first line of text in a paragraph to
   /// the beginning of the paragraph.
   ///
+  /// {@macro skip_unselectable_components}
+  ///
   /// Expands/contracts the selection if [expand] is [true], otherwise
   /// collapses the selection or keeps it collapsed.
   ///
@@ -474,11 +488,11 @@ class CommonEditorOperations {
     }
 
     String newExtentNodeId = nodeId;
-    dynamic newExtentNodePosition = extentComponent.movePositionUp(currentExtent.nodePosition);
+    NodePosition? newExtentNodePosition = extentComponent.movePositionUp(currentExtent.nodePosition);
 
     if (newExtentNodePosition == null) {
       // Move to next node
-      final nextNode = editor.document.getNodeBefore(node);
+      final nextNode = _getUpstreamSelectableNodeBefore(node);
       if (nextNode != null) {
         newExtentNodeId = nextNode.id;
         final nextComponent = documentLayoutResolver().getComponentByNodeId(nextNode.id);
@@ -525,6 +539,8 @@ class CommonEditorOperations {
   /// moves from the middle of the last line of text in a paragraph to
   /// the end of the paragraph.
   ///
+  /// {@macro skip_unselectable_components}
+  ///
   /// Expands/contracts the selection if [expand] is [true], otherwise
   /// collapses the selection or keeps it collapsed.
   ///
@@ -554,7 +570,7 @@ class CommonEditorOperations {
 
     if (newExtentNodePosition == null) {
       // Move to next node
-      final nextNode = editor.document.getNodeAfter(node);
+      final nextNode = _getDownstreamSelectableNodeAfter(node);
       if (nextNode != null) {
         newExtentNodeId = nextNode.id;
         final nextComponent = documentLayoutResolver().getComponentByNodeId(nextNode.id);
@@ -590,12 +606,58 @@ class CommonEditorOperations {
     return true;
   }
 
+  /// Returns the first [DocumentNode] before [startingNode] whose
+  /// [DocumentComponent] is visually selectable.
+  DocumentNode? _getUpstreamSelectableNodeBefore(DocumentNode startingNode) {
+    bool foundSelectableNode = false;
+    DocumentNode prevNode = startingNode;
+    DocumentNode? selectableNode;
+    do {
+      selectableNode = editor.document.getNodeBefore(prevNode);
+
+      if (selectableNode != null) {
+        final nextComponent = documentLayoutResolver().getComponentByNodeId(selectableNode.id);
+        if (nextComponent != null) {
+          foundSelectableNode = nextComponent.isVisualSelectionSupported();
+        }
+        prevNode = selectableNode;
+      }
+    } while (!foundSelectableNode && selectableNode != null);
+
+    return selectableNode;
+  }
+
+  /// Returns the first [DocumentNode] after [startingNode] whose
+  /// [DocumentComponent] is visually selectable.
+  DocumentNode? _getDownstreamSelectableNodeAfter(DocumentNode startingNode) {
+    bool foundSelectableNode = false;
+    DocumentNode prevNode = startingNode;
+    DocumentNode? selectableNode;
+    do {
+      selectableNode = editor.document.getNodeAfter(prevNode);
+
+      if (selectableNode != null) {
+        final nextComponent = documentLayoutResolver().getComponentByNodeId(selectableNode.id);
+        if (nextComponent != null) {
+          foundSelectableNode = nextComponent.isVisualSelectionSupported();
+        }
+        prevNode = selectableNode;
+      }
+    } while (!foundSelectableNode && selectableNode != null);
+
+    return selectableNode;
+  }
+
   /// Deletes a unit of content that comes after the [DocumentComposer]'s
   /// selection extent, or deletes all selected content if the selection
   /// is not collapsed.
   ///
   /// In the case of text editing, deletes the character that appears after
   /// the caret.
+  ///
+  /// If the caret sits at the end of a content block, such as the end of
+  /// a text node, and the next node is not visually selectable, then the
+  /// next node is deleted and the caret is kept where it is.
   ///
   /// Returns [true] if content was deleted, or [false] if no downstream
   /// content exists.
@@ -618,11 +680,19 @@ class CommonEditorOperations {
           // The caret is at the end of one TextNode and is followed by
           // another TextNode. Merge the two TextNodes.
           return _mergeTextNodeWithDownstreamTextNode();
-        } else {
-          // The caret is at the end of a TextNode, but the next node
-          // is not a TextNode. Move the document selection to the
-          // next node.
-          return _moveSelectionToBeginningOfNextNode();
+        } else if (nodeAfter != null) {
+          final componentAfter = documentLayoutResolver().getComponentByNodeId(nodeAfter.id)!;
+
+          if (componentAfter.isVisualSelectionSupported()) {
+            // The caret is at the end of a TextNode, but the next node
+            // is not a TextNode. Move the document selection to the
+            // next node.
+            return _moveSelectionToBeginningOfNextNode();
+          } else {
+            // The next node/component isn't selectable. Delete it.
+            _deleteNonSelectedNode(nodeAfter);
+            return true;
+          }
         }
       } else {
         return _deleteDownstreamCharacter();
@@ -741,6 +811,10 @@ class CommonEditorOperations {
   /// In the case of text editing, deletes the character that appears before
   /// the caret.
   ///
+  /// If the caret sits at the beginning of a content block, such as the
+  /// beginning of a text node, and the upstream node is not visually selectable,
+  /// then the upstream node is deleted and the caret is kept where it is.
+  ///
   /// Returns [true] if content was deleted, or [false] if no upstream
   /// content exists.
   bool deleteUpstream() {
@@ -764,11 +838,20 @@ class CommonEditorOperations {
       final textPosition = composer.selection!.extent.nodePosition as TextNodePosition;
       if (textPosition.offset == 0) {
         final nodeBefore = editor.document.getNodeBefore(node);
+        if (nodeBefore == null) {
+          return false;
+        }
+
+        final componentBefore = documentLayoutResolver().getComponentByNodeId(nodeBefore.id)!;
 
         if (nodeBefore is TextNode) {
           // The caret is at the beginning of one TextNode and is preceded by
           // another TextNode. Merge the two TextNodes.
           return _mergeTextNodeWithUpstreamTextNode();
+        } else if (!componentBefore.isVisualSelectionSupported()) {
+          // The node/component above is not selectable. Delete it.
+          _deleteNonSelectedNode(nodeBefore);
+          return true;
         } else if ((node as TextNode).text.text.isEmpty) {
           // The caret is at the beginning of an empty TextNode and the preceding
           // node is not a TextNode. Delete the current TextNode and move the
@@ -1074,6 +1157,13 @@ class CommonEditorOperations {
     return newSelectionPosition;
   }
 
+  void _deleteNonSelectedNode(DocumentNode node) {
+    assert(composer.selection?.base.nodeId != node.id);
+    assert(composer.selection?.extent.nodeId != node.id);
+
+    editor.executeCommand(DeleteNodeCommand(nodeId: node.id));
+  }
+
   /// Adds the given [attributions] to all [AttributedText] within the
   /// [DocumentComposer]'s current selection.
   ///
@@ -1265,7 +1355,10 @@ class CommonEditorOperations {
     }
 
     // Delegate the action to the standard insert-character behavior.
-    final inserted = _insertCharacterInTextComposable(character);
+    final inserted = _insertCharacterInTextComposable(
+      character,
+      ignoreComposerAttributions: ignoreComposerAttributions,
+    );
     if (!inserted) {
       return false;
     }
@@ -1290,8 +1383,8 @@ class CommonEditorOperations {
     final unorderedListItemMatch = RegExp(r'^\s*[\*-]\s+$');
     final hasUnorderedListItemMatch = unorderedListItemMatch.hasMatch(textBeforeCaret);
 
-    // We want to match "1 ", " 1 ", " 1. ".
-    final orderedListItemMatch = RegExp(r'^\s*[1]\.?\s+$');
+    // We want to match "1. ", " 1. ", "1) ", " 1) ".
+    final orderedListItemMatch = RegExp(r'^\s*1[.)]\s+$');
     final hasOrderedListItemMatch = orderedListItemMatch.hasMatch(textBeforeCaret);
 
     editorOpsLog.fine('_convertParagraphIfDesired', ' - text before caret: "$textBeforeCaret"');
@@ -1822,6 +1915,10 @@ class CommonEditorOperations {
     final baseNode = editor.document.getNodeById(composer.selection!.base.nodeId);
     final extentNode = editor.document.getNodeById(composer.selection!.extent.nodeId);
     if (baseNode!.id != extentNode!.id) {
+      return false;
+    }
+
+    if (baseNode is! ListItemNode) {
       return false;
     }
 
