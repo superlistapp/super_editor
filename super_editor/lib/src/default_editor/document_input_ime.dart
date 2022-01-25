@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document.dart';
@@ -223,8 +224,15 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
       editorImeLog.info("Applying delta: $delta");
       if (delta is TextEditingDeltaInsertion) {
         if (delta.textInserted == "\n") {
-          // Newlines are also reported to performAction(). We handle it there.
-          editorImeLog.fine("Skipping insertion delta because its a newline");
+          // On iOS, newlines are reported here and also to performAction().
+          // On Android, newlines are only reported here. So, on Android only,
+          // we forward the newline action to performAction.
+          if (defaultTargetPlatform == TargetPlatform.android) {
+            editorImeLog.fine("Received a newline insertion on Android. Forwarding to newline input action.");
+            widget.softwareKeyboardHandler.performAction(TextInputAction.newline);
+          } else {
+            editorImeLog.fine("Skipping insertion delta because its a newline");
+          }
           continue;
         }
 
