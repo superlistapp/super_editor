@@ -282,6 +282,8 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   }
 
   void _onDocumentChange() {
+    _editingController.hideToolbar();
+
     WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
       // The user may have changed the type of node, e.g., paragraph to
       // blockquote, which impacts the caret size and position. Reposition
