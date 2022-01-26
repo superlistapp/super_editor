@@ -386,6 +386,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
         !selection.isCollapsed &&
         (_isOverBaseHandle(details.localPosition) || _isOverExtentHandle(details.localPosition))) {
       _editingController.toggleToolbar();
+      _positionToolbar();
       return;
     }
 
@@ -401,6 +402,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
         widget.document.doesSelectionContainPosition(selection, docPosition)) {
       // The user tapped on an expanded selection. Toggle the toolbar.
       _editingController.toggleToolbar();
+      _positionToolbar();
       return;
     }
 
@@ -428,6 +430,8 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
       widget.composer.clearSelection();
       _editingController.hideToolbar();
     }
+
+    _positionToolbar();
 
     widget.focusNode.requestFocus();
   }

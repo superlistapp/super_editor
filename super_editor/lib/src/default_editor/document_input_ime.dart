@@ -128,6 +128,8 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
       return;
     }
 
+    editorImeLog.fine(
+        "Updating IME to use new config with action button: ${widget.editContext.composer.imeConfiguration.value.keyboardActionButton}");
     _inputConnection!.updateConfig(_createInputConfiguration());
   }
 

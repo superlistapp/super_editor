@@ -394,6 +394,8 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       // Place the document selection at the location where the
       // user tapped.
       _selectPosition(docPosition);
+
+      _positionToolbar();
     } else {
       _clearSelection();
 
