@@ -435,17 +435,26 @@ class AttributedSpans {
     required int end,
   }) {
     _log.fine('attribution: "$attribution", range: $start -> $end');
-    SpanMarker? markerBefore = _getNearestMarkerAtOrBefore(start, attribution: attribution, type: SpanMarkerType.start);
-    _log.fine('marker before: $markerBefore');
+    SpanMarker? startMarkerBefore =
+        _getNearestMarkerAtOrBefore(start, attribution: attribution, type: SpanMarkerType.start);
+    SpanMarker? endMarkerBefore =
+        _getNearestMarkerAtOrBefore(start, attribution: attribution, type: SpanMarkerType.end);
 
-    if (markerBefore == null) {
+    if (startMarkerBefore != null && endMarkerBefore != null && endMarkerBefore.offset >= startMarkerBefore.offset) {
+      return false;
+    }
+    _log.fine('marker before: $startMarkerBefore');
+
+    if (startMarkerBefore == null) {
       return false;
     }
 
-    final indexBefore = _attributions.indexOf(markerBefore);
+    final indexBefore = _attributions.indexOf(startMarkerBefore);
     final nextMarker = _attributions.sublist(indexBefore).firstWhereOrNull((marker) {
-      _log.finest('Comparing start marker $markerBefore to another marker $marker');
-      return marker.attribution == attribution && marker.offset >= markerBefore.offset && marker != markerBefore;
+      _log.finest('Comparing start marker $startMarkerBefore to another marker $marker');
+      return marker.attribution == attribution &&
+          marker.offset >= startMarkerBefore.offset &&
+          marker != startMarkerBefore;
     });
     _log.fine('next marker: $nextMarker');
 
