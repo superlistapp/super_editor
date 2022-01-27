@@ -771,8 +771,7 @@ class SoftwareKeyboardHandler {
     composer.selection = replacementSelection;
 
     if (replacementText == "\n") {
-      commonOps.deleteSelection();
-      commonOps.insertBlockLevelNewline();
+      performAction(TextInputAction.newline);
       return;
     }
 
@@ -815,6 +814,9 @@ class SoftwareKeyboardHandler {
   void performAction(TextInputAction action) {
     switch (action) {
       case TextInputAction.newline:
+        if (!composer.selection!.isCollapsed) {
+          commonOps.deleteSelection();
+        }
         commonOps.insertBlockLevelNewline();
         break;
       case TextInputAction.none:
