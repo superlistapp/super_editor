@@ -140,6 +140,13 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     }
 
     _scrollController = _scrollController = (widget.scrollController ?? ScrollController());
+    // I added this listener directly to our ScrollController because the listener we added
+    // to the ScrollPosition wasn't triggering once the user makes an initial selection. I'm
+    // not sure why that happened. It's as if the ScrollPosition was replaced, but I don't
+    // know why the ScrollPosition would be replaced. In the meantime, adding this listener
+    // keeps the toolbar positioning logic working.
+    // TODO: rely solely on a ScrollPosition listener, not a ScrollController listener.
+    _scrollController.addListener(_onScrollChange);
 
     _editingController = IosDocumentGestureEditingController(
       documentLayoutLink: _documentLayerLink,
