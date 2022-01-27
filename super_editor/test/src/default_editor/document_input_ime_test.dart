@@ -82,7 +82,7 @@ void main() {
               ),
             ),
           ).toTextEditingValue(),
-          expectedTextWithSelection: "This is a |paragraph of text.\nThis is a paragraph| of text.",
+          expectedTextWithSelection: "This is a |paragraph of text.\n~\nThis is a paragraph| of text.",
         );
       });
 
@@ -107,7 +107,7 @@ void main() {
               ),
             ),
           ).toTextEditingValue(),
-          expectedTextWithSelection: "|This is the first paragraph of text.|",
+          expectedTextWithSelection: "|~\nThis is the first paragraph of text.\n~|",
         );
       });
     });

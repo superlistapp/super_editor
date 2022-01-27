@@ -516,12 +516,12 @@ class DocumentImeSerializer {
     if (docPosition.nodePosition is! TextNodePosition) {
       if (isUpstream) {
         // Return the text position before the special character,
-        // e.g., "|~\n".
+        // e.g., "|~".
         return TextPosition(offset: imeRange.start);
       } else {
         // Return the text position after the special character,
-        // e.g., "~\n|".
-        return TextPosition(offset: imeRange.start + 2);
+        // e.g., "~|".
+        return TextPosition(offset: imeRange.start + 1);
       }
     }
 
