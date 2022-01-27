@@ -278,6 +278,8 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       // blockquote, which impacts the caret size and position. Reposition
       // the caret on the next frame.
       _updateHandlesAfterSelectionOrLayoutChange();
+
+      _ensureSelectionExtentIsVisible();
     });
   }
 

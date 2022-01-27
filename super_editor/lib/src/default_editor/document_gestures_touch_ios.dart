@@ -290,6 +290,8 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
       // the caret on the next frame.
       // TODO: find a way to only do this when something relevant changes
       _updateHandlesAfterSelectionOrLayoutChange();
+
+      _ensureSelectionExtentIsVisible();
     });
   }
 
