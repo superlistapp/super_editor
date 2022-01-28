@@ -26,6 +26,7 @@ import 'horizontal_rule.dart';
 import 'image.dart';
 import 'list_items.dart';
 import 'multi_node_editing.dart';
+import 'selection_binary.dart';
 import 'text.dart';
 import 'text_tools.dart';
 

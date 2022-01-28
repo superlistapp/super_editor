@@ -3,10 +3,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_editor.dart';
 import 'package:super_editor/src/core/document_selection.dart';
-import 'package:super_editor/src/default_editor/box_component.dart';
 import 'package:super_editor/src/default_editor/document_input_ime.dart';
 import 'package:super_editor/src/default_editor/horizontal_rule.dart';
 import 'package:super_editor/src/default_editor/paragraph.dart';
+import 'package:super_editor/src/default_editor/selection_binary.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/attributed_text.dart';
 

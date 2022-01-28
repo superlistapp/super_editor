@@ -1,7 +1,6 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
-import 'package:super_editor/super_editor.dart';
+import 'package:super_editor/src/core/document_layout.dart';
+import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
 
 import '../core/document.dart';
 import 'box_component.dart';
@@ -9,7 +8,7 @@ import 'styles.dart';
 
 /// [DocumentNode] for a horizontal rule, which represents a full-width
 /// horizontal separation in a document.
-class HorizontalRuleNode with ChangeNotifier implements DocumentNode {
+class HorizontalRuleNode extends BlockNode with ChangeNotifier {
   HorizontalRuleNode({
     required this.id,
   });
@@ -18,54 +17,12 @@ class HorizontalRuleNode with ChangeNotifier implements DocumentNode {
   final String id;
 
   @override
-  BinaryNodePosition get beginningPosition => const BinaryNodePosition.included();
-
-  @override
-  BinaryNodePosition get endPosition => const BinaryNodePosition.included();
-
-  @override
-  NodePosition selectUpstreamPosition(NodePosition position1, NodePosition position2) {
-    if (position1 is! BinaryNodePosition) {
-      throw Exception('Expected a BinaryNodePosition for position1 but received a ${position1.runtimeType}');
-    }
-    if (position2 is! BinaryNodePosition) {
-      throw Exception('Expected a BinaryNodePosition for position2 but received a ${position2.runtimeType}');
-    }
-
-    // BinaryNodePosition's don't disambiguate between upstream and downstream so
-    // it doesn't matter which one we return.
-    return position1;
-  }
-
-  @override
-  NodePosition selectDownstreamPosition(NodePosition position1, NodePosition position2) {
-    if (position1 is! BinaryNodePosition) {
-      throw Exception('Expected a BinaryNodePosition for position1 but received a ${position1.runtimeType}');
-    }
-    if (position2 is! BinaryNodePosition) {
-      throw Exception('Expected a BinaryNodePosition for position2 but received a ${position2.runtimeType}');
-    }
-
-    // BinaryNodePosition's don't disambiguate between upstream and downstream so
-    // it doesn't matter which one we return.
-    return position1;
-  }
-
-  @override
-  BinarySelection computeSelection({
-    @required dynamic base,
-    @required dynamic extent,
-  }) {
-    return const BinarySelection.all();
-  }
-
-  @override
   String? copyContent(dynamic selection) {
-    if (selection is! BinarySelection) {
-      throw Exception('HorizontalRuleNode can only copy content from a BinarySelection.');
+    if (selection is! UpstreamDownstreamNodeSelection) {
+      throw Exception('HorizontalRuleNode can only copy content from a UpstreamDownstreamNodeSelection.');
     }
 
-    return selection.position == const BinaryNodePosition.included() ? '---' : null;
+    return !selection.isCollapsed ? '---' : null;
   }
 
   @override
@@ -125,9 +82,10 @@ Widget? horizontalRuleBuilder(ComponentContext componentContext) {
     return null;
   }
 
-  final selection =
-      componentContext.nodeSelection == null ? null : componentContext.nodeSelection!.nodeSelection as BinarySelection;
-  final isSelected = selection != null && selection.position.isIncluded;
+  final selection = componentContext.nodeSelection == null
+      ? null
+      : componentContext.nodeSelection!.nodeSelection as UpstreamDownstreamNodeSelection;
+  final isSelected = selection != null && !selection.isCollapsed;
 
   return HorizontalRuleComponent(
     componentKey: componentContext.componentKey,

@@ -17,6 +17,7 @@ import 'box_component.dart';
 import 'document_input_keyboard.dart';
 import 'multi_node_editing.dart';
 import 'paragraph.dart';
+import 'selection_binary.dart';
 import 'text.dart';
 
 final _log = Logger(scope: 'document_keyboard_actions.dart');
