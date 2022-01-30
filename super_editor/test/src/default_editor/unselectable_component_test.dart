@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
 import 'package:super_editor/super_editor.dart';
 
 /// This test suite illustrates the difference between interacting with
@@ -113,7 +114,7 @@ void main() {
         const DocumentSelection.collapsed(
           position: DocumentPosition(
             nodeId: "2",
-            nodePosition: BinaryNodePosition.included(),
+            nodePosition: UpstreamDownstreamNodePosition.upstream(),
           ),
         ),
       );
@@ -138,7 +139,7 @@ void main() {
         const DocumentSelection.collapsed(
           position: DocumentPosition(
             nodeId: "2",
-            nodePosition: BinaryNodePosition.included(),
+            nodePosition: UpstreamDownstreamNodePosition.downstream(),
           ),
         ),
       );

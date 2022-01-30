@@ -7,6 +7,7 @@ import 'package:super_editor/src/default_editor/document_input_ime.dart';
 import 'package:super_editor/src/default_editor/horizontal_rule.dart';
 import 'package:super_editor/src/default_editor/paragraph.dart';
 import 'package:super_editor/src/default_editor/selection_binary.dart';
+import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/attributed_text.dart';
 
@@ -99,11 +100,11 @@ void main() {
             const DocumentSelection(
               base: DocumentPosition(
                 nodeId: "1",
-                nodePosition: BinaryNodePosition.included(),
+                nodePosition: UpstreamDownstreamNodePosition.upstream(),
               ),
               extent: DocumentPosition(
                 nodeId: "3",
-                nodePosition: BinaryNodePosition.included(),
+                nodePosition: UpstreamDownstreamNodePosition.downstream(),
               ),
             ),
           ).toTextEditingValue(),

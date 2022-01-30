@@ -1,5 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
 import 'package:super_editor/src/infrastructure/platform_detector.dart';
 import 'package:super_editor/super_editor.dart';
 
@@ -230,14 +231,14 @@ void main() {
                 _editContext.composer.selection!.base,
                 const DocumentPosition(
                   nodeId: 'image_1',
-                  nodePosition: BinaryNodePosition.included(),
+                  nodePosition: UpstreamDownstreamNodePosition.upstream(),
                 ),
               );
               expect(
                 _editContext.composer.selection!.extent,
                 const DocumentPosition(
                   nodeId: 'image_2',
-                  nodePosition: BinaryNodePosition.included(),
+                  nodePosition: UpstreamDownstreamNodePosition.downstream(),
                 ),
               );
 
@@ -261,12 +262,12 @@ void main() {
               ],
             ),
             documentComposer: DocumentComposer(
-              initialSelection: DocumentSelection(
-                base: const DocumentPosition(
+              initialSelection: const DocumentSelection(
+                base: DocumentPosition(
                   nodeId: '1',
                   nodePosition: TextNodePosition(offset: 11),
                 ),
-                extent: const DocumentPosition(
+                extent: DocumentPosition(
                   nodeId: '1',
                   nodePosition: TextNodePosition(offset: 19),
                 ),
@@ -317,12 +318,12 @@ void main() {
               ],
             ),
             documentComposer: DocumentComposer(
-              initialSelection: DocumentSelection(
-                base: const DocumentPosition(
+              initialSelection: const DocumentSelection(
+                base: DocumentPosition(
                   nodeId: '1',
                   nodePosition: TextNodePosition(offset: 11),
                 ),
-                extent: const DocumentPosition(
+                extent: DocumentPosition(
                   nodeId: '1',
                   nodePosition: TextNodePosition(offset: 19),
                 ),
@@ -373,12 +374,12 @@ void main() {
               ],
             ),
             documentComposer: DocumentComposer(
-              initialSelection: DocumentSelection(
-                base: const DocumentPosition(
+              initialSelection: const DocumentSelection(
+                base: DocumentPosition(
                   nodeId: '1',
                   nodePosition: TextNodePosition(offset: 11),
                 ),
-                extent: const DocumentPosition(
+                extent: DocumentPosition(
                   nodeId: '1',
                   nodePosition: TextNodePosition(offset: 19),
                 ),
