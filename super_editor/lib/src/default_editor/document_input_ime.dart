@@ -116,6 +116,7 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
       _detachFromIme();
     } else {
       if (isAttachedToIme) {
+        _inputConnection!.show();
         _syncImeWithDocumentAndComposer();
       } else {
         _attachToIme();
@@ -217,7 +218,7 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
 
   @override
   void updateEditingValueWithDeltas(List<TextEditingDelta> textEditingDeltas) {
-    editorImeLog.info("Received edit deltas from platform");
+    editorImeLog.info("Received edit deltas from platform: ${textEditingDeltas.length} deltas");
     for (final delta in textEditingDeltas) {
       editorImeLog.info("$delta");
     }

@@ -4,6 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
 import 'package:super_editor/super_editor.dart';
 
+import 'test_documents.dart';
+
 /// This test suite illustrates the difference between interacting with
 /// selectable non-text nodes and un-selectable non-text nodes.
 ///
@@ -24,7 +26,7 @@ void main() {
           position: DocumentPosition(nodeId: "1", nodePosition: TextNodePosition(offset: 11)),
         ),
       );
-      await tester.pumpWidget(_buildEditorWithSelectableHrs(_threeNodeDoc(), composer));
+      await tester.pumpWidget(_buildEditorWithSelectableHrs(paragraphThenHrThenParagraphDoc(), composer));
 
       await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
       await tester.pump();
@@ -39,7 +41,7 @@ void main() {
           position: DocumentPosition(nodeId: "1", nodePosition: TextNodePosition(offset: 11)),
         ),
       );
-      await tester.pumpWidget(_buildEditorWithSelectableHrs(_threeNodeDoc(), composer));
+      await tester.pumpWidget(_buildEditorWithSelectableHrs(paragraphThenHrThenParagraphDoc(), composer));
 
       await tester.sendKeyDownEvent(LogicalKeyboardKey.shift);
       await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
@@ -57,7 +59,7 @@ void main() {
           position: DocumentPosition(nodeId: "3", nodePosition: TextNodePosition(offset: 0)),
         ),
       );
-      await tester.pumpWidget(_buildEditorWithSelectableHrs(_threeNodeDoc(), composer));
+      await tester.pumpWidget(_buildEditorWithSelectableHrs(paragraphThenHrThenParagraphDoc(), composer));
 
       await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
       await tester.pump();
@@ -72,7 +74,7 @@ void main() {
           position: DocumentPosition(nodeId: "3", nodePosition: TextNodePosition(offset: 0)),
         ),
       );
-      await tester.pumpWidget(_buildEditorWithSelectableHrs(_threeNodeDoc(), composer));
+      await tester.pumpWidget(_buildEditorWithSelectableHrs(paragraphThenHrThenParagraphDoc(), composer));
 
       await tester.sendKeyDownEvent(LogicalKeyboardKey.shift);
       await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
@@ -86,7 +88,7 @@ void main() {
 
     testWidgets("accepts selection when user taps on it", (tester) async {
       final composer = DocumentComposer();
-      await tester.pumpWidget(_buildEditorWithSelectableHrs(_threeNodeDoc(), composer));
+      await tester.pumpWidget(_buildEditorWithSelectableHrs(paragraphThenHrThenParagraphDoc(), composer));
 
       await tester.tap(find.byType(HorizontalRuleComponent));
       await tester.pumpAndSettle();
@@ -104,7 +106,7 @@ void main() {
           ),
         ),
       );
-      await tester.pumpWidget(_buildEditorWithSelectableHrs(_threeNodeDoc(), composer));
+      await tester.pumpWidget(_buildEditorWithSelectableHrs(paragraphThenHrThenParagraphDoc(), composer));
 
       await tester.sendKeyEvent(LogicalKeyboardKey.delete);
       await tester.pump();
@@ -129,7 +131,7 @@ void main() {
           ),
         ),
       );
-      await tester.pumpWidget(_buildEditorWithSelectableHrs(_threeNodeDoc(), composer));
+      await tester.pumpWidget(_buildEditorWithSelectableHrs(paragraphThenHrThenParagraphDoc(), composer));
 
       await tester.sendKeyEvent(LogicalKeyboardKey.backspace);
       await tester.pump();
@@ -153,7 +155,7 @@ void main() {
           position: DocumentPosition(nodeId: "1", nodePosition: TextNodePosition(offset: 11)),
         ),
       );
-      await tester.pumpWidget(_buildEditorWithUnselectableHrs(_threeNodeDoc(), composer));
+      await tester.pumpWidget(_buildEditorWithUnselectableHrs(paragraphThenHrThenParagraphDoc(), composer));
 
       await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
       await tester.pump();
@@ -172,7 +174,7 @@ void main() {
           position: DocumentPosition(nodeId: "1", nodePosition: TextNodePosition(offset: 11)),
         ),
       );
-      await tester.pumpWidget(_buildEditorWithUnselectableHrs(_threeNodeDoc(), composer));
+      await tester.pumpWidget(_buildEditorWithUnselectableHrs(paragraphThenHrThenParagraphDoc(), composer));
 
       await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
       await tester.pump();
@@ -191,7 +193,7 @@ void main() {
           position: DocumentPosition(nodeId: "1", nodePosition: TextNodePosition(offset: 11)),
         ),
       );
-      await tester.pumpWidget(_buildEditorWithUnselectableHrs(_paragraphThenHrDoc(), composer));
+      await tester.pumpWidget(_buildEditorWithUnselectableHrs(paragraphThenHrDoc(), composer));
 
       await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
       await tester.pump();
@@ -210,7 +212,7 @@ void main() {
           position: DocumentPosition(nodeId: "1", nodePosition: TextNodePosition(offset: 11)),
         ),
       );
-      await tester.pumpWidget(_buildEditorWithUnselectableHrs(_paragraphThenHrDoc(), composer));
+      await tester.pumpWidget(_buildEditorWithUnselectableHrs(paragraphThenHrDoc(), composer));
 
       await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
       await tester.pump();
@@ -229,7 +231,7 @@ void main() {
           position: DocumentPosition(nodeId: "3", nodePosition: TextNodePosition(offset: 11)),
         ),
       );
-      await tester.pumpWidget(_buildEditorWithUnselectableHrs(_threeNodeDoc(), composer));
+      await tester.pumpWidget(_buildEditorWithUnselectableHrs(paragraphThenHrThenParagraphDoc(), composer));
 
       await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
       await tester.pump();
@@ -251,7 +253,7 @@ void main() {
           position: DocumentPosition(nodeId: "3", nodePosition: TextNodePosition(offset: 0)),
         ),
       );
-      await tester.pumpWidget(_buildEditorWithUnselectableHrs(_threeNodeDoc(), composer));
+      await tester.pumpWidget(_buildEditorWithUnselectableHrs(paragraphThenHrThenParagraphDoc(), composer));
 
       await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
       await tester.pump();
@@ -270,7 +272,7 @@ void main() {
           position: DocumentPosition(nodeId: "2", nodePosition: TextNodePosition(offset: 11)),
         ),
       );
-      await tester.pumpWidget(_buildEditorWithUnselectableHrs(_hrThenParagraphDoc(), composer));
+      await tester.pumpWidget(_buildEditorWithUnselectableHrs(hrThenParagraphDoc(), composer));
 
       await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
       await tester.pump();
@@ -289,7 +291,7 @@ void main() {
           position: DocumentPosition(nodeId: "2", nodePosition: TextNodePosition(offset: 0)),
         ),
       );
-      await tester.pumpWidget(_buildEditorWithUnselectableHrs(_hrThenParagraphDoc(), composer));
+      await tester.pumpWidget(_buildEditorWithUnselectableHrs(hrThenParagraphDoc(), composer));
 
       await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
       await tester.pump();
@@ -303,7 +305,7 @@ void main() {
     });
 
     testWidgets("deletes downstream node when delete pressed from upstream", (tester) async {
-      final document = _threeNodeDoc();
+      final document = paragraphThenHrThenParagraphDoc();
       final composer = DocumentComposer(
         initialSelection: const DocumentSelection.collapsed(
           position: DocumentPosition(
@@ -332,7 +334,7 @@ void main() {
     });
 
     testWidgets("deletes upstream node when backspace pressed from downstream", (tester) async {
-      final document = _threeNodeDoc();
+      final document = paragraphThenHrThenParagraphDoc();
       final composer = DocumentComposer(
         initialSelection: const DocumentSelection.collapsed(
           position: DocumentPosition(
@@ -362,7 +364,7 @@ void main() {
 
     testWidgets("rejects selection when user taps on it", (tester) async {
       final composer = DocumentComposer();
-      await tester.pumpWidget(_buildEditorWithUnselectableHrs(_threeNodeDoc(), composer));
+      await tester.pumpWidget(_buildEditorWithUnselectableHrs(paragraphThenHrThenParagraphDoc(), composer));
 
       await tester.tap(find.byType(_UnselectableHorizontalRuleComponent));
       await tester.pumpAndSettle();
@@ -403,28 +405,6 @@ Widget _buildEditorWithUnselectableHrs(MutableDocument document, DocumentCompose
     ),
   );
 }
-
-MutableDocument _threeNodeDoc() => MutableDocument(
-      nodes: [
-        ParagraphNode(id: "1", text: AttributedText(text: "Paragraph 1")),
-        HorizontalRuleNode(id: "2"),
-        ParagraphNode(id: "3", text: AttributedText(text: "Paragraph 3")),
-      ],
-    );
-
-MutableDocument _paragraphThenHrDoc() => MutableDocument(
-      nodes: [
-        ParagraphNode(id: "1", text: AttributedText(text: "Paragraph 1")),
-        HorizontalRuleNode(id: "2"),
-      ],
-    );
-
-MutableDocument _hrThenParagraphDoc() => MutableDocument(
-      nodes: [
-        HorizontalRuleNode(id: "1"),
-        ParagraphNode(id: "2", text: AttributedText(text: "Paragraph 1")),
-      ],
-    );
 
 Widget? _unselectableHrBuilder(ComponentContext context) {
   if (context.documentNode is! HorizontalRuleNode) {

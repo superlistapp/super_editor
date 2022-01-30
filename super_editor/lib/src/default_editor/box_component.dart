@@ -95,7 +95,11 @@ class _BoxComponentState extends State<BoxComponent> with DocumentComponent {
 
   @override
   UpstreamDownstreamNodePosition getBeginningPositionNearX(double x) {
-    return const UpstreamDownstreamNodePosition.upstream();
+    final width = (context.findRenderObject() as RenderBox).size.width;
+
+    return x < width / 2
+        ? const UpstreamDownstreamNodePosition.upstream()
+        : const UpstreamDownstreamNodePosition.downstream();
   }
 
   @override
@@ -153,7 +157,11 @@ class _BoxComponentState extends State<BoxComponent> with DocumentComponent {
 
   @override
   UpstreamDownstreamNodePosition getEndPositionNearX(double x) {
-    return const UpstreamDownstreamNodePosition.downstream();
+    final width = (context.findRenderObject() as RenderBox).size.width;
+
+    return x < width / 2
+        ? const UpstreamDownstreamNodePosition.upstream()
+        : const UpstreamDownstreamNodePosition.downstream();
   }
 
   @override
