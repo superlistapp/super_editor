@@ -46,26 +46,28 @@ class HorizontalRuleComponent extends StatelessWidget {
     this.color = Colors.grey,
     this.thickness = 1,
     this.selectionColor = Colors.blue,
-    this.isSelected = false,
+    this.selection,
+    required this.caretColor,
+    this.showCaret = false,
   }) : super(key: key);
 
   final GlobalKey componentKey;
   final Color color;
   final double thickness;
   final Color selectionColor;
-  final bool isSelected;
+  final UpstreamDownstreamNodeSelection? selection;
+  final Color caretColor;
+  final bool showCaret;
 
   @override
   Widget build(BuildContext context) {
-    return BoxComponent(
-      key: componentKey,
-      child: Container(
-        decoration: BoxDecoration(
-          border: Border.all(
-            width: 1,
-            color: isSelected ? selectionColor : Colors.transparent,
-          ),
-        ),
+    return SelectableBox(
+      selection: selection,
+      selectionColor: selectionColor,
+      caretColor: caretColor,
+      showCaret: showCaret,
+      child: BoxComponent(
+        key: componentKey,
         child: Divider(
           color: color,
           thickness: thickness,
@@ -85,12 +87,19 @@ Widget? horizontalRuleBuilder(ComponentContext componentContext) {
   final selection = componentContext.nodeSelection == null
       ? null
       : componentContext.nodeSelection!.nodeSelection as UpstreamDownstreamNodeSelection;
-  final isSelected = selection != null && !selection.isCollapsed;
+
+  final showCaret = componentContext.showCaret && selection != null ? componentContext.nodeSelection!.isExtent : false;
+
+  // TODO: centralize this value. It should probably be explicit in ComponentContext, but think about it.
+  final caretColor = (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle?)?.textCaretColor ??
+      const Color(0x00000000);
 
   return HorizontalRuleComponent(
     componentKey: componentContext.componentKey,
-    isSelected: isSelected,
+    selection: selection,
     selectionColor: (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle?)?.selectionColor ??
         const Color(0x00000000),
+    caretColor: caretColor,
+    showCaret: showCaret,
   );
 }

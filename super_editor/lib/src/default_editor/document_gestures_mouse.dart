@@ -9,6 +9,7 @@ import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/edit_context.dart';
+import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
 import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
@@ -345,11 +346,16 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     _clearSelection();
 
     if (docPosition != null) {
-      final didSelectWord = _selectWordAt(
+      bool didSelectContent = _selectWordAt(
         docPosition: docPosition,
         docLayout: _docLayout,
       );
-      if (!didSelectWord) {
+
+      if (!didSelectContent) {
+        didSelectContent = _selectBlockAt(docPosition);
+      }
+
+      if (!didSelectContent) {
         // Place the document selection at the location where the
         // user tapped.
         _selectPosition(docPosition);
@@ -357,6 +363,25 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     }
 
     _focusNode.requestFocus();
+  }
+
+  bool _selectBlockAt(DocumentPosition position) {
+    if (position.nodePosition is! UpstreamDownstreamNodePosition) {
+      return false;
+    }
+
+    widget.editContext.composer.selection = DocumentSelection(
+      base: DocumentPosition(
+        nodeId: position.nodeId,
+        nodePosition: const UpstreamDownstreamNodePosition.upstream(),
+      ),
+      extent: DocumentPosition(
+        nodeId: position.nodeId,
+        nodePosition: const UpstreamDownstreamNodePosition.downstream(),
+      ),
+    );
+
+    return true;
   }
 
   void _onDoubleTap() {

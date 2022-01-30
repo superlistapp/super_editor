@@ -9,6 +9,7 @@ import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
+import 'package:super_editor/src/default_editor/common_editor_operations.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
@@ -50,7 +51,7 @@ ExecutionInstruction pasteWhenCmdVIsPressed({
 
   // Delete all currently selected content.
   if (!editContext.composer.selection!.isCollapsed) {
-    pastePosition = _getDocumentPositionAfterDeletion(
+    pastePosition = CommonEditorOperations.getDocumentPositionAfterExpandedDeletion(
       document: editContext.editor.document,
       selection: editContext.composer.selection!,
     );
@@ -200,7 +201,7 @@ class _PasteEditorCommand implements EditorCommand {
 
     for (int i = newNodeToMergeIndex; i < newNodes.length; ++i) {
       transaction.insertNodeAfter(
-        previousNode: mergeAfterNode,
+        existingNode: mergeAfterNode,
         newNode: newNodes[i],
       );
       mergeAfterNode = newNodes[i];
@@ -416,73 +417,6 @@ ExecutionInstruction anyCharacterOrDestructiveKeyToDeleteSelection({
   }
 
   return ExecutionInstruction.haltExecution;
-}
-
-DocumentPosition _getDocumentPositionAfterDeletion({
-  required Document document,
-  required DocumentSelection selection,
-}) {
-  // Figure out where the caret should appear after the
-  // deletion.
-  // TODO: This calculation depends upon the first
-  //       selected node still existing after the deletion. This
-  //       is a fragile expectation and should be revisited.
-  final basePosition = selection.base;
-  final baseNode = document.getNode(basePosition);
-  if (baseNode == null) {
-    throw Exception('Failed to _getDocumentPositionAfterDeletion because the base node no longer exists.');
-  }
-  final baseNodeIndex = document.getNodeIndex(baseNode);
-
-  final extentPosition = selection.extent;
-  final extentNode = document.getNode(extentPosition);
-  if (extentNode == null) {
-    throw Exception('Failed to _getDocumentPositionAfterDeletion because the extent node no longer exists.');
-  }
-  final extentNodeIndex = document.getNodeIndex(extentNode);
-  DocumentPosition newSelectionPosition;
-
-  if (baseNodeIndex != extentNodeIndex) {
-    // Place the caret at the current position within the
-    // first node in the selection.
-    newSelectionPosition = baseNodeIndex <= extentNodeIndex ? selection.base : selection.extent;
-
-    // If it's a binary selection node then that node will
-    // be replaced by a ParagraphNode with the same ID.
-    if (newSelectionPosition.nodePosition is BinaryNodePosition) {
-      // Assume that the node was replaced with an empty paragraph.
-      newSelectionPosition = DocumentPosition(
-        nodeId: newSelectionPosition.nodeId,
-        nodePosition: const TextNodePosition(offset: 0),
-      );
-    }
-  } else {
-    // Selection is within a single node. If it's a binary
-    // selection node then that node will be replaced by
-    // a ParagraphNode with the same ID. Otherwise, it must
-    // be a TextNode, in which case we need to figure out
-    // which DocumentPosition contains the earlier TextPosition.
-    if (basePosition.nodePosition is BinaryNodePosition) {
-      // Assume that the node was replace with an empty paragraph.
-      newSelectionPosition = DocumentPosition(
-        nodeId: baseNode.id,
-        nodePosition: const TextNodePosition(offset: 0),
-      );
-    } else if (basePosition.nodePosition is TextPosition) {
-      final baseOffset = (basePosition.nodePosition as TextPosition).offset;
-      final extentOffset = (extentPosition.nodePosition as TextPosition).offset;
-
-      newSelectionPosition = DocumentPosition(
-        nodeId: baseNode.id,
-        nodePosition: TextNodePosition(offset: min(baseOffset, extentOffset)),
-      );
-    } else {
-      throw Exception(
-          'Unknown selection position type: $basePosition, for node: $baseNode, within document selection: $selection');
-    }
-  }
-
-  return newSelectionPosition;
 }
 
 ExecutionInstruction backspaceToRemoveUpstreamContent({

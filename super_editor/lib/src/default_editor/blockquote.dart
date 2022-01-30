@@ -175,7 +175,7 @@ class SplitBlockquoteCommand implements EditorCommand {
 
     // Insert the new node after the current node.
     transaction.insertNodeAfter(
-      previousNode: node,
+      existingNode: node,
       newNode: newNode,
     );
   }

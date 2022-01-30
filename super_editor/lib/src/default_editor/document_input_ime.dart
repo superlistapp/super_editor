@@ -254,6 +254,21 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
       } else if (delta is TextEditingDeltaReplacement) {
         editorImeLog.fine("Replacing text: ${delta.textReplaced}");
         editorImeLog.fine("With new text: ${delta.replacementText}");
+        editorImeLog.fine("Replaced range: ${delta.replacedRange}");
+        editorImeLog.fine("New selection: ${delta.selection}");
+
+        if (delta.replacementText == "\n") {
+          // On iOS, newlines are reported here and also to performAction().
+          // On Android, newlines are only reported here. So, on Android only,
+          // we forward the newline action to performAction.
+          if (defaultTargetPlatform == TargetPlatform.android) {
+            editorImeLog.fine("Received a newline replacement on Android. Forwarding to newline input action.");
+            widget.softwareKeyboardHandler.performAction(TextInputAction.newline);
+          } else {
+            editorImeLog.fine("Skipping replacement delta because its a newline");
+          }
+          continue;
+        }
 
         widget.softwareKeyboardHandler.replace(delta.replacedRange, delta.replacementText);
       } else if (delta is TextEditingDeltaDeletion) {
@@ -322,7 +337,7 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
 }
 
 class DocumentImeSerializer {
-  static const _leadingCharacters = ['*', '^', '~', '`'];
+  static const _leadingCharacters = ['*', '^', '`'];
   static int _nextLeadingCharacterIndex = 0;
   static String _nextLeadingCharacter() {
     final nextCharacter = _leadingCharacters[_nextLeadingCharacterIndex];
@@ -439,13 +454,13 @@ class DocumentImeSerializer {
           (imeSelection.start == 0 && imeSelection.end == 1)) {
         editorImeLog.fine("Returning null doc selection");
         return null;
+      } else {
+        editorImeLog.fine("Removing arbitrary character from IME selection");
+        imeSelection = imeSelection.copyWith(
+          baseOffset: imeSelection.affinity == TextAffinity.downstream ? 1 : imeSelection.baseOffset,
+          extentOffset: imeSelection.affinity == TextAffinity.downstream ? imeSelection.extentOffset : 1,
+        );
       }
-
-      editorImeLog.fine("Removing arbitrary character from IME selection");
-      imeSelection = imeSelection.copyWith(
-        baseOffset: imeSelection.affinity == TextAffinity.downstream ? 1 : imeSelection.baseOffset,
-        extentOffset: imeSelection.affinity == TextAffinity.downstream ? imeSelection.extentOffset : 1,
-      );
     } else {
       editorImeLog.fine("Returning doc selection without modification");
     }
@@ -761,6 +776,7 @@ class SoftwareKeyboardHandler {
       editor.document,
       composer.selection!,
     );
+
     final replacementSelection = docSerializer.imeToDocumentSelection(TextSelection(
       baseOffset: replacedRange.start,
       // TODO: the delta API is wrong for TextRange.end, it should be exclusive,
@@ -768,7 +784,8 @@ class SoftwareKeyboardHandler {
       //       fixes the problem.
       extentOffset: replacedRange.end,
     ));
-    composer.selection = replacementSelection;
+
+    composer.selection ??= replacementSelection;
 
     if (replacementText == "\n") {
       performAction(TextInputAction.newline);

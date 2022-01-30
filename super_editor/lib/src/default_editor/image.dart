@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
+import 'package:super_editor/src/infrastructure/caret.dart';
 
 import '../core/document.dart';
 import 'box_component.dart';
@@ -70,26 +71,28 @@ class ImageComponent extends StatelessWidget {
     required this.componentKey,
     required this.imageUrl,
     this.selectionColor = Colors.blue,
-    this.isSelected = false,
+    this.selection,
+    required this.caretColor,
+    this.showCaret = false,
   }) : super(key: key);
 
   final GlobalKey componentKey;
   final String imageUrl;
   final Color selectionColor;
-  final bool isSelected;
+  final UpstreamDownstreamNodeSelection? selection;
+  final Color caretColor;
+  final bool showCaret;
 
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: BoxComponent(
-        key: componentKey,
-        child: Container(
-          decoration: BoxDecoration(
-            border: Border.all(
-              width: 1,
-              color: isSelected ? selectionColor : Colors.transparent,
-            ),
-          ),
+      child: SelectableBox(
+        selection: selection,
+        selectionColor: selectionColor,
+        caretColor: caretColor,
+        showCaret: showCaret,
+        child: BoxComponent(
+          key: componentKey,
           child: Image.network(
             imageUrl,
             fit: BoxFit.contain,
@@ -110,13 +113,20 @@ Widget? imageBuilder(ComponentContext componentContext) {
   final selection = componentContext.nodeSelection == null
       ? null
       : componentContext.nodeSelection!.nodeSelection as UpstreamDownstreamNodeSelection;
-  final isSelected = selection != null && !selection.isCollapsed;
+
+  final showCaret = componentContext.showCaret && selection != null ? componentContext.nodeSelection!.isExtent : false;
+
+  // TODO: centralize this value. It should probably be explicit in ComponentContext, but think about it.
+  final caretColor = (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle?)?.textCaretColor ??
+      const Color(0x00000000);
 
   return ImageComponent(
     componentKey: componentContext.componentKey,
     imageUrl: (componentContext.documentNode as ImageNode).imageUrl,
-    isSelected: isSelected,
+    selection: selection,
     selectionColor: (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle?)?.selectionColor ??
         Colors.transparent,
+    caretColor: caretColor,
+    showCaret: showCaret,
   );
 }

@@ -1,10 +1,15 @@
+import 'dart:math';
+
 import 'package:flutter/services.dart';
-import 'package:super_editor/super_editor.dart';
+import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_editor.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/attributed_text.dart';
+
+import 'paragraph.dart';
 
 final _log = Logger(scope: 'multi_node_editing.dart');
 
@@ -42,6 +47,7 @@ class DeleteSelectionCommand implements EditorCommand {
     final startNodePosition = startNode.id == documentSelection.base.nodeId
         ? documentSelection.base.nodePosition
         : documentSelection.extent.nodePosition;
+    final startNodeIndex = document.getNodeIndex(startNode);
 
     final endNode = document.getNode(range.end);
     if (endNode == null) {
@@ -50,6 +56,7 @@ class DeleteSelectionCommand implements EditorCommand {
     final endNodePosition = startNode.id == documentSelection.base.nodeId
         ? documentSelection.extent.nodePosition
         : documentSelection.base.nodePosition;
+    final endNodeIndex = document.getNodeIndex(endNode);
 
     _deleteNodesBetweenFirstAndLast(
       document: document,
@@ -64,6 +71,7 @@ class DeleteSelectionCommand implements EditorCommand {
       node: startNode,
       nodePosition: startNodePosition,
       transaction: transaction,
+      replaceWithParagraph: false,
     );
 
     _log.log('DeleteSelectionCommand', ' - deleting partial selection within ending node.');
@@ -73,6 +81,19 @@ class DeleteSelectionCommand implements EditorCommand {
       nodePosition: endNodePosition,
       transaction: transaction,
     );
+
+    // If all selected nodes were deleted, e.g., the user selected from
+    // the beginning of the first node to the end of the last node, then
+    // we need insert an empty paragraph node so that there's a place
+    // to position the caret.
+    if (document.getNodeById(startNode.id) == null && document.getNodeById(endNode.id) == null) {
+      final insertIndex = min(startNodeIndex, endNodeIndex);
+      transaction.insertNodeAt(
+        insertIndex,
+        ParagraphNode(id: startNode.id, text: AttributedText()),
+      );
+      return;
+    }
 
     // If the start node and end nodes are both `TextNode`s
     // then we need to consider merging them if one or both are
@@ -96,14 +117,23 @@ class DeleteSelectionCommand implements EditorCommand {
     required DocumentEditorTransaction transaction,
     required DocumentNode node,
   }) {
-    _log.log('_deleteSelectionWithinSingleNode', ' - deleting selection withing single node');
+    _log.log('_deleteSelectionWithinSingleNode', ' - deleting selection within single node');
     final basePosition = documentSelection.base.nodePosition;
     final extentPosition = documentSelection.extent.nodePosition;
 
-    if (basePosition is BinaryNodePosition) {
-      // Binary positions are all-or-nothing. Therefore, partial
-      // selection means delete the whole node.
-      transaction.deleteNode(node);
+    if (basePosition is UpstreamDownstreamNodePosition) {
+      if (basePosition == extentPosition) {
+        // The selection is collapsed. Nothing to delete.
+        return;
+      }
+
+      // The selection is expanded within a block-level node. The only
+      // possibility is that the entire node is selected. Delete the node
+      // and replace it with an empty paragraph.
+      transaction.replaceNode(
+        oldNode: node,
+        newNode: ParagraphNode(id: node.id, text: AttributedText()),
+      );
     } else if (node is TextNode) {
       _log.log('_deleteSelectionWithinSingleNode', ' - its a TextNode');
       final baseOffset = (basePosition as TextPosition).offset;
@@ -146,15 +176,21 @@ class DeleteSelectionCommand implements EditorCommand {
     required DocumentNode node,
     required dynamic nodePosition,
     required DocumentEditorTransaction transaction,
+    required bool replaceWithParagraph,
   }) {
-    if (nodePosition is BinaryNodePosition) {
-      _deleteBinaryNode(
+    if (nodePosition is UpstreamDownstreamNodePosition) {
+      if (nodePosition.affinity == TextAffinity.downstream) {
+        // The position is already at the end of the node. Nothing to do.
+        return;
+      }
+
+      // The position is on the upstream side of block-level content.
+      // Delete the whole block.
+      _deleteBlockLevelNode(
         document: document,
         node: node,
         transaction: transaction,
-        // This is the first node in a selection. We can't delete it because
-        // the composer's selection depends on a stable ID for the first node.
-        replaceWithParagraph: true,
+        replaceWithParagraph: replaceWithParagraph,
       );
     } else if (nodePosition is TextPosition && node is TextNode) {
       node.text = node.text.removeRegion(
@@ -172,12 +208,18 @@ class DeleteSelectionCommand implements EditorCommand {
     required dynamic nodePosition,
     required DocumentEditorTransaction transaction,
   }) {
-    if (nodePosition is BinaryNodePosition) {
-      _deleteBinaryNode(
+    if (nodePosition is UpstreamDownstreamNodePosition) {
+      if (nodePosition.affinity == TextAffinity.upstream) {
+        // The position is already at the beginning of the node. Nothing to do.
+        return;
+      }
+
+      // The position is on the downstream side of block-level content.
+      // Delete the whole block.
+      _deleteBlockLevelNode(
         document: document,
         node: node,
         transaction: transaction,
-        // This is the last node in a selection. We can safely delete the node.
         replaceWithParagraph: false,
       );
     } else if (nodePosition is TextPosition && node is TextNode) {
@@ -190,14 +232,14 @@ class DeleteSelectionCommand implements EditorCommand {
     }
   }
 
-  void _deleteBinaryNode({
+  void _deleteBlockLevelNode({
     required Document document,
     required DocumentNode node,
     required DocumentEditorTransaction transaction,
     required bool replaceWithParagraph,
   }) {
     if (replaceWithParagraph) {
-      // TODO: for now deleting a binary node simply means replacing
+      // TODO: for now deleting a block-level node simply means replacing
       //       it with an empty ParagraphNode because after doing that,
       //       the general deletion logic that called this function will
       //       collapse empty paragraphs together, which gives the
@@ -207,12 +249,12 @@ class DeleteSelectionCommand implements EditorCommand {
       //       depending on the first node still existing at the end of
       //       the deletion. This is a fragile relationship between the
       //       composer and the editor and needs to be addressed.
-      _log.log('_deleteBinaryNode', ' - replacing BinaryNode with a ParagraphNode: ${node.id}');
+      _log.log('_deleteBlockNode', ' - replacing block-level node with a ParagraphNode: ${node.id}');
 
       final newNode = ParagraphNode(id: node.id, text: AttributedText());
       transaction.replaceNode(oldNode: node, newNode: newNode);
     } else {
-      _log.log('_deleteBinaryNode', ' - deleting BinaryNode');
+      _log.log('_deleteBlockNode', ' - deleting block level node');
       transaction.deleteNode(node);
     }
   }

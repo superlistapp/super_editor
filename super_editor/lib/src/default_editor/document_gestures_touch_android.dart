@@ -18,6 +18,7 @@ import 'package:super_editor/src/infrastructure/touch_controls.dart';
 
 import 'document_gestures.dart';
 import 'document_gestures_touch.dart';
+import 'selection_upstream_downstream.dart';
 
 /// Document gesture interactor that's designed for Android touch input, e.g.,
 /// drag to scroll, and handles to control selection.
@@ -419,11 +420,16 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     _clearSelection();
 
     if (docPosition != null) {
-      final didSelectWord = _selectWordAt(
+      bool didSelectContent = _selectWordAt(
         docPosition: docPosition,
         docLayout: _docLayout,
       );
-      if (!didSelectWord) {
+
+      if (!didSelectContent) {
+        didSelectContent = _selectBlockAt(docPosition);
+      }
+
+      if (!didSelectContent) {
         // Place the document selection at the location where the
         // user tapped.
         _selectPosition(docPosition);
@@ -443,6 +449,25 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     }
 
     widget.focusNode.requestFocus();
+  }
+
+  bool _selectBlockAt(DocumentPosition position) {
+    if (position.nodePosition is! UpstreamDownstreamNodePosition) {
+      return false;
+    }
+
+    widget.composer.selection = DocumentSelection(
+      base: DocumentPosition(
+        nodeId: position.nodeId,
+        nodePosition: const UpstreamDownstreamNodePosition.upstream(),
+      ),
+      extent: DocumentPosition(
+        nodeId: position.nodeId,
+        nodePosition: const UpstreamDownstreamNodePosition.downstream(),
+      ),
+    );
+
+    return true;
   }
 
   void _onTripleTapDown(TapDownDetails details) {
