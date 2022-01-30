@@ -102,7 +102,7 @@ void main() {
         initialSelection: const DocumentSelection.collapsed(
           position: DocumentPosition(
             nodeId: "1",
-            nodePosition: TextNodePosition(offset: 11),
+            nodePosition: TextNodePosition(offset: 37),
           ),
         ),
       );
@@ -152,7 +152,7 @@ void main() {
     testWidgets("skips node when down arrow moves caret down from upstream node", (tester) async {
       final composer = DocumentComposer(
         initialSelection: const DocumentSelection.collapsed(
-          position: DocumentPosition(nodeId: "1", nodePosition: TextNodePosition(offset: 11)),
+          position: DocumentPosition(nodeId: "1", nodePosition: TextNodePosition(offset: 37)),
         ),
       );
       await tester.pumpWidget(_buildEditorWithUnselectableHrs(paragraphThenHrThenParagraphDoc(), composer));
@@ -164,14 +164,14 @@ void main() {
       expect(composer.selection!.extent.nodeId, "3");
       expect(
         composer.selection!.extent.nodePosition,
-        const TextNodePosition(offset: 11, affinity: TextAffinity.upstream),
+        const TextNodePosition(offset: 37, affinity: TextAffinity.upstream),
       );
     });
 
     testWidgets("skips node when right arrow moves caret down from upstream node", (tester) async {
       final composer = DocumentComposer(
         initialSelection: const DocumentSelection.collapsed(
-          position: DocumentPosition(nodeId: "1", nodePosition: TextNodePosition(offset: 11)),
+          position: DocumentPosition(nodeId: "1", nodePosition: TextNodePosition(offset: 37)),
         ),
       );
       await tester.pumpWidget(_buildEditorWithUnselectableHrs(paragraphThenHrThenParagraphDoc(), composer));
@@ -228,7 +228,7 @@ void main() {
     testWidgets("skips node when up arrow moves caret up from downstream node", (tester) async {
       final composer = DocumentComposer(
         initialSelection: const DocumentSelection.collapsed(
-          position: DocumentPosition(nodeId: "3", nodePosition: TextNodePosition(offset: 11)),
+          position: DocumentPosition(nodeId: "3", nodePosition: TextNodePosition(offset: 37)),
         ),
       );
       await tester.pumpWidget(_buildEditorWithUnselectableHrs(paragraphThenHrThenParagraphDoc(), composer));
@@ -241,7 +241,7 @@ void main() {
         const DocumentSelection.collapsed(
           position: DocumentPosition(
             nodeId: "1",
-            nodePosition: TextNodePosition(offset: 11, affinity: TextAffinity.upstream),
+            nodePosition: TextNodePosition(offset: 37, affinity: TextAffinity.upstream),
           ),
         ),
       );
@@ -261,7 +261,7 @@ void main() {
       expect(
         composer.selection,
         const DocumentSelection.collapsed(
-          position: DocumentPosition(nodeId: "1", nodePosition: TextNodePosition(offset: 11)),
+          position: DocumentPosition(nodeId: "1", nodePosition: TextNodePosition(offset: 37)),
         ),
       );
     });
@@ -310,7 +310,7 @@ void main() {
         initialSelection: const DocumentSelection.collapsed(
           position: DocumentPosition(
             nodeId: "1",
-            nodePosition: TextNodePosition(offset: 11),
+            nodePosition: TextNodePosition(offset: 37),
           ),
         ),
       );
@@ -324,7 +324,7 @@ void main() {
         const DocumentSelection.collapsed(
           position: DocumentPosition(
             nodeId: "1",
-            nodePosition: TextNodePosition(offset: 11),
+            nodePosition: TextNodePosition(offset: 37),
           ),
         ),
       );

@@ -39,7 +39,6 @@ class DocumentComposer with ChangeNotifier {
   /// Sets the current [selection] for a [Document].
   set selection(DocumentSelection? newSelection) {
     if (newSelection != _selection) {
-      print("Composer setting new selection");
       _selection = newSelection;
       selectionNotifier.value = newSelection;
       notifyListeners();
