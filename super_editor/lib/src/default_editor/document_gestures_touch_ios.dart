@@ -617,7 +617,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     final baseRect = _docLayout.getRectForPosition(basePosition)!;
     // The following caretRect offset and size were chosen empirically, based
     // on trying to drag the handle from various locations near the handle.
-    final caretRect = Rect.fromLTWH(baseRect.left - 16, baseRect.top - 24, 32, baseRect.height + 48);
+    final caretRect = Rect.fromLTWH(baseRect.left - 24, baseRect.top - 24, 48, baseRect.height + 48);
 
     final docOffset = _docLayout.getDocumentOffsetFromAncestorOffset(interactorOffset, context.findRenderObject()!);
     return caretRect.contains(docOffset);
@@ -632,7 +632,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     final extentRect = _docLayout.getRectForPosition(extentPosition)!;
     // The following caretRect offset and size were chosen empirically, based
     // on trying to drag the handle from various locations near the handle.
-    final caretRect = Rect.fromLTWH(extentRect.left - 16, extentRect.top, 32, extentRect.height + 32);
+    final caretRect = Rect.fromLTWH(extentRect.left - 24, extentRect.top, 48, extentRect.height + 32);
 
     final docOffset = _docLayout.getDocumentOffsetFromAncestorOffset(interactorOffset, context.findRenderObject()!);
     return caretRect.contains(docOffset);
