@@ -492,7 +492,7 @@ void main() {
     });
 
     group("typing at boundary", () {
-      testWidgets("with hardware keyboard character at upstream edge", (tester) async {
+      testWidgets("inserts paragraph before upstream edge", (tester) async {
         final document = singleBlockDoc();
         final composer = DocumentComposer(
           initialSelection: const DocumentSelection.collapsed(
@@ -505,11 +505,13 @@ void main() {
         await tester.pump();
 
         expect(composer.selection!.isCollapsed, true);
-        expect(document.nodes.length, 1);
-        expect(composer.selection!.extent.nodePosition, const UpstreamDownstreamNodePosition.upstream());
+        expect(document.nodes.length, 2);
+        expect(document.nodes[0], isA<ParagraphNode>());
+        expect(document.nodes[1], isA<HorizontalRuleNode>());
+        expect(composer.selection!.extent.nodePosition, const TextNodePosition(offset: 1));
       });
 
-      testWidgets("with hardware keyboard character at downstream edge", (tester) async {
+      testWidgets("inserts paragraph after downstream edge", (tester) async {
         final document = singleBlockDoc();
         final composer = DocumentComposer(
           initialSelection: const DocumentSelection.collapsed(
@@ -522,8 +524,33 @@ void main() {
         await tester.pump();
 
         expect(composer.selection!.isCollapsed, true);
+        expect(document.nodes.length, 2);
+        expect(document.nodes[0], isA<HorizontalRuleNode>());
+        expect(document.nodes[1], isA<ParagraphNode>());
+        expect(composer.selection!.extent.nodePosition, const TextNodePosition(offset: 1));
+      });
+
+      testWidgets("deletes empty paragraph in node above when backspace pressed from upstream edge", (tester) async {
+        final document = MutableDocument(
+          nodes: [
+            ParagraphNode(id: "1", text: AttributedText(text: "")),
+            HorizontalRuleNode(id: "2"),
+          ],
+        );
+        final composer = DocumentComposer(
+          initialSelection: const DocumentSelection.collapsed(
+            position: DocumentPosition(nodeId: "2", nodePosition: UpstreamDownstreamNodePosition.upstream()),
+          ),
+        );
+        await tester.pumpWidget(_buildHardwareKeyboardEditor(document, composer));
+
+        await tester.sendKeyEvent(LogicalKeyboardKey.backspace);
+        await tester.pump();
+
+        expect(composer.selection!.isCollapsed, true);
         expect(document.nodes.length, 1);
-        expect(composer.selection!.extent.nodePosition, const UpstreamDownstreamNodePosition.downstream());
+        expect(document.nodes[0], isA<HorizontalRuleNode>());
+        expect(composer.selection!.extent.nodePosition, const UpstreamDownstreamNodePosition.upstream());
       });
     });
   });

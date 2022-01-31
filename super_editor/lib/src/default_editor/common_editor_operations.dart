@@ -1344,13 +1344,6 @@ class CommonEditorOperations {
       return false;
     }
 
-    // final baseNode = editor.document.getNodeById(composer.selection!.base.nodeId)!;
-    // final extentNode = editor.document.getNodeById(composer.selection!.extent.nodeId)!;
-    // if (baseNode.id != extentNode.id) {
-    //   editorOpsLog.fine("The selection spans multiple nodes. Can't insert.");
-    //   return false;
-    // }
-
     if (!composer.selection!.isCollapsed) {
       // The selection is expanded. Delete the selected content
       // and then insert the new text.
@@ -1405,18 +1398,17 @@ class CommonEditorOperations {
   /// If the current selection is expanded, the current selection is deleted
   /// before the character is inserted.
   ///
+  /// If the caret sits at the boundary of a block node, a new paragraph is
+  /// inserted before or after the block node, and then the character is inserted.
+  ///
   /// Returns [true] if the [character] was successfully inserted, or [false]
   /// if it wasn't, e.g., the currently selected node is not a [TextNode].
   bool insertCharacter(
     String character, {
     bool ignoreComposerAttributions = false,
   }) {
+    editorOpsLog.fine("Trying to insert '$character'");
     if (composer.selection == null) {
-      return false;
-    }
-
-    final node = editor.document.getNodeById(composer.selection!.extent.nodeId);
-    if (node is! TextNode) {
       return false;
     }
 
@@ -1424,16 +1416,26 @@ class CommonEditorOperations {
       _deleteExpandedSelection();
     }
 
+    final extentNodePosition = composer.selection!.extent.nodePosition;
+    if (extentNodePosition is UpstreamDownstreamNodePosition) {
+      editorOpsLog.fine("The selected position is an UpstreamDownstreamPosition. Inserting new paragraph first.");
+      insertBlockLevelNewline();
+    }
+
+    final extentNode = editor.document.getNodeById(composer.selection!.extent.nodeId)!;
+    if (extentNode is! TextNode) {
+      editorOpsLog.fine(
+          "Couldn't insert character because Super Editor doesn't know how to handle a node of type: $extentNode");
+      return false;
+    }
+
     // Delegate the action to the standard insert-character behavior.
     final inserted = _insertCharacterInTextComposable(
       character,
       ignoreComposerAttributions: ignoreComposerAttributions,
     );
-    if (!inserted) {
-      return false;
-    }
-
-    return true;
+    editorOpsLog.fine("Did insert '$character'? $inserted");
+    return inserted;
   }
 
   // TODO: refactor to make prefix matching extensible (#68)
