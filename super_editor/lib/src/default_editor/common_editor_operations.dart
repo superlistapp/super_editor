@@ -863,9 +863,30 @@ class CommonEditorOperations {
         return true;
       } else {
         // The caret is sitting on the upstream edge of block-level content and
-        // the user is trying to delete upstream. It's not obvious what should
-        // happen in this situation. Super Editor chooses to move the caret to
-        // the preceding node and to not delete anything.
+        // the user is trying to delete upstream.
+        //  * If the node above is an empty paragraph, delete it.
+        //  * If the node above is non-selectable, delete it.
+        //  * Otherwise, move the caret up to the node above.
+        final nodeBefore = editor.document.getNodeBefore(node);
+        if (nodeBefore == null) {
+          return false;
+        }
+
+        final componentBefore = documentLayoutResolver().getComponentByNodeId(nodeBefore.id)!;
+
+        if (nodeBefore is TextNode && nodeBefore.text.text.isEmpty) {
+          editor.executeCommand(EditorCommandFunction((doc, transaction) {
+            transaction.deleteNode(nodeBefore);
+          }));
+          return true;
+        }
+
+        if (!componentBefore.isVisualSelectionSupported()) {
+          // The node/component above is not selectable. Delete it.
+          _deleteNonSelectedNode(nodeBefore);
+          return true;
+        }
+
         return _moveSelectionToEndOfPrecedingNode();
       }
     }
