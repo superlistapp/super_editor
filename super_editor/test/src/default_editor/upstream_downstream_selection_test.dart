@@ -18,7 +18,7 @@ void main() {
             position: DocumentPosition(nodeId: "3", nodePosition: TextNodePosition(offset: 0)),
           ),
         );
-        await tester.pumpWidget(_buildEditor(paragraphThenHrThenParagraphDoc(), composer));
+        await tester.pumpWidget(_buildHardwareKeyboardEditor(paragraphThenHrThenParagraphDoc(), composer));
 
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
         await tester.pump();
@@ -34,7 +34,7 @@ void main() {
             position: DocumentPosition(nodeId: "3", nodePosition: TextNodePosition(offset: 33)),
           ),
         );
-        await tester.pumpWidget(_buildEditor(paragraphThenHrThenParagraphDoc(), composer));
+        await tester.pumpWidget(_buildHardwareKeyboardEditor(paragraphThenHrThenParagraphDoc(), composer));
 
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
         await tester.pump();
@@ -50,7 +50,7 @@ void main() {
             position: DocumentPosition(nodeId: "2", nodePosition: UpstreamDownstreamNodePosition.upstream()),
           ),
         );
-        await tester.pumpWidget(_buildEditor(paragraphThenHrThenParagraphDoc(), composer));
+        await tester.pumpWidget(_buildHardwareKeyboardEditor(paragraphThenHrThenParagraphDoc(), composer));
 
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
         await tester.pump();
@@ -66,7 +66,7 @@ void main() {
             position: DocumentPosition(nodeId: "2", nodePosition: UpstreamDownstreamNodePosition.downstream()),
           ),
         );
-        await tester.pumpWidget(_buildEditor(paragraphThenHrThenParagraphDoc(), composer));
+        await tester.pumpWidget(_buildHardwareKeyboardEditor(paragraphThenHrThenParagraphDoc(), composer));
 
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
         await tester.pump();
@@ -82,7 +82,7 @@ void main() {
             position: DocumentPosition(nodeId: "2", nodePosition: UpstreamDownstreamNodePosition.upstream()),
           ),
         );
-        await tester.pumpWidget(_buildEditor(paragraphThenHrThenParagraphDoc(), composer));
+        await tester.pumpWidget(_buildHardwareKeyboardEditor(paragraphThenHrThenParagraphDoc(), composer));
 
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
         await tester.pump();
@@ -99,7 +99,7 @@ void main() {
             position: DocumentPosition(nodeId: "2", nodePosition: UpstreamDownstreamNodePosition.downstream()),
           ),
         );
-        await tester.pumpWidget(_buildEditor(paragraphThenHrThenParagraphDoc(), composer));
+        await tester.pumpWidget(_buildHardwareKeyboardEditor(paragraphThenHrThenParagraphDoc(), composer));
 
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
         await tester.pump();
@@ -116,7 +116,7 @@ void main() {
             position: DocumentPosition(nodeId: "1", nodePosition: TextNodePosition(offset: 37)),
           ),
         );
-        await tester.pumpWidget(_buildEditor(paragraphThenHrThenParagraphDoc(), composer));
+        await tester.pumpWidget(_buildHardwareKeyboardEditor(paragraphThenHrThenParagraphDoc(), composer));
 
         await tester.sendKeyEvent(LogicalKeyboardKey.delete);
         await tester.pump();
@@ -132,7 +132,7 @@ void main() {
             position: DocumentPosition(nodeId: "3", nodePosition: TextNodePosition(offset: 0)),
           ),
         );
-        await tester.pumpWidget(_buildEditor(paragraphThenHrThenParagraphDoc(), composer));
+        await tester.pumpWidget(_buildHardwareKeyboardEditor(paragraphThenHrThenParagraphDoc(), composer));
 
         await tester.sendKeyEvent(LogicalKeyboardKey.backspace);
         await tester.pump();
@@ -150,7 +150,7 @@ void main() {
             position: DocumentPosition(nodeId: "1", nodePosition: TextNodePosition(offset: 0)),
           ),
         );
-        await tester.pumpWidget(_buildEditor(paragraphThenHrThenParagraphDoc(), composer));
+        await tester.pumpWidget(_buildHardwareKeyboardEditor(paragraphThenHrThenParagraphDoc(), composer));
 
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
         await tester.pump();
@@ -166,7 +166,7 @@ void main() {
             position: DocumentPosition(nodeId: "1", nodePosition: TextNodePosition(offset: 33)),
           ),
         );
-        await tester.pumpWidget(_buildEditor(paragraphThenHrThenParagraphDoc(), composer));
+        await tester.pumpWidget(_buildHardwareKeyboardEditor(paragraphThenHrThenParagraphDoc(), composer));
 
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
         await tester.pump();
@@ -182,7 +182,7 @@ void main() {
             position: DocumentPosition(nodeId: "2", nodePosition: UpstreamDownstreamNodePosition.upstream()),
           ),
         );
-        await tester.pumpWidget(_buildEditor(paragraphThenHrThenParagraphDoc(), composer));
+        await tester.pumpWidget(_buildHardwareKeyboardEditor(paragraphThenHrThenParagraphDoc(), composer));
 
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
         await tester.pump();
@@ -198,7 +198,7 @@ void main() {
             position: DocumentPosition(nodeId: "2", nodePosition: UpstreamDownstreamNodePosition.downstream()),
           ),
         );
-        await tester.pumpWidget(_buildEditor(paragraphThenHrThenParagraphDoc(), composer));
+        await tester.pumpWidget(_buildHardwareKeyboardEditor(paragraphThenHrThenParagraphDoc(), composer));
 
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
         await tester.pump();
@@ -214,7 +214,7 @@ void main() {
             position: DocumentPosition(nodeId: "2", nodePosition: UpstreamDownstreamNodePosition.downstream()),
           ),
         );
-        await tester.pumpWidget(_buildEditor(paragraphThenHrThenParagraphDoc(), composer));
+        await tester.pumpWidget(_buildHardwareKeyboardEditor(paragraphThenHrThenParagraphDoc(), composer));
 
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
         await tester.pump();
@@ -233,7 +233,7 @@ void main() {
             position: DocumentPosition(nodeId: "2", nodePosition: UpstreamDownstreamNodePosition.upstream()),
           ),
         );
-        await tester.pumpWidget(_buildEditor(paragraphThenHrThenParagraphDoc(), composer));
+        await tester.pumpWidget(_buildHardwareKeyboardEditor(paragraphThenHrThenParagraphDoc(), composer));
 
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
         await tester.pump();
@@ -249,7 +249,7 @@ void main() {
             position: DocumentPosition(nodeId: "2", nodePosition: UpstreamDownstreamNodePosition.downstream()),
           ),
         );
-        await tester.pumpWidget(_buildEditor(paragraphThenHrThenParagraphDoc(), composer));
+        await tester.pumpWidget(_buildHardwareKeyboardEditor(paragraphThenHrThenParagraphDoc(), composer));
 
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
         await tester.pump();
@@ -267,7 +267,7 @@ void main() {
             position: DocumentPosition(nodeId: "2", nodePosition: UpstreamDownstreamNodePosition.upstream()),
           ),
         );
-        await tester.pumpWidget(_buildEditor(paragraphThenHrThenParagraphDoc(), composer));
+        await tester.pumpWidget(_buildHardwareKeyboardEditor(paragraphThenHrThenParagraphDoc(), composer));
 
         await tester.sendKeyEvent(LogicalKeyboardKey.backspace);
         await tester.pump();
@@ -283,7 +283,7 @@ void main() {
             position: DocumentPosition(nodeId: "2", nodePosition: UpstreamDownstreamNodePosition.downstream()),
           ),
         );
-        await tester.pumpWidget(_buildEditor(paragraphThenHrThenParagraphDoc(), composer));
+        await tester.pumpWidget(_buildHardwareKeyboardEditor(paragraphThenHrThenParagraphDoc(), composer));
 
         await tester.sendKeyEvent(LogicalKeyboardKey.backspace);
         await tester.pump();
@@ -299,7 +299,7 @@ void main() {
             position: DocumentPosition(nodeId: "2", nodePosition: UpstreamDownstreamNodePosition.downstream()),
           ),
         );
-        await tester.pumpWidget(_buildEditor(paragraphThenHrThenParagraphDoc(), composer));
+        await tester.pumpWidget(_buildHardwareKeyboardEditor(paragraphThenHrThenParagraphDoc(), composer));
 
         await tester.sendKeyEvent(LogicalKeyboardKey.delete);
         await tester.pump();
@@ -315,7 +315,7 @@ void main() {
             position: DocumentPosition(nodeId: "2", nodePosition: UpstreamDownstreamNodePosition.upstream()),
           ),
         );
-        await tester.pumpWidget(_buildEditor(paragraphThenHrThenParagraphDoc(), composer));
+        await tester.pumpWidget(_buildHardwareKeyboardEditor(paragraphThenHrThenParagraphDoc(), composer));
 
         await tester.sendKeyEvent(LogicalKeyboardKey.delete);
         await tester.pump();
@@ -332,7 +332,7 @@ void main() {
             extent: DocumentPosition(nodeId: "2", nodePosition: UpstreamDownstreamNodePosition.downstream()),
           ),
         );
-        await tester.pumpWidget(_buildEditor(paragraphThenHrThenParagraphDoc(), composer));
+        await tester.pumpWidget(_buildHardwareKeyboardEditor(paragraphThenHrThenParagraphDoc(), composer));
 
         await tester.sendKeyEvent(LogicalKeyboardKey.backspace);
         await tester.pump();
@@ -349,7 +349,7 @@ void main() {
             extent: DocumentPosition(nodeId: "2", nodePosition: UpstreamDownstreamNodePosition.downstream()),
           ),
         );
-        await tester.pumpWidget(_buildEditor(paragraphThenHrThenParagraphDoc(), composer));
+        await tester.pumpWidget(_buildHardwareKeyboardEditor(paragraphThenHrThenParagraphDoc(), composer));
 
         await tester.sendKeyEvent(LogicalKeyboardKey.delete);
         await tester.pump();
@@ -367,7 +367,7 @@ void main() {
             extent: DocumentPosition(nodeId: "2", nodePosition: UpstreamDownstreamNodePosition.downstream()),
           ),
         );
-        await tester.pumpWidget(_buildEditor(document, composer));
+        await tester.pumpWidget(_buildHardwareKeyboardEditor(document, composer));
 
         await tester.sendKeyEvent(LogicalKeyboardKey.backspace);
         await tester.pump();
@@ -386,7 +386,7 @@ void main() {
             extent: DocumentPosition(nodeId: "3", nodePosition: TextNodePosition(offset: 20)),
           ),
         );
-        await tester.pumpWidget(_buildEditor(document, composer));
+        await tester.pumpWidget(_buildHardwareKeyboardEditor(document, composer));
 
         await tester.sendKeyEvent(LogicalKeyboardKey.backspace);
         await tester.pump();
@@ -405,7 +405,7 @@ void main() {
             extent: DocumentPosition(nodeId: "3", nodePosition: TextNodePosition(offset: 20)),
           ),
         );
-        await tester.pumpWidget(_buildEditor(document, composer));
+        await tester.pumpWidget(_buildHardwareKeyboardEditor(document, composer));
 
         await tester.sendKeyEvent(LogicalKeyboardKey.backspace);
         await tester.pump();
@@ -423,7 +423,7 @@ void main() {
             position: DocumentPosition(nodeId: "1", nodePosition: UpstreamDownstreamNodePosition.upstream()),
           ),
         );
-        await tester.pumpWidget(_buildEditor(document, composer));
+        await tester.pumpWidget(_buildHardwareKeyboardEditor(document, composer));
 
         await tester.sendKeyEvent(LogicalKeyboardKey.backspace);
         await tester.pump();
@@ -440,7 +440,7 @@ void main() {
             position: DocumentPosition(nodeId: "1", nodePosition: UpstreamDownstreamNodePosition.downstream()),
           ),
         );
-        await tester.pumpWidget(_buildEditor(document, composer));
+        await tester.pumpWidget(_buildHardwareKeyboardEditor(document, composer));
 
         await tester.sendKeyEvent(LogicalKeyboardKey.delete);
         await tester.pump();
@@ -459,7 +459,7 @@ void main() {
             position: DocumentPosition(nodeId: "1", nodePosition: UpstreamDownstreamNodePosition.upstream()),
           ),
         );
-        await tester.pumpWidget(_buildEditor(document, composer));
+        await tester.pumpWidget(_buildHardwareKeyboardEditor(document, composer));
 
         await tester.sendKeyEvent(LogicalKeyboardKey.enter);
         await tester.pump();
@@ -478,7 +478,7 @@ void main() {
             position: DocumentPosition(nodeId: "1", nodePosition: UpstreamDownstreamNodePosition.downstream()),
           ),
         );
-        await tester.pumpWidget(_buildEditor(document, composer));
+        await tester.pumpWidget(_buildHardwareKeyboardEditor(document, composer));
 
         await tester.sendKeyEvent(LogicalKeyboardKey.enter);
         await tester.pump();
@@ -490,10 +490,46 @@ void main() {
         expect(document.getNodeAt(1)!.id, composer.selection!.extent.nodeId);
       });
     });
+
+    group("typing at boundary", () {
+      testWidgets("with hardware keyboard character at upstream edge", (tester) async {
+        final document = singleBlockDoc();
+        final composer = DocumentComposer(
+          initialSelection: const DocumentSelection.collapsed(
+            position: DocumentPosition(nodeId: "1", nodePosition: UpstreamDownstreamNodePosition.upstream()),
+          ),
+        );
+        await tester.pumpWidget(_buildHardwareKeyboardEditor(document, composer));
+
+        await tester.sendKeyEvent(LogicalKeyboardKey.keyA);
+        await tester.pump();
+
+        expect(composer.selection!.isCollapsed, true);
+        expect(document.nodes.length, 1);
+        expect(composer.selection!.extent.nodePosition, const UpstreamDownstreamNodePosition.upstream());
+      });
+
+      testWidgets("with hardware keyboard character at downstream edge", (tester) async {
+        final document = singleBlockDoc();
+        final composer = DocumentComposer(
+          initialSelection: const DocumentSelection.collapsed(
+            position: DocumentPosition(nodeId: "1", nodePosition: UpstreamDownstreamNodePosition.downstream()),
+          ),
+        );
+        await tester.pumpWidget(_buildHardwareKeyboardEditor(document, composer));
+
+        await tester.sendKeyEvent(LogicalKeyboardKey.keyA);
+        await tester.pump();
+
+        expect(composer.selection!.isCollapsed, true);
+        expect(document.nodes.length, 1);
+        expect(composer.selection!.extent.nodePosition, const UpstreamDownstreamNodePosition.downstream());
+      });
+    });
   });
 }
 
-Widget _buildEditor(MutableDocument document, DocumentComposer composer) {
+Widget _buildHardwareKeyboardEditor(MutableDocument document, DocumentComposer composer) {
   final editor = DocumentEditor(document: document);
 
   return MaterialApp(

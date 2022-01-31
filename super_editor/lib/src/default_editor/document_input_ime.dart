@@ -11,6 +11,7 @@ import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/default_editor/common_editor_operations.dart';
 import 'package:super_editor/src/default_editor/document_gestures_touch_ios.dart';
 import 'package:super_editor/src/default_editor/paragraph.dart';
+import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_spans.dart';
@@ -239,17 +240,24 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
           continue;
         }
 
-        editorImeLog.fine("Inserting text: ${delta.textInserted}, insertion offset: ${delta.insertionOffset}");
+        editorImeLog.fine(
+            "Inserting text: ${delta.textInserted}, insertion offset: ${delta.insertionOffset}, ime selection: ${delta.selection}");
 
         final imeValueBeforeChange = currentTextEditingValue;
-        widget.softwareKeyboardHandler.insert(delta.insertionOffset, delta.textInserted);
+        editorImeLog.fine("IME value before insertion: $imeValueBeforeChange");
+        widget.softwareKeyboardHandler.insert(
+            TextPosition(offset: delta.insertionOffset, affinity: delta.selection.affinity), delta.textInserted);
+        editorImeLog.fine("IME value after insertion: $currentTextEditingValue");
 
-        if (delta.textInserted == "\n" && imeValueBeforeChange == currentTextEditingValue) {
-          // The newline action didn't change the current IME content or
+        if (imeValueBeforeChange == currentTextEditingValue) {
+          // The insertion action didn't change the current IME content or
           // selection. This can happen, for example, when an empty list
-          // item is converted to a paragraph. Here, we explicitly reset
-          // the IME value to what it was before the newline so that the
-          // IME doesn't think there's a "\n" character in the content.
+          // item is converted to a paragraph, or when the user tries enters
+          // a character in a component that doesn't support text input.
+          //
+          // Here, we explicitly reset the IME value to what it was before
+          // the change so that the IME doesn't think we applied the change,
+          // such as inserting a '\n' or inserting some characters.
           _inputConnection!.setEditingState(currentTextEditingValue);
         }
       } else if (delta is TextEditingDeltaReplacement) {
@@ -271,7 +279,22 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
           continue;
         }
 
+        final imeValueBeforeChange = currentTextEditingValue;
+        editorImeLog.fine("IME value before replacement: $imeValueBeforeChange");
         widget.softwareKeyboardHandler.replace(delta.replacedRange, delta.replacementText);
+        editorImeLog.fine("IME value after replacement: $currentTextEditingValue");
+
+        if (imeValueBeforeChange == currentTextEditingValue) {
+          // The insertion action didn't change the current IME content or
+          // selection. This can happen, for example, when an empty list
+          // item is converted to a paragraph, or when the user tries enters
+          // a character in a component that doesn't support text input.
+          //
+          // Here, we explicitly reset the IME value to what it was before
+          // the change so that the IME doesn't think we applied the change,
+          // such as inserting a '\n' or inserting some characters.
+          _inputConnection!.setEditingState(currentTextEditingValue);
+        }
       } else if (delta is TextEditingDeltaDeletion) {
         editorImeLog.fine("Deleting text: ${delta.textDeleted}");
         editorImeLog.fine("Deleted range: ${delta.deletedRange}");
@@ -463,12 +486,18 @@ class DocumentImeSerializer {
         );
       }
     } else {
-      editorImeLog.fine("Returning doc selection without modification");
+      editorImeLog.fine("Mapping the IME base/extent to their corresponding doc positions without modification.");
     }
 
     return DocumentSelection(
-      base: _imeToDocumentPosition(imeSelection.base, isUpstream: true),
-      extent: _imeToDocumentPosition(imeSelection.extent, isUpstream: false),
+      base: _imeToDocumentPosition(
+        imeSelection.base,
+        isUpstream: imeSelection.base.affinity == TextAffinity.upstream,
+      ),
+      extent: _imeToDocumentPosition(
+        imeSelection.extent,
+        isUpstream: imeSelection.extent.affinity == TextAffinity.upstream,
+      ),
     );
   }
 
@@ -483,7 +512,7 @@ class DocumentImeSerializer {
             nodePosition: TextNodePosition(offset: imePosition.offset - range.start),
           );
         } else {
-          if (isUpstream) {
+          if (imePosition.offset <= range.start) {
             // Return a position at the start of the node.
             return DocumentPosition(
               nodeId: node.id,
@@ -509,39 +538,49 @@ class DocumentImeSerializer {
     editorImeLog.fine("Converting doc selection to ime selection: $docSelection");
     final selectionAffinity = _doc.getAffinityForSelection(docSelection);
 
-    final startPosition = selectionAffinity == TextAffinity.downstream ? docSelection.base : docSelection.extent;
-    final startOffset = _documentToImePosition(startPosition, isUpstream: true).offset;
+    final startDocPosition = selectionAffinity == TextAffinity.downstream ? docSelection.base : docSelection.extent;
+    final startImePosition = _documentToImePosition(startDocPosition);
 
-    final endPosition = selectionAffinity == TextAffinity.downstream ? docSelection.extent : docSelection.base;
-    final endOffset = _documentToImePosition(endPosition, isUpstream: false).offset;
+    final endDocPosition = selectionAffinity == TextAffinity.downstream ? docSelection.extent : docSelection.base;
+    final endImePosition = _documentToImePosition(endDocPosition);
 
-    editorImeLog.fine("Start offset: $startOffset");
-    editorImeLog.fine("End offset: $endOffset");
+    editorImeLog.fine("Start IME position: $startImePosition");
+    editorImeLog.fine("End IME position: $endImePosition");
     return TextSelection(
-      baseOffset: startOffset,
-      extentOffset: endOffset,
+      baseOffset: startImePosition.offset,
+      extentOffset: endImePosition.offset,
+      affinity: startImePosition == endImePosition ? endImePosition.affinity : TextAffinity.downstream,
     );
   }
 
-  TextPosition _documentToImePosition(DocumentPosition docPosition, {required bool isUpstream}) {
+  TextPosition _documentToImePosition(DocumentPosition docPosition) {
+    editorImeLog.fine("Converting DocumentPosition to IME TextPosition: $docPosition");
     final imeRange = _docTextNodesToImeRanges[docPosition.nodeId];
     if (imeRange == null) {
       throw Exception("No such document position in the IME content: $docPosition");
     }
 
-    if (docPosition.nodePosition is! TextNodePosition) {
-      if (isUpstream) {
+    final nodePosition = docPosition.nodePosition;
+
+    if (nodePosition is UpstreamDownstreamNodePosition) {
+      if (nodePosition.affinity == TextAffinity.upstream) {
+        editorImeLog.fine("The doc position is an upstream position on a block.");
         // Return the text position before the special character,
         // e.g., "|~".
         return TextPosition(offset: imeRange.start);
       } else {
+        editorImeLog.fine("The doc position is a downstream position on a block.");
         // Return the text position after the special character,
         // e.g., "~|".
         return TextPosition(offset: imeRange.start + 1);
       }
     }
 
-    return TextPosition(offset: imeRange.start + (docPosition.nodePosition as TextNodePosition).offset);
+    if (nodePosition is TextNodePosition) {
+      return TextPosition(offset: imeRange.start + (docPosition.nodePosition as TextNodePosition).offset);
+    }
+
+    throw Exception("Super Editor doesn't know how to convert a $nodePosition into an IME-compatible selection");
   }
 
   TextEditingValue toTextEditingValue() {
@@ -753,23 +792,35 @@ class SoftwareKeyboardHandler {
   final DocumentComposer composer;
   final CommonEditorOperations commonOps;
 
-  void insert(int insertionOffset, String textInserted) {
+  void insert(TextPosition insertionPosition, String textInserted) {
     if (textInserted == "\n") {
       // Newlines are handled in performAction()
       return;
     }
 
+    editorImeLog.fine('Inserting "$textInserted" at position "$insertionPosition"');
+    editorImeLog.fine("Serializing document to perform IME operation");
     final docSerializer = DocumentImeSerializer(
       editor.document,
       composer.selection!,
     );
+    editorImeLog.fine("Converting IME insertion offset into a DocumentSelection");
     final insertionSelection = docSerializer.imeToDocumentSelection(
-      TextSelection.collapsed(offset: insertionOffset),
+      TextSelection.fromPosition(insertionPosition),
     );
+    editorImeLog
+        .fine("Updating the Document Composer's selection to place caret at insertion offset:\n$insertionSelection");
+    final selectionBeforeInsertion = composer.selection;
     composer.selection = insertionSelection;
 
+    editorImeLog.fine("Inserting the text at the Document Composer's selection");
     final didInsert = commonOps.insertPlainText(textInserted);
     editorImeLog.fine("Insertion successful? $didInsert");
+
+    if (!didInsert) {
+      editorImeLog.fine("Failed to insert characters. Restoring previous selection.");
+      composer.selection = selectionBeforeInsertion;
+    }
   }
 
   void replace(TextRange replacedRange, String replacementText) {

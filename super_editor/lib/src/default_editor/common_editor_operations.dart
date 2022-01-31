@@ -1313,31 +1313,47 @@ class CommonEditorOperations {
   ///
   /// Any selected content is deleted before inserting the new text.
   ///
-  /// Returns [true] if the [text] was successfully inserted, or [false]
-  /// if it wasn't, e.g., the currently selected node is not a [TextNode].
+  /// Returns `true` if the [text] was successfully inserted, or [false]
+  /// if it wasn't, e.g., there was no selection, or more than one node
+  /// was selected.
   bool insertPlainText(String text) {
+    editorOpsLog.fine('Attempting to insert "$text"');
     if (composer.selection == null) {
+      editorOpsLog.fine("The composer has no selection. Can't insert.");
       return false;
     }
 
-    final baseNode = editor.document.getNodeById(composer.selection!.base.nodeId)!;
-    final extentNode = editor.document.getNodeById(composer.selection!.extent.nodeId)!;
-    if (baseNode.id != extentNode.id) {
-      return false;
-    }
-    if (extentNode is! TextNode) {
-      return false;
-    }
+    // final baseNode = editor.document.getNodeById(composer.selection!.base.nodeId)!;
+    // final extentNode = editor.document.getNodeById(composer.selection!.extent.nodeId)!;
+    // if (baseNode.id != extentNode.id) {
+    //   editorOpsLog.fine("The selection spans multiple nodes. Can't insert.");
+    //   return false;
+    // }
 
     if (!composer.selection!.isCollapsed) {
       // The selection is expanded. Delete the selected content
       // and then insert the new text.
+      editorOpsLog.fine("The selection is expanded. Deleting the selection before inserting text.");
       _deleteExpandedSelection();
+    }
+
+    final extentNodePosition = composer.selection!.extent.nodePosition;
+    if (extentNodePosition is UpstreamDownstreamNodePosition) {
+      editorOpsLog.fine("The selected position is an UpstreamDownstreamPosition. Inserting new paragraph first.");
+      insertBlockLevelNewline();
+    }
+
+    final extentNode = editor.document.getNodeById(composer.selection!.extent.nodeId)!;
+    if (extentNode is! TextNode) {
+      editorOpsLog
+          .fine("Couldn't insert text because Super Editor doesn't know how to handle a node of type: $extentNode");
+      return false;
     }
 
     final textNode = editor.document.getNode(composer.selection!.extent) as TextNode;
     final initialTextOffset = (composer.selection!.extent.nodePosition as TextNodePosition).offset;
 
+    editorOpsLog.fine("Executing text insertion command.");
     editor.executeCommand(
       InsertTextCommand(
         documentPosition: composer.selection!.extent,
@@ -1346,6 +1362,7 @@ class CommonEditorOperations {
       ),
     );
 
+    editorOpsLog.fine("Updating Document Composer selection after text insertion.");
     composer.selection = DocumentSelection.collapsed(
       position: DocumentPosition(
         nodeId: textNode.id,
@@ -1354,7 +1371,6 @@ class CommonEditorOperations {
         ),
       ),
     );
-    print("Text offset was $initialTextOffset but now it's ${composer.selection}");
 
     return true;
   }
