@@ -20,6 +20,21 @@ void main() {
         expect(find.text("hello world", findRichText: true), findsOneWidget);
       });
 
+      testWidgets("shift characters", (tester) async {
+        await _pumpDesktopScaffold(tester);
+
+        await tester.tap(find.byType(SuperTextField));
+        await tester.pumpAndSettle();
+
+        await tester.enterSuperTextPlain(
+          find.byType(SuperTextField),
+          "@",
+        );
+
+        expect(find.text("@", findRichText: true), findsOneWidget);
+        expect(find.text("2", findRichText: true), findsNothing);
+      });
+
       testWidgets("doesn't support Android", (tester) async {
         await _pumpAndroidScaffold(tester);
 

@@ -3,6 +3,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/android/android_textfield.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/ios/ios_textfield.dart';
+
 import 'super_textfield.dart';
 
 extension SuperTextFieldTesting on WidgetTester {
@@ -69,7 +70,12 @@ extension SuperTextFieldTesting on WidgetTester {
         await sendKeyDownEvent(LogicalKeyboardKey.shift, platform: 'macos');
       }
 
-      await sendKeyEvent(keyCombo.key, platform: 'macos');
+      if (keyCombo.isShiftPressed) {
+        await sendKeyDownEvent(keyCombo.physicalKey!, platform: 'macos', character: character);
+        await sendKeyUpEvent(keyCombo.physicalKey!, platform: 'macos');
+      } else {
+        await sendKeyEvent(keyCombo.key, platform: 'macos');
+      }
 
       if (keyCombo.isShiftPressed) {
         await sendKeyUpEvent(LogicalKeyboardKey.shift, platform: 'macos');
@@ -96,7 +102,11 @@ extension SuperTextFieldTesting on WidgetTester {
       return _KeyboardCombo(_charactersToKey[character]!);
     }
     if (_shiftCharactersToKey.containsKey(character)) {
-      return _KeyboardCombo(_shiftCharactersToKey[character]!, isShiftPressed: true);
+      return _KeyboardCombo(
+        _shiftCharactersToKey[character]!,
+        isShiftPressed: true,
+        physicalKey: _enUSShiftCharactersToPhysicalKey[character]!,
+      );
     }
 
     throw Exception("Couldn't convert '$character' to a key combo.");
@@ -204,12 +214,39 @@ const _shiftCharactersToKey = {
   '?': LogicalKeyboardKey.question,
 };
 
+/// A mapping of shift characters to physical keys on en_US keyboards
+const _enUSShiftCharactersToPhysicalKey = {
+  '!': LogicalKeyboardKey.digit1,
+  '@': LogicalKeyboardKey.digit2,
+  '#': LogicalKeyboardKey.digit3,
+  '\$': LogicalKeyboardKey.digit4,
+  '%': LogicalKeyboardKey.digit5,
+  '^': LogicalKeyboardKey.digit6,
+  '&': LogicalKeyboardKey.digit7,
+  '*': LogicalKeyboardKey.digit8,
+  '(': LogicalKeyboardKey.digit9,
+  ')': LogicalKeyboardKey.digit0,
+  '~': LogicalKeyboardKey.backquote,
+  '_': LogicalKeyboardKey.minus,
+  '+': LogicalKeyboardKey.equal,
+  '{': LogicalKeyboardKey.bracketLeft,
+  '}': LogicalKeyboardKey.bracketRight,
+  '|': LogicalKeyboardKey.backslash,
+  ':': LogicalKeyboardKey.semicolon,
+  '"': LogicalKeyboardKey.quoteSingle,
+  '<': LogicalKeyboardKey.comma,
+  '>': LogicalKeyboardKey.period,
+  '?': LogicalKeyboardKey.slash,
+};
+
 class _KeyboardCombo {
   _KeyboardCombo(
     this.key, {
     this.isShiftPressed = false,
-  });
+    this.physicalKey,
+  }) : assert(isShiftPressed ? physicalKey != null : physicalKey == null);
 
   final LogicalKeyboardKey key;
   final bool isShiftPressed;
+  final LogicalKeyboardKey? physicalKey;
 }
