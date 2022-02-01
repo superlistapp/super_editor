@@ -1073,6 +1073,7 @@ class KeyboardEditingToolbar extends StatelessWidget {
                         listenable: composer,
                         builder: (context) {
                           final selectedNode = document.getNodeById(selection.extent.nodeId);
+                          final isSingleNodeSelected = selection.extent.nodeId == selection.base.nodeId;
 
                           return Row(
                             mainAxisSize: MainAxisSize.min,
@@ -1098,7 +1099,7 @@ class KeyboardEditingToolbar extends StatelessWidget {
                                 color: _isStrikethroughActive ? Theme.of(context).primaryColor : null,
                               ),
                               IconButton(
-                                onPressed: selection.isCollapsed &&
+                                onPressed: isSingleNodeSelected &&
                                         (selectedNode is TextNode &&
                                             selectedNode.metadata['blockType'] != header1Attribution)
                                     ? _convertToHeader1
@@ -1106,7 +1107,7 @@ class KeyboardEditingToolbar extends StatelessWidget {
                                 icon: const Icon(Icons.title),
                               ),
                               IconButton(
-                                onPressed: selection.isCollapsed &&
+                                onPressed: isSingleNodeSelected &&
                                         (selectedNode is TextNode &&
                                             selectedNode.metadata['blockType'] != header2Attribution)
                                     ? _convertToHeader2
@@ -1115,7 +1116,7 @@ class KeyboardEditingToolbar extends StatelessWidget {
                                 iconSize: 18,
                               ),
                               IconButton(
-                                onPressed: selection.isCollapsed &&
+                                onPressed: isSingleNodeSelected &&
                                         ((selectedNode is ParagraphNode &&
                                                 selectedNode.metadata['blockType'] != null) ||
                                             (selectedNode is TextNode && selectedNode is! ParagraphNode))
@@ -1124,7 +1125,7 @@ class KeyboardEditingToolbar extends StatelessWidget {
                                 icon: const Icon(Icons.wrap_text),
                               ),
                               IconButton(
-                                onPressed: selection.isCollapsed &&
+                                onPressed: isSingleNodeSelected &&
                                         (selectedNode is TextNode && selectedNode is! ListItemNode ||
                                             (selectedNode is ListItemNode && selectedNode.type != ListItemType.ordered))
                                     ? _convertToOrderedListItem
@@ -1132,7 +1133,7 @@ class KeyboardEditingToolbar extends StatelessWidget {
                                 icon: const Icon(Icons.looks_one_rounded),
                               ),
                               IconButton(
-                                onPressed: selection.isCollapsed &&
+                                onPressed: isSingleNodeSelected &&
                                         (selectedNode is TextNode && selectedNode is! ListItemNode ||
                                             (selectedNode is ListItemNode &&
                                                 selectedNode.type != ListItemType.unordered))
@@ -1141,7 +1142,7 @@ class KeyboardEditingToolbar extends StatelessWidget {
                                 icon: const Icon(Icons.list),
                               ),
                               IconButton(
-                                onPressed: selection.isCollapsed &&
+                                onPressed: isSingleNodeSelected &&
                                         selectedNode is TextNode &&
                                         (selectedNode is! ParagraphNode ||
                                             selectedNode.metadata['blockType'] != blockquoteAttribution)
@@ -1150,7 +1151,7 @@ class KeyboardEditingToolbar extends StatelessWidget {
                                 icon: const Icon(Icons.format_quote),
                               ),
                               IconButton(
-                                onPressed: selection.isCollapsed &&
+                                onPressed: isSingleNodeSelected &&
                                         selectedNode is ParagraphNode &&
                                         selectedNode.text.text.isEmpty
                                     ? _convertToHr
