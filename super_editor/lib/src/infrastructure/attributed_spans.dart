@@ -54,7 +54,7 @@ class AttributedSpans {
   final List<SpanMarker> _attributions;
 
   void _sortAttributions() {
-    _attributions.sort((m1, m2) => m1.compareTo(m2));
+    _attributions.sort();
   }
 
   /// Returns true if this [AttributedSpans] contains at least one
