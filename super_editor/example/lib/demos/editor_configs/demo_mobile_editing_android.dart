@@ -139,18 +139,20 @@ class _MobileEditingAndroidDemoState extends State<MobileEditingAndroidDemo> {
   Widget _buildScaffold({
     required Widget child,
   }) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isPortrait = constraints.maxHeight / constraints.maxWidth > 1;
+    return SafeArea(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isPortrait = constraints.maxHeight / constraints.maxWidth > 1;
 
-        if (Platform.isAndroid || Platform.isIOS || isPortrait) {
-          return child;
-        } else {
-          return _buildPhoneSizedArea(
-            child: child,
-          );
-        }
-      },
+          if (Platform.isAndroid || Platform.isIOS || isPortrait) {
+            return child;
+          } else {
+            return _buildPhoneSizedArea(
+              child: child,
+            );
+          }
+        },
+      ),
     );
   }
 

@@ -191,13 +191,21 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
   @override
   TextEditingValue get currentTextEditingValue => _currentTextEditingValue;
   TextEditingValue _currentTextEditingValue = const TextEditingValue();
+  TextEditingValue? _lastTextEditingValueSentToOs;
   set currentTextEditingValue(TextEditingValue newValue) {
-    if (newValue != _currentTextEditingValue) {
-      _currentTextEditingValue = newValue;
+    _currentTextEditingValue = newValue;
+    if (newValue != _lastTextEditingValueSentToOs && !_isApplyingDeltas) {
       editorImeLog.info("Sending new text editing value to OS: $_currentTextEditingValue");
       _inputConnection?.setEditingState(_currentTextEditingValue);
+      _lastTextEditingValueSentToOs = _currentTextEditingValue;
+    } else if (_isApplyingDeltas) {
+      editorImeLog.fine("Ignoring new TextEditingValue because we're applying deltas");
+    } else {
+      editorImeLog.fine("Ignoring new TextEditingValue because it's the same as the existing one: $newValue");
     }
   }
+
+  bool _isApplyingDeltas = false;
 
   void _syncImeWithDocumentAndComposer() {
     final selection = widget.editContext.composer.selection;
@@ -225,96 +233,16 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
       editorImeLog.info("$delta");
     }
 
-    for (final delta in textEditingDeltas) {
-      editorImeLog.info("Applying delta: $delta");
-      if (delta is TextEditingDeltaInsertion) {
-        if (delta.textInserted == "\n") {
-          // On iOS, newlines are reported here and also to performAction().
-          // On Android, newlines are only reported here. So, on Android only,
-          // we forward the newline action to performAction.
-          if (defaultTargetPlatform == TargetPlatform.android) {
-            editorImeLog.fine("Received a newline insertion on Android. Forwarding to newline input action.");
-            widget.softwareKeyboardHandler.performAction(TextInputAction.newline);
-          } else {
-            editorImeLog.fine("Skipping insertion delta because its a newline");
-          }
-          continue;
-        }
+    final imeValueBeforeChange = currentTextEditingValue;
+    editorImeLog.fine("IME value before insertion: $imeValueBeforeChange");
 
-        editorImeLog.fine(
-            "Inserting text: ${delta.textInserted}, insertion offset: ${delta.insertionOffset}, ime selection: ${delta.selection}");
+    _isApplyingDeltas = true;
+    widget.softwareKeyboardHandler.applyDeltas(textEditingDeltas);
+    _isApplyingDeltas = false;
 
-        final imeValueBeforeChange = currentTextEditingValue;
-        editorImeLog.fine("IME value before insertion: $imeValueBeforeChange");
-        widget.softwareKeyboardHandler.insert(
-            TextPosition(offset: delta.insertionOffset, affinity: delta.selection.affinity), delta.textInserted);
-        editorImeLog.fine("IME value after insertion: $currentTextEditingValue");
+    editorImeLog.fine("IME value after insertion: $currentTextEditingValue");
 
-        if (imeValueBeforeChange == currentTextEditingValue) {
-          // The insertion action didn't change the current IME content or
-          // selection. This can happen, for example, when an empty list
-          // item is converted to a paragraph, or when the user tries enters
-          // a character in a component that doesn't support text input.
-          //
-          // Here, we explicitly reset the IME value to what it was before
-          // the change so that the IME doesn't think we applied the change,
-          // such as inserting a '\n' or inserting some characters.
-          _inputConnection!.setEditingState(currentTextEditingValue);
-        }
-      } else if (delta is TextEditingDeltaReplacement) {
-        editorImeLog.fine("Replacing text: ${delta.textReplaced}");
-        editorImeLog.fine("With new text: ${delta.replacementText}");
-        editorImeLog.fine("Replaced range: ${delta.replacedRange}");
-        editorImeLog.fine("New selection: ${delta.selection}");
-
-        if (delta.replacementText == "\n") {
-          // On iOS, newlines are reported here and also to performAction().
-          // On Android, newlines are only reported here. So, on Android only,
-          // we forward the newline action to performAction.
-          if (defaultTargetPlatform == TargetPlatform.android) {
-            editorImeLog.fine("Received a newline replacement on Android. Forwarding to newline input action.");
-            widget.softwareKeyboardHandler.performAction(TextInputAction.newline);
-          } else {
-            editorImeLog.fine("Skipping replacement delta because its a newline");
-          }
-          continue;
-        }
-
-        final imeValueBeforeChange = currentTextEditingValue;
-        editorImeLog.fine("IME value before replacement: $imeValueBeforeChange");
-        widget.softwareKeyboardHandler.replace(delta.replacedRange, delta.replacementText);
-        editorImeLog.fine("IME value after replacement: $currentTextEditingValue");
-
-        if (imeValueBeforeChange == currentTextEditingValue) {
-          // The insertion action didn't change the current IME content or
-          // selection. This can happen, for example, when an empty list
-          // item is converted to a paragraph, or when the user tries enters
-          // a character in a component that doesn't support text input.
-          //
-          // Here, we explicitly reset the IME value to what it was before
-          // the change so that the IME doesn't think we applied the change,
-          // such as inserting a '\n' or inserting some characters.
-          _inputConnection!.setEditingState(currentTextEditingValue);
-        }
-      } else if (delta is TextEditingDeltaDeletion) {
-        editorImeLog.fine("Deleting text: ${delta.textDeleted}");
-        editorImeLog.fine("Deleted range: ${delta.deletedRange}");
-
-        widget.softwareKeyboardHandler.delete(delta.deletedRange);
-
-        _syncImeWithDocumentAndComposer();
-        editorImeLog.fine("Deletion operation complete");
-      } else if (delta is TextEditingDeltaNonTextUpdate) {
-        editorImeLog.fine("Non-text change:");
-        editorImeLog.fine("App-side selection - ${currentTextEditingValue.selection}");
-        editorImeLog.fine("App-side composing - ${currentTextEditingValue.composing}");
-        editorImeLog.fine("OS-side selection - ${delta.selection}");
-        editorImeLog.fine("OS-side composing - ${delta.composing}");
-        currentTextEditingValue = _currentTextEditingValue.copyWith(composing: delta.composing);
-      } else {
-        editorImeLog.shout("Unknown IME delta type: ${delta.runtimeType}");
-      }
-    }
+    _syncImeWithDocumentAndComposer();
   }
 
   @override
@@ -398,12 +326,10 @@ class DocumentImeSerializer {
       //     Text above...
       //     |The selected text node.
       _prependedCharacter = _nextLeadingCharacter();
-      editorImeLog.fine("Prepending upstream character for IME: $_prependedCharacter");
       buffer.write(_prependedCharacter);
       characterCount = 1;
       _didPrependPlaceholder = true;
     } else {
-      editorImeLog.fine("No prepended upstream character is needed");
       _didPrependPlaceholder = false;
       _prependedCharacter = null;
     }
@@ -423,23 +349,19 @@ class DocumentImeSerializer {
 
       final node = _selectedNodes[i];
       if (node is! TextNode) {
-        editorImeLog.fine("Appending a special character to represent a non-text node: $node");
         buffer.write('~');
         characterCount += 1;
 
         final imeRange = TextRange(start: characterCount - 1, end: characterCount);
-        editorImeLog.fine("Node ${node.id} occupies the following IME range: $imeRange");
         _imeRangesToDocTextNodes[imeRange] = node.id;
         _docTextNodesToImeRanges[node.id] = imeRange;
 
         continue;
       }
 
-      editorImeLog.fine("Appending a text node to IME content: $node");
       // Cache mappings between the IME text range and the document position
       // so that we can easily convert between the two, when requested.
       final imeRange = TextRange(start: characterCount, end: characterCount + node.text.text.length);
-      editorImeLog.fine("Node ${node.id} occupies the following IME range: $imeRange");
       _imeRangesToDocTextNodes[imeRange] = node.id;
       _docTextNodesToImeRanges[node.id] = imeRange;
 
@@ -793,6 +715,96 @@ class SoftwareKeyboardHandler {
   final DocumentComposer composer;
   final CommonEditorOperations commonOps;
 
+  void applyDeltas(List<TextEditingDelta> textEditingDeltas) {
+    editorImeLog.info("Applying ${textEditingDeltas.length} IME deltas to document");
+
+    for (final delta in textEditingDeltas) {
+      editorImeLog.info("Applying delta: $delta");
+      if (delta is TextEditingDeltaInsertion) {
+        _applyInsertion(delta);
+      } else if (delta is TextEditingDeltaReplacement) {
+        _applyReplacement(delta);
+      } else if (delta is TextEditingDeltaDeletion) {
+        _applyDeletion(delta);
+      } else if (delta is TextEditingDeltaNonTextUpdate) {
+        _applyNonTextChange(delta);
+      } else {
+        editorImeLog.shout("Unknown IME delta type: ${delta.runtimeType}");
+      }
+    }
+  }
+
+  void _applyInsertion(TextEditingDeltaInsertion delta) {
+    editorImeLog.fine('Inserted text: "${delta.textInserted}"');
+    editorImeLog.fine("Insertion offset: ${delta.insertionOffset}");
+    editorImeLog.fine("Selection: ${delta.selection}");
+    editorImeLog.fine("Composing: ${delta.composing}");
+    editorImeLog.fine('Old text: "${delta.oldText}"');
+
+    if (delta.textInserted == "\n") {
+      // On iOS, newlines are reported here and also to performAction().
+      // On Android, newlines are only reported here. So, on Android only,
+      // we forward the newline action to performAction.
+      if (defaultTargetPlatform == TargetPlatform.android) {
+        editorImeLog.fine("Received a newline insertion on Android. Forwarding to newline input action.");
+        performAction(TextInputAction.newline);
+      } else {
+        editorImeLog.fine("Skipping insertion delta because its a newline");
+      }
+      return;
+    }
+
+    editorImeLog.fine(
+        "Inserting text: ${delta.textInserted}, insertion offset: ${delta.insertionOffset}, ime selection: ${delta.selection}");
+
+    insert(
+      TextPosition(offset: delta.insertionOffset, affinity: delta.selection.affinity),
+      delta.textInserted,
+    );
+  }
+
+  void _applyReplacement(TextEditingDeltaReplacement delta) {
+    editorImeLog.fine("Text replaced: '${delta.textReplaced}'");
+    editorImeLog.fine("Replacement text: '${delta.replacementText}'");
+    editorImeLog.fine("Replaced range: ${delta.replacedRange}");
+    editorImeLog.fine("Selection: ${delta.selection}");
+    editorImeLog.fine("Composing: ${delta.composing}");
+    editorImeLog.fine('Old text: "${delta.oldText}"');
+
+    if (delta.replacementText == "\n") {
+      // On iOS, newlines are reported here and also to performAction().
+      // On Android, newlines are only reported here. So, on Android only,
+      // we forward the newline action to performAction.
+      if (defaultTargetPlatform == TargetPlatform.android) {
+        editorImeLog.fine("Received a newline replacement on Android. Forwarding to newline input action.");
+        performAction(TextInputAction.newline);
+      } else {
+        editorImeLog.fine("Skipping replacement delta because its a newline");
+      }
+      return;
+    }
+
+    replace(delta.replacedRange, delta.replacementText);
+  }
+
+  void _applyDeletion(TextEditingDeltaDeletion delta) {
+    editorImeLog.fine("Deleting text: ${delta.textDeleted}");
+    editorImeLog.fine("Deleted range: ${delta.deletedRange}");
+
+    delete(delta.deletedRange);
+
+    editorImeLog.fine("Deletion operation complete");
+  }
+
+  void _applyNonTextChange(TextEditingDeltaNonTextUpdate delta) {
+    editorImeLog.fine("Non-text change:");
+    // editorImeLog.fine("App-side selection - ${currentTextEditingValue.selection}");
+    // editorImeLog.fine("App-side composing - ${currentTextEditingValue.composing}");
+    editorImeLog.fine("OS-side selection - ${delta.selection}");
+    editorImeLog.fine("OS-side composing - ${delta.composing}");
+    // currentTextEditingValue = _currentTextEditingValue.copyWith(composing: delta.composing);
+  }
+
   void insert(TextPosition insertionPosition, String textInserted) {
     if (textInserted == "\n") {
       // Newlines are handled in performAction()
@@ -838,7 +850,11 @@ class SoftwareKeyboardHandler {
       extentOffset: replacedRange.end,
     ));
 
-    composer.selection ??= replacementSelection;
+    if (replacementSelection != null) {
+      composer.selection = replacementSelection;
+    }
+    editorImeLog.fine("Replacing selection: $replacementSelection");
+    editorImeLog.fine('With text: "$replacementText"');
 
     if (replacementText == "\n") {
       performAction(TextInputAction.newline);

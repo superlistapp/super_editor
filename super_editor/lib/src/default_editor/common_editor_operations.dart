@@ -1338,7 +1338,7 @@ class CommonEditorOperations {
   /// if it wasn't, e.g., there was no selection, or more than one node
   /// was selected.
   bool insertPlainText(String text) {
-    editorOpsLog.fine('Attempting to insert "$text"');
+    editorOpsLog.fine('Attempting to insert "$text" at document selection: ${composer.selection}');
     if (composer.selection == null) {
       editorOpsLog.fine("The composer has no selection. Can't insert.");
       return false;
