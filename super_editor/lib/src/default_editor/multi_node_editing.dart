@@ -95,18 +95,24 @@ class DeleteSelectionCommand implements EditorCommand {
       return;
     }
 
+    // The start/end nodes may have been deleted due to empty content.
+    // Refresh our references so that we can decide if we need to merge
+    // the nodes.
+    final startNodeAfterDeletion = document.getNodeById(startNode.id);
+    final endNodeAfterDeletion = document.getNodeById(endNode.id);
+
     // If the start node and end nodes are both `TextNode`s
     // then we need to consider merging them if one or both are
     // empty.
-    if (startNode is! TextNode || endNode is! TextNode) {
+    if (startNodeAfterDeletion is! TextNode || endNodeAfterDeletion is! TextNode) {
       return;
     }
 
     _log.log('DeleteSelectionCommand', ' - combining last node text with first node text');
-    startNode.text = startNode.text.copyAndAppend(endNode.text);
+    startNodeAfterDeletion.text = startNodeAfterDeletion.text.copyAndAppend(endNodeAfterDeletion.text);
 
     _log.log('DeleteSelectionCommand', ' - deleting last node');
-    transaction.deleteNode(endNode);
+    transaction.deleteNode(endNodeAfterDeletion);
 
     _log.log('DeleteSelectionCommand', ' - done with selection deletion');
   }
@@ -193,10 +199,16 @@ class DeleteSelectionCommand implements EditorCommand {
         replaceWithParagraph: replaceWithParagraph,
       );
     } else if (nodePosition is TextPosition && node is TextNode) {
-      node.text = node.text.removeRegion(
-        startOffset: nodePosition.offset,
-        endOffset: node.text.text.length,
-      );
+      if (nodePosition == node.beginningPosition) {
+        // All text is selected. Delete the node.
+        transaction.deleteNode(node);
+      } else {
+        // Delete part of the text.
+        node.text = node.text.removeRegion(
+          startOffset: nodePosition.offset,
+          endOffset: node.text.text.length,
+        );
+      }
     } else {
       throw Exception('Unknown node position type: $nodePosition, for node: $node');
     }
@@ -223,10 +235,16 @@ class DeleteSelectionCommand implements EditorCommand {
         replaceWithParagraph: false,
       );
     } else if (nodePosition is TextPosition && node is TextNode) {
-      node.text = node.text.removeRegion(
-        startOffset: 0,
-        endOffset: nodePosition.offset,
-      );
+      if (nodePosition == node.endPosition) {
+        // All text is selected. Delete the node.
+        transaction.deleteNode(node);
+      } else {
+        // Delete part of the text.
+        node.text = node.text.removeRegion(
+          startOffset: 0,
+          endOffset: nodePosition.offset,
+        );
+      }
     } else {
       throw Exception('Unknown node position type: $nodePosition, for node: $node');
     }

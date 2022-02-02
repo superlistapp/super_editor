@@ -240,9 +240,9 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
     widget.softwareKeyboardHandler.applyDeltas(textEditingDeltas);
     _isApplyingDeltas = false;
 
-    editorImeLog.fine("IME value after insertion: $currentTextEditingValue");
-
     _syncImeWithDocumentAndComposer();
+
+    editorImeLog.fine("IME value after insertion: $currentTextEditingValue");
   }
 
   @override
@@ -788,8 +788,12 @@ class SoftwareKeyboardHandler {
   }
 
   void _applyDeletion(TextEditingDeltaDeletion delta) {
-    editorImeLog.fine("Deleting text: ${delta.textDeleted}");
-    editorImeLog.fine("Deleted range: ${delta.deletedRange}");
+    editorImeLog.fine("Delete delta:\n"
+        "Text deleted: ${delta.textDeleted}\n"
+        "Deleted Range: ${delta.deletedRange}\n"
+        "Selection: ${delta.selection}\n"
+        "Composing: ${delta.composing}\n"
+        "Old text: ${delta.oldText}");
 
     delete(delta.deletedRange);
 

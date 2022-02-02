@@ -1151,28 +1151,17 @@ class CommonEditorOperations {
       } else if (topNodePosition == topNode.beginningPosition) {
         // The top node will be deleted, but only part of the bottom node
         // will be deleted.
-        if (baseNode == bottomNode) {
-          // The selection collapses to a caret at the beginning of the
-          // resulting bottom node content.
-          newSelectionPosition = basePosition.copyWith(nodePosition: baseNode.beginningPosition);
-        } else {
-          // The top node is the base node, which means the base is
-          // going to be deleted. The selection after deletion should
-          // sit at the beginning of the remaining bottom node.
-          newSelectionPosition = extentPosition.copyWith(nodePosition: extentNode.beginningPosition);
-        }
+        newSelectionPosition = DocumentPosition(
+          nodeId: bottomNode.id,
+          nodePosition: bottomNode.beginningPosition,
+        );
       } else if (bottomNodePosition == bottomNode.endPosition) {
         // The bottom node will be deleted, but only part of the top node
         // will be deleted.
-        if (baseNode == topNode) {
-          // The selection stays where it is in the base node.
-          newSelectionPosition = basePosition;
-        } else {
-          // The bottom node is the base node, which means the base is
-          // going to be deleted. The selection after deletion should
-          // be the selection position in the top node.
-          newSelectionPosition = extentPosition;
-        }
+        newSelectionPosition = DocumentPosition(
+          nodeId: topNode.id,
+          nodePosition: topNodePosition,
+        );
       } else {
         // Part of the top and bottom nodes will be deleted, but both of
         // those nodes will remain.
