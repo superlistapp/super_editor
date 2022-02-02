@@ -837,21 +837,13 @@ class AttributedSpans {
         final currentEnd = marker.isStart ? marker.offset - 1 : marker.offset;
 
         // Commit the completed span.
-        collapsedSpans.add(MultiAttributionSpan(
-          attributions: currentSpan.attributions,
-          start: currentSpan.start,
-          end: currentEnd,
-        ));
+        collapsedSpans.add(currentSpan.copyWith(end: currentEnd));
 
         // If we encountered an end token, start the next span 1 index later to simulate the missing start marker.
         final nextStart = marker.isStart ? marker.offset : marker.offset + 1;
 
         // Create the next span and continue consumeing markers
-        currentSpan = MultiAttributionSpan(
-          attributions: {...currentSpan.attributions},
-          start: nextStart,
-          end: contentLength - 1,
-        );
+        currentSpan = currentSpan.copyWith(start: nextStart);
       }
 
       // Because we handle committing completed spans before this, we know that by this point the current marker should
@@ -1037,6 +1029,17 @@ class MultiAttributionSpan {
   final Set<Attribution> attributions;
   final int start;
   final int end;
+
+  MultiAttributionSpan copyWith({
+    Set<Attribution>? attributions,
+    int? start,
+    int? end,
+  }) =>
+      MultiAttributionSpan(
+        attributions: attributions ?? {...this.attributions},
+        start: start ?? this.start,
+        end: end ?? this.end,
+      );
 }
 
 typedef AttributionFilter = bool Function(Attribution candidate);
