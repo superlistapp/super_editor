@@ -54,7 +54,7 @@ class AttributedSpans {
   final List<SpanMarker> _attributions;
 
   void _sortAttributions() {
-    _attributions.sort((m1, m2) => m1.offset - m2.offset);
+    _attributions.sort((m1, m2) => m1.compareTo(m2));
   }
 
   /// Returns true if this [AttributedSpans] contains at least one
@@ -820,90 +820,89 @@ class AttributedSpans {
       return [];
     }
 
-    // Cut up attributions in a series of corresponding "start"
-    // and "end" points for every different combination of
-    // attributions.
-    final startPoints = <int>[0]; // we always start at zero
-    final endPoints = <int>[];
+    final collapsedSpans = <MultiAttributionSpan>[];
+    var currentSpan = MultiAttributionSpan(attributions: {}, start: 0, end: contentLength);
 
-    _log.fine('accumulating start and end points:');
-    for (final marker in _attributions) {
-      _log.fine('marker at ${marker.offset}');
-      _log.fine('start points before change: $startPoints');
-      _log.fine('end points before change: $endPoints');
+    var i = 0;
+    while (i < _attributions.length) {
+      var marker = _attributions[i];
+      final currentOffset = marker.offset;
+      final currentType = marker.markerType;
 
-      if (marker.offset > contentLength - 1) {
-        _log.fine('this marker is beyond the desired content length. Breaking loop.');
+      do {
+        // Consume markers as long as they are in a contiguous block with the same offset and type.
+        if (marker.offset >= contentLength) {
+          // One or more markers still exist but they are past the length that has been requested. Set i to indicate
+          // that we have consumed all markers and beak out to commit the final span.
+          i = _attributions.length;
+          break;
+        }
+
+        if (marker.isStart) {
+          if (marker.offset == currentSpan.start) {
+            // The marker indicates the start of a attribution that is part of the current span. Merge the attribution
+            // in and continue consuming markers.
+            currentSpan.attributions.add(marker.attribution);
+          } else {
+            // The marker indicates the start of the span that immeditely follows this one. Break the loop to stop
+            // consuming markers and finalize the current span.
+            break;
+          }
+        } else {
+          if (marker.offset < currentSpan.start) {
+            // The marker indicates the end of an attribution, and that attribution was already included in the
+            // collapsed span immediately preceding this one. Remove the attribution from the current span and continue
+            // consuming markers.
+            currentSpan.attributions.remove(marker.attribution);
+          } else {
+            // The marker indicates the end of the current span. Break the loop to stop consuming tokens and finalize
+            // the current span.
+            break;
+          }
+        }
+
+        // Consume the next token if it exists, or break the loop to commit the final span if it doesn't.
+        i++;
+        if (i >= _attributions.length) {
+          break;
+        }
+        marker = _attributions[i];
+
+        // If we have reached the end of this block of markers, exit the loop to commit the current span.
+      } while (marker.offset == currentOffset && marker.markerType == currentType);
+
+      final int currentEnd;
+      if (i == _attributions.length) {
+        // If we ran out of markers, this will be the last span and should reach to the end of the requested content.
+        currentEnd = contentLength - 1;
+      } else {
+        // If we encountered a start token, end the current span 1 index earlier to simulate the missing end marker.
+        currentEnd = marker.isStart ? marker.offset - 1 : marker.offset;
+      }
+      // If we encountered an end token, start the next span i index later to simulate the missing start marker.
+      final nextStart = marker.isStart ? marker.offset : marker.offset + 1;
+
+      // Commit the completed span.
+      collapsedSpans.add(MultiAttributionSpan(
+        attributions: currentSpan.attributions,
+        start: currentSpan.start,
+        end: currentEnd,
+      ));
+
+      if (currentEnd == contentLength - 1) {
+        // If previous span reached the end of the requested content, break and return the results.
         break;
       }
 
-      if (marker.isStart) {
-        // Add a `start` point.
-        if (!startPoints.contains(marker.offset)) {
-          _log.fine('adding start point at ${marker.offset}');
-          startPoints.add(marker.offset);
-        }
-
-        // If there are no attributions before this `start` point
-        // then there won't be an `end` just before this
-        // `start` point. Insert one.
-        if (marker.offset > 0 && !endPoints.contains(marker.offset - 1)) {
-          _log.fine('going back one and adding end point at: ${marker.offset - 1}');
-          endPoints.add(marker.offset - 1);
-        }
-      }
-      if (marker.isEnd) {
-        // Add an `end` point.
-        if (!endPoints.contains(marker.offset)) {
-          _log.fine('adding an end point at: ${marker.offset}');
-          endPoints.add(marker.offset);
-        }
-
-        // Automatically start another range if we aren't at
-        // the end of the content. We do this because we're not
-        // guaranteed to have another `start` marker after this
-        // `end` marker.
-        if (marker.offset < contentLength - 1 && !startPoints.contains(marker.offset + 1)) {
-          _log.fine('jumping forward one to add a start point at: ${marker.offset + 1}');
-          startPoints.add(marker.offset + 1);
-        }
-      }
-
-      _log.fine('start points after change: $startPoints');
-      _log.fine('end points after change: $endPoints');
-    }
-    if (!endPoints.contains(contentLength - 1)) {
-      // This condition occurs when there are no attributions.
-      _log.fine('adding a final endpoint at end of text');
-      endPoints.add(contentLength - 1);
+      // Create the next collapsed span with the newly calculated start index. Inherit the attributions from the
+      // previous span. Attribution removal will be handled by the inner loop as it consumes end markers.
+      currentSpan = MultiAttributionSpan(
+        attributions: {...currentSpan.attributions},
+        start: nextStart,
+        end: contentLength - 1,
+      );
     }
 
-    if (startPoints.length != endPoints.length) {
-      _log.fine('start points: $startPoints');
-      _log.fine('end points: $endPoints');
-      throw Exception(
-          ' - mismatch between number of start points and end points. Content length: $contentLength, Start: ${startPoints.length} -> $startPoints, End: ${endPoints.length} -> $endPoints, from attributions: $_attributions');
-    }
-
-    // Sort the start and end points so that they can be
-    // processed from beginning to end.
-    startPoints.sort();
-    endPoints.sort();
-
-    // Create the collapsed spans.
-    List<MultiAttributionSpan> collapsedSpans = [];
-    for (int i = 0; i < startPoints.length; ++i) {
-      _log.fine('building span from ${startPoints[i]} -> ${endPoints[i]}');
-      _log.fine(' - attributions in span: ${getAllAttributionsAt(startPoints[i])}');
-      final attributionsAtOffset = getAllAttributionsAt(startPoints[i]);
-
-      collapsedSpans.add(MultiAttributionSpan(
-        start: startPoints[i],
-        end: endPoints[i],
-        attributions: attributionsAtOffset,
-      ));
-    }
-    _log.fine('returning collapsed spans: $collapsedSpans');
     return collapsedSpans;
   }
 
@@ -974,7 +973,15 @@ class SpanMarker implements Comparable<SpanMarker> {
 
   @override
   int compareTo(SpanMarker other) {
-    return offset - other.offset;
+    final offsetDiff = offset - other.offset;
+    if (offsetDiff != 0) {
+      return offsetDiff;
+    }
+    if (isStart == other.isStart) {
+      return 0;
+    }
+
+    return isStart ? -1 : 1;
   }
 
   @override
