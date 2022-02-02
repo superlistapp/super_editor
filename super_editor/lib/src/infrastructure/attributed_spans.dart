@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:collection/collection.dart';
+import 'package:flutter/foundation.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 
 final _log = attributionsLog;
@@ -52,6 +53,9 @@ class AttributedSpans {
   // _attributions must always be in order from lowest
   // marker offset to highest marker offset.
   final List<SpanMarker> _attributions;
+
+  @visibleForTesting
+  List<SpanMarker> get attributions => [..._attributions];
 
   void _sortAttributions() {
     _attributions.sort((m1, m2) => m1.compareTo(m2));
@@ -505,11 +509,9 @@ class AttributedSpans {
   /// Precondition: There must not already exist a marker with
   /// the same attribution at the same offset.
   void _insertMarker(SpanMarker newMarker) {
-    SpanMarker? markerAfter =
-        _attributions.firstWhereOrNull((existingMarker) => existingMarker.offset >= newMarker.offset);
+    int markerAfterIndex = _attributions.indexWhere((existingMarker) => existingMarker.compareTo(newMarker) > 0);
 
-    if (markerAfter != null) {
-      final markerAfterIndex = _attributions.indexOf(markerAfter);
+    if (markerAfterIndex >= 0) {
       _attributions.insert(markerAfterIndex, newMarker);
     } else {
       // Insert the new marker at the end.

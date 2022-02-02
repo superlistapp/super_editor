@@ -367,6 +367,13 @@ void main() {
 
         expect(spans.hasAttributionsWithin(attributions: {boldAttribution}, start: 0, end: 16), false);
       });
+
+      test('single character attribution markers are inserted in order', () {
+        final spans = AttributedSpans()..addAttribution(newAttribution: boldAttribution, start: 1, end: 1);
+        final initalAttributions = spans.attributions;
+        final sortedAttributions = spans.attributions..sort();
+        expect(initalAttributions, equals(sortedAttributions));
+      });
     });
 
     group('multiple attributions', () {
