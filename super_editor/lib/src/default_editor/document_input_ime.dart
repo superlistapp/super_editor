@@ -165,6 +165,8 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
 
     return TextInputConfiguration(
       enableDeltaModel: true,
+      inputType: TextInputType.multiline,
+      textCapitalization: TextCapitalization.sentences,
       autocorrect: imeConfig.enableAutocorrect,
       enableSuggestions: imeConfig.enableSuggestions,
       inputAction: imeConfig.keyboardActionButton,
