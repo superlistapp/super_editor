@@ -831,11 +831,8 @@ class AttributedSpans {
     var currentSpan = MultiAttributionSpan(attributions: {}, start: 0, end: contentLength);
 
     var i = 0;
+    var marker = _attributions[i];
     while (i < _attributions.length) {
-      var marker = _attributions[i];
-      final currentOffset = marker.offset;
-      final currentType = marker.markerType;
-
       do {
         // Consume markers as long as they are in a contiguous block with the same offset and type.
         if (marker.offset >= contentLength) {
@@ -875,8 +872,8 @@ class AttributedSpans {
         }
         marker = _attributions[i];
 
-        // If we have reached the end of this block of markers, exit the loop to commit the current span.
-      } while (marker.offset == currentOffset && marker.markerType == currentType);
+        // Keep consuming markers as long as they modify the current span.
+      } while (marker.offset <= currentSpan.start);
 
       final int currentEnd;
       if (i == _attributions.length) {

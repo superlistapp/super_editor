@@ -537,6 +537,23 @@ void main() {
         expect(collapsedSpans[3].attributions.length, 0);
       });
 
+      test('adjacent non-overlapping attributions', () {
+        final collapsedSpans = AttributedSpans(
+          attributions: [
+            const SpanMarker(attribution: boldAttribution, offset: 0, markerType: SpanMarkerType.start),
+            const SpanMarker(attribution: boldAttribution, offset: 4, markerType: SpanMarkerType.end),
+            const SpanMarker(attribution: italicsAttribution, offset: 5, markerType: SpanMarkerType.start),
+            const SpanMarker(attribution: italicsAttribution, offset: 9, markerType: SpanMarkerType.end),
+          ],
+        ).collapseSpans(contentLength: 10);
+
+        expect(collapsedSpans, hasLength(2));
+        expect(collapsedSpans.first.start, 0);
+        expect(collapsedSpans.first.end, 4);
+        expect(collapsedSpans.last.start, 5);
+        expect(collapsedSpans.last.end, 9);
+      });
+
       test('multiple non-overlapping attributions', () {
         final collapsedSpans = AttributedSpans(
           attributions: [
