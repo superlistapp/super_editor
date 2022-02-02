@@ -550,9 +550,17 @@ TextStyle defaultStyleBuilder(Set<Attribution> attributions) {
       newStyle = newStyle.copyWith(
         fontStyle: FontStyle.italic,
       );
+    } else if (attribution == underlineAttribution) {
+      newStyle = newStyle.copyWith(
+        decoration: newStyle.decoration == null
+            ? TextDecoration.underline
+            : TextDecoration.combine([TextDecoration.underline, newStyle.decoration!]),
+      );
     } else if (attribution == strikethroughAttribution) {
       newStyle = newStyle.copyWith(
-        decoration: TextDecoration.lineThrough,
+        decoration: newStyle.decoration == null
+            ? TextDecoration.lineThrough
+            : TextDecoration.combine([TextDecoration.lineThrough, newStyle.decoration!]),
       );
     } else if (attribution is LinkAttribution) {
       newStyle = newStyle.copyWith(
