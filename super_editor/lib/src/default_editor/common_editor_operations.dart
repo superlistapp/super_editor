@@ -1772,7 +1772,6 @@ class CommonEditorOperations {
     }
 
     // Place the caret at the beginning of the new node.
-    print("Placing caret in new text node: $newNodeId");
     composer.selection = DocumentSelection.collapsed(
       position: DocumentPosition(
         nodeId: newNodeId,

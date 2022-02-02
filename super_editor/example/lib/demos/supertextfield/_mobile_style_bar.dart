@@ -14,9 +14,6 @@ class MobileStyleBar extends StatelessWidget {
       return textController.composingAttributions.contains(attribution);
     } else {
       final selection = textController.selection;
-      print('_isAttributionActive()');
-      print(' - attribution: $attribution');
-      print(' - selection: $selection');
       return textController.text.hasAttributionsThroughout(
         attributions: {attribution},
         range: TextRange(start: selection.start, end: selection.end - 1),

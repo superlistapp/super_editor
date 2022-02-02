@@ -1287,7 +1287,6 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
     return ListenableBuilder(
         listenable: widget.editingController,
         builder: (context) {
-          print("Clipper method: ${widget.createOverlayControlsClipper}");
           return Padding(
             // Remove the keyboard from the space that we occupy so that
             // clipping calculations apply to the expected visual borders,
