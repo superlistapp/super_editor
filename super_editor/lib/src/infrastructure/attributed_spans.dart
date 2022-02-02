@@ -1,7 +1,6 @@
 import 'dart:math';
 
 import 'package:collection/collection.dart';
-import 'package:flutter/foundation.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 
 final _log = attributionsLog;
@@ -53,9 +52,6 @@ class AttributedSpans {
   // _attributions must always be in order from lowest
   // marker offset to highest marker offset.
   final List<SpanMarker> _attributions;
-
-  @visibleForTesting
-  List<SpanMarker> get attributions => [..._attributions];
 
   void _sortAttributions() {
     _attributions.sort((m1, m2) => m1.compareTo(m2));
@@ -977,15 +973,7 @@ class SpanMarker implements Comparable<SpanMarker> {
 
   @override
   int compareTo(SpanMarker other) {
-    final offsetDiff = offset - other.offset;
-    if (offsetDiff != 0) {
-      return offsetDiff;
-    }
-    if (isStart == other.isStart) {
-      return 0;
-    }
-
-    return isStart ? -1 : 1;
+    return offset - other.offset;
   }
 
   @override

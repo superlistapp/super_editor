@@ -9,31 +9,6 @@ import '../../test_tools.dart';
 import '_attributed_text_test_tools.dart';
 
 void main() {
-  group('SpanMarker', () {
-    group('compareTo', () {
-      test('fully equal', () {
-        const m1 = SpanMarker(offset: 3, markerType: SpanMarkerType.start, attribution: boldAttribution);
-        const m2 = SpanMarker(offset: 3, markerType: SpanMarkerType.start, attribution: boldAttribution);
-
-        expect(m1.compareTo(m2), equals(0));
-      });
-
-      test('lower offset', () {
-        const m1 = SpanMarker(offset: 1, markerType: SpanMarkerType.end, attribution: boldAttribution);
-        const m2 = SpanMarker(offset: 3, markerType: SpanMarkerType.start, attribution: boldAttribution);
-
-        expect(m1.compareTo(m2), lessThan(0));
-      });
-
-      test('equal offset, different markerType', () {
-        const m1 = SpanMarker(offset: 3, markerType: SpanMarkerType.end, attribution: boldAttribution);
-        const m2 = SpanMarker(offset: 3, markerType: SpanMarkerType.start, attribution: boldAttribution);
-
-        expect(m1.compareTo(m2), greaterThan(0));
-      });
-    });
-  });
-
   groupWithLogging('Spans', Level.OFF, {attributionsLog}, () {
     group('attribution queries', () {
       test('it expands a span from a given offset', () {
@@ -391,13 +366,6 @@ void main() {
         )..toggleAttribution(attribution: boldAttribution, start: 0, end: 16);
 
         expect(spans.hasAttributionsWithin(attributions: {boldAttribution}, start: 0, end: 16), false);
-      });
-
-      test('single character attribution markers are inserted in order', () {
-        final spans = AttributedSpans()..addAttribution(newAttribution: boldAttribution, start: 1, end: 1);
-        final initalAttributions = spans.attributions;
-        final sortedAttributions = spans.attributions..sort();
-        expect(initalAttributions, equals(sortedAttributions));
       });
     });
 
