@@ -821,10 +821,12 @@ class AttributedSpans {
     final collapsedSpans = <MultiAttributionSpan>[];
     var currentSpan = MultiAttributionSpan(attributions: {}, start: 0, end: contentLength - 1);
 
+    _log.fine('walking list of markers to determine collapsed spans.');
     for (final marker in _attributions) {
       if (marker.offset > contentLength) {
         // There are markers to process but we ran off the end of the requested content. Break early and handle
         // committing the last span if necessary below.
+        _log.fine('ran out of markers within the requested contentLength, breaking early.');
         break;
       }
 
@@ -832,18 +834,22 @@ class AttributedSpans {
           (marker.isEnd && marker.offset >= currentSpan.start)) {
         // We reached the boundary between the current span and the next.  Finalize the current span, commit it, and
         // prepare the next one.
+        _log.fine(
+            'encountered a span boundary with ${marker.isStart ? "a start" : "an end"} marker at offset ${marker.offset}.');
 
         // If we encountered a start token, end the current span 1 index earlier to simulate the missing end marker.
         final currentEnd = marker.isStart ? marker.offset - 1 : marker.offset;
 
         // Commit the completed span.
         collapsedSpans.add(currentSpan.copyWith(end: currentEnd));
+        _log.fine('committed span ${collapsedSpans.last}');
 
         // If we encountered an end token, start the next span 1 index later to simulate the missing start marker.
         final nextStart = marker.isStart ? marker.offset : marker.offset + 1;
 
         // Create the next span and continue consumeing markers
         currentSpan = currentSpan.copyWith(start: nextStart);
+        _log.fine('new current span is $currentSpan');
       }
 
       // Because we handle committing completed spans before this, we know that by this point the current marker should
@@ -851,9 +857,11 @@ class AttributedSpans {
       if (marker.isStart) {
         // Merge the new attribution into the current span.
         currentSpan.attributions.add(marker.attribution);
+        _log.fine('merging ${marker.attribution}, current span is now $currentSpan.');
       } else if (marker.isEnd) {
         // Remove the ending attribution from the current span.
         currentSpan.attributions.remove(marker.attribution);
+        _log.fine('removing attribution ${marker.attribution}, current span is now $currentSpan.');
       }
     }
 
@@ -861,8 +869,10 @@ class AttributedSpans {
       // The spans committed during the loop didn't cover the entire range.  The value in currentSpan should already
       // span from the end of the last token to the end of the requested content, so just add it to the result.
       collapsedSpans.add(currentSpan);
+      _log.fine('committing last span to cover requested content length of $contentLength: ${collapsedSpans.last}');
     }
 
+    _log.fine('returning collapsed spans: $collapsedSpans');
     return collapsedSpans;
   }
 
@@ -1040,6 +1050,9 @@ class MultiAttributionSpan {
         start: start ?? this.start,
         end: end ?? this.end,
       );
+
+  @override
+  String toString() => '[MultiAttributionSpan] - attributions: $attributions, start: $start, end: $end';
 }
 
 typedef AttributionFilter = bool Function(Attribution candidate);
