@@ -820,6 +820,11 @@ class AttributedSpans {
       return [];
     }
 
+    if (_attributions.isEmpty) {
+      // There is content but no attributions, return a single collapsed span with no attributions.
+      return [MultiAttributionSpan(attributions: {}, start: 0, end: contentLength - 1)];
+    }
+
     final collapsedSpans = <MultiAttributionSpan>[];
     var currentSpan = MultiAttributionSpan(attributions: {}, start: 0, end: contentLength);
 

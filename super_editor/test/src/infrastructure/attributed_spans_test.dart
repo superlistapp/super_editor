@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:super_editor/super_editor.dart';
 import 'package:logging/logging.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_spans.dart';
+import 'package:super_editor/super_editor.dart';
 
 import '../../test_tools.dart';
 import '_attributed_text_test_tools.dart';
@@ -478,6 +478,14 @@ void main() {
         // Make sure no exceptions are thrown when collapsing
         // spans on an empty AttributedSpans.
         AttributedSpans().collapseSpans(contentLength: 0);
+      });
+
+      test('non-empty span with no attributions', () {
+        final collapsedSpans = AttributedSpans().collapseSpans(contentLength: 10);
+        expect(collapsedSpans, hasLength(1));
+        expect(collapsedSpans.first.start, 0);
+        expect(collapsedSpans.first.end, 9);
+        expect(collapsedSpans.first.attributions, isEmpty);
       });
 
       test('single continuous attribution', () {
