@@ -423,7 +423,7 @@ class SplitListItemCommand implements EditorCommand {
     // Insert the new node after the current node.
     _log.log('SplitListItemCommand', ' - inserting new node in document');
     transaction.insertNodeAfter(
-      previousNode: node,
+      existingNode: node,
       newNode: newNode,
     );
 

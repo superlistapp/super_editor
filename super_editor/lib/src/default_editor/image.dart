@@ -1,14 +1,14 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
-import 'package:super_editor/super_editor.dart';
+import 'package:super_editor/src/core/document_layout.dart';
+import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
+import 'package:super_editor/src/infrastructure/caret.dart';
 
 import '../core/document.dart';
 import 'box_component.dart';
 import 'styles.dart';
 
 /// [DocumentNode] that represents an image at a URL.
-class ImageNode with ChangeNotifier implements DocumentNode {
+class ImageNode extends BlockNode with ChangeNotifier {
   ImageNode({
     required this.id,
     required String imageUrl,
@@ -38,54 +38,12 @@ class ImageNode with ChangeNotifier implements DocumentNode {
   }
 
   @override
-  BinaryNodePosition get beginningPosition => const BinaryNodePosition.included();
-
-  @override
-  BinaryNodePosition get endPosition => const BinaryNodePosition.included();
-
-  @override
-  NodePosition selectUpstreamPosition(NodePosition position1, NodePosition position2) {
-    if (position1 is! BinaryNodePosition) {
-      throw Exception('Expected a BinaryNodePosition for position1 but received a ${position1.runtimeType}');
-    }
-    if (position2 is! BinaryNodePosition) {
-      throw Exception('Expected a BinaryNodePosition for position2 but received a ${position2.runtimeType}');
-    }
-
-    // BinaryNodePosition's don't disambiguate between upstream and downstream so
-    // it doesn't matter which one we return.
-    return position1;
-  }
-
-  @override
-  NodePosition selectDownstreamPosition(NodePosition position1, NodePosition position2) {
-    if (position1 is! BinaryNodePosition) {
-      throw Exception('Expected a BinaryNodePosition for position1 but received a ${position1.runtimeType}');
-    }
-    if (position2 is! BinaryNodePosition) {
-      throw Exception('Expected a BinaryNodePosition for position2 but received a ${position2.runtimeType}');
-    }
-
-    // BinaryNodePosition's don't disambiguate between upstream and downstream so
-    // it doesn't matter which one we return.
-    return position1;
-  }
-
-  @override
-  BinarySelection computeSelection({
-    @required dynamic base,
-    @required dynamic extent,
-  }) {
-    return const BinarySelection.all();
-  }
-
-  @override
   String? copyContent(dynamic selection) {
-    if (selection is! BinarySelection) {
-      throw Exception('ImageNode can only copy content from a BinarySelection.');
+    if (selection is! UpstreamDownstreamNodeSelection) {
+      throw Exception('ImageNode can only copy content from a UpstreamDownstreamNodeSelection.');
     }
 
-    return selection.position == const BinaryNodePosition.included() ? _imageUrl : null;
+    return !selection.isCollapsed ? _imageUrl : null;
   }
 
   @override
@@ -113,26 +71,28 @@ class ImageComponent extends StatelessWidget {
     required this.componentKey,
     required this.imageUrl,
     this.selectionColor = Colors.blue,
-    this.isSelected = false,
+    this.selection,
+    required this.caretColor,
+    this.showCaret = false,
   }) : super(key: key);
 
   final GlobalKey componentKey;
   final String imageUrl;
   final Color selectionColor;
-  final bool isSelected;
+  final UpstreamDownstreamNodeSelection? selection;
+  final Color caretColor;
+  final bool showCaret;
 
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: BoxComponent(
-        key: componentKey,
-        child: Container(
-          decoration: BoxDecoration(
-            border: Border.all(
-              width: 1,
-              color: isSelected ? selectionColor : Colors.transparent,
-            ),
-          ),
+      child: SelectableBox(
+        selection: selection,
+        selectionColor: selectionColor,
+        caretColor: caretColor,
+        showCaret: showCaret,
+        child: BoxComponent(
+          key: componentKey,
           child: Image.network(
             imageUrl,
             fit: BoxFit.contain,
@@ -150,15 +110,23 @@ Widget? imageBuilder(ComponentContext componentContext) {
     return null;
   }
 
-  final selection =
-      componentContext.nodeSelection == null ? null : componentContext.nodeSelection!.nodeSelection as BinarySelection;
-  final isSelected = selection != null && selection.position.isIncluded;
+  final selection = componentContext.nodeSelection == null
+      ? null
+      : componentContext.nodeSelection!.nodeSelection as UpstreamDownstreamNodeSelection;
+
+  final showCaret = componentContext.showCaret && selection != null ? componentContext.nodeSelection!.isExtent : false;
+
+  // TODO: centralize this value. It should probably be explicit in ComponentContext, but think about it.
+  final caretColor = (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle?)?.textCaretColor ??
+      const Color(0x00000000);
 
   return ImageComponent(
     componentKey: componentContext.componentKey,
     imageUrl: (componentContext.documentNode as ImageNode).imageUrl,
-    isSelected: isSelected,
+    selection: selection,
     selectionColor: (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle?)?.selectionColor ??
         Colors.transparent,
+    caretColor: caretColor,
+    showCaret: showCaret,
   );
 }

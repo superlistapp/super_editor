@@ -25,6 +25,8 @@ export 'src/default_editor/document_gestures_touch.dart';
 export 'src/default_editor/document_input_ime.dart';
 export 'src/default_editor/document_input_keyboard.dart';
 export 'src/default_editor/document_keyboard_actions.dart';
+export 'src/default_editor/selection_binary.dart';
+export 'src/default_editor/selection_upstream_downstream.dart';
 export 'src/default_editor/super_editor.dart';
 export 'src/default_editor/horizontal_rule.dart';
 export 'src/default_editor/image.dart';

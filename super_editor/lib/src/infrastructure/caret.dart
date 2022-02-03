@@ -111,17 +111,17 @@ class BlinkingCaret extends StatefulWidget {
   const BlinkingCaret({
     Key? key,
     this.controller,
-    required this.caretOffset,
-    required this.caretHeight,
+    this.caretOffset,
+    this.caretHeight,
     required this.color,
     required this.width,
-    required this.borderRadius,
-    required this.isTextEmpty,
-    required this.showCaret,
+    this.borderRadius = BorderRadius.zero,
+    this.isTextEmpty = false,
+    this.showCaret = true,
   }) : super(key: key);
 
   final CaretBlinkController? controller;
-  final double caretHeight;
+  final double? caretHeight;
   final Offset? caretOffset;
   final Color color;
   final double width;
@@ -202,7 +202,7 @@ class _CursorPainter extends CustomPainter {
         super(repaint: blinkController);
 
   final CaretBlinkController blinkController;
-  final double caretHeight;
+  final double? caretHeight;
   final Offset? caretOffset;
   final double width;
   final BorderRadius borderRadius;
@@ -223,13 +223,15 @@ class _CursorPainter extends CustomPainter {
 
     caretPaint.color = caretColor.withOpacity(blinkController.opacity);
 
+    final height = caretHeight?.roundToDouble() ?? size.height;
+
     if (borderRadius == BorderRadius.zero) {
       canvas.drawRect(
         Rect.fromLTWH(
           caretOffset!.dx.roundToDouble(),
           caretOffset!.dy.roundToDouble(),
           width,
-          caretHeight.roundToDouble(),
+          height,
         ),
         caretPaint,
       );
@@ -239,7 +241,7 @@ class _CursorPainter extends CustomPainter {
           caretOffset!.dx.roundToDouble(),
           caretOffset!.dy.roundToDouble(),
           caretOffset!.dx.roundToDouble() + width,
-          caretOffset!.dy.roundToDouble() + caretHeight.roundToDouble(),
+          caretOffset!.dy.roundToDouble() + height,
           topLeft: borderRadius.topLeft,
           topRight: borderRadius.topRight,
           bottomLeft: borderRadius.bottomLeft,
@@ -290,6 +292,15 @@ class CaretBlinkController with ChangeNotifier {
   bool _isVisible = true;
   double get opacity => _isVisible ? 1.0 : 0.0;
 
+  void startBlinking() {
+    _startTimer();
+  }
+
+  void stopBlinking() {
+    _isVisible = true; // If we're not blinking then we need to be visible
+    _stopTimer();
+  }
+
   /// Clients should call this method when the caret first appears
   /// in the content so that this controller immediately makes the
   /// caret visible.
@@ -306,14 +317,26 @@ class CaretBlinkController with ChangeNotifier {
     _isVisible = true;
 
     _timer?.cancel();
-    if (_isBlinkingEnabled) {
-      _timer = Timer(_flashPeriod, _onToggleTimer);
+
+    if (!_isBlinkingEnabled) {
+      return;
     }
+
+    _startTimer();
   }
 
   /// Clients should call this method when the caret is removed from
   /// the content so that this controller can cancel the blink timer.
   void onCaretRemoved() {
+    _stopTimer();
+  }
+
+  void _startTimer() {
+    _timer?.cancel();
+    _timer = Timer(_flashPeriod, _onToggleTimer);
+  }
+
+  void _stopTimer() {
     _timer?.cancel();
   }
 

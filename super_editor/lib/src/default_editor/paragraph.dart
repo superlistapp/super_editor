@@ -16,8 +16,6 @@ import 'document_input_keyboard.dart';
 import 'styles.dart';
 import 'text_tools.dart';
 
-final _log = Logger(scope: 'paragraph.dart');
-
 class ParagraphNode extends TextNode {
   ParagraphNode({
     required String id,
@@ -48,25 +46,25 @@ class CombineParagraphsCommand implements EditorCommand {
 
   @override
   void execute(Document document, DocumentEditorTransaction transaction) {
-    _log.log('CombineParagraphsCommand', 'Executing CombineParagraphsCommand');
-    _log.log('CombineParagraphsCommand', ' - merging "$firstNodeId" <- "$secondNodeId"');
+    editorDocLog.info('Executing CombineParagraphsCommand');
+    editorDocLog.info(' - merging "$firstNodeId" <- "$secondNodeId"');
     final secondNode = document.getNodeById(secondNodeId);
     if (secondNode is! TextNode) {
-      _log.log('CombineParagraphsCommand', 'WARNING: Cannot merge node of type: $secondNode into node above.');
+      editorDocLog.info('WARNING: Cannot merge node of type: $secondNode into node above.');
       return;
     }
 
     final nodeAbove = document.getNodeBefore(secondNode);
     if (nodeAbove == null) {
-      _log.log('CombineParagraphsCommand', 'At top of document. Cannot merge with node above.');
+      editorDocLog.info('At top of document. Cannot merge with node above.');
       return;
     }
     if (nodeAbove.id != firstNodeId) {
-      _log.log('CombineParagraphsCommand', 'The specified `firstNodeId` is not the node before `secondNodeId`.');
+      editorDocLog.info('The specified `firstNodeId` is not the node before `secondNodeId`.');
       return;
     }
     if (nodeAbove is! TextNode) {
-      _log.log('CombineParagraphsCommand', 'Cannot merge ParagraphNode into node of type: $nodeAbove');
+      editorDocLog.info('Cannot merge ParagraphNode into node of type: $nodeAbove');
       return;
     }
 
@@ -74,7 +72,7 @@ class CombineParagraphsCommand implements EditorCommand {
     nodeAbove.text = nodeAbove.text.copyAndAppend(secondNode.text);
     bool didRemove = transaction.deleteNode(secondNode);
     if (!didRemove) {
-      _log.log('CombineParagraphsCommand', 'ERROR: Failed to delete the currently selected node from the document.');
+      editorDocLog.info('ERROR: Failed to delete the currently selected node from the document.');
     }
   }
 }
@@ -98,28 +96,28 @@ class SplitParagraphCommand implements EditorCommand {
 
   @override
   void execute(Document document, DocumentEditorTransaction transaction) {
-    _log.log('SplitParagraphCommand', 'Executing SplitParagraphCommand');
+    editorDocLog.info('Executing SplitParagraphCommand');
 
     final node = document.getNodeById(nodeId);
     if (node is! ParagraphNode) {
-      _log.log('SplitParagraphCommand', 'WARNING: Cannot split paragraph for node of type: $node.');
+      editorDocLog.info('WARNING: Cannot split paragraph for node of type: $node.');
       return;
     }
 
     final text = node.text;
     final startText = text.copyText(0, splitPosition.offset);
     final endText = text.copyText(splitPosition.offset);
-    _log.log('SplitParagraphCommand', 'Splitting paragraph:');
-    _log.log('SplitParagraphCommand', ' - start text: "${startText.text}"');
-    _log.log('SplitParagraphCommand', ' - end text: "${endText.text}"');
+    editorDocLog.info('Splitting paragraph:');
+    editorDocLog.info(' - start text: "${startText.text}"');
+    editorDocLog.info(' - end text: "${endText.text}"');
 
     // Change the current nodes content to just the text before the caret.
-    _log.log('SplitParagraphCommand', ' - changing the original paragraph text due to split');
+    editorDocLog.info(' - changing the original paragraph text due to split');
     node.text = startText;
 
     // Create a new node that will follow the current node. Set its text
     // to the text that was removed from the current node. And create a
-    // new copy of the metadata if `replicateExistingMetdata` is true. 
+    // new copy of the metadata if `replicateExistingMetdata` is true.
     final newNode = ParagraphNode(
       id: newNodeId,
       text: endText,
@@ -127,13 +125,13 @@ class SplitParagraphCommand implements EditorCommand {
     );
 
     // Insert the new node after the current node.
-    _log.log('SplitParagraphCommand', ' - inserting new node in document');
+    editorDocLog.info(' - inserting new node in document');
     transaction.insertNodeAfter(
-      previousNode: node,
+      existingNode: node,
       newNode: newNode,
     );
 
-    _log.log('SplitParagraphCommand', ' - inserted new node: ${newNode.id} after old one: ${node.id}');
+    editorDocLog.info(' - inserted new node: ${newNode.id} after old one: ${node.id}');
   }
 }
 
@@ -188,17 +186,17 @@ class DeleteParagraphsCommand implements EditorCommand {
 
   @override
   void execute(Document document, DocumentEditorTransaction transaction) {
-    _log.log('DeleteParagraphsCommand', 'Executing DeleteParagraphsCommand');
-    _log.log('DeleteParagraphsCommand', ' - deleting "$nodeId"');
+    editorDocLog.info('Executing DeleteParagraphsCommand');
+    editorDocLog.info(' - deleting "$nodeId"');
     final node = document.getNodeById(nodeId);
     if (node is! TextNode) {
-      _log.log('DeleteParagraphsCommand', 'WARNING: Cannot delete node of type: $node.');
+      editorDocLog.shout('WARNING: Cannot delete node of type: $node.');
       return;
     }
 
     bool didRemove = transaction.deleteNode(node);
     if (!didRemove) {
-      _log.log('DeleteParagraphsCommand', 'ERROR: Failed to delete node "$node" from the document.');
+      editorDocLog.shout('ERROR: Failed to delete node "$node" from the document.');
     }
   }
 }
@@ -298,7 +296,7 @@ Widget? paragraphBuilder(ComponentContext componentContext) {
           ? null
           : componentContext.nodeSelection!.nodeSelection as TextSelection;
   if (componentContext.nodeSelection != null && componentContext.nodeSelection!.nodeSelection is! TextSelection) {
-    _log.log('paragraphBuilder',
+    editorLayoutLog.shout(
         'ERROR: Building a paragraph component but the selection is not a TextSelection: ${componentContext.documentNode.id}');
   }
   final showCaret = componentContext.showCaret && componentContext.nodeSelection != null
@@ -307,14 +305,14 @@ Widget? paragraphBuilder(ComponentContext componentContext) {
   final highlightWhenEmpty =
       componentContext.nodeSelection == null ? false : componentContext.nodeSelection!.highlightWhenEmpty;
 
-  _log.log('paragraphBuilder', ' - ${componentContext.documentNode.id}: ${componentContext.nodeSelection}');
+  editorLayoutLog.finer(' - ${componentContext.documentNode.id}: ${componentContext.nodeSelection}');
   if (showCaret) {
-    _log.log('paragraphBuilder', '   - ^ showing caret');
+    editorLayoutLog.finer('   - ^ showing caret');
   }
 
-  _log.log('paragraphBuilder', ' - building a paragraph with selection:');
-  _log.log('paragraphBuilder', '   - base: ${textSelection?.base}');
-  _log.log('paragraphBuilder', '   - extent: ${textSelection?.extent}');
+  editorLayoutLog.finer(' - building a paragraph with selection:');
+  editorLayoutLog.finer('   - base: ${textSelection?.base}');
+  editorLayoutLog.finer('   - extent: ${textSelection?.extent}');
 
   final textDirection = getParagraphDirection((componentContext.documentNode as TextNode).text.text);
 

@@ -78,12 +78,20 @@ class DocumentEditorTransaction {
     _document.insertNodeAt(index, node);
   }
 
-  /// Inserts [newNode] immediately after the given [previousNode].
-  void insertNodeAfter({
-    required DocumentNode previousNode,
+  /// Inserts [newNode] immediately before the given [existingNode].
+  void insertNodeBefore({
+    required DocumentNode existingNode,
     required DocumentNode newNode,
   }) {
-    _document.insertNodeAfter(previousNode: previousNode, newNode: newNode);
+    _document.insertNodeBefore(existingNode: existingNode, newNode: newNode);
+  }
+
+  /// Inserts [newNode] immediately after the given [existingNode].
+  void insertNodeAfter({
+    required DocumentNode existingNode,
+    required DocumentNode newNode,
+  }) {
+    _document.insertNodeAfter(existingNode: existingNode, newNode: newNode);
   }
 
   /// Deletes the node at the given [index].
@@ -144,6 +152,12 @@ class MutableDocument with ChangeNotifier implements Document {
   @override
   int getNodeIndex(DocumentNode node) {
     return _nodes.indexOf(node);
+  }
+
+  @override
+  int getNodeIndexById(String nodeId) {
+    final node = getNodeById(nodeId);
+    return node != null ? getNodeIndex(node) : -1;
   }
 
   @override
@@ -211,12 +225,23 @@ class MutableDocument with ChangeNotifier implements Document {
     }
   }
 
-  /// Inserts [newNode] immediately after the given [previousNode].
-  void insertNodeAfter({
-    required DocumentNode previousNode,
+  /// Inserts [newNode] immediately before the given [existingNode].
+  void insertNodeBefore({
+    required DocumentNode existingNode,
     required DocumentNode newNode,
   }) {
-    final nodeIndex = nodes.indexOf(previousNode);
+    final nodeIndex = nodes.indexOf(existingNode);
+    nodes.insert(nodeIndex, newNode);
+    newNode.addListener(_forwardNodeChange);
+    notifyListeners();
+  }
+
+  /// Inserts [newNode] immediately after the given [existingNode].
+  void insertNodeAfter({
+    required DocumentNode existingNode,
+    required DocumentNode newNode,
+  }) {
+    final nodeIndex = nodes.indexOf(existingNode);
     if (nodeIndex >= 0 && nodeIndex < nodes.length) {
       nodes.insert(nodeIndex + 1, newNode);
       newNode.addListener(_forwardNodeChange);

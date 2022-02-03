@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:example/demos/editor_configs/keyboard_overlay_clipper.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/super_editor.dart';
 
@@ -16,8 +17,8 @@ class _MobileEditingIOSDemoState extends State<MobileEditingIOSDemo> {
   final GlobalKey _docLayoutKey = GlobalKey();
 
   late Document _doc;
-  DocumentEditor? _docEditor;
-  DocumentComposer? _composer;
+  late DocumentEditor _docEditor;
+  late DocumentComposer _composer;
 
   FocusNode? _editorFocusNode;
 
@@ -33,31 +34,67 @@ class _MobileEditingIOSDemoState extends State<MobileEditingIOSDemo> {
   @override
   void dispose() {
     _editorFocusNode!.dispose();
-    _composer!.dispose();
+    _composer.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return _buildScaffold(
-      child: SuperEditor(
-        focusNode: _editorFocusNode,
-        documentLayoutKey: _docLayoutKey,
-        gestureMode: DocumentGestureMode.iOS,
-        iOSToolbarBuilder: (_) => IOSTextEditingFloatingToolbar(
-          onCopyPressed: () {
-            // TODO:
-          },
-          onCutPressed: () {
-            // TODO:
-          },
-          onPastePressed: () {
-            // TODO:
-          },
-        ),
-        editor: _docEditor!,
+      child: Column(
+        children: [
+          Expanded(
+            child: SuperEditor(
+              focusNode: _editorFocusNode,
+              documentLayoutKey: _docLayoutKey,
+              gestureMode: DocumentGestureMode.iOS,
+              inputSource: DocumentInputSource.ime,
+              iOSToolbarBuilder: (_) => IOSTextEditingFloatingToolbar(
+                onCopyPressed: () {
+                  // TODO:
+                },
+                onCutPressed: () {
+                  // TODO:
+                },
+                onPastePressed: () {
+                  // TODO:
+                },
+              ),
+              editor: _docEditor,
+              composer: _composer,
+              padding: const EdgeInsets.all(16),
+              createOverlayControlsClipper: (_) => const KeyboardToolbarClipper(),
+            ),
+          ),
+          AnimatedBuilder(
+              animation: _doc,
+              builder: (context, child) {
+                return AnimatedBuilder(
+                  animation: _composer.selectionNotifier,
+                  builder: (context, child) {
+                    return _buildMountedToolbar();
+                  },
+                );
+              }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMountedToolbar() {
+    final selection = _composer.selection;
+
+    if (selection == null) {
+      return const SizedBox();
+    }
+
+    return KeyboardEditingToolbar(
+      document: _doc,
+      composer: _composer,
+      commonOps: CommonEditorOperations(
+        editor: _docEditor,
         composer: _composer,
-        padding: const EdgeInsets.all(16),
+        documentLayoutResolver: () => _docLayoutKey.currentState as DocumentLayout,
       ),
     );
   }
@@ -65,18 +102,20 @@ class _MobileEditingIOSDemoState extends State<MobileEditingIOSDemo> {
   Widget _buildScaffold({
     required Widget child,
   }) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isPortrait = constraints.maxHeight / constraints.maxWidth > 1;
+    return SafeArea(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isPortrait = constraints.maxHeight / constraints.maxWidth > 1;
 
-        if (Platform.isAndroid || Platform.isIOS || isPortrait) {
-          return child;
-        } else {
-          return _buildPhoneSizedArea(
-            child: child,
-          );
-        }
-      },
+          if (Platform.isAndroid || Platform.isIOS || isPortrait) {
+            return child;
+          } else {
+            return _buildPhoneSizedArea(
+              child: child,
+            );
+          }
+        },
+      ),
     );
   }
 

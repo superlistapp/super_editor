@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:super_editor/super_editor.dart';
 
+import 'keyboard_overlay_clipper.dart';
+
 /// Mobile Android document editing demo.
 ///
 /// This demo forces the editor into a mobile configuration,
@@ -16,8 +18,9 @@ class _MobileEditingAndroidDemoState extends State<MobileEditingAndroidDemo> {
   final GlobalKey _docLayoutKey = GlobalKey();
 
   late Document _doc;
-  DocumentEditor? _docEditor;
-  DocumentComposer? _composer;
+  late DocumentEditor _docEditor;
+  late DocumentComposer _composer;
+  late SoftwareKeyboardHandler _softwareKeyboardHandler;
 
   FocusNode? _editorFocusNode;
 
@@ -26,41 +29,109 @@ class _MobileEditingAndroidDemoState extends State<MobileEditingAndroidDemo> {
     super.initState();
     _doc = _createInitialDocument();
     _docEditor = DocumentEditor(document: _doc as MutableDocument);
-    _composer = DocumentComposer();
+    _composer = DocumentComposer()..addListener(_configureImeActionButton);
+    _softwareKeyboardHandler = SoftwareKeyboardHandler(
+      editor: _docEditor,
+      composer: _composer,
+      commonOps: CommonEditorOperations(
+        editor: _docEditor,
+        composer: _composer,
+        documentLayoutResolver: () => _docLayoutKey.currentState as DocumentLayout,
+      ),
+    );
     _editorFocusNode = FocusNode();
   }
 
   @override
   void dispose() {
     _editorFocusNode!.dispose();
-    _composer!.dispose();
+    _composer.dispose();
     super.dispose();
+  }
+
+  void _configureImeActionButton() {
+    if (_composer.selection == null || !_composer.selection!.isCollapsed) {
+      _composer.imeConfiguration.value = _composer.imeConfiguration.value.copyWith(
+        keyboardActionButton: TextInputAction.newline,
+      );
+      return;
+    }
+
+    final selectedNode = _doc.getNodeById(_composer.selection!.extent.nodeId);
+    if (selectedNode is ListItemNode) {
+      _composer.imeConfiguration.value = _composer.imeConfiguration.value.copyWith(
+        keyboardActionButton: TextInputAction.done,
+      );
+      return;
+    }
+
+    _composer.imeConfiguration.value = _composer.imeConfiguration.value.copyWith(
+      keyboardActionButton: TextInputAction.newline,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return _buildScaffold(
-      child: SuperEditor(
-        focusNode: _editorFocusNode,
-        documentLayoutKey: _docLayoutKey,
-        gestureMode: DocumentGestureMode.android,
-        androidToolbarBuilder: (_) => AndroidTextEditingFloatingToolbar(
-          onCutPressed: () {
-            // TODO:
-          },
-          onCopyPressed: () {
-            // TODO:
-          },
-          onPastePressed: () async {
-            // TODO:
-          },
-          onSelectAllPressed: () {
-            // TODO:
-          },
-        ),
-        editor: _docEditor!,
+      child: Column(
+        children: [
+          Expanded(
+            child: SuperEditor(
+              focusNode: _editorFocusNode,
+              documentLayoutKey: _docLayoutKey,
+              gestureMode: DocumentGestureMode.android,
+              inputSource: DocumentInputSource.ime,
+              androidToolbarBuilder: (_) => AndroidTextEditingFloatingToolbar(
+                onCutPressed: () {
+                  // TODO:
+                },
+                onCopyPressed: () {
+                  // TODO:
+                },
+                onPastePressed: () async {
+                  // TODO:
+                },
+                onSelectAllPressed: () {
+                  // TODO:
+                },
+              ),
+              editor: _docEditor,
+              composer: _composer,
+              softwareKeyboardHandler: _softwareKeyboardHandler,
+              padding: const EdgeInsets.all(16),
+              createOverlayControlsClipper: (_) => const KeyboardToolbarClipper(),
+            ),
+          ),
+          AnimatedBuilder(
+            animation: _doc,
+            builder: (context, child) {
+              return AnimatedBuilder(
+                animation: _composer.selectionNotifier,
+                builder: (context, child) {
+                  return _buildMountedToolbar();
+                },
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMountedToolbar() {
+    final selection = _composer.selection;
+
+    if (selection == null) {
+      return const SizedBox();
+    }
+
+    return KeyboardEditingToolbar(
+      document: _doc,
+      composer: _composer,
+      commonOps: CommonEditorOperations(
+        editor: _docEditor,
         composer: _composer,
-        padding: const EdgeInsets.all(16),
+        documentLayoutResolver: () => _docLayoutKey.currentState as DocumentLayout,
       ),
     );
   }
@@ -68,18 +139,20 @@ class _MobileEditingAndroidDemoState extends State<MobileEditingAndroidDemo> {
   Widget _buildScaffold({
     required Widget child,
   }) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isPortrait = constraints.maxHeight / constraints.maxWidth > 1;
+    return SafeArea(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isPortrait = constraints.maxHeight / constraints.maxWidth > 1;
 
-        if (Platform.isAndroid || Platform.isIOS || isPortrait) {
-          return child;
-        } else {
-          return _buildPhoneSizedArea(
-            child: child,
-          );
-        }
-      },
+          if (Platform.isAndroid || Platform.isIOS || isPortrait) {
+            return child;
+          } else {
+            return _buildPhoneSizedArea(
+              child: child,
+            );
+          }
+        },
+      ),
     );
   }
 

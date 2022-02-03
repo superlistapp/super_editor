@@ -1,4 +1,5 @@
 import 'package:collection/collection.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/document.dart';
@@ -80,29 +81,14 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
 
   @override
   DocumentPosition? getDocumentPositionAtOffset(Offset documentOffset) {
-    _log.log('getDocumentPositionAtOffset', 'Getting document position at exact offset: $documentOffset');
+    editorLayoutLog.info('Getting document position at exact offset: $documentOffset');
 
     final componentKey = _findComponentAtOffset(documentOffset);
     if (componentKey == null || componentKey.currentContext == null) {
       return null;
     }
 
-    final component = componentKey.currentState as DocumentComponent;
-    final componentBox = componentKey.currentContext!.findRenderObject() as RenderBox;
-    _log.log('getDocumentPositionAtOffset', ' - found node at position: $component');
-    final componentOffset = _componentOffset(componentBox, documentOffset);
-    final componentPosition = component.getPositionAtOffset(componentOffset);
-
-    if (componentPosition == null) {
-      return null;
-    }
-
-    final selectionAtOffset = DocumentPosition(
-      nodeId: _nodeIdsToComponentKeys.entries.firstWhere((element) => element.value == componentKey).key,
-      nodePosition: componentPosition,
-    );
-    _log.log('getDocumentPositionAtOffset', ' - selection at offset: $selectionAtOffset');
-    return selectionAtOffset;
+    return _getDocumentPositionInComponentNearOffset(componentKey, documentOffset);
   }
 
   @override
@@ -118,16 +104,40 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
       rawDocumentOffset.dx.clamp(1.0, docBox.size.width - 1),
       rawDocumentOffset.dy,
     );
-    _log.log('getDocumentPositionNearestToOffset', 'Getting document position at offset: $documentOffset');
+    editorLayoutLog.info('Getting document position near offset: $documentOffset');
 
-    return getDocumentPositionAtOffset(documentOffset);
+    final componentKey = _findComponentClosestToOffset(documentOffset);
+    if (componentKey == null || componentKey.currentContext == null) {
+      return null;
+    }
+
+    return _getDocumentPositionInComponentNearOffset(componentKey, documentOffset);
+  }
+
+  DocumentPosition? _getDocumentPositionInComponentNearOffset(GlobalKey componentKey, Offset documentOffset) {
+    final component = componentKey.currentState as DocumentComponent;
+    final componentBox = componentKey.currentContext!.findRenderObject() as RenderBox;
+    editorLayoutLog.info(' - found node at position: $component');
+    final componentOffset = _componentOffset(componentBox, documentOffset);
+    final componentPosition = component.getPositionAtOffset(componentOffset);
+
+    if (componentPosition == null) {
+      return null;
+    }
+
+    final selectionAtOffset = DocumentPosition(
+      nodeId: _nodeIdsToComponentKeys.entries.firstWhere((element) => element.value == componentKey).key,
+      nodePosition: componentPosition,
+    );
+    editorLayoutLog.info(' - selection at offset: $selectionAtOffset');
+    return selectionAtOffset;
   }
 
   @override
   Rect? getRectForPosition(DocumentPosition position) {
     final component = getComponentByNodeId(position.nodeId);
     if (component == null) {
-      _log.log('getRectForPosition', 'Could not find any component for node position: $position');
+      editorLayoutLog.info('Could not find any component for node position: $position');
       return null;
     }
     final componentRect = component.getRectForPosition(position.nodePosition);
@@ -143,7 +153,7 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
     final baseComponent = getComponentByNodeId(base.nodeId);
     final extentComponent = getComponentByNodeId(extent.nodeId);
     if (baseComponent == null || extentComponent == null) {
-      _log.log('getRectForSelection',
+      editorLayoutLog.info(
           'Could not find base and/or extent position to calculate bounding box for selection. Base: $base -> $baseComponent, Extent: $extent -> $extentComponent');
       return null;
     }
@@ -206,7 +216,7 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
 
   @override
   DocumentSelection? getDocumentSelectionInRegion(Offset baseOffset, Offset extentOffset) {
-    _log.log('getDocumentSelectionInRegion', 'getDocumentSelectionInRegion() - from: $baseOffset, to: $extentOffset');
+    editorLayoutLog.info('getDocumentSelectionInRegion() - from: $baseOffset, to: $extentOffset');
     // Drag direction determines whether the extent offset is at the
     // top or bottom of the drag rect.
     // TODO: this condition is wrong when the user is dragging within a single line of text (#50)
@@ -223,9 +233,9 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
     dynamic bottomNodeExtentPosition;
 
     for (final componentKey in _topToBottomComponentKeys) {
-      _log.log('getDocumentSelectionInRegion', ' - considering component "$componentKey"');
+      editorLayoutLog.info(' - considering component "$componentKey"');
       if (componentKey.currentState is! DocumentComponent) {
-        _log.log('getDocumentSelectionInRegion', ' - found unknown component: ${componentKey.currentState}');
+        editorLayoutLog.info(' - found unknown component: ${componentKey.currentState}');
         continue;
       }
 
@@ -234,8 +244,8 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
       final componentOverlap = _getLocalOverlapWithComponent(region, component);
 
       if (componentOverlap != null) {
-        _log.log('getDocumentSelectionInRegion', ' - drag intersects: $componentKey}');
-        _log.log('getDocumentSelectionInRegion', ' - intersection: $componentOverlap');
+        editorLayoutLog.info(' - drag intersects: $componentKey}');
+        editorLayoutLog.info(' - intersection: $componentOverlap');
         final componentBaseOffset = _componentOffset(
           componentKey.currentContext!.findRenderObject() as RenderBox,
           baseOffset,
@@ -345,12 +355,56 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
     return null;
   }
 
+  GlobalKey? _findComponentClosestToOffset(Offset documentOffset) {
+    GlobalKey? nearestComponentKey;
+    double nearestDistance = double.infinity;
+    for (final componentKey in _nodeIdsToComponentKeys.values) {
+      if (componentKey.currentState is! DocumentComponent) {
+        continue;
+      }
+      if (componentKey.currentContext == null || componentKey.currentContext!.findRenderObject() == null) {
+        continue;
+      }
+
+      final componentBox = componentKey.currentContext!.findRenderObject() as RenderBox;
+      if (_isOffsetInComponent(componentBox, documentOffset)) {
+        return componentKey;
+      }
+
+      final distance = _getDistanceToComponent(componentBox, documentOffset);
+      if (distance < nearestDistance) {
+        nearestDistance = distance;
+        nearestComponentKey = componentKey;
+      }
+    }
+    return nearestComponentKey;
+  }
+
   bool _isOffsetInComponent(RenderBox componentBox, Offset documentOffset) {
     final containerBox = context.findRenderObject() as RenderBox;
     final contentOffset = componentBox.localToGlobal(Offset.zero, ancestor: containerBox);
     final contentRect = contentOffset & componentBox.size;
 
     return contentRect.contains(documentOffset);
+  }
+
+  /// Returns the vertical distance between the given [documentOffset] and the
+  /// bounds of the given [componentBox].
+  double _getDistanceToComponent(RenderBox componentBox, Offset documentOffset) {
+    final documentLayoutBox = context.findRenderObject() as RenderBox;
+    final componentOffset = componentBox.localToGlobal(Offset.zero, ancestor: documentLayoutBox);
+    final componentRect = componentOffset & componentBox.size;
+
+    if (documentOffset.dy < componentRect.top) {
+      // The given offset is above the component's bounds.
+      return componentRect.top - documentOffset.dy;
+    } else if (documentOffset.dy > componentRect.bottom) {
+      // The given offset is below the component's bounds.
+      return documentOffset.dy - componentRect.bottom;
+    } else {
+      // The given offset sits within the component bounds.
+      return 0;
+    }
   }
 
   Offset _componentOffset(RenderBox componentBox, Offset documentOffset) {
@@ -365,12 +419,16 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
   DocumentComponent? getComponentByNodeId(String nodeId) {
     final key = _nodeIdsToComponentKeys[nodeId];
     if (key == null) {
-      _log.log('getComponentByNodeId', 'WARNING: could not find component for node ID: $nodeId');
+      editorLayoutLog.info('WARNING: could not find component for node ID: $nodeId');
       return null;
     }
     if (key.currentState is! DocumentComponent) {
-      _log.log('getComponentByNodeId',
+      editorLayoutLog.info(
           'WARNING: found component but it\'s not a DocumentComponent: $nodeId, layout key: $key, state: ${key.currentState}, widget: ${key.currentWidget}, context: ${key.currentContext}');
+      if (kDebugMode) {
+        throw Exception(
+            'WARNING: found component but it\'s not a DocumentComponent: $nodeId, layout key: $key, state: ${key.currentState}, widget: ${key.currentWidget}, context: ${key.currentContext}');
+      }
       return null;
     }
     return key.currentState as DocumentComponent;
@@ -393,6 +451,7 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
 
   @override
   Widget build(BuildContext context) {
+    editorLayoutLog.fine("Building document layout");
     final docComponents = _buildDocComponents();
 
     return Padding(
@@ -415,7 +474,7 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
     final newComponentKeys = <String, GlobalKey>{};
     _topToBottomComponentKeys.clear();
 
-    _log.log('_buildDocComponents', '_buildDocComponents()');
+    editorLayoutLog.finer('_buildDocComponents()');
 
     final selectedNodes = widget.documentSelection != null
         ? widget.document.getNodesInside(
@@ -432,7 +491,7 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
         newComponentKeyMap: newComponentKeys,
         nodeId: docNode.id,
       );
-      _log.log('_buildDocComponents', 'Node -> Key: ${docNode.id} -> $componentKey');
+      editorLayoutLog.finer('Node -> Key: ${docNode.id} -> $componentKey');
 
       _topToBottomComponentKeys.add(componentKey);
 
@@ -455,7 +514,7 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
       if (component != null) {
         docComponents.add(component);
       } else {
-        _log.log('_buildDocComponents', 'Failed to build component for node: $docNode');
+        editorLayoutLog.info('Failed to build component for node: $docNode');
       }
     }
 
@@ -463,9 +522,9 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
       ..clear()
       ..addAll(newComponentKeys);
 
-    _log.log('_buildDocComponents', ' - keys -> IDs after building all components:');
+    editorLayoutLog.finer(' - keys -> IDs after building all components:');
     _nodeIdsToComponentKeys.forEach((key, value) {
-      _log.log('_buildDocComponents', '   - $key: $value');
+      editorLayoutLog.finer('   - $key: $value');
     });
 
     return docComponents;
@@ -497,9 +556,9 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
     }
     final documentSelection = widget.documentSelection!;
 
-    _log.log('_computeNodeSelection', '_computeNodeSelection(): $nodeId');
-    _log.log('_computeNodeSelection', ' - base: ${documentSelection.base.nodeId}');
-    _log.log('_computeNodeSelection', ' - extent: ${documentSelection.extent.nodeId}');
+    editorLayoutLog.finer('_computeNodeSelection(): $nodeId');
+    editorLayoutLog.finer(' - base: ${documentSelection.base.nodeId}');
+    editorLayoutLog.finer(' - extent: ${documentSelection.extent.nodeId}');
 
     final node = widget.document.getNodeById(nodeId);
     if (node == null) {
@@ -507,18 +566,18 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
     }
 
     if (documentSelection.base.nodeId == documentSelection.extent.nodeId) {
-      _log.log('_computeNodeSelection', ' - selection is within 1 node.');
+      editorLayoutLog.finer(' - selection is within 1 node.');
       if (documentSelection.base.nodeId != nodeId) {
         // Only 1 node is selected and its not the node we're interested in. Return.
-        _log.log('_computeNodeSelection', ' - this node is not selected. Returning null.');
+        editorLayoutLog.finer(' - this node is not selected. Returning null.');
         return null;
       }
 
-      _log.log('_computeNodeSelection', ' - this node has the selection');
+      editorLayoutLog.finer(' - this node has the selection');
       final baseNodePosition = documentSelection.base.nodePosition;
       final extentNodePosition = documentSelection.extent.nodePosition;
       final nodeSelection = node.computeSelection(base: baseNodePosition, extent: extentNodePosition);
-      _log.log('_computeNodeSelection', ' - node selection: $nodeSelection');
+      editorLayoutLog.finer(' - node selection: $nodeSelection');
 
       return DocumentNodeSelection(
         nodeId: nodeId,
@@ -528,19 +587,19 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
       );
     } else {
       // Log all the selected nodes.
-      _log.log('_computeNodeSelection', ' - selection contains multiple nodes:');
+      editorLayoutLog.finer(' - selection contains multiple nodes:');
       for (final node in selectedNodes) {
-        _log.log('_computeNodeSelection', '   - ${node.id}');
+        editorLayoutLog.finer('   - ${node.id}');
       }
 
       if (selectedNodes.firstWhereOrNull((selectedNode) => selectedNode.id == nodeId) == null) {
         // The document selection does not contain the node we're interested in. Return.
-        _log.log('_computeNodeSelection', ' - this node is not in the selection');
+        editorLayoutLog.finer(' - this node is not in the selection');
         return null;
       }
 
       if (selectedNodes.first.id == nodeId) {
-        _log.log('_computeNodeSelection', ' - this is the first node in the selection');
+        editorLayoutLog.finer(' - this is the first node in the selection');
         // Multiple nodes are selected and the node that we're interested in
         // is the top node in that selection. Therefore, this node is
         // selected from a position down to its bottom.
@@ -555,7 +614,7 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
           isExtent: !isBase,
         );
       } else if (selectedNodes.last.id == nodeId) {
-        _log.log('_computeNodeSelection', ' - this is the last node in the selection');
+        editorLayoutLog.finer(' - this is the last node in the selection');
         // Multiple nodes are selected and the node that we're interested in
         // is the bottom node in that selection. Therefore, this node is
         // selected from the beginning down to some position.
@@ -570,7 +629,7 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
           isExtent: !isBase,
         );
       } else {
-        _log.log('_computeNodeSelection', ' - this node is fully selected within the selection');
+        editorLayoutLog.finer(' - this node is fully selected within the selection');
         // Multiple nodes are selected and this node is neither the top
         // or the bottom node, therefore this entire node is selected.
         return DocumentNodeSelection(
@@ -588,9 +647,18 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
     for (final componentBuilder in widget.componentBuilders) {
       final component = componentBuilder(componentContext);
       if (component != null) {
-        return component;
+        return widget.showDebugPaint ? _wrapWithDebugWidget(component) : component;
       }
     }
     return null;
+  }
+
+  Widget _wrapWithDebugWidget(Widget component) {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: const Color(0xFFFF0000), width: 1),
+      ),
+      child: component,
+    );
   }
 }
