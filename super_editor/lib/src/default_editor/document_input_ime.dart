@@ -430,11 +430,8 @@ class DocumentImeSerializer {
       } else {
         editorImeLog.fine("Removing arbitrary character from IME selection");
         imeSelection = imeSelection.copyWith(
-          baseOffset:
-              imeSelection.affinity == TextAffinity.downstream ? _prependedPlaceholder.length : imeSelection.baseOffset,
-          extentOffset: imeSelection.affinity == TextAffinity.downstream
-              ? imeSelection.extentOffset + _prependedPlaceholder.length
-              : _prependedPlaceholder.length,
+          baseOffset: min(imeSelection.baseOffset, _prependedPlaceholder.length),
+          extentOffset: min(imeSelection.extentOffset, _prependedPlaceholder.length),
         );
         editorImeLog.fine("Adjusted IME selection is: $imeSelection");
       }
@@ -525,7 +522,7 @@ class DocumentImeSerializer {
         editorImeLog.fine("The doc position is a downstream position on a block.");
         // Return the text position after the special character,
         // e.g., "~|".
-        return TextPosition(offset: imeRange.start + _prependedPlaceholder.length);
+        return TextPosition(offset: imeRange.start + 1);
       }
     }
 
