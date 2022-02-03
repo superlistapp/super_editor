@@ -864,7 +864,7 @@ class AttributedSpans {
       // Because we handle committing completed spans before this, we know that by this point the current marker should
       // indicate changes to the current span.
       if (marker.isStart) {
-        // Merge the new attribution into the current span.
+        // Add the new attribution to the current span.
         currentSpan.attributions.add(marker.attribution);
         _log.fine('merging ${marker.attribution}, current span is now $currentSpan.');
       } else if (marker.isEnd) {
