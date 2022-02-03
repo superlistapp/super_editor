@@ -821,6 +821,11 @@ class AttributedSpans {
       return [];
     }
 
+    if (_attributions.isEmpty || _attributions.first.offset > contentLength - 1) {
+      // There is content but no attributions that apply to it.
+      return [MultiAttributionSpan(attributions: {}, start: 0, end: contentLength - 1)];
+    }
+
     final collapsedSpans = <MultiAttributionSpan>[];
     var currentSpan = MultiAttributionSpan(attributions: {}, start: 0, end: contentLength - 1);
 
@@ -874,7 +879,7 @@ class AttributedSpans {
       }
     }
 
-    if (collapsedSpans.isEmpty || collapsedSpans.last.end < contentLength - 1) {
+    if (collapsedSpans.last.end < contentLength - 1) {
       // The spans committed during the loop didn't cover the entire range.  The value in currentSpan should already
       // span from the end of the last token to the end of the requested content, so just add it to the result.
       collapsedSpans.add(currentSpan);
