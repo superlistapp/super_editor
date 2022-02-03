@@ -100,7 +100,7 @@ class UnorderedListItemComponent extends StatelessWidget {
     required this.styleBuilder,
     this.dotBuilder = _defaultUnorderedListItemDotBuilder,
     this.indent = 0,
-    this.indentExtent = 25,
+    this.indentCalculator = _defaultIndentCalculator,
     this.textSelection,
     this.selectionColor = Colors.lightBlueAccent,
     this.showCaret = false,
@@ -113,7 +113,7 @@ class UnorderedListItemComponent extends StatelessWidget {
   final AttributionStyleBuilder styleBuilder;
   final UnorderedListItemDotBuilder dotBuilder;
   final int indent;
-  final double indentExtent;
+  final double Function(TextStyle, int indent) indentCalculator;
   final TextSelection? textSelection;
   final Color selectionColor;
   final bool showCaret;
@@ -122,21 +122,22 @@ class UnorderedListItemComponent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final indentSpace = indentExtent * (indent + 1);
-    final firstLineHeight = styleBuilder({}).fontSize;
+    final textStyle = styleBuilder({});
+    final indentSpace = indentCalculator(textStyle, indent);
+    final lineHeight = textStyle.fontSize! * 1.25;
     const manualVerticalAdjustment = 2.0;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
+          width: indentSpace,
           margin: const EdgeInsets.only(top: manualVerticalAdjustment),
           decoration: BoxDecoration(
-            border: Border.all(width: 1, color: showDebugPaint ? Colors.grey : Colors.transparent),
+            border: showDebugPaint ? Border.all(width: 1, color: Colors.grey) : null,
           ),
           child: SizedBox(
-            width: indentSpace,
-            height: firstLineHeight,
+            height: lineHeight,
             child: dotBuilder(context, this),
           ),
         ),
@@ -186,7 +187,7 @@ class OrderedListItemComponent extends StatelessWidget {
     required this.styleBuilder,
     this.numeralBuilder = _defaultOrderedListItemNumeralBuilder,
     this.indent = 0,
-    this.indentExtent = 25,
+    this.indentCalculator = _defaultIndentCalculator,
     this.textSelection,
     this.selectionColor = Colors.lightBlueAccent,
     this.showCaret = false,
@@ -200,7 +201,7 @@ class OrderedListItemComponent extends StatelessWidget {
   final AttributionStyleBuilder styleBuilder;
   final OrderedListItemNumeralBuilder numeralBuilder;
   final int indent;
-  final double indentExtent;
+  final double Function(TextStyle, int indent) indentCalculator;
   final TextSelection? textSelection;
   final Color selectionColor;
   final bool showCaret;
@@ -209,24 +210,24 @@ class OrderedListItemComponent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final indentSpace = indentExtent * (indent + 1);
-    final firstLineHeight = styleBuilder({}).fontSize!;
+    final textStyle = styleBuilder({});
+    final indentSpace = indentCalculator(textStyle, indent);
+    final lineHeight = textStyle.fontSize!;
     const manualVerticalAdjustment = 2.0;
-    final manualHeightAdjustment = firstLineHeight * 0.15;
+    final manualHeightAdjustment = lineHeight * 0.15;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
           width: indentSpace,
-          height: firstLineHeight + manualHeightAdjustment,
+          height: lineHeight + manualHeightAdjustment,
           margin: const EdgeInsets.only(top: manualVerticalAdjustment),
           decoration: BoxDecoration(
-            border: Border.all(width: 1, color: showDebugPaint ? Colors.grey : Colors.transparent),
+            border: showDebugPaint ? Border.all(width: 1, color: Colors.grey) : null,
           ),
           child: SizedBox(
-            width: indentSpace,
-            height: firstLineHeight,
+            height: lineHeight,
             child: numeralBuilder(context, this),
           ),
         ),
@@ -249,8 +250,13 @@ class OrderedListItemComponent extends StatelessWidget {
 
 typedef OrderedListItemNumeralBuilder = Widget Function(BuildContext, OrderedListItemComponent);
 
+double _defaultIndentCalculator(TextStyle textStyle, int indent) {
+  return (textStyle.fontSize! * 0.60) * 4 * (indent + 1);
+}
+
 Widget _defaultOrderedListItemNumeralBuilder(BuildContext context, OrderedListItemComponent component) {
   return OverflowBox(
+    maxWidth: double.infinity,
     maxHeight: double.infinity,
     child: Align(
       alignment: Alignment.centerRight,
@@ -258,6 +264,7 @@ Widget _defaultOrderedListItemNumeralBuilder(BuildContext context, OrderedListIt
         padding: const EdgeInsets.only(right: 5.0),
         child: Text(
           '${component.listIndex}.',
+          textAlign: TextAlign.right,
           style: component.styleBuilder({}).copyWith(),
         ),
       ),
