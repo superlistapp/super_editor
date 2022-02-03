@@ -3,6 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:super_editor/super_editor.dart';
 
+import 'test_documents.dart';
+
 
 void main() {
   group('SuperEditor', () {
@@ -13,7 +15,7 @@ void main() {
           MaterialApp(
             home: Scaffold(
               body: SuperEditor(
-                editor: DocumentEditor(document: MutableDocument(nodes: [])),
+                editor: DocumentEditor(document: singleBlockDoc()),
                 focusNode: focusNode,
                 inputSource: inputAndGestureVariants.currentValue!.inputSource,
                 gestureMode: inputAndGestureVariants.currentValue!.gestureMode,
@@ -32,7 +34,7 @@ void main() {
           MaterialApp(
             home: Scaffold(
               body: SuperEditor(
-                editor: DocumentEditor(document: MutableDocument(nodes: [])),
+                editor: DocumentEditor(document: singleBlockDoc()),
                 focusNode: focusNode,
                 inputSource: inputAndGestureVariants.currentValue!.inputSource,
                 gestureMode: inputAndGestureVariants.currentValue!.gestureMode,
@@ -51,7 +53,7 @@ void main() {
           MaterialApp(
             home: Scaffold(
               body: SuperEditor(
-                editor: DocumentEditor(document: MutableDocument(nodes: [])),
+                editor: DocumentEditor(document: singleBlockDoc()),
                 focusNode: focusNode,
                 inputSource: inputAndGestureVariants.currentValue!.inputSource,
                 gestureMode: inputAndGestureVariants.currentValue!.gestureMode,
