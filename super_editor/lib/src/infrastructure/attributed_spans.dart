@@ -880,8 +880,9 @@ class AttributedSpans {
     }
 
     if (collapsedSpans.last.end < contentLength - 1) {
-      // The spans committed during the loop didn't cover the entire range.  The value in currentSpan should already
-      // span from the end of the last token to the end of the requested content, so just add it to the result.
+      // The last span committed during the loop does not reach the end of the requested content range. We either ran
+      // out of markers or the remaining markers are outside the content range. In both cases the value in currentSpan
+      // should already have the correct start, end, and attributions values to cover the remaining content.
       collapsedSpans.add(currentSpan);
       _log.fine('committing last span to cover requested content length of $contentLength: ${collapsedSpans.last}');
     }
