@@ -377,20 +377,26 @@ ExecutionInstruction anyCharacterOrDestructiveKeyToDeleteSelection({
     return ExecutionInstruction.continueExecution;
   }
 
+  // Do nothing if CMD or CTRL are pressed because this signifies an attempted
+  // shortcut.
+  if (keyEvent.isControlPressed || keyEvent.isMetaPressed) {
+    return ExecutionInstruction.continueExecution;
+  }
+
   // Specifically exclude situations where shift is pressed because shift
   // needs to alter the selection, not delete content. We have to explicitly
   // look for this because when shift is pressed along with an arrow key,
   // Flutter reports a non-null character.
-  final isShiftPressed = keyEvent.isShiftPressed;
+  if (keyEvent.isShiftPressed) {
+    return ExecutionInstruction.continueExecution;
+  }
 
   final isDestructiveKey =
       keyEvent.logicalKey == LogicalKeyboardKey.backspace || keyEvent.logicalKey == LogicalKeyboardKey.delete;
+  final isCharacterKey =
+      keyEvent.character != null && keyEvent.character != '' && !webBugBlacklistCharacters.contains(keyEvent.character);
 
-  final shouldDeleteSelection = !isShiftPressed &&
-      (isDestructiveKey ||
-          (keyEvent.character != null &&
-              keyEvent.character != '' &&
-              !webBugBlacklistCharacters.contains(keyEvent.character)));
+  final shouldDeleteSelection = isDestructiveKey || isCharacterKey;
   if (!shouldDeleteSelection) {
     return ExecutionInstruction.continueExecution;
   }

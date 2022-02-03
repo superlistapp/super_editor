@@ -1019,7 +1019,9 @@ ExecutionInstruction anyCharacterToInsertInTextContent({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
-  if (keyEvent.isMetaPressed || keyEvent.isControlPressed) {
+  // Do nothing if CMD or CTRL are pressed because this signifies an attempted
+  // shortcut.
+  if (keyEvent.isControlPressed || keyEvent.isMetaPressed) {
     return ExecutionInstruction.continueExecution;
   }
   if (editContext.composer.selection == null) {
