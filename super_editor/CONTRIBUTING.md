@@ -42,6 +42,7 @@ All feature request tickets must be framed in terms of a motivation, rather than
 Rather than jump directly into an implementation, consider drafting a proposal for the project maintainers to review. The proposal process might discover issues or conflicts that will save you considerable time and frustration.
 
 ## Pull requests must include effective tests
+**File an issue ticket before working on code!** Issue tickets are where we recognize problems and discuss solutions. Don't invest your time in a PR before the team tells you that your solution is likely to be accepted. Otherwise, you might waste your time.
 
 Text editing and document rendering involve a large number of interrelated behaviors. It's extremely easy to make a change that fixes one bug but then creates another bug.
 
