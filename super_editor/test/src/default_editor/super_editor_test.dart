@@ -3,150 +3,93 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:super_editor/super_editor.dart';
 
+
 void main() {
   group('SuperEditor', () {
     group('autofocus tests -', () {
-      group('does not claim focus when autofocus = false -', () {
-        testWidgets('Keyboard Input Source', (tester) async {
-          final focusNode = FocusNode();
-          await tester.pumpWidget(
-            MaterialApp(
-              home: Scaffold(
-                body: SuperEditor(
-                  editor: DocumentEditor(document: MutableDocument(nodes: [])),
-                  focusNode: focusNode,
-                  inputSource: DocumentInputSource.keyboard,
-                  autofocus: false,
-                ),
+      testWidgets('does not claim focus when autofocus = false', (tester) async {
+        final focusNode = FocusNode();
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: SuperEditor(
+                editor: DocumentEditor(document: MutableDocument(nodes: [])),
+                focusNode: focusNode,
+                inputSource: inputAndGestureVariants.currentValue!.inputSource,
+                gestureMode: inputAndGestureVariants.currentValue!.gestureMode,
+                autofocus: false,
               ),
             ),
-          );
+          ),
+        );
 
-          expect(focusNode.hasFocus, false);
-        });
+        expect(focusNode.hasFocus, false);
+      }, variant: inputAndGestureVariants);
 
-        testWidgets('IME Input Source', (tester) async {
-          final focusNode = FocusNode();
-          await tester.pumpWidget(
-            MaterialApp(
-              home: Scaffold(
-                body: SuperEditor(
-                  editor: DocumentEditor(document: MutableDocument(nodes: [])),
-                  focusNode: focusNode,
-                  inputSource: DocumentInputSource.ime,
-                  autofocus: false,
-                ),
+      testWidgets('claims focus when autofocus = true - ', (tester) async {
+        final focusNode = FocusNode();
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: SuperEditor(
+                editor: DocumentEditor(document: MutableDocument(nodes: [])),
+                focusNode: focusNode,
+                inputSource: inputAndGestureVariants.currentValue!.inputSource,
+                gestureMode: inputAndGestureVariants.currentValue!.gestureMode,
+                autofocus: true,
               ),
             ),
-          );
+          ),
+        );
 
-          expect(focusNode.hasFocus, false);
-        });
-      });
+        expect(focusNode.hasFocus, true);
+      }, variant: inputAndGestureVariants);
 
-      group('claims focus when autofocus = true - ', () {
-        testWidgets('Keyboard Input Source', (tester) async {
-          final focusNode = FocusNode();
-          await tester.pumpWidget(
-            MaterialApp(
-              home: Scaffold(
-                body: SuperEditor(
-                  editor: DocumentEditor(document: MutableDocument(nodes: [])),
-                  focusNode: focusNode,
-                  inputSource: DocumentInputSource.keyboard,
-                  autofocus: true,
-                ),
+      testWidgets('claims focus by gesture when autofocus = false -', (tester) async {
+        final focusNode = FocusNode();
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: SuperEditor(
+                editor: DocumentEditor(document: MutableDocument(nodes: [])),
+                focusNode: focusNode,
+                inputSource: inputAndGestureVariants.currentValue!.inputSource,
+                gestureMode: inputAndGestureVariants.currentValue!.gestureMode,
+                autofocus: false,
               ),
             ),
-          );
+          ),
+        );
 
-          expect(focusNode.hasFocus, true);
-        });
+        await tester.tap(find.byType(SuperEditor));
+        await tester.pumpAndSettle();
 
-        testWidgets('IME Input Source', (tester) async {
-          final focusNode = FocusNode();
-          await tester.pumpWidget(
-            MaterialApp(
-              home: Scaffold(
-                body: SuperEditor(
-                  editor: DocumentEditor(document: MutableDocument(nodes: [])),
-                  focusNode: focusNode,
-                  inputSource: DocumentInputSource.ime,
-                  autofocus: true,
-                ),
-              ),
-            ),
-          );
-
-          expect(focusNode.hasFocus, true);
-        });
-      });
-
-      group('claims focus by pointer when autofocus = false -', () {
-        testWidgets('Mouse Gesture Mode', (tester) async {
-          final focusNode = FocusNode();
-          await tester.pumpWidget(
-            MaterialApp(
-              home: Scaffold(
-                body: SuperEditor(
-                  editor: DocumentEditor(document: MutableDocument(nodes: [])),
-                  focusNode: focusNode,
-                  gestureMode: DocumentGestureMode.mouse,
-                  autofocus: false,
-                ),
-              ),
-            ),
-          );
-
-          await tester.tap(find.byType(SuperEditor));
-          await tester.pumpAndSettle();
-
-          expect(focusNode.hasFocus, true);
-        });
-        testWidgets('Android Gesture Mode', (tester) async {
-          final focusNode = FocusNode();
-          await tester.pumpWidget(
-            MaterialApp(
-              home: Scaffold(
-                body: SuperEditor(
-                  editor: DocumentEditor(document: MutableDocument(nodes: [])),
-                  focusNode: focusNode,
-                  gestureMode: DocumentGestureMode.android,
-                  inputSource: DocumentInputSource.ime,
-                  autofocus: false,
-                ),
-              ),
-            ),
-          );
-
-          await tester.tap(find.byType(SuperEditor));
-          await tester.pumpAndSettle();
-
-          expect(focusNode.hasFocus, true);
-        });
-
-        testWidgets('iOS Gesture Mode', (tester) async {
-          final focusNode = FocusNode();
-          await tester.pumpWidget(
-            MaterialApp(
-              home: Scaffold(
-                body: SuperEditor(
-                  editor: DocumentEditor(document: MutableDocument(nodes: [])),
-                  focusNode: focusNode,
-                  gestureMode: DocumentGestureMode.iOS,
-                  inputSource: DocumentInputSource.ime,
-                  autofocus: false,
-                ),
-              ),
-            ),
-          );
-
-          await tester.tap(find.byType(SuperEditor));
-          await tester.pumpAndSettle();
-
-          expect(focusNode.hasFocus, true);
-        });
-      });
+        expect(focusNode.hasFocus, true);
+      }, variant: inputAndGestureVariants);
     });
   });
 }
+
+
+class InputGestureTuple {
+  final DocumentInputSource inputSource;
+  final DocumentGestureMode gestureMode;
+
+  const InputGestureTuple(this.inputSource, this.gestureMode);
+
+  @override
+  String toString() {
+    return '${inputSource.name} Input Source & ${gestureMode.name} Gesture Mode';
+  }
+}
+
+final inputAndGestureVariants = ValueVariant<InputGestureTuple>(
+  {
+    const InputGestureTuple(DocumentInputSource.keyboard, DocumentGestureMode.mouse),
+    const InputGestureTuple(DocumentInputSource.keyboard, DocumentGestureMode.iOS),
+    const InputGestureTuple(DocumentInputSource.keyboard, DocumentGestureMode.android),
+    const InputGestureTuple(DocumentInputSource.ime, DocumentGestureMode.mouse),
+    const InputGestureTuple(DocumentInputSource.ime, DocumentGestureMode.iOS),
+    const InputGestureTuple(DocumentInputSource.ime, DocumentGestureMode.android),
+  },
+);
