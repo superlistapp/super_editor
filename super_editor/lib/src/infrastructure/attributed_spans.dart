@@ -505,10 +505,13 @@ class AttributedSpans {
   /// Precondition: There must not already exist a marker with
   /// the same attribution at the same offset.
   void _insertMarker(SpanMarker newMarker) {
-    int markerAfterIndex = _attributions.indexWhere((existingMarker) => existingMarker.compareTo(newMarker) > 0);
+    int indexOfFirstMarkerAfterInsertionPoint =
+        _attributions.indexWhere((existingMarker) => existingMarker.compareTo(newMarker) > 0);
+    // [indexWhere] returns -1 if no matching element is found.
+    final foundMarkerToInsertBefore = indexOfFirstMarkerAfterInsertionPoint >= 0;
 
-    if (markerAfterIndex >= 0) {
-      _attributions.insert(markerAfterIndex, newMarker);
+    if (foundMarkerToInsertBefore) {
+      _attributions.insert(indexOfFirstMarkerAfterInsertionPoint, newMarker);
     } else {
       // Insert the new marker at the end.
       _attributions.add(newMarker);
