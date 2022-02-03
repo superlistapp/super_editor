@@ -866,8 +866,8 @@ class AttributedSpans {
         _log.fine('new current span is $currentSpan');
       }
 
-      // Because we handle committing completed spans before this, we know that by this point the current marker should
-      // indicate changes to the current span.
+      // By the time we get here, we are guaranteed that the current marker should modify the current span. Apply
+      // changes based on the type of the marker.
       if (marker.isStart) {
         // Add the new attribution to the current span.
         currentSpan.attributions.add(marker.attribution);
