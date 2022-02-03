@@ -236,7 +236,7 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
     }
 
     final imeValueBeforeChange = currentTextEditingValue;
-    editorImeLog.fine("IME value before insertion: $imeValueBeforeChange");
+    editorImeLog.fine("IME value before applying deltas: $imeValueBeforeChange");
 
     _isApplyingDeltas = true;
     widget.softwareKeyboardHandler.applyDeltas(textEditingDeltas);
@@ -244,7 +244,38 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
 
     _syncImeWithDocumentAndComposer();
 
-    editorImeLog.fine("IME value after insertion: $currentTextEditingValue");
+    editorImeLog.fine("IME value after applying deltas: $currentTextEditingValue");
+
+    final hasDestructiveUpdate =
+        textEditingDeltas.where((element) => element is! TextEditingDeltaNonTextUpdate).toList().isNotEmpty;
+    if (hasDestructiveUpdate && imeValueBeforeChange == currentTextEditingValue) {
+      // Sometimes the IME reports changes to us, but our document doesn't change
+      // in ways that's reflected in the IME. In this case, we need to "reset"
+      // the IME value to what it was before the deltas.
+      //
+      // Example: The user has a caret in an empty paragraph. That empty paragraph
+      // includes a couple hidden characters, so the IME value might look like:
+      //
+      //     ". |"
+      //
+      // The ". " substring is invisible to the user and the "|" represents the caret at
+      // the beginning of the empty paragraph.
+      //
+      // Then the user inserts a newline "\n". This causes Super Editor to insert a new,
+      // empty paragraph node, and place the caret in the new, empty paragraph. At this
+      // point, we have an issue:
+      //
+      // This class still sees the TextEditingValue as: ". |"
+      //
+      // However, the OS IME thinks the TextEditingValue is: ". |\n"
+      //
+      // In this situation, even though our TextEditingValue looks identical to what it
+      // was before, we need to send our TextEditingValue to the OS so that the OS doesn't
+      // think there's a "\n" sitting in the edit region.
+      editorImeLog.fine(
+          "Sending forceful update to IME because our local TextEditingValue didn't change, but the IME may have");
+      _inputConnection!.setEditingState(currentTextEditingValue);
+    }
   }
 
   @override
@@ -292,13 +323,7 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
 }
 
 class DocumentImeSerializer {
-  static const _leadingCharacters = ['*', '^', '`'];
-  static int _nextLeadingCharacterIndex = 0;
-  static String _nextLeadingCharacter() {
-    final nextCharacter = _leadingCharacters[_nextLeadingCharacterIndex];
-    _nextLeadingCharacterIndex = (_nextLeadingCharacterIndex + 1) % _leadingCharacters.length;
-    return nextCharacter;
-  }
+  static const _leadingCharacter = '. ';
 
   DocumentImeSerializer(this._doc, this._selection) {
     _serialize();
@@ -310,8 +335,7 @@ class DocumentImeSerializer {
   final _docTextNodesToImeRanges = <String, TextRange>{};
   final _selectedNodes = <DocumentNode>[];
   late String _imeText;
-  late bool _didPrependPlaceholder;
-  String? _prependedCharacter;
+  String _prependedPlaceholder = '';
 
   void _serialize() {
     editorImeLog.fine("Creating an IME model from document and selection");
@@ -327,13 +351,11 @@ class DocumentImeSerializer {
       //
       //     Text above...
       //     |The selected text node.
-      _prependedCharacter = _nextLeadingCharacter();
-      buffer.write(_prependedCharacter);
-      characterCount = 1;
-      _didPrependPlaceholder = true;
+      _prependedPlaceholder = _leadingCharacter;
+      buffer.write(_prependedPlaceholder);
+      characterCount = _prependedPlaceholder.length;
     } else {
-      _didPrependPlaceholder = false;
-      _prependedCharacter = null;
+      _prependedPlaceholder = '';
     }
 
     _selectedNodes.clear();
@@ -389,26 +411,32 @@ class DocumentImeSerializer {
         _selection.extent.nodePosition == selectedNode.beginningPosition;
   }
 
+  bool get _didPrependPlaceholder => _prependedPlaceholder.isNotEmpty;
+
   DocumentSelection? imeToDocumentSelection(TextSelection imeSelection) {
     editorImeLog.fine("Creating doc selection from IME selection: $imeSelection");
     if (_didPrependPlaceholder &&
-        ((!imeSelection.isCollapsed && imeSelection.start == 0) ||
-            (imeSelection.isCollapsed && imeSelection.extentOffset == 1))) {
+        ((!imeSelection.isCollapsed && imeSelection.start < _prependedPlaceholder.length) ||
+            (imeSelection.isCollapsed && imeSelection.extentOffset <= _prependedPlaceholder.length))) {
       // The IME is trying to select our artificial prepended character.
       // If that's the only character that the IME is trying to select, then
       // return a null selection to indicate that there's nothing to select.
       // If the selection is expanded, then remove the arbitrary character from
       // the selection.
-      if ((imeSelection.isCollapsed && imeSelection.extentOffset == 0) ||
-          (imeSelection.start == 0 && imeSelection.end == 1)) {
+      if ((imeSelection.isCollapsed && imeSelection.extentOffset < _prependedPlaceholder.length) ||
+          (imeSelection.start < _prependedPlaceholder.length && imeSelection.end == _prependedPlaceholder.length)) {
         editorImeLog.fine("Returning null doc selection");
         return null;
       } else {
         editorImeLog.fine("Removing arbitrary character from IME selection");
         imeSelection = imeSelection.copyWith(
-          baseOffset: imeSelection.affinity == TextAffinity.downstream ? 1 : imeSelection.baseOffset,
-          extentOffset: imeSelection.affinity == TextAffinity.downstream ? imeSelection.extentOffset : 1,
+          baseOffset:
+              imeSelection.affinity == TextAffinity.downstream ? _prependedPlaceholder.length : imeSelection.baseOffset,
+          extentOffset: imeSelection.affinity == TextAffinity.downstream
+              ? imeSelection.extentOffset + _prependedPlaceholder.length
+              : _prependedPlaceholder.length,
         );
+        editorImeLog.fine("Adjusted IME selection is: $imeSelection");
       }
     } else {
       editorImeLog.fine("Mapping the IME base/extent to their corresponding doc positions without modification.");
@@ -497,7 +525,7 @@ class DocumentImeSerializer {
         editorImeLog.fine("The doc position is a downstream position on a block.");
         // Return the text position after the special character,
         // e.g., "~|".
-        return TextPosition(offset: imeRange.start + 1);
+        return TextPosition(offset: imeRange.start + _prependedPlaceholder.length);
       }
     }
 
@@ -510,7 +538,7 @@ class DocumentImeSerializer {
 
   TextEditingValue toTextEditingValue() {
     editorImeLog.fine("Creating TextEditingValue from document. Selection: $_selection");
-    editorImeLog.fine("Text:\n$_imeText");
+    editorImeLog.fine("Text:\n'$_imeText'");
     final imeSelection = documentToImeSelection(_selection);
     editorImeLog.fine("Selection: $imeSelection");
 
@@ -717,6 +745,7 @@ class SoftwareKeyboardHandler {
   final DocumentComposer composer;
   final CommonEditorOperations commonOps;
 
+  /// Applies the given [textEditingDeltas] to the [Document].
   void applyDeltas(List<TextEditingDelta> textEditingDeltas) {
     editorImeLog.info("Applying ${textEditingDeltas.length} IME deltas to document");
 
@@ -791,11 +820,11 @@ class SoftwareKeyboardHandler {
 
   void _applyDeletion(TextEditingDeltaDeletion delta) {
     editorImeLog.fine("Delete delta:\n"
-        "Text deleted: ${delta.textDeleted}\n"
+        "Text deleted: '${delta.textDeleted}'\n"
         "Deleted Range: ${delta.deletedRange}\n"
         "Selection: ${delta.selection}\n"
         "Composing: ${delta.composing}\n"
-        "Old text: ${delta.oldText}");
+        "Old text: '${delta.oldText}'");
 
     delete(delta.deletedRange);
 
