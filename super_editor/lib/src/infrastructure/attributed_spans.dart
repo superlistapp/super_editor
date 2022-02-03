@@ -840,14 +840,20 @@ class AttributedSpans {
         _log.fine(
             'encountered a span boundary with ${marker.isStart ? "a start" : "an end"} marker at offset ${marker.offset}.');
 
-        // If we encountered a start token, end the current span 1 index earlier to simulate the missing end marker.
-        final currentEnd = marker.isStart ? marker.offset - 1 : marker.offset;
+        // Calculate the end of the current span.
+        //
+        // If the current marker is an end marker, then the current span at that marker. Otherwise, if the
+        // marker is an start marker, the current span ends 1 unit before the marker.
+        final currentEnd = marker.isEnd ? marker.offset : marker.offset - 1;
 
         // Commit the completed span.
         collapsedSpans.add(currentSpan.copyWith(end: currentEnd));
         _log.fine('committed span ${collapsedSpans.last}');
 
-        // If we encountered an end token, start the next span 1 index later to simulate the missing start marker.
+        // Calculate the start of the next span.
+        //
+        // If the current marker is a start marker, then the next span begins at that marker. Otherwise, if the
+        // marker is an end marker, the next span begins 1 unit after the marker.
         final nextStart = marker.isStart ? marker.offset : marker.offset + 1;
 
         // Create the next span and continue consumeing markers
