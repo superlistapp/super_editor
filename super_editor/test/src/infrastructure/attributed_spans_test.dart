@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:super_editor/super_editor.dart';
 import 'package:logging/logging.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_spans.dart';
+import 'package:super_editor/super_editor.dart';
 
 import '../../test_tools.dart';
 import '_attributed_text_test_tools.dart';
@@ -480,6 +480,14 @@ void main() {
         AttributedSpans().collapseSpans(contentLength: 0);
       });
 
+      test('non-empty span with no attributions', () {
+        final collapsedSpans = AttributedSpans().collapseSpans(contentLength: 10);
+        expect(collapsedSpans, hasLength(1));
+        expect(collapsedSpans.first.start, 0);
+        expect(collapsedSpans.first.end, 9);
+        expect(collapsedSpans.first.attributions, isEmpty);
+      });
+
       test('single continuous attribution', () {
         final collapsedSpans = AttributedSpans(
           attributions: [
@@ -520,6 +528,23 @@ void main() {
         expect(collapsedSpans[3].start, 11);
         expect(collapsedSpans[3].end, 16);
         expect(collapsedSpans[3].attributions.length, 0);
+      });
+
+      test('adjacent non-overlapping attributions', () {
+        final collapsedSpans = AttributedSpans(
+          attributions: [
+            const SpanMarker(attribution: boldAttribution, offset: 0, markerType: SpanMarkerType.start),
+            const SpanMarker(attribution: boldAttribution, offset: 4, markerType: SpanMarkerType.end),
+            const SpanMarker(attribution: italicsAttribution, offset: 5, markerType: SpanMarkerType.start),
+            const SpanMarker(attribution: italicsAttribution, offset: 9, markerType: SpanMarkerType.end),
+          ],
+        ).collapseSpans(contentLength: 10);
+
+        expect(collapsedSpans, hasLength(2));
+        expect(collapsedSpans.first.start, 0);
+        expect(collapsedSpans.first.end, 4);
+        expect(collapsedSpans.last.start, 5);
+        expect(collapsedSpans.last.end, 9);
       });
 
       test('multiple non-overlapping attributions', () {
