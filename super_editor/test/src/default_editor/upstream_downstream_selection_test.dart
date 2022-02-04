@@ -565,6 +565,7 @@ Widget _buildHardwareKeyboardEditor(MutableDocument document, DocumentComposer c
         editor: editor,
         composer: composer,
         gestureMode: DocumentGestureMode.mouse,
+        autofocus: true,
       ),
     ),
   );
