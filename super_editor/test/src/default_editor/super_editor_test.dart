@@ -17,8 +17,8 @@ void main() {
               body: SuperEditor(
                 editor: DocumentEditor(document: singleBlockDoc()),
                 focusNode: focusNode,
-                inputSource: inputAndGestureVariants.currentValue!.inputSource,
-                gestureMode: inputAndGestureVariants.currentValue!.gestureMode,
+                inputSource: _inputAndGestureVariants.currentValue!.inputSource,
+                gestureMode: _inputAndGestureVariants.currentValue!.gestureMode,
                 autofocus: false,
               ),
             ),
@@ -26,7 +26,7 @@ void main() {
         );
 
         expect(focusNode.hasFocus, false);
-      }, variant: inputAndGestureVariants);
+      }, variant: _inputAndGestureVariants);
 
       testWidgets('claims focus when autofocus = true - ', (tester) async {
         final focusNode = FocusNode();
@@ -36,8 +36,8 @@ void main() {
               body: SuperEditor(
                 editor: DocumentEditor(document: singleBlockDoc()),
                 focusNode: focusNode,
-                inputSource: inputAndGestureVariants.currentValue!.inputSource,
-                gestureMode: inputAndGestureVariants.currentValue!.gestureMode,
+                inputSource: _inputAndGestureVariants.currentValue!.inputSource,
+                gestureMode: _inputAndGestureVariants.currentValue!.gestureMode,
                 autofocus: true,
               ),
             ),
@@ -45,7 +45,7 @@ void main() {
         );
 
         expect(focusNode.hasFocus, true);
-      }, variant: inputAndGestureVariants);
+      }, variant: _inputAndGestureVariants);
 
       testWidgets('claims focus by gesture when autofocus = false -', (tester) async {
         final focusNode = FocusNode();
@@ -55,8 +55,8 @@ void main() {
               body: SuperEditor(
                 editor: DocumentEditor(document: singleBlockDoc()),
                 focusNode: focusNode,
-                inputSource: inputAndGestureVariants.currentValue!.inputSource,
-                gestureMode: inputAndGestureVariants.currentValue!.gestureMode,
+                inputSource: _inputAndGestureVariants.currentValue!.inputSource,
+                gestureMode: _inputAndGestureVariants.currentValue!.gestureMode,
                 autofocus: false,
               ),
             ),
@@ -67,17 +67,17 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(focusNode.hasFocus, true);
-      }, variant: inputAndGestureVariants);
+      }, variant: _inputAndGestureVariants);
     });
   });
 }
 
 
-class InputGestureTuple {
+class _InputAndGestureTuple {
   final DocumentInputSource inputSource;
   final DocumentGestureMode gestureMode;
 
-  const InputGestureTuple(this.inputSource, this.gestureMode);
+  const _InputAndGestureTuple(this.inputSource, this.gestureMode);
 
   @override
   String toString() {
@@ -85,13 +85,13 @@ class InputGestureTuple {
   }
 }
 
-final inputAndGestureVariants = ValueVariant<InputGestureTuple>(
+final _inputAndGestureVariants = ValueVariant<_InputAndGestureTuple>(
   {
-    const InputGestureTuple(DocumentInputSource.keyboard, DocumentGestureMode.mouse),
-    const InputGestureTuple(DocumentInputSource.keyboard, DocumentGestureMode.iOS),
-    const InputGestureTuple(DocumentInputSource.keyboard, DocumentGestureMode.android),
-    const InputGestureTuple(DocumentInputSource.ime, DocumentGestureMode.mouse),
-    const InputGestureTuple(DocumentInputSource.ime, DocumentGestureMode.iOS),
-    const InputGestureTuple(DocumentInputSource.ime, DocumentGestureMode.android),
+    const _InputAndGestureTuple(DocumentInputSource.keyboard, DocumentGestureMode.mouse),
+    const _InputAndGestureTuple(DocumentInputSource.keyboard, DocumentGestureMode.iOS),
+    const _InputAndGestureTuple(DocumentInputSource.keyboard, DocumentGestureMode.android),
+    const _InputAndGestureTuple(DocumentInputSource.ime, DocumentGestureMode.mouse),
+    const _InputAndGestureTuple(DocumentInputSource.ime, DocumentGestureMode.iOS),
+    const _InputAndGestureTuple(DocumentInputSource.ime, DocumentGestureMode.android),
   },
 );
