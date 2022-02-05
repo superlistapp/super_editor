@@ -21,7 +21,7 @@ import 'document_gestures_mouse.dart';
 import 'document_input_ime.dart';
 import 'document_input_keyboard.dart';
 import 'document_keyboard_actions.dart';
-import 'layout.dart';
+import 'document_layout_column.dart';
 import 'paragraph.dart';
 import 'styles.dart';
 import 'text.dart';
@@ -473,33 +473,29 @@ class _SuperEditorState extends State<SuperEditor> {
   /// Builds the `DocumentLayout` with a constrained width, and a builder
   /// that re-runs when various artifacts change, e.g., the document changes.
   Widget _buildDocumentLayout() {
-    return ConstrainedBox(
-      constraints: BoxConstraints(
-        maxWidth: widget.maxWidth,
-      ),
-      child: MultiListenableBuilder(
-        listenables: {
-          _focusNode,
-          _composer,
-          widget.editor.document,
-        },
-        builder: (context) {
-          return DefaultDocumentLayout(
-            key: _docLayoutKey,
-            document: widget.editor.document,
-            documentSelection: _composer.selection,
-            componentBuilders: widget.componentBuilders,
-            showCaret: _focusNode.hasFocus && _gestureMode == DocumentGestureMode.mouse,
-            margin: widget.padding,
-            componentVerticalSpacing: widget.componentVerticalSpacing,
-            extensions: {
-              textStylesExtensionKey: widget.textStyleBuilder,
-              selectionStylesExtensionKey: widget.selectionStyle,
-            },
-            showDebugPaint: widget.showDebugPaint,
-          );
-        },
-      ),
+    return MultiListenableBuilder(
+      listenables: {
+        _focusNode,
+        _composer,
+        widget.editor.document,
+      },
+      builder: (context) {
+        return ColumnDocumentLayout(
+          key: _docLayoutKey,
+          document: widget.editor.document,
+          documentSelection: _composer.selection,
+          componentBuilders: widget.componentBuilders,
+          maxComponentWidth: widget.maxWidth,
+          showCaret: _focusNode.hasFocus && _gestureMode == DocumentGestureMode.mouse,
+          margin: widget.padding,
+          componentVerticalSpacing: widget.componentVerticalSpacing,
+          extensions: {
+            textStylesExtensionKey: widget.textStyleBuilder,
+            selectionStylesExtensionKey: widget.selectionStyle,
+          },
+          showDebugPaint: widget.showDebugPaint,
+        );
+      },
     );
   }
 }

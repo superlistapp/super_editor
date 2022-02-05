@@ -1,30 +1,29 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
+import 'package:super_editor/src/default_editor/image.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
-
-final _log = Logger(scope: 'DocumentLayout');
 
 /// Displays a `Document` as a single column.
 ///
-/// `DefaultDocumentLayout` displays a visual "component" for each
+/// `ColumnDocumentLayout` displays a visual "component" for each
 /// type of node in a given `Document`. The components are positioned
 /// vertically in a column with some space in between.
 ///
-/// `DefaultDocumentLayout`'s `State` object implements `DocumentLayout`,
+/// `ColumnDocumentLayout`'s `State` object implements `DocumentLayout`,
 /// which establishes a contract for querying many document layout
 /// properties. To use the `DocumentLayout` API, assign a `GlobalKey`
-/// to a `DefaultDocumentLayout`, obtain its `State` object, and then
+/// to a `ColumnDocumentLayout`, obtain its `State` object, and then
 /// cast that `State` object to a `DocumentLayout`.
-class DefaultDocumentLayout extends StatefulWidget {
-  const DefaultDocumentLayout({
+class ColumnDocumentLayout extends StatefulWidget {
+  const ColumnDocumentLayout({
     Key? key,
     required this.document,
     this.documentSelection,
+    this.maxComponentWidth = double.infinity,
     required this.showCaret,
     required this.componentBuilders,
     this.margin = EdgeInsets.zero,
@@ -39,6 +38,9 @@ class DefaultDocumentLayout extends StatefulWidget {
   /// The selection of a region of a `Document`, used when
   /// rendering document content, e.g., painting a text selection.
   final DocumentSelection? documentSelection;
+
+  /// The maximum width, in pixels, for content within the document.
+  final double maxComponentWidth;
 
   /// [true] if the document UI should display a caret at the
   /// selection extent.
@@ -68,10 +70,10 @@ class DefaultDocumentLayout extends StatefulWidget {
   final bool showDebugPaint;
 
   @override
-  _DefaultDocumentLayoutState createState() => _DefaultDocumentLayoutState();
+  _ColumnDocumentLayoutState createState() => _ColumnDocumentLayoutState();
 }
 
-class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implements DocumentLayout {
+class _ColumnDocumentLayoutState extends State<ColumnDocumentLayout> implements DocumentLayout {
   final Map<String, GlobalKey> _nodeIdsToComponentKeys = {};
 
   // Keys are cached in top-to-bottom order so that we can visually
@@ -458,7 +460,7 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
       padding: widget.margin,
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           for (final docComponent in docComponents) ...[
             docComponent,
@@ -500,16 +502,21 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
         nodeId: docNode.id,
       );
 
-      final component = _buildComponent(ComponentContext(
-        context: context,
-        document: widget.document,
-        documentSelection: widget.documentSelection,
-        documentNode: docNode,
-        componentKey: componentKey,
-        showCaret: widget.showCaret,
-        nodeSelection: nodeSelection,
-        extensions: widget.extensions,
-      ));
+      final component = _buildComponent(
+        ComponentContext(
+          context: context,
+          document: widget.document,
+          documentSelection: widget.documentSelection,
+          documentNode: docNode,
+          componentKey: componentKey,
+          showCaret: widget.showCaret,
+          nodeSelection: nodeSelection,
+          extensions: widget.extensions,
+        ),
+        ColumnDocumentLayoutComponentConfig(
+          isFullWidth: docNode is ImageNode ? true : false,
+        ),
+      );
 
       if (component != null) {
         docComponents.add(component);
@@ -643,10 +650,20 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
     }
   }
 
-  Widget? _buildComponent(ComponentContext componentContext) {
+  Widget? _buildComponent(ComponentContext componentContext, ColumnDocumentLayoutComponentConfig config) {
     for (final componentBuilder in widget.componentBuilders) {
-      final component = componentBuilder(componentContext);
+      var component = componentBuilder(componentContext);
       if (component != null) {
+        component = ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: config.isFullWidth ? double.infinity : widget.maxComponentWidth,
+          ),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: component,
+          ),
+        );
+
         return widget.showDebugPaint ? _wrapWithDebugWidget(component) : component;
       }
     }
@@ -661,4 +678,27 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
       child: component,
     );
   }
+}
+
+/// A per-component configuration that determines how a
+/// [ColumnDocumentLayout] will layout the given component.
+class ColumnDocumentLayoutComponentConfig {
+  const ColumnDocumentLayoutComponentConfig({
+    this.isFullWidth = false,
+  });
+
+  final bool isFullWidth;
+
+  @override
+  String toString() => "[ColumnDocumentLayoutComponentConfig]\nDisplay full width: $isFullWidth";
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ColumnDocumentLayoutComponentConfig &&
+          runtimeType == other.runtimeType &&
+          isFullWidth == other.isFullWidth;
+
+  @override
+  int get hashCode => isFullWidth.hashCode;
 }

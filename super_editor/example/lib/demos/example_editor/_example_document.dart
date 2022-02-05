@@ -5,50 +5,76 @@ Document createInitialDocument() {
     nodes: [
       ImageNode(
         id: DocumentEditor.createNodeId(),
-        imageUrl: 'https://i.imgur.com/fSZwM7G.jpg',
+        imageUrl: 'https://i.ibb.co/5nvRdx1/flutter-horizon.png',
       ),
       ParagraphNode(
         id: DocumentEditor.createNodeId(),
         text: AttributedText(
-          text: 'Example Document',
+          text: 'Welcome to Super Editor',
         ),
         metadata: {
           'blockType': header1Attribution,
         },
       ),
-      HorizontalRuleNode(id: DocumentEditor.createNodeId()),
       ParagraphNode(
         id: DocumentEditor.createNodeId(),
         text: AttributedText(
-          text:
-              'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus sed sagittis urna. Aenean mattis ante justo, quis sollicitudin metus interdum id. Aenean ornare urna ac enim consequat mollis. In aliquet convallis efficitur. Phasellus convallis purus in fringilla scelerisque. Ut ac orci a turpis egestas lobortis. Morbi aliquam dapibus sem, vitae sodales arcu ultrices eu. Duis vulputate mauris quam, eleifend pulvinar quam blandit eget.',
+          text: "Super Editor is a toolkit to help with document editing, document layout, text fields, and more.",
         ),
       ),
       ParagraphNode(
         id: DocumentEditor.createNodeId(),
         text: AttributedText(
-          text: 'This is a blockquote!',
+          text: "Are you building a blog editor or layout? Super Editor might be right for you.",
+        ),
+      ),
+      ParagraphNode(
+        id: DocumentEditor.createNodeId(),
+        text: AttributedText(
+          text:
+              "Are you building text field behaviors that Flutter can't support? Super Editor might be right for you.",
+        ),
+      ),
+      ParagraphNode(
+        id: DocumentEditor.createNodeId(),
+        text: AttributedText(
+          text: 'Quickstart',
         ),
         metadata: {
-          'blockType': blockquoteAttribution,
+          'blockType': header2Attribution,
         },
       ),
       ListItemNode.unordered(
         id: DocumentEditor.createNodeId(),
         text: AttributedText(
-          text: 'This is an unordered list item',
+          text: 'SuperEditor is a ready-made, configurable document editing experience.',
         ),
       ),
       ListItemNode.unordered(
         id: DocumentEditor.createNodeId(),
         text: AttributedText(
-          text: 'This is another list item',
+          text: 'SuperTextField is a ready-made, configurable text field.',
+        ),
+      ),
+      ParagraphNode(
+        id: DocumentEditor.createNodeId(),
+        text: AttributedText(
+          text: 'Explore the toolkit',
+        ),
+        metadata: {
+          'blockType': header2Attribution,
+        },
+      ),
+      ListItemNode.unordered(
+        id: DocumentEditor.createNodeId(),
+        text: AttributedText(
+          text: "Position and size components the way you'd like, by implementing your own DocumentLayout subclass",
         ),
       ),
       ListItemNode.unordered(
         id: DocumentEditor.createNodeId(),
         text: AttributedText(
-          text: 'This is a 3rd list item',
+          text: 'Work with text metadata quickly and easily with AttributedText.',
         ),
       ),
       ParagraphNode(
