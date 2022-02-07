@@ -6,12 +6,9 @@ import 'package:super_editor/src/core/document_editor.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
-import 'package:super_editor/src/default_editor/blockquote.dart';
 import 'package:super_editor/src/default_editor/common_editor_operations.dart';
 import 'package:super_editor/src/default_editor/document_gestures_touch_android.dart';
 import 'package:super_editor/src/default_editor/document_gestures_touch_ios.dart';
-import 'package:super_editor/src/default_editor/horizontal_rule.dart';
-import 'package:super_editor/src/default_editor/image.dart';
 import 'package:super_editor/src/default_editor/list_items.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/attributed_spans.dart';
@@ -21,11 +18,10 @@ import 'document_gestures_mouse.dart';
 import 'document_input_ime.dart';
 import 'document_input_keyboard.dart';
 import 'document_keyboard_actions.dart';
-import 'document_layout_column.dart';
+import 'layout_single_column/layout_single_column.dart';
 import 'paragraph.dart';
 import 'styles.dart';
 import 'text.dart';
-import 'unknown_component.dart';
 
 /// A text editor for styled text and multi-media elements.
 ///
@@ -112,13 +108,14 @@ class SuperEditor extends StatefulWidget {
     List<DocumentKeyboardAction>? keyboardActions,
     this.softwareKeyboardHandler,
     List<ComponentBuilder>? componentBuilders,
+    List<SingleColumnDocumentComponentBuilder>? newComponentBuilders,
     this.componentVerticalSpacing = 16,
     this.showDebugPaint = false,
     this.autofocus = false,
   })  : textStyleBuilder = textStyleBuilder ?? defaultStyleBuilder,
         selectionStyle = selectionStyle ?? defaultSelectionStyle,
         keyboardActions = keyboardActions ?? defaultKeyboardActions,
-        componentBuilders = componentBuilders ?? defaultComponentBuilders,
+        componentBuilders = newComponentBuilders ?? defaultComponentBuilders,
         super(key: key);
 
   /// Creates a `Super Editor` with common (but configurable) defaults for
@@ -141,7 +138,7 @@ class SuperEditor extends StatefulWidget {
     SelectionStyle? selectionStyle,
     List<DocumentKeyboardAction>? keyboardActions,
     this.softwareKeyboardHandler,
-    List<ComponentBuilder>? componentBuilders,
+    List<SingleColumnDocumentComponentBuilder>? componentBuilders,
     this.componentVerticalSpacing = 16,
     this.showDebugPaint = false,
     this.autofocus = false,
@@ -211,7 +208,7 @@ class SuperEditor extends StatefulWidget {
   /// each visual component displayed in the document layout, e.g.,
   /// paragraph component, image component,
   /// horizontal rule component, etc.
-  final List<ComponentBuilder> componentBuilders;
+  final List<SingleColumnDocumentComponentBuilder> componentBuilders;
 
   /// Factory that creates [TextStyle]s based on given
   /// attributions. An attribution can be anything. It is up
@@ -480,7 +477,7 @@ class _SuperEditorState extends State<SuperEditor> {
         widget.editor.document,
       },
       builder: (context) {
-        return ColumnDocumentLayout(
+        return SingleColumnDocumentLayout(
           key: _docLayoutKey,
           document: widget.editor.document,
           documentSelection: _composer.selection,
@@ -581,14 +578,14 @@ TextStyle defaultStyleBuilder(Set<Attribution> attributions) {
 /// These builders are in priority order. The first builder
 /// to return a non-null component is used. The final
 /// `unknownComponentBuilder` always returns a component.
-final defaultComponentBuilders = <ComponentBuilder>[
-  paragraphBuilder,
-  unorderedListItemBuilder,
-  orderedListItemBuilder,
-  blockquoteBuilder,
-  imageBuilder,
-  horizontalRuleBuilder,
-  unknownComponentBuilder,
+final defaultComponentBuilders = <SingleColumnDocumentComponentBuilder>[
+  paragraphComponentBuilder,
+  blockquoteComponentBuilder,
+  unorderedListItemComponentBuilder,
+  newOrderedListItemBuilder,
+  imageComponentBuilder,
+  horizontalRuleComponentBuilder,
+  newUnknownComponentBuilder,
 ];
 
 /// Keyboard actions for the standard [SuperEditor].

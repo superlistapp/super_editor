@@ -138,30 +138,28 @@ TextStyle _textStyleBuilder(Set<Attribution> attributions) {
 ///   return null;
 /// }
 /// ```
-Widget? _headerWithHintBuilder(ComponentContext componentContext) {
-  if (componentContext.documentNode is! ParagraphNode) {
+Widget? _headerWithHintBuilder(
+    SingleColumnDocumentComponentContext componentContext, ComponentViewModel componentMetadata) {
+  if (componentMetadata is! ParagraphComponentMetadata) {
     return null;
   }
 
-  final blockAttribution = (componentContext.documentNode as TextNode).metadata['blockType'];
+  final blockAttribution = componentMetadata.blockType;
   if (!(const [header1Attribution, header2Attribution, header3Attribution]).contains(blockAttribution)) {
     return null;
   }
 
-  final textSelection =
-      componentContext.nodeSelection == null || componentContext.nodeSelection!.nodeSelection is! TextSelection
-          ? null
-          : componentContext.nodeSelection!.nodeSelection as TextSelection;
-
-  final showCaret = componentContext.showCaret && componentContext.nodeSelection != null
-      ? componentContext.nodeSelection!.isExtent
-      : false;
+  final textSelection = componentMetadata.selection;
 
   return TextWithHintComponent(
     key: componentContext.componentKey,
-    text: (componentContext.documentNode as TextNode).text,
+    text: componentMetadata.text,
     textStyleBuilder: _textStyleBuilder,
-    metadata: (componentContext.documentNode as TextNode).metadata,
+    metadata: componentMetadata.blockType != null
+        ? {
+            'blockType': componentMetadata.blockType,
+          }
+        : {},
     // This is the text displayed as a hint.
     hintText: AttributedText(
       text: 'header goes here...',
@@ -177,7 +175,7 @@ Widget? _headerWithHintBuilder(ComponentContext componentContext) {
       color: const Color(0xFFDDDDDD),
     ),
     textSelection: textSelection,
-    selectionColor: (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle).selectionColor,
-    showCaret: showCaret,
+    selectionColor: componentMetadata.selectionColor,
+    showCaret: componentMetadata.caret != null,
   );
 }

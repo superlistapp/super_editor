@@ -1,38 +1,37 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:super_editor/src/core/document_render_pipeline.dart';
 import 'package:super_editor/super_editor.dart';
 
 void main() {
   group("Document render pipeline", () {
-    group("computes component metadata", () {
-      test("without component configuration", () {
+    group("computes component view models", () {
+      test("without component styles", () {
         final doc = _createSingleParagraphDocument();
 
         final pipeline = DocumentRenderPipeline(
-          metadataFactory: _TestMetadataFactory(),
-          metadataConfiguration: _NoComponentConfiguration(),
+          viewModelFactory: _TestMetadataFactory(),
+          componentStyler: _NoComponentConfiguration(),
         );
 
         pipeline.pump(doc);
 
-        final metadata = pipeline.componentsMetadata;
+        final metadata = pipeline.componentViewModels;
         expect(metadata.length, 1);
         expect(metadata.first, isA<_ParagraphComponentMetadata>());
         final paragraphComponentMetadata = metadata.first as _ParagraphComponentMetadata;
         expect(paragraphComponentMetadata.text, (doc.nodes.first as ParagraphNode).text);
       });
 
-      test("with component configuration", () {
+      test("with component styles", () {
         final doc = _createSingleImageDocument();
 
         final pipeline = DocumentRenderPipeline(
-          metadataFactory: _TestMetadataFactory(),
-          metadataConfiguration: _TestComponentConfiguration(),
+          viewModelFactory: _TestMetadataFactory(),
+          componentStyler: _TestComponentConfiguration(),
         );
 
         pipeline.pump(doc);
 
-        final metadata = pipeline.componentsMetadata;
+        final metadata = pipeline.componentViewModels;
         expect(metadata.length, 1);
         expect(metadata.first, isA<_ImageComponentMetadata>());
         final imageComponentMetadata = metadata.first as _ImageComponentMetadata;
@@ -41,8 +40,8 @@ void main() {
 
       test("with multiple pumps", () {
         final pipeline = DocumentRenderPipeline(
-          metadataFactory: _TestMetadataFactory(),
-          metadataConfiguration: _NoComponentConfiguration(),
+          viewModelFactory: _TestMetadataFactory(),
+          componentStyler: _NoComponentConfiguration(),
         );
 
         // First pump
@@ -51,7 +50,7 @@ void main() {
         );
 
         // Expect first pump to create a paragraph component metadata
-        final metadata1 = pipeline.componentsMetadata;
+        final metadata1 = pipeline.componentViewModels;
         expect(metadata1.length, 1);
         expect(metadata1.first, isA<_ParagraphComponentMetadata>());
 
@@ -61,7 +60,7 @@ void main() {
         );
 
         // Expect second pump to create an image component metadata
-        final metadata2 = pipeline.componentsMetadata;
+        final metadata2 = pipeline.componentViewModels;
         expect(metadata2.length, 1);
         expect(metadata2.first, isA<_ImageComponentMetadata>());
       });
@@ -87,9 +86,9 @@ Document _createSingleImageDocument() => MutableDocument(
       ],
     );
 
-class _TestMetadataFactory implements ComponentMetadataFactory {
+class _TestMetadataFactory implements ComponentViewModelFactory {
   @override
-  ComponentMetadata createComponentConfig(DocumentNode node) {
+  ComponentViewModel createComponentViewModel(Document document, DocumentNode node) {
     if (node is ParagraphNode) {
       return _ParagraphComponentMetadata(nodeId: node.id, text: node.text);
     }
@@ -101,18 +100,18 @@ class _TestMetadataFactory implements ComponentMetadataFactory {
   }
 }
 
-class _NoComponentConfiguration implements ComponentConfiguration {
+class _NoComponentConfiguration implements ComponentStyler {
   @override
-  ComponentMetadata configureComponentMetadata(
-      Document document, DocumentNode node, ComponentMetadata componentMetadata) {
+  ComponentViewModel styleComponentViewModel(
+      Document document, DocumentNode node, ComponentViewModel componentMetadata) {
     return componentMetadata;
   }
 }
 
-class _TestComponentConfiguration implements ComponentConfiguration {
+class _TestComponentConfiguration implements ComponentStyler {
   @override
-  ComponentMetadata configureComponentMetadata(
-      Document document, DocumentNode node, ComponentMetadata componentMetadata) {
+  ComponentViewModel styleComponentViewModel(
+      Document document, DocumentNode node, ComponentViewModel componentMetadata) {
     if (componentMetadata is _ImageComponentMetadata) {
       return componentMetadata.copyWith(
         maxWidth: double.infinity,
@@ -123,7 +122,7 @@ class _TestComponentConfiguration implements ComponentConfiguration {
   }
 }
 
-class _ParagraphComponentMetadata implements ComponentMetadata {
+class _ParagraphComponentMetadata implements ComponentViewModel {
   const _ParagraphComponentMetadata({
     required this.nodeId,
     required this.text,
@@ -146,7 +145,7 @@ class _ParagraphComponentMetadata implements ComponentMetadata {
   int get hashCode => nodeId.hashCode ^ text.hashCode;
 }
 
-class _ImageComponentMetadata implements ComponentMetadata {
+class _ImageComponentMetadata implements ComponentViewModel {
   const _ImageComponentMetadata({
     required this.nodeId,
     required this.url,

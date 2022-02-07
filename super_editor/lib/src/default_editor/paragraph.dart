@@ -1,9 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_editor.dart';
-import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/default_editor/text.dart';
@@ -13,8 +11,6 @@ import 'package:super_editor/src/infrastructure/keyboard.dart';
 import 'package:super_editor/src/infrastructure/raw_key_event_extensions.dart';
 
 import 'document_input_keyboard.dart';
-import 'styles.dart';
-import 'text_tools.dart';
 
 class ParagraphNode extends TextNode {
   ParagraphNode({
@@ -292,73 +288,4 @@ ExecutionInstruction moveParagraphSelectionUpWhenBackspaceIsPressed({
   );
 
   return ExecutionInstruction.haltExecution;
-}
-
-Widget? paragraphBuilder(ComponentContext componentContext) {
-  if (componentContext.documentNode is! ParagraphNode) {
-    return null;
-  }
-
-  final textSelection =
-      componentContext.nodeSelection == null || componentContext.nodeSelection!.nodeSelection is! TextSelection
-          ? null
-          : componentContext.nodeSelection!.nodeSelection as TextSelection;
-  if (componentContext.nodeSelection != null && componentContext.nodeSelection!.nodeSelection is! TextSelection) {
-    editorLayoutLog.shout(
-        'ERROR: Building a paragraph component but the selection is not a TextSelection: ${componentContext.documentNode.id}');
-  }
-  final showCaret = componentContext.showCaret && componentContext.nodeSelection != null
-      ? componentContext.nodeSelection!.isExtent
-      : false;
-  final highlightWhenEmpty =
-      componentContext.nodeSelection == null ? false : componentContext.nodeSelection!.highlightWhenEmpty;
-
-  editorLayoutLog.finer(' - ${componentContext.documentNode.id}: ${componentContext.nodeSelection}');
-  if (showCaret) {
-    editorLayoutLog.finer('   - ^ showing caret');
-  }
-
-  editorLayoutLog.finer(' - building a paragraph with selection:');
-  editorLayoutLog.finer('   - base: ${textSelection?.base}');
-  editorLayoutLog.finer('   - extent: ${textSelection?.extent}');
-
-  final textDirection = getParagraphDirection((componentContext.documentNode as TextNode).text.text);
-
-  TextAlign textAlign = (textDirection == TextDirection.ltr) ? TextAlign.left : TextAlign.right;
-  final textAlignName = (componentContext.documentNode as TextNode).metadata['textAlign'];
-  switch (textAlignName) {
-    case 'left':
-      textAlign = TextAlign.left;
-      break;
-    case 'center':
-      textAlign = TextAlign.center;
-      break;
-    case 'right':
-      textAlign = TextAlign.right;
-      break;
-    case 'justify':
-      textAlign = TextAlign.justify;
-      break;
-  }
-
-  final selectionColor =
-      (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle?)?.selectionColor ??
-          const Color(0x00000000);
-
-  final caretColor = (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle?)?.textCaretColor ??
-      const Color(0x00000000);
-
-  return TextComponent(
-    key: componentContext.componentKey,
-    text: (componentContext.documentNode as TextNode).text,
-    textStyleBuilder: componentContext.extensions[textStylesExtensionKey],
-    metadata: (componentContext.documentNode as TextNode).metadata,
-    textAlign: textAlign,
-    textDirection: textDirection,
-    textSelection: textSelection,
-    selectionColor: selectionColor,
-    showCaret: showCaret,
-    caretColor: caretColor,
-    highlightWhenEmpty: highlightWhenEmpty,
-  );
 }

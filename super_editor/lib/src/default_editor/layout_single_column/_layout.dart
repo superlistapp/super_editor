@@ -1,25 +1,28 @@
-import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_layout.dart';
+import 'package:super_editor/src/core/document_render_pipeline.dart';
 import 'package:super_editor/src/core/document_selection.dart';
-import 'package:super_editor/src/default_editor/image.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/attributed_text.dart';
+
+import '../styles.dart';
+import '_presenter.dart';
 
 /// Displays a `Document` as a single column.
 ///
-/// `ColumnDocumentLayout` displays a visual "component" for each
+/// `SingleColumnDocumentLayout` displays a visual "component" for each
 /// type of node in a given `Document`. The components are positioned
 /// vertically in a column with some space in between.
 ///
-/// `ColumnDocumentLayout`'s `State` object implements `DocumentLayout`,
+/// `SingleColumnDocumentLayout`'s `State` object implements `DocumentLayout`,
 /// which establishes a contract for querying many document layout
 /// properties. To use the `DocumentLayout` API, assign a `GlobalKey`
-/// to a `ColumnDocumentLayout`, obtain its `State` object, and then
+/// to a `SingleColumnDocumentLayout`, obtain its `State` object, and then
 /// cast that `State` object to a `DocumentLayout`.
-class ColumnDocumentLayout extends StatefulWidget {
-  const ColumnDocumentLayout({
+class SingleColumnDocumentLayout extends StatefulWidget {
+  const SingleColumnDocumentLayout({
     Key? key,
     required this.document,
     this.documentSelection,
@@ -51,7 +54,7 @@ class ColumnDocumentLayout extends StatefulWidget {
   /// Every type of `DocumentNode` that might appear in the displayed
   /// `document` should have a `ComponentBuilder` that knows how to
   /// render that piece of content.
-  final List<ComponentBuilder> componentBuilders;
+  final List<SingleColumnDocumentComponentBuilder> componentBuilders;
 
   /// Space added around the outside of the document.
   final EdgeInsetsGeometry margin;
@@ -70,10 +73,10 @@ class ColumnDocumentLayout extends StatefulWidget {
   final bool showDebugPaint;
 
   @override
-  _ColumnDocumentLayoutState createState() => _ColumnDocumentLayoutState();
+  _SingleColumnDocumentLayoutState createState() => _SingleColumnDocumentLayoutState();
 }
 
-class _ColumnDocumentLayoutState extends State<ColumnDocumentLayout> implements DocumentLayout {
+class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout> implements DocumentLayout {
   final Map<String, GlobalKey> _nodeIdsToComponentKeys = {};
 
   // Keys are cached in top-to-bottom order so that we can visually
@@ -478,50 +481,48 @@ class _ColumnDocumentLayoutState extends State<ColumnDocumentLayout> implements 
 
     editorLayoutLog.finer('_buildDocComponents()');
 
-    final selectedNodes = widget.documentSelection != null
-        ? widget.document.getNodesInside(
-            widget.documentSelection!.base,
-            widget.documentSelection!.extent,
-          )
-        : const <DocumentNode>[];
-
     final extensions = Map.from(widget.extensions);
     extensions['showDebugPaint'] = widget.showDebugPaint;
 
-    for (final docNode in widget.document.nodes) {
+    // TODO: Move this pipeline outside the layout and provide as
+    //       a constructor dependency.
+    final pipeline = DocumentRenderPipeline(
+      viewModelFactory: SingleColumnMetadataFactory(),
+      componentStyler: SingleColumnComponentConfiguration(
+        documentSelection: widget.documentSelection,
+        textStyleBuilder: widget.extensions[textStylesExtensionKey] as AttributionStyleBuilder,
+        selectionColor: (widget.extensions[selectionStylesExtensionKey] as SelectionStyle).selectionColor,
+        caretColor: (widget.extensions[selectionStylesExtensionKey] as SelectionStyle).textCaretColor,
+        shouldDocumentShowCaret: widget.showCaret,
+      ),
+    );
+    pipeline.pump(widget.document);
+    final componentsMetadata = pipeline.componentViewModels;
+
+    for (final componentMetadata in componentsMetadata) {
       final componentKey = _createOrTransferComponentKey(
         newComponentKeyMap: newComponentKeys,
-        nodeId: docNode.id,
+        nodeId: componentMetadata.nodeId,
       );
-      editorLayoutLog.finer('Node -> Key: ${docNode.id} -> $componentKey');
+      editorLayoutLog.finer('Node -> Key: ${componentMetadata.nodeId} -> $componentKey');
 
       _topToBottomComponentKeys.add(componentKey);
 
-      final nodeSelection = _computeNodeSelection(
-        selectedNodes: selectedNodes,
-        nodeId: docNode.id,
-      );
-
-      final component = _buildComponent(
-        ComponentContext(
+      final component = _buildComponentFromMetadata(
+        SingleColumnDocumentComponentContext(
           context: context,
+          // TODO: remove the Document from this context, it shouldn't be
+          //       needed after the decorators are done.
           document: widget.document,
-          documentSelection: widget.documentSelection,
-          documentNode: docNode,
           componentKey: componentKey,
-          showCaret: widget.showCaret,
-          nodeSelection: nodeSelection,
-          extensions: widget.extensions,
         ),
-        ColumnDocumentLayoutComponentConfig(
-          isFullWidth: docNode is ImageNode ? true : false,
-        ),
+        componentMetadata,
       );
 
       if (component != null) {
         docComponents.add(component);
       } else {
-        editorLayoutLog.info('Failed to build component for node: $docNode');
+        editorLayoutLog.info('Failed to build component for: $componentMetadata');
       }
     }
 
@@ -552,112 +553,17 @@ class _ColumnDocumentLayoutState extends State<ColumnDocumentLayout> implements 
     return newComponentKeyMap[nodeId]!;
   }
 
-  /// Computes the `DocumentNodeSelection` for the individual `nodeId` based on
-  /// the total list of selected nodes.
-  DocumentNodeSelection? _computeNodeSelection({
-    required List<DocumentNode> selectedNodes,
-    required String nodeId,
-  }) {
-    if (widget.documentSelection == null) {
-      return null;
-    }
-    final documentSelection = widget.documentSelection!;
-
-    editorLayoutLog.finer('_computeNodeSelection(): $nodeId');
-    editorLayoutLog.finer(' - base: ${documentSelection.base.nodeId}');
-    editorLayoutLog.finer(' - extent: ${documentSelection.extent.nodeId}');
-
-    final node = widget.document.getNodeById(nodeId);
-    if (node == null) {
-      return null;
-    }
-
-    if (documentSelection.base.nodeId == documentSelection.extent.nodeId) {
-      editorLayoutLog.finer(' - selection is within 1 node.');
-      if (documentSelection.base.nodeId != nodeId) {
-        // Only 1 node is selected and its not the node we're interested in. Return.
-        editorLayoutLog.finer(' - this node is not selected. Returning null.');
-        return null;
-      }
-
-      editorLayoutLog.finer(' - this node has the selection');
-      final baseNodePosition = documentSelection.base.nodePosition;
-      final extentNodePosition = documentSelection.extent.nodePosition;
-      final nodeSelection = node.computeSelection(base: baseNodePosition, extent: extentNodePosition);
-      editorLayoutLog.finer(' - node selection: $nodeSelection');
-
-      return DocumentNodeSelection(
-        nodeId: nodeId,
-        nodeSelection: nodeSelection,
-        isBase: true,
-        isExtent: true,
-      );
-    } else {
-      // Log all the selected nodes.
-      editorLayoutLog.finer(' - selection contains multiple nodes:');
-      for (final node in selectedNodes) {
-        editorLayoutLog.finer('   - ${node.id}');
-      }
-
-      if (selectedNodes.firstWhereOrNull((selectedNode) => selectedNode.id == nodeId) == null) {
-        // The document selection does not contain the node we're interested in. Return.
-        editorLayoutLog.finer(' - this node is not in the selection');
-        return null;
-      }
-
-      if (selectedNodes.first.id == nodeId) {
-        editorLayoutLog.finer(' - this is the first node in the selection');
-        // Multiple nodes are selected and the node that we're interested in
-        // is the top node in that selection. Therefore, this node is
-        // selected from a position down to its bottom.
-        final isBase = nodeId == documentSelection.base.nodeId;
-        return DocumentNodeSelection(
-          nodeId: nodeId,
-          nodeSelection: node.computeSelection(
-            base: isBase ? documentSelection.base.nodePosition : node.endPosition,
-            extent: isBase ? node.endPosition : documentSelection.extent.nodePosition,
-          ),
-          isBase: isBase,
-          isExtent: !isBase,
-        );
-      } else if (selectedNodes.last.id == nodeId) {
-        editorLayoutLog.finer(' - this is the last node in the selection');
-        // Multiple nodes are selected and the node that we're interested in
-        // is the bottom node in that selection. Therefore, this node is
-        // selected from the beginning down to some position.
-        final isBase = nodeId == documentSelection.base.nodeId;
-        return DocumentNodeSelection(
-          nodeId: nodeId,
-          nodeSelection: node.computeSelection(
-            base: isBase ? node.beginningPosition : node.beginningPosition,
-            extent: isBase ? documentSelection.base.nodePosition : documentSelection.extent.nodePosition,
-          ),
-          isBase: isBase,
-          isExtent: !isBase,
-        );
-      } else {
-        editorLayoutLog.finer(' - this node is fully selected within the selection');
-        // Multiple nodes are selected and this node is neither the top
-        // or the bottom node, therefore this entire node is selected.
-        return DocumentNodeSelection(
-          nodeId: nodeId,
-          nodeSelection: node.computeSelection(
-            base: node.beginningPosition,
-            extent: node.endPosition,
-          ),
-        );
-      }
-    }
-  }
-
-  Widget? _buildComponent(ComponentContext componentContext, ColumnDocumentLayoutComponentConfig config) {
+  Widget? _buildComponentFromMetadata(
+      SingleColumnDocumentComponentContext componentContext, ComponentViewModel componentMetadata) {
     for (final componentBuilder in widget.componentBuilders) {
-      var component = componentBuilder(componentContext);
+      var component = componentBuilder(componentContext, componentMetadata);
       if (component != null) {
+        final maxWidth = componentMetadata is SingleColumnDocumentLayoutComponentViewModel
+            ? componentMetadata.maxWidth ?? widget.maxComponentWidth
+            : widget.maxComponentWidth;
+
         component = ConstrainedBox(
-          constraints: BoxConstraints(
-            maxWidth: config.isFullWidth ? double.infinity : widget.maxComponentWidth,
-          ),
+          constraints: BoxConstraints(maxWidth: maxWidth),
           child: Align(
             alignment: Alignment.centerLeft,
             child: component,
@@ -678,27 +584,4 @@ class _ColumnDocumentLayoutState extends State<ColumnDocumentLayout> implements 
       child: component,
     );
   }
-}
-
-/// A per-component configuration that determines how a
-/// [ColumnDocumentLayout] will layout the given component.
-class ColumnDocumentLayoutComponentConfig {
-  const ColumnDocumentLayoutComponentConfig({
-    this.isFullWidth = false,
-  });
-
-  final bool isFullWidth;
-
-  @override
-  String toString() => "[ColumnDocumentLayoutComponentConfig]\nDisplay full width: $isFullWidth";
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is ColumnDocumentLayoutComponentConfig &&
-          runtimeType == other.runtimeType &&
-          isFullWidth == other.isFullWidth;
-
-  @override
-  int get hashCode => isFullWidth.hashCode;
 }

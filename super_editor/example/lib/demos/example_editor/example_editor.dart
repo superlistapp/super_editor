@@ -157,7 +157,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
       scrollController: _scrollController,
       documentLayoutKey: _docLayoutKey,
       maxWidth: 600, // arbitrary choice for maximum width
-      // padding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),
+      padding: const EdgeInsets.only(bottom: 96),
     );
   }
 }

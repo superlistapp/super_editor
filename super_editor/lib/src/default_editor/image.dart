@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
-import 'package:super_editor/src/infrastructure/caret.dart';
 
 import '../core/document.dart';
 import 'box_component.dart';
-import 'styles.dart';
 
 /// [DocumentNode] that represents an image at a URL.
 class ImageNode extends BlockNode with ChangeNotifier {
@@ -101,32 +98,4 @@ class ImageComponent extends StatelessWidget {
       ),
     );
   }
-}
-
-/// Component builder that returns an [ImageComponent] when
-/// [componentContext.documentNode] is an [ImageNode].
-Widget? imageBuilder(ComponentContext componentContext) {
-  if (componentContext.documentNode is! ImageNode) {
-    return null;
-  }
-
-  final selection = componentContext.nodeSelection == null
-      ? null
-      : componentContext.nodeSelection!.nodeSelection as UpstreamDownstreamNodeSelection;
-
-  final showCaret = componentContext.showCaret && selection != null ? componentContext.nodeSelection!.isExtent : false;
-
-  // TODO: centralize this value. It should probably be explicit in ComponentContext, but think about it.
-  final caretColor = (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle?)?.textCaretColor ??
-      const Color(0x00000000);
-
-  return ImageComponent(
-    componentKey: componentContext.componentKey,
-    imageUrl: (componentContext.documentNode as ImageNode).imageUrl,
-    selection: selection,
-    selectionColor: (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle?)?.selectionColor ??
-        Colors.transparent,
-    caretColor: caretColor,
-    showCaret: showCaret,
-  );
 }

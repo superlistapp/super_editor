@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
 
 import '../core/document.dart';
 import 'box_component.dart';
-import 'styles.dart';
 
 /// [DocumentNode] for a horizontal rule, which represents a full-width
 /// horizontal separation in a document.
@@ -75,31 +73,4 @@ class HorizontalRuleComponent extends StatelessWidget {
       ),
     );
   }
-}
-
-/// Component builder that returns a [HorizontalRuleComponent] when
-/// [componentContext.documentNode] is a [HorizontalRuleNode].
-Widget? horizontalRuleBuilder(ComponentContext componentContext) {
-  if (componentContext.documentNode is! HorizontalRuleNode) {
-    return null;
-  }
-
-  final selection = componentContext.nodeSelection == null
-      ? null
-      : componentContext.nodeSelection!.nodeSelection as UpstreamDownstreamNodeSelection;
-
-  final showCaret = componentContext.showCaret && selection != null ? componentContext.nodeSelection!.isExtent : false;
-
-  // TODO: centralize this value. It should probably be explicit in ComponentContext, but think about it.
-  final caretColor = (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle?)?.textCaretColor ??
-      const Color(0x00000000);
-
-  return HorizontalRuleComponent(
-    componentKey: componentContext.componentKey,
-    selection: selection,
-    selectionColor: (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle?)?.selectionColor ??
-        const Color(0x00000000),
-    caretColor: caretColor,
-    showCaret: showCaret,
-  );
 }

@@ -1,18 +1,4 @@
 import 'package:flutter/widgets.dart';
-import 'package:super_editor/src/core/document_layout.dart';
-
-/// Builds an `UnknownComponent` for any given `componentContext`.
-///
-/// This builder always returns an `UnknownComponent`. It never
-/// returns `null`.
-Widget unknownComponentBuilder(ComponentContext componentContext) {
-  return SizedBox(
-    key: componentContext.componentKey,
-    width: double.infinity,
-    height: 100,
-    child: const Placeholder(),
-  );
-}
 
 /// Displays a `Placeholder` widget within a document layout.
 ///
