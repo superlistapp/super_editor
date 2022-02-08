@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart' hide SelectableText;
 import 'package:flutter/foundation.dart' show defaultTargetPlatform;
+import 'package:flutter/material.dart' hide SelectableText;
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_editor.dart';
@@ -489,7 +489,7 @@ class _SuperEditorState extends State<SuperEditor> {
             document: widget.editor.document,
             documentSelection: _composer.selection,
             componentBuilders: widget.componentBuilders,
-            showCaret: _focusNode.hasFocus && _gestureMode == DocumentGestureMode.mouse,
+            showCaret: _focusNode.hasFocus,
             margin: widget.padding,
             componentVerticalSpacing: widget.componentVerticalSpacing,
             extensions: {
