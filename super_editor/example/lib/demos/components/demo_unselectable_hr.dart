@@ -69,7 +69,7 @@ class _UnselectableHrDemoState extends State<UnselectableHrDemo> {
 /// not selectable.
 Widget? _unselectableHrBuilder(
     SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel componentMetadata) {
-  if (componentMetadata is! HorizontalRuleComponentMetadata) {
+  if (componentMetadata is! HorizontalRuleComponentViewModel) {
     return null;
   }
 

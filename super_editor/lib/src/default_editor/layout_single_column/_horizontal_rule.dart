@@ -6,7 +6,7 @@ import '_presenter.dart';
 
 Widget? horizontalRuleComponentBuilder(
     SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel componentMetadata) {
-  if (componentMetadata is! HorizontalRuleComponentMetadata) {
+  if (componentMetadata is! HorizontalRuleComponentViewModel) {
     return null;
   }
 
@@ -19,8 +19,8 @@ Widget? horizontalRuleComponentBuilder(
   );
 }
 
-class HorizontalRuleComponentMetadata extends SingleColumnLayoutComponentViewModel {
-  const HorizontalRuleComponentMetadata({
+class HorizontalRuleComponentViewModel extends SingleColumnLayoutComponentViewModel {
+  const HorizontalRuleComponentViewModel({
     required String nodeId,
     double? maxWidth,
     EdgeInsetsGeometry padding = EdgeInsets.zero,
@@ -35,7 +35,7 @@ class HorizontalRuleComponentMetadata extends SingleColumnLayoutComponentViewMod
   final UpstreamDownstreamNodePosition? caret;
   final Color caretColor;
 
-  HorizontalRuleComponentMetadata copyWith({
+  HorizontalRuleComponentViewModel copyWith({
     double? maxWidth,
     EdgeInsetsGeometry? padding,
     UpstreamDownstreamNodeSelection? selection,
@@ -43,7 +43,7 @@ class HorizontalRuleComponentMetadata extends SingleColumnLayoutComponentViewMod
     UpstreamDownstreamNodePosition? caret,
     Color? caretColor,
   }) {
-    return HorizontalRuleComponentMetadata(
+    return HorizontalRuleComponentViewModel(
       nodeId: nodeId,
       maxWidth: maxWidth ?? this.maxWidth,
       padding: padding ?? this.padding,
@@ -58,7 +58,7 @@ class HorizontalRuleComponentMetadata extends SingleColumnLayoutComponentViewMod
   bool operator ==(Object other) =>
       identical(this, other) ||
       super == other &&
-          other is HorizontalRuleComponentMetadata &&
+          other is HorizontalRuleComponentViewModel &&
           runtimeType == other.runtimeType &&
           nodeId == other.nodeId &&
           selection == other.selection &&

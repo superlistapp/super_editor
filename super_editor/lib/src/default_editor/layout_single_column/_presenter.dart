@@ -454,7 +454,7 @@ class SingleColumnLayoutBaselineStyler extends SingleColumnLayoutStylePhase {
       );
     }
     if (node is HorizontalRuleNode) {
-      return HorizontalRuleComponentMetadata(
+      return HorizontalRuleComponentViewModel(
         nodeId: node.id,
         selectionColor: const Color(0x00000000),
         caretColor: const Color(0x00000000),
@@ -548,7 +548,7 @@ class SingleColumnLayoutStyler extends SingleColumnLayoutStylePhase {
         padding: (_stylesheet.blockStyles.image.paddingAdjustment ?? EdgeInsets.zero).add(basePadding),
       );
     }
-    if (viewModel is HorizontalRuleComponentMetadata) {
+    if (viewModel is HorizontalRuleComponentViewModel) {
       return viewModel.copyWith(
         maxWidth: _stylesheet.blockStyles.hr.maxWidth ?? standardWidth,
         padding: (_stylesheet.blockStyles.hr.paddingAdjustment ?? EdgeInsets.zero).add(basePadding),
@@ -622,7 +622,7 @@ class SingleColumnLayoutCustomComponentStyler extends SingleColumnLayoutStylePha
         padding: componentPadding,
       );
     }
-    if (viewModel is HorizontalRuleComponentMetadata) {
+    if (viewModel is HorizontalRuleComponentViewModel) {
       return viewModel.copyWith(
         maxWidth: componentWidth,
         padding: componentPadding,
@@ -781,7 +781,7 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
         caretColor: _caretColor,
       );
     }
-    if (viewModel is HorizontalRuleComponentMetadata) {
+    if (viewModel is HorizontalRuleComponentViewModel) {
       final selection = nodeSelection == null ? null : nodeSelection.nodeSelection as UpstreamDownstreamNodeSelection;
 
       return viewModel.copyWith(
