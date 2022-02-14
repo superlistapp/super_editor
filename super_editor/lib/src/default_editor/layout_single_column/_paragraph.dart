@@ -1,5 +1,4 @@
 import 'package:flutter/widgets.dart';
-import 'package:super_editor/src/core/document_render_pipeline.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_spans.dart';
@@ -8,7 +7,7 @@ import 'package:super_editor/src/infrastructure/attributed_text.dart';
 import '_presenter.dart';
 
 Widget? paragraphComponentBuilder(
-    SingleColumnDocumentComponentContext componentContext, ComponentViewModel componentViewModel) {
+    SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel componentViewModel) {
   if (componentViewModel is! ParagraphComponentViewModel) {
     return null;
   }
@@ -48,7 +47,7 @@ Widget? paragraphComponentBuilder(
 
 class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel {
   const ParagraphComponentViewModel({
-    required this.nodeId,
+    required String nodeId,
     double? maxWidth,
     EdgeInsetsGeometry padding = EdgeInsets.zero,
     this.blockType,
@@ -61,10 +60,8 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel {
     this.caret,
     required this.caretColor,
     this.highlightWhenEmpty = false,
-  }) : super(maxWidth: maxWidth, padding: padding);
+  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
 
-  @override
-  final String nodeId;
   final Attribution? blockType;
   final AttributedText text;
   final AttributionStyleBuilder textStyleBuilder;

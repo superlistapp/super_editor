@@ -1,12 +1,11 @@
 import 'package:flutter/widgets.dart';
-import 'package:super_editor/src/core/document_render_pipeline.dart';
 import 'package:super_editor/src/default_editor/horizontal_rule.dart';
 import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
 
 import '_presenter.dart';
 
 Widget? horizontalRuleComponentBuilder(
-    SingleColumnDocumentComponentContext componentContext, ComponentViewModel componentMetadata) {
+    SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel componentMetadata) {
   if (componentMetadata is! HorizontalRuleComponentMetadata) {
     return null;
   }
@@ -22,17 +21,15 @@ Widget? horizontalRuleComponentBuilder(
 
 class HorizontalRuleComponentMetadata extends SingleColumnLayoutComponentViewModel {
   const HorizontalRuleComponentMetadata({
-    required this.nodeId,
+    required String nodeId,
     double? maxWidth,
     EdgeInsetsGeometry padding = EdgeInsets.zero,
     this.selection,
     required this.selectionColor,
     this.caret,
     required this.caretColor,
-  }) : super(maxWidth: maxWidth, padding: padding);
+  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
 
-  @override
-  final String nodeId;
   final UpstreamDownstreamNodeSelection? selection;
   final Color selectionColor;
   final UpstreamDownstreamNodePosition? caret;

@@ -1,12 +1,11 @@
 import 'package:flutter/widgets.dart';
-import 'package:super_editor/src/core/document_render_pipeline.dart';
 import 'package:super_editor/src/default_editor/image.dart';
 import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
 
 import '_presenter.dart';
 
 Widget? imageComponentBuilder(
-    SingleColumnDocumentComponentContext componentContext, ComponentViewModel componentMetadata) {
+    SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel componentMetadata) {
   if (componentMetadata is! ImageComponentViewModel) {
     return null;
   }
@@ -23,7 +22,7 @@ Widget? imageComponentBuilder(
 
 class ImageComponentViewModel extends SingleColumnLayoutComponentViewModel {
   const ImageComponentViewModel({
-    required this.nodeId,
+    required String nodeId,
     double? maxWidth,
     EdgeInsetsGeometry padding = EdgeInsets.zero,
     required this.imageUrl,
@@ -31,10 +30,8 @@ class ImageComponentViewModel extends SingleColumnLayoutComponentViewModel {
     required this.selectionColor,
     this.caret,
     required this.caretColor,
-  }) : super(maxWidth: maxWidth, padding: padding);
+  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
 
-  @override
-  final String nodeId;
   final String imageUrl;
   final UpstreamDownstreamNodeSelection? selection;
   final Color selectionColor;

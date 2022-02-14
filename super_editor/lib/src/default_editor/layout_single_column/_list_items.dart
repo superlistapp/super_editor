@@ -1,12 +1,11 @@
 import 'package:flutter/widgets.dart';
-import 'package:super_editor/src/core/document_render_pipeline.dart';
 import 'package:super_editor/src/default_editor/list_items.dart';
 import 'package:super_editor/src/infrastructure/attributed_text.dart';
 
 import '_presenter.dart';
 
 Widget? unorderedListItemComponentBuilder(
-    SingleColumnDocumentComponentContext componentContext, ComponentViewModel componentMetadata) {
+    SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel componentMetadata) {
   if (componentMetadata is! ListItemComponentViewModel) {
     return null;
   }
@@ -28,7 +27,7 @@ Widget? unorderedListItemComponentBuilder(
 }
 
 Widget? newOrderedListItemBuilder(
-    SingleColumnDocumentComponentContext componentContext, ComponentViewModel componentMetadata) {
+    SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel componentMetadata) {
   if (componentMetadata is! ListItemComponentViewModel) {
     return null;
   }
@@ -52,7 +51,7 @@ Widget? newOrderedListItemBuilder(
 
 class ListItemComponentViewModel extends SingleColumnLayoutComponentViewModel {
   const ListItemComponentViewModel({
-    required this.nodeId,
+    required String nodeId,
     double? maxWidth,
     EdgeInsetsGeometry padding = EdgeInsets.zero,
     required this.type,
@@ -65,10 +64,8 @@ class ListItemComponentViewModel extends SingleColumnLayoutComponentViewModel {
     required this.selectionColor,
     this.caret,
     required this.caretColor,
-  }) : super(maxWidth: maxWidth, padding: padding);
+  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
 
-  @override
-  final String nodeId;
   final ListItemType type;
   final int? ordinalValue;
   final int indent;

@@ -68,7 +68,7 @@ class _UnselectableHrDemoState extends State<UnselectableHrDemo> {
 /// SuperEditor [ComponentBuilder] that builds a horizontal rule that is
 /// not selectable.
 Widget? _unselectableHrBuilder(
-    SingleColumnDocumentComponentContext componentContext, ComponentViewModel componentMetadata) {
+    SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel componentMetadata) {
   if (componentMetadata is! HorizontalRuleComponentMetadata) {
     return null;
   }

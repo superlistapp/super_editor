@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
-import 'package:super_editor/src/core/document_render_pipeline.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/default_editor/horizontal_rule.dart';
 import 'package:super_editor/src/default_editor/image.dart';
@@ -927,13 +926,16 @@ class SingleColumnLayoutViewModel {
   SingleColumnLayoutComponentViewModel? getComponentViewModelByNodeId(String nodeId) => _viewModelsByNodeId[nodeId];
 }
 
-/// Base class for a [ComponentViewModel] that appears within a
+/// Base class for a component view model that appears within a
 /// [SingleColumnDocumentLayout].
-abstract class SingleColumnLayoutComponentViewModel implements ComponentViewModel {
+abstract class SingleColumnLayoutComponentViewModel {
   const SingleColumnLayoutComponentViewModel({
+    required this.nodeId,
     this.maxWidth,
     required this.padding,
   });
+
+  final String nodeId;
 
   /// The maximum width of this component in the layout, or `null` to
   /// defer to the layout's preference.
@@ -947,9 +949,10 @@ abstract class SingleColumnLayoutComponentViewModel implements ComponentViewMode
       identical(this, other) ||
       other is SingleColumnLayoutComponentViewModel &&
           runtimeType == other.runtimeType &&
+          nodeId == other.nodeId &&
           maxWidth == other.maxWidth &&
           padding == other.padding;
 
   @override
-  int get hashCode => maxWidth.hashCode ^ padding.hashCode;
+  int get hashCode => nodeId.hashCode ^ maxWidth.hashCode ^ padding.hashCode;
 }

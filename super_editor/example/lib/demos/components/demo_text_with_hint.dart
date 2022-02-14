@@ -141,7 +141,7 @@ TextStyle _textStyleBuilder(Set<Attribution> attributions) {
 /// }
 /// ```
 Widget? _headerWithHintBuilder(
-    SingleColumnDocumentComponentContext componentContext, ComponentViewModel componentMetadata) {
+    SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel componentMetadata) {
   if (componentMetadata is! ParagraphComponentViewModel) {
     return null;
   }

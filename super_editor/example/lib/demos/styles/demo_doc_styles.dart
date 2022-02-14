@@ -28,8 +28,9 @@ class _DocumentStylesDemoState extends State<DocumentStylesDemo> {
       margin: EdgeInsets.only(bottom: 96, top: 96),
       inlineTextStyler: defaultInlineTextStyler,
       blockStyles: DocumentBlockStyles(
+        standardPadding: EdgeInsets.only(left: 20, right: 20),
         text: TextBlockStyle(
-          paddingAdjustment: EdgeInsets.only(top: 20, left: 20, right: 20),
+          paddingAdjustment: EdgeInsets.only(top: 20),
           textStyle: TextStyle(
             color: Colors.black,
             fontSize: 16,
@@ -38,7 +39,7 @@ class _DocumentStylesDemoState extends State<DocumentStylesDemo> {
           ),
         ),
         h1: TextBlockStyle(
-          paddingAdjustment: EdgeInsets.only(top: 40, left: 20, right: 20),
+          paddingAdjustment: EdgeInsets.only(top: 40),
           textStyle: TextStyle(
             color: Color(0xFF333333),
             fontSize: 38,
@@ -46,7 +47,7 @@ class _DocumentStylesDemoState extends State<DocumentStylesDemo> {
           ),
         ),
         h2: TextBlockStyle(
-          paddingAdjustment: EdgeInsets.only(top: 32, left: 20, right: 20),
+          paddingAdjustment: EdgeInsets.only(top: 32),
           textStyle: TextStyle(
             color: Color(0xFF333333),
             fontSize: 26,
@@ -54,7 +55,7 @@ class _DocumentStylesDemoState extends State<DocumentStylesDemo> {
           ),
         ),
         h3: TextBlockStyle(
-          paddingAdjustment: EdgeInsets.only(top: 28, left: 20, right: 20),
+          paddingAdjustment: EdgeInsets.only(top: 28),
           textStyle: TextStyle(
             color: Color(0xFF333333),
             fontSize: 22,
@@ -62,7 +63,7 @@ class _DocumentStylesDemoState extends State<DocumentStylesDemo> {
           ),
         ),
         h4: TextBlockStyle(
-          paddingAdjustment: EdgeInsets.only(top: 22, left: 20, right: 20),
+          paddingAdjustment: EdgeInsets.only(top: 22),
           textStyle: TextStyle(
             color: Color(0xFF333333),
             fontSize: 18,
@@ -70,7 +71,7 @@ class _DocumentStylesDemoState extends State<DocumentStylesDemo> {
           ),
         ),
         h5: TextBlockStyle(
-          paddingAdjustment: EdgeInsets.only(top: 20, left: 20, right: 20),
+          paddingAdjustment: EdgeInsets.only(top: 20),
           textStyle: TextStyle(
             color: Color(0xFF333333),
             fontSize: 16,
@@ -78,7 +79,7 @@ class _DocumentStylesDemoState extends State<DocumentStylesDemo> {
           ),
         ),
         h6: TextBlockStyle(
-          paddingAdjustment: EdgeInsets.only(top: 16, left: 20, right: 20),
+          paddingAdjustment: EdgeInsets.only(top: 16),
           textStyle: TextStyle(
             color: Color(0xFF333333),
             fontSize: 14,
@@ -86,7 +87,7 @@ class _DocumentStylesDemoState extends State<DocumentStylesDemo> {
           ),
         ),
         listItem: TextBlockStyle(
-          paddingAdjustment: EdgeInsets.only(top: 20, left: 20, right: 20),
+          paddingAdjustment: EdgeInsets.only(top: 20),
           textStyle: TextStyle(
             color: Colors.black,
             fontSize: 16,
@@ -95,7 +96,7 @@ class _DocumentStylesDemoState extends State<DocumentStylesDemo> {
           ),
         ),
         blockquote: BlockquoteBlockStyle(
-          paddingAdjustment: EdgeInsets.only(top: 20, left: 20, right: 20),
+          paddingAdjustment: EdgeInsets.only(top: 20),
           textStyle: TextStyle(
             color: Color(0xFF555555),
             fontSize: 18,

@@ -1,12 +1,11 @@
 import 'package:flutter/widgets.dart';
-import 'package:super_editor/src/core/document_render_pipeline.dart';
 import 'package:super_editor/src/default_editor/blockquote.dart';
 import 'package:super_editor/src/infrastructure/attributed_text.dart';
 
 import '_presenter.dart';
 
 Widget? blockquoteComponentBuilder(
-    SingleColumnDocumentComponentContext componentContext, ComponentViewModel componentViewModel) {
+    SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel componentViewModel) {
   if (componentViewModel is! BlockquoteComponentViewModel) {
     return null;
   }
@@ -26,7 +25,7 @@ Widget? blockquoteComponentBuilder(
 
 class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel {
   const BlockquoteComponentViewModel({
-    required this.nodeId,
+    required String nodeId,
     double? maxWidth,
     EdgeInsetsGeometry padding = EdgeInsets.zero,
     required this.text,
@@ -40,10 +39,8 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel 
     this.caret,
     required this.caretColor,
     this.highlightWhenEmpty = false,
-  }) : super(maxWidth: maxWidth, padding: padding);
+  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
 
-  @override
-  final String nodeId;
   final AttributedText text;
   final AttributionStyleBuilder textStyleBuilder;
   final TextDirection textDirection;

@@ -407,7 +407,8 @@ Widget _buildEditorWithUnselectableHrs(MutableDocument document, DocumentCompose
   );
 }
 
-Widget? _unselectableHrBuilder(SingleColumnDocumentComponentContext context, ComponentViewModel componentMetadata) {
+Widget? _unselectableHrBuilder(
+    SingleColumnDocumentComponentContext context, SingleColumnLayoutComponentViewModel componentMetadata) {
   if (componentMetadata is! HorizontalRuleComponentMetadata) {
     return null;
   }
