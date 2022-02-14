@@ -21,12 +21,6 @@ const header6Attribution = NamedAttribution('header6');
 /// Blockquote attribution
 const blockquoteAttribution = NamedAttribution('blockquote');
 
-/// List item attribution.
-///
-/// This attribution is used for styling decisions, but not for
-/// document structure. Documents use `ListItemNode`s.
-const listItemAttribution = NamedAttribution('listItem');
-
 /// Bold style attribution.
 const boldAttribution = NamedAttribution('bold');
 
