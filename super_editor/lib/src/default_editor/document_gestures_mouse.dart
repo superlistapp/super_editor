@@ -321,10 +321,11 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
       } else {
         // Place the document selection at the location where the
         // user tapped.
-        _clearSelection();
         _selectionType = SelectionType.position;
         _selectPosition(docPosition);
       }
+    } else {
+      _clearSelection();
     }
   }
 

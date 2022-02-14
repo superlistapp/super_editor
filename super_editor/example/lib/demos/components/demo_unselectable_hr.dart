@@ -52,7 +52,9 @@ class _UnselectableHrDemoState extends State<UnselectableHrDemo> {
   Widget build(BuildContext context) {
     return SuperEditor(
       editor: _docEditor,
-      padding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),
+      stylesheet: defaultDocumentStylesheet.copyWith(
+        margin: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),
+      ),
       // Add a new component builder that creates an unselectable
       // horizontal rule, instead of creating the usual selectable kind.
       componentBuilders: [

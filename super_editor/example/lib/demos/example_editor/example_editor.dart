@@ -16,6 +16,7 @@ class ExampleEditor extends StatefulWidget {
 
 class _ExampleEditorState extends State<ExampleEditor> {
   final GlobalKey _docLayoutKey = GlobalKey();
+  late SingleColumnCustomComponentStyles _layoutComponentStyles;
 
   late Document _doc;
   DocumentEditor? _docEditor;
@@ -39,6 +40,14 @@ class _ExampleEditorState extends State<ExampleEditor> {
     _composer = DocumentComposer()..addListener(_hideOrShowToolbar);
     _editorFocusNode = FocusNode();
     _scrollController = ScrollController()..addListener(_hideOrShowToolbar);
+    _layoutComponentStyles = const SingleColumnCustomComponentStyles(
+      componentWidths: {
+        "1": double.infinity,
+      },
+      componentPaddings: {
+        "1": EdgeInsets.zero,
+      },
+    );
   }
 
   @override
@@ -174,8 +183,17 @@ class _ExampleEditorState extends State<ExampleEditor> {
       _imageFormatBarOverlayEntry ??= OverlayEntry(builder: (context) {
         return ImageFormatToolbar(
           anchor: _imageSelectionAnchor,
-          editor: _docEditor,
           composer: _composer,
+          setWidth: (nodeId, width) {
+            print("Changing node width ($nodeId) to $width");
+            setState(() {
+              _layoutComponentStyles = _layoutComponentStyles.copyWith(
+                componentWidths: {
+                  nodeId: width,
+                },
+              );
+            });
+          },
           closeToolbar: _hideImageToolbar,
         );
       });
@@ -232,8 +250,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
       focusNode: _editorFocusNode,
       scrollController: _scrollController,
       documentLayoutKey: _docLayoutKey,
-      maxWidth: 600, // arbitrary choice for maximum width
-      padding: const EdgeInsets.only(bottom: 96),
+      componentStyles: _layoutComponentStyles,
     );
   }
 }

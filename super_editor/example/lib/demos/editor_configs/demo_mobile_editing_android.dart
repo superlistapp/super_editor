@@ -98,7 +98,9 @@ class _MobileEditingAndroidDemoState extends State<MobileEditingAndroidDemo> {
               editor: _docEditor,
               composer: _composer,
               softwareKeyboardHandler: _softwareKeyboardHandler,
-              padding: const EdgeInsets.all(16),
+              stylesheet: defaultDocumentStylesheet.copyWith(
+                margin: const EdgeInsets.all(16),
+              ),
               createOverlayControlsClipper: (_) => const KeyboardToolbarClipper(),
             ),
           ),

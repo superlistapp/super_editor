@@ -70,11 +70,13 @@ class _TextWithHintDemoState extends State<TextWithHintDemo> {
   Widget build(BuildContext context) {
     return SuperEditor(
       editor: _docEditor,
-      padding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),
+      stylesheet: defaultDocumentStylesheet.copyWith(
+        margin: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),
 
-      /// Adjust the default styles to style 3 levels of headers
-      /// with large font sizes.
-      textStyleBuilder: _textStyleBuilder,
+        /// Adjust the default styles to style 3 levels of headers
+        /// with large font sizes.
+        inlineTextStyler: (attributions, style) => _textStyleBuilder(attributions),
+      ),
 
       /// Add a new component builder to the front of the list
       /// that knows how to render header widgets with hint text.
@@ -140,7 +142,7 @@ TextStyle _textStyleBuilder(Set<Attribution> attributions) {
 /// ```
 Widget? _headerWithHintBuilder(
     SingleColumnDocumentComponentContext componentContext, ComponentViewModel componentMetadata) {
-  if (componentMetadata is! ParagraphComponentMetadata) {
+  if (componentMetadata is! ParagraphComponentViewModel) {
     return null;
   }
 

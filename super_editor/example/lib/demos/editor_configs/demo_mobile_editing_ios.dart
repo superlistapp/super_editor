@@ -62,7 +62,9 @@ class _MobileEditingIOSDemoState extends State<MobileEditingIOSDemo> {
               ),
               editor: _docEditor,
               composer: _composer,
-              padding: const EdgeInsets.all(16),
+              stylesheet: defaultDocumentStylesheet.copyWith(
+                margin: const EdgeInsets.all(16),
+              ),
               createOverlayControlsClipper: (_) => const KeyboardToolbarClipper(),
             ),
           ),

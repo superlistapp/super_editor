@@ -20,14 +20,16 @@ Widget? horizontalRuleComponentBuilder(
   );
 }
 
-class HorizontalRuleComponentMetadata implements ComponentViewModel {
+class HorizontalRuleComponentMetadata extends SingleColumnLayoutComponentViewModel {
   const HorizontalRuleComponentMetadata({
     required this.nodeId,
+    double? maxWidth,
+    EdgeInsetsGeometry padding = EdgeInsets.zero,
     this.selection,
     required this.selectionColor,
     this.caret,
     required this.caretColor,
-  });
+  }) : super(maxWidth: maxWidth, padding: padding);
 
   @override
   final String nodeId;
@@ -37,6 +39,8 @@ class HorizontalRuleComponentMetadata implements ComponentViewModel {
   final Color caretColor;
 
   HorizontalRuleComponentMetadata copyWith({
+    double? maxWidth,
+    EdgeInsetsGeometry? padding,
     UpstreamDownstreamNodeSelection? selection,
     Color? selectionColor,
     UpstreamDownstreamNodePosition? caret,
@@ -44,10 +48,33 @@ class HorizontalRuleComponentMetadata implements ComponentViewModel {
   }) {
     return HorizontalRuleComponentMetadata(
       nodeId: nodeId,
+      maxWidth: maxWidth ?? this.maxWidth,
+      padding: padding ?? this.padding,
       selection: selection ?? this.selection,
       selectionColor: selectionColor ?? this.selectionColor,
       caret: caret ?? this.caret,
       caretColor: caretColor ?? this.caretColor,
     );
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      super == other &&
+          other is HorizontalRuleComponentMetadata &&
+          runtimeType == other.runtimeType &&
+          nodeId == other.nodeId &&
+          selection == other.selection &&
+          selectionColor == other.selectionColor &&
+          caret == other.caret &&
+          caretColor == other.caretColor;
+
+  @override
+  int get hashCode =>
+      super.hashCode ^
+      nodeId.hashCode ^
+      selection.hashCode ^
+      selectionColor.hashCode ^
+      caret.hashCode ^
+      caretColor.hashCode;
 }

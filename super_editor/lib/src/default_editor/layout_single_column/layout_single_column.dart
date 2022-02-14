@@ -1,6 +1,7 @@
 /// Everything needed to display a document in a single-column layout,
 /// similar to most blog posts.
 
+export '_styles.dart';
 export '_horizontal_rule.dart';
 export '_blockquote.dart';
 export '_image.dart';

@@ -6,35 +6,41 @@ import 'package:super_editor/src/infrastructure/attributed_text.dart';
 import '_presenter.dart';
 
 Widget? blockquoteComponentBuilder(
-    SingleColumnDocumentComponentContext componentContext, ComponentViewModel componentMetadata) {
-  if (componentMetadata is! BlockquoteComponentMetadata) {
+    SingleColumnDocumentComponentContext componentContext, ComponentViewModel componentViewModel) {
+  if (componentViewModel is! BlockquoteComponentViewModel) {
     return null;
   }
 
   return BlockquoteComponent(
     textKey: componentContext.componentKey,
-    text: componentMetadata.text,
-    styleBuilder: componentMetadata.textStyleBuilder,
-    textSelection: componentMetadata.selection,
-    selectionColor: componentMetadata.selectionColor,
-    showCaret: componentMetadata.caret != null,
-    caretColor: componentMetadata.caretColor,
+    text: componentViewModel.text,
+    styleBuilder: componentViewModel.textStyleBuilder,
+    backgroundColor: componentViewModel.backgroundColor,
+    borderRadius: componentViewModel.borderRadius,
+    textSelection: componentViewModel.selection,
+    selectionColor: componentViewModel.selectionColor,
+    showCaret: componentViewModel.caret != null,
+    caretColor: componentViewModel.caretColor,
   );
 }
 
-class BlockquoteComponentMetadata implements ComponentViewModel {
-  const BlockquoteComponentMetadata({
+class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel {
+  const BlockquoteComponentViewModel({
     required this.nodeId,
+    double? maxWidth,
+    EdgeInsetsGeometry padding = EdgeInsets.zero,
     required this.text,
     required this.textStyleBuilder,
     this.textDirection = TextDirection.ltr,
     this.textAlignment = TextAlign.left,
+    required this.backgroundColor,
+    required this.borderRadius,
     this.selection,
     required this.selectionColor,
     this.caret,
     required this.caretColor,
     this.highlightWhenEmpty = false,
-  });
+  }) : super(maxWidth: maxWidth, padding: padding);
 
   @override
   final String nodeId;
@@ -42,30 +48,40 @@ class BlockquoteComponentMetadata implements ComponentViewModel {
   final AttributionStyleBuilder textStyleBuilder;
   final TextDirection textDirection;
   final TextAlign textAlignment;
+  final Color backgroundColor;
+  final BorderRadius borderRadius;
   final TextSelection? selection;
   final Color selectionColor;
   final TextPosition? caret;
   final Color caretColor;
   final bool highlightWhenEmpty;
 
-  BlockquoteComponentMetadata copyWith({
+  BlockquoteComponentViewModel copyWith({
     String? nodeId,
+    double? maxWidth,
+    EdgeInsetsGeometry? padding,
     AttributedText? text,
     AttributionStyleBuilder? textStyleBuilder,
     TextDirection? textDirection,
     TextAlign? textAlignment,
+    Color? backgroundColor,
+    BorderRadius? borderRadius,
     TextSelection? selection,
     Color? selectionColor,
     TextPosition? caret,
     Color? caretColor,
     bool? highlightWhenEmpty,
   }) {
-    return BlockquoteComponentMetadata(
+    return BlockquoteComponentViewModel(
       nodeId: nodeId ?? this.nodeId,
+      maxWidth: maxWidth ?? this.maxWidth,
+      padding: padding ?? this.padding,
       text: text ?? this.text,
       textStyleBuilder: textStyleBuilder ?? this.textStyleBuilder,
       textDirection: textDirection ?? this.textDirection,
       textAlignment: textAlignment ?? this.textAlignment,
+      backgroundColor: backgroundColor ?? this.backgroundColor,
+      borderRadius: borderRadius ?? this.borderRadius,
       selection: selection ?? this.selection,
       selectionColor: selectionColor ?? this.selectionColor,
       caret: caret ?? this.caret,
@@ -77,13 +93,16 @@ class BlockquoteComponentMetadata implements ComponentViewModel {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is BlockquoteComponentMetadata &&
+      super == other &&
+          other is BlockquoteComponentViewModel &&
           runtimeType == other.runtimeType &&
           nodeId == other.nodeId &&
           text == other.text &&
           textStyleBuilder == other.textStyleBuilder &&
           textDirection == other.textDirection &&
           textAlignment == other.textAlignment &&
+          backgroundColor == other.backgroundColor &&
+          borderRadius == other.borderRadius &&
           selection == other.selection &&
           selectionColor == other.selectionColor &&
           caret == other.caret &&
@@ -92,11 +111,14 @@ class BlockquoteComponentMetadata implements ComponentViewModel {
 
   @override
   int get hashCode =>
+      super.hashCode ^
       nodeId.hashCode ^
       text.hashCode ^
       textStyleBuilder.hashCode ^
       textDirection.hashCode ^
       textAlignment.hashCode ^
+      backgroundColor.hashCode ^
+      borderRadius.hashCode ^
       selection.hashCode ^
       selectionColor.hashCode ^
       caret.hashCode ^

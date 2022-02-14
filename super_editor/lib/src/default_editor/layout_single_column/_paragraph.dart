@@ -1,6 +1,5 @@
 import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/document_render_pipeline.dart';
-import 'package:super_editor/src/default_editor/blockquote.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_spans.dart';
@@ -9,47 +8,49 @@ import 'package:super_editor/src/infrastructure/attributed_text.dart';
 import '_presenter.dart';
 
 Widget? paragraphComponentBuilder(
-    SingleColumnDocumentComponentContext componentContext, ComponentViewModel componentMetadata) {
-  if (componentMetadata is! ParagraphComponentMetadata) {
+    SingleColumnDocumentComponentContext componentContext, ComponentViewModel componentViewModel) {
+  if (componentViewModel is! ParagraphComponentViewModel) {
     return null;
   }
 
-  editorLayoutLog.fine("Building paragraph component for node: ${componentMetadata.nodeId}");
+  editorLayoutLog.fine("Building paragraph component for node: ${componentViewModel.nodeId}");
 
-  if (componentMetadata.caret != null) {
+  if (componentViewModel.caret != null) {
     editorLayoutLog.finer(' - painting caret in paragraph');
   }
 
-  if (componentMetadata.selection != null) {
+  if (componentViewModel.selection != null) {
     editorLayoutLog.finer(' - painting a text selection:');
-    editorLayoutLog.finer('   base: ${componentMetadata.selection!.base}');
-    editorLayoutLog.finer('   extent: ${componentMetadata.selection!.extent}');
+    editorLayoutLog.finer('   base: ${componentViewModel.selection!.base}');
+    editorLayoutLog.finer('   extent: ${componentViewModel.selection!.extent}');
   } else {
     editorLayoutLog.finer(' - not painting any text selection');
   }
 
   return TextComponent(
     key: componentContext.componentKey,
-    text: componentMetadata.text,
-    textStyleBuilder: componentMetadata.textStyleBuilder,
-    metadata: componentMetadata.blockType != null
+    text: componentViewModel.text,
+    textStyleBuilder: componentViewModel.textStyleBuilder,
+    metadata: componentViewModel.blockType != null
         ? {
-            'blockType': componentMetadata.blockType,
+            'blockType': componentViewModel.blockType,
           }
         : {},
-    textAlign: componentMetadata.textAlignment,
-    textDirection: componentMetadata.textDirection,
-    textSelection: componentMetadata.selection,
-    selectionColor: componentMetadata.selectionColor,
-    showCaret: componentMetadata.caret != null,
-    caretColor: componentMetadata.caretColor,
-    highlightWhenEmpty: componentMetadata.highlightWhenEmpty,
+    textAlign: componentViewModel.textAlignment,
+    textDirection: componentViewModel.textDirection,
+    textSelection: componentViewModel.selection,
+    selectionColor: componentViewModel.selectionColor,
+    showCaret: componentViewModel.caret != null,
+    caretColor: componentViewModel.caretColor,
+    highlightWhenEmpty: componentViewModel.highlightWhenEmpty,
   );
 }
 
-class ParagraphComponentMetadata implements ComponentViewModel {
-  const ParagraphComponentMetadata({
+class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel {
+  const ParagraphComponentViewModel({
     required this.nodeId,
+    double? maxWidth,
+    EdgeInsetsGeometry padding = EdgeInsets.zero,
     this.blockType,
     required this.text,
     required this.textStyleBuilder,
@@ -60,7 +61,7 @@ class ParagraphComponentMetadata implements ComponentViewModel {
     this.caret,
     required this.caretColor,
     this.highlightWhenEmpty = false,
-  });
+  }) : super(maxWidth: maxWidth, padding: padding);
 
   @override
   final String nodeId;
@@ -75,8 +76,10 @@ class ParagraphComponentMetadata implements ComponentViewModel {
   final Color caretColor;
   final bool highlightWhenEmpty;
 
-  ParagraphComponentMetadata copyWith({
+  ParagraphComponentViewModel copyWith({
     String? nodeId,
+    double? maxWidth,
+    EdgeInsetsGeometry? padding,
     Attribution? blockType,
     AttributedText? text,
     AttributionStyleBuilder? textStyleBuilder,
@@ -88,8 +91,10 @@ class ParagraphComponentMetadata implements ComponentViewModel {
     Color? caretColor,
     bool? highlightWhenEmpty,
   }) {
-    return ParagraphComponentMetadata(
+    return ParagraphComponentViewModel(
       nodeId: nodeId ?? this.nodeId,
+      maxWidth: maxWidth ?? this.maxWidth,
+      padding: padding ?? this.padding,
       blockType: blockType ?? this.blockType,
       text: text ?? this.text,
       textStyleBuilder: textStyleBuilder ?? this.textStyleBuilder,
@@ -106,9 +111,11 @@ class ParagraphComponentMetadata implements ComponentViewModel {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is ParagraphComponentMetadata &&
+      super == other &&
+          other is ParagraphComponentViewModel &&
           runtimeType == other.runtimeType &&
           nodeId == other.nodeId &&
+          blockType == other.blockType &&
           text == other.text &&
           textStyleBuilder == other.textStyleBuilder &&
           textDirection == other.textDirection &&
@@ -121,7 +128,9 @@ class ParagraphComponentMetadata implements ComponentViewModel {
 
   @override
   int get hashCode =>
+      super.hashCode ^
       nodeId.hashCode ^
+      blockType.hashCode ^
       text.hashCode ^
       textStyleBuilder.hashCode ^
       textDirection.hashCode ^

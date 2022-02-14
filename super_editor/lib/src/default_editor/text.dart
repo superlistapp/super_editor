@@ -40,6 +40,8 @@ class TextNode with ChangeNotifier implements DocumentNode {
   final String id;
 
   AttributedText _text;
+
+  /// The content text within this [TextNode].
   AttributedText get text => _text;
   set text(AttributedText newText) {
     if (newText != _text) {
@@ -51,8 +53,27 @@ class TextNode with ChangeNotifier implements DocumentNode {
     }
   }
 
+  /// Returns `true` if this node has a non-null metadata value for
+  /// the given metadata [key], and returns `false`, otherwise.
+  bool hasMetadata(String key) => _metadata[key] != null;
+
+  /// Returns this node's metadata value for the given [key].
+  dynamic getMetadata(String key) => _metadata[key];
   final Map<String, dynamic> _metadata;
-  Map<String, dynamic> get metadata => _metadata;
+
+  /// Sets this node's metadata value for the given [key] to the given
+  /// [value], and notifies node listeners that a change has occurred.
+  void setMetadata(String key, dynamic value) {
+    if (_metadata[key] == value) {
+      return;
+    }
+
+    _metadata[key] = value;
+    notifyListeners();
+  }
+
+  /// Returns a copy of this node's metadata.
+  Map<String, dynamic> copyMetadata() => Map.from(_metadata);
 
   @override
   TextNodePosition get beginningPosition => const TextNodePosition(offset: 0);
@@ -107,11 +128,11 @@ class TextNode with ChangeNotifier implements DocumentNode {
 
   @override
   bool hasEquivalentContent(DocumentNode other) {
-    return other is TextNode && text == other.text && const DeepCollectionEquality().equals(metadata, other.metadata);
+    return other is TextNode && text == other.text && const DeepCollectionEquality().equals(_metadata, other._metadata);
   }
 
   @override
-  String toString() => '[TextNode] - text: $text, metadata: $metadata';
+  String toString() => '[TextNode] - text: $text, metadata: $_metadata';
 
   @override
   bool operator ==(Object other) =>

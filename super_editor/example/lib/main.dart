@@ -11,6 +11,7 @@ import 'package:example/demos/example_editor/example_editor.dart';
 import 'package:example/demos/flutter_features/demo_inline_widgets.dart';
 import 'package:example/demos/flutter_features/textinputclient/basic_text_input_client.dart';
 import 'package:example/demos/scrolling/demo_task_and_chat_with_customscrollview.dart';
+import 'package:example/demos/styles/demo_doc_styles.dart';
 import 'package:example/demos/supertextfield/ios/demo_superiostextfield.dart';
 import 'package:example/demos/flutter_features/textinputclient/textfield.dart';
 import 'package:example/demos/sliver_example_editor.dart';
@@ -207,6 +208,18 @@ final _menu = <_MenuGroup>[
         title: 'RTL Demo',
         pageBuilder: (context) {
           return RTLDemo();
+        },
+      ),
+    ],
+  ),
+  _MenuGroup(
+    title: 'STYLES',
+    items: [
+      _MenuItem(
+        icon: Icons.style,
+        title: 'Document Styles',
+        pageBuilder: (context) {
+          return const DocumentStylesDemo();
         },
       ),
     ],

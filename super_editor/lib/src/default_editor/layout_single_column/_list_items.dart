@@ -7,7 +7,7 @@ import '_presenter.dart';
 
 Widget? unorderedListItemComponentBuilder(
     SingleColumnDocumentComponentContext componentContext, ComponentViewModel componentMetadata) {
-  if (componentMetadata is! ListItemComponentMetadata) {
+  if (componentMetadata is! ListItemComponentViewModel) {
     return null;
   }
 
@@ -29,7 +29,7 @@ Widget? unorderedListItemComponentBuilder(
 
 Widget? newOrderedListItemBuilder(
     SingleColumnDocumentComponentContext componentContext, ComponentViewModel componentMetadata) {
-  if (componentMetadata is! ListItemComponentMetadata) {
+  if (componentMetadata is! ListItemComponentViewModel) {
     return null;
   }
 
@@ -50,9 +50,11 @@ Widget? newOrderedListItemBuilder(
   );
 }
 
-class ListItemComponentMetadata implements ComponentViewModel {
-  const ListItemComponentMetadata({
+class ListItemComponentViewModel extends SingleColumnLayoutComponentViewModel {
+  const ListItemComponentViewModel({
     required this.nodeId,
+    double? maxWidth,
+    EdgeInsetsGeometry padding = EdgeInsets.zero,
     required this.type,
     this.ordinalValue,
     required this.indent,
@@ -63,7 +65,7 @@ class ListItemComponentMetadata implements ComponentViewModel {
     required this.selectionColor,
     this.caret,
     required this.caretColor,
-  });
+  }) : super(maxWidth: maxWidth, padding: padding);
 
   @override
   final String nodeId;
@@ -78,8 +80,10 @@ class ListItemComponentMetadata implements ComponentViewModel {
   final TextPosition? caret;
   final Color caretColor;
 
-  ListItemComponentMetadata copyWith({
+  ListItemComponentViewModel copyWith({
     String? nodeId,
+    double? maxWidth,
+    EdgeInsetsGeometry? padding,
     ListItemType? type,
     int? ordinalValue,
     int? indent,
@@ -91,8 +95,10 @@ class ListItemComponentMetadata implements ComponentViewModel {
     TextPosition? caret,
     Color? caretColor,
   }) {
-    return ListItemComponentMetadata(
+    return ListItemComponentViewModel(
       nodeId: nodeId ?? this.nodeId,
+      maxWidth: maxWidth ?? this.maxWidth,
+      padding: padding ?? this.padding,
       type: type ?? this.type,
       ordinalValue: ordinalValue ?? this.ordinalValue,
       indent: indent ?? this.indent,
@@ -109,7 +115,8 @@ class ListItemComponentMetadata implements ComponentViewModel {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is ListItemComponentMetadata &&
+      super == other &&
+          other is ListItemComponentViewModel &&
           runtimeType == other.runtimeType &&
           nodeId == other.nodeId &&
           type == other.type &&
@@ -125,6 +132,7 @@ class ListItemComponentMetadata implements ComponentViewModel {
 
   @override
   int get hashCode =>
+      super.hashCode ^
       nodeId.hashCode ^
       type.hashCode ^
       ordinalValue.hashCode ^

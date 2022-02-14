@@ -87,7 +87,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
   _TextType _getCurrentTextType() {
     final selectedNode = widget.editor!.document.getNodeById(widget.composer.selection!.extent.nodeId);
     if (selectedNode is ParagraphNode) {
-      final type = selectedNode.metadata['blockType'];
+      final type = selectedNode.getMetadata('blockType');
 
       if (type == header1Attribution) {
         return _TextType.header1;
@@ -113,7 +113,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
   TextAlign _getCurrentTextAlignment() {
     final selectedNode = widget.editor!.document.getNodeById(widget.composer.selection!.extent.nodeId);
     if (selectedNode is ParagraphNode) {
-      final align = selectedNode.metadata['textAlign'];
+      final align = selectedNode.getMetadata('textAlign');
       switch (align) {
         case 'left':
           return TextAlign.left;
@@ -181,8 +181,9 @@ class _EditorToolbarState extends State<EditorToolbar> {
       );
     } else {
       // Apply a new block type to an existing paragraph node.
-      final existingNode = widget.editor!.document.getNodeById(widget.composer.selection!.extent.nodeId)!;
-      (existingNode as ParagraphNode).metadata['blockType'] = _getBlockTypeAttribution(newType);
+      final existingNode =
+          widget.editor!.document.getNodeById(widget.composer.selection!.extent.nodeId)! as ParagraphNode;
+      existingNode.setMetadata('blockType', _getBlockTypeAttribution(newType));
     }
   }
 
@@ -399,7 +400,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
     }
 
     final selectedNode = widget.editor!.document.getNodeById(widget.composer.selection!.extent.nodeId) as ParagraphNode;
-    selectedNode.metadata['textAlign'] = newAlignmentValue;
+    selectedNode.setMetadata('textAlign', newAlignmentValue);
   }
 
   /// Returns the localized name for the given [_TextType], e.g.,
@@ -664,8 +665,8 @@ class ImageFormatToolbar extends StatefulWidget {
   const ImageFormatToolbar({
     Key? key,
     required this.anchor,
-    required this.editor,
     required this.composer,
+    required this.setWidth,
     required this.closeToolbar,
   }) : super(key: key);
 
@@ -676,13 +677,14 @@ class ImageFormatToolbar extends StatefulWidget {
   /// reposition itself as the [Offset] value changes.
   final ValueNotifier<Offset?> anchor;
 
-  /// The [editor] is used to alter document content..
-  final DocumentEditor? editor;
-
   /// The [composer] provides access to the user's current
   /// selection within the document, which dictates the
   /// content that is altered by the toolbar's options.
   final DocumentComposer composer;
+
+  /// Callback that should update the width of the component with
+  /// the given [nodeId] to match the given [width].
+  final void Function(String nodeId, double? width) setWidth;
 
   /// Delegate that instructs the owner of this [ImageFormatToolbar]
   /// to close the toolbar.
@@ -694,23 +696,11 @@ class ImageFormatToolbar extends StatefulWidget {
 
 class _ImageFormatToolbarState extends State<ImageFormatToolbar> {
   void _makeImageConfined() {
-    // TODO: confine image like all other content
-    // widget.editor!.executeCommand(
-    //   ToggleTextAttributionsCommand(
-    //     documentSelection: widget.composer.selection!,
-    //     attributions: {boldAttribution},
-    //   ),
-    // );
+    widget.setWidth(widget.composer.selection!.extent.nodeId, null);
   }
 
   void _makeImageFullBleed() {
-    // TODO: make image take full width
-    // widget.editor!.executeCommand(
-    //   ToggleTextAttributionsCommand(
-    //     documentSelection: widget.composer.selection!,
-    //     attributions: {boldAttribution},
-    //   ),
-    // );
+    widget.setWidth(widget.composer.selection!.extent.nodeId, double.infinity);
   }
 
   @override

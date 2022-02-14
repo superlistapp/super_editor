@@ -145,11 +145,7 @@ class SuperSelectableTextState extends State<SuperSelectableText> implements Tex
   double get _lineHeight {
     final fontSize = widget.richText.style?.fontSize;
     final lineHeight = widget.richText.style?.height;
-    if (fontSize != null && lineHeight != null) {
-      return fontSize * lineHeight;
-    } else {
-      return 16;
-    }
+    return (fontSize ?? 16) * (lineHeight ?? 1.0);
   }
 
   @override

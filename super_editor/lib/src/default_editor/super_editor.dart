@@ -1,29 +1,26 @@
-import 'package:flutter/material.dart' hide SelectableText;
 import 'package:flutter/foundation.dart' show defaultTargetPlatform;
+import 'package:flutter/material.dart' hide SelectableText;
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_editor.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/edit_context.dart';
-import 'package:super_editor/src/default_editor/attributions.dart';
 import 'package:super_editor/src/default_editor/common_editor_operations.dart';
 import 'package:super_editor/src/default_editor/document_gestures_touch_android.dart';
 import 'package:super_editor/src/default_editor/document_gestures_touch_ios.dart';
 import 'package:super_editor/src/default_editor/list_items.dart';
-import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/attributed_spans.dart';
-import 'package:super_editor/src/infrastructure/attributed_text.dart';
 
+import 'attributions.dart';
 import 'document_gestures_mouse.dart';
 import 'document_input_ime.dart';
 import 'document_input_keyboard.dart';
 import 'document_keyboard_actions.dart';
 import 'layout_single_column/layout_single_column.dart';
 import 'paragraph.dart';
-import 'styles.dart';
 import 'text.dart';
 
-/// A text editor for styled text and multi-media elements.
+/// A rich text editor that displays a document in a single-column layout.
 ///
 /// A [SuperEditor] brings together the key pieces needed
 /// to display a user-editable document:
@@ -34,15 +31,17 @@ import 'text.dart';
 ///  * document composer (current selection, and styles to apply to next character)
 ///
 /// A [SuperEditor] determines the visual styling by way of:
-///  * [componentBuilders], which produce individual components
-///     within the document layout
-///  * [textStyleBuilder], which vends [TextStyle]s for every
-///     combination of text attributions
-///  * [selectionStyle], which dictates the color of the caret
-///     and the color of selected text and components
+///  * [stylesheet], which applies styles throughout the document layout,
+///    including text styles and block padding.
+///  * [componentStyles], which applies targeted styles to specific components
+///    in the document layout.
+///  * [componentBuilders], which produce every visual component within the document layout.
+///  * [selectionStyles], which dictates the color of the caret and the color of
+///    selected text and components
 ///
-/// A [SuperEditor] determines how the keyboard interacts with the
-/// document by way of [keyboardActions].
+/// A [SuperEditor] determines how a physical keyboard interacts with the document
+/// by way of [keyboardActions]. Software keyboards are integrated with the
+/// [softwareKeyboardHandler].
 ///
 /// ## Deeper explanation of core artifacts:
 ///
@@ -67,55 +66,49 @@ class SuperEditor extends StatefulWidget {
   SuperEditor.standard({
     Key? key,
     this.focusNode,
+    required this.editor,
+    this.composer,
     this.scrollController,
-    this.padding = EdgeInsets.zero,
     this.documentLayoutKey,
-    this.maxWidth = 600,
+    this.stylesheet = defaultDocumentStylesheet,
+    this.componentStyles,
     this.inputSource = DocumentInputSource.keyboard,
     this.gestureMode = DocumentGestureMode.mouse,
     this.androidToolbarBuilder,
     this.iOSToolbarBuilder,
     this.createOverlayControlsClipper,
-    required this.editor,
-    this.composer,
-    this.componentVerticalSpacing = 16,
-    this.showDebugPaint = false,
     this.autofocus = false,
+    this.showDebugPaint = false,
   })  : componentBuilders = defaultComponentBuilders,
         keyboardActions = defaultKeyboardActions,
         softwareKeyboardHandler = null,
-        textStyleBuilder = defaultStyleBuilder,
-        selectionStyle = defaultSelectionStyle,
+        selectionStyles = defaultSelectionStyle,
         super(key: key);
 
   @Deprecated("Use unnamed SuperEditor() constructor instead")
   SuperEditor.custom({
     Key? key,
     this.focusNode,
-    this.padding = EdgeInsets.zero,
+    required this.editor,
+    this.composer,
     this.scrollController,
     this.documentLayoutKey,
-    this.maxWidth = 600,
+    this.stylesheet = defaultDocumentStylesheet,
+    this.componentStyles,
+    List<SingleColumnDocumentComponentBuilder>? componentBuilders,
+    SelectionStyles? selectionStyle,
     this.inputSource = DocumentInputSource.keyboard,
     this.gestureMode = DocumentGestureMode.mouse,
+    List<DocumentKeyboardAction>? keyboardActions,
+    this.softwareKeyboardHandler,
     this.androidToolbarBuilder,
     this.iOSToolbarBuilder,
     this.createOverlayControlsClipper,
-    required this.editor,
-    this.composer,
-    AttributionStyleBuilder? textStyleBuilder,
-    SelectionStyle? selectionStyle,
-    List<DocumentKeyboardAction>? keyboardActions,
-    this.softwareKeyboardHandler,
-    List<ComponentBuilder>? componentBuilders,
-    List<SingleColumnDocumentComponentBuilder>? newComponentBuilders,
-    this.componentVerticalSpacing = 16,
-    this.showDebugPaint = false,
     this.autofocus = false,
-  })  : textStyleBuilder = textStyleBuilder ?? defaultStyleBuilder,
-        selectionStyle = selectionStyle ?? defaultSelectionStyle,
+    this.showDebugPaint = false,
+  })  : selectionStyles = selectionStyle ?? defaultSelectionStyle,
         keyboardActions = keyboardActions ?? defaultKeyboardActions,
-        componentBuilders = newComponentBuilders ?? defaultComponentBuilders,
+        componentBuilders = componentBuilders ?? defaultComponentBuilders,
         super(key: key);
 
   /// Creates a `Super Editor` with common (but configurable) defaults for
@@ -123,27 +116,24 @@ class SuperEditor extends StatefulWidget {
   SuperEditor({
     Key? key,
     this.focusNode,
-    this.padding = EdgeInsets.zero,
+    required this.editor,
+    this.composer,
     this.scrollController,
     this.documentLayoutKey,
-    this.maxWidth = 600,
+    this.stylesheet = defaultDocumentStylesheet,
+    this.componentStyles,
+    List<SingleColumnDocumentComponentBuilder>? componentBuilders,
+    SelectionStyles? selectionStyle,
     this.inputSource = DocumentInputSource.keyboard,
     this.gestureMode = DocumentGestureMode.mouse,
+    List<DocumentKeyboardAction>? keyboardActions,
     this.androidToolbarBuilder,
     this.iOSToolbarBuilder,
     this.createOverlayControlsClipper,
-    required this.editor,
-    this.composer,
-    AttributionStyleBuilder? textStyleBuilder,
-    SelectionStyle? selectionStyle,
-    List<DocumentKeyboardAction>? keyboardActions,
     this.softwareKeyboardHandler,
-    List<SingleColumnDocumentComponentBuilder>? componentBuilders,
-    this.componentVerticalSpacing = 16,
-    this.showDebugPaint = false,
     this.autofocus = false,
-  })  : textStyleBuilder = textStyleBuilder ?? defaultStyleBuilder,
-        selectionStyle = selectionStyle ?? defaultSelectionStyle,
+    this.showDebugPaint = false,
+  })  : selectionStyles = selectionStyle ?? defaultSelectionStyle,
         keyboardActions = keyboardActions ?? defaultKeyboardActions,
         componentBuilders = componentBuilders ?? defaultComponentBuilders,
         super(key: key);
@@ -153,11 +143,6 @@ class SuperEditor extends StatefulWidget {
 
   /// Whether or not the [SuperEditor] should autofocus
   final bool autofocus;
-
-  /// Padding between the boundary of this `SuperEditor` and its
-  /// document content, i.e., insets the content of this document
-  /// by the given amount.
-  final EdgeInsetsGeometry padding;
 
   /// The [ScrollController] that governs this `SuperEditor`'s scroll
   /// offset.
@@ -173,8 +158,14 @@ class SuperEditor extends StatefulWidget {
   /// layout within this `SuperEditor`.
   final GlobalKey? documentLayoutKey;
 
-  /// The maximum width for document content within this `SuperEditor`.
-  final double maxWidth;
+  /// Layout-wide styles.
+  final SingleColumnLayoutStylesheet stylesheet;
+
+  /// Custom styles applied to specific components within the document layout.
+  final SingleColumnCustomComponentStyles? componentStyles;
+
+  /// Styles applied to selected content.
+  final SelectionStyles selectionStyles;
 
   /// The `SuperEditor` input source, e.g., keyboard or Input Method Engine.
   final DocumentInputSource inputSource;
@@ -210,15 +201,6 @@ class SuperEditor extends StatefulWidget {
   /// horizontal rule component, etc.
   final List<SingleColumnDocumentComponentBuilder> componentBuilders;
 
-  /// Factory that creates [TextStyle]s based on given
-  /// attributions. An attribution can be anything. It is up
-  /// to the [textStyleBuilder] to interpret attributions
-  /// as desired to produce corresponding styles.
-  final AttributionStyleBuilder textStyleBuilder;
-
-  /// Styles to be applied to selected text.
-  final SelectionStyle selectionStyle;
-
   /// All actions that this editor takes in response to key
   /// events, e.g., text entry, newlines, character deletion,
   /// copy, paste, etc.
@@ -232,9 +214,6 @@ class SuperEditor extends StatefulWidget {
   /// This handler is only used when in [DocumentInputSource.ime] mode.
   final SoftwareKeyboardHandler? softwareKeyboardHandler;
 
-  /// The vertical distance between visual components in the document layout.
-  final double componentVerticalSpacing;
-
   /// Paints some extra visual ornamentation to help with
   /// debugging, when true.
   final bool showDebugPaint;
@@ -247,6 +226,10 @@ class _SuperEditorState extends State<SuperEditor> {
   // GlobalKey used to access the [DocumentLayoutState] to figure
   // out where in the document the user taps or drags.
   late GlobalKey _docLayoutKey;
+  SingleColumnLayoutPresenter? _docLayoutPresenter;
+  late SingleColumnLayoutStyler _docLayoutStyler;
+  late SingleColumnLayoutCustomComponentStyler _docLayoutSizeStyler;
+  late SingleColumnLayoutSelectionStyler _docLayoutSelectionStyler;
 
   late FocusNode _focusNode;
   late DocumentComposer _composer;
@@ -264,11 +247,12 @@ class _SuperEditorState extends State<SuperEditor> {
     _composer = widget.composer ?? DocumentComposer();
     _composer.addListener(_updateComposerPreferencesAtSelection);
 
-    _focusNode = widget.focusNode ?? FocusNode();
+    _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
 
     _docLayoutKey = widget.documentLayoutKey ?? GlobalKey();
 
     _createEditContext();
+    _createLayoutPresenter();
 
     _softwareKeyboardHandler = widget.softwareKeyboardHandler ??
         SoftwareKeyboardHandler(
@@ -294,7 +278,7 @@ class _SuperEditorState extends State<SuperEditor> {
       _composer.selection = null;
     }
     if (widget.focusNode != oldWidget.focusNode) {
-      _focusNode = widget.focusNode ?? FocusNode();
+      _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
     }
     if (widget.documentLayoutKey != oldWidget.documentLayoutKey) {
       _docLayoutKey = widget.documentLayoutKey ?? GlobalKey();
@@ -308,7 +292,19 @@ class _SuperEditorState extends State<SuperEditor> {
           );
     }
 
-    _createEditContext();
+    if (widget.editor != oldWidget.editor) {
+      _createEditContext();
+      _createLayoutPresenter();
+    }
+
+    if (widget.stylesheet != oldWidget.stylesheet) {
+      _docLayoutStyler.stylesheet = widget.stylesheet;
+    }
+    if (widget.componentStyles != oldWidget.componentStyles) {
+      _docLayoutSizeStyler.styles = widget.componentStyles;
+    }
+
+    _recomputeIfLayoutShouldShowCaret();
   }
 
   @override
@@ -317,6 +313,7 @@ class _SuperEditorState extends State<SuperEditor> {
       _composer.dispose();
     }
 
+    _focusNode.removeListener(_onFocusChange);
     if (widget.focusNode == null) {
       // We are using our own private FocusNode. Dispose it.
       _focusNode.dispose();
@@ -336,6 +333,45 @@ class _SuperEditorState extends State<SuperEditor> {
         documentLayoutResolver: () => _docLayoutKey.currentState as DocumentLayout,
       ),
     );
+  }
+
+  void _createLayoutPresenter() {
+    if (_docLayoutPresenter != null) {
+      _docLayoutPresenter!.dispose();
+    }
+
+    final document = _editContext.editor.document;
+
+    _docLayoutStyler = SingleColumnLayoutStyler(stylesheet: widget.stylesheet);
+
+    _docLayoutSizeStyler = SingleColumnLayoutCustomComponentStyler(styles: widget.componentStyles);
+
+    _docLayoutSelectionStyler = SingleColumnLayoutSelectionStyler(
+      document: document,
+      composer: _editContext.composer,
+      selectionColor: widget.selectionStyles.selectionColor,
+      caretColor: widget.selectionStyles.textCaretColor,
+    );
+
+    _docLayoutPresenter = SingleColumnLayoutPresenter(
+      document: document,
+      pipeline: [
+        _docLayoutStyler,
+        _docLayoutSizeStyler,
+        _docLayoutSelectionStyler,
+      ],
+    );
+
+    _recomputeIfLayoutShouldShowCaret();
+  }
+
+  void _onFocusChange() {
+    _recomputeIfLayoutShouldShowCaret();
+  }
+
+  void _recomputeIfLayoutShouldShowCaret() {
+    _docLayoutSelectionStyler.shouldDocumentShowCaret =
+        _focusNode.hasFocus && _gestureMode == DocumentGestureMode.mouse;
   }
 
   void _updateComposerPreferencesAtSelection() {
@@ -391,7 +427,12 @@ class _SuperEditorState extends State<SuperEditor> {
   Widget build(BuildContext context) {
     return _buildInputSystem(
       child: _buildGestureSystem(
-        child: _buildDocumentLayout(),
+        child: SingleColumnDocumentLayout(
+          key: _docLayoutKey,
+          presenter: _docLayoutPresenter!,
+          componentBuilders: widget.componentBuilders,
+          showDebugPaint: widget.showDebugPaint,
+        ),
       ),
     );
   }
@@ -466,35 +507,6 @@ class _SuperEditorState extends State<SuperEditor> {
         );
     }
   }
-
-  /// Builds the `DocumentLayout` with a constrained width, and a builder
-  /// that re-runs when various artifacts change, e.g., the document changes.
-  Widget _buildDocumentLayout() {
-    return MultiListenableBuilder(
-      listenables: {
-        _focusNode,
-        _composer,
-        widget.editor.document,
-      },
-      builder: (context) {
-        return SingleColumnDocumentLayout(
-          key: _docLayoutKey,
-          document: widget.editor.document,
-          documentSelection: _composer.selection,
-          componentBuilders: widget.componentBuilders,
-          maxComponentWidth: widget.maxWidth,
-          showCaret: _focusNode.hasFocus && _gestureMode == DocumentGestureMode.mouse,
-          margin: widget.padding,
-          componentVerticalSpacing: widget.componentVerticalSpacing,
-          extensions: {
-            textStylesExtensionKey: widget.textStyleBuilder,
-            selectionStylesExtensionKey: widget.selectionStyle,
-          },
-          showDebugPaint: widget.showDebugPaint,
-        );
-      },
-    );
-  }
 }
 
 enum DocumentInputSource {
@@ -508,42 +520,108 @@ enum DocumentGestureMode {
   iOS,
 }
 
-/// Default visual styles related to content selection.
-const defaultSelectionStyle = SelectionStyle(
-  textCaretColor: Colors.black,
-  selectionColor: Color(0xFFACCEF7),
+/// Default document stylesheet that's used by [SuperEditor], when
+/// no stylesheet is provided.
+///
+/// You can quickly adjust these styles by using the [copyWith] method.
+const defaultDocumentStylesheet = SingleColumnLayoutStylesheet(
+  standardContentWidth: 640.0,
+  margin: EdgeInsets.only(bottom: 96),
+  inlineTextStyler: defaultInlineTextStyler,
+  blockStyles: DocumentBlockStyles(
+    standardPadding: EdgeInsets.only(left: 20, right: 20),
+    text: TextBlockStyle(
+      paddingAdjustment: EdgeInsets.only(top: 20),
+      textStyle: TextStyle(
+        color: Colors.black,
+        fontSize: 16,
+        fontWeight: FontWeight.w300,
+        height: 1.8,
+      ),
+    ),
+    h1: TextBlockStyle(
+      paddingAdjustment: EdgeInsets.only(top: 40),
+      textStyle: TextStyle(
+        color: Color(0xFF333333),
+        fontSize: 38,
+        fontWeight: FontWeight.bold,
+      ),
+    ),
+    h2: TextBlockStyle(
+      paddingAdjustment: EdgeInsets.only(top: 32),
+      textStyle: TextStyle(
+        color: Color(0xFF333333),
+        fontSize: 26,
+        fontWeight: FontWeight.bold,
+      ),
+    ),
+    h3: TextBlockStyle(
+      paddingAdjustment: EdgeInsets.only(top: 28),
+      textStyle: TextStyle(
+        color: Color(0xFF333333),
+        fontSize: 22,
+        fontWeight: FontWeight.bold,
+      ),
+    ),
+    h4: TextBlockStyle(
+      paddingAdjustment: EdgeInsets.only(top: 22),
+      textStyle: TextStyle(
+        color: Color(0xFF333333),
+        fontSize: 18,
+        fontWeight: FontWeight.bold,
+      ),
+    ),
+    h5: TextBlockStyle(
+      paddingAdjustment: EdgeInsets.only(top: 20),
+      textStyle: TextStyle(
+        color: Color(0xFF333333),
+        fontSize: 16,
+        fontWeight: FontWeight.bold,
+      ),
+    ),
+    h6: TextBlockStyle(
+      paddingAdjustment: EdgeInsets.only(top: 16),
+      textStyle: TextStyle(
+        color: Color(0xFF333333),
+        fontSize: 14,
+        fontWeight: FontWeight.bold,
+      ),
+    ),
+    listItem: TextBlockStyle(
+      paddingAdjustment: EdgeInsets.only(top: 20),
+      textStyle: TextStyle(
+        color: Color(0xFF333333),
+        fontSize: 16,
+        fontWeight: FontWeight.w300,
+        height: 1.8,
+      ),
+    ),
+    blockquote: BlockquoteBlockStyle(
+      paddingAdjustment: EdgeInsets.only(top: 20),
+      textStyle: TextStyle(
+        color: Color(0xFF555555),
+        fontSize: 18,
+        fontWeight: FontWeight.bold,
+        fontStyle: FontStyle.italic,
+      ),
+      backgroundColor: Color(0xFFF0F0F0),
+      borderRadius: BorderRadius.all(Radius.circular(4)),
+    ),
+    image: BlockStyle(paddingAdjustment: EdgeInsets.only(top: 20)),
+    hr: BlockStyle(paddingAdjustment: EdgeInsets.zero),
+  ),
 );
+
+TextStyle defaultInlineTextStyler(Set<Attribution> attributions, TextStyle existingStyle) {
+  return existingStyle.merge(defaultStyleBuilder(attributions));
+}
 
 /// Creates [TextStyles] for the standard [SuperEditor].
 TextStyle defaultStyleBuilder(Set<Attribution> attributions) {
-  TextStyle newStyle = const TextStyle(
-    color: Colors.black,
-    fontSize: 13,
-    height: 1.4,
-  );
+  TextStyle newStyle = const TextStyle();
 
   for (final attribution in attributions) {
-    if (attribution == header1Attribution) {
-      newStyle = newStyle.copyWith(
-        fontSize: 24,
-        fontWeight: FontWeight.bold,
-        height: 1.0,
-      );
-    } else if (attribution == header2Attribution) {
-      newStyle = newStyle.copyWith(
-        fontSize: 18,
-        fontWeight: FontWeight.bold,
-        color: const Color(0xFF888888),
-        height: 1.0,
-      );
-    } else if (attribution == blockquoteAttribution) {
-      newStyle = newStyle.copyWith(
-        fontSize: 20,
-        fontWeight: FontWeight.bold,
-        height: 1.4,
-        color: Colors.grey,
-      );
-    } else if (attribution == boldAttribution) {
+    if (attribution == boldAttribution) {
       newStyle = newStyle.copyWith(
         fontWeight: FontWeight.bold,
       );
@@ -572,6 +650,12 @@ TextStyle defaultStyleBuilder(Set<Attribution> attributions) {
   }
   return newStyle;
 }
+
+/// Default visual styles related to content selection.
+const defaultSelectionStyle = SelectionStyles(
+  textCaretColor: Colors.black,
+  selectionColor: Color(0xFFACCEF7),
+);
 
 /// Creates visual components for the standard [SuperEditor].
 ///

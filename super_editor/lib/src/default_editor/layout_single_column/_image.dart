@@ -3,12 +3,11 @@ import 'package:super_editor/src/core/document_render_pipeline.dart';
 import 'package:super_editor/src/default_editor/image.dart';
 import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
 
-import '_layout.dart';
 import '_presenter.dart';
 
 Widget? imageComponentBuilder(
     SingleColumnDocumentComponentContext componentContext, ComponentViewModel componentMetadata) {
-  if (componentMetadata is! ImageComponentMetadata) {
+  if (componentMetadata is! ImageComponentViewModel) {
     return null;
   }
 
@@ -22,16 +21,17 @@ Widget? imageComponentBuilder(
   );
 }
 
-class ImageComponentMetadata extends SingleColumnDocumentLayoutComponentViewModel {
-  const ImageComponentMetadata({
+class ImageComponentViewModel extends SingleColumnLayoutComponentViewModel {
+  const ImageComponentViewModel({
     required this.nodeId,
     double? maxWidth,
+    EdgeInsetsGeometry padding = EdgeInsets.zero,
     required this.imageUrl,
     this.selection,
     required this.selectionColor,
     this.caret,
     required this.caretColor,
-  }) : super(maxWidth: maxWidth);
+  }) : super(maxWidth: maxWidth, padding: padding);
 
   @override
   final String nodeId;
@@ -41,17 +41,19 @@ class ImageComponentMetadata extends SingleColumnDocumentLayoutComponentViewMode
   final UpstreamDownstreamNodePosition? caret;
   final Color caretColor;
 
-  ImageComponentMetadata copyWith({
+  ImageComponentViewModel copyWith({
     double? maxWidth,
+    EdgeInsetsGeometry? padding,
     String? imageUrl,
     UpstreamDownstreamNodeSelection? selection,
     Color? selectionColor,
     UpstreamDownstreamNodePosition? caret,
     Color? caretColor,
   }) {
-    return ImageComponentMetadata(
+    return ImageComponentViewModel(
       nodeId: nodeId,
       maxWidth: maxWidth ?? this.maxWidth,
+      padding: padding ?? this.padding,
       imageUrl: imageUrl ?? this.imageUrl,
       selection: selection ?? this.selection,
       selectionColor: selectionColor ?? this.selectionColor,
@@ -63,11 +65,11 @@ class ImageComponentMetadata extends SingleColumnDocumentLayoutComponentViewMode
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is ImageComponentMetadata &&
+      super == other &&
+          other is ImageComponentViewModel &&
           runtimeType == other.runtimeType &&
           nodeId == other.nodeId &&
           imageUrl == other.imageUrl &&
-          maxWidth == other.maxWidth &&
           selection == other.selection &&
           selectionColor == other.selectionColor &&
           caret == other.caret &&
@@ -75,9 +77,9 @@ class ImageComponentMetadata extends SingleColumnDocumentLayoutComponentViewMode
 
   @override
   int get hashCode =>
+      super.hashCode ^
       nodeId.hashCode ^
       imageUrl.hashCode ^
-      maxWidth.hashCode ^
       selection.hashCode ^
       selectionColor.hashCode ^
       caret.hashCode ^

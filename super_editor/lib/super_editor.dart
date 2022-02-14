@@ -35,7 +35,6 @@ export 'src/default_editor/layout_single_column/layout_single_column.dart';
 export 'src/default_editor/list_items.dart';
 export 'src/default_editor/multi_node_editing.dart';
 export 'src/default_editor/paragraph.dart';
-export 'src/default_editor/styles.dart';
 export 'src/default_editor/text.dart';
 export 'src/default_editor/text_tools.dart';
 export 'src/default_editor/unknown_component.dart';

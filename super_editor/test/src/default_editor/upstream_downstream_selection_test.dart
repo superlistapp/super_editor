@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
+import 'package:logging/logging.dart';
 import 'package:super_editor/super_editor.dart';
 
 import 'test_documents.dart';

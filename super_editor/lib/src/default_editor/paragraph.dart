@@ -113,11 +113,11 @@ class SplitParagraphCommand implements EditorCommand {
 
     // Create a new node that will follow the current node. Set its text
     // to the text that was removed from the current node. And create a
-    // new copy of the metadata if `replicateExistingMetdata` is true.
+    // new copy of the metadata if `replicateExistingMetadata` is true.
     final newNode = ParagraphNode(
       id: newNodeId,
       text: endText,
-      metadata: replicateExistingMetdata ? {...node.metadata} : {},
+      metadata: replicateExistingMetdata ? node.copyMetadata() : {},
     );
 
     // Insert the new node after the current node.

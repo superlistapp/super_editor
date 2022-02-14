@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
@@ -10,7 +9,6 @@ import '../core/document.dart';
 import '../core/document_editor.dart';
 import 'document_input_keyboard.dart';
 import 'paragraph.dart';
-import 'styles.dart';
 import 'text.dart';
 
 // ignore: unused_element
@@ -25,6 +23,8 @@ class BlockquoteComponent extends StatelessWidget {
     required this.styleBuilder,
     this.textSelection,
     this.selectionColor = Colors.lightBlueAccent,
+    required this.backgroundColor,
+    required this.borderRadius,
     this.showCaret = false,
     this.caretColor = Colors.black,
     this.showDebugPaint = false,
@@ -35,6 +35,8 @@ class BlockquoteComponent extends StatelessWidget {
   final AttributionStyleBuilder styleBuilder;
   final TextSelection? textSelection;
   final Color selectionColor;
+  final Color backgroundColor;
+  final BorderRadius borderRadius;
   final bool showCaret;
   final Color caretColor;
   final bool showDebugPaint;
@@ -44,8 +46,8 @@ class BlockquoteComponent extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(4),
-        color: const Color(0xFFEEEEEE),
+        borderRadius: borderRadius,
+        color: backgroundColor,
       ),
       child: TextComponent(
         key: textKey,
@@ -104,7 +106,7 @@ ExecutionInstruction insertNewlineInBlockquote({
   if (extentNode is! ParagraphNode) {
     return ExecutionInstruction.continueExecution;
   }
-  if (extentNode.metadata['blockType'] != blockquoteAttribution) {
+  if (extentNode.getMetadata('blockType') != blockquoteAttribution) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -132,7 +134,7 @@ ExecutionInstruction splitBlockquoteWhenEnterPressed({
   if (extentNode is! ParagraphNode) {
     return ExecutionInstruction.continueExecution;
   }
-  if (extentNode.metadata['blockType'] != blockquoteAttribution) {
+  if (extentNode.getMetadata('blockType') != blockquoteAttribution) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -179,27 +181,4 @@ class SplitBlockquoteCommand implements EditorCommand {
       newNode: newNode,
     );
   }
-}
-
-Widget? blockquoteBuilder(ComponentContext componentContext) {
-  final blockquoteNode = componentContext.documentNode;
-  if (blockquoteNode is! ParagraphNode) {
-    return null;
-  }
-  if (blockquoteNode.metadata['blockType'] != blockquoteAttribution) {
-    return null;
-  }
-
-  final textSelection = componentContext.nodeSelection?.nodeSelection as TextSelection?;
-  final showCaret = componentContext.showCaret && (componentContext.nodeSelection?.isExtent ?? false);
-
-  return BlockquoteComponent(
-    textKey: componentContext.componentKey,
-    text: blockquoteNode.text,
-    styleBuilder: componentContext.extensions[textStylesExtensionKey],
-    textSelection: textSelection,
-    selectionColor: (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle).selectionColor,
-    showCaret: showCaret,
-    caretColor: (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle).textCaretColor,
-  );
 }
