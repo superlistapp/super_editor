@@ -1725,7 +1725,7 @@ class CommonEditorOperations {
           nodeId: extentNode.id,
           splitPosition: currentExtentPosition,
           newNodeId: newNodeId,
-          replicateExistingMetdata: currentExtentPosition.offset != endOfParagraph.offset,
+          replicateExistingMetadata: currentExtentPosition.offset != endOfParagraph.offset,
         ),
       );
     } else if (composer.selection!.extent.nodePosition is UpstreamDownstreamNodePosition) {

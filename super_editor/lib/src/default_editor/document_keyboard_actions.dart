@@ -148,7 +148,7 @@ class _PasteEditorCommand implements EditorCommand {
             nodeId: currentNodeWithSelection.id,
             splitPosition: TextPosition(offset: pasteTextOffset),
             newNodeId: DocumentEditor.createNodeId(),
-            replicateExistingMetdata: false,
+            replicateExistingMetadata: false,
           ).execute(document, transaction);
         } else {
           throw Exception('Can\'t handle pasting text within node of type: $currentNodeWithSelection');

@@ -86,13 +86,13 @@ class SplitParagraphCommand implements EditorCommand {
     required this.nodeId,
     required this.splitPosition,
     required this.newNodeId,
-    required this.replicateExistingMetdata,
+    required this.replicateExistingMetadata,
   });
 
   final String nodeId;
   final TextPosition splitPosition;
   final String newNodeId;
-  final bool replicateExistingMetdata;
+  final bool replicateExistingMetadata;
 
   @override
   void execute(Document document, DocumentEditorTransaction transaction) {
@@ -117,11 +117,11 @@ class SplitParagraphCommand implements EditorCommand {
 
     // Create a new node that will follow the current node. Set its text
     // to the text that was removed from the current node. And create a
-    // new copy of the metadata if `replicateExistingMetdata` is true.
+    // new copy of the metadata if `replicateExistingMetadata` is true.
     final newNode = ParagraphNode(
       id: newNodeId,
       text: endText,
-      metadata: replicateExistingMetdata ? {...node.metadata} : {},
+      metadata: replicateExistingMetadata ? {...node.metadata} : {},
     );
 
     // Insert the new node after the current node.
