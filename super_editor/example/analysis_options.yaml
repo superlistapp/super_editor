@@ -1,8 +1,5 @@
 include: package:flutter_lints/flutter.yaml
 
-analyzer:
-  exclude: [lib/spikes]
-
 linter:
   rules:
     avoid_print: false
