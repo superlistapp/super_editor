@@ -869,6 +869,10 @@ class SoftwareKeyboardHandler {
       editorImeLog.fine("Failed to insert characters. Restoring previous selection.");
       composer.selection = selectionBeforeInsertion;
     }
+
+    commonOps.convertParagraphByPatternMatching(
+      composer.selection!.extent.nodeId,
+    );
   }
 
   void replace(TextRange replacedRange, String replacementText) {
@@ -897,6 +901,10 @@ class SoftwareKeyboardHandler {
     }
 
     commonOps.insertPlainText(replacementText);
+
+    commonOps.convertParagraphByPatternMatching(
+      composer.selection!.extent.nodeId,
+    );
   }
 
   void delete(TextRange deletedRange) {
