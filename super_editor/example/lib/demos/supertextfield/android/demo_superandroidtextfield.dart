@@ -37,7 +37,7 @@ class _SuperAndroidTextFieldDemoState extends State<SuperAndroidTextFieldDemo> {
     final genericTextStyle = config.styleBuilder({});
     final lineHeight = genericTextStyle.fontSize! * (genericTextStyle.height ?? 1.0);
 
-    return SuperAndroidTextfield(
+    return SuperAndroidTextField(
       textController: config.controller,
       textStyleBuilder: config.styleBuilder,
       selectionColor: Colors.blue.withOpacity(0.4),

@@ -4,7 +4,6 @@ import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart' hide SelectableText;
-import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/default_editor/super_editor.dart';
@@ -12,33 +11,36 @@ import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_spans.dart';
 import 'package:super_editor/src/infrastructure/super_selectable_text.dart';
+import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/hint_text.dart';
 import 'package:super_editor/src/infrastructure/text_layout.dart';
 
-import '../attributed_text.dart';
-import '../keyboard.dart';
-import '../multi_tap_gesture.dart';
+import '../../attributed_text.dart';
+import '../../keyboard.dart';
+import '../../multi_tap_gesture.dart';
 
 final _log = textFieldLog;
 
-/// Highly configurable textfield intended for web and desktop uses.
+/// Highly configurable text field intended for web and desktop uses.
 ///
-/// [SuperTextField] provides two advantages over a typical [TextField].
-/// First, [SuperTextField] is based on [AttributedText], which is a far
+/// [SuperDesktopTextField] provides two advantages over a typical [TextField].
+/// First, [SuperDesktopTextField] is based on [AttributedText], which is a far
 /// more useful foundation for styled text display than [TextSpan]. Second,
-/// [SuperTextField] provides deeper control over various visual properties
+/// [SuperDesktopTextField] provides deeper control over various visual properties
 /// including selection painting, caret painting, hint display, and keyboard
 /// interaction.
 ///
-/// If [SuperTextField] does not provide the desired level of configuration,
-/// look at its implementation. Unlike Flutter's [TextField], [SuperTextField]
+/// If [SuperDesktopTextField] does not provide the desired level of configuration,
+/// look at its implementation. Unlike Flutter's [TextField], [SuperDesktopTextField]
 /// is composed of a few widgets that you can recompose to create your own
 /// flavor of a text field.
-class SuperTextField extends StatefulWidget {
-  const SuperTextField({
+class SuperDesktopTextField extends StatefulWidget {
+  const SuperDesktopTextField({
     Key? key,
     this.focusNode,
     this.textController,
     this.textStyleBuilder = defaultStyleBuilder,
+    this.hintText,
+    this.hintTextStyleBuilder = defaultHintStyleBuilder,
     this.textAlign = TextAlign.left,
     this.textSelectionDecoration = const TextSelectionDecoration(
       selectionColor: Color(0xFFACCEF7),
@@ -62,9 +64,18 @@ class SuperTextField extends StatefulWidget {
 
   final AttributedTextEditingController? textController;
 
+  /// Text style factory that creates styles for the content in
+  /// [textController] based on the attributions in that content.
   final AttributionStyleBuilder textStyleBuilder;
 
-  /// The alignment to use for `richText` display.
+  /// Text displayed when the text field has no content.
+  final AttributedText? hintText;
+
+  /// Text style factory that creates styles for the [hintText],
+  /// which is displayed when [textController] is empty.
+  final AttributionStyleBuilder hintTextStyleBuilder;
+
+  /// The alignment to use for text in this text field.
   final TextAlign textAlign;
 
   /// The visual decoration to apply to the `textSelection`.
@@ -89,10 +100,10 @@ class SuperTextField extends StatefulWidget {
   final List<TextFieldKeyboardHandler> keyboardHandlers;
 
   @override
-  SuperTextFieldState createState() => SuperTextFieldState();
+  SuperDesktopTextFieldState createState() => SuperDesktopTextFieldState();
 }
 
-class SuperTextFieldState extends State<SuperTextField> {
+class SuperDesktopTextFieldState extends State<SuperDesktopTextField> {
   final _selectableTextKey = GlobalKey<SuperSelectableTextState>();
   final _textScrollKey = GlobalKey<SuperTextFieldScrollviewState>();
   late FocusNode _focusNode;
@@ -116,7 +127,7 @@ class SuperTextFieldState extends State<SuperTextField> {
   }
 
   @override
-  void didUpdateWidget(SuperTextField oldWidget) {
+  void didUpdateWidget(SuperDesktopTextField oldWidget) {
     super.didUpdateWidget(oldWidget);
 
     if (widget.focusNode != oldWidget.focusNode) {

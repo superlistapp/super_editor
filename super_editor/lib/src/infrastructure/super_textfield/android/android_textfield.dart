@@ -1,15 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
-import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/android/_editing_controls.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/android/_user_interaction.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/hint_text.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/text_scrollview.dart';
 import 'package:super_editor/super_editor.dart';
-
-import '../input_method_engine/_ime_text_editing_controller.dart';
 
 export '_caret.dart';
 export '../../platforms/android/selection_handles.dart';
@@ -17,20 +13,21 @@ export '../../platforms/android/toolbar.dart';
 
 final _log = androidTextFieldLog;
 
-class SuperAndroidTextfield extends StatefulWidget {
-  const SuperAndroidTextfield({
+class SuperAndroidTextField extends StatefulWidget {
+  const SuperAndroidTextField({
     Key? key,
     this.focusNode,
     this.textController,
+    this.textAlign = TextAlign.left,
     this.textStyleBuilder = defaultStyleBuilder,
     this.hintText,
     this.hintTextStyleBuilder = defaultHintStyleBuilder,
     this.minLines,
     this.maxLines = 1,
+    required this.lineHeight,
     required this.caretColor,
     required this.selectionColor,
     required this.handlesColor,
-    required this.lineHeight,
     this.textInputAction = TextInputAction.done,
     this.popoverToolbarBuilder = _defaultAndroidToolbarBuilder,
     this.showDebugPaint = false,
@@ -43,6 +40,9 @@ class SuperAndroidTextfield extends StatefulWidget {
   /// Controller that owns the text content and text selection for
   /// this text field.
   final ImeAttributedTextEditingController? textController;
+
+  /// The alignment to use for text in this text field.
+  final TextAlign textAlign;
 
   /// Text style factory that creates styles for the content in
   /// [textController] based on the attributions in that content.
@@ -114,13 +114,14 @@ class SuperAndroidTextfield extends StatefulWidget {
   /// on the keyboard, e.g., "done", "call", "emergency", etc.
   final Function(TextInputAction)? onPerformActionPressed;
 
+  /// Builder that creates the popover toolbar widget that appears when text is selected.
   final Widget Function(BuildContext, AndroidEditingOverlayController) popoverToolbarBuilder;
 
   @override
-  _SuperAndroidTextfieldState createState() => _SuperAndroidTextfieldState();
+  _SuperAndroidTextFieldState createState() => _SuperAndroidTextFieldState();
 }
 
-class _SuperAndroidTextfieldState extends State<SuperAndroidTextfield> with SingleTickerProviderStateMixin {
+class _SuperAndroidTextFieldState extends State<SuperAndroidTextField> with SingleTickerProviderStateMixin {
   final _textFieldKey = GlobalKey();
   final _textFieldLayerLink = LayerLink();
   final _textContentLayerLink = LayerLink();
@@ -166,7 +167,7 @@ class _SuperAndroidTextfieldState extends State<SuperAndroidTextfield> with Sing
   }
 
   @override
-  void didUpdateWidget(SuperAndroidTextfield oldWidget) {
+  void didUpdateWidget(SuperAndroidTextField oldWidget) {
     super.didUpdateWidget(oldWidget);
 
     if (widget.focusNode != oldWidget.focusNode) {

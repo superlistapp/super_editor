@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:super_editor/src/default_editor/super_editor.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/hint_text.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/text_scrollview.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/ios/_editing_controls.dart';
 
@@ -27,14 +28,18 @@ class SuperIOSTextField extends StatefulWidget {
     Key? key,
     this.focusNode,
     this.textController,
-    required this.caretColor,
-    required this.selectionColor,
-    required this.handlesColor,
     this.textStyleBuilder = defaultStyleBuilder,
+    this.textAlign = TextAlign.left,
+    this.hintText,
+    this.hintTextStyleBuilder = defaultHintStyleBuilder,
     this.minLines,
     this.maxLines = 1,
     required this.lineHeight,
+    required this.caretColor,
+    required this.selectionColor,
+    required this.handlesColor,
     this.textInputAction = TextInputAction.done,
+    this.popoverToolbarBuilder = _defaultPopoverToolbarBuilder,
     this.showDebugPaint = false,
     this.onPerformActionPressed,
   }) : super(key: key);
@@ -46,9 +51,19 @@ class SuperIOSTextField extends StatefulWidget {
   /// this text field.
   final ImeAttributedTextEditingController? textController;
 
+  /// The alignment to use for text in this text field.
+  final TextAlign textAlign;
+
   /// Text style factory that creates styles for the content in
   /// [textController] based on the attributions in that content.
   final AttributionStyleBuilder textStyleBuilder;
+
+  /// Text displayed when the text field has no content.
+  final AttributedText? hintText;
+
+  /// Text style factory that creates styles for the [hintText],
+  /// which is displayed when [textController] is empty.
+  final AttributionStyleBuilder hintTextStyleBuilder;
 
   /// Color of the caret.
   final Color caretColor;
@@ -101,6 +116,9 @@ class SuperIOSTextField extends StatefulWidget {
   /// The type of action associated with the action button on the mobile
   /// keyboard.
   final TextInputAction textInputAction;
+
+  /// Builder that creates the popover toolbar widget that appears when text is selected.
+  final Widget Function(BuildContext, IOSEditingOverlayController) popoverToolbarBuilder;
 
   /// Whether to paint debug guides.
   final bool showDebugPaint;
