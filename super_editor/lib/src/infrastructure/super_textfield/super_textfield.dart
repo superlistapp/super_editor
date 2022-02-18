@@ -5,12 +5,19 @@ import 'package:super_editor/src/infrastructure/attributed_text.dart';
 import 'package:super_editor/src/infrastructure/super_selectable_text.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/android/android_textfield.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/desktop/desktop_textfield.dart';
+import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/attributed_text_editing_controller.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/hint_text.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/input_method_engine/_ime_text_editing_controller.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/ios/ios_textfield.dart';
 
 export 'desktop/desktop_textfield.dart';
+export 'android/android_textfield.dart';
+export 'ios/ios_textfield.dart';
 export 'input_method_engine/_ime_text_editing_controller.dart';
+export 'infrastructure/attributed_text_editing_controller.dart';
+export 'infrastructure/hint_text.dart';
+export 'infrastructure/magnifier.dart';
+export 'infrastructure/text_scrollview.dart';
 export '_test_tools.dart';
 
 /// Custom text field implementations that offer greater control than traditional
@@ -45,13 +52,14 @@ class SuperTextField extends StatefulWidget {
     this.textController,
     this.textAlign = TextAlign.left,
     this.textStyleBuilder = defaultStyleBuilder,
-    this.hintText,
-    this.hintTextStyleBuilder = defaultHintStyleBuilder,
+    this.hintBehavior = HintBehavior.displayHintUntilFocus,
+    this.hintBuilder,
     this.controlsColor,
     this.selectionColor,
-    required this.lineHeight,
     this.minLines,
     this.maxLines = 1,
+    required this.lineHeight,
+    this.keyboardHandlers = defaultTextFieldKeyboardHandlers,
   }) : super(key: key);
 
   final FocusNode? focusNode;
@@ -71,12 +79,13 @@ class SuperTextField extends StatefulWidget {
   /// [textController] based on the attributions in that content.
   final AttributionStyleBuilder textStyleBuilder;
 
-  /// Text displayed when the text field has no content.
-  final AttributedText? hintText;
+  /// Policy for when the hint should be displayed.
+  final HintBehavior hintBehavior;
 
-  /// Text style factory that creates styles for the [hintText],
-  /// which is displayed when [textController] is empty.
-  final AttributionStyleBuilder hintTextStyleBuilder;
+  /// Builder that creates the hint widget, when a hint is displayed.
+  ///
+  /// To easily build a hint with styled text, see [StyledHintBuilder].
+  final WidgetBuilder? hintBuilder;
 
   /// The color of the caret, drag handles, and other controls.
   final Color? controlsColor;
@@ -123,6 +132,12 @@ class SuperTextField extends StatefulWidget {
   /// provided and used for all text field height calculations.
   final double lineHeight;
 
+  /// Priority list of handlers that process all physical keyboard
+  /// key presses, for text input, deletion, caret movement, etc.
+  ///
+  /// Only used on desktop.
+  final List<TextFieldKeyboardHandler>? keyboardHandlers;
+
   @override
   State<SuperTextField> createState() => _SuperTextFieldState();
 }
@@ -159,8 +174,8 @@ class _SuperTextFieldState extends State<SuperTextField> {
           textController: _controller,
           textAlign: widget.textAlign,
           textStyleBuilder: widget.textStyleBuilder,
-          hintText: widget.hintText,
-          hintTextStyleBuilder: widget.hintTextStyleBuilder,
+          hintBehavior: widget.hintBehavior,
+          hintBuilder: widget.hintBuilder,
           textSelectionDecoration: TextSelectionDecoration(
             selectionColor: widget.selectionColor ?? _defaultSelectionColor,
           ),
@@ -178,8 +193,8 @@ class _SuperTextFieldState extends State<SuperTextField> {
           textController: _controller,
           textAlign: widget.textAlign,
           textStyleBuilder: widget.textStyleBuilder,
-          hintText: widget.hintText,
-          hintTextStyleBuilder: widget.hintTextStyleBuilder,
+          hintBehavior: widget.hintBehavior,
+          hintBuilder: widget.hintBuilder,
           caretColor: widget.controlsColor ?? _defaultAndroidControlsColor,
           selectionColor: widget.selectionColor ?? _defaultSelectionColor,
           handlesColor: widget.controlsColor ?? _defaultAndroidControlsColor,
@@ -193,8 +208,8 @@ class _SuperTextFieldState extends State<SuperTextField> {
           textController: _controller,
           textAlign: widget.textAlign,
           textStyleBuilder: widget.textStyleBuilder,
-          hintText: widget.hintText,
-          hintTextStyleBuilder: widget.hintTextStyleBuilder,
+          hintBehavior: widget.hintBehavior,
+          hintBuilder: widget.hintBuilder,
           caretColor: widget.controlsColor ?? _defaultIOSControlsColor,
           selectionColor: widget.selectionColor ?? _defaultSelectionColor,
           handlesColor: widget.controlsColor ?? _defaultIOSControlsColor,

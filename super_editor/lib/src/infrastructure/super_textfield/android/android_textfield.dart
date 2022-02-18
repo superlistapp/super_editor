@@ -3,8 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/android/_editing_controls.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/android/_user_interaction.dart';
-import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/hint_text.dart';
-import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/text_scrollview.dart';
 import 'package:super_editor/super_editor.dart';
 
 export '_caret.dart';
@@ -20,11 +18,11 @@ class SuperAndroidTextField extends StatefulWidget {
     this.textController,
     this.textAlign = TextAlign.left,
     this.textStyleBuilder = defaultStyleBuilder,
-    this.hintText,
-    this.hintTextStyleBuilder = defaultHintStyleBuilder,
+    this.hintBehavior = HintBehavior.displayHintUntilFocus,
+    this.hintBuilder,
     this.minLines,
     this.maxLines = 1,
-    required this.lineHeight,
+    this.lineHeight,
     required this.caretColor,
     required this.selectionColor,
     required this.handlesColor,
@@ -32,7 +30,9 @@ class SuperAndroidTextField extends StatefulWidget {
     this.popoverToolbarBuilder = _defaultAndroidToolbarBuilder,
     this.showDebugPaint = false,
     this.onPerformActionPressed,
-  }) : super(key: key);
+  })  : assert(minLines == null || minLines == 1 || lineHeight != null, 'minLines > 1 requires a non-null lineHeight'),
+        assert(maxLines == null || maxLines == 1 || lineHeight != null, 'maxLines > 1 requires a non-null lineHeight'),
+        super(key: key);
 
   /// [FocusNode] attached to this text field.
   final FocusNode? focusNode;
@@ -48,12 +48,13 @@ class SuperAndroidTextField extends StatefulWidget {
   /// [textController] based on the attributions in that content.
   final AttributionStyleBuilder textStyleBuilder;
 
-  /// Text displayed when the text field has no content.
-  final AttributedText? hintText;
+  /// Policy for when the hint should be displayed.
+  final HintBehavior hintBehavior;
 
-  /// Text style factory that creates styles for the [hintText],
-  /// which is displayed when [textController] is empty.
-  final AttributionStyleBuilder hintTextStyleBuilder;
+  /// Builder that creates the hint widget, when a hint is displayed.
+  ///
+  /// To easily build a hint with styled text, see [StyledHintBuilder].
+  final WidgetBuilder? hintBuilder;
 
   /// Color of the caret.
   final Color caretColor;
@@ -93,15 +94,16 @@ class SuperAndroidTextField extends StatefulWidget {
   ///  * [lineHeight]
   final int? maxLines;
 
-  /// The height of a single line of text in this text field, used
+  /// The height of a single line of text in this text scroll view, used
   /// with [minLines] and [maxLines] to size the text field.
   ///
-  /// An explicit [lineHeight] is required because rich text in this
-  /// text field might have lines of varying height, which would
-  /// result in a constantly changing text field height during scrolling.
-  /// To avoid that situation, a single, explicit [lineHeight] is
-  /// provided and used for all text field height calculations.
-  final double lineHeight;
+  /// An explicit [lineHeight] is required for multi-line text fields
+  /// because rich text in this text scroll view might have lines of
+  /// varying height, which would result in a constantly changing text
+  /// field height during scrolling. To avoid that situation, a single,
+  /// explicit [lineHeight] is provided and used for all text field height
+  /// calculations.
+  final double? lineHeight;
 
   /// The type of action associated with the action button on the mobile
   /// keyboard.
@@ -297,7 +299,6 @@ class _SuperAndroidTextFieldState extends State<SuperAndroidTextField> with Sing
           textFieldKey: _textFieldKey,
           textContentLayerLink: _textContentLayerLink,
           textContentKey: _textContentKey,
-          defaultLineHeight: widget.lineHeight,
           handleColor: widget.handlesColor,
           popoverToolbarBuilder: widget.popoverToolbarBuilder,
           showDebugPaint: widget.showDebugPaint,
@@ -353,35 +354,19 @@ class _SuperAndroidTextFieldState extends State<SuperAndroidTextField> with Sing
             child: ListenableBuilder(
               listenable: _textEditingController,
               builder: (context) {
-                final styleBuilder =
-                    _textEditingController.text.text.isNotEmpty ? widget.textStyleBuilder : widget.hintTextStyleBuilder;
-
-                final textSpan = _textEditingController.text.text.isNotEmpty
-                    ? _textEditingController.text.computeTextSpan(styleBuilder)
-                    : widget.hintText?.computeTextSpan(widget.hintTextStyleBuilder) ?? const TextSpan();
-
-                final emptyTextCaretHeight =
-                    (widget.textStyleBuilder({}).fontSize ?? 0.0) * (widget.textStyleBuilder({}).height ?? 1.0);
+                final isTextEmpty = _textEditingController.text.text.isEmpty;
+                final showHint = widget.hintBuilder != null &&
+                    ((isTextEmpty && widget.hintBehavior == HintBehavior.displayHintUntilTextEntered) ||
+                        (isTextEmpty &&
+                            !_focusNode.hasFocus &&
+                            widget.hintBehavior == HintBehavior.displayHintUntilFocus));
 
                 return CompositedTransformTarget(
                   link: _textContentLayerLink,
                   child: Stack(
                     children: [
-                      // TODO: switch out textSelectionDecoration and textCaretFactory
-                      //       for backgroundBuilders and foregroundBuilders, respectively
-                      //
-                      //       add the floating cursor as a foreground builder
-                      SuperSelectableText(
-                        key: _textContentKey,
-                        textSpan: textSpan,
-                        textSelection: _textEditingController.selection,
-                        textSelectionDecoration: TextSelectionDecoration(selectionColor: widget.selectionColor),
-                        showCaret: true,
-                        textCaretFactory: AndroidTextCaretFactory(
-                          color: widget.caretColor,
-                          emptyTextCaretHeight: emptyTextCaretHeight,
-                        ),
-                      ),
+                      if (showHint) widget.hintBuilder!(context),
+                      _buildSelectableText(),
                     ],
                   ),
                 );
@@ -389,6 +374,31 @@ class _SuperAndroidTextFieldState extends State<SuperAndroidTextField> with Sing
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildSelectableText() {
+    final textSpan = _textEditingController.text.text.isNotEmpty
+        ? _textEditingController.text.computeTextSpan(widget.textStyleBuilder)
+        : TextSpan(text: "", style: widget.textStyleBuilder({}));
+
+    final emptyTextCaretHeight =
+        (widget.textStyleBuilder({}).fontSize ?? 0.0) * (widget.textStyleBuilder({}).height ?? 1.0);
+
+    // TODO: switch out textSelectionDecoration and textCaretFactory
+    //       for backgroundBuilders and foregroundBuilders, respectively
+    //
+    //       add the floating cursor as a foreground builder
+    return SuperSelectableText(
+      key: _textContentKey,
+      textSpan: textSpan,
+      textSelection: _textEditingController.selection,
+      textSelectionDecoration: TextSelectionDecoration(selectionColor: widget.selectionColor),
+      showCaret: true,
+      textCaretFactory: AndroidTextCaretFactory(
+        color: widget.caretColor,
+        emptyTextCaretHeight: emptyTextCaretHeight,
       ),
     );
   }

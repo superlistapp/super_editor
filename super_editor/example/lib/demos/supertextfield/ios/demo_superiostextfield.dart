@@ -40,6 +40,12 @@ class _SuperIOSTextFieldDemoState extends State<SuperIOSTextFieldDemo> {
     return SuperIOSTextField(
       textController: config.controller,
       textStyleBuilder: config.styleBuilder,
+      hintBehavior: HintBehavior.displayHintUntilTextEntered,
+      hintBuilder: StyledHintBuilder(
+          hintText: AttributedText(text: "Enter text"),
+          hintTextStyleBuilder: (attributions) {
+            return config.styleBuilder(attributions).copyWith(color: Colors.grey);
+          }).build,
       selectionColor: Colors.blue.withOpacity(0.4),
       caretColor: Colors.blue,
       handlesColor: Colors.blue,
