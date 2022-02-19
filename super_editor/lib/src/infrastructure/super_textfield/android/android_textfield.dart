@@ -393,6 +393,7 @@ class _SuperAndroidTextFieldState extends State<SuperAndroidTextField> with Sing
     return SuperSelectableText(
       key: _textContentKey,
       textSpan: textSpan,
+      textAlign: widget.textAlign,
       textSelection: _textEditingController.selection,
       textSelectionDecoration: TextSelectionDecoration(selectionColor: widget.selectionColor),
       showCaret: true,

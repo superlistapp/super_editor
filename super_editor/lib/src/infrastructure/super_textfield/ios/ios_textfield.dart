@@ -424,6 +424,7 @@ class _SuperIOSTextFieldState extends State<SuperIOSTextField> with SingleTicker
     return SuperSelectableText(
       key: _textContentKey,
       textSpan: textSpan,
+      textAlign: widget.textAlign,
       textSelection: _textEditingController.selection,
       textSelectionDecoration: TextSelectionDecoration(selectionColor: widget.selectionColor),
       showCaret: true,

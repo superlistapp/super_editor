@@ -58,9 +58,11 @@ class SuperTextField extends StatefulWidget {
     this.selectionColor,
     this.minLines,
     this.maxLines = 1,
-    required this.lineHeight,
+    this.lineHeight,
     this.keyboardHandlers = defaultTextFieldKeyboardHandlers,
-  }) : super(key: key);
+  })  : assert(minLines == null || minLines == 1 || lineHeight != null, 'minLines > 1 requires a non-null lineHeight'),
+        assert(maxLines == null || maxLines == 1 || lineHeight != null, 'maxLines > 1 requires a non-null lineHeight'),
+        super(key: key);
 
   final FocusNode? focusNode;
 
@@ -130,7 +132,7 @@ class SuperTextField extends StatefulWidget {
   /// result in a constantly changing text field height during scrolling.
   /// To avoid that situation, a single, explicit [lineHeight] is
   /// provided and used for all text field height calculations.
-  final double lineHeight;
+  final double? lineHeight;
 
   /// Priority list of handlers that process all physical keyboard
   /// key presses, for text input, deletion, caret movement, etc.
