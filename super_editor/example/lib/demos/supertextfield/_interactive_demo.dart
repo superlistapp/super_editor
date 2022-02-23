@@ -132,7 +132,7 @@ class _InteractiveTextFieldDemoState extends State<InteractiveTextFieldDemo> {
             },
             child: SizedBox(
               width: double.infinity,
-              child: SuperTextField(
+              child: SuperDesktopTextField(
                 textController: _textFieldController,
                 focusNode: _focusNode,
                 textStyleBuilder: _textStyleBuilder,

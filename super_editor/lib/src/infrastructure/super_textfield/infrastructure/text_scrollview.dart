@@ -78,11 +78,12 @@ class TextScrollView extends StatefulWidget {
   /// The height of a single line of text in this text scroll view, used
   /// with [minLines] and [maxLines] to size the text field.
   ///
-  /// An explicit [lineHeight] is required because rich text in this
-  /// text scroll view might have lines of varying height, which would
-  /// result in a constantly changing text field height during scrolling.
-  /// To avoid that situation, a single, explicit [lineHeight] is
-  /// provided and used for all text field height calculations.
+  /// An explicit [lineHeight] is required for multi-line text fields
+  /// because rich text in this text scroll view might have lines of
+  /// varying height, which would result in a constantly changing text
+  /// field height during scrolling. To avoid that situation, a single,
+  /// explicit [lineHeight] is provided and used for all text field height
+  /// calculations.
   final double? lineHeight;
 
   /// The time it takes to scroll to the next line, when auto-scrolling.
