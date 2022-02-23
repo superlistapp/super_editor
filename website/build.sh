@@ -5,7 +5,7 @@ git clone https://github.com/flutter/flutter.git
 FLUTTER=flutter/bin/flutter
 
 # Make sure we're on the stable channel & precache web artifacts
-DIR=$("${FLUTTER} channel stable" >& /dev/stdout)
+$FLUTTER channel stable
 $FLUTTER precache --web
 
 # Build the website in release mode
