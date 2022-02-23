@@ -20,7 +20,7 @@ class TextFieldDemoRobot {
   final FocusNode? focusNode;
   final TickerProvider tickerProvider;
   final AttributedTextEditingController textController;
-  final GlobalKey<SuperTextFieldState>? textKey;
+  final GlobalKey<SuperDesktopTextFieldState>? textKey;
 
   final List<RobotCommand> _commands = [];
   bool _executionDesired = false;
@@ -106,7 +106,7 @@ abstract class RobotCommand {
   Future<void> run(
     FocusNode? focusNode,
     AttributedTextEditingController textController,
-    GlobalKey<SuperTextFieldState>? textKey,
+    GlobalKey<SuperDesktopTextFieldState>? textKey,
   );
 
   void cancel();
@@ -129,7 +129,7 @@ class TypeTextCommand implements RobotCommand {
   Future<void> run(
     FocusNode? focusNode,
     AttributedTextEditingController textController,
-    GlobalKey<SuperTextFieldState>? textKey,
+    GlobalKey<SuperDesktopTextFieldState>? textKey,
   ) async {
     if (textController.selection.extentOffset == -1) {
       print('Can\'t type text because the text field doesn\'t have a valid selection.');
@@ -212,7 +212,7 @@ class DeleteCharactersCommand implements RobotCommand {
   Future<void> run(
     FocusNode? focusNode,
     AttributedTextEditingController textController,
-    GlobalKey<SuperTextFieldState>? textKey,
+    GlobalKey<SuperDesktopTextFieldState>? textKey,
   ) async {
     if (textController.selection.extentOffset == -1) {
       print('Can\'t delete characters because the text field doesn\'t have a valid selection.');
@@ -309,7 +309,7 @@ class InsertCaretCommand implements RobotCommand {
   Future<void> run(
     FocusNode? focusNode,
     AttributedTextEditingController textController,
-    GlobalKey<SuperTextFieldState>? textKey,
+    GlobalKey<SuperDesktopTextFieldState>? textKey,
   ) async {
     focusNode!.requestFocus();
     textController.selection = TextSelection.collapsed(offset: caretPosition.offset);
@@ -330,7 +330,7 @@ class SelectTextCommand implements RobotCommand {
   Future<void> run(
     FocusNode? focusNode,
     AttributedTextEditingController textController,
-    GlobalKey<SuperTextFieldState>? textKey,
+    GlobalKey<SuperDesktopTextFieldState>? textKey,
   ) async {
     focusNode!.requestFocus();
     textController.selection = selection;
@@ -355,7 +355,7 @@ class PauseCommand implements RobotCommand {
   Future<void> run(
     FocusNode? focusNode,
     AttributedTextEditingController textController,
-    GlobalKey<SuperTextFieldState>? textKey,
+    GlobalKey<SuperDesktopTextFieldState>? textKey,
   ) async {
     _completer = Completer();
 

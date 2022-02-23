@@ -7,9 +7,9 @@ import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/super_selectable_text.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/magnifier.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/android/android_textfield.dart';
+import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/attributed_text_editing_controller.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/text_scrollview.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/toolbar_position_delegate.dart';
-import 'package:super_editor/src/infrastructure/super_textfield/super_textfield.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
 
 final _log = androidTextFieldLog;
@@ -32,7 +32,6 @@ class AndroidEditingOverlayControls extends StatefulWidget {
     required this.textContentKey,
     required this.textFieldLayerLink,
     required this.textContentLayerLink,
-    required this.defaultLineHeight,
     required this.handleColor,
     required this.popoverToolbarBuilder,
     this.showDebugPaint = false,
@@ -62,10 +61,6 @@ class AndroidEditingOverlayControls extends StatefulWidget {
   /// [GlobalKey] that references the [SuperSelectableTextState] within
   /// the text field.
   final GlobalKey<SuperSelectableTextState> textContentKey;
-
-  /// The line height to use to paint the caret when there's no text
-  /// in the field to measure.
-  final double defaultLineHeight;
 
   /// The color of the selection handles.
   final Color handleColor;
@@ -522,7 +517,7 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
     _log.finer('Collapsed handle text offset: $extentHandleOffsetInText');
     double extentLineHeight = widget.textContentKey.currentState!.getCharacterBox(extentTextPosition).toRect().height;
     if (widget.editingController.textController.text.text.isEmpty) {
-      extentLineHeight = widget.defaultLineHeight;
+      extentLineHeight = widget.textContentKey.currentState!.getLineHeightAtPosition(extentTextPosition);
     }
 
     if (extentHandleOffsetInText == const Offset(0, 0) && extentTextPosition.offset != 0) {

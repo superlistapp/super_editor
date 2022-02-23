@@ -30,20 +30,27 @@ class ImeAttributedTextEditingController
     with ChangeNotifier
     implements AttributedTextEditingController, DeltaTextInputClient {
   ImeAttributedTextEditingController({
-    final AttributedTextEditingController? controller,
-    final void Function(RawFloatingCursorPoint)? onIOSFloatingCursorChange,
+    AttributedTextEditingController? controller,
+    bool disposeClientController = true,
+    void Function(RawFloatingCursorPoint)? onIOSFloatingCursorChange,
   })  : _realController = controller ?? AttributedTextEditingController(),
+        _disposeClientController = disposeClientController,
         _onIOSFloatingCursorChange = onIOSFloatingCursorChange {
     _realController.addListener(_onTextChange);
   }
 
   @override
   void dispose() {
-    _realController.dispose();
+    if (_disposeClientController) {
+      _realController.dispose();
+    }
+
     super.dispose();
   }
 
   final AttributedTextEditingController _realController;
+
+  final bool _disposeClientController;
 
   void Function(RawFloatingCursorPoint)? _onIOSFloatingCursorChange;
 
