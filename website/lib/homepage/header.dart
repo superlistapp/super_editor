@@ -1,12 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class Header extends StatelessWidget {
-  const Header({
-    @required this.displayCollapsedNavigation,
-  });
-
+  const Header({required this.displayCollapsedNavigation});
   final bool displayCollapsedNavigation;
 
   @override
@@ -54,9 +50,9 @@ class Header extends StatelessWidget {
 
 class DrawerLayout extends StatefulWidget {
   const DrawerLayout({
-    @required this.isNavigationCollapsed,
-    @required this.child,
-  }) : assert(child != null);
+    required this.isNavigationCollapsed,
+    required this.child,
+  });
 
   final bool isNavigationCollapsed;
   final Widget child;
@@ -163,10 +159,7 @@ class _DrawerLayoutState extends State<DrawerLayout> {
 }
 
 class _Link extends StatelessWidget {
-  const _Link({@required this.url, @required this.child})
-      : assert(url != null),
-        assert(child != null);
-
+  const _Link({required this.url, required this.child});
   final String url;
   final Widget child;
 

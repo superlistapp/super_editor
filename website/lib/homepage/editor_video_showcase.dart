@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:website/shims/dart_ui.dart' as ui;
 
 class EditorVideoShowcase extends StatefulWidget {
-  const EditorVideoShowcase({@required this.url, @required this.isCompact});
+  const EditorVideoShowcase({required this.url, required this.isCompact});
   final String url;
   final bool isCompact;
 

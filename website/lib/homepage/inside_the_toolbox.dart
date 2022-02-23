@@ -77,8 +77,7 @@ class InsideTheToolbox extends StatelessWidget {
   Widget _buildSelectableText() {
     return _buildToolDescription(
       title: 'SelectableText',
-      description:
-          "Super Editor includes a SelectableText widget built from the ground up. Instead of building "
+      description: "Super Editor includes a SelectableText widget built from the ground up. Instead of building "
           "gesture detection into SelectableText, we provide all the painting abilities, and you hook up whatever "
           "gestures you'd like. This makes Super Editor's SelectableText fundamentally different and more composable "
           "than Flutter's SelectableText.\n\nSuper Editor's text editor and SuperTextField are both based on this "
@@ -93,8 +92,7 @@ class InsideTheToolbox extends StatelessWidget {
             borderRadius: BorderRadius.circular(4),
           ),
           child: SuperSelectableText.plain(
-            text:
-                'This text is selectable. The caret and selection rendering is custom.',
+            text: 'This text is selectable. The caret and selection rendering is custom.',
             textSelection: const TextSelection(
               baseOffset: 13,
               extentOffset: 23,
@@ -113,9 +111,8 @@ class InsideTheToolbox extends StatelessWidget {
   Widget _buildAttributedText() {
     return _buildToolDescription(
       title: 'AttributedText',
-      description:
-          "At the heart of everything in Super Editor is AttributedText, a representation of text along with"
-          " any number of \"attributions\". These attributions can represent styles, like bold and italics, or more "
+      description: "At the heart of everything in Super Editor is AttributedText, a representation of text along with"
+          ' any number of "attributions". These attributions can represent styles, like bold and italics, or more '
           "complicated things like links.\n\nThe closest thing that Flutter offers to Super Editor's AttributedText "
           "is TextSpans, which are used for applying partial styles to text. But TextSpans include rendering-specific"
           " references, and they don't support overlapping spans. AttributedText has nothing to do with rendering, "
@@ -125,9 +122,9 @@ class InsideTheToolbox extends StatelessWidget {
   }
 
   Widget _buildToolDescription({
-    @required String title,
-    @required String description,
-    @required Widget demo,
+    required String title,
+    required String description,
+    required Widget demo,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 60.0),
@@ -177,8 +174,9 @@ class _AttributedTextDemoState extends State<_AttributedTextDemo> {
   final List<TextRange> _boldRanges = [];
   final List<TextRange> _italicsRanges = [];
   final List<TextRange> _strikethroughRanges = [];
-  TextSpan _richText;
-  String _plainText;
+
+  late String _plainText;
+  TextSpan? _richText;
 
   @override
   void initState() {
@@ -224,7 +222,7 @@ class _AttributedTextDemoState extends State<_AttributedTextDemo> {
         }
         return newStyle;
       });
-      _plainText = _richText.toPlainText();
+      _plainText = _richText!.toPlainText();
     });
   }
 
@@ -284,8 +282,8 @@ class _AttributedTextDemoState extends State<_AttributedTextDemo> {
 
 class TextRangeSelector extends StatefulWidget {
   const TextRangeSelector({
-    Key key,
-    @required this.cellCount,
+    Key? key,
+    required this.cellCount,
     this.cellWidth = 10,
     this.cellHeight = 10,
     this.onRangesChange,
@@ -294,15 +292,15 @@ class TextRangeSelector extends StatefulWidget {
   final int cellCount;
   final double cellWidth;
   final double cellHeight;
-  final void Function(List<TextRange>) onRangesChange;
+  final void Function(List<TextRange>)? onRangesChange;
 
   @override
   _TextRangeSelectorState createState() => _TextRangeSelectorState();
 }
 
 class _TextRangeSelectorState extends State<TextRangeSelector> {
-  List<bool> _selectedCells;
-  String _selectionMode;
+  late List<bool> _selectedCells;
+  String? _selectionMode;
 
   @override
   void initState() {
@@ -315,8 +313,7 @@ class _TextRangeSelectorState extends State<TextRangeSelector> {
   }
 
   void _onTapUp(TapUpDetails details) {
-    final selectedCellIndex =
-        _getCellIndexFromLocalOffset(details.localPosition);
+    final selectedCellIndex = _getCellIndexFromLocalOffset(details.localPosition);
     setState(() {
       _selectedCells[selectedCellIndex] = !_selectedCells[selectedCellIndex];
       _reportSelectedRanges();
@@ -324,14 +321,12 @@ class _TextRangeSelectorState extends State<TextRangeSelector> {
   }
 
   void _onPanStart(DragStartDetails details) {
-    final selectedCellIndex =
-        _getCellIndexFromLocalOffset(details.localPosition);
+    final selectedCellIndex = _getCellIndexFromLocalOffset(details.localPosition);
     _selectionMode = _selectedCells[selectedCellIndex] ? 'deselect' : 'select';
   }
 
   void _onPanUpdate(DragUpdateDetails details) {
-    final selectedCellIndex =
-        _getCellIndexFromLocalOffset(details.localPosition);
+    final selectedCellIndex = _getCellIndexFromLocalOffset(details.localPosition);
     setState(() {
       _selectedCells[selectedCellIndex] = _selectionMode == 'select';
       _reportSelectedRanges();
@@ -339,9 +334,7 @@ class _TextRangeSelectorState extends State<TextRangeSelector> {
   }
 
   int _getCellIndexFromLocalOffset(Offset localOffset) {
-    return ((localOffset.dx / widget.cellWidth).floor())
-        .clamp(0.0, widget.cellCount - 1)
-        .toInt();
+    return ((localOffset.dx / widget.cellWidth).floor()).clamp(0.0, widget.cellCount - 1).toInt();
   }
 
   void _reportSelectedRanges() {
@@ -365,7 +358,7 @@ class _TextRangeSelectorState extends State<TextRangeSelector> {
       ranges.add(TextRange(start: rangeStart, end: widget.cellCount - 1));
     }
 
-    widget.onRangesChange(ranges);
+    widget.onRangesChange?.call(ranges);
   }
 
   @override
@@ -382,11 +375,8 @@ class _TextRangeSelectorState extends State<TextRangeSelector> {
             width: widget.cellWidth,
             height: widget.cellHeight,
             decoration: BoxDecoration(
-              border: Border.all(
-                  color: _isSelected(index) ? Colors.tealAccent : Colors.grey),
-              color: _isSelected(index)
-                  ? Colors.tealAccent.withOpacity(0.7)
-                  : Colors.grey.withOpacity(0.7),
+              border: Border.all(color: _isSelected(index) ? Colors.tealAccent : Colors.grey),
+              color: _isSelected(index) ? Colors.tealAccent.withOpacity(0.7) : Colors.grey.withOpacity(0.7),
             ),
           ),
         ),
