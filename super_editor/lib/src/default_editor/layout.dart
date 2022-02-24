@@ -1,13 +1,12 @@
+import 'dart:math';
+
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
-
-final _log = Logger(scope: 'DocumentLayout');
 
 /// Displays a `Document` as a single column.
 ///
@@ -101,7 +100,7 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
       // to the exact width, that x-value is considered outside the
       // component RenderBox's. However, 1px less than that is
       // considered to be within the component RenderBox's.
-      rawDocumentOffset.dx.clamp(1.0, docBox.size.width - 1),
+      rawDocumentOffset.dx.clamp(1.0, max(docBox.size.width - 1.0, 1.0)),
       rawDocumentOffset.dy,
     );
     editorLayoutLog.info('Getting document position near offset: $documentOffset');
