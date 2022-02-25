@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 
+/// Builder that runs every time one of the given [listenables] changes.
 class MultiListenableBuilder extends StatefulWidget {
   const MultiListenableBuilder({
     Key? key,

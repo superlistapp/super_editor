@@ -19,6 +19,7 @@ class _MobileEditingIOSDemoState extends State<MobileEditingIOSDemo> {
   late Document _doc;
   late DocumentEditor _docEditor;
   late DocumentComposer _composer;
+  late CommonEditorOperations _docOps;
 
   FocusNode? _editorFocusNode;
 
@@ -28,6 +29,11 @@ class _MobileEditingIOSDemoState extends State<MobileEditingIOSDemo> {
     _doc = _createInitialDocument();
     _docEditor = DocumentEditor(document: _doc as MutableDocument);
     _composer = DocumentComposer();
+    _docOps = CommonEditorOperations(
+      editor: _docEditor,
+      composer: _composer,
+      documentLayoutResolver: () => _docLayoutKey.currentState as DocumentLayout,
+    );
     _editorFocusNode = FocusNode();
   }
 
@@ -47,35 +53,26 @@ class _MobileEditingIOSDemoState extends State<MobileEditingIOSDemo> {
             child: SuperEditor(
               focusNode: _editorFocusNode,
               documentLayoutKey: _docLayoutKey,
-              gestureMode: DocumentGestureMode.iOS,
-              inputSource: DocumentInputSource.ime,
-              iOSToolbarBuilder: (_) => IOSTextEditingFloatingToolbar(
-                onCopyPressed: () {
-                  // TODO:
-                },
-                onCutPressed: () {
-                  // TODO:
-                },
-                onPastePressed: () {
-                  // TODO:
-                },
-              ),
               editor: _docEditor,
               composer: _composer,
               padding: const EdgeInsets.all(16),
+              gestureMode: DocumentGestureMode.iOS,
+              inputSource: DocumentInputSource.ime,
+              iOSToolbarBuilder: (_) => IOSTextEditingFloatingToolbar(
+                onCutPressed: () => _docOps.cut(),
+                onCopyPressed: () => _docOps.copy(),
+                onPastePressed: () => _docOps.paste(),
+              ),
               createOverlayControlsClipper: (_) => const KeyboardToolbarClipper(),
             ),
           ),
-          AnimatedBuilder(
-              animation: _doc,
-              builder: (context, child) {
-                return AnimatedBuilder(
-                  animation: _composer.selectionNotifier,
-                  builder: (context, child) {
-                    return _buildMountedToolbar();
-                  },
-                );
-              }),
+          MultiListenableBuilder(
+            listenables: <Listenable>{
+              _doc,
+              _composer.selectionNotifier,
+            },
+            builder: (_) => _buildMountedToolbar(),
+          ),
         ],
       ),
     );
@@ -91,11 +88,7 @@ class _MobileEditingIOSDemoState extends State<MobileEditingIOSDemo> {
     return KeyboardEditingToolbar(
       document: _doc,
       composer: _composer,
-      commonOps: CommonEditorOperations(
-        editor: _docEditor,
-        composer: _composer,
-        documentLayoutResolver: () => _docLayoutKey.currentState as DocumentLayout,
-      ),
+      commonOps: _docOps,
     );
   }
 
