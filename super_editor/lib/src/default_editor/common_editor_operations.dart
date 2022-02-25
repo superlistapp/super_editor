@@ -2094,6 +2094,8 @@ class CommonEditorOperations {
     return extentNode is TextNode;
   }
 
+  /// Serializes the current selection to plain text, and adds it to the
+  /// clipboard.
   void copy() {
     final textToCopy = _textInSelection(
       document: editor.document,
@@ -2104,6 +2106,8 @@ class CommonEditorOperations {
     _saveToClipboard(textToCopy);
   }
 
+  /// Serializes the current selection to plain text, adds it to the
+  /// clipboard, and then deletes the selected content.
   void cut() {
     final textToCut = _textInSelection(
       document: editor.document,
@@ -2176,6 +2180,12 @@ class CommonEditorOperations {
     return buffer.toString();
   }
 
+  /// Deletes all selected content, and then pastes the current clipboard
+  /// content at the given location.
+  ///
+  /// The clipboard operation is asynchronous. As a result, if the user quickly
+  /// moves the caret, it's possible that the clipboard content will be pasted
+  /// at the wrong spot.
   void paste() {
     DocumentPosition pastePosition = composer.selection!.extent;
 

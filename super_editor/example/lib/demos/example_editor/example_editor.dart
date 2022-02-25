@@ -202,14 +202,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
         Expanded(
           child: _buildEditor(),
         ),
-        if (_isMobile)
-          MultiListenableBuilder(
-            listenables: <Listenable>{
-              _doc,
-              _composer.selectionNotifier,
-            },
-            builder: (_) => _buildMountedToolbar(),
-          ),
+        if (_isMobile) _buildMountedToolbar(),
       ],
     );
   }
@@ -246,10 +239,16 @@ class _ExampleEditorState extends State<ExampleEditor> {
       return const SizedBox();
     }
 
-    return KeyboardEditingToolbar(
-      document: _doc,
-      composer: _composer,
-      commonOps: _docOps,
+    return MultiListenableBuilder(
+      listenables: <Listenable>{
+        _doc,
+        _composer.selectionNotifier,
+      },
+      builder: (_) => KeyboardEditingToolbar(
+        document: _doc,
+        composer: _composer,
+        commonOps: _docOps,
+      ),
     );
   }
 }
