@@ -301,7 +301,7 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     editorGesturesLog.info("Tap down on document");
     final docOffset = _getDocOffset(details.localPosition);
     editorGesturesLog.fine(" - document offset: $docOffset");
-    final docPosition = _docLayout.getDocumentPositionAtOffset(docOffset);
+    final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
     editorGesturesLog.fine(" - tapped document position: $docPosition");
 
     _focusNode.requestFocus();
@@ -332,7 +332,7 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     editorGesturesLog.info("Double tap down on document");
     final docOffset = _getDocOffset(details.localPosition);
     editorGesturesLog.fine(" - document offset: $docOffset");
-    final docPosition = _docLayout.getDocumentPositionAtOffset(docOffset);
+    final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
     editorGesturesLog.fine(" - tapped document position: $docPosition");
 
     if (docPosition != null) {
@@ -393,7 +393,7 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     editorGesturesLog.info("Triple down down on document");
     final docOffset = _getDocOffset(details.localPosition);
     editorGesturesLog.fine(" - document offset: $docOffset");
-    final docPosition = _docLayout.getDocumentPositionAtOffset(docOffset);
+    final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
     editorGesturesLog.fine(" - tapped document position: $docPosition");
 
     if (docPosition != null) {
