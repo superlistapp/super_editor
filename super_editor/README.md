@@ -1,3 +1,5 @@
+<img src="docs/marketing/readme-header.png" width="100%" alt="Super Editor">
+
 # Super Editor
 
 Super Editor is an open source, configurable, extensible text editor and document renderer for Flutter apps.
@@ -14,6 +16,8 @@ Super Editor is actively developed against these platforms.
 
  * Mac OS
  * Web
+ * Android
+ * iOS
 
 **Unverified**
 
@@ -21,13 +25,6 @@ These platforms might work, but Super Editor is not developing against them.
 
  * Windows
  * Linux
-
-**Not Yet Supported**
-
-These platforms are explicitly not supported at this time because mobile input is fundamentally different than desktop input. 
-
- * Android
- * iOS
 
 ## Run the example implementation
 

@@ -1,3 +1,8 @@
+## [0.2.0] - Feb, 2022: Mobile Support
+ * Mobile document editing
+ * Mobile text field editing
+ * More document style controls
+
 ## [0.1.0] - June 3, 2021
 
 The first release of Super Editor.
