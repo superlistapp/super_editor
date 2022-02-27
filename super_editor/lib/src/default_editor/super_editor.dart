@@ -83,7 +83,7 @@ class SuperEditor extends StatefulWidget {
     required this.editor,
     this.composer,
     this.componentVerticalSpacing = 16,
-    this.showDebugPaint = false,
+    this.debugPaint = const DebugPaintConfig(),
     this.autofocus = false,
   })  : componentBuilders = defaultComponentBuilders,
         keyboardActions = defaultKeyboardActions,
@@ -113,7 +113,7 @@ class SuperEditor extends StatefulWidget {
     this.softwareKeyboardHandler,
     List<ComponentBuilder>? componentBuilders,
     this.componentVerticalSpacing = 16,
-    this.showDebugPaint = false,
+    this.debugPaint = const DebugPaintConfig(),
     this.autofocus = false,
   })  : textStyleBuilder = textStyleBuilder ?? defaultStyleBuilder,
         selectionStyle = selectionStyle ?? defaultSelectionStyle,
@@ -143,7 +143,7 @@ class SuperEditor extends StatefulWidget {
     this.softwareKeyboardHandler,
     List<ComponentBuilder>? componentBuilders,
     this.componentVerticalSpacing = 16,
-    this.showDebugPaint = false,
+    this.debugPaint = const DebugPaintConfig(),
     this.autofocus = false,
   })  : textStyleBuilder = textStyleBuilder ?? defaultStyleBuilder,
         selectionStyle = selectionStyle ?? defaultSelectionStyle,
@@ -240,7 +240,7 @@ class SuperEditor extends StatefulWidget {
 
   /// Paints some extra visual ornamentation to help with
   /// debugging, when true.
-  final bool showDebugPaint;
+  final DebugPaintConfig debugPaint;
 
   @override
   _SuperEditorState createState() => _SuperEditorState();
@@ -437,7 +437,7 @@ class _SuperEditorState extends State<SuperEditor> {
           focusNode: _focusNode,
           editContext: _editContext,
           scrollController: widget.scrollController,
-          showDebugPaint: widget.showDebugPaint,
+          showDebugPaint: widget.debugPaint.gestures,
           child: child,
         );
       case DocumentGestureMode.android:
@@ -450,7 +450,7 @@ class _SuperEditorState extends State<SuperEditor> {
           documentKey: _docLayoutKey,
           popoverToolbarBuilder: widget.androidToolbarBuilder ?? (_) => const SizedBox(),
           createOverlayControlsClipper: widget.createOverlayControlsClipper,
-          showDebugPaint: widget.showDebugPaint,
+          showDebugPaint: widget.debugPaint.gestures,
           child: child,
         );
       case DocumentGestureMode.iOS:
@@ -464,7 +464,7 @@ class _SuperEditorState extends State<SuperEditor> {
           popoverToolbarBuilder: widget.iOSToolbarBuilder ?? (_) => const SizedBox(),
           floatingCursorController: _floatingCursorController,
           createOverlayControlsClipper: widget.createOverlayControlsClipper,
-          showDebugPaint: widget.showDebugPaint,
+          showDebugPaint: widget.debugPaint.gestures,
           child: child,
         );
     }
@@ -496,7 +496,7 @@ class _SuperEditorState extends State<SuperEditor> {
               textStylesExtensionKey: widget.textStyleBuilder,
               selectionStylesExtensionKey: widget.selectionStyle,
             },
-            showDebugPaint: widget.showDebugPaint,
+            showDebugPaint: widget.debugPaint.layout,
           );
         },
       ),
@@ -513,6 +513,19 @@ enum DocumentGestureMode {
   mouse,
   android,
   iOS,
+}
+
+/// Configures the aspects of the editor that show debug paint.
+class DebugPaintConfig {
+  const DebugPaintConfig({
+    this.scrolling = false,
+    this.gestures = false,
+    this.layout = false,
+  });
+
+  final bool scrolling;
+  final bool gestures;
+  final bool layout;
 }
 
 /// Default visual styles related to content selection.
