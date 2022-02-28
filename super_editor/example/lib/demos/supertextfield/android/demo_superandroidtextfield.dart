@@ -1,5 +1,4 @@
 import 'package:example/demos/supertextfield/_mobile_textfield_demo.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:super_editor/super_editor.dart';
@@ -37,9 +36,15 @@ class _SuperAndroidTextFieldDemoState extends State<SuperAndroidTextFieldDemo> {
     final genericTextStyle = config.styleBuilder({});
     final lineHeight = genericTextStyle.fontSize! * (genericTextStyle.height ?? 1.0);
 
-    return SuperAndroidTextfield(
+    return SuperAndroidTextField(
       textController: config.controller,
       textStyleBuilder: config.styleBuilder,
+      hintBehavior: HintBehavior.displayHintUntilTextEntered,
+      hintBuilder: StyledHintBuilder(
+          hintText: AttributedText(text: "Enter text"),
+          hintTextStyleBuilder: (attributions) {
+            return config.styleBuilder(attributions).copyWith(color: Colors.grey);
+          }).build,
       selectionColor: Colors.blue.withOpacity(0.4),
       caretColor: Colors.green,
       handlesColor: Colors.lightGreen,

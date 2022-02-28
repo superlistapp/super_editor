@@ -10,15 +10,15 @@ extension SuperTextFieldTesting on WidgetTester {
   Future<void> tapAtSuperTextPosition(Finder finder, int offset) async {
     final match = _findSuperTextField(finder);
 
-    if (match.widget is SuperTextField) {
-      final didTap = await _tapAtTextPositionOnDesktop(state<SuperTextFieldState>(finder), offset);
+    if (match.widget is SuperDesktopTextField) {
+      final didTap = await _tapAtTextPositionOnDesktop(state<SuperDesktopTextFieldState>(finder), offset);
       if (!didTap) {
         throw Exception("The desired text offset wasn't tappable in SuperTextField: $offset");
       }
       return;
     }
 
-    if (match.widget is SuperAndroidTextfield) {
+    if (match.widget is SuperAndroidTextField) {
       throw Exception("Entering text on an Android SuperTextField is not yet supported");
     }
 
@@ -29,7 +29,7 @@ extension SuperTextFieldTesting on WidgetTester {
     throw Exception("Couldn't find a SuperTextField with the given Finder: $finder");
   }
 
-  Future<bool> _tapAtTextPositionOnDesktop(SuperTextFieldState textField, int offset) async {
+  Future<bool> _tapAtTextPositionOnDesktop(SuperDesktopTextFieldState textField, int offset) async {
     final textPositionOffset = textField.textLayout.getOffsetForCaret(TextPosition(offset: offset));
     final textFieldBox = textField.context.findRenderObject() as RenderBox;
 
@@ -45,12 +45,12 @@ extension SuperTextFieldTesting on WidgetTester {
   Future<void> enterSuperTextPlain(Finder finder, String plainText) async {
     final match = _findSuperTextField(finder);
 
-    if (match.widget is SuperTextField) {
+    if (match.widget is SuperDesktopTextField) {
       await _enterTextOnDesktop(plainText);
       return;
     }
 
-    if (match.widget is SuperAndroidTextfield) {
+    if (match.widget is SuperAndroidTextField) {
       throw Exception("Entering text on an Android SuperTextField is not yet supported");
     }
 

@@ -8,11 +8,11 @@ void main() {
       testWidgets("in empty field", (tester) async {
         await _pumpDesktopScaffold(tester);
 
-        await tester.tap(find.byType(SuperTextField));
+        await tester.tap(find.byType(SuperDesktopTextField));
         await tester.pumpAndSettle();
 
         await tester.enterSuperTextPlain(
-          find.byType(SuperTextField),
+          find.byType(SuperDesktopTextField),
           // TODO: we can only send lowercase text until Flutter bug #96021 is resolved
           "hello world",
         );
@@ -23,11 +23,11 @@ void main() {
       testWidgets("shift characters", (tester) async {
         await _pumpDesktopScaffold(tester);
 
-        await tester.tap(find.byType(SuperTextField));
+        await tester.tap(find.byType(SuperDesktopTextField));
         await tester.pumpAndSettle();
 
         await tester.enterSuperTextPlain(
-          find.byType(SuperTextField),
+          find.byType(SuperDesktopTextField),
           "@",
         );
 
@@ -38,12 +38,12 @@ void main() {
       testWidgets("doesn't support Android", (tester) async {
         await _pumpAndroidScaffold(tester);
 
-        await tester.tap(find.byType(SuperAndroidTextfield));
+        await tester.tap(find.byType(SuperAndroidTextField));
         await tester.pumpAndSettle();
 
         await expectLater(() async {
           await tester.enterSuperTextPlain(
-            find.byType(SuperAndroidTextfield),
+            find.byType(SuperAndroidTextField),
             "a",
           );
         }, throwsException);
@@ -71,7 +71,7 @@ void main() {
           ),
         );
 
-        final textFieldFinder = find.byType(SuperTextField);
+        final textFieldFinder = find.byType(SuperDesktopTextField);
 
         await tester.tapAtSuperTextPosition(textFieldFinder, 6);
         await tester.pumpAndSettle();
@@ -90,7 +90,7 @@ void main() {
 Future<void> _pumpDesktopScaffold(WidgetTester tester, [AttributedTextEditingController? controller]) async {
   await _pumpScaffold(
     tester,
-    SuperTextField(
+    SuperDesktopTextField(
       textController: controller,
     ),
   );
@@ -99,7 +99,7 @@ Future<void> _pumpDesktopScaffold(WidgetTester tester, [AttributedTextEditingCon
 Future<void> _pumpAndroidScaffold(WidgetTester tester, [ImeAttributedTextEditingController? controller]) async {
   await _pumpScaffold(
     tester,
-    SuperAndroidTextfield(
+    SuperAndroidTextField(
       textController: controller,
       caretColor: Colors.blue,
       handlesColor: Colors.blue,

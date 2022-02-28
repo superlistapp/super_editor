@@ -16,6 +16,7 @@ import 'package:super_editor/src/infrastructure/attributed_text.dart';
 import 'package:super_editor/src/infrastructure/composable_text.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
 import 'package:super_editor/src/infrastructure/raw_key_event_extensions.dart';
+import 'package:super_editor/src/infrastructure/strings.dart';
 import 'package:super_editor/src/infrastructure/super_selectable_text.dart';
 
 import 'document_input_keyboard.dart';
@@ -404,7 +405,22 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
     if (textPosition == null) {
       return null;
     }
-    return TextNodePosition.fromTextPosition(textPosition);
+
+    // Rework the textPosition so that it reports a "downstream" affinity because
+    // the editor doesn't support "upstream" positions, yet.
+    //
+    // Applying the "-1" to switch from upstream to downstream works everywhere, except
+    // when the position is at the very end of the text. In that case, we leave the offset
+    // alone.
+    return TextNodePosition.fromTextPosition(textPosition.affinity == TextAffinity.downstream
+        // The textPosition is already "downstream", leave it alone.
+        ? textPosition
+        // The textPosition if "upstream", adjust it to become "downstream", unless
+        // the position sits at the very end of the text.
+        : TextPosition(
+            offset: textPosition.offset < widget.text.text.length ? textPosition.offset - 1 : textPosition.offset,
+            affinity: TextAffinity.downstream,
+          ));
   }
 
   @override
@@ -486,15 +502,17 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
     } else if (movementModifiers != null && movementModifiers.contains(MovementModifier.word)) {
       final text = getContiguousTextAt(textPosition);
 
-      int newOffset = textPosition.offset;
-      newOffset -= 1; // we always want to jump at least 1 character.
-      while (newOffset > 0 && text[newOffset - 1] != ' ') {
-        newOffset -= 1;
+      final newOffset = text.moveOffsetUpstreamByWord(textPosition.offset);
+      if (newOffset == null) {
+        return textPosition;
       }
+
       return TextNodePosition(offset: newOffset);
     }
 
-    return TextNodePosition(offset: textPosition.offset - 1);
+    final text = getContiguousTextAt(textPosition);
+    final newOffset = text.moveOffsetUpstreamByCharacter(textPosition.offset);
+    return newOffset != null ? TextNodePosition(offset: newOffset) : textPosition;
   }
 
   @override
@@ -539,15 +557,17 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
     if (movementModifiers != null && movementModifiers.contains(MovementModifier.word)) {
       final text = getContiguousTextAt(textPosition);
 
-      int newOffset = textPosition.offset;
-      newOffset += 1; // we always want to jump at least 1 character.
-      while (newOffset < text.length && text[newOffset] != ' ') {
-        newOffset += 1;
+      final newOffset = text.moveOffsetDownstreamByWord(textPosition.offset);
+      if (newOffset == null) {
+        return textPosition;
       }
+
       return TextNodePosition(offset: newOffset);
     }
 
-    return TextNodePosition(offset: textPosition.offset + 1);
+    final text = getContiguousTextAt(textPosition);
+    final newOffset = text.moveOffsetDownstreamByCharacter(textPosition.offset);
+    return newOffset != null ? TextNodePosition(offset: newOffset) : textPosition;
   }
 
   @override

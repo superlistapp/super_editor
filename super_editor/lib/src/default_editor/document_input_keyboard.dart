@@ -111,12 +111,11 @@ typedef DocumentKeyboardAction = ExecutionInstruction Function({
 });
 
 enum ExecutionInstruction {
-  /// The handler recognized the key event and chose to
-  /// take an action.
+  /// The handler has no relation to the key event and
+  /// took no action.
   ///
-  /// No other handler should receive the key event.
-  ///
-  /// The key event **shouldn't** bubble up the tree.
+  /// Other handlers should be given a chance to act on
+  /// the key press.
   continueExecution,
 
   /// The handler recognized the key event but chose to
@@ -129,10 +128,11 @@ enum ExecutionInstruction {
   /// listeners.
   blocked,
 
-  /// The handler has no relation to the key event and
-  /// took no action.
+  /// The handler recognized the key event and chose to
+  /// take an action.
   ///
-  /// Other handlers should be given a chance to act on
-  /// the key press.
+  /// No other handler should receive the key event.
+  ///
+  /// The key event **shouldn't** bubble up the tree.
   haltExecution,
 }

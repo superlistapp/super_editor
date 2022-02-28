@@ -22,7 +22,7 @@ class _StaticMultiLineTextFieldDemoState extends State<StaticMultiLineTextFieldD
         ),
   );
 
-  GlobalKey<SuperTextFieldState>? _textKey;
+  GlobalKey<SuperDesktopTextFieldState>? _textKey;
   late TextFieldDemoRobot _demoRobot;
 
   FocusNode? _focusNode;
@@ -88,7 +88,7 @@ class _StaticMultiLineTextFieldDemoState extends State<StaticMultiLineTextFieldD
                 },
                 child: SizedBox(
                   width: double.infinity,
-                  child: SuperTextField(
+                  child: SuperDesktopTextField(
                     key: _textKey,
                     textController: _textFieldController,
                     focusNode: _focusNode,

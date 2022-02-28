@@ -41,6 +41,7 @@ class DeleteSelectionCommand implements EditorCommand {
     final range = document.getRangeBetween(documentSelection.base, documentSelection.extent);
 
     final startNode = document.getNode(range.start);
+    final baseNode = document.getNode(documentSelection.base);
     if (startNode == null) {
       throw Exception('Could not locate start node for DeleteSelectionCommand: ${range.start}');
     }
@@ -90,7 +91,7 @@ class DeleteSelectionCommand implements EditorCommand {
       final insertIndex = min(startNodeIndex, endNodeIndex);
       transaction.insertNodeAt(
         insertIndex,
-        ParagraphNode(id: startNode.id, text: AttributedText()),
+        ParagraphNode(id: baseNode!.id, text: AttributedText()),
       );
       return;
     }
