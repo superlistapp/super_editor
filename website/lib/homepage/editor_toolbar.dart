@@ -187,6 +187,14 @@ class _EditorToolbarState extends State<EditorToolbar> {
       // Apply a new block type to an existing paragraph node.
       final existingNode = widget.editor.document.getNodeById(widget.composer.selection!.extent.nodeId)!;
       (existingNode as ParagraphNode).metadata['blockType'] = _getBlockTypeAttribution(newType);
+
+      // Merely changing the blockType of the ParagraphNode does not trigger any of the document listeners.
+      //
+      // As such, we have to manually tell the node that something changed - otherwise, the block type of this
+      // ParagraphNode would change only if something else in the document changed. This is a bit hacky.
+      //
+      // ignore: invalid_use_of_protected_member, invalid_use_of_visible_for_testing_member
+      existingNode.notifyListeners();
     }
   }
 
@@ -400,10 +408,6 @@ class _EditorToolbarState extends State<EditorToolbar> {
       case null:
         // Do nothing.
         return;
-    }
-
-    if (newAlignmentValue == null) {
-      return;
     }
 
     final selectedNode = widget.editor.document.getNodeById(widget.composer.selection!.extent.nodeId)! as ParagraphNode;
