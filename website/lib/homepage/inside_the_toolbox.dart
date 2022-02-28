@@ -56,8 +56,13 @@ class InsideTheToolbox extends StatelessWidget {
       title: 'SuperTextField',
       description:
           "SuperTextField is a custom implementation of a text field based on the same philosophy as Super Editor.",
-      demo: SizedBox(
+      demo: Container(
         width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(4),
+        ),
         child: SuperTextField(
           textStyleBuilder: _textfieldStyleBuilder,
           hintBuilder: (context) {
@@ -176,7 +181,7 @@ class _AttributedTextDemoState extends State<_AttributedTextDemo> {
   final List<TextRange> _strikethroughRanges = [];
 
   late String _plainText;
-  TextSpan? _richText;
+  late TextSpan _richText;
 
   @override
   void initState() {
@@ -222,7 +227,7 @@ class _AttributedTextDemoState extends State<_AttributedTextDemo> {
         }
         return newStyle;
       });
-      _plainText = _richText!.toPlainText();
+      _plainText = _richText.toPlainText();
     });
   }
 
@@ -242,7 +247,7 @@ class _AttributedTextDemoState extends State<_AttributedTextDemo> {
           _buildRowTitle('Attributed Text'),
           SuperSelectableText(
             key: GlobalKey(),
-            textSpan: _richText ?? const TextSpan(text: 'error'),
+            textSpan: _richText,
           ),
         ],
       ),
