@@ -2057,7 +2057,7 @@ class CommonEditorOperations {
     if (extentNode is! TextNode) {
       return false;
     }
-    if (extentNode is ParagraphNode && extentNode.hasMetadata('blockType')) {
+    if (extentNode is ParagraphNode && extentNode.hasMetadataValue('blockType')) {
       // This content is already a regular paragraph.
       return false;
     }
@@ -2065,7 +2065,7 @@ class CommonEditorOperations {
     editor.executeCommand(
       EditorCommandFunction((document, transaction) {
         if (extentNode is ParagraphNode) {
-          extentNode.setMetadata('blockType', null);
+          extentNode.putMetadataValue('blockType', null);
           // TODO: find a way to alter nodes that automatically notifies listeners
           // ignore: invalid_use_of_protected_member, invalid_use_of_visible_for_testing_member
           extentNode.notifyListeners();

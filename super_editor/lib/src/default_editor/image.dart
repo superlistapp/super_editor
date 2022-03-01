@@ -10,8 +10,11 @@ class ImageNode extends BlockNode with ChangeNotifier {
     required this.id,
     required String imageUrl,
     String altText = '',
+    Map<String, dynamic>? metadata,
   })  : _imageUrl = imageUrl,
-        _altText = altText;
+        _altText = altText {
+    this.metadata = metadata;
+  }
 
   @override
   final String id;

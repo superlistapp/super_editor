@@ -1,3 +1,4 @@
+import 'package:flutter/rendering.dart';
 import 'package:super_editor/super_editor.dart';
 
 Document createInitialDocument() {
@@ -6,6 +7,10 @@ Document createInitialDocument() {
       ImageNode(
         id: "1",
         imageUrl: 'https://i.ibb.co/5nvRdx1/flutter-horizon.png',
+        metadata: const SingleColumnLayoutComponentStyles(
+          width: double.infinity,
+          padding: EdgeInsets.zero,
+        ).toMetadata(),
       ),
       ParagraphNode(
         id: DocumentEditor.createNodeId(),

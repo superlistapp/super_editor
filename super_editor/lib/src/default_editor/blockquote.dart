@@ -106,7 +106,7 @@ ExecutionInstruction insertNewlineInBlockquote({
   if (extentNode is! ParagraphNode) {
     return ExecutionInstruction.continueExecution;
   }
-  if (extentNode.getMetadata('blockType') != blockquoteAttribution) {
+  if (extentNode.getMetadataValue('blockType') != blockquoteAttribution) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -134,7 +134,7 @@ ExecutionInstruction splitBlockquoteWhenEnterPressed({
   if (extentNode is! ParagraphNode) {
     return ExecutionInstruction.continueExecution;
   }
-  if (extentNode.getMetadata('blockType') != blockquoteAttribution) {
+  if (extentNode.getMetadataValue('blockType') != blockquoteAttribution) {
     return ExecutionInstruction.continueExecution;
   }
 

@@ -1,7 +1,6 @@
 import 'dart:collection';
 import 'dart:math';
 
-import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' hide SelectableText;
 import 'package:flutter/services.dart';
@@ -21,13 +20,13 @@ import 'package:super_editor/src/infrastructure/super_selectable_text.dart';
 
 import 'document_input_keyboard.dart';
 
-class TextNode with ChangeNotifier implements DocumentNode {
+class TextNode extends DocumentNode with ChangeNotifier {
   TextNode({
     required this.id,
     required AttributedText text,
     Map<String, dynamic>? metadata,
-  })  : _text = text,
-        _metadata = metadata ?? {} {
+  }) : _text = text {
+    this.metadata = metadata;
     _text.addListener(notifyListeners);
   }
 
@@ -53,28 +52,6 @@ class TextNode with ChangeNotifier implements DocumentNode {
       notifyListeners();
     }
   }
-
-  /// Returns `true` if this node has a non-null metadata value for
-  /// the given metadata [key], and returns `false`, otherwise.
-  bool hasMetadata(String key) => _metadata[key] != null;
-
-  /// Returns this node's metadata value for the given [key].
-  dynamic getMetadata(String key) => _metadata[key];
-  final Map<String, dynamic> _metadata;
-
-  /// Sets this node's metadata value for the given [key] to the given
-  /// [value], and notifies node listeners that a change has occurred.
-  void setMetadata(String key, dynamic value) {
-    if (_metadata[key] == value) {
-      return;
-    }
-
-    _metadata[key] = value;
-    notifyListeners();
-  }
-
-  /// Returns a copy of this node's metadata.
-  Map<String, dynamic> copyMetadata() => Map.from(_metadata);
 
   @override
   TextNodePosition get beginningPosition => const TextNodePosition(offset: 0);
@@ -129,23 +106,19 @@ class TextNode with ChangeNotifier implements DocumentNode {
 
   @override
   bool hasEquivalentContent(DocumentNode other) {
-    return other is TextNode && text == other.text && const DeepCollectionEquality().equals(_metadata, other._metadata);
+    return other is TextNode && text == other.text && super.hasEquivalentContent(other);
   }
 
   @override
-  String toString() => '[TextNode] - text: $text, metadata: $_metadata';
+  String toString() => '[TextNode] - text: $text, metadata: ${copyMetadata()}';
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is TextNode &&
-          runtimeType == other.runtimeType &&
-          id == other.id &&
-          _text == other._text &&
-          const DeepCollectionEquality.unordered().equals(_metadata, other._metadata);
+      super == other && other is TextNode && runtimeType == other.runtimeType && id == other.id && _text == other._text;
 
   @override
-  int get hashCode => id.hashCode ^ _text.hashCode ^ _metadata.hashCode;
+  int get hashCode => super.hashCode ^ id.hashCode ^ _text.hashCode;
 }
 
 extension DocumentSelectionWithText on Document {

@@ -63,8 +63,13 @@ class SingleColumnDocumentComponentContext {
 /// Produces [SingleColumnLayoutViewModel]s to be displayed by a
 /// [SingleColumnDocumentLayout].
 ///
-/// The view model is computed by passing the given [Document] through a
-/// series of "style phases", known as a [pipeline].
+/// First, a [SingleColumnLayoutComponentViewModel] is created for every
+/// [DocumentNode] in the given [document], using the [componentViewModelBuilders].
+/// These component view models are assembled into a [SingleColumnLayoutViewModel].
+///
+/// The view model is styled by passing it through a series of "style phases",
+/// known as a [pipeline]. The final, styled, [SingleColumnLayoutViewModel] is
+/// available via the [viewModel] property.
 ///
 /// When the [document] changes, the entire pipeline is re-run to produce
 /// a new [SingleColumnLayoutViewModel].
@@ -76,19 +81,29 @@ class SingleColumnDocumentComponentContext {
 class SingleColumnLayoutPresenter {
   SingleColumnLayoutPresenter({
     required Document document,
+    List<ComponentViewModelBuilder> componentViewModelBuilders = const [
+      TextBlockViewModelBuilder(),
+      ListItemViewModelBuilder(),
+      ImageViewModelBuilder(),
+      HorizontalRuleViewModelBuilder(),
+    ],
     required List<SingleColumnLayoutStylePhase> pipeline,
   })  : _document = document,
+        _componentViewModelBuilders = componentViewModelBuilders,
         _pipeline = pipeline {
     _assemblePipeline();
     _viewModel = _createNewViewModel();
+    _document.addListener(_onDocumentChange);
   }
 
   void dispose() {
     _listeners.clear();
+    _document.removeListener(_onDocumentChange);
     _disassemblePipeline();
   }
 
   final Document _document;
+  final List<ComponentViewModelBuilder> _componentViewModelBuilders;
   final List<SingleColumnLayoutStylePhase> _pipeline;
   final List<SingleColumnLayoutViewModel?> _phaseViewModels = [];
   int _earliestDirtyPhase = 0;
@@ -108,12 +123,21 @@ class SingleColumnLayoutPresenter {
     _listeners.remove(listener);
   }
 
-  void _assemblePipeline() {
-    // Insert the phase that creates the baseline view models for every node.
-    _pipeline.insert(0, SingleColumnLayoutBaselineStyler(document: _document));
-    // Create an empty placeholder for cached view models for this phase.
-    _phaseViewModels.add(null);
+  void _onDocumentChange() {
+    editorLayoutLog.info("The document changed. Marking the presenter dirty.");
+    final wasDirty = isDirty;
 
+    _earliestDirtyPhase = 0;
+
+    if (!wasDirty) {
+      // The presenter just went from clean to dirty. Notify listeners.
+      for (final listener in _listeners) {
+        listener.onPresenterMarkedDirty();
+      }
+    }
+  }
+
+  void _assemblePipeline() {
     // Add all the phases that were provided by the client.
     for (int i = 0; i < _pipeline.length; i += 1) {
       // Create an empty placeholder for cached view models for this phase.
@@ -173,13 +197,38 @@ class SingleColumnLayoutPresenter {
     editorLayoutLog.fine("Running layout presenter pipeline");
     // (Re)generate all dirty phases.
     SingleColumnLayoutViewModel? newViewModel = _getCleanCachedViewModel();
+
+    if (newViewModel == null) {
+      // The document changed. All view models were invalidated. Create a
+      // new base document view model.
+      final components = <SingleColumnLayoutComponentViewModel>[];
+      for (int i = 0; i < _document.nodes.length; i += 1) {
+        SingleColumnLayoutComponentViewModel? component;
+        for (final builder in _componentViewModelBuilders) {
+          component = builder.build(_document, _document.nodes[i]);
+          if (component != null) {
+            break;
+          }
+        }
+        if (component == null) {
+          throw Exception("Couldn't find styler to create component for document node: ${_document.nodes[i]}");
+        }
+        components.add(component);
+      }
+
+      newViewModel = SingleColumnLayoutViewModel(
+        componentViewModels: components,
+      );
+    }
+
+    // Style the document view model.
     for (int i = _earliestDirtyPhase; i < _pipeline.length; i += 1) {
       editorLayoutLog.fine("Running phase $i: ${_pipeline[i]}");
-      newViewModel = _pipeline[i].produceViewModel(newViewModel);
+      newViewModel = _pipeline[i].style(_document, newViewModel!);
       editorLayoutLog.fine("Storing phase $i view model");
       _phaseViewModels[i] = newViewModel;
     }
-    // No more dirty phases.
+    // We're all clean.
     _earliestDirtyPhase = _pipeline.length;
 
     return newViewModel!;
@@ -308,6 +357,141 @@ typedef _ViewModelChangeCallback = void Function({
   required List<String> removedComponents,
 });
 
+/// Creates [SingleColumnLayoutComponentViewModel]s for given [DocumentNodes].
+abstract class ComponentViewModelBuilder {
+  /// Produces a [SingleColumnLayoutComponentViewModel] with default styles for the given
+  /// [node], or returns `null` if this builder doesn't apply to the given node.
+  SingleColumnLayoutComponentViewModel? build(Document document, DocumentNode node);
+}
+
+class TextBlockViewModelBuilder implements ComponentViewModelBuilder {
+  const TextBlockViewModelBuilder();
+
+  @override
+  SingleColumnLayoutComponentViewModel? build(Document document, DocumentNode node) {
+    if (node is! ParagraphNode) {
+      return null;
+    }
+
+    final textDirection = getParagraphDirection(node.text.text);
+
+    TextAlign textAlign = (textDirection == TextDirection.ltr) ? TextAlign.left : TextAlign.right;
+    final textAlignName = node.getMetadataValue('textAlign');
+    switch (textAlignName) {
+      case 'left':
+        textAlign = TextAlign.left;
+        break;
+      case 'center':
+        textAlign = TextAlign.center;
+        break;
+      case 'right':
+        textAlign = TextAlign.right;
+        break;
+      case 'justify':
+        textAlign = TextAlign.justify;
+        break;
+    }
+
+    final isBlockquote = node.getMetadataValue('blockType') == blockquoteAttribution;
+    if (isBlockquote) {
+      return BlockquoteComponentViewModel(
+        nodeId: node.id,
+        text: node.text,
+        textStyleBuilder: _noStyleBuilder,
+        backgroundColor: const Color(0x00000000),
+        borderRadius: BorderRadius.zero,
+        textDirection: textDirection,
+        textAlignment: textAlign,
+        selectionColor: const Color(0x00000000),
+        caretColor: const Color(0x00000000),
+      );
+    }
+
+    return ParagraphComponentViewModel(
+      nodeId: node.id,
+      blockType: node.getMetadataValue('blockType'),
+      text: node.text,
+      textStyleBuilder: _noStyleBuilder,
+      textDirection: textDirection,
+      textAlignment: textAlign,
+      selectionColor: const Color(0x00000000),
+      caretColor: const Color(0x00000000),
+    );
+  }
+}
+
+class ListItemViewModelBuilder implements ComponentViewModelBuilder {
+  const ListItemViewModelBuilder();
+
+  @override
+  SingleColumnLayoutComponentViewModel? build(Document document, DocumentNode node) {
+    if (node is! ListItemNode) {
+      return null;
+    }
+
+    int? ordinalValue;
+    if (node.type == ListItemType.ordered) {
+      ordinalValue = 1;
+      DocumentNode? nodeAbove = document.getNodeBefore(node);
+      while (nodeAbove != null &&
+          nodeAbove is ListItemNode &&
+          nodeAbove.type == ListItemType.ordered &&
+          nodeAbove.indent >= node.indent) {
+        if (nodeAbove.indent == node.indent) {
+          ordinalValue = ordinalValue! + 1;
+        }
+        nodeAbove = document.getNodeBefore(nodeAbove);
+      }
+    }
+
+    return ListItemComponentViewModel(
+      nodeId: node.id,
+      type: node.type,
+      indent: node.indent,
+      ordinalValue: ordinalValue,
+      text: node.text,
+      textStyleBuilder: _noStyleBuilder,
+      selectionColor: const Color(0x00000000),
+      caretColor: const Color(0x00000000),
+    );
+  }
+}
+
+class ImageViewModelBuilder implements ComponentViewModelBuilder {
+  const ImageViewModelBuilder();
+
+  @override
+  SingleColumnLayoutComponentViewModel? build(Document document, DocumentNode node) {
+    if (node is! ImageNode) {
+      return null;
+    }
+
+    return ImageComponentViewModel(
+      nodeId: node.id,
+      imageUrl: node.imageUrl,
+      selectionColor: const Color(0x00000000),
+      caretColor: const Color(0x00000000),
+    );
+  }
+}
+
+class HorizontalRuleViewModelBuilder implements ComponentViewModelBuilder {
+  const HorizontalRuleViewModelBuilder();
+
+  @override
+  SingleColumnLayoutComponentViewModel? build(Document document, DocumentNode node) {
+    if (node is! HorizontalRuleNode) {
+      return null;
+    }
+
+    return HorizontalRuleComponentViewModel(
+      nodeId: node.id,
+      selectionColor: const Color(0x00000000),
+      caretColor: const Color(0x00000000),
+    );
+  }
+}
+
 /// A single phase of style rules, which are applied in a pipeline to
 /// a baseline [SingleColumnLayoutViewModel].
 ///
@@ -332,137 +516,8 @@ abstract class SingleColumnLayoutStylePhase {
     _dirtyCallback?.call();
   }
 
-  /// Produces a [SingleColumnLayoutViewModel] with adjustments applied
-  /// by this style phase.
-  SingleColumnLayoutViewModel produceViewModel(SingleColumnLayoutViewModel? viewModel);
-}
-
-/// The first phase in a single-column layout presentation pipeline.
-///
-/// This style phase creates baseline view models for each node within
-/// the given [Document].
-///
-/// This style phase automatically marks itself dirty whenever the given
-/// [Document] reports changes.
-class SingleColumnLayoutBaselineStyler extends SingleColumnLayoutStylePhase {
-  SingleColumnLayoutBaselineStyler({
-    required Document document,
-  }) : _document = document {
-    // The baseline needs to be recomputed whenever the document changes.
-    _document.addListener(markDirty);
-  }
-
-  @override
-  void dispose() {
-    _document.removeListener(markDirty);
-    super.dispose();
-  }
-
-  final Document _document;
-
-  @override
-  SingleColumnLayoutViewModel produceViewModel(SingleColumnLayoutViewModel? viewModel) {
-    editorLayoutLog.fine("Producing view model for phase: $this");
-
-    editorLayoutLog.info("(Re)calculating baseline view model for document layout");
-    return SingleColumnLayoutViewModel(componentViewModels: [
-      for (final previousViewModel in _document.nodes) //
-        _createBaselineViewModel(previousViewModel),
-    ]);
-  }
-
-  SingleColumnLayoutComponentViewModel _createBaselineViewModel(DocumentNode node) {
-    if (node is ParagraphNode) {
-      final textDirection = getParagraphDirection(node.text.text);
-
-      TextAlign textAlign = (textDirection == TextDirection.ltr) ? TextAlign.left : TextAlign.right;
-      final textAlignName = node.getMetadata('textAlign');
-      switch (textAlignName) {
-        case 'left':
-          textAlign = TextAlign.left;
-          break;
-        case 'center':
-          textAlign = TextAlign.center;
-          break;
-        case 'right':
-          textAlign = TextAlign.right;
-          break;
-        case 'justify':
-          textAlign = TextAlign.justify;
-          break;
-      }
-
-      final isBlockquote = node.getMetadata('blockType') == blockquoteAttribution;
-      if (isBlockquote) {
-        return BlockquoteComponentViewModel(
-          nodeId: node.id,
-          text: node.text,
-          textStyleBuilder: _noStyleBuilder,
-          backgroundColor: const Color(0x00000000),
-          borderRadius: BorderRadius.zero,
-          textDirection: textDirection,
-          textAlignment: textAlign,
-          selectionColor: const Color(0x00000000),
-          caretColor: const Color(0x00000000),
-        );
-      }
-
-      return ParagraphComponentViewModel(
-        nodeId: node.id,
-        blockType: node.getMetadata('blockType'),
-        text: node.text,
-        textStyleBuilder: _noStyleBuilder,
-        textDirection: textDirection,
-        textAlignment: textAlign,
-        selectionColor: const Color(0x00000000),
-        caretColor: const Color(0x00000000),
-      );
-    }
-    if (node is ListItemNode) {
-      int? ordinalValue;
-      if (node.type == ListItemType.ordered) {
-        ordinalValue = 1;
-        DocumentNode? nodeAbove = _document.getNodeBefore(node);
-        while (nodeAbove != null &&
-            nodeAbove is ListItemNode &&
-            nodeAbove.type == ListItemType.ordered &&
-            nodeAbove.indent >= node.indent) {
-          if (nodeAbove.indent == node.indent) {
-            ordinalValue = ordinalValue! + 1;
-          }
-          nodeAbove = _document.getNodeBefore(nodeAbove);
-        }
-      }
-
-      return ListItemComponentViewModel(
-        nodeId: node.id,
-        type: node.type,
-        indent: node.indent,
-        ordinalValue: ordinalValue,
-        text: node.text,
-        textStyleBuilder: _noStyleBuilder,
-        selectionColor: const Color(0x00000000),
-        caretColor: const Color(0x00000000),
-      );
-    }
-    if (node is ImageNode) {
-      return ImageComponentViewModel(
-        nodeId: node.id,
-        imageUrl: node.imageUrl,
-        selectionColor: const Color(0x00000000),
-        caretColor: const Color(0x00000000),
-      );
-    }
-    if (node is HorizontalRuleNode) {
-      return HorizontalRuleComponentViewModel(
-        nodeId: node.id,
-        selectionColor: const Color(0x00000000),
-        caretColor: const Color(0x00000000),
-      );
-    }
-
-    throw Exception("Super Editor doesn't know how to style node: ${node.runtimeType}");
-  }
+  /// Styles a [SingleColumnLayoutViewModel] by adjusting the given viewModel.
+  SingleColumnLayoutViewModel style(Document document, SingleColumnLayoutViewModel viewModel);
 }
 
 /// [AttributionStyleBuilder] that returns a default `TextStyle`, for
@@ -489,11 +544,7 @@ class SingleColumnLayoutStyler extends SingleColumnLayoutStylePhase {
   }
 
   @override
-  SingleColumnLayoutViewModel produceViewModel(SingleColumnLayoutViewModel? viewModel) {
-    if (viewModel == null) {
-      throw Exception("This phase must receive a non-null view model: $this");
-    }
-
+  SingleColumnLayoutViewModel style(Document document, SingleColumnLayoutViewModel viewModel) {
     editorLayoutLog.info("(Re)calculating spacing view model for document layout");
     return SingleColumnLayoutViewModel(
       margin: _stylesheet.margin,
@@ -579,24 +630,28 @@ class SingleColumnLayoutCustomComponentStyler extends SingleColumnLayoutStylePha
   }
 
   @override
-  SingleColumnLayoutViewModel produceViewModel(SingleColumnLayoutViewModel? viewModel) {
-    if (viewModel == null) {
-      throw Exception("This phase must receive a non-null view model: $this");
-    }
-
+  SingleColumnLayoutViewModel style(Document document, SingleColumnLayoutViewModel viewModel) {
     editorLayoutLog.info("(Re)calculating custom component styles view model for document layout");
     editorLayoutLog.fine("Widths: ${_perComponentStyles.widths}");
     return SingleColumnLayoutViewModel(
       margin: viewModel.margin,
       componentViewModels: [
-        for (final previousViewModel in viewModel.componentViewModels) _applyLayoutStyles(previousViewModel),
+        for (final previousViewModel in viewModel.componentViewModels)
+          _applyLayoutStyles(
+            document.getNodeById(previousViewModel.nodeId)!,
+            previousViewModel,
+          ),
       ],
     );
   }
 
-  SingleColumnLayoutComponentViewModel _applyLayoutStyles(SingleColumnLayoutComponentViewModel viewModel) {
-    final componentWidth = _perComponentStyles.getWidth(viewModel.nodeId) ?? viewModel.maxWidth;
-    final componentPadding = _perComponentStyles.getPadding(viewModel.nodeId) ?? viewModel.padding;
+  SingleColumnLayoutComponentViewModel _applyLayoutStyles(
+    DocumentNode node,
+    SingleColumnLayoutComponentViewModel viewModel,
+  ) {
+    final componentStyles = SingleColumnLayoutComponentStyles.fromMetadata(node);
+    final componentWidth = componentStyles.width ?? viewModel.maxWidth;
+    final componentPadding = componentStyles.padding ?? viewModel.padding;
 
     if (viewModel is ParagraphComponentViewModel) {
       return viewModel.copyWith(
@@ -633,6 +688,62 @@ class SingleColumnLayoutCustomComponentStyler extends SingleColumnLayoutStylePha
         .warning("Tried to apply custom component styles to unknown layout component view model: $viewModel");
     return viewModel;
   }
+}
+
+class SingleColumnLayoutComponentStyles {
+  static const _metadataKey = "singleColumnLayout";
+  static const _widthKey = "width";
+  static const _paddingKey = "padding";
+
+  factory SingleColumnLayoutComponentStyles.fromMetadata(DocumentNode node) {
+    return SingleColumnLayoutComponentStyles(
+      width: node.metadata[_metadataKey]?[_widthKey],
+      padding: node.metadata[_metadataKey]?[_paddingKey],
+    );
+  }
+
+  const SingleColumnLayoutComponentStyles({
+    this.width,
+    this.padding,
+  });
+
+  final double? width;
+  final EdgeInsetsGeometry? padding;
+
+  void applyTo(DocumentNode node) {
+    node.putMetadataValue(_metadataKey, {
+      _widthKey: width,
+      _paddingKey: padding,
+    });
+  }
+
+  Map<String, dynamic> toMetadata() => {
+        _metadataKey: {
+          _widthKey: width,
+          _paddingKey: padding,
+        },
+      };
+
+  SingleColumnLayoutComponentStyles copyWith({
+    double? width,
+    EdgeInsetsGeometry? padding,
+  }) {
+    return SingleColumnLayoutComponentStyles(
+      width: width ?? this.width,
+      padding: padding ?? this.padding,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SingleColumnLayoutComponentStyles &&
+          runtimeType == other.runtimeType &&
+          width == other.width &&
+          padding == other.padding;
+
+  @override
+  int get hashCode => width.hashCode ^ padding.hashCode;
 }
 
 /// [SingleColumnLayoutStylePhase] that applies visual selections to each component,
@@ -674,11 +785,7 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
   }
 
   @override
-  SingleColumnLayoutViewModel produceViewModel(SingleColumnLayoutViewModel? viewModel) {
-    if (viewModel == null) {
-      throw Exception("This phase must receive a non-null view model: $this");
-    }
-
+  SingleColumnLayoutViewModel style(Document document, SingleColumnLayoutViewModel viewModel) {
     editorLayoutLog.info("(Re)calculating selection view model for document layout");
     editorLayoutLog.fine("Applying selection to components: ${_composer.selection}");
     return SingleColumnLayoutViewModel(

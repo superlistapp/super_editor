@@ -87,7 +87,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
   _TextType _getCurrentTextType() {
     final selectedNode = widget.editor!.document.getNodeById(widget.composer.selection!.extent.nodeId);
     if (selectedNode is ParagraphNode) {
-      final type = selectedNode.getMetadata('blockType');
+      final type = selectedNode.getMetadataValue('blockType');
 
       if (type == header1Attribution) {
         return _TextType.header1;
@@ -113,7 +113,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
   TextAlign _getCurrentTextAlignment() {
     final selectedNode = widget.editor!.document.getNodeById(widget.composer.selection!.extent.nodeId);
     if (selectedNode is ParagraphNode) {
-      final align = selectedNode.getMetadata('textAlign');
+      final align = selectedNode.getMetadataValue('textAlign');
       switch (align) {
         case 'left':
           return TextAlign.left;
@@ -183,7 +183,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
       // Apply a new block type to an existing paragraph node.
       final existingNode =
           widget.editor!.document.getNodeById(widget.composer.selection!.extent.nodeId)! as ParagraphNode;
-      existingNode.setMetadata('blockType', _getBlockTypeAttribution(newType));
+      existingNode.putMetadataValue('blockType', _getBlockTypeAttribution(newType));
     }
   }
 
@@ -400,7 +400,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
     }
 
     final selectedNode = widget.editor!.document.getNodeById(widget.composer.selection!.extent.nodeId) as ParagraphNode;
-    selectedNode.setMetadata('textAlign', newAlignmentValue);
+    selectedNode.putMetadataValue('textAlign', newAlignmentValue);
   }
 
   /// Returns the localized name for the given [_TextType], e.g.,

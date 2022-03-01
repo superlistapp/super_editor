@@ -71,7 +71,7 @@ class SuperEditor extends StatefulWidget {
     this.scrollController,
     this.documentLayoutKey,
     this.stylesheet = defaultDocumentStylesheet,
-    this.componentStyles,
+    this.customStylePhases = const [],
     this.inputSource = DocumentInputSource.keyboard,
     this.gestureMode = DocumentGestureMode.mouse,
     this.androidToolbarBuilder,
@@ -94,7 +94,7 @@ class SuperEditor extends StatefulWidget {
     this.scrollController,
     this.documentLayoutKey,
     this.stylesheet = defaultDocumentStylesheet,
-    this.componentStyles,
+    this.customStylePhases = const [],
     List<SingleColumnDocumentComponentBuilder>? componentBuilders,
     SelectionStyles? selectionStyle,
     this.inputSource = DocumentInputSource.keyboard,
@@ -121,7 +121,7 @@ class SuperEditor extends StatefulWidget {
     this.scrollController,
     this.documentLayoutKey,
     this.stylesheet = defaultDocumentStylesheet,
-    this.componentStyles,
+    this.customStylePhases = const [],
     List<SingleColumnDocumentComponentBuilder>? componentBuilders,
     SelectionStyles? selectionStyle,
     this.inputSource = DocumentInputSource.keyboard,
@@ -161,11 +161,26 @@ class SuperEditor extends StatefulWidget {
   /// Layout-wide styles.
   final SingleColumnLayoutStylesheet stylesheet;
 
-  /// Custom styles applied to specific components within the document layout.
-  final SingleColumnCustomComponentStyles? componentStyles;
-
   /// Styles applied to selected content.
   final SelectionStyles selectionStyles;
+
+  /// Custom style phases that are added to the standard style phases.
+  ///
+  /// Documents are styled in a series of phases. A number of such
+  /// phases are applied, automatically, e.g., text styles, per-component
+  /// styles, and content selection styles.
+  ///
+  /// [customStylePhases] are added after the standard style phases. You can
+  /// use custom style phases to apply styles that aren't supported with
+  /// [stylesheet]s.
+  ///
+  /// You can also use them to apply styles to your custom [DocumentNode]
+  /// types that aren't supported by Super Editor. For example, Super Editor
+  /// doesn't include support for tables within documents, but you could
+  /// implement a `TableNode` for that purpose. You may then want to make your
+  /// table styleable. To accomplish this, you add a custom style phase that
+  /// knows how to interpret and apply table styles for your visual table component.
+  final List<SingleColumnLayoutStylePhase> customStylePhases;
 
   /// The `SuperEditor` input source, e.g., keyboard or Input Method Engine.
   final DocumentInputSource inputSource;
@@ -300,9 +315,6 @@ class _SuperEditorState extends State<SuperEditor> {
     if (widget.stylesheet != oldWidget.stylesheet) {
       _docLayoutStyler.stylesheet = widget.stylesheet;
     }
-    if (widget.componentStyles != oldWidget.componentStyles) {
-      _docLayoutSizeStyler.styles = widget.componentStyles;
-    }
 
     _recomputeIfLayoutShouldShowCaret();
   }
@@ -344,7 +356,7 @@ class _SuperEditorState extends State<SuperEditor> {
 
     _docLayoutStyler = SingleColumnLayoutStyler(stylesheet: widget.stylesheet);
 
-    _docLayoutSizeStyler = SingleColumnLayoutCustomComponentStyler(styles: widget.componentStyles);
+    _docLayoutSizeStyler = SingleColumnLayoutCustomComponentStyler();
 
     _docLayoutSelectionStyler = SingleColumnLayoutSelectionStyler(
       document: document,
@@ -358,6 +370,9 @@ class _SuperEditorState extends State<SuperEditor> {
       pipeline: [
         _docLayoutStyler,
         _docLayoutSizeStyler,
+        ...widget.customStylePhases,
+        // Selection changes are very volatile. Put that phase last
+        // to minimize view model recalculations.
         _docLayoutSelectionStyler,
       ],
     );
@@ -519,6 +534,82 @@ enum DocumentGestureMode {
   android,
   iOS,
 }
+
+// final stylesheet = Stylesheet(
+//   rules: [
+//     StyleRule(
+//       selector: "layout",
+//       properties: {
+//         "contentWidth": 640.0,
+//         "margin": const EdgeInsets.only(bottom: 96),
+//         "blockPadding": const EdgeInsets.only(left: 20, right: 20),
+//       },
+//     ),
+//     StyleRule(
+//       selector: "p",
+//       properties: {
+//         "padding": const EdgeInsets.only(top: 20),
+//         "highlightWhenEmpty": true,
+//         "textStyle": const TextStyle(
+//           color: Colors.black,
+//           fontSize: 16,
+//           fontWeight: FontWeight.w300,
+//           height: 1.8,
+//         ),
+//       },
+//     ),
+//     StyleRule(
+//       selector: "h1",
+//       properties: {
+//         "padding": const EdgeInsets.only(top: 40),
+//         "textStyle": const TextStyle(
+//           color: Color(0xFF333333),
+//           fontSize: 38,
+//           fontWeight: FontWeight.bold,
+//         ),
+//       },
+//     ),
+//     StyleRule(
+//       selector: "image",
+//       properties: {
+//         "padding": const EdgeInsets.only(top: 20),
+//       },
+//     ),
+//     StyleRule(
+//       selector: "hr",
+//       properties: {
+//         "padding": EdgeInsets.zero,
+//       },
+//     ),
+//   ],
+// );
+//
+// final textBlockStylePhase = SylePhase(
+//   builder: (doc, node) {
+//     if (node is! ParagraphNode) {
+//       return null;
+//     }
+//     // TODO:
+//   },
+//   styler: (doc, stylesheet) {
+//     //
+//   },
+// );
+//
+// final imageStylePhase = StylePhase(builder: (doc, node) {
+//   if (node is! ImageNode) {
+//     return null;
+//   }
+//
+//   return ImageComponentViewModel(
+//     nodeId: node.id,
+//     imageUrl: node.url,
+//     selectionColor: Colors.transparent,
+//     caretColor: Colors.transparent,
+//   );
+// }, styler: (doc, stylesheet) {
+//   //
+// });
 
 /// Default document stylesheet that's used by [SuperEditor], when
 /// no stylesheet is provided.

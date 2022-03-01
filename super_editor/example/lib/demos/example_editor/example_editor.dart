@@ -16,7 +16,6 @@ class ExampleEditor extends StatefulWidget {
 
 class _ExampleEditorState extends State<ExampleEditor> {
   final GlobalKey _docLayoutKey = GlobalKey();
-  late SingleColumnCustomComponentStyles _layoutComponentStyles;
 
   late Document _doc;
   DocumentEditor? _docEditor;
@@ -40,14 +39,6 @@ class _ExampleEditorState extends State<ExampleEditor> {
     _composer = DocumentComposer()..addListener(_hideOrShowToolbar);
     _editorFocusNode = FocusNode();
     _scrollController = ScrollController()..addListener(_hideOrShowToolbar);
-    _layoutComponentStyles = const SingleColumnCustomComponentStyles(
-      componentWidths: {
-        "1": double.infinity,
-      },
-      componentPaddings: {
-        "1": EdgeInsets.zero,
-      },
-    );
   }
 
   @override
@@ -185,14 +176,12 @@ class _ExampleEditorState extends State<ExampleEditor> {
           anchor: _imageSelectionAnchor,
           composer: _composer,
           setWidth: (nodeId, width) {
-            print("Changing node width ($nodeId) to $width");
-            setState(() {
-              _layoutComponentStyles = _layoutComponentStyles.copyWith(
-                componentWidths: {
-                  nodeId: width,
-                },
-              );
-            });
+            final node = _doc.getNodeById(nodeId)!;
+            final currentStyles = SingleColumnLayoutComponentStyles.fromMetadata(node);
+            SingleColumnLayoutComponentStyles(
+              width: width,
+              padding: currentStyles.padding,
+            ).applyTo(node);
           },
           closeToolbar: _hideImageToolbar,
         );
@@ -250,7 +239,36 @@ class _ExampleEditorState extends State<ExampleEditor> {
       focusNode: _editorFocusNode,
       scrollController: _scrollController,
       documentLayoutKey: _docLayoutKey,
-      componentStyles: _layoutComponentStyles,
+      // customStylers: [
+      //   SingleColumnLayoutStylePhase(
+      //     builder: (doc, docNode) {
+      //       // TODO:
+      //     },
+      //     styler: (doc, docNode, viewModel) {
+      //       // TODO:
+      //     }
+      //   )
+      // ],
     );
   }
 }
+
+// class TaskStylePhase extends SingleColumnLayoutStylePhase {
+//   SingleColumnLayoutComponentViewModel? buildComponent(Document doc, DocumentNode node) {
+//     if (node is! TaskNode) {
+//       return null;
+//     }
+//
+//     return TaskComponent(...);
+//   }
+//
+//   SingleColumnLayoutComponentViewModel build(Document doc, DocumentNode node, SingleColumnLayoutComponentViewModel viewModel) {
+//     if (node is! TaskNode || viewModel is! TaskViewModel) {
+//       return viewModel;
+//     }
+//
+//     return viewModel.copyWith(
+//       ...,
+//     );
+//   }
+// }

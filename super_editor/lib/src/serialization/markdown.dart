@@ -53,7 +53,7 @@ String serializeDocumentToMarkdown(Document doc) {
         buffer.writeln('');
       }
     } else if (node is ParagraphNode) {
-      final Attribution? blockType = node.getMetadata('blockType');
+      final Attribution? blockType = node.getMetadataValue('blockType');
 
       if (blockType == header1Attribution) {
         buffer

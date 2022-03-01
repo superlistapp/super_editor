@@ -65,7 +65,13 @@ class CombineParagraphsCommand implements EditorCommand {
     }
 
     // Combine the text and delete the currently selected node.
+    final isTopNodeEmpty = nodeAbove.text.text.isEmpty;
     nodeAbove.text = nodeAbove.text.copyAndAppend(secondNode.text);
+    if (isTopNodeEmpty) {
+      // If the top node was empty, we want to retain everything in the
+      // bottom node, including the block attribution and styles.
+      nodeAbove.metadata = secondNode.metadata;
+    }
     bool didRemove = transaction.deleteNode(secondNode);
     if (!didRemove) {
       editorDocLog.info('ERROR: Failed to delete the currently selected node from the document.');

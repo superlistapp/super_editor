@@ -12,22 +12,22 @@ void main() {
           ),
         ]);
 
-        (doc.nodes[0] as ParagraphNode).setMetadata('blockType', header1Attribution);
+        (doc.nodes[0] as ParagraphNode).putMetadataValue('blockType', header1Attribution);
         expect(serializeDocumentToMarkdown(doc).trim(), '# My Header');
 
-        (doc.nodes[0] as ParagraphNode).setMetadata('blockType', header2Attribution);
+        (doc.nodes[0] as ParagraphNode).putMetadataValue('blockType', header2Attribution);
         expect(serializeDocumentToMarkdown(doc).trim(), '## My Header');
 
-        (doc.nodes[0] as ParagraphNode).setMetadata('blockType', header3Attribution);
+        (doc.nodes[0] as ParagraphNode).putMetadataValue('blockType', header3Attribution);
         expect(serializeDocumentToMarkdown(doc).trim(), '### My Header');
 
-        (doc.nodes[0] as ParagraphNode).setMetadata('blockType', header4Attribution);
+        (doc.nodes[0] as ParagraphNode).putMetadataValue('blockType', header4Attribution);
         expect(serializeDocumentToMarkdown(doc).trim(), '#### My Header');
 
-        (doc.nodes[0] as ParagraphNode).setMetadata('blockType', header5Attribution);
+        (doc.nodes[0] as ParagraphNode).putMetadataValue('blockType', header5Attribution);
         expect(serializeDocumentToMarkdown(doc).trim(), '##### My Header');
 
-        (doc.nodes[0] as ParagraphNode).setMetadata('blockType', header6Attribution);
+        (doc.nodes[0] as ParagraphNode).putMetadataValue('blockType', header6Attribution);
         expect(serializeDocumentToMarkdown(doc).trim(), '###### My Header');
       });
 
@@ -391,29 +391,29 @@ This is some code
     group('deserialization', () {
       test('headers', () {
         final header1Doc = deserializeMarkdownToDocument('# Header 1');
-        expect((header1Doc.nodes.first as ParagraphNode).getMetadata('blockType'), header1Attribution);
+        expect((header1Doc.nodes.first as ParagraphNode).getMetadataValue('blockType'), header1Attribution);
 
         final header2Doc = deserializeMarkdownToDocument('## Header 2');
-        expect((header2Doc.nodes.first as ParagraphNode).getMetadata('blockType'), header2Attribution);
+        expect((header2Doc.nodes.first as ParagraphNode).getMetadataValue('blockType'), header2Attribution);
 
         final header3Doc = deserializeMarkdownToDocument('### Header 3');
-        expect((header3Doc.nodes.first as ParagraphNode).getMetadata('blockType'), header3Attribution);
+        expect((header3Doc.nodes.first as ParagraphNode).getMetadataValue('blockType'), header3Attribution);
 
         final header4Doc = deserializeMarkdownToDocument('#### Header 4');
-        expect((header4Doc.nodes.first as ParagraphNode).getMetadata('blockType'), header4Attribution);
+        expect((header4Doc.nodes.first as ParagraphNode).getMetadataValue('blockType'), header4Attribution);
 
         final header5Doc = deserializeMarkdownToDocument('##### Header 5');
-        expect((header5Doc.nodes.first as ParagraphNode).getMetadata('blockType'), header5Attribution);
+        expect((header5Doc.nodes.first as ParagraphNode).getMetadataValue('blockType'), header5Attribution);
 
         final header6Doc = deserializeMarkdownToDocument('###### Header 6');
-        expect((header6Doc.nodes.first as ParagraphNode).getMetadata('blockType'), header6Attribution);
+        expect((header6Doc.nodes.first as ParagraphNode).getMetadataValue('blockType'), header6Attribution);
       });
 
       test('blockquote', () {
         final blockquoteDoc = deserializeMarkdownToDocument('> This is a blockquote');
 
         final blockquote = blockquoteDoc.nodes.first as ParagraphNode;
-        expect(blockquote.getMetadata('blockType'), blockquoteAttribution);
+        expect(blockquote.getMetadataValue('blockType'), blockquoteAttribution);
         expect(blockquote.text.text, 'This is a blockquote');
       });
 
@@ -424,7 +424,7 @@ This is some code
 ```''');
 
         final code = codeBlockDoc.nodes.first as ParagraphNode;
-        expect(code.getMetadata('blockType'), codeAttribution);
+        expect(code.getMetadataValue('blockType'), codeAttribution);
         expect(code.text.text, 'This is some code\n');
       });
 
@@ -518,7 +518,7 @@ This is some code
         expect(document.nodes.length, 18);
 
         expect(document.nodes[0], isA<ParagraphNode>());
-        expect((document.nodes[0] as ParagraphNode).getMetadata('blockType'), header1Attribution);
+        expect((document.nodes[0] as ParagraphNode).getMetadataValue('blockType'), header1Attribution);
 
         expect(document.nodes[1], isA<HorizontalRuleNode>());
 

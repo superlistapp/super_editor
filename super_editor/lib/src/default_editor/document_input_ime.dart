@@ -1037,7 +1037,7 @@ class KeyboardEditingToolbar extends StatelessWidget {
         },
       );
     } else {
-      selectedNode.setMetadata('blockType', header1Attribution);
+      selectedNode.putMetadataValue('blockType', header1Attribution);
     }
   }
 
@@ -1054,7 +1054,7 @@ class KeyboardEditingToolbar extends StatelessWidget {
         },
       );
     } else {
-      selectedNode.setMetadata('blockType', header2Attribution);
+      selectedNode.putMetadataValue('blockType', header2Attribution);
     }
   }
 
@@ -1158,7 +1158,7 @@ class KeyboardEditingToolbar extends StatelessWidget {
                               IconButton(
                                 onPressed: isSingleNodeSelected &&
                                         (selectedNode is TextNode &&
-                                            selectedNode.getMetadata('blockType') != header1Attribution)
+                                            selectedNode.getMetadataValue('blockType') != header1Attribution)
                                     ? _convertToHeader1
                                     : null,
                                 icon: const Icon(Icons.title),
@@ -1166,7 +1166,7 @@ class KeyboardEditingToolbar extends StatelessWidget {
                               IconButton(
                                 onPressed: isSingleNodeSelected &&
                                         (selectedNode is TextNode &&
-                                            selectedNode.getMetadata('blockType') == header2Attribution)
+                                            selectedNode.getMetadataValue('blockType') == header2Attribution)
                                     ? _convertToHeader2
                                     : null,
                                 icon: const Icon(Icons.title),
@@ -1174,7 +1174,8 @@ class KeyboardEditingToolbar extends StatelessWidget {
                               ),
                               IconButton(
                                 onPressed: isSingleNodeSelected &&
-                                        ((selectedNode is ParagraphNode && selectedNode.hasMetadata('blockType')) ||
+                                        ((selectedNode is ParagraphNode &&
+                                                selectedNode.hasMetadataValue('blockType')) ||
                                             (selectedNode is TextNode && selectedNode is! ParagraphNode))
                                     ? _convertToParagraph
                                     : null,
@@ -1201,7 +1202,7 @@ class KeyboardEditingToolbar extends StatelessWidget {
                                 onPressed: isSingleNodeSelected &&
                                         selectedNode is TextNode &&
                                         (selectedNode is! ParagraphNode ||
-                                            selectedNode.getMetadata('blockType') != blockquoteAttribution)
+                                            selectedNode.getMetadataValue('blockType') != blockquoteAttribution)
                                     ? _convertToBlockquote
                                     : null,
                                 icon: const Icon(Icons.format_quote),
