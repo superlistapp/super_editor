@@ -1,5 +1,7 @@
 import 'package:characters/characters.dart';
 
+final _separatorRegex = RegExp(r'^\p{Z}$', unicode: true);
+
 extension CharacterMovement on String {
   /// Returns the code point index of the character that sits
   /// one word upstream from the given [textOffset] code point index.
@@ -19,34 +21,38 @@ extension CharacterMovement on String {
       return null;
     }
 
-    bool isInSpace = false;
+    bool isInSeparator = false;
 
-    int lastSpaceStartCodePointOffset = 0;
-    int lastSpaceEndCodePointOffset = 0;
+    int lastSeparatorStartCodePointOffset = 0;
+    int lastSeparatorEndCodePointOffset = 0;
 
     int visitedCharacterCount = 0;
     int codePointIndex = 0;
     for (final character in characters) {
       if (visitedCharacterCount >= textOffset - 1) {
         // We're at the given text offset. The upstream word offset is
-        // at lastSpaceEndCodePointOffset.
+        // at lastSeparatorEndCodePointOffset.
         break;
       }
 
-      if (character == " " && !isInSpace) {
-        lastSpaceStartCodePointOffset = codePointIndex;
+      final characterIsSeparator = _separatorRegex.hasMatch(character);
+
+      if (characterIsSeparator && !isInSeparator) {
+        lastSeparatorStartCodePointOffset = codePointIndex;
       }
 
-      isInSpace = character == " ";
+      isInSeparator = characterIsSeparator;
       codePointIndex += character.length;
       visitedCharacterCount += 1;
 
-      if (character == " ") {
-        lastSpaceEndCodePointOffset = codePointIndex;
+      if (characterIsSeparator) {
+        lastSeparatorEndCodePointOffset = codePointIndex;
       }
     }
 
-    return lastSpaceEndCodePointOffset < textOffset ? lastSpaceEndCodePointOffset : lastSpaceStartCodePointOffset;
+    return lastSeparatorEndCodePointOffset < textOffset
+        ? lastSeparatorEndCodePointOffset
+        : lastSeparatorStartCodePointOffset;
   }
 
   /// Returns the code point index of the character that sits
@@ -104,29 +110,31 @@ extension CharacterMovement on String {
       return null;
     }
 
-    bool isInSpace = false;
+    bool isInSeparator = false;
 
-    int lastSpaceStartCodePointOffset = 0;
-    int lastSpaceEndCodePointOffset = 0;
+    int lastSeparatorStartCodePointOffset = 0;
+    int lastSeparatorEndCodePointOffset = 0;
 
     int codePointIndex = 0;
     for (final character in characters) {
-      if (character == " " && !isInSpace) {
-        lastSpaceStartCodePointOffset = codePointIndex;
+      final characterIsSeparator = _separatorRegex.hasMatch(character);
+
+      if (characterIsSeparator && !isInSeparator) {
+        lastSeparatorStartCodePointOffset = codePointIndex;
       }
 
-      isInSpace = character == " ";
+      isInSeparator = characterIsSeparator;
       codePointIndex += character.length;
 
-      if (character == " ") {
-        lastSpaceEndCodePointOffset = codePointIndex;
+      if (characterIsSeparator) {
+        lastSeparatorEndCodePointOffset = codePointIndex;
       }
 
-      if (lastSpaceStartCodePointOffset > textOffset) {
-        return lastSpaceStartCodePointOffset;
+      if (lastSeparatorStartCodePointOffset > textOffset) {
+        return lastSeparatorStartCodePointOffset;
       }
-      if (lastSpaceEndCodePointOffset > textOffset) {
-        return lastSpaceEndCodePointOffset;
+      if (lastSeparatorEndCodePointOffset > textOffset) {
+        return lastSeparatorEndCodePointOffset;
       }
     }
 

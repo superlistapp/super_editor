@@ -23,14 +23,14 @@ void main() {
       });
 
       test("a word", () {
-        expect("move a💙c words".moveOffsetUpstreamByWord(15), 10);
-        expect("move a💙c words".moveOffsetUpstreamByWord(10), 9);
-        expect("move a💙c words".moveOffsetUpstreamByWord(9), 5);
-        expect("move a💙c words".moveOffsetUpstreamByWord(8), 5);
-        expect("move a💙c words".moveOffsetUpstreamByWord(4), 0);
-        expect("move a💙c words".moveOffsetUpstreamByWord(0), null);
-        expect(() => "move a💙c words".moveOffsetUpstreamByWord(-1), throwsException);
-        expect(() => "move a💙c words".moveOffsetUpstreamByWord(16), throwsException);
+        expect("move a💙c\u3000words".moveOffsetUpstreamByWord(15), 10);
+        expect("move a💙c\u3000words".moveOffsetUpstreamByWord(10), 9);
+        expect("move a💙c\u3000words".moveOffsetUpstreamByWord(9), 5);
+        expect("move a💙c\u3000words".moveOffsetUpstreamByWord(8), 5);
+        expect("move a💙c\u3000words".moveOffsetUpstreamByWord(4), 0);
+        expect("move a💙c\u3000words".moveOffsetUpstreamByWord(0), null);
+        expect(() => "move a💙c\u3000words".moveOffsetUpstreamByWord(-1), throwsException);
+        expect(() => "move a💙c\u3000words".moveOffsetUpstreamByWord(16), throwsException);
       });
     });
 
@@ -54,16 +54,16 @@ void main() {
       });
 
       test("a word", () {
-        expect("move a💙c words".moveOffsetDownstreamByWord(0), 4);
-        expect("move a💙c words".moveOffsetDownstreamByWord(4), 5);
-        expect("move a💙c words".moveOffsetDownstreamByWord(5), 9);
-        expect("move a💙c words".moveOffsetDownstreamByWord(6), 9);
-        expect("move a💙c words".moveOffsetDownstreamByWord(8), 9);
-        expect("move a💙c words".moveOffsetDownstreamByWord(9), 10);
-        expect("move a💙c words".moveOffsetDownstreamByWord(10), 15);
-        expect("move a💙c words".moveOffsetDownstreamByWord(15), null);
-        expect(() => "move a💙c words".moveOffsetDownstreamByWord(-1), throwsException);
-        expect(() => "move a💙c words".moveOffsetDownstreamByWord(16), throwsException);
+        expect("move a💙c\u3000words".moveOffsetDownstreamByWord(0), 4);
+        expect("move a💙c\u3000words".moveOffsetDownstreamByWord(4), 5);
+        expect("move a💙c\u3000words".moveOffsetDownstreamByWord(5), 9);
+        expect("move a💙c\u3000words".moveOffsetDownstreamByWord(6), 9);
+        expect("move a💙c\u3000words".moveOffsetDownstreamByWord(8), 9);
+        expect("move a💙c\u3000words".moveOffsetDownstreamByWord(9), 10);
+        expect("move a💙c\u3000words".moveOffsetDownstreamByWord(10), 15);
+        expect("move a💙c\u3000words".moveOffsetDownstreamByWord(15), null);
+        expect(() => "move a💙c\u3000words".moveOffsetDownstreamByWord(-1), throwsException);
+        expect(() => "move a💙c\u3000words".moveOffsetDownstreamByWord(16), throwsException);
       });
     });
   });
