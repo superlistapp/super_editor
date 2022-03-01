@@ -1,6 +1,6 @@
 import 'package:characters/characters.dart';
 
-final _separatorRegex = RegExp(r'^\p{Z}$', unicode: true);
+final _separatorRegex = RegExp(r'^[\p{Z}\p{P}]$', unicode: true);
 
 extension CharacterMovement on String {
   /// Returns the code point index of the character that sits
