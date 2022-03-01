@@ -1,3 +1,5 @@
+import 'dart:collection';
+
 import 'package:characters/characters.dart';
 
 final _separatorRegex = RegExp(r'^[\p{Z}\p{P}]$', unicode: true);
@@ -23,36 +25,36 @@ extension CharacterMovement on String {
 
     bool isInSeparator = false;
 
-    int lastSeparatorStartCodePointOffset = 0;
-    int lastSeparatorEndCodePointOffset = 0;
+    final separatorEnds = Queue<int>()..addFirst(0);
 
     int visitedCharacterCount = 0;
     int codePointIndex = 0;
     for (final character in characters) {
-      if (visitedCharacterCount >= textOffset - 1) {
-        // We're at the given text offset. The upstream word offset is
-        // at lastSeparatorEndCodePointOffset.
-        break;
-      }
-
-      final characterIsSeparator = _separatorRegex.hasMatch(character);
-
-      if (characterIsSeparator && !isInSeparator) {
-        lastSeparatorStartCodePointOffset = codePointIndex;
-      }
-
-      isInSeparator = characterIsSeparator;
+      isInSeparator = _separatorRegex.hasMatch(character);
       codePointIndex += character.length;
       visitedCharacterCount += 1;
 
-      if (characterIsSeparator) {
-        lastSeparatorEndCodePointOffset = codePointIndex;
+      if (isInSeparator) {
+        // If the last separator end was before this index, it wasn't really the
+        // end. Remove and replace it. Always keep 0 as a special case to make
+        // sure we can reach the start of the string.
+        if (separatorEnds.first != 0 && separatorEnds.first == codePointIndex - 1) {
+          separatorEnds.removeFirst();
+        }
+        separatorEnds.addFirst(codePointIndex);
+        if (separatorEnds.length > 2) {
+          separatorEnds.removeLast();
+        }
+      }
+
+      if (visitedCharacterCount >= textOffset) {
+        // We're at the given text offset. The upstream word offset is
+        // in the separatorEnds queue.
+        break;
       }
     }
 
-    return lastSeparatorEndCodePointOffset < textOffset
-        ? lastSeparatorEndCodePointOffset
-        : lastSeparatorStartCodePointOffset;
+    return separatorEnds.first < textOffset ? separatorEnds.first : separatorEnds.last;
   }
 
   /// Returns the code point index of the character that sits

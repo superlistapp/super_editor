@@ -24,9 +24,10 @@ void main() {
 
       test("a word", () {
         expect("move a💙c\u3000words".moveOffsetUpstreamByWord(15), 10);
-        expect("move a💙c\u3000words".moveOffsetUpstreamByWord(10), 9);
+        expect("move a💙c\u3000words".moveOffsetUpstreamByWord(10), 5);
         expect("move a💙c\u3000words".moveOffsetUpstreamByWord(9), 5);
         expect("move a💙c\u3000words".moveOffsetUpstreamByWord(8), 5);
+        expect("move a💙c\u3000words".moveOffsetUpstreamByWord(5), 0);
         expect("move a💙c\u3000words".moveOffsetUpstreamByWord(4), 0);
         expect("move a💙c\u3000words".moveOffsetUpstreamByWord(0), null);
         expect(() => "move a💙c\u3000words".moveOffsetUpstreamByWord(-1), throwsException);
