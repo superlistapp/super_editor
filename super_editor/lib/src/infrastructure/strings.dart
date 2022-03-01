@@ -113,7 +113,6 @@ extension CharacterMovement on String {
     bool isInSeparator = false;
 
     int lastSeparatorStartCodePointOffset = 0;
-    int lastSeparatorEndCodePointOffset = 0;
 
     int codePointIndex = 0;
     for (final character in characters) {
@@ -126,15 +125,8 @@ extension CharacterMovement on String {
       isInSeparator = characterIsSeparator;
       codePointIndex += character.length;
 
-      if (characterIsSeparator) {
-        lastSeparatorEndCodePointOffset = codePointIndex;
-      }
-
       if (lastSeparatorStartCodePointOffset > textOffset) {
         return lastSeparatorStartCodePointOffset;
-      }
-      if (lastSeparatorEndCodePointOffset > textOffset) {
-        return lastSeparatorEndCodePointOffset;
       }
     }
 

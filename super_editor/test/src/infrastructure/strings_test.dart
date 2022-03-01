@@ -55,11 +55,11 @@ void main() {
 
       test("a word", () {
         expect("move a💙c\u3000words".moveOffsetDownstreamByWord(0), 4);
-        expect("move a💙c\u3000words".moveOffsetDownstreamByWord(4), 5);
+        expect("move a💙c\u3000words".moveOffsetDownstreamByWord(4), 9);
         expect("move a💙c\u3000words".moveOffsetDownstreamByWord(5), 9);
         expect("move a💙c\u3000words".moveOffsetDownstreamByWord(6), 9);
         expect("move a💙c\u3000words".moveOffsetDownstreamByWord(8), 9);
-        expect("move a💙c\u3000words".moveOffsetDownstreamByWord(9), 10);
+        expect("move a💙c\u3000words".moveOffsetDownstreamByWord(9), 15);
         expect("move a💙c\u3000words".moveOffsetDownstreamByWord(10), 15);
         expect("move a💙c\u3000words".moveOffsetDownstreamByWord(15), null);
         expect(() => "move a💙c\u3000words".moveOffsetDownstreamByWord(-1), throwsException);
