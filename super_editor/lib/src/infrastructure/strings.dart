@@ -6,9 +6,8 @@ final _separatorRegex = RegExp(r'^[\p{Z}\p{P}]$', unicode: true);
 
 extension CharacterMovement on String {
   /// Returns the code point index of the character that sits
-  /// one word upstream from the given [textOffset] code
-  /// point index, ignoring separator and punctuation
-  /// characters.
+  /// at the next start of word upstream from the given
+  /// [textOffset] code point index.
   ///
   /// Examples:
   ///   |word up -> `null`
@@ -96,9 +95,8 @@ extension CharacterMovement on String {
   }
 
   /// Returns the code point index of the character that sits
-  /// one word downstream from the given [textOffset] code
-  /// point index, ignoring separator and punctuation
-  /// characters.
+  /// after the next end of word downstream from the given
+  /// [textOffset] code point index.
   ///
   /// Examples:
   ///   |word up -> `4`
