@@ -40,7 +40,7 @@ extension CharacterMovement on String {
         // If the last separator end was before this index, it wasn't really the
         // end. Remove and replace it. Always keep 0 as a special case to make
         // sure we can reach the start of the string.
-        if (separatorEnds.first != 0 && separatorEnds.first == codePointIndex - 1) {
+        if (separatorEnds.first != 0 && separatorEnds.first == codePointIndex - character.length) {
           separatorEnds.removeFirst();
         }
         separatorEnds.addFirst(codePointIndex);

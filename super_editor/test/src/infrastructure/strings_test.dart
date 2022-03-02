@@ -23,20 +23,20 @@ void main() {
       });
 
       test("a word", () {
-        expect("  move a💙c\u3000wo.rds".moveOffsetUpstreamByWord(18), 15);
-        expect("  move a💙c\u3000wo.rds".moveOffsetUpstreamByWord(16), 15);
-        expect("  move a💙c\u3000wo.rds".moveOffsetUpstreamByWord(15), 12);
-        expect("  move a💙c\u3000wo.rds".moveOffsetUpstreamByWord(14), 12);
-        expect("  move a💙c\u3000wo.rds".moveOffsetUpstreamByWord(12), 7);
-        expect("  move a💙c\u3000wo.rds".moveOffsetUpstreamByWord(11), 7);
-        expect("  move a💙c\u3000wo.rds".moveOffsetUpstreamByWord(10), 7);
-        expect("  move a💙c\u3000wo.rds".moveOffsetUpstreamByWord(7), 2);
-        expect("  move a💙c\u3000wo.rds".moveOffsetUpstreamByWord(6), 2);
-        expect("  move a💙c\u3000wo.rds".moveOffsetUpstreamByWord(2), 0);
-        expect("  move a💙c\u3000wo.rds".moveOffsetUpstreamByWord(1), 0);
-        expect("  move a💙c\u3000wo.rds".moveOffsetUpstreamByWord(0), null);
-        expect(() => "  move a💙c\u3000wo.rds".moveOffsetUpstreamByWord(-1), throwsException);
-        expect(() => "  move a💙c\u3000wo.rds".moveOffsetUpstreamByWord(19), throwsException);
+        expect("  move a💙c\u{10B3F}wo.rds".moveOffsetUpstreamByWord(19), 16);
+        expect("  move a💙c\u{10B3F}wo.rds".moveOffsetUpstreamByWord(17), 16);
+        expect("  move a💙c\u{10B3F}wo.rds".moveOffsetUpstreamByWord(16), 13);
+        expect("  move a💙c\u{10B3F}wo.rds".moveOffsetUpstreamByWord(15), 13);
+        expect("  move a💙c\u{10B3F}wo.rds".moveOffsetUpstreamByWord(13), 7);
+        expect("  move a💙c\u{10B3F}wo.rds".moveOffsetUpstreamByWord(11), 7);
+        expect("  move a💙c\u{10B3F}wo.rds".moveOffsetUpstreamByWord(10), 7);
+        expect("  move a💙c\u{10B3F}wo.rds".moveOffsetUpstreamByWord(7), 2);
+        expect("  move a💙c\u{10B3F}wo.rds".moveOffsetUpstreamByWord(6), 2);
+        expect("  move a💙c\u{10B3F}wo.rds".moveOffsetUpstreamByWord(2), 0);
+        expect("  move a💙c\u{10B3F}wo.rds".moveOffsetUpstreamByWord(1), 0);
+        expect("  move a💙c\u{10B3F}wo.rds".moveOffsetUpstreamByWord(0), null);
+        expect(() => "  move a💙c\u{10B3F}wo.rds".moveOffsetUpstreamByWord(-1), throwsException);
+        expect(() => "  move a💙c\u{10B3F}wo.rds".moveOffsetUpstreamByWord(20), throwsException);
       });
     });
 
@@ -60,19 +60,19 @@ void main() {
       });
 
       test("a word", () {
-        expect("move a💙c\u3000wo.rds  ".moveOffsetDownstreamByWord(0), 4);
-        expect("move a💙c\u3000wo.rds  ".moveOffsetDownstreamByWord(4), 9);
-        expect("move a💙c\u3000wo.rds  ".moveOffsetDownstreamByWord(5), 9);
-        expect("move a💙c\u3000wo.rds  ".moveOffsetDownstreamByWord(6), 9);
-        expect("move a💙c\u3000wo.rds  ".moveOffsetDownstreamByWord(8), 9);
-        expect("move a💙c\u3000wo.rds  ".moveOffsetDownstreamByWord(9), 12);
-        expect("move a💙c\u3000wo.rds  ".moveOffsetDownstreamByWord(10), 12);
-        expect("move a💙c\u3000wo.rds  ".moveOffsetDownstreamByWord(12), 16);
-        expect("move a💙c\u3000wo.rds  ".moveOffsetDownstreamByWord(16), 18);
-        expect("move a💙c\u3000wo.rds  ".moveOffsetDownstreamByWord(17), 18);
-        expect("move a💙c\u3000wo.rds  ".moveOffsetDownstreamByWord(18), null);
-        expect(() => "move a💙c\u3000wo.rds  ".moveOffsetDownstreamByWord(-1), throwsException);
-        expect(() => "move a💙c\u3000wo.rds  ".moveOffsetDownstreamByWord(19), throwsException);
+        expect("move a💙c\u{10B3F}wo.rds  ".moveOffsetDownstreamByWord(0), 4);
+        expect("move a💙c\u{10B3F}wo.rds  ".moveOffsetDownstreamByWord(4), 9);
+        expect("move a💙c\u{10B3F}wo.rds  ".moveOffsetDownstreamByWord(5), 9);
+        expect("move a💙c\u{10B3F}wo.rds  ".moveOffsetDownstreamByWord(6), 9);
+        expect("move a💙c\u{10B3F}wo.rds  ".moveOffsetDownstreamByWord(8), 9);
+        expect("move a💙c\u{10B3F}wo.rds  ".moveOffsetDownstreamByWord(9), 13);
+        expect("move a💙c\u{10B3F}wo.rds  ".moveOffsetDownstreamByWord(11), 13);
+        expect("move a💙c\u{10B3F}wo.rds  ".moveOffsetDownstreamByWord(13), 17);
+        expect("move a💙c\u{10B3F}wo.rds  ".moveOffsetDownstreamByWord(17), 19);
+        expect("move a💙c\u{10B3F}wo.rds  ".moveOffsetDownstreamByWord(18), 19);
+        expect("move a💙c\u{10B3F}wo.rds  ".moveOffsetDownstreamByWord(19), null);
+        expect(() => "move a💙c\u{10B3F}wo.rds  ".moveOffsetDownstreamByWord(-1), throwsException);
+        expect(() => "move a💙c\u{10B3F}wo.rds  ".moveOffsetDownstreamByWord(20), throwsException);
       });
     });
   });
