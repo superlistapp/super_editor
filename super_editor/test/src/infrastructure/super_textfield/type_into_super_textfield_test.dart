@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/super_editor.dart';
@@ -8,11 +9,11 @@ void main() {
       testWidgets("in empty field", (tester) async {
         await _pumpDesktopScaffold(tester);
 
-        await tester.tap(find.byType(SuperDesktopTextField));
+        await tester.tap(find.byType(SuperTextField));
         await tester.pumpAndSettle();
 
         await tester.enterSuperTextPlain(
-          find.byType(SuperDesktopTextField),
+          find.byType(SuperTextField),
           // TODO: we can only send lowercase text until Flutter bug #96021 is resolved
           "hello world",
         );
@@ -23,11 +24,11 @@ void main() {
       testWidgets("shift characters", (tester) async {
         await _pumpDesktopScaffold(tester);
 
-        await tester.tap(find.byType(SuperDesktopTextField));
+        await tester.tap(find.byType(SuperTextField));
         await tester.pumpAndSettle();
 
         await tester.enterSuperTextPlain(
-          find.byType(SuperDesktopTextField),
+          find.byType(SuperTextField),
           "@",
         );
 
@@ -38,12 +39,12 @@ void main() {
       testWidgets("doesn't support Android", (tester) async {
         await _pumpAndroidScaffold(tester);
 
-        await tester.tap(find.byType(SuperAndroidTextField));
+        await tester.tap(find.byType(SuperTextField));
         await tester.pumpAndSettle();
 
         await expectLater(() async {
           await tester.enterSuperTextPlain(
-            find.byType(SuperAndroidTextField),
+            find.byType(SuperTextField),
             "a",
           );
         }, throwsException);
@@ -52,12 +53,12 @@ void main() {
       testWidgets("doesn't support iOS", (tester) async {
         await _pumpIOSScaffold(tester);
 
-        await tester.tap(find.byType(SuperIOSTextField));
+        await tester.tap(find.byType(SuperTextField));
         await tester.pumpAndSettle();
 
         await expectLater(() async {
           await tester.enterSuperTextPlain(
-            find.byType(SuperIOSTextField),
+            find.byType(SuperTextField),
             "a",
           );
         }, throwsException);
@@ -71,7 +72,7 @@ void main() {
           ),
         );
 
-        final textFieldFinder = find.byType(SuperDesktopTextField);
+        final textFieldFinder = find.byType(SuperTextField);
 
         await tester.tapAtSuperTextPosition(textFieldFinder, 6);
         await tester.pumpAndSettle();
@@ -88,38 +89,50 @@ void main() {
 }
 
 Future<void> _pumpDesktopScaffold(WidgetTester tester, [AttributedTextEditingController? controller]) async {
+  debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
+
   await _pumpScaffold(
     tester,
-    SuperDesktopTextField(
+    SuperTextField(
       textController: controller,
+      controlsColor: Colors.blue,
+      selectionColor: Colors.lightBlueAccent,
     ),
   );
+
+  debugDefaultTargetPlatformOverride = null;
 }
 
 Future<void> _pumpAndroidScaffold(WidgetTester tester, [ImeAttributedTextEditingController? controller]) async {
+  debugDefaultTargetPlatformOverride = TargetPlatform.android;
+
   await _pumpScaffold(
     tester,
-    SuperAndroidTextField(
+    SuperTextField(
       textController: controller,
-      caretColor: Colors.blue,
-      handlesColor: Colors.blue,
+      controlsColor: Colors.blue,
       selectionColor: Colors.lightBlueAccent,
       lineHeight: 24,
     ),
   );
+
+  debugDefaultTargetPlatformOverride = null;
 }
 
 Future<void> _pumpIOSScaffold(WidgetTester tester, [ImeAttributedTextEditingController? controller]) async {
+  debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+
   await _pumpScaffold(
     tester,
-    SuperIOSTextField(
+    SuperTextField(
       textController: controller,
-      caretColor: Colors.blue,
-      handlesColor: Colors.blue,
       selectionColor: Colors.lightBlueAccent,
+      controlsColor: Colors.blue,
       lineHeight: 24,
     ),
   );
+
+  debugDefaultTargetPlatformOverride = null;
 }
 
 Future<void> _pumpScaffold(WidgetTester tester, Widget textField) async {
