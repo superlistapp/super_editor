@@ -23,15 +23,20 @@ void main() {
       });
 
       test("a word", () {
-        expect("move a💙c\u3000words".moveOffsetUpstreamByWord(15), 10);
-        expect("move a💙c\u3000words".moveOffsetUpstreamByWord(10), 5);
-        expect("move a💙c\u3000words".moveOffsetUpstreamByWord(9), 5);
-        expect("move a💙c\u3000words".moveOffsetUpstreamByWord(8), 5);
-        expect("move a💙c\u3000words".moveOffsetUpstreamByWord(5), 0);
-        expect("move a💙c\u3000words".moveOffsetUpstreamByWord(4), 0);
-        expect("move a💙c\u3000words".moveOffsetUpstreamByWord(0), null);
-        expect(() => "move a💙c\u3000words".moveOffsetUpstreamByWord(-1), throwsException);
-        expect(() => "move a💙c\u3000words".moveOffsetUpstreamByWord(16), throwsException);
+        expect("  move a💙c\u3000wo.rds".moveOffsetUpstreamByWord(18), 15);
+        expect("  move a💙c\u3000wo.rds".moveOffsetUpstreamByWord(16), 15);
+        expect("  move a💙c\u3000wo.rds".moveOffsetUpstreamByWord(15), 12);
+        expect("  move a💙c\u3000wo.rds".moveOffsetUpstreamByWord(14), 12);
+        expect("  move a💙c\u3000wo.rds".moveOffsetUpstreamByWord(12), 7);
+        expect("  move a💙c\u3000wo.rds".moveOffsetUpstreamByWord(11), 7);
+        expect("  move a💙c\u3000wo.rds".moveOffsetUpstreamByWord(10), 7);
+        expect("  move a💙c\u3000wo.rds".moveOffsetUpstreamByWord(7), 2);
+        expect("  move a💙c\u3000wo.rds".moveOffsetUpstreamByWord(6), 2);
+        expect("  move a💙c\u3000wo.rds".moveOffsetUpstreamByWord(2), 0);
+        expect("  move a💙c\u3000wo.rds".moveOffsetUpstreamByWord(1), 0);
+        expect("  move a💙c\u3000wo.rds".moveOffsetUpstreamByWord(0), null);
+        expect(() => "  move a💙c\u3000wo.rds".moveOffsetUpstreamByWord(-1), throwsException);
+        expect(() => "  move a💙c\u3000wo.rds".moveOffsetUpstreamByWord(19), throwsException);
       });
     });
 
@@ -55,16 +60,19 @@ void main() {
       });
 
       test("a word", () {
-        expect("move a💙c\u3000words".moveOffsetDownstreamByWord(0), 4);
-        expect("move a💙c\u3000words".moveOffsetDownstreamByWord(4), 9);
-        expect("move a💙c\u3000words".moveOffsetDownstreamByWord(5), 9);
-        expect("move a💙c\u3000words".moveOffsetDownstreamByWord(6), 9);
-        expect("move a💙c\u3000words".moveOffsetDownstreamByWord(8), 9);
-        expect("move a💙c\u3000words".moveOffsetDownstreamByWord(9), 15);
-        expect("move a💙c\u3000words".moveOffsetDownstreamByWord(10), 15);
-        expect("move a💙c\u3000words".moveOffsetDownstreamByWord(15), null);
-        expect(() => "move a💙c\u3000words".moveOffsetDownstreamByWord(-1), throwsException);
-        expect(() => "move a💙c\u3000words".moveOffsetDownstreamByWord(16), throwsException);
+        expect("move a💙c\u3000wo.rds  ".moveOffsetDownstreamByWord(0), 4);
+        expect("move a💙c\u3000wo.rds  ".moveOffsetDownstreamByWord(4), 9);
+        expect("move a💙c\u3000wo.rds  ".moveOffsetDownstreamByWord(5), 9);
+        expect("move a💙c\u3000wo.rds  ".moveOffsetDownstreamByWord(6), 9);
+        expect("move a💙c\u3000wo.rds  ".moveOffsetDownstreamByWord(8), 9);
+        expect("move a💙c\u3000wo.rds  ".moveOffsetDownstreamByWord(9), 12);
+        expect("move a💙c\u3000wo.rds  ".moveOffsetDownstreamByWord(10), 12);
+        expect("move a💙c\u3000wo.rds  ".moveOffsetDownstreamByWord(12), 16);
+        expect("move a💙c\u3000wo.rds  ".moveOffsetDownstreamByWord(16), 18);
+        expect("move a💙c\u3000wo.rds  ".moveOffsetDownstreamByWord(17), 18);
+        expect("move a💙c\u3000wo.rds  ".moveOffsetDownstreamByWord(18), null);
+        expect(() => "move a💙c\u3000wo.rds  ".moveOffsetDownstreamByWord(-1), throwsException);
+        expect(() => "move a💙c\u3000wo.rds  ".moveOffsetDownstreamByWord(19), throwsException);
       });
     });
   });
