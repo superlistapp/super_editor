@@ -6,15 +6,17 @@ final _separatorRegex = RegExp(r'^[\p{Z}\p{P}]$', unicode: true);
 
 extension CharacterMovement on String {
   /// Returns the code point index of the character that sits
-  /// one word upstream from the given [textOffset] code point index.
+  /// one word upstream from the given [textOffset] code
+  /// point index, ignoring separator and punctuation
+  /// characters.
   ///
   /// Examples:
   ///   |word up -> `null`
   ///   wo|rd up -> `0`
   ///   word| up -> `0`
-  ///   word |up -> `4`
-  ///   word up| -> `6`
-  int? moveOffsetUpstreamByWord(int textOffset, {int characterCount = 1}) {
+  ///   word |up -> `0`
+  ///   word up| -> `5`
+  int? moveOffsetUpstreamByWord(int textOffset) {
     if (textOffset < 0 || textOffset > length) {
       throw Exception("Index '$textOffset' is out of string range. Length: $length");
     }
@@ -94,16 +96,17 @@ extension CharacterMovement on String {
   }
 
   /// Returns the code point index of the character that sits
-  /// one word downstream from given [textOffset] code point
-  /// index.
+  /// one word downstream from the given [textOffset] code
+  /// point index, ignoring separator and punctuation
+  /// characters.
   ///
   /// Examples:
   ///   |word up -> `4`
   ///   wo|rd up -> `4`
-  ///   word| up -> `5`
+  ///   word| up -> `7`
   ///   word |up -> `7`
   ///   word up| -> `null`
-  int? moveOffsetDownstreamByWord(int textOffset, {int characterCount = 1}) {
+  int? moveOffsetDownstreamByWord(int textOffset) {
     if (textOffset < 0 || textOffset > length) {
       throw Exception("Index '$textOffset' is out of string range. Length: $length");
     }
