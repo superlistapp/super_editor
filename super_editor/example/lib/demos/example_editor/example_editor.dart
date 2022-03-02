@@ -272,3 +272,46 @@ class _ExampleEditorState extends State<ExampleEditor> {
 //     );
 //   }
 // }
+
+final stylesheet = Stylesheet([
+  StyleRule(
+    const BlockSelector.all(),
+    (doc, docNode) {
+      return {
+        "padding": const EdgeInsets.all(24),
+      };
+    },
+  ),
+  StyleRule(
+    const BlockSelector("header1"),
+    (doc, docNode) {
+      return {
+        // TODO:
+      };
+    },
+  ),
+  StyleRule(
+    const BlockSelector("header2"),
+    (doc, docNode) {
+      return {
+        // TODO:
+      };
+    },
+  ),
+  StyleRule(
+    const BlockSelector("header3"),
+    (doc, docNode) {
+      return {
+        // TODO:
+      };
+    },
+  ),
+  StyleRule(
+    const BlockSelector("paragraph"),
+    (doc, docNode) {
+      return {
+        // TODO:
+      };
+    },
+  ),
+]);
