@@ -7,7 +7,7 @@ import 'super_textfield.dart';
 extension SuperTextFieldTesting on WidgetTester {
   Future<void> tapAtSuperTextPosition(Finder finder, int offset) async {
     final fieldFinder = _findInnerPlatformTextField(finder);
-    final match = fieldFinder.evaluate().first.widget;
+    final match = fieldFinder.evaluate().single.widget;
 
     if (match is SuperDesktopTextField) {
       final didTap = await _tapAtTextPositionOnDesktop(state<SuperDesktopTextFieldState>(fieldFinder), offset);
@@ -43,7 +43,7 @@ extension SuperTextFieldTesting on WidgetTester {
 
   Future<void> enterSuperTextPlain(Finder finder, String plainText) async {
     final fieldFinder = _findInnerPlatformTextField(finder);
-    final match = fieldFinder.evaluate().first.widget;
+    final match = fieldFinder.evaluate().single.widget;
 
     if (match is SuperDesktopTextField) {
       await _enterTextOnDesktop(plainText);
@@ -70,7 +70,7 @@ extension SuperTextFieldTesting on WidgetTester {
       throw Exception("Found more than 1 super text field match with finder: $rootFieldFinder");
     }
 
-    final rootMatch = rootMatches.first.widget;
+    final rootMatch = rootMatches.single.widget;
     if (rootMatch is! SuperTextField) {
       // The match isn't a generic SuperTextField. Assume that it's a platform
       // specific super text field, which is what we're looking for. Return it.
