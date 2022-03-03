@@ -233,22 +233,24 @@ class _ExampleEditorState extends State<ExampleEditor> {
   }
 
   Widget _buildMountedToolbar() {
-    final selection = _composer.selection;
-
-    if (selection == null) {
-      return const SizedBox();
-    }
-
     return MultiListenableBuilder(
       listenables: <Listenable>{
         _doc,
         _composer.selectionNotifier,
       },
-      builder: (_) => KeyboardEditingToolbar(
-        document: _doc,
-        composer: _composer,
-        commonOps: _docOps,
-      ),
+      builder: (_) {
+        final selection = _composer.selection;
+
+        if (selection == null) {
+          return const SizedBox();
+        }
+
+        return KeyboardEditingToolbar(
+          document: _doc,
+          composer: _composer,
+          commonOps: _docOps,
+        );
+      },
     );
   }
 }
