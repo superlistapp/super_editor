@@ -384,7 +384,22 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
     if (textPosition == null) {
       return null;
     }
-    return TextNodePosition.fromTextPosition(textPosition);
+
+    // Rework the textPosition so that it reports a "downstream" affinity because
+    // the editor doesn't support "upstream" positions, yet.
+    //
+    // Applying the "-1" to switch from upstream to downstream works everywhere, except
+    // when the position is at the very end of the text. In that case, we leave the offset
+    // alone.
+    return TextNodePosition.fromTextPosition(textPosition.affinity == TextAffinity.downstream
+        // The textPosition is already "downstream", leave it alone.
+        ? textPosition
+        // The textPosition if "upstream", adjust it to become "downstream", unless
+        // the position sits at the very end of the text.
+        : TextPosition(
+            offset: textPosition.offset < widget.text.text.length ? textPosition.offset - 1 : textPosition.offset,
+            affinity: TextAffinity.downstream,
+          ));
   }
 
   @override

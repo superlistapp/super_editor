@@ -73,9 +73,9 @@ class ScrollableDocument extends StatelessWidget {
   }
 
   Widget _buildDocument() {
-    return CompositedTransformTarget(
-      link: documentLayerLink,
-      child: Center(
+    return Center(
+      child: CompositedTransformTarget(
+        link: documentLayerLink,
         child: child,
       ),
     );

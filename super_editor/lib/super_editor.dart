@@ -2,6 +2,7 @@ library super_editor;
 
 export 'src/infrastructure/super_textfield/super_textfield.dart';
 export 'src/infrastructure/super_selectable_text.dart';
+export 'src/infrastructure/_listenable_builder.dart';
 export 'src/infrastructure/_logging.dart';
 export 'src/infrastructure/attributed_text.dart';
 export 'src/infrastructure/attributed_spans.dart';
