@@ -5,6 +5,7 @@ import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_editor.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/edit_context.dart';
+import 'package:super_editor/src/core/styles.dart';
 import 'package:super_editor/src/default_editor/common_editor_operations.dart';
 import 'package:super_editor/src/default_editor/document_gestures_touch_android.dart';
 import 'package:super_editor/src/default_editor/document_gestures_touch_ios.dart';
@@ -77,8 +78,8 @@ class SuperEditor extends StatefulWidget {
     this.androidToolbarBuilder,
     this.iOSToolbarBuilder,
     this.createOverlayControlsClipper,
+    this.debugPaint = const DebugPaintConfig(),
     this.autofocus = false,
-    this.showDebugPaint = false,
   })  : componentBuilders = defaultComponentBuilders,
         keyboardActions = defaultKeyboardActions,
         softwareKeyboardHandler = null,
@@ -104,8 +105,8 @@ class SuperEditor extends StatefulWidget {
     this.androidToolbarBuilder,
     this.iOSToolbarBuilder,
     this.createOverlayControlsClipper,
+    this.debugPaint = const DebugPaintConfig(),
     this.autofocus = false,
-    this.showDebugPaint = false,
   })  : selectionStyles = selectionStyle ?? defaultSelectionStyle,
         keyboardActions = keyboardActions ?? defaultKeyboardActions,
         componentBuilders = componentBuilders ?? defaultComponentBuilders,
@@ -131,8 +132,8 @@ class SuperEditor extends StatefulWidget {
     this.iOSToolbarBuilder,
     this.createOverlayControlsClipper,
     this.softwareKeyboardHandler,
+    this.debugPaint = const DebugPaintConfig(),
     this.autofocus = false,
-    this.showDebugPaint = false,
   })  : selectionStyles = selectionStyle ?? defaultSelectionStyle,
         keyboardActions = keyboardActions ?? defaultKeyboardActions,
         componentBuilders = componentBuilders ?? defaultComponentBuilders,
@@ -231,7 +232,7 @@ class SuperEditor extends StatefulWidget {
 
   /// Paints some extra visual ornamentation to help with
   /// debugging, when true.
-  final bool showDebugPaint;
+  final DebugPaintConfig debugPaint;
 
   @override
   _SuperEditorState createState() => _SuperEditorState();
@@ -242,8 +243,8 @@ class _SuperEditorState extends State<SuperEditor> {
   // out where in the document the user taps or drags.
   late GlobalKey _docLayoutKey;
   SingleColumnLayoutPresenter? _docLayoutPresenter;
-  late SingleColumnLayoutStyler _docLayoutStyler;
-  late SingleColumnLayoutCustomComponentStyler _docLayoutSizeStyler;
+  late SingleColumnLayoutStyler _docStandardStyler;
+  late SingleColumnLayoutCustomComponentStyler _docLayoutPerComponentBlockStyler;
   late SingleColumnLayoutSelectionStyler _docLayoutSelectionStyler;
 
   late FocusNode _focusNode;
@@ -313,7 +314,7 @@ class _SuperEditorState extends State<SuperEditor> {
     }
 
     if (widget.stylesheet != oldWidget.stylesheet) {
-      _docLayoutStyler.stylesheet = widget.stylesheet;
+      _docStandardStyler.stylesheet = widget.stylesheet;
     }
 
     _recomputeIfLayoutShouldShowCaret();
@@ -354,9 +355,9 @@ class _SuperEditorState extends State<SuperEditor> {
 
     final document = _editContext.editor.document;
 
-    _docLayoutStyler = SingleColumnLayoutStyler(stylesheet: widget.stylesheet);
+    _docStandardStyler = SingleColumnLayoutStyler(stylesheet: widget.stylesheet);
 
-    _docLayoutSizeStyler = SingleColumnLayoutCustomComponentStyler();
+    _docLayoutPerComponentBlockStyler = SingleColumnLayoutCustomComponentStyler();
 
     _docLayoutSelectionStyler = SingleColumnLayoutSelectionStyler(
       document: document,
@@ -368,8 +369,8 @@ class _SuperEditorState extends State<SuperEditor> {
     _docLayoutPresenter = SingleColumnLayoutPresenter(
       document: document,
       pipeline: [
-        _docLayoutStyler,
-        _docLayoutSizeStyler,
+        // _docStandardStyler,
+        _docLayoutPerComponentBlockStyler,
         ...widget.customStylePhases,
         // Selection changes are very volatile. Put that phase last
         // to minimize view model recalculations.
@@ -446,7 +447,7 @@ class _SuperEditorState extends State<SuperEditor> {
           key: _docLayoutKey,
           presenter: _docLayoutPresenter!,
           componentBuilders: widget.componentBuilders,
-          showDebugPaint: widget.showDebugPaint,
+          showDebugPaint: widget.debugPaint.layout,
         ),
       ),
     );
@@ -490,7 +491,7 @@ class _SuperEditorState extends State<SuperEditor> {
           focusNode: _focusNode,
           editContext: _editContext,
           scrollController: widget.scrollController,
-          showDebugPaint: widget.showDebugPaint,
+          showDebugPaint: widget.debugPaint.gestures,
           child: child,
         );
       case DocumentGestureMode.android:
@@ -503,7 +504,7 @@ class _SuperEditorState extends State<SuperEditor> {
           documentKey: _docLayoutKey,
           popoverToolbarBuilder: widget.androidToolbarBuilder ?? (_) => const SizedBox(),
           createOverlayControlsClipper: widget.createOverlayControlsClipper,
-          showDebugPaint: widget.showDebugPaint,
+          showDebugPaint: widget.debugPaint.gestures,
           child: child,
         );
       case DocumentGestureMode.iOS:
@@ -517,7 +518,7 @@ class _SuperEditorState extends State<SuperEditor> {
           popoverToolbarBuilder: widget.iOSToolbarBuilder ?? (_) => const SizedBox(),
           floatingCursorController: _floatingCursorController,
           createOverlayControlsClipper: widget.createOverlayControlsClipper,
-          showDebugPaint: widget.showDebugPaint,
+          showDebugPaint: widget.debugPaint.gestures,
           child: child,
         );
     }
@@ -535,81 +536,24 @@ enum DocumentGestureMode {
   iOS,
 }
 
-// final stylesheet = Stylesheet(
-//   rules: [
-//     StyleRule(
-//       selector: "layout",
-//       properties: {
-//         "contentWidth": 640.0,
-//         "margin": const EdgeInsets.only(bottom: 96),
-//         "blockPadding": const EdgeInsets.only(left: 20, right: 20),
-//       },
-//     ),
-//     StyleRule(
-//       selector: "p",
-//       properties: {
-//         "padding": const EdgeInsets.only(top: 20),
-//         "highlightWhenEmpty": true,
-//         "textStyle": const TextStyle(
-//           color: Colors.black,
-//           fontSize: 16,
-//           fontWeight: FontWeight.w300,
-//           height: 1.8,
-//         ),
-//       },
-//     ),
-//     StyleRule(
-//       selector: "h1",
-//       properties: {
-//         "padding": const EdgeInsets.only(top: 40),
-//         "textStyle": const TextStyle(
-//           color: Color(0xFF333333),
-//           fontSize: 38,
-//           fontWeight: FontWeight.bold,
-//         ),
-//       },
-//     ),
-//     StyleRule(
-//       selector: "image",
-//       properties: {
-//         "padding": const EdgeInsets.only(top: 20),
-//       },
-//     ),
-//     StyleRule(
-//       selector: "hr",
-//       properties: {
-//         "padding": EdgeInsets.zero,
-//       },
-//     ),
-//   ],
-// );
-//
-// final textBlockStylePhase = SylePhase(
-//   builder: (doc, node) {
-//     if (node is! ParagraphNode) {
-//       return null;
-//     }
-//     // TODO:
-//   },
-//   styler: (doc, stylesheet) {
-//     //
-//   },
-// );
-//
-// final imageStylePhase = StylePhase(builder: (doc, node) {
-//   if (node is! ImageNode) {
-//     return null;
-//   }
-//
-//   return ImageComponentViewModel(
-//     nodeId: node.id,
-//     imageUrl: node.url,
-//     selectionColor: Colors.transparent,
-//     caretColor: Colors.transparent,
-//   );
-// }, styler: (doc, stylesheet) {
-//   //
-// });
+/// Configures the aspects of the editor that show debug paint.
+class DebugPaintConfig {
+  const DebugPaintConfig({
+    this.scrolling = false,
+    this.gestures = false,
+    this.layout = false,
+  });
+
+  final bool scrolling;
+  final bool gestures;
+  final bool layout;
+}
+
+/// Default visual styles related to content selection.
+const defaultSelectionStyle = SelectionStyles(
+  textCaretColor: Colors.black,
+  selectionColor: Color(0xFFACCEF7),
+);
 
 /// Default document stylesheet that's used by [SuperEditor], when
 /// no stylesheet is provided.
@@ -703,6 +647,49 @@ const defaultDocumentStylesheet = SingleColumnLayoutStylesheet(
   ),
 );
 
+final defaultStylesheet = Stylesheet([
+  StyleRule(
+    const BlockSelector.all(),
+    (doc, docNode) {
+      return {
+        "padding": const EdgeInsets.all(24),
+      };
+    },
+  ),
+  StyleRule(
+    const BlockSelector("header1"),
+    (doc, docNode) {
+      return {
+        // TODO:
+      };
+    },
+  ),
+  StyleRule(
+    const BlockSelector("header2"),
+    (doc, docNode) {
+      return {
+        // TODO:
+      };
+    },
+  ),
+  StyleRule(
+    const BlockSelector("header3"),
+    (doc, docNode) {
+      return {
+        // TODO:
+      };
+    },
+  ),
+  StyleRule(
+    const BlockSelector("paragraph"),
+    (doc, docNode) {
+      return {
+        // TODO:
+      };
+    },
+  ),
+]);
+
 TextStyle defaultInlineTextStyler(Set<Attribution> attributions, TextStyle existingStyle) {
   return existingStyle.merge(defaultStyleBuilder(attributions));
 }
@@ -741,12 +728,6 @@ TextStyle defaultStyleBuilder(Set<Attribution> attributions) {
   }
   return newStyle;
 }
-
-/// Default visual styles related to content selection.
-const defaultSelectionStyle = SelectionStyles(
-  textCaretColor: Colors.black,
-  selectionColor: Color(0xFFACCEF7),
-);
 
 /// Creates visual components for the standard [SuperEditor].
 ///

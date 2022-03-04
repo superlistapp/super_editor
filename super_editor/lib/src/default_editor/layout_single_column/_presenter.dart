@@ -524,7 +524,13 @@ abstract class SingleColumnLayoutStylePhase {
 /// use when creating baseline view models before the text styles are
 /// configured.
 TextStyle _noStyleBuilder(Set<Attribution> attributions) {
-  return const TextStyle();
+  return const TextStyle(
+    // Even though this a "no style" builder, we supply a font size
+    // and line height because there are a number of places in the editor
+    // where these details are needed for layout calculations.
+    fontSize: 16,
+    height: 1.0,
+  );
 }
 
 /// [SingleColumnLayoutStylePhase] that applies layout-wide styles.

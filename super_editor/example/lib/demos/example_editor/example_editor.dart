@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:example/logging.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/super_editor.dart';
@@ -18,12 +19,13 @@ class _ExampleEditorState extends State<ExampleEditor> {
   final GlobalKey _docLayoutKey = GlobalKey();
 
   late Document _doc;
-  DocumentEditor? _docEditor;
+  late DocumentEditor _docEditor;
   late DocumentComposer _composer;
+  late CommonEditorOperations _docOps;
 
-  FocusNode? _editorFocusNode;
+  late FocusNode _editorFocusNode;
 
-  ScrollController? _scrollController;
+  late ScrollController _scrollController;
 
   OverlayEntry? _textFormatBarOverlayEntry;
   final _textSelectionAnchor = ValueNotifier<Offset?>(null);
@@ -37,6 +39,11 @@ class _ExampleEditorState extends State<ExampleEditor> {
     _doc = createInitialDocument()..addListener(_hideOrShowToolbar);
     _docEditor = DocumentEditor(document: _doc as MutableDocument);
     _composer = DocumentComposer()..addListener(_hideOrShowToolbar);
+    _docOps = CommonEditorOperations(
+      editor: _docEditor,
+      composer: _composer,
+      documentLayoutResolver: () => _docLayoutKey.currentState as DocumentLayout,
+    );
     _editorFocusNode = FocusNode();
     _scrollController = ScrollController()..addListener(_hideOrShowToolbar);
   }
@@ -47,13 +54,19 @@ class _ExampleEditorState extends State<ExampleEditor> {
       _textFormatBarOverlayEntry!.remove();
     }
 
-    _scrollController!.dispose();
-    _editorFocusNode!.dispose();
+    _scrollController.dispose();
+    _editorFocusNode.dispose();
     _composer.dispose();
     super.dispose();
   }
 
   void _hideOrShowToolbar() {
+    if (_gestureMode != DocumentGestureMode.mouse) {
+      // We only add our own toolbar when using mouse. On mobile, a bar
+      // is rendered for us.
+      return;
+    }
+
     final selection = _composer.selection;
     if (selection == null) {
       // Nothing is selected. We don't want to show a toolbar
@@ -165,8 +178,42 @@ class _ExampleEditorState extends State<ExampleEditor> {
     // I tried explicitly unfocus()'ing the URL textfield
     // in the toolbar but it didn't return focus to the
     // editor. I'm not sure why.
-    _editorFocusNode!.requestFocus();
+    _editorFocusNode.requestFocus();
   }
+
+  DocumentGestureMode get _gestureMode {
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+        return DocumentGestureMode.android;
+      case TargetPlatform.iOS:
+        return DocumentGestureMode.iOS;
+      case TargetPlatform.fuchsia:
+      case TargetPlatform.linux:
+      case TargetPlatform.macOS:
+      case TargetPlatform.windows:
+        return DocumentGestureMode.mouse;
+    }
+  }
+
+  bool get _isMobile => _gestureMode != DocumentGestureMode.mouse;
+
+  DocumentInputSource get _inputSource {
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+      case TargetPlatform.iOS:
+        return DocumentInputSource.ime;
+      case TargetPlatform.fuchsia:
+      case TargetPlatform.linux:
+      case TargetPlatform.macOS:
+      case TargetPlatform.windows:
+        return DocumentInputSource.keyboard;
+    }
+  }
+
+  void _cut() => _docOps.cut();
+  void _copy() => _docOps.copy();
+  void _paste() => _docOps.paste();
+  void _selectAll() => _docOps.selectAll();
 
   void _showImageToolbar() {
     if (_imageFormatBarOverlayEntry == null) {
@@ -228,90 +275,63 @@ class _ExampleEditorState extends State<ExampleEditor> {
     }
 
     // Ensure that focus returns to the editor.
-    _editorFocusNode!.requestFocus();
+    _editorFocusNode.requestFocus();
   }
 
   @override
   Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Expanded(
+          child: _buildEditor(),
+        ),
+        if (_isMobile) _buildMountedToolbar(),
+      ],
+    );
+  }
+
+  Widget _buildEditor() {
     return SuperEditor(
-      editor: _docEditor!,
+      editor: _docEditor,
       composer: _composer,
       focusNode: _editorFocusNode,
       scrollController: _scrollController,
       documentLayoutKey: _docLayoutKey,
-      // customStylers: [
-      //   SingleColumnLayoutStylePhase(
-      //     builder: (doc, docNode) {
-      //       // TODO:
-      //     },
-      //     styler: (doc, docNode, viewModel) {
-      //       // TODO:
-      //     }
-      //   )
-      // ],
+      gestureMode: _gestureMode,
+      inputSource: _inputSource,
+      androidToolbarBuilder: (_) => AndroidTextEditingFloatingToolbar(
+        onCutPressed: _cut,
+        onCopyPressed: _copy,
+        onPastePressed: _paste,
+        onSelectAllPressed: _selectAll,
+      ),
+      iOSToolbarBuilder: (_) => IOSTextEditingFloatingToolbar(
+        onCutPressed: _cut,
+        onCopyPressed: _copy,
+        onPastePressed: _paste,
+      ),
+    );
+  }
+
+  Widget _buildMountedToolbar() {
+    return MultiListenableBuilder(
+      listenables: <Listenable>{
+        _doc,
+        _composer.selectionNotifier,
+      },
+      builder: (_) {
+        final selection = _composer.selection;
+
+        if (selection == null) {
+          return const SizedBox();
+        }
+
+        return KeyboardEditingToolbar(
+          document: _doc,
+          composer: _composer,
+          commonOps: _docOps,
+        );
+      },
     );
   }
 }
-
-// class TaskStylePhase extends SingleColumnLayoutStylePhase {
-//   SingleColumnLayoutComponentViewModel? buildComponent(Document doc, DocumentNode node) {
-//     if (node is! TaskNode) {
-//       return null;
-//     }
-//
-//     return TaskComponent(...);
-//   }
-//
-//   SingleColumnLayoutComponentViewModel build(Document doc, DocumentNode node, SingleColumnLayoutComponentViewModel viewModel) {
-//     if (node is! TaskNode || viewModel is! TaskViewModel) {
-//       return viewModel;
-//     }
-//
-//     return viewModel.copyWith(
-//       ...,
-//     );
-//   }
-// }
-
-final stylesheet = Stylesheet([
-  StyleRule(
-    const BlockSelector.all(),
-    (doc, docNode) {
-      return {
-        "padding": const EdgeInsets.all(24),
-      };
-    },
-  ),
-  StyleRule(
-    const BlockSelector("header1"),
-    (doc, docNode) {
-      return {
-        // TODO:
-      };
-    },
-  ),
-  StyleRule(
-    const BlockSelector("header2"),
-    (doc, docNode) {
-      return {
-        // TODO:
-      };
-    },
-  ),
-  StyleRule(
-    const BlockSelector("header3"),
-    (doc, docNode) {
-      return {
-        // TODO:
-      };
-    },
-  ),
-  StyleRule(
-    const BlockSelector("paragraph"),
-    (doc, docNode) {
-      return {
-        // TODO:
-      };
-    },
-  ),
-]);

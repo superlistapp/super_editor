@@ -1,28 +1,27 @@
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:super_editor/src/infrastructure/super_textfield/android/android_textfield.dart';
-import 'package:super_editor/src/infrastructure/super_textfield/ios/ios_textfield.dart';
 
 import 'super_textfield.dart';
 
 extension SuperTextFieldTesting on WidgetTester {
   Future<void> tapAtSuperTextPosition(Finder finder, int offset) async {
-    final match = _findSuperTextField(finder);
+    final fieldFinder = _findInnerPlatformTextField(finder);
+    final match = fieldFinder.evaluate().single.widget;
 
-    if (match.widget is SuperDesktopTextField) {
-      final didTap = await _tapAtTextPositionOnDesktop(state<SuperDesktopTextFieldState>(finder), offset);
+    if (match is SuperDesktopTextField) {
+      final didTap = await _tapAtTextPositionOnDesktop(state<SuperDesktopTextFieldState>(fieldFinder), offset);
       if (!didTap) {
         throw Exception("The desired text offset wasn't tappable in SuperTextField: $offset");
       }
       return;
     }
 
-    if (match.widget is SuperAndroidTextField) {
+    if (match is SuperAndroidTextField) {
       throw Exception("Entering text on an Android SuperTextField is not yet supported");
     }
 
-    if (match.widget is SuperIOSTextField) {
+    if (match is SuperIOSTextField) {
       throw Exception("Entering text on an iOS SuperTextField is not yet supported");
     }
 
@@ -43,22 +42,61 @@ extension SuperTextFieldTesting on WidgetTester {
   }
 
   Future<void> enterSuperTextPlain(Finder finder, String plainText) async {
-    final match = _findSuperTextField(finder);
+    final fieldFinder = _findInnerPlatformTextField(finder);
+    final match = fieldFinder.evaluate().single.widget;
 
-    if (match.widget is SuperDesktopTextField) {
+    if (match is SuperDesktopTextField) {
       await _enterTextOnDesktop(plainText);
       return;
     }
 
-    if (match.widget is SuperAndroidTextField) {
+    if (match is SuperAndroidTextField) {
       throw Exception("Entering text on an Android SuperTextField is not yet supported");
     }
 
-    if (match.widget is SuperIOSTextField) {
+    if (match is SuperIOSTextField) {
       throw Exception("Entering text on an iOS SuperTextField is not yet supported");
     }
 
     throw Exception("Couldn't find a SuperTextField with the given Finder: $finder");
+  }
+
+  Finder _findInnerPlatformTextField(Finder rootFieldFinder) {
+    final rootMatches = rootFieldFinder.evaluate();
+    if (rootMatches.isEmpty) {
+      throw Exception("Couldn't find a super text field variant with the given finder: $rootFieldFinder");
+    }
+    if (rootMatches.length > 1) {
+      throw Exception("Found more than 1 super text field match with finder: $rootFieldFinder");
+    }
+
+    final rootMatch = rootMatches.single.widget;
+    if (rootMatch is! SuperTextField) {
+      // The match isn't a generic SuperTextField. Assume that it's a platform
+      // specific super text field, which is what we're looking for. Return it.
+      return rootFieldFinder;
+    }
+
+    final desktopFieldCandidates =
+        find.descendant(of: rootFieldFinder, matching: find.byType(SuperDesktopTextField)).evaluate();
+    if (desktopFieldCandidates.isNotEmpty) {
+      return find.descendant(of: rootFieldFinder, matching: find.byType(SuperDesktopTextField));
+    }
+
+    final androidFieldCandidates =
+        find.descendant(of: rootFieldFinder, matching: find.byType(SuperAndroidTextField)).evaluate();
+    if (androidFieldCandidates.isNotEmpty) {
+      return find.descendant(of: rootFieldFinder, matching: find.byType(SuperAndroidTextField));
+    }
+
+    final iosFieldCandidates =
+        find.descendant(of: rootFieldFinder, matching: find.byType(SuperIOSTextField)).evaluate();
+    if (iosFieldCandidates.isNotEmpty) {
+      return find.descendant(of: rootFieldFinder, matching: find.byType(SuperIOSTextField));
+    }
+
+    throw Exception(
+        "Couldn't find the platform-specific super text field within the root SuperTextField. Root finder: $rootFieldFinder");
   }
 
   Future<void> _enterTextOnDesktop(String plainText) async {
@@ -83,18 +121,6 @@ extension SuperTextFieldTesting on WidgetTester {
 
       await pump();
     }
-  }
-
-  Element _findSuperTextField(Finder finder) {
-    final matches = finder.evaluate().toList();
-    if (matches.isEmpty) {
-      throw Exception("Couldn't find a SuperTextField with the given Finder: $finder");
-    }
-    if (matches.length > 1) {
-      throw Exception("Found multiple SuperTextField candidates with the given Finder: $finder");
-    }
-
-    return matches.first;
   }
 
   _KeyboardCombo _keyCodeFromCharacter(String character) {

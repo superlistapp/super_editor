@@ -20,6 +20,7 @@ class _MobileEditingAndroidDemoState extends State<MobileEditingAndroidDemo> {
   late Document _doc;
   late DocumentEditor _docEditor;
   late DocumentComposer _composer;
+  late CommonEditorOperations _docOps;
   late SoftwareKeyboardHandler _softwareKeyboardHandler;
 
   FocusNode? _editorFocusNode;
@@ -30,14 +31,15 @@ class _MobileEditingAndroidDemoState extends State<MobileEditingAndroidDemo> {
     _doc = _createInitialDocument();
     _docEditor = DocumentEditor(document: _doc as MutableDocument);
     _composer = DocumentComposer()..addListener(_configureImeActionButton);
+    _docOps = CommonEditorOperations(
+      editor: _docEditor,
+      composer: _composer,
+      documentLayoutResolver: () => _docLayoutKey.currentState as DocumentLayout,
+    );
     _softwareKeyboardHandler = SoftwareKeyboardHandler(
       editor: _docEditor,
       composer: _composer,
-      commonOps: CommonEditorOperations(
-        editor: _docEditor,
-        composer: _composer,
-        documentLayoutResolver: () => _docLayoutKey.currentState as DocumentLayout,
-      ),
+      commonOps: _docOps,
     );
     _editorFocusNode = FocusNode();
   }
@@ -79,41 +81,29 @@ class _MobileEditingAndroidDemoState extends State<MobileEditingAndroidDemo> {
             child: SuperEditor(
               focusNode: _editorFocusNode,
               documentLayoutKey: _docLayoutKey,
-              gestureMode: DocumentGestureMode.android,
-              inputSource: DocumentInputSource.ime,
-              androidToolbarBuilder: (_) => AndroidTextEditingFloatingToolbar(
-                onCutPressed: () {
-                  // TODO:
-                },
-                onCopyPressed: () {
-                  // TODO:
-                },
-                onPastePressed: () async {
-                  // TODO:
-                },
-                onSelectAllPressed: () {
-                  // TODO:
-                },
-              ),
               editor: _docEditor,
               composer: _composer,
               softwareKeyboardHandler: _softwareKeyboardHandler,
+              gestureMode: DocumentGestureMode.android,
+              inputSource: DocumentInputSource.ime,
+              androidToolbarBuilder: (_) => AndroidTextEditingFloatingToolbar(
+                onCutPressed: () => _docOps.cut(),
+                onCopyPressed: () => _docOps.copy(),
+                onPastePressed: () => _docOps.paste(),
+                onSelectAllPressed: () => _docOps.selectAll(),
+              ),
               stylesheet: defaultDocumentStylesheet.copyWith(
                 margin: const EdgeInsets.all(16),
               ),
               createOverlayControlsClipper: (_) => const KeyboardToolbarClipper(),
             ),
           ),
-          AnimatedBuilder(
-            animation: _doc,
-            builder: (context, child) {
-              return AnimatedBuilder(
-                animation: _composer.selectionNotifier,
-                builder: (context, child) {
-                  return _buildMountedToolbar();
-                },
-              );
+          MultiListenableBuilder(
+            listenables: <Listenable>{
+              _doc,
+              _composer.selectionNotifier,
             },
+            builder: (_) => _buildMountedToolbar(),
           ),
         ],
       ),

@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:linkify/linkify.dart';
 import 'package:super_editor/src/core/document.dart';
@@ -2091,5 +2092,257 @@ class CommonEditorOperations {
     final extentPosition = selection.extent;
     final extentNode = document.getNodeById(extentPosition.nodeId);
     return extentNode is TextNode;
+  }
+
+  /// Serializes the current selection to plain text, and adds it to the
+  /// clipboard.
+  void copy() {
+    final textToCopy = _textInSelection(
+      document: editor.document,
+      documentSelection: composer.selection!,
+    );
+    // TODO: figure out a general approach for asynchronous behaviors that
+    //       need to be carried out in response to user input.
+    _saveToClipboard(textToCopy);
+  }
+
+  /// Serializes the current selection to plain text, adds it to the
+  /// clipboard, and then deletes the selected content.
+  void cut() {
+    final textToCut = _textInSelection(
+      document: editor.document,
+      documentSelection: composer.selection!,
+    );
+    // TODO: figure out a general approach for asynchronous behaviors that
+    //       need to be carried out in response to user input.
+    _saveToClipboard(textToCut);
+
+    deleteSelection();
+  }
+
+  Future<void> _saveToClipboard(String text) {
+    return Clipboard.setData(ClipboardData(text: text));
+  }
+
+  String _textInSelection({
+    required Document document,
+    required DocumentSelection documentSelection,
+  }) {
+    final selectedNodes = document.getNodesInside(
+      documentSelection.base,
+      documentSelection.extent,
+    );
+
+    final buffer = StringBuffer();
+    for (int i = 0; i < selectedNodes.length; ++i) {
+      final selectedNode = selectedNodes[i];
+      dynamic nodeSelection;
+
+      if (i == 0) {
+        // This is the first node and it may be partially selected.
+        final baseSelectionPosition = selectedNode.id == documentSelection.base.nodeId
+            ? documentSelection.base.nodePosition
+            : documentSelection.extent.nodePosition;
+
+        final extentSelectionPosition =
+            selectedNodes.length > 1 ? selectedNode.endPosition : documentSelection.extent.nodePosition;
+
+        nodeSelection = selectedNode.computeSelection(
+          base: baseSelectionPosition,
+          extent: extentSelectionPosition,
+        );
+      } else if (i == selectedNodes.length - 1) {
+        // This is the last node and it may be partially selected.
+        final nodePosition = selectedNode.id == documentSelection.base.nodeId
+            ? documentSelection.base.nodePosition
+            : documentSelection.extent.nodePosition;
+
+        nodeSelection = selectedNode.computeSelection(
+          base: selectedNode.beginningPosition,
+          extent: nodePosition,
+        );
+      } else {
+        // This node is fully selected. Copy the whole thing.
+        nodeSelection = selectedNode.computeSelection(
+          base: selectedNode.beginningPosition,
+          extent: selectedNode.endPosition,
+        );
+      }
+
+      final nodeContent = selectedNode.copyContent(nodeSelection);
+      if (nodeContent != null) {
+        buffer.write(nodeContent);
+        if (i < selectedNodes.length - 1) {
+          buffer.writeln();
+        }
+      }
+    }
+    return buffer.toString();
+  }
+
+  /// Deletes all selected content, and then pastes the current clipboard
+  /// content at the given location.
+  ///
+  /// The clipboard operation is asynchronous. As a result, if the user quickly
+  /// moves the caret, it's possible that the clipboard content will be pasted
+  /// at the wrong spot.
+  void paste() {
+    DocumentPosition pastePosition = composer.selection!.extent;
+
+    // Delete all currently selected content.
+    if (!composer.selection!.isCollapsed) {
+      pastePosition = CommonEditorOperations.getDocumentPositionAfterExpandedDeletion(
+        document: editor.document,
+        selection: composer.selection!,
+      );
+
+      // Delete the selected content.
+      editor.executeCommand(
+        DeleteSelectionCommand(documentSelection: composer.selection!),
+      );
+
+      composer.selection = DocumentSelection.collapsed(position: pastePosition);
+    }
+
+    // TODO: figure out a general approach for asynchronous behaviors that
+    //       need to be carried out in response to user input.
+    _paste(
+      document: editor.document,
+      editor: editor,
+      composer: composer,
+      pastePosition: pastePosition,
+    );
+  }
+
+  Future<void> _paste({
+    required Document document,
+    required DocumentEditor editor,
+    required DocumentComposer composer,
+    required DocumentPosition pastePosition,
+  }) async {
+    final content = (await Clipboard.getData('text/plain'))?.text ?? '';
+
+    editor.executeCommand(
+      _PasteEditorCommand(
+        content: content,
+        pastePosition: pastePosition,
+        composer: composer,
+      ),
+    );
+  }
+}
+
+class _PasteEditorCommand implements EditorCommand {
+  _PasteEditorCommand({
+    required String content,
+    required DocumentPosition pastePosition,
+    required DocumentComposer composer,
+  })  : _content = content,
+        _pastePosition = pastePosition,
+        _composer = composer;
+
+  final String _content;
+  final DocumentPosition _pastePosition;
+  final DocumentComposer _composer;
+
+  @override
+  void execute(Document document, DocumentEditorTransaction transaction) {
+    final splitContent = _content.split('\n\n');
+    editorOpsLog.fine('Split content:');
+    for (final piece in splitContent) {
+      editorOpsLog.fine(' - "$piece"');
+    }
+
+    final currentNodeWithSelection = document.getNodeById(_pastePosition.nodeId);
+
+    DocumentPosition? newSelectionPosition;
+
+    if (currentNodeWithSelection is TextNode) {
+      final textNode = document.getNode(_pastePosition) as TextNode;
+      final pasteTextOffset = (_pastePosition.nodePosition as TextPosition).offset;
+      final attributionsAtPasteOffset = textNode.text.getAllAttributionsAt(pasteTextOffset);
+
+      if (splitContent.length > 1 && pasteTextOffset < textNode.endPosition.offset) {
+        // There is more than 1 node of content being pasted. Therefore,
+        // new nodes will need to be added, which means that the currently
+        // selected text node will be split at the current text offset.
+        // Configure a new node to be added at the end of the pasted content
+        // which contains the trailing text from the currently selected
+        // node.
+        if (currentNodeWithSelection is ParagraphNode) {
+          SplitParagraphCommand(
+            nodeId: currentNodeWithSelection.id,
+            splitPosition: TextPosition(offset: pasteTextOffset),
+            newNodeId: DocumentEditor.createNodeId(),
+            replicateExistingMetadata: false,
+          ).execute(document, transaction);
+        } else {
+          throw Exception('Can\'t handle pasting text within node of type: $currentNodeWithSelection');
+        }
+      }
+
+      // Paste the first piece of content into the selected TextNode.
+      InsertTextCommand(
+        documentPosition: _pastePosition,
+        textToInsert: splitContent.first,
+        attributions: attributionsAtPasteOffset,
+      ).execute(document, transaction);
+
+      // At this point in the paste process, the document selection
+      // position is at the end of the text that was just pasted.
+      newSelectionPosition = DocumentPosition(
+        nodeId: currentNodeWithSelection.id,
+        nodePosition: TextNodePosition(
+          offset: pasteTextOffset + splitContent.first.length,
+        ),
+      );
+
+      // Remove the pasted text from the list of pieces of text
+      // to paste.
+      splitContent.removeAt(0);
+    }
+
+    final newNodes = splitContent
+        .map(
+          // TODO: create nodes based on content inspection.
+          (nodeText) => ParagraphNode(
+            id: DocumentEditor.createNodeId(),
+            text: AttributedText(
+              text: nodeText,
+            ),
+          ),
+        )
+        .toList();
+    editorOpsLog.fine(' - new nodes: $newNodes');
+
+    int newNodeToMergeIndex = 0;
+    DocumentNode mergeAfterNode;
+
+    final nodeWithSelection = document.getNodeById(_pastePosition.nodeId);
+    if (nodeWithSelection == null) {
+      throw Exception(
+          'Failed to complete paste process because the node being pasted into disappeared from the document unexpectedly.');
+    }
+    mergeAfterNode = nodeWithSelection;
+
+    for (int i = newNodeToMergeIndex; i < newNodes.length; ++i) {
+      transaction.insertNodeAfter(
+        existingNode: mergeAfterNode,
+        newNode: newNodes[i],
+      );
+      mergeAfterNode = newNodes[i];
+
+      newSelectionPosition = DocumentPosition(
+        nodeId: mergeAfterNode.id,
+        nodePosition: mergeAfterNode.endPosition,
+      );
+    }
+
+    _composer.selection = DocumentSelection.collapsed(
+      position: newSelectionPosition!,
+    );
+    editorOpsLog.fine(' - new selection: ${_composer.selection}');
+
+    editorOpsLog.fine('Done with paste command.');
   }
 }

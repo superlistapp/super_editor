@@ -2,6 +2,7 @@ library super_editor;
 
 export 'src/infrastructure/super_textfield/super_textfield.dart';
 export 'src/infrastructure/super_selectable_text.dart';
+export 'src/infrastructure/_listenable_builder.dart';
 export 'src/infrastructure/_logging.dart';
 export 'src/infrastructure/attributed_text.dart';
 export 'src/infrastructure/attributed_spans.dart';
@@ -13,6 +14,7 @@ export 'src/core/document_editor.dart';
 export 'src/core/document_layout.dart';
 export 'src/core/document_selection.dart';
 export 'src/core/edit_context.dart';
+export 'src/core/styles.dart';
 export 'src/default_editor/attributions.dart';
 export 'src/default_editor/blockquote.dart';
 export 'src/default_editor/box_component.dart';
