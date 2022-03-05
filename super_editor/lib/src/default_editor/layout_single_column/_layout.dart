@@ -500,7 +500,7 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
   Widget build(BuildContext context) {
     editorLayoutLog.fine("Building document layout");
     return Padding(
-      padding: widget.presenter.viewModel.margin,
+      padding: widget.presenter.viewModel.padding,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.center,

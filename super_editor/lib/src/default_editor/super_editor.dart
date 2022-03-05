@@ -71,7 +71,8 @@ class SuperEditor extends StatefulWidget {
     this.composer,
     this.scrollController,
     this.documentLayoutKey,
-    this.stylesheet = defaultDocumentStylesheet,
+    this.customViewModelBuilders = const [],
+    Stylesheet? stylesheet,
     this.customStylePhases = const [],
     this.inputSource = DocumentInputSource.keyboard,
     this.gestureMode = DocumentGestureMode.mouse,
@@ -83,6 +84,7 @@ class SuperEditor extends StatefulWidget {
   })  : componentBuilders = defaultComponentBuilders,
         keyboardActions = defaultKeyboardActions,
         softwareKeyboardHandler = null,
+        stylesheet = stylesheet ?? defaultStylesheet,
         selectionStyles = defaultSelectionStyle,
         super(key: key);
 
@@ -94,7 +96,8 @@ class SuperEditor extends StatefulWidget {
     this.composer,
     this.scrollController,
     this.documentLayoutKey,
-    this.stylesheet = defaultDocumentStylesheet,
+    this.customViewModelBuilders = const [],
+    Stylesheet? stylesheet,
     this.customStylePhases = const [],
     List<SingleColumnDocumentComponentBuilder>? componentBuilders,
     SelectionStyles? selectionStyle,
@@ -107,9 +110,12 @@ class SuperEditor extends StatefulWidget {
     this.createOverlayControlsClipper,
     this.debugPaint = const DebugPaintConfig(),
     this.autofocus = false,
-  })  : selectionStyles = selectionStyle ?? defaultSelectionStyle,
+  })  : stylesheet = stylesheet ?? defaultStylesheet,
+        selectionStyles = selectionStyle ?? defaultSelectionStyle,
         keyboardActions = keyboardActions ?? defaultKeyboardActions,
-        componentBuilders = componentBuilders ?? defaultComponentBuilders,
+        componentBuilders = componentBuilders != null
+            ? [...componentBuilders, newUnknownComponentBuilder]
+            : [...defaultComponentBuilders, newUnknownComponentBuilder],
         super(key: key);
 
   /// Creates a `Super Editor` with common (but configurable) defaults for
@@ -121,7 +127,8 @@ class SuperEditor extends StatefulWidget {
     this.composer,
     this.scrollController,
     this.documentLayoutKey,
-    this.stylesheet = defaultDocumentStylesheet,
+    this.customViewModelBuilders = const [],
+    Stylesheet? stylesheet,
     this.customStylePhases = const [],
     List<SingleColumnDocumentComponentBuilder>? componentBuilders,
     SelectionStyles? selectionStyle,
@@ -134,9 +141,12 @@ class SuperEditor extends StatefulWidget {
     this.softwareKeyboardHandler,
     this.debugPaint = const DebugPaintConfig(),
     this.autofocus = false,
-  })  : selectionStyles = selectionStyle ?? defaultSelectionStyle,
+  })  : stylesheet = stylesheet ?? defaultStylesheet,
+        selectionStyles = selectionStyle ?? defaultSelectionStyle,
         keyboardActions = keyboardActions ?? defaultKeyboardActions,
-        componentBuilders = componentBuilders ?? defaultComponentBuilders,
+        componentBuilders = componentBuilders != null
+            ? [...componentBuilders, newUnknownComponentBuilder]
+            : [...defaultComponentBuilders, newUnknownComponentBuilder],
         super(key: key);
 
   /// [FocusNode] for the entire `SuperEditor`.
@@ -159,8 +169,16 @@ class SuperEditor extends StatefulWidget {
   /// layout within this `SuperEditor`.
   final GlobalKey? documentLayoutKey;
 
-  /// Layout-wide styles.
-  final SingleColumnLayoutStylesheet stylesheet;
+  /// Builders that create view models for custom components.
+  ///
+  /// If you add a new type of [DocumentNode] with its own visual component,
+  /// you need to provide a corresponding view model builder, which allows
+  /// various style phases to style the view model before it's applied to
+  /// a widget.
+  final List<ComponentViewModelBuilder> customViewModelBuilders;
+
+  /// Style rules applied through the document presentation.
+  final Stylesheet stylesheet;
 
   /// Styles applied to selected content.
   final SelectionStyles selectionStyles;
@@ -243,7 +261,7 @@ class _SuperEditorState extends State<SuperEditor> {
   // out where in the document the user taps or drags.
   late GlobalKey _docLayoutKey;
   SingleColumnLayoutPresenter? _docLayoutPresenter;
-  late SingleColumnLayoutStyler _docStandardStyler;
+  late SingleColumnStylesheetStyler _docStylesheetStyler;
   late SingleColumnLayoutCustomComponentStyler _docLayoutPerComponentBlockStyler;
   late SingleColumnLayoutSelectionStyler _docLayoutSelectionStyler;
 
@@ -314,7 +332,7 @@ class _SuperEditorState extends State<SuperEditor> {
     }
 
     if (widget.stylesheet != oldWidget.stylesheet) {
-      _docStandardStyler.stylesheet = widget.stylesheet;
+      // TODO:
     }
 
     _recomputeIfLayoutShouldShowCaret();
@@ -355,21 +373,27 @@ class _SuperEditorState extends State<SuperEditor> {
 
     final document = _editContext.editor.document;
 
-    _docStandardStyler = SingleColumnLayoutStyler(stylesheet: widget.stylesheet);
+    _docStylesheetStyler = SingleColumnStylesheetStyler(stylesheet: widget.stylesheet);
 
     _docLayoutPerComponentBlockStyler = SingleColumnLayoutCustomComponentStyler();
 
     _docLayoutSelectionStyler = SingleColumnLayoutSelectionStyler(
       document: document,
       composer: _editContext.composer,
-      selectionColor: widget.selectionStyles.selectionColor,
-      caretColor: widget.selectionStyles.textCaretColor,
+      selectionStyles: widget.selectionStyles,
     );
 
     _docLayoutPresenter = SingleColumnLayoutPresenter(
       document: document,
+      componentViewModelBuilders: [
+        const TextBlockViewModelBuilder(),
+        const ListItemViewModelBuilder(),
+        const ImageViewModelBuilder(),
+        const HorizontalRuleViewModelBuilder(),
+        ...widget.customViewModelBuilders,
+      ],
       pipeline: [
-        // _docStandardStyler,
+        _docStylesheetStyler,
         _docLayoutPerComponentBlockStyler,
         ...widget.customStylePhases,
         // Selection changes are very volatile. Put that phase last
@@ -549,146 +573,150 @@ class DebugPaintConfig {
   final bool layout;
 }
 
-/// Default visual styles related to content selection.
-const defaultSelectionStyle = SelectionStyles(
-  textCaretColor: Colors.black,
-  selectionColor: Color(0xFFACCEF7),
-);
-
-/// Default document stylesheet that's used by [SuperEditor], when
-/// no stylesheet is provided.
+/// Creates visual components for the standard [SuperEditor].
 ///
-/// You can quickly adjust these styles by using the [copyWith] method.
-const defaultDocumentStylesheet = SingleColumnLayoutStylesheet(
-  standardContentWidth: 640.0,
-  margin: EdgeInsets.only(bottom: 96),
-  inlineTextStyler: defaultInlineTextStyler,
-  blockStyles: DocumentBlockStyles(
-    standardPadding: EdgeInsets.only(left: 20, right: 20),
-    text: TextBlockStyle(
-      paddingAdjustment: EdgeInsets.only(top: 20),
-      textStyle: TextStyle(
-        color: Colors.black,
-        fontSize: 16,
-        fontWeight: FontWeight.w300,
-        height: 1.8,
-      ),
-    ),
-    h1: TextBlockStyle(
-      paddingAdjustment: EdgeInsets.only(top: 40),
-      textStyle: TextStyle(
-        color: Color(0xFF333333),
-        fontSize: 38,
-        fontWeight: FontWeight.bold,
-      ),
-    ),
-    h2: TextBlockStyle(
-      paddingAdjustment: EdgeInsets.only(top: 32),
-      textStyle: TextStyle(
-        color: Color(0xFF333333),
-        fontSize: 26,
-        fontWeight: FontWeight.bold,
-      ),
-    ),
-    h3: TextBlockStyle(
-      paddingAdjustment: EdgeInsets.only(top: 28),
-      textStyle: TextStyle(
-        color: Color(0xFF333333),
-        fontSize: 22,
-        fontWeight: FontWeight.bold,
-      ),
-    ),
-    h4: TextBlockStyle(
-      paddingAdjustment: EdgeInsets.only(top: 22),
-      textStyle: TextStyle(
-        color: Color(0xFF333333),
-        fontSize: 18,
-        fontWeight: FontWeight.bold,
-      ),
-    ),
-    h5: TextBlockStyle(
-      paddingAdjustment: EdgeInsets.only(top: 20),
-      textStyle: TextStyle(
-        color: Color(0xFF333333),
-        fontSize: 16,
-        fontWeight: FontWeight.bold,
-      ),
-    ),
-    h6: TextBlockStyle(
-      paddingAdjustment: EdgeInsets.only(top: 16),
-      textStyle: TextStyle(
-        color: Color(0xFF333333),
-        fontSize: 14,
-        fontWeight: FontWeight.bold,
-      ),
-    ),
-    listItem: TextBlockStyle(
-      paddingAdjustment: EdgeInsets.only(top: 20),
-      textStyle: TextStyle(
-        color: Color(0xFF333333),
-        fontSize: 16,
-        fontWeight: FontWeight.w300,
-        height: 1.8,
-      ),
-    ),
-    blockquote: BlockquoteBlockStyle(
-      paddingAdjustment: EdgeInsets.only(top: 20),
-      textStyle: TextStyle(
-        color: Color(0xFF555555),
-        fontSize: 18,
-        fontWeight: FontWeight.bold,
-        fontStyle: FontStyle.italic,
-      ),
-      backgroundColor: Color(0xFFF0F0F0),
-      borderRadius: BorderRadius.all(Radius.circular(4)),
-    ),
-    image: BlockStyle(paddingAdjustment: EdgeInsets.only(top: 20)),
-    hr: BlockStyle(paddingAdjustment: EdgeInsets.zero),
-  ),
-);
+/// These builders are in priority order. The first builder
+/// to return a non-null component is used. The final
+/// `unknownComponentBuilder` always returns a component.
+final defaultComponentBuilders = <SingleColumnDocumentComponentBuilder>[
+  paragraphComponentBuilder,
+  blockquoteComponentBuilder,
+  unorderedListItemComponentBuilder,
+  newOrderedListItemBuilder,
+  imageComponentBuilder,
+  horizontalRuleComponentBuilder,
+];
 
-final defaultStylesheet = Stylesheet([
-  StyleRule(
-    const BlockSelector.all(),
-    (doc, docNode) {
-      return {
-        "padding": const EdgeInsets.all(24),
-      };
-    },
-  ),
-  StyleRule(
-    const BlockSelector("header1"),
-    (doc, docNode) {
-      return {
-        // TODO:
-      };
-    },
-  ),
-  StyleRule(
-    const BlockSelector("header2"),
-    (doc, docNode) {
-      return {
-        // TODO:
-      };
-    },
-  ),
-  StyleRule(
-    const BlockSelector("header3"),
-    (doc, docNode) {
-      return {
-        // TODO:
-      };
-    },
-  ),
-  StyleRule(
-    const BlockSelector("paragraph"),
-    (doc, docNode) {
-      return {
-        // TODO:
-      };
-    },
-  ),
-]);
+/// Keyboard actions for the standard [SuperEditor].
+final defaultKeyboardActions = <DocumentKeyboardAction>[
+  doNothingWhenThereIsNoSelection,
+  pasteWhenCmdVIsPressed,
+  copyWhenCmdCIsPressed,
+  cutWhenCmdXIsPressed,
+  selectAllWhenCmdAIsPressed,
+  moveUpDownLeftAndRightWithArrowKeys,
+  tabToIndentListItem,
+  shiftTabToUnIndentListItem,
+  backspaceToUnIndentListItem,
+  backspaceToClearParagraphBlockType,
+  cmdBToToggleBold,
+  cmdIToToggleItalics,
+  shiftEnterToInsertNewlineInBlock,
+  enterToInsertBlockNewline,
+  backspaceToRemoveUpstreamContent,
+  deleteToRemoveDownstreamContent,
+  anyCharacterOrDestructiveKeyToDeleteSelection,
+  anyCharacterToInsertInParagraph,
+  anyCharacterToInsertInTextContent,
+];
+
+/// Stylesheet applied to all [SuperEditor]s by default.
+final defaultStylesheet = Stylesheet(
+  rules: [
+    StyleRule(
+      const BlockSelector.all(),
+      (doc, docNode) {
+        return {
+          "maxWidth": 640.0,
+          "padding": const CascadingPadding.symmetric(horizontal: 24),
+          "textStyle": const TextStyle(
+            color: Colors.black,
+            fontSize: 18,
+            height: 1.4,
+          ),
+        };
+      },
+    ),
+    StyleRule(
+      const BlockSelector("header1"),
+      (doc, docNode) {
+        return {
+          "padding": const CascadingPadding.only(top: 40),
+          "textStyle": const TextStyle(
+            color: Color(0xFF333333),
+            fontSize: 38,
+            fontWeight: FontWeight.bold,
+          ),
+        };
+      },
+    ),
+    StyleRule(
+      const BlockSelector("header2"),
+      (doc, docNode) {
+        return {
+          "padding": const CascadingPadding.only(top: 32),
+          "textStyle": const TextStyle(
+            color: Color(0xFF333333),
+            fontSize: 26,
+            fontWeight: FontWeight.bold,
+          ),
+        };
+      },
+    ),
+    StyleRule(
+      const BlockSelector("header3"),
+      (doc, docNode) {
+        return {
+          "padding": const CascadingPadding.only(top: 28),
+          "textStyle": const TextStyle(
+            color: Color(0xFF333333),
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+          ),
+        };
+      },
+    ),
+    StyleRule(
+      const BlockSelector("paragraph"),
+      (doc, docNode) {
+        return {
+          "padding": const CascadingPadding.only(top: 24),
+        };
+      },
+    ),
+    StyleRule(
+      const BlockSelector("paragraph").after("header1"),
+      (doc, docNode) {
+        return {
+          "padding": const CascadingPadding.only(top: 0),
+        };
+      },
+    ),
+    StyleRule(
+      const BlockSelector("paragraph").after("header2"),
+      (doc, docNode) {
+        return {
+          "padding": const CascadingPadding.only(top: 0),
+        };
+      },
+    ),
+    StyleRule(
+      const BlockSelector("paragraph").after("header3"),
+      (doc, docNode) {
+        return {
+          "padding": const CascadingPadding.only(top: 0),
+        };
+      },
+    ),
+    StyleRule(
+      const BlockSelector("listItem"),
+      (doc, docNode) {
+        return {
+          "padding": const CascadingPadding.only(top: 24),
+        };
+      },
+    ),
+    StyleRule(
+      const BlockSelector.all().last(),
+      (doc, docNode) {
+        return {
+          "padding": const CascadingPadding.only(bottom: 96),
+        };
+      },
+    ),
+  ],
+  inlineTextStyler: defaultInlineTextStyler,
+);
 
 TextStyle defaultInlineTextStyler(Set<Attribution> attributions, TextStyle existingStyle) {
   return existingStyle.merge(defaultStyleBuilder(attributions));
@@ -729,40 +757,8 @@ TextStyle defaultStyleBuilder(Set<Attribution> attributions) {
   return newStyle;
 }
 
-/// Creates visual components for the standard [SuperEditor].
-///
-/// These builders are in priority order. The first builder
-/// to return a non-null component is used. The final
-/// `unknownComponentBuilder` always returns a component.
-final defaultComponentBuilders = <SingleColumnDocumentComponentBuilder>[
-  paragraphComponentBuilder,
-  blockquoteComponentBuilder,
-  unorderedListItemComponentBuilder,
-  newOrderedListItemBuilder,
-  imageComponentBuilder,
-  horizontalRuleComponentBuilder,
-  newUnknownComponentBuilder,
-];
-
-/// Keyboard actions for the standard [SuperEditor].
-final defaultKeyboardActions = <DocumentKeyboardAction>[
-  doNothingWhenThereIsNoSelection,
-  pasteWhenCmdVIsPressed,
-  copyWhenCmdCIsPressed,
-  cutWhenCmdXIsPressed,
-  selectAllWhenCmdAIsPressed,
-  moveUpDownLeftAndRightWithArrowKeys,
-  tabToIndentListItem,
-  shiftTabToUnIndentListItem,
-  backspaceToUnIndentListItem,
-  backspaceToClearParagraphBlockType,
-  cmdBToToggleBold,
-  cmdIToToggleItalics,
-  shiftEnterToInsertNewlineInBlock,
-  enterToInsertBlockNewline,
-  backspaceToRemoveUpstreamContent,
-  deleteToRemoveDownstreamContent,
-  anyCharacterOrDestructiveKeyToDeleteSelection,
-  anyCharacterToInsertInParagraph,
-  anyCharacterToInsertInTextContent,
-];
+/// Default visual styles related to content selection.
+const defaultSelectionStyle = SelectionStyles(
+  caretColor: Colors.black,
+  selectionColor: Color(0xFFACCEF7),
+);

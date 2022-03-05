@@ -739,7 +739,9 @@ void testParagraphSelection(
         editor: _createSingleParagraphEditor(),
         composer: composer,
         gestureMode: platform,
-        stylesheet: defaultDocumentStylesheet.copyWith(
+        stylesheet: Stylesheet(
+          documentPadding: const EdgeInsets.all(16),
+          rules: defaultStylesheet.rules,
           inlineTextStyler: (attributions, style) => _textStyleBuilder(attributions),
         ),
       ),

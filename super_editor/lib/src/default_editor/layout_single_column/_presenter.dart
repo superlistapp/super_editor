@@ -1,12 +1,12 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_selection.dart';
+import 'package:super_editor/src/core/styles.dart';
 import 'package:super_editor/src/default_editor/horizontal_rule.dart';
 import 'package:super_editor/src/default_editor/image.dart';
-import 'package:super_editor/src/default_editor/layout_single_column/_styles.dart';
 import 'package:super_editor/src/default_editor/list_items.dart';
 import 'package:super_editor/src/default_editor/paragraph.dart';
 import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
@@ -397,7 +397,7 @@ class TextBlockViewModelBuilder implements ComponentViewModelBuilder {
       return BlockquoteComponentViewModel(
         nodeId: node.id,
         text: node.text,
-        textStyleBuilder: _noStyleBuilder,
+        textStyleBuilder: noStyleBuilder,
         backgroundColor: const Color(0x00000000),
         borderRadius: BorderRadius.zero,
         textDirection: textDirection,
@@ -411,7 +411,7 @@ class TextBlockViewModelBuilder implements ComponentViewModelBuilder {
       nodeId: node.id,
       blockType: node.getMetadataValue('blockType'),
       text: node.text,
-      textStyleBuilder: _noStyleBuilder,
+      textStyleBuilder: noStyleBuilder,
       textDirection: textDirection,
       textAlignment: textAlign,
       selectionColor: const Color(0x00000000),
@@ -450,7 +450,7 @@ class ListItemViewModelBuilder implements ComponentViewModelBuilder {
       indent: node.indent,
       ordinalValue: ordinalValue,
       text: node.text,
-      textStyleBuilder: _noStyleBuilder,
+      textStyleBuilder: noStyleBuilder,
       selectionColor: const Color(0x00000000),
       caretColor: const Color(0x00000000),
     );
@@ -523,7 +523,7 @@ abstract class SingleColumnLayoutStylePhase {
 /// [AttributionStyleBuilder] that returns a default `TextStyle`, for
 /// use when creating baseline view models before the text styles are
 /// configured.
-TextStyle _noStyleBuilder(Set<Attribution> attributions) {
+TextStyle noStyleBuilder(Set<Attribution> attributions) {
   return const TextStyle(
     // Even though this a "no style" builder, we supply a font size
     // and line height because there are a number of places in the editor
@@ -533,114 +533,130 @@ TextStyle _noStyleBuilder(Set<Attribution> attributions) {
   );
 }
 
-/// [SingleColumnLayoutStylePhase] that applies layout-wide styles.
-class SingleColumnLayoutStyler extends SingleColumnLayoutStylePhase {
-  SingleColumnLayoutStyler({
-    required SingleColumnLayoutStylesheet stylesheet,
+/// Style phase that applies a given [Stylesheet] to the document view model.
+class SingleColumnStylesheetStyler extends SingleColumnLayoutStylePhase {
+  SingleColumnStylesheetStyler({
+    required Stylesheet stylesheet,
   }) : _stylesheet = stylesheet;
 
-  SingleColumnLayoutStylesheet _stylesheet;
-  set stylesheet(SingleColumnLayoutStylesheet newStylesheet) {
-    if (newStylesheet == _stylesheet) {
-      return;
-    }
-
-    _stylesheet = newStylesheet;
-    markDirty();
-  }
+  final Stylesheet _stylesheet;
 
   @override
   SingleColumnLayoutViewModel style(Document document, SingleColumnLayoutViewModel viewModel) {
-    editorLayoutLog.info("(Re)calculating spacing view model for document layout");
     return SingleColumnLayoutViewModel(
-      margin: _stylesheet.margin,
+      padding: _stylesheet.documentPadding ?? viewModel.padding,
       componentViewModels: [
-        for (int i = 0; i < viewModel.componentViewModels.length; i += 1) //
-          _applyLayoutStyles(i, viewModel.componentViewModels[i]),
+        for (final componentViewModel in viewModel.componentViewModels)
+          _styleComponent(document, document.getNodeById(componentViewModel.nodeId)!, componentViewModel),
       ],
     );
   }
 
-  SingleColumnLayoutComponentViewModel _applyLayoutStyles(int index, SingleColumnLayoutComponentViewModel viewModel) {
-    final standardWidth = _stylesheet.standardContentWidth;
-    final basePadding = _stylesheet.blockStyles.standardPadding;
+  SingleColumnLayoutComponentViewModel _styleComponent(
+      Document document, DocumentNode node, SingleColumnLayoutComponentViewModel viewModel) {
+    // Combine all applicable style rules into a single set of styles
+    // for this component.
+    final aggregateStyles = <String, dynamic>{};
+    for (final rule in _stylesheet.rules) {
+      if (rule.selector.matches(document, node)) {
+        _mergeStyles(
+          existingStyles: aggregateStyles,
+          newStyles: rule.styler(document, node),
+        );
+      }
+    }
+
+    // Apply the aggregate styles to this component.
     if (viewModel is ParagraphComponentViewModel) {
       return viewModel.copyWith(
-        maxWidth: _stylesheet.blockStyles.textBlockStyleByAttribution(viewModel.blockType)?.maxWidth ?? standardWidth,
-        padding: (_stylesheet.blockStyles.textBlockStyleByAttribution(viewModel.blockType)?.paddingAdjustment ??
-                EdgeInsets.zero)
-            .add(basePadding),
+        maxWidth: aggregateStyles["maxWidth"] ?? double.infinity,
+        padding: (aggregateStyles["padding"] as CascadingPadding?)?.toEdgeInsets() ?? EdgeInsets.zero,
         textStyleBuilder: (attributions) {
-          final baseStyle =
-              _stylesheet.blockStyles.textBlockStyleByAttribution(viewModel.blockType)?.textStyle ?? const TextStyle();
+          final baseStyle = aggregateStyles["textStyle"] ?? noStyleBuilder({});
           return _stylesheet.inlineTextStyler(attributions, baseStyle);
         },
       );
     }
     if (viewModel is BlockquoteComponentViewModel) {
       return viewModel.copyWith(
-        maxWidth: _stylesheet.blockStyles.blockquote.maxWidth ?? standardWidth,
-        padding: (_stylesheet.blockStyles.blockquote.paddingAdjustment ?? EdgeInsets.zero).add(basePadding),
+        maxWidth: aggregateStyles["maxWidth"] ?? double.infinity,
+        padding: (aggregateStyles["padding"] as CascadingPadding?)?.toEdgeInsets() ?? EdgeInsets.zero,
         textStyleBuilder: (attributions) {
-          final baseStyle = _stylesheet.blockStyles.blockquote.textStyle ?? const TextStyle();
+          final baseStyle = aggregateStyles["textStyle"] ?? noStyleBuilder({});
           return _stylesheet.inlineTextStyler(attributions, baseStyle);
         },
-        backgroundColor: _stylesheet.blockStyles.blockquote.backgroundColor,
-        borderRadius: _stylesheet.blockStyles.blockquote.borderRadius,
+        backgroundColor: aggregateStyles["backgroundColor"] ?? Colors.transparent,
+        borderRadius: aggregateStyles["borderRadius"] ?? BorderRadius.zero,
       );
     }
     if (viewModel is ListItemComponentViewModel) {
       return viewModel.copyWith(
-        maxWidth: _stylesheet.blockStyles.listItem.maxWidth ?? standardWidth,
-        padding: (_stylesheet.blockStyles.listItem.paddingAdjustment ?? EdgeInsets.zero).add(basePadding),
+        maxWidth: aggregateStyles["maxWidth"] ?? double.infinity,
+        padding: (aggregateStyles["padding"] as CascadingPadding?)?.toEdgeInsets() ?? EdgeInsets.zero,
         textStyleBuilder: (attributions) {
-          final baseStyle = _stylesheet.blockStyles.listItem.textStyle ?? const TextStyle();
+          final baseStyle = aggregateStyles["textStyle"] ?? noStyleBuilder({});
           return _stylesheet.inlineTextStyler(attributions, baseStyle);
         },
       );
     }
     if (viewModel is ImageComponentViewModel) {
       return viewModel.copyWith(
-        maxWidth: _stylesheet.blockStyles.image.maxWidth ?? standardWidth,
-        padding: (_stylesheet.blockStyles.image.paddingAdjustment ?? EdgeInsets.zero).add(basePadding),
+        maxWidth: aggregateStyles["maxWidth"] ?? double.infinity,
+        padding: (aggregateStyles["padding"] as CascadingPadding?)?.toEdgeInsets() ?? EdgeInsets.zero,
       );
     }
     if (viewModel is HorizontalRuleComponentViewModel) {
       return viewModel.copyWith(
-        maxWidth: _stylesheet.blockStyles.hr.maxWidth ?? standardWidth,
-        padding: (_stylesheet.blockStyles.hr.paddingAdjustment ?? EdgeInsets.zero).add(basePadding),
+        maxWidth: aggregateStyles["maxWidth"] ?? double.infinity,
+        padding: (aggregateStyles["padding"] as CascadingPadding?)?.toEdgeInsets() ?? EdgeInsets.zero,
       );
     }
 
     editorLayoutLog.warning("Tried to apply spacing to unknown layout component view model: $viewModel");
     return viewModel;
   }
+
+  void _mergeStyles({
+    required Map<String, dynamic> existingStyles,
+    required Map<String, dynamic> newStyles,
+  }) {
+    for (final entry in newStyles.entries) {
+      if (existingStyles.containsKey(entry.key)) {
+        // Try to merge. If we can't, then overwrite.
+        final oldValue = existingStyles[entry.key];
+        final newValue = entry.value;
+
+        if (oldValue is TextStyle && newValue is TextStyle) {
+          existingStyles[entry.key] = oldValue.merge(newValue);
+        } else if (oldValue is CascadingPadding && newValue is CascadingPadding) {
+          existingStyles[entry.key] = newValue.applyOnTopOf(oldValue);
+        }
+      } else {
+        // This is a new entry, just set it.
+        existingStyles[entry.key] = entry.value;
+      }
+    }
+  }
 }
 
 /// [SingleColumnLayoutStylePhase] that applies custom styling to specific
 /// components.
+///
+/// Each per-component style should be defined within a [SingleColumnLayoutComponentStyles]
+/// and then stored within the given [DocumentNode]'s metadata.
+///
+/// Every time a [DocumentNode]'s metadata changes, this phase needs to re-run so
+/// that it picks up any style related changes. Given that the entire style pipeline
+/// re-runs every time the document changes, this phase automatically runs at the
+/// appropriate time.
 class SingleColumnLayoutCustomComponentStyler extends SingleColumnLayoutStylePhase {
-  SingleColumnLayoutCustomComponentStyler({
-    SingleColumnCustomComponentStyles? styles,
-  }) : _perComponentStyles = styles ?? const SingleColumnCustomComponentStyles();
-
-  SingleColumnCustomComponentStyles _perComponentStyles;
-
-  set styles(SingleColumnCustomComponentStyles? newStyles) {
-    if (newStyles == _perComponentStyles) {
-      return;
-    }
-
-    _perComponentStyles = newStyles ?? const SingleColumnCustomComponentStyles();
-    markDirty();
-  }
+  SingleColumnLayoutCustomComponentStyler();
 
   @override
   SingleColumnLayoutViewModel style(Document document, SingleColumnLayoutViewModel viewModel) {
     editorLayoutLog.info("(Re)calculating custom component styles view model for document layout");
-    editorLayoutLog.fine("Widths: ${_perComponentStyles.widths}");
     return SingleColumnLayoutViewModel(
-      margin: viewModel.margin,
+      padding: viewModel.padding,
       componentViewModels: [
         for (final previousViewModel in viewModel.componentViewModels)
           _applyLayoutStyles(
@@ -758,12 +774,10 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
   SingleColumnLayoutSelectionStyler({
     required Document document,
     required DocumentComposer composer,
-    required Color selectionColor,
-    required Color caretColor,
+    required SelectionStyles selectionStyles,
   })  : _document = document,
         _composer = composer,
-        _selectionColor = selectionColor,
-        _caretColor = caretColor {
+        _selectionStyles = selectionStyles {
     // Our styles need to be re-applied whenever the document selection changes.
     _composer.selectionNotifier.addListener(markDirty);
   }
@@ -776,8 +790,7 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
 
   final Document _document;
   final DocumentComposer _composer;
-  final Color _selectionColor;
-  final Color _caretColor;
+  final SelectionStyles _selectionStyles;
 
   bool _shouldDocumentShowCaret = false;
   set shouldDocumentShowCaret(bool newValue) {
@@ -795,7 +808,7 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
     editorLayoutLog.info("(Re)calculating selection view model for document layout");
     editorLayoutLog.fine("Applying selection to components: ${_composer.selection}");
     return SingleColumnLayoutViewModel(
-      margin: viewModel.margin,
+      padding: viewModel.padding,
       componentViewModels: [
         for (final previousViewModel in viewModel.componentViewModels) //
           _applySelection(previousViewModel),
@@ -840,7 +853,8 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
             'ERROR: Building a paragraph component but the selection is not a TextSelection. Node: ${node.id}, Selection: ${nodeSelection.nodeSelection}');
       }
       final showCaret = _shouldDocumentShowCaret && nodeSelection != null ? nodeSelection.isExtent : false;
-      final highlightWhenEmpty = nodeSelection == null ? false : nodeSelection.highlightWhenEmpty;
+      final highlightWhenEmpty =
+          nodeSelection == null ? false : nodeSelection.highlightWhenEmpty && _selectionStyles.highlightEmptyTextBlocks;
 
       editorLayoutLog.finer(' - ${node.id}: $nodeSelection');
       if (showCaret) {
@@ -854,9 +868,9 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
       if (viewModel is ParagraphComponentViewModel) {
         final newViewModel = viewModel.copyWith(
           selection: textSelection,
-          selectionColor: _selectionColor,
+          selectionColor: _selectionStyles.selectionColor,
           caret: showCaret ? textSelection?.extent : null,
-          caretColor: _caretColor,
+          caretColor: _selectionStyles.caretColor,
           highlightWhenEmpty: highlightWhenEmpty,
         );
 
@@ -869,18 +883,18 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
       if (viewModel is BlockquoteComponentViewModel) {
         return viewModel.copyWith(
           selection: textSelection,
-          selectionColor: _selectionColor,
+          selectionColor: _selectionStyles.selectionColor,
           caret: showCaret ? textSelection?.extent : null,
-          caretColor: _caretColor,
+          caretColor: _selectionStyles.caretColor,
           highlightWhenEmpty: highlightWhenEmpty,
         );
       }
       if (viewModel is ListItemComponentViewModel) {
         return viewModel.copyWith(
           selection: textSelection,
-          selectionColor: _selectionColor,
+          selectionColor: _selectionStyles.selectionColor,
           caret: showCaret ? textSelection?.extent : null,
-          caretColor: _caretColor,
+          caretColor: _selectionStyles.caretColor,
         );
       }
     }
@@ -889,9 +903,9 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
 
       return viewModel.copyWith(
         selection: selection,
-        selectionColor: _selectionColor,
+        selectionColor: _selectionStyles.selectionColor,
         caret: _shouldDocumentShowCaret && selection != null && selection.isCollapsed ? selection.extent : null,
-        caretColor: _caretColor,
+        caretColor: _selectionStyles.caretColor,
       );
     }
     if (viewModel is HorizontalRuleComponentViewModel) {
@@ -899,9 +913,9 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
 
       return viewModel.copyWith(
         selection: selection,
-        selectionColor: _selectionColor,
+        selectionColor: _selectionStyles.selectionColor,
         caret: _shouldDocumentShowCaret && selection != null && selection.isCollapsed ? selection.extent : null,
-        caretColor: _caretColor,
+        caretColor: _selectionStyles.selectionColor,
       );
     }
 
@@ -984,6 +998,7 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
           ),
           isBase: isBase,
           isExtent: !isBase,
+          highlightWhenEmpty: isBase,
         );
       } else if (selectedNodes.last.id == node.id) {
         editorLayoutLog.finer(' - this is the last node in the selection');
@@ -999,6 +1014,7 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
           ),
           isBase: isBase,
           isExtent: !isBase,
+          highlightWhenEmpty: isBase,
         );
       } else {
         editorLayoutLog.finer(' - this node is fully selected within the selection');
@@ -1010,6 +1026,7 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
             base: node.beginningPosition,
             extent: node.endPosition,
           ),
+          highlightWhenEmpty: true,
         );
       }
     }
@@ -1019,18 +1036,16 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
 /// View model for an entire [SingleColumnDocumentLayout].
 class SingleColumnLayoutViewModel {
   SingleColumnLayoutViewModel({
-    EdgeInsetsGeometry margin = EdgeInsets.zero,
+    this.padding = EdgeInsets.zero,
     required List<SingleColumnLayoutComponentViewModel> componentViewModels,
-  })  : _margin = margin,
-        _componentViewModels = componentViewModels,
+  })  : _componentViewModels = componentViewModels,
         _viewModelsByNodeId = {} {
     for (final componentViewModel in _componentViewModels) {
       _viewModelsByNodeId[componentViewModel.nodeId] = componentViewModel;
     }
   }
 
-  final EdgeInsetsGeometry _margin;
-  EdgeInsetsGeometry get margin => _margin;
+  final EdgeInsetsGeometry padding;
 
   final List<SingleColumnLayoutComponentViewModel> _componentViewModels;
   List<SingleColumnLayoutComponentViewModel> get componentViewModels => _componentViewModels;

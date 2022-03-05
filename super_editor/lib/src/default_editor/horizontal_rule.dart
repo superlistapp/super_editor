@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
+import 'package:super_editor/src/infrastructure/attributed_spans.dart';
 
 import '../core/document.dart';
 import 'box_component.dart';
@@ -9,7 +10,9 @@ import 'box_component.dart';
 class HorizontalRuleNode extends BlockNode with ChangeNotifier {
   HorizontalRuleNode({
     required this.id,
-  });
+  }) {
+    putMetadataValue("blockType", const NamedAttribution("horizontalRule"));
+  }
 
   @override
   final String id;

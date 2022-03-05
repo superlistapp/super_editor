@@ -6,6 +6,7 @@ import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/attributed_spans.dart';
 import 'package:super_editor/src/infrastructure/attributed_text.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
 import 'package:super_editor/src/infrastructure/raw_key_event_extensions.dart';
@@ -21,7 +22,11 @@ class ParagraphNode extends TextNode {
           id: id,
           text: text,
           metadata: metadata,
-        );
+        ) {
+    if (getMetadataValue("blockType") == null) {
+      putMetadataValue("blockType", const NamedAttribution("paragraph"));
+    }
+  }
 }
 
 /// Combines two consecutive `ParagraphNode`s, indicated by `firstNodeId`

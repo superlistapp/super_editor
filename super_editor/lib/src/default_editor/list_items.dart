@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/attributed_spans.dart';
 import 'package:super_editor/src/infrastructure/attributed_text.dart';
 
 import '../core/document.dart';
@@ -24,7 +25,9 @@ class ListItemNode extends TextNode {
           id: id,
           text: text,
           metadata: metadata,
-        );
+        ) {
+    putMetadataValue("blockType", const NamedAttribution("listItem"));
+  }
 
   ListItemNode.unordered({
     required String id,
@@ -37,7 +40,9 @@ class ListItemNode extends TextNode {
           id: id,
           text: text,
           metadata: metadata,
-        );
+        ) {
+    putMetadataValue("blockType", const NamedAttribution("listItem"));
+  }
 
   ListItemNode({
     required String id,

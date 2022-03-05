@@ -1,6 +1,8 @@
 import 'package:flutter/rendering.dart';
 import 'package:super_editor/super_editor.dart';
 
+import '_task.dart';
+
 Document createInitialDocument() {
   return MutableDocument(
     nodes: [
@@ -62,20 +64,42 @@ Document createInitialDocument() {
         id: DocumentEditor.createNodeId(),
         text: AttributedText(text: 'To get started with your own editing experience, take the following steps:'),
       ),
-      ListItemNode.ordered(
+      // ListItemNode.ordered(
+      //   id: DocumentEditor.createNodeId(),
+      //   text: AttributedText(
+      //     text: 'Create and configure your document, for example, by creating a new MutableDocument.',
+      //   ),
+      // ),
+      // ListItemNode.ordered(
+      //   id: DocumentEditor.createNodeId(),
+      //   text: AttributedText(
+      //     text: "If you want programmatic control over the user's selection and styles, create a DocumentComposer.",
+      //   ),
+      // ),
+      // ListItemNode.ordered(
+      //   id: DocumentEditor.createNodeId(),
+      //   text: AttributedText(
+      //     text:
+      //         "Build a SuperEditor widget in your widget tree, configured with your Document and (optionally) your DocumentComposer.",
+      //   ),
+      // ),
+      TaskNode(
         id: DocumentEditor.createNodeId(),
+        isComplete: false,
         text: AttributedText(
           text: 'Create and configure your document, for example, by creating a new MutableDocument.',
         ),
       ),
-      ListItemNode.ordered(
+      TaskNode(
         id: DocumentEditor.createNodeId(),
+        isComplete: false,
         text: AttributedText(
           text: "If you want programmatic control over the user's selection and styles, create a DocumentComposer.",
         ),
       ),
-      ListItemNode.ordered(
+      TaskNode(
         id: DocumentEditor.createNodeId(),
+        isComplete: false,
         text: AttributedText(
           text:
               "Build a SuperEditor widget in your widget tree, configured with your Document and (optionally) your DocumentComposer.",

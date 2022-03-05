@@ -1,3 +1,4 @@
+import 'package:example/demos/example_editor/_task.dart';
 import 'package:flutter/foundation.dart';
 import 'package:example/logging.dart';
 import 'package:flutter/material.dart';
@@ -297,6 +298,11 @@ class _ExampleEditorState extends State<ExampleEditor> {
       focusNode: _editorFocusNode,
       scrollController: _scrollController,
       documentLayoutKey: _docLayoutKey,
+      customViewModelBuilders: const [TaskViewModelBuilder()],
+      componentBuilders: [
+        ...defaultComponentBuilders,
+        taskComponentBuilder,
+      ],
       gestureMode: _gestureMode,
       inputSource: _inputSource,
       androidToolbarBuilder: (_) => AndroidTextEditingFloatingToolbar(

@@ -19,96 +19,115 @@ class _DocumentStylesDemoState extends State<DocumentStylesDemo> {
     _docEditor = DocumentEditor(document: _doc as MutableDocument);
   }
 
-  SingleColumnLayoutStylesheet _createStyles() {
+  Stylesheet _createStyles() {
     // This stylesheet is defined here as an example. If you want to use
     // the default stylesheet in Super Editor, or make adjustments to it,
-    // then use the defaultDocumentStylesheet
-    return const SingleColumnLayoutStylesheet(
-      standardContentWidth: 640.0,
-      margin: EdgeInsets.only(bottom: 96, top: 96),
+    // then use the defaultStylesheet
+    return Stylesheet(
+      rules: [
+        StyleRule(
+          const BlockSelector.all(),
+          (doc, docNode) {
+            return {
+              "maxWidth": 640.0,
+              "padding": const CascadingPadding.symmetric(horizontal: 24),
+              "textStyle": const TextStyle(
+                color: Colors.black,
+                fontSize: 18,
+                height: 1.4,
+              ),
+            };
+          },
+        ),
+        StyleRule(
+          const BlockSelector("header1"),
+          (doc, docNode) {
+            return {
+              "padding": const CascadingPadding.only(top: 40),
+              "textStyle": const TextStyle(
+                color: Color(0xFF333333),
+                fontSize: 38,
+                fontWeight: FontWeight.bold,
+              ),
+            };
+          },
+        ),
+        StyleRule(
+          const BlockSelector("header2"),
+          (doc, docNode) {
+            return {
+              "padding": const CascadingPadding.only(top: 32),
+              "textStyle": const TextStyle(
+                color: Color(0xFF333333),
+                fontSize: 26,
+                fontWeight: FontWeight.bold,
+              ),
+            };
+          },
+        ),
+        StyleRule(
+          const BlockSelector("header3"),
+          (doc, docNode) {
+            return {
+              "padding": const CascadingPadding.only(top: 28),
+              "textStyle": const TextStyle(
+                color: Color(0xFF333333),
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+              ),
+            };
+          },
+        ),
+        StyleRule(
+          const BlockSelector("paragraph"),
+          (doc, docNode) {
+            return {
+              "padding": const CascadingPadding.only(top: 24),
+            };
+          },
+        ),
+        StyleRule(
+          const BlockSelector("paragraph").after("header1"),
+          (doc, docNode) {
+            return {
+              "padding": const CascadingPadding.only(top: 0),
+            };
+          },
+        ),
+        StyleRule(
+          const BlockSelector("paragraph").after("header2"),
+          (doc, docNode) {
+            return {
+              "padding": const CascadingPadding.only(top: 0),
+            };
+          },
+        ),
+        StyleRule(
+          const BlockSelector("paragraph").after("header3"),
+          (doc, docNode) {
+            return {
+              "padding": const CascadingPadding.only(top: 0),
+            };
+          },
+        ),
+        StyleRule(
+          const BlockSelector("listItem"),
+          (doc, docNode) {
+            return {
+              "padding": const CascadingPadding.only(top: 24),
+            };
+          },
+        ),
+        StyleRule(
+          const BlockSelector.all().last(),
+          (doc, docNode) {
+            return {
+              "padding": const CascadingPadding.only(bottom: 96),
+            };
+          },
+        ),
+      ],
       inlineTextStyler: defaultInlineTextStyler,
-      blockStyles: DocumentBlockStyles(
-        standardPadding: EdgeInsets.only(left: 20, right: 20),
-        text: TextBlockStyle(
-          paddingAdjustment: EdgeInsets.only(top: 20),
-          textStyle: TextStyle(
-            color: Colors.black,
-            fontSize: 16,
-            fontWeight: FontWeight.w300,
-            height: 1.8,
-          ),
-        ),
-        h1: TextBlockStyle(
-          paddingAdjustment: EdgeInsets.only(top: 40),
-          textStyle: TextStyle(
-            color: Color(0xFF333333),
-            fontSize: 38,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        h2: TextBlockStyle(
-          paddingAdjustment: EdgeInsets.only(top: 32),
-          textStyle: TextStyle(
-            color: Color(0xFF333333),
-            fontSize: 26,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        h3: TextBlockStyle(
-          paddingAdjustment: EdgeInsets.only(top: 28),
-          textStyle: TextStyle(
-            color: Color(0xFF333333),
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        h4: TextBlockStyle(
-          paddingAdjustment: EdgeInsets.only(top: 22),
-          textStyle: TextStyle(
-            color: Color(0xFF333333),
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        h5: TextBlockStyle(
-          paddingAdjustment: EdgeInsets.only(top: 20),
-          textStyle: TextStyle(
-            color: Color(0xFF333333),
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        h6: TextBlockStyle(
-          paddingAdjustment: EdgeInsets.only(top: 16),
-          textStyle: TextStyle(
-            color: Color(0xFF333333),
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        listItem: TextBlockStyle(
-          paddingAdjustment: EdgeInsets.only(top: 20),
-          textStyle: TextStyle(
-            color: Colors.black,
-            fontSize: 16,
-            fontWeight: FontWeight.w300,
-            height: 1.8,
-          ),
-        ),
-        blockquote: BlockquoteBlockStyle(
-          paddingAdjustment: EdgeInsets.only(top: 20),
-          textStyle: TextStyle(
-            color: Color(0xFF555555),
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            fontStyle: FontStyle.italic,
-          ),
-          backgroundColor: Color(0xFFF0F0F0),
-          borderRadius: BorderRadius.all(Radius.circular(4)),
-        ),
-        image: BlockStyle(paddingAdjustment: EdgeInsets.only(top: 20)),
-        hr: BlockStyle(paddingAdjustment: EdgeInsets.zero),
-      ),
     );
   }
 

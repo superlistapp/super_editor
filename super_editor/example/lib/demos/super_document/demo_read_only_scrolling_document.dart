@@ -69,7 +69,7 @@ class _ReadOnlyCustomScrollViewDemoState extends State<ReadOnlyCustomScrollViewD
         presenter: SingleColumnLayoutPresenter(
           document: _doc,
           pipeline: [
-            SingleColumnLayoutStyler(stylesheet: defaultDocumentStylesheet),
+            SingleColumnStylesheetStyler(stylesheet: defaultStylesheet),
           ],
         ),
         componentBuilders: defaultComponentBuilders,

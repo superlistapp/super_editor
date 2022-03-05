@@ -70,12 +70,13 @@ class _TextWithHintDemoState extends State<TextWithHintDemo> {
   Widget build(BuildContext context) {
     return SuperEditor(
       editor: _docEditor,
-      stylesheet: defaultDocumentStylesheet.copyWith(
-        margin: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),
+      stylesheet: Stylesheet(
+        documentPadding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),
+        rules: defaultStylesheet.rules,
 
         /// Adjust the default styles to style 3 levels of headers
         /// with large font sizes.
-        inlineTextStyler: (attributions, style) => _textStyleBuilder(attributions),
+        inlineTextStyler: (attributions, style) => style.merge(_textStyleBuilder(attributions)),
       ),
 
       /// Add a new component builder to the front of the list
