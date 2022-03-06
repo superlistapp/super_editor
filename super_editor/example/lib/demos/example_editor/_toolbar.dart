@@ -654,12 +654,12 @@ enum _TextType {
   unorderedListItem,
 }
 
-/// Small toolbar that is intended to display near some selected
-/// text and offer a few text formatting controls.
+/// Small toolbar that is intended to display over an image and
+/// offer controls to expand or contract the size of the image.
 ///
-/// [EditorToolbar] expects to be displayed in a [Stack] where it
+/// [ImageFormatToolbar] expects to be displayed in a [Stack] where it
 /// will position itself based on the given [anchor]. This can be
-/// accomplished, for example, by adding [EditorToolbar] to the
+/// accomplished, for example, by adding [ImageFormatToolbar] to the
 /// application [Overlay]. Any other [Stack] should work, too.
 class ImageFormatToolbar extends StatefulWidget {
   const ImageFormatToolbar({

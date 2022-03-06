@@ -3,7 +3,7 @@ import 'package:super_editor/src/infrastructure/attributed_spans.dart';
 
 import 'document.dart';
 
-/// Stylesheet for styling content within a single-column document layout.
+/// Stylesheet for styling content within a document.
 ///
 /// A stylesheet is a series of priority-order rules that generate style
 /// metadata, which is then applied to the layout and the blocks within the
@@ -53,8 +53,7 @@ typedef AttributionStyleAdjuster = TextStyle Function(Set<Attribution> attributi
 /// A single style rule within a [Stylesheet].
 ///
 /// A style rule combines a [selector], which identifies desired blocks within
-/// a single-column document, and a [styler], which generates style metadata
-/// for those blocks.
+/// a document, and a [styler], which generates style metadata for those blocks.
 ///
 /// There is no explicit contract for the style metadata. Different blocks might
 /// expect different styles. For example, a paragraph might understand text styles,
@@ -73,7 +72,7 @@ class StyleRule {
 /// Generates style metadata for the given [DocumentNode] within the [Document].
 typedef Styler = Map<String, dynamic> Function(Document, DocumentNode);
 
-/// Selects blocks in a document that match a given rule.
+/// Selects blocks in a document that matches a given rule.
 class BlockSelector {
   const BlockSelector(this._blockType)
       : _precedingBlockType = null,

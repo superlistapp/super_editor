@@ -45,10 +45,8 @@ class _SwitchDocumentDemoState extends State<SwitchDocumentDemo> {
           Expanded(
             child: SuperEditor(
               editor: _activeDocumentEditor!,
-              stylesheet: Stylesheet(
+              stylesheet: defaultStylesheet.copyWith(
                 documentPadding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),
-                rules: defaultStylesheet.rules,
-                inlineTextStyler: defaultStylesheet.inlineTextStyler,
               ),
             ),
           ),

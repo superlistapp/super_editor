@@ -63,10 +63,8 @@ class _TaskAndChatWithCustomScrollViewDemoState extends State<TaskAndChatWithCus
                 SliverToBoxAdapter(
                   child: SuperEditor(
                     editor: _editor,
-                    stylesheet: Stylesheet(
+                    stylesheet: defaultStylesheet.copyWith(
                       documentPadding: const EdgeInsets.all(48),
-                      rules: defaultStylesheet.rules,
-                      inlineTextStyler: defaultStylesheet.inlineTextStyler,
                     ),
                   ),
                 ),

@@ -9,6 +9,7 @@ import 'package:super_editor/src/core/document_editor.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/edit_context.dart';
+import 'package:super_editor/src/core/styles.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_spans.dart';
 import 'package:super_editor/src/infrastructure/attributed_text.dart';
@@ -19,6 +20,7 @@ import 'package:super_editor/src/infrastructure/strings.dart';
 import 'package:super_editor/src/infrastructure/super_selectable_text.dart';
 
 import 'document_input_keyboard.dart';
+import 'layout_single_column/layout_single_column.dart';
 
 class TextNode extends DocumentNode with ChangeNotifier {
   TextNode({
@@ -242,6 +244,52 @@ class TextNodePosition extends TextPosition implements NodePosition {
 
   @override
   int get hashCode => super.hashCode ^ super.offset.hashCode;
+}
+
+/// Mixin for all [SingleColumnLayoutComponentViewModel]s that represent
+/// a text-based block, e.g., paragraph, blockquote, list item.
+///
+/// This mixin enforces a consistent contract for all such view models.
+/// Each view model can add more properties, but they must at least
+/// support the properties in this mixin. Additionally, [applyStyles]
+/// provides consistent application of text-based styling for all
+/// view models that add this mixin.
+mixin TextComponentViewModel on SingleColumnLayoutComponentViewModel {
+  AttributionStyleBuilder get textStyleBuilder;
+  set textStyleBuilder(AttributionStyleBuilder styleBuilder);
+
+  TextDirection get textDirection;
+  set textDirection(TextDirection direction);
+
+  TextAlign get textAlignment;
+  set textAlignment(TextAlign alignment);
+
+  TextSelection? get selection;
+  set selection(TextSelection? selection);
+
+  Color get selectionColor;
+  set selectionColor(Color color);
+
+  TextPosition? get caret;
+  set caret(TextPosition? position);
+
+  Color get caretColor;
+  set caretColor(Color color);
+
+  bool get highlightWhenEmpty;
+  set highlightWhenEmpty(bool highlight);
+
+  @override
+  void applyStyles(Map<String, dynamic> styles) {
+    super.applyStyles(styles);
+
+    textStyleBuilder = (attributions) {
+      final baseStyle = styles["textStyle"] ?? noStyleBuilder({});
+      final inlineTextStyler = styles["inlineTextStyler"] as AttributionStyleAdjuster;
+
+      return inlineTextStyler(attributions, baseStyle);
+    };
+  }
 }
 
 /// Document component that displays hint text when its content text

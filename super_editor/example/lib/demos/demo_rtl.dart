@@ -31,10 +31,8 @@ class _RTLDemoState extends State<RTLDemo> {
   Widget build(BuildContext context) {
     return SuperEditor(
       editor: _docEditor,
-      stylesheet: Stylesheet(
+      stylesheet: defaultStylesheet.copyWith(
         documentPadding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),
-        rules: defaultStylesheet.rules,
-        inlineTextStyler: defaultStylesheet.inlineTextStyler,
       ),
     );
   }

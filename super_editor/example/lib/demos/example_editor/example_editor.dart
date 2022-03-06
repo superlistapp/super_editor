@@ -303,7 +303,6 @@ class _ExampleEditorState extends State<ExampleEditor> {
       ),
       componentBuilders: [
         ...defaultComponentBuilders,
-        // TODO: Is this the best way to inject dependencies for components to take edit actions?
         TaskComponentBuilder(_docEditor),
       ],
       gestureMode: _gestureMode,

@@ -1,16 +1,8 @@
-import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/src/core/document.dart';
-import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_layout.dart';
-import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/styles.dart';
-import 'package:super_editor/src/default_editor/blockquote.dart';
-import 'package:super_editor/src/default_editor/horizontal_rule.dart';
-import 'package:super_editor/src/default_editor/image.dart';
-import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
-import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_spans.dart';
 import 'package:super_editor/src/infrastructure/attributed_text.dart';
@@ -39,9 +31,9 @@ class SingleColumnDocumentComponentContext {
 /// Produces [SingleColumnLayoutViewModel]s to be displayed by a
 /// [SingleColumnDocumentLayout].
 ///
-/// First, a [SingleColumnLayoutComponentViewModel] is created for every
-/// [DocumentNode] in the given [document], using the [componentViewModelBuilders].
-/// These component view models are assembled into a [SingleColumnLayoutViewModel].
+/// A [SingleColumnLayoutComponentViewModel] is created for every [DocumentNode]
+/// in the given [document], using the [ComponentBuilder]s. These component
+/// view models are assembled into a [SingleColumnLayoutViewModel].
 ///
 /// The view model is styled by passing it through a series of "style phases",
 /// known as a [pipeline]. The final, styled, [SingleColumnLayoutViewModel] is
@@ -356,7 +348,7 @@ abstract class ComponentBuilder {
 /// a baseline [SingleColumnLayoutViewModel].
 ///
 /// Each such phase takes an incoming layout view model, copies it,
-/// makes any desired style changes, and then returns it.
+/// makes any desired style changes, and then returns the new view model.
 ///
 /// Example:
 ///
@@ -391,427 +383,6 @@ TextStyle noStyleBuilder(Set<Attribution> attributions) {
     fontSize: 16,
     height: 1.0,
   );
-}
-
-/// Style phase that applies a given [Stylesheet] to the document view model.
-class SingleColumnStylesheetStyler extends SingleColumnLayoutStylePhase {
-  SingleColumnStylesheetStyler({
-    required Stylesheet stylesheet,
-  }) : _stylesheet = stylesheet;
-
-  final Stylesheet _stylesheet;
-
-  @override
-  SingleColumnLayoutViewModel style(Document document, SingleColumnLayoutViewModel viewModel) {
-    return SingleColumnLayoutViewModel(
-      padding: _stylesheet.documentPadding ?? viewModel.padding,
-      componentViewModels: [
-        for (final componentViewModel in viewModel.componentViewModels)
-          _styleComponent(
-            document,
-            document.getNodeById(componentViewModel.nodeId)!,
-            componentViewModel.copy(),
-          ),
-      ],
-    );
-  }
-
-  SingleColumnLayoutComponentViewModel _styleComponent(
-    Document document,
-    DocumentNode node,
-    SingleColumnLayoutComponentViewModel viewModel,
-  ) {
-    // Combine all applicable style rules into a single set of styles
-    // for this component.
-    final aggregateStyles = <String, dynamic>{};
-    for (final rule in _stylesheet.rules) {
-      if (rule.selector.matches(document, node)) {
-        _mergeStyles(
-          existingStyles: aggregateStyles,
-          newStyles: rule.styler(document, node),
-        );
-      }
-    }
-
-    viewModel
-      ..maxWidth = aggregateStyles["maxWidth"] ?? double.infinity
-      ..padding = (aggregateStyles["padding"] as CascadingPadding?)?.toEdgeInsets() ?? EdgeInsets.zero;
-
-    // Apply the aggregate styles to this component.
-    if (viewModel is TextComponentViewModel) {
-      viewModel.textStyleBuilder = (attributions) {
-        final baseStyle = aggregateStyles["textStyle"] ?? noStyleBuilder({});
-        return _stylesheet.inlineTextStyler(attributions, baseStyle);
-      };
-    }
-    if (viewModel is BlockquoteComponentViewModel) {
-      viewModel
-        ..backgroundColor = aggregateStyles["backgroundColor"] ?? Colors.transparent
-        ..borderRadius = aggregateStyles["borderRadius"] ?? BorderRadius.zero;
-    }
-
-    return viewModel;
-  }
-
-  void _mergeStyles({
-    required Map<String, dynamic> existingStyles,
-    required Map<String, dynamic> newStyles,
-  }) {
-    for (final entry in newStyles.entries) {
-      if (existingStyles.containsKey(entry.key)) {
-        // Try to merge. If we can't, then overwrite.
-        final oldValue = existingStyles[entry.key];
-        final newValue = entry.value;
-
-        if (oldValue is TextStyle && newValue is TextStyle) {
-          existingStyles[entry.key] = oldValue.merge(newValue);
-        } else if (oldValue is CascadingPadding && newValue is CascadingPadding) {
-          existingStyles[entry.key] = newValue.applyOnTopOf(oldValue);
-        }
-      } else {
-        // This is a new entry, just set it.
-        existingStyles[entry.key] = entry.value;
-      }
-    }
-  }
-}
-
-/// [SingleColumnLayoutStylePhase] that applies custom styling to specific
-/// components.
-///
-/// Each per-component style should be defined within a [SingleColumnLayoutComponentStyles]
-/// and then stored within the given [DocumentNode]'s metadata.
-///
-/// Every time a [DocumentNode]'s metadata changes, this phase needs to re-run so
-/// that it picks up any style related changes. Given that the entire style pipeline
-/// re-runs every time the document changes, this phase automatically runs at the
-/// appropriate time.
-class SingleColumnLayoutCustomComponentStyler extends SingleColumnLayoutStylePhase {
-  SingleColumnLayoutCustomComponentStyler();
-
-  @override
-  SingleColumnLayoutViewModel style(Document document, SingleColumnLayoutViewModel viewModel) {
-    editorLayoutLog.info("(Re)calculating custom component styles view model for document layout");
-    return SingleColumnLayoutViewModel(
-      padding: viewModel.padding,
-      componentViewModels: [
-        for (final previousViewModel in viewModel.componentViewModels)
-          _applyLayoutStyles(
-            document.getNodeById(previousViewModel.nodeId)!,
-            previousViewModel.copy(),
-          ),
-      ],
-    );
-  }
-
-  SingleColumnLayoutComponentViewModel _applyLayoutStyles(
-    DocumentNode node,
-    SingleColumnLayoutComponentViewModel viewModel,
-  ) {
-    final componentStyles = SingleColumnLayoutComponentStyles.fromMetadata(node);
-
-    viewModel
-      ..maxWidth = componentStyles.width ?? viewModel.maxWidth
-      ..padding = componentStyles.padding ?? viewModel.padding;
-
-    editorLayoutLog
-        .warning("Tried to apply custom component styles to unknown layout component view model: $viewModel");
-    return viewModel;
-  }
-}
-
-class SingleColumnLayoutComponentStyles {
-  static const _metadataKey = "singleColumnLayout";
-  static const _widthKey = "width";
-  static const _paddingKey = "padding";
-
-  factory SingleColumnLayoutComponentStyles.fromMetadata(DocumentNode node) {
-    return SingleColumnLayoutComponentStyles(
-      width: node.metadata[_metadataKey]?[_widthKey],
-      padding: node.metadata[_metadataKey]?[_paddingKey],
-    );
-  }
-
-  const SingleColumnLayoutComponentStyles({
-    this.width,
-    this.padding,
-  });
-
-  final double? width;
-  final EdgeInsetsGeometry? padding;
-
-  void applyTo(DocumentNode node) {
-    node.putMetadataValue(_metadataKey, {
-      _widthKey: width,
-      _paddingKey: padding,
-    });
-  }
-
-  Map<String, dynamic> toMetadata() => {
-        _metadataKey: {
-          _widthKey: width,
-          _paddingKey: padding,
-        },
-      };
-
-  SingleColumnLayoutComponentStyles copyWith({
-    double? width,
-    EdgeInsetsGeometry? padding,
-  }) {
-    return SingleColumnLayoutComponentStyles(
-      width: width ?? this.width,
-      padding: padding ?? this.padding,
-    );
-  }
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is SingleColumnLayoutComponentStyles &&
-          runtimeType == other.runtimeType &&
-          width == other.width &&
-          padding == other.padding;
-
-  @override
-  int get hashCode => width.hashCode ^ padding.hashCode;
-}
-
-/// [SingleColumnLayoutStylePhase] that applies visual selections to each component,
-/// e.g., text selections, image selections, caret positioning.
-class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
-  SingleColumnLayoutSelectionStyler({
-    required Document document,
-    required DocumentComposer composer,
-    required SelectionStyles selectionStyles,
-  })  : _document = document,
-        _composer = composer,
-        _selectionStyles = selectionStyles {
-    // Our styles need to be re-applied whenever the document selection changes.
-    _composer.selectionNotifier.addListener(markDirty);
-  }
-
-  @override
-  void dispose() {
-    _composer.selectionNotifier.removeListener(markDirty);
-    super.dispose();
-  }
-
-  final Document _document;
-  final DocumentComposer _composer;
-  final SelectionStyles _selectionStyles;
-
-  bool _shouldDocumentShowCaret = false;
-  set shouldDocumentShowCaret(bool newValue) {
-    if (newValue == _shouldDocumentShowCaret) {
-      return;
-    }
-
-    _shouldDocumentShowCaret = newValue;
-    editorLayoutLog.fine("Change to 'document should show caret': $_shouldDocumentShowCaret");
-    markDirty();
-  }
-
-  @override
-  SingleColumnLayoutViewModel style(Document document, SingleColumnLayoutViewModel viewModel) {
-    editorLayoutLog.info("(Re)calculating selection view model for document layout");
-    editorLayoutLog.fine("Applying selection to components: ${_composer.selection}");
-    return SingleColumnLayoutViewModel(
-      padding: viewModel.padding,
-      componentViewModels: [
-        for (final previousViewModel in viewModel.componentViewModels) //
-          _applySelection(previousViewModel.copy()),
-      ],
-    );
-  }
-
-  SingleColumnLayoutComponentViewModel _applySelection(SingleColumnLayoutComponentViewModel viewModel) {
-    final documentSelection = _composer.selection;
-    final node = _document.getNodeById(viewModel.nodeId)!;
-
-    DocumentNodeSelection? nodeSelection;
-    if (documentSelection != null) {
-      late List<DocumentNode> selectedNodes;
-      try {
-        selectedNodes = _document.getNodesInside(
-          documentSelection.base,
-          documentSelection.extent,
-        );
-      } catch (exception) {
-        // This situation can happen in the moment between a document change and
-        // a corresponding selection change. For example: deleting an image and
-        // replacing it with an empty paragraph. Between the doc change and the
-        // selection change, the old image selection is applied to the new paragraph.
-        // This results in an exception.
-        //
-        // TODO: introduce a unified event ledger that combines related behaviors
-        //       into atomic transactions (#423)
-        selectedNodes = [];
-      }
-      nodeSelection =
-          _computeNodeSelection(documentSelection: documentSelection, selectedNodes: selectedNodes, node: node);
-    }
-
-    editorLayoutLog.fine("Node selection (${node.id}): $nodeSelection");
-    if (node is TextNode) {
-      final textSelection = nodeSelection == null || nodeSelection.nodeSelection is! TextSelection
-          ? null
-          : nodeSelection.nodeSelection as TextSelection;
-      if (nodeSelection != null && nodeSelection.nodeSelection is! TextSelection) {
-        editorLayoutLog.shout(
-            'ERROR: Building a paragraph component but the selection is not a TextSelection. Node: ${node.id}, Selection: ${nodeSelection.nodeSelection}');
-      }
-      final showCaret = _shouldDocumentShowCaret && nodeSelection != null ? nodeSelection.isExtent : false;
-      final highlightWhenEmpty =
-          nodeSelection == null ? false : nodeSelection.highlightWhenEmpty && _selectionStyles.highlightEmptyTextBlocks;
-
-      editorLayoutLog.finer(' - ${node.id}: $nodeSelection');
-      if (showCaret) {
-        editorLayoutLog.finer('   - ^ showing caret');
-      }
-
-      editorLayoutLog.finer(' - building a paragraph with selection:');
-      editorLayoutLog.finer('   - base: ${textSelection?.base}');
-      editorLayoutLog.finer('   - extent: ${textSelection?.extent}');
-
-      if (viewModel is TextComponentViewModel) {
-        viewModel
-          ..selection = textSelection
-          ..selectionColor = _selectionStyles.selectionColor
-          ..caret = showCaret ? textSelection?.extent : null
-          ..caretColor = _selectionStyles.caretColor
-          ..highlightWhenEmpty = highlightWhenEmpty;
-      }
-    }
-    if (viewModel is ImageComponentViewModel) {
-      final selection = nodeSelection == null ? null : nodeSelection.nodeSelection as UpstreamDownstreamNodeSelection;
-
-      viewModel
-        ..selection = selection
-        ..selectionColor = _selectionStyles.selectionColor
-        ..caret = _shouldDocumentShowCaret && selection != null && selection.isCollapsed ? selection.extent : null
-        ..caretColor = _selectionStyles.caretColor;
-    }
-    if (viewModel is HorizontalRuleComponentViewModel) {
-      final selection = nodeSelection == null ? null : nodeSelection.nodeSelection as UpstreamDownstreamNodeSelection;
-
-      viewModel
-        ..selection = selection
-        ..selectionColor = _selectionStyles.selectionColor
-        ..caret = _shouldDocumentShowCaret && selection != null && selection.isCollapsed ? selection.extent : null
-        ..caretColor = _selectionStyles.selectionColor;
-    }
-
-    return viewModel;
-  }
-
-  /// Computes the [DocumentNodeSelection] for the individual `nodeId` based on
-  /// the total list of selected nodes.
-  DocumentNodeSelection? _computeNodeSelection({
-    required DocumentSelection? documentSelection,
-    required List<DocumentNode> selectedNodes,
-    required DocumentNode node,
-  }) {
-    if (documentSelection == null) {
-      return null;
-    }
-
-    editorLayoutLog.finer('_computeNodeSelection(): ${node.id}');
-    editorLayoutLog.finer(' - base: ${documentSelection.base.nodeId}');
-    editorLayoutLog.finer(' - extent: ${documentSelection.extent.nodeId}');
-
-    if (documentSelection.base.nodeId == documentSelection.extent.nodeId) {
-      editorLayoutLog.finer(' - selection is within 1 node.');
-      if (documentSelection.base.nodeId != node.id) {
-        // Only 1 node is selected and its not the node we're interested in. Return.
-        editorLayoutLog.finer(' - this node is not selected. Returning null.');
-        return null;
-      }
-
-      editorLayoutLog.finer(' - this node has the selection');
-      final baseNodePosition = documentSelection.base.nodePosition;
-      final extentNodePosition = documentSelection.extent.nodePosition;
-      late NodeSelection? nodeSelection;
-      try {
-        nodeSelection = node.computeSelection(base: baseNodePosition, extent: extentNodePosition);
-      } catch (exception) {
-        // This situation can happen in the moment between a document change and
-        // a corresponding selection change. For example: deleting an image and
-        // replacing it with an empty paragraph. Between the doc change and the
-        // selection change, the old image selection is applied to the new paragraph.
-        // This results in an exception.
-        //
-        // TODO: introduce a unified event ledger that combines related behaviors
-        //       into atomic transactions (#423)
-        return null;
-      }
-      editorLayoutLog.finer(' - node selection: $nodeSelection');
-
-      return DocumentNodeSelection(
-        nodeId: node.id,
-        nodeSelection: nodeSelection,
-        isBase: true,
-        isExtent: true,
-      );
-    } else {
-      // Log all the selected nodes.
-      editorLayoutLog.finer(' - selection contains multiple nodes:');
-      for (final node in selectedNodes) {
-        editorLayoutLog.finer('   - ${node.id}');
-      }
-
-      if (selectedNodes.firstWhereOrNull((selectedNode) => selectedNode.id == node.id) == null) {
-        // The document selection does not contain the node we're interested in. Return.
-        editorLayoutLog.finer(' - this node is not in the selection');
-        return null;
-      }
-
-      if (selectedNodes.first.id == node.id) {
-        editorLayoutLog.finer(' - this is the first node in the selection');
-        // Multiple nodes are selected and the node that we're interested in
-        // is the top node in that selection. Therefore, this node is
-        // selected from a position down to its bottom.
-        final isBase = node.id == documentSelection.base.nodeId;
-        return DocumentNodeSelection(
-          nodeId: node.id,
-          nodeSelection: node.computeSelection(
-            base: isBase ? documentSelection.base.nodePosition : node.endPosition,
-            extent: isBase ? node.endPosition : documentSelection.extent.nodePosition,
-          ),
-          isBase: isBase,
-          isExtent: !isBase,
-          highlightWhenEmpty: isBase,
-        );
-      } else if (selectedNodes.last.id == node.id) {
-        editorLayoutLog.finer(' - this is the last node in the selection');
-        // Multiple nodes are selected and the node that we're interested in
-        // is the bottom node in that selection. Therefore, this node is
-        // selected from the beginning down to some position.
-        final isBase = node.id == documentSelection.base.nodeId;
-        return DocumentNodeSelection(
-          nodeId: node.id,
-          nodeSelection: node.computeSelection(
-            base: isBase ? node.beginningPosition : node.beginningPosition,
-            extent: isBase ? documentSelection.base.nodePosition : documentSelection.extent.nodePosition,
-          ),
-          isBase: isBase,
-          isExtent: !isBase,
-          highlightWhenEmpty: isBase,
-        );
-      } else {
-        editorLayoutLog.finer(' - this node is fully selected within the selection');
-        // Multiple nodes are selected and this node is neither the top
-        // or the bottom node, therefore this entire node is selected.
-        return DocumentNodeSelection(
-          nodeId: node.id,
-          nodeSelection: node.computeSelection(
-            base: node.beginningPosition,
-            extent: node.endPosition,
-          ),
-          highlightWhenEmpty: true,
-        );
-      }
-    }
-  }
 }
 
 /// View model for an entire [SingleColumnDocumentLayout].
@@ -853,6 +424,11 @@ abstract class SingleColumnLayoutComponentViewModel {
   /// The padding applied around this component.
   EdgeInsetsGeometry padding;
 
+  void applyStyles(Map<String, dynamic> styles) {
+    maxWidth = styles["maxWidth"] ?? double.infinity;
+    padding = (styles["padding"] as CascadingPadding?)?.toEdgeInsets() ?? EdgeInsets.zero;
+  }
+
   SingleColumnLayoutComponentViewModel copy();
 
   @override
@@ -866,30 +442,4 @@ abstract class SingleColumnLayoutComponentViewModel {
 
   @override
   int get hashCode => nodeId.hashCode ^ maxWidth.hashCode ^ padding.hashCode;
-}
-
-mixin TextComponentViewModel on SingleColumnLayoutComponentViewModel {
-  AttributionStyleBuilder get textStyleBuilder;
-  set textStyleBuilder(AttributionStyleBuilder styleBuilder);
-
-  TextDirection get textDirection;
-  set textDirection(TextDirection direction);
-
-  TextAlign get textAlignment;
-  set textAlignment(TextAlign alignment);
-
-  TextSelection? get selection;
-  set selection(TextSelection? selection);
-
-  Color get selectionColor;
-  set selectionColor(Color color);
-
-  TextPosition? get caret;
-  set caret(TextPosition? position);
-
-  Color get caretColor;
-  set caretColor(Color color);
-
-  bool get highlightWhenEmpty;
-  set highlightWhenEmpty(bool highlight);
 }

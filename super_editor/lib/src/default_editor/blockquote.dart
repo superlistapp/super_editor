@@ -122,6 +122,12 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel 
   BorderRadius borderRadius;
 
   @override
+  void applyStyles(Map<String, dynamic> styles) {
+    backgroundColor = styles["backgroundColor"] ?? Colors.transparent;
+    borderRadius = styles["borderRadius"] ?? BorderRadius.zero;
+  }
+
+  @override
   BlockquoteComponentViewModel copy() {
     return BlockquoteComponentViewModel(
       nodeId: nodeId,

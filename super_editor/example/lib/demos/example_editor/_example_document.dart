@@ -64,25 +64,6 @@ Document createInitialDocument() {
         id: DocumentEditor.createNodeId(),
         text: AttributedText(text: 'To get started with your own editing experience, take the following steps:'),
       ),
-      // ListItemNode.ordered(
-      //   id: DocumentEditor.createNodeId(),
-      //   text: AttributedText(
-      //     text: 'Create and configure your document, for example, by creating a new MutableDocument.',
-      //   ),
-      // ),
-      // ListItemNode.ordered(
-      //   id: DocumentEditor.createNodeId(),
-      //   text: AttributedText(
-      //     text: "If you want programmatic control over the user's selection and styles, create a DocumentComposer.",
-      //   ),
-      // ),
-      // ListItemNode.ordered(
-      //   id: DocumentEditor.createNodeId(),
-      //   text: AttributedText(
-      //     text:
-      //         "Build a SuperEditor widget in your widget tree, configured with your Document and (optionally) your DocumentComposer.",
-      //   ),
-      // ),
       TaskNode(
         id: DocumentEditor.createNodeId(),
         isComplete: false,

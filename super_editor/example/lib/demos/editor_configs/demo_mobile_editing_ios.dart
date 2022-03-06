@@ -62,10 +62,8 @@ class _MobileEditingIOSDemoState extends State<MobileEditingIOSDemo> {
                 onCopyPressed: () => _docOps.copy(),
                 onPastePressed: () => _docOps.paste(),
               ),
-              stylesheet: Stylesheet(
+              stylesheet: defaultStylesheet.copyWith(
                 documentPadding: const EdgeInsets.all(16),
-                rules: defaultStylesheet.rules,
-                inlineTextStyler: defaultStylesheet.inlineTextStyler,
               ),
               createOverlayControlsClipper: (_) => const KeyboardToolbarClipper(),
             ),

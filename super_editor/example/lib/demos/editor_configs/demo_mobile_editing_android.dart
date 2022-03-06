@@ -92,10 +92,8 @@ class _MobileEditingAndroidDemoState extends State<MobileEditingAndroidDemo> {
                 onPastePressed: () => _docOps.paste(),
                 onSelectAllPressed: () => _docOps.selectAll(),
               ),
-              stylesheet: Stylesheet(
+              stylesheet: defaultStylesheet.copyWith(
                 documentPadding: const EdgeInsets.all(16),
-                rules: defaultStylesheet.rules,
-                inlineTextStyler: defaultStylesheet.inlineTextStyler,
               ),
               createOverlayControlsClipper: (_) => const KeyboardToolbarClipper(),
             ),
