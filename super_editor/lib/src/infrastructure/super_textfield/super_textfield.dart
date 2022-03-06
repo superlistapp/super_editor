@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter/widgets.dart';
-import 'package:super_editor/src/default_editor/super_editor.dart';
+import 'package:flutter/material.dart';
+import 'package:super_editor/src/infrastructure/attributed_spans.dart';
 import 'package:super_editor/src/infrastructure/attributed_text.dart';
 import 'package:super_editor/src/infrastructure/super_selectable_text.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/android/android_textfield.dart';
@@ -10,15 +10,17 @@ import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/h
 import 'package:super_editor/src/infrastructure/super_textfield/input_method_engine/_ime_text_editing_controller.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/ios/ios_textfield.dart';
 
-export 'desktop/desktop_textfield.dart';
+import '../../default_editor/attributions.dart';
+
+export '_test_tools.dart';
 export 'android/android_textfield.dart';
-export 'ios/ios_textfield.dart';
-export 'input_method_engine/_ime_text_editing_controller.dart';
+export 'desktop/desktop_textfield.dart';
 export 'infrastructure/attributed_text_editing_controller.dart';
 export 'infrastructure/hint_text.dart';
 export 'infrastructure/magnifier.dart';
 export 'infrastructure/text_scrollview.dart';
-export '_test_tools.dart';
+export 'input_method_engine/_ime_text_editing_controller.dart';
+export 'ios/ios_textfield.dart';
 
 /// Custom text field implementations that offer greater control than traditional
 /// Flutter text fields.
@@ -51,7 +53,7 @@ class SuperTextField extends StatefulWidget {
     this.configuration,
     this.textController,
     this.textAlign = TextAlign.left,
-    this.textStyleBuilder = defaultStyleBuilder,
+    this.textStyleBuilder = defaultTextFieldStyleBuilder,
     this.hintBehavior = HintBehavior.displayHintUntilFocus,
     this.hintBuilder,
     this.controlsColor,
@@ -258,4 +260,42 @@ enum SuperTextFieldPlatformConfiguration {
   desktop,
   android,
   iOS,
+}
+
+/// Default [TextStyles] for [SuperTextField].
+TextStyle defaultTextFieldStyleBuilder(Set<Attribution> attributions) {
+  TextStyle newStyle = const TextStyle(
+    fontSize: 16,
+    height: 1,
+  );
+
+  for (final attribution in attributions) {
+    if (attribution == boldAttribution) {
+      newStyle = newStyle.copyWith(
+        fontWeight: FontWeight.bold,
+      );
+    } else if (attribution == italicsAttribution) {
+      newStyle = newStyle.copyWith(
+        fontStyle: FontStyle.italic,
+      );
+    } else if (attribution == underlineAttribution) {
+      newStyle = newStyle.copyWith(
+        decoration: newStyle.decoration == null
+            ? TextDecoration.underline
+            : TextDecoration.combine([TextDecoration.underline, newStyle.decoration!]),
+      );
+    } else if (attribution == strikethroughAttribution) {
+      newStyle = newStyle.copyWith(
+        decoration: newStyle.decoration == null
+            ? TextDecoration.lineThrough
+            : TextDecoration.combine([TextDecoration.lineThrough, newStyle.decoration!]),
+      );
+    } else if (attribution is LinkAttribution) {
+      newStyle = newStyle.copyWith(
+        color: Colors.lightBlue,
+        decoration: TextDecoration.underline,
+      );
+    }
+  }
+  return newStyle;
 }

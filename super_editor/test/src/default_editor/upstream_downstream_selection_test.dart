@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:logging/logging.dart';
 import 'package:super_editor/super_editor.dart';
 
 import 'test_documents.dart';
@@ -31,6 +30,7 @@ void main() {
       testWidgets("up arrow moves text caret to downstream edge of block from node below", (tester) async {
         final composer = DocumentComposer(
           initialSelection: const DocumentSelection.collapsed(
+            // The caret needs to be on the 1st line, in the right half of the line.
             position: DocumentPosition(nodeId: "3", nodePosition: TextNodePosition(offset: 33)),
           ),
         );
@@ -147,6 +147,7 @@ void main() {
       testWidgets("text caret moves to upstream edge of block from node above", (tester) async {
         final composer = DocumentComposer(
           initialSelection: const DocumentSelection.collapsed(
+            // Caret needs to sit on the left half of the last line in the paragraph.
             position: DocumentPosition(nodeId: "1", nodePosition: TextNodePosition(offset: 0)),
           ),
         );
@@ -163,7 +164,8 @@ void main() {
       testWidgets("text caret moves to downstream edge of block from node above", (tester) async {
         final composer = DocumentComposer(
           initialSelection: const DocumentSelection.collapsed(
-            position: DocumentPosition(nodeId: "1", nodePosition: TextNodePosition(offset: 33)),
+            // Caret needs to sit in right half of the last line in the paragraph.
+            position: DocumentPosition(nodeId: "1", nodePosition: TextNodePosition(offset: 37)),
           ),
         );
         await tester.pumpWidget(_buildHardwareKeyboardEditor(paragraphThenHrThenParagraphDoc(), composer));
@@ -564,6 +566,20 @@ Widget _buildHardwareKeyboardEditor(MutableDocument document, DocumentComposer c
       body: SuperEditor(
         editor: editor,
         composer: composer,
+        // Make the text small so that the test paragraphs fit on a single
+        // line, so that we can place the caret on the left/right halves
+        // of lines, as needed.
+        stylesheet: defaultStylesheet.copyWith(
+          addRulesAfter: [
+            StyleRule(const BlockSelector.all(), (doc, node) {
+              return {
+                "textStyle": const TextStyle(
+                  fontSize: 12,
+                ),
+              };
+            })
+          ],
+        ),
         gestureMode: DocumentGestureMode.mouse,
         autofocus: true,
       ),

@@ -13,13 +13,17 @@ import 'package:super_editor/src/default_editor/list_items.dart';
 import 'package:super_editor/src/infrastructure/attributed_spans.dart';
 
 import 'attributions.dart';
+import 'blockquote.dart';
 import 'document_gestures_mouse.dart';
 import 'document_input_ime.dart';
 import 'document_input_keyboard.dart';
 import 'document_keyboard_actions.dart';
+import 'horizontal_rule.dart';
+import 'image.dart';
 import 'layout_single_column/layout_single_column.dart';
 import 'paragraph.dart';
 import 'text.dart';
+import 'unknown_component.dart';
 
 /// A rich text editor that displays a document in a single-column layout.
 ///
@@ -71,7 +75,6 @@ class SuperEditor extends StatefulWidget {
     this.composer,
     this.scrollController,
     this.documentLayoutKey,
-    this.customViewModelBuilders = const [],
     Stylesheet? stylesheet,
     this.customStylePhases = const [],
     this.inputSource = DocumentInputSource.keyboard,
@@ -96,10 +99,9 @@ class SuperEditor extends StatefulWidget {
     this.composer,
     this.scrollController,
     this.documentLayoutKey,
-    this.customViewModelBuilders = const [],
     Stylesheet? stylesheet,
     this.customStylePhases = const [],
-    List<SingleColumnDocumentComponentBuilder>? componentBuilders,
+    List<ComponentBuilder>? componentBuilders,
     SelectionStyles? selectionStyle,
     this.inputSource = DocumentInputSource.keyboard,
     this.gestureMode = DocumentGestureMode.mouse,
@@ -114,8 +116,8 @@ class SuperEditor extends StatefulWidget {
         selectionStyles = selectionStyle ?? defaultSelectionStyle,
         keyboardActions = keyboardActions ?? defaultKeyboardActions,
         componentBuilders = componentBuilders != null
-            ? [...componentBuilders, newUnknownComponentBuilder]
-            : [...defaultComponentBuilders, newUnknownComponentBuilder],
+            ? [...componentBuilders, const UnknownComponentBuilder()]
+            : [...defaultComponentBuilders, const UnknownComponentBuilder()],
         super(key: key);
 
   /// Creates a `Super Editor` with common (but configurable) defaults for
@@ -127,10 +129,9 @@ class SuperEditor extends StatefulWidget {
     this.composer,
     this.scrollController,
     this.documentLayoutKey,
-    this.customViewModelBuilders = const [],
     Stylesheet? stylesheet,
     this.customStylePhases = const [],
-    List<SingleColumnDocumentComponentBuilder>? componentBuilders,
+    List<ComponentBuilder>? componentBuilders,
     SelectionStyles? selectionStyle,
     this.inputSource = DocumentInputSource.keyboard,
     this.gestureMode = DocumentGestureMode.mouse,
@@ -145,8 +146,8 @@ class SuperEditor extends StatefulWidget {
         selectionStyles = selectionStyle ?? defaultSelectionStyle,
         keyboardActions = keyboardActions ?? defaultKeyboardActions,
         componentBuilders = componentBuilders != null
-            ? [...componentBuilders, newUnknownComponentBuilder]
-            : [...defaultComponentBuilders, newUnknownComponentBuilder],
+            ? [...componentBuilders, const UnknownComponentBuilder()]
+            : [...defaultComponentBuilders, const UnknownComponentBuilder()],
         super(key: key);
 
   /// [FocusNode] for the entire `SuperEditor`.
@@ -168,14 +169,6 @@ class SuperEditor extends StatefulWidget {
   /// This key can be used to lookup visual components in the document
   /// layout within this `SuperEditor`.
   final GlobalKey? documentLayoutKey;
-
-  /// Builders that create view models for custom components.
-  ///
-  /// If you add a new type of [DocumentNode] with its own visual component,
-  /// you need to provide a corresponding view model builder, which allows
-  /// various style phases to style the view model before it's applied to
-  /// a widget.
-  final List<ComponentViewModelBuilder> customViewModelBuilders;
 
   /// Style rules applied through the document presentation.
   final Stylesheet stylesheet;
@@ -229,11 +222,10 @@ class SuperEditor extends StatefulWidget {
   /// text input, and other transitive editor configurations.
   final DocumentComposer? composer;
 
-  /// Priority list of widget factories that creates instances of
+  /// Priority list of widget factories that create instances of
   /// each visual component displayed in the document layout, e.g.,
-  /// paragraph component, image component,
-  /// horizontal rule component, etc.
-  final List<SingleColumnDocumentComponentBuilder> componentBuilders;
+  /// paragraph component, image component, horizontal rule component, etc.
+  final List<ComponentBuilder> componentBuilders;
 
   /// All actions that this editor takes in response to key
   /// events, e.g., text entry, newlines, character deletion,
@@ -385,13 +377,7 @@ class _SuperEditorState extends State<SuperEditor> {
 
     _docLayoutPresenter = SingleColumnLayoutPresenter(
       document: document,
-      componentViewModelBuilders: [
-        const TextBlockViewModelBuilder(),
-        const ListItemViewModelBuilder(),
-        const ImageViewModelBuilder(),
-        const HorizontalRuleViewModelBuilder(),
-        ...widget.customViewModelBuilders,
-      ],
+      componentBuilders: widget.componentBuilders,
       pipeline: [
         _docStylesheetStyler,
         _docLayoutPerComponentBlockStyler,
@@ -576,15 +562,13 @@ class DebugPaintConfig {
 /// Creates visual components for the standard [SuperEditor].
 ///
 /// These builders are in priority order. The first builder
-/// to return a non-null component is used. The final
-/// `unknownComponentBuilder` always returns a component.
-final defaultComponentBuilders = <SingleColumnDocumentComponentBuilder>[
-  paragraphComponentBuilder,
-  blockquoteComponentBuilder,
-  unorderedListItemComponentBuilder,
-  newOrderedListItemBuilder,
-  imageComponentBuilder,
-  horizontalRuleComponentBuilder,
+/// to return a non-null component is used.
+final defaultComponentBuilders = <ComponentBuilder>[
+  const BlockquoteComponentBuilder(),
+  const ParagraphComponentBuilder(),
+  const ListItemComponentBuilder(),
+  const ImageComponentBuilder(),
+  const HorizontalRuleComponentBuilder(),
 ];
 
 /// Keyboard actions for the standard [SuperEditor].

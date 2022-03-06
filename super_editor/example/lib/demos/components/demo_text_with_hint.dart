@@ -82,7 +82,7 @@ class _TextWithHintDemoState extends State<TextWithHintDemo> {
       /// Add a new component builder to the front of the list
       /// that knows how to render header widgets with hint text.
       componentBuilders: [
-        _headerWithHintBuilder,
+        const HeaderWithHintComponentBuilder(),
         ...defaultComponentBuilders,
       ],
     );
@@ -141,44 +141,56 @@ TextStyle _textStyleBuilder(Set<Attribution> attributions) {
 ///   return null;
 /// }
 /// ```
-Widget? _headerWithHintBuilder(
-    SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel componentMetadata) {
-  if (componentMetadata is! ParagraphComponentViewModel) {
+class HeaderWithHintComponentBuilder implements ComponentBuilder {
+  const HeaderWithHintComponentBuilder();
+
+  @override
+  SingleColumnLayoutComponentViewModel? createViewModel(Document document, DocumentNode node) {
+    // This component builder can work with the standard paragraph view model.
+    // We'll defer to the standard paragraph component builder to create it.
     return null;
   }
 
-  final blockAttribution = componentMetadata.blockType;
-  if (!(const [header1Attribution, header2Attribution, header3Attribution]).contains(blockAttribution)) {
-    return null;
-  }
+  @override
+  Widget? createComponent(
+      SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel componentViewModel) {
+    if (componentViewModel is! ParagraphComponentViewModel) {
+      return null;
+    }
 
-  final textSelection = componentMetadata.selection;
+    final blockAttribution = componentViewModel.blockType;
+    if (!(const [header1Attribution, header2Attribution, header3Attribution]).contains(blockAttribution)) {
+      return null;
+    }
 
-  return TextWithHintComponent(
-    key: componentContext.componentKey,
-    text: componentMetadata.text,
-    textStyleBuilder: _textStyleBuilder,
-    metadata: componentMetadata.blockType != null
-        ? {
-            'blockType': componentMetadata.blockType,
-          }
-        : {},
-    // This is the text displayed as a hint.
-    hintText: AttributedText(
-      text: 'header goes here...',
-      spans: AttributedSpans(
-        attributions: [
-          const SpanMarker(attribution: italicsAttribution, offset: 12, markerType: SpanMarkerType.start),
-          const SpanMarker(attribution: italicsAttribution, offset: 15, markerType: SpanMarkerType.end),
-        ],
+    final textSelection = componentViewModel.selection;
+
+    return TextWithHintComponent(
+      key: componentContext.componentKey,
+      text: componentViewModel.text,
+      textStyleBuilder: _textStyleBuilder,
+      metadata: componentViewModel.blockType != null
+          ? {
+              'blockType': componentViewModel.blockType,
+            }
+          : {},
+      // This is the text displayed as a hint.
+      hintText: AttributedText(
+        text: 'header goes here...',
+        spans: AttributedSpans(
+          attributions: [
+            const SpanMarker(attribution: italicsAttribution, offset: 12, markerType: SpanMarkerType.start),
+            const SpanMarker(attribution: italicsAttribution, offset: 15, markerType: SpanMarkerType.end),
+          ],
+        ),
       ),
-    ),
-    // This is the function that selects styles for the hint text.
-    hintStyleBuilder: (Set<Attribution> attributions) => _textStyleBuilder(attributions).copyWith(
-      color: const Color(0xFFDDDDDD),
-    ),
-    textSelection: textSelection,
-    selectionColor: componentMetadata.selectionColor,
-    showCaret: componentMetadata.caret != null,
-  );
+      // This is the function that selects styles for the hint text.
+      hintStyleBuilder: (Set<Attribution> attributions) => _textStyleBuilder(attributions).copyWith(
+        color: const Color(0xFFDDDDDD),
+      ),
+      textSelection: textSelection,
+      selectionColor: componentViewModel.selectionColor,
+      showCaret: componentViewModel.caret != null,
+    );
+  }
 }

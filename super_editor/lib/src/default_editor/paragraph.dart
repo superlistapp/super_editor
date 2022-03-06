@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/painting.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_editor.dart';
@@ -12,6 +13,8 @@ import 'package:super_editor/src/infrastructure/keyboard.dart';
 import 'package:super_editor/src/infrastructure/raw_key_event_extensions.dart';
 
 import 'document_input_keyboard.dart';
+import 'layout_single_column/layout_single_column.dart';
+import 'text_tools.dart';
 
 class ParagraphNode extends TextNode {
   ParagraphNode({
@@ -27,6 +30,176 @@ class ParagraphNode extends TextNode {
       putMetadataValue("blockType", const NamedAttribution("paragraph"));
     }
   }
+}
+
+class ParagraphComponentBuilder implements ComponentBuilder {
+  const ParagraphComponentBuilder();
+
+  @override
+  SingleColumnLayoutComponentViewModel? createViewModel(Document document, DocumentNode node) {
+    if (node is! ParagraphNode) {
+      return null;
+    }
+
+    final textDirection = getParagraphDirection(node.text.text);
+
+    TextAlign textAlign = (textDirection == TextDirection.ltr) ? TextAlign.left : TextAlign.right;
+    final textAlignName = node.getMetadataValue('textAlign');
+    switch (textAlignName) {
+      case 'left':
+        textAlign = TextAlign.left;
+        break;
+      case 'center':
+        textAlign = TextAlign.center;
+        break;
+      case 'right':
+        textAlign = TextAlign.right;
+        break;
+      case 'justify':
+        textAlign = TextAlign.justify;
+        break;
+    }
+
+    return ParagraphComponentViewModel(
+      nodeId: node.id,
+      blockType: node.getMetadataValue('blockType'),
+      text: node.text,
+      textStyleBuilder: noStyleBuilder,
+      textDirection: textDirection,
+      textAlignment: textAlign,
+      selectionColor: const Color(0x00000000),
+      caretColor: const Color(0x00000000),
+    );
+  }
+
+  @override
+  TextComponent? createComponent(
+      SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel componentViewModel) {
+    if (componentViewModel is! ParagraphComponentViewModel) {
+      return null;
+    }
+
+    editorLayoutLog.fine("Building paragraph component for node: ${componentViewModel.nodeId}");
+
+    if (componentViewModel.caret != null) {
+      editorLayoutLog.finer(' - painting caret in paragraph');
+    }
+
+    if (componentViewModel.selection != null) {
+      editorLayoutLog.finer(' - painting a text selection:');
+      editorLayoutLog.finer('   base: ${componentViewModel.selection!.base}');
+      editorLayoutLog.finer('   extent: ${componentViewModel.selection!.extent}');
+    } else {
+      editorLayoutLog.finer(' - not painting any text selection');
+    }
+
+    return TextComponent(
+      key: componentContext.componentKey,
+      text: componentViewModel.text,
+      textStyleBuilder: componentViewModel.textStyleBuilder,
+      metadata: componentViewModel.blockType != null
+          ? {
+              'blockType': componentViewModel.blockType,
+            }
+          : {},
+      textAlign: componentViewModel.textAlignment,
+      textDirection: componentViewModel.textDirection,
+      textSelection: componentViewModel.selection,
+      selectionColor: componentViewModel.selectionColor,
+      showCaret: componentViewModel.caret != null,
+      caretColor: componentViewModel.caretColor,
+      highlightWhenEmpty: componentViewModel.highlightWhenEmpty,
+    );
+  }
+}
+
+class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel with TextComponentViewModel {
+  ParagraphComponentViewModel({
+    required String nodeId,
+    double? maxWidth,
+    EdgeInsetsGeometry padding = EdgeInsets.zero,
+    this.blockType,
+    required this.text,
+    required this.textStyleBuilder,
+    this.textDirection = TextDirection.ltr,
+    this.textAlignment = TextAlign.left,
+    this.selection,
+    required this.selectionColor,
+    this.caret,
+    required this.caretColor,
+    this.highlightWhenEmpty = false,
+  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
+
+  Attribution? blockType;
+  AttributedText text;
+  @override
+  AttributionStyleBuilder textStyleBuilder;
+  @override
+  TextDirection textDirection;
+  @override
+  TextAlign textAlignment;
+  @override
+  TextSelection? selection;
+  @override
+  Color selectionColor;
+  @override
+  TextPosition? caret;
+  @override
+  Color caretColor;
+  @override
+  bool highlightWhenEmpty;
+
+  @override
+  ParagraphComponentViewModel copy() {
+    return ParagraphComponentViewModel(
+      nodeId: nodeId,
+      maxWidth: maxWidth,
+      padding: padding,
+      blockType: blockType,
+      text: text,
+      textStyleBuilder: textStyleBuilder,
+      textDirection: textDirection,
+      textAlignment: textAlignment,
+      selection: selection,
+      selectionColor: selectionColor,
+      caret: caret,
+      caretColor: caretColor,
+      highlightWhenEmpty: highlightWhenEmpty,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      super == other &&
+          other is ParagraphComponentViewModel &&
+          runtimeType == other.runtimeType &&
+          nodeId == other.nodeId &&
+          blockType == other.blockType &&
+          text == other.text &&
+          textStyleBuilder == other.textStyleBuilder &&
+          textDirection == other.textDirection &&
+          textAlignment == other.textAlignment &&
+          selection == other.selection &&
+          selectionColor == other.selectionColor &&
+          caret == other.caret &&
+          caretColor == other.caretColor &&
+          highlightWhenEmpty == other.highlightWhenEmpty;
+
+  @override
+  int get hashCode =>
+      super.hashCode ^
+      nodeId.hashCode ^
+      blockType.hashCode ^
+      text.hashCode ^
+      textStyleBuilder.hashCode ^
+      textDirection.hashCode ^
+      textAlignment.hashCode ^
+      selection.hashCode ^
+      selectionColor.hashCode ^
+      caret.hashCode ^
+      caretColor.hashCode ^
+      highlightWhenEmpty.hashCode;
 }
 
 /// Combines two consecutive `ParagraphNode`s, indicated by `firstNodeId`

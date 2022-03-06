@@ -4,6 +4,7 @@ import 'package:super_editor/src/infrastructure/attributed_spans.dart';
 
 import '../core/document.dart';
 import 'box_component.dart';
+import 'layout_single_column/layout_single_column.dart';
 
 /// [DocumentNode] that represents an image at a URL.
 class ImageNode extends BlockNode with ChangeNotifier {
@@ -65,6 +66,97 @@ class ImageNode extends BlockNode with ChangeNotifier {
 
   @override
   int get hashCode => id.hashCode ^ _imageUrl.hashCode ^ _altText.hashCode;
+}
+
+class ImageComponentBuilder implements ComponentBuilder {
+  const ImageComponentBuilder();
+
+  @override
+  SingleColumnLayoutComponentViewModel? createViewModel(Document document, DocumentNode node) {
+    if (node is! ImageNode) {
+      return null;
+    }
+
+    return ImageComponentViewModel(
+      nodeId: node.id,
+      imageUrl: node.imageUrl,
+      selectionColor: const Color(0x00000000),
+      caretColor: const Color(0x00000000),
+    );
+  }
+
+  @override
+  Widget? createComponent(
+      SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel componentViewModel) {
+    if (componentViewModel is! ImageComponentViewModel) {
+      return null;
+    }
+
+    return ImageComponent(
+      componentKey: componentContext.componentKey,
+      imageUrl: componentViewModel.imageUrl,
+      selection: componentViewModel.selection,
+      selectionColor: componentViewModel.selectionColor,
+      showCaret: componentViewModel.caret != null,
+      caretColor: componentViewModel.caretColor,
+    );
+  }
+}
+
+class ImageComponentViewModel extends SingleColumnLayoutComponentViewModel {
+  ImageComponentViewModel({
+    required String nodeId,
+    double? maxWidth,
+    EdgeInsetsGeometry padding = EdgeInsets.zero,
+    required this.imageUrl,
+    this.selection,
+    required this.selectionColor,
+    this.caret,
+    required this.caretColor,
+  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
+
+  String imageUrl;
+  UpstreamDownstreamNodeSelection? selection;
+  Color selectionColor;
+  UpstreamDownstreamNodePosition? caret;
+  Color caretColor;
+
+  @override
+  ImageComponentViewModel copy() {
+    return ImageComponentViewModel(
+      nodeId: nodeId,
+      maxWidth: maxWidth,
+      padding: padding,
+      imageUrl: imageUrl,
+      selection: selection,
+      selectionColor: selectionColor,
+      caret: caret,
+      caretColor: caretColor,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      super == other &&
+          other is ImageComponentViewModel &&
+          runtimeType == other.runtimeType &&
+          nodeId == other.nodeId &&
+          imageUrl == other.imageUrl &&
+          selection == other.selection &&
+          selectionColor == other.selectionColor &&
+          caret == other.caret &&
+          caretColor == other.caretColor;
+
+  @override
+  int get hashCode =>
+      super.hashCode ^
+      nodeId.hashCode ^
+      imageUrl.hashCode ^
+      selection.hashCode ^
+      selectionColor.hashCode ^
+      caret.hashCode ^
+      caretColor.hashCode;
 }
 
 /// Displays an image in a document.

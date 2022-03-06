@@ -8,6 +8,7 @@ import 'package:super_editor/src/infrastructure/attributed_text.dart';
 import '../core/document.dart';
 import '../core/document_editor.dart';
 import 'document_input_keyboard.dart';
+import 'layout_single_column/layout_single_column.dart';
 import 'paragraph.dart';
 import 'text.dart';
 
@@ -90,6 +91,174 @@ class ListItemNode extends TextNode {
 enum ListItemType {
   ordered,
   unordered,
+}
+
+class ListItemComponentBuilder implements ComponentBuilder {
+  const ListItemComponentBuilder();
+
+  @override
+  SingleColumnLayoutComponentViewModel? createViewModel(Document document, DocumentNode node) {
+    if (node is! ListItemNode) {
+      return null;
+    }
+
+    int? ordinalValue;
+    if (node.type == ListItemType.ordered) {
+      ordinalValue = 1;
+      DocumentNode? nodeAbove = document.getNodeBefore(node);
+      while (nodeAbove != null &&
+          nodeAbove is ListItemNode &&
+          nodeAbove.type == ListItemType.ordered &&
+          nodeAbove.indent >= node.indent) {
+        if (nodeAbove.indent == node.indent) {
+          ordinalValue = ordinalValue! + 1;
+        }
+        nodeAbove = document.getNodeBefore(nodeAbove);
+      }
+    }
+
+    return ListItemComponentViewModel(
+      nodeId: node.id,
+      type: node.type,
+      indent: node.indent,
+      ordinalValue: ordinalValue,
+      text: node.text,
+      textStyleBuilder: noStyleBuilder,
+      selectionColor: const Color(0x00000000),
+      caretColor: const Color(0x00000000),
+    );
+  }
+
+  @override
+  Widget? createComponent(
+      SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel componentViewModel) {
+    if (componentViewModel is! ListItemComponentViewModel) {
+      return null;
+    }
+
+    if (componentViewModel.type == ListItemType.unordered) {
+      return UnorderedListItemComponent(
+        textKey: componentContext.componentKey,
+        text: componentViewModel.text,
+        styleBuilder: componentViewModel.textStyleBuilder,
+        indent: componentViewModel.indent,
+        textSelection: componentViewModel.selection,
+        selectionColor: componentViewModel.selectionColor,
+        showCaret: componentViewModel.caret != null,
+        caretColor: componentViewModel.caretColor,
+      );
+    } else if (componentViewModel.type == ListItemType.ordered) {
+      return OrderedListItemComponent(
+        textKey: componentContext.componentKey,
+        indent: componentViewModel.indent,
+        listIndex: componentViewModel.ordinalValue!,
+        text: componentViewModel.text,
+        styleBuilder: componentViewModel.textStyleBuilder,
+        textSelection: componentViewModel.selection,
+        selectionColor: componentViewModel.selectionColor,
+        showCaret: componentViewModel.caret != null,
+        caretColor: componentViewModel.caretColor,
+      );
+    }
+
+    editorLayoutLog
+        .warning("Tried to build a component for a list item view model without a list item type: $componentViewModel");
+    return null;
+  }
+}
+
+class ListItemComponentViewModel extends SingleColumnLayoutComponentViewModel with TextComponentViewModel {
+  ListItemComponentViewModel({
+    required String nodeId,
+    double? maxWidth,
+    EdgeInsetsGeometry padding = EdgeInsets.zero,
+    required this.type,
+    this.ordinalValue,
+    required this.indent,
+    required this.text,
+    required this.textStyleBuilder,
+    this.textDirection = TextDirection.ltr,
+    this.textAlignment = TextAlign.left,
+    this.selection,
+    required this.selectionColor,
+    this.caret,
+    required this.caretColor,
+    this.highlightWhenEmpty = false,
+  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
+
+  ListItemType type;
+  int? ordinalValue;
+  int indent;
+  AttributedText text;
+
+  @override
+  AttributionStyleBuilder textStyleBuilder;
+  @override
+  TextDirection textDirection;
+  @override
+  TextAlign textAlignment;
+  @override
+  TextSelection? selection;
+  @override
+  Color selectionColor;
+  @override
+  TextPosition? caret;
+  @override
+  Color caretColor;
+  @override
+  bool highlightWhenEmpty;
+
+  @override
+  ListItemComponentViewModel copy() {
+    return ListItemComponentViewModel(
+      nodeId: nodeId,
+      maxWidth: maxWidth,
+      padding: padding,
+      type: type,
+      ordinalValue: ordinalValue,
+      indent: indent,
+      text: text,
+      textStyleBuilder: textStyleBuilder,
+      textDirection: textDirection,
+      selection: selection,
+      selectionColor: selectionColor,
+      caret: caret,
+      caretColor: caretColor,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      super == other &&
+          other is ListItemComponentViewModel &&
+          runtimeType == other.runtimeType &&
+          nodeId == other.nodeId &&
+          type == other.type &&
+          ordinalValue == other.ordinalValue &&
+          indent == other.indent &&
+          text == other.text &&
+          textStyleBuilder == other.textStyleBuilder &&
+          textDirection == other.textDirection &&
+          selection == other.selection &&
+          selectionColor == other.selectionColor &&
+          caret == other.caret &&
+          caretColor == other.caretColor;
+
+  @override
+  int get hashCode =>
+      super.hashCode ^
+      nodeId.hashCode ^
+      type.hashCode ^
+      ordinalValue.hashCode ^
+      indent.hashCode ^
+      text.hashCode ^
+      textStyleBuilder.hashCode ^
+      textDirection.hashCode ^
+      selection.hashCode ^
+      selectionColor.hashCode ^
+      caret.hashCode ^
+      caretColor.hashCode;
 }
 
 /// Displays a un-ordered list item in a document.

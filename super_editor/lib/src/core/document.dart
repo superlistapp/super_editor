@@ -237,6 +237,10 @@ abstract class DocumentNode implements ChangeNotifier {
   /// node, and contains the same content.
   ///
   /// Content equivalency ignores the node ID.
+  ///
+  /// Content equivalency is used to determine if two documents are
+  /// equivalent. Corresponding nodes in each document are compared
+  /// with this method.
   bool hasEquivalentContent(DocumentNode other) {
     return const DeepCollectionEquality().equals(_metadata, other._metadata);
   }
@@ -284,10 +288,17 @@ abstract class DocumentNode implements ChangeNotifier {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is DocumentNode && runtimeType == other.runtimeType && _metadata == other._metadata;
+      other is DocumentNode &&
+          runtimeType == other.runtimeType &&
+          const DeepCollectionEquality().equals(_metadata, other._metadata);
 
+  // We return an arbitrary number for the hashCode because the only
+  // data we have is metadata, and different instances of metadata can
+  // be equivalent. If we returned `_metadata.hashCode`, then two
+  // `DocumentNode`s with equivalent metadata would say that they're
+  // unequal, because the hashCodes would be different.
   @override
-  int get hashCode => _metadata.hashCode;
+  int get hashCode => 1;
 }
 
 extension InspectNodeAffinity on DocumentNode {

@@ -3,41 +3,17 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
+import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/styles.dart';
+import 'package:super_editor/src/default_editor/blockquote.dart';
 import 'package:super_editor/src/default_editor/horizontal_rule.dart';
 import 'package:super_editor/src/default_editor/image.dart';
-import 'package:super_editor/src/default_editor/list_items.dart';
-import 'package:super_editor/src/default_editor/paragraph.dart';
 import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
 import 'package:super_editor/src/default_editor/text.dart';
-import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_spans.dart';
 import 'package:super_editor/src/infrastructure/attributed_text.dart';
-
-import '../attributions.dart';
-import '_blockquote.dart';
-import '_horizontal_rule.dart';
-import '_image.dart';
-import '_list_items.dart';
-import '_paragraph.dart';
-
-/// Builds a widget that renders the desired UI for one or
-/// more [DocumentNode]s.
-///
-/// Every widget returned from a [SingleColumnDocumentComponentBuilder]
-/// should be a [StatefulWidget] that mixes in [DocumentComponent].
-///
-/// A [SingleColumnDocumentComponentBuilder] might be invoked with a
-/// type of [ComponentViewModel] that it doesn't know how to work with.
-/// When this happens, the [SingleColumnDocumentComponentBuilder] should
-/// return `null`, indicating that it doesn't know how to build a component
-/// for the given [ComponentViewModel].
-typedef SingleColumnDocumentComponentBuilder = Widget? Function(
-  SingleColumnDocumentComponentContext,
-  SingleColumnLayoutComponentViewModel,
-);
 
 /// Information that is provided to a [ComponentBuilder] to
 /// construct an appropriate [DocumentComponent] widget.
@@ -81,15 +57,10 @@ class SingleColumnDocumentComponentContext {
 class SingleColumnLayoutPresenter {
   SingleColumnLayoutPresenter({
     required Document document,
-    List<ComponentViewModelBuilder> componentViewModelBuilders = const [
-      TextBlockViewModelBuilder(),
-      ListItemViewModelBuilder(),
-      ImageViewModelBuilder(),
-      HorizontalRuleViewModelBuilder(),
-    ],
+    required List<ComponentBuilder> componentBuilders,
     required List<SingleColumnLayoutStylePhase> pipeline,
   })  : _document = document,
-        _componentViewModelBuilders = componentViewModelBuilders,
+        _componentBuilders = componentBuilders,
         _pipeline = pipeline {
     _assemblePipeline();
     _viewModel = _createNewViewModel();
@@ -103,7 +74,7 @@ class SingleColumnLayoutPresenter {
   }
 
   final Document _document;
-  final List<ComponentViewModelBuilder> _componentViewModelBuilders;
+  final List<ComponentBuilder> _componentBuilders;
   final List<SingleColumnLayoutStylePhase> _pipeline;
   final List<SingleColumnLayoutViewModel?> _phaseViewModels = [];
   int _earliestDirtyPhase = 0;
@@ -204,8 +175,8 @@ class SingleColumnLayoutPresenter {
       final components = <SingleColumnLayoutComponentViewModel>[];
       for (int i = 0; i < _document.nodes.length; i += 1) {
         SingleColumnLayoutComponentViewModel? component;
-        for (final builder in _componentViewModelBuilders) {
-          component = builder.build(_document, _document.nodes[i]);
+        for (final builder in _componentBuilders) {
+          component = builder.createViewModel(_document, _document.nodes[i]);
           if (component != null) {
             break;
           }
@@ -307,6 +278,7 @@ class SingleColumnLayoutPresenter {
 
     if (addedComponents.isEmpty && changedComponents.isEmpty && removedComponents.isEmpty) {
       // No changes to report.
+      editorLayoutLog.fine("Nothing has changed in the view model. Not notifying any listeners.");
       return;
     }
 
@@ -357,139 +329,27 @@ typedef _ViewModelChangeCallback = void Function({
   required List<String> removedComponents,
 });
 
-/// Creates [SingleColumnLayoutComponentViewModel]s for given [DocumentNodes].
-abstract class ComponentViewModelBuilder {
+/// Creates view models and components to display various [DocumentNode]s
+/// in a [Document].
+abstract class ComponentBuilder {
   /// Produces a [SingleColumnLayoutComponentViewModel] with default styles for the given
   /// [node], or returns `null` if this builder doesn't apply to the given node.
-  SingleColumnLayoutComponentViewModel? build(Document document, DocumentNode node);
-}
+  SingleColumnLayoutComponentViewModel? createViewModel(Document document, DocumentNode node);
 
-class TextBlockViewModelBuilder implements ComponentViewModelBuilder {
-  const TextBlockViewModelBuilder();
-
-  @override
-  SingleColumnLayoutComponentViewModel? build(Document document, DocumentNode node) {
-    if (node is! ParagraphNode) {
-      return null;
-    }
-
-    final textDirection = getParagraphDirection(node.text.text);
-
-    TextAlign textAlign = (textDirection == TextDirection.ltr) ? TextAlign.left : TextAlign.right;
-    final textAlignName = node.getMetadataValue('textAlign');
-    switch (textAlignName) {
-      case 'left':
-        textAlign = TextAlign.left;
-        break;
-      case 'center':
-        textAlign = TextAlign.center;
-        break;
-      case 'right':
-        textAlign = TextAlign.right;
-        break;
-      case 'justify':
-        textAlign = TextAlign.justify;
-        break;
-    }
-
-    final isBlockquote = node.getMetadataValue('blockType') == blockquoteAttribution;
-    if (isBlockquote) {
-      return BlockquoteComponentViewModel(
-        nodeId: node.id,
-        text: node.text,
-        textStyleBuilder: noStyleBuilder,
-        backgroundColor: const Color(0x00000000),
-        borderRadius: BorderRadius.zero,
-        textDirection: textDirection,
-        textAlignment: textAlign,
-        selectionColor: const Color(0x00000000),
-        caretColor: const Color(0x00000000),
-      );
-    }
-
-    return ParagraphComponentViewModel(
-      nodeId: node.id,
-      blockType: node.getMetadataValue('blockType'),
-      text: node.text,
-      textStyleBuilder: noStyleBuilder,
-      textDirection: textDirection,
-      textAlignment: textAlign,
-      selectionColor: const Color(0x00000000),
-      caretColor: const Color(0x00000000),
-    );
-  }
-}
-
-class ListItemViewModelBuilder implements ComponentViewModelBuilder {
-  const ListItemViewModelBuilder();
-
-  @override
-  SingleColumnLayoutComponentViewModel? build(Document document, DocumentNode node) {
-    if (node is! ListItemNode) {
-      return null;
-    }
-
-    int? ordinalValue;
-    if (node.type == ListItemType.ordered) {
-      ordinalValue = 1;
-      DocumentNode? nodeAbove = document.getNodeBefore(node);
-      while (nodeAbove != null &&
-          nodeAbove is ListItemNode &&
-          nodeAbove.type == ListItemType.ordered &&
-          nodeAbove.indent >= node.indent) {
-        if (nodeAbove.indent == node.indent) {
-          ordinalValue = ordinalValue! + 1;
-        }
-        nodeAbove = document.getNodeBefore(nodeAbove);
-      }
-    }
-
-    return ListItemComponentViewModel(
-      nodeId: node.id,
-      type: node.type,
-      indent: node.indent,
-      ordinalValue: ordinalValue,
-      text: node.text,
-      textStyleBuilder: noStyleBuilder,
-      selectionColor: const Color(0x00000000),
-      caretColor: const Color(0x00000000),
-    );
-  }
-}
-
-class ImageViewModelBuilder implements ComponentViewModelBuilder {
-  const ImageViewModelBuilder();
-
-  @override
-  SingleColumnLayoutComponentViewModel? build(Document document, DocumentNode node) {
-    if (node is! ImageNode) {
-      return null;
-    }
-
-    return ImageComponentViewModel(
-      nodeId: node.id,
-      imageUrl: node.imageUrl,
-      selectionColor: const Color(0x00000000),
-      caretColor: const Color(0x00000000),
-    );
-  }
-}
-
-class HorizontalRuleViewModelBuilder implements ComponentViewModelBuilder {
-  const HorizontalRuleViewModelBuilder();
-
-  @override
-  SingleColumnLayoutComponentViewModel? build(Document document, DocumentNode node) {
-    if (node is! HorizontalRuleNode) {
-      return null;
-    }
-
-    return HorizontalRuleComponentViewModel(
-      nodeId: node.id,
-      selectionColor: const Color(0x00000000),
-      caretColor: const Color(0x00000000),
-    );
-  }
+  /// Creates a visual component that renders the given [viewModel],
+  /// or returns `null` if this builder doesn't apply to the given [viewModel].
+  ///
+  /// Returned widgets should be [StatefulWidget]s that mix in [DocumentComponent].
+  ///
+  /// This method might be invoked with a type of [viewModel] that it
+  /// doesn't know how to work with. When this happens, the method should
+  /// return `null`, indicating that it doesn't know how to build a component
+  /// for the given [viewModel].
+  ///
+  /// See [ComponentContext] for expectations about how to use the context
+  /// to build a component widget.
+  Widget? createComponent(
+      SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel componentViewModel);
 }
 
 /// A single phase of style rules, which are applied in a pipeline to
@@ -547,13 +407,20 @@ class SingleColumnStylesheetStyler extends SingleColumnLayoutStylePhase {
       padding: _stylesheet.documentPadding ?? viewModel.padding,
       componentViewModels: [
         for (final componentViewModel in viewModel.componentViewModels)
-          _styleComponent(document, document.getNodeById(componentViewModel.nodeId)!, componentViewModel),
+          _styleComponent(
+            document,
+            document.getNodeById(componentViewModel.nodeId)!,
+            componentViewModel.copy(),
+          ),
       ],
     );
   }
 
   SingleColumnLayoutComponentViewModel _styleComponent(
-      Document document, DocumentNode node, SingleColumnLayoutComponentViewModel viewModel) {
+    Document document,
+    DocumentNode node,
+    SingleColumnLayoutComponentViewModel viewModel,
+  ) {
     // Combine all applicable style rules into a single set of styles
     // for this component.
     final aggregateStyles = <String, dynamic>{};
@@ -566,53 +433,23 @@ class SingleColumnStylesheetStyler extends SingleColumnLayoutStylePhase {
       }
     }
 
+    viewModel
+      ..maxWidth = aggregateStyles["maxWidth"] ?? double.infinity
+      ..padding = (aggregateStyles["padding"] as CascadingPadding?)?.toEdgeInsets() ?? EdgeInsets.zero;
+
     // Apply the aggregate styles to this component.
-    if (viewModel is ParagraphComponentViewModel) {
-      return viewModel.copyWith(
-        maxWidth: aggregateStyles["maxWidth"] ?? double.infinity,
-        padding: (aggregateStyles["padding"] as CascadingPadding?)?.toEdgeInsets() ?? EdgeInsets.zero,
-        textStyleBuilder: (attributions) {
-          final baseStyle = aggregateStyles["textStyle"] ?? noStyleBuilder({});
-          return _stylesheet.inlineTextStyler(attributions, baseStyle);
-        },
-      );
+    if (viewModel is TextComponentViewModel) {
+      viewModel.textStyleBuilder = (attributions) {
+        final baseStyle = aggregateStyles["textStyle"] ?? noStyleBuilder({});
+        return _stylesheet.inlineTextStyler(attributions, baseStyle);
+      };
     }
     if (viewModel is BlockquoteComponentViewModel) {
-      return viewModel.copyWith(
-        maxWidth: aggregateStyles["maxWidth"] ?? double.infinity,
-        padding: (aggregateStyles["padding"] as CascadingPadding?)?.toEdgeInsets() ?? EdgeInsets.zero,
-        textStyleBuilder: (attributions) {
-          final baseStyle = aggregateStyles["textStyle"] ?? noStyleBuilder({});
-          return _stylesheet.inlineTextStyler(attributions, baseStyle);
-        },
-        backgroundColor: aggregateStyles["backgroundColor"] ?? Colors.transparent,
-        borderRadius: aggregateStyles["borderRadius"] ?? BorderRadius.zero,
-      );
-    }
-    if (viewModel is ListItemComponentViewModel) {
-      return viewModel.copyWith(
-        maxWidth: aggregateStyles["maxWidth"] ?? double.infinity,
-        padding: (aggregateStyles["padding"] as CascadingPadding?)?.toEdgeInsets() ?? EdgeInsets.zero,
-        textStyleBuilder: (attributions) {
-          final baseStyle = aggregateStyles["textStyle"] ?? noStyleBuilder({});
-          return _stylesheet.inlineTextStyler(attributions, baseStyle);
-        },
-      );
-    }
-    if (viewModel is ImageComponentViewModel) {
-      return viewModel.copyWith(
-        maxWidth: aggregateStyles["maxWidth"] ?? double.infinity,
-        padding: (aggregateStyles["padding"] as CascadingPadding?)?.toEdgeInsets() ?? EdgeInsets.zero,
-      );
-    }
-    if (viewModel is HorizontalRuleComponentViewModel) {
-      return viewModel.copyWith(
-        maxWidth: aggregateStyles["maxWidth"] ?? double.infinity,
-        padding: (aggregateStyles["padding"] as CascadingPadding?)?.toEdgeInsets() ?? EdgeInsets.zero,
-      );
+      viewModel
+        ..backgroundColor = aggregateStyles["backgroundColor"] ?? Colors.transparent
+        ..borderRadius = aggregateStyles["borderRadius"] ?? BorderRadius.zero;
     }
 
-    editorLayoutLog.warning("Tried to apply spacing to unknown layout component view model: $viewModel");
     return viewModel;
   }
 
@@ -661,7 +498,7 @@ class SingleColumnLayoutCustomComponentStyler extends SingleColumnLayoutStylePha
         for (final previousViewModel in viewModel.componentViewModels)
           _applyLayoutStyles(
             document.getNodeById(previousViewModel.nodeId)!,
-            previousViewModel,
+            previousViewModel.copy(),
           ),
       ],
     );
@@ -672,39 +509,10 @@ class SingleColumnLayoutCustomComponentStyler extends SingleColumnLayoutStylePha
     SingleColumnLayoutComponentViewModel viewModel,
   ) {
     final componentStyles = SingleColumnLayoutComponentStyles.fromMetadata(node);
-    final componentWidth = componentStyles.width ?? viewModel.maxWidth;
-    final componentPadding = componentStyles.padding ?? viewModel.padding;
 
-    if (viewModel is ParagraphComponentViewModel) {
-      return viewModel.copyWith(
-        maxWidth: componentWidth,
-        padding: componentPadding,
-      );
-    }
-    if (viewModel is BlockquoteComponentViewModel) {
-      return viewModel.copyWith(
-        maxWidth: componentWidth,
-        padding: componentPadding,
-      );
-    }
-    if (viewModel is ListItemComponentViewModel) {
-      return viewModel.copyWith(
-        maxWidth: componentWidth,
-        padding: componentPadding,
-      );
-    }
-    if (viewModel is ImageComponentViewModel) {
-      return viewModel.copyWith(
-        maxWidth: componentWidth,
-        padding: componentPadding,
-      );
-    }
-    if (viewModel is HorizontalRuleComponentViewModel) {
-      return viewModel.copyWith(
-        maxWidth: componentWidth,
-        padding: componentPadding,
-      );
-    }
+    viewModel
+      ..maxWidth = componentStyles.width ?? viewModel.maxWidth
+      ..padding = componentStyles.padding ?? viewModel.padding;
 
     editorLayoutLog
         .warning("Tried to apply custom component styles to unknown layout component view model: $viewModel");
@@ -811,7 +619,7 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
       padding: viewModel.padding,
       componentViewModels: [
         for (final previousViewModel in viewModel.componentViewModels) //
-          _applySelection(previousViewModel),
+          _applySelection(previousViewModel.copy()),
       ],
     );
   }
@@ -865,61 +673,34 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
       editorLayoutLog.finer('   - base: ${textSelection?.base}');
       editorLayoutLog.finer('   - extent: ${textSelection?.extent}');
 
-      if (viewModel is ParagraphComponentViewModel) {
-        final newViewModel = viewModel.copyWith(
-          selection: textSelection,
-          selectionColor: _selectionStyles.selectionColor,
-          caret: showCaret ? textSelection?.extent : null,
-          caretColor: _selectionStyles.caretColor,
-          highlightWhenEmpty: highlightWhenEmpty,
-        );
-
-        if (textSelection != null) {
-          editorLayoutLog.fine("View model with selection: ${newViewModel.hashCode}");
-        }
-
-        return newViewModel;
-      }
-      if (viewModel is BlockquoteComponentViewModel) {
-        return viewModel.copyWith(
-          selection: textSelection,
-          selectionColor: _selectionStyles.selectionColor,
-          caret: showCaret ? textSelection?.extent : null,
-          caretColor: _selectionStyles.caretColor,
-          highlightWhenEmpty: highlightWhenEmpty,
-        );
-      }
-      if (viewModel is ListItemComponentViewModel) {
-        return viewModel.copyWith(
-          selection: textSelection,
-          selectionColor: _selectionStyles.selectionColor,
-          caret: showCaret ? textSelection?.extent : null,
-          caretColor: _selectionStyles.caretColor,
-        );
+      if (viewModel is TextComponentViewModel) {
+        viewModel
+          ..selection = textSelection
+          ..selectionColor = _selectionStyles.selectionColor
+          ..caret = showCaret ? textSelection?.extent : null
+          ..caretColor = _selectionStyles.caretColor
+          ..highlightWhenEmpty = highlightWhenEmpty;
       }
     }
     if (viewModel is ImageComponentViewModel) {
       final selection = nodeSelection == null ? null : nodeSelection.nodeSelection as UpstreamDownstreamNodeSelection;
 
-      return viewModel.copyWith(
-        selection: selection,
-        selectionColor: _selectionStyles.selectionColor,
-        caret: _shouldDocumentShowCaret && selection != null && selection.isCollapsed ? selection.extent : null,
-        caretColor: _selectionStyles.caretColor,
-      );
+      viewModel
+        ..selection = selection
+        ..selectionColor = _selectionStyles.selectionColor
+        ..caret = _shouldDocumentShowCaret && selection != null && selection.isCollapsed ? selection.extent : null
+        ..caretColor = _selectionStyles.caretColor;
     }
     if (viewModel is HorizontalRuleComponentViewModel) {
       final selection = nodeSelection == null ? null : nodeSelection.nodeSelection as UpstreamDownstreamNodeSelection;
 
-      return viewModel.copyWith(
-        selection: selection,
-        selectionColor: _selectionStyles.selectionColor,
-        caret: _shouldDocumentShowCaret && selection != null && selection.isCollapsed ? selection.extent : null,
-        caretColor: _selectionStyles.selectionColor,
-      );
+      viewModel
+        ..selection = selection
+        ..selectionColor = _selectionStyles.selectionColor
+        ..caret = _shouldDocumentShowCaret && selection != null && selection.isCollapsed ? selection.extent : null
+        ..caretColor = _selectionStyles.selectionColor;
     }
 
-    // We don't know what kind of component this is. Return it, unmodified.
     return viewModel;
   }
 
@@ -1057,7 +838,7 @@ class SingleColumnLayoutViewModel {
 /// Base class for a component view model that appears within a
 /// [SingleColumnDocumentLayout].
 abstract class SingleColumnLayoutComponentViewModel {
-  const SingleColumnLayoutComponentViewModel({
+  SingleColumnLayoutComponentViewModel({
     required this.nodeId,
     this.maxWidth,
     required this.padding,
@@ -1067,10 +848,12 @@ abstract class SingleColumnLayoutComponentViewModel {
 
   /// The maximum width of this component in the layout, or `null` to
   /// defer to the layout's preference.
-  final double? maxWidth;
+  double? maxWidth;
 
   /// The padding applied around this component.
-  final EdgeInsetsGeometry padding;
+  EdgeInsetsGeometry padding;
+
+  SingleColumnLayoutComponentViewModel copy();
 
   @override
   bool operator ==(Object other) =>
@@ -1083,4 +866,30 @@ abstract class SingleColumnLayoutComponentViewModel {
 
   @override
   int get hashCode => nodeId.hashCode ^ maxWidth.hashCode ^ padding.hashCode;
+}
+
+mixin TextComponentViewModel on SingleColumnLayoutComponentViewModel {
+  AttributionStyleBuilder get textStyleBuilder;
+  set textStyleBuilder(AttributionStyleBuilder styleBuilder);
+
+  TextDirection get textDirection;
+  set textDirection(TextDirection direction);
+
+  TextAlign get textAlignment;
+  set textAlignment(TextAlign alignment);
+
+  TextSelection? get selection;
+  set selection(TextSelection? selection);
+
+  Color get selectionColor;
+  set selectionColor(Color color);
+
+  TextPosition? get caret;
+  set caret(TextPosition? position);
+
+  Color get caretColor;
+  set caretColor(Color color);
+
+  bool get highlightWhenEmpty;
+  set highlightWhenEmpty(bool highlight);
 }

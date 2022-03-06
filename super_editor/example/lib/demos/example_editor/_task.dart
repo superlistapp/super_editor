@@ -2,10 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:super_editor/super_editor.dart';
 
 /// This file includes everything needed to add the concept of a task
-/// to Super Editor. This includes a new type of [DocumentNode] that
-/// represents a task, a new visual component to render the task in the
-/// document, ...
-/// TODO: complete the documentation
+/// to Super Editor. This includes:
+///
+///  * [TaskNode], which represents a logical task.
+///  * [TaskComponentViewModel], which configures the visual appearance
+///    of a task in a document.
+///  * [taskStyles], which applies desired styles to tasks in a document.
+///  * [TaskComponentBuilder], which creates new [TaskComponentViewModel]s
+///    and [TaskComponent]s, for every [TaskNode] in the document.
+///  * [TaskComponent], which renders a task in a document.
 
 /// [DocumentNode] that represents a task to complete.
 ///
@@ -18,9 +23,12 @@ class TaskNode extends TextNode {
     required bool isComplete,
   })  : _isComplete = isComplete,
         super(id: id, text: text, metadata: metadata) {
+    // Set a block type so that TaskNode's can be styled by
+    // StyleRule's.
     putMetadataValue("blockType", const NamedAttribution("task"));
   }
 
+  /// Whether this task is complete.
   bool get isComplete => _isComplete;
   bool _isComplete;
   set isComplete(bool newValue) {
@@ -46,25 +54,29 @@ class TaskNode extends TextNode {
   int get hashCode => super.hashCode ^ isComplete.hashCode;
 }
 
-Widget? taskComponentBuilder(
-  SingleColumnDocumentComponentContext componentContext,
-  SingleColumnLayoutComponentViewModel componentViewModel,
-) {
-  if (componentViewModel is! TaskComponentViewModel) {
-    return null;
-  }
+/// Styles all task components to apply top padding
+final taskStyles = StyleRule(
+  const BlockSelector("task"),
+  (document, node) {
+    if (node is! TaskNode) {
+      return {};
+    }
 
-  return TaskComponent(
-    textKey: componentContext.componentKey,
-    viewModel: componentViewModel,
-  );
-}
+    return {
+      "padding": const CascadingPadding.only(top: 24),
+    };
+  },
+);
 
-class TaskViewModelBuilder implements ComponentViewModelBuilder {
-  const TaskViewModelBuilder();
+/// Builds [TaskComponentViewModel]s and [TaskComponent]s for every
+/// [TaskNode] in a document.
+class TaskComponentBuilder implements ComponentBuilder {
+  TaskComponentBuilder(this._editor);
+
+  final DocumentEditor _editor;
 
   @override
-  SingleColumnLayoutComponentViewModel? build(Document document, DocumentNode node) {
+  TaskComponentViewModel? createViewModel(Document document, DocumentNode node) {
     if (node is! TaskNode) {
       return null;
     }
@@ -73,23 +85,53 @@ class TaskViewModelBuilder implements ComponentViewModelBuilder {
       nodeId: node.id,
       padding: EdgeInsets.zero,
       isComplete: node.isComplete,
+      setComplete: (bool isComplete) {
+        _editor.executeCommand(EditorCommandFunction((document, transaction) {
+          // Technically, this line could be called without the editor, but
+          // that's only because Super Editor hasn't fully separated document
+          // queries from document edits. In the future, all edits will have
+          // to go through a dedicated editing interface.
+          node.isComplete = isComplete;
+        }));
+      },
       text: node.text,
       textStyleBuilder: noStyleBuilder,
       selectionColor: const Color(0x00000000),
       caretColor: const Color(0x00000000),
     );
   }
+
+  @override
+  Widget? createComponent(
+      SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel componentViewModel) {
+    if (componentViewModel is! TaskComponentViewModel) {
+      return null;
+    }
+
+    return TaskComponent(
+      textKey: componentContext.componentKey,
+      viewModel: componentViewModel,
+    );
+  }
 }
 
-class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel {
+/// View model that configures the appearance of a [TaskComponent].
+///
+/// View models move through various style phases, which fill out
+/// various properties in the view model. For example, one phase applies
+/// all [StyleRule]s, and another phase configures content selection
+/// and caret appearance.
+class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with TextComponentViewModel {
   TaskComponentViewModel({
     required String nodeId,
     double? maxWidth,
     required EdgeInsetsGeometry padding,
     required this.isComplete,
+    required this.setComplete,
     required this.text,
     required this.textStyleBuilder,
     this.textDirection = TextDirection.ltr,
+    this.textAlignment = TextAlign.left,
     this.selection,
     required this.selectionColor,
     required this.caretColor,
@@ -97,47 +139,88 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel {
     this.highlightWhenEmpty = false,
   }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
 
-  final bool isComplete;
-  final AttributedText text;
-  final AttributionStyleBuilder textStyleBuilder;
-  final TextDirection textDirection;
-  final TextSelection? selection;
-  final Color selectionColor;
-  final TextPosition? caret;
-  final Color caretColor;
-  final bool highlightWhenEmpty;
+  bool isComplete;
+  void Function(bool) setComplete;
+  AttributedText text;
 
-  TaskComponentViewModel copyWith({
-    String? nodeId,
-    double? maxWidth,
-    EdgeInsetsGeometry? padding,
-    bool? isComplete,
-    AttributedText? text,
-    AttributionStyleBuilder? textStyleBuilder,
-    TextDirection? textDirection,
-    TextSelection? selection,
-    Color? selectionColor,
-    TextPosition? caret,
-    Color? caretColor,
-    bool? highlightWhenEmpty,
-  }) {
+  @override
+  AttributionStyleBuilder textStyleBuilder;
+  @override
+  TextDirection textDirection;
+  @override
+  TextAlign textAlignment;
+  @override
+  TextSelection? selection;
+  @override
+  Color selectionColor;
+  @override
+  TextPosition? caret;
+  @override
+  Color caretColor;
+  @override
+  bool highlightWhenEmpty;
+
+  @override
+  TaskComponentViewModel copy() {
     return TaskComponentViewModel(
-      nodeId: nodeId ?? this.nodeId,
-      maxWidth: maxWidth ?? this.maxWidth,
-      padding: padding ?? this.padding,
-      isComplete: isComplete ?? this.isComplete,
-      text: text ?? this.text,
-      textStyleBuilder: textStyleBuilder ?? this.textStyleBuilder,
-      textDirection: textDirection ?? this.textDirection,
-      selection: selection ?? this.selection,
-      selectionColor: selectionColor ?? this.selectionColor,
-      caret: caret ?? this.caret,
-      caretColor: caretColor ?? this.caretColor,
-      highlightWhenEmpty: highlightWhenEmpty ?? this.highlightWhenEmpty,
+      nodeId: nodeId,
+      maxWidth: maxWidth,
+      padding: padding,
+      isComplete: isComplete,
+      setComplete: setComplete,
+      text: text,
+      textStyleBuilder: textStyleBuilder,
+      textDirection: textDirection,
+      selection: selection,
+      selectionColor: selectionColor,
+      caret: caret,
+      caretColor: caretColor,
+      highlightWhenEmpty: highlightWhenEmpty,
     );
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      super == other &&
+          other is TaskComponentViewModel &&
+          runtimeType == other.runtimeType &&
+          isComplete == other.isComplete &&
+          setComplete == other.setComplete &&
+          text == other.text &&
+          textStyleBuilder == other.textStyleBuilder &&
+          textDirection == other.textDirection &&
+          textAlignment == other.textAlignment &&
+          selection == other.selection &&
+          selectionColor == other.selectionColor &&
+          caret == other.caret &&
+          caretColor == other.caretColor &&
+          highlightWhenEmpty == other.highlightWhenEmpty;
+
+  @override
+  int get hashCode =>
+      super.hashCode ^
+      isComplete.hashCode ^
+      setComplete.hashCode ^
+      text.hashCode ^
+      textStyleBuilder.hashCode ^
+      textDirection.hashCode ^
+      textAlignment.hashCode ^
+      selection.hashCode ^
+      selectionColor.hashCode ^
+      caret.hashCode ^
+      caretColor.hashCode ^
+      highlightWhenEmpty.hashCode;
 }
 
+/// A document component that displays a complete-able task.
+///
+/// This is the widget that appears in the document layout for
+/// an individual task. This widget includes a checkbox that the
+/// user can tap to toggle the completeness of the task.
+///
+/// The appearance of a [TaskComponent] is configured by the given
+/// [viewModel].
 class TaskComponent extends StatelessWidget {
   const TaskComponent({
     Key? key,
@@ -152,36 +235,38 @@ class TaskComponent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textStyle = viewModel.textStyleBuilder({});
-    final lineHeight = textStyle.fontSize! * (textStyle.height ?? 1.25);
-
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
+        Padding(
           padding: const EdgeInsets.only(left: 16, right: 4),
-          decoration: BoxDecoration(
-            border: showDebugPaint ? Border.all(width: 1, color: Colors.grey) : null,
-          ),
-          child: SizedBox(
-            height: lineHeight,
-            child: Checkbox(
-              value: false,
-              onChanged: (newValue) {
-                // TODO:
-              },
-            ),
+          child: Checkbox(
+            value: viewModel.isComplete,
+            onChanged: (newValue) {
+              viewModel.setComplete(newValue!);
+            },
           ),
         ),
         Expanded(
           child: TextComponent(
             key: textKey,
             text: viewModel.text,
-            textStyleBuilder: viewModel.textStyleBuilder,
+            textStyleBuilder: (attributions) {
+              // Show a strikethrough across the entire task if it's complete.
+              final style = viewModel.textStyleBuilder(attributions);
+              return viewModel.isComplete
+                  ? style.copyWith(
+                      decoration: style.decoration == null
+                          ? TextDecoration.lineThrough
+                          : TextDecoration.combine([TextDecoration.lineThrough, style.decoration!]),
+                    )
+                  : style;
+            },
             textSelection: viewModel.selection,
             selectionColor: viewModel.selectionColor,
             showCaret: viewModel.caret != null,
             caretColor: viewModel.caretColor,
+            highlightWhenEmpty: viewModel.highlightWhenEmpty,
             showDebugPaint: showDebugPaint,
           ),
         ),

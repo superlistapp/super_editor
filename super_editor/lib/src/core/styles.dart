@@ -22,11 +22,29 @@ class Stylesheet {
   /// `EdgeInsets.zero`, which means that you affirmatively want zero padding.
   final EdgeInsets? documentPadding;
 
+  /// Styles all in-line text in the document.
+  final AttributionStyleAdjuster inlineTextStyler;
+
   /// Priority-order list of style rules.
   final List<StyleRule> rules;
 
-  /// Styles all in-line text in the document.
-  final AttributionStyleAdjuster inlineTextStyler;
+  Stylesheet copyWith({
+    EdgeInsets? documentPadding,
+    AttributionStyleAdjuster? inlineTextStyler,
+    List<StyleRule> addRulesBefore = const [],
+    List<StyleRule>? rules,
+    List<StyleRule> addRulesAfter = const [],
+  }) {
+    return Stylesheet(
+      documentPadding: documentPadding ?? this.documentPadding,
+      inlineTextStyler: inlineTextStyler ?? this.inlineTextStyler,
+      rules: [
+        ...addRulesBefore,
+        ...(rules ?? this.rules),
+        ...addRulesAfter,
+      ],
+    );
+  }
 }
 
 /// Adjusts the given [existingStyle] based on the given [attributions].

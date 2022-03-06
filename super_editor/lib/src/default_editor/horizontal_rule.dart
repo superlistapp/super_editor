@@ -4,6 +4,7 @@ import 'package:super_editor/src/infrastructure/attributed_spans.dart';
 
 import '../core/document.dart';
 import 'box_component.dart';
+import 'layout_single_column/layout_single_column.dart';
 
 /// [DocumentNode] for a horizontal rule, which represents a full-width
 /// horizontal separation in a document.
@@ -37,6 +38,90 @@ class HorizontalRuleNode extends BlockNode with ChangeNotifier {
 
   @override
   int get hashCode => id.hashCode;
+}
+
+class HorizontalRuleComponentBuilder implements ComponentBuilder {
+  const HorizontalRuleComponentBuilder();
+
+  @override
+  SingleColumnLayoutComponentViewModel? createViewModel(Document document, DocumentNode node) {
+    if (node is! HorizontalRuleNode) {
+      return null;
+    }
+
+    return HorizontalRuleComponentViewModel(
+      nodeId: node.id,
+      selectionColor: const Color(0x00000000),
+      caretColor: const Color(0x00000000),
+    );
+  }
+
+  @override
+  Widget? createComponent(
+      SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel componentViewModel) {
+    if (componentViewModel is! HorizontalRuleComponentViewModel) {
+      return null;
+    }
+
+    return HorizontalRuleComponent(
+      componentKey: componentContext.componentKey,
+      selection: componentViewModel.selection,
+      selectionColor: componentViewModel.selectionColor,
+      showCaret: componentViewModel.caret != null,
+      caretColor: componentViewModel.caretColor,
+    );
+  }
+}
+
+class HorizontalRuleComponentViewModel extends SingleColumnLayoutComponentViewModel {
+  HorizontalRuleComponentViewModel({
+    required String nodeId,
+    double? maxWidth,
+    EdgeInsetsGeometry padding = EdgeInsets.zero,
+    this.selection,
+    required this.selectionColor,
+    this.caret,
+    required this.caretColor,
+  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
+
+  UpstreamDownstreamNodeSelection? selection;
+  Color selectionColor;
+  UpstreamDownstreamNodePosition? caret;
+  Color caretColor;
+
+  @override
+  HorizontalRuleComponentViewModel copy() {
+    return HorizontalRuleComponentViewModel(
+      nodeId: nodeId,
+      maxWidth: maxWidth,
+      padding: padding,
+      selection: selection,
+      selectionColor: selectionColor,
+      caret: caret,
+      caretColor: caretColor,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      super == other &&
+          other is HorizontalRuleComponentViewModel &&
+          runtimeType == other.runtimeType &&
+          nodeId == other.nodeId &&
+          selection == other.selection &&
+          selectionColor == other.selectionColor &&
+          caret == other.caret &&
+          caretColor == other.caretColor;
+
+  @override
+  int get hashCode =>
+      super.hashCode ^
+      nodeId.hashCode ^
+      selection.hashCode ^
+      selectionColor.hashCode ^
+      caret.hashCode ^
+      caretColor.hashCode;
 }
 
 /// Displays a horizontal rule in a document.

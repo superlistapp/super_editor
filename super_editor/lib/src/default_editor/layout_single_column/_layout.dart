@@ -42,7 +42,7 @@ class SingleColumnDocumentLayout extends StatefulWidget {
   /// appear in the displayed `document` should have a
   /// [SingleColumnDocumentComponentBuilder] that knows how to render
   /// that piece of content.
-  final List<SingleColumnDocumentComponentBuilder> componentBuilders;
+  final List<ComponentBuilder> componentBuilders;
 
   /// Adds a debugging UI to the document layout, when true.
   final bool showDebugPaint;
@@ -666,7 +666,7 @@ class _Component extends StatelessWidget {
   /// Every type of `DocumentNode` that might appear in the displayed
   /// `document` should have a `ComponentBuilder` that knows how to
   /// render that piece of content.
-  final List<SingleColumnDocumentComponentBuilder> componentBuilders;
+  final List<ComponentBuilder> componentBuilders;
 
   /// Global key that will be attached to the root of the component
   /// widget sub-tree.
@@ -685,7 +685,7 @@ class _Component extends StatelessWidget {
       componentKey: componentKey,
     );
     for (final componentBuilder in componentBuilders) {
-      var component = componentBuilder(componentContext, componentViewModel);
+      var component = componentBuilder.createComponent(componentContext, componentViewModel);
       if (component != null) {
         component = ConstrainedBox(
           constraints: BoxConstraints(maxWidth: componentViewModel.maxWidth ?? double.infinity),

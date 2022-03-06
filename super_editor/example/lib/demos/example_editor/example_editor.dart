@@ -298,10 +298,13 @@ class _ExampleEditorState extends State<ExampleEditor> {
       focusNode: _editorFocusNode,
       scrollController: _scrollController,
       documentLayoutKey: _docLayoutKey,
-      customViewModelBuilders: const [TaskViewModelBuilder()],
+      stylesheet: defaultStylesheet.copyWith(
+        addRulesAfter: [taskStyles],
+      ),
       componentBuilders: [
         ...defaultComponentBuilders,
-        taskComponentBuilder,
+        // TODO: Is this the best way to inject dependencies for components to take edit actions?
+        TaskComponentBuilder(_docEditor),
       ],
       gestureMode: _gestureMode,
       inputSource: _inputSource,

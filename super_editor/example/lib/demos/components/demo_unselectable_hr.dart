@@ -60,7 +60,7 @@ class _UnselectableHrDemoState extends State<UnselectableHrDemo> {
       // Add a new component builder that creates an unselectable
       // horizontal rule, instead of creating the usual selectable kind.
       componentBuilders: [
-        _unselectableHrBuilder,
+        const UnselectableHrComponentBuilder(),
         ...defaultComponentBuilders,
       ],
     );
@@ -69,15 +69,27 @@ class _UnselectableHrDemoState extends State<UnselectableHrDemo> {
 
 /// SuperEditor [ComponentBuilder] that builds a horizontal rule that is
 /// not selectable.
-Widget? _unselectableHrBuilder(
-    SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel componentMetadata) {
-  if (componentMetadata is! HorizontalRuleComponentViewModel) {
+class UnselectableHrComponentBuilder implements ComponentBuilder {
+  const UnselectableHrComponentBuilder();
+
+  @override
+  SingleColumnLayoutComponentViewModel? createViewModel(Document document, DocumentNode node) {
+    // This builder can work with the standard horizontal rule view model, so
+    // we'll defer to the standard horizontal rule builder.
     return null;
   }
 
-  return _UnselectableHorizontalRuleComponent(
-    componentKey: componentContext.componentKey,
-  );
+  @override
+  Widget? createComponent(
+      SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel componentViewModel) {
+    if (componentViewModel is! HorizontalRuleComponentViewModel) {
+      return null;
+    }
+
+    return _UnselectableHorizontalRuleComponent(
+      componentKey: componentContext.componentKey,
+    );
+  }
 }
 
 class _UnselectableHorizontalRuleComponent extends StatelessWidget {
