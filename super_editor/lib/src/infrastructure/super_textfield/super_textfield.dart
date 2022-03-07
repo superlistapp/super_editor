@@ -10,15 +10,15 @@ import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/h
 import 'package:super_editor/src/infrastructure/super_textfield/input_method_engine/_ime_text_editing_controller.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/ios/ios_textfield.dart';
 
-export 'desktop/desktop_textfield.dart';
+export '_test_tools.dart';
 export 'android/android_textfield.dart';
-export 'ios/ios_textfield.dart';
-export 'input_method_engine/_ime_text_editing_controller.dart';
+export 'desktop/desktop_textfield.dart';
 export 'infrastructure/attributed_text_editing_controller.dart';
 export 'infrastructure/hint_text.dart';
 export 'infrastructure/magnifier.dart';
 export 'infrastructure/text_scrollview.dart';
-export '_test_tools.dart';
+export 'input_method_engine/_ime_text_editing_controller.dart';
+export 'ios/ios_textfield.dart';
 
 /// Custom text field implementations that offer greater control than traditional
 /// Flutter text fields.
@@ -138,7 +138,7 @@ class SuperTextField extends StatefulWidget {
   /// key presses, for text input, deletion, caret movement, etc.
   ///
   /// Only used on desktop.
-  final List<TextFieldKeyboardHandler>? keyboardHandlers;
+  final List<TextFieldKeyboardHandler> keyboardHandlers;
 
   @override
   State<SuperTextField> createState() => _SuperTextFieldState();
@@ -188,6 +188,7 @@ class _SuperTextFieldState extends State<SuperTextField> {
           ),
           minLines: widget.minLines,
           maxLines: widget.maxLines,
+          keyboardHandlers: widget.keyboardHandlers,
         );
       case SuperTextFieldPlatformConfiguration.android:
         return SuperAndroidTextField(
