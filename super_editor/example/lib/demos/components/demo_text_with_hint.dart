@@ -167,11 +167,6 @@ class HeaderWithHintComponentBuilder implements ComponentBuilder {
       return null;
     }
 
-    final blockAttribution = componentViewModel.blockType;
-    if (!(const [header1Attribution, header2Attribution, header3Attribution]).contains(blockAttribution)) {
-      return null;
-    }
-
     return TextWithHintComponent(
       key: componentContext.componentKey,
       text: componentViewModel.text,
@@ -325,6 +320,11 @@ class ParagraphWithHintStyler extends SingleColumnLayoutStylePhase {
     final node = document.getNodeById(viewModel.nodeId)!;
 
     if (node is TextNode && viewModel is ParagraphComponentViewModel) {
+      final blockAttribution = viewModel.blockType;
+      if (!(const [header1Attribution, header2Attribution, header3Attribution]).contains(blockAttribution)) {
+        return viewModel;
+      }
+
       final documentSelection = composer.selection;
       final shouldShowHintText = documentSelection?.isCollapsed == true;
 
