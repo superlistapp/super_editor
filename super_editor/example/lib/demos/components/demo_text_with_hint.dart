@@ -21,17 +21,20 @@ class TextWithHintDemo extends StatefulWidget {
 class _TextWithHintDemoState extends State<TextWithHintDemo> {
   late MutableDocument _doc;
   late DocumentEditor _docEditor;
+  late DocumentComposer _composer;
 
   @override
   void initState() {
     super.initState();
     _doc = _createDocument();
     _docEditor = DocumentEditor(document: _doc);
+    _composer = DocumentComposer();
   }
 
   @override
   void dispose() {
     _doc.dispose();
+    _composer.dispose();
     super.dispose();
   }
 
@@ -70,6 +73,10 @@ class _TextWithHintDemoState extends State<TextWithHintDemo> {
   Widget build(BuildContext context) {
     return SuperEditor(
       editor: _docEditor,
+      composer: _composer,
+      customStylePhases: [
+        ParagraphWithHintStylesheetStyler(_composer),
+      ],
       stylesheet: Stylesheet(
         documentPadding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),
         rules: defaultStylesheet.rules,
@@ -154,7 +161,7 @@ class HeaderWithHintComponentBuilder implements ComponentBuilder {
   @override
   Widget? createComponent(
       SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel componentViewModel) {
-    if (componentViewModel is! ParagraphComponentViewModel) {
+    if (componentViewModel is! ParagraphWithHintComponentViewModel) {
       return null;
     }
 
@@ -175,15 +182,17 @@ class HeaderWithHintComponentBuilder implements ComponentBuilder {
             }
           : {},
       // This is the text displayed as a hint.
-      hintText: AttributedText(
-        text: 'header goes here...',
-        spans: AttributedSpans(
-          attributions: [
-            const SpanMarker(attribution: italicsAttribution, offset: 12, markerType: SpanMarkerType.start),
-            const SpanMarker(attribution: italicsAttribution, offset: 15, markerType: SpanMarkerType.end),
-          ],
-        ),
-      ),
+      hintText: !componentViewModel.hideHintText && componentViewModel.caret != null
+          ? AttributedText(
+              text: 'header goes here...',
+              spans: AttributedSpans(
+                attributions: [
+                  const SpanMarker(attribution: italicsAttribution, offset: 12, markerType: SpanMarkerType.start),
+                  const SpanMarker(attribution: italicsAttribution, offset: 15, markerType: SpanMarkerType.end),
+                ],
+              ),
+            )
+          : null,
       // This is the function that selects styles for the hint text.
       hintStyleBuilder: (Set<Attribution> attributions) => _textStyleBuilder(attributions).copyWith(
         color: const Color(0xFFDDDDDD),
@@ -192,5 +201,152 @@ class HeaderWithHintComponentBuilder implements ComponentBuilder {
       selectionColor: componentViewModel.selectionColor,
       showCaret: componentViewModel.caret != null,
     );
+  }
+}
+
+class ParagraphWithHintComponentViewModel extends ParagraphComponentViewModel {
+  ParagraphWithHintComponentViewModel({
+    required String nodeId,
+    double? maxWidth,
+    EdgeInsetsGeometry padding = EdgeInsets.zero,
+    Attribution? blockType,
+    required AttributedText text,
+    required AttributionStyleBuilder textStyleBuilder,
+    TextDirection textDirection = TextDirection.ltr,
+    TextAlign textAlignment = TextAlign.left,
+    TextSelection? selection,
+    required Color selectionColor,
+    TextPosition? caret,
+    required Color caretColor,
+    bool highlightWhenEmpty = false,
+    required this.hideHintText,
+  }) : super(
+          nodeId: nodeId,
+          maxWidth: maxWidth,
+          padding: padding,
+          blockType: blockType,
+          text: text,
+          textStyleBuilder: textStyleBuilder,
+          textDirection: textDirection,
+          selectionColor: selectionColor,
+          caret: caret,
+          caretColor: caretColor,
+          highlightWhenEmpty: highlightWhenEmpty,
+        );
+
+  bool hideHintText;
+
+  @override
+  ParagraphWithHintComponentViewModel copy() {
+    return ParagraphWithHintComponentViewModel(
+      nodeId: nodeId,
+      maxWidth: maxWidth,
+      padding: padding,
+      blockType: blockType,
+      text: text,
+      textStyleBuilder: textStyleBuilder,
+      textDirection: textDirection,
+      textAlignment: textAlignment,
+      selection: selection,
+      selectionColor: selectionColor,
+      caret: caret,
+      caretColor: caretColor,
+      highlightWhenEmpty: highlightWhenEmpty,
+      hideHintText: hideHintText,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      super == other &&
+          other is ParagraphWithHintComponentViewModel &&
+          runtimeType == other.runtimeType &&
+          nodeId == other.nodeId &&
+          blockType == other.blockType &&
+          text == other.text &&
+          textStyleBuilder == other.textStyleBuilder &&
+          textDirection == other.textDirection &&
+          textAlignment == other.textAlignment &&
+          selection == other.selection &&
+          selectionColor == other.selectionColor &&
+          caret == other.caret &&
+          caretColor == other.caretColor &&
+          highlightWhenEmpty == other.highlightWhenEmpty &&
+          hideHintText == other.hideHintText;
+
+  @override
+  int get hashCode =>
+      super.hashCode ^
+      nodeId.hashCode ^
+      blockType.hashCode ^
+      text.hashCode ^
+      textStyleBuilder.hashCode ^
+      textDirection.hashCode ^
+      textAlignment.hashCode ^
+      selection.hashCode ^
+      selectionColor.hashCode ^
+      caret.hashCode ^
+      caretColor.hashCode ^
+      highlightWhenEmpty.hashCode ^
+      hideHintText.hashCode;
+}
+
+class ParagraphWithHintStylesheetStyler extends SingleColumnLayoutStylePhase {
+  ParagraphWithHintStylesheetStyler(this.composer) {
+    composer.selectionNotifier.addListener(markDirty);
+  }
+
+  final DocumentComposer composer;
+
+  @override
+  void dispose() {
+    composer.selectionNotifier.removeListener(markDirty);
+    super.dispose();
+  }
+
+  @override
+  SingleColumnLayoutViewModel style(
+    Document document,
+    SingleColumnLayoutViewModel viewModel,
+  ) {
+    return SingleColumnLayoutViewModel(
+      padding: viewModel.padding,
+      componentViewModels: [
+        for (final previousViewModel in viewModel.componentViewModels)
+          _applySelection(document, previousViewModel.copy()),
+      ],
+    );
+  }
+
+  SingleColumnLayoutComponentViewModel _applySelection(
+    Document document,
+    SingleColumnLayoutComponentViewModel viewModel,
+  ) {
+    final node = document.getNodeById(viewModel.nodeId)!;
+
+    if (node is TextNode && viewModel is ParagraphComponentViewModel) {
+      final documentSelection = composer.selection;
+      final hideHintText = documentSelection?.isCollapsed == false;
+
+      return ParagraphWithHintComponentViewModel(
+        nodeId: viewModel.nodeId,
+        maxWidth: viewModel.maxWidth,
+        padding: viewModel.padding,
+        blockType: viewModel.blockType,
+        text: viewModel.text,
+        textStyleBuilder: viewModel.textStyleBuilder,
+        textDirection: viewModel.textDirection,
+        textAlignment: viewModel.textAlignment,
+        selection: viewModel.selection,
+        selectionColor: viewModel.selectionColor,
+        caret: viewModel.caret,
+        caretColor: viewModel.caretColor,
+        highlightWhenEmpty: viewModel.highlightWhenEmpty,
+        hideHintText: hideHintText,
+      );
+    }
+
+    return viewModel;
   }
 }
