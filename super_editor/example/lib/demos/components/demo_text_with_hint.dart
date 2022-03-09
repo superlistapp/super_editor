@@ -22,6 +22,7 @@ class _TextWithHintDemoState extends State<TextWithHintDemo> {
   late MutableDocument _doc;
   late DocumentEditor _docEditor;
   late DocumentComposer _composer;
+  late List<SingleColumnLayoutStylePhase> _customStylePhases;
 
   @override
   void initState() {
@@ -29,6 +30,9 @@ class _TextWithHintDemoState extends State<TextWithHintDemo> {
     _doc = _createDocument();
     _docEditor = DocumentEditor(document: _doc);
     _composer = DocumentComposer();
+    _customStylePhases = [
+      ParagraphWithHintStyler(_composer),
+    ];
   }
 
   @override
@@ -74,9 +78,7 @@ class _TextWithHintDemoState extends State<TextWithHintDemo> {
     return SuperEditor(
       editor: _docEditor,
       composer: _composer,
-      customStylePhases: [
-        ParagraphWithHintStylesheetStyler(_composer),
-      ],
+      customStylePhases: _customStylePhases,
       stylesheet: Stylesheet(
         documentPadding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),
         rules: defaultStylesheet.rules,
@@ -170,8 +172,6 @@ class HeaderWithHintComponentBuilder implements ComponentBuilder {
       return null;
     }
 
-    final textSelection = componentViewModel.selection;
-
     return TextWithHintComponent(
       key: componentContext.componentKey,
       text: componentViewModel.text,
@@ -181,8 +181,7 @@ class HeaderWithHintComponentBuilder implements ComponentBuilder {
               'blockType': componentViewModel.blockType,
             }
           : {},
-      // This is the text displayed as a hint.
-      hintText: !componentViewModel.hideHintText && componentViewModel.caret != null
+      hintText: componentViewModel.shouldShowHintText && componentViewModel.caret != null
           ? AttributedText(
               text: 'header goes here...',
               spans: AttributedSpans(
@@ -197,7 +196,7 @@ class HeaderWithHintComponentBuilder implements ComponentBuilder {
       hintStyleBuilder: (Set<Attribution> attributions) => _textStyleBuilder(attributions).copyWith(
         color: const Color(0xFFDDDDDD),
       ),
-      textSelection: textSelection,
+      textSelection: componentViewModel.selection,
       selectionColor: componentViewModel.selectionColor,
       showCaret: componentViewModel.caret != null,
     );
@@ -219,7 +218,7 @@ class ParagraphWithHintComponentViewModel extends ParagraphComponentViewModel {
     TextPosition? caret,
     required Color caretColor,
     bool highlightWhenEmpty = false,
-    required this.hideHintText,
+    required this.shouldShowHintText,
   }) : super(
           nodeId: nodeId,
           maxWidth: maxWidth,
@@ -234,7 +233,7 @@ class ParagraphWithHintComponentViewModel extends ParagraphComponentViewModel {
           highlightWhenEmpty: highlightWhenEmpty,
         );
 
-  bool hideHintText;
+  bool shouldShowHintText;
 
   @override
   ParagraphWithHintComponentViewModel copy() {
@@ -252,7 +251,7 @@ class ParagraphWithHintComponentViewModel extends ParagraphComponentViewModel {
       caret: caret,
       caretColor: caretColor,
       highlightWhenEmpty: highlightWhenEmpty,
-      hideHintText: hideHintText,
+      shouldShowHintText: shouldShowHintText,
     );
   }
 
@@ -273,7 +272,7 @@ class ParagraphWithHintComponentViewModel extends ParagraphComponentViewModel {
           caret == other.caret &&
           caretColor == other.caretColor &&
           highlightWhenEmpty == other.highlightWhenEmpty &&
-          hideHintText == other.hideHintText;
+          shouldShowHintText == other.shouldShowHintText;
 
   @override
   int get hashCode =>
@@ -289,11 +288,11 @@ class ParagraphWithHintComponentViewModel extends ParagraphComponentViewModel {
       caret.hashCode ^
       caretColor.hashCode ^
       highlightWhenEmpty.hashCode ^
-      hideHintText.hashCode;
+      shouldShowHintText.hashCode;
 }
 
-class ParagraphWithHintStylesheetStyler extends SingleColumnLayoutStylePhase {
-  ParagraphWithHintStylesheetStyler(this.composer) {
+class ParagraphWithHintStyler extends SingleColumnLayoutStylePhase {
+  ParagraphWithHintStyler(this.composer) {
     composer.selectionNotifier.addListener(markDirty);
   }
 
@@ -327,7 +326,7 @@ class ParagraphWithHintStylesheetStyler extends SingleColumnLayoutStylePhase {
 
     if (node is TextNode && viewModel is ParagraphComponentViewModel) {
       final documentSelection = composer.selection;
-      final hideHintText = documentSelection?.isCollapsed == false;
+      final shouldShowHintText = documentSelection?.isCollapsed == true;
 
       return ParagraphWithHintComponentViewModel(
         nodeId: viewModel.nodeId,
@@ -343,7 +342,7 @@ class ParagraphWithHintStylesheetStyler extends SingleColumnLayoutStylePhase {
         caret: viewModel.caret,
         caretColor: viewModel.caretColor,
         highlightWhenEmpty: viewModel.highlightWhenEmpty,
-        hideHintText: hideHintText,
+        shouldShowHintText: shouldShowHintText,
       );
     }
 
