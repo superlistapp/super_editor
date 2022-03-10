@@ -194,6 +194,8 @@ class HeaderWithHintComponentBuilder implements ComponentBuilder {
       textSelection: componentViewModel.selection,
       selectionColor: componentViewModel.selectionColor,
       showCaret: componentViewModel.caret != null,
+      caretColor: componentViewModel.caretColor,
+      highlightWhenEmpty: componentViewModel.highlightWhenEmpty,
     );
   }
 }
@@ -326,7 +328,8 @@ class ParagraphWithHintStyler extends SingleColumnLayoutStylePhase {
       }
 
       final documentSelection = composer.selection;
-      final shouldShowHintText = documentSelection?.isCollapsed == true;
+      final shouldShowHintText =
+          documentSelection != null && documentSelection.isCollapsed && documentSelection.extent.nodeId == node.id;
 
       return ParagraphWithHintComponentViewModel(
         nodeId: viewModel.nodeId,
