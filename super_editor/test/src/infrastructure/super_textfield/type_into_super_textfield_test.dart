@@ -82,6 +82,8 @@ void main() {
           "new ",
         );
 
+        debugDefaultTargetPlatformOverride = null;
+
         expect(find.text("hello new world", findRichText: true), findsOneWidget);
       });
     });
@@ -99,8 +101,6 @@ Future<void> _pumpDesktopScaffold(WidgetTester tester, [AttributedTextEditingCon
       selectionColor: Colors.lightBlueAccent,
     ),
   );
-
-  debugDefaultTargetPlatformOverride = null;
 }
 
 Future<void> _pumpAndroidScaffold(WidgetTester tester, [ImeAttributedTextEditingController? controller]) async {
