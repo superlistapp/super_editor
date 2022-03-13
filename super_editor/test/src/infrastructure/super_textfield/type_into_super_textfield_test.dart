@@ -82,8 +82,6 @@ void main() {
           "new ",
         );
 
-        debugDefaultTargetPlatformOverride = null;
-
         expect(find.text("hello new world", findRichText: true), findsOneWidget);
       });
     });
@@ -91,7 +89,7 @@ void main() {
 }
 
 Future<void> _pumpDesktopScaffold(WidgetTester tester, [AttributedTextEditingController? controller]) async {
-  debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
+  debugDefaultTargetPlatformOverride = TargetPlatform.windows;
 
   await _pumpScaffold(
     tester,
@@ -101,6 +99,8 @@ Future<void> _pumpDesktopScaffold(WidgetTester tester, [AttributedTextEditingCon
       selectionColor: Colors.lightBlueAccent,
     ),
   );
+
+  debugDefaultTargetPlatformOverride = null;
 }
 
 Future<void> _pumpAndroidScaffold(WidgetTester tester, [ImeAttributedTextEditingController? controller]) async {
