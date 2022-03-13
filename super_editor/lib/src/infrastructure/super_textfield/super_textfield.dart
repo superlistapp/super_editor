@@ -140,7 +140,7 @@ class SuperTextField extends StatefulWidget {
   /// key presses, for text input, deletion, caret movement, etc.
   ///
   /// Only used on desktop.
-  final List<TextFieldKeyboardHandler>? keyboardHandlers;
+  final List<TextFieldKeyboardHandler> keyboardHandlers;
 
   @override
   State<SuperTextField> createState() => _SuperTextFieldState();
@@ -190,6 +190,7 @@ class _SuperTextFieldState extends State<SuperTextField> {
           ),
           minLines: widget.minLines,
           maxLines: widget.maxLines,
+          keyboardHandlers: widget.keyboardHandlers,
         );
       case SuperTextFieldPlatformConfiguration.android:
         return SuperAndroidTextField(
