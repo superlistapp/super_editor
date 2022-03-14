@@ -48,7 +48,7 @@ extension SuperTextFieldTesting on WidgetTester {
       return false;
     }
 
-    final globalTapOffset = textPositionOffset + textFieldBox.localToGlobal(Offset.zero);
+    final globalTapOffset = adjustedOffset + textFieldBox.localToGlobal(Offset.zero);
     await tapAt(globalTapOffset);
     return true;
   }
