@@ -36,6 +36,10 @@ extension SuperTextFieldTesting on WidgetTester {
     print("Text field size: ${textFieldBox.size}");
 
     if (!textFieldBox.size.contains(textPositionOffset)) {
+      print("Position ($textPositionOffset) is not in field size (${textFieldBox.size})");
+
+      print("Does a manual call work? ${Size(300.0, 16.0).contains(Offset(96.0, -0.0))}");
+
       return false;
     }
 
