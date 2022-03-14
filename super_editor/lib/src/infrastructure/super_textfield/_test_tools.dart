@@ -36,8 +36,8 @@ extension SuperTextFieldTesting on WidgetTester {
     print("Text field size: ${textFieldBox.size}");
 
     final adjustedOffset = Offset(
-      textPositionOffset.dx == -0.0 ? 0.0 : textPositionOffset.dx,
-      textPositionOffset.dy == -0.0 ? 0.0 : textPositionOffset.dy,
+      textPositionOffset.dx == -0.0 || textPositionOffset.dx == 0.0 ? 0.0 : textPositionOffset.dx,
+      textPositionOffset.dy == -0.0 || textPositionOffset.dy == 0.0 ? 0.0 : textPositionOffset.dy,
     );
 
     if (!textFieldBox.size.contains(adjustedOffset)) {
