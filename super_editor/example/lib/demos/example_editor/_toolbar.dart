@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:example/logging.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -36,7 +37,7 @@ class EditorToolbar extends StatefulWidget {
   /// The [composer] provides access to the user's current
   /// selection within the document, which dictates the
   /// content that is altered by the toolbar's options.
-  final DocumentComposer? composer;
+  final DocumentComposer composer;
 
   /// Delegate that instructs the owner of this [EditorToolbar]
   /// to close the toolbar, such as after submitting a URL
@@ -71,7 +72,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
   /// multiple nodes are selected, no node is selected, or the selected
   /// node is not a standard text block.
   bool _isConvertibleNode() {
-    final selection = widget.composer!.selection!;
+    final selection = widget.composer.selection!;
     if (selection.base.nodeId != selection.extent.nodeId) {
       return false;
     }
@@ -84,9 +85,9 @@ class _EditorToolbarState extends State<EditorToolbar> {
   ///
   /// Throws an exception if the currently selected node is not a text node.
   _TextType _getCurrentTextType() {
-    final selectedNode = widget.editor!.document.getNodeById(widget.composer!.selection!.extent.nodeId);
+    final selectedNode = widget.editor!.document.getNodeById(widget.composer.selection!.extent.nodeId);
     if (selectedNode is ParagraphNode) {
-      final type = selectedNode.metadata['blockType'];
+      final type = selectedNode.getMetadataValue('blockType');
 
       if (type == header1Attribution) {
         return _TextType.header1;
@@ -110,9 +111,9 @@ class _EditorToolbarState extends State<EditorToolbar> {
   ///
   /// Throws an exception if the currently selected node is not a text node.
   TextAlign _getCurrentTextAlignment() {
-    final selectedNode = widget.editor!.document.getNodeById(widget.composer!.selection!.extent.nodeId);
+    final selectedNode = widget.editor!.document.getNodeById(widget.composer.selection!.extent.nodeId);
     if (selectedNode is ParagraphNode) {
-      final align = selectedNode.metadata['textAlign'];
+      final align = selectedNode.getMetadataValue('textAlign');
       switch (align) {
         case 'left':
           return TextAlign.left;
@@ -133,7 +134,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
   /// Returns true if a single text node is selected and that text node
   /// is capable of respecting alignment, returns false otherwise.
   bool _isTextAlignable() {
-    final selection = widget.composer!.selection!;
+    final selection = widget.composer.selection!;
     if (selection.base.nodeId != selection.extent.nodeId) {
       return false;
     }
@@ -158,14 +159,14 @@ class _EditorToolbarState extends State<EditorToolbar> {
     if (_isListItem(existingTextType) && _isListItem(newType)) {
       widget.editor!.executeCommand(
         ChangeListItemTypeCommand(
-          nodeId: widget.composer!.selection!.extent.nodeId,
+          nodeId: widget.composer.selection!.extent.nodeId,
           newType: newType == _TextType.orderedListItem ? ListItemType.ordered : ListItemType.unordered,
         ),
       );
     } else if (_isListItem(existingTextType) && !_isListItem(newType)) {
       widget.editor!.executeCommand(
         ConvertListItemToParagraphCommand(
-          nodeId: widget.composer!.selection!.extent.nodeId,
+          nodeId: widget.composer.selection!.extent.nodeId,
           paragraphMetadata: {
             'blockType': _getBlockTypeAttribution(newType),
           },
@@ -174,14 +175,15 @@ class _EditorToolbarState extends State<EditorToolbar> {
     } else if (!_isListItem(existingTextType) && _isListItem(newType)) {
       widget.editor!.executeCommand(
         ConvertParagraphToListItemCommand(
-          nodeId: widget.composer!.selection!.extent.nodeId,
+          nodeId: widget.composer.selection!.extent.nodeId,
           type: newType == _TextType.orderedListItem ? ListItemType.ordered : ListItemType.unordered,
         ),
       );
     } else {
       // Apply a new block type to an existing paragraph node.
-      final existingNode = widget.editor!.document.getNodeById(widget.composer!.selection!.extent.nodeId)!;
-      (existingNode as ParagraphNode).metadata['blockType'] = _getBlockTypeAttribution(newType);
+      final existingNode =
+          widget.editor!.document.getNodeById(widget.composer.selection!.extent.nodeId)! as ParagraphNode;
+      existingNode.putMetadataValue('blockType', _getBlockTypeAttribution(newType));
     }
   }
 
@@ -213,7 +215,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
   void _toggleBold() {
     widget.editor!.executeCommand(
       ToggleTextAttributionsCommand(
-        documentSelection: widget.composer!.selection!,
+        documentSelection: widget.composer.selection!,
         attributions: {boldAttribution},
       ),
     );
@@ -223,7 +225,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
   void _toggleItalics() {
     widget.editor!.executeCommand(
       ToggleTextAttributionsCommand(
-        documentSelection: widget.composer!.selection!,
+        documentSelection: widget.composer.selection!,
         attributions: {italicsAttribution},
       ),
     );
@@ -233,7 +235,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
   void _toggleStrikethrough() {
     widget.editor!.executeCommand(
       ToggleTextAttributionsCommand(
-        documentSelection: widget.composer!.selection!,
+        documentSelection: widget.composer.selection!,
         attributions: {strikethroughAttribution},
       ),
     );
@@ -255,7 +257,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
   /// Returns any link-based [AttributionSpan]s that appear partially
   /// or wholly within the current text selection.
   Set<AttributionSpan> _getSelectedLinkSpans() {
-    final selection = widget.composer!.selection!;
+    final selection = widget.composer.selection!;
     final baseOffset = (selection.base.nodePosition as TextPosition).offset;
     final extentOffset = (selection.extent.nodePosition as TextPosition).offset;
     final selectionStart = min(baseOffset, extentOffset);
@@ -276,7 +278,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
   /// Takes appropriate action when the toolbar's link button is
   /// pressed.
   void _onLinkPressed() {
-    final selection = widget.composer!.selection!;
+    final selection = widget.composer.selection!;
     final baseOffset = (selection.base.nodePosition as TextPosition).offset;
     final extentOffset = (selection.extent.nodePosition as TextPosition).offset;
     final selectionStart = min(baseOffset, extentOffset);
@@ -329,7 +331,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
   void _applyLink() {
     final url = _urlController!.text;
 
-    final selection = widget.composer!.selection!;
+    final selection = widget.composer.selection!;
     final baseOffset = (selection.base.nodePosition as TextPosition).offset;
     final extentOffset = (selection.extent.nodePosition as TextPosition).offset;
     final selectionStart = min(baseOffset, extentOffset);
@@ -397,9 +399,8 @@ class _EditorToolbarState extends State<EditorToolbar> {
         break;
     }
 
-    final selectedNode =
-        widget.editor!.document.getNodeById(widget.composer!.selection!.extent.nodeId) as ParagraphNode;
-    selectedNode.metadata['textAlign'] = newAlignmentValue;
+    final selectedNode = widget.editor!.document.getNodeById(widget.composer.selection!.extent.nodeId) as ParagraphNode;
+    selectedNode.putMetadataValue('textAlign', newAlignmentValue);
   }
 
   /// Returns the localized name for the given [_TextType], e.g.,
@@ -425,41 +426,41 @@ class _EditorToolbarState extends State<EditorToolbar> {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder(
-      valueListenable: widget.anchor,
-      builder: (context, dynamic offset, child) {
-        if (widget.anchor.value == null || widget.composer!.selection == null) {
-          // When no anchor position is available, or the user hasn't
-          // selected any text, show nothing.
-          return const SizedBox();
-        }
-
-        return SizedBox.expand(
-          child: Stack(
-            children: [
-              // Conditionally display the URL text field below
-              // the standard toolbar.
-              if (_showUrlField)
-                Positioned(
-                  left: widget.anchor.value!.dx,
-                  top: widget.anchor.value!.dy,
-                  child: FractionalTranslation(
-                    translation: const Offset(-0.5, 0.0),
-                    child: _buildUrlField(),
-                  ),
-                ),
-              Positioned(
-                left: widget.anchor.value!.dx,
-                top: widget.anchor.value!.dy,
-                child: FractionalTranslation(
-                  translation: const Offset(-0.5, -1.4),
-                  child: _buildToolbar(),
-                ),
-              ),
-            ],
+    return Stack(
+      children: [
+        // Conditionally display the URL text field below
+        // the standard toolbar.
+        if (_showUrlField)
+          Positioned(
+            left: widget.anchor.value!.dx,
+            top: widget.anchor.value!.dy,
+            child: FractionalTranslation(
+              translation: const Offset(-0.5, 0.0),
+              child: _buildUrlField(),
+            ),
           ),
-        );
-      },
+        _PositionedToolbar(
+          anchor: widget.anchor,
+          composer: widget.composer,
+          child: ValueListenableBuilder<DocumentSelection?>(
+            valueListenable: widget.composer.selectionNotifier,
+            builder: (context, selection, child) {
+              appLog.fine("Building toolbar. Selection: $selection");
+              if (selection == null) {
+                return const SizedBox();
+              }
+              if (selection.extent.nodePosition is! TextPosition) {
+                // The user selected non-text content. This toolbar is probably
+                // about to disappear. Until then, build nothing, because the
+                // toolbar needs to inspect selected text to build correctly.
+                return const SizedBox();
+              }
+
+              return _buildToolbar();
+            },
+          ),
+        ),
+      ],
     );
   }
 
@@ -651,4 +652,159 @@ enum _TextType {
   blockquote,
   orderedListItem,
   unorderedListItem,
+}
+
+/// Small toolbar that is intended to display over an image and
+/// offer controls to expand or contract the size of the image.
+///
+/// [ImageFormatToolbar] expects to be displayed in a [Stack] where it
+/// will position itself based on the given [anchor]. This can be
+/// accomplished, for example, by adding [ImageFormatToolbar] to the
+/// application [Overlay]. Any other [Stack] should work, too.
+class ImageFormatToolbar extends StatefulWidget {
+  const ImageFormatToolbar({
+    Key? key,
+    required this.anchor,
+    required this.composer,
+    required this.setWidth,
+    required this.closeToolbar,
+  }) : super(key: key);
+
+  /// [ImageFormatToolbar] displays itself horizontally centered and
+  /// slightly above the given [anchor] value.
+  ///
+  /// [anchor] is a [ValueNotifier] so that [ImageFormatToolbar] can
+  /// reposition itself as the [Offset] value changes.
+  final ValueNotifier<Offset?> anchor;
+
+  /// The [composer] provides access to the user's current
+  /// selection within the document, which dictates the
+  /// content that is altered by the toolbar's options.
+  final DocumentComposer composer;
+
+  /// Callback that should update the width of the component with
+  /// the given [nodeId] to match the given [width].
+  final void Function(String nodeId, double? width) setWidth;
+
+  /// Delegate that instructs the owner of this [ImageFormatToolbar]
+  /// to close the toolbar.
+  final VoidCallback closeToolbar;
+
+  @override
+  _ImageFormatToolbarState createState() => _ImageFormatToolbarState();
+}
+
+class _ImageFormatToolbarState extends State<ImageFormatToolbar> {
+  void _makeImageConfined() {
+    widget.setWidth(widget.composer.selection!.extent.nodeId, null);
+  }
+
+  void _makeImageFullBleed() {
+    widget.setWidth(widget.composer.selection!.extent.nodeId, double.infinity);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _PositionedToolbar(
+      anchor: widget.anchor,
+      composer: widget.composer,
+      child: ValueListenableBuilder<DocumentSelection?>(
+        valueListenable: widget.composer.selectionNotifier,
+        builder: (context, selection, child) {
+          appLog.fine("Building image toolbar. Selection: $selection");
+          if (selection == null) {
+            return const SizedBox();
+          }
+          if (selection.extent.nodePosition is! UpstreamDownstreamNodePosition) {
+            // The user selected non-image content. This toolbar is probably
+            // about to disappear. Until then, build nothing, because the
+            // toolbar needs to inspect selected image to build correctly.
+            return const SizedBox();
+          }
+
+          return _buildToolbar();
+        },
+      ),
+    );
+  }
+
+  Widget _buildToolbar() {
+    return Material(
+      shape: const StadiumBorder(),
+      elevation: 5,
+      clipBehavior: Clip.hardEdge,
+      child: SizedBox(
+        height: 40,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: IconButton(
+                  onPressed: _makeImageConfined,
+                  icon: const Icon(Icons.photo_size_select_large),
+                  splashRadius: 16,
+                  tooltip: AppLocalizations.of(context)!.labelBold,
+                ),
+              ),
+              Center(
+                child: IconButton(
+                  onPressed: _makeImageFullBleed,
+                  icon: const Icon(Icons.photo_size_select_actual),
+                  splashRadius: 16,
+                  tooltip: AppLocalizations.of(context)!.labelItalics,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PositionedToolbar extends StatelessWidget {
+  const _PositionedToolbar({
+    Key? key,
+    required this.anchor,
+    required this.composer,
+    required this.child,
+  }) : super(key: key);
+
+  final ValueNotifier<Offset?> anchor;
+  final DocumentComposer composer;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<Offset?>(
+      valueListenable: anchor,
+      builder: (context, offset, _) {
+        appLog.fine("(Re)Building _PositionedToolbar widget due to anchor change");
+        if (offset == null || composer.selection == null) {
+          appLog.fine("Anchor is null. Building an empty box.");
+          // When no anchor position is available, or the user hasn't
+          // selected any text, show nothing.
+          return const SizedBox();
+        }
+
+        appLog.fine("Anchor is non-null: $offset, child: $child");
+        return SizedBox.expand(
+          child: Stack(
+            children: [
+              Positioned(
+                left: offset.dx,
+                top: offset.dy,
+                child: FractionalTranslation(
+                  translation: const Offset(-0.5, -1.4),
+                  child: child,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 }

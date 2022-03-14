@@ -408,22 +408,6 @@ class MovementModifier {
   int get hashCode => id.hashCode;
 }
 
-/// Builds a widget that renders the desired UI for one or
-/// more [DocumentNode]s.
-///
-/// Every widget returned from a [ComponentBuilder] should be
-/// a [StatefulWidget] that mixes in [DocumentComponent].
-///
-/// A [ComponentBuilder] might be invoked with a type of
-/// [DocumentNode] that it doesn't know how to work with. When
-/// this happens, the [ComponentBuilder] should return [null],
-/// indicating that it doesn't know how to build a component
-/// for the given [DocumentNode].
-///
-/// See [ComponentContext] for expectations about how to use
-/// the context to build a component widget.
-typedef ComponentBuilder = Widget? Function(ComponentContext);
-
 /// Information that is provided to a [ComponentBuilder] to
 /// construct an appropriate [DocumentComponent] widget.
 class ComponentContext {

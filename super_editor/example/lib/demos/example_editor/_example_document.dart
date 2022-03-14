@@ -1,92 +1,142 @@
+import 'package:flutter/rendering.dart';
 import 'package:super_editor/super_editor.dart';
+
+import '_task.dart';
 
 Document createInitialDocument() {
   return MutableDocument(
     nodes: [
       ImageNode(
-        id: DocumentEditor.createNodeId(),
-        imageUrl: 'https://i.imgur.com/fSZwM7G.jpg',
+        id: "1",
+        imageUrl: 'https://i.ibb.co/5nvRdx1/flutter-horizon.png',
+        metadata: const SingleColumnLayoutComponentStyles(
+          width: double.infinity,
+          padding: EdgeInsets.zero,
+        ).toMetadata(),
       ),
       ParagraphNode(
         id: DocumentEditor.createNodeId(),
         text: AttributedText(
-          text: 'Example Document',
+          text: 'Welcome to Super Editor 💙 🚀',
         ),
         metadata: {
           'blockType': header1Attribution,
         },
       ),
-      HorizontalRuleNode(id: DocumentEditor.createNodeId()),
       ParagraphNode(
         id: DocumentEditor.createNodeId(),
         text: AttributedText(
           text:
-              'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus sed sagittis urna. Aenean mattis ante justo, quis sollicitudin metus interdum id. Aenean ornare urna ac enim consequat mollis. In aliquet convallis efficitur. Phasellus convallis purus in fringilla scelerisque. Ut ac orci a turpis egestas lobortis. Morbi aliquam dapibus sem, vitae sodales arcu ultrices eu. Duis vulputate mauris quam, eleifend pulvinar quam blandit eget.',
+              "Super Editor is a toolkit to help you build document editors, document layouts, text fields, and more.",
         ),
       ),
       ParagraphNode(
         id: DocumentEditor.createNodeId(),
         text: AttributedText(
-          text: 'This is a blockquote!',
+          text: 'Ready-made solutions 📦',
         ),
         metadata: {
-          'blockType': blockquoteAttribution,
+          'blockType': header2Attribution,
         },
       ),
       ListItemNode.unordered(
         id: DocumentEditor.createNodeId(),
         text: AttributedText(
-          text: 'This is an unordered list item',
+          text: 'SuperEditor is a ready-made, configurable document editing experience.',
         ),
       ),
       ListItemNode.unordered(
         id: DocumentEditor.createNodeId(),
         text: AttributedText(
-          text: 'This is another list item',
-        ),
-      ),
-      ListItemNode.unordered(
-        id: DocumentEditor.createNodeId(),
-        text: AttributedText(
-          text: 'This is a 3rd list item',
+          text: 'SuperTextField is a ready-made, configurable text field.',
         ),
       ),
       ParagraphNode(
         id: DocumentEditor.createNodeId(),
         text: AttributedText(
-            text:
-                'Cras vitae sodales nisi. Vivamus dignissim vel purus vel aliquet. Sed viverra diam vel nisi rhoncus pharetra. Donec gravida ut ligula euismod pharetra. Etiam sed urna scelerisque, efficitur mauris vel, semper arcu. Nullam sed vehicula sapien. Donec id tellus volutpat, eleifend nulla eget, rutrum mauris.'),
+          text: 'Quickstart 🚀',
+        ),
+        metadata: {
+          'blockType': header2Attribution,
+        },
       ),
-      ListItemNode.ordered(
+      ParagraphNode(
         id: DocumentEditor.createNodeId(),
+        text: AttributedText(text: 'To get started with your own editing experience, take the following steps:'),
+      ),
+      TaskNode(
+        id: DocumentEditor.createNodeId(),
+        isComplete: false,
         text: AttributedText(
-          text: 'First thing to do',
+          text: 'Create and configure your document, for example, by creating a new MutableDocument.',
         ),
       ),
-      ListItemNode.ordered(
+      TaskNode(
         id: DocumentEditor.createNodeId(),
+        isComplete: false,
         text: AttributedText(
-          text: 'Second thing to do',
+          text: "If you want programmatic control over the user's selection and styles, create a DocumentComposer.",
         ),
       ),
-      ListItemNode.ordered(
+      TaskNode(
         id: DocumentEditor.createNodeId(),
+        isComplete: false,
         text: AttributedText(
-          text: 'Third thing to do',
+          text:
+              "Build a SuperEditor widget in your widget tree, configured with your Document and (optionally) your DocumentComposer.",
         ),
       ),
       ParagraphNode(
         id: DocumentEditor.createNodeId(),
         text: AttributedText(
           text:
-              'Nam hendrerit vitae elit ut placerat. Maecenas nec congue neque. Fusce eget tortor pulvinar, cursus neque vitae, sagittis lectus. Duis mollis libero eu scelerisque ullamcorper. Pellentesque eleifend arcu nec augue molestie, at iaculis dui rutrum. Etiam lobortis magna at magna pellentesque ornare. Sed accumsan, libero vel porta molestie, tortor lorem eleifend ante, at egestas leo felis sed nunc. Quisque mi neque, molestie vel dolor a, eleifend tempor odio.',
+              "Now, you're off to the races! SuperEditor renders your document, and lets you select, insert, and delete content.",
+        ),
+      ),
+      ParagraphNode(
+        id: DocumentEditor.createNodeId(),
+        text: AttributedText(
+          text: 'Explore the toolkit 🔎',
+        ),
+        metadata: {
+          'blockType': header2Attribution,
+        },
+      ),
+      ListItemNode.unordered(
+        id: DocumentEditor.createNodeId(),
+        text: AttributedText(
+          text: "Use MutableDocument as an in-memory representation of a document.",
+        ),
+      ),
+      ListItemNode.unordered(
+        id: DocumentEditor.createNodeId(),
+        text: AttributedText(
+          text: "Implement your own document data store by implementing the Document api.",
+        ),
+      ),
+      ListItemNode.unordered(
+        id: DocumentEditor.createNodeId(),
+        text: AttributedText(
+          text: "Implement your down DocumentLayout to position and size document components however you'd like.",
+        ),
+      ),
+      ListItemNode.unordered(
+        id: DocumentEditor.createNodeId(),
+        text: AttributedText(
+          text: "Use SuperSelectableText to paint text with selection boxes and a caret.",
+        ),
+      ),
+      ListItemNode.unordered(
+        id: DocumentEditor.createNodeId(),
+        text: AttributedText(
+          text: 'Use AttributedText to quickly and easily apply metadata spans to a string.',
         ),
       ),
       ParagraphNode(
         id: DocumentEditor.createNodeId(),
         text: AttributedText(
           text:
-              'Etiam id lacus interdum, efficitur ex convallis, accumsan ipsum. Integer faucibus mollis mauris, a suscipit ante mollis vitae. Fusce justo metus, congue non lectus ac, luctus rhoncus tellus. Phasellus vitae fermentum orci, sit amet sodales orci. Fusce at ante iaculis nunc aliquet pharetra. Nam placerat, nisl in gravida lacinia, nisl nibh feugiat nunc, in sagittis nisl sapien nec arcu. Nunc gravida faucibus massa, sit amet accumsan dolor feugiat in. Mauris ut elementum leo.',
+              "We hope you enjoy using Super Editor. Let us know what you're building, and please file issues for any bugs that you find.",
         ),
       ),
     ],

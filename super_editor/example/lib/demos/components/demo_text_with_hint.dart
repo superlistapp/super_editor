@@ -70,16 +70,19 @@ class _TextWithHintDemoState extends State<TextWithHintDemo> {
   Widget build(BuildContext context) {
     return SuperEditor(
       editor: _docEditor,
-      padding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),
+      stylesheet: Stylesheet(
+        documentPadding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),
+        rules: defaultStylesheet.rules,
 
-      /// Adjust the default styles to style 3 levels of headers
-      /// with large font sizes.
-      textStyleBuilder: _textStyleBuilder,
+        /// Adjust the default styles to style 3 levels of headers
+        /// with large font sizes.
+        inlineTextStyler: (attributions, style) => style.merge(_textStyleBuilder(attributions)),
+      ),
 
       /// Add a new component builder to the front of the list
       /// that knows how to render header widgets with hint text.
       componentBuilders: [
-        _headerWithHintBuilder,
+        const HeaderWithHintComponentBuilder(),
         ...defaultComponentBuilders,
       ],
     );
@@ -138,46 +141,56 @@ TextStyle _textStyleBuilder(Set<Attribution> attributions) {
 ///   return null;
 /// }
 /// ```
-Widget? _headerWithHintBuilder(ComponentContext componentContext) {
-  if (componentContext.documentNode is! ParagraphNode) {
+class HeaderWithHintComponentBuilder implements ComponentBuilder {
+  const HeaderWithHintComponentBuilder();
+
+  @override
+  SingleColumnLayoutComponentViewModel? createViewModel(Document document, DocumentNode node) {
+    // This component builder can work with the standard paragraph view model.
+    // We'll defer to the standard paragraph component builder to create it.
     return null;
   }
 
-  final blockAttribution = (componentContext.documentNode as TextNode).metadata['blockType'];
-  if (!(const [header1Attribution, header2Attribution, header3Attribution]).contains(blockAttribution)) {
-    return null;
-  }
+  @override
+  Widget? createComponent(
+      SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel componentViewModel) {
+    if (componentViewModel is! ParagraphComponentViewModel) {
+      return null;
+    }
 
-  final textSelection =
-      componentContext.nodeSelection == null || componentContext.nodeSelection!.nodeSelection is! TextSelection
-          ? null
-          : componentContext.nodeSelection!.nodeSelection as TextSelection;
+    final blockAttribution = componentViewModel.blockType;
+    if (!(const [header1Attribution, header2Attribution, header3Attribution]).contains(blockAttribution)) {
+      return null;
+    }
 
-  final showCaret = componentContext.showCaret && componentContext.nodeSelection != null
-      ? componentContext.nodeSelection!.isExtent
-      : false;
+    final textSelection = componentViewModel.selection;
 
-  return TextWithHintComponent(
-    key: componentContext.componentKey,
-    text: (componentContext.documentNode as TextNode).text,
-    textStyleBuilder: _textStyleBuilder,
-    metadata: (componentContext.documentNode as TextNode).metadata,
-    // This is the text displayed as a hint.
-    hintText: AttributedText(
-      text: 'header goes here...',
-      spans: AttributedSpans(
-        attributions: [
-          const SpanMarker(attribution: italicsAttribution, offset: 12, markerType: SpanMarkerType.start),
-          const SpanMarker(attribution: italicsAttribution, offset: 15, markerType: SpanMarkerType.end),
-        ],
+    return TextWithHintComponent(
+      key: componentContext.componentKey,
+      text: componentViewModel.text,
+      textStyleBuilder: _textStyleBuilder,
+      metadata: componentViewModel.blockType != null
+          ? {
+              'blockType': componentViewModel.blockType,
+            }
+          : {},
+      // This is the text displayed as a hint.
+      hintText: AttributedText(
+        text: 'header goes here...',
+        spans: AttributedSpans(
+          attributions: [
+            const SpanMarker(attribution: italicsAttribution, offset: 12, markerType: SpanMarkerType.start),
+            const SpanMarker(attribution: italicsAttribution, offset: 15, markerType: SpanMarkerType.end),
+          ],
+        ),
       ),
-    ),
-    // This is the function that selects styles for the hint text.
-    hintStyleBuilder: (Set<Attribution> attributions) => _textStyleBuilder(attributions).copyWith(
-      color: const Color(0xFFDDDDDD),
-    ),
-    textSelection: textSelection,
-    selectionColor: (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle).selectionColor,
-    showCaret: showCaret,
-  );
+      // This is the function that selects styles for the hint text.
+      hintStyleBuilder: (Set<Attribution> attributions) => _textStyleBuilder(attributions).copyWith(
+        color: const Color(0xFFDDDDDD),
+      ),
+      textSelection: textSelection,
+      selectionColor: componentViewModel.selectionColor,
+      showCaret: componentViewModel.caret != null,
+    );
+  }
 }

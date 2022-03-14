@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
@@ -9,12 +8,180 @@ import 'package:super_editor/src/infrastructure/attributed_text.dart';
 import '../core/document.dart';
 import '../core/document_editor.dart';
 import 'document_input_keyboard.dart';
+import 'layout_single_column/layout_single_column.dart';
 import 'paragraph.dart';
-import 'styles.dart';
 import 'text.dart';
+import 'text_tools.dart';
 
 // ignore: unused_element
 final _log = Logger(scope: 'blockquote.dart');
+
+class BlockquoteComponentBuilder implements ComponentBuilder {
+  const BlockquoteComponentBuilder();
+
+  @override
+  SingleColumnLayoutComponentViewModel? createViewModel(Document document, DocumentNode node) {
+    if (node is! ParagraphNode) {
+      return null;
+    }
+    if (node.getMetadataValue('blockType') != blockquoteAttribution) {
+      return null;
+    }
+
+    final textDirection = getParagraphDirection(node.text.text);
+
+    TextAlign textAlign = (textDirection == TextDirection.ltr) ? TextAlign.left : TextAlign.right;
+    final textAlignName = node.getMetadataValue('textAlign');
+    switch (textAlignName) {
+      case 'left':
+        textAlign = TextAlign.left;
+        break;
+      case 'center':
+        textAlign = TextAlign.center;
+        break;
+      case 'right':
+        textAlign = TextAlign.right;
+        break;
+      case 'justify':
+        textAlign = TextAlign.justify;
+        break;
+    }
+
+    return BlockquoteComponentViewModel(
+      nodeId: node.id,
+      text: node.text,
+      textStyleBuilder: noStyleBuilder,
+      backgroundColor: const Color(0x00000000),
+      borderRadius: BorderRadius.zero,
+      textDirection: textDirection,
+      textAlignment: textAlign,
+      selectionColor: const Color(0x00000000),
+      caretColor: const Color(0x00000000),
+    );
+  }
+
+  @override
+  Widget? createComponent(
+      SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel componentViewModel) {
+    if (componentViewModel is! BlockquoteComponentViewModel) {
+      return null;
+    }
+
+    return BlockquoteComponent(
+      textKey: componentContext.componentKey,
+      text: componentViewModel.text,
+      styleBuilder: componentViewModel.textStyleBuilder,
+      backgroundColor: componentViewModel.backgroundColor,
+      borderRadius: componentViewModel.borderRadius,
+      textSelection: componentViewModel.selection,
+      selectionColor: componentViewModel.selectionColor,
+      showCaret: componentViewModel.caret != null,
+      caretColor: componentViewModel.caretColor,
+    );
+  }
+}
+
+class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel with TextComponentViewModel {
+  BlockquoteComponentViewModel({
+    required String nodeId,
+    double? maxWidth,
+    EdgeInsetsGeometry padding = EdgeInsets.zero,
+    required this.text,
+    required this.textStyleBuilder,
+    this.textDirection = TextDirection.ltr,
+    this.textAlignment = TextAlign.left,
+    required this.backgroundColor,
+    required this.borderRadius,
+    this.selection,
+    required this.selectionColor,
+    this.caret,
+    required this.caretColor,
+    this.highlightWhenEmpty = false,
+  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
+
+  AttributedText text;
+
+  @override
+  AttributionStyleBuilder textStyleBuilder;
+  @override
+  TextDirection textDirection;
+  @override
+  TextAlign textAlignment;
+  @override
+  TextSelection? selection;
+  @override
+  Color selectionColor;
+  @override
+  TextPosition? caret;
+  @override
+  Color caretColor;
+  @override
+  bool highlightWhenEmpty;
+
+  Color backgroundColor;
+  BorderRadius borderRadius;
+
+  @override
+  void applyStyles(Map<String, dynamic> styles) {
+    backgroundColor = styles["backgroundColor"] ?? Colors.transparent;
+    borderRadius = styles["borderRadius"] ?? BorderRadius.zero;
+  }
+
+  @override
+  BlockquoteComponentViewModel copy() {
+    return BlockquoteComponentViewModel(
+      nodeId: nodeId,
+      maxWidth: maxWidth,
+      padding: padding,
+      text: text,
+      textStyleBuilder: textStyleBuilder,
+      textDirection: textDirection,
+      textAlignment: textAlignment,
+      backgroundColor: backgroundColor,
+      borderRadius: borderRadius,
+      selection: selection,
+      selectionColor: selectionColor,
+      caret: caret,
+      caretColor: caretColor,
+      highlightWhenEmpty: highlightWhenEmpty,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      super == other &&
+          other is BlockquoteComponentViewModel &&
+          runtimeType == other.runtimeType &&
+          nodeId == other.nodeId &&
+          text == other.text &&
+          textStyleBuilder == other.textStyleBuilder &&
+          textDirection == other.textDirection &&
+          textAlignment == other.textAlignment &&
+          backgroundColor == other.backgroundColor &&
+          borderRadius == other.borderRadius &&
+          selection == other.selection &&
+          selectionColor == other.selectionColor &&
+          caret == other.caret &&
+          caretColor == other.caretColor &&
+          highlightWhenEmpty == other.highlightWhenEmpty;
+
+  @override
+  int get hashCode =>
+      super.hashCode ^
+      nodeId.hashCode ^
+      text.hashCode ^
+      textStyleBuilder.hashCode ^
+      textDirection.hashCode ^
+      textAlignment.hashCode ^
+      backgroundColor.hashCode ^
+      borderRadius.hashCode ^
+      selection.hashCode ^
+      selectionColor.hashCode ^
+      caret.hashCode ^
+      caretColor.hashCode ^
+      highlightWhenEmpty.hashCode;
+}
 
 /// Displays a blockquote in a document.
 class BlockquoteComponent extends StatelessWidget {
@@ -25,6 +192,8 @@ class BlockquoteComponent extends StatelessWidget {
     required this.styleBuilder,
     this.textSelection,
     this.selectionColor = Colors.lightBlueAccent,
+    required this.backgroundColor,
+    required this.borderRadius,
     this.showCaret = false,
     this.caretColor = Colors.black,
     this.showDebugPaint = false,
@@ -35,6 +204,8 @@ class BlockquoteComponent extends StatelessWidget {
   final AttributionStyleBuilder styleBuilder;
   final TextSelection? textSelection;
   final Color selectionColor;
+  final Color backgroundColor;
+  final BorderRadius borderRadius;
   final bool showCaret;
   final Color caretColor;
   final bool showDebugPaint;
@@ -44,8 +215,8 @@ class BlockquoteComponent extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(4),
-        color: const Color(0xFFEEEEEE),
+        borderRadius: borderRadius,
+        color: backgroundColor,
       ),
       child: TextComponent(
         key: textKey,
@@ -104,7 +275,7 @@ ExecutionInstruction insertNewlineInBlockquote({
   if (extentNode is! ParagraphNode) {
     return ExecutionInstruction.continueExecution;
   }
-  if (extentNode.metadata['blockType'] != blockquoteAttribution) {
+  if (extentNode.getMetadataValue('blockType') != blockquoteAttribution) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -132,7 +303,7 @@ ExecutionInstruction splitBlockquoteWhenEnterPressed({
   if (extentNode is! ParagraphNode) {
     return ExecutionInstruction.continueExecution;
   }
-  if (extentNode.metadata['blockType'] != blockquoteAttribution) {
+  if (extentNode.getMetadataValue('blockType') != blockquoteAttribution) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -179,27 +350,4 @@ class SplitBlockquoteCommand implements EditorCommand {
       newNode: newNode,
     );
   }
-}
-
-Widget? blockquoteBuilder(ComponentContext componentContext) {
-  final blockquoteNode = componentContext.documentNode;
-  if (blockquoteNode is! ParagraphNode) {
-    return null;
-  }
-  if (blockquoteNode.metadata['blockType'] != blockquoteAttribution) {
-    return null;
-  }
-
-  final textSelection = componentContext.nodeSelection?.nodeSelection as TextSelection?;
-  final showCaret = componentContext.showCaret && (componentContext.nodeSelection?.isExtent ?? false);
-
-  return BlockquoteComponent(
-    textKey: componentContext.componentKey,
-    text: blockquoteNode.text,
-    styleBuilder: componentContext.extensions[textStylesExtensionKey],
-    textSelection: textSelection,
-    selectionColor: (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle).selectionColor,
-    showCaret: showCaret,
-    caretColor: (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle).textCaretColor,
-  );
 }

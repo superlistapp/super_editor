@@ -55,13 +55,15 @@ class _MobileEditingIOSDemoState extends State<MobileEditingIOSDemo> {
               documentLayoutKey: _docLayoutKey,
               editor: _docEditor,
               composer: _composer,
-              padding: const EdgeInsets.all(16),
               gestureMode: DocumentGestureMode.iOS,
               inputSource: DocumentInputSource.ime,
               iOSToolbarBuilder: (_) => IOSTextEditingFloatingToolbar(
                 onCutPressed: () => _docOps.cut(),
                 onCopyPressed: () => _docOps.copy(),
                 onPastePressed: () => _docOps.paste(),
+              ),
+              stylesheet: defaultStylesheet.copyWith(
+                documentPadding: const EdgeInsets.all(16),
               ),
               createOverlayControlsClipper: (_) => const KeyboardToolbarClipper(),
             ),

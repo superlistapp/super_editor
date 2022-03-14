@@ -198,8 +198,17 @@ class _MarketingVideoState extends State<MarketingVideo> {
           documentLayoutKey: _docLayoutKey,
           editor: _editor,
           composer: _composer,
-          textStyleBuilder: _textStyleBuilder,
-          componentVerticalSpacing: 0,
+          stylesheet: defaultStylesheet.copyWith(
+            documentPadding: const EdgeInsets.all(16),
+            addRulesAfter: [
+              StyleRule(
+                  const BlockSelector.all(),
+                  (doc, node) => {
+                        "padding": const CascadingPadding.all(0.0),
+                      }),
+            ],
+            inlineTextStyler: (attributions, style) => _textStyleBuilder(attributions),
+          ),
         ),
       ),
     );

@@ -65,13 +65,15 @@ class _ReadOnlyCustomScrollViewDemoState extends State<ReadOnlyCustomScrollViewD
   Widget _buildReadOnlyDocument() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 96.0, vertical: 48.0),
-      child: DefaultDocumentLayout(
-        document: _doc,
-        showCaret: false,
+      child: SingleColumnDocumentLayout(
+        presenter: SingleColumnLayoutPresenter(
+          document: _doc,
+          componentBuilders: defaultComponentBuilders,
+          pipeline: [
+            SingleColumnStylesheetStyler(stylesheet: defaultStylesheet),
+          ],
+        ),
         componentBuilders: defaultComponentBuilders,
-        extensions: const {
-          textStylesExtensionKey: defaultStyleBuilder,
-        },
       ),
     );
   }

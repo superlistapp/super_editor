@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
+import 'package:super_editor/src/infrastructure/attributed_spans.dart';
 
 import '../core/document.dart';
 import 'box_component.dart';
-import 'styles.dart';
+import 'layout_single_column/layout_single_column.dart';
 
 /// [DocumentNode] for a horizontal rule, which represents a full-width
 /// horizontal separation in a document.
 class HorizontalRuleNode extends BlockNode with ChangeNotifier {
   HorizontalRuleNode({
     required this.id,
-  });
+  }) {
+    putMetadataValue("blockType", const NamedAttribution("horizontalRule"));
+  }
 
   @override
   final String id;
@@ -36,6 +38,90 @@ class HorizontalRuleNode extends BlockNode with ChangeNotifier {
 
   @override
   int get hashCode => id.hashCode;
+}
+
+class HorizontalRuleComponentBuilder implements ComponentBuilder {
+  const HorizontalRuleComponentBuilder();
+
+  @override
+  SingleColumnLayoutComponentViewModel? createViewModel(Document document, DocumentNode node) {
+    if (node is! HorizontalRuleNode) {
+      return null;
+    }
+
+    return HorizontalRuleComponentViewModel(
+      nodeId: node.id,
+      selectionColor: const Color(0x00000000),
+      caretColor: const Color(0x00000000),
+    );
+  }
+
+  @override
+  Widget? createComponent(
+      SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel componentViewModel) {
+    if (componentViewModel is! HorizontalRuleComponentViewModel) {
+      return null;
+    }
+
+    return HorizontalRuleComponent(
+      componentKey: componentContext.componentKey,
+      selection: componentViewModel.selection,
+      selectionColor: componentViewModel.selectionColor,
+      showCaret: componentViewModel.caret != null,
+      caretColor: componentViewModel.caretColor,
+    );
+  }
+}
+
+class HorizontalRuleComponentViewModel extends SingleColumnLayoutComponentViewModel {
+  HorizontalRuleComponentViewModel({
+    required String nodeId,
+    double? maxWidth,
+    EdgeInsetsGeometry padding = EdgeInsets.zero,
+    this.selection,
+    required this.selectionColor,
+    this.caret,
+    required this.caretColor,
+  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
+
+  UpstreamDownstreamNodeSelection? selection;
+  Color selectionColor;
+  UpstreamDownstreamNodePosition? caret;
+  Color caretColor;
+
+  @override
+  HorizontalRuleComponentViewModel copy() {
+    return HorizontalRuleComponentViewModel(
+      nodeId: nodeId,
+      maxWidth: maxWidth,
+      padding: padding,
+      selection: selection,
+      selectionColor: selectionColor,
+      caret: caret,
+      caretColor: caretColor,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      super == other &&
+          other is HorizontalRuleComponentViewModel &&
+          runtimeType == other.runtimeType &&
+          nodeId == other.nodeId &&
+          selection == other.selection &&
+          selectionColor == other.selectionColor &&
+          caret == other.caret &&
+          caretColor == other.caretColor;
+
+  @override
+  int get hashCode =>
+      super.hashCode ^
+      nodeId.hashCode ^
+      selection.hashCode ^
+      selectionColor.hashCode ^
+      caret.hashCode ^
+      caretColor.hashCode;
 }
 
 /// Displays a horizontal rule in a document.
@@ -75,31 +161,4 @@ class HorizontalRuleComponent extends StatelessWidget {
       ),
     );
   }
-}
-
-/// Component builder that returns a [HorizontalRuleComponent] when
-/// [componentContext.documentNode] is a [HorizontalRuleNode].
-Widget? horizontalRuleBuilder(ComponentContext componentContext) {
-  if (componentContext.documentNode is! HorizontalRuleNode) {
-    return null;
-  }
-
-  final selection = componentContext.nodeSelection == null
-      ? null
-      : componentContext.nodeSelection!.nodeSelection as UpstreamDownstreamNodeSelection;
-
-  final showCaret = componentContext.showCaret && selection != null ? componentContext.nodeSelection!.isExtent : false;
-
-  // TODO: centralize this value. It should probably be explicit in ComponentContext, but think about it.
-  final caretColor = (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle?)?.textCaretColor ??
-      const Color(0x00000000);
-
-  return HorizontalRuleComponent(
-    componentKey: componentContext.componentKey,
-    selection: selection,
-    selectionColor: (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle?)?.selectionColor ??
-        const Color(0x00000000),
-    caretColor: caretColor,
-    showCaret: showCaret,
-  );
 }

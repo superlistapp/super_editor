@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
-import 'package:super_editor/src/infrastructure/caret.dart';
+import 'package:super_editor/src/infrastructure/attributed_spans.dart';
 
 import '../core/document.dart';
 import 'box_component.dart';
-import 'styles.dart';
+import 'layout_single_column/layout_single_column.dart';
 
 /// [DocumentNode] that represents an image at a URL.
 class ImageNode extends BlockNode with ChangeNotifier {
@@ -13,8 +12,13 @@ class ImageNode extends BlockNode with ChangeNotifier {
     required this.id,
     required String imageUrl,
     String altText = '',
+    Map<String, dynamic>? metadata,
   })  : _imageUrl = imageUrl,
-        _altText = altText;
+        _altText = altText {
+    this.metadata = metadata;
+
+    putMetadataValue("blockType", const NamedAttribution("image"));
+  }
 
   @override
   final String id;
@@ -64,6 +68,97 @@ class ImageNode extends BlockNode with ChangeNotifier {
   int get hashCode => id.hashCode ^ _imageUrl.hashCode ^ _altText.hashCode;
 }
 
+class ImageComponentBuilder implements ComponentBuilder {
+  const ImageComponentBuilder();
+
+  @override
+  SingleColumnLayoutComponentViewModel? createViewModel(Document document, DocumentNode node) {
+    if (node is! ImageNode) {
+      return null;
+    }
+
+    return ImageComponentViewModel(
+      nodeId: node.id,
+      imageUrl: node.imageUrl,
+      selectionColor: const Color(0x00000000),
+      caretColor: const Color(0x00000000),
+    );
+  }
+
+  @override
+  Widget? createComponent(
+      SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel componentViewModel) {
+    if (componentViewModel is! ImageComponentViewModel) {
+      return null;
+    }
+
+    return ImageComponent(
+      componentKey: componentContext.componentKey,
+      imageUrl: componentViewModel.imageUrl,
+      selection: componentViewModel.selection,
+      selectionColor: componentViewModel.selectionColor,
+      showCaret: componentViewModel.caret != null,
+      caretColor: componentViewModel.caretColor,
+    );
+  }
+}
+
+class ImageComponentViewModel extends SingleColumnLayoutComponentViewModel {
+  ImageComponentViewModel({
+    required String nodeId,
+    double? maxWidth,
+    EdgeInsetsGeometry padding = EdgeInsets.zero,
+    required this.imageUrl,
+    this.selection,
+    required this.selectionColor,
+    this.caret,
+    required this.caretColor,
+  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
+
+  String imageUrl;
+  UpstreamDownstreamNodeSelection? selection;
+  Color selectionColor;
+  UpstreamDownstreamNodePosition? caret;
+  Color caretColor;
+
+  @override
+  ImageComponentViewModel copy() {
+    return ImageComponentViewModel(
+      nodeId: nodeId,
+      maxWidth: maxWidth,
+      padding: padding,
+      imageUrl: imageUrl,
+      selection: selection,
+      selectionColor: selectionColor,
+      caret: caret,
+      caretColor: caretColor,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      super == other &&
+          other is ImageComponentViewModel &&
+          runtimeType == other.runtimeType &&
+          nodeId == other.nodeId &&
+          imageUrl == other.imageUrl &&
+          selection == other.selection &&
+          selectionColor == other.selectionColor &&
+          caret == other.caret &&
+          caretColor == other.caretColor;
+
+  @override
+  int get hashCode =>
+      super.hashCode ^
+      nodeId.hashCode ^
+      imageUrl.hashCode ^
+      selection.hashCode ^
+      selectionColor.hashCode ^
+      caret.hashCode ^
+      caretColor.hashCode;
+}
+
 /// Displays an image in a document.
 class ImageComponent extends StatelessWidget {
   const ImageComponent({
@@ -101,32 +196,4 @@ class ImageComponent extends StatelessWidget {
       ),
     );
   }
-}
-
-/// Component builder that returns an [ImageComponent] when
-/// [componentContext.documentNode] is an [ImageNode].
-Widget? imageBuilder(ComponentContext componentContext) {
-  if (componentContext.documentNode is! ImageNode) {
-    return null;
-  }
-
-  final selection = componentContext.nodeSelection == null
-      ? null
-      : componentContext.nodeSelection!.nodeSelection as UpstreamDownstreamNodeSelection;
-
-  final showCaret = componentContext.showCaret && selection != null ? componentContext.nodeSelection!.isExtent : false;
-
-  // TODO: centralize this value. It should probably be explicit in ComponentContext, but think about it.
-  final caretColor = (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle?)?.textCaretColor ??
-      const Color(0x00000000);
-
-  return ImageComponent(
-    componentKey: componentContext.componentKey,
-    imageUrl: (componentContext.documentNode as ImageNode).imageUrl,
-    selection: selection,
-    selectionColor: (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle?)?.selectionColor ??
-        Colors.transparent,
-    caretColor: caretColor,
-    showCaret: showCaret,
-  );
 }

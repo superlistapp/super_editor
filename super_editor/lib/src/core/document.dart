@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 
@@ -237,7 +237,68 @@ abstract class DocumentNode implements ChangeNotifier {
   /// node, and contains the same content.
   ///
   /// Content equivalency ignores the node ID.
-  bool hasEquivalentContent(DocumentNode other);
+  ///
+  /// Content equivalency is used to determine if two documents are
+  /// equivalent. Corresponding nodes in each document are compared
+  /// with this method.
+  bool hasEquivalentContent(DocumentNode other) {
+    return const DeepCollectionEquality().equals(_metadata, other._metadata);
+  }
+
+  /// Returns all metadata attached to this [DocumentNode].
+  Map<String, dynamic> get metadata => _metadata;
+
+  final Map<String, dynamic> _metadata = {};
+
+  /// Sets all metadata for this [DocumentNode], removing all
+  /// existing values.
+  set metadata(Map<String, dynamic>? newMetadata) {
+    if (const DeepCollectionEquality().equals(_metadata, newMetadata)) {
+      return;
+    }
+
+    _metadata.clear();
+    if (newMetadata != null) {
+      _metadata.addAll(newMetadata);
+    }
+    notifyListeners();
+  }
+
+  /// Returns `true` if this node has a non-null metadata value for
+  /// the given metadata [key], and returns `false`, otherwise.
+  bool hasMetadataValue(String key) => _metadata[key] != null;
+
+  /// Returns this node's metadata value for the given [key].
+  dynamic getMetadataValue(String key) => _metadata[key];
+
+  /// Sets this node's metadata value for the given [key] to the given
+  /// [value], and notifies node listeners that a change has occurred.
+  void putMetadataValue(String key, dynamic value) {
+    if (_metadata[key] == value) {
+      return;
+    }
+
+    _metadata[key] = value;
+    notifyListeners();
+  }
+
+  /// Returns a copy of this node's metadata.
+  Map<String, dynamic> copyMetadata() => Map.from(_metadata);
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is DocumentNode &&
+          runtimeType == other.runtimeType &&
+          const DeepCollectionEquality().equals(_metadata, other._metadata);
+
+  // We return an arbitrary number for the hashCode because the only
+  // data we have is metadata, and different instances of metadata can
+  // be equivalent. If we returned `_metadata.hashCode`, then two
+  // `DocumentNode`s with equivalent metadata would say that they're
+  // unequal, because the hashCodes would be different.
+  @override
+  int get hashCode => 1;
 }
 
 extension InspectNodeAffinity on DocumentNode {

@@ -84,7 +84,6 @@ class _MobileEditingAndroidDemoState extends State<MobileEditingAndroidDemo> {
               editor: _docEditor,
               composer: _composer,
               softwareKeyboardHandler: _softwareKeyboardHandler,
-              padding: const EdgeInsets.all(16),
               gestureMode: DocumentGestureMode.android,
               inputSource: DocumentInputSource.ime,
               androidToolbarBuilder: (_) => AndroidTextEditingFloatingToolbar(
@@ -92,6 +91,9 @@ class _MobileEditingAndroidDemoState extends State<MobileEditingAndroidDemo> {
                 onCopyPressed: () => _docOps.copy(),
                 onPastePressed: () => _docOps.paste(),
                 onSelectAllPressed: () => _docOps.selectAll(),
+              ),
+              stylesheet: defaultStylesheet.copyWith(
+                documentPadding: const EdgeInsets.all(16),
               ),
               createOverlayControlsClipper: (_) => const KeyboardToolbarClipper(),
             ),

@@ -1,4 +1,6 @@
+import 'package:example/demos/example_editor/_task.dart';
 import 'package:flutter/foundation.dart';
+import 'package:example/logging.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/super_editor.dart';
 
@@ -26,8 +28,11 @@ class _ExampleEditorState extends State<ExampleEditor> {
 
   late ScrollController _scrollController;
 
-  OverlayEntry? _formatBarOverlayEntry;
-  final _selectionAnchor = ValueNotifier<Offset?>(null);
+  OverlayEntry? _textFormatBarOverlayEntry;
+  final _textSelectionAnchor = ValueNotifier<Offset?>(null);
+
+  OverlayEntry? _imageFormatBarOverlayEntry;
+  final _imageSelectionAnchor = ValueNotifier<Offset?>(null);
 
   @override
   void initState() {
@@ -46,8 +51,8 @@ class _ExampleEditorState extends State<ExampleEditor> {
 
   @override
   void dispose() {
-    if (_formatBarOverlayEntry != null) {
-      _formatBarOverlayEntry!.remove();
+    if (_textFormatBarOverlayEntry != null) {
+      _textFormatBarOverlayEntry!.remove();
     }
 
     _scrollController.dispose();
@@ -75,6 +80,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
       // More than one node is selected. We don't want to show
       // a toolbar in this case.
       _hideEditorToolbar();
+      _hideImageToolbar();
 
       return;
     }
@@ -82,31 +88,46 @@ class _ExampleEditorState extends State<ExampleEditor> {
       // We only want to show the toolbar when a span of text
       // is selected. Therefore, we ignore collapsed selections.
       _hideEditorToolbar();
+      _hideImageToolbar();
 
       return;
     }
 
-    final textNode = _doc.getNodeById(selection.extent.nodeId);
-    if (textNode is! TextNode) {
+    final selectedNode = _doc.getNodeById(selection.extent.nodeId);
+
+    if (selectedNode is ImageNode) {
+      appLog.fine("Showing image toolbar");
+      // Show the editor's toolbar for image sizing.
+      _showImageToolbar();
+      _hideEditorToolbar();
+      return;
+    } else {
+      // The currently selected content is not an image. We don't
+      // want to show the image toolbar.
+      _hideImageToolbar();
+    }
+
+    if (selectedNode is TextNode) {
+      appLog.fine("Showing text format toolbar");
+      // Show the editor's toolbar for text styling.
+      _showEditorToolbar();
+      _hideImageToolbar();
+      return;
+    } else {
       // The currently selected content is not a paragraph. We don't
       // want to show a toolbar in this case.
       _hideEditorToolbar();
-
-      return;
     }
-
-    // Show the editor's toolbar for text styling.
-    _showEditorToolbar();
   }
 
   void _showEditorToolbar() {
-    if (_formatBarOverlayEntry == null) {
+    if (_textFormatBarOverlayEntry == null) {
       // Create an overlay entry to build the editor toolbar.
       // TODO: add an overlay to the Editor widget to avoid using the
       //       application overlay
-      _formatBarOverlayEntry ??= OverlayEntry(builder: (context) {
+      _textFormatBarOverlayEntry ??= OverlayEntry(builder: (context) {
         return EditorToolbar(
-          anchor: _selectionAnchor,
+          anchor: _textSelectionAnchor,
           editor: _docEditor,
           composer: _composer,
           closeToolbar: _hideEditorToolbar,
@@ -115,14 +136,14 @@ class _ExampleEditorState extends State<ExampleEditor> {
 
       // Display the toolbar in the application overlay.
       final overlay = Overlay.of(context)!;
-      overlay.insert(_formatBarOverlayEntry!);
+      overlay.insert(_textFormatBarOverlayEntry!);
     }
 
     // Schedule a callback after this frame to locate the selection
     // bounds on the screen and display the toolbar near the selected
     // text.
     WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
-      if (_formatBarOverlayEntry == null) {
+      if (_textFormatBarOverlayEntry == null) {
         return;
       }
 
@@ -134,23 +155,23 @@ class _ExampleEditorState extends State<ExampleEditor> {
         docBox.localToGlobal(docBoundingBox.bottomRight, ancestor: context.findRenderObject()),
       );
 
-      _selectionAnchor.value = overlayBoundingBox.topCenter;
+      _textSelectionAnchor.value = overlayBoundingBox.topCenter;
     });
   }
 
   void _hideEditorToolbar() {
     // Null out the selection anchor so that when it re-appears,
     // the bar doesn't momentarily "flash" at its old anchor position.
-    _selectionAnchor.value = null;
+    _textSelectionAnchor.value = null;
 
-    if (_formatBarOverlayEntry != null) {
+    if (_textFormatBarOverlayEntry != null) {
       // Remove the toolbar overlay and null-out the entry.
       // We null out the entry because we can't query whether
       // or not the entry exists in the overlay, so in our
       // case, null implies the entry is not in the overlay,
       // and non-null implies the entry is in the overlay.
-      _formatBarOverlayEntry!.remove();
-      _formatBarOverlayEntry = null;
+      _textFormatBarOverlayEntry!.remove();
+      _textFormatBarOverlayEntry = null;
     }
 
     // Ensure that focus returns to the editor.
@@ -195,6 +216,69 @@ class _ExampleEditorState extends State<ExampleEditor> {
   void _paste() => _docOps.paste();
   void _selectAll() => _docOps.selectAll();
 
+  void _showImageToolbar() {
+    if (_imageFormatBarOverlayEntry == null) {
+      // Create an overlay entry to build the image toolbar.
+      _imageFormatBarOverlayEntry ??= OverlayEntry(builder: (context) {
+        return ImageFormatToolbar(
+          anchor: _imageSelectionAnchor,
+          composer: _composer,
+          setWidth: (nodeId, width) {
+            final node = _doc.getNodeById(nodeId)!;
+            final currentStyles = SingleColumnLayoutComponentStyles.fromMetadata(node);
+            SingleColumnLayoutComponentStyles(
+              width: width,
+              padding: currentStyles.padding,
+            ).applyTo(node);
+          },
+          closeToolbar: _hideImageToolbar,
+        );
+      });
+
+      // Display the toolbar in the application overlay.
+      final overlay = Overlay.of(context)!;
+      overlay.insert(_imageFormatBarOverlayEntry!);
+    }
+
+    // Schedule a callback after this frame to locate the selection
+    // bounds on the screen and display the toolbar near the selected
+    // text.
+    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      if (_imageFormatBarOverlayEntry == null) {
+        return;
+      }
+
+      final docBoundingBox = (_docLayoutKey.currentState as DocumentLayout)
+          .getRectForSelection(_composer.selection!.base, _composer.selection!.extent)!;
+      final docBox = _docLayoutKey.currentContext!.findRenderObject() as RenderBox;
+      final overlayBoundingBox = Rect.fromPoints(
+        docBox.localToGlobal(docBoundingBox.topLeft, ancestor: context.findRenderObject()),
+        docBox.localToGlobal(docBoundingBox.bottomRight, ancestor: context.findRenderObject()),
+      );
+
+      _imageSelectionAnchor.value = overlayBoundingBox.center;
+    });
+  }
+
+  void _hideImageToolbar() {
+    // Null out the selection anchor so that when the bar re-appears,
+    // it doesn't momentarily "flash" at its old anchor position.
+    _imageSelectionAnchor.value = null;
+
+    if (_imageFormatBarOverlayEntry != null) {
+      // Remove the image toolbar overlay and null-out the entry.
+      // We null out the entry because we can't query whether
+      // or not the entry exists in the overlay, so in our
+      // case, null implies the entry is not in the overlay,
+      // and non-null implies the entry is in the overlay.
+      _imageFormatBarOverlayEntry!.remove();
+      _imageFormatBarOverlayEntry = null;
+    }
+
+    // Ensure that focus returns to the editor.
+    _editorFocusNode.requestFocus();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -214,8 +298,13 @@ class _ExampleEditorState extends State<ExampleEditor> {
       focusNode: _editorFocusNode,
       scrollController: _scrollController,
       documentLayoutKey: _docLayoutKey,
-      maxWidth: 600, // arbitrary choice for maximum width
-      padding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),
+      stylesheet: defaultStylesheet.copyWith(
+        addRulesAfter: [taskStyles],
+      ),
+      componentBuilders: [
+        ...defaultComponentBuilders,
+        TaskComponentBuilder(_docEditor),
+      ],
       gestureMode: _gestureMode,
       inputSource: _inputSource,
       androidToolbarBuilder: (_) => AndroidTextEditingFloatingToolbar(
