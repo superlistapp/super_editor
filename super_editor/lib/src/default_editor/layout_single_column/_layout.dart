@@ -1,6 +1,5 @@
 import 'dart:math';
 
-import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/document.dart';
@@ -8,75 +7,107 @@ import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 
-/// Displays a `Document` as a single column.
+import '_presenter.dart';
+
+/// Displays a document in a single-column layout.
 ///
-/// `DefaultDocumentLayout` displays a visual "component" for each
-/// type of node in a given `Document`. The components are positioned
-/// vertically in a column with some space in between.
+/// [SingleColumnDocumentLayout] displays a series of visual "components".
+/// The components are positioned vertically in a column with some space
+/// in between.
 ///
-/// `DefaultDocumentLayout`'s `State` object implements `DocumentLayout`,
+/// The given [presenter] produces component view models, and each of those
+/// component view models are turned into visual components by the given
+/// [componentBuilders].
+///
+/// [SingleColumnDocumentLayout]'s `State` object implements [DocumentLayout],
 /// which establishes a contract for querying many document layout
-/// properties. To use the `DocumentLayout` API, assign a `GlobalKey`
-/// to a `DefaultDocumentLayout`, obtain its `State` object, and then
-/// cast that `State` object to a `DocumentLayout`.
-class DefaultDocumentLayout extends StatefulWidget {
-  const DefaultDocumentLayout({
+/// properties. To use the [DocumentLayout] API, assign a `GlobalKey`
+/// to a [SingleColumnDocumentLayout], obtain its `State` object, and then
+/// cast that `State` object to a [DocumentLayout].
+class SingleColumnDocumentLayout extends StatefulWidget {
+  const SingleColumnDocumentLayout({
     Key? key,
-    required this.document,
-    this.documentSelection,
-    required this.showCaret,
+    required this.presenter,
     required this.componentBuilders,
-    this.margin = EdgeInsets.zero,
-    this.componentVerticalSpacing = 16,
-    this.extensions = const {},
     this.showDebugPaint = false,
   }) : super(key: key);
 
-  /// The `Document` that this layout displays.
-  final Document document;
-
-  /// The selection of a region of a `Document`, used when
-  /// rendering document content, e.g., painting a text selection.
-  final DocumentSelection? documentSelection;
-
-  /// [true] if the document UI should display a caret at the
-  /// selection extent.
-  final bool showCaret;
+  /// Presenter that provides a view model for a complete single-column
+  /// document layout.
+  final SingleColumnLayoutPresenter presenter;
 
   /// Builders for every type of component that this layout displays.
   ///
-  /// Every type of `DocumentNode` that might appear in the displayed
-  /// `document` should have a `ComponentBuilder` that knows how to
-  /// render that piece of content.
+  /// Every type of [SingleColumnLayoutComponentViewModel] that might
+  /// appear in the displayed `document` should have a
+  /// [SingleColumnDocumentComponentBuilder] that knows how to render
+  /// that piece of content.
   final List<ComponentBuilder> componentBuilders;
-
-  /// Space added around the outside of the document.
-  final EdgeInsetsGeometry margin;
-
-  /// The space between sequential components.
-  final double componentVerticalSpacing;
-
-  /// Tools that components might use to build themselves.
-  ///
-  /// `extensions` is used to provide text components with
-  /// a default text styler. `extensions` can be used to
-  /// pass anything else that a component might expect.
-  final Map<String, dynamic> extensions;
 
   /// Adds a debugging UI to the document layout, when true.
   final bool showDebugPaint;
 
   @override
-  _DefaultDocumentLayoutState createState() => _DefaultDocumentLayoutState();
+  _SingleColumnDocumentLayoutState createState() => _SingleColumnDocumentLayoutState();
 }
 
-class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implements DocumentLayout {
+class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout> implements DocumentLayout {
   final Map<String, GlobalKey> _nodeIdsToComponentKeys = {};
 
   // Keys are cached in top-to-bottom order so that we can visually
   // traverse components without repeatedly querying a `Document`
   // to determine component ordering.
   final List<GlobalKey> _topToBottomComponentKeys = [];
+
+  late SingleColumnLayoutPresenterChangeListener _presenterListener;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _presenterListener = SingleColumnLayoutPresenterChangeListener(
+      onPresenterMarkedDirty: _onPresenterMarkedDirty,
+      onViewModelChange: _onViewModelChange,
+    );
+    widget.presenter.addChangeListener(_presenterListener);
+
+    // Build the view model now, so that any further changes to the
+    // presenter send us a dirty notification.
+    widget.presenter.updateViewModel();
+  }
+
+  @override
+  void didUpdateWidget(SingleColumnDocumentLayout oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (widget.presenter != oldWidget.presenter) {
+      oldWidget.presenter.removeChangeListener(_presenterListener);
+      widget.presenter.addChangeListener(_presenterListener);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.presenter.removeChangeListener(_presenterListener);
+    super.dispose();
+  }
+
+  Future<void> _onPresenterMarkedDirty() async {
+    editorLayoutLog.fine("Layout presenter is dirty. Instructing it to update the view model.");
+    widget.presenter.updateViewModel();
+  }
+
+  void _onViewModelChange({
+    required List<String> addedComponents,
+    required List<String> changedComponents,
+    required List<String> removedComponents,
+  }) {
+    if (addedComponents.isNotEmpty || removedComponents.isNotEmpty) {
+      setState(() {
+        // Re-flow the whole layout.
+      });
+    }
+  }
 
   @override
   DocumentPosition? getDocumentPositionAtOffset(Offset documentOffset) {
@@ -168,13 +199,13 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
       componentBoundingBoxes.add(componentBoundingBox);
     } else {
       // Selection across nodes.
-      final selectedNodes = widget.document.getNodesInside(base, extent);
-      topComponent = getComponentByNodeId(selectedNodes.first.id)!;
-      final startPosition = selectedNodes.first.id == base.nodeId ? base.nodePosition : extent.nodePosition;
-      final endPosition = selectedNodes.first.id == extent.nodeId ? extent.nodePosition : base.nodePosition;
+      final selectedNodes = _getNodeIdsBetween(base.nodeId, extent.nodeId);
+      topComponent = getComponentByNodeId(selectedNodes.first)!;
+      final startPosition = selectedNodes.first == base.nodeId ? base.nodePosition : extent.nodePosition;
+      final endPosition = selectedNodes.first == extent.nodeId ? extent.nodePosition : base.nodePosition;
 
       for (int i = 0; i < selectedNodes.length; ++i) {
-        final component = getComponentByNodeId(selectedNodes[i].id)!;
+        final component = getComponentByNodeId(selectedNodes[i])!;
 
         if (i == 0) {
           // This is the first node. The selection goes from
@@ -211,6 +242,23 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
     boundingBox = boundingBox.translate(docOffset.dx, docOffset.dy);
 
     return boundingBox;
+  }
+
+  List<String> _getNodeIdsBetween(String baseNodeId, String extentNodeId) {
+    final baseComponentKey = _nodeIdsToComponentKeys[baseNodeId]!;
+    final baseComponentIndex = _topToBottomComponentKeys.indexOf(baseComponentKey);
+    final extentComponentKey = _nodeIdsToComponentKeys[extentNodeId]!;
+    final extentComponentIndex = _topToBottomComponentKeys.indexOf(extentComponentKey);
+
+    final topNodeIndex = baseComponentIndex <= extentComponentIndex ? baseComponentIndex : extentComponentIndex;
+    final bottomNodeIndex = topNodeIndex == baseComponentIndex ? extentComponentIndex : baseComponentIndex;
+    final componentsInside = _topToBottomComponentKeys.sublist(topNodeIndex, bottomNodeIndex + 1);
+
+    return componentsInside.map((componentKey) {
+      return _nodeIdsToComponentKeys.entries.firstWhere((entry) {
+        return entry.value == componentKey;
+      }).key;
+    }).toList();
   }
 
   @override
@@ -451,70 +499,50 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
   @override
   Widget build(BuildContext context) {
     editorLayoutLog.fine("Building document layout");
-    final docComponents = _buildDocComponents();
-
     return Padding(
-      padding: widget.margin,
+      padding: widget.presenter.viewModel.padding,
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          for (final docComponent in docComponents) ...[
-            docComponent,
-            SizedBox(height: widget.componentVerticalSpacing),
-          ],
-        ],
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: _buildDocComponents(),
       ),
     );
   }
 
   List<Widget> _buildDocComponents() {
+    editorLayoutLog.fine('Building all document layout components');
+
     final docComponents = <Widget>[];
     final newComponentKeys = <String, GlobalKey>{};
     _topToBottomComponentKeys.clear();
 
-    editorLayoutLog.finer('_buildDocComponents()');
-
-    final selectedNodes = widget.documentSelection != null
-        ? widget.document.getNodesInside(
-            widget.documentSelection!.base,
-            widget.documentSelection!.extent,
-          )
-        : const <DocumentNode>[];
-
-    final extensions = Map.from(widget.extensions);
-    extensions['showDebugPaint'] = widget.showDebugPaint;
-
-    for (final docNode in widget.document.nodes) {
-      final componentKey = _createOrTransferComponentKey(
+    final viewModel = widget.presenter.viewModel;
+    editorLayoutLog.fine("Rendering layout view model: ${viewModel.hashCode}");
+    for (final componentViewModel in viewModel.componentViewModels) {
+      final componentKey = _obtainComponentKeyForDocumentNode(
         newComponentKeyMap: newComponentKeys,
-        nodeId: docNode.id,
+        nodeId: componentViewModel.nodeId,
       );
-      editorLayoutLog.finer('Node -> Key: ${docNode.id} -> $componentKey');
+      editorLayoutLog.finer('Node -> Key: ${componentViewModel.nodeId} -> $componentKey');
 
       _topToBottomComponentKeys.add(componentKey);
 
-      final nodeSelection = _computeNodeSelection(
-        selectedNodes: selectedNodes,
-        nodeId: docNode.id,
+      docComponents.add(
+        // Rebuilds whenever this particular component view model changes
+        // within the overall layout view model.
+        _PresenterComponentBuilder(
+          presenter: widget.presenter,
+          watchNode: componentViewModel.nodeId,
+          builder: (context, newComponentViewModel) {
+            // Converts the component view model into a widget.
+            return _Component(
+              componentBuilders: widget.componentBuilders,
+              componentKey: componentKey,
+              componentViewModel: newComponentViewModel,
+            );
+          },
+        ),
       );
-
-      final component = _buildComponent(ComponentContext(
-        context: context,
-        document: widget.document,
-        documentSelection: widget.documentSelection,
-        documentNode: docNode,
-        componentKey: componentKey,
-        showCaret: widget.showCaret,
-        nodeSelection: nodeSelection,
-        extensions: widget.extensions,
-      ));
-
-      if (component != null) {
-        docComponents.add(component);
-      } else {
-        editorLayoutLog.info('Failed to build component for node: $docNode');
-      }
     }
 
     _nodeIdsToComponentKeys
@@ -529,10 +557,13 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
     return docComponents;
   }
 
-  // TODO: try assigning a new GlobalKey every time and see if it breaks
-  //       anything. If it doesn't break anything, or hurt performance,
-  //       then replace this behavior with regular GlobalKey instantiation (#51)
-  GlobalKey _createOrTransferComponentKey({
+  /// Obtains a `GlobalKey` that should be attached to the component
+  /// that represents the given [nodeId].
+  ///
+  /// If a key was already created for the given [nodeId], that same
+  /// key is returned. Otherwise, a new key is created, stored for
+  /// later, and returned.
+  GlobalKey _obtainComponentKeyForDocumentNode({
     required Map<String, GlobalKey> newComponentKeyMap,
     required String nodeId,
   }) {
@@ -543,113 +574,134 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
     }
     return newComponentKeyMap[nodeId]!;
   }
+}
 
-  /// Computes the `DocumentNodeSelection` for the individual `nodeId` based on
-  /// the total list of selected nodes.
-  DocumentNodeSelection? _computeNodeSelection({
-    required List<DocumentNode> selectedNodes,
-    required String nodeId,
-  }) {
-    if (widget.documentSelection == null) {
-      return null;
-    }
-    final documentSelection = widget.documentSelection!;
+class _PresenterComponentBuilder extends StatefulWidget {
+  const _PresenterComponentBuilder({
+    Key? key,
+    required this.presenter,
+    required this.watchNode,
+    required this.builder,
+  }) : super(key: key);
 
-    editorLayoutLog.finer('_computeNodeSelection(): $nodeId');
-    editorLayoutLog.finer(' - base: ${documentSelection.base.nodeId}');
-    editorLayoutLog.finer(' - extent: ${documentSelection.extent.nodeId}');
+  final SingleColumnLayoutPresenter presenter;
+  final String watchNode;
+  final Widget Function(BuildContext, SingleColumnLayoutComponentViewModel) builder;
 
-    final node = widget.document.getNodeById(nodeId);
-    if (node == null) {
-      return null;
-    }
+  @override
+  _PresenterComponentBuilderState createState() => _PresenterComponentBuilderState();
+}
 
-    if (documentSelection.base.nodeId == documentSelection.extent.nodeId) {
-      editorLayoutLog.finer(' - selection is within 1 node.');
-      if (documentSelection.base.nodeId != nodeId) {
-        // Only 1 node is selected and its not the node we're interested in. Return.
-        editorLayoutLog.finer(' - this node is not selected. Returning null.');
-        return null;
-      }
+class _PresenterComponentBuilderState extends State<_PresenterComponentBuilder> {
+  late SingleColumnLayoutPresenterChangeListener _presenterListener;
 
-      editorLayoutLog.finer(' - this node has the selection');
-      final baseNodePosition = documentSelection.base.nodePosition;
-      final extentNodePosition = documentSelection.extent.nodePosition;
-      final nodeSelection = node.computeSelection(base: baseNodePosition, extent: extentNodePosition);
-      editorLayoutLog.finer(' - node selection: $nodeSelection');
+  @override
+  void initState() {
+    super.initState();
 
-      return DocumentNodeSelection(
-        nodeId: nodeId,
-        nodeSelection: nodeSelection,
-        isBase: true,
-        isExtent: true,
-      );
-    } else {
-      // Log all the selected nodes.
-      editorLayoutLog.finer(' - selection contains multiple nodes:');
-      for (final node in selectedNodes) {
-        editorLayoutLog.finer('   - ${node.id}');
-      }
+    _presenterListener = SingleColumnLayoutPresenterChangeListener(
+      onViewModelChange: _onViewModelChange,
+    );
+    widget.presenter.addChangeListener(_presenterListener);
+  }
 
-      if (selectedNodes.firstWhereOrNull((selectedNode) => selectedNode.id == nodeId) == null) {
-        // The document selection does not contain the node we're interested in. Return.
-        editorLayoutLog.finer(' - this node is not in the selection');
-        return null;
-      }
+  @override
+  void didUpdateWidget(_PresenterComponentBuilder oldWidget) {
+    super.didUpdateWidget(oldWidget);
 
-      if (selectedNodes.first.id == nodeId) {
-        editorLayoutLog.finer(' - this is the first node in the selection');
-        // Multiple nodes are selected and the node that we're interested in
-        // is the top node in that selection. Therefore, this node is
-        // selected from a position down to its bottom.
-        final isBase = nodeId == documentSelection.base.nodeId;
-        return DocumentNodeSelection(
-          nodeId: nodeId,
-          nodeSelection: node.computeSelection(
-            base: isBase ? documentSelection.base.nodePosition : node.endPosition,
-            extent: isBase ? node.endPosition : documentSelection.extent.nodePosition,
-          ),
-          isBase: isBase,
-          isExtent: !isBase,
-        );
-      } else if (selectedNodes.last.id == nodeId) {
-        editorLayoutLog.finer(' - this is the last node in the selection');
-        // Multiple nodes are selected and the node that we're interested in
-        // is the bottom node in that selection. Therefore, this node is
-        // selected from the beginning down to some position.
-        final isBase = nodeId == documentSelection.base.nodeId;
-        return DocumentNodeSelection(
-          nodeId: nodeId,
-          nodeSelection: node.computeSelection(
-            base: isBase ? node.beginningPosition : node.beginningPosition,
-            extent: isBase ? documentSelection.base.nodePosition : documentSelection.extent.nodePosition,
-          ),
-          isBase: isBase,
-          isExtent: !isBase,
-        );
-      } else {
-        editorLayoutLog.finer(' - this node is fully selected within the selection');
-        // Multiple nodes are selected and this node is neither the top
-        // or the bottom node, therefore this entire node is selected.
-        return DocumentNodeSelection(
-          nodeId: nodeId,
-          nodeSelection: node.computeSelection(
-            base: node.beginningPosition,
-            extent: node.endPosition,
-          ),
-        );
-      }
+    if (widget.presenter != oldWidget.presenter) {
+      oldWidget.presenter.removeChangeListener(_presenterListener);
+      widget.presenter.addChangeListener(_presenterListener);
     }
   }
 
-  Widget? _buildComponent(ComponentContext componentContext) {
-    for (final componentBuilder in widget.componentBuilders) {
-      final component = componentBuilder(componentContext);
+  @override
+  void dispose() {
+    widget.presenter.removeChangeListener(_presenterListener);
+    super.dispose();
+  }
+
+  void _onViewModelChange({
+    required List<String> addedComponents,
+    required List<String> changedComponents,
+    required List<String> removedComponents,
+  }) {
+    if (changedComponents.contains(widget.watchNode)) {
+      setState(() {
+        // Re-build.
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    editorImeLog.fine("Building component: ${widget.watchNode}");
+
+    final viewModel = widget
+        .presenter //
+        .viewModel //
+        .getComponentViewModelByNodeId(widget.watchNode)!;
+
+    return widget.builder(context, viewModel);
+  }
+}
+
+/// Builds a component widget for the given [componentViewModel] and
+/// binds it to the given [componentKey].
+///
+/// The specific widget that's build is determined by the given
+/// [componentBuilders]. The component widget is rebuilt whenever the
+/// given [presenter] reports that the
+class _Component extends StatelessWidget {
+  const _Component({
+    Key? key,
+    required this.componentBuilders,
+    required this.componentViewModel,
+    required this.componentKey,
+    this.showDebugPaint = false,
+  }) : super(key: key);
+
+  /// Builders for every type of component that this layout displays.
+  ///
+  /// Every type of `DocumentNode` that might appear in the displayed
+  /// `document` should have a `ComponentBuilder` that knows how to
+  /// render that piece of content.
+  final List<ComponentBuilder> componentBuilders;
+
+  /// Global key that will be attached to the root of the component
+  /// widget sub-tree.
+  final GlobalKey componentKey;
+
+  /// The visual configuration for the component that needs to be built.
+  final SingleColumnLayoutComponentViewModel componentViewModel;
+
+  /// Whether to add debug paint to the component.
+  final bool showDebugPaint;
+
+  @override
+  Widget build(BuildContext context) {
+    final componentContext = SingleColumnDocumentComponentContext(
+      context: context,
+      componentKey: componentKey,
+    );
+    for (final componentBuilder in componentBuilders) {
+      var component = componentBuilder.createComponent(componentContext, componentViewModel);
       if (component != null) {
-        return widget.showDebugPaint ? _wrapWithDebugWidget(component) : component;
+        component = ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: componentViewModel.maxWidth ?? double.infinity),
+          child: SizedBox(
+            width: double.infinity,
+            child: Padding(
+              padding: componentViewModel.padding,
+              child: component,
+            ),
+          ),
+        );
+
+        return showDebugPaint ? _wrapWithDebugWidget(component) : component;
       }
     }
-    return null;
+    return const SizedBox();
   }
 
   Widget _wrapWithDebugWidget(Widget component) {

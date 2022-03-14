@@ -1,7 +1,6 @@
 import 'dart:collection';
 import 'dart:math';
 
-import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' hide SelectableText;
 import 'package:flutter/services.dart';
@@ -10,6 +9,7 @@ import 'package:super_editor/src/core/document_editor.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/edit_context.dart';
+import 'package:super_editor/src/core/styles.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_spans.dart';
 import 'package:super_editor/src/infrastructure/attributed_text.dart';
@@ -20,14 +20,15 @@ import 'package:super_editor/src/infrastructure/strings.dart';
 import 'package:super_editor/src/infrastructure/super_selectable_text.dart';
 
 import 'document_input_keyboard.dart';
+import 'layout_single_column/layout_single_column.dart';
 
-class TextNode with ChangeNotifier implements DocumentNode {
+class TextNode extends DocumentNode with ChangeNotifier {
   TextNode({
     required this.id,
     required AttributedText text,
     Map<String, dynamic>? metadata,
-  })  : _text = text,
-        _metadata = metadata ?? {} {
+  }) : _text = text {
+    this.metadata = metadata;
     _text.addListener(notifyListeners);
   }
 
@@ -41,6 +42,8 @@ class TextNode with ChangeNotifier implements DocumentNode {
   final String id;
 
   AttributedText _text;
+
+  /// The content text within this [TextNode].
   AttributedText get text => _text;
   set text(AttributedText newText) {
     if (newText != _text) {
@@ -51,9 +54,6 @@ class TextNode with ChangeNotifier implements DocumentNode {
       notifyListeners();
     }
   }
-
-  final Map<String, dynamic> _metadata;
-  Map<String, dynamic> get metadata => _metadata;
 
   @override
   TextNodePosition get beginningPosition => const TextNodePosition(offset: 0);
@@ -108,23 +108,19 @@ class TextNode with ChangeNotifier implements DocumentNode {
 
   @override
   bool hasEquivalentContent(DocumentNode other) {
-    return other is TextNode && text == other.text && const DeepCollectionEquality().equals(metadata, other.metadata);
+    return other is TextNode && text == other.text && super.hasEquivalentContent(other);
   }
 
   @override
-  String toString() => '[TextNode] - text: $text, metadata: $metadata';
+  String toString() => '[TextNode] - text: $text, metadata: ${copyMetadata()}';
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is TextNode &&
-          runtimeType == other.runtimeType &&
-          id == other.id &&
-          _text == other._text &&
-          const DeepCollectionEquality.unordered().equals(_metadata, other._metadata);
+      super == other && other is TextNode && runtimeType == other.runtimeType && id == other.id && _text == other._text;
 
   @override
-  int get hashCode => id.hashCode ^ _text.hashCode ^ _metadata.hashCode;
+  int get hashCode => super.hashCode ^ id.hashCode ^ _text.hashCode;
 }
 
 extension DocumentSelectionWithText on Document {
@@ -248,6 +244,52 @@ class TextNodePosition extends TextPosition implements NodePosition {
 
   @override
   int get hashCode => super.hashCode ^ super.offset.hashCode;
+}
+
+/// Mixin for all [SingleColumnLayoutComponentViewModel]s that represent
+/// a text-based block, e.g., paragraph, blockquote, list item.
+///
+/// This mixin enforces a consistent contract for all such view models.
+/// Each view model can add more properties, but they must at least
+/// support the properties in this mixin. Additionally, [applyStyles]
+/// provides consistent application of text-based styling for all
+/// view models that add this mixin.
+mixin TextComponentViewModel on SingleColumnLayoutComponentViewModel {
+  AttributionStyleBuilder get textStyleBuilder;
+  set textStyleBuilder(AttributionStyleBuilder styleBuilder);
+
+  TextDirection get textDirection;
+  set textDirection(TextDirection direction);
+
+  TextAlign get textAlignment;
+  set textAlignment(TextAlign alignment);
+
+  TextSelection? get selection;
+  set selection(TextSelection? selection);
+
+  Color get selectionColor;
+  set selectionColor(Color color);
+
+  TextPosition? get caret;
+  set caret(TextPosition? position);
+
+  Color get caretColor;
+  set caretColor(Color color);
+
+  bool get highlightWhenEmpty;
+  set highlightWhenEmpty(bool highlight);
+
+  @override
+  void applyStyles(Map<String, dynamic> styles) {
+    super.applyStyles(styles);
+
+    textStyleBuilder = (attributions) {
+      final baseStyle = styles["textStyle"] ?? noStyleBuilder({});
+      final inlineTextStyler = styles["inlineTextStyler"] as AttributionStyleAdjuster;
+
+      return inlineTextStyler(attributions, baseStyle);
+    };
+  }
 }
 
 /// Document component that displays hint text when its content text

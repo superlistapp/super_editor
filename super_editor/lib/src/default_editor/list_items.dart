@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/attributed_spans.dart';
 import 'package:super_editor/src/infrastructure/attributed_text.dart';
 
 import '../core/document.dart';
 import '../core/document_editor.dart';
 import 'document_input_keyboard.dart';
+import 'layout_single_column/layout_single_column.dart';
 import 'paragraph.dart';
-import 'styles.dart';
 import 'text.dart';
 
 final _log = Logger(scope: 'list_items.dart');
@@ -26,7 +26,9 @@ class ListItemNode extends TextNode {
           id: id,
           text: text,
           metadata: metadata,
-        );
+        ) {
+    putMetadataValue("blockType", const NamedAttribution("listItem"));
+  }
 
   ListItemNode.unordered({
     required String id,
@@ -39,7 +41,9 @@ class ListItemNode extends TextNode {
           id: id,
           text: text,
           metadata: metadata,
-        );
+        ) {
+    putMetadataValue("blockType", const NamedAttribution("listItem"));
+  }
 
   ListItemNode({
     required String id,
@@ -89,6 +93,174 @@ enum ListItemType {
   unordered,
 }
 
+class ListItemComponentBuilder implements ComponentBuilder {
+  const ListItemComponentBuilder();
+
+  @override
+  SingleColumnLayoutComponentViewModel? createViewModel(Document document, DocumentNode node) {
+    if (node is! ListItemNode) {
+      return null;
+    }
+
+    int? ordinalValue;
+    if (node.type == ListItemType.ordered) {
+      ordinalValue = 1;
+      DocumentNode? nodeAbove = document.getNodeBefore(node);
+      while (nodeAbove != null &&
+          nodeAbove is ListItemNode &&
+          nodeAbove.type == ListItemType.ordered &&
+          nodeAbove.indent >= node.indent) {
+        if (nodeAbove.indent == node.indent) {
+          ordinalValue = ordinalValue! + 1;
+        }
+        nodeAbove = document.getNodeBefore(nodeAbove);
+      }
+    }
+
+    return ListItemComponentViewModel(
+      nodeId: node.id,
+      type: node.type,
+      indent: node.indent,
+      ordinalValue: ordinalValue,
+      text: node.text,
+      textStyleBuilder: noStyleBuilder,
+      selectionColor: const Color(0x00000000),
+      caretColor: const Color(0x00000000),
+    );
+  }
+
+  @override
+  Widget? createComponent(
+      SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel componentViewModel) {
+    if (componentViewModel is! ListItemComponentViewModel) {
+      return null;
+    }
+
+    if (componentViewModel.type == ListItemType.unordered) {
+      return UnorderedListItemComponent(
+        textKey: componentContext.componentKey,
+        text: componentViewModel.text,
+        styleBuilder: componentViewModel.textStyleBuilder,
+        indent: componentViewModel.indent,
+        textSelection: componentViewModel.selection,
+        selectionColor: componentViewModel.selectionColor,
+        showCaret: componentViewModel.caret != null,
+        caretColor: componentViewModel.caretColor,
+      );
+    } else if (componentViewModel.type == ListItemType.ordered) {
+      return OrderedListItemComponent(
+        textKey: componentContext.componentKey,
+        indent: componentViewModel.indent,
+        listIndex: componentViewModel.ordinalValue!,
+        text: componentViewModel.text,
+        styleBuilder: componentViewModel.textStyleBuilder,
+        textSelection: componentViewModel.selection,
+        selectionColor: componentViewModel.selectionColor,
+        showCaret: componentViewModel.caret != null,
+        caretColor: componentViewModel.caretColor,
+      );
+    }
+
+    editorLayoutLog
+        .warning("Tried to build a component for a list item view model without a list item type: $componentViewModel");
+    return null;
+  }
+}
+
+class ListItemComponentViewModel extends SingleColumnLayoutComponentViewModel with TextComponentViewModel {
+  ListItemComponentViewModel({
+    required String nodeId,
+    double? maxWidth,
+    EdgeInsetsGeometry padding = EdgeInsets.zero,
+    required this.type,
+    this.ordinalValue,
+    required this.indent,
+    required this.text,
+    required this.textStyleBuilder,
+    this.textDirection = TextDirection.ltr,
+    this.textAlignment = TextAlign.left,
+    this.selection,
+    required this.selectionColor,
+    this.caret,
+    required this.caretColor,
+    this.highlightWhenEmpty = false,
+  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
+
+  ListItemType type;
+  int? ordinalValue;
+  int indent;
+  AttributedText text;
+
+  @override
+  AttributionStyleBuilder textStyleBuilder;
+  @override
+  TextDirection textDirection;
+  @override
+  TextAlign textAlignment;
+  @override
+  TextSelection? selection;
+  @override
+  Color selectionColor;
+  @override
+  TextPosition? caret;
+  @override
+  Color caretColor;
+  @override
+  bool highlightWhenEmpty;
+
+  @override
+  ListItemComponentViewModel copy() {
+    return ListItemComponentViewModel(
+      nodeId: nodeId,
+      maxWidth: maxWidth,
+      padding: padding,
+      type: type,
+      ordinalValue: ordinalValue,
+      indent: indent,
+      text: text,
+      textStyleBuilder: textStyleBuilder,
+      textDirection: textDirection,
+      selection: selection,
+      selectionColor: selectionColor,
+      caret: caret,
+      caretColor: caretColor,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      super == other &&
+          other is ListItemComponentViewModel &&
+          runtimeType == other.runtimeType &&
+          nodeId == other.nodeId &&
+          type == other.type &&
+          ordinalValue == other.ordinalValue &&
+          indent == other.indent &&
+          text == other.text &&
+          textStyleBuilder == other.textStyleBuilder &&
+          textDirection == other.textDirection &&
+          selection == other.selection &&
+          selectionColor == other.selectionColor &&
+          caret == other.caret &&
+          caretColor == other.caretColor;
+
+  @override
+  int get hashCode =>
+      super.hashCode ^
+      nodeId.hashCode ^
+      type.hashCode ^
+      ordinalValue.hashCode ^
+      indent.hashCode ^
+      text.hashCode ^
+      textStyleBuilder.hashCode ^
+      textDirection.hashCode ^
+      selection.hashCode ^
+      selectionColor.hashCode ^
+      caret.hashCode ^
+      caretColor.hashCode;
+}
+
 /// Displays a un-ordered list item in a document.
 ///
 /// Supports various indentation levels, e.g., 1, 2, 3, ...
@@ -124,8 +296,8 @@ class UnorderedListItemComponent extends StatelessWidget {
   Widget build(BuildContext context) {
     final textStyle = styleBuilder({});
     final indentSpace = indentCalculator(textStyle, indent);
-    final lineHeight = textStyle.fontSize! * 1.25;
-    const manualVerticalAdjustment = 2.0;
+    final lineHeight = textStyle.fontSize! * (textStyle.height ?? 1.25);
+    const manualVerticalAdjustment = 3.0;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -212,17 +384,14 @@ class OrderedListItemComponent extends StatelessWidget {
   Widget build(BuildContext context) {
     final textStyle = styleBuilder({});
     final indentSpace = indentCalculator(textStyle, indent);
-    final lineHeight = textStyle.fontSize!;
-    const manualVerticalAdjustment = 2.0;
-    final manualHeightAdjustment = lineHeight * 0.15;
+    final lineHeight = textStyle.fontSize! * (textStyle.height ?? 1.0);
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
           width: indentSpace,
-          height: lineHeight + manualHeightAdjustment,
-          margin: const EdgeInsets.only(top: manualVerticalAdjustment),
+          height: lineHeight,
           decoration: BoxDecoration(
             border: showDebugPaint ? Border.all(width: 1, color: Colors.grey) : null,
           ),
@@ -513,67 +682,4 @@ ExecutionInstruction splitListItemWhenEnterPressed({
 
   final didSplitListItem = editContext.commonOps.insertBlockLevelNewline();
   return didSplitListItem ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
-}
-
-Widget? unorderedListItemBuilder(ComponentContext componentContext) {
-  final listItemNode = componentContext.documentNode;
-  if (listItemNode is! ListItemNode) {
-    return null;
-  }
-
-  if (listItemNode.type != ListItemType.unordered) {
-    return null;
-  }
-
-  final textSelection = componentContext.nodeSelection?.nodeSelection as TextSelection?;
-  final showCaret = componentContext.showCaret && (componentContext.nodeSelection?.isExtent ?? false);
-
-  return UnorderedListItemComponent(
-    textKey: componentContext.componentKey,
-    text: listItemNode.text,
-    styleBuilder: componentContext.extensions[textStylesExtensionKey],
-    indent: listItemNode.indent,
-    textSelection: textSelection,
-    selectionColor: (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle).selectionColor,
-    showCaret: showCaret,
-    caretColor: (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle).textCaretColor,
-  );
-}
-
-Widget? orderedListItemBuilder(ComponentContext componentContext) {
-  final listItemNode = componentContext.documentNode;
-  if (listItemNode is! ListItemNode) {
-    return null;
-  }
-
-  if (listItemNode.type != ListItemType.ordered) {
-    return null;
-  }
-
-  int index = 1;
-  DocumentNode? nodeAbove = componentContext.document.getNodeBefore(listItemNode);
-  while (nodeAbove != null &&
-      nodeAbove is ListItemNode &&
-      nodeAbove.type == ListItemType.ordered &&
-      nodeAbove.indent >= listItemNode.indent) {
-    if (nodeAbove.indent == listItemNode.indent) {
-      index += 1;
-    }
-    nodeAbove = componentContext.document.getNodeBefore(nodeAbove);
-  }
-
-  final textSelection = componentContext.nodeSelection?.nodeSelection as TextSelection?;
-  final showCaret = componentContext.showCaret && (componentContext.nodeSelection?.isExtent ?? false);
-
-  return OrderedListItemComponent(
-    textKey: componentContext.componentKey,
-    listIndex: index,
-    text: listItemNode.text,
-    styleBuilder: componentContext.extensions[textStylesExtensionKey],
-    textSelection: textSelection,
-    selectionColor: (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle).selectionColor,
-    showCaret: showCaret,
-    caretColor: (componentContext.extensions[selectionStylesExtensionKey] as SelectionStyle).textCaretColor,
-    indent: listItemNode.indent,
-  );
 }

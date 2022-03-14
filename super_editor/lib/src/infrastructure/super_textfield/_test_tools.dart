@@ -32,11 +32,22 @@ extension SuperTextFieldTesting on WidgetTester {
     final textPositionOffset = textField.textLayout.getOffsetForCaret(TextPosition(offset: offset));
     final textFieldBox = textField.context.findRenderObject() as RenderBox;
 
-    if (!textFieldBox.size.contains(textPositionOffset)) {
+    // There's a problem on Windows and Linux where we get -0.0 instead 0.0.
+    // We adjust the offset to get rid of the -0.0, because a -0.0 fails the
+    // Rect bounds check. (https://github.com/flutter/flutter/issues/100033)
+    final adjustedOffset = Offset(
+      textPositionOffset.dx,
+      // I tried checking "== -0.0" but it didn't catch the problem. This
+      // approach looks for an arbitrarily small epsilon and then interprets
+      // any such bounds as zero.
+      textPositionOffset.dy.abs() < 1e-6 ? 0.0 : textPositionOffset.dy,
+    );
+
+    if (!textFieldBox.size.contains(adjustedOffset)) {
       return false;
     }
 
-    final globalTapOffset = textPositionOffset + textFieldBox.localToGlobal(Offset.zero);
+    final globalTapOffset = adjustedOffset + textFieldBox.localToGlobal(Offset.zero);
     await tapAt(globalTapOffset);
     return true;
   }

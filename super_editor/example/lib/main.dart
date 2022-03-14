@@ -11,10 +11,12 @@ import 'package:example/demos/example_editor/example_editor.dart';
 import 'package:example/demos/flutter_features/demo_inline_widgets.dart';
 import 'package:example/demos/flutter_features/textinputclient/basic_text_input_client.dart';
 import 'package:example/demos/scrolling/demo_task_and_chat_with_customscrollview.dart';
+import 'package:example/demos/styles/demo_doc_styles.dart';
 import 'package:example/demos/supertextfield/ios/demo_superiostextfield.dart';
 import 'package:example/demos/flutter_features/textinputclient/textfield.dart';
 import 'package:example/demos/sliver_example_editor.dart';
 import 'package:example/demos/supertextfield/demo_textfield.dart';
+import 'package:example/logging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -31,7 +33,15 @@ import 'demos/supertextfield/android/demo_superandroidtextfield.dart';
 /// Demo of a basic text editor, as well as various widgets that
 /// are available in this package.
 Future<void> main() async {
-  initLoggers(Level.FINE, {editorGesturesLog, editorImeLog, editorLayoutLog});
+  initLoggers(Level.FINE, {
+    editorGesturesLog,
+    editorImeLog,
+    editorKeyLog,
+    editorOpsLog,
+    editorLayoutLog,
+    editorDocLog,
+    appLog,
+  });
 
   runApp(SuperEditorDemoApp());
 }
@@ -206,6 +216,18 @@ final _menu = <_MenuGroup>[
         title: 'RTL Demo',
         pageBuilder: (context) {
           return RTLDemo();
+        },
+      ),
+    ],
+  ),
+  _MenuGroup(
+    title: 'STYLES',
+    items: [
+      _MenuItem(
+        icon: Icons.style,
+        title: 'Document Styles',
+        pageBuilder: (context) {
+          return const DocumentStylesDemo();
         },
       ),
     ],

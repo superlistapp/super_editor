@@ -298,8 +298,8 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     }
   }
 
-  void _onTapDown(TapDownDetails details) {
-    editorGesturesLog.info("Tap down on document");
+  void _onTapUp(TapUpDetails details) {
+    editorGesturesLog.info("Tap up on document");
     final docOffset = _getDocOffset(details.localPosition);
     editorGesturesLog.fine(" - document offset: $docOffset");
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
@@ -322,10 +322,11 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
       } else {
         // Place the document selection at the location where the
         // user tapped.
-        _clearSelection();
         _selectionType = SelectionType.position;
         _selectPosition(docPosition);
       }
+    } else {
+      _clearSelection();
     }
   }
 
@@ -883,7 +884,7 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
           () => TapSequenceGestureRecognizer(),
           (TapSequenceGestureRecognizer recognizer) {
             recognizer
-              ..onTapDown = _onTapDown
+              ..onTapUp = _onTapUp
               ..onDoubleTapDown = _onDoubleTapDown
               ..onDoubleTap = _onDoubleTap
               ..onTripleTapDown = _onTripleTapDown

@@ -1,17 +1,28 @@
 import 'package:flutter/widgets.dart';
-import 'package:super_editor/src/core/document_layout.dart';
+import 'package:super_editor/src/infrastructure/_logging.dart';
 
-/// Builds an `UnknownComponent` for any given `componentContext`.
-///
-/// This builder always returns an `UnknownComponent`. It never
-/// returns `null`.
-Widget unknownComponentBuilder(ComponentContext componentContext) {
-  return SizedBox(
-    key: componentContext.componentKey,
-    width: double.infinity,
-    height: 100,
-    child: const Placeholder(),
-  );
+import '../core/document.dart';
+import 'layout_single_column/layout_single_column.dart';
+
+class UnknownComponentBuilder implements ComponentBuilder {
+  const UnknownComponentBuilder();
+
+  @override
+  SingleColumnLayoutComponentViewModel? createViewModel(Document document, DocumentNode node) {
+    return null;
+  }
+
+  @override
+  Widget? createComponent(
+      SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel componentViewModel) {
+    editorLayoutLog.warning("Building component widget for unknown component: $componentViewModel");
+    return SizedBox(
+      key: componentContext.componentKey,
+      width: double.infinity,
+      height: 100,
+      child: const Placeholder(),
+    );
+  }
 }
 
 /// Displays a `Placeholder` widget within a document layout.

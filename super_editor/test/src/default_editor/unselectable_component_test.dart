@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
 import 'package:super_editor/super_editor.dart';
 
 import 'test_documents.dart';
@@ -23,7 +22,7 @@ void main() {
     testWidgets("accepts selection when caret moves down from upstream node", (tester) async {
       final composer = DocumentComposer(
         initialSelection: const DocumentSelection.collapsed(
-          position: DocumentPosition(nodeId: "1", nodePosition: TextNodePosition(offset: 11)),
+          position: DocumentPosition(nodeId: "1", nodePosition: TextNodePosition(offset: 37)),
         ),
       );
       await tester.pumpWidget(_buildEditorWithSelectableHrs(paragraphThenHrThenParagraphDoc(), composer));
@@ -38,7 +37,7 @@ void main() {
     testWidgets("accepts selection when selection expands down from upstream node", (tester) async {
       final composer = DocumentComposer(
         initialSelection: const DocumentSelection.collapsed(
-          position: DocumentPosition(nodeId: "1", nodePosition: TextNodePosition(offset: 11)),
+          position: DocumentPosition(nodeId: "1", nodePosition: TextNodePosition(offset: 37)),
         ),
       );
       await tester.pumpWidget(_buildEditorWithSelectableHrs(paragraphThenHrThenParagraphDoc(), composer));
@@ -382,6 +381,20 @@ Widget _buildEditorWithSelectableHrs(MutableDocument document, DocumentComposer 
       body: SuperEditor(
         editor: editor,
         composer: composer,
+        // Make the text small so that the test paragraphs fit on a single
+        // line, so that we can place the caret on the left/right halves
+        // of lines, as needed.
+        stylesheet: defaultStylesheet.copyWith(
+          addRulesAfter: [
+            StyleRule(const BlockSelector.all(), (doc, node) {
+              return {
+                "textStyle": const TextStyle(
+                  fontSize: 12,
+                ),
+              };
+            })
+          ],
+        ),
         autofocus: true,
         gestureMode: DocumentGestureMode.mouse,
       ),
@@ -397,9 +410,23 @@ Widget _buildEditorWithUnselectableHrs(MutableDocument document, DocumentCompose
       body: SuperEditor(
         editor: editor,
         composer: composer,
+        // Make the text small so that the test paragraphs fit on a single
+        // line, so that we can place the caret on the left/right halves
+        // of lines, as needed.
+        stylesheet: defaultStylesheet.copyWith(
+          addRulesAfter: [
+            StyleRule(const BlockSelector.all(), (doc, node) {
+              return {
+                "textStyle": const TextStyle(
+                  fontSize: 12,
+                ),
+              };
+            })
+          ],
+        ),
         autofocus: true,
         componentBuilders: [
-          _unselectableHrBuilder,
+          const UnselectableHrComponentBuilder(),
           ...defaultComponentBuilders,
         ],
         gestureMode: DocumentGestureMode.mouse,
@@ -408,12 +435,29 @@ Widget _buildEditorWithUnselectableHrs(MutableDocument document, DocumentCompose
   );
 }
 
-Widget? _unselectableHrBuilder(ComponentContext context) {
-  if (context.documentNode is! HorizontalRuleNode) {
+/// SuperEditor [ComponentBuilder] that builds a horizontal rule that is
+/// not selectable.
+class UnselectableHrComponentBuilder implements ComponentBuilder {
+  const UnselectableHrComponentBuilder();
+
+  @override
+  SingleColumnLayoutComponentViewModel? createViewModel(Document document, DocumentNode node) {
+    // This builder can work with the standard horizontal rule view model, so
+    // we'll defer to the standard horizontal rule builder.
     return null;
   }
 
-  return _UnselectableHorizontalRuleComponent(componentKey: context.componentKey);
+  @override
+  Widget? createComponent(
+      SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel componentViewModel) {
+    if (componentViewModel is! HorizontalRuleComponentViewModel) {
+      return null;
+    }
+
+    return _UnselectableHorizontalRuleComponent(
+      componentKey: componentContext.componentKey,
+    );
+  }
 }
 
 class _UnselectableHorizontalRuleComponent extends StatelessWidget {
