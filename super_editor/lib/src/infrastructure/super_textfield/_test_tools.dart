@@ -35,8 +35,13 @@ extension SuperTextFieldTesting on WidgetTester {
     final textFieldBox = textField.context.findRenderObject() as RenderBox;
     print("Text field size: ${textFieldBox.size}");
 
-    if (!textFieldBox.size.contains(textPositionOffset)) {
-      print("Position ($textPositionOffset) is not in field size (${textFieldBox.size})");
+    final adjustedOffset = Offset(
+      textPositionOffset.dx == -0.0 ? 0.0 : textPositionOffset.dx,
+      textPositionOffset.dy == -0.0 ? 0.0 : textPositionOffset.dy,
+    );
+
+    if (!textFieldBox.size.contains(adjustedOffset)) {
+      print("Position ($adjustedOffset) is not in field size (${textFieldBox.size})");
 
       print("Does a manual call work? ${Size(300.0, 16.0).contains(Offset(96.0, -0.0))}");
 
