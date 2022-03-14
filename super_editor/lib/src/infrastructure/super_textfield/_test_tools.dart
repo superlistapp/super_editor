@@ -29,15 +29,12 @@ extension SuperTextFieldTesting on WidgetTester {
   }
 
   Future<bool> _tapAtTextPositionOnDesktop(SuperDesktopTextFieldState textField, int offset) async {
-    print("Tapping text position in SuperTextField on desktop. Offset: $offset");
     final textPositionOffset = textField.textLayout.getOffsetForCaret(TextPosition(offset: offset));
-    print("Text position offset: $textPositionOffset");
     final textFieldBox = textField.context.findRenderObject() as RenderBox;
-    print("Text field size: ${textFieldBox.size}");
 
     // There's a problem on Windows and Linux where we get -0.0 instead 0.0.
     // We adjust the offset to get rid of the -0.0, because a -0.0 fails the
-    // Rect bounds check.
+    // Rect bounds check. (https://github.com/flutter/flutter/issues/100033)
     final adjustedOffset = Offset(
       textPositionOffset.dx,
       // I tried checking "== -0.0" but it didn't catch the problem. This
@@ -47,10 +44,6 @@ extension SuperTextFieldTesting on WidgetTester {
     );
 
     if (!textFieldBox.size.contains(adjustedOffset)) {
-      print("Position ($adjustedOffset) is not in field size (${textFieldBox.size})");
-
-      print("Does a manual call work? ${Size(300.0, 16.0).contains(Offset(96.0, -0.0))}");
-
       return false;
     }
 
