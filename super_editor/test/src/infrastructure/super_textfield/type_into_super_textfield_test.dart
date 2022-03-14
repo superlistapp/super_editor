@@ -89,7 +89,7 @@ void main() {
 }
 
 Future<void> _pumpDesktopScaffold(WidgetTester tester, [AttributedTextEditingController? controller]) async {
-  debugDefaultTargetPlatformOverride = TargetPlatform.windows;
+  debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
 
   await _pumpScaffold(
     tester,

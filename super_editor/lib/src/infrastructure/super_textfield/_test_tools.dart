@@ -29,8 +29,11 @@ extension SuperTextFieldTesting on WidgetTester {
   }
 
   Future<bool> _tapAtTextPositionOnDesktop(SuperDesktopTextFieldState textField, int offset) async {
+    print("Tapping text position in SuperTextField on desktop. Offset: $offset");
     final textPositionOffset = textField.textLayout.getOffsetForCaret(TextPosition(offset: offset));
+    print("Text position offset: $textPositionOffset");
     final textFieldBox = textField.context.findRenderObject() as RenderBox;
+    print("Text field size: ${textFieldBox.size}");
 
     if (!textFieldBox.size.contains(textPositionOffset)) {
       return false;
