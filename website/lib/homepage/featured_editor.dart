@@ -13,12 +13,12 @@ import 'editor_toolbar.dart';
 /// popup toolbar.
 class FeaturedEditor extends StatefulWidget {
   const FeaturedEditor({
-    Key key,
+    Key? key,
     this.displayMode,
     this.shadows = const [],
   }) : super(key: key);
 
-  final DisplayMode displayMode;
+  final DisplayMode? displayMode;
   final List<BoxShadow> shadows;
 
   @override
@@ -28,16 +28,15 @@ class FeaturedEditor extends StatefulWidget {
 class _FeaturedEditorState extends State<FeaturedEditor> {
   final _docLayoutKey = GlobalKey();
 
-  MutableDocument _doc;
-  DocumentEditor _docEditor;
-  DocumentComposer _composer;
+  late final MutableDocument _doc;
+  late final DocumentEditor _docEditor;
+  late final DocumentComposer _composer;
+  late final FocusNode _editorFocusNode;
+  late final ScrollController _scrollController;
 
-  FocusNode _editorFocusNode;
+  OverlayEntry? _formatBarOverlayEntry;
 
-  ScrollController _scrollController;
-
-  OverlayEntry _formatBarOverlayEntry;
-  final _selectionAnchor = ValueNotifier<Offset>(null);
+  final _selectionAnchor = ValueNotifier<Offset?>(null);
 
   @override
   void initState() {
@@ -76,10 +75,7 @@ class _FeaturedEditorState extends State<FeaturedEditor> {
 
   @override
   void dispose() {
-    if (_formatBarOverlayEntry != null) {
-      _formatBarOverlayEntry.remove();
-    }
-
+    _formatBarOverlayEntry?.remove();
     _doc.dispose();
     _scrollController.dispose();
     _editorFocusNode.dispose();
@@ -103,12 +99,12 @@ class _FeaturedEditorState extends State<FeaturedEditor> {
 
       // Display the toolbar in the application overlay.
       final overlay = Overlay.of(context);
-      overlay.insert(_formatBarOverlayEntry);
+      overlay!.insert(_formatBarOverlayEntry!);
 
       // Schedule a callback after this frame to locate the selection
       // bounds on the screen and display the toolbar near the selected
       // text.
-      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
         _updateToolbarOffset();
       });
     }
@@ -119,15 +115,15 @@ class _FeaturedEditorState extends State<FeaturedEditor> {
       return;
     }
 
-    final docBoundingBox = (_docLayoutKey.currentState as DocumentLayout).getRectForSelection(
-      _composer.selection.base,
-      _composer.selection.extent,
+    final docBoundingBox = (_docLayoutKey.currentState! as DocumentLayout).getRectForSelection(
+      _composer.selection!.base,
+      _composer.selection!.extent,
     );
-    final parentBox = context.findRenderObject() as RenderBox;
-    final docBox = _docLayoutKey.currentContext.findRenderObject() as RenderBox;
+    final parentBox = context.findRenderObject()! as RenderBox;
+    final docBox = _docLayoutKey.currentContext!.findRenderObject()! as RenderBox;
     final parentInOverlayOffset = parentBox.localToGlobal(Offset.zero);
     final overlayBoundingBox = Rect.fromPoints(
-      docBox.localToGlobal(docBoundingBox.topLeft, ancestor: parentBox),
+      docBox.localToGlobal(docBoundingBox!.topLeft, ancestor: parentBox),
       docBox.localToGlobal(docBoundingBox.bottomRight, ancestor: parentBox),
     ).translate(parentInOverlayOffset.dx, parentInOverlayOffset.dy);
 
@@ -147,7 +143,7 @@ class _FeaturedEditorState extends State<FeaturedEditor> {
       // or not the entry exists in the overlay, so in our
       // case, null implies the entry is not in the overlay,
       // and non-null implies the entry is in the overlay.
-      _formatBarOverlayEntry.remove();
+      _formatBarOverlayEntry?.remove();
       _formatBarOverlayEntry = null;
     }
 
@@ -208,39 +204,22 @@ class _FeaturedEditorState extends State<FeaturedEditor> {
         borderRadius: BorderRadius.circular(8),
         boxShadow: widget.shadows,
       ),
-      child: SuperEditor.custom(
+      child: SuperEditor(
         editor: _docEditor,
         composer: _composer,
         documentLayoutKey: _docLayoutKey,
         focusNode: _editorFocusNode,
-        maxWidth: 800,
-        padding: _getEditorPadding(),
-        textStyleBuilder: _getEditorStyleBuilder(),
-        componentBuilders: [
-          _blockquoteBuilder,
-          ...defaultComponentBuilders,
-        ],
+        stylesheet: _getEditorStyleSheet(),
       ),
     );
   }
 
-  EdgeInsetsGeometry _getEditorPadding() {
+  Stylesheet _getEditorStyleSheet() {
     switch (widget.displayMode) {
       case DisplayMode.wide:
-        return const EdgeInsets.symmetric(horizontal: 54, vertical: 60);
+        return _wideStylesheet;
       case DisplayMode.compact:
-        return const EdgeInsets.symmetric(horizontal: 32, vertical: 24);
-      default:
-        throw Exception('Invalid displayMode: ${widget.displayMode}');
-    }
-  }
-
-  TextStyle Function(Set<Attribution> attributions) _getEditorStyleBuilder() {
-    switch (widget.displayMode) {
-      case DisplayMode.wide:
-        return _editorStyleBuilderWide;
-      case DisplayMode.compact:
-        return _editorStyleBuilderCompact;
+        return _compactStylesheet;
       default:
         throw Exception('Invalid displayMode: ${widget.displayMode}');
     }
@@ -322,128 +301,121 @@ MutableDocument _createInitialDocument() {
   );
 }
 
-/// Produces all [TextStyle]s for the editor in wide mode.
-TextStyle _editorStyleBuilderWide(Set<Attribution> attributions) {
-  var result = const TextStyle(
-    fontFamily: 'Aeonik',
-    fontWeight: FontWeight.w400,
-    fontSize: 18,
-    height: 27 / 18,
-    color: Color(0xFF003F51),
-  );
-
-  for (final attribution in attributions) {
-    if (attribution == header1Attribution) {
-      result = result.copyWith(
-        fontSize: 40,
-        fontWeight: FontWeight.w700,
-        height: 1.2,
-      );
-    } else if (attribution == header2Attribution) {
-      result = result.copyWith(
-        fontSize: 32,
-        fontWeight: FontWeight.w700,
-        height: 1.2,
-      );
-    } else if (attribution == header3Attribution) {
-      result = result.copyWith(
-        fontSize: 36,
-        fontWeight: FontWeight.w700,
-        height: 1.2,
-      );
-    } else if (attribution == blockquoteAttribution) {
-      result = result.copyWith(
-        fontSize: 20,
-        fontWeight: FontWeight.bold,
-        color: Colors.black54,
-      );
-    } else if (attribution == boldAttribution) {
-      result = result.copyWith(fontWeight: FontWeight.bold);
-    } else if (attribution == italicsAttribution) {
-      result = result.copyWith(fontStyle: FontStyle.italic);
-    } else if (attribution == strikethroughAttribution) {
-      result = result.copyWith(decoration: TextDecoration.lineThrough);
-    } else if (attribution == _underlineAttribution) {
-      result = result.copyWith(decoration: TextDecoration.underline);
-    }
-  }
-  return result;
-}
+const _baseTextStyle = TextStyle(
+  fontFamily: 'Aeonik',
+  fontWeight: FontWeight.w400,
+  fontSize: 18,
+  height: 27 / 18,
+  color: Color(0xFF003F51),
+);
 
 /// Produces all [TextStyle]s for the editor in compact mode.
-TextStyle _editorStyleBuilderCompact(Set<Attribution> attributions) {
-  var result = const TextStyle(
-    fontFamily: 'Aeonik',
-    fontWeight: FontWeight.w400,
-    fontSize: 18,
-    height: 27 / 18,
-    color: Color(0xFF003F51),
-  );
-
-  for (final attribution in attributions) {
-    if (attribution == header1Attribution) {
-      result = result.copyWith(
-        fontSize: 32,
-        fontWeight: FontWeight.w700,
-        height: 1.2,
-      );
-    } else if (attribution == header2Attribution) {
-      result = result.copyWith(
-        fontSize: 32,
-        fontWeight: FontWeight.w700,
-        height: 1.2,
-      );
-    } else if (attribution == header3Attribution) {
-      result = result.copyWith(
-        fontSize: 26,
-        fontWeight: FontWeight.w700,
-        height: 1.2,
-      );
-    } else if (attribution == blockquoteAttribution) {
-      result = result.copyWith(
-        fontSize: 20,
-        fontWeight: FontWeight.bold,
-        color: Colors.black54,
-      );
-    } else if (attribution == boldAttribution) {
-      result = result.copyWith(fontWeight: FontWeight.bold);
-    } else if (attribution == italicsAttribution) {
-      result = result.copyWith(fontStyle: FontStyle.italic);
-    } else if (attribution == strikethroughAttribution) {
-      result = result.copyWith(decoration: TextDecoration.lineThrough);
-    } else if (attribution == _underlineAttribution) {
-      result = result.copyWith(decoration: TextDecoration.underline);
-    }
-  }
-  return result;
-}
-
-/// Creates the display for a paragraph with a blockquote block style.
-///
-/// The editor offers a default styling and display for blockquotes,
-/// but this editor wants to display a vertical bar on the left side
-/// of the blockquote, so we override the default behavior with this
-/// builder and provide a different widget tree.
-///
-/// If you only want to change the style of blockquote text, use
-/// the text style builder in the [Editor], instead.
-Widget _blockquoteBuilder(ComponentContext context) {
-  final node = context.documentNode;
-
-  if (node is ParagraphNode && node.metadata['blockType'] == blockquoteAttribution) {
-    return Container(
-      decoration: const BoxDecoration(
-        border: Border(
-          left: BorderSide(
-            color: Colors.black26,
-            width: 4,
+final _compactStylesheet = defaultStylesheet.copyWith(
+  documentPadding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+  addRulesAfter: [
+    StyleRule(const BlockSelector.all(), (doc, docNode) => {'textStyle': _baseTextStyle}),
+    StyleRule(
+      const BlockSelector.all().after(header1Attribution.name),
+      (doc, docNode) => {'padding': const CascadingPadding.only(top: 24)},
+    ),
+    StyleRule(
+      BlockSelector(header1Attribution.name),
+      (doc, docNode) {
+        return {
+          'textStyle': _baseTextStyle.copyWith(
+            fontSize: 32,
+            fontWeight: FontWeight.w700,
+            height: 1.2,
           ),
+        };
+      },
+    ),
+    StyleRule(BlockSelector(header2Attribution.name), (doc, docNode) {
+      return {
+        'textStyle': _baseTextStyle.copyWith(
+          fontSize: 32,
+          fontWeight: FontWeight.w700,
+          height: 1.2,
         ),
-      ),
-      padding: const EdgeInsets.only(left: 8),
-      child: paragraphBuilder(context),
-    );
-  }
+      };
+    }),
+    StyleRule(BlockSelector(header3Attribution.name), (doc, docNode) {
+      return {
+        'textStyle': _baseTextStyle.copyWith(
+          fontSize: 26,
+          fontWeight: FontWeight.w700,
+          height: 1.2,
+        ),
+      };
+    }),
+    StyleRule(BlockSelector(blockquoteAttribution.name), (doc, docNode) {
+      return {
+        'textStyle': _baseTextStyle.copyWith(
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+          color: Colors.black54,
+        ),
+      };
+    }),
+  ],
+);
 
-  return null;
-}
+/// Produces all [TextStyle]s for the editor in wide mode.
+final _wideStylesheet = defaultStylesheet.copyWith(
+  documentPadding: const EdgeInsets.symmetric(horizontal: 54, vertical: 60),
+  addRulesAfter: [
+    StyleRule(const BlockSelector.all(), (doc, docNode) => {'textStyle': _baseTextStyle}),
+    StyleRule(
+      const BlockSelector.all().after(header1Attribution.name),
+      (doc, docNode) => {'padding': const CascadingPadding.only(top: 48)},
+    ),
+    StyleRule(
+      BlockSelector(header1Attribution.name),
+      (doc, docNode) {
+        return {
+          'textStyle': _baseTextStyle.copyWith(
+            fontSize: 40,
+            fontWeight: FontWeight.w700,
+            height: 1.2,
+          ),
+        };
+      },
+    ),
+    StyleRule(
+      BlockSelector(header2Attribution.name),
+      (doc, docNode) {
+        return {
+          'textStyle': _baseTextStyle.copyWith(
+            fontSize: 32,
+            fontWeight: FontWeight.w700,
+            height: 1.2,
+          ),
+        };
+      },
+    ),
+    StyleRule(
+      BlockSelector(header3Attribution.name),
+      (doc, docNode) {
+        return {
+          'textStyle': _baseTextStyle.copyWith(
+            fontSize: 36,
+            fontWeight: FontWeight.w700,
+            height: 1.2,
+          ),
+        };
+      },
+    ),
+    StyleRule(
+      BlockSelector(blockquoteAttribution.name),
+      (doc, docNode) {
+        return {
+          'textStyle': _baseTextStyle.copyWith(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.black54,
+          ),
+        };
+      },
+    ),
+  ],
+);

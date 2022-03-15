@@ -72,12 +72,10 @@ class Features extends StatelessWidget {
 
 class _Feature extends StatelessWidget {
   const _Feature({
-    @required this.image,
-    @required this.title,
-    @required this.description,
-  })  : assert(image != null),
-        assert(title != null),
-        assert(description != null);
+    required this.image,
+    required this.title,
+    required this.description,
+  });
 
   final Widget image;
   final String title;

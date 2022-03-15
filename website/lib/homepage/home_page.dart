@@ -1,4 +1,3 @@
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:website/homepage/featured_editor.dart';
 import 'package:website/homepage/inside_the_toolbox.dart';
@@ -37,9 +36,7 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _buildContent({
-    @required bool isSingleColumnLayout,
-  }) {
+  Widget _buildContent({required bool isSingleColumnLayout}) {
     return Scrollbar(
       child: SingleChildScrollView(
         child: Stack(
@@ -85,9 +82,7 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _buildFeaturedEditor({
-    @required DisplayMode displayMode,
-  }) {
+  Widget _buildFeaturedEditor({required DisplayMode displayMode}) {
     return Center(
       child: Container(
         constraints: const BoxConstraints(maxWidth: 800).tighten(

@@ -12,11 +12,11 @@ import 'package:super_editor/super_editor.dart';
 /// application [Overlay]. Any other [Stack] should work, too.
 class EditorToolbar extends StatefulWidget {
   const EditorToolbar({
-    Key key,
-    @required this.anchor,
-    @required this.editor,
-    @required this.composer,
-    @required this.closeToolbar,
+    Key? key,
+    required this.anchor,
+    required this.editor,
+    required this.composer,
+    required this.closeToolbar,
   }) : super(key: key);
 
   /// [EditorToolbar] displays itself horizontally centered and
@@ -24,7 +24,7 @@ class EditorToolbar extends StatefulWidget {
   ///
   /// [anchor] is a [ValueNotifier] so that [EditorToolbar] can
   /// reposition itself as the [Offset] value changes.
-  final ValueNotifier<Offset> anchor;
+  final ValueNotifier<Offset?> anchor;
 
   /// The [editor] is used to alter document content, such as
   /// when the user selects a different block format for a
@@ -48,8 +48,8 @@ class EditorToolbar extends StatefulWidget {
 
 class _EditorToolbarState extends State<EditorToolbar> {
   bool _showUrlField = false;
-  FocusNode _urlFocusNode;
-  TextEditingController _urlController;
+  late final FocusNode _urlFocusNode;
+  late final TextEditingController _urlController;
 
   @override
   void initState() {
@@ -71,7 +71,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
   /// node is not a standard text block.
   bool _isConvertibleNode() {
     final selection = widget.composer.selection;
-    if (selection.base.nodeId != selection.extent.nodeId) {
+    if (selection == null || selection.base.nodeId != selection.extent.nodeId) {
       return false;
     }
 
@@ -83,7 +83,8 @@ class _EditorToolbarState extends State<EditorToolbar> {
   ///
   /// Throws an exception if the currently selected node is not a text node.
   _TextType _getCurrentTextType() {
-    final selectedNode = widget.editor.document.getNodeById(widget.composer.selection.extent.nodeId);
+    final selection = widget.composer.selection!;
+    final selectedNode = widget.editor.document.getNodeById(selection.extent.nodeId);
     if (selectedNode is ParagraphNode) {
       final type = selectedNode.metadata['blockType'];
 
@@ -109,9 +110,10 @@ class _EditorToolbarState extends State<EditorToolbar> {
   ///
   /// Throws an exception if the currently selected node is not a text node.
   TextAlign _getCurrentTextAlignment() {
-    final selectedNode = widget.editor.document.getNodeById(widget.composer.selection.extent.nodeId);
+    final selection = widget.composer.selection!;
+    final selectedNode = widget.editor.document.getNodeById(selection.extent.nodeId);
     if (selectedNode is ParagraphNode) {
-      final align = selectedNode.metadata['textAlign'] as String;
+      final align = selectedNode.metadata['textAlign'] as String?;
       switch (align) {
         case 'left':
           return TextAlign.left;
@@ -133,7 +135,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
   /// is capable of respecting alignment, returns false otherwise.
   bool _isTextAlignable() {
     final selection = widget.composer.selection;
-    if (selection.base.nodeId != selection.extent.nodeId) {
+    if (selection == null || selection.base.nodeId != selection.extent.nodeId) {
       return false;
     }
 
@@ -146,7 +148,11 @@ class _EditorToolbarState extends State<EditorToolbar> {
   ///
   /// For example: convert a paragraph to a blockquote, or a header
   /// to a list item.
-  void _convertTextToNewType(_TextType newType) {
+  void _convertTextToNewType(_TextType? newType) {
+    if (newType == null) {
+      return;
+    }
+
     final existingTextType = _getCurrentTextType();
 
     if (existingTextType == newType) {
@@ -157,14 +163,14 @@ class _EditorToolbarState extends State<EditorToolbar> {
     if (_isListItem(existingTextType) && _isListItem(newType)) {
       widget.editor.executeCommand(
         ChangeListItemTypeCommand(
-          nodeId: widget.composer.selection.extent.nodeId,
+          nodeId: widget.composer.selection!.extent.nodeId,
           newType: newType == _TextType.orderedListItem ? ListItemType.ordered : ListItemType.unordered,
         ),
       );
     } else if (_isListItem(existingTextType) && !_isListItem(newType)) {
       widget.editor.executeCommand(
         ConvertListItemToParagraphCommand(
-          nodeId: widget.composer.selection.extent.nodeId,
+          nodeId: widget.composer.selection!.extent.nodeId,
           paragraphMetadata: {
             'blockType': _getBlockTypeAttribution(newType),
           },
@@ -173,14 +179,22 @@ class _EditorToolbarState extends State<EditorToolbar> {
     } else if (!_isListItem(existingTextType) && _isListItem(newType)) {
       widget.editor.executeCommand(
         ConvertParagraphToListItemCommand(
-          nodeId: widget.composer.selection.extent.nodeId,
+          nodeId: widget.composer.selection!.extent.nodeId,
           type: newType == _TextType.orderedListItem ? ListItemType.ordered : ListItemType.unordered,
         ),
       );
     } else {
       // Apply a new block type to an existing paragraph node.
-      final existingNode = widget.editor.document.getNodeById(widget.composer.selection.extent.nodeId);
+      final existingNode = widget.editor.document.getNodeById(widget.composer.selection!.extent.nodeId)!;
       (existingNode as ParagraphNode).metadata['blockType'] = _getBlockTypeAttribution(newType);
+
+      // Merely changing the blockType of the ParagraphNode does not trigger any of the document listeners.
+      //
+      // As such, we have to manually tell the node that something changed - otherwise, the block type of this
+      // ParagraphNode would change only if something else in the document changed. This is a bit hacky.
+      //
+      // ignore: invalid_use_of_protected_member, invalid_use_of_visible_for_testing_member
+      existingNode.notifyListeners();
     }
   }
 
@@ -192,7 +206,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
 
   /// Returns the text [Attribution] associated with the given
   /// [_TextType], e.g., [_TextType.header1] -> [header1Attribution].
-  Attribution _getBlockTypeAttribution(_TextType newType) {
+  Attribution? _getBlockTypeAttribution(_TextType newType) {
     switch (newType) {
       case _TextType.header1:
         return header1Attribution;
@@ -212,7 +226,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
   void _toggleBold() {
     widget.editor.executeCommand(
       ToggleTextAttributionsCommand(
-        documentSelection: widget.composer.selection,
+        documentSelection: widget.composer.selection!,
         attributions: {boldAttribution},
       ),
     );
@@ -222,7 +236,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
   void _toggleItalics() {
     widget.editor.executeCommand(
       ToggleTextAttributionsCommand(
-        documentSelection: widget.composer.selection,
+        documentSelection: widget.composer.selection!,
         attributions: {italicsAttribution},
       ),
     );
@@ -232,7 +246,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
   void _toggleStrikethrough() {
     widget.editor.executeCommand(
       ToggleTextAttributionsCommand(
-        documentSelection: widget.composer.selection,
+        documentSelection: widget.composer.selection!,
         attributions: {strikethroughAttribution},
       ),
     );
@@ -255,13 +269,13 @@ class _EditorToolbarState extends State<EditorToolbar> {
   /// or wholly within the current text selection.
   Set<AttributionSpan> _getSelectedLinkSpans() {
     final selection = widget.composer.selection;
-    final baseOffset = (selection.base.nodePosition as TextPosition).offset;
+    final baseOffset = (selection!.base.nodePosition as TextPosition).offset;
     final extentOffset = (selection.extent.nodePosition as TextPosition).offset;
     final selectionStart = min(baseOffset, extentOffset);
     final selectionEnd = max(baseOffset, extentOffset);
     final selectionRange = TextRange(start: selectionStart, end: selectionEnd - 1);
 
-    final textNode = widget.editor.document.getNodeById(selection.extent.nodeId) as TextNode;
+    final textNode = widget.editor.document.getNodeById(selection.extent.nodeId)! as TextNode;
     final text = textNode.text;
 
     final overlappingLinkAttributions = text.getAttributionSpansInRange(
@@ -276,13 +290,13 @@ class _EditorToolbarState extends State<EditorToolbar> {
   /// pressed.
   void _onLinkPressed() {
     final selection = widget.composer.selection;
-    final baseOffset = (selection.base.nodePosition as TextPosition).offset;
+    final baseOffset = (selection!.base.nodePosition as TextPosition).offset;
     final extentOffset = (selection.extent.nodePosition as TextPosition).offset;
     final selectionStart = min(baseOffset, extentOffset);
     final selectionEnd = max(baseOffset, extentOffset);
     final selectionRange = TextRange(start: selectionStart, end: selectionEnd - 1);
 
-    final textNode = widget.editor.document.getNodeById(selection.extent.nodeId) as TextNode;
+    final textNode = widget.editor.document.getNodeById(selection.extent.nodeId)! as TextNode;
     final text = textNode.text;
 
     final overlappingLinkAttributions = text.getAttributionSpansInRange(
@@ -329,13 +343,13 @@ class _EditorToolbarState extends State<EditorToolbar> {
     final url = _urlController.text;
 
     final selection = widget.composer.selection;
-    final baseOffset = (selection.base.nodePosition as TextPosition).offset;
+    final baseOffset = (selection!.base.nodePosition as TextPosition).offset;
     final extentOffset = (selection.extent.nodePosition as TextPosition).offset;
     final selectionStart = min(baseOffset, extentOffset);
     final selectionEnd = max(baseOffset, extentOffset);
     final selectionRange = TextRange(start: selectionStart, end: selectionEnd - 1);
 
-    final textNode = widget.editor.document.getNodeById(selection.extent.nodeId) as TextNode;
+    final textNode = widget.editor.document.getNodeById(selection.extent.nodeId)! as TextNode;
     final text = textNode.text;
 
     final trimmedRange = _trimTextRangeWhitespace(text, selectionRange);
@@ -374,8 +388,8 @@ class _EditorToolbarState extends State<EditorToolbar> {
 
   /// Changes the alignment of the current selected text node
   /// to reflect [newAlignment].
-  void _changeAlignment(TextAlign newAlignment) {
-    String newAlignmentValue;
+  void _changeAlignment(TextAlign? newAlignment) {
+    String? newAlignmentValue;
     switch (newAlignment) {
       case TextAlign.left:
       case TextAlign.start:
@@ -391,9 +405,12 @@ class _EditorToolbarState extends State<EditorToolbar> {
       case TextAlign.justify:
         newAlignmentValue = 'justify';
         break;
+      case null:
+        // Do nothing.
+        return;
     }
 
-    final selectedNode = widget.editor.document.getNodeById(widget.composer.selection.extent.nodeId) as ParagraphNode;
+    final selectedNode = widget.editor.document.getNodeById(widget.composer.selection!.extent.nodeId)! as ParagraphNode;
     selectedNode.metadata['textAlign'] = newAlignmentValue;
   }
 
@@ -416,8 +433,6 @@ class _EditorToolbarState extends State<EditorToolbar> {
       case _TextType.unorderedListItem:
         return 'Unordered List Item';
     }
-
-    throw StateError('Unknown _TextType: $textType');
   }
 
   @override
@@ -438,8 +453,8 @@ class _EditorToolbarState extends State<EditorToolbar> {
               // the standard toolbar.
               if (_showUrlField)
                 Positioned(
-                  left: widget.anchor.value.dx,
-                  top: widget.anchor.value.dy,
+                  left: widget.anchor.value!.dx,
+                  top: widget.anchor.value!.dy,
                   child: FractionalTranslation(
                     translation: const Offset(-0.5, 0.0),
                     child: _buildUrlField(),
@@ -449,8 +464,8 @@ class _EditorToolbarState extends State<EditorToolbar> {
                 // The hard-coded clamp values are based on empirical checks
                 // with the marketing website. The clamping behavior should be
                 // generalized to use this toolbar in an app.
-                left: widget.anchor.value.dx.clamp(165, MediaQuery.of(context).size.width - 165).toDouble(),
-                top: widget.anchor.value.dy,
+                left: widget.anchor.value!.dx.clamp(165, MediaQuery.of(context).size.width - 165).toDouble(),
+                top: widget.anchor.value!.dy,
                 child: FractionalTranslation(
                   translation: const Offset(-0.5, -1.4),
                   child: _buildToolbar(),
@@ -631,7 +646,6 @@ class _EditorToolbarState extends State<EditorToolbar> {
       case TextAlign.justify:
         return Icons.format_align_justify;
     }
-    throw StateError('Unknown TextAlign: $align');
   }
 }
 

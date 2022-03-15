@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:website/breakpoints.dart';
 
@@ -125,16 +124,16 @@ class _RightPart extends StatelessWidget {
 class _Link extends StatelessWidget {
   const _Link(
     this.text, {
-    @required this.url,
+    required this.url,
     this.style,
     this.underlineColor = const Color(0xAAFFFFFF),
     this.underlineWidth = 1.5,
     this.underlineSpacing = 1,
-  }) : assert(url != null);
+  });
 
   final String text;
   final String url;
-  final TextStyle style;
+  final TextStyle? style;
   final Color underlineColor;
   final double underlineWidth;
   final double underlineSpacing;
