@@ -11,6 +11,7 @@ dependencies:
   flutter:
     sdk: flutter
 
+  characters: ^1.2.0
   collection: ^1.15.0
   http: ^0.13.1
   linkify: ^4.0.0

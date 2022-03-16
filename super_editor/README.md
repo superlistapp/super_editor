@@ -1,4 +1,4 @@
-<img src="docs/marketing/readme-header.png" width="100%" alt="Super Editor">
+<img src="doc/marketing/readme-header.png" width="100%" alt="Super Editor">
 
 # Super Editor
 
