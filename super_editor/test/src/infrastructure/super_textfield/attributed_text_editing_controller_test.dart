@@ -1,11 +1,8 @@
+import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
-import 'package:super_editor/src/infrastructure/attributed_spans.dart';
-import 'package:super_editor/src/infrastructure/attributed_text.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/super_textfield.dart';
-
-import '../_attributed_text_test_tools.dart';
 
 void main() {
   // TODO: handle selection changes.

@@ -1,11 +1,11 @@
 import 'dart:math';
 
+import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
-import 'package:super_editor/src/infrastructure/attributed_spans.dart';
-import 'package:super_editor/src/infrastructure/attributed_text.dart';
+import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/super_selectable_text.dart';
 import 'package:super_editor/src/infrastructure/text_layout.dart';
 
@@ -48,7 +48,7 @@ class AttributedTextEditingController with ChangeNotifier {
       _composingAttributions
         ..clear()
         ..addAll(text.getAllAttributionsThroughout(
-          TextRange(start: selection.start, end: selection.end),
+          SpanRange(start: selection.start, end: selection.end),
         ));
     }
   }
@@ -118,7 +118,7 @@ class AttributedTextEditingController with ChangeNotifier {
     for (final attribution in attributions) {
       _text.toggleAttribution(
         attribution,
-        TextRange(start: selection.start, end: selection.end - 1),
+        SpanRange(start: selection.start, end: selection.end - 1),
       );
     }
 
@@ -132,7 +132,7 @@ class AttributedTextEditingController with ChangeNotifier {
     }
 
     _text.clearAttributions(
-      TextRange(start: selection.start, end: selection.end - 1),
+      SpanRange(start: selection.start, end: selection.end - 1),
     );
 
     notifyListeners();

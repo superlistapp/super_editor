@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -15,8 +16,6 @@ import 'package:super_editor/src/default_editor/selection_upstream_downstream.da
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
-import 'package:super_editor/src/infrastructure/attributed_spans.dart';
-import 'package:super_editor/src/infrastructure/attributed_text.dart';
 
 import 'attributions.dart';
 import 'list_items.dart';

@@ -1,26 +1,26 @@
+import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:super_editor/src/default_editor/layout_single_column/layout_single_column.dart';
 import 'package:super_editor/src/default_editor/super_editor.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/attributed_text_editing_controller.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/hint_text.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/text_scrollview.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/input_method_engine/_ime_text_editing_controller.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/ios/_editing_controls.dart';
 
-import '../../attributed_text.dart';
+import '../../platforms/ios/toolbar.dart';
 import '../../super_selectable_text.dart';
 import '_caret.dart';
 import '_floating_cursor.dart';
-import '../../platforms/ios/toolbar.dart';
 import '_user_interaction.dart';
 
-export '../infrastructure/magnifier.dart';
-export '_caret.dart';
 export '../../platforms/ios/selection_handles.dart';
 export '../../platforms/ios/toolbar.dart';
+export '../infrastructure/magnifier.dart';
+export '_caret.dart';
 export '_user_interaction.dart';
 
 final _log = iosTextFieldLog;

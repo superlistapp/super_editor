@@ -1,8 +1,13 @@
-import 'package:flutter_test/flutter_test.dart';
-import 'package:super_editor/src/default_editor/attributions.dart';
-import 'package:super_editor/src/infrastructure/attributed_spans.dart';
+import 'package:test/expect.dart';
+
+import 'attributed_spans.dart';
+import 'attribution.dart';
 
 class ExpectedSpans {
+  static const bold = NamedAttribution('bold');
+  static const italics = NamedAttribution('italics');
+  static const strikethrough = NamedAttribution('strikethrough');
+
   ExpectedSpans(
     List<String> spanTemplates,
   ) : _combinedSpans = [] {
@@ -42,13 +47,13 @@ class ExpectedSpans {
         Attribution namedAttribution;
         switch (attributionName) {
           case 'b':
-            namedAttribution = boldAttribution;
+            namedAttribution = bold;
             break;
           case 'i':
-            namedAttribution = italicsAttribution;
+            namedAttribution = italics;
             break;
           case 's':
-            namedAttribution = strikethroughAttribution;
+            namedAttribution = strikethrough;
             break;
           default:
             throw Exception('Unknown span template character: $attributionName');

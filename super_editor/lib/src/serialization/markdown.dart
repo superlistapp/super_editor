@@ -1,8 +1,7 @@
 import 'dart:convert';
 
-import 'package:flutter/rendering.dart';
-import 'package:super_editor/super_editor.dart';
 import 'package:markdown/markdown.dart' as md;
+import 'package:super_editor/super_editor.dart';
 
 // TODO: return a regular Document instead of a MutableDocument.
 //       For now, we return MutableDocument because DocumentEditor
@@ -393,7 +392,7 @@ class _InlineMarkdownToDocument implements md.NodeVisitor {
     if (element.tag == 'strong') {
       styledText.addAttribution(
         boldAttribution,
-        TextRange(
+        SpanRange(
           start: 0,
           end: styledText.text.length - 1,
         ),
@@ -401,7 +400,7 @@ class _InlineMarkdownToDocument implements md.NodeVisitor {
     } else if (element.tag == 'em') {
       styledText.addAttribution(
         italicsAttribution,
-        TextRange(
+        SpanRange(
           start: 0,
           end: styledText.text.length - 1,
         ),

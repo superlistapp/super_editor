@@ -1,8 +1,8 @@
+import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/foundation.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/default_editor/document_input_ime.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
-import 'package:super_editor/src/infrastructure/attributed_spans.dart';
 
 import 'document_selection.dart';
 

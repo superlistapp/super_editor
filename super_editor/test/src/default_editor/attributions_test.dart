@@ -1,9 +1,8 @@
 import 'dart:ui';
 
+import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
-import 'package:super_editor/src/infrastructure/attributed_spans.dart';
-import 'package:super_editor/src/infrastructure/attributed_text.dart';
 
 void main() {
   group('Default editor attributions', () {
@@ -16,7 +15,7 @@ void main() {
         // Add link across "one two"
         text.addAttribution(
           LinkAttribution(url: Uri.parse('https://flutter.dev')),
-          const TextRange(start: 0, end: 6),
+          const SpanRange(start: 0, end: 6),
         );
 
         // Try to add a different link across "two three" and expect
@@ -24,7 +23,7 @@ void main() {
         expect(() {
           text.addAttribution(
             LinkAttribution(url: Uri.parse('https://pub.dev')),
-            const TextRange(start: 4, end: 12),
+            const SpanRange(start: 4, end: 12),
           );
         }, throwsA(isA<IncompatibleOverlappingAttributionsException>()));
       });
@@ -39,12 +38,12 @@ void main() {
         // Add link across "one two"
         text.addAttribution(
           linkAttribution,
-          const TextRange(start: 0, end: 6),
+          const SpanRange(start: 0, end: 6),
         );
 
         text.addAttribution(
           LinkAttribution(url: Uri.parse('https://flutter.dev')),
-          const TextRange(start: 4, end: 12),
+          const SpanRange(start: 4, end: 12),
         );
 
         expect(text.spans.hasAttributionsWithin(attributions: {linkAttribution}, start: 0, end: 12), true);

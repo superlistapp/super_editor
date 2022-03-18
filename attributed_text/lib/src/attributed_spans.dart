@@ -1,7 +1,9 @@
 import 'dart:math';
 
 import 'package:collection/collection.dart';
-import 'package:super_editor/src/infrastructure/_logging.dart';
+
+import 'attribution.dart';
+import 'logging.dart';
 
 final _log = attributionsLog;
 
@@ -22,22 +24,17 @@ final _log = attributionsLog;
 /// ------------------------------------------------------
 ///
 /// An attribution can be any subclass of [Attribution]. Based
-/// on the type of [Attribution] that is used, two [Attributions]
+/// on the type of [Attribution] that is used, two [Attribution]s
 /// might occupy the same lane or different lanes. For example,
 /// any two [NamedAttribution]s occupy the same lane if-and-only-if
-/// the two attributions have the same name, like "bold".
+/// the two [Attribution]s have the same name, like "bold".
 ///
-/// Each attributed span is represented by two `SpanMarker`s, one
-/// with type `SpanMarkerType.start` and one with type
-/// `SpanMarkerType.end`.
+/// Each attributed span is represented by two [SpanMarker]s, one
+/// with type [SpanMarkerType.start] and one with type
+/// [SpanMarkerType.end].
 ///
-/// Spans with equivalent [Attribution]s cannot overlap each other, but
-/// spans with different [Attribution]s can overlap each other.
-///
-/// When applying [AttributedSpans] to text as styles, you'll
-/// eventually want a single collapsed list of spans. Use [collapseSpans()]
-/// to collapse the different attribution spans into a single
-/// series of multi-attribution spans.
+/// Spans with equivalent [Attribution]s **cannot** overlap each other, but
+/// spans with different [Attribution]s **can** overlap each other.
 class AttributedSpans {
   /// Constructs an [AttributedSpans] with the given [attributions].
   ///
@@ -57,7 +54,7 @@ class AttributedSpans {
     _attributions.sort();
   }
 
-  /// Returns true if this [AttributedSpans] contains at least one
+  /// Returns `true` if this [AttributedSpans] contains at least one
   /// unit of attribution for each of the given [attributions]
   /// within the given range (inclusive).
   bool hasAttributionsWithin({
@@ -80,6 +77,10 @@ class AttributedSpans {
     return false;
   }
 
+  /// Finds and returns all [Attribution]s in this [AttributedSpans] that
+  /// match any of the given [attributions].
+  ///
+  /// Two [Attribution]s are said to "match" if their `id`s are equal.
   Set<Attribution> getMatchingAttributionsWithin({
     required Set<Attribution> attributions,
     required int start,
@@ -99,9 +100,9 @@ class AttributedSpans {
     return matchingAttributions;
   }
 
-  /// Returns true if the given [offset] has the given [attribution].
+  /// Returns `true` if the given [offset] has the given [attribution].
   ///
-  /// If the given [attribution] is null, returns [true] if any attribution
+  /// If the given [attribution] is `null`, returns `true` if any attribution
   /// exists at the given [offset].
   bool hasAttributionAt(
     int offset, {
@@ -119,6 +120,13 @@ class AttributedSpans {
     return (markerBefore.offset <= offset) && (offset <= markerAfter.offset);
   }
 
+  /// Calculates and returns the full [AttributionSpan], which contains the
+  /// given [attribution] at the given [offset].
+  ///
+  /// For example, imagine spans applied to text like this: "Hello, |world!|".
+  /// The text between the bars has a "bold" attribution. Invoking this method
+  /// with the "bold" attribution and an offset of `10` would return an
+  /// `AttributionSpan` of "bold" from `7` to `14`.
   AttributionSpan expandAttributionToSpan({
     required Attribution attribution,
     required int offset,
@@ -169,7 +177,7 @@ class AttributedSpans {
   /// By default, the returned spans represent the full, contiguous span
   /// of each attribution. This means that if a portion of an attribution
   /// appears between [start] and [end], the entire attribution span is
-  /// returned, including the area that sits before [start] or after [end].
+  /// returned, including the area that sits before [start], or after [end].
   ///
   /// To obtain attribution spans that are cut down and limited to the
   /// given [start]/[end] range, pass [true] for [resizeSpansToFitInRange].
@@ -1070,62 +1078,8 @@ class MultiAttributionSpan {
   String toString() => '[MultiAttributionSpan] - attributions: $attributions, start: $start, end: $end';
 }
 
+/// Returns `true` when the given [candidate] [Attribution] matches the desired condition.
 typedef AttributionFilter = bool Function(Attribution candidate);
-
-/// An attribution that can be associated with a span within
-/// an [AttributedSpan].
-///
-/// To attribute a span with a name, consider using a
-/// [NamedAttribution].
-abstract class Attribution {
-  /// Attributions with different IDs can overlap each
-  /// other, but attributions with the same ID cannot
-  /// overlap.
-  ///
-  /// For example, consider the use of attributions within
-  /// [AttributedText]. One attribution might have an ID
-  /// of "bold" and another might have an of "italics". Those
-  /// attributions can overlap at the same location. However,
-  /// two attributions both with the ID of "bold" cannot overlap.
-  /// The matching attributions can only be combined into a new,
-  /// larger attributed span.
-  String get id;
-
-  /// Returns [true] if this [Attribution] can be combined with
-  /// the [other] [Attribution], replacing both smaller attributions
-  /// with one larger attribution.
-  bool canMergeWith(Attribution other);
-}
-
-/// [Attribution] that is defined by a given [String].
-///
-/// Any two [NamedAttribution]s with the same [id]/[name] are
-/// considered equivalent and merge-able.
-class NamedAttribution implements Attribution {
-  const NamedAttribution(this.id);
-
-  @override
-  final String id;
-
-  String get name => id;
-
-  @override
-  bool canMergeWith(Attribution other) {
-    return this == other;
-  }
-
-  @override
-  String toString() {
-    return '[NamedAttribution]: $name';
-  }
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) || other is NamedAttribution && runtimeType == other.runtimeType && id == other.id;
-
-  @override
-  int get hashCode => id.hashCode;
-}
 
 class IncompatibleOverlappingAttributionsException implements Exception {
   IncompatibleOverlappingAttributionsException({

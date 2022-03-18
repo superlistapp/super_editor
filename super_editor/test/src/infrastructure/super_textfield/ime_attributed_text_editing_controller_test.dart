@@ -2,8 +2,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/super_editor.dart';
 
-import '../_attributed_text_test_tools.dart';
-
 void main() {
   group('ImeAttributedTextEditingController', () {
     group('platform', () {

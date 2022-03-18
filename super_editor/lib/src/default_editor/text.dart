@@ -1,6 +1,7 @@
 import 'dart:collection';
 import 'dart:math';
 
+import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' hide SelectableText;
 import 'package:flutter/services.dart';
@@ -11,8 +12,7 @@ import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/core/styles.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
-import 'package:super_editor/src/infrastructure/attributed_spans.dart';
-import 'package:super_editor/src/infrastructure/attributed_text.dart';
+import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/composable_text.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
 import 'package:super_editor/src/infrastructure/raw_key_event_extensions.dart';
@@ -173,7 +173,7 @@ extension DocumentSelectionWithText on Document {
         endOffset = max(textNode.text.text.length - 1, 0);
       }
 
-      final selectionRange = TextRange(start: startOffset, end: endOffset);
+      final selectionRange = SpanRange(start: startOffset, end: endOffset);
 
       if (textNode.text.hasAttributionsWithin(
         attributions: attributions,
@@ -850,7 +850,7 @@ class AddTextAttributionsCommand implements EditorCommand {
     for (final entry in nodesAndSelections.entries) {
       for (Attribution attribution in attributions) {
         final node = entry.key;
-        final range = entry.value;
+        final range = entry.value.toSpanRange();
         editorDocLog.info(' - adding attribution: $attribution. Range: $range');
         node.text.addAttribution(
           attribution,
@@ -938,7 +938,7 @@ class RemoveTextAttributionsCommand implements EditorCommand {
     for (final entry in nodesAndSelections.entries) {
       for (Attribution attribution in attributions) {
         final node = entry.key;
-        final range = entry.value;
+        final range = entry.value.toSpanRange();
         editorDocLog.info(' - removing attribution: $attribution. Range: $range');
         node.text.removeAttribution(
           attribution,
@@ -979,7 +979,7 @@ class ToggleTextAttributionsCommand implements EditorCommand {
     editorDocLog.info(' - node range: $nodeRange');
 
     // ignore: prefer_collection_literals
-    final nodesAndSelections = LinkedHashMap<TextNode, TextRange>();
+    final nodesAndSelections = LinkedHashMap<TextNode, SpanRange>();
     bool alreadyHasAttributions = false;
 
     for (final textNode in nodes) {
@@ -1021,7 +1021,7 @@ class ToggleTextAttributionsCommand implements EditorCommand {
         endOffset = max(textNode.text.text.length - 1, 0);
       }
 
-      final selectionRange = TextRange(start: startOffset, end: endOffset);
+      final selectionRange = SpanRange(start: startOffset, end: endOffset);
 
       alreadyHasAttributions = alreadyHasAttributions ||
           textNode.text.hasAttributionsWithin(
