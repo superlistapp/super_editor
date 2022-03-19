@@ -176,9 +176,9 @@ class _AttributedTextDemo extends StatefulWidget {
 }
 
 class _AttributedTextDemoState extends State<_AttributedTextDemo> {
-  final List<TextRange> _boldRanges = [];
-  final List<TextRange> _italicsRanges = [];
-  final List<TextRange> _strikethroughRanges = [];
+  final List<SpanRange> _boldRanges = [];
+  final List<SpanRange> _italicsRanges = [];
+  final List<SpanRange> _strikethroughRanges = [];
 
   late String _plainText;
   late TextSpan _richText;
@@ -266,7 +266,7 @@ class _AttributedTextDemoState extends State<_AttributedTextDemo> {
     );
   }
 
-  Widget _buildCellSelector(List<TextRange> rangesToUpdate) {
+  Widget _buildCellSelector(List<SpanRange> rangesToUpdate) {
     return LayoutBuilder(builder: (context, constraints) {
       final cellWidth = constraints.maxWidth / _plainText.length;
 
@@ -297,7 +297,7 @@ class TextRangeSelector extends StatefulWidget {
   final int cellCount;
   final double cellWidth;
   final double cellHeight;
-  final void Function(List<TextRange>)? onRangesChange;
+  final void Function(List<SpanRange>)? onRangesChange;
 
   @override
   _TextRangeSelectorState createState() => _TextRangeSelectorState();
@@ -347,7 +347,7 @@ class _TextRangeSelectorState extends State<TextRangeSelector> {
       return;
     }
 
-    final ranges = <TextRange>[];
+    final ranges = <SpanRange>[];
     int rangeStart = -1;
     for (int i = 0; i < _selectedCells.length; ++i) {
       if (_selectedCells[i]) {
@@ -355,12 +355,12 @@ class _TextRangeSelectorState extends State<TextRangeSelector> {
           rangeStart = i;
         }
       } else if (rangeStart >= 0) {
-        ranges.add(TextRange(start: rangeStart, end: i - 1));
+        ranges.add(SpanRange(start: rangeStart, end: i - 1));
         rangeStart = -1;
       }
     }
     if (rangeStart >= 0) {
-      ranges.add(TextRange(start: rangeStart, end: widget.cellCount - 1));
+      ranges.add(SpanRange(start: rangeStart, end: widget.cellCount - 1));
     }
 
     widget.onRangesChange?.call(ranges);
