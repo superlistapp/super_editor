@@ -57,3 +57,23 @@ jobs:
       # TODO: run static analysis here when we get to zero analysis warnings
       # Run all tests
       - run: flutter test
+
+  test_attributed_text:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./attributed_text
+    steps:
+      # Checkout the PR branch
+      - uses: actions/checkout@v2
+
+      # Setup Dart
+      - uses: dart-lang/setup-dart@v1
+
+      # Install app dependencies
+      - run: dart pub get
+
+      # TODO: run static analysis here when we get to zero analysis warnings
+
+      # Run all tests
+      - run: dart test

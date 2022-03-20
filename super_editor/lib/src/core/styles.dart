@@ -1,5 +1,5 @@
+import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/painting.dart';
-import 'package:super_editor/src/infrastructure/attributed_spans.dart';
 
 import 'document.dart';
 

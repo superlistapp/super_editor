@@ -1,7 +1,7 @@
+import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
-import 'package:super_editor/src/infrastructure/attributed_spans.dart';
-import 'package:super_editor/src/infrastructure/attributed_text.dart';
+import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 
 /// Policy that dictates when to display a hint in a Super Text Field.
 enum HintBehavior {

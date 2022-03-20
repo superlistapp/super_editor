@@ -1,7 +1,8 @@
-import 'package:flutter/cupertino.dart';
+import 'package:attributed_text/attributed_text.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/painting.dart';
 import 'package:flutter/services.dart';
-import 'package:super_editor/src/infrastructure/attributed_spans.dart';
-import 'package:super_editor/src/infrastructure/attributed_text.dart';
+import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/super_textfield.dart';
 
 import '../../_logging.dart';

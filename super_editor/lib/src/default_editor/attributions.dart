@@ -1,4 +1,4 @@
-import 'package:super_editor/src/infrastructure/attributed_spans.dart';
+import 'package:attributed_text/attributed_text.dart';
 
 /// Header 1 style attribution.
 const header1Attribution = NamedAttribution('header1');

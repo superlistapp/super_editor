@@ -1,8 +1,7 @@
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/painting.dart';
-
-import '_logging.dart';
 import 'attributed_spans.dart';
+import 'attribution.dart';
+import 'logging.dart';
+import 'span_range.dart';
 
 final _log = attributionsLog;
 
@@ -15,25 +14,41 @@ final _log = attributionsLog;
 /// attributions. A common Flutter alternative is [TextSpan], but
 /// [TextSpan] does not support overlapping styles, and [TextSpan]
 /// is exclusively intended for visual text styles.
-///
-/// To style Flutter text, [AttributedText] produces a
-/// corresponding [TextSpan] with [computeTextSpan()]. Clients
-/// style the text by providing an [AttributionStyleBuilder],
-/// which is responsible for interpreting the meaning of all
-/// attributions applied to this [AttributedText].
 // TODO: there is a mixture of mutable and immutable behavior in this class.
 //       Pick one or the other, or offer 2 classes: mutable and immutable (#113)
-class AttributedText with ChangeNotifier {
+class AttributedText {
   AttributedText({
     this.text = '',
     AttributedSpans? spans,
   }) : spans = spans ?? AttributedSpans();
+
+  void dispose() {
+    _listeners.clear();
+  }
 
   /// The text that this [AttributedText] attributes.
   final String text;
 
   /// The attributes applied to [text].
   final AttributedSpans spans;
+
+  final _listeners = <VoidCallback>{};
+
+  bool get hasListeners => _listeners.isNotEmpty;
+
+  void addListener(VoidCallback listener) {
+    _listeners.add(listener);
+  }
+
+  void removeListener(VoidCallback listener) {
+    _listeners.remove(listener);
+  }
+
+  void _notifyListeners() {
+    for (final listener in _listeners) {
+      listener();
+    }
+  }
 
   /// Returns true if the given [attribution] is applied at [offset].
   ///
@@ -51,7 +66,7 @@ class AttributedText with ChangeNotifier {
   /// given [range] (inclusive).
   bool hasAttributionsWithin({
     required Set<Attribution> attributions,
-    required TextRange range,
+    required SpanRange range,
   }) {
     return spans.hasAttributionsWithin(
       attributions: attributions,
@@ -64,7 +79,7 @@ class AttributedText with ChangeNotifier {
   /// given [attributions] throughout the given [range] (inclusive).
   bool hasAttributionsThroughout({
     required Set<Attribution> attributions,
-    required TextRange range,
+    required SpanRange range,
   }) {
     for (int i = range.start; i <= range.end; i += 1) {
       for (final attribution in attributions) {
@@ -84,7 +99,7 @@ class AttributedText with ChangeNotifier {
 
   /// Returns all attributions that appear throughout the entirety
   /// of the given [range].
-  Set<Attribution> getAllAttributionsThroughout(TextRange range) {
+  Set<Attribution> getAllAttributionsThroughout(SpanRange range) {
     final attributionsThroughout = spans.getAllAttributionsAt(range.start);
     int index = range.start + 1;
 
@@ -116,7 +131,7 @@ class AttributedText with ChangeNotifier {
   /// within this [AttributedText].
   Set<AttributionSpan> getAttributionSpansInRange({
     required AttributionFilter attributionFilter,
-    required TextRange range,
+    required SpanRange range,
     bool resizeSpansToFitInRange = false,
   }) {
     return spans.getAttributionSpansInRange(
@@ -129,20 +144,20 @@ class AttributedText with ChangeNotifier {
 
   /// Adds the given [attribution] to all characters within the given
   /// [range], inclusive.
-  void addAttribution(Attribution attribution, TextRange range) {
+  void addAttribution(Attribution attribution, SpanRange range) {
     spans.addAttribution(newAttribution: attribution, start: range.start, end: range.end);
-    notifyListeners();
+    _notifyListeners();
   }
 
   /// Removes the given [attribution] from all characters within the
   /// given [range], inclusive.
-  void removeAttribution(Attribution attribution, TextRange range) {
+  void removeAttribution(Attribution attribution, SpanRange range) {
     spans.removeAttribution(attributionToRemove: attribution, start: range.start, end: range.end);
-    notifyListeners();
+    _notifyListeners();
   }
 
   /// Removes all attributions within the given [range].
-  void clearAttributions(TextRange range) {
+  void clearAttributions(SpanRange range) {
     // TODO: implement this capability within AttributedSpans
     //       This implementation uses existing round-about functionality
     //       to avoid adding new complexity to AttributedSpans while
@@ -161,9 +176,9 @@ class AttributedText with ChangeNotifier {
   /// If ALL of the text in [range], inclusive, contains the given [attribution],
   /// that [attribution] is removed from the text in [range], inclusive.
   /// Otherwise, all of the text in [range], inclusive, is given the [attribution].
-  void toggleAttribution(Attribution attribution, TextRange range) {
+  void toggleAttribution(Attribution attribution, SpanRange range) {
     spans.toggleAttribution(attribution: attribution, start: range.start, end: range.end);
-    notifyListeners();
+    _notifyListeners();
   }
 
   /// Copies all text and attributions from [startOffset] to
@@ -254,7 +269,7 @@ class AttributedText with ChangeNotifier {
     final insertedText = AttributedText(
       text: textToInsert,
     );
-    final insertTextRange = TextRange(start: 0, end: textToInsert.length - 1);
+    final insertTextRange = SpanRange(start: 0, end: textToInsert.length - 1);
     for (dynamic attribution in applyAttributions) {
       insertedText.addAttribution(attribution, insertTextRange);
     }
@@ -300,39 +315,6 @@ class AttributedText with ChangeNotifier {
     }
   }
 
-  /// Returns a Flutter [TextSpan] that is styled based on the
-  /// attributions within this [AttributedText].
-  ///
-  /// The given [styleBuilder] interprets the meaning of every
-  /// attribution and constructs [TextStyle]s accordingly.
-  // TODO: remove this method and use [visitAttributions()] to compute TextSpan
-  TextSpan computeTextSpan(AttributionStyleBuilder styleBuilder) {
-    _log.fine('text length: ${text.length}');
-    _log.fine('attributions used to compute spans:');
-    _log.fine(spans.toString());
-
-    if (text.isEmpty) {
-      // There is no text and therefore no attributions.
-      _log.fine('text is empty. Returning empty TextSpan.');
-      return TextSpan(text: '', style: styleBuilder({}));
-    }
-
-    final collapsedSpans = spans.collapseSpans(contentLength: text.length);
-    final textSpans = collapsedSpans
-        .map((attributedSpan) => TextSpan(
-              text: text.substring(attributedSpan.start, attributedSpan.end + 1),
-              style: styleBuilder(attributedSpan.attributions),
-            ))
-        .toList();
-
-    return textSpans.length == 1
-        ? textSpans.first
-        : TextSpan(
-            children: textSpans,
-            style: styleBuilder({}),
-          );
-  }
-
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
@@ -348,23 +330,27 @@ class AttributedText with ChangeNotifier {
   }
 }
 
-/// Visits the [start] and [end] of every span of attributions in
+/// Visits the start and end of every span of attributions in
 /// the given [AttributedText].
 ///
 /// The [index] is the [String] index of the character where the span
 /// either begins or ends. Note: most range-based operations expect the
 /// closing index to be exclusive, but that is not how this callback
-/// works. Both the [start] and [end] [index]es are inclusive.
+/// works. Both the start and end [index]es are inclusive.
 typedef AttributionVisitor = void Function(
-    AttributedText fullText, int index, Set<Attribution> attributions, AttributionVisitEvent event);
+  AttributedText fullText,
+  int index,
+  Set<Attribution> attributions,
+  AttributionVisitEvent event,
+);
 
 enum AttributionVisitEvent {
   start,
   end,
 }
 
-/// Creates the desired [TextStyle] given the [attributions] associated
-/// with a span of text.
+/// A zero-parameter function that returns nothing.
 ///
-/// The [attributions] set may be empty.
-typedef AttributionStyleBuilder = TextStyle Function(Set<Attribution> attributions);
+/// This is the same as Flutter's `VoidCallback`. It's replicated in this
+/// project to avoid depending on Flutter.
+typedef VoidCallback = void Function();

@@ -273,7 +273,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
     final extentOffset = (selection.extent.nodePosition as TextPosition).offset;
     final selectionStart = min(baseOffset, extentOffset);
     final selectionEnd = max(baseOffset, extentOffset);
-    final selectionRange = TextRange(start: selectionStart, end: selectionEnd - 1);
+    final selectionRange = SpanRange(start: selectionStart, end: selectionEnd - 1);
 
     final textNode = widget.editor.document.getNodeById(selection.extent.nodeId)! as TextNode;
     final text = textNode.text;
@@ -294,7 +294,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
     final extentOffset = (selection.extent.nodePosition as TextPosition).offset;
     final selectionStart = min(baseOffset, extentOffset);
     final selectionEnd = max(baseOffset, extentOffset);
-    final selectionRange = TextRange(start: selectionStart, end: selectionEnd - 1);
+    final selectionRange = SpanRange(start: selectionStart, end: selectionEnd - 1);
 
     final textNode = widget.editor.document.getNodeById(selection.extent.nodeId)! as TextNode;
     final text = textNode.text;
@@ -325,7 +325,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
         // the entire link attribution.
         text.removeAttribution(
           overlappingLinkSpan.attribution,
-          TextRange(start: overlappingLinkSpan.start, end: overlappingLinkSpan.end),
+          SpanRange(start: overlappingLinkSpan.start, end: overlappingLinkSpan.end),
         );
       }
     } else {
@@ -347,7 +347,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
     final extentOffset = (selection.extent.nodePosition as TextPosition).offset;
     final selectionStart = min(baseOffset, extentOffset);
     final selectionEnd = max(baseOffset, extentOffset);
-    final selectionRange = TextRange(start: selectionStart, end: selectionEnd - 1);
+    final selectionRange = SpanRange(start: selectionStart, end: selectionEnd - 1);
 
     final textNode = widget.editor.document.getNodeById(selection.extent.nodeId)! as TextNode;
     final text = textNode.text;
@@ -372,7 +372,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
   /// Given [text] and a [range] within the [text], the [range] is
   /// shortened on both sides to remove any trailing whitespace and
   /// the new range is returned.
-  TextRange _trimTextRangeWhitespace(AttributedText text, TextRange range) {
+  SpanRange _trimTextRangeWhitespace(AttributedText text, SpanRange range) {
     int startOffset = range.start;
     int endOffset = range.end;
 
@@ -383,7 +383,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
       endOffset -= 1;
     }
 
-    return TextRange(start: startOffset, end: endOffset);
+    return SpanRange(start: startOffset, end: endOffset);
   }
 
   /// Changes the alignment of the current selected text node
