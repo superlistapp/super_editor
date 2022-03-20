@@ -1,4 +1,4 @@
-<img src="doc/marketing/readme-header.png" width="100%" alt="Super Editor">
+<img src="https://raw.githubusercontent.com/superlistapp/super_editor/main/super_editor/doc/marketing/readme-header.png" width="100%" alt="Super Editor">
 
 # Super Editor
 
