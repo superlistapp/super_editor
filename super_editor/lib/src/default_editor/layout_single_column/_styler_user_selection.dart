@@ -98,7 +98,7 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
       }
       final showCaret = _shouldDocumentShowCaret && nodeSelection != null ? nodeSelection.isExtent : false;
       final highlightWhenEmpty =
-      nodeSelection == null ? false : nodeSelection.highlightWhenEmpty && _selectionStyles.highlightEmptyTextBlocks;
+          nodeSelection == null ? false : nodeSelection.highlightWhenEmpty && _selectionStyles.highlightEmptyTextBlocks;
 
       editorLayoutLog.finer(' - ${node.id}: $nodeSelection');
       if (showCaret) {
@@ -134,7 +134,7 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
         ..selection = selection
         ..selectionColor = _selectionStyles.selectionColor
         ..caret = _shouldDocumentShowCaret && selection != null && selection.isCollapsed ? selection.extent : null
-        ..caretColor = _selectionStyles.selectionColor;
+        ..caretColor = _selectionStyles.caretColor;
     }
 
     return viewModel;
