@@ -1,7 +1,5 @@
 import 'package:flutter/widgets.dart';
-import 'package:super_editor/src/infrastructure/caret.dart';
-import 'package:super_editor/src/infrastructure/super_selectable_text.dart';
-import 'package:super_editor/src/infrastructure/text_layout.dart';
+import 'package:super_selectable_text/super_selectable_text.dart';
 
 /// [TextCaretFactory] that creates an [IOSTextFieldCaret], which
 /// paints a blinking iOS-style caret on top of a [SuperSelectableText].

@@ -1,7 +1,5 @@
 import 'package:flutter/widgets.dart';
-import 'package:super_editor/src/infrastructure/caret.dart';
-import 'package:super_editor/src/infrastructure/super_selectable_text.dart';
-import 'package:super_editor/src/infrastructure/text_layout.dart';
+import 'package:super_selectable_text/super_selectable_text.dart';
 
 /// Factory that creates an Android-style caret to be displayed in
 /// a [SuperSelectableText] widget.

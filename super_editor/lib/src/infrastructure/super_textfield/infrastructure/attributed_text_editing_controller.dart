@@ -6,8 +6,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
-import 'package:super_editor/src/infrastructure/super_selectable_text.dart';
-import 'package:super_editor/src/infrastructure/text_layout.dart';
+import 'package:super_selectable_text/super_selectable_text.dart';
 
 class AttributedTextEditingController with ChangeNotifier {
   AttributedTextEditingController({

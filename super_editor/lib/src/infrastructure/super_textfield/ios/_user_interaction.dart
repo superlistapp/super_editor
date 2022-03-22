@@ -1,14 +1,9 @@
-import 'dart:ui';
-
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
-import 'package:super_editor/src/infrastructure/super_selectable_text.dart';
-import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/text_scrollview.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/super_textfield.dart';
-import 'package:super_editor/src/infrastructure/text_layout.dart';
+import 'package:super_selectable_text/super_selectable_text.dart';
 
 import '_editing_controls.dart';
 

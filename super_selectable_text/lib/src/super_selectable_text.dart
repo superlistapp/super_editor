@@ -16,16 +16,16 @@ import 'text_layout.dart';
 ///
 /// [showCaret] and [textSelection] together determine whether or not the
 /// caret is painted in this [SuperSelectableText]. If [textSelection] is collapsed
-/// with an offset less than 0 then no caret is displayed. If [showCaret] is
-/// false then no caret is displayed. If [textSelection] has a [baseOffset]
-/// or [extentOffset] that is >= zero and [showCaret] is true then a caret is
+/// with an offset `< 0`, then no caret is displayed. If [showCaret] is
+/// `false` then no caret is displayed. If [textSelection] has a [baseOffset]
+/// or [extentOffset] that is `>= 0` and [showCaret] is `true`, then a caret is
 /// displayed. An explicit [showCaret] control is offered because multiple
 /// [SuperSelectableText] widgets might be displayed together with a selection
 /// spanning multiple [SuperSelectableText] widgets, but only one of the
-/// [SuperSelectableTex]` widgets displays a caret.
+/// [SuperSelectableText] widgets displays a caret.
 ///
-/// If [text] is empty, and a [textSelection] with an extent >= 0 is provided, and
-/// [highlightWhenEmpty] is [true], then [SuperSelectableText] will paint a small
+/// If [text] is empty, and a [textSelection] with an extent `>= 0` is provided, and
+/// [highlightWhenEmpty] is `true`, then [SuperSelectableText] will paint a small
 /// highlight, despite having no content. This is useful when showing that
 /// one or more empty text areas are selected.
 class SuperSelectableText extends StatefulWidget {
@@ -512,7 +512,7 @@ class SuperSelectableTextState extends State<SuperSelectableText> implements Tex
 
     // The only item in this Stack with intrinsic height is the text.
     // We wrap with IntrinsicHeight so that the text selection widget and
-    // the text controls widget have explicit bounds so that they can
+    // the text controls widget have explicit bounds, so that they can
     // position their content relative to the text without inadvertently
     // expanding to take up all available space on the screen.
     return IntrinsicHeight(

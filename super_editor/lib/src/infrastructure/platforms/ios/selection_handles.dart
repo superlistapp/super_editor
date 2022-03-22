@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:super_editor/src/infrastructure/caret.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
+import 'package:super_selectable_text/super_selectable_text.dart';
 
 /// An iOS-style text selection handle.
 ///
@@ -68,8 +68,7 @@ class IOSSelectionHandle extends StatelessWidget {
 
   Widget _buildExpandedHandle() {
     final ballDiameter = ballRadius * 2;
-    final verticalOffset =
-        handleType == HandleType.upstream ? -ballRadius : ballRadius;
+    final verticalOffset = handleType == HandleType.upstream ? -ballRadius : ballRadius;
 
     return Transform.translate(
       offset: Offset(0, verticalOffset),
