@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/android/_editing_controls.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/android/_user_interaction.dart';
 import 'package:super_editor/super_editor.dart';
+import 'package:super_selectable_text/super_selectable_text.dart';
 
 export '_caret.dart';
 export '../../platforms/android/selection_handles.dart';

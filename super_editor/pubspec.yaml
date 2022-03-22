@@ -24,6 +24,8 @@ dependencies:
   flutter_lints: ^1.0.0
   flutter_test:
     sdk: flutter
+  super_selectable_text:
+    path: ../super_selectable_text
   uuid: ^3.0.3
 
 dev_dependencies:

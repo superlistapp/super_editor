@@ -19,7 +19,6 @@ import 'package:super_editor/src/default_editor/selection_upstream_downstream.da
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
-import 'package:super_editor/src/infrastructure/text_layout.dart';
 
 import 'attributions.dart';
 import 'horizontal_rule.dart';

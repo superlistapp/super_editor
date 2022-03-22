@@ -4,13 +4,13 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
-import 'package:super_editor/src/infrastructure/super_selectable_text.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/magnifier.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/android/android_textfield.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/attributed_text_editing_controller.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/text_scrollview.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/toolbar_position_delegate.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
+import 'package:super_selectable_text/super_selectable_text.dart';
 
 final _log = androidTextFieldLog;
 

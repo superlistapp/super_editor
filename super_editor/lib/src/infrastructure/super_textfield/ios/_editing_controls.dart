@@ -3,13 +3,10 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
-import 'package:super_editor/src/infrastructure/super_selectable_text.dart';
-import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/text_scrollview.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/toolbar_position_delegate.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/magnifier.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/super_textfield.dart';
-
-import '../../platforms/ios/selection_handles.dart';
+import 'package:super_selectable_text/super_selectable_text.dart';
 
 final _log = iosTextFieldLog;
 

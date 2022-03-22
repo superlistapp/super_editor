@@ -9,12 +9,12 @@ import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
-import 'package:super_editor/src/infrastructure/caret.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/magnifier.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/selection_handles.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/toolbar_position_delegate.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
+import 'package:super_selectable_text/super_selectable_text.dart';
 
 import 'document_gestures.dart';
 import 'document_gestures_touch.dart';
