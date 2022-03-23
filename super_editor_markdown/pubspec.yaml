@@ -15,6 +15,7 @@ dependencies:
     path: ../super_editor
   flutter_lints: ^1.0.0
   logging: ^1.0.1
+  markdown: ^4.0.0
 
 dev_dependencies:
   flutter_test:
