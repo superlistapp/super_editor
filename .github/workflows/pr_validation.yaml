@@ -58,6 +58,25 @@ jobs:
       # Run all tests
       - run: flutter test
 
+  test_super_editor_markdown:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./super_editor_markdown
+    steps:
+      # Checkout the PR branch
+      - uses: actions/checkout@v2
+      # Setup Flutter environment
+      - uses: subosito/flutter-action@v1
+        with:
+          channel: "stable"
+      # Download all the packages that the app uses
+      - run: flutter pub get
+      # TODO: run static analysis here when we get to zero analysis warnings
+      # Run all tests
+      - run: flutter test
+
+
   test_attributed_text:
     runs-on: ubuntu-latest
     defaults:

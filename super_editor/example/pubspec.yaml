@@ -42,6 +42,8 @@ dependencies:
 
   super_editor:
     path: ../
+  super_editor_markdown:
+    path: ../../super_editor_markdown
 
 dev_dependencies:
   flutter_test:
