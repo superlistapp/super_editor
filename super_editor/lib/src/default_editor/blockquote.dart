@@ -78,6 +78,7 @@ class BlockquoteComponentBuilder implements ComponentBuilder {
       selectionColor: componentViewModel.selectionColor,
       showCaret: componentViewModel.caret != null,
       caretColor: componentViewModel.caretColor,
+      highlightWhenEmpty: componentViewModel.highlightWhenEmpty,
     );
   }
 }
@@ -198,6 +199,7 @@ class BlockquoteComponent extends StatelessWidget {
     this.showCaret = false,
     this.caretColor = Colors.black,
     this.showDebugPaint = false,
+    this.highlightWhenEmpty = false,
   }) : super(key: key);
 
   final GlobalKey textKey;
@@ -209,6 +211,7 @@ class BlockquoteComponent extends StatelessWidget {
   final BorderRadius borderRadius;
   final bool showCaret;
   final Color caretColor;
+  final bool highlightWhenEmpty;
   final bool showDebugPaint;
 
   @override
@@ -227,6 +230,7 @@ class BlockquoteComponent extends StatelessWidget {
         selectionColor: selectionColor,
         showCaret: showCaret,
         caretColor: caretColor,
+        highlightWhenEmpty: highlightWhenEmpty,
         showDebugPaint: showDebugPaint,
       ),
     );

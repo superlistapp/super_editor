@@ -146,6 +146,7 @@ class ListItemComponentBuilder implements ComponentBuilder {
         selectionColor: componentViewModel.selectionColor,
         showCaret: componentViewModel.caret != null,
         caretColor: componentViewModel.caretColor,
+        highlightWhenEmpty: componentViewModel.highlightWhenEmpty,
       );
     } else if (componentViewModel.type == ListItemType.ordered) {
       return OrderedListItemComponent(
@@ -158,6 +159,7 @@ class ListItemComponentBuilder implements ComponentBuilder {
         selectionColor: componentViewModel.selectionColor,
         showCaret: componentViewModel.caret != null,
         caretColor: componentViewModel.caretColor,
+        highlightWhenEmpty: componentViewModel.highlightWhenEmpty,
       );
     }
 
@@ -277,6 +279,7 @@ class UnorderedListItemComponent extends StatelessWidget {
     this.selectionColor = Colors.lightBlueAccent,
     this.showCaret = false,
     this.caretColor = Colors.black,
+    this.highlightWhenEmpty = false,
     this.showDebugPaint = false,
   }) : super(key: key);
 
@@ -290,6 +293,7 @@ class UnorderedListItemComponent extends StatelessWidget {
   final Color selectionColor;
   final bool showCaret;
   final Color caretColor;
+  final bool highlightWhenEmpty;
   final bool showDebugPaint;
 
   @override
@@ -322,6 +326,7 @@ class UnorderedListItemComponent extends StatelessWidget {
             selectionColor: selectionColor,
             showCaret: showCaret,
             caretColor: caretColor,
+            highlightWhenEmpty: highlightWhenEmpty,
             showDebugPaint: showDebugPaint,
           ),
         ),
@@ -364,6 +369,7 @@ class OrderedListItemComponent extends StatelessWidget {
     this.selectionColor = Colors.lightBlueAccent,
     this.showCaret = false,
     this.caretColor = Colors.black,
+    this.highlightWhenEmpty = false,
     this.showDebugPaint = false,
   }) : super(key: key);
 
@@ -378,6 +384,7 @@ class OrderedListItemComponent extends StatelessWidget {
   final Color selectionColor;
   final bool showCaret;
   final Color caretColor;
+  final bool highlightWhenEmpty;
   final bool showDebugPaint;
 
   @override
@@ -409,6 +416,7 @@ class OrderedListItemComponent extends StatelessWidget {
             selectionColor: selectionColor,
             showCaret: showCaret,
             caretColor: caretColor,
+            highlightWhenEmpty: highlightWhenEmpty,
             showDebugPaint: showDebugPaint,
           ),
         ),
