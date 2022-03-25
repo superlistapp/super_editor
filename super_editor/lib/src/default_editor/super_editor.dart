@@ -592,6 +592,9 @@ final defaultKeyboardActions = <DocumentKeyboardAction>[
   anyCharacterOrDestructiveKeyToDeleteSelection,
   anyCharacterToInsertInParagraph,
   anyCharacterToInsertInTextContent,
+  moveToLineStartOrEndWithCtrlAOrE,
+  deleteLineWithCmdBksp,
+  deleteWordWithAltBksp,
 ];
 
 /// Stylesheet applied to all [SuperEditor]s by default.

@@ -2458,6 +2458,125 @@ void main() {
           expect(controller.text.text, '-->f<--');
         });
       });
+
+      group("Move caret with control A/E", () {
+        group("MacOS", () {
+          testWidgets('Control A moves caret to left most position', (tester) async {
+            Platform.setTestInstance(MacPlatform());
+
+            final controller = AttributedTextEditingController(
+              text: AttributedText(text: 'this is some text'),
+              selection: const TextSelection.collapsed(offset: 5),
+            );
+
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+
+            final result = DefaultSuperTextFieldKeyboardHandlers.moveCaretToStartOrEnd(
+              controller: controller,
+              selectableTextState: selectableTextState,
+              keyEvent: const FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.keyA,
+                  physicalKey: PhysicalKeyboardKey.keyA,
+                  isControlPressed: true,
+                ),
+                character: 'a',
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.handled);
+            expect(controller.selection.baseOffset, 0);
+            expect(controller.selection.extentOffset, 0);
+
+            Platform.setTestInstance(null);
+          });
+          testWidgets('Control E moves caret to right most position', (tester) async {
+            Platform.setTestInstance(MacPlatform());
+
+            final controller = AttributedTextEditingController(
+              text: AttributedText(text: 'this is some text'),
+              selection: const TextSelection.collapsed(offset: 5),
+            );
+
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+
+            final result = DefaultSuperTextFieldKeyboardHandlers.moveCaretToStartOrEnd(
+              controller: controller,
+              selectableTextState: selectableTextState,
+              keyEvent: const FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.keyE,
+                  physicalKey: PhysicalKeyboardKey.keyE,
+                  isControlPressed: true,
+                ),
+                character: 'e',
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.handled);
+            expect(controller.selection.baseOffset, 17);
+            expect(controller.selection.extentOffset, 17);
+
+            Platform.setTestInstance(null);
+          });
+        });
+        group("Windows", () {
+          testWidgets('Ignores Control A', (tester) async {
+            Platform.setTestInstance(WindowsPlatform());
+
+            final controller = AttributedTextEditingController(
+              text: AttributedText(text: 'this is some text'),
+              selection: const TextSelection.collapsed(offset: 5),
+            );
+
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+
+            final result = DefaultSuperTextFieldKeyboardHandlers.moveCaretToStartOrEnd(
+              controller: controller,
+              selectableTextState: selectableTextState,
+              keyEvent: const FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.keyA,
+                  physicalKey: PhysicalKeyboardKey.keyA,
+                  isControlPressed: true,
+                ),
+                character: 'a',
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.notHandled);
+
+            Platform.setTestInstance(null);
+          });
+          testWidgets('Ignores Control E', (tester) async {
+            Platform.setTestInstance(WindowsPlatform());
+
+            final controller = AttributedTextEditingController(
+              text: AttributedText(text: 'this is some text'),
+              selection: const TextSelection.collapsed(offset: 5),
+            );
+
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+
+            final result = DefaultSuperTextFieldKeyboardHandlers.moveCaretToStartOrEnd(
+              controller: controller,
+              selectableTextState: selectableTextState,
+              keyEvent: const FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.keyE,
+                  physicalKey: PhysicalKeyboardKey.keyE,
+                  isControlPressed: true,
+                ),
+                character: 'e',
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.notHandled);
+
+            Platform.setTestInstance(null);
+          });
+        });
+      });
     });
   });
 }

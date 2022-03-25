@@ -7,6 +7,7 @@ import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
+import 'package:super_editor/src/infrastructure/platform_detector.dart';
 
 import 'document_input_keyboard.dart';
 import 'paragraph.dart';
@@ -194,6 +195,10 @@ ExecutionInstruction backspaceToRemoveUpstreamContent({
     return ExecutionInstruction.continueExecution;
   }
 
+  if (keyEvent.isMetaPressed || keyEvent.isAltPressed) {
+    return ExecutionInstruction.continueExecution;
+  }
+
   final didDelete = editContext.commonOps.deleteUpstream();
 
   return didDelete ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
@@ -298,4 +303,86 @@ ExecutionInstruction moveUpDownLeftAndRightWithArrowKeys({
   }
 
   return didMove ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
+}
+
+ExecutionInstruction moveToLineStartOrEndWithCtrlAOrE({
+  required EditContext editContext,
+  required RawKeyEvent keyEvent,
+}) {
+  if (!keyEvent.isControlPressed && Platform.instance.isMac) {
+    return ExecutionInstruction.continueExecution;
+  }
+  bool didMove = false;
+
+  if (keyEvent.logicalKey == LogicalKeyboardKey.keyA) {
+    didMove = editContext.commonOps.moveCaretUpstream(
+      expand: keyEvent.isShiftPressed,
+      movementModifiers: {MovementModifier.line},
+    );
+    _log.log('moveToLineStartOrEndWithCtrlAOrE', ' - handling Ctrl+A');
+  }
+
+  if (keyEvent.logicalKey == LogicalKeyboardKey.keyE) {
+    didMove = editContext.commonOps.moveCaretDownstream(
+      expand: keyEvent.isShiftPressed,
+      movementModifiers: {MovementModifier.line},
+    );
+    _log.log('moveToLineStartOrEndWithCtrlAOrE', ' - handling Ctrl+E');
+  }
+
+  return didMove ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
+}
+
+ExecutionInstruction deleteLineWithCmdBksp({
+  required EditContext editContext,
+  required RawKeyEvent keyEvent,
+}) {
+  if (!keyEvent.isPrimaryShortcutKeyPressed || keyEvent.logicalKey != LogicalKeyboardKey.backspace) {
+    return ExecutionInstruction.continueExecution;
+  }
+  if (editContext.composer.selection == null) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  bool didMove = false;
+
+  didMove = editContext.commonOps.moveCaretUpstream(
+    expand: true,
+    movementModifiers: {MovementModifier.line},
+  );
+
+  if (didMove) {
+    _log.log('deleteLineWithCmdBksp', ' - handling CMD+BKSP');
+    return editContext.commonOps.deleteSelection()
+        ? ExecutionInstruction.haltExecution
+        : ExecutionInstruction.continueExecution;
+  }
+  return ExecutionInstruction.continueExecution;
+}
+
+ExecutionInstruction deleteWordWithAltBksp({
+  required EditContext editContext,
+  required RawKeyEvent keyEvent,
+}) {
+  if (!keyEvent.isAltPressed || keyEvent.logicalKey != LogicalKeyboardKey.backspace) {
+    return ExecutionInstruction.continueExecution;
+  }
+  if (editContext.composer.selection == null) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  bool didMove = false;
+
+  didMove = editContext.commonOps.moveCaretUpstream(
+    expand: true,
+    movementModifiers: {MovementModifier.word},
+  );
+
+  if (didMove) {
+    _log.log('deleteWordWithAltBksp', ' - handling ALT+BKSP');
+    return editContext.commonOps.deleteSelection()
+        ? ExecutionInstruction.haltExecution
+        : ExecutionInstruction.continueExecution;
+  }
+  return ExecutionInstruction.continueExecution;
 }

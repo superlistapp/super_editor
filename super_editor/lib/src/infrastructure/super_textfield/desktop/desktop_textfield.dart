@@ -10,6 +10,7 @@ import 'package:super_editor/src/default_editor/super_editor.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
+import 'package:super_editor/src/infrastructure/platform_detector.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/attributed_text_editing_controller.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/hint_text.dart';
 import 'package:super_selectable_text/super_selectable_text.dart';
@@ -1272,6 +1273,40 @@ class DefaultSuperTextFieldKeyboardHandlers {
     }
 
     controller.selectAll();
+
+    return TextFieldKeyboardHandlerResult.handled;
+  }
+
+  static TextFieldKeyboardHandlerResult moveCaretToStartOrEnd({
+    required AttributedTextEditingController controller,
+    SuperSelectableTextState? selectableTextState,
+    required RawKeyEvent keyEvent,
+  }) {
+    bool _moveLeft = false;
+    if (!keyEvent.isControlPressed) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+    if (![LogicalKeyboardKey.keyA, LogicalKeyboardKey.keyE].contains(keyEvent.logicalKey)) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+    if (!Platform.instance.isMac) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    keyEvent.logicalKey == LogicalKeyboardKey.keyA
+        ? _moveLeft = true
+        : keyEvent.logicalKey == LogicalKeyboardKey.keyE
+            ? _moveLeft = false
+            : null;
+
+    controller.moveCaretHorizontally(
+      selectableTextState: selectableTextState!,
+      expandSelection: false,
+      moveLeft: _moveLeft,
+      movementModifiers: {
+        'movement_unit': 'line',
+      },
+    );
 
     return TextFieldKeyboardHandlerResult.handled;
   }
