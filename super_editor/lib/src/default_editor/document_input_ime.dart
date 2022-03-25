@@ -1165,7 +1165,7 @@ class KeyboardEditingToolbar extends StatelessWidget {
                               IconButton(
                                 onPressed: isSingleNodeSelected &&
                                         (selectedNode is TextNode &&
-                                            selectedNode.getMetadataValue('blockType') == header2Attribution)
+                                            selectedNode.getMetadataValue('blockType') != header2Attribution)
                                     ? _convertToHeader2
                                     : null,
                                 icon: const Icon(Icons.title),
