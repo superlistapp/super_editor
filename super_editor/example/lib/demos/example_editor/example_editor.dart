@@ -206,12 +206,12 @@ class _ExampleEditorState extends State<ExampleEditor> {
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
       case TargetPlatform.iOS:
-        return DocumentInputSource.ime;
       case TargetPlatform.fuchsia:
       case TargetPlatform.linux:
       case TargetPlatform.macOS:
       case TargetPlatform.windows:
-        return DocumentInputSource.keyboard;
+        return DocumentInputSource.ime;
+      // return DocumentInputSource.keyboard;
     }
   }
 
@@ -347,6 +347,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
         ],
         gestureMode: _gestureMode,
         inputSource: _inputSource,
+        keyboardActions: _inputSource == DocumentInputSource.ime ? defaultImeKeyboardActions : defaultKeyboardActions,
         androidToolbarBuilder: (_) => AndroidTextEditingFloatingToolbar(
           onCutPressed: _cut,
           onCopyPressed: _copy,
