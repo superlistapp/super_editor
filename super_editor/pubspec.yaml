@@ -12,7 +12,9 @@ dependencies:
     sdk: flutter
 
   attributed_text:
-    path: ../attributed_text
+    git:
+      url: https://github.com/superlistapp/super_editor.git
+      path: attributed_text
   characters: ^1.2.0
   collection: ^1.15.0
   http: ^0.13.1
@@ -22,7 +24,9 @@ dependencies:
   flutter_test:
     sdk: flutter
   super_selectable_text:
-    path: ../super_selectable_text
+    git:
+      url: https://github.com/superlistapp/super_editor.git
+      path: super_selectable_text
   uuid: ^3.0.3
 
 dev_dependencies:
