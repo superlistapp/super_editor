@@ -4,6 +4,7 @@ import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_selectable_text/super_selectable_text.dart';
@@ -688,7 +689,7 @@ extension DefaultSuperTextFieldActions on AttributedTextEditingController {
     required SuperSelectableTextState selectableTextState,
     required bool expandSelection,
     required bool moveLeft,
-    Map<String, dynamic> movementModifiers = const {},
+    Set<MovementModifier> movementModifiers = const {},
   }) {
     int newExtent;
 
@@ -703,9 +704,9 @@ extension DefaultSuperTextFieldActions on AttributedTextEditingController {
         // want to continue expanding the selection. Move the
         // extent to the left side of the selection.
         newExtent = selection.start;
-      } else if (movementModifiers['movement_unit'] == 'line') {
+      } else if (movementModifiers.contains(MovementModifier.line)) {
         newExtent = selectableTextState.getPositionAtStartOfLine(TextPosition(offset: selection.extentOffset)).offset;
-      } else if (movementModifiers['movement_unit'] == 'word') {
+      } else if (movementModifiers.contains(MovementModifier.word)) {
         final plainText = text.text;
 
         newExtent = selection.extentOffset;
@@ -727,7 +728,7 @@ extension DefaultSuperTextFieldActions on AttributedTextEditingController {
         // want to continue expanding the selection. Move the
         // extent to the left side of the selection.
         newExtent = selection.end;
-      } else if (movementModifiers['movement_unit'] == 'line') {
+      } else if (movementModifiers.contains(MovementModifier.line)) {
         final endOfLine = selectableTextState.getPositionAtEndOfLine(TextPosition(offset: selection.extentOffset));
 
         final endPosition = TextPosition(offset: text.text.length);
@@ -749,7 +750,7 @@ extension DefaultSuperTextFieldActions on AttributedTextEditingController {
         // TODO: with affinity, ensure it works as expected for right-aligned text
         // TODO: this logic fails for justified text - find a solution for that (#55)
         newExtent = isAutoWrapLine ? endOfLine.offset - 1 : endOfLine.offset;
-      } else if (movementModifiers['movement_unit'] == 'word') {
+      } else if (movementModifiers.contains(MovementModifier.word)) {
         final extentPosition = selection.extent;
         final plainText = text.text;
 
