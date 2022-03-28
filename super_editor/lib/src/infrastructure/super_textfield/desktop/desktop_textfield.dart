@@ -6,6 +6,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart' hide SelectableText;
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
+import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/default_editor/super_editor.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
@@ -1283,16 +1284,12 @@ class DefaultSuperTextFieldKeyboardHandlers {
     required RawKeyEvent keyEvent,
   }) {
     bool _moveLeft = false;
-    if (!keyEvent.isControlPressed) {
+    if (!keyEvent.isControlPressed || !Platform.instance.isMac) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
-    if (![LogicalKeyboardKey.keyA, LogicalKeyboardKey.keyE].contains(keyEvent.logicalKey)) {
+    if (keyEvent.logicalKey != LogicalKeyboardKey.keyA && keyEvent.logicalKey != LogicalKeyboardKey.keyE) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
-    if (!Platform.instance.isMac) {
-      return TextFieldKeyboardHandlerResult.notHandled;
-    }
-
     keyEvent.logicalKey == LogicalKeyboardKey.keyA
         ? _moveLeft = true
         : keyEvent.logicalKey == LogicalKeyboardKey.keyE
@@ -1303,9 +1300,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
       selectableTextState: selectableTextState!,
       expandSelection: false,
       moveLeft: _moveLeft,
-      movementModifiers: {
-        'movement_unit': 'line',
-      },
+      movementModifiers: {MovementModifier.line},
     );
 
     return TextFieldKeyboardHandlerResult.handled;
@@ -1335,13 +1330,11 @@ class DefaultSuperTextFieldKeyboardHandlers {
     if (keyEvent.logicalKey == LogicalKeyboardKey.arrowLeft) {
       _log.finer('moveUpDownLeftAndRightWithArrowKeys - handling left arrow key');
 
-      final movementModifiers = <String, dynamic>{
-        'movement_unit': 'character',
-      };
+      Set<MovementModifier> movementModifiers = {};
       if (keyEvent.isPrimaryShortcutKeyPressed) {
-        movementModifiers['movement_unit'] = 'line';
+        movementModifiers = {MovementModifier.line};
       } else if (keyEvent.isAltPressed) {
-        movementModifiers['movement_unit'] = 'word';
+        movementModifiers = {MovementModifier.word};
       }
 
       controller.moveCaretHorizontally(
@@ -1353,13 +1346,11 @@ class DefaultSuperTextFieldKeyboardHandlers {
     } else if (keyEvent.logicalKey == LogicalKeyboardKey.arrowRight) {
       _log.finer('moveUpDownLeftAndRightWithArrowKeys - handling right arrow key');
 
-      final movementModifiers = <String, dynamic>{
-        'movement_unit': 'character',
-      };
+      Set<MovementModifier> movementModifiers = {};
       if (keyEvent.isPrimaryShortcutKeyPressed) {
-        movementModifiers['movement_unit'] = 'line';
+        movementModifiers = {MovementModifier.line};
       } else if (keyEvent.isAltPressed) {
-        movementModifiers['movement_unit'] = 'word';
+        movementModifiers = {MovementModifier.word};
       }
 
       controller.moveCaretHorizontally(
@@ -1465,6 +1456,32 @@ class DefaultSuperTextFieldKeyboardHandlers {
     }
 
     return TextFieldKeyboardHandlerResult.handled;
+  }
+
+  static TextFieldKeyboardHandlerResult deleteWordWhenAltBackSpaceIsPressed({
+    required AttributedTextEditingController controller,
+    required SuperSelectableTextState selectableTextState,
+    required RawKeyEvent keyEvent,
+  }) {
+    if (keyEvent.logicalKey != LogicalKeyboardKey.backspace && !keyEvent.isAltPressed) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+    if (controller.selection.extentOffset < 0) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    if (controller.selection.isCollapsed) {
+      controller.moveCaretHorizontally(
+        selectableTextState: selectableTextState,
+        expandSelection: true,
+        moveLeft: true,
+        movementModifiers: {MovementModifier.word},
+      );
+      controller.deleteSelectedText();
+
+      return TextFieldKeyboardHandlerResult.handled;
+    }
+    return TextFieldKeyboardHandlerResult.notHandled;
   }
 
   static TextFieldKeyboardHandlerResult insertNewlineWhenEnterIsPressed({
