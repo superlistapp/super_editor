@@ -2461,7 +2461,7 @@ void main() {
 
       group("Move caret with control A/E", () {
         group("MacOS", () {
-          testWidgets('Control A moves caret to left most position', (tester) async {
+          testWidgets('Caret at 5, Control A moves caret to start', (tester) async {
             Platform.setTestInstance(MacPlatform());
 
             final controller = AttributedTextEditingController(
@@ -2490,12 +2490,70 @@ void main() {
 
             Platform.setTestInstance(null);
           });
-          testWidgets('Control E moves caret to right most position', (tester) async {
+          testWidgets('Caret at 5, Control E moves caret to end', (tester) async {
             Platform.setTestInstance(MacPlatform());
 
             final controller = AttributedTextEditingController(
               text: AttributedText(text: 'this is some text'),
               selection: const TextSelection.collapsed(offset: 5),
+            );
+
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+
+            final result = DefaultSuperTextFieldKeyboardHandlers.moveCaretToStartOrEnd(
+              controller: controller,
+              selectableTextState: selectableTextState,
+              keyEvent: const FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.keyE,
+                  physicalKey: PhysicalKeyboardKey.keyE,
+                  isControlPressed: true,
+                ),
+                character: 'e',
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.handled);
+            expect(controller.selection.baseOffset, 17);
+            expect(controller.selection.extentOffset, 17);
+
+            Platform.setTestInstance(null);
+          });
+          testWidgets('Caret at start, Cntl+A moves caret to start', (tester) async {
+            Platform.setTestInstance(MacPlatform());
+
+            final controller = AttributedTextEditingController(
+              text: AttributedText(text: 'this is some text'),
+              selection: const TextSelection.collapsed(offset: 0),
+            );
+
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+
+            final result = DefaultSuperTextFieldKeyboardHandlers.moveCaretToStartOrEnd(
+              controller: controller,
+              selectableTextState: selectableTextState,
+              keyEvent: const FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.keyA,
+                  physicalKey: PhysicalKeyboardKey.keyA,
+                  isControlPressed: true,
+                ),
+                character: 'a',
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.handled);
+            expect(controller.selection.baseOffset, 0);
+            expect(controller.selection.extentOffset, 0);
+
+            Platform.setTestInstance(null);
+          });
+          testWidgets('Caret at end, Cntl+E moves caret to end', (tester) async {
+            Platform.setTestInstance(MacPlatform());
+
+            final controller = AttributedTextEditingController(
+              text: AttributedText(text: 'this is some text'),
+              selection: const TextSelection.collapsed(offset: 17),
             );
 
             final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
@@ -2568,6 +2626,297 @@ void main() {
                   isControlPressed: true,
                 ),
                 character: 'e',
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.notHandled);
+
+            Platform.setTestInstance(null);
+          });
+        });
+      });
+
+      group("Delete Word with Alt Backspace", () {
+        group("MacOS", () {
+          testWidgets('Caret at end of word, word deleted until beginning', (tester) async {
+            Platform.setTestInstance(MacPlatform());
+
+            final controller = AttributedTextEditingController(
+              text: AttributedText(text: 'this is some text'),
+              selection: const TextSelection.collapsed(offset: 4), //this|
+            );
+
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+
+            final result = DefaultSuperTextFieldKeyboardHandlers.deleteWordWhenAltBackSpaceIsPressed(
+              controller: controller,
+              selectableTextState: selectableTextState,
+              keyEvent: const FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.backspace,
+                  physicalKey: PhysicalKeyboardKey.backspace,
+                  isAltPressed: true,
+                ),
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.handled);
+            expect(controller.selection.baseOffset, 0);
+            expect(controller.selection.extentOffset, 0);
+            expect(controller.text.text, " is some text");
+
+            Platform.setTestInstance(null);
+          });
+          testWidgets('Caret at middle of word, word deleted until beginning', (tester) async {
+            Platform.setTestInstance(MacPlatform());
+
+            final controller = AttributedTextEditingController(
+              text: AttributedText(text: 'this is some text'),
+              selection: const TextSelection.collapsed(offset: 2), //th|is
+            );
+
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+
+            final result = DefaultSuperTextFieldKeyboardHandlers.deleteWordWhenAltBackSpaceIsPressed(
+              controller: controller,
+              selectableTextState: selectableTextState,
+              keyEvent: const FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.backspace,
+                  physicalKey: PhysicalKeyboardKey.backspace,
+                  isAltPressed: true,
+                ),
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.handled);
+            expect(controller.selection.baseOffset, 0);
+            expect(controller.selection.extentOffset, 0);
+            expect(controller.text.text, "is is some text");
+
+            Platform.setTestInstance(null);
+          });
+          testWidgets('Caret at start of word, deletes previous word', (tester) async {
+            Platform.setTestInstance(MacPlatform());
+
+            final controller = AttributedTextEditingController(
+              text: AttributedText(text: 'this is some text'),
+              selection: const TextSelection.collapsed(offset: 8), //this is |some
+            );
+
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+
+            final result = DefaultSuperTextFieldKeyboardHandlers.deleteWordWhenAltBackSpaceIsPressed(
+              controller: controller,
+              selectableTextState: selectableTextState,
+              keyEvent: const FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.backspace,
+                  physicalKey: PhysicalKeyboardKey.backspace,
+                  isAltPressed: true,
+                ),
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.handled);
+            expect(controller.selection.baseOffset, 5);
+            expect(controller.selection.extentOffset, 5);
+            expect(controller.text.text, "this some text");
+
+            Platform.setTestInstance(null);
+          });
+          testWidgets('it does nothing when selection is expanded', (tester) async {
+            Platform.setTestInstance(MacPlatform());
+
+            final controller = AttributedTextEditingController(
+              text: AttributedText(text: 'This is some text that doesn\'t matter for this test.'),
+              selection: const TextSelection(
+                baseOffset: 0,
+                extentOffset: 10,
+              ),
+            );
+
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+
+            final result = DefaultSuperTextFieldKeyboardHandlers.deleteWordWhenAltBackSpaceIsPressed(
+              controller: controller,
+              selectableTextState: selectableTextState,
+              keyEvent: const FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.backspace,
+                  physicalKey: PhysicalKeyboardKey.backspace,
+                  isAltPressed: true,
+                ),
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.notHandled);
+
+            Platform.setTestInstance(null);
+          });
+          testWidgets('it does nothing when selection extent is < 0', (tester) async {
+            Platform.setTestInstance(MacPlatform());
+
+            final controller = AttributedTextEditingController(
+              text: AttributedText(text: 'This is some text that doesn\'t matter for this test.'),
+              selection: const TextSelection.collapsed(offset: -1),
+            );
+
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+
+            final result = DefaultSuperTextFieldKeyboardHandlers.deleteWordWhenAltBackSpaceIsPressed(
+              controller: controller,
+              selectableTextState: selectableTextState,
+              keyEvent: const FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.backspace,
+                  physicalKey: PhysicalKeyboardKey.backspace,
+                  isAltPressed: true,
+                ),
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.notHandled);
+
+            Platform.setTestInstance(null);
+          });
+        });
+        group("Windows", () {
+          testWidgets('Caret at end of word, word deleted until beginning', (tester) async {
+            Platform.setTestInstance(MacPlatform());
+
+            final controller = AttributedTextEditingController(
+              text: AttributedText(text: 'this is some text'),
+              selection: const TextSelection.collapsed(offset: 4), //this|
+            );
+
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+
+            final result = DefaultSuperTextFieldKeyboardHandlers.deleteWordWhenAltBackSpaceIsPressed(
+              controller: controller,
+              selectableTextState: selectableTextState,
+              keyEvent: const FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.backspace,
+                  physicalKey: PhysicalKeyboardKey.backspace,
+                  isAltPressed: true,
+                ),
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.handled);
+            expect(controller.selection.baseOffset, 0);
+            expect(controller.selection.extentOffset, 0);
+            expect(controller.text.text, " is some text");
+
+            Platform.setTestInstance(null);
+          });
+          testWidgets('Caret at middle of word, word deleted until beginning', (tester) async {
+            Platform.setTestInstance(MacPlatform());
+
+            final controller = AttributedTextEditingController(
+              text: AttributedText(text: 'this is some text'),
+              selection: const TextSelection.collapsed(offset: 2), //th|is
+            );
+
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+
+            final result = DefaultSuperTextFieldKeyboardHandlers.deleteWordWhenAltBackSpaceIsPressed(
+              controller: controller,
+              selectableTextState: selectableTextState,
+              keyEvent: const FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.backspace,
+                  physicalKey: PhysicalKeyboardKey.backspace,
+                  isAltPressed: true,
+                ),
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.handled);
+            expect(controller.selection.baseOffset, 0);
+            expect(controller.selection.extentOffset, 0);
+            expect(controller.text.text, "is is some text");
+
+            Platform.setTestInstance(null);
+          });
+          testWidgets('Caret at start of word, deletes previous word', (tester) async {
+            Platform.setTestInstance(MacPlatform());
+
+            final controller = AttributedTextEditingController(
+              text: AttributedText(text: 'this is some text'),
+              selection: const TextSelection.collapsed(offset: 8), //this is |some
+            );
+
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+
+            final result = DefaultSuperTextFieldKeyboardHandlers.deleteWordWhenAltBackSpaceIsPressed(
+              controller: controller,
+              selectableTextState: selectableTextState,
+              keyEvent: const FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.backspace,
+                  physicalKey: PhysicalKeyboardKey.backspace,
+                  isAltPressed: true,
+                ),
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.handled);
+            expect(controller.selection.baseOffset, 5);
+            expect(controller.selection.extentOffset, 5);
+            expect(controller.text.text, "this some text");
+
+            Platform.setTestInstance(null);
+          });
+          testWidgets('it does nothing when selection is expanded', (tester) async {
+            Platform.setTestInstance(WindowsPlatform());
+
+            final controller = AttributedTextEditingController(
+              text: AttributedText(text: 'This is some text that doesn\'t matter for this test.'),
+              selection: const TextSelection(
+                baseOffset: 0,
+                extentOffset: 10,
+              ),
+            );
+
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+
+            final result = DefaultSuperTextFieldKeyboardHandlers.deleteWordWhenAltBackSpaceIsPressed(
+              controller: controller,
+              selectableTextState: selectableTextState,
+              keyEvent: const FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.backspace,
+                  physicalKey: PhysicalKeyboardKey.backspace,
+                  isAltPressed: true,
+                ),
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.notHandled);
+
+            Platform.setTestInstance(null);
+          });
+          testWidgets('it does nothing when selection extent is < 0', (tester) async {
+            Platform.setTestInstance(WindowsPlatform());
+
+            final controller = AttributedTextEditingController(
+              text: AttributedText(text: 'This is some text that doesn\'t matter for this test.'),
+              selection: const TextSelection.collapsed(offset: -1),
+            );
+
+            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+
+            final result = DefaultSuperTextFieldKeyboardHandlers.deleteWordWhenAltBackSpaceIsPressed(
+              controller: controller,
+              selectableTextState: selectableTextState,
+              keyEvent: const FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.backspace,
+                  physicalKey: PhysicalKeyboardKey.backspace,
+                  isAltPressed: true,
+                ),
               ),
             );
 
