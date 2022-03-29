@@ -74,7 +74,8 @@ extension CharacterMovement on String {
   ///   a💙c| -> `3` (notice that we moved 2 units due to emoji length)
   int? moveOffsetUpstreamByCharacter(int textOffset, {int characterCount = 1}) {
     if (textOffset < 0 || textOffset > length) {
-      throw Exception("Index '$textOffset' is out of string range. Length: $length");
+      throw Exception(
+          "Index '$textOffset' is out of string range. Length: $length");
     }
 
     if (textOffset == 0) {
@@ -111,31 +112,31 @@ extension CharacterMovement on String {
   ///   word up| -> `null`
   int? moveOffsetDownstreamByWord(int textOffset) {
     if (textOffset < 0 || textOffset > length) {
-      throw Exception("Index '$textOffset' is out of string range. Length: $length");
+      throw Exception(
+          "Index '$textOffset' is out of string range. Length: $length");
     }
 
     if (textOffset == length) {
       return null;
     }
 
-    bool isInSeparator = false;
-
-    int lastSeparatorStartCodePointOffset = 0;
-
+    bool lastCharWasSeparator = true;
     int codePointIndex = 0;
+    int visitedCharacterCount = 0;
     for (final character in characters) {
-      final characterIsSeparator = _separatorRegex.hasMatch(character);
-
-      if (characterIsSeparator && !isInSeparator) {
-        lastSeparatorStartCodePointOffset = codePointIndex;
+      if (visitedCharacterCount >= textOffset) {
+        // No characters before textOffset will impact the results, so don't
+        // bother running the regex on them
+        final isInSeparator = _separatorRegex.hasMatch(character);
+        if (visitedCharacterCount > textOffset &&
+            isInSeparator &&
+            !lastCharWasSeparator) {
+          return codePointIndex;
+        }
+        lastCharWasSeparator = isInSeparator;
       }
-
-      isInSeparator = characterIsSeparator;
+      visitedCharacterCount += 1;
       codePointIndex += character.length;
-
-      if (lastSeparatorStartCodePointOffset > textOffset) {
-        return lastSeparatorStartCodePointOffset;
-      }
     }
 
     // The end of this string is as far as we can go.
@@ -151,9 +152,11 @@ extension CharacterMovement on String {
   ///   a|💙c -> `3` (notice that we moved 2 units due to emoji length)
   ///   a💙|c -> `4`
   ///   a💙c| -> `null`
-  int? moveOffsetDownstreamByCharacter(int textOffset, {int characterCount = 1}) {
+  int? moveOffsetDownstreamByCharacter(int textOffset,
+      {int characterCount = 1}) {
     if (textOffset < 0 || textOffset > length) {
-      throw Exception("Index '$textOffset' is out of string range. Length: $length");
+      throw Exception(
+          "Index '$textOffset' is out of string range. Length: $length");
     }
 
     if (textOffset == length) {

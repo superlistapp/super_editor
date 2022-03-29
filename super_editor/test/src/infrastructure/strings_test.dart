@@ -133,7 +133,7 @@ void main() {
           expect("move a💙c words".moveOffsetDownstreamByWord(4), 9);
           expect("move a💙c words".moveOffsetDownstreamByWord(5), 9);
           expect("move a💙c words".moveOffsetDownstreamByWord(6), 9);
-          expect("move a💙c words".moveOffsetDownstreamByWord(8), 9);
+          expect("move a💙c words".moveOffsetDownstreamByWord(8), 15);
           expect("move a💙c words".moveOffsetDownstreamByWord(9), 15);
           expect("move a💙c words".moveOffsetDownstreamByWord(10), 15);
           expect("move a💙c words".moveOffsetDownstreamByWord(15), null);
