@@ -29,29 +29,34 @@ extension CharacterMovement on String {
       return null;
     }
 
-    bool isInSeparator = false;
-
-    int lastSeparatorEndCodePointOffset = 0;
+    // We'll store the end of the most recently seen separator grapheme here
     int nextSeparatorEndCodePointOffset = 0;
+    // ...and flush it to here when we see a non-separator grapheme. This
+    // addresses the case where multiple consecutive separator graphemes
+    // immediately precede the requested textOffset
+    int lastSeparatorEndCodePointOffset = 0;
 
-    int visitedCharacterCount = 0;
-    int codePointIndex = 0;
+    // We want to return the code point index immediately after the last
+    // separator grapheme, so keep track of the character and code point indices
+    // one ahead of the current character in each iteration of the loop
+    int nextCharacterIndex = 0;
+    int nextCodePointIndex = 0;
     for (final character in characters) {
-      visitedCharacterCount += 1;
-      if (visitedCharacterCount >= textOffset) {
+      nextCharacterIndex += 1;
+      if (nextCharacterIndex >= textOffset) {
         // We're at the given text offset. The upstream word offset is in
         // lastWordStartIndex
         break;
       }
 
-      isInSeparator = _separatorRegex.hasMatch(character);
-      codePointIndex += character.length;
+      nextCodePointIndex += character.length;
+      final isInSeparator = _separatorRegex.hasMatch(character);
 
       if (isInSeparator) {
         // We're in a separator character but it might not be the last one in
-        // a series of separators. Write the current index to a temporary
+        // a series of separators. Write the current index to our temporary
         // variable
-        nextSeparatorEndCodePointOffset = codePointIndex;
+        nextSeparatorEndCodePointOffset = nextCodePointIndex;
       } else {
         // We're in a non-separator character, so the last seen separator
         // character was the last one in its sequence. Update the variable
@@ -122,20 +127,20 @@ extension CharacterMovement on String {
 
     bool lastCharWasSeparator = true;
     int codePointIndex = 0;
-    int visitedCharacterCount = 0;
+    int characterIndex = 0;
     for (final character in characters) {
-      if (visitedCharacterCount >= textOffset) {
+      if (characterIndex >= textOffset) {
         // No characters before textOffset will impact the results, so don't
         // bother running the regex on them
         final isInSeparator = _separatorRegex.hasMatch(character);
-        if (visitedCharacterCount > textOffset &&
+        if (characterIndex > textOffset &&
             isInSeparator &&
             !lastCharWasSeparator) {
           return codePointIndex;
         }
         lastCharWasSeparator = isInSeparator;
       }
-      visitedCharacterCount += 1;
+      characterIndex += 1;
       codePointIndex += character.length;
     }
 
