@@ -1,5 +1,3 @@
-import 'dart:collection';
-
 import 'package:characters/characters.dart';
 
 // Match any characters we want skip over while moving by word. This will match
@@ -23,7 +21,8 @@ extension CharacterMovement on String {
   ///   word up| -> `5`
   int? moveOffsetUpstreamByWord(int textOffset) {
     if (textOffset < 0 || textOffset > length) {
-      throw Exception("Index '$textOffset' is out of string range. Length: $length");
+      throw Exception(
+          "Index '$textOffset' is out of string range. Length: $length");
     }
 
     if (textOffset == 0) {
@@ -32,36 +31,36 @@ extension CharacterMovement on String {
 
     bool isInSeparator = false;
 
-    final separatorEnds = Queue<int>()..addFirst(0);
+    int lastSeparatorEndCodePointOffset = 0;
+    int nextSeparatorEndCodePointOffset = 0;
 
     int visitedCharacterCount = 0;
     int codePointIndex = 0;
     for (final character in characters) {
-      isInSeparator = _separatorRegex.hasMatch(character);
-      codePointIndex += character.length;
       visitedCharacterCount += 1;
-
-      if (isInSeparator) {
-        // If the last separator end was before this index, it wasn't really the
-        // end. Remove and replace it. Always keep 0 as a special case to make
-        // sure we can reach the start of the string.
-        if (separatorEnds.first != 0 && separatorEnds.first == codePointIndex - character.length) {
-          separatorEnds.removeFirst();
-        }
-        separatorEnds.addFirst(codePointIndex);
-        if (separatorEnds.length > 2) {
-          separatorEnds.removeLast();
-        }
+      if (visitedCharacterCount >= textOffset) {
+        // We're at the given text offset. The upstream word offset is in
+        // lastWordStartIndex
+        break;
       }
 
-      if (visitedCharacterCount >= textOffset) {
-        // We're at the given text offset. The upstream word offset is
-        // in the separatorEnds queue.
-        break;
+      isInSeparator = _separatorRegex.hasMatch(character);
+      codePointIndex += character.length;
+
+      if (isInSeparator) {
+        // We're in a separator character but it might not be the last one in
+        // a series of separators. Write the current index to a temporary
+        // variable
+        nextSeparatorEndCodePointOffset = codePointIndex;
+      } else {
+        // We're in a non-separator character, so the last seen separator
+        // character was the last one in its sequence. Update the variable
+        // accordingly
+        lastSeparatorEndCodePointOffset = nextSeparatorEndCodePointOffset;
       }
     }
 
-    return separatorEnds.first < textOffset ? separatorEnds.first : separatorEnds.last;
+    return lastSeparatorEndCodePointOffset;
   }
 
   /// Returns the code point index of the character that sits
