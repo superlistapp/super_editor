@@ -2,6 +2,12 @@ import 'dart:collection';
 
 import 'package:characters/characters.dart';
 
+// Match any characters we want skip over while moving by word. This will match
+// Unicode graphemes with a General_Category value in:
+// - Punctuation (P), such as ".", "-", and "。"
+// - Separator (Z), such as " " (space), and "　" (ideographic space)
+// See http://www.unicode.org/reports/tr44/#GC_Values_Table for details on
+// on the Unicode General_Category property.
 final _separatorRegex = RegExp(r'^[\p{Z}\p{P}]$', unicode: true);
 
 extension CharacterMovement on String {
