@@ -101,7 +101,7 @@ extension CharacterMovement on String {
   }
 
   /// Returns the code point index of the character that sits
-  /// after the next end of word downstream from the given
+  /// after the end of the next word downstream from the given
   /// [textOffset] code point index.
   ///
   /// Examples:
