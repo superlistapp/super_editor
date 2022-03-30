@@ -28,43 +28,29 @@ extension CharacterMovement on String {
       return null;
     }
 
-    // We'll store the end of the most recently seen separator grapheme here
-    int nextSeparatorEndCodePointOffset = 0;
-    // ...and flush it to here when we see a non-separator grapheme. This
-    // addresses the case where multiple consecutive separator graphemes
-    // immediately precede the requested textOffset
-    int lastSeparatorEndCodePointOffset = 0;
-
-    // We want to return the code point index immediately after the last
-    // separator grapheme, so keep track of the character and code point indices
-    // one ahead of the current character in each iteration of the loop
-    int nextCharacterIndex = 0;
-    int nextCodePointIndex = 0;
-    for (final character in characters) {
-      nextCharacterIndex += 1;
-      if (nextCharacterIndex >= textOffset) {
-        // We're at the given text offset. The upstream word offset is in
-        // lastWordStartIndex
-        break;
-      }
-
-      nextCodePointIndex += character.length;
-      final isInSeparator = _separatorRegex.hasMatch(character);
-
-      if (isInSeparator) {
-        // We're in a separator character but it might not be the last one in
-        // a series of separators. Write the current index to our temporary
-        // variable
-        nextSeparatorEndCodePointOffset = nextCodePointIndex;
-      } else {
-        // We're in a non-separator character, so the last seen separator
-        // character was the last one in its sequence. Update the variable
-        // accordingly
-        lastSeparatorEndCodePointOffset = nextSeparatorEndCodePointOffset;
-      }
-    }
-
-    return lastSeparatorEndCodePointOffset;
+    // Create a character range, initially with zero length
+    // Note that the getter for this object is confusingly named: it is an iterator but includes lots of functionality
+    // beyond that interface, most importantly for us a range over this string that can be manipulated in terms of
+    // characters
+    final CharacterRange range = characters.iterator;
+    // Expand the range so it reaches from the start of the string to the initial text offset. The text offset is passed
+    // to us in terms of bytes but the iterator deals in grapheme clusters, so we need to manually count the length of
+    // each cluster as until we reach the desired offset
+    var remainingOffset = textOffset;
+    range.expandWhile((char) {
+      remainingOffset -= char.length;
+      return remainingOffset >= 0;
+    });
+    // Shrink the range from the end as long it does not end in a word. This accounts for cases where the text offset
+    // starts in between words. After this expansion we know the range ends on a word character
+    range.dropBackWhile((char) => _separatorRegex.hasMatch(char));
+    // Shrink the range from the back until it reaches a non-word character. After this expansion we know that the range
+    // ends on the first character of a word, which is the next word upstream from the initial text offset
+    range.dropBackWhile((char) => !_separatorRegex.hasMatch(char));
+    // The range to reaches from the start of the string to our new text offset. Calculate that offset using the range's
+    // string length and return it
+    final current = range.current;
+    return current.length;
   }
 
   /// Returns the code point index of the character that sits
@@ -122,25 +108,28 @@ extension CharacterMovement on String {
       return null;
     }
 
-    bool lastCharWasSeparator = true;
-    int codePointIndex = 0;
-    int characterIndex = 0;
-    for (final character in characters) {
-      if (characterIndex >= textOffset) {
-        // No characters before textOffset will impact the results, so don't
-        // bother running the regex on them
-        final isInSeparator = _separatorRegex.hasMatch(character);
-        if (characterIndex > textOffset && isInSeparator && !lastCharWasSeparator) {
-          return codePointIndex;
-        }
-        lastCharWasSeparator = isInSeparator;
-      }
-      characterIndex += 1;
-      codePointIndex += character.length;
-    }
-
-    // The end of this string is as far as we can go.
-    return length;
+    // Create a character range, initially with zero length
+    // Note that the getter for this object is confusingly named: it is an iterator but includes lots of functionality
+    // beyond that interface, most importantly for us a range over this string that can be manipulated in terms of
+    // characters
+    final range = characters.iterator;
+    // Expand the range so it reaches from the start of the string to the initial text offset. The text offset is passed
+    // to us in terms of bytes but the iterator deals in grapheme clusters, so we need to manually count the length of
+    // each cluster as until we reach the desired offset
+    var remainingOffset = textOffset;
+    range.expandWhile((char) {
+      remainingOffset -= char.length;
+      return remainingOffset >= 0;
+    });
+    // Expand the range forward as long it does not end in a word. This accounts for cases where the text offset starts
+    // in between words. After this expansion we know the range ends on a word character
+    range.expandWhile((char) => _separatorRegex.hasMatch(char));
+    // Expand the range forward until it reaches a non-word character. After this expansion we know that the range ends
+    // on the last character of a word, which is the next word downstream from the initial text offset
+    range.expandWhile((char) => !_separatorRegex.hasMatch(char));
+    // The range to reaches from the start of the string to our new text offset. Calculate that offset using the range's
+    // string length and return it
+    return range.current.length;
   }
 
   /// Returns the code point index of the character that sits
