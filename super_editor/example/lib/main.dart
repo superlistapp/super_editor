@@ -1,5 +1,6 @@
 import 'package:example/demos/components/demo_text_with_hint.dart';
 import 'package:example/demos/components/demo_unselectable_hr.dart';
+import 'package:example/demos/debugging/simple_deltas_input.dart';
 import 'package:example/demos/demo_app_shortcuts.dart';
 import 'package:example/demos/demo_rtl.dart';
 import 'package:example/demos/demo_markdown_serialization.dart';
@@ -355,6 +356,18 @@ final _menu = <_MenuGroup>[
         title: 'Attributed Text',
         pageBuilder: (context) {
           return AttributedTextDemo();
+        },
+      ),
+    ],
+  ),
+  _MenuGroup(
+    title: 'DEBUGGING',
+    items: [
+      _MenuItem(
+        icon: Icons.text_fields,
+        title: 'Text Deltas',
+        pageBuilder: (context) {
+          return SimpleDeltasInputDemo();
         },
       ),
     ],
