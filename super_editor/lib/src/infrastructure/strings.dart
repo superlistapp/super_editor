@@ -21,8 +21,7 @@ extension CharacterMovement on String {
   ///   word up| -> `5`
   int? moveOffsetUpstreamByWord(int textOffset) {
     if (textOffset < 0 || textOffset > length) {
-      throw Exception(
-          "Index '$textOffset' is out of string range. Length: $length");
+      throw Exception("Index '$textOffset' is out of string range. Length: $length");
     }
 
     if (textOffset == 0) {
@@ -79,8 +78,7 @@ extension CharacterMovement on String {
   ///   a💙c| -> `3` (notice that we moved 2 units due to emoji length)
   int? moveOffsetUpstreamByCharacter(int textOffset, {int characterCount = 1}) {
     if (textOffset < 0 || textOffset > length) {
-      throw Exception(
-          "Index '$textOffset' is out of string range. Length: $length");
+      throw Exception("Index '$textOffset' is out of string range. Length: $length");
     }
 
     if (textOffset == 0) {
@@ -117,8 +115,7 @@ extension CharacterMovement on String {
   ///   word up| -> `null`
   int? moveOffsetDownstreamByWord(int textOffset) {
     if (textOffset < 0 || textOffset > length) {
-      throw Exception(
-          "Index '$textOffset' is out of string range. Length: $length");
+      throw Exception("Index '$textOffset' is out of string range. Length: $length");
     }
 
     if (textOffset == length) {
@@ -133,9 +130,7 @@ extension CharacterMovement on String {
         // No characters before textOffset will impact the results, so don't
         // bother running the regex on them
         final isInSeparator = _separatorRegex.hasMatch(character);
-        if (characterIndex > textOffset &&
-            isInSeparator &&
-            !lastCharWasSeparator) {
+        if (characterIndex > textOffset && isInSeparator && !lastCharWasSeparator) {
           return codePointIndex;
         }
         lastCharWasSeparator = isInSeparator;
@@ -157,11 +152,9 @@ extension CharacterMovement on String {
   ///   a|💙c -> `3` (notice that we moved 2 units due to emoji length)
   ///   a💙|c -> `4`
   ///   a💙c| -> `null`
-  int? moveOffsetDownstreamByCharacter(int textOffset,
-      {int characterCount = 1}) {
+  int? moveOffsetDownstreamByCharacter(int textOffset, {int characterCount = 1}) {
     if (textOffset < 0 || textOffset > length) {
-      throw Exception(
-          "Index '$textOffset' is out of string range. Length: $length");
+      throw Exception("Index '$textOffset' is out of string range. Length: $length");
     }
 
     if (textOffset == length) {

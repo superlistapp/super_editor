@@ -14,17 +14,12 @@ void main() {
       });
 
       test("2 characters", () {
-        expect(
-            "a💙c".moveOffsetUpstreamByCharacter(0, characterCount: 2), null);
-        expect(
-            "a💙c".moveOffsetUpstreamByCharacter(1, characterCount: 2), null);
+        expect("a💙c".moveOffsetUpstreamByCharacter(0, characterCount: 2), null);
+        expect("a💙c".moveOffsetUpstreamByCharacter(1, characterCount: 2), null);
         expect("a💙c".moveOffsetUpstreamByCharacter(3, characterCount: 2), 0);
         expect("a💙c".moveOffsetUpstreamByCharacter(4, characterCount: 2), 1);
-        expect(
-            () => "a💙c".moveOffsetUpstreamByCharacter(-1, characterCount: 2),
-            throwsException);
-        expect(() => "a💙c".moveOffsetUpstreamByCharacter(5, characterCount: 2),
-            throwsException);
+        expect(() => "a💙c".moveOffsetUpstreamByCharacter(-1, characterCount: 2), throwsException);
+        expect(() => "a💙c".moveOffsetUpstreamByCharacter(5, characterCount: 2), throwsException);
       });
 
       group("a word", () {
@@ -35,10 +30,8 @@ void main() {
           expect("move a💙c words".moveOffsetUpstreamByWord(8), 5);
           expect("move a💙c words".moveOffsetUpstreamByWord(4), 0);
           expect("move a💙c words".moveOffsetUpstreamByWord(0), null);
-          expect(() => "move a💙c words".moveOffsetUpstreamByWord(-1),
-              throwsException);
-          expect(() => "move a💙c words".moveOffsetUpstreamByWord(16),
-              throwsException);
+          expect(() => "move a💙c words".moveOffsetUpstreamByWord(-1), throwsException);
+          expect(() => "move a💙c words".moveOffsetUpstreamByWord(16), throwsException);
         });
 
         test("separated by multiple spaces", () {
@@ -47,10 +40,8 @@ void main() {
           expect("move   words".moveOffsetUpstreamByWord(6), 0);
           expect("move   words".moveOffsetUpstreamByWord(4), 0);
           expect("move   words".moveOffsetUpstreamByWord(0), null);
-          expect(() => "move   words".moveOffsetUpstreamByWord(-1),
-              throwsException);
-          expect(() => "move   words".moveOffsetUpstreamByWord(13),
-              throwsException);
+          expect(() => "move   words".moveOffsetUpstreamByWord(-1), throwsException);
+          expect(() => "move   words".moveOffsetUpstreamByWord(13), throwsException);
         });
 
         test("separated by punctuation", () {
@@ -58,10 +49,8 @@ void main() {
           expect("move.words".moveOffsetUpstreamByWord(5), 0);
           expect("move.words".moveOffsetUpstreamByWord(4), 0);
           expect("move.words".moveOffsetUpstreamByWord(0), null);
-          expect(
-              () => "move.words".moveOffsetUpstreamByWord(-1), throwsException);
-          expect(
-              () => "move.words".moveOffsetUpstreamByWord(11), throwsException);
+          expect(() => "move.words".moveOffsetUpstreamByWord(-1), throwsException);
+          expect(() => "move.words".moveOffsetUpstreamByWord(11), throwsException);
         });
 
         test("separated by punctuation and spaces", () {
@@ -70,10 +59,8 @@ void main() {
           expect("move. words".moveOffsetUpstreamByWord(5), 0);
           expect("move. words".moveOffsetUpstreamByWord(4), 0);
           expect("move. words".moveOffsetUpstreamByWord(0), null);
-          expect(() => "move. words".moveOffsetUpstreamByWord(-1),
-              throwsException);
-          expect(() => "move. words".moveOffsetUpstreamByWord(12),
-              throwsException);
+          expect(() => "move. words".moveOffsetUpstreamByWord(-1), throwsException);
+          expect(() => "move. words".moveOffsetUpstreamByWord(12), throwsException);
         });
 
         test("separated by multi-byte punctuation", () {
@@ -81,10 +68,8 @@ void main() {
           expect("move\u{10B3F}words".moveOffsetUpstreamByWord(6), 0);
           expect("move\u{10B3F}words".moveOffsetUpstreamByWord(4), 0);
           expect("move\u{10B3F}words".moveOffsetUpstreamByWord(0), null);
-          expect(() => "move\u{10B3F}words".moveOffsetUpstreamByWord(-1),
-              throwsException);
-          expect(() => "move\u{10B3F}words".moveOffsetUpstreamByWord(12),
-              throwsException);
+          expect(() => "move\u{10B3F}words".moveOffsetUpstreamByWord(-1), throwsException);
+          expect(() => "move\u{10B3F}words".moveOffsetUpstreamByWord(12), throwsException);
         });
 
         test("leading and trailing spaces", () {
@@ -92,10 +77,8 @@ void main() {
           expect("  move words  ".moveOffsetUpstreamByWord(7), 2);
           expect("  move words  ".moveOffsetUpstreamByWord(2), 0);
           expect("  move words  ".moveOffsetUpstreamByWord(0), null);
-          expect(() => "move\u{10B3F}words".moveOffsetUpstreamByWord(-1),
-              throwsException);
-          expect(() => "move\u{10B3F}words".moveOffsetUpstreamByWord(15),
-              throwsException);
+          expect(() => "move\u{10B3F}words".moveOffsetUpstreamByWord(-1), throwsException);
+          expect(() => "move\u{10B3F}words".moveOffsetUpstreamByWord(15), throwsException);
         });
       });
     });
@@ -106,25 +89,17 @@ void main() {
         expect("a💙c".moveOffsetDownstreamByCharacter(1), 3);
         expect("a💙c".moveOffsetDownstreamByCharacter(3), 4);
         expect("a💙c".moveOffsetDownstreamByCharacter(4), null);
-        expect(
-            () => "a💙c".moveOffsetDownstreamByCharacter(-1), throwsException);
-        expect(
-            () => "a💙c".moveOffsetDownstreamByCharacter(5), throwsException);
+        expect(() => "a💙c".moveOffsetDownstreamByCharacter(-1), throwsException);
+        expect(() => "a💙c".moveOffsetDownstreamByCharacter(5), throwsException);
       });
 
       test("2 characters", () {
         expect("a💙c".moveOffsetDownstreamByCharacter(0, characterCount: 2), 3);
         expect("a💙c".moveOffsetDownstreamByCharacter(1, characterCount: 2), 4);
-        expect(
-            "a💙c".moveOffsetDownstreamByCharacter(3, characterCount: 2), null);
-        expect(
-            "a💙c".moveOffsetDownstreamByCharacter(4, characterCount: 2), null);
-        expect(
-            () => "a💙c".moveOffsetDownstreamByCharacter(-1, characterCount: 2),
-            throwsException);
-        expect(
-            () => "a💙c".moveOffsetDownstreamByCharacter(5, characterCount: 2),
-            throwsException);
+        expect("a💙c".moveOffsetDownstreamByCharacter(3, characterCount: 2), null);
+        expect("a💙c".moveOffsetDownstreamByCharacter(4, characterCount: 2), null);
+        expect(() => "a💙c".moveOffsetDownstreamByCharacter(-1, characterCount: 2), throwsException);
+        expect(() => "a💙c".moveOffsetDownstreamByCharacter(5, characterCount: 2), throwsException);
       });
 
       group('a word', () {
@@ -137,10 +112,8 @@ void main() {
           expect("move a💙c words".moveOffsetDownstreamByWord(9), 15);
           expect("move a💙c words".moveOffsetDownstreamByWord(10), 15);
           expect("move a💙c words".moveOffsetDownstreamByWord(15), null);
-          expect(() => "move a💙c words".moveOffsetDownstreamByWord(-1),
-              throwsException);
-          expect(() => "move a💙c words".moveOffsetDownstreamByWord(16),
-              throwsException);
+          expect(() => "move a💙c words".moveOffsetDownstreamByWord(-1), throwsException);
+          expect(() => "move a💙c words".moveOffsetDownstreamByWord(16), throwsException);
         });
 
         test("separated by multiple spaces", () {
@@ -148,10 +121,8 @@ void main() {
           expect("move   words".moveOffsetDownstreamByWord(4), 12);
           expect("move   words".moveOffsetDownstreamByWord(5), 12);
           expect("move   words".moveOffsetDownstreamByWord(12), null);
-          expect(() => "move   words".moveOffsetDownstreamByWord(-1),
-              throwsException);
-          expect(() => "move   words".moveOffsetDownstreamByWord(13),
-              throwsException);
+          expect(() => "move   words".moveOffsetDownstreamByWord(-1), throwsException);
+          expect(() => "move   words".moveOffsetDownstreamByWord(13), throwsException);
         });
 
         test("separated by punctuation", () {
@@ -159,10 +130,8 @@ void main() {
           expect("move.words".moveOffsetDownstreamByWord(4), 10);
           expect("move.words".moveOffsetDownstreamByWord(5), 10);
           expect("move.words".moveOffsetDownstreamByWord(10), null);
-          expect(() => "move.words".moveOffsetDownstreamByWord(-1),
-              throwsException);
-          expect(() => "move.words".moveOffsetDownstreamByWord(11),
-              throwsException);
+          expect(() => "move.words".moveOffsetDownstreamByWord(-1), throwsException);
+          expect(() => "move.words".moveOffsetDownstreamByWord(11), throwsException);
         });
 
         test("separated by punctuation and spaces", () {
@@ -171,10 +140,8 @@ void main() {
           expect("move. words".moveOffsetDownstreamByWord(5), 11);
           expect("move. words".moveOffsetDownstreamByWord(6), 11);
           expect("move. words".moveOffsetDownstreamByWord(11), null);
-          expect(() => "move. words".moveOffsetDownstreamByWord(-1),
-              throwsException);
-          expect(() => "move. words".moveOffsetDownstreamByWord(12),
-              throwsException);
+          expect(() => "move. words".moveOffsetDownstreamByWord(-1), throwsException);
+          expect(() => "move. words".moveOffsetDownstreamByWord(12), throwsException);
         });
 
         test("separated by multi-byte punctuation", () {
@@ -182,10 +149,8 @@ void main() {
           expect("move\u{10B3F}words".moveOffsetDownstreamByWord(4), 11);
           expect("move\u{10B3F}words".moveOffsetDownstreamByWord(6), 11);
           expect("move\u{10B3F}words".moveOffsetDownstreamByWord(11), null);
-          expect(() => "move\u{10B3F}words".moveOffsetDownstreamByWord(-1),
-              throwsException);
-          expect(() => "move\u{10B3F}words".moveOffsetDownstreamByWord(12),
-              throwsException);
+          expect(() => "move\u{10B3F}words".moveOffsetDownstreamByWord(-1), throwsException);
+          expect(() => "move\u{10B3F}words".moveOffsetDownstreamByWord(12), throwsException);
         });
 
         test("leading and trailing spaces", () {
@@ -193,10 +158,8 @@ void main() {
           expect("  move words  ".moveOffsetDownstreamByWord(1), 6);
           expect("  move words  ".moveOffsetDownstreamByWord(6), 12);
           expect("  move words  ".moveOffsetDownstreamByWord(14), null);
-          expect(() => "move\u{10B3F}words".moveOffsetDownstreamByWord(-1),
-              throwsException);
-          expect(() => "move\u{10B3F}words".moveOffsetDownstreamByWord(15),
-              throwsException);
+          expect(() => "move\u{10B3F}words".moveOffsetDownstreamByWord(-1), throwsException);
+          expect(() => "move\u{10B3F}words".moveOffsetDownstreamByWord(15), throwsException);
         });
       });
     });
