@@ -500,7 +500,7 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
   }
 
   @override
-  TextNodePosition? movePositionLeft(NodePosition textPosition, [Set<MovementModifier>? movementModifiers]) {
+  TextNodePosition? movePositionLeft(NodePosition textPosition, [MovementModifier? movementModifier]) {
     if (textPosition is! TextNodePosition) {
       // We don't know how to interpret a non-text position.
       return null;
@@ -516,11 +516,11 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
       return null;
     }
 
-    if (movementModifiers != null && movementModifiers.contains(MovementModifier.line)) {
+    if (movementModifier != null && movementModifier == MovementModifier.line) {
       return getPositionAtStartOfLine(
         TextNodePosition(offset: textPosition.offset),
       );
-    } else if (movementModifiers != null && movementModifiers.contains(MovementModifier.word)) {
+    } else if (movementModifier != null && movementModifier == MovementModifier.word) {
       final text = getContiguousTextAt(textPosition);
 
       final newOffset = text.moveOffsetUpstreamByWord(textPosition.offset);
@@ -537,7 +537,7 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
   }
 
   @override
-  TextNodePosition? movePositionRight(NodePosition textPosition, [Set<MovementModifier>? movementModifiers]) {
+  TextNodePosition? movePositionRight(NodePosition textPosition, [MovementModifier? movementModifier]) {
     if (textPosition is! TextNodePosition) {
       // We don't know how to interpret a non-text position.
       return null;
@@ -548,7 +548,7 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
       return null;
     }
 
-    if (movementModifiers != null && movementModifiers.contains(MovementModifier.line)) {
+    if (movementModifier != null && movementModifier == MovementModifier.line) {
       final endOfLine = getPositionAtEndOfLine(
         TextNodePosition(offset: textPosition.offset),
       );
@@ -575,7 +575,7 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
           ? TextNodePosition(offset: endOfLine.offset - 1)
           : TextNodePosition.fromTextPosition(endOfLine);
     }
-    if (movementModifiers != null && movementModifiers.contains(MovementModifier.word)) {
+    if (movementModifier != null && movementModifier == MovementModifier.word) {
       final text = getContiguousTextAt(textPosition);
 
       final newOffset = text.moveOffsetDownstreamByWord(textPosition.offset);

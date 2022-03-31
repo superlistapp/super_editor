@@ -272,24 +272,24 @@ ExecutionInstruction moveUpDownLeftAndRightWithArrowKeys({
   if (keyEvent.logicalKey == LogicalKeyboardKey.arrowLeft || keyEvent.logicalKey == LogicalKeyboardKey.arrowRight) {
     _log.log('moveUpDownLeftAndRightWithArrowKeys', ' - handling left arrow key');
 
-    final movementModifiers = <MovementModifier>{};
+    MovementModifier? movementModifier;
     if (keyEvent.isPrimaryShortcutKeyPressed) {
-      movementModifiers.add(MovementModifier.line);
+      movementModifier == MovementModifier.line;
     } else if (keyEvent.isAltPressed) {
-      movementModifiers.add(MovementModifier.word);
+      movementModifier == MovementModifier.word;
     }
 
     if (keyEvent.logicalKey == LogicalKeyboardKey.arrowLeft) {
       // Move the caret left/upstream.
       didMove = editContext.commonOps.moveCaretUpstream(
         expand: keyEvent.isShiftPressed,
-        movementModifiers: movementModifiers,
+        movementModifier: movementModifier,
       );
     } else {
       // Move the caret right/downstream.
       didMove = editContext.commonOps.moveCaretDownstream(
         expand: keyEvent.isShiftPressed,
-        movementModifiers: movementModifiers,
+        movementModifier: movementModifier,
       );
     }
   } else if (keyEvent.logicalKey == LogicalKeyboardKey.arrowUp) {
@@ -317,7 +317,7 @@ ExecutionInstruction moveToLineStartOrEndWithCtrlAOrE({
   if (keyEvent.logicalKey == LogicalKeyboardKey.keyA) {
     didMove = editContext.commonOps.moveCaretUpstream(
       expand: keyEvent.isShiftPressed,
-      movementModifiers: {MovementModifier.line},
+      movementModifier: MovementModifier.line,
     );
     _log.log('moveToLineStartOrEndWithCtrlAOrE', ' - handling Ctrl+A');
   }
@@ -325,7 +325,7 @@ ExecutionInstruction moveToLineStartOrEndWithCtrlAOrE({
   if (keyEvent.logicalKey == LogicalKeyboardKey.keyE) {
     didMove = editContext.commonOps.moveCaretDownstream(
       expand: keyEvent.isShiftPressed,
-      movementModifiers: {MovementModifier.line},
+      movementModifier: MovementModifier.line,
     );
     _log.log('moveToLineStartOrEndWithCtrlAOrE', ' - handling Ctrl+E');
   }
@@ -348,7 +348,7 @@ ExecutionInstruction deleteLineWithCmdBksp({
 
   didMove = editContext.commonOps.moveCaretUpstream(
     expand: true,
-    movementModifiers: {MovementModifier.line},
+    movementModifier: MovementModifier.line,
   );
 
   if (didMove) {
@@ -375,7 +375,7 @@ ExecutionInstruction deleteWordWithAltBksp({
 
   didMove = editContext.commonOps.moveCaretUpstream(
     expand: true,
-    movementModifiers: {MovementModifier.word},
+    movementModifier: MovementModifier.word,
   );
 
   if (didMove) {

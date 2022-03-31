@@ -1300,7 +1300,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
       selectableTextState: selectableTextState!,
       expandSelection: false,
       moveLeft: _moveLeft,
-      movementModifiers: {MovementModifier.line},
+      movementModifier: MovementModifier.line,
     );
 
     return TextFieldKeyboardHandlerResult.handled;
@@ -1330,34 +1330,34 @@ class DefaultSuperTextFieldKeyboardHandlers {
     if (keyEvent.logicalKey == LogicalKeyboardKey.arrowLeft) {
       _log.finer('moveUpDownLeftAndRightWithArrowKeys - handling left arrow key');
 
-      Set<MovementModifier> movementModifiers = {};
+      MovementModifier? movementModifier;
       if (keyEvent.isPrimaryShortcutKeyPressed) {
-        movementModifiers = {MovementModifier.line};
+        movementModifier = MovementModifier.line;
       } else if (keyEvent.isAltPressed) {
-        movementModifiers = {MovementModifier.word};
+        movementModifier = MovementModifier.word;
       }
 
       controller.moveCaretHorizontally(
         selectableTextState: selectableTextState,
         expandSelection: keyEvent.isShiftPressed,
         moveLeft: true,
-        movementModifiers: movementModifiers,
+        movementModifier: movementModifier,
       );
     } else if (keyEvent.logicalKey == LogicalKeyboardKey.arrowRight) {
       _log.finer('moveUpDownLeftAndRightWithArrowKeys - handling right arrow key');
 
-      Set<MovementModifier> movementModifiers = {};
+      MovementModifier? movementModifier;
       if (keyEvent.isPrimaryShortcutKeyPressed) {
-        movementModifiers = {MovementModifier.line};
+        movementModifier = MovementModifier.line;
       } else if (keyEvent.isAltPressed) {
-        movementModifiers = {MovementModifier.word};
+        movementModifier = MovementModifier.word;
       }
 
       controller.moveCaretHorizontally(
         selectableTextState: selectableTextState,
         expandSelection: keyEvent.isShiftPressed,
         moveLeft: false,
-        movementModifiers: movementModifiers,
+        movementModifier: movementModifier,
       );
     } else if (keyEvent.logicalKey == LogicalKeyboardKey.arrowUp) {
       _log.finer('moveUpDownLeftAndRightWithArrowKeys - handling up arrow key');
@@ -1475,7 +1475,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
         selectableTextState: selectableTextState,
         expandSelection: true,
         moveLeft: true,
-        movementModifiers: {MovementModifier.word},
+        movementModifier: MovementModifier.word,
       );
       controller.deleteSelectedText();
 

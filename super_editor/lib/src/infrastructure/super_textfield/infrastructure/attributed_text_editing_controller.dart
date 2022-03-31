@@ -689,7 +689,7 @@ extension DefaultSuperTextFieldActions on AttributedTextEditingController {
     required SuperSelectableTextState selectableTextState,
     required bool expandSelection,
     required bool moveLeft,
-    Set<MovementModifier> movementModifiers = const {},
+    required MovementModifier? movementModifier,
   }) {
     int newExtent;
 
@@ -704,9 +704,9 @@ extension DefaultSuperTextFieldActions on AttributedTextEditingController {
         // want to continue expanding the selection. Move the
         // extent to the left side of the selection.
         newExtent = selection.start;
-      } else if (movementModifiers.contains(MovementModifier.line)) {
+      } else if (movementModifier != null && movementModifier == MovementModifier.line) {
         newExtent = selectableTextState.getPositionAtStartOfLine(TextPosition(offset: selection.extentOffset)).offset;
-      } else if (movementModifiers.contains(MovementModifier.word)) {
+      } else if (movementModifier != null && movementModifier == MovementModifier.word) {
         final plainText = text.text;
 
         newExtent = selection.extentOffset;
@@ -728,7 +728,7 @@ extension DefaultSuperTextFieldActions on AttributedTextEditingController {
         // want to continue expanding the selection. Move the
         // extent to the left side of the selection.
         newExtent = selection.end;
-      } else if (movementModifiers.contains(MovementModifier.line)) {
+      } else if (movementModifier != null && movementModifier == MovementModifier.line) {
         final endOfLine = selectableTextState.getPositionAtEndOfLine(TextPosition(offset: selection.extentOffset));
 
         final endPosition = TextPosition(offset: text.text.length);
@@ -750,7 +750,7 @@ extension DefaultSuperTextFieldActions on AttributedTextEditingController {
         // TODO: with affinity, ensure it works as expected for right-aligned text
         // TODO: this logic fails for justified text - find a solution for that (#55)
         newExtent = isAutoWrapLine ? endOfLine.offset - 1 : endOfLine.offset;
-      } else if (movementModifiers.contains(MovementModifier.word)) {
+      } else if (movementModifier != null && movementModifier == MovementModifier.word) {
         final extentPosition = selection.extent;
         final plainText = text.text;
 
