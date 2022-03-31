@@ -1812,7 +1812,7 @@ void main() {
             Platform.setTestInstance(null);
           });
 
-          testWidgets('it does nothing when selection extent is < 0', (tester) async {
+          testWidgets('it does nothing when caret is not focused on any text', (tester) async {
             Platform.setTestInstance(MacPlatform());
 
             final controller = AttributedTextEditingController(
@@ -2038,7 +2038,7 @@ void main() {
             Platform.setTestInstance(null);
           });
 
-          testWidgets('it does nothing when selection extent is < 0', (tester) async {
+          testWidgets('it does nothing when caret is not focused on any text', (tester) async {
             Platform.setTestInstance(WindowsPlatform());
 
             final controller = AttributedTextEditingController(
@@ -2459,9 +2459,9 @@ void main() {
         });
       });
 
-      group("Move caret with control A/E", () {
+      group("move caret to start/end of line", () {
         group("MacOS", () {
-          testWidgets('Caret at 5, Control A moves caret to start', (tester) async {
+          testWidgets('caret in middle of line, Ctl+A moves caret to start', (tester) async {
             Platform.setTestInstance(MacPlatform());
 
             final controller = AttributedTextEditingController(
@@ -2490,7 +2490,7 @@ void main() {
 
             Platform.setTestInstance(null);
           });
-          testWidgets('Caret at 5, Control E moves caret to end', (tester) async {
+          testWidgets('caret in middle of line, Ctl+E moves caret to end', (tester) async {
             Platform.setTestInstance(MacPlatform());
 
             final controller = AttributedTextEditingController(
@@ -2519,7 +2519,7 @@ void main() {
 
             Platform.setTestInstance(null);
           });
-          testWidgets('Caret at start, Cntl+A moves caret to start', (tester) async {
+          testWidgets('caret at start, Ctl+A does nothing', (tester) async {
             Platform.setTestInstance(MacPlatform());
 
             final controller = AttributedTextEditingController(
@@ -2548,7 +2548,7 @@ void main() {
 
             Platform.setTestInstance(null);
           });
-          testWidgets('Caret at end, Cntl+E moves caret to end', (tester) async {
+          testWidgets('caret at end, Ctl+E does nothing', (tester) async {
             Platform.setTestInstance(MacPlatform());
 
             final controller = AttributedTextEditingController(
@@ -2579,7 +2579,7 @@ void main() {
           });
         });
         group("Windows", () {
-          testWidgets('Ignores Control A', (tester) async {
+          testWidgets('Ctl+A does nothing', (tester) async {
             Platform.setTestInstance(WindowsPlatform());
 
             final controller = AttributedTextEditingController(
@@ -2606,7 +2606,7 @@ void main() {
 
             Platform.setTestInstance(null);
           });
-          testWidgets('Ignores Control E', (tester) async {
+          testWidgets('Ctl+E does nothing', (tester) async {
             Platform.setTestInstance(WindowsPlatform());
 
             final controller = AttributedTextEditingController(
@@ -2636,9 +2636,9 @@ void main() {
         });
       });
 
-      group("Delete Word with Alt Backspace", () {
+      group("delete word by word", () {
         group("MacOS", () {
-          testWidgets('Caret at end of word, word deleted until beginning', (tester) async {
+          testWidgets('caret at end of word, Alt+Backspace deletes the word', (tester) async {
             Platform.setTestInstance(MacPlatform());
 
             final controller = AttributedTextEditingController(
@@ -2667,7 +2667,7 @@ void main() {
 
             Platform.setTestInstance(null);
           });
-          testWidgets('Caret at middle of word, word deleted until beginning', (tester) async {
+          testWidgets('caret at middle of word, Alt+Backspace deletes until beginning of word', (tester) async {
             Platform.setTestInstance(MacPlatform());
 
             final controller = AttributedTextEditingController(
@@ -2696,7 +2696,7 @@ void main() {
 
             Platform.setTestInstance(null);
           });
-          testWidgets('Caret at start of word, deletes previous word', (tester) async {
+          testWidgets('caret at start of word, Alt+Backspace deletes previous word', (tester) async {
             Platform.setTestInstance(MacPlatform());
 
             final controller = AttributedTextEditingController(
@@ -2729,7 +2729,7 @@ void main() {
             Platform.setTestInstance(MacPlatform());
 
             final controller = AttributedTextEditingController(
-              text: AttributedText(text: 'This is some text that doesn\'t matter for this test.'),
+              text: AttributedText(text: _multilineLayoutText),
               selection: const TextSelection(
                 baseOffset: 0,
                 extentOffset: 10,
@@ -2754,7 +2754,7 @@ void main() {
 
             Platform.setTestInstance(null);
           });
-          testWidgets('it does nothing when selection extent is < 0', (tester) async {
+          testWidgets('it does nothing when caret is not focused on any text', (tester) async {
             Platform.setTestInstance(MacPlatform());
 
             final controller = AttributedTextEditingController(
@@ -2782,7 +2782,7 @@ void main() {
           });
         });
         group("Windows", () {
-          testWidgets('Caret at end of word, word deleted until beginning', (tester) async {
+          testWidgets('caret at end of word, Alt+Backspace deletes the word', (tester) async {
             Platform.setTestInstance(MacPlatform());
 
             final controller = AttributedTextEditingController(
@@ -2811,7 +2811,7 @@ void main() {
 
             Platform.setTestInstance(null);
           });
-          testWidgets('Caret at middle of word, word deleted until beginning', (tester) async {
+          testWidgets('caret at middle of word, Alt+Backspace deletes until beginning of word', (tester) async {
             Platform.setTestInstance(MacPlatform());
 
             final controller = AttributedTextEditingController(
@@ -2840,7 +2840,7 @@ void main() {
 
             Platform.setTestInstance(null);
           });
-          testWidgets('Caret at start of word, deletes previous word', (tester) async {
+          testWidgets('caret at start of word, Alt+Backspace deletes previous word', (tester) async {
             Platform.setTestInstance(MacPlatform());
 
             final controller = AttributedTextEditingController(
@@ -2898,7 +2898,7 @@ void main() {
 
             Platform.setTestInstance(null);
           });
-          testWidgets('it does nothing when selection extent is < 0', (tester) async {
+          testWidgets('it does nothing when caret is not focused on any text', (tester) async {
             Platform.setTestInstance(WindowsPlatform());
 
             final controller = AttributedTextEditingController(
