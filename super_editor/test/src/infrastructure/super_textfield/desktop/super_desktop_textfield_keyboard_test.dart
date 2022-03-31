@@ -1780,11 +1780,11 @@ void main() {
             Platform.setTestInstance(null);
           });
 
-          testWidgets('it does nothing when selection is expanded', (tester) async {
+          testWidgets('deletes selection when selection is expanded', (tester) async {
             Platform.setTestInstance(MacPlatform());
 
             final controller = AttributedTextEditingController(
-              text: AttributedText(text: 'This is some text that doesn\'t matter for this test.'),
+              text: AttributedText(text: _multilineLayoutText),
               selection: const TextSelection(
                 baseOffset: 0,
                 extentOffset: 10,
@@ -1807,7 +1807,10 @@ void main() {
               ),
             );
 
-            expect(result, TextFieldKeyboardHandlerResult.notHandled);
+            expect(result, TextFieldKeyboardHandlerResult.handled);
+            expect(controller.selection.isCollapsed, true);
+            expect(controller.selection.extentOffset, 0);
+            expect(controller.text.text, 'is long enough to be multiline in the available space');
 
             Platform.setTestInstance(null);
           });
@@ -2006,11 +2009,11 @@ void main() {
             Platform.setTestInstance(null);
           });
 
-          testWidgets('it does nothing when selection is expanded', (tester) async {
+          testWidgets('deletes selection when selection is expanded', (tester) async {
             Platform.setTestInstance(WindowsPlatform());
 
             final controller = AttributedTextEditingController(
-              text: AttributedText(text: 'This is some text that doesn\'t matter for this test.'),
+              text: AttributedText(text: _multilineLayoutText),
               selection: const TextSelection(
                 baseOffset: 0,
                 extentOffset: 10,
@@ -2033,7 +2036,10 @@ void main() {
               ),
             );
 
-            expect(result, TextFieldKeyboardHandlerResult.notHandled);
+            expect(result, TextFieldKeyboardHandlerResult.handled);
+            expect(controller.selection.isCollapsed, true);
+            expect(controller.selection.extentOffset, 0);
+            expect(controller.text.text, 'is long enough to be multiline in the available space');
 
             Platform.setTestInstance(null);
           });
@@ -2725,7 +2731,7 @@ void main() {
 
             Platform.setTestInstance(null);
           });
-          testWidgets('it does nothing when selection is expanded', (tester) async {
+          testWidgets('selection is expanded, Alt+Backspace deletes selection', (tester) async {
             Platform.setTestInstance(MacPlatform());
 
             final controller = AttributedTextEditingController(
@@ -2750,7 +2756,10 @@ void main() {
               ),
             );
 
-            expect(result, TextFieldKeyboardHandlerResult.notHandled);
+            expect(result, TextFieldKeyboardHandlerResult.handled);
+            expect(controller.selection.isCollapsed, true);
+            expect(controller.selection.extentOffset, 0);
+            expect(controller.text.text, 'is long enough to be multiline in the available space');
 
             Platform.setTestInstance(null);
           });
@@ -2869,11 +2878,11 @@ void main() {
 
             Platform.setTestInstance(null);
           });
-          testWidgets('it does nothing when selection is expanded', (tester) async {
+          testWidgets('selection is expanded, Alt+Backspace deletes selection', (tester) async {
             Platform.setTestInstance(WindowsPlatform());
 
             final controller = AttributedTextEditingController(
-              text: AttributedText(text: 'This is some text that doesn\'t matter for this test.'),
+              text: AttributedText(text: _multilineLayoutText),
               selection: const TextSelection(
                 baseOffset: 0,
                 extentOffset: 10,
@@ -2894,7 +2903,10 @@ void main() {
               ),
             );
 
-            expect(result, TextFieldKeyboardHandlerResult.notHandled);
+            expect(result, TextFieldKeyboardHandlerResult.handled);
+            expect(controller.selection.isCollapsed, true);
+            expect(controller.selection.extentOffset, 0);
+            expect(controller.text.text, 'is long enough to be multiline in the available space');
 
             Platform.setTestInstance(null);
           });

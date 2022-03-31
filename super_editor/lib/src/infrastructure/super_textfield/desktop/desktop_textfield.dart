@@ -1419,15 +1419,16 @@ class DefaultSuperTextFieldKeyboardHandlers {
     if (!keyEvent.isPrimaryShortcutKeyPressed || keyEvent.logicalKey != LogicalKeyboardKey.backspace) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
-    if (!controller.selection.isCollapsed) {
-      return TextFieldKeyboardHandlerResult.notHandled;
-    }
     if (controller.selection.extentOffset < 0) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
     if (selectableTextState.getPositionAtStartOfLine(controller.selection.extent).offset ==
         controller.selection.extentOffset) {
       return TextFieldKeyboardHandlerResult.notHandled;
+    }
+    if (!controller.selection.isCollapsed) {
+      controller.deleteSelection();
+      return TextFieldKeyboardHandlerResult.handled;
     }
 
     controller.deleteTextOnLineBeforeCaret(selectableTextState: selectableTextState);
@@ -1468,6 +1469,11 @@ class DefaultSuperTextFieldKeyboardHandlers {
     }
     if (controller.selection.extentOffset < 0) {
       return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    if (!controller.selection.isCollapsed) {
+      controller.deleteSelectedText();
+      return TextFieldKeyboardHandlerResult.handled;
     }
 
     if (controller.selection.isCollapsed) {
