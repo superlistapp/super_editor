@@ -11,10 +11,6 @@ dependencies:
   flutter:
     sdk: flutter
 
-  attributed_text:
-    git:
-      url: https://github.com/superlistapp/super_editor.git
-      path: attributed_text
   characters: ^1.2.0
   collection: ^1.15.0
   http: ^0.13.1
