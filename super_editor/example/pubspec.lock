@@ -32,9 +32,11 @@ packages:
   attributed_text:
     dependency: transitive
     description:
-      path: "../../attributed_text"
-      relative: true
-    source: path
+      path: attributed_text
+      ref: HEAD
+      resolved-ref: "1d990f1ae7a37de410b050ab9e0b229d1fb57342"
+      url: "https://github.com/superlistapp/super_editor.git"
+    source: git
     version: "0.1.0"
   boolean_selector:
     dependency: transitive
@@ -138,7 +140,7 @@ packages:
       name: flutter_keyboard_visibility
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "5.1.1"
+    version: "5.2.0"
   flutter_keyboard_visibility_platform_interface:
     dependency: transitive
     description:
@@ -259,6 +261,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.0.2"
+  markdown:
+    dependency: transitive
+    description:
+      name: markdown
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "4.0.1"
   matcher:
     dependency: transitive
     description:
@@ -321,14 +330,14 @@ packages:
       name: path_provider_android
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.0.11"
+    version: "2.0.12"
   path_provider_ios:
     dependency: transitive
     description:
       name: path_provider_ios
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.0.7"
+    version: "2.0.8"
   path_provider_linux:
     dependency: transitive
     description:
@@ -398,7 +407,7 @@ packages:
       name: shelf
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.2.0"
+    version: "1.3.0"
   shelf_packages_handler:
     dependency: transitive
     description:
@@ -470,23 +479,29 @@ packages:
   super_editor:
     dependency: "direct main"
     description:
-      path: ".."
-      relative: true
-    source: path
+      path: super_editor
+      ref: HEAD
+      resolved-ref: "1d990f1ae7a37de410b050ab9e0b229d1fb57342"
+      url: "https://github.com/superlistapp/super_editor.git"
+    source: git
     version: "0.2.0"
   super_editor_markdown:
     dependency: "direct main"
     description:
-      path: "../../super_editor_markdown"
-      relative: true
-    source: path
+      path: super_editor_markdown
+      ref: HEAD
+      resolved-ref: "1d990f1ae7a37de410b050ab9e0b229d1fb57342"
+      url: "https://github.com/superlistapp/super_editor.git"
+    source: git
     version: "0.1.0"
-  super_selectable_text:
+  super_text:
     dependency: transitive
     description:
-      path: "../../super_selectable_text"
-      relative: true
-    source: path
+      path: super_text
+      ref: HEAD
+      resolved-ref: "1d990f1ae7a37de410b050ab9e0b229d1fb57342"
+      url: "https://github.com/superlistapp/super_editor.git"
+    source: git
     version: "0.1.0"
   term_glyph:
     dependency: transitive
@@ -529,7 +544,7 @@ packages:
       name: uuid
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "3.0.5"
+    version: "3.0.6"
   vector_math:
     dependency: transitive
     description:
@@ -571,7 +586,7 @@ packages:
       name: win32
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.3.11"
+    version: "2.5.1"
   xdg_directories:
     dependency: transitive
     description:
@@ -587,5 +602,5 @@ packages:
     source: hosted
     version: "3.1.0"
 sdks:
-  dart: ">=2.15.0 <3.0.0"
+  dart: ">=2.16.0 <3.0.0"
   flutter: ">=2.10.0-0"
