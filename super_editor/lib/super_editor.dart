@@ -1,7 +1,7 @@
 library super_editor;
 
 export 'package:attributed_text/attributed_text.dart';
-export 'package:super_selectable_text/super_selectable_text.dart';
+export 'package:super_text/super_selectable_text.dart';
 export 'src/infrastructure/attributed_text_styles.dart';
 export 'src/infrastructure/super_textfield/super_textfield.dart';
 export 'src/infrastructure/_listenable_builder.dart';

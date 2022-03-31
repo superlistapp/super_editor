@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/super_textfield.dart';
-import 'package:super_selectable_text/super_selectable_text.dart';
+import 'package:super_text/super_selectable_text.dart';
 
 /// An iOS floating cursor.
 ///
