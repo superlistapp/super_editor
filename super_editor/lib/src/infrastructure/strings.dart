@@ -20,37 +20,11 @@ extension CharacterMovement on String {
   ///   word |up -> `0`
   ///   word up| -> `5`
   int? moveOffsetUpstreamByWord(int textOffset) {
-    if (textOffset < 0 || textOffset > length) {
-      throw Exception("Index '$textOffset' is out of string range. Length: $length");
-    }
-
     if (textOffset == 0) {
       return null;
     }
 
-    // Create a character range, initially with zero length
-    // Note that the getter for this object is confusingly named: it is an iterator but includes lots of functionality
-    // beyond that interface, most importantly for us a range over this string that can be manipulated in terms of
-    // characters
-    final range = characters.iterator;
-    // Expand the range so it reaches from the start of the string to the initial text offset. The text offset is passed
-    // to us in terms of bytes but the iterator deals in grapheme clusters, so we need to manually count the length of
-    // each cluster as until we reach the desired offset
-    var remainingOffset = textOffset;
-    range.expandWhile((char) {
-      remainingOffset -= char.length;
-      return remainingOffset >= 0;
-    });
-    // Shrink the range from the end as long it does not end in a word. This accounts for cases where the text offset
-    // starts in between words. After this expansion we know the range ends on a word character
-    range.dropBackWhile((char) => _separatorRegex.hasMatch(char));
-    // Shrink the range from the back until it reaches a non-word character. After this expansion we know that the range
-    // ends on the first character of a word, which is the next word upstream from the initial text offset
-    range.dropBackWhile((char) => !_separatorRegex.hasMatch(char));
-    // The range now reaches from the start of the string to our new text offset. Calculate that offset using the
-    // range's string length and return it
-    final current = range.current;
-    return current.length;
+    return _moveOffsetByWord(textOffset, TextAffinity.upstream);
   }
 
   /// Returns the code point index of the character that sits
@@ -81,36 +55,11 @@ extension CharacterMovement on String {
   ///   word |up -> `7`
   ///   word up| -> `null`
   int? moveOffsetDownstreamByWord(int textOffset) {
-    if (textOffset < 0 || textOffset > length) {
-      throw Exception("Index '$textOffset' is out of string range. Length: $length");
-    }
-
     if (textOffset == length) {
       return null;
     }
 
-    // Create a character range, initially with zero length
-    // Note that the getter for this object is confusingly named: it is an iterator but includes lots of functionality
-    // beyond that interface, most importantly for us a range over this string that can be manipulated in terms of
-    // characters
-    final range = characters.iterator;
-    // Expand the range so it reaches from the start of the string to the initial text offset. The text offset is passed
-    // to us in terms of bytes but the iterator deals in grapheme clusters, so we need to manually count the length of
-    // each cluster as until we reach the desired offset
-    var remainingOffset = textOffset;
-    range.expandWhile((char) {
-      remainingOffset -= char.length;
-      return remainingOffset >= 0;
-    });
-    // Expand the range forward as long it does not end in a word. This accounts for cases where the text offset starts
-    // in between words. After this expansion we know the range ends on a word character
-    range.expandWhile((char) => _separatorRegex.hasMatch(char));
-    // Expand the range forward until it reaches a non-word character. After this expansion we know that the range ends
-    // on the last character of a word, which is the next word downstream from the initial text offset
-    range.expandWhile((char) => !_separatorRegex.hasMatch(char));
-    // The range now reaches from the start of the string to our new text offset. Calculate that offset using the
-    // range's string length and return it
-    return range.current.length;
+    return _moveOffsetByWord(textOffset, TextAffinity.downstream);
   }
 
   /// Returns the code point index of the character that sits
@@ -128,6 +77,36 @@ extension CharacterMovement on String {
     }
 
     return _moveOffsetByCharacter(textOffset, characterCount, TextAffinity.downstream);
+  }
+
+  int? _moveOffsetByWord(int textOffset, TextAffinity affinity) {
+    if (textOffset < 0 || textOffset > length) {
+      throw Exception("Index '$textOffset' is out of string range. Length: $length");
+    }
+
+    // Create a character range, initially with zero length
+    // Note that the getter for this object is confusingly named: it is an iterator but includes lots of functionality
+    // beyond that interface, most importantly for us a range over this string that can be manipulated in terms of
+    // characters
+    final range = characters.iterator;
+    // Expand the range so it reaches from the start of the string to the initial text offset. The text offset is passed
+    // to us in terms of bytes but the iterator deals in grapheme clusters, so we need to manually count the length of
+    // each cluster as until we reach the desired offset
+    var remainingOffset = textOffset;
+    range.expandWhile((char) {
+      remainingOffset -= char.length;
+      return remainingOffset >= 0;
+    });
+    final moveWhile = affinity == TextAffinity.downstream ? range.expandWhile : range.dropBackWhile;
+    // Adjust the range in the requested direction as long it does not end in a word. This accounts for cases where the
+    // text offset starts in between words. After this we know the range ends on a word character
+    moveWhile((char) => _separatorRegex.hasMatch(char));
+    // Adjust the range in the requested direction until it reaches a non-word character. After this we know that the
+    // range ends at the start of the next word upstream or end of the next word downstream from the initial text offset
+    moveWhile((char) => !_separatorRegex.hasMatch(char));
+    // The range now reaches from the start of the string to our new text offset. Calculate that offset using the
+    // range's string length and return it
+    return range.current.length;
   }
 
   int? _moveOffsetByCharacter(int textOffset, int characterCount, TextAffinity affinity) {
