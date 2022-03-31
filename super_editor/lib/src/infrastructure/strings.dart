@@ -91,7 +91,7 @@ extension CharacterMovement on String {
     final range = characters.iterator;
     // Expand the range so it reaches from the start of the string to the initial text offset. The text offset is passed
     // to us in terms of bytes but the iterator deals in grapheme clusters, so we need to manually count the length of
-    // each cluster as until we reach the desired offset
+    // each cluster until we reach the desired offset
     var remainingOffset = textOffset;
     range.expandWhile((char) {
       remainingOffset -= char.length;
@@ -122,7 +122,7 @@ extension CharacterMovement on String {
     var remainingOffset = textOffset;
     // Expand the range so it reaches from the start of the string to the initial text offset. The text offset is passed
     // to us in terms of bytes but the iterator deals in grapheme clusters, so we need to manually count the length of
-    // each cluster as until we reach the desired offset
+    // each cluster until we reach the desired offset
     range.expandWhile((char) {
       remainingOffset -= char.length;
       return remainingOffset >= 0;
