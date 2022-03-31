@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
-import 'package:super_selectable_text/super_selectable_text.dart';
+import 'package:super_text/super_selectable_text.dart';
 
 /// An iOS-style text selection handle.
 ///
