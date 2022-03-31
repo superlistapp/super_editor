@@ -17,7 +17,7 @@ import 'package:super_editor/src/infrastructure/composable_text.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
 import 'package:super_editor/src/infrastructure/raw_key_event_extensions.dart';
 import 'package:super_editor/src/infrastructure/strings.dart';
-import 'package:super_selectable_text/super_selectable_text.dart';
+import 'package:super_text/super_selectable_text.dart';
 
 import 'document_input_keyboard.dart';
 import 'layout_single_column/layout_single_column.dart';

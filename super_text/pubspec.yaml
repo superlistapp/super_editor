@@ -1,4 +1,4 @@
-name: super_selectable_text
+name: super_text
 description: Configurable, composable, extensible text display for Flutter.
 version: 0.1.0
 homepage: https://github.com/superlistapp/super_editor
@@ -12,7 +12,9 @@ dependencies:
     sdk: flutter
 
   attributed_text:
-    path: ../attributed_text
+    git:
+      url: https://github.com/superlistapp/super_editor.git
+      path: attributed_text
   flutter_lints: ^1.0.0
   logging: ^1.0.1
 

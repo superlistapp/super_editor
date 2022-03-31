@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/super_textfield.dart';
-import 'package:super_selectable_text/super_selectable_text.dart';
+import 'package:super_text/super_selectable_text.dart';
 
 final _log = scrollingTextFieldLog;
 

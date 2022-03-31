@@ -12,7 +12,9 @@ dependencies:
     sdk: flutter
 
   super_editor:
-    path: ../super_editor
+    git:
+      url: https://github.com/superlistapp/super_editor.git
+      path: super_editor
   flutter_lints: ^1.0.0
   logging: ^1.0.1
   markdown: ^4.0.0
