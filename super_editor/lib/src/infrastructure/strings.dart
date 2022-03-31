@@ -32,7 +32,7 @@ extension CharacterMovement on String {
     // Note that the getter for this object is confusingly named: it is an iterator but includes lots of functionality
     // beyond that interface, most importantly for us a range over this string that can be manipulated in terms of
     // characters
-    final CharacterRange range = characters.iterator;
+    final range = characters.iterator;
     // Expand the range so it reaches from the start of the string to the initial text offset. The text offset is passed
     // to us in terms of bytes but the iterator deals in grapheme clusters, so we need to manually count the length of
     // each cluster as until we reach the desired offset
@@ -47,8 +47,8 @@ extension CharacterMovement on String {
     // Shrink the range from the back until it reaches a non-word character. After this expansion we know that the range
     // ends on the first character of a word, which is the next word upstream from the initial text offset
     range.dropBackWhile((char) => !_separatorRegex.hasMatch(char));
-    // The range to reaches from the start of the string to our new text offset. Calculate that offset using the range's
-    // string length and return it
+    // The range now reaches from the start of the string to our new text offset. Calculate that offset using the
+    // range's string length and return it
     final current = range.current;
     return current.length;
   }
@@ -63,30 +63,11 @@ extension CharacterMovement on String {
   ///   a💙|c -> `1`
   ///   a💙c| -> `3` (notice that we moved 2 units due to emoji length)
   int? moveOffsetUpstreamByCharacter(int textOffset, {int characterCount = 1}) {
-    if (textOffset < 0 || textOffset > length) {
-      throw Exception("Index '$textOffset' is out of string range. Length: $length");
-    }
-
     if (textOffset == 0) {
       return null;
     }
 
-    int codePointIndex = 0;
-    final characterIndices = <int>[];
-    for (final character in characters) {
-      if (codePointIndex == textOffset) {
-        break;
-      }
-
-      characterIndices.add(codePointIndex);
-      codePointIndex += character.length;
-    }
-
-    if (characterIndices.length < characterCount) {
-      return null;
-    }
-
-    return characterIndices[characterIndices.length - characterCount];
+    return _moveOffsetByCharacter(textOffset, characterCount, TextAffinity.upstream);
   }
 
   /// Returns the code point index of the character that sits
@@ -127,8 +108,8 @@ extension CharacterMovement on String {
     // Expand the range forward until it reaches a non-word character. After this expansion we know that the range ends
     // on the last character of a word, which is the next word downstream from the initial text offset
     range.expandWhile((char) => !_separatorRegex.hasMatch(char));
-    // The range to reaches from the start of the string to our new text offset. Calculate that offset using the range's
-    // string length and return it
+    // The range now reaches from the start of the string to our new text offset. Calculate that offset using the
+    // range's string length and return it
     return range.current.length;
   }
 
@@ -142,31 +123,46 @@ extension CharacterMovement on String {
   ///   a💙|c -> `4`
   ///   a💙c| -> `null`
   int? moveOffsetDownstreamByCharacter(int textOffset, {int characterCount = 1}) {
-    if (textOffset < 0 || textOffset > length) {
-      throw Exception("Index '$textOffset' is out of string range. Length: $length");
-    }
-
     if (textOffset == length) {
       return null;
     }
 
-    int visitedCharacterCodePointLength = 0;
-    int characterCountBeyondTextOffset = 0;
-    for (final character in characters) {
-      visitedCharacterCodePointLength += character.length;
-      if (visitedCharacterCodePointLength > textOffset) {
-        characterCountBeyondTextOffset += 1;
-      }
+    return _moveOffsetByCharacter(textOffset, characterCount, TextAffinity.downstream);
+  }
 
-      if (characterCountBeyondTextOffset == characterCount) {
-        break;
-      }
+  int? _moveOffsetByCharacter(int textOffset, int characterCount, TextAffinity affinity) {
+    if (textOffset < 0 || textOffset > length) {
+      throw Exception("Index '$textOffset' is out of string range. Length: $length");
     }
 
-    if (characterCountBeyondTextOffset < characterCount) {
+    // Create a character range, initially with zero length
+    // Note that the getter for this object is confusingly named: it is an iterator but includes lots of functionality
+    // beyond that interface, most importantly for us a range over this string that can be manipulated in terms of
+    // characters
+    final range = characters.iterator;
+    var remainingOffset = textOffset;
+    // Expand the range so it reaches from the start of the string to the initial text offset. The text offset is passed
+    // to us in terms of bytes but the iterator deals in grapheme clusters, so we need to manually count the length of
+    // each cluster as until we reach the desired offset
+    range.expandWhile((char) {
+      remainingOffset -= char.length;
+      return remainingOffset >= 0;
+    });
+    // Verify that the move is possible with the requested character count
+    if (affinity == TextAffinity.downstream && range.stringAfterLength < characterCount) {
       return null;
     }
-
-    return visitedCharacterCodePointLength;
+    if (affinity == TextAffinity.upstream && range.current.length < characterCount) {
+      return null;
+    }
+    // Expand or contract the range by the requested number of characters
+    if (affinity == TextAffinity.downstream) {
+      range.expandNext(characterCount);
+    } else {
+      range.dropLast(characterCount);
+    }
+    // The range now reaches from the start of the string to our new text offset. Calculate that offset using the
+    // range's string length and return it
+    return range.current.length;
   }
 }
