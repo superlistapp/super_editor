@@ -24,7 +24,7 @@ extension CharacterMovement on String {
       return null;
     }
 
-    return _moveOffsetByWord(textOffset, TextAffinity.upstream);
+    return _moveOffsetByWord(textOffset, true);
   }
 
   /// Returns the code point index of the character that sits
@@ -41,7 +41,7 @@ extension CharacterMovement on String {
       return null;
     }
 
-    return _moveOffsetByCharacter(textOffset, characterCount, TextAffinity.upstream);
+    return _moveOffsetByCharacter(textOffset, characterCount, true);
   }
 
   /// Returns the code point index of the character that sits
@@ -59,7 +59,7 @@ extension CharacterMovement on String {
       return null;
     }
 
-    return _moveOffsetByWord(textOffset, TextAffinity.downstream);
+    return _moveOffsetByWord(textOffset, false);
   }
 
   /// Returns the code point index of the character that sits
@@ -76,10 +76,10 @@ extension CharacterMovement on String {
       return null;
     }
 
-    return _moveOffsetByCharacter(textOffset, characterCount, TextAffinity.downstream);
+    return _moveOffsetByCharacter(textOffset, characterCount, false);
   }
 
-  int? _moveOffsetByWord(int textOffset, TextAffinity affinity) {
+  int? _moveOffsetByWord(int textOffset, bool upstream) {
     if (textOffset < 0 || textOffset > length) {
       throw Exception("Index '$textOffset' is out of string range. Length: $length");
     }
@@ -97,7 +97,7 @@ extension CharacterMovement on String {
       remainingOffset -= char.length;
       return remainingOffset >= 0;
     });
-    final moveWhile = affinity == TextAffinity.downstream ? range.expandWhile : range.dropBackWhile;
+    final moveWhile = upstream ? range.dropBackWhile : range.expandWhile;
     // Adjust the range in the requested direction as long it does not end in a word. This accounts for cases where the
     // text offset starts in between words. After this we know the range ends on a word character
     moveWhile((char) => _separatorRegex.hasMatch(char));
@@ -109,7 +109,7 @@ extension CharacterMovement on String {
     return range.current.length;
   }
 
-  int? _moveOffsetByCharacter(int textOffset, int characterCount, TextAffinity affinity) {
+  int? _moveOffsetByCharacter(int textOffset, int characterCount, bool upstream) {
     if (textOffset < 0 || textOffset > length) {
       throw Exception("Index '$textOffset' is out of string range. Length: $length");
     }
@@ -128,17 +128,14 @@ extension CharacterMovement on String {
       return remainingOffset >= 0;
     });
     // Verify that the move is possible with the requested character count
-    if (affinity == TextAffinity.downstream && range.stringAfterLength < characterCount) {
-      return null;
-    }
-    if (affinity == TextAffinity.upstream && range.current.length < characterCount) {
+    if (upstream ? range.current.length < characterCount : range.stringAfterLength < characterCount) {
       return null;
     }
     // Expand or contract the range by the requested number of characters
-    if (affinity == TextAffinity.downstream) {
-      range.expandNext(characterCount);
-    } else {
+    if (upstream) {
       range.dropLast(characterCount);
+    } else {
+      range.expandNext(characterCount);
     }
     // The range now reaches from the start of the string to our new text offset. Calculate that offset using the
     // range's string length and return it
