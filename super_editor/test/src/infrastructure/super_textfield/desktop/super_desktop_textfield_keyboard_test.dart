@@ -118,6 +118,30 @@ void main() {
 
             Platform.setTestInstance(null);
           });
+          testWidgets('it does nothing when caret is not focused on any text', (tester) async {
+            Platform.setTestInstance(MacPlatform());
+
+            final controller = AttributedTextEditingController(
+              text: AttributedText(text: 'This is some text that doesn\'t matter for this test.'),
+              selection: const TextSelection.collapsed(offset: -1),
+            );
+
+            final result = DefaultSuperTextFieldKeyboardHandlers.copyTextWhenCmdCIsPressed(
+              controller: controller,
+              keyEvent: const FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.keyC,
+                  physicalKey: PhysicalKeyboardKey.keyC,
+                  isMetaPressed: true,
+                ),
+                character: 'c',
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.notHandled);
+
+            Platform.setTestInstance(null);
+          });
         });
 
         group('Windows + Linux', () {
@@ -218,6 +242,30 @@ void main() {
                   isControlPressed: true,
                 ),
                 character: null,
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.notHandled);
+
+            Platform.setTestInstance(null);
+          });
+          testWidgets('it does nothing when caret is not focused on any text', (tester) async {
+            Platform.setTestInstance(WindowsPlatform());
+
+            final controller = AttributedTextEditingController(
+              text: AttributedText(text: 'This is some text that doesn\'t matter for this test.'),
+              selection: const TextSelection.collapsed(offset: -1),
+            );
+
+            final result = DefaultSuperTextFieldKeyboardHandlers.copyTextWhenCmdCIsPressed(
+              controller: controller,
+              keyEvent: const FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.keyC,
+                  physicalKey: PhysicalKeyboardKey.keyC,
+                  isMetaPressed: true,
+                ),
+                character: 'c',
               ),
             );
 
@@ -340,6 +388,30 @@ void main() {
 
             Platform.setTestInstance(null);
           });
+          testWidgets('it does nothing when caret is not focused on any text', (tester) async {
+            Platform.setTestInstance(MacPlatform());
+
+            final controller = AttributedTextEditingController(
+              text: AttributedText(text: 'This is some text that doesn\'t matter for this test.'),
+              selection: const TextSelection.collapsed(offset: -1),
+            );
+
+            final result = DefaultSuperTextFieldKeyboardHandlers.pasteTextWhenCmdVIsPressed(
+              controller: controller,
+              keyEvent: const FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.keyV,
+                  physicalKey: PhysicalKeyboardKey.keyV,
+                  isMetaPressed: true,
+                ),
+                character: 'v',
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.notHandled);
+
+            Platform.setTestInstance(null);
+          });
         });
 
         group('Windows + Linux', () {
@@ -446,6 +518,30 @@ void main() {
                   isControlPressed: true,
                 ),
                 character: null,
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.notHandled);
+
+            Platform.setTestInstance(null);
+          });
+          testWidgets('it does nothing when caret is not focused on any text', (tester) async {
+            Platform.setTestInstance(WindowsPlatform());
+
+            final controller = AttributedTextEditingController(
+              text: AttributedText(text: 'This is some text that doesn\'t matter for this test.'),
+              selection: const TextSelection.collapsed(offset: -1),
+            );
+
+            final result = DefaultSuperTextFieldKeyboardHandlers.pasteTextWhenCmdVIsPressed(
+              controller: controller,
+              keyEvent: const FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.keyV,
+                  physicalKey: PhysicalKeyboardKey.keyV,
+                  isControlPressed: true,
+                ),
+                character: 'v',
               ),
             );
 
@@ -2580,6 +2676,30 @@ void main() {
             expect(result, TextFieldKeyboardHandlerResult.handled);
             expect(controller.selection.baseOffset, 17);
             expect(controller.selection.extentOffset, 17);
+
+            Platform.setTestInstance(null);
+          });
+          testWidgets('it does nothing when caret is not focused on any text', (tester) async {
+            Platform.setTestInstance(WindowsPlatform());
+
+            final controller = AttributedTextEditingController(
+              text: AttributedText(text: 'This is some text that doesn\'t matter for this test.'),
+              selection: const TextSelection.collapsed(offset: -1),
+            );
+
+            final result = DefaultSuperTextFieldKeyboardHandlers.moveCaretToStartOrEnd(
+              controller: controller,
+              keyEvent: const FakeRawKeyEvent(
+                data: FakeRawKeyEventData(
+                  logicalKey: LogicalKeyboardKey.keyE,
+                  physicalKey: PhysicalKeyboardKey.keyE,
+                  isControlPressed: true,
+                ),
+                character: 'e',
+              ),
+            );
+
+            expect(result, TextFieldKeyboardHandlerResult.notHandled);
 
             Platform.setTestInstance(null);
           });

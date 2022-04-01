@@ -309,7 +309,11 @@ ExecutionInstruction moveToLineStartOrEndWithCtrlAOrE({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
-  if (!keyEvent.isControlPressed && Platform.instance.isMac) {
+  if (Platform.instance.isMac) {
+    ExecutionInstruction.continueExecution;
+  }
+
+  if (!keyEvent.isControlPressed) {
     return ExecutionInstruction.continueExecution;
   }
   bool didMove = false;

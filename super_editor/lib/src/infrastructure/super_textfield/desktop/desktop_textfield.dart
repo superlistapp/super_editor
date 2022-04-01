@@ -1223,6 +1223,8 @@ const defaultTextFieldKeyboardHandlers = <TextFieldKeyboardHandler>[
 ];
 
 class DefaultSuperTextFieldKeyboardHandlers {
+  /// [copyTextWhenCmdCIsPressed] copies text to clipboard when primary shortcut key
+  /// (CMD on Mac, CTL on Windows) + C is pressed.
   static TextFieldKeyboardHandlerResult copyTextWhenCmdCIsPressed({
     required AttributedTextEditingController controller,
     SuperSelectableTextState? selectableTextState,
@@ -1234,12 +1236,17 @@ class DefaultSuperTextFieldKeyboardHandlers {
     if (keyEvent.logicalKey != LogicalKeyboardKey.keyC) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
+    if (controller.selection.extentOffset == -1) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
 
     controller.copySelectedTextToClipboard();
 
     return TextFieldKeyboardHandlerResult.handled;
   }
 
+  /// [pasteTextWhenCmdVIsPressed] pastes text from clipboard to document when primary shortcut key
+  /// (CMD on Mac, CTL on Windows) + V is pressed.
   static TextFieldKeyboardHandlerResult pasteTextWhenCmdVIsPressed({
     required AttributedTextEditingController controller,
     SuperSelectableTextState? selectableTextState,
@@ -1249,6 +1256,9 @@ class DefaultSuperTextFieldKeyboardHandlers {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
     if (keyEvent.logicalKey != LogicalKeyboardKey.keyV) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+    if (controller.selection.extentOffset == -1) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 
@@ -1261,6 +1271,8 @@ class DefaultSuperTextFieldKeyboardHandlers {
     return TextFieldKeyboardHandlerResult.handled;
   }
 
+  /// [selectAllTextFieldWhenCmdAIsPressed] selects all text when primary shortcut key
+  /// (CMD on Mac, CTL on Windows) + A is pressed.
   static TextFieldKeyboardHandlerResult selectAllTextFieldWhenCmdAIsPressed({
     required AttributedTextEditingController controller,
     SuperSelectableTextState? selectableTextState,
@@ -1278,18 +1290,27 @@ class DefaultSuperTextFieldKeyboardHandlers {
     return TextFieldKeyboardHandlerResult.handled;
   }
 
+  /// [moveCaretToStartOrEnd] moves caret to start (using CTL+A) or end of line (using CTL+E)
+  /// on MacOS platforms. This is part of expected behavior on MacOS. Not applicable to Windows.
   static TextFieldKeyboardHandlerResult moveCaretToStartOrEnd({
     required AttributedTextEditingController controller,
     SuperSelectableTextState? selectableTextState,
     required RawKeyEvent keyEvent,
   }) {
     bool _moveLeft = false;
-    if (!keyEvent.isControlPressed || !Platform.instance.isMac) {
+    if (!keyEvent.isControlPressed) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+    if (!Platform.instance.isMac) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
     if (keyEvent.logicalKey != LogicalKeyboardKey.keyA && keyEvent.logicalKey != LogicalKeyboardKey.keyE) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
+    if (controller.selection.extentOffset == -1) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
     keyEvent.logicalKey == LogicalKeyboardKey.keyA
         ? _moveLeft = true
         : keyEvent.logicalKey == LogicalKeyboardKey.keyE
@@ -1306,6 +1327,8 @@ class DefaultSuperTextFieldKeyboardHandlers {
     return TextFieldKeyboardHandlerResult.handled;
   }
 
+  /// [moveUpDownLeftAndRightWithArrowKeys] moves caret according to the directional key which was pressed.
+  /// If there is no caret selection. it does nothing.
   static TextFieldKeyboardHandlerResult moveUpDownLeftAndRightWithArrowKeys({
     required AttributedTextEditingController controller,
     required SuperSelectableTextState selectableTextState,
@@ -1378,6 +1401,9 @@ class DefaultSuperTextFieldKeyboardHandlers {
     return TextFieldKeyboardHandlerResult.handled;
   }
 
+  /// [insertCharacterWhenKeyIsPressed] adds any character when that key is pressed.
+  /// Certain keys are currently checked against a blacklist of characters for web
+  /// since their behavior is unexpected. Check definition for more details.
   static TextFieldKeyboardHandlerResult insertCharacterWhenKeyIsPressed({
     required AttributedTextEditingController controller,
     SuperSelectableTextState? selectableTextState,
@@ -1411,6 +1437,8 @@ class DefaultSuperTextFieldKeyboardHandlers {
     return TextFieldKeyboardHandlerResult.handled;
   }
 
+  /// [deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed] deletes lines of text before
+  /// the caret when the primary shortcut key (CMD on Mac, CTL on Windows) + Backspace is pressed.
   static TextFieldKeyboardHandlerResult deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed({
     required AttributedTextEditingController controller,
     required SuperSelectableTextState selectableTextState,
@@ -1436,6 +1464,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
     return TextFieldKeyboardHandlerResult.handled;
   }
 
+  /// [deleteTextWhenBackspaceOrDeleteIsPressed] deletes single characters when delete or backspace is pressed.
   static TextFieldKeyboardHandlerResult deleteTextWhenBackspaceOrDeleteIsPressed({
     required AttributedTextEditingController controller,
     SuperSelectableTextState? selectableTextState,
@@ -1459,6 +1488,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
     return TextFieldKeyboardHandlerResult.handled;
   }
 
+  /// [deleteWordWhenAltBackSpaceIsPressed] deletes single words when Alt+Backspace is pressed.
   static TextFieldKeyboardHandlerResult deleteWordWhenAltBackSpaceIsPressed({
     required AttributedTextEditingController controller,
     required SuperSelectableTextState selectableTextState,
@@ -1490,6 +1520,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
     return TextFieldKeyboardHandlerResult.notHandled;
   }
 
+  /// [insertNewlineWhenEnterIsPressed] inserts a new line character when the enter key is pressed.
   static TextFieldKeyboardHandlerResult insertNewlineWhenEnterIsPressed({
     required AttributedTextEditingController controller,
     SuperSelectableTextState? selectableTextState,
