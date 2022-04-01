@@ -68,8 +68,9 @@ void deactivateLoggers(Set<logging.Logger> loggers) {
   }
 }
 
-void printLog(record) {
-  print('${record.level.name}: ${record.time}: ${record.message}');
+void printLog(logging.LogRecord record) {
+  print(
+      '(${record.time.second}.${record.time.millisecond.toString().padLeft(3, '0')}) ${record.loggerName} > ${record.level.name}: ${record.message}');
 }
 
 // TODO: get rid of this custom Logger when all references are replaced with logging package

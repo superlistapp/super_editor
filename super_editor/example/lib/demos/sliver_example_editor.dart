@@ -12,78 +12,125 @@ class SliverExampleEditor extends StatefulWidget {
 }
 
 class _SliverExampleEditorState extends State<SliverExampleEditor> {
+  // Toggle this, as a developer, to turn auto-scrolling debug
+  // paint on/off.
+  static const _showDebugPaint = true;
+
+  final _scrollableKey = GlobalKey(debugLabel: "sliver_scrollable");
+  late ScrollController _scrollController;
+  final _minimapKey = GlobalKey(debugLabel: "sliver_minimap");
+
   late Document _doc;
   late DocumentEditor _docEditor;
 
   @override
   void initState() {
     super.initState();
+
+    _scrollController = ScrollController();
+
     _doc = _createInitialDocument();
     _docEditor = DocumentEditor(document: _doc as MutableDocument);
   }
 
   @override
   void dispose() {
+    _scrollController.dispose();
+
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return CustomScrollView(
-      slivers: [
-        SliverAppBar(
-          title: const Text(
-            'Rich Text Editor Sliver Example',
-          ),
-          expandedHeight: 200.0,
-          leading: const SizedBox(),
-          flexibleSpace: FlexibleSpaceBar(
-            background: Image.network(
-              'https://i.imgur.com/fSZwM7G.jpg',
-              fit: BoxFit.cover,
-            ),
-          ),
-        ),
-        const SliverToBoxAdapter(
-          child: Text(
-            'Lorem Ipsum Dolor',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 72,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ),
-        SliverToBoxAdapter(
-          child: SuperEditor(
-            editor: _docEditor,
-            stylesheet: defaultStylesheet.copyWith(
-              documentPadding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),
-            ),
-          ),
-        ),
-        SliverList(
-          delegate: SliverChildBuilderDelegate(
-            (BuildContext context, int index) {
-              return ListTile(
-                title: Text('$index'),
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'SliverList element tapped with index $index.',
-                      ),
-                      duration: const Duration(milliseconds: 500),
+    return ScrollingMinimaps(
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: CustomScrollView(
+              key: _scrollableKey,
+              controller: _scrollController,
+              slivers: [
+                SliverAppBar(
+                  title: const Text(
+                    'Rich Text Editor Sliver Example',
+                  ),
+                  expandedHeight: 200.0,
+                  leading: const SizedBox(),
+                  flexibleSpace: FlexibleSpaceBar(
+                    background: Image.network(
+                      'https://i.imgur.com/fSZwM7G.jpg',
+                      fit: BoxFit.cover,
                     ),
-                  );
-                },
-              );
-            },
-            // Or, uncomment the following line:
-            // childCount: 3,
+                  ),
+                ),
+                const SliverToBoxAdapter(
+                  child: Text(
+                    'Lorem Ipsum Dolor',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 72,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                SliverToBoxAdapter(
+                  child: SuperEditor(
+                    editor: _docEditor,
+                    stylesheet: defaultStylesheet.copyWith(
+                      documentPadding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),
+                    ),
+                    debugPaint: const DebugPaintConfig(
+                      gestures: _showDebugPaint,
+                      scrollingMinimapId: "sliver_demo",
+                    ),
+                  ),
+                ),
+                SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (BuildContext context, int index) {
+                      return ListTile(
+                        title: Text('$index'),
+                        onTap: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'SliverList element tapped with index $index.',
+                              ),
+                              duration: const Duration(milliseconds: 500),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                    // Or, uncomment the following line:
+                    // childCount: 3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (_showDebugPaint) _buildScrollingMinimap(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildScrollingMinimap() {
+    return Positioned(
+      top: 0,
+      bottom: 0,
+      right: 0,
+      width: 200,
+      child: ColoredBox(
+        color: Colors.black.withOpacity(0.2),
+        child: Center(
+          child: ScrollingMinimap.fromRepository(
+            key: _minimapKey,
+            minimapId: "sliver_demo",
+            minimapScale: 0.1,
           ),
         ),
-      ],
+      ),
     );
   }
 }
