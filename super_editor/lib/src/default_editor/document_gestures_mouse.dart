@@ -157,7 +157,9 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     // to report our scrolling behavior for debugging. Register with an
     // ancestor ScrollingMinimaps.
     if (widget.scrollingMinimapId != null) {
-      _debugInstrumentation = ScrollableInstrumentation()..scrollable.value = Scrollable.of(context);
+      _debugInstrumentation = ScrollableInstrumentation()
+        ..viewport.value = Scrollable.of(context)!.context
+        ..scrollPosition.value = Scrollable.of(context)!.position;
       ScrollingMinimaps.of(context)?.put(widget.scrollingMinimapId!, _debugInstrumentation);
     }
   }

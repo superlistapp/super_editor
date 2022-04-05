@@ -9,73 +9,8 @@ void main() {
 
   group("Scrolling minimap widget", () {
     testGoldens("renders with content height", (tester) async {
-      final scrollableKey = GlobalKey(debugLabel: "scrollable");
-      final scrollController = ScrollController();
-      final minimapKey = GlobalKey(debugLabel: "scrolling_minimap");
-
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Expanded(
-                  child: SingleChildScrollView(
-                    key: scrollableKey,
-                    controller: scrollController,
-                    child: Container(
-                      width: double.infinity,
-                      height: 1500,
-                      color: Colors.grey,
-                    ),
-                  ),
-                ),
-                // This is where the minimap will be added in the next frame.
-                const SizedBox(
-                  width: 250,
-                ),
-              ],
-            ),
-          ),
-          debugShowCheckedModeBanner: false,
-        ),
-      );
-
-      final scrollableInstrumentation = ScrollableInstrumentation()
-        ..scrollable.value = scrollableKey.currentState as ScrollableState?;
-
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Expanded(
-                  child: SingleChildScrollView(
-                    key: scrollableKey,
-                    controller: scrollController,
-                    child: Container(
-                      width: double.infinity,
-                      height: 1500,
-                      color: Colors.grey,
-                    ),
-                  ),
-                ),
-                SizedBox(
-                  width: 250,
-                  child: Center(
-                    child: ScrollingMinimap(
-                      key: minimapKey,
-                      instrumentation: scrollableInstrumentation,
-                      minimapScale: minimapScale,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          debugShowCheckedModeBanner: false,
-        ),
+        const _MinimapTestScaffold(),
       );
 
       // Let the minimap update its display
@@ -85,73 +20,8 @@ void main() {
     });
 
     testGoldens("renders with content height, scrolled", (tester) async {
-      final scrollableKey = GlobalKey(debugLabel: "scrollable");
-      final scrollController = ScrollController();
-      final minimapKey = GlobalKey(debugLabel: "scrolling_minimap");
-
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Expanded(
-                  child: SingleChildScrollView(
-                    key: scrollableKey,
-                    controller: scrollController,
-                    child: Container(
-                      width: double.infinity,
-                      height: 1500,
-                      color: Colors.grey,
-                    ),
-                  ),
-                ),
-                // This is where the minimap will go on the next frame.
-                const SizedBox(
-                  width: 250,
-                ),
-              ],
-            ),
-          ),
-          debugShowCheckedModeBanner: false,
-        ),
-      );
-
-      final scrollableInstrumentation = ScrollableInstrumentation()
-        ..scrollable.value = scrollableKey.currentState as ScrollableState?;
-
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Expanded(
-                  child: SingleChildScrollView(
-                    key: scrollableKey,
-                    controller: scrollController,
-                    child: Container(
-                      width: double.infinity,
-                      height: 1500,
-                      color: Colors.grey,
-                    ),
-                  ),
-                ),
-                SizedBox(
-                  width: 250,
-                  child: Center(
-                    child: ScrollingMinimap(
-                      key: minimapKey,
-                      instrumentation: scrollableInstrumentation,
-                      minimapScale: minimapScale,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          debugShowCheckedModeBanner: false,
-        ),
+        const _MinimapTestScaffold(),
       );
 
       // Scroll the Scrollable
@@ -195,7 +65,8 @@ void main() {
       );
 
       final scrollableInstrumentation = ScrollableInstrumentation()
-        ..scrollable.value = scrollableKey.currentState as ScrollableState?;
+        ..viewport.value = (scrollController.position.context as State).context
+        ..scrollPosition.value = scrollController.position;
 
       await tester.pumpWidget(
         MaterialApp(
@@ -411,4 +282,73 @@ void main() {
       await screenMatchesGolden(tester, "scrolling-minimap-painter_no-content-height_scrolled_with-drag");
     });
   });
+}
+
+class _MinimapTestScaffold extends StatefulWidget {
+  const _MinimapTestScaffold({Key? key}) : super(key: key);
+
+  @override
+  _MinimapTestScaffoldState createState() => _MinimapTestScaffoldState();
+}
+
+class _MinimapTestScaffoldState extends State<_MinimapTestScaffold> {
+  final _scrollKey = GlobalKey(debugLabel: "scrollable");
+  late ScrollController _scrollController;
+  ScrollableInstrumentation? _instrumentation;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_instrumentation == null) {
+      WidgetsBinding.instance!.scheduleFrameCallback((timeStamp) {
+        _instrumentation = ScrollableInstrumentation()
+          ..viewport.value = _scrollKey.currentContext!
+          ..scrollPosition.value = _scrollController.position;
+      });
+    }
+
+    return MaterialApp(
+      home: Scaffold(
+        body: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                key: _scrollKey,
+                controller: _scrollController,
+                child: Container(
+                  width: double.infinity,
+                  height: 1500,
+                  color: Colors.grey,
+                ),
+              ),
+            ),
+            SizedBox(
+              width: 250,
+              child: Center(
+                child: _instrumentation != null
+                    ? ScrollingMinimap(
+                        instrumentation: _instrumentation,
+                        minimapScale: 0.1,
+                      )
+                    : const SizedBox(),
+              ),
+            ),
+          ],
+        ),
+      ),
+      debugShowCheckedModeBanner: false,
+    );
+  }
 }

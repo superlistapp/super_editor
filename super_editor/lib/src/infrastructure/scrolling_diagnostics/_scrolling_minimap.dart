@@ -77,7 +77,7 @@ class _ScrollingMinimapState extends State<ScrollingMinimap> {
   ScrollableInstrumentation? get _instrumentation =>
       widget.instrumentation ?? ScrollingMinimaps.of(context)?.get(widget.minimapId!);
 
-  RenderBox? get _viewportBox => _instrumentation?.scrollable.value?.context.findRenderObject() as RenderBox?;
+  RenderBox? get _viewportBox => _instrumentation?.viewport.value?.findRenderObject() as RenderBox?;
 
   @override
   Widget build(BuildContext context) {
@@ -97,14 +97,14 @@ class _ScrollingMinimapState extends State<ScrollingMinimap> {
       return const SizedBox();
     }
 
-    final scrollPosition = _instrumentation!.scrollable.value?.position;
+    final scrollPosition = _instrumentation!.scrollPosition.value;
     if (scrollPosition == null) {
       return const SizedBox();
     }
 
     return MultiListenableBuilder(
       listenables: {
-        _instrumentation!.scrollable,
+        _instrumentation!.scrollPosition,
         scrollPosition,
         _instrumentation!.startDragInViewport,
         _instrumentation!.endDragInViewport,
@@ -145,7 +145,8 @@ extension on ScrollPosition {
 /// used for visual debugging.
 class ScrollableInstrumentation {
   ScrollableInstrumentation()
-      : scrollable = ValueNotifier(null),
+      : viewport = ValueNotifier(null),
+        scrollPosition = ValueNotifier(null),
         scrollDirection = ValueNotifier(null),
         startDragInViewport = ValueNotifier(null),
         endDragInViewport = ValueNotifier(null),
@@ -153,7 +154,9 @@ class ScrollableInstrumentation {
         endDragInContent = ValueNotifier(null),
         autoScrollEdge = ValueNotifier(null);
 
-  final ValueNotifier<ScrollableState?> scrollable;
+  final ValueNotifier<BuildContext?> viewport;
+
+  final ValueNotifier<ScrollPosition?> scrollPosition;
 
   final ValueNotifier<ScrollDirection?> scrollDirection;
 
