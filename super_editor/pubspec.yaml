@@ -25,6 +25,12 @@ dependencies:
       path: super_text
   uuid: ^3.0.3
 
+dependency_overrides:
+  # Override to local mono-repo path so devs can test this repo
+  # against changes that they're making to other mono-repo packages
+  super_text:
+    path: ../super_text
+
 dev_dependencies:
   golden_toolkit: ^0.11.0
   mockito: ^5.0.4
