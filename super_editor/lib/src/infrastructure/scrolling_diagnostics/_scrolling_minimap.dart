@@ -2,6 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 
+// TODO: Write golden tests for scrolling minimap
+//       (Matt - April, 2022) - I tried writing the tests but couldn't get the
+//       minimap attached to the Scrollable. There might be some issue that's
+//       specific to testing. The minimap is mostly functional in the example
+//       app. I'm committing this code without tests because we need to move
+//       forward with other things.
+
 /// Repository of scrolling minimap statuses, used to coordinate between
 /// a `Scrollable` and the minimap that represents that `Scrollable`.
 ///
@@ -114,7 +121,6 @@ class _ScrollingMinimapState extends State<ScrollingMinimap> {
         _instrumentation!.autoScrollEdge,
       },
       builder: (context) {
-        print("Start drag in content: ${_instrumentation!.startDragInContent}");
         return SizedBox.fromSize(
           size: viewportBox.size * widget.minimapScale,
           child: CustomPaint(

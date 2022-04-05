@@ -14,7 +14,7 @@ class SliverExampleEditor extends StatefulWidget {
 class _SliverExampleEditorState extends State<SliverExampleEditor> {
   // Toggle this, as a developer, to turn auto-scrolling debug
   // paint on/off.
-  static const _showDebugPaint = true;
+  static const _showDebugPaint = false;
 
   final _scrollableKey = GlobalKey(debugLabel: "sliver_scrollable");
   late ScrollController _scrollController;
@@ -81,7 +81,7 @@ class _SliverExampleEditorState extends State<SliverExampleEditor> {
                     ),
                     debugPaint: const DebugPaintConfig(
                       gestures: _showDebugPaint,
-                      scrollingMinimapId: "sliver_demo",
+                      scrollingMinimapId: _showDebugPaint ? "sliver_demo" : null,
                     ),
                   ),
                 ),
