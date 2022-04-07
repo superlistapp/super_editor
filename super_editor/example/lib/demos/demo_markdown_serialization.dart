@@ -132,8 +132,19 @@ Document _createInitialDocument() {
       ListItemNode.unordered(
         id: DocumentEditor.createNodeId(),
         text: AttributedText(
-          text: 'This is a 3rd list item',
-        ),
+            text: 'This is a 3rd list item, with a link',
+            spans: AttributedSpans(
+              attributions: [
+                SpanMarker(
+                    attribution: LinkAttribution(url: Uri.https('example.org', '')),
+                    offset: 30,
+                    markerType: SpanMarkerType.start),
+                SpanMarker(
+                    attribution: LinkAttribution(url: Uri.https('example.org', '')),
+                    offset: 35,
+                    markerType: SpanMarkerType.end),
+              ],
+            )),
       ),
       ParagraphNode(
         id: DocumentEditor.createNodeId(),
