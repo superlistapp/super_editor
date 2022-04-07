@@ -151,8 +151,8 @@ class _ExampleEditorState extends State<ExampleEditor> {
           .getRectForSelection(_composer.selection!.base, _composer.selection!.extent)!;
       final docBox = _docLayoutKey.currentContext!.findRenderObject() as RenderBox;
       final overlayBoundingBox = Rect.fromPoints(
-        docBox.localToGlobal(docBoundingBox.topLeft, ancestor: context.findRenderObject()),
-        docBox.localToGlobal(docBoundingBox.bottomRight, ancestor: context.findRenderObject()),
+        docBox.localToGlobal(docBoundingBox.topLeft),
+        docBox.localToGlobal(docBoundingBox.bottomRight),
       );
 
       _textSelectionAnchor.value = overlayBoundingBox.topCenter;
@@ -252,8 +252,8 @@ class _ExampleEditorState extends State<ExampleEditor> {
           .getRectForSelection(_composer.selection!.base, _composer.selection!.extent)!;
       final docBox = _docLayoutKey.currentContext!.findRenderObject() as RenderBox;
       final overlayBoundingBox = Rect.fromPoints(
-        docBox.localToGlobal(docBoundingBox.topLeft, ancestor: context.findRenderObject()),
-        docBox.localToGlobal(docBoundingBox.bottomRight, ancestor: context.findRenderObject()),
+        docBox.localToGlobal(docBoundingBox.topLeft),
+        docBox.localToGlobal(docBoundingBox.bottomRight),
       );
 
       _imageSelectionAnchor.value = overlayBoundingBox.center;
