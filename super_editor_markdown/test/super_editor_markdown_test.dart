@@ -172,7 +172,8 @@ This is some code
         ]);
 
         expect(serializeDocumentToMarkdown(doc).trim(), 'This ***is a** paragraph*.');
-      }, skip: "Markdown serialization does not currently support intersecting styles");
+      }, skip: '''Markdown serialization is currently broken for intersecting styles.
+                  See https://github.com/superlistapp/super_editor/issues/526''');
 
       test('paragraph with overlapping code and bold', () {
         final doc = MutableDocument(nodes: [
@@ -257,22 +258,23 @@ This is some code
                 attributions: [
                   SpanMarker(
                       attribution: LinkAttribution(url: Uri.https('example.org', '')),
-                      offset: 10,
+                      offset: 0,
                       markerType: SpanMarkerType.start),
                   SpanMarker(
                       attribution: LinkAttribution(url: Uri.https('example.org', '')),
                       offset: 18,
                       markerType: SpanMarkerType.end),
-                  const SpanMarker(attribution: boldAttribution, offset: 10, markerType: SpanMarkerType.start),
-                  const SpanMarker(attribution: boldAttribution, offset: 18, markerType: SpanMarkerType.end),
+                  const SpanMarker(attribution: boldAttribution, offset: 5, markerType: SpanMarkerType.start),
+                  const SpanMarker(attribution: boldAttribution, offset: 8, markerType: SpanMarkerType.end),
                 ],
               ),
             ),
           ),
         ]);
 
-        expect(serializeDocumentToMarkdown(doc).trim(), 'This is a [**paragraph**](https://example.org).');
-      }, skip: "Markdown serialization does not currently support intersecting styles");
+        expect(serializeDocumentToMarkdown(doc).trim(), '[This **is a** paragraph](https://example.org).');
+      }, skip: '''Markdown serialization is currently broken for intersecting styles.
+                  See https://github.com/superlistapp/super_editor/issues/526''');
 
       test('image', () {
         final doc = MutableDocument(nodes: [
