@@ -153,6 +153,28 @@ This is some code
         expect(serializeDocumentToMarkdown(doc).trim(), 'This ***is a*** paragraph.');
       });
 
+      test('paragraph with intersecting bold and italics', () {
+        final doc = MutableDocument(nodes: [
+          ParagraphNode(
+            id: '1',
+            text: AttributedText(
+              text: 'This is a paragraph.',
+              spans: AttributedSpans(
+                attributions: [
+                  const SpanMarker(attribution: boldAttribution, offset: 5, markerType: SpanMarkerType.start),
+                  const SpanMarker(attribution: boldAttribution, offset: 8, markerType: SpanMarkerType.end),
+                  const SpanMarker(attribution: italicsAttribution, offset: 5, markerType: SpanMarkerType.start),
+                  const SpanMarker(attribution: italicsAttribution, offset: 18, markerType: SpanMarkerType.end),
+                ],
+              ),
+            ),
+          ),
+        ]);
+
+        expect(serializeDocumentToMarkdown(doc).trim(), 'This ***is a** paragraph*.');
+      }, skip: '''Markdown serialization is currently broken for intersecting styles.
+                  See https://github.com/superlistapp/super_editor/issues/526''');
+
       test('paragraph with overlapping code and bold', () {
         final doc = MutableDocument(nodes: [
           ParagraphNode(
@@ -173,6 +195,86 @@ This is some code
 
         expect(serializeDocumentToMarkdown(doc).trim(), 'This `**is a**` paragraph.');
       });
+
+      test('paragraph with link', () {
+        final doc = MutableDocument(nodes: [
+          ParagraphNode(
+            id: '1',
+            text: AttributedText(
+              text: 'This is a paragraph.',
+              spans: AttributedSpans(
+                attributions: [
+                  SpanMarker(
+                      attribution: LinkAttribution(url: Uri.https('example.org', '')),
+                      offset: 10,
+                      markerType: SpanMarkerType.start),
+                  SpanMarker(
+                      attribution: LinkAttribution(url: Uri.https('example.org', '')),
+                      offset: 18,
+                      markerType: SpanMarkerType.end),
+                ],
+              ),
+            ),
+          ),
+        ]);
+
+        expect(serializeDocumentToMarkdown(doc).trim(), 'This is a [paragraph](https://example.org).');
+      });
+
+      test('paragraph with link overlapping style', () {
+        final doc = MutableDocument(nodes: [
+          ParagraphNode(
+            id: '1',
+            text: AttributedText(
+              text: 'This is a paragraph.',
+              spans: AttributedSpans(
+                attributions: [
+                  SpanMarker(
+                      attribution: LinkAttribution(url: Uri.https('example.org', '')),
+                      offset: 10,
+                      markerType: SpanMarkerType.start),
+                  SpanMarker(
+                      attribution: LinkAttribution(url: Uri.https('example.org', '')),
+                      offset: 18,
+                      markerType: SpanMarkerType.end),
+                  const SpanMarker(attribution: boldAttribution, offset: 10, markerType: SpanMarkerType.start),
+                  const SpanMarker(attribution: boldAttribution, offset: 18, markerType: SpanMarkerType.end),
+                ],
+              ),
+            ),
+          ),
+        ]);
+
+        expect(serializeDocumentToMarkdown(doc).trim(), 'This is a [**paragraph**](https://example.org).');
+      });
+
+      test('paragraph with link intersecting style', () {
+        final doc = MutableDocument(nodes: [
+          ParagraphNode(
+            id: '1',
+            text: AttributedText(
+              text: 'This is a paragraph.',
+              spans: AttributedSpans(
+                attributions: [
+                  SpanMarker(
+                      attribution: LinkAttribution(url: Uri.https('example.org', '')),
+                      offset: 0,
+                      markerType: SpanMarkerType.start),
+                  SpanMarker(
+                      attribution: LinkAttribution(url: Uri.https('example.org', '')),
+                      offset: 18,
+                      markerType: SpanMarkerType.end),
+                  const SpanMarker(attribution: boldAttribution, offset: 5, markerType: SpanMarkerType.start),
+                  const SpanMarker(attribution: boldAttribution, offset: 8, markerType: SpanMarkerType.end),
+                ],
+              ),
+            ),
+          ),
+        ]);
+
+        expect(serializeDocumentToMarkdown(doc).trim(), '[This **is a** paragraph](https://example.org).');
+      }, skip: '''Markdown serialization is currently broken for intersecting styles.
+                  See https://github.com/superlistapp/super_editor/issues/526''');
 
       test('image', () {
         final doc = MutableDocument(nodes: [

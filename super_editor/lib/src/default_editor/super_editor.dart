@@ -502,6 +502,7 @@ class _SuperEditorState extends State<SuperEditor> {
           editContext: _editContext,
           scrollController: widget.scrollController,
           showDebugPaint: widget.debugPaint.gestures,
+          scrollingMinimapId: widget.debugPaint.scrollingMinimapId,
           child: child,
         );
       case DocumentGestureMode.android:
@@ -551,11 +552,13 @@ class DebugPaintConfig {
   const DebugPaintConfig({
     this.scrolling = false,
     this.gestures = false,
+    this.scrollingMinimapId,
     this.layout = false,
   });
 
   final bool scrolling;
   final bool gestures;
+  final String? scrollingMinimapId;
   final bool layout;
 }
 

@@ -7,6 +7,7 @@ export 'src/infrastructure/super_textfield/super_textfield.dart';
 export 'src/infrastructure/_listenable_builder.dart';
 export 'src/infrastructure/_logging.dart';
 export 'src/infrastructure/multi_tap_gesture.dart';
+export 'src/infrastructure/scrolling_diagnostics/scrolling_diagnostics.dart';
 export 'src/core/document.dart';
 export 'src/core/document_composer.dart';
 export 'src/core/document_editor.dart';

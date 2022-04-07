@@ -635,7 +635,7 @@ class _PresenterComponentBuilderState extends State<_PresenterComponentBuilder> 
 
   @override
   Widget build(BuildContext context) {
-    editorImeLog.fine("Building component: ${widget.watchNode}");
+    editorLayoutLog.finest("Building component: ${widget.watchNode}");
 
     final viewModel = widget
         .presenter //

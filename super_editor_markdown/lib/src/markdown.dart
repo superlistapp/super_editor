@@ -449,24 +449,46 @@ extension on AttributedText {
     }
   }
 
+  /// Checks for the presence of a link in the attributions and returns the characters necessary to represent it
+  /// at the open or closing boundary of the attribution, depending on the event.
+  static String _encodeLinkMarker(Set<Attribution> attributions, AttributionVisitEvent event) {
+    final linkAttributions = attributions.where((element) => element is LinkAttribution?);
+    if (linkAttributions.isNotEmpty) {
+      final linkAttribution = linkAttributions.first as LinkAttribution;
+
+      if (event == AttributionVisitEvent.start) {
+        return '[';
+      } else {
+        return '](${linkAttribution.url.toString()})';
+      }
+    }
+    return "";
+  }
+
   String toMarkdown() {
     final buffer = StringBuffer();
     int spanStart = 0;
 
     visitAttributions((fullText, index, attributions, event) {
       final markdownStyles = _sortAndSerializeAttributions(attributions, event);
+      // Links are different from the plain styles since they are both not NamedAttributions (and therefore
+      // can't be checked using equality comparison) and asymmetrical in markdown.
+      final linkMarker = _encodeLinkMarker(attributions, event);
 
       switch (event) {
         case AttributionVisitEvent.start:
           spanStart = index;
-          buffer.write(markdownStyles);
+          buffer
+            ..write(linkMarker)
+            ..write(markdownStyles);
           break;
         case AttributionVisitEvent.end:
           // +1 on end index because this visitor has inclusive indices
           // whereas substring() expects an exclusive ending index.
           buffer
             ..write(fullText.text.substring(spanStart, index + 1))
-            ..write(markdownStyles);
+            ..write(markdownStyles)
+            ..write(linkMarker);
           break;
       }
     });
