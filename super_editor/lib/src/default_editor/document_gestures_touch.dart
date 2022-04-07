@@ -222,8 +222,11 @@ class DragHandleAutoScroller {
   /// Jumps to a scroll offset so that the given [documentOffset] is visible within the
   /// scrollable.
   ///
+  /// The [editorOffset] is used to determine offset of from editor from its `Scrollable` e.g [CustomScrollView]
+  /// which is used to calculate the scrolling distance
+  ///
   /// Does nothing, if the given [documentOffset] is already visible.
-  void ensureOffsetIsVisible(Offset documentOffset) {
+  void ensureOffsetIsVisible(Offset documentOffset, Offset docGlobalOffset) {
     editorGesturesLog.fine("Ensuring document offset is visible in scrollable: $documentOffset");
 
     final scrollPosition = _getScrollPosition();
@@ -233,9 +236,14 @@ class DragHandleAutoScroller {
     if (documentOffset.dy < currentScrollOffset) {
       editorGesturesLog.fine("The scrollable needs to scroll up to make offset visible.");
       scrollPosition.jumpTo(documentOffset.dy + _dragAutoScrollBoundary.leading);
-    } else if (documentOffset.dy > _getViewportBox().size.height + currentScrollOffset) {
+    } else if (documentOffset.dy > _getViewportBox().size.height - docGlobalOffset.dy) {
       editorGesturesLog.fine('The scrollable needs to scroll down to make offset visible.');
-      scrollPosition.jumpTo(documentOffset.dy + _dragAutoScrollBoundary.trailing - _getViewportBox().size.height);
+      scrollPosition.jumpTo(
+        documentOffset.dy +
+            _dragAutoScrollBoundary.trailing -
+            _getViewportBox().size.height +
+            (docGlobalOffset.dy + currentScrollOffset),
+      );
     }
   }
 

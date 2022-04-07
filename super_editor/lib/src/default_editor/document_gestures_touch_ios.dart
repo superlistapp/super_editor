@@ -270,12 +270,15 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
       return;
     }
 
+    final docGlobalOffset = (widget.documentKey.currentContext!.findRenderObject() as RenderBox)
+        .localToGlobal(viewportBox.globalToLocal(Offset.zero));
+
     if (collapsedHandleOffset != null) {
       editorGesturesLog.fine("The selection is collapsed");
-      _handleAutoScrolling.ensureOffsetIsVisible(collapsedHandleOffset);
+      _handleAutoScrolling.ensureOffsetIsVisible(collapsedHandleOffset, docGlobalOffset);
     } else {
       editorGesturesLog.fine("The selection is expanded");
-      _handleAutoScrolling.ensureOffsetIsVisible(extentHandleOffset!);
+      _handleAutoScrolling.ensureOffsetIsVisible(extentHandleOffset!, docGlobalOffset);
     }
   }
 
