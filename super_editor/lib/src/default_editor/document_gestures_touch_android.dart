@@ -254,13 +254,13 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       return;
     }
 
-    final docGlobalOffset = (widget.documentKey.currentContext!.findRenderObject() as RenderBox)
+    final editorOffset = (widget.documentKey.currentContext!.findRenderObject() as RenderBox)
         .localToGlobal(viewportBox.globalToLocal(Offset.zero));
 
     if (collapsedHandleOffset != null) {
-      _handleAutoScrolling.ensureOffsetIsVisible(collapsedHandleOffset, docGlobalOffset);
+      _handleAutoScrolling.ensureOffsetIsVisible(collapsedHandleOffset, editorOffset);
     } else {
-      _handleAutoScrolling.ensureOffsetIsVisible(extentHandleOffset!, docGlobalOffset);
+      _handleAutoScrolling.ensureOffsetIsVisible(extentHandleOffset!, editorOffset);
     }
   }
 
