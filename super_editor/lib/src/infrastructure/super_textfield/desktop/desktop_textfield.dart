@@ -1218,6 +1218,7 @@ const defaultTextFieldKeyboardHandlers = <TextFieldKeyboardHandler>[
   DefaultSuperTextFieldKeyboardHandlers.deleteTextWhenBackspaceOrDeleteIsPressed,
   DefaultSuperTextFieldKeyboardHandlers.insertNewlineWhenEnterIsPressed,
   DefaultSuperTextFieldKeyboardHandlers.insertCharacterWhenKeyIsPressed,
+  DefaultSuperTextFieldKeyboardHandlers.collapseTextSelectionWhenEscIsPressed,
 ];
 
 class DefaultSuperTextFieldKeyboardHandlers {
@@ -1445,6 +1446,25 @@ class DefaultSuperTextFieldKeyboardHandlers {
     }
 
     controller.insertNewline();
+
+    return TextFieldKeyboardHandlerResult.handled;
+  }
+
+  static TextFieldKeyboardHandlerResult collapseTextSelectionWhenEscIsPressed({
+    required AttributedTextEditingController controller,
+    SuperSelectableTextState? selectableTextState,
+    required RawKeyEvent keyEvent,
+  }) {
+    if (keyEvent.logicalKey != LogicalKeyboardKey.escape) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    if (controller.selection.isCollapsed) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    final caretPosition = controller.selection.extentOffset;
+    controller.selection = TextSelection.collapsed(offset: caretPosition);
 
     return TextFieldKeyboardHandlerResult.handled;
   }
