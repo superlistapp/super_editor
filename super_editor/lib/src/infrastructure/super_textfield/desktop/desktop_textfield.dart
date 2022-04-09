@@ -1205,7 +1205,7 @@ typedef TextFieldKeyboardHandler = TextFieldKeyboardHandlerResult Function({
 ///   keyboardActions: [
 ///     myNewAction1,
 ///     myNewAction2,
-///     ...defaultTextfieldKeyboardActions,
+///     ...defaultTextFieldKeyboardActions,
 ///   ],
 /// );
 /// ```
