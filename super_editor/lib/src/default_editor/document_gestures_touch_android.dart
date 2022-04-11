@@ -148,6 +148,8 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   void didChangeDependencies() {
     super.didChangeDependencies();
 
+    _ancestorScrollPosition = Scrollable.of(context)?.position;
+
     // On the next frame, check if our active scroll position changed to a
     // different instance. If it did, move our listener to the new one.
     //
