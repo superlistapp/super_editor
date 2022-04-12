@@ -82,6 +82,40 @@ abstract class TextLayout {
   TextSelection expandSelection(TextPosition startingPosition, TextExpansion expansion, TextAffinity affinity);
 }
 
+/// A block of text (probably a widget's State object) that includes a
+/// [ProseTextLayout] somewhere within it.
+///
+/// The [ProseTextBlock] interface provides clients with access to the
+/// internal [ProseTextLayout], no matter how deeply that text layout
+/// might be buried within this block's widget tree.
+///
+/// For example, a [ProseTextBlock] might include an animated builder,
+/// or stream builder that wraps the actual text layout. But you still want
+/// to query details about the text layout. Rather than re-declare every
+/// [ProseTextLayout] method and forward the calls, a [ProseTextBlock]
+/// provides access to the inner [ProseTextLayout], directly.
+abstract class ProseTextBlock {
+  /// Returns the [ProseTextLayout] that sits within this text block.
+  ProseTextLayout get textLayout;
+}
+
+/// A [TextLayout] that includes queries that pertain specifically to
+/// prose-style text, i.e., regular human-to-human text - not code,
+/// or phone numbers, or dates.
+///
+/// The [ProseTextLayout] is kept separate from [TextLayout] because some
+/// [ProseTextLayout] APIs may not be applicable to some [TextLayout] content.
+/// Furthermore, there may be various [TextLayout] use-cases for which [ProseTextLayout]
+/// APIs aren't needed, and would therefore introduce undue implementation burden.
+abstract class ProseTextLayout extends TextLayout {
+  /// Returns a [TextSelection] that surrounds the word that contains the
+  /// given [position].
+  ///
+  /// For example, given the text and position "Hello, wo|rld", this method
+  /// would return a [TextSelection] that surrounds the word "world".
+  TextSelection getWordSelectionAt(TextPosition position);
+}
+
 /// Function that expands from a given [startingPosition] to an expanded
 /// [TextSelection], based on some expansion decision behavior.
 typedef TextExpansion = TextSelection Function(String text, TextPosition startingPosition, TextAffinity affinity);

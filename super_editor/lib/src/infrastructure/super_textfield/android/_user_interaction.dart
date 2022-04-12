@@ -131,6 +131,8 @@ class AndroidTextFieldTouchInteractorState extends State<AndroidTextFieldTouchIn
     super.dispose();
   }
 
+  ProseTextLayout get _textLayout => (widget.selectableTextKey.currentState as ProseTextBlock).textLayout;
+
   void _onTapDown(TapDownDetails details) {
     _log.fine('_onTapDown');
 
@@ -224,10 +226,10 @@ class AndroidTextFieldTouchInteractorState extends State<AndroidTextFieldTouchIn
 
   void _onTripleTapDown(TapDownDetails details) {
     _log.fine('_onTripleTapDown()');
-    final tapTextPosition = widget.selectableTextKey.currentState!.getPositionAtOffset(details.localPosition);
+    final tapTextPosition = _textLayout.getPositionAtOffset(details.localPosition)!;
 
-    widget.textController.selection = widget.selectableTextKey.currentState!
-        .expandSelection(tapTextPosition, paragraphExpansionFilter, TextAffinity.downstream);
+    widget.textController.selection =
+        _textLayout.expandSelection(tapTextPosition, paragraphExpansionFilter, TextAffinity.downstream);
 
     if (widget.textController.selection.isCollapsed) {
       // The selection is collapsed. The collapsed handle should disappear
@@ -332,7 +334,7 @@ class AndroidTextFieldTouchInteractorState extends State<AndroidTextFieldTouchIn
   /// Converts a screen-level offset to a [TextPosition] that sits at that
   /// global offset.
   TextPosition _globalOffsetToTextPosition(Offset globalOffset) {
-    return widget.selectableTextKey.currentState!.getPositionNearestToOffset(
+    return _textLayout.getPositionNearestToOffset(
       _globalOffsetToTextOffset(globalOffset),
     );
   }
@@ -350,13 +352,13 @@ class AndroidTextFieldTouchInteractorState extends State<AndroidTextFieldTouchIn
     final globalOffset = (context.findRenderObject() as RenderBox).localToGlobal(localOffset);
     final textOffset =
         (widget.selectableTextKey.currentContext!.findRenderObject() as RenderBox).globalToLocal(globalOffset);
-    return widget.selectableTextKey.currentState!.getPositionAtOffset(textOffset);
+    return _textLayout.getPositionAtOffset(textOffset);
   }
 
   /// Returns a [TextSelection] that selects the word surrounding the given
   /// [position].
   TextSelection _getWordSelectionAt(TextPosition position) {
-    return widget.selectableTextKey.currentState!.getWordSelectionAt(position);
+    return _textLayout.getWordSelectionAt(position);
   }
 
   @override
@@ -444,9 +446,8 @@ class AndroidTextFieldTouchInteractorState extends State<AndroidTextFieldTouchIn
     // focus on the vertical midpoint of the current extent position.
     // TODO: can we de-dup this with similar calculations in _editing_controls?
     final extentPosition = widget.textController.selection.extent;
-    final textLayout = widget.selectableTextKey.currentState!;
-    final extentOffsetInText = textLayout.getOffsetAtPosition(extentPosition);
-    final extentLineHeight = textLayout.getCharacterBox(extentPosition).toRect().height;
+    final extentOffsetInText = _textLayout.getOffsetAtPosition(extentPosition);
+    final extentLineHeight = _textLayout.getCharacterBox(extentPosition).toRect().height;
     final extentGlobalOffset =
         (widget.selectableTextKey.currentContext!.findRenderObject() as RenderBox).localToGlobal(extentOffsetInText);
     final extentOffsetInViewport = (context.findRenderObject() as RenderBox).globalToLocal(extentGlobalOffset);

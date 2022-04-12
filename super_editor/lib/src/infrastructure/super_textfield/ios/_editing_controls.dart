@@ -207,7 +207,7 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
   void _updateSelectionForNewDragHandleLocation() {
     final textBox = (widget.textContentKey.currentContext!.findRenderObject() as RenderBox);
     final textOffset = textBox.globalToLocal(_globalDragOffset!);
-    final textLayout = widget.textContentKey.currentState!;
+    final textLayout = widget.textContentKey.currentState!.textLayout;
     if (_isDraggingBase) {
       widget.editingController.textController.selection = widget.editingController.textController.selection.copyWith(
         baseOffset: textLayout.getPositionNearestToOffset(textOffset).offset,
@@ -248,7 +248,7 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
   }
 
   Offset _textPositionToViewportOffset(TextPosition position) {
-    final textOffset = widget.textContentKey.currentState!.getOffsetAtPosition(position);
+    final textOffset = widget.textContentKey.currentState!.textLayout.getOffsetAtPosition(position);
     final globalOffset =
         (widget.textContentKey.currentContext!.findRenderObject() as RenderBox).localToGlobal(textOffset);
     return (widget.textFieldKey.currentContext!.findRenderObject() as RenderBox).globalToLocal(globalOffset);
@@ -261,7 +261,7 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
   }
 
   Offset _textPositionToTextOffset(TextPosition position) {
-    return widget.textContentKey.currentState!.getOffsetAtPosition(position);
+    return widget.textContentKey.currentState!.textLayout.getOffsetAtPosition(position);
   }
 
   @override
@@ -310,14 +310,14 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
     if (widget.editingController.textController.selection.isCollapsed) {
       final extentOffsetInViewport =
           _textPositionToViewportOffset(widget.editingController.textController.selection.extent);
-      final lineHeight = widget.textContentKey.currentState!
+      final lineHeight = widget.textContentKey.currentState!.textLayout
           .getLineHeightAtPosition(widget.editingController.textController.selection.extent);
 
       toolbarTopAnchor = extentOffsetInViewport - const Offset(0, toolbarGap);
       toolbarBottomAnchor = extentOffsetInViewport + Offset(0, lineHeight) + const Offset(0, toolbarGap);
     } else {
-      final selectionBoxes =
-          widget.textContentKey.currentState!.getBoxesForSelection(widget.editingController.textController.selection);
+      final selectionBoxes = widget.textContentKey.currentState!.textLayout
+          .getBoxesForSelection(widget.editingController.textController.selection);
       Rect selectionBounds = selectionBoxes.first.toRect();
       for (int i = 1; i < selectionBoxes.length; ++i) {
         selectionBounds = selectionBounds.expandToInclude(selectionBoxes[i].toRect());
@@ -415,14 +415,14 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
         : widget.editingController.textController.selection.extent;
     final upstreamHandleOffsetInText = _textPositionToTextOffset(upstreamTextPosition);
     final upstreamLineHeight =
-        widget.textContentKey.currentState!.getCharacterBox(upstreamTextPosition).toRect().height;
+        widget.textContentKey.currentState!.textLayout.getCharacterBox(upstreamTextPosition).toRect().height;
 
     final downstreamTextPosition = selectionDirection == TextAffinity.downstream
         ? widget.editingController.textController.selection.extent
         : widget.editingController.textController.selection.base;
     final downstreamHandleOffsetInText = _textPositionToTextOffset(downstreamTextPosition);
     final downstreamLineHeight =
-        widget.textContentKey.currentState!.getCharacterBox(downstreamTextPosition).toRect().height;
+        widget.textContentKey.currentState!.textLayout.getCharacterBox(downstreamTextPosition).toRect().height;
 
     if (upstreamLineHeight == 0 || downstreamLineHeight == 0) {
       _log.finer('Not building expanded handles because the text layout reported a zero line-height');

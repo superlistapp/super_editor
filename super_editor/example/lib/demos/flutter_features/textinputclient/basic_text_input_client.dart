@@ -63,14 +63,14 @@ class _BareBonesTextFieldWithInputClientState extends State<_BareBonesTextFieldW
     super.dispose();
   }
 
+  ProseTextLayout get _textLayout => (_textKey.currentState as ProseTextBlock).textLayout;
+
   TextPosition _getTextPositionAtOffset(Offset localOffset) {
-    final superSelectableTextState = _textKey.currentState as SuperSelectableTextState;
-    return superSelectableTextState.getPositionAtOffset(localOffset);
+    return _textLayout.getPositionAtOffset(localOffset)!;
   }
 
   Offset _getOffsetAtTextPosition(TextPosition position) {
-    final superSelectableTextState = _textKey.currentState as SuperSelectableTextState;
-    return superSelectableTextState.getOffsetAtPosition(position);
+    return _textLayout.getOffsetAtPosition(position);
   }
 
   void _onTextFieldTapUp(TapUpDetails details) {

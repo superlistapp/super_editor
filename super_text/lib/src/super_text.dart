@@ -52,8 +52,7 @@ class SuperText extends StatefulWidget {
   SuperTextState createState() => SuperTextState();
 }
 
-@visibleForTesting
-class SuperTextState extends State<SuperText> implements TextLayout {
+class SuperTextState extends State<SuperText> implements ProseTextLayout {
   // GlobalKey that provides access to the RenderParagraph associated
   // with the text that this SuperText widget displays.
   final GlobalKey _textKey = GlobalKey();
@@ -356,18 +355,6 @@ class SuperTextState extends State<SuperText> implements TextLayout {
     );
   }
 
-  TextSelection getWordSelectionAt(TextPosition position) {
-    if (_renderParagraph == null) {
-      return const TextSelection.collapsed(offset: -1);
-    }
-
-    final wordRange = _renderParagraph!.getWordBoundary(position);
-    return TextSelection(
-      baseOffset: wordRange.start,
-      extentOffset: wordRange.end,
-    );
-  }
-
   @override
   TextSelection expandSelection(TextPosition position, TextExpansion expansion, TextAffinity affinity) {
     return expansion(widget.richText.toPlainText(), position, affinity);
@@ -427,6 +414,19 @@ class SuperTextState extends State<SuperText> implements TextLayout {
     );
 
     return selection;
+  }
+
+  @override
+  TextSelection getWordSelectionAt(TextPosition position) {
+    if (_renderParagraph == null) {
+      return const TextSelection.collapsed(offset: -1);
+    }
+
+    final wordRange = _renderParagraph!.getWordBoundary(position);
+    return TextSelection(
+      baseOffset: wordRange.start,
+      extentOffset: wordRange.end,
+    );
   }
 
   bool get _textNeedsLayout {

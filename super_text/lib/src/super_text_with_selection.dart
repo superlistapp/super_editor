@@ -18,6 +18,7 @@ import 'text_selection_layer.dart';
 class SuperTextWithSelection extends StatefulWidget {
   SuperTextWithSelection.single({
     Key? key,
+    this.textLayoutKey,
     required this.richText,
     required UserSelection? userSelection,
   })  : userSelections = userSelection != null ? [userSelection] : const [],
@@ -25,9 +26,13 @@ class SuperTextWithSelection extends StatefulWidget {
 
   const SuperTextWithSelection.multi({
     Key? key,
+    this.textLayoutKey,
     required this.richText,
     required this.userSelections,
   }) : super(key: key);
+
+  /// Key attached to the inner widget that implements [TextLayout].
+  final GlobalKey? textLayoutKey;
 
   /// The blob of text that's displayed to the user.
   final InlineSpan richText;
@@ -41,18 +46,24 @@ class SuperTextWithSelection extends StatefulWidget {
   State<SuperTextWithSelection> createState() => _SuperTextWithSelectionState();
 }
 
-class _SuperTextWithSelectionState extends State<SuperTextWithSelection> {
+class _SuperTextWithSelectionState extends State<SuperTextWithSelection> implements ProseTextBlock {
+  late GlobalKey _textLayoutKey;
   late final ValueNotifier<List<UserSelection>> _userSelections;
 
   @override
   void initState() {
     super.initState();
+    _textLayoutKey = widget.textLayoutKey ?? GlobalKey(debugLabel: "text_layout");
     _userSelections = ValueNotifier(widget.userSelections);
   }
 
   @override
   void didUpdateWidget(SuperTextWithSelection oldWidget) {
     super.didUpdateWidget(oldWidget);
+
+    if (widget.textLayoutKey != oldWidget.textLayoutKey) {
+      _textLayoutKey = widget.textLayoutKey ?? GlobalKey(debugLabel: "text_layout");
+    }
 
     // Notify the optimized rendering widget that the user selections
     // have changed. This is done with a ValueNotifier instead of a
@@ -65,12 +76,16 @@ class _SuperTextWithSelectionState extends State<SuperTextWithSelection> {
   }
 
   @override
+  ProseTextLayout get textLayout => _textLayoutKey.currentState as ProseTextLayout;
+
+  @override
   Widget build(BuildContext context) {
     buildsLog.info("Building SuperTextWithSelection ($hashCode)");
     // TODO: how do we prevent a full SuperText rebuild when the selection changes?
     // TODO: add a test that ensures the highlight painter doesn't paint anything when
     //       the selection is collapsed
     return _RebuildOptimizedSuperTextWithSelection(
+      textLayoutKey: widget.textLayoutKey,
       richText: widget.richText,
       userSelections: _userSelections,
     );
@@ -80,10 +95,12 @@ class _SuperTextWithSelectionState extends State<SuperTextWithSelection> {
 class _RebuildOptimizedSuperTextWithSelection extends StatefulWidget {
   const _RebuildOptimizedSuperTextWithSelection({
     Key? key,
+    this.textLayoutKey,
     required this.richText,
     required this.userSelections,
   }) : super(key: key);
 
+  final Key? textLayoutKey;
   final InlineSpan richText;
 
   final ValueNotifier<List<UserSelection>> userSelections;
@@ -96,15 +113,36 @@ class _RebuildOptimizedSuperTextWithSelectionState extends State<_RebuildOptimiz
   Widget? _cachedSubtree;
 
   @override
+  void initState() {
+    super.initState();
+
+    _updateTextLength();
+  }
+
+  @override
   void didUpdateWidget(_RebuildOptimizedSuperTextWithSelection oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.richText != oldWidget.richText) {
       buildsLog.fine("Rich text changed. Invalidating the cached SuperText widget.");
+
+      _updateTextLength();
+
       // The text changed, which means the text layout changed. Invalidate
       // the cache so that the full SuperText widget subtree is rebuilt.
       _cachedSubtree = null;
     }
   }
+
+  // The current length of the text displayed by this widget. The value
+  // is cached because computing the length of rich text may have
+  // non-trivial performance implications.
+  int get _textLength => _cachedTextLength;
+  late int _cachedTextLength;
+  void _updateTextLength() {
+    _cachedTextLength = widget.richText.toPlainText().length;
+  }
+
+  bool get _isTextEmpty => _textLength == 0;
 
   @override
   Widget build(BuildContext context) {
@@ -116,6 +154,7 @@ class _RebuildOptimizedSuperTextWithSelectionState extends State<_RebuildOptimiz
 
     buildsLog.info("Building SuperTextWithSelection ($hashCode), doing full build (no cached subtree is available)");
     _cachedSubtree = SuperText(
+      key: widget.textLayoutKey,
       richText: widget.richText,
       layerBeneathBuilder: _buildLayerBeneath,
       layerAboveBuilder: _buildLayerAbove,
@@ -133,11 +172,17 @@ class _RebuildOptimizedSuperTextWithSelectionState extends State<_RebuildOptimiz
         return Stack(
           children: [
             for (final userSelection in widget.userSelections.value)
-              TextLayoutSelectionHighlight(
-                textLayout: textLayout,
-                style: userSelection.highlightStyle,
-                selection: userSelection.selection,
-              ),
+              if (!_isTextEmpty)
+                TextLayoutSelectionHighlight(
+                  textLayout: textLayout,
+                  style: userSelection.highlightStyle,
+                  selection: userSelection.selection,
+                )
+              else if (userSelection.highlightWhenEmpty)
+                TextLayoutEmptyHighlight(
+                  textLayout: textLayout,
+                  style: userSelection.highlightStyle,
+                ),
           ],
         );
       },
@@ -154,12 +199,13 @@ class _RebuildOptimizedSuperTextWithSelectionState extends State<_RebuildOptimiz
         return Stack(
           children: [
             for (final userSelection in widget.userSelections.value)
-              TextLayoutCaret(
-                textLayout: textLayout,
-                style: userSelection.caretStyle,
-                blinkCaret: userSelection.blinkCaret,
-                position: userSelection.selection.extent,
-              ),
+              if (userSelection.hasCaret)
+                TextLayoutCaret(
+                  textLayout: textLayout,
+                  style: userSelection.caretStyle,
+                  blinkCaret: userSelection.blinkCaret,
+                  position: userSelection.selection.extent,
+                ),
           ],
         );
       },
@@ -175,6 +221,8 @@ class UserSelection {
     required this.caretStyle,
     this.blinkCaret = true,
     required this.selection,
+    this.highlightWhenEmpty = false,
+    this.hasCaret = true,
   });
 
   /// Visual style used to paint a highlight for an expanded [selection].
@@ -187,19 +235,38 @@ class UserSelection {
   final bool blinkCaret;
 
   /// The logical text selection boundaries.
+  ///
+  /// User selection of an empty text block should pass
+  /// `TextSelection.collapsed(offset: 0)`.
   final TextSelection selection;
+
+  /// Whether to paint a small selection highlight for an empty text block.
+  ///
+  /// For example, the user selects multiple blocks of text and some of those
+  /// blocks are empty. If [highlightWhenEmpty] is `true`, those empty text
+  /// blocks will paint a small selection highlight.
+  final bool highlightWhenEmpty;
+
+  /// Whether this selection includes the user's caret.
+  ///
+  /// Typically, there is only one caret per user within an entire
+  /// document. At the same time, many different blocks of text may
+  /// have selection highlights.
+  final bool hasCaret;
 
   UserSelection copyWith({
     SelectionHighlightStyle? highlightStyle,
     CaretStyle? caretStyle,
     bool? blinkCaret,
     TextSelection? selection,
+    bool? hasCaret,
   }) {
     return UserSelection(
       highlightStyle: highlightStyle ?? this.highlightStyle,
       caretStyle: caretStyle ?? this.caretStyle,
       blinkCaret: blinkCaret ?? this.blinkCaret,
       selection: selection ?? this.selection,
+      hasCaret: hasCaret ?? this.hasCaret,
     );
   }
 

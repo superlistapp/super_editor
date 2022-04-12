@@ -750,12 +750,12 @@ void main() {
               selection: const TextSelection.collapsed(offset: 0),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             // Move by character
             final characterResult = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.arrowLeft,
@@ -772,7 +772,7 @@ void main() {
             // Move by word
             final wordResult = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.arrowLeft,
@@ -790,7 +790,7 @@ void main() {
             // Move to end of line
             final lineResult = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.arrowLeft,
@@ -812,11 +812,11 @@ void main() {
               selection: const TextSelection.collapsed(offset: 2),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.arrowLeft,
@@ -839,11 +839,11 @@ void main() {
               selection: const TextSelection.collapsed(offset: 18),
             );
 
-            final selectableTextState = await _pumpMultilineLayout(tester);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.arrowLeft,
@@ -867,8 +867,8 @@ void main() {
             // We give a tiny bit of wiggle room on the value because when this test
             // is run on Windows and Linux CI, there is some kind of precision error
             // that results in a tiny positive number instead of zero.
-            expect(selectableTextState.getCharacterBox(const TextPosition(offset: 16)).top, lessThan(0.1));
-            expect(selectableTextState.getCharacterBox(const TextPosition(offset: 16)).top, greaterThanOrEqualTo(0));
+            expect(textLayout.getCharacterBox(const TextPosition(offset: 16)).top, lessThan(0.1));
+            expect(textLayout.getCharacterBox(const TextPosition(offset: 16)).top, greaterThanOrEqualTo(0));
           });
 
           testWidgets('it expands left by character', (tester) async {
@@ -877,11 +877,11 @@ void main() {
               selection: const TextSelection.collapsed(offset: 2),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.arrowLeft,
@@ -904,11 +904,11 @@ void main() {
               selection: const TextSelection.collapsed(offset: 10),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.arrowLeft,
@@ -930,11 +930,11 @@ void main() {
               selection: const TextSelection.collapsed(offset: 10),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.arrowLeft,
@@ -960,11 +960,11 @@ void main() {
               selection: const TextSelection.collapsed(offset: 10),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.arrowLeft,
@@ -990,11 +990,11 @@ void main() {
               selection: const TextSelection.collapsed(offset: 10),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.arrowLeft,
@@ -1020,11 +1020,11 @@ void main() {
               selection: const TextSelection.collapsed(offset: 10),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.arrowLeft,
@@ -1052,11 +1052,11 @@ void main() {
               selection: const TextSelection.collapsed(offset: 10),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.arrowLeft,
@@ -1085,11 +1085,11 @@ void main() {
               ),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.arrowLeft,
@@ -1113,11 +1113,11 @@ void main() {
               ),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.arrowLeft,
@@ -1140,12 +1140,12 @@ void main() {
               selection: const TextSelection.collapsed(offset: 16),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             // Move by character
             final characterResult = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.arrowRight,
@@ -1162,7 +1162,7 @@ void main() {
             // Move by word
             final wordResult = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.arrowRight,
@@ -1180,7 +1180,7 @@ void main() {
             // Move to end of line
             final lineResult = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.arrowRight,
@@ -1202,11 +1202,11 @@ void main() {
               selection: const TextSelection.collapsed(offset: 2),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.arrowRight,
@@ -1229,11 +1229,11 @@ void main() {
               selection: const TextSelection.collapsed(offset: 17),
             );
 
-            final selectableTextState = await _pumpMultilineLayout(tester);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.arrowRight,
@@ -1250,7 +1250,7 @@ void main() {
             // We should have gone from line 1 to line 2. Make double sure by
             // checking that the bounding box for the character that's now selected
             // does not sit at the top of the text box.
-            expect(selectableTextState.getCharacterBox(const TextPosition(offset: 18)).top, isNonZero);
+            expect(textLayout.getCharacterBox(const TextPosition(offset: 18)).top, isNonZero);
           });
 
           testWidgets('it expands right by character', (tester) async {
@@ -1259,11 +1259,11 @@ void main() {
               selection: const TextSelection.collapsed(offset: 2),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.arrowRight,
@@ -1286,11 +1286,11 @@ void main() {
               selection: const TextSelection.collapsed(offset: 6),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.arrowRight,
@@ -1312,11 +1312,11 @@ void main() {
               selection: const TextSelection.collapsed(offset: 6),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.arrowRight,
@@ -1342,11 +1342,11 @@ void main() {
               selection: const TextSelection.collapsed(offset: 6),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.arrowRight,
@@ -1372,11 +1372,11 @@ void main() {
               selection: const TextSelection.collapsed(offset: 6),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.arrowRight,
@@ -1402,11 +1402,11 @@ void main() {
               selection: const TextSelection.collapsed(offset: 6),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.arrowRight,
@@ -1434,11 +1434,11 @@ void main() {
               selection: const TextSelection.collapsed(offset: 6),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.arrowRight,
@@ -1467,11 +1467,11 @@ void main() {
               ),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.arrowRight,
@@ -1495,11 +1495,11 @@ void main() {
               ),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.arrowRight,
@@ -1524,11 +1524,11 @@ void main() {
               selection: const TextSelection.collapsed(offset: 5),
             );
 
-            final selectableTextState = await _pumpMultilineLayout(tester);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.arrowUp,
@@ -1551,11 +1551,11 @@ void main() {
               selection: const TextSelection.collapsed(offset: 18),
             );
 
-            final selectableTextState = await _pumpMultilineLayout(tester);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.arrowUp,
@@ -1578,11 +1578,11 @@ void main() {
               selection: const TextSelection.collapsed(offset: 18),
             );
 
-            final selectableTextState = await _pumpMultilineLayout(tester);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.arrowUp,
@@ -1607,11 +1607,11 @@ void main() {
               selection: const TextSelection.collapsed(offset: 23),
             );
 
-            final selectableTextState = await _pumpMultilineLayout(tester);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.arrowUp,
@@ -1636,11 +1636,11 @@ void main() {
               selection: const TextSelection.collapsed(offset: 50),
             );
 
-            final selectableTextState = await _pumpMultilineLayout(tester);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.arrowDown,
@@ -1663,11 +1663,11 @@ void main() {
               selection: const TextSelection.collapsed(offset: 0),
             );
 
-            final selectableTextState = await _pumpMultilineLayout(tester);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.arrowDown,
@@ -1690,11 +1690,11 @@ void main() {
               selection: const TextSelection.collapsed(offset: 0),
             );
 
-            final selectableTextState = await _pumpMultilineLayout(tester);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.arrowDown,
@@ -1719,11 +1719,11 @@ void main() {
               selection: const TextSelection.collapsed(offset: 5),
             );
 
-            final selectableTextState = await _pumpMultilineLayout(tester);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result = DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.arrowDown,
@@ -1752,12 +1752,12 @@ void main() {
               selection: const TextSelection.collapsed(offset: 28), // midway through 2nd line
             );
 
-            final selectableTextState = await _pumpMultilineLayout(tester);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result =
                 DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.backspace,
@@ -1786,12 +1786,12 @@ void main() {
               selection: const TextSelection.collapsed(offset: 31, affinity: TextAffinity.upstream), // end of 2nd line
             );
 
-            final selectableTextState = await _pumpMultilineLayout(tester);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result =
                 DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.backspace,
@@ -1818,12 +1818,12 @@ void main() {
               selection: const TextSelection.collapsed(offset: 23), // midway through 2nd line
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result =
                 DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.backspace,
@@ -1850,12 +1850,12 @@ void main() {
               selection: const TextSelection.collapsed(offset: 29, affinity: TextAffinity.upstream), // end of 2nd line
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result =
                 DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.backspace,
@@ -1885,12 +1885,12 @@ void main() {
               ),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result =
                 DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.backspace,
@@ -1917,12 +1917,12 @@ void main() {
               selection: const TextSelection.collapsed(offset: -1),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result =
                 DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.backspace,
@@ -1948,12 +1948,12 @@ void main() {
               selection: const TextSelection.collapsed(offset: 18), // start of 2nd line
             );
 
-            final selectableTextState = await _pumpMultilineLayout(tester);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result =
                 DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.backspace,
@@ -1981,12 +1981,12 @@ void main() {
               selection: const TextSelection.collapsed(offset: 28), // midway through 2nd line
             );
 
-            final selectableTextState = await _pumpMultilineLayout(tester);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result =
                 DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.backspace,
@@ -2015,12 +2015,12 @@ void main() {
               selection: const TextSelection.collapsed(offset: 31, affinity: TextAffinity.upstream), // end of 2nd line
             );
 
-            final selectableTextState = await _pumpMultilineLayout(tester);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result =
                 DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.backspace,
@@ -2047,12 +2047,12 @@ void main() {
               selection: const TextSelection.collapsed(offset: 23), // midway through 2nd line
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result =
                 DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.backspace,
@@ -2079,12 +2079,12 @@ void main() {
               selection: const TextSelection.collapsed(offset: 29, affinity: TextAffinity.upstream), // end of 2nd line
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result =
                 DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.backspace,
@@ -2114,12 +2114,12 @@ void main() {
               ),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result =
                 DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.backspace,
@@ -2146,12 +2146,12 @@ void main() {
               selection: const TextSelection.collapsed(offset: -1),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result =
                 DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.backspace,
@@ -2177,12 +2177,12 @@ void main() {
               selection: const TextSelection.collapsed(offset: 18), // start of 2nd line
             );
 
-            final selectableTextState = await _pumpMultilineLayout(tester);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result =
                 DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.backspace,
@@ -2569,11 +2569,11 @@ void main() {
               selection: const TextSelection.collapsed(offset: 5),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result = DefaultSuperTextFieldKeyboardHandlers.moveCaretToStartOrEnd(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.keyA,
@@ -2598,11 +2598,11 @@ void main() {
               selection: const TextSelection.collapsed(offset: 5),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result = DefaultSuperTextFieldKeyboardHandlers.moveCaretToStartOrEnd(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.keyE,
@@ -2627,11 +2627,11 @@ void main() {
               selection: const TextSelection.collapsed(offset: 0),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result = DefaultSuperTextFieldKeyboardHandlers.moveCaretToStartOrEnd(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.keyA,
@@ -2656,11 +2656,11 @@ void main() {
               selection: const TextSelection.collapsed(offset: 17),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result = DefaultSuperTextFieldKeyboardHandlers.moveCaretToStartOrEnd(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.keyE,
@@ -2711,11 +2711,11 @@ void main() {
               selection: const TextSelection.collapsed(offset: 5),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result = DefaultSuperTextFieldKeyboardHandlers.moveCaretToStartOrEnd(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.keyA,
@@ -2738,11 +2738,11 @@ void main() {
               selection: const TextSelection.collapsed(offset: 5),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result = DefaultSuperTextFieldKeyboardHandlers.moveCaretToStartOrEnd(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.keyE,
@@ -2770,11 +2770,11 @@ void main() {
               selection: const TextSelection.collapsed(offset: 4), //this|
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result = DefaultSuperTextFieldKeyboardHandlers.deleteWordWhenAltBackSpaceIsPressed(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.backspace,
@@ -2799,11 +2799,11 @@ void main() {
               selection: const TextSelection.collapsed(offset: 2), //th|is
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result = DefaultSuperTextFieldKeyboardHandlers.deleteWordWhenAltBackSpaceIsPressed(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.backspace,
@@ -2828,11 +2828,11 @@ void main() {
               selection: const TextSelection.collapsed(offset: 8), //this is |some
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result = DefaultSuperTextFieldKeyboardHandlers.deleteWordWhenAltBackSpaceIsPressed(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.backspace,
@@ -2860,11 +2860,11 @@ void main() {
               ),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result = DefaultSuperTextFieldKeyboardHandlers.deleteWordWhenAltBackSpaceIsPressed(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.backspace,
@@ -2889,11 +2889,11 @@ void main() {
               selection: const TextSelection.collapsed(offset: -1),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result = DefaultSuperTextFieldKeyboardHandlers.deleteWordWhenAltBackSpaceIsPressed(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.backspace,
@@ -2917,11 +2917,11 @@ void main() {
               selection: const TextSelection.collapsed(offset: 4), //this|
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result = DefaultSuperTextFieldKeyboardHandlers.deleteWordWhenAltBackSpaceIsPressed(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.backspace,
@@ -2946,11 +2946,11 @@ void main() {
               selection: const TextSelection.collapsed(offset: 2), //th|is
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result = DefaultSuperTextFieldKeyboardHandlers.deleteWordWhenAltBackSpaceIsPressed(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.backspace,
@@ -2975,11 +2975,11 @@ void main() {
               selection: const TextSelection.collapsed(offset: 8), //this is |some
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result = DefaultSuperTextFieldKeyboardHandlers.deleteWordWhenAltBackSpaceIsPressed(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.backspace,
@@ -3007,11 +3007,11 @@ void main() {
               ),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result = DefaultSuperTextFieldKeyboardHandlers.deleteWordWhenAltBackSpaceIsPressed(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.backspace,
@@ -3036,11 +3036,11 @@ void main() {
               selection: const TextSelection.collapsed(offset: -1),
             );
 
-            final selectableTextState = await _pumpAndReturnSelectableText(tester, controller.text.text);
+            final textLayout = (await _pumpAndReturnSelectableText(tester, controller.text.text)).textLayout;
 
             final result = DefaultSuperTextFieldKeyboardHandlers.deleteWordWhenAltBackSpaceIsPressed(
               controller: controller,
-              selectableTextState: selectableTextState,
+              textLayout: textLayout,
               keyEvent: const FakeRawKeyEvent(
                 data: FakeRawKeyEventData(
                   logicalKey: LogicalKeyboardKey.backspace,
