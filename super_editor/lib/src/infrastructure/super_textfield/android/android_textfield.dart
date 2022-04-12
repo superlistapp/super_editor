@@ -1,9 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:super_editor/src/default_editor/super_editor.dart';
+import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
+import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/android/_editing_controls.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/android/_user_interaction.dart';
-import 'package:super_editor/super_editor.dart';
+import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/attributed_text_editing_controller.dart';
+import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/hint_text.dart';
+import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/text_scrollview.dart';
+import 'package:super_editor/src/infrastructure/super_textfield/input_method_engine/_ime_text_editing_controller.dart';
 import 'package:super_text/super_text.dart';
+
+import '../../_logging.dart';
+import 'android_textfield.dart';
 
 export '_caret.dart';
 export '../../platforms/android/selection_handles.dart';
@@ -128,7 +137,7 @@ class _SuperAndroidTextFieldState extends State<SuperAndroidTextField> with Sing
   final _textFieldLayerLink = LayerLink();
   final _textContentLayerLink = LayerLink();
   final _scrollKey = GlobalKey<AndroidTextFieldTouchInteractorState>();
-  final _textContentKey = GlobalKey<SuperSelectableTextState>();
+  final _textContentKey = GlobalKey();
 
   late FocusNode _focusNode;
 
@@ -333,7 +342,7 @@ class _SuperAndroidTextFieldState extends State<SuperAndroidTextField> with Sing
         link: _textFieldLayerLink,
         child: AndroidTextFieldTouchInteractor(
           focusNode: _focusNode,
-          selectableTextKey: _textContentKey,
+          textKey: _textContentKey,
           textFieldLayerLink: _textFieldLayerLink,
           textController: _textEditingController,
           editingOverlayController: _editingOverlayController,
@@ -383,23 +392,19 @@ class _SuperAndroidTextFieldState extends State<SuperAndroidTextField> with Sing
         ? _textEditingController.text.computeTextSpan(widget.textStyleBuilder)
         : TextSpan(text: "", style: widget.textStyleBuilder({}));
 
-    final emptyTextCaretHeight =
-        (widget.textStyleBuilder({}).fontSize ?? 0.0) * (widget.textStyleBuilder({}).height ?? 1.0);
-
-    // TODO: switch out textSelectionDecoration and textCaretFactory
-    //       for backgroundBuilders and foregroundBuilders, respectively
-    //
-    //       add the floating cursor as a foreground builder
-    return SuperSelectableText(
+    return SuperTextWithSelection.single(
       key: _textContentKey,
-      textSpan: textSpan,
+      richText: textSpan,
       textAlign: widget.textAlign,
-      textSelection: _textEditingController.selection,
-      textSelectionDecoration: TextSelectionDecoration(selectionColor: widget.selectionColor),
-      showCaret: true,
-      textCaretFactory: AndroidTextCaretFactory(
-        color: widget.caretColor,
-        emptyTextCaretHeight: emptyTextCaretHeight,
+      userSelection: UserSelection(
+        highlightStyle: SelectionHighlightStyle(
+          color: widget.selectionColor,
+        ),
+        caretStyle: CaretStyle(
+          color: widget.caretColor,
+        ),
+        selection: _textEditingController.selection,
+        hasCaret: true,
       ),
     );
   }

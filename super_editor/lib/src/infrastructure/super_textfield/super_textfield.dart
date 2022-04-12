@@ -180,10 +180,10 @@ class _SuperTextFieldState extends State<SuperTextField> {
           textStyleBuilder: widget.textStyleBuilder,
           hintBehavior: widget.hintBehavior,
           hintBuilder: widget.hintBuilder,
-          textSelectionDecoration: TextSelectionDecoration(
-            selectionColor: widget.selectionColor ?? _defaultSelectionColor,
+          selectionHighlightStyle: SelectionHighlightStyle(
+            color: widget.selectionColor ?? _defaultSelectionColor,
           ),
-          textCaretFactory: TextCaretFactory(
+          caretStyle: CaretStyle(
             color: widget.controlsColor ?? _defaultDesktopCaretColor,
             width: 1,
             borderRadius: BorderRadius.zero,

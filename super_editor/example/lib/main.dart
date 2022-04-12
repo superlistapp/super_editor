@@ -137,6 +137,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildDrawer() {
     return Drawer(
       child: SingleChildScrollView(
+        primary: false,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 48),
           child: Column(
@@ -344,7 +345,7 @@ final _menu = <_MenuGroup>[
     items: [
       _MenuItem(
         icon: Icons.text_fields,
-        title: 'SuperSelectableText',
+        title: 'SuperTextWithSelection',
         pageBuilder: (context) {
           return SelectableTextDemo();
         },

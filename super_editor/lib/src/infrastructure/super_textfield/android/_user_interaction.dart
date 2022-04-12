@@ -43,7 +43,7 @@ class AndroidTextFieldTouchInteractor extends StatefulWidget {
     required this.textController,
     required this.editingOverlayController,
     required this.textScrollController,
-    required this.selectableTextKey,
+    required this.textKey,
     required this.isMultiline,
     required this.handleColor,
     this.showDebugPaint = false,
@@ -73,10 +73,11 @@ class AndroidTextFieldTouchInteractor extends StatefulWidget {
 
   final TextScrollController textScrollController;
 
-  /// [GlobalKey] that references the [SuperSelectableText] that lays out
-  /// and renders the text within the text field that owns this
-  /// [AndroidTextFieldInteractor].
-  final GlobalKey<SuperSelectableTextState> selectableTextKey;
+  /// [GlobalKey] that references the widget that contains the text within
+  /// this [AndroidTextFieldTouchInteractor].
+  ///
+  /// The referenced widget's `State` object must implement [ProseTextBlock].
+  final GlobalKey textKey;
 
   /// Whether the text field that owns this [AndroidTextFieldInteractor] is
   /// a multiline text field.
@@ -131,7 +132,7 @@ class AndroidTextFieldTouchInteractorState extends State<AndroidTextFieldTouchIn
     super.dispose();
   }
 
-  ProseTextLayout get _textLayout => (widget.selectableTextKey.currentState as ProseTextBlock).textLayout;
+  ProseTextLayout get _textLayout => (widget.textKey.currentState as ProseTextBlock).textLayout;
 
   void _onTapDown(TapDownDetails details) {
     _log.fine('_onTapDown');
@@ -327,7 +328,7 @@ class AndroidTextFieldTouchInteractorState extends State<AndroidTextFieldTouchIn
   /// Converts a screen-level offset to an offset relative to the top-left
   /// corner of the text within this text field.
   Offset _globalOffsetToTextOffset(Offset globalOffset) {
-    final textBox = widget.selectableTextKey.currentContext!.findRenderObject() as RenderBox;
+    final textBox = widget.textKey.currentContext!.findRenderObject() as RenderBox;
     return textBox.globalToLocal(globalOffset);
   }
 
@@ -350,8 +351,7 @@ class AndroidTextFieldTouchInteractorState extends State<AndroidTextFieldTouchIn
     }
 
     final globalOffset = (context.findRenderObject() as RenderBox).localToGlobal(localOffset);
-    final textOffset =
-        (widget.selectableTextKey.currentContext!.findRenderObject() as RenderBox).globalToLocal(globalOffset);
+    final textOffset = (widget.textKey.currentContext!.findRenderObject() as RenderBox).globalToLocal(globalOffset);
     return _textLayout.getPositionAtOffset(textOffset);
   }
 
@@ -449,7 +449,7 @@ class AndroidTextFieldTouchInteractorState extends State<AndroidTextFieldTouchIn
     final extentOffsetInText = _textLayout.getOffsetAtPosition(extentPosition);
     final extentLineHeight = _textLayout.getCharacterBox(extentPosition).toRect().height;
     final extentGlobalOffset =
-        (widget.selectableTextKey.currentContext!.findRenderObject() as RenderBox).localToGlobal(extentOffsetInText);
+        (widget.textKey.currentContext!.findRenderObject() as RenderBox).localToGlobal(extentOffsetInText);
     final extentOffsetInViewport = (context.findRenderObject() as RenderBox).globalToLocal(extentGlobalOffset);
 
     return Positioned(

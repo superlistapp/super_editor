@@ -129,7 +129,7 @@ class CaretPainter extends CustomPainter {
 
 class CaretStyle {
   const CaretStyle({
-    required this.color,
+    this.color = const Color(0xFF000000),
     this.width = 2,
     this.borderRadius = BorderRadius.zero,
   });

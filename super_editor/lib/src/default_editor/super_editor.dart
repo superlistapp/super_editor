@@ -714,7 +714,15 @@ TextStyle defaultInlineTextStyler(Set<Attribution> attributions, TextStyle exist
 
 /// Creates [TextStyles] for the standard [SuperEditor].
 TextStyle defaultStyleBuilder(Set<Attribution> attributions) {
-  TextStyle newStyle = const TextStyle();
+  // TODO: this line works for the document editor...
+  // TextStyle newStyle = const TextStyle();
+
+  // TODO: ...BUT, this line works for text fields
+  TextStyle newStyle = const TextStyle(
+    color: Colors.black,
+    fontSize: 16.0,
+    height: 1.0,
+  );
 
   for (final attribution in attributions) {
     if (attribution == boldAttribution) {

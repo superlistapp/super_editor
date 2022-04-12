@@ -746,16 +746,22 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
   Widget build(BuildContext context) {
     editorLayoutLog.finer('Building a TextComponent with key: ${widget.key}');
 
-    return SuperSelectableText(
+    return SuperTextWithSelection.single(
       key: _selectableTextKey,
-      textSpan: widget.text.computeTextSpan(_textStyleWithBlockType),
+      richText: widget.text.computeTextSpan(_textStyleWithBlockType),
       textAlign: widget.textAlign ?? TextAlign.left,
       textDirection: widget.textDirection ?? TextDirection.ltr,
-      textSelection: widget.textSelection ?? const TextSelection.collapsed(offset: -1),
-      textSelectionDecoration: TextSelectionDecoration(selectionColor: widget.selectionColor),
-      showCaret: widget.showCaret,
-      textCaretFactory: TextCaretFactory(color: widget.caretColor),
-      highlightWhenEmpty: widget.highlightWhenEmpty,
+      userSelection: UserSelection(
+        highlightStyle: SelectionHighlightStyle(
+          color: widget.selectionColor,
+        ),
+        caretStyle: CaretStyle(
+          color: widget.caretColor,
+        ),
+        selection: widget.textSelection ?? const TextSelection.collapsed(offset: -1),
+        hasCaret: widget.showCaret,
+        highlightWhenEmpty: widget.highlightWhenEmpty,
+      ),
     );
   }
 

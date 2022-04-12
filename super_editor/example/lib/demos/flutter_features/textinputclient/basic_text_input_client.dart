@@ -256,15 +256,28 @@ class _BareBonesTextFieldWithInputClientState extends State<_BareBonesTextFieldW
           onPanUpdate: _focusNode.hasFocus ? _onPanUpdate : null,
           child: Stack(
             children: [
-              SuperSelectableText.plain(
+              SuperTextWithSelection.single(
                 key: _textKey,
-                text: _currentText.isNotEmpty ? _currentText : 'enter text',
-                textSelection: _currentSelection,
-                showCaret: true,
-                style: TextStyle(
-                  color: _currentText.isNotEmpty ? Colors.black : Colors.grey,
-                  fontSize: 18,
-                  height: 1.4,
+                richText: _currentText.isNotEmpty
+                    ? TextSpan(
+                        text: _currentText,
+                        style: TextStyle(
+                          color: _currentText.isNotEmpty ? Colors.black : Colors.grey,
+                          fontSize: 18,
+                          height: 1.4,
+                        ),
+                      )
+                    : const TextSpan(
+                        text: 'enter text',
+                        style: TextStyle(
+                          color: Colors.grey,
+                          fontSize: 18,
+                          height: 1.4,
+                        ),
+                      ),
+                userSelection: UserSelection(
+                  selection: _currentSelection,
+                  hasCaret: true,
                 ),
               ),
               _buildFloatingCaret(),

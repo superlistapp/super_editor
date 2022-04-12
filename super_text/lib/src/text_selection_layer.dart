@@ -105,7 +105,7 @@ class SelectionSource {
 /// Visual styles for a selection highlight.
 class SelectionHighlightStyle {
   const SelectionHighlightStyle({
-    required this.color,
+    this.color = const Color(0xFFACCEF7),
     this.borderRadius = BorderRadius.zero,
   });
 

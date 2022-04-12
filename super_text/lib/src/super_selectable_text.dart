@@ -9,140 +9,140 @@ import 'infrastructure/blink_controller.dart';
 import 'super_text.dart';
 import 'text_layout.dart';
 
-/// Displays text with a selection highlight and a caret.
-///
-/// [SuperSelectableText] does not recognize any user interaction. It's the
-/// responsibility of ancestor widgets to recognize interactions that
-/// should alter this widget's text selection and/or caret position.
-///
-/// [textSelection] determines the span of text to be painted
-/// with a selection highlight.
-///
-/// [showCaret] and [textSelection] together determine whether or not the
-/// caret is painted in this [SuperSelectableText]. If [textSelection] is collapsed
-/// with an offset `< 0`, then no caret is displayed. If [showCaret] is
-/// `false` then no caret is displayed. If [textSelection] has a [baseOffset]
-/// or [extentOffset] that is `>= 0` and [showCaret] is `true`, then a caret is
-/// displayed. An explicit [showCaret] control is offered because multiple
-/// [SuperSelectableText] widgets might be displayed together with a selection
-/// spanning multiple [SuperSelectableText] widgets, but only one of the
-/// [SuperSelectableText] widgets displays a caret.
-///
-/// If [text] is empty, and a [textSelection] with an extent `>= 0` is provided, and
-/// [highlightWhenEmpty] is `true`, then [SuperSelectableText] will paint a small
-/// highlight, despite having no content. This is useful when showing that
-/// one or more empty text areas are selected.
-class SuperSelectableText extends StatefulWidget {
-  /// [SuperSelectableText] that displays plain text (only one text style).
-  SuperSelectableText.plain({
-    Key? key,
-    required String text,
-    required TextStyle style,
-    this.textAlign = TextAlign.left,
-    this.textDirection = TextDirection.ltr,
-    this.textSelection = const TextSelection.collapsed(offset: -1),
-    this.textSelectionDecoration = const TextSelectionDecoration(
-      selectionColor: Color(0xFFACCEF7),
-    ),
-    this.showCaret = false,
-    this.textCaretFactory = const TextCaretFactory(
-      color: Colors.black,
-      width: 1,
-      borderRadius: BorderRadius.zero,
-    ),
-    this.highlightWhenEmpty = false,
-  })  : richText = TextSpan(text: text, style: style),
-        super(key: key);
-
-  /// [SuperSelectableText] that displays styled text.
-  const SuperSelectableText({
-    Key? key,
-    required TextSpan textSpan,
-    this.textAlign = TextAlign.left,
-    this.textDirection = TextDirection.ltr,
-    this.textSelection = const TextSelection.collapsed(offset: -1),
-    this.textSelectionDecoration = const TextSelectionDecoration(
-      selectionColor: Color(0xFFACCEF7),
-    ),
-    this.highlightWhenEmpty = false,
-    this.showCaret = false,
-    this.textCaretFactory = const TextCaretFactory(
-      color: Colors.black,
-      width: 1,
-      borderRadius: BorderRadius.zero,
-    ),
-  })  : richText = textSpan,
-        super(key: key);
-
-  /// The text to display in this [SuperSelectableText] widget.
-  final TextSpan richText;
-
-  /// The alignment to use for [richText] display.
-  final TextAlign textAlign;
-
-  /// The text direction to use for [richText] display.
-  final TextDirection textDirection;
-
-  /// The portion of [richText] to display with the
-  /// [textSelectionDecoration].
-  final TextSelection textSelection;
-
-  /// The visual decoration to apply to the [textSelection].
-  final TextSelectionDecoration textSelectionDecoration;
-
-  /// Builds the visual representation of the caret in this
-  /// [SuperSelectableText] widget.
-  final TextCaretFactory textCaretFactory;
-
-  /// True to show a thin selection highlight when [richText]
-  /// is empty, or false to avoid showing a selection highlight
-  /// when [richText] is empty.
-  ///
-  /// This is useful when multiple [SuperSelectableText] widgets
-  /// are selected and some of the selected [SuperSelectableText]
-  /// widgets are empty.
-  final bool highlightWhenEmpty;
-
-  /// True to display a caret in this [SuperSelectableText] at
-  /// the [extent] of [textSelection], or false to avoid
-  /// displaying a caret.
-  final bool showCaret;
-
-  @override
-  SuperSelectableTextState createState() => SuperSelectableTextState();
-}
-
-class SuperSelectableTextState extends State<SuperSelectableText> implements ProseTextBlock {
-  // [GlobalKey] that provides access to the [RenderParagraph] associated
-  // with the text that this [SuperSelectableText] widget displays.
-  final _textKey = GlobalKey<SuperTextState>();
-
-  @override
-  ProseTextLayout get textLayout => _textKey.currentState as ProseTextLayout;
-
-  RenderParagraph? get _renderParagraph => _textKey.currentContext?.findRenderObject() as RenderParagraph?;
-
-  @override
-  Widget build(BuildContext context) {
-    return SuperTextWithSelection.single(
-      textLayoutKey: _textKey,
-      richText: widget.richText,
-      userSelection: UserSelection(
-        highlightStyle: SelectionHighlightStyle(
-          color: widget.textSelectionDecoration.selectionColor,
-        ),
-        // TODO: update SuperSelectableText widget API to take in CaretStyle
-        caretStyle: const CaretStyle(
-          color: Colors.black,
-        ),
-        selection: widget.textSelection,
-        highlightWhenEmpty: widget.highlightWhenEmpty,
-        hasCaret: widget.showCaret,
-      ),
-    );
-  }
-}
-
+// /// Displays text with a selection highlight and a caret.
+// ///
+// /// [SuperSelectableText] does not recognize any user interaction. It's the
+// /// responsibility of ancestor widgets to recognize interactions that
+// /// should alter this widget's text selection and/or caret position.
+// ///
+// /// [textSelection] determines the span of text to be painted
+// /// with a selection highlight.
+// ///
+// /// [showCaret] and [textSelection] together determine whether or not the
+// /// caret is painted in this [SuperSelectableText]. If [textSelection] is collapsed
+// /// with an offset `< 0`, then no caret is displayed. If [showCaret] is
+// /// `false` then no caret is displayed. If [textSelection] has a [baseOffset]
+// /// or [extentOffset] that is `>= 0` and [showCaret] is `true`, then a caret is
+// /// displayed. An explicit [showCaret] control is offered because multiple
+// /// [SuperSelectableText] widgets might be displayed together with a selection
+// /// spanning multiple [SuperSelectableText] widgets, but only one of the
+// /// [SuperSelectableText] widgets displays a caret.
+// ///
+// /// If [text] is empty, and a [textSelection] with an extent `>= 0` is provided, and
+// /// [highlightWhenEmpty] is `true`, then [SuperSelectableText] will paint a small
+// /// highlight, despite having no content. This is useful when showing that
+// /// one or more empty text areas are selected.
+// class SuperSelectableText extends StatefulWidget {
+//   /// [SuperSelectableText] that displays plain text (only one text style).
+//   SuperSelectableText.plain({
+//     Key? key,
+//     required String text,
+//     required TextStyle style,
+//     this.textAlign = TextAlign.left,
+//     this.textDirection = TextDirection.ltr,
+//     this.textSelection = const TextSelection.collapsed(offset: -1),
+//     this.textSelectionDecoration = const TextSelectionDecoration(
+//       selectionColor: Color(0xFFACCEF7),
+//     ),
+//     this.showCaret = false,
+//     this.textCaretFactory = const TextCaretFactory(
+//       color: Colors.black,
+//       width: 1,
+//       borderRadius: BorderRadius.zero,
+//     ),
+//     this.highlightWhenEmpty = false,
+//   })  : richText = TextSpan(text: text, style: style),
+//         super(key: key);
+//
+//   /// [SuperSelectableText] that displays styled text.
+//   const SuperSelectableText({
+//     Key? key,
+//     required TextSpan textSpan,
+//     this.textAlign = TextAlign.left,
+//     this.textDirection = TextDirection.ltr,
+//     this.textSelection = const TextSelection.collapsed(offset: -1),
+//     this.textSelectionDecoration = const TextSelectionDecoration(
+//       selectionColor: Color(0xFFACCEF7),
+//     ),
+//     this.highlightWhenEmpty = false,
+//     this.showCaret = false,
+//     this.textCaretFactory = const TextCaretFactory(
+//       color: Colors.black,
+//       width: 1,
+//       borderRadius: BorderRadius.zero,
+//     ),
+//   })  : richText = textSpan,
+//         super(key: key);
+//
+//   /// The text to display in this [SuperSelectableText] widget.
+//   final TextSpan richText;
+//
+//   /// The alignment to use for [richText] display.
+//   final TextAlign textAlign;
+//
+//   /// The text direction to use for [richText] display.
+//   final TextDirection textDirection;
+//
+//   /// The portion of [richText] to display with the
+//   /// [textSelectionDecoration].
+//   final TextSelection textSelection;
+//
+//   /// The visual decoration to apply to the [textSelection].
+//   final TextSelectionDecoration textSelectionDecoration;
+//
+//   /// Builds the visual representation of the caret in this
+//   /// [SuperSelectableText] widget.
+//   final TextCaretFactory textCaretFactory;
+//
+//   /// True to show a thin selection highlight when [richText]
+//   /// is empty, or false to avoid showing a selection highlight
+//   /// when [richText] is empty.
+//   ///
+//   /// This is useful when multiple [SuperSelectableText] widgets
+//   /// are selected and some of the selected [SuperSelectableText]
+//   /// widgets are empty.
+//   final bool highlightWhenEmpty;
+//
+//   /// True to display a caret in this [SuperSelectableText] at
+//   /// the [extent] of [textSelection], or false to avoid
+//   /// displaying a caret.
+//   final bool showCaret;
+//
+//   @override
+//   SuperSelectableTextState createState() => SuperSelectableTextState();
+// }
+//
+// class SuperSelectableTextState extends State<SuperSelectableText> implements ProseTextBlock {
+//   // [GlobalKey] that provides access to the [RenderParagraph] associated
+//   // with the text that this [SuperSelectableText] widget displays.
+//   final _textKey = GlobalKey<SuperTextState>();
+//
+//   @override
+//   ProseTextLayout get textLayout => _textKey.currentState as ProseTextLayout;
+//
+//   RenderParagraph? get _renderParagraph => _textKey.currentContext?.findRenderObject() as RenderParagraph?;
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     return SuperTextWithSelection.single(
+//       textLayoutKey: _textKey,
+//       richText: widget.richText,
+//       userSelection: UserSelection(
+//         highlightStyle: SelectionHighlightStyle(
+//           color: widget.textSelectionDecoration.selectionColor,
+//         ),
+//         // TODO: update SuperSelectableText widget API to take in CaretStyle
+//         caretStyle: const CaretStyle(
+//           color: Colors.black,
+//         ),
+//         selection: widget.textSelection,
+//         highlightWhenEmpty: widget.highlightWhenEmpty,
+//         hasCaret: widget.showCaret,
+//       ),
+//     );
+//   }
+// }
+//
 class TextSelectionDecoration {
   const TextSelectionDecoration({
     required this.selectionColor,
@@ -500,116 +500,113 @@ class _CaretPainter extends CustomPainter {
   }
 }
 
-/// Wraps a given [SuperSelectableText] and paints extra decoration
-/// to visualize text boundaries.
-class DebugSelectableTextDecorator extends StatefulWidget {
-  const DebugSelectableTextDecorator({
-    Key? key,
-    required this.selectableTextKey,
-    required this.textLength,
-    required this.child,
-    this.showDebugPaint = false,
-  }) : super(key: key);
-
-  final GlobalKey selectableTextKey;
-  final int textLength;
-  final SuperSelectableText child;
-  final bool showDebugPaint;
-
-  @override
-  _DebugSelectableTextDecoratorState createState() => _DebugSelectableTextDecoratorState();
-}
-
-class _DebugSelectableTextDecoratorState extends State<DebugSelectableTextDecorator> {
-  SuperSelectableTextState? get _selectableTextState =>
-      widget.selectableTextKey.currentState as SuperSelectableTextState?;
-
-  RenderParagraph? get _renderParagraph => _selectableTextState?._renderParagraph;
-
-  List<Rect> _computeTextRectangles(RenderParagraph renderParagraph) {
-    return renderParagraph
-        .getBoxesForSelection(TextSelection(
-          baseOffset: 0,
-          extentOffset: widget.textLength,
-        ))
-        .map((box) => box.toRect())
-        .toList();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        if (widget.showDebugPaint) _buildDebugPaint(),
-        widget.child,
-      ],
-    );
-  }
-
-  Widget _buildDebugPaint() {
-    if (_selectableTextState == null) {
-      // Schedule another frame so we can compute the debug paint.
-      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-        setState(() {});
-      });
-      return const SizedBox();
-    }
-    if (_renderParagraph == null) {
-      // Schedule another frame so we can compute the debug paint.
-      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-        setState(() {});
-      });
-      return const SizedBox();
-    }
-    if (_renderParagraph!.hasSize && (kDebugMode && _renderParagraph!.debugNeedsLayout)) {
-      // Schedule another frame so we can compute the debug paint.
-      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-        setState(() {});
-      });
-      return const SizedBox();
-    }
-
-    return Positioned.fill(
-      child: CustomPaint(
-        painter: _DebugTextPainter(
-          textRectangles: _computeTextRectangles(_renderParagraph!),
-        ),
-        size: Size.infinite,
-      ),
-    );
-  }
-}
-
-class _DebugTextPainter extends CustomPainter {
-  _DebugTextPainter({
-    required this.textRectangles,
-  });
-
-  final List<Rect> textRectangles;
-  final Paint leftBoundaryPaint = Paint()..color = const Color(0xFFCCCCCC);
-  final Paint textBoxesPaint = Paint()
-    ..color = const Color(0xFFCCCCCC)
-    ..style = PaintingStyle.stroke
-    ..strokeWidth = 1;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    for (final rect in textRectangles) {
-      canvas.drawRect(
-        rect,
-        textBoxesPaint,
-      );
-    }
-
-    // Paint left boundary.
-    canvas.drawRect(
-      Rect.fromLTWH(-6, 0, 2, size.height),
-      leftBoundaryPaint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(_DebugTextPainter oldDelegate) {
-    return textRectangles != oldDelegate.textRectangles;
-  }
-}
+// /// Wraps a given [SuperTextWithSelection] and paints extra decoration
+// /// to visualize text boundaries.
+// class DebugSelectableTextDecorator extends StatefulWidget {
+//   const DebugSelectableTextDecorator({
+//     Key? key,
+//     required this.selectableTextKey,
+//     required this.textLength,
+//     required this.child,
+//     this.showDebugPaint = false,
+//   }) : super(key: key);
+//
+//   final GlobalKey selectableTextKey;
+//   final int textLength;
+//   final SuperTextWithSelection child;
+//   final bool showDebugPaint;
+//
+//   @override
+//   _DebugSelectableTextDecoratorState createState() => _DebugSelectableTextDecoratorState();
+// }
+//
+// class _DebugSelectableTextDecoratorState extends State<DebugSelectableTextDecorator> {
+//   RenderParagraph? get _renderParagraph => widget.selectableTextKey.currentState as ?._renderParagraph;
+//
+//   List<Rect> _computeTextRectangles(RenderParagraph renderParagraph) {
+//     return renderParagraph
+//         .getBoxesForSelection(TextSelection(
+//           baseOffset: 0,
+//           extentOffset: widget.textLength,
+//         ))
+//         .map((box) => box.toRect())
+//         .toList();
+//   }
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     return Stack(
+//       children: [
+//         if (widget.showDebugPaint) _buildDebugPaint(),
+//         widget.child,
+//       ],
+//     );
+//   }
+//
+//   Widget _buildDebugPaint() {
+//     if (_selectableTextState == null) {
+//       // Schedule another frame so we can compute the debug paint.
+//       WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+//         setState(() {});
+//       });
+//       return const SizedBox();
+//     }
+//     if (_renderParagraph == null) {
+//       // Schedule another frame so we can compute the debug paint.
+//       WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+//         setState(() {});
+//       });
+//       return const SizedBox();
+//     }
+//     if (_renderParagraph!.hasSize && (kDebugMode && _renderParagraph!.debugNeedsLayout)) {
+//       // Schedule another frame so we can compute the debug paint.
+//       WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+//         setState(() {});
+//       });
+//       return const SizedBox();
+//     }
+//
+//     return Positioned.fill(
+//       child: CustomPaint(
+//         painter: _DebugTextPainter(
+//           textRectangles: _computeTextRectangles(_renderParagraph!),
+//         ),
+//         size: Size.infinite,
+//       ),
+//     );
+//   }
+// }
+//
+// class _DebugTextPainter extends CustomPainter {
+//   _DebugTextPainter({
+//     required this.textRectangles,
+//   });
+//
+//   final List<Rect> textRectangles;
+//   final Paint leftBoundaryPaint = Paint()..color = const Color(0xFFCCCCCC);
+//   final Paint textBoxesPaint = Paint()
+//     ..color = const Color(0xFFCCCCCC)
+//     ..style = PaintingStyle.stroke
+//     ..strokeWidth = 1;
+//
+//   @override
+//   void paint(Canvas canvas, Size size) {
+//     for (final rect in textRectangles) {
+//       canvas.drawRect(
+//         rect,
+//         textBoxesPaint,
+//       );
+//     }
+//
+//     // Paint left boundary.
+//     canvas.drawRect(
+//       Rect.fromLTWH(-6, 0, 2, size.height),
+//       leftBoundaryPaint,
+//     );
+//   }
+//
+//   @override
+//   bool shouldRepaint(_DebugTextPainter oldDelegate) {
+//     return textRectangles != oldDelegate.textRectangles;
+//   }
+// }

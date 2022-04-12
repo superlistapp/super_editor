@@ -3068,7 +3068,7 @@ const _multilineLayoutText = 'this text is long enough to be multiline in the av
 // (18)enough to be (31 - upstream)
 // (31)multiline in the (48 - upstream)
 // (48)available space(63)
-Future<SuperSelectableTextState> _pumpMultilineLayout(
+Future<ProseTextLayout> _pumpMultilineLayout(
   WidgetTester tester,
 ) async {
   final selectableText = await _pumpAndReturnSelectableText(
@@ -3089,23 +3089,22 @@ Future<SuperSelectableTextState> _pumpMultilineLayout(
   //   print('$i: ${selectableText.getCharacterBox(TextPosition(offset: i))}');
   // }
 
-  return selectableText;
+  return selectableText.textLayout;
 }
 
-Future<SuperSelectableTextState> _pumpAndReturnSelectableText(
+Future<ProseTextBlock> _pumpAndReturnSelectableText(
   WidgetTester tester,
   String text, [
   Widget Function(Widget child)? decorator,
 ]) async {
-  final textKey = GlobalKey<SuperSelectableTextState>();
+  final textKey = GlobalKey();
 
-  final selectableText = SuperSelectableText.plain(
+  final textLayout = SuperTextWithSelection.single(
     key: textKey,
-    text: text,
-    style: const TextStyle(),
+    richText: TextSpan(text: text, style: const TextStyle()),
   );
 
-  final decoratedText = decorator == null ? selectableText : decorator(selectableText);
+  final decoratedText = decorator == null ? textLayout : decorator(textLayout);
 
   await tester.pumpWidget(
     MaterialApp(
@@ -3116,5 +3115,5 @@ Future<SuperSelectableTextState> _pumpAndReturnSelectableText(
     ),
   );
   await tester.pumpAndSettle();
-  return textKey.currentState!;
+  return textKey.currentState as ProseTextBlock;
 }

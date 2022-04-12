@@ -41,9 +41,10 @@ class TextScrollView extends StatefulWidget {
   /// auto-scrolling behavior.
   final TextScrollController textScrollController;
 
-  /// [GobalKey] that references the [SuperSelectableText] within
-  /// the [child] subtree.
-  final GlobalKey<SuperSelectableTextState> textKey;
+  /// [GlobalKey] that references the widget that contains the scrolling text.
+  ///
+  /// The referenced widget's `State` object must implement [ProseTextBlock].
+  final GlobalKey textKey;
 
   /// Controller that owns the text content and text selection for
   /// the [SuperSelectableText] within the [child] subtree.

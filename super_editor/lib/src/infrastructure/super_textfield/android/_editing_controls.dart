@@ -58,9 +58,11 @@ class AndroidEditingOverlayControls extends StatefulWidget {
   /// within the text field.
   final LayerLink textContentLayerLink;
 
-  /// [GlobalKey] that references the [SuperSelectableTextState] within
+  /// [GlobalKey] that references the widget that contains the text within
   /// the text field.
-  final GlobalKey<SuperSelectableTextState> textContentKey;
+  ///
+  /// The referenced widget's `State` object must implement [ProseTextBlock].
+  final GlobalKey textContentKey;
 
   /// The color of the selection handles.
   final Color handleColor;

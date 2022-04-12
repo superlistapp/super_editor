@@ -20,7 +20,9 @@ class SuperTextWithSelection extends StatefulWidget {
     Key? key,
     this.textLayoutKey,
     required this.richText,
-    required UserSelection? userSelection,
+    this.textAlign = TextAlign.left,
+    this.textDirection = TextDirection.ltr,
+    UserSelection? userSelection,
   })  : userSelections = userSelection != null ? [userSelection] : const [],
         super(key: key);
 
@@ -28,6 +30,8 @@ class SuperTextWithSelection extends StatefulWidget {
     Key? key,
     this.textLayoutKey,
     required this.richText,
+    this.textAlign = TextAlign.left,
+    this.textDirection = TextDirection.ltr,
     required this.userSelections,
   }) : super(key: key);
 
@@ -36,6 +40,12 @@ class SuperTextWithSelection extends StatefulWidget {
 
   /// The blob of text that's displayed to the user.
   final InlineSpan richText;
+
+  /// The alignment to use for [richText] display.
+  final TextAlign textAlign;
+
+  /// The text direction to use for [richText] display.
+  final TextDirection textDirection;
 
   /// The user selections that are painted with the given [richText].
   ///
@@ -85,7 +95,7 @@ class _SuperTextWithSelectionState extends State<SuperTextWithSelection> impleme
     // TODO: add a test that ensures the highlight painter doesn't paint anything when
     //       the selection is collapsed
     return _RebuildOptimizedSuperTextWithSelection(
-      textLayoutKey: widget.textLayoutKey,
+      textLayoutKey: _textLayoutKey,
       richText: widget.richText,
       userSelections: _userSelections,
     );
@@ -168,7 +178,7 @@ class _RebuildOptimizedSuperTextWithSelectionState extends State<_RebuildOptimiz
       valueListenable: widget.userSelections,
       builder: (context, value, child) {
         buildsLog.info(
-            "SuperTextWithSelection ($hashCode) user selection changed, building selection highlights: ${widget.userSelections.value.first.selection}");
+            "SuperTextWithSelection ($hashCode) user selection changed, building selection highlights: ${widget.userSelections.value.isNotEmpty ? widget.userSelections.value.first.selection : "null"}");
         return Stack(
           children: [
             for (final userSelection in widget.userSelections.value)
@@ -195,7 +205,7 @@ class _RebuildOptimizedSuperTextWithSelectionState extends State<_RebuildOptimiz
       valueListenable: widget.userSelections,
       builder: (context, value, child) {
         buildsLog.info(
-            "SuperTextWithSelection ($hashCode) user selection changed, building carets: ${widget.userSelections.value.first.selection}");
+            "SuperTextWithSelection ($hashCode) user selection changed, building carets: ${widget.userSelections.value.isNotEmpty ? widget.userSelections.value.first.selection : "null"}");
         return Stack(
           children: [
             for (final userSelection in widget.userSelections.value)
@@ -217,8 +227,8 @@ class _RebuildOptimizedSuperTextWithSelectionState extends State<_RebuildOptimiz
 /// [TextSelection].
 class UserSelection {
   const UserSelection({
-    required this.highlightStyle,
-    required this.caretStyle,
+    this.highlightStyle = const SelectionHighlightStyle(),
+    this.caretStyle = const CaretStyle(),
     this.blinkCaret = true,
     required this.selection,
     this.highlightWhenEmpty = false,

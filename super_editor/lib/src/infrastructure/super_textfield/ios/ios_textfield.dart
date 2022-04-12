@@ -12,7 +12,6 @@ import 'package:super_editor/src/infrastructure/super_textfield/ios/_editing_con
 import 'package:super_text/super_text.dart';
 
 import '../../platforms/ios/toolbar.dart';
-import '_caret.dart';
 import '_floating_cursor.dart';
 import '_user_interaction.dart';
 
@@ -141,7 +140,7 @@ class _SuperIOSTextFieldState extends State<SuperIOSTextField> with SingleTicker
   final _textFieldLayerLink = LayerLink();
   final _textContentLayerLink = LayerLink();
   final _scrollKey = GlobalKey<IOSTextFieldTouchInteractorState>();
-  final _textContentKey = GlobalKey<SuperSelectableTextState>();
+  final _textContentKey = GlobalKey();
 
   late FocusNode _focusNode;
 
@@ -346,7 +345,7 @@ class _SuperIOSTextFieldState extends State<SuperIOSTextField> with SingleTicker
   }
 
   void _onFloatingCursorChange(RawFloatingCursorPoint point) {
-    _floatingCursorController.updateFloatingCursor(_textContentKey.currentState!.textLayout, point);
+    _floatingCursorController.updateFloatingCursor((_textContentKey.currentState! as ProseTextBlock).textLayout, point);
   }
 
   @override
@@ -417,20 +416,19 @@ class _SuperIOSTextFieldState extends State<SuperIOSTextField> with SingleTicker
         ? _textEditingController.text.computeTextSpan(widget.textStyleBuilder)
         : AttributedText(text: "").computeTextSpan(widget.textStyleBuilder);
 
-    // TODO: switch out textSelectionDecoration and textCaretFactory
-    //       for backgroundBuilders and foregroundBuilders, respectively
-    //
-    //       add the floating cursor as a foreground builder
-    return SuperSelectableText(
+    return SuperTextWithSelection.single(
       key: _textContentKey,
-      textSpan: textSpan,
+      richText: textSpan,
       textAlign: widget.textAlign,
-      textSelection: _textEditingController.selection,
-      textSelectionDecoration: TextSelectionDecoration(selectionColor: widget.selectionColor),
-      showCaret: true,
-      textCaretFactory: IOSTextFieldCaretFactory(
-        color: _floatingCursorController.isShowingFloatingCursor ? Colors.grey : widget.caretColor,
-        width: 2,
+      userSelection: UserSelection(
+        highlightStyle: SelectionHighlightStyle(
+          color: widget.selectionColor,
+        ),
+        caretStyle: CaretStyle(
+          color: _floatingCursorController.isShowingFloatingCursor ? Colors.grey : widget.caretColor,
+        ),
+        selection: _textEditingController.selection,
+        hasCaret: true,
       ),
     );
   }

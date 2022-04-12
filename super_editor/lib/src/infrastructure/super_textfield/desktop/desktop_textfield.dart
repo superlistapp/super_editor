@@ -43,10 +43,10 @@ class SuperDesktopTextField extends StatefulWidget {
     this.textAlign = TextAlign.left,
     this.hintBehavior = HintBehavior.displayHintUntilFocus,
     this.hintBuilder,
-    this.textSelectionDecoration = const TextSelectionDecoration(
-      selectionColor: Color(0xFFACCEF7),
+    this.selectionHighlightStyle = const SelectionHighlightStyle(
+      color: Color(0xFFACCEF7),
     ),
-    this.textCaretFactory = const TextCaretFactory(
+    this.caretStyle = const CaretStyle(
       color: Colors.black,
       width: 1,
       borderRadius: BorderRadius.zero,
@@ -78,12 +78,11 @@ class SuperDesktopTextField extends StatefulWidget {
   /// The alignment to use for text in this text field.
   final TextAlign textAlign;
 
-  /// The visual decoration to apply to the `textSelection`.
-  final TextSelectionDecoration textSelectionDecoration;
+  /// The visual representation of the user's selection highlight.
+  final SelectionHighlightStyle selectionHighlightStyle;
 
-  /// Builds the visual representation of the caret in this
-  /// `SelectableText` widget.
-  final TextCaretFactory textCaretFactory;
+  /// The visual representation of the caret in this `SelectableText` widget.
+  final CaretStyle caretStyle;
 
   final EdgeInsetsGeometry padding;
 
@@ -103,7 +102,7 @@ class SuperDesktopTextField extends StatefulWidget {
 }
 
 class SuperDesktopTextFieldState extends State<SuperDesktopTextField> {
-  final _selectableTextKey = GlobalKey<SuperSelectableTextState>();
+  final _selectableTextKey = GlobalKey();
   final _textScrollKey = GlobalKey<SuperTextFieldScrollviewState>();
   late FocusNode _focusNode;
   bool _hasFocus = false; // cache whether we have focus so we know when it changes
@@ -169,7 +168,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> {
     super.dispose();
   }
 
-  TextLayout get textLayout => _selectableTextKey.currentState as TextLayout;
+  ProseTextLayout get textLayout => (_selectableTextKey.currentState as ProseTextBlock).textLayout;
 
   FocusNode get focusNode => _focusNode;
 
@@ -236,8 +235,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> {
       return 0;
     }
 
-    final offsetAtEndOfText = _selectableTextKey.currentState!.textLayout
-        .getOffsetAtPosition(TextPosition(offset: _controller.text.text.length));
+    final offsetAtEndOfText = textLayout.getOffsetAtPosition(TextPosition(offset: _controller.text.text.length));
     int lineCount = (offsetAtEndOfText.dy / _getEstimatedLineHeight()).ceil();
 
     if (_controller.text.text.endsWith('\n')) {
@@ -323,14 +321,16 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> {
   }
 
   Widget _buildSelectableText() {
-    return SuperSelectableText(
+    return SuperTextWithSelection.single(
       key: _selectableTextKey,
-      textSpan: _controller.text.computeTextSpan(widget.textStyleBuilder),
+      richText: _controller.text.computeTextSpan(widget.textStyleBuilder),
       textAlign: widget.textAlign,
-      textSelection: _controller.selection,
-      textSelectionDecoration: widget.textSelectionDecoration,
-      showCaret: _focusNode.hasFocus,
-      textCaretFactory: widget.textCaretFactory,
+      userSelection: UserSelection(
+        highlightStyle: widget.selectionHighlightStyle,
+        caretStyle: widget.caretStyle,
+        selection: _controller.selection,
+        hasCaret: _focusNode.hasFocus,
+      ),
     );
   }
 }
@@ -369,8 +369,10 @@ class SuperTextFieldGestureInteractor extends StatefulWidget {
   final AttributedTextEditingController textController;
 
   /// [GlobalKey] that links this [SuperTextFieldGestureInteractor] to
-  /// the [SuperSelectableText] widget that paints the text for this text field.
-  final GlobalKey<SuperSelectableTextState> textKey;
+  /// the [ProseTextLayout] widget that paints the text for this text field.
+  ///
+  /// This key's `State` object must implement [ProseTextBlock].
+  final GlobalKey textKey;
 
   /// [GlobalKey] that links this [SuperTextFieldGestureInteractor] to
   /// the [SuperTextFieldScrollview] that's responsible for scrolling
@@ -792,8 +794,10 @@ class SuperTextFieldKeyboardInteractor extends StatefulWidget {
   final AttributedTextEditingController textController;
 
   /// [GlobalKey] that links this [SuperTextFieldGestureInteractor] to
-  /// the [SuperSelectableText] widget that paints the text for this text field.
-  final GlobalKey<SuperSelectableTextState> textKey;
+  /// the [ProseTextLayout] widget that paints the text for this text field.
+  ///
+  /// This key's `State` object must implement [ProseTextBlock].
+  final GlobalKey textKey;
 
   /// Ordered list of actions that correspond to various key events.
   ///
@@ -837,7 +841,7 @@ class _SuperTextFieldKeyboardInteractorState extends State<SuperTextFieldKeyboar
     while (instruction == TextFieldKeyboardHandlerResult.notHandled && index < widget.keyboardActions.length) {
       instruction = widget.keyboardActions[index](
         controller: widget.textController,
-        textLayout: widget.textKey.currentState as ProseTextLayout,
+        textLayout: (widget.textKey.currentState as ProseTextBlock).textLayout,
         keyEvent: keyEvent,
       );
       index += 1;
@@ -882,8 +886,10 @@ class SuperTextFieldScrollview extends StatefulWidget {
   final AttributedTextEditingController textController;
 
   /// [GlobalKey] that links this [SuperTextFieldScrollview] to
-  /// the [SuperSelectableText] widget that paints the text for this text field.
-  final GlobalKey<SuperSelectableTextState> textKey;
+  /// the [ProseTextLayout] widget that paints the text for this text field.
+  ///
+  /// This key's `State` object must implement [ProseTextBlock].
+  final GlobalKey textKey;
 
   /// [ScrollController] that controls the scroll offset of this [SuperTextFieldScrollview].
   final ScrollController scrollController;
@@ -951,7 +957,7 @@ class SuperTextFieldScrollviewState extends State<SuperTextFieldScrollview> with
     super.dispose();
   }
 
-  ProseTextLayout get _textLayout => widget.textKey.currentState as ProseTextLayout;
+  ProseTextLayout get _textLayout => (widget.textKey.currentState as ProseTextBlock).textLayout;
 
   void _onSelectionOrContentChange() {
     // Use a post-frame callback to "ensure selection extent is visible"
