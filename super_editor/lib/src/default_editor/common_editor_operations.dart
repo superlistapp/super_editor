@@ -296,15 +296,15 @@ class CommonEditorOperations {
   ///
   /// By default, moves one character at a time when the extent sits in
   /// a [TextNode]. To move word-by-word, pass [MovementModifier.word]
-  /// in [movementModifiers]. To move to the beginning of a line, pass
-  /// [MovementModifier.line] in [movementModifiers].
+  /// in [movementModifier]. To move to the beginning of a line, pass
+  /// [MovementModifier.line] in [movementModifier].
   ///
   /// Returns [true] if the extent moved, or the selection changed, e.g., the
   /// selection collapsed but the extent stayed in the same place. Returns
   /// [false] if the extent did not move and the selection did not change.
   bool moveCaretUpstream({
     bool expand = false,
-    Set<MovementModifier> movementModifiers = const {},
+    MovementModifier? movementModifier,
   }) {
     if (composer.selection == null) {
       return false;
@@ -328,7 +328,7 @@ class CommonEditorOperations {
 
     String newExtentNodeId = nodeId;
     NodePosition? newExtentNodePosition =
-        extentComponent.movePositionLeft(currentExtent.nodePosition, movementModifiers);
+        extentComponent.movePositionLeft(currentExtent.nodePosition, movementModifier);
 
     if (newExtentNodePosition == null) {
       // Move to next node
@@ -377,15 +377,15 @@ class CommonEditorOperations {
   ///
   /// By default, moves one character at a time when the extent sits in
   /// a [TextNode]. To move word-by-word, pass [MovementModifier.word]
-  /// in [movementModifiers]. To move to the end of a line, pass
-  /// [MovementModifier.line] in [movementModifiers].
+  /// in [movementModifier]. To move to the end of a line, pass
+  /// [MovementModifier.line] in [movementModifier].
   ///
   /// Returns [true] if the extent moved, or the selection changed, e.g., the
   /// selection collapsed but the extent stayed in the same place. Returns
   /// [false] if the extent did not move and the selection did not change.
   bool moveCaretDownstream({
     bool expand = false,
-    Set<MovementModifier> movementModifiers = const {},
+    MovementModifier? movementModifier,
   }) {
     if (composer.selection == null) {
       return false;
@@ -409,7 +409,7 @@ class CommonEditorOperations {
 
     String newExtentNodeId = nodeId;
     NodePosition? newExtentNodePosition =
-        extentComponent.movePositionRight(currentExtent.nodePosition, movementModifiers);
+        extentComponent.movePositionRight(currentExtent.nodePosition, movementModifier);
 
     if (newExtentNodePosition == null) {
       // Move to next node

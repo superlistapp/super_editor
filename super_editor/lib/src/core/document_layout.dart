@@ -144,7 +144,7 @@ mixin DocumentComponent<T extends StatefulWidget> on State<T> {
   /// as interpreted by this component/node, in conjunction with
   /// any relevant [movementModifier].
   ///
-  /// The structure and options for [movementModifier]s is
+  /// The structure and options for [movementModifier] is
   /// determined by each component/node combination.
   ///
   /// Returns [null] if the concept of horizontal movement does not
@@ -153,14 +153,14 @@ mixin DocumentComponent<T extends StatefulWidget> on State<T> {
   /// Returns [null] if there is nowhere to move left within this
   /// component, such as when the [currentPosition] is the first
   /// character within a paragraph.
-  NodePosition? movePositionLeft(NodePosition currentPosition, [Set<MovementModifier>? movementModifiers]);
+  NodePosition? movePositionLeft(NodePosition currentPosition, [MovementModifier? movementModifier]);
 
   /// Returns a new position within this component's node that
   /// corresponds to the [currentPosition] moved right one unit,
   /// as interpreted by this component/node, in conjunction with
   /// any relevant [movementModifier].
   ///
-  /// The structure and options for [movementModifier]s is
+  /// The structure and options for [movementModifier] is
   /// determined by each component/node combination.
   ///
   /// Returns null if the concept of horizontal movement does not
@@ -169,7 +169,7 @@ mixin DocumentComponent<T extends StatefulWidget> on State<T> {
   /// Returns null if there is nowhere to move right within this
   /// component, such as when the [currentPosition] refers to the
   /// last character in a paragraph.
-  NodePosition? movePositionRight(NodePosition currentPosition, [Set<MovementModifier>? movementModifiers]);
+  NodePosition? movePositionRight(NodePosition currentPosition, [MovementModifier? movementModifier]);
 
   /// Returns a new position within this component's node that
   /// corresponds to the [currentPosition] moved up one unit,
@@ -303,13 +303,13 @@ mixin ProxyDocumentComponent<T extends StatefulWidget> implements DocumentCompon
   }
 
   @override
-  NodePosition? movePositionLeft(NodePosition currentPosition, [Set<MovementModifier>? movementModifiers]) {
-    return childDocumentComponentKey.movePositionLeft(currentPosition, movementModifiers);
+  NodePosition? movePositionLeft(NodePosition currentPosition, [MovementModifier? movementModifier]) {
+    return childDocumentComponentKey.movePositionLeft(currentPosition, movementModifier);
   }
 
   @override
-  NodePosition? movePositionRight(NodePosition currentPosition, [Set<MovementModifier>? movementModifiers]) {
-    return childDocumentComponentKey.movePositionRight(currentPosition, movementModifiers);
+  NodePosition? movePositionRight(NodePosition currentPosition, [MovementModifier? movementModifier]) {
+    return childDocumentComponentKey.movePositionRight(currentPosition, movementModifier);
   }
 
   @override

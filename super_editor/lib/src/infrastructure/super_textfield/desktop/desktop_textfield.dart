@@ -6,10 +6,12 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart' hide SelectableText;
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
+import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/default_editor/super_editor.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
+import 'package:super_editor/src/infrastructure/platform_detector.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/attributed_text_editing_controller.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/hint_text.dart';
 import 'package:super_text/super_selectable_text.dart';
@@ -1221,6 +1223,8 @@ const defaultTextFieldKeyboardHandlers = <TextFieldKeyboardHandler>[
 ];
 
 class DefaultSuperTextFieldKeyboardHandlers {
+  /// [copyTextWhenCmdCIsPressed] copies text to clipboard when primary shortcut key
+  /// (CMD on Mac, CTL on Windows) + C is pressed.
   static TextFieldKeyboardHandlerResult copyTextWhenCmdCIsPressed({
     required AttributedTextEditingController controller,
     SuperSelectableTextState? selectableTextState,
@@ -1232,12 +1236,17 @@ class DefaultSuperTextFieldKeyboardHandlers {
     if (keyEvent.logicalKey != LogicalKeyboardKey.keyC) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
+    if (controller.selection.extentOffset == -1) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
 
     controller.copySelectedTextToClipboard();
 
     return TextFieldKeyboardHandlerResult.handled;
   }
 
+  /// [pasteTextWhenCmdVIsPressed] pastes text from clipboard to document when primary shortcut key
+  /// (CMD on Mac, CTL on Windows) + V is pressed.
   static TextFieldKeyboardHandlerResult pasteTextWhenCmdVIsPressed({
     required AttributedTextEditingController controller,
     SuperSelectableTextState? selectableTextState,
@@ -1247,6 +1256,9 @@ class DefaultSuperTextFieldKeyboardHandlers {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
     if (keyEvent.logicalKey != LogicalKeyboardKey.keyV) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+    if (controller.selection.extentOffset == -1) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 
@@ -1259,6 +1271,8 @@ class DefaultSuperTextFieldKeyboardHandlers {
     return TextFieldKeyboardHandlerResult.handled;
   }
 
+  /// [selectAllTextFieldWhenCmdAIsPressed] selects all text when primary shortcut key
+  /// (CMD on Mac, CTL on Windows) + A is pressed.
   static TextFieldKeyboardHandlerResult selectAllTextFieldWhenCmdAIsPressed({
     required AttributedTextEditingController controller,
     SuperSelectableTextState? selectableTextState,
@@ -1276,6 +1290,45 @@ class DefaultSuperTextFieldKeyboardHandlers {
     return TextFieldKeyboardHandlerResult.handled;
   }
 
+  /// [moveCaretToStartOrEnd] moves caret to start (using CTL+A) or end of line (using CTL+E)
+  /// on MacOS platforms. This is part of expected behavior on MacOS. Not applicable to Windows.
+  static TextFieldKeyboardHandlerResult moveCaretToStartOrEnd({
+    required AttributedTextEditingController controller,
+    SuperSelectableTextState? selectableTextState,
+    required RawKeyEvent keyEvent,
+  }) {
+    bool _moveLeft = false;
+    if (!keyEvent.isControlPressed) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+    if (!Platform.instance.isMac) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+    if (keyEvent.logicalKey != LogicalKeyboardKey.keyA && keyEvent.logicalKey != LogicalKeyboardKey.keyE) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+    if (controller.selection.extentOffset == -1) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    keyEvent.logicalKey == LogicalKeyboardKey.keyA
+        ? _moveLeft = true
+        : keyEvent.logicalKey == LogicalKeyboardKey.keyE
+            ? _moveLeft = false
+            : null;
+
+    controller.moveCaretHorizontally(
+      selectableTextState: selectableTextState!,
+      expandSelection: false,
+      moveLeft: _moveLeft,
+      movementModifier: MovementModifier.line,
+    );
+
+    return TextFieldKeyboardHandlerResult.handled;
+  }
+
+  /// [moveUpDownLeftAndRightWithArrowKeys] moves caret according to the directional key which was pressed.
+  /// If there is no caret selection. it does nothing.
   static TextFieldKeyboardHandlerResult moveUpDownLeftAndRightWithArrowKeys({
     required AttributedTextEditingController controller,
     required SuperSelectableTextState selectableTextState,
@@ -1300,38 +1353,34 @@ class DefaultSuperTextFieldKeyboardHandlers {
     if (keyEvent.logicalKey == LogicalKeyboardKey.arrowLeft) {
       _log.finer('moveUpDownLeftAndRightWithArrowKeys - handling left arrow key');
 
-      final movementModifiers = <String, dynamic>{
-        'movement_unit': 'character',
-      };
+      MovementModifier? movementModifier;
       if (keyEvent.isPrimaryShortcutKeyPressed) {
-        movementModifiers['movement_unit'] = 'line';
+        movementModifier = MovementModifier.line;
       } else if (keyEvent.isAltPressed) {
-        movementModifiers['movement_unit'] = 'word';
+        movementModifier = MovementModifier.word;
       }
 
       controller.moveCaretHorizontally(
         selectableTextState: selectableTextState,
         expandSelection: keyEvent.isShiftPressed,
         moveLeft: true,
-        movementModifiers: movementModifiers,
+        movementModifier: movementModifier,
       );
     } else if (keyEvent.logicalKey == LogicalKeyboardKey.arrowRight) {
       _log.finer('moveUpDownLeftAndRightWithArrowKeys - handling right arrow key');
 
-      final movementModifiers = <String, dynamic>{
-        'movement_unit': 'character',
-      };
+      MovementModifier? movementModifier;
       if (keyEvent.isPrimaryShortcutKeyPressed) {
-        movementModifiers['movement_unit'] = 'line';
+        movementModifier = MovementModifier.line;
       } else if (keyEvent.isAltPressed) {
-        movementModifiers['movement_unit'] = 'word';
+        movementModifier = MovementModifier.word;
       }
 
       controller.moveCaretHorizontally(
         selectableTextState: selectableTextState,
         expandSelection: keyEvent.isShiftPressed,
         moveLeft: false,
-        movementModifiers: movementModifiers,
+        movementModifier: movementModifier,
       );
     } else if (keyEvent.logicalKey == LogicalKeyboardKey.arrowUp) {
       _log.finer('moveUpDownLeftAndRightWithArrowKeys - handling up arrow key');
@@ -1352,6 +1401,9 @@ class DefaultSuperTextFieldKeyboardHandlers {
     return TextFieldKeyboardHandlerResult.handled;
   }
 
+  /// [insertCharacterWhenKeyIsPressed] adds any character when that key is pressed.
+  /// Certain keys are currently checked against a blacklist of characters for web
+  /// since their behavior is unexpected. Check definition for more details.
   static TextFieldKeyboardHandlerResult insertCharacterWhenKeyIsPressed({
     required AttributedTextEditingController controller,
     SuperSelectableTextState? selectableTextState,
@@ -1385,15 +1437,14 @@ class DefaultSuperTextFieldKeyboardHandlers {
     return TextFieldKeyboardHandlerResult.handled;
   }
 
+  /// [deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed] deletes lines of text before
+  /// the caret when the primary shortcut key (CMD on Mac, CTL on Windows) + Backspace is pressed.
   static TextFieldKeyboardHandlerResult deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed({
     required AttributedTextEditingController controller,
     required SuperSelectableTextState selectableTextState,
     required RawKeyEvent keyEvent,
   }) {
     if (!keyEvent.isPrimaryShortcutKeyPressed || keyEvent.logicalKey != LogicalKeyboardKey.backspace) {
-      return TextFieldKeyboardHandlerResult.notHandled;
-    }
-    if (!controller.selection.isCollapsed) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
     if (controller.selection.extentOffset < 0) {
@@ -1403,12 +1454,17 @@ class DefaultSuperTextFieldKeyboardHandlers {
         controller.selection.extentOffset) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
+    if (!controller.selection.isCollapsed) {
+      controller.deleteSelection();
+      return TextFieldKeyboardHandlerResult.handled;
+    }
 
     controller.deleteTextOnLineBeforeCaret(selectableTextState: selectableTextState);
 
     return TextFieldKeyboardHandlerResult.handled;
   }
 
+  /// [deleteTextWhenBackspaceOrDeleteIsPressed] deletes single characters when delete or backspace is pressed.
   static TextFieldKeyboardHandlerResult deleteTextWhenBackspaceOrDeleteIsPressed({
     required AttributedTextEditingController controller,
     SuperSelectableTextState? selectableTextState,
@@ -1432,6 +1488,39 @@ class DefaultSuperTextFieldKeyboardHandlers {
     return TextFieldKeyboardHandlerResult.handled;
   }
 
+  /// [deleteWordWhenAltBackSpaceIsPressed] deletes single words when Alt+Backspace is pressed.
+  static TextFieldKeyboardHandlerResult deleteWordWhenAltBackSpaceIsPressed({
+    required AttributedTextEditingController controller,
+    required SuperSelectableTextState selectableTextState,
+    required RawKeyEvent keyEvent,
+  }) {
+    if (keyEvent.logicalKey != LogicalKeyboardKey.backspace && !keyEvent.isAltPressed) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+    if (controller.selection.extentOffset < 0) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    if (!controller.selection.isCollapsed) {
+      controller.deleteSelectedText();
+      return TextFieldKeyboardHandlerResult.handled;
+    }
+
+    if (controller.selection.isCollapsed) {
+      controller.moveCaretHorizontally(
+        selectableTextState: selectableTextState,
+        expandSelection: true,
+        moveLeft: true,
+        movementModifier: MovementModifier.word,
+      );
+      controller.deleteSelectedText();
+
+      return TextFieldKeyboardHandlerResult.handled;
+    }
+    return TextFieldKeyboardHandlerResult.notHandled;
+  }
+
+  /// [insertNewlineWhenEnterIsPressed] inserts a new line character when the enter key is pressed.
   static TextFieldKeyboardHandlerResult insertNewlineWhenEnterIsPressed({
     required AttributedTextEditingController controller,
     SuperSelectableTextState? selectableTextState,

@@ -102,8 +102,7 @@ class _BoxComponentState extends State<BoxComponent> with DocumentComponent {
   }
 
   @override
-  UpstreamDownstreamNodePosition? movePositionLeft(dynamic currentPosition,
-      [Set<MovementModifier>? movementModifiers]) {
+  UpstreamDownstreamNodePosition? movePositionLeft(dynamic currentPosition, [MovementModifier? movementModifier]) {
     if (currentPosition == const UpstreamDownstreamNodePosition.upstream()) {
       // Can't move any further left.
       return null;
@@ -113,8 +112,7 @@ class _BoxComponentState extends State<BoxComponent> with DocumentComponent {
   }
 
   @override
-  UpstreamDownstreamNodePosition? movePositionRight(dynamic currentPosition,
-      [Set<MovementModifier>? movementModifiers]) {
+  UpstreamDownstreamNodePosition? movePositionRight(dynamic currentPosition, [MovementModifier? movementModifier]) {
     if (currentPosition == const UpstreamDownstreamNodePosition.downstream()) {
       // Can't move any further right.
       return null;
