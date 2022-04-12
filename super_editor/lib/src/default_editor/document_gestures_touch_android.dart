@@ -14,7 +14,7 @@ import 'package:super_editor/src/infrastructure/platforms/android/magnifier.dart
 import 'package:super_editor/src/infrastructure/platforms/android/selection_handles.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/toolbar_position_delegate.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
-import 'package:super_text/super_selectable_text.dart';
+import 'package:super_text/super_text.dart';
 
 import 'document_gestures.dart';
 import 'document_gestures_touch.dart';
@@ -939,13 +939,13 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
   bool _isDraggingHandle = false;
   Offset? _localDragOffset;
 
-  late CaretBlinkController _caretBlinkController;
+  late BlinkController _caretBlinkController;
   Offset? _prevCaretOffset;
 
   @override
   void initState() {
     super.initState();
-    _caretBlinkController = CaretBlinkController(tickerProvider: this);
+    _caretBlinkController = BlinkController(tickerProvider: this);
     _prevCaretOffset = widget.editingController.caretTop;
     widget.editingController.addListener(_onEditingControllerChange);
 
@@ -974,11 +974,9 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
   void _onEditingControllerChange() {
     if (_prevCaretOffset != widget.editingController.caretTop) {
       if (widget.editingController.caretTop == null) {
-        _caretBlinkController.onCaretRemoved();
-      } else if (_prevCaretOffset == null) {
-        _caretBlinkController.onCaretPlaced();
+        _caretBlinkController.stopBlinking();
       } else {
-        _caretBlinkController.onCaretMoved();
+        _caretBlinkController.jumpToOpaque();
       }
 
       _prevCaretOffset = widget.editingController.caretTop;

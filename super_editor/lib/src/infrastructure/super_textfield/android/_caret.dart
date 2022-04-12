@@ -1,5 +1,5 @@
 import 'package:flutter/widgets.dart';
-import 'package:super_text/super_selectable_text.dart';
+import 'package:super_text/super_text.dart';
 
 /// Factory that creates an Android-style caret to be displayed in
 /// a [SuperSelectableText] widget.
@@ -81,14 +81,14 @@ class AndroidTextFieldCaret extends StatefulWidget {
 }
 
 class _AndroidTextFieldCaretState extends State<AndroidTextFieldCaret> with SingleTickerProviderStateMixin {
-  late CaretBlinkController _caretBlinkController;
+  late BlinkController _caretBlinkController;
 
   @override
   void initState() {
     super.initState();
-    _caretBlinkController = CaretBlinkController(tickerProvider: this);
+    _caretBlinkController = BlinkController(tickerProvider: this);
     if (widget.selection.extent.offset >= 0) {
-      _caretBlinkController.onCaretPlaced();
+      _caretBlinkController.jumpToOpaque();
     }
   }
 
@@ -98,9 +98,9 @@ class _AndroidTextFieldCaretState extends State<AndroidTextFieldCaret> with Sing
 
     if (widget.selection != oldWidget.selection) {
       if (widget.selection.extent.offset >= 0) {
-        _caretBlinkController.onCaretMoved();
+        _caretBlinkController.jumpToOpaque();
       } else {
-        _caretBlinkController.onCaretRemoved();
+        _caretBlinkController.stopBlinking();
       }
     }
   }
@@ -142,7 +142,7 @@ class AndroidCursorPainter extends CustomPainter {
   })  : caretPaint = Paint()..color = caretColor,
         super(repaint: blinkController);
 
-  final CaretBlinkController blinkController;
+  final BlinkController blinkController;
   final TextLayout textLayout;
   final TextSelection selection;
   final double width;

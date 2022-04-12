@@ -2,7 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
-import 'caret.dart';
+import 'infrastructure/blink_controller.dart';
+import 'infrastructure/fill_width_if_constrained.dart';
 import 'text_layout.dart';
 
 /// Displays text with a selection highlight and a caret.
@@ -521,7 +522,7 @@ class SuperSelectableTextState extends State<SuperSelectableText> implements Tex
           clipBehavior: Clip.none,
           children: [
             _buildTextSelection(),
-            _FillWidthIfConstrained(
+            FillWidthIfConstrained(
               child: _buildText(),
             ),
             _buildTextCaret(),
@@ -684,6 +685,251 @@ class TextCaretFactory {
   }
 }
 
+class BlinkingTextCaret extends StatefulWidget {
+  const BlinkingTextCaret({
+    Key? key,
+    required this.textLayout,
+    required this.color,
+    required this.width,
+    required this.borderRadius,
+    required this.textPosition,
+    required this.isTextEmpty,
+    required this.showCaret,
+  }) : super(key: key);
+
+  final TextLayout textLayout;
+  final Color color;
+  final double width;
+  final BorderRadius borderRadius;
+  final TextPosition textPosition;
+  final bool isTextEmpty;
+  final bool showCaret;
+
+  @override
+  State<BlinkingTextCaret> createState() => _BlinkingTextCaretState();
+}
+
+class _BlinkingTextCaretState extends State<BlinkingTextCaret> {
+  Offset? _caretOffset;
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.textPosition.offset < 0) {
+      return const SizedBox();
+    }
+
+    final lineHeight = widget.textLayout.getLineHeightAtPosition(widget.textPosition);
+    late double caretHeight;
+    try {
+      caretHeight = widget.textLayout.getHeightForCaret(widget.textPosition) ?? lineHeight;
+    } catch (exception) {
+      // In debug mode, if we try to getHeightForCaret() when RenderParagraph
+      // is dirty, Flutter throws an assertion error. We have no way to query
+      // this information, nor force a layout pass, so the best we can do is
+      // catch the exception and recover.
+      caretHeight = lineHeight;
+    }
+
+    late Offset caretOffset;
+    try {
+      caretOffset = widget.isTextEmpty
+          ? Offset(0, (lineHeight - caretHeight) / 2)
+          : widget.textLayout.getOffsetForCaret(TextPosition(offset: widget.textPosition.offset));
+    } catch (exception) {
+      // In debug mode, if we try to getOffsetForCaret() when RenderParagraph
+      // is dirty, Flutter throws an assertion error. We have no way to query
+      // this information, nor force a layout pass, so the best we can do is
+      // catch the exception and recover.
+      WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+        if (mounted) {
+          // Trigger another build after the current layout pass.
+          setState(() {});
+        }
+      });
+
+      return const SizedBox();
+    }
+
+    // This is a hack to solve super_editor bug #369.
+    //
+    // In profile/release mode, we don't get assertion errors when we try to
+    // measure against a dirty text layout. In fact, there's no signal at all
+    // that we measured against a dirty text layout. In practice, measuring
+    // while dirty results in the caret position thinking that the final word
+    // in a single-line of text is wrapped to a 2nd line, causing the caret to
+    // sit below the line of text.
+    //
+    // To deal with this (temporarily), we force the caret offset to be the same
+    // for 2 frames before we draw anything. This causes flickering, but that
+    // flickering is tolerable because carets blink, normally.
+    //
+    // See #370 for the ticket that aims to fix all similar timing issues.
+    if (_caretOffset != caretOffset) {
+      WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+        if (mounted) {
+          // Trigger another build after the current layout pass.
+          setState(() {
+            _caretOffset = caretOffset;
+          });
+        }
+      });
+      return const SizedBox();
+    }
+
+    return BlinkingCaret(
+      caretHeight: caretHeight,
+      caretOffset: caretOffset,
+      color: widget.color,
+      width: widget.width,
+      borderRadius: widget.borderRadius,
+      isTextEmpty: widget.isTextEmpty,
+      showCaret: widget.showCaret && widget.textPosition.offset >= 0,
+    );
+  }
+}
+
+class BlinkingCaret extends StatefulWidget {
+  const BlinkingCaret({
+    Key? key,
+    this.controller,
+    this.caretOffset,
+    this.caretHeight,
+    required this.color,
+    required this.width,
+    this.borderRadius = BorderRadius.zero,
+    this.isTextEmpty = false,
+    this.showCaret = true,
+  }) : super(key: key);
+
+  final BlinkController? controller;
+  final double? caretHeight;
+  final Offset? caretOffset;
+  final Color color;
+  final double width;
+  final BorderRadius borderRadius;
+  final bool isTextEmpty;
+  final bool showCaret;
+
+  @override
+  BlinkingCaretState createState() => BlinkingCaretState();
+}
+
+class BlinkingCaretState extends State<BlinkingCaret> with SingleTickerProviderStateMixin {
+  // Controls the blinking caret animation.
+  late BlinkController _caretBlinkController;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _caretBlinkController = widget.controller ??
+        BlinkController(
+          tickerProvider: this,
+        );
+    if (widget.caretOffset != null) {
+      _caretBlinkController.jumpToOpaque();
+    }
+  }
+
+  @override
+  void didUpdateWidget(BlinkingCaret oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (widget.caretOffset != oldWidget.caretOffset) {
+      if (widget.caretOffset != null) {
+        _caretBlinkController.jumpToOpaque();
+      } else {
+        _caretBlinkController.stopBlinking();
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    if (widget.controller == null) {
+      _caretBlinkController.dispose();
+    }
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      painter: _CaretPainter(
+        blinkController: _caretBlinkController,
+        caretHeight: widget.caretHeight,
+        caretOffset: widget.caretOffset,
+        width: widget.width,
+        borderRadius: widget.borderRadius,
+        caretColor: widget.color,
+        isTextEmpty: widget.isTextEmpty,
+        showCaret: widget.showCaret,
+      ),
+    );
+  }
+}
+
+class _CaretPainter extends CustomPainter {
+  _CaretPainter({
+    required this.blinkController,
+    required this.caretHeight,
+    required this.caretOffset,
+    required this.width,
+    required this.borderRadius,
+    required this.caretColor,
+    required this.isTextEmpty,
+    required this.showCaret,
+  })  : caretPaint = Paint()..color = caretColor,
+        super(repaint: blinkController);
+
+  final BlinkController blinkController;
+  final double? caretHeight;
+  final Offset? caretOffset;
+  final double width;
+  final BorderRadius borderRadius;
+  final bool isTextEmpty;
+  final bool showCaret;
+  final Color caretColor;
+  final Paint caretPaint;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (!showCaret) {
+      return;
+    }
+
+    if (caretOffset == null) {
+      return;
+    }
+
+    caretPaint.color = caretColor.withOpacity(blinkController.opacity);
+
+    final height = caretHeight?.roundToDouble() ?? size.height;
+
+    canvas.drawRRect(
+      RRect.fromLTRBAndCorners(
+        caretOffset!.dx.roundToDouble(),
+        caretOffset!.dy.roundToDouble(),
+        caretOffset!.dx.roundToDouble() + width,
+        caretOffset!.dy.roundToDouble() + height,
+        topLeft: borderRadius.topLeft,
+        topRight: borderRadius.topRight,
+        bottomLeft: borderRadius.bottomLeft,
+        bottomRight: borderRadius.bottomRight,
+      ),
+      caretPaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_CaretPainter oldDelegate) {
+    return caretHeight != oldDelegate.caretHeight ||
+        caretOffset != oldDelegate.caretOffset ||
+        isTextEmpty != oldDelegate.isTextEmpty ||
+        showCaret != oldDelegate.showCaret;
+  }
+}
+
 /// Wraps a given [SuperSelectableText] and paints extra decoration
 /// to visualize text boundaries.
 class DebugSelectableTextDecorator extends StatefulWidget {
@@ -795,56 +1041,5 @@ class _DebugTextPainter extends CustomPainter {
   @override
   bool shouldRepaint(_DebugTextPainter oldDelegate) {
     return textRectangles != oldDelegate.textRectangles;
-  }
-}
-
-/// Forces [child] to take up all available width when the
-/// incoming width constraint is bounded, otherwise the [child]
-/// is sized by its intrinsic width.
-///
-/// If there is an existing widget that does this, get rid of this
-/// widget and use the standard widget.
-class _FillWidthIfConstrained extends SingleChildRenderObjectWidget {
-  const _FillWidthIfConstrained({
-    required Widget child,
-  }) : super(child: child);
-
-  @override
-  RenderObject createRenderObject(BuildContext context) {
-    return _RenderFillWidthIfConstrained();
-  }
-
-  @override
-  void updateRenderObject(BuildContext context, RenderObject renderObject) {
-    renderObject.markNeedsLayout();
-  }
-}
-
-class _RenderFillWidthIfConstrained extends RenderProxyBox {
-  @override
-  void performLayout() {
-    size = computeDryLayout(constraints);
-
-    if (child != null) {
-      child!.layout(BoxConstraints.tight(size));
-    }
-  }
-
-  @override
-  Size computeDryLayout(BoxConstraints constraints) {
-    if (child == null) {
-      return Size.zero;
-    }
-
-    Size size = child!.computeDryLayout(constraints);
-
-    // If the available width is bounded and the child did not
-    // take all available width, force the child to be as wide
-    // as the available width.
-    if (constraints.hasBoundedWidth && size.width < constraints.maxWidth) {
-      size = Size(constraints.maxWidth, size.height);
-    }
-
-    return size;
   }
 }

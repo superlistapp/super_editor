@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/android/_editing_controls.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/android/_user_interaction.dart';
 import 'package:super_editor/super_editor.dart';
+import 'package:super_text/super_text.dart';
 
 export '_caret.dart';
 export '../../platforms/android/selection_handles.dart';
