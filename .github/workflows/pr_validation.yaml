@@ -152,7 +152,7 @@ jobs:
       - run: dart pub get
 
       # Enforce static analysis
-      - run: flutter analyze
+      - run: dart analyze
 
       # Run all tests
       - run: dart test
