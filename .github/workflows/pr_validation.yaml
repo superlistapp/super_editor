@@ -87,8 +87,7 @@ jobs:
       # Download all the packages that the app uses
       - run: flutter pub get
 
-      # Enforce static analysis
-      - run: flutter analyze
+      # TODO: Enforce static analysis
 
       # Run all tests
       - run: flutter test
