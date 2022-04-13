@@ -38,7 +38,7 @@ class _BareBonesTextFieldWithInputClient extends StatefulWidget {
 
 class _BareBonesTextFieldWithInputClientState extends State<_BareBonesTextFieldWithInputClient>
     implements TextInputClient {
-  final _textKey = GlobalKey();
+  final _textKey = GlobalKey<ProseTextState>();
 
   late FocusNode _focusNode;
   String _currentText = 'This is a barebones textfield implemented with SuperSelectableText and TextInputClient.';
@@ -63,7 +63,7 @@ class _BareBonesTextFieldWithInputClientState extends State<_BareBonesTextFieldW
     super.dispose();
   }
 
-  ProseTextLayout get _textLayout => (_textKey.currentState as ProseTextBlock).textLayout;
+  ProseTextLayout get _textLayout => _textKey.currentState!.textLayout;
 
   TextPosition _getTextPositionAtOffset(Offset localOffset) {
     return _textLayout.getPositionAtOffset(localOffset)!;

@@ -42,9 +42,7 @@ class TextScrollView extends StatefulWidget {
   final TextScrollController textScrollController;
 
   /// [GlobalKey] that references the widget that contains the scrolling text.
-  ///
-  /// The referenced widget's `State` object must implement [ProseTextBlock].
-  final GlobalKey textKey;
+  final GlobalKey<ProseTextState> textKey;
 
   /// Controller that owns the text content and text selection for
   /// the [SuperSelectableText] within the [child] subtree.
@@ -401,7 +399,7 @@ class _TextScrollViewState extends State<TextScrollView>
 
   /// Returns the [ProseTextLayout] that lays out and renders the
   /// text in this text field.
-  ProseTextLayout get _textLayout => (widget.textKey.currentState as ProseTextBlock).textLayout;
+  ProseTextLayout get _textLayout => widget.textKey.currentState!.textLayout;
 
   @override
   Widget build(BuildContext context) {

@@ -9,6 +9,7 @@ import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/blinking_caret.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/magnifier.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/selection_handles.dart';

@@ -1,40 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:super_text/super_text.dart';
 
-/// Factory that creates an Android-style caret to be displayed in
-/// a [SuperSelectableText] widget.
-class AndroidTextCaretFactory implements TextCaretFactory {
-  AndroidTextCaretFactory({
-    required Color color,
-    required double emptyTextCaretHeight,
-    BorderRadius borderRadius = BorderRadius.zero,
-  })  : _color = color,
-        _emptyTextCaretHeight = emptyTextCaretHeight,
-        _borderRadius = borderRadius;
-
-  final Color _color;
-  final double _emptyTextCaretHeight;
-  final BorderRadius _borderRadius;
-
-  @override
-  Widget build({
-    required BuildContext context,
-    required TextLayout textLayout,
-    required TextSelection selection,
-    required bool isTextEmpty,
-    required bool showCaret,
-  }) {
-    return AndroidTextFieldCaret(
-      textLayout: textLayout,
-      isTextEmpty: isTextEmpty,
-      emptyTextCaretHeight: _emptyTextCaretHeight,
-      selection: selection,
-      caretColor: _color,
-      caretBorderRadius: _borderRadius,
-    );
-  }
-}
-
 /// An Android-style blinking caret.
 ///
 /// [AndroidTextFieldCaret] should be displayed on top of its corresponding

@@ -99,6 +99,23 @@ abstract class ProseTextBlock {
   ProseTextLayout get textLayout;
 }
 
+/// A [State] object that mixes in [ProseTextBlock], which is a useful base class
+/// for [State] objects that include a [TextLayout] in their widget sub-tree.
+///
+/// A [ProseTextBlock] is anything that provides access to a [TextLayout]. Typically,
+/// a [State] object is what provides access to a [TextLayout], by grabbing a reference
+/// to a [TextLayout] in the [State]'s widget sub-tree.
+///
+/// A [State] object could extend `State<MyWidget>`, like normal, and then implement
+/// `ProseTextBlock`. However, in practice, there are often [GlobalKey]s that are
+/// created to access the [State] object and retrieve the [textLayout]. It would be
+/// nice if those [GlobalKey]s could be strongly-typed to the [State] object, e.g.,
+/// `GlobalKey<ProseTextState>`. This base class allows many different [GlobalKey]
+/// declarations to declare their [State] type without needing access to every
+/// different widget's [State] class, so long as any such widget's [State] class
+/// extends this class.
+abstract class ProseTextState<T extends StatefulWidget> extends State<T> with ProseTextBlock {}
+
 /// A [TextLayout] that includes queries that pertain specifically to
 /// prose-style text, i.e., regular human-to-human text - not code,
 /// or phone numbers, or dates.

@@ -1,50 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:super_text/super_text.dart';
 
-/// [TextCaretFactory] that creates an [IOSTextFieldCaret], which
-/// paints a blinking iOS-style caret on top of a [SuperSelectableText].
-class IOSTextFieldCaretFactory implements TextCaretFactory {
-  IOSTextFieldCaretFactory({
-    required Color color,
-    double width = 2.0,
-    BorderRadius borderRadius = BorderRadius.zero,
-  })  : _color = color,
-        _width = width,
-        _borderRadius = borderRadius;
-
-  final Color _color;
-  final double _width;
-  final BorderRadius _borderRadius;
-
-  @override
-  Widget build({
-    required BuildContext context,
-    required TextLayout textLayout,
-    required TextSelection selection,
-    required bool isTextEmpty,
-    required bool showCaret,
-  }) {
-    return Stack(
-      children: [
-        Positioned(
-          left: 0,
-          right: 0,
-          top: 0,
-          bottom: 0,
-          child: IOSTextFieldCaret(
-            textLayout: textLayout,
-            isTextEmpty: isTextEmpty,
-            selection: selection,
-            caretColor: _color,
-            caretWidth: _width,
-            caretBorderRadius: _borderRadius,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 /// An iOS-style blinking caret.
 ///
 /// [IOSTextFieldCaret] should be displayed on top of its corresponding

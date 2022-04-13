@@ -56,9 +56,7 @@ class IOSEditingControls extends StatefulWidget {
 
   /// [GlobalKey] that references the widget that contains the field's
   /// text.
-  ///
-  /// The referenced widget's `State` object must implement [ProseTextBlock].
-  final GlobalKey textContentKey;
+  final GlobalKey<ProseTextState> textContentKey;
 
   /// The color of the selection handles.
   final Color handleColor;
@@ -140,7 +138,7 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
     });
   }
 
-  ProseTextLayout get _textLayout => (widget.textContentKey.currentState as ProseTextBlock).textLayout;
+  ProseTextLayout get _textLayout => widget.textContentKey.currentState!.textLayout;
 
   void _rebuildOnNextFrame() {
     // We request a rebuild at the end of this frame so that the editing

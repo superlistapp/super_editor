@@ -71,9 +71,7 @@ class IOSTextFieldTouchInteractor extends StatefulWidget {
 
   /// [GlobalKey] that references the widget that contains the field's
   /// text.
-  ///
-  /// The referenced widget's `State` object must implement [ProseTextBlock].
-  final GlobalKey selectableTextKey;
+  final GlobalKey<ProseTextState> selectableTextKey;
 
   /// Whether the text field that owns this [IOSTextFieldInteractor] is
   /// a multiline text field.
@@ -127,7 +125,7 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
     super.dispose();
   }
 
-  ProseTextLayout get _textLayout => (widget.selectableTextKey.currentState as ProseTextBlock).textLayout;
+  ProseTextLayout get _textLayout => widget.selectableTextKey.currentState!.textLayout;
 
   void _onTapDown(TapDownDetails details) {
     _log.fine('_onTapDown');

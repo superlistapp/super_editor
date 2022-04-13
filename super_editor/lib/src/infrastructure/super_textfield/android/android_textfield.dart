@@ -137,7 +137,7 @@ class _SuperAndroidTextFieldState extends State<SuperAndroidTextField> with Sing
   final _textFieldLayerLink = LayerLink();
   final _textContentLayerLink = LayerLink();
   final _scrollKey = GlobalKey<AndroidTextFieldTouchInteractorState>();
-  final _textContentKey = GlobalKey();
+  final _textContentKey = GlobalKey<ProseTextState>();
 
   late FocusNode _focusNode;
 

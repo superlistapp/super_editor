@@ -32,7 +32,7 @@ class SuperTextWithSelection extends StatefulWidget {
     required this.richText,
     this.textAlign = TextAlign.left,
     this.textDirection = TextDirection.ltr,
-    required this.userSelections,
+    this.userSelections = const [],
   }) : super(key: key);
 
   /// Key attached to the inner widget that implements [TextLayout].
@@ -56,7 +56,7 @@ class SuperTextWithSelection extends StatefulWidget {
   State<SuperTextWithSelection> createState() => _SuperTextWithSelectionState();
 }
 
-class _SuperTextWithSelectionState extends State<SuperTextWithSelection> implements ProseTextBlock {
+class _SuperTextWithSelectionState extends ProseTextState<SuperTextWithSelection> {
   late GlobalKey _textLayoutKey;
   late final ValueNotifier<List<UserSelection>> _userSelections;
 

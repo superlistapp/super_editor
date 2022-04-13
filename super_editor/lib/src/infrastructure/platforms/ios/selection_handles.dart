@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:super_editor/src/infrastructure/blinking_caret.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
 import 'package:super_text/super_text.dart';
 

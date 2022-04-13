@@ -75,9 +75,7 @@ class AndroidTextFieldTouchInteractor extends StatefulWidget {
 
   /// [GlobalKey] that references the widget that contains the text within
   /// this [AndroidTextFieldTouchInteractor].
-  ///
-  /// The referenced widget's `State` object must implement [ProseTextBlock].
-  final GlobalKey textKey;
+  final GlobalKey<ProseTextState> textKey;
 
   /// Whether the text field that owns this [AndroidTextFieldInteractor] is
   /// a multiline text field.
@@ -132,7 +130,7 @@ class AndroidTextFieldTouchInteractorState extends State<AndroidTextFieldTouchIn
     super.dispose();
   }
 
-  ProseTextLayout get _textLayout => (widget.textKey.currentState as ProseTextBlock).textLayout;
+  ProseTextLayout get _textLayout => widget.textKey.currentState!.textLayout;
 
   void _onTapDown(TapDownDetails details) {
     _log.fine('_onTapDown');

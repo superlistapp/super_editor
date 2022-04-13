@@ -417,9 +417,9 @@ class TextComponent extends StatefulWidget {
 }
 
 class _TextComponentState extends State<TextComponent> with DocumentComponent implements TextComposable {
-  final _selectableTextKey = GlobalKey();
+  final _textKey = GlobalKey<ProseTextState>();
 
-  ProseTextLayout get _textLayout => (_selectableTextKey.currentState as ProseTextBlock).textLayout;
+  ProseTextLayout get _textLayout => _textKey.currentState!.textLayout;
 
   @override
   TextNodePosition? getPositionAtOffset(Offset localOffset) {
@@ -681,6 +681,9 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
 
   @override
   MouseCursor? getDesiredCursorAtOffset(Offset localOffset) {
+    print("getDesiredCursorAtOffset: $localOffset");
+    print(" - text layout state: ${_textKey.currentState}");
+
     return _textLayout.isTextAtOffset(localOffset) ? SystemMouseCursors.text : null;
   }
 
@@ -747,7 +750,7 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
     editorLayoutLog.finer('Building a TextComponent with key: ${widget.key}');
 
     return SuperTextWithSelection.single(
-      key: _selectableTextKey,
+      key: _textKey,
       richText: widget.text.computeTextSpan(_textStyleWithBlockType),
       textAlign: widget.textAlign ?? TextAlign.left,
       textDirection: widget.textDirection ?? TextDirection.ltr,

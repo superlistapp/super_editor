@@ -102,7 +102,7 @@ class SuperDesktopTextField extends StatefulWidget {
 }
 
 class SuperDesktopTextFieldState extends State<SuperDesktopTextField> {
-  final _selectableTextKey = GlobalKey();
+  final _textKey = GlobalKey<ProseTextState>();
   final _textScrollKey = GlobalKey<SuperTextFieldScrollviewState>();
   late FocusNode _focusNode;
   bool _hasFocus = false; // cache whether we have focus so we know when it changes
@@ -168,7 +168,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> {
     super.dispose();
   }
 
-  ProseTextLayout get textLayout => (_selectableTextKey.currentState as ProseTextBlock).textLayout;
+  ProseTextLayout get textLayout => _textKey.currentState!.textLayout;
 
   FocusNode get focusNode => _focusNode;
 
@@ -231,7 +231,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> {
       return 0;
     }
 
-    if (_selectableTextKey.currentState == null) {
+    if (_textKey.currentState == null) {
       return 0;
     }
 
@@ -252,7 +252,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> {
 
   @override
   Widget build(BuildContext context) {
-    if (_selectableTextKey.currentContext == null) {
+    if (_textKey.currentContext == null) {
       // The text hasn't been laid out yet, which means our calculations
       // for text height is probably wrong. Schedule a post frame callback
       // to re-calculate the height after initial layout.
@@ -270,12 +270,12 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> {
     return SuperTextFieldKeyboardInteractor(
       focusNode: _focusNode,
       textController: _controller,
-      textKey: _selectableTextKey,
+      textKey: _textKey,
       keyboardActions: widget.keyboardHandlers,
       child: SuperTextFieldGestureInteractor(
         focusNode: _focusNode,
         textController: _controller,
-        textKey: _selectableTextKey,
+        textKey: _textKey,
         textScrollKey: _textScrollKey,
         isMultiline: isMultiline,
         onRightClick: widget.onRightClick,
@@ -293,7 +293,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> {
             return _buildDecoration(
               child: SuperTextFieldScrollview(
                 key: _textScrollKey,
-                textKey: _selectableTextKey,
+                textKey: _textKey,
                 textController: _controller,
                 scrollController: _scrollController,
                 viewportHeight: _viewportHeight,
@@ -322,7 +322,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> {
 
   Widget _buildSelectableText() {
     return SuperTextWithSelection.single(
-      key: _selectableTextKey,
+      key: _textKey,
       richText: _controller.text.computeTextSpan(widget.textStyleBuilder),
       textAlign: widget.textAlign,
       userSelection: UserSelection(
@@ -370,9 +370,7 @@ class SuperTextFieldGestureInteractor extends StatefulWidget {
 
   /// [GlobalKey] that links this [SuperTextFieldGestureInteractor] to
   /// the [ProseTextLayout] widget that paints the text for this text field.
-  ///
-  /// This key's `State` object must implement [ProseTextBlock].
-  final GlobalKey textKey;
+  final GlobalKey<ProseTextState> textKey;
 
   /// [GlobalKey] that links this [SuperTextFieldGestureInteractor] to
   /// the [SuperTextFieldScrollview] that's responsible for scrolling
@@ -405,7 +403,7 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
   final _dragGutterExtent = 24;
   final _maxDragSpeed = 20;
 
-  ProseTextLayout get _textLayout => (widget.textKey.currentState as ProseTextBlock).textLayout;
+  ProseTextLayout get _textLayout => widget.textKey.currentState!.textLayout;
 
   SuperTextFieldScrollviewState get _textScroll => widget.textScrollKey.currentState!;
 
@@ -795,9 +793,7 @@ class SuperTextFieldKeyboardInteractor extends StatefulWidget {
 
   /// [GlobalKey] that links this [SuperTextFieldGestureInteractor] to
   /// the [ProseTextLayout] widget that paints the text for this text field.
-  ///
-  /// This key's `State` object must implement [ProseTextBlock].
-  final GlobalKey textKey;
+  final GlobalKey<ProseTextState> textKey;
 
   /// Ordered list of actions that correspond to various key events.
   ///
@@ -841,7 +837,7 @@ class _SuperTextFieldKeyboardInteractorState extends State<SuperTextFieldKeyboar
     while (instruction == TextFieldKeyboardHandlerResult.notHandled && index < widget.keyboardActions.length) {
       instruction = widget.keyboardActions[index](
         controller: widget.textController,
-        textLayout: (widget.textKey.currentState as ProseTextBlock).textLayout,
+        textLayout: widget.textKey.currentState!.textLayout,
         keyEvent: keyEvent,
       );
       index += 1;
@@ -887,9 +883,7 @@ class SuperTextFieldScrollview extends StatefulWidget {
 
   /// [GlobalKey] that links this [SuperTextFieldScrollview] to
   /// the [ProseTextLayout] widget that paints the text for this text field.
-  ///
-  /// This key's `State` object must implement [ProseTextBlock].
-  final GlobalKey textKey;
+  final GlobalKey<ProseTextState> textKey;
 
   /// [ScrollController] that controls the scroll offset of this [SuperTextFieldScrollview].
   final ScrollController scrollController;
@@ -957,7 +951,7 @@ class SuperTextFieldScrollviewState extends State<SuperTextFieldScrollview> with
     super.dispose();
   }
 
-  ProseTextLayout get _textLayout => (widget.textKey.currentState as ProseTextBlock).textLayout;
+  ProseTextLayout get _textLayout => widget.textKey.currentState!.textLayout;
 
   void _onSelectionOrContentChange() {
     // Use a post-frame callback to "ensure selection extent is visible"
