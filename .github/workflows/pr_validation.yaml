@@ -10,13 +10,17 @@ jobs:
     steps:
       # Checkout the PR branch
       - uses: actions/checkout@v2
+
       # Setup Flutter environment
       - uses: subosito/flutter-action@v1
         with:
           channel: "stable"
+
       # Download all the packages that the app uses
       - run: flutter pub get
+
       # TODO: run static analysis here when we get to zero analysis warnings
+
       # Run all tests
       - run: flutter test
 
@@ -29,13 +33,17 @@ jobs:
     steps:
       # Checkout the PR branch
       - uses: actions/checkout@v2
+
       # Setup Flutter environment
       - uses: subosito/flutter-action@v1
         with:
           channel: "stable"
+
       # Download all the packages that the app uses
       - run: flutter pub get
+
       # TODO: run static analysis here when we get to zero analysis warnings
+
       # Run all tests
       - run: flutter test
 
@@ -48,13 +56,17 @@ jobs:
     steps:
       # Checkout the PR branch
       - uses: actions/checkout@v2
+
       # Setup Flutter environment
       - uses: subosito/flutter-action@v1
         with:
           channel: "stable"
+
       # Download all the packages that the app uses
       - run: flutter pub get
+
       # TODO: run static analysis here when we get to zero analysis warnings
+
       # Run all tests
       - run: flutter test
 
@@ -66,13 +78,18 @@ jobs:
     steps:
       # Checkout the PR branch
       - uses: actions/checkout@v2
+
       # Setup Flutter environment
       - uses: subosito/flutter-action@v1
         with:
           channel: "stable"
+
       # Download all the packages that the app uses
       - run: flutter pub get
-      # TODO: run static analysis here when we get to zero analysis warnings
+
+      # Enforce static analysis
+      - run: flutter analyze
+
       # Run all tests
       - run: flutter test
 
@@ -84,14 +101,18 @@ jobs:
     steps:
       # Checkout the PR branch
       - uses: actions/checkout@v2
+
       # Setup Flutter environment
       - uses: subosito/flutter-action@v1
         with:
           channel: "stable"
+
       # Download all the packages that the app uses
       - run: flutter pub get
+
       # Enforce static analysis
-      - run: flutter analysis
+      - run: flutter analyze
+
       # Run all tests
       - run: flutter test
 
@@ -103,12 +124,15 @@ jobs:
     steps:
       # Checkout the PR branch
       - uses: actions/checkout@v2
+
       # Setup Flutter environment
       - uses: subosito/flutter-action@v1
         with:
           channel: "stable"
+
       # Download all the packages that the app uses
       - run: flutter pub get
+
       # Run all golden tests
       - run: flutter test test_goldens
 
@@ -127,7 +151,8 @@ jobs:
       # Install app dependencies
       - run: dart pub get
 
-      # TODO: run static analysis here when we get to zero analysis warnings
+      # Enforce static analysis
+      - run: flutter analyze
 
       # Run all tests
       - run: dart test
