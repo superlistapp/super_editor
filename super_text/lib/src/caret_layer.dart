@@ -72,12 +72,17 @@ class _TextLayoutCaretState extends State<TextLayoutCaret> with TickerProviderSt
 
   @override
   Widget build(BuildContext context) {
+    final offset = widget.position != null ? widget.textLayout.getOffsetForCaret(widget.position!) : null;
+    final height = widget.position != null
+        ? widget.textLayout.getHeightForCaret(widget.position!) ??
+            widget.textLayout.getLineHeightAtPosition(widget.position!)
+        : null;
     return CustomPaint(
       painter: CaretPainter(
         blinkController: _blinkController,
         caretStyle: widget.style,
-        offset: widget.position != null ? widget.textLayout.getOffsetForCaret(widget.position!) : null,
-        height: widget.position != null ? widget.textLayout.getHeightForCaret(widget.position!) : null,
+        offset: offset,
+        height: height,
       ),
     );
   }

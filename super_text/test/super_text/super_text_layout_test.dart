@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:golden_toolkit/golden_toolkit.dart';
 import 'package:super_text/super_text.dart';
 
 // TODO: getOffsetAtPosition()
@@ -19,11 +18,6 @@ import 'package:super_text/super_text.dart';
 void main() {
   group("SuperText", () {
     group("text layout", () {
-      testGoldens("renders a visual reference for non-visual tests", (tester) async {
-        await _pumpThreeLinePlainText(tester);
-        await screenMatchesGolden(tester, "SuperText-reference-render");
-      });
-
       group("calculates line count", () {
         testWidgets("for empty text", (tester) async {
           await _pumpEmptyText(tester);
@@ -359,7 +353,7 @@ const _threeLineSpan = TextSpan(
 );
 
 const _oneLineSpan = TextSpan(
-  text: "This is some text. It is explicitly laid out in\n", // Line indices: 0 -> 47/48 (upstream/downstream)
+  text: "This is some text. It is explicitly laid out in", // Line indices: 0 -> 46/47 (upstream/downstream)
   style: _testTextStyle,
 );
 

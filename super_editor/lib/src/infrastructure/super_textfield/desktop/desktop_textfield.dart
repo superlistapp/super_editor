@@ -706,7 +706,7 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
   }
 
   TextPosition _getPositionNearestToTextOffset(Offset textOffset) {
-    return _textLayout.getPositionAtOffset(textOffset)!;
+    return _textLayout.getPositionNearestToOffset(textOffset);
   }
 
   bool _isTextAtOffset(Offset textFieldOffset) {
@@ -1437,8 +1437,8 @@ class DefaultSuperTextFieldKeyboardHandlers {
     return TextFieldKeyboardHandlerResult.handled;
   }
 
-  /// [deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed] deletes lines of text before
-  /// the caret when the primary shortcut key (CMD on Mac, CTL on Windows) + Backspace is pressed.
+  /// Deletes text between the beginning of the line and the caret, when the user
+  /// presses CMD + Backspace, or CTL + Backspace.
   static TextFieldKeyboardHandlerResult deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed({
     required AttributedTextEditingController controller,
     required ProseTextLayout textLayout,
@@ -1450,14 +1450,18 @@ class DefaultSuperTextFieldKeyboardHandlers {
     if (controller.selection.extentOffset < 0) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
-    if (textLayout.getPositionAtStartOfLine(controller.selection.extent).offset == controller.selection.extentOffset) {
-      return TextFieldKeyboardHandlerResult.notHandled;
-    }
+
     if (!controller.selection.isCollapsed) {
       controller.deleteSelection();
       return TextFieldKeyboardHandlerResult.handled;
     }
 
+    if (textLayout.getPositionAtStartOfLine(controller.selection.extent).offset == controller.selection.extentOffset) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    print(
+        "Deleting text on line before caret. Current position: ${controller.selection.extentOffset}, Position at start of line: ${textLayout.getPositionAtStartOfLine(controller.selection.extent).offset}");
     controller.deleteTextOnLineBeforeCaret(textLayout: textLayout);
 
     return TextFieldKeyboardHandlerResult.handled;

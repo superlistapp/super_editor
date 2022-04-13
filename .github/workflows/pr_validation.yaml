@@ -76,6 +76,41 @@ jobs:
       # Run all tests
       - run: flutter test
 
+  test_super_text:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./super_text
+    steps:
+      # Checkout the PR branch
+      - uses: actions/checkout@v2
+      # Setup Flutter environment
+      - uses: subosito/flutter-action@v1
+        with:
+          channel: "stable"
+      # Download all the packages that the app uses
+      - run: flutter pub get
+      # Enforce static analysis
+      - run: flutter analysis
+      # Run all tests
+      - run: flutter test
+
+  test_goldens_super_text:
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: ./super_text
+    steps:
+      # Checkout the PR branch
+      - uses: actions/checkout@v2
+      # Setup Flutter environment
+      - uses: subosito/flutter-action@v1
+        with:
+          channel: "stable"
+      # Download all the packages that the app uses
+      - run: flutter pub get
+      # Run all golden tests
+      - run: flutter test test_goldens
 
   test_attributed_text:
     runs-on: ubuntu-latest

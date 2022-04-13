@@ -34,11 +34,11 @@ import 'demos/supertextfield/android/demo_superandroidtextfield.dart';
 /// are available in this package.
 Future<void> main() async {
   initLoggers(Level.FINEST, {
-    editorGesturesLog,
+    // editorGesturesLog,
     // editorImeLog,
     // editorKeyLog,
     // editorOpsLog,
-    editorLayoutLog,
+    // editorLayoutLog,
     // editorDocLog,
     appLog,
   });

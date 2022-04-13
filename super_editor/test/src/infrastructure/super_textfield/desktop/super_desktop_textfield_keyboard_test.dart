@@ -3101,7 +3101,14 @@ Future<ProseTextBlock> _pumpAndReturnSelectableText(
 
   final textLayout = SuperTextWithSelection.single(
     key: textKey,
-    richText: TextSpan(text: text, style: const TextStyle()),
+    richText: TextSpan(
+      text: text,
+      style: const TextStyle(
+        // This font size, combined with the layout width below, are
+        // critical to determining the text line wrapping.
+        fontSize: 18,
+      ),
+    ),
   );
 
   final decoratedText = decorator == null ? textLayout : decorator(textLayout);
@@ -3110,7 +3117,13 @@ Future<ProseTextBlock> _pumpAndReturnSelectableText(
     MaterialApp(
       // The Center allows the content to be smaller than the display
       home: Center(
-        child: decoratedText,
+        // This SizedBox, combined with the font size in the TextStyle,
+        // determines the text line wrapping, which is critical for the
+        // tests in this suite.
+        child: SizedBox(
+          width: 320,
+          child: decoratedText,
+        ),
       ),
     ),
   );

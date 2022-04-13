@@ -423,10 +423,16 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
 
   @override
   TextNodePosition? getPositionAtOffset(Offset localOffset) {
-    final textPosition = _textLayout.getPositionAtOffset(localOffset);
-    if (textPosition == null) {
-      return null;
-    }
+    // TODO: Change this implementation to use exact position instead of nearest position
+    //       After extracting super_text, looking up the exact offset broke the
+    //       ability to tap into empty TextWithHintComponents. To fix this, we
+    //       switched to the nearest position. Add a different version of this
+    //       API for nearest position and then let clients pick the one that's
+    //       right for them.
+    final textPosition = _textLayout.getPositionNearestToOffset(localOffset);
+    // if (textPosition == null) {
+    //   return null;
+    // }
 
     // Rework the textPosition so that it reports a "downstream" affinity because
     // the editor doesn't support "upstream" positions, yet.
@@ -681,9 +687,6 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
 
   @override
   MouseCursor? getDesiredCursorAtOffset(Offset localOffset) {
-    print("getDesiredCursorAtOffset: $localOffset");
-    print(" - text layout state: ${_textKey.currentState}");
-
     return _textLayout.isTextAtOffset(localOffset) ? SystemMouseCursors.text : null;
   }
 

@@ -5,10 +5,9 @@ import 'package:super_text/super_text.dart';
 
 Future<void> testExecutable(FutureOr<void> Function() testMain) async {
   // Disable indeterminate animations
+  // ignore: invalid_use_of_visible_for_testing_member
   BlinkController.indeterminateAnimationsEnabled = false;
 
-  // We load fonts, even for non-golden tests, so that text layout and
-  // line-wrapping is more predictable.
   await loadAppFonts();
   return testMain();
 }

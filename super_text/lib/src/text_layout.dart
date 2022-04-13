@@ -1,4 +1,3 @@
-import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
 /// Contract to interrogate the layout of a blob of text.

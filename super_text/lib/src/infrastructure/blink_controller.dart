@@ -7,6 +7,12 @@ import 'package:flutter/scheduler.dart';
 /// on a [flashPeriod]. The blinking can be enabled or disabled, and
 /// the opacity can be immediately reset to opaque with [jumpToOpaque()].
 class BlinkController with ChangeNotifier {
+  // Controls whether or not all BlinkControllers animate. This is intended
+  // to be used by tests to disable animations so that pumpAndSettle() doesn't
+  // time out.
+  @visibleForTesting
+  static bool indeterminateAnimationsEnabled = true;
+
   BlinkController({
     required TickerProvider tickerProvider,
     Duration flashPeriod = const Duration(milliseconds: 500),
@@ -41,6 +47,12 @@ class BlinkController with ChangeNotifier {
   double get opacity => _isVisible ? 1.0 : 0.0;
 
   void startBlinking() {
+    if (!indeterminateAnimationsEnabled) {
+      // Never animate a blink when the app/test wants to avoid
+      // indeterminate animations.
+      return;
+    }
+
     _ticker
       ..stop()
       ..start();
