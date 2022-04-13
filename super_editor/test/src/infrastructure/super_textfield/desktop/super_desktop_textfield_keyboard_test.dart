@@ -868,7 +868,16 @@ void main() {
             // is run on Windows and Linux CI, there is some kind of precision error
             // that results in a tiny positive number instead of zero.
             expect(textLayout.getCharacterBox(const TextPosition(offset: 16)).top, lessThan(0.1));
-            expect(textLayout.getCharacterBox(const TextPosition(offset: 16)).top, greaterThanOrEqualTo(0));
+
+            // On Linux CI, the "top" is a very tiny negative number, so we check for that value
+            // instead of the check that we actually want to do.
+            //
+            // From CI:
+            // Expected: a value greater than or equal to <0>
+            //   Actual: <-7.152557373046875e-7>
+            //    Which: is not a value greater than or equal to <0>
+            // expect(textLayout.getCharacterBox(const TextPosition(offset: 16)).top, greaterThanOrEqualTo(0));
+            expect(textLayout.getCharacterBox(const TextPosition(offset: 16)).top, greaterThanOrEqualTo(-0.000001));
           });
 
           testWidgets('it expands left by character', (tester) async {
