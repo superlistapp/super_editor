@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:super_editor/src/default_editor/super_editor.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/android/_editing_controls.dart';
@@ -12,11 +11,12 @@ import 'package:super_editor/src/infrastructure/super_textfield/input_method_eng
 import 'package:super_text/super_text.dart';
 
 import '../../_logging.dart';
+import '../styles.dart';
 import 'android_textfield.dart';
 
-export '_caret.dart';
 export '../../platforms/android/selection_handles.dart';
 export '../../platforms/android/toolbar.dart';
+export '_caret.dart';
 
 final _log = androidTextFieldLog;
 
@@ -26,7 +26,7 @@ class SuperAndroidTextField extends StatefulWidget {
     this.focusNode,
     this.textController,
     this.textAlign = TextAlign.left,
-    this.textStyleBuilder = defaultStyleBuilder,
+    this.textStyleBuilder = defaultTextFieldStyleBuilder,
     this.hintBehavior = HintBehavior.displayHintUntilFocus,
     this.hintBuilder,
     this.minLines,

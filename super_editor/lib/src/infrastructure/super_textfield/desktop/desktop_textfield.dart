@@ -7,7 +7,6 @@ import 'package:flutter/material.dart' hide SelectableText;
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document_layout.dart';
-import 'package:super_editor/src/default_editor/super_editor.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
@@ -18,6 +17,7 @@ import 'package:super_text/super_text.dart';
 
 import '../../keyboard.dart';
 import '../../multi_tap_gesture.dart';
+import '../styles.dart';
 
 final _log = textFieldLog;
 
@@ -39,7 +39,7 @@ class SuperDesktopTextField extends StatefulWidget {
     Key? key,
     this.focusNode,
     this.textController,
-    this.textStyleBuilder = defaultStyleBuilder,
+    this.textStyleBuilder = defaultTextFieldStyleBuilder,
     this.textAlign = TextAlign.left,
     this.hintBehavior = HintBehavior.displayHintUntilFocus,
     this.hintBuilder,

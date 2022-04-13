@@ -10,7 +10,7 @@ import 'package:super_editor/src/infrastructure/super_textfield/input_method_eng
 import 'package:super_editor/src/infrastructure/super_textfield/ios/ios_textfield.dart';
 import 'package:super_text/super_text.dart';
 
-import '../../default_editor/attributions.dart';
+import 'styles.dart';
 
 export '_test_tools.dart';
 export 'android/android_textfield.dart';
@@ -181,10 +181,10 @@ class _SuperTextFieldState extends State<SuperTextField> {
           hintBehavior: widget.hintBehavior,
           hintBuilder: widget.hintBuilder,
           selectionHighlightStyle: SelectionHighlightStyle(
-            color: widget.selectionColor ?? _defaultSelectionColor,
+            color: widget.selectionColor ?? defaultSelectionColor,
           ),
           caretStyle: CaretStyle(
-            color: widget.controlsColor ?? _defaultDesktopCaretColor,
+            color: widget.controlsColor ?? defaultDesktopCaretColor,
             width: 1,
             borderRadius: BorderRadius.zero,
           ),
@@ -200,9 +200,9 @@ class _SuperTextFieldState extends State<SuperTextField> {
           textStyleBuilder: widget.textStyleBuilder,
           hintBehavior: widget.hintBehavior,
           hintBuilder: widget.hintBuilder,
-          caretColor: widget.controlsColor ?? _defaultAndroidControlsColor,
-          selectionColor: widget.selectionColor ?? _defaultSelectionColor,
-          handlesColor: widget.controlsColor ?? _defaultAndroidControlsColor,
+          caretColor: widget.controlsColor ?? defaultAndroidControlsColor,
+          selectionColor: widget.selectionColor ?? defaultSelectionColor,
+          handlesColor: widget.controlsColor ?? defaultAndroidControlsColor,
           minLines: widget.minLines,
           maxLines: widget.maxLines,
           lineHeight: widget.lineHeight,
@@ -215,9 +215,9 @@ class _SuperTextFieldState extends State<SuperTextField> {
           textStyleBuilder: widget.textStyleBuilder,
           hintBehavior: widget.hintBehavior,
           hintBuilder: widget.hintBuilder,
-          caretColor: widget.controlsColor ?? _defaultIOSControlsColor,
-          selectionColor: widget.selectionColor ?? _defaultSelectionColor,
-          handlesColor: widget.controlsColor ?? _defaultIOSControlsColor,
+          caretColor: widget.controlsColor ?? defaultIOSControlsColor,
+          selectionColor: widget.selectionColor ?? defaultSelectionColor,
+          handlesColor: widget.controlsColor ?? defaultIOSControlsColor,
           minLines: widget.minLines,
           maxLines: widget.maxLines,
           lineHeight: widget.lineHeight,
@@ -244,13 +244,6 @@ class _SuperTextFieldState extends State<SuperTextField> {
   }
 }
 
-const _defaultSelectionColor = Color(0xFFACCEF7);
-const _defaultDesktopCaretColor = Color(0xFF000000);
-
-const _defaultAndroidControlsColor = Color(0xFFA4C639);
-
-const _defaultIOSControlsColor = Color(0xFF2196F3);
-
 /// Configures a [SuperTextField] for the given platform.
 ///
 /// Desktop uses physical keyboard handlers, while mobile uses the IME.
@@ -261,42 +254,4 @@ enum SuperTextFieldPlatformConfiguration {
   desktop,
   android,
   iOS,
-}
-
-/// Default [TextStyles] for [SuperTextField].
-TextStyle defaultTextFieldStyleBuilder(Set<Attribution> attributions) {
-  TextStyle newStyle = const TextStyle(
-    fontSize: 16,
-    height: 1,
-  );
-
-  for (final attribution in attributions) {
-    if (attribution == boldAttribution) {
-      newStyle = newStyle.copyWith(
-        fontWeight: FontWeight.bold,
-      );
-    } else if (attribution == italicsAttribution) {
-      newStyle = newStyle.copyWith(
-        fontStyle: FontStyle.italic,
-      );
-    } else if (attribution == underlineAttribution) {
-      newStyle = newStyle.copyWith(
-        decoration: newStyle.decoration == null
-            ? TextDecoration.underline
-            : TextDecoration.combine([TextDecoration.underline, newStyle.decoration!]),
-      );
-    } else if (attribution == strikethroughAttribution) {
-      newStyle = newStyle.copyWith(
-        decoration: newStyle.decoration == null
-            ? TextDecoration.lineThrough
-            : TextDecoration.combine([TextDecoration.lineThrough, newStyle.decoration!]),
-      );
-    } else if (attribution is LinkAttribution) {
-      newStyle = newStyle.copyWith(
-        color: Colors.lightBlue,
-        decoration: TextDecoration.underline,
-      );
-    }
-  }
-  return newStyle;
 }
