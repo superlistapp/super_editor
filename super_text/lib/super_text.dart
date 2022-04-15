@@ -4,3 +4,5 @@ export 'src/super_text_with_selection.dart';
 export 'src/text_layout.dart';
 export 'src/text_selection_layer.dart';
 export 'src/infrastructure/blink_controller.dart';
+
+export 'src/super_duper_text.dart';

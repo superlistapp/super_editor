@@ -27,7 +27,7 @@ class TextLayoutUserLabel extends StatelessWidget {
         Positioned(
           left: offset.dx,
           top: offset.dy,
-          child: _UserLabel(
+          child: UserLabel(
             style: style,
             label: label,
           ),
@@ -37,8 +37,8 @@ class TextLayoutUserLabel extends StatelessWidget {
   }
 }
 
-class _UserLabel extends StatelessWidget {
-  const _UserLabel({
+class UserLabel extends StatelessWidget {
+  const UserLabel({
     Key? key,
     required this.style,
     required this.label,
@@ -63,7 +63,14 @@ class _UserLabel extends StatelessWidget {
 class UserLabelStyle {
   const UserLabelStyle({
     required this.color,
-    required this.shape,
+    this.shape = const RoundedRectangleBorder(
+      borderRadius: BorderRadius.only(
+        topLeft: Radius.circular(4),
+        topRight: Radius.circular(16),
+        bottomLeft: Radius.circular(16),
+        bottomRight: Radius.circular(16),
+      ),
+    ),
     this.padding = const EdgeInsets.only(top: 2, bottom: 6, left: 8, right: 8),
     this.labelStyle = const TextStyle(
       color: Colors.black,

@@ -11,6 +11,7 @@ class TextLayoutCaret extends StatefulWidget {
     this.blinkCaret = true,
     required this.style,
     required this.position,
+    this.follower,
   }) : super(key: key);
 
   final TextLayout textLayout;
@@ -18,6 +19,7 @@ class TextLayoutCaret extends StatefulWidget {
   final bool blinkCaret;
   final CaretStyle style;
   final TextPosition? position;
+  final LayerLink? follower;
 
   @override
   State<TextLayoutCaret> createState() => _TextLayoutCaretState();
@@ -31,6 +33,7 @@ class _TextLayoutCaretState extends State<TextLayoutCaret> with TickerProviderSt
     super.initState();
     _blinkController = widget.blinkController ?? BlinkController(tickerProvider: this);
     if (widget.blinkCaret) {
+      print("Starting caret blinking");
       _blinkController.startBlinking();
     }
   }
@@ -72,18 +75,38 @@ class _TextLayoutCaretState extends State<TextLayoutCaret> with TickerProviderSt
 
   @override
   Widget build(BuildContext context) {
+    print("Building caret. Text layout: ${widget.textLayout}");
     final offset = widget.position != null ? widget.textLayout.getOffsetForCaret(widget.position!) : null;
     final height = widget.position != null
         ? widget.textLayout.getHeightForCaret(widget.position!) ??
             widget.textLayout.getLineHeightAtPosition(widget.position!)
         : null;
-    return CustomPaint(
-      painter: CaretPainter(
-        blinkController: _blinkController,
-        caretStyle: widget.style,
-        offset: offset,
-        height: height,
-      ),
+    print("Offset: $offset, height: $height, follower: ${widget.follower}");
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Positioned.fill(
+          child: CustomPaint(
+            painter: CaretPainter(
+              blinkController: _blinkController,
+              caretStyle: widget.style,
+              offset: offset,
+              height: height,
+            ),
+          ),
+        ),
+        if (widget.follower != null && offset != null)
+          Positioned(
+            left: offset.dx,
+            top: offset.dy,
+            width: widget.style.width,
+            height: height,
+            child: CompositedTransformTarget(
+              link: widget.follower!,
+              child: ColoredBox(color: const Color(0xFF00FF00)),
+            ),
+          ),
+      ],
     );
   }
 }
@@ -107,6 +130,7 @@ class CaretPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    print("Painting caret");
     if (_offset == null || _height == null) {
       // No caret to paint.
       return;

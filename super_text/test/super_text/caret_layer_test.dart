@@ -16,28 +16,30 @@ void main() {
           buildTestScaffold(
             child: SuperText(
               richText: threeLineTextSpan,
-              layerAboveBuilder: (context, textLayout) {
-                return Stack(
-                  children: [
-                    // We switch the BlinkController using a builder so that we don't
-                    // risk replacing the entire widget tree across pumps. We need to
-                    // retain the same State object for the TextLayoutCaret, so that
-                    // we can test the didUpdateWidget() behavior.
-                    ValueListenableBuilder(
-                      valueListenable: blinkControllerHolder,
-                      builder: (context, value, child) {
-                        return TextLayoutCaret(
-                          textLayout: textLayout,
-                          blinkController: blinkControllerHolder.value,
-                          style: primaryCaretStyle,
-                          position: const TextPosition(offset: 35),
-                          blinkCaret: false,
-                        );
-                      },
-                    ),
-                  ],
-                );
-              },
+              layerAboveBuilder: SuperDuperTextLayoutLayer(
+                builder: (context, textLayout) {
+                  return Stack(
+                    children: [
+                      // We switch the BlinkController using a builder so that we don't
+                      // risk replacing the entire widget tree across pumps. We need to
+                      // retain the same State object for the TextLayoutCaret, so that
+                      // we can test the didUpdateWidget() behavior.
+                      ValueListenableBuilder(
+                        valueListenable: blinkControllerHolder,
+                        builder: (context, value, child) {
+                          return TextLayoutCaret(
+                            textLayout: textLayout,
+                            blinkController: blinkControllerHolder.value,
+                            style: primaryCaretStyle,
+                            position: const TextPosition(offset: 35),
+                            blinkCaret: false,
+                          );
+                        },
+                      ),
+                    ],
+                  );
+                },
+              ),
             ),
           ),
         );

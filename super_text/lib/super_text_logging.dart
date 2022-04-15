@@ -4,10 +4,13 @@ import 'package:logging/logging.dart';
 export 'package:logging/logging.dart';
 
 class LogNames {
+  static const errors = 'super_text.errors';
   static const builds = 'super_text.builds';
   static const typingRobot = 'super_text.robot';
 }
 
+// Errors that don't fit into other loggers
+final errorsLog = Logger(LogNames.errors);
 final buildsLog = Logger(LogNames.builds);
 final robotLog = Logger(LogNames.typingRobot);
 

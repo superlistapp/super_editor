@@ -18,8 +18,16 @@ Future<void> pumpThreeLinePlainSuperText(
       child: SuperText(
         key: superTextKey,
         richText: threeLineTextSpan,
-        layerBeneathBuilder: beneathBuilder,
-        layerAboveBuilder: aboveBuilder,
+        layerBeneathBuilder: beneathBuilder != null
+            ? SuperDuperTextLayoutLayer(
+                builder: beneathBuilder,
+              )
+            : null,
+        layerAboveBuilder: aboveBuilder != null
+            ? SuperDuperTextLayoutLayer(
+                builder: aboveBuilder,
+              )
+            : null,
       ),
     ),
   );
@@ -35,8 +43,16 @@ Future<void> pumpEmptySuperText(
       child: SuperText(
         key: superTextKey,
         richText: const TextSpan(text: "", style: _testTextStyle),
-        layerBeneathBuilder: beneathBuilder,
-        layerAboveBuilder: aboveBuilder,
+        layerBeneathBuilder: beneathBuilder != null
+            ? SuperDuperTextLayoutLayer(
+                builder: beneathBuilder,
+              )
+            : null,
+        layerAboveBuilder: aboveBuilder != null
+            ? SuperDuperTextLayoutLayer(
+                builder: aboveBuilder,
+              )
+            : null,
       ),
     ),
   );

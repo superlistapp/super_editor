@@ -3,6 +3,7 @@ import 'package:super_text/src/super_text.dart';
 import 'package:super_text/super_text_logging.dart';
 
 import 'caret_layer.dart';
+import 'super_duper_text.dart';
 import 'text_layout.dart';
 import 'text_selection_layer.dart';
 
@@ -166,8 +167,12 @@ class _RebuildOptimizedSuperTextWithSelectionState extends State<_RebuildOptimiz
     _cachedSubtree = SuperText(
       key: widget.textLayoutKey,
       richText: widget.richText,
-      layerBeneathBuilder: _buildLayerBeneath,
-      layerAboveBuilder: _buildLayerAbove,
+      layerBeneathBuilder: SuperDuperTextLayoutLayer(
+        builder: _buildLayerBeneath,
+      ),
+      layerAboveBuilder: SuperDuperTextLayoutLayer(
+        builder: _buildLayerAbove,
+      ),
     );
     return _cachedSubtree!;
   }
@@ -215,6 +220,7 @@ class _RebuildOptimizedSuperTextWithSelectionState extends State<_RebuildOptimiz
                   style: userSelection.caretStyle,
                   blinkCaret: userSelection.blinkCaret,
                   position: userSelection.selection.extent,
+                  follower: userSelection.caretFollower,
                 ),
           ],
         );
@@ -227,28 +233,24 @@ class _RebuildOptimizedSuperTextWithSelectionState extends State<_RebuildOptimiz
 /// [TextSelection].
 class UserSelection {
   const UserSelection({
+    required this.selection,
     this.highlightStyle = const SelectionHighlightStyle(),
+    this.highlightWhenEmpty = false,
+    this.highlightBoundsFollower,
     this.caretStyle = const CaretStyle(),
     this.blinkCaret = true,
-    required this.selection,
-    this.highlightWhenEmpty = false,
     this.hasCaret = true,
+    this.caretFollower,
   });
-
-  /// Visual style used to paint a highlight for an expanded [selection].
-  final SelectionHighlightStyle highlightStyle;
-
-  /// Visual style used to paint a caret at the [selection] extent.
-  final CaretStyle caretStyle;
-
-  /// Whether the caret should blink.
-  final bool blinkCaret;
 
   /// The logical text selection boundaries.
   ///
   /// User selection of an empty text block should pass
   /// `TextSelection.collapsed(offset: 0)`.
   final TextSelection selection;
+
+  /// Visual style used to paint a highlight for an expanded [selection].
+  final SelectionHighlightStyle highlightStyle;
 
   /// Whether to paint a small selection highlight for an empty text block.
   ///
@@ -257,6 +259,17 @@ class UserSelection {
   /// blocks will paint a small selection highlight.
   final bool highlightWhenEmpty;
 
+  /// [LayerLink] that connects to an invisible rectangle that surrounds
+  /// the selection highlight, which is useful for positioning something
+  /// like a toolbar near the user's selection.
+  final LayerLink? highlightBoundsFollower;
+
+  /// Visual style used to paint a caret at the [selection] extent.
+  final CaretStyle caretStyle;
+
+  /// Whether the caret should blink.
+  final bool blinkCaret;
+
   /// Whether this selection includes the user's caret.
   ///
   /// Typically, there is only one caret per user within an entire
@@ -264,19 +277,32 @@ class UserSelection {
   /// have selection highlights.
   final bool hasCaret;
 
+  /// [LayerLink] that connects to an invisible rectangle that surrounds
+  /// the user's caret, if the caret is displayed.
+  ///
+  /// Following the caret is useful when displaying something like a user
+  /// name next to a caret, or a magnifier above the caret.
+  final LayerLink? caretFollower;
+
   UserSelection copyWith({
+    TextSelection? selection,
     SelectionHighlightStyle? highlightStyle,
+    bool? highlightWhenEmpty,
+    LayerLink? highlightBoundsFollower,
     CaretStyle? caretStyle,
     bool? blinkCaret,
-    TextSelection? selection,
     bool? hasCaret,
+    LayerLink? caretFollower,
   }) {
     return UserSelection(
+      selection: selection ?? this.selection,
       highlightStyle: highlightStyle ?? this.highlightStyle,
+      highlightWhenEmpty: highlightWhenEmpty ?? this.highlightWhenEmpty,
+      highlightBoundsFollower: highlightBoundsFollower ?? this.highlightBoundsFollower,
       caretStyle: caretStyle ?? this.caretStyle,
       blinkCaret: blinkCaret ?? this.blinkCaret,
-      selection: selection ?? this.selection,
       hasCaret: hasCaret ?? this.hasCaret,
+      caretFollower: caretFollower ?? this.caretFollower,
     );
   }
 
@@ -285,11 +311,23 @@ class UserSelection {
       identical(this, other) ||
       other is UserSelection &&
           runtimeType == other.runtimeType &&
+          selection == other.selection &&
           highlightStyle == other.highlightStyle &&
+          highlightWhenEmpty == other.highlightWhenEmpty &&
+          highlightBoundsFollower == other.highlightBoundsFollower &&
           caretStyle == other.caretStyle &&
           blinkCaret == other.blinkCaret &&
-          selection == other.selection;
+          hasCaret == other.hasCaret &&
+          caretFollower == other.caretFollower;
 
   @override
-  int get hashCode => highlightStyle.hashCode ^ caretStyle.hashCode ^ blinkCaret.hashCode ^ selection.hashCode;
+  int get hashCode =>
+      selection.hashCode ^
+      highlightStyle.hashCode ^
+      highlightWhenEmpty.hashCode ^
+      highlightBoundsFollower.hashCode ^
+      caretStyle.hashCode ^
+      blinkCaret.hashCode ^
+      hasCaret.hashCode ^
+      caretFollower.hashCode;
 }
