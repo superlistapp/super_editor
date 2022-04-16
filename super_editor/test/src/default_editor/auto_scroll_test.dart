@@ -17,8 +17,11 @@ void main() {
           var screenHeight = 844.0;
           const screenWidth = 390.0;
 
-          const frameCount = 60;
-          const shrinkPerFrame = 5.0;
+          // TODO: Figure out why changing the [shrinkPerFrame] and/or [frameCount]
+          // could result in the final actual scroll offset is smaller than the expected scroll offset
+          // by a fraction of [shrinkPerFrame]
+          const frameCount = 5;
+          const shrinkPerFrame = 60.0;
 
           // The position should be in the middle bottom of the screen, so that
           // if the document is layed out properly, tapping this position should place a caret to the document.
@@ -50,7 +53,28 @@ void main() {
             screenHeight,
           );
 
-          expect(scrollController.offset, greaterThanOrEqualTo(tapPosition.dy - screenHeight));
+          final handleFinder = find.byType(BlinkingCaret);
+          final handleBox = handleFinder.evaluate().last.findRenderObject() as RenderBox;
+
+          final editorFinder = find.byType(SuperEditor);
+          final editorBox = editorFinder.evaluate().first.findRenderObject() as RenderBox;
+
+          final documentOffset = handleBox.localToGlobal(editorBox.globalToLocal(Offset.zero));
+
+          // Determine the caret's height. Related to the position of the tapped caret and the document
+          const lineHeight = 18;
+
+          // Dy from the SuperEditor to its Scrollable parent
+          const editorOffsetDy = 212.0;
+
+          // DragAutoScrollBoundary.trailing of default_editor in [AndroidDocumentTouchInteractor]
+          const dragAutoScrollBoundary = 54.0;
+
+          // The math was taken from [ensureOffsetIsVisible] in [document_gestures_touch.dart]
+          expect(
+            scrollController.offset,
+            equals((documentOffset.dy + lineHeight) + dragAutoScrollBoundary - screenHeight + editorOffsetDy),
+          );
         });
       });
       group('iOS', () {
@@ -63,8 +87,11 @@ void main() {
           var screenHeight = 844.0;
           const screenWidth = 390.0;
 
-          const frameCount = 60;
-          const shrinkPerFrame = 5.0;
+          // TODO: Figure out why changing the [shrinkPerFrame] and/or [frameCount]
+          // could result in the final actual scroll offset is smaller than the expected scroll offset
+          // by a fraction of [shrinkPerFrame]
+          const frameCount = 5;
+          const shrinkPerFrame = 60.0;
 
           // The position should be in the middle bottom of the screen, so that
           // if the document is layed out properly, tapping this position should place a caret to the document.
@@ -96,7 +123,28 @@ void main() {
             screenHeight,
           );
 
-          expect(scrollController.offset, greaterThanOrEqualTo(tapPosition.dy - screenHeight));
+          final handleFinder = find.byType(BlinkingCaret);
+          final handleBox = handleFinder.evaluate().last.findRenderObject() as RenderBox;
+
+          final editorFinder = find.byType(SuperEditor);
+          final editorBox = editorFinder.evaluate().first.findRenderObject() as RenderBox;
+
+          final documentOffset = handleBox.localToGlobal(editorBox.globalToLocal(Offset.zero));
+
+          // Determine the caret's height. Related to the position of the tapped caret
+          const lineHeight = 18;
+
+          // Dy from the SuperEditor to its Scrollable parent
+          const editorOffsetDy = 212.0;
+
+          // dragAutoScrollBoundary.trailing of default_editor in [IOSDocumentTouchInteractor]
+          const dragAutoScrollBoundary = 54.0;
+
+          // The math was taken from [ensureOffsetIsVisible] in [document_gestures_touch.dart]
+          expect(
+            scrollController.offset,
+            equals((documentOffset.dy + lineHeight) + dragAutoScrollBoundary - screenHeight + editorOffsetDy),
+          );
         });
       });
     });
@@ -121,7 +169,7 @@ Future<double> _shrinkViewportAndEnsureVisibleCaret(
     await tester.pumpAndSettle();
 
     // Ensure visible caret
-    final handleBox = handleFinder.evaluate().last.renderObject as RenderBox;
+    final handleBox = handleFinder.evaluate().last.findRenderObject() as RenderBox;
     final handleOffset = handleBox.localToGlobal(Offset.zero);
 
     expect(handleOffset.dy, lessThanOrEqualTo(height));
