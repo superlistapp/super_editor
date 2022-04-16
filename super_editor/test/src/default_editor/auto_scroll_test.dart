@@ -151,33 +151,6 @@ void main() {
   });
 }
 
-/// Slowly reduce screen size and pump
-/// To mimic keyboard showing behaviour
-/// Return the reduced height
-Future<double> _shrinkViewportAndEnsureVisibleCaret(
-  WidgetTester tester,
-  int frameCount,
-  double shrinkPerFrame,
-  double width,
-  double height,
-) async {
-  final handleFinder = find.byType(BlinkingCaret);
-
-  for (var i = 0; i < frameCount; i++) {
-    height -= shrinkPerFrame;
-    tester.binding.window.physicalSizeTestValue = Size(width, height);
-    await tester.pumpAndSettle();
-
-    // Ensure visible caret
-    final handleBox = handleFinder.evaluate().last.findRenderObject() as RenderBox;
-    final handleOffset = handleBox.localToGlobal(Offset.zero);
-
-    expect(handleOffset.dy, lessThanOrEqualTo(height));
-  }
-
-  return height;
-}
-
 class _SliverTestEditor extends StatefulWidget {
   const _SliverTestEditor({
     Key? key,
@@ -260,4 +233,31 @@ class _SliverTestEditorState extends State<_SliverTestEditor> {
       debugShowCheckedModeBanner: false,
     );
   }
+}
+
+/// Slowly reduce screen size and pump
+/// To mimic keyboard showing behaviour
+/// Return the reduced height
+Future<double> _shrinkViewportAndEnsureVisibleCaret(
+  WidgetTester tester,
+  int frameCount,
+  double shrinkPerFrame,
+  double width,
+  double height,
+) async {
+  final handleFinder = find.byType(BlinkingCaret);
+
+  for (var i = 0; i < frameCount; i++) {
+    height -= shrinkPerFrame;
+    tester.binding.window.physicalSizeTestValue = Size(width, height);
+    await tester.pumpAndSettle();
+
+    // Ensure visible caret
+    final handleBox = handleFinder.evaluate().last.findRenderObject() as RenderBox;
+    final handleOffset = handleBox.localToGlobal(Offset.zero);
+
+    expect(handleOffset.dy, lessThanOrEqualTo(height));
+  }
+
+  return height;
 }
