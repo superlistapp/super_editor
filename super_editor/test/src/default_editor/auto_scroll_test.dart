@@ -12,7 +12,7 @@ void main() {
           final scrollController = ScrollController();
 
           // Setting initial fake screen size. The height would shrink later on.
-          // The size should be set properly so that when the _SliverTestEditor is layed out,
+          // The size should be set properly so that when the _SliverTestEditor is laid out,
           // the document is within bottom of the viewport.
           var screenHeight = 844.0;
           const screenWidth = 390.0;
@@ -24,7 +24,7 @@ void main() {
           const shrinkPerFrame = 60.0;
 
           // The position should be in the middle bottom of the screen, so that
-          // if the document is layed out properly, tapping this position should place a caret to the document.
+          // if the document is laid out properly, tapping this position should place a caret to the document.
           // dy should be less than height to prevent tapping outside the screen
           final tapPosition = Offset(screenWidth / 2, screenHeight - 1);
 
@@ -82,7 +82,7 @@ void main() {
           final scrollController = ScrollController();
 
           // Setting initial fake screen size. The height would shrink later on.
-          // The size should be set properly so that when the _SliverTestEditor is layed out,
+          // The size should be set properly so that when the _SliverTestEditor is laid out,
           // the document is within bottom of the viewport.
           var screenHeight = 844.0;
           const screenWidth = 390.0;
@@ -94,7 +94,7 @@ void main() {
           const shrinkPerFrame = 60.0;
 
           // The position should be in the middle bottom of the screen, so that
-          // if the document is layed out properly, tapping this position should place a caret to the document.
+          // if the document is laid out properly, tapping this position should place a caret to the document.
           // dy should be less than height to prevent tapping outside the screen
           final tapPosition = Offset(screenWidth / 2, screenHeight - 1);
 
