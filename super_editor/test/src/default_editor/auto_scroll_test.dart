@@ -2,75 +2,136 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/super_editor.dart';
 
+import '../_document_test_tools.dart';
+
 void main() {
   group('SuperEditor', () {
     group('auto-scroll', () {
       group('Android', () {
-        testAutoScroll(
-          'maintain visible caret when the viewport is being minimized',
-          DocumentGestureMode.android,
-        );
+        testWidgets('maintain visible caret when the viewport is being minimized', (WidgetTester tester) async {
+          final scrollController = ScrollController();
+
+          // Setting initial fake screen size. The height would shrink later on.
+          // The size should be set properly so that when the _SliverTestEditor is layed out,
+          // the document is within bottom of the viewport.
+          var screenHeight = 844.0;
+          const screenWidth = 390.0;
+
+          const frameCount = 60;
+          const shrinkPerFrame = 5.0;
+
+          // The position should be in the middle bottom of the screen, so that
+          // if the document is layed out properly, tapping this position should place a caret to the document.
+          // dy should be less than height to prevent tapping outside the screen
+          final tapPosition = Offset(screenWidth / 2, screenHeight - 1);
+
+          tester.binding.window
+            ..physicalSizeTestValue = Size(screenWidth, screenHeight)
+            ..textScaleFactorTestValue = 1.0
+            ..devicePixelRatioTestValue = 1.0;
+
+          final testEditor = _SliverTestEditor(
+            scrollController: scrollController,
+            gestureMode: DocumentGestureMode.android,
+          );
+
+          await tester.pumpWidget(testEditor);
+          await tester.pumpAndSettle();
+
+          // Place a caret to the document
+          await tester.tapAt(tapPosition);
+          await tester.pumpAndSettle();
+
+          screenHeight = await _shrinkViewportAndEnsureVisibleCaret(
+            tester,
+            frameCount,
+            shrinkPerFrame,
+            screenWidth,
+            screenHeight,
+          );
+
+          expect(scrollController.offset, greaterThanOrEqualTo(tapPosition.dy - screenHeight));
+        });
       });
       group('iOS', () {
-        testAutoScroll(
-          'maintain visible caret when the viewport is being minimized',
-          DocumentGestureMode.iOS,
-        );
+        testWidgets('maintain visible caret when the viewport is being minimized', (WidgetTester tester) async {
+          final scrollController = ScrollController();
+
+          // Setting initial fake screen size. The height would shrink later on.
+          // The size should be set properly so that when the _SliverTestEditor is layed out,
+          // the document is within bottom of the viewport.
+          var screenHeight = 844.0;
+          const screenWidth = 390.0;
+
+          const frameCount = 60;
+          const shrinkPerFrame = 5.0;
+
+          // The position should be in the middle bottom of the screen, so that
+          // if the document is layed out properly, tapping this position should place a caret to the document.
+          // dy should be less than height to prevent tapping outside the screen
+          final tapPosition = Offset(screenWidth / 2, screenHeight - 1);
+
+          tester.binding.window
+            ..physicalSizeTestValue = Size(screenWidth, screenHeight)
+            ..textScaleFactorTestValue = 1.0
+            ..devicePixelRatioTestValue = 1.0;
+
+          final testEditor = _SliverTestEditor(
+            scrollController: scrollController,
+            gestureMode: DocumentGestureMode.iOS,
+          );
+
+          await tester.pumpWidget(testEditor);
+          await tester.pumpAndSettle();
+
+          // Place a caret to the document
+          await tester.tapAt(tapPosition);
+          await tester.pumpAndSettle();
+
+          screenHeight = await _shrinkViewportAndEnsureVisibleCaret(
+            tester,
+            frameCount,
+            shrinkPerFrame,
+            screenWidth,
+            screenHeight,
+          );
+
+          expect(scrollController.offset, greaterThanOrEqualTo(tapPosition.dy - screenHeight));
+        });
       });
     });
   });
 }
 
-void testAutoScroll(
-  String description,
-  DocumentGestureMode gestureMode,
-) {
-  testWidgets(description, (WidgetTester tester) async {
-    final scrollController = ScrollController();
+/// Slowly reduce screen size and pump
+/// To mimic keyboard showing behaviour
+/// Return the reduced height
+Future<double> _shrinkViewportAndEnsureVisibleCaret(
+  WidgetTester tester,
+  int frameCount,
+  double shrinkPerFrame,
+  double width,
+  double height,
+) async {
+  final handleFinder = find.byType(BlinkingCaret);
 
-    var height = 844.0;
-    const width = 390.0;
-    const tapDy = 800.0;
-
-    tester.binding.window
-      ..physicalSizeTestValue = Size(width, height)
-      ..textScaleFactorTestValue = 1.0
-      ..devicePixelRatioTestValue = 1.0;
-
-    final testEditor = SliverTestEditor(
-      scrollController: scrollController,
-      gestureMode: gestureMode,
-    );
-
-    await tester.pumpWidget(testEditor);
+  for (var i = 0; i < frameCount; i++) {
+    height -= shrinkPerFrame;
+    tester.binding.window.physicalSizeTestValue = Size(width, height);
     await tester.pumpAndSettle();
 
-    expect(scrollController.offset, 0.0);
+    // Ensure visible caret
+    final handleBox = handleFinder.evaluate().last.renderObject as RenderBox;
+    final handleOffset = handleBox.localToGlobal(Offset.zero);
 
-    // Tap at the middle bottom of the screen
-    await tester.tapAt(const Offset(width / 2, tapDy));
-    await tester.pumpAndSettle();
+    expect(handleOffset.dy, lessThanOrEqualTo(height));
+  }
 
-    // Slowly reduce screen size and pump
-    // To mimic keyboard showing behaviour
-    for (var i = 0; i < 30; i++) {
-      height -= 10;
-      tester.binding.window.physicalSizeTestValue = Size(width, height);
-      await tester.pumpAndSettle();
-
-      // Maintain visible caret
-      final handleFinder = find.byType(
-        gestureMode == DocumentGestureMode.iOS ? IOSCollapsedHandle : AndroidSelectionHandle,
-      );
-      expect(handleFinder.evaluate(), isNotEmpty);
-    }
-
-    expect(scrollController.offset, greaterThanOrEqualTo(tapDy - height));
-  });
+  return height;
 }
 
-class SliverTestEditor extends StatefulWidget {
-  const SliverTestEditor({
+class _SliverTestEditor extends StatefulWidget {
+  const _SliverTestEditor({
     Key? key,
     this.scrollController,
     required this.gestureMode,
@@ -80,10 +141,10 @@ class SliverTestEditor extends StatefulWidget {
   final DocumentGestureMode gestureMode;
 
   @override
-  State<SliverTestEditor> createState() => SliverTestEditorState();
+  State<_SliverTestEditor> createState() => _SliverTestEditorState();
 }
 
-class SliverTestEditorState extends State<SliverTestEditor> {
+class _SliverTestEditorState extends State<_SliverTestEditor> {
   late Document _doc;
   late DocumentEditor _docEditor;
 
@@ -91,7 +152,7 @@ class SliverTestEditorState extends State<SliverTestEditor> {
   void initState() {
     super.initState();
 
-    _doc = _createInitialDocument();
+    _doc = createExampleDocument();
     _docEditor = DocumentEditor(document: _doc as MutableDocument);
   }
 
@@ -141,19 +202,7 @@ class SliverTestEditorState extends State<SliverTestEditor> {
             SliverList(
               delegate: SliverChildBuilderDelegate(
                 (BuildContext context, int index) {
-                  return ListTile(
-                    title: Text('$index'),
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            'SliverList element tapped with index $index.',
-                          ),
-                          duration: const Duration(milliseconds: 500),
-                        ),
-                      );
-                    },
-                  );
+                  return ListTile(title: Text('$index'));
                 },
               ),
             ),
@@ -161,50 +210,6 @@ class SliverTestEditorState extends State<SliverTestEditor> {
         ),
       ),
       debugShowCheckedModeBanner: false,
-    );
-  }
-
-  Document _createInitialDocument() {
-    return MutableDocument(
-      nodes: [
-        ParagraphNode(
-          id: DocumentEditor.createNodeId(),
-          text: AttributedText(
-            text: 'Example Document',
-          ),
-          metadata: {
-            'blockType': header1Attribution,
-          },
-        ),
-        HorizontalRuleNode(id: DocumentEditor.createNodeId()),
-        ParagraphNode(
-          id: DocumentEditor.createNodeId(),
-          text: AttributedText(
-            text:
-                'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus sed sagittis urna. Aenean mattis ante justo, quis sollicitudin metus interdum id. Aenean ornare urna ac enim consequat mollis. In aliquet convallis efficitur. Phasellus convallis purus in fringilla scelerisque. Ut ac orci a turpis egestas lobortis. Morbi aliquam dapibus sem, vitae sodales arcu ultrices eu. Duis vulputate mauris quam, eleifend pulvinar quam blandit eget.',
-          ),
-        ),
-        ParagraphNode(
-          id: DocumentEditor.createNodeId(),
-          text: AttributedText(
-              text:
-                  'Cras vitae sodales nisi. Vivamus dignissim vel purus vel aliquet. Sed viverra diam vel nisi rhoncus pharetra. Donec gravida ut ligula euismod pharetra. Etiam sed urna scelerisque, efficitur mauris vel, semper arcu. Nullam sed vehicula sapien. Donec id tellus volutpat, eleifend nulla eget, rutrum mauris.'),
-        ),
-        ParagraphNode(
-          id: DocumentEditor.createNodeId(),
-          text: AttributedText(
-            text:
-                'Nam hendrerit vitae elit ut placerat. Maecenas nec congue neque. Fusce eget tortor pulvinar, cursus neque vitae, sagittis lectus. Duis mollis libero eu scelerisque ullamcorper. Pellentesque eleifend arcu nec augue molestie, at iaculis dui rutrum. Etiam lobortis magna at magna pellentesque ornare. Sed accumsan, libero vel porta molestie, tortor lorem eleifend ante, at egestas leo felis sed nunc. Quisque mi neque, molestie vel dolor a, eleifend tempor odio.',
-          ),
-        ),
-        ParagraphNode(
-          id: DocumentEditor.createNodeId(),
-          text: AttributedText(
-            text:
-                'Etiam id lacus interdum, efficitur ex convallis, accumsan ipsum. Integer faucibus mollis mauris, a suscipit ante mollis vitae. Fusce justo metus, congue non lectus ac, luctus rhoncus tellus. Phasellus vitae fermentum orci, sit amet sodales orci. Fusce at ante iaculis nunc aliquet pharetra. Nam placerat, nisl in gravida lacinia, nisl nibh feugiat nunc, in sagittis nisl sapien nec arcu. Nunc gravida faucibus massa, sit amet accumsan dolor feugiat in. Mauris ut elementum leo.',
-          ),
-        ),
-      ],
     );
   }
 }
