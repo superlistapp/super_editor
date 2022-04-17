@@ -256,8 +256,9 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       return;
     }
 
-    final editorOffset = (widget.documentKey.currentContext!.findRenderObject() as RenderBox)
-        .localToGlobal(viewportBox.globalToLocal(Offset.zero));
+    final editorBox = widget.documentKey.currentContext!.findRenderObject() as RenderBox;
+
+    final editorOffset = viewportBox.globalToLocal(Offset.zero) - editorBox.globalToLocal(Offset.zero);
 
     if (collapsedHandleOffset != null) {
       _handleAutoScrolling.ensureOffsetIsVisible(collapsedHandleOffset, editorOffset);
@@ -684,6 +685,8 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     // Calculate the new (x,y) offset for the collapsed handle.
     final extentRect = _docLayout.getRectForPosition(selection.extent);
     late Offset handleOffset = extentRect!.bottomLeft;
+
+    editorGesturesLog.fine('handleOffset: $handleOffset');
 
     _editingController
       ..collapsedHandleOffset = handleOffset

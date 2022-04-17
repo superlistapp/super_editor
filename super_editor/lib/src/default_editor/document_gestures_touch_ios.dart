@@ -270,8 +270,9 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
       return;
     }
 
-    final editorOffset = (widget.documentKey.currentContext!.findRenderObject() as RenderBox)
-        .localToGlobal(viewportBox.globalToLocal(Offset.zero));
+    final editorBox = widget.documentKey.currentContext!.findRenderObject() as RenderBox;
+
+    final editorOffset = viewportBox.globalToLocal(Offset.zero) - editorBox.globalToLocal(Offset.zero);
 
     if (collapsedHandleOffset != null) {
       editorGesturesLog.fine("The selection is collapsed");
