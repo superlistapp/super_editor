@@ -55,7 +55,7 @@ void main() {
 
           final handleToEditorOffset = handleOffset - editorOffset;
 
-          // Determine the caret's height. Related to the position of the tapped caret
+          // Determine the caret's height. Related to the tapped text position
           const lineHeight = 18;
 
           // Dy from the SuperEditor to its Scrollable parent
@@ -119,13 +119,13 @@ void main() {
 
           final handleToEditorOffset = handleOffset - editorOffset;
 
-          // Determine the caret's height. Related to the position of the tapped caret
+          // Determine the caret's height. Related to the tapped text position
           const lineHeight = 18;
 
           // Dy from the SuperEditor to its Scrollable parent
           const editorOffsetDy = 212.0;
 
-          // DragAutoScrollBoundary.trailing of default_editor in [AndroidDocumentTouchInteractor]
+          // DragAutoScrollBoundary.trailing of default_editor in [iOSDocumentTouchInteractor]
           const dragAutoScrollBoundary = 54.0;
 
           // The math was taken from [ensureOffsetIsVisible] in [document_gestures_touch.dart]
