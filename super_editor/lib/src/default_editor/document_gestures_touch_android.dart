@@ -258,7 +258,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
     final editorBox = widget.documentKey.currentContext!.findRenderObject() as RenderBox;
 
-    final editorOffset = viewportBox.globalToLocal(Offset.zero) - editorBox.globalToLocal(Offset.zero);
+    final editorOffset = editorBox.globalToLocal(Offset.zero) - viewportBox.globalToLocal(Offset.zero);
 
     if (collapsedHandleOffset != null) {
       _handleAutoScrolling.ensureOffsetIsVisible(collapsedHandleOffset, editorOffset);
