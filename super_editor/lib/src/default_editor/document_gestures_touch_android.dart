@@ -686,8 +686,6 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     final extentRect = _docLayout.getRectForPosition(selection.extent);
     late Offset handleOffset = extentRect!.bottomLeft;
 
-    editorGesturesLog.fine('handleOffset: $handleOffset');
-
     _editingController
       ..collapsedHandleOffset = handleOffset
       ..unHideCollapsedHandle()
