@@ -11,9 +11,7 @@ void main() {
         testWidgets('maintain visible caret when the viewport is being minimized', (WidgetTester tester) async {
           final scrollController = ScrollController();
 
-          // Setting initial fake screen size. The height would shrink later on.
-          // The size should be set properly so that when the _SliverTestEditor is laid out,
-          // the document is within bottom of the viewport.
+          // Setting initial fake screen size. The height will shrink later.
           var screenHeight = 844.0;
           const screenWidth = 390.0;
 
@@ -23,9 +21,7 @@ void main() {
           const frameCount = 5;
           const shrinkPerFrame = 60.0;
 
-          // The position should be in the middle bottom of the screen, so that
-          // if the document is laid out properly, tapping this position should place a caret to the document.
-          // dy should be less than height to prevent tapping outside the screen
+          // Tap offset to select an arbitrary text position in the document.
           final tapPosition = Offset(screenWidth / 2, screenHeight - 1);
 
           tester.binding.window
@@ -39,29 +35,27 @@ void main() {
           );
 
           await tester.pumpWidget(testEditor);
-          await tester.pumpAndSettle();
 
-          // Place a caret to the document
+          // Place a caret in the document
           await tester.tapAt(tapPosition);
-          await tester.pumpAndSettle();
 
           screenHeight = await _shrinkViewportAndEnsureVisibleCaret(
-            tester,
-            frameCount,
-            shrinkPerFrame,
-            screenWidth,
-            screenHeight,
+            tester: tester,
+            frameCount: frameCount,
+            shrinkPerFrame: shrinkPerFrame,
+            width: screenWidth,
+            height: screenHeight,
           );
 
           final handleFinder = find.byType(BlinkingCaret);
-          final handleBox = handleFinder.evaluate().last.findRenderObject() as RenderBox;
+          final handleOffset = tester.getTopLeft(handleFinder.last);
 
           final editorFinder = find.byType(SuperEditor);
-          final editorBox = editorFinder.evaluate().first.findRenderObject() as RenderBox;
+          final editorOffset = tester.getTopLeft(editorFinder.last);
 
-          final documentOffset = handleBox.localToGlobal(editorBox.globalToLocal(Offset.zero));
+          final handleToEditorOffset = handleOffset - editorOffset;
 
-          // Determine the caret's height. Related to the position of the tapped caret and the document
+          // Determine the caret's height. Related to the position of the tapped caret
           const lineHeight = 18;
 
           // Dy from the SuperEditor to its Scrollable parent
@@ -73,7 +67,7 @@ void main() {
           // The math was taken from [ensureOffsetIsVisible] in [document_gestures_touch.dart]
           expect(
             scrollController.offset,
-            equals((documentOffset.dy + lineHeight) + dragAutoScrollBoundary - screenHeight + editorOffsetDy),
+            equals((handleToEditorOffset.dy + lineHeight) + dragAutoScrollBoundary - screenHeight + editorOffsetDy),
           );
         });
       });
@@ -81,9 +75,7 @@ void main() {
         testWidgets('maintain visible caret when the viewport is being minimized', (WidgetTester tester) async {
           final scrollController = ScrollController();
 
-          // Setting initial fake screen size. The height would shrink later on.
-          // The size should be set properly so that when the _SliverTestEditor is laid out,
-          // the document is within bottom of the viewport.
+          // Setting initial fake screen size. The height will shrink later.
           var screenHeight = 844.0;
           const screenWidth = 390.0;
 
@@ -93,9 +85,7 @@ void main() {
           const frameCount = 5;
           const shrinkPerFrame = 60.0;
 
-          // The position should be in the middle bottom of the screen, so that
-          // if the document is laid out properly, tapping this position should place a caret to the document.
-          // dy should be less than height to prevent tapping outside the screen
+          // Tap offset to select an arbitrary text position in the document.
           final tapPosition = Offset(screenWidth / 2, screenHeight - 1);
 
           tester.binding.window
@@ -109,27 +99,25 @@ void main() {
           );
 
           await tester.pumpWidget(testEditor);
-          await tester.pumpAndSettle();
 
           // Place a caret to the document
           await tester.tapAt(tapPosition);
-          await tester.pumpAndSettle();
 
           screenHeight = await _shrinkViewportAndEnsureVisibleCaret(
-            tester,
-            frameCount,
-            shrinkPerFrame,
-            screenWidth,
-            screenHeight,
+            tester: tester,
+            frameCount: frameCount,
+            shrinkPerFrame: shrinkPerFrame,
+            width: screenWidth,
+            height: screenHeight,
           );
 
           final handleFinder = find.byType(BlinkingCaret);
-          final handleBox = handleFinder.evaluate().last.findRenderObject() as RenderBox;
+          final handleOffset = tester.getTopLeft(handleFinder.last);
 
           final editorFinder = find.byType(SuperEditor);
-          final editorBox = editorFinder.evaluate().first.findRenderObject() as RenderBox;
+          final editorOffset = tester.getTopLeft(editorFinder.last);
 
-          final documentOffset = handleBox.localToGlobal(editorBox.globalToLocal(Offset.zero));
+          final handleToEditorOffset = handleOffset - editorOffset;
 
           // Determine the caret's height. Related to the position of the tapped caret
           const lineHeight = 18;
@@ -137,13 +125,13 @@ void main() {
           // Dy from the SuperEditor to its Scrollable parent
           const editorOffsetDy = 212.0;
 
-          // dragAutoScrollBoundary.trailing of default_editor in [IOSDocumentTouchInteractor]
+          // DragAutoScrollBoundary.trailing of default_editor in [AndroidDocumentTouchInteractor]
           const dragAutoScrollBoundary = 54.0;
 
           // The math was taken from [ensureOffsetIsVisible] in [document_gestures_touch.dart]
           expect(
             scrollController.offset,
-            equals((documentOffset.dy + lineHeight) + dragAutoScrollBoundary - screenHeight + editorOffsetDy),
+            equals((handleToEditorOffset.dy + lineHeight) + dragAutoScrollBoundary - screenHeight + editorOffsetDy),
           );
         });
       });
@@ -235,16 +223,20 @@ class _SliverTestEditorState extends State<_SliverTestEditor> {
   }
 }
 
-/// Slowly reduce screen size and pump
-/// To mimic keyboard showing behaviour
-/// Return the reduced height
-Future<double> _shrinkViewportAndEnsureVisibleCaret(
-  WidgetTester tester,
-  int frameCount,
-  double shrinkPerFrame,
-  double width,
-  double height,
-) async {
+/// Slowly reduces window size in order to mimic keyboard
+/// showing behaviour while ensuring the caret is being displayed
+///
+/// The window size will shrink for a number of [frameCount], each time
+/// it reduces an amount of [shrinkPerFrame]
+///
+/// Returns the new height, which equals to [height] - [frameCount] * [shrinkPerFrame]
+Future<double> _shrinkViewportAndEnsureVisibleCaret({
+  required WidgetTester tester,
+  required int frameCount,
+  required double shrinkPerFrame,
+  required double width,
+  required double height,
+}) async {
   final handleFinder = find.byType(BlinkingCaret);
 
   for (var i = 0; i < frameCount; i++) {
@@ -253,11 +245,11 @@ Future<double> _shrinkViewportAndEnsureVisibleCaret(
     await tester.pumpAndSettle();
 
     // Ensure visible caret
-    final handleBox = handleFinder.evaluate().last.findRenderObject() as RenderBox;
-    final handleOffset = handleBox.localToGlobal(Offset.zero);
+    final handleOffset = tester.getBottomLeft(handleFinder.last);
 
     expect(handleOffset.dy, lessThanOrEqualTo(height));
   }
 
+  // Return the window's height after being shrunk
   return height;
 }
