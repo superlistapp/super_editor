@@ -223,11 +223,10 @@ class _SliverTestEditorState extends State<_SliverTestEditor> {
   }
 }
 
-/// Slowly reduces window size in order to mimic keyboard
-/// showing behaviour while ensuring the caret is being displayed
+/// Slowly reduces window size while ensuring the caret is being displayed
 ///
-/// The window size will shrink for a number of [frameCount], each time
-/// it reduces an amount of [shrinkPerFrame]
+/// To mimic the keyboard showing behaviour, the window size will be shrinking
+/// for a number of [frameCount], each time it reduces an amount of [shrinkPerFrame]
 ///
 /// Returns the new height, which equals to [height] - [frameCount] * [shrinkPerFrame]
 Future<double> _shrinkViewportAndEnsureVisibleCaret({
