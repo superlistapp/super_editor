@@ -15,8 +15,8 @@ void main() {
           var screenHeight = 844.0;
           const screenWidth = 390.0;
 
-          const frameCount = 5;
-          const shrinkPerFrame = 60.0;
+          const frameCount = 60;
+          const shrinkPerFrame = 5.0;
 
           // Tap offset to select an arbitrary text position in the document.
           final tapPosition = Offset(screenWidth / 2, screenHeight - 1);
@@ -71,8 +71,9 @@ void main() {
             scrollController.offset,
             equals((handleToEditorOffset.dy + lineHeight) +
                 dragAutoScrollBoundary -
-                (screenHeight - unscrolledOffset) +
-                editorOffsetDy),
+                screenHeight +
+                editorOffsetDy -
+                unscrolledOffset),
           );
         });
       });
@@ -140,8 +141,9 @@ void main() {
             scrollController.offset,
             equals((handleToEditorOffset.dy + lineHeight) +
                 dragAutoScrollBoundary -
-                (screenHeight - unscrolledOffset) +
-                editorOffsetDy),
+                screenHeight +
+                editorOffsetDy -
+                unscrolledOffset),
           );
         });
       });
