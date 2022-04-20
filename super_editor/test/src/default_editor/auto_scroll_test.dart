@@ -15,9 +15,6 @@ void main() {
           var screenHeight = 844.0;
           const screenWidth = 390.0;
 
-          // TODO: Figure out why changing the [shrinkPerFrame] and/or [frameCount]
-          // could result in the final actual scroll offset is smaller than the expected scroll offset
-          // by a fraction of [shrinkPerFrame]
           const frameCount = 5;
           const shrinkPerFrame = 60.0;
 
@@ -39,13 +36,16 @@ void main() {
           // Place a caret in the document
           await tester.tapAt(tapPosition);
 
-          screenHeight = await _shrinkViewportAndEnsureVisibleCaret(
+          final unscrolledOffset = await _shrinkViewportAndEnsureVisibleCaret(
             tester: tester,
             frameCount: frameCount,
             shrinkPerFrame: shrinkPerFrame,
             width: screenWidth,
             height: screenHeight,
           );
+
+          // After shrinking, screenHeight is reduced
+          screenHeight = screenHeight - frameCount * shrinkPerFrame;
 
           final handleFinder = find.byType(BlinkingCaret);
           final handleOffset = tester.getTopLeft(handleFinder.last);
@@ -65,9 +65,14 @@ void main() {
           const dragAutoScrollBoundary = 54.0;
 
           // The math was taken from [ensureOffsetIsVisible] in [document_gestures_touch.dart]
+          // The [unscrolledOffset] is subtracted because at the last of the shrinking frame process,
+          // the screenHeight (viewport) is reduced but it doesn't meet the condition to scroll
           expect(
             scrollController.offset,
-            equals((handleToEditorOffset.dy + lineHeight) + dragAutoScrollBoundary - screenHeight + editorOffsetDy),
+            equals((handleToEditorOffset.dy + lineHeight) +
+                dragAutoScrollBoundary -
+                (screenHeight - unscrolledOffset) +
+                editorOffsetDy),
           );
         });
       });
@@ -79,11 +84,8 @@ void main() {
           var screenHeight = 844.0;
           const screenWidth = 390.0;
 
-          // TODO: Figure out why changing the [shrinkPerFrame] and/or [frameCount]
-          // could result in the final actual scroll offset is smaller than the expected scroll offset
-          // by a fraction of [shrinkPerFrame]
-          const frameCount = 5;
-          const shrinkPerFrame = 60.0;
+          const frameCount = 60;
+          const shrinkPerFrame = 5.0;
 
           // Tap offset to select an arbitrary text position in the document.
           final tapPosition = Offset(screenWidth / 2, screenHeight - 1);
@@ -103,13 +105,16 @@ void main() {
           // Place a caret to the document
           await tester.tapAt(tapPosition);
 
-          screenHeight = await _shrinkViewportAndEnsureVisibleCaret(
+          final unscrolledOffset = await _shrinkViewportAndEnsureVisibleCaret(
             tester: tester,
             frameCount: frameCount,
             shrinkPerFrame: shrinkPerFrame,
             width: screenWidth,
             height: screenHeight,
           );
+
+          // After shrinking, screenHeight is reduced
+          screenHeight = screenHeight - frameCount * shrinkPerFrame;
 
           final handleFinder = find.byType(BlinkingCaret);
           final handleOffset = tester.getTopLeft(handleFinder.last);
@@ -129,9 +134,14 @@ void main() {
           const dragAutoScrollBoundary = 54.0;
 
           // The math was taken from [ensureOffsetIsVisible] in [document_gestures_touch.dart]
+          // The [unscrolledOffset] is subtracted because at the last of the shrinking frame process,
+          // the screenHeight (viewport) is reduced but it doesn't meet the condition to scroll
           expect(
             scrollController.offset,
-            equals((handleToEditorOffset.dy + lineHeight) + dragAutoScrollBoundary - screenHeight + editorOffsetDy),
+            equals((handleToEditorOffset.dy + lineHeight) +
+                dragAutoScrollBoundary -
+                (screenHeight - unscrolledOffset) +
+                editorOffsetDy),
           );
         });
       });
@@ -228,7 +238,8 @@ class _SliverTestEditorState extends State<_SliverTestEditor> {
 /// To mimic the keyboard showing behaviour, the window size will be shrinking
 /// for a number of [frameCount], each time it reduces an amount of [shrinkPerFrame]
 ///
-/// Returns the new height, which equals to [height] - [frameCount] * [shrinkPerFrame]
+/// During the shrinking, the editor might not scroll on every frame.
+/// Returns the total scroll offset of continuously not scrolling in those last frames.
 Future<double> _shrinkViewportAndEnsureVisibleCaret({
   required WidgetTester tester,
   required int frameCount,
@@ -237,6 +248,9 @@ Future<double> _shrinkViewportAndEnsureVisibleCaret({
   required double height,
 }) async {
   final handleFinder = find.byType(BlinkingCaret);
+
+  int framesBeforeScroll = 0;
+  double prevHandleOffsetDy = 0;
 
   for (var i = 0; i < frameCount; i++) {
     height -= shrinkPerFrame;
@@ -247,8 +261,15 @@ Future<double> _shrinkViewportAndEnsureVisibleCaret({
     final handleOffset = tester.getBottomLeft(handleFinder.last);
 
     expect(handleOffset.dy, lessThanOrEqualTo(height));
-  }
 
-  // Return the window's height after being shrunk
-  return height;
+    if (prevHandleOffsetDy != handleOffset.dy) {
+      // HandleOffset changed, means the editor scrolled
+      framesBeforeScroll = 0;
+      prevHandleOffsetDy = handleOffset.dy;
+    } else {
+      framesBeforeScroll++;
+    }
+  }
+  // Returns the total scroll offset of continuously not scrolling in the last frames
+  return framesBeforeScroll * shrinkPerFrame;
 }
