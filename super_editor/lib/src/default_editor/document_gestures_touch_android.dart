@@ -261,8 +261,10 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     final editorOffset = editorBox.globalToLocal(Offset.zero) - viewportBox.globalToLocal(Offset.zero);
 
     if (collapsedHandleOffset != null) {
+      editorGesturesLog.fine("The selection is collapsed");
       _handleAutoScrolling.ensureOffsetIsVisible(collapsedHandleOffset, editorOffset);
     } else {
+      editorGesturesLog.fine("The selection is expanded");
       _handleAutoScrolling.ensureOffsetIsVisible(extentHandleOffset!, editorOffset);
     }
   }
