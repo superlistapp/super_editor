@@ -8,7 +8,7 @@ void main() {
   group('SuperEditor', () {
     group('auto-scroll', () {
       const screenSizeWithoutKeyboard = Size(390.0, 844.0);
-      const screenSizeWithKeyboard = Size(390.0, 544.0);
+      const screenSizeWithKeyboard = Size(390.0, 444.0);
       const keyboardExpansionFrameCount = 60;
       final shrinkPerFrame =
           (screenSizeWithoutKeyboard.height - screenSizeWithKeyboard.height) / keyboardExpansionFrameCount;
@@ -39,7 +39,7 @@ void main() {
 
         // Ensure that the editor auto-scrolled to keep the caret visible.
         final handleFinder = find.byType(BlinkingCaret);
-        final handleOffset = tester.getTopLeft(handleFinder.first);
+        final handleOffset = tester.getTopLeft(handleFinder.last);
 
         // Hard-code a reasonable line-height because carets do not currently
         // report their height.
@@ -92,13 +92,12 @@ void main() {
   });
 }
 
-/// Displays a `SuperEditor` within a parent `Scrollable`, including additional content
-/// above the `SuperEditor`, so that `SuperEditor` doesn't have the same origin as the
-/// parent `Scrollable`.
+/// Displays a [SuperEditor] within a parent [Scrollable], including additional
+/// content above the [SuperEditor] and additional content on top of [Scrollable].
 ///
-/// The difference in origin is important because some calculations might assume that
-/// they're the same, and this test suite helps to make sure that scrolling calculations
-/// fully account for the editor's origin.
+/// By including content above the [SuperEditor], it doesn't have the same origin as the parent [Scrollable].
+///
+/// By including content on top of [Scrollable], it doesn't have the origin at [Offset.zero].
 class _SliverTestEditor extends StatefulWidget {
   const _SliverTestEditor({
     Key? key,
@@ -127,46 +126,49 @@ class _SliverTestEditorState extends State<_SliverTestEditor> {
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
-        body: CustomScrollView(
-          slivers: [
-            SliverAppBar(
-              title: const Text(
-                'Rich Text Editor Sliver Example',
-              ),
-              expandedHeight: 200.0,
-              leading: const SizedBox(),
-              flexibleSpace: FlexibleSpaceBar(
-                background: Container(color: Colors.blue),
-              ),
-            ),
-            const SliverToBoxAdapter(
-              child: Text(
-                'Lorem Ipsum Dolor',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
+        body: Padding(
+          padding: const EdgeInsets.only(top: 300),
+          child: CustomScrollView(
+            slivers: [
+              SliverAppBar(
+                title: const Text(
+                  'Rich Text Editor Sliver Example',
                 ),
-                textAlign: TextAlign.center,
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: SuperEditor(
-                editor: _docEditor,
-                stylesheet: defaultStylesheet.copyWith(
-                  documentPadding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),
+                expandedHeight: 200.0,
+                leading: const SizedBox(),
+                flexibleSpace: FlexibleSpaceBar(
+                  background: Container(color: Colors.blue),
                 ),
-                gestureMode: widget.gestureMode,
-                inputSource: DocumentInputSource.ime,
               ),
-            ),
-            SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (BuildContext context, int index) {
-                  return ListTile(title: Text('$index'));
-                },
+              const SliverToBoxAdapter(
+                child: Text(
+                  'Lorem Ipsum Dolor',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
               ),
-            ),
-          ],
+              SliverToBoxAdapter(
+                child: SuperEditor(
+                  editor: _docEditor,
+                  stylesheet: defaultStylesheet.copyWith(
+                    documentPadding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),
+                  ),
+                  gestureMode: widget.gestureMode,
+                  inputSource: DocumentInputSource.ime,
+                ),
+              ),
+              SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (BuildContext context, int index) {
+                    return ListTile(title: Text('$index'));
+                  },
+                ),
+              ),
+            ],
+          ),
         ),
       ),
       debugShowCheckedModeBanner: false,
