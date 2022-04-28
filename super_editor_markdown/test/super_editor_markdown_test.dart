@@ -660,31 +660,27 @@ This is some code
     });
 
     group("empty lines", () {
-      test('single empty lines', () {
 
-        const markdown = '''
-content
-
-
-
-content
-''';
-
+      void assertParagraphEquality(String markdown, List<String> paragraphs) {
         final document = deserializeMarkdownToDocument(markdown, allowBlankLines: true);
+        expect(document.nodes.length, paragraphs.length, reason: "Nodes (${document.nodes}) does not match paragraphs ($paragraphs)");
+        for (int i = 0; i < document.nodes.length; i++) {
+          expect((document.nodes[i] as ParagraphNode).text.text, paragraphs[i], reason: "Mismatch at index $i");
+        }
+      }
 
-        expect(document.nodes.length, 3);
+      test('single empty line', () {
+        assertParagraphEquality('''
+content
 
-        var paragraph = document.nodes[0] as ParagraphNode;
-        expect(paragraph.text.text, 'content');
-        paragraph = document.nodes[1] as ParagraphNode;
-        expect(paragraph.text.text, '');
-        paragraph = document.nodes[2] as ParagraphNode;
-        expect(paragraph.text.text, 'content');
+
+
+content
+''', <String>["content", "", "content"]);
       });
 
-      test('multiple empty lines', () {
-
-        const markdown = '''
+      test('multi empty lines', () {
+        assertParagraphEquality('''
 content
 
 
@@ -692,16 +688,21 @@ content
 
 
 content
-''';
+''', <String>["content", "", "", "content"]);
+      });
 
-        final document = deserializeMarkdownToDocument(markdown, allowBlankLines: true);
+      test('single empty line nothing else', () {
+        assertParagraphEquality('''
 
-        expect(document.nodes.length, 4);
+''', <String>[""]);
+      });
 
-        expect((document.nodes[0] as ParagraphNode).text.text, 'content');
-        expect((document.nodes[1] as ParagraphNode).text.text, '');
-        expect((document.nodes[2] as ParagraphNode).text.text, '');
-        expect((document.nodes[3] as ParagraphNode).text.text, 'content');
+      test('multi empty lines nothing else', () {
+        assertParagraphEquality('''
+
+
+
+''', <String>["", ""]);
       });
     });
   });
