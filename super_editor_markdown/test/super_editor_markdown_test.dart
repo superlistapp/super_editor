@@ -657,8 +657,10 @@ This is some code
         final paragraph = document.nodes.first as ParagraphNode;
         expect(paragraph.text.text, '');
       });
+    });
 
-      test('empty line', () {
+    group("empty lines", () {
+      test('single', () {
 
         const markdown = '''
 content
@@ -678,6 +680,29 @@ content
         expect(paragraph.text.text, '');
         paragraph = document.nodes[2] as ParagraphNode;
         expect(paragraph.text.text, 'content');
+      });
+
+      test('multiple', () {
+
+        const markdown = '''
+content
+
+
+
+
+
+content
+''';
+
+        final document = deserializeMarkdownToDocument(markdown, allowBlankLines: true);
+
+        print(document.nodes);
+        expect(document.nodes.length, 4);
+
+        expect((document.nodes[0] as ParagraphNode).text.text, 'content');
+        expect((document.nodes[1] as ParagraphNode).text.text, '');
+        expect((document.nodes[2] as ParagraphNode).text.text, '');
+        expect((document.nodes[3] as ParagraphNode).text.text, 'content');
       });
     });
   });
