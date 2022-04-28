@@ -7,10 +7,13 @@ import 'package:super_editor/super_editor.dart';
 //       For now, we return MutableDocument because DocumentEditor
 //       requires one. When the editing system matures, there should
 //       be a way to return something here that is not concrete.
-MutableDocument deserializeMarkdownToDocument(String markdown) {
+MutableDocument deserializeMarkdownToDocument(String markdown, {bool allowBlankLines = false}) {
   final markdownLines = const LineSplitter().convert(markdown);
 
-  final markdownDoc = md.Document();
+  final markdownDoc = md.Document(blockSyntaxes: allowBlankLines ? <md.BlockSyntax>[
+    const CustomEmptyBlockSyntax(),
+  ] : null);
+
   final blockParser = md.BlockParser(markdownLines, markdownDoc);
 
   // Parse markdown string to structured markdown.
@@ -23,6 +26,30 @@ MutableDocument deserializeMarkdownToDocument(String markdown) {
   }
 
   return MutableDocument(nodes: nodeVisitor.content);
+}
+
+class CustomEmptyBlockSyntax extends md.BlockSyntax {
+  @override
+  RegExp get pattern => RegExp(r'^$');
+
+  const CustomEmptyBlockSyntax();
+
+  @override
+  md.Node? parse(md.BlockParser parser) {
+
+    md.Node? returnValue;
+
+    if (parser.peek(1) != null && parser.peek(2) != null &&
+        RegExp(r'^(?:[ \t]*)$').hasMatch(parser.peek(1)!) &&
+        RegExp(r'^$').hasMatch(parser.peek(2)!)) {
+      returnValue = md.Element("p", <md.UnparsedContent>[ md.UnparsedContent(parser.peek(1)!)]);
+    }
+
+    parser.encounteredBlankLine = true;
+    parser.advance();
+
+    return returnValue;
+  }
 }
 
 String serializeDocumentToMarkdown(Document doc) {
