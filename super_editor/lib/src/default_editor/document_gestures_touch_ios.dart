@@ -270,6 +270,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
       return;
     }
 
+    // Determine offset from the editor to the current viewport
     final editorBox = widget.documentKey.currentContext!.findRenderObject() as RenderBox;
     final editorToViewportOffset = viewportBox.globalToLocal(Offset.zero) - editorBox.globalToLocal(Offset.zero);
 
