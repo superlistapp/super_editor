@@ -649,8 +649,8 @@ This is some code
 
     group("empty lines", () {
 
-      void assertParagraphEquality(String markdown, List<String> paragraphs) {
-        final document = deserializeMarkdownToDocument(markdown, allowBlankLines: true);
+      void assertParagraphEquality(String markdown, List<String> paragraphs, {bool allowBlankLines = true}) {
+        final document = deserializeMarkdownToDocument(markdown, allowBlankLines: allowBlankLines);
         expect(document.nodes.length, paragraphs.length, reason: "Nodes (${document.nodes}) does not match paragraphs ($paragraphs)");
         for (int i = 0; i < document.nodes.length; i++) {
           expect((document.nodes[i] as ParagraphNode).text.text, paragraphs[i], reason: "Mismatch at index $i");
@@ -691,6 +691,28 @@ content
 
 
 ''', <String>["", ""]);
+      });
+
+      test('multi white space lines nothing else', () {
+        assertParagraphEquality('''
+ \t
+
+ \t
+''', <String>[" \t", " \t"]);
+      });
+
+      test('single white space lines nothing else', () {
+        assertParagraphEquality('''
+ \t
+''', <String>[" \t"]);
+      });
+
+      test('multi white space lines nothing else no blank line support', () {
+        assertParagraphEquality('''
+ \t
+
+ \t
+''', <String>[], allowBlankLines: false);
       });
     });
   });
