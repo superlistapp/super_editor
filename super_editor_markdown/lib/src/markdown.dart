@@ -48,13 +48,13 @@ class CustomEmptyBlockSyntax extends md.BlockSyntax {
 
     md.Node? returnValue;
 
+    parser.encounteredBlankLine = true;
     if (parser.peek(1) != null && parser.peek(2) != null &&
         RegExp(r'^(?:[ \t]*)$').hasMatch(parser.peek(1)!) &&
         RegExp(r'^$').hasMatch(parser.peek(2)!)) {
       returnValue = md.Element("p", <md.UnparsedContent>[ md.UnparsedContent(parser.peek(1)!)]);
+      parser.advance();
     }
-
-    parser.encounteredBlankLine = true;
     parser.advance();
 
     return returnValue;
