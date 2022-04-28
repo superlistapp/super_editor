@@ -3,6 +3,9 @@ import 'dart:convert';
 import 'package:markdown/markdown.dart' as md;
 import 'package:super_editor/super_editor.dart';
 
+/// The line contains only whitespace or is empty.
+final _emptyPattern = RegExp(r'^(?:[ \t]*)$');
+
 // TODO: return a regular Document instead of a MutableDocument.
 //       For now, we return MutableDocument because DocumentEditor
 //       requires one. When the editing system matures, there should
@@ -14,10 +17,21 @@ MutableDocument deserializeMarkdownToDocument(String markdown, {bool allowBlankL
     const CustomEmptyBlockSyntax(),
   ] : null);
 
+  md.Node? startNode;
+
+  if (allowBlankLines && _emptyPattern.hasMatch(markdownLines.first)) {
+    startNode = md.Element("p", <md.UnparsedContent>[ md.UnparsedContent(markdownLines[0])]);
+    markdownLines.removeAt(0);
+  }
+
   final blockParser = md.BlockParser(markdownLines, markdownDoc);
 
   // Parse markdown string to structured markdown.
   final markdownNodes = blockParser.parseLines();
+
+  if (startNode != null) {
+    markdownNodes.insert(0, startNode);
+  }
 
   // Convert structured markdown to a Document.
   final nodeVisitor = _MarkdownToDocument();
@@ -40,7 +54,7 @@ class CustomEmptyBlockSyntax extends md.BlockSyntax {
     md.Node? returnValue;
 
     parser.encounteredBlankLine = true;
-    if (parser.peek(1) != null && RegExp(r'^(?:[ \t]*)$').hasMatch(parser.peek(1)!) &&
+    if (parser.peek(1) != null && _emptyPattern.hasMatch(parser.peek(1)!) &&
         (parser.peek(2) == null || RegExp(r'^$').hasMatch(parser.peek(2)!))) {
       returnValue = md.Element("p", <md.UnparsedContent>[ md.UnparsedContent(parser.peek(1)!)]);
       parser.advance();
