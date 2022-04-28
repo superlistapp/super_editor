@@ -7,25 +7,26 @@ import '../_document_test_tools.dart';
 void main() {
   group('SuperEditor', () {
     group('auto-scroll', () {
-      const screenSizeWithoutKeyboard = Size(390.0, 844.0, 390.0);
+      const screenSizeWithoutKeyboard = Size(390.0, 844.0);
       const screenSizeWithKeyboard = Size(390.0, 544.0);
       const keyboardExpansionFrameCount = 60;
-      const shrinkPerFrame = (screenSizeWithKeyboard.height - screenSizeWithoutKeyboard.height) / keyboardExpansionFrameCount;
-      
+      final shrinkPerFrame =
+          (screenSizeWithoutKeyboard.height - screenSizeWithKeyboard.height) / keyboardExpansionFrameCount;
+
       testWidgets('on Android, keeps caret visible when keyboard appears', (WidgetTester tester) async {
         tester.binding.window
           ..physicalSizeTestValue = screenSizeWithoutKeyboard
           ..textScaleFactorTestValue = 1.0
           ..devicePixelRatioTestValue = 1.0;
-        
+
         await tester.pumpWidget(
-          _SliverTestEditor(
+          const _SliverTestEditor(
             gestureMode: DocumentGestureMode.android,
           ),
         );
 
         // Select text near the bottom of the screen, where the keyboard will appear
-        final tapPosition = Offset(screenWidth / 2, screenSizeWithoutKeyboard.height - 1);
+        final tapPosition = Offset(screenSizeWithoutKeyboard.width / 2, screenSizeWithoutKeyboard.height - 1);
         await tester.tapAt(tapPosition);
 
         // Shrink the screen height, as if the keyboard appeared.
@@ -37,52 +38,55 @@ void main() {
         );
 
         // Ensure that the editor auto-scrolled to keep the caret visible.
-        
+        final handleFinder = find.byType(BlinkingCaret);
+        final handleOffset = tester.getTopLeft(handleFinder.first);
+
         // Hard-code a reasonable line-height because carets do not currently
         // report their height.
         // TODO: look up the actual line height of the text at the selection extent
         // TODO: update caret implementation so that it reports its own height.
         const lineHeight = 18;
-        
+
         final bottomOfCaret = handleOffset.dy + lineHeight;
         expect(bottomOfCaret, lessThanOrEqualTo(screenSizeWithKeyboard.height));
       });
-      
-        testWidgets('on iOS, keeps caret visible when keyboard appears', (WidgetTester tester) async {
-          tester.binding.window
-            ..physicalSizeTestValue = screenSizeWithoutKeyboard
-            ..textScaleFactorTestValue = 1.0
-            ..devicePixelRatioTestValue = 1.0;
-        
-          await tester.pumpWidget(
-            _SliverTestEditor(
-              gestureMode: DocumentGestureMode.iOS,
-            ),
-          );
 
-          // Select text near the bottom of the screen, where the keyboard will appear
-          final tapPosition = Offset(screenWidth / 2, screenSizeWithoutKeyboard.height - 1);
-          await tester.tapAt(tapPosition);
+      testWidgets('on iOS, keeps caret visible when keyboard appears', (WidgetTester tester) async {
+        tester.binding.window
+          ..physicalSizeTestValue = screenSizeWithoutKeyboard
+          ..textScaleFactorTestValue = 1.0
+          ..devicePixelRatioTestValue = 1.0;
 
-          // Shrink the screen height, as if the keyboard appeared.
-          await _simulateKeyboardAppearance(
-            tester: tester,
-            initialScreenSize: screenSizeWithoutKeyboard,
-            shrinkPerFrame: shrinkPerFrame,
-            frameCount: keyboardExpansionFrameCount,
-          );
+        await tester.pumpWidget(
+          const _SliverTestEditor(
+            gestureMode: DocumentGestureMode.iOS,
+          ),
+        );
 
-          // Ensure that the editor auto-scrolled to keep the caret visible.
+        // Select text near the bottom of the screen, where the keyboard will appear
+        final tapPosition = Offset(screenSizeWithoutKeyboard.width / 2, screenSizeWithoutKeyboard.height - 1);
+        await tester.tapAt(tapPosition);
 
-          // Hard-code a reasonable line-height because carets do not currently
-          // report their height.
-          // TODO: look up the actual line height of the text at the selection extent
-          // TODO: update caret implementation so that it reports its own height.
-          const lineHeight = 18;
+        // Shrink the screen height, as if the keyboard appeared.
+        await _simulateKeyboardAppearance(
+          tester: tester,
+          initialScreenSize: screenSizeWithoutKeyboard,
+          shrinkPerFrame: shrinkPerFrame,
+          frameCount: keyboardExpansionFrameCount,
+        );
 
-          final bottomOfCaret = handleOffset.dy + lineHeight;
-          expect(bottomOfCaret, lessThanOrEqualTo(screenSizeWithKeyboard.height));
-        });
+        // Ensure that the editor auto-scrolled to keep the caret visible.
+        final handleFinder = find.byType(BlinkingCaret);
+        final handleOffset = tester.getTopLeft(handleFinder.last);
+
+        // Hard-code a reasonable line-height because carets do not currently
+        // report their height.
+        // TODO: look up the actual line height of the text at the selection extent
+        // TODO: update caret implementation so that it reports its own height.
+        const lineHeight = 18;
+
+        final bottomOfCaret = handleOffset.dy + lineHeight;
+        expect(bottomOfCaret, lessThanOrEqualTo(screenSizeWithKeyboard.height));
       });
     });
   });
@@ -182,9 +186,9 @@ Future<void> _simulateKeyboardAppearance({
   for (var i = 0; i < frameCount; i++) {
     // Shrink the height of the screen by a small amount.
     keyboardHeight += shrinkPerFrame;
-    final currentScreenSize = initialScreenSize - Size(0, keyboardHeight);
+    final currentScreenSize = (initialScreenSize - Offset(0, keyboardHeight)) as Size;
     tester.binding.window.physicalSizeTestValue = currentScreenSize;
-    
+
     // Let the scrolling system auto-scroll, as desired.
     await tester.pumpAndSettle();
   }
