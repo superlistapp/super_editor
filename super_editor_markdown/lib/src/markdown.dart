@@ -19,6 +19,15 @@ MutableDocument deserializeMarkdownToDocument(String markdown, {bool allowBlankL
   // Parse markdown string to structured markdown.
   final markdownNodes = blockParser.parseLines();
 
+  if (markdownNodes.isEmpty) {
+    return MutableDocument(nodes: <DocumentNode>[
+      ParagraphNode(
+        id: DocumentEditor.createNodeId(),
+        text: AttributedText(text: ''),
+      ),
+    ]);
+  }
+
   // Convert structured markdown to a Document.
   final nodeVisitor = _MarkdownToDocument();
   for (final node in markdownNodes) {

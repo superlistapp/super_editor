@@ -646,6 +646,18 @@ This is some code
         expect(document.nodes[17], isA<ParagraphNode>());
       });
 
+      test('empty', () {
+        const markdown = '';
+
+        final document = deserializeMarkdownToDocument(markdown);
+
+        expect(document.nodes.length, 1);
+        expect(document.nodes.first, isA<ParagraphNode>());
+
+        final paragraph = document.nodes.first as ParagraphNode;
+        expect(paragraph.text.text, '');
+      });
+
       test('empty line', () {
 
         const markdown = '''
