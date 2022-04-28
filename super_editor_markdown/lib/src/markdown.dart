@@ -19,15 +19,6 @@ MutableDocument deserializeMarkdownToDocument(String markdown, {bool allowBlankL
   // Parse markdown string to structured markdown.
   final markdownNodes = blockParser.parseLines();
 
-  if (markdownNodes.isEmpty) {
-    return MutableDocument(nodes: <DocumentNode>[
-      ParagraphNode(
-        id: DocumentEditor.createNodeId(),
-        text: AttributedText(text: ''),
-      ),
-    ]);
-  }
-
   // Convert structured markdown to a Document.
   final nodeVisitor = _MarkdownToDocument();
   for (final node in markdownNodes) {
@@ -49,9 +40,8 @@ class CustomEmptyBlockSyntax extends md.BlockSyntax {
     md.Node? returnValue;
 
     parser.encounteredBlankLine = true;
-    if (parser.peek(1) != null && parser.peek(2) != null &&
-        RegExp(r'^(?:[ \t]*)$').hasMatch(parser.peek(1)!) &&
-        RegExp(r'^$').hasMatch(parser.peek(2)!)) {
+    if (parser.peek(1) != null && RegExp(r'^(?:[ \t]*)$').hasMatch(parser.peek(1)!) &&
+        (parser.peek(2) == null || RegExp(r'^$').hasMatch(parser.peek(2)!))) {
       returnValue = md.Element("p", <md.UnparsedContent>[ md.UnparsedContent(parser.peek(1)!)]);
       parser.advance();
     }
