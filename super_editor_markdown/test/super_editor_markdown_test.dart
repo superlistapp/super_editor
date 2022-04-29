@@ -693,6 +693,16 @@ content
 ''', <String>["", ""]);
       });
 
+      test('multi empty lines with content in the middle', () {
+        assertParagraphEquality('''
+
+
+content
+
+
+''', <String>["", "content", ""]);
+      });
+
       test('multi white space lines nothing else', () {
         assertParagraphEquality('''
  \t
