@@ -38,6 +38,7 @@ void main() {
         );
 
         // Ensure that the editor auto-scrolled to keep the caret visible.
+        // TODO: there are 2 `BlinkingCaret` at the same time. There should be only 1 caret
         final handleFinder = find.byType(BlinkingCaret);
         final handleOffset = tester.getTopLeft(handleFinder.last);
 
@@ -76,6 +77,7 @@ void main() {
         );
 
         // Ensure that the editor auto-scrolled to keep the caret visible.
+        // TODO: there are 2 `BlinkingCaret` at the same time. There should be only 1 caret
         final handleFinder = find.byType(BlinkingCaret);
         final handleOffset = tester.getTopLeft(handleFinder.last);
 

@@ -237,7 +237,7 @@ class DragHandleAutoScroller {
 
     if (documentOffset.dy < currentScrollOffset - viewportOffset.dy) {
       editorGesturesLog.fine("The scrollable needs to scroll up to make offset visible.");
-      scrollPosition.jumpTo(documentOffset.dy + _dragAutoScrollBoundary.leading);
+      scrollPosition.jumpTo(documentOffset.dy + _dragAutoScrollBoundary.leading + viewportOffset.dy);
     } else if (documentOffset.dy > _getViewportBox().size.height + editorToViewportOffset.dy) {
       editorGesturesLog.fine('The scrollable needs to scroll down to make offset visible.');
       scrollPosition.jumpTo(

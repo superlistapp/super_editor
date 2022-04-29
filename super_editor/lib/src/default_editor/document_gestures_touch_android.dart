@@ -258,7 +258,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
     // Determine offset from the editor to the current viewport
     final editorBox = widget.documentKey.currentContext!.findRenderObject() as RenderBox;
-    final editorToViewportOffset = viewportBox.globalToLocal(Offset.zero) - editorBox.globalToLocal(Offset.zero);
+    final editorToViewportOffset = viewportBox.localToGlobal(Offset.zero) - editorBox.localToGlobal(Offset.zero);
 
     if (collapsedHandleOffset != null) {
       editorGesturesLog.fine("The selection is collapsed");
