@@ -74,14 +74,10 @@ typedef Styler = Map<String, dynamic> Function(Document, DocumentNode);
 
 /// Selects blocks in a document that matches a given rule.
 class BlockSelector {
+  static const all = BlockSelector._();
+
   const BlockSelector(this._blockType)
       : _precedingBlockType = null,
-        _followingBlockType = null,
-        _indexMatcher = null;
-
-  const BlockSelector.all()
-      : _blockType = null,
-        _precedingBlockType = null,
         _followingBlockType = null,
         _indexMatcher = null;
 

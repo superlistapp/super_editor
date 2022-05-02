@@ -324,7 +324,7 @@ class _SuperEditorState extends State<SuperEditor> {
     }
 
     if (widget.stylesheet != oldWidget.stylesheet) {
-      // TODO:
+      _docStylesheetStyler.stylesheet = widget.stylesheet;
     }
 
     _recomputeIfLayoutShouldShowCaret();
@@ -604,7 +604,7 @@ final defaultKeyboardActions = <DocumentKeyboardAction>[
 final defaultStylesheet = Stylesheet(
   rules: [
     StyleRule(
-      const BlockSelector.all(),
+      BlockSelector.all,
       (doc, docNode) {
         return {
           "maxWidth": 640.0,
@@ -697,7 +697,7 @@ final defaultStylesheet = Stylesheet(
       },
     ),
     StyleRule(
-      const BlockSelector.all().last(),
+      BlockSelector.all.last(),
       (doc, docNode) {
         return {
           "padding": const CascadingPadding.only(bottom: 96),

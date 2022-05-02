@@ -571,7 +571,7 @@ Widget _buildHardwareKeyboardEditor(MutableDocument document, DocumentComposer c
         // of lines, as needed.
         stylesheet: defaultStylesheet.copyWith(
           addRulesAfter: [
-            StyleRule(const BlockSelector.all(), (doc, node) {
+            StyleRule(BlockSelector.all, (doc, node) {
               return {
                 "textStyle": const TextStyle(
                   fontSize: 12,

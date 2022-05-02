@@ -386,7 +386,7 @@ Widget _buildEditorWithSelectableHrs(MutableDocument document, DocumentComposer 
         // of lines, as needed.
         stylesheet: defaultStylesheet.copyWith(
           addRulesAfter: [
-            StyleRule(const BlockSelector.all(), (doc, node) {
+            StyleRule(BlockSelector.all, (doc, node) {
               return {
                 "textStyle": const TextStyle(
                   fontSize: 12,
@@ -415,7 +415,7 @@ Widget _buildEditorWithUnselectableHrs(MutableDocument document, DocumentCompose
         // of lines, as needed.
         stylesheet: defaultStylesheet.copyWith(
           addRulesAfter: [
-            StyleRule(const BlockSelector.all(), (doc, node) {
+            StyleRule(BlockSelector.all, (doc, node) {
               return {
                 "textStyle": const TextStyle(
                   fontSize: 12,
