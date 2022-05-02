@@ -26,7 +26,7 @@ class _DocumentStylesDemoState extends State<DocumentStylesDemo> {
     return Stylesheet(
       rules: [
         StyleRule(
-          const BlockSelector.all(),
+          BlockSelector.all,
           (doc, docNode) {
             return {
               "maxWidth": 640.0,
@@ -119,7 +119,7 @@ class _DocumentStylesDemoState extends State<DocumentStylesDemo> {
           },
         ),
         StyleRule(
-          const BlockSelector.all().last(),
+          BlockSelector.all.last(),
           (doc, docNode) {
             return {
               "padding": const CascadingPadding.only(bottom: 96),
