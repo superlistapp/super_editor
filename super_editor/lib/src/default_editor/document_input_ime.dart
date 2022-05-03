@@ -227,14 +227,14 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
 
   bool _isApplyingDeltas = false;
 
-  void _syncImeWithDocumentAndComposer() {
+  void _syncImeWithDocumentAndComposer([TextRange? composingRegion]) {
     final selection = widget.editContext.composer.selection;
     if (selection != null) {
       editorImeLog.fine("Syncing IME with Doc and Composer");
       currentTextEditingValue = DocumentImeSerializer(
         widget.editContext.editor.document,
         selection,
-      ).toTextEditingValue();
+      ).toTextEditingValue().copyWith(composing: composingRegion ?? currentTextEditingValue.composing);
     }
   }
 
@@ -260,7 +260,7 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
     widget.softwareKeyboardHandler.applyDeltas(textEditingDeltas);
     _isApplyingDeltas = false;
 
-    _syncImeWithDocumentAndComposer();
+    _syncImeWithDocumentAndComposer(textEditingDeltas.last.composing);
 
     editorImeLog.fine("IME value after applying deltas: $currentTextEditingValue");
 
