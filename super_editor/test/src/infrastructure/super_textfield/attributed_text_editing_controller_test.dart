@@ -699,5 +699,62 @@ void main() {
       expect(text1.hasListeners, false);
       expect(text2.hasListeners, true);
     });
+
+    group('remove composing attributions', () {
+      test('should remove the given attributions', () {
+        final controller = AttributedTextEditingController(
+          text: AttributedText(text: 'my text'),
+        );
+        controller.addComposingAttributions(
+          {boldAttribution, italicsAttribution, underlineAttribution},
+        );
+        controller.removeComposingAttributions(
+            {boldAttribution, underlineAttribution});
+        expect(controller.composingAttributions.length, 1);
+        expect(
+            controller.composingAttributions.contains(boldAttribution), false,
+            reason: 'expected to remove boldAttribution');
+        expect(controller.composingAttributions.contains(underlineAttribution),
+            false,
+            reason: 'expected to remove underlineAttribution');
+      });
+
+      test(
+          'should not remove any attributions that are not passed as arguments',
+          () {
+        final controller = AttributedTextEditingController(
+          text: AttributedText(text: 'my text'),
+        );
+        controller.addComposingAttributions(
+          {boldAttribution, italicsAttribution, underlineAttribution},
+        );
+        controller.removeComposingAttributions({boldAttribution});
+        expect(controller.composingAttributions.length, 2);
+        expect(
+            controller.composingAttributions.contains(italicsAttribution), true,
+            reason: 'expected to NOT remove italicsAttribution');
+        expect(controller.composingAttributions.contains(underlineAttribution),
+            true,
+            reason: 'expected to NOT remove underlineAttribution');
+      });
+
+      test(
+          'should not modify any attributions if the controller does not contain any of the attributions passed as arguments',
+          () {
+        final controller = AttributedTextEditingController(
+          text: AttributedText(text: 'my text'),
+        );
+        controller.addComposingAttributions(
+          {boldAttribution, italicsAttribution},
+        );
+        controller.removeComposingAttributions({underlineAttribution});
+        expect(controller.composingAttributions.length, 2);
+        expect(
+            controller.composingAttributions.contains(italicsAttribution), true,
+            reason: 'expected to NOT remove italicsAttribution');
+        expect(controller.composingAttributions.contains(boldAttribution), true,
+            reason: 'expected to NOT remove boldAttribution');
+      });
+    });
   });
 }
