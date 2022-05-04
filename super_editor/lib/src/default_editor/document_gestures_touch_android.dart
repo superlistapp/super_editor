@@ -256,16 +256,21 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       return;
     }
 
-    // Determine offset from the editor to the current viewport
+    // Determines the offset from the editor to the viewport
     final editorBox = widget.documentKey.currentContext!.findRenderObject() as RenderBox;
     final editorToViewportOffset = viewportBox.localToGlobal(Offset.zero) - editorBox.localToGlobal(Offset.zero);
 
+    // Determines the offset from the bottom of the handle to the viewport
+    late Offset handleToViewportOffset;
+
     if (collapsedHandleOffset != null) {
       editorGesturesLog.fine("The selection is collapsed");
-      _handleAutoScrolling.ensureOffsetIsVisible(collapsedHandleOffset, editorToViewportOffset);
+      handleToViewportOffset = collapsedHandleOffset - editorToViewportOffset;
+      _handleAutoScrolling.ensureOffsetIsVisible(handleToViewportOffset);
     } else {
       editorGesturesLog.fine("The selection is expanded");
-      _handleAutoScrolling.ensureOffsetIsVisible(extentHandleOffset!, editorToViewportOffset);
+      handleToViewportOffset = extentHandleOffset! - editorToViewportOffset;
+      _handleAutoScrolling.ensureOffsetIsVisible(handleToViewportOffset);
     }
   }
 

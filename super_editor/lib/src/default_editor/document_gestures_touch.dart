@@ -219,32 +219,32 @@ class DragHandleAutoScroller {
   /// that this auto-scroller controls.
   final RenderBox Function() _getViewportBox;
 
-  /// Jumps to a scroll offset so that the given [documentOffset] is visible within the
-  /// scrollable.
+  /// Jumps to a scroll offset so that the given [contentOffset] is visible
+  /// within the viewport.
   ///
-  /// The [editorToViewportOffset] determines the offset from editor to its [Scrollable]
-  /// which is used to calculate the scrolling distance
+  /// Let's consider the triggering condition as an inequality. The position to
+  /// jump to is the difference between the first expression and the second one,
+  /// added with the current scroll offset
   ///
-  /// Does nothing, if the given [documentOffset] is already visible.
-  void ensureOffsetIsVisible(Offset documentOffset, Offset editorToViewportOffset) {
-    editorGesturesLog.fine("Ensuring document offset is visible in scrollable: $documentOffset");
+  /// Does nothing, if the given [contentOffset] is already visible.
+  void ensureOffsetIsVisible(Offset contentOffset) {
+    editorGesturesLog.fine("Ensuring document offset is visible in scrollable: $contentOffset");
 
     final scrollPosition = _getScrollPosition();
     final currentScrollOffset = scrollPosition.pixels;
     editorGesturesLog.fine("Current scroll offset: $currentScrollOffset");
 
-    final viewportOffset = _getViewportBox().localToGlobal(Offset.zero);
-
-    if (documentOffset.dy < currentScrollOffset - viewportOffset.dy) {
+    if (contentOffset.dy < _dragAutoScrollBoundary.leading) {
+      // Ensure the handle is below the viewport with the leading boundary
       editorGesturesLog.fine("The scrollable needs to scroll up to make offset visible.");
-      scrollPosition.jumpTo(documentOffset.dy + _dragAutoScrollBoundary.leading + viewportOffset.dy);
-    } else if (documentOffset.dy > _getViewportBox().size.height + editorToViewportOffset.dy) {
+      scrollPosition.jumpTo(
+        contentOffset.dy - _dragAutoScrollBoundary.leading + currentScrollOffset,
+      );
+    } else if (contentOffset.dy > _getViewportBox().size.height - _dragAutoScrollBoundary.trailing) {
+      // Ensure the handle is above the viewport with the trailing boundary
       editorGesturesLog.fine('The scrollable needs to scroll down to make offset visible.');
       scrollPosition.jumpTo(
-        documentOffset.dy +
-            _dragAutoScrollBoundary.trailing -
-            _getViewportBox().size.height +
-            (currentScrollOffset - editorToViewportOffset.dy),
+        contentOffset.dy - (_getViewportBox().size.height - _dragAutoScrollBoundary.trailing) + currentScrollOffset,
       );
     }
   }
