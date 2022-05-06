@@ -219,34 +219,31 @@ class DragHandleAutoScroller {
   /// that this auto-scroller controls.
   final RenderBox Function() _getViewportBox;
 
-  /// Jumps to a scroll offset so that the given [contentToViewportOffset] is
+  /// Jumps to a scroll offset so that the given [offsetInViewport] is
   /// visible within the viewport.
   ///
-  /// Let's consider the triggering condition as an inequality. The position to
-  /// jump to is the difference between the first expression and the second one,
-  /// added with the current scroll offset
-  ///
-  /// Does nothing, if the given [contentToViewportOffset] is already visible.
-  void ensureOffsetIsVisible(Offset contentToViewportOffset) {
-    editorGesturesLog.fine("Ensuring content offset is visible in scrollable: $contentToViewportOffset");
+  /// Does nothing, if the given [offsetInViewport] is already visible within the boundary.
+  void ensureOffsetIsVisible(Offset offsetInViewport) {
+    editorGesturesLog.fine("Ensuring content offset is visible in scrollable: $offsetInViewport");
 
     final scrollPosition = _getScrollPosition();
     final currentScrollOffset = scrollPosition.pixels;
     editorGesturesLog.fine("Current scroll offset: $currentScrollOffset");
 
-    if (contentToViewportOffset.dy < _dragAutoScrollBoundary.leading) {
-      // Ensure the handle is below the viewport with the leading boundary
+    if (offsetInViewport.dy < _dragAutoScrollBoundary.leading) {
+      // The offset is above the leading boundary. We need to scroll up
       editorGesturesLog.fine("The scrollable needs to scroll up to make offset visible.");
+      // Jump to the position where the offset sits at the leading boundary
       scrollPosition.jumpTo(
-        contentToViewportOffset.dy - _dragAutoScrollBoundary.leading + currentScrollOffset,
+        currentScrollOffset + (offsetInViewport.dy - _dragAutoScrollBoundary.leading),
       );
-    } else if (contentToViewportOffset.dy > _getViewportBox().size.height - _dragAutoScrollBoundary.trailing) {
-      // Ensure the handle is above the viewport with the trailing boundary
+    } else if (offsetInViewport.dy > _getViewportBox().size.height - _dragAutoScrollBoundary.trailing) {
+      // The offset is below the trailing boundary. We need to scroll down
       editorGesturesLog.fine('The scrollable needs to scroll down to make offset visible.');
+      // Jump to the position where the offset sits at the trailing boundary
       scrollPosition.jumpTo(
-        contentToViewportOffset.dy -
-            (_getViewportBox().size.height - _dragAutoScrollBoundary.trailing) +
-            currentScrollOffset,
+        currentScrollOffset +
+            (offsetInViewport.dy - (_getViewportBox().size.height - _dragAutoScrollBoundary.trailing)),
       );
     }
   }
