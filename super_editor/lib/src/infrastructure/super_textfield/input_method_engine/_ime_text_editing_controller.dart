@@ -1,5 +1,4 @@
 import 'package:attributed_text/attributed_text.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
@@ -27,9 +26,7 @@ final _log = imeTextFieldLog;
 /// By default, an [ImeAttributedTextEditingController] is not connected to the platform
 /// IME. To connect to the IME, call `attachToIme`. To detach from the IME, call
 /// `detachFromIme`.
-class ImeAttributedTextEditingController
-    with ChangeNotifier
-    implements AttributedTextEditingController, DeltaTextInputClient {
+class ImeAttributedTextEditingController extends AttributedTextEditingController implements DeltaTextInputClient {
   ImeAttributedTextEditingController({
     AttributedTextEditingController? controller,
     bool disposeClientController = true,
@@ -50,6 +47,9 @@ class ImeAttributedTextEditingController
   }
 
   final AttributedTextEditingController _realController;
+
+  @Deprecated("this property is exposed temporarily as super_editor evaluates what to do with controllers")
+  AttributedTextEditingController get innerController => _realController;
 
   final bool _disposeClientController;
 
