@@ -261,7 +261,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     final editorBox = widget.documentKey.currentContext!.findRenderObject() as RenderBox;
     final editorInViewportOffset = viewportBox.localToGlobal(Offset.zero) - editorBox.localToGlobal(Offset.zero);
 
-    // Determines the offset of the bottom of the handle in the viewport coordinate
+    // Determines the offset of the handle in the viewport coordinate
     late Offset handleInViewportOffset;
 
     if (collapsedHandleOffset != null) {

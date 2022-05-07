@@ -220,9 +220,9 @@ class DragHandleAutoScroller {
   final RenderBox Function() _getViewportBox;
 
   /// Jumps to a scroll offset so that the given [offsetInViewport] is
-  /// visible within the viewport.
+  /// visible within the viewport boundary.
   ///
-  /// Does nothing, if the given [offsetInViewport] is already visible within the boundary.
+  /// Does nothing, if the given [offsetInViewport] is already visible within the viewport boundary.
   void ensureOffsetIsVisible(Offset offsetInViewport) {
     editorGesturesLog.fine("Ensuring content offset is visible in scrollable: $offsetInViewport");
 
