@@ -646,9 +646,8 @@ class AttributedTextEditingController with ChangeNotifier {
     _composingAttributions.clear();
     _composingRegion = TextRange.empty;
   }
-}
 
-extension DefaultSuperTextFieldActions on AttributedTextEditingController {
+  //------ START: Methods moved here from extension methods ---------
   void copySelectedTextToClipboard() {
     if (selection.extentOffset == -1) {
       // Nothing selected to copy.
@@ -877,4 +876,5 @@ extension DefaultSuperTextFieldActions on AttributedTextEditingController {
     );
     selection = TextSelection.collapsed(offset: currentSelectionExtent.offset + 1);
   }
+  //------ END: Methods moved here from extension methods -------
 }
