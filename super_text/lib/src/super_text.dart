@@ -557,7 +557,7 @@ extension on TextStyle {
   double get estimatedLineHeight => (fontSize ?? 18.0) * (height ?? 1.0);
 }
 
-typedef SuperTextLayerBuilder = Widget Function(BuildContext, TextLayout? Function() getTextLayout);
+typedef SuperTextLayerBuilder = Widget Function(BuildContext, TextLayout textLayout);
 
 /// A [SuperTextLayerBuilder] that combines multiple other layers into a single
 /// layer, to be displayed above or beneath [SuperText].
@@ -569,11 +569,11 @@ class MultiLayerBuilder {
 
   final List<SuperTextLayerBuilder> _layers;
 
-  Widget build(BuildContext context, TextLayout? Function() getTextLayout) {
+  Widget build(BuildContext context, TextLayout textLayout) {
     return Stack(
       children: [
         for (final layer in _layers) //
-          layer(context, getTextLayout),
+          layer(context, textLayout),
       ],
     );
   }

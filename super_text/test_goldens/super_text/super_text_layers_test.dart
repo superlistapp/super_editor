@@ -8,12 +8,7 @@ void main() {
   group("SuperText", () {
     group("builds layers", () {
       testGoldens("that can paint line boxes", (tester) async {
-        await pumpThreeLinePlainSuperText(tester, beneathBuilder: (context, getTextLayout) {
-          final textLayout = getTextLayout();
-          if (textLayout == null) {
-            return const SizedBox();
-          }
-
+        await pumpThreeLinePlainSuperText(tester, beneathBuilder: (context, textLayout) {
           final lineCount = textLayout.getLineCount();
           final lineRects = <Rect>[];
           final lineColors = <Color>[];
@@ -48,12 +43,7 @@ void main() {
       });
 
       testGoldens("that can paint character boxes", (tester) async {
-        await pumpThreeLinePlainSuperText(tester, beneathBuilder: (context, getTextLayout) {
-          final textLayout = getTextLayout();
-          if (textLayout == null) {
-            return const SizedBox();
-          }
-
+        await pumpThreeLinePlainSuperText(tester, beneathBuilder: (context, textLayout) {
           final characterRects = <Rect>[];
           final characterColors = <Color>[];
 
@@ -81,12 +71,7 @@ void main() {
       });
 
       testGoldens("that can paint carets", (tester) async {
-        await pumpThreeLinePlainSuperText(tester, beneathBuilder: (context, getTextLayout) {
-          final textLayout = getTextLayout();
-          if (textLayout == null) {
-            return const SizedBox();
-          }
-
+        await pumpThreeLinePlainSuperText(tester, beneathBuilder: (context, textLayout) {
           const textPosition = TextPosition(offset: 115);
           final caretOffset = textLayout.getOffsetForCaret(textPosition);
           final caretHeight = textLayout.getHeightForCaret(textPosition)!;

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:super_text/src/magic_text.dart';
 import 'package:super_text/super_text.dart';
 
 import 'super_text_test_tools.dart';
@@ -14,14 +13,7 @@ void main() {
         child: SuperText(
           key: superTextKey,
           richText: threeLineTextSpan,
-          layerBeneathBuilder: (context, TextLayout? Function() getTextLayout) {
-            print("Building SuperDuperTextLayoutLayer beneath");
-            final textLayout = getTextLayout();
-            if (textLayout == null) {
-              print(" - text layout is null. Building empty space");
-              return const SizedBox();
-            }
-
+          layerBeneathBuilder: (context, TextLayout textLayout) {
             return Stack(
               children: [
                 TextLayoutSelectionHighlight(
@@ -32,14 +24,7 @@ void main() {
               ],
             );
           },
-          layerAboveBuilder: (context, TextLayout? Function() getTextLayout) {
-            print("Building SuperDuperTextLayoutLayer above");
-            final textLayout = getTextLayout();
-            if (textLayout == null) {
-              print(" - text layout is null. Building empty space");
-              return const SizedBox();
-            }
-
+          layerAboveBuilder: (context, TextLayout textLayout) {
             return Stack(
               children: [
                 TextLayoutCaret(

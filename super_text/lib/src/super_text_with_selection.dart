@@ -172,13 +172,7 @@ class _RebuildOptimizedSuperTextWithSelectionState extends State<_RebuildOptimiz
     return _cachedSubtree!;
   }
 
-  Widget _buildLayerBeneath(BuildContext context, TextLayout? Function() getTextLayout) {
-    buildsLog.info("Building SuperTextWithSelection ($hashCode) selection highlight layer");
-    final textLayout = getTextLayout();
-    if (textLayout == null) {
-      return const SizedBox();
-    }
-
+  Widget _buildLayerBeneath(BuildContext context, TextLayout textLayout) {
     return ValueListenableBuilder<List<UserSelection>>(
       valueListenable: widget.userSelections,
       builder: (context, value, child) {
@@ -204,13 +198,7 @@ class _RebuildOptimizedSuperTextWithSelectionState extends State<_RebuildOptimiz
     );
   }
 
-  Widget _buildLayerAbove(BuildContext context, TextLayout? Function() getTextLayout) {
-    buildsLog.info("Building SuperTextWithSelection ($hashCode) caret layer");
-    final textLayout = getTextLayout();
-    if (textLayout == null) {
-      return const SizedBox();
-    }
-
+  Widget _buildLayerAbove(BuildContext context, TextLayout textLayout) {
     return ValueListenableBuilder<List<UserSelection>>(
       valueListenable: widget.userSelections,
       builder: (context, value, child) {

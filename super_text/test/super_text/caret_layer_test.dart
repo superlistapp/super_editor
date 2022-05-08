@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:super_text/src/magic_text.dart';
 import 'package:super_text/super_text.dart';
 
 import 'super_text_test_tools.dart';
@@ -17,12 +16,7 @@ void main() {
           buildTestScaffold(
             child: SuperText(
               richText: threeLineTextSpan,
-              layerAboveBuilder: (context, TextLayout? Function() getTextLayout) {
-                final textLayout = getTextLayout();
-                if (textLayout == null) {
-                  return const SizedBox();
-                }
-
+              layerAboveBuilder: (context, TextLayout textLayout) {
                 return Stack(
                   children: [
                     // We switch the BlinkController using a builder so that we don't

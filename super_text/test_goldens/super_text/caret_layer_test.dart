@@ -13,12 +13,7 @@ void main() {
       testGoldens("paints a normal caret", (tester) async {
         await pumpThreeLinePlainSuperText(
           tester,
-          aboveBuilder: (context, TextLayout? Function() getTextLayout) {
-            final textLayout = getTextLayout();
-            if (textLayout == null) {
-              return const SizedBox();
-            }
-
+          aboveBuilder: (context, TextLayout textLayout) {
             return Stack(
               children: [
                 TextLayoutCaret(
@@ -38,12 +33,7 @@ void main() {
       testGoldens("paints caret styles", (tester) async {
         await pumpThreeLinePlainSuperText(
           tester,
-          aboveBuilder: (context, TextLayout? Function() getTextLayout) {
-            final textLayout = getTextLayout();
-            if (textLayout == null) {
-              return const SizedBox();
-            }
-
+          aboveBuilder: (context, TextLayout textLayout) {
             return Stack(
               children: [
                 TextLayoutCaret(
@@ -69,12 +59,7 @@ void main() {
       testGoldens("paints multiple carets", (tester) async {
         await pumpThreeLinePlainSuperText(
           tester,
-          aboveBuilder: (context, TextLayout? Function() getTextLayout) {
-            final textLayout = getTextLayout();
-            if (textLayout == null) {
-              return const SizedBox();
-            }
-
+          aboveBuilder: (context, TextLayout textLayout) {
             return Stack(
               children: [
                 TextLayoutCaret(
@@ -106,12 +91,7 @@ void main() {
       testGoldens("paints two carets at the same position", (tester) async {
         await pumpThreeLinePlainSuperText(
           tester,
-          aboveBuilder: (context, TextLayout? Function() getTextLayout) {
-            final textLayout = getTextLayout();
-            if (textLayout == null) {
-              return const SizedBox();
-            }
-
+          aboveBuilder: (context, TextLayout textLayout) {
             return Stack(
               children: [
                 TextLayoutCaret(

@@ -5,7 +5,7 @@ import 'package:flutter/rendering.dart';
 import 'package:super_text/src/text_layout.dart';
 
 typedef MagicParagraph = TextLayout? Function();
-typedef MagicTextLayer = Widget Function(BuildContext context, TextLayout? Function() getTextLayout);
+typedef MagicTextLayer = Widget Function(BuildContext context, TextLayout textLayout);
 
 @immutable
 class SuperText extends StatelessWidget {
@@ -84,14 +84,12 @@ class _MagicTextParentState extends State<MagicTextParent> {
         builder: (BuildContext context, BoxConstraints constraints) {
           final background = widget.background;
           if (background != null && _paragraph != null) {
-            return background(context, () {
-              return _paragraph != null && !_paragraph!.needsLayout
-                  ? RenderParagraphProseTextLayout(
-                      richText: widget.text,
-                      renderParagraph: _paragraph!,
-                    )
-                  : null;
-            });
+            return background(
+                context,
+                RenderParagraphProseTextLayout(
+                  richText: widget.text,
+                  renderParagraph: _paragraph!,
+                ));
           } else {
             return const SizedBox();
           }
@@ -101,15 +99,12 @@ class _MagicTextParentState extends State<MagicTextParent> {
         builder: (BuildContext context, BoxConstraints constraints) {
           final foreground = widget.foreground;
           if (foreground != null && _paragraph != null) {
-            return foreground(context, () {
-              print("Returning text layout for foreground");
-              return _paragraph != null && !_paragraph!.needsLayout
-                  ? RenderParagraphProseTextLayout(
-                      richText: widget.text,
-                      renderParagraph: _paragraph!,
-                    )
-                  : null;
-            });
+            return foreground(
+                context,
+                RenderParagraphProseTextLayout(
+                  richText: widget.text,
+                  renderParagraph: _paragraph!,
+                ));
           } else {
             return const SizedBox();
           }

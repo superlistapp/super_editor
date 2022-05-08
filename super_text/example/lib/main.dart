@@ -138,14 +138,7 @@ class _SuperTextExampleScreenState extends State<SuperTextExampleScreen> with Ti
       //     );
       //   },
       // ),
-      layerAboveBuilder: (context, getTextLayout) {
-        print("Building SuperDuperTextLayoutLayer above");
-        final textLayout = getTextLayout();
-        if (textLayout == null) {
-          print(" - text layout is null. Building empty space");
-          return const SizedBox();
-        }
-
+      layerAboveBuilder: (context, textLayout) {
         return Stack(
           children: [
             TextLayoutCaret(
@@ -207,12 +200,7 @@ class _SuperTextExampleScreenState extends State<SuperTextExampleScreen> with Ti
     return _buildExampleContainer(
       child: SuperText(
         richText: _text,
-        layerAboveBuilder: (context, getTextLayout) {
-          final textLayout = getTextLayout();
-          if (textLayout == null) {
-            return const SizedBox();
-          }
-
+        layerAboveBuilder: (context, textLayout) {
           return Stack(
             children: [
               TextLayoutCaret(
@@ -231,12 +219,7 @@ class _SuperTextExampleScreenState extends State<SuperTextExampleScreen> with Ti
     return _buildExampleContainer(
       child: SuperText(
         richText: _text,
-        layerAboveBuilder: (context, getTextLayout) {
-          final textLayout = getTextLayout();
-          if (textLayout == null) {
-            return const SizedBox();
-          }
-
+        layerAboveBuilder: (context, textLayout) {
           return Stack(
             children: [
               TextLayoutCaret(
@@ -247,12 +230,7 @@ class _SuperTextExampleScreenState extends State<SuperTextExampleScreen> with Ti
             ],
           );
         },
-        layerBeneathBuilder: (context, getTextLayout) {
-          final textLayout = getTextLayout();
-          if (textLayout == null) {
-            return const SizedBox();
-          }
-
+        layerBeneathBuilder: (context, textLayout) {
           return Stack(
             children: [
               TextLayoutSelectionHighlight(
@@ -271,12 +249,7 @@ class _SuperTextExampleScreenState extends State<SuperTextExampleScreen> with Ti
     return _buildExampleContainer(
       child: SuperText(
         richText: _text,
-        layerAboveBuilder: (context, getTextLayout) {
-          final textLayout = getTextLayout();
-          if (textLayout == null) {
-            return const SizedBox();
-          }
-
+        layerAboveBuilder: (context, textLayout) {
           return Stack(
             children: [
               RainbowBuilder(builder: (context, color) {
@@ -289,12 +262,7 @@ class _SuperTextExampleScreenState extends State<SuperTextExampleScreen> with Ti
             ],
           );
         },
-        layerBeneathBuilder: (context, getTextLayout) {
-          final textLayout = getTextLayout();
-          if (textLayout == null) {
-            return const SizedBox();
-          }
-
+        layerBeneathBuilder: (context, textLayout) {
           return Stack(
             children: [
               RainbowBuilder(builder: (context, color) {
@@ -317,12 +285,7 @@ class _SuperTextExampleScreenState extends State<SuperTextExampleScreen> with Ti
         richText: _text,
         layerAboveBuilder: (context, getTextLayout) {
           return MultiLayerBuilder([
-            (context, getTextLayout) {
-              final textLayout = getTextLayout();
-              if (textLayout == null) {
-                return const SizedBox();
-              }
-
+            (context, textLayout) {
               return Stack(
                 children: [
                   TextLayoutCaret(
@@ -343,12 +306,7 @@ class _SuperTextExampleScreenState extends State<SuperTextExampleScreen> with Ti
                 ],
               );
             },
-            (context, getTextLayout) {
-              final textLayout = getTextLayout();
-              if (textLayout == null) {
-                return const SizedBox();
-              }
-
+            (context, textLayout) {
               return Stack(
                 children: [
                   TextLayoutUserLabel(
@@ -368,12 +326,7 @@ class _SuperTextExampleScreenState extends State<SuperTextExampleScreen> with Ti
             },
           ]).build(context, getTextLayout);
         },
-        layerBeneathBuilder: (context, getTextLayout) {
-          final textLayout = getTextLayout();
-          if (textLayout == null) {
-            return const SizedBox();
-          }
-
+        layerBeneathBuilder: (context, textLayout) {
           return Stack(
             children: [
               TextLayoutSelectionHighlight(
@@ -402,12 +355,7 @@ class _SuperTextExampleScreenState extends State<SuperTextExampleScreen> with Ti
     return _buildExampleContainer(
       child: SuperText(
         richText: const TextSpan(text: "", style: _textStyle),
-        layerAboveBuilder: (context, getTextLayout) {
-          final textLayout = getTextLayout();
-          if (textLayout == null) {
-            return const SizedBox();
-          }
-
+        layerAboveBuilder: (context, textLayout) {
           return TextLayoutEmptyHighlight(
             textLayout: textLayout,
             style: _primaryHighlightStyle,
