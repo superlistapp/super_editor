@@ -1,5 +1,6 @@
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
+import 'package:super_text/src/magic_text.dart';
 
 /// Contract to interrogate the layout of a blob of text.
 abstract class TextLayout {
@@ -170,14 +171,14 @@ TextSelection paragraphExpansionFilter(String text, TextPosition startingPositio
 class RenderParagraphProseTextLayout implements ProseTextLayout {
   RenderParagraphProseTextLayout({
     required InlineSpan richText,
-    required RenderParagraph renderParagraph,
+    required RenderLayoutAwareParagraph renderParagraph,
   })  : _richText = richText,
         _renderParagraph = renderParagraph {
     _textLength = _richText.toPlainText().length;
   }
 
   final InlineSpan _richText;
-  final RenderParagraph _renderParagraph;
+  final RenderLayoutAwareParagraph _renderParagraph;
   late final int _textLength;
 
   double get _estimatedLineHeight {
@@ -188,6 +189,10 @@ class RenderParagraphProseTextLayout implements ProseTextLayout {
 
   @override
   TextPosition? getPositionAtOffset(Offset localOffset) {
+    if (_renderParagraph.needsLayout) {
+      return null;
+    }
+
     if (!_renderParagraph.size.contains(localOffset)) {
       return null;
     }
@@ -197,16 +202,28 @@ class RenderParagraphProseTextLayout implements ProseTextLayout {
 
   @override
   TextPosition getPositionNearestToOffset(Offset localOffset) {
+    if (_renderParagraph.needsLayout) {
+      return const TextPosition(offset: -1);
+    }
+
     return _renderParagraph.getPositionForOffset(localOffset);
   }
 
   @override
   Offset getOffsetAtPosition(TextPosition position) {
+    if (_renderParagraph.needsLayout) {
+      return Offset.zero;
+    }
+
     return _renderParagraph.getOffsetForCaret(position, Rect.zero);
   }
 
   @override
   double getLineHeightAtPosition(TextPosition position) {
+    if (_renderParagraph.needsLayout) {
+      return 0;
+    }
+
     final lineHeightMultiplier = _richText.style?.height ?? 1.0;
 
     // If no text is currently displayed, we can't use a character box
@@ -223,6 +240,10 @@ class RenderParagraphProseTextLayout implements ProseTextLayout {
 
   @override
   int getLineCount() {
+    if (_renderParagraph.needsLayout) {
+      return 0;
+    }
+
     return _renderParagraph
         .getBoxesForSelection(TextSelection(
           baseOffset: 0,
@@ -233,21 +254,37 @@ class RenderParagraphProseTextLayout implements ProseTextLayout {
 
   @override
   Offset getOffsetForCaret(TextPosition position) {
+    if (_renderParagraph.needsLayout) {
+      return Offset.zero;
+    }
+
     return _renderParagraph.getOffsetForCaret(position, Rect.zero);
   }
 
   @override
   double? getHeightForCaret(TextPosition position) {
+    if (_renderParagraph.needsLayout) {
+      return null;
+    }
+
     return _renderParagraph.getFullHeightForCaret(position);
   }
 
   @override
   List<TextBox> getBoxesForSelection(TextSelection selection) {
+    if (_renderParagraph.needsLayout) {
+      return [];
+    }
+
     return _renderParagraph.getBoxesForSelection(selection);
   }
 
   @override
   TextBox getCharacterBox(TextPosition position) {
+    if (_renderParagraph.needsLayout) {
+      return const TextBox.fromLTRBD(0, 0, 0, 0, TextDirection.ltr);
+    }
+
     final plainText = _richText.toPlainText();
     if (plainText.isEmpty) {
       final lineHeightEstimate = _renderParagraph.getFullHeightForCaret(const TextPosition(offset: 0)) ?? 0.0;
@@ -295,6 +332,10 @@ class RenderParagraphProseTextLayout implements ProseTextLayout {
 
   @override
   TextPosition getPositionAtStartOfLine(TextPosition currentPosition) {
+    if (_renderParagraph.needsLayout) {
+      return const TextPosition(offset: -1);
+    }
+
     final renderParagraph = _renderParagraph;
     // TODO: use the character box instead of the estimated line height
     // Note: add half the line height to the current offset to help deal with
@@ -307,6 +348,10 @@ class RenderParagraphProseTextLayout implements ProseTextLayout {
 
   @override
   TextPosition getPositionAtEndOfLine(TextPosition currentPosition) {
+    if (_renderParagraph.needsLayout) {
+      return const TextPosition(offset: -1);
+    }
+
     final renderParagraph = _renderParagraph;
     // TODO: use the character box instead of the estimated line height
     // Note: add half the line height to the current offset to help deal with
@@ -319,6 +364,10 @@ class RenderParagraphProseTextLayout implements ProseTextLayout {
 
   @override
   TextPosition? getPositionOneLineUp(TextPosition currentPosition) {
+    if (_renderParagraph.needsLayout) {
+      return null;
+    }
+
     final renderParagraph = _renderParagraph;
     // TODO: use the character box instead of the estimated line height
     final lineHeight = _estimatedLineHeight;
@@ -338,6 +387,10 @@ class RenderParagraphProseTextLayout implements ProseTextLayout {
 
   @override
   TextPosition? getPositionOneLineDown(TextPosition currentPosition) {
+    if (_renderParagraph.needsLayout) {
+      return null;
+    }
+
     final renderParagraph = _renderParagraph;
     // TODO: use the character box instead of the estimated line height
     final lineHeight = _estimatedLineHeight;
@@ -357,11 +410,19 @@ class RenderParagraphProseTextLayout implements ProseTextLayout {
 
   @override
   TextPosition getPositionInFirstLineAtX(double x) {
+    if (_renderParagraph.needsLayout) {
+      return const TextPosition(offset: -1);
+    }
+
     return getPositionNearestToOffset(Offset(x, 0));
   }
 
   @override
   TextPosition getPositionInLastLineAtX(double x) {
+    if (_renderParagraph.needsLayout) {
+      return const TextPosition(offset: -1);
+    }
+
     return getPositionNearestToOffset(
       Offset(x, _renderParagraph.size.height),
     );
@@ -374,6 +435,10 @@ class RenderParagraphProseTextLayout implements ProseTextLayout {
 
   @override
   bool isTextAtOffset(Offset localOffset) {
+    if (_renderParagraph.needsLayout) {
+      return false;
+    }
+
     List<TextBox> boxes = _renderParagraph.getBoxesForSelection(
       TextSelection(
         baseOffset: 0,
@@ -392,6 +457,10 @@ class RenderParagraphProseTextLayout implements ProseTextLayout {
 
   @override
   TextSelection getSelectionInRect(Offset baseOffset, Offset extentOffset) {
+    if (_renderParagraph.needsLayout) {
+      return const TextSelection.collapsed(offset: -1);
+    }
+
     final renderParagraph = _renderParagraph;
     final contentHeight = renderParagraph.size.height;
     final textLength = _textLength;
@@ -422,6 +491,10 @@ class RenderParagraphProseTextLayout implements ProseTextLayout {
 
   @override
   TextSelection getWordSelectionAt(TextPosition position) {
+    if (_renderParagraph.needsLayout) {
+      return const TextSelection.collapsed(offset: -1);
+    }
+
     final wordRange = _renderParagraph.getWordBoundary(position);
     return TextSelection(
       baseOffset: wordRange.start,

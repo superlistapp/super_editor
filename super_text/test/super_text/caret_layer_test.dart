@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:super_text/src/magic_text.dart';
 import 'package:super_text/super_text.dart';
 
 import 'super_text_test_tools.dart';
@@ -16,30 +17,33 @@ void main() {
           buildTestScaffold(
             child: SuperText(
               richText: threeLineTextSpan,
-              layerAboveBuilder: SuperDuperTextLayoutLayer(
-                builder: (context, textLayout) {
-                  return Stack(
-                    children: [
-                      // We switch the BlinkController using a builder so that we don't
-                      // risk replacing the entire widget tree across pumps. We need to
-                      // retain the same State object for the TextLayoutCaret, so that
-                      // we can test the didUpdateWidget() behavior.
-                      ValueListenableBuilder(
-                        valueListenable: blinkControllerHolder,
-                        builder: (context, value, child) {
-                          return TextLayoutCaret(
-                            textLayout: textLayout,
-                            blinkController: blinkControllerHolder.value,
-                            style: primaryCaretStyle,
-                            position: const TextPosition(offset: 35),
-                            blinkCaret: false,
-                          );
-                        },
-                      ),
-                    ],
-                  );
-                },
-              ),
+              layerAboveBuilder: (context, TextLayout? Function() getTextLayout) {
+                final textLayout = getTextLayout();
+                if (textLayout == null) {
+                  return const SizedBox();
+                }
+
+                return Stack(
+                  children: [
+                    // We switch the BlinkController using a builder so that we don't
+                    // risk replacing the entire widget tree across pumps. We need to
+                    // retain the same State object for the TextLayoutCaret, so that
+                    // we can test the didUpdateWidget() behavior.
+                    ValueListenableBuilder(
+                      valueListenable: blinkControllerHolder,
+                      builder: (context, value, child) {
+                        return TextLayoutCaret(
+                          textLayout: textLayout,
+                          blinkController: blinkControllerHolder.value,
+                          style: primaryCaretStyle,
+                          position: const TextPosition(offset: 35),
+                          blinkCaret: false,
+                        );
+                      },
+                    ),
+                  ],
+                );
+              },
             ),
           ),
         );

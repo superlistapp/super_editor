@@ -6,7 +6,7 @@ import 'package:super_text/super_text.dart';
 import 'super_text_test_tools.dart';
 
 void main() {
-  testWidgets("super duper text", (tester) async {
+  testWidgets("magic text", (tester) async {
     BlinkController.indeterminateAnimationsEnabled = true;
 
     await tester.pumpWidget(
@@ -18,7 +18,7 @@ void main() {
             print("Building SuperDuperTextLayoutLayer beneath");
             final textLayout = getTextLayout();
             if (textLayout == null) {
-              print(" - text layout is null. Building empty space");
+              print(" - text layout is null. Building empty space.");
               return const SizedBox();
             }
 

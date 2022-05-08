@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_toolkit/golden_toolkit.dart';
+import 'package:super_text/src/magic_text.dart';
 import 'package:super_text/super_text.dart';
 
 void main() {

@@ -14,7 +14,12 @@ void main() {
     testGoldens("paints a full text selection", (tester) async {
       await pumpThreeLinePlainSuperText(
         tester,
-        beneathBuilder: (context, textLayout) {
+        beneathBuilder: (context, getTextLayout) {
+          final textLayout = getTextLayout();
+          if (textLayout == null) {
+            return const SizedBox();
+          }
+
           return TextLayoutSelectionHighlight(
             textLayout: textLayout,
             style: selectionStyle,
@@ -32,7 +37,12 @@ void main() {
     testGoldens("paints a partial text selection", (tester) async {
       await pumpThreeLinePlainSuperText(
         tester,
-        beneathBuilder: (context, textLayout) {
+        beneathBuilder: (context, getTextLayout) {
+          final textLayout = getTextLayout();
+          if (textLayout == null) {
+            return const SizedBox();
+          }
+
           return TextLayoutSelectionHighlight(
             textLayout: textLayout,
             style: selectionStyle,
@@ -50,7 +60,12 @@ void main() {
     testGoldens("paints an empty highlight when text is empty", (tester) async {
       await pumpEmptySuperText(
         tester,
-        beneathBuilder: (context, textLayout) {
+        beneathBuilder: (context, getTextLayout) {
+          final textLayout = getTextLayout();
+          if (textLayout == null) {
+            return const SizedBox();
+          }
+
           return TextLayoutEmptyHighlight(
             textLayout: textLayout,
             style: selectionStyle,
@@ -64,7 +79,12 @@ void main() {
     testGoldens("paints no selection when text is empty", (tester) async {
       await pumpEmptySuperText(
         tester,
-        beneathBuilder: (context, textLayout) {
+        beneathBuilder: (context, getTextLayout) {
+          final textLayout = getTextLayout();
+          if (textLayout == null) {
+            return const SizedBox();
+          }
+
           return TextLayoutSelectionHighlight(
             textLayout: textLayout,
             style: selectionStyle,

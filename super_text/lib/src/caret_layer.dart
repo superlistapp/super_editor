@@ -75,13 +75,12 @@ class _TextLayoutCaretState extends State<TextLayoutCaret> with TickerProviderSt
 
   @override
   Widget build(BuildContext context) {
-    print("Building caret. Text layout: ${widget.textLayout}");
     final offset = widget.position != null ? widget.textLayout.getOffsetForCaret(widget.position!) : null;
     final height = widget.position != null
         ? widget.textLayout.getHeightForCaret(widget.position!) ??
             widget.textLayout.getLineHeightAtPosition(widget.position!)
         : null;
-    print("Offset: $offset, height: $height, follower: ${widget.follower}");
+
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -130,7 +129,6 @@ class CaretPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    print("Painting caret");
     if (_offset == null || _height == null) {
       // No caret to paint.
       return;

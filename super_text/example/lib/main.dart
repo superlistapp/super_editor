@@ -70,18 +70,18 @@ class _SuperTextExampleScreenState extends State<SuperTextExampleScreen> with Ti
                 _buildDescription(
                     "SuperTextWithSelection is a product-level widget that renders text with traditional user selections. If you want to build a custom text decoration experience, see SuperText."),
                 _buildSuperDuperText(),
-                // _buildSuperTextWithSelectionRobot(),
-                // _buildSuperTextWithSelectionStaticSingle(),
-                // _buildSuperTextWithSelectionStaticMulti(),
-                // // // SuperText examples
+                _buildSuperTextWithSelectionRobot(),
+                _buildSuperTextWithSelectionStaticSingle(),
+                _buildSuperTextWithSelectionStaticMulti(),
+                // SuperText examples
                 _buildHeader("SuperText Widget"),
                 _buildDescription(
                     "SuperText is a platform, upon which you can build various text experiences. A SuperText widget allows you to build an arbitrary UI beneath the text, and above the text."),
-                // _buildSingleCaret(),
-                // _buildSingleSelectionHighlight(),
-                // _buildSingleSelectionHighlightRainbow(),
-                // _buildMultiUserSelections(),
-                // _buildEmptySelection(),
+                _buildSingleCaret(),
+                _buildSingleSelectionHighlight(),
+                _buildSingleSelectionHighlightRainbow(),
+                _buildMultiUserSelections(),
+                _buildEmptySelection(),
               ],
             ),
           ),
@@ -138,22 +138,24 @@ class _SuperTextExampleScreenState extends State<SuperTextExampleScreen> with Ti
       //     );
       //   },
       // ),
-      layerAboveBuilder: SuperDuperTextLayoutLayer(
-        builder: (context, textLayout) {
-          print("Building SuperDuperTextLayoutLayer above");
-          print(" - context: $context");
-          print(" - textLayout: $textLayout");
-          return Stack(
-            children: [
-              TextLayoutCaret(
-                textLayout: textLayout,
-                style: _primaryCaretStyle,
-                position: const TextPosition(offset: 21),
-              ),
-            ],
-          );
-        },
-      ),
+      layerAboveBuilder: (context, getTextLayout) {
+        print("Building SuperDuperTextLayoutLayer above");
+        final textLayout = getTextLayout();
+        if (textLayout == null) {
+          print(" - text layout is null. Building empty space");
+          return const SizedBox();
+        }
+
+        return Stack(
+          children: [
+            TextLayoutCaret(
+              textLayout: textLayout,
+              style: _primaryCaretStyle,
+              position: const TextPosition(offset: 21),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -205,19 +207,22 @@ class _SuperTextExampleScreenState extends State<SuperTextExampleScreen> with Ti
     return _buildExampleContainer(
       child: SuperText(
         richText: _text,
-        layerAboveBuilder: SuperDuperTextLayoutLayer(
-          builder: (context, textLayout) {
-            return Stack(
-              children: [
-                TextLayoutCaret(
-                  textLayout: textLayout,
-                  style: _primaryCaretStyle,
-                  position: const TextPosition(offset: 21),
-                ),
-              ],
-            );
-          },
-        ),
+        layerAboveBuilder: (context, getTextLayout) {
+          final textLayout = getTextLayout();
+          if (textLayout == null) {
+            return const SizedBox();
+          }
+
+          return Stack(
+            children: [
+              TextLayoutCaret(
+                textLayout: textLayout,
+                style: _primaryCaretStyle,
+                position: const TextPosition(offset: 21),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -226,32 +231,38 @@ class _SuperTextExampleScreenState extends State<SuperTextExampleScreen> with Ti
     return _buildExampleContainer(
       child: SuperText(
         richText: _text,
-        layerAboveBuilder: SuperDuperTextLayoutLayer(
-          builder: (context, textLayout) {
-            return Stack(
-              children: [
-                TextLayoutCaret(
-                  textLayout: textLayout,
-                  style: _primaryCaretStyle,
-                  position: const TextPosition(offset: 21),
-                ),
-              ],
-            );
-          },
-        ),
-        layerBeneathBuilder: SuperDuperTextLayoutLayer(
-          builder: (context, textLayout) {
-            return Stack(
-              children: [
-                TextLayoutSelectionHighlight(
-                  textLayout: textLayout,
-                  style: _primaryHighlightStyle,
-                  selection: const TextSelection(baseOffset: 11, extentOffset: 21),
-                ),
-              ],
-            );
-          },
-        ),
+        layerAboveBuilder: (context, getTextLayout) {
+          final textLayout = getTextLayout();
+          if (textLayout == null) {
+            return const SizedBox();
+          }
+
+          return Stack(
+            children: [
+              TextLayoutCaret(
+                textLayout: textLayout,
+                style: _primaryCaretStyle,
+                position: const TextPosition(offset: 21),
+              ),
+            ],
+          );
+        },
+        layerBeneathBuilder: (context, getTextLayout) {
+          final textLayout = getTextLayout();
+          if (textLayout == null) {
+            return const SizedBox();
+          }
+
+          return Stack(
+            children: [
+              TextLayoutSelectionHighlight(
+                textLayout: textLayout,
+                style: _primaryHighlightStyle,
+                selection: const TextSelection(baseOffset: 11, extentOffset: 21),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -260,36 +271,42 @@ class _SuperTextExampleScreenState extends State<SuperTextExampleScreen> with Ti
     return _buildExampleContainer(
       child: SuperText(
         richText: _text,
-        layerAboveBuilder: SuperDuperTextLayoutLayer(
-          builder: (context, textLayout) {
-            return Stack(
-              children: [
-                RainbowBuilder(builder: (context, color) {
-                  return TextLayoutCaret(
-                    textLayout: textLayout,
-                    style: _primaryCaretStyle.copyWith(color: color),
-                    position: const TextPosition(offset: 21),
-                  );
-                }),
-              ],
-            );
-          },
-        ),
-        layerBeneathBuilder: SuperDuperTextLayoutLayer(
-          builder: (context, textLayout) {
-            return Stack(
-              children: [
-                RainbowBuilder(builder: (context, color) {
-                  return TextLayoutSelectionHighlight(
-                    textLayout: textLayout,
-                    style: _primaryHighlightStyle.copyWith(color: color.withOpacity(0.2)),
-                    selection: const TextSelection(baseOffset: 11, extentOffset: 21),
-                  );
-                }),
-              ],
-            );
-          },
-        ),
+        layerAboveBuilder: (context, getTextLayout) {
+          final textLayout = getTextLayout();
+          if (textLayout == null) {
+            return const SizedBox();
+          }
+
+          return Stack(
+            children: [
+              RainbowBuilder(builder: (context, color) {
+                return TextLayoutCaret(
+                  textLayout: textLayout,
+                  style: _primaryCaretStyle.copyWith(color: color),
+                  position: const TextPosition(offset: 21),
+                );
+              }),
+            ],
+          );
+        },
+        layerBeneathBuilder: (context, getTextLayout) {
+          final textLayout = getTextLayout();
+          if (textLayout == null) {
+            return const SizedBox();
+          }
+
+          return Stack(
+            children: [
+              RainbowBuilder(builder: (context, color) {
+                return TextLayoutSelectionHighlight(
+                  textLayout: textLayout,
+                  style: _primaryHighlightStyle.copyWith(color: color.withOpacity(0.2)),
+                  selection: const TextSelection(baseOffset: 11, extentOffset: 21),
+                );
+              }),
+            ],
+          );
+        },
       ),
     );
   }
@@ -298,74 +315,85 @@ class _SuperTextExampleScreenState extends State<SuperTextExampleScreen> with Ti
     return _buildExampleContainer(
       child: SuperText(
         richText: _text,
-        layerAboveBuilder: SuperDuperTextLayoutLayer(
-          builder: (context, textLayout) {
-            return MultiLayerBuilder([
-              (context, textLayout) {
-                return Stack(
-                  children: [
-                    TextLayoutCaret(
-                      textLayout: textLayout,
-                      style: _primaryCaretStyle,
-                      position: const TextPosition(offset: 21),
-                    ),
-                    TextLayoutCaret(
-                      textLayout: textLayout,
-                      style: _johnCaretStyle,
-                      position: const TextPosition(offset: 65),
-                    ),
-                    TextLayoutCaret(
-                      textLayout: textLayout,
-                      style: _sallyCaretStyle,
-                      position: const TextPosition(offset: 120),
-                    ),
-                  ],
-                );
-              },
-              (context, textLayout) {
-                return Stack(
-                  children: [
-                    TextLayoutUserLabel(
-                      textLayout: textLayout,
-                      style: _johnUserLabelStyle,
-                      label: "John",
-                      position: const TextPosition(offset: 65),
-                    ),
-                    TextLayoutUserLabel(
-                      textLayout: textLayout,
-                      style: _sallyUserLabelStyle,
-                      label: "Sally",
-                      position: const TextPosition(offset: 120),
-                    ),
-                  ],
-                );
-              },
-            ]).build(context, textLayout);
-          },
-        ),
-        layerBeneathBuilder: SuperDuperTextLayoutLayer(
-          builder: (context, textLayout) {
-            return Stack(
-              children: [
-                TextLayoutSelectionHighlight(
-                  textLayout: textLayout,
-                  style: _primaryHighlightStyle,
-                  selection: const TextSelection(baseOffset: 11, extentOffset: 21),
-                ),
-                TextLayoutSelectionHighlight(
-                  textLayout: textLayout,
-                  style: _johnHighlightStyle,
-                  selection: const TextSelection(baseOffset: 58, extentOffset: 65),
-                ),
-                TextLayoutSelectionHighlight(
-                  textLayout: textLayout,
-                  style: _sallyHighlightStyle,
-                  selection: const TextSelection(baseOffset: 79, extentOffset: 120),
-                ),
-              ],
-            );
-          },
-        ),
+        layerAboveBuilder: (context, getTextLayout) {
+          return MultiLayerBuilder([
+            (context, getTextLayout) {
+              final textLayout = getTextLayout();
+              if (textLayout == null) {
+                return const SizedBox();
+              }
+
+              return Stack(
+                children: [
+                  TextLayoutCaret(
+                    textLayout: textLayout,
+                    style: _primaryCaretStyle,
+                    position: const TextPosition(offset: 21),
+                  ),
+                  TextLayoutCaret(
+                    textLayout: textLayout,
+                    style: _johnCaretStyle,
+                    position: const TextPosition(offset: 65),
+                  ),
+                  TextLayoutCaret(
+                    textLayout: textLayout,
+                    style: _sallyCaretStyle,
+                    position: const TextPosition(offset: 120),
+                  ),
+                ],
+              );
+            },
+            (context, getTextLayout) {
+              final textLayout = getTextLayout();
+              if (textLayout == null) {
+                return const SizedBox();
+              }
+
+              return Stack(
+                children: [
+                  TextLayoutUserLabel(
+                    textLayout: textLayout,
+                    style: _johnUserLabelStyle,
+                    label: "John",
+                    position: const TextPosition(offset: 65),
+                  ),
+                  TextLayoutUserLabel(
+                    textLayout: textLayout,
+                    style: _sallyUserLabelStyle,
+                    label: "Sally",
+                    position: const TextPosition(offset: 120),
+                  ),
+                ],
+              );
+            },
+          ]).build(context, getTextLayout);
+        },
+        layerBeneathBuilder: (context, getTextLayout) {
+          final textLayout = getTextLayout();
+          if (textLayout == null) {
+            return const SizedBox();
+          }
+
+          return Stack(
+            children: [
+              TextLayoutSelectionHighlight(
+                textLayout: textLayout,
+                style: _primaryHighlightStyle,
+                selection: const TextSelection(baseOffset: 11, extentOffset: 21),
+              ),
+              TextLayoutSelectionHighlight(
+                textLayout: textLayout,
+                style: _johnHighlightStyle,
+                selection: const TextSelection(baseOffset: 58, extentOffset: 65),
+              ),
+              TextLayoutSelectionHighlight(
+                textLayout: textLayout,
+                style: _sallyHighlightStyle,
+                selection: const TextSelection(baseOffset: 79, extentOffset: 120),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -374,14 +402,17 @@ class _SuperTextExampleScreenState extends State<SuperTextExampleScreen> with Ti
     return _buildExampleContainer(
       child: SuperText(
         richText: const TextSpan(text: "", style: _textStyle),
-        layerAboveBuilder: SuperDuperTextLayoutLayer(
-          builder: (context, textLayout) {
-            return TextLayoutEmptyHighlight(
-              textLayout: textLayout,
-              style: _primaryHighlightStyle,
-            );
-          },
-        ),
+        layerAboveBuilder: (context, getTextLayout) {
+          final textLayout = getTextLayout();
+          if (textLayout == null) {
+            return const SizedBox();
+          }
+
+          return TextLayoutEmptyHighlight(
+            textLayout: textLayout,
+            style: _primaryHighlightStyle,
+          );
+        },
       ),
     );
   }

@@ -1,9 +1,8 @@
 import 'package:flutter/widgets.dart';
-import 'package:super_text/src/super_text.dart';
 import 'package:super_text/super_text_logging.dart';
 
 import 'caret_layer.dart';
-import 'super_duper_text.dart';
+import 'magic_text.dart';
 import 'text_layout.dart';
 import 'text_selection_layer.dart';
 
@@ -167,18 +166,19 @@ class _RebuildOptimizedSuperTextWithSelectionState extends State<_RebuildOptimiz
     _cachedSubtree = SuperText(
       key: widget.textLayoutKey,
       richText: widget.richText,
-      layerBeneathBuilder: SuperDuperTextLayoutLayer(
-        builder: _buildLayerBeneath,
-      ),
-      layerAboveBuilder: SuperDuperTextLayoutLayer(
-        builder: _buildLayerAbove,
-      ),
+      layerBeneathBuilder: _buildLayerBeneath,
+      layerAboveBuilder: _buildLayerAbove,
     );
     return _cachedSubtree!;
   }
 
-  Widget _buildLayerBeneath(BuildContext context, TextLayout textLayout) {
+  Widget _buildLayerBeneath(BuildContext context, TextLayout? Function() getTextLayout) {
     buildsLog.info("Building SuperTextWithSelection ($hashCode) selection highlight layer");
+    final textLayout = getTextLayout();
+    if (textLayout == null) {
+      return const SizedBox();
+    }
+
     return ValueListenableBuilder<List<UserSelection>>(
       valueListenable: widget.userSelections,
       builder: (context, value, child) {
@@ -204,8 +204,13 @@ class _RebuildOptimizedSuperTextWithSelectionState extends State<_RebuildOptimiz
     );
   }
 
-  Widget _buildLayerAbove(BuildContext context, TextLayout textLayout) {
+  Widget _buildLayerAbove(BuildContext context, TextLayout? Function() getTextLayout) {
     buildsLog.info("Building SuperTextWithSelection ($hashCode) caret layer");
+    final textLayout = getTextLayout();
+    if (textLayout == null) {
+      return const SizedBox();
+    }
+
     return ValueListenableBuilder<List<UserSelection>>(
       valueListenable: widget.userSelections,
       builder: (context, value, child) {
