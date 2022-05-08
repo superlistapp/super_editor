@@ -2,7 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:super_text/super_text_logging.dart';
 
 import 'caret_layer.dart';
-import 'magic_text.dart';
+import 'super_text.dart';
 import 'text_layout.dart';
 import 'text_selection_layer.dart';
 

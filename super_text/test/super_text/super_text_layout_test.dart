@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:super_text/src/magic_text.dart';
 import 'package:super_text/super_text.dart';
 
 // TODO: getOffsetAtPosition()
@@ -23,7 +22,7 @@ void main() {
         testWidgets("for empty text", (tester) async {
           await _pumpEmptyText(tester);
 
-          final textLayout = RenderMagicTextLayout.textLayoutFrom(_textKey)!;
+          final textLayout = RenderSuperTextLayout.textLayoutFrom(_textKey)!;
           expect(textLayout.getLineCount(), 0);
         });
 
@@ -37,14 +36,14 @@ void main() {
             ),
           );
 
-          final textLayout = RenderMagicTextLayout.textLayoutFrom(_textKey)!;
+          final textLayout = RenderSuperTextLayout.textLayoutFrom(_textKey)!;
           expect(textLayout.getLineCount(), 1);
         });
 
         testWidgets("for three lines of text", (tester) async {
           await _pumpThreeLinePlainText(tester);
 
-          final textLayout = RenderMagicTextLayout.textLayoutFrom(_textKey)!;
+          final textLayout = RenderSuperTextLayout.textLayoutFrom(_textKey)!;
           expect(textLayout.getLineCount(), 3);
         });
       });
@@ -53,21 +52,21 @@ void main() {
         testWidgets("character when text is empty", (tester) async {
           await _pumpEmptyText(tester);
 
-          final textLayout = RenderMagicTextLayout.textLayoutFrom(_textKey)!;
+          final textLayout = RenderSuperTextLayout.textLayoutFrom(_textKey)!;
           expect(textLayout.getPositionAtOffset(Offset.zero), null);
         });
 
         testWidgets("character when offset is outside of text", (tester) async {
           await _pumpEmptyText(tester);
 
-          final textLayout = RenderMagicTextLayout.textLayoutFrom(_textKey)!;
+          final textLayout = RenderSuperTextLayout.textLayoutFrom(_textKey)!;
           expect(textLayout.getPositionAtOffset(const Offset(-50, 0)), null);
         });
 
         testWidgets("characters in first line", (tester) async {
           await _pumpThreeLinePlainText(tester);
 
-          final textLayout = RenderMagicTextLayout.textLayoutFrom(_textKey)!;
+          final textLayout = RenderSuperTextLayout.textLayoutFrom(_textKey)!;
           final textBox = _textKey.currentContext!.findRenderObject() as RenderBox;
 
           final firstLineEstimatedMiddle = textBox.size.height / 6;
@@ -91,7 +90,7 @@ void main() {
         testWidgets("characters in second line", (tester) async {
           await _pumpThreeLinePlainText(tester);
 
-          final textLayout = RenderMagicTextLayout.textLayoutFrom(_textKey)!;
+          final textLayout = RenderSuperTextLayout.textLayoutFrom(_textKey)!;
           final textBox = _textKey.currentContext!.findRenderObject() as RenderBox;
 
           final secondLineEstimatedMiddle = (textBox.size.height / 6) * 3;
@@ -115,7 +114,7 @@ void main() {
         testWidgets("characters in third line", (tester) async {
           await _pumpThreeLinePlainText(tester);
 
-          final textLayout = RenderMagicTextLayout.textLayoutFrom(_textKey)!;
+          final textLayout = RenderSuperTextLayout.textLayoutFrom(_textKey)!;
           final textBox = _textKey.currentContext!.findRenderObject() as RenderBox;
 
           final thirdLineEstimatedMiddle = (textBox.size.height / 6) * 5;
@@ -141,7 +140,7 @@ void main() {
         testWidgets("TextPosition on the left side", (tester) async {
           await _pumpThreeLinePlainText(tester);
 
-          final textLayout = RenderMagicTextLayout.textLayoutFrom(_textKey)!;
+          final textLayout = RenderSuperTextLayout.textLayoutFrom(_textKey)!;
           final textBox = _textKey.currentContext!.findRenderObject() as RenderBox;
 
           final firstLineEstimatedMiddle = textBox.size.height / 6;
@@ -166,7 +165,7 @@ void main() {
         testWidgets("TextPosition on the right side", (tester) async {
           await _pumpThreeLinePlainText(tester);
 
-          final textLayout = RenderMagicTextLayout.textLayoutFrom(_textKey)!;
+          final textLayout = RenderSuperTextLayout.textLayoutFrom(_textKey)!;
           final textBox = _textKey.currentContext!.findRenderObject() as RenderBox;
 
           final firstLineEstimatedMiddle = textBox.size.height / 6;
@@ -191,7 +190,7 @@ void main() {
         testWidgets("TextPosition on the top side", (tester) async {
           await _pumpThreeLinePlainText(tester);
 
-          final textLayout = RenderMagicTextLayout.textLayoutFrom(_textKey)!;
+          final textLayout = RenderSuperTextLayout.textLayoutFrom(_textKey)!;
           final textBox = _textKey.currentContext!.findRenderObject() as RenderBox;
 
           expect(
@@ -213,7 +212,7 @@ void main() {
         testWidgets("TextPosition on the bottom side", (tester) async {
           await _pumpThreeLinePlainText(tester);
 
-          final textLayout = RenderMagicTextLayout.textLayoutFrom(_textKey)!;
+          final textLayout = RenderSuperTextLayout.textLayoutFrom(_textKey)!;
           final textBox = _textKey.currentContext!.findRenderObject() as RenderBox;
 
           expect(
@@ -235,7 +234,7 @@ void main() {
 
       testWidgets("finds the beginning of lines", (tester) async {
         await _pumpThreeLinePlainText(tester);
-        final textLayout = RenderMagicTextLayout.textLayoutFrom(_textKey)!;
+        final textLayout = RenderSuperTextLayout.textLayoutFrom(_textKey)!;
 
         // Line 1
         expect(
@@ -258,7 +257,7 @@ void main() {
 
       testWidgets("finds the end of lines", (tester) async {
         await _pumpThreeLinePlainText(tester);
-        final textLayout = RenderMagicTextLayout.textLayoutFrom(_textKey)!;
+        final textLayout = RenderSuperTextLayout.textLayoutFrom(_textKey)!;
 
         // Line 1
         expect(
@@ -284,14 +283,14 @@ void main() {
           testWidgets("from the first line", (tester) async {
             await _pumpThreeLinePlainText(tester);
 
-            final textLayout = RenderMagicTextLayout.textLayoutFrom(_textKey)!;
+            final textLayout = RenderSuperTextLayout.textLayoutFrom(_textKey)!;
             expect(textLayout.getPositionOneLineUp(const TextPosition(offset: 5)), null);
           });
 
           testWidgets("from the last line", (tester) async {
             await _pumpThreeLinePlainText(tester);
 
-            final textLayout = RenderMagicTextLayout.textLayoutFrom(_textKey)!;
+            final textLayout = RenderSuperTextLayout.textLayoutFrom(_textKey)!;
             expect(
               textLayout.getPositionOneLineUp(const TextPosition(offset: 100)),
               const TextPosition(offset: 55, affinity: TextAffinity.upstream),
@@ -303,14 +302,14 @@ void main() {
           testWidgets("from the last line", (tester) async {
             await _pumpThreeLinePlainText(tester);
 
-            final textLayout = RenderMagicTextLayout.textLayoutFrom(_textKey)!;
+            final textLayout = RenderSuperTextLayout.textLayoutFrom(_textKey)!;
             expect(textLayout.getPositionOneLineDown(const TextPosition(offset: 100)), null);
           });
 
           testWidgets("from the first line", (tester) async {
             await _pumpThreeLinePlainText(tester);
 
-            final textLayout = RenderMagicTextLayout.textLayoutFrom(_textKey)!;
+            final textLayout = RenderSuperTextLayout.textLayoutFrom(_textKey)!;
             expect(
               textLayout.getPositionOneLineDown(const TextPosition(offset: 5)),
               const TextPosition(offset: 53, affinity: TextAffinity.upstream),

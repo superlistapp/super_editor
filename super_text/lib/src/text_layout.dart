@@ -1,6 +1,6 @@
-import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
-import 'package:super_text/src/magic_text.dart';
+
+import 'super_text.dart';
 
 /// Contract to interrogate the layout of a blob of text.
 abstract class TextLayout {
@@ -168,6 +168,8 @@ TextSelection paragraphExpansionFilter(String text, TextPosition startingPositio
         );
 }
 
+/// A [ProseTextLayout] that's backed by a [RenderLayoutAwareParagraph], which
+/// is essentially a [RenderParagraph].
 class RenderParagraphProseTextLayout implements ProseTextLayout {
   RenderParagraphProseTextLayout({
     required InlineSpan richText,
