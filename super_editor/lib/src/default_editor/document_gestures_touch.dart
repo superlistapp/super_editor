@@ -219,23 +219,32 @@ class DragHandleAutoScroller {
   /// that this auto-scroller controls.
   final RenderBox Function() _getViewportBox;
 
-  /// Jumps to a scroll offset so that the given [documentOffset] is visible within the
-  /// scrollable.
+  /// Jumps to a scroll offset so that the given [offsetInViewport] is
+  /// visible within the viewport boundary.
   ///
-  /// Does nothing, if the given [documentOffset] is already visible.
-  void ensureOffsetIsVisible(Offset documentOffset) {
-    editorGesturesLog.fine("Ensuring document offset is visible in scrollable: $documentOffset");
+  /// Does nothing, if the given [offsetInViewport] is already visible within the viewport boundary.
+  void ensureOffsetIsVisible(Offset offsetInViewport) {
+    editorGesturesLog.fine("Ensuring content offset is visible in scrollable: $offsetInViewport");
 
     final scrollPosition = _getScrollPosition();
     final currentScrollOffset = scrollPosition.pixels;
     editorGesturesLog.fine("Current scroll offset: $currentScrollOffset");
 
-    if (documentOffset.dy < currentScrollOffset) {
+    if (offsetInViewport.dy < _dragAutoScrollBoundary.leading) {
+      // The offset is above the leading boundary. We need to scroll up
       editorGesturesLog.fine("The scrollable needs to scroll up to make offset visible.");
-      scrollPosition.jumpTo(documentOffset.dy + _dragAutoScrollBoundary.leading);
-    } else if (documentOffset.dy > _getViewportBox().size.height + currentScrollOffset) {
+      // Jump to the position where the offset sits at the leading boundary
+      scrollPosition.jumpTo(
+        currentScrollOffset + (offsetInViewport.dy - _dragAutoScrollBoundary.leading),
+      );
+    } else if (offsetInViewport.dy > _getViewportBox().size.height - _dragAutoScrollBoundary.trailing) {
+      // The offset is below the trailing boundary. We need to scroll down
       editorGesturesLog.fine('The scrollable needs to scroll down to make offset visible.');
-      scrollPosition.jumpTo(documentOffset.dy + _dragAutoScrollBoundary.trailing - _getViewportBox().size.height);
+      // Jump to the position where the offset sits at the trailing boundary
+      scrollPosition.jumpTo(
+        currentScrollOffset +
+            (offsetInViewport.dy - (_getViewportBox().size.height - _dragAutoScrollBoundary.trailing)),
+      );
     }
   }
 
