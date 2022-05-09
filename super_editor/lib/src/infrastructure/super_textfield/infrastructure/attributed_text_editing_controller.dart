@@ -92,7 +92,7 @@ class AttributedTextEditingController with ChangeNotifier {
 
   /// Removes the given [attributions] from [composingAttributions].
   void removeComposingAttributions(Set<Attribution> attributions) {
-    _composingAttributions.removeWhere((attribution) => _composingAttributions.contains(attribution));
+    _composingAttributions.removeWhere((attribution) => attributions.contains(attribution));
     notifyListeners();
   }
 
