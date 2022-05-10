@@ -631,6 +631,22 @@ This is some code
         expect(styledText.getAllAttributionsAt(12).single, LinkAttribution(url: Uri.https('example.org', '')));
       });
 
+      test('empty link', () {
+        // This isn't necessarily the behavior that you would expect, but it has been tested against multiple Markdown
+        // renderers (such as VS Code) and it matches their behaviour.
+        const markdown = 'This is [a link]() test';
+        final document = deserializeMarkdownToDocument(markdown);
+
+        expect(document.nodes.length, 1);
+        expect(document.nodes.first, isA<ParagraphNode>());
+
+        final paragraph = document.nodes.first as ParagraphNode;
+        final styledText = paragraph.text;
+        expect(styledText.text, 'This is a link test');
+
+        expect(styledText.getAllAttributionsAt(12).single, LinkAttribution(url: Uri.parse('')));
+      });
+
       test('unordered list', () {
         const markdown = '''
  * list item 1
