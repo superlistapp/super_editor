@@ -552,7 +552,7 @@ This is some code
       });
 
       test('single styled paragraph', () {
-        const markdown = 'This is **some *styled*** text to parse as markdown';
+        const markdown = 'This is **some *styled*** text to parse as [markdown](https://example.org)';
 
         final document = deserializeMarkdownToDocument(markdown);
 
@@ -567,6 +567,68 @@ This is some code
         expect(styledText.getAllAttributionsAt(8).contains(boldAttribution), true);
         expect(styledText.getAllAttributionsAt(13).containsAll([boldAttribution, italicsAttribution]), true);
         expect(styledText.getAllAttributionsAt(19).isEmpty, true);
+        expect(styledText.getAllAttributionsAt(40).single, LinkAttribution(url: Uri.https('example.org', '')));
+      });
+
+      test('link within multiple styles', () {
+        const markdown = 'This is **some *styled [link](https://example.org) text***';
+
+        final document = deserializeMarkdownToDocument(markdown);
+
+        expect(document.nodes.length, 1);
+        expect(document.nodes.first, isA<ParagraphNode>());
+
+        final paragraph = document.nodes.first as ParagraphNode;
+        final styledText = paragraph.text;
+        expect(styledText.text, 'This is some styled link text');
+
+        expect(styledText.getAllAttributionsAt(0).isEmpty, true);
+        expect(styledText.getAllAttributionsAt(8).contains(boldAttribution), true);
+        expect(styledText.getAllAttributionsAt(13).containsAll([boldAttribution, italicsAttribution]), true);
+        expect(
+            styledText
+                .getAllAttributionsAt(20)
+                .containsAll([boldAttribution, italicsAttribution, LinkAttribution(url: Uri.https('example.org', ''))]),
+            true);
+        expect(styledText.getAllAttributionsAt(25).containsAll([boldAttribution, italicsAttribution]), true);
+      });
+
+      test('completely overlapping link and style', () {
+        const markdown = 'This is **[a test](https://example.org)**';
+
+        final document = deserializeMarkdownToDocument(markdown);
+
+        expect(document.nodes.length, 1);
+        expect(document.nodes.first, isA<ParagraphNode>());
+
+        final paragraph = document.nodes.first as ParagraphNode;
+        final styledText = paragraph.text;
+        expect(styledText.text, 'This is a test');
+
+        expect(styledText.getAllAttributionsAt(0).isEmpty, true);
+        expect(styledText.getAllAttributionsAt(8).contains(boldAttribution), true);
+        expect(
+            styledText
+                .getAllAttributionsAt(13)
+                .containsAll([boldAttribution, LinkAttribution(url: Uri.https('example.org', ''))]),
+            true);
+      });
+
+      test('single style intersecting link', () {
+        // This isn't necessarily the behavior that you would expect, but it has been tested against multiple Markdown
+        // renderers (such as VS Code) and it matches their behaviour.
+        const markdown = 'This **is [a** link](https://example.org) test';
+        final document = deserializeMarkdownToDocument(markdown);
+
+        expect(document.nodes.length, 1);
+        expect(document.nodes.first, isA<ParagraphNode>());
+
+        final paragraph = document.nodes.first as ParagraphNode;
+        final styledText = paragraph.text;
+        expect(styledText.text, 'This **is a** link test');
+
+        expect(styledText.getAllAttributionsAt(9).isEmpty, true);
+        expect(styledText.getAllAttributionsAt(12).single, LinkAttribution(url: Uri.https('example.org', '')));
       });
 
       test('unordered list', () {
@@ -652,7 +714,7 @@ This is some code
 const exampleMarkdownDoc1 = '''
 # Example 1
 ---
-This is an example doc that has various types of nodes.
+This is an example doc that has various types of nodes, like [links](https://example.org).
 
 It includes multiple paragraphs, ordered list items, unordered list items, images, and HRs.
 
