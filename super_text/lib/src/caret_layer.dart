@@ -50,7 +50,7 @@ class _TextLayoutCaretState extends State<TextLayoutCaret> with TickerProviderSt
         // CaretPainter will throw an exception when it deregister itself.
         // TODO: ask the Flutter community if there's a common solution to this situation
         final oldBlinkController = _blinkController;
-        WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+        WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
           oldBlinkController.dispose();
         });
       }
@@ -102,7 +102,7 @@ class _TextLayoutCaretState extends State<TextLayoutCaret> with TickerProviderSt
             height: height,
             child: CompositedTransformTarget(
               link: widget.follower!,
-              child: ColoredBox(color: const Color(0xFF00FF00)),
+              child: const ColoredBox(color: Color(0xFF00FF00)),
             ),
           ),
       ],

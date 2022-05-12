@@ -476,7 +476,7 @@ class _NextFrameBuilderState extends State<_NextFrameBuilder> {
   @override
   Widget build(BuildContext context) {
     if (!_isNextFrameBuild) {
-      WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         setState(() {
           _isNextFrameBuild = true;
           _previousFrame = widget.builder(context);
