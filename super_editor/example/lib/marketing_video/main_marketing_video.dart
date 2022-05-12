@@ -202,7 +202,7 @@ class _MarketingVideoState extends State<MarketingVideo> {
             documentPadding: const EdgeInsets.all(16),
             addRulesAfter: [
               StyleRule(
-                  const BlockSelector.all(),
+                  BlockSelector.all,
                   (doc, node) => {
                         "padding": const CascadingPadding.all(0.0),
                       }),

@@ -28,6 +28,10 @@ class _ExampleEditorState extends State<ExampleEditor> {
 
   late ScrollController _scrollController;
 
+  final _darkBackground = const Color(0xFF222222);
+  final _lightBackground = Colors.white;
+  bool _isLight = true;
+
   OverlayEntry? _textFormatBarOverlayEntry;
   final _textSelectionAnchor = ValueNotifier<Offset?>(null);
 
@@ -281,42 +285,79 @@ class _ExampleEditorState extends State<ExampleEditor> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return Stack(
       children: [
-        Expanded(
-          child: _buildEditor(),
+        Column(
+          children: [
+            Expanded(
+              child: _buildEditor(),
+            ),
+            if (_isMobile) _buildMountedToolbar(),
+          ],
         ),
-        if (_isMobile) _buildMountedToolbar(),
+        Align(
+          alignment: Alignment.bottomRight,
+          child: _buildLightAndDarkModeToggle(),
+        ),
       ],
     );
   }
 
+  Widget _buildLightAndDarkModeToggle() {
+    return Padding(
+      padding: const EdgeInsets.only(right: 16.0, bottom: 16.0),
+      child: FloatingActionButton(
+        backgroundColor: _isLight ? _darkBackground : _lightBackground,
+        foregroundColor: _isLight ? _lightBackground : _darkBackground,
+        elevation: 5,
+        onPressed: () {
+          setState(() {
+            _isLight = !_isLight;
+          });
+        },
+        child: _isLight
+            ? const Icon(
+                Icons.dark_mode,
+              )
+            : const Icon(
+                Icons.light_mode,
+              ),
+      ),
+    );
+  }
+
   Widget _buildEditor() {
-    return SuperEditor(
-      editor: _docEditor,
-      composer: _composer,
-      focusNode: _editorFocusNode,
-      scrollController: _scrollController,
-      documentLayoutKey: _docLayoutKey,
-      stylesheet: defaultStylesheet.copyWith(
-        addRulesAfter: [taskStyles],
-      ),
-      componentBuilders: [
-        ...defaultComponentBuilders,
-        TaskComponentBuilder(_docEditor),
-      ],
-      gestureMode: _gestureMode,
-      inputSource: _inputSource,
-      androidToolbarBuilder: (_) => AndroidTextEditingFloatingToolbar(
-        onCutPressed: _cut,
-        onCopyPressed: _copy,
-        onPastePressed: _paste,
-        onSelectAllPressed: _selectAll,
-      ),
-      iOSToolbarBuilder: (_) => IOSTextEditingFloatingToolbar(
-        onCutPressed: _cut,
-        onCopyPressed: _copy,
-        onPastePressed: _paste,
+    return ColoredBox(
+      color: _isLight ? _lightBackground : _darkBackground,
+      child: SuperEditor(
+        editor: _docEditor,
+        composer: _composer,
+        focusNode: _editorFocusNode,
+        scrollController: _scrollController,
+        documentLayoutKey: _docLayoutKey,
+        stylesheet: defaultStylesheet.copyWith(
+          addRulesAfter: [
+            if (!_isLight) ..._darkModeStyles,
+            taskStyles,
+          ],
+        ),
+        componentBuilders: [
+          ...defaultComponentBuilders,
+          TaskComponentBuilder(_docEditor),
+        ],
+        gestureMode: _gestureMode,
+        inputSource: _inputSource,
+        androidToolbarBuilder: (_) => AndroidTextEditingFloatingToolbar(
+          onCutPressed: _cut,
+          onCopyPressed: _copy,
+          onPastePressed: _paste,
+          onSelectAllPressed: _selectAll,
+        ),
+        iOSToolbarBuilder: (_) => IOSTextEditingFloatingToolbar(
+          onCutPressed: _cut,
+          onCopyPressed: _copy,
+          onPastePressed: _paste,
+        ),
       ),
     );
   }
@@ -343,3 +384,37 @@ class _ExampleEditorState extends State<ExampleEditor> {
     );
   }
 }
+
+// Makes text light, for use during dark mode styling.
+final _darkModeStyles = [
+  StyleRule(
+    BlockSelector.all,
+    (doc, docNode) {
+      return {
+        "textStyle": const TextStyle(
+          color: Color(0xFFCCCCCC),
+        ),
+      };
+    },
+  ),
+  StyleRule(
+    const BlockSelector("header1"),
+    (doc, docNode) {
+      return {
+        "textStyle": const TextStyle(
+          color: Color(0xFF888888),
+        ),
+      };
+    },
+  ),
+  StyleRule(
+    const BlockSelector("header2"),
+    (doc, docNode) {
+      return {
+        "textStyle": const TextStyle(
+          color: Color(0xFF888888),
+        ),
+      };
+    },
+  ),
+];

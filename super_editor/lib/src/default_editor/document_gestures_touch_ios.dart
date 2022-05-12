@@ -270,13 +270,21 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
       return;
     }
 
+    // Determines the offset of the editor in the viewport coordinate
+    final editorBox = widget.documentKey.currentContext!.findRenderObject() as RenderBox;
+    final editorInViewportOffset = viewportBox.localToGlobal(Offset.zero) - editorBox.localToGlobal(Offset.zero);
+
+    // Determines the offset of the bottom of the handle in the viewport coordinate
+    late Offset handleInViewportOffset;
+
     if (collapsedHandleOffset != null) {
       editorGesturesLog.fine("The selection is collapsed");
-      _handleAutoScrolling.ensureOffsetIsVisible(collapsedHandleOffset);
+      handleInViewportOffset = collapsedHandleOffset - editorInViewportOffset;
     } else {
       editorGesturesLog.fine("The selection is expanded");
-      _handleAutoScrolling.ensureOffsetIsVisible(extentHandleOffset!);
+      handleInViewportOffset = extentHandleOffset! - editorInViewportOffset;
     }
+    _handleAutoScrolling.ensureOffsetIsVisible(handleInViewportOffset);
   }
 
   void _onFocusChange() {

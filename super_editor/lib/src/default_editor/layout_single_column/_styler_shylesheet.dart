@@ -10,7 +10,25 @@ class SingleColumnStylesheetStyler extends SingleColumnLayoutStylePhase {
     required Stylesheet stylesheet,
   }) : _stylesheet = stylesheet;
 
-  final Stylesheet _stylesheet;
+  Stylesheet _stylesheet;
+
+  /// Sets the [stylesheet] that's used by this styler to generate view models
+  /// for document content.
+  ///
+  /// If [newStylesheet] is the same as the existing stylesheet, this method
+  /// does nothing.
+  ///
+  /// If [newStylesheet] is different than the existing stylesheet, this method
+  /// marks this style phase a dirty, which will cause the associated presenter
+  /// to re-run this style phase, and all presentation phases after it.
+  set stylesheet(Stylesheet newStylesheet) {
+    if (newStylesheet == _stylesheet) {
+      return;
+    }
+
+    _stylesheet = newStylesheet;
+    markDirty();
+  }
 
   @override
   SingleColumnLayoutViewModel style(Document document, SingleColumnLayoutViewModel viewModel) {
@@ -28,10 +46,10 @@ class SingleColumnStylesheetStyler extends SingleColumnLayoutStylePhase {
   }
 
   SingleColumnLayoutComponentViewModel _styleComponent(
-      Document document,
-      DocumentNode node,
-      SingleColumnLayoutComponentViewModel viewModel,
-      ) {
+    Document document,
+    DocumentNode node,
+    SingleColumnLayoutComponentViewModel viewModel,
+  ) {
     // Combine all applicable style rules into a single set of styles
     // for this component.
     final aggregateStyles = <String, dynamic>{

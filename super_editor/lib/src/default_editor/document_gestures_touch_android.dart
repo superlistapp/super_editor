@@ -148,6 +148,8 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   void didChangeDependencies() {
     super.didChangeDependencies();
 
+    _ancestorScrollPosition = Scrollable.of(context)?.position;
+
     // On the next frame, check if our active scroll position changed to a
     // different instance. If it did, move our listener to the new one.
     //
@@ -247,6 +249,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   }
 
   void _ensureSelectionExtentIsVisible() {
+    editorGesturesLog.fine("Ensuring selection extent is visible");
     final collapsedHandleOffset = _editingController.collapsedHandleOffset;
     final extentHandleOffset = _editingController.downstreamHandleOffset;
     if (collapsedHandleOffset == null && extentHandleOffset == null) {
@@ -254,11 +257,21 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       return;
     }
 
+    // Determines the offset of the editor in the viewport coordinate
+    final editorBox = widget.documentKey.currentContext!.findRenderObject() as RenderBox;
+    final editorInViewportOffset = viewportBox.localToGlobal(Offset.zero) - editorBox.localToGlobal(Offset.zero);
+
+    // Determines the offset of the handle in the viewport coordinate
+    late Offset handleInViewportOffset;
+
     if (collapsedHandleOffset != null) {
-      _handleAutoScrolling.ensureOffsetIsVisible(collapsedHandleOffset);
+      editorGesturesLog.fine("The selection is collapsed");
+      handleInViewportOffset = collapsedHandleOffset - editorInViewportOffset;
     } else {
-      _handleAutoScrolling.ensureOffsetIsVisible(extentHandleOffset!);
+      editorGesturesLog.fine("The selection is expanded");
+      handleInViewportOffset = extentHandleOffset! - editorInViewportOffset;
     }
+    _handleAutoScrolling.ensureOffsetIsVisible(handleInViewportOffset);
   }
 
   void _onFocusChange() {

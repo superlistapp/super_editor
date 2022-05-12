@@ -92,7 +92,7 @@ class AttributedTextEditingController with ChangeNotifier {
 
   /// Removes the given [attributions] from [composingAttributions].
   void removeComposingAttributions(Set<Attribution> attributions) {
-    _composingAttributions.removeWhere((attribution) => _composingAttributions.contains(attribution));
+    _composingAttributions.removeWhere((attribution) => attributions.contains(attribution));
     notifyListeners();
   }
 
@@ -646,9 +646,8 @@ class AttributedTextEditingController with ChangeNotifier {
     _composingAttributions.clear();
     _composingRegion = TextRange.empty;
   }
-}
 
-extension DefaultSuperTextFieldActions on AttributedTextEditingController {
+  //------ START: Methods moved here from extension methods ---------
   void copySelectedTextToClipboard() {
     if (selection.extentOffset == -1) {
       // Nothing selected to copy.
@@ -877,4 +876,5 @@ extension DefaultSuperTextFieldActions on AttributedTextEditingController {
     );
     selection = TextSelection.collapsed(offset: currentSelectionExtent.offset + 1);
   }
+  //------ END: Methods moved here from extension methods -------
 }
