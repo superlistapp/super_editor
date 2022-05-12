@@ -15,6 +15,8 @@ void main() {
     () {
       group('jumps to', () {
         testWidgets('beginning of line with CMD + LEFT ARROW', (tester) async {
+          Platform.setTestInstance(MacPlatform());
+
           // Start the user's selection somewhere after the beginning of the first
           // line in the first node.
           final editContext = await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
@@ -31,9 +33,13 @@ void main() {
               ),
             ),
           );
+
+          Platform.setTestInstance(null);
         });
 
         testWidgets('end of line with CMD + RIGHT ARROW', (tester) async {
+          Platform.setTestInstance(MacPlatform());
+
           // Start the user's selection somewhere before the end of the first line
           // in the first node.
           final editContext = await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
@@ -52,9 +58,13 @@ void main() {
               ),
             ),
           );
+
+          Platform.setTestInstance(null);
         });
 
         testWidgets('beginning of word with ALT + LEFT ARROW', (tester) async {
+          Platform.setTestInstance(MacPlatform());
+
           // Start the user's selection somewhere in the middle of a word.
           final editContext = await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
 
@@ -70,9 +80,13 @@ void main() {
               ),
             ),
           );
+
+          Platform.setTestInstance(null);
         });
 
         testWidgets('end of word with ALT + RIGHT ARROW', (tester) async {
+          Platform.setTestInstance(MacPlatform());
+
           // Start the user's selection somewhere in the middle of a word.
           final editContext = await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
 
@@ -88,6 +102,8 @@ void main() {
               ),
             ),
           );
+
+          Platform.setTestInstance(null);
         });
       });
 
