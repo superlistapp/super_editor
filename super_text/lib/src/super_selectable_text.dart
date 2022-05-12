@@ -501,7 +501,7 @@ class SuperSelectableTextState extends State<SuperSelectableText> implements Tex
   @override
   Widget build(BuildContext context) {
     if (_renderParagraph == null) {
-      WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         if (mounted) {
           setState(() {
             // Force another frame so that we can use the renderParagraph.
@@ -733,21 +733,21 @@ class _DebugSelectableTextDecoratorState extends State<DebugSelectableTextDecora
   Widget _buildDebugPaint() {
     if (_selectableTextState == null) {
       // Schedule another frame so we can compute the debug paint.
-      WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         setState(() {});
       });
       return const SizedBox();
     }
     if (_renderParagraph == null) {
       // Schedule another frame so we can compute the debug paint.
-      WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         setState(() {});
       });
       return const SizedBox();
     }
     if (_renderParagraph!.hasSize && (kDebugMode && _renderParagraph!.debugNeedsLayout)) {
       // Schedule another frame so we can compute the debug paint.
-      WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         setState(() {});
       });
       return const SizedBox();

@@ -5,7 +5,6 @@ import 'package:super_editor/src/default_editor/super_editor.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
-import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/attributed_text_editing_controller.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/hint_text.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/text_scrollview.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/input_method_engine/_ime_text_editing_controller.dart';
@@ -219,7 +218,7 @@ class _SuperIOSTextFieldState extends State<SuperIOSTextField> with SingleTicker
     }
 
     if (widget.showDebugPaint != oldWidget.showDebugPaint) {
-      WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         _rebuildHandles();
       });
     }
@@ -235,7 +234,7 @@ class _SuperIOSTextFieldState extends State<SuperIOSTextField> with SingleTicker
     // available upon Hot Reload. Accessing it results in an exception.
     _removeEditingOverlayControls();
 
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       _showHandles();
     });
   }
@@ -244,7 +243,7 @@ class _SuperIOSTextFieldState extends State<SuperIOSTextField> with SingleTicker
   void dispose() {
     _removeEditingOverlayControls();
 
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       // Dispose after the current frame so that other widgets have
       // time to remove their listeners.
       _editingOverlayController.dispose();
@@ -254,7 +253,7 @@ class _SuperIOSTextFieldState extends State<SuperIOSTextField> with SingleTicker
       ..removeListener(_onTextOrSelectionChange)
       ..onIOSFloatingCursorChange = null;
     if (widget.textController == null) {
-      WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         // Dispose after the current frame so that other widgets have
         // time to remove their listeners.
         _textEditingController.dispose();

@@ -158,7 +158,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
 
     widget.composer.addListener(_onSelectionChange);
 
-    WidgetsBinding.instance!.addObserver(this);
+    WidgetsBinding.instance.addObserver(this);
   }
 
   @override
@@ -173,7 +173,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     // This is posted to the next frame because the first time this method
     // runs, we haven't attached to our own ScrollController yet, so
     // this.scrollPosition might be null.
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       final newScrollPosition = scrollPosition;
       if (newScrollPosition != _activeScrollPosition) {
         setState(() {
@@ -218,7 +218,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
       //       problem exists for documents, too.
       _removeEditingOverlayControls();
 
-      WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         _showEditingControlsOverlay();
       });
     }
@@ -226,7 +226,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
 
   @override
   void dispose() {
-    WidgetsBinding.instance!.removeObserver(this);
+    WidgetsBinding.instance.removeObserver(this);
 
     widget.document.removeListener(_onDocumentChange);
 
@@ -250,7 +250,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     // The available screen dimensions may have changed, e.g., due to keyboard
     // appearance/disappearance. Reflow the layout. Use a post-frame callback
     // to give the rest of the UI a chance to reflow, first.
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       if (mounted) {
         _ensureSelectionExtentIsVisible();
 
@@ -300,7 +300,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   void _onDocumentChange() {
     _editingController.hideToolbar();
 
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       // The user may have changed the type of node, e.g., paragraph to
       // blockquote, which impacts the caret size and position. Reposition
       // the caret on the next frame.
@@ -314,7 +314,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   void _onSelectionChange() {
     // The selection change might correspond to new content that's not
     // laid out yet. Wait until the next frame to update visuals.
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       _updateHandlesAfterSelectionOrLayoutChange();
     });
   }
@@ -1260,7 +1260,7 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
       // The selection is expanded. First we need to collapse it, then
       // we can start showing the floating cursor.
       widget.composer.selection = widget.composer.selection!.collapseDownstream(widget.document);
-      WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         _onFloatingCursorChange();
       });
     }

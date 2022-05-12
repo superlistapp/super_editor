@@ -274,7 +274,7 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
       // layout until the end of this frame. Therefore, we schedule a
       // a post frame callback to lookup the new text selection location
       // after the current layout pass.
-      WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         widget.textController.selection = TextSelection.collapsed(
           offset: _globalOffsetToTextPosition(_globalDragOffset!).offset,
         );

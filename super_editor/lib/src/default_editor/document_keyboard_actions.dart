@@ -5,7 +5,6 @@ import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
-import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
 import 'package:super_editor/src/infrastructure/platform_detector.dart';
 
@@ -13,14 +12,11 @@ import 'document_input_keyboard.dart';
 import 'paragraph.dart';
 import 'text.dart';
 
-final _log = Logger(scope: 'document_keyboard_actions.dart');
-
 ExecutionInstruction doNothingWhenThereIsNoSelection({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
   if (editContext.composer.selection == null) {
-    _log.log('doNothingWhenThereIsNoSelection', ' - no selection. Returning.');
     return ExecutionInstruction.haltExecution;
   } else {
     return ExecutionInstruction.continueExecution;
@@ -38,7 +34,6 @@ ExecutionInstruction pasteWhenCmdVIsPressed({
     return ExecutionInstruction.continueExecution;
   }
 
-  _log.log('pasteWhenCmdVIsPressed', 'Pasting clipboard content...');
   editContext.commonOps.paste();
 
   return ExecutionInstruction.haltExecution;
@@ -134,7 +129,6 @@ ExecutionInstruction anyCharacterOrDestructiveKeyToDeleteSelection({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
-  _log.log('deleteExpandedSelectionWhenCharacterOrDestructiveKeyPressed', 'Running...');
   if (editContext.composer.selection == null || editContext.composer.selection!.isCollapsed) {
     return ExecutionInstruction.continueExecution;
   }
@@ -218,21 +212,17 @@ ExecutionInstruction mergeNodeWithNextWhenDeleteIsPressed({
 
   final node = editContext.editor.document.getNodeById(editContext.composer.selection!.extent.nodeId);
   if (node is! TextNode) {
-    _log.log('mergeNodeWithNextWhenDeleteIsPressed', 'WARNING: Cannot combine node of type: $node');
     return ExecutionInstruction.continueExecution;
   }
 
   final nextNode = editContext.editor.document.getNodeAfter(node);
   if (nextNode == null) {
-    _log.log('mergeNodeWithNextWhenDeleteIsPressed', 'At bottom of document. Cannot merge with node above.');
     return ExecutionInstruction.continueExecution;
   }
   if (nextNode is! TextNode) {
-    _log.log('mergeNodeWithNextWhenDeleteIsPressed', 'Cannot merge ParagraphNode into node of type: $nextNode');
     return ExecutionInstruction.continueExecution;
   }
 
-  _log.log('mergeNodeWithNextWhenDeleteIsPressed', 'Combining node with next.');
   final currentParagraphLength = node.text.text.length;
 
   // Send edit command.
@@ -270,13 +260,11 @@ ExecutionInstruction moveUpDownLeftAndRightWithArrowKeys({
 
   bool didMove = false;
   if (keyEvent.logicalKey == LogicalKeyboardKey.arrowLeft || keyEvent.logicalKey == LogicalKeyboardKey.arrowRight) {
-    _log.log('moveUpDownLeftAndRightWithArrowKeys', ' - handling left arrow key');
-
     MovementModifier? movementModifier;
     if (keyEvent.isPrimaryShortcutKeyPressed) {
-      movementModifier == MovementModifier.line;
+      movementModifier = MovementModifier.line;
     } else if (keyEvent.isAltPressed) {
-      movementModifier == MovementModifier.word;
+      movementModifier = MovementModifier.word;
     }
 
     if (keyEvent.logicalKey == LogicalKeyboardKey.arrowLeft) {
@@ -293,12 +281,8 @@ ExecutionInstruction moveUpDownLeftAndRightWithArrowKeys({
       );
     }
   } else if (keyEvent.logicalKey == LogicalKeyboardKey.arrowUp) {
-    _log.log('moveUpDownLeftAndRightWithArrowKeys', ' - handling up arrow key');
-
     didMove = editContext.commonOps.moveCaretUp(expand: keyEvent.isShiftPressed);
   } else if (keyEvent.logicalKey == LogicalKeyboardKey.arrowDown) {
-    _log.log('moveUpDownLeftAndRightWithArrowKeys', ' - handling down arrow key');
-
     didMove = editContext.commonOps.moveCaretDown(expand: keyEvent.isShiftPressed);
   }
 
@@ -310,7 +294,7 @@ ExecutionInstruction moveToLineStartOrEndWithCtrlAOrE({
   required RawKeyEvent keyEvent,
 }) {
   if (Platform.instance.isMac) {
-    ExecutionInstruction.continueExecution;
+    return ExecutionInstruction.continueExecution;
   }
 
   if (!keyEvent.isControlPressed) {
@@ -323,7 +307,6 @@ ExecutionInstruction moveToLineStartOrEndWithCtrlAOrE({
       expand: keyEvent.isShiftPressed,
       movementModifier: MovementModifier.line,
     );
-    _log.log('moveToLineStartOrEndWithCtrlAOrE', ' - handling Ctrl+A');
   }
 
   if (keyEvent.logicalKey == LogicalKeyboardKey.keyE) {
@@ -331,7 +314,6 @@ ExecutionInstruction moveToLineStartOrEndWithCtrlAOrE({
       expand: keyEvent.isShiftPressed,
       movementModifier: MovementModifier.line,
     );
-    _log.log('moveToLineStartOrEndWithCtrlAOrE', ' - handling Ctrl+E');
   }
 
   return didMove ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
@@ -356,7 +338,6 @@ ExecutionInstruction deleteLineWithCmdBksp({
   );
 
   if (didMove) {
-    _log.log('deleteLineWithCmdBksp', ' - handling CMD+BKSP');
     return editContext.commonOps.deleteSelection()
         ? ExecutionInstruction.haltExecution
         : ExecutionInstruction.continueExecution;
@@ -383,7 +364,6 @@ ExecutionInstruction deleteWordWithAltBksp({
   );
 
   if (didMove) {
-    _log.log('deleteWordWithAltBksp', ' - handling ALT+BKSP');
     return editContext.commonOps.deleteSelection()
         ? ExecutionInstruction.haltExecution
         : ExecutionInstruction.continueExecution;

@@ -38,7 +38,7 @@ class _StaticMultiLineTextFieldDemoState extends State<StaticMultiLineTextFieldD
       textKey: _textKey,
     );
 
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       _startDemo();
     });
   }

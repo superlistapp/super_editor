@@ -39,7 +39,7 @@ class _ExpandingMultiLineTextFieldDemoState extends State<ExpandingMultiLineText
       textKey: _textKey,
     );
 
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       _startDemo();
     });
   }

@@ -64,7 +64,7 @@ class _TaskAndChatWithRenderObjectDemoState extends State<TaskAndChatWithRenderO
                   // We don't know the size of the viewport yet. Return an empty box
                   // and schedule another frame to reflow our layout based on the
                   // viewport size.
-                  WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+                  WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
                     if (mounted) {
                       setState(() {});
                     }

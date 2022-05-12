@@ -1,6 +1,5 @@
 import 'dart:ui' as ui;
 
-import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';

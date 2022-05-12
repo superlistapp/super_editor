@@ -121,7 +121,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     _scrollController = _scrollController = (widget.scrollController ?? ScrollController());
     // On the next frame, after our ScrollController is attached to the Scrollable,
     // add a listener for scroll changes.
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       _updateScrollPositionListener();
     });
     // I added this listener directly to our ScrollController because the listener we added
@@ -141,7 +141,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
     widget.composer.addListener(_onSelectionChange);
 
-    WidgetsBinding.instance!.addObserver(this);
+    WidgetsBinding.instance.addObserver(this);
   }
 
   @override
@@ -156,7 +156,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     // This is posted to the next frame because the first time this method
     // runs, we haven't attached to our own ScrollController yet, so
     // this.scrollPosition might be null.
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       _updateScrollPositionListener();
     });
   }
@@ -194,7 +194,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       //       problem exists for documents, too.
       _removeEditingOverlayControls();
 
-      WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         _showEditingControlsOverlay();
       });
     }
@@ -202,7 +202,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
   @override
   void dispose() {
-    WidgetsBinding.instance!.removeObserver(this);
+    WidgetsBinding.instance.removeObserver(this);
 
     // TODO: I commented this out because the scroll position is already
     //       disposed by the time this runs and it causes an error.
@@ -211,7 +211,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     // We dispose the EditingController on the next frame because
     // the ListenableBuilder that uses it throws an error if we
     // dispose of it here.
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       _editingController.dispose();
     });
 
@@ -237,7 +237,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     // The available screen dimensions may have changed, e.g., due to keyboard
     // appearance/disappearance. Reflow the layout. Use a post-frame callback
     // to give the rest of the UI a chance to reflow, first.
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       if (mounted) {
         _ensureSelectionExtentIsVisible();
 
@@ -287,7 +287,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   void _onDocumentChange() {
     _editingController.hideToolbar();
 
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       // The user may have changed the type of node, e.g., paragraph to
       // blockquote, which impacts the caret size and position. Reposition
       // the caret on the next frame.
@@ -300,7 +300,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   void _onSelectionChange() {
     // The selection change might correspond to new content that's not
     // laid out yet. Wait until the next frame to update visuals.
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       _updateHandlesAfterSelectionOrLayoutChange();
     });
   }

@@ -309,6 +309,21 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
   }
 
   @override
+  void insertTextPlaceholder(Size size) {
+    // No-op: this is for scribble
+  }
+
+  @override
+  void removeTextPlaceholder() {
+    // No-op: this is for scribble
+  }
+
+  @override
+  void showToolbar() {
+    // No-op: this is for scribble
+  }
+
+  @override
   void connectionClosed() {
     editorImeLog.info("IME connection closed");
     _inputConnection = null;

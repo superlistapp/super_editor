@@ -100,7 +100,7 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
   void initState() {
     super.initState();
 
-    WidgetsBinding.instance!.addObserver(this);
+    WidgetsBinding.instance.addObserver(this);
 
     widget.editingController.textController.addListener(_rebuildOnNextFrame);
   }
@@ -119,7 +119,7 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
   void dispose() {
     widget.editingController.textController.removeListener(_rebuildOnNextFrame);
 
-    WidgetsBinding.instance!.removeObserver(this);
+    WidgetsBinding.instance.removeObserver(this);
 
     super.dispose();
   }
@@ -129,7 +129,7 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
     // The available screen dimensions may have changed, e.g., due to keyboard
     // appearance/disappearance. Reflow the layout. Use a post-frame callback
     // to give the rest of the UI a chance to reflow, first.
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       if (mounted) {
         setState(() {
           // no-op
@@ -142,7 +142,7 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
     // We request a rebuild at the end of this frame so that the editing
     // controls update their position to reflect changes to text styling,
     // e.g., text that gets wider because it was bolded.
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       if (mounted) {
         setState(() {});
       }
@@ -268,7 +268,7 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
   Widget build(BuildContext context) {
     final textFieldRenderObject = context.findRenderObject();
     if (textFieldRenderObject == null) {
-      WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         setState(() {});
       });
       return const SizedBox();
@@ -532,7 +532,7 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
   }
 
   void _scheduleRebuildBecauseTextIsNotLaidOutYet() {
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       if (mounted) {
         setState(() {
           // no-op. Rebuild this widget in the hopes that the selectable

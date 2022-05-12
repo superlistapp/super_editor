@@ -1,5 +1,4 @@
 import 'package:example/demos/supertextfield/_mobile_style_bar.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:logging/logging.dart';

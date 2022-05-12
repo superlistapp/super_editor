@@ -194,11 +194,6 @@ class _BareBonesTextFieldWithInputClientState extends State<_BareBonesTextFieldW
   }
 
   @override
-  void updateEditingValueWithDeltas(List<TextEditingDelta> deltas) {
-    // TODO: implement updateEditingValueWithDeltas
-  }
-
-  @override
   void updateFloatingCursor(RawFloatingCursorPoint point) {
     print('My TextInputClient: updateFloatingCursor(): ${point.state}, offset: ${point.offset}');
 
@@ -223,6 +218,21 @@ class _BareBonesTextFieldWithInputClientState extends State<_BareBonesTextFieldW
         _floatingCursorCurrentOffset = null;
         break;
     }
+  }
+
+  @override
+  void insertTextPlaceholder(Size size) {
+    // No-op: this is for scribble
+  }
+
+  @override
+  void removeTextPlaceholder() {
+    // No-op: this is for scribble
+  }
+
+  @override
+  void showToolbar() {
+    // No-op: this is for scribble
   }
 
   @override
