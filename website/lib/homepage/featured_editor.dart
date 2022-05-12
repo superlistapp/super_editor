@@ -313,9 +313,9 @@ const _baseTextStyle = TextStyle(
 final _compactStylesheet = defaultStylesheet.copyWith(
   documentPadding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
   addRulesAfter: [
-    StyleRule(const BlockSelector.all(), (doc, docNode) => {'textStyle': _baseTextStyle}),
+    StyleRule(BlockSelector.all, (doc, docNode) => {'textStyle': _baseTextStyle}),
     StyleRule(
-      const BlockSelector.all().after(header1Attribution.name),
+      BlockSelector.all.after(header1Attribution.name),
       (doc, docNode) => {'padding': const CascadingPadding.only(top: 24)},
     ),
     StyleRule(
@@ -364,9 +364,9 @@ final _compactStylesheet = defaultStylesheet.copyWith(
 final _wideStylesheet = defaultStylesheet.copyWith(
   documentPadding: const EdgeInsets.symmetric(horizontal: 54, vertical: 60),
   addRulesAfter: [
-    StyleRule(const BlockSelector.all(), (doc, docNode) => {'textStyle': _baseTextStyle}),
+    StyleRule(BlockSelector.all, (doc, docNode) => {'textStyle': _baseTextStyle}),
     StyleRule(
-      const BlockSelector.all().after(header1Attribution.name),
+      BlockSelector.all.after(header1Attribution.name),
       (doc, docNode) => {'padding': const CascadingPadding.only(top: 48)},
     ),
     StyleRule(
