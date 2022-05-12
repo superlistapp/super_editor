@@ -59,7 +59,7 @@ class _BlinkingTextCaretState extends State<BlinkingTextCaret> {
       // is dirty, Flutter throws an assertion error. We have no way to query
       // this information, nor force a layout pass, so the best we can do is
       // catch the exception and recover.
-      WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         if (mounted) {
           // Trigger another build after the current layout pass.
           setState(() {});
@@ -84,7 +84,7 @@ class _BlinkingTextCaretState extends State<BlinkingTextCaret> {
     //
     // See #370 for the ticket that aims to fix all similar timing issues.
     if (_caretOffset != caretOffset) {
-      WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         if (mounted) {
           // Trigger another build after the current layout pass.
           setState(() {

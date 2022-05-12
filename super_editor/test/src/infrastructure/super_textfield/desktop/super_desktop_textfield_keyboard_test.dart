@@ -312,7 +312,7 @@ void main() {
 
             expect(result, TextFieldKeyboardHandlerResult.handled);
 
-            WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+            WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
               // We have to run these expectations in the next frame
               // so that the async paste operation has time to complete.
               expect(controller.text.text, 'Pasted content: this is clipboard text');
@@ -449,7 +449,7 @@ void main() {
 
             expect(result, TextFieldKeyboardHandlerResult.handled);
 
-            WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+            WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
               // We have to run these expectations in the next frame
               // so that the async paste operation has time to complete.
               expect(controller.text.text, 'Pasted content: this is clipboard text');

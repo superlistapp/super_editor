@@ -374,7 +374,7 @@ class _TextScrollViewState extends State<TextScrollView>
       _log.finer(' - could not calculate a viewport height. Rescheduling calculation.');
 
       // We still don't have a resolved viewport height. Run again next frame.
-      WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         if (mounted) {
           setState(() {
             _updateViewportHeight();
@@ -408,7 +408,7 @@ class _TextScrollViewState extends State<TextScrollView>
       // The text hasn't been laid out yet, which means our calculations
       // for text height is probably wrong. Schedule a post frame callback
       // to re-calculate the height after initial layout.
-      WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         if (mounted) {
           _updateViewportHeight();
         }

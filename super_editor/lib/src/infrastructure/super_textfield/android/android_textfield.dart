@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/android/_editing_controls.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/android/_user_interaction.dart';
 import 'package:super_editor/super_editor.dart';
-import 'package:super_text/super_selectable_text.dart';
 
 export '_caret.dart';
 export '../../platforms/android/selection_handles.dart';
@@ -199,7 +198,7 @@ class _SuperAndroidTextFieldState extends State<SuperAndroidTextField> with Sing
     }
 
     if (widget.showDebugPaint != oldWidget.showDebugPaint) {
-      WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         _rebuildEditingOverlayControls();
       });
     }
@@ -215,7 +214,7 @@ class _SuperAndroidTextFieldState extends State<SuperAndroidTextField> with Sing
     // available upon Hot Reload. Accessing it results in an exception.
     _removeEditingOverlayControls();
 
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       _showEditingControlsOverlay();
     });
   }
@@ -224,7 +223,7 @@ class _SuperAndroidTextFieldState extends State<SuperAndroidTextField> with Sing
   void dispose() {
     _removeEditingOverlayControls();
 
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       // Dispose after the current frame so that other widgets have
       // time to remove their listeners.
       _editingOverlayController.dispose();
@@ -232,7 +231,7 @@ class _SuperAndroidTextFieldState extends State<SuperAndroidTextField> with Sing
 
     _textEditingController.removeListener(_onTextOrSelectionChange);
     if (widget.textController == null) {
-      WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         // Dispose after the current frame so that other widgets have
         // time to remove their listeners.
         _textEditingController.dispose();

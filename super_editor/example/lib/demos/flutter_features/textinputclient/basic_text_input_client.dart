@@ -194,11 +194,6 @@ class _BareBonesTextFieldWithInputClientState extends State<_BareBonesTextFieldW
   }
 
   @override
-  void updateEditingValueWithDeltas(List<TextEditingDelta> deltas) {
-    // TODO: implement updateEditingValueWithDeltas
-  }
-
-  @override
   void updateFloatingCursor(RawFloatingCursorPoint point) {
     print('My TextInputClient: updateFloatingCursor(): ${point.state}, offset: ${point.offset}');
 

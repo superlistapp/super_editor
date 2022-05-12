@@ -34,7 +34,7 @@ class _EmojisTextFieldDemoState extends State<EmojisTextFieldDemo> with TickerPr
       textKey: _textKey,
     );
 
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       _startDemo();
     });
   }

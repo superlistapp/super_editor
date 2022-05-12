@@ -194,7 +194,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> {
     // Use a post-frame callback to "ensure selection extent is visible"
     // so that any pending visual content changes can happen before
     // attempting to calculate the visual position of the selection extent.
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       if (mounted) {
         _updateViewportHeight();
       }
@@ -258,7 +258,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> {
       // The text hasn't been laid out yet, which means our calculations
       // for text height is probably wrong. Schedule a post frame callback
       // to re-calculate the height after initial layout.
-      WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         if (mounted) {
           setState(() {
             _updateViewportHeight();
@@ -937,7 +937,7 @@ class SuperTextFieldScrollviewState extends State<SuperTextFieldScrollview> with
     if (widget.viewportHeight != oldWidget.viewportHeight) {
       // After the current layout, ensure that the current text
       // selection is visible.
-      WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         if (mounted) {
           _ensureSelectionExtentIsVisible();
         }
@@ -957,7 +957,7 @@ class SuperTextFieldScrollviewState extends State<SuperTextFieldScrollview> with
     // Use a post-frame callback to "ensure selection extent is visible"
     // so that any pending visual content changes can happen before
     // attempting to calculate the visual position of the selection extent.
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       if (mounted) {
         _ensureSelectionExtentIsVisible();
       }

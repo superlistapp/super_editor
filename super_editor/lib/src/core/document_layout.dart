@@ -1,5 +1,4 @@
 import 'package:flutter/widgets.dart';
-import 'package:flutter/rendering.dart';
 
 import 'document_selection.dart';
 import 'document.dart';

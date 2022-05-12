@@ -146,7 +146,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
     // Schedule a callback after this frame to locate the selection
     // bounds on the screen and display the toolbar near the selected
     // text.
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       if (_textFormatBarOverlayEntry == null) {
         return;
       }
@@ -247,7 +247,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
     // Schedule a callback after this frame to locate the selection
     // bounds on the screen and display the toolbar near the selected
     // text.
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       if (_imageFormatBarOverlayEntry == null) {
         return;
       }
