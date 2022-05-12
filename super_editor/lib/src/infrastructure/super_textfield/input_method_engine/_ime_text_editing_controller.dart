@@ -307,6 +307,21 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
     _inputConnection = null;
     _latestPlatformTextEditingValue = null;
   }
+
+  @override
+  void insertTextPlaceholder(Size size) {
+    // No-op: this is for scribble
+  }
+
+  @override
+  void removeTextPlaceholder() {
+    // No-op: this is for scribble
+  }
+
+  @override
+  void showToolbar() {
+    // No-op: this is for scribble
+  }
   //------ End TextInputClient -----
 
   @override

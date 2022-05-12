@@ -226,6 +226,21 @@ class _BareBonesTextFieldWithInputClientState extends State<_BareBonesTextFieldW
   }
 
   @override
+  void insertTextPlaceholder(Size size) {
+    // No-op: this is for scribble
+  }
+
+  @override
+  void removeTextPlaceholder() {
+    // No-op: this is for scribble
+  }
+
+  @override
+  void showToolbar() {
+    // No-op: this is for scribble
+  }
+
+  @override
   void connectionClosed() {
     print('My TextInputClient: connectionClosed()');
     _textInputConnection = null;
