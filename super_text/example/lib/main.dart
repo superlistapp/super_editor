@@ -70,10 +70,10 @@ class _SuperTextExampleScreenState extends State<SuperTextExampleScreen> with Ti
                 _buildSubHeader("SuperTextWithSelection Widget"),
                 _buildDescription(
                     "SuperTextWithSelection is a product-level widget that renders text with traditional user selections. If you want to build a custom text decoration experience, see SuperText."),
-                _buildSuperTextWithExpandedSelection(),
-                _buildSuperTextWithSelectionRobot(),
                 _buildSuperTextWithSelectionStaticSingle(),
+                _buildSuperTextWithSelectionRobot(),
                 _buildSuperTextWithSelectionStaticMulti(),
+                const SizedBox(height: 48),
                 // SuperText examples
                 _buildSubHeader("SuperText Widget"),
                 _buildDescription(
@@ -83,6 +83,7 @@ class _SuperTextExampleScreenState extends State<SuperTextExampleScreen> with Ti
                 _buildSingleSelectionHighlightRainbow(),
                 _buildMultiUserSelections(),
                 _buildEmptySelection(),
+                const SizedBox(height: 48),
               ],
             ),
           ),
@@ -129,36 +130,6 @@ class _SuperTextExampleScreenState extends State<SuperTextExampleScreen> with Ti
           fontSize: 14,
           height: 1.4,
         ),
-      ),
-    );
-  }
-
-  Widget _buildSuperTextWithExpandedSelection() {
-    return _buildExampleContainer(
-      child: SuperText(
-        richText: _text,
-        layerBeneathBuilder: (context, textLayout) {
-          return Stack(
-            children: [
-              TextLayoutSelectionHighlight(
-                textLayout: textLayout,
-                style: _primaryHighlightStyle,
-                selection: const TextSelection(baseOffset: 11, extentOffset: 21),
-              ),
-            ],
-          );
-        },
-        layerAboveBuilder: (context, textLayout) {
-          return Stack(
-            children: [
-              TextLayoutCaret(
-                textLayout: textLayout,
-                style: _primaryCaretStyle,
-                position: const TextPosition(offset: 21),
-              ),
-            ],
-          );
-        },
       ),
     );
   }

@@ -11,7 +11,7 @@ class TextLayoutCaret extends StatefulWidget {
     this.blinkCaret = true,
     required this.style,
     required this.position,
-    this.follower,
+    this.caretTracker,
   }) : super(key: key);
 
   final TextLayout textLayout;
@@ -19,7 +19,7 @@ class TextLayoutCaret extends StatefulWidget {
   final bool blinkCaret;
   final CaretStyle style;
   final TextPosition? position;
-  final LayerLink? follower;
+  final LayerLink? caretTracker;
 
   @override
   State<TextLayoutCaret> createState() => _TextLayoutCaretState();
@@ -93,15 +93,14 @@ class _TextLayoutCaretState extends State<TextLayoutCaret> with TickerProviderSt
             ),
           ),
         ),
-        if (widget.follower != null && offset != null)
+        if (widget.caretTracker != null && offset != null)
           Positioned(
             left: offset.dx,
             top: offset.dy,
             width: widget.style.width,
             height: height,
             child: CompositedTransformTarget(
-              link: widget.follower!,
-              child: const ColoredBox(color: Color(0xFF00FF00)),
+              link: widget.caretTracker!,
             ),
           ),
       ],

@@ -213,7 +213,7 @@ class _RebuildOptimizedSuperTextWithSelectionState extends State<_RebuildOptimiz
                   style: userSelection.caretStyle,
                   blinkCaret: userSelection.blinkCaret,
                   position: userSelection.selection.extent,
-                  follower: userSelection.caretFollower,
+                  caretTracker: userSelection.caretFollower,
                 ),
           ],
         );
