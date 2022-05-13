@@ -133,6 +133,11 @@ ExecutionInstruction anyCharacterOrDestructiveKeyToDeleteSelection({
     return ExecutionInstruction.continueExecution;
   }
 
+  // Do nothing if ESC is pressed because this should collapse the selection
+  if (keyEvent.logicalKey == LogicalKeyboardKey.escape) {
+    return ExecutionInstruction.continueExecution;
+  }
+
   // Do nothing if CMD or CTRL are pressed because this signifies an attempted
   // shortcut.
   if (keyEvent.isControlPressed || keyEvent.isMetaPressed) {
@@ -369,4 +374,21 @@ ExecutionInstruction deleteWordWithAltBksp({
         : ExecutionInstruction.continueExecution;
   }
   return ExecutionInstruction.continueExecution;
+}
+
+ExecutionInstruction collapseSelectionWhenEscIsPressed({
+  required EditContext editContext,
+  required RawKeyEvent keyEvent,
+}) {
+  if (keyEvent.logicalKey != LogicalKeyboardKey.escape) {
+    return ExecutionInstruction.continueExecution;
+  }
+  if (editContext.composer.selection == null || editContext.composer.selection!.isCollapsed) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  bool didCollapse = false;
+
+  didCollapse = editContext.commonOps.collapseSelection();
+  return didCollapse ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
 }
