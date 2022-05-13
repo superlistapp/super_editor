@@ -16,7 +16,7 @@ void main() {
       testWidgets('on Android, keeps caret visible when keyboard appears', (WidgetTester tester) async {
         tester.binding.window
           ..physicalSizeTestValue = screenSizeWithoutKeyboard
-          ..textScaleFactorTestValue = 1.0
+          ..platformDispatcher.textScaleFactorTestValue = 1.0
           ..devicePixelRatioTestValue = 1.0;
 
         await tester.pumpWidget(
@@ -37,37 +37,23 @@ void main() {
           frameCount: keyboardExpansionFrameCount,
         );
 
-        // Hard-code a reasonable line-height because carets do not currently
-        // report their height.
-        // TODO: look up the actual line height of the text at the selection extent
-        // TODO: update caret implementation so that it reports its own height.
-        const lineHeight = 18;
-
         // Ensure that the editor auto-scrolled to keep the caret visible.
         // TODO: there are 2 `BlinkingCaret` at the same time. There should be only 1 caret
         final caretFinder = find.byType(BlinkingCaret);
-        final caretOffset = tester.getTopLeft(caretFinder.last);
-        final bottomOfCaret = caretOffset.dy + lineHeight;
+        final caretOffset = tester.getBottomLeft(caretFinder.last);
 
         // The default trailing boundary of the default `SuperEditor`
         const trailingBoundary = 54.0;
 
         // The caret should be at the trailing boundary, within a small margin of error
-        // expect(bottomOfCaret, lessThanOrEqualTo(screenSizeWithKeyboard.height - trailingBoundary + .001));
-        // expect(bottomOfCaret, greaterThanOrEqualTo(screenSizeWithKeyboard.height - trailingBoundary - .001));
-
-        // TODO(Matt): I'm overriding the existing expectations because after upgrading to
-        // to Flutter 3, the existing bottom of caret of 489.999 is not within (-0.001, 0.001)
-        // of the new bottom of caret, which is 482.79999923706055. I don't have time to
-        // figure out what changed right now.
-        expect(bottomOfCaret, lessThanOrEqualTo(482.799 + .001));
-        expect(bottomOfCaret, greaterThanOrEqualTo(482.799 - .001));
+        expect(caretOffset.dy, lessThanOrEqualTo(screenSizeWithKeyboard.height - trailingBoundary));
+        expect(caretOffset.dy, greaterThanOrEqualTo(screenSizeWithKeyboard.height - trailingBoundary));
       });
 
       testWidgets('on iOS, keeps caret visible when keyboard appears', (WidgetTester tester) async {
         tester.binding.window
           ..physicalSizeTestValue = screenSizeWithoutKeyboard
-          ..textScaleFactorTestValue = 1.0
+          ..platformDispatcher.textScaleFactorTestValue = 1.0
           ..devicePixelRatioTestValue = 1.0;
 
         await tester.pumpWidget(
@@ -88,31 +74,17 @@ void main() {
           frameCount: keyboardExpansionFrameCount,
         );
 
-        // Hard-code a reasonable line-height because carets do not currently
-        // report their height.
-        // TODO: look up the actual line height of the text at the selection extent
-        // TODO: update caret implementation so that it reports its own height.
-        const lineHeight = 18;
-
         // Ensure that the editor auto-scrolled to keep the caret visible.
         // TODO: there are 2 `BlinkingCaret` at the same time. There should be only 1 caret
         final caretFinder = find.byType(BlinkingCaret);
-        final caretOffset = tester.getTopLeft(caretFinder.last);
-        final bottomOfCaret = caretOffset.dy + lineHeight;
+        final caretOffset = tester.getBottomLeft(caretFinder.last);
 
         // The default trailing boundary of the default `SuperEditor`
         const trailingBoundary = 54.0;
 
         // The caret should be at the trailing boundary, within a small margin of error
-        // expect(bottomOfCaret, lessThanOrEqualTo(screenSizeWithKeyboard.height - trailingBoundary + .001));
-        // expect(bottomOfCaret, greaterThanOrEqualTo(screenSizeWithKeyboard.height - trailingBoundary - .001));
-
-        // TODO(Matt): I'm overriding the existing expectations because after upgrading to
-        // to Flutter 3, the existing bottom of caret of 489.999 is not within (-0.001, 0.001)
-        // of the new bottom of caret, which is 482.79999923706055. I don't have time to
-        // figure out what changed right now.
-        expect(bottomOfCaret, lessThanOrEqualTo(482.799 + .001));
-        expect(bottomOfCaret, greaterThanOrEqualTo(482.799 - .001));
+        expect(caretOffset.dy, lessThanOrEqualTo(screenSizeWithKeyboard.height - trailingBoundary));
+        expect(caretOffset.dy, greaterThanOrEqualTo(screenSizeWithKeyboard.height - trailingBoundary));
       });
     });
   });
