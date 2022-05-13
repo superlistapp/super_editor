@@ -539,7 +539,7 @@ void main() {
             ),
           );
 
-          var result = collapseSelectionWhenEscIsPressed(
+          final result = collapseSelectionWhenEscIsPressed(
             editContext: _editContext,
             keyEvent: const FakeRawKeyEvent(
               data: FakeRawKeyEventData(
@@ -551,9 +551,11 @@ void main() {
 
           expect(result, ExecutionInstruction.haltExecution);
 
+          // The text should remain the same
           final paragraph = _editContext.editor.document.nodes.first as ParagraphNode;
           expect(paragraph.text.text, 'Text with [SELECTME] selection');
 
+          // The selection should be collapsed
           expect(
             _editContext.composer.selection,
             equals(
@@ -569,7 +571,7 @@ void main() {
           Platform.setTestInstance(null);
         });
       });
-      group('key pressed with collapsed', () {
+      group('key pressed without selection', () {
         test('does nothing if escape is pressed', () {
           Platform.setTestInstance(MacPlatform());
 
@@ -592,7 +594,7 @@ void main() {
             ),
           );
 
-          var result = collapseSelectionWhenEscIsPressed(
+          final result = collapseSelectionWhenEscIsPressed(
             editContext: _editContext,
             keyEvent: const FakeRawKeyEvent(
               data: FakeRawKeyEventData(
@@ -602,11 +604,14 @@ void main() {
             ),
           );
 
+          // The handler should pass on do nothing when there is no selection.
           expect(result, ExecutionInstruction.continueExecution);
 
+          // The text should remain the same
           final paragraph = _editContext.editor.document.nodes.first as ParagraphNode;
           expect(paragraph.text.text, 'This is some text');
 
+          // The selection should remain the same
           expect(
             _editContext.composer.selection,
             equals(
