@@ -21,44 +21,41 @@ void main() {
 
       await tester.pumpWidget(
         buildTestScaffold(
-          child: ValueListenableBuilder<UserSelection?>(
-            valueListenable: userSelection,
-            builder: (context, value, child) {
-              return SuperTextWithSelection.single(
-                richText: threeLineTextSpan,
-                userSelection: value,
-              );
-            },
+          child: SuperTextAnalytics(
+            trackBuilds: true,
+            child: ValueListenableBuilder<UserSelection?>(
+              valueListenable: userSelection,
+              builder: (context, value, child) {
+                return SuperTextWithSelection.single(
+                  richText: threeLineTextSpan,
+                  userSelection: value,
+                );
+              },
+            ),
           ),
         ),
       );
 
-      // Let the underlying SuperText layout however many times it needs so that it
-      // builds and paints its decoration layers.
+      // Ensure that the SuperText has built exactly 1 time to start off.
+      final superTextState1 = (find.byType(SuperText).evaluate().first as StatefulElement).state as SuperTextState;
+      expect(superTextState1.textBuildCount, 1);
+
+      // Change the user selection, which will rebuild the SuperTextWithSelection
+      // using the new selection value.
+      userSelection.value = userSelection.value!.copyWith(
+        selection: const TextSelection(baseOffset: 0, extentOffset: 4),
+      );
+
+      // Let the widget tree rebuild however it needs to become stable again.
       await tester.pumpAndSettle();
 
-      // TODO: Find a new way to verify rebuilds with new SuperText that doesn't have a State object
-
-      // // Get the build count before changing the user's selection.
-      // final superTextState1 = (find.byType(SuperText).evaluate().first as StatefulElement).state as SuperTextState;
-      // final buildCountBeforeSelectionChange = superTextState1.buildCount;
-      //
-      // // Change the user selection, which will rebuild the SuperTextWithSelection
-      // // using the new selection value.
-      // userSelection.value = userSelection.value!.copyWith(
-      //   selection: const TextSelection(baseOffset: 0, extentOffset: 4),
-      // );
-      //
-      // // Let the widget tree rebuild however it needs to become stable again.
-      // await tester.pumpAndSettle();
-      //
-      // // Get the build count after handling the user's selection change.
-      // final superTextState2 = (find.byType(SuperText).evaluate().first as StatefulElement).state as SuperTextState;
-      // final buildCountAfterSelectionChange = superTextState2.buildCount;
-      //
-      // // Ensure that the underlying SuperText widget didn't run another build()
-      // // call after we moved the user's selection.
-      // expect(buildCountBeforeSelectionChange, buildCountAfterSelectionChange);
+      // Ensure that the text within SuperText didn't rebuild since the last check.
+      final superTextState2 = (find.byType(SuperText).evaluate().first as StatefulElement).state as SuperTextState;
+      // We need to make sure the State objects remained the same because if the
+      // original State object was replaced with a new one then the build count
+      // will still read `1`, despite two builds taking place.
+      expect(superTextState2, superTextState1);
+      expect(superTextState2.textBuildCount, 1);
     });
   });
 }

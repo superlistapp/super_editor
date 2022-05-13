@@ -17,7 +17,7 @@ import 'package:super_text/super_text.dart';
 
 void main() {
   group("SuperText", () {
-    group("text layout", () {
+    group("RenderSuperTextLayout", () {
       group("calculates line count", () {
         testWidgets("for empty text", (tester) async {
           await _pumpEmptyText(tester);

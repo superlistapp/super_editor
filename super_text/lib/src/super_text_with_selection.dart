@@ -180,7 +180,7 @@ class _RebuildOptimizedSuperTextWithSelectionState extends State<_RebuildOptimiz
             "SuperTextWithSelection ($hashCode) user selection changed, building selection highlights: ${widget.userSelections.value.isNotEmpty ? widget.userSelections.value.first.selection : "null"}");
         return Stack(
           children: [
-            for (final userSelection in widget.userSelections.value)
+            for (final userSelection in value)
               if (!_isTextEmpty)
                 TextLayoutSelectionHighlight(
                   textLayout: textLayout,
@@ -206,7 +206,7 @@ class _RebuildOptimizedSuperTextWithSelectionState extends State<_RebuildOptimiz
             "SuperTextWithSelection ($hashCode) user selection changed, building carets: ${widget.userSelections.value.isNotEmpty ? widget.userSelections.value.first.selection : "null"}");
         return Stack(
           children: [
-            for (final userSelection in widget.userSelections.value)
+            for (final userSelection in value)
               if (userSelection.hasCaret)
                 TextLayoutCaret(
                   textLayout: textLayout,

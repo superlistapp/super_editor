@@ -65,16 +65,17 @@ class _SuperTextExampleScreenState extends State<SuperTextExampleScreen> with Ti
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                _buildHeader("Welcome to super_text"),
                 // SuperTextWithSelection examples
-                _buildHeader("SuperTextWithSelection Widget"),
+                _buildSubHeader("SuperTextWithSelection Widget"),
                 _buildDescription(
                     "SuperTextWithSelection is a product-level widget that renders text with traditional user selections. If you want to build a custom text decoration experience, see SuperText."),
-                _buildSuperDuperText(),
+                _buildSuperTextWithExpandedSelection(),
                 _buildSuperTextWithSelectionRobot(),
                 _buildSuperTextWithSelectionStaticSingle(),
                 _buildSuperTextWithSelectionStaticMulti(),
                 // SuperText examples
-                _buildHeader("SuperText Widget"),
+                _buildSubHeader("SuperText Widget"),
                 _buildDescription(
                     "SuperText is a platform, upon which you can build various text experiences. A SuperText widget allows you to build an arbitrary UI beneath the text, and above the text."),
                 _buildSingleCaret(),
@@ -104,6 +105,20 @@ class _SuperTextExampleScreenState extends State<SuperTextExampleScreen> with Ti
     );
   }
 
+  Widget _buildSubHeader(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 12, bottom: 8.0),
+      child: Text(
+        text,
+        style: const TextStyle(
+          color: Color(0xFF444444),
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
   Widget _buildDescription(String text) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
@@ -118,37 +133,33 @@ class _SuperTextExampleScreenState extends State<SuperTextExampleScreen> with Ti
     );
   }
 
-  Widget _buildSuperDuperText() {
-    print("Building super duper text example");
-    return SuperText(
-      richText: _text,
-      // layerBeneathBuilder: SuperDuperTextLayoutLayer(
-      //   builder: (context, textLayout) {
-      //     print("Building SuperDuperTextLayoutLayer beneath");
-      //     print(" - context: $context");
-      //     print(" - textLayout: $textLayout");
-      //     return Stack(
-      //       children: [
-      //         TextLayoutSelectionHighlight(
-      //           textLayout: textLayout,
-      //           style: _primaryHighlightStyle,
-      //           selection: const TextSelection(baseOffset: 11, extentOffset: 21),
-      //         ),
-      //       ],
-      //     );
-      //   },
-      // ),
-      layerAboveBuilder: (context, textLayout) {
-        return Stack(
-          children: [
-            TextLayoutCaret(
-              textLayout: textLayout,
-              style: _primaryCaretStyle,
-              position: const TextPosition(offset: 21),
-            ),
-          ],
-        );
-      },
+  Widget _buildSuperTextWithExpandedSelection() {
+    return _buildExampleContainer(
+      child: SuperText(
+        richText: _text,
+        layerBeneathBuilder: (context, textLayout) {
+          return Stack(
+            children: [
+              TextLayoutSelectionHighlight(
+                textLayout: textLayout,
+                style: _primaryHighlightStyle,
+                selection: const TextSelection(baseOffset: 11, extentOffset: 21),
+              ),
+            ],
+          );
+        },
+        layerAboveBuilder: (context, textLayout) {
+          return Stack(
+            children: [
+              TextLayoutCaret(
+                textLayout: textLayout,
+                style: _primaryCaretStyle,
+                position: const TextPosition(offset: 21),
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 
@@ -369,7 +380,7 @@ class _SuperTextExampleScreenState extends State<SuperTextExampleScreen> with Ti
     required Widget child,
   }) {
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 4.0),
+      margin: const EdgeInsets.only(top: 30.0, left: 24),
       padding: const EdgeInsets.only(top: 20.0, bottom: 20.0, left: 16.0),
       decoration: const BoxDecoration(
         border: Border(left: BorderSide(width: 5, color: Color(0xFFDDDDDD))),
@@ -424,7 +435,6 @@ class _TypingRobotExampleState extends State<_TypingRobotExample> {
 
   @override
   Widget build(BuildContext context) {
-    print("Building robot demo with follower");
     return Stack(
       children: [
         SuperTextWithSelection.single(
@@ -436,60 +446,20 @@ class _TypingRobotExampleState extends State<_TypingRobotExample> {
             caretFollower: _caretLink,
           ),
         ),
-        _NextFrameBuilder(
-          builder: (context) {
-            return CompositedTransformFollower(
-              link: _caretLink,
-              followerAnchor: Alignment.centerLeft,
-              targetAnchor: Alignment.centerRight,
-              showWhenUnlinked: false,
-              child: const UserLabel(
-                label: "iRobot",
-                style: UserLabelStyle(
-                  color: Colors.red,
-                ),
-              ),
-            );
-          },
+        CompositedTransformFollower(
+          link: _caretLink,
+          followerAnchor: Alignment.centerLeft,
+          targetAnchor: Alignment.centerRight,
+          showWhenUnlinked: false,
+          child: const UserLabel(
+            label: "iRobot",
+            style: UserLabelStyle(
+              color: Colors.red,
+            ),
+          ),
         ),
       ],
     );
-  }
-}
-
-class _NextFrameBuilder extends StatefulWidget {
-  const _NextFrameBuilder({
-    Key? key,
-    required this.builder,
-  }) : super(key: key);
-
-  final WidgetBuilder builder;
-
-  @override
-  _NextFrameBuilderState createState() => _NextFrameBuilderState();
-}
-
-class _NextFrameBuilderState extends State<_NextFrameBuilder> {
-  Widget? _previousFrame;
-  bool _isNextFrameBuild = false;
-
-  @override
-  Widget build(BuildContext context) {
-    if (!_isNextFrameBuild) {
-      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-        setState(() {
-          _isNextFrameBuild = true;
-          _previousFrame = widget.builder(context);
-        });
-      });
-    }
-    _isNextFrameBuild = false;
-
-    if (_previousFrame == null) {
-      return const SizedBox();
-    }
-
-    return _previousFrame!;
   }
 }
 

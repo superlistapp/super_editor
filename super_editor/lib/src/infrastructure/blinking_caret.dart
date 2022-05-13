@@ -139,6 +139,9 @@ class _CaretPainter extends CustomPainter {
     return caretHeight != oldDelegate.caretHeight ||
         caretOffset != oldDelegate.caretOffset ||
         isTextEmpty != oldDelegate.isTextEmpty ||
-        showCaret != oldDelegate.showCaret;
+        showCaret != oldDelegate.showCaret ||
+        width != oldDelegate.width ||
+        borderRadius != oldDelegate.borderRadius ||
+        caretColor != oldDelegate.caretColor;
   }
 }

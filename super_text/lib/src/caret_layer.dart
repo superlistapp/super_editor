@@ -33,7 +33,6 @@ class _TextLayoutCaretState extends State<TextLayoutCaret> with TickerProviderSt
     super.initState();
     _blinkController = widget.blinkController ?? BlinkController(tickerProvider: this);
     if (widget.blinkCaret) {
-      print("Starting caret blinking");
       _blinkController.startBlinking();
     }
   }

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
@@ -27,6 +28,7 @@ class SuperText extends StatefulWidget {
     this.textDirection = TextDirection.ltr,
     this.layerBeneathBuilder,
     this.layerAboveBuilder,
+    this.debugTrackTextBuilds = false,
   }) : super(key: key);
 
   /// The text to display in this [SuperText] widget.
@@ -45,17 +47,34 @@ class SuperText extends StatefulWidget {
   /// Builds a widget that appears above the text, e.g., to render a caret.
   final SuperTextLayerBuilder? layerAboveBuilder;
 
+  /// Whether this [SuperText] widget should track the number of times it
+  /// builds its inner rich text, so that tests can ensure the inner text
+  /// is not rebuilt unnecessarily, due to text decorations.
+  final bool debugTrackTextBuilds;
+
   @override
-  State<SuperText> createState() => _SuperTextState();
+  State<SuperText> createState() => SuperTextState();
 }
 
-class _SuperTextState extends State<SuperText> {
+@visibleForTesting
+class SuperTextState extends State<SuperText> {
+  int _textBuildCount = 0;
+
+  @visibleForTesting
+  int get textBuildCount => _textBuildCount;
+
   RenderLayoutAwareParagraph? _paragraph;
 
   void _invalidateParagraph() => _paragraph = null;
 
   @override
   Widget build(BuildContext context) {
+    if (kDebugMode) {
+      if (widget.debugTrackTextBuilds || SuperTextAnalytics.of(context)?.trackBuilds == true) {
+        _textBuildCount += 1;
+      }
+    }
+
     return _SuperTextLayout(
       state: this,
       text: _LayoutAwareRichText(
@@ -98,6 +117,28 @@ class _SuperTextState extends State<SuperText> {
   }
 }
 
+class SuperTextAnalytics extends InheritedWidget {
+  static SuperTextAnalytics? of(BuildContext context) {
+    return context.dependOnInheritedWidgetOfExactType<SuperTextAnalytics>();
+  }
+
+  const SuperTextAnalytics({
+    Key? key,
+    this.trackBuilds = false,
+    required Widget child,
+  }) : super(
+          key: key,
+          child: child,
+        );
+
+  final bool trackBuilds;
+
+  @override
+  bool updateShouldNotify(SuperTextAnalytics oldWidget) {
+    return trackBuilds != oldWidget.trackBuilds;
+  }
+}
+
 class _SuperTextLayout extends MultiChildRenderObjectWidget {
   _SuperTextLayout({
     Key? key,
@@ -107,7 +148,7 @@ class _SuperTextLayout extends MultiChildRenderObjectWidget {
     required Widget background,
   }) : super(key: key, children: [background, text, foreground]);
 
-  final _SuperTextState state;
+  final SuperTextState state;
 
   @override
   RenderObject createRenderObject(BuildContext context) {
@@ -141,14 +182,14 @@ class RenderSuperTextLayout extends RenderBox
   }
 
   RenderSuperTextLayout({
-    required _SuperTextState state,
+    required SuperTextState state,
   }) : _state = state;
 
-  _SuperTextState? _state;
+  SuperTextState? _state;
 
-  _SuperTextState get state => _state!;
+  SuperTextState get state => _state!;
 
-  set state(_SuperTextState value) {
+  set state(SuperTextState value) {
     if (_state != value) {
       _state = value;
       markNeedsLayout();
@@ -165,7 +206,6 @@ class RenderSuperTextLayout extends RenderBox
 
   @override
   void performLayout() {
-    print("Super text, performing layout");
     final children = getChildrenAsList();
     final background = children[0];
     final text = children[1];
@@ -173,7 +213,6 @@ class RenderSuperTextLayout extends RenderBox
 
     text.layout(constraints, parentUsesSize: true);
     state._paragraph = text as RenderLayoutAwareParagraph;
-    print("Done laying out RenderParagraph: ${state._paragraph}");
     final layerConstraints = constraints.copyWith(maxHeight: text.size.height);
 
     background.layout(layerConstraints, parentUsesSize: true);
@@ -302,10 +341,6 @@ class RenderLayoutAwareParagraph extends RenderParagraph {
     super.performLayout();
     _needsLayout = false;
   }
-}
-
-extension on TextStyle {
-  double get estimatedLineHeight => (fontSize ?? 18.0) * (height ?? 1.0);
 }
 
 typedef SuperTextLayerBuilder = Widget Function(BuildContext, TextLayout textLayout);

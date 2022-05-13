@@ -42,20 +42,17 @@ void main() {
           ),
         );
 
-        // Give SuperText time to layout its layers.
-        await tester.pumpAndSettle();
-
         // Switch to an external BlinkController
         blinkControllerHolder.value = BlinkController(tickerProvider: tester);
 
         // Give the Flutter pipeline time to rebuild after the ValueNotifier change.
-        await tester.pumpAndSettle();
+        await tester.pump();
 
-        // Switch back an internal BlinkController
+        // Switch back to an internal BlinkController
         blinkControllerHolder.value = null;
 
         // Give the Flutter pipeline time to rebuild after the ValueNotifier change.
-        await tester.pumpAndSettle();
+        await tester.pump();
 
         // As long as this test completes without an error, it should be the
         // case that the BlinkController was successfully switched from an internal
