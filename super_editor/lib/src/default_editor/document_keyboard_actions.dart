@@ -376,6 +376,9 @@ ExecutionInstruction deleteWordWithAltBksp({
   return ExecutionInstruction.continueExecution;
 }
 
+/// When the ESC key is pressed, the editor should collapse the expanded selection.
+///
+/// Do nothing if selection is already collapsed.
 ExecutionInstruction collapseSelectionWhenEscIsPressed({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
