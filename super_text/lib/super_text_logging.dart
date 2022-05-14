@@ -6,12 +6,14 @@ export 'package:logging/logging.dart';
 class LogNames {
   static const errors = 'super_text.errors';
   static const builds = 'super_text.builds';
+  static const layout = 'super_text.layout';
   static const typingRobot = 'super_text.robot';
 }
 
 // Errors that don't fit into other loggers
 final errorsLog = Logger(LogNames.errors);
 final buildsLog = Logger(LogNames.builds);
+final layoutLog = Logger(LogNames.layout);
 final robotLog = Logger(LogNames.typingRobot);
 
 final _activeLoggers = <Logger>{};

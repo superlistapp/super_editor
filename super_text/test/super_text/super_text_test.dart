@@ -149,6 +149,23 @@ void main() {
       expect(layerAboveBuildCount, 1);
       expect(caretBuildCount, 2);
     });
+
+    testWidgets("provides access to a TextLayout", (tester) async {
+      await tester.pumpWidget(
+        buildTestScaffold(
+          child: SuperText(
+            key: superTextKey,
+            richText: threeLineTextSpan,
+          ),
+        ),
+      );
+
+      final state = superTextKey.currentState;
+      expect(state, isA<ProseTextBlock>());
+
+      final textBlock = state as ProseTextBlock;
+      expect(textBlock.textLayout, isA<TextLayout>());
+    });
   });
 }
 

@@ -86,7 +86,7 @@ class _SuperTextWithSelectionState extends ProseTextState<SuperTextWithSelection
   }
 
   @override
-  ProseTextLayout get textLayout => _textLayoutKey.currentState as ProseTextLayout;
+  ProseTextLayout get textLayout => (_textLayoutKey.currentState as ProseTextBlock).textLayout;
 
   @override
   Widget build(BuildContext context) {
@@ -177,7 +177,8 @@ class _RebuildOptimizedSuperTextWithSelectionState extends State<_RebuildOptimiz
       valueListenable: widget.userSelections,
       builder: (context, value, child) {
         buildsLog.info(
-            "SuperTextWithSelection ($hashCode) user selection changed, building selection highlights: ${widget.userSelections.value.isNotEmpty ? widget.userSelections.value.first.selection : "null"}");
+            "SuperTextWithSelection ($hashCode) user selection changed, building new selection highlights: ${widget.userSelections.value.isNotEmpty ? widget.userSelections.value.first.selection : "null"}");
+
         return Stack(
           children: [
             for (final userSelection in value)
@@ -204,6 +205,7 @@ class _RebuildOptimizedSuperTextWithSelectionState extends State<_RebuildOptimiz
       builder: (context, value, child) {
         buildsLog.info(
             "SuperTextWithSelection ($hashCode) user selection changed, building carets: ${widget.userSelections.value.isNotEmpty ? widget.userSelections.value.first.selection : "null"}");
+
         return Stack(
           children: [
             for (final userSelection in value)

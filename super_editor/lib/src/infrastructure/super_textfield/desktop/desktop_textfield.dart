@@ -1460,8 +1460,6 @@ class DefaultSuperTextFieldKeyboardHandlers {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 
-    print(
-        "Deleting text on line before caret. Current position: ${controller.selection.extentOffset}, Position at start of line: ${textLayout.getPositionAtStartOfLine(controller.selection.extent).offset}");
     controller.deleteTextOnLineBeforeCaret(textLayout: textLayout);
 
     return TextFieldKeyboardHandlerResult.handled;

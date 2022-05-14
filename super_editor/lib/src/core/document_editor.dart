@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
+import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:uuid/uuid.dart';
 
 import 'document.dart';
@@ -256,7 +257,7 @@ class MutableDocument with ChangeNotifier implements Document {
       removedNode.removeListener(_forwardNodeChange);
       notifyListeners();
     } else {
-      print('Could not delete node. Index out of range: $index');
+      editorDocLog.warning('Could not delete node. Index out of range: $index');
     }
   }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
+import 'package:super_text/super_text_logging.dart';
 
 import 'text_layout.dart';
 
@@ -57,14 +58,16 @@ class SuperText extends StatefulWidget {
 }
 
 @visibleForTesting
-class SuperTextState extends State<SuperText> {
-  int _textBuildCount = 0;
+class SuperTextState extends State<SuperText> with ProseTextBlock {
+  final _textLayoutKey = GlobalKey();
+  @override
+  ProseTextLayout get textLayout => RenderSuperTextLayout.textLayoutFrom(_textLayoutKey)!;
 
+  int _textBuildCount = 0;
   @visibleForTesting
   int get textBuildCount => _textBuildCount;
 
   RenderLayoutAwareParagraph? _paragraph;
-
   void _invalidateParagraph() => _paragraph = null;
 
   @override
@@ -76,8 +79,9 @@ class SuperTextState extends State<SuperText> {
     }
 
     return _SuperTextLayout(
+      key: _textLayoutKey,
       state: this,
-      text: _LayoutAwareRichText(
+      text: LayoutAwareRichText(
         text: widget.richText,
         onMarkNeedsLayout: _invalidateParagraph,
       ),
@@ -143,7 +147,7 @@ class _SuperTextLayout extends MultiChildRenderObjectWidget {
   _SuperTextLayout({
     Key? key,
     required this.state,
-    required _LayoutAwareRichText text,
+    required LayoutAwareRichText text,
     required Widget foreground,
     required Widget background,
   }) : super(key: key, children: [background, text, foreground]);
@@ -206,6 +210,7 @@ class RenderSuperTextLayout extends RenderBox
 
   @override
   void performLayout() {
+    layoutLog.info("Running SuperText layout. Incoming constraints: $constraints");
     final children = getChildrenAsList();
     final background = children[0];
     final text = children[1];
@@ -213,10 +218,15 @@ class RenderSuperTextLayout extends RenderBox
 
     text.layout(constraints, parentUsesSize: true);
     state._paragraph = text as RenderLayoutAwareParagraph;
-    final layerConstraints = constraints.copyWith(maxHeight: text.size.height);
+    layoutLog.info("SuperText text layout size: ${text.size}");
 
-    background.layout(layerConstraints, parentUsesSize: true);
-    foreground.layout(layerConstraints, parentUsesSize: true);
+    final layerConstraints = BoxConstraints.tight(text.size);
+
+    layoutLog.finer("Laying out SuperText background layer. Constraints: $layerConstraints");
+    background.layout(layerConstraints);
+
+    layoutLog.finer("Laying out SuperText foreground layer. Constraints: $layerConstraints");
+    foreground.layout(layerConstraints);
 
     size = text.size;
   }
@@ -235,8 +245,9 @@ class RenderSuperTextLayout extends RenderBox
 /// A version of [RichText] that notifies clients when the underlying
 /// [RenderParagraph] invalidates its layout, so that clients can avoid
 /// accessing properties when the layout is invalid.
-class _LayoutAwareRichText extends RichText {
-  _LayoutAwareRichText({
+@visibleForTesting
+class LayoutAwareRichText extends RichText {
+  LayoutAwareRichText({
     Key? key,
     required InlineSpan text,
     required this.onMarkNeedsLayout,
