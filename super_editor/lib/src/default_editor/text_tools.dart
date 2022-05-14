@@ -62,7 +62,7 @@ TextSelection expandPositionToWord({
 
   int start = min(textPosition.offset, text.length - 1);
   int end = min(textPosition.offset, text.length - 1);
-  while (start > 0 && text[start] != ' ') {
+  while (start > 0 && text[start - 1] != ' ') {
     start -= 1;
   }
   while (end < text.length && text[end] != ' ') {
@@ -154,4 +154,25 @@ TextDirection getParagraphDirection(String text) {
   } else {
     return TextDirection.ltr;
   }
+}
+
+List<TextSelection> wordsInText(String text, DocumentPosition position) {
+  final List<TextSelection> textSelections = [];
+  var currentPosition = position.nodePosition as TextNodePosition;
+  var currentIndex = 0;
+
+  while (currentIndex < text.length) {
+    if (text[currentIndex] == ' ') {
+      currentIndex++;
+      continue;
+    }
+
+    currentPosition = currentPosition.copyWith(offset: currentPosition.offset + currentIndex);
+
+    final textSelection = expandPositionToWord(text: text, textPosition: currentPosition);
+    textSelections.add(textSelection);
+
+    currentIndex += textSelection.end - textSelection.start + 1;
+  }
+  return textSelections;
 }
