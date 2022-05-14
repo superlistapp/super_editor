@@ -2286,6 +2286,26 @@ class _PasteEditorCommand implements EditorCommand {
         attributions: attributionsAtPasteOffset,
       ).execute(document, transaction);
 
+      // Check for url in the pasted text and apply [LinkAttribution] appropriately
+      final hasLinkAttribute = attributionsAtPasteOffset.firstWhereOrNull((attr) => attr is LinkAttribution) != null;
+      if (!hasLinkAttribute) {
+        // Attributions at paste offset doesn't have [LinkAttribute].
+        // Add [LinkAttribute] to each url in the text if existed
+        _forEachWordInText(
+          splitContent.first,
+          (word, documentSelection) {
+            final link = Uri.tryParse(word);
+
+            if (link != null && link.hasScheme) {
+              // Valid url. Apply [LinkAttribution] to the url's [documentSelection]
+              final linkAttribution = LinkAttribution(url: link);
+              AddTextAttributionsCommand(documentSelection: documentSelection, attributions: {linkAttribution})
+                  .execute(document, transaction);
+            }
+          },
+        );
+      }
+
       // At this point in the paste process, the document selection
       // position is at the end of the text that was just pasted.
       newSelectionPosition = DocumentPosition(
@@ -2342,5 +2362,32 @@ class _PasteEditorCommand implements EditorCommand {
     editorOpsLog.fine(' - new selection: ${_composer.selection}');
 
     editorOpsLog.fine('Done with paste command.');
+  }
+
+  /// Invoke [action] on each [word] with its [documentSelection] in the given [text]
+  void _forEachWordInText(
+    String text,
+    void Function(String word, DocumentSelection documentSelection) action,
+  ) {
+    final nodePosition = _pastePosition.nodePosition as TextNodePosition;
+    final textSelections = getTextSelectionsForEachWord(text);
+
+    for (final textSelection in textSelections) {
+      final word = text.substring(
+        textSelection.start,
+        textSelection.end,
+      );
+
+      final documentSelection = DocumentSelection(
+        base: _pastePosition.copyWith(
+          nodePosition: nodePosition.copyWith(offset: nodePosition.offset + textSelection.start),
+        ),
+        extent: _pastePosition.copyWith(
+          nodePosition: nodePosition.copyWith(offset: nodePosition.offset + textSelection.end),
+        ),
+      );
+
+      action(word, documentSelection);
+    }
   }
 }
