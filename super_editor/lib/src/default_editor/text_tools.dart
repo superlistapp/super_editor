@@ -156,23 +156,22 @@ TextDirection getParagraphDirection(String text) {
   }
 }
 
-List<TextSelection> wordsInText(String text, DocumentPosition position) {
+/// Returns list of ranges of each word in text
+List<TextSelection> getTextSelectionsForEachWord(String text) {
   final List<TextSelection> textSelections = [];
-  var currentPosition = position.nodePosition as TextNodePosition;
-  var currentIndex = 0;
+  var offset = 0;
 
-  while (currentIndex < text.length) {
-    if (text[currentIndex] == ' ') {
-      currentIndex++;
+  while (offset < text.length) {
+    if (text[offset] == ' ') {
+      offset++;
       continue;
     }
 
-    currentPosition = currentPosition.copyWith(offset: currentPosition.offset + currentIndex);
-
+    final currentPosition = TextPosition(offset: offset);
     final textSelection = expandPositionToWord(text: text, textPosition: currentPosition);
     textSelections.add(textSelection);
 
-    currentIndex += textSelection.end - textSelection.start + 1;
+    offset += textSelection.end - textSelection.start + 1;
   }
   return textSelections;
 }

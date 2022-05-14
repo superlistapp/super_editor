@@ -244,6 +244,18 @@ class TextNodePosition extends TextPosition implements NodePosition {
 
   @override
   int get hashCode => super.hashCode ^ super.offset.hashCode;
+
+  /// Creates a new [TextNodePosition] based on the current position, with the
+  /// provided parameters overridden.
+  TextNodePosition copyWith({
+    int? offset,
+    TextAffinity? affinity,
+  }) {
+    return TextNodePosition(
+      offset: offset ?? this.offset,
+      affinity: affinity ?? this.affinity,
+    );
+  }
 }
 
 /// Mixin for all [SingleColumnLayoutComponentViewModel]s that represent
