@@ -31,6 +31,25 @@ class DocumentSelection {
   })  : base = position,
         extent = position;
 
+  /// Creates a selection from the [documentPosition] as the [base] position
+  /// with [extentOffset] as the [extent] position within the document.
+  factory DocumentSelection.extentFromDocumentPosition({
+    required DocumentPosition documentPosition,
+    int extentOffset = 0,
+  }) {
+    assert(documentPosition.nodePosition is TextNodePosition);
+
+    final nodePosition = documentPosition.nodePosition as TextNodePosition;
+    return DocumentSelection(
+      base: documentPosition.copyWith(
+        nodePosition: nodePosition,
+      ),
+      extent: documentPosition.copyWith(
+        nodePosition: nodePosition.copyWith(offset: nodePosition.offset + extentOffset),
+      ),
+    );
+  }
+
   /// Creates a selection from the [base] position to the [extent] position
   /// within the document.
   const DocumentSelection({

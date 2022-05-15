@@ -301,6 +301,196 @@ void main() {
         );
       });
     });
+
+    group('Inserting a space character', () {
+      test('it turns the previous word into a link if that word is a url', () {
+        final editContext = _createEditContext();
+
+        // Add a paragraph to the document.
+        (editContext.editor.document as MutableDocument).nodes.add(
+              ParagraphNode(
+                id: 'paragraph',
+                text: AttributedText(text: 'This text: https://flutter.devis a link'),
+              ),
+            );
+
+        // Select the last character of the url
+        editContext.composer.selection = const DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: 'paragraph',
+            nodePosition: TextNodePosition(offset: 30),
+          ),
+        );
+
+        // Press the "space" key
+        var result = anyCharacterToInsertInTextContent(
+          editContext: editContext,
+          keyEvent: const FakeRawKeyEvent(
+            character: ' ',
+            data: FakeRawKeyEventData(
+              logicalKey: LogicalKeyboardKey.space,
+              physicalKey: PhysicalKeyboardKey.space,
+            ),
+          ),
+        );
+
+        // The handler should insert a character
+        expect(result, ExecutionInstruction.haltExecution);
+
+        final textNode = editContext.editor.document.nodes.first as TextNode;
+
+        // The handler should insert a space
+        expect(
+          textNode.text.text,
+          'This text: https://flutter.dev is a link',
+        );
+
+        // The handler should add a [LinkAttribution] at the url
+        expect(
+          textNode.text.spans.hasAttributionsWithin(
+            attributions: {LinkAttribution(url: Uri.parse('https://flutter.dev'))},
+            start: 11,
+            end: 30,
+          ),
+          true,
+        );
+
+        // The handler should not change any attribution of the remaining text
+        expect(
+          textNode.text.spans.getAttributionSpansInRange(
+            attributionFilter: (_) => true,
+            start: 0,
+            end: 10,
+          ),
+          <dynamic>{},
+        );
+        expect(
+          textNode.text.spans.getAttributionSpansInRange(
+            attributionFilter: (_) => true,
+            start: 31,
+            end: 42,
+          ),
+          <dynamic>{},
+        );
+      });
+
+      test('it does NOT turn the previous word into a link if that word is NOT a url', () {
+        final editContext = _createEditContext();
+
+        // Add a paragraph to the document.
+        (editContext.editor.document as MutableDocument).nodes.add(
+              ParagraphNode(
+                id: 'paragraph',
+                text: AttributedText(text: 'This [text] is not a link'),
+              ),
+            );
+
+        // Select the last character of the url
+        editContext.composer.selection = const DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: 'paragraph',
+            nodePosition: TextNodePosition(offset: 10),
+          ),
+        );
+
+        // Press the "space" key
+        var result = anyCharacterToInsertInTextContent(
+          editContext: editContext,
+          keyEvent: const FakeRawKeyEvent(
+            character: ' ',
+            data: FakeRawKeyEventData(
+              logicalKey: LogicalKeyboardKey.space,
+              physicalKey: PhysicalKeyboardKey.space,
+            ),
+          ),
+        );
+
+        // The handler should insert a character
+        expect(result, ExecutionInstruction.haltExecution);
+
+        final textNode = editContext.editor.document.nodes.first as TextNode;
+
+        // The handler should insert a space
+        expect(
+          textNode.text.text,
+          'This [text ] is not a link',
+        );
+
+        // The handler should not change any existing attribution
+        expect(
+          textNode.text.spans.getAttributionSpansInRange(
+            attributionFilter: (_) => true,
+            start: 0,
+            end: 25,
+          ),
+          <dynamic>{},
+        );
+      });
+      test('it does NOT turn the previous word into a link if that word is already a link', () {
+        final editContext = _createEditContext();
+
+        // Add a paragraph to the document.
+        (editContext.editor.document as MutableDocument).nodes.add(
+              ParagraphNode(
+                id: 'paragraph',
+                text: AttributedText(
+                    text: 'This text: https://flutter.dev is a link',
+                    spans: AttributedSpans(attributions: [
+                      SpanMarker(
+                        attribution: LinkAttribution(url: Uri.parse('https://flutter.dev')),
+                        offset: 11,
+                        markerType: SpanMarkerType.start,
+                      ),
+                      SpanMarker(
+                        attribution: LinkAttribution(url: Uri.parse('https://flutter.dev')),
+                        offset: 30,
+                        markerType: SpanMarkerType.end,
+                      ),
+                    ])),
+              ),
+            );
+
+        // Select the last character of the url
+        editContext.composer.selection = const DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: 'paragraph',
+            nodePosition: TextNodePosition(offset: 30),
+          ),
+        );
+
+        // Press the "space" key
+        var result = anyCharacterToInsertInTextContent(
+          editContext: editContext,
+          keyEvent: const FakeRawKeyEvent(
+            character: ' ',
+            data: FakeRawKeyEventData(
+              logicalKey: LogicalKeyboardKey.space,
+              physicalKey: PhysicalKeyboardKey.space,
+            ),
+          ),
+        );
+
+        // The handler should insert a character
+        expect(result, ExecutionInstruction.haltExecution);
+
+        final textNode = editContext.editor.document.nodes.first as TextNode;
+        // The handler should insert a space
+        expect(
+          textNode.text.text,
+          'This text: https://flutter.dev  is a link',
+        );
+
+        // The handler should not change any existing attribution
+        expect(
+          textNode.text.spans.getAttributionSpansInRange(
+            attributionFilter: (_) => true,
+            start: 0,
+            end: 43,
+          ),
+          {LinkAttribution(url: Uri.parse('https://flutter.dev'))},
+        );
+      });
+    });
   });
 }
 
