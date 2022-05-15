@@ -173,7 +173,6 @@ class BlinkingCaretState extends State<BlinkingCaret> with SingleTickerProviderS
 
   @override
   Widget build(BuildContext context) {
-    // Passing the size so its [RenderBox] reports the size
     return CustomPaint(
       size: Size(widget.width, widget.caretHeight ?? 0),
       painter: _CursorPainter(
