@@ -580,6 +580,7 @@ final defaultKeyboardActions = <DocumentKeyboardAction>[
   pasteWhenCmdVIsPressed,
   copyWhenCmdCIsPressed,
   cutWhenCmdXIsPressed,
+  collapseSelectionWhenEscIsPressed,
   selectAllWhenCmdAIsPressed,
   moveUpDownLeftAndRightWithArrowKeys,
   tabToIndentListItem,
@@ -598,7 +599,6 @@ final defaultKeyboardActions = <DocumentKeyboardAction>[
   anyCharacterOrDestructiveKeyToDeleteSelection,
   anyCharacterToInsertInParagraph,
   anyCharacterToInsertInTextContent,
-  collapseSelectionWhenEscIsPressed,
 ];
 
 /// Stylesheet applied to all [SuperEditor]s by default.
