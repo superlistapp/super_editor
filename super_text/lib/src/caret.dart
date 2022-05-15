@@ -28,8 +28,34 @@ class BlinkingTextCaret extends StatefulWidget {
   State<BlinkingTextCaret> createState() => _BlinkingTextCaretState();
 }
 
-class _BlinkingTextCaretState extends State<BlinkingTextCaret> {
+class _BlinkingTextCaretState extends State<BlinkingTextCaret> with WidgetsBindingObserver {
   Offset? _caretOffset;
+
+  @override
+  void initState() {    
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeMetrics() {      
+    // The available screen dimensions may have changed, e.g., due to keyboard
+    // appearance/disappearance, phone rotation or window resizing.
+    // The caretOffset must be recomputed
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      if (mounted) {
+        setState(() {
+          // 
+        });
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
