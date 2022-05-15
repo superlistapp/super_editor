@@ -173,21 +173,18 @@ class BlinkingCaretState extends State<BlinkingCaret> with SingleTickerProviderS
 
   @override
   Widget build(BuildContext context) {
-    // Wrap the caret with [SizedBox] so its [RenderBox] reports the size
-    return SizedBox(
-      height: widget.caretHeight,
-      width: widget.width,
-      child: CustomPaint(
-        painter: _CursorPainter(
-          blinkController: _caretBlinkController,
-          caretHeight: widget.caretHeight,
-          caretOffset: widget.caretOffset,
-          width: widget.width,
-          borderRadius: widget.borderRadius,
-          caretColor: widget.color,
-          isTextEmpty: widget.isTextEmpty,
-          showCaret: widget.showCaret,
-        ),
+    // Passing the size so its [RenderBox] reports the size
+    return CustomPaint(
+      size: Size(widget.width, widget.caretHeight ?? 0),
+      painter: _CursorPainter(
+        blinkController: _caretBlinkController,
+        caretHeight: widget.caretHeight,
+        caretOffset: widget.caretOffset,
+        width: widget.width,
+        borderRadius: widget.borderRadius,
+        caretColor: widget.color,
+        isTextEmpty: widget.isTextEmpty,
+        showCaret: widget.showCaret,
       ),
     );
   }
