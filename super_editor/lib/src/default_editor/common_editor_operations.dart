@@ -2276,7 +2276,7 @@ class CommonEditorOperations {
     final word = getTextFromTextSelection(text, textSelection);
 
     final link = Uri.tryParse(word);
-    if (link != null && link.hasScheme) {
+    if (link != null && link.hasScheme && link.hasAuthority) {
       // Valid url. Apply [LinkAttribution] to the url
       final linkAttribution = LinkAttribution(url: link);
 
@@ -2355,6 +2355,7 @@ class _PasteEditorCommand implements EditorCommand {
 
       // Check for url in the pasted text and apply [LinkAttribution] appropriately
       final hasLinkAttribute = attributionsAtPasteOffset.firstWhereOrNull((attr) => attr is LinkAttribution) != null;
+      print('hasLinkAttribute: $hasLinkAttribute');
       if (!hasLinkAttribute) {
         // Attributions at paste offset doesn't have [LinkAttribute].
         // Add [LinkAttribute] to each url in the text if existed
@@ -2363,7 +2364,7 @@ class _PasteEditorCommand implements EditorCommand {
           (word, documentSelection) {
             final link = Uri.tryParse(word);
 
-            if (link != null && link.hasScheme) {
+            if (link != null && link.hasScheme && link.hasAuthority) {
               // Valid url. Apply [LinkAttribution] to the url
               final linkAttribution = LinkAttribution(url: link);
               AddTextAttributionsCommand(documentSelection: documentSelection, attributions: {linkAttribution})
