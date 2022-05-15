@@ -302,21 +302,6 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
   }
 
   @override
-  void insertTextPlaceholder(Size size) {
-    // TODO: implement insertTextPlaceholder
-  }
-
-  @override
-  void removeTextPlaceholder() {
-    // TODO: implement removeTextPlaceholder
-  }
-
-  @override
-  void showToolbar() {
-    // TODO: implement showToolbar
-  }
-
-  @override
   void connectionClosed() {
     _log.info('TextInputClient: connectionClosed()');
     _inputConnection = null;
