@@ -16,7 +16,6 @@ dependencies:
   http: ^0.13.1
   linkify: ^4.0.0
   logging: ^1.0.1
-  flutter_lints: ^1.0.0
   flutter_test:
     sdk: flutter
   super_text:
@@ -32,6 +31,7 @@ dependency_overrides:
     path: ../super_text
 
 dev_dependencies:
+  flutter_lints: ^1.0.0
   golden_toolkit: ^0.11.0
   mockito: ^5.0.4
 

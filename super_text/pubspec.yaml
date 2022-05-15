@@ -12,7 +12,6 @@ dependencies:
     sdk: flutter
 
   attributed_text: 0.1.1
-  flutter_lints: ^1.0.0
   logging: ^1.0.1
 
 dependency_overrides:
@@ -22,6 +21,7 @@ dependency_overrides:
     path: ../attributed_text
 
 dev_dependencies:
+  flutter_lints: ^1.0.0
   flutter_test:
     sdk: flutter
   golden_toolkit: ^0.11.0
