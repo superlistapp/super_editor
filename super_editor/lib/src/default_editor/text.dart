@@ -1153,7 +1153,7 @@ ExecutionInstruction anyCharacterToInsertInTextContent({
 
   if (didInsertCharacter && character == ' ') {
     // Check for the word before the space. If that is a url, make that a link
-    editContext.commonOps.convertPreviousWordToLinkIfIsUrl(
+    editContext.commonOps.convertPreviousWordToLinkIfItIsUrl(
       editContext.composer,
       editContext.editor,
     );

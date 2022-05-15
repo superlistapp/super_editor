@@ -889,6 +889,10 @@ class SoftwareKeyboardHandler {
       TextPosition(offset: delta.insertionOffset, affinity: delta.selection.affinity),
       delta.textInserted,
     );
+
+    if (delta.textInserted == ' ') {
+      commonOps.convertPreviousWordToLinkIfItIsUrl(composer, editor);
+    }
   }
 
   void _applyReplacement(TextEditingDeltaReplacement delta) {
