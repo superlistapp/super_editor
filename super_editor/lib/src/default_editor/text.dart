@@ -1138,6 +1138,14 @@ ExecutionInstruction anyCharacterToInsertInTextContent({
 
   final didInsertCharacter = editContext.commonOps.insertCharacter(character);
 
+  if (didInsertCharacter && character == ' ') {
+    // Check for the word before the space. If that is a url, make that a link
+    editContext.commonOps.convertPreviousWordToLinkIfIsUrl(
+      editContext.composer,
+      editContext.editor,
+    );
+  }
+
   return didInsertCharacter ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
 }
 

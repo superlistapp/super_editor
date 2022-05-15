@@ -156,7 +156,7 @@ TextDirection getParagraphDirection(String text) {
   }
 }
 
-/// Returns list of ranges of each word in text
+/// Returns list of [TextSelection] on each word in text
 List<TextSelection> getTextSelectionsForEachWord(String text) {
   final List<TextSelection> textSelections = [];
   var offset = 0;
@@ -174,4 +174,9 @@ List<TextSelection> getTextSelectionsForEachWord(String text) {
     offset += textSelection.end - textSelection.start + 1;
   }
   return textSelections;
+}
+
+/// Returns a string from a given [text] in a [textSelection] range
+String getTextFromTextSelection(String text, TextSelection textSelection) {
+  return text.substring(textSelection.start, textSelection.end);
 }

@@ -2228,6 +2228,73 @@ class CommonEditorOperations {
       ),
     );
   }
+
+  /// Get the word from the previous offset of the current selection. Convert the word to
+  /// a link if it is a url
+  ///
+  /// Does nothing if previous word is already a link
+  void convertPreviousWordToLinkIfIsUrl(DocumentComposer composer, DocumentEditor editor) {
+    if (composer.selection == null) {
+      return;
+    }
+
+    final documentNode = editor.document.getNodeById(composer.selection!.extent.nodeId);
+
+    if (documentNode is! TextNode && documentNode is! ParagraphNode) {
+      return;
+    }
+
+    // Position of the current selection
+    late TextNodePosition textNodeCurrPosition;
+    late AttributedText attributedText;
+
+    if (documentNode is ParagraphNode) {
+      textNodeCurrPosition = composer.selection!.extent.nodePosition as TextNodePosition;
+      attributedText = documentNode.text;
+    } else if (documentNode is TextNode) {
+      textNodeCurrPosition = composer.selection!.extent.nodePosition as TextNodePosition;
+      attributedText = documentNode.text;
+    }
+
+    final text = attributedText.text;
+
+    // Position which is at the previous offset of the current selection.
+    // This should also be the end position of the previous word
+    final textNodePrevPosition = textNodeCurrPosition.copyWith(offset: textNodeCurrPosition.offset - 1);
+    final attributionsAtPreviousWord = attributedText.getAllAttributionsAt(textNodePrevPosition.offset);
+
+    final hasLinkAttribute = attributionsAtPreviousWord.firstWhereOrNull((attr) => attr is LinkAttribution) != null;
+    if (hasLinkAttribute) {
+      // Previous word has [LinkAttribute]. Do nothing
+      return;
+    }
+
+    final textSelection = expandPositionToWord(
+      text: text,
+      textPosition: textNodePrevPosition,
+    );
+    final word = getTextFromTextSelection(text, textSelection);
+
+    final link = Uri.tryParse(word);
+    if (link != null && link.hasScheme) {
+      // Valid url. Apply [LinkAttribution] to the url
+      final linkAttribution = LinkAttribution(url: link);
+
+      final prevWordDocumentSelection = DocumentSelection.extentFromDocumentPosition(
+        documentPosition: composer.selection!.extent.copyWith(
+          nodePosition: textNodePrevPosition.copyWith(offset: textNodePrevPosition.offset - word.length),
+        ),
+        extentOffset: word.length,
+      );
+
+      editor.executeCommand(
+        AddTextAttributionsCommand(
+          documentSelection: prevWordDocumentSelection,
+          attributions: {linkAttribution},
+        ),
+      );
+    }
+  }
 }
 
 class _PasteEditorCommand implements EditorCommand {
@@ -2297,7 +2364,7 @@ class _PasteEditorCommand implements EditorCommand {
             final link = Uri.tryParse(word);
 
             if (link != null && link.hasScheme) {
-              // Valid url. Apply [LinkAttribution] to the url's [documentSelection]
+              // Valid url. Apply [LinkAttribution] to the url
               final linkAttribution = LinkAttribution(url: link);
               AddTextAttributionsCommand(documentSelection: documentSelection, attributions: {linkAttribution})
                   .execute(document, transaction);
@@ -2369,22 +2436,18 @@ class _PasteEditorCommand implements EditorCommand {
     String text,
     void Function(String word, DocumentSelection documentSelection) action,
   ) {
-    final nodePosition = _pastePosition.nodePosition as TextNodePosition;
+    final pastedTextNodePosition = _pastePosition.nodePosition as TextNodePosition;
     final textSelections = getTextSelectionsForEachWord(text);
 
     for (final textSelection in textSelections) {
-      final word = text.substring(
-        textSelection.start,
-        textSelection.end,
-      );
-
-      final documentSelection = DocumentSelection(
-        base: _pastePosition.copyWith(
-          nodePosition: nodePosition.copyWith(offset: nodePosition.offset + textSelection.start),
+      final word = getTextFromTextSelection(text, textSelection);
+      final documentSelection = DocumentSelection.extentFromDocumentPosition(
+        documentPosition: _pastePosition.copyWith(
+          nodePosition: pastedTextNodePosition.copyWith(
+            offset: pastedTextNodePosition.offset + textSelection.start,
+          ),
         ),
-        extent: _pastePosition.copyWith(
-          nodePosition: nodePosition.copyWith(offset: nodePosition.offset + textSelection.end),
-        ),
+        extentOffset: word.length,
       );
 
       action(word, documentSelection);
