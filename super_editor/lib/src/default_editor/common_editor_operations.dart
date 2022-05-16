@@ -2256,6 +2256,12 @@ class CommonEditorOperations {
       attributedText = documentNode.text;
     }
 
+    // Specifically exclude this case because this leads to getting
+    // the previous position having an offset of -1, which is invalid
+    if (textNodeCurrPosition.offset == 0) {
+      return;
+    }
+
     final text = attributedText.text;
 
     // Position which is at the previous offset of the current selection.
