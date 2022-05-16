@@ -891,7 +891,7 @@ class SoftwareKeyboardHandler {
     );
 
     if (delta.textInserted == ' ') {
-      commonOps.convertPreviousWordToLinkIfItIsUrl(composer, editor);
+      commonOps.convertPreviousUrlToLink(composer, editor);
     }
   }
 

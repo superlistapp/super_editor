@@ -2233,7 +2233,7 @@ class CommonEditorOperations {
   /// a link if it is a url
   ///
   /// Does nothing if previous word is already a link
-  void convertPreviousWordToLinkIfItIsUrl(DocumentComposer composer, DocumentEditor editor) {
+  void convertPreviousUrlToLink(DocumentComposer composer, DocumentEditor editor) {
     if (composer.selection == null) {
       return;
     }
