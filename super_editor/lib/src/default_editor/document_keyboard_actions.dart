@@ -139,9 +139,8 @@ ExecutionInstruction anyCharacterOrDestructiveKeyToDeleteSelection({
     return ExecutionInstruction.continueExecution;
   }
 
-  // Specifically exclude situations where ESC key is pressed because ESC
-  // should collapse the selection. We have to explicitly look for this
-  // because when ESC key is pressed, Flutter reports a non-null character.
+  // Flutter reports a character for ESC, but we don't want to add a character
+  // for ESC. Ignore this key press
   if (keyEvent.logicalKey == LogicalKeyboardKey.escape) {
     return ExecutionInstruction.continueExecution;
   }
