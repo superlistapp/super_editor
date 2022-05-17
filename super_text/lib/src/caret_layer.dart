@@ -85,6 +85,7 @@ class _TextLayoutCaretState extends State<TextLayoutCaret> with TickerProviderSt
       children: [
         Positioned.fill(
           child: CustomPaint(
+            size: Size(widget.style.width, height ?? 0),
             painter: CaretPainter(
               blinkController: _blinkController,
               caretStyle: widget.style,
