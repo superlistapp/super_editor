@@ -1,5 +1,9 @@
-# Super Text Layout
-Configurable, composable, extensible text display for Flutter.
+<p align="center">
+  <img src="https://user-images.githubusercontent.com/7259036/168731754-12a0c766-775c-45d0-8000-417b2e737fda.png" width="300" alt="Super Text Layout"><br>
+  <span><b>Configurable, composable, extensible text display for Flutter.</b></span><br><br>
+</p>
+
+---
 
 ## `SuperTextWithSelection`
 Use the `SuperTextWithSelection` widget when you want to paint text with traditional user selections.
