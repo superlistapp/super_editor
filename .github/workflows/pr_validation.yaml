@@ -92,11 +92,11 @@ jobs:
       # Run all tests
       - run: flutter test
 
-  test_super_text:
+  test_super_text_layout:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./super_text
+        working-directory: ./super_text_layout
     steps:
       # Checkout the PR branch
       - uses: actions/checkout@v2
