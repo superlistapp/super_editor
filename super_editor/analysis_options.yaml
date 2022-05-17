@@ -5,6 +5,5 @@ analyzer:
 
 linter:
     rules:
-        avoid_print: false
         omit_local_variable_types: false
         use_key_in_widget_constructors: false

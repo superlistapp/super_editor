@@ -42,77 +42,63 @@ class _SelectableTextDemoState extends State<SelectableTextDemo> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildTitle('SuperSelectableText Widget'),
+                _buildTitle('SuperTextWithSelection Widget'),
                 const SizedBox(height: 24),
                 _buildDemo(
                   title: 'EMPTY TEXT WITH CARET',
-                  demo: SuperSelectableText.plain(
-                    text: '',
-                    textSelection: const TextSelection.collapsed(offset: 0),
-                    showCaret: true,
-                    style: const TextStyle(
-                      color: Color(0xFF444444),
-                      fontSize: 18,
-                      height: 1.4,
+                  demo: SuperTextWithSelection.single(
+                    richText: const TextSpan(
+                      text: '',
+                      style: TextStyle(
+                        color: Color(0xFF444444),
+                        fontSize: 18,
+                        height: 1.4,
+                      ),
+                    ),
+                    userSelection: const UserSelection(
+                      selection: TextSelection.collapsed(offset: 0),
                     ),
                   ),
                 ),
                 const SizedBox(height: 24),
                 _buildDemo(
                   title: 'TEXT WITHOUT SELECTION OR CARET',
-                  demo: SuperSelectableText(
-                    textSpan: _demoText1,
+                  demo: SuperTextWithSelection.single(
+                    richText: _demoText1,
                   ),
                 ),
                 const SizedBox(height: 24),
                 _buildDemo(
                   title: 'TEXT WITH CARET + COLLAPSED SELECTION',
-                  demo: SuperSelectableText(
-                    textSpan: _demoText1,
-                    textSelection: TextSelection.collapsed(offset: _demoText1.toPlainText().length),
-                    showCaret: true,
+                  demo: SuperTextWithSelection.single(
+                    richText: _demoText1,
+                    userSelection: UserSelection(
+                      selection: TextSelection.collapsed(offset: _demoText1.toPlainText().length),
+                      hasCaret: true,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 24),
                 _buildDemo(
                   title: 'TEXT WITH LEFT-TO-RIGHT SELECTION + CARET',
-                  demo: SuperSelectableText(
-                    textSpan: _demoText1,
-                    textSelection: const TextSelection(baseOffset: 0, extentOffset: 12),
-                    showCaret: true,
+                  demo: SuperTextWithSelection.single(
+                    richText: _demoText1,
+                    userSelection: const UserSelection(
+                      selection: TextSelection(baseOffset: 0, extentOffset: 12),
+                      hasCaret: true,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 24),
                 _buildDemo(
                   title: 'TEXT WITH RIGHT-TO-LEFT SELECTION + CARET',
-                  demo: SuperSelectableText(
-                    textSpan: _demoText1,
-                    textSelection: TextSelection(
-                        baseOffset: _demoText1.toPlainText().length,
-                        extentOffset: _demoText1.toPlainText().length - 17),
-                    showCaret: true,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                _buildDemo(
-                  title: 'TEXT WITH FULL SELECTION + CARET, CUSTOM COLORS, CARET SHAPE, DEBUG PAINT',
-                  demo: DebugSelectableTextDecorator(
-                    selectableTextKey: _debugTextKey,
-                    textLength: _demoText1.toPlainText().length,
-                    showDebugPaint: true,
-                    child: SuperSelectableText(
-                      key: _debugTextKey,
-                      textSpan: _demoText1,
-                      textSelection: TextSelection(baseOffset: 0, extentOffset: _demoText1.toPlainText().length),
-                      textSelectionDecoration: const TextSelectionDecoration(
-                        selectionColor: Colors.yellow,
-                      ),
-                      showCaret: true,
-                      textCaretFactory: TextCaretFactory(
-                        color: Colors.red,
-                        width: 4,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
+                  demo: SuperTextWithSelection.single(
+                    richText: _demoText1,
+                    userSelection: UserSelection(
+                      selection: TextSelection(
+                          baseOffset: _demoText1.toPlainText().length,
+                          extentOffset: _demoText1.toPlainText().length - 17),
+                      hasCaret: true,
                     ),
                   ),
                 ),

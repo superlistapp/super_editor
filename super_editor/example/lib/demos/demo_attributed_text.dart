@@ -134,10 +134,9 @@ Try it yourself by adding and removing attributions to characters in a string...
               TableRow(
                 children: [
                   _buildRowTitle('Attributed Text'),
-                  SuperSelectableText(
-                    key: GlobalKey(),
-                    textSpan: _richText ?? const TextSpan(text: 'error'),
-                  ),
+                  SuperTextWithSelection.single(
+                    richText: _richText ?? const TextSpan(text: 'error'),
+                  )
                 ],
               ),
             ],
