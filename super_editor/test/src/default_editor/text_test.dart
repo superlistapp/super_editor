@@ -303,7 +303,7 @@ void main() {
     });
 
     group('Inserting a space character', () {
-      test('it turns the previous word into a link if that word is a url', () {
+      test('it turns the previous url into a link', () {
         final editContext = _createEditContext();
 
         // Add a paragraph to the document.
@@ -361,7 +361,10 @@ void main() {
           },
         );
       });
-      test('it does NOT turn the previous word into a link if that word is already a link', () {
+      test('it does NOT turn the previous url into a link if that is already a link', () {
+        // Adding [LinkAttribution] to a position that already has it
+        // could cause spans mismatching, which potentially leads to errors.
+        // This test prevents that regression
         final editContext = _createEditContext();
         final linkAttribution = LinkAttribution(url: Uri.parse('https://flutter.dev'));
 
@@ -370,7 +373,7 @@ void main() {
               ParagraphNode(
                 id: 'paragraph',
                 text: AttributedText(
-                  text: 'This text: https://flutter.dev is a link',
+                  text: 'This text: https://flutter.devis a link',
                   spans: AttributedSpans(
                     attributions: [
                       SpanMarker(
@@ -416,7 +419,7 @@ void main() {
         // The handler should insert a space
         expect(
           textNode.text.text,
-          'This text: https://flutter.dev  is a link',
+          'This text: https://flutter.dev is a link',
         );
 
         // The handler should not change any existing attribution
@@ -424,7 +427,7 @@ void main() {
           textNode.text.spans.getAttributionSpansInRange(
             attributionFilter: (_) => true,
             start: 0,
-            end: 43,
+            end: 40,
           ),
           {AttributionSpan(attribution: linkAttribution, start: 11, end: 29)},
         );
