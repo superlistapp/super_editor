@@ -809,8 +809,8 @@ class SoftwareKeyboardHandler {
 
     if (delta.textInserted == ' ') {
       // Check for the word before the space. If that is a url, make that a link
-      final position = composer.selection!.extent.nodePosition as TextNodePosition;
-      commonOps.turnWordAtPositionToLink(position.copyWith(offset: position.offset - 1));
+      final currentPosition = composer.selection!.extent.nodePosition as TextNodePosition;
+      commonOps.turnWordAtPositionToLink(currentPosition.copyWith(offset: currentPosition.offset - 1));
     }
   }
 
