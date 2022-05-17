@@ -8,7 +8,7 @@ import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/a
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/hint_text.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/input_method_engine/_ime_text_editing_controller.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/ios/ios_textfield.dart';
-import 'package:super_text/super_text.dart';
+import 'package:super_text_layout/super_text_layout.dart';
 
 import 'styles.dart';
 

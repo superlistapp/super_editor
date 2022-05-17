@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart' hide SelectableText;
-import 'package:super_editor/super_editor.dart';
+import 'package:super_text_layout/super_text_layout.dart';
 
 /// Demo of a variety of `SelectableText` configurations.
 class SelectableTextDemo extends StatefulWidget {
@@ -28,7 +28,6 @@ class _SelectableTextDemoState extends State<SelectableTextDemo> {
       ),
     ],
   );
-  final _debugTextKey = GlobalKey();
 
   @override
   Widget build(BuildContext context) {

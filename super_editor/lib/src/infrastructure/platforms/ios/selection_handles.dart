@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:super_editor/src/infrastructure/blinking_caret.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
-import 'package:super_text/super_text.dart';
+import 'package:super_text_layout/super_text_layout.dart';
 
 /// An iOS-style text selection handle.
 ///

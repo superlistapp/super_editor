@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:super_editor/super_editor.dart';
+import 'package:super_text_layout/super_text_layout.dart';
 
 /// Demo that displays a very limited text field, constructed from
 /// the ground up, and using [TextInput] for user interaction instead

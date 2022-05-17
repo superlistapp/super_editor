@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart' hide SelectableText;
 import 'package:super_editor/super_editor.dart';
+import 'package:super_text_layout/super_text_layout.dart';
 
 class AttributedTextDemo extends StatefulWidget {
   @override
