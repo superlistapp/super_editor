@@ -19,10 +19,10 @@ dependencies:
   logging: ^1.0.1
   flutter_test:
     sdk: flutter
-  super_text:
+  super_text_layout:
     git:
       url: https://github.com/superlistapp/super_editor.git
-      path: super_text
+      path: super_text_layout
   uuid: ^3.0.3
 
 dependency_overrides:
@@ -30,8 +30,8 @@ dependency_overrides:
   # against changes that they're making to other mono-repo packages
   attributed_text:
     path: ../attributed_text
-  super_text:
-    path: ../super_text
+  super_text_layout:
+    path: ../super_text_layout
 
 dev_dependencies:
   flutter_lints: ^1.0.0

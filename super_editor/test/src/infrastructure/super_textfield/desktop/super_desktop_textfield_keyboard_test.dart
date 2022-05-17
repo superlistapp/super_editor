@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/src/infrastructure/platform_detector.dart';
 import 'package:super_editor/super_editor.dart';
+import 'package:super_text_layout/super_text_layout.dart';
 
 import '../../../_text_entry_test_tools.dart';
 import '../../_platform_test_tools.dart';
@@ -3108,7 +3109,7 @@ Future<ProseTextBlock> _pumpAndReturnSelectableText(
 ]) async {
   final textKey = GlobalKey();
 
-  final textLayout = SuperTextWithSelection.single(
+  final textLayout = SuperTextLayoutWithSelection.single(
     key: textKey,
     richText: TextSpan(
       text: text,

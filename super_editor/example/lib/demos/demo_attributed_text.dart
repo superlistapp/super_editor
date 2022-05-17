@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart' hide SelectableText;
 import 'package:super_editor/super_editor.dart';
+import 'package:super_text_layout/super_text_layout.dart';
 
 class AttributedTextDemo extends StatefulWidget {
   @override
@@ -134,7 +135,7 @@ Try it yourself by adding and removing attributions to characters in a string...
               TableRow(
                 children: [
                   _buildRowTitle('Attributed Text'),
-                  SuperTextWithSelection.single(
+                  SuperTextLayoutWithSelection.single(
                     richText: _richText ?? const TextSpan(text: 'error'),
                   )
                 ],

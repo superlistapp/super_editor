@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:super_editor/super_editor.dart';
+import 'package:super_text_layout/super_text_layout.dart';
 
 /// Demo that displays a very limited iOS text field, constructed from
 /// the ground up, using [TextInput] for user interaction instead
@@ -256,7 +256,7 @@ class _BareBonesTextFieldWithInputClientState extends State<_BareBonesTextFieldW
           onPanUpdate: _focusNode.hasFocus ? _onPanUpdate : null,
           child: Stack(
             children: [
-              SuperTextWithSelection.single(
+              SuperTextLayoutWithSelection.single(
                 key: _textKey,
                 richText: _currentText.isNotEmpty
                     ? TextSpan(

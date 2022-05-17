@@ -8,7 +8,7 @@ import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/h
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/text_scrollview.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/input_method_engine/_ime_text_editing_controller.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/ios/_editing_controls.dart';
-import 'package:super_text/super_text.dart';
+import 'package:super_text_layout/super_text_layout.dart';
 
 import '../../platforms/ios/toolbar.dart';
 import '../styles.dart';
@@ -416,7 +416,7 @@ class _SuperIOSTextFieldState extends State<SuperIOSTextField> with SingleTicker
         ? _textEditingController.text.computeTextSpan(widget.textStyleBuilder)
         : AttributedText(text: "").computeTextSpan(widget.textStyleBuilder);
 
-    return SuperTextWithSelection.single(
+    return SuperTextLayoutWithSelection.single(
       key: _textContentKey,
       richText: textSpan,
       textAlign: widget.textAlign,

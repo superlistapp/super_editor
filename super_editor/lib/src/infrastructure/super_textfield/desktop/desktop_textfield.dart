@@ -13,7 +13,7 @@ import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/platform_detector.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/attributed_text_editing_controller.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/hint_text.dart';
-import 'package:super_text/super_text.dart';
+import 'package:super_text_layout/super_text_layout.dart';
 
 import '../../keyboard.dart';
 import '../../multi_tap_gesture.dart';
@@ -321,7 +321,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> {
   }
 
   Widget _buildSelectableText() {
-    return SuperTextWithSelection.single(
+    return SuperTextLayoutWithSelection.single(
       key: _textKey,
       richText: _controller.text.computeTextSpan(widget.textStyleBuilder),
       textAlign: widget.textAlign,

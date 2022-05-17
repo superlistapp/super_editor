@@ -1,5 +1,5 @@
 import 'package:flutter/widgets.dart';
-import 'package:super_text/super_text.dart';
+import 'package:super_text_layout/super_text_layout.dart';
 
 /// An Android-style blinking caret.
 ///
