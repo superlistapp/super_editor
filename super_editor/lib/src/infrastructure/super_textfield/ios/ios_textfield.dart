@@ -416,7 +416,7 @@ class _SuperIOSTextFieldState extends State<SuperIOSTextField> with SingleTicker
         ? _textEditingController.text.computeTextSpan(widget.textStyleBuilder)
         : AttributedText(text: "").computeTextSpan(widget.textStyleBuilder);
 
-    return SuperTextLayoutWithSelection.single(
+    return SuperTextWithSelection.single(
       key: _textContentKey,
       richText: textSpan,
       textAlign: widget.textAlign,

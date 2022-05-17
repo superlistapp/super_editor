@@ -15,8 +15,8 @@ Future<void> pumpThreeLinePlainSuperText(
 }) async {
   await tester.pumpWidget(
     buildTestScaffold(
-      child: SuperTextLayout(
-        key: superTextLayoutKey,
+      child: SuperText(
+        key: superTextKey,
         richText: threeLineTextSpan,
         layerBeneathBuilder: beneathBuilder,
         layerAboveBuilder: aboveBuilder,
@@ -32,8 +32,8 @@ Future<void> pumpEmptySuperText(
 }) async {
   await tester.pumpWidget(
     buildTestScaffold(
-      child: SuperTextLayout(
-        key: superTextLayoutKey,
+      child: SuperText(
+        key: superTextKey,
         richText: const TextSpan(text: "", style: _testTextStyle),
         layerBeneathBuilder: beneathBuilder,
         layerAboveBuilder: aboveBuilder,
@@ -42,7 +42,7 @@ Future<void> pumpEmptySuperText(
   );
 }
 
-final superTextLayoutKey = GlobalKey(debugLabel: "super_text_layout");
+final superTextKey = GlobalKey(debugLabel: "super_text");
 
 const threeLineTextSpan = TextSpan(
   text: "This is some text. It is explicitly laid out in\n" // Line indices: 0 -> 47/48 (upstream/downstream)

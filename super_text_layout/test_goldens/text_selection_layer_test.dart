@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_toolkit/golden_toolkit.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
-import 'super_text_layout_test_tools.dart';
+import 'test_tools.dart';
 
 void main() {
   group("Text selection layer", () {

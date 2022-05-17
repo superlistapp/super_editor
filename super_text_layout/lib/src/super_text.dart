@@ -12,17 +12,17 @@ import 'text_layout.dart';
 /// To display a widget that includes standard text selection display,
 /// see [SuperTextWithSelection].
 ///
-/// The layers in a [SuperTextLayout] are built by provided [SuperTextLayerBuilder]s.
+/// The layers in a [SuperText] are built by provided [SuperTextLayerBuilder]s.
 /// These builders are similar to a typical `WidgetBuilder`, except that
 /// [SuperTextLayerBuilder]s are also given a reference to the [TextLayout]
-/// within this [SuperTextLayout]. The layer builders can then use the [TextLayout] to
+/// within this [SuperText]. The layer builders can then use the [TextLayout] to
 /// position widgets and paint coordinates near lines and characters in the text.
 ///
-/// If you discover performance issues with your [SuperTextLayout], consider wrapping
+/// If you discover performance issues with your [SuperText], consider wrapping
 /// the [SuperTextLayerBuilder] content with [RepaintBoundary]s, which might prevent
 /// unnecessary repaints between your layers and the text content.
-class SuperTextLayout extends StatefulWidget {
-  const SuperTextLayout({
+class SuperText extends StatefulWidget {
+  const SuperText({
     Key? key,
     required this.richText,
     this.textAlign = TextAlign.left,
@@ -32,7 +32,7 @@ class SuperTextLayout extends StatefulWidget {
     this.debugTrackTextBuilds = false,
   }) : super(key: key);
 
-  /// The text to display in this [SuperTextLayout] widget.
+  /// The text to display in this [SuperText] widget.
   final InlineSpan richText;
 
   /// The alignment to use for [richText] display.
@@ -48,17 +48,17 @@ class SuperTextLayout extends StatefulWidget {
   /// Builds a widget that appears above the text, e.g., to render a caret.
   final SuperTextLayerBuilder? layerAboveBuilder;
 
-  /// Whether this [SuperTextLayout] widget should track the number of times it
+  /// Whether this [SuperText] widget should track the number of times it
   /// builds its inner rich text, so that tests can ensure the inner text
   /// is not rebuilt unnecessarily, due to text decorations.
   final bool debugTrackTextBuilds;
 
   @override
-  State<SuperTextLayout> createState() => SuperTextLayoutState();
+  State<SuperText> createState() => SuperTextState();
 }
 
 @visibleForTesting
-class SuperTextLayoutState extends State<SuperTextLayout> with ProseTextBlock {
+class SuperTextState extends State<SuperText> with ProseTextBlock {
   final _textLayoutKey = GlobalKey();
   @override
   ProseTextLayout get textLayout => RenderSuperTextLayout.textLayoutFrom(_textLayoutKey)!;
@@ -153,7 +153,7 @@ class _SuperTextLayout extends MultiChildRenderObjectWidget {
     required Widget background,
   }) : super(key: key, children: [background, text, foreground]);
 
-  final SuperTextLayoutState state;
+  final SuperTextState state;
 
   @override
   RenderObject createRenderObject(BuildContext context) {
@@ -172,7 +172,7 @@ class RenderSuperTextLayout extends RenderBox
     with
         ContainerRenderObjectMixin<RenderBox, _SuperTextLayoutParentData>,
         RenderBoxContainerDefaultsMixin<RenderBox, _SuperTextLayoutParentData> {
-  /// Returns the [ProseTextLayout] within a [SuperTextLayout] that's connected
+  /// Returns the [ProseTextLayout] within a [SuperText] that's connected
   /// to the given [key].
   static ProseTextLayout? textLayoutFrom(GlobalKey key) {
     final renderTextLayout = key.currentContext?.findRenderObject() as RenderSuperTextLayout;
@@ -187,14 +187,14 @@ class RenderSuperTextLayout extends RenderBox
   }
 
   RenderSuperTextLayout({
-    required SuperTextLayoutState state,
+    required SuperTextState state,
   }) : _state = state;
 
-  SuperTextLayoutState? _state;
+  SuperTextState? _state;
 
-  SuperTextLayoutState get state => _state!;
+  SuperTextState get state => _state!;
 
-  set state(SuperTextLayoutState value) {
+  set state(SuperTextState value) {
     if (_state != value) {
       _state = value;
       markNeedsLayout();
@@ -358,7 +358,7 @@ class RenderLayoutAwareParagraph extends RenderParagraph {
 typedef SuperTextLayerBuilder = Widget Function(BuildContext, TextLayout textLayout);
 
 /// A [SuperTextLayerBuilder] that combines multiple other layers into a single
-/// layer, to be displayed above or beneath [SuperTextLayout].
+/// layer, to be displayed above or beneath [SuperText].
 ///
 /// The layers are drawn bottom-to-top, with the bottom layer being the first
 /// layer in the list of layers.

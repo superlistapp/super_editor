@@ -135,7 +135,7 @@ Try it yourself by adding and removing attributions to characters in a string...
               TableRow(
                 children: [
                   _buildRowTitle('Attributed Text'),
-                  SuperTextLayoutWithSelection.single(
+                  SuperTextWithSelection.single(
                     richText: _richText ?? const TextSpan(text: 'error'),
                   )
                 ],

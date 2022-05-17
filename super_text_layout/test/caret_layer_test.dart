@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
-import 'super_text_layout_test_tools.dart';
+import 'test_tools.dart';
 
 const primaryCaretStyle = CaretStyle(color: Colors.black);
 
@@ -14,7 +14,7 @@ void main() {
         final blinkControllerHolder = ValueNotifier<BlinkController?>(null);
         await tester.pumpWidget(
           buildTestScaffold(
-            child: SuperTextLayout(
+            child: SuperText(
               richText: threeLineTextSpan,
               layerAboveBuilder: (context, TextLayout textLayout) {
                 return Stack(

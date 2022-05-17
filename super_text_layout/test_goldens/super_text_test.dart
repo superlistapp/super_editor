@@ -4,11 +4,11 @@ import 'package:golden_toolkit/golden_toolkit.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
 void main() {
-  group("SuperTextLayout", () {
+  group("SuperText", () {
     group("text layout", () {
       testGoldens("renders a visual reference for non-visual tests", (tester) async {
         await _pumpThreeLinePlainText(tester);
-        await screenMatchesGolden(tester, "SuperTextLayout-reference-render");
+        await screenMatchesGolden(tester, "SuperText-reference-render");
       });
     });
   });
@@ -17,7 +17,7 @@ void main() {
 Future<void> _pumpThreeLinePlainText(WidgetTester tester) async {
   await tester.pumpWidget(
     _buildScaffold(
-      child: SuperTextLayout(
+      child: SuperText(
         key: _textKey,
         richText: _threeLineSpan,
       ),

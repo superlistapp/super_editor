@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_toolkit/golden_toolkit.dart';
 
-import 'super_text_layout_test_tools.dart';
+import 'test_tools.dart';
 
 void main() {
-  group("SuperTextLayout", () {
+  group("SuperText", () {
     group("builds layers", () {
       testGoldens("that can paint line boxes", (tester) async {
         await pumpThreeLinePlainSuperText(tester, beneathBuilder: (context, textLayout) {
@@ -39,7 +39,7 @@ void main() {
           );
         });
 
-        await screenMatchesGolden(tester, "SuperTextLayout_layers_line-boxes");
+        await screenMatchesGolden(tester, "SuperText_layers_line-boxes");
       });
 
       testGoldens("that can paint character boxes", (tester) async {
@@ -67,7 +67,7 @@ void main() {
           );
         });
 
-        await screenMatchesGolden(tester, "SuperTextLayout_layers_character-boxes");
+        await screenMatchesGolden(tester, "SuperText_layers_character-boxes");
       });
 
       testGoldens("that can paint carets", (tester) async {
@@ -87,7 +87,7 @@ void main() {
           );
         });
 
-        await screenMatchesGolden(tester, "SuperTextLayout_layers_caret");
+        await screenMatchesGolden(tester, "SuperText_layers_caret");
       });
     });
   });

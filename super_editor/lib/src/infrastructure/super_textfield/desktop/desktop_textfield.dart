@@ -321,7 +321,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> {
   }
 
   Widget _buildSelectableText() {
-    return SuperTextLayoutWithSelection.single(
+    return SuperTextWithSelection.single(
       key: _textKey,
       richText: _controller.text.computeTextSpan(widget.textStyleBuilder),
       textAlign: widget.textAlign,

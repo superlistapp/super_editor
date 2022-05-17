@@ -256,7 +256,7 @@ class _BareBonesTextFieldWithInputClientState extends State<_BareBonesTextFieldW
           onPanUpdate: _focusNode.hasFocus ? _onPanUpdate : null,
           child: Stack(
             children: [
-              SuperTextLayoutWithSelection.single(
+              SuperTextWithSelection.single(
                 key: _textKey,
                 richText: _currentText.isNotEmpty
                     ? TextSpan(

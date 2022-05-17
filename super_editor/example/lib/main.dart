@@ -345,7 +345,7 @@ final _menu = <_MenuGroup>[
     items: [
       _MenuItem(
         icon: Icons.text_fields,
-        title: 'SuperTextLayoutWithSelection',
+        title: 'SuperTextWithSelection',
         pageBuilder: (context) {
           return SelectableTextDemo();
         },

@@ -752,7 +752,7 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
   Widget build(BuildContext context) {
     editorLayoutLog.finer('Building a TextComponent with key: ${widget.key}');
 
-    return SuperTextLayoutWithSelection.single(
+    return SuperTextWithSelection.single(
       key: _textKey,
       richText: widget.text.computeTextSpan(_textStyleWithBlockType),
       textAlign: widget.textAlign ?? TextAlign.left,

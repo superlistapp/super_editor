@@ -142,7 +142,7 @@ class _SuperTextExampleScreenState extends State<SuperTextExampleScreen> with Ti
 
   Widget _buildSuperTextWithSelectionStaticSingle() {
     return _buildExampleContainer(
-      child: SuperTextLayoutWithSelection.single(
+      child: SuperTextWithSelection.single(
         richText: _text,
         userSelection: const UserSelection(
           highlightStyle: _primaryHighlightStyle,
@@ -155,7 +155,7 @@ class _SuperTextExampleScreenState extends State<SuperTextExampleScreen> with Ti
 
   Widget _buildSuperTextWithSelectionStaticMulti() {
     return _buildExampleContainer(
-      child: SuperTextLayoutWithSelection.multi(
+      child: SuperTextWithSelection.multi(
         richText: _text,
         userSelections: [
           const UserSelection(
@@ -180,7 +180,7 @@ class _SuperTextExampleScreenState extends State<SuperTextExampleScreen> with Ti
 
   Widget _buildSingleCaret() {
     return _buildExampleContainer(
-      child: SuperTextLayout(
+      child: SuperText(
         richText: _text,
         layerAboveBuilder: (context, textLayout) {
           return Stack(
@@ -199,7 +199,7 @@ class _SuperTextExampleScreenState extends State<SuperTextExampleScreen> with Ti
 
   Widget _buildSingleSelectionHighlight() {
     return _buildExampleContainer(
-      child: SuperTextLayout(
+      child: SuperText(
         richText: _text,
         layerAboveBuilder: (context, textLayout) {
           return Stack(
@@ -229,7 +229,7 @@ class _SuperTextExampleScreenState extends State<SuperTextExampleScreen> with Ti
 
   Widget _buildSingleSelectionHighlightRainbow() {
     return _buildExampleContainer(
-      child: SuperTextLayout(
+      child: SuperText(
         richText: _text,
         layerAboveBuilder: (context, textLayout) {
           return Stack(
@@ -263,7 +263,7 @@ class _SuperTextExampleScreenState extends State<SuperTextExampleScreen> with Ti
 
   Widget _buildMultiUserSelections() {
     return _buildExampleContainer(
-      child: SuperTextLayout(
+      child: SuperText(
         richText: _text,
         layerAboveBuilder: (context, getTextLayout) {
           return MultiLayerBuilder([
@@ -335,7 +335,7 @@ class _SuperTextExampleScreenState extends State<SuperTextExampleScreen> with Ti
 
   Widget _buildEmptySelection() {
     return _buildExampleContainer(
-      child: SuperTextLayout(
+      child: SuperText(
         richText: const TextSpan(text: "", style: _textStyle),
         layerAboveBuilder: (context, textLayout) {
           return TextLayoutEmptyHighlight(
@@ -408,7 +408,7 @@ class _TypingRobotExampleState extends State<_TypingRobotExample> {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        SuperTextLayoutWithSelection.single(
+        SuperTextWithSelection.single(
           richText: _richText,
           userSelection: UserSelection(
             highlightStyle: _primaryHighlightStyle,

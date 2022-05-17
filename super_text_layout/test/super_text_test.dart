@@ -2,17 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
-import 'super_text_layout_test_tools.dart';
+import 'test_tools.dart';
 
 void main() {
-  group("SuperTextLayout", () {
+  group("SuperText", () {
     testWidgets("renders text and layers in a single frame", (tester) async {
       bool didBuildLayerBeneath = false;
       bool didBuildLayerAbove = false;
 
       await tester.pumpWidget(
         buildTestScaffold(
-          child: SuperTextLayout(
+          child: SuperText(
             key: superTextKey,
             richText: threeLineTextSpan,
             layerBeneathBuilder: (context, TextLayout textLayout) {
@@ -68,7 +68,7 @@ void main() {
         buildTestScaffold(
           child: SuperTextAnalytics(
             trackBuilds: true,
-            child: SuperTextLayout(
+            child: SuperText(
               key: superTextKey,
               richText: threeLineTextSpan,
               layerBeneathBuilder: (context, TextLayout textLayout) {
@@ -117,8 +117,7 @@ void main() {
       );
 
       // Ensure that the SuperText has built exactly 1 time to start off.
-      final superTextState1 =
-          (find.byKey(superTextKey).evaluate().first as StatefulElement).state as SuperTextLayoutState;
+      final superTextState1 = (find.byKey(superTextKey).evaluate().first as StatefulElement).state as SuperTextState;
       expect(superTextState1.textBuildCount, 1);
       expect(layerBeneathBuildCount, 1);
       expect(highlightBuildCount, 1);
@@ -135,8 +134,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Ensure that the text within SuperText didn't rebuild since the last check.
-      final superTextState2 =
-          (find.byKey(superTextKey).evaluate().first as StatefulElement).state as SuperTextLayoutState;
+      final superTextState2 = (find.byKey(superTextKey).evaluate().first as StatefulElement).state as SuperTextState;
       // We need to make sure the State objects remained the same because if the
       // original State object was replaced with a new one then the build count
       // will still read `1`, despite two builds taking place.
@@ -155,7 +153,7 @@ void main() {
     testWidgets("provides access to a TextLayout", (tester) async {
       await tester.pumpWidget(
         buildTestScaffold(
-          child: SuperTextLayout(
+          child: SuperText(
             key: superTextKey,
             richText: threeLineTextSpan,
           ),
@@ -194,7 +192,7 @@ void main() {
         testWidgets("for one line of text", (tester) async {
           await tester.pumpWidget(
             _buildScaffold(
-              child: SuperTextLayout(
+              child: SuperText(
                 key: _textKey,
                 richText: _oneLineSpan,
               ),
@@ -489,7 +487,7 @@ void main() {
 Future<void> _pumpThreeLinePlainText(WidgetTester tester) async {
   await tester.pumpWidget(
     _buildScaffold(
-      child: SuperTextLayout(
+      child: SuperText(
         key: _textKey,
         richText: _threeLineSpan,
       ),
@@ -500,7 +498,7 @@ Future<void> _pumpThreeLinePlainText(WidgetTester tester) async {
 Future<void> _pumpEmptyText(WidgetTester tester) async {
   await tester.pumpWidget(
     _buildScaffold(
-      child: SuperTextLayout(
+      child: SuperText(
         key: _textKey,
         richText: const TextSpan(text: "", style: _testTextStyle),
       ),

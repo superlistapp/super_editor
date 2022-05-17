@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 
-import 'super_text_layout.dart';
+import 'super_text.dart';
 
 /// Contract to interrogate the layout of a blob of text.
 abstract class TextLayout {

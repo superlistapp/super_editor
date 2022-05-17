@@ -391,7 +391,7 @@ class _SuperAndroidTextFieldState extends State<SuperAndroidTextField> with Sing
         ? _textEditingController.text.computeTextSpan(widget.textStyleBuilder)
         : TextSpan(text: "", style: widget.textStyleBuilder({}));
 
-    return SuperTextLayoutWithSelection.single(
+    return SuperTextWithSelection.single(
       key: _textContentKey,
       richText: textSpan,
       textAlign: widget.textAlign,

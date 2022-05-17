@@ -2,21 +2,21 @@ import 'package:flutter/widgets.dart';
 import 'package:super_text_layout/super_text_layout_logging.dart';
 
 import 'caret_layer.dart';
-import 'super_text_layout.dart';
+import 'super_text.dart';
 import 'text_layout.dart';
 import 'text_selection_layer.dart';
 
 /// Displays rich text with traditional text carets and selection highlights.
 ///
-/// [SuperTextLayoutWithSelection] supports single-user and multi-user selection
+/// [SuperTextWithSelection] supports single-user and multi-user selection
 /// displays.
 ///
-/// [SuperTextLayoutWithSelection] is intended to provide the most convenient API possible
+/// [SuperTextWithSelection] is intended to provide the most convenient API possible
 /// for traditional selection rendering. To render unusual selection use-cases,
-/// use [SuperTextLayout], directly. You can use the implementation of [SuperTextLayoutWithSelection]
+/// use [SuperText], directly. You can use the implementation of [SuperTextWithSelection]
 /// as a guide for how to implement your own behaviors and visual effects.
-class SuperTextLayoutWithSelection extends StatefulWidget {
-  SuperTextLayoutWithSelection.single({
+class SuperTextWithSelection extends StatefulWidget {
+  SuperTextWithSelection.single({
     Key? key,
     this.textLayoutKey,
     required this.richText,
@@ -26,7 +26,7 @@ class SuperTextLayoutWithSelection extends StatefulWidget {
   })  : userSelections = userSelection != null ? [userSelection] : const [],
         super(key: key);
 
-  const SuperTextLayoutWithSelection.multi({
+  const SuperTextWithSelection.multi({
     Key? key,
     this.textLayoutKey,
     required this.richText,
@@ -53,10 +53,10 @@ class SuperTextLayoutWithSelection extends StatefulWidget {
   final List<UserSelection> userSelections;
 
   @override
-  State<SuperTextLayoutWithSelection> createState() => _SuperTextLayoutWithSelectionState();
+  State<SuperTextWithSelection> createState() => _SuperTextWithSelectionState();
 }
 
-class _SuperTextLayoutWithSelectionState extends ProseTextState<SuperTextLayoutWithSelection> {
+class _SuperTextWithSelectionState extends ProseTextState<SuperTextWithSelection> {
   late GlobalKey _textLayoutKey;
   late final ValueNotifier<List<UserSelection>> _userSelections;
 
@@ -68,7 +68,7 @@ class _SuperTextLayoutWithSelectionState extends ProseTextState<SuperTextLayoutW
   }
 
   @override
-  void didUpdateWidget(SuperTextLayoutWithSelection oldWidget) {
+  void didUpdateWidget(SuperTextWithSelection oldWidget) {
     super.didUpdateWidget(oldWidget);
 
     if (widget.textLayoutKey != oldWidget.textLayoutKey) {
@@ -163,7 +163,7 @@ class _RebuildOptimizedSuperTextWithSelectionState extends State<_RebuildOptimiz
     }
 
     buildsLog.info("Building SuperTextWithSelection ($hashCode), doing full build (no cached subtree is available)");
-    _cachedSubtree = SuperTextLayout(
+    _cachedSubtree = SuperText(
       key: widget.textLayoutKey,
       richText: widget.richText,
       layerBeneathBuilder: _buildLayerBeneath,

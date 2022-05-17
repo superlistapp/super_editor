@@ -3109,7 +3109,7 @@ Future<ProseTextBlock> _pumpAndReturnSelectableText(
 ]) async {
   final textKey = GlobalKey();
 
-  final textLayout = SuperTextLayoutWithSelection.single(
+  final textLayout = SuperTextWithSelection.single(
     key: textKey,
     richText: TextSpan(
       text: text,

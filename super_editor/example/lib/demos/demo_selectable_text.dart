@@ -41,11 +41,11 @@ class _SelectableTextDemoState extends State<SelectableTextDemo> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildTitle('SuperTextLayoutWithSelection Widget'),
+                _buildTitle('SuperTextWithSelection Widget'),
                 const SizedBox(height: 24),
                 _buildDemo(
                   title: 'EMPTY TEXT WITH CARET',
-                  demo: SuperTextLayoutWithSelection.single(
+                  demo: SuperTextWithSelection.single(
                     richText: const TextSpan(
                       text: '',
                       style: TextStyle(
@@ -62,14 +62,14 @@ class _SelectableTextDemoState extends State<SelectableTextDemo> {
                 const SizedBox(height: 24),
                 _buildDemo(
                   title: 'TEXT WITHOUT SELECTION OR CARET',
-                  demo: SuperTextLayoutWithSelection.single(
+                  demo: SuperTextWithSelection.single(
                     richText: _demoText1,
                   ),
                 ),
                 const SizedBox(height: 24),
                 _buildDemo(
                   title: 'TEXT WITH CARET + COLLAPSED SELECTION',
-                  demo: SuperTextLayoutWithSelection.single(
+                  demo: SuperTextWithSelection.single(
                     richText: _demoText1,
                     userSelection: UserSelection(
                       selection: TextSelection.collapsed(offset: _demoText1.toPlainText().length),
@@ -80,7 +80,7 @@ class _SelectableTextDemoState extends State<SelectableTextDemo> {
                 const SizedBox(height: 24),
                 _buildDemo(
                   title: 'TEXT WITH LEFT-TO-RIGHT SELECTION + CARET',
-                  demo: SuperTextLayoutWithSelection.single(
+                  demo: SuperTextWithSelection.single(
                     richText: _demoText1,
                     userSelection: const UserSelection(
                       selection: TextSelection(baseOffset: 0, extentOffset: 12),
@@ -91,7 +91,7 @@ class _SelectableTextDemoState extends State<SelectableTextDemo> {
                 const SizedBox(height: 24),
                 _buildDemo(
                   title: 'TEXT WITH RIGHT-TO-LEFT SELECTION + CARET',
-                  demo: SuperTextLayoutWithSelection.single(
+                  demo: SuperTextWithSelection.single(
                     richText: _demoText1,
                     userSelection: UserSelection(
                       selection: TextSelection(

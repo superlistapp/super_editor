@@ -2,17 +2,17 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
-import 'super_text_layout_test_tools.dart';
+import 'test_tools.dart';
 
 const _highlightStyle = SelectionHighlightStyle(color: defaultSelectionColor);
 const _caretStyle = CaretStyle(color: Color(0xFF000000));
 
 void main() {
-  group("SuperTextLayoutWithSelection", () {
+  group("SuperTextWithSelection", () {
     testWidgets("builds when text is empty", (tester) async {
       await tester.pumpWidget(
         buildTestScaffold(
-          child: SuperTextLayoutWithSelection.single(
+          child: SuperTextWithSelection.single(
             richText: const TextSpan(text: ""),
             userSelection: const UserSelection(
               highlightStyle: _highlightStyle,
@@ -46,7 +46,7 @@ void main() {
             child: ValueListenableBuilder<UserSelection?>(
               valueListenable: userSelection,
               builder: (context, value, child) {
-                return SuperTextLayoutWithSelection.single(
+                return SuperTextWithSelection.single(
                   richText: threeLineTextSpan,
                   userSelection: value,
                 );
@@ -57,8 +57,7 @@ void main() {
       );
 
       // Ensure that the SuperText has built exactly 1 time to start off.
-      final superTextState1 =
-          (find.byType(SuperTextLayout).evaluate().first as StatefulElement).state as SuperTextLayoutState;
+      final superTextState1 = (find.byType(SuperText).evaluate().first as StatefulElement).state as SuperTextState;
       expect(superTextState1.textBuildCount, 1);
 
       // Change the user selection, which will rebuild the SuperTextWithSelection
@@ -71,8 +70,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Ensure that the text within SuperText didn't rebuild since the last check.
-      final superTextState2 =
-          (find.byType(SuperTextLayout).evaluate().first as StatefulElement).state as SuperTextLayoutState;
+      final superTextState2 = (find.byType(SuperText).evaluate().first as StatefulElement).state as SuperTextState;
       // We need to make sure the State objects remained the same because if the
       // original State object was replaced with a new one then the build count
       // will still read `1`, despite two builds taking place.
@@ -87,7 +85,7 @@ void main() {
         buildTestScaffold(
           child: SuperTextAnalytics(
             trackBuilds: true,
-            child: SuperTextLayoutWithSelection.single(
+            child: SuperTextWithSelection.single(
               key: textKey,
               richText: threeLineTextSpan,
             ),

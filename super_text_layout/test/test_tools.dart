@@ -15,7 +15,7 @@ Future<void> pumpThreeLinePlainSuperText(
 }) async {
   await tester.pumpWidget(
     buildTestScaffold(
-      child: SuperTextLayout(
+      child: SuperText(
         key: superTextKey,
         richText: threeLineTextSpan,
         layerBeneathBuilder: beneathBuilder,
@@ -32,7 +32,7 @@ Future<void> pumpEmptySuperText(
 }) async {
   await tester.pumpWidget(
     buildTestScaffold(
-      child: SuperTextLayout(
+      child: SuperText(
         key: superTextKey,
         richText: const TextSpan(text: "", style: _testTextStyle),
         layerBeneathBuilder: beneathBuilder,
