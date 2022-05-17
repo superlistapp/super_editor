@@ -1153,8 +1153,8 @@ ExecutionInstruction anyCharacterToInsertInTextContent({
 
   if (didInsertCharacter && character == ' ') {
     // Check for the word before the space. If that is a url, make that a link
-    final position = editContext.composer.selection!.extent.nodePosition as TextNodePosition;
-    editContext.commonOps.turnWordAtPositionToLink(position.copyWith(offset: position.offset - 1));
+    final currentPosition = editContext.composer.selection!.extent.nodePosition as TextNodePosition;
+    editContext.commonOps.turnWordAtPositionToLink(currentPosition.copyWith(offset: currentPosition.offset - 1));
   }
 
   return didInsertCharacter ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
