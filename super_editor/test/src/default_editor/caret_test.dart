@@ -3,25 +3,34 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/super_editor.dart';
 
 void main() { 
-  //position at doc|ument
-  const caretPosition = DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: 46));
+  // position at doc|ument. When the screen is resized this word will move between lines
+  const tapPosition = DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: 46));
 
   group("SuperEditor", () {
     group('window resizing', () {
       const screenSizeBigger = Size(1000.0, 400.0);
-      const screenSizeSmaller = Size(250.0, 400.0);  
+      const screenSizeSmaller = Size(250.0, 400.0);
+
       testWidgets('updates caret offset when selected position is displayed in a line below', (WidgetTester tester) async {          
         tester.binding.window
           ..devicePixelRatioTestValue = 1.0
           ..platformDispatcher.textScaleFactorTestValue = 1.0
-          ..physicalSizeTestValue = screenSizeBigger;  
+          ..physicalSizeTestValue = screenSizeBigger;
+
+        final docKey = GlobalKey();
         await tester.pumpWidget(
           _createTestApp(
-            gestureMode:  DocumentGestureMode.mouse, 
-            initialPosition: caretPosition,
+            gestureMode:  DocumentGestureMode.mouse,
+            docKey: docKey,
           ),
         );
-        await tester.pumpAndSettle();            
+        await tester.pumpAndSettle();
+
+        // simulate a tap at doc|ument
+        final tapOffset = _getOffsetForPosition(docKey, tapPosition);
+        await tester.tapAt(tapOffset);        
+        await tester.pumpAndSettle();
+
         BlinkingCaret blinkingCaret = tester.widget<BlinkingCaret>(find.byType(BlinkingCaret));
         final initialCaretOffset = blinkingCaret.caretOffset ?? Offset.zero;            
         expect(initialCaretOffset.dx.floor(), 306);
@@ -44,14 +53,22 @@ void main() {
         tester.binding.window
           ..devicePixelRatioTestValue = 1.0
           ..platformDispatcher.textScaleFactorTestValue = 1.0
-          ..physicalSizeTestValue = screenSizeSmaller;              
+          ..physicalSizeTestValue = screenSizeSmaller;
+
+        final docKey = GlobalKey();
         await tester.pumpWidget(
           _createTestApp(
-            gestureMode: DocumentGestureMode.mouse, 
-            initialPosition: caretPosition,
+            gestureMode: DocumentGestureMode.mouse,
+            docKey: docKey, 
           ),
         );  
-        await tester.pumpAndSettle();            
+        await tester.pumpAndSettle();
+
+        // simulate a tap at doc|ument
+        final tapOffset = _getOffsetForPosition(docKey, tapPosition);
+        await tester.tapAt(tapOffset);        
+        await tester.pumpAndSettle();
+
         BlinkingCaret blinkingCaret = tester.widget<BlinkingCaret>(find.byType(BlinkingCaret));
         final initialCaretOffset = blinkingCaret.caretOffset ?? Offset.zero;
         expect(initialCaretOffset.dx.floor(), 36);
@@ -73,13 +90,14 @@ void main() {
 
     group('phone rotation', () {
       const screenSizePortrait = Size(400.0, 1000.0);
-      const screenSizeLandscape = Size(1000.0, 400);    
+      const screenSizeLandscape = Size(1000.0, 400);
+          
       group('on Android', () {    
         testWidgets('from portrait to landscape updates caret position', (WidgetTester tester) async {  
           tester.binding.window
-          ..devicePixelRatioTestValue = 1.0
-          ..platformDispatcher.textScaleFactorTestValue = 1.0
-          ..physicalSizeTestValue = screenSizePortrait;    
+            ..devicePixelRatioTestValue = 1.0
+            ..platformDispatcher.textScaleFactorTestValue = 1.0
+            ..physicalSizeTestValue = screenSizePortrait;    
 
           final docKey = GlobalKey();
           await tester.pumpWidget(
@@ -90,29 +108,28 @@ void main() {
           );           
           await tester.pumpAndSettle();              
 
-          final tapOffset = _getOffsetForPosition(docKey, caretPosition);
+          // simulate a tap at doc|ument
+          final tapOffset = _getOffsetForPosition(docKey, tapPosition);
           await tester.tapAt(tapOffset);        
           await tester.pumpAndSettle();  
 
-          Finder caretFinder = find.byType(BlinkingCaret);
-          final initialCaretTopLeft = tester.getTopLeft(caretFinder.last);      
+          final initialCaretTopLeft = tester.getTopLeft(find.byType(BlinkingCaret).last);      
           expect(initialCaretTopLeft.dx.floor(), 168);
           expect(initialCaretTopLeft.dy.floor(), 73);
 
           tester.binding.window.physicalSizeTestValue = screenSizeLandscape;
           await tester.pumpAndSettle(); 
 
-          caretFinder = find.byType(BlinkingCaret);
-          final finalCaretTopLeft = tester.getTopLeft(caretFinder.last);      
+          final finalCaretTopLeft = tester.getTopLeft(find.byType(BlinkingCaret).last);      
           expect(finalCaretTopLeft.dx.floor(), 510);
           expect(finalCaretTopLeft.dy.floor(), 48);               
         });    
 
         testWidgets('from landscape to portrait updates caret position', (WidgetTester tester) async {
           tester.binding.window
-          ..devicePixelRatioTestValue = 1.0
-          ..platformDispatcher.textScaleFactorTestValue = 1.0
-          ..physicalSizeTestValue = screenSizeLandscape;    
+            ..devicePixelRatioTestValue = 1.0
+            ..platformDispatcher.textScaleFactorTestValue = 1.0
+            ..physicalSizeTestValue = screenSizeLandscape;    
 
           final docKey = GlobalKey();
           await tester.pumpWidget(
@@ -123,20 +140,19 @@ void main() {
           );              
           await tester.pumpAndSettle();              
 
-          final tapOffset = _getOffsetForPosition(docKey, caretPosition);
+          // simulate a tap at doc|ument
+          final tapOffset = _getOffsetForPosition(docKey, tapPosition);
           await tester.tapAt(tapOffset);        
           await tester.pumpAndSettle();  
 
-          Finder caretFinder = find.byType(BlinkingCaret);
-          final initialCaretTopLeft = tester.getTopLeft(caretFinder.last);      
+          final initialCaretTopLeft = tester.getTopLeft(find.byType(BlinkingCaret).last);      
           expect(initialCaretTopLeft.dx.floor(), 510);
           expect(initialCaretTopLeft.dy.floor(), 48);
 
           tester.binding.window.physicalSizeTestValue = screenSizePortrait;
           await tester.pumpAndSettle(); 
 
-          caretFinder = find.byType(BlinkingCaret);
-          final finalCaretTopLeft = tester.getTopLeft(caretFinder.last);      
+          final finalCaretTopLeft = tester.getTopLeft(find.byType(BlinkingCaret).last);      
           expect(finalCaretTopLeft.dx.floor(), 168);
           expect(finalCaretTopLeft.dy.floor(), 73);           
         });   
@@ -145,9 +161,9 @@ void main() {
       group('on iOS', () {      
         testWidgets('from portrait to landscape updates caret position', (WidgetTester tester) async {  
           tester.binding.window
-          ..devicePixelRatioTestValue = 1.0
-          ..platformDispatcher.textScaleFactorTestValue = 1.0
-          ..physicalSizeTestValue = screenSizePortrait;    
+            ..devicePixelRatioTestValue = 1.0
+            ..platformDispatcher.textScaleFactorTestValue = 1.0
+            ..physicalSizeTestValue = screenSizePortrait;    
 
           final docKey = GlobalKey();
           await tester.pumpWidget(
@@ -158,29 +174,28 @@ void main() {
           );    
           await tester.pumpAndSettle();              
 
-          final tapOffset = _getOffsetForPosition(docKey, caretPosition);
+          // simulate a tap at doc|ument
+          final tapOffset = _getOffsetForPosition(docKey, tapPosition);
           await tester.tapAt(tapOffset);        
           await tester.pumpAndSettle();  
 
-          Finder caretFinder = find.byType(BlinkingCaret);
-          final initialCaretTopLeft = tester.getTopLeft(caretFinder.last);      
+          final initialCaretTopLeft = tester.getTopLeft(find.byType(BlinkingCaret).last);      
           expect(initialCaretTopLeft.dx.floor(), 167);
           expect(initialCaretTopLeft.dy.floor(), 73);
 
           tester.binding.window.physicalSizeTestValue = screenSizeLandscape;
           await tester.pumpAndSettle(); 
 
-          caretFinder = find.byType(BlinkingCaret);
-          final finalCaretTopLeft = tester.getTopLeft(caretFinder.last);      
+          final finalCaretTopLeft = tester.getTopLeft(find.byType(BlinkingCaret).last);      
           expect(finalCaretTopLeft.dx.floor(), 509);
           expect(finalCaretTopLeft.dy.floor(), 48);                
         });    
 
         testWidgets('from landscape to portrait updates caret position', (WidgetTester tester) async {  
           tester.binding.window
-          ..devicePixelRatioTestValue = 1.0
-          ..platformDispatcher.textScaleFactorTestValue = 1.0
-          ..physicalSizeTestValue = screenSizeLandscape;    
+            ..devicePixelRatioTestValue = 1.0
+            ..platformDispatcher.textScaleFactorTestValue = 1.0
+            ..physicalSizeTestValue = screenSizeLandscape;    
 
           final docKey = GlobalKey();
           await tester.pumpWidget(
@@ -191,20 +206,19 @@ void main() {
           );    
           await tester.pumpAndSettle();              
 
-          final tapOffset = _getOffsetForPosition(docKey, caretPosition);
+          // simulate a tap at doc|ument
+          final tapOffset = _getOffsetForPosition(docKey, tapPosition);
           await tester.tapAt(tapOffset);        
           await tester.pumpAndSettle();  
 
-          Finder caretFinder = find.byType(BlinkingCaret);
-          final initialCaretTopLeft = tester.getTopLeft(caretFinder.last);      
+          final initialCaretTopLeft = tester.getTopLeft(find.byType(BlinkingCaret).last);      
           expect(initialCaretTopLeft.dx.floor(), 509);
           expect(initialCaretTopLeft.dy.floor(), 48);               
 
           tester.binding.window.physicalSizeTestValue = screenSizePortrait;
           await tester.pumpAndSettle(); 
 
-          caretFinder = find.byType(BlinkingCaret);
-          final finalCaretTopLeft = tester.getTopLeft(caretFinder.last);      
+          final finalCaretTopLeft = tester.getTopLeft(find.byType(BlinkingCaret).last);      
           expect(finalCaretTopLeft.dx.floor(), 167);
           expect(finalCaretTopLeft.dy.floor(), 73);         
         });   
@@ -213,19 +227,13 @@ void main() {
   });
 }
 
-Widget _createTestApp({required DocumentGestureMode gestureMode, DocumentPosition? initialPosition, GlobalKey? docKey}){
-  final editor = _createTestDocEditor();  
-  final composer = DocumentComposer(
-    initialSelection: initialPosition != null  
-      ? DocumentSelection.collapsed(position: initialPosition) 
-      : null,   
-  );        
+Widget _createTestApp({required DocumentGestureMode gestureMode, required GlobalKey docKey}){
+  final editor = _createTestDocEditor();        
   return MaterialApp(
     home: Scaffold(
       body: SuperEditor(                
         documentLayoutKey: docKey,
         editor: editor,        
-        composer: composer,
         gestureMode: gestureMode,                       
       ),
     ),
