@@ -2229,47 +2229,34 @@ class CommonEditorOperations {
     );
   }
 
-  /// Get the word from the previous offset of the current selection. Convert the word to
-  /// a link if it is a url
+  /// Get the word from [position]. Convert the word to a link if it is a url
   ///
-  /// Does nothing if previous word is already a link
-  void convertPreviousUrlToLink(DocumentComposer composer, DocumentEditor editor) {
+  /// Does nothing if the word is already a link
+  void turnWordAtPositionToLink(TextNodePosition position) {
     if (composer.selection == null) {
+      return;
+    }
+
+    // It is invalid to have a position with negative offset
+    if (position.offset == -1) {
       return;
     }
 
     final documentNode = editor.document.getNodeById(composer.selection!.extent.nodeId);
 
-    if (documentNode is! TextNode && documentNode is! ParagraphNode) {
-      return;
-    }
-
-    // Position of the current selection
-    late TextNodePosition textNodeCurrPosition;
     late AttributedText attributedText;
-
     if (documentNode is ParagraphNode) {
-      textNodeCurrPosition = composer.selection!.extent.nodePosition as TextNodePosition;
       attributedText = documentNode.text;
     } else if (documentNode is TextNode) {
-      textNodeCurrPosition = composer.selection!.extent.nodePosition as TextNodePosition;
       attributedText = documentNode.text;
     }
-
-    // Specifically exclude this case because this leads to getting
-    // the previous position having an offset of -1, which is invalid
-    if (textNodeCurrPosition.offset == 0) {
-      return;
-    }
-
     final text = attributedText.text;
 
     // Position which is at the previous offset of the current selection.
     // This should also be the end position of the previous word
-    final textNodePrevPosition = textNodeCurrPosition.copyWith(offset: textNodeCurrPosition.offset - 1);
-    final attributionsAtPreviousWord = attributedText.getAllAttributionsAt(textNodePrevPosition.offset);
+    final attributions = attributedText.getAllAttributionsAt(position.offset);
 
-    final hasLinkAttribute = attributionsAtPreviousWord.firstWhereOrNull((attr) => attr is LinkAttribution) != null;
+    final hasLinkAttribute = attributions.firstWhereOrNull((attr) => attr is LinkAttribution) != null;
     if (hasLinkAttribute) {
       // Previous word has [LinkAttribute]. Do nothing
       return;
@@ -2277,7 +2264,7 @@ class CommonEditorOperations {
 
     final textSelection = expandPositionToWord(
       text: text,
-      textPosition: textNodePrevPosition,
+      textPosition: position,
     );
     final word = getTextFromTextSelection(text, textSelection);
 
@@ -2288,7 +2275,7 @@ class CommonEditorOperations {
 
       final prevWordDocumentSelection = DocumentSelection.extentFromDocumentPosition(
         documentPosition: composer.selection!.extent.copyWith(
-          nodePosition: textNodePrevPosition.copyWith(offset: textNodePrevPosition.offset - word.length),
+          nodePosition: position.copyWith(offset: position.offset - word.length),
         ),
         extentOffset: word.length,
       );
