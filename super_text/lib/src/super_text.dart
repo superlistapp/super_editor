@@ -9,8 +9,8 @@ import 'text_layout.dart';
 /// beneath the text, which can be used to add text decorations, like
 /// selections and carets.
 ///
-/// To display a widget that includes standard text selection display, as well
-/// as typical selection gestures, see [SuperSelectableText].
+/// To display a widget that includes standard text selection display,
+/// see [SuperTextWithSelection].
 ///
 /// The layers in a [SuperText] are built by provided [SuperTextLayerBuilder]s.
 /// These builders are similar to a typical `WidgetBuilder`, except that
@@ -121,6 +121,7 @@ class SuperTextState extends State<SuperText> with ProseTextBlock {
   }
 }
 
+@visibleForTesting
 class SuperTextAnalytics extends InheritedWidget {
   static SuperTextAnalytics? of(BuildContext context) {
     return context.dependOnInheritedWidgetOfExactType<SuperTextAnalytics>();
