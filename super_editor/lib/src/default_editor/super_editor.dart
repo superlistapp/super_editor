@@ -580,6 +580,7 @@ final defaultKeyboardActions = <DocumentKeyboardAction>[
   pasteWhenCmdVIsPressed,
   copyWhenCmdCIsPressed,
   cutWhenCmdXIsPressed,
+  collapseSelectionWhenEscIsPressed,
   selectAllWhenCmdAIsPressed,
   moveUpDownLeftAndRightWithArrowKeys,
   tabToIndentListItem,

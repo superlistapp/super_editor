@@ -68,6 +68,7 @@ class BlinkingCaretState extends State<BlinkingCaret> with SingleTickerProviderS
   @override
   Widget build(BuildContext context) {
     return CustomPaint(
+      size: Size(widget.width, widget.caretHeight ?? 0),
       painter: _CaretPainter(
         blinkController: _caretBlinkController,
         caretHeight: widget.caretHeight,
