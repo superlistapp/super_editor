@@ -162,7 +162,9 @@ void main() {
     });
     group("pasting", () {
       test("it converts url in the pasted text into a link", () async {
+        // Note: We need to ensure initialized because we access the Clipboard.
         TestWidgetsFlutterBinding.ensureInitialized();
+
         final document = MutableDocument(nodes: [
           ParagraphNode(
             id: 'paragraph',
@@ -228,6 +230,8 @@ void main() {
         // Adding [LinkAttribution] to a position that already has it
         // could cause spans mismatching, which potentially leads to errors.
         // This test prevents that regression
+
+        // Note: We need to ensure initialized because we access the Clipboard.
         TestWidgetsFlutterBinding.ensureInitialized();
 
         final linkAttribution = LinkAttribution(url: Uri.parse('https://flutter.dev'));
