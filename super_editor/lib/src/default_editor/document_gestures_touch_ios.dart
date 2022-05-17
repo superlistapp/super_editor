@@ -15,7 +15,7 @@ import 'package:super_editor/src/infrastructure/platforms/ios/magnifier.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/selection_handles.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/toolbar_position_delegate.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
-import 'package:super_text/super_selectable_text.dart';
+import 'package:super_text/super_text.dart';
 
 import 'document_gestures.dart';
 import 'document_gestures_touch.dart';
@@ -1179,7 +1179,7 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
   final _upstreamHandleKey = GlobalKey();
   final _downstreamHandleKey = GlobalKey();
 
-  late CaretBlinkController _caretBlinkController;
+  late BlinkController _caretBlinkController;
   Offset? _prevCaretOffset;
 
   static const _defaultFloatingCursorHeight = 20.0;
@@ -1192,7 +1192,7 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
   @override
   void initState() {
     super.initState();
-    _caretBlinkController = CaretBlinkController(tickerProvider: this);
+    _caretBlinkController = BlinkController(tickerProvider: this);
     _prevCaretOffset = widget.editingController.caretTop;
     widget.editingController.addListener(_onEditingControllerChange);
     widget.floatingCursorController.addListener(_onFloatingCursorChange);
@@ -1223,11 +1223,9 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
   void _onEditingControllerChange() {
     if (_prevCaretOffset != widget.editingController.caretTop) {
       if (widget.editingController.caretTop == null) {
-        _caretBlinkController.onCaretRemoved();
-      } else if (_prevCaretOffset == null) {
-        _caretBlinkController.onCaretPlaced();
+        _caretBlinkController.stopBlinking();
       } else {
-        _caretBlinkController.onCaretMoved();
+        _caretBlinkController.jumpToOpaque();
       }
 
       _prevCaretOffset = widget.editingController.caretTop;

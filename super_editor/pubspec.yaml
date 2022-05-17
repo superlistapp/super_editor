@@ -11,6 +11,7 @@ dependencies:
   flutter:
     sdk: flutter
 
+  attributed_text: ^0.1.1
   characters: ^1.2.0
   collection: ^1.15.0
   http: ^0.13.1
@@ -27,6 +28,8 @@ dependencies:
 dependency_overrides:
   # Override to local mono-repo path so devs can test this repo
   # against changes that they're making to other mono-repo packages
+  attributed_text:
+    path: ../attributed_text
   super_text:
     path: ../super_text
 

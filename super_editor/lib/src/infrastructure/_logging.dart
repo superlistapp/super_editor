@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'package:logging/logging.dart' as logging;
 
 class LogNames {
@@ -75,7 +77,7 @@ void printLog(logging.LogRecord record) {
 
 // TODO: get rid of this custom Logger when all references are replaced with logging package
 class Logger {
-  static bool _printLogs = true;
+  static bool _printLogs = false;
   static void setLoggingMode(bool enabled) {
     _printLogs = enabled;
   }

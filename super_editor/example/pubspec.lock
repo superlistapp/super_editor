@@ -32,12 +32,10 @@ packages:
   attributed_text:
     dependency: transitive
     description:
-      path: attributed_text
-      ref: HEAD
-      resolved-ref: "1d990f1ae7a37de410b050ab9e0b229d1fb57342"
-      url: "https://github.com/superlistapp/super_editor.git"
-    source: git
-    version: "0.1.0"
+      name: attributed_text
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.1.1"
   boolean_selector:
     dependency: transitive
     description:
@@ -479,29 +477,23 @@ packages:
   super_editor:
     dependency: "direct main"
     description:
-      path: super_editor
-      ref: HEAD
-      resolved-ref: "1d990f1ae7a37de410b050ab9e0b229d1fb57342"
-      url: "https://github.com/superlistapp/super_editor.git"
-    source: git
+      path: ".."
+      relative: true
+    source: path
     version: "0.2.0"
   super_editor_markdown:
     dependency: "direct main"
     description:
-      path: super_editor_markdown
-      ref: HEAD
-      resolved-ref: "1d990f1ae7a37de410b050ab9e0b229d1fb57342"
-      url: "https://github.com/superlistapp/super_editor.git"
-    source: git
+      path: "../../super_editor_markdown"
+      relative: true
+    source: path
     version: "0.1.0"
   super_text:
-    dependency: transitive
+    dependency: "direct main"
     description:
-      path: super_text
-      ref: HEAD
-      resolved-ref: "1d990f1ae7a37de410b050ab9e0b229d1fb57342"
-      url: "https://github.com/superlistapp/super_editor.git"
-    source: git
+      path: "../../super_text"
+      relative: true
+    source: path
     version: "0.1.0"
   term_glyph:
     dependency: transitive
