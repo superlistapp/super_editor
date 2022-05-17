@@ -278,10 +278,9 @@ void main() {
 
       group('paste shortcut', () {
         group('Mac', () {
-          testWidgets('cmd+v pastes clipboard text', (tester) async {
+          test('cmd+v pastes clipboard text', () async {
             Platform.setTestInstance(MacPlatform());
 
-            // Note: this is a widget test because we access the Clipboard.
             final controller = AttributedTextEditingController(
               text: AttributedText(text: 'Pasted content: '),
               selection: const TextSelection.collapsed(offset: 16),
@@ -415,10 +414,9 @@ void main() {
         });
 
         group('Windows + Linux', () {
-          testWidgets('control+v pastes clipboard text', (tester) async {
+          test('control+v pastes clipboard text', () async {
             Platform.setTestInstance(WindowsPlatform());
 
-            // Note: this is a widget test because we access the Clipboard.
             final controller = AttributedTextEditingController(
               text: AttributedText(text: 'Pasted content: '),
               selection: const TextSelection.collapsed(offset: 16),
@@ -525,7 +523,7 @@ void main() {
 
             Platform.setTestInstance(null);
           });
-          testWidgets('it does nothing when caret is not focused on any text', (tester) async {
+          test('it does nothing when caret is not focused on any text', () async {
             Platform.setTestInstance(WindowsPlatform());
 
             final controller = AttributedTextEditingController(
