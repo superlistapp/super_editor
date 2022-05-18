@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:super_editor/src/default_editor/document_gestures_touch_android.dart';
+import 'package:super_editor/src/default_editor/document_gestures_touch_ios.dart';
 import 'package:super_editor/super_editor.dart';
 
 void main() { 
   // position at doc|ument. When the screen is resized this word will move between lines
-  const tapPosition = DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: 46));
+  const textPosition = TextPosition(offset: 46);
+  final tapPosition = DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: textPosition.offset));  
 
   group("SuperEditor", () {
     group('window resizing', () {
@@ -30,11 +33,10 @@ void main() {
         final tapOffset = _getOffsetForPosition(docKey, tapPosition);
         await tester.tapAt(tapOffset);        
         await tester.pumpAndSettle();
-
-        BlinkingCaret blinkingCaret = tester.widget<BlinkingCaret>(find.byType(BlinkingCaret));
-        final initialCaretOffset = blinkingCaret.caretOffset ?? Offset.zero;            
-        expect(initialCaretOffset.dx.floor(), 306);
-        expect(initialCaretOffset.dy.floor(), 24);
+        
+        final initialCaretOffset = _getCurrentDesktopCaretOffset(tester);
+        final expectedInitialCaretOffset = _computeExpectedDesktopCaretOffset(tester, textPosition);
+        expect(initialCaretOffset, expectedInitialCaretOffset); 
 
         await _resizeWindow(
           tester: tester,             
@@ -42,11 +44,10 @@ void main() {
           initialScreenSize: screenSizeBigger,
           finalScreenSize: screenSizeSmaller
         );    
-
-        blinkingCaret = tester.widget<BlinkingCaret>(find.byType(BlinkingCaret));      
-        final finalCaretOffset = blinkingCaret.caretOffset ?? Offset.zero;      
-        expect(finalCaretOffset.dx.floor(), 36);
-        expect(finalCaretOffset.dy.floor(), 124);      
+      
+        final finalCaretOffset = _getCurrentDesktopCaretOffset(tester);
+        final expectedFinalCaretOffset = _computeExpectedDesktopCaretOffset(tester, textPosition);
+        expect(finalCaretOffset, expectedFinalCaretOffset);        
       });
 
       testWidgets('updates caret offset when selected position is displayed in a line above', (WidgetTester tester) async {          
@@ -69,10 +70,9 @@ void main() {
         await tester.tapAt(tapOffset);        
         await tester.pumpAndSettle();
 
-        BlinkingCaret blinkingCaret = tester.widget<BlinkingCaret>(find.byType(BlinkingCaret));
-        final initialCaretOffset = blinkingCaret.caretOffset ?? Offset.zero;
-        expect(initialCaretOffset.dx.floor(), 36);
-        expect(initialCaretOffset.dy.floor(), 124);          
+        final initialCaretOffset = _getCurrentDesktopCaretOffset(tester);
+        final expectedInitialCaretOffset = _computeExpectedDesktopCaretOffset(tester, textPosition);
+        expect(initialCaretOffset, expectedInitialCaretOffset); 
 
         await _resizeWindow(
           tester: tester,             
@@ -80,11 +80,10 @@ void main() {
           initialScreenSize: screenSizeSmaller,
           finalScreenSize: screenSizeBigger
         );    
-
-        blinkingCaret = tester.widget<BlinkingCaret>(find.byType(BlinkingCaret));      
-        final finalCaretOffset = blinkingCaret.caretOffset ?? Offset.zero;      
-        expect(finalCaretOffset.dx.floor(), 306);
-        expect(finalCaretOffset.dy.floor(), 24);
+        
+        final finalCaretOffset = _getCurrentDesktopCaretOffset(tester);
+        final expectedFinalCaretOffset = _computeExpectedDesktopCaretOffset(tester, textPosition);
+        expect(finalCaretOffset, expectedFinalCaretOffset);   
       });
     });
 
@@ -113,16 +112,16 @@ void main() {
           await tester.tapAt(tapOffset);        
           await tester.pumpAndSettle();  
 
-          final initialCaretTopLeft = tester.getTopLeft(find.byType(BlinkingCaret).last);      
-          expect(initialCaretTopLeft.dx.floor(), 168);
-          expect(initialCaretTopLeft.dy.floor(), 73);
+          final initialCaretOffset = _getCurrentAndroidCaretOffset(tester);
+          final expectedInitialCaretOffset = _computeExpectedMobileCaretOffset(tester, docKey, tapPosition);
+          expect(initialCaretOffset, expectedInitialCaretOffset); 
 
           tester.binding.window.physicalSizeTestValue = screenSizeLandscape;
           await tester.pumpAndSettle(); 
 
-          final finalCaretTopLeft = tester.getTopLeft(find.byType(BlinkingCaret).last);      
-          expect(finalCaretTopLeft.dx.floor(), 510);
-          expect(finalCaretTopLeft.dy.floor(), 48);               
+          final finalCaretOffset = _getCurrentAndroidCaretOffset(tester);
+          final expectedFinalCaretOffset = _computeExpectedMobileCaretOffset(tester, docKey, tapPosition);
+          expect(finalCaretOffset, expectedFinalCaretOffset);               
         });    
 
         testWidgets('from landscape to portrait updates caret position', (WidgetTester tester) async {
@@ -145,16 +144,16 @@ void main() {
           await tester.tapAt(tapOffset);        
           await tester.pumpAndSettle();  
 
-          final initialCaretTopLeft = tester.getTopLeft(find.byType(BlinkingCaret).last);      
-          expect(initialCaretTopLeft.dx.floor(), 510);
-          expect(initialCaretTopLeft.dy.floor(), 48);
+          final initialCaretOffset = _getCurrentAndroidCaretOffset(tester);
+          final expectedInitialCaretOffset = _computeExpectedMobileCaretOffset(tester, docKey, tapPosition);
+          expect(initialCaretOffset, expectedInitialCaretOffset); 
 
           tester.binding.window.physicalSizeTestValue = screenSizePortrait;
           await tester.pumpAndSettle(); 
 
-          final finalCaretTopLeft = tester.getTopLeft(find.byType(BlinkingCaret).last);      
-          expect(finalCaretTopLeft.dx.floor(), 168);
-          expect(finalCaretTopLeft.dy.floor(), 73);           
+          final finalCaretOffset = _getCurrentAndroidCaretOffset(tester);
+          final expectedFinalCaretOffset = _computeExpectedMobileCaretOffset(tester, docKey, tapPosition);
+          expect(finalCaretOffset, expectedFinalCaretOffset);           
         });   
       });
 
@@ -179,16 +178,16 @@ void main() {
           await tester.tapAt(tapOffset);        
           await tester.pumpAndSettle();  
 
-          final initialCaretTopLeft = tester.getTopLeft(find.byType(BlinkingCaret).last);      
-          expect(initialCaretTopLeft.dx.floor(), 167);
-          expect(initialCaretTopLeft.dy.floor(), 73);
+          final initialOffset = _getIosCurrentCaretOffset(tester);
+          final expectedInitialCaretOffset = _computeExpectedMobileCaretOffset(tester, docKey, tapPosition);
+          expect(initialOffset, expectedInitialCaretOffset); 
 
           tester.binding.window.physicalSizeTestValue = screenSizeLandscape;
           await tester.pumpAndSettle(); 
 
-          final finalCaretTopLeft = tester.getTopLeft(find.byType(BlinkingCaret).last);      
-          expect(finalCaretTopLeft.dx.floor(), 509);
-          expect(finalCaretTopLeft.dy.floor(), 48);                
+          final finalCaretOffset = _getIosCurrentCaretOffset(tester);
+          final expectedFinalCaretOffset = _computeExpectedMobileCaretOffset(tester, docKey, tapPosition);
+          expect(finalCaretOffset, expectedFinalCaretOffset);                
         });    
 
         testWidgets('from landscape to portrait updates caret position', (WidgetTester tester) async {  
@@ -211,16 +210,16 @@ void main() {
           await tester.tapAt(tapOffset);        
           await tester.pumpAndSettle();  
 
-          final initialCaretTopLeft = tester.getTopLeft(find.byType(BlinkingCaret).last);      
-          expect(initialCaretTopLeft.dx.floor(), 509);
-          expect(initialCaretTopLeft.dy.floor(), 48);               
+          final initialOffset = _getIosCurrentCaretOffset(tester);
+          final expectedInitialCaretOffset = _computeExpectedMobileCaretOffset(tester, docKey, tapPosition);
+          expect(initialOffset, expectedInitialCaretOffset);              
 
           tester.binding.window.physicalSizeTestValue = screenSizePortrait;
           await tester.pumpAndSettle(); 
 
-          final finalCaretTopLeft = tester.getTopLeft(find.byType(BlinkingCaret).last);      
-          expect(finalCaretTopLeft.dx.floor(), 167);
-          expect(finalCaretTopLeft.dy.floor(), 73);         
+          final finalCaretOffset = _getIosCurrentCaretOffset(tester);
+          final expectedFinalCaretOffset = _computeExpectedMobileCaretOffset(tester, docKey, tapPosition);
+          expect(finalCaretOffset, expectedFinalCaretOffset);          
         });   
       });
     });  
@@ -245,6 +244,32 @@ Offset _getOffsetForPosition(GlobalKey docKey, DocumentPosition position){
   final docLayout = docKey.currentState as DocumentLayout;
   final characterBox = docLayout.getRectForPosition(position);
   return docBox.localToGlobal(characterBox!.center);
+}
+
+Offset _getCurrentDesktopCaretOffset(WidgetTester tester){
+  final blinkingCaret = tester.widget<BlinkingCaret>(find.byType(BlinkingCaret).last);      
+  return blinkingCaret.caretOffset ?? Offset.zero;
+}
+
+Offset _getCurrentAndroidCaretOffset(WidgetTester tester){
+  final controls = tester.widget<AndroidDocumentTouchEditingControls>(find.byType(AndroidDocumentTouchEditingControls).last);   
+  return controls.editingController.caretTop!;
+}
+
+Offset _getIosCurrentCaretOffset(WidgetTester tester){
+  final controls = tester.widget<IosDocumentTouchEditingControls>(find.byType(IosDocumentTouchEditingControls).last);  
+  return controls.editingController.caretTop!;
+}
+
+Offset _computeExpectedDesktopCaretOffset(WidgetTester tester, TextPosition textPosition){
+  final superText = tester.state<SuperSelectableTextState>(find.byType(SuperSelectableText));        
+  return superText.getOffsetForCaret(textPosition);
+}
+
+Offset _computeExpectedMobileCaretOffset(WidgetTester tester, GlobalKey docKey, DocumentPosition documentPosition){
+  final docLayout = docKey.currentState as DocumentLayout;
+  final extentRect = docLayout.getRectForPosition(documentPosition)!;
+  return Offset(extentRect.left, extentRect.top);
 }
 
 DocumentEditor _createTestDocEditor(){
