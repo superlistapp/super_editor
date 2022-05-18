@@ -136,10 +136,10 @@ class SuperEditor extends StatefulWidget {
     this.inputSource = DocumentInputSource.keyboard,
     this.gestureMode = DocumentGestureMode.mouse,
     List<DocumentKeyboardAction>? keyboardActions,
+    this.softwareKeyboardHandler,
     this.androidToolbarBuilder,
     this.iOSToolbarBuilder,
     this.createOverlayControlsClipper,
-    this.softwareKeyboardHandler,
     this.debugPaint = const DebugPaintConfig(),
     this.autofocus = false,
   })  : stylesheet = stylesheet ?? defaultStylesheet,
@@ -483,6 +483,7 @@ class _SuperEditorState extends State<SuperEditor> {
           autofocus: widget.autofocus,
           editContext: _editContext,
           softwareKeyboardHandler: _softwareKeyboardHandler,
+          hardwareKeyboardActions: widget.keyboardActions,
           floatingCursorController: _floatingCursorController,
           child: child,
         );
@@ -599,6 +600,29 @@ final defaultKeyboardActions = <DocumentKeyboardAction>[
   anyCharacterOrDestructiveKeyToDeleteSelection,
   anyCharacterToInsertInParagraph,
   anyCharacterToInsertInTextContent,
+];
+
+/// Keyboard actions for a [SuperEditor] running with IME on
+/// desktop.
+///
+/// Using the IME on desktop involves partial input from the IME
+/// and partial input from non-content keys, like arrow keys.
+final defaultImeKeyboardActions = <DocumentKeyboardAction>[
+  doNothingWhenThereIsNoSelection,
+  pasteWhenCmdVIsPressed,
+  copyWhenCmdCIsPressed,
+  cutWhenCmdXIsPressed,
+  selectAllWhenCmdAIsPressed,
+  moveUpDownLeftAndRightWithArrowKeys,
+  tabToIndentListItem,
+  shiftTabToUnIndentListItem,
+  backspaceToUnIndentListItem,
+  backspaceToClearParagraphBlockType,
+  cmdBToToggleBold,
+  cmdIToToggleItalics,
+  shiftEnterToInsertNewlineInBlock,
+  backspaceToRemoveUpstreamContent,
+  deleteToRemoveDownstreamContent,
 ];
 
 /// Stylesheet applied to all [SuperEditor]s by default.
