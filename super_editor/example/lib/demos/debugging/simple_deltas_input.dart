@@ -2,6 +2,7 @@ import 'package:example/logging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/super_editor.dart';
+import 'package:super_text_layout/super_text_layout.dart';
 
 /// Demo of the simplest possible delta-based input system, for use when
 /// debugging issues and concerns with delta-based input without bringing
@@ -191,16 +192,18 @@ class _SimpleDeltasInputState extends State<SimpleDeltasInputDemo> implements De
           decoration: BoxDecoration(
             border: Border.all(color: Colors.grey, width: 1),
           ),
-          child: SuperSelectableText(
+          child: SuperTextWithSelection.single(
             key: _textGlobalKey,
-            textSpan: _text.computeTextSpan(
+            richText: _text.computeTextSpan(
               (attributions) => const TextStyle(
                 fontSize: 18,
                 color: Colors.black,
               ),
             ),
-            textSelection: _currentTextEditingValue?.selection ?? const TextSelection.collapsed(offset: -1),
-            showCaret: true,
+            userSelection: UserSelection(
+              selection: _currentTextEditingValue?.selection ?? const TextSelection.collapsed(offset: -1),
+              hasCaret: true,
+            ),
           ),
         ),
       ),
