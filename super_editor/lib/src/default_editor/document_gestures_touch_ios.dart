@@ -253,6 +253,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       if (mounted) {
         _ensureSelectionExtentIsVisible();
+        _updateHandlesAfterSelectionOrLayoutChange();
 
         setState(() {
           // reflow document layout

@@ -113,29 +113,29 @@ class CaretPainter extends CustomPainter {
   CaretPainter({
     BlinkController? blinkController,
     required CaretStyle caretStyle,
-    required Offset? offset,
+    this.offset,
     required double? height,
   })  : _blinkController = blinkController,
-        _caretStyle = caretStyle,
-        _offset = offset,
+        _caretStyle = caretStyle,        
         _height = height,
         super(repaint: blinkController);
 
   final BlinkController? _blinkController;
   final CaretStyle _caretStyle;
-  final Offset? _offset;
-  final double? _height;
+  @visibleForTesting
+  final Offset? offset;
+  final double? _height;  
 
   @override
   void paint(Canvas canvas, Size size) {
-    if (_offset == null || _height == null) {
+    if (offset == null || _height == null) {
       // No caret to paint.
       return;
     }
 
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-        Rect.fromLTWH(_offset!.dx, _offset!.dy, _caretStyle.width, _height!),
+        Rect.fromLTWH(offset!.dx, offset!.dy, _caretStyle.width, _height!),
         // TODO: either change `Caret` to only support circular radius, or
         //       update painter to support generic geometry
         _caretStyle.borderRadius.resolve(TextDirection.ltr).topLeft,
@@ -148,7 +148,7 @@ class CaretPainter extends CustomPainter {
   bool shouldRepaint(CaretPainter oldDelegate) {
     return _blinkController != oldDelegate._blinkController ||
         _caretStyle != oldDelegate._caretStyle ||
-        _offset != oldDelegate._offset ||
+        offset != oldDelegate.offset ||
         _height != oldDelegate._height;
   }
 }

@@ -241,7 +241,8 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       if (mounted) {
         _ensureSelectionExtentIsVisible();
-
+        _updateHandlesAfterSelectionOrLayoutChange();
+        
         setState(() {
           // reflow document layout
         });
