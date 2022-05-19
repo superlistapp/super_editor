@@ -139,6 +139,12 @@ ExecutionInstruction anyCharacterOrDestructiveKeyToDeleteSelection({
     return ExecutionInstruction.continueExecution;
   }
 
+  // Flutter reports a character for ESC, but we don't want to add a character
+  // for ESC. Ignore this key press
+  if (keyEvent.logicalKey == LogicalKeyboardKey.escape) {
+    return ExecutionInstruction.continueExecution;
+  }
+
   // Specifically exclude situations where shift is pressed because shift
   // needs to alter the selection, not delete content. We have to explicitly
   // look for this because when shift is pressed along with an arrow key,
@@ -369,4 +375,22 @@ ExecutionInstruction deleteWordWithAltBksp({
         : ExecutionInstruction.continueExecution;
   }
   return ExecutionInstruction.continueExecution;
+}
+
+/// When the ESC key is pressed, the editor should collapse the expanded selection.
+///
+/// Do nothing if selection is already collapsed.
+ExecutionInstruction collapseSelectionWhenEscIsPressed({
+  required EditContext editContext,
+  required RawKeyEvent keyEvent,
+}) {
+  if (keyEvent.logicalKey != LogicalKeyboardKey.escape) {
+    return ExecutionInstruction.continueExecution;
+  }
+  if (editContext.composer.selection == null || editContext.composer.selection!.isCollapsed) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  editContext.commonOps.collapseSelection();
+  return ExecutionInstruction.haltExecution;
 }

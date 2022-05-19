@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/super_textfield.dart';
-import 'package:super_text/super_selectable_text.dart';
+import 'package:super_text_layout/super_text_layout.dart';
 
 import '_editing_controls.dart';
 
@@ -69,10 +69,9 @@ class IOSTextFieldTouchInteractor extends StatefulWidget {
 
   final TextScrollController textScrollController;
 
-  /// [GlobalKey] that references the [SuperSelectableText] that lays out
-  /// and renders the text within the text field that owns this
-  /// [IOSTextFieldInteractor].
-  final GlobalKey<SuperSelectableTextState> selectableTextKey;
+  /// [GlobalKey] that references the widget that contains the field's
+  /// text.
+  final GlobalKey<ProseTextState> selectableTextKey;
 
   /// Whether the text field that owns this [IOSTextFieldInteractor] is
   /// a multiline text field.
@@ -125,6 +124,8 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
     widget.textScrollController.removeListener(_onScrollChange);
     super.dispose();
   }
+
+  ProseTextLayout get _textLayout => widget.selectableTextKey.currentState!.textLayout;
 
   void _onTapDown(TapDownDetails details) {
     _log.fine('_onTapDown');
@@ -203,10 +204,11 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
   }
 
   void _onTripleTapDown(TapDownDetails details) {
-    final tapTextPosition = widget.selectableTextKey.currentState!.getPositionAtOffset(details.localPosition);
+    final textLayout = _textLayout;
+    final tapTextPosition = textLayout.getPositionAtOffset(details.localPosition)!;
 
-    widget.textController.selection = widget.selectableTextKey.currentState!
-        .expandSelection(tapTextPosition, paragraphExpansionFilter, TextAffinity.downstream);
+    widget.textController.selection =
+        textLayout.expandSelection(tapTextPosition, paragraphExpansionFilter, TextAffinity.downstream);
   }
 
   void _onTextPanStart(DragStartDetails details) {
@@ -292,7 +294,7 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
   /// Converts a screen-level offset to a [TextPosition] that sits at that
   /// global offset.
   TextPosition _globalOffsetToTextPosition(Offset globalOffset) {
-    return widget.selectableTextKey.currentState!.getPositionNearestToOffset(
+    return _textLayout.getPositionNearestToOffset(
       _globalOffsetToTextOffset(globalOffset),
     );
   }
@@ -310,13 +312,13 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
     final globalOffset = (context.findRenderObject() as RenderBox).localToGlobal(localOffset);
     final textOffset =
         (widget.selectableTextKey.currentContext!.findRenderObject() as RenderBox).globalToLocal(globalOffset);
-    return widget.selectableTextKey.currentState!.getPositionAtOffset(textOffset);
+    return _textLayout.getPositionAtOffset(textOffset);
   }
 
   /// Returns a [TextSelection] that selects the word surrounding the given
   /// [position].
   TextSelection _getWordSelectionAt(TextPosition position) {
-    return widget.selectableTextKey.currentState!.getWordSelectionAt(position);
+    return _textLayout.getWordSelectionAt(position);
   }
 
   @override

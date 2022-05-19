@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/super_textfield.dart';
-import 'package:super_text/super_selectable_text.dart';
+import 'package:super_text_layout/super_text_layout.dart';
 
 final _log = scrollingTextFieldLog;
 
@@ -41,9 +41,8 @@ class TextScrollView extends StatefulWidget {
   /// auto-scrolling behavior.
   final TextScrollController textScrollController;
 
-  /// [GobalKey] that references the [SuperSelectableText] within
-  /// the [child] subtree.
-  final GlobalKey<SuperSelectableTextState> textKey;
+  /// [GlobalKey] that references the widget that contains the scrolling text.
+  final GlobalKey<ProseTextState> textKey;
 
   /// Controller that owns the text content and text selection for
   /// the [SuperSelectableText] within the [child] subtree.
@@ -193,7 +192,7 @@ class _TextScrollViewState extends State<TextScrollView>
     }
 
     final lastCharacterPosition = TextPosition(offset: widget.textEditingController.text.text.length - 1);
-    return _text.getCharacterBox(lastCharacterPosition).bottom - viewportHeight;
+    return _textLayout.getCharacterBox(lastCharacterPosition).bottom - viewportHeight;
   }
 
   @override
@@ -204,7 +203,7 @@ class _TextScrollViewState extends State<TextScrollView>
         return false;
       }
 
-      final characterBox = _text.getCharacterBox(position);
+      final characterBox = _textLayout.getCharacterBox(position);
       final scrolledCharacterTop = characterBox.top - _scrollController.offset;
       final scrolledCharacterBottom = characterBox.bottom - _scrollController.offset;
       // Round the top/bottom values to avoid false negatives due to floating point accuracy.
@@ -215,7 +214,7 @@ class _TextScrollViewState extends State<TextScrollView>
         return false;
       }
 
-      final offsetInViewport = _text.getOffsetAtPosition(position) - Offset(_scrollController.offset, 0);
+      final offsetInViewport = _textLayout.getOffsetAtPosition(position) - Offset(_scrollController.offset, 0);
       // Round the top/bottom values to avoid false negatives due to floating point accuracy.
       return offsetInViewport.dx.round() >= 0 && offsetInViewport.dx.round() <= viewportWidth;
     }
@@ -251,18 +250,18 @@ class _TextScrollViewState extends State<TextScrollView>
 
   @override
   Rect getCharacterRectAtPosition(TextPosition position) {
-    return _text.getCharacterBox(position).toRect();
+    return _textLayout.getCharacterBox(position).toRect();
   }
 
   @override
   double getHorizontalOffsetForStartOfCharacterLeftOfViewport() {
     // Note: we look for an offset that is slightly further down than zero
     // to avoid any issues with the layout system differentiating between lines.
-    final textPositionAtLeftEnd = _text.getPositionNearestToOffset(Offset(_scrollController.offset, 5));
+    final textPositionAtLeftEnd = _textLayout.getPositionNearestToOffset(Offset(_scrollController.offset, 5));
     final nextPosition = textPositionAtLeftEnd.offset <= 0
         ? textPositionAtLeftEnd
         : TextPosition(offset: textPositionAtLeftEnd.offset - 1);
-    return _text.getOffsetAtPosition(nextPosition).dx;
+    return _textLayout.getOffsetAtPosition(nextPosition).dx;
   }
 
   @override
@@ -271,11 +270,11 @@ class _TextScrollViewState extends State<TextScrollView>
     // Note: we look for an offset that is slightly further down than zero
     // to avoid any issues with the layout system differentiating between lines.
     final textPositionAtRightEnd =
-        _text.getPositionNearestToOffset(Offset(viewportWidth + _scrollController.offset, 5));
+        _textLayout.getPositionNearestToOffset(Offset(viewportWidth + _scrollController.offset, 5));
     final nextPosition = textPositionAtRightEnd.offset >= widget.textEditingController.text.text.length - 1
         ? textPositionAtRightEnd
         : TextPosition(offset: textPositionAtRightEnd.offset + 1);
-    return _text.getOffsetAtPosition(nextPosition).dx;
+    return _textLayout.getOffsetAtPosition(nextPosition).dx;
   }
 
   @override
@@ -283,8 +282,8 @@ class _TextScrollViewState extends State<TextScrollView>
     final topOfFirstLine = _scrollController.offset;
     // Note: we nudge the vertical offset up a few pixels to see if we
     // find a text position in the line above.
-    final textPositionOneLineUp = _text.getPositionNearestToOffset(Offset(0, topOfFirstLine - 5));
-    return _text.getOffsetAtPosition(textPositionOneLineUp).dy;
+    final textPositionOneLineUp = _textLayout.getPositionNearestToOffset(Offset(0, topOfFirstLine - 5));
+    return _textLayout.getOffsetAtPosition(textPositionOneLineUp).dy;
   }
 
   @override
@@ -297,8 +296,8 @@ class _TextScrollViewState extends State<TextScrollView>
     final bottomOfLastLine = viewportHeight! + _scrollController.offset;
     // Note: we nudge the vertical offset down a few pixels to see if we
     // find a text position in the line below.
-    final textPositionOneLineDown = _text.getPositionNearestToOffset(Offset(0, bottomOfLastLine + 5));
-    final bottomOfCharacter = _text.getCharacterBox(textPositionOneLineDown).bottom;
+    final textPositionOneLineDown = _textLayout.getPositionNearestToOffset(Offset(0, bottomOfLastLine + 5));
+    final bottomOfCharacter = _textLayout.getCharacterBox(textPositionOneLineDown).bottom;
     return bottomOfCharacter;
   }
 
@@ -395,12 +394,12 @@ class _TextScrollViewState extends State<TextScrollView>
       return 0;
     }
 
-    return widget.textKey.currentState!.getLineCount();
+    return _textLayout.getLineCount();
   }
 
-  /// Returns the [SuperSelectableTextState] that lays out and renders the
+  /// Returns the [ProseTextLayout] that lays out and renders the
   /// text in this text field.
-  SuperSelectableTextState get _text => widget.textKey.currentState!;
+  ProseTextLayout get _textLayout => widget.textKey.currentState!.textLayout;
 
   @override
   Widget build(BuildContext context) {

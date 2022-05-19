@@ -512,6 +512,118 @@ void main() {
 
           Platform.setTestInstance(null);
         });
+
+        test('collapses selection if escape is pressed', () {
+          Platform.setTestInstance(MacPlatform());
+
+          final _editContext = createEditContext(
+            document: MutableDocument(
+              nodes: [
+                ParagraphNode(
+                  id: '1',
+                  text: AttributedText(text: 'Text with [SELECTME] selection'),
+                ),
+              ],
+            ),
+            documentComposer: DocumentComposer(
+              initialSelection: const DocumentSelection(
+                base: DocumentPosition(
+                  nodeId: '1',
+                  nodePosition: TextNodePosition(offset: 11),
+                ),
+                extent: DocumentPosition(
+                  nodeId: '1',
+                  nodePosition: TextNodePosition(offset: 19),
+                ),
+              ),
+            ),
+          );
+
+          final result = collapseSelectionWhenEscIsPressed(
+            editContext: _editContext,
+            keyEvent: const FakeRawKeyEvent(
+              data: FakeRawKeyEventData(
+                logicalKey: LogicalKeyboardKey.escape,
+                physicalKey: PhysicalKeyboardKey.escape,
+              ),
+            ),
+          );
+
+          expect(result, ExecutionInstruction.haltExecution);
+
+          // The text should remain the same
+          final paragraph = _editContext.editor.document.nodes.first as ParagraphNode;
+          expect(paragraph.text.text, 'Text with [SELECTME] selection');
+
+          // The selection should be collapsed
+          expect(
+            _editContext.composer.selection,
+            equals(
+              const DocumentSelection.collapsed(
+                position: DocumentPosition(
+                  nodeId: '1',
+                  nodePosition: TextNodePosition(offset: 19),
+                ),
+              ),
+            ),
+          );
+
+          Platform.setTestInstance(null);
+        });
+      });
+      test('does nothing when escape is pressed if the selection is collapsed', () {
+        Platform.setTestInstance(MacPlatform());
+
+        final _editContext = createEditContext(
+          document: MutableDocument(
+            nodes: [
+              ParagraphNode(
+                id: '1',
+                text: AttributedText(text: 'This is some text'),
+              ),
+            ],
+          ),
+          documentComposer: DocumentComposer(
+            initialSelection: const DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: '1',
+                nodePosition: TextNodePosition(offset: 8),
+              ),
+            ),
+          ),
+        );
+
+        final result = collapseSelectionWhenEscIsPressed(
+          editContext: _editContext,
+          keyEvent: const FakeRawKeyEvent(
+            data: FakeRawKeyEventData(
+              logicalKey: LogicalKeyboardKey.escape,
+              physicalKey: PhysicalKeyboardKey.escape,
+            ),
+          ),
+        );
+
+        // The handler should pass on do nothing when there is no selection.
+        expect(result, ExecutionInstruction.continueExecution);
+
+        // The text should remain the same
+        final paragraph = _editContext.editor.document.nodes.first as ParagraphNode;
+        expect(paragraph.text.text, 'This is some text');
+
+        // The selection should remain the same
+        expect(
+          _editContext.composer.selection,
+          equals(
+            const DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: '1',
+                nodePosition: TextNodePosition(offset: 8),
+              ),
+            ),
+          ),
+        );
+
+        Platform.setTestInstance(null);
       });
     },
   );

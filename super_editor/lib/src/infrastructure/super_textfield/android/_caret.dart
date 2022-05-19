@@ -1,39 +1,5 @@
 import 'package:flutter/widgets.dart';
-import 'package:super_text/super_selectable_text.dart';
-
-/// Factory that creates an Android-style caret to be displayed in
-/// a [SuperSelectableText] widget.
-class AndroidTextCaretFactory implements TextCaretFactory {
-  AndroidTextCaretFactory({
-    required Color color,
-    required double emptyTextCaretHeight,
-    BorderRadius borderRadius = BorderRadius.zero,
-  })  : _color = color,
-        _emptyTextCaretHeight = emptyTextCaretHeight,
-        _borderRadius = borderRadius;
-
-  final Color _color;
-  final double _emptyTextCaretHeight;
-  final BorderRadius _borderRadius;
-
-  @override
-  Widget build({
-    required BuildContext context,
-    required TextLayout textLayout,
-    required TextSelection selection,
-    required bool isTextEmpty,
-    required bool showCaret,
-  }) {
-    return AndroidTextFieldCaret(
-      textLayout: textLayout,
-      isTextEmpty: isTextEmpty,
-      emptyTextCaretHeight: _emptyTextCaretHeight,
-      selection: selection,
-      caretColor: _color,
-      caretBorderRadius: _borderRadius,
-    );
-  }
-}
+import 'package:super_text_layout/super_text_layout.dart';
 
 /// An Android-style blinking caret.
 ///
@@ -81,14 +47,14 @@ class AndroidTextFieldCaret extends StatefulWidget {
 }
 
 class _AndroidTextFieldCaretState extends State<AndroidTextFieldCaret> with SingleTickerProviderStateMixin {
-  late CaretBlinkController _caretBlinkController;
+  late BlinkController _caretBlinkController;
 
   @override
   void initState() {
     super.initState();
-    _caretBlinkController = CaretBlinkController(tickerProvider: this);
+    _caretBlinkController = BlinkController(tickerProvider: this);
     if (widget.selection.extent.offset >= 0) {
-      _caretBlinkController.onCaretPlaced();
+      _caretBlinkController.jumpToOpaque();
     }
   }
 
@@ -98,9 +64,9 @@ class _AndroidTextFieldCaretState extends State<AndroidTextFieldCaret> with Sing
 
     if (widget.selection != oldWidget.selection) {
       if (widget.selection.extent.offset >= 0) {
-        _caretBlinkController.onCaretMoved();
+        _caretBlinkController.jumpToOpaque();
       } else {
-        _caretBlinkController.onCaretRemoved();
+        _caretBlinkController.stopBlinking();
       }
     }
   }
@@ -142,7 +108,7 @@ class AndroidCursorPainter extends CustomPainter {
   })  : caretPaint = Paint()..color = caretColor,
         super(repaint: blinkController);
 
-  final CaretBlinkController blinkController;
+  final BlinkController blinkController;
   final TextLayout textLayout;
   final TextSelection selection;
   final double width;

@@ -1,5 +1,9 @@
-# Attributed Text
-Easily add metadata to your `String`s with the `attributed_text` package.
+<p align="center">
+  <img src="https://user-images.githubusercontent.com/7259036/168731417-646b5fb9-6adb-4071-a232-1c6b8337d1e8.png" width="300" alt="Attributed Text"><br>
+  <span><b>Easily add metadata to your <code>String</code>s with the <code>attributed_text</code> package.</b></span><br><br>
+</p>
+
+---
 
 `AttributedText` forms the basis of all text representation within `super_editor`.
 
