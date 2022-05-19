@@ -70,6 +70,34 @@ void main() {
         await screenMatchesGolden(tester, "SuperText_layers_character-boxes");
       });
 
+      testGoldens("that can paint character box outlines", (tester) async {
+        await pumpThreeLinePlainSuperText(tester, beneathBuilder: (context, textLayout) {
+          final characterRects = <Rect>[];
+
+          final textLength = threeLineTextSpan.toPlainText().length;
+          for (int i = 0; i < textLength; i += 1) {
+            // Get the bounding rectangle for the character
+            characterRects.add(textLayout.getCharacterBox(TextPosition(offset: i)).toRect());
+          }
+
+          return Stack(
+            children: [
+              for (int i = 0; i < characterRects.length; i += 1)
+                Positioned.fromRect(
+                  rect: characterRects[i],
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.lightBlueAccent),
+                    ),
+                  ),
+                ),
+            ],
+          );
+        });
+
+        await screenMatchesGolden(tester, "SuperText_layers_character-box-outlines");
+      });
+
       testGoldens("that can paint carets", (tester) async {
         await pumpThreeLinePlainSuperText(tester, beneathBuilder: (context, textLayout) {
           const textPosition = TextPosition(offset: 115);

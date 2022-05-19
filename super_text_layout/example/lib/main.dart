@@ -4,6 +4,7 @@ import 'package:super_text_layout/super_text_layout.dart';
 import 'package:super_text_layout/super_text_layout_logging.dart';
 
 import 'rainbow_builder.dart';
+import 'rainbow_character_supertext.dart';
 import 'user_label_layer.dart';
 
 void main() {
@@ -78,6 +79,7 @@ class _SuperTextExampleScreenState extends State<SuperTextExampleScreen> with Ti
                 _buildSubHeader("SuperText Widget"),
                 _buildDescription(
                     "SuperText is a platform, upon which you can build various text experiences. A SuperText widget allows you to build an arbitrary UI beneath the text, and above the text."),
+                _buildCharacterRainbow(),
                 _buildSingleCaret(),
                 _buildSingleSelectionHighlight(),
                 _buildSingleSelectionHighlightRainbow(),
@@ -174,6 +176,14 @@ class _SuperTextExampleScreenState extends State<SuperTextExampleScreen> with Ti
             selection: const TextSelection(baseOffset: 79, extentOffset: 120),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildCharacterRainbow() {
+    return _buildExampleContainer(
+      child: const CharacterRainbowSuperText(
+        text: _text,
       ),
     );
   }
