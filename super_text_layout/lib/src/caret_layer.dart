@@ -125,6 +125,7 @@ class CaretPainter extends CustomPainter {
   final CaretStyle _caretStyle;
   final Offset? _offset;
   final double? _height;
+  Offset? get offset => _offset;
 
   @override
   void paint(Canvas canvas, Size size) {

@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/src/default_editor/document_gestures_touch_android.dart';
 import 'package:super_editor/src/default_editor/document_gestures_touch_ios.dart';
+import 'package:super_editor/src/infrastructure/blinking_caret.dart';
 import 'package:super_editor/super_editor.dart';
+import 'package:super_text_layout/super_text_layout.dart';
 
 void main() { 
   group("SuperEditor", () {
@@ -280,8 +282,9 @@ Offset _getOffsetForPosition(GlobalKey docKey, DocumentPosition position){
 /// The reason for having different implementations is that depending on the gesture mode,
 /// the widget that holds the caret offset is different
 Offset _getCurrentDesktopCaretOffset(WidgetTester tester){
-  final blinkingCaret = tester.widget<BlinkingCaret>(find.byType(BlinkingCaret).last);      
-  return blinkingCaret.caretOffset ?? Offset.zero;
+  final customPaint = find.byWidgetPredicate((widget) => widget is CustomPaint && widget.painter is CaretPainter);
+  final caretPainter = tester.widget<CustomPaint>(customPaint.last).painter as CaretPainter;
+  return caretPainter.offset!;  
 }
 
 /// Find the caret in the widget tree and return it's (x,y)
@@ -310,8 +313,8 @@ Offset _getIosCurrentCaretOffset(WidgetTester tester){
 /// 
 /// Should be used only when the document gesture mode is equal to [DocumentGestureMode.mouse]
 Offset _computeExpectedDesktopCaretOffset(WidgetTester tester, TextPosition textPosition){
-  final superText = tester.state<SuperSelectableTextState>(find.byType(SuperSelectableText));        
-  return superText.getOffsetForCaret(textPosition);
+  final textLayoutCaret = tester.widget<TextLayoutCaret>(find.byType(TextLayoutCaret).last);
+  return textLayoutCaret.textLayout.getOffsetForCaret(textPosition);  
 }
 
 /// Given a [textPosition], compute the expected (x,y) for the caret
