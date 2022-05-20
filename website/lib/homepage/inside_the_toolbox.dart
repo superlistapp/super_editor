@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:super_editor/super_editor.dart';
+import 'package:super_text_layout/super_text_layout.dart';
 
 class InsideTheToolbox extends StatelessWidget {
   const InsideTheToolbox();
@@ -95,19 +96,23 @@ class InsideTheToolbox extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(4),
-          ),
-          child: SuperSelectableText.plain(
-            text: 'This text is selectable. The caret and selection rendering is custom.',
-            textSelection: const TextSelection(
-              baseOffset: 13,
-              extentOffset: 23,
+          ),    
+          child: SuperTextWithSelection.single(
+            richText: const TextSpan(
+              text: 'This text is selectable. The caret and selection rendering is custom.',              
+              style: TextStyle(
+                color: Colors.black,
+                fontSize: 16,
+              ),
             ),
-            showCaret: true,
-            style: const TextStyle(
-              color: Colors.black,
-              fontSize: 16,
+            userSelection: const UserSelection(
+              selection: TextSelection(
+                baseOffset: 13,
+                extentOffset: 23,
+              ),
+              
             ),
-          ),
+          ),          
         ),
       ),
     );
@@ -245,9 +250,9 @@ class _AttributedTextDemoState extends State<_AttributedTextDemo> {
           _buildRowTitle('Strikethrough'),
           _buildCellSelector(_strikethroughRanges),
           _buildRowTitle('Attributed Text'),
-          SuperSelectableText(
+          SuperTextWithSelection.single(
             key: GlobalKey(),
-            textSpan: _richText,
+            richText: _richText,
           ),
         ],
       ),

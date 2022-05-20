@@ -371,14 +371,12 @@ packages:
       relative: true
     source: path
     version: "0.2.0"
-  super_text:
-    dependency: transitive
+  super_text_layout:
+    dependency: "direct main"
     description:
-      path: super_text
-      ref: HEAD
-      resolved-ref: "9e032c23dfbfac51366ccb2103032e61c056e9fa"
-      url: "https://github.com/superlistapp/super_editor.git"
-    source: git
+      name: super_text_layout
+      url: "https://pub.dartlang.org"
+    source: hosted
     version: "0.1.0"
   term_glyph:
     dependency: transitive
