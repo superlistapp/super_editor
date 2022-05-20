@@ -1,6 +1,7 @@
 .DS_Store
 
 .idea
+.vscode
 
 ios_text_example/
 android_text_example/

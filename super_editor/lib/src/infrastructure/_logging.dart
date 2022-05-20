@@ -10,6 +10,11 @@ class LogNames {
   static const editorLayout = 'editor.layout';
   static const editorDocument = 'editor.document';
   static const editorCommonOps = 'editor.ops';
+  static const editorBlockquote = 'editor.blockquote';
+  static const editorBoxComponent = 'editor.box_component';
+  static const editorListItems = 'editor.listItems';
+  static const editorMultiNodeEditing = 'editor.multi_node_editing';
+  static const editorTextTools = 'editor.text_tools';
 
   static const textField = 'textfield';
   static const scrollingTextField = 'textfield.scrolling';
@@ -28,6 +33,11 @@ final editorImeLog = logging.Logger(LogNames.editorIme);
 final editorLayoutLog = logging.Logger(LogNames.editorLayout);
 final editorDocLog = logging.Logger(LogNames.editorDocument);
 final editorOpsLog = logging.Logger(LogNames.editorCommonOps);
+final editorBlockquoteLog = logging.Logger(LogNames.editorBlockquote);
+final editorBoxComponentLog = logging.Logger(LogNames.editorBoxComponent);
+final editorListItemsLog = logging.Logger(LogNames.editorListItems);
+final editorMultiNodeEditingLog = logging.Logger(LogNames.editorMultiNodeEditing);
+final editorTextToolsLog = logging.Logger(LogNames.editorTextTools);
 
 final textFieldLog = logging.Logger(LogNames.textField);
 final scrollingTextFieldLog = logging.Logger(LogNames.scrollingTextField);
@@ -73,29 +83,4 @@ void deactivateLoggers(Set<logging.Logger> loggers) {
 void printLog(logging.LogRecord record) {
   print(
       '(${record.time.second}.${record.time.millisecond.toString().padLeft(3, '0')}) ${record.loggerName} > ${record.level.name}: ${record.message}');
-}
-
-// TODO: get rid of this custom Logger when all references are replaced with logging package
-class Logger {
-  static bool _printLogs = false;
-  static void setLoggingMode(bool enabled) {
-    _printLogs = enabled;
-  }
-
-  Logger({
-    required scope,
-  }) : _scope = scope;
-
-  final String _scope;
-
-  void log(String tag, String message, [Exception? exception]) {
-    if (!Logger._printLogs) {
-      return;
-    }
-
-    print('[$_scope] - $tag: $message');
-    if (exception != null) {
-      print(' - ${exception.toString()}');
-    }
-  }
 }

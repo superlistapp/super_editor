@@ -11,8 +11,6 @@ import 'package:super_editor/src/infrastructure/composable_text.dart';
 /// Collection of generic text inspection behavior that does not belong
 /// to any particular `DocumentNode` or `Component`.
 
-final _log = Logger(scope: 'text_tools.dart');
-
 /// Returns the word of text that contains the given `docPosition`, or `null` if
 /// no text exists at the given `docPosition`.
 ///
@@ -21,8 +19,8 @@ DocumentSelection? getWordSelection({
   required DocumentPosition docPosition,
   required DocumentLayout docLayout,
 }) {
-  _log.log('getWordSelection', '_getWordSelection()');
-  _log.log('getWordSelection', ' - doc position: $docPosition');
+  editorTextToolsLog.info('_getWordSelection()');
+  editorTextToolsLog.info(' - doc position: $docPosition');
 
   final component = docLayout.getComponentByNodeId(docPosition.nodeId);
   if (component is! TextComposable) {
@@ -37,7 +35,7 @@ DocumentSelection? getWordSelection({
   final TextSelection wordTextSelection = (component as TextComposable).getWordSelectionAt(nodePosition);
   final wordNodeSelection = TextNodeSelection.fromTextSelection(wordTextSelection);
 
-  _log.log('getWordSelection', ' - word selection: $wordNodeSelection');
+  editorTextToolsLog.info(' - word selection: $wordNodeSelection');
   return DocumentSelection(
     base: DocumentPosition(
       nodeId: docPosition.nodeId,
@@ -83,8 +81,8 @@ DocumentSelection? getParagraphSelection({
   required DocumentPosition docPosition,
   required DocumentLayout docLayout,
 }) {
-  _log.log('getParagraphSelection', '_getWordSelection()');
-  _log.log('getParagraphSelection', ' - doc position: $docPosition');
+  editorTextToolsLog.info('_getWordSelection()');
+  editorTextToolsLog.info(' - doc position: $docPosition');
 
   final component = docLayout.getComponentByNodeId(docPosition.nodeId);
   if (component is! TextComposable) {

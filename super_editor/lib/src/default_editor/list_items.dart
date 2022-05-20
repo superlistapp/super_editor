@@ -12,8 +12,6 @@ import 'layout_single_column/layout_single_column.dart';
 import 'paragraph.dart';
 import 'text.dart';
 
-final _log = Logger(scope: 'list_items.dart');
-
 class ListItemNode extends TextNode {
   ListItemNode.ordered({
     required String id,
@@ -463,7 +461,9 @@ class IndentListItemCommand implements EditorCommand {
     final node = document.getNodeById(nodeId);
     final listItem = node as ListItemNode;
     if (listItem.indent >= 6) {
-      _log.log('IndentListItemCommand', 'WARNING: Editor does not support an indent level beyond 6.');
+      editorListItemsLog.info(
+        'WARNING: Editor does not support an indent level beyond 6.',
+      );
       return;
     }
 
@@ -580,12 +580,14 @@ class SplitListItemCommand implements EditorCommand {
     final text = listItemNode.text;
     final startText = text.copyText(0, splitPosition.offset);
     final endText = splitPosition.offset < text.text.length ? text.copyText(splitPosition.offset) : AttributedText();
-    _log.log('SplitListItemCommand', 'Splitting list item:');
-    _log.log('SplitListItemCommand', ' - start text: "$startText"');
-    _log.log('SplitListItemCommand', ' - end text: "$endText"');
+    editorListItemsLog.info('Splitting list item:');
+    editorListItemsLog.info(' - start text: "$startText"');
+    editorListItemsLog.info(' - end text: "$endText"');
 
     // Change the current node's content to just the text before the caret.
-    _log.log('SplitListItemCommand', ' - changing the original list item text due to split');
+    editorListItemsLog.info(
+      ' - changing the original list item text due to split',
+    );
     // TODO: figure out how node changes should work in terms of
     //       a DocumentEditorTransaction (#67)
     listItemNode.text = startText;
@@ -605,13 +607,15 @@ class SplitListItemCommand implements EditorCommand {
           );
 
     // Insert the new node after the current node.
-    _log.log('SplitListItemCommand', ' - inserting new node in document');
+    editorListItemsLog.info(' - inserting new node in document');
     transaction.insertNodeAfter(
       existingNode: node,
       newNode: newNode,
     );
 
-    _log.log('SplitListItemCommand', ' - inserted new node: ${newNode.id} after old one: ${node.id}');
+    editorListItemsLog.info(
+      ' - inserted new node: ${newNode.id} after old one: ${node.id}',
+    );
   }
 }
 
