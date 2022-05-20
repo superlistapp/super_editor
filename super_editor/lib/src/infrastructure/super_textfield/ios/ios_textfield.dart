@@ -1,19 +1,17 @@
 import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:super_editor/src/default_editor/super_editor.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
-import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/attributed_text_editing_controller.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/hint_text.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/text_scrollview.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/input_method_engine/_ime_text_editing_controller.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/ios/_editing_controls.dart';
-import 'package:super_text/super_selectable_text.dart';
+import 'package:super_text_layout/super_text_layout.dart';
 
 import '../../platforms/ios/toolbar.dart';
-import '_caret.dart';
+import '../styles.dart';
 import '_floating_cursor.dart';
 import '_user_interaction.dart';
 
@@ -30,7 +28,7 @@ class SuperIOSTextField extends StatefulWidget {
     Key? key,
     this.focusNode,
     this.textController,
-    this.textStyleBuilder = defaultStyleBuilder,
+    this.textStyleBuilder = defaultTextFieldStyleBuilder,
     this.textAlign = TextAlign.left,
     this.hintBehavior = HintBehavior.displayHintUntilFocus,
     this.hintBuilder,
@@ -142,7 +140,7 @@ class _SuperIOSTextFieldState extends State<SuperIOSTextField> with SingleTicker
   final _textFieldLayerLink = LayerLink();
   final _textContentLayerLink = LayerLink();
   final _scrollKey = GlobalKey<IOSTextFieldTouchInteractorState>();
-  final _textContentKey = GlobalKey<SuperSelectableTextState>();
+  final _textContentKey = GlobalKey<ProseTextState>();
 
   late FocusNode _focusNode;
 
@@ -219,7 +217,7 @@ class _SuperIOSTextFieldState extends State<SuperIOSTextField> with SingleTicker
     }
 
     if (widget.showDebugPaint != oldWidget.showDebugPaint) {
-      WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         _rebuildHandles();
       });
     }
@@ -235,7 +233,7 @@ class _SuperIOSTextFieldState extends State<SuperIOSTextField> with SingleTicker
     // available upon Hot Reload. Accessing it results in an exception.
     _removeEditingOverlayControls();
 
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       _showHandles();
     });
   }
@@ -244,7 +242,7 @@ class _SuperIOSTextFieldState extends State<SuperIOSTextField> with SingleTicker
   void dispose() {
     _removeEditingOverlayControls();
 
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       // Dispose after the current frame so that other widgets have
       // time to remove their listeners.
       _editingOverlayController.dispose();
@@ -254,7 +252,7 @@ class _SuperIOSTextFieldState extends State<SuperIOSTextField> with SingleTicker
       ..removeListener(_onTextOrSelectionChange)
       ..onIOSFloatingCursorChange = null;
     if (widget.textController == null) {
-      WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         // Dispose after the current frame so that other widgets have
         // time to remove their listeners.
         _textEditingController.dispose();
@@ -347,7 +345,7 @@ class _SuperIOSTextFieldState extends State<SuperIOSTextField> with SingleTicker
   }
 
   void _onFloatingCursorChange(RawFloatingCursorPoint point) {
-    _floatingCursorController.updateFloatingCursor(_textContentKey.currentState!, point);
+    _floatingCursorController.updateFloatingCursor(_textContentKey.currentState!.textLayout, point);
   }
 
   @override
@@ -418,20 +416,19 @@ class _SuperIOSTextFieldState extends State<SuperIOSTextField> with SingleTicker
         ? _textEditingController.text.computeTextSpan(widget.textStyleBuilder)
         : AttributedText(text: "").computeTextSpan(widget.textStyleBuilder);
 
-    // TODO: switch out textSelectionDecoration and textCaretFactory
-    //       for backgroundBuilders and foregroundBuilders, respectively
-    //
-    //       add the floating cursor as a foreground builder
-    return SuperSelectableText(
+    return SuperTextWithSelection.single(
       key: _textContentKey,
-      textSpan: textSpan,
+      richText: textSpan,
       textAlign: widget.textAlign,
-      textSelection: _textEditingController.selection,
-      textSelectionDecoration: TextSelectionDecoration(selectionColor: widget.selectionColor),
-      showCaret: true,
-      textCaretFactory: IOSTextFieldCaretFactory(
-        color: _floatingCursorController.isShowingFloatingCursor ? Colors.grey : widget.caretColor,
-        width: 2,
+      userSelection: UserSelection(
+        highlightStyle: SelectionHighlightStyle(
+          color: widget.selectionColor,
+        ),
+        caretStyle: CaretStyle(
+          color: _floatingCursorController.isShowingFloatingCursor ? Colors.grey : widget.caretColor,
+        ),
+        selection: _textEditingController.selection,
+        hasCaret: true,
       ),
     );
   }

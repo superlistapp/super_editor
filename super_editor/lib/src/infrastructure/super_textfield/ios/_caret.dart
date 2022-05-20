@@ -1,49 +1,5 @@
 import 'package:flutter/widgets.dart';
-import 'package:super_text/super_selectable_text.dart';
-
-/// [TextCaretFactory] that creates an [IOSTextFieldCaret], which
-/// paints a blinking iOS-style caret on top of a [SuperSelectableText].
-class IOSTextFieldCaretFactory implements TextCaretFactory {
-  IOSTextFieldCaretFactory({
-    required Color color,
-    double width = 2.0,
-    BorderRadius borderRadius = BorderRadius.zero,
-  })  : _color = color,
-        _width = width,
-        _borderRadius = borderRadius;
-
-  final Color _color;
-  final double _width;
-  final BorderRadius _borderRadius;
-
-  @override
-  Widget build({
-    required BuildContext context,
-    required TextLayout textLayout,
-    required TextSelection selection,
-    required bool isTextEmpty,
-    required bool showCaret,
-  }) {
-    return Stack(
-      children: [
-        Positioned(
-          left: 0,
-          right: 0,
-          top: 0,
-          bottom: 0,
-          child: IOSTextFieldCaret(
-            textLayout: textLayout,
-            isTextEmpty: isTextEmpty,
-            selection: selection,
-            caretColor: _color,
-            caretWidth: _width,
-            caretBorderRadius: _borderRadius,
-          ),
-        ),
-      ],
-    );
-  }
-}
+import 'package:super_text_layout/super_text_layout.dart';
 
 /// An iOS-style blinking caret.
 ///
@@ -75,14 +31,14 @@ class IOSTextFieldCaret extends StatefulWidget {
 }
 
 class _IOSTextFieldCaretState extends State<IOSTextFieldCaret> with SingleTickerProviderStateMixin {
-  late CaretBlinkController _caretBlinkController;
+  late BlinkController _caretBlinkController;
 
   @override
   void initState() {
     super.initState();
-    _caretBlinkController = CaretBlinkController(tickerProvider: this);
+    _caretBlinkController = BlinkController(tickerProvider: this);
     if (widget.selection.extent.offset >= 0) {
-      _caretBlinkController.onCaretPlaced();
+      _caretBlinkController.jumpToOpaque();
     }
   }
 
@@ -92,9 +48,9 @@ class _IOSTextFieldCaretState extends State<IOSTextFieldCaret> with SingleTicker
 
     if (widget.selection != oldWidget.selection) {
       if (widget.selection.extent.offset >= 0) {
-        _caretBlinkController.onCaretMoved();
+        _caretBlinkController.jumpToOpaque();
       } else {
-        _caretBlinkController.onCaretRemoved();
+        _caretBlinkController.stopBlinking();
       }
     }
   }
@@ -136,7 +92,7 @@ class _IOSCursorPainter extends CustomPainter {
   })  : caretPaint = Paint(),
         super(repaint: blinkController);
 
-  final CaretBlinkController blinkController;
+  final BlinkController blinkController;
   final TextLayout textLayout;
   final TextSelection selection;
   final double width;

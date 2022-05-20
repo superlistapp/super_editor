@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:super_editor/src/infrastructure/blinking_caret.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
-import 'package:super_text/super_selectable_text.dart';
+import 'package:super_text_layout/super_text_layout.dart';
 
 /// An iOS-style text selection handle.
 ///
@@ -117,7 +118,7 @@ class IOSCollapsedHandle extends StatelessWidget {
   }) : super(key: key);
 
   /// The controller for the handle/caret's blinking behavior.
-  final CaretBlinkController? controller;
+  final BlinkController? controller;
 
   /// The color of the caret and ball in the handle.
   final Color color;

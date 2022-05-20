@@ -38,7 +38,7 @@ class _SingleLineTextFieldDemoState extends State<SingleLineTextFieldDemo> with 
       textKey: _textKey,
     );
 
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       _startDemo();
     });
   }

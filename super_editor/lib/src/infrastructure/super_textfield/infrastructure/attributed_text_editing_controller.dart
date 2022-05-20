@@ -7,7 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
-import 'package:super_text/super_selectable_text.dart';
+import 'package:super_text_layout/super_text_layout.dart';
 
 class AttributedTextEditingController with ChangeNotifier {
   AttributedTextEditingController({
@@ -685,7 +685,7 @@ class AttributedTextEditingController with ChangeNotifier {
   }
 
   void moveCaretHorizontally({
-    required SuperSelectableTextState selectableTextState,
+    required ProseTextLayout textLayout,
     required bool expandSelection,
     required bool moveLeft,
     required MovementModifier? movementModifier,
@@ -704,7 +704,7 @@ class AttributedTextEditingController with ChangeNotifier {
         // extent to the left side of the selection.
         newExtent = selection.start;
       } else if (movementModifier != null && movementModifier == MovementModifier.line) {
-        newExtent = selectableTextState.getPositionAtStartOfLine(TextPosition(offset: selection.extentOffset)).offset;
+        newExtent = textLayout.getPositionAtStartOfLine(TextPosition(offset: selection.extentOffset)).offset;
       } else if (movementModifier != null && movementModifier == MovementModifier.word) {
         final plainText = text.text;
 
@@ -728,7 +728,7 @@ class AttributedTextEditingController with ChangeNotifier {
         // extent to the left side of the selection.
         newExtent = selection.end;
       } else if (movementModifier != null && movementModifier == MovementModifier.line) {
-        final endOfLine = selectableTextState.getPositionAtEndOfLine(TextPosition(offset: selection.extentOffset));
+        final endOfLine = textLayout.getPositionAtEndOfLine(TextPosition(offset: selection.extentOffset));
 
         final endPosition = TextPosition(offset: text.text.length);
         final plainText = text.text;
@@ -770,20 +770,20 @@ class AttributedTextEditingController with ChangeNotifier {
   }
 
   void moveCaretVertically({
-    required SuperSelectableTextState selectableTextState,
+    required ProseTextLayout textLayout,
     required bool expandSelection,
     required bool moveUp,
   }) {
     int? newExtent;
 
     if (moveUp) {
-      newExtent = selectableTextState.getPositionOneLineUp(selection.extent)?.offset;
+      newExtent = textLayout.getPositionOneLineUp(selection.extent)?.offset;
 
       // If there is no line above the current selection, move selection
       // to the beginning of the available text.
       newExtent ??= 0;
     } else {
-      newExtent = selectableTextState.getPositionOneLineDown(selection.extent)?.offset;
+      newExtent = textLayout.getPositionOneLineDown(selection.extent)?.offset;
 
       // If there is no line below the current selection, move selection
       // to the end of the available text.
@@ -839,11 +839,11 @@ class AttributedTextEditingController with ChangeNotifier {
   }
 
   void deleteTextOnLineBeforeCaret({
-    required SuperSelectableTextState selectableTextState,
+    required ProseTextLayout textLayout,
   }) {
     assert(selection.isCollapsed);
 
-    final startOfLinePosition = selectableTextState.getPositionAtStartOfLine(selection.extent);
+    final startOfLinePosition = textLayout.getPositionAtStartOfLine(selection.extent);
     selection = TextSelection(
       baseOffset: selection.extentOffset,
       extentOffset: startOfLinePosition.offset,

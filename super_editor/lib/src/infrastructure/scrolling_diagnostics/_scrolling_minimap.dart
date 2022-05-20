@@ -98,7 +98,7 @@ class _ScrollingMinimapState extends State<ScrollingMinimap> {
     }
     if (!viewportBox.hasSize) {
       // The viewport hasn't laid out yet. Try again next frame.
-      WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         setState(() {});
       });
       return const SizedBox();

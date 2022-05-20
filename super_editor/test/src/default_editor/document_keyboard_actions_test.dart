@@ -1,17 +1,112 @@
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
 import 'package:super_editor/src/infrastructure/platform_detector.dart';
 import 'package:super_editor/super_editor.dart';
 
 import '../_document_test_tools.dart';
 import '../_text_entry_test_tools.dart';
 import '../infrastructure/_platform_test_tools.dart';
+import 'test_documents.dart';
 
 void main() {
   group(
-    'document_keyboard_actions.dart',
+    'Document keyboard actions',
     () {
+      group('jumps to', () {
+        testWidgets('beginning of line with CMD + LEFT ARROW', (tester) async {
+          Platform.setTestInstance(MacPlatform());
+
+          // Start the user's selection somewhere after the beginning of the first
+          // line in the first node.
+          final editContext = await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
+
+          await tester.pressCmdLeftArrow(tester);
+
+          // Ensure that the caret moved to the beginning of the line.
+          expect(
+            editContext.composer.selection,
+            const DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: "1",
+                nodePosition: TextNodePosition(offset: 0),
+              ),
+            ),
+          );
+
+          Platform.setTestInstance(null);
+        });
+
+        testWidgets('end of line with CMD + RIGHT ARROW', (tester) async {
+          Platform.setTestInstance(MacPlatform());
+
+          // Start the user's selection somewhere before the end of the first line
+          // in the first node.
+          final editContext = await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
+
+          await tester.pressCmdRightArrow(tester);
+
+          // Ensure that the caret moved to the end of the line. This value
+          // is very fragile. If the text size or layout width changes, this value
+          // will also need to change.
+          expect(
+            editContext.composer.selection,
+            const DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: "1",
+                nodePosition: TextNodePosition(offset: 27),
+              ),
+            ),
+          );
+
+          Platform.setTestInstance(null);
+        });
+
+        testWidgets('beginning of word with ALT + LEFT ARROW', (tester) async {
+          Platform.setTestInstance(MacPlatform());
+
+          // Start the user's selection somewhere in the middle of a word.
+          final editContext = await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
+
+          await tester.pressAltLeftArrow(tester);
+
+          // Ensure that the caret moved to the beginning of the word.
+          expect(
+            editContext.composer.selection,
+            const DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: "1",
+                nodePosition: TextNodePosition(offset: 6),
+              ),
+            ),
+          );
+
+          Platform.setTestInstance(null);
+        });
+
+        testWidgets('end of word with ALT + RIGHT ARROW', (tester) async {
+          Platform.setTestInstance(MacPlatform());
+
+          // Start the user's selection somewhere in the middle of a word.
+          final editContext = await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
+
+          await tester.pressAltRightArrow(tester);
+
+          // Ensure that the caret moved to the beginning of the word.
+          expect(
+            editContext.composer.selection,
+            const DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: "1",
+                nodePosition: TextNodePosition(offset: 11),
+              ),
+            ),
+          );
+
+          Platform.setTestInstance(null);
+        });
+      });
+
       group(
         'CMD + A to select all',
         () {
@@ -417,7 +512,157 @@ void main() {
 
           Platform.setTestInstance(null);
         });
+
+        test('collapses selection if escape is pressed', () {
+          Platform.setTestInstance(MacPlatform());
+
+          final _editContext = createEditContext(
+            document: MutableDocument(
+              nodes: [
+                ParagraphNode(
+                  id: '1',
+                  text: AttributedText(text: 'Text with [SELECTME] selection'),
+                ),
+              ],
+            ),
+            documentComposer: DocumentComposer(
+              initialSelection: const DocumentSelection(
+                base: DocumentPosition(
+                  nodeId: '1',
+                  nodePosition: TextNodePosition(offset: 11),
+                ),
+                extent: DocumentPosition(
+                  nodeId: '1',
+                  nodePosition: TextNodePosition(offset: 19),
+                ),
+              ),
+            ),
+          );
+
+          final result = collapseSelectionWhenEscIsPressed(
+            editContext: _editContext,
+            keyEvent: const FakeRawKeyEvent(
+              data: FakeRawKeyEventData(
+                logicalKey: LogicalKeyboardKey.escape,
+                physicalKey: PhysicalKeyboardKey.escape,
+              ),
+            ),
+          );
+
+          expect(result, ExecutionInstruction.haltExecution);
+
+          // The text should remain the same
+          final paragraph = _editContext.editor.document.nodes.first as ParagraphNode;
+          expect(paragraph.text.text, 'Text with [SELECTME] selection');
+
+          // The selection should be collapsed
+          expect(
+            _editContext.composer.selection,
+            equals(
+              const DocumentSelection.collapsed(
+                position: DocumentPosition(
+                  nodeId: '1',
+                  nodePosition: TextNodePosition(offset: 19),
+                ),
+              ),
+            ),
+          );
+
+          Platform.setTestInstance(null);
+        });
+      });
+      test('does nothing when escape is pressed if the selection is collapsed', () {
+        Platform.setTestInstance(MacPlatform());
+
+        final _editContext = createEditContext(
+          document: MutableDocument(
+            nodes: [
+              ParagraphNode(
+                id: '1',
+                text: AttributedText(text: 'This is some text'),
+              ),
+            ],
+          ),
+          documentComposer: DocumentComposer(
+            initialSelection: const DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: '1',
+                nodePosition: TextNodePosition(offset: 8),
+              ),
+            ),
+          ),
+        );
+
+        final result = collapseSelectionWhenEscIsPressed(
+          editContext: _editContext,
+          keyEvent: const FakeRawKeyEvent(
+            data: FakeRawKeyEventData(
+              logicalKey: LogicalKeyboardKey.escape,
+              physicalKey: PhysicalKeyboardKey.escape,
+            ),
+          ),
+        );
+
+        // The handler should pass on do nothing when there is no selection.
+        expect(result, ExecutionInstruction.continueExecution);
+
+        // The text should remain the same
+        final paragraph = _editContext.editor.document.nodes.first as ParagraphNode;
+        expect(paragraph.text.text, 'This is some text');
+
+        // The selection should remain the same
+        expect(
+          _editContext.composer.selection,
+          equals(
+            const DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: '1',
+                nodePosition: TextNodePosition(offset: 8),
+              ),
+            ),
+          ),
+        );
+
+        Platform.setTestInstance(null);
       });
     },
   );
+}
+
+/// Pumps a [SuperEditor] with a single-paragraph document, with focus, and returns
+/// the associated [EditContext] for further inspection and control.
+///
+/// This particular setup is intended for caret movement testing within a single
+/// paragraph node.
+Future<EditContext> _pumpCaretMovementTestSetup(
+  WidgetTester tester, {
+  required int textOffsetInFirstNode,
+}) async {
+  final composer = DocumentComposer(
+    initialSelection: DocumentSelection.collapsed(
+      position: DocumentPosition(
+        nodeId: "1",
+        nodePosition: TextNodePosition(offset: textOffsetInFirstNode),
+      ),
+    ),
+  );
+  final editContext = createEditContext(
+    document: singleParagraphDoc(),
+    documentComposer: composer,
+  );
+
+  final focusNode = FocusNode()..requestFocus();
+  await tester.pumpWidget(
+    MaterialApp(
+      home: Scaffold(
+        body: SuperEditor(
+          focusNode: focusNode,
+          editor: editContext.editor,
+          composer: composer,
+        ),
+      ),
+    ),
+  );
+
+  return editContext;
 }

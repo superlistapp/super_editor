@@ -146,7 +146,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
     // Schedule a callback after this frame to locate the selection
     // bounds on the screen and display the toolbar near the selected
     // text.
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       if (_textFormatBarOverlayEntry == null) {
         return;
       }
@@ -206,12 +206,12 @@ class _ExampleEditorState extends State<ExampleEditor> {
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
       case TargetPlatform.iOS:
-        return DocumentInputSource.ime;
       case TargetPlatform.fuchsia:
       case TargetPlatform.linux:
       case TargetPlatform.macOS:
       case TargetPlatform.windows:
-        return DocumentInputSource.keyboard;
+        return DocumentInputSource.ime;
+      // return DocumentInputSource.keyboard;
     }
   }
 
@@ -247,7 +247,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
     // Schedule a callback after this frame to locate the selection
     // bounds on the screen and display the toolbar near the selected
     // text.
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       if (_imageFormatBarOverlayEntry == null) {
         return;
       }
@@ -347,6 +347,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
         ],
         gestureMode: _gestureMode,
         inputSource: _inputSource,
+        keyboardActions: _inputSource == DocumentInputSource.ime ? defaultImeKeyboardActions : defaultKeyboardActions,
         androidToolbarBuilder: (_) => AndroidTextEditingFloatingToolbar(
           onCutPressed: _cut,
           onCopyPressed: _copy,

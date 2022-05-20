@@ -1,13 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
+import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/android/_editing_controls.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/android/_user_interaction.dart';
-import 'package:super_editor/super_editor.dart';
-import 'package:super_text/super_selectable_text.dart';
+import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/hint_text.dart';
+import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/text_scrollview.dart';
+import 'package:super_editor/src/infrastructure/super_textfield/input_method_engine/_ime_text_editing_controller.dart';
+import 'package:super_text_layout/super_text_layout.dart';
 
-export '_caret.dart';
+import '../../_logging.dart';
+import '../styles.dart';
+import 'android_textfield.dart';
+
 export '../../platforms/android/selection_handles.dart';
 export '../../platforms/android/toolbar.dart';
+export '_caret.dart';
 
 final _log = androidTextFieldLog;
 
@@ -17,7 +25,7 @@ class SuperAndroidTextField extends StatefulWidget {
     this.focusNode,
     this.textController,
     this.textAlign = TextAlign.left,
-    this.textStyleBuilder = defaultStyleBuilder,
+    this.textStyleBuilder = defaultTextFieldStyleBuilder,
     this.hintBehavior = HintBehavior.displayHintUntilFocus,
     this.hintBuilder,
     this.minLines,
@@ -128,7 +136,7 @@ class _SuperAndroidTextFieldState extends State<SuperAndroidTextField> with Sing
   final _textFieldLayerLink = LayerLink();
   final _textContentLayerLink = LayerLink();
   final _scrollKey = GlobalKey<AndroidTextFieldTouchInteractorState>();
-  final _textContentKey = GlobalKey<SuperSelectableTextState>();
+  final _textContentKey = GlobalKey<ProseTextState>();
 
   late FocusNode _focusNode;
 
@@ -199,7 +207,7 @@ class _SuperAndroidTextFieldState extends State<SuperAndroidTextField> with Sing
     }
 
     if (widget.showDebugPaint != oldWidget.showDebugPaint) {
-      WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         _rebuildEditingOverlayControls();
       });
     }
@@ -215,7 +223,7 @@ class _SuperAndroidTextFieldState extends State<SuperAndroidTextField> with Sing
     // available upon Hot Reload. Accessing it results in an exception.
     _removeEditingOverlayControls();
 
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       _showEditingControlsOverlay();
     });
   }
@@ -224,7 +232,7 @@ class _SuperAndroidTextFieldState extends State<SuperAndroidTextField> with Sing
   void dispose() {
     _removeEditingOverlayControls();
 
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       // Dispose after the current frame so that other widgets have
       // time to remove their listeners.
       _editingOverlayController.dispose();
@@ -232,7 +240,7 @@ class _SuperAndroidTextFieldState extends State<SuperAndroidTextField> with Sing
 
     _textEditingController.removeListener(_onTextOrSelectionChange);
     if (widget.textController == null) {
-      WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         // Dispose after the current frame so that other widgets have
         // time to remove their listeners.
         _textEditingController.dispose();
@@ -333,7 +341,7 @@ class _SuperAndroidTextFieldState extends State<SuperAndroidTextField> with Sing
         link: _textFieldLayerLink,
         child: AndroidTextFieldTouchInteractor(
           focusNode: _focusNode,
-          selectableTextKey: _textContentKey,
+          textKey: _textContentKey,
           textFieldLayerLink: _textFieldLayerLink,
           textController: _textEditingController,
           editingOverlayController: _editingOverlayController,
@@ -383,23 +391,19 @@ class _SuperAndroidTextFieldState extends State<SuperAndroidTextField> with Sing
         ? _textEditingController.text.computeTextSpan(widget.textStyleBuilder)
         : TextSpan(text: "", style: widget.textStyleBuilder({}));
 
-    final emptyTextCaretHeight =
-        (widget.textStyleBuilder({}).fontSize ?? 0.0) * (widget.textStyleBuilder({}).height ?? 1.0);
-
-    // TODO: switch out textSelectionDecoration and textCaretFactory
-    //       for backgroundBuilders and foregroundBuilders, respectively
-    //
-    //       add the floating cursor as a foreground builder
-    return SuperSelectableText(
+    return SuperTextWithSelection.single(
       key: _textContentKey,
-      textSpan: textSpan,
+      richText: textSpan,
       textAlign: widget.textAlign,
-      textSelection: _textEditingController.selection,
-      textSelectionDecoration: TextSelectionDecoration(selectionColor: widget.selectionColor),
-      showCaret: true,
-      textCaretFactory: AndroidTextCaretFactory(
-        color: widget.caretColor,
-        emptyTextCaretHeight: emptyTextCaretHeight,
+      userSelection: UserSelection(
+        highlightStyle: SelectionHighlightStyle(
+          color: widget.selectionColor,
+        ),
+        caretStyle: CaretStyle(
+          color: widget.caretColor,
+        ),
+        selection: _textEditingController.selection,
+        hasCaret: true,
       ),
     );
   }

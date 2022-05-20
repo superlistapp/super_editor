@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:super_editor/src/infrastructure/blinking_caret.dart';
 import 'package:super_editor/super_editor.dart';
 
 import '../_document_test_tools.dart';
@@ -16,7 +17,7 @@ void main() {
       testWidgets('on Android, keeps caret visible when keyboard appears', (WidgetTester tester) async {
         tester.binding.window
           ..physicalSizeTestValue = screenSizeWithoutKeyboard
-          ..textScaleFactorTestValue = 1.0
+          ..platformDispatcher.textScaleFactorTestValue = 1.0
           ..devicePixelRatioTestValue = 1.0;
 
         await tester.pumpWidget(
@@ -37,30 +38,23 @@ void main() {
           frameCount: keyboardExpansionFrameCount,
         );
 
-        // Hard-code a reasonable line-height because carets do not currently
-        // report their height.
-        // TODO: look up the actual line height of the text at the selection extent
-        // TODO: update caret implementation so that it reports its own height.
-        const lineHeight = 18;
-
         // Ensure that the editor auto-scrolled to keep the caret visible.
         // TODO: there are 2 `BlinkingCaret` at the same time. There should be only 1 caret
         final caretFinder = find.byType(BlinkingCaret);
-        final caretOffset = tester.getTopLeft(caretFinder.last);
-        final bottomOfCaret = caretOffset.dy + lineHeight;
+        final caretOffset = tester.getBottomLeft(caretFinder.last);
 
         // The default trailing boundary of the default `SuperEditor`
         const trailingBoundary = 54.0;
 
         // The caret should be at the trailing boundary, within a small margin of error
-        expect(bottomOfCaret, lessThanOrEqualTo(screenSizeWithKeyboard.height - trailingBoundary + .001));
-        expect(bottomOfCaret, greaterThanOrEqualTo(screenSizeWithKeyboard.height - trailingBoundary - .001));
+        expect(caretOffset.dy, lessThanOrEqualTo(screenSizeWithKeyboard.height - trailingBoundary));
+        expect(caretOffset.dy, greaterThanOrEqualTo(screenSizeWithKeyboard.height - trailingBoundary));
       });
 
       testWidgets('on iOS, keeps caret visible when keyboard appears', (WidgetTester tester) async {
         tester.binding.window
           ..physicalSizeTestValue = screenSizeWithoutKeyboard
-          ..textScaleFactorTestValue = 1.0
+          ..platformDispatcher.textScaleFactorTestValue = 1.0
           ..devicePixelRatioTestValue = 1.0;
 
         await tester.pumpWidget(
@@ -81,24 +75,17 @@ void main() {
           frameCount: keyboardExpansionFrameCount,
         );
 
-        // Hard-code a reasonable line-height because carets do not currently
-        // report their height.
-        // TODO: look up the actual line height of the text at the selection extent
-        // TODO: update caret implementation so that it reports its own height.
-        const lineHeight = 18;
-
         // Ensure that the editor auto-scrolled to keep the caret visible.
         // TODO: there are 2 `BlinkingCaret` at the same time. There should be only 1 caret
         final caretFinder = find.byType(BlinkingCaret);
-        final caretOffset = tester.getTopLeft(caretFinder.last);
-        final bottomOfCaret = caretOffset.dy + lineHeight;
+        final caretOffset = tester.getBottomLeft(caretFinder.last);
 
         // The default trailing boundary of the default `SuperEditor`
         const trailingBoundary = 54.0;
 
         // The caret should be at the trailing boundary, within a small margin of error
-        expect(bottomOfCaret, lessThanOrEqualTo(screenSizeWithKeyboard.height - trailingBoundary + .001));
-        expect(bottomOfCaret, greaterThanOrEqualTo(screenSizeWithKeyboard.height - trailingBoundary - .001));
+        expect(caretOffset.dy, lessThanOrEqualTo(screenSizeWithKeyboard.height - trailingBoundary));
+        expect(caretOffset.dy, greaterThanOrEqualTo(screenSizeWithKeyboard.height - trailingBoundary));
       });
     });
   });

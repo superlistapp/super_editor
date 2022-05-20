@@ -15,7 +15,7 @@ import 'package:super_editor/src/infrastructure/platforms/ios/magnifier.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/selection_handles.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/toolbar_position_delegate.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
-import 'package:super_text/super_selectable_text.dart';
+import 'package:super_text_layout/super_text_layout.dart';
 
 import 'document_gestures.dart';
 import 'document_gestures_touch.dart';
@@ -158,7 +158,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
 
     widget.composer.addListener(_onSelectionChange);
 
-    WidgetsBinding.instance!.addObserver(this);
+    WidgetsBinding.instance.addObserver(this);
   }
 
   @override
@@ -173,7 +173,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     // This is posted to the next frame because the first time this method
     // runs, we haven't attached to our own ScrollController yet, so
     // this.scrollPosition might be null.
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       final newScrollPosition = scrollPosition;
       if (newScrollPosition != _activeScrollPosition) {
         setState(() {
@@ -218,7 +218,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
       //       problem exists for documents, too.
       _removeEditingOverlayControls();
 
-      WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         _showEditingControlsOverlay();
       });
     }
@@ -226,7 +226,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
 
   @override
   void dispose() {
-    WidgetsBinding.instance!.removeObserver(this);
+    WidgetsBinding.instance.removeObserver(this);
 
     widget.document.removeListener(_onDocumentChange);
 
@@ -250,9 +250,10 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     // The available screen dimensions may have changed, e.g., due to keyboard
     // appearance/disappearance. Reflow the layout. Use a post-frame callback
     // to give the rest of the UI a chance to reflow, first.
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       if (mounted) {
         _ensureSelectionExtentIsVisible();
+        _updateHandlesAfterSelectionOrLayoutChange();
 
         setState(() {
           // reflow document layout
@@ -300,7 +301,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   void _onDocumentChange() {
     _editingController.hideToolbar();
 
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       // The user may have changed the type of node, e.g., paragraph to
       // blockquote, which impacts the caret size and position. Reposition
       // the caret on the next frame.
@@ -314,7 +315,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   void _onSelectionChange() {
     // The selection change might correspond to new content that's not
     // laid out yet. Wait until the next frame to update visuals.
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       _updateHandlesAfterSelectionOrLayoutChange();
     });
   }
@@ -1179,7 +1180,7 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
   final _upstreamHandleKey = GlobalKey();
   final _downstreamHandleKey = GlobalKey();
 
-  late CaretBlinkController _caretBlinkController;
+  late BlinkController _caretBlinkController;
   Offset? _prevCaretOffset;
 
   static const _defaultFloatingCursorHeight = 20.0;
@@ -1192,7 +1193,7 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
   @override
   void initState() {
     super.initState();
-    _caretBlinkController = CaretBlinkController(tickerProvider: this);
+    _caretBlinkController = BlinkController(tickerProvider: this);
     _prevCaretOffset = widget.editingController.caretTop;
     widget.editingController.addListener(_onEditingControllerChange);
     widget.floatingCursorController.addListener(_onFloatingCursorChange);
@@ -1223,11 +1224,9 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
   void _onEditingControllerChange() {
     if (_prevCaretOffset != widget.editingController.caretTop) {
       if (widget.editingController.caretTop == null) {
-        _caretBlinkController.onCaretRemoved();
-      } else if (_prevCaretOffset == null) {
-        _caretBlinkController.onCaretPlaced();
+        _caretBlinkController.stopBlinking();
       } else {
-        _caretBlinkController.onCaretMoved();
+        _caretBlinkController.jumpToOpaque();
       }
 
       _prevCaretOffset = widget.editingController.caretTop;
@@ -1260,7 +1259,7 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
       // The selection is expanded. First we need to collapse it, then
       // we can start showing the floating cursor.
       widget.composer.selection = widget.composer.selection!.collapseDownstream(widget.document);
-      WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         _onFloatingCursorChange();
       });
     }

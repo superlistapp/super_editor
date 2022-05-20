@@ -445,6 +445,14 @@ class _InlineMarkdownToDocument implements md.NodeVisitor {
           end: styledText.text.length - 1,
         ),
       );
+    } else if (element.tag == 'a') {
+      styledText.addAttribution(
+        LinkAttribution(url: Uri.parse(element.attributes['href']!)),
+        SpanRange(
+          start: 0,
+          end: styledText.text.length - 1,
+        ),
+      );
     }
 
     if (_textStack.isNotEmpty) {

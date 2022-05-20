@@ -18,6 +18,7 @@ import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 
 import 'attributions.dart';
+import 'document_input_keyboard.dart';
 import 'list_items.dart';
 
 /// Governs document input that comes from the operating system's
@@ -38,15 +39,31 @@ class DocumentImeInteractor extends StatefulWidget {
     this.autofocus = false,
     required this.editContext,
     required this.softwareKeyboardHandler,
+    this.hardwareKeyboardActions = const [],
     this.floatingCursorController,
     required this.child,
   }) : super(key: key);
 
   final FocusNode? focusNode;
+
   final bool autofocus;
+
   final EditContext editContext;
+
   final SoftwareKeyboardHandler softwareKeyboardHandler;
+
+  /// All the actions that the user can execute with physical hardware
+  /// keyboard keys.
+  ///
+  /// [keyboardActions] operates as a Chain of Responsibility. Starting
+  /// from the beginning of the list, a [DocumentKeyboardAction] is
+  /// given the opportunity to handle the currently pressed keys. If that
+  /// [DocumentKeyboardAction] reports the keys as handled, then execution
+  /// stops. Otherwise, execution continues to the next [DocumentKeyboardAction].
+  final List<DocumentKeyboardAction> hardwareKeyboardActions;
+
   final FloatingCursorController? floatingCursorController;
+
   final Widget child;
 
   @override
@@ -210,14 +227,14 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
 
   bool _isApplyingDeltas = false;
 
-  void _syncImeWithDocumentAndComposer() {
+  void _syncImeWithDocumentAndComposer([TextRange? composingRegion]) {
     final selection = widget.editContext.composer.selection;
     if (selection != null) {
       editorImeLog.fine("Syncing IME with Doc and Composer");
       currentTextEditingValue = DocumentImeSerializer(
         widget.editContext.editor.document,
         selection,
-      ).toTextEditingValue();
+      ).toTextEditingValue().copyWith(composing: composingRegion ?? currentTextEditingValue.composing);
     }
   }
 
@@ -243,7 +260,7 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
     widget.softwareKeyboardHandler.applyDeltas(textEditingDeltas);
     _isApplyingDeltas = false;
 
-    _syncImeWithDocumentAndComposer();
+    _syncImeWithDocumentAndComposer(textEditingDeltas.last.composing);
 
     editorImeLog.fine("IME value after applying deltas: $currentTextEditingValue");
 
@@ -309,9 +326,61 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
   }
 
   @override
+  void insertTextPlaceholder(Size size) {
+    // No-op: this is for scribble
+  }
+
+  @override
+  void removeTextPlaceholder() {
+    // No-op: this is for scribble
+  }
+
+  @override
+  void showToolbar() {
+    // No-op: this is for scribble
+  }
+
+  @override
   void connectionClosed() {
     editorImeLog.info("IME connection closed");
     _inputConnection = null;
+  }
+
+  KeyEventResult _onKeyPressed(FocusNode node, RawKeyEvent keyEvent) {
+    if (keyEvent is! RawKeyDownEvent) {
+      editorKeyLog.finer("Received key event, but ignoring because it's not a down event: $keyEvent");
+      return KeyEventResult.handled;
+    }
+
+    // Try to execute an app shortcut for this key combo. If a shortcut
+    // runs, then return that result and skip editor handling. If no shortcut
+    // runs, then try to process this key in the editor.
+    final shortcuts = Shortcuts.maybeOf(node.context!);
+    if (shortcuts != null) {
+      final result = shortcuts.handleKeypress(node.context!, keyEvent);
+      if (result != KeyEventResult.ignored) {
+        return result;
+      }
+    }
+
+    editorKeyLog.info("Handling key press: $keyEvent");
+    ExecutionInstruction instruction = ExecutionInstruction.continueExecution;
+    int index = 0;
+    while (instruction == ExecutionInstruction.continueExecution && index < widget.hardwareKeyboardActions.length) {
+      instruction = widget.hardwareKeyboardActions[index](
+        editContext: widget.editContext,
+        keyEvent: keyEvent,
+      );
+      index += 1;
+    }
+
+    switch (instruction) {
+      case ExecutionInstruction.haltExecution:
+        return KeyEventResult.handled;
+      case ExecutionInstruction.continueExecution:
+      case ExecutionInstruction.blocked:
+        return KeyEventResult.ignored;
+    }
   }
 
   @override
@@ -319,6 +388,7 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
     return Focus(
       focusNode: _focusNode,
       autofocus: widget.autofocus,
+      onKey: widget.hardwareKeyboardActions.isEmpty ? null : _onKeyPressed,
       child: widget.child,
     );
   }

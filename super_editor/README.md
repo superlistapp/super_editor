@@ -1,10 +1,11 @@
+<p align="center">
+  <img src="https://user-images.githubusercontent.com/7259036/168734271-bf146672-57a9-4533-84ae-4cc28c356bc5.png" width="300" alt="Super Editor"><br>
+  <span><b>Open source, configurable, extensible text editor and document renderer for Flutter.</b></span><br><br>
+</p>
+
 <img src="https://raw.githubusercontent.com/superlistapp/super_editor/main/super_editor/doc/marketing/readme-header.png" width="100%" alt="Super Editor">
 
-# Super Editor
-
-Super Editor is an open source, configurable, extensible text editor and document renderer for Flutter apps.
-
-`super_editor` was initiated by [Superlist](https://superlist.com) and is being implemented and maintained by [SuperDeclarative!](https://superdeclarative.com), Superlist, and the contributors.
+`super_editor` was initiated by [Superlist](https://superlist.com) and is being implemented and maintained by the [Flutter Bounty Hunters](https://flutterbountyhunters.com), Superlist, and the contributors.
 
 ## Supported Platforms
 

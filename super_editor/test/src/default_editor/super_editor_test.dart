@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:super_editor/super_editor.dart';
+import 'package:super_text_layout/super_text_layout.dart';
 
 import 'test_documents.dart';
 
@@ -83,8 +84,8 @@ void main() {
         );
 
         // Ensure that the initial text is black
-        expect(find.byType(RichText), findsOneWidget);
-        final richText = (find.byType(RichText).evaluate().first.widget) as RichText;
+        expect(find.byType(LayoutAwareRichText), findsOneWidget);
+        final richText = (find.byType(LayoutAwareRichText).evaluate().first.widget) as LayoutAwareRichText;
         expect(richText.text.style!.color, Colors.black);
 
         await tester.pumpWidget(
@@ -100,8 +101,8 @@ void main() {
 
         // Ensure that the new stylesheet was applied, and the text is
         // now painted white.
-        expect(find.byType(RichText), findsOneWidget);
-        final richText2 = (find.byType(RichText).evaluate().first.widget) as RichText;
+        expect(find.byType(LayoutAwareRichText), findsOneWidget);
+        final richText2 = (find.byType(LayoutAwareRichText).evaluate().first.widget) as LayoutAwareRichText;
         expect(richText2.text.style!.color, Colors.white);
       });
     });
