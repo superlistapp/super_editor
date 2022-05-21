@@ -102,10 +102,30 @@ class _MyAppState extends State<MyApp> {
     void build(context) {
         return SuperEditor.custom(
             editor: _myDocumentEditor,
-            textStyleBuilder: /** INSERT CUSTOMIZATION **/ null,
             selectionStyle: /** INSERT CUSTOMIZATION **/ null,
-            keyboardActions: /** INSERT CUSTOMIZATION **/ null,
-            componentBuilders: /** INSERT CUSTOMIZATION **/ null,
+            stylesheet: defaultStylesheet.copyWith(
+                addRulesAfter: [
+                    // Add any custom document styles, for example, you might
+                    // apply styles to a custom Task node type.
+                    StyleRule(
+                        const BlockSelector("task"),
+                        (document, node) {
+                            if (node is! TaskNode) {
+                                return {};
+                            }
+
+                            return {
+                                "padding": const CascadingPadding.only(top: 24),
+                            };
+                        },
+                    )
+                ],
+            ),
+            componentBuilders: [
+              ...defaultComponentBuilders,
+              // Add any of your own custom builders for document
+              // components, e.g., paragraphs, images, list items.
+            ],
         );
     }
 }
@@ -114,7 +134,3 @@ class _MyAppState extends State<MyApp> {
 If your app requires deeper customization than `SuperEditor` provides, you can construct your own version of the `SuperEditor` widget by using lower level tools within the `super_editor` package.
 
 See the wiki for more information about how to customize an editor experience.
-
-## Display a document renderer
-
-TODO: implement static document rendering
