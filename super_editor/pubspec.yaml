@@ -31,7 +31,7 @@ dependency_overrides:
     path: ../super_text_layout
 
 dev_dependencies:
-  flutter_lints: ^1.0.0
+  flutter_lints: ^2.0.1
   golden_toolkit: ^0.11.0
   mockito: ^5.0.4
 
