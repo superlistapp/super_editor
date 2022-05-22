@@ -344,6 +344,10 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     _positionToolbar();
   }
 
+  /// Returns true if this widget has `BoxConstraints` with `maxHeight` defined
+  /// and false otherwise.
+  bool get _hasMaxHeightConstraint => (context.findRenderObject() as RenderBox).constraints.maxHeight < double.infinity;
+
   /// Returns the layout for the current document, which answers questions
   /// about the locations and sizes of visual components within the layout.
   DocumentLayout get _docLayout => widget.getDocumentLayout();
@@ -351,25 +355,28 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   /// Returns the `ScrollPosition` that controls the scroll offset of
   /// this widget.
   ///
-  /// If this widget has an ancestor `Scrollable`, then the returned
-  /// `ScrollPosition` belongs to that ancestor `Scrollable`, and this
-  /// widget doesn't include a `ScrollView`.
+  /// If this widget has an ancestor `Scrollable` and doesn't have a `maxHeight`
+  /// constraint, then the returned `ScrollPosition` belongs to that ancestor 
+  /// `Scrollable`, and this widget doesn't include a `ScrollView`.
   ///
-  /// If this widget doesn't have an ancestor `Scrollable`, then this
-  /// widget includes a `ScrollView` and the `ScrollView`'s position
+  /// If this widget doesn't have an ancestor `Scrollable` or has a `maxHeight`
+  /// constraint, then this widget includes a `ScrollView` and the `ScrollView`'s position
   /// is returned.
-  ScrollPosition get scrollPosition => _ancestorScrollPosition ?? _scrollController.position;
+  ScrollPosition get scrollPosition => _hasMaxHeightConstraint 
+    ? _scrollController.position  
+    : _ancestorScrollPosition ?? _scrollController.position;
 
   /// Returns the `RenderBox` for the scrolling viewport.
   ///
-  /// If this widget has an ancestor `Scrollable`, then the returned
-  /// `RenderBox` belongs to that ancestor `Scrollable`.
+  /// If this widget has an ancestor `Scrollable` and doesn't have a `maxHeight`
+  /// constraint, then the returned `RenderBox` belongs to that ancestor `Scrollable`.
   ///
-  /// If this widget doesn't have an ancestor `Scrollable`, then this
-  /// widget includes a `ScrollView` and this `State`'s render object
-  /// is the viewport `RenderBox`.
-  RenderBox get viewportBox =>
-      (Scrollable.of(context)?.context.findRenderObject() ?? context.findRenderObject()) as RenderBox;
+  /// If this widget doesn't have an ancestor `Scrollable` or has a `maxHeight` 
+  /// constraint, then this widget includes a `ScrollView` and this `State`'s 
+  /// render object is the viewport `RenderBox`.
+  RenderBox get viewportBox => _hasMaxHeightConstraint
+      ? context.findRenderObject() as RenderBox    
+      : (Scrollable.of(context)?.context.findRenderObject() ?? context.findRenderObject()) as RenderBox;
 
   RenderBox get interactorBox => context.findRenderObject() as RenderBox;
 

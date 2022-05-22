@@ -85,7 +85,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   ScrollPosition? _ancestorScrollPosition;
   // The actual ScrollPosition that's used for the document layout, either
   // the Scrollable installed by this interactor, or an ancestor Scrollable.
-  ScrollPosition? _activeScrollPosition;
+  ScrollPosition? _activeScrollPosition;  
 
   // OverlayEntry that displays editing controls, e.g.,
   // drag handles, magnifier, and toolbar.
@@ -345,28 +345,35 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   /// about the locations and sizes of visual components within the layout.
   DocumentLayout get _docLayout => widget.getDocumentLayout();
 
+  /// Returns true if this widget has `BoxConstraints` with `maxHeight` defined
+  /// and false otherwise.
+  bool get _hasMaxHeightContraint => (context.findRenderObject() as RenderBox).constraints.maxHeight < double.infinity;
+
   /// Returns the `ScrollPosition` that controls the scroll offset of
   /// this widget.
   ///
-  /// If this widget has an ancestor `Scrollable`, then the returned
-  /// `ScrollPosition` belongs to that ancestor `Scrollable`, and this
-  /// widget doesn't include a `ScrollView`.
+  /// If this widget has an ancestor `Scrollable` and doesn't have a `maxHeight`
+  /// constraint, then the returned `ScrollPosition` belongs to that ancestor 
+  /// `Scrollable`, and this widget doesn't include a `ScrollView`.
   ///
-  /// If this widget doesn't have an ancestor `Scrollable`, then this
-  /// widget includes a `ScrollView` and the `ScrollView`'s position
+  /// If this widget doesn't have an ancestor `Scrollable` or has a `maxHeight`
+  /// constraint, then this widget includes a `ScrollView` and the `ScrollView`'s position
   /// is returned.
-  ScrollPosition get scrollPosition => _ancestorScrollPosition ?? _scrollController.position;
+  ScrollPosition get scrollPosition => _hasMaxHeightContraint 
+      ? _scrollController.position
+      : _ancestorScrollPosition ?? _scrollController.position;
 
   /// Returns the `RenderBox` for the scrolling viewport.
   ///
-  /// If this widget has an ancestor `Scrollable`, then the returned
-  /// `RenderBox` belongs to that ancestor `Scrollable`.
+  /// If this widget has an ancestor `Scrollable` and doesn't have a `maxHeight`
+  /// constraint, then the returned `RenderBox` belongs to that ancestor `Scrollable`.
   ///
-  /// If this widget doesn't have an ancestor `Scrollable`, then this
-  /// widget includes a `ScrollView` and this `State`'s render object
-  /// is the viewport `RenderBox`.
-  RenderBox get viewportBox =>
-      (Scrollable.of(context)?.context.findRenderObject() ?? context.findRenderObject()) as RenderBox;
+  /// If this widget doesn't have an ancestor `Scrollable` or has a `maxHeight` 
+  /// constraint, then this widget includes a `ScrollView` and this `State`'s 
+  /// render object is the viewport `RenderBox`.
+  RenderBox get viewportBox => _hasMaxHeightContraint 
+      ? context.findRenderObject() as RenderBox
+      : (Scrollable.of(context)?.context.findRenderObject() ?? context.findRenderObject()) as RenderBox;
 
   /// Converts the given [offset] from the [DocumentInteractor]'s coordinate
   /// space to the [DocumentLayout]'s coordinate space.
@@ -384,7 +391,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   /// [interactorOffset] is transformed into the ancestor coordinate space.
   Offset _interactorOffsetInViewport(Offset interactorOffset) {
     // Viewport might be our box, or an ancestor box if we're inside someone
-    // else's Scrollable.
+    // else's Scrollable and don't have a maxHeight constraint.
     final interactorBox = context.findRenderObject() as RenderBox;
     return viewportBox.globalToLocal(
       interactorBox.localToGlobal(interactorOffset),
@@ -844,7 +851,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
         documentLayerLink: _documentLayoutLink,
         child: widget.child,
       ),
-    );
+    );    
   }
 
   Widget _buildGestureInput({
