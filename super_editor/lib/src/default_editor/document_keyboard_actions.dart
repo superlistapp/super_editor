@@ -12,6 +12,62 @@ import 'document_input_keyboard.dart';
 import 'paragraph.dart';
 import 'text.dart';
 
+ExecutionInstruction scrollWhenNavigationKeyPressed({
+  required EditContext editContext,
+  required RawKeyEvent keyEvent,
+}) {
+  //the super_editor doesn't always have a scroll controller
+  if (editContext.scrollController == null) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (keyEvent.logicalKey.keyId < LogicalKeyboardKey.end.keyId ||
+      keyEvent.logicalKey.keyId > LogicalKeyboardKey.pageUp.keyId) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  final scrollController = editContext.scrollController!;
+
+  double? jumpTo;
+
+  //end key or fn-arrowDn (on Mac)
+  if (keyEvent.logicalKey == LogicalKeyboardKey.end) {
+    jumpTo = scrollController.position.maxScrollExtent;
+    //home key or fn-arrowUp (on Mac)
+  } else if (keyEvent.logicalKey == LogicalKeyboardKey.home) {
+    jumpTo = scrollController.position.minScrollExtent;
+    //pgDn key or fn-arrowDn (on Mac)
+  } else if (keyEvent.logicalKey == LogicalKeyboardKey.pageDown) {
+    final nextJump = scrollController.offset + scrollController.position.extentInside;
+
+    jumpTo =
+        nextJump < scrollController.position.maxScrollExtent ? nextJump : scrollController.position.maxScrollExtent;
+    //pgUp key or fn-arrowUp (on Mac)
+  } else if (keyEvent.logicalKey == LogicalKeyboardKey.pageUp) {
+    final nextJump = scrollController.offset - scrollController.position.extentInside;
+
+    jumpTo = nextJump > 0 ? nextJump : scrollController.position.minScrollExtent;
+  }
+
+  if (jumpTo != null) {
+    scrollController.jumpTo(jumpTo);
+  }
+
+  return ExecutionInstruction.haltExecution;
+}
+
+ExecutionInstruction doNothingWhenFnKeyPressed({
+  required EditContext editContext,
+  required RawKeyEvent keyEvent,
+}) {
+  if (keyEvent.logicalKey.keyId < LogicalKeyboardKey.f1.keyId ||
+      keyEvent.logicalKey.keyId > LogicalKeyboardKey.f12.keyId) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  return ExecutionInstruction.haltExecution;
+}
+
 ExecutionInstruction doNothingWhenThereIsNoSelection({
   required EditContext editContext,
   required RawKeyEvent keyEvent,

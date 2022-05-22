@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/default_editor/common_editor_operations.dart';
 
@@ -17,12 +18,15 @@ class EditContext {
   ///
   /// The [documentLayout] is passed as a [getDocumentLayout] callback that
   /// should return the current layout as it might change.
-  EditContext({
-    required this.editor,
-    required DocumentLayout Function() getDocumentLayout,
-    required this.composer,
-    required this.commonOps,
-  }) : _getDocumentLayout = getDocumentLayout;
+  EditContext(
+      {required this.editor,
+      required DocumentLayout Function() getDocumentLayout,
+      required this.composer,
+      required this.commonOps,
+      this.scrollController})
+      : _getDocumentLayout = getDocumentLayout;
+
+  final ScrollController? scrollController;
 
   /// The editor of the [Document] that allows executing commands that alter the
   /// structure of the document.

@@ -347,6 +347,7 @@ class _SuperEditorState extends State<SuperEditor> {
 
   void _createEditContext() {
     _editContext = EditContext(
+      scrollController: widget.scrollController,
       editor: widget.editor,
       composer: _composer,
       getDocumentLayout: () => _docLayoutKey.currentState as DocumentLayout,
@@ -576,6 +577,8 @@ final defaultComponentBuilders = <ComponentBuilder>[
 
 /// Keyboard actions for the standard [SuperEditor].
 final defaultKeyboardActions = <DocumentKeyboardAction>[
+  scrollWhenNavigationKeyPressed,
+  doNothingWhenFnKeyPressed,
   doNothingWhenThereIsNoSelection,
   pasteWhenCmdVIsPressed,
   copyWhenCmdCIsPressed,
