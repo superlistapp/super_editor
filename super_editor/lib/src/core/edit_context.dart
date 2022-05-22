@@ -1,6 +1,6 @@
+import 'package:flutter/widgets.dart';
+import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/default_editor/common_editor_operations.dart';
-
-import 'document.dart';
 import 'document_composer.dart';
 import 'document_layout.dart';
 import 'editor.dart';
@@ -23,7 +23,10 @@ class SuperEditorContext {
     required DocumentLayout Function() getDocumentLayout,
     required this.composer,
     required this.commonOps,
+    this.scrollController,
   }) : _getDocumentLayout = getDocumentLayout;
+
+  final ScrollController? scrollController;
 
   /// The editor of the [Document] that allows executing commands that alter the
   /// structure of the document.
