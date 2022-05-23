@@ -85,7 +85,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   ScrollPosition? _ancestorScrollPosition;
   // The actual ScrollPosition that's used for the document layout, either
   // the Scrollable installed by this interactor, or an ancestor Scrollable.
-  ScrollPosition? _activeScrollPosition;  
+  ScrollPosition? _activeScrollPosition;
 
   // OverlayEntry that displays editing controls, e.g.,
   // drag handles, magnifier, and toolbar.
@@ -391,7 +391,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   /// [interactorOffset] is transformed into the ancestor coordinate space.
   Offset _interactorOffsetInViewport(Offset interactorOffset) {
     // Viewport might be our box, or an ancestor box if we're inside someone
-    // else's Scrollable and don't have a maxHeight constraint.
+    // else's Scrollable and we don't have a maxHeight constraint.
     final interactorBox = context.findRenderObject() as RenderBox;
     return viewportBox.globalToLocal(
       interactorBox.localToGlobal(interactorOffset),
@@ -851,7 +851,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
         documentLayerLink: _documentLayoutLink,
         child: widget.child,
       ),
-    );    
+    );
   }
 
   Widget _buildGestureInput({
