@@ -74,7 +74,7 @@ void main() {
     });
 
     group('inserting a space character', () {
-      test('it turns the URL before the space into a link', () {
+      test('automatically converts a URL into a link', () {
         // The `https://flutter.devis` typo was done on purpose
         // because a space will be added after the `dev`
 
@@ -137,6 +137,7 @@ void main() {
           },
         );
       });
+
       test('it does nothing to an existing link', () {
         // Adding [LinkAttribution] to a position that already has it
         // could cause spans mismatching, which potentially leads to errors.

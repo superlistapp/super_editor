@@ -303,7 +303,7 @@ void main() {
     });
 
     group('Inserting a space character', () {
-      test('converts the URL before the space to a link', () {
+      test('automatically converts a URL into a link', () {
         final editContext = _createEditContext();
 
         // Add a paragraph to the document.
@@ -363,6 +363,7 @@ void main() {
           },
         );
       });
+
       test('it does nothing to an existing link', () {
         // Adding [LinkAttribution] to a position that already has it
         // could cause spans mismatching, which potentially leads to errors.
