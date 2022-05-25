@@ -771,7 +771,7 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
 
     editorGesturesLog.finest("Scrolling up on tick");
 
-    // If this widget sits inside an ancestor Scrollable and doesn't have a maxHeight constraint,
+    // If this widget sits inside an ancestor Scrollable and don't have a maxHeight constraint,
     // adjust the drag-end offset to account for the scroll offset of the ancestor Scrollable.
     final scrollDeltaWhileDragging = _dragStartScrollOffset! - _scrollPosition.pixels;
     final ancestorScrollableDragEndAdjustment =
