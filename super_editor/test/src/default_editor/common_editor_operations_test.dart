@@ -160,7 +160,7 @@ void main() {
       });
     });
     group("pasting", () {
-      testWidgets("automatically converts a URL to a link", (tester) async {
+      testWidgets("automatically converts a URL in the pasted text to a link", (tester) async {
         // Note: We need to ensure initialized because we access the Clipboard.
         TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -226,6 +226,7 @@ void main() {
           },
         );
       });
+
       testWidgets("does nothing to an existing link", (tester) async {
         // Adding [LinkAttribution] to a position that already has it
         // could cause spans mismatching, which potentially leads to errors.
