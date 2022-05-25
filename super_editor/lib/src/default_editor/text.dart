@@ -191,22 +191,26 @@ extension DocumentSelectionWithText on Document {
 extension WordsDocumentPosition on String {
   /// Given [documentPosition] as the starting position of the text in the [Document],
   /// invoke [action] with each [word] and its corresponding [documentSelection]
+  ///
+  /// For Matt: I'm not sure if this is the version after refactoring you would expect,
+  /// but I believe this one is better than the last one. The reason I can't return an
+  /// [Iterable] as you said is I need to invoke action on 2 variables, and creating a
+  /// wrapper class only for this method is really confusing.
   void forEachWord(
     DocumentPosition documentPosition,
     void Function(String word, DocumentSelection documentSelection) action,
   ) {
-    final textSelections = textSelectionsOnWord();
     final textPosition = documentPosition.nodePosition as TextNodePosition;
 
-    for (final textSelection in textSelections) {
-      final word = textSelection.textInside(this);
+    for (final wordTextSelection in wordTextSelections) {
+      final word = wordTextSelection.textInside(this);
       final documentSelection = documentPositionToDocumentSelection(
         documentPosition: documentPosition.copyWith(
           nodePosition: textPosition.copyWith(
-            offset: textPosition.offset + textSelection.start,
+            offset: textPosition.offset + wordTextSelection.start,
           ),
         ),
-        extentOffset: textSelection.end - textSelection.start,
+        extentOffset: wordTextSelection.end - wordTextSelection.start,
       );
 
       action(word, documentSelection);
@@ -214,7 +218,7 @@ extension WordsDocumentPosition on String {
   }
 
   /// Returns list of [TextSelection] on each word in text
-  List<TextSelection> textSelectionsOnWord() {
+  List<TextSelection> get wordTextSelections {
     final List<TextSelection> textSelections = [];
     var offset = 0;
 
