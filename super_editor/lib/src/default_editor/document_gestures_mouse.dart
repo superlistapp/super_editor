@@ -119,7 +119,6 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
 
   late ScrollController _scrollController;
   ScrollPosition? _ancestorScrollPosition;
-  bool _hasMaxHeightConstraint = false;
 
   // Tracks user drag gestures for selection purposes.
   SelectionType _selectionType = SelectionType.position;
@@ -211,28 +210,25 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
   /// Returns the `ScrollPosition` that controls the scroll offset of
   /// this widget.
   ///
-  /// If this widget has an ancestor `Scrollable` and doesn't have a `maxHeight`
-  /// constraint, then the returned `ScrollPosition` belongs to that ancestor 
-  /// `Scrollable`, and this widget doesn't include a `ScrollView`.
+  /// If this widget has an ancestor `Scrollable`, then the returned
+  /// `ScrollPosition` belongs to that ancestor `Scrollable`, and this
+  /// widget doesn't include a `ScrollView`.
   ///
-  /// If this widget doesn't have an ancestor `Scrollable` or has a `maxHeight`
-  /// constraint, then this widget includes a `ScrollView` and the `ScrollView`'s position
+  /// If this widget doesn't have an ancestor `Scrollable`, then this
+  /// widget includes a `ScrollView` and the `ScrollView`'s position
   /// is returned.
-  ScrollPosition get _scrollPosition => _hasMaxHeightConstraint 
-      ? _scrollController.position
-      : _ancestorScrollPosition ?? _scrollController.position;
+  ScrollPosition get _scrollPosition => _ancestorScrollPosition ?? _scrollController.position;
 
   /// Returns the `RenderBox` for the scrolling viewport.
   ///
-  /// If this widget has an ancestor `Scrollable` and doesn't have a `maxHeight`
-  /// constraint, then the returned `RenderBox` belongs to that ancestor `Scrollable`.
+  /// If this widget has an ancestor `Scrollable`, then the returned
+  /// `RenderBox` belongs to that ancestor `Scrollable`.
   ///
-  /// If this widget doesn't have an ancestor `Scrollable` or has a `maxHeight` 
-  /// constraint, then this widget includes a `ScrollView` and this `State`'s 
-  /// render object is the viewport `RenderBox`.
-  RenderBox get _viewport => _hasMaxHeightConstraint  
-      ? context.findRenderObject() as RenderBox
-      : (Scrollable.of(context)?.context.findRenderObject() ?? context.findRenderObject()) as RenderBox;
+  /// If this widget doesn't have an ancestor `Scrollable`, then this
+  /// widget includes a `ScrollView` and this `State`'s render object
+  /// is the viewport `RenderBox`.
+  RenderBox get _viewport =>
+      (Scrollable.of(context)?.context.findRenderObject() ?? context.findRenderObject()) as RenderBox;
 
   bool get _isShiftPressed =>
       (RawKeyboard.instance.keysPressed.contains(LogicalKeyboardKey.shiftLeft) ||
@@ -250,7 +246,7 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
   /// [interactorOffset] is transformed into the ancestor coordinate space.
   Offset _interactorOffsetInViewport(Offset interactorOffset) {
     // Viewport might be our box, or an ancestor box if we're inside someone
-    // else's Scrollable and we don't have a maxHeight constraint.
+    // else's Scrollable.
     final viewportBox = _viewport;
     final interactorBox = context.findRenderObject() as RenderBox;
     return viewportBox.globalToLocal(
@@ -291,7 +287,7 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     }
 
     // Viewport might be our box, or an ancestor box if we're inside someone
-    // else's Scrollable and we don't have a maxHeight constraint.
+    // else's Scrollable.
     final viewportBox = _viewport;
 
     final docBox = _documentWrapperKey.currentContext!.findRenderObject() as RenderBox;
@@ -577,7 +573,7 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     // in the document is impacted by auto-scrolling behavior.
     final scrollDeltaWhileDragging = _dragStartScrollOffset! - _scrollPosition.pixels;
     final ancestorScrollableDragEndAdjustment =
-        _hasAncestorScrollable && !_hasMaxHeightConstraint ? Offset(0, -scrollDeltaWhileDragging) : Offset.zero;
+        _hasAncestorScrollable ? Offset(0, -scrollDeltaWhileDragging) : Offset.zero;
     _dragEndInDoc = _getDocOffsetFromInteractorOffset(_dragEndInInteractor! + ancestorScrollableDragEndAdjustment);
 
     _selectRegion(
@@ -708,7 +704,7 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
 
     final scrollDeltaWhileDragging = _dragStartScrollOffset! - _scrollPosition.pixels;
     final ancestorScrollableDragEndAdjustment =
-        _hasAncestorScrollable && !_hasMaxHeightConstraint ? Offset(0, -scrollDeltaWhileDragging) : Offset.zero;
+        _hasAncestorScrollable ? Offset(0, -scrollDeltaWhileDragging) : Offset.zero;
 
     final dragEndInViewport = _interactorOffsetInViewport(_dragEndInInteractor!) + ancestorScrollableDragEndAdjustment;
 
@@ -771,11 +767,11 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
 
     editorGesturesLog.finest("Scrolling up on tick");
 
-    // If this widget sits inside an ancestor Scrollable and don't have a maxHeight constraint,
-    // adjust the drag-end offset to account for the scroll offset of the ancestor Scrollable.
+    // If this widget sits inside an ancestor Scrollable, adjust the drag-end
+    // offset to account for the scroll offset of the ancestor Scrollable.
     final scrollDeltaWhileDragging = _dragStartScrollOffset! - _scrollPosition.pixels;
     final ancestorScrollableDragEndAdjustment =
-        _hasAncestorScrollable && !_hasMaxHeightConstraint ? Offset(0, -scrollDeltaWhileDragging) : Offset.zero;
+        _hasAncestorScrollable ? Offset(0, -scrollDeltaWhileDragging) : Offset.zero;
 
     final dragEndInViewport = _interactorOffsetInViewport(_dragEndInInteractor!) + ancestorScrollableDragEndAdjustment;
     final leadingScrollBoundary = widget.dragAutoScrollBoundary.leading;
@@ -831,7 +827,7 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     // offset to account for the scroll offset of the ancestor Scrollable.
     final scrollDeltaWhileDragging = _dragStartScrollOffset! - _scrollPosition.pixels;
     final ancestorScrollableDragEndAdjustment =
-        _hasAncestorScrollable && !_hasMaxHeightConstraint ? Offset(0, -scrollDeltaWhileDragging) : Offset.zero;
+        _hasAncestorScrollable ? Offset(0, -scrollDeltaWhileDragging) : Offset.zero;
 
     final dragEndInViewport = _interactorOffsetInViewport(_dragEndInInteractor!) + ancestorScrollableDragEndAdjustment;
     final trailingScrollBoundary = widget.dragAutoScrollBoundary.trailing;
@@ -860,36 +856,30 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
   }
 
   @override
-  Widget build(BuildContext context) {  
-    return LayoutBuilder(
-      builder: (context,constraints) {
-        _hasMaxHeightConstraint = constraints.maxHeight < double.infinity;        
-        final ancestorScrollable = Scrollable.of(context);
-        _ancestorScrollPosition = ancestorScrollable?.position;        
+  Widget build(BuildContext context) {
+    final ancestorScrollable = Scrollable.of(context);
+    _ancestorScrollPosition = ancestorScrollable?.position;
 
-        return _buildCursorStyle(
-          child: _buildGestureInput(
-            child: SizedBox(
-              width: double.infinity,
-              // If there is no ancestor scrollable or we have a maxHeight constraint
-              // then we want the gesture area to fill all available height. 
-              // If there is a scrollable ancestor and we don't have a maxHeight constraint,
-              // then expanding vertically would cause an infinite height, so in that
-              // case we let the gesture area take up whatever it can, naturally.
-              height: _hasMaxHeightConstraint || ancestorScrollable == null ? double.infinity : null,
-              child: Stack(
-                children: [
-                  _buildDocumentContainer(
-                    document: widget.child,
-                    addScrollView: _hasMaxHeightConstraint || ancestorScrollable == null,
-                  ),
-                  if (widget.showDebugPaint) ..._buildScrollingDebugPaint(includesScrollView: _hasMaxHeightConstraint || ancestorScrollable == null),
-                ],
+    return _buildCursorStyle(
+      child: _buildGestureInput(
+        child: SizedBox(
+          width: double.infinity,
+          // If there is no ancestor scrollable then we want the gesture area
+          // to fill all available height. If there is a scrollable ancestor,
+          // then expanding vertically would cause an infinite height, so in that
+          // case we let the gesture area take up whatever it can, naturally.
+          height: ancestorScrollable == null ? double.infinity : null,
+          child: Stack(
+            children: [
+              _buildDocumentContainer(
+                document: widget.child,
+                addScrollView: ancestorScrollable == null,
               ),
-            ),
+              if (widget.showDebugPaint) ..._buildScrollingDebugPaint(includesScrollView: ancestorScrollable == null),
+            ],
           ),
-        );
-      }
+        ),
+      ),
     );
   }
 

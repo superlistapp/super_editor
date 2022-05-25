@@ -14,12 +14,10 @@ import 'package:super_editor/src/infrastructure/_scrolling.dart';
 ///  * super_editor's mouse gesture support.
 
 /// Displays the given [child] document within a `Scrollable`, if and only
-/// if there is no ancestor `Scrollable` in the widget tree and we don't have
-/// a maxHeight constraint.
+/// if there is no ancestor `Scrollable` in the widget tree.
 ///
 /// The given [scrollController] is attached to inner `Scrollable`, when
-/// a `Scrollable` is included in this widget tree and we don't have
-/// a maxHeight constraint.
+/// a `Scrollable` is included in this widget tree.
 ///
 /// The [documentLayerLink] is given a `CompositedTransformTarget` that
 /// surrounds the document.
@@ -36,7 +34,7 @@ class ScrollableDocument extends StatelessWidget {
   /// widget, if a `Scrollable` is added.
   ///
   /// A `Scrollable` is added if, and only if, there is no ancestor
-  /// `Scrollable` in the widget tree and we don't have a maxHeight constraint.
+  /// `Scrollable` in the widget tree.
   final ScrollController? scrollController;
 
   /// Whether to disable drag-based scrolling, for cases in which drag
@@ -51,32 +49,27 @@ class ScrollableDocument extends StatelessWidget {
   final Widget child;
 
   @override
-  Widget build(BuildContext context) {    
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        bool hasMaxHeightConstraint = constraints.maxHeight < double.infinity;
-        final ancestorScrollable = Scrollable.of(context);
-        final _ancestorScrollPosition = ancestorScrollable?.position;
-        final addScrollView = hasMaxHeightConstraint || _ancestorScrollPosition == null;
+  Widget build(BuildContext context) {
+    final ancestorScrollable = Scrollable.of(context);
+    final _ancestorScrollPosition = ancestorScrollable?.position;
+    final addScrollView = _ancestorScrollPosition == null;
 
-        return addScrollView
-            ? SizedBox(
-                height: double.infinity,
-                child: ScrollConfiguration(
-                  behavior: ScrollConfiguration.of(context).copyWith(dragDevices: {
-                    PointerDeviceKind.touch,
-                    PointerDeviceKind.mouse,
-                  }),
-                  child: SingleChildScrollView(
-                    physics: disableDragScrolling ? const NeverScrollableScrollPhysics() : null,
-                    controller: scrollController,
-                    child: _buildDocument(),
-                  ),
-                ),
-              )
-            : _buildDocument();
-      }
-    );
+    return addScrollView
+        ? SizedBox(
+            height: double.infinity,
+            child: ScrollConfiguration(
+              behavior: ScrollConfiguration.of(context).copyWith(dragDevices: {
+                PointerDeviceKind.touch,
+                PointerDeviceKind.mouse,
+              }),
+              child: SingleChildScrollView(
+                physics: disableDragScrolling ? const NeverScrollableScrollPhysics() : null,
+                controller: scrollController,
+                child: _buildDocument(),
+              ),
+            ),
+          )
+        : _buildDocument();
   }
 
   Widget _buildDocument() {
