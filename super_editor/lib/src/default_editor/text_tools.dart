@@ -156,27 +156,26 @@ TextDirection getParagraphDirection(String text) {
   }
 }
 
-/// Returns list of [TextSelection] on each word in text
-List<TextSelection> getTextSelectionsForEachWord(String text) {
-  final List<TextSelection> textSelections = [];
-  var offset = 0;
+/// Convert a [documentPosition] to a [DocumentSelection] with an [extentOffset]
+///
+/// Giving a negative [extentOffset] would result in a selection expanded
+/// in downstream direction.
+///
+/// Giving a positive [extentOffset] would result in a selection expanded
+/// in upstream direction.
+///
+/// Return a collapsed selection by
+DocumentSelection documentPositionToDocumentSelection({
+  required DocumentPosition documentPosition,
+  int extentOffset = 0,
+}) {
+  assert(documentPosition.nodePosition is TextNodePosition);
 
-  while (offset < text.length) {
-    if (text[offset] == ' ') {
-      offset++;
-      continue;
-    }
-
-    final currentPosition = TextPosition(offset: offset);
-    final textSelection = expandPositionToWord(text: text, textPosition: currentPosition);
-    textSelections.add(textSelection);
-
-    offset += textSelection.end - textSelection.start + 1;
-  }
-  return textSelections;
-}
-
-/// Returns a string from a given [text] in a [textSelection] range
-String getTextFromTextSelection(String text, TextSelection textSelection) {
-  return text.substring(textSelection.start, textSelection.end);
+  final nodePosition = documentPosition.nodePosition as TextNodePosition;
+  return DocumentSelection(
+    base: documentPosition,
+    extent: documentPosition.copyWith(
+      nodePosition: nodePosition.copyWith(offset: nodePosition.offset + extentOffset),
+    ),
+  );
 }

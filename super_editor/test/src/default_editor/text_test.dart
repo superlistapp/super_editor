@@ -303,10 +303,12 @@ void main() {
     });
 
     group('Inserting a space character', () {
-      test('it turns the previous url into a link', () {
+      test('converts the URL before the space to a link', () {
         final editContext = _createEditContext();
 
         // Add a paragraph to the document.
+        // The `https://flutter.devis` typo was done on purpose
+        // because a space will be added after the `dev`
         (editContext.editor.document as MutableDocument).nodes.add(
               ParagraphNode(
                 id: 'paragraph',
@@ -314,7 +316,7 @@ void main() {
               ),
             );
 
-        // Select the last character of the url
+        // Place caret at "This text: http://flutter.dev|is..."
         editContext.composer.selection = const DocumentSelection.collapsed(
           position: DocumentPosition(
             nodeId: 'paragraph',
@@ -361,7 +363,7 @@ void main() {
           },
         );
       });
-      test('it does NOT turn the previous url into a link if that is already a link', () {
+      test('it does nothing to an existing link', () {
         // Adding [LinkAttribution] to a position that already has it
         // could cause spans mismatching, which potentially leads to errors.
         // This test prevents that regression
@@ -369,6 +371,8 @@ void main() {
         final linkAttribution = LinkAttribution(url: Uri.parse('https://flutter.dev'));
 
         // Add a paragraph to the document.
+        // The `https://flutter.devis` typo was done on purpose
+        // because a space will be added after the `dev`
         (editContext.editor.document as MutableDocument).nodes.add(
               ParagraphNode(
                 id: 'paragraph',
@@ -392,7 +396,7 @@ void main() {
               ),
             );
 
-        // Select the last character of the url
+        // Place caret at "This text: http://flutter.dev|is..."
         editContext.composer.selection = const DocumentSelection.collapsed(
           position: DocumentPosition(
             nodeId: 'paragraph',

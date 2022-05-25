@@ -170,7 +170,10 @@ void main() {
     });
 
     group('inserting a space character', () {
-      test('it turns the previous url into a link', () {
+      test('it turns the URL before the space into a link', () {
+        // The `https://flutter.devis` typo was done on purpose
+        // because a space will be added after the `dev`
+
         final document = MutableDocument(nodes: [
           ParagraphNode(
             id: "1",
@@ -197,7 +200,8 @@ void main() {
           commonOps: commonOps,
         );
 
-        // Insert the "space" character
+        // Place caret at "This text: http://flutter.dev|is..."
+        // then insert a "space" character
         softwareKeyboardHandler.applyDeltas([
           const TextEditingDeltaInsertion(
             textInserted: ' ',
@@ -229,12 +233,14 @@ void main() {
           },
         );
       });
-      test('it does NOT turn the previous url into a link if that is already a link', () {
+      test('it does nothing to an existing link', () {
         // Adding [LinkAttribution] to a position that already has it
         // could cause spans mismatching, which potentially leads to errors.
         // This test prevents that regression
         final linkAttribution = LinkAttribution(url: Uri.parse('https://flutter.dev'));
 
+        // The `https://flutter.devis` typo was done on purpose
+        // because a space will be added after the `dev`
         final document = MutableDocument(nodes: [
           ParagraphNode(
             id: "1",
@@ -277,7 +283,8 @@ void main() {
           commonOps: commonOps,
         );
 
-        // Insert the "space" character
+        // Place caret at "This text: http://flutter.dev|is..."
+        // then insert a "space" character
         softwareKeyboardHandler.applyDeltas([
           const TextEditingDeltaInsertion(
             textInserted: ' ',
@@ -293,7 +300,7 @@ void main() {
         // The handler should insert a space
         expect(paragraphNode.text.text, 'This text: https://flutter.dev is a link');
 
-        // The handler should add a [LinkAttribution] at the url
+        // The handler should not change the existing link atrribution
         expect(
           paragraphNode.text.spans.getAttributionSpansInRange(
             attributionFilter: (_) => true,

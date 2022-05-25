@@ -17,7 +17,6 @@ import 'package:super_editor/src/default_editor/list_items.dart';
 import 'package:super_editor/src/default_editor/paragraph.dart';
 import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
 import 'package:super_editor/src/default_editor/text.dart';
-import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 
 import 'attributions.dart';
@@ -2229,60 +2228,54 @@ class CommonEditorOperations {
     );
   }
 
-  /// Get the word from [position]. Convert the word to a link if it is a url
-  ///
-  /// Does nothing if the word is already a link
-  void turnWordAtPositionToLink(TextNodePosition position) {
-    if (composer.selection == null) {
+  /// Get the upstream position of the [current document position], then tokenize
+  /// the upstream word at that position.
+  void tokenizeUpstreamWord(DocumentPosition documentPosition) {
+    final currentTextPosition = documentPosition.nodePosition;
+    if (currentTextPosition is! TextNodePosition) {
+      return;
+    }
+
+    final upstreamTextPosition = currentTextPosition.copyWith(offset: currentTextPosition.offset - 1);
+    final upstreamDocumentPosition = documentPosition.copyWith(nodePosition: upstreamTextPosition);
+
+    final documentNode = editor.document.getNodeById(composer.selection!.extent.nodeId);
+    if (documentNode is! TextNode) {
       return;
     }
 
     // It is invalid to have a position with negative offset
-    if (position.offset == -1) {
+    if (upstreamTextPosition.offset == -1) {
       return;
     }
 
-    final documentNode = editor.document.getNodeById(composer.selection!.extent.nodeId);
-
-    late AttributedText attributedText;
-    if (documentNode is ParagraphNode) {
-      attributedText = documentNode.text;
-    } else if (documentNode is TextNode) {
-      attributedText = documentNode.text;
-    }
+    final attributedText = documentNode.text;
     final text = attributedText.text;
+    final word = expandPositionToWord(text: text, textPosition: upstreamTextPosition).textInside(text);
 
-    // Position which is at the previous offset of the current selection.
-    // This should also be the end position of the previous word
-    final attributions = attributedText.getAllAttributionsAt(position.offset);
-
-    final hasLinkAttribute = attributions.firstWhereOrNull((attr) => attr is LinkAttribution) != null;
+    final attributionsAtWord = attributedText.getAllAttributionsAt(upstreamTextPosition.offset);
+    final hasLinkAttribute = attributionsAtWord.any((attr) => attr is LinkAttribution);
     if (hasLinkAttribute) {
-      // Previous word has [LinkAttribute]. Do nothing
+      // Current word has [LinkAttribute]. Do nothing
       return;
     }
-
-    final textSelection = expandPositionToWord(
-      text: text,
-      textPosition: position,
-    );
-    final word = getTextFromTextSelection(text, textSelection);
 
     final link = Uri.tryParse(word);
+
     if (link != null && link.hasScheme && link.hasAuthority) {
       // Valid url. Apply [LinkAttribution] to the url
       final linkAttribution = LinkAttribution(url: link);
 
-      final prevWordDocumentSelection = DocumentSelection.extentFromDocumentPosition(
-        documentPosition: composer.selection!.extent.copyWith(
-          nodePosition: position.copyWith(offset: position.offset - word.length),
-        ),
-        extentOffset: word.length,
+      // [upstreamDocumentPosition] is at the end of word, so we create
+      // a downstream expanded selection
+      final urlDocumentSelection = documentPositionToDocumentSelection(
+        documentPosition: upstreamDocumentPosition,
+        extentOffset: -word.length,
       );
 
       editor.executeCommand(
         AddTextAttributionsCommand(
-          documentSelection: prevWordDocumentSelection,
+          documentSelection: urlDocumentSelection,
           attributions: {linkAttribution},
         ),
       );
@@ -2348,23 +2341,19 @@ class _PasteEditorCommand implements EditorCommand {
 
       // Check for url in the pasted text and apply [LinkAttribution] appropriately
       final hasLinkAttribute = attributionsAtPasteOffset.firstWhereOrNull((attr) => attr is LinkAttribution) != null;
-      print('hasLinkAttribute: $hasLinkAttribute');
       if (!hasLinkAttribute) {
         // Attributions at paste offset doesn't have [LinkAttribute].
         // Add [LinkAttribute] to each url in the text if existed
-        _forEachWordInText(
-          splitContent.first,
-          (word, documentSelection) {
-            final link = Uri.tryParse(word);
+        splitContent.first.forEachWord(_pastePosition, ((word, documentSelection) {
+          final link = Uri.tryParse(word);
 
-            if (link != null && link.hasScheme && link.hasAuthority) {
-              // Valid url. Apply [LinkAttribution] to the url
-              final linkAttribution = LinkAttribution(url: link);
-              AddTextAttributionsCommand(documentSelection: documentSelection, attributions: {linkAttribution})
-                  .execute(document, transaction);
-            }
-          },
-        );
+          if (link != null && link.hasScheme && link.hasAuthority) {
+            // Valid url. Apply [LinkAttribution] to the url
+            final linkAttribution = LinkAttribution(url: link);
+            AddTextAttributionsCommand(documentSelection: documentSelection, attributions: {linkAttribution})
+                .execute(document, transaction);
+          }
+        }));
       }
 
       // At this point in the paste process, the document selection
@@ -2423,28 +2412,5 @@ class _PasteEditorCommand implements EditorCommand {
     editorOpsLog.fine(' - new selection: ${_composer.selection}');
 
     editorOpsLog.fine('Done with paste command.');
-  }
-
-  /// Invoke [action] on each [word] with its [documentSelection] in the given [text]
-  void _forEachWordInText(
-    String text,
-    void Function(String word, DocumentSelection documentSelection) action,
-  ) {
-    final pastedTextNodePosition = _pastePosition.nodePosition as TextNodePosition;
-    final textSelections = getTextSelectionsForEachWord(text);
-
-    for (final textSelection in textSelections) {
-      final word = getTextFromTextSelection(text, textSelection);
-      final documentSelection = DocumentSelection.extentFromDocumentPosition(
-        documentPosition: _pastePosition.copyWith(
-          nodePosition: pastedTextNodePosition.copyWith(
-            offset: pastedTextNodePosition.offset + textSelection.start,
-          ),
-        ),
-        extentOffset: word.length,
-      );
-
-      action(word, documentSelection);
-    }
   }
 }

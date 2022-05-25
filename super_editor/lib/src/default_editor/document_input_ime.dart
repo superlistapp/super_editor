@@ -889,12 +889,6 @@ class SoftwareKeyboardHandler {
       TextPosition(offset: delta.insertionOffset, affinity: delta.selection.affinity),
       delta.textInserted,
     );
-
-    if (delta.textInserted == ' ') {
-      // Check for the word before the space. If that is a url, make that a link
-      final currentPosition = composer.selection!.extent.nodePosition as TextNodePosition;
-      commonOps.turnWordAtPositionToLink(currentPosition.copyWith(offset: currentPosition.offset - 1));
-    }
   }
 
   void _applyReplacement(TextEditingDeltaReplacement delta) {
@@ -976,6 +970,10 @@ class SoftwareKeyboardHandler {
     commonOps.convertParagraphByPatternMatching(
       composer.selection!.extent.nodeId,
     );
+
+    if (textInserted == ' ') {
+      commonOps.tokenizeUpstreamWord(composer.selection!.extent);
+    }
   }
 
   void replace(TextRange replacedRange, String replacementText) {
