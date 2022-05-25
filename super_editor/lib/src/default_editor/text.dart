@@ -21,6 +21,7 @@ import 'package:super_text/super_selectable_text.dart';
 
 import 'document_input_keyboard.dart';
 import 'layout_single_column/layout_single_column.dart';
+import 'text_tools.dart';
 
 class TextNode extends DocumentNode with ChangeNotifier {
   TextNode({
@@ -187,6 +188,52 @@ extension DocumentSelectionWithText on Document {
   }
 }
 
+extension WordsDocumentPosition on String {
+  /// Given [documentPosition] as the starting position of the text in the [Document],
+  /// invoke [action] with each [word] and its corresponding [documentSelection]
+  void forEachWord(
+    DocumentPosition documentPosition,
+    void Function(String word, DocumentSelection documentSelection) action,
+  ) {
+    final textSelections = textSelectionsOnWord();
+    final textPosition = documentPosition.nodePosition as TextNodePosition;
+
+    for (final textSelection in textSelections) {
+      final word = textSelection.textInside(this);
+      final documentSelection = documentPositionToDocumentSelection(
+        documentPosition: documentPosition.copyWith(
+          nodePosition: textPosition.copyWith(
+            offset: textPosition.offset + textSelection.start,
+          ),
+        ),
+        extentOffset: textSelection.end - textSelection.start,
+      );
+
+      action(word, documentSelection);
+    }
+  }
+
+  /// Returns list of [TextSelection] on each word in text
+  List<TextSelection> textSelectionsOnWord() {
+    final List<TextSelection> textSelections = [];
+    var offset = 0;
+
+    while (offset < length) {
+      if (this[offset] == ' ') {
+        offset++;
+        continue;
+      }
+
+      final currentPosition = TextPosition(offset: offset);
+      final textSelection = expandPositionToWord(text: this, textPosition: currentPosition);
+      textSelections.add(textSelection);
+
+      offset += textSelection.end - textSelection.start + 1;
+    }
+    return textSelections;
+  }
+}
+
 /// A logical selection within a [TextNode].
 ///
 /// The selection begins at [baseOffset] and ends at [extentOffset].
@@ -237,14 +284,6 @@ class TextNodePosition extends TextPosition implements NodePosition {
     TextAffinity affinity = TextAffinity.downstream,
   }) : super(offset: offset, affinity: affinity);
 
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      super == other && other is TextNodePosition && runtimeType == other.runtimeType && offset == other.offset;
-
-  @override
-  int get hashCode => super.hashCode ^ super.offset.hashCode;
-
   /// Creates a new [TextNodePosition] based on the current position, with the
   /// provided parameters overridden.
   TextNodePosition copyWith({
@@ -256,6 +295,14 @@ class TextNodePosition extends TextPosition implements NodePosition {
       affinity: affinity ?? this.affinity,
     );
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      super == other && other is TextNodePosition && runtimeType == other.runtimeType && offset == other.offset;
+
+  @override
+  int get hashCode => super.hashCode ^ super.offset.hashCode;
 }
 
 /// Mixin for all [SingleColumnLayoutComponentViewModel]s that represent
@@ -1139,9 +1186,7 @@ ExecutionInstruction anyCharacterToInsertInTextContent({
   final didInsertCharacter = editContext.commonOps.insertCharacter(character);
 
   if (didInsertCharacter && character == ' ') {
-    // Check for the word before the space. If that is a url, make that a link
-    final currentPosition = editContext.composer.selection!.extent.nodePosition as TextNodePosition;
-    editContext.commonOps.turnWordAtPositionToLink(currentPosition.copyWith(offset: currentPosition.offset - 1));
+    editContext.commonOps.tokenizeUpstreamWord(editContext.composer.selection!.extent);
   }
 
   return didInsertCharacter ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;

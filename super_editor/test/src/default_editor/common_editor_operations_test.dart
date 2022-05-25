@@ -1,5 +1,4 @@
 import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/super_editor.dart';
 
@@ -161,7 +160,7 @@ void main() {
       });
     });
     group("pasting", () {
-      test("it converts url in the pasted text into a link", () async {
+      testWidgets("automatically converts a URL to a link", (tester) async {
         // Note: We need to ensure initialized because we access the Clipboard.
         TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -175,7 +174,7 @@ void main() {
         ]);
         final editor = DocumentEditor(document: document);
 
-        // Select block of text containing a url
+        // Place caret at "This | a link"
         final composer = DocumentComposer(
           initialSelection: const DocumentSelection.collapsed(
             position: DocumentPosition(
@@ -201,32 +200,33 @@ void main() {
           }
         });
 
+        // Paste the block of text containing the link
         commonOps.paste();
 
-        WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-          // We have to run these expectations in the next frame
-          // so that the async paste operation has time to complete.
-          final textNode = editor.document.nodes.first as TextNode;
+        // We have to run these expectations pumping
+        // so that the async paste operation has time to complete.
+        await tester.pumpAndSettle();
 
-          expect(textNode.text.text, 'This text: https://flutter.dev is a link');
-          // A [LinkAttribution] should be added at the url
-          expect(
-            textNode.text.spans.getAttributionSpansInRange(
-              attributionFilter: (_) => true,
-              start: 0,
-              end: 40,
-            ),
-            {
-              AttributionSpan(
-                attribution: LinkAttribution(url: Uri.parse('https://flutter.dev')),
-                start: 11,
-                end: 29,
-              )
-            },
-          );
-        });
+        final textNode = editor.document.nodes.first as TextNode;
+
+        expect(textNode.text.text, 'This text: https://flutter.dev is a link');
+        // A [LinkAttribution] should be added at the url
+        expect(
+          textNode.text.spans.getAttributionSpansInRange(
+            attributionFilter: (_) => true,
+            start: 0,
+            end: 40,
+          ),
+          {
+            AttributionSpan(
+              attribution: LinkAttribution(url: Uri.parse('https://flutter.dev')),
+              start: 11,
+              end: 29,
+            )
+          },
+        );
       });
-      test("it does NOT convert url in the pasted text if the pasted position is already a link", () async {
+      testWidgets("does nothing to an existing link", (tester) async {
         // Adding [LinkAttribution] to a position that already has it
         // could cause spans mismatching, which potentially leads to errors.
         // This test prevents that regression
@@ -252,12 +252,12 @@ void main() {
         ]);
         final editor = DocumentEditor(document: document);
 
-        // Place the selection within the link attributed span's range
+        // Place the caret within the link attributed span's range
         final composer = DocumentComposer(
           initialSelection: const DocumentSelection.collapsed(
             position: DocumentPosition(
               nodeId: "paragraph",
-              nodePosition: TextNodePosition(offset: 28),
+              nodePosition: TextNodePosition(offset: 27),
             ),
           ),
         );
@@ -273,29 +273,37 @@ void main() {
         SystemChannels.platform.setMockMethodCallHandler((call) async {
           if (call.method == 'Clipboard.getData') {
             return {
-              'text': '[block] https://flutter.dev [block]',
+              'text': '[block] https://pub.dev [block]',
             };
           }
         });
 
+        // Paste the block of text containing the link
         commonOps.paste();
 
-        WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-          // We have to run these expectations in the next frame
-          // so that the async paste operation has time to complete.
-          final textNode = editor.document.nodes.first as TextNode;
+        // We have to run these expectations after pumping
+        // so that the async paste operation has time to complete.
+        await tester.pumpAndSettle();
 
-          expect(textNode.text.text, 'This text: https://flutter.[block] https://flutter.dev [block]dev is a link');
-          // A [LinkAttribution] should be added at the url
-          expect(
-            textNode.text.spans.hasAttributionsWithin(
-              attributions: {LinkAttribution(url: Uri.parse('https://flutter.dev'))},
+        final textNode = editor.document.nodes.first as TextNode;
+
+        expect(textNode.text.text, 'This text: https://flutter.[block] https://pub.dev [block]dev is already a link');
+
+        // The handler should only expand the link attribution's span and nothing more
+        expect(
+          textNode.text.spans.getAttributionSpansInRange(
+            attributionFilter: (_) => true,
+            start: 0,
+            end: 79,
+          ),
+          {
+            AttributionSpan(
+              attribution: LinkAttribution(url: Uri.parse('https://flutter.dev')),
               start: 11,
-              end: 30 + 35,
-            ),
-            true,
-          );
-        });
+              end: 30 + 31, // adding 31 as the length of the newly pasted text
+            )
+          },
+        );
       });
     });
   });

@@ -361,9 +361,7 @@ ExecutionInstruction anyCharacterToInsertInParagraph({
       editContext.composer.selection!.extent.nodeId,
     );
 
-    // Check for the word before the space. If that is a url, make that a link
-    final currentPosition = editContext.composer.selection!.extent.nodePosition as TextNodePosition;
-    editContext.commonOps.turnWordAtPositionToLink(currentPosition.copyWith(offset: currentPosition.offset - 1));
+    editContext.commonOps.tokenizeUpstreamWord(editContext.composer.selection!.extent);
   }
 
   return didInsertCharacter ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
