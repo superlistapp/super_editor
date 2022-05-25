@@ -17,7 +17,7 @@ void main() {
         {required LogicalKeyboardKey key, bool scrollToBottom = false}) async {
       final testDocument = TestDocument(tester, screenWidth: screenWidth, screenHeight: screenHeight);
 
-      await testDocument.buildDoc(tester);
+      await testDocument.buildDoc();
 
       //caret is at begining of doc
       expect(testDocument.textNodePosition.offset == 0, true);
@@ -129,7 +129,7 @@ class TestDocument {
       ..devicePixelRatioTestValue = 1.0;
   }
 
-  Future<void> buildDoc(WidgetTester tester) async {
+  Future<void> buildDoc() async {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
