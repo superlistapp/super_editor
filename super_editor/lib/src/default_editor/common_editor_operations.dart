@@ -2344,16 +2344,21 @@ class _PasteEditorCommand implements EditorCommand {
       if (!hasLinkAttribute) {
         // Attributions at paste offset doesn't have [LinkAttribute].
         // Add [LinkAttribute] to each url in the text if existed
-        splitContent.first.forEachWord(_pastePosition, ((word, documentSelection) {
+        for (final selectionWordEntry in splitContent.first.wordWithSelections(_pastePosition).entries) {
+          final documentSelection = selectionWordEntry.key;
+          final word = selectionWordEntry.value;
+
           final link = Uri.tryParse(word);
 
           if (link != null && link.hasScheme && link.hasAuthority) {
             // Valid url. Apply [LinkAttribution] to the url
             final linkAttribution = LinkAttribution(url: link);
-            AddTextAttributionsCommand(documentSelection: documentSelection, attributions: {linkAttribution})
-                .execute(document, transaction);
+            AddTextAttributionsCommand(
+              documentSelection: documentSelection,
+              attributions: {linkAttribution},
+            ).execute(document, transaction);
           }
-        }));
+        }
       }
 
       // At this point in the paste process, the document selection
