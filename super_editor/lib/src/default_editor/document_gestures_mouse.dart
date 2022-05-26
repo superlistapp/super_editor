@@ -286,9 +286,14 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
       return;
     }
 
+    final renderBox = context.findRenderObject() as RenderBox;
+    final hasMaxHeightConstraint = renderBox.constraints.maxHeight < double.infinity;
+    final hasAncestorScrollable = Scrollable.of(context) != null;    
     // Viewport might be our box, or an ancestor box if we're inside someone
-    // else's Scrollable.
-    final viewportBox = _viewport;
+    // else's Scrollable and we don't have a maxHeight constraint.
+    final viewportBox = hasMaxHeightConstraint 
+      ? renderBox
+      : _viewport;
 
     final docBox = _documentWrapperKey.currentContext!.findRenderObject() as RenderBox;
 
@@ -309,6 +314,19 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     editorGesturesLog.finest(' - beyond bottom: $beyondBottomExtent');
 
     if (beyondTopExtent > 0) {
+      // if we have a maxHeight constraint, first we scroll until the top of 
+      // our own scrollview and then start scrolling our ancestor's Scrollable
+      if (hasMaxHeightConstraint && 
+          hasAncestorScrollable && 
+          !(_scrollController.position.atEdge && _scrollController.position.pixels == 0)){        
+        final newScrollPosition = (_scrollController.position.pixels - beyondTopExtent).clamp(0.0, _scrollController.position.maxScrollExtent);
+        _scrollController.position.animateTo(
+          newScrollPosition,
+          duration: const Duration(milliseconds: 100),
+          curve: Curves.easeOut,
+        );                
+        return;        
+      }
       final newScrollPosition = (_scrollPosition.pixels - beyondTopExtent).clamp(0.0, _scrollPosition.maxScrollExtent);
 
       _scrollPosition.animateTo(
@@ -317,6 +335,20 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
         curve: Curves.easeOut,
       );
     } else if (beyondBottomExtent > 0) {
+      // if we have a maxHeight constraint, first we scroll until the bottom of 
+      // our own scrollview and then start scrolling our ancestor's Scrollable
+      if (hasMaxHeightConstraint && 
+          hasAncestorScrollable && 
+          !(_scrollController.position.atEdge && _scrollController.position.pixels > 0)){        
+        final newScrollPosition =
+          (beyondBottomExtent + _scrollController.position.pixels).clamp(0.0, _scrollController.position.maxScrollExtent); 
+        _scrollController.position.animateTo(
+          newScrollPosition,
+          duration: const Duration(milliseconds: 100),
+          curve: Curves.easeOut,
+        );                
+        return;
+      }
       final newScrollPosition =
           (beyondBottomExtent + _scrollPosition.pixels).clamp(0.0, _scrollPosition.maxScrollExtent);
 
@@ -857,30 +889,35 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
 
   @override
   Widget build(BuildContext context) {
-    final ancestorScrollable = Scrollable.of(context);
-    _ancestorScrollPosition = ancestorScrollable?.position;
-
-    return _buildCursorStyle(
-      child: _buildGestureInput(
-        child: SizedBox(
-          width: double.infinity,
-          // If there is no ancestor scrollable then we want the gesture area
-          // to fill all available height. If there is a scrollable ancestor,
-          // then expanding vertically would cause an infinite height, so in that
-          // case we let the gesture area take up whatever it can, naturally.
-          height: ancestorScrollable == null ? double.infinity : null,
-          child: Stack(
-            children: [
-              _buildDocumentContainer(
-                document: widget.child,
-                addScrollView: ancestorScrollable == null,
+    return LayoutBuilder(
+      builder:(context, constraints) {
+        final ancestorScrollable = Scrollable.of(context);
+        _ancestorScrollPosition = ancestorScrollable?.position;
+        final hasConstraints = constraints.maxHeight < double.infinity;
+        return _buildCursorStyle(
+          child: _buildGestureInput(
+            child: SizedBox(
+              width: double.infinity,
+              // If there is no ancestor scrollable or we have a maxHeight constraint
+              // then we want the gesture area to fill all available height. 
+              // If there is a scrollable ancestor and we don't have a maxHeight constraint,
+              // then expanding vertically would cause an infinite height, so in that
+              // case we let the gesture area take up whatever it can, naturally.
+              height: hasConstraints || ancestorScrollable == null ? double.infinity : null,
+              child: Stack(
+                children: [
+                  _buildDocumentContainer(
+                    document: widget.child,
+                    addScrollView: hasConstraints || ancestorScrollable == null,
+                  ),
+                  if (widget.showDebugPaint) ..._buildScrollingDebugPaint(includesScrollView: ancestorScrollable == null),
+                ],
               ),
-              if (widget.showDebugPaint) ..._buildScrollingDebugPaint(includesScrollView: ancestorScrollable == null),
-            ],
+            ),
           ),
-        ),
-      ),
-    );
+        );
+      },
+    );    
   }
 
   List<Widget> _buildScrollingDebugPaint({
