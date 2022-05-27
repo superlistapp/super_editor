@@ -21,6 +21,7 @@ export 'infrastructure/magnifier.dart';
 export 'infrastructure/text_scrollview.dart';
 export 'input_method_engine/_ime_text_editing_controller.dart';
 export 'ios/ios_textfield.dart';
+export 'styles.dart';
 
 /// Custom text field implementations that offer greater control than traditional
 /// Flutter text fields.
