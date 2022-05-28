@@ -32,15 +32,21 @@ extension SuperTextFieldTesting on WidgetTester {
     final textPositionOffset = textField.textLayout.getOffsetForCaret(TextPosition(offset: offset));
     final textFieldBox = textField.context.findRenderObject() as RenderBox;
 
+    // When upgrading Superlist to Flutter 3, some tests showed a caret offset
+    // dy of -0.2. This didn't happen everywhere, but it did happen some places.
+    // Until we get to the bottom of this issue, we'll add a constant offset to
+    // make up for this.
+    Offset adjustedOffset = textPositionOffset + const Offset(0, 0.2);
+
     // There's a problem on Windows and Linux where we get -0.0 instead 0.0.
     // We adjust the offset to get rid of the -0.0, because a -0.0 fails the
     // Rect bounds check. (https://github.com/flutter/flutter/issues/100033)
-    final adjustedOffset = Offset(
-      textPositionOffset.dx,
+    adjustedOffset = Offset(
+      adjustedOffset.dx,
       // I tried checking "== -0.0" but it didn't catch the problem. This
       // approach looks for an arbitrarily small epsilon and then interprets
       // any such bounds as zero.
-      textPositionOffset.dy.abs() < 1e-6 ? 0.0 : textPositionOffset.dy,
+      adjustedOffset.dy.abs() < 1e-6 ? 0.0 : adjustedOffset.dy,
     );
 
     if (!textFieldBox.size.contains(adjustedOffset)) {
