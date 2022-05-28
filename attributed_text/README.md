@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://user-images.githubusercontent.com/7259036/168731417-646b5fb9-6adb-4071-a232-1c6b8337d1e8.png" width="300" alt="Attributed Text"><br>
+  <img src="https://user-images.githubusercontent.com/7259036/170845473-268655ac-3fec-47c1-86ab-41a1391aa1e0.png" width="300" alt="Attributed Text"><br>
   <span><b>Easily add metadata to your <code>String</code>s with the <code>attributed_text</code> package.</b></span><br><br>
 </p>
 
