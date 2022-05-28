@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://user-images.githubusercontent.com/7259036/168734271-bf146672-57a9-4533-84ae-4cc28c356bc5.png" width="300" alt="Super Editor"><br>
+  <img src="https://user-images.githubusercontent.com/7259036/170845431-e83699df-5c6c-4e9c-90fc-c12277cc2f48.png" width="300" alt="Super Editor"><br>
   <span><b>Open source, configurable, extensible text editor and document renderer for Flutter.</b></span><br><br>
 </p>
 
