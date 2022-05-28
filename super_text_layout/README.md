@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://user-images.githubusercontent.com/7259036/168731754-12a0c766-775c-45d0-8000-417b2e737fda.png" width="300" alt="Super Text Layout"><br>
+  <img src="https://user-images.githubusercontent.com/7259036/170845454-e7a6e0ec-07f0-4f80-be31-3e5730a72aaf.png" width="300" alt="Super Text Layout"><br>
   <span><b>Configurable, composable, extensible text display for Flutter.</b></span><br><br>
 </p>
 
