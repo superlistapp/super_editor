@@ -9,7 +9,7 @@ void main() {
 
     testWidgets("can report preceding gestures", (tester) async {
       final recognizer = TapSequenceGestureRecognizer(
-        kind: PointerDeviceKind.touch,
+        supportedDevices: {PointerDeviceKind.touch},
         reportPrecedingGestures: true,
       );
       int tapDownCount = 0;
@@ -108,7 +108,7 @@ void main() {
 
     testWidgets("reports single tap after timeout", (tester) async {
       final recognizer = TapSequenceGestureRecognizer(
-        kind: PointerDeviceKind.touch,
+        supportedDevices: {PointerDeviceKind.touch},
         reportPrecedingGestures: false,
       );
 
@@ -176,7 +176,7 @@ void main() {
 
     testWidgets("can ignore single tap gesture", (tester) async {
       final recognizer = TapSequenceGestureRecognizer(
-        kind: PointerDeviceKind.touch,
+        supportedDevices: {PointerDeviceKind.touch},
         reportPrecedingGestures: false,
       );
 
@@ -272,7 +272,7 @@ void main() {
     testWidgets("can ignore single tap and double tap gestures",
         (tester) async {
       final recognizer = TapSequenceGestureRecognizer(
-        kind: PointerDeviceKind.touch,
+        supportedDevices: {PointerDeviceKind.touch},
         reportPrecedingGestures: false,
       );
 

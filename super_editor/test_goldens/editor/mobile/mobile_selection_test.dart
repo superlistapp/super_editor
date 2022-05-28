@@ -725,8 +725,8 @@ void testParagraphSelection(
   testGoldens(description, (tester) async {
     tester.binding.window
       ..physicalSizeTestValue = const Size(800, 200)
-      ..textScaleFactorTestValue = 1.0
       ..devicePixelRatioTestValue = 1.0;
+    tester.binding.platformDispatcher.textScaleFactorTestValue = 1.0;
 
     final dragLine = ValueNotifier<_Line?>(null);
 
