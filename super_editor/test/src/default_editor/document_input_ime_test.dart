@@ -1,8 +1,11 @@
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:logging/logging.dart';
 import 'package:super_editor/super_editor.dart';
 
 import '../_document_test_tools.dart';
+import 'test_documents.dart';
 
 void main() {
   group('IME input', () {
@@ -70,6 +73,99 @@ void main() {
         ]);
 
         expect((document.nodes.first as ParagraphNode).text.text, "This is a sentence. ");
+      });
+
+      testWidgets('can type compound character in an empty paragraph', (tester) async {
+        // Inserting special characters, or compound characters, like ü, requires
+        // multiple key presses, which are combined by the IME, based on the
+        // composing region.
+        //
+        // A blank paragraph is serialized with a leading ". " to trick IMEs into
+        // auto-capitalizing the first character the user types, while still reporting
+        // a `backspace` operation, if the user presses backspace on a software keyboard.
+        //
+        // This test ensures that when we go from an empty paragraph with a hidden ". ", to
+        // a character with a composing region, like "¨", we report the correct composing region.
+        // For example, due to our hidden ". ", when the user enters a "¨", the IME thinks
+        // the composing region is [2,3], like ". ¨", but the text is actually "¨", so we
+        // need to adjust the composing region to [0,1].
+        final editContext = createEditContext(
+          // Use a two-paragraph document so that the selection in the 2nd
+          // paragraph sends a hidden placeholder to the IME for backspace.
+          document: twoParagraphEmptyDoc(),
+          documentComposer: DocumentComposer(
+            initialSelection: const DocumentSelection.collapsed(
+              position: DocumentPosition(
+                // Start the caret in the 2nd paragraph so that we send a
+                // hidden placeholder to the IME to report backspaces.
+                nodeId: "2",
+                nodePosition: TextNodePosition(
+                  offset: 0,
+                ),
+              ),
+            ),
+          ),
+        );
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: SuperEditor(
+                editor: editContext.editor,
+                composer: editContext.composer,
+                inputSource: DocumentInputSource.ime,
+                gestureMode: DocumentGestureMode.mouse,
+                autofocus: true,
+              ),
+            ),
+          ),
+        );
+
+        // Send the deltas that should produce a ü.
+        //
+        // We have to use implementation details to send the simulated IME deltas
+        // because Flutter doesn't have any testing tools for IME deltas.
+        final imeInteractor = find.byType(DocumentImeInteractor).evaluate().first;
+        final deltaClient = (imeInteractor as StatefulElement).state as DeltaTextInputClient;
+
+        // Ensure that the delta client starts with the expected invisible placeholder
+        // characters.
+        expect(deltaClient.currentTextEditingValue!.text, ". ");
+        expect(deltaClient.currentTextEditingValue!.selection, const TextSelection.collapsed(offset: 2));
+        expect(deltaClient.currentTextEditingValue!.composing, const TextRange(start: -1, end: -1));
+
+        // Insert the "opt+u" character.
+        deltaClient.updateEditingValueWithDeltas([
+          const TextEditingDeltaInsertion(
+            oldText: ". ",
+            textInserted: "¨",
+            insertionOffset: 2,
+            selection: TextSelection.collapsed(offset: 3),
+            composing: TextRange(start: 2, end: 3),
+          ),
+        ]);
+
+        // Ensure that the empty paragraph now reads "¨".
+        expect((editContext.editor.document.nodes[1] as ParagraphNode).text.text, "¨");
+
+        // Ensure that the reported composing region respects the removal of the
+        // invisible placeholder characters. THIS IS WHERE THE ORIGINAL BUG HAPPENED.
+        expect(deltaClient.currentTextEditingValue!.text, "¨");
+        expect(deltaClient.currentTextEditingValue!.composing, const TextRange(start: 0, end: 1));
+
+        // Insert the "u" character to create the compound character.
+        deltaClient.updateEditingValueWithDeltas([
+          const TextEditingDeltaReplacement(
+            oldText: "¨",
+            replacementText: "ü",
+            replacedRange: TextRange(start: 0, end: 1),
+            selection: TextSelection.collapsed(offset: 1),
+            composing: TextRange(start: -1, end: -1),
+          ),
+        ]);
+
+        // Ensure that the empty paragraph now reads "ü".
+        expect((editContext.editor.document.nodes[1] as ParagraphNode).text.text, "ü");
       });
     });
 
