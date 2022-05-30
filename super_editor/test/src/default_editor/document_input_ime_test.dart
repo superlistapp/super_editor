@@ -76,8 +76,6 @@ void main() {
       });
 
       testWidgets('can type compound character in an empty paragraph', (tester) async {
-        initLoggers(Level.FINER, {editorImeLog});
-
         // Inserting special characters, or compound characters, like ü, requires
         // multiple key presses, which are combined by the IME, based on the
         // composing region.
