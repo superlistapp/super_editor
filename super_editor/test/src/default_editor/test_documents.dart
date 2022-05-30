@@ -22,6 +22,19 @@ MutableDocument hrThenParagraphDoc() => MutableDocument(
       ],
     );
 
+MutableDocument singleParagraphEmptyDoc() => MutableDocument(
+      nodes: [
+        ParagraphNode(id: "1", text: AttributedText(text: "")),
+      ],
+    );
+
+MutableDocument twoParagraphEmptyDoc() => MutableDocument(
+      nodes: [
+        ParagraphNode(id: "1", text: AttributedText(text: "")),
+        ParagraphNode(id: "2", text: AttributedText(text: "")),
+      ],
+    );
+
 MutableDocument singleParagraphDoc() => MutableDocument(
       nodes: [
         ParagraphNode(
