@@ -5,23 +5,40 @@ import 'package:test/test.dart';
 
 void main() {
   group('Attributed Text', () {
-    test('Bug 582 - combining spans', () {
-      initAllLogs(Level.FINEST);
-      final text = AttributedText(text: '01234567');
-      text.spans.addAttribution(newAttribution: ExpectedSpans.bold, start: 0, end: 4);
-      text.spans.addAttribution(newAttribution: ExpectedSpans.bold, start: 4, end: 8);
+    group('Bug 582 - combining spans', () {
+      test('as reported in ticket', () {
+        final text = AttributedText(text: '01234567');
+        text.spans.addAttribution(newAttribution: ExpectedSpans.bold, start: 0, end: 4);
+        text.spans.addAttribution(newAttribution: ExpectedSpans.bold, start: 4, end: 8);
 
-      print("$text");
+        // Ensure that the spans were merged into a single span.
+        expect(text.spans.markers.length, 2);
+        expect(
+          text.spans.markers.first,
+          SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
+        );
+        expect(
+          text.spans.markers.last,
+          SpanMarker(attribution: ExpectedSpans.bold, offset: 8, markerType: SpanMarkerType.end),
+        );
+      });
 
-      expect(text.spans.markers.length, 2);
-      expect(
-        text.spans.markers.first,
-        SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
-      );
-      expect(
-        text.spans.markers.last,
-        SpanMarker(attribution: ExpectedSpans.bold, offset: 8, markerType: SpanMarkerType.end),
-      );
+      test('in reverse order', () {
+        final text = AttributedText(text: '01234567');
+        text.spans.addAttribution(newAttribution: ExpectedSpans.bold, start: 4, end: 8);
+        text.spans.addAttribution(newAttribution: ExpectedSpans.bold, start: 0, end: 4);
+
+        // Ensure that the spans were merged into a single span.
+        expect(text.spans.markers.length, 2);
+        expect(
+          text.spans.markers.first,
+          SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
+        );
+        expect(
+          text.spans.markers.last,
+          SpanMarker(attribution: ExpectedSpans.bold, offset: 8, markerType: SpanMarkerType.end),
+        );
+      });
     });
 
     test('Bug 145 - insert character at beginning of styled text', () {
