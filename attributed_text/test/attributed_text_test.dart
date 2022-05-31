@@ -1,6 +1,4 @@
 import 'package:attributed_text/attributed_text.dart';
-import 'package:attributed_text/src/logging.dart';
-import 'package:logging/logging.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -8,8 +6,8 @@ void main() {
     group('Bug 582 - combining spans', () {
       test('as reported in ticket', () {
         final text = AttributedText(text: '01234567');
-        text.spans.addAttribution(newAttribution: ExpectedSpans.bold, start: 0, end: 4);
-        text.spans.addAttribution(newAttribution: ExpectedSpans.bold, start: 4, end: 8);
+        text.addAttribution(ExpectedSpans.bold, SpanRange(start: 0, end: 4));
+        text.addAttribution(ExpectedSpans.bold, SpanRange(start: 4, end: 8));
 
         // Ensure that the spans were merged into a single span.
         expect(text.spans.markers.length, 2);
@@ -25,8 +23,8 @@ void main() {
 
       test('in reverse order', () {
         final text = AttributedText(text: '01234567');
-        text.spans.addAttribution(newAttribution: ExpectedSpans.bold, start: 4, end: 8);
-        text.spans.addAttribution(newAttribution: ExpectedSpans.bold, start: 0, end: 4);
+        text.addAttribution(ExpectedSpans.bold, SpanRange(start: 4, end: 8));
+        text.addAttribution(ExpectedSpans.bold, SpanRange(start: 0, end: 4));
 
         // Ensure that the spans were merged into a single span.
         expect(text.spans.markers.length, 2);
