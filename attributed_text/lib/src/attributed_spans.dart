@@ -152,11 +152,8 @@ class AttributedSpans {
 
   /// Returns all attributions for spans that cover the given [offset].
   Set<Attribution> getAllAttributionsAt(int offset) {
-    _log.fine('offset: $offset');
-    _log.fine(' - collecting all existing markers');
     final allAttributions = <Attribution>{};
     for (final marker in markers) {
-      _log.fine('   - marker: $marker');
       allAttributions.add(marker.attribution);
     }
 
@@ -164,7 +161,6 @@ class AttributedSpans {
     for (final attribution in allAttributions) {
       final hasAttribution = hasAttributionAt(offset, attribution: attribution);
       if (hasAttribution) {
-        _log.fine('getAllAttributionsAt', ' - adding attribution: $attribution');
         attributionsAtOffset.add(attribution);
       }
     }
@@ -288,34 +284,42 @@ class AttributedSpans {
       }
     }
 
-    if (!hasAttributionAt(start, attribution: newAttribution)) {
-      _log.fine('adding start marker for new span at: $start');
+    // Start the new span, either by expanding an existing span, or by
+    // inserting a new start marker for the new span.
+    final endMarkerJustBefore =
+        SpanMarker(attribution: newAttribution, offset: start - 1, markerType: SpanMarkerType.end);
+    final endMarkerAtNewStart = SpanMarker(attribution: newAttribution, offset: start, markerType: SpanMarkerType.end);
+    if (markers.contains(endMarkerJustBefore)) {
+      // A compatible span ends immediately before this new span begins.
+      // Remove the end marker so that the existing span flows into the new span.
+      _log.fine('A compatible span already exists immediately before the new span range. Combining the spans.');
+      markers.remove(endMarkerJustBefore);
+    } else if (!hasAttributionAt(start, attribution: newAttribution)) {
+      // The desired attribution does not yet exist at `start`, and no compatible
+      // span sits immediately upstream. Therefore, we need to start a new span
+      // for the given `newAttribution`.
+      _log.fine('Adding start marker for new span at: $start');
       _insertMarker(SpanMarker(
         attribution: newAttribution,
         offset: start,
         markerType: SpanMarkerType.start,
       ));
-    } else if (markers
-        .contains(SpanMarker(attribution: newAttribution, offset: start, markerType: SpanMarkerType.end))) {
+    } else if (markers.contains(endMarkerAtNewStart)) {
       // There's an end marker for this span at the same place where
       // the new span wants to begin. Remove the end marker so that the
       // existing span flows into the new span.
-      _log.fine('removing existing end marker at $start because the new span should merge with an existing span');
-      markers.remove(SpanMarker(
-        attribution: newAttribution,
-        offset: start,
-        markerType: SpanMarkerType.end,
-      ));
+      _log.fine('Removing existing end marker at $start because the new span should merge with an existing span');
+      markers.remove(endMarkerAtNewStart);
     }
 
-    // Delete all matching attributions between `range.start`
+    // Delete all markers of the same type between `range.start`
     // and `range.end`.
     final markersToDelete = markers
         .where((attribution) => attribution.attribution == newAttribution)
         .where((attribution) => attribution.offset > start)
         .where((attribution) => attribution.offset <= end)
         .toList();
-    _log.fine('removing ${markersToDelete.length} markers between $start and $end');
+    _log.fine('Removing ${markersToDelete.length} markers between $start and $end');
     markers.removeWhere((element) => markersToDelete.contains(element));
 
     final lastDeletedMarker = markersToDelete.isNotEmpty ? markersToDelete.last : null;
@@ -327,7 +331,7 @@ class AttributedSpans {
       // If we deleted some markers, but the last marker was an
       // `end` marker, we still have an open-ended span and we
       // need to cap it off.
-      _log.fine('inserting ending marker at: $end');
+      _log.fine('Inserting ending marker at: $end');
       _insertMarker(SpanMarker(
         attribution: newAttribution,
         offset: end,
@@ -337,10 +341,15 @@ class AttributedSpans {
     // Else, `range.end` is in the middle of larger span and
     // doesn't need to be inserted.
 
-    _log.fine('all attributions after:');
-    markers.where((element) => element.attribution == newAttribution).forEach((element) {
-      _log.fine('$element');
-    });
+    assert(() {
+      // Only run this loop in debug mode to avoid unnecessary iteration
+      // in a release build (when logging should be turned off, anyway).
+      _log.fine('All attributions after:');
+      markers.where((element) => element.attribution == newAttribution).forEach((element) {
+        _log.fine('$element');
+      });
+      return true;
+    }());
   }
 
   /// Removes [attributionToRemove] between [start] and [end], inclusive.

@@ -99,6 +99,25 @@ void main() {
       );
     });
 
+    group('span manipulation', () {
+      test('combines back-to-back spans after addition', () {
+        final text = AttributedText(text: 'ABCD');
+        text.addAttribution(ExpectedSpans.bold, const SpanRange(start: 0, end: 1));
+        text.addAttribution(ExpectedSpans.bold, const SpanRange(start: 2, end: 3));
+
+        // Ensure that we only have a single span
+        expect(text.spans.markers.length, 2);
+        expect(
+          text.spans.markers.first,
+          SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
+        );
+        expect(
+          text.spans.markers.last,
+          SpanMarker(attribution: ExpectedSpans.bold, offset: 3, markerType: SpanMarkerType.end),
+        );
+      });
+    });
+
     test('notifies listeners when style changes', () {
       bool listenerCalled = false;
 
