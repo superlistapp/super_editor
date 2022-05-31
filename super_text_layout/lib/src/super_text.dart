@@ -203,6 +203,11 @@ class RenderSuperTextLayout extends RenderBox
   }
 
   @override
+  bool get alwaysNeedsCompositing {
+    return true;
+  }
+
+  @override
   void setupParentData(RenderBox child) {
     if (child.parentData is! _SuperTextLayoutParentData) {
       child.parentData = _SuperTextLayoutParentData();
@@ -234,7 +239,39 @@ class RenderSuperTextLayout extends RenderBox
 
   @override
   void paint(PaintingContext context, Offset offset) {
-    defaultPaint(context, offset);
+    final newLayer = ContainerLayer();
+    context.pushLayer(
+      newLayer,
+      (context, offset) {
+        // defaultPaint(context, offset);
+
+        final backgroundLayerParentData = firstChild!.parentData as _SuperTextLayoutParentData;
+        context.paintChild(firstChild!, backgroundLayerParentData.offset + offset);
+
+        // Separate this render object from everything that came before
+        context.canvas.saveLayer(offset & size, Paint());
+
+        final textChild = backgroundLayerParentData.nextSibling;
+        final textParentData = textChild!.parentData as _SuperTextLayoutParentData;
+        context.paintChild(textChild, textParentData.offset + offset);
+
+        // Separate the text/foreground from the background, so the background doesn't
+        // interfere with the blending mode
+        context.canvas.saveLayer(offset & size, Paint()..blendMode = BlendMode.srcATop);
+
+        final foregroundLayerChild = textParentData.nextSibling;
+        final foregroundLayerParentData = foregroundLayerChild!.parentData! as _SuperTextLayoutParentData;
+        context.paintChild(foregroundLayerChild, foregroundLayerParentData.offset + offset);
+
+        // Combine the text/foreground with the background
+        context.canvas.restore();
+
+        // Combine this entire render object with everything that came before
+        context.canvas.restore();
+      },
+      Offset.zero,
+      childPaintBounds: Rect.fromLTWH(0, 0, size.width, size.height),
+    );
   }
 
   @override

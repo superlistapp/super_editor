@@ -98,7 +98,14 @@ class _FadeWhileTypingDemoState extends State<_FadeWhileTypingDemo> with SingleT
   @override
   Widget build(BuildContext context) {
     // return _buildBoxHighlightsExample();
-    return _buildCustomPainterGradientExample();
+    // return _buildCustomPainterGradientExample();
+    return Container(
+      color: const Color(0xFF222222),
+      // color: Colors.white,
+      child: RepaintBoundary(
+        child: _buildCustomPainterGradientShaderExample(),
+      ),
+    );
   }
 
   // Example that displays a different Container behind every character
@@ -135,6 +142,29 @@ class _FadeWhileTypingDemoState extends State<_FadeWhileTypingDemo> with SingleT
           painter: _GradientHighlightPainter(
             textLayout,
             _characterHighlightAlpha,
+            applyToText: false,
+          ),
+          size: Size.infinite,
+        );
+      },
+    );
+  }
+
+  // Example that applies a gradient to the text beneath it
+  Widget _buildCustomPainterGradientShaderExample() {
+    return SuperText(
+      richText: _richText,
+      // richText: const TextSpan(text: _textMessage, style: _textStyle),
+      layerAboveBuilder: (context, textLayout) {
+        return CustomPaint(
+          painter: _GradientHighlightPainter(
+            textLayout,
+            // {
+            //   0: 0.0,
+            //   100: 1.0,
+            // },
+            _characterHighlightAlpha,
+            applyToText: true,
           ),
           size: Size.infinite,
         );
@@ -146,11 +176,16 @@ class _FadeWhileTypingDemoState extends State<_FadeWhileTypingDemo> with SingleT
 class _GradientHighlightPainter extends CustomPainter {
   _GradientHighlightPainter(
     this.textLayout,
-    this.characterHighlights,
-  );
+    this.characterHighlights, {
+    required this.applyToText,
+  });
 
   final TextLayout textLayout;
   final Map<int, double> characterHighlights;
+
+  /// Whether the gradient is painted as a fully-visible rectangle, or
+  /// the gradient is "applied to the text" with a blending mode.
+  final bool applyToText;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -184,6 +219,7 @@ class _GradientHighlightPainter extends CustomPainter {
             Colors.red.withOpacity(lineEndAlpha),
           ],
         );
+      // ..blendMode = applyToText ? BlendMode.lighten : BlendMode.srcOver;
       canvas.drawRect(lineBox.toRect(), paint);
 
       currentAlpha = lineEndAlpha;
@@ -199,7 +235,7 @@ class _GradientHighlightPainter extends CustomPainter {
 const defaultSelectionColor = Color(0xFFACCEF7);
 
 const _textMessage =
-    "This is a prototype for a fading highlight effect. Every character that appears is given a box highlight. Each box fades out over time.";
+    "This is a prototype for a fading highlight effect. A few effects are available. We can fade character boxes behind the text, gradient boxes behind the text, and a gradient over the text with a blend mode.";
 
 const _textStyle = TextStyle(
   color: Color(0xFF444444),
