@@ -1,8 +1,29 @@
 import 'package:attributed_text/attributed_text.dart';
+import 'package:attributed_text/src/logging.dart';
+import 'package:logging/logging.dart';
 import 'package:test/test.dart';
 
 void main() {
   group('Attributed Text', () {
+    test('Bug 582 - combining spans', () {
+      initAllLogs(Level.FINEST);
+      final text = AttributedText(text: '01234567');
+      text.spans.addAttribution(newAttribution: ExpectedSpans.bold, start: 0, end: 4);
+      text.spans.addAttribution(newAttribution: ExpectedSpans.bold, start: 4, end: 8);
+
+      print("$text");
+
+      expect(text.spans.markers.length, 2);
+      expect(
+        text.spans.markers.first,
+        SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
+      );
+      expect(
+        text.spans.markers.last,
+        SpanMarker(attribution: ExpectedSpans.bold, offset: 8, markerType: SpanMarkerType.end),
+      );
+    });
+
     test('Bug 145 - insert character at beginning of styled text', () {
       final initialText = AttributedText(
         text: 'abcdefghij',
