@@ -98,6 +98,7 @@ class TextNode extends DocumentNode with ChangeNotifier {
     return TextNodeSelection(
       baseOffset: (base as TextNodePosition).offset,
       extentOffset: (extent as TextNodePosition).offset,
+      affinity: extent.affinity,
     );
   }
 
@@ -246,10 +247,10 @@ class TextNodeSelection extends TextSelection implements NodeSelection {
         );
 
   @override
-  TextNodePosition get base => TextNodePosition(offset: baseOffset);
+  TextNodePosition get base => TextNodePosition(offset: baseOffset, affinity: affinity);
 
   @override
-  TextNodePosition get extent => TextNodePosition(offset: extentOffset);
+  TextNodePosition get extent => TextNodePosition(offset: extentOffset, affinity: affinity);
 }
 
 /// A logical position within a [TextNode].
@@ -457,21 +458,7 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
     //   return null;
     // }
 
-    // Rework the textPosition so that it reports a "downstream" affinity because
-    // the editor doesn't support "upstream" positions, yet.
-    //
-    // Applying the "-1" to switch from upstream to downstream works everywhere, except
-    // when the position is at the very end of the text. In that case, we leave the offset
-    // alone.
-    return TextNodePosition.fromTextPosition(textPosition.affinity == TextAffinity.downstream
-        // The textPosition is already "downstream", leave it alone.
-        ? textPosition
-        // The textPosition if "upstream", adjust it to become "downstream", unless
-        // the position sits at the very end of the text.
-        : TextPosition(
-            offset: textPosition.offset < widget.text.text.length ? textPosition.offset - 1 : textPosition.offset,
-            affinity: TextAffinity.downstream,
-          ));
+    return TextNodePosition.fromTextPosition(textPosition);
   }
 
   @override
