@@ -1,3 +1,7 @@
+## [0.1.2] - June 2, 2022
+
+Fixed a couple bugs related to merging attribution spans when adding new spans.
+
 ## [0.1.1] - April 4, 2022
 
 Downgraded `collection` from `1.16.0` to `1.15.0` because `flutter_test` is pinned to `1.15.0`
