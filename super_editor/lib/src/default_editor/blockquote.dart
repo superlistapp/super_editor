@@ -125,6 +125,7 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel 
 
   @override
   void applyStyles(Map<String, dynamic> styles) {
+    super.applyStyles(styles);
     backgroundColor = styles["backgroundColor"] ?? Colors.transparent;
     borderRadius = styles["borderRadius"] ?? BorderRadius.zero;
   }
