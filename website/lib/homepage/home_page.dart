@@ -93,15 +93,23 @@ class HomePage extends StatelessWidget {
           horizontal: 32,
           vertical: displayMode == DisplayMode.compact ? 16 : 0,
         ),
-        child: FeaturedEditor(
-          displayMode: displayMode,
-          shadows: [
-            BoxShadow(
-              offset: const Offset(0, 10),
-              color: Colors.black.withOpacity(0.79),
-              blurRadius: 75,
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            boxShadow: [
+              BoxShadow(
+                offset: const Offset(0, 10),
+                color: Colors.black.withOpacity(0.79),
+                blurRadius: 75,
+              ),
+            ],
+          ),
+          child: SingleChildScrollView(
+            child: FeaturedEditor(
+              displayMode: displayMode,              
             ),
-          ],
+          ),
         ),
       ),
     );
