@@ -1,4 +1,8 @@
-## [0.1.2] - June 2, 2022
+## [0.1.3] - June 3, 2022
+
+Changed the `meta` dependency to a version that's compatible with Flutter
+
+## [0.1.2] - June 2, 2022 (DEPRECATED)
 
 Fixed a couple bugs related to merging attribution spans when adding new spans.
 
