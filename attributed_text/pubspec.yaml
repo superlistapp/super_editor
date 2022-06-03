@@ -10,7 +10,7 @@ dependencies:
   characters: ^1.2.0
   collection: ^1.15.0
   logging: ^1.0.1
-  meta: ^1.8.0
+  meta: ^1.7.0
   test: ^1.19.4
 
 dev_dependencies:

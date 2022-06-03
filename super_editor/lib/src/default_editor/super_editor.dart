@@ -722,6 +722,19 @@ final defaultStylesheet = Stylesheet(
       },
     ),
     StyleRule(
+      const BlockSelector("blockquote"),
+      (doc, docNode) {
+        return {              
+          "textStyle": const TextStyle(
+            color: Colors.grey,     
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            height: 1.4,
+          ),
+        };
+      },
+    ),
+    StyleRule(
       BlockSelector.all.last(),
       (doc, docNode) {
         return {
