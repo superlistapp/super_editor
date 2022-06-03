@@ -11,6 +11,7 @@ dependencies:
     sdk: flutter
   super_editor:
     path: ../super_editor
+  super_text_layout: ^0.1.0
   url_launcher:
 
 dev_dependencies:
