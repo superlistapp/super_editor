@@ -19,6 +19,7 @@ dependency_overrides:
   # against changes that they're making to other mono-repo packages
   attributed_text:
     path: ../attributed_text
+  meta: ^1.8.0
 
 dev_dependencies:
   flutter_lints: ^2.0.1
