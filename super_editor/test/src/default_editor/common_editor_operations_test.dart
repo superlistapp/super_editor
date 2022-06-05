@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/super_editor.dart';
@@ -189,6 +190,18 @@ void main() {
           documentLayoutResolver: () => FakeDocumentLayout(),
         );
 
+        // Render document in a `SuperEditor`
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: SuperEditor(
+                editor: editor,
+                composer: composer,
+              ),
+            ),
+          ),
+        );
+
         // The Clipboard requires a platform response, which doesn't exist
         // for widget tests. Pretend that we're the platform and handle
         // the incoming clipboard call.
@@ -266,6 +279,18 @@ void main() {
           editor: editor,
           composer: composer,
           documentLayoutResolver: () => FakeDocumentLayout(),
+        );
+
+        // Render document in a `SuperEditor`
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: SuperEditor(
+                editor: editor,
+                composer: composer,
+              ),
+            ),
+          ),
         );
 
         // The Clipboard requires a platform response, which doesn't exist
