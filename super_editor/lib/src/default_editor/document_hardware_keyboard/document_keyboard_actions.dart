@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document.dart';
@@ -11,15 +13,12 @@ import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
 
-ExecutionInstruction scrollWhenNavigationKeyPressed({
+/// Scroll to appropriate position in viewport when one of pageUp,
+/// pageDown, Home or End key is pressed
+ExecutionInstruction scrollOnPageUpPageDownHomeAndEnd({
   required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
 }) {
-  //the super_editor doesn't always have a scroll controller
-  if (editContext.scrollController == null) {
-    return ExecutionInstruction.continueExecution;
-  }
-
   if (keyEvent.logicalKey.keyId < LogicalKeyboardKey.end.keyId ||
       keyEvent.logicalKey.keyId > LogicalKeyboardKey.pageUp.keyId) {
     return ExecutionInstruction.continueExecution;
@@ -27,34 +26,27 @@ ExecutionInstruction scrollWhenNavigationKeyPressed({
 
   final scrollController = editContext.scrollController!;
 
-  double? jumpTo;
-
-  //end key or fn-arrowDn (on Mac)
+  // The user pressed the END key, scroll to the bottom of the document.
   if (keyEvent.logicalKey == LogicalKeyboardKey.end) {
-    jumpTo = scrollController.position.maxScrollExtent;
-    //home key or fn-arrowUp (on Mac)
+    scrollController.jumpTo(scrollController.position.maxScrollExtent);
+    // The user pressed the HOME key, scroll to the top of the document.
   } else if (keyEvent.logicalKey == LogicalKeyboardKey.home) {
-    jumpTo = scrollController.position.minScrollExtent;
-    //pgDn key or fn-arrowDn (on Mac)
+    scrollController.jumpTo(scrollController.position.minScrollExtent);
+    // The user pressed the PAGEDOWN key, scroll down for one viewport length of the document.
   } else if (keyEvent.logicalKey == LogicalKeyboardKey.pageDown) {
-    final nextJump = scrollController.offset + scrollController.position.extentInside;
-
-    jumpTo =
-        nextJump < scrollController.position.maxScrollExtent ? nextJump : scrollController.position.maxScrollExtent;
-    //pgUp key or fn-arrowUp (on Mac)
+    scrollController.jumpTo(min(
+        scrollController.offset + scrollController.position.extentInside, scrollController.position.maxScrollExtent));
+    // The user pressed the PAGEUP key, scroll up for one viewport length of the document.
   } else if (keyEvent.logicalKey == LogicalKeyboardKey.pageUp) {
-    final nextJump = scrollController.offset - scrollController.position.extentInside;
-
-    jumpTo = nextJump > 0 ? nextJump : scrollController.position.minScrollExtent;
-  }
-
-  if (jumpTo != null) {
-    scrollController.jumpTo(jumpTo);
+    scrollController.jumpTo(max(
+        scrollController.offset - scrollController.position.extentInside, scrollController.position.minScrollExtent));
   }
 
   return ExecutionInstruction.haltExecution;
 }
 
+/// Without this action in place pressing a function key would display
+/// an unknown '?' character in the document
 ExecutionInstruction doNothingWhenFnKeyPressed({
   required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,

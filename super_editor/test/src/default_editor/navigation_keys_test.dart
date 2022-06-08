@@ -3,160 +3,203 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/super_editor.dart';
 
-enum Extent { top, bottom, pgDown, pgUp }
-
-enum ScrollTo { bottom }
+import 'test_documents.dart';
 
 void main() {
-  group('Navigation Keys', () {
-    double screenWidth = 640.0;
+  group('Keyboard based navigation', () {
+    group('Page navigation keys', () {
+      testWidgets('pageDown key press at bottom of viewport', (tester) async {
+        await _pumpDocumentLayout(tester);
 
-    double screenHeight = 120.0;
+        final scrollState = tester.state<ScrollableState>(find.byType(Scrollable));
 
-    Future<void> _testExtent(WidgetTester tester, Extent extent,
-        {required LogicalKeyboardKey key, bool scrollToBottom = false}) async {
-      final testDocument = TestDocument(tester, screenWidth: screenWidth, screenHeight: screenHeight);
+        // Set the ScollPostion to the bottom of the scrollable area
+        scrollState.widget.controller!.jumpTo(scrollState.position.maxScrollExtent);
 
-      await testDocument.buildDoc();
+        await tester.sendKeyEvent(LogicalKeyboardKey.pageDown);
 
-      //caret is at begining of doc
-      expect(testDocument.textNodePosition.offset == 0, true);
+        // Let the scrolling system auto-scroll, as desired.
+        await tester.pumpAndSettle();
 
-      if (scrollToBottom) {
-        testDocument.scrollController.jumpTo(testDocument.extentBottom);
-      }
+        // Ensure that the scroll position is set to the expected position
+        // after the key press action.
+        expect(scrollState.widget.controller!.offset, equals(scrollState.position.maxScrollExtent));
 
-      //activate key press
-      await tester.sendKeyEvent(key);
+        // Ensure that the caret has not move during the key press action.
+        expect(textNodePosition.offset, equals(0));
+      });
 
-      await tester.pumpAndSettle();
+      testWidgets('pageDown key press at top of viewport', (tester) async {
+        await _pumpDocumentLayout(tester);
 
-      final offset = testDocument.scrollController.offset;
+        final scrollState = tester.state<ScrollableState>(find.byType(Scrollable));
 
-      switch (extent) {
-        case Extent.top:
-          //confirm no scroll beyond top
-          expect(offset, equals(testDocument.extentTop));
-          break;
+        await tester.sendKeyEvent(LogicalKeyboardKey.pageDown);
 
-        case Extent.bottom:
-          //confirm no scroll beyond bottom
-          expect(offset, equals(testDocument.extentBottom));
-          break;
+        // Let the scrolling system auto-scroll, as desired.
+        await tester.pumpAndSettle();
 
-        case Extent.pgDown:
-          //confirm scroll down by screenHeight
-          expect(offset, equals(screenHeight));
-          break;
+        // Ensure that the scroll position is set to the expected position
+        // after the key press action.
+        expect(scrollState.widget.controller!.offset, equals(screenHeight));
 
-        case Extent.pgUp:
-          //confirm scroll up one page
-          expect(offset, equals(testDocument.extentBottom - screenHeight));
-          break;
-      }
+        // Ensure that the caret has not move during the key press action.
+        expect(textNodePosition.offset, equals(0));
+      });
 
-      //caret should not move
-      expect(testDocument.textNodePosition.offset == 0, true);
-    }
+      testWidgets('pageUp key press at top of viewport', (tester) async {
+        await _pumpDocumentLayout(tester);
 
-    group('navigation', () {
-      testWidgets('pageDown key press at bottom of viewport',
-          (tester) async => _testExtent(tester, Extent.bottom, key: LogicalKeyboardKey.pageDown, scrollToBottom: true));
+        final scrollState = tester.state<ScrollableState>(find.byType(Scrollable));
 
-      testWidgets(
-          'pageDown key press at top of viewport',
-          (tester) async => _testExtent(
-                tester,
-                Extent.pgDown,
-                key: LogicalKeyboardKey.pageDown,
-              ));
+        await tester.sendKeyEvent(LogicalKeyboardKey.pageUp);
 
-      testWidgets('pageUp key press at top of viewport',
-          (tester) async => _testExtent(tester, Extent.top, key: LogicalKeyboardKey.pageUp));
+        // Let the scrolling system auto-scroll, as desired.
+        await tester.pumpAndSettle();
 
-      testWidgets('pageUp key press at bottom of viewport',
-          (tester) async => _testExtent(tester, Extent.pgUp, key: LogicalKeyboardKey.pageUp, scrollToBottom: true));
+        // Ensure that the scroll position is set to the expected position
+        // after the key press action.
+        expect(scrollState.widget.controller!.offset, equals(scrollState.position.minScrollExtent));
 
-      testWidgets('home key press at top of viewport',
-          (tester) async => _testExtent(tester, Extent.top, key: LogicalKeyboardKey.home));
+        // Ensure that the caret has not move during the key press action.
+        expect(textNodePosition.offset, equals(0));
+      });
 
-      testWidgets('home key press at bottom of viewport',
-          (tester) async => _testExtent(tester, Extent.top, key: LogicalKeyboardKey.home, scrollToBottom: true));
+      testWidgets('pageUp key press at bottom of viewport', (tester) async {
+        await _pumpDocumentLayout(tester);
 
-      testWidgets('end key press at bottom of viewport',
-          (tester) async => _testExtent(tester, Extent.bottom, key: LogicalKeyboardKey.end, scrollToBottom: true));
+        final scrollState = tester.state<ScrollableState>(find.byType(Scrollable));
 
-      testWidgets(
-          'end key press at top of viewport',
-          (tester) async => _testExtent(
-                tester,
-                Extent.bottom,
-                key: LogicalKeyboardKey.end,
-              ));
+        // Set the ScollPostion to the bottom of the scrollable area
+        scrollState.widget.controller!.jumpTo(scrollState.position.maxScrollExtent);
+
+        await tester.sendKeyEvent(LogicalKeyboardKey.pageUp);
+
+        // Let the scrolling system auto-scroll, as desired.
+        await tester.pumpAndSettle();
+
+        // Ensure that the scroll position is set to the expected position
+        // after the key press action.
+        expect(scrollState.widget.controller!.offset, equals(scrollState.position.maxScrollExtent - screenHeight));
+
+        // Ensure that the caret has not move during the key press action.
+        expect(textNodePosition.offset, equals(0));
+      });
+
+      testWidgets('home key press at top of viewport', (tester) async {
+        await _pumpDocumentLayout(tester);
+
+        final scrollState = tester.state<ScrollableState>(find.byType(Scrollable));
+
+        await tester.sendKeyEvent(LogicalKeyboardKey.home);
+
+        // Let the scrolling system auto-scroll, as desired.
+        await tester.pumpAndSettle();
+
+        // Ensure that the scroll position is set to the expected position
+        // after the key press action.
+        expect(scrollState.widget.controller!.offset, equals(scrollState.position.minScrollExtent));
+
+        // Ensure that the caret has not move during the key press action.
+        expect(textNodePosition.offset, equals(0));
+      });
+
+      testWidgets('home key press at bottom of viewport', (tester) async {
+        await _pumpDocumentLayout(tester);
+
+        final scrollState = tester.state<ScrollableState>(find.byType(Scrollable));
+
+        // Set the ScollPostion to the bottom of the scrollable area
+        scrollState.widget.controller!.jumpTo(scrollState.position.maxScrollExtent);
+
+        await tester.sendKeyEvent(LogicalKeyboardKey.home);
+
+        // Let the scrolling system auto-scroll, as desired.
+        await tester.pumpAndSettle();
+
+        // Ensure that the scroll position is set to the expected position
+        // after the key press action.
+        expect(scrollState.widget.controller!.offset, equals(scrollState.position.minScrollExtent));
+
+        // Ensure that the caret has not move during the key press action.
+        expect(textNodePosition.offset, equals(0));
+      });
+
+      testWidgets('end key press at bottom of viewport', (tester) async {
+        await _pumpDocumentLayout(tester);
+
+        final scrollState = tester.state<ScrollableState>(find.byType(Scrollable));
+
+        // Set the ScollPostion to the bottom of the scrollable area
+        scrollState.widget.controller!.jumpTo(scrollState.position.maxScrollExtent);
+
+        await tester.sendKeyEvent(LogicalKeyboardKey.end);
+
+        // Let the scrolling system auto-scroll, as desired.
+        await tester.pumpAndSettle();
+
+        // Ensure that the scroll position is set to the expected position
+        // after the key press action.
+        expect(scrollState.widget.controller!.offset, equals(scrollState.position.maxScrollExtent));
+
+        // Ensure that the caret has not move during the key press action.
+        expect(textNodePosition.offset, equals(0));
+      });
+
+      testWidgets('end key press at top of viewport', (tester) async {
+        await _pumpDocumentLayout(tester);
+
+        final scrollState = tester.state<ScrollableState>(find.byType(Scrollable));
+
+        await tester.sendKeyEvent(LogicalKeyboardKey.end);
+
+        // Let the scrolling system auto-scroll, as desired.
+        await tester.pumpAndSettle();
+
+        // Ensure that the scroll position is set to the expected position
+        // after the key press action.
+        expect(scrollState.widget.controller!.offset, equals(scrollState.position.maxScrollExtent));
+
+        // Ensure that the caret has not move during the key press action.
+        expect(textNodePosition.offset, equals(0));
+      });
     });
   });
 }
 
-class TestDocument {
-  final WidgetTester tester;
+// Initial screen dimensions for test document
+const double screenWidth = 640.0;
+const double screenHeight = 120.0;
 
-  final double screenWidth;
+final composer = DocumentComposer(
+  initialSelection: const DocumentSelection.collapsed(
+    position: DocumentPosition(
+      nodeId: '1',
+      nodePosition: TextNodePosition(offset: 0),
+    ),
+  ),
+);
 
-  final double screenHeight;
+TextNodePosition get textNodePosition => composer.selection!.extent.nodePosition as TextNodePosition;
 
-  final scrollController = ScrollController();
+Future<void> _pumpDocumentLayout(WidgetTester tester) async {
+  tester.binding.window
+    ..physicalSizeTestValue = const Size(screenWidth, screenHeight)
+    ..platformDispatcher.textScaleFactorTestValue = 1.0
+    ..devicePixelRatioTestValue = 1.0;
 
-  final composer = DocumentComposer(
-    initialSelection: const DocumentSelection.collapsed(
-      position: DocumentPosition(
-        nodeId: '1',
-        nodePosition: TextNodePosition(offset: 0),
+  await tester.pumpWidget(
+    MaterialApp(
+      home: Scaffold(
+        body: SuperEditor(
+          scrollController: ScrollController(),
+          editor: DocumentEditor(document: multipleParagraphDoc()),
+          inputSource: DocumentInputSource.keyboard,
+          focusNode: FocusNode()..requestFocus(),
+          composer: composer,
+          autofocus: true,
+        ),
       ),
     ),
   );
-
-  //get caret offset
-  TextNodePosition get textNodePosition => composer.selection!.extent.nodePosition as TextNodePosition;
-
-  double get extentTop => scrollController.position.minScrollExtent;
-
-  double get extentBottom => scrollController.position.maxScrollExtent;
-
-  TestDocument(this.tester, {required this.screenWidth, required this.screenHeight}) {
-    tester.binding.window
-      ..physicalSizeTestValue = Size(screenWidth, screenHeight)
-      ..platformDispatcher.textScaleFactorTestValue = 1.0
-      ..devicePixelRatioTestValue = 1.0;
-  }
-
-  Future<void> buildDoc() async {
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: SuperEditor(
-            scrollController: scrollController,
-            editor: DocumentEditor(
-                document: MutableDocument(
-              nodes: [
-                ParagraphNode(
-                    id: '1',
-                    text: AttributedText(
-                        text:
-                            '1. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.')),
-                ParagraphNode(
-                    id: '2',
-                    text: AttributedText(
-                        text:
-                            '2. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.')),
-              ],
-            )),
-            inputSource: DocumentInputSource.keyboard,
-            focusNode: FocusNode()..requestFocus(),
-            composer: composer,
-            autofocus: true,
-          ),
-        ),
-      ),
-    );
-  }
 }

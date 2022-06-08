@@ -845,9 +845,10 @@ final defaultComponentBuilders = <ComponentBuilder>[
 /// Keyboard actions for the standard [SuperEditor].
 final defaultKeyboardActions = <DocumentKeyboardAction>[
   toggleInteractionModeWhenCmdOrCtrlPressed,
-  scrollWhenNavigationKeyPressed,
+  scrollOnPageUpPageDownHomeAndEnd,
   doNothingWhenFnKeyPressed,
   doNothingWhenThereIsNoSelection,
+  scrollOnPageUpPageDownHomeAndEnd,
   pasteWhenCmdVIsPressed,
   copyWhenCmdCIsPressed,
   cutWhenCmdXIsPressed,
