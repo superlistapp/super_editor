@@ -204,8 +204,6 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
 
     editorImeLog.info('Detaching TextInputClient from TextInput.');
 
-    widget.editContext.composer.selection = null;
-
     _inputConnection!.close();
   }
 
