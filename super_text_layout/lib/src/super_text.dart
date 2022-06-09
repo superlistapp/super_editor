@@ -29,9 +29,11 @@ class SuperText extends StatefulWidget {
     this.textDirection = TextDirection.ltr,
     this.layerBeneathBuilder,
     this.layerAboveBuilder,
-    this.compositeGrouping = SuperTextCompositeGrouping.allTogether,
+    this.foregroundIntoTextBlendMode,
+    this.textIntoBackgroundBlendMode,
     this.debugTrackTextBuilds = false,
-  }) : super(key: key);
+  })  : assert(foregroundIntoTextBlendMode == null || textIntoBackgroundBlendMode == null),
+        super(key: key);
 
   /// The text to display in this [SuperText] widget.
   final InlineSpan richText;
@@ -49,9 +51,19 @@ class SuperText extends StatefulWidget {
   /// Builds a widget that appears above the text, e.g., to render a caret.
   final SuperTextLayerBuilder? layerAboveBuilder;
 
-  /// The grouping of layers in the compositor for the background, text, and
-  /// foreground.
-  final SuperTextCompositeGrouping compositeGrouping;
+  /// The blending mode used when painting the foreground layer on top of text.
+  ///
+  /// When using a blending mode, the foreground is blended only with the text.
+  /// The background is moved to a separate layer. As such, if you provide a
+  /// [foregroundIntoTextBlendMode], you shouldn't provide a [textIntoBackgroundBlendMode].
+  final BlendMode? foregroundIntoTextBlendMode;
+
+  /// The blending mode used when painting the text layer on top of the background.
+  ///
+  /// When using a blending mode, the text is blended only with the background.
+  /// The foreground is moved to a separate layer. As such, if you provide a
+  /// [textIntoBackgroundBlendMode], you shouldn't provide a [foregroundIntoTextBlendMode].
+  final BlendMode? textIntoBackgroundBlendMode;
 
   /// Whether this [SuperText] widget should track the number of times it
   /// builds its inner rich text, so that tests can ensure the inner text
@@ -275,35 +287,35 @@ class RenderSuperTextLayout extends RenderBox
 
   @override
   void paint(PaintingContext context, Offset offset) {
-    final grouping = state.widget.compositeGrouping;
-
     final backgroundLayerParentData = firstChild!.parentData as _SuperTextLayoutParentData;
     context.paintChild(firstChild!, backgroundLayerParentData.offset + offset);
 
-    if (grouping == SuperTextCompositeGrouping.allSeparate ||
-        grouping == SuperTextCompositeGrouping.foregroundWithText) {
+    if (state.widget.foregroundIntoTextBlendMode != null) {
       // Separate background layer from the text and foreground.
       context.canvas.saveLayer(offset & size, Paint());
+    } else if (state.widget.textIntoBackgroundBlendMode != null) {
+      // Push the desired blending mode so that the text is blended with the background.
+      context.canvas.saveLayer(offset & size, Paint()..blendMode = state.widget.textIntoBackgroundBlendMode!);
     }
 
     final textChild = backgroundLayerParentData.nextSibling;
     final textParentData = textChild!.parentData as _SuperTextLayoutParentData;
     context.paintChild(textChild, textParentData.offset + offset);
 
-    if (grouping == SuperTextCompositeGrouping.allSeparate ||
-        grouping == SuperTextCompositeGrouping.backgroundWithText) {
-      // Separate background and text layer from the foreground.
-      context.canvas.saveLayer(offset & size, Paint()..blendMode = BlendMode.srcATop);
+    if (state.widget.foregroundIntoTextBlendMode != null) {
+      // Blend the foreground with the text.
+      context.canvas.saveLayer(offset & size, Paint()..blendMode = state.widget.foregroundIntoTextBlendMode!);
     }
 
     final foregroundLayerChild = textParentData.nextSibling;
     final foregroundLayerParentData = foregroundLayerChild!.parentData! as _SuperTextLayoutParentData;
     context.paintChild(foregroundLayerChild, foregroundLayerParentData.offset + offset);
 
-    if (grouping == SuperTextCompositeGrouping.foregroundWithText ||
-        grouping == SuperTextCompositeGrouping.backgroundWithText) {
+    if (state.widget.textIntoBackgroundBlendMode != null) {
+      // Pop the one layer that was added for background blending.
       context.canvas.restore();
-    } else if (grouping == SuperTextCompositeGrouping.allSeparate) {
+    } else if (state.widget.foregroundIntoTextBlendMode != null) {
+      // Pop both of the layers that were added for foreground blending.
       context.canvas
         ..restore()
         ..restore();
