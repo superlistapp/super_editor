@@ -29,6 +29,7 @@ class SuperText extends StatefulWidget {
     this.textDirection = TextDirection.ltr,
     this.layerBeneathBuilder,
     this.layerAboveBuilder,
+    this.compositeGrouping = SuperTextCompositeGrouping.allTogether,
     this.debugTrackTextBuilds = false,
   }) : super(key: key);
 
@@ -47,6 +48,10 @@ class SuperText extends StatefulWidget {
 
   /// Builds a widget that appears above the text, e.g., to render a caret.
   final SuperTextLayerBuilder? layerAboveBuilder;
+
+  /// The grouping of layers in the compositor for the background, text, and
+  /// foreground.
+  final SuperTextCompositeGrouping compositeGrouping;
 
   /// Whether this [SuperText] widget should track the number of times it
   /// builds its inner rich text, so that tests can ensure the inner text
@@ -119,6 +124,37 @@ class SuperTextState extends State<SuperText> with ProseTextBlock {
       ),
     );
   }
+}
+
+enum SuperTextCompositeGrouping {
+  /// The background, text, and foreground are all composited in
+  /// the same layer.
+  ///
+  /// This is the typical Flutter painting configuration.
+  allTogether,
+
+  /// The background and text are painted in a shared layer, and the
+  /// foreground is painted in a separate layer.
+  ///
+  /// This mode makes it possible to blend the text with the background,
+  /// without worrying about what's in the foreground.
+  backgroundWithText,
+
+  /// The foreground and text are painted in a shared layer, and the
+  /// background is painted in a separate layer.
+  ///
+  /// This mode makes it possible to blend the text with the foreground,
+  /// without worrying about what's in the background.
+  foregroundWithText,
+
+  /// The background, text, and foreground are all composited in different
+  /// layers.
+  ///
+  /// This mode prevents any cross-blending between the background, text, and
+  /// foreground. This mode should only be chosen when there is a specific
+  /// reason to do so, because separating compositor layers might prevent
+  /// internal optimizations.
+  allSeparate,
 }
 
 @visibleForTesting
