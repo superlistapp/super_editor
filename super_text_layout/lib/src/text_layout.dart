@@ -329,6 +329,13 @@ class RenderParagraphProseTextLayout implements ProseTextLayout {
       ));
     }
 
+    // If we still don't have any boxes, it means that the text contains only
+    // emojis and we can't get a measurement from Flutter
+    if (boxes.isEmpty) {
+      final lineHeightEstimate = _renderParagraph.getFullHeightForCaret(const TextPosition(offset: 0)) ?? 0.0;
+      return TextBox.fromLTRBD(0, 0, 0, lineHeightEstimate, TextDirection.ltr);
+    }
+
     return boxes.first;
   }
 

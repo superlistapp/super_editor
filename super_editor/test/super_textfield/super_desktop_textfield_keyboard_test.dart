@@ -1785,6 +1785,34 @@ void main() {
         });
       });
     });
+  
+    testWidgets("can move the selection when text contains only emojis", (tester) async {      
+      final controller = AttributedTextEditingController(
+        text: AttributedText(text: '🐢'),
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(            
+            body: SuperDesktopTextField(
+              textController: controller,
+              textStyleBuilder: (_) => const TextStyle(fontSize: 16),
+            ),
+          ),
+        ),
+      );
+
+      // Focus the text field
+      await tester.tap(find.byType(SuperDesktopTextField));
+      await tester.pumpAndSettle();
+
+      // Press left arrow key to move the selection to the begining of the text
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+      await tester.pumpAndSettle();      
+
+      // As long as this test completes without an error, it should be the case
+      // that the selection is at the begining of the text
+    });
   });
 }
 
