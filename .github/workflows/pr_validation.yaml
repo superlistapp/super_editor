@@ -15,7 +15,7 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: "stable"
-          architecture: arm64
+          architecture: x64
 
       # Download all the packages that the app uses
       - run: flutter pub get
@@ -129,7 +129,7 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: "stable"
-          architecture: arm64
+          architecture: x64
 
       # Download all the packages that the app uses
       - run: flutter pub get
