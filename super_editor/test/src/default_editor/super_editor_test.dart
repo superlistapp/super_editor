@@ -1,109 +1,76 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
 import 'package:super_editor/super_editor.dart';
-import 'package:super_text_layout/super_text_layout.dart';
 
-import 'test_documents.dart';
+import '../../super_editor/document_test_tools.dart';
+import '../../super_editor/supereditor_inspector.dart';
+import '../../super_editor/supereditor_robot.dart';
 
 void main() {
   group('SuperEditor', () {
     group('autofocus', () {
       testWidgets('does not claim focus when autofocus is false', (tester) async {
-        final focusNode = FocusNode();
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: SuperEditor(
-                editor: DocumentEditor(document: singleParagraphDoc()),
-                focusNode: focusNode,
-                inputSource: _inputAndGestureVariants.currentValue!.inputSource,
-                gestureMode: _inputAndGestureVariants.currentValue!.gestureMode,
-                autofocus: false,
-              ),
-            ),
-          ),
-        );
+        // Configure and render a document.
+        await tester //
+            .createDocument()
+            .withSingleParagraph()
+            .withInputSource(_inputAndGestureVariants.currentValue!.inputSource)
+            .withGestureMode(_inputAndGestureVariants.currentValue!.gestureMode)
+            .autoFocus(false)
+            .pump();
 
-        expect(focusNode.hasFocus, false);
+        expect(SuperEditorInspector.hasFocus(), false);
       }, variant: _inputAndGestureVariants);
 
       testWidgets('claims focus when autofocus is true', (tester) async {
-        final focusNode = FocusNode();
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: SuperEditor(
-                editor: DocumentEditor(document: singleParagraphDoc()),
-                focusNode: focusNode,
-                inputSource: _inputAndGestureVariants.currentValue!.inputSource,
-                gestureMode: _inputAndGestureVariants.currentValue!.gestureMode,
-                autofocus: true,
-              ),
-            ),
-          ),
-        );
+        // Configure and render a document.
+        await tester //
+            .createDocument()
+            .withSingleParagraph()
+            .withInputSource(_inputAndGestureVariants.currentValue!.inputSource)
+            .withGestureMode(_inputAndGestureVariants.currentValue!.gestureMode)
+            .autoFocus(true)
+            .pump();
 
-        expect(focusNode.hasFocus, true);
+        expect(SuperEditorInspector.hasFocus(), true);
       }, variant: _inputAndGestureVariants);
 
       testWidgets('claims focus by gesture when autofocus is false', (tester) async {
-        final focusNode = FocusNode();
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: SuperEditor(
-                editor: DocumentEditor(document: singleParagraphDoc()),
-                focusNode: focusNode,
-                inputSource: _inputAndGestureVariants.currentValue!.inputSource,
-                gestureMode: _inputAndGestureVariants.currentValue!.gestureMode,
-                autofocus: false,
-              ),
-            ),
-          ),
-        );
+        // Configure and render a document.
+        await tester //
+            .createDocument()
+            .withSingleParagraph()
+            .withInputSource(_inputAndGestureVariants.currentValue!.inputSource)
+            .withGestureMode(_inputAndGestureVariants.currentValue!.gestureMode)
+            .autoFocus(false)
+            .pump();
 
-        await tester.tap(find.byType(SuperEditor));
-        await tester.pumpAndSettle();
+        await tester.placeCaretInParagraph("1", 0);
 
-        expect(focusNode.hasFocus, true);
+        expect(SuperEditorInspector.hasFocus(), true);
       }, variant: _inputAndGestureVariants);
     });
 
     group("stylesheet", () {
       testWidgets("change causes presentation to run again", (tester) async {
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: SuperEditor(
-                editor: DocumentEditor(document: singleParagraphDoc()),
-                stylesheet: _stylesheet1,
-              ),
-            ),
-          ),
-        );
+        // Configure and render a document.
+        final testDocument = await tester //
+            .createDocument()
+            .withSingleParagraph()
+            .useStylesheet(_stylesheet1)
+            .pump();
 
         // Ensure that the initial text is black
-        expect(find.byType(LayoutAwareRichText), findsOneWidget);
-        final richText = (find.byType(LayoutAwareRichText).evaluate().first.widget) as LayoutAwareRichText;
-        expect(richText.text.style!.color, Colors.black);
+        expect(SuperEditorInspector.findParagraphStyle("1")!.color, Colors.black);
 
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: SuperEditor(
-                editor: DocumentEditor(document: singleParagraphDoc()),
-                stylesheet: _stylesheet2,
-              ),
-            ),
-          ),
-        );
+        // Configure and render a document with a different stylesheet.
+        await tester //
+            .updateDocument(testDocument)
+            .useStylesheet(_stylesheet2)
+            .pump();
 
-        // Ensure that the new stylesheet was applied, and the text is
-        // now painted white.
-        expect(find.byType(LayoutAwareRichText), findsOneWidget);
-        final richText2 = (find.byType(LayoutAwareRichText).evaluate().first.widget) as LayoutAwareRichText;
-        expect(richText2.text.style!.color, Colors.white);
+        // Expect the paragraph to now be white.
+        expect(SuperEditorInspector.findParagraphStyle("1")!.color, Colors.white);
       });
     });
   });

@@ -334,7 +334,7 @@ class TextWithHintComponent extends StatefulWidget {
 
 class _TextWithHintComponentState extends State<TextWithHintComponent>
     with ProxyDocumentComponent<TextWithHintComponent>, ProxyTextComposable {
-  final _childTextComponentKey = GlobalKey<_TextComponentState>();
+  final _childTextComponentKey = GlobalKey<TextComponentState>();
 
   @override
   DocumentComponent<StatefulWidget> get childDocumentComponentKey => _childTextComponentKey.currentState!;
@@ -413,13 +413,15 @@ class TextComponent extends StatefulWidget {
   final bool showDebugPaint;
 
   @override
-  _TextComponentState createState() => _TextComponentState();
+  TextComponentState createState() => TextComponentState();
 }
 
-class _TextComponentState extends State<TextComponent> with DocumentComponent implements TextComposable {
+@visibleForTesting
+class TextComponentState extends State<TextComponent> with DocumentComponent implements TextComposable {
   final _textKey = GlobalKey<ProseTextState>();
 
-  ProseTextLayout get _textLayout => _textKey.currentState!.textLayout;
+  @visibleForTesting
+  ProseTextLayout get textLayout => _textKey.currentState!.textLayout;
 
   @override
   TextNodePosition? getPositionAtOffset(Offset localOffset) {
@@ -429,7 +431,7 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
     //       switched to the nearest position. Add a different version of this
     //       API for nearest position and then let clients pick the one that's
     //       right for them.
-    final textPosition = _textLayout.getPositionNearestToOffset(localOffset);
+    final textPosition = textLayout.getPositionNearestToOffset(localOffset);
     // if (textPosition == null) {
     //   return null;
     // }
@@ -456,7 +458,7 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
     if (nodePosition is! TextPosition) {
       throw Exception('Expected nodePosition of type TextPosition but received: $nodePosition');
     }
-    return _textLayout.getOffsetAtPosition(nodePosition);
+    return textLayout.getOffsetAtPosition(nodePosition);
   }
 
   @override
@@ -466,7 +468,7 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
     }
 
     final offset = getOffsetForPosition(nodePosition);
-    final lineHeight = _textLayout.getHeightForCaret(nodePosition) ?? _textLayout.getLineHeightAtPosition(nodePosition);
+    final lineHeight = textLayout.getHeightForCaret(nodePosition) ?? textLayout.getLineHeightAtPosition(nodePosition);
     return Rect.fromLTWH(offset.dx, offset.dy, 0, lineHeight);
   }
 
@@ -483,7 +485,7 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
       baseOffset: baseNodePosition.offset,
       extentOffset: extentNodePosition.offset,
     );
-    final boxes = _textLayout.getBoxesForSelection(selection);
+    final boxes = textLayout.getBoxesForSelection(selection);
 
     Rect boundingBox = boxes.isNotEmpty ? boxes.first.toRect() : Rect.zero;
     for (int i = 1; i < boxes.length; ++i) {
@@ -501,7 +503,7 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
   @override
   TextNodePosition getBeginningPositionNearX(double x) {
     return TextNodePosition.fromTextPosition(
-      _textLayout.getPositionInFirstLineAtX(x),
+      textLayout.getPositionInFirstLineAtX(x),
     );
   }
 
@@ -642,12 +644,12 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
 
   @override
   TextNodePosition getEndPositionNearX(double x) {
-    return TextNodePosition.fromTextPosition(_textLayout.getPositionInLastLineAtX(x));
+    return TextNodePosition.fromTextPosition(textLayout.getPositionInLastLineAtX(x));
   }
 
   @override
   TextNodeSelection getSelectionInRange(Offset localBaseOffset, Offset localExtentOffset) {
-    return TextNodeSelection.fromTextSelection(_textLayout.getSelectionInRect(localBaseOffset, localExtentOffset));
+    return TextNodeSelection.fromTextSelection(textLayout.getSelectionInRect(localBaseOffset, localExtentOffset));
   }
 
   @override
@@ -687,13 +689,13 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
 
   @override
   MouseCursor? getDesiredCursorAtOffset(Offset localOffset) {
-    return _textLayout.isTextAtOffset(localOffset) ? SystemMouseCursors.text : null;
+    return textLayout.isTextAtOffset(localOffset) ? SystemMouseCursors.text : null;
   }
 
   @override
   TextNodeSelection getWordSelectionAt(TextNodePosition textPosition) {
     return TextNodeSelection.fromTextSelection(
-      _textLayout.getWordSelectionAt(textPosition),
+      textLayout.getWordSelectionAt(textPosition),
     );
   }
 
@@ -714,7 +716,7 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
       throw Exception('Expected position of type NodePosition but received ${textPosition.runtimeType}');
     }
 
-    final positionOneLineUp = _textLayout.getPositionOneLineUp(textPosition);
+    final positionOneLineUp = textLayout.getPositionOneLineUp(textPosition);
     if (positionOneLineUp == null) {
       return null;
     }
@@ -727,7 +729,7 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
       throw Exception('Expected position of type NodePosition but received ${textPosition.runtimeType}');
     }
 
-    final positionOneLineDown = _textLayout.getPositionOneLineDown(textPosition);
+    final positionOneLineDown = textLayout.getPositionOneLineDown(textPosition);
     if (positionOneLineDown == null) {
       return null;
     }
@@ -737,14 +739,14 @@ class _TextComponentState extends State<TextComponent> with DocumentComponent im
   @override
   TextNodePosition getPositionAtEndOfLine(TextNodePosition textPosition) {
     return TextNodePosition.fromTextPosition(
-      _textLayout.getPositionAtEndOfLine(textPosition),
+      textLayout.getPositionAtEndOfLine(textPosition),
     );
   }
 
   @override
   TextNodePosition getPositionAtStartOfLine(TextNodePosition textNodePosition) {
     return TextNodePosition.fromTextPosition(
-      _textLayout.getPositionAtStartOfLine(textNodePosition),
+      textLayout.getPositionAtStartOfLine(textNodePosition),
     );
   }
 

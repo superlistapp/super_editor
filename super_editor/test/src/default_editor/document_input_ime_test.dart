@@ -5,7 +5,7 @@ import 'package:logging/logging.dart';
 import 'package:super_editor/super_editor.dart';
 
 import '../_document_test_tools.dart';
-import 'test_documents.dart';
+import '../../super_editor/test_documents.dart';
 
 void main() {
   group('IME input', () {
