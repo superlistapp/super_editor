@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
-/// Extensions on [WidgetTester] for inspecting the status of a [SuperEditor].
+/// Inspects a given [SuperEditor] in the widget tree.
 class SuperEditorInspector {
   /// Returns `true` if the given [SuperEditor] widget currently has focus, or
   /// `false` otherwise.
