@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/super_editor.dart';
 
-import 'test_documents.dart';
+import '../../super_editor/test_documents.dart';
 
 /// Upstream/downstream selection refers components that only support
 /// a caret position at the upstream edge, or downstream edge. For
