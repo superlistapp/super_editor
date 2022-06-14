@@ -12,7 +12,6 @@ import 'package:super_text_layout/super_text_layout.dart';
 
 import 'styles.dart';
 
-export '_test_tools.dart';
 export 'android/android_textfield.dart';
 export 'desktop/desktop_textfield.dart';
 export 'infrastructure/attributed_text_editing_controller.dart';
