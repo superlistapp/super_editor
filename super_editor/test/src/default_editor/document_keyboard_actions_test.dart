@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -15,7 +16,7 @@ void main() {
     'Document keyboard actions',
     () {
       group('jumps to', () {
-        testWidgets('beginning of line with CMD + LEFT ARROW', (tester) async {
+        testWidgets('beginning of line with CMD + LEFT ARROW on Mac', (tester) async {
           Platform.setTestInstance(MacPlatform());
 
           // Start the user's selection somewhere after the beginning of the first
@@ -38,7 +39,7 @@ void main() {
           Platform.setTestInstance(null);
         });
 
-        testWidgets('end of line with CMD + RIGHT ARROW', (tester) async {
+        testWidgets('end of line with CMD + RIGHT ARROW on Mac', (tester) async {
           Platform.setTestInstance(MacPlatform());
 
           // Start the user's selection somewhere before the end of the first line
@@ -63,7 +64,7 @@ void main() {
           Platform.setTestInstance(null);
         });
 
-        testWidgets('beginning of word with ALT + LEFT ARROW', (tester) async {
+        testWidgets('beginning of word with ALT + LEFT ARROW on Mac', (tester) async {
           Platform.setTestInstance(MacPlatform());
 
           // Start the user's selection somewhere in the middle of a word.
@@ -85,7 +86,7 @@ void main() {
           Platform.setTestInstance(null);
         });
 
-        testWidgets('end of word with ALT + RIGHT ARROW', (tester) async {
+        testWidgets('end of word with ALT + RIGHT ARROW on Mac', (tester) async {
           Platform.setTestInstance(MacPlatform());
 
           // Start the user's selection somewhere in the middle of a word.
@@ -105,6 +106,98 @@ void main() {
           );
 
           Platform.setTestInstance(null);
+        });
+        
+        testWidgets('beginning of line with HOME on Windows', (tester) async {
+          debugDefaultTargetPlatformOverride = TargetPlatform.windows;
+
+          // Start the user's selection somewhere after the beginning of the first
+          // line in the first node.
+          final editContext = await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
+
+          await _pressHome(tester);
+
+          // Ensure that the caret moved to the beginning of the line.
+          expect(
+            editContext.composer.selection,
+            const DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: "1",
+                nodePosition: TextNodePosition(offset: 0),
+              ),
+            ),
+          );
+
+          debugDefaultTargetPlatformOverride = null;
+        });
+        
+        testWidgets('end of line with END on Windows', (tester) async {
+          debugDefaultTargetPlatformOverride = TargetPlatform.windows;
+
+          // Start the user's selection somewhere before the end of the first line
+          // in the first node.
+          final editContext = await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
+
+          await _pressEnd(tester);
+
+          // Ensure that the caret moved to the end of the line. This value
+          // is very fragile. If the text size or layout width changes, this value
+          // will also need to change.
+          expect(
+            editContext.composer.selection,
+            const DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: "1",
+                nodePosition: TextNodePosition(offset: 27),
+              ),
+            ),
+          );
+
+          debugDefaultTargetPlatformOverride = null;
+        });
+        
+        testWidgets('beginning of word with CTRL + LEFT ARROW on Windows', (tester) async {
+          debugDefaultTargetPlatformOverride = TargetPlatform.windows;
+
+          // Start the user's selection somewhere in the middle of a word.
+          final editContext = await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
+
+          await _pressCtrlLeftArrow(tester);
+
+          // Ensure that the caret moved to the beginning of the word.
+          expect(
+            editContext.composer.selection,
+            const DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: "1",
+                nodePosition: TextNodePosition(offset: 6),
+              ),
+            ),
+          );
+
+          debugDefaultTargetPlatformOverride = null;
+        });
+        
+        testWidgets('end of word with CTRL + RIGHT ARROW on Windows', (tester) async {
+          debugDefaultTargetPlatformOverride = TargetPlatform.windows;
+
+          // Start the user's selection somewhere in the middle of a word.
+          final editContext = await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
+
+          await _pressCtrlRightArrow(tester);
+
+          // Ensure that the caret moved to the beginning of the word.
+          expect(
+            editContext.composer.selection,
+            const DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: "1",
+                nodePosition: TextNodePosition(offset: 11),
+              ),
+            ),
+          );
+
+          debugDefaultTargetPlatformOverride = null;
         });
       });
 
@@ -666,4 +759,30 @@ Future<EditContext> _pumpCaretMovementTestSetup(
   );
 
   return editContext;
+}
+
+Future<void> _pressCtrlLeftArrow(WidgetTester tester) async {   
+  await tester.sendKeyDownEvent(LogicalKeyboardKey.control);
+  await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+  await tester.sendKeyUpEvent(LogicalKeyboardKey.control);    
+  await tester.pumpAndSettle();
+}
+
+Future<void> _pressCtrlRightArrow(WidgetTester tester) async { 
+  await tester.sendKeyDownEvent(LogicalKeyboardKey.control);
+  await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+  await tester.sendKeyUpEvent(LogicalKeyboardKey.control);  
+  await tester.pumpAndSettle();
+}
+
+Future<void> _pressHome(WidgetTester tester) async {
+  await tester.sendKeyDownEvent(LogicalKeyboardKey.home);    
+  await tester.sendKeyUpEvent(LogicalKeyboardKey.home);
+  await tester.pumpAndSettle();
+}
+
+Future<void> _pressEnd(WidgetTester tester) async {  
+  await tester.sendKeyDownEvent(LogicalKeyboardKey.end);    
+  await tester.sendKeyUpEvent(LogicalKeyboardKey.end);  
+  await tester.pumpAndSettle();
 }
