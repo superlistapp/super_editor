@@ -131,7 +131,9 @@ class SuperAndroidTextField extends StatefulWidget {
   State createState() => SuperAndroidTextFieldState();
 }
 
-class SuperAndroidTextFieldState extends State<SuperAndroidTextField> with SingleTickerProviderStateMixin {
+class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
+    with SingleTickerProviderStateMixin
+    implements ProseTextBlock {
   final _textFieldKey = GlobalKey();
   final _textFieldLayerLink = LayerLink();
   final _textContentLayerLink = LayerLink();
@@ -259,6 +261,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField> with Singl
     super.dispose();
   }
 
+  @override
   ProseTextLayout get textLayout => _textContentKey.currentState!.textLayout;
 
   bool get _isMultiline => widget.minLines != 1 || widget.maxLines != 1;

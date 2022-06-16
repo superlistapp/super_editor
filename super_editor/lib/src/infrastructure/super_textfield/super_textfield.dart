@@ -174,16 +174,7 @@ class SuperTextFieldState extends State<SuperTextField> {
   AttributedTextEditingController get controller => _controller;
 
   @visibleForTesting
-  ProseTextLayout get textLayout {
-    switch (_configuration) {
-      case SuperTextFieldPlatformConfiguration.desktop:
-        return (_platformFieldKey.currentState as SuperDesktopTextFieldState).textLayout;
-      case SuperTextFieldPlatformConfiguration.android:
-        return (_platformFieldKey.currentState as SuperAndroidTextFieldState).textLayout;
-      case SuperTextFieldPlatformConfiguration.iOS:
-        return (_platformFieldKey.currentState as SuperIOSTextFieldState).textLayout;
-    }
-  }
+  ProseTextLayout get textLayout => (_platformFieldKey.currentState as ProseTextBlock).textLayout;
 
   @override
   Widget build(BuildContext context) {

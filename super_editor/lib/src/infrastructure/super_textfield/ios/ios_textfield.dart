@@ -135,7 +135,9 @@ class SuperIOSTextField extends StatefulWidget {
   State createState() => SuperIOSTextFieldState();
 }
 
-class SuperIOSTextFieldState extends State<SuperIOSTextField> with SingleTickerProviderStateMixin {
+class SuperIOSTextFieldState extends State<SuperIOSTextField>
+    with SingleTickerProviderStateMixin
+    implements ProseTextBlock {
   final _textFieldKey = GlobalKey();
   final _textFieldLayerLink = LayerLink();
   final _textContentLayerLink = LayerLink();
@@ -271,6 +273,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField> with SingleTickerP
     super.dispose();
   }
 
+  @override
   ProseTextLayout get textLayout => _textContentKey.currentState!.textLayout;
 
   bool get _isMultiline => widget.minLines != 1 || widget.maxLines != 1;

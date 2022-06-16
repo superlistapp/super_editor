@@ -101,7 +101,7 @@ class SuperDesktopTextField extends StatefulWidget {
   SuperDesktopTextFieldState createState() => SuperDesktopTextFieldState();
 }
 
-class SuperDesktopTextFieldState extends State<SuperDesktopTextField> {
+class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements ProseTextBlock {
   final _textKey = GlobalKey<ProseTextState>();
   final _textScrollKey = GlobalKey<SuperTextFieldScrollviewState>();
   late FocusNode _focusNode;
@@ -168,6 +168,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> {
     super.dispose();
   }
 
+  @override
   ProseTextLayout get textLayout => _textKey.currentState!.textLayout;
 
   FocusNode get focusNode => _focusNode;
