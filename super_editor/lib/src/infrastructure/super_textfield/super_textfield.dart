@@ -12,7 +12,6 @@ import 'package:super_text_layout/super_text_layout.dart';
 
 import 'styles.dart';
 
-export '_test_tools.dart';
 export 'android/android_textfield.dart';
 export 'desktop/desktop_textfield.dart';
 export 'infrastructure/attributed_text_editing_controller.dart';
@@ -144,10 +143,11 @@ class SuperTextField extends StatefulWidget {
   final List<TextFieldKeyboardHandler> keyboardHandlers;
 
   @override
-  State<SuperTextField> createState() => _SuperTextFieldState();
+  State<SuperTextField> createState() => SuperTextFieldState();
 }
 
-class _SuperTextFieldState extends State<SuperTextField> {
+class SuperTextFieldState extends State<SuperTextField> {
+  final _platformFieldKey = GlobalKey();
   late ImeAttributedTextEditingController _controller;
 
   @override
@@ -170,11 +170,18 @@ class _SuperTextFieldState extends State<SuperTextField> {
     }
   }
 
+  @visibleForTesting
+  AttributedTextEditingController get controller => _controller;
+
+  @visibleForTesting
+  ProseTextLayout get textLayout => (_platformFieldKey.currentState as ProseTextBlock).textLayout;
+
   @override
   Widget build(BuildContext context) {
     switch (_configuration) {
       case SuperTextFieldPlatformConfiguration.desktop:
         return SuperDesktopTextField(
+          key: _platformFieldKey,
           focusNode: widget.focusNode,
           textController: _controller,
           textAlign: widget.textAlign,
@@ -195,6 +202,7 @@ class _SuperTextFieldState extends State<SuperTextField> {
         );
       case SuperTextFieldPlatformConfiguration.android:
         return SuperAndroidTextField(
+          key: _platformFieldKey,
           focusNode: widget.focusNode,
           textController: _controller,
           textAlign: widget.textAlign,
@@ -210,6 +218,7 @@ class _SuperTextFieldState extends State<SuperTextField> {
         );
       case SuperTextFieldPlatformConfiguration.iOS:
         return SuperIOSTextField(
+          key: _platformFieldKey,
           focusNode: widget.focusNode,
           textController: _controller,
           textAlign: widget.textAlign,

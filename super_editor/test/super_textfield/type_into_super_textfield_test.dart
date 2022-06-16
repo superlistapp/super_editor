@@ -1,7 +1,11 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:super_editor/super_editor.dart';
+
+import 'super_textfield_inspector.dart';
+import 'super_textfield_robot.dart';
 
 void main() {
   group("SuperTextField", () {
@@ -11,57 +15,19 @@ void main() {
 
         await tester.tap(find.byType(SuperTextField));
         await tester.pumpAndSettle();
+        await tester.typeKeyboardText("Hello, World!");
 
-        await tester.enterSuperTextPlain(
-          find.byType(SuperTextField),
-          // TODO: we can only send lowercase text until Flutter bug #96021 is resolved
-          "hello world",
-        );
-
-        expect(find.text("hello world", findRichText: true), findsOneWidget);
+        expect(SuperTextFieldInspector.findText().text, "Hello, World!");
       });
 
-      testWidgets("shift characters", (tester) async {
+      testWidgets("symbol characters", (tester) async {
         await _pumpDesktopScaffold(tester);
 
         await tester.tap(find.byType(SuperTextField));
         await tester.pumpAndSettle();
+        await tester.typeKeyboardText("@");
 
-        await tester.enterSuperTextPlain(
-          find.byType(SuperTextField),
-          "@",
-        );
-
-        expect(find.text("@", findRichText: true), findsOneWidget);
-        expect(find.text("2", findRichText: true), findsNothing);
-      });
-
-      testWidgets("doesn't support Android", (tester) async {
-        await _pumpAndroidScaffold(tester);
-
-        await tester.tap(find.byType(SuperTextField));
-        await tester.pumpAndSettle();
-
-        await expectLater(() async {
-          await tester.enterSuperTextPlain(
-            find.byType(SuperTextField),
-            "a",
-          );
-        }, throwsException);
-      });
-
-      testWidgets("doesn't support iOS", (tester) async {
-        await _pumpIOSScaffold(tester);
-
-        await tester.tap(find.byType(SuperTextField));
-        await tester.pumpAndSettle();
-
-        await expectLater(() async {
-          await tester.enterSuperTextPlain(
-            find.byType(SuperTextField),
-            "a",
-          );
-        }, throwsException);
+        expect(SuperTextFieldInspector.findText().text, "@");
       });
 
       testWidgets("in middle of existing text", (tester) async {
@@ -71,18 +37,31 @@ void main() {
             text: AttributedText(text: "hello world"),
           ),
         );
-
-        final textFieldFinder = find.byType(SuperTextField);
-
-        await tester.tapAtSuperTextPosition(textFieldFinder, 6);
+        await tester.placeCaretInSuperTextField(6);
         await tester.pumpAndSettle();
+        await tester.typeKeyboardText("new ");
 
-        await tester.enterSuperTextPlain(
-          textFieldFinder,
-          "new ",
-        );
+        expect(SuperTextFieldInspector.findText().text, "hello new world");
+      });
 
-        expect(find.text("hello new world", findRichText: true), findsOneWidget);
+      testWidgets("doesn't support Android", (tester) async {
+        await _pumpAndroidScaffold(tester);
+
+        await tester.tap(find.byType(SuperTextField));
+        await tester.pumpAndSettle();
+        await tester.typeKeyboardText("a");
+
+        expect(find.text("a", findRichText: true), findsNothing);
+      });
+
+      testWidgets("doesn't support iOS", (tester) async {
+        await _pumpIOSScaffold(tester);
+
+        await tester.tap(find.byType(SuperTextField));
+        await tester.pumpAndSettle();
+        await tester.typeKeyboardText("a");
+
+        expect(find.text("a", findRichText: true), findsNothing);
       });
     });
   });
