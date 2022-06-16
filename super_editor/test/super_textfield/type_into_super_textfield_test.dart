@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:super_editor/super_editor.dart';
 
+import 'super_textfield_inspector.dart';
 import 'super_textfield_robot.dart';
 
 void main() {
@@ -16,7 +17,7 @@ void main() {
         await tester.pumpAndSettle();
         await tester.typeKeyboardText("Hello, World!");
 
-        expect(find.text("Hello, World!", findRichText: true), findsOneWidget);
+        expect(SuperTextFieldInspector.findText().text, "Hello, World!");
       });
 
       testWidgets("symbol characters", (tester) async {
@@ -26,8 +27,7 @@ void main() {
         await tester.pumpAndSettle();
         await tester.typeKeyboardText("@");
 
-        expect(find.text("@", findRichText: true), findsOneWidget);
-        expect(find.text("2", findRichText: true), findsNothing);
+        expect(SuperTextFieldInspector.findText().text, "@");
       });
 
       testWidgets("in middle of existing text", (tester) async {
@@ -41,7 +41,7 @@ void main() {
         await tester.pumpAndSettle();
         await tester.typeKeyboardText("new ");
 
-        expect(find.text("hello new world", findRichText: true), findsOneWidget);
+        expect(SuperTextFieldInspector.findText().text, "hello new world");
       });
 
       testWidgets("doesn't support Android", (tester) async {
