@@ -115,7 +115,7 @@ void main() {
           // line in the first node.
           final editContext = await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
 
-          await _pressHome(tester);
+          await tester.pressHome();
 
           // Ensure that the caret moved to the beginning of the line.
           expect(
@@ -138,7 +138,7 @@ void main() {
           // in the first node.
           final editContext = await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
 
-          await _pressEnd(tester);
+          await tester.pressEnd();
 
           // Ensure that the caret moved to the end of the line. This value
           // is very fragile. If the text size or layout width changes, this value
@@ -162,7 +162,7 @@ void main() {
           // Start the user's selection somewhere in the middle of a word.
           final editContext = await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
 
-          await _pressCtrlLeftArrow(tester);
+          await tester.pressCtlLeftArrow();
 
           // Ensure that the caret moved to the beginning of the word.
           expect(
@@ -184,7 +184,7 @@ void main() {
           // Start the user's selection somewhere in the middle of a word.
           final editContext = await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
 
-          await _pressCtrlRightArrow(tester);
+          await tester.pressCtlRightArrow();
 
           // Ensure that the caret moved to the beginning of the word.
           expect(
@@ -759,30 +759,4 @@ Future<EditContext> _pumpCaretMovementTestSetup(
   );
 
   return editContext;
-}
-
-Future<void> _pressCtrlLeftArrow(WidgetTester tester) async {   
-  await tester.sendKeyDownEvent(LogicalKeyboardKey.control);
-  await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
-  await tester.sendKeyUpEvent(LogicalKeyboardKey.control);    
-  await tester.pumpAndSettle();
-}
-
-Future<void> _pressCtrlRightArrow(WidgetTester tester) async { 
-  await tester.sendKeyDownEvent(LogicalKeyboardKey.control);
-  await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
-  await tester.sendKeyUpEvent(LogicalKeyboardKey.control);  
-  await tester.pumpAndSettle();
-}
-
-Future<void> _pressHome(WidgetTester tester) async {
-  await tester.sendKeyDownEvent(LogicalKeyboardKey.home);    
-  await tester.sendKeyUpEvent(LogicalKeyboardKey.home);
-  await tester.pumpAndSettle();
-}
-
-Future<void> _pressEnd(WidgetTester tester) async {  
-  await tester.sendKeyDownEvent(LogicalKeyboardKey.end);    
-  await tester.sendKeyUpEvent(LogicalKeyboardKey.end);  
-  await tester.pumpAndSettle();
 }
