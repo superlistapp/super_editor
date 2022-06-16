@@ -128,10 +128,10 @@ class SuperAndroidTextField extends StatefulWidget {
   final Widget Function(BuildContext, AndroidEditingOverlayController) popoverToolbarBuilder;
 
   @override
-  _SuperAndroidTextFieldState createState() => _SuperAndroidTextFieldState();
+  State createState() => SuperAndroidTextFieldState();
 }
 
-class _SuperAndroidTextFieldState extends State<SuperAndroidTextField> with SingleTickerProviderStateMixin {
+class SuperAndroidTextFieldState extends State<SuperAndroidTextField> with SingleTickerProviderStateMixin {
   final _textFieldKey = GlobalKey();
   final _textFieldLayerLink = LayerLink();
   final _textContentLayerLink = LayerLink();
@@ -258,6 +258,8 @@ class _SuperAndroidTextFieldState extends State<SuperAndroidTextField> with Sing
 
     super.dispose();
   }
+
+  ProseTextLayout get textLayout => _textContentKey.currentState!.textLayout;
 
   bool get _isMultiline => widget.minLines != 1 || widget.maxLines != 1;
 

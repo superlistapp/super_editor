@@ -387,7 +387,7 @@ class SuperTextFieldGestureInteractor extends StatefulWidget {
   final Widget child;
 
   @override
-  _SuperTextFieldGestureInteractorState createState() => _SuperTextFieldGestureInteractorState();
+  State createState() => _SuperTextFieldGestureInteractorState();
 }
 
 class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureInteractor> {
@@ -639,11 +639,14 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
 
     if (_dragEndInViewport!.dy < _dragGutterExtent) {
       _startScrollingToStart();
+      return;
     } else {
       _stopScrollingToStart();
     }
+
     if (editorBox.size.height - _dragEndInViewport!.dy < _dragGutterExtent) {
       _startScrollingToEnd();
+      return;
     } else {
       _stopScrollingToEnd();
     }
@@ -821,7 +824,7 @@ class SuperTextFieldKeyboardInteractor extends StatefulWidget {
   final Widget child;
 
   @override
-  _SuperTextFieldKeyboardInteractorState createState() => _SuperTextFieldKeyboardInteractorState();
+  State createState() => _SuperTextFieldKeyboardInteractorState();
 }
 
 class _SuperTextFieldKeyboardInteractorState extends State<SuperTextFieldKeyboardInteractor> {
@@ -1068,6 +1071,7 @@ class SuperTextFieldScrollviewState extends State<SuperTextFieldScrollview> with
     }
 
     _scrollToStartOnTick = true;
+    _log.finer("Starting Ticker to auto-scroll up");
     _ticker.start();
   }
 
@@ -1078,6 +1082,7 @@ class SuperTextFieldScrollviewState extends State<SuperTextFieldScrollview> with
 
     _scrollToStartOnTick = false;
     _scrollAmountPerFrame = 0;
+    _log.finer("Stopping Ticker after auto-scroll up");
     _ticker.stop();
   }
 
@@ -1098,6 +1103,7 @@ class SuperTextFieldScrollviewState extends State<SuperTextFieldScrollview> with
     }
 
     _scrollToEndOnTick = true;
+    _log.finer("Starting Ticker to auto-scroll down");
     _ticker.start();
   }
 
@@ -1108,6 +1114,7 @@ class SuperTextFieldScrollviewState extends State<SuperTextFieldScrollview> with
 
     _scrollToEndOnTick = false;
     _scrollAmountPerFrame = 0;
+    _log.finer("Stopping Ticker after auto-scroll down");
     _ticker.stop();
   }
 
@@ -1215,7 +1222,10 @@ const defaultTextFieldKeyboardHandlers = <TextFieldKeyboardHandler>[
   DefaultSuperTextFieldKeyboardHandlers.copyTextWhenCmdCIsPressed,
   DefaultSuperTextFieldKeyboardHandlers.pasteTextWhenCmdVIsPressed,
   DefaultSuperTextFieldKeyboardHandlers.selectAllTextFieldWhenCmdAIsPressed,
+  DefaultSuperTextFieldKeyboardHandlers.moveCaretToStartOrEnd,
   DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys,
+  DefaultSuperTextFieldKeyboardHandlers.deleteWordWhenAltBackSpaceIsPressedOnMac,
+  DefaultSuperTextFieldKeyboardHandlers.deleteWordWhenCtlBackSpaceIsPressedOnWindowsAndLinux,
   DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed,
   DefaultSuperTextFieldKeyboardHandlers.deleteTextWhenBackspaceOrDeleteIsPressed,
   DefaultSuperTextFieldKeyboardHandlers.insertNewlineWhenEnterIsPressed,
@@ -1297,7 +1307,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
     ProseTextLayout? textLayout,
     required RawKeyEvent keyEvent,
   }) {
-    bool _moveLeft = false;
+    bool moveLeft = false;
     if (!keyEvent.isControlPressed) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
@@ -1312,15 +1322,15 @@ class DefaultSuperTextFieldKeyboardHandlers {
     }
 
     keyEvent.logicalKey == LogicalKeyboardKey.keyA
-        ? _moveLeft = true
+        ? moveLeft = true
         : keyEvent.logicalKey == LogicalKeyboardKey.keyE
-            ? _moveLeft = false
+            ? moveLeft = false
             : null;
 
     controller.moveCaretHorizontally(
       textLayout: textLayout!,
       expandSelection: false,
-      moveLeft: _moveLeft,
+      moveLeft: moveLeft,
       movementModifier: MovementModifier.line,
     );
 
@@ -1457,7 +1467,10 @@ class DefaultSuperTextFieldKeyboardHandlers {
     }
 
     if (textLayout.getPositionAtStartOfLine(controller.selection.extent).offset == controller.selection.extentOffset) {
-      return TextFieldKeyboardHandlerResult.notHandled;
+      // The caret is sitting at the beginning of a line. There's nothing for us to
+      // delete upstream on this line. But we also don't want a regular BACKSPACE to
+      // run, either. Report this key combination as handled.
+      return TextFieldKeyboardHandlerResult.handled;
     }
 
     controller.deleteTextOnLineBeforeCaret(textLayout: textLayout);
@@ -1489,36 +1502,63 @@ class DefaultSuperTextFieldKeyboardHandlers {
     return TextFieldKeyboardHandlerResult.handled;
   }
 
-  /// [deleteWordWhenAltBackSpaceIsPressed] deletes single words when Alt+Backspace is pressed.
-  static TextFieldKeyboardHandlerResult deleteWordWhenAltBackSpaceIsPressed({
+  /// [deleteWordWhenAltBackSpaceIsPressedOnMac] deletes single words when Alt+Backspace is pressed on Mac.
+  static TextFieldKeyboardHandlerResult deleteWordWhenAltBackSpaceIsPressedOnMac({
     required AttributedTextEditingController controller,
     required ProseTextLayout textLayout,
     required RawKeyEvent keyEvent,
   }) {
-    if (keyEvent.logicalKey != LogicalKeyboardKey.backspace && !keyEvent.isAltPressed) {
+    if (defaultTargetPlatform != TargetPlatform.macOS) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    if (keyEvent.logicalKey != LogicalKeyboardKey.backspace || !keyEvent.isAltPressed) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
     if (controller.selection.extentOffset < 0) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 
+    _deleteUpstreamWord(controller, textLayout);
+
+    return TextFieldKeyboardHandlerResult.handled;
+  }
+
+  /// [deleteWordWhenAltBackSpaceIsPressedOnMac] deletes single words when Ctl+Backspace is pressed on Windows/Linux.
+  static TextFieldKeyboardHandlerResult deleteWordWhenCtlBackSpaceIsPressedOnWindowsAndLinux({
+    required AttributedTextEditingController controller,
+    required ProseTextLayout textLayout,
+    required RawKeyEvent keyEvent,
+  }) {
+    if (defaultTargetPlatform != TargetPlatform.windows && defaultTargetPlatform != TargetPlatform.linux) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    if (keyEvent.logicalKey != LogicalKeyboardKey.backspace || !keyEvent.isControlPressed) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+    if (controller.selection.extentOffset < 0) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    _deleteUpstreamWord(controller, textLayout);
+
+    return TextFieldKeyboardHandlerResult.handled;
+  }
+
+  static void _deleteUpstreamWord(AttributedTextEditingController controller, ProseTextLayout textLayout) {
     if (!controller.selection.isCollapsed) {
       controller.deleteSelectedText();
-      return TextFieldKeyboardHandlerResult.handled;
+      return;
     }
 
-    if (controller.selection.isCollapsed) {
-      controller.moveCaretHorizontally(
-        textLayout: textLayout,
-        expandSelection: true,
-        moveLeft: true,
-        movementModifier: MovementModifier.word,
-      );
-      controller.deleteSelectedText();
-
-      return TextFieldKeyboardHandlerResult.handled;
-    }
-    return TextFieldKeyboardHandlerResult.notHandled;
+    controller.moveCaretHorizontally(
+      textLayout: textLayout,
+      expandSelection: true,
+      moveLeft: true,
+      movementModifier: MovementModifier.word,
+    );
+    controller.deleteSelectedText();
   }
 
   /// [insertNewlineWhenEnterIsPressed] inserts a new line character when the enter key is pressed.
@@ -1538,4 +1578,6 @@ class DefaultSuperTextFieldKeyboardHandlers {
 
     return TextFieldKeyboardHandlerResult.handled;
   }
+
+  DefaultSuperTextFieldKeyboardHandlers._();
 }

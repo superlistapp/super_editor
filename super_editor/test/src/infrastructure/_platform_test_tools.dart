@@ -9,3 +9,8 @@ class WindowsPlatform implements Platform {
   @override
   bool get isMac => false;
 }
+
+class LinuxPlatform implements Platform {
+  @override
+  bool get isMac => false;
+}

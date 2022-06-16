@@ -143,10 +143,11 @@ class SuperTextField extends StatefulWidget {
   final List<TextFieldKeyboardHandler> keyboardHandlers;
 
   @override
-  State<SuperTextField> createState() => _SuperTextFieldState();
+  State<SuperTextField> createState() => SuperTextFieldState();
 }
 
-class _SuperTextFieldState extends State<SuperTextField> {
+class SuperTextFieldState extends State<SuperTextField> {
+  final _platformFieldKey = GlobalKey();
   late ImeAttributedTextEditingController _controller;
 
   @override
@@ -169,11 +170,27 @@ class _SuperTextFieldState extends State<SuperTextField> {
     }
   }
 
+  @visibleForTesting
+  AttributedTextEditingController get controller => _controller;
+
+  @visibleForTesting
+  ProseTextLayout get textLayout {
+    switch (_configuration) {
+      case SuperTextFieldPlatformConfiguration.desktop:
+        return (_platformFieldKey.currentState as SuperDesktopTextFieldState).textLayout;
+      case SuperTextFieldPlatformConfiguration.android:
+        return (_platformFieldKey.currentState as SuperAndroidTextFieldState).textLayout;
+      case SuperTextFieldPlatformConfiguration.iOS:
+        return (_platformFieldKey.currentState as SuperIOSTextFieldState).textLayout;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     switch (_configuration) {
       case SuperTextFieldPlatformConfiguration.desktop:
         return SuperDesktopTextField(
+          key: _platformFieldKey,
           focusNode: widget.focusNode,
           textController: _controller,
           textAlign: widget.textAlign,
@@ -194,6 +211,7 @@ class _SuperTextFieldState extends State<SuperTextField> {
         );
       case SuperTextFieldPlatformConfiguration.android:
         return SuperAndroidTextField(
+          key: _platformFieldKey,
           focusNode: widget.focusNode,
           textController: _controller,
           textAlign: widget.textAlign,
@@ -209,6 +227,7 @@ class _SuperTextFieldState extends State<SuperTextField> {
         );
       case SuperTextFieldPlatformConfiguration.iOS:
         return SuperIOSTextField(
+          key: _platformFieldKey,
           focusNode: widget.focusNode,
           textController: _controller,
           textAlign: widget.textAlign,
