@@ -267,7 +267,7 @@ ExecutionInstruction moveUpDownLeftAndRightWithArrowKeys({
   bool didMove = false;
   if (keyEvent.logicalKey == LogicalKeyboardKey.arrowLeft || keyEvent.logicalKey == LogicalKeyboardKey.arrowRight) {
     MovementModifier? movementModifier;    
-    if (defaultTargetPlatform == TargetPlatform.windows) {
+    if (defaultTargetPlatform == TargetPlatform.windows || defaultTargetPlatform == TargetPlatform.linux) {
       if (keyEvent.isControlPressed) {
         movementModifier = MovementModifier.word;
       }
@@ -333,11 +333,11 @@ ExecutionInstruction moveToLineStartWithHome({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
-  if (defaultTargetPlatform != TargetPlatform.windows) {
+  if (defaultTargetPlatform != TargetPlatform.windows && defaultTargetPlatform != TargetPlatform.linux) {
     return ExecutionInstruction.continueExecution;
   }  
-  bool didMove = false;
 
+  bool didMove = false;
   if (keyEvent.logicalKey == LogicalKeyboardKey.home) {
     didMove = editContext.commonOps.moveCaretUpstream(
       expand: keyEvent.isShiftPressed,
@@ -352,11 +352,11 @@ ExecutionInstruction moveToLineEndWithEnd({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
-  if (defaultTargetPlatform != TargetPlatform.windows) {
+  if (defaultTargetPlatform != TargetPlatform.windows && defaultTargetPlatform != TargetPlatform.linux) {
     return ExecutionInstruction.continueExecution;
   }  
-  bool didMove = false;
 
+  bool didMove = false;
   if (keyEvent.logicalKey == LogicalKeyboardKey.end) {
     didMove = editContext.commonOps.moveCaretDownstream(
       expand: keyEvent.isShiftPressed,

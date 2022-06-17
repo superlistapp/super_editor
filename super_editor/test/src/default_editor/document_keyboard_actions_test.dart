@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -6,6 +5,10 @@ import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:super_editor/src/infrastructure/platform_detector.dart';
 import 'package:super_editor/super_editor.dart';
 
+import '../../super_editor/document_test_tools.dart';
+import '../../super_editor/supereditor_inspector.dart';
+import '../../super_editor/supereditor_robot.dart';
+import '../../test_tools.dart';
 import '../_document_test_tools.dart';
 import '../_text_entry_test_tools.dart';
 import '../infrastructure/_platform_test_tools.dart';
@@ -21,13 +24,13 @@ void main() {
 
           // Start the user's selection somewhere after the beginning of the first
           // line in the first node.
-          final editContext = await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
+          await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
 
           await tester.pressCmdLeftArrow();
 
           // Ensure that the caret moved to the beginning of the line.
           expect(
-            editContext.composer.selection,
+            SuperEditorInspector.findDocumentSelection(),
             const DocumentSelection.collapsed(
               position: DocumentPosition(
                 nodeId: "1",
@@ -44,7 +47,7 @@ void main() {
 
           // Start the user's selection somewhere before the end of the first line
           // in the first node.
-          final editContext = await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
+          await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
 
           await tester.pressCmdRightArrow();
 
@@ -52,7 +55,7 @@ void main() {
           // is very fragile. If the text size or layout width changes, this value
           // will also need to change.
           expect(
-            editContext.composer.selection,
+            SuperEditorInspector.findDocumentSelection(),
             const DocumentSelection.collapsed(
               position: DocumentPosition(
                 nodeId: "1",
@@ -68,13 +71,13 @@ void main() {
           Platform.setTestInstance(MacPlatform());
 
           // Start the user's selection somewhere in the middle of a word.
-          final editContext = await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
+          await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
 
           await tester.pressAltLeftArrow();
 
           // Ensure that the caret moved to the beginning of the word.
           expect(
-            editContext.composer.selection,
+            SuperEditorInspector.findDocumentSelection(),
             const DocumentSelection.collapsed(
               position: DocumentPosition(
                 nodeId: "1",
@@ -90,13 +93,13 @@ void main() {
           Platform.setTestInstance(MacPlatform());
 
           // Start the user's selection somewhere in the middle of a word.
-          final editContext = await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
+          await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
 
           await tester.pressAltRightArrow();
 
           // Ensure that the caret moved to the beginning of the word.
           expect(
-            editContext.composer.selection,
+            SuperEditorInspector.findDocumentSelection(),
             const DocumentSelection.collapsed(
               position: DocumentPosition(
                 nodeId: "1",
@@ -107,44 +110,68 @@ void main() {
 
           Platform.setTestInstance(null);
         });
-        
-        testWidgets('beginning of line with HOME on Windows', (tester) async {
-          debugDefaultTargetPlatformOverride = TargetPlatform.windows;
 
-          // Start the user's selection somewhere after the beginning of the first
-          // line in the first node.
-          final editContext = await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
+        testWidgetsOnWindowsAndLinux('beginning of line with HOME in an auto-wrapping paragraph', (tester) async {
+          // Configure the screen to a size we know will cause the paragraph to auto-wrap its lines
+          tester.binding.window
+            ..devicePixelRatioTestValue = 1.0
+            ..platformDispatcher.textScaleFactorTestValue = 1.0
+            ..physicalSizeTestValue = const Size(400, 400);
+          
+          await tester 
+            .createDocument()
+            .withSingleParagraph()
+            .forDesktop()
+            .pump();
+
+          // Place caret at the second line at "adipiscing |elit"
+          await tester.placeCaretInParagraph('1', 51);
 
           await tester.pressHome();
 
-          // Ensure that the caret moved to the beginning of the line.
+          // Ensure that the caret moved to the beginning of the wrapped line at "|adipiscing elit"         
           expect(
-            editContext.composer.selection,
+            SuperEditorInspector.findDocumentSelection(),
             const DocumentSelection.collapsed(
               position: DocumentPosition(
                 nodeId: "1",
-                nodePosition: TextNodePosition(offset: 0),
+                nodePosition: TextNodePosition(offset: 40),
               ),
             ),
           );
 
-          debugDefaultTargetPlatformOverride = null;
+          tester.binding.window.clearDevicePixelRatioTestValue();
+          tester.binding.platformDispatcher.clearTextScaleFactorTestValue();
+          tester.binding.window.clearPhysicalSizeTestValue();
         });
-        
-        testWidgets('end of line with END on Windows', (tester) async {
-          debugDefaultTargetPlatformOverride = TargetPlatform.windows;
 
-          // Start the user's selection somewhere before the end of the first line
-          // in the first node.
-          final editContext = await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
+        testWidgetsOnWindowsAndLinux('beginning of line with HOME in a paragraph with explicit new lines', (tester) async {                    
+          final document = MutableDocument(
+            nodes: [
+              ParagraphNode(
+                id: '1',
+                text: AttributedText(                  
+                  text:
+                      'Lorem ipsum dolor sit amet\nconsectetur adipiscing elit',
+                ),
+              ),
+            ],
+          );  
 
-          await tester.pressEnd();
+          await tester 
+            .createDocument()
+            .withCustomContent(document)
+            .forDesktop()
+            .pump();
 
-          // Ensure that the caret moved to the end of the line. This value
-          // is very fragile. If the text size or layout width changes, this value
-          // will also need to change.
+          // Place caret at the second line at "consectetur adipiscing |elit"
+          await tester.placeCaretInParagraph('1', 51);
+
+          await tester.pressHome();
+
+          // Ensure that the caret moved to the beginning of the second line at "|consectetur adipiscing elit"         
           expect(
-            editContext.composer.selection,
+            SuperEditorInspector.findDocumentSelection(),
             const DocumentSelection.collapsed(
               position: DocumentPosition(
                 nodeId: "1",
@@ -152,21 +179,87 @@ void main() {
               ),
             ),
           );
-
-          debugDefaultTargetPlatformOverride = null;
         });
         
-        testWidgets('beginning of word with CTRL + LEFT ARROW on Windows', (tester) async {
-          debugDefaultTargetPlatformOverride = TargetPlatform.windows;
+        testWidgetsOnWindowsAndLinux('end of line with END in an auto-wrapping paragraph', (tester) async {
+          // Configure the screen to a size we know will cause the paragraph to auto-wrap its lines
+          tester.binding.window
+            ..devicePixelRatioTestValue = 1.0
+            ..platformDispatcher.textScaleFactorTestValue = 1.0
+            ..physicalSizeTestValue = const Size(400, 400);
+          
+          await tester 
+            .createDocument()
+            .withSingleParagraph()
+            .forDesktop()
+            .pump();
 
+          // Place caret at the start of the first line
+          await tester.placeCaretInParagraph('1', 0);
+
+          await tester.pressEnd();
+
+          // Ensure that the caret moved to the end of the current line
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            const DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: "1",
+                nodePosition: TextNodePosition(offset: 17),
+              ),
+            ),
+          );
+
+          tester.binding.window.clearDevicePixelRatioTestValue();
+          tester.binding.platformDispatcher.clearTextScaleFactorTestValue();
+          tester.binding.window.clearPhysicalSizeTestValue();
+        });
+
+        testWidgetsOnWindowsAndLinux('end of line with END in a paragraph with explicit new lines', (tester) async {                    
+          final document = MutableDocument(
+            nodes: [
+              ParagraphNode(
+                id: '1',
+                text: AttributedText(                  
+                  text:
+                      'Lorem ipsum dolor sit amet\nconsectetur adipiscing elit',
+                ),
+              ),
+            ],
+          );  
+
+          await tester 
+            .createDocument()
+            .withCustomContent(document)
+            .forDesktop()
+            .pump();
+
+          // Place caret at the first line at "Lorem |ipsum"
+          await tester.placeCaretInParagraph('1', 6);
+
+          await tester.pressEnd();
+
+          // Ensure that the caret moved the end of the first line
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            const DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: "1",
+                nodePosition: TextNodePosition(offset: 26, affinity: TextAffinity.upstream),
+              ),
+            ),
+          );
+        });
+        
+        testWidgetsOnWindowsAndLinux('beginning of word with CTRL + LEFT ARROW', (tester) async {
           // Start the user's selection somewhere in the middle of a word.
-          final editContext = await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
+          await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
 
           await tester.pressCtlLeftArrow();
 
           // Ensure that the caret moved to the beginning of the word.
           expect(
-            editContext.composer.selection,
+            SuperEditorInspector.findDocumentSelection(),
             const DocumentSelection.collapsed(
               position: DocumentPosition(
                 nodeId: "1",
@@ -174,21 +267,17 @@ void main() {
               ),
             ),
           );
-
-          debugDefaultTargetPlatformOverride = null;
         });
         
-        testWidgets('end of word with CTRL + RIGHT ARROW on Windows', (tester) async {
-          debugDefaultTargetPlatformOverride = TargetPlatform.windows;
-
+        testWidgetsOnWindowsAndLinux('end of word with CTRL + RIGHT ARROW', (tester) async {
           // Start the user's selection somewhere in the middle of a word.
-          final editContext = await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
+          await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
 
           await tester.pressCtlRightArrow();
 
           // Ensure that the caret moved to the beginning of the word.
           expect(
-            editContext.composer.selection,
+            SuperEditorInspector.findDocumentSelection(),
             const DocumentSelection.collapsed(
               position: DocumentPosition(
                 nodeId: "1",
@@ -196,8 +285,6 @@ void main() {
               ),
             ),
           );
-
-          debugDefaultTargetPlatformOverride = null;
         });
       });
 
