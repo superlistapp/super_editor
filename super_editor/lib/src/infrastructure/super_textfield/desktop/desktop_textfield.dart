@@ -7,6 +7,7 @@ import 'package:flutter/material.dart' hide SelectableText;
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document_layout.dart';
+import 'package:super_editor/src/default_editor/document_input_keyboard.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
@@ -1203,6 +1204,23 @@ typedef TextFieldKeyboardHandler = TextFieldKeyboardHandlerResult Function({
   required ProseTextLayout textLayout,
   required RawKeyEvent keyEvent,
 });
+
+/// A [DocumentKeyboardAction] that reports [ExecutionInstruction.blocked]
+/// for any key combination that matches one of the given [keys].
+TextFieldKeyboardHandler ignoreTextFieldKeyCombos(List<KeyCombo> keys) {
+  return ({
+    required AttributedTextEditingController controller,
+    required ProseTextLayout textLayout,
+    required RawKeyEvent keyEvent,
+  }) {
+    for (final key in keys) {
+      if (key.matches(keyEvent)) {
+        return TextFieldKeyboardHandlerResult.blocked;
+      }
+    }
+    return TextFieldKeyboardHandlerResult.notHandled;
+  };
+}
 
 /// The keyboard actions that a [SuperTextField] uses by default.
 ///
