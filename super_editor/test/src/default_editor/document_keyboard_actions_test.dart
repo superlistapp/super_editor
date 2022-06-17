@@ -1,7 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
+import 'package:golden_toolkit/golden_toolkit.dart';
 import 'package:super_editor/src/infrastructure/platform_detector.dart';
 import 'package:super_editor/super_editor.dart';
 
@@ -181,17 +183,22 @@ void main() {
           );
         });
         
-        testWidgetsOnWindowsAndLinux('end of line with END in an auto-wrapping paragraph', (tester) async {
+        testWidgetsOnWindowsAndLinux('end of line with END in an auto-wrapping paragraph', (tester) async { 
+          // load app fonts so line-wrapping is more predictable.
+          await loadAppFonts();         
+          
           // Configure the screen to a size we know will cause the paragraph to auto-wrap its lines
           tester.binding.window
             ..devicePixelRatioTestValue = 1.0
             ..platformDispatcher.textScaleFactorTestValue = 1.0
             ..physicalSizeTestValue = const Size(400, 400);
           
+          // Using a stylesheet to set the fontFamily so the line-wrapping is more predictable          
           await tester 
-            .createDocument()
+            .createDocument()            
             .withSingleParagraph()
-            .forDesktop()
+            .forDesktop()       
+            .useStylesheet(_styleSheet)     
             .pump();
 
           // Place caret at the start of the first line
@@ -205,7 +212,7 @@ void main() {
             const DocumentSelection.collapsed(
               position: DocumentPosition(
                 nodeId: "1",
-                nodePosition: TextNodePosition(offset: 17),
+                nodePosition: TextNodePosition(offset: 39),
               ),
             ),
           );
@@ -215,7 +222,13 @@ void main() {
           tester.binding.window.clearPhysicalSizeTestValue();
         });
 
-        testWidgetsOnWindowsAndLinux('end of line with END in a paragraph with explicit new lines', (tester) async {                    
+        testWidgetsOnWindowsAndLinux('end of line with END in a paragraph with explicit new lines', (tester) async {                              
+          // Configure the screen to a size big enough so there's no auto line-wrapping
+          tester.binding.window
+            ..devicePixelRatioTestValue = 1.0
+            ..platformDispatcher.textScaleFactorTestValue = 1.0
+            ..physicalSizeTestValue = const Size(1024, 400);
+          
           final document = MutableDocument(
             nodes: [
               ParagraphNode(
@@ -249,6 +262,10 @@ void main() {
               ),
             ),
           );
+
+          tester.binding.window.clearDevicePixelRatioTestValue();
+          tester.binding.platformDispatcher.clearTextScaleFactorTestValue();
+          tester.binding.window.clearPhysicalSizeTestValue();
         });
         
         testWidgetsOnWindowsAndLinux('beginning of word with CTRL + LEFT ARROW', (tester) async {
@@ -847,3 +864,14 @@ Future<EditContext> _pumpCaretMovementTestSetup(
 
   return editContext;
 }
+
+final _styleSheet = defaultStylesheet.copyWith(
+  addRulesAfter: [
+    StyleRule(BlockSelector.all, (doc, docNode) => {'textStyle': _textStyle}),
+  ],
+);
+
+const _textStyle = TextStyle(
+  color: Colors.black,
+  fontFamily: 'Roboto',  
+);
