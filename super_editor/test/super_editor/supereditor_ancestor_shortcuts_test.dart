@@ -71,8 +71,8 @@ Future<void> _pumpShortcutsAndSuperEditor(
           shortcuts: {
             // These activators should only trigger when the child
             // SuperEditor explicitly ignores these keys.
-            const SingleActivator(LogicalKeyboardKey.enter): VoidCallbackIntent(onShortcut),
-            const SingleActivator(LogicalKeyboardKey.arrowRight, shift: true): VoidCallbackIntent(onShortcut),
+            const SingleActivator(LogicalKeyboardKey.enter): _VoidCallbackIntent(onShortcut),
+            const SingleActivator(LogicalKeyboardKey.arrowRight, shift: true): _VoidCallbackIntent(onShortcut),
           },
           child: SuperEditor(
             editor: DocumentEditor(
@@ -88,4 +88,17 @@ Future<void> _pumpShortcutsAndSuperEditor(
       ),
     ),
   );
+}
+
+// TODO: This was copied from "master" because it's not yet on "stable".
+// Delete this when VoidCallbackIntent rolls to stable.
+/// An [Intent] that keeps a [VoidCallback] to be invoked by a
+/// [VoidCallbackAction] when it receives this intent.
+class _VoidCallbackIntent extends Intent {
+  /// Creates a [VoidCallbackIntent].
+  const _VoidCallbackIntent(this.callback);
+
+  /// The callback that is to be called by the [VoidCallbackAction] that
+  /// receives this intent.
+  final VoidCallback callback;
 }
