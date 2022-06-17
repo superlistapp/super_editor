@@ -74,15 +74,20 @@ Future<void> _pumpShortcutsAndSuperEditor(
             const SingleActivator(LogicalKeyboardKey.enter): _VoidCallbackIntent(onShortcut),
             const SingleActivator(LogicalKeyboardKey.arrowRight, shift: true): _VoidCallbackIntent(onShortcut),
           },
-          child: SuperEditor(
-            editor: DocumentEditor(
-              document: MutableDocument(
-                nodes: [
-                  ParagraphNode(id: "1", text: AttributedText(text: "")),
-                ],
+          child: Actions(
+            actions: {
+              _VoidCallbackIntent: _VoidCallbackAction(),
+            },
+            child: SuperEditor(
+              editor: DocumentEditor(
+                document: MutableDocument(
+                  nodes: [
+                    ParagraphNode(id: "1", text: AttributedText(text: "")),
+                  ],
+                ),
               ),
+              keyboardActions: keyboardActions,
             ),
-            keyboardActions: keyboardActions,
           ),
         ),
       ),
@@ -101,4 +106,12 @@ class _VoidCallbackIntent extends Intent {
   /// The callback that is to be called by the [VoidCallbackAction] that
   /// receives this intent.
   final VoidCallback callback;
+}
+
+class _VoidCallbackAction extends Action<_VoidCallbackIntent> {
+  @override
+  Object? invoke(_VoidCallbackIntent intent) {
+    intent.callback();
+    return null;
+  }
 }
