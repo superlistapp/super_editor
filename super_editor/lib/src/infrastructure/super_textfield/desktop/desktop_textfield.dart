@@ -1205,7 +1205,7 @@ typedef TextFieldKeyboardHandler = TextFieldKeyboardHandlerResult Function({
   required RawKeyEvent keyEvent,
 });
 
-/// A [DocumentKeyboardAction] that reports [ExecutionInstruction.blocked]
+/// A [TextFieldKeyboardHandler] that reports [TextFieldKeyboardHandlerResult.blocked]
 /// for any key combination that matches one of the given [keys].
 TextFieldKeyboardHandler ignoreTextFieldKeyCombos(List<KeyCombo> keys) {
   return ({
