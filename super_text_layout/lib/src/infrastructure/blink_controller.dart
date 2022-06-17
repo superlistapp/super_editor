@@ -57,6 +57,7 @@ class BlinkController with ChangeNotifier {
       ..stop()
       ..start();
     _lastBlinkTime = Duration.zero;
+    notifyListeners();
   }
 
   void stopBlinking() {
