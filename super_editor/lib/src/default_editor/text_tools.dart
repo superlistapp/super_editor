@@ -62,6 +62,8 @@ TextSelection expandPositionToWord({
 
   int start = min(textPosition.offset, text.length - 1);
   int end = min(textPosition.offset, text.length - 1);
+  // -1 because TextPosition's offset indexes the character after the
+  // selection, not the final character in the selection.
   while (start > 0 && text[start - 1] != ' ') {
     start -= 1;
   }

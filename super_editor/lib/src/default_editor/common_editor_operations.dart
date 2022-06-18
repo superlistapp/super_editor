@@ -2336,28 +2336,34 @@ class _PasteEditorCommand implements EditorCommand {
       InsertTextCommand(
         documentPosition: _pastePosition,
         textToInsert: splitContent.first,
-        attributions: attributionsAtPasteOffset,
+        // For [LinkAttribution], we don't apply to the pasted text, but rather
+        // split the link at the pasted position, as handled below
+        attributions: attributionsAtPasteOffset.where((attribution) => attribution is! LinkAttribution).toSet(),
       ).execute(document, transaction);
 
       // Check for url in the pasted text and apply [LinkAttribution] appropriately
-      final hasLinkAttribute = attributionsAtPasteOffset.firstWhereOrNull((attr) => attr is LinkAttribution) != null;
-      if (!hasLinkAttribute) {
-        // Attributions at paste offset doesn't have [LinkAttribute].
-        // Add [LinkAttribute] to each url in the text if existed
-        for (final selectionWordEntry in splitContent.first.wordWithSelections(_pastePosition).entries) {
-          final documentSelection = selectionWordEntry.key;
-          final word = selectionWordEntry.value;
 
-          final link = Uri.tryParse(word);
+      _splitLinkAtPastedOffset(
+        textNode: textNode,
+        document: document,
+        transaction: transaction,
+      );
 
-          if (link != null && link.hasScheme && link.hasAuthority) {
-            // Valid url. Apply [LinkAttribution] to the url
-            final linkAttribution = LinkAttribution(url: link);
-            AddTextAttributionsCommand(
-              documentSelection: documentSelection,
-              attributions: {linkAttribution},
-            ).execute(document, transaction);
-          }
+      // Attributions at paste offset doesn't have [LinkAttribute].
+      // Add [LinkAttribute] to each url in the text if existed
+      for (final selectionWordEntry in splitContent.first.wordWithSelections(_pastePosition).entries) {
+        final documentSelection = selectionWordEntry.key;
+        final word = selectionWordEntry.value;
+
+        final link = Uri.tryParse(word);
+
+        if (link != null && link.hasScheme && link.hasAuthority) {
+          // Valid url. Apply [LinkAttribution] to the url
+          final linkAttribution = LinkAttribution(url: link);
+          AddTextAttributionsCommand(
+            documentSelection: documentSelection,
+            attributions: {linkAttribution},
+          ).execute(document, transaction);
         }
       }
 
@@ -2417,5 +2423,53 @@ class _PasteEditorCommand implements EditorCommand {
     editorOpsLog.fine(' - new selection: ${_composer.selection}');
 
     editorOpsLog.fine('Done with paste command.');
+  }
+
+  void _splitLinkAtPastedOffset({
+    required TextNode textNode,
+    required Document document,
+    required DocumentEditorTransaction transaction,
+  }) {
+    final pasteTextOffset = (_pastePosition.nodePosition as TextPosition).offset;
+    final linkAttributionSpan = textNode.text.spans
+        .getAttributionSpansInRange(
+          attributionFilter: (attr) => attr is LinkAttribution,
+          start: pasteTextOffset,
+          end: pasteTextOffset,
+        )
+        .firstOrNull;
+
+    if (linkAttributionSpan == null) {
+      // Do nothing
+      return;
+    }
+
+    final documentSelection = documentPositionToDocumentSelection(
+      documentPosition: _pastePosition,
+      extentOffset: textNode.text.text.length,
+    );
+
+    // Remove the existing link attribution
+    RemoveTextAttributionsCommand(
+      documentSelection: documentSelection,
+      attributions: {linkAttributionSpan.attribution},
+    );
+
+    // Split the current link into 2 parts
+    final firstLink = linkAttributionSpan.copyWith(end: pasteTextOffset).attribution;
+
+    final secondLinkStart = pasteTextOffset + _content.length;
+    final secondLinkLength = linkAttributionSpan.end - pasteTextOffset;
+    final secondLink = linkAttributionSpan
+        .copyWith(
+          start: secondLinkStart,
+          end: secondLinkStart + secondLinkLength,
+        )
+        .attribution;
+
+    AddTextAttributionsCommand(
+      documentSelection: documentSelection,
+      attributions: {firstLink, secondLink},
+    ).execute(document, transaction);
   }
 }
