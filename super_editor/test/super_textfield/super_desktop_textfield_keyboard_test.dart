@@ -610,7 +610,7 @@ void main() {
     group('on Mac', () {
       group('copy text', () {
         testWidgetsOnMac('CMD + C copies selected text', (tester) async {
-          final clipboard = _SimulatedClipboard(tester)..init();
+          tester.simulateClipboard();
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
@@ -625,11 +625,11 @@ void main() {
           await tester.pressCmdC();
 
           // Ensure that the expected text was copied to the clipboard.
-          expect(clipboard.clipboardText, 'is some');
+          expect(tester.getSimulatedClipboardContent(), 'is some');
         });
 
         testWidgetsOnMac('CTL + C does NOT copy selected text', (tester) async {
-          final clipboard = _SimulatedClipboard(tester)..init();
+          tester.simulateClipboard();
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
@@ -643,12 +643,12 @@ void main() {
 
           await tester.pressCtlC();
 
-          // Ensure that the expected text was copied to the clipboard.
-          expect(clipboard.clipboardText, null);
+          // Ensure that a copy didn't happen.
+          expect(tester.getSimulatedClipboardContent(), null);
         });
 
         testWidgetsOnMac('C does NOT copy text without CMD', (tester) async {
-          final clipboard = _SimulatedClipboard(tester)..init();
+          tester.simulateClipboard();
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
@@ -662,12 +662,12 @@ void main() {
 
           await tester.sendKeyEvent(LogicalKeyboardKey.keyC);
 
-          // Ensure that the expected text was copied to the clipboard.
-          expect(clipboard.clipboardText, null);
+          // Ensure that a copy didn't happen.
+          expect(tester.getSimulatedClipboardContent(), null);
         });
 
         testWidgetsOnMac('CMD does NOT copy text without C', (tester) async {
-          final clipboard = _SimulatedClipboard(tester)..init();
+          tester.simulateClipboard();
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
@@ -681,16 +681,14 @@ void main() {
 
           await tester.sendKeyEvent(LogicalKeyboardKey.metaLeft);
 
-          // Ensure that the expected text was copied to the clipboard.
-          expect(clipboard.clipboardText, null);
+          // Ensure that a copy didn't happen.
+          expect(tester.getSimulatedClipboardContent(), null);
         });
       });
 
       group('paste text', () {
         testWidgetsOnMac('CMD + V pastes clipboard text', (tester) async {
-          _SimulatedClipboard(tester)
-            ..init()
-            ..clipboardText = "this is clipboard text";
+          tester.setSimulatedClipboardContent("this is clipboard text");
 
           await _pumpSuperTextField(
             tester,
@@ -706,9 +704,7 @@ void main() {
         });
 
         testWidgetsOnMac('CTL + V does NOT paste clipboard text', (tester) async {
-          _SimulatedClipboard(tester)
-            ..init()
-            ..clipboardText = "this is clipboard text";
+          tester.setSimulatedClipboardContent("this is clipboard text");
 
           await _pumpSuperTextField(
             tester,
@@ -724,9 +720,7 @@ void main() {
         });
 
         testWidgetsOnMac('V does NOT paste text without CMD', (tester) async {
-          _SimulatedClipboard(tester)
-            ..init()
-            ..clipboardText = "this is clipboard text";
+          tester.setSimulatedClipboardContent("this is clipboard text");
 
           await _pumpSuperTextField(
             tester,
@@ -742,9 +736,7 @@ void main() {
         });
 
         testWidgetsOnMac('V does NOT paste text without CMD', (tester) async {
-          _SimulatedClipboard(tester)
-            ..init()
-            ..clipboardText = "this is clipboard text";
+          tester.setSimulatedClipboardContent("this is clipboard text");
 
           await _pumpSuperTextField(
             tester,
@@ -1203,7 +1195,7 @@ void main() {
     group('on Windows + Linux', () {
       group('copy text', () {
         testWidgetsOnWindowsAndLinux('control+c copies selected text', (tester) async {
-          final clipboard = _SimulatedClipboard(tester)..init();
+          tester.simulateClipboard();
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
@@ -1218,11 +1210,11 @@ void main() {
           await tester.pressCtlC();
 
           // Ensure that the expected text was copied to the clipboard.
-          expect(clipboard.clipboardText, 'is some');
+          expect(tester.getSimulatedClipboardContent(), 'is some');
         });
 
-        testWidgetsOnWindowsAndLinux('cmd+c does NOT copy selected text', (tester) async {
-          final clipboard = _SimulatedClipboard(tester)..init();
+        testWidgetsOnWindowsAndLinux('CMD + C does NOT copy selected text', (tester) async {
+          tester.simulateClipboard();
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
@@ -1236,12 +1228,12 @@ void main() {
 
           await tester.pressCmdC();
 
-          // Ensure that the expected text was copied to the clipboard.
-          expect(clipboard.clipboardText, null);
+          // Ensure that a copy didn't happen.
+          expect(tester.getSimulatedClipboardContent(), null);
         });
 
-        testWidgetsOnWindowsAndLinux('it ignores c-key without control', (tester) async {
-          final clipboard = _SimulatedClipboard(tester)..init();
+        testWidgetsOnWindowsAndLinux('it ignores C without CTL', (tester) async {
+          tester.simulateClipboard();
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
@@ -1255,12 +1247,12 @@ void main() {
 
           await tester.sendKeyEvent(LogicalKeyboardKey.keyC);
 
-          // Ensure that the expected text was copied to the clipboard.
-          expect(clipboard.clipboardText, null);
+          // Ensure that a copy didn't happen.
+          expect(tester.getSimulatedClipboardContent(), null);
         });
 
-        testWidgetsOnWindowsAndLinux('it ignores control without c-key', (tester) async {
-          final clipboard = _SimulatedClipboard(tester)..init();
+        testWidgetsOnWindowsAndLinux('it ignores control without C', (tester) async {
+          tester.simulateClipboard();
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
@@ -1274,16 +1266,14 @@ void main() {
 
           await tester.sendKeyEvent(LogicalKeyboardKey.controlLeft);
 
-          // Ensure that the expected text was copied to the clipboard.
-          expect(clipboard.clipboardText, null);
+          // Ensure that a copy didn't happen.
+          expect(tester.getSimulatedClipboardContent(), null);
         });
       });
 
       group('paste text', () {
         testWidgetsOnWindowsAndLinux('control+v pastes clipboard text', (tester) async {
-          _SimulatedClipboard(tester)
-            ..init()
-            ..clipboardText = "this is clipboard text";
+          tester.setSimulatedClipboardContent("this is clipboard text");
 
           await _pumpSuperTextField(
             tester,
@@ -1299,9 +1289,7 @@ void main() {
         });
 
         testWidgetsOnWindowsAndLinux('cmd+v does NOT paste clipboard text', (tester) async {
-          _SimulatedClipboard(tester)
-            ..init()
-            ..clipboardText = "this is clipboard text";
+          tester.setSimulatedClipboardContent("this is clipboard text");
 
           await _pumpSuperTextField(
             tester,
@@ -1317,9 +1305,7 @@ void main() {
         });
 
         testWidgetsOnWindowsAndLinux('it ignores v-key without control', (tester) async {
-          _SimulatedClipboard(tester)
-            ..init()
-            ..clipboardText = "this is clipboard text";
+          tester.setSimulatedClipboardContent("this is clipboard text");
 
           await _pumpSuperTextField(
             tester,
@@ -1335,9 +1321,7 @@ void main() {
         });
 
         testWidgetsOnWindowsAndLinux('it ignores control without v-key', (tester) async {
-          _SimulatedClipboard(tester)
-            ..init()
-            ..clipboardText = "this is clipboard text";
+          tester.setSimulatedClipboardContent("this is clipboard text");
 
           await _pumpSuperTextField(
             tester,
@@ -1630,41 +1614,4 @@ Future<void> _pumpSuperTextField(
   // for (int i = 0; i < _multilineLayoutText.length; ++i) {
   //   print('$i: ${textLayout.getCharacterBox(TextPosition(offset: i))}');
   // }
-}
-
-/// Simulates platform copy/paste behavior for testing purposes.
-///
-/// Clipboard behavior happens on the platform side. Flutter's copy/paste
-/// operations delegate to the platform over the [SystemChannels.platform]
-/// channel. [_SimulatedClipboard] installs itself as the handler of the
-/// copy/paste channel messages, pretending to be the platform.
-///
-/// [_SimulatedClipboard] uses `setMockMethodCallHandler()` to intercept
-/// the copy/paste channel messages. Flutter automatically resets the mock
-/// method handler after every test. You don't need to do that manually.
-/// To explicitly deregister the mock method handler before the end of a
-/// test, call [dispose()].
-class _SimulatedClipboard {
-  _SimulatedClipboard(this.tester);
-
-  final WidgetTester tester;
-  String? clipboardText;
-
-  void init() {
-    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(SystemChannels.platform, _methodCallHandler);
-  }
-
-  void dispose() {
-    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(SystemChannels.platform, null);
-  }
-
-  Future<dynamic> _methodCallHandler(MethodCall call) async {
-    if (call.method == 'Clipboard.setData') {
-      clipboardText = call.arguments['text'];
-    } else if (call.method == 'Clipboard.getData') {
-      return {
-        'text': clipboardText,
-      };
-    }
-  }
 }
