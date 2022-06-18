@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -21,9 +20,7 @@ void main() {
     'Document keyboard actions',
     () {
       group('jumps to', () {
-        testWidgets('beginning of line with CMD + LEFT ARROW on Mac', (tester) async {
-          Platform.setTestInstance(MacPlatform());
-
+        testWidgetsOnMac('beginning of line with CMD + LEFT ARROW', (tester) async {
           // Start the user's selection somewhere after the beginning of the first
           // line in the first node.
           await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
@@ -40,13 +37,9 @@ void main() {
               ),
             ),
           );
-
-          Platform.setTestInstance(null);
         });
 
-        testWidgets('end of line with CMD + RIGHT ARROW on Mac', (tester) async {
-          Platform.setTestInstance(MacPlatform());
-
+        testWidgetsOnMac('end of line with CMD + RIGHT ARROW', (tester) async {
           // Start the user's selection somewhere before the end of the first line
           // in the first node.
           await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
@@ -65,13 +58,9 @@ void main() {
               ),
             ),
           );
-
-          Platform.setTestInstance(null);
         });
 
-        testWidgets('beginning of word with ALT + LEFT ARROW on Mac', (tester) async {
-          Platform.setTestInstance(MacPlatform());
-
+        testWidgetsOnMac('beginning of word with ALT + LEFT ARROW', (tester) async {
           // Start the user's selection somewhere in the middle of a word.
           await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
 
@@ -87,13 +76,9 @@ void main() {
               ),
             ),
           );
-
-          Platform.setTestInstance(null);
         });
 
-        testWidgets('end of word with ALT + RIGHT ARROW on Mac', (tester) async {
-          Platform.setTestInstance(MacPlatform());
-
+        testWidgetsOnMac('end of word with ALT + RIGHT ARROW', (tester) async {
           // Start the user's selection somewhere in the middle of a word.
           await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
 
@@ -109,24 +94,14 @@ void main() {
               ),
             ),
           );
-
-          Platform.setTestInstance(null);
         });
 
-        testWidgetsOnWindowsAndLinux('beginning of line with HOME in an auto-wrapping paragraph', (tester) async {
-          // Configure the screen to a size we know will cause the paragraph to auto-wrap its lines
-          tester.binding.window
-            ..devicePixelRatioTestValue = 1.0
-            ..platformDispatcher.textScaleFactorTestValue = 1.0
-            ..physicalSizeTestValue = const Size(400, 400);
-          
-          await tester 
-            .createDocument()
-            .withSingleParagraph()
-            .forDesktop()
-            .pump();
+        testWidgetsOnWindowsAndLinux('beginning of line with HOME in an auto-wrapping paragraph', (tester) async {          
+          await _pumpAutoWrappingTestSetup(tester);          
 
           // Place caret at the second line at "adipiscing |elit"
+          // We avoid placing the caret in the first line to make sure HOME doesn't move caret
+          // all the way to the beginning of the text
           await tester.placeCaretInParagraph('1', 51);
 
           await tester.pressHome();
@@ -141,32 +116,14 @@ void main() {
               ),
             ),
           );
-
-          tester.binding.window.clearDevicePixelRatioTestValue();
-          tester.binding.platformDispatcher.clearTextScaleFactorTestValue();
-          tester.binding.window.clearPhysicalSizeTestValue();
         });
 
         testWidgetsOnWindowsAndLinux('beginning of line with HOME in a paragraph with explicit new lines', (tester) async {                    
-          final document = MutableDocument(
-            nodes: [
-              ParagraphNode(
-                id: '1',
-                text: AttributedText(                  
-                  text:
-                      'Lorem ipsum dolor sit amet\nconsectetur adipiscing elit',
-                ),
-              ),
-            ],
-          );  
-
-          await tester 
-            .createDocument()
-            .withCustomContent(document)
-            .forDesktop()
-            .pump();
+          await _pumpExplicitLineBreakTestSetup(tester);
 
           // Place caret at the second line at "consectetur adipiscing |elit"
+          // We avoid placing the caret in the first line to make sure HOME doesn't move caret
+          // all the way to the beginning of the text
           await tester.placeCaretInParagraph('1', 51);
 
           await tester.pressHome();
@@ -187,21 +144,14 @@ void main() {
           // load app fonts so line-wrapping is more predictable.
           await loadAppFonts();         
           
-          // Configure the screen to a size we know will cause the paragraph to auto-wrap its lines
-          tester.binding.window
-            ..devicePixelRatioTestValue = 1.0
-            ..platformDispatcher.textScaleFactorTestValue = 1.0
-            ..physicalSizeTestValue = const Size(400, 400);
-          
           // Using a stylesheet to set the fontFamily so the line-wrapping is more predictable          
-          await tester 
-            .createDocument()            
-            .withSingleParagraph()
-            .forDesktop()       
-            .useStylesheet(_styleSheet)     
-            .pump();
+          await _pumpAutoWrappingTestSetup(tester, 
+            stylesheet: _styleSheet
+          );  
 
           // Place caret at the start of the first line
+          // We avoid placing the caret in the last line to make sure END doesn't move caret
+          // all the way to the end of the text
           await tester.placeCaretInParagraph('1', 0);
 
           await tester.pressEnd();
@@ -216,10 +166,6 @@ void main() {
               ),
             ),
           );
-
-          tester.binding.window.clearDevicePixelRatioTestValue();
-          tester.binding.platformDispatcher.clearTextScaleFactorTestValue();
-          tester.binding.window.clearPhysicalSizeTestValue();
         });
 
         testWidgetsOnWindowsAndLinux('end of line with END in a paragraph with explicit new lines', (tester) async {                              
@@ -228,26 +174,12 @@ void main() {
             ..devicePixelRatioTestValue = 1.0
             ..platformDispatcher.textScaleFactorTestValue = 1.0
             ..physicalSizeTestValue = const Size(1024, 400);
-          
-          final document = MutableDocument(
-            nodes: [
-              ParagraphNode(
-                id: '1',
-                text: AttributedText(                  
-                  text:
-                      'Lorem ipsum dolor sit amet\nconsectetur adipiscing elit',
-                ),
-              ),
-            ],
-          );  
 
-          await tester 
-            .createDocument()
-            .withCustomContent(document)
-            .forDesktop()
-            .pump();
+          await _pumpExplicitLineBreakTestSetup(tester);
 
           // Place caret at the first line at "Lorem |ipsum"
+          // Avoid placing caret in the last line to make sure END doesn't move caret
+          // all the way to the end of the text
           await tester.placeCaretInParagraph('1', 6);
 
           await tester.pressEnd();
@@ -263,9 +195,7 @@ void main() {
             ),
           );
 
-          tester.binding.window.clearDevicePixelRatioTestValue();
-          tester.binding.platformDispatcher.clearTextScaleFactorTestValue();
-          tester.binding.window.clearPhysicalSizeTestValue();
+          tester.binding.window.clearAllTestValues();
         });
         
         testWidgetsOnWindowsAndLinux('beginning of word with CTRL + LEFT ARROW', (tester) async {
@@ -863,6 +793,51 @@ Future<EditContext> _pumpCaretMovementTestSetup(
   );
 
   return editContext;
+}
+
+Future<TestDocumentContext> _pumpAutoWrappingTestSetup(
+  WidgetTester tester, {
+  Stylesheet? stylesheet,
+}) async {
+  final configurator = tester 
+    .createDocument()
+    .withSingleParagraph()
+    .forDesktop()
+    .withEditorSize(const Size(400, 400));
+
+  if (stylesheet != null) {
+    configurator.useStylesheet(stylesheet);
+  } 
+
+  return await configurator.pump();
+}
+
+Future<TestDocumentContext> _pumpExplicitLineBreakTestSetup(
+  WidgetTester tester, {
+  Size? size,
+}) async {          
+  final document = MutableDocument(
+    nodes: [
+      ParagraphNode(
+        id: '1',
+        text: AttributedText(                  
+          text:
+              'Lorem ipsum dolor sit amet\nconsectetur adipiscing elit',              
+        ),
+      ),
+    ],
+  );  
+
+  final configurator = tester 
+    .createDocument()
+    .withCustomContent(document)
+    .forDesktop();
+
+  if (size != null) {
+    configurator.withEditorSize(const Size(400, 400));
+  }
+
+  return await configurator.pump();
 }
 
 final _styleSheet = defaultStylesheet.copyWith(

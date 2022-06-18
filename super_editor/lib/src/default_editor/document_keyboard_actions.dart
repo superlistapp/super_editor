@@ -267,13 +267,13 @@ ExecutionInstruction moveUpDownLeftAndRightWithArrowKeys({
   bool didMove = false;
   if (keyEvent.logicalKey == LogicalKeyboardKey.arrowLeft || keyEvent.logicalKey == LogicalKeyboardKey.arrowRight) {
     MovementModifier? movementModifier;    
-    if (defaultTargetPlatform == TargetPlatform.windows || defaultTargetPlatform == TargetPlatform.linux) {
-      if (keyEvent.isControlPressed) {
-        movementModifier = MovementModifier.word;
-      }
-    } else if (keyEvent.isPrimaryShortcutKeyPressed) {      
+    if ((defaultTargetPlatform == TargetPlatform.windows || defaultTargetPlatform == TargetPlatform.linux) &&
+        keyEvent.isControlPressed
+    ) {      
+      movementModifier = MovementModifier.word;      
+    } else if (defaultTargetPlatform == TargetPlatform.macOS && keyEvent.isMetaPressed) {      
       movementModifier = MovementModifier.line;
-    } else if (keyEvent.isAltPressed) {
+    } else if (defaultTargetPlatform == TargetPlatform.macOS && keyEvent.isAltPressed) {
       movementModifier = MovementModifier.word;
     }
 
