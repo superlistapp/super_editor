@@ -1363,17 +1363,27 @@ class DefaultSuperTextFieldKeyboardHandlers {
       return TextFieldKeyboardHandlerResult.handled;
     }
 
+    if (defaultTargetPlatform == TargetPlatform.windows && keyEvent.isAltPressed) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    if (defaultTargetPlatform == TargetPlatform.linux && keyEvent.isAltPressed && 
+        (keyEvent.logicalKey == LogicalKeyboardKey.arrowUp || keyEvent.logicalKey == LogicalKeyboardKey.arrowDown)
+    ) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
     if (keyEvent.logicalKey == LogicalKeyboardKey.arrowLeft) {
       _log.finer('moveUpDownLeftAndRightWithArrowKeys - handling left arrow key');
 
       MovementModifier? movementModifier;
-      if (defaultTargetPlatform == TargetPlatform.windows || defaultTargetPlatform == TargetPlatform.linux) {
-        if (keyEvent.isControlPressed) {
-          movementModifier = MovementModifier.word;
-        }
-      } else if (keyEvent.isPrimaryShortcutKeyPressed) {
+      if ((defaultTargetPlatform == TargetPlatform.windows || defaultTargetPlatform == TargetPlatform.linux) &&
+          keyEvent.isControlPressed
+      ) {        
+        movementModifier = MovementModifier.word;        
+      } else if (defaultTargetPlatform == TargetPlatform.macOS && keyEvent.isMetaPressed) {
         movementModifier = MovementModifier.line;
-      } else if (keyEvent.isAltPressed) {
+      } else if (defaultTargetPlatform == TargetPlatform.macOS && keyEvent.isAltPressed) {
         movementModifier = MovementModifier.word;
       }
 
@@ -1387,13 +1397,13 @@ class DefaultSuperTextFieldKeyboardHandlers {
       _log.finer('moveUpDownLeftAndRightWithArrowKeys - handling right arrow key');
 
       MovementModifier? movementModifier;
-      if (defaultTargetPlatform == TargetPlatform.windows || defaultTargetPlatform == TargetPlatform.linux) {
-        if (keyEvent.isControlPressed) {
-          movementModifier = MovementModifier.word;
-        }
-      } else if (keyEvent.isPrimaryShortcutKeyPressed) {
+      if ((defaultTargetPlatform == TargetPlatform.windows || defaultTargetPlatform == TargetPlatform.linux) &&
+          keyEvent.isControlPressed
+      ) {        
+        movementModifier = MovementModifier.word;        
+      } else if (defaultTargetPlatform == TargetPlatform.macOS && keyEvent.isMetaPressed) {
         movementModifier = MovementModifier.line;
-      } else if (keyEvent.isAltPressed) {
+      } else if (defaultTargetPlatform == TargetPlatform.macOS && keyEvent.isAltPressed) {
         movementModifier = MovementModifier.word;
       }
 

@@ -94,6 +94,42 @@ void main() {
             ),
           );
         });
+        
+        testWidgetsOnLinux('preceding character with ALT + LEFT ARROW', (tester) async {
+          // Start the user's selection somewhere in the middle of a word.
+          await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
+
+          await tester.pressAltLeftArrow();
+
+          // Ensure that the caret moved one character to the left.
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            const DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: "1",
+                nodePosition: TextNodePosition(offset: 7),
+              ),
+            ),
+          );
+        });
+        
+        testWidgetsOnLinux('next character with ALT + RIGHT ARROW', (tester) async {
+          // Start the user's selection somewhere in the middle of a word.
+          await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
+
+          await tester.pressAltRightArrow();
+
+          // Ensure that the caret moved one character to the right
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            const DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: "1",
+                nodePosition: TextNodePosition(offset: 9),
+              ),
+            ),
+          );
+        });
 
         testWidgetsOnWindowsAndLinux('beginning of line with HOME in an auto-wrapping paragraph', (tester) async {          
           await _pumpAutoWrappingTestSetup(tester);          
@@ -230,8 +266,8 @@ void main() {
         });
       });
 
-      group("doesn't move selection", (){
-        testWidgetsOnWindowsAndLinux("with ALT + LEFT ARROW", (tester) async {
+      group("does nothing", (){
+        testWidgetsOnWindows("with ALT + LEFT ARROW", (tester) async {
           // Start the user's selection somewhere in the middle of a word.
           await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
 
@@ -249,7 +285,7 @@ void main() {
           );
         });
 
-        testWidgetsOnWindowsAndLinux("with ALT + RIGHT ARROW", (tester) async {
+        testWidgetsOnWindows("with ALT + RIGHT ARROW", (tester) async {
           // Start the user's selection somewhere in the middle of a word.
           await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
 
@@ -308,8 +344,8 @@ void main() {
         });
       });
 
-      group("shortcuts from windows and linux dont't run on mac", (){
-        testWidgetsOnMac('beginning of line with HOME', (tester) async {
+      group("shortcuts for Windows and Linux do nothing on mac", (){
+        testWidgetsOnMac('HOME', (tester) async {
           // Start the user's selection somewhere after the beginning of the first
           // line in the first node.
           await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
@@ -328,7 +364,7 @@ void main() {
           );
         });
 
-        testWidgetsOnMac('end of line with END', (tester) async {
+        testWidgetsOnMac('END', (tester) async {
           // Start the user's selection somewhere after the beginning of the first
           // line in the first node.
           await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 2);
@@ -347,7 +383,7 @@ void main() {
           );
         });
       
-        testWidgetsOnMac('beginning of word with CTRL + LEFT ARROW', (tester) async {
+        testWidgetsOnMac('CTRL + LEFT ARROW', (tester) async {
           // Start the user's selection somewhere in the middle of a word.
           await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
 
@@ -365,7 +401,7 @@ void main() {
           );
         });
         
-        testWidgetsOnMac('end of word with CTRL + RIGHT ARROW', (tester) async {
+        testWidgetsOnMac('CTRL + RIGHT ARROW', (tester) async {
           // Start the user's selection somewhere in the middle of a word.
           await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
 
@@ -384,8 +420,8 @@ void main() {
         });
       });
 
-      group("shortcuts from mac don't run on windows and linux", (){
-        testWidgetsOnWindowsAndLinux('beginning of line with CMD + LEFT ARROW', (tester) async {
+      group("shortcuts for Mac do nothing on Windows and Linux", (){
+        testWidgetsOnWindowsAndLinux('CMD + LEFT ARROW', (tester) async {
           // Start the user's selection somewhere after the beginning of the first
           // line in the first node.
           await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
@@ -404,7 +440,7 @@ void main() {
           );
         });
 
-        testWidgetsOnWindowsAndLinux('end of line with CMD + RIGHT ARROW', (tester) async {
+        testWidgetsOnWindowsAndLinux('CMD + RIGHT ARROW', (tester) async {
           // Start the user's selection somewhere before the end of the first line
           // in the first node.
           await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 2);
