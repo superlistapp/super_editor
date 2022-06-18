@@ -230,6 +230,200 @@ void main() {
         });
       });
 
+      group("doesn't move selection", (){
+        testWidgetsOnWindowsAndLinux("with ALT + LEFT ARROW", (tester) async {
+          // Start the user's selection somewhere in the middle of a word.
+          await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
+
+          await tester.pressAltLeftArrow();
+
+          // Ensure that the caret didn't move
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            const DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: "1",
+                nodePosition: TextNodePosition(offset: 8),
+              ),
+            ),
+          );
+        });
+
+        testWidgetsOnWindowsAndLinux("with ALT + RIGHT ARROW", (tester) async {
+          // Start the user's selection somewhere in the middle of a word.
+          await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
+
+          await tester.pressAltRightArrow();
+
+          // Ensure that the caret didn't move
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            const DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: "1",
+                nodePosition: TextNodePosition(offset: 8),
+              ),
+            ),
+          );
+        });
+      
+        testWidgetsOnWindowsAndLinux('with ALT + UP ARROW', (tester) async {                                        
+          await _pumpExplicitLineBreakTestSetup(tester);
+
+          // Place caret at the second line at "consectetur adipiscing |elit"          
+          await tester.placeCaretInParagraph('1', 51);
+
+          await _pressAltUpArrow(tester);
+
+          // Ensure that the caret didn't move
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            const DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: "1",
+                nodePosition: TextNodePosition(offset: 51),
+              ),
+            ),
+          );
+        });
+
+        testWidgetsOnWindowsAndLinux('with ALT + DOWN ARROW', (tester) async {                              
+          await _pumpExplicitLineBreakTestSetup(tester);
+
+          // Place caret at the first line at "Lorem |ipsum"          
+          await tester.placeCaretInParagraph('1', 6);
+
+          await _pressAltDownArrow(tester);
+
+          // Ensure that the caret didn't move
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            const DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: "1",
+                nodePosition: TextNodePosition(offset: 6),
+              ),
+            ),
+          );
+        });
+      });
+
+      group("shortcuts from windows and linux dont't run on mac", (){
+        testWidgetsOnMac('beginning of line with HOME', (tester) async {
+          // Start the user's selection somewhere after the beginning of the first
+          // line in the first node.
+          await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
+
+          await tester.pressHome();
+
+          // Ensure that the caret didn't move
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            const DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: "1",
+                nodePosition: TextNodePosition(offset: 8),
+              ),
+            ),
+          );
+        });
+
+        testWidgetsOnMac('end of line with END', (tester) async {
+          // Start the user's selection somewhere after the beginning of the first
+          // line in the first node.
+          await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 2);
+
+          await tester.pressEnd();
+
+          // Ensure that the caret didn't move
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            const DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: "1",
+                nodePosition: TextNodePosition(offset: 2),
+              ),
+            ),
+          );
+        });
+      
+        testWidgetsOnMac('beginning of word with CTRL + LEFT ARROW', (tester) async {
+          // Start the user's selection somewhere in the middle of a word.
+          await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
+
+          await tester.pressCtlLeftArrow();
+
+          // Ensure that the caret moved only one character to the left
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            const DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: "1",
+                nodePosition: TextNodePosition(offset: 7),
+              ),
+            ),
+          );
+        });
+        
+        testWidgetsOnMac('end of word with CTRL + RIGHT ARROW', (tester) async {
+          // Start the user's selection somewhere in the middle of a word.
+          await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
+
+          await tester.pressCtlRightArrow();
+
+          // Ensure that the caret moved only one character to the right
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            const DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: "1",
+                nodePosition: TextNodePosition(offset: 9),
+              ),
+            ),
+          );
+        });
+      });
+
+      group("shortcuts from mac don't run on windows and linux", (){
+        testWidgetsOnWindowsAndLinux('beginning of line with CMD + LEFT ARROW', (tester) async {
+          // Start the user's selection somewhere after the beginning of the first
+          // line in the first node.
+          await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
+
+          await tester.pressCmdLeftArrow();
+
+          // Ensure that the caret didn't move to the beginning of the line.
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            const DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: "1",
+                nodePosition: TextNodePosition(offset: 7),
+              ),
+            ),
+          );
+        });
+
+        testWidgetsOnWindowsAndLinux('end of line with CMD + RIGHT ARROW', (tester) async {
+          // Start the user's selection somewhere before the end of the first line
+          // in the first node.
+          await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 2);
+
+          await tester.pressCmdRightArrow();
+
+          // Ensure that the caret didn't move to the end of the line.
+          expect(
+            SuperEditorInspector.findDocumentSelection(),
+            const DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: "1",
+                nodePosition: TextNodePosition(offset: 3),
+              ),
+            ),
+          );
+        });
+      });
+
       group(
         'CMD + A to select all',
         () {
@@ -825,4 +1019,20 @@ Future<TestDocumentContext> _pumpExplicitLineBreakTestSetup(
   }
 
   return await configurator.pump();
+}
+
+Future<void> _pressAltUpArrow(WidgetTester tester) async {
+  await tester.sendKeyDownEvent(LogicalKeyboardKey.alt, platform: 'macos');
+  await tester.sendKeyDownEvent(LogicalKeyboardKey.arrowUp, platform: 'macos');
+  await tester.sendKeyUpEvent(LogicalKeyboardKey.arrowUp, platform: 'macos');
+  await tester.sendKeyUpEvent(LogicalKeyboardKey.alt, platform: 'macos');
+  await tester.pumpAndSettle();
+}
+
+Future<void> _pressAltDownArrow(WidgetTester tester) async {
+  await tester.sendKeyDownEvent(LogicalKeyboardKey.alt, platform: 'macos');
+  await tester.sendKeyDownEvent(LogicalKeyboardKey.arrowDown, platform: 'macos');
+  await tester.sendKeyUpEvent(LogicalKeyboardKey.arrowDown, platform: 'macos');
+  await tester.sendKeyUpEvent(LogicalKeyboardKey.alt, platform: 'macos');
+  await tester.pumpAndSettle();
 }
