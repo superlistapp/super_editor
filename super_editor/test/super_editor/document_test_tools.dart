@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -77,6 +78,7 @@ class TestDocumentConfigurator {
   DocumentInputSource? _inputSource;
   Stylesheet? _stylesheet;
   bool _autoFocus = false;
+  ui.Size? _editorSize;
 
   /// Configures the [SuperEditor] for standard desktop interactions,
   /// e.g., mouse and keyboard input.
@@ -113,6 +115,12 @@ class TestDocumentConfigurator {
   /// Configures the [SuperEditor] to use the given [gestureMode].
   TestDocumentConfigurator withGestureMode(DocumentGestureMode gestureMode) {
     _gestureMode = gestureMode;
+    return this;
+  }
+
+  /// Configures the [SuperEditor] to constrain its maxHeight and maxWidth using the given [size].
+  TestDocumentConfigurator withEditorSize(ui.Size size) {
+    _editorSize = size;
     return this;
   }
 
@@ -196,19 +204,34 @@ class TestDocumentConfigurator {
 
     await _widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
-        body: SuperEditor(
-          documentLayoutKey: testDocumentContext.layoutKey,
-          editor: testDocumentContext.editContext.editor,
-          focusNode: testDocumentContext.focusNode,
-          inputSource: _inputSource ?? _defaultInputSource,
-          gestureMode: _gestureMode ?? _defaultGestureMode,
-          stylesheet: _stylesheet,
-          autofocus: _autoFocus,
+        body: _buildContent(
+          SuperEditor(
+            documentLayoutKey: testDocumentContext.layoutKey,
+            editor: testDocumentContext.editContext.editor,
+            focusNode: testDocumentContext.focusNode,
+            inputSource: _inputSource ?? _defaultInputSource,
+            gestureMode: _gestureMode ?? _defaultGestureMode,
+            stylesheet: _stylesheet,
+            autofocus: _autoFocus,
+          ),
         ),
       ),
     ));
 
     return testDocumentContext;
+  }
+
+  Widget _buildContent(Widget superEditor) {
+    if (_editorSize != null){      
+      return ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: _editorSize!.width,
+          maxHeight: _editorSize!.height,
+        ),
+        child: superEditor,
+      );
+    }
+    return superEditor;
   }
 }
 
