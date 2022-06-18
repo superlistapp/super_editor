@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
-import 'package:golden_toolkit/golden_toolkit.dart';
 import 'package:super_editor/src/infrastructure/platform_detector.dart';
 import 'package:super_editor/super_editor.dart';
 
@@ -140,14 +139,8 @@ void main() {
           );
         });
         
-        testWidgetsOnWindowsAndLinux('end of line with END in an auto-wrapping paragraph', (tester) async { 
-          // load app fonts so line-wrapping is more predictable.
-          await loadAppFonts();         
-          
-          // Using a stylesheet to set the fontFamily so the line-wrapping is more predictable          
-          await _pumpAutoWrappingTestSetup(tester, 
-            stylesheet: _styleSheet
-          );  
+        testWidgetsOnWindowsAndLinux('end of line with END in an auto-wrapping paragraph', (tester) async {           
+          await _pumpAutoWrappingTestSetup(tester);
 
           // Place caret at the start of the first line
           // We avoid placing the caret in the last line to make sure END doesn't move caret
@@ -156,13 +149,15 @@ void main() {
 
           await tester.pressEnd();
 
-          // Ensure that the caret moved to the end of the current line
+          // Ensure that the caret moved to the end of the line. This value
+          // is very fragile. If the text size or layout width changes, this value
+          // will also need to change.
           expect(
             SuperEditorInspector.findDocumentSelection(),
             const DocumentSelection.collapsed(
               position: DocumentPosition(
                 nodeId: "1",
-                nodePosition: TextNodePosition(offset: 39),
+                nodePosition: TextNodePosition(offset: 17),
               ),
             ),
           );
@@ -795,21 +790,13 @@ Future<EditContext> _pumpCaretMovementTestSetup(
   return editContext;
 }
 
-Future<TestDocumentContext> _pumpAutoWrappingTestSetup(
-  WidgetTester tester, {
-  Stylesheet? stylesheet,
-}) async {
-  final configurator = tester 
+Future<TestDocumentContext> _pumpAutoWrappingTestSetup(WidgetTester tester) async {
+  return await tester 
     .createDocument()
     .withSingleParagraph()
     .forDesktop()
-    .withEditorSize(const Size(400, 400));
-
-  if (stylesheet != null) {
-    configurator.useStylesheet(stylesheet);
-  } 
-
-  return await configurator.pump();
+    .withEditorSize(const Size(400, 400))
+    .pump();
 }
 
 Future<TestDocumentContext> _pumpExplicitLineBreakTestSetup(
@@ -839,14 +826,3 @@ Future<TestDocumentContext> _pumpExplicitLineBreakTestSetup(
 
   return await configurator.pump();
 }
-
-final _styleSheet = defaultStylesheet.copyWith(
-  addRulesAfter: [
-    StyleRule(BlockSelector.all, (doc, docNode) => {'textStyle': _textStyle}),
-  ],
-);
-
-const _textStyle = TextStyle(
-  color: Colors.black,
-  fontFamily: 'Roboto',  
-);
