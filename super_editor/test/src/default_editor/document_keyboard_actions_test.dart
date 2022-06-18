@@ -199,14 +199,11 @@ void main() {
           );
         });
 
-        testWidgetsOnWindowsAndLinux('end of line with END in a paragraph with explicit new lines', (tester) async {                              
+        testWidgetsOnWindowsAndLinux('end of line with END in a paragraph with explicit new lines', (tester) async {
           // Configure the screen to a size big enough so there's no auto line-wrapping
-          tester.binding.window
-            ..devicePixelRatioTestValue = 1.0
-            ..platformDispatcher.textScaleFactorTestValue = 1.0
-            ..physicalSizeTestValue = const Size(1024, 400);
-
-          await _pumpExplicitLineBreakTestSetup(tester);
+          await _pumpExplicitLineBreakTestSetup(tester, 
+            size: const Size(1024, 400)
+          );
 
           // Place caret at the first line at "Lorem |ipsum"
           // Avoid placing caret in the last line to make sure END doesn't move caret
@@ -225,8 +222,6 @@ void main() {
               ),
             ),
           );
-
-          tester.binding.window.clearAllTestValues();
         });
         
         testWidgetsOnWindowsAndLinux('beginning of word with CTRL + LEFT ARROW', (tester) async {
@@ -1051,7 +1046,7 @@ Future<TestDocumentContext> _pumpExplicitLineBreakTestSetup(
     .forDesktop();
 
   if (size != null) {
-    configurator.withEditorSize(const Size(400, 400));
+    configurator.withEditorSize(size);
   }
 
   return await configurator.pump();
