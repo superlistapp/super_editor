@@ -1,8 +1,11 @@
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:super_editor/super_editor.dart';
 
+import '../../super_editor/document_test_tools.dart';
+import '../../super_editor/supereditor_inspector.dart';
+import '../../super_editor/supereditor_robot.dart';
+import '../../test_tools.dart';
 import '../_document_test_tools.dart';
 
 void main() {
@@ -160,174 +163,310 @@ void main() {
         expect(composer.selection!.extent.nodePosition, const TextNodePosition(offset: 0));
       });
     });
-    group("pasting", () {
-      testWidgets("automatically converts a URL in the pasted text to a link", (tester) async {
-        // Note: We need to ensure initialized because we access the Clipboard.
-        TestWidgetsFlutterBinding.ensureInitialized();
 
-        final document = MutableDocument(nodes: [
-          ParagraphNode(
-            id: 'paragraph',
-            text: AttributedText(
-              text: 'This  a link',
-            ),
-          ),
-        ]);
-        final editor = DocumentEditor(document: document);
+    // This test group covers cases related to link encoding when pasting. This
+    // is not neccessary a desktop platform test, but it utilizes the simulation
+    // of pasting on desktop
+    //
+    // Note: This covers cases on mobile as well, so separated tests for mobile
+    // is not necessary
+    group('link encoding when pasting', () {
+      testWidgetsOnMac('converts URLs on an empty paragraph', (tester) async {
+        tester.simulateClipboard();
+        tester.setSimulatedClipboardContent("Link: https://flutter.dev and link: https://pub.dev");
 
-        // Place caret at "This | a link"
-        final composer = DocumentComposer(
-          initialSelection: const DocumentSelection.collapsed(
-            position: DocumentPosition(
-              nodeId: "paragraph",
-              nodePosition: TextNodePosition(offset: 5),
-            ),
-          ),
-        );
-        final commonOps = CommonEditorOperations(
-          editor: editor,
-          composer: composer,
-          documentLayoutResolver: () => FakeDocumentLayout(),
-        );
+        // Configure and render a document.
+        await tester //
+            .createDocument()
+            .withSingleEmptyParagraph()
+            .forDesktop()
+            .autoFocus(true)
+            .pump();
 
-        // Render document in a `SuperEditor`
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: SuperEditor(
-                editor: editor,
-                composer: composer,
-              ),
-            ),
-          ),
-        );
+        // Tap to place the caret in the first paragraph.
+        await tester.placeCaretInParagraph("1", 0);
 
-        // The Clipboard requires a platform response, which doesn't exist
-        // for widget tests. Pretend that we're the platform and handle
-        // the incoming clipboard call.
-        SystemChannels.platform.setMockMethodCallHandler((call) async {
-          if (call.method == 'Clipboard.getData') {
-            return {
-              'text': 'text: https://flutter.dev is',
-            };
-          }
-        });
+        // Type some text by simulating hardware keyboard key presses.
+        await tester.pressCmdV();
 
-        // Paste the block of text containing the link
-        commonOps.paste();
-
-        // We have to run these expectations pumping
-        // so that the async paste operation has time to complete.
-        await tester.pumpAndSettle();
-
-        final textNode = editor.document.nodes.first as TextNode;
-
-        expect(textNode.text.text, 'This text: https://flutter.dev is a link');
-        // A [LinkAttribution] should be added at the url
+        // Ensure that the clipboard text was pasted into the SuperTextField
         expect(
-          textNode.text.spans.getAttributionSpansInRange(
-            attributionFilter: (_) => true,
-            start: 0,
-            end: 40,
-          ),
+          SuperEditorInspector.findTextInParagraph("1").text,
+          'Link: https://flutter.dev and link: https://pub.dev',
+        );
+
+        // Ensure that URLs are converted into links
+        expect(
+          SuperEditorInspector.findTextInParagraph("1").spans.getAttributionSpansInRange(
+                attributionFilter: (_) => true,
+                start: 0,
+                end: 51,
+              ),
           {
             AttributionSpan(
               attribution: LinkAttribution(url: Uri.parse('https://flutter.dev')),
-              start: 11,
-              end: 29,
+              start: 6,
+              end: 24,
+            ),
+            AttributionSpan(
+              attribution: LinkAttribution(url: Uri.parse('https://pub.dev')),
+              start: 36,
+              end: 50,
             )
           },
         );
       });
 
-      testWidgets("does nothing to an existing link", (tester) async {
-        // Adding [LinkAttribution] to a position that already has it
-        // could cause spans mismatching, which potentially leads to errors.
-        // This test prevents that regression
+      testWidgetsOnMac('converts URLs on an existing paragraph', (tester) async {
+        tester.simulateClipboard();
+        tester.setSimulatedClipboardContent("Link: https://flutter.dev and link: https://pub.dev");
 
-        // Note: We need to ensure initialized because we access the Clipboard.
-        TestWidgetsFlutterBinding.ensureInitialized();
+        // Configure and render a document.
+        await tester //
+            .createDocument()
+            .withCustomContent(MutableDocument(
+              nodes: [
+                ParagraphNode(id: "1", text: AttributedText(text: "Pasted content: .")),
+              ],
+            ))
+            .forDesktop()
+            .autoFocus(true)
+            .pump();
 
-        final linkAttribution = LinkAttribution(url: Uri.parse('https://flutter.dev'));
+        // Tap to place the caret in the first paragraph.
+        await tester.placeCaretInParagraph("1", 16);
 
-        final document = MutableDocument(nodes: [
-          ParagraphNode(
-            id: 'paragraph',
-            text: AttributedText(
-              text: 'This text: https://flutter.dev is already a link',
-              spans: AttributedSpans(
-                attributions: [
-                  SpanMarker(attribution: linkAttribution, offset: 11, markerType: SpanMarkerType.start),
-                  SpanMarker(attribution: linkAttribution, offset: 30, markerType: SpanMarkerType.end),
-                ],
-              ),
-            ),
-          ),
-        ]);
-        final editor = DocumentEditor(document: document);
+        // Type some text by simulating hardware keyboard key presses.
+        await tester.pressCmdV();
 
-        // Place the caret within the link attributed span's range
-        final composer = DocumentComposer(
-          initialSelection: const DocumentSelection.collapsed(
-            position: DocumentPosition(
-              nodeId: "paragraph",
-              nodePosition: TextNodePosition(offset: 27),
-            ),
-          ),
-        );
-        final commonOps = CommonEditorOperations(
-          editor: editor,
-          composer: composer,
-          documentLayoutResolver: () => FakeDocumentLayout(),
-        );
+        // Ensure that the clipboard text was pasted into the SuperTextField
+        expect(SuperEditorInspector.findTextInParagraph("1").text,
+            'Pasted content: Link: https://flutter.dev and link: https://pub.dev.');
 
-        // Render document in a `SuperEditor`
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: SuperEditor(
-                editor: editor,
-                composer: composer,
-              ),
-            ),
-          ),
-        );
-
-        // The Clipboard requires a platform response, which doesn't exist
-        // for widget tests. Pretend that we're the platform and handle
-        // the incoming clipboard call.
-        SystemChannels.platform.setMockMethodCallHandler((call) async {
-          if (call.method == 'Clipboard.getData') {
-            return {
-              'text': '[block] https://pub.dev [block]',
-            };
-          }
-        });
-
-        // Paste the block of text containing the link
-        commonOps.paste();
-
-        // We have to run these expectations after pumping
-        // so that the async paste operation has time to complete.
-        await tester.pumpAndSettle();
-
-        final textNode = editor.document.nodes.first as TextNode;
-
-        expect(textNode.text.text, 'This text: https://flutter.[block] https://pub.dev [block]dev is already a link');
-
-        // The handler should only expand the link attribution's span and nothing more
+        // Ensure that URLs are converted into links
         expect(
-          textNode.text.spans.getAttributionSpansInRange(
-            attributionFilter: (_) => true,
-            start: 0,
-            end: 79,
-          ),
+          SuperEditorInspector.findTextInParagraph("1").spans.getAttributionSpansInRange(
+                attributionFilter: (_) => true,
+                start: 0,
+                end: 67,
+              ),
           {
             AttributionSpan(
               attribution: LinkAttribution(url: Uri.parse('https://flutter.dev')),
-              start: 11,
-              end: 30 + 31, // adding 31 as the length of the newly pasted text
+              start: 22,
+              end: 40,
+            ),
+            AttributionSpan(
+              attribution: LinkAttribution(url: Uri.parse('https://pub.dev')),
+              start: 52,
+              end: 66,
             )
+          },
+        );
+      });
+
+      testWidgetsOnMac('when pasting in a link, split the existing link and convert URLs', (tester) async {
+        tester.simulateClipboard();
+        tester.setSimulatedClipboardContent("Link: https://flutter.dev and link: https://pub.dev");
+
+        // Configure and render a document.
+        await tester //
+            .createDocument()
+            .withCustomContent(MutableDocument(nodes: [
+              ParagraphNode(
+                id: "1",
+                text: AttributedText(
+                    text: "https://google.com",
+                    spans: AttributedSpans(
+                      attributions: [
+                        SpanMarker(
+                          attribution: LinkAttribution(url: Uri.parse('https://google.com')),
+                          offset: 0,
+                          markerType: SpanMarkerType.start,
+                        ),
+                        SpanMarker(
+                          attribution: LinkAttribution(url: Uri.parse('https://google.com')),
+                          offset: 17,
+                          markerType: SpanMarkerType.end,
+                        ),
+                      ],
+                    )),
+              )
+            ]))
+            .forDesktop()
+            .autoFocus(true)
+            .pump();
+
+        // Tap to place the caret in the first paragraph.
+        await tester.placeCaretInParagraph("1", 11);
+
+        // Type some text by simulating hardware keyboard key presses.
+        await tester.pressCmdV();
+
+        // Ensure that the clipboard text was pasted into the SuperTextField
+        expect(SuperEditorInspector.findTextInParagraph("1").text,
+            'https://gooLink: https://flutter.dev and link: https://pub.devgle.com');
+
+        // Ensure that URLs are converted into links
+        expect(
+          SuperEditorInspector.findTextInParagraph("1").spans.getAttributionSpansInRange(
+                attributionFilter: (_) => true,
+                start: 0,
+                end: 69,
+              ),
+          {
+            AttributionSpan(
+              attribution: LinkAttribution(url: Uri.parse('https://google.com')),
+              start: 0,
+              end: 10,
+            ),
+            AttributionSpan(
+              attribution: LinkAttribution(url: Uri.parse('https://flutter.dev')),
+              start: 17,
+              end: 35,
+            ),
+            AttributionSpan(
+              attribution: LinkAttribution(url: Uri.parse('https://pub.dev')),
+              start: 47,
+              end: 61,
+            ),
+            AttributionSpan(
+              attribution: LinkAttribution(url: Uri.parse('https://google.com')),
+              start: 62,
+              end: 68,
+            ),
+          },
+        );
+      });
+
+      testWidgetsOnMac('when pasting at the start of a link, convert URLs and prevent expanding link', (tester) async {
+        tester.simulateClipboard();
+        tester.setSimulatedClipboardContent("Link: https://flutter.dev ");
+
+        // Configure and render a document.
+        await tester //
+            .createDocument()
+            .withCustomContent(MutableDocument(nodes: [
+              ParagraphNode(
+                id: "1",
+                text: AttributedText(
+                    text: "https://google.com",
+                    spans: AttributedSpans(
+                      attributions: [
+                        SpanMarker(
+                          attribution: LinkAttribution(url: Uri.parse('https://google.com')),
+                          offset: 0,
+                          markerType: SpanMarkerType.start,
+                        ),
+                        SpanMarker(
+                          attribution: LinkAttribution(url: Uri.parse('https://google.com')),
+                          offset: 17,
+                          markerType: SpanMarkerType.end,
+                        ),
+                      ],
+                    )),
+              )
+            ]))
+            .forDesktop()
+            .autoFocus(true)
+            .pump();
+
+        // Tap to place the caret in the first paragraph.
+        await tester.placeCaretInParagraph("1", 0);
+
+        // Type some text by simulating hardware keyboard key presses.
+        await tester.pressCmdV();
+
+        // Ensure that the clipboard text was pasted into the SuperTextField
+        expect(
+          SuperEditorInspector.findTextInParagraph("1").text,
+          'Link: https://flutter.dev https://google.com',
+        );
+
+        // Ensure that URLs are converted into links
+        expect(
+          SuperEditorInspector.findTextInParagraph("1").spans.getAttributionSpansInRange(
+                attributionFilter: (_) => true,
+                start: 0,
+                end: 44,
+              ),
+          {
+            AttributionSpan(
+              attribution: LinkAttribution(url: Uri.parse('https://flutter.dev')),
+              start: 6,
+              end: 24,
+            ),
+            AttributionSpan(
+              attribution: LinkAttribution(url: Uri.parse('https://google.com')),
+              start: 26,
+              end: 43,
+            ),
+          },
+        );
+      });
+
+      testWidgetsOnMac('when pasting at the end of a link, convert URLs and prevent expanding link', (tester) async {
+        tester.simulateClipboard();
+        tester.setSimulatedClipboardContent(" Link: https://flutter.dev");
+
+        // Configure and render a document.
+        await tester //
+            .createDocument()
+            .withCustomContent(MutableDocument(nodes: [
+              ParagraphNode(
+                id: "1",
+                text: AttributedText(
+                    text: "https://google.com",
+                    spans: AttributedSpans(
+                      attributions: [
+                        SpanMarker(
+                          attribution: LinkAttribution(url: Uri.parse('https://google.com')),
+                          offset: 0,
+                          markerType: SpanMarkerType.start,
+                        ),
+                        SpanMarker(
+                          attribution: LinkAttribution(url: Uri.parse('https://google.com')),
+                          offset: 17,
+                          markerType: SpanMarkerType.end,
+                        ),
+                      ],
+                    )),
+              )
+            ]))
+            .forDesktop()
+            .autoFocus(true)
+            .pump();
+
+        // Tap to place the caret in the first paragraph.
+        await tester.placeCaretInParagraph("1", 18);
+
+        // Type some text by simulating hardware keyboard key presses.
+        await tester.pressCmdV();
+
+        // Ensure that the clipboard text was pasted into the SuperTextField
+        expect(
+          SuperEditorInspector.findTextInParagraph("1").text,
+          'https://google.com Link: https://flutter.dev',
+        );
+
+        // Ensure that URLs are converted into links
+        expect(
+          SuperEditorInspector.findTextInParagraph("1").spans.getAttributionSpansInRange(
+                attributionFilter: (_) => true,
+                start: 0,
+                end: 44,
+              ),
+          {
+            AttributionSpan(
+              attribution: LinkAttribution(url: Uri.parse('https://google.com')),
+              start: 0,
+              end: 17,
+            ),
+            AttributionSpan(
+              attribution: LinkAttribution(url: Uri.parse('https://flutter.dev')),
+              start: 25,
+              end: 43,
+            ),
           },
         );
       });

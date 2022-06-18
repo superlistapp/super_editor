@@ -347,7 +347,8 @@ class _ExampleEditorState extends State<ExampleEditor> {
         ],
         gestureMode: _gestureMode,
         inputSource: _inputSource,
-        keyboardActions: _inputSource == DocumentInputSource.ime ? defaultImeKeyboardActions : defaultKeyboardActions,
+        keyboardActions:
+            _inputSource == DocumentInputSource.keyboard ? defaultImeKeyboardActions : defaultKeyboardActions,
         androidToolbarBuilder: (_) => AndroidTextEditingFloatingToolbar(
           onCutPressed: _cut,
           onCopyPressed: _copy,

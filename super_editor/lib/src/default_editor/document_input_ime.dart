@@ -970,10 +970,6 @@ class SoftwareKeyboardHandler {
     commonOps.convertParagraphByPatternMatching(
       composer.selection!.extent.nodeId,
     );
-
-    if (textInserted == ' ') {
-      commonOps.tokenizeUpstreamWord(composer.selection!.extent);
-    }
   }
 
   void replace(TextRange replacedRange, String replacementText) {

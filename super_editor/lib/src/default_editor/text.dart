@@ -189,32 +189,6 @@ extension DocumentSelectionWithText on Document {
 }
 
 extension WordsDocumentPosition on String {
-  /// Returns a [Map] of which entries represent list of words in the text, with
-  /// keys are [DocumentSelection] and values are their corresponding [String] words
-  ///
-  /// The [documentPosition] should be the starting position of the text in
-  /// the [Document],
-
-  Map<DocumentSelection, String> wordWithSelections(DocumentPosition documentPosition) {
-    final textPosition = documentPosition.nodePosition as TextNodePosition;
-
-    return Map.fromEntries(
-      wordTextSelections.map((wordTextSelection) {
-        final word = wordTextSelection.textInside(this);
-        final documentSelection = documentPositionToDocumentSelection(
-          documentPosition: documentPosition.copyWith(
-            nodePosition: textPosition.copyWith(
-              offset: textPosition.offset + wordTextSelection.start,
-            ),
-          ),
-          extentOffset: wordTextSelection.end - wordTextSelection.start,
-        );
-
-        return MapEntry(documentSelection, word);
-      }),
-    );
-  }
-
   /// Returns list of [TextSelection] on each word in text
   List<TextSelection> get wordTextSelections {
     final List<TextSelection> textSelections = [];
@@ -1199,10 +1173,6 @@ ExecutionInstruction anyCharacterToInsertInTextContent({
   }
 
   final didInsertCharacter = editContext.commonOps.insertCharacter(character);
-
-  if (didInsertCharacter && character == ' ') {
-    editContext.commonOps.tokenizeUpstreamWord(editContext.composer.selection!.extent);
-  }
 
   return didInsertCharacter ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
 }

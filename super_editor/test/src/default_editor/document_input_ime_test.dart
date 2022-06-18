@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:logging/logging.dart';
+import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:super_editor/super_editor.dart';
 
+import '../../super_editor/document_test_tools.dart';
+import '../../super_editor/supereditor_inspector.dart';
+import '../../super_editor/supereditor_robot.dart';
 import '../_document_test_tools.dart';
 import '../../super_editor/test_documents.dart';
 
@@ -169,294 +172,6 @@ void main() {
       });
     });
 
-    group('inserting a space character', () {
-      test('automatically converts a URL into a link', () {
-        // The `https://flutter.devis` typo was done on purpose
-        // because a space will be added after the `dev`
-
-        final document = MutableDocument(nodes: [
-          ParagraphNode(
-            id: "1",
-            text: AttributedText(text: 'This text: https://flutter.devis a link'),
-          ),
-        ]);
-        final editor = DocumentEditor(document: document);
-        final composer = DocumentComposer(
-          initialSelection: const DocumentSelection.collapsed(
-            position: DocumentPosition(
-              nodeId: "1",
-              nodePosition: TextNodePosition(offset: 30),
-            ),
-          ),
-        );
-        final commonOps = CommonEditorOperations(
-          editor: editor,
-          composer: composer,
-          documentLayoutResolver: () => FakeDocumentLayout(),
-        );
-        final softwareKeyboardHandler = SoftwareKeyboardHandler(
-          editor: editor,
-          composer: composer,
-          commonOps: commonOps,
-        );
-
-        // Place caret at "This text: http://flutter.dev|is..."
-        // then insert a "space" character
-        softwareKeyboardHandler.applyDeltas([
-          const TextEditingDeltaInsertion(
-            textInserted: ' ',
-            insertionOffset: 30,
-            selection: TextSelection.collapsed(offset: 30),
-            composing: TextRange(start: -1, end: -1),
-            oldText: 'This text: https://flutter.devis a link',
-          ),
-        ]);
-
-        final paragraphNode = document.nodes.first as ParagraphNode;
-
-        // The handler should insert a space
-        expect(paragraphNode.text.text, 'This text: https://flutter.dev is a link');
-
-        // The handler should add a [LinkAttribution] at the url
-        expect(
-          paragraphNode.text.spans.getAttributionSpansInRange(
-            attributionFilter: (_) => true,
-            start: 0,
-            end: 40,
-          ),
-          {
-            AttributionSpan(
-              attribution: LinkAttribution(url: Uri.parse('https://flutter.dev')),
-              start: 11,
-              end: 29,
-            )
-          },
-        );
-      });
-
-      test('it does nothing to an existing link', () {
-        // Adding [LinkAttribution] to a position that already has it
-        // could cause spans mismatching, which potentially leads to errors.
-        // This test prevents that regression
-        final linkAttribution = LinkAttribution(url: Uri.parse('https://flutter.dev'));
-
-        // The `https://flutter.devis` typo was done on purpose
-        // because a space will be added after the `dev`
-        final document = MutableDocument(nodes: [
-          ParagraphNode(
-            id: "1",
-            text: AttributedText(
-              text: 'This text: https://flutter.devis a link',
-              spans: AttributedSpans(
-                attributions: [
-                  SpanMarker(
-                    attribution: linkAttribution,
-                    offset: 11,
-                    markerType: SpanMarkerType.start,
-                  ),
-                  SpanMarker(
-                    attribution: linkAttribution,
-                    offset: 29,
-                    markerType: SpanMarkerType.end,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ]);
-        final editor = DocumentEditor(document: document);
-        final composer = DocumentComposer(
-          initialSelection: const DocumentSelection.collapsed(
-            position: DocumentPosition(
-              nodeId: "1",
-              nodePosition: TextNodePosition(offset: 30),
-            ),
-          ),
-        );
-        final commonOps = CommonEditorOperations(
-          editor: editor,
-          composer: composer,
-          documentLayoutResolver: () => FakeDocumentLayout(),
-        );
-        final softwareKeyboardHandler = SoftwareKeyboardHandler(
-          editor: editor,
-          composer: composer,
-          commonOps: commonOps,
-        );
-
-        // Place caret at "This text: http://flutter.dev|is..."
-        // then insert a "space" character
-        softwareKeyboardHandler.applyDeltas([
-          const TextEditingDeltaInsertion(
-            textInserted: ' ',
-            insertionOffset: 30,
-            selection: TextSelection.collapsed(offset: 30),
-            composing: TextRange(start: -1, end: -1),
-            oldText: 'This text: https://flutter.devis a link',
-          ),
-        ]);
-
-        final paragraphNode = document.nodes.first as ParagraphNode;
-
-        // The handler should insert a space
-        expect(paragraphNode.text.text, 'This text: https://flutter.dev is a link');
-
-        // The handler should not change the existing link atrribution
-        expect(
-          paragraphNode.text.spans.getAttributionSpansInRange(
-            attributionFilter: (_) => true,
-            start: 0,
-            end: 40,
-          ),
-          {AttributionSpan(attribution: linkAttribution, start: 11, end: 29)},
-        );
-      });
-    });
-
-    group('inserting a space character', () {
-      test('automatically converts a URL into a link', () {
-        // The `https://flutter.devis` typo was done on purpose
-        // because a space will be added after the `dev`
-
-        final document = MutableDocument(nodes: [
-          ParagraphNode(
-            id: "1",
-            text: AttributedText(text: 'This text: https://flutter.devis a link'),
-          ),
-        ]);
-        final editor = DocumentEditor(document: document);
-        final composer = DocumentComposer(
-          initialSelection: const DocumentSelection.collapsed(
-            position: DocumentPosition(
-              nodeId: "1",
-              nodePosition: TextNodePosition(offset: 30),
-            ),
-          ),
-        );
-        final commonOps = CommonEditorOperations(
-          editor: editor,
-          composer: composer,
-          documentLayoutResolver: () => FakeDocumentLayout(),
-        );
-        final softwareKeyboardHandler = SoftwareKeyboardHandler(
-          editor: editor,
-          composer: composer,
-          commonOps: commonOps,
-        );
-
-        // Place caret at "This text: http://flutter.dev|is..."
-        // then insert a "space" character
-        softwareKeyboardHandler.applyDeltas([
-          const TextEditingDeltaInsertion(
-            textInserted: ' ',
-            insertionOffset: 30,
-            selection: TextSelection.collapsed(offset: 30),
-            composing: TextRange(start: -1, end: -1),
-            oldText: 'This text: https://flutter.devis a link',
-          ),
-        ]);
-
-        final paragraphNode = document.nodes.first as ParagraphNode;
-
-        // The handler should insert a space
-        expect(paragraphNode.text.text, 'This text: https://flutter.dev is a link');
-
-        // The handler should add a [LinkAttribution] at the url
-        expect(
-          paragraphNode.text.spans.getAttributionSpansInRange(
-            attributionFilter: (_) => true,
-            start: 0,
-            end: 40,
-          ),
-          {
-            AttributionSpan(
-              attribution: LinkAttribution(url: Uri.parse('https://flutter.dev')),
-              start: 11,
-              end: 29,
-            )
-          },
-        );
-      });
-
-      test('it does nothing to an existing link', () {
-        // Adding [LinkAttribution] to a position that already has it
-        // could cause spans mismatching, which potentially leads to errors.
-        // This test prevents that regression
-        final linkAttribution = LinkAttribution(url: Uri.parse('https://flutter.dev'));
-
-        // The `https://flutter.devis` typo was done on purpose
-        // because a space will be added after the `dev`
-        final document = MutableDocument(nodes: [
-          ParagraphNode(
-            id: "1",
-            text: AttributedText(
-              text: 'This text: https://flutter.devis a link',
-              spans: AttributedSpans(
-                attributions: [
-                  SpanMarker(
-                    attribution: linkAttribution,
-                    offset: 11,
-                    markerType: SpanMarkerType.start,
-                  ),
-                  SpanMarker(
-                    attribution: linkAttribution,
-                    offset: 29,
-                    markerType: SpanMarkerType.end,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ]);
-        final editor = DocumentEditor(document: document);
-        final composer = DocumentComposer(
-          initialSelection: const DocumentSelection.collapsed(
-            position: DocumentPosition(
-              nodeId: "1",
-              nodePosition: TextNodePosition(offset: 30),
-            ),
-          ),
-        );
-        final commonOps = CommonEditorOperations(
-          editor: editor,
-          composer: composer,
-          documentLayoutResolver: () => FakeDocumentLayout(),
-        );
-        final softwareKeyboardHandler = SoftwareKeyboardHandler(
-          editor: editor,
-          composer: composer,
-          commonOps: commonOps,
-        );
-
-        // Place caret at "This text: http://flutter.dev|is..."
-        // then insert a "space" character
-        softwareKeyboardHandler.applyDeltas([
-          const TextEditingDeltaInsertion(
-            textInserted: ' ',
-            insertionOffset: 30,
-            selection: TextSelection.collapsed(offset: 30),
-            composing: TextRange(start: -1, end: -1),
-            oldText: 'This text: https://flutter.devis a link',
-          ),
-        ]);
-
-        final paragraphNode = document.nodes.first as ParagraphNode;
-
-        // The handler should insert a space
-        expect(paragraphNode.text.text, 'This text: https://flutter.dev is a link');
-
-        // The handler should not change the existing link atrribution
-        expect(
-          paragraphNode.text.spans.getAttributionSpansInRange(
-            attributionFilter: (_) => true,
-            start: 0,
-            end: 40,
-          ),
-          {AttributionSpan(attribution: linkAttribution, start: 11, end: 29)},
-        );
-      });
-    });
-
     group('text serialization and selected content', () {
       test('within a single node is reported as a TextEditingValue', () {
         const text = "This is a paragraph of text.";
@@ -553,6 +268,128 @@ void main() {
             ),
           ).toTextEditingValue(),
           expectedTextWithSelection: "|~\nThis is the first paragraph of text.\n~|",
+        );
+      });
+    });
+
+    group('inserting', () {
+      testWidgets('prevent expanding the link when inserting at the start', (tester) async {
+        final document = MutableDocument(nodes: [
+          ParagraphNode(
+            id: '1',
+            text: AttributedText(
+              text: 'https://flutter.dev',
+              spans: AttributedSpans(
+                attributions: [
+                  SpanMarker(
+                    attribution: LinkAttribution(url: Uri.parse('https://flutter.dev')),
+                    offset: 0,
+                    markerType: SpanMarkerType.start,
+                  ),
+                  SpanMarker(
+                    attribution: LinkAttribution(url: Uri.parse('https://flutter.dev')),
+                    offset: 18,
+                    markerType: SpanMarkerType.end,
+                  )
+                ],
+              ),
+            ),
+          )
+        ]);
+        // Configure and render a document.
+        await tester //
+            .createDocument()
+            .withCustomContent(document)
+            .forDesktop()
+            .autoFocus(true)
+            .pump();
+
+        // Place the caret in the first paragraph at the start of the link.
+        await tester.placeCaretInParagraph('1', 0);
+
+        // Type some text by simulating hardware keyboard key presses.
+        await tester.typeKeyboardText('Go to ');
+
+        // Ensure that the text was typed into the paragraph
+        expect(
+          SuperEditorInspector.findTextInParagraph("1").text,
+          'Go to https://flutter.dev',
+        );
+
+        // Ensure that the link is not being expanded
+        expect(
+          SuperEditorInspector.findTextInParagraph("1").spans.getAttributionSpansInRange(
+                attributionFilter: (_) => true,
+                start: 0,
+                end: 43,
+              ),
+          {
+            AttributionSpan(
+              attribution: LinkAttribution(url: Uri.parse('https://flutter.dev')),
+              start: 6,
+              end: 24,
+            ),
+          },
+        );
+      });
+
+      testWidgets('prevent expanding the link when inserting at the end', (tester) async {
+        final document = MutableDocument(nodes: [
+          ParagraphNode(
+            id: '1',
+            text: AttributedText(
+              text: 'Go to https://flutter.dev',
+              spans: AttributedSpans(
+                attributions: [
+                  SpanMarker(
+                    attribution: LinkAttribution(url: Uri.parse('https://flutter.dev')),
+                    offset: 6,
+                    markerType: SpanMarkerType.start,
+                  ),
+                  SpanMarker(
+                    attribution: LinkAttribution(url: Uri.parse('https://flutter.dev')),
+                    offset: 24,
+                    markerType: SpanMarkerType.end,
+                  )
+                ],
+              ),
+            ),
+          )
+        ]);
+        // Configure and render a document.
+        await tester //
+            .createDocument()
+            .withCustomContent(document)
+            .forIOS()
+            .autoFocus(true)
+            .pump();
+
+        // Place the caret in the first paragraph at the start of the link.
+        await tester.placeCaretInParagraph('1', 25);
+
+        // Type some text by simulating hardware keyboard key presses.
+        await tester.typeKeyboardText(' to learn Flutter.');
+
+        // Ensure that the text was typed into the paragraph
+        expect(
+          SuperEditorInspector.findTextInParagraph("1").text,
+          'Go to https://flutter.dev to learn Flutter.',
+        );
+
+        // Ensure that the link is not being expanded
+        expect(
+          SuperEditorInspector.findTextInParagraph("1").spans.getAttributionSpansInRange(
+                attributionFilter: (_) => true,
+                start: 0,
+                end: 42,
+              ),
+          {
+            AttributionSpan(
+              attribution: LinkAttribution(url: Uri.parse('https://flutter.dev')),
+              start: 6,
+              end: 24,
+            ),
+          },
         );
       });
     });

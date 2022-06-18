@@ -215,6 +215,19 @@ class AttributedSpans {
     return matchingAttributionSpans;
   }
 
+  /// Returns spans for each attribution that (at least partially) appear at
+  /// [offset], as selected by [attributionFilter].
+  Set<AttributionSpan> getAttributionSpansAt({
+    required AttributionFilter attributionFilter,
+    required int offset,
+  }) {
+    return getAttributionSpansInRange(
+      attributionFilter: attributionFilter,
+      start: offset,
+      end: offset,
+    );
+  }
+
   /// Finds and returns the nearest [start] marker that appears at or before the
   /// given [offset], optionally looking specifically for a marker with
   /// the given [attribution].
@@ -259,7 +272,6 @@ class AttributedSpans {
     }
 
     _log.info("Adding attribution ($newAttribution) from $start to $end");
-    _log.finer("Has ${markers.length} markers before addition");
 
     // Ensure that no conflicting attribution overlaps the new attribution.
     // If a conflict exists, throw an exception.

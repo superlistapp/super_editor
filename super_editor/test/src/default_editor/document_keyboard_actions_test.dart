@@ -5,6 +5,9 @@ import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:super_editor/src/infrastructure/platform_detector.dart';
 import 'package:super_editor/super_editor.dart';
 
+import '../../super_editor/document_test_tools.dart';
+import '../../super_editor/supereditor_inspector.dart';
+import '../../super_editor/supereditor_robot.dart';
 import '../_document_test_tools.dart';
 import '../_text_entry_test_tools.dart';
 import '../infrastructure/_platform_test_tools.dart';
@@ -572,6 +575,129 @@ void main() {
           Platform.setTestInstance(null);
         });
       });
+
+      group('inserting', () {
+        testWidgets('does not expand the link when inserting at the start', (tester) async {
+          final document = MutableDocument(nodes: [
+            ParagraphNode(
+              id: '1',
+              text: AttributedText(
+                text: 'https://flutter.dev',
+                spans: AttributedSpans(
+                  attributions: [
+                    SpanMarker(
+                      attribution: LinkAttribution(url: Uri.parse('https://flutter.dev')),
+                      offset: 0,
+                      markerType: SpanMarkerType.start,
+                    ),
+                    SpanMarker(
+                      attribution: LinkAttribution(url: Uri.parse('https://flutter.dev')),
+                      offset: 18,
+                      markerType: SpanMarkerType.end,
+                    )
+                  ],
+                ),
+              ),
+            )
+          ]);
+          // Configure and render a document.
+          await tester //
+              .createDocument()
+              .withCustomContent(document)
+              .forDesktop()
+              .autoFocus(true)
+              .pump();
+
+          // Place the caret in the first paragraph at the start of the link.
+          await tester.placeCaretInParagraph('1', 0);
+
+          // Type some text by simulating hardware keyboard key presses.
+          await tester.typeKeyboardText('Go to ');
+
+          // Ensure that the text was typed into the paragraph
+          expect(
+            SuperEditorInspector.findTextInParagraph("1").text,
+            'Go to https://flutter.dev',
+          );
+
+          // Ensure that the link is not being expanded
+          expect(
+            SuperEditorInspector.findTextInParagraph("1").spans.getAttributionSpansInRange(
+                  attributionFilter: (_) => true,
+                  start: 0,
+                  end: 43,
+                ),
+            {
+              AttributionSpan(
+                attribution: LinkAttribution(url: Uri.parse('https://flutter.dev')),
+                start: 6,
+                end: 24,
+              ),
+            },
+          );
+        });
+
+        testWidgets('does not expand the link when inserting at the end', (tester) async {
+          final document = MutableDocument(nodes: [
+            ParagraphNode(
+              id: '1',
+              text: AttributedText(
+                text: 'Go to https://flutter.dev',
+                spans: AttributedSpans(
+                  attributions: [
+                    SpanMarker(
+                      attribution: LinkAttribution(url: Uri.parse('https://flutter.dev')),
+                      offset: 6,
+                      markerType: SpanMarkerType.start,
+                    ),
+                    SpanMarker(
+                      attribution: LinkAttribution(url: Uri.parse('https://flutter.dev')),
+                      offset: 24,
+                      markerType: SpanMarkerType.end,
+                    )
+                  ],
+                ),
+              ),
+            )
+          ]);
+          // Configure and render a document.
+          await tester //
+              .createDocument()
+              .withCustomContent(document)
+              .forDesktop()
+              .autoFocus(true)
+              .pump();
+
+          // Place the caret in the first paragraph at the start of the link.
+          await tester.placeCaretInParagraph('1', 25);
+
+          // Type some text by simulating hardware keyboard key presses.
+          await tester.typeKeyboardText(' to learn Flutter.');
+
+          // Ensure that the text was typed into the paragraph
+          expect(
+            SuperEditorInspector.findTextInParagraph("1").text,
+            'Go to https://flutter.dev to learn Flutter.',
+          );
+
+          // Ensure that the link is not being expanded
+          expect(
+            SuperEditorInspector.findTextInParagraph("1").spans.getAttributionSpansInRange(
+                  attributionFilter: (_) => true,
+                  start: 0,
+                  end: 42,
+                ),
+            {
+              AttributionSpan(
+                attribution: LinkAttribution(url: Uri.parse('https://flutter.dev')),
+                start: 6,
+                end: 24,
+              ),
+            },
+          );
+        });
+      });
+
       test('does nothing when escape is pressed if the selection is collapsed', () {
         Platform.setTestInstance(MacPlatform());
 
