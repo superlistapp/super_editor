@@ -887,7 +887,9 @@ final defaultKeyboardActions = <DocumentKeyboardAction>[
 /// and partial input from non-content keys, like arrow keys.
 final defaultImeKeyboardActions = <DocumentKeyboardAction>[
   toggleInteractionModeWhenCmdOrCtrlPressed,
+  doNothingWhenFnKeyPressed,
   doNothingWhenThereIsNoSelection,
+  scrollOnPageUpPageDownHomeAndEnd,
   pasteWhenCmdVIsPressed,
   copyWhenCmdCIsPressed,
   cutWhenCmdXIsPressed,
