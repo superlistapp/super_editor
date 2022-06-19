@@ -119,7 +119,7 @@ class TestDocumentConfigurator {
   }
 
   /// Configures the [SuperEditor] to constrain its maxHeight and maxWidth using the given [size].
-  TestDocumentConfigurator withEditorSize(ui.Size size) {
+  TestDocumentConfigurator withEditorSize(ui.Size? size) {
     _editorSize = size;
     return this;
   }

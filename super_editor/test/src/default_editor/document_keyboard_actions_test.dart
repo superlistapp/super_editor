@@ -304,7 +304,7 @@ void main() {
           // Place caret at the second line at "consectetur adipiscing |elit"          
           await tester.placeCaretInParagraph('1', 51);
 
-          await _pressAltUpArrow(tester);
+          await tester.pressAltUpArrow();
 
           // Ensure that the caret didn't move
           expect(
@@ -324,7 +324,7 @@ void main() {
           // Place caret at the first line at "Lorem |ipsum"          
           await tester.placeCaretInParagraph('1', 6);
 
-          await _pressAltDownArrow(tester);
+          await tester.pressAltDownArrow();
 
           // Ensure that the caret didn't move
           expect(
@@ -1028,42 +1028,21 @@ Future<TestDocumentContext> _pumpExplicitLineBreakTestSetup(
   WidgetTester tester, {
   Size? size,
 }) async {          
-  final document = MutableDocument(
-    nodes: [
-      ParagraphNode(
-        id: '1',
-        text: AttributedText(                  
-          text:
-              'Lorem ipsum dolor sit amet\nconsectetur adipiscing elit',              
-        ),
-      ),
-    ],
-  );  
-
-  final configurator = tester 
+  return await tester 
     .createDocument()
-    .withCustomContent(document)
-    .forDesktop();
-
-  if (size != null) {
-    configurator.withEditorSize(size);
-  }
-
-  return await configurator.pump();
-}
-
-Future<void> _pressAltUpArrow(WidgetTester tester) async {
-  await tester.sendKeyDownEvent(LogicalKeyboardKey.alt, platform: 'macos');
-  await tester.sendKeyDownEvent(LogicalKeyboardKey.arrowUp, platform: 'macos');
-  await tester.sendKeyUpEvent(LogicalKeyboardKey.arrowUp, platform: 'macos');
-  await tester.sendKeyUpEvent(LogicalKeyboardKey.alt, platform: 'macos');
-  await tester.pumpAndSettle();
-}
-
-Future<void> _pressAltDownArrow(WidgetTester tester) async {
-  await tester.sendKeyDownEvent(LogicalKeyboardKey.alt, platform: 'macos');
-  await tester.sendKeyDownEvent(LogicalKeyboardKey.arrowDown, platform: 'macos');
-  await tester.sendKeyUpEvent(LogicalKeyboardKey.arrowDown, platform: 'macos');
-  await tester.sendKeyUpEvent(LogicalKeyboardKey.alt, platform: 'macos');
-  await tester.pumpAndSettle();
+    .withCustomContent(
+      MutableDocument(
+        nodes: [
+          ParagraphNode(
+            id: '1',
+            text: AttributedText(                  
+              text:
+                  'Lorem ipsum dolor sit amet\nconsectetur adipiscing elit',              
+            ),
+          ),
+        ],
+      ))
+    .forDesktop()
+    .withEditorSize(size)
+    .pump();
 }

@@ -1572,19 +1572,41 @@ void main() {
 
           expect(SuperTextFieldInspector.findSelection(), const TextSelection(baseOffset: 10, extentOffset: 6));
         });
-      
-        testWidgetsOnWindowsAndLinux('HOME moves left to beginning of line', (tester) async {
+
+        testWidgetsOnWindowsAndLinux('HOME moves left to beginning of line with auto-wrapping lines', (tester) async {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: "super text field"),
+              text: AttributedText(text: "this is a text big enough that will cause auto line wrapping"),
             ),
           );
-          await tester.placeCaretInSuperTextField(10);
+
+          // Place caret at the second line at "wrapping|"
+          // We avoid placing the caret in the first line to make sure HOME doesn't move caret
+          // all the way to the beginning of the text
+          await tester.placeCaretInSuperTextField(60);
 
           await tester.pressHome();
 
-          expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 0));
+          expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 47));
+        });      
+
+        testWidgetsOnWindowsAndLinux('HOME moves left to beginning of line with explicit new lines', (tester) async {
+          await _pumpSuperTextField(
+            tester,
+            AttributedTextEditingController(
+              text: AttributedText(text: "super text field\nthis is second line"),
+            ),
+          );
+
+          // Place caret at the second line at "|second"
+          // We avoid placing the caret in the first line to make sure HOME doesn't move caret
+          // all the way to the beginning of the text
+          await tester.placeCaretInSuperTextField(26);
+
+          await tester.pressHome();
+
+          expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 17));
         });
       });
 
@@ -1617,14 +1639,36 @@ void main() {
           expect(SuperTextFieldInspector.findSelection(), const TextSelection(baseOffset: 6, extentOffset: 10));
         });        
 
-        testWidgetsOnWindowsAndLinux('END moves right to end of line', (tester) async {
+        testWidgetsOnWindowsAndLinux('END moves right to end of line with auto-wrapping lines', (tester) async {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
-              text: AttributedText(text: "super text field"),
+              text: AttributedText(text: "this is a text big enough that will cause auto line wrapping"),
             ),
           );
-          await tester.placeCaretInSuperTextField(6);
+
+          // Place caret at the first line at "|this"
+          // We avoid placing the caret in the second line to make sure END doesn't move caret
+          // all the way to the end of the text
+          await tester.placeCaretInSuperTextField(0);
+
+          await tester.pressEnd();
+
+          expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 14));
+        });
+
+        testWidgetsOnWindowsAndLinux('END moves right to end of line with explicit new lines', (tester) async {
+          await _pumpSuperTextField(
+            tester,
+            AttributedTextEditingController(
+              text: AttributedText(text: "super text field\nthis is second line"),
+            ),
+          );
+
+          // Place caret at the first line at "|super"
+          // We avoid placing the caret in the second line to make sure END doesn't move caret
+          // all the way to the end of the text
+          await tester.placeCaretInSuperTextField(0);
 
           await tester.pressEnd();
 
