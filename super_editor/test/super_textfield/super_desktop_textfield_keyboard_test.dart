@@ -1190,6 +1190,136 @@ void main() {
           expect(SuperTextFieldInspector.findText().text, _multilineLayoutText);
         });
       });
+
+      group('shortcuts for Windows and Linux do nothing', () {
+        testWidgetsOnMac("HOME", (tester) async {
+          await _pumpSuperTextField(
+            tester,
+            AttributedTextEditingController(
+              text: AttributedText(text: "this is some text"),
+            ),
+          );
+          await tester.placeCaretInSuperTextField(5);
+
+          await tester.pressHome();
+
+          expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 5));
+        });
+
+        testWidgetsOnMac("END", (tester) async {
+          await _pumpSuperTextField(
+            tester,
+            AttributedTextEditingController(
+              text: AttributedText(text: "this is some text"),
+            ),
+          );
+          await tester.placeCaretInSuperTextField(5);
+
+          await tester.pressEnd();
+
+          expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 5));
+        });  
+
+        testWidgetsOnMac("CTRL + LEFT ARROW", (tester) async {
+          await _pumpSuperTextField(
+            tester,
+            AttributedTextEditingController(
+              text: AttributedText(text: "this is some text"),
+            ),
+          );
+          await tester.placeCaretInSuperTextField(5);
+
+          await tester.pressCtlLeftArrow();
+
+          expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 4));
+        });
+
+        testWidgetsOnMac("CTRL + RIGHT ARROW", (tester) async {
+          await _pumpSuperTextField(
+            tester,
+            AttributedTextEditingController(
+              text: AttributedText(text: "this is some text"),
+            ),
+          );
+          await tester.placeCaretInSuperTextField(5);
+
+          await tester.pressCtlRightArrow();
+
+          expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 6));
+        });
+      });
+    });
+
+    group('on Windows', () {
+      group('move caret upstream', () {
+        testWidgetsOnWindows('LEFT ARROW does nothing when ALT is pressed', (tester) async {
+          await _pumpSuperTextField(
+            tester,
+            AttributedTextEditingController(
+              text: AttributedText(text: "super text field"),
+            ),
+          );
+          await tester.placeCaretInSuperTextField(10);
+
+          await tester.pressAltLeftArrow();
+
+          expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 10));
+        });
+      });
+
+      group('move caret downstream', () {
+        testWidgetsOnWindows('RIGHT ARROW does nothing when ALT is pressed', (tester) async {
+          await _pumpSuperTextField(
+            tester,
+            AttributedTextEditingController(
+              text: AttributedText(text: "super text field"),
+            ),
+          );
+          await tester.placeCaretInSuperTextField(10);
+
+          await tester.pressAltRightArrow();
+
+          expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 10));
+        });
+      });
+    });
+
+    group('on Linux', () {
+      group('move caret upstream', () {
+        testWidgetsOnLinux('ALT + LEFT ARROW moves left by character', (tester) async {
+          await _pumpSuperTextField(
+            tester,
+            AttributedTextEditingController(
+              text: AttributedText(text: 'This is some text'),
+            ),
+          );
+          await tester.placeCaretInSuperTextField(12);
+
+          await tester.pressAltLeftArrow();
+          expect(
+            SuperTextFieldInspector.findSelection(),
+            const TextSelection.collapsed(offset: 11),
+          );
+        });
+      });
+
+      group('move caret downstream', () {
+        testWidgetsOnLinux('ALT + RIGHT ARROW moves right by character', (tester) async {
+          await _pumpSuperTextField(
+            tester,
+            AttributedTextEditingController(
+              text: AttributedText(text: 'This is some text'),
+            ),
+          );
+          await tester.placeCaretInSuperTextField(12);
+
+          await tester.pressAltRightArrow();
+          expect(
+            SuperTextFieldInspector.findSelection(),
+            const TextSelection.collapsed(offset: 13),
+          );
+        });
+      });
     });
 
     group('on Windows + Linux', () {
@@ -1415,7 +1545,7 @@ void main() {
       });
 
       group('move caret upstream', () {
-        testWidgetsOnWindowsAndLinux('CTL + LEFT ARROW moves left to beginning of line', (tester) async {
+        testWidgetsOnWindowsAndLinux('CTL + LEFT ARROW moves left by word', (tester) async {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
@@ -1426,10 +1556,10 @@ void main() {
 
           await tester.pressCtlLeftArrow();
 
-          expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 0));
+          expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 6));
         });
 
-        testWidgetsOnWindowsAndLinux('SHIFT + CTL + LEFT ARROW expands left to beginning of line', (tester) async {
+        testWidgetsOnWindowsAndLinux('SHIFT + CTL + LEFT ARROW expands left by word', (tester) async {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
@@ -1440,12 +1570,48 @@ void main() {
 
           await tester.pressShiftCtlLeftArrow();
 
-          expect(SuperTextFieldInspector.findSelection(), const TextSelection(baseOffset: 10, extentOffset: 0));
+          expect(SuperTextFieldInspector.findSelection(), const TextSelection(baseOffset: 10, extentOffset: 6));
+        });
+
+        testWidgetsOnWindowsAndLinux('HOME moves left to beginning of line with auto-wrapping lines', (tester) async {
+          await _pumpSuperTextField(
+            tester,
+            AttributedTextEditingController(
+              text: AttributedText(text: "this is a text big enough that will cause auto line wrapping"),
+            ),
+          );
+
+          // Place caret at the second line at "wrapping|"
+          // We avoid placing the caret in the first line to make sure HOME doesn't move caret
+          // all the way to the beginning of the text
+          await tester.placeCaretInSuperTextField(60);
+
+          await tester.pressHome();
+
+          expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 47));
+        });      
+
+        testWidgetsOnWindowsAndLinux('HOME moves left to beginning of line with explicit new lines', (tester) async {
+          await _pumpSuperTextField(
+            tester,
+            AttributedTextEditingController(
+              text: AttributedText(text: "super text field\nthis is second line"),
+            ),
+          );
+
+          // Place caret at the second line at "|second"
+          // We avoid placing the caret in the first line to make sure HOME doesn't move caret
+          // all the way to the beginning of the text
+          await tester.placeCaretInSuperTextField(26);
+
+          await tester.pressHome();
+
+          expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 17));
         });
       });
 
       group('move caret downstream', () {
-        testWidgetsOnWindowsAndLinux('CTL + RIGHT ARROW moves right to end of line', (tester) async {
+        testWidgetsOnWindowsAndLinux('CTL + RIGHT ARROW moves right by word', (tester) async {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
@@ -1456,10 +1622,10 @@ void main() {
 
           await tester.pressCtlRightArrow();
 
-          expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 16));
+          expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 10));
         });
 
-        testWidgetsOnWindowsAndLinux('SHIFT + CTL + RIGHT ARROW expands right to end of line', (tester) async {
+        testWidgetsOnWindowsAndLinux('SHIFT + CTL + RIGHT ARROW expands by word', (tester) async {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
@@ -1470,7 +1636,43 @@ void main() {
 
           await tester.pressShiftCtlRightArrow();
 
-          expect(SuperTextFieldInspector.findSelection(), const TextSelection(baseOffset: 6, extentOffset: 16));
+          expect(SuperTextFieldInspector.findSelection(), const TextSelection(baseOffset: 6, extentOffset: 10));
+        });        
+
+        testWidgetsOnWindowsAndLinux('END moves right to end of line with auto-wrapping lines', (tester) async {
+          await _pumpSuperTextField(
+            tester,
+            AttributedTextEditingController(
+              text: AttributedText(text: "this is a text big enough that will cause auto line wrapping"),
+            ),
+          );
+
+          // Place caret at the first line at "|this"
+          // We avoid placing the caret in the second line to make sure END doesn't move caret
+          // all the way to the end of the text
+          await tester.placeCaretInSuperTextField(0);
+
+          await tester.pressEnd();
+
+          expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 14));
+        });
+
+        testWidgetsOnWindowsAndLinux('END moves right to end of line with explicit new lines', (tester) async {
+          await _pumpSuperTextField(
+            tester,
+            AttributedTextEditingController(
+              text: AttributedText(text: "super text field\nthis is second line"),
+            ),
+          );
+
+          // Place caret at the first line at "|super"
+          // We avoid placing the caret in the second line to make sure END doesn't move caret
+          // all the way to the end of the text
+          await tester.placeCaretInSuperTextField(0);
+
+          await tester.pressEnd();
+
+          expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 16));
         });
       });
 
@@ -1552,6 +1754,34 @@ void main() {
           await tester.pressCtlE();
 
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 5));
+        });
+
+        testWidgetsOnWindowsAndLinux('CMD + LEFT ARROW', (tester) async {
+          await _pumpSuperTextField(
+            tester,
+            AttributedTextEditingController(
+              text: AttributedText(text: "this is some text"),
+            ),
+          );
+          await tester.placeCaretInSuperTextField(5);
+
+          await tester.pressCmdLeftArrow();
+
+          expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 4));
+        });
+
+        testWidgetsOnWindowsAndLinux('CMD + RIGHT ARROW', (tester) async {
+          await _pumpSuperTextField(
+            tester,
+            AttributedTextEditingController(
+              text: AttributedText(text: "this is some text"),
+            ),
+          );
+          await tester.placeCaretInSuperTextField(5);
+
+          await tester.pressCmdRightArrow();
+
+          expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 6));
         });
       });
     });

@@ -1225,6 +1225,8 @@ const defaultTextFieldKeyboardHandlers = <TextFieldKeyboardHandler>[
   DefaultSuperTextFieldKeyboardHandlers.selectAllTextFieldWhenCmdAIsPressed,
   DefaultSuperTextFieldKeyboardHandlers.moveCaretToStartOrEnd,
   DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys,
+  DefaultSuperTextFieldKeyboardHandlers.moveToLineStartWithHome,
+  DefaultSuperTextFieldKeyboardHandlers.moveToLineEndWithEnd,
   DefaultSuperTextFieldKeyboardHandlers.deleteWordWhenAltBackSpaceIsPressedOnMac,
   DefaultSuperTextFieldKeyboardHandlers.deleteWordWhenCtlBackSpaceIsPressedOnWindowsAndLinux,
   DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed,
@@ -1361,13 +1363,27 @@ class DefaultSuperTextFieldKeyboardHandlers {
       return TextFieldKeyboardHandlerResult.handled;
     }
 
+    if (defaultTargetPlatform == TargetPlatform.windows && keyEvent.isAltPressed) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
+    if (defaultTargetPlatform == TargetPlatform.linux && keyEvent.isAltPressed && 
+        (keyEvent.logicalKey == LogicalKeyboardKey.arrowUp || keyEvent.logicalKey == LogicalKeyboardKey.arrowDown)
+    ) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }
+
     if (keyEvent.logicalKey == LogicalKeyboardKey.arrowLeft) {
       _log.finer('moveUpDownLeftAndRightWithArrowKeys - handling left arrow key');
 
       MovementModifier? movementModifier;
-      if (keyEvent.isPrimaryShortcutKeyPressed) {
+      if ((defaultTargetPlatform == TargetPlatform.windows || defaultTargetPlatform == TargetPlatform.linux) &&
+          keyEvent.isControlPressed
+      ) {        
+        movementModifier = MovementModifier.word;        
+      } else if (defaultTargetPlatform == TargetPlatform.macOS && keyEvent.isMetaPressed) {
         movementModifier = MovementModifier.line;
-      } else if (keyEvent.isAltPressed) {
+      } else if (defaultTargetPlatform == TargetPlatform.macOS && keyEvent.isAltPressed) {
         movementModifier = MovementModifier.word;
       }
 
@@ -1381,9 +1397,13 @@ class DefaultSuperTextFieldKeyboardHandlers {
       _log.finer('moveUpDownLeftAndRightWithArrowKeys - handling right arrow key');
 
       MovementModifier? movementModifier;
-      if (keyEvent.isPrimaryShortcutKeyPressed) {
+      if ((defaultTargetPlatform == TargetPlatform.windows || defaultTargetPlatform == TargetPlatform.linux) &&
+          keyEvent.isControlPressed
+      ) {        
+        movementModifier = MovementModifier.word;        
+      } else if (defaultTargetPlatform == TargetPlatform.macOS && keyEvent.isMetaPressed) {
         movementModifier = MovementModifier.line;
-      } else if (keyEvent.isAltPressed) {
+      } else if (defaultTargetPlatform == TargetPlatform.macOS && keyEvent.isAltPressed) {
         movementModifier = MovementModifier.word;
       }
 
@@ -1410,6 +1430,50 @@ class DefaultSuperTextFieldKeyboardHandlers {
     }
 
     return TextFieldKeyboardHandlerResult.handled;
+  }
+  
+  static TextFieldKeyboardHandlerResult moveToLineStartWithHome({
+    required AttributedTextEditingController controller,
+    required ProseTextLayout textLayout,
+    required RawKeyEvent keyEvent,
+  }) {
+    if (defaultTargetPlatform != TargetPlatform.windows && defaultTargetPlatform != TargetPlatform.linux) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }  
+
+    if (keyEvent.logicalKey == LogicalKeyboardKey.home) {
+      controller.moveCaretHorizontally(
+        textLayout: textLayout,
+        expandSelection: keyEvent.isShiftPressed,
+        moveLeft: true,
+        movementModifier: MovementModifier.line,
+      );   
+      return TextFieldKeyboardHandlerResult.handled;
+    }
+
+    return TextFieldKeyboardHandlerResult.notHandled;
+  }
+
+  static TextFieldKeyboardHandlerResult moveToLineEndWithEnd({
+    required AttributedTextEditingController controller,
+    required ProseTextLayout textLayout,
+    required RawKeyEvent keyEvent,
+  }) {
+    if (defaultTargetPlatform != TargetPlatform.windows && defaultTargetPlatform != TargetPlatform.linux) {
+      return TextFieldKeyboardHandlerResult.notHandled;
+    }  
+
+    if (keyEvent.logicalKey == LogicalKeyboardKey.end) {
+      controller.moveCaretHorizontally(
+        textLayout: textLayout,
+        expandSelection: keyEvent.isShiftPressed,
+        moveLeft: false,
+        movementModifier: MovementModifier.line,
+      );   
+      return TextFieldKeyboardHandlerResult.handled;
+    }
+
+    return TextFieldKeyboardHandlerResult.notHandled;
   }
 
   /// [insertCharacterWhenKeyIsPressed] adds any character when that key is pressed.
