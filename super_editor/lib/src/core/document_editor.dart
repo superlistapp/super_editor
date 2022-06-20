@@ -100,6 +100,12 @@ class DocumentEditorTransaction {
     _document.deleteNodeAt(index);
   }
 
+  /// Moves the given [node] from its current index in the [Document] to the
+  /// given [toIndex].
+  void moveNode({required DocumentNode node, required int toIndex}) {
+    _document.moveNode(node: node, toIndex: toIndex);
+  }
+
   /// Replaces the given [oldNode] with the given [newNode]
   void replaceNode({
     required DocumentNode oldNode,
@@ -271,6 +277,15 @@ class MutableDocument with ChangeNotifier implements Document {
     notifyListeners();
 
     return isRemoved;
+  }
+
+  /// Moves the given [node] from its current index in the [Document] to the
+  /// given [toIndex].
+  void moveNode({required DocumentNode node, required int toIndex}) {
+    if (nodes.remove(node)) {
+      nodes.insert(toIndex, node);
+      notifyListeners();
+    }
   }
 
   /// Replaces the given [oldNode] with the given [newNode]

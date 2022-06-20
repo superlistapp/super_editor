@@ -3,6 +3,50 @@ import 'package:super_editor/super_editor.dart';
 
 void main() {
   group('MutableDocument', () {
+    test('it moves node from its current index to the given index ', () {
+      final node = ParagraphNode(id: 'old', text: AttributedText());
+      final document = MutableDocument(
+        nodes: [
+          HorizontalRuleNode(id: '0'),
+          node,
+          HorizontalRuleNode(id: '2'),
+        ],
+      );
+
+      document.moveNode(node: node, toIndex: 0);
+      // Node exists at index 0
+      expect(
+        document.nodes,
+        [
+          node,
+          HorizontalRuleNode(id: '0'),
+          HorizontalRuleNode(id: '2'),
+        ],
+      );
+
+      document.moveNode(node: node, toIndex: 2);
+      // Node exists at index 2
+      expect(
+        document.nodes,
+        [
+          HorizontalRuleNode(id: '0'),
+          HorizontalRuleNode(id: '2'),
+          node,
+        ],
+      );
+
+      document.moveNode(node: node, toIndex: 1);
+      // Node exists at index 1
+      expect(
+        document.nodes,
+        [
+          HorizontalRuleNode(id: '0'),
+          node,
+          HorizontalRuleNode(id: '2'),
+        ],
+      );
+    });
+
     test('it replaces one node by another ', () {
       final oldNode = ParagraphNode(id: 'old', text: AttributedText());
       final document = MutableDocument(
