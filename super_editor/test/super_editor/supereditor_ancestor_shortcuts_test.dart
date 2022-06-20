@@ -35,8 +35,8 @@ void main() {
         tester,
         [
           ignoreKeyCombos([
-            const KeyCombo(key: LogicalKeyboardKey.enter),
-            const KeyCombo(key: LogicalKeyboardKey.arrowRight, isShiftPressed: true),
+            const SingleActivator(LogicalKeyboardKey.enter),
+            const SingleActivator(LogicalKeyboardKey.arrowRight, shift: true),
           ]),
           ...defaultKeyboardActions,
         ],

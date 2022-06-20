@@ -7,7 +7,6 @@ import 'package:flutter/material.dart' hide SelectableText;
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document_layout.dart';
-import 'package:super_editor/src/default_editor/document_input_keyboard.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
@@ -1207,14 +1206,14 @@ typedef TextFieldKeyboardHandler = TextFieldKeyboardHandlerResult Function({
 
 /// A [TextFieldKeyboardHandler] that reports [TextFieldKeyboardHandlerResult.blocked]
 /// for any key combination that matches one of the given [keys].
-TextFieldKeyboardHandler ignoreTextFieldKeyCombos(List<KeyCombo> keys) {
+TextFieldKeyboardHandler ignoreTextFieldKeyCombos(List<ShortcutActivator> keys) {
   return ({
     required AttributedTextEditingController controller,
     required ProseTextLayout textLayout,
     required RawKeyEvent keyEvent,
   }) {
     for (final key in keys) {
-      if (key.matches(keyEvent)) {
+      if (key.accepts(keyEvent, RawKeyboard.instance)) {
         return TextFieldKeyboardHandlerResult.blocked;
       }
     }

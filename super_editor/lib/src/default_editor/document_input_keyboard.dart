@@ -128,61 +128,16 @@ enum ExecutionInstruction {
 
 /// A [DocumentKeyboardAction] that reports [ExecutionInstruction.blocked]
 /// for any key combination that matches one of the given [keys].
-DocumentKeyboardAction ignoreKeyCombos(List<KeyCombo> keys) {
+DocumentKeyboardAction ignoreKeyCombos(List<ShortcutActivator> keys) {
   return ({
     required EditContext editContext,
     required RawKeyEvent keyEvent,
   }) {
     for (final key in keys) {
-      if (key.matches(keyEvent)) {
+      if (key.accepts(keyEvent, RawKeyboard.instance)) {
         return ExecutionInstruction.blocked;
       }
     }
     return ExecutionInstruction.continueExecution;
   };
-}
-
-/// A combination of a logical key and some number of modifier
-/// keys that are pressed at the same time.
-class KeyCombo {
-  const KeyCombo({
-    required this.key,
-    this.isShiftPressed = false,
-    this.isMetaPressed = false,
-    this.isControlPressed = false,
-    this.isAltPressed = false,
-  });
-
-  final LogicalKeyboardKey key;
-  final bool isShiftPressed;
-  final bool isMetaPressed;
-  final bool isControlPressed;
-  final bool isAltPressed;
-
-  bool matches(RawKeyEvent event) {
-    return event.logicalKey == key &&
-        event.isShiftPressed == isShiftPressed &&
-        event.isMetaPressed == isMetaPressed &&
-        event.isControlPressed == isControlPressed &&
-        event.isAltPressed == isAltPressed;
-  }
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is KeyCombo &&
-          runtimeType == other.runtimeType &&
-          key == other.key &&
-          isShiftPressed == other.isShiftPressed &&
-          isMetaPressed == other.isMetaPressed &&
-          isControlPressed == other.isControlPressed &&
-          isAltPressed == other.isAltPressed;
-
-  @override
-  int get hashCode =>
-      key.hashCode ^
-      isShiftPressed.hashCode ^
-      isMetaPressed.hashCode ^
-      isControlPressed.hashCode ^
-      isAltPressed.hashCode;
 }
