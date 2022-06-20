@@ -264,12 +264,26 @@ ExecutionInstruction moveUpDownLeftAndRightWithArrowKeys({
     return ExecutionInstruction.continueExecution;
   }
 
+  if (defaultTargetPlatform == TargetPlatform.windows && keyEvent.isAltPressed) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (defaultTargetPlatform == TargetPlatform.linux && keyEvent.isAltPressed && 
+      (keyEvent.logicalKey == LogicalKeyboardKey.arrowUp || keyEvent.logicalKey == LogicalKeyboardKey.arrowDown)
+  ) {
+    return ExecutionInstruction.continueExecution;
+  }
+
   bool didMove = false;
   if (keyEvent.logicalKey == LogicalKeyboardKey.arrowLeft || keyEvent.logicalKey == LogicalKeyboardKey.arrowRight) {
-    MovementModifier? movementModifier;
-    if (keyEvent.isPrimaryShortcutKeyPressed) {
+    MovementModifier? movementModifier;    
+    if ((defaultTargetPlatform == TargetPlatform.windows || defaultTargetPlatform == TargetPlatform.linux) &&
+        keyEvent.isControlPressed
+    ) {      
+      movementModifier = MovementModifier.word;      
+    } else if (defaultTargetPlatform == TargetPlatform.macOS && keyEvent.isMetaPressed) {      
       movementModifier = MovementModifier.line;
-    } else if (keyEvent.isAltPressed) {
+    } else if (defaultTargetPlatform == TargetPlatform.macOS && keyEvent.isAltPressed) {
       movementModifier = MovementModifier.word;
     }
 
@@ -316,6 +330,44 @@ ExecutionInstruction moveToLineStartOrEndWithCtrlAOrE({
   }
 
   if (keyEvent.logicalKey == LogicalKeyboardKey.keyE) {
+    didMove = editContext.commonOps.moveCaretDownstream(
+      expand: keyEvent.isShiftPressed,
+      movementModifier: MovementModifier.line,
+    );
+  }
+
+  return didMove ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
+}
+
+ExecutionInstruction moveToLineStartWithHome({
+  required EditContext editContext,
+  required RawKeyEvent keyEvent,
+}) {
+  if (defaultTargetPlatform != TargetPlatform.windows && defaultTargetPlatform != TargetPlatform.linux) {
+    return ExecutionInstruction.continueExecution;
+  }  
+
+  bool didMove = false;
+  if (keyEvent.logicalKey == LogicalKeyboardKey.home) {
+    didMove = editContext.commonOps.moveCaretUpstream(
+      expand: keyEvent.isShiftPressed,
+      movementModifier: MovementModifier.line,
+    );    
+  }
+
+  return didMove ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
+}
+
+ExecutionInstruction moveToLineEndWithEnd({
+  required EditContext editContext,
+  required RawKeyEvent keyEvent,
+}) {
+  if (defaultTargetPlatform != TargetPlatform.windows && defaultTargetPlatform != TargetPlatform.linux) {
+    return ExecutionInstruction.continueExecution;
+  }  
+
+  bool didMove = false;
+  if (keyEvent.logicalKey == LogicalKeyboardKey.end) {
     didMove = editContext.commonOps.moveCaretDownstream(
       expand: keyEvent.isShiftPressed,
       movementModifier: MovementModifier.line,

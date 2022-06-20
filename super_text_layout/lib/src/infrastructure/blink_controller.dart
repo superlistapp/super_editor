@@ -57,11 +57,13 @@ class BlinkController with ChangeNotifier {
       ..stop()
       ..start();
     _lastBlinkTime = Duration.zero;
+    notifyListeners();
   }
 
   void stopBlinking() {
     _isVisible = true; // If we're not blinking then we need to be visible
     _ticker.stop();
+    notifyListeners();
   }
 
   /// Make the object completely opaque, and restart the blink timer.
