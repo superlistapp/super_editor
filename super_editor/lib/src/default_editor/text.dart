@@ -264,13 +264,33 @@ mixin TextComponentViewModel on SingleColumnLayoutComponentViewModel {
   TextAlign get textAlignment;
   set textAlignment(TextAlign alignment);
 
-  // TODO: we need to support non-primary selections here
+  /// A list of styled selections that should appear in a text component.
+  ///
+  /// Typical editor usage includes either zero or one styled selections.
+  /// However, a multi-user editor, or an editor that supports a "find"
+  /// feature might paint multiple text selections.
+  ///
+  /// The list is painted in order. In the case of overlapping selections,
+  /// the first selection in the list is painted first, and the last
+  /// selection in the list is painted last.
+  ///
+  /// To add, remove, or update styled selections, edit the list returned
+  /// from this getter. The view model retains a reference to the original
+  /// list. Any change you make to the list is reflected within the view
+  /// model.
+  List<StyledSelection<TextSelection>> get styledSelections;
 
-  TextSelection? get selection;
-  set selection(TextSelection? selection);
+  /// Replaces all existing [styledSelections] with the given list.
+  ///
+  /// If you only want to change some [styledSelections], then mutate the
+  /// list returned from [styledSelections].
+  set styledSelections(List<StyledSelection<TextSelection>> styledSelections);
 
-  Color get selectionColor;
-  set selectionColor(Color color);
+  // TextSelection? get selection;
+  // set selection(TextSelection? selection);
+  //
+  // Color get selectionColor;
+  // set selectionColor(Color color);
 
   TextPosition? get caret;
   set caret(TextPosition? position);
@@ -278,8 +298,8 @@ mixin TextComponentViewModel on SingleColumnLayoutComponentViewModel {
   Color get caretColor;
   set caretColor(Color color);
 
-  bool get highlightWhenEmpty;
-  set highlightWhenEmpty(bool highlight);
+  // bool get highlightWhenEmpty;
+  // set highlightWhenEmpty(bool highlight);
 
   @override
   void applyStyles(Map<String, dynamic> styles) {
@@ -308,11 +328,9 @@ class TextWithHintComponent extends StatefulWidget {
     this.textDirection,
     required this.textStyleBuilder,
     this.metadata = const {},
-    this.textSelection,
-    this.selectionColor = Colors.lightBlueAccent,
+    this.styledSelections = const [],
     this.showCaret = false,
     this.caretColor = Colors.black,
-    this.highlightWhenEmpty = false,
     this.showDebugPaint = false,
   }) : super(key: key);
 
@@ -323,15 +341,13 @@ class TextWithHintComponent extends StatefulWidget {
   final TextDirection? textDirection;
   final AttributionStyleBuilder textStyleBuilder;
   final Map<String, dynamic> metadata;
-  final TextSelection? textSelection;
-  final Color selectionColor;
+  final List<StyledSelection<TextSelection>> styledSelections;
   final bool showCaret;
   final Color caretColor;
-  final bool highlightWhenEmpty;
   final bool showDebugPaint;
 
   @override
-  _TextWithHintComponentState createState() => _TextWithHintComponentState();
+  State createState() => _TextWithHintComponentState();
 }
 
 class _TextWithHintComponentState extends State<TextWithHintComponent>
@@ -371,11 +387,9 @@ class _TextWithHintComponentState extends State<TextWithHintComponent>
           textDirection: widget.textDirection,
           textStyleBuilder: widget.textStyleBuilder,
           metadata: widget.metadata,
-          textSelection: widget.textSelection,
-          selectionColor: widget.selectionColor,
+          styledSelections: widget.styledSelections,
           showCaret: widget.showCaret,
           caretColor: widget.caretColor,
-          highlightWhenEmpty: widget.highlightWhenEmpty,
           showDebugPaint: widget.showDebugPaint,
         ),
       ],
@@ -394,11 +408,9 @@ class TextComponent extends StatefulWidget {
     this.textDirection,
     required this.textStyleBuilder,
     this.metadata = const {},
-    this.textSelection,
-    this.selectionColor = Colors.lightBlueAccent,
+    this.styledSelections = const [],
     this.showCaret = false,
     this.caretColor = Colors.black,
-    this.highlightWhenEmpty = false,
     this.showDebugPaint = false,
   }) : super(key: key);
 
@@ -407,11 +419,9 @@ class TextComponent extends StatefulWidget {
   final TextDirection? textDirection;
   final AttributionStyleBuilder textStyleBuilder;
   final Map<String, dynamic> metadata;
-  final TextSelection? textSelection;
-  final Color selectionColor;
+  final List<StyledSelection<TextSelection>> styledSelections;
   final bool showCaret;
   final Color caretColor;
-  final bool highlightWhenEmpty;
   final bool showDebugPaint;
 
   @override
@@ -756,22 +766,26 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
   Widget build(BuildContext context) {
     editorLayoutLog.finer('Building a TextComponent with key: ${widget.key}');
 
-    return SuperTextWithSelection.single(
+    return SuperTextWithSelection.multi(
       key: _textKey,
       richText: widget.text.computeTextSpan(_textStyleWithBlockType),
       textAlign: widget.textAlign ?? TextAlign.left,
       textDirection: widget.textDirection ?? TextDirection.ltr,
-      userSelection: UserSelection(
-        highlightStyle: SelectionHighlightStyle(
-          color: widget.selectionColor,
-        ),
-        caretStyle: CaretStyle(
-          color: widget.caretColor,
-        ),
-        selection: widget.textSelection ?? const TextSelection.collapsed(offset: -1),
-        hasCaret: widget.showCaret,
-        highlightWhenEmpty: widget.highlightWhenEmpty,
-      ),
+      userSelections: [
+        for (final selection in widget.styledSelections)
+          UserSelection(
+            highlightStyle: SelectionHighlightStyle(
+              color: selection.styles.selectionColor,
+            ),
+            selection: selection.selection,
+            highlightWhenEmpty: selection.styles.highlightEmptyTextBlocks,
+            // TODO: remove carets from UserSelection, or add them to StyledSelection
+            caretStyle: CaretStyle(
+              color: widget.caretColor,
+            ),
+            hasCaret: widget.showCaret,
+          )
+      ],
     );
   }
 

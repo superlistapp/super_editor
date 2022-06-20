@@ -43,7 +43,21 @@ class _ExampleEditorState extends State<ExampleEditor> {
     super.initState();
     _doc = createInitialDocument()..addListener(_hideOrShowToolbar);
     _docEditor = DocumentEditor(document: _doc as MutableDocument);
-    _composer = DocumentComposer()..addListener(_hideOrShowToolbar);
+    final nodeId = _doc.nodes[2].id;
+    _composer = DocumentComposer()
+      ..addListener(_hideOrShowToolbar)
+      ..setNonPrimarySelection(
+          "john",
+          DocumentSelection(
+            base: DocumentPosition(
+              nodeId: nodeId,
+              nodePosition: TextNodePosition.fromTextPosition(TextPosition(offset: 10)),
+            ),
+            extent: DocumentPosition(
+              nodeId: nodeId,
+              nodePosition: TextNodePosition.fromTextPosition(TextPosition(offset: 50)),
+            ),
+          ));
     _docOps = CommonEditorOperations(
       editor: _docEditor,
       composer: _composer,
@@ -341,6 +355,12 @@ class _ExampleEditorState extends State<ExampleEditor> {
             taskStyles,
           ],
         ),
+        nonPrimarySelectionStyler: (NonPrimarySelection selection) {
+          return SelectionStyles(
+            caretColor: Colors.black,
+            selectionColor: Colors.purpleAccent,
+          );
+        },
         componentBuilders: [
           ...defaultComponentBuilders,
           TaskComponentBuilder(_docEditor),

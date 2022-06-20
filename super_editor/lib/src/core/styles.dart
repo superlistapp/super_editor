@@ -269,16 +269,32 @@ class CascadingPadding {
   int get hashCode => left.hashCode ^ right.hashCode ^ top.hashCode ^ bottom.hashCode;
 }
 
-/// Styles applied to the user's selection, e.g., caret, selected text.
+/// A document selection with associated visual styles.
+class StyledSelection<SelectionType> {
+  const StyledSelection(this.selection, this.styles);
+
+  final SelectionType selection;
+  final SelectionStyles styles;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is StyledSelection &&
+          runtimeType == other.runtimeType &&
+          selection == other.selection &&
+          styles == other.styles;
+
+  @override
+  int get hashCode => selection.hashCode ^ styles.hashCode;
+}
+
+/// Styles applied to a document selection, e.g., caret, selected text.
 class SelectionStyles {
   const SelectionStyles({
     required this.caretColor,
     required this.selectionColor,
     this.highlightEmptyTextBlocks = true,
   });
-
-  // TODO: multiple user selections
-  // TODO: how do we handle a non-primary selection that spans an empty paragraph?
 
   /// The color of the caret.
   final Color caretColor;
@@ -289,4 +305,16 @@ class SelectionStyles {
   /// Whether to show a small highlight at the beginning of an
   /// empty block of text, when the user selects multiple blocks.
   final bool highlightEmptyTextBlocks;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SelectionStyles &&
+          runtimeType == other.runtimeType &&
+          caretColor == other.caretColor &&
+          selectionColor == other.selectionColor &&
+          highlightEmptyTextBlocks == other.highlightEmptyTextBlocks;
+
+  @override
+  int get hashCode => caretColor.hashCode ^ selectionColor.hashCode ^ highlightEmptyTextBlocks.hashCode;
 }

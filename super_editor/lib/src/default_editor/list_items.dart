@@ -1,7 +1,9 @@
 import 'package:attributed_text/attributed_text.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/edit_context.dart';
+import 'package:super_editor/src/core/styles.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 
@@ -124,7 +126,6 @@ class ListItemComponentBuilder implements ComponentBuilder {
       ordinalValue: ordinalValue,
       text: node.text,
       textStyleBuilder: noStyleBuilder,
-      selectionColor: const Color(0x00000000),
       caretColor: const Color(0x00000000),
     );
   }
@@ -142,11 +143,9 @@ class ListItemComponentBuilder implements ComponentBuilder {
         text: componentViewModel.text,
         styleBuilder: componentViewModel.textStyleBuilder,
         indent: componentViewModel.indent,
-        textSelection: componentViewModel.selection,
-        selectionColor: componentViewModel.selectionColor,
+        styledSelections: componentViewModel.styledSelections,
         showCaret: componentViewModel.caret != null,
         caretColor: componentViewModel.caretColor,
-        highlightWhenEmpty: componentViewModel.highlightWhenEmpty,
       );
     } else if (componentViewModel.type == ListItemType.ordered) {
       return OrderedListItemComponent(
@@ -155,11 +154,9 @@ class ListItemComponentBuilder implements ComponentBuilder {
         listIndex: componentViewModel.ordinalValue!,
         text: componentViewModel.text,
         styleBuilder: componentViewModel.textStyleBuilder,
-        textSelection: componentViewModel.selection,
-        selectionColor: componentViewModel.selectionColor,
+        styledSelections: componentViewModel.styledSelections,
         showCaret: componentViewModel.caret != null,
         caretColor: componentViewModel.caretColor,
-        highlightWhenEmpty: componentViewModel.highlightWhenEmpty,
       );
     }
 
@@ -181,12 +178,11 @@ class ListItemComponentViewModel extends SingleColumnLayoutComponentViewModel wi
     required this.textStyleBuilder,
     this.textDirection = TextDirection.ltr,
     this.textAlignment = TextAlign.left,
-    this.selection,
-    required this.selectionColor,
+    List<StyledSelection<TextSelection>>? styledSelections,
     this.caret,
     required this.caretColor,
-    this.highlightWhenEmpty = false,
-  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
+  })  : styledSelections = styledSelections ?? [],
+        super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
 
   ListItemType type;
   int? ordinalValue;
@@ -200,15 +196,11 @@ class ListItemComponentViewModel extends SingleColumnLayoutComponentViewModel wi
   @override
   TextAlign textAlignment;
   @override
-  TextSelection? selection;
-  @override
-  Color selectionColor;
+  List<StyledSelection<TextSelection>> styledSelections;
   @override
   TextPosition? caret;
   @override
   Color caretColor;
-  @override
-  bool highlightWhenEmpty;
 
   @override
   ListItemComponentViewModel copy() {
@@ -222,8 +214,7 @@ class ListItemComponentViewModel extends SingleColumnLayoutComponentViewModel wi
       text: text,
       textStyleBuilder: textStyleBuilder,
       textDirection: textDirection,
-      selection: selection,
-      selectionColor: selectionColor,
+      styledSelections: styledSelections,
       caret: caret,
       caretColor: caretColor,
     );
@@ -242,10 +233,9 @@ class ListItemComponentViewModel extends SingleColumnLayoutComponentViewModel wi
           text == other.text &&
           textStyleBuilder == other.textStyleBuilder &&
           textDirection == other.textDirection &&
-          selection == other.selection &&
-          selectionColor == other.selectionColor &&
           caret == other.caret &&
-          caretColor == other.caretColor;
+          caretColor == other.caretColor &&
+          const DeepCollectionEquality().equals(styledSelections, other.styledSelections);
 
   @override
   int get hashCode =>
@@ -257,8 +247,7 @@ class ListItemComponentViewModel extends SingleColumnLayoutComponentViewModel wi
       text.hashCode ^
       textStyleBuilder.hashCode ^
       textDirection.hashCode ^
-      selection.hashCode ^
-      selectionColor.hashCode ^
+      styledSelections.hashCode ^
       caret.hashCode ^
       caretColor.hashCode;
 }
@@ -275,11 +264,9 @@ class UnorderedListItemComponent extends StatelessWidget {
     this.dotBuilder = _defaultUnorderedListItemDotBuilder,
     this.indent = 0,
     this.indentCalculator = _defaultIndentCalculator,
-    this.textSelection,
-    this.selectionColor = Colors.lightBlueAccent,
+    this.styledSelections = const [],
     this.showCaret = false,
     this.caretColor = Colors.black,
-    this.highlightWhenEmpty = false,
     this.showDebugPaint = false,
   }) : super(key: key);
 
@@ -289,11 +276,9 @@ class UnorderedListItemComponent extends StatelessWidget {
   final UnorderedListItemDotBuilder dotBuilder;
   final int indent;
   final double Function(TextStyle, int indent) indentCalculator;
-  final TextSelection? textSelection;
-  final Color selectionColor;
+  final List<StyledSelection<TextSelection>> styledSelections;
   final bool showCaret;
   final Color caretColor;
-  final bool highlightWhenEmpty;
   final bool showDebugPaint;
 
   @override
@@ -322,11 +307,9 @@ class UnorderedListItemComponent extends StatelessWidget {
             key: textKey,
             text: text,
             textStyleBuilder: styleBuilder,
-            textSelection: textSelection,
-            selectionColor: selectionColor,
+            styledSelections: styledSelections,
             showCaret: showCaret,
             caretColor: caretColor,
-            highlightWhenEmpty: highlightWhenEmpty,
             showDebugPaint: showDebugPaint,
           ),
         ),
@@ -365,11 +348,9 @@ class OrderedListItemComponent extends StatelessWidget {
     this.numeralBuilder = _defaultOrderedListItemNumeralBuilder,
     this.indent = 0,
     this.indentCalculator = _defaultIndentCalculator,
-    this.textSelection,
-    this.selectionColor = Colors.lightBlueAccent,
+    this.styledSelections = const [],
     this.showCaret = false,
     this.caretColor = Colors.black,
-    this.highlightWhenEmpty = false,
     this.showDebugPaint = false,
   }) : super(key: key);
 
@@ -380,11 +361,9 @@ class OrderedListItemComponent extends StatelessWidget {
   final OrderedListItemNumeralBuilder numeralBuilder;
   final int indent;
   final double Function(TextStyle, int indent) indentCalculator;
-  final TextSelection? textSelection;
-  final Color selectionColor;
+  final List<StyledSelection<TextSelection>> styledSelections;
   final bool showCaret;
   final Color caretColor;
-  final bool highlightWhenEmpty;
   final bool showDebugPaint;
 
   @override
@@ -412,11 +391,9 @@ class OrderedListItemComponent extends StatelessWidget {
             key: textKey,
             text: text,
             textStyleBuilder: styleBuilder,
-            textSelection: textSelection,
-            selectionColor: selectionColor,
+            styledSelections: styledSelections,
             showCaret: showCaret,
             caretColor: caretColor,
-            highlightWhenEmpty: highlightWhenEmpty,
             showDebugPaint: showDebugPaint,
           ),
         ),

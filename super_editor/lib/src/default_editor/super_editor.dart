@@ -89,6 +89,7 @@ class SuperEditor extends StatefulWidget {
         softwareKeyboardHandler = null,
         stylesheet = stylesheet ?? defaultStylesheet,
         selectionStyles = defaultSelectionStyle,
+        nonPrimarySelectionStyler = null,
         super(key: key);
 
   @Deprecated("Use unnamed SuperEditor() constructor instead")
@@ -103,6 +104,7 @@ class SuperEditor extends StatefulWidget {
     this.customStylePhases = const [],
     List<ComponentBuilder>? componentBuilders,
     SelectionStyles? selectionStyle,
+    this.nonPrimarySelectionStyler,
     this.inputSource = DocumentInputSource.keyboard,
     this.gestureMode = DocumentGestureMode.mouse,
     List<DocumentKeyboardAction>? keyboardActions,
@@ -133,6 +135,7 @@ class SuperEditor extends StatefulWidget {
     this.customStylePhases = const [],
     List<ComponentBuilder>? componentBuilders,
     SelectionStyles? selectionStyle,
+    this.nonPrimarySelectionStyler,
     this.inputSource = DocumentInputSource.keyboard,
     this.gestureMode = DocumentGestureMode.mouse,
     List<DocumentKeyboardAction>? keyboardActions,
@@ -175,6 +178,10 @@ class SuperEditor extends StatefulWidget {
 
   /// Styles applied to selected content.
   final SelectionStyles selectionStyles;
+
+  /// Styler that chooses styles for all non-primary selections, e.g.,
+  /// remote users, find-and-replace selections.
+  final NonPrimarySelectionStyler? nonPrimarySelectionStyler;
 
   /// Custom style phases that are added to the standard style phases.
   ///
@@ -378,6 +385,7 @@ class SuperEditorState extends State<SuperEditor> {
       document: document,
       composer: editContext.composer,
       primaryUserSelectionStyles: widget.selectionStyles,
+      nonPrimarySelectionStyler: widget.nonPrimarySelectionStyler,
     );
 
     _docLayoutPresenter = SingleColumnLayoutPresenter(
