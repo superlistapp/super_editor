@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/super_editor.dart';
@@ -19,6 +20,47 @@ extension SuperTextFieldRobot on WidgetTester {
     if (match is SuperDesktopTextField) {
       final didTap =
           await _tapAtTextPositionOnDesktop(state<SuperDesktopTextFieldState>(fieldFinder), offset, affinity);
+      if (!didTap) {
+        throw Exception("The desired text offset wasn't tappable in SuperTextField: $offset");
+      }
+
+      await pumpAndSettle();
+
+      return;
+    }
+
+    if (match is SuperAndroidTextField) {
+      throw Exception("Entering text on an Android SuperTextField is not yet supported");
+    }
+
+    if (match is SuperIOSTextField) {
+      throw Exception("Entering text on an iOS SuperTextField is not yet supported");
+    }
+
+    throw Exception("Couldn't find a SuperTextField with the given Finder: $fieldFinder");
+  }
+
+  /// Double taps to select a character at the given [offset].
+  ///
+  /// {@template supertextfield_finder}
+  /// By default, this method expects a single [SuperTextField] in the widget tree and
+  /// finds it `byType`. To specify one [SuperTextField] among many, pass a [superTextFieldFinder].
+  /// {@endtemplate}
+  Future<void> doubleTapAtSuperTextField(int offset,
+    [Finder? superTextFieldFinder, TextAffinity affinity = TextAffinity.downstream]) async {
+    final fieldFinder = _findInnerPlatformTextField(superTextFieldFinder ?? find.byType(SuperTextField));
+    final match = fieldFinder.evaluate().single.widget;
+
+    if (match is SuperDesktopTextField) {
+      final superDesktopTextField = state<SuperDesktopTextFieldState>(fieldFinder);
+
+      bool didTap = await _tapAtTextPositionOnDesktop(superDesktopTextField, offset, affinity);
+      if (!didTap) {
+        throw Exception("The desired text offset wasn't tappable in SuperTextField: $offset");
+      }
+      await pump(kDoubleTapMinTime);
+
+      didTap = await _tapAtTextPositionOnDesktop(superDesktopTextField, offset, affinity);
       if (!didTap) {
         throw Exception("The desired text offset wasn't tappable in SuperTextField: $offset");
       }
@@ -64,7 +106,7 @@ extension SuperTextFieldRobot on WidgetTester {
     );
 
     if (adjustedOffset.dx == textFieldBox.size.width) {
-      adjustedOffset += const Offset(-10, 0);
+      adjustedOffset += const Offset(-8, 0);
     }
 
     if (!textFieldBox.size.contains(adjustedOffset)) {

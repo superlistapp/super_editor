@@ -354,7 +354,8 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
     // TODO: can we de-dup this with similar calculations in _user_interaction?
     final textLayout = _textLayout;
     final extentOffsetInText = textLayout.getOffsetAtPosition(position);
-    final extentLineHeight = textLayout.getCharacterBox(position).toRect().height;
+    final extentLineHeight = 
+        textLayout.getCharacterBox(position)?.toRect().height ?? textLayout.estimatedLineHeight;
     final extentGlobalOffset =
         (widget.textContentKey.currentContext!.findRenderObject() as RenderBox).localToGlobal(extentOffsetInText);
 
@@ -515,7 +516,8 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
     _log.finer('Collapsed handle text position: $extentTextPosition');
     final extentHandleOffsetInText = _textPositionToTextOffset(extentTextPosition);
     _log.finer('Collapsed handle text offset: $extentHandleOffsetInText');
-    double extentLineHeight = _textLayout.getCharacterBox(extentTextPosition).toRect().height;
+    double extentLineHeight = 
+        _textLayout.getCharacterBox(extentTextPosition)?.toRect().height ?? _textLayout.estimatedLineHeight;
     if (widget.editingController.textController.text.text.isEmpty) {
       extentLineHeight = _textLayout.getLineHeightAtPosition(extentTextPosition);
     }
@@ -558,13 +560,15 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
     final upstreamTextPosition = selectionDirection == TextAffinity.downstream
         ? widget.editingController.textController.selection.base
         : widget.editingController.textController.selection.extent;
-    final upstreamLineHeight = _textLayout.getCharacterBox(upstreamTextPosition).toRect().height;
+    final upstreamLineHeight = 
+        _textLayout.getCharacterBox(upstreamTextPosition)?.toRect().height ?? _textLayout.estimatedLineHeight;
     final upstreamHandleOffsetInText = _textPositionToTextOffset(upstreamTextPosition) + Offset(0, upstreamLineHeight);
 
     final downstreamTextPosition = selectionDirection == TextAffinity.downstream
         ? widget.editingController.textController.selection.extent
         : widget.editingController.textController.selection.base;
-    final downstreamLineHeight = _textLayout.getCharacterBox(downstreamTextPosition).toRect().height;
+    final downstreamLineHeight = 
+        _textLayout.getCharacterBox(downstreamTextPosition)?.toRect().height ?? _textLayout.estimatedLineHeight;
     final downstreamHandleOffsetInText =
         _textPositionToTextOffset(downstreamTextPosition) + Offset(0, downstreamLineHeight);
 

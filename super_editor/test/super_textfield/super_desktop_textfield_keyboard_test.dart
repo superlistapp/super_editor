@@ -208,7 +208,7 @@ void main() {
           // We give a tiny bit of wiggle room on the value because when this test
           // is run on Windows and Linux CI, there is some kind of precision error
           // that results in a tiny positive number instead of zero.
-          expect(textLayout.getCharacterBox(const TextPosition(offset: 16)).top, lessThan(0.1));
+          expect(textLayout.getCharacterBox(const TextPosition(offset: 16))?.top, lessThan(0.1));
 
           // On Linux CI, the "top" is a very tiny negative number, so we check for that value
           // instead of the check that we actually want to do.
@@ -218,7 +218,7 @@ void main() {
           //   Actual: <-7.152557373046875e-7>
           //    Which: is not a value greater than or equal to <0>
           // expect(textLayout.getCharacterBox(const TextPosition(offset: 16)).top, greaterThanOrEqualTo(0));
-          expect(textLayout.getCharacterBox(const TextPosition(offset: 16)).top, greaterThanOrEqualTo(-0.000001));
+          expect(textLayout.getCharacterBox(const TextPosition(offset: 16))?.top, greaterThanOrEqualTo(-0.000001));
         }, skip: true);
 
         testWidgetsOnDesktop('SHIFT + LEFT ARROW expands left by character', (tester) async {
@@ -323,7 +323,7 @@ void main() {
           // We should have gone from line 1 to line 2. Make double sure by
           // checking that the bounding box for the character that's now selected
           // does not sit at the top of the text box.
-          expect(SuperTextFieldInspector.findProseTextLayout().getCharacterBox(const TextPosition(offset: 18)).top,
+          expect(SuperTextFieldInspector.findProseTextLayout().getCharacterBox(const TextPosition(offset: 18))?.top,
               isNonZero);
         });
 

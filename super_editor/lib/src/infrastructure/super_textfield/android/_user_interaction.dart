@@ -445,7 +445,8 @@ class AndroidTextFieldTouchInteractorState extends State<AndroidTextFieldTouchIn
     // TODO: can we de-dup this with similar calculations in _editing_controls?
     final extentPosition = widget.textController.selection.extent;
     final extentOffsetInText = _textLayout.getOffsetAtPosition(extentPosition);
-    final extentLineHeight = _textLayout.getCharacterBox(extentPosition).toRect().height;
+    final extentLineHeight = 
+        _textLayout.getCharacterBox(extentPosition)?.toRect().height ?? _textLayout.estimatedLineHeight;
     final extentGlobalOffset =
         (widget.textKey.currentContext!.findRenderObject() as RenderBox).localToGlobal(extentOffsetInText);
     final extentOffsetInViewport = (context.findRenderObject() as RenderBox).globalToLocal(extentGlobalOffset);
