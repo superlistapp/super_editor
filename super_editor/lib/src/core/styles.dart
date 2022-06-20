@@ -277,6 +277,9 @@ class SelectionStyles {
     this.highlightEmptyTextBlocks = true,
   });
 
+  // TODO: multiple user selections
+  // TODO: how do we handle a non-primary selection that spans an empty paragraph?
+
   /// The color of the caret.
   final Color caretColor;
 

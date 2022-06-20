@@ -18,10 +18,12 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
   SingleColumnLayoutSelectionStyler({
     required Document document,
     required DocumentComposer composer,
-    required SelectionStyles selectionStyles,
+    required SelectionStyles primaryUserSelectionStyles,
+    NonPrimarySelectionStyler? nonPrimarySelectionStyler,
   })  : _document = document,
         _composer = composer,
-        _selectionStyles = selectionStyles {
+        _selectionStyles = primaryUserSelectionStyles,
+  _nonPrimarySelectionStyler = nonPrimarySelectionStyler {
     // Our styles need to be re-applied whenever the document selection changes.
     _composer.selectionNotifier.addListener(markDirty);
   }
@@ -35,6 +37,7 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
   final Document _document;
   final DocumentComposer _composer;
   final SelectionStyles _selectionStyles;
+  final NonPrimarySelectionStyler? _nonPrimarySelectionStyler;
 
   bool _shouldDocumentShowCaret = false;
   set shouldDocumentShowCaret(bool newValue) {
@@ -89,6 +92,7 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
 
     editorLayoutLog.fine("Node selection (${node.id}): $nodeSelection");
     if (node is TextNode) {
+      // TODO: add non-primary selections
       final textSelection = nodeSelection == null || nodeSelection.nodeSelection is! TextSelection
           ? null
           : nodeSelection.nodeSelection as TextSelection;
@@ -119,6 +123,8 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
       }
     }
     if (viewModel is ImageComponentViewModel) {
+      // TODO: paint primary selection, if it exists. Otherwise, paint non-primary
+      // selection, if one exists.
       final selection = nodeSelection == null ? null : nodeSelection.nodeSelection as UpstreamDownstreamNodeSelection;
 
       viewModel
@@ -128,6 +134,8 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
         ..caretColor = _selectionStyles.caretColor;
     }
     if (viewModel is HorizontalRuleComponentViewModel) {
+      // TODO: paint primary selection, if it exists. Otherwise, paint non-primary
+      // selection, if one exists.
       final selection = nodeSelection == null ? null : nodeSelection.nodeSelection as UpstreamDownstreamNodeSelection;
 
       viewModel
@@ -249,3 +257,8 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
     }
   }
 }
+
+/// Function called to configure [SelectionStyles] for a given [nonPrimarySelection].
+///
+/// If you don't want to display anything for this selection, return `null`.
+typedef NonPrimarySelectionStyler = SelectionStyles? Function(NonPrimarySelection nonPrimarySelection);

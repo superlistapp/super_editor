@@ -264,6 +264,8 @@ mixin TextComponentViewModel on SingleColumnLayoutComponentViewModel {
   TextAlign get textAlignment;
   set textAlignment(TextAlign alignment);
 
+  // TODO: we need to support non-primary selections here
+
   TextSelection? get selection;
   set selection(TextSelection? selection);
 
