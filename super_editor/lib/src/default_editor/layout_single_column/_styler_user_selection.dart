@@ -18,10 +18,12 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
   SingleColumnLayoutSelectionStyler({
     required Document document,
     required DocumentComposer composer,
-    required SelectionStyles selectionStyles,
+    required SelectionStyles primaryUserSelectionStyles,
+    NonPrimarySelectionStyler? nonPrimarySelectionStyler,
   })  : _document = document,
         _composer = composer,
-        _selectionStyles = selectionStyles {
+        _selectionStyles = primaryUserSelectionStyles,
+        _nonPrimarySelectionStyler = nonPrimarySelectionStyler {
     // Our styles need to be re-applied whenever the document selection changes.
     _composer.selectionNotifier.addListener(markDirty);
   }
@@ -34,6 +36,8 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
 
   final Document _document;
   final DocumentComposer _composer;
+  final SelectionStyles _selectionStyles;
+  final NonPrimarySelectionStyler? _nonPrimarySelectionStyler;
 
   SelectionStyles _selectionStyles;
   set selectionStyles(SelectionStyles selectionStyles) {
@@ -98,6 +102,7 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
 
     editorStyleLog.fine("Node selection (${node.id}): $nodeSelection");
     if (node is TextNode) {
+      // TODO: add non-primary selections
       final textSelection = nodeSelection == null || nodeSelection.nodeSelection is! TextSelection
           ? null
           : nodeSelection.nodeSelection as TextSelection;
@@ -126,6 +131,8 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
       }
     }
     if (viewModel is ImageComponentViewModel) {
+      // TODO: paint primary selection, if it exists. Otherwise, paint non-primary
+      // selection, if one exists.
       final selection = nodeSelection == null ? null : nodeSelection.nodeSelection as UpstreamDownstreamNodeSelection;
 
       viewModel
@@ -133,6 +140,8 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
         ..selectionColor = _selectionStyles.selectionColor;
     }
     if (viewModel is HorizontalRuleComponentViewModel) {
+      // TODO: paint primary selection, if it exists. Otherwise, paint non-primary
+      // selection, if one exists.
       final selection = nodeSelection == null ? null : nodeSelection.nodeSelection as UpstreamDownstreamNodeSelection;
 
       viewModel
@@ -253,65 +262,7 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
   }
 }
 
-/// Description of a selection within a specific node in a document.
+/// Function called to configure [SelectionStyles] for a given [nonPrimarySelection].
 ///
-/// The [nodeSelection] only describes the selection in the particular node
-/// that [nodeId] points to. The document might have a selection that spans
-/// multiple nodes but this only regards the part of that total selection that
-/// affects the single node.
-///
-/// The [SelectionType] is a generic subtype of [NodeSelection], e.g., a
-/// [TextNodeSelection] that describes which characters of text are
-/// selected within the text node.
-class DocumentNodeSelection<SelectionType extends NodeSelection> {
-  DocumentNodeSelection({
-    required this.nodeId,
-    required this.nodeSelection,
-    this.isBase = false,
-    this.isExtent = false,
-    this.highlightWhenEmpty = false,
-  });
-
-  /// The ID of the node that's selected.
-  final String nodeId;
-
-  /// The selection within the given node.
-  final SelectionType? nodeSelection;
-
-  /// Whether this [DocumentNodeSelection] forms the base position of a larger
-  /// document selection, `false` otherwise.
-  ///
-  /// [isBase] is `true` iff [nodeId] is the same as [DocumentSelection.base.nodeId].
-  final bool isBase;
-
-  /// Whether this [DocumentNodeSelection] forms the extent position of a
-  /// larger document selection, `false` otherwise.
-  ///
-  /// [isExtent] is `true` iff [nodeId] is the same as [DocumentSelection.extent.nodeId].
-  final bool isExtent;
-
-  /// Whether the component rendering this [DocumentNodeSelection] should
-  /// paint a highlight even when the given node has no content, `false`
-  /// otherwise.
-  ///
-  /// For example: the user selects across multiple paragraphs. One of those
-  /// inner paragraphs is empty. We want to paint a small highlight where that
-  /// empty paragraph sits.
-  final bool highlightWhenEmpty;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is DocumentNodeSelection &&
-          runtimeType == other.runtimeType &&
-          nodeId == other.nodeId &&
-          nodeSelection == other.nodeSelection;
-
-  @override
-  int get hashCode => nodeId.hashCode ^ nodeSelection.hashCode;
-
-  @override
-  String toString() {
-    return '[DocumentNodeSelection] - node: "$nodeId", selection: ($nodeSelection)';
-  }
-}
+/// If you don't want to display anything for this selection, return `null`.
+typedef NonPrimarySelectionStyler = SelectionStyles? Function(NonPrimarySelection nonPrimarySelection);

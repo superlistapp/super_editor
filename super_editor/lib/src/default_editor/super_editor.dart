@@ -404,7 +404,7 @@ class SuperEditorState extends State<SuperEditor> {
     _docLayoutSelectionStyler = SingleColumnLayoutSelectionStyler(
       document: document,
       composer: editContext.composer,
-      selectionStyles: widget.selectionStyles,
+      primaryUserSelectionStyles: widget.selectionStyles,
     );
 
     _docLayoutPresenter = SingleColumnLayoutPresenter(
