@@ -2285,6 +2285,72 @@ class CommonEditorOperations {
       ),
     );
   }
+
+  /// Get the upstream position of the [current document position], then tokenize
+  /// the upstream word at that position.
+  void tokenizeUpstreamWord(DocumentPosition documentPosition) {
+    final currentTextPosition = documentPosition.nodePosition;
+    if (currentTextPosition is! TextNodePosition) {
+      return;
+    }
+
+    final upstreamTextPosition = currentTextPosition.copyWith(offset: currentTextPosition.offset - 1);
+    final upstreamDocumentPosition = documentPosition.copyWith(nodePosition: upstreamTextPosition);
+
+    final documentNode = editor.document.getNodeById(composer.selection!.extent.nodeId);
+    if (documentNode is! TextNode) {
+      return;
+    }
+
+    // It is invalid to have a position with negative offset
+    if (upstreamTextPosition.offset == -1) {
+      return;
+    }
+
+    final attributedText = documentNode.text;
+    final text = attributedText.text;
+    final word = expandPositionToWord(text: text, textPosition: upstreamTextPosition).textInside(text);
+
+    // Consider the text in the [] is already a link: [https://flutter.dev]https://pub.dev |
+    // To avoid the span conflict, we'll only linkify the word after the last link span's end
+    final linkAttributionSpansAtWord = attributedText.getAttributionSpansInRange(
+      attributionFilter: (attr) => attr is LinkAttribution,
+      range: SpanRange(
+        start: upstreamTextPosition.offset - word.length,
+        end: upstreamTextPosition.offset,
+      ),
+    );
+
+    final maxLinkSpanEnd =
+        linkAttributionSpansAtWord.map((span) => span.end).fold<int>(0, (value, element) => max(value, element));
+    final wordToLinkify = maxLinkSpanEnd != 0
+        ? text.substring(
+            maxLinkSpanEnd + 1,
+            upstreamTextPosition.offset,
+          )
+        : word;
+
+    // Now start to linkify the word
+    final link = Uri.tryParse(wordToLinkify);
+    if (link != null && link.hasScheme && link.hasAuthority) {
+      // Valid url. Apply [LinkAttribution] to the url
+      final linkAttribution = LinkAttribution(url: link);
+
+      // [upstreamDocumentPosition] is at the end of wordToLinkify, so we create
+      // a downstream expanded selection
+      final urlDocumentSelection = documentPositionToDocumentSelection(
+        documentPosition: upstreamDocumentPosition,
+        extentOffset: -wordToLinkify.length,
+      );
+
+      editor.executeCommand(
+        AddTextAttributionsCommand(
+          documentSelection: urlDocumentSelection,
+          attributions: {linkAttribution},
+        ),
+      );
+    }
+  }
 }
 
 class _PasteEditorCommand implements EditorCommand {

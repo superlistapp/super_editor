@@ -360,6 +360,8 @@ ExecutionInstruction anyCharacterToInsertInParagraph({
     editContext.commonOps.convertParagraphByPatternMatching(
       editContext.composer.selection!.extent.nodeId,
     );
+
+    editContext.commonOps.tokenizeUpstreamWord(editContext.composer.selection!.extent);
   }
 
   return didInsertCharacter ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
