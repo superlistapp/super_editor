@@ -54,17 +54,6 @@ class DocumentKeyboardInteractor extends StatelessWidget {
       return KeyEventResult.handled;
     }
 
-    // Try to execute an app shortcut for this key combo. If a shortcut
-    // runs, then return that result and skip editor handling. If no shortcut
-    // runs, then try to process this key in the editor.
-    final shortcuts = Shortcuts.maybeOf(node.context!);
-    if (shortcuts != null) {
-      final result = shortcuts.handleKeypress(node.context!, keyEvent);
-      if (result != KeyEventResult.ignored) {
-        return result;
-      }
-    }
-
     editorKeyLog.info("Handling key press: $keyEvent");
     ExecutionInstruction instruction = ExecutionInstruction.continueExecution;
     int index = 0;
@@ -135,4 +124,20 @@ enum ExecutionInstruction {
   ///
   /// The key event **shouldn't** bubble up the tree.
   haltExecution,
+}
+
+/// A [DocumentKeyboardAction] that reports [ExecutionInstruction.blocked]
+/// for any key combination that matches one of the given [keys].
+DocumentKeyboardAction ignoreKeyCombos(List<ShortcutActivator> keys) {
+  return ({
+    required EditContext editContext,
+    required RawKeyEvent keyEvent,
+  }) {
+    for (final key in keys) {
+      if (key.accepts(keyEvent, RawKeyboard.instance)) {
+        return ExecutionInstruction.blocked;
+      }
+    }
+    return ExecutionInstruction.continueExecution;
+  };
 }
