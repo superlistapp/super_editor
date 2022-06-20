@@ -1389,12 +1389,16 @@ class CommonEditorOperations {
     required Set<Attribution> currentAttribution,
   }) {
     final linkAttributionSpan = textNode.text.spans
-        .getAttributionSpansAt(
+        // Note: We can't use the method [AttributedSpans.getAttributionSpansAt] because it seems
+        // like the dependency doesn't pick the [attributed_text] package in the dependency_override.
+        // Therefore, until the package [attributed_text] is updated, we'll use this method instead.
+        .getAttributionSpansInRange(
           attributionFilter: (attr) => attr is LinkAttribution,
           // -1 because TextPosition's offset indexes the character after the
           // selection, not the final character in the selection.
           // It would be invalid
-          offset: textOffset != 0 ? textOffset - 1 : 0,
+          start: textOffset != 0 ? textOffset - 1 : 0,
+          end: textOffset != 0 ? textOffset - 1 : 0,
         )
         .firstOrNull;
 
@@ -2420,9 +2424,13 @@ class _PasteEditorCommand implements EditorCommand {
   }) {
     final pasteTextOffset = (_pastePosition.nodePosition as TextPosition).offset;
     final linkAttributionSpan = textNode.text.spans
-        .getAttributionSpansAt(
+        // Note: We can't use the method [AttributedSpans.getAttributionSpansAt] because it seems
+        // like the dependency doesn't pick the [attributed_text] package in the dependency_override.
+        // Therefore, until the package [attributed_text] is updated, we'll use this method instead.
+        .getAttributionSpansInRange(
           attributionFilter: (attr) => attr is LinkAttribution,
-          offset: pasteTextOffset,
+          start: pasteTextOffset,
+          end: pasteTextOffset,
         )
         .firstOrNull;
 
