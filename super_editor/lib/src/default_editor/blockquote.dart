@@ -1,7 +1,9 @@
 import 'package:attributed_text/attributed_text.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/edit_context.dart';
+import 'package:super_editor/src/core/styles.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
@@ -56,7 +58,7 @@ class BlockquoteComponentBuilder implements ComponentBuilder {
       borderRadius: BorderRadius.zero,
       textDirection: textDirection,
       textAlignment: textAlign,
-      selectionColor: const Color(0x00000000),
+      caretColor: const Color(0x00000000),
     );
   }
 
@@ -73,9 +75,7 @@ class BlockquoteComponentBuilder implements ComponentBuilder {
       styleBuilder: componentViewModel.textStyleBuilder,
       backgroundColor: componentViewModel.backgroundColor,
       borderRadius: componentViewModel.borderRadius,
-      textSelection: componentViewModel.selection,
-      selectionColor: componentViewModel.selectionColor,
-      highlightWhenEmpty: componentViewModel.highlightWhenEmpty,
+      styledSelections: List.from(componentViewModel.styledSelections),
     );
   }
 }
@@ -91,10 +91,11 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel 
     this.textAlignment = TextAlign.left,
     required this.backgroundColor,
     required this.borderRadius,
-    this.selection,
-    required this.selectionColor,
-    this.highlightWhenEmpty = false,
-  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
+    List<StyledSelection<TextSelection>>? styledSelections,
+    this.caret,
+    required this.caretColor,
+  })  : styledSelections = styledSelections ?? [],
+        super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
 
   AttributedText text;
 
@@ -105,11 +106,11 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel 
   @override
   TextAlign textAlignment;
   @override
-  TextSelection? selection;
+  List<StyledSelection<TextSelection>> styledSelections;
   @override
-  Color selectionColor;
+  TextPosition? caret;
   @override
-  bool highlightWhenEmpty;
+  Color caretColor;
 
   Color backgroundColor;
   BorderRadius borderRadius;
@@ -133,9 +134,9 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel 
       textAlignment: textAlignment,
       backgroundColor: backgroundColor,
       borderRadius: borderRadius,
-      selection: selection,
-      selectionColor: selectionColor,
-      highlightWhenEmpty: highlightWhenEmpty,
+      styledSelections: List.from(styledSelections),
+      caret: caret,
+      caretColor: caretColor,
     );
   }
 
@@ -152,9 +153,9 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel 
           textAlignment == other.textAlignment &&
           backgroundColor == other.backgroundColor &&
           borderRadius == other.borderRadius &&
-          selection == other.selection &&
-          selectionColor == other.selectionColor &&
-          highlightWhenEmpty == other.highlightWhenEmpty;
+          caret == other.caret &&
+          caretColor == other.caretColor &&
+          const DeepCollectionEquality().equals(styledSelections, other.styledSelections);
 
   @override
   int get hashCode =>
@@ -166,9 +167,9 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel 
       textAlignment.hashCode ^
       backgroundColor.hashCode ^
       borderRadius.hashCode ^
-      selection.hashCode ^
-      selectionColor.hashCode ^
-      highlightWhenEmpty.hashCode;
+      styledSelections.hashCode ^
+      caret.hashCode ^
+      caretColor.hashCode;
 }
 
 /// Displays a blockquote in a document.
@@ -178,22 +179,18 @@ class BlockquoteComponent extends StatelessWidget {
     required this.textKey,
     required this.text,
     required this.styleBuilder,
-    this.textSelection,
-    this.selectionColor = Colors.lightBlueAccent,
+    this.styledSelections = const [],
     required this.backgroundColor,
     required this.borderRadius,
     this.showDebugPaint = false,
-    this.highlightWhenEmpty = false,
   }) : super(key: key);
 
   final GlobalKey textKey;
   final AttributedText text;
   final AttributionStyleBuilder styleBuilder;
-  final TextSelection? textSelection;
-  final Color selectionColor;
   final Color backgroundColor;
   final BorderRadius borderRadius;
-  final bool highlightWhenEmpty;
+  final List<StyledSelection<TextSelection>> styledSelections;
   final bool showDebugPaint;
 
   @override
@@ -208,9 +205,7 @@ class BlockquoteComponent extends StatelessWidget {
         key: textKey,
         text: text,
         textStyleBuilder: styleBuilder,
-        textSelection: textSelection,
-        selectionColor: selectionColor,
-        highlightWhenEmpty: highlightWhenEmpty,
+        styledSelections: styledSelections,
         showDebugPaint: showDebugPaint,
       ),
     );

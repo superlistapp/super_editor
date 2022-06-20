@@ -80,10 +80,12 @@ class DocumentComposer with ChangeNotifier {
         _notifyNonPrimarySelectionChange(nonPrimarySelection);
       } else {
         // This is a new selection.
+        _nonPrimarySelections[id] = nonPrimarySelection;
         _notifyNonPrimarySelectionAdded(nonPrimarySelection);
       }
     } else if (_nonPrimarySelections.containsKey(id)) {
       // Remove an existing selection.
+      _nonPrimarySelections.remove(id);
       _notifyNonPrimarySelectionRemoval(id);
     }
   }

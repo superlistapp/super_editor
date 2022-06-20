@@ -5,6 +5,7 @@ import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/styles.dart';
 import 'package:super_editor/src/default_editor/horizontal_rule.dart';
 import 'package:super_editor/src/default_editor/image.dart';
+import 'package:super_editor/src/default_editor/list_items.dart';
 import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
@@ -102,7 +103,11 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
 
     editorStyleLog.fine("Node selection (${node.id}): $nodeSelection");
     if (node is TextNode) {
-      // TODO: add non-primary selections
+      final styledSelections = _computeStyledSelectionsForText(
+        composer: _composer,
+        node: node,
+      );
+
       final textSelection = nodeSelection == null || nodeSelection.nodeSelection is! TextSelection
           ? null
           : nodeSelection.nodeSelection as TextSelection;
@@ -111,8 +116,8 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
             'ERROR: Building a paragraph component but the selection is not a TextSelection. Node: ${node.id}, Selection: ${nodeSelection.nodeSelection}');
       }
       final showCaret = _shouldDocumentShowCaret && nodeSelection != null ? nodeSelection.isExtent : false;
-      final highlightWhenEmpty =
-          nodeSelection == null ? false : nodeSelection.highlightWhenEmpty && _selectionStyles.highlightEmptyTextBlocks;
+      // final highlightWhenEmpty =
+      //     nodeSelection == null ? false : nodeSelection.highlightWhenEmpty && _selectionStyles.highlightEmptyTextBlocks;
 
       editorStyleLog.finer(' - ${node.id}: $nodeSelection');
       if (showCaret) {
@@ -125,8 +130,9 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
 
       if (viewModel is TextComponentViewModel) {
         viewModel
-          ..selection = textSelection
-          ..selectionColor = _selectionStyles.selectionColor
+          ..styledSelections = styledSelections
+          ..caret = showCaret ? textSelection?.extent : null
+          ..caretColor = _selectionStyles.caretColor
           ..highlightWhenEmpty = highlightWhenEmpty;
       }
     }
@@ -150,6 +156,94 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
     }
 
     return viewModel;
+  }
+
+  List<StyledSelection<TextSelection>> _computeStyledSelectionsForText({
+    required DocumentComposer composer,
+    required DocumentNode node,
+  }) {
+    final styledSelections = <StyledSelection<TextSelection>>[];
+
+    for (final nonPrimarySelection in _composer.getAllNonPrimarySelections()) {
+      late List<DocumentNode> selectedNodes;
+      try {
+        selectedNodes = _document.getNodesInside(
+          nonPrimarySelection.selection.base,
+          nonPrimarySelection.selection.extent,
+        );
+      } catch (exception) {
+        // This situation can happen in the moment between a document change and
+        // a corresponding selection change. For example: deleting an image and
+        // replacing it with an empty paragraph. Between the doc change and the
+        // selection change, the old image selection is applied to the new paragraph.
+        // This results in an exception.
+        //
+        // TODO: introduce a unified event ledger that combines related behaviors
+        //       into atomic transactions (#423)
+        selectedNodes = [];
+      }
+
+      final nodeSelection = _computeNodeSelection(
+        documentSelection: nonPrimarySelection.selection,
+        selectedNodes: selectedNodes,
+        node: node,
+      );
+
+      if (nodeSelection?.nodeSelection is TextNodeSelection) {
+        final textNodeSelection = nodeSelection!.nodeSelection as TextNodeSelection;
+        final textSelection =
+            TextSelection(baseOffset: textNodeSelection.baseOffset, extentOffset: textNodeSelection.extentOffset);
+
+        styledSelections.add(StyledSelection(
+          textSelection,
+          // TODO: the styler decides whether to highlight an empty block, but it shouldn't.
+          // That decision needs to be made based on whether the user is selecting multiple
+          // blocks.
+          _nonPrimarySelectionStyler!(nonPrimarySelection)!,
+        ));
+      }
+    }
+
+    final documentSelection = _composer.selection;
+    if (documentSelection != null) {
+      late List<DocumentNode> selectedNodes;
+      try {
+        selectedNodes = _document.getNodesInside(
+          documentSelection.base,
+          documentSelection.extent,
+        );
+      } catch (exception) {
+        // This situation can happen in the moment between a document change and
+        // a corresponding selection change. For example: deleting an image and
+        // replacing it with an empty paragraph. Between the doc change and the
+        // selection change, the old image selection is applied to the new paragraph.
+        // This results in an exception.
+        //
+        // TODO: introduce a unified event ledger that combines related behaviors
+        //       into atomic transactions (#423)
+        selectedNodes = [];
+      }
+
+      final nodeSelection =
+          _computeNodeSelection(documentSelection: documentSelection, selectedNodes: selectedNodes, node: node);
+
+      if (nodeSelection?.nodeSelection is TextNodeSelection) {
+        final textNodeSelection = nodeSelection!.nodeSelection as TextNodeSelection;
+        final textSelection =
+            TextSelection(baseOffset: textNodeSelection.baseOffset, extentOffset: textNodeSelection.extentOffset);
+
+        styledSelections.add(StyledSelection(
+          textSelection,
+          SelectionStyles(
+            selectionColor: _selectionStyles.selectionColor,
+            highlightEmptyTextBlocks: nodeSelection.highlightWhenEmpty,
+            caretColor: _selectionStyles.caretColor,
+          ),
+        ));
+      }
+    }
+
+    return styledSelections;
   }
 
   /// Computes the [DocumentNodeSelection] for the individual `nodeId` based on

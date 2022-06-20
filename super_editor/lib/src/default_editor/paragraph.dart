@@ -1,11 +1,12 @@
 import 'package:attributed_text/attributed_text.dart';
-import 'package:flutter/foundation.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_editor.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/edit_context.dart';
+import 'package:super_editor/src/core/styles.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
@@ -67,7 +68,7 @@ class ParagraphComponentBuilder implements ComponentBuilder {
       textStyleBuilder: noStyleBuilder,
       textDirection: textDirection,
       textAlignment: textAlign,
-      selectionColor: const Color(0x00000000),
+      caretColor: const Color(0x00000000),
     );
   }
 
@@ -80,10 +81,14 @@ class ParagraphComponentBuilder implements ComponentBuilder {
 
     editorLayoutLog.fine("Building paragraph component for node: ${componentViewModel.nodeId}");
 
-    if (componentViewModel.selection != null) {
+    if (componentViewModel.caret != null) {
+      editorLayoutLog.finer(' - painting caret in paragraph');
+    }
+
+    if (componentViewModel.styledSelections.isNotEmpty) {
       editorLayoutLog.finer(' - painting a text selection:');
-      editorLayoutLog.finer('   base: ${componentViewModel.selection!.base}');
-      editorLayoutLog.finer('   extent: ${componentViewModel.selection!.extent}');
+      editorLayoutLog.finer('   base: ${componentViewModel.styledSelections.first.selection.base}');
+      editorLayoutLog.finer('   extent: ${componentViewModel.styledSelections.first.selection.extent}');
     } else {
       editorLayoutLog.finer(' - not painting any text selection');
     }
@@ -99,9 +104,7 @@ class ParagraphComponentBuilder implements ComponentBuilder {
           : {},
       textAlign: componentViewModel.textAlignment,
       textDirection: componentViewModel.textDirection,
-      textSelection: componentViewModel.selection,
-      selectionColor: componentViewModel.selectionColor,
-      highlightWhenEmpty: componentViewModel.highlightWhenEmpty,
+      styledSelections: componentViewModel.styledSelections,
     );
   }
 }
@@ -116,10 +119,11 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
     required this.textStyleBuilder,
     this.textDirection = TextDirection.ltr,
     this.textAlignment = TextAlign.left,
-    this.selection,
-    required this.selectionColor,
-    this.highlightWhenEmpty = false,
-  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
+    List<StyledSelection<TextSelection>>? styledSelections,
+    this.caret,
+    required this.caretColor,
+  })  : styledSelections = styledSelections ?? [],
+        super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
 
   Attribution? blockType;
   AttributedText text;
@@ -130,11 +134,11 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
   @override
   TextAlign textAlignment;
   @override
-  TextSelection? selection;
+  List<StyledSelection<TextSelection>> styledSelections;
   @override
-  Color selectionColor;
+  TextPosition? caret;
   @override
-  bool highlightWhenEmpty;
+  Color caretColor;
 
   @override
   ParagraphComponentViewModel copy() {
@@ -147,9 +151,9 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
       textStyleBuilder: textStyleBuilder,
       textDirection: textDirection,
       textAlignment: textAlignment,
-      selection: selection,
-      selectionColor: selectionColor,
-      highlightWhenEmpty: highlightWhenEmpty,
+      styledSelections: styledSelections,
+      caret: caret,
+      caretColor: caretColor,
     );
   }
 
@@ -165,9 +169,9 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
           textStyleBuilder == other.textStyleBuilder &&
           textDirection == other.textDirection &&
           textAlignment == other.textAlignment &&
-          selection == other.selection &&
-          selectionColor == other.selectionColor &&
-          highlightWhenEmpty == other.highlightWhenEmpty;
+          caret == other.caret &&
+          caretColor == other.caretColor &&
+          const DeepCollectionEquality().equals(styledSelections, other.styledSelections);
 
   @override
   int get hashCode =>
@@ -178,9 +182,9 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
       textStyleBuilder.hashCode ^
       textDirection.hashCode ^
       textAlignment.hashCode ^
-      selection.hashCode ^
-      selectionColor.hashCode ^
-      highlightWhenEmpty.hashCode;
+      styledSelections.hashCode ^
+      caret.hashCode ^
+      caretColor.hashCode;
 }
 
 /// Combines two consecutive `ParagraphNode`s, indicated by `firstNodeId`

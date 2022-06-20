@@ -163,8 +163,6 @@ class HeaderWithHintComponentBuilder implements ComponentBuilder {
       return null;
     }
 
-    final textSelection = componentViewModel.selection;
-
     return TextWithHintComponent(
       key: componentContext.componentKey,
       text: componentViewModel.text,
@@ -188,8 +186,8 @@ class HeaderWithHintComponentBuilder implements ComponentBuilder {
       hintStyleBuilder: (Set<Attribution> attributions) => _textStyleBuilder(attributions).copyWith(
         color: const Color(0xFFDDDDDD),
       ),
-      textSelection: textSelection,
-      selectionColor: componentViewModel.selectionColor,
+      styledSelections: componentViewModel.styledSelections,
+      showCaret: componentViewModel.caret != null,
     );
   }
 }
