@@ -26,6 +26,11 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
         _nonPrimarySelectionStyler = nonPrimarySelectionStyler {
     // Our styles need to be re-applied whenever the document selection changes.
     _composer.selectionNotifier.addListener(markDirty);
+    _composer.addNonPrimarySelectionListener(NonPrimarySelectionListener(
+      onSelectionAdded: (_) => markDirty(),
+      onSelectionChanged: (_) => markDirty(),
+      onSelectionRemoved: (_) => markDirty(),
+    ));
   }
 
   @override
@@ -46,14 +51,18 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
     }
 
     _shouldDocumentShowCaret = newValue;
-    editorLayoutLog.fine("Change to 'document should show caret': $_shouldDocumentShowCaret");
+    editorLayoutLog.fine(
+        "Change to 'document should show caret': $_shouldDocumentShowCaret");
     markDirty();
   }
 
   @override
-  SingleColumnLayoutViewModel style(Document document, SingleColumnLayoutViewModel viewModel) {
-    editorLayoutLog.info("(Re)calculating selection view model for document layout");
-    editorLayoutLog.fine("Applying selection to components: ${_composer.selection}");
+  SingleColumnLayoutViewModel style(
+      Document document, SingleColumnLayoutViewModel viewModel) {
+    editorLayoutLog
+        .info("(Re)calculating selection view model for document layout");
+    editorLayoutLog
+        .fine("Applying selection to components: ${_composer.selection}");
     return SingleColumnLayoutViewModel(
       padding: viewModel.padding,
       componentViewModels: [
@@ -63,7 +72,8 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
     );
   }
 
-  SingleColumnLayoutComponentViewModel _applySelection(SingleColumnLayoutComponentViewModel viewModel) {
+  SingleColumnLayoutComponentViewModel _applySelection(
+      SingleColumnLayoutComponentViewModel viewModel) {
     final documentSelection = _composer.selection;
     final node = _document.getNodeById(viewModel.nodeId)!;
 
@@ -86,8 +96,10 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
         //       into atomic transactions (#423)
         selectedNodes = [];
       }
-      nodeSelection =
-          _computeNodeSelection(documentSelection: documentSelection, selectedNodes: selectedNodes, node: node);
+      nodeSelection = _computeNodeSelection(
+          documentSelection: documentSelection,
+          selectedNodes: selectedNodes,
+          node: node);
     }
 
     editorLayoutLog.fine("Node selection (${node.id}): $nodeSelection");
@@ -97,14 +109,18 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
         node: node,
       );
 
-      final textSelection = nodeSelection == null || nodeSelection.nodeSelection is! TextSelection
-          ? null
-          : nodeSelection.nodeSelection as TextSelection;
-      if (nodeSelection != null && nodeSelection.nodeSelection is! TextSelection) {
+      final textSelection =
+          nodeSelection == null || nodeSelection.nodeSelection is! TextSelection
+              ? null
+              : nodeSelection.nodeSelection as TextSelection;
+      if (nodeSelection != null &&
+          nodeSelection.nodeSelection is! TextSelection) {
         editorLayoutLog.shout(
             'ERROR: Building a paragraph component but the selection is not a TextSelection. Node: ${node.id}, Selection: ${nodeSelection.nodeSelection}');
       }
-      final showCaret = _shouldDocumentShowCaret && nodeSelection != null ? nodeSelection.isExtent : false;
+      final showCaret = _shouldDocumentShowCaret && nodeSelection != null
+          ? nodeSelection.isExtent
+          : false;
       // final highlightWhenEmpty =
       //     nodeSelection == null ? false : nodeSelection.highlightWhenEmpty && _selectionStyles.highlightEmptyTextBlocks;
 
@@ -125,19 +141,31 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
       }
     }
     if (viewModel is ImageComponentViewModel) {
-      final styledSelections = _computeStyledSelectionsForUpstreamDownstreamNodes(composer: _composer, node: node);
+      final styledSelections =
+          _computeStyledSelectionsForUpstreamDownstreamNodes(
+              composer: _composer, node: node);
 
       viewModel
         ..styledSelections = styledSelections
-        ..caret = _shouldDocumentShowCaret && styledSelections.isNotEmpty && styledSelections.last.selection.isCollapsed ? styledSelections.last.selection.extent : null
+        ..caret = _shouldDocumentShowCaret &&
+                styledSelections.isNotEmpty &&
+                styledSelections.last.selection.isCollapsed
+            ? styledSelections.last.selection.extent
+            : null
         ..caretColor = _selectionStyles.caretColor;
     }
     if (viewModel is HorizontalRuleComponentViewModel) {
-      final styledSelections = _computeStyledSelectionsForUpstreamDownstreamNodes(composer: _composer, node: node);
+      final styledSelections =
+          _computeStyledSelectionsForUpstreamDownstreamNodes(
+              composer: _composer, node: node);
 
       viewModel
         ..styledSelections = styledSelections
-        ..caret = _shouldDocumentShowCaret && styledSelections.isNotEmpty && styledSelections.last.selection.isCollapsed ? styledSelections.last.selection.extent : null
+        ..caret = _shouldDocumentShowCaret &&
+                styledSelections.isNotEmpty &&
+                styledSelections.last.selection.isCollapsed
+            ? styledSelections.last.selection.extent
+            : null
         ..caretColor = _selectionStyles.caretColor;
     }
 
@@ -176,9 +204,11 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
       );
 
       if (nodeSelection?.nodeSelection is TextNodeSelection) {
-        final textNodeSelection = nodeSelection!.nodeSelection as TextNodeSelection;
-        final textSelection =
-            TextSelection(baseOffset: textNodeSelection.baseOffset, extentOffset: textNodeSelection.extentOffset);
+        final textNodeSelection =
+            nodeSelection!.nodeSelection as TextNodeSelection;
+        final textSelection = TextSelection(
+            baseOffset: textNodeSelection.baseOffset,
+            extentOffset: textNodeSelection.extentOffset);
 
         styledSelections.add(StyledSelection(
           textSelection,
@@ -210,13 +240,17 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
         selectedNodes = [];
       }
 
-      final nodeSelection =
-          _computeNodeSelection(documentSelection: documentSelection, selectedNodes: selectedNodes, node: node);
+      final nodeSelection = _computeNodeSelection(
+          documentSelection: documentSelection,
+          selectedNodes: selectedNodes,
+          node: node);
 
       if (nodeSelection?.nodeSelection is TextNodeSelection) {
-        final textNodeSelection = nodeSelection!.nodeSelection as TextNodeSelection;
-        final textSelection =
-            TextSelection(baseOffset: textNodeSelection.baseOffset, extentOffset: textNodeSelection.extentOffset);
+        final textNodeSelection =
+            nodeSelection!.nodeSelection as TextNodeSelection;
+        final textSelection = TextSelection(
+            baseOffset: textNodeSelection.baseOffset,
+            extentOffset: textNodeSelection.extentOffset);
 
         styledSelections.add(StyledSelection(
           textSelection,
@@ -232,11 +266,13 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
     return styledSelections;
   }
 
-  List<StyledSelection<UpstreamDownstreamNodeSelection>> _computeStyledSelectionsForUpstreamDownstreamNodes({
+  List<StyledSelection<UpstreamDownstreamNodeSelection>>
+      _computeStyledSelectionsForUpstreamDownstreamNodes({
     required DocumentComposer composer,
     required DocumentNode node,
   }) {
-    final styledSelections = <StyledSelection<UpstreamDownstreamNodeSelection>>[];
+    final styledSelections =
+        <StyledSelection<UpstreamDownstreamNodeSelection>>[];
 
     for (final nonPrimarySelection in _composer.getAllNonPrimarySelections()) {
       late List<DocumentNode> selectedNodes;
@@ -264,7 +300,8 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
       );
 
       if (nodeSelection?.nodeSelection is UpstreamDownstreamNodeSelection) {
-        final upstreamDownstreamSelection = nodeSelection!.nodeSelection as UpstreamDownstreamNodeSelection;
+        final upstreamDownstreamSelection =
+            nodeSelection!.nodeSelection as UpstreamDownstreamNodeSelection;
 
         styledSelections.add(StyledSelection(
           upstreamDownstreamSelection,
@@ -296,11 +333,14 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
         selectedNodes = [];
       }
 
-      final nodeSelection =
-      _computeNodeSelection(documentSelection: documentSelection, selectedNodes: selectedNodes, node: node);
+      final nodeSelection = _computeNodeSelection(
+          documentSelection: documentSelection,
+          selectedNodes: selectedNodes,
+          node: node);
 
       if (nodeSelection?.nodeSelection is UpstreamDownstreamNodeSelection) {
-        final upstreamDownstreamSelection = nodeSelection!.nodeSelection as UpstreamDownstreamNodeSelection;
+        final upstreamDownstreamSelection =
+            nodeSelection!.nodeSelection as UpstreamDownstreamNodeSelection;
 
         styledSelections.add(StyledSelection(
           upstreamDownstreamSelection,
@@ -344,7 +384,8 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
       final extentNodePosition = documentSelection.extent.nodePosition;
       late NodeSelection? nodeSelection;
       try {
-        nodeSelection = node.computeSelection(base: baseNodePosition, extent: extentNodePosition);
+        nodeSelection = node.computeSelection(
+            base: baseNodePosition, extent: extentNodePosition);
       } catch (exception) {
         // This situation can happen in the moment between a document change and
         // a corresponding selection change. For example: deleting an image and
@@ -371,7 +412,9 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
         editorLayoutLog.finer('   - ${node.id}');
       }
 
-      if (selectedNodes.firstWhereOrNull((selectedNode) => selectedNode.id == node.id) == null) {
+      if (selectedNodes
+              .firstWhereOrNull((selectedNode) => selectedNode.id == node.id) ==
+          null) {
         // The document selection does not contain the node we're interested in. Return.
         editorLayoutLog.finer(' - this node is not in the selection');
         return null;
@@ -386,8 +429,11 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
         return DocumentNodeSelection(
           nodeId: node.id,
           nodeSelection: node.computeSelection(
-            base: isBase ? documentSelection.base.nodePosition : node.endPosition,
-            extent: isBase ? node.endPosition : documentSelection.extent.nodePosition,
+            base:
+                isBase ? documentSelection.base.nodePosition : node.endPosition,
+            extent: isBase
+                ? node.endPosition
+                : documentSelection.extent.nodePosition,
           ),
           isBase: isBase,
           isExtent: !isBase,
@@ -403,14 +449,17 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
           nodeId: node.id,
           nodeSelection: node.computeSelection(
             base: isBase ? node.beginningPosition : node.beginningPosition,
-            extent: isBase ? documentSelection.base.nodePosition : documentSelection.extent.nodePosition,
+            extent: isBase
+                ? documentSelection.base.nodePosition
+                : documentSelection.extent.nodePosition,
           ),
           isBase: isBase,
           isExtent: !isBase,
           highlightWhenEmpty: isBase,
         );
       } else {
-        editorLayoutLog.finer(' - this node is fully selected within the selection');
+        editorLayoutLog
+            .finer(' - this node is fully selected within the selection');
         // Multiple nodes are selected and this node is neither the top
         // or the bottom node, therefore this entire node is selected.
         return DocumentNodeSelection(
@@ -429,4 +478,5 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
 /// Function called to configure [SelectionStyles] for a given [nonPrimarySelection].
 ///
 /// If you don't want to display anything for this selection, return `null`.
-typedef NonPrimarySelectionStyler = SelectionStyles? Function(NonPrimarySelection nonPrimarySelection);
+typedef NonPrimarySelectionStyler = SelectionStyles? Function(
+    NonPrimarySelection nonPrimarySelection);

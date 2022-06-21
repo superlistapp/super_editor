@@ -17,7 +17,8 @@ class DocumentComposer with ChangeNotifier {
     DocumentSelection? initialSelection,
     ImeConfiguration? imeConfiguration,
   })  : _selection = initialSelection,
-        imeConfiguration = ValueNotifier(imeConfiguration ?? const ImeConfiguration()),
+        imeConfiguration =
+            ValueNotifier(imeConfiguration ?? const ImeConfiguration()),
         _preferences = ComposerPreferences() {
     _preferences.addListener(() {
       editorLog.fine("Composer preferences changed");
@@ -141,15 +142,33 @@ class NonPrimarySelection {
 }
 
 /// Listener for changes to non-primary user selections.
-abstract class NonPrimarySelectionListener {
+class NonPrimarySelectionListener {
+  const NonPrimarySelectionListener({
+    void Function(NonPrimarySelection)? onSelectionAdded,
+    void Function(NonPrimarySelection)? onSelectionChanged,
+    void Function(String id)? onSelectionRemoved,
+  })  : _onSelectionAdded = onSelectionAdded,
+        _onSelectionChanged = onSelectionChanged,
+        _onSelectionRemoved = onSelectionRemoved;
+
+  final void Function(NonPrimarySelection)? _onSelectionAdded;
+  final void Function(NonPrimarySelection)? _onSelectionChanged;
+  final void Function(String id)? _onSelectionRemoved;
+
   /// The given [selection] was added to the composer.
-  void onSelectionAdded(NonPrimarySelection selection);
+  void onSelectionAdded(NonPrimarySelection selection) {
+    _onSelectionAdded?.call(selection);
+  }
 
   /// An existing selection was changed to the new [selection].
-  void onSelectionChanged(NonPrimarySelection selection);
+  void onSelectionChanged(NonPrimarySelection selection) {
+    _onSelectionChanged?.call(selection);
+  }
 
   /// The selection with the given [id] was removed from the document.
-  void onSelectionRemoved(String id);
+  void onSelectionRemoved(String id) {
+    _onSelectionRemoved?.call(id);
+  }
 }
 
 /// Holds preferences about user input, to be used for the
