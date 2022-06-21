@@ -106,7 +106,7 @@ extension SuperTextFieldRobot on WidgetTester {
     );
 
     if (adjustedOffset.dx == textFieldBox.size.width) {
-      adjustedOffset += const Offset(-8, 0);
+      adjustedOffset += const Offset(-10, 0);
     }
 
     if (!textFieldBox.size.contains(adjustedOffset)) {

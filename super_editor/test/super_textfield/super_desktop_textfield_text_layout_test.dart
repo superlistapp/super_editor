@@ -14,8 +14,10 @@ void main() {
           text: '🐢',
         );
 
-        // Place caret after the emoji      
-        await tester.placeCaretInSuperTextField(2);   
+        // Place caret at the beginning of the text
+        await tester.placeCaretInSuperTextField(0);
+        // Move caret to the right   
+        await tester.pressRightArrow();
 
         // Ensure we are at the end of the text
         expect(
@@ -38,8 +40,10 @@ void main() {
           text: '🐢',
         );
 
-        // Place caret after the emoji      
-        await tester.placeCaretInSuperTextField(2); 
+        // Place caret at the beginning of the text
+        await tester.placeCaretInSuperTextField(0);
+        // Move caret to the right   
+        await tester.pressRightArrow(); 
 
         // Ensure we are at the end of the text
         expect(
@@ -134,9 +138,13 @@ void main() {
         await _pumpSuperTextFieldEmojiTest(tester, 
           text: '🐢🐢',
         );
-
-        // Place caret after the second emoji      
-        await tester.placeCaretInSuperTextField(4);   
+                
+        // Place caret at the beginning of the text
+        await tester.placeCaretInSuperTextField(0);
+        // Move caret to the right   
+        await tester.pressRightArrow();
+        // Move caret to the right   
+        await tester.pressRightArrow();
 
         // Ensure we are at the end of the text
         expect(
@@ -168,8 +176,12 @@ void main() {
           text: '🐢🐢',
         );
 
-        // Place caret after the second emoji    
-        await tester.placeCaretInSuperTextField(4); 
+        // Place caret at the beginning of the text
+        await tester.placeCaretInSuperTextField(0);
+        // Move caret to the right   
+        await tester.pressRightArrow();
+        // Move caret to the right   
+        await tester.pressRightArrow();
 
         // Ensure we are at the end of the text
         expect(
