@@ -125,25 +125,19 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
       }
     }
     if (viewModel is ImageComponentViewModel) {
-      // TODO: paint primary selection, if it exists. Otherwise, paint non-primary
-      // selection, if one exists.
-      final selection = nodeSelection == null ? null : nodeSelection.nodeSelection as UpstreamDownstreamNodeSelection;
+      final styledSelections = _computeStyledSelectionsForUpstreamDownstreamNodes(composer: _composer, node: node);
 
       viewModel
-        ..selection = selection
-        ..selectionColor = _selectionStyles.selectionColor
-        ..caret = _shouldDocumentShowCaret && selection != null && selection.isCollapsed ? selection.extent : null
+        ..styledSelections = styledSelections
+        ..caret = _shouldDocumentShowCaret && styledSelections.isNotEmpty && styledSelections.last.selection.isCollapsed ? styledSelections.last.selection.extent : null
         ..caretColor = _selectionStyles.caretColor;
     }
     if (viewModel is HorizontalRuleComponentViewModel) {
-      // TODO: paint primary selection, if it exists. Otherwise, paint non-primary
-      // selection, if one exists.
-      final selection = nodeSelection == null ? null : nodeSelection.nodeSelection as UpstreamDownstreamNodeSelection;
+      final styledSelections = _computeStyledSelectionsForUpstreamDownstreamNodes(composer: _composer, node: node);
 
       viewModel
-        ..selection = selection
-        ..selectionColor = _selectionStyles.selectionColor
-        ..caret = _shouldDocumentShowCaret && selection != null && selection.isCollapsed ? selection.extent : null
+        ..styledSelections = styledSelections
+        ..caret = _shouldDocumentShowCaret && styledSelections.isNotEmpty && styledSelections.last.selection.isCollapsed ? styledSelections.last.selection.extent : null
         ..caretColor = _selectionStyles.caretColor;
     }
 
@@ -226,6 +220,90 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
 
         styledSelections.add(StyledSelection(
           textSelection,
+          SelectionStyles(
+            selectionColor: _selectionStyles.selectionColor,
+            highlightEmptyTextBlocks: nodeSelection.highlightWhenEmpty,
+            caretColor: _selectionStyles.caretColor,
+          ),
+        ));
+      }
+    }
+
+    return styledSelections;
+  }
+
+  List<StyledSelection<UpstreamDownstreamNodeSelection>> _computeStyledSelectionsForUpstreamDownstreamNodes({
+    required DocumentComposer composer,
+    required DocumentNode node,
+  }) {
+    final styledSelections = <StyledSelection<UpstreamDownstreamNodeSelection>>[];
+
+    for (final nonPrimarySelection in _composer.getAllNonPrimarySelections()) {
+      late List<DocumentNode> selectedNodes;
+      try {
+        selectedNodes = _document.getNodesInside(
+          nonPrimarySelection.selection.base,
+          nonPrimarySelection.selection.extent,
+        );
+      } catch (exception) {
+        // This situation can happen in the moment between a document change and
+        // a corresponding selection change. For example: deleting an image and
+        // replacing it with an empty paragraph. Between the doc change and the
+        // selection change, the old image selection is applied to the new paragraph.
+        // This results in an exception.
+        //
+        // TODO: introduce a unified event ledger that combines related behaviors
+        //       into atomic transactions (#423)
+        selectedNodes = [];
+      }
+
+      final nodeSelection = _computeNodeSelection(
+        documentSelection: nonPrimarySelection.selection,
+        selectedNodes: selectedNodes,
+        node: node,
+      );
+
+      if (nodeSelection?.nodeSelection is UpstreamDownstreamNodeSelection) {
+        final upstreamDownstreamSelection = nodeSelection!.nodeSelection as UpstreamDownstreamNodeSelection;
+
+        styledSelections.add(StyledSelection(
+          upstreamDownstreamSelection,
+          // TODO: the styler decides whether to highlight an empty block, but it shouldn't.
+          // That decision needs to be made based on whether the user is selecting multiple
+          // blocks.
+          _nonPrimarySelectionStyler!(nonPrimarySelection)!,
+        ));
+      }
+    }
+
+    final documentSelection = _composer.selection;
+    if (documentSelection != null) {
+      late List<DocumentNode> selectedNodes;
+      try {
+        selectedNodes = _document.getNodesInside(
+          documentSelection.base,
+          documentSelection.extent,
+        );
+      } catch (exception) {
+        // This situation can happen in the moment between a document change and
+        // a corresponding selection change. For example: deleting an image and
+        // replacing it with an empty paragraph. Between the doc change and the
+        // selection change, the old image selection is applied to the new paragraph.
+        // This results in an exception.
+        //
+        // TODO: introduce a unified event ledger that combines related behaviors
+        //       into atomic transactions (#423)
+        selectedNodes = [];
+      }
+
+      final nodeSelection =
+      _computeNodeSelection(documentSelection: documentSelection, selectedNodes: selectedNodes, node: node);
+
+      if (nodeSelection?.nodeSelection is UpstreamDownstreamNodeSelection) {
+        final upstreamDownstreamSelection = nodeSelection!.nodeSelection as UpstreamDownstreamNodeSelection;
+
+        styledSelections.add(StyledSelection(
+          upstreamDownstreamSelection,
           SelectionStyles(
             selectionColor: _selectionStyles.selectionColor,
             highlightEmptyTextBlocks: nodeSelection.highlightWhenEmpty,

@@ -1,5 +1,7 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/src/core/document.dart';
+import 'package:super_editor/src/core/styles.dart';
 import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/blinking_caret.dart';
@@ -12,13 +14,16 @@ final _log = Logger(scope: 'box_component.dart');
 /// Base implementation for a [DocumentNode] that only supports [UpstreamDownstreamNodeSelection]s.
 abstract class BlockNode extends DocumentNode {
   @override
-  UpstreamDownstreamNodePosition get beginningPosition => const UpstreamDownstreamNodePosition.upstream();
+  UpstreamDownstreamNodePosition get beginningPosition =>
+      const UpstreamDownstreamNodePosition.upstream();
 
   @override
-  UpstreamDownstreamNodePosition get endPosition => const UpstreamDownstreamNodePosition.downstream();
+  UpstreamDownstreamNodePosition get endPosition =>
+      const UpstreamDownstreamNodePosition.downstream();
 
   @override
-  UpstreamDownstreamNodePosition selectUpstreamPosition(NodePosition position1, NodePosition position2) {
+  UpstreamDownstreamNodePosition selectUpstreamPosition(
+      NodePosition position1, NodePosition position2) {
     if (position1 is! UpstreamDownstreamNodePosition) {
       throw Exception(
           'Expected a UpstreamDownstreamNodePosition for position1 but received a ${position1.runtimeType}');
@@ -28,7 +33,8 @@ abstract class BlockNode extends DocumentNode {
           'Expected a UpstreamDownstreamNodePosition for position2 but received a ${position2.runtimeType}');
     }
 
-    if (position1.affinity == TextAffinity.upstream || position2.affinity == TextAffinity.upstream) {
+    if (position1.affinity == TextAffinity.upstream ||
+        position2.affinity == TextAffinity.upstream) {
       return const UpstreamDownstreamNodePosition.upstream();
     } else {
       return const UpstreamDownstreamNodePosition.downstream();
@@ -36,7 +42,8 @@ abstract class BlockNode extends DocumentNode {
   }
 
   @override
-  UpstreamDownstreamNodePosition selectDownstreamPosition(NodePosition position1, NodePosition position2) {
+  UpstreamDownstreamNodePosition selectDownstreamPosition(
+      NodePosition position1, NodePosition position2) {
     if (position1 is! UpstreamDownstreamNodePosition) {
       throw Exception(
           'Expected a UpstreamDownstreamNodePosition for position1 but received a ${position1.runtimeType}');
@@ -46,7 +53,8 @@ abstract class BlockNode extends DocumentNode {
           'Expected a UpstreamDownstreamNodePosition for position2 but received a ${position2.runtimeType}');
     }
 
-    if (position1.affinity == TextAffinity.downstream || position2.affinity == TextAffinity.downstream) {
+    if (position1.affinity == TextAffinity.downstream ||
+        position2.affinity == TextAffinity.downstream) {
       return const UpstreamDownstreamNodePosition.upstream();
     } else {
       return const UpstreamDownstreamNodePosition.downstream();
@@ -59,10 +67,12 @@ abstract class BlockNode extends DocumentNode {
     @required dynamic extent,
   }) {
     if (base is! UpstreamDownstreamNodePosition) {
-      throw Exception('Expected a UpstreamDownstreamNodePosition for base but received a ${base.runtimeType}');
+      throw Exception(
+          'Expected a UpstreamDownstreamNodePosition for base but received a ${base.runtimeType}');
     }
     if (extent is! UpstreamDownstreamNodePosition) {
-      throw Exception('Expected a UpstreamDownstreamNodePosition for extent but received a ${extent.runtimeType}');
+      throw Exception(
+          'Expected a UpstreamDownstreamNodePosition for extent but received a ${extent.runtimeType}');
     }
 
     return UpstreamDownstreamNodeSelection(base: base, extent: extent);
@@ -102,7 +112,8 @@ class _BoxComponentState extends State<BoxComponent> with DocumentComponent {
   }
 
   @override
-  UpstreamDownstreamNodePosition? movePositionLeft(dynamic currentPosition, [MovementModifier? movementModifier]) {
+  UpstreamDownstreamNodePosition? movePositionLeft(dynamic currentPosition,
+      [MovementModifier? movementModifier]) {
     if (currentPosition == const UpstreamDownstreamNodePosition.upstream()) {
       // Can't move any further left.
       return null;
@@ -112,7 +123,8 @@ class _BoxComponentState extends State<BoxComponent> with DocumentComponent {
   }
 
   @override
-  UpstreamDownstreamNodePosition? movePositionRight(dynamic currentPosition, [MovementModifier? movementModifier]) {
+  UpstreamDownstreamNodePosition? movePositionRight(dynamic currentPosition,
+      [MovementModifier? movementModifier]) {
     if (currentPosition == const UpstreamDownstreamNodePosition.downstream()) {
       // Can't move any further right.
       return null;
@@ -136,7 +148,8 @@ class _BoxComponentState extends State<BoxComponent> with DocumentComponent {
   @override
   UpstreamDownstreamNodeSelection getCollapsedSelectionAt(nodePosition) {
     if (nodePosition is! UpstreamDownstreamNodePosition) {
-      throw Exception('The given nodePosition ($nodePosition) is not compatible with BoxComponent');
+      throw Exception(
+          'The given nodePosition ($nodePosition) is not compatible with BoxComponent');
     }
 
     return UpstreamDownstreamNodeSelection.collapsed(nodePosition);
@@ -164,7 +177,8 @@ class _BoxComponentState extends State<BoxComponent> with DocumentComponent {
   @override
   Offset getOffsetForPosition(nodePosition) {
     if (nodePosition is! UpstreamDownstreamNodePosition) {
-      throw Exception('Expected nodePosition of type UpstreamDownstreamNodePosition but received: $nodePosition');
+      throw Exception(
+          'Expected nodePosition of type UpstreamDownstreamNodePosition but received: $nodePosition');
     }
 
     final myBox = context.findRenderObject() as RenderBox;
@@ -185,7 +199,8 @@ class _BoxComponentState extends State<BoxComponent> with DocumentComponent {
   @override
   Rect getRectForPosition(dynamic nodePosition) {
     if (nodePosition is! UpstreamDownstreamNodePosition) {
-      throw Exception('Expected nodePosition of type UpstreamDownstreamNodePosition but received: $nodePosition');
+      throw Exception(
+          'Expected nodePosition of type UpstreamDownstreamNodePosition but received: $nodePosition');
     }
 
     final myBox = context.findRenderObject() as RenderBox;
@@ -202,13 +217,16 @@ class _BoxComponentState extends State<BoxComponent> with DocumentComponent {
   @override
   Rect getRectForSelection(dynamic basePosition, dynamic extentPosition) {
     if (basePosition is! UpstreamDownstreamNodePosition) {
-      throw Exception('Expected nodePosition of type UpstreamDownstreamNodePosition but received: $basePosition');
+      throw Exception(
+          'Expected nodePosition of type UpstreamDownstreamNodePosition but received: $basePosition');
     }
     if (extentPosition is! UpstreamDownstreamNodePosition) {
-      throw Exception('Expected nodePosition of type UpstreamDownstreamNodePosition but received: $extentPosition');
+      throw Exception(
+          'Expected nodePosition of type UpstreamDownstreamNodePosition but received: $extentPosition');
     }
 
-    final selection = UpstreamDownstreamNodeSelection(base: basePosition, extent: extentPosition);
+    final selection = UpstreamDownstreamNodeSelection(
+        base: basePosition, extent: extentPosition);
     if (selection.isCollapsed) {
       return getRectForPosition(selection.extent);
     }
@@ -230,19 +248,24 @@ class _BoxComponentState extends State<BoxComponent> with DocumentComponent {
   }
 
   @override
-  UpstreamDownstreamNodeSelection getSelectionBetween({required basePosition, required extentPosition}) {
+  UpstreamDownstreamNodeSelection getSelectionBetween(
+      {required basePosition, required extentPosition}) {
     if (basePosition is! UpstreamDownstreamNodePosition) {
-      throw Exception('The given basePosition ($basePosition) is not compatible with BoxComponent');
+      throw Exception(
+          'The given basePosition ($basePosition) is not compatible with BoxComponent');
     }
     if (extentPosition is! UpstreamDownstreamNodePosition) {
-      throw Exception('The given extentPosition ($extentPosition) is not compatible with BoxComponent');
+      throw Exception(
+          'The given extentPosition ($extentPosition) is not compatible with BoxComponent');
     }
 
-    return UpstreamDownstreamNodeSelection(base: basePosition, extent: extentPosition);
+    return UpstreamDownstreamNodeSelection(
+        base: basePosition, extent: extentPosition);
   }
 
   @override
-  UpstreamDownstreamNodeSelection getSelectionInRange(Offset localBaseOffset, Offset localExtentOffset) {
+  UpstreamDownstreamNodeSelection getSelectionInRange(
+      Offset localBaseOffset, Offset localExtentOffset) {
     return getSelectionBetween(
       basePosition: getPositionAtOffset(localBaseOffset),
       extentPosition: getPositionAtOffset(localExtentOffset),
@@ -266,36 +289,44 @@ class _BoxComponentState extends State<BoxComponent> with DocumentComponent {
 class SelectableBox extends StatelessWidget {
   const SelectableBox({
     Key? key,
-    this.selection,
-    required this.selectionColor,
+    this.styledSelections = const [],
     required this.caretColor,
     this.showCaret = false,
     required this.child,
   }) : super(key: key);
 
-  final UpstreamDownstreamNodeSelection? selection;
-  final Color selectionColor;
+  final List<StyledSelection<UpstreamDownstreamNodeSelection>> styledSelections;
   final bool showCaret;
   final Color caretColor;
   final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    final isSelected = selection != null && !selection!.isCollapsed;
+    final topPrioritySelection = styledSelections.lastOrNull;
 
     return Stack(
       children: [
-        DecoratedBox(
-          decoration: BoxDecoration(
-            color: isSelected ? selectionColor.withOpacity(0.5) : Colors.transparent,
+        child,
+        for (final styledSelection in styledSelections)
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: !styledSelection.selection.isCollapsed
+                    ? styledSelection.styles.selectionColor.withOpacity(0.5)
+                    : Colors.transparent,
+              ),
+            ),
           ),
-          position: DecorationPosition.foreground,
-          child: child,
-        ),
-        if (selection != null && showCaret)
+        if (topPrioritySelection != null && showCaret)
           Positioned(
-            left: selection!.extent.affinity == TextAffinity.upstream ? 0 : null,
-            right: selection!.extent.affinity == TextAffinity.upstream ? null : 0,
+            left: topPrioritySelection.selection.extent.affinity ==
+                    TextAffinity.upstream
+                ? 0
+                : null,
+            right: topPrioritySelection.selection.extent.affinity ==
+                    TextAffinity.upstream
+                ? null
+                : 0,
             top: 0,
             bottom: 0,
             width: 1,

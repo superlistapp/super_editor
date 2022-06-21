@@ -1,5 +1,7 @@
 import 'package:attributed_text/attributed_text.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:super_editor/src/core/styles.dart';
 import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
 
 import '../core/document.dart';
@@ -21,7 +23,8 @@ class HorizontalRuleNode extends BlockNode with ChangeNotifier {
   @override
   String? copyContent(dynamic selection) {
     if (selection is! UpstreamDownstreamNodeSelection) {
-      throw Exception('HorizontalRuleNode can only copy content from a UpstreamDownstreamNodeSelection.');
+      throw Exception(
+          'HorizontalRuleNode can only copy content from a UpstreamDownstreamNodeSelection.');
     }
 
     return !selection.isCollapsed ? '---' : null;
@@ -34,7 +37,10 @@ class HorizontalRuleNode extends BlockNode with ChangeNotifier {
 
   @override
   bool operator ==(Object other) =>
-      identical(this, other) || other is HorizontalRuleNode && runtimeType == other.runtimeType && id == other.id;
+      identical(this, other) ||
+      other is HorizontalRuleNode &&
+          runtimeType == other.runtimeType &&
+          id == other.id;
 
   @override
   int get hashCode => id.hashCode;
@@ -44,48 +50,47 @@ class HorizontalRuleComponentBuilder implements ComponentBuilder {
   const HorizontalRuleComponentBuilder();
 
   @override
-  SingleColumnLayoutComponentViewModel? createViewModel(Document document, DocumentNode node) {
+  SingleColumnLayoutComponentViewModel? createViewModel(
+      Document document, DocumentNode node) {
     if (node is! HorizontalRuleNode) {
       return null;
     }
 
     return HorizontalRuleComponentViewModel(
       nodeId: node.id,
-      selectionColor: const Color(0x00000000),
       caretColor: const Color(0x00000000),
     );
   }
 
   @override
-  Widget? createComponent(
-      SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel componentViewModel) {
+  Widget? createComponent(SingleColumnDocumentComponentContext componentContext,
+      SingleColumnLayoutComponentViewModel componentViewModel) {
     if (componentViewModel is! HorizontalRuleComponentViewModel) {
       return null;
     }
 
     return HorizontalRuleComponent(
       componentKey: componentContext.componentKey,
-      selection: componentViewModel.selection,
-      selectionColor: componentViewModel.selectionColor,
+      styledSelections: componentViewModel.styledSelections,
       showCaret: componentViewModel.caret != null,
       caretColor: componentViewModel.caretColor,
     );
   }
 }
 
-class HorizontalRuleComponentViewModel extends SingleColumnLayoutComponentViewModel {
+class HorizontalRuleComponentViewModel
+    extends SingleColumnLayoutComponentViewModel {
   HorizontalRuleComponentViewModel({
     required String nodeId,
     double? maxWidth,
     EdgeInsetsGeometry padding = EdgeInsets.zero,
-    this.selection,
-    required this.selectionColor,
+    List<StyledSelection<UpstreamDownstreamNodeSelection>>? styledSelections,
     this.caret,
     required this.caretColor,
-  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
+  })  : styledSelections = styledSelections ?? [],
+        super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
 
-  UpstreamDownstreamNodeSelection? selection;
-  Color selectionColor;
+  List<StyledSelection<UpstreamDownstreamNodeSelection>> styledSelections;
   UpstreamDownstreamNodePosition? caret;
   Color caretColor;
 
@@ -95,8 +100,7 @@ class HorizontalRuleComponentViewModel extends SingleColumnLayoutComponentViewMo
       nodeId: nodeId,
       maxWidth: maxWidth,
       padding: padding,
-      selection: selection,
-      selectionColor: selectionColor,
+      styledSelections: List.from(styledSelections),
       caret: caret,
       caretColor: caretColor,
     );
@@ -109,17 +113,16 @@ class HorizontalRuleComponentViewModel extends SingleColumnLayoutComponentViewMo
           other is HorizontalRuleComponentViewModel &&
           runtimeType == other.runtimeType &&
           nodeId == other.nodeId &&
-          selection == other.selection &&
-          selectionColor == other.selectionColor &&
           caret == other.caret &&
-          caretColor == other.caretColor;
+          caretColor == other.caretColor &&
+          const DeepCollectionEquality()
+              .equals(styledSelections, other.styledSelections);
 
   @override
   int get hashCode =>
       super.hashCode ^
       nodeId.hashCode ^
-      selection.hashCode ^
-      selectionColor.hashCode ^
+      styledSelections.hashCode ^
       caret.hashCode ^
       caretColor.hashCode;
 }
@@ -131,8 +134,7 @@ class HorizontalRuleComponent extends StatelessWidget {
     required this.componentKey,
     this.color = Colors.grey,
     this.thickness = 1,
-    this.selectionColor = Colors.blue,
-    this.selection,
+    this.styledSelections = const [],
     required this.caretColor,
     this.showCaret = false,
   }) : super(key: key);
@@ -140,16 +142,14 @@ class HorizontalRuleComponent extends StatelessWidget {
   final GlobalKey componentKey;
   final Color color;
   final double thickness;
-  final Color selectionColor;
-  final UpstreamDownstreamNodeSelection? selection;
+  final List<StyledSelection<UpstreamDownstreamNodeSelection>> styledSelections;
   final Color caretColor;
   final bool showCaret;
 
   @override
   Widget build(BuildContext context) {
     return SelectableBox(
-      selection: selection,
-      selectionColor: selectionColor,
+      styledSelections: styledSelections,
       caretColor: caretColor,
       showCaret: showCaret,
       child: BoxComponent(

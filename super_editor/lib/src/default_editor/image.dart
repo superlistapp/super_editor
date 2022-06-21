@@ -1,5 +1,7 @@
 import 'package:attributed_text/attributed_text.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:super_editor/src/core/styles.dart';
 import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
 
 import '../core/document.dart';
@@ -44,7 +46,8 @@ class ImageNode extends BlockNode with ChangeNotifier {
   @override
   String? copyContent(dynamic selection) {
     if (selection is! UpstreamDownstreamNodeSelection) {
-      throw Exception('ImageNode can only copy content from a UpstreamDownstreamNodeSelection.');
+      throw Exception(
+          'ImageNode can only copy content from a UpstreamDownstreamNodeSelection.');
     }
 
     return !selection.isCollapsed ? _imageUrl : null;
@@ -52,7 +55,9 @@ class ImageNode extends BlockNode with ChangeNotifier {
 
   @override
   bool hasEquivalentContent(DocumentNode other) {
-    return other is ImageNode && imageUrl == other.imageUrl && altText == other.altText;
+    return other is ImageNode &&
+        imageUrl == other.imageUrl &&
+        altText == other.altText;
   }
 
   @override
@@ -72,7 +77,8 @@ class ImageComponentBuilder implements ComponentBuilder {
   const ImageComponentBuilder();
 
   @override
-  SingleColumnLayoutComponentViewModel? createViewModel(Document document, DocumentNode node) {
+  SingleColumnLayoutComponentViewModel? createViewModel(
+      Document document, DocumentNode node) {
     if (node is! ImageNode) {
       return null;
     }
@@ -80,14 +86,15 @@ class ImageComponentBuilder implements ComponentBuilder {
     return ImageComponentViewModel(
       nodeId: node.id,
       imageUrl: node.imageUrl,
-      selectionColor: const Color(0x00000000),
       caretColor: const Color(0x00000000),
     );
   }
 
   @override
   Widget? createComponent(
-      SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel componentViewModel) {
+    SingleColumnDocumentComponentContext componentContext,
+    SingleColumnLayoutComponentViewModel componentViewModel,
+  ) {
     if (componentViewModel is! ImageComponentViewModel) {
       return null;
     }
@@ -95,8 +102,7 @@ class ImageComponentBuilder implements ComponentBuilder {
     return ImageComponent(
       componentKey: componentContext.componentKey,
       imageUrl: componentViewModel.imageUrl,
-      selection: componentViewModel.selection,
-      selectionColor: componentViewModel.selectionColor,
+      styledSelections: componentViewModel.styledSelections,
       showCaret: componentViewModel.caret != null,
       caretColor: componentViewModel.caretColor,
     );
@@ -109,15 +115,14 @@ class ImageComponentViewModel extends SingleColumnLayoutComponentViewModel {
     double? maxWidth,
     EdgeInsetsGeometry padding = EdgeInsets.zero,
     required this.imageUrl,
-    this.selection,
-    required this.selectionColor,
+    List<StyledSelection<UpstreamDownstreamNodeSelection>>? styledSelections,
     this.caret,
     required this.caretColor,
-  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
+  })  : styledSelections = styledSelections ?? [],
+        super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
 
   String imageUrl;
-  UpstreamDownstreamNodeSelection? selection;
-  Color selectionColor;
+  List<StyledSelection<UpstreamDownstreamNodeSelection>> styledSelections;
   UpstreamDownstreamNodePosition? caret;
   Color caretColor;
 
@@ -128,8 +133,7 @@ class ImageComponentViewModel extends SingleColumnLayoutComponentViewModel {
       maxWidth: maxWidth,
       padding: padding,
       imageUrl: imageUrl,
-      selection: selection,
-      selectionColor: selectionColor,
+      styledSelections: List.from(styledSelections),
       caret: caret,
       caretColor: caretColor,
     );
@@ -143,18 +147,17 @@ class ImageComponentViewModel extends SingleColumnLayoutComponentViewModel {
           runtimeType == other.runtimeType &&
           nodeId == other.nodeId &&
           imageUrl == other.imageUrl &&
-          selection == other.selection &&
-          selectionColor == other.selectionColor &&
           caret == other.caret &&
-          caretColor == other.caretColor;
+          caretColor == other.caretColor &&
+          const DeepCollectionEquality()
+              .equals(styledSelections, other.styledSelections);
 
   @override
   int get hashCode =>
       super.hashCode ^
       nodeId.hashCode ^
       imageUrl.hashCode ^
-      selection.hashCode ^
-      selectionColor.hashCode ^
+      styledSelections.hashCode ^
       caret.hashCode ^
       caretColor.hashCode;
 }
@@ -165,16 +168,14 @@ class ImageComponent extends StatelessWidget {
     Key? key,
     required this.componentKey,
     required this.imageUrl,
-    this.selectionColor = Colors.blue,
-    this.selection,
+    this.styledSelections = const [],
     required this.caretColor,
     this.showCaret = false,
   }) : super(key: key);
 
   final GlobalKey componentKey;
   final String imageUrl;
-  final Color selectionColor;
-  final UpstreamDownstreamNodeSelection? selection;
+  final List<StyledSelection<UpstreamDownstreamNodeSelection>> styledSelections;
   final Color caretColor;
   final bool showCaret;
 
@@ -182,8 +183,7 @@ class ImageComponent extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: SelectableBox(
-        selection: selection,
-        selectionColor: selectionColor,
+        styledSelections: styledSelections,
         caretColor: caretColor,
         showCaret: showCaret,
         child: BoxComponent(

@@ -1,6 +1,6 @@
 import 'package:example/demos/example_editor/_task.dart';
-import 'package:flutter/foundation.dart';
 import 'package:example/logging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/super_editor.dart';
 
@@ -43,25 +43,44 @@ class _ExampleEditorState extends State<ExampleEditor> {
     super.initState();
     _doc = createInitialDocument()..addListener(_hideOrShowToolbar);
     _docEditor = DocumentEditor(document: _doc as MutableDocument);
-    final nodeId = _doc.nodes[2].id;
+
+    final headerImageId = _doc.nodes[0].id;
+    final firstParagraphId = _doc.nodes[2].id;
     _composer = DocumentComposer()
       ..addListener(_hideOrShowToolbar)
       ..setNonPrimarySelection(
-          "john",
-          DocumentSelection(
-            base: DocumentPosition(
-              nodeId: nodeId,
-              nodePosition: TextNodePosition.fromTextPosition(TextPosition(offset: 10)),
-            ),
-            extent: DocumentPosition(
-              nodeId: nodeId,
-              nodePosition: TextNodePosition.fromTextPosition(TextPosition(offset: 50)),
-            ),
-          ));
+        "john",
+        DocumentSelection(
+          base: DocumentPosition(
+            nodeId: firstParagraphId,
+            nodePosition:
+                TextNodePosition.fromTextPosition(TextPosition(offset: 10)),
+          ),
+          extent: DocumentPosition(
+            nodeId: firstParagraphId,
+            nodePosition:
+                TextNodePosition.fromTextPosition(TextPosition(offset: 50)),
+          ),
+        ),
+      )
+      ..setNonPrimarySelection(
+        "jane",
+        DocumentSelection(
+          base: DocumentPosition(
+            nodeId: headerImageId,
+            nodePosition: UpstreamDownstreamNodePosition.upstream(),
+          ),
+          extent: DocumentPosition(
+            nodeId: headerImageId,
+            nodePosition: UpstreamDownstreamNodePosition.downstream(),
+          ),
+        ),
+      );
     _docOps = CommonEditorOperations(
       editor: _docEditor,
       composer: _composer,
-      documentLayoutResolver: () => _docLayoutKey.currentState as DocumentLayout,
+      documentLayoutResolver: () =>
+          _docLayoutKey.currentState as DocumentLayout,
     );
     _editorFocusNode = FocusNode();
     _scrollController = ScrollController()..addListener(_hideOrShowToolbar);
@@ -166,8 +185,10 @@ class _ExampleEditorState extends State<ExampleEditor> {
       }
 
       final docBoundingBox = (_docLayoutKey.currentState as DocumentLayout)
-          .getRectForSelection(_composer.selection!.base, _composer.selection!.extent)!;
-      final docBox = _docLayoutKey.currentContext!.findRenderObject() as RenderBox;
+          .getRectForSelection(
+              _composer.selection!.base, _composer.selection!.extent)!;
+      final docBox =
+          _docLayoutKey.currentContext!.findRenderObject() as RenderBox;
       final overlayBoundingBox = Rect.fromPoints(
         docBox.localToGlobal(docBoundingBox.topLeft),
         docBox.localToGlobal(docBoundingBox.bottomRight),
@@ -243,7 +264,8 @@ class _ExampleEditorState extends State<ExampleEditor> {
           composer: _composer,
           setWidth: (nodeId, width) {
             final node = _doc.getNodeById(nodeId)!;
-            final currentStyles = SingleColumnLayoutComponentStyles.fromMetadata(node);
+            final currentStyles =
+                SingleColumnLayoutComponentStyles.fromMetadata(node);
             SingleColumnLayoutComponentStyles(
               width: width,
               padding: currentStyles.padding,
@@ -267,8 +289,10 @@ class _ExampleEditorState extends State<ExampleEditor> {
       }
 
       final docBoundingBox = (_docLayoutKey.currentState as DocumentLayout)
-          .getRectForSelection(_composer.selection!.base, _composer.selection!.extent)!;
-      final docBox = _docLayoutKey.currentContext!.findRenderObject() as RenderBox;
+          .getRectForSelection(
+              _composer.selection!.base, _composer.selection!.extent)!;
+      final docBox =
+          _docLayoutKey.currentContext!.findRenderObject() as RenderBox;
       final overlayBoundingBox = Rect.fromPoints(
         docBox.localToGlobal(docBoundingBox.topLeft),
         docBox.localToGlobal(docBoundingBox.bottomRight),
@@ -356,10 +380,21 @@ class _ExampleEditorState extends State<ExampleEditor> {
           ],
         ),
         nonPrimarySelectionStyler: (NonPrimarySelection selection) {
+          if (selection.id == "john") {
+            return SelectionStyles(
+              caretColor: Colors.black,
+              selectionColor: Colors.purpleAccent,
+            );
+          } else if (selection.id == "jane") {
+            return SelectionStyles(
+              caretColor: Colors.black,
+              selectionColor: Colors.yellow,
+            );
+          }
+
           return SelectionStyles(
-            caretColor: Colors.black,
-            selectionColor: Colors.purpleAccent,
-          );
+              caretColor: Colors.transparent,
+              selectionColor: Colors.transparent);
         },
         componentBuilders: [
           ...defaultComponentBuilders,
@@ -367,7 +402,9 @@ class _ExampleEditorState extends State<ExampleEditor> {
         ],
         gestureMode: _gestureMode,
         inputSource: _inputSource,
-        keyboardActions: _inputSource == DocumentInputSource.ime ? defaultImeKeyboardActions : defaultKeyboardActions,
+        keyboardActions: _inputSource == DocumentInputSource.ime
+            ? defaultImeKeyboardActions
+            : defaultKeyboardActions,
         androidToolbarBuilder: (_) => AndroidTextEditingFloatingToolbar(
           onCutPressed: _cut,
           onCopyPressed: _copy,
