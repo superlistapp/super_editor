@@ -100,10 +100,12 @@ class DocumentEditorTransaction {
     _document.deleteNodeAt(index);
   }
 
-  /// Moves the given [node] from its current index in the [Document] to the
-  /// given [toIndex].
-  void moveNode({required DocumentNode node, required int toIndex}) {
-    _document.moveNode(node: node, toIndex: toIndex);
+  /// Moves a [DocumentNode] matching the given [nodeId] from its current index
+  /// in the [Document] to the given [targetIndex].
+  ///
+  /// If none of the nodes in this document match [nodeId], throws an error.
+  void moveNode({required String nodeId, required int targetIndex}) {
+    _document.moveNode(nodeId: nodeId, targetIndex: targetIndex);
   }
 
   /// Replaces the given [oldNode] with the given [newNode]
@@ -279,11 +281,18 @@ class MutableDocument with ChangeNotifier implements Document {
     return isRemoved;
   }
 
-  /// Moves the given [node] from its current index in the [Document] to the
-  /// given [toIndex].
-  void moveNode({required DocumentNode node, required int toIndex}) {
+  /// Moves a [DocumentNode] matching the given [nodeId] from its current index
+  /// in the [Document] to the given [targetIndex].
+  ///
+  /// If none of the nodes in this document match [nodeId], throws an error.
+  void moveNode({required String nodeId, required int targetIndex}) {
+    final node = getNodeById(nodeId);
+    if (node == null) {
+      throw Exception('Could not find node with nodeId: $nodeId');
+    }
+
     if (nodes.remove(node)) {
-      nodes.insert(toIndex, node);
+      nodes.insert(targetIndex, node);
       notifyListeners();
     }
   }
