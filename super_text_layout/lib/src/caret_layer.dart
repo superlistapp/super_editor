@@ -111,16 +111,15 @@ class _TextLayoutCaretState extends State<TextLayoutCaret> with TickerProviderSt
 
 class CaretPainter extends CustomPainter {
   CaretPainter({
-    BlinkController? blinkController,
+    this.blinkController,
     required CaretStyle caretStyle,
     this.offset,
     required double? height,
-  })  : _blinkController = blinkController,
-        _caretStyle = caretStyle,        
+  })  : _caretStyle = caretStyle,        
         _height = height,
         super(repaint: blinkController);
-
-  final BlinkController? _blinkController;
+  @visibleForTesting
+  final BlinkController? blinkController;
   final CaretStyle _caretStyle;
   @visibleForTesting
   final Offset? offset;
@@ -140,13 +139,13 @@ class CaretPainter extends CustomPainter {
         //       update painter to support generic geometry
         _caretStyle.borderRadius.resolve(TextDirection.ltr).topLeft,
       ),
-      Paint()..color = _caretStyle.color.withOpacity(_blinkController?.opacity ?? 1.0),
+      Paint()..color = _caretStyle.color.withOpacity(blinkController?.opacity ?? 1.0),
     );
   }
 
   @override
   bool shouldRepaint(CaretPainter oldDelegate) {
-    return _blinkController != oldDelegate._blinkController ||
+    return blinkController != oldDelegate.blinkController ||
         _caretStyle != oldDelegate._caretStyle ||
         offset != oldDelegate.offset ||
         _height != oldDelegate._height;
