@@ -16,6 +16,7 @@ void main() {
         );
 
         // TODO: placing caret on the right side of the emoji at the end of the text isn't working correctly
+        // #549 - update to place caret at the end and remove the call to pressRightArrow when that bug is fixed.
         // Place caret at the beginning of the text
         await tester.placeCaretInSuperTextField(0);
         // Move caret to the right   
@@ -43,6 +44,7 @@ void main() {
         );
 
         // TODO: placing caret on the right side of the emoji at the end of the text isn't working correctly
+        // #549 - update to place caret at the end and remove the call to pressRightArrow when that bug is fixed.
         // Place caret at the beginning of the text
         await tester.placeCaretInSuperTextField(0);
         // Move caret to the right   
@@ -143,6 +145,7 @@ void main() {
         );
 
         // TODO: placing caret on the right side of the emoji at the end of the text isn't working correctly
+        // #549 - update to place caret at the end and remove the calls to pressRightArrow when that bug is fixed.
         // Place caret at the beginning of the text
         await tester.placeCaretInSuperTextField(0);
         // Move caret to the right   
@@ -181,6 +184,7 @@ void main() {
         );
 
         // TODO: placing caret on the right side of the emoji at the end of the text isn't working correctly
+        // #549 - update to place caret at the end and remove the calls to pressRightArrow when that bug is fixed.
         // Place caret at the beginning of the text
         await tester.placeCaretInSuperTextField(0);
         // Move caret to the right   
