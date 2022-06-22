@@ -48,6 +48,7 @@ class AndroidTextFieldTouchInteractor extends StatefulWidget {
     required this.handleColor,
     this.showDebugPaint = false,
     required this.child,
+    this.padding = EdgeInsets.zero,
   }) : super(key: key);
 
   /// [FocusNode] for the text field that contains this [AndroidTextFieldInteractor].
@@ -89,6 +90,11 @@ class AndroidTextFieldTouchInteractor extends StatefulWidget {
 
   /// The child widget.
   final Widget child;
+
+  /// Padding around the text entry area
+  ///
+  /// defaults to `EdgeInsets.zero`
+  final EdgeInsetsGeometry padding;
 
   @override
   AndroidTextFieldTouchInteractorState createState() => AndroidTextFieldTouchInteractorState();

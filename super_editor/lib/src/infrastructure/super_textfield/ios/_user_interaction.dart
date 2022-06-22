@@ -44,6 +44,7 @@ class IOSTextFieldTouchInteractor extends StatefulWidget {
     required this.handleColor,
     this.showDebugPaint = false,
     required this.child,
+    this.padding = EdgeInsets.zero,
   }) : super(key: key);
 
   /// [FocusNode] for the text field that contains this [IOSTextFieldInteractor].
@@ -85,6 +86,11 @@ class IOSTextFieldTouchInteractor extends StatefulWidget {
 
   /// The child widget.
   final Widget child;
+
+  /// Padding around the text entry area
+  ///
+  /// defaults to `EdgeInsets.zero`
+  final EdgeInsetsGeometry padding;
 
   @override
   IOSTextFieldTouchInteractorState createState() => IOSTextFieldTouchInteractorState();

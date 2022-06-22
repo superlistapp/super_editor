@@ -376,6 +376,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
           isMultiline: _isMultiline,
           handleColor: widget.handlesColor,
           showDebugPaint: widget.showDebugPaint,
+          padding: widget.padding,
           child: TextScrollView(
             key: _scrollKey,
             textScrollController: _textScrollController,
