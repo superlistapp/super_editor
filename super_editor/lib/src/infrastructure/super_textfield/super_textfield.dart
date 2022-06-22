@@ -62,6 +62,7 @@ class SuperTextField extends StatefulWidget {
     this.maxLines = 1,
     this.lineHeight,
     this.keyboardHandlers = defaultTextFieldKeyboardHandlers,
+    this.padding = EdgeInsets.zero,
   })  : assert(minLines == null || minLines == 1 || lineHeight != null, 'minLines > 1 requires a non-null lineHeight'),
         assert(maxLines == null || maxLines == 1 || lineHeight != null, 'maxLines > 1 requires a non-null lineHeight'),
         super(key: key);
@@ -141,6 +142,11 @@ class SuperTextField extends StatefulWidget {
   ///
   /// Only used on desktop.
   final List<TextFieldKeyboardHandler> keyboardHandlers;
+
+  /// Padding around the text entry area
+  ///
+  /// defaults to `EdgeInsets.zero`
+  final EdgeInsetsGeometry padding;
 
   @override
   State<SuperTextField> createState() => SuperTextFieldState();
