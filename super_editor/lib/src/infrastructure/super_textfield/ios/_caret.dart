@@ -122,7 +122,7 @@ class _IOSCursorPainter extends CustomPainter {
     caretPaint.color = caretColor.withOpacity(blinkController.opacity);
 
     final textPosition = selection.extent;
-    double caretHeight = textLayout.getCharacterBox(textPosition).toRect().height;
+    double caretHeight = textLayout.getCharacterBox(textPosition)?.toRect().height ?? 0.0;
     caretHeight = caretHeight > 0 ? caretHeight : textLayout.getHeightForCaret(textPosition) ?? 0;
     caretHeight = caretHeight > 0 ? caretHeight : textLayout.getLineHeightAtPosition(textPosition);
 

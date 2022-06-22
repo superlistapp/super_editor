@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
+import 'package:super_editor/src/infrastructure/strings.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
 class AttributedTextEditingController with ChangeNotifier {
@@ -714,7 +715,7 @@ class AttributedTextEditingController with ChangeNotifier {
           newExtent -= 1;
         }
       } else {
-        newExtent = max(selection.extentOffset - 1, 0);
+        newExtent = text.text.moveOffsetUpstreamByCharacter(selection.extentOffset) ?? 0;
       }
     } else {
       if (selection.extentOffset >= text.text.length && selection.isCollapsed) {
@@ -759,7 +760,7 @@ class AttributedTextEditingController with ChangeNotifier {
           newExtent += 1;
         }
       } else {
-        newExtent = min(selection.extentOffset + 1, text.text.length);
+        newExtent = text.text.moveOffsetDownstreamByCharacter(selection.extentOffset) ?? text.text.length;
       }
     }
 

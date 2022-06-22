@@ -27,6 +27,20 @@ void testWidgetsOnDesktop(
   testWidgetsOnLinux("$description (on Linux)", test, skip: skip);
 }
 
+/// A widget test that runs a variant for every platform, e.g.,
+/// Mac, Windows, Linux, Android and iOS.
+void testWidgetsOnAllPlatforms(
+  String description,
+  WidgetTesterCallback test, {
+  bool skip = false,
+}) {
+  testWidgetsOnMac("$description (on MAC)", test, skip: skip);
+  testWidgetsOnWindows("$description (on Windows)", test, skip: skip);
+  testWidgetsOnLinux("$description (on Linux)", test, skip: skip);
+  testWidgetsOnAndroid("$description (on Android)", test, skip: skip);
+  testWidgetsOnIos("$description (on iOS)", test, skip: skip);  
+}
+
 /// A widget test that runs a variant for Windows and Linux.
 ///
 /// This test method exists because many keyboard shortcuts are identical
@@ -169,6 +183,46 @@ void testOnLinux(
     try {
       realTest();
     } finally {
+      Platform.setTestInstance(null);
+    }
+  }, skip: skip);
+}
+
+/// A widget test that configures itself as a Android platform before executing the
+/// given [test], and nullifies the Android configuration when the test is done.
+void testWidgetsOnAndroid(
+  String description,
+  WidgetTesterCallback test, {
+  bool skip = false,
+}) {
+  testWidgets(description, (tester) async {
+    Platform.setTestInstance(AndroidPlatform());
+    debugDefaultTargetPlatformOverride = TargetPlatform.android;
+
+    try {
+      await test(tester);
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+      Platform.setTestInstance(null);
+    }
+  }, skip: skip);
+}
+
+/// A widget test that configures itself as a iOS platform before executing the
+/// given [test], and nullifies the iOS configuration when the test is done.
+void testWidgetsOnIos(
+  String description,
+  WidgetTesterCallback test, {
+  bool skip = false,
+}) {
+  testWidgets(description, (tester) async {
+    Platform.setTestInstance(IosPlatform());
+    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+
+    try {
+      await test(tester);
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
       Platform.setTestInstance(null);
     }
   }, skip: skip);

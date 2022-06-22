@@ -14,6 +14,16 @@ abstract class TextLayout {
   /// Returns the height of the character at the given [position].
   double getLineHeightAtPosition(TextPosition position);
 
+  /// Returns the estimated line height  
+  /// 
+  /// This is needed because if the text contains only emojis 
+  /// we can't get a [TextBox] from flutter to determine
+  /// the line height
+  /// 
+  /// WARNING: This method should be called only when absolutely necessary
+  /// and may be removed in the future
+  double get estimatedLineHeight;
+
   /// Returns the number of lines of text, given the current text layout.
   int getLineCount();
 
@@ -39,8 +49,12 @@ abstract class TextLayout {
   /// Returns a [List] of [TextBox]es that contain the given [selection].
   List<TextBox> getBoxesForSelection(TextSelection selection);
 
-  /// Returns a bounding [TextBox] for the character at the given [position].
-  TextBox getCharacterBox(TextPosition position);
+  /// Returns a bounding [TextBox] for the character at the given [position] or `null` 
+  /// if a character box couldn't be found.
+  /// 
+  /// The only situation where this could return null is when the text 
+  /// contains only emojis
+  TextBox? getCharacterBox(TextPosition position);
 
   /// Returns the [TextPosition] that corresponds to a text location
   /// that is one line above the given [textPosition], or [null] if
@@ -183,7 +197,8 @@ class RenderParagraphProseTextLayout implements ProseTextLayout {
   final RenderLayoutAwareParagraph _renderParagraph;
   late final int _textLength;
 
-  double get _estimatedLineHeight {
+  @override
+  double get estimatedLineHeight {
     final fontSize = _richText.style?.fontSize;
     final lineHeight = _richText.style?.height;
     return (fontSize ?? 16) * (lineHeight ?? 1.0);
@@ -237,7 +252,11 @@ class RenderParagraphProseTextLayout implements ProseTextLayout {
 
     // There is some text in this layout. Get the bounding box for the
     // character at the given position and return its height.
-    return getCharacterBox(position).toRect().height * lineHeightMultiplier;
+    final characterBox = getCharacterBox(position);
+    if (characterBox == null) {
+      return estimatedLineHeight;
+    }    
+    return characterBox.toRect().height * lineHeightMultiplier;    
   }
 
   @override
@@ -282,7 +301,7 @@ class RenderParagraphProseTextLayout implements ProseTextLayout {
   }
 
   @override
-  TextBox getCharacterBox(TextPosition position) {
+  TextBox? getCharacterBox(TextPosition position) {
     if (_renderParagraph.needsLayout) {
       return const TextBox.fromLTRBD(0, 0, 0, 0, TextDirection.ltr);
     }
@@ -329,6 +348,10 @@ class RenderParagraphProseTextLayout implements ProseTextLayout {
       ));
     }
 
+    if (boxes.isEmpty) {
+      return null;
+    }
+
     return boxes.first;
   }
 
@@ -343,7 +366,7 @@ class RenderParagraphProseTextLayout implements ProseTextLayout {
     // Note: add half the line height to the current offset to help deal with
     //       line heights that aren't accurate.
     final positionOffset =
-        renderParagraph.getOffsetForCaret(currentPosition, Rect.zero) + Offset(0, _estimatedLineHeight / 2);
+        renderParagraph.getOffsetForCaret(currentPosition, Rect.zero) + Offset(0, estimatedLineHeight / 2);
     final endOfLineOffset = Offset(0, positionOffset.dy);
     return renderParagraph.getPositionForOffset(endOfLineOffset);
   }
@@ -359,7 +382,7 @@ class RenderParagraphProseTextLayout implements ProseTextLayout {
     // Note: add half the line height to the current offset to help deal with
     //       line heights that aren't accurate.
     final positionOffset =
-        renderParagraph.getOffsetForCaret(currentPosition, Rect.zero) + Offset(0, _estimatedLineHeight / 2);
+        renderParagraph.getOffsetForCaret(currentPosition, Rect.zero) + Offset(0, estimatedLineHeight / 2);
     final endOfLineOffset = Offset(renderParagraph.size.width, positionOffset.dy);
     return renderParagraph.getPositionForOffset(endOfLineOffset);
   }
@@ -372,7 +395,7 @@ class RenderParagraphProseTextLayout implements ProseTextLayout {
 
     final renderParagraph = _renderParagraph;
     // TODO: use the character box instead of the estimated line height
-    final lineHeight = _estimatedLineHeight;
+    final lineHeight = estimatedLineHeight;
     // Note: add half the line height to the current offset to help deal with
     //       line heights that aren't accurate.
     final currentSelectionOffset =
@@ -395,7 +418,7 @@ class RenderParagraphProseTextLayout implements ProseTextLayout {
 
     final renderParagraph = _renderParagraph;
     // TODO: use the character box instead of the estimated line height
-    final lineHeight = _estimatedLineHeight;
+    final lineHeight = estimatedLineHeight;
     // Note: add half the line height to the current offset to help deal with
     //       line heights that aren't accurate.
     final currentSelectionOffset =
