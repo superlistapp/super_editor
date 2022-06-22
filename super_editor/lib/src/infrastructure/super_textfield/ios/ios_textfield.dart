@@ -42,6 +42,7 @@ class SuperIOSTextField extends StatefulWidget {
     this.popoverToolbarBuilder = _defaultPopoverToolbarBuilder,
     this.showDebugPaint = false,
     this.onPerformActionPressed,
+    this.padding = EdgeInsets.zero,
   })  : assert(minLines == null || minLines == 1 || lineHeight != null, 'minLines > 1 requires a non-null lineHeight'),
         assert(maxLines == null || maxLines == 1 || lineHeight != null, 'maxLines > 1 requires a non-null lineHeight'),
         super(key: key);
@@ -130,6 +131,11 @@ class SuperIOSTextField extends StatefulWidget {
   /// Callback invoked when the user presses the "action" button
   /// on the keyboard, e.g., "done", "call", "emergency", etc.
   final Function(TextInputAction)? onPerformActionPressed;
+
+  /// Padding around the text entry area
+  ///
+  /// defaults to `EdgeInsets.zero`
+  final EdgeInsetsGeometry padding;
 
   @override
   State createState() => SuperIOSTextFieldState();

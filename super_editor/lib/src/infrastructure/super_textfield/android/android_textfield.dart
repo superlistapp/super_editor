@@ -38,6 +38,7 @@ class SuperAndroidTextField extends StatefulWidget {
     this.popoverToolbarBuilder = _defaultAndroidToolbarBuilder,
     this.showDebugPaint = false,
     this.onPerformActionPressed,
+    this.padding = EdgeInsets.zero,
   })  : assert(minLines == null || minLines == 1 || lineHeight != null, 'minLines > 1 requires a non-null lineHeight'),
         assert(maxLines == null || maxLines == 1 || lineHeight != null, 'maxLines > 1 requires a non-null lineHeight'),
         super(key: key);
@@ -126,6 +127,11 @@ class SuperAndroidTextField extends StatefulWidget {
 
   /// Builder that creates the popover toolbar widget that appears when text is selected.
   final Widget Function(BuildContext, AndroidEditingOverlayController) popoverToolbarBuilder;
+
+  /// Padding around the text entry area
+  ///
+  /// defaults to `EdgeInsets.zero`
+  final EdgeInsetsGeometry padding;
 
   @override
   State createState() => SuperAndroidTextFieldState();

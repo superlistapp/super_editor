@@ -205,6 +205,7 @@ class SuperTextFieldState extends State<SuperTextField> {
           minLines: widget.minLines,
           maxLines: widget.maxLines,
           keyboardHandlers: widget.keyboardHandlers,
+          padding: widget.padding,
         );
       case SuperTextFieldPlatformConfiguration.android:
         return SuperAndroidTextField(
@@ -221,6 +222,7 @@ class SuperTextFieldState extends State<SuperTextField> {
           minLines: widget.minLines,
           maxLines: widget.maxLines,
           lineHeight: widget.lineHeight,
+          padding: widget.padding,
         );
       case SuperTextFieldPlatformConfiguration.iOS:
         return SuperIOSTextField(
@@ -237,6 +239,7 @@ class SuperTextFieldState extends State<SuperTextField> {
           minLines: widget.minLines,
           maxLines: widget.maxLines,
           lineHeight: widget.lineHeight,
+          padding: widget.padding,
         );
     }
   }
