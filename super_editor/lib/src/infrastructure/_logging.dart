@@ -61,6 +61,18 @@ void initLoggers(logging.Level level, Set<logging.Logger> loggers) {
   }
 }
 
+/// Returns `true` if the given [logger] is currently logging, or
+/// `false` otherwise.
+///
+/// Generally, developers should call loggers, regardless of whether
+/// a given logger is active. However, sometimes you may want to log
+/// information that's costly to compute. In such a case, you can
+/// choose to compute the expensive information only if the given
+/// logger will actually log the information.
+bool isLogActive(logging.Logger logger) {
+  return _activeLoggers.contains(logger);
+}
+
 void deactivateLoggers(Set<logging.Logger> loggers) {
   for (final logger in loggers) {
     if (_activeLoggers.contains(logger)) {

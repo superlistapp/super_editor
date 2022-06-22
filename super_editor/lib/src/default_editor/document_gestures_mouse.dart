@@ -120,13 +120,14 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
   late ScrollController _scrollController;
   ScrollPosition? _ancestorScrollPosition;
 
+  Offset? _cursorGlobalOffset;
+
   // Tracks user drag gestures for selection purposes.
   SelectionType _selectionType = SelectionType.position;
   bool _hasAncestorScrollable = false;
-  Offset? _dragStartInDoc;
+  Offset? _dragStartGlobal;
   double? _dragStartScrollOffset;
-  Offset? _dragEndInInteractor;
-  Offset? _dragEndInDoc;
+  Offset? _dragEndGlobal;
   bool _expandSelectionDuringDrag = false;
 
   bool _scrollUpOnTick = false;
@@ -236,24 +237,6 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
           RawKeyboard.instance.keysPressed.contains(LogicalKeyboardKey.shift)) &&
       widget.editContext.composer.selection != null;
 
-  /// Maps the given [interactorOffset] within the interactor's coordinate space
-  /// to the same screen position in the viewport's coordinate space.
-  ///
-  /// When this interactor includes it's own `ScrollView`, the [interactorOffset]
-  /// if the same as the viewport offset.
-  ///
-  /// When this interactor defers to an ancestor `Scrollable`, then the
-  /// [interactorOffset] is transformed into the ancestor coordinate space.
-  Offset _interactorOffsetInViewport(Offset interactorOffset) {
-    // Viewport might be our box, or an ancestor box if we're inside someone
-    // else's Scrollable.
-    final viewportBox = _viewport;
-    final interactorBox = context.findRenderObject() as RenderBox;
-    return viewportBox.globalToLocal(
-      interactorBox.localToGlobal(interactorOffset),
-    );
-  }
-
   void _onSelectionChange() {
     if (mounted) {
       // Use a post-frame callback to "ensure selection extent is visible"
@@ -336,7 +319,6 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     editorGesturesLog.fine(" - tapped document position: $docPosition");
 
     _focusNode.requestFocus();
-    print("On tap up. Doc position: $docPosition");
 
     if (docPosition != null) {
       final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
@@ -460,12 +442,14 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
   }
 
   void _onPanStart(DragStartDetails details) {
-    editorGesturesLog.info("Pan start on document");
+    editorGesturesLog.info("Pan start on document, global offset: ${details.globalPosition}");
 
     _hasAncestorScrollable = Scrollable.of(context) != null;
-    _dragStartInDoc = _getDocOffsetFromGlobalOffset(details.globalPosition);
 
-    _debugInstrumentation?.startDragInContent.value = _dragStartInDoc;
+    _dragStartGlobal = details.globalPosition;
+    _cursorGlobalOffset = details.globalPosition;
+
+    _debugInstrumentation?.startDragInContent.value = _getDocOffsetFromGlobalOffset(_dragStartGlobal!);
 
     // We need to record the scroll offset at the beginning of
     // a drag for the case that this interactor is embedded
@@ -491,14 +475,14 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
 
   void _onPanUpdate(DragUpdateDetails details) {
     setState(() {
-      editorGesturesLog.info("Pan update on document");
+      editorGesturesLog.info("Pan update on document, global offset: ${details.globalPosition}");
 
-      _dragEndInDoc = _getDocOffsetFromGlobalOffset(details.localPosition);
-      _dragEndInInteractor = _getInteractorOffsetFromGlobalOffset(details.globalPosition);
+      _dragEndGlobal = details.globalPosition;
+      _cursorGlobalOffset = details.globalPosition;
 
-      _debugInstrumentation?.startDragInContent.value = _dragEndInDoc;
+      _debugInstrumentation?.startDragInContent.value = _getDocOffsetFromGlobalOffset(_dragEndGlobal!);
 
-      _updateCursorStyle(_dragEndInDoc!);
+      _updateCursorStyle();
       _updateDragSelection();
 
       _scrollIfNearBoundary();
@@ -517,9 +501,8 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
 
   void _onDragEnd() {
     setState(() {
-      _dragStartInDoc = null;
-      _dragEndInDoc = null;
-      _dragEndInInteractor = null;
+      _dragStartGlobal = null;
+      _dragEndGlobal = null;
       _expandSelectionDuringDrag = false;
     });
 
@@ -528,8 +511,8 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
   }
 
   void _onMouseMove(PointerEvent pointerEvent) {
-    final documentOffset = _getDocOffsetFromGlobalOffset(pointerEvent.position);
-    _updateCursorStyle(documentOffset);
+    _cursorGlobalOffset = pointerEvent.position;
+    _updateCursorStyle();
   }
 
   bool _selectWordAt({
@@ -566,7 +549,8 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
   }
 
   void _updateDragSelection() {
-    if (_dragEndInInteractor == null) {
+    if (_dragEndGlobal == null) {
+      // User isn't dragging. No need to update drag selection.
       return;
     }
 
@@ -574,14 +558,15 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     // caching the value during the pan update) because the position
     // in the document is impacted by auto-scrolling behavior.
     final scrollDeltaWhileDragging = _dragStartScrollOffset! - _scrollPosition.pixels;
-    final ancestorScrollableDragEndAdjustment =
-        _hasAncestorScrollable ? Offset(0, -scrollDeltaWhileDragging) : Offset.zero;
-    _dragEndInDoc = _getDocOffsetFromInteractorOffset(_dragEndInInteractor! + ancestorScrollableDragEndAdjustment);
+
+    final dragStartInDoc = _getDocOffsetFromGlobalOffset(_dragStartGlobal!) + Offset(0, scrollDeltaWhileDragging);
+
+    final dragEndInDoc = _getDocOffsetFromGlobalOffset(_dragEndGlobal!);
 
     _selectRegion(
       documentLayout: _docLayout,
-      baseOffset: _dragStartInDoc!,
-      extentOffset: _dragEndInDoc!,
+      baseOffset: dragStartInDoc,
+      extentOffset: dragEndInDoc,
       selectionType: _selectionType,
       expandSelection: _expandSelectionDuringDrag,
     );
@@ -661,7 +646,8 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     widget.editContext.composer.clearSelection();
   }
 
-  void _updateCursorStyle(Offset cursorOffsetInDocument) {
+  void _updateCursorStyle() {
+    final cursorOffsetInDocument = _getDocOffsetFromGlobalOffset(_cursorGlobalOffset!);
     final desiredCursor = _docLayout.getDesiredCursorAtOffset(cursorOffsetInDocument);
 
     if (desiredCursor != null && desiredCursor != _cursorStyle.value) {
@@ -671,8 +657,10 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     }
   }
 
-  // Converts the given [globalOffset] from the global coordiante space to
-  // the [DocumentInteractor]'s coordinate space.
+  Offset _getViewportOffsetFromGlobal(Offset globalOffset) {
+    return _viewport.globalToLocal(globalOffset);
+  }
+
   Offset _getInteractorOffsetFromGlobalOffset(Offset globalOffset) {
     final interactorBox = context.findRenderObject() as RenderBox;
     return interactorBox.globalToLocal(globalOffset);
@@ -680,14 +668,6 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
 
   Offset _getDocOffsetFromGlobalOffset(Offset globalOffset) {
     return _docLayout.getDocumentOffsetFromAncestorOffset(globalOffset);
-  }
-
-  // Converts the given [offset] from the [DocumentInteractor]'s coordinate
-  // space to the [DocumentLayout]'s coordinate space.
-  Offset _getDocOffsetFromInteractorOffset(Offset offset) {
-    // TODO: this calculation is wrong. We might have horizontal padding
-    // around the document, which this doesn't account for
-    return _docLayout.getDocumentOffsetFromAncestorOffset(offset, context.findRenderObject()!);
   }
 
   // ------ scrolling -------
@@ -705,32 +685,33 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     }
   }
 
-  // Preconditions:
-  // - _dragEndInViewport must be non-null
   void _scrollIfNearBoundary() {
-    if (_dragEndInInteractor == null) {
-      editorGesturesLog.warning("Tried to scroll near boundary but couldn't because _dragEndInViewport is null");
-      assert(_dragEndInInteractor != null);
-      return;
-    }
-
     final viewport = _viewport;
 
-    final scrollDeltaWhileDragging = _dragStartScrollOffset! - _scrollPosition.pixels;
-    final ancestorScrollableDragEndAdjustment =
-        _hasAncestorScrollable ? Offset(0, -scrollDeltaWhileDragging) : Offset.zero;
+    final dragEndInViewport = _getViewportOffsetFromGlobal(_dragEndGlobal!);
 
-    final dragEndInViewport = _interactorOffsetInViewport(_dragEndInInteractor!) + ancestorScrollableDragEndAdjustment;
+    // Compute some useful logging information, if our logger is active.
+    if (isLogActive(editorGesturesLog)) {
+      final dragEndInDoc = _getDocOffsetFromGlobalOffset(_dragEndGlobal!);
+      final docBox = _documentWrapperKey.currentContext!.findRenderObject() as RenderBox;
 
-    editorGesturesLog.finest("Scrolling, if near boundary:");
-    editorGesturesLog.finest(' - Drag end in document: ${_dragEndInDoc!.dy}');
-    editorGesturesLog.finest(' - Drag end in interactor: ${_dragEndInInteractor!.dy}');
-    editorGesturesLog.finest(' - Drag end in viewport: ${dragEndInViewport.dy}, viewport size: ${viewport.size}');
-    editorGesturesLog.finest(' - Distance to top of viewport: ${dragEndInViewport.dy}');
-    editorGesturesLog.finest(' - Distance to bottom of viewport: ${viewport.size.height - dragEndInViewport.dy}');
-    editorGesturesLog.finest(' - Auto-scroll distance: ${widget.dragAutoScrollBoundary.trailing}');
-    editorGesturesLog.finest(
-        ' - Auto-scroll diff: ${viewport.size.height - dragEndInViewport.dy < widget.dragAutoScrollBoundary.trailing}');
+      final dragEndInInteractor = _getInteractorOffsetFromGlobalOffset(_dragEndGlobal!);
+      final interactorBox = context.findRenderObject() as RenderBox;
+
+      editorGesturesLog.finest("Scrolling, if near boundary:");
+      editorGesturesLog.finest(" - Has ancestor scrollable: $_hasAncestorScrollable");
+      editorGesturesLog.finest(
+          ' - Drag end in document: ${dragEndInDoc.dy}, document height: ${docBox.size.height}, top left: ${docBox.localToGlobal(Offset.zero)}');
+      editorGesturesLog.finest(
+          ' - Drag end in interactor: ${dragEndInInteractor.dy}, interactor height: ${interactorBox.size.height}, top left: ${interactorBox.localToGlobal(Offset.zero)}');
+      editorGesturesLog.finest(' - Drag end in viewport: ${dragEndInViewport.dy}, viewport size: ${viewport.size}');
+      editorGesturesLog.finest(' - Distance to top of viewport: ${dragEndInViewport.dy}');
+      editorGesturesLog.finest(' - Distance to bottom of viewport: ${viewport.size.height - dragEndInViewport.dy}');
+      editorGesturesLog.finest(' - Auto-scroll distance: ${widget.dragAutoScrollBoundary.trailing}');
+      editorGesturesLog.finest(
+          ' - Auto-scroll diff: ${viewport.size.height - dragEndInViewport.dy < widget.dragAutoScrollBoundary.trailing}');
+    }
+
     if (dragEndInViewport.dy < widget.dragAutoScrollBoundary.leading) {
       editorGesturesLog.finest('Metrics say we should try to scroll up');
       _startScrollingUp();
@@ -769,9 +750,9 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
   }
 
   void _scrollUp() {
-    if (_dragEndInInteractor == null) {
-      editorGesturesLog.warning("Tried to scroll up but couldn't because _dragEndInViewport is null");
-      assert(_dragEndInInteractor != null);
+    if (_dragEndGlobal == null) {
+      editorGesturesLog.warning("Tried to scroll up but couldn't because _dragEndGlobal is null");
+      assert(_dragEndGlobal != null);
       return;
     }
 
@@ -782,13 +763,7 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
 
     editorGesturesLog.finest("Scrolling up on tick");
 
-    // If this widget sits inside an ancestor Scrollable, adjust the drag-end
-    // offset to account for the scroll offset of the ancestor Scrollable.
-    final scrollDeltaWhileDragging = _dragStartScrollOffset! - _scrollPosition.pixels;
-    final ancestorScrollableDragEndAdjustment =
-        _hasAncestorScrollable ? Offset(0, -scrollDeltaWhileDragging) : Offset.zero;
-
-    final dragEndInViewport = _interactorOffsetInViewport(_dragEndInInteractor!) + ancestorScrollableDragEndAdjustment;
+    final dragEndInViewport = _getViewportOffsetFromGlobal(_dragEndGlobal!); // + ancestorScrollableDragEndAdjustment;
     final leadingScrollBoundary = widget.dragAutoScrollBoundary.leading;
     final gutterAmount = dragEndInViewport.dy.clamp(0.0, leadingScrollBoundary);
     final speedPercent = 1.0 - (gutterAmount / leadingScrollBoundary);
@@ -825,9 +800,9 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
   }
 
   void _scrollDown() {
-    if (_dragEndInInteractor == null) {
+    if (_dragEndGlobal == null) {
       editorGesturesLog.warning("Tried to scroll down but couldn't because _dragEndInViewport is null");
-      assert(_dragEndInInteractor != null);
+      assert(_dragEndGlobal != null);
       return;
     }
 
@@ -838,13 +813,7 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
 
     editorGesturesLog.finest("Scrolling down on tick");
 
-    // If this widget sits inside an ancestor Scrollable, adjust the drag-end
-    // offset to account for the scroll offset of the ancestor Scrollable.
-    final scrollDeltaWhileDragging = _dragStartScrollOffset! - _scrollPosition.pixels;
-    final ancestorScrollableDragEndAdjustment =
-        _hasAncestorScrollable ? Offset(0, -scrollDeltaWhileDragging) : Offset.zero;
-
-    final dragEndInViewport = _interactorOffsetInViewport(_dragEndInInteractor!) + ancestorScrollableDragEndAdjustment;
+    final dragEndInViewport = _getViewportOffsetFromGlobal(_dragEndGlobal!); // + ancestorScrollableDragEndAdjustment;
     final trailingScrollBoundary = widget.dragAutoScrollBoundary.trailing;
     final viewportBox = _viewport;
     final gutterAmount = (viewportBox.size.height - dragEndInViewport.dy).clamp(0.0, trailingScrollBoundary);
@@ -877,16 +846,22 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
 
     return Stack(
       children: [
-        _buildScroller(
-          addScrollView: ancestorScrollable == null,
-          child: _buildCursorStyle(
-            child: _buildGestureInput(
-              child: _buildDocumentContainer(
-                document: widget.child,
+        // Use a LayoutBuilder to get the max height of the editor,
+        // so that we can expand the gesture region to take up all
+        // available space.
+        LayoutBuilder(builder: (context, constraints) {
+          return _buildScroller(
+            addScrollView: ancestorScrollable == null,
+            child: _buildCursorStyle(
+              child: _buildGestureInput(
+                child: _buildDocumentContainer(
+                  viewportHeight: constraints.maxHeight,
+                  document: widget.child,
+                ),
               ),
             ),
-          ),
-        ),
+          );
+        }),
         if (widget.showDebugPaint)
           ..._buildScrollingDebugPaint(
             includesScrollView: ancestorScrollable == null,
@@ -995,53 +970,29 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
         ),
       },
       child: child,
-      // child: Builder(
-      //   // We need to constrain our height based on the viewport height. Our
-      //   // scrolling system is built within the same context as this method,
-      //   // so the scroll position won't be attached yet. To deal with this, we
-      //   // add a Builder(), which starts a new context, which gives us access
-      //   // to a non-null scroll position, which has the viewport dimension.
-      //   builder: (context) {
-      //     return ConstrainedBox(
-      //       // The gesture detector needs to respond to gestures outside the
-      //       // document's bounds, when the document is shorter than the viewport.
-      //       // Therefore, we force the gesture detector to be at least as tall as
-      //       // the viewport.
-      //       constraints:
-      //           BoxConstraints(minHeight: _scrollPosition.hasViewportDimension ? _scrollPosition.viewportDimension : 0),
-      //       child: child,
-      //     );
-      //   },
-      // ),
     );
   }
 
   Widget _buildDocumentContainer({
+    required double viewportHeight,
     required Widget document,
   }) {
+    // TODO(June, 2022): why is this Center here?
     return Center(
       child: Stack(
         children: [
-          SizedBox(
-            key: _documentWrapperKey,
-            // child: document,
-            child: Builder(
-              // We need to constrain our height based on the viewport height. Our
-              // scrolling system is built within the same context as this method,
-              // so the scroll position won't be attached yet. To deal with this, we
-              // add a Builder(), which starts a new context, which gives us access
-              // to a non-null scroll position, which has the viewport dimension.
-              builder: (context) {
-                return ConstrainedBox(
-                  // The gesture detector needs to respond to gestures outside the
-                  // document's bounds, when the document is shorter than the viewport.
-                  // Therefore, we force the gesture detector to be at least as tall as
-                  // the viewport.
-                  constraints: BoxConstraints(
-                      minHeight: _scrollPosition.hasViewportDimension ? _scrollPosition.viewportDimension : 0),
-                  child: document,
-                );
-              },
+          ConstrainedBox(
+            // The gesture detector needs to respond to gestures outside the
+            // document's bounds, when the document is shorter than the viewport.
+            // Therefore, we force the gesture detector to be at least as tall as
+            // the viewport.
+            //
+            // The viewport height will be infinite when the editor is placed within
+            // another Scrollable. In that case, we allow any height.
+            constraints: BoxConstraints(minHeight: viewportHeight < double.infinity ? viewportHeight : 0),
+            child: SizedBox(
+              key: _documentWrapperKey,
+              child: document,
             ),
           ),
           if (widget.showDebugPaint) ..._buildDebugPaintInDocSpace(),
@@ -1051,11 +1002,14 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
   }
 
   List<Widget> _buildDebugPaintInDocSpace() {
+    final dragStartInDoc = _dragStartGlobal != null ? _getDocOffsetFromGlobalOffset(_dragStartGlobal!) : null;
+    final dragEndInDoc = _dragEndGlobal != null ? _getDocOffsetFromGlobalOffset(_dragEndGlobal!) : null;
+
     return [
-      if (_dragStartInDoc != null)
+      if (dragStartInDoc != null)
         Positioned(
-          left: _dragStartInDoc!.dx,
-          top: _dragStartInDoc!.dy,
+          left: dragStartInDoc.dx,
+          top: dragStartInDoc.dy,
           child: FractionalTranslation(
             translation: const Offset(-0.5, -0.5),
             child: Container(
@@ -1068,10 +1022,10 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
             ),
           ),
         ),
-      if (_dragEndInDoc != null)
+      if (dragEndInDoc != null)
         Positioned(
-          left: _dragEndInDoc!.dx,
-          top: _dragEndInDoc!.dy,
+          left: dragEndInDoc.dx,
+          top: dragEndInDoc.dy,
           child: FractionalTranslation(
             translation: const Offset(-0.5, -0.5),
             child: Container(
@@ -1084,12 +1038,12 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
             ),
           ),
         ),
-      if (_dragStartInDoc != null && _dragEndInDoc != null)
+      if (dragStartInDoc != null && dragEndInDoc != null)
         Positioned(
-          left: min(_dragStartInDoc!.dx, _dragEndInDoc!.dx),
-          top: min(_dragStartInDoc!.dy, _dragEndInDoc!.dy),
-          width: (_dragEndInDoc!.dx - _dragStartInDoc!.dx).abs(),
-          height: (_dragEndInDoc!.dy - _dragStartInDoc!.dy).abs(),
+          left: min(dragStartInDoc.dx, dragEndInDoc.dx),
+          top: min(dragStartInDoc.dy, dragEndInDoc.dy),
+          width: (dragEndInDoc.dx - dragStartInDoc.dx).abs(),
+          height: (dragEndInDoc.dy - dragStartInDoc.dy).abs(),
           child: DecoratedBox(
             decoration: BoxDecoration(
               border: Border.all(color: const Color(0xFF0088FF), width: 3),

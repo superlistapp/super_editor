@@ -1,17 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:logging/logging.dart';
 import 'package:super_editor/super_editor.dart';
-
-import 'supereditor_inspector.dart';
 
 void main() {
   group("Bug fix", () {
     group("429 - delete multiple new nodes", () {
       testWidgets("bug repro", (tester) async {
-        initLoggers(Level.FINEST, {editorGesturesLog});
-
         final document = MutableDocument(
           nodes: [
             ParagraphNode(id: "1", text: AttributedText(text: "")),
@@ -41,20 +36,6 @@ void main() {
         );
         await tester.tap(find.byType(SuperEditor));
         await tester.pumpAndSettle();
-
-        final superEditorBox = find.byType(SuperEditor).evaluate().first.findRenderObject() as RenderBox;
-        print("SuperEditor bounds: ${superEditorBox.size}");
-
-        final documentMouseInteractorBox =
-            find.byType(DocumentMouseInteractor).evaluate().first.findRenderObject() as RenderBox;
-        print("Mouse interactor bounds: ${documentMouseInteractorBox.size}");
-
-        final gestureDetectorBox = find.byType(RawGestureDetector).evaluate().first.findRenderObject() as RenderBox;
-        print("Gesture detector bounds: ${gestureDetectorBox.size}");
-
-        print("Center of tap area: ${tester.getCenter(find.byType(SuperEditor), callee: 'tap')}");
-
-        expect(SuperEditorInspector.hasFocus(), isTrue);
 
         // Create a couple new nodes.
         await tester.sendKeyEvent(LogicalKeyboardKey.enter);
