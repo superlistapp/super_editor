@@ -488,7 +488,7 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
   }
 
   @override
-  Offset getDocumentOffsetFromAncestorOffset(Offset ancestorOffset, RenderObject ancestor) {
+  Offset getDocumentOffsetFromAncestorOffset(Offset ancestorOffset, [RenderObject? ancestor]) {
     return (context.findRenderObject() as RenderBox).globalToLocal(ancestorOffset, ancestor: ancestor);
   }
 

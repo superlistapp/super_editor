@@ -61,7 +61,7 @@ abstract class DocumentLayout {
 
   /// Converts [ancestorOffset] from the [ancestor]'s coordinate space to the
   /// same location on the screen within this [DocumentLayout]'s coordinate space.
-  Offset getDocumentOffsetFromAncestorOffset(Offset ancestorOffset, RenderObject ancestor);
+  Offset getDocumentOffsetFromAncestorOffset(Offset ancestorOffset, [RenderObject? ancestor]);
 
   /// Converts [documentOffset] from this [DocumentLayout]'s coordinate space
   /// to the same location on the screen within the [ancestor]'s coordinate space.

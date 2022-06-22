@@ -330,12 +330,13 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
 
   void _onTapUp(TapUpDetails details) {
     editorGesturesLog.info("Tap up on document");
-    final docOffset = details.localPosition;
+    final docOffset = _getDocOffsetFromGlobalOffset(details.globalPosition);
     editorGesturesLog.fine(" - document offset: $docOffset");
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
     editorGesturesLog.fine(" - tapped document position: $docPosition");
 
     _focusNode.requestFocus();
+    print("On tap up. Doc position: $docPosition");
 
     if (docPosition != null) {
       final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
@@ -362,7 +363,7 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
 
   void _onDoubleTapDown(TapDownDetails details) {
     editorGesturesLog.info("Double tap down on document");
-    final docOffset = details.localPosition;
+    final docOffset = _getDocOffsetFromGlobalOffset(details.globalPosition);
     editorGesturesLog.fine(" - document offset: $docOffset");
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
     editorGesturesLog.fine(" - tapped document position: $docPosition");
@@ -423,7 +424,7 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
 
   void _onTripleTapDown(TapDownDetails details) {
     editorGesturesLog.info("Triple down down on document");
-    final docOffset = details.localPosition;
+    final docOffset = _getDocOffsetFromGlobalOffset(details.globalPosition);
     editorGesturesLog.fine(" - document offset: $docOffset");
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
     editorGesturesLog.fine(" - tapped document position: $docPosition");
@@ -462,7 +463,7 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     editorGesturesLog.info("Pan start on document");
 
     _hasAncestorScrollable = Scrollable.of(context) != null;
-    _dragStartInDoc = details.localPosition;
+    _dragStartInDoc = _getDocOffsetFromGlobalOffset(details.globalPosition);
 
     _debugInstrumentation?.startDragInContent.value = _dragStartInDoc;
 
@@ -492,7 +493,7 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     setState(() {
       editorGesturesLog.info("Pan update on document");
 
-      _dragEndInDoc = details.localPosition;
+      _dragEndInDoc = _getDocOffsetFromGlobalOffset(details.localPosition);
       _dragEndInInteractor = _getInteractorOffsetFromGlobalOffset(details.globalPosition);
 
       _debugInstrumentation?.startDragInContent.value = _dragEndInDoc;
@@ -527,7 +528,8 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
   }
 
   void _onMouseMove(PointerEvent pointerEvent) {
-    _updateCursorStyle(pointerEvent.localPosition);
+    final documentOffset = _getDocOffsetFromGlobalOffset(pointerEvent.position);
+    _updateCursorStyle(documentOffset);
   }
 
   bool _selectWordAt({
@@ -676,9 +678,15 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     return interactorBox.globalToLocal(globalOffset);
   }
 
+  Offset _getDocOffsetFromGlobalOffset(Offset globalOffset) {
+    return _docLayout.getDocumentOffsetFromAncestorOffset(globalOffset);
+  }
+
   // Converts the given [offset] from the [DocumentInteractor]'s coordinate
   // space to the [DocumentLayout]'s coordinate space.
   Offset _getDocOffsetFromInteractorOffset(Offset offset) {
+    // TODO: this calculation is wrong. We might have horizontal padding
+    // around the document, which this doesn't account for
     return _docLayout.getDocumentOffsetFromAncestorOffset(offset, context.findRenderObject()!);
   }
 
@@ -918,6 +926,28 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     ];
   }
 
+  Widget _buildScroller({
+    required bool addScrollView,
+    required Widget child,
+  }) {
+    return addScrollView
+        ? SizedBox.expand(
+            // If there is no ancestor scrollable then we want the gesture area
+            // to fill all available height. If there is a scrollable ancestor,
+            // then expanding vertically would cause an infinite height, so in that
+            // case we let the gesture area take up whatever it can, naturally.
+            child: Listener(
+              onPointerSignal: _onPointerSignal,
+              child: SingleChildScrollView(
+                controller: _scrollController,
+                physics: const NeverScrollableScrollPhysics(),
+                child: child,
+              ),
+            ),
+          )
+        : child;
+  }
+
   Widget _buildCursorStyle({
     required Widget child,
   }) {
@@ -977,34 +1007,13 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
       //       // document's bounds, when the document is shorter than the viewport.
       //       // Therefore, we force the gesture detector to be at least as tall as
       //       // the viewport.
-      //       constraints: BoxConstraints(minHeight: _scrollPosition.hasViewportDimension ? _scrollPosition.viewportDimension : 0),
+      //       constraints:
+      //           BoxConstraints(minHeight: _scrollPosition.hasViewportDimension ? _scrollPosition.viewportDimension : 0),
       //       child: child,
       //     );
       //   },
       // ),
     );
-  }
-
-  Widget _buildScroller({
-    required bool addScrollView,
-    required Widget child,
-  }) {
-    return addScrollView
-        ? SizedBox.expand(
-            // If there is no ancestor scrollable then we want the gesture area
-            // to fill all available height. If there is a scrollable ancestor,
-            // then expanding vertically would cause an infinite height, so in that
-            // case we let the gesture area take up whatever it can, naturally.
-            child: Listener(
-              onPointerSignal: _onPointerSignal,
-              child: SingleChildScrollView(
-                controller: _scrollController,
-                physics: const NeverScrollableScrollPhysics(),
-                child: child,
-              ),
-            ),
-          )
-        : child;
   }
 
   Widget _buildDocumentContainer({
@@ -1015,7 +1024,25 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
         children: [
           SizedBox(
             key: _documentWrapperKey,
-            child: document,
+            // child: document,
+            child: Builder(
+              // We need to constrain our height based on the viewport height. Our
+              // scrolling system is built within the same context as this method,
+              // so the scroll position won't be attached yet. To deal with this, we
+              // add a Builder(), which starts a new context, which gives us access
+              // to a non-null scroll position, which has the viewport dimension.
+              builder: (context) {
+                return ConstrainedBox(
+                  // The gesture detector needs to respond to gestures outside the
+                  // document's bounds, when the document is shorter than the viewport.
+                  // Therefore, we force the gesture detector to be at least as tall as
+                  // the viewport.
+                  constraints: BoxConstraints(
+                      minHeight: _scrollPosition.hasViewportDimension ? _scrollPosition.viewportDimension : 0),
+                  child: document,
+                );
+              },
+            ),
           ),
           if (widget.showDebugPaint) ..._buildDebugPaintInDocSpace(),
         ],
