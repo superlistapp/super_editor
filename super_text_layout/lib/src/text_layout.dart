@@ -49,7 +49,7 @@ abstract class TextLayout {
   /// Returns a [List] of [TextBox]es that contain the given [selection].
   List<TextBox> getBoxesForSelection(TextSelection selection);
 
-  /// Returns a bounding [TextBox] for the character at the given [position] or null 
+  /// Returns a bounding [TextBox] for the character at the given [position] or `null` 
   /// if a character box couldn't be found.
   /// 
   /// The only situation where this could return null is when the text 
@@ -348,8 +348,6 @@ class RenderParagraphProseTextLayout implements ProseTextLayout {
       ));
     }
 
-    // If we still don't have any boxes, it means that the text contains only
-    // emojis and we can't get a measurement from Flutter
     if (boxes.isEmpty) {
       return null;
     }

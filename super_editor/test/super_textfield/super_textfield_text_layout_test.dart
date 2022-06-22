@@ -3,17 +3,19 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:super_editor/super_editor.dart';
 
+import '../test_tools.dart';
 import 'super_textfield_inspector.dart';
 import 'super_textfield_robot.dart';
 
 void main() {
-  group('SuperDesktopTextField', () {
+  group('SuperTextField with keyboard', () {
     group('containing only one emoji', (){
-      testWidgets("moves left with LEFT ARROW", (tester) async {           
+      testWidgetsOnAllPlatforms("moves caret upstream around the emoji", (tester) async {           
         await _pumpSuperTextFieldEmojiTest(tester, 
           text: '🐢',
         );
 
+        // TODO: placing caret on the right side of the emoji at the end of the text isn't working correctly
         // Place caret at the beginning of the text
         await tester.placeCaretInSuperTextField(0);
         // Move caret to the right   
@@ -35,11 +37,12 @@ void main() {
         );         
       });
 
-      testWidgets("expands selection with SHIFT + LEFT ARROW", (tester) async {           
+      testWidgetsOnAllPlatforms("expands selection upstream around the emoji", (tester) async {           
         await _pumpSuperTextFieldEmojiTest(tester, 
           text: '🐢',
         );
 
+        // TODO: placing caret on the right side of the emoji at the end of the text isn't working correctly
         // Place caret at the beginning of the text
         await tester.placeCaretInSuperTextField(0);
         // Move caret to the right   
@@ -64,7 +67,7 @@ void main() {
         );         
       });
     
-      testWidgets("moves right with RIGHT ARROW", (tester) async {      
+      testWidgetsOnAllPlatforms("moves caret downstream around the emoji", (tester) async {      
         await _pumpSuperTextFieldEmojiTest(tester, 
           text: '🐢',
         );
@@ -88,7 +91,7 @@ void main() {
         );         
       });    
 
-      testWidgets("expands selection with SHIFT + RIGHT ARROW", (tester) async {           
+      testWidgetsOnAllPlatforms("expands selection downstream around the emoji", (tester) async {           
         await _pumpSuperTextFieldEmojiTest(tester, 
           text: '🐢',
         );
@@ -115,7 +118,7 @@ void main() {
         );         
       });
 
-      testWidgets("selects the content double tap", (tester) async {           
+      testWidgetsOnAllPlatforms("selects the emoji on double tap", (tester) async {           
         await _pumpSuperTextFieldEmojiTest(tester, 
           text: '🐢',
         );
@@ -134,11 +137,12 @@ void main() {
     });
 
     group('containing only two consecutive emojis', (){
-      testWidgets("moves left with LEFT ARROW", (tester) async {           
+      testWidgetsOnAllPlatforms("moves caret upstream around the emoji", (tester) async {           
         await _pumpSuperTextFieldEmojiTest(tester, 
           text: '🐢🐢',
         );
-                
+
+        // TODO: placing caret on the right side of the emoji at the end of the text isn't working correctly
         // Place caret at the beginning of the text
         await tester.placeCaretInSuperTextField(0);
         // Move caret to the right   
@@ -171,11 +175,12 @@ void main() {
         );         
       });
 
-      testWidgets("expands selection with SHIFT + LEFT ARROW", (tester) async {           
+      testWidgetsOnAllPlatforms("expands selection upstream around the emoji", (tester) async {           
         await _pumpSuperTextFieldEmojiTest(tester, 
           text: '🐢🐢',
         );
 
+        // TODO: placing caret on the right side of the emoji at the end of the text isn't working correctly
         // Place caret at the beginning of the text
         await tester.placeCaretInSuperTextField(0);
         // Move caret to the right   
@@ -214,7 +219,7 @@ void main() {
         );         
       });    
     
-      testWidgets("moves right with RIGHT ARROW", (tester) async {      
+      testWidgetsOnAllPlatforms("moves caret downstream around the emoji", (tester) async {      
         await _pumpSuperTextFieldEmojiTest(tester, 
           text: '🐢🐢',
         );
@@ -247,7 +252,7 @@ void main() {
         );         
       });    
     
-      testWidgets("expands selection with SHIFT + RIGHT ARROW", (tester) async {           
+      testWidgetsOnAllPlatforms("expands selection downstream around the emoji", (tester) async {           
         await _pumpSuperTextFieldEmojiTest(tester, 
           text: '🐢🐢',
         );
@@ -288,7 +293,7 @@ void main() {
     });  
 
     group('containing emojis and non-emojis', (){
-      testWidgets("moves left with LEFT ARROW", (tester) async {           
+      testWidgetsOnAllPlatforms("moves caret upstream around the text", (tester) async {           
         await _pumpSuperTextFieldEmojiTest(tester, 
           text: 'a🐢b',
         );
@@ -321,7 +326,7 @@ void main() {
         );         
       });
     
-      testWidgets("expands selection with SHIFT + LEFT ARROW", (tester) async {           
+      testWidgetsOnAllPlatforms("expands selection upstream around the text", (tester) async {           
         await _pumpSuperTextFieldEmojiTest(tester, 
           text: 'a🐢b',
         );
@@ -360,7 +365,7 @@ void main() {
         );         
       });    
     
-      testWidgets("moves right with RIGHT ARROW", (tester) async {      
+      testWidgetsOnAllPlatforms("moves caret downstream around the text", (tester) async {      
         await _pumpSuperTextFieldEmojiTest(tester, 
           text: 'a🐢b',
         );
@@ -393,7 +398,7 @@ void main() {
         );         
       });    
     
-      testWidgets("expands selection with SHIFT + RIGHT ARROW", (tester) async {           
+      testWidgetsOnAllPlatforms("expands selection downstream around the text", (tester) async {           
         await _pumpSuperTextFieldEmojiTest(tester, 
           text: 'a🐢b',
         );
@@ -454,19 +459,3 @@ Future<void> _pumpSuperTextFieldEmojiTest(
     ),
   );
 }
-
-/// Compute the center (x,y) for the given document [position]
-// Offset _getOffsetForPosition(GlobalKey docKey, DocumentPosition position){
-//   final docBox = docKey.currentContext!.findRenderObject() as RenderBox;
-//   final docLayout = docKey.currentState as DocumentLayout;
-//   final characterBox = docLayout.getRectForPosition(position);
-//   return docBox.localToGlobal(characterBox!.center);
-// }
-
-// extension on WidgetTester {
-//   Future<void> doubleTapAt(int offset) async {
-//     await tapAt(offset);
-//     await pump(kDoubleTapMinTime);
-//     await tapAt(offset);
-//   }  
-// }

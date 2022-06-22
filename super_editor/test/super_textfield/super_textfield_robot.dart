@@ -40,14 +40,12 @@ extension SuperTextFieldRobot on WidgetTester {
     throw Exception("Couldn't find a SuperTextField with the given Finder: $fieldFinder");
   }
 
-  /// Double taps to select a character at the given [offset].
+  /// Double taps in a [SuperTextField] at the given [offset]
   ///
-  /// {@template supertextfield_finder}
-  /// By default, this method expects a single [SuperTextField] in the widget tree and
-  /// finds it `byType`. To specify one [SuperTextField] among many, pass a [superTextFieldFinder].
-  /// {@endtemplate}
+  /// {@macro supertextfield_finder} 
   Future<void> doubleTapAtSuperTextField(int offset,
     [Finder? superTextFieldFinder, TextAffinity affinity = TextAffinity.downstream]) async {
+    // TODO: De-duplicate this behavior with placeCaretInSuperTextField
     final fieldFinder = _findInnerPlatformTextField(superTextFieldFinder ?? find.byType(SuperTextField));
     final match = fieldFinder.evaluate().single.widget;
 

@@ -16,3 +16,13 @@ class LinuxPlatform implements Platform {
   @override
   bool get isMac => false;
 }
+
+class AndroidPlatform implements Platform {
+  @override
+  bool get isMac => false;
+}
+
+class IosPlatform implements Platform {
+  @override
+  bool get isMac => false;
+}
