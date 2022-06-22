@@ -14,22 +14,22 @@ void main() {
         ]);
 
         (doc.nodes[0] as ParagraphNode).putMetadataValue('blockType', header1Attribution);
-        expect(serializeDocumentToMarkdown(doc).trim(), '# My Header');
+        expect(serializeDocumentToMarkdown(doc), '# My Header');
 
         (doc.nodes[0] as ParagraphNode).putMetadataValue('blockType', header2Attribution);
-        expect(serializeDocumentToMarkdown(doc).trim(), '## My Header');
+        expect(serializeDocumentToMarkdown(doc), '## My Header');
 
         (doc.nodes[0] as ParagraphNode).putMetadataValue('blockType', header3Attribution);
-        expect(serializeDocumentToMarkdown(doc).trim(), '### My Header');
+        expect(serializeDocumentToMarkdown(doc), '### My Header');
 
         (doc.nodes[0] as ParagraphNode).putMetadataValue('blockType', header4Attribution);
-        expect(serializeDocumentToMarkdown(doc).trim(), '#### My Header');
+        expect(serializeDocumentToMarkdown(doc), '#### My Header');
 
         (doc.nodes[0] as ParagraphNode).putMetadataValue('blockType', header5Attribution);
-        expect(serializeDocumentToMarkdown(doc).trim(), '##### My Header');
+        expect(serializeDocumentToMarkdown(doc), '##### My Header');
 
         (doc.nodes[0] as ParagraphNode).putMetadataValue('blockType', header6Attribution);
-        expect(serializeDocumentToMarkdown(doc).trim(), '###### My Header');
+        expect(serializeDocumentToMarkdown(doc), '###### My Header');
       });
 
       test('header with styles', () {
@@ -49,7 +49,7 @@ void main() {
           ),
         ]);
 
-        expect(serializeDocumentToMarkdown(doc).trim(), '# My **Header**');
+        expect(serializeDocumentToMarkdown(doc), '# My **Header**');
       });
 
       test('blockquote', () {
@@ -61,7 +61,7 @@ void main() {
           ),
         ]);
 
-        expect(serializeDocumentToMarkdown(doc).trim(), '> This is a blockquote');
+        expect(serializeDocumentToMarkdown(doc), '> This is a blockquote');
       });
 
       test('blockquote with styles', () {
@@ -81,7 +81,7 @@ void main() {
           ),
         ]);
 
-        expect(serializeDocumentToMarkdown(doc).trim(), '> This is a **blockquote**');
+        expect(serializeDocumentToMarkdown(doc), '> This is a **blockquote**');
       });
 
       test('code', () {
@@ -94,12 +94,12 @@ void main() {
         ]);
 
         expect(
-            serializeDocumentToMarkdown(doc).trim(),
-            '''
+          serializeDocumentToMarkdown(doc),
+          '''
 ```
 This is some code
-```'''
-                .trim());
+```''',
+        );
       });
 
       test('paragraph', () {
@@ -110,7 +110,7 @@ This is some code
           ),
         ]);
 
-        expect(serializeDocumentToMarkdown(doc).trim(), 'This is a paragraph.');
+        expect(serializeDocumentToMarkdown(doc), 'This is a paragraph.');
       });
 
       test('paragraph with one inline style', () {
@@ -129,7 +129,7 @@ This is some code
           ),
         ]);
 
-        expect(serializeDocumentToMarkdown(doc).trim(), 'This **is a** paragraph.');
+        expect(serializeDocumentToMarkdown(doc), 'This **is a** paragraph.');
       });
 
       test('paragraph with overlapping bold and italics', () {
@@ -150,7 +150,7 @@ This is some code
           ),
         ]);
 
-        expect(serializeDocumentToMarkdown(doc).trim(), 'This ***is a*** paragraph.');
+        expect(serializeDocumentToMarkdown(doc), 'This ***is a*** paragraph.');
       });
 
       test('paragraph with intersecting bold and italics', () {
@@ -171,7 +171,7 @@ This is some code
           ),
         ]);
 
-        expect(serializeDocumentToMarkdown(doc).trim(), 'This ***is a** paragraph*.');
+        expect(serializeDocumentToMarkdown(doc), 'This ***is a** paragraph*.');
       }, skip: '''Markdown serialization is currently broken for intersecting styles.
                   See https://github.com/superlistapp/super_editor/issues/526''');
 
@@ -193,7 +193,7 @@ This is some code
           ),
         ]);
 
-        expect(serializeDocumentToMarkdown(doc).trim(), 'This `**is a**` paragraph.');
+        expect(serializeDocumentToMarkdown(doc), 'This `**is a**` paragraph.');
       });
 
       test('paragraph with link', () {
@@ -218,7 +218,7 @@ This is some code
           ),
         ]);
 
-        expect(serializeDocumentToMarkdown(doc).trim(), 'This is a [paragraph](https://example.org).');
+        expect(serializeDocumentToMarkdown(doc), 'This is a [paragraph](https://example.org).');
       });
 
       test('paragraph with link overlapping style', () {
@@ -245,7 +245,7 @@ This is some code
           ),
         ]);
 
-        expect(serializeDocumentToMarkdown(doc).trim(), 'This is a [**paragraph**](https://example.org).');
+        expect(serializeDocumentToMarkdown(doc), 'This is a [**paragraph**](https://example.org).');
       });
 
       test('paragraph with link intersecting style', () {
@@ -272,7 +272,7 @@ This is some code
           ),
         ]);
 
-        expect(serializeDocumentToMarkdown(doc).trim(), '[This **is a** paragraph](https://example.org).');
+        expect(serializeDocumentToMarkdown(doc), '[This **is a** paragraph](https://example.org).');
       }, skip: '''Markdown serialization is currently broken for intersecting styles.
                   See https://github.com/superlistapp/super_editor/issues/526''');
 
@@ -285,7 +285,7 @@ This is some code
           ),
         ]);
 
-        expect(serializeDocumentToMarkdown(doc).trim(), '![some alt text](https://someimage.com/the/image.png)');
+        expect(serializeDocumentToMarkdown(doc), '![some alt text](https://someimage.com/the/image.png)');
       });
 
       test('horizontal rule', () {
@@ -295,7 +295,7 @@ This is some code
           ),
         ]);
 
-        expect(serializeDocumentToMarkdown(doc).trim(), '---');
+        expect(serializeDocumentToMarkdown(doc), '---');
       });
 
       test('unordered list items', () {
@@ -330,14 +330,14 @@ This is some code
         ]);
 
         expect(
-            serializeDocumentToMarkdown(doc).trim(),
-            '''
+          serializeDocumentToMarkdown(doc),
+          '''
   * Unordered 1
   * Unordered 2
     * Unordered 2.1
     * Unordered 2.2
-  * Unordered 3'''
-                .trim());
+  * Unordered 3''',
+        );
       });
 
       test('unordered list item with styles', () {
@@ -357,7 +357,7 @@ This is some code
           ),
         ]);
 
-        expect(serializeDocumentToMarkdown(doc).trim(), '* **Unordered** 1');
+        expect(serializeDocumentToMarkdown(doc), '  * **Unordered** 1');
       });
 
       test('ordered list items', () {
@@ -392,14 +392,14 @@ This is some code
         ]);
 
         expect(
-            serializeDocumentToMarkdown(doc).trim(),
-            '''
+          serializeDocumentToMarkdown(doc),
+          '''
   1. Ordered 1
   1. Ordered 2
     1. Ordered 2.1
     1. Ordered 2.2
-  1. Ordered 3'''
-                .trim());
+  1. Ordered 3''',
+        );
       });
 
       test('ordered list item with styles', () {
@@ -419,7 +419,7 @@ This is some code
           ),
         ]);
 
-        expect(serializeDocumentToMarkdown(doc).trim(), '1. **Ordered** 1');
+        expect(serializeDocumentToMarkdown(doc), '  1. **Ordered** 1');
       });
 
       test('example doc', () {

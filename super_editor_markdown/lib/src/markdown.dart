@@ -28,25 +28,29 @@ MutableDocument deserializeMarkdownToDocument(String markdown) {
 String serializeDocumentToMarkdown(Document doc) {
   StringBuffer buffer = StringBuffer();
 
+  bool isFirstLine = true;
   for (int i = 0; i < doc.nodes.length; ++i) {
     final node = doc.nodes[i];
 
+    if (!isFirstLine) {
+      // Create a new line to encode the given node.
+      buffer.writeln("");
+    } else {
+      isFirstLine = false;
+    }
+
     if (node is ImageNode) {
-      buffer
-        ..writeln('![${node.altText}](${node.imageUrl})')
-        ..writeln('');
+      buffer.write('![${node.altText}](${node.imageUrl})');
     } else if (node is HorizontalRuleNode) {
-      buffer
-        ..writeln('---')
-        ..writeln('');
+      buffer.write('---');
     } else if (node is ListItemNode) {
       final indent = List.generate(node.indent + 1, (index) => '  ').join('');
       final symbol = node.type == ListItemType.unordered ? '*' : '1.';
 
-      buffer.writeln('$indent$symbol ${node.text.toMarkdown()}');
+      buffer.write('$indent$symbol ${node.text.toMarkdown()}');
 
       final nodeBelow = i < doc.nodes.length - 1 ? doc.nodes[i + 1] : null;
-      if (nodeBelow is! ListItemNode || nodeBelow.type != node.type) {
+      if (nodeBelow != null && (nodeBelow is! ListItemNode || nodeBelow.type != node.type)) {
         // This list item is the last item in the list. Add an extra
         // blank line after it.
         buffer.writeln('');
@@ -55,44 +59,27 @@ String serializeDocumentToMarkdown(Document doc) {
       final Attribution? blockType = node.getMetadataValue('blockType');
 
       if (blockType == header1Attribution) {
-        buffer
-          ..writeln('# ${node.text.toMarkdown()}')
-          ..writeln('');
+        buffer.write('# ${node.text.toMarkdown()}');
       } else if (blockType == header2Attribution) {
-        buffer
-          ..writeln('## ${node.text.toMarkdown()}')
-          ..writeln('');
+        buffer.write('## ${node.text.toMarkdown()}');
       } else if (blockType == header3Attribution) {
-        buffer
-          ..writeln('### ${node.text.toMarkdown()}')
-          ..writeln('');
+        buffer.write('### ${node.text.toMarkdown()}');
       } else if (blockType == header4Attribution) {
-        buffer
-          ..writeln('#### ${node.text.toMarkdown()}')
-          ..writeln('');
+        buffer.write('#### ${node.text.toMarkdown()}');
       } else if (blockType == header5Attribution) {
-        buffer
-          ..writeln('##### ${node.text.toMarkdown()}')
-          ..writeln('');
+        buffer.write('##### ${node.text.toMarkdown()}');
       } else if (blockType == header6Attribution) {
-        buffer
-          ..writeln('###### ${node.text.toMarkdown()}')
-          ..writeln('');
+        buffer.write('###### ${node.text.toMarkdown()}');
       } else if (blockType == blockquoteAttribution) {
         // TODO: handle multiline
-        buffer
-          ..writeln('> ${node.text.toMarkdown()}')
-          ..writeln();
+        buffer.write('> ${node.text.toMarkdown()}');
       } else if (blockType == codeAttribution) {
         buffer //
           ..writeln('```') //
           ..writeln(node.text.toMarkdown()) //
-          ..writeln('```')
-          ..writeln('');
+          ..write('```');
       } else {
-        buffer
-          ..writeln(node.text.toMarkdown())
-          ..writeln('');
+        buffer.write(node.text.toMarkdown());
       }
     }
   }
