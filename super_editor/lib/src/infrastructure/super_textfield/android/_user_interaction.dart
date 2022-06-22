@@ -389,13 +389,16 @@ class AndroidTextFieldTouchInteractorState extends State<AndroidTextFieldTouchIn
           decoration: BoxDecoration(
             border: widget.showDebugPaint ? Border.all(color: Colors.purple) : const Border(),
           ),
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              widget.child,
-              if (widget.textController.selection.extentOffset >= 0) _buildExtentTrackerForMagnifier(),
-              _buildTapAndDragDetector(),
-            ],
+          child: Padding(
+            padding: widget.padding,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                widget.child,
+                if (widget.textController.selection.extentOffset >= 0) _buildExtentTrackerForMagnifier(),
+                _buildTapAndDragDetector(),
+              ],
+            ),
           ),
         ),
       ),
