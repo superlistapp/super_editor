@@ -1204,6 +1204,23 @@ typedef TextFieldKeyboardHandler = TextFieldKeyboardHandlerResult Function({
   required RawKeyEvent keyEvent,
 });
 
+/// A [TextFieldKeyboardHandler] that reports [TextFieldKeyboardHandlerResult.blocked]
+/// for any key combination that matches one of the given [keys].
+TextFieldKeyboardHandler ignoreTextFieldKeyCombos(List<ShortcutActivator> keys) {
+  return ({
+    required AttributedTextEditingController controller,
+    required ProseTextLayout textLayout,
+    required RawKeyEvent keyEvent,
+  }) {
+    for (final key in keys) {
+      if (key.accepts(keyEvent, RawKeyboard.instance)) {
+        return TextFieldKeyboardHandlerResult.blocked;
+      }
+    }
+    return TextFieldKeyboardHandlerResult.notHandled;
+  };
+}
+
 /// The keyboard actions that a [SuperTextField] uses by default.
 ///
 /// It's common for developers to want all of these actions, but also
