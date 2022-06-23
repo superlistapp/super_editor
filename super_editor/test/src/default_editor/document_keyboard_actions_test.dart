@@ -153,8 +153,7 @@ void main() {
           );
         });
 
-        testWidgetsOnWindowsAndLinux('beginning of line with HOME in a paragraph with explicit new lines',
-            (tester) async {
+        testWidgetsOnWindowsAndLinux('beginning of line with HOME in a paragraph with explicit new lines', (tester) async {
           await _pumpExplicitLineBreakTestSetup(tester);
 
           // Place caret at the second line at "consectetur adipiscing |elit"
@@ -202,7 +201,9 @@ void main() {
 
         testWidgetsOnWindowsAndLinux('end of line with END in a paragraph with explicit new lines', (tester) async {
           // Configure the screen to a size big enough so there's no auto line-wrapping
-          await _pumpExplicitLineBreakTestSetup(tester, size: const Size(1024, 400));
+          await _pumpExplicitLineBreakTestSetup(tester, 
+            size: const Size(1024, 400)
+          );
 
           // Place caret at the first line at "Lorem |ipsum"
           // Avoid placing caret in the last line to make sure END doesn't move caret
@@ -260,7 +261,7 @@ void main() {
         });
       });
 
-      group("does nothing", () {
+      group("does nothing", (){
         testWidgetsOnWindows("with ALT + LEFT ARROW", (tester) async {
           // Start the user's selection somewhere in the middle of a word.
           await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
@@ -338,7 +339,7 @@ void main() {
         });
       });
 
-      group("shortcuts for Windows and Linux do nothing on mac", () {
+      group("shortcuts for Windows and Linux do nothing on mac", (){
         testWidgetsOnMac('HOME', (tester) async {
           // Start the user's selection somewhere after the beginning of the first
           // line in the first node.
@@ -414,7 +415,7 @@ void main() {
         });
       });
 
-      group("shortcuts for Mac do nothing on Windows and Linux", () {
+      group("shortcuts for Mac do nothing on Windows and Linux", (){
         testWidgetsOnWindowsAndLinux('CMD + LEFT ARROW', (tester) async {
           // Start the user's selection somewhere after the beginning of the first
           // line in the first node.
@@ -1074,19 +1075,19 @@ Future<TestDocumentContext> _pumpExplicitLineBreakTestSetup(
   WidgetTester tester, {
   Size? size,
 }) async {
-  return await tester
-      .createDocument()
-      .withCustomContent(MutableDocument(
-        nodes: [
-          ParagraphNode(
-            id: '1',
-            text: AttributedText(
-              text: 'Lorem ipsum dolor sit amet\nconsectetur adipiscing elit',
-            ),
+  return await tester 
+    .createDocument()
+    .withCustomContent(MutableDocument(
+      nodes: [
+        ParagraphNode(
+          id: '1',
+          text: AttributedText(
+            text: 'Lorem ipsum dolor sit amet\nconsectetur adipiscing elit',
           ),
-        ],
-      ))
-      .forDesktop()
-      .withEditorSize(size)
-      .pump();
+        ),
+      ],
+    ))
+    .forDesktop()
+    .withEditorSize(size)
+    .pump();
 }
