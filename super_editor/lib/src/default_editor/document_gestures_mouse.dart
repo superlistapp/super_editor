@@ -339,6 +339,7 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
         _selectPosition(docPosition);
       }
     } else {
+      editorGesturesLog.fine("No document content at ${details.globalPosition}.");
       _clearSelection();
     }
   }
@@ -467,6 +468,7 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     if (!_isShiftPressed) {
       // Only clear the selection if the user isn't pressing shift. Shift is
       // used to expand the current selection, not replace it.
+      editorGesturesLog.fine("Shift isn't pressed. Clearing any existing selection before panning.");
       _clearSelection();
     }
 
@@ -560,13 +562,18 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     final scrollDeltaWhileDragging = _dragStartScrollOffset! - _scrollPosition.pixels;
 
     final dragStartInDoc = _getDocOffsetFromGlobalOffset(_dragStartGlobal!) + Offset(0, scrollDeltaWhileDragging);
-
     final dragEndInDoc = _getDocOffsetFromGlobalOffset(_dragEndGlobal!);
+    editorGesturesLog.finest(
+      '''
+Updating drag selection:
+ - drag start in doc: $dragStartInDoc
+ - drag end in doc: $dragEndInDoc''',
+    );
 
     _selectRegion(
       documentLayout: _docLayout,
-      baseOffset: dragStartInDoc,
-      extentOffset: dragEndInDoc,
+      baseOffsetInDocument: dragStartInDoc,
+      extentOffsetInDocument: dragEndInDoc,
       selectionType: _selectionType,
       expandSelection: _expandSelectionDuringDrag,
     );
@@ -574,13 +581,16 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
 
   void _selectRegion({
     required DocumentLayout documentLayout,
-    required Offset baseOffset,
-    required Offset extentOffset,
+    required Offset baseOffsetInDocument,
+    required Offset extentOffsetInDocument,
     required SelectionType selectionType,
     bool expandSelection = false,
   }) {
     editorGesturesLog.info("Selecting region with selection mode: $selectionType");
-    DocumentSelection? selection = documentLayout.getDocumentSelectionInRegion(baseOffset, extentOffset);
+    DocumentSelection? selection = documentLayout.getDocumentSelectionInRegion(
+      baseOffsetInDocument,
+      extentOffsetInDocument,
+    );
     DocumentPosition? basePosition = selection?.base;
     DocumentPosition? extentPosition = selection?.extent;
     editorGesturesLog.fine(" - base: $basePosition, extent: $extentPosition");
@@ -599,7 +609,9 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
         widget.editContext.composer.selection = null;
         return;
       }
-      basePosition = baseOffset.dy < extentOffset.dy ? baseParagraphSelection.base : baseParagraphSelection.extent;
+      basePosition = baseOffsetInDocument.dy < extentOffsetInDocument.dy
+          ? baseParagraphSelection.base
+          : baseParagraphSelection.extent;
 
       final extentParagraphSelection = getParagraphSelection(
         docPosition: extentPosition,
@@ -609,8 +621,9 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
         widget.editContext.composer.selection = null;
         return;
       }
-      extentPosition =
-          baseOffset.dy < extentOffset.dy ? extentParagraphSelection.extent : extentParagraphSelection.base;
+      extentPosition = baseOffsetInDocument.dy < extentOffsetInDocument.dy
+          ? extentParagraphSelection.extent
+          : extentParagraphSelection.base;
     } else if (selectionType == SelectionType.word) {
       final baseWordSelection = getWordSelection(
         docPosition: basePosition,

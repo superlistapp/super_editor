@@ -308,16 +308,16 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
           // first intersecting component that we find must be the top node of
           // the selected area.
           topNodeId = _nodeIdsToComponentKeys.entries.firstWhere((element) => element.value == componentKey).key;
-          topNodeBasePosition = component.getPositionAtOffset(componentBaseOffset);
-          topNodeExtentPosition = component.getPositionAtOffset(componentExtentOffset);
+          topNodeBasePosition = _getNodePositionForComponentOffset(component, componentBaseOffset);
+          topNodeExtentPosition = _getNodePositionForComponentOffset(component, componentExtentOffset);
         }
         // We continuously update the bottom node with every additional
         // intersection that we find. This way, when the iteration ends,
         // the last bottom node that we assigned must be the actual bottom
         // node within the selected area.
         bottomNodeId = _nodeIdsToComponentKeys.entries.firstWhere((element) => element.value == componentKey).key;
-        bottomNodeBasePosition = component.getPositionAtOffset(componentBaseOffset);
-        bottomNodeExtentPosition = component.getPositionAtOffset(componentExtentOffset);
+        bottomNodeBasePosition = _getNodePositionForComponentOffset(component, componentBaseOffset);
+        bottomNodeExtentPosition = _getNodePositionForComponentOffset(component, componentExtentOffset);
       }
     }
 
@@ -373,6 +373,22 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
     } else {
       return null;
     }
+  }
+
+  /// Returns the [NodePosition] that sits at the given [componentOffset].
+  ///
+  /// If the [componentOffset] is above the component, then the component's
+  /// "beginning" position is returned. If the [componentOffset] is below
+  /// the component, then the component's "end" position is returned.
+  NodePosition? _getNodePositionForComponentOffset(DocumentComponent component, Offset componentOffset) {
+    if (componentOffset.dy < 0) {
+      return component.getBeginningPosition();
+    }
+    if (componentOffset.dy > component.getRectForPosition(component.getEndPosition()).bottom) {
+      return component.getEndPosition();
+    }
+
+    return component.getPositionAtOffset(componentOffset);
   }
 
   @override
@@ -493,7 +509,7 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
   }
 
   @override
-  Offset getAncestorOffsetFromDocumentOffset(Offset documentOffset, RenderObject ancestor) {
+  Offset getAncestorOffsetFromDocumentOffset(Offset documentOffset, [RenderObject? ancestor]) {
     return (context.findRenderObject() as RenderBox).localToGlobal(documentOffset, ancestor: ancestor);
   }
 
