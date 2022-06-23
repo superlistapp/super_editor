@@ -42,9 +42,9 @@ class IOSTextFieldTouchInteractor extends StatefulWidget {
     required this.selectableTextKey,
     required this.isMultiline,
     required this.handleColor,
+    this.padding = EdgeInsets.zero,
     this.showDebugPaint = false,
     required this.child,
-    this.padding = EdgeInsets.zero,
   }) : super(key: key);
 
   /// [FocusNode] for the text field that contains this [IOSTextFieldInteractor].
@@ -81,16 +81,16 @@ class IOSTextFieldTouchInteractor extends StatefulWidget {
   /// The color of expanded selection drag handles.
   final Color handleColor;
 
+  /// Padding around the text entry area
+  ///
+  /// defaults to `EdgeInsets.zero`
+  final EdgeInsetsGeometry padding;
+
   /// Whether to paint debugging guides and regions.
   final bool showDebugPaint;
 
   /// The child widget.
   final Widget child;
-
-  /// Padding around the text entry area
-  ///
-  /// defaults to `EdgeInsets.zero`
-  final EdgeInsetsGeometry padding;
 
   @override
   IOSTextFieldTouchInteractorState createState() => IOSTextFieldTouchInteractorState();

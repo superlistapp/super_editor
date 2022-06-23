@@ -33,12 +33,12 @@ class SuperAndroidTextField extends StatefulWidget {
     this.lineHeight,
     required this.caretColor,
     required this.selectionColor,
+    this.padding = EdgeInsets.zero,
     required this.handlesColor,
     this.textInputAction = TextInputAction.done,
     this.popoverToolbarBuilder = _defaultAndroidToolbarBuilder,
     this.showDebugPaint = false,
     this.onPerformActionPressed,
-    this.padding = EdgeInsets.zero,
   })  : assert(minLines == null || minLines == 1 || lineHeight != null, 'minLines > 1 requires a non-null lineHeight'),
         assert(maxLines == null || maxLines == 1 || lineHeight != null, 'maxLines > 1 requires a non-null lineHeight'),
         super(key: key);
@@ -64,6 +64,11 @@ class SuperAndroidTextField extends StatefulWidget {
   ///
   /// To easily build a hint with styled text, see [StyledHintBuilder].
   final WidgetBuilder? hintBuilder;
+
+  /// Padding around the text entry area
+  ///
+  /// defaults to `EdgeInsets.zero`
+  final EdgeInsetsGeometry padding;
 
   /// Color of the caret.
   final Color caretColor;
@@ -127,11 +132,6 @@ class SuperAndroidTextField extends StatefulWidget {
 
   /// Builder that creates the popover toolbar widget that appears when text is selected.
   final Widget Function(BuildContext, AndroidEditingOverlayController) popoverToolbarBuilder;
-
-  /// Padding around the text entry area
-  ///
-  /// defaults to `EdgeInsets.zero`
-  final EdgeInsetsGeometry padding;
 
   @override
   State createState() => SuperAndroidTextFieldState();
@@ -359,8 +359,8 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
           textScrollController: _textScrollController,
           isMultiline: _isMultiline,
           handleColor: widget.handlesColor,
-          showDebugPaint: widget.showDebugPaint,
           padding: widget.padding,
+          showDebugPaint: widget.showDebugPaint,
           child: TextScrollView(
             key: _scrollKey,
             textScrollController: _textScrollController,

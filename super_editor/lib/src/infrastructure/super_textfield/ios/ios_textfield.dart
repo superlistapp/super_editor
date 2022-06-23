@@ -37,12 +37,12 @@ class SuperIOSTextField extends StatefulWidget {
     this.lineHeight,
     required this.caretColor,
     required this.selectionColor,
+    this.padding = EdgeInsets.zero,
     required this.handlesColor,
     this.textInputAction = TextInputAction.done,
     this.popoverToolbarBuilder = _defaultPopoverToolbarBuilder,
     this.showDebugPaint = false,
     this.onPerformActionPressed,
-    this.padding = EdgeInsets.zero,
   })  : assert(minLines == null || minLines == 1 || lineHeight != null, 'minLines > 1 requires a non-null lineHeight'),
         assert(maxLines == null || maxLines == 1 || lineHeight != null, 'maxLines > 1 requires a non-null lineHeight'),
         super(key: key);
@@ -68,6 +68,11 @@ class SuperIOSTextField extends StatefulWidget {
   ///
   /// To easily build a hint with styled text, see [StyledHintBuilder].
   final WidgetBuilder? hintBuilder;
+
+  /// Padding around the text entry area
+  ///
+  /// defaults to `EdgeInsets.zero`
+  final EdgeInsetsGeometry padding;
 
   /// Color of the caret.
   final Color caretColor;
@@ -131,11 +136,6 @@ class SuperIOSTextField extends StatefulWidget {
   /// Callback invoked when the user presses the "action" button
   /// on the keyboard, e.g., "done", "call", "emergency", etc.
   final Function(TextInputAction)? onPerformActionPressed;
-
-  /// Padding around the text entry area
-  ///
-  /// defaults to `EdgeInsets.zero`
-  final EdgeInsetsGeometry padding;
 
   @override
   State createState() => SuperIOSTextFieldState();
@@ -375,8 +375,8 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
           textScrollController: _textScrollController,
           isMultiline: _isMultiline,
           handleColor: widget.handlesColor,
-          showDebugPaint: widget.showDebugPaint,
           padding: widget.padding,
+          showDebugPaint: widget.showDebugPaint,
           child: TextScrollView(
             key: _scrollKey,
             textScrollController: _textScrollController,
