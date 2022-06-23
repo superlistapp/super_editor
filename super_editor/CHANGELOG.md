@@ -1,6 +1,3 @@
-## [0.2.1] - June, 2022
- * Expose padding property in SuperTextField
-
 ## [0.2.0] - Feb, 2022: Mobile Support
  * Mobile document editing
  * Mobile text field editing
