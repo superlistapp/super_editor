@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:logging/logging.dart';
 import 'package:super_editor/super_editor.dart';
 
+import '../../super_editor/document_test_tools.dart';
+import '../../super_editor/supereditor_inspector.dart';
 import '../_document_test_tools.dart';
 import '../../super_editor/test_documents.dart';
 
@@ -265,6 +266,82 @@ void main() {
             ),
           ).toTextEditingValue(),
           expectedTextWithSelection: "|~\nThis is the first paragraph of text.\n~|",
+        );
+      });
+    });
+
+    group('inserting near links', () {
+      testWidgets('prevent expanding the link when inserting at the start', (tester) async {
+        // Configure and render a document.
+        final testerDocumentContext = await tester //
+            .createDocument()
+            .withSingleLinkParagraph()
+            .forIOS()
+            .autoFocus(true)
+            .pump();
+
+        // Place the caret in the first paragraph at the start of the link.
+        final softwareKeyboardHandler = SoftwareKeyboardHandler(
+          composer: testerDocumentContext.editContext.composer
+            ..selection = const DocumentSelection.collapsed(
+              position: DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: 0)),
+            ),
+          editor: testerDocumentContext.editContext.editor,
+          commonOps: testerDocumentContext.editContext.commonOps,
+        );
+
+        // Insert some text to simulate IME input action
+        softwareKeyboardHandler.applyDeltas([
+          const TextEditingDeltaInsertion(
+            textInserted: 'Go to ',
+            insertionOffset: 0,
+            selection: TextSelection.collapsed(offset: 0),
+            composing: TextRange(start: -1, end: -1),
+            oldText: 'https://google.com',
+          ),
+        ]);
+
+        // Ensure that the link is not being expanded
+        expect(
+          SuperEditorInspector.findDocument(),
+          equalsMarkdown("Go to [https://google.com](https://google.com)"),
+        );
+      });
+
+      testWidgets('prevent expanding the link when inserting at the end', (tester) async {
+        // Configure and render a document.
+        final testerDocumentContext = await tester //
+            .createDocument()
+            .withSingleLinkParagraph()
+            .forIOS()
+            .autoFocus(true)
+            .pump();
+
+        // Place the caret in the first paragraph at the start of the link.
+        final softwareKeyboardHandler = SoftwareKeyboardHandler(
+          composer: testerDocumentContext.editContext.composer
+            ..selection = const DocumentSelection.collapsed(
+              position: DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: 18)),
+            ),
+          editor: testerDocumentContext.editContext.editor,
+          commonOps: testerDocumentContext.editContext.commonOps,
+        );
+
+        // Insert some text to simulate IME input action
+        softwareKeyboardHandler.applyDeltas([
+          const TextEditingDeltaInsertion(
+            textInserted: ' to learn anything',
+            insertionOffset: 18,
+            selection: TextSelection.collapsed(offset: 18),
+            composing: TextRange(start: -1, end: -1),
+            oldText: 'https://google.com',
+          ),
+        ]);
+
+        // Ensure that the link is not being expanded
+        expect(
+          SuperEditorInspector.findDocument(),
+          equalsMarkdown("[https://google.com](https://google.com) to learn anything"),
         );
       });
     });
