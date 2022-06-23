@@ -171,7 +171,7 @@ void main() {
     // Note: This covers cases on mobile as well, so separated tests for mobile
     // is not necessary
     group('link encoding when pasting', () {
-      testWidgetsOnMac('converts URLs on an empty paragraph', (tester) async {
+      testWidgetsOnMac('converts URLs when pasting into an empty paragraph', (tester) async {
         tester.simulateClipboard();
         tester.setSimulatedClipboardContent("Link: https://flutter.dev and link: https://pub.dev");
 
@@ -197,7 +197,7 @@ void main() {
         );
       });
 
-      testWidgetsOnMac('converts URLs on an existing paragraph', (tester) async {
+      testWidgetsOnMac('converts URLs when pasting into an existing paragraph', (tester) async {
         tester.simulateClipboard();
         tester.setSimulatedClipboardContent("Link: https://flutter.dev and link: https://pub.dev");
 
@@ -227,7 +227,7 @@ void main() {
         );
       });
 
-      testWidgetsOnMac('when pasting in a link, split the existing link and convert URLs', (tester) async {
+      testWidgetsOnMac('splits an existing link that surrounds the caret"', (tester) async {
         tester.simulateClipboard();
         tester.setSimulatedClipboardContent("Link: https://flutter.dev and link: https://pub.dev");
 
@@ -253,7 +253,7 @@ void main() {
         );
       });
 
-      testWidgetsOnMac('when pasting at the start of a link, convert URLs and prevent expanding link', (tester) async {
+      testWidgetsOnMac('convert URLs and prevent expanding link when pasting at the start of a link', (tester) async {
         tester.simulateClipboard();
         tester.setSimulatedClipboardContent("Link: https://flutter.dev");
 
@@ -277,7 +277,7 @@ void main() {
         );
       });
 
-      testWidgetsOnMac('when pasting at the end of a link, convert URLs and prevent expanding link', (tester) async {
+      testWidgetsOnMac('convert URLs and prevent expanding link at the end of a link', (tester) async {
         tester.simulateClipboard();
         tester.setSimulatedClipboardContent("Link: https://flutter.dev");
 
