@@ -112,7 +112,7 @@ void main() {
             ),
           );
         });
-
+        
         testWidgetsOnLinux('next character with ALT + RIGHT ARROW', (tester) async {
           // Start the user's selection somewhere in the middle of a word.
           await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
@@ -131,8 +131,8 @@ void main() {
           );
         });
 
-        testWidgetsOnWindowsAndLinux('beginning of line with HOME in an auto-wrapping paragraph', (tester) async {
-          await _pumpAutoWrappingTestSetup(tester);
+        testWidgetsOnWindowsAndLinux('beginning of line with HOME in an auto-wrapping paragraph', (tester) async {          
+          await _pumpAutoWrappingTestSetup(tester);          
 
           // Place caret at the second line at "adipiscing |elit"
           // We avoid placing the caret in the first line to make sure HOME doesn't move caret
@@ -141,7 +141,7 @@ void main() {
 
           await tester.pressHome();
 
-          // Ensure that the caret moved to the beginning of the wrapped line at "|adipiscing elit"
+          // Ensure that the caret moved to the beginning of the wrapped line at "|adipiscing elit"         
           expect(
             SuperEditorInspector.findDocumentSelection(),
             const DocumentSelection.collapsed(
@@ -153,7 +153,7 @@ void main() {
           );
         });
 
-        testWidgetsOnWindowsAndLinux('beginning of line with HOME in a paragraph with explicit new lines', (tester) async {
+        testWidgetsOnWindowsAndLinux('beginning of line with HOME in a paragraph with explicit new lines', (tester) async {                    
           await _pumpExplicitLineBreakTestSetup(tester);
 
           // Place caret at the second line at "consectetur adipiscing |elit"
@@ -163,7 +163,7 @@ void main() {
 
           await tester.pressHome();
 
-          // Ensure that the caret moved to the beginning of the second line at "|consectetur adipiscing elit"
+          // Ensure that the caret moved to the beginning of the second line at "|consectetur adipiscing elit"         
           expect(
             SuperEditorInspector.findDocumentSelection(),
             const DocumentSelection.collapsed(
@@ -174,8 +174,8 @@ void main() {
             ),
           );
         });
-
-        testWidgetsOnWindowsAndLinux('end of line with END in an auto-wrapping paragraph', (tester) async {
+        
+        testWidgetsOnWindowsAndLinux('end of line with END in an auto-wrapping paragraph', (tester) async {           
           await _pumpAutoWrappingTestSetup(tester);
 
           // Place caret at the start of the first line
@@ -297,11 +297,11 @@ void main() {
             ),
           );
         });
-
-        testWidgetsOnWindowsAndLinux('with ALT + UP ARROW', (tester) async {
+      
+        testWidgetsOnWindowsAndLinux('with ALT + UP ARROW', (tester) async {                                        
           await _pumpExplicitLineBreakTestSetup(tester);
 
-          // Place caret at the second line at "consectetur adipiscing |elit"
+          // Place caret at the second line at "consectetur adipiscing |elit"          
           await tester.placeCaretInParagraph('1', 51);
 
           await tester.pressAltUpArrow();
@@ -318,10 +318,10 @@ void main() {
           );
         });
 
-        testWidgetsOnWindowsAndLinux('with ALT + DOWN ARROW', (tester) async {
+        testWidgetsOnWindowsAndLinux('with ALT + DOWN ARROW', (tester) async {                              
           await _pumpExplicitLineBreakTestSetup(tester);
 
-          // Place caret at the first line at "Lorem |ipsum"
+          // Place caret at the first line at "Lorem |ipsum"          
           await tester.placeCaretInParagraph('1', 6);
 
           await tester.pressAltDownArrow();
@@ -377,7 +377,7 @@ void main() {
             ),
           );
         });
-
+      
         testWidgetsOnMac('CTRL + LEFT ARROW', (tester) async {
           // Start the user's selection somewhere in the middle of a word.
           await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
@@ -1063,30 +1063,32 @@ Future<EditContext> _pumpCaretMovementTestSetup(
 }
 
 Future<TestDocumentContext> _pumpAutoWrappingTestSetup(WidgetTester tester) async {
-  return await tester //
-      .createDocument()
-      .withSingleParagraph()
-      .forDesktop()
-      .withEditorSize(const Size(400, 400))
-      .pump();
+  return await tester 
+    .createDocument()
+    .withSingleParagraph()
+    .forDesktop()
+    .withEditorSize(const Size(400, 400))
+    .pump();
 }
 
 Future<TestDocumentContext> _pumpExplicitLineBreakTestSetup(
   WidgetTester tester, {
   Size? size,
-}) async {
+}) async {          
   return await tester 
     .createDocument()
-    .withCustomContent(MutableDocument(
-      nodes: [
-        ParagraphNode(
-          id: '1',
-          text: AttributedText(
-            text: 'Lorem ipsum dolor sit amet\nconsectetur adipiscing elit',
+    .withCustomContent(
+      MutableDocument(
+        nodes: [
+          ParagraphNode(
+            id: '1',
+            text: AttributedText(                  
+              text:
+                  'Lorem ipsum dolor sit amet\nconsectetur adipiscing elit',              
+            ),
           ),
-        ),
-      ],
-    ))
+        ],
+      ))
     .forDesktop()
     .withEditorSize(size)
     .pump();
