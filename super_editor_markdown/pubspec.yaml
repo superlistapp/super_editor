@@ -1,6 +1,6 @@
 name: super_editor_markdown
 description: Markdown (de)serialization for super_editor documents.
-version: 0.1.0
+version: 0.1.1
 homepage: https://github.com/superlistapp/super_editor
 
 environment:
@@ -20,6 +20,8 @@ dependency_overrides:
   # against changes that they're making to other mono-repo packages
   super_editor:
     path: ../super_editor
+  super_text_layout:
+    path: ../super_text_layout
 
 dev_dependencies:
   # TODO: upgrade lints to 2.0.1 when we release super_editor 0.2.1

@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/super_editor.dart';
@@ -19,6 +20,45 @@ extension SuperTextFieldRobot on WidgetTester {
     if (match is SuperDesktopTextField) {
       final didTap =
           await _tapAtTextPositionOnDesktop(state<SuperDesktopTextFieldState>(fieldFinder), offset, affinity);
+      if (!didTap) {
+        throw Exception("The desired text offset wasn't tappable in SuperTextField: $offset");
+      }
+
+      await pumpAndSettle();
+
+      return;
+    }
+
+    if (match is SuperAndroidTextField) {
+      throw Exception("Entering text on an Android SuperTextField is not yet supported");
+    }
+
+    if (match is SuperIOSTextField) {
+      throw Exception("Entering text on an iOS SuperTextField is not yet supported");
+    }
+
+    throw Exception("Couldn't find a SuperTextField with the given Finder: $fieldFinder");
+  }
+
+  /// Double taps in a [SuperTextField] at the given [offset]
+  ///
+  /// {@macro supertextfield_finder} 
+  Future<void> doubleTapAtSuperTextField(int offset,
+    [Finder? superTextFieldFinder, TextAffinity affinity = TextAffinity.downstream]) async {
+    // TODO: De-duplicate this behavior with placeCaretInSuperTextField
+    final fieldFinder = _findInnerPlatformTextField(superTextFieldFinder ?? find.byType(SuperTextField));
+    final match = fieldFinder.evaluate().single.widget;
+
+    if (match is SuperDesktopTextField) {
+      final superDesktopTextField = state<SuperDesktopTextFieldState>(fieldFinder);
+
+      bool didTap = await _tapAtTextPositionOnDesktop(superDesktopTextField, offset, affinity);
+      if (!didTap) {
+        throw Exception("The desired text offset wasn't tappable in SuperTextField: $offset");
+      }
+      await pump(kDoubleTapMinTime);
+
+      didTap = await _tapAtTextPositionOnDesktop(superDesktopTextField, offset, affinity);
       if (!didTap) {
         throw Exception("The desired text offset wasn't tappable in SuperTextField: $offset");
       }

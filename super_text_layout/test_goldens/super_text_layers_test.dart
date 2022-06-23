@@ -50,7 +50,7 @@ void main() {
           final textLength = threeLineTextSpan.toPlainText().length;
           for (int i = 0; i < textLength; i += 1) {
             // Get the bounding rectangle for the character
-            characterRects.add(textLayout.getCharacterBox(TextPosition(offset: i)).toRect());
+            characterRects.add(textLayout.getCharacterBox(TextPosition(offset: i))!.toRect());
             // Select a color for this character
             characterColors
                 .add(HSVColor.fromAHSV(1.0, 360.0 * (characterColors.length / textLength), 1.0, 1.0).toColor());
@@ -77,7 +77,7 @@ void main() {
           final textLength = threeLineTextSpan.toPlainText().length;
           for (int i = 0; i < textLength; i += 1) {
             // Get the bounding rectangle for the character
-            characterRects.add(textLayout.getCharacterBox(TextPosition(offset: i)).toRect());
+            characterRects.add(textLayout.getCharacterBox(TextPosition(offset: i))!.toRect());
           }
 
           return Stack(
