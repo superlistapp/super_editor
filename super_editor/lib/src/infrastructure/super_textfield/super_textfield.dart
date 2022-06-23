@@ -202,10 +202,10 @@ class SuperTextFieldState extends State<SuperTextField> {
             width: 1,
             borderRadius: BorderRadius.zero,
           ),
+          padding: widget.padding,
           minLines: widget.minLines,
           maxLines: widget.maxLines,
           keyboardHandlers: widget.keyboardHandlers,
-          padding: widget.padding,
         );
       case SuperTextFieldPlatformConfiguration.android:
         return SuperAndroidTextField(
@@ -218,11 +218,11 @@ class SuperTextFieldState extends State<SuperTextField> {
           hintBuilder: widget.hintBuilder,
           caretColor: widget.controlsColor ?? defaultAndroidControlsColor,
           selectionColor: widget.selectionColor ?? defaultSelectionColor,
+          padding: widget.padding,
           handlesColor: widget.controlsColor ?? defaultAndroidControlsColor,
           minLines: widget.minLines,
           maxLines: widget.maxLines,
           lineHeight: widget.lineHeight,
-          padding: widget.padding,
         );
       case SuperTextFieldPlatformConfiguration.iOS:
         return SuperIOSTextField(
@@ -235,11 +235,11 @@ class SuperTextFieldState extends State<SuperTextField> {
           hintBuilder: widget.hintBuilder,
           caretColor: widget.controlsColor ?? defaultIOSControlsColor,
           selectionColor: widget.selectionColor ?? defaultSelectionColor,
+          padding: widget.padding,
           handlesColor: widget.controlsColor ?? defaultIOSControlsColor,
           minLines: widget.minLines,
           maxLines: widget.maxLines,
           lineHeight: widget.lineHeight,
-          padding: widget.padding,
         );
     }
   }
