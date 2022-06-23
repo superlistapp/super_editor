@@ -63,7 +63,7 @@ class TestDocumentSelector {
   TestDocumentConfigurator withSingleParagraph() {
     return TestDocumentConfigurator._(
       _widgetTester,
-      singleParagraphEmptyDoc(),
+      singleParagraphDoc(),
     );
   }
 
