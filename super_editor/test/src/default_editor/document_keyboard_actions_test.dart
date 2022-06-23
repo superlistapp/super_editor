@@ -94,7 +94,7 @@ void main() {
             ),
           );
         });
-
+        
         testWidgetsOnLinux('preceding character with ALT + LEFT ARROW', (tester) async {
           // Start the user's selection somewhere in the middle of a word.
           await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
@@ -223,7 +223,7 @@ void main() {
             ),
           );
         });
-
+        
         testWidgetsOnWindowsAndLinux('beginning of word with CTRL + LEFT ARROW', (tester) async {
           // Start the user's selection somewhere in the middle of a word.
           await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
@@ -241,7 +241,7 @@ void main() {
             ),
           );
         });
-
+        
         testWidgetsOnWindowsAndLinux('end of word with CTRL + RIGHT ARROW', (tester) async {
           // Start the user's selection somewhere in the middle of a word.
           await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
@@ -395,7 +395,7 @@ void main() {
             ),
           );
         });
-
+        
         testWidgetsOnMac('CTRL + RIGHT ARROW', (tester) async {
           // Start the user's selection somewhere in the middle of a word.
           await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
