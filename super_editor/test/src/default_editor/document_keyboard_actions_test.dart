@@ -933,13 +933,16 @@ void main() {
           // Place the caret in the first paragraph at the start of the link.
           await tester.placeCaretInParagraph('1', 0);
 
+          // Enable bold attribution
+          await tester.pressCmdB();
+
           // Type some text by simulating hardware keyboard key presses.
           await tester.typeKeyboardText('Go to ');
 
-          // Ensure that the link is not being expanded
+          // Ensure that the link is not being expanded, and bold attribution is preserved
           expect(
             SuperEditorInspector.findDocument(),
-            equalsMarkdown("Go to [https://google.com](https://google.com)"),
+            equalsMarkdown("**Go to **[https://google.com](https://google.com)"),
           );
         });
 
@@ -955,13 +958,16 @@ void main() {
           // Place the caret in the first paragraph at the start of the link.
           await tester.placeCaretInParagraph('1', 18);
 
+          // Enable bold attribution
+          await tester.pressCmdB();
+
           // Type some text by simulating hardware keyboard key presses.
           await tester.typeKeyboardText(' to learn anything');
 
-          // Ensure that the link is not being expanded
+          // Ensure that the link is not being expanded, and bold attribution is preserved
           expect(
             SuperEditorInspector.findDocument(),
-            equalsMarkdown("[https://google.com](https://google.com) to learn anything"),
+            equalsMarkdown("[https://google.com](https://google.com)** to learn anything**"),
           );
         });
       });
@@ -1092,4 +1098,15 @@ Future<TestDocumentContext> _pumpExplicitLineBreakTestSetup(
     .forDesktop()
     .withEditorSize(size)
     .pump();
+}
+
+extension on WidgetTester {
+  Future<void> pressCmdB() async {
+    // TODO: remove this method and this extension when flutter_test_robot supports pressCmdB
+    await sendKeyDownEvent(LogicalKeyboardKey.meta, platform: 'macos');
+    await sendKeyDownEvent(LogicalKeyboardKey.keyB, platform: 'macos');
+    await sendKeyUpEvent(LogicalKeyboardKey.keyB, platform: 'macos');
+    await sendKeyUpEvent(LogicalKeyboardKey.meta, platform: 'macos');
+    await pumpAndSettle();
+  }
 }
