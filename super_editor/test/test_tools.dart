@@ -27,6 +27,17 @@ void testWidgetsOnDesktop(
   testWidgetsOnLinux("$description (on Linux)", test, skip: skip);
 }
 
+/// A widget test that runs a variant for every mobile platform, e.g.,
+/// Android, iOS
+void testWidgetsOnMobile(
+  String description,
+  WidgetTesterCallback test, {
+  bool skip = false,
+}) {
+  testWidgetsOnAndroid("$description (on Android)", test, skip: skip);
+  testWidgetsOnIOS("$description (on iOS)", test, skip: skip);
+}
+
 /// A widget test that runs a variant for Windows and Linux.
 ///
 /// This test method exists because many keyboard shortcuts are identical
@@ -170,6 +181,46 @@ void testOnLinux(
       realTest();
     } finally {
       Platform.setTestInstance(null);
+    }
+  }, skip: skip);
+}
+
+/// A widget test that configures itself as a Android platform before executing the
+/// given [test], and nullifies the Android configuration when the test is done.
+void testWidgetsOnAndroid(
+  String description,
+  WidgetTesterCallback test, {
+  bool skip = false,
+}) {
+  testWidgets(description, (tester) async {
+    // Platform.setTestInstance(LinuxPlatform()); // see todo in `_platform_test_tools.dart`
+    debugDefaultTargetPlatformOverride = TargetPlatform.android;
+
+    try {
+      await test(tester);
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+      // Platform.setTestInstance(null); // see todo in `_platform_test_tools.dart`
+    }
+  }, skip: skip);
+}
+
+/// A widget test that configures itself as a iOS platform before executing the
+/// given [test], and nullifies the iOS configuration when the test is done.
+void testWidgetsOnIOS(
+  String description,
+  WidgetTesterCallback test, {
+  bool skip = false,
+}) {
+  testWidgets(description, (tester) async {
+    // Platform.setTestInstance(LinuxPlatform()); // see todo in `_platform_test_tools.dart`
+    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+
+    try {
+      await test(tester);
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+      // Platform.setTestInstance(null); // see todo in `_platform_test_tools.dart`
     }
   }, skip: skip);
 }
