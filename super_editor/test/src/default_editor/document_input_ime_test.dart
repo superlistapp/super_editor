@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_test_robots/flutter_test_robots.dart';
+import 'package:logging/logging.dart';
 import 'package:super_editor/super_editor.dart';
 
-import '../../super_editor/document_test_tools.dart';
-import '../../super_editor/supereditor_inspector.dart';
-import '../../super_editor/supereditor_robot.dart';
 import '../_document_test_tools.dart';
 import '../../super_editor/test_documents.dart';
 
@@ -268,58 +265,6 @@ void main() {
             ),
           ).toTextEditingValue(),
           expectedTextWithSelection: "|~\nThis is the first paragraph of text.\n~|",
-        );
-      });
-    });
-
-    group('inserting near links', () {
-      testWidgets('prevent expanding the link when inserting at the start', (tester) async {
-        // Configure and render a document.
-        await tester //
-            .createDocument()
-            .withSingleLinkParagraph()
-            .forIOS()
-            .autoFocus(true)
-            .pump();
-
-        // Place the caret in the first paragraph at the start of the link.
-        await tester.placeCaretInParagraph('1', 0);
-
-        // Type some text by simulating hardware keyboard key presses.
-        await tester.typeKeyboardText('Go to ');
-
-        // Ensure that the text was typed into the paragraph
-        expect(
-          SuperEditorInspector.findTextInParagraph("1").text,
-          'Go to https://google.com',
-        );
-
-        // Ensure that the link is not being expanded
-        expect(
-          SuperEditorInspector.findDocument(),
-          equalsMarkdown("Go to [https://google.com](https://google.com)"),
-        );
-      });
-
-      testWidgets('prevent expanding the link when inserting at the end', (tester) async {
-        // Configure and render a document.
-        await tester //
-            .createDocument()
-            .withSingleLinkParagraph()
-            .forIOS()
-            .autoFocus(true)
-            .pump();
-
-        // Place the caret in the first paragraph at the start of the link.
-        await tester.placeCaretInParagraph('1', 18);
-
-        // Type some text by simulating hardware keyboard key presses.
-        await tester.typeKeyboardText(' to learn anything');
-
-        // Ensure that the link is not being expanded
-        expect(
-          SuperEditorInspector.findDocument(),
-          equalsMarkdown("[https://google.com](https://google.com) to learn anything"),
         );
       });
     });

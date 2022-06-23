@@ -466,7 +466,7 @@ packages:
       path: "../../super_editor_markdown"
       relative: true
     source: path
-    version: "0.1.0"
+    version: "0.1.1"
   super_text_layout:
     dependency: "direct main"
     description:
