@@ -921,7 +921,8 @@ void main() {
       });
 
       group('inserting near links', () {
-        testWidgets('prevents expanding the link when inserting at the start', (tester) async {
+        // Note:This is a Mac test because it depends on `pressCmdB` to enable a bold attribution
+        testWidgetsOnMac('prevents expanding the link when inserting at the start', (tester) async {
           // Configure and render a document.
           await tester //
               .createDocument()
@@ -946,7 +947,8 @@ void main() {
           );
         });
 
-        testWidgets('prevents expanding the link when inserting at the end', (tester) async {
+        // Note:This is a Mac test because it depends on `pressCmdB` to enable a bold attribution
+        testWidgetsOnMac('prevents expanding the link when inserting at the end', (tester) async {
           // Configure and render a document.
           await tester //
               .createDocument()
