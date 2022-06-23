@@ -935,26 +935,10 @@ void main() {
           // Type some text by simulating hardware keyboard key presses.
           await tester.typeKeyboardText('Go to ');
 
-          // Ensure that the text was typed into the paragraph
-          expect(
-            SuperEditorInspector.findTextInParagraph("1").text,
-            'Go to https://google.com',
-          );
-
           // Ensure that the link is not being expanded
           expect(
-            SuperEditorInspector.findTextInParagraph("1").spans.getAttributionSpansInRange(
-                  attributionFilter: (_) => true,
-                  start: 0,
-                  end: 43,
-                ),
-            {
-              AttributionSpan(
-                attribution: LinkAttribution(url: Uri.parse('https://flutter.dev')),
-                start: 6,
-                end: 24,
-              ),
-            },
+            SuperEditorInspector.findDocument(),
+            equalsMarkdown("Go to [https://google.com](https://google.com)"),
           );
         });
 
@@ -968,32 +952,15 @@ void main() {
               .pump();
 
           // Place the caret in the first paragraph at the start of the link.
-          await tester.placeCaretInParagraph('1', 25);
+          await tester.placeCaretInParagraph('1', 18);
 
           // Type some text by simulating hardware keyboard key presses.
-          await tester.typeKeyboardText(' to learn Flutter.');
-
-          // Ensure that the text was typed into the paragraph
-          expect(
-            SuperEditorInspector.findTextInParagraph("1").text,
-            'https://google.com to learn Flutter.',
-          );
+          await tester.typeKeyboardText(' to learn anything');
 
           // Ensure that the link is not being expanded
-
           expect(
-            SuperEditorInspector.findTextInParagraph("1").spans.getAttributionSpansInRange(
-                  attributionFilter: (_) => true,
-                  start: 0,
-                  end: 42,
-                ),
-            {
-              AttributionSpan(
-                attribution: LinkAttribution(url: Uri.parse('https://flutter.dev')),
-                start: 6,
-                end: 24,
-              ),
-            },
+            SuperEditorInspector.findDocument(),
+            equalsMarkdown("[https://google.com](https://google.com) to learn anything"),
           );
         });
       });

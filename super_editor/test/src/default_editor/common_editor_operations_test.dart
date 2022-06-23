@@ -186,34 +186,14 @@ void main() {
         // Tap to place the caret in the first paragraph.
         await tester.placeCaretInParagraph("1", 0);
 
-        // Type some text by simulating hardware keyboard key presses.
         await tester.pressCmdV();
-
-        // Ensure that the clipboard text was pasted into the SuperTextField
-        expect(
-          SuperEditorInspector.findTextInParagraph("1").text,
-          'Link: https://flutter.dev and link: https://pub.dev',
-        );
 
         // Ensure that URLs are converted into links
         expect(
-          SuperEditorInspector.findTextInParagraph("1").spans.getAttributionSpansInRange(
-                attributionFilter: (_) => true,
-                start: 0,
-                end: 51,
-              ),
-          {
-            AttributionSpan(
-              attribution: LinkAttribution(url: Uri.parse('https://flutter.dev')),
-              start: 6,
-              end: 24,
-            ),
-            AttributionSpan(
-              attribution: LinkAttribution(url: Uri.parse('https://pub.dev')),
-              start: 36,
-              end: 50,
-            )
-          },
+          SuperEditorInspector.findDocument(),
+          equalsMarkdown(
+            'Link: [https://flutter.dev](https://flutter.dev) and link: [https://pub.dev](https://pub.dev)',
+          ),
         );
       });
 
@@ -236,32 +216,14 @@ void main() {
         // Tap to place the caret in the first paragraph.
         await tester.placeCaretInParagraph("1", 16);
 
-        // Type some text by simulating hardware keyboard key presses.
         await tester.pressCmdV();
-
-        // Ensure that the clipboard text was pasted into the SuperTextField
-        expect(SuperEditorInspector.findTextInParagraph("1").text,
-            'Pasted content: Link: https://flutter.dev and link: https://pub.dev.');
 
         // Ensure that URLs are converted into links
         expect(
-          SuperEditorInspector.findTextInParagraph("1").spans.getAttributionSpansInRange(
-                attributionFilter: (_) => true,
-                start: 0,
-                end: 67,
-              ),
-          {
-            AttributionSpan(
-              attribution: LinkAttribution(url: Uri.parse('https://flutter.dev')),
-              start: 22,
-              end: 40,
-            ),
-            AttributionSpan(
-              attribution: LinkAttribution(url: Uri.parse('https://pub.dev')),
-              start: 52,
-              end: 66,
-            )
-          },
+          SuperEditorInspector.findDocument(),
+          equalsMarkdown(
+            'Pasted content: Link: [https://flutter.dev](https://flutter.dev) and link: [https://pub.dev](https://pub.dev).',
+          ),
         );
       });
 
@@ -280,42 +242,14 @@ void main() {
         // Tap to place the caret in the first paragraph.
         await tester.placeCaretInParagraph("1", 11);
 
-        // Type some text by simulating hardware keyboard key presses.
         await tester.pressCmdV();
 
-        // Ensure that the clipboard text was pasted into the SuperTextField
-        expect(SuperEditorInspector.findTextInParagraph("1").text,
-            'https://gooLink: https://flutter.dev and link: https://pub.devgle.com');
-
-        // Ensure that URLs are converted into links
+        // Ensure that the link is not being expanded and splitted. Pasted URLs are converted
+        // into links
         expect(
-          SuperEditorInspector.findTextInParagraph("1").spans.getAttributionSpansInRange(
-                attributionFilter: (_) => true,
-                start: 0,
-                end: 69,
-              ),
-          {
-            AttributionSpan(
-              attribution: LinkAttribution(url: Uri.parse('https://google.com')),
-              start: 0,
-              end: 10,
-            ),
-            AttributionSpan(
-              attribution: LinkAttribution(url: Uri.parse('https://flutter.dev')),
-              start: 17,
-              end: 35,
-            ),
-            AttributionSpan(
-              attribution: LinkAttribution(url: Uri.parse('https://pub.dev')),
-              start: 47,
-              end: 61,
-            ),
-            AttributionSpan(
-              attribution: LinkAttribution(url: Uri.parse('https://google.com')),
-              start: 62,
-              end: 68,
-            ),
-          },
+          SuperEditorInspector.findDocument(),
+          equalsMarkdown('[https://goo](https://google.com)Link: [https://flutter.dev](https://flutter.dev) '
+              'and link: [https://pub.dev](https://pub.dev)[gle.com](https://google.com)'),
         );
       });
 
@@ -334,34 +268,12 @@ void main() {
         // Tap to place the caret in the first paragraph.
         await tester.placeCaretInParagraph("1", 0);
 
-        // Type some text by simulating hardware keyboard key presses.
         await tester.pressCmdV();
 
-        // Ensure that the clipboard text was pasted into the SuperTextField
+        // Ensure that the link is not being expanded
         expect(
-          SuperEditorInspector.findTextInParagraph("1").text,
-          'Link: https://flutter.devhttps://google.com',
-        );
-
-        // Ensure that URLs are converted into links
-        expect(
-          SuperEditorInspector.findTextInParagraph("1").spans.getAttributionSpansInRange(
-                attributionFilter: (_) => true,
-                start: 0,
-                end: 43,
-              ),
-          {
-            AttributionSpan(
-              attribution: LinkAttribution(url: Uri.parse('https://flutter.dev')),
-              start: 6,
-              end: 24,
-            ),
-            AttributionSpan(
-              attribution: LinkAttribution(url: Uri.parse('https://google.com')),
-              start: 25,
-              end: 42,
-            ),
-          },
+          SuperEditorInspector.findDocument(),
+          equalsMarkdown("Link: [https://flutter.dev](https://flutter.dev)[https://google.com](https://google.com)"),
         );
       });
 
@@ -380,34 +292,12 @@ void main() {
         // Tap to place the caret in the first paragraph.
         await tester.placeCaretInParagraph("1", 18);
 
-        // Type some text by simulating hardware keyboard key presses.
         await tester.pressCmdV();
 
-        // Ensure that the clipboard text was pasted into the SuperTextField
+        // Ensure that the link is not being expanded
         expect(
-          SuperEditorInspector.findTextInParagraph("1").text,
-          'https://google.comLink: https://flutter.dev',
-        );
-
-        // Ensure that URLs are converted into links
-        expect(
-          SuperEditorInspector.findTextInParagraph("1").spans.getAttributionSpansInRange(
-                attributionFilter: (_) => true,
-                start: 0,
-                end: 43,
-              ),
-          {
-            AttributionSpan(
-              attribution: LinkAttribution(url: Uri.parse('https://google.com')),
-              start: 0,
-              end: 17,
-            ),
-            AttributionSpan(
-              attribution: LinkAttribution(url: Uri.parse('https://flutter.dev')),
-              start: 24,
-              end: 42,
-            ),
-          },
+          SuperEditorInspector.findDocument(),
+          equalsMarkdown("[https://google.com](https://google.com)Link: [https://flutter.dev](https://flutter.dev)"),
         );
       });
     });
