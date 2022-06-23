@@ -919,34 +919,12 @@ void main() {
         });
       });
 
-      group('inserting', () {
-        testWidgets('does not expand the link when inserting at the start', (tester) async {
-          final document = MutableDocument(nodes: [
-            ParagraphNode(
-              id: '1',
-              text: AttributedText(
-                text: 'https://flutter.dev',
-                spans: AttributedSpans(
-                  attributions: [
-                    SpanMarker(
-                      attribution: LinkAttribution(url: Uri.parse('https://flutter.dev')),
-                      offset: 0,
-                      markerType: SpanMarkerType.start,
-                    ),
-                    SpanMarker(
-                      attribution: LinkAttribution(url: Uri.parse('https://flutter.dev')),
-                      offset: 18,
-                      markerType: SpanMarkerType.end,
-                    )
-                  ],
-                ),
-              ),
-            )
-          ]);
+      group('inserting near links', () {
+        testWidgets('prevents expanding the link when inserting at the start', (tester) async {
           // Configure and render a document.
           await tester //
               .createDocument()
-              .withCustomContent(document)
+              .withSingleLinkParagraph()
               .forDesktop()
               .autoFocus(true)
               .pump();
@@ -960,7 +938,7 @@ void main() {
           // Ensure that the text was typed into the paragraph
           expect(
             SuperEditorInspector.findTextInParagraph("1").text,
-            'Go to https://flutter.dev',
+            'Go to https://google.com',
           );
 
           // Ensure that the link is not being expanded
@@ -980,33 +958,11 @@ void main() {
           );
         });
 
-        testWidgets('does not expand the link when inserting at the end', (tester) async {
-          final document = MutableDocument(nodes: [
-            ParagraphNode(
-              id: '1',
-              text: AttributedText(
-                text: 'Go to https://flutter.dev',
-                spans: AttributedSpans(
-                  attributions: [
-                    SpanMarker(
-                      attribution: LinkAttribution(url: Uri.parse('https://flutter.dev')),
-                      offset: 6,
-                      markerType: SpanMarkerType.start,
-                    ),
-                    SpanMarker(
-                      attribution: LinkAttribution(url: Uri.parse('https://flutter.dev')),
-                      offset: 24,
-                      markerType: SpanMarkerType.end,
-                    )
-                  ],
-                ),
-              ),
-            )
-          ]);
+        testWidgets('prevents expanding the link when inserting at the end', (tester) async {
           // Configure and render a document.
           await tester //
               .createDocument()
-              .withCustomContent(document)
+              .withSingleLinkParagraph()
               .forDesktop()
               .autoFocus(true)
               .pump();
@@ -1020,10 +976,11 @@ void main() {
           // Ensure that the text was typed into the paragraph
           expect(
             SuperEditorInspector.findTextInParagraph("1").text,
-            'Go to https://flutter.dev to learn Flutter.',
+            'https://google.com to learn Flutter.',
           );
 
           // Ensure that the link is not being expanded
+
           expect(
             SuperEditorInspector.findTextInParagraph("1").spans.getAttributionSpansInRange(
                   attributionFilter: (_) => true,
@@ -1138,7 +1095,12 @@ Future<EditContext> _pumpCaretMovementTestSetup(
 }
 
 Future<TestDocumentContext> _pumpAutoWrappingTestSetup(WidgetTester tester) async {
-  return await tester.createDocument().withSingleParagraph().forDesktop().withEditorSize(const Size(400, 400)).pump();
+  return await tester //
+      .createDocument()
+      .withSingleParagraph()
+      .forDesktop()
+      .withEditorSize(const Size(400, 400))
+      .pump();
 }
 
 Future<TestDocumentContext> _pumpExplicitLineBreakTestSetup(

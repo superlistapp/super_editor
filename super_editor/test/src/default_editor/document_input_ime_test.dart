@@ -272,35 +272,13 @@ void main() {
       });
     });
 
-    group('inserting', () {
+    group('inserting near links', () {
       testWidgets('prevent expanding the link when inserting at the start', (tester) async {
-        final document = MutableDocument(nodes: [
-          ParagraphNode(
-            id: '1',
-            text: AttributedText(
-              text: 'https://flutter.dev',
-              spans: AttributedSpans(
-                attributions: [
-                  SpanMarker(
-                    attribution: LinkAttribution(url: Uri.parse('https://flutter.dev')),
-                    offset: 0,
-                    markerType: SpanMarkerType.start,
-                  ),
-                  SpanMarker(
-                    attribution: LinkAttribution(url: Uri.parse('https://flutter.dev')),
-                    offset: 18,
-                    markerType: SpanMarkerType.end,
-                  )
-                ],
-              ),
-            ),
-          )
-        ]);
         // Configure and render a document.
         await tester //
             .createDocument()
-            .withCustomContent(document)
-            .forDesktop()
+            .withSingleLinkParagraph()
+            .forIOS()
             .autoFocus(true)
             .pump();
 
@@ -313,7 +291,7 @@ void main() {
         // Ensure that the text was typed into the paragraph
         expect(
           SuperEditorInspector.findTextInParagraph("1").text,
-          'Go to https://flutter.dev',
+          'Go to https://google.com',
         );
 
         // Ensure that the link is not being expanded
@@ -334,32 +312,10 @@ void main() {
       });
 
       testWidgets('prevent expanding the link when inserting at the end', (tester) async {
-        final document = MutableDocument(nodes: [
-          ParagraphNode(
-            id: '1',
-            text: AttributedText(
-              text: 'Go to https://flutter.dev',
-              spans: AttributedSpans(
-                attributions: [
-                  SpanMarker(
-                    attribution: LinkAttribution(url: Uri.parse('https://flutter.dev')),
-                    offset: 6,
-                    markerType: SpanMarkerType.start,
-                  ),
-                  SpanMarker(
-                    attribution: LinkAttribution(url: Uri.parse('https://flutter.dev')),
-                    offset: 24,
-                    markerType: SpanMarkerType.end,
-                  )
-                ],
-              ),
-            ),
-          )
-        ]);
         // Configure and render a document.
         await tester //
             .createDocument()
-            .withCustomContent(document)
+            .withSingleLinkParagraph()
             .forIOS()
             .autoFocus(true)
             .pump();
@@ -368,12 +324,12 @@ void main() {
         await tester.placeCaretInParagraph('1', 25);
 
         // Type some text by simulating hardware keyboard key presses.
-        await tester.typeKeyboardText(' to learn Flutter.');
+        await tester.typeKeyboardText(' to learn anything.');
 
         // Ensure that the text was typed into the paragraph
         expect(
           SuperEditorInspector.findTextInParagraph("1").text,
-          'Go to https://flutter.dev to learn Flutter.',
+          'https://google.com to learn anything.',
         );
 
         // Ensure that the link is not being expanded

@@ -48,6 +48,30 @@ MutableDocument singleParagraphDoc() => MutableDocument(
       ],
     );
 
+MutableDocument singleLinkParagraphDoc() => MutableDocument(
+      nodes: [
+        ParagraphNode(
+          id: "1",
+          text: AttributedText(
+              text: "https://google.com",
+              spans: AttributedSpans(
+                attributions: [
+                  SpanMarker(
+                    attribution: LinkAttribution(url: Uri.parse('https://google.com')),
+                    offset: 0,
+                    markerType: SpanMarkerType.start,
+                  ),
+                  SpanMarker(
+                    attribution: LinkAttribution(url: Uri.parse('https://google.com')),
+                    offset: 17,
+                    markerType: SpanMarkerType.end,
+                  ),
+                ],
+              )),
+        )
+      ],
+    );
+
 MutableDocument singleBlockDoc() => MutableDocument(
       nodes: [
         HorizontalRuleNode(id: "1"),

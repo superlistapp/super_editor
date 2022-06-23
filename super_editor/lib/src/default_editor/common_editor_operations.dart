@@ -1355,10 +1355,11 @@ class CommonEditorOperations {
     final textNode = editor.document.getNode(composer.selection!.extent) as TextNode;
     final initialTextOffset = (composer.selection!.extent.nodePosition as TextNodePosition).offset;
 
-    Set<Attribution> filteredAttributions = _filterAttributionsWhenInsertText(
+    // Inserting text and both ends of a link should not expand the link attribution
+    Set<Attribution> filteredAttributions = _filterLinkAttributionAtBothEndsOfLink(
       textNode: textNode,
       textOffset: initialTextOffset,
-      currentAttribution: composer.preferences.currentAttributions,
+      currentAttributions: composer.preferences.currentAttributions,
     );
 
     editorOpsLog.fine("Executing text insertion command.");
@@ -1383,20 +1384,18 @@ class CommonEditorOperations {
     return true;
   }
 
-  Set<Attribution> _filterAttributionsWhenInsertText({
+  /// Filters [LinkAttribution] from the given [currentAttributions] if the user
+  /// is inserting text at both ends of a link
+  Set<Attribution> _filterLinkAttributionAtBothEndsOfLink({
     required TextNode textNode,
     required int textOffset,
-    required Set<Attribution> currentAttribution,
+    required Set<Attribution> currentAttributions,
   }) {
     final linkAttributionSpan = textNode.text.spans
-        // Note: We can't use the method [AttributedSpans.getAttributionSpansAt] because it seems
-        // like the dependency doesn't pick the [attributed_text] package in the dependency_override.
-        // Therefore, until the package [attributed_text] is updated, we'll use this method instead.
         .getAttributionSpansInRange(
           attributionFilter: (attr) => attr is LinkAttribution,
           // -1 because TextPosition's offset indexes the character after the
           // selection, not the final character in the selection.
-          // It would be invalid
           start: textOffset != 0 ? textOffset - 1 : 0,
           end: textOffset != 0 ? textOffset - 1 : 0,
         )
@@ -1407,10 +1406,10 @@ class CommonEditorOperations {
             // -1 because TextPosition's offset indexes the character after the
             // selection, not the final character in the selection.
             textOffset - 1 == linkAttributionSpan.end)) {
-      return currentAttribution.where((attr) => attr is! LinkAttribution).toSet();
+      return currentAttributions.where((attr) => attr is! LinkAttribution).toSet();
     }
 
-    return currentAttribution;
+    return currentAttributions;
   }
 
   /// Inserts the given [character] at the current extent position.
@@ -1615,7 +1614,7 @@ class CommonEditorOperations {
     late http.Response response;
 
     // This function throws [SocketException] when the [url] is not valid.
-    // For instance, when typing for https://flutter.dev, it throws
+    // For instance, when typing for https://f|, it throws
     // Unhandled Exception: SocketException: Failed host lookup: 'f'
     //
     // It doesn't affect any functionality, but it throws exception and preventing
@@ -1691,12 +1690,13 @@ class CommonEditorOperations {
     final textNode = editor.document.getNode(composer.selection!.extent) as TextNode;
     final initialTextOffset = (composer.selection!.extent.nodePosition as TextNodePosition).offset;
 
+    // Inserting text and both ends of a link should not expand the link attribution
     final attributions = ignoreComposerAttributions
         ? <Attribution>{}
-        : _filterAttributionsWhenInsertText(
+        : _filterLinkAttributionAtBothEndsOfLink(
             textNode: textNode,
             textOffset: initialTextOffset,
-            currentAttribution: composer.preferences.currentAttributions,
+            currentAttributions: composer.preferences.currentAttributions,
           );
 
     editor.executeCommand(
@@ -2337,22 +2337,24 @@ class _PasteEditorCommand implements EditorCommand {
       }
 
       // Paste the first piece of content into the selected TextNode.
+
+      // If a link spans across the past location, we split that link in two. Part
+      // of the link sits before the pasted text, and the other part of the link
+      // sits after the pasted text. Both of the link parts continue to reference
+      // the original URL, even if the text was a URL.
       InsertTextCommand(
+        attributions: attributionsAtPasteOffset.where((attribution) => attribution is! LinkAttribution).toSet(),
         documentPosition: _pastePosition,
         textToInsert: splitContent.first,
-        // For [LinkAttribution], we don't apply to the pasted text, but rather
-        // split the link at the pasted position, as handled below
-        attributions: attributionsAtPasteOffset.where((attribution) => attribution is! LinkAttribution).toSet(),
       ).execute(document, transaction);
 
-      // Check for url in the pasted text and apply [LinkAttribution] appropriately
-
+      // Split the link into 2 parts
       _splitLinkAtPastedOffset(
         textNode: textNode,
         document: document,
         transaction: transaction,
       );
-
+      // Check for url in the pasted text and apply [LinkAttribution] appropriately
       _convertURLsInPastedTextToLink(
         text: splitContent.first,
         textNode: textNode,
@@ -2425,9 +2427,6 @@ class _PasteEditorCommand implements EditorCommand {
   }) {
     final pasteTextOffset = (_pastePosition.nodePosition as TextPosition).offset;
     final linkAttributionSpan = textNode.text.spans
-        // Note: We can't use the method [AttributedSpans.getAttributionSpansAt] because it seems
-        // like the dependency doesn't pick the [attributed_text] package in the dependency_override.
-        // Therefore, until the package [attributed_text] is updated, we'll use this method instead.
         .getAttributionSpansInRange(
           attributionFilter: (attr) => attr is LinkAttribution,
           start: pasteTextOffset,
@@ -2449,7 +2448,7 @@ class _PasteEditorCommand implements EditorCommand {
     RemoveTextAttributionsCommand(
       documentSelection: documentSelection,
       attributions: {linkAttributionSpan.attribution},
-    );
+    ).execute(document, transaction);
 
     // Split the current link into 2 parts
     final firstLink = linkAttributionSpan.copyWith(end: pasteTextOffset).attribution;

@@ -272,27 +272,7 @@ void main() {
         // Configure and render a document.
         await tester //
             .createDocument()
-            .withCustomContent(MutableDocument(nodes: [
-              ParagraphNode(
-                id: "1",
-                text: AttributedText(
-                    text: "https://google.com",
-                    spans: AttributedSpans(
-                      attributions: [
-                        SpanMarker(
-                          attribution: LinkAttribution(url: Uri.parse('https://google.com')),
-                          offset: 0,
-                          markerType: SpanMarkerType.start,
-                        ),
-                        SpanMarker(
-                          attribution: LinkAttribution(url: Uri.parse('https://google.com')),
-                          offset: 17,
-                          markerType: SpanMarkerType.end,
-                        ),
-                      ],
-                    )),
-              )
-            ]))
+            .withSingleLinkParagraph()
             .forDesktop()
             .autoFocus(true)
             .pump();
@@ -341,32 +321,12 @@ void main() {
 
       testWidgetsOnMac('when pasting at the start of a link, convert URLs and prevent expanding link', (tester) async {
         tester.simulateClipboard();
-        tester.setSimulatedClipboardContent("Link: https://flutter.dev ");
+        tester.setSimulatedClipboardContent("Link: https://flutter.dev");
 
         // Configure and render a document.
         await tester //
             .createDocument()
-            .withCustomContent(MutableDocument(nodes: [
-              ParagraphNode(
-                id: "1",
-                text: AttributedText(
-                    text: "https://google.com",
-                    spans: AttributedSpans(
-                      attributions: [
-                        SpanMarker(
-                          attribution: LinkAttribution(url: Uri.parse('https://google.com')),
-                          offset: 0,
-                          markerType: SpanMarkerType.start,
-                        ),
-                        SpanMarker(
-                          attribution: LinkAttribution(url: Uri.parse('https://google.com')),
-                          offset: 17,
-                          markerType: SpanMarkerType.end,
-                        ),
-                      ],
-                    )),
-              )
-            ]))
+            .withSingleLinkParagraph()
             .forDesktop()
             .autoFocus(true)
             .pump();
@@ -380,7 +340,7 @@ void main() {
         // Ensure that the clipboard text was pasted into the SuperTextField
         expect(
           SuperEditorInspector.findTextInParagraph("1").text,
-          'Link: https://flutter.dev https://google.com',
+          'Link: https://flutter.devhttps://google.com',
         );
 
         // Ensure that URLs are converted into links
@@ -388,7 +348,7 @@ void main() {
           SuperEditorInspector.findTextInParagraph("1").spans.getAttributionSpansInRange(
                 attributionFilter: (_) => true,
                 start: 0,
-                end: 44,
+                end: 43,
               ),
           {
             AttributionSpan(
@@ -398,8 +358,8 @@ void main() {
             ),
             AttributionSpan(
               attribution: LinkAttribution(url: Uri.parse('https://google.com')),
-              start: 26,
-              end: 43,
+              start: 25,
+              end: 42,
             ),
           },
         );
@@ -407,32 +367,12 @@ void main() {
 
       testWidgetsOnMac('when pasting at the end of a link, convert URLs and prevent expanding link', (tester) async {
         tester.simulateClipboard();
-        tester.setSimulatedClipboardContent(" Link: https://flutter.dev");
+        tester.setSimulatedClipboardContent("Link: https://flutter.dev");
 
         // Configure and render a document.
         await tester //
             .createDocument()
-            .withCustomContent(MutableDocument(nodes: [
-              ParagraphNode(
-                id: "1",
-                text: AttributedText(
-                    text: "https://google.com",
-                    spans: AttributedSpans(
-                      attributions: [
-                        SpanMarker(
-                          attribution: LinkAttribution(url: Uri.parse('https://google.com')),
-                          offset: 0,
-                          markerType: SpanMarkerType.start,
-                        ),
-                        SpanMarker(
-                          attribution: LinkAttribution(url: Uri.parse('https://google.com')),
-                          offset: 17,
-                          markerType: SpanMarkerType.end,
-                        ),
-                      ],
-                    )),
-              )
-            ]))
+            .withSingleLinkParagraph()
             .forDesktop()
             .autoFocus(true)
             .pump();
@@ -446,7 +386,7 @@ void main() {
         // Ensure that the clipboard text was pasted into the SuperTextField
         expect(
           SuperEditorInspector.findTextInParagraph("1").text,
-          'https://google.com Link: https://flutter.dev',
+          'https://google.comLink: https://flutter.dev',
         );
 
         // Ensure that URLs are converted into links
@@ -454,7 +394,7 @@ void main() {
           SuperEditorInspector.findTextInParagraph("1").spans.getAttributionSpansInRange(
                 attributionFilter: (_) => true,
                 start: 0,
-                end: 44,
+                end: 43,
               ),
           {
             AttributionSpan(
@@ -464,8 +404,8 @@ void main() {
             ),
             AttributionSpan(
               attribution: LinkAttribution(url: Uri.parse('https://flutter.dev')),
-              start: 25,
-              end: 43,
+              start: 24,
+              end: 42,
             ),
           },
         );

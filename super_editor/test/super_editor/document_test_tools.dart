@@ -53,7 +53,14 @@ class TestDocumentSelector {
   TestDocumentConfigurator withSingleParagraph() {
     return TestDocumentConfigurator._(
       _widgetTester,
-      singleParagraphDoc(),
+      singleParagraphEmptyDoc(),
+    );
+  }
+
+  TestDocumentConfigurator withSingleLinkParagraph() {
+    return TestDocumentConfigurator._(
+      _widgetTester,
+      singleLinkParagraphDoc(),
     );
   }
 
@@ -222,7 +229,7 @@ class TestDocumentConfigurator {
   }
 
   Widget _buildContent(Widget superEditor) {
-    if (_editorSize != null){      
+    if (_editorSize != null) {
       return ConstrainedBox(
         constraints: BoxConstraints(
           maxWidth: _editorSize!.width,
