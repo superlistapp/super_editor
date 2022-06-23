@@ -50,7 +50,8 @@ class _CharacterRainbowSuperTextState extends State<CharacterRainbowSuperText> w
               final textLength = widget.text.toPlainText().length;
               for (int i = 0; i < textLength; i += 1) {
                 // Get the bounding rectangle for the character
-                characterRects.add(textLayout.getCharacterBox(TextPosition(offset: i)).toRect());
+                characterRects.add(textLayout.getCharacterBox(TextPosition(offset: i))?.toRect() 
+                    ?? Rect.fromLTRB(0, 0, 0, textLayout.estimatedLineHeight));
                 // Select a color for this character
                 final colorWheelDegrees =
                     ((360.0 * (characterColors.length / textLength)) + _startingColor.value) % 360;

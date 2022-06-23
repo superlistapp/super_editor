@@ -3,6 +3,105 @@ import 'package:super_editor/super_editor.dart';
 
 void main() {
   group('MutableDocument', () {
+    group('.moveNode()', () {
+      test('when the document is empty, throws an exception', () {
+        final document = MutableDocument(nodes: []);
+        expect(
+          () => document.moveNode(nodeId: 'does-not-exist', targetIndex: 0),
+          throwsException,
+        );
+      });
+
+      test('when the node does not exist in the document, throws an exception', () {
+        final node = ParagraphNode(id: 'move-me', text: AttributedText());
+        final document = MutableDocument(
+          nodes: [
+            HorizontalRuleNode(id: '0'),
+            node,
+            HorizontalRuleNode(id: '2'),
+          ],
+        );
+
+        expect(
+          () => document.moveNode(nodeId: 'does-not-exist', targetIndex: 0),
+          throwsException,
+        );
+      });
+
+      test('when the given target index is negative, throws a RangeError', () {
+        final node = ParagraphNode(id: 'move-me', text: AttributedText());
+        final document = MutableDocument(
+          nodes: [
+            HorizontalRuleNode(id: '0'),
+            node,
+            HorizontalRuleNode(id: '2'),
+          ],
+        );
+
+        expect(
+          () => document.moveNode(nodeId: 'move-me', targetIndex: -1),
+          throwsRangeError,
+        );
+      });
+
+      test('when the given target index is out of document bounds, throws a RangeError', () {
+        final node = ParagraphNode(id: 'move-me', text: AttributedText());
+        final document = MutableDocument(
+          nodes: [
+            HorizontalRuleNode(id: '0'),
+            node,
+            HorizontalRuleNode(id: '2'),
+          ],
+        );
+
+        expect(
+          () => document.moveNode(nodeId: 'move-me', targetIndex: 3),
+          throwsRangeError,
+        );
+      });
+
+      test('when the node exists in the document, and the targetIndex is valid, moves it to the given target index', () {
+        final node = ParagraphNode(id: 'move-me', text: AttributedText());
+        final document = MutableDocument(
+          nodes: [
+            HorizontalRuleNode(id: '0'),
+            node,
+            HorizontalRuleNode(id: '2'),
+          ],
+        );
+
+        document.moveNode(nodeId: 'move-me', targetIndex: 0);
+        expect(
+          document.nodes,
+          [
+            node, // Node exists at index 0
+            HorizontalRuleNode(id: '0'),
+            HorizontalRuleNode(id: '2'),
+          ],
+        );
+
+        document.moveNode(nodeId: 'move-me', targetIndex: 2);
+        expect(
+          document.nodes,
+          [
+            HorizontalRuleNode(id: '0'),
+            HorizontalRuleNode(id: '2'),
+            node, // Node exists at index 2
+          ],
+        );
+
+        document.moveNode(nodeId: 'move-me', targetIndex: 1);
+        expect(
+          document.nodes,
+          [
+            HorizontalRuleNode(id: '0'),
+            node, // Node exists at index 1
+            HorizontalRuleNode(id: '2'),
+          ],
+        );
+      });
+    });
+
     test('it replaces one node by another ', () {
       final oldNode = ParagraphNode(id: 'old', text: AttributedText());
       final document = MutableDocument(
