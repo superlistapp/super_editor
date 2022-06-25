@@ -433,6 +433,12 @@ Updating drag selection:
       selectionType: _selectionType,
       expandSelection: _expandSelectionDuringDrag,
     );
+
+    if (widget.showDebugPaint) {
+      setState(() {
+        // Repaint the debug UI.
+      });
+    }
   }
 
   void _selectRegion({
@@ -598,7 +604,9 @@ Updating drag selection:
   }
 
   List<Widget> _buildDebugPaintInDocSpace() {
-    final dragStartInDoc = _dragStartGlobal != null ? _getDocOffsetFromGlobalOffset(_dragStartGlobal!) : null;
+    final dragStartInDoc = _dragStartGlobal != null
+        ? _getDocOffsetFromGlobalOffset(_dragStartGlobal!) + Offset(0, widget.autoScroller.deltaWhileAutoScrolling)
+        : null;
     final dragEndInDoc = _dragEndGlobal != null ? _getDocOffsetFromGlobalOffset(_dragEndGlobal!) : null;
 
     return [

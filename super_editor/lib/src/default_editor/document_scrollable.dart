@@ -260,10 +260,14 @@ class AutoScrollController with ChangeNotifier {
   double? _autoScrollingStartOffset;
   Rect? _autoScrollGlobalRegion;
 
+  /// Returns `true` if this controller is attached a [Scrollable].
+  bool get hasScrollable => _getScrollPosition != null;
+
+  /// Returns the change to the scroll offset that's accumulated during
+  /// the current auto-scroll behavior, or `0.0` if no auto-scroll
+  /// is taking place.
   double get deltaWhileAutoScrolling => _deltaWhileAutoScrolling;
   double _deltaWhileAutoScrolling = 0;
-
-  bool get hasScrollable => _getScrollPosition != null;
 
   /// Starts controlling the scroll offset for a [Scrollable].
   ///

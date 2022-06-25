@@ -523,6 +523,7 @@ class SuperEditorState extends State<SuperEditor> {
           return DocumentScrollable(
             autoScroller: _autoScrollController,
             scrollingMinimapId: widget.debugPaint.scrollingMinimapId,
+            showDebugPaint: widget.debugPaint.scrolling,
             child: ConstrainedBox(
               constraints: BoxConstraints(
                 // When SuperEditor installs its own Viewport, we want the gesture
