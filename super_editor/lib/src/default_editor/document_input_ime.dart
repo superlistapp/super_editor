@@ -860,9 +860,9 @@ class SoftwareKeyboardHandler {
 
     if (delta.textInserted == "\n") {
       // On iOS, newlines are reported here and also to performAction().
-      // On Android, newlines are only reported here. So, on Android only,
+      // On Android and web, newlines are only reported here. So, on Android and web,
       // we forward the newline action to performAction.
-      if (defaultTargetPlatform == TargetPlatform.android) {
+      if (defaultTargetPlatform == TargetPlatform.android || kIsWeb) {              
         editorImeLog.fine("Received a newline insertion on Android. Forwarding to newline input action.");
         performAction(TextInputAction.newline);
       } else {
@@ -890,9 +890,9 @@ class SoftwareKeyboardHandler {
 
     if (delta.replacementText == "\n") {
       // On iOS, newlines are reported here and also to performAction().
-      // On Android, newlines are only reported here. So, on Android only,
+      // On Android and web, newlines are only reported here. So, on Android and web,
       // we forward the newline action to performAction.
-      if (defaultTargetPlatform == TargetPlatform.android) {
+      if (defaultTargetPlatform == TargetPlatform.android || kIsWeb) {
         editorImeLog.fine("Received a newline replacement on Android. Forwarding to newline input action.");
         performAction(TextInputAction.newline);
       } else {
