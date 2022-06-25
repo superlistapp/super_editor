@@ -83,6 +83,7 @@ class SuperTextState extends State<SuperText> with ProseTextBlock {
       state: this,
       text: LayoutAwareRichText(
         text: widget.richText,
+        textAlign: widget.textAlign,
         onMarkNeedsLayout: _invalidateParagraph,
       ),
       background: LayoutBuilder(
@@ -251,8 +252,9 @@ class LayoutAwareRichText extends RichText {
   LayoutAwareRichText({
     Key? key,
     required InlineSpan text,
+    TextAlign textAlign = TextAlign.left,
     required this.onMarkNeedsLayout,
-  }) : super(key: key, text: text);
+  }) : super(key: key, text: text, textAlign: textAlign);
 
   /// Callback invoked when the underlying [RenderParagraph] invalidates
   /// its layout.
