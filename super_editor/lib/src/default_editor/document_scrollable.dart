@@ -356,23 +356,21 @@ class AutoScrollController with ChangeNotifier {
     editorScrollingLog.finest(' - beyond top: $beyondTopExtent');
     editorScrollingLog.finest(' - beyond bottom: $beyondBottomExtent');
 
+    late double newScrollPosition;
     if (beyondTopExtent > 0) {
-      final newScrollPosition = (scrollPosition.pixels - beyondTopExtent).clamp(0.0, scrollPosition.maxScrollExtent);
-
-      scrollPosition.animateTo(
-        newScrollPosition,
-        duration: const Duration(milliseconds: 100),
-        curve: Curves.easeOut,
-      );
+      newScrollPosition = (scrollPosition.pixels - beyondTopExtent).clamp(0.0, scrollPosition.maxScrollExtent);
     } else if (beyondBottomExtent > 0) {
-      final newScrollPosition = (beyondBottomExtent + scrollPosition.pixels).clamp(0.0, scrollPosition.maxScrollExtent);
-
-      scrollPosition.animateTo(
-        newScrollPosition,
-        duration: const Duration(milliseconds: 100),
-        curve: Curves.easeOut,
-      );
+      newScrollPosition = (beyondBottomExtent + scrollPosition.pixels).clamp(0.0, scrollPosition.maxScrollExtent);
+    } else {
+      return;
     }
+
+    editorScrollingLog.finest('Animating scroll offset to: $newScrollPosition');
+    scrollPosition.animateTo(
+      newScrollPosition,
+      duration: const Duration(milliseconds: 100),
+      curve: Curves.easeOut,
+    );
   }
 
   /// Starts auto-scrolling, when necessary.

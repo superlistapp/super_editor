@@ -39,6 +39,18 @@ class SuperEditorInspector {
     return superEditor.editContext.composer.selection;
   }
 
+  static bool isPositionVisibleGlobally(DocumentPosition position, Size globalSize, [Finder? finder]) {
+    final documentLayout = _findDocumentLayout(finder);
+    final positionRect = documentLayout.getRectForPosition(position)!;
+    final globalDocumentOffset = documentLayout.getGlobalOffsetFromDocumentOffset(Offset.zero);
+    final globalPositionRect = positionRect.translate(globalDocumentOffset.dx, globalDocumentOffset.dy);
+
+    return globalPositionRect.top >= 0 &&
+        globalPositionRect.left >= 0 &&
+        globalPositionRect.bottom <= globalSize.height &&
+        globalPositionRect.right <= globalSize.width;
+  }
+
   /// Finds and returns the [Widget] that configures the [DocumentComponent] with the
   /// given [nodeId].
   ///

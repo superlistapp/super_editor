@@ -55,6 +55,9 @@ extension SuperEditorRobot on WidgetTester {
     final localTapOffset = textLayout.getOffsetForCaret(position) + const Offset(0, 5);
     final globalTapOffset = localTapOffset + textRenderBox.localToGlobal(Offset.zero);
 
+    // TODO: check that the tap offset is visible within the viewport. Add option to
+    // auto-scroll, or throw exception when it's not tappable.
+
     // Tap the desired number of times in SuperEditor at the given position.
     for (int i = 0; i < tapCount; i += 1) {
       await tapAt(globalTapOffset);
@@ -71,7 +74,7 @@ extension SuperEditorRobot on WidgetTester {
   /// to ensure that the drag rectangle never has a zero-width or a
   /// zero-height, because such a drag rectangle wouldn't be seen as
   /// intersecting any content.
-  Future<void> dragSelectFromPositionByOffset({
+  Future<void> dragSelectDocumentFromPositionByOffset({
     required DocumentPosition from,
     required Offset delta,
     Finder? superEditorFinder,
@@ -79,6 +82,7 @@ extension SuperEditorRobot on WidgetTester {
     final documentLayout = _findDocumentLayout(superEditorFinder);
 
     final dragStartRect = documentLayout.getRectForPosition(from)!;
+    // TODO: use startDragFromPosition to start the drag instead of re-implementing it here
 
     // We select an initial drag offset that sits furthest from the drag
     // direction. Dragging recognition waits for a certain amount of drag
@@ -127,6 +131,42 @@ extension SuperEditorRobot on WidgetTester {
     await gesture.moveBy(delta);
 
     // Release the drag and settle.
+    await endDocumentDragGesture(gesture);
+  }
+
+  /// Simulates a user drag that begins at the [from] [DocumentPosition]
+  /// and returns the simulated gesture for further control.
+  ///
+  /// Make sure to remove the pointer when you're done with the [TestGesture].
+  Future<TestGesture> startDocumentDragFromPosition({
+    required DocumentPosition from,
+    Alignment startAlignmentWithinPosition = Alignment.center,
+    Finder? superEditorFinder,
+  }) async {
+    final documentLayout = _findDocumentLayout(superEditorFinder);
+
+    // Find the global offset to start the drag gesture.
+    Rect dragStartRect = documentLayout.getRectForPosition(from)!.deflate(1);
+    final globalDocTopLeft = documentLayout.getGlobalOffsetFromDocumentOffset(Offset.zero);
+    dragStartRect = dragStartRect.translate(globalDocTopLeft.dx, globalDocTopLeft.dy);
+    final dragStartOffset = startAlignmentWithinPosition.withinRect(dragStartRect);
+
+    // Simulate the drag.
+    final gesture = await startGesture(dragStartOffset, kind: PointerDeviceKind.mouse);
+    await pump();
+
+    // Move a tiny amount to start the pan gesture.
+    await gesture.moveBy(const Offset(2, 2));
+    await pump();
+
+    return gesture;
+  }
+
+  /// Ends a drag gesture that's simulated with the given [gesture].
+  ///
+  /// To end the drag gesture, the point is released from surface and then
+  /// the pointer is removed from the gesture simulator.
+  Future<void> endDocumentDragGesture(TestGesture gesture) async {
     await gesture.up();
     await gesture.removePointer();
     await pumpAndSettle();

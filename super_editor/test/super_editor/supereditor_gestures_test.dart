@@ -177,7 +177,7 @@ spans multiple lines.''',
       final document = SuperEditorInspector.findDocument()!;
       final paragraphNode = document.nodes.first as ParagraphNode;
 
-      await tester.dragSelectFromPositionByOffset(
+      await tester.dragSelectDocumentFromPositionByOffset(
         from: DocumentPosition(
           nodeId: paragraphNode.id,
           nodePosition: paragraphNode.endPosition,
@@ -223,7 +223,7 @@ spans multiple lines.''',
       final document = SuperEditorInspector.findDocument()!;
       final paragraphNode = document.nodes.first as ParagraphNode;
 
-      await tester.dragSelectFromPositionByOffset(
+      await tester.dragSelectDocumentFromPositionByOffset(
         from: DocumentPosition(
           nodeId: paragraphNode.id,
           nodePosition: paragraphNode.beginningPosition,
@@ -272,7 +272,7 @@ spans multiple lines.''',
       final titleNode = document.nodes.first as ParagraphNode;
       final paragraphNode = document.nodes[1] as ParagraphNode;
 
-      await tester.dragSelectFromPositionByOffset(
+      await tester.dragSelectDocumentFromPositionByOffset(
         from: DocumentPosition(
           nodeId: paragraphNode.id,
           nodePosition: paragraphNode.endPosition,
@@ -321,7 +321,7 @@ spans multiple lines.''',
       final titleNode = document.nodes.first as ParagraphNode;
       final paragraphNode = document.nodes[1] as ParagraphNode;
 
-      await tester.dragSelectFromPositionByOffset(
+      await tester.dragSelectDocumentFromPositionByOffset(
         from: DocumentPosition(
           nodeId: titleNode.id,
           nodePosition: titleNode.beginningPosition,

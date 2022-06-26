@@ -77,7 +77,7 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
   void initState() {
     super.initState();
     _focusNode = widget.focusNode ?? FocusNode();
-    widget.editContext.composer.addListener(_onSelectionChange);
+    widget.editContext.composer.selectionNotifier.addListener(_onSelectionChange);
     widget.autoScroller.addListener(_updateDragSelection);
   }
 
@@ -88,8 +88,9 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
       _focusNode = widget.focusNode ?? FocusNode();
     }
     if (widget.editContext.composer != oldWidget.editContext.composer) {
-      oldWidget.editContext.composer.removeListener(_onSelectionChange);
-      widget.editContext.composer.addListener(_onSelectionChange);
+      oldWidget.editContext.composer.selectionNotifier.removeListener(_onSelectionChange);
+      print("Updating listener to selection notifier: ${widget.editContext.composer.selectionNotifier.hashCode}");
+      widget.editContext.composer.selectionNotifier.addListener(_onSelectionChange);
     }
     if (widget.autoScroller != oldWidget.autoScroller) {
       oldWidget.autoScroller.removeListener(_updateDragSelection);
@@ -102,7 +103,7 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     if (widget.focusNode == null) {
       _focusNode.dispose();
     }
-    widget.editContext.composer.removeListener(_onSelectionChange);
+    widget.editContext.composer.selectionNotifier.removeListener(_onSelectionChange);
     widget.autoScroller.removeListener(_updateDragSelection);
     super.dispose();
   }

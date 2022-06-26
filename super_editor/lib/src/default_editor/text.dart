@@ -765,7 +765,7 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
 
   @override
   Widget build(BuildContext context) {
-    editorLayoutLog.finer('Building a TextComponent with key: ${widget.key}');
+    editorLayoutLog.finer('Building a TextComponent with key: ${widget.key}, show caret? ${widget.showCaret}');
 
     return SuperTextWithSelection.single(
       key: _textKey,
