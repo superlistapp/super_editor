@@ -95,6 +95,7 @@ class TestDocumentConfigurator {
   DocumentInputSource? _inputSource;
   ThemeData? _appTheme;
   Stylesheet? _stylesheet;
+  final _addedComponents = <ComponentBuilder>[];
   bool _autoFocus = false;
   ui.Size? _editorSize;
   List<ComponentBuilder>? _componentBuilders;
@@ -193,6 +194,11 @@ class TestDocumentConfigurator {
     return this;
   }
 
+  TestDocumentConfigurator withAddedComponents(List<ComponentBuilder> newComponents) {
+    _addedComponents.addAll(newComponents);
+    return this;
+  }
+
   /// Configures the [SuperEditor] to auto-focus when first pumped, or not.
   TestDocumentConfigurator autoFocus(bool autoFocus) {
     _autoFocus = autoFocus;
@@ -247,8 +253,11 @@ class TestDocumentConfigurator {
               inputSource: _inputSource ?? _defaultInputSource,
               gestureMode: _gestureMode ?? _defaultGestureMode,
               stylesheet: _stylesheet,
+              componentBuilders: [
+                ..._addedComponents,
+                ...(_componentBuilders ?? defaultComponentBuilders),
+              ],
               autofocus: _autoFocus,
-              componentBuilders: _componentBuilders ?? defaultComponentBuilders,
             ),
           ),
         ),

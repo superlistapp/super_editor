@@ -474,7 +474,7 @@ class SuperEditorState extends State<SuperEditor> {
   Widget build(BuildContext context) {
     return _buildInputSystem(
       child: _buildGestureSystem(
-        child: SingleColumnDocumentLayout(
+        documentLayout: SingleColumnDocumentLayout(
           key: _docLayoutKey,
           presenter: _docLayoutPresenter!,
           componentBuilders: widget.componentBuilders,
@@ -515,35 +515,11 @@ class SuperEditorState extends State<SuperEditor> {
   /// with the document, e.g., mouse input on desktop, or touch input
   /// on mobile.
   Widget _buildGestureSystem({
-    required Widget child,
+    required Widget documentLayout,
   }) {
     switch (_gestureMode) {
       case DocumentGestureMode.mouse:
-        return LayoutBuilder(builder: (context, constraints) {
-          return DocumentScrollable(
-            autoScroller: _autoScrollController,
-            scrollingMinimapId: widget.debugPaint.scrollingMinimapId,
-            showDebugPaint: widget.debugPaint.scrolling,
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                // When SuperEditor installs its own Viewport, we want the gesture
-                // detection to span throughout the Viewport. Because the gesture
-                // system sits around the DocumentLayout, within the Viewport, we
-                // have to explicitly tell the gesture area to be at least as tall
-                // as the viewport (in case the document content is shorter than
-                // the viewport).
-                minHeight: constraints.maxHeight < double.infinity ? constraints.maxHeight : 0,
-              ),
-              child: DocumentMouseInteractor(
-                focusNode: _focusNode,
-                editContext: editContext,
-                autoScroller: _autoScrollController,
-                showDebugPaint: widget.debugPaint.gestures,
-                child: child,
-              ),
-            ),
-          );
-        });
+        return _buildDesktopGestureSystem(documentLayout);
       case DocumentGestureMode.android:
         return AndroidDocumentTouchInteractor(
           focusNode: _focusNode,
@@ -556,7 +532,7 @@ class SuperEditorState extends State<SuperEditor> {
           popoverToolbarBuilder: widget.androidToolbarBuilder ?? (_) => const SizedBox(),
           createOverlayControlsClipper: widget.createOverlayControlsClipper,
           showDebugPaint: widget.debugPaint.gestures,
-          child: child,
+          child: documentLayout,
         );
       case DocumentGestureMode.iOS:
         return IOSDocumentTouchInteractor(
@@ -571,9 +547,54 @@ class SuperEditorState extends State<SuperEditor> {
           floatingCursorController: _floatingCursorController,
           createOverlayControlsClipper: widget.createOverlayControlsClipper,
           showDebugPaint: widget.debugPaint.gestures,
-          child: child,
+          child: documentLayout,
         );
     }
+  }
+
+  Widget _buildDesktopGestureSystem(Widget documentLayout) {
+    return LayoutBuilder(builder: (context, viewportConstraints) {
+      return DocumentScrollable(
+        autoScroller: _autoScrollController,
+        scrollingMinimapId: widget.debugPaint.scrollingMinimapId,
+        showDebugPaint: widget.debugPaint.scrolling,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            // When SuperEditor installs its own Viewport, we want the gesture
+            // detection to span throughout the Viewport. Because the gesture
+            // system sits around the DocumentLayout, within the Viewport, we
+            // have to explicitly tell the gesture area to be at least as tall
+            // as the viewport (in case the document content is shorter than
+            // the viewport).
+            minWidth: viewportConstraints.maxWidth < double.infinity ? viewportConstraints.maxWidth : 0,
+            minHeight: viewportConstraints.maxHeight < double.infinity ? viewportConstraints.maxHeight : 0,
+          ),
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              // A layer that sits beneath the document and handles gestures.
+              // It's beneath the document so that components that include
+              // interactive UI, like a Checkbox, can intercept their own
+              // touch events.
+              Positioned.fill(
+                child: DocumentMouseInteractor(
+                  focusNode: _focusNode,
+                  editContext: editContext,
+                  autoScroller: _autoScrollController,
+                  showDebugPaint: widget.debugPaint.gestures,
+                  child: const SizedBox(),
+                ),
+              ),
+              // The document that the user is editing.
+              Align(
+                alignment: Alignment.topCenter,
+                child: documentLayout,
+              ),
+            ],
+          ),
+        ),
+      );
+    });
   }
 }
 

@@ -767,21 +767,23 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
   Widget build(BuildContext context) {
     editorLayoutLog.finer('Building a TextComponent with key: ${widget.key}, show caret? ${widget.showCaret}');
 
-    return SuperTextWithSelection.single(
-      key: _textKey,
-      richText: widget.text.computeTextSpan(_textStyleWithBlockType),
-      textAlign: widget.textAlign ?? TextAlign.left,
-      textDirection: widget.textDirection ?? TextDirection.ltr,
-      userSelection: UserSelection(
-        highlightStyle: SelectionHighlightStyle(
-          color: widget.selectionColor,
+    return IgnorePointer(
+      child: SuperTextWithSelection.single(
+        key: _textKey,
+        richText: widget.text.computeTextSpan(_textStyleWithBlockType),
+        textAlign: widget.textAlign ?? TextAlign.left,
+        textDirection: widget.textDirection ?? TextDirection.ltr,
+        userSelection: UserSelection(
+          highlightStyle: SelectionHighlightStyle(
+            color: widget.selectionColor,
+          ),
+          caretStyle: CaretStyle(
+            color: widget.caretColor,
+          ),
+          selection: widget.textSelection ?? const TextSelection.collapsed(offset: -1),
+          hasCaret: widget.showCaret,
+          highlightWhenEmpty: widget.highlightWhenEmpty,
         ),
-        caretStyle: CaretStyle(
-          color: widget.caretColor,
-        ),
-        selection: widget.textSelection ?? const TextSelection.collapsed(offset: -1),
-        hasCaret: widget.showCaret,
-        highlightWhenEmpty: widget.highlightWhenEmpty,
       ),
     );
   }

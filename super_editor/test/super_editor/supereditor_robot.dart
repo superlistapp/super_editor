@@ -67,6 +67,14 @@ extension SuperEditorRobot on WidgetTester {
     await pumpAndSettle();
   }
 
+  Future<void> tapAtDocumentPosition(DocumentPosition position, [Finder? superEditorFinder]) async {
+    final documentLayout = _findDocumentLayout(superEditorFinder);
+    final positionRectInDoc = documentLayout.getRectForPosition(position)!;
+    final globalTapOffset = documentLayout.getAncestorOffsetFromDocumentOffset(positionRectInDoc.center);
+
+    await tapAt(globalTapOffset);
+  }
+
   /// Simulates a user drag that begins at the [from] [DocumentPosition]
   /// and drags a [delta] amount from that point.
   ///

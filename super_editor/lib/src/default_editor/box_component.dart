@@ -283,29 +283,31 @@ class SelectableBox extends StatelessWidget {
   Widget build(BuildContext context) {
     final isSelected = selection != null && !selection!.isCollapsed;
 
-    return Stack(
-      children: [
-        DecoratedBox(
-          decoration: BoxDecoration(
-            color: isSelected ? selectionColor.withOpacity(0.5) : Colors.transparent,
-          ),
-          position: DecorationPosition.foreground,
-          child: child,
-        ),
-        if (selection != null && showCaret)
-          Positioned(
-            left: selection!.extent.affinity == TextAffinity.upstream ? 0 : null,
-            right: selection!.extent.affinity == TextAffinity.upstream ? null : 0,
-            top: 0,
-            bottom: 0,
-            width: 1,
-            child: BlinkingCaret(
-              color: caretColor,
-              caretOffset: Offset.zero,
-              width: 1,
+    return IgnorePointer(
+      child: Stack(
+        children: [
+          DecoratedBox(
+            decoration: BoxDecoration(
+              color: isSelected ? selectionColor.withOpacity(0.5) : Colors.transparent,
             ),
+            position: DecorationPosition.foreground,
+            child: child,
           ),
-      ],
+          if (selection != null && showCaret)
+            Positioned(
+              left: selection!.extent.affinity == TextAffinity.upstream ? 0 : null,
+              right: selection!.extent.affinity == TextAffinity.upstream ? null : 0,
+              top: 0,
+              bottom: 0,
+              width: 1,
+              child: BlinkingCaret(
+                color: caretColor,
+                caretOffset: Offset.zero,
+                width: 1,
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
