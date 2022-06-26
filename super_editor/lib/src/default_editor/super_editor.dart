@@ -844,9 +844,11 @@ final defaultComponentBuilders = <ComponentBuilder>[
 
 /// Keyboard actions for the standard [SuperEditor].
 final defaultKeyboardActions = <DocumentKeyboardAction>[
-  // doNothingWhenFnKeyPressed,
   doNothingWhenThereIsNoSelection,
-  // scrollOnPageUpPageDownHomeAndEnd,
+  scrollOnPageUpKeyPress,
+  scrollOnPageDownKeyPress,
+  scrollOnHomeKeyPress,
+  scrollOnEndKeyPress,
   pasteWhenCmdVIsPressed,
   copyWhenCmdCIsPressed,
   cutWhenCmdXIsPressed,
@@ -884,9 +886,11 @@ final defaultKeyboardActions = <DocumentKeyboardAction>[
 /// Using the IME on desktop involves partial input from the IME
 /// and partial input from non-content keys, like arrow keys.
 final defaultImeKeyboardActions = <DocumentKeyboardAction>[
-  // doNothingWhenFnKeyPressed,
   doNothingWhenThereIsNoSelection,
-  // scrollOnPageUpPageDownHomeAndEnd,
+  scrollOnPageUpKeyPress,
+  scrollOnPageDownKeyPress,
+  scrollOnHomeKeyPress,
+  scrollOnEndKeyPress,
   pasteWhenCmdVIsPressed,
   copyWhenCmdCIsPressed,
   cutWhenCmdXIsPressed,

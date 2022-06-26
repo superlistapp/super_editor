@@ -10,8 +10,9 @@ import 'editor.dart';
 /// In particular, the context contains the [DocumentEditor],
 /// [DocumentComposer], and [DocumentLayout].
 /// In addition, [commonOps] are available for directly applying common, complex
-/// changes to the document using the artifacts and a [scrollController] can be
-/// used to make changes to the scroll position in the viewport.
+/// changes to the document using the artifacts.
+/// A [scrollController] is available to allow changes to the scroll position in
+/// the viewport.
 class SuperEditorContext {
   /// Creates an edit context that makes up a collection of core artifacts for
   /// editing a document.
@@ -47,7 +48,7 @@ class SuperEditorContext {
   /// the document.
   final CommonEditorOperations commonOps;
 
-  ///The scroll position state of the viewport, used to apply position changes to
-  ///the display.
+  /// The scroll position state of the viewport, used to apply position changes to
+  /// the display.
   final ScrollController? scrollController;
 }

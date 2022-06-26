@@ -13,14 +13,84 @@ import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
 
-/// Scroll to appropriate position in viewport when one of pageUp,
-/// pageDown, Home or End key is pressed
-ExecutionInstruction scrollOnPageUpPageDownHomeAndEnd({
+/// Scroll to appropriate position in viewport when the PAGE UP key is pressed.
+///
+/// PAGE UP: moves the scroll position in the viewport up by an amount equal to
+/// the height of the viewport.  This key press will move to scroll position
+/// `minScrollExtent` if the current scroll position is less the current viewport
+/// height.
+ExecutionInstruction scrollOnPageUpKeyPress({
   required SuperEditorContext editContext,
   required RawKeyEvent keyEvent,
 }) {
-  if (keyEvent.logicalKey.keyId < LogicalKeyboardKey.end.keyId ||
-      keyEvent.logicalKey.keyId > LogicalKeyboardKey.pageUp.keyId) {
+  if (editContext.scrollController == null || keyEvent.logicalKey.keyId != LogicalKeyboardKey.pageUp.keyId) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  final scrollController = editContext.scrollController!;
+
+  // Scroll up for one viewport length of the document.
+  scrollController.jumpTo(
+      max(scrollController.offset - scrollController.position.extentInside, scrollController.position.minScrollExtent));
+
+  return ExecutionInstruction.haltExecution;
+}
+
+/// Scroll to appropriate position in viewport when the PAGE DOWN key is pressed.
+///
+/// PAGE DOWN: moves the scroll position in the viewport down by an amount equal
+/// to the height of the viewport.  This key press will move to scroll position
+/// to `maxScrollExtent` (bottom of the document) if its execution would take the
+/// scroll position past the bottom of the document.
+ExecutionInstruction scrollOnPageDownKeyPress({
+  required SuperEditorContext editContext,
+  required RawKeyEvent keyEvent,
+}) {
+  if (editContext.scrollController == null || keyEvent.logicalKey.keyId != LogicalKeyboardKey.pageDown.keyId) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  final scrollController = editContext.scrollController!;
+
+  // The user pressed the PageDown key, scroll down for one viewport length of the
+  // document.
+  scrollController.jumpTo(
+      min(scrollController.offset + scrollController.position.extentInside, scrollController.position.maxScrollExtent));
+
+  return ExecutionInstruction.haltExecution;
+}
+
+/// Scroll to appropriate position in viewport when the HOME key is pressed.
+///
+/// HOME: moves the scroll position in the viewport to the `minScrollExtent`
+/// of the viewport `scrollController`.  The `minScrollExtent` is the bottom
+/// of the document.
+ExecutionInstruction scrollOnHomeKeyPress({
+  required SuperEditorContext editContext,
+  required RawKeyEvent keyEvent,
+}) {
+  if (editContext.scrollController == null || keyEvent.logicalKey.keyId != LogicalKeyboardKey.home.keyId) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  final scrollController = editContext.scrollController!;
+
+  // The user pressed the HOME key, scroll to the top of the document.
+  scrollController.jumpTo(scrollController.position.minScrollExtent);
+
+  return ExecutionInstruction.haltExecution;
+}
+
+/// Scroll to appropriate position in viewport when the END key is pressed.
+///
+/// END: Moves the scroll position in the viewport to the `maxScrollExtent`
+/// of the viewport `scrollController`.  The `maxScrollExtent` is the
+/// bottom of the document.
+ExecutionInstruction scrollOnEndKeyPress({
+  required SuperEditorContext editContext,
+  required RawKeyEvent keyEvent,
+}) {
+  if (editContext.scrollController == null || keyEvent.logicalKey.keyId != LogicalKeyboardKey.end.keyId) {
     return ExecutionInstruction.continueExecution;
   }
 
