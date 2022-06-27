@@ -89,7 +89,6 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     }
     if (widget.editContext.composer != oldWidget.editContext.composer) {
       oldWidget.editContext.composer.selectionNotifier.removeListener(_onSelectionChange);
-      print("Updating listener to selection notifier: ${widget.editContext.composer.selectionNotifier.hashCode}");
       widget.editContext.composer.selectionNotifier.addListener(_onSelectionChange);
     }
     if (widget.autoScroller != oldWidget.autoScroller) {

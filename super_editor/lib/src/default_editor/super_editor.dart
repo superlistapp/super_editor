@@ -639,10 +639,14 @@ class DebugPaintConfig {
   final bool layout;
 }
 
+/// Builds widgets that are displayed at the same position and size as
+/// the document layout within a [SuperEditor].
 abstract class DocumentLayerBuilder {
   Widget build(BuildContext context, EditContext editContext);
 }
 
+/// A [DocumentLayerBuilder] that's implemented with a given function, so
+/// that simple use-cases don't need to sub-class [DocumentLayerBuilder].
 class FunctionalDocumentLayerBuilder implements DocumentLayerBuilder {
   const FunctionalDocumentLayerBuilder(this._delegate);
 
@@ -652,6 +656,8 @@ class FunctionalDocumentLayerBuilder implements DocumentLayerBuilder {
   Widget build(BuildContext context, EditContext editContext) => _delegate(context, editContext);
 }
 
+/// A [DocumentLayerBuilder] that paints a caret at the primary selection extent
+/// in a [SuperEditor].
 class DefaultCaretOverlayBuilder implements DocumentLayerBuilder {
   const DefaultCaretOverlayBuilder([
     this.caretStyle = const CaretStyle(

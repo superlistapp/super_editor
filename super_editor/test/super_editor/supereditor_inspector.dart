@@ -40,6 +40,8 @@ class SuperEditorInspector {
   }
 
   /// Returns the (x,y) offset for a caret, if that caret appeared at the given [position].
+  ///
+  /// {@macro supereditor_finder}
   static Offset findOffsetForCaret(DocumentPosition position, [Finder? finder]) {
     final documentLayout = _findDocumentLayout(finder);
     final positionRect = documentLayout.getRectForPosition(position);
@@ -47,6 +49,10 @@ class SuperEditorInspector {
     return positionRect!.topLeft;
   }
 
+  /// Returns `true` if the entire content rectangle at [position] is visible on
+  /// screen, or `false` otherwise.
+  ///
+  /// {@macro supereditor_finder}
   static bool isPositionVisibleGlobally(DocumentPosition position, Size globalSize, [Finder? finder]) {
     final documentLayout = _findDocumentLayout(finder);
     final positionRect = documentLayout.getRectForPosition(position)!;

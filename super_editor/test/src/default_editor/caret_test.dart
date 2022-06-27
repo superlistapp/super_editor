@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/src/default_editor/document_gestures_touch_android.dart';
 import 'package:super_editor/src/default_editor/document_gestures_touch_ios.dart';
 import 'package:super_editor/super_editor.dart';
-import 'package:super_text_layout/super_text_layout.dart';
 
 import '../../super_editor/supereditor_inspector.dart';
 
@@ -277,9 +276,6 @@ Offset _getOffsetForPosition(GlobalKey docKey, DocumentPosition position) {
 Offset _getCurrentDesktopCaretOffset(WidgetTester tester) {
   final caretBox = find.byKey(primaryCaretKey).evaluate().single.renderObject as RenderBox;
   return caretBox.localToGlobal(Offset.zero);
-  // final customPaint = find.byWidgetPredicate((widget) => widget is CustomPaint && widget.painter is CaretPainter);
-  // final caretPainter = tester.widget<CustomPaint>(customPaint.last).painter as CaretPainter;
-  // return caretPainter.offset!;
 }
 
 /// Find the caret in the widget tree and return it's (x,y)
@@ -313,8 +309,6 @@ Offset _computeExpectedDesktopCaretOffset(WidgetTester tester, TextPosition text
     nodeId: "1",
     nodePosition: TextNodePosition(offset: textPosition.offset),
   ));
-  // final textLayoutCaret = tester.widget<TextLayoutCaret>(find.byType(TextLayoutCaret).last);
-  // return textLayoutCaret.textLayout.getOffsetForCaret(textPosition);
 }
 
 /// Given a [textPosition], compute the expected (x,y) for the caret

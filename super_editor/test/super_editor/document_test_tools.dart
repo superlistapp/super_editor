@@ -194,6 +194,8 @@ class TestDocumentConfigurator {
     return this;
   }
 
+  /// Adds the given component builders to the list of component builders that are
+  /// used to render the document layout in the pumped [SuperEditor].
   TestDocumentConfigurator withAddedComponents(List<ComponentBuilder> newComponents) {
     _addedComponents.addAll(newComponents);
     return this;

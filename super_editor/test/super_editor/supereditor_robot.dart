@@ -67,6 +67,9 @@ extension SuperEditorRobot on WidgetTester {
     await pumpAndSettle();
   }
 
+  /// Taps at the center of the content at the given [position] within a [SuperEditor].
+  ///
+  /// {@macro supereditor_finder}
   Future<void> tapAtDocumentPosition(DocumentPosition position, [Finder? superEditorFinder]) async {
     final documentLayout = _findDocumentLayout(superEditorFinder);
     final positionRectInDoc = documentLayout.getRectForPosition(position)!;
