@@ -12,9 +12,11 @@ import 'package:super_editor/src/default_editor/document_gestures_touch_android.
 import 'package:super_editor/src/default_editor/document_gestures_touch_ios.dart';
 import 'package:super_editor/src/default_editor/document_scrollable.dart';
 import 'package:super_editor/src/default_editor/list_items.dart';
+import 'package:super_text_layout/super_text_layout.dart';
 
 import 'attributions.dart';
 import 'blockquote.dart';
+import 'document_caret_overlay.dart';
 import 'document_gestures_mouse.dart';
 import 'document_input_ime.dart';
 import 'document_input_keyboard.dart';
@@ -92,6 +94,7 @@ class SuperEditor extends StatefulWidget {
         softwareKeyboardHandler = null,
         stylesheet = stylesheet ?? defaultStylesheet,
         selectionStyles = defaultSelectionStyle,
+        documentOverlayBuilders = [const DefaultCaretOverlayBuilder()],
         super(key: key);
 
   @Deprecated("Use unnamed SuperEditor() constructor instead")
@@ -120,6 +123,7 @@ class SuperEditor extends StatefulWidget {
   })  : stylesheet = stylesheet ?? defaultStylesheet,
         selectionStyles = selectionStyle ?? defaultSelectionStyle,
         keyboardActions = keyboardActions ?? defaultKeyboardActions,
+        documentOverlayBuilders = [const DefaultCaretOverlayBuilder()],
         componentBuilders = componentBuilders != null
             ? [...componentBuilders, const UnknownComponentBuilder()]
             : [...defaultComponentBuilders, const UnknownComponentBuilder()],
@@ -147,6 +151,7 @@ class SuperEditor extends StatefulWidget {
     this.iOSHandleColor,
     this.iOSToolbarBuilder,
     this.createOverlayControlsClipper,
+    this.documentOverlayBuilders = const [DefaultCaretOverlayBuilder()],
     this.debugPaint = const DebugPaintConfig(),
     this.autofocus = false,
   })  : stylesheet = stylesheet ?? defaultStylesheet,
@@ -230,6 +235,10 @@ class SuperEditor extends StatefulWidget {
 
   /// Contains a [Document] and alters that document as desired.
   final DocumentEditor editor;
+
+  /// Layers that are displayed on top of the document layout, aligned
+  /// with the location and size of the document layout.
+  final List<DocumentLayerBuilder> documentOverlayBuilders;
 
   /// Owns the editor's current selection, the current attributions for
   /// text input, and other transitive editor configurations.
@@ -342,6 +351,8 @@ class SuperEditorState extends State<SuperEditor> {
     if (widget.editor != oldWidget.editor) {
       _createEditContext();
       _createLayoutPresenter();
+    } else if (widget.selectionStyles != oldWidget.selectionStyles) {
+      _docLayoutSelectionStyler.selectionStyles = widget.selectionStyles;
     }
 
     if (widget.stylesheet != oldWidget.stylesheet) {
@@ -590,6 +601,10 @@ class SuperEditorState extends State<SuperEditor> {
                 alignment: Alignment.topCenter,
                 child: documentLayout,
               ),
+              for (final overlayBuilder in widget.documentOverlayBuilders)
+                Positioned.fill(
+                  child: overlayBuilder.build(context, editContext),
+                ),
             ],
           ),
         ),
@@ -622,6 +637,40 @@ class DebugPaintConfig {
   final bool gestures;
   final String? scrollingMinimapId;
   final bool layout;
+}
+
+abstract class DocumentLayerBuilder {
+  Widget build(BuildContext context, EditContext editContext);
+}
+
+class FunctionalDocumentLayerBuilder implements DocumentLayerBuilder {
+  const FunctionalDocumentLayerBuilder(this._delegate);
+
+  final Widget Function(BuildContext context, EditContext editContext) _delegate;
+
+  @override
+  Widget build(BuildContext context, EditContext editContext) => _delegate(context, editContext);
+}
+
+class DefaultCaretOverlayBuilder implements DocumentLayerBuilder {
+  const DefaultCaretOverlayBuilder([
+    this.caretStyle = const CaretStyle(
+      width: 2,
+      color: Colors.black,
+    ),
+  ]);
+
+  /// Styles applied to the caret that's painted by this caret overlay.
+  final CaretStyle caretStyle;
+
+  @override
+  Widget build(BuildContext context, EditContext editContext) {
+    return CaretDocumentOverlay(
+      composer: editContext.composer,
+      documentLayoutResolver: () => editContext.documentLayout,
+      caretStyle: caretStyle,
+    );
+  }
 }
 
 /// Creates visual components for the standard [SuperEditor].
@@ -852,6 +901,5 @@ TextStyle defaultStyleBuilder(Set<Attribution> attributions) {
 
 /// Default visual styles related to content selection.
 const defaultSelectionStyle = SelectionStyles(
-  caretColor: Colors.black,
   selectionColor: Color(0xFFACCEF7),
 );

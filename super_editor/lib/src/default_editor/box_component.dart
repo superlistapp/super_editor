@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
-import 'package:super_editor/src/infrastructure/blinking_caret.dart';
 
 import '../core/document_layout.dart';
 
@@ -83,7 +82,7 @@ class BoxComponent extends StatefulWidget {
   final Widget child;
 
   @override
-  _BoxComponentState createState() => _BoxComponentState();
+  State createState() => _BoxComponentState();
 }
 
 class _BoxComponentState extends State<BoxComponent> with DocumentComponent {
@@ -268,15 +267,11 @@ class SelectableBox extends StatelessWidget {
     Key? key,
     this.selection,
     required this.selectionColor,
-    required this.caretColor,
-    this.showCaret = false,
     required this.child,
   }) : super(key: key);
 
   final UpstreamDownstreamNodeSelection? selection;
   final Color selectionColor;
-  final bool showCaret;
-  final Color caretColor;
   final Widget child;
 
   @override
@@ -293,19 +288,6 @@ class SelectableBox extends StatelessWidget {
             position: DecorationPosition.foreground,
             child: child,
           ),
-          if (selection != null && showCaret)
-            Positioned(
-              left: selection!.extent.affinity == TextAffinity.upstream ? 0 : null,
-              right: selection!.extent.affinity == TextAffinity.upstream ? null : 0,
-              top: 0,
-              bottom: 0,
-              width: 1,
-              child: BlinkingCaret(
-                color: caretColor,
-                caretOffset: Offset.zero,
-                width: 1,
-              ),
-            ),
         ],
       ),
     );

@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:example/logging.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/super_editor.dart';
+import 'package:super_text_layout/super_text_layout.dart';
 
 import '_example_document.dart';
 import '_toolbar.dart';
@@ -336,6 +337,16 @@ class _ExampleEditorState extends State<ExampleEditor> {
         focusNode: _editorFocusNode,
         scrollController: _scrollController,
         documentLayoutKey: _docLayoutKey,
+        documentOverlayBuilders: [
+          DefaultCaretOverlayBuilder(
+            CaretStyle().copyWith(color: _isLight ? Colors.black : Colors.redAccent),
+          ),
+        ],
+        selectionStyle: _isLight
+            ? defaultSelectionStyle
+            : SelectionStyles(
+                selectionColor: Colors.red.withOpacity(0.3),
+              ),
         stylesheet: defaultStylesheet.copyWith(
           addRulesAfter: [
             if (!_isLight) ..._darkModeStyles,

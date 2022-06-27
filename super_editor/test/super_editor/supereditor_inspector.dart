@@ -39,6 +39,14 @@ class SuperEditorInspector {
     return superEditor.editContext.composer.selection;
   }
 
+  /// Returns the (x,y) offset for a caret, if that caret appeared at the given [position].
+  static Offset findOffsetForCaret(DocumentPosition position, [Finder? finder]) {
+    final documentLayout = _findDocumentLayout(finder);
+    final positionRect = documentLayout.getRectForPosition(position);
+    assert(positionRect != null);
+    return positionRect!.topLeft;
+  }
+
   static bool isPositionVisibleGlobally(DocumentPosition position, Size globalSize, [Finder? finder]) {
     final documentLayout = _findDocumentLayout(finder);
     final positionRect = documentLayout.getRectForPosition(position)!;

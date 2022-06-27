@@ -21,6 +21,7 @@ export 'src/default_editor/attributions.dart';
 export 'src/default_editor/blockquote.dart';
 export 'src/default_editor/box_component.dart';
 export 'src/default_editor/common_editor_operations.dart';
+export 'src/default_editor/document_caret_overlay.dart';
 export 'src/default_editor/document_gestures.dart';
 export 'src/default_editor/document_gestures_mouse.dart';
 export 'src/default_editor/document_gestures_touch.dart';

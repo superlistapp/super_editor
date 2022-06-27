@@ -150,8 +150,6 @@ class HorizontalRuleComponent extends StatelessWidget {
     return SelectableBox(
       selection: selection,
       selectionColor: selectionColor,
-      caretColor: caretColor,
-      showCaret: showCaret,
       child: BoxComponent(
         key: componentKey,
         child: Divider(
