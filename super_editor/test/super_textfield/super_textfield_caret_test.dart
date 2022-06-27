@@ -15,6 +15,11 @@ void main() {
 
       // duration to switch between visible and invisible
       const flashPeriod = Duration(milliseconds: 500);
+      
+      // interval between each key is pressed
+      // here we add one millissecond because BlinkController checks if the 
+      // ellapsed time is bigger than the flash period
+      final typingInterval = (flashPeriod ~/ 2) + const Duration(milliseconds: 1);
 
       await tester.pumpWidget(
         MaterialApp(
@@ -45,17 +50,33 @@ void main() {
 
       // Ensure caret is visible
       expect(_isCaretVisible(tester), true);
+     
+      // Type and 'wait' for ~ half a period
+      await tester.typeKeyboardText("a");
+      await tester.pump(typingInterval);
 
-      // Trigger another frame after half flash period
-      await tester.pump(const Duration(milliseconds: 250));
+      // After typing caret should stay visible
+      expect(_isCaretVisible(tester), true); 
 
-      await tester.typeKeyboardText("abc");
+      // Type and 'wait' for ~ half a period to end the first full period
+      await tester.typeKeyboardText("b");
+      await tester.pump(typingInterval);
 
-      // Trigger a frame that added to the previous frame 
-      // is bigger than the flash period
-      await tester.pump(const Duration(milliseconds: 300));
+      // Ensure typing prevented caret from disappearing
+      expect(_isCaretVisible(tester), true); 
 
-      // Ensure caret is visible
+      // Type and 'wait' for ~ half a period
+      await tester.typeKeyboardText("c");
+      await tester.pump(typingInterval);
+
+      // After typing caret should stay visible
+      expect(_isCaretVisible(tester), true); 
+
+      // Type and 'wait' for ~ half a period to end the second full period
+      await tester.typeKeyboardText("d");
+      await tester.pump(typingInterval);
+
+      // Ensure typing prevented caret from disappearing
       expect(_isCaretVisible(tester), true); 
 
       BlinkController.indeterminateAnimationsEnabled = false;
