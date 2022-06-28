@@ -9,14 +9,20 @@ import '../test_tools.dart';
 
 void main() {
   group('SuperDesktopTextField', () {
-    testWidgetsOnDesktop('has text cursor style while hovering text', (tester) async {
-      final gesture = await _pumpGestureTestApp(tester);
+    testWidgetsOnDesktop('has text cursor style while hovering over text', (tester) async {
+      await _pumpGestureTestApp(tester);
+
+      // Start a gesture outside SuperDesktopTextField bounds
+      final gesture = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      await gesture.addPointer(location: Offset.zero);
+      addTearDown(gesture.removePointer);      
+      await tester.pump();
 
       // Ensure the cursor type is 'basic' when not hovering SuperDesktopTextField
       expect(RendererBinding.instance.mouseTracker.debugDeviceActiveCursor(1), SystemMouseCursors.basic);
       
-      // Hover the text inside SuperDesktopTextField
-      await gesture.moveTo(tester.getCenter(find.byType(SuperText)));
+      // Hover over the text inside SuperDesktopTextField
+      await gesture.moveTo(tester.getTopLeft(find.byType(SuperText)));
       await tester.pump();
 
       // Ensure the cursor type is 'text' when hovering the text
@@ -29,14 +35,20 @@ void main() {
       expect(RendererBinding.instance.mouseTracker.debugDeviceActiveCursor(1), SystemMouseCursors.basic);
     });
 
-    testWidgetsOnDesktop('has text cursor style while hovering empty space', (tester) async {
-      final gesture = await _pumpGestureTestApp(tester);
+    testWidgetsOnDesktop('has text cursor style while hovering over empty space', (tester) async {
+      await _pumpGestureTestApp(tester);
+
+      // Start a gesture outside SuperDesktopTextField bounds
+      final gesture = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      await gesture.addPointer(location: Offset.zero);
+      addTearDown(gesture.removePointer);      
+      await tester.pump();
 
       // Ensure the cursor type is 'basic' when not hovering SuperDesktopTextField
       expect(RendererBinding.instance.mouseTracker.debugDeviceActiveCursor(1), SystemMouseCursors.basic);
       
-      // Hover the empty space within SuperDesktopTextField        
-      await gesture.moveTo(tester.getTopRight(find.byType(SuperText)) + const Offset(10, 0));
+      // Hover over the empty space within SuperDesktopTextField      
+      await gesture.moveTo(tester.getTopRight(find.byType(SuperText)) + const Offset(10, 0));      
       await tester.pump();
 
       // Ensure the cursor type is 'text' when hovering the empty space
@@ -49,13 +61,19 @@ void main() {
       expect(RendererBinding.instance.mouseTracker.debugDeviceActiveCursor(1), SystemMouseCursors.basic);
     });
 
-    testWidgetsOnDesktop('has text cursor style while hovering padding region', (tester) async {
-      final gesture = await _pumpGestureTestApp(tester, padding: 20.0);
+    testWidgetsOnDesktop('has text cursor style while hovering over padding region', (tester) async {
+      await _pumpGestureTestApp(tester, padding: 20.0);
+
+      // Start a gesture outside SuperDesktopTextField bounds
+      final gesture = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      await gesture.addPointer(location: Offset.zero);
+      addTearDown(gesture.removePointer);      
+      await tester.pump();
 
       // Ensure the cursor type is 'basic' when not hovering SuperDesktopTextField
       expect(RendererBinding.instance.mouseTracker.debugDeviceActiveCursor(1), SystemMouseCursors.basic);
       
-      // Hover the padding within SuperDesktopTextField
+      // Hover over the padding within SuperDesktopTextField
       await gesture.moveTo(tester.getTopLeft(find.byType(SuperDesktopTextField)) + const Offset(10, 10));
       await tester.pump();
 
@@ -72,8 +90,7 @@ void main() {
 }
 
 /// Creates a test app with the given [padding] applied to [SuperDesktopTextField]
-/// and starts a mouse gesture at (0, 0)
-Future<TestGesture> _pumpGestureTestApp(WidgetTester tester, {
+Future<void> _pumpGestureTestApp(WidgetTester tester, {
   double padding = 0.0
 }) async {
   await tester.pumpWidget(
@@ -93,12 +110,5 @@ Future<TestGesture> _pumpGestureTestApp(WidgetTester tester, {
       ),
     ),
   );
-
-  final gesture = await tester.createGesture(kind: PointerDeviceKind.mouse);
-  await gesture.addPointer(location: Offset.zero);
-  addTearDown(gesture.removePointer);      
-  await tester.pump();
-
-  return gesture;
 }
 
