@@ -162,9 +162,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
   @override
   void initState() {
     super.initState();
-    _focusNode = (widget.focusNode ?? FocusNode())
-      ..unfocus()
-      ..addListener(_onFocusChange);
+    _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
     if (_focusNode.hasFocus) {
       _showHandles();
     }
@@ -283,6 +281,10 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
       if (!_textEditingController.isAttachedToIme) {
         _log.info('Attaching TextInputClient to TextInput');
         setState(() {
+          if (!_textEditingController.selection.isValid) {
+            _textEditingController.selection = TextSelection.collapsed(offset: _textEditingController.text.text.length);
+          }
+
           _textEditingController.attachToIme(
             textInputAction: widget.textInputAction,
           );
@@ -433,7 +435,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
           color: _floatingCursorController.isShowingFloatingCursor ? Colors.grey : widget.caretColor,
         ),
         selection: _textEditingController.selection,
-        hasCaret: true,
+        hasCaret: _focusNode.hasFocus,
       ),
     );
   }

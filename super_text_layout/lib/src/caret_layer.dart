@@ -22,10 +22,11 @@ class TextLayoutCaret extends StatefulWidget {
   final LayerLink? caretTracker;
 
   @override
-  State<TextLayoutCaret> createState() => _TextLayoutCaretState();
+  State<TextLayoutCaret> createState() => TextLayoutCaretState();
 }
 
-class _TextLayoutCaretState extends State<TextLayoutCaret> with TickerProviderStateMixin {
+@visibleForTesting
+class TextLayoutCaretState extends State<TextLayoutCaret> with TickerProviderStateMixin {
   late BlinkController _blinkController;
 
   @override
@@ -72,10 +73,13 @@ class _TextLayoutCaretState extends State<TextLayoutCaret> with TickerProviderSt
     super.dispose();
   }
 
+  @visibleForTesting
+  bool get isCaretPresent => widget.position != null && widget.position!.offset >= 0;
+
   @override
   Widget build(BuildContext context) {
-    final offset = widget.position != null ? widget.textLayout.getOffsetForCaret(widget.position!) : null;
-    final height = widget.position != null
+    final offset = isCaretPresent ? widget.textLayout.getOffsetForCaret(widget.position!) : null;
+    final height = isCaretPresent
         ? widget.textLayout.getHeightForCaret(widget.position!) ??
             widget.textLayout.getLineHeightAtPosition(widget.position!)
         : null;
@@ -115,15 +119,16 @@ class CaretPainter extends CustomPainter {
     required CaretStyle caretStyle,
     this.offset,
     required double? height,
-  })  : _caretStyle = caretStyle,        
+  })  : _caretStyle = caretStyle,
         _height = height,
         super(repaint: blinkController);
+
   @visibleForTesting
   final BlinkController? blinkController;
   final CaretStyle _caretStyle;
   @visibleForTesting
   final Offset? offset;
-  final double? _height;  
+  final double? _height;
 
   @override
   void paint(Canvas canvas, Size size) {
