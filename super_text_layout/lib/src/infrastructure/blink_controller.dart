@@ -78,7 +78,7 @@ class BlinkController with ChangeNotifier {
   }
 
   void _onTick(Duration elapsedTime) {
-    if (elapsedTime - _lastBlinkTime > _flashPeriod) {
+    if (elapsedTime - _lastBlinkTime >= _flashPeriod) {
       _blink();
       _lastBlinkTime = elapsedTime;
     }
