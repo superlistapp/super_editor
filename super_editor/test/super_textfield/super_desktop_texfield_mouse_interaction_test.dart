@@ -22,6 +22,7 @@ void main() {
       expect(RendererBinding.instance.mouseTracker.debugDeviceActiveCursor(1), SystemMouseCursors.basic);
       
       // Hover over the text inside SuperDesktopTextField
+      // TODO: add the ability to SuperTextFieldInspector to lookup an offset for a content position
       await gesture.moveTo(tester.getTopLeft(find.byType(SuperText)));
       await tester.pump();
 
@@ -48,7 +49,7 @@ void main() {
       expect(RendererBinding.instance.mouseTracker.debugDeviceActiveCursor(1), SystemMouseCursors.basic);
       
       // Hover over the empty space within SuperDesktopTextField      
-      await gesture.moveTo(tester.getTopRight(find.byType(SuperText)) + const Offset(10, 0));      
+      await gesture.moveTo(tester.getBottomRight(find.byType(SuperDesktopTextField)) - const Offset(10, 10));      
       await tester.pump();
 
       // Ensure the cursor type is 'text' when hovering the empty space
