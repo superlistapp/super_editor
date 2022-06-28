@@ -392,7 +392,6 @@ class SuperTextFieldGestureInteractor extends StatefulWidget {
 }
 
 class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureInteractor> {
-  final _cursorStyle = ValueNotifier<MouseCursor>(SystemMouseCursors.basic);
 
   _SelectionType _selectionType = _SelectionType.position;
   Offset? _dragStartInViewport;
@@ -499,7 +498,6 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
       _dragEndInText = _getTextOffset(_dragEndInViewport!);
       _dragRectInViewport = Rect.fromPoints(_dragStartInViewport!, _dragEndInViewport!);
       _log.finer('_onPanUpdate - drag rect: $_dragRectInViewport');
-      _updateCursorStyle(details.localPosition);
       _updateDragSelection();
 
       _scrollIfNearBoundary();
@@ -585,10 +583,6 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
     setState(() {
       widget.textController.selection = const TextSelection.collapsed(offset: -1);
     });
-  }
-
-  void _onMouseMove(PointerEvent pointerEvent) {
-    _updateCursorStyle(pointerEvent.localPosition);
   }
 
   /// We prevent SingleChildScrollView from processing mouse events because
@@ -690,14 +684,6 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
     _textScroll.stopScrollingToEnd();
   }
 
-  void _updateCursorStyle(Offset cursorOffset) {
-    if (_isTextAtOffset(cursorOffset)) {
-      _cursorStyle.value = SystemMouseCursors.text;
-    } else {
-      _cursorStyle.value = SystemMouseCursors.basic;
-    }
-  }
-
   TextPosition? _getPositionAtOffset(Offset textFieldOffset) {
     final textOffset = _getTextOffset(textFieldOffset);
     final textBox = widget.textKey.currentContext!.findRenderObject() as RenderBox;
@@ -727,8 +713,7 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
   @override
   Widget build(BuildContext context) {
     return Listener(
-      onPointerSignal: _onPointerSignal,
-      onPointerHover: _onMouseMove,
+      onPointerSignal: _onPointerSignal,      
       child: GestureDetector(
         onSecondaryTapUp: _onRightClick,
         child: RawGestureDetector(
@@ -756,15 +741,10 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
               },
             ),
           },
-          child: ListenableBuilder(
-            listenable: _cursorStyle,
-            builder: (context) {
-              return MouseRegion(
-                cursor: _cursorStyle.value,
-                child: widget.child,
-              );
-            },
-          ),
+          child: MouseRegion(            
+            cursor: SystemMouseCursors.text, 
+            child: widget.child,
+          ),          
         ),
       ),
     );
