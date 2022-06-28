@@ -4,6 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/super_editor.dart';
 
 import '../test_tools.dart';
+import 'super_textfield_inspector.dart';
+import 'super_textfield_robot.dart';
 
 void main() {
   group("SuperTextField", () {
@@ -119,17 +121,13 @@ void main() {
             ),
           );
 
-          final widgetFinder = find.byType(SuperTextField);
-          final center = tester.getCenter(widgetFinder);
-
           expect(
             focusNode.hasPrimaryFocus,
             isFalse,
             reason: '`FocusNode` should NOT have focus yet',
           );
 
-          await tester.tapAt(center);
-          await tester.pumpAndSettle();
+          await tester.tapSuperTextField();
 
           expect(
             focusNode.hasPrimaryFocus,
@@ -138,29 +136,24 @@ void main() {
           );
         });
 
-        testWidgetsOnMobile('GIVEN Padding != zero ' 'WHEN tap in padded area ' 'THEN Focus is NOT requested',
-            (tester) async {
+        testWidgetsOnMobile(
+            'GIVEN Padding has Insets '
+            'WHEN tap on Padding '
+            'THEN Focus is requested', (tester) async {
           final focusNode = FocusNode(debugLabel: 'SuperTextField FocusNode');
-          const padding = 20.0;
+          const padding = EdgeInsets.only(right: 20);
 
           await tester.pumpWidget(
             _buildScaffold(
               child: SuperTextField(
                 focusNode: focusNode,
-                padding: const EdgeInsets.only(right: padding),
+                padding: padding,
                 lineHeight: 16,
               ),
             ),
           );
 
-          final widgetFinder = find.byType(SuperTextField);
-          final size = tester.getSize(widgetFinder);
-          final center = tester.getCenter(widgetFinder);
-          final centerOfPadding = (size.width - padding) / 2;
-          final target = Offset(
-            center.dx + centerOfPadding,
-            center.dy,
-          );
+          final target = SuperTextFieldInspector.findPaddingRect(tester);
 
           expect(
             focusNode.hasPrimaryFocus,
@@ -168,41 +161,7 @@ void main() {
             reason: '`FocusNode` should NOT have focus yet',
           );
 
-          await tester.tapAt(target);
-          await tester.pumpAndSettle();
-
-          expect(
-            focusNode.hasPrimaryFocus,
-            isFalse,
-            reason: '`FocusNode` should NOT receive focus',
-          );
-        });
-        testWidgetsOnMobile('GIVEN Padding != zero ' 'WHEN tap on Padding child ' 'THEN Focus is requested',
-            (tester) async {
-          final focusNode = FocusNode(debugLabel: 'SuperTextField FocusNode');
-          const padding = 20.0;
-
-          await tester.pumpWidget(
-            _buildScaffold(
-              child: SuperTextField(
-                focusNode: focusNode,
-                padding: const EdgeInsets.only(right: padding),
-                lineHeight: 16,
-              ),
-            ),
-          );
-
-          final widgetFinder = find.byType(SuperTextField);
-          final center = tester.getCenter(widgetFinder);
-
-          expect(
-            focusNode.hasPrimaryFocus,
-            isFalse,
-            reason: '`FocusNode` should NOT have focus yet',
-          );
-
-          await tester.tapAt(center);
-          await tester.pumpAndSettle();
+          await tester.tapSuperTextField(offset: target.center);
 
           expect(
             focusNode.hasPrimaryFocus,
@@ -211,58 +170,43 @@ void main() {
           );
         });
 
-        testWidgetsOnMobile('GIVEN Padding any ' 'WHEN tap next to SuperTextField ' 'THEN Focus is NOT requested',
-            (tester) async {
+        testWidgetsOnMobile(
+            'GIVEN Padding has Insets '
+            'WHEN tap on insets '
+            'THEN Focus is  requested', (tester) async {
           final focusNode = FocusNode(debugLabel: 'SuperTextField FocusNode');
-          const padding = 20.0;
-          const justEnoughToTheSide = .1;
-
+          const padding = EdgeInsets.only(right: 20);
           await tester.pumpWidget(
             _buildScaffold(
               child: SuperTextField(
                 focusNode: focusNode,
-                padding: const EdgeInsets.only(right: padding),
+                padding: padding,
                 lineHeight: 16,
               ),
             ),
           );
 
-          final widgetFinder = find.byType(SuperTextField);
-          final center = tester.getCenter(widgetFinder);
-          final size = tester.getSize(widgetFinder);
-          final tapRight = Offset(
-            center.dx + size.width / 2 + justEnoughToTheSide,
-            center.dy,
+          final insets = SuperTextFieldInspector.findPaddingInsetsRects(
+            tester,
           );
 
-          expect(
-            focusNode.hasPrimaryFocus,
-            isFalse,
-            reason: '`FocusNode` should NOT have focus yet',
-          );
+          for (final inset in insets) {
+            expect(
+              focusNode.hasPrimaryFocus,
+              isFalse,
+              reason: '`FocusNode` should NOT have focus yet',
+            );
 
-          await tester.tapAt(tapRight);
-          await tester.pumpAndSettle();
+            await tester.tapSuperTextField(offset: inset.center);
 
-          expect(
-            focusNode.hasPrimaryFocus,
-            isFalse,
-            reason: '`FocusNode` should NOT receive focus',
-          );
+            expect(
+              focusNode.hasPrimaryFocus,
+              isTrue,
+              reason: '`FocusNode` should receive focus',
+            );
 
-          final tapLeft = Offset(
-            center.dx - size.width / 2 - justEnoughToTheSide,
-            center.dy,
-          );
-
-          await tester.tapAt(tapLeft);
-          await tester.pumpAndSettle();
-
-          expect(
-            focusNode.hasPrimaryFocus,
-            isFalse,
-            reason: '`FocusNode` should NOT receive focus',
-          );
+            focusNode.unfocus();
+          }
         });
       });
     });
