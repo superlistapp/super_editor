@@ -1364,9 +1364,9 @@ class DefaultSuperTextFieldKeyboardHandlers {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 
-    if (defaultTargetPlatform == TargetPlatform.linux && keyEvent.isAltPressed && 
-        (keyEvent.logicalKey == LogicalKeyboardKey.arrowUp || keyEvent.logicalKey == LogicalKeyboardKey.arrowDown)
-    ) {
+    if (defaultTargetPlatform == TargetPlatform.linux &&
+        keyEvent.isAltPressed &&
+        (keyEvent.logicalKey == LogicalKeyboardKey.arrowUp || keyEvent.logicalKey == LogicalKeyboardKey.arrowDown)) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 
@@ -1375,9 +1375,8 @@ class DefaultSuperTextFieldKeyboardHandlers {
 
       MovementModifier? movementModifier;
       if ((defaultTargetPlatform == TargetPlatform.windows || defaultTargetPlatform == TargetPlatform.linux) &&
-          keyEvent.isControlPressed
-      ) {        
-        movementModifier = MovementModifier.word;        
+          keyEvent.isControlPressed) {
+        movementModifier = MovementModifier.word;
       } else if (defaultTargetPlatform == TargetPlatform.macOS && keyEvent.isMetaPressed) {
         movementModifier = MovementModifier.line;
       } else if (defaultTargetPlatform == TargetPlatform.macOS && keyEvent.isAltPressed) {
@@ -1395,9 +1394,8 @@ class DefaultSuperTextFieldKeyboardHandlers {
 
       MovementModifier? movementModifier;
       if ((defaultTargetPlatform == TargetPlatform.windows || defaultTargetPlatform == TargetPlatform.linux) &&
-          keyEvent.isControlPressed
-      ) {        
-        movementModifier = MovementModifier.word;        
+          keyEvent.isControlPressed) {
+        movementModifier = MovementModifier.word;
       } else if (defaultTargetPlatform == TargetPlatform.macOS && keyEvent.isMetaPressed) {
         movementModifier = MovementModifier.line;
       } else if (defaultTargetPlatform == TargetPlatform.macOS && keyEvent.isAltPressed) {
@@ -1428,7 +1426,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
 
     return TextFieldKeyboardHandlerResult.handled;
   }
-  
+
   static TextFieldKeyboardHandlerResult moveToLineStartWithHome({
     required AttributedTextEditingController controller,
     required ProseTextLayout textLayout,
@@ -1436,7 +1434,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
   }) {
     if (defaultTargetPlatform != TargetPlatform.windows && defaultTargetPlatform != TargetPlatform.linux) {
       return TextFieldKeyboardHandlerResult.notHandled;
-    }  
+    }
 
     if (keyEvent.logicalKey == LogicalKeyboardKey.home) {
       controller.moveCaretHorizontally(
@@ -1444,7 +1442,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
         expandSelection: keyEvent.isShiftPressed,
         moveLeft: true,
         movementModifier: MovementModifier.line,
-      );   
+      );
       return TextFieldKeyboardHandlerResult.handled;
     }
 
@@ -1458,7 +1456,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
   }) {
     if (defaultTargetPlatform != TargetPlatform.windows && defaultTargetPlatform != TargetPlatform.linux) {
       return TextFieldKeyboardHandlerResult.notHandled;
-    }  
+    }
 
     if (keyEvent.logicalKey == LogicalKeyboardKey.end) {
       controller.moveCaretHorizontally(
@@ -1466,7 +1464,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
         expandSelection: keyEvent.isShiftPressed,
         moveLeft: false,
         movementModifier: MovementModifier.line,
-      );   
+      );
       return TextFieldKeyboardHandlerResult.handled;
     }
 
