@@ -2425,7 +2425,8 @@ class _PasteEditorCommand implements EditorCommand {
     required Document document,
     required DocumentEditorTransaction transaction,
   }) {
-    final pasteTextOffset = (_pastePosition.nodePosition as TextPosition).offset;
+    final textPosition = _pastePosition.nodePosition as TextNodePosition;
+    final pasteTextOffset = textPosition.offset;
     final linkAttributionSpan = textNode.text.spans
         .getAttributionSpansInRange(
           attributionFilter: (attr) => attr is LinkAttribution,
@@ -2439,9 +2440,11 @@ class _PasteEditorCommand implements EditorCommand {
       return;
     }
 
-    final documentSelection = documentPositionToDocumentSelection(
-      documentPosition: _pastePosition,
-      extentOffset: textNode.text.text.length,
+    final documentSelection = DocumentSelection(
+      base: _pastePosition,
+      extent: _pastePosition.copyWith(
+        nodePosition: textPosition.copyWith(offset: textPosition.offset + textNode.text.text.length),
+      ),
     );
 
     // Remove the existing link attribution
@@ -2481,13 +2484,17 @@ class _PasteEditorCommand implements EditorCommand {
 
       final link = Uri.tryParse(word);
 
-      final documentSelection = documentPositionToDocumentSelection(
-        documentPosition: _pastePosition.copyWith(
+      final documentSelection = DocumentSelection(
+        base: _pastePosition.copyWith(
           nodePosition: textPosition.copyWith(
             offset: textPosition.offset + wordTextSelection.start,
           ),
         ),
-        extentOffset: wordTextSelection.end - wordTextSelection.start,
+        extent: _pastePosition.copyWith(
+          nodePosition: textPosition.copyWith(
+            offset: textPosition.offset + wordTextSelection.end,
+          ),
+        ),
       );
 
       if (link != null && link.hasScheme && link.hasAuthority) {

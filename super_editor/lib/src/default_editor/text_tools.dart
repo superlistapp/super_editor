@@ -157,27 +157,3 @@ TextDirection getParagraphDirection(String text) {
     return TextDirection.ltr;
   }
 }
-
-/// Convert a [documentPosition] to a [DocumentSelection] with an [extentOffset]
-///
-/// Giving a negative [extentOffset] would result in a selection expanded
-/// in downstream direction.
-///
-/// Giving a positive [extentOffset] would result in a selection expanded
-/// in upstream direction.
-///
-/// Return a collapsed selection by
-DocumentSelection documentPositionToDocumentSelection({
-  required DocumentPosition documentPosition,
-  int extentOffset = 0,
-}) {
-  assert(documentPosition.nodePosition is TextNodePosition);
-
-  final nodePosition = documentPosition.nodePosition as TextNodePosition;
-  return DocumentSelection(
-    base: documentPosition,
-    extent: documentPosition.copyWith(
-      nodePosition: nodePosition.copyWith(offset: nodePosition.offset + extentOffset),
-    ),
-  );
-}
