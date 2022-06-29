@@ -141,9 +141,8 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
 
     final tapTextPosition = _getTextPositionAtOffset(details.localPosition);
     if (tapTextPosition == null) {
-      // This shouldn't be possible, but we'll ignore the tap if we can't
-      // map it to a position within the text.
       _log.warning('received a tap-down event on IOSTextFieldInteractor that is not on top of any text');
+      widget.textController.selection = TextSelection.collapsed(offset: widget.textController.text.text.length);
       return;
     }
 
