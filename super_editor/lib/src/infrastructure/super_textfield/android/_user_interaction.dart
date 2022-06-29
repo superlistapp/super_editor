@@ -149,15 +149,14 @@ class AndroidTextFieldTouchInteractorState extends State<AndroidTextFieldTouchIn
 
     final tapTextPosition = _getTextPositionAtOffset(details.localPosition);
     if (tapTextPosition == null) {
-      _log.warning('received a tap-down event on AndroidTextFieldInteractor that is not on top of any text');
+      // This situation indicates the user tapped in empty space
       widget.textController.selection = TextSelection.collapsed(offset: widget.textController.text.text.length);
-      return;
+    } else {
+      // Update the text selection to a collapsed selection where the user tapped.
+      widget.textController.selection = tapTextPosition.offset >= 0
+          ? TextSelection.collapsed(offset: tapTextPosition.offset)
+          : const TextSelection.collapsed(offset: 0);
     }
-
-    // Update the text selection to a collapsed selection where the user tapped.
-    widget.textController.selection = tapTextPosition.offset >= 0
-        ? TextSelection.collapsed(offset: tapTextPosition.offset)
-        : const TextSelection.collapsed(offset: 0);
 
     widget.editingOverlayController.showHandles();
   }
