@@ -141,7 +141,7 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
 
     final tapTextPosition = _getTextPositionAtOffset(details.localPosition);
     if (tapTextPosition == null) {
-      _log.warning('received a tap-down event on IOSTextFieldInteractor that is not on top of any text');
+      // This situation indicates the user tapped in empty space
       widget.textController.selection = TextSelection.collapsed(offset: widget.textController.text.text.length);
       return;
     }

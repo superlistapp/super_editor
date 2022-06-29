@@ -7,9 +7,9 @@ import '../test_tools.dart';
 import 'super_textfield_inspector.dart';
 
 void main() {
-  group('SuperTextField touch interaction', () {
-    group('tapping in an empty space selects the end of the text', () {
-      testWidgetsOnMobile("when having no selection", (tester) async {
+  group('SuperTextField gestures', () {
+    group('tapping in empty space places the caret at the end of the text', () {
+      testWidgetsOnMobile("when the field does not have focus", (tester) async {
         await _pumpTestApp(tester);
 
         // Tap in a position without text
@@ -41,8 +41,8 @@ void main() {
       });
     });
 
-    group('tapping in an area containing text moves selection to tap position', () {
-      testWidgetsOnMobile("when having no selection", (tester) async {
+    group('tapping in an area containing text places the cart at tap position', () {
+      testWidgetsOnMobile("when the field does not have focus", (tester) async {
         await _pumpTestApp(tester);
 
         // Tap in a place containing text
