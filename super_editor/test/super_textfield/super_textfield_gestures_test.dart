@@ -12,7 +12,7 @@ void main() {
       testWidgetsOnMobile("when the field does not have focus", (tester) async {
         await _pumpTestApp(tester);
 
-        // Tap in a position without text
+        // Tap in a place without text
         await tester.tapAt(tester.getBottomRight(find.byType(SuperTextField)) - const Offset(10, 10));
         await tester.pumpAndSettle();
 
@@ -23,13 +23,15 @@ void main() {
         );
       });
 
-      testWidgetsOnMobile("when having a valid selection", (tester) async {
-        await _pumpTestApp(
-          tester,
-          selection: const TextSelection.collapsed(offset: 0),
-        );
+      testWidgetsOnMobile("when the field already has focus", (tester) async {
+        await _pumpTestApp(tester);
 
-        // Tap in a position without text
+        // Tap in a place containing text
+        await tester.tapAt(tester.getTopLeft(find.byType(SuperTextField)));
+        // Without this 'delay' onTapDown is not called the second time
+        await tester.pumpAndSettle(const Duration(milliseconds: 200));
+
+        // Tap in a place without text
         await tester.tapAt(tester.getBottomRight(find.byType(SuperTextField)) - const Offset(10, 10));
         await tester.pumpAndSettle();
 
@@ -41,7 +43,7 @@ void main() {
       });
     });
 
-    group('tapping in an area containing text places the cart at tap position', () {
+    group('tapping in an area containing text places the caret at tap position', () {
       testWidgetsOnMobile("when the field does not have focus", (tester) async {
         await _pumpTestApp(tester);
 
@@ -56,11 +58,13 @@ void main() {
         );
       });
 
-      testWidgetsOnMobile("when having a valid selection", (tester) async {
-        await _pumpTestApp(
-          tester,
-          selection: const TextSelection.collapsed(offset: 2),
-        );
+      testWidgetsOnMobile("when the field already has focus", (tester) async {
+        await _pumpTestApp(tester);
+
+        // Tap in a place without text
+        await tester.tapAt(tester.getBottomRight(find.byType(SuperTextField)) - const Offset(10, 10));
+        // Without this 'delay' onTapDown is not called the second time
+        await tester.pumpAndSettle(const Duration(milliseconds: 200));
 
         // Tap in a place containing text
         await tester.tapAt(tester.getTopLeft(find.byType(SuperTextField)));
@@ -76,10 +80,7 @@ void main() {
   });
 }
 
-Future<void> _pumpTestApp(
-  WidgetTester tester, {
-  TextSelection? selection,
-}) async {
+Future<void> _pumpTestApp(WidgetTester tester) async {
   await tester.pumpWidget(
     MaterialApp(
       home: Scaffold(
@@ -87,7 +88,6 @@ Future<void> _pumpTestApp(
           lineHeight: 16,
           textController: AttributedTextEditingController(
             text: AttributedText(text: "abc"),
-            selection: selection,
           ),
         ),
       ),
