@@ -27,6 +27,17 @@ void testWidgetsOnDesktop(
   testWidgetsOnLinux("$description (on Linux)", test, skip: skip);
 }
 
+/// A widget test that runs a variant for every mobile platform, e.g.,
+/// Android and iOS
+void testWidgetsOnMobile(
+  String description,
+  WidgetTesterCallback test, {
+  bool skip = false,
+}) {
+  testWidgetsOnAndroid("$description (on Android)", test, skip: skip);
+  testWidgetsOnIos("$description (on iOS)", test, skip: skip);
+}
+
 /// A widget test that runs a variant for every platform, e.g.,
 /// Mac, Windows, Linux, Android and iOS.
 void testWidgetsOnAllPlatforms(
