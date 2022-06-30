@@ -392,7 +392,6 @@ class SuperTextFieldGestureInteractor extends StatefulWidget {
 }
 
 class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureInteractor> {
-
   _SelectionType _selectionType = _SelectionType.position;
   Offset? _dragStartInViewport;
   Offset? _dragStartInText;
@@ -482,7 +481,7 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
   }
 
   void _onPanStart(DragStartDetails details) {
-    _log.finer('_onPanStart()');
+    _log.fine("User started pan");
     _dragStartInViewport = details.localPosition;
     _dragStartInText = _getTextOffset(_dragStartInViewport!);
 
@@ -492,7 +491,7 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
   }
 
   void _onPanUpdate(DragUpdateDetails details) {
-    _log.finer('_onPanUpdate()');
+    _log.finer("User moved during pan");
     setState(() {
       _dragEndInViewport = details.localPosition;
       _dragEndInText = _getTextOffset(_dragEndInViewport!);
@@ -505,6 +504,7 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
   }
 
   void _onPanEnd(DragEndDetails details) {
+    _log.finer("User ended a pan");
     setState(() {
       _dragStartInText = null;
       _dragEndInText = null;
@@ -516,6 +516,7 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
   }
 
   void _onPanCancel() {
+    _log.finer("User cancelled a pan");
     setState(() {
       _dragStartInText = null;
       _dragEndInText = null;
@@ -713,7 +714,7 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
   @override
   Widget build(BuildContext context) {
     return Listener(
-      onPointerSignal: _onPointerSignal,      
+      onPointerSignal: _onPointerSignal,
       child: GestureDetector(
         onSecondaryTapUp: _onRightClick,
         child: RawGestureDetector(
@@ -741,10 +742,10 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
               },
             ),
           },
-          child: MouseRegion(            
-            cursor: SystemMouseCursors.text, 
+          child: MouseRegion(
+            cursor: SystemMouseCursors.text,
             child: widget.child,
-          ),          
+          ),
         ),
       ),
     );
