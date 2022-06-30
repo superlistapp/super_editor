@@ -160,8 +160,9 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
     _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
 
     _textEditingController = (widget.textController ?? ImeAttributedTextEditingController())
-      ..addListener(_onTextOrSelectionChange);
-
+      ..addListener(_onTextOrSelectionChange)
+      ..onPerformActionPressed = _onPerformActionPressed;
+    
     _textScrollController = TextScrollController(
       textController: _textEditingController,
       tickerProvider: this,
@@ -195,13 +196,17 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
     }
 
     if (widget.textController != oldWidget.textController) {
-      _textEditingController.removeListener(_onTextOrSelectionChange);
+      _textEditingController
+        ..removeListener(_onTextOrSelectionChange)
+        ..onPerformActionPressed = null;
       if (widget.textController != null) {
         _textEditingController = widget.textController!;
       } else {
         _textEditingController = ImeAttributedTextEditingController();
       }
-      _textEditingController.addListener(_onTextOrSelectionChange);
+      _textEditingController
+        ..addListener(_onTextOrSelectionChange)
+        ..onPerformActionPressed = _onPerformActionPressed;
     }
 
     if (widget.showDebugPaint != oldWidget.showDebugPaint) {
@@ -336,6 +341,14 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
       _controlsOverlayEntry!.remove();
       _controlsOverlayEntry = null;
     }
+  }
+
+  /// Handles actions from the IME
+  void _onPerformActionPressed(TextInputAction action) {
+    if (action == TextInputAction.done) {
+      _focusNode.unfocus();
+    }
+    widget.onPerformActionPressed?.call(action);
   }
 
   @override

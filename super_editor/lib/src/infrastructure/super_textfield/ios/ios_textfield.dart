@@ -169,7 +169,8 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
 
     _textEditingController = (widget.textController ?? ImeAttributedTextEditingController())
       ..addListener(_onTextOrSelectionChange)
-      ..onIOSFloatingCursorChange = _onFloatingCursorChange;
+      ..onIOSFloatingCursorChange = _onFloatingCursorChange
+      ..onPerformActionPressed = _onPerformActionPressed;
 
     _textScrollController = TextScrollController(
       textController: _textEditingController,
@@ -203,7 +204,8 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
     if (widget.textController != oldWidget.textController) {
       _textEditingController
         ..removeListener(_onTextOrSelectionChange)
-        ..onIOSFloatingCursorChange = null;
+        ..onIOSFloatingCursorChange = null
+        ..onPerformActionPressed = null;
 
       if (widget.textController != null) {
         _textEditingController = widget.textController!;
@@ -213,7 +215,8 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
 
       _textEditingController
         ..addListener(_onTextOrSelectionChange)
-        ..onIOSFloatingCursorChange = _onFloatingCursorChange;
+        ..onIOSFloatingCursorChange = _onFloatingCursorChange
+        ..onPerformActionPressed = _onPerformActionPressed;
     }
 
     if (widget.showDebugPaint != oldWidget.showDebugPaint) {
@@ -354,6 +357,14 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
 
   void _onFloatingCursorChange(RawFloatingCursorPoint point) {
     _floatingCursorController.updateFloatingCursor(_textContentKey.currentState!.textLayout, point);
+  }
+
+  /// Handles actions from the IME
+  void _onPerformActionPressed(TextInputAction action) {
+    if (action == TextInputAction.done) {
+      _focusNode.unfocus();
+    }
+    widget.onPerformActionPressed?.call(action);
   }
 
   @override
