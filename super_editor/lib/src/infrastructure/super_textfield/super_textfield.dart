@@ -176,6 +176,26 @@ class SuperTextFieldState extends State<SuperTextField> {
   @visibleForTesting
   ProseTextLayout get textLayout => (_platformFieldKey.currentState as ProseTextBlock).textLayout;
 
+  bool get _isMultiline => widget.minLines != 1 || widget.maxLines != 1;
+
+  SuperTextFieldPlatformConfiguration get _configuration {
+    if (widget.configuration != null) {
+      return widget.configuration!;
+    }
+
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+        return SuperTextFieldPlatformConfiguration.android;
+      case TargetPlatform.iOS:
+        return SuperTextFieldPlatformConfiguration.iOS;
+      case TargetPlatform.fuchsia:
+      case TargetPlatform.linux:
+      case TargetPlatform.macOS:
+      case TargetPlatform.windows:
+        return SuperTextFieldPlatformConfiguration.desktop;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     switch (_configuration) {
@@ -236,26 +256,6 @@ class SuperTextFieldState extends State<SuperTextField> {
         );
     }
   }
-
-  SuperTextFieldPlatformConfiguration get _configuration {
-    if (widget.configuration != null) {
-      return widget.configuration!;
-    }
-
-    switch (defaultTargetPlatform) {
-      case TargetPlatform.android:
-        return SuperTextFieldPlatformConfiguration.android;
-      case TargetPlatform.iOS:
-        return SuperTextFieldPlatformConfiguration.iOS;
-      case TargetPlatform.fuchsia:
-      case TargetPlatform.linux:
-      case TargetPlatform.macOS:
-      case TargetPlatform.windows:
-        return SuperTextFieldPlatformConfiguration.desktop;
-    }
-  }
-
-  bool get _isMultiline => widget.minLines != 1 || widget.maxLines != 1;
 }
 
 /// Configures a [SuperTextField] for the given platform.
