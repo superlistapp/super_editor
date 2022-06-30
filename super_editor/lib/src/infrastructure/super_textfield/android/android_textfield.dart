@@ -190,6 +190,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
     if (widget.textInputAction != oldWidget.textInputAction && _textEditingController.isAttachedToIme) {
       _textEditingController.updateTextInputConfiguration(
         textInputAction: widget.textInputAction,
+        textInputType: _isMultiline ? TextInputType.multiline : TextInputType.text,
       );
     }
 
@@ -272,6 +273,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
 
           _textEditingController.attachToIme(
             textInputAction: widget.textInputAction,
+            textInputType: _isMultiline ? TextInputType.multiline : TextInputType.text,
           );
 
           _showEditingControlsOverlay();

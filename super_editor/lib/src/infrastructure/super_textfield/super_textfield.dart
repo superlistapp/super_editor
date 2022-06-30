@@ -215,6 +215,7 @@ class SuperTextFieldState extends State<SuperTextField> {
           minLines: widget.minLines,
           maxLines: widget.maxLines,
           lineHeight: widget.lineHeight,
+          textInputAction: _isMultiline ? TextInputAction.newline : TextInputAction.done,
         );
       case SuperTextFieldPlatformConfiguration.iOS:
         return SuperIOSTextField(
@@ -231,6 +232,7 @@ class SuperTextFieldState extends State<SuperTextField> {
           minLines: widget.minLines,
           maxLines: widget.maxLines,
           lineHeight: widget.lineHeight,
+          textInputAction: _isMultiline ? TextInputAction.newline : TextInputAction.done,
         );
     }
   }
@@ -252,6 +254,8 @@ class SuperTextFieldState extends State<SuperTextField> {
         return SuperTextFieldPlatformConfiguration.desktop;
     }
   }
+
+  bool get _isMultiline => widget.minLines != 1 || widget.maxLines != 1;
 }
 
 /// Configures a [SuperTextField] for the given platform.

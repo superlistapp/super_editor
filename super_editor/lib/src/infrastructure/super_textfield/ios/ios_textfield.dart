@@ -287,6 +287,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
 
           _textEditingController.attachToIme(
             textInputAction: widget.textInputAction,
+            textInputType: _isMultiline ? TextInputType.multiline : TextInputType.text,
           );
 
           _showHandles();
