@@ -67,13 +67,6 @@ class TestDocumentSelector {
     );
   }
 
-  TestDocumentConfigurator withSingleLinkParagraph() {
-    return TestDocumentConfigurator._(
-      _widgetTester,
-      singleLinkParagraphDoc(),
-    );
-  }
-
   TestDocumentConfigurator withTwoEmptyParagraphs() {
     return TestDocumentConfigurator._(
       _widgetTester,

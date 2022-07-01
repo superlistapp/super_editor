@@ -922,20 +922,16 @@ void main() {
 
       group('inserting near links', () {
         // Note:This is a Mac test because it depends on `pressCmdB` to enable a bold attribution
-        testWidgetsOnMac('prevents expanding the link when inserting at the start', (tester) async {
+        testWidgetsOnMac('does not expand the link when inserting at the start', (tester) async {
           // Configure and render a document.
           await tester //
               .createDocument()
-              .withSingleLinkParagraph()
+              .withCustomContent(_singleParagraphWithLinkDoc())
               .forDesktop()
-              .autoFocus(true)
               .pump();
 
           // Place the caret in the first paragraph at the start of the link.
           await tester.placeCaretInParagraph('1', 0);
-
-          // Enable bold attribution
-          await tester.pressCmdB();
 
           // Type some text by simulating hardware keyboard key presses.
           await tester.typeKeyboardText('Go to ');
@@ -943,16 +939,16 @@ void main() {
           // Ensure that the link is not being expanded, and bold attribution is preserved
           expect(
             SuperEditorInspector.findDocument(),
-            equalsMarkdown("**Go to **[https://google.com](https://google.com)"),
+            equalsMarkdown("Go to [https://google.com](https://google.com)"),
           );
         });
 
         // Note:This is a Mac test because it depends on `pressCmdB` to enable a bold attribution
-        testWidgetsOnMac('prevents expanding the link when inserting at the end', (tester) async {
+        testWidgetsOnMac('does not expand the link when inserting at the end', (tester) async {
           // Configure and render a document.
           await tester //
               .createDocument()
-              .withSingleLinkParagraph()
+              .withCustomContent(_singleParagraphWithLinkDoc())
               .forDesktop()
               .autoFocus(true)
               .pump();
@@ -960,16 +956,13 @@ void main() {
           // Place the caret in the first paragraph at the start of the link.
           await tester.placeCaretInParagraph('1', 18);
 
-          // Enable bold attribution
-          await tester.pressCmdB();
-
           // Type some text by simulating hardware keyboard key presses.
           await tester.typeKeyboardText(' to learn anything');
 
           // Ensure that the link is not being expanded, and bold attribution is preserved
           expect(
             SuperEditorInspector.findDocument(),
-            equalsMarkdown("[https://google.com](https://google.com)** to learn anything**"),
+            equalsMarkdown("[https://google.com](https://google.com) to learn anything"),
           );
         });
       });
@@ -1102,13 +1095,29 @@ Future<TestDocumentContext> _pumpExplicitLineBreakTestSetup(
     .pump();
 }
 
-extension on WidgetTester {
-  Future<void> pressCmdB() async {
-    // TODO: remove this method and this extension when flutter_test_robot supports pressCmdB
-    await sendKeyDownEvent(LogicalKeyboardKey.meta, platform: 'macos');
-    await sendKeyDownEvent(LogicalKeyboardKey.keyB, platform: 'macos');
-    await sendKeyUpEvent(LogicalKeyboardKey.keyB, platform: 'macos');
-    await sendKeyUpEvent(LogicalKeyboardKey.meta, platform: 'macos');
-    await pumpAndSettle();
-  }
+MutableDocument singleParagraphWithLinkDoc() {
+  return MutableDocument(
+    nodes: [
+      ParagraphNode(
+        id: "1",
+        text: AttributedText(
+          text: "https://google.com",
+          spans: AttributedSpans(
+            attributions: [
+              SpanMarker(
+                attribution: LinkAttribution(url: Uri.parse('https://google.com')),
+                offset: 0,
+                markerType: SpanMarkerType.start,
+              ),
+              SpanMarker(
+                attribution: LinkAttribution(url: Uri.parse('https://google.com')),
+                offset: 17,
+                markerType: SpanMarkerType.end,
+              ),
+            ],
+          ),
+        ),
+      )
+    ],
+  );
 }

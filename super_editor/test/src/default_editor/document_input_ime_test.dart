@@ -270,12 +270,12 @@ void main() {
       });
     });
 
-    group('inserting near links', () {
-      testWidgets('prevent expanding the link when inserting at the start', (tester) async {
+    group('inserting typing characters near a link', () {
+      testWidgets('does not expand the link when typing before the link', (tester) async {
         // Configure and render a document.
         final testerDocumentContext = await tester //
             .createDocument()
-            .withSingleLinkParagraph()
+            .withCustomContent(_singleParagraphWithLinkDoc())
             .forIOS()
             .autoFocus(true)
             .pump();
@@ -290,16 +290,13 @@ void main() {
           commonOps: testerDocumentContext.editContext.commonOps,
         );
 
-        // Insert some text to simulate IME input action
-        softwareKeyboardHandler.applyDeltas([
-          const TextEditingDeltaInsertion(
-            textInserted: 'Go to ',
-            insertionOffset: 0,
-            selection: TextSelection.collapsed(offset: 0),
-            composing: TextRange(start: -1, end: -1),
-            oldText: 'https://google.com',
-          ),
-        ]);
+        // Type characters before the link using the IME
+        await tester.insertTextIME(
+          softwareKeyboardHandler: softwareKeyboardHandler,
+          text: 'Go to ',
+          initialInsertionOffset: 0,
+          oldText: 'https://google.com',
+        );
 
         // Ensure that the link is not being expanded
         expect(
@@ -312,12 +309,12 @@ void main() {
         // Configure and render a document.
         final testerDocumentContext = await tester //
             .createDocument()
-            .withSingleLinkParagraph()
+            .withCustomContent(_singleParagraphWithLinkDoc())
             .forIOS()
             .autoFocus(true)
             .pump();
 
-        // Place the caret in the first paragraph at the start of the link.
+        // Place the caret in the first paragraph at the end of the link.
         final softwareKeyboardHandler = SoftwareKeyboardHandler(
           composer: testerDocumentContext.editContext.composer
             ..selection = const DocumentSelection.collapsed(
@@ -327,16 +324,13 @@ void main() {
           commonOps: testerDocumentContext.editContext.commonOps,
         );
 
-        // Insert some text to simulate IME input action
-        softwareKeyboardHandler.applyDeltas([
-          const TextEditingDeltaInsertion(
-            textInserted: ' to learn anything',
-            insertionOffset: 18,
-            selection: TextSelection.collapsed(offset: 18),
-            composing: TextRange(start: -1, end: -1),
-            oldText: 'https://google.com',
-          ),
-        ]);
+        // Type characters after the link using the IME
+        await tester.insertTextIME(
+          softwareKeyboardHandler: softwareKeyboardHandler,
+          text: ' to learn anything',
+          initialInsertionOffset: 18,
+          oldText: 'https://google.com',
+        );
 
         // Ensure that the link is not being expanded
         expect(
@@ -380,4 +374,56 @@ void _expectTextEditingValue({
     actualTextEditingValue,
     TextEditingValue(text: expectedText, selection: expectedSelection),
   );
+}
+
+MutableDocument _singleParagraphWithLinkDoc() {
+  return MutableDocument(
+    nodes: [
+      ParagraphNode(
+        id: "1",
+        text: AttributedText(
+          text: "https://google.com",
+          spans: AttributedSpans(
+            attributions: [
+              SpanMarker(
+                attribution: LinkAttribution(url: Uri.parse('https://google.com')),
+                offset: 0,
+                markerType: SpanMarkerType.start,
+              ),
+              SpanMarker(
+                attribution: LinkAttribution(url: Uri.parse('https://google.com')),
+                offset: 17,
+                markerType: SpanMarkerType.end,
+              ),
+            ],
+          ),
+        ),
+      )
+    ],
+  );
+}
+
+extension on WidgetTester {
+  // TODO: Remove this when `SuperTestRobot` support insert IME
+  Future<void> insertTextIME({
+    required SoftwareKeyboardHandler softwareKeyboardHandler,
+    required String text,
+    required int initialInsertionOffset,
+    required String oldText,
+  }) async {
+    for (int i = 0; i < text.length; i += 1) {
+      // Insert a character to simulate IME input action
+      softwareKeyboardHandler.applyDeltas([
+        TextEditingDeltaInsertion(
+          textInserted: text[i],
+          insertionOffset: initialInsertionOffset + i,
+          selection: TextSelection.collapsed(offset: initialInsertionOffset + i),
+          composing: const TextRange(start: -1, end: -1),
+          oldText: oldText,
+        ),
+      ]);
+
+      await pumpAndSettle();
+    }
+  }
 }

@@ -2315,7 +2315,6 @@ class _PasteEditorCommand implements EditorCommand {
     if (currentNodeWithSelection is TextNode) {
       final textNode = document.getNode(_pastePosition) as TextNode;
       final pasteTextOffset = (_pastePosition.nodePosition as TextPosition).offset;
-      final attributionsAtPasteOffset = textNode.text.getAllAttributionsAt(pasteTextOffset);
 
       if (splitContent.length > 1 && pasteTextOffset < textNode.endPosition.offset) {
         // There is more than 1 node of content being pasted. Therefore,
@@ -2342,8 +2341,11 @@ class _PasteEditorCommand implements EditorCommand {
       // of the link sits before the pasted text, and the other part of the link
       // sits after the pasted text. Both of the link parts continue to reference
       // the original URL, even if the text was a URL.
+
+      final currentAttributions = _composer.preferences.currentAttributions;
+
       InsertTextCommand(
-        attributions: attributionsAtPasteOffset.where((attribution) => attribution is! LinkAttribution).toSet(),
+        attributions: currentAttributions.where((attribution) => attribution is! LinkAttribution).toSet(),
         documentPosition: _pastePosition,
         textToInsert: splitContent.first,
       ).execute(document, transaction);

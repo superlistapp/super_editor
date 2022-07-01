@@ -60,10 +60,11 @@ TextSelection expandPositionToWord({
     return const TextSelection.collapsed(offset: -1);
   }
 
-  int start = min(textPosition.offset, text.length - 1);
-  int end = min(textPosition.offset, text.length - 1);
-  // -1 because TextPosition's offset indexes the character after the
-  // selection, not the final character in the selection.
+  int start = min(textPosition.offset, text.length);
+  int end = min(textPosition.offset, text.length);
+
+  // We're checking for the character before the start index because
+  // TextPosition's offset indexes the character after the caret
   while (start > 0 && text[start - 1] != ' ') {
     start -= 1;
   }
