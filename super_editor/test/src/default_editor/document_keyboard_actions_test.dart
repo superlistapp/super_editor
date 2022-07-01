@@ -1095,7 +1095,7 @@ Future<TestDocumentContext> _pumpExplicitLineBreakTestSetup(
     .pump();
 }
 
-MutableDocument singleParagraphWithLinkDoc() {
+MutableDocument _singleParagraphWithLinkDoc() {
   return MutableDocument(
     nodes: [
       ParagraphNode(
