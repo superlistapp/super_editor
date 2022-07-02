@@ -2335,27 +2335,25 @@ class _PasteEditorCommand implements EditorCommand {
         }
       }
 
-      // Paste the first piece of content into the selected TextNode.
-
       // If a link spans across the past location, we split that link in two. Part
       // of the link sits before the pasted text, and the other part of the link
       // sits after the pasted text. Both of the link parts continue to reference
       // the original URL, even if the text was a URL.
+      //
+      // The attribution splitting happens automatically in the text inserting execution, when the
+      // newly inserted text's attributions doesn't contain the original attribution. Hence, we only
+      // need to filter out the original link attribution.
+      final currentAttributionsWithoutLink = _composer.preferences.currentAttributions //
+          .where((attribution) => attribution is! LinkAttribution)
+          .toSet();
 
-      final currentAttributions = _composer.preferences.currentAttributions;
-
+      // Paste the first piece of content into the selected TextNode.
       InsertTextCommand(
-        attributions: currentAttributions.where((attribution) => attribution is! LinkAttribution).toSet(),
         documentPosition: _pastePosition,
         textToInsert: splitContent.first,
+        attributions: currentAttributionsWithoutLink,
       ).execute(document, transaction);
 
-      // Split the link into 2 parts
-      _splitLinkAtPastedOffset(
-        textNode: textNode,
-        document: document,
-        transaction: transaction,
-      );
       // Check for url in the pasted text and apply [LinkAttribution] appropriately
       _convertURLsInPastedTextToLink(
         text: splitContent.first,
@@ -2420,57 +2418,6 @@ class _PasteEditorCommand implements EditorCommand {
     editorOpsLog.fine(' - new selection: ${_composer.selection}');
 
     editorOpsLog.fine('Done with paste command.');
-  }
-
-  void _splitLinkAtPastedOffset({
-    required TextNode textNode,
-    required Document document,
-    required DocumentEditorTransaction transaction,
-  }) {
-    final textPosition = _pastePosition.nodePosition as TextNodePosition;
-    final pasteTextOffset = textPosition.offset;
-    final linkAttributionSpan = textNode.text.spans
-        .getAttributionSpansInRange(
-          attributionFilter: (attr) => attr is LinkAttribution,
-          start: pasteTextOffset,
-          end: pasteTextOffset,
-        )
-        .firstOrNull;
-
-    if (linkAttributionSpan == null) {
-      // Do nothing
-      return;
-    }
-
-    final documentSelection = DocumentSelection(
-      base: _pastePosition,
-      extent: _pastePosition.copyWith(
-        nodePosition: textPosition.copyWith(offset: textPosition.offset + textNode.text.text.length),
-      ),
-    );
-
-    // Remove the existing link attribution
-    RemoveTextAttributionsCommand(
-      documentSelection: documentSelection,
-      attributions: {linkAttributionSpan.attribution},
-    ).execute(document, transaction);
-
-    // Split the current link into 2 parts
-    final firstLink = linkAttributionSpan.copyWith(end: pasteTextOffset).attribution;
-
-    final secondLinkStart = pasteTextOffset + _content.length;
-    final secondLinkLength = linkAttributionSpan.end - pasteTextOffset;
-    final secondLink = linkAttributionSpan
-        .copyWith(
-          start: secondLinkStart,
-          end: secondLinkStart + secondLinkLength,
-        )
-        .attribution;
-
-    AddTextAttributionsCommand(
-      documentSelection: documentSelection,
-      attributions: {firstLink, secondLink},
-    ).execute(document, transaction);
   }
 
   void _convertURLsInPastedTextToLink({
