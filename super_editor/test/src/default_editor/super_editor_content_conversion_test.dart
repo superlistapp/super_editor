@@ -173,31 +173,6 @@ void main() {
           equalsMarkdown("[https://google.com](https://google.com)Link: [https://flutter.dev](https://flutter.dev)"),
         );
       });
-
-      testWidgetsOnMac('splits a link in two when pasting in the middle of the link', (tester) async {
-        tester.simulateClipboard();
-        tester.setSimulatedClipboardContent("Link: https://flutter.dev and link: https://pub.dev");
-
-        // Configure and render a document.
-        await tester //
-            .createDocument()
-            .withCustomContent(_singleParagraphWithLinkDoc())
-            .forDesktop()
-            .pump();
-
-        // Tap to place the caret in the first paragraph.
-        await tester.placeCaretInParagraph("1", 11);
-
-        await tester.pressCmdV();
-
-        // Ensure that the link is  splitted and not expanded.
-        // Pasted URLs are converted into links
-        expect(
-          SuperEditorInspector.findDocument(),
-          equalsMarkdown('[https://goo](https://google.com)Link: [https://flutter.dev](https://flutter.dev) '
-              'and link: [https://pub.dev](https://pub.dev)[gle.com](https://google.com)'),
-        );
-      });
     });
 
     group("apply toggled attribution to pasted text", () {
@@ -330,6 +305,31 @@ void main() {
           ),
         );
       });
+    });
+
+    testWidgetsOnMac('splits a link in two when pasting in the middle of the link', (tester) async {
+      tester.simulateClipboard();
+      tester.setSimulatedClipboardContent("Link: https://flutter.dev and link: https://pub.dev");
+
+      // Configure and render a document.
+      await tester //
+          .createDocument()
+          .withCustomContent(_singleParagraphWithLinkDoc())
+          .forDesktop()
+          .pump();
+
+      // Tap to place the caret in the first paragraph.
+      await tester.placeCaretInParagraph("1", 11);
+
+      await tester.pressCmdV();
+
+      // Ensure that the link is  splitted and not expanded.
+      // Pasted URLs are converted into links
+      expect(
+        SuperEditorInspector.findDocument(),
+        equalsMarkdown('[https://goo](https://google.com)Link: [https://flutter.dev](https://flutter.dev) '
+            'and link: [https://pub.dev](https://pub.dev)[gle.com](https://google.com)'),
+      );
     });
   });
 }
