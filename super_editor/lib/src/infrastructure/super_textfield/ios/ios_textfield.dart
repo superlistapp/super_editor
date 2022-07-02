@@ -10,6 +10,8 @@ import 'package:super_editor/src/infrastructure/super_textfield/input_method_eng
 import 'package:super_editor/src/infrastructure/super_textfield/ios/_editing_controls.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
+import '../../../default_editor/document_gestures.dart';
+import '../../../default_editor/document_gestures_touch.dart';
 import '../../platforms/ios/toolbar.dart';
 import '../styles.dart';
 import '_floating_cursor.dart';
@@ -126,9 +128,7 @@ class SuperIOSTextField extends StatefulWidget {
   State createState() => SuperIOSTextFieldState();
 }
 
-class SuperIOSTextFieldState extends State<SuperIOSTextField>
-    with SingleTickerProviderStateMixin
-    implements ProseTextBlock {
+class SuperIOSTextFieldState extends State<SuperIOSTextField> with TickerProviderStateMixin, WidgetsBindingObserver implements ProseTextBlock {
   final _textFieldKey = GlobalKey();
   final _textFieldLayerLink = LayerLink();
   final _textContentLayerLink = LayerLink();
@@ -149,6 +149,8 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
   // positions the invisible touch targets for base/extent
   // dragging.
   OverlayEntry? _controlsOverlayEntry;
+
+  late DragHandleAutoScroller _autoScroller;
 
   @override
   void initState() {
@@ -176,6 +178,15 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
       textController: _textEditingController,
       magnifierFocalPoint: _magnifierLayerLink,
     );
+
+    _autoScroller = DragHandleAutoScroller(
+      vsync: this,
+      dragAutoScrollBoundary: const AxisOffset.symmetric(54),
+      getScrollPosition: () => Scrollable.of(context)!.position,
+      getViewportBox: () => Scrollable.of(context)!.context.findRenderObject() as RenderBox,
+    );
+
+    WidgetsBinding.instance.addObserver(this);
   }
 
   @override
@@ -264,7 +275,22 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
       ..removeListener(_onTextScrollChange)
       ..dispose();
 
+    _autoScroller.dispose();
+
+    WidgetsBinding.instance.removeObserver(this);
+
     super.dispose();
+  }
+
+  @override
+  void didChangeMetrics() {
+    // The available screen dimensions may have changed, e.g., due to keyboard
+    // appearance/disappearance.
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      if (mounted && _focusNode.hasFocus) {
+        _ensureIsVisible();
+      }
+    });
   }
 
   @override
@@ -286,6 +312,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
             textInputType: _isMultiline ? TextInputType.multiline : TextInputType.text,
           );
 
+          _ensureIsVisible();
           _showHandles();
         });
       }
@@ -368,6 +395,38 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
       default:
         _log.warning("User pressed unhandled action button: $action");
     }
+  }
+
+  /// Scrolls the ancestor [Scrollable], if any, so [SuperTextField]
+  /// is visible on the viewport when it's focused
+  void _ensureIsVisible() {
+    // If we are not inside a [Scrollable] we don't autoscroll
+    final ancestorScrollable = Scrollable.of(context);
+    if (ancestorScrollable == null) {
+      return;
+    }
+
+    // The [RenderBox] is needed so we can calculate the final [Offset]
+    final fieldBox = context.findRenderObject() as RenderBox?;
+    if (fieldBox == null) {
+      return;
+    }
+
+    final viewportBox = ancestorScrollable.context.findRenderObject() as RenderBox;
+
+    // We get the selection offset so the autoscroll also supports
+    // multi-line textfields
+    final offsetInsideTextField = _isMultiline && _textEditingController.selection.isValid
+        ? _textContentKey.currentState!.textLayout.getOffsetAtPosition(
+            TextPosition(offset: _textEditingController.selection.extentOffset),
+          )
+        : Offset.zero;
+
+    final offsetInsideViewport = viewportBox.globalToLocal(
+      fieldBox.localToGlobal(offsetInsideTextField),
+    );
+
+    _autoScroller.ensureOffsetIsVisible(offsetInsideViewport);
   }
 
   @override

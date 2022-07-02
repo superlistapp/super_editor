@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:super_editor/src/default_editor/document_gestures.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/android/_editing_controls.dart';
@@ -12,6 +13,7 @@ import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/t
 import 'package:super_editor/src/infrastructure/super_textfield/input_method_engine/_ime_text_editing_controller.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
+import '../../../default_editor/document_gestures_touch.dart';
 import '../../_logging.dart';
 import '../styles.dart';
 import 'android_textfield.dart';
@@ -125,9 +127,7 @@ class SuperAndroidTextField extends StatefulWidget {
   State createState() => SuperAndroidTextFieldState();
 }
 
-class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
-    with SingleTickerProviderStateMixin
-    implements ProseTextBlock {
+class SuperAndroidTextFieldState extends State<SuperAndroidTextField> with TickerProviderStateMixin, WidgetsBindingObserver implements ProseTextBlock {
   final _textFieldKey = GlobalKey();
   final _textFieldLayerLink = LayerLink();
   final _textContentLayerLink = LayerLink();
@@ -148,6 +148,8 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
   // dragging.
   OverlayEntry? _controlsOverlayEntry;
 
+  late DragHandleAutoScroller _autoScroller;
+
   @override
   void initState() {
     super.initState();
@@ -166,6 +168,15 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
       textController: _textEditingController,
       magnifierFocalPoint: _magnifierLayerLink,
     );
+
+    _autoScroller = DragHandleAutoScroller(
+      vsync: this,
+      dragAutoScrollBoundary: const AxisOffset.symmetric(54),
+      getScrollPosition: () => Scrollable.of(context)!.position,
+      getViewportBox: () => Scrollable.of(context)!.context.findRenderObject() as RenderBox,
+    );
+
+    WidgetsBinding.instance.addObserver(this);
   }
 
   @override
@@ -254,7 +265,22 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
       ..removeListener(_onTextScrollChange)
       ..dispose();
 
+    _autoScroller.dispose();
+
+    WidgetsBinding.instance.removeObserver(this);
+
     super.dispose();
+  }
+
+  @override
+  void didChangeMetrics() {
+    // The available screen dimensions may have changed, e.g., due to keyboard
+    // appearance/disappearance.
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      if (mounted && _focusNode.hasFocus) {
+        _ensureIsVisible();
+      }
+    });
   }
 
   @override
@@ -275,7 +301,8 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
             textInputAction: widget.textInputAction,
             textInputType: _isMultiline ? TextInputType.multiline : TextInputType.text,
           );
-
+          
+          _ensureIsVisible();
           _showEditingControlsOverlay();
         });
       }
@@ -377,6 +404,38 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
     }
 
     return KeyEventResult.handled;
+  }
+
+  /// Scrolls the ancestor [Scrollable], if any, so [SuperTextField]
+  /// is visible on the viewport when it's focused
+  void _ensureIsVisible() {
+    // If we are not inside a [Scrollable] we don't autoscroll
+    final ancestorScrollable = Scrollable.of(context);
+    if (ancestorScrollable == null) {
+      return;
+    }
+
+    // The [RenderBox] is needed so we can calculate the final [Offset]
+    final fieldBox = context.findRenderObject() as RenderBox?;
+    if (fieldBox == null) {
+      return;
+    }
+
+    final viewportBox = ancestorScrollable.context.findRenderObject() as RenderBox;
+
+    // We get the selection offset so the autoscroll also supports
+    // multi-line textfields
+    final offsetInsideTextField = _isMultiline && _textEditingController.selection.isValid
+        ? _textContentKey.currentState!.textLayout.getOffsetAtPosition(
+            TextPosition(offset: _textEditingController.selection.extentOffset),
+          )
+        : Offset.zero;
+
+    final offsetInsideViewport = viewportBox.globalToLocal(
+      fieldBox.localToGlobal(offsetInsideTextField),
+    );
+
+    _autoScroller.ensureOffsetIsVisible(offsetInsideViewport);
   }
 
   @override
