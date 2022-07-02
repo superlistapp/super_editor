@@ -190,8 +190,8 @@ void main() {
 
         await tester.pressCmdV();
 
-        // Ensure that the link is not being expanded and splitted. Pasted URLs are converted
-        // into links
+        // Ensure that the link is  splitted and not expanded.
+        // Pasted URLs are converted into links
         expect(
           SuperEditorInspector.findDocument(),
           equalsMarkdown('[https://goo](https://google.com)Link: [https://flutter.dev](https://flutter.dev) '
@@ -254,7 +254,7 @@ void main() {
 
         await tester.typeKeyboardText('. Hello Mars');
 
-        // Ensure that URLs are converted into links
+        // Ensure that bold attribution is applied
         expect(
           SuperEditorInspector.findDocument(),
           equalsMarkdown(
@@ -288,7 +288,7 @@ void main() {
 
         await tester.typeKeyboardText(' Mars. Hello');
 
-        // Ensure that URLs are converted into links
+        // Ensure that bold attribution is applied
         expect(
           SuperEditorInspector.findDocument(),
           equalsMarkdown(
@@ -322,7 +322,7 @@ void main() {
 
         await tester.typeKeyboardText('. Hello other planets.');
 
-        // Ensure that URLs are converted into links
+        // Ensure that bold attribution is applied
         expect(
           SuperEditorInspector.findDocument(),
           equalsMarkdown(
