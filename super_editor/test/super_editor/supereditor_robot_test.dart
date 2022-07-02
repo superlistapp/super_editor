@@ -4,13 +4,14 @@ import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 
+import '../test_tools.dart';
 import 'document_test_tools.dart';
 import 'supereditor_inspector.dart';
 import 'supereditor_robot.dart';
 
 void main() {
   group("SuperEditor robot", () {
-    testWidgets("taps to place caret in empty paragraph", (tester) async {
+    testWidgetsOnAllPlatforms("taps to place caret in empty paragraph", (tester) async {
       // Configure and render a document.
       await tester //
           .createDocument()
@@ -36,7 +37,7 @@ void main() {
       );
     });
 
-    testWidgets("taps to place caret before first character", (tester) async {
+    testWidgetsOnAllPlatforms("taps to place caret before first character", (tester) async {
       // Configure and render a document.
       await tester //
           .createDocument()
@@ -62,7 +63,7 @@ void main() {
       );
     });
 
-    testWidgets("taps to place caret in middle of paragraph", (tester) async {
+    testWidgetsOnAllPlatforms("taps to place caret in middle of paragraph", (tester) async {
       // Configure and render a document.
       await tester //
           .createDocument()
@@ -88,7 +89,7 @@ void main() {
       );
     });
 
-    testWidgets("taps to place caret after last character", (tester) async {
+    testWidgetsOnAllPlatforms("taps to place caret after last character", (tester) async {
       // Configure and render a document.
       await tester //
           .createDocument()
@@ -115,7 +116,7 @@ void main() {
       );
     });
 
-    testWidgets("enters text with hardware keyboard", (tester) async {
+    testWidgetsOnDesktop("enters text with hardware keyboard", (tester) async {
       // Configure and render a document.
       await tester //
           .createDocument()
