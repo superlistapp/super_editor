@@ -1,6 +1,7 @@
 import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/android/android_textfield.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/desktop/desktop_textfield.dart';
@@ -196,6 +197,22 @@ class SuperTextFieldState extends State<SuperTextField> {
     }
   }
 
+  /// Shortcuts that should be ignored on web.
+  /// 
+  /// Without this we can't handle space and arrow keys inside [SuperTextField].
+  /// 
+  /// For exemple, when [SuperTextField] is inside a [ScrollView],
+  /// pressing [LogicalKeyboardKey.space] scrolls the scrollview. 
+  final Map<LogicalKeySet, Intent> _scrollShortcutOverrides = kIsWeb
+      ? {
+          LogicalKeySet(LogicalKeyboardKey.space): DoNothingAndStopPropagationIntent(),
+          LogicalKeySet(LogicalKeyboardKey.arrowUp): DoNothingAndStopPropagationIntent(),
+          LogicalKeySet(LogicalKeyboardKey.arrowDown): DoNothingAndStopPropagationIntent(),
+          LogicalKeySet(LogicalKeyboardKey.arrowLeft): DoNothingAndStopPropagationIntent(),
+          LogicalKeySet(LogicalKeyboardKey.arrowRight): DoNothingAndStopPropagationIntent(),
+        }
+      : const <LogicalKeySet, Intent>{};
+
   @override
   Widget build(BuildContext context) {
     switch (_configuration) {
@@ -221,38 +238,44 @@ class SuperTextFieldState extends State<SuperTextField> {
           keyboardHandlers: widget.keyboardHandlers,
         );
       case SuperTextFieldPlatformConfiguration.android:
-        return SuperAndroidTextField(
-          key: _platformFieldKey,
-          focusNode: widget.focusNode,
-          textController: _controller,
-          textAlign: widget.textAlign,
-          textStyleBuilder: widget.textStyleBuilder,
-          hintBehavior: widget.hintBehavior,
-          hintBuilder: widget.hintBuilder,
-          caretColor: widget.controlsColor ?? defaultAndroidControlsColor,
-          selectionColor: widget.selectionColor ?? defaultSelectionColor,
-          handlesColor: widget.controlsColor ?? defaultAndroidControlsColor,
-          minLines: widget.minLines,
-          maxLines: widget.maxLines,
-          lineHeight: widget.lineHeight,
-          textInputAction: _isMultiline ? TextInputAction.newline : TextInputAction.done,
+        return Shortcuts(
+          shortcuts: _scrollShortcutOverrides,
+          child: SuperAndroidTextField(
+            key: _platformFieldKey,
+            focusNode: widget.focusNode,
+            textController: _controller,
+            textAlign: widget.textAlign,
+            textStyleBuilder: widget.textStyleBuilder,
+            hintBehavior: widget.hintBehavior,
+            hintBuilder: widget.hintBuilder,
+            caretColor: widget.controlsColor ?? defaultAndroidControlsColor,
+            selectionColor: widget.selectionColor ?? defaultSelectionColor,
+            handlesColor: widget.controlsColor ?? defaultAndroidControlsColor,
+            minLines: widget.minLines,
+            maxLines: widget.maxLines,
+            lineHeight: widget.lineHeight,
+            textInputAction: _isMultiline ? TextInputAction.newline : TextInputAction.done,
+          ),
         );
       case SuperTextFieldPlatformConfiguration.iOS:
-        return SuperIOSTextField(
-          key: _platformFieldKey,
-          focusNode: widget.focusNode,
-          textController: _controller,
-          textAlign: widget.textAlign,
-          textStyleBuilder: widget.textStyleBuilder,
-          hintBehavior: widget.hintBehavior,
-          hintBuilder: widget.hintBuilder,
-          caretColor: widget.controlsColor ?? defaultIOSControlsColor,
-          selectionColor: widget.selectionColor ?? defaultSelectionColor,
-          handlesColor: widget.controlsColor ?? defaultIOSControlsColor,
-          minLines: widget.minLines,
-          maxLines: widget.maxLines,
-          lineHeight: widget.lineHeight,
-          textInputAction: _isMultiline ? TextInputAction.newline : TextInputAction.done,
+        return Shortcuts(
+          shortcuts: _scrollShortcutOverrides,
+          child: SuperIOSTextField(
+            key: _platformFieldKey,
+            focusNode: widget.focusNode,
+            textController: _controller,
+            textAlign: widget.textAlign,
+            textStyleBuilder: widget.textStyleBuilder,
+            hintBehavior: widget.hintBehavior,
+            hintBuilder: widget.hintBuilder,
+            caretColor: widget.controlsColor ?? defaultIOSControlsColor,
+            selectionColor: widget.selectionColor ?? defaultSelectionColor,
+            handlesColor: widget.controlsColor ?? defaultIOSControlsColor,
+            minLines: widget.minLines,
+            maxLines: widget.maxLines,
+            lineHeight: widget.lineHeight,
+            textInputAction: _isMultiline ? TextInputAction.newline : TextInputAction.done,
+          ),
         );
     }
   }
