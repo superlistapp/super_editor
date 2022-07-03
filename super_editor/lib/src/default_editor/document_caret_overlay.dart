@@ -43,8 +43,8 @@ class _CaretDocumentOverlayState extends State<CaretDocumentOverlay> with Single
     super.didUpdateWidget(oldWidget);
 
     if (widget.composer != oldWidget.composer) {
-      oldWidget.composer.removeListener(_onSelectionChange);
-      widget.composer.addListener(_onSelectionChange);
+      oldWidget.composer.selectionNotifier.removeListener(_onSelectionChange);
+      widget.composer.selectionNotifier.addListener(_onSelectionChange);
     }
   }
 

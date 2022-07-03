@@ -40,3 +40,5 @@ export 'src/default_editor/paragraph.dart';
 export 'src/default_editor/text.dart';
 export 'src/default_editor/text_tools.dart';
 export 'src/default_editor/unknown_component.dart';
+
+export 'package:super_text_layout/src/caret_layer.dart';
