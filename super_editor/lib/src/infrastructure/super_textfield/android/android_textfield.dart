@@ -37,7 +37,6 @@ class SuperAndroidTextField extends StatefulWidget {
     this.textInputAction = TextInputAction.done,
     this.popoverToolbarBuilder = _defaultAndroidToolbarBuilder,
     this.showDebugPaint = false,
-    this.onPerformActionPressed,
   })  : assert(minLines == null || minLines == 1 || lineHeight != null, 'minLines > 1 requires a non-null lineHeight'),
         assert(maxLines == null || maxLines == 1 || lineHeight != null, 'maxLines > 1 requires a non-null lineHeight'),
         super(key: key);
@@ -120,10 +119,6 @@ class SuperAndroidTextField extends StatefulWidget {
   /// Whether to paint debug guides.
   final bool showDebugPaint;
 
-  /// Callback invoked when the user presses the "action" button
-  /// on the keyboard, e.g., "done", "call", "emergency", etc.
-  final Function(TextInputAction)? onPerformActionPressed;
-
   /// Builder that creates the popover toolbar widget that appears when text is selected.
   final Widget Function(BuildContext, AndroidEditingOverlayController) popoverToolbarBuilder;
 
@@ -161,8 +156,8 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
 
     _textEditingController = (widget.textController ?? ImeAttributedTextEditingController())
       ..addListener(_onTextOrSelectionChange)
-      ..onPerformActionPressed = _onPerformActionPressed;
-    
+      ..onPerformActionPressed ??= _onPerformActionPressed;
+
     _textScrollController = TextScrollController(
       textController: _textEditingController,
       tickerProvider: this,
@@ -196,9 +191,10 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
     }
 
     if (widget.textController != oldWidget.textController) {
-      _textEditingController
-        ..removeListener(_onTextOrSelectionChange)
-        ..onPerformActionPressed = null;
+      _textEditingController.removeListener(_onTextOrSelectionChange);
+      if (_textEditingController.onPerformActionPressed == _onPerformActionPressed) {
+        _textEditingController.onPerformActionPressed = null;
+      }
       if (widget.textController != null) {
         _textEditingController = widget.textController!;
       } else {
@@ -206,7 +202,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
       }
       _textEditingController
         ..addListener(_onTextOrSelectionChange)
-        ..onPerformActionPressed = _onPerformActionPressed;
+        ..onPerformActionPressed ??= _onPerformActionPressed;
     }
 
     if (widget.showDebugPaint != oldWidget.showDebugPaint) {
@@ -265,7 +261,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
   @override
   ProseTextLayout get textLayout => _textContentKey.currentState!.textLayout;
 
-  bool get _isMultiline => widget.minLines != 1 || widget.maxLines != 1;
+  bool get _isMultiline => (widget.minLines ?? 1) != 1 || (widget.maxLines ?? 1) != 1;
 
   void _onFocusChange() {
     if (_focusNode.hasFocus) {
@@ -345,10 +341,18 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
 
   /// Handles actions from the IME
   void _onPerformActionPressed(TextInputAction action) {
-    if (action == TextInputAction.done) {
-      _focusNode.unfocus();
+    switch (action) {
+      case TextInputAction.done:
+        _focusNode.unfocus();
+        break;
+      case TextInputAction.next:
+        _focusNode.nextFocus();
+        break;
+      case TextInputAction.previous:
+        _focusNode.previousFocus();
+        break;
+      default:
     }
-    widget.onPerformActionPressed?.call(action);
   }
 
   @override

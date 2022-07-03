@@ -194,6 +194,7 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
 
   void Function(TextInputAction)? _onPerformActionPressed;
   set onPerformActionPressed(Function(TextInputAction)? callback) => _onPerformActionPressed = callback;
+  Function(TextInputAction)? get onPerformActionPressed => _onPerformActionPressed;
 
   @override
   TextEditingValue? get currentTextEditingValue => TextEditingValue(
@@ -289,7 +290,11 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
 
   @override
   void performAction(TextInputAction action) {
-    _onPerformActionPressed?.call(action);
+    if (_realController is ImeAttributedTextEditingController && (_realController as ImeAttributedTextEditingController).onPerformActionPressed != null) {
+      (_realController as ImeAttributedTextEditingController).onPerformActionPressed!(action);
+    } else {
+      _onPerformActionPressed?.call(action);
+    }
   }
 
   @override
