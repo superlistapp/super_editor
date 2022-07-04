@@ -16,6 +16,7 @@ class EditorToolbar extends StatefulWidget {
   const EditorToolbar({
     Key? key,
     required this.anchor,
+    required this.editorFocusNode,
     required this.editor,
     required this.composer,
     required this.closeToolbar,
@@ -27,6 +28,9 @@ class EditorToolbar extends StatefulWidget {
   /// [anchor] is a [ValueNotifier] so that [EditorToolbar] can
   /// reposition itself as the [Offset] value changes.
   final ValueNotifier<Offset?> anchor;
+
+  /// The [FocusNode] attached to the editor to which this toolbar applies.
+  final FocusNode editorFocusNode;
 
   /// The [editor] is used to alter document content, such as
   /// when the user selects a different block format for a
@@ -50,19 +54,19 @@ class EditorToolbar extends StatefulWidget {
 
 class _EditorToolbarState extends State<EditorToolbar> {
   bool _showUrlField = false;
-  FocusNode? _urlFocusNode;
-  TextEditingController? _urlController;
+  late FocusNode _urlFocusNode;
+  AttributedTextEditingController? _urlController;
 
   @override
   void initState() {
     super.initState();
     _urlFocusNode = FocusNode();
-    _urlController = TextEditingController();
+    _urlController = SingleLineAttributedTextEditingController(_applyLink);
   }
 
   @override
   void dispose() {
-    _urlFocusNode!.dispose();
+    _urlFocusNode.dispose();
     _urlController!.dispose();
     super.dispose();
   }
@@ -321,7 +325,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
       // There are no other links in the selection. Show the URL text field.
       setState(() {
         _showUrlField = true;
-        _urlFocusNode!.requestFocus();
+        _urlFocusNode.requestFocus();
       });
     }
   }
@@ -329,7 +333,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
   /// Takes the text from the [urlController] and applies it as a link
   /// attribution to the currently selected text.
   void _applyLink() {
-    final url = _urlController!.text;
+    final url = _urlController!.text.text;
 
     final selection = widget.composer.selection!;
     final baseOffset = (selection.base.nodePosition as TextPosition).offset;
@@ -353,7 +357,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
     _urlController!.clear();
     setState(() {
       _showUrlField = false;
-      _urlFocusNode!.unfocus(disposition: UnfocusDisposition.previouslyFocusedChild);
+      _urlFocusNode.unfocus(disposition: UnfocusDisposition.previouslyFocusedChild);
       widget.closeToolbar();
     });
   }
@@ -592,14 +596,43 @@ class _EditorToolbarState extends State<EditorToolbar> {
         child: Row(
           children: [
             Expanded(
-              child: TextField(
+              child: FocusWithCustomParent(
                 focusNode: _urlFocusNode,
-                controller: _urlController,
-                decoration: const InputDecoration(
-                  hintText: 'enter url...',
-                  border: InputBorder.none,
+                parentFocusNode: widget.editorFocusNode,
+                // We use a SuperTextField instead of a TextField because TextField
+                // automatically re-parents its FocusNode, which causes #609. Flutter
+                // #106923 tracks the TextField issue.
+                child: SuperTextField(
+                  focusNode: _urlFocusNode,
+                  textController: _urlController,
+                  minLines: 1,
+                  maxLines: 1,
+                  hintBehavior: HintBehavior.displayHintUntilTextEntered,
+                  hintBuilder: (context) {
+                    return Text(
+                      "enter a url...",
+                      style: const TextStyle(
+                        color: Colors.grey,
+                        fontSize: 16,
+                      ),
+                    );
+                  },
+                  textStyleBuilder: (_) {
+                    return const TextStyle(
+                      color: Colors.black,
+                      fontSize: 16,
+                    );
+                  },
                 ),
-                onSubmitted: (newValue) => _applyLink(),
+                // child: TextField(
+                //   focusNode: _urlFocusNode,
+                //   controller: _urlController,
+                //   decoration: const InputDecoration(
+                //     hintText: 'enter url...',
+                //     border: InputBorder.none,
+                //   ),
+                //   onSubmitted: (newValue) => _applyLink(),
+                // ),
               ),
             ),
             IconButton(
@@ -609,7 +642,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
               padding: EdgeInsets.zero,
               onPressed: () {
                 setState(() {
-                  _urlFocusNode!.unfocus();
+                  _urlFocusNode.unfocus();
                   _showUrlField = false;
                   _urlController!.clear();
                 });
@@ -806,5 +839,22 @@ class _PositionedToolbar extends StatelessWidget {
         );
       },
     );
+  }
+}
+
+class SingleLineAttributedTextEditingController extends AttributedTextEditingController {
+  SingleLineAttributedTextEditingController(this.onSubmit);
+
+  final VoidCallback onSubmit;
+
+  @override
+  void insertNewline() {
+    // Don't insert newline in a single-line text field.
+
+    // Invoke callback to take action on enter.
+    onSubmit();
+
+    // TODO: this is a hack. SuperTextField shouldn't insert newlines in a single
+    // line field.
   }
 }

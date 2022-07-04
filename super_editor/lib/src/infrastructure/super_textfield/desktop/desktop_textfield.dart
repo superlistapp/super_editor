@@ -759,7 +759,11 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
 /// is defined on its own so that it can be replaced with a widget that handles
 /// key events differently.
 ///
-/// The key events are applied to a [SuperSelectableText] widget that is tied to [textKey].
+/// The key events are passed down the [keyboardActions] Chain of Responsibility.
+/// Each handler is given a reference to the [textController], to manipulate the
+/// text content, and a [TextLayout] via the [textKey], which can be used to make
+/// decisions about manipulations, such as moving the caret to the beginning/end
+/// of a line.
 class SuperTextFieldKeyboardInteractor extends StatefulWidget {
   const SuperTextFieldKeyboardInteractor({
     Key? key,
@@ -811,16 +815,16 @@ class SuperTextFieldKeyboardInteractor extends StatefulWidget {
 
 class _SuperTextFieldKeyboardInteractorState extends State<SuperTextFieldKeyboardInteractor> {
   KeyEventResult _onKeyPressed(FocusNode focusNode, RawKeyEvent keyEvent) {
-    _log.finer('_onKeyPressed - keyEvent: ${keyEvent.character}');
+    _log.fine('_onKeyPressed - keyEvent: ${keyEvent.logicalKey}, character: ${keyEvent.character}');
     if (keyEvent is! RawKeyDownEvent) {
       _log.finer('_onKeyPressed - not a "down" event. Ignoring.');
       return KeyEventResult.ignored;
     }
 
-    TextFieldKeyboardHandlerResult instruction = TextFieldKeyboardHandlerResult.notHandled;
+    TextFieldKeyboardHandlerResult result = TextFieldKeyboardHandlerResult.notHandled;
     int index = 0;
-    while (instruction == TextFieldKeyboardHandlerResult.notHandled && index < widget.keyboardActions.length) {
-      instruction = widget.keyboardActions[index](
+    while (result == TextFieldKeyboardHandlerResult.notHandled && index < widget.keyboardActions.length) {
+      result = widget.keyboardActions[index](
         controller: widget.textController,
         textLayout: widget.textKey.currentState!.textLayout,
         keyEvent: keyEvent,
@@ -828,12 +832,13 @@ class _SuperTextFieldKeyboardInteractorState extends State<SuperTextFieldKeyboar
       index += 1;
     }
 
-    return instruction == TextFieldKeyboardHandlerResult.handled ? KeyEventResult.handled : KeyEventResult.ignored;
+    _log.finest("Key handler result: $result");
+    return result == TextFieldKeyboardHandlerResult.handled ? KeyEventResult.handled : KeyEventResult.ignored;
   }
 
   @override
   Widget build(BuildContext context) {
-    return Focus(
+    return KeyboardFocus(
       focusNode: widget.focusNode,
       onKey: _onKeyPressed,
       child: widget.child,
