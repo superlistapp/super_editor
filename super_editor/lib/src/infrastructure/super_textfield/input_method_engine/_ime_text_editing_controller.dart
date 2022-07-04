@@ -194,6 +194,7 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
 
   void Function(TextInputAction)? _onPerformActionPressed;
   set onPerformActionPressed(Function(TextInputAction)? callback) => _onPerformActionPressed = callback;
+  Function(TextInputAction)? get onPerformActionPressed => _onPerformActionPressed;
 
   @override
   TextEditingValue? get currentTextEditingValue => TextEditingValue(

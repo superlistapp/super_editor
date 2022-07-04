@@ -156,7 +156,9 @@ class SuperTextFieldState extends State<SuperTextField> {
     super.initState();
 
     _controller = widget.textController != null
-        ? ImeAttributedTextEditingController(controller: widget.textController, disposeClientController: false)
+        ? widget.textController is ImeAttributedTextEditingController
+            ? (widget.textController as ImeAttributedTextEditingController)
+            : ImeAttributedTextEditingController(controller: widget.textController, disposeClientController: false)
         : ImeAttributedTextEditingController();
   }
 
@@ -166,7 +168,9 @@ class SuperTextFieldState extends State<SuperTextField> {
 
     if (widget.textController != oldWidget.textController) {
       _controller = widget.textController != null
-          ? ImeAttributedTextEditingController(controller: widget.textController, disposeClientController: false)
+          ? widget.textController is ImeAttributedTextEditingController
+              ? (widget.textController as ImeAttributedTextEditingController)
+              : ImeAttributedTextEditingController(controller: widget.textController, disposeClientController: false)
           : ImeAttributedTextEditingController();
     }
   }
@@ -177,7 +181,7 @@ class SuperTextFieldState extends State<SuperTextField> {
   @visibleForTesting
   ProseTextLayout get textLayout => (_platformFieldKey.currentState as ProseTextBlock).textLayout;
 
-  bool get _isMultiline => widget.minLines != 1 || widget.maxLines != 1;
+  bool get _isMultiline => (widget.minLines ?? 1) != 1 || (widget.maxLines ?? 1) != 1;
 
   SuperTextFieldPlatformConfiguration get _configuration {
     if (widget.configuration != null) {
