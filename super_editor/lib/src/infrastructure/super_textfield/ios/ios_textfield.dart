@@ -369,6 +369,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
         _focusNode.previousFocus();
         break;
       default:
+        _log.warning("User pressed unhandled action button: $action");
     } 
   }
 

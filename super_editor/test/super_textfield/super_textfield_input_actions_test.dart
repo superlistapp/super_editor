@@ -80,7 +80,7 @@ void main() {
       expect(focusNodeFirstField.hasFocus, true);
     });
 
-    group('having a textController with onPerformActionPressed set', () {
+    group('with custom onPerformActionPressed callback', () {
       testWidgetsOnMobile("does nothing on DONE", (tester) async {
         FocusNode focusNode = FocusNode();
         bool callbackCalled = false;

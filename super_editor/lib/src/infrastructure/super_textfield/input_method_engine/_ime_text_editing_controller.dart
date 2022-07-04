@@ -290,11 +290,7 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
 
   @override
   void performAction(TextInputAction action) {
-    if (_realController is ImeAttributedTextEditingController && (_realController as ImeAttributedTextEditingController).onPerformActionPressed != null) {
-      (_realController as ImeAttributedTextEditingController).onPerformActionPressed!(action);
-    } else {
-      _onPerformActionPressed?.call(action);
-    }
+    _onPerformActionPressed?.call(action);
   }
 
   @override

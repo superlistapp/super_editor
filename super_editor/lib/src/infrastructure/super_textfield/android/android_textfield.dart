@@ -352,6 +352,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
         _focusNode.previousFocus();
         break;
       default:
+        _log.warning("User pressed unhandled action button: $action");
     }
   }
 
