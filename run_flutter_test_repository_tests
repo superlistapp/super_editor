@@ -1,7 +1,17 @@
 # attributed_text tests
+echo "Running attributed_text tests"
 cd attributed_text
 flutter test
+cd ..
 
 # super_text_layout tests
+echo "Running super_text_layout tests"
 cd super_text_layout
 flutter test
+cd ..
+
+# super_editor tests
+echo "Running super_editor tests"
+cd super_editor
+flutter test
+cd ..
