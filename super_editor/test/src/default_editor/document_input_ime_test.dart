@@ -272,7 +272,7 @@ void main() {
       });
     });
 
-    group('inserting near links', () {
+    group('typing characters near a link', () {
       testWidgets('does not expand the link when inserting before the link', (tester) async {
         // Configure and render a document.
         final testerDocumentContext = await tester //

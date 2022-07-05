@@ -166,7 +166,7 @@ void main() {
     });
 
     group('pasting', () {
-      group("apply composer attribution to pasted text", () {
+      group("apply composer attributions to pasted text", () {
         testWidgetsOnMac('when pasting into an empty paragraph', (tester) async {
           tester.simulateClipboard();
           tester.setSimulatedClipboardContent("Hello world");
@@ -298,9 +298,9 @@ void main() {
         });
       });
 
-      testWidgetsOnMac('splits a link in two when pasting in the middle of the link', (tester) async {
+      testWidgetsOnMac('splits a link in two when pasting in the middle of a link', (tester) async {
         tester.simulateClipboard();
-        tester.setSimulatedClipboardContent("Link: https://flutter.dev and link: https://pub.dev");
+        tester.setSimulatedClipboardContent("Some text");
 
         // Configure and render a document.
         await tester //
@@ -314,12 +314,10 @@ void main() {
         // Simulate the user pasting content from clipboard
         await tester.pressCmdV();
 
-        // Ensure that the link is splitted and not expanded
-        // Pasted URLs are converted into links
+        // Ensure that the link is splitted
         expect(
           SuperEditorInspector.findDocument(),
-          equalsMarkdown('[https://goo](https://google.com)Link: [https://flutter.dev](https://flutter.dev) '
-              'and link: [https://pub.dev](https://pub.dev)[gle.com](https://google.com)'),
+          equalsMarkdown('[https://goo](https://google.com)Some text[gle.com](https://google.com)'),
         );
       });
     });
