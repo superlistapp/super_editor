@@ -1,0 +1,3 @@
+# Attributed Text tests
+cd attributed_text
+flutter test
