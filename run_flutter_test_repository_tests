@@ -1,3 +1,7 @@
-# Attributed Text tests
+# attributed_text tests
 cd attributed_text
+flutter test
+
+# super_text_layout tests
+cd super_text_layout
 flutter test
