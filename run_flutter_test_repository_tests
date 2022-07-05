@@ -4,9 +4,9 @@ flutter test
 cd ..
 
 # super_text_layout tests
-#cd super_text_layout
-#flutter test
-#cd ..
+cd super_text_layout
+flutter test
+cd ..
 
 # super_editor tests
 #cd super_editor
