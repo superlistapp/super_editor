@@ -921,7 +921,7 @@ void main() {
       });
 
       group('inserting near links', () {
-        testWidgets('does not expand the link when inserting at the start', (tester) async {
+        testWidgets('does not expand the link when inserting before the link', (tester) async {
           // Configure and render a document.
           await tester //
               .createDocument()
@@ -941,7 +941,7 @@ void main() {
           );
         });
 
-        testWidgets('does not expand the link when inserting at the end', (tester) async {
+        testWidgets('does not expand the link when inserting after the link', (tester) async {
           // Configure and render a document.
           await tester //
               .createDocument()

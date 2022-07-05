@@ -272,7 +272,7 @@ void main() {
       });
     });
 
-    group('inserting characters near a link', () {
+    group('inserting near links', () {
       testWidgets('does not expand the link when inserting before the link', (tester) async {
         // Configure and render a document.
         final testerDocumentContext = await tester //
@@ -293,8 +293,8 @@ void main() {
         await tester.textToType(
           softwareKeyboardHandler: softwareKeyboardHandler,
           text: 'Go to ',
-          insertionOffset: 0,
           existingText: 'https://google.com',
+          insertionOffset: 0,
         );
 
         // Ensure that the link is unchanged
@@ -304,7 +304,7 @@ void main() {
         );
       });
 
-      testWidgetsOnMobile('does not expand the link when typing after the link', (tester) async {
+      testWidgetsOnMobile('does not expand the link when inserting after the link', (tester) async {
         // Configure and render a document.
         final testerDocumentContext = await tester //
             .createDocument()
@@ -324,8 +324,8 @@ void main() {
         await tester.textToType(
           softwareKeyboardHandler: softwareKeyboardHandler,
           text: ' to learn anything',
-          insertionOffset: 18,
           existingText: 'https://google.com',
+          insertionOffset: 18,
         );
 
         // Ensure that the link is unchanged
