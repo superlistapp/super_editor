@@ -5,6 +5,8 @@ import 'package:super_editor/super_editor.dart';
 
 import '../../super_editor/document_test_tools.dart';
 import '../../super_editor/supereditor_inspector.dart';
+import '../../super_editor/supereditor_robot.dart';
+import '../../test_tools.dart';
 import '../_document_test_tools.dart';
 import '../../super_editor/test_documents.dart';
 
@@ -270,69 +272,63 @@ void main() {
       });
     });
 
-    group('inserting typing characters near a link', () {
-      testWidgets('does not expand the link when typing before the link', (tester) async {
+    group('inserting characters near a link', () {
+      testWidgets('does not expand the link when inserting before the link', (tester) async {
         // Configure and render a document.
         final testerDocumentContext = await tester //
             .createDocument()
             .withCustomContent(_singleParagraphWithLinkDoc())
-            .forIOS()
-            .autoFocus(true)
             .pump();
 
-        // Place the caret in the first paragraph at the start of the link.
+        // Place the caret at the start of the link.
+        await tester.placeCaretInParagraph('1', 0);
+
         final softwareKeyboardHandler = SoftwareKeyboardHandler(
-          composer: testerDocumentContext.editContext.composer
-            ..selection = const DocumentSelection.collapsed(
-              position: DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: 0)),
-            ),
+          composer: testerDocumentContext.editContext.composer,
           editor: testerDocumentContext.editContext.editor,
           commonOps: testerDocumentContext.editContext.commonOps,
         );
 
         // Type characters before the link using the IME
-        await tester.insertTextIME(
+        await tester.textToType(
           softwareKeyboardHandler: softwareKeyboardHandler,
           text: 'Go to ',
-          initialInsertionOffset: 0,
-          oldText: 'https://google.com',
+          insertionOffset: 0,
+          existingText: 'https://google.com',
         );
 
-        // Ensure that the link is not being expanded
+        // Ensure that the link is unchanged
         expect(
           SuperEditorInspector.findDocument(),
           equalsMarkdown("Go to [https://google.com](https://google.com)"),
         );
       });
 
-      testWidgets('prevent expanding the link when inserting at the end', (tester) async {
+      testWidgetsOnMobile('does not expand the link when typing after the link', (tester) async {
         // Configure and render a document.
         final testerDocumentContext = await tester //
             .createDocument()
             .withCustomContent(_singleParagraphWithLinkDoc())
-            .forIOS()
-            .autoFocus(true)
             .pump();
 
-        // Place the caret in the first paragraph at the end of the link.
+        // Place the caret at the end of the link.
+        await tester.placeCaretInParagraph('1', 18);
+
         final softwareKeyboardHandler = SoftwareKeyboardHandler(
-          composer: testerDocumentContext.editContext.composer
-            ..selection = const DocumentSelection.collapsed(
-              position: DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: 18)),
-            ),
+          composer: testerDocumentContext.editContext.composer,
           editor: testerDocumentContext.editContext.editor,
           commonOps: testerDocumentContext.editContext.commonOps,
         );
 
         // Type characters after the link using the IME
-        await tester.insertTextIME(
+        await tester.textToType(
           softwareKeyboardHandler: softwareKeyboardHandler,
           text: ' to learn anything',
-          initialInsertionOffset: 18,
-          oldText: 'https://google.com',
+          insertionOffset: 18,
+          existingText: 'https://google.com',
         );
 
-        // Ensure that the link is not being expanded
+        // Ensure that the link is unchanged
         expect(
           SuperEditorInspector.findDocument(),
           equalsMarkdown("[https://google.com](https://google.com) to learn anything"),
@@ -405,23 +401,25 @@ MutableDocument _singleParagraphWithLinkDoc() {
 
 extension on WidgetTester {
   // TODO: Remove this when `SuperTestRobot` support insert IME
-  Future<void> insertTextIME({
+  Future<void> textToType({
     required SoftwareKeyboardHandler softwareKeyboardHandler,
     required String text,
-    required int initialInsertionOffset,
-    required String oldText,
+    required String existingText,
+    required int insertionOffset,
   }) async {
+    var oldText = existingText;
     for (int i = 0; i < text.length; i += 1) {
       // Insert a character to simulate IME input action
       softwareKeyboardHandler.applyDeltas([
         TextEditingDeltaInsertion(
           textInserted: text[i],
-          insertionOffset: initialInsertionOffset + i,
-          selection: TextSelection.collapsed(offset: initialInsertionOffset + i),
+          insertionOffset: insertionOffset + i,
+          selection: TextSelection.collapsed(offset: insertionOffset + i),
           composing: const TextRange(start: -1, end: -1),
           oldText: oldText,
         ),
       ]);
+      oldText += text[i];
 
       await pumpAndSettle();
     }

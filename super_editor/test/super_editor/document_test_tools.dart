@@ -218,6 +218,7 @@ class TestDocumentConfigurator {
           SuperEditor(
             documentLayoutKey: testDocumentContext.layoutKey,
             editor: testDocumentContext.editContext.editor,
+            composer: testDocumentContext.editContext.composer,
             focusNode: testDocumentContext.focusNode,
             inputSource: _inputSource ?? _defaultInputSource,
             gestureMode: _gestureMode ?? _defaultGestureMode,

@@ -921,13 +921,11 @@ void main() {
       });
 
       group('inserting near links', () {
-        // Note:This is a Mac test because it depends on `pressCmdB` to enable a bold attribution
-        testWidgetsOnMac('does not expand the link when inserting at the start', (tester) async {
+        testWidgets('does not expand the link when inserting at the start', (tester) async {
           // Configure and render a document.
           await tester //
               .createDocument()
               .withCustomContent(_singleParagraphWithLinkDoc())
-              .forDesktop()
               .pump();
 
           // Place the caret in the first paragraph at the start of the link.
@@ -936,21 +934,18 @@ void main() {
           // Type some text by simulating hardware keyboard key presses.
           await tester.typeKeyboardText('Go to ');
 
-          // Ensure that the link is not being expanded, and bold attribution is preserved
+          // Ensure that the link is unchanged
           expect(
             SuperEditorInspector.findDocument(),
             equalsMarkdown("Go to [https://google.com](https://google.com)"),
           );
         });
 
-        // Note:This is a Mac test because it depends on `pressCmdB` to enable a bold attribution
-        testWidgetsOnMac('does not expand the link when inserting at the end', (tester) async {
+        testWidgets('does not expand the link when inserting at the end', (tester) async {
           // Configure and render a document.
           await tester //
               .createDocument()
               .withCustomContent(_singleParagraphWithLinkDoc())
-              .forDesktop()
-              .autoFocus(true)
               .pump();
 
           // Place the caret in the first paragraph at the start of the link.
@@ -959,7 +954,7 @@ void main() {
           // Type some text by simulating hardware keyboard key presses.
           await tester.typeKeyboardText(' to learn anything');
 
-          // Ensure that the link is not being expanded, and bold attribution is preserved
+          // Ensure that the link is unchanged
           expect(
             SuperEditorInspector.findDocument(),
             equalsMarkdown("[https://google.com](https://google.com) to learn anything"),

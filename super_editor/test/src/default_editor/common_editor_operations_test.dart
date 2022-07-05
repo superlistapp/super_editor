@@ -2,6 +2,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/super_editor.dart';
 
 import '../_document_test_tools.dart';
+import 'package:flutter_test_robots/flutter_test_robots.dart';
+
+import '../../super_editor/document_test_tools.dart';
+import '../../super_editor/supereditor_inspector.dart';
+import '../../super_editor/supereditor_robot.dart';
+import '../../test_tools.dart';
 
 void main() {
   group("Common editor operations", () {
@@ -158,5 +164,191 @@ void main() {
         expect(composer.selection!.extent.nodePosition, const TextNodePosition(offset: 0));
       });
     });
+
+    group('pasting', () {
+      group("apply composer attribution to pasted text", () {
+        testWidgetsOnMac('when pasting into an empty paragraph', (tester) async {
+          tester.simulateClipboard();
+          tester.setSimulatedClipboardContent("Hello world");
+
+          // Configure and render a document.
+          await tester //
+              .createDocument()
+              .withSingleEmptyParagraph()
+              .forDesktop()
+              .pump();
+
+          await tester.placeCaretInParagraph("1", 0);
+
+          // Toggle bold attribution before pasting
+          await tester.pressCmdB();
+          // Simulate the user pasting content from clipboard
+          await tester.pressCmdV();
+
+          await tester.typeKeyboardText('. Hello Mars');
+
+          // Ensure that URLs are converted into links
+          expect(
+            SuperEditorInspector.findDocument(),
+            equalsMarkdown(
+              '**Hello world. Hello Mars**',
+            ),
+          );
+        });
+
+        testWidgetsOnMac('when pasting at the start of text', (tester) async {
+          tester.simulateClipboard();
+          tester.setSimulatedClipboardContent("Hello world");
+
+          // Configure and render a document.
+          await tester //
+              .createDocument()
+              .withCustomContent(MutableDocument(
+                nodes: [
+                  ParagraphNode(id: "1", text: AttributedText(text: ". Hello other planets")),
+                ],
+              ))
+              .forDesktop()
+              .pump();
+
+          await tester.placeCaretInParagraph("1", 0);
+
+          // Toggle bold attribution before pasting
+          await tester.pressCmdB();
+          // Simulate the user pasting content from clipboard
+          await tester.pressCmdV();
+
+          await tester.typeKeyboardText('. Hello Mars');
+
+          // Ensure that bold attribution is applied
+          expect(
+            SuperEditorInspector.findDocument(),
+            equalsMarkdown(
+              '**Hello world. Hello Mars**. Hello other planets',
+            ),
+          );
+        });
+
+        testWidgetsOnMac('when pasting in the middle of text', (tester) async {
+          tester.simulateClipboard();
+          tester.setSimulatedClipboardContent("world. Hello");
+
+          // Configure and render a document.
+          await tester //
+              .createDocument()
+              .withCustomContent(MutableDocument(
+                nodes: [
+                  ParagraphNode(id: "1", text: AttributedText(text: "Hello  other planets")),
+                ],
+              ))
+              .forDesktop()
+              .pump();
+
+          // Tap to place the caret at 'Hello | other planets'
+          await tester.placeCaretInParagraph("1", 6);
+
+          // Toggle bold attribution before pasting
+          await tester.pressCmdB();
+          // Simulate the user pasting content from clipboard
+          await tester.pressCmdV();
+
+          await tester.typeKeyboardText(' Mars. Hello');
+
+          // Ensure that bold attribution is applied
+          expect(
+            SuperEditorInspector.findDocument(),
+            equalsMarkdown(
+              'Hello **world. Hello Mars. Hello** other planets',
+            ),
+          );
+        });
+
+        testWidgetsOnMac('when pasting at the end of text', (tester) async {
+          tester.simulateClipboard();
+          tester.setSimulatedClipboardContent("Hello world");
+
+          // Configure and render a document.
+          await tester //
+              .createDocument()
+              .withCustomContent(MutableDocument(
+                nodes: [
+                  ParagraphNode(id: "1", text: AttributedText(text: "Hello Mars. ")),
+                ],
+              ))
+              .forDesktop()
+              .pump();
+
+          // Tap to place the caret at the end of text
+          await tester.placeCaretInParagraph("1", 12);
+
+          // Toggle bold attribution before pasting
+          await tester.pressCmdB();
+          // Simulate the user pasting content from clipboard
+          await tester.pressCmdV();
+
+          await tester.typeKeyboardText('. Hello other planets.');
+
+          // Ensure that bold attribution is applied
+          expect(
+            SuperEditorInspector.findDocument(),
+            equalsMarkdown(
+              'Hello Mars. **Hello world. Hello other planets.**',
+            ),
+          );
+        });
+      });
+
+      testWidgetsOnMac('splits a link in two when pasting in the middle of the link', (tester) async {
+        tester.simulateClipboard();
+        tester.setSimulatedClipboardContent("Link: https://flutter.dev and link: https://pub.dev");
+
+        // Configure and render a document.
+        await tester //
+            .createDocument()
+            .withCustomContent(_singleParagraphWithLinkDoc())
+            .forDesktop()
+            .pump();
+
+        // Tap to place the caret in the first paragraph.
+        await tester.placeCaretInParagraph("1", 11);
+        // Simulate the user pasting content from clipboard
+        await tester.pressCmdV();
+
+        // Ensure that the link is splitted and not expanded
+        // Pasted URLs are converted into links
+        expect(
+          SuperEditorInspector.findDocument(),
+          equalsMarkdown('[https://goo](https://google.com)Link: [https://flutter.dev](https://flutter.dev) '
+              'and link: [https://pub.dev](https://pub.dev)[gle.com](https://google.com)'),
+        );
+      });
+    });
   });
+}
+
+MutableDocument _singleParagraphWithLinkDoc() {
+  return MutableDocument(
+    nodes: [
+      ParagraphNode(
+        id: "1",
+        text: AttributedText(
+          text: "https://google.com",
+          spans: AttributedSpans(
+            attributions: [
+              SpanMarker(
+                attribution: LinkAttribution(url: Uri.parse('https://google.com')),
+                offset: 0,
+                markerType: SpanMarkerType.start,
+              ),
+              SpanMarker(
+                attribution: LinkAttribution(url: Uri.parse('https://google.com')),
+                offset: 17,
+                markerType: SpanMarkerType.end,
+              ),
+            ],
+          ),
+        ),
+      )
+    ],
+  );
 }
