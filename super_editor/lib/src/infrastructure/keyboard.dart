@@ -6,7 +6,9 @@ import 'package:flutter/widgets.dart';
 import 'platform_detector.dart';
 
 /// Widget that responds to keyboard events for a given [focusNode] without
-/// re-parenting the [focusNode].
+/// necessarily re-parenting the [focusNode].
+///
+/// The [focusNode] is only re-parented if its parent is `null`.
 ///
 /// The traditional [Focus] widget provides an `onKey` property, but that widget
 /// automatically re-parents the [FocusNode] based on the structure of the widget
@@ -53,7 +55,14 @@ class _KeyboardFocusState extends State<KeyboardFocus> {
     if (widget.focusNode != oldWidget.focusNode || widget.onKey != oldWidget.onKey) {
       _keyboardFocusAttachment.detach();
       _keyboardFocusAttachment = widget.focusNode.attach(context, onKey: widget.onKey);
+      _reparentIfMissingParent();
     }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _reparentIfMissingParent();
   }
 
   @override
@@ -62,8 +71,16 @@ class _KeyboardFocusState extends State<KeyboardFocus> {
     super.dispose();
   }
 
+  void _reparentIfMissingParent() {
+    if (widget.focusNode.parent == null) {
+      _keyboardFocusAttachment.reparent();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    _reparentIfMissingParent();
+
     return widget.child;
   }
 }

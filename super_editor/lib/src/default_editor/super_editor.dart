@@ -409,9 +409,6 @@ class SuperEditorState extends State<SuperEditor> {
   }
 
   void _onFocusChange() {
-    print("SuperEditor focus changed:");
-    print(" - node: $_focusNode");
-    print(" - has focus? ${_focusNode.hasFocus}");
     _recomputeIfLayoutShouldShowCaret();
   }
 

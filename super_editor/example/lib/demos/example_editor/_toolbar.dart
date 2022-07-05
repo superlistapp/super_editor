@@ -624,15 +624,6 @@ class _EditorToolbarState extends State<EditorToolbar> {
                     );
                   },
                 ),
-                // child: TextField(
-                //   focusNode: _urlFocusNode,
-                //   controller: _urlController,
-                //   decoration: const InputDecoration(
-                //     hintText: 'enter url...',
-                //     border: InputBorder.none,
-                //   ),
-                //   onSubmitted: (newValue) => _applyLink(),
-                // ),
               ),
             ),
             IconButton(
