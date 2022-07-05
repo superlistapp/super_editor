@@ -253,9 +253,6 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
     super.dispose();
   }
 
-  @visibleForTesting
-  ImeAttributedTextEditingController get textController => _textEditingController;
-
   @override
   ProseTextLayout get textLayout => _textContentKey.currentState!.textLayout;
 
