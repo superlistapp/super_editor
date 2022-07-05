@@ -1,6 +1,90 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
+/// Widget that responds to keyboard events for a given [focusNode] without
+/// necessarily re-parenting the [focusNode].
+///
+/// The [focusNode] is only re-parented if its parent is `null`.
+///
+/// The traditional [Focus] widget provides an `onKey` property, but that widget
+/// automatically re-parents the [FocusNode] based on the structure of the widget
+/// tree. Re-parenting is a problem in some situations, e.g., a popover toolbar
+/// that appears while editing a document. The toolbar and the document are on
+/// different branches of the widget tree, but they need to share focus. That shared
+/// focus is impossible when the [Focus] widget forces re-parenting. The
+/// [NonReparentingFocus] widget provides an [onKey] property without re-parenting the
+/// given [focusNode].
+class NonReparentingFocus extends StatefulWidget {
+  const NonReparentingFocus({
+    Key? key,
+    required this.focusNode,
+    this.onKey,
+    required this.child,
+  }) : super(key: key);
+
+  /// The [FocusNode] that sends key events to [onKey].
+  final FocusNode focusNode;
+
+  /// The callback invoked whenever [focusNode] receives key events.
+  final FocusOnKeyCallback? onKey;
+
+  /// The child of this widget.
+  final Widget child;
+
+  @override
+  State<NonReparentingFocus> createState() => _NonReparentingFocusState();
+}
+
+class _NonReparentingFocusState extends State<NonReparentingFocus> {
+  late FocusAttachment _keyboardFocusAttachment;
+
+  @override
+  void initState() {
+    super.initState();
+    _keyboardFocusAttachment = widget.focusNode.attach(context, onKey: _onKey);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _reparentIfMissingParent();
+  }
+
+  @override
+  void didUpdateWidget(NonReparentingFocus oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (widget.focusNode != oldWidget.focusNode) {
+      _keyboardFocusAttachment.detach();
+      _keyboardFocusAttachment = widget.focusNode.attach(context, onKey: widget.onKey);
+      _reparentIfMissingParent();
+    }
+  }
+
+  @override
+  void dispose() {
+    _keyboardFocusAttachment.detach();
+    super.dispose();
+  }
+
+  void _reparentIfMissingParent() {
+    if (widget.focusNode.parent == null) {
+      _keyboardFocusAttachment.reparent();
+    }
+  }
+
+  KeyEventResult _onKey(FocusNode focusNode, RawKeyEvent event) {
+    return widget.onKey?.call(focusNode, event) ?? KeyEventResult.ignored;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    _reparentIfMissingParent();
+
+    return widget.child;
+  }
+}
+
 /// Copy of [Focus] that configures its [FocusNode] with the
 /// given [parentNode], rather than automatically re-parenting based
 /// on the widget tree structure.

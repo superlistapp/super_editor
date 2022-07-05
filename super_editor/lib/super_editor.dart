@@ -3,7 +3,7 @@ library super_editor;
 export 'package:attributed_text/attributed_text.dart';
 export 'src/infrastructure/attributed_text_styles.dart';
 export 'src/infrastructure/composable_text.dart';
-export 'src/infrastructure/focus_with_custom_parent.dart';
+export 'src/infrastructure/focus.dart';
 export 'src/infrastructure/super_textfield/super_textfield.dart';
 export 'src/infrastructure/_listenable_builder.dart';
 export 'src/infrastructure/_logging.dart';

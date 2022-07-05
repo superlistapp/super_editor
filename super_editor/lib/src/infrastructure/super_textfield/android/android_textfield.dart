@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
+import 'package:super_editor/src/infrastructure/focus.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/android/_editing_controls.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/android/_user_interaction.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/hint_text.dart';
@@ -174,12 +175,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
 
     if (widget.focusNode != oldWidget.focusNode) {
       _focusNode.removeListener(_onFocusChange);
-      if (widget.focusNode != null) {
-        _focusNode = widget.focusNode!;
-      } else {
-        _focusNode = FocusNode();
-      }
-      _focusNode.addListener(_onFocusChange);
+      _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
     }
 
     if (widget.textInputAction != oldWidget.textInputAction && _textEditingController.isAttachedToIme) {
@@ -256,6 +252,9 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
 
     super.dispose();
   }
+
+  @visibleForTesting
+  ImeAttributedTextEditingController get textController => _textEditingController;
 
   @override
   ProseTextLayout get textLayout => _textContentKey.currentState!.textLayout;
@@ -381,7 +380,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
 
   @override
   Widget build(BuildContext context) {
-    return Focus(
+    return NonReparentingFocus(
       key: _textFieldKey,
       focusNode: _focusNode,
       onKey: _onKeyPressed,

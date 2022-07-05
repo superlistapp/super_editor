@@ -1218,7 +1218,7 @@ void main() {
           await tester.pressEnd();
 
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 5));
-        });  
+        });
 
         testWidgetsOnMac("CTRL + LEFT ARROW", (tester) async {
           await _pumpSuperTextField(
@@ -1589,7 +1589,7 @@ void main() {
           await tester.pressHome();
 
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 47));
-        });      
+        });
 
         testWidgetsOnWindowsAndLinux('HOME moves left to beginning of line with explicit new lines', (tester) async {
           await _pumpSuperTextField(
@@ -1637,7 +1637,7 @@ void main() {
           await tester.pressShiftCtlRightArrow();
 
           expect(SuperTextFieldInspector.findSelection(), const TextSelection(baseOffset: 6, extentOffset: 10));
-        });        
+        });
 
         testWidgetsOnWindowsAndLinux('END moves right to end of line with auto-wrapping lines', (tester) async {
           await _pumpSuperTextField(

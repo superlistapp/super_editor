@@ -10,6 +10,7 @@ import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
+import 'package:super_editor/src/infrastructure/focus.dart';
 import 'package:super_editor/src/infrastructure/platform_detector.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/attributed_text_editing_controller.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/hint_text.dart';
@@ -838,7 +839,7 @@ class _SuperTextFieldKeyboardInteractorState extends State<SuperTextFieldKeyboar
 
   @override
   Widget build(BuildContext context) {
-    return KeyboardFocus(
+    return NonReparentingFocus(
       focusNode: widget.focusNode,
       onKey: _onKeyPressed,
       child: widget.child,
