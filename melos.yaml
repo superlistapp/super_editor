@@ -1,0 +1,24 @@
+name: super_editor
+repository: https://github.com/superlistapp/super_editor
+
+packages:
+  - attributed_text/pubspec.yaml
+  - super_editor/example/pubspec.yaml
+  - super_editor/pubspec.yaml
+  - super_editor_markdown/pubspec.yaml
+  - super_text/pubspec.yaml
+  - super_text_layout/example/pubspec.yaml
+  - super_text_layout/pubspec.yaml
+  - website/pubspec.yaml
+
+command:
+  bootstrap:
+   usePubspecOverrides: true
+
+scripts:
+  analyze:
+   exec: dart analyze .
+  test:
+   exec: flutter test -r expanded
+   select-package:
+    dir-exists: test

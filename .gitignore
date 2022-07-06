@@ -5,3 +5,5 @@
 ios_text_example/
 android_text_example/
 
+melos_*.iml
+pubspec_overrides.yaml

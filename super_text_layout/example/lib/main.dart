@@ -1,7 +1,7 @@
-import 'package:example/typing_robot.dart';
 import 'package:flutter/material.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 import 'package:super_text_layout/super_text_layout_logging.dart';
+import 'package:super_text_layout_example/typing_robot.dart';
 
 import 'rainbow_builder.dart';
 import 'rainbow_character_supertext.dart';
