@@ -33,9 +33,7 @@ class TextScrollView extends StatefulWidget {
     this.perLineAutoScrollDuration = Duration.zero,
     this.showDebugPaint = false,
     required this.child,
-  })  : assert(minLines == null || minLines == 1 || lineHeight != null, 'minLines > 1 requires a non-null lineHeight'),
-        assert(maxLines == null || maxLines == 1 || lineHeight != null, 'maxLines > 1 requires a non-null lineHeight'),
-        super(key: key);
+  }) : super(key: key);
 
   /// Controller that sets the scroll offset and orchestrates
   /// auto-scrolling behavior.
@@ -77,12 +75,10 @@ class TextScrollView extends StatefulWidget {
   /// The height of a single line of text in this text scroll view, used
   /// with [minLines] and [maxLines] to size the text field.
   ///
-  /// An explicit [lineHeight] is required for multi-line text fields
-  /// because rich text in this text scroll view might have lines of
-  /// varying height, which would result in a constantly changing text
-  /// field height during scrolling. To avoid that situation, a single,
-  /// explicit [lineHeight] is provided and used for all text field height
-  /// calculations.
+  /// If a [lineHeight] is provided, the [TextScrollView] is sized as a
+  /// multiple of that [lineHeight]. If no [lineHeight] is provided, the
+  /// [TextScrollView] is sized as a multiple of the line-height of the
+  /// first line of text.
   final double? lineHeight;
 
   /// The time it takes to scroll to the next line, when auto-scrolling.
@@ -97,7 +93,7 @@ class TextScrollView extends StatefulWidget {
   final Widget child;
 
   @override
-  _TextScrollViewState createState() => _TextScrollViewState();
+  State createState() => _TextScrollViewState();
 }
 
 class _TextScrollViewState extends State<TextScrollView>
@@ -192,7 +188,8 @@ class _TextScrollViewState extends State<TextScrollView>
     }
 
     final lastCharacterPosition = TextPosition(offset: widget.textEditingController.text.text.length - 1);
-    return (_textLayout.getCharacterBox(lastCharacterPosition)?.bottom ?? _textLayout.estimatedLineHeight) - viewportHeight;
+    return (_textLayout.getCharacterBox(lastCharacterPosition)?.bottom ?? _textLayout.estimatedLineHeight) -
+        viewportHeight;
   }
 
   @override
@@ -205,7 +202,8 @@ class _TextScrollViewState extends State<TextScrollView>
 
       final characterBox = _textLayout.getCharacterBox(position);
       final scrolledCharacterTop = (characterBox?.top ?? 0.0) - _scrollController.offset;
-      final scrolledCharacterBottom = (characterBox?.bottom ?? _textLayout.estimatedLineHeight) - _scrollController.offset;
+      final scrolledCharacterBottom =
+          (characterBox?.bottom ?? _textLayout.estimatedLineHeight) - _scrollController.offset;
       // Round the top/bottom values to avoid false negatives due to floating point accuracy.
       return scrolledCharacterTop.round() >= 0 && scrolledCharacterBottom.round() <= viewportHeight;
     } else {
@@ -250,8 +248,7 @@ class _TextScrollViewState extends State<TextScrollView>
 
   @override
   Rect getCharacterRectAtPosition(TextPosition position) {
-    return _textLayout.getCharacterBox(position)?.toRect() ?? 
-        Rect.fromLTRB(0, 0, 0, _textLayout.estimatedLineHeight);
+    return _textLayout.getCharacterBox(position)?.toRect() ?? Rect.fromLTRB(0, 0, 0, _textLayout.estimatedLineHeight);
   }
 
   @override
@@ -298,7 +295,8 @@ class _TextScrollViewState extends State<TextScrollView>
     // Note: we nudge the vertical offset down a few pixels to see if we
     // find a text position in the line below.
     final textPositionOneLineDown = _textLayout.getPositionNearestToOffset(Offset(0, bottomOfLastLine + 5));
-    final bottomOfCharacter = (_textLayout.getCharacterBox(textPositionOneLineDown)?.bottom ?? _textLayout.estimatedLineHeight);
+    final bottomOfCharacter =
+        (_textLayout.getCharacterBox(textPositionOneLineDown)?.bottom ?? _textLayout.estimatedLineHeight);
     return bottomOfCharacter;
   }
 
@@ -321,14 +319,35 @@ class _TextScrollViewState extends State<TextScrollView>
     final linesOfText = _getLineCount();
     _log.finer(' - lines of text: $linesOfText');
 
-    final estimatedContentHeight = linesOfText * widget.lineHeight!;
+    late double estimatedLineHeight;
+    if (widget.lineHeight != null) {
+      _log.finer(' - explicit line height provided: ${widget.lineHeight}');
+      // Use the line height that was explicitly provided by the widget.
+      estimatedLineHeight = widget.lineHeight!;
+    } else {
+      _log.finer(' - calculating an estimated line height for the field');
+      // No line height was provided. Calculate a best-guess.
+      final textLayout = widget.textKey.currentState!.textLayout;
+      estimatedLineHeight = textLayout.getLineHeightAtPosition(const TextPosition(offset: 0));
+      _log.finer(' - line height at position 0: $estimatedLineHeight');
+
+      // We got 0.0 for the line height at the beginning of text. Maybe the
+      // text is empty. Ask the TextLayout to estimate a height for us that's
+      // based on the text style.
+      if (estimatedLineHeight == 0) {
+        estimatedLineHeight = widget.textKey.currentState!.textLayout.estimatedLineHeight;
+        _log.finer(' - estimated line height based on text styles: $estimatedLineHeight');
+      }
+    }
+
+    final estimatedContentHeight = linesOfText * estimatedLineHeight;
     _log.finer(' - estimated content height: $estimatedContentHeight');
 
     final minHeight = widget.minLines != null
-        ? widget.minLines! * widget.lineHeight!
-        : widget.lineHeight; // Can't be shorter than 1 line
+        ? widget.minLines! * estimatedLineHeight
+        : estimatedLineHeight; // Can't be shorter than 1 line
     final maxHeight = widget.maxLines != null //
-        ? widget.maxLines! * widget.lineHeight! //
+        ? widget.maxLines! * estimatedLineHeight //
         : null;
     _log.finer(' - minHeight: $minHeight, maxHeight: $maxHeight');
 

@@ -37,9 +37,7 @@ class SuperAndroidTextField extends StatefulWidget {
     this.textInputAction = TextInputAction.done,
     this.popoverToolbarBuilder = _defaultAndroidToolbarBuilder,
     this.showDebugPaint = false,
-  })  : assert(minLines == null || minLines == 1 || lineHeight != null, 'minLines > 1 requires a non-null lineHeight'),
-        assert(maxLines == null || maxLines == 1 || lineHeight != null, 'maxLines > 1 requires a non-null lineHeight'),
-        super(key: key);
+  }) : super(key: key);
 
   /// [FocusNode] attached to this text field.
   final FocusNode? focusNode;
@@ -104,12 +102,10 @@ class SuperAndroidTextField extends StatefulWidget {
   /// The height of a single line of text in this text scroll view, used
   /// with [minLines] and [maxLines] to size the text field.
   ///
-  /// An explicit [lineHeight] is required for multi-line text fields
-  /// because rich text in this text scroll view might have lines of
-  /// varying height, which would result in a constantly changing text
-  /// field height during scrolling. To avoid that situation, a single,
-  /// explicit [lineHeight] is provided and used for all text field height
-  /// calculations.
+  /// If a [lineHeight] is provided, the text field viewport is sized as a
+  /// multiple of that [lineHeight]. If no [lineHeight] is provided, the
+  /// text field viewport is sized as a multiple of the line-height of the
+  /// first line of text.
   final double? lineHeight;
 
   /// The type of action associated with the action button on the mobile

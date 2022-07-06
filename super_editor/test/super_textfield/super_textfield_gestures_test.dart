@@ -160,7 +160,7 @@ void main() {
         expect(SuperTextFieldInspector.findSelection()!.extent.offset, 0);
       });
 
-      testWidgetsOnMobile("tap up shows the keyboard if the field already has focus", (tester) async {     
+      testWidgetsOnMobile("tap up shows the keyboard if the field already has focus", (tester) async {
         await _pumpTestApp(tester);
 
         bool isShowKeyboardCalled = false;
@@ -170,11 +170,12 @@ void main() {
         await tester.pumpAndSettle();
 
         // Intercept messages sent to the platform.
-        tester.binding.defaultBinaryMessenger.setMockMessageHandler(SystemChannels.textInput.name, (message) {
+        tester.binding.defaultBinaryMessenger.setMockMessageHandler(SystemChannels.textInput.name, (message) async {
           final methodCall = const JSONMethodCodec().decodeMethodCall(message);
           if (methodCall.method == "TextInput.show") {
             isShowKeyboardCalled = true;
           }
+          return null;
         });
 
         // Avoid a double tap.
@@ -196,7 +197,6 @@ Future<void> _pumpTestApp(WidgetTester tester) async {
     MaterialApp(
       home: Scaffold(
         body: SuperTextField(
-          lineHeight: 16,
           textController: AttributedTextEditingController(
             text: AttributedText(text: "abc"),
           ),
