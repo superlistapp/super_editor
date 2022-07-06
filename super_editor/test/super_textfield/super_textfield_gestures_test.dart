@@ -160,10 +160,10 @@ void main() {
         expect(SuperTextFieldInspector.findSelection()!.extent.offset, 0);
       });
 
-      testWidgetsOnMobile("tap up shows the keyboard if the field has focus", (tester) async {     
+      testWidgetsOnMobile("tap up shows the keyboard if the field already has focus", (tester) async {     
         await _pumpTestApp(tester);
 
-        bool isShowKeyboarCalled = false;
+        bool isShowKeyboardCalled = false;
 
         // Tap down and up so the field is focused.
         await tester.tapAt(tester.getTopLeft(find.byType(SuperTextField)));
@@ -173,7 +173,7 @@ void main() {
         tester.binding.defaultBinaryMessenger.setMockMessageHandler(SystemChannels.textInput.name, (message) {
           final methodCall = const JSONMethodCodec().decodeMethodCall(message);
           if (methodCall.method == "TextInput.show") {
-            isShowKeyboarCalled = true;
+            isShowKeyboardCalled = true;
           }
         });
 
@@ -185,7 +185,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Ensure we requested the keyboard to the platform
-        expect(isShowKeyboarCalled, true);
+        expect(isShowKeyboardCalled, true);
       });
     });
   });

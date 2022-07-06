@@ -63,7 +63,7 @@ class IOSTextFieldTouchInteractor extends StatefulWidget {
   /// [TextController] used to read the current selection to display
   /// editing controls, and used to update the selection based on
   /// user interactions.
-  final AttributedTextEditingController textController;
+  final ImeAttributedTextEditingController textController;
 
   final IOSEditingOverlayController editingOverlayController;
 
@@ -143,10 +143,8 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
   void _onTapUp(TapUpDetails details) {
     _log.fine('User released a tap');
 
-    if (widget.focusNode.hasFocus &&
-        (widget.textController is ImeAttributedTextEditingController) &&
-        (widget.textController as ImeAttributedTextEditingController).isAttachedToIme) {
-      (widget.textController as ImeAttributedTextEditingController).showKeyboard();
+    if (widget.focusNode.hasFocus && widget.textController.isAttachedToIme) {
+      widget.textController.showKeyboard();
     } else {
       widget.focusNode.requestFocus();
     }
