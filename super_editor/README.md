@@ -30,6 +30,22 @@ These platforms probably work, but our verification on these platforms is spotty
  * Windows
  * Linux
 
+## Development Setup
+
+This repo uses Melos to manage dependencies within the monorepo. You can install Melos via pub:
+
+```sh
+flutter pub global activate melos
+```
+
+Once Melos is installed, use it to set up dependencies within the monorepo:
+
+```sh
+melos bs
+```
+
+For more information please refer to the [Melos documentation][melos].
+
 ## Run the example implementation
 
 Super Editor comes with an example implementation to showcase the core functionality. It also exposes example UI elements on how to interact with the Editor.
@@ -137,3 +153,5 @@ class _MyAppState extends State<MyApp> {
 If your app requires deeper customization than `SuperEditor` provides, you can construct your own version of the `SuperEditor` widget by using lower level tools within the `super_editor` package.
 
 See the wiki for more information about how to customize an editor experience.
+
+[melos]: https://melos.invertase.dev/
