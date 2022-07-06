@@ -1,8 +1,7 @@
-import 'package:attributed_text/attributed_text.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:logging/logging.dart';
-import 'package:super_editor/src/infrastructure/super_textfield/super_textfield.dart';
 import 'package:super_editor/super_editor.dart';
 
 import '../test_tools.dart';
@@ -159,6 +158,34 @@ void main() {
 
         // Ensure the caret moved to the beginning of the text.
         expect(SuperTextFieldInspector.findSelection()!.extent.offset, 0);
+      });
+
+      testWidgetsOnMobile("tap up shows the keyboard if the field has focus", (tester) async {     
+        await _pumpTestApp(tester);
+
+        bool isShowKeyboarCalled = false;
+
+        // Tap down and up so the field is focused.
+        await tester.tapAt(tester.getTopLeft(find.byType(SuperTextField)));
+        await tester.pumpAndSettle();
+
+        // Intercept messages sent to the platform.
+        tester.binding.defaultBinaryMessenger.setMockMessageHandler(SystemChannels.textInput.name, (message) {
+          final methodCall = const JSONMethodCodec().decodeMethodCall(message);
+          if (methodCall.method == "TextInput.show") {
+            isShowKeyboarCalled = true;
+          }
+        });
+
+        // Avoid a double tap.
+        await tester.pump(kDoubleTapTimeout + const Duration(milliseconds: 1));
+
+        // Tap down and up again.
+        await tester.tapAt(tester.getTopLeft(find.byType(SuperTextField)));
+        await tester.pumpAndSettle();
+
+        // Ensure we requested the keyboard to the platform
+        expect(isShowKeyboarCalled, true);
       });
     });
   });

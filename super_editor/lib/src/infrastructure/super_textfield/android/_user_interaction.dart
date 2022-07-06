@@ -148,7 +148,13 @@ class AndroidTextFieldTouchInteractorState extends State<AndroidTextFieldTouchIn
   void _onTapUp(TapUpDetails details) {
     _log.fine('User released a tap');
 
-    widget.focusNode.requestFocus();
+    if (widget.focusNode.hasFocus &&
+        (widget.textController is ImeAttributedTextEditingController) &&
+        (widget.textController as ImeAttributedTextEditingController).isAttachedToIme) {
+      (widget.textController as ImeAttributedTextEditingController).showKeyboard();
+    } else {
+      widget.focusNode.requestFocus();
+    }
 
     // If the user tapped on a collapsed caret, or tapped on an
     // expanded selection, toggle the toolbar appearance.
