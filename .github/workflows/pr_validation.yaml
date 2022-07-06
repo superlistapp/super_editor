@@ -1,5 +1,8 @@
 name: Test project in a PR
 on: [pull_request]
+env:
+  MELOS_VERSION: ^2.5.0
+
 jobs:
   test_mac:
     runs-on: macos-latest
@@ -17,10 +20,10 @@ jobs:
           channel: "master"
           architecture: x64
 
-      # Download all the packages that the app uses
-      - run: flutter pub get
+      - run: flutter pub global activate melos ${{ env.MELOS_VERSION }}
 
-      # TODO: run static analysis here when we get to zero analysis warnings
+      # Download all the packages that the app uses and override internal dependencies
+      - run: melos bootstrap
 
       # Run all tests
       - run: flutter test
@@ -40,10 +43,10 @@ jobs:
         with:
           channel: "master"
 
-      # Download all the packages that the app uses
-      - run: flutter pub get
+      - run: flutter pub global activate melos ${{ env.MELOS_VERSION }}
 
-      # TODO: run static analysis here when we get to zero analysis warnings
+      # Download all the packages that the app uses and override internal dependencies
+      - run: melos bootstrap
 
       # Run all tests
       - run: flutter test
@@ -63,10 +66,10 @@ jobs:
         with:
           channel: "master"
 
-      # Download all the packages that the app uses
-      - run: flutter pub get
+      - run: flutter pub global activate melos ${{ env.MELOS_VERSION }}
 
-      # TODO: run static analysis here when we get to zero analysis warnings
+      # Download all the packages that the app uses and override internal dependencies
+      - run: melos bootstrap
 
       # Run all tests
       - run: flutter test
@@ -85,10 +88,10 @@ jobs:
         with:
           channel: "master"
 
-      # Download all the packages that the app uses
-      - run: flutter pub get
+      - run: flutter pub global activate melos ${{ env.MELOS_VERSION }}
 
-      # TODO: Enforce static analysis
+      # Download all the packages that the app uses and override internal dependencies
+      - run: melos bootstrap
 
       # Run all tests
       - run: flutter test
@@ -107,11 +110,10 @@ jobs:
         with:
           channel: "master"
 
-      # Download all the packages that the app uses
-      - run: flutter pub get
+      - run: flutter pub global activate melos ${{ env.MELOS_VERSION }}
 
-      # Enforce static analysis
-      - run: flutter analyze
+      # Download all the packages that the app uses and override internal dependencies
+      - run: melos bootstrap
 
       # Run all tests
       - run: flutter test
@@ -131,8 +133,10 @@ jobs:
           channel: "master"
           architecture: x64
 
-      # Download all the packages that the app uses
-      - run: flutter pub get
+      - run: flutter pub global activate melos ${{ env.MELOS_VERSION }}
+
+      # Download all the packages that the app uses and override internal dependencies
+      - run: melos bootstrap
 
       # Run all golden tests
       - run: flutter test test_goldens
@@ -150,10 +154,9 @@ jobs:
       - uses: dart-lang/setup-dart@v1
 
       # Install app dependencies
+      # Not using Melos here because it tries to call `flutter pub` instead of `dart pub`
+      # For now attributed_text doesn't depend on any other packages in the monorepo so it doesn't matter
       - run: dart pub get
-
-      # Enforce static analysis
-      - run: dart analyze
 
       # Run all tests
       - run: dart test
