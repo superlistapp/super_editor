@@ -658,6 +658,7 @@ class _Component extends StatelessWidget {
     required this.componentBuilders,
     required this.componentViewModel,
     required this.componentKey,
+    // ignore: unused_element
     this.showDebugPaint = false,
   }) : super(key: key);
 
