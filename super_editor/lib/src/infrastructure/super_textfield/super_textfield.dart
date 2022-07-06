@@ -63,9 +63,7 @@ class SuperTextField extends StatefulWidget {
     this.maxLines = 1,
     this.lineHeight,
     this.keyboardHandlers = defaultTextFieldKeyboardHandlers,
-  })  : assert(minLines == null || minLines == 1 || lineHeight != null, 'minLines > 1 requires a non-null lineHeight'),
-        assert(maxLines == null || maxLines == 1 || lineHeight != null, 'maxLines > 1 requires a non-null lineHeight'),
-        super(key: key);
+  }) : super(key: key);
 
   final FocusNode? focusNode;
 
@@ -202,11 +200,11 @@ class SuperTextFieldState extends State<SuperTextField> {
   }
 
   /// Shortcuts that should be ignored on web.
-  /// 
+  ///
   /// Without this we can't handle space and arrow keys inside [SuperTextField].
-  /// 
+  ///
   /// For exemple, when [SuperTextField] is inside a [ScrollView],
-  /// pressing [LogicalKeyboardKey.space] scrolls the scrollview. 
+  /// pressing [LogicalKeyboardKey.space] scrolls the scrollview.
   final Map<LogicalKeySet, Intent> _scrollShortcutOverrides = kIsWeb
       ? {
           LogicalKeySet(LogicalKeyboardKey.space): DoNothingAndStopPropagationIntent(),
