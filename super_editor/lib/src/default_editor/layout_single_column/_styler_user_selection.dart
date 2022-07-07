@@ -93,7 +93,8 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
           ? null
           : nodeSelection.nodeSelection as TextSelection;
       if (nodeSelection != null && nodeSelection.nodeSelection is! TextSelection) {
-        editorStyleLog.shout('ERROR: Building a paragraph component but the selection is not a TextSelection. Node: ${node.id}, Selection: ${nodeSelection.nodeSelection}');
+        editorStyleLog.shout(
+            'ERROR: Building a paragraph component but the selection is not a TextSelection. Node: ${node.id}, Selection: ${nodeSelection.nodeSelection}');
       }
       final showCaret = _shouldDocumentShowCaret && nodeSelection != null ? nodeSelection.isExtent : false;
       final highlightWhenEmpty =
@@ -246,5 +247,68 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
         );
       }
     }
+  }
+}
+
+/// Description of a selection within a specific node in a document.
+///
+/// The [nodeSelection] only describes the selection in the particular node
+/// that [nodeId] points to. The document might have a selection that spans
+/// multiple nodes but this only regards the part of that total selection that
+/// affects the single node.
+///
+/// The [SelectionType] is a generic subtype of [NodeSelection], e.g., a
+/// [TextNodeSelection] that describes which characters of text are
+/// selected within the text node.
+class DocumentNodeSelection<SelectionType extends NodeSelection> {
+  DocumentNodeSelection({
+    required this.nodeId,
+    required this.nodeSelection,
+    this.isBase = false,
+    this.isExtent = false,
+    this.highlightWhenEmpty = false,
+  });
+
+  /// The ID of the node that's selected.
+  final String nodeId;
+
+  /// The selection within the given node.
+  final SelectionType? nodeSelection;
+
+  /// Whether this [DocumentNodeSelection] forms the base position of a larger
+  /// document selection, `false` otherwise.
+  ///
+  /// [isBase] is `true` iff [nodeId] is the same as [DocumentSelection.base.nodeId].
+  final bool isBase;
+
+  /// Whether this [DocumentNodeSelection] forms the extent position of a
+  /// larger document selection, `false` otherwise.
+  ///
+  /// [isExtent] is `true` iff [nodeId] is the same as [DocumentSelection.extent.nodeId].
+  final bool isExtent;
+
+  /// Whether the component rendering this [DocumentNodeSelection] should
+  /// paint a highlight even when the given node has no content, `false`
+  /// otherwise.
+  ///
+  /// For example: the user selects across multiple paragraphs. One of those
+  /// inner paragraphs is empty. We want to paint a small highlight where that
+  /// empty paragraph sits.
+  final bool highlightWhenEmpty;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is DocumentNodeSelection &&
+          runtimeType == other.runtimeType &&
+          nodeId == other.nodeId &&
+          nodeSelection == other.nodeSelection;
+
+  @override
+  int get hashCode => nodeId.hashCode ^ nodeSelection.hashCode;
+
+  @override
+  String toString() {
+    return '[DocumentNodeSelection] - node: "$nodeId", selection: ($nodeSelection)';
   }
 }
