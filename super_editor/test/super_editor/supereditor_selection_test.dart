@@ -59,7 +59,7 @@ void main() {
           const Offset(150, 60) + globalLayoutOrigin, const Offset(200, 40) + globalLayoutOrigin);
       expect(selection, isNotNull);
 
-      // Ensure that the document selection is upstream.
+      // Ensure that the document selection is downstream.
       final base = selection!.base.nodePosition as TextNodePosition;
       final extent = selection.extent.nodePosition as TextNodePosition;
       expect(base.offset < extent.offset, isTrue);
