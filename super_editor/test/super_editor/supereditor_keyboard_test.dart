@@ -187,11 +187,11 @@ void main() {
 
         testWidgetsOnDesktop("to beginning of line and expands when SHIFT + UP_ARROW is pressed at top of document",
             (tester) async {
-          final nodeId = await _pumpDoubleLineWithCaret(tester, offset: 41);
+          final nodeId = await _pumpDoubleLineWithCaret(tester, offset: 12);
 
           await tester.pressShiftUpArrow();
 
-          expect(SuperEditorInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 41, to: 12));
+          expect(SuperEditorInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 12, to: 0));
         });
 
         testWidgetsOnDesktop("to end of line when DOWN_ARROW is pressed at end of document", (tester) async {
