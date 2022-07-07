@@ -329,7 +329,7 @@ class TextWithHintComponent extends StatefulWidget {
   final bool showDebugPaint;
 
   @override
-  _TextWithHintComponentState createState() => _TextWithHintComponentState();
+  State createState() => _TextWithHintComponentState();
 }
 
 class _TextWithHintComponentState extends State<TextWithHintComponent>
@@ -524,14 +524,12 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
       return null;
     }
 
-    if (movementModifier != null && movementModifier == MovementModifier.line) {
+    if (movementModifier == MovementModifier.line) {
       return getPositionAtStartOfLine(
         TextNodePosition(offset: textPosition.offset),
       );
-    } else if (movementModifier != null && movementModifier == MovementModifier.word) {
-      final text = getContiguousTextAt(textPosition);
-
-      final newOffset = text.moveOffsetUpstreamByWord(textPosition.offset);
+    } else if (movementModifier == MovementModifier.word) {
+      final newOffset = getAllText().moveOffsetUpstreamByWord(textPosition.offset);
       if (newOffset == null) {
         return textPosition;
       }
@@ -539,8 +537,7 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
       return TextNodePosition(offset: newOffset);
     }
 
-    final text = getContiguousTextAt(textPosition);
-    final newOffset = text.moveOffsetUpstreamByCharacter(textPosition.offset);
+    final newOffset = getAllText().moveOffsetUpstreamByCharacter(textPosition.offset);
     return newOffset != null ? TextNodePosition(offset: newOffset) : textPosition;
   }
 
@@ -556,16 +553,15 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
       return null;
     }
 
-    if (movementModifier != null && movementModifier == MovementModifier.line) {
+    if (movementModifier == MovementModifier.line) {
       final endOfLine = getPositionAtEndOfLine(
         TextNodePosition(offset: textPosition.offset),
       );
 
       final TextPosition endPosition = getEndPosition();
-      final text = getContiguousTextAt(endOfLine);
 
       // Note: we compare offset values because we don't care if the affinitys are equal
-      final isAutoWrapLine = endOfLine.offset != endPosition.offset && (text[endOfLine.offset] != '\n');
+      final isAutoWrapLine = endOfLine.offset != endPosition.offset && (widget.text.text[endOfLine.offset] != '\n');
 
       // Note: For lines that auto-wrap, moving the cursor to `offset` causes the
       //       cursor to jump to the next line because the cursor is placed after
@@ -584,9 +580,7 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
           : TextNodePosition.fromTextPosition(endOfLine);
     }
     if (movementModifier != null && movementModifier == MovementModifier.word) {
-      final text = getContiguousTextAt(textPosition);
-
-      final newOffset = text.moveOffsetDownstreamByWord(textPosition.offset);
+      final newOffset = getAllText().moveOffsetDownstreamByWord(textPosition.offset);
       if (newOffset == null) {
         return textPosition;
       }
@@ -594,8 +588,7 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
       return TextNodePosition(offset: newOffset);
     }
 
-    final text = getContiguousTextAt(textPosition);
-    final newOffset = text.moveOffsetDownstreamByCharacter(textPosition.offset);
+    final newOffset = getAllText().moveOffsetDownstreamByCharacter(textPosition.offset);
     return newOffset != null ? TextNodePosition(offset: newOffset) : textPosition;
   }
 
@@ -693,6 +686,16 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
   }
 
   @override
+  String getAllText() {
+    return widget.text.text;
+  }
+
+  @override
+  String getContiguousTextAt(TextNodePosition textPosition) {
+    return getContiguousTextSelectionAt(textPosition).textInside(widget.text.text);
+  }
+
+  @override
   TextNodeSelection getWordSelectionAt(TextNodePosition textPosition) {
     return TextNodeSelection.fromTextSelection(
       textLayout.getWordSelectionAt(textPosition),
@@ -700,14 +703,24 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
   }
 
   @override
-  String getContiguousTextAt(TextNodePosition textPosition) {
-    // This component only displays a single contiguous span of text.
-    // Therefore, all of our text is contiguous regardless of position.
-    // TODO: This assumption isn't true in the case that multiline text
-    //       is displayed within 1 node, such as when the user presses
-    //       shift+enter. Change implementation to find actual contiguous
-    //       text. (#54)
-    return widget.text.text;
+  TextNodeSelection getContiguousTextSelectionAt(TextNodePosition textPosition) {
+    final text = widget.text.text;
+    if (text.isEmpty) {
+      return const TextNodeSelection.collapsed(offset: -1);
+    }
+
+    int start = min(textPosition.offset, text.length - 1);
+    int end = min(textPosition.offset, text.length - 1);
+    while (start > 0 && text[start - 1] != '\n') {
+      start -= 1;
+    }
+    while (end < text.length && text[end] != '\n') {
+      end += 1;
+    }
+    return TextNodeSelection(
+      baseOffset: start,
+      extentOffset: end,
+    );
   }
 
   @override
