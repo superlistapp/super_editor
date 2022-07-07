@@ -49,7 +49,7 @@ void main() {
       final layout = layoutState as DocumentLayout;
       final globalLayoutOrigin = (layoutState.context.findRenderObject() as RenderBox).localToGlobal(Offset.zero);
 
-      // Drag from lower-right to upper-left.
+      // Drag from lower-left to upper-right.
       //
       // By dragging in this exact direction, we're purposefully introducing contrary
       // directions: left-to-right is downstream for a single line, and down-to-up is
