@@ -219,8 +219,16 @@ extension InspectDocumentAffinity on Document {
     required DocumentPosition base,
     required DocumentPosition extent,
   }) {
+    final baseNode = getNode(base);
+    if (baseNode == null) {
+      throw Exception('No such position in document: $base');
+    }
     final baseIndex = getNodeIndex(getNode(base)!);
-    final extentNode = getNode(extent)!;
+
+    final extentNode = getNode(extent);
+    if (extentNode == null) {
+      throw Exception('No such position in document: $extent');
+    }
     final extentIndex = getNodeIndex(extentNode);
 
     late TextAffinity affinity;

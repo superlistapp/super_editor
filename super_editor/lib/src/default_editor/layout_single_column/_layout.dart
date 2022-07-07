@@ -48,7 +48,7 @@ class SingleColumnDocumentLayout extends StatefulWidget {
   final bool showDebugPaint;
 
   @override
-  _SingleColumnDocumentLayoutState createState() => _SingleColumnDocumentLayoutState();
+  State createState() => _SingleColumnDocumentLayoutState();
 }
 
 class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout> implements DocumentLayout {
@@ -264,11 +264,6 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
   @override
   DocumentSelection? getDocumentSelectionInRegion(Offset baseOffset, Offset extentOffset) {
     editorLayoutLog.info('getDocumentSelectionInRegion() - from: $baseOffset, to: $extentOffset');
-    // Drag direction determines whether the extent offset is at the
-    // top or bottom of the drag rect.
-    // TODO: this condition is wrong when the user is dragging within a single line of text (#50)
-    final isDraggingDown = baseOffset.dy < extentOffset.dy;
-
     final region = Rect.fromPoints(baseOffset, extentOffset);
 
     String? topNodeId;
@@ -339,6 +334,11 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
       );
     } else {
       // Region covers multiple components.
+
+      // Drag direction determines whether the extent offset is at the
+      // top or bottom of the drag rect.
+      final isDraggingDown = baseOffset.dy < extentOffset.dy;
+
       return DocumentSelection(
         base: DocumentPosition(
           nodeId: isDraggingDown ? topNodeId : bottomNodeId,
