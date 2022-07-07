@@ -12,10 +12,12 @@ dependencies:
   flutter:
     sdk: flutter
 
+  # Specify paths for direct dependencies within the mono-repo.
   super_text_layout:
     path: ../
 
 dependency_overrides:
+  # Override transitive dependencies within the mono-repo.
   attributed_text:
     path: ../../attributed_text
 

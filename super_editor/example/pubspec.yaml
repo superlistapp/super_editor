@@ -40,6 +40,7 @@ dependencies:
   logging: ^1.0.1
   uuid: ^3.0.3
 
+  # Specify paths for direct dependencies within the mono-repo.
   super_editor:
     path: ../
   super_editor_markdown:
@@ -48,8 +49,7 @@ dependencies:
     path: ../../super_text_layout
 
 dependency_overrides:
-  # Override to local mono-repo path so devs can test this repo
-  # against changes that they're making to other mono-repo packages
+  # Override transitive dependencies within the mono-repo.
   attributed_text:
     path: ../../attributed_text
 
