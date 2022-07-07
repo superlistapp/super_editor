@@ -1499,7 +1499,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
     // catch any key that isn't explicitly listed. The eventual solution
     // to this is for the web to honor the standard key event contract,
     // but that's out of our control.
-    if (kIsWeb && webBugBlacklistCharacters.contains(keyEvent.character)) {
+    if (isKeyEventCharacterBlacklisted(keyEvent.character)) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 

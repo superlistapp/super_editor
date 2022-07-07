@@ -345,7 +345,7 @@ ExecutionInstruction anyCharacterToInsertInParagraph({
   // catch any key that isn't explicitly listed. The eventual solution
   // to this is for the web to honor the standard key event contract,
   // but that's out of our control.
-  if (kIsWeb && webBugBlacklistCharacters.contains(character)) {
+  if (isKeyEventCharacterBlacklisted(character)) {
     return ExecutionInstruction.continueExecution;
   }
 
