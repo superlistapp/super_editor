@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_layout.dart';
+import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/default_editor/layout_single_column/layout_single_column.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 
 import '../test_tools.dart';
 import 'document_test_tools.dart';
+import 'supereditor_inspector.dart';
+import 'supereditor_robot.dart';
 
 void main() {
   group("SuperEditor selection", () {
@@ -63,6 +67,38 @@ void main() {
       final base = selection!.base.nodePosition as TextNodePosition;
       final extent = selection.extent.nodePosition as TextNodePosition;
       expect(base.offset < extent.offset, isTrue);
+    });
+
+    testWidgetsOnArbitraryDesktop("calculates downstream document selection within a single node", (tester) async {
+      final testContext = await tester //
+          .createDocument() //
+          .fromMarkdown("This is paragraph one.\nThis is paragraph two.") //
+          .pump();
+      final nodeId = testContext.editContext.editor.document.nodes.first.id;
+
+      /// Triple tap on the first line in the paragraph node.
+      await tester.tripleTapInParagraph(nodeId, 10);
+
+      /// Ensure that only the first line is selected.
+      expect(
+        SuperEditorInspector.findDocumentSelection(),
+        DocumentSelection(
+          base: DocumentPosition(nodeId: nodeId, nodePosition: const TextNodePosition(offset: 0)),
+          extent: DocumentPosition(nodeId: nodeId, nodePosition: const TextNodePosition(offset: 22)),
+        ),
+      );
+
+      /// Triple tap on the second line in the paragraph node.
+      await tester.tripleTapInParagraph(nodeId, 25);
+
+      /// Ensure that only the second line is selected.
+      expect(
+        SuperEditorInspector.findDocumentSelection(),
+        DocumentSelection(
+          base: DocumentPosition(nodeId: nodeId, nodePosition: const TextNodePosition(offset: 23)),
+          extent: DocumentPosition(nodeId: nodeId, nodePosition: const TextNodePosition(offset: 45)),
+        ),
+      );
     });
   });
 }

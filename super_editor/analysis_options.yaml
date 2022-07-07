@@ -7,3 +7,4 @@ linter:
     rules:
         omit_local_variable_types: false
         use_key_in_widget_constructors: false
+        avoid_renaming_method_parameters: false
