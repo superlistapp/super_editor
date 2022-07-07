@@ -8,6 +8,7 @@ class LogNames {
   static const editorKeys = 'editor.keys';
   static const editorIme = 'editor.ime';
   static const editorLayout = 'editor.layout';
+  static const editorStyle = 'editor.style';
   static const editorDocument = 'editor.document';
   static const editorCommonOps = 'editor.ops';
 
@@ -26,6 +27,7 @@ final editorGesturesLog = logging.Logger(LogNames.editorGestures);
 final editorKeyLog = logging.Logger(LogNames.editorKeys);
 final editorImeLog = logging.Logger(LogNames.editorIme);
 final editorLayoutLog = logging.Logger(LogNames.editorLayout);
+final editorStyleLog = logging.Logger(LogNames.editorStyle);
 final editorDocLog = logging.Logger(LogNames.editorDocument);
 final editorOpsLog = logging.Logger(LogNames.editorCommonOps);
 
