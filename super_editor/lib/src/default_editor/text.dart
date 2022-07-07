@@ -1123,12 +1123,7 @@ ExecutionInstruction anyCharacterToInsertInTextContent({
   // On web, keys like shift and alt are sending their full name
   // as a character, e.g., "Shift" and "Alt". This check prevents
   // those keys from inserting their name into content.
-  //
-  // This filter is a blacklist, and therefore it will fail to
-  // catch any key that isn't explicitly listed. The eventual solution
-  // to this is for the web to honor the standard key event contract,
-  // but that's out of our control.
-  if (isKeyEventCharacterBlacklisted(character)) {
+  if (isKeyEventCharacterBlacklisted(character) && character != 'Tab') {
     return ExecutionInstruction.continueExecution;
   }
 
