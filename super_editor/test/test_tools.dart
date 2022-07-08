@@ -28,7 +28,7 @@ void testWidgetsOnDesktop(
 }
 
 /// A widget test that runs a variant for every mobile platform, e.g.,
-/// Android, iOS
+/// Android and iOS
 void testWidgetsOnMobile(
   String description,
   WidgetTesterCallback test, {
@@ -65,6 +65,19 @@ void testWidgetsOnWindowsAndLinux(
 }) {
   testWidgetsOnWindows("$description (on Windows)", test, skip: skip);
   testWidgetsOnLinux("$description (on Linux)", test, skip: skip);
+}
+
+/// A widget test that configures itself for an arbitrary desktop environment.
+///
+/// There's no guarantee which desktop environment is used. The purpose of this
+/// test method is to cause all relevant configurations to setup for desktop,
+/// without concern for any features that change between desktop platforms.
+void testWidgetsOnArbitraryDesktop(
+  String description,
+  WidgetTesterCallback test, {
+  bool skip = false,
+}) {
+  testWidgetsOnMac(description, test, skip: skip);
 }
 
 /// A widget test that configures itself as a Mac platform before executing the
