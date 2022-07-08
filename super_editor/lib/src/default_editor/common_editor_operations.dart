@@ -2315,6 +2315,7 @@ class _PasteEditorCommand implements EditorCommand {
     if (currentNodeWithSelection is TextNode) {
       final textNode = document.getNode(_pastePosition) as TextNode;
       final pasteTextOffset = (_pastePosition.nodePosition as TextPosition).offset;
+      final attributionsAtPasteOffset = textNode.text.getAllAttributionsAt(pasteTextOffset);
 
       if (splitContent.length > 1 && pasteTextOffset < textNode.endPosition.offset) {
         // There is more than 1 node of content being pasted. Therefore,
@@ -2343,7 +2344,7 @@ class _PasteEditorCommand implements EditorCommand {
       // The attribution splitting happens automatically in the text inserting execution, when the
       // newly inserted text's attributions doesn't contain the original attribution. Hence, we only
       // need to filter out the original link attribution.
-      final currentAttributionsWithoutLink = _composer.preferences.currentAttributions //
+      final filteredLinkAttribution = attributionsAtPasteOffset //
           .where((attribution) => attribution is! LinkAttribution)
           .toSet();
 
@@ -2351,7 +2352,7 @@ class _PasteEditorCommand implements EditorCommand {
       InsertTextCommand(
         documentPosition: _pastePosition,
         textToInsert: splitContent.first,
-        attributions: currentAttributionsWithoutLink,
+        attributions: filteredLinkAttribution,
       ).execute(document, transaction);
 
       // Check for url in the pasted text and apply [LinkAttribution] appropriately
