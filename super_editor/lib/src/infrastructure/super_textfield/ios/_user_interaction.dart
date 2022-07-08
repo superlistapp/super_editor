@@ -81,7 +81,7 @@ class IOSTextFieldTouchInteractor extends StatefulWidget {
   /// The color of expanded selection drag handles.
   final Color handleColor;
 
-  /// Padding around the text entry area
+  /// "Space added around the text in the field, which also responds to gestures."
   ///
   /// defaults to `EdgeInsets.zero`
   final EdgeInsetsGeometry padding;

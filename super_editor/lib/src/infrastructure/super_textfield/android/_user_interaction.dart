@@ -85,7 +85,7 @@ class AndroidTextFieldTouchInteractor extends StatefulWidget {
   /// The color of expanded selection drag handles.
   final Color handleColor;
 
-  /// Padding around the text entry area
+  /// "Space added around the text in the field, which also responds to gestures."
   ///
   /// defaults to `EdgeInsets.zero`
   final EdgeInsetsGeometry padding;
@@ -454,7 +454,7 @@ class AndroidTextFieldTouchInteractorState extends State<AndroidTextFieldTouchIn
     // TODO: can we de-dup this with similar calculations in _editing_controls?
     final extentPosition = widget.textController.selection.extent;
     final extentOffsetInText = _textLayout.getOffsetAtPosition(extentPosition);
-    final extentLineHeight = 
+    final extentLineHeight =
         _textLayout.getCharacterBox(extentPosition)?.toRect().height ?? _textLayout.estimatedLineHeight;
     final extentGlobalOffset =
         (widget.textKey.currentContext!.findRenderObject() as RenderBox).localToGlobal(extentOffsetInText);
