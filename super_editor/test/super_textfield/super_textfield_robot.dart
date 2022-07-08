@@ -230,17 +230,9 @@ extension SuperTextFieldRobot on WidgetTester {
   Future<void> tapSuperTextField({
     Offset? offset,
     Finder? superTextFieldFinder,
-    String callee = 'getCenter',
-    bool warnIfMissed = false,
   }) async {
     final finder = superTextFieldFinder ?? find.byType(SuperTextField);
-    final target = offset ??
-        getCenter(
-          finder,
-          callee: callee,
-          warnIfMissed: warnIfMissed,
-        );
-
+    final target = offset ?? getCenter(finder);
     await tapAt(target);
     await pumpAndSettle();
   }
