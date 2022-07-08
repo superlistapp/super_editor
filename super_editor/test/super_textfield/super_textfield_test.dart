@@ -8,7 +8,6 @@ import '../test_tools.dart';
 import 'super_textfield_inspector.dart';
 import 'super_textfield_robot.dart';
 
-
 void main() {
   group("SuperTextField", () {
     group("configures for", () {
@@ -108,7 +107,7 @@ void main() {
               ),
             ),
           );
-          
+
           final innerTextField = tester.widget<SuperAndroidTextField>(find.byType(SuperAndroidTextField).first);
 
           // Ensure inner textfield action is configured to newline
@@ -205,7 +204,7 @@ void main() {
 
     group("padding for ", () {
       group("mobile ", () {
-        testWidgetsOnMobile('receive focus on tap with default insets', (tester) async {
+        testWidgetsOnMobile('when default SuperTextField is tapped should receive focus', (tester) async {
           final focusNode = FocusNode(debugLabel: 'SuperTextField FocusNode');
 
           await tester.pumpWidget(
@@ -232,7 +231,7 @@ void main() {
           );
         });
 
-        testWidgetsOnMobile('receive focus on tap with custom insets', (tester) async {
+        testWidgetsOnMobile('when SuperTextField with custom insets is tapped should receive focus', (tester) async {
           final focusNode = FocusNode(debugLabel: 'SuperTextField FocusNode');
           const padding = EdgeInsets.only(right: 20);
 
@@ -246,15 +245,13 @@ void main() {
             ),
           );
 
-          final target = SuperTextFieldInspector.findPaddingRect(tester);
-
           expect(
             focusNode.hasPrimaryFocus,
             isFalse,
             reason: '`FocusNode` should NOT have focus yet',
           );
 
-          await tester.tapSuperTextField(offset: target.center);
+          await tester.tapSuperTextField();
 
           expect(
             focusNode.hasPrimaryFocus,
@@ -263,7 +260,7 @@ void main() {
           );
         });
 
-        testWidgetsOnMobile('receive focus when tap on insets', (tester) async {
+        testWidgetsOnMobile('when tap on insets should receive focus', (tester) async {
           final focusNode = FocusNode(debugLabel: 'SuperTextField FocusNode');
           const padding = EdgeInsets.only(right: 20);
           await tester.pumpWidget(
@@ -276,26 +273,33 @@ void main() {
             ),
           );
 
-          final insets = SuperTextFieldInspector.findPaddingInsetsRects(
-            tester,
-          );
+          final superTextFieldRect = SuperTextFieldInspector.findSuperTextFieldRect(tester);
+          final paddingInsets = padding.resolve(null);
+          final maybePaddings = [
+            RelativeRect.fromLTRB(paddingInsets.left, 0, 0, 0),
+            RelativeRect.fromLTRB(0, paddingInsets.top, 0, 0),
+            RelativeRect.fromLTRB(0, 0, paddingInsets.right, 0),
+            RelativeRect.fromLTRB(0, 0, 0, paddingInsets.bottom),
+          ];
 
-          for (final inset in insets) {
-            expect(
-              focusNode.hasPrimaryFocus,
-              isFalse,
-              reason: '`FocusNode` should NOT have focus yet',
-            );
+          for (final maybePadding in maybePaddings) {
+            if (maybePadding.hasInsets) {
+              final paddingIndeed = maybePadding.toRect(superTextFieldRect);
+              expect(
+                focusNode.hasPrimaryFocus,
+                isFalse,
+                reason: '`FocusNode` should NOT have focus yet',
+              );
 
-            await tester.tapSuperTextField(offset: inset.center);
+              await tester.tapSuperTextField(paddingIndeed.center);
 
-            expect(
-              focusNode.hasPrimaryFocus,
-              isTrue,
-              reason: '`FocusNode` should receive focus',
-            );
-
-            focusNode.unfocus();
+              expect(
+                focusNode.hasPrimaryFocus,
+                isTrue,
+                reason: '`FocusNode` should receive focus',
+              );
+              focusNode.unfocus();
+            }
           }
         });
       });

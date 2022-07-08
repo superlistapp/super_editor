@@ -3,6 +3,8 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/super_editor.dart';
 
+import 'super_textfield_inspector.dart';
+
 /// Extensions on [WidgetTester] for interacting with a [SuperTextField] the way
 /// a user would.
 extension SuperTextFieldRobot on WidgetTester {
@@ -227,13 +229,12 @@ extension SuperTextFieldRobot on WidgetTester {
   /// Taps in a [SuperTextField] at its [center] or at a given [offset]
   ///
   /// {@macro supertextfield_finder}
-  Future<void> tapSuperTextField({
-    Offset? offset,
-    Finder? superTextFieldFinder,
-  }) async {
-    final finder = superTextFieldFinder ?? find.byType(SuperTextField);
-    final target = offset ?? getCenter(finder);
-    await tapAt(target);
+  Future<void> tapSuperTextField([Offset? offset]) async {
+    final superTextFieldRect = SuperTextFieldInspector.findSuperTextFieldRect(this);
+    if (offset != null) {
+      assert(superTextFieldRect.contains(offset), 'SuperTextField must contain offset');
+    }
+    await tapAt(offset ?? superTextFieldRect.center);
     await pumpAndSettle();
   }
 }
