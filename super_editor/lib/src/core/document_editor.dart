@@ -2,6 +2,8 @@ import 'dart:math';
 
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:uuid/uuid.dart';
 
@@ -187,21 +189,10 @@ class MutableDocument with ChangeNotifier implements Document {
 
   @override
   DocumentRange getRangeBetween(DocumentPosition position1, DocumentPosition position2) {
-    final node1 = getNode(position1);
-    if (node1 == null) {
-      throw Exception('No such position in document: $position1');
-    }
-    final index1 = _nodes.indexOf(node1);
-
-    final node2 = getNode(position2);
-    if (node2 == null) {
-      throw Exception('No such position in document: $position2');
-    }
-    final index2 = _nodes.indexOf(node2);
-
+    late TextAffinity affinity = getAffinityBetween(base: position1, extent: position2);
     return DocumentRange(
-      start: index1 < index2 ? position1 : position2,
-      end: index1 < index2 ? position2 : position1,
+      start: affinity == TextAffinity.downstream ? position1 : position2,
+      end: affinity == TextAffinity.downstream ? position2 : position1,
     );
   }
 

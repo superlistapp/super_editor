@@ -94,7 +94,7 @@ void main() {
             ),
           );
         });
-        
+
         testWidgetsOnLinux('preceding character with ALT + LEFT ARROW', (tester) async {
           // Start the user's selection somewhere in the middle of a word.
           await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
@@ -112,7 +112,7 @@ void main() {
             ),
           );
         });
-        
+
         testWidgetsOnLinux('next character with ALT + RIGHT ARROW', (tester) async {
           // Start the user's selection somewhere in the middle of a word.
           await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
@@ -131,8 +131,8 @@ void main() {
           );
         });
 
-        testWidgetsOnWindowsAndLinux('beginning of line with HOME in an auto-wrapping paragraph', (tester) async {          
-          await _pumpAutoWrappingTestSetup(tester);          
+        testWidgetsOnWindowsAndLinux('beginning of line with HOME in an auto-wrapping paragraph', (tester) async {
+          await _pumpAutoWrappingTestSetup(tester);
 
           // Place caret at the second line at "adipiscing |elit"
           // We avoid placing the caret in the first line to make sure HOME doesn't move caret
@@ -141,7 +141,7 @@ void main() {
 
           await tester.pressHome();
 
-          // Ensure that the caret moved to the beginning of the wrapped line at "|adipiscing elit"         
+          // Ensure that the caret moved to the beginning of the wrapped line at "|adipiscing elit"
           expect(
             SuperEditorInspector.findDocumentSelection(),
             const DocumentSelection.collapsed(
@@ -153,7 +153,8 @@ void main() {
           );
         });
 
-        testWidgetsOnWindowsAndLinux('beginning of line with HOME in a paragraph with explicit new lines', (tester) async {                    
+        testWidgetsOnWindowsAndLinux('beginning of line with HOME in a paragraph with explicit new lines',
+            (tester) async {
           await _pumpExplicitLineBreakTestSetup(tester);
 
           // Place caret at the second line at "consectetur adipiscing |elit"
@@ -163,7 +164,7 @@ void main() {
 
           await tester.pressHome();
 
-          // Ensure that the caret moved to the beginning of the second line at "|consectetur adipiscing elit"         
+          // Ensure that the caret moved to the beginning of the second line at "|consectetur adipiscing elit"
           expect(
             SuperEditorInspector.findDocumentSelection(),
             const DocumentSelection.collapsed(
@@ -174,8 +175,8 @@ void main() {
             ),
           );
         });
-        
-        testWidgetsOnWindowsAndLinux('end of line with END in an auto-wrapping paragraph', (tester) async {           
+
+        testWidgetsOnWindowsAndLinux('end of line with END in an auto-wrapping paragraph', (tester) async {
           await _pumpAutoWrappingTestSetup(tester);
 
           // Place caret at the start of the first line
@@ -201,9 +202,7 @@ void main() {
 
         testWidgetsOnWindowsAndLinux('end of line with END in a paragraph with explicit new lines', (tester) async {
           // Configure the screen to a size big enough so there's no auto line-wrapping
-          await _pumpExplicitLineBreakTestSetup(tester, 
-            size: const Size(1024, 400)
-          );
+          await _pumpExplicitLineBreakTestSetup(tester, size: const Size(1024, 400));
 
           // Place caret at the first line at "Lorem |ipsum"
           // Avoid placing caret in the last line to make sure END doesn't move caret
@@ -223,7 +222,7 @@ void main() {
             ),
           );
         });
-        
+
         testWidgetsOnWindowsAndLinux('beginning of word with CTRL + LEFT ARROW', (tester) async {
           // Start the user's selection somewhere in the middle of a word.
           await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
@@ -241,7 +240,7 @@ void main() {
             ),
           );
         });
-        
+
         testWidgetsOnWindowsAndLinux('end of word with CTRL + RIGHT ARROW', (tester) async {
           // Start the user's selection somewhere in the middle of a word.
           await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
@@ -261,7 +260,7 @@ void main() {
         });
       });
 
-      group("does nothing", (){
+      group("does nothing", () {
         testWidgetsOnWindows("with ALT + LEFT ARROW", (tester) async {
           // Start the user's selection somewhere in the middle of a word.
           await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
@@ -297,11 +296,11 @@ void main() {
             ),
           );
         });
-      
-        testWidgetsOnWindowsAndLinux('with ALT + UP ARROW', (tester) async {                                        
+
+        testWidgetsOnWindowsAndLinux('with ALT + UP ARROW', (tester) async {
           await _pumpExplicitLineBreakTestSetup(tester);
 
-          // Place caret at the second line at "consectetur adipiscing |elit"          
+          // Place caret at the second line at "consectetur adipiscing |elit"
           await tester.placeCaretInParagraph('1', 51);
 
           await tester.pressAltUpArrow();
@@ -318,10 +317,10 @@ void main() {
           );
         });
 
-        testWidgetsOnWindowsAndLinux('with ALT + DOWN ARROW', (tester) async {                              
+        testWidgetsOnWindowsAndLinux('with ALT + DOWN ARROW', (tester) async {
           await _pumpExplicitLineBreakTestSetup(tester);
 
-          // Place caret at the first line at "Lorem |ipsum"          
+          // Place caret at the first line at "Lorem |ipsum"
           await tester.placeCaretInParagraph('1', 6);
 
           await tester.pressAltDownArrow();
@@ -339,7 +338,7 @@ void main() {
         });
       });
 
-      group("shortcuts for Windows and Linux do nothing on mac", (){
+      group("shortcuts for Windows and Linux do nothing on mac", () {
         testWidgetsOnMac('HOME', (tester) async {
           // Start the user's selection somewhere after the beginning of the first
           // line in the first node.
@@ -377,7 +376,7 @@ void main() {
             ),
           );
         });
-      
+
         testWidgetsOnMac('CTRL + LEFT ARROW', (tester) async {
           // Start the user's selection somewhere in the middle of a word.
           await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
@@ -395,7 +394,7 @@ void main() {
             ),
           );
         });
-        
+
         testWidgetsOnMac('CTRL + RIGHT ARROW', (tester) async {
           // Start the user's selection somewhere in the middle of a word.
           await _pumpCaretMovementTestSetup(tester, textOffsetInFirstNode: 8);
@@ -415,7 +414,7 @@ void main() {
         });
       });
 
-      group("shortcuts for Mac do nothing on Windows and Linux", (){
+      group("shortcuts for Mac do nothing on Windows and Linux", () {
         testWidgetsOnWindowsAndLinux('CMD + LEFT ARROW', (tester) async {
           // Start the user's selection somewhere after the beginning of the first
           // line in the first node.
@@ -804,7 +803,7 @@ void main() {
           Platform.setTestInstance(null);
         });
 
-        test('deletes selection and inserts character', () {
+        test('deletes selection when character key is pressed', () {
           Platform.setTestInstance(MacPlatform());
 
           final editContext = createEditContext(
@@ -841,10 +840,12 @@ void main() {
             ),
           );
 
-          expect(result, ExecutionInstruction.haltExecution);
+          // When we use a character key for deletion, we expect to continue
+          // execution so that the character is also entered by another handler.
+          expect(result, ExecutionInstruction.continueExecution);
 
           final paragraph = editContext.editor.document.nodes.first as ParagraphNode;
-          expect(paragraph.text.text, 'Text with [a] selection');
+          expect(paragraph.text.text, 'Text with [] selection');
 
           expect(
             editContext.composer.selection,
@@ -852,7 +853,7 @@ void main() {
               const DocumentSelection.collapsed(
                 position: DocumentPosition(
                   nodeId: '1',
-                  nodePosition: TextNodePosition(offset: 12),
+                  nodePosition: TextNodePosition(offset: 11),
                 ),
               ),
             ),
@@ -1016,33 +1017,26 @@ Future<EditContext> _pumpCaretMovementTestSetup(
 }
 
 Future<TestDocumentContext> _pumpAutoWrappingTestSetup(WidgetTester tester) async {
-  return await tester 
-    .createDocument()
-    .withSingleParagraph()
-    .forDesktop()
-    .withEditorSize(const Size(400, 400))
-    .pump();
+  return await tester.createDocument().withSingleParagraph().forDesktop().withEditorSize(const Size(400, 400)).pump();
 }
 
 Future<TestDocumentContext> _pumpExplicitLineBreakTestSetup(
   WidgetTester tester, {
   Size? size,
-}) async {          
-  return await tester 
-    .createDocument()
-    .withCustomContent(
-      MutableDocument(
+}) async {
+  return await tester
+      .createDocument()
+      .withCustomContent(MutableDocument(
         nodes: [
           ParagraphNode(
             id: '1',
-            text: AttributedText(                  
-              text:
-                  'Lorem ipsum dolor sit amet\nconsectetur adipiscing elit',              
+            text: AttributedText(
+              text: 'Lorem ipsum dolor sit amet\nconsectetur adipiscing elit',
             ),
           ),
         ],
       ))
-    .forDesktop()
-    .withEditorSize(size)
-    .pump();
+      .forDesktop()
+      .withEditorSize(size)
+      .pump();
 }
