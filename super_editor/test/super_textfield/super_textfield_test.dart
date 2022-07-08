@@ -261,10 +261,7 @@ void main() {
           );
         });
 
-        testWidgetsOnMobile(
-            'GIVEN Padding has Insets '
-            'WHEN tap on insets '
-            'THEN Focus is  requested', (tester) async {
+        testWidgetsOnMobile('receive focus when tap on insets', (tester) async {
           final focusNode = FocusNode(debugLabel: 'SuperTextField FocusNode');
           const padding = EdgeInsets.only(right: 20);
           await tester.pumpWidget(
