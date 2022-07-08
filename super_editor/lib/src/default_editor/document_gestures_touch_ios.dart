@@ -33,6 +33,7 @@ class IOSDocumentTouchInteractor extends StatefulWidget {
     required this.getDocumentLayout,
     this.scrollController,
     this.dragAutoScrollBoundary = const AxisOffset.symmetric(54),
+    required this.handleColor,
     required this.popoverToolbarBuilder,
     required this.floatingCursorController,
     this.createOverlayControlsClipper,
@@ -56,6 +57,9 @@ class IOSDocumentTouchInteractor extends StatefulWidget {
   /// edges.
   final AxisOffset dragAutoScrollBoundary;
 
+  /// Color the iOS-style text selection drag handles.
+  final Color handleColor;
+
   final WidgetBuilder popoverToolbarBuilder;
 
   /// Controller that reports the current offset of the iOS floating
@@ -76,7 +80,7 @@ class IOSDocumentTouchInteractor extends StatefulWidget {
   final Widget child;
 
   @override
-  _IOSDocumentTouchInteractorState createState() => _IOSDocumentTouchInteractorState();
+  State createState() => _IOSDocumentTouchInteractorState();
 }
 
 class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
@@ -791,7 +795,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
         documentLayout: _docLayout,
         document: widget.document,
         composer: widget.composer,
-        handleColor: Colors.red,
+        handleColor: widget.handleColor,
         onDoubleTapOnCaret: _selectWordAtCaret,
         onTripleTapOnCaret: _selectParagraphAtCaret,
         onFloatingCursorStart: _onFloatingCursorStart,
@@ -1117,6 +1121,7 @@ class IosDocumentTouchEditingControls extends StatefulWidget {
   /// (probably the entire screen).
   final CustomClipper<Rect> Function(BuildContext overlayContext)? createOverlayControlsClipper;
 
+  /// Color the iOS-style text selection drag handles.
   final Color handleColor;
 
   /// Callback invoked on iOS when the user double taps on the caret.
@@ -1158,7 +1163,7 @@ class IosDocumentTouchEditingControls extends StatefulWidget {
   final bool showDebugPaint;
 
   @override
-  _IosDocumentTouchEditingControlsState createState() => _IosDocumentTouchEditingControlsState();
+  State createState() => _IosDocumentTouchEditingControlsState();
 }
 
 class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditingControls>
