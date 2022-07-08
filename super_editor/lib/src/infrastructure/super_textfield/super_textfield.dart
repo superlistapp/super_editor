@@ -139,7 +139,7 @@ class SuperTextField extends StatefulWidget {
 
   /// "Space added around the text in the field, which also responds to gestures."
   ///
-  /// defaults to `EdgeInsets.zero`
+  /// Defaults to `EdgeInsets.zero`.
   final EdgeInsetsGeometry padding;
 
   /// Priority list of handlers that process all physical keyboard

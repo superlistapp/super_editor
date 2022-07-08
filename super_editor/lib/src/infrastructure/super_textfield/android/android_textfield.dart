@@ -67,7 +67,7 @@ class SuperAndroidTextField extends StatefulWidget {
 
   /// "Space added around the text in the field, which also responds to gestures."
   ///
-  /// defaults to `EdgeInsets.zero`
+  /// Defaults to `EdgeInsets.zero`.
   final EdgeInsetsGeometry padding;
 
   /// Color of the caret.
