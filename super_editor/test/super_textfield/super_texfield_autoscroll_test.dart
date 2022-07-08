@@ -7,7 +7,7 @@ import '../test_tools.dart';
 
 void main() {
   group('SuperTextField', () {
-    testWidgetsOnAllPlatforms('auto scrolls horizontally when single-line', (tester) async {
+    testWidgetsOnAllPlatforms('single-line jumps scroll position horizontally when selection changes', (tester) async {
       final controller = AttributedTextEditingController(
         text: AttributedText(text: "ABCDEFG"),
       );
@@ -23,6 +23,7 @@ void main() {
       );
 
       // Move selection to the end of the text
+      // TODO: change to simulate user input when IME simulation is available
       controller.selection = const TextSelection.collapsed(offset: 7);
       await tester.pumpAndSettle();
 
@@ -36,7 +37,7 @@ void main() {
       expect(textRight, lessThanOrEqualTo(viewportRight));
     });
 
-    testWidgetsOnAllPlatforms('auto scrolls vertically when multi-line', (tester) async {
+    testWidgetsOnAllPlatforms('multi-line jumps scroll position vertically when selection changes', (tester) async {
       final controller = AttributedTextEditingController(
         text: AttributedText(text: "A\nB\nC\nD"),
       );
@@ -52,6 +53,7 @@ void main() {
       );
 
       // Move selection to the end of the text
+      // TODO: change to simulate user input when IME simulation is available
       controller.selection = const TextSelection.collapsed(offset: 7);
       await tester.pumpAndSettle();
 
