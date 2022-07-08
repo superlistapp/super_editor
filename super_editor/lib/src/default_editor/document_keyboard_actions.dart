@@ -156,7 +156,7 @@ ExecutionInstruction anyCharacterOrDestructiveKeyToDeleteSelection({
   final isDestructiveKey =
       keyEvent.logicalKey == LogicalKeyboardKey.backspace || keyEvent.logicalKey == LogicalKeyboardKey.delete;
   final isCharacterKey =
-      keyEvent.character != null && keyEvent.character != '' && !webBugBlacklistCharacters.contains(keyEvent.character);
+      keyEvent.character != null && keyEvent.character != '' && !isKeyEventCharacterBlacklisted(keyEvent.character);
 
   final shouldDeleteSelection = isDestructiveKey || isCharacterKey;
   if (!shouldDeleteSelection) {
@@ -165,25 +165,16 @@ ExecutionInstruction anyCharacterOrDestructiveKeyToDeleteSelection({
 
   editContext.commonOps.deleteSelection();
 
-  // If the user pressed a character, insert it.
-  String? character = keyEvent.character;
-  // On web, keys like shift and alt are sending their full name
-  // as a character, e.g., "Shift" and "Alt". This check prevents
-  // those keys from inserting their name into content.
-  //
-  // This filter is a blacklist, and therefore it will fail to
-  // catch any key that isn't explicitly listed. The eventual solution
-  // to this is for the web to honor the standard key event contract,
-  // but that's out of our control.
-  if (character != null && (!kIsWeb || webBugBlacklistCharacters.contains(character))) {
-    // The web reports a tab as "Tab". Intercept it and translate it to a space.
-    if (character == 'Tab') {
-      character = ' ';
-    }
-
-    editContext.commonOps.insertCharacter(character);
+  if (isCharacterKey) {
+    // We continue handler execution even though we deleted the selection.
+    // If the user pressed a character key, we want to let the character entry
+    // behavior run.
+    return ExecutionInstruction.continueExecution;
   }
 
+  // We deleted a selection in response to an explicit deletion key, e.g.,
+  // BACKSPACE or DELETE. We don't want any other handlers to respond to
+  // this key.
   return ExecutionInstruction.haltExecution;
 }
 
@@ -268,20 +259,19 @@ ExecutionInstruction moveUpDownLeftAndRightWithArrowKeys({
     return ExecutionInstruction.continueExecution;
   }
 
-  if (defaultTargetPlatform == TargetPlatform.linux && keyEvent.isAltPressed && 
-      (keyEvent.logicalKey == LogicalKeyboardKey.arrowUp || keyEvent.logicalKey == LogicalKeyboardKey.arrowDown)
-  ) {
+  if (defaultTargetPlatform == TargetPlatform.linux &&
+      keyEvent.isAltPressed &&
+      (keyEvent.logicalKey == LogicalKeyboardKey.arrowUp || keyEvent.logicalKey == LogicalKeyboardKey.arrowDown)) {
     return ExecutionInstruction.continueExecution;
   }
 
   bool didMove = false;
   if (keyEvent.logicalKey == LogicalKeyboardKey.arrowLeft || keyEvent.logicalKey == LogicalKeyboardKey.arrowRight) {
-    MovementModifier? movementModifier;    
+    MovementModifier? movementModifier;
     if ((defaultTargetPlatform == TargetPlatform.windows || defaultTargetPlatform == TargetPlatform.linux) &&
-        keyEvent.isControlPressed
-    ) {      
-      movementModifier = MovementModifier.word;      
-    } else if (defaultTargetPlatform == TargetPlatform.macOS && keyEvent.isMetaPressed) {      
+        keyEvent.isControlPressed) {
+      movementModifier = MovementModifier.word;
+    } else if (defaultTargetPlatform == TargetPlatform.macOS && keyEvent.isMetaPressed) {
       movementModifier = MovementModifier.line;
     } else if (defaultTargetPlatform == TargetPlatform.macOS && keyEvent.isAltPressed) {
       movementModifier = MovementModifier.word;
@@ -345,14 +335,14 @@ ExecutionInstruction moveToLineStartWithHome({
 }) {
   if (defaultTargetPlatform != TargetPlatform.windows && defaultTargetPlatform != TargetPlatform.linux) {
     return ExecutionInstruction.continueExecution;
-  }  
+  }
 
   bool didMove = false;
   if (keyEvent.logicalKey == LogicalKeyboardKey.home) {
     didMove = editContext.commonOps.moveCaretUpstream(
       expand: keyEvent.isShiftPressed,
       movementModifier: MovementModifier.line,
-    );    
+    );
   }
 
   return didMove ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
@@ -364,7 +354,7 @@ ExecutionInstruction moveToLineEndWithEnd({
 }) {
   if (defaultTargetPlatform != TargetPlatform.windows && defaultTargetPlatform != TargetPlatform.linux) {
     return ExecutionInstruction.continueExecution;
-  }  
+  }
 
   bool didMove = false;
   if (keyEvent.logicalKey == LogicalKeyboardKey.end) {

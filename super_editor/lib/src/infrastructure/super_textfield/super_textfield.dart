@@ -265,6 +265,7 @@ class SuperTextFieldState extends State<SuperTextField> {
             lineHeight: widget.lineHeight,
             textInputAction: _isMultiline ? TextInputAction.newline : TextInputAction.done,
             padding: widget.padding,
+
           ),
         );
       case SuperTextFieldPlatformConfiguration.iOS:

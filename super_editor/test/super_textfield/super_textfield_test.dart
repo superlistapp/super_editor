@@ -8,6 +8,7 @@ import '../test_tools.dart';
 import 'super_textfield_inspector.dart';
 import 'super_textfield_robot.dart';
 
+
 void main() {
   group("SuperTextField", () {
     group("configures for", () {
@@ -107,6 +108,7 @@ void main() {
               ),
             ),
           );
+          
           final innerTextField = tester.widget<SuperAndroidTextField>(find.byType(SuperAndroidTextField).first);
 
           // Ensure inner textfield action is configured to newline

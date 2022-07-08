@@ -42,10 +42,7 @@ class SuperIOSTextField extends StatefulWidget {
     this.textInputAction = TextInputAction.done,
     this.popoverToolbarBuilder = _defaultPopoverToolbarBuilder,
     this.showDebugPaint = false,
-    this.onPerformActionPressed,
-  })  : assert(minLines == null || minLines == 1 || lineHeight != null, 'minLines > 1 requires a non-null lineHeight'),
-        assert(maxLines == null || maxLines == 1 || lineHeight != null, 'maxLines > 1 requires a non-null lineHeight'),
-        super(key: key);
+  }) : super(key: key);
 
   /// [FocusNode] attached to this text field.
   final FocusNode? focusNode;
@@ -115,12 +112,10 @@ class SuperIOSTextField extends StatefulWidget {
   /// The height of a single line of text in this text scroll view, used
   /// with [minLines] and [maxLines] to size the text field.
   ///
-  /// An explicit [lineHeight] is required for multi-line text fields
-  /// because rich text in this text scroll view might have lines of
-  /// varying height, which would result in a constantly changing text
-  /// field height during scrolling. To avoid that situation, a single,
-  /// explicit [lineHeight] is provided and used for all text field height
-  /// calculations.
+  /// If a [lineHeight] is provided, the text field viewport is sized as a
+  /// multiple of that [lineHeight]. If no [lineHeight] is provided, the
+  /// text field viewport is sized as a multiple of the line-height of the
+  /// first line of text.
   final double? lineHeight;
 
   /// The type of action associated with the action button on the mobile
@@ -132,10 +127,6 @@ class SuperIOSTextField extends StatefulWidget {
 
   /// Whether to paint debug guides.
   final bool showDebugPaint;
-
-  /// Callback invoked when the user presses the "action" button
-  /// on the keyboard, e.g., "done", "call", "emergency", etc.
-  final Function(TextInputAction)? onPerformActionPressed;
 
   @override
   State createState() => SuperIOSTextFieldState();
@@ -168,16 +159,15 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
   @override
   void initState() {
     super.initState();
-    _focusNode = (widget.focusNode ?? FocusNode())
-      ..unfocus()
-      ..addListener(_onFocusChange);
+    _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
     if (_focusNode.hasFocus) {
       _showHandles();
     }
 
     _textEditingController = (widget.textController ?? ImeAttributedTextEditingController())
       ..addListener(_onTextOrSelectionChange)
-      ..onIOSFloatingCursorChange = _onFloatingCursorChange;
+      ..onIOSFloatingCursorChange = _onFloatingCursorChange
+      ..onPerformActionPressed ??= _onPerformActionPressed;
 
     _textScrollController = TextScrollController(
       textController: _textEditingController,
@@ -212,6 +202,9 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
       _textEditingController
         ..removeListener(_onTextOrSelectionChange)
         ..onIOSFloatingCursorChange = null;
+      if (_textEditingController.onPerformActionPressed == _onPerformActionPressed) {
+        _textEditingController.onPerformActionPressed = null;
+      }
 
       if (widget.textController != null) {
         _textEditingController = widget.textController!;
@@ -221,7 +214,8 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
 
       _textEditingController
         ..addListener(_onTextOrSelectionChange)
-        ..onIOSFloatingCursorChange = _onFloatingCursorChange;
+        ..onIOSFloatingCursorChange = _onFloatingCursorChange
+        ..onPerformActionPressed ??= _onPerformActionPressed;
     }
 
     if (widget.showDebugPaint != oldWidget.showDebugPaint) {
@@ -282,15 +276,20 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
   @override
   ProseTextLayout get textLayout => _textContentKey.currentState!.textLayout;
 
-  bool get _isMultiline => widget.minLines != 1 || widget.maxLines != 1;
+  bool get _isMultiline => (widget.minLines ?? 1) != 1 || (widget.maxLines ?? 1) != 1;
 
   void _onFocusChange() {
     if (_focusNode.hasFocus) {
       if (!_textEditingController.isAttachedToIme) {
         _log.info('Attaching TextInputClient to TextInput');
         setState(() {
+          if (!_textEditingController.selection.isValid) {
+            _textEditingController.selection = TextSelection.collapsed(offset: _textEditingController.text.text.length);
+          }
+
           _textEditingController.attachToIme(
             textInputAction: widget.textInputAction,
+            textInputType: _isMultiline ? TextInputType.multiline : TextInputType.text,
           );
 
           _showHandles();
@@ -357,6 +356,23 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
 
   void _onFloatingCursorChange(RawFloatingCursorPoint point) {
     _floatingCursorController.updateFloatingCursor(_textContentKey.currentState!.textLayout, point);
+  }
+
+  /// Handles actions from the IME
+  void _onPerformActionPressed(TextInputAction action) {
+    switch (action) {
+      case TextInputAction.done:
+        _focusNode.unfocus();
+        break;
+      case TextInputAction.next:
+        _focusNode.nextFocus();
+        break;
+      case TextInputAction.previous:
+        _focusNode.previousFocus();
+        break;
+      default:
+        _log.warning("User pressed unhandled action button: $action");
+    }
   }
 
   @override
@@ -440,7 +456,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
           color: _floatingCursorController.isShowingFloatingCursor ? Colors.grey : widget.caretColor,
         ),
         selection: _textEditingController.selection,
-        hasCaret: true,
+        hasCaret: _focusNode.hasFocus,
       ),
     );
   }

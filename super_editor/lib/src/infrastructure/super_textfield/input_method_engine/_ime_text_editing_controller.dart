@@ -81,6 +81,7 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
     bool autocorrect = true,
     bool enableSuggestions = true,
     TextInputAction textInputAction = TextInputAction.done,
+    TextInputType textInputType = TextInputType.text,
   }) {
     if (isAttachedToIme) {
       // We're already connected to the IME.
@@ -94,6 +95,7 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
           enableDeltaModel: true,
           enableSuggestions: enableSuggestions,
           inputAction: textInputAction,
+          inputType: textInputType,
         ));
     _inputConnection!
       ..show()
@@ -105,6 +107,7 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
     bool autocorrect = true,
     bool enableSuggestions = true,
     TextInputAction textInputAction = TextInputAction.done,
+    TextInputType textInputType = TextInputType.text,
   }) {
     if (!isAttachedToIme) {
       // We're not attached to the IME, so there is nothing to update.
@@ -122,6 +125,7 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
           enableDeltaModel: true,
           enableSuggestions: enableSuggestions,
           inputAction: textInputAction,
+          inputType: textInputType,
         ));
     _inputConnection!
       ..show()
@@ -190,6 +194,7 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
 
   void Function(TextInputAction)? _onPerformActionPressed;
   set onPerformActionPressed(Function(TextInputAction)? callback) => _onPerformActionPressed = callback;
+  Function(TextInputAction)? get onPerformActionPressed => _onPerformActionPressed;
 
   @override
   TextEditingValue? get currentTextEditingValue => TextEditingValue(
