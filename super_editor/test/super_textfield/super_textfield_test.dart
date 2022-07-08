@@ -105,11 +105,8 @@ void main() {
     });
 
     group("padding for ", () {
-      group("mobile", () {
-        testWidgetsOnMobile(
-            'GIVEN Padding is default '
-            'WHEN tap on SuperTextField '
-            'THEN Focus is requested', (tester) async {
+      group("mobile ", () {
+        testWidgetsOnMobile('receive focus on tap with default insets', (tester) async {
           final focusNode = FocusNode(debugLabel: 'SuperTextField FocusNode');
 
           await tester.pumpWidget(
@@ -136,10 +133,7 @@ void main() {
           );
         });
 
-        testWidgetsOnMobile(
-            'GIVEN Padding has Insets '
-            'WHEN tap on Padding '
-            'THEN Focus is requested', (tester) async {
+        testWidgetsOnMobile('receive focus on tap with custom insets', (tester) async {
           final focusNode = FocusNode(debugLabel: 'SuperTextField FocusNode');
           const padding = EdgeInsets.only(right: 20);
 
@@ -170,10 +164,7 @@ void main() {
           );
         });
 
-        testWidgetsOnMobile(
-            'GIVEN Padding has Insets '
-            'WHEN tap on insets '
-            'THEN Focus is  requested', (tester) async {
+        testWidgetsOnMobile('receive focus on tap on insets', (tester) async {
           final focusNode = FocusNode(debugLabel: 'SuperTextField FocusNode');
           const padding = EdgeInsets.only(right: 20);
           await tester.pumpWidget(

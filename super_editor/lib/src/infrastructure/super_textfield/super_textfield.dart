@@ -1,6 +1,7 @@
 import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/android/android_textfield.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/desktop/desktop_textfield.dart';
@@ -63,9 +64,7 @@ class SuperTextField extends StatefulWidget {
     this.lineHeight,
     this.padding = EdgeInsets.zero,
     this.keyboardHandlers = defaultTextFieldKeyboardHandlers,
-  })  : assert(minLines == null || minLines == 1 || lineHeight != null, 'minLines > 1 requires a non-null lineHeight'),
-        assert(maxLines == null || maxLines == 1 || lineHeight != null, 'maxLines > 1 requires a non-null lineHeight'),
-        super(key: key);
+  }) : super(key: key);
 
   final FocusNode? focusNode;
 
@@ -161,7 +160,9 @@ class SuperTextFieldState extends State<SuperTextField> {
     super.initState();
 
     _controller = widget.textController != null
-        ? ImeAttributedTextEditingController(controller: widget.textController, disposeClientController: false)
+        ? widget.textController is ImeAttributedTextEditingController
+            ? (widget.textController as ImeAttributedTextEditingController)
+            : ImeAttributedTextEditingController(controller: widget.textController, disposeClientController: false)
         : ImeAttributedTextEditingController();
   }
 
@@ -171,7 +172,9 @@ class SuperTextFieldState extends State<SuperTextField> {
 
     if (widget.textController != oldWidget.textController) {
       _controller = widget.textController != null
-          ? ImeAttributedTextEditingController(controller: widget.textController, disposeClientController: false)
+          ? widget.textController is ImeAttributedTextEditingController
+              ? (widget.textController as ImeAttributedTextEditingController)
+              : ImeAttributedTextEditingController(controller: widget.textController, disposeClientController: false)
           : ImeAttributedTextEditingController();
     }
   }
@@ -181,6 +184,42 @@ class SuperTextFieldState extends State<SuperTextField> {
 
   @visibleForTesting
   ProseTextLayout get textLayout => (_platformFieldKey.currentState as ProseTextBlock).textLayout;
+
+  bool get _isMultiline => (widget.minLines ?? 1) != 1 || (widget.maxLines ?? 1) != 1;
+
+  SuperTextFieldPlatformConfiguration get _configuration {
+    if (widget.configuration != null) {
+      return widget.configuration!;
+    }
+
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+        return SuperTextFieldPlatformConfiguration.android;
+      case TargetPlatform.iOS:
+        return SuperTextFieldPlatformConfiguration.iOS;
+      case TargetPlatform.fuchsia:
+      case TargetPlatform.linux:
+      case TargetPlatform.macOS:
+      case TargetPlatform.windows:
+        return SuperTextFieldPlatformConfiguration.desktop;
+    }
+  }
+
+  /// Shortcuts that should be ignored on web.
+  ///
+  /// Without this we can't handle space and arrow keys inside [SuperTextField].
+  ///
+  /// For exemple, when [SuperTextField] is inside a [ScrollView],
+  /// pressing [LogicalKeyboardKey.space] scrolls the scrollview.
+  final Map<LogicalKeySet, Intent> _scrollShortcutOverrides = kIsWeb
+      ? {
+          LogicalKeySet(LogicalKeyboardKey.space): DoNothingAndStopPropagationIntent(),
+          LogicalKeySet(LogicalKeyboardKey.arrowUp): DoNothingAndStopPropagationIntent(),
+          LogicalKeySet(LogicalKeyboardKey.arrowDown): DoNothingAndStopPropagationIntent(),
+          LogicalKeySet(LogicalKeyboardKey.arrowLeft): DoNothingAndStopPropagationIntent(),
+          LogicalKeySet(LogicalKeyboardKey.arrowRight): DoNothingAndStopPropagationIntent(),
+        }
+      : const <LogicalKeySet, Intent>{};
 
   @override
   Widget build(BuildContext context) {
@@ -208,57 +247,47 @@ class SuperTextFieldState extends State<SuperTextField> {
           keyboardHandlers: widget.keyboardHandlers,
         );
       case SuperTextFieldPlatformConfiguration.android:
-        return SuperAndroidTextField(
-          key: _platformFieldKey,
-          focusNode: widget.focusNode,
-          textController: _controller,
-          textAlign: widget.textAlign,
-          textStyleBuilder: widget.textStyleBuilder,
-          hintBehavior: widget.hintBehavior,
-          hintBuilder: widget.hintBuilder,
-          caretColor: widget.controlsColor ?? defaultAndroidControlsColor,
-          selectionColor: widget.selectionColor ?? defaultSelectionColor,
-          padding: widget.padding,
-          handlesColor: widget.controlsColor ?? defaultAndroidControlsColor,
-          minLines: widget.minLines,
-          maxLines: widget.maxLines,
-          lineHeight: widget.lineHeight,
+        return Shortcuts(
+          shortcuts: _scrollShortcutOverrides,
+          child: SuperAndroidTextField(
+            key: _platformFieldKey,
+            focusNode: widget.focusNode,
+            textController: _controller,
+            textAlign: widget.textAlign,
+            textStyleBuilder: widget.textStyleBuilder,
+            hintBehavior: widget.hintBehavior,
+            hintBuilder: widget.hintBuilder,
+            caretColor: widget.controlsColor ?? defaultAndroidControlsColor,
+            selectionColor: widget.selectionColor ?? defaultSelectionColor,
+            handlesColor: widget.controlsColor ?? defaultAndroidControlsColor,
+            minLines: widget.minLines,
+            maxLines: widget.maxLines,
+            lineHeight: widget.lineHeight,
+            textInputAction: _isMultiline ? TextInputAction.newline : TextInputAction.done,
+            padding: widget.padding,
+          ),
         );
       case SuperTextFieldPlatformConfiguration.iOS:
-        return SuperIOSTextField(
-          key: _platformFieldKey,
-          focusNode: widget.focusNode,
-          textController: _controller,
-          textAlign: widget.textAlign,
-          textStyleBuilder: widget.textStyleBuilder,
-          hintBehavior: widget.hintBehavior,
-          hintBuilder: widget.hintBuilder,
-          caretColor: widget.controlsColor ?? defaultIOSControlsColor,
-          selectionColor: widget.selectionColor ?? defaultSelectionColor,
-          padding: widget.padding,
-          handlesColor: widget.controlsColor ?? defaultIOSControlsColor,
-          minLines: widget.minLines,
-          maxLines: widget.maxLines,
-          lineHeight: widget.lineHeight,
+        return Shortcuts(
+          shortcuts: _scrollShortcutOverrides,
+          child: SuperIOSTextField(
+            key: _platformFieldKey,
+            focusNode: widget.focusNode,
+            textController: _controller,
+            textAlign: widget.textAlign,
+            textStyleBuilder: widget.textStyleBuilder,
+            hintBehavior: widget.hintBehavior,
+            hintBuilder: widget.hintBuilder,
+            caretColor: widget.controlsColor ?? defaultIOSControlsColor,
+            selectionColor: widget.selectionColor ?? defaultSelectionColor,
+            handlesColor: widget.controlsColor ?? defaultIOSControlsColor,
+            minLines: widget.minLines,
+            maxLines: widget.maxLines,
+            lineHeight: widget.lineHeight,
+            textInputAction: _isMultiline ? TextInputAction.newline : TextInputAction.done,
+            padding: widget.padding,
+          ),
         );
-    }
-  }
-
-  SuperTextFieldPlatformConfiguration get _configuration {
-    if (widget.configuration != null) {
-      return widget.configuration!;
-    }
-
-    switch (defaultTargetPlatform) {
-      case TargetPlatform.android:
-        return SuperTextFieldPlatformConfiguration.android;
-      case TargetPlatform.iOS:
-        return SuperTextFieldPlatformConfiguration.iOS;
-      case TargetPlatform.fuchsia:
-      case TargetPlatform.linux:
-      case TargetPlatform.macOS:
-      case TargetPlatform.windows:
-        return SuperTextFieldPlatformConfiguration.desktop;
     }
   }
 }
