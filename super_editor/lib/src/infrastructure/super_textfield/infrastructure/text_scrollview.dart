@@ -30,6 +30,7 @@ class TextScrollView extends StatefulWidget {
     this.minLines,
     this.maxLines,
     this.lineHeight,
+    this.padding = EdgeInsets.zero,
     this.perLineAutoScrollDuration = Duration.zero,
     this.showDebugPaint = false,
     required this.child,
@@ -80,6 +81,11 @@ class TextScrollView extends StatefulWidget {
   /// [TextScrollView] is sized as a multiple of the line-height of the
   /// first line of text.
   final double? lineHeight;
+
+  /// "Space added around the text in the field, which also responds to gestures."
+  ///
+  /// Defaults to `EdgeInsets.zero`.
+  final EdgeInsetsGeometry padding;
 
   /// The time it takes to scroll to the next line, when auto-scrolling.
   ///
@@ -441,8 +447,11 @@ class _TextScrollViewState extends State<TextScrollView>
         height: _viewportHeight,
         child: Stack(
           children: [
-            _buildScrollView(
-              child: widget.child,
+            Padding(
+              padding: EdgeInsets.zero,
+              child: _buildScrollView(
+                child: widget.child,
+              ),
             ),
             if (widget.showDebugPaint) ..._buildDebugScrollRegions(),
           ],

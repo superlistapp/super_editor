@@ -46,7 +46,6 @@ class AndroidTextFieldTouchInteractor extends StatefulWidget {
     required this.textKey,
     required this.isMultiline,
     required this.handleColor,
-    this.padding = EdgeInsets.zero,
     this.showDebugPaint = false,
     required this.child,
   }) : super(key: key);
@@ -84,11 +83,6 @@ class AndroidTextFieldTouchInteractor extends StatefulWidget {
 
   /// The color of expanded selection drag handles.
   final Color handleColor;
-
-  /// "Space added around the text in the field, which also responds to gestures."
-  ///
-  /// Defaults to `EdgeInsets.zero`.
-  final EdgeInsetsGeometry padding;
 
   /// Whether to paint debugging guides and regions.
   final bool showDebugPaint;
@@ -400,16 +394,13 @@ class AndroidTextFieldTouchInteractorState extends State<AndroidTextFieldTouchIn
           decoration: BoxDecoration(
             border: widget.showDebugPaint ? Border.all(color: Colors.purple) : const Border(),
           ),
-          child: Padding(
-            padding: widget.padding,
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                widget.child,
-                if (widget.textController.selection.extentOffset >= 0) _buildExtentTrackerForMagnifier(),
-                _buildTapAndDragDetector(),
-              ],
-            ),
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              widget.child,
+              if (widget.textController.selection.extentOffset >= 0) _buildExtentTrackerForMagnifier(),
+              _buildTapAndDragDetector(),
+            ],
           ),
         ),
       ),

@@ -374,7 +374,6 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
           textScrollController: _textScrollController,
           isMultiline: _isMultiline,
           handleColor: widget.handlesColor,
-          padding: widget.padding,
           showDebugPaint: widget.showDebugPaint,
           child: TextScrollView(
             key: _scrollKey,
@@ -384,6 +383,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
             minLines: widget.minLines,
             maxLines: widget.maxLines,
             lineHeight: widget.lineHeight,
+            padding: widget.padding,
             perLineAutoScrollDuration: const Duration(milliseconds: 100),
             showDebugPaint: widget.showDebugPaint,
             child: ListenableBuilder(
