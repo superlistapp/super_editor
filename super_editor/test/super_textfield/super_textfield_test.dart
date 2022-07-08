@@ -5,7 +5,6 @@ import 'package:super_editor/super_editor.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
 import '../test_tools.dart';
-import 'super_textfield_robot.dart';
 
 void main() {
   group("SuperTextField", () {
@@ -16,9 +15,7 @@ void main() {
 
           await tester.pumpWidget(
             _buildScaffold(
-              child: const SuperTextField(
-                lineHeight: 16,
-              ),
+              child: const SuperTextField(),
             ),
           );
 
@@ -32,7 +29,6 @@ void main() {
             _buildScaffold(
               child: const SuperTextField(
                 configuration: SuperTextFieldPlatformConfiguration.desktop,
-                lineHeight: 16,
               ),
             ),
           );
@@ -47,9 +43,7 @@ void main() {
 
           await tester.pumpWidget(
             _buildScaffold(
-              child: const SuperTextField(
-                lineHeight: 16,
-              ),
+              child: const SuperTextField(),
             ),
           );
 
@@ -63,7 +57,6 @@ void main() {
             _buildScaffold(
               child: const SuperTextField(
                 configuration: SuperTextFieldPlatformConfiguration.android,
-                lineHeight: 16,
               ),
             ),
           );
@@ -78,9 +71,7 @@ void main() {
 
           await tester.pumpWidget(
             _buildScaffold(
-              child: const SuperTextField(
-                lineHeight: 16,
-              ),
+              child: const SuperTextField(),
             ),
           );
 
@@ -94,12 +85,85 @@ void main() {
             _buildScaffold(
               child: const SuperTextField(
                 configuration: SuperTextFieldPlatformConfiguration.iOS,
-                lineHeight: 16,
               ),
             ),
           );
 
           expect(find.byType(SuperIOSTextField), findsOneWidget);
+        });
+      });
+    });
+
+    group("on mobile", () {
+      group("configures inner textfield textInputAction for newline when it's multiline", () {
+        testWidgetsOnAndroid('(on Android)', (tester) async {
+          await tester.pumpWidget(
+            _buildScaffold(
+              child: const SuperTextField(
+                minLines: 10,
+                maxLines: 10,
+              ),
+            ),
+          );
+
+          final innerTextField = tester.widget<SuperAndroidTextField>(find.byType(SuperAndroidTextField).first);
+
+          // Ensure inner textfield action is configured to newline
+          // so we are able to receive new lines
+          expect(innerTextField.textInputAction, TextInputAction.newline);
+        });
+
+        testWidgetsOnIos('(on iOS)', (tester) async {
+          await tester.pumpWidget(
+            _buildScaffold(
+              child: const SuperTextField(
+                minLines: 10,
+                maxLines: 10,
+              ),
+            ),
+          );
+
+          final innerTextField = tester.widget<SuperIOSTextField>(find.byType(SuperIOSTextField).first);
+
+          // Ensure inner textfield action is configured to newline
+          // so we are able to receive new lines
+          expect(innerTextField.textInputAction, TextInputAction.newline);
+        });
+      });
+
+      group("configures inner textfield textInputAction for done when it's singleline", () {
+        testWidgetsOnAndroid('(on Android)', (tester) async {
+          await tester.pumpWidget(
+            _buildScaffold(
+              child: const SuperTextField(
+                minLines: 1,
+                maxLines: 1,
+              ),
+            ),
+          );
+
+          final innerTextField = tester.widget<SuperAndroidTextField>(find.byType(SuperAndroidTextField).first);
+
+          // Ensure inner textfield action is configured to done
+          // because we should NOT receive new lines
+          expect(innerTextField.textInputAction, TextInputAction.done);
+        });
+
+        testWidgetsOnIos('(on iOS)', (tester) async {
+          await tester.pumpWidget(
+            _buildScaffold(
+              child: const SuperTextField(
+                minLines: 1,
+                maxLines: 1,
+              ),
+            ),
+          );
+
+          final innerTextField = tester.widget<SuperIOSTextField>(find.byType(SuperIOSTextField).first);
+
+          // Ensure inner textfield action is configured to done
+          // because we should NOT receive new lines
+          expect(innerTextField.textInputAction, TextInputAction.done);
         });
       });
     });
@@ -110,7 +174,6 @@ void main() {
           _buildScaffold(
             child: SuperTextField(
               focusNode: FocusNode()..requestFocus(),
-              lineHeight: 16,
             ),
           ),
         );
@@ -125,7 +188,6 @@ void main() {
           _buildScaffold(
             child: SuperTextField(
               focusNode: focusNode,
-              lineHeight: 16,
             ),
           ),
         );

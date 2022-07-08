@@ -33,6 +33,7 @@ class AndroidDocumentTouchInteractor extends StatefulWidget {
     required this.getDocumentLayout,
     this.scrollController,
     this.dragAutoScrollBoundary = const AxisOffset.symmetric(54),
+    required this.handleColor,
     required this.popoverToolbarBuilder,
     this.createOverlayControlsClipper,
     this.showDebugPaint = false,
@@ -55,6 +56,9 @@ class AndroidDocumentTouchInteractor extends StatefulWidget {
   /// edges.
   final AxisOffset dragAutoScrollBoundary;
 
+  /// The color of the Android-style drag handles.
+  final Color handleColor;
+
   final WidgetBuilder popoverToolbarBuilder;
 
   /// Creates a clipper that applies to overlay controls, preventing
@@ -71,7 +75,7 @@ class AndroidDocumentTouchInteractor extends StatefulWidget {
   final Widget child;
 
   @override
-  _AndroidDocumentTouchInteractorState createState() => _AndroidDocumentTouchInteractorState();
+  State createState() => _AndroidDocumentTouchInteractorState();
 }
 
 class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInteractor>
@@ -242,7 +246,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       if (mounted) {
         _ensureSelectionExtentIsVisible();
         _updateHandlesAfterSelectionOrLayoutChange();
-        
+
         setState(() {
           // reflow document layout
         });
@@ -518,7 +522,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
           documentKey: widget.documentKey,
           documentLayout: _docLayout,
           createOverlayControlsClipper: widget.createOverlayControlsClipper,
-          handleColor: Colors.red,
+          handleColor: widget.handleColor,
           onHandleDragStart: _onHandleDragStart,
           onHandleDragUpdate: _onHandleDragUpdate,
           onHandleDragEnd: _onHandleDragEnd,
@@ -898,6 +902,7 @@ class AndroidDocumentTouchEditingControls extends StatefulWidget {
   /// (probably the entire screen).
   final CustomClipper<Rect> Function(BuildContext overlayContext)? createOverlayControlsClipper;
 
+  /// The color of the Android-style drag handles.
   final Color handleColor;
 
   final void Function(HandleType handleType, Offset globalOffset)? onHandleDragStart;
@@ -915,7 +920,7 @@ class AndroidDocumentTouchEditingControls extends StatefulWidget {
   final bool showDebugPaint;
 
   @override
-  _AndroidDocumentTouchEditingControlsState createState() => _AndroidDocumentTouchEditingControlsState();
+  State createState() => _AndroidDocumentTouchEditingControlsState();
 }
 
 class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTouchEditingControls>

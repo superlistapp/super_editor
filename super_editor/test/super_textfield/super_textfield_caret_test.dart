@@ -21,7 +21,6 @@ void main() {
         _buildScaffold(
           child: SuperTextField(
             textStyleBuilder: (_) => const TextStyle(fontSize: 16),
-            lineHeight: 16,
           ),
         ),
       );
@@ -59,7 +58,6 @@ void main() {
         _buildScaffold(
           child: SuperTextField(
             textStyleBuilder: (_) => const TextStyle(fontSize: 16),
-            lineHeight: 16,
           ),
         ),
       );
@@ -96,9 +94,7 @@ void main() {
     testWidgetsOnAllPlatforms("is NOT displayed without a text selection", (tester) async {
       await tester.pumpWidget(
         _buildScaffold(
-          child: const SuperTextField(
-            lineHeight: 16,
-          ),
+          child: const SuperTextField(),
         ),
       );
       await tester.pump();
@@ -116,7 +112,6 @@ void main() {
           child: SuperTextField(
             focusNode: FocusNode()..requestFocus(),
             textController: controller,
-            lineHeight: 16,
           ),
         ),
       );

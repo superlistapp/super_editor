@@ -1,7 +1,8 @@
-import 'package:attributed_text/attributed_text.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:super_editor/src/infrastructure/super_textfield/super_textfield.dart';
+import 'package:super_editor/super_editor.dart';
 
 import '../test_tools.dart';
 import 'super_textfield_inspector.dart';
@@ -77,6 +78,117 @@ void main() {
         );
       });
     });
+
+    group("on desktop", () {
+      testWidgetsOnDesktop("tap down focuses the field", (tester) async {
+        await _pumpTestApp(tester);
+
+        // Tap down, but don't release.
+        final gesture = await tester.startGesture(tester.getTopLeft(find.byType(SuperTextField)));
+        await tester.pumpAndSettle();
+
+        // Ensure the field has a selection
+        expect(SuperTextFieldInspector.findSelection()!.isValid, true);
+
+        // Normally, `gesture.removePointer()` would be placed in a teardown
+        // because we don't really care about removing the pointer. However,
+        // in this case, when the pointer is removed, it triggers the field's
+        // "pan cancel", which throws a null-pointer exception because the
+        // widget tree is being torn down and a `GlobalKey` is used. The only
+        // way I found to fix this issue was to run both an `up()` and
+        // `removePointer()` here.
+        await gesture.up();
+        await gesture.removePointer();
+      });
+    });
+
+    group("on mobile", () {
+      testWidgetsOnMobile("tap down does NOT focus the field", (tester) async {
+        await _pumpTestApp(tester);
+
+        // Tap down, but don't release.
+        final gesture = await tester.startGesture(tester.getTopLeft(find.byType(SuperTextField)));
+        addTearDown(() => gesture.removePointer());
+        await tester.pumpAndSettle();
+
+        // Ensure the field has no selection
+        expect(SuperTextFieldInspector.findSelection()!.isValid, false);
+      });
+
+      testWidgetsOnMobile("tap down and drag does NOT focus the field", (tester) async {
+        await _pumpTestApp(tester);
+
+        // Tap down, start a pan, then drag up.
+        final gesture = await tester.startGesture(tester.getTopLeft(find.byType(SuperTextField)));
+        addTearDown(() => gesture.removePointer());
+        await tester.pumpAndSettle();
+        await gesture.moveBy(const Offset(2, 2));
+        await tester.pumpAndSettle();
+        await gesture.moveBy(const Offset(0, -300));
+        await tester.pumpAndSettle();
+
+        // Ensure the field has no selection
+        expect(SuperTextFieldInspector.findSelection()!.isValid, false);
+      });
+
+      testWidgetsOnMobile("tap up focuses the field", (tester) async {
+        await _pumpTestApp(tester);
+
+        // Tap down and up.
+        await tester.tapAt(tester.getTopLeft(find.byType(SuperTextField)));
+        await tester.pumpAndSettle();
+
+        // Ensure the field now has a selection.
+        expect(SuperTextFieldInspector.findSelection()!.isValid, true);
+      });
+
+      testWidgetsOnMobile("tap down in focused field moves the caret", (tester) async {
+        await _pumpTestApp(tester);
+
+        // Tap in empty space to place the caret at the end of the text.
+        await tester.tapAt(tester.getBottomRight(find.byType(SuperTextField)) - const Offset(10, 10));
+        // Without this 'delay' onTapDown is not called the second time
+        await tester.pumpAndSettle(const Duration(milliseconds: 200));
+        expect(SuperTextFieldInspector.findSelection()!.extent.offset, greaterThan(0));
+
+        // Tap DOWN at beginning of text to move the caret.
+        final gesture = await tester.startGesture(tester.getTopLeft(find.byType(SuperTextField)));
+        addTearDown(() => gesture.removePointer());
+        await tester.pumpAndSettle();
+
+        // Ensure the caret moved to the beginning of the text.
+        expect(SuperTextFieldInspector.findSelection()!.extent.offset, 0);
+      });
+
+      testWidgetsOnMobile("tap up shows the keyboard if the field already has focus", (tester) async {
+        await _pumpTestApp(tester);
+
+        bool isShowKeyboardCalled = false;
+
+        // Tap down and up so the field is focused.
+        await tester.tapAt(tester.getTopLeft(find.byType(SuperTextField)));
+        await tester.pumpAndSettle();
+
+        // Intercept messages sent to the platform.
+        tester.binding.defaultBinaryMessenger.setMockMessageHandler(SystemChannels.textInput.name, (message) async {
+          final methodCall = const JSONMethodCodec().decodeMethodCall(message);
+          if (methodCall.method == "TextInput.show") {
+            isShowKeyboardCalled = true;
+          }
+          return null;
+        });
+
+        // Avoid a double tap.
+        await tester.pump(kDoubleTapTimeout + const Duration(milliseconds: 1));
+
+        // Tap down and up again.
+        await tester.tapAt(tester.getTopLeft(find.byType(SuperTextField)));
+        await tester.pumpAndSettle();
+
+        // Ensure we requested the keyboard to the platform
+        expect(isShowKeyboardCalled, true);
+      });
+    });
   });
 }
 
@@ -85,7 +197,6 @@ Future<void> _pumpTestApp(WidgetTester tester) async {
     MaterialApp(
       home: Scaffold(
         body: SuperTextField(
-          lineHeight: 16,
           textController: AttributedTextEditingController(
             text: AttributedText(text: "abc"),
           ),

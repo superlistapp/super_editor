@@ -86,6 +86,7 @@ class TestDocumentConfigurator {
   final TestDocumentContext? _existingContext;
   DocumentGestureMode? _gestureMode;
   DocumentInputSource? _inputSource;
+  ThemeData? _appTheme;
   Stylesheet? _stylesheet;
   bool _autoFocus = false;
   ui.Size? _editorSize;
@@ -165,6 +166,13 @@ class TestDocumentConfigurator {
     }
   }
 
+  /// Configures the [ThemeData] used for the [MaterialApp] that wraps
+  /// the [SuperEditor].
+  TestDocumentConfigurator useAppTheme(ThemeData theme) {
+    _appTheme = theme;
+    return this;
+  }
+
   /// Configures the [SuperEditor] to use the given [stylesheet].
   TestDocumentConfigurator useStylesheet(Stylesheet stylesheet) {
     _stylesheet = stylesheet;
@@ -212,22 +220,25 @@ class TestDocumentConfigurator {
       testDocumentContext = _existingContext!;
     }
 
-    await _widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: _buildContent(
-          SuperEditor(
-            documentLayoutKey: testDocumentContext.layoutKey,
-            editor: testDocumentContext.editContext.editor,
-            composer: testDocumentContext.editContext.composer,
-            focusNode: testDocumentContext.focusNode,
-            inputSource: _inputSource ?? _defaultInputSource,
-            gestureMode: _gestureMode ?? _defaultGestureMode,
-            stylesheet: _stylesheet,
-            autofocus: _autoFocus,
+    await _widgetTester.pumpWidget(
+      MaterialApp(
+        theme: _appTheme,
+        home: Scaffold(
+          body: _buildContent(
+            SuperEditor(
+              documentLayoutKey: testDocumentContext.layoutKey,
+              editor: testDocumentContext.editContext.editor,
+              composer: testDocumentContext.editContext.composer,
+              focusNode: testDocumentContext.focusNode,
+              inputSource: _inputSource ?? _defaultInputSource,
+              gestureMode: _gestureMode ?? _defaultGestureMode,
+              stylesheet: _stylesheet,
+              autofocus: _autoFocus,
+            ),
           ),
         ),
       ),
-    ));
+    );
 
     return testDocumentContext;
   }
