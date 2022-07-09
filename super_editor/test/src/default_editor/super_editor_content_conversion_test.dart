@@ -8,14 +8,14 @@ import '../../super_editor/supereditor_robot.dart';
 import '../../test_tools.dart';
 import 'document_input_ime_test.dart';
 
-// This is not neccessary a desktop platform test suite, but it utilizes the
-// simulation of pasting on desktop
 void main() {
   group('SuperEditor', () {
     group('link conversion', () {
-      // Note: This covers cases on mobile as well, so separated tests for mobile
-      // is not necessary
       group('on desktop', () {
+        // This is not neccessary a desktop platform test suite, but it utilizes the
+        // simulation of pasting on desktop
+        // Note: This covers cases on mobile as well, so separated tests for mobile
+        // is not necessary
         group('recognizes links in pasted code', () {
           testWidgetsOnMac('when pasting into an empty paragraph', (tester) async {
             tester.simulateClipboard();
