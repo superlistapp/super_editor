@@ -1,11 +1,13 @@
 import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/android/android_textfield.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/desktop/desktop_textfield.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/attributed_text_editing_controller.dart';
+import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/gesture_overrides.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/hint_text.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/input_method_engine/_ime_text_editing_controller.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/ios/ios_textfield.dart';
@@ -14,9 +16,9 @@ import 'package:super_text_layout/super_text_layout.dart';
 import 'styles.dart';
 
 export 'android/android_textfield.dart';
-export 'desktop/desktop_textfield_gesture_extensions.dart';
 export 'desktop/desktop_textfield.dart';
 export 'infrastructure/attributed_text_editing_controller.dart';
+export 'infrastructure/gesture_overrides.dart';
 export 'infrastructure/hint_text.dart';
 export 'infrastructure/magnifier.dart';
 export 'infrastructure/text_scrollview.dart';
@@ -65,6 +67,8 @@ class SuperTextField extends StatefulWidget {
     this.lineHeight,
     this.keyboardHandlers = defaultTextFieldKeyboardHandlers,
     this.desktopGestureOverrides = SuperTextFieldGestureOverrides.none,
+    this.gestureOverrideBuilder,
+    this.desktopGestureOverrideRecognizer,
   }) : super(key: key);
 
   final FocusNode? focusNode;
@@ -150,6 +154,10 @@ class SuperTextField extends StatefulWidget {
   /// Ordinarily, these gestures would be handled by [SuperTextField],
   /// but [SuperTextField] defers to these overrides.
   final SuperTextFieldGestureOverrides desktopGestureOverrides;
+
+  final GestureOverrideBuilder? gestureOverrideBuilder;
+
+  final Map<Type, GestureRecognizerFactory<GestureRecognizer>>? desktopGestureOverrideRecognizer;
 
   @override
   State<SuperTextField> createState() => SuperTextFieldState();
@@ -249,6 +257,8 @@ class SuperTextFieldState extends State<SuperTextField> implements ProseTextBloc
           maxLines: widget.maxLines,
           keyboardHandlers: widget.keyboardHandlers,
           gestureOverrides: widget.desktopGestureOverrides,
+          gestureOverrideBuilder: widget.gestureOverrideBuilder,
+          gestureOverrideRecognizer: widget.desktopGestureOverrideRecognizer,
         );
       case SuperTextFieldPlatformConfiguration.android:
         return Shortcuts(
@@ -268,6 +278,7 @@ class SuperTextFieldState extends State<SuperTextField> implements ProseTextBloc
             maxLines: widget.maxLines,
             lineHeight: widget.lineHeight,
             textInputAction: _isMultiline ? TextInputAction.newline : TextInputAction.done,
+            gestureOverrideBuilder: widget.gestureOverrideBuilder,
           ),
         );
       case SuperTextFieldPlatformConfiguration.iOS:
@@ -288,6 +299,7 @@ class SuperTextFieldState extends State<SuperTextField> implements ProseTextBloc
             maxLines: widget.maxLines,
             lineHeight: widget.lineHeight,
             textInputAction: _isMultiline ? TextInputAction.newline : TextInputAction.done,
+            gestureOverrideBuilder: widget.gestureOverrideBuilder,
           ),
         );
     }

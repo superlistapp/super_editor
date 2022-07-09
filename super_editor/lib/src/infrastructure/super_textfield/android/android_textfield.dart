@@ -4,6 +4,7 @@ import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/android/_editing_controls.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/android/_user_interaction.dart';
+import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/gesture_overrides.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/hint_text.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/text_scrollview.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/input_method_engine/_ime_text_editing_controller.dart';
@@ -35,6 +36,7 @@ class SuperAndroidTextField extends StatefulWidget {
     required this.selectionColor,
     required this.handlesColor,
     this.textInputAction = TextInputAction.done,
+    this.gestureOverrideBuilder,
     this.popoverToolbarBuilder = _defaultAndroidToolbarBuilder,
     this.showDebugPaint = false,
   }) : super(key: key);
@@ -111,6 +113,9 @@ class SuperAndroidTextField extends StatefulWidget {
   /// The type of action associated with the action button on the mobile
   /// keyboard.
   final TextInputAction textInputAction;
+
+  /// {@macros SuperTextField_gestureOverrideBuilder}
+  final GestureOverrideBuilder? gestureOverrideBuilder;
 
   /// Whether to paint debug guides.
   final bool showDebugPaint;

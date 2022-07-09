@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
+import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/gesture_overrides.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/hint_text.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/text_scrollview.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/input_method_engine/_ime_text_editing_controller.dart';
@@ -39,6 +40,7 @@ class SuperIOSTextField extends StatefulWidget {
     required this.selectionColor,
     required this.handlesColor,
     this.textInputAction = TextInputAction.done,
+    this.gestureOverrideBuilder,
     this.popoverToolbarBuilder = _defaultPopoverToolbarBuilder,
     this.showDebugPaint = false,
   }) : super(key: key);
@@ -115,6 +117,9 @@ class SuperIOSTextField extends StatefulWidget {
   /// The type of action associated with the action button on the mobile
   /// keyboard.
   final TextInputAction textInputAction;
+
+  /// {@macros SuperTextField_gestureOverrideBuilder}
+  final GestureOverrideBuilder? gestureOverrideBuilder;
 
   /// Builder that creates the popover toolbar widget that appears when text is selected.
   final Widget Function(BuildContext, IOSEditingOverlayController) popoverToolbarBuilder;
@@ -378,7 +383,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
         link: _textFieldLayerLink,
         child: IOSTextFieldTouchInteractor(
           focusNode: _focusNode,
-          selectableTextKey: _textContentKey,
+          textKey: _textContentKey,
           textFieldLayerLink: _textFieldLayerLink,
           textController: _textEditingController,
           editingOverlayController: _editingOverlayController,
