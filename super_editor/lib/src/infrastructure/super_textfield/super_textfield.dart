@@ -14,6 +14,7 @@ import 'package:super_text_layout/super_text_layout.dart';
 import 'styles.dart';
 
 export 'android/android_textfield.dart';
+export 'desktop/desktop_textfield_gesture_extensions.dart';
 export 'desktop/desktop_textfield.dart';
 export 'infrastructure/attributed_text_editing_controller.dart';
 export 'infrastructure/hint_text.dart';
@@ -63,6 +64,7 @@ class SuperTextField extends StatefulWidget {
     this.maxLines = 1,
     this.lineHeight,
     this.keyboardHandlers = defaultTextFieldKeyboardHandlers,
+    this.desktopGestureOverrides = SuperTextFieldGestureOverrides.none,
   }) : super(key: key);
 
   final FocusNode? focusNode;
@@ -141,11 +143,19 @@ class SuperTextField extends StatefulWidget {
   /// Only used on desktop.
   final List<TextFieldKeyboardHandler> keyboardHandlers;
 
+  /// Gesture overrides for desktop interaction.
+  ///
+  /// Gesture overrides are useful, for example, when implementing a
+  /// popover context menu on right-click, or on ALT + left-click.
+  /// Ordinarily, these gestures would be handled by [SuperTextField],
+  /// but [SuperTextField] defers to these overrides.
+  final SuperTextFieldGestureOverrides desktopGestureOverrides;
+
   @override
   State<SuperTextField> createState() => SuperTextFieldState();
 }
 
-class SuperTextFieldState extends State<SuperTextField> {
+class SuperTextFieldState extends State<SuperTextField> implements ProseTextBlock {
   final _platformFieldKey = GlobalKey();
   late ImeAttributedTextEditingController _controller;
 
@@ -176,7 +186,7 @@ class SuperTextFieldState extends State<SuperTextField> {
   @visibleForTesting
   AttributedTextEditingController get controller => _controller;
 
-  @visibleForTesting
+  @override
   ProseTextLayout get textLayout => (_platformFieldKey.currentState as ProseTextBlock).textLayout;
 
   bool get _isMultiline => (widget.minLines ?? 1) != 1 || (widget.maxLines ?? 1) != 1;
@@ -238,6 +248,7 @@ class SuperTextFieldState extends State<SuperTextField> {
           minLines: widget.minLines,
           maxLines: widget.maxLines,
           keyboardHandlers: widget.keyboardHandlers,
+          gestureOverrides: widget.desktopGestureOverrides,
         );
       case SuperTextFieldPlatformConfiguration.android:
         return Shortcuts(
