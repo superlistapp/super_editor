@@ -1,3 +1,7 @@
+import 'dart:math';
+
+import 'package:attributed_text/attributed_text.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
@@ -352,11 +356,48 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
     }
   }
 
+  /// Handles key presses
+  ///
+  /// Some third party keyboards report backspace as a key press
+  /// rather than a deletion delta, so we need to handle them manually
+  KeyEventResult _onKeyPressed(FocusNode focusNode, RawKeyEvent keyEvent) {
+    _log.finer('_onKeyPressed - keyEvent: ${keyEvent.character}');
+    if (keyEvent is! RawKeyDownEvent) {
+      _log.finer('_onKeyPressed - not a "down" event. Ignoring.');
+      return KeyEventResult.ignored;
+    }
+    if (keyEvent.logicalKey != LogicalKeyboardKey.backspace) {
+      return KeyEventResult.ignored;
+    }
+
+    int deleteEndIndex = -1;
+    int deleteStartIndex = -1;
+    if (_textEditingController.selection.isCollapsed) {
+      deleteEndIndex = _textEditingController.selection.extentOffset;
+      deleteStartIndex = getCharacterStartBounds(_textEditingController.text.text, deleteEndIndex);
+    } else {
+      deleteEndIndex = max(_textEditingController.selection.baseOffset, _textEditingController.selection.extentOffset);
+      deleteStartIndex = min(_textEditingController.selection.baseOffset, _textEditingController.selection.extentOffset);
+    }
+
+    // We call updateTextAndSelection directly because, when deleting the last character
+    // using delete on the controller, an exception is thrown due to the fact that
+    // the selection is in an invalid position
+    final updatedText = _textEditingController.text.removeRegion(startOffset: deleteStartIndex, endOffset: deleteEndIndex);
+    _textEditingController.updateTextAndSelection(
+      text: updatedText,
+      selection: TextSelection.collapsed(offset: deleteStartIndex),
+    );
+
+    return KeyEventResult.handled;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Focus(
       key: _textFieldKey,
       focusNode: _focusNode,
+      onKey: _onKeyPressed,
       child: CompositedTransformTarget(
         link: _textFieldLayerLink,
         child: AndroidTextFieldTouchInteractor(
