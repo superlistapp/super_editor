@@ -257,7 +257,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
   @override
   ProseTextLayout get textLayout => _textContentKey.currentState!.textLayout;
 
-  bool get _isMultiline => (widget.minLines ?? 1) != 1 || (widget.maxLines ?? 1) != 1;
+  bool get _isMultiline => (widget.minLines ?? 1) != 1 || widget.maxLines != 1;
 
   void _onFocusChange() {
     if (_focusNode.hasFocus) {
@@ -290,6 +290,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
     if (_textEditingController.selection.isCollapsed) {
       _editingOverlayController.hideToolbar();
     }
+    _textScrollController.ensureExtentIsVisible();
   }
 
   void _onTextScrollChange() {
