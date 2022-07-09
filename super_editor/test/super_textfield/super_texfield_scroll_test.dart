@@ -7,7 +7,7 @@ import '../test_tools.dart';
 
 void main() {
   group('SuperTextField', () {
-    testWidgetsOnAllPlatforms('single-line jumps scroll position horizontally when selection changes', (tester) async {
+    testWidgetsOnAllPlatforms('single-line jumps scroll position horizontally as the user types', (tester) async {
       final controller = AttributedTextEditingController(
         text: AttributedText(text: "ABCDEFG"),
       );
@@ -37,7 +37,7 @@ void main() {
       expect(textRight, lessThanOrEqualTo(viewportRight));
     });
 
-    testWidgetsOnAllPlatforms('multi-line jumps scroll position vertically when selection changes', (tester) async {
+    testWidgetsOnAllPlatforms('multi-line jumps scroll position vertically as the user types', (tester) async {
       final controller = AttributedTextEditingController(
         text: AttributedText(text: "A\nB\nC\nD"),
       );
