@@ -60,10 +60,11 @@ TextSelection expandPositionToWord({
     return const TextSelection.collapsed(offset: -1);
   }
 
-  int start = min(textPosition.offset, text.length - 1);
-  int end = min(textPosition.offset, text.length - 1);
-  // -1 because TextPosition's offset indexes the character after the
-  // selection, not the final character in the selection.
+  int start = min(textPosition.offset, text.length);
+  int end = min(textPosition.offset, text.length);
+
+  // We're checking for the character before the start index because
+  // TextPosition's offset indexes the character after the caret
   while (start > 0 && text[start - 1] != ' ') {
     start -= 1;
   }
@@ -152,28 +153,4 @@ TextDirection getParagraphDirection(String text) {
   } else {
     return TextDirection.ltr;
   }
-}
-
-/// Convert a [documentPosition] to a [DocumentSelection] with an [extentOffset]
-///
-/// Giving a negative [extentOffset] would result in a selection expanded
-/// in downstream direction.
-///
-/// Giving a positive [extentOffset] would result in a selection expanded
-/// in upstream direction.
-///
-/// Return a collapsed selection by
-DocumentSelection documentPositionToDocumentSelection({
-  required DocumentPosition documentPosition,
-  int extentOffset = 0,
-}) {
-  assert(documentPosition.nodePosition is TextNodePosition);
-
-  final nodePosition = documentPosition.nodePosition as TextNodePosition;
-  return DocumentSelection(
-    base: documentPosition,
-    extent: documentPosition.copyWith(
-      nodePosition: nodePosition.copyWith(offset: nodePosition.offset + extentOffset),
-    ),
-  );
 }

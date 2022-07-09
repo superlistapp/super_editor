@@ -921,36 +921,12 @@ void main() {
         });
       });
 
-      group('inserting', () {
-        testWidgets('does not expand the link when inserting at the start', (tester) async {
-          final document = MutableDocument(nodes: [
-            ParagraphNode(
-              id: '1',
-              text: AttributedText(
-                text: 'https://flutter.dev',
-                spans: AttributedSpans(
-                  attributions: [
-                    SpanMarker(
-                      attribution: LinkAttribution(url: Uri.parse('https://flutter.dev')),
-                      offset: 0,
-                      markerType: SpanMarkerType.start,
-                    ),
-                    SpanMarker(
-                      attribution: LinkAttribution(url: Uri.parse('https://flutter.dev')),
-                      offset: 18,
-                      markerType: SpanMarkerType.end,
-                    )
-                  ],
-                ),
-              ),
-            )
-          ]);
+      group('typing characters near a link', () {
+        testWidgets('does not expand the link when inserting before the link', (tester) async {
           // Configure and render a document.
           await tester //
               .createDocument()
-              .withCustomContent(document)
-              .forDesktop()
-              .autoFocus(true)
+              .withCustomContent(_singleParagraphWithLinkDoc())
               .pump();
 
           // Place the caret in the first paragraph at the start of the link.
@@ -959,86 +935,30 @@ void main() {
           // Type some text by simulating hardware keyboard key presses.
           await tester.typeKeyboardText('Go to ');
 
-          // Ensure that the text was typed into the paragraph
+          // Ensure that the link is unchanged
           expect(
-            SuperEditorInspector.findTextInParagraph("1").text,
-            'Go to https://flutter.dev',
-          );
-
-          // Ensure that the link is not being expanded
-          expect(
-            SuperEditorInspector.findTextInParagraph("1").spans.getAttributionSpansInRange(
-                  attributionFilter: (_) => true,
-                  start: 0,
-                  end: 43,
-                ),
-            {
-              AttributionSpan(
-                attribution: LinkAttribution(url: Uri.parse('https://flutter.dev')),
-                start: 6,
-                end: 24,
-              ),
-            },
+            SuperEditorInspector.findDocument(),
+            equalsMarkdown("Go to [https://google.com](https://google.com)"),
           );
         });
 
-        testWidgets('does not expand the link when inserting at the end', (tester) async {
-          final document = MutableDocument(nodes: [
-            ParagraphNode(
-              id: '1',
-              text: AttributedText(
-                text: 'Go to https://flutter.dev',
-                spans: AttributedSpans(
-                  attributions: [
-                    SpanMarker(
-                      attribution: LinkAttribution(url: Uri.parse('https://flutter.dev')),
-                      offset: 6,
-                      markerType: SpanMarkerType.start,
-                    ),
-                    SpanMarker(
-                      attribution: LinkAttribution(url: Uri.parse('https://flutter.dev')),
-                      offset: 24,
-                      markerType: SpanMarkerType.end,
-                    )
-                  ],
-                ),
-              ),
-            )
-          ]);
+        testWidgets('does not expand the link when inserting after the link', (tester) async {
           // Configure and render a document.
           await tester //
               .createDocument()
-              .withCustomContent(document)
-              .forDesktop()
-              .autoFocus(true)
+              .withCustomContent(_singleParagraphWithLinkDoc())
               .pump();
 
           // Place the caret in the first paragraph at the start of the link.
-          await tester.placeCaretInParagraph('1', 25);
+          await tester.placeCaretInParagraph('1', 18);
 
           // Type some text by simulating hardware keyboard key presses.
-          await tester.typeKeyboardText(' to learn Flutter.');
+          await tester.typeKeyboardText(' to learn anything');
 
-          // Ensure that the text was typed into the paragraph
+          // Ensure that the link is unchanged
           expect(
-            SuperEditorInspector.findTextInParagraph("1").text,
-            'Go to https://flutter.dev to learn Flutter.',
-          );
-
-          // Ensure that the link is not being expanded
-          expect(
-            SuperEditorInspector.findTextInParagraph("1").spans.getAttributionSpansInRange(
-                  attributionFilter: (_) => true,
-                  start: 0,
-                  end: 42,
-                ),
-            {
-              AttributionSpan(
-                attribution: LinkAttribution(url: Uri.parse('https://flutter.dev')),
-                start: 6,
-                end: 24,
-              ),
-            },
+            SuperEditorInspector.findDocument(),
+            equalsMarkdown("[https://google.com](https://google.com) to learn anything"),
           );
         });
       });
@@ -1162,4 +1082,31 @@ Future<TestDocumentContext> _pumpExplicitLineBreakTestSetup(
       .forDesktop()
       .withEditorSize(size)
       .pump();
+}
+
+MutableDocument _singleParagraphWithLinkDoc() {
+  return MutableDocument(
+    nodes: [
+      ParagraphNode(
+        id: "1",
+        text: AttributedText(
+          text: "https://google.com",
+          spans: AttributedSpans(
+            attributions: [
+              SpanMarker(
+                attribution: LinkAttribution(url: Uri.parse('https://google.com')),
+                offset: 0,
+                markerType: SpanMarkerType.start,
+              ),
+              SpanMarker(
+                attribution: LinkAttribution(url: Uri.parse('https://google.com')),
+                offset: 17,
+                markerType: SpanMarkerType.end,
+              ),
+            ],
+          ),
+        ),
+      )
+    ],
+  );
 }

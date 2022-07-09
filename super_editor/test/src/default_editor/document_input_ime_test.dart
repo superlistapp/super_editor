@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:super_editor/super_editor.dart';
 
 import '../../super_editor/document_test_tools.dart';
 import '../../super_editor/supereditor_inspector.dart';
 import '../../super_editor/supereditor_robot.dart';
+import '../../test_tools.dart';
 import '../_document_test_tools.dart';
 import '../../super_editor/test_documents.dart';
 
@@ -272,124 +272,66 @@ void main() {
       });
     });
 
-    group('inserting', () {
-      testWidgets('prevent expanding the link when inserting at the start', (tester) async {
-        final document = MutableDocument(nodes: [
-          ParagraphNode(
-            id: '1',
-            text: AttributedText(
-              text: 'https://flutter.dev',
-              spans: AttributedSpans(
-                attributions: [
-                  SpanMarker(
-                    attribution: LinkAttribution(url: Uri.parse('https://flutter.dev')),
-                    offset: 0,
-                    markerType: SpanMarkerType.start,
-                  ),
-                  SpanMarker(
-                    attribution: LinkAttribution(url: Uri.parse('https://flutter.dev')),
-                    offset: 18,
-                    markerType: SpanMarkerType.end,
-                  )
-                ],
-              ),
-            ),
-          )
-        ]);
+    group('typing characters near a link', () {
+      testWidgets('does not expand the link when inserting before the link', (tester) async {
         // Configure and render a document.
-        await tester //
+        final testerDocumentContext = await tester //
             .createDocument()
-            .withCustomContent(document)
-            .forDesktop()
-            .autoFocus(true)
+            .withCustomContent(_singleParagraphWithLinkDoc())
             .pump();
 
-        // Place the caret in the first paragraph at the start of the link.
+        // Place the caret at the start of the link.
         await tester.placeCaretInParagraph('1', 0);
 
-        // Type some text by simulating hardware keyboard key presses.
-        await tester.typeKeyboardText('Go to ');
-
-        // Ensure that the text was typed into the paragraph
-        expect(
-          SuperEditorInspector.findTextInParagraph("1").text,
-          'Go to https://flutter.dev',
+        final softwareKeyboardHandler = SoftwareKeyboardHandler(
+          composer: testerDocumentContext.editContext.composer,
+          editor: testerDocumentContext.editContext.editor,
+          commonOps: testerDocumentContext.editContext.commonOps,
         );
 
-        // Ensure that the link is not being expanded
+        // Type characters before the link using the IME
+        await tester.textToType(
+          softwareKeyboardHandler: softwareKeyboardHandler,
+          text: 'Go to ',
+          existingText: 'https://google.com',
+          insertionOffset: 0,
+        );
+
+        // Ensure that the link is unchanged
         expect(
-          SuperEditorInspector.findTextInParagraph("1").spans.getAttributionSpansInRange(
-                attributionFilter: (_) => true,
-                start: 0,
-                end: 43,
-              ),
-          {
-            AttributionSpan(
-              attribution: LinkAttribution(url: Uri.parse('https://flutter.dev')),
-              start: 6,
-              end: 24,
-            ),
-          },
+          SuperEditorInspector.findDocument(),
+          equalsMarkdown("Go to [https://google.com](https://google.com)"),
         );
       });
 
-      testWidgets('prevent expanding the link when inserting at the end', (tester) async {
-        final document = MutableDocument(nodes: [
-          ParagraphNode(
-            id: '1',
-            text: AttributedText(
-              text: 'Go to https://flutter.dev',
-              spans: AttributedSpans(
-                attributions: [
-                  SpanMarker(
-                    attribution: LinkAttribution(url: Uri.parse('https://flutter.dev')),
-                    offset: 6,
-                    markerType: SpanMarkerType.start,
-                  ),
-                  SpanMarker(
-                    attribution: LinkAttribution(url: Uri.parse('https://flutter.dev')),
-                    offset: 24,
-                    markerType: SpanMarkerType.end,
-                  )
-                ],
-              ),
-            ),
-          )
-        ]);
+      testWidgetsOnMobile('does not expand the link when inserting after the link', (tester) async {
         // Configure and render a document.
-        await tester //
+        final testerDocumentContext = await tester //
             .createDocument()
-            .withCustomContent(document)
-            .forIOS()
-            .autoFocus(true)
+            .withCustomContent(_singleParagraphWithLinkDoc())
             .pump();
 
-        // Place the caret in the first paragraph at the start of the link.
-        await tester.placeCaretInParagraph('1', 25);
+        // Place the caret at the end of the link.
+        await tester.placeCaretInParagraph('1', 18);
 
-        // Type some text by simulating hardware keyboard key presses.
-        await tester.typeKeyboardText(' to learn Flutter.');
-
-        // Ensure that the text was typed into the paragraph
-        expect(
-          SuperEditorInspector.findTextInParagraph("1").text,
-          'Go to https://flutter.dev to learn Flutter.',
+        final softwareKeyboardHandler = SoftwareKeyboardHandler(
+          composer: testerDocumentContext.editContext.composer,
+          editor: testerDocumentContext.editContext.editor,
+          commonOps: testerDocumentContext.editContext.commonOps,
         );
 
-        // Ensure that the link is not being expanded
+        // Type characters after the link using the IME
+        await tester.textToType(
+          softwareKeyboardHandler: softwareKeyboardHandler,
+          text: ' to learn anything',
+          existingText: 'https://google.com',
+          insertionOffset: 18,
+        );
+
+        // Ensure that the link is unchanged
         expect(
-          SuperEditorInspector.findTextInParagraph("1").spans.getAttributionSpansInRange(
-                attributionFilter: (_) => true,
-                start: 0,
-                end: 42,
-              ),
-          {
-            AttributionSpan(
-              attribution: LinkAttribution(url: Uri.parse('https://flutter.dev')),
-              start: 6,
-              end: 24,
-            ),
-          },
+          SuperEditorInspector.findDocument(),
+          equalsMarkdown("[https://google.com](https://google.com) to learn anything"),
         );
       });
 
@@ -603,4 +545,58 @@ void _expectTextEditingValue({
     actualTextEditingValue,
     TextEditingValue(text: expectedText, selection: expectedSelection),
   );
+}
+
+MutableDocument _singleParagraphWithLinkDoc() {
+  return MutableDocument(
+    nodes: [
+      ParagraphNode(
+        id: "1",
+        text: AttributedText(
+          text: "https://google.com",
+          spans: AttributedSpans(
+            attributions: [
+              SpanMarker(
+                attribution: LinkAttribution(url: Uri.parse('https://google.com')),
+                offset: 0,
+                markerType: SpanMarkerType.start,
+              ),
+              SpanMarker(
+                attribution: LinkAttribution(url: Uri.parse('https://google.com')),
+                offset: 17,
+                markerType: SpanMarkerType.end,
+              ),
+            ],
+          ),
+        ),
+      )
+    ],
+  );
+}
+
+extension on WidgetTester {
+  // TODO: Remove this when `SuperTestRobot` support insert IME
+  Future<void> textToType({
+    required SoftwareKeyboardHandler softwareKeyboardHandler,
+    required String text,
+    required String existingText,
+    required int insertionOffset,
+  }) async {
+    var oldText = existingText;
+    for (int i = 0; i < text.length; i += 1) {
+      // Insert a character to simulate IME input action
+      softwareKeyboardHandler.applyDeltas([
+        TextEditingDeltaInsertion(
+          textInserted: text[i],
+          insertionOffset: insertionOffset + i,
+          selection: TextSelection.collapsed(offset: insertionOffset + i),
+          composing: const TextRange(start: -1, end: -1),
+          oldText: oldText,
+        ),
+      ]);
+      oldText += text[i];
+
+      await pumpAndSettle();
+    }
+  }
 }
