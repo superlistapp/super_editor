@@ -219,8 +219,16 @@ extension InspectDocumentAffinity on Document {
     required DocumentPosition base,
     required DocumentPosition extent,
   }) {
+    final baseNode = getNode(base);
+    if (baseNode == null) {
+      throw Exception('No such position in document: $base');
+    }
     final baseIndex = getNodeIndex(getNode(base)!);
-    final extentNode = getNode(extent)!;
+
+    final extentNode = getNode(extent);
+    if (extentNode == null) {
+      throw Exception('No such position in document: $extent');
+    }
     final extentIndex = getNodeIndex(extentNode);
 
     late TextAffinity affinity;
@@ -344,77 +352,5 @@ extension InspectDocumentSelection on Document {
     // selection boundary, or after the downstream selection boundary.
     // Either way, the position is not in the selection.
     return false;
-  }
-}
-
-/// Description of a selection within a specific node in a document.
-///
-/// The [nodeSelection] only describes the selection in the particular node
-/// that [nodeId] points to. The document might have a selection that spans
-/// multiple nodes but this only regards the part of that total selection that
-/// affects the single node.
-///
-/// The [SelectionType] is a generic subtype of [NodeSelection], i.e. for
-/// example a [TextNodeSelection] that describes which characters of text are
-/// selected within the text node.
-class DocumentNodeSelection<SelectionType extends NodeSelection> {
-  /// Creates a node selection for a particular node in the document.
-  DocumentNodeSelection({
-    required this.nodeId,
-    required this.nodeSelection,
-    this.isBase = false,
-    this.isExtent = false,
-    // TODO: either remove highlightWhenEmpty from this class, or move
-    //       this class to a different place. Visual preferences don't
-    //       belong here. (#52)
-    this.highlightWhenEmpty = false,
-  });
-
-  /// The ID of the node that is selected.
-  final String nodeId;
-
-  /// The selection within the given node.
-  final SelectionType? nodeSelection;
-
-  /// `true` if this [DocumentNodeSelection] forms the base position of a larger
-  /// document selection, `false` otherwise.
-  ///
-  /// If the node that [DocumentSelection.base] points to is equal to the node
-  /// that [nodeId] points to, [isBase] is `true`. Otherwise, it is `false`.
-  final bool isBase;
-
-  /// `true` if this [DocumentNodeSelection] forms the extent position of a
-  /// larger document selection, `false` otherwise.
-  ///
-  /// If the node that [DocumentSelection.extent] points to is equal to the node
-  /// that [nodeId] points to, [isExtent] is `true`. Otherwise, it is `false`.
-  final bool isExtent;
-
-  /// [true] if the component rendering this [DocumentNodeSelection] should
-  /// paint a highlight even when the given node has no content, [false]
-  /// otherwise.
-  ///
-  /// TODO: this is out-of-place here and should be removed.
-  ///
-  /// See also:
-  ///
-  ///  * [SuperSelectableText.highlightWhenEmpty], which the value of this field
-  ///    is indirectly passed to.
-  final bool highlightWhenEmpty;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is DocumentNodeSelection &&
-          runtimeType == other.runtimeType &&
-          nodeId == other.nodeId &&
-          nodeSelection == other.nodeSelection;
-
-  @override
-  int get hashCode => nodeId.hashCode ^ nodeSelection.hashCode;
-
-  @override
-  String toString() {
-    return '[DocumentNodeSelection] - node: "$nodeId", selection: ($nodeSelection)';
   }
 }

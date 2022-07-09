@@ -19,7 +19,7 @@ class SingleColumnLayoutCustomComponentStyler extends SingleColumnLayoutStylePha
 
   @override
   SingleColumnLayoutViewModel style(Document document, SingleColumnLayoutViewModel viewModel) {
-    editorLayoutLog.info("(Re)calculating custom component styles view model for document layout");
+    editorStyleLog.info("(Re)calculating custom component styles view model for document layout");
     return SingleColumnLayoutViewModel(
       padding: viewModel.padding,
       componentViewModels: [
@@ -42,7 +42,7 @@ class SingleColumnLayoutCustomComponentStyler extends SingleColumnLayoutStylePha
       ..maxWidth = componentStyles.width ?? viewModel.maxWidth
       ..padding = componentStyles.padding ?? viewModel.padding;
 
-    editorLayoutLog
+    editorStyleLog
         .warning("Tried to apply custom component styles to unknown layout component view model: $viewModel");
     return viewModel;
   }

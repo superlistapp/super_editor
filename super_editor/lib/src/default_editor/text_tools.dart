@@ -98,11 +98,7 @@ DocumentSelection? getParagraphSelection({
     return null;
   }
 
-  final TextSelection paragraphTextSelection = expandPositionToParagraph(
-    text: (component as TextComposable).getContiguousTextAt(nodePosition),
-    textPosition: docPosition.nodePosition as TextPosition,
-  );
-  final paragraphNodeSelection = TextNodeSelection.fromTextSelection(paragraphTextSelection);
+  final paragraphNodeSelection = (component as TextComposable).getContiguousTextSelectionAt(nodePosition);
 
   return DocumentSelection(
     base: DocumentPosition(
@@ -128,7 +124,7 @@ TextSelection expandPositionToParagraph({
 
   int start = min(textPosition.offset, text.length - 1);
   int end = min(textPosition.offset, text.length - 1);
-  while (start > 0 && text[start] != '\n') {
+  while (start > 0 && text[start - 1] != '\n') {
     start -= 1;
   }
   while (end < text.length && text[end] != '\n') {

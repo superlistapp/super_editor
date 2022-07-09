@@ -190,59 +190,6 @@ class CommonEditorOperations {
     return true;
   }
 
-  /// Given a selection in a [TextNode], expands the [DocumentComposer]'s
-  /// selection to include the entire paragraph in which the current
-  /// selection sits.
-  ///
-  /// Returns [true] if a paragraph was selected. Returns [false] if no
-  /// selection could be computed, e.g., the existing selection spanned
-  /// more than one paragraph, the selection spanned multiple nodes,
-  /// the selection was not in a [TextNode].
-  bool selectSurroundingParagraph() {
-    if (composer.selection == null) {
-      return false;
-    }
-    if (composer.selection!.base.nodeId != composer.selection!.extent.nodeId) {
-      return false;
-    }
-
-    final selectedNode = editor.document.getNodeById(composer.selection!.extent.nodeId);
-    if (selectedNode is! TextNode) {
-      return false;
-    }
-
-    final docSelection = composer.selection!;
-    final currentSelection = TextSelection(
-      baseOffset: (docSelection.base.nodePosition as TextNodePosition).offset,
-      extentOffset: (docSelection.extent.nodePosition as TextNodePosition).offset,
-    );
-    final selectedText = currentSelection.textInside(selectedNode.text.text);
-
-    if (selectedText.contains('\n')) {
-      // The selection already spans multiple paragraphs. Nothing to do.
-      return false;
-    }
-
-    final paragraphTextSelection = expandPositionToParagraph(
-      text: selectedNode.text.text,
-      textPosition: TextPosition(offset: (docSelection.extent.nodePosition as TextNodePosition).offset),
-    );
-    final paragraphNodeSelection = TextNodeSelection.fromTextSelection(paragraphTextSelection);
-
-    composer.selection = DocumentSelection(
-      base: DocumentPosition(
-        nodeId: selectedNode.id,
-        nodePosition: paragraphNodeSelection.base,
-      ),
-      extent: DocumentPosition(
-        nodeId: selectedNode.id,
-        nodePosition: paragraphNodeSelection.extent,
-      ),
-    );
-
-    return true;
-  }
-
   /// Sets the [DocumentComposer]'s selection to include the entire
   /// [Document].
   ///

@@ -803,7 +803,7 @@ void main() {
           Platform.setTestInstance(null);
         });
 
-        test('deletes selection and inserts character', () {
+        test('deletes selection when character key is pressed', () {
           Platform.setTestInstance(MacPlatform());
 
           final editContext = createEditContext(
@@ -840,10 +840,12 @@ void main() {
             ),
           );
 
-          expect(result, ExecutionInstruction.haltExecution);
+          // When we use a character key for deletion, we expect to continue
+          // execution so that the character is also entered by another handler.
+          expect(result, ExecutionInstruction.continueExecution);
 
           final paragraph = editContext.editor.document.nodes.first as ParagraphNode;
-          expect(paragraph.text.text, 'Text with [a] selection');
+          expect(paragraph.text.text, 'Text with [] selection');
 
           expect(
             editContext.composer.selection,
@@ -851,7 +853,7 @@ void main() {
               const DocumentSelection.collapsed(
                 position: DocumentPosition(
                   nodeId: '1',
-                  nodePosition: TextNodePosition(offset: 12),
+                  nodePosition: TextNodePosition(offset: 11),
                 ),
               ),
             ),

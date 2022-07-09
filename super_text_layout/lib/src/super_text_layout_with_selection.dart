@@ -97,6 +97,7 @@ class _SuperTextWithSelectionState extends ProseTextState<SuperTextWithSelection
     return _RebuildOptimizedSuperTextWithSelection(
       textLayoutKey: _textLayoutKey,
       richText: widget.richText,
+      textAlign: widget.textAlign,
       userSelections: _userSelections,
     );
   }
@@ -107,11 +108,13 @@ class _RebuildOptimizedSuperTextWithSelection extends StatefulWidget {
     Key? key,
     this.textLayoutKey,
     required this.richText,
+    this.textAlign = TextAlign.left,
     required this.userSelections,
   }) : super(key: key);
 
   final Key? textLayoutKey;
   final InlineSpan richText;
+  final TextAlign textAlign;
 
   final ValueNotifier<List<UserSelection>> userSelections;
 
@@ -166,6 +169,7 @@ class _RebuildOptimizedSuperTextWithSelectionState extends State<_RebuildOptimiz
     _cachedSubtree = SuperText(
       key: widget.textLayoutKey,
       richText: widget.richText,
+      textAlign: widget.textAlign,
       layerBeneathBuilder: _buildLayerBeneath,
       layerAboveBuilder: _buildLayerAbove,
     );

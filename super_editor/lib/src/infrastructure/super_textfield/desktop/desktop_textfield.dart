@@ -392,8 +392,6 @@ class SuperTextFieldGestureInteractor extends StatefulWidget {
 }
 
 class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureInteractor> {
-  final _cursorStyle = ValueNotifier<MouseCursor>(SystemMouseCursors.basic);
-
   _SelectionType _selectionType = _SelectionType.position;
   Offset? _dragStartInViewport;
   Offset? _dragStartInText;
@@ -483,7 +481,7 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
   }
 
   void _onPanStart(DragStartDetails details) {
-    _log.finer('_onPanStart()');
+    _log.fine("User started pan");
     _dragStartInViewport = details.localPosition;
     _dragStartInText = _getTextOffset(_dragStartInViewport!);
 
@@ -493,13 +491,12 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
   }
 
   void _onPanUpdate(DragUpdateDetails details) {
-    _log.finer('_onPanUpdate()');
+    _log.finer("User moved during pan");
     setState(() {
       _dragEndInViewport = details.localPosition;
       _dragEndInText = _getTextOffset(_dragEndInViewport!);
       _dragRectInViewport = Rect.fromPoints(_dragStartInViewport!, _dragEndInViewport!);
       _log.finer('_onPanUpdate - drag rect: $_dragRectInViewport');
-      _updateCursorStyle(details.localPosition);
       _updateDragSelection();
 
       _scrollIfNearBoundary();
@@ -507,6 +504,7 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
   }
 
   void _onPanEnd(DragEndDetails details) {
+    _log.finer("User ended a pan");
     setState(() {
       _dragStartInText = null;
       _dragEndInText = null;
@@ -518,6 +516,7 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
   }
 
   void _onPanCancel() {
+    _log.finer("User cancelled a pan");
     setState(() {
       _dragStartInText = null;
       _dragEndInText = null;
@@ -585,10 +584,6 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
     setState(() {
       widget.textController.selection = const TextSelection.collapsed(offset: -1);
     });
-  }
-
-  void _onMouseMove(PointerEvent pointerEvent) {
-    _updateCursorStyle(pointerEvent.localPosition);
   }
 
   /// We prevent SingleChildScrollView from processing mouse events because
@@ -690,14 +685,6 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
     _textScroll.stopScrollingToEnd();
   }
 
-  void _updateCursorStyle(Offset cursorOffset) {
-    if (_isTextAtOffset(cursorOffset)) {
-      _cursorStyle.value = SystemMouseCursors.text;
-    } else {
-      _cursorStyle.value = SystemMouseCursors.basic;
-    }
-  }
-
   TextPosition? _getPositionAtOffset(Offset textFieldOffset) {
     final textOffset = _getTextOffset(textFieldOffset);
     final textBox = widget.textKey.currentContext!.findRenderObject() as RenderBox;
@@ -728,7 +715,6 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
   Widget build(BuildContext context) {
     return Listener(
       onPointerSignal: _onPointerSignal,
-      onPointerHover: _onMouseMove,
       child: GestureDetector(
         onSecondaryTapUp: _onRightClick,
         child: RawGestureDetector(
@@ -756,14 +742,9 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
               },
             ),
           },
-          child: ListenableBuilder(
-            listenable: _cursorStyle,
-            builder: (context) {
-              return MouseRegion(
-                cursor: _cursorStyle.value,
-                child: widget.child,
-              );
-            },
+          child: MouseRegion(
+            cursor: SystemMouseCursors.text,
+            child: widget.child,
           ),
         ),
       ),
@@ -1384,9 +1365,9 @@ class DefaultSuperTextFieldKeyboardHandlers {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 
-    if (defaultTargetPlatform == TargetPlatform.linux && keyEvent.isAltPressed && 
-        (keyEvent.logicalKey == LogicalKeyboardKey.arrowUp || keyEvent.logicalKey == LogicalKeyboardKey.arrowDown)
-    ) {
+    if (defaultTargetPlatform == TargetPlatform.linux &&
+        keyEvent.isAltPressed &&
+        (keyEvent.logicalKey == LogicalKeyboardKey.arrowUp || keyEvent.logicalKey == LogicalKeyboardKey.arrowDown)) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 
@@ -1395,9 +1376,8 @@ class DefaultSuperTextFieldKeyboardHandlers {
 
       MovementModifier? movementModifier;
       if ((defaultTargetPlatform == TargetPlatform.windows || defaultTargetPlatform == TargetPlatform.linux) &&
-          keyEvent.isControlPressed
-      ) {        
-        movementModifier = MovementModifier.word;        
+          keyEvent.isControlPressed) {
+        movementModifier = MovementModifier.word;
       } else if (defaultTargetPlatform == TargetPlatform.macOS && keyEvent.isMetaPressed) {
         movementModifier = MovementModifier.line;
       } else if (defaultTargetPlatform == TargetPlatform.macOS && keyEvent.isAltPressed) {
@@ -1415,9 +1395,8 @@ class DefaultSuperTextFieldKeyboardHandlers {
 
       MovementModifier? movementModifier;
       if ((defaultTargetPlatform == TargetPlatform.windows || defaultTargetPlatform == TargetPlatform.linux) &&
-          keyEvent.isControlPressed
-      ) {        
-        movementModifier = MovementModifier.word;        
+          keyEvent.isControlPressed) {
+        movementModifier = MovementModifier.word;
       } else if (defaultTargetPlatform == TargetPlatform.macOS && keyEvent.isMetaPressed) {
         movementModifier = MovementModifier.line;
       } else if (defaultTargetPlatform == TargetPlatform.macOS && keyEvent.isAltPressed) {
@@ -1448,7 +1427,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
 
     return TextFieldKeyboardHandlerResult.handled;
   }
-  
+
   static TextFieldKeyboardHandlerResult moveToLineStartWithHome({
     required AttributedTextEditingController controller,
     required ProseTextLayout textLayout,
@@ -1456,7 +1435,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
   }) {
     if (defaultTargetPlatform != TargetPlatform.windows && defaultTargetPlatform != TargetPlatform.linux) {
       return TextFieldKeyboardHandlerResult.notHandled;
-    }  
+    }
 
     if (keyEvent.logicalKey == LogicalKeyboardKey.home) {
       controller.moveCaretHorizontally(
@@ -1464,7 +1443,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
         expandSelection: keyEvent.isShiftPressed,
         moveLeft: true,
         movementModifier: MovementModifier.line,
-      );   
+      );
       return TextFieldKeyboardHandlerResult.handled;
     }
 
@@ -1478,7 +1457,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
   }) {
     if (defaultTargetPlatform != TargetPlatform.windows && defaultTargetPlatform != TargetPlatform.linux) {
       return TextFieldKeyboardHandlerResult.notHandled;
-    }  
+    }
 
     if (keyEvent.logicalKey == LogicalKeyboardKey.end) {
       controller.moveCaretHorizontally(
@@ -1486,7 +1465,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
         expandSelection: keyEvent.isShiftPressed,
         moveLeft: false,
         movementModifier: MovementModifier.line,
-      );   
+      );
       return TextFieldKeyboardHandlerResult.handled;
     }
 
@@ -1520,7 +1499,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
     // catch any key that isn't explicitly listed. The eventual solution
     // to this is for the web to honor the standard key event contract,
     // but that's out of our control.
-    if (kIsWeb && webBugBlacklistCharacters.contains(keyEvent.character)) {
+    if (isKeyEventCharacterBlacklisted(keyEvent.character)) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
 

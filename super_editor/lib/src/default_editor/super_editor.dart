@@ -79,7 +79,9 @@ class SuperEditor extends StatefulWidget {
     this.customStylePhases = const [],
     this.inputSource = DocumentInputSource.keyboard,
     this.gestureMode = DocumentGestureMode.mouse,
+    this.androidHandleColor,
     this.androidToolbarBuilder,
+    this.iOSHandleColor,
     this.iOSToolbarBuilder,
     this.createOverlayControlsClipper,
     this.debugPaint = const DebugPaintConfig(),
@@ -107,7 +109,9 @@ class SuperEditor extends StatefulWidget {
     this.gestureMode = DocumentGestureMode.mouse,
     List<DocumentKeyboardAction>? keyboardActions,
     this.softwareKeyboardHandler,
+    this.androidHandleColor,
     this.androidToolbarBuilder,
+    this.iOSHandleColor,
     this.iOSToolbarBuilder,
     this.createOverlayControlsClipper,
     this.debugPaint = const DebugPaintConfig(),
@@ -137,7 +141,9 @@ class SuperEditor extends StatefulWidget {
     this.gestureMode = DocumentGestureMode.mouse,
     List<DocumentKeyboardAction>? keyboardActions,
     this.softwareKeyboardHandler,
+    this.androidHandleColor,
     this.androidToolbarBuilder,
+    this.iOSHandleColor,
     this.iOSToolbarBuilder,
     this.createOverlayControlsClipper,
     this.debugPaint = const DebugPaintConfig(),
@@ -200,8 +206,14 @@ class SuperEditor extends StatefulWidget {
   /// The `SuperEditor` gesture mode, e.g., mouse or touch.
   final DocumentGestureMode? gestureMode;
 
+  /// Color of the text selection drag handles on Android.
+  final Color? androidHandleColor;
+
   /// Builder that creates a floating toolbar when running on Android.
   final WidgetBuilder? androidToolbarBuilder;
+
+  /// Color of the text selection drag handles on iOS.
+  final Color? iOSHandleColor;
 
   /// Builder that creates a floating toolbar when running on iOS.
   final WidgetBuilder? iOSToolbarBuilder;
@@ -519,6 +531,7 @@ class SuperEditorState extends State<SuperEditor> {
           getDocumentLayout: () => editContext.documentLayout,
           scrollController: widget.scrollController,
           documentKey: _docLayoutKey,
+          handleColor: widget.androidHandleColor ?? Theme.of(context).primaryColor,
           popoverToolbarBuilder: widget.androidToolbarBuilder ?? (_) => const SizedBox(),
           createOverlayControlsClipper: widget.createOverlayControlsClipper,
           showDebugPaint: widget.debugPaint.gestures,
@@ -532,6 +545,7 @@ class SuperEditorState extends State<SuperEditor> {
           getDocumentLayout: () => editContext.documentLayout,
           scrollController: widget.scrollController,
           documentKey: _docLayoutKey,
+          handleColor: widget.iOSHandleColor ?? Theme.of(context).primaryColor,
           popoverToolbarBuilder: widget.iOSToolbarBuilder ?? (_) => const SizedBox(),
           floatingCursorController: _floatingCursorController,
           createOverlayControlsClipper: widget.createOverlayControlsClipper,

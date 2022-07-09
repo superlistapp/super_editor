@@ -12,13 +12,12 @@ extension ToSpanRange on TextRange {
   SpanRange toSpanRange() => SpanRange(start: start, end: end);
 }
 
-extension ComputerTextSpan on AttributedText {
+extension ComputeTextSpan on AttributedText {
   /// Returns a Flutter [TextSpan] that is styled based on the
   /// attributions within this [AttributedText].
   ///
   /// The given [styleBuilder] interprets the meaning of every
   /// attribution and constructs [TextStyle]s accordingly.
-  // TODO: remove this method and use [visitAttributions()] to compute TextSpan
   TextSpan computeTextSpan(AttributionStyleBuilder styleBuilder) {
     attributionsLog.fine('text length: ${text.length}');
     attributionsLog.fine('attributions used to compute spans:');
