@@ -56,8 +56,6 @@ class SuperDesktopTextField extends StatefulWidget {
     this.minLines,
     this.maxLines = 1,
     this.decorationBuilder,
-    this.gestureOverrides = SuperTextFieldGestureOverrides.none,
-    this.gestureOverrideRecognizer,
     this.onRightClick,
     this.keyboardHandlers = defaultTextFieldKeyboardHandlers,
     this.gestureOverrideBuilder,
@@ -95,13 +93,6 @@ class SuperDesktopTextField extends StatefulWidget {
 
   final DecorationBuilder? decorationBuilder;
 
-  /// Overrides default text field gestures, so that clients can handle
-  /// some of them instead.
-  ///
-  /// For example, a client may want to open a context menu on right-click,
-  /// or on ALT + left-click.
-  final SuperTextFieldGestureOverrides gestureOverrides;
-
   @Deprecated("Use gestureOverrideBuilder to take control of desired gestures")
   final RightClickListener? onRightClick;
 
@@ -109,9 +100,8 @@ class SuperDesktopTextField extends StatefulWidget {
   /// key presses, for text input, deletion, caret movement, etc.
   final List<TextFieldKeyboardHandler> keyboardHandlers;
 
+  /// {@macros SuperTextField_gestureOverrideBuilder}
   final GestureOverrideBuilder? gestureOverrideBuilder;
-
-  final Map<Type, GestureRecognizerFactory<GestureRecognizer>>? gestureOverrideRecognizer;
 
   @override
   SuperDesktopTextFieldState createState() => SuperDesktopTextFieldState();
@@ -400,7 +390,7 @@ class SuperTextFieldGestureInteractor extends StatefulWidget {
   final bool isMultiline;
 
   /// Callback invoked when the user right clicks on this text field.
-  @Deprecated("Use the gesture override system to take control of desired gestures")
+  @Deprecated("Use gestureOverrideBuilder to take control of desired gestures")
   final RightClickListener? onRightClick;
 
   /// {@template SuperTextField_gestureOverrideBuilder}
@@ -795,136 +785,6 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
 
     return widget.gestureOverrideBuilder!(context, widget.textKey, child);
   }
-}
-
-/// Overrides desired [SuperDesktopTextField] default gesture behaviors and
-/// replaces them with the given implementation.
-///
-/// Implement this interface, or extent this class to respond to gestures.
-class SuperTextFieldGestureOverrides {
-  static const none = _NoSuperTextFieldGestureOverrides();
-
-  GestureOverrideResult onTapDown(SuperTextFieldTapDetails details) => GestureOverrideResult.notHandled;
-  GestureOverrideResult onTapUp(SuperTextFieldTapDetails details) => GestureOverrideResult.notHandled;
-
-  GestureOverrideResult onRightTapDown(SuperTextFieldTapDetails details) => GestureOverrideResult.notHandled;
-  GestureOverrideResult onRightTapUp(SuperTextFieldTapDetails details) => GestureOverrideResult.notHandled;
-
-  GestureOverrideResult onDoubleTapDown(SuperTextFieldTapDetails details) => GestureOverrideResult.notHandled;
-  GestureOverrideResult onDoubleTapUp(SuperTextFieldTapDetails details) => GestureOverrideResult.notHandled;
-
-  GestureOverrideResult onTripleTapDown(SuperTextFieldTapDetails details) => GestureOverrideResult.notHandled;
-  GestureOverrideResult onTripleTapUp(SuperTextFieldTapDetails details) => GestureOverrideResult.notHandled;
-}
-
-class CallbackSuperTextFieldGestureOverrides implements SuperTextFieldGestureOverrides {
-  CallbackSuperTextFieldGestureOverrides({
-    GestureOverrideHandler? onTapDown,
-    GestureOverrideHandler? onTapUp,
-    GestureOverrideHandler? onDoubleTapDown,
-    GestureOverrideHandler? onDoubleTapUp,
-    GestureOverrideHandler? onTripleTapDown,
-    GestureOverrideHandler? onTripleTapUp,
-    GestureOverrideHandler? onRightTapDown,
-    GestureOverrideHandler? onRightTapUp,
-  })  : _onTapDown = onTapDown,
-        _onTapUp = onTapUp,
-        _onDoubleTapDown = onDoubleTapDown,
-        _onDoubleTapUp = onDoubleTapUp,
-        _onTripleTapDown = onTripleTapDown,
-        _onTripleTapUp = onTripleTapUp,
-        _onRightTapDown = onRightTapDown,
-        _onRightTapUp = onRightTapUp;
-
-  @override
-  GestureOverrideResult onTapDown(SuperTextFieldTapDetails details) =>
-      _onTapDown?.call(details) ?? GestureOverrideResult.notHandled;
-  final GestureOverrideHandler? _onTapDown;
-
-  @override
-  GestureOverrideResult onTapUp(SuperTextFieldTapDetails details) =>
-      _onTapUp?.call(details) ?? GestureOverrideResult.notHandled;
-  final GestureOverrideHandler? _onTapUp;
-
-  @override
-  GestureOverrideResult onRightTapDown(SuperTextFieldTapDetails details) =>
-      _onRightTapDown?.call(details) ?? GestureOverrideResult.notHandled;
-  final GestureOverrideHandler? _onRightTapDown;
-
-  @override
-  GestureOverrideResult onRightTapUp(SuperTextFieldTapDetails details) =>
-      _onRightTapUp?.call(details) ?? GestureOverrideResult.notHandled;
-  final GestureOverrideHandler? _onRightTapUp;
-
-  @override
-  GestureOverrideResult onDoubleTapDown(SuperTextFieldTapDetails details) =>
-      _onDoubleTapDown?.call(details) ?? GestureOverrideResult.notHandled;
-  final GestureOverrideHandler? _onDoubleTapDown;
-
-  @override
-  GestureOverrideResult onDoubleTapUp(SuperTextFieldTapDetails details) =>
-      _onDoubleTapUp?.call(details) ?? GestureOverrideResult.notHandled;
-  final GestureOverrideHandler? _onDoubleTapUp;
-
-  @override
-  GestureOverrideResult onTripleTapDown(SuperTextFieldTapDetails details) =>
-      _onTripleTapDown?.call(details) ?? GestureOverrideResult.notHandled;
-  final GestureOverrideHandler? _onTripleTapDown;
-
-  @override
-  GestureOverrideResult onTripleTapUp(SuperTextFieldTapDetails details) =>
-      _onTripleTapUp?.call(details) ?? GestureOverrideResult.notHandled;
-  final GestureOverrideHandler? _onTripleTapUp;
-}
-
-/// A no-op implementation of [SuperTextFieldGestureOverrides], which is available as
-/// a public constant in [SuperTextFieldGestureOverrides.none].
-class _NoSuperTextFieldGestureOverrides implements SuperTextFieldGestureOverrides {
-  const _NoSuperTextFieldGestureOverrides();
-
-  @override
-  GestureOverrideResult onTapDown(SuperTextFieldTapDetails details) => GestureOverrideResult.notHandled;
-  @override
-  GestureOverrideResult onTapUp(SuperTextFieldTapDetails details) => GestureOverrideResult.notHandled;
-
-  @override
-  GestureOverrideResult onRightTapDown(SuperTextFieldTapDetails details) => GestureOverrideResult.notHandled;
-  @override
-  GestureOverrideResult onRightTapUp(SuperTextFieldTapDetails details) => GestureOverrideResult.notHandled;
-
-  @override
-  GestureOverrideResult onDoubleTapDown(SuperTextFieldTapDetails details) => GestureOverrideResult.notHandled;
-  @override
-  GestureOverrideResult onDoubleTapUp(SuperTextFieldTapDetails details) => GestureOverrideResult.notHandled;
-
-  @override
-  GestureOverrideResult onTripleTapDown(SuperTextFieldTapDetails details) => GestureOverrideResult.notHandled;
-  @override
-  GestureOverrideResult onTripleTapUp(SuperTextFieldTapDetails details) => GestureOverrideResult.notHandled;
-}
-
-typedef GestureOverrideHandler = GestureOverrideResult Function(SuperTextFieldTapDetails details);
-
-/// Details about where a tap took place in a [SuperTextField] so that a client
-/// can respond with a gesture override.
-class SuperTextFieldTapDetails {
-  const SuperTextFieldTapDetails({
-    required this.globalOffset,
-    required this.textFieldRenderBox,
-    required this.nearestTextPosition,
-  });
-
-  final Offset globalOffset;
-  final RenderBox textFieldRenderBox;
-  final TextPosition nearestTextPosition;
-}
-
-enum GestureOverrideResult {
-  /// The gesture should NOT be handled by SuperTextField.
-  handled,
-
-  /// The gesture should be handled by SuperTextField.
-  notHandled,
 }
 
 /// Handles all keyboard interactions for text entry in a text field.

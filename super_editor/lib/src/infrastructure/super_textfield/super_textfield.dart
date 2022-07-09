@@ -1,6 +1,5 @@
 import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
@@ -66,9 +65,7 @@ class SuperTextField extends StatefulWidget {
     this.maxLines = 1,
     this.lineHeight,
     this.keyboardHandlers = defaultTextFieldKeyboardHandlers,
-    this.desktopGestureOverrides = SuperTextFieldGestureOverrides.none,
     this.gestureOverrideBuilder,
-    this.desktopGestureOverrideRecognizer,
   }) : super(key: key);
 
   final FocusNode? focusNode;
@@ -147,17 +144,8 @@ class SuperTextField extends StatefulWidget {
   /// Only used on desktop.
   final List<TextFieldKeyboardHandler> keyboardHandlers;
 
-  /// Gesture overrides for desktop interaction.
-  ///
-  /// Gesture overrides are useful, for example, when implementing a
-  /// popover context menu on right-click, or on ALT + left-click.
-  /// Ordinarily, these gestures would be handled by [SuperTextField],
-  /// but [SuperTextField] defers to these overrides.
-  final SuperTextFieldGestureOverrides desktopGestureOverrides;
-
+  /// {@macros SuperTextField_gestureOverrideBuilder}
   final GestureOverrideBuilder? gestureOverrideBuilder;
-
-  final Map<Type, GestureRecognizerFactory<GestureRecognizer>>? desktopGestureOverrideRecognizer;
 
   @override
   State<SuperTextField> createState() => SuperTextFieldState();
@@ -256,9 +244,7 @@ class SuperTextFieldState extends State<SuperTextField> implements ProseTextBloc
           minLines: widget.minLines,
           maxLines: widget.maxLines,
           keyboardHandlers: widget.keyboardHandlers,
-          gestureOverrides: widget.desktopGestureOverrides,
           gestureOverrideBuilder: widget.gestureOverrideBuilder,
-          gestureOverrideRecognizer: widget.desktopGestureOverrideRecognizer,
         );
       case SuperTextFieldPlatformConfiguration.android:
         return Shortcuts(

@@ -14,10 +14,7 @@ void main() {
         await _pumpScaffold(
           tester,
           child: SuperTextField(
-            // TODO: need to provide ProseTextBlock to the callback to look up
-            // text position
             gestureOverrideBuilder: (context, textLayoutResolver, [child]) {
-              print("BUILDING OVERRIDE GESTURE DETECTOR");
               return GestureDetector(
                 onTapDown: (details) {
                   tapDownCount += 1;
