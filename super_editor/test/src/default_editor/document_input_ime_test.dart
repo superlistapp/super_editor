@@ -279,15 +279,14 @@ void main() {
             .createDocument()
             .withCustomContent(_singleParagraphWithLinkDoc())
             .pump();
-
-        // Place the caret at the start of the link.
-        await tester.placeCaretInParagraph('1', 0);
-
         final softwareKeyboardHandler = SoftwareKeyboardHandler(
           composer: testerDocumentContext.editContext.composer,
           editor: testerDocumentContext.editContext.editor,
           commonOps: testerDocumentContext.editContext.commonOps,
         );
+
+        // Place the caret at the start of the link.
+        await tester.placeCaretInParagraph('1', 0);
 
         // Type characters before the link using the IME
         await tester.textToType(
@@ -311,14 +310,14 @@ void main() {
             .withCustomContent(_singleParagraphWithLinkDoc())
             .pump();
 
-        // Place the caret at the end of the link.
-        await tester.placeCaretInParagraph('1', 18);
-
         final softwareKeyboardHandler = SoftwareKeyboardHandler(
           composer: testerDocumentContext.editContext.composer,
           editor: testerDocumentContext.editContext.editor,
           commonOps: testerDocumentContext.editContext.commonOps,
         );
+
+        // Place the caret at the end of the link.
+        await tester.placeCaretInParagraph('1', 18);
 
         // Type characters after the link using the IME
         await tester.textToType(
