@@ -2243,6 +2243,7 @@ class CommonEditorOperations {
 
     final upstreamTextPosition = currentTextPosition.copyWith(offset: currentTextPosition.offset - 1);
     final upstreamDocumentPosition = documentPosition.copyWith(nodePosition: upstreamTextPosition);
+    final upstreamTextNodePosition = upstreamDocumentPosition.nodePosition as TextNodePosition;
 
     final documentNode = editor.document.getNodeById(composer.selection!.extent.nodeId);
     if (documentNode is! TextNode) {
@@ -2285,9 +2286,13 @@ class CommonEditorOperations {
 
       // [upstreamDocumentPosition] is at the end of wordToLinkify, so we create
       // a downstream expanded selection
-      final urlDocumentSelection = documentPositionToDocumentSelection(
-        documentPosition: upstreamDocumentPosition,
-        extentOffset: -wordToLinkify.length,
+      final urlDocumentSelection = DocumentSelection(
+        base: upstreamDocumentPosition,
+        extent: upstreamDocumentPosition.copyWith(
+          nodePosition: upstreamTextNodePosition.copyWith(
+            offset: upstreamTextNodePosition.offset - wordToLinkify.length,
+          ),
+        ),
       );
 
       editor.executeCommand(
