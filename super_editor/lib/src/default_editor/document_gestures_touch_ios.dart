@@ -558,11 +558,11 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   }
 
   void _onPanDown(DragDownDetails details) {
-    print("ON PAN DOWN");
+    // No-op: this method is only here to beat out any ancestor
+    // Scrollable that's also trying to drag.
   }
 
   void _onPanStart(DragStartDetails details) {
-    print("ON PAN START");
     // TODO: to help the user drag handles instead of scrolling, try checking touch
     //       placement during onTapDown, and then pick that up here. I think the little
     //       bit of slop might be the problem.
