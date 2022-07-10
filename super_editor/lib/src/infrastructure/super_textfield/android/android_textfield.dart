@@ -369,24 +369,11 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
       return KeyEventResult.ignored;
     }
 
-    int deleteEndIndex = -1;
-    int deleteStartIndex = -1;
     if (_textEditingController.selection.isCollapsed) {
-      deleteEndIndex = _textEditingController.selection.extentOffset;
-      deleteStartIndex = getCharacterStartBounds(_textEditingController.text.text, deleteEndIndex);
+      _textEditingController.deletePreviousCharacter();
     } else {
-      deleteEndIndex = max(_textEditingController.selection.baseOffset, _textEditingController.selection.extentOffset);
-      deleteStartIndex = min(_textEditingController.selection.baseOffset, _textEditingController.selection.extentOffset);
+      _textEditingController.deleteSelection();
     }
-
-    // We call updateTextAndSelection directly because, when deleting the last character
-    // using delete on the controller, an exception is thrown due to the fact that
-    // the selection is in an invalid position
-    final updatedText = _textEditingController.text.removeRegion(startOffset: deleteStartIndex, endOffset: deleteEndIndex);
-    _textEditingController.updateTextAndSelection(
-      text: updatedText,
-      selection: TextSelection.collapsed(offset: deleteStartIndex),
-    );
 
     return KeyEventResult.handled;
   }

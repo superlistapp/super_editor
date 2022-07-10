@@ -15,6 +15,7 @@ void main() {
       await _pumpScaffold(tester, controller: controller);
 
       // Focus the text field
+      // TODO: change to use the robot when mobile is supported
       await tester.tapAt(tester.getCenter(find.byType(SuperTextField)));
       await tester.pump();
 
@@ -36,6 +37,7 @@ void main() {
       await _pumpScaffold(tester, controller: controller);
 
       // Focus the text field
+      // TODO: change to use the robot when mobile is supported
       await tester.tapAt(tester.getCenter(find.byType(SuperTextField)));
       await tester.pump();
 
