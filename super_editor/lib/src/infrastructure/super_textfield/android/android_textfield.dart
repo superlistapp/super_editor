@@ -1,3 +1,6 @@
+import 'dart:math';
+
+import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
@@ -353,11 +356,35 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
     }
   }
 
+  /// Handles key presses
+  ///
+  /// Some third party keyboards report backspace as a key press
+  /// rather than a deletion delta, so we need to handle them manually
+  KeyEventResult _onKeyPressed(FocusNode focusNode, RawKeyEvent keyEvent) {
+    _log.finer('_onKeyPressed - keyEvent: ${keyEvent.character}');
+    if (keyEvent is! RawKeyDownEvent) {
+      _log.finer('_onKeyPressed - not a "down" event. Ignoring.');
+      return KeyEventResult.ignored;
+    }
+    if (keyEvent.logicalKey != LogicalKeyboardKey.backspace) {
+      return KeyEventResult.ignored;
+    }
+
+    if (_textEditingController.selection.isCollapsed) {
+      _textEditingController.deletePreviousCharacter();
+    } else {
+      _textEditingController.deleteSelection();
+    }
+
+    return KeyEventResult.handled;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Focus(
       key: _textFieldKey,
       focusNode: _focusNode,
+      onKey: _onKeyPressed,
       child: CompositedTransformTarget(
         link: _textFieldLayerLink,
         child: AndroidTextFieldTouchInteractor(

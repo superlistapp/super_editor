@@ -579,8 +579,11 @@ class AttributedTextEditingController with ChangeNotifier {
     final updatedSelection =
         newSelection ?? _moveSelectionForDeletion(selection: _selection, deleteFrom: from, deleteTo: to);
 
-    text = updatedText;
-    selection = updatedSelection;
+    updateTextAndSelection(
+      text: updatedText,
+      selection: updatedSelection,
+    );
+    
     _updateComposingAttributions();
     // TODO: do we need to implement composing region update behavior like selections?
     composingRegion = newComposingRegion ?? TextRange.empty;
