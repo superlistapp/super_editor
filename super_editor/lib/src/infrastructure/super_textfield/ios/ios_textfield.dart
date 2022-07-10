@@ -150,7 +150,8 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField> with TickerProvide
   // dragging.
   OverlayEntry? _controlsOverlayEntry;
 
-  late DragHandleAutoScroller _autoScroller;
+  static const Duration _autoScrollAnimationDuration = Duration(milliseconds: 100);
+  static const Curve _autoScrollAnimationCurve = Curves.fastOutSlowIn;
 
   @override
   void initState() {
@@ -177,13 +178,6 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField> with TickerProvide
     _editingOverlayController = IOSEditingOverlayController(
       textController: _textEditingController,
       magnifierFocalPoint: _magnifierLayerLink,
-    );
-
-    _autoScroller = DragHandleAutoScroller(
-      vsync: this,
-      dragAutoScrollBoundary: const AxisOffset.symmetric(54),
-      getScrollPosition: () => Scrollable.of(context)!.position,
-      getViewportBox: () => Scrollable.of(context)!.context.findRenderObject() as RenderBox,
     );
 
     WidgetsBinding.instance.addObserver(this);
@@ -274,8 +268,6 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField> with TickerProvide
     _textScrollController
       ..removeListener(_onTextScrollChange)
       ..dispose();
-
-    _autoScroller.dispose();
 
     WidgetsBinding.instance.removeObserver(this);
 
@@ -415,8 +407,8 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField> with TickerProvide
     final viewportBox = ancestorScrollable.context.findRenderObject() as RenderBox;
 
     // We get the selection offset so the autoscroll also supports
-    // multi-line textfields
-    final offsetInsideTextField = _isMultiline && _textEditingController.selection.isValid
+    // multi-line textfields with unbounded lines
+    final offsetInsideTextField = widget.maxLines == null && _textEditingController.selection.isValid
         ? _textContentKey.currentState!.textLayout.getOffsetAtPosition(
             TextPosition(offset: _textEditingController.selection.extentOffset),
           )
@@ -426,7 +418,11 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField> with TickerProvide
       fieldBox.localToGlobal(offsetInsideTextField),
     );
 
-    _autoScroller.ensureOffsetIsVisible(offsetInsideViewport);
+    fieldBox.showOnScreen(
+      rect: Rect.fromLTWH(offsetInsideViewport.dx, offsetInsideViewport.dy, fieldBox.size.width, fieldBox.size.height),
+      duration: _autoScrollAnimationDuration,
+      curve: _autoScrollAnimationCurve,
+    );
   }
 
   @override

@@ -3,7 +3,6 @@ import 'dart:math';
 import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:super_editor/src/default_editor/document_gestures.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/android/_editing_controls.dart';
@@ -13,7 +12,6 @@ import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/t
 import 'package:super_editor/src/infrastructure/super_textfield/input_method_engine/_ime_text_editing_controller.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
-import '../../../default_editor/document_gestures_touch.dart';
 import '../../_logging.dart';
 import '../styles.dart';
 import 'android_textfield.dart';
@@ -148,7 +146,8 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField> with Ticke
   // dragging.
   OverlayEntry? _controlsOverlayEntry;
 
-  late DragHandleAutoScroller _autoScroller;
+  static const Duration _autoScrollAnimationDuration = Duration(milliseconds: 100);
+  static const Curve _autoScrollAnimationCurve = Curves.fastOutSlowIn;
 
   @override
   void initState() {
@@ -167,13 +166,6 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField> with Ticke
     _editingOverlayController = AndroidEditingOverlayController(
       textController: _textEditingController,
       magnifierFocalPoint: _magnifierLayerLink,
-    );
-
-    _autoScroller = DragHandleAutoScroller(
-      vsync: this,
-      dragAutoScrollBoundary: const AxisOffset.symmetric(54),
-      getScrollPosition: () => Scrollable.of(context)!.position,
-      getViewportBox: () => Scrollable.of(context)!.context.findRenderObject() as RenderBox,
     );
 
     WidgetsBinding.instance.addObserver(this);
@@ -264,8 +256,6 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField> with Ticke
     _textScrollController
       ..removeListener(_onTextScrollChange)
       ..dispose();
-
-    _autoScroller.dispose();
 
     WidgetsBinding.instance.removeObserver(this);
 
@@ -424,8 +414,8 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField> with Ticke
     final viewportBox = ancestorScrollable.context.findRenderObject() as RenderBox;
 
     // We get the selection offset so the autoscroll also supports
-    // multi-line textfields
-    final offsetInsideTextField = _isMultiline && _textEditingController.selection.isValid
+    // multi-line textfields with unbounded lines
+    final offsetInsideTextField = widget.maxLines == null && _textEditingController.selection.isValid
         ? _textContentKey.currentState!.textLayout.getOffsetAtPosition(
             TextPosition(offset: _textEditingController.selection.extentOffset),
           )
@@ -435,7 +425,11 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField> with Ticke
       fieldBox.localToGlobal(offsetInsideTextField),
     );
 
-    _autoScroller.ensureOffsetIsVisible(offsetInsideViewport);
+    fieldBox.showOnScreen(
+      rect: Rect.fromLTWH(offsetInsideViewport.dx, offsetInsideViewport.dy, fieldBox.size.width, fieldBox.size.height),
+      duration: _autoScrollAnimationDuration,
+      curve: _autoScrollAnimationCurve,
+    );
   }
 
   @override
