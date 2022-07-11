@@ -764,7 +764,7 @@ class AttributedTextEditingController with ChangeNotifier {
     if (!selection.isCollapsed && !expandSelection) {
       // The selection isn't collapsed and the user doesn't
       // want to continue expanding the selection. Move the
-      // extent to the left side of the selection.
+      // extent to the right side of the selection.
       selection = TextSelection.collapsed(offset: selection.end);
       return;
     }

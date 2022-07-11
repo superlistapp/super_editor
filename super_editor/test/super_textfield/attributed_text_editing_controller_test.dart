@@ -102,7 +102,7 @@ void main() {
           movementModifier: MovementModifier.word,
         );
 
-        // Ensure that the selection didn't change.
+        // Ensure that the selection moved upstream by one word.
         expect(controller.selection, const TextSelection.collapsed(offset: 4));
       });
 
@@ -121,7 +121,7 @@ void main() {
           movementModifier: MovementModifier.word,
         );
 
-        // Ensure that the selection didn't change.
+        // Ensure that the selection moved downstream by one word.
         expect(controller.selection, const TextSelection.collapsed(offset: 7));
       });
     });
