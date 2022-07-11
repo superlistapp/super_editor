@@ -11,11 +11,23 @@ import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/a
 import 'package:super_text_layout/super_text_layout.dart';
 
 import '../attributed_text_editing_value.dart';
+import 'commands.dart';
+import 'event_source_value.dart';
 
 class EventSourcedAttributedTextEditingController with ChangeNotifier implements AttributedTextEditingController {
-  EventSourcedAttributedTextEditingController(this._value);
+  EventSourcedAttributedTextEditingController(
+    AttributedTextEditingValue initialValue,
+  ) : _value = EventSourcedAttributedTextEditingValue(initialValue);
 
-  AttributedTextEditingValue _value;
+  final EventSourcedAttributedTextEditingValue _value;
+
+  bool get isUndoable => _value.isUndoable;
+
+  bool undo() => _value.undo();
+
+  bool get isRedoable => _value.isRedoable;
+
+  bool redo() => _value.redo();
 
   @override
   AttributedText get text => _value.text;
@@ -142,11 +154,6 @@ class EventSourcedAttributedTextEditingController with ChangeNotifier implements
     // TODO: create a command
   }
 
-  @override
-  void selectAll() {
-    // TODO: create a command
-  }
-
   /// Toggles the presence of each of the given [attributions] within
   /// the text in the [selection].
   @override
@@ -154,12 +161,13 @@ class EventSourcedAttributedTextEditingController with ChangeNotifier implements
     if (attributions.isEmpty) {
       return;
     }
-
     if (selection.isCollapsed) {
       return;
     }
 
-    // TODO: create a command
+    _value.execute(
+      ToggleSelectionAttributionsCommand(attributions.toSet()),
+    );
   }
 
   /// Removes all attributions from the text that is currently selected.
@@ -173,98 +181,114 @@ class EventSourcedAttributedTextEditingController with ChangeNotifier implements
   }
 
   @override
+  void selectAll() {
+    _value.execute(SelectAllCommand());
+  }
+
+  @override
   void updateTextAndSelection({
     required AttributedText text,
     required TextSelection selection,
+    TextRange composingRegion = TextRange.empty,
   }) {
-    // TODO: create a command
+    _value.execute(
+      ReplaceContentCommands(
+        newText: text,
+        newSelection: selection,
+        newComposingRegion: composingRegion,
+      ),
+    );
   }
 
   @override
   void insertCharacter(String character) {
-    // TODO: create a command
+    insertAtCaretWithUpstreamAttributions(text: character);
   }
 
   @override
   void insertNewline() {
-    // TODO: create a command
+    insertAtCaretWithUpstreamAttributions(text: "\n");
   }
 
   /// Inserts the given [text] at the current caret position.
   ///
   /// The current [composingAttributions] are applied to the given
   /// [text] and the caret is moved to the end of the given [text].
-  ///
-  /// If the current [selection] is expanded, this method does nothing,
-  /// because there is no conceptual caret with an expanded selection.
   @override
   void insertAtCaret({
     required String text,
     TextRange? newComposingRegion,
   }) {
-    if (!selection.isCollapsed) {
-      textFieldLog.warning('Attempted to insert text at the caret with an expanded selection. Selection: $selection');
-      return;
+    _ensureCaretReadyForInsertion();
+
+    final attributedText = AttributedText(text: text);
+    final attributions = Set.from(composingAttributions);
+    for (final attribution in attributions) {
+      attributedText.addAttribution(
+        attribution,
+        SpanRange(start: 0, end: attributedText.text.length - 1),
+      );
     }
 
-    // TODO: create a command
+    _value.execute(InsertTextAtCaretCommand(
+      attributedText,
+      composingRegion: newComposingRegion ?? TextRange.empty,
+    ));
   }
 
   /// Inserts the given [text] at the current caret position, extending whatever
   /// attributions exist at the offset before the insertion.
   ///
   /// The caret is moved to the end of the inserted [text].
-  ///
-  /// If the current [selection] is expanded, this method does nothing,
-  /// because there is no conceptual caret with an expanded selection.
   @override
   void insertAtCaretWithUpstreamAttributions({
     required String text,
     TextRange? newComposingRegion,
   }) {
-    if (!selection.isCollapsed) {
-      textFieldLog.warning('Attempted to insert text at the caret with an expanded selection. Selection: $selection');
-      return;
+    _ensureCaretReadyForInsertion();
+
+    final attributedText = AttributedText(text: text);
+    final attributions = _value.text.getAllAttributionsAt(max(selection.extentOffset - 1, 0));
+    for (final attribution in attributions) {
+      attributedText.addAttribution(
+        attribution,
+        SpanRange(start: 0, end: attributedText.text.length - 1),
+      );
     }
 
-    // TODO: create a command
-  }
-
-  /// Inserts the given [attributedText] at the current caret position.
-  ///
-  /// The caret is moved to the end of the inserted [text].
-  ///
-  /// If the current [selection] is expanded, this method does nothing,
-  /// because there is no conceptual caret with an expanded selection.
-  @override
-  void insertAttributedTextAtCaret({
-    required AttributedText attributedText,
-    TextRange? newComposingRegion,
-  }) {
-    if (!selection.isCollapsed) {
-      textFieldLog.warning('Attempted to insert text at the caret with an expanded selection. Selection: $selection');
-      return;
-    }
-
-    // TODO: create a command
+    _value.execute(InsertTextAtCaretCommand(
+      attributedText,
+      composingRegion: newComposingRegion ?? TextRange.empty,
+    ));
   }
 
   /// Inserts the given [text] at the current caret position without any
   /// attributions applied to the [text].
-  ///
-  /// If the current [selection] is expanded, this method does nothing,
-  /// because there is no conceptual caret with an expanded selection.
   @override
   void insertAtCaretUnstyled({
     required String text,
     TextRange? newComposingRegion,
   }) {
-    if (!selection.isCollapsed) {
-      textFieldLog.warning('Attempted to insert text at the caret with an expanded selection. Selection: $selection');
-      return;
-    }
+    insertAttributedTextAtCaret(
+      attributedText: AttributedText(text: text),
+      newComposingRegion: newComposingRegion,
+    );
+  }
 
-    // TODO: create a command
+  /// Inserts the given [attributedText] at the current caret position.
+  ///
+  /// The caret is moved to the end of the inserted [text].
+  @override
+  void insertAttributedTextAtCaret({
+    required AttributedText attributedText,
+    TextRange? newComposingRegion,
+  }) {
+    _ensureCaretReadyForInsertion();
+
+    _value.execute(InsertTextAtCaretCommand(
+      attributedText,
+      composingRegion: newComposingRegion ?? TextRange.empty,
+    ));
   }
 
   /// Inserts [newText], starting at the given [insertIndex].
@@ -282,7 +306,39 @@ class EventSourcedAttributedTextEditingController with ChangeNotifier implements
     TextSelection? newSelection,
     TextRange? newComposingRegion,
   }) {
-    // TODO: create a command
+    late final TextSelection updatedSelection;
+    if (newSelection != null) {
+      updatedSelection = newSelection;
+    } else {
+      int newBaseOffset = selection.baseOffset;
+      if ((selection.baseOffset == insertIndex && selection.isCollapsed) || (selection.baseOffset > insertIndex)) {
+        newBaseOffset = selection.baseOffset + newText.text.length;
+      }
+
+      final newExtentOffset =
+          selection.extentOffset >= insertIndex ? selection.extentOffset + newText.text.length : selection.extentOffset;
+
+      updatedSelection = TextSelection(
+        baseOffset: newBaseOffset,
+        extentOffset: newExtentOffset,
+      );
+    }
+
+    _value.execute(InsertTextAtOffsetCommand(
+      textToInsert: newText,
+      insertionOffset: insertIndex,
+      selectionAfter: updatedSelection,
+      composingRegion: newComposingRegion ?? TextRange.empty,
+    ));
+  }
+
+  void _ensureCaretReadyForInsertion() {
+    if (!selection.isValid) {
+      throw Exception("Attempted to insert text at the caret but there is no selection");
+    }
+    if (!selection.isCollapsed) {
+      throw Exception('Attempted to insert text at the caret with an expanded selection. Selection: $selection');
+    }
   }
 
   /// Replaces the currently selected text with [replacementText] and collapses

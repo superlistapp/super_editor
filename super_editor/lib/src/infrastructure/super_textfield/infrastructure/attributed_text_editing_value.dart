@@ -4,6 +4,15 @@ import 'package:flutter/services.dart';
 /// The logical value of a text editable that displays attributed
 /// text.
 class AttributedTextEditingValue {
+  factory AttributedTextEditingValue.empty() => AttributedTextEditingValue(
+        text: AttributedText(text: ""),
+      );
+
+  factory AttributedTextEditingValue.emptyWithCaret() => AttributedTextEditingValue(
+        text: AttributedText(text: ""),
+        selection: const TextSelection.collapsed(offset: 0),
+      );
+
   const AttributedTextEditingValue({
     required this.text,
     this.selection = const TextSelection.collapsed(offset: -1),

@@ -15,9 +15,9 @@ void main() {
         );
 
         editingValue
-          ..execute(TextFieldInsertTextCommand(AttributedText(text: "a")))
-          ..execute(TextFieldInsertTextCommand(AttributedText(text: "b")))
-          ..execute(TextFieldInsertTextCommand(AttributedText(text: "c")));
+          ..execute(InsertTextAtCaretCommand(AttributedText(text: "a")))
+          ..execute(InsertTextAtCaretCommand(AttributedText(text: "b")))
+          ..execute(InsertTextAtCaretCommand(AttributedText(text: "c")));
 
         expect(editingValue.text.text, "abc");
         expect(editingValue.selection, const TextSelection.collapsed(offset: 3));
@@ -32,9 +32,9 @@ void main() {
         );
 
         editingValue
-          ..execute(TextFieldInsertTextCommand(AttributedText(text: "a")))
-          ..execute(TextFieldInsertTextCommand(AttributedText(text: "b")))
-          ..execute(TextFieldInsertTextCommand(AttributedText(text: "c")));
+          ..execute(InsertTextAtCaretCommand(AttributedText(text: "a")))
+          ..execute(InsertTextAtCaretCommand(AttributedText(text: "b")))
+          ..execute(InsertTextAtCaretCommand(AttributedText(text: "c")));
 
         // Undo the insertions.
         editingValue.undo();
@@ -75,14 +75,14 @@ void main() {
         // Run a series of insertions, undo's, and redo's to ensure that
         // we can redo operations at various times.
         editingValue
-          ..execute(TextFieldInsertTextCommand(AttributedText(text: "a")))
+          ..execute(InsertTextAtCaretCommand(AttributedText(text: "a")))
           ..undo()
           ..redo();
         expect(editingValue.text.text, "a");
 
         editingValue
-          ..execute(TextFieldInsertTextCommand(AttributedText(text: "b")))
-          ..execute(TextFieldInsertTextCommand(AttributedText(text: "c")))
+          ..execute(InsertTextAtCaretCommand(AttributedText(text: "b")))
+          ..execute(InsertTextAtCaretCommand(AttributedText(text: "c")))
           ..undo()
           ..undo()
           ..redo();
@@ -116,11 +116,11 @@ void main() {
         // Run a series of insertions, undo's, and redo's to ensure that
         // we can redo operations at various times.
         editingValue
-          ..execute(TextFieldInsertTextCommand(AttributedText(text: "a")))
-          ..execute(TextFieldInsertTextCommand(AttributedText(text: "b")))
-          ..execute(TextFieldInsertTextCommand(AttributedText(text: "c")))
+          ..execute(InsertTextAtCaretCommand(AttributedText(text: "a")))
+          ..execute(InsertTextAtCaretCommand(AttributedText(text: "b")))
+          ..execute(InsertTextAtCaretCommand(AttributedText(text: "c")))
           ..undo()
-          ..execute(TextFieldInsertTextCommand(AttributedText(text: "d")));
+          ..execute(InsertTextAtCaretCommand(AttributedText(text: "d")));
 
         expect(editingValue.text.text, "abd");
         expect(editingValue.isRedoable, isFalse);
@@ -136,12 +136,12 @@ void main() {
 
         // Run a batch command with multiple inner commands.
         editingValue
-          ..execute(TextFieldInsertTextCommand(AttributedText(text: "a")))
+          ..execute(InsertTextAtCaretCommand(AttributedText(text: "a")))
           ..execute(BatchCommand([
-            TextFieldInsertTextCommand(AttributedText(text: "b")),
-            TextFieldInsertTextCommand(AttributedText(text: "c")),
+            InsertTextAtCaretCommand(AttributedText(text: "b")),
+            InsertTextAtCaretCommand(AttributedText(text: "c")),
           ]))
-          ..execute(TextFieldInsertTextCommand(AttributedText(text: "d")));
+          ..execute(InsertTextAtCaretCommand(AttributedText(text: "d")));
         expect(editingValue.text.text, "abcd");
 
         // Undo the batch command.
