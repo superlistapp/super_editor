@@ -557,6 +557,11 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     widget.focusNode.requestFocus();
   }
 
+  void _onPanDown(DragDownDetails details) {
+    // No-op: this method is only here to beat out any ancestor
+    // Scrollable that's also trying to drag.
+  }
+
   void _onPanStart(DragStartDetails details) {
     // TODO: to help the user drag handles instead of scrolling, try checking touch
     //       placement during onTapDown, and then pick that up here. I think the little
@@ -1032,7 +1037,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     required Widget child,
   }) {
     return RawGestureDetector(
-      behavior: HitTestBehavior.translucent,
+      behavior: HitTestBehavior.opaque,
       gestures: <Type, GestureRecognizerFactory>{
         TapSequenceGestureRecognizer: GestureRecognizerFactoryWithHandlers<TapSequenceGestureRecognizer>(
           () => TapSequenceGestureRecognizer(),
@@ -1044,10 +1049,15 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
               ..onTimeout = _onTapTimeout;
           },
         ),
-        PanGestureRecognizer: GestureRecognizerFactoryWithHandlers<PanGestureRecognizer>(
-          () => PanGestureRecognizer(),
-          (PanGestureRecognizer recognizer) {
-            recognizer
+        // We use a VerticalDragGestureRecognizer instead of a PanGestureRecognizer
+        // because `Scrollable` also uses a VerticalDragGestureRecognizer and we
+        // need to beat out any ancestor `Scrollable` in the gesture arena.
+        VerticalDragGestureRecognizer: GestureRecognizerFactoryWithHandlers<VerticalDragGestureRecognizer>(
+          () => VerticalDragGestureRecognizer(),
+          (VerticalDragGestureRecognizer instance) {
+            instance
+              ..dragStartBehavior = DragStartBehavior.down
+              ..onDown = _onPanDown
               ..onStart = _onPanStart
               ..onUpdate = _onPanUpdate
               ..onEnd = _onPanEnd
