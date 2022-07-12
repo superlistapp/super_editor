@@ -2,7 +2,9 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
-import 'package:super_editor/src/infrastructure/super_textfield/super_textfield.dart';
+import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/gesture_overrides.dart';
+import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/text_scrollview.dart';
+import 'package:super_editor/src/infrastructure/super_textfield/input_method_engine/_ime_text_editing_controller.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
 import '_editing_controls.dart';
@@ -39,9 +41,10 @@ class IOSTextFieldTouchInteractor extends StatefulWidget {
     required this.textController,
     required this.editingOverlayController,
     required this.textScrollController,
-    required this.selectableTextKey,
+    required this.textKey,
     required this.isMultiline,
     required this.handleColor,
+    this.gestureOverrideBuilder,
     this.showDebugPaint = false,
     required this.child,
   }) : super(key: key);
@@ -71,7 +74,7 @@ class IOSTextFieldTouchInteractor extends StatefulWidget {
 
   /// [GlobalKey] that references the widget that contains the field's
   /// text.
-  final GlobalKey<ProseTextState> selectableTextKey;
+  final GlobalKey<ProseTextState> textKey;
 
   /// Whether the text field that owns this [IOSTextFieldInteractor] is
   /// a multiline text field.
@@ -79,6 +82,9 @@ class IOSTextFieldTouchInteractor extends StatefulWidget {
 
   /// The color of expanded selection drag handles.
   final Color handleColor;
+
+  /// {@macros SuperTextField_gestureOverrideBuilder}
+  final GestureOverrideBuilder? gestureOverrideBuilder;
 
   /// Whether to paint debugging guides and regions.
   final bool showDebugPaint;
@@ -123,7 +129,7 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
     super.dispose();
   }
 
-  ProseTextLayout get _textLayout => widget.selectableTextKey.currentState!.textLayout;
+  ProseTextLayout get _textLayout => widget.textKey.currentState!.textLayout;
 
   void _onTapDown(TapDownDetails details) {
     _log.fine("User tapped down");
@@ -299,7 +305,7 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
   /// Converts a screen-level offset to an offset relative to the top-left
   /// corner of the text within this text field.
   Offset _globalOffsetToTextOffset(Offset globalOffset) {
-    final textBox = widget.selectableTextKey.currentContext!.findRenderObject() as RenderBox;
+    final textBox = widget.textKey.currentContext!.findRenderObject() as RenderBox;
     return textBox.globalToLocal(globalOffset);
   }
 
@@ -322,8 +328,7 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
     }
 
     final globalOffset = (context.findRenderObject() as RenderBox).localToGlobal(localOffset);
-    final textOffset =
-        (widget.selectableTextKey.currentContext!.findRenderObject() as RenderBox).globalToLocal(globalOffset);
+    final textOffset = (widget.textKey.currentContext!.findRenderObject() as RenderBox).globalToLocal(globalOffset);
     return _textLayout.getPositionAtOffset(textOffset);
   }
 
@@ -400,6 +405,7 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
             },
           ),
         },
+        child: widget.gestureOverrideBuilder?.call(context, widget.textKey),
       ),
     );
   }

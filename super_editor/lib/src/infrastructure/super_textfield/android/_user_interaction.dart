@@ -2,7 +2,9 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
-import 'package:super_editor/src/infrastructure/super_textfield/super_textfield.dart';
+import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/gesture_overrides.dart';
+import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/text_scrollview.dart';
+import 'package:super_editor/src/infrastructure/super_textfield/input_method_engine/_ime_text_editing_controller.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
 import '_editing_controls.dart';
@@ -46,6 +48,7 @@ class AndroidTextFieldTouchInteractor extends StatefulWidget {
     required this.textKey,
     required this.isMultiline,
     required this.handleColor,
+    this.gestureOverrideBuilder,
     this.showDebugPaint = false,
     required this.child,
   }) : super(key: key);
@@ -83,6 +86,9 @@ class AndroidTextFieldTouchInteractor extends StatefulWidget {
 
   /// The color of expanded selection drag handles.
   final Color handleColor;
+
+  /// {@macros SuperTextField_gestureOverrideBuilder}
+  final GestureOverrideBuilder? gestureOverrideBuilder;
 
   /// Whether to paint debugging guides and regions.
   final bool showDebugPaint;
@@ -437,6 +443,7 @@ class AndroidTextFieldTouchInteractorState extends State<AndroidTextFieldTouchIn
             },
           ),
         },
+        child: widget.gestureOverrideBuilder?.call(context, widget.textKey),
       ),
     );
   }

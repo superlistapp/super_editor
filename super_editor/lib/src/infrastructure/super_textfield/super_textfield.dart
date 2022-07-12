@@ -6,6 +6,7 @@ import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/android/android_textfield.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/desktop/desktop_textfield.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/attributed_text_editing_controller.dart';
+import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/gesture_overrides.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/hint_text.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/input_method_engine/_ime_text_editing_controller.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/ios/ios_textfield.dart';
@@ -16,6 +17,7 @@ import 'styles.dart';
 export 'android/android_textfield.dart';
 export 'desktop/desktop_textfield.dart';
 export 'infrastructure/attributed_text_editing_controller.dart';
+export 'infrastructure/gesture_overrides.dart';
 export 'infrastructure/hint_text.dart';
 export 'infrastructure/magnifier.dart';
 export 'infrastructure/text_scrollview.dart';
@@ -63,6 +65,7 @@ class SuperTextField extends StatefulWidget {
     this.maxLines = 1,
     this.lineHeight,
     this.keyboardHandlers = defaultTextFieldKeyboardHandlers,
+    this.gestureOverrideBuilder,
   }) : super(key: key);
 
   final FocusNode? focusNode;
@@ -141,11 +144,14 @@ class SuperTextField extends StatefulWidget {
   /// Only used on desktop.
   final List<TextFieldKeyboardHandler> keyboardHandlers;
 
+  /// {@macros SuperTextField_gestureOverrideBuilder}
+  final GestureOverrideBuilder? gestureOverrideBuilder;
+
   @override
   State<SuperTextField> createState() => SuperTextFieldState();
 }
 
-class SuperTextFieldState extends State<SuperTextField> {
+class SuperTextFieldState extends State<SuperTextField> implements ProseTextBlock {
   final _platformFieldKey = GlobalKey();
   late ImeAttributedTextEditingController _controller;
 
@@ -176,7 +182,7 @@ class SuperTextFieldState extends State<SuperTextField> {
   @visibleForTesting
   AttributedTextEditingController get controller => _controller;
 
-  @visibleForTesting
+  @override
   ProseTextLayout get textLayout => (_platformFieldKey.currentState as ProseTextBlock).textLayout;
 
   bool get _isMultiline => (widget.minLines ?? 1) != 1 || widget.maxLines != 1;
@@ -238,6 +244,7 @@ class SuperTextFieldState extends State<SuperTextField> {
           minLines: widget.minLines,
           maxLines: widget.maxLines,
           keyboardHandlers: widget.keyboardHandlers,
+          gestureOverrideBuilder: widget.gestureOverrideBuilder,
         );
       case SuperTextFieldPlatformConfiguration.android:
         return Shortcuts(
@@ -257,6 +264,7 @@ class SuperTextFieldState extends State<SuperTextField> {
             maxLines: widget.maxLines,
             lineHeight: widget.lineHeight,
             textInputAction: _isMultiline ? TextInputAction.newline : TextInputAction.done,
+            gestureOverrideBuilder: widget.gestureOverrideBuilder,
           ),
         );
       case SuperTextFieldPlatformConfiguration.iOS:
@@ -277,6 +285,7 @@ class SuperTextFieldState extends State<SuperTextField> {
             maxLines: widget.maxLines,
             lineHeight: widget.lineHeight,
             textInputAction: _isMultiline ? TextInputAction.newline : TextInputAction.done,
+            gestureOverrideBuilder: widget.gestureOverrideBuilder,
           ),
         );
     }

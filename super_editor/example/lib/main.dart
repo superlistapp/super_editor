@@ -30,6 +30,7 @@ import 'demos/demo_switch_document_content.dart';
 import 'demos/scrolling/demo_task_and_chat_with_renderobject.dart';
 import 'demos/super_document/demo_read_only_scrolling_document.dart';
 import 'demos/supertextfield/android/demo_superandroidtextfield.dart';
+import 'demos/supertextfield/demo_textfield_with_context_menu.dart';
 
 /// Demo of a basic text editor, as well as various widgets that
 /// are available in this package.
@@ -324,6 +325,13 @@ final _menu = <_MenuGroup>[
         title: 'SuperTextField',
         pageBuilder: (context) {
           return TextFieldDemo();
+        },
+      ),
+      _MenuItem(
+        icon: Icons.text_fields,
+        title: 'SuperTextField with context menu',
+        pageBuilder: (context) {
+          return TextFieldWithContextMenuDemo();
         },
       ),
       _MenuItem(

@@ -12,6 +12,7 @@ import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/platform_detector.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/attributed_text_editing_controller.dart';
+import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/gesture_overrides.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/hint_text.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
@@ -57,6 +58,7 @@ class SuperDesktopTextField extends StatefulWidget {
     this.decorationBuilder,
     this.onRightClick,
     this.keyboardHandlers = defaultTextFieldKeyboardHandlers,
+    this.gestureOverrideBuilder,
   }) : super(key: key);
 
   final FocusNode? focusNode;
@@ -91,11 +93,15 @@ class SuperDesktopTextField extends StatefulWidget {
 
   final DecorationBuilder? decorationBuilder;
 
+  @Deprecated("Use gestureOverrideBuilder to take control of desired gestures")
   final RightClickListener? onRightClick;
 
   /// Priority list of handlers that process all physical keyboard
   /// key presses, for text input, deletion, caret movement, etc.
   final List<TextFieldKeyboardHandler> keyboardHandlers;
+
+  /// {@macros SuperTextField_gestureOverrideBuilder}
+  final GestureOverrideBuilder? gestureOverrideBuilder;
 
   @override
   SuperDesktopTextFieldState createState() => SuperDesktopTextFieldState();
@@ -280,6 +286,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
         textScrollKey: _textScrollKey,
         isMultiline: isMultiline,
         onRightClick: widget.onRightClick,
+        gestureOverrideBuilder: widget.gestureOverrideBuilder,
         child: MultiListenableBuilder(
           listenables: {
             _focusNode,
@@ -360,6 +367,7 @@ class SuperTextFieldGestureInteractor extends StatefulWidget {
     required this.textScrollKey,
     required this.isMultiline,
     this.onRightClick,
+    this.gestureOverrideBuilder,
     required this.child,
   }) : super(key: key);
 
@@ -382,7 +390,19 @@ class SuperTextFieldGestureInteractor extends StatefulWidget {
   final bool isMultiline;
 
   /// Callback invoked when the user right clicks on this text field.
+  @Deprecated("Use gestureOverrideBuilder to take control of desired gestures")
   final RightClickListener? onRightClick;
+
+  /// {@template SuperTextField_gestureOverrideBuilder}
+  /// Widget that takes up as much space as the text field, and can be used to override
+  /// default text field gestures, so that clients can handle some of them instead.
+  ///
+  /// For example, a client may want to open a context menu on right-click,
+  /// or on ALT + left-click. Rather than add all possible gesture controls to this
+  /// text field, clients can pass a [gestureOverrideBuilder] to respond to any
+  /// set of desired gestures.
+  /// {@endtemplate}
+  final GestureOverrideBuilder? gestureOverrideBuilder;
 
   /// The rest of the subtree for this text field.
   final Widget child;
@@ -433,9 +453,8 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
   }
 
   void _onDoubleTapDown(TapDownDetails details) {
+    _log.fine("Double tap down on SuperTextField");
     _selectionType = _SelectionType.word;
-
-    _log.finer('_onDoubleTapDown - EditableDocument: onDoubleTap()');
 
     final tapTextPosition = _getPositionAtOffset(details.localPosition);
 
@@ -450,11 +469,13 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
     widget.focusNode.requestFocus();
   }
 
-  void _onDoubleTap() {
+  void _onDoubleTapUp(TapUpDetails details) {
+    _log.fine('Double tap up on SuperTextField');
     _selectionType = _SelectionType.position;
   }
 
   void _onTripleTapDown(TapDownDetails details) {
+    _log.fine('Triple tap down on SuperTextField');
     _selectionType = _SelectionType.paragraph;
 
     _log.finer('_onTripleTapDown - EditableDocument: onTripleTapDown()');
@@ -472,11 +493,12 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
     widget.focusNode.requestFocus();
   }
 
-  void _onTripleTap() {
+  void _onTripleTapUp(TapUpDetails details) {
+    _log.fine('Triple tap up on SuperTextField');
     _selectionType = _SelectionType.position;
   }
 
-  void _onRightClick(TapUpDetails details) {
+  void _onRightTapUp(TapUpDetails details) {
     widget.onRightClick?.call(context, widget.textController, details.localPosition);
   }
 
@@ -715,33 +737,38 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
   Widget build(BuildContext context) {
     return Listener(
       onPointerSignal: _onPointerSignal,
-      child: GestureDetector(
-        onSecondaryTapUp: _onRightClick,
-        child: RawGestureDetector(
-          behavior: HitTestBehavior.translucent,
-          gestures: <Type, GestureRecognizerFactory>{
-            TapSequenceGestureRecognizer: GestureRecognizerFactoryWithHandlers<TapSequenceGestureRecognizer>(
-              () => TapSequenceGestureRecognizer(),
-              (TapSequenceGestureRecognizer recognizer) {
-                recognizer
-                  ..onTapDown = _onTapDown
-                  ..onDoubleTapDown = _onDoubleTapDown
-                  ..onDoubleTap = _onDoubleTap
-                  ..onTripleTapDown = _onTripleTapDown
-                  ..onTripleTap = _onTripleTap;
-              },
-            ),
-            PanGestureRecognizer: GestureRecognizerFactoryWithHandlers<PanGestureRecognizer>(
-              () => PanGestureRecognizer(),
-              (PanGestureRecognizer recognizer) {
-                recognizer
-                  ..onStart = _onPanStart
-                  ..onUpdate = _onPanUpdate
-                  ..onEnd = _onPanEnd
-                  ..onCancel = _onPanCancel;
-              },
-            ),
-          },
+      child: RawGestureDetector(
+        behavior: HitTestBehavior.translucent,
+        gestures: <Type, GestureRecognizerFactory>{
+          TapGestureRecognizer: GestureRecognizerFactoryWithHandlers<TapGestureRecognizer>(
+            () => TapGestureRecognizer(),
+            (TapGestureRecognizer recognizer) {
+              recognizer.onSecondaryTapUp = _onRightTapUp;
+            },
+          ),
+          TapSequenceGestureRecognizer: GestureRecognizerFactoryWithHandlers<TapSequenceGestureRecognizer>(
+            () => TapSequenceGestureRecognizer(),
+            (TapSequenceGestureRecognizer recognizer) {
+              recognizer
+                ..onTapDown = _onTapDown
+                ..onDoubleTapDown = _onDoubleTapDown
+                ..onDoubleTapUp = _onDoubleTapUp
+                ..onTripleTapDown = _onTripleTapDown
+                ..onTripleTapUp = _onTripleTapUp;
+            },
+          ),
+          PanGestureRecognizer: GestureRecognizerFactoryWithHandlers<PanGestureRecognizer>(
+            () => PanGestureRecognizer(),
+            (PanGestureRecognizer recognizer) {
+              recognizer
+                ..onStart = _onPanStart
+                ..onUpdate = _onPanUpdate
+                ..onEnd = _onPanEnd
+                ..onCancel = _onPanCancel;
+            },
+          ),
+        },
+        child: _buildGestureOverrides(
           child: MouseRegion(
             cursor: SystemMouseCursors.text,
             child: widget.child,
@@ -749,6 +776,14 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
         ),
       ),
     );
+  }
+
+  Widget _buildGestureOverrides({required Widget child}) {
+    if (widget.gestureOverrideBuilder == null) {
+      return child;
+    }
+
+    return widget.gestureOverrideBuilder!(context, widget.textKey, child);
   }
 }
 
