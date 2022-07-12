@@ -1,3 +1,3 @@
-(cd .\attributed_text; flutter test)
-(cd .\super_editor; flutter test)
-(cd .\super_text_layout; flutter test)
+(CD attributed_text; flutter test)
+(CD super_editor; flutter test)
+(CD super_text_layout; flutter test)
