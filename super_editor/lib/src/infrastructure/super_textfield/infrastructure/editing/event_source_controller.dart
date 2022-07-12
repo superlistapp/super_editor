@@ -14,6 +14,7 @@ import '../attributed_text_editing_value.dart';
 import 'commands.dart';
 import 'event_source_value.dart';
 
+/// An [AttributedTextEditingController] that supports undo/redo.
 class EventSourcedAttributedTextEditingController with ChangeNotifier implements AttributedTextEditingController {
   EventSourcedAttributedTextEditingController(
     AttributedTextEditingValue initialValue,
@@ -21,12 +22,18 @@ class EventSourcedAttributedTextEditingController with ChangeNotifier implements
 
   final EventSourcedAttributedTextEditingValue _value;
 
+  /// Whether there are any commands in the history stack.
   bool get isUndoable => _value.isUndoable;
 
+  /// Pops the top command off the history stack and reverses its
+  /// effect on the current attributed text editing value.
   bool undo() => _value.undo();
 
+  /// Whether there are any commands in the future stack.
   bool get isRedoable => _value.isRedoable;
 
+  /// Pops the top command off the future stack and re-applies its
+  /// effect on the current attributed text editing value.
   bool redo() => _value.redo();
 
   @override
@@ -50,7 +57,7 @@ class EventSourcedAttributedTextEditingController with ChangeNotifier implements
   @override
   set composingRegion(TextRange _) => throw UnimplementedError();
 
-  // TODO: this should probably an extension method on AttributedText or something
+  // TODO: this should probably be an extension method on AttributedText or something
   // like that.
   @override
   bool isSelectionWithinTextBounds(TextSelection selection) {
@@ -177,7 +184,7 @@ class EventSourcedAttributedTextEditingController with ChangeNotifier implements
       return;
     }
 
-    // TODO: create a command
+    _value.execute(RemoveSelectedAttributionsCommand());
   }
 
   @override
@@ -192,7 +199,7 @@ class EventSourcedAttributedTextEditingController with ChangeNotifier implements
     TextRange composingRegion = TextRange.empty,
   }) {
     _value.execute(
-      ReplaceContentCommands(
+      ReplaceEverythingCommand(
         newText: text,
         newSelection: selection,
         newComposingRegion: composingRegion,
@@ -354,7 +361,19 @@ class EventSourcedAttributedTextEditingController with ChangeNotifier implements
       return;
     }
 
-    // TODO: create a command
+    final upstreamAttributions = _value.text.getAllAttributionsAt(
+      max(selection.start - 1, 0),
+    );
+    final newStyledText = AttributedText(text: replacementText);
+    final newTextRange = SpanRange(start: 0, end: newStyledText.text.length - 1);
+    for (final attribution in upstreamAttributions) {
+      newStyledText.addAttribution(attribution, newTextRange);
+    }
+
+    replaceSelectionWithAttributedText(
+      attributedReplacementText: newStyledText,
+      newComposingRegion: newComposingRegion,
+    );
   }
 
   /// Replaces the currently selected text with [attributedReplacementText] and
@@ -370,7 +389,10 @@ class EventSourcedAttributedTextEditingController with ChangeNotifier implements
       return;
     }
 
-    // TODO: create a command
+    _value.execute(BatchCommand([
+      DeleteSelectedTextCommand(),
+      InsertTextAtCaretCommand(attributedReplacementText, composingRegion: newComposingRegion),
+    ]));
   }
 
   /// Replaces the currently selected text with un-styled [text] and collapses
@@ -386,7 +408,10 @@ class EventSourcedAttributedTextEditingController with ChangeNotifier implements
       return;
     }
 
-    // TODO: create a command
+    _value.execute(BatchCommand([
+      DeleteSelectedTextCommand(),
+      InsertTextAtCaretCommand(AttributedText(text: replacementText), composingRegion: newComposingRegion),
+    ]));
   }
 
   /// Removes the text between [from] (inclusive) and [to] (exclusive), and replaces that
@@ -409,6 +434,8 @@ class EventSourcedAttributedTextEditingController with ChangeNotifier implements
     // TODO: create a command
   }
 
+  /// Deletes all the text on the current line that appears upstream from the
+  /// caret.
   @override
   void deleteTextOnLineBeforeCaret({
     required ProseTextLayout textLayout,
@@ -418,9 +445,24 @@ class EventSourcedAttributedTextEditingController with ChangeNotifier implements
     // TODO: create a command
   }
 
+  // TODO: either this method or the next one should be deleted
   @override
   void deleteSelectedText() {
     assert(!selection.isCollapsed);
+
+    // TODO: create a command
+  }
+
+  /// Deletes the text within the current [selection].
+  ///
+  /// Does nothing if [selection] is collapsed.
+  @override
+  void deleteSelection({
+    TextRange? newComposingRegion,
+  }) {
+    if (selection.isCollapsed) {
+      return;
+    }
 
     // TODO: create a command
   }
@@ -476,20 +518,6 @@ class EventSourcedAttributedTextEditingController with ChangeNotifier implements
     // TODO: create a command
   }
 
-  /// Deletes the text within the current [selection].
-  ///
-  /// Does nothing if [selection] is collapsed.
-  @override
-  void deleteSelection({
-    TextRange? newComposingRegion,
-  }) {
-    if (selection.isCollapsed) {
-      return;
-    }
-
-    // TODO: create a command
-  }
-
   /// Removes the text between [from] (inclusive) and [to] (exclusive).
   ///
   /// The [selection] is updated to [newSelection], if provided, otherwise
@@ -508,18 +536,29 @@ class EventSourcedAttributedTextEditingController with ChangeNotifier implements
     // TODO: create a command
   }
 
+  /// Sets the text to empty and removes the selection and composing region.
+  @override
+  void clear() {
+    update(
+      text: AttributedText(text: ""),
+      selection: const TextSelection.collapsed(offset: -1),
+      composingRegion: TextRange.empty,
+    );
+  }
+
   @override
   void update({
     AttributedText? text,
     TextSelection? selection,
     TextRange? composingRegion,
   }) {
-    // TODO: create a command
-  }
-
-  @override
-  void clear() {
-    // TODO: create a command
+    _value.execute(
+      ReplaceEverythingCommand(
+        newText: text ?? this.text,
+        newSelection: selection ?? this.selection,
+        newComposingRegion: composingRegion ?? this.composingRegion,
+      ),
+    );
   }
 
   @override

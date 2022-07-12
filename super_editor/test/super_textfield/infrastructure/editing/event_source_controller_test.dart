@@ -59,6 +59,10 @@ void main() {
         expect(controller.selection, const TextSelection.collapsed(offset: 27));
         expect(controller.composingRegion, TextRange.empty);
       });
+
+      test("by clearing everything", () {
+        // TODO:
+      });
     });
 
     group("changes attributions", () {
@@ -115,12 +119,43 @@ void main() {
       }, skip: true);
 
       test("by clearing from selected text", () {
-        // TODO:
+        final controller = EventSourcedAttributedTextEditingController(
+          AttributedTextEditingValue(
+            text: AttributedText(
+              text: "This is styled text.",
+              spans: AttributedSpans(
+                attributions: [
+                  const SpanMarker(attribution: boldAttribution, offset: 8, markerType: SpanMarkerType.start),
+                  const SpanMarker(attribution: boldAttribution, offset: 13, markerType: SpanMarkerType.end),
+                ],
+              ),
+            ),
+            selection: const TextSelection(baseOffset: 9, extentOffset: 12),
+          ),
+        );
+
+        // Ensure that we can remove selected attributions.
+        controller.clearSelectionAttributions();
+        expect(controller.text, equalsMarkdown("This is **s**tyle**d** text."));
+
+        // Ensure that we can undo it.
+        controller.undo();
+        expect(controller.text, equalsMarkdown("This is **styled** text."));
       });
     });
 
     group("moves the caret", () {
-      // TODO:
+      test("to a different position", () {
+        // TODO:
+      });
+
+      test("by expanding the selection", () {
+        // TODO:
+      });
+
+      test("by collapsing the selection", () {
+        // TODO:
+      });
     });
 
     group("inserts text", () {
@@ -290,10 +325,250 @@ void main() {
     });
 
     group("replaces text", () {
-      // TODO:
+      test("by replacing selection and extending upstream attributions", () {
+        final controller = EventSourcedAttributedTextEditingController(
+          AttributedTextEditingValue(
+            text: AttributedText(
+              text: "This is some existing text.",
+              spans: AttributedSpans(
+                attributions: [
+                  const SpanMarker(attribution: boldAttribution, offset: 8, markerType: SpanMarkerType.start),
+                  const SpanMarker(attribution: boldAttribution, offset: 11, markerType: SpanMarkerType.end),
+                ],
+              ),
+            ),
+            selection: const TextSelection(
+              baseOffset: 12,
+              extentOffset: 21,
+            ),
+          ),
+        );
+
+        controller.replaceSelectionWithTextAndUpstreamAttributions(replacementText: " new");
+        expect(controller.text, equalsMarkdown("This is **some new** text."));
+        expect(controller.selection, const TextSelection.collapsed(offset: 16));
+
+        // Undo it.
+        controller.undo();
+        expect(controller.text, equalsMarkdown("This is **some** existing text."));
+        expect(
+          controller.selection,
+          const TextSelection(
+            baseOffset: 12,
+            extentOffset: 21,
+          ),
+        );
+      });
+
+      test("by replacing selection with new attributed text", () {
+        final controller = EventSourcedAttributedTextEditingController(
+          AttributedTextEditingValue(
+            text: AttributedText(
+              text: "This is some existing text.",
+            ),
+            selection: const TextSelection(
+              baseOffset: 13,
+              extentOffset: 21,
+            ),
+          ),
+        );
+
+        controller.replaceSelectionWithAttributedText(
+          attributedReplacementText: AttributedText(
+            text: "new",
+            spans: AttributedSpans(
+              attributions: [
+                const SpanMarker(attribution: boldAttribution, offset: 0, markerType: SpanMarkerType.start),
+                const SpanMarker(attribution: boldAttribution, offset: 2, markerType: SpanMarkerType.end),
+              ],
+            ),
+          ),
+        );
+        expect(controller.text, equalsMarkdown("This is some **new** text."));
+        expect(controller.selection, const TextSelection.collapsed(offset: 16));
+
+        // Undo it.
+        controller.undo();
+        expect(controller.text, equalsMarkdown("This is some existing text."));
+        expect(
+          controller.selection,
+          const TextSelection(
+            baseOffset: 13,
+            extentOffset: 21,
+          ),
+        );
+      });
+
+      test("by replacing selection with unstyled text", () {
+        final controller = EventSourcedAttributedTextEditingController(
+          AttributedTextEditingValue(
+            text: AttributedText(
+              text: "This is some existing text.",
+            ),
+            selection: const TextSelection(
+              baseOffset: 13,
+              extentOffset: 21,
+            ),
+          ),
+        );
+
+        controller.replaceSelectionWithUnstyledText(replacementText: "new");
+        expect(controller.text, equalsMarkdown("This is some new text."));
+        expect(controller.selection, const TextSelection.collapsed(offset: 16));
+
+        // Undo it.
+        controller.undo();
+        expect(controller.text, equalsMarkdown("This is some existing text."));
+        expect(
+          controller.selection,
+          const TextSelection(
+            baseOffset: 13,
+            extentOffset: 21,
+          ),
+        );
+      });
+
+      test("by replacing arbitrary text away from the caret", () {
+        final controller = EventSourcedAttributedTextEditingController(
+          AttributedTextEditingValue(
+            text: AttributedText(
+              text: "This is some existing text.",
+            ),
+            selection: const TextSelection(
+              baseOffset: 21,
+              extentOffset: 22,
+            ),
+          ),
+        );
+
+        // TODO:
+        // controller.replace(
+        //   newText: newText,
+        //   from: from,
+        //   to: to,
+        // );
+      });
+
+      test("by replacing arbitrary text that overlaps the caret", () {
+        final controller = EventSourcedAttributedTextEditingController(
+          AttributedTextEditingValue(
+            text: AttributedText(
+              text: "This is some existing text.",
+            ),
+            selection: const TextSelection(
+              baseOffset: 21,
+              extentOffset: 22,
+            ),
+          ),
+        );
+
+        // TODO:
+        // controller.replace(
+        //   newText: newText,
+        //   from: from,
+        //   to: to,
+        // );
+      });
+
+      test("by replacing arbitrary text away from an expanded selection", () {
+        final controller = EventSourcedAttributedTextEditingController(
+          AttributedTextEditingValue(
+            text: AttributedText(
+              text: "This is some existing text.",
+            ),
+            selection: const TextSelection(
+              baseOffset: 21,
+              extentOffset: 22,
+            ),
+          ),
+        );
+
+        // TODO:
+        // controller.replace(
+        //   newText: newText,
+        //   from: from,
+        //   to: to,
+        // );
+      });
+
+      test("by replacing arbitrary text contained within an expanded selection", () {
+        final controller = EventSourcedAttributedTextEditingController(
+          AttributedTextEditingValue(
+            text: AttributedText(
+              text: "This is some existing text.",
+            ),
+            selection: const TextSelection(
+              baseOffset: 21,
+              extentOffset: 22,
+            ),
+          ),
+        );
+
+        // TODO:
+        // controller.replace(
+        //   newText: newText,
+        //   from: from,
+        //   to: to,
+        // );
+      });
+
+      test("by replacing arbitrary text that overlaps an expanded selection", () {
+        final controller = EventSourcedAttributedTextEditingController(
+          AttributedTextEditingValue(
+            text: AttributedText(
+              text: "This is some existing text.",
+            ),
+            selection: const TextSelection(
+              baseOffset: 21,
+              extentOffset: 22,
+            ),
+          ),
+        );
+
+        // TODO:
+        // controller.replace(
+        //   newText: newText,
+        //   from: from,
+        //   to: to,
+        // );
+      });
     });
 
     group("deletes text", () {
+      test("between the caret and the beginning of the line", () {
+        // TODO:
+      });
+
+      test("when its selected", () {
+        // TODO:
+      });
+
+      test("by character", () {
+        // TODO:
+      });
+
+      test("that sits away from the caret", () {
+        // TODO:
+      });
+
+      test("that overlaps the caret", () {
+        // TODO:
+      });
+
+      test("that sits away from an expanded selection", () {
+        // TODO:
+      });
+
+      test("that sits within an expanded selection", () {
+        // TODO:
+      });
+
+      test("that overlaps an expanded selection", () {
+        // TODO
+      });
+    });
+
+    test("pastes text from clipboard", () {
       // TODO:
     });
   });

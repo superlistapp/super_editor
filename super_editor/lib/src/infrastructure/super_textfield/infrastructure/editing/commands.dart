@@ -70,6 +70,47 @@ class ToggleSelectionAttributionsCommand extends AttributedTextEditingValueComma
   }
 }
 
+/// Removes all attributions within the current selection.
+class RemoveSelectedAttributionsCommand extends AttributedTextEditingValueCommand {
+  RemoveSelectedAttributionsCommand();
+
+  Set<AttributionSpan>? _previousAttributionSpans;
+
+  @override
+  AttributedTextEditingValue doExecute(AttributedTextEditingValue previousValue) {
+    final selectionRange = previousValue.selection.toSpanRange();
+    _previousAttributionSpans =
+        previousValue.text.getAttributionSpansInRange(attributionFilter: (_) => true, range: selectionRange).toSet();
+    final newText = previousValue.text.copy()..clearAttributions(selectionRange);
+
+    return AttributedTextEditingValue(
+      text: newText,
+      selection: previousValue.selection,
+      composingRegion: previousValue.composingRegion,
+    );
+  }
+
+  @override
+  AttributedTextEditingValue doUndo(AttributedTextEditingValue currentValue) {
+    final revertedText = currentValue.text.copy();
+    for (final attributionSpan in _previousAttributionSpans!) {
+      revertedText.addAttribution(
+        attributionSpan.attribution,
+        SpanRange(
+          start: attributionSpan.start,
+          end: attributionSpan.end,
+        ),
+      );
+    }
+
+    return AttributedTextEditingValue(
+      text: revertedText,
+      selection: currentValue.selection,
+      composingRegion: currentValue.composingRegion,
+    );
+  }
+}
+
 /// Inserts the given text at the current caret location.
 ///
 /// The [AttributedTextEditingValue] must have a collapsed selection.
@@ -102,7 +143,7 @@ class InsertTextAtCaretCommand extends AttributedTextEditingValueCommand {
       selection: TextSelection.collapsed(
         offset: previousValue.selection.extentOffset + textToInsert.text.length,
       ),
-      composingRegion: composingRegion ?? TextRange.empty,
+      composingRegion: composingRegion ?? _previousComposingRegion!,
     );
 
     return newValue;
@@ -163,7 +204,7 @@ class InsertTextAtOffsetCommand extends AttributedTextEditingValueCommand {
         startOffset: insertionOffset,
       ),
       selection: selectionAfter,
-      composingRegion: composingRegion ?? TextRange.empty,
+      composingRegion: composingRegion ?? _previousComposingRegion!,
     );
 
     return newValue;
@@ -196,9 +237,55 @@ extension on AttributedText {
   }
 }
 
+/// Deletes the currently selected text, collapsing the selection to a caret
+/// at the selection base.
+class DeleteSelectedTextCommand extends AttributedTextEditingValueCommand {
+  DeleteSelectedTextCommand({
+    this.newComposingRegion,
+  });
+
+  final TextRange? newComposingRegion;
+
+  AttributedText? _deletedText;
+  TextSelection? _previousSelection;
+  TextRange? _previousComposingRegion;
+
+  @override
+  AttributedTextEditingValue doExecute(AttributedTextEditingValue previousValue) {
+    _deletedText = previousValue.text.copyText(
+      previousValue.selection.start,
+      previousValue.selection.end,
+    );
+
+    _previousSelection = previousValue.selection;
+    _previousComposingRegion = previousValue.composingRegion;
+
+    return AttributedTextEditingValue(
+      text: previousValue.text.removeRegion(
+        startOffset: previousValue.selection.start,
+        endOffset: previousValue.selection.end,
+      ),
+      selection: TextSelection.collapsed(offset: previousValue.selection.baseOffset),
+      composingRegion: newComposingRegion ?? _previousComposingRegion!,
+    );
+  }
+
+  @override
+  AttributedTextEditingValue doUndo(AttributedTextEditingValue currentValue) {
+    return AttributedTextEditingValue(
+      text: currentValue.text.insert(
+        textToInsert: _deletedText!,
+        startOffset: _previousSelection!.baseOffset,
+      ),
+      selection: _previousSelection!,
+      composingRegion: _previousComposingRegion!,
+    );
+  }
+}
+
 /// Replaces the text, selection, and composing region in the editable.
-class ReplaceContentCommands extends AttributedTextEditingValueCommand {
-  ReplaceContentCommands({
+class ReplaceEverythingCommand extends AttributedTextEditingValueCommand {
+  ReplaceEverythingCommand({
     required this.newText,
     required this.newSelection,
     this.newComposingRegion = TextRange.empty,
