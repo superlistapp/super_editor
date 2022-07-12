@@ -309,9 +309,27 @@ class AttributedText {
 
   void visitAttributions(AttributionVisitor visitor) {
     final collapsedSpans = spans.collapseSpans(contentLength: text.length);
-    for (final span in collapsedSpans) {
-      visitor(this, span.start, span.attributions, AttributionVisitEvent.start);
-      visitor(this, span.end, span.attributions, AttributionVisitEvent.end);
+    for (int i = 0; i < collapsedSpans.length; i++) {
+      final currentSpan = collapsedSpans[i];
+      final previousSpan = i > 0 ? collapsedSpans[i - 1] : null;
+      final nextSpan = i < collapsedSpans.length - 1 ? collapsedSpans[i + 1] : null;
+
+      // When the previous span ends right before the current one
+      // whe only add start markers for the attributions that weren't present
+      // in the previous span.
+      final startAtributions = previousSpan == null || previousSpan.end != currentSpan.start - 1 //
+          ? currentSpan.attributions
+          : currentSpan.attributions.where((e) => !previousSpan.attributions.contains(e)).toSet();
+
+      // When the next span starts right after the current one
+      // whe only add end markers for the attributions that won't be present
+      // in the next span.
+      final endAtributions = nextSpan == null || nextSpan.start != currentSpan.end + 1 //
+          ? currentSpan.attributions
+          : currentSpan.attributions.where((e) => !nextSpan.attributions.contains(e)).toSet();
+
+      visitor(this, currentSpan.start, startAtributions, AttributionVisitEvent.start);
+      visitor(this, currentSpan.end, endAtributions, AttributionVisitEvent.end);
     }
   }
 
