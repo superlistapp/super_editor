@@ -314,17 +314,15 @@ class AttributedText {
       final previousSpan = i > 0 ? collapsedSpans[i - 1] : null;
       final nextSpan = i < collapsedSpans.length - 1 ? collapsedSpans[i + 1] : null;
 
-      // When the previous span ends right before the current one
-      // whe only add start markers for the attributions that weren't present
+      // Whe only add start markers for attributions that weren't present
       // in the previous span.
-      final startAtributions = previousSpan == null || previousSpan.end != currentSpan.start - 1 //
+      final startAtributions = previousSpan == null //
           ? currentSpan.attributions
           : currentSpan.attributions.where((e) => !previousSpan.attributions.contains(e)).toSet();
 
-      // When the next span starts right after the current one
-      // whe only add end markers for the attributions that won't be present
+      // Whe only add end markers for attributions that won't be present
       // in the next span.
-      final endAtributions = nextSpan == null || nextSpan.start != currentSpan.end + 1 //
+      final endAtributions = nextSpan == null //
           ? currentSpan.attributions
           : currentSpan.attributions.where((e) => !nextSpan.attributions.contains(e)).toSet();
 
