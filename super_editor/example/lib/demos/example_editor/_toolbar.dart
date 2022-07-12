@@ -846,6 +846,6 @@ class SingleLineAttributedTextEditingController extends AttributedTextEditingCon
     onSubmit();
 
     // TODO: this is a hack. SuperTextField shouldn't insert newlines in a single
-    // line field.
+    // line field (#697).
   }
 }
