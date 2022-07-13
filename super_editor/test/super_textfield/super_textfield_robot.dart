@@ -2,6 +2,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/super_editor.dart';
+import 'package:super_text_layout/super_text_layout.dart';
 
 /// Extensions on [WidgetTester] for interacting with a [SuperTextField] the way
 /// a user would.
@@ -16,6 +17,7 @@ extension SuperTextFieldRobot on WidgetTester {
       [Finder? superTextFieldFinder, TextAffinity affinity = TextAffinity.downstream]) async {
     final fieldFinder = _findInnerPlatformTextField(superTextFieldFinder ?? find.byType(SuperTextField));
     final match = fieldFinder.evaluate().single.widget;
+    bool found = false;
 
     if (match is SuperDesktopTextField) {
       final didTap =
@@ -23,28 +25,34 @@ extension SuperTextFieldRobot on WidgetTester {
       if (!didTap) {
         throw Exception("The desired text offset wasn't tappable in SuperTextField: $offset");
       }
+      found = true;
+    } else if (match is SuperAndroidTextField) {
+      final didTap =
+          await _tapAtTextPositionOnAndroid(state<SuperAndroidTextFieldState>(fieldFinder), offset, affinity);
+      if (!didTap) {
+        throw Exception("The desired text offset wasn't tappable in SuperTextField: $offset");
+      }
+      found = true;
+    } else if (match is SuperIOSTextField) {
+      final didTap = await _tapAtTextPositionOnIOS(state<SuperIOSTextFieldState>(fieldFinder), offset, affinity);
+      if (!didTap) {
+        throw Exception("The desired text offset wasn't tappable in SuperTextField: $offset");
+      }
+      found = true;
+    }
 
+    if (found) {
       await pumpAndSettle();
-
-      return;
+    } else {
+      throw Exception("Couldn't find a SuperTextField with the given Finder: $fieldFinder");
     }
-
-    if (match is SuperAndroidTextField) {
-      throw Exception("Entering text on an Android SuperTextField is not yet supported");
-    }
-
-    if (match is SuperIOSTextField) {
-      throw Exception("Entering text on an iOS SuperTextField is not yet supported");
-    }
-
-    throw Exception("Couldn't find a SuperTextField with the given Finder: $fieldFinder");
   }
 
   /// Double taps in a [SuperTextField] at the given [offset]
   ///
-  /// {@macro supertextfield_finder} 
+  /// {@macro supertextfield_finder}
   Future<void> doubleTapAtSuperTextField(int offset,
-    [Finder? superTextFieldFinder, TextAffinity affinity = TextAffinity.downstream]) async {
+      [Finder? superTextFieldFinder, TextAffinity affinity = TextAffinity.downstream]) async {
     // TODO: De-duplicate this behavior with placeCaretInSuperTextField
     final fieldFinder = _findInnerPlatformTextField(superTextFieldFinder ?? find.byType(SuperTextField));
     final match = fieldFinder.evaluate().single.widget;
@@ -81,10 +89,27 @@ extension SuperTextFieldRobot on WidgetTester {
 
   Future<bool> _tapAtTextPositionOnDesktop(SuperDesktopTextFieldState textField, int offset,
       [TextAffinity textAffinity = TextAffinity.downstream]) async {
-    final textPositionOffset = textField.textLayout.getOffsetForCaret(
+    final textFieldBox = textField.context.findRenderObject() as RenderBox;
+    return await _tapAtTextPositionInTextLayout(textField.textLayout, textFieldBox, offset, textAffinity);
+  }
+
+  Future<bool> _tapAtTextPositionOnAndroid(SuperAndroidTextFieldState textField, int offset,
+      [TextAffinity textAffinity = TextAffinity.downstream]) async {
+    final textFieldBox = textField.context.findRenderObject() as RenderBox;
+    return await _tapAtTextPositionInTextLayout(textField.textLayout, textFieldBox, offset, textAffinity);
+  }
+
+  Future<bool> _tapAtTextPositionOnIOS(SuperIOSTextFieldState textField, int offset,
+      [TextAffinity textAffinity = TextAffinity.downstream]) async {
+    final textFieldBox = textField.context.findRenderObject() as RenderBox;
+    return await _tapAtTextPositionInTextLayout(textField.textLayout, textFieldBox, offset, textAffinity);
+  }
+
+  Future<bool> _tapAtTextPositionInTextLayout(TextLayout textLayout, RenderBox textFieldBox, int offset,
+      [TextAffinity textAffinity = TextAffinity.downstream]) async {
+    final textPositionOffset = textLayout.getOffsetForCaret(
       TextPosition(offset: offset, affinity: textAffinity),
     );
-    final textFieldBox = textField.context.findRenderObject() as RenderBox;
 
     // When upgrading Superlist to Flutter 3, some tests showed a caret offset
     // dy of -0.2. This didn't happen everywhere, but it did happen some places.
