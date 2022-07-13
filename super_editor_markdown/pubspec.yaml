@@ -22,8 +22,6 @@ dependency_overrides:
     path: ../super_editor
   super_text_layout:
     path: ../super_text_layout
-  attributed_text:
-    path: ../attributed_text
 
 dev_dependencies:
   # TODO: upgrade lints to 2.0.1 when we release super_editor 0.2.1

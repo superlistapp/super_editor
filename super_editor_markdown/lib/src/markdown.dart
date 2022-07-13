@@ -464,29 +464,73 @@ extension on AttributedText {
     final buffer = StringBuffer();
     int spanStart = 0;
 
-    visitAttributions((fullText, index, attributions, event) {
-      final markdownStyles = _sortAndSerializeAttributions(attributions, event);
-      // Links are different from the plain styles since they are both not NamedAttributions (and therefore
-      // can't be checked using equality comparison) and asymmetrical in markdown.
-      final linkMarker = _encodeLinkMarker(attributions, event);
+    // Hold information about the previous span
+    bool hasPendingEnd = false;
+    int previousSpanStart = 0;
+    int previousSpanEnd = 0;
+    Set<Attribution> previousAttributions = {};
+    AttributedText? previousFullText = null;
 
+    visitAttributions((fullText, index, attributions, event) {
       switch (event) {
         case AttributionVisitEvent.start:
+          Set<Attribution> startAttributions = attributions;
+
+          // Handle the end of the previous span
+          if (hasPendingEnd) {
+            // Close only the attributions that aren't present in the current span
+            final endAtributions = previousAttributions.where((e) => !attributions.contains(e)).toSet();
+            final endMarkdownStyles = _sortAndSerializeAttributions(endAtributions, AttributionVisitEvent.end);
+
+            // Links are different from the plain styles since they are both not NamedAttributions (and therefore
+            // can't be checked using equality comparison) and asymmetrical in markdown.
+            final endLinkMarker = _encodeLinkMarker(endAtributions, AttributionVisitEvent.end);
+
+            buffer
+              ..write(previousFullText!.text.substring(previousSpanStart, previousSpanEnd))
+              ..write(endMarkdownStyles)
+              ..write(endLinkMarker);
+
+            // Open only the attributions that aren't present in the previous span
+            startAttributions = attributions.where((e) => !previousAttributions.contains(e)).toSet();
+
+            hasPendingEnd = false;
+          }
+
+          final markdownStyles = _sortAndSerializeAttributions(startAttributions, event);
+          // Links are different from the plain styles since they are both not NamedAttributions (and therefore
+          // can't be checked using equality comparison) and asymmetrical in markdown.
+          final linkMarker = _encodeLinkMarker(startAttributions, event);
+
           spanStart = index;
           buffer
             ..write(linkMarker)
             ..write(markdownStyles);
           break;
         case AttributionVisitEvent.end:
+          // The span end is handled when we visit the next span or after we visit the last one
+          hasPendingEnd = true;
+          previousSpanStart = spanStart;
+          previousAttributions = attributions;
+          previousFullText = fullText;
           // +1 on end index because this visitor has inclusive indices
           // whereas substring() expects an exclusive ending index.
-          buffer
-            ..write(fullText.text.substring(spanStart, index + 1))
-            ..write(markdownStyles)
-            ..write(linkMarker);
+          previousSpanEnd = index + 1;
           break;
       }
     });
+
+    // Handle the end of the last span
+    if (hasPendingEnd) {
+      final endMarkdownStyles = _sortAndSerializeAttributions(previousAttributions, AttributionVisitEvent.end);
+      // Links are different from the plain styles since they are both not NamedAttributions (and therefore
+      // can't be checked using equality comparison) and asymmetrical in markdown.
+      final endLinkMarker = _encodeLinkMarker(previousAttributions, AttributionVisitEvent.end);
+      buffer
+        ..write(previousFullText!.text.substring(previousSpanStart, previousSpanEnd))
+        ..write(endMarkdownStyles)
+        ..write(endLinkMarker);
+    }
 
     return buffer.toString();
   }
