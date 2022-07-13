@@ -195,25 +195,6 @@ This is some code
         expect(serializeDocumentToMarkdown(doc), 'This ***is a** paragraph*.');
       });
 
-      test('paragraph with intersecting bold and strikethrough', () {
-        final doc = MutableDocument(nodes: [
-          ParagraphNode(
-            id: '1',
-            text: AttributedText(
-              text: 'Bold and Strike Bold',
-              spans: AttributedSpans(attributions: [
-                const SpanMarker(attribution: boldAttribution, offset: 0, markerType: SpanMarkerType.start),
-                const SpanMarker(attribution: boldAttribution, offset: 19, markerType: SpanMarkerType.end),
-                const SpanMarker(attribution: strikethroughAttribution, offset: 0, markerType: SpanMarkerType.start),
-                const SpanMarker(attribution: strikethroughAttribution, offset: 14, markerType: SpanMarkerType.end),
-              ]),
-            ),
-          ),
-        ]);
-
-        expect(serializeDocumentToMarkdown(doc), '**~Bold and Strike~ Bold**');
-      });
-    
       test('paragraph with overlapping code and bold', () {
         final doc = MutableDocument(nodes: [
           ParagraphNode(
