@@ -126,6 +126,9 @@ class SuperAndroidTextField extends StatefulWidget {
 }
 
 class SuperAndroidTextFieldState extends State<SuperAndroidTextField> with TickerProviderStateMixin, WidgetsBindingObserver implements ProseTextBlock {
+  static const Duration _autoScrollAnimationDuration = Duration(milliseconds: 100);
+  static const Curve _autoScrollAnimationCurve = Curves.fastOutSlowIn;
+
   final _textFieldKey = GlobalKey();
   final _textFieldLayerLink = LayerLink();
   final _textContentLayerLink = LayerLink();
@@ -145,9 +148,6 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField> with Ticke
   // positions the invisible touch targets for base/extent
   // dragging.
   OverlayEntry? _controlsOverlayEntry;
-
-  static const Duration _autoScrollAnimationDuration = Duration(milliseconds: 100);
-  static const Curve _autoScrollAnimationCurve = Curves.fastOutSlowIn;
 
   @override
   void initState() {
@@ -268,7 +268,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField> with Ticke
     // appearance/disappearance.
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       if (mounted && _focusNode.hasFocus) {
-        _ensureIsVisible();
+        _autoScrollToKeepTextFieldVisible();
       }
     });
   }
@@ -291,8 +291,8 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField> with Ticke
             textInputAction: widget.textInputAction,
             textInputType: _isMultiline ? TextInputType.multiline : TextInputType.text,
           );
-          
-          _ensureIsVisible();
+
+          _autoScrollToKeepTextFieldVisible();
           _showEditingControlsOverlay();
         });
       }
@@ -398,35 +398,36 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField> with Ticke
 
   /// Scrolls the ancestor [Scrollable], if any, so [SuperTextField]
   /// is visible on the viewport when it's focused
-  void _ensureIsVisible() {
+  void _autoScrollToKeepTextFieldVisible() {
     // If we are not inside a [Scrollable] we don't autoscroll
     final ancestorScrollable = Scrollable.of(context);
     if (ancestorScrollable == null) {
       return;
     }
 
-    // The [RenderBox] is needed so we can calculate the final [Offset]
-    final fieldBox = context.findRenderObject() as RenderBox?;
-    if (fieldBox == null) {
-      return;
-    }
-
-    final viewportBox = ancestorScrollable.context.findRenderObject() as RenderBox;
-
-    // We get the selection offset so the autoscroll also supports
-    // multi-line textfields with unbounded lines
-    final offsetInsideTextField = widget.maxLines == null && _textEditingController.selection.isValid
+    // Compute the text field offset that should be visible to the user
+    final textFieldFocalPoint = widget.maxLines == null && _textEditingController.selection.isValid
         ? _textContentKey.currentState!.textLayout.getOffsetAtPosition(
             TextPosition(offset: _textEditingController.selection.extentOffset),
           )
         : Offset.zero;
 
-    final offsetInsideViewport = viewportBox.globalToLocal(
-      fieldBox.localToGlobal(offsetInsideTextField),
+    final lineHeight = _textContentKey.currentState!.textLayout.getLineHeightAtPosition(
+      TextPosition(offset: _textEditingController.selection.extentOffset),
+    );
+    final fieldBox = context.findRenderObject() as RenderBox;
+
+    // The area of the text field that should be revealed.
+    // We add a small margin to leave some space between the text field and the keyboard.    
+    final textFieldFocalRect = Rect.fromLTWH(
+      textFieldFocalPoint.dx,
+      textFieldFocalPoint.dy,
+      fieldBox.size.width,
+      lineHeight + 30,
     );
 
     fieldBox.showOnScreen(
-      rect: Rect.fromLTWH(offsetInsideViewport.dx, offsetInsideViewport.dy, fieldBox.size.width, fieldBox.size.height),
+      rect: textFieldFocalRect,
       duration: _autoScrollAnimationDuration,
       curve: _autoScrollAnimationCurve,
     );
