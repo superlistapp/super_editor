@@ -32,11 +32,12 @@ class _ExampleEditorState extends State<ExampleEditor> {
   final _lightBackground = Colors.white;
   bool _isLight = true;
 
-  OverlayEntry? _textFormatBarOverlayEntry;
   final _textSelectionAnchor = ValueNotifier<Offset?>(null);
 
   OverlayEntry? _imageFormatBarOverlayEntry;
   final _imageSelectionAnchor = ValueNotifier<Offset?>(null);
+
+  bool _isToolbarVisible = false;
 
   @override
   void initState() {
@@ -55,10 +56,6 @@ class _ExampleEditorState extends State<ExampleEditor> {
 
   @override
   void dispose() {
-    if (_textFormatBarOverlayEntry != null) {
-      _textFormatBarOverlayEntry!.remove();
-    }
-
     _scrollController.dispose();
     _editorFocusNode.dispose();
     _composer.dispose();
@@ -125,30 +122,15 @@ class _ExampleEditorState extends State<ExampleEditor> {
   }
 
   void _showEditorToolbar() {
-    if (_textFormatBarOverlayEntry == null) {
-      // Create an overlay entry to build the editor toolbar.
-      // TODO: add an overlay to the Editor widget to avoid using the
-      //       application overlay
-      _textFormatBarOverlayEntry ??= OverlayEntry(builder: (context) {
-        return EditorToolbar(
-          anchor: _textSelectionAnchor,
-          editorFocusNode: _editorFocusNode,
-          editor: _docEditor,
-          composer: _composer,
-          closeToolbar: _hideEditorToolbar,
-        );
-      });
-
-      // Display the toolbar in the application overlay.
-      final overlay = Overlay.of(context)!;
-      overlay.insert(_textFormatBarOverlayEntry!);
-    }
+    setState(() {
+      _isToolbarVisible = true;
+    });
 
     // Schedule a callback after this frame to locate the selection
     // bounds on the screen and display the toolbar near the selected
     // text.
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      if (_textFormatBarOverlayEntry == null) {
+      if (!_isToolbarVisible) {
         return;
       }
 
@@ -165,19 +147,9 @@ class _ExampleEditorState extends State<ExampleEditor> {
   }
 
   void _hideEditorToolbar() {
-    // Null out the selection anchor so that when it re-appears,
-    // the bar doesn't momentarily "flash" at its old anchor position.
-    _textSelectionAnchor.value = null;
-
-    if (_textFormatBarOverlayEntry != null) {
-      // Remove the toolbar overlay and null-out the entry.
-      // We null out the entry because we can't query whether
-      // or not the entry exists in the overlay, so in our
-      // case, null implies the entry is not in the overlay,
-      // and non-null implies the entry is in the overlay.
-      _textFormatBarOverlayEntry!.remove();
-      _textFormatBarOverlayEntry = null;
-    }
+    setState(() {
+      _isToolbarVisible = false;
+    });
 
     // Ensure that focus returns to the editor.
     //
@@ -296,6 +268,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
             if (_isMobile) _buildMountedToolbar(),
           ],
         ),
+        if (_isToolbarVisible) _buildEditorToolbar(),
         Align(
           alignment: Alignment.bottomRight,
           child: _buildLightAndDarkModeToggle(),
@@ -361,6 +334,16 @@ class _ExampleEditorState extends State<ExampleEditor> {
           onPastePressed: _paste,
         ),
       ),
+    );
+  }
+
+  Widget _buildEditorToolbar() {
+    return EditorToolbar(
+      anchor: _textSelectionAnchor,
+      editorFocusNode: _editorFocusNode,
+      editor: _docEditor,
+      composer: _composer,
+      closeToolbar: _hideEditorToolbar,
     );
   }
 
