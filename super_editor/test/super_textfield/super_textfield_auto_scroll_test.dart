@@ -11,6 +11,9 @@ void main() {
       const screenSizeWithoutKeyboard = Size(400, 800);
       const screenSizeWithKeyboard = Size(400, 300);
 
+      // Space between the caret and the keyboard.
+      const gap = 30;
+
       testWidgetsOnMobile('auto scrolls when focused in single-line', (tester) async {
         tester.binding.window
           ..physicalSizeTestValue = screenSizeWithoutKeyboard
@@ -41,6 +44,9 @@ void main() {
 
         // Ensure selection is visible in the viewport
         expect(selectionOffset.dy.floor(), lessThanOrEqualTo(screenSizeWithKeyboard.height));
+
+        // Ensure we scroll only the necessary to reveal the selection, plus a small gap
+        expect(screenSizeWithKeyboard.height - selectionOffset.dy.floor(), lessThanOrEqualTo(gap));
 
         // Ensure selection doesn't scroll beyond the top
         expect(selectionOffset.dy.floor(), greaterThanOrEqualTo(0));
@@ -76,6 +82,9 @@ void main() {
 
         // Ensure selected line is visible on viewport
         expect(selectionOffset.dy.floor(), lessThanOrEqualTo(screenSizeWithKeyboard.height));
+
+        // Ensure we scroll only the necessary to reveal the selection, plus a small gap
+        expect(screenSizeWithKeyboard.height - selectionOffset.dy.floor(), lessThanOrEqualTo(gap));
 
         // Ensure selection doesn't scroll beyond the top
         expect(selectionOffset.dy.floor(), greaterThanOrEqualTo(0));
