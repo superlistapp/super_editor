@@ -10,8 +10,6 @@ import 'package:super_editor/src/infrastructure/super_textfield/input_method_eng
 import 'package:super_editor/src/infrastructure/super_textfield/ios/_editing_controls.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
-import '../../../default_editor/document_gestures.dart';
-import '../../../default_editor/document_gestures_touch.dart';
 import '../../platforms/ios/toolbar.dart';
 import '../styles.dart';
 import '_floating_cursor.dart';
@@ -410,13 +408,15 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField> with TickerProvide
     );
     final fieldBox = context.findRenderObject() as RenderBox;
 
+    const gapBetweenCaretAndKeyboard = 30;
+
     // The area of the text field that should be revealed.
     // We add a small margin to leave some space between the text field and the keyboard.    
     final textFieldFocalRect = Rect.fromLTWH(
       textFieldFocalPoint.dx,
       textFieldFocalPoint.dy,
       fieldBox.size.width,
-      lineHeight + 30,
+      lineHeight + gapBetweenCaretAndKeyboard,
     );
 
     fieldBox.showOnScreen(
