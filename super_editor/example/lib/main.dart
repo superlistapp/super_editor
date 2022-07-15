@@ -115,12 +115,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      key: _scaffoldKey,
-      appBar: _buildAppBar(context),
-      extendBodyBehindAppBar: true,
-      body: _selectedMenuItem!.pageBuilder(context),
-      drawer: _buildDrawer(),
+    return Overlay(
+      initialEntries: [
+        OverlayEntry(builder: (context) {
+          return Scaffold(
+            key: _scaffoldKey,
+            appBar: _buildAppBar(context),
+            extendBodyBehindAppBar: true,
+            body: _selectedMenuItem!.pageBuilder(context),
+            drawer: _buildDrawer(),
+          );
+        })
+      ],
     );
   }
 
