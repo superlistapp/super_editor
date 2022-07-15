@@ -315,17 +315,17 @@ class AttributedText {
       final nextSpan = i < collapsedSpans.length - 1 ? collapsedSpans[i + 1] : null;
 
       // Attributions that are starting in the current span
-      final startEventAtributions = previousSpan == null //
+      final startingAttributions = previousSpan == null //
           ? currentSpan.attributions
           : currentSpan.attributions.where((e) => !previousSpan.attributions.contains(e)).toSet();
 
       // Attributions that are ending in the current span
-      final endAtributions = nextSpan == null //
+      final endingAttributions = nextSpan == null //
           ? currentSpan.attributions
           : currentSpan.attributions.where((e) => !nextSpan.attributions.contains(e)).toSet();
 
-      visitor(this, currentSpan.start, currentSpan.attributions, startEventAtributions, AttributionVisitEvent.start);
-      visitor(this, currentSpan.end, currentSpan.attributions, endAtributions, AttributionVisitEvent.end);
+      visitor(this, currentSpan.start, currentSpan.attributions, startingAttributions, AttributionVisitEvent.start);
+      visitor(this, currentSpan.end, currentSpan.attributions, endingAttributions, AttributionVisitEvent.end);
     }
   }
 
