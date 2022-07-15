@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:super_editor/src/infrastructure/super_textfield/metrics.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
@@ -11,9 +12,6 @@ const screenSizeWithKeyboard = Size(400, 300);
 void main() {
   group('SuperTextField on mobile', () {
     group('with an ancestor Scrollable', () {
-      // Default gap between the caret and the keyboard.
-      const gapBetweenCaretAndKeyboard = 30;
-
       testWidgetsOnMobileWithKeyboard('auto scrolls when focused in single-line', (tester, keyboardToggle) async {
         await _pumpTestApp(
           tester,

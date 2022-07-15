@@ -11,6 +11,7 @@ import 'package:super_editor/src/infrastructure/super_textfield/ios/_editing_con
 import 'package:super_text_layout/super_text_layout.dart';
 
 import '../../platforms/ios/toolbar.dart';
+import '../metrics.dart';
 import '../styles.dart';
 import '_floating_cursor.dart';
 import '_user_interaction.dart';
@@ -407,8 +408,6 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField> with TickerProvide
       TextPosition(offset: _textEditingController.selection.extentOffset),
     );
     final fieldBox = context.findRenderObject() as RenderBox;
-
-    const gapBetweenCaretAndKeyboard = 30;
 
     // The area of the text field that should be revealed.
     // We add a small margin to leave some space between the text field and the keyboard.    

@@ -1,0 +1,1 @@
+const gapBetweenCaretAndKeyboard = 30;

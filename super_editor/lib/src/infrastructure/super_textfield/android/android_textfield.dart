@@ -13,6 +13,7 @@ import 'package:super_editor/src/infrastructure/super_textfield/input_method_eng
 import 'package:super_text_layout/super_text_layout.dart';
 
 import '../../_logging.dart';
+import '../metrics.dart';
 import '../styles.dart';
 import 'android_textfield.dart';
 
@@ -416,8 +417,6 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField> with Ticke
       TextPosition(offset: _textEditingController.selection.extentOffset),
     );
     final fieldBox = context.findRenderObject() as RenderBox;
-
-    const gapBetweenCaretAndKeyboard = 30;
 
     // The area of the text field that should be revealed.
     // We add a small margin to leave some space between the text field and the keyboard.    
