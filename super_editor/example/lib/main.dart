@@ -115,6 +115,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // We need our own [Overlay] instead of the one created by the navigator
+    // because overlay entries added to navigator's [Overlay] are always
+    // displayed above all routes.
+    //    
+    // We display the editor's toolbar in an [OverlayEntry], so inserting it
+    // at the navigator's [Overlay] causes widgets that are displayed in routes, 
+    // e.g. [DropdownButton] items, to be displayed beneath the toolbar.    
     return Overlay(
       initialEntries: [
         OverlayEntry(builder: (context) {
