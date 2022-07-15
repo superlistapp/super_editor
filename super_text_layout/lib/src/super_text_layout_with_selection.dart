@@ -144,6 +144,13 @@ class _RebuildOptimizedSuperTextWithSelectionState extends State<_RebuildOptimiz
       // the cache so that the full SuperText widget subtree is rebuilt.
       _cachedSubtree = null;
     }
+    if (widget.textAlign != oldWidget.textAlign) {
+      buildsLog.fine("Text align changed. Invalidating the cached SuperText widget.");
+
+      // The text align changed, which means the text layout changed. Invalidate
+      // the cache so that the full SuperText widget subtree is rebuilt.
+      _cachedSubtree = null;
+    }
   }
 
   // The current length of the text displayed by this widget. The value
