@@ -309,9 +309,23 @@ class AttributedText {
 
   void visitAttributions(AttributionVisitor visitor) {
     final collapsedSpans = spans.collapseSpans(contentLength: text.length);
-    for (final span in collapsedSpans) {
-      visitor(this, span.start, span.attributions, AttributionVisitEvent.start);
-      visitor(this, span.end, span.attributions, AttributionVisitEvent.end);
+    for (int i = 0; i < collapsedSpans.length; i++) {
+      final currentSpan = collapsedSpans[i];
+      final previousSpan = i > 0 ? collapsedSpans[i - 1] : null;
+      final nextSpan = i < collapsedSpans.length - 1 ? collapsedSpans[i + 1] : null;
+
+      // Attributions that are starting in the current span
+      final startEventAtributions = previousSpan == null //
+          ? currentSpan.attributions
+          : currentSpan.attributions.where((e) => !previousSpan.attributions.contains(e)).toSet();
+
+      // Attributions that are ending in the current span
+      final endAtributions = nextSpan == null //
+          ? currentSpan.attributions
+          : currentSpan.attributions.where((e) => !nextSpan.attributions.contains(e)).toSet();
+
+      visitor(this, currentSpan.start, currentSpan.attributions, startEventAtributions, AttributionVisitEvent.start);
+      visitor(this, currentSpan.end, currentSpan.attributions, endAtributions, AttributionVisitEvent.end);
     }
   }
 
@@ -340,7 +354,8 @@ class AttributedText {
 typedef AttributionVisitor = void Function(
   AttributedText fullText,
   int index,
-  Set<Attribution> attributions,
+  Set<Attribution> allActiveAttributions,
+  Set<Attribution> eventAttributions,
   AttributionVisitEvent event,
 );
 
