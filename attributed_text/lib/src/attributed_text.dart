@@ -308,24 +308,36 @@ class AttributedText {
   }
 
   void visitAttributions(AttributionVisitor visitor) {
-    final collapsedSpans = spans.collapseSpans(contentLength: text.length);
-    for (int i = 0; i < collapsedSpans.length; i++) {
-      final currentSpan = collapsedSpans[i];
-      final previousSpan = i > 0 ? collapsedSpans[i - 1] : null;
-      final nextSpan = i < collapsedSpans.length - 1 ? collapsedSpans[i + 1] : null;
+    final emptyAttributions = Set<Attribution>.unmodifiable([]);
 
-      // Attributions that are starting in the current span
-      final startingAttributions = previousSpan == null //
-          ? currentSpan.attributions
-          : currentSpan.attributions.where((e) => !previousSpan.attributions.contains(e)).toSet();
+    // Maps the indexes to the attributions that are changing at that index.
+    Map<int, ChangingAttributions> changingIndexes = {};
 
-      // Attributions that are ending in the current span
-      final endingAttributions = nextSpan == null //
-          ? currentSpan.attributions
-          : currentSpan.attributions.where((e) => !nextSpan.attributions.contains(e)).toSet();
+    // Groups start/end markers by index.
+    for (final marker in spans.markers) {
+      final changingAttributions = changingIndexes.putIfAbsent(
+        marker.offset,
+        () => ChangingAttributions(
+          index: marker.offset,
+          startingAttributions: {},
+          endingAttributions: {},
+        ),
+      );
+      if (marker.isStart) {
+        changingAttributions.startingAttributions.add(marker.attribution);
+      } else {
+        changingAttributions.endingAttributions.add(marker.attribution);
+      }
+    }
 
-      visitor(this, currentSpan.start, currentSpan.attributions, startingAttributions, AttributionVisitEvent.start);
-      visitor(this, currentSpan.end, currentSpan.attributions, endingAttributions, AttributionVisitEvent.end);
+    for (int i = 0; i < text.length; i++) {
+      final changingAttributions = changingIndexes[i];
+      visitor(
+        this,
+        i,
+        changingAttributions?.startingAttributions ?? emptyAttributions,
+        changingAttributions?.endingAttributions ?? emptyAttributions,
+      );
     }
   }
 
@@ -344,19 +356,36 @@ class AttributedText {
   }
 }
 
-/// Visits the start and end of every span of attributions in
-/// the given [AttributedText].
+/// Represents the sets of attributions that are starting or ending
+/// at a given index.
+class ChangingAttributions {
+  ChangingAttributions({
+    required this.index,
+    required this.startingAttributions,
+    required this.endingAttributions,
+  });
+
+  /// The [index] at the [AttributedText]
+  final int index;
+
+  /// Attributions that are starting at [index]
+  final Set<Attribution> startingAttributions;
+
+  /// Attributions that are ending at [index]
+  final Set<Attribution> endingAttributions;
+}
+
+/// Visits every [index] in the the given [AttributedText], passing the attributions
+/// that start or end at the [index].
 ///
-/// The [index] is the [String] index of the character where the span
-/// either begins or ends. Note: most range-based operations expect the
-/// closing index to be exclusive, but that is not how this callback
+/// Note: most range-based operations expect the
+/// closing [index] to be exclusive, but that is not how this callback
 /// works. Both the start and end [index]es are inclusive.
 typedef AttributionVisitor = void Function(
   AttributedText fullText,
   int index,
-  Set<Attribution> allActiveAttributions,
-  Set<Attribution> eventAttributions,
-  AttributionVisitEvent event,
+  Set<Attribution> startingAttributions,
+  Set<Attribution> endingAttributions,
 );
 
 enum AttributionVisitEvent {

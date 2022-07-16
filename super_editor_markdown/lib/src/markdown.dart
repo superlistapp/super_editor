@@ -464,30 +464,48 @@ extension on AttributedText {
     final buffer = StringBuffer();
     int spanStart = 0;
 
-    visitAttributions((fullText, index, allActiveAttributions, eventAttributions, event) {
-      final markdownStyles = _sortAndSerializeAttributions(eventAttributions, event);
-      // Links are different from the plain styles since they are both not NamedAttributions (and therefore
-      // can't be checked using equality comparison) and asymmetrical in markdown.
-      final linkMarker = _encodeLinkMarker(eventAttributions, event);
+    visitAttributions((fullText, index, startingAttributions, endAttributions) {
+      // Add end markers.
+      if (endAttributions.isNotEmpty) {
+        final markdownStyles = _sortAndSerializeAttributions(endAttributions, AttributionVisitEvent.end);
+        // Links are different from the plain styles since they are both not NamedAttributions (and therefore
+        // can't be checked using equality comparison) and asymmetrical in markdown.
+        final linkMarker = _encodeLinkMarker(endAttributions, AttributionVisitEvent.end);
 
-      switch (event) {
-        case AttributionVisitEvent.start:
-          spanStart = index;
-          buffer
-            ..write(linkMarker)
-            ..write(markdownStyles);
-          break;
-        case AttributionVisitEvent.end:
-          // +1 on end index because this visitor has inclusive indices
-          // whereas substring() expects an exclusive ending index.
-          buffer
-            ..write(fullText.text.substring(spanStart, index + 1))
-            ..write(markdownStyles)
-            ..write(linkMarker);
-          break;
+        // +1 on end index because this visitor has inclusive indices
+        // whereas substring() expects an exclusive ending index.
+        buffer
+          ..write(fullText.text.substring(spanStart, index + 1))
+          ..write(markdownStyles)
+          ..write(linkMarker);
+
+        // When we reach the end of an attribution we need to hold the start of the next span, 
+        // because if the last span has no attributions we will not visit any other index with 
+        // a start marker. 
+        // After we visit all the indexes we add the remaining text to the buffer.
+        spanStart = index + 1;
+      }
+
+      // Add start markers.
+      if (startingAttributions.isNotEmpty) {
+        final markdownStyles = _sortAndSerializeAttributions(startingAttributions, AttributionVisitEvent.start);
+        // Links are different from the plain styles since they are both not NamedAttributions (and therefore
+        // can't be checked using equality comparison) and asymmetrical in markdown.
+        final linkMarker = _encodeLinkMarker(startingAttributions, AttributionVisitEvent.start);
+
+        buffer
+          ..write(fullText.text.substring(spanStart, index))
+          ..write(linkMarker)
+          ..write(markdownStyles);
+
+        spanStart = index;
       }
     });
 
+    // When the last span has no attributions, we still have text that wasn't added to the buffer yet.    
+    if (spanStart <= text.length - 1) {
+      buffer.write(text.substring(spanStart));
+    }
     return buffer.toString();
   }
 }
