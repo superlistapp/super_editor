@@ -14,6 +14,7 @@ import 'package:super_editor/src/infrastructure/super_textfield/input_method_eng
 import 'package:super_text_layout/super_text_layout.dart';
 
 import '../../_logging.dart';
+import '../metrics.dart';
 import '../styles.dart';
 import 'android_textfield.dart';
 
@@ -126,9 +127,10 @@ class SuperAndroidTextField extends StatefulWidget {
   State createState() => SuperAndroidTextFieldState();
 }
 
-class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
-    with SingleTickerProviderStateMixin
-    implements ProseTextBlock {
+class SuperAndroidTextFieldState extends State<SuperAndroidTextField> with TickerProviderStateMixin, WidgetsBindingObserver implements ProseTextBlock {
+  static const Duration _autoScrollAnimationDuration = Duration(milliseconds: 100);
+  static const Curve _autoScrollAnimationCurve = Curves.fastOutSlowIn;
+
   final _textFieldKey = GlobalKey();
   final _textFieldLayerLink = LayerLink();
   final _textContentLayerLink = LayerLink();
@@ -167,6 +169,8 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
       textController: _textEditingController,
       magnifierFocalPoint: _magnifierLayerLink,
     );
+
+    WidgetsBinding.instance.addObserver(this);
   }
 
   @override
@@ -250,7 +254,20 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
       ..removeListener(_onTextScrollChange)
       ..dispose();
 
+    WidgetsBinding.instance.removeObserver(this);
+
     super.dispose();
+  }
+
+  @override
+  void didChangeMetrics() {
+    // The available screen dimensions may have changed, e.g., due to keyboard
+    // appearance/disappearance.
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      if (mounted && _focusNode.hasFocus) {
+        _autoScrollToKeepTextFieldVisible();
+      }
+    });
   }
 
   @override
@@ -272,6 +289,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
             textInputType: _isMultiline ? TextInputType.multiline : TextInputType.text,
           );
 
+          _autoScrollToKeepTextFieldVisible();
           _showEditingControlsOverlay();
         });
       }
@@ -373,6 +391,43 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
     }
 
     return KeyEventResult.handled;
+  }
+
+  /// Scrolls the ancestor [Scrollable], if any, so [SuperTextField]
+  /// is visible on the viewport when it's focused
+  void _autoScrollToKeepTextFieldVisible() {
+    // If we are not inside a [Scrollable] we don't autoscroll
+    final ancestorScrollable = Scrollable.of(context);
+    if (ancestorScrollable == null) {
+      return;
+    }
+
+    // Compute the text field offset that should be visible to the user
+    final textFieldFocalPoint = widget.maxLines == null && _textEditingController.selection.isValid
+        ? _textContentKey.currentState!.textLayout.getOffsetAtPosition(
+            TextPosition(offset: _textEditingController.selection.extentOffset),
+          )
+        : Offset.zero;
+
+    final lineHeight = _textContentKey.currentState!.textLayout.getLineHeightAtPosition(
+      TextPosition(offset: _textEditingController.selection.extentOffset),
+    );
+    final fieldBox = context.findRenderObject() as RenderBox;
+
+    // The area of the text field that should be revealed.
+    // We add a small margin to leave some space between the text field and the keyboard.    
+    final textFieldFocalRect = Rect.fromLTWH(
+      textFieldFocalPoint.dx,
+      textFieldFocalPoint.dy,
+      fieldBox.size.width,
+      lineHeight + gapBetweenCaretAndKeyboard,
+    );
+
+    fieldBox.showOnScreen(
+      rect: textFieldFocalRect,
+      duration: _autoScrollAnimationDuration,
+      curve: _autoScrollAnimationCurve,
+    );
   }
 
   @override
