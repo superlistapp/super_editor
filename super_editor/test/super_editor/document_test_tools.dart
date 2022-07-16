@@ -90,6 +90,7 @@ class TestDocumentConfigurator {
   Stylesheet? _stylesheet;
   bool _autoFocus = false;
   ui.Size? _editorSize;
+  List<ComponentBuilder>? _componentBuilders;
 
   /// Configures the [SuperEditor] for standard desktop interactions,
   /// e.g., mouse and keyboard input.
@@ -132,6 +133,12 @@ class TestDocumentConfigurator {
   /// Configures the [SuperEditor] to constrain its maxHeight and maxWidth using the given [size].
   TestDocumentConfigurator withEditorSize(ui.Size? size) {
     _editorSize = size;
+    return this;
+  }
+
+  /// Configures the [SuperEditor] to use only the given [componentBuilders]
+  TestDocumentConfigurator withComponentBuilders(List<ComponentBuilder>? componentBuilders) {
+    _componentBuilders = componentBuilders;
     return this;
   }
 
@@ -234,6 +241,7 @@ class TestDocumentConfigurator {
               gestureMode: _gestureMode ?? _defaultGestureMode,
               stylesheet: _stylesheet,
               autofocus: _autoFocus,
+              componentBuilders: _componentBuilders ?? defaultComponentBuilders,
             ),
           ),
         ),
