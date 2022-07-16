@@ -5,8 +5,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document_layout.dart';
-import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
+import 'package:super_editor/src/infrastructure/strings.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/attributed_text_editing_controller.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
@@ -84,9 +84,6 @@ class EventSourcedAttributedTextEditingController with ChangeNotifier implements
 
   final _composingAttributions = <Attribution>{};
 
-  // TODO: good litmus test - what if a developer wanted composing attribution
-  // presence to be undo/redo-able? Or the same for some other editing configuration?
-
   /// Attributions that will be applied to the next inserted character(s).
   @override
   Set<Attribution> get composingAttributions => Set.from(_composingAttributions);
@@ -149,7 +146,87 @@ class EventSourcedAttributedTextEditingController with ChangeNotifier implements
     required bool moveLeft,
     required MovementModifier? movementModifier,
   }) {
-    // TODO: create a command
+    int newExtent;
+
+    if (moveLeft) {
+      if (selection.extentOffset <= 0 && selection.isCollapsed) {
+        // Can't move further left.
+        return;
+      }
+
+      if (!selection.isCollapsed && !expandSelection) {
+        // The selection isn't collapsed and the user doesn't
+        // want to continue expanding the selection. Move the
+        // extent to the left side of the selection.
+        newExtent = selection.start;
+      } else if (movementModifier != null && movementModifier == MovementModifier.line) {
+        newExtent = textLayout.getPositionAtStartOfLine(TextPosition(offset: selection.extentOffset)).offset;
+      } else if (movementModifier != null && movementModifier == MovementModifier.word) {
+        final plainText = text.text;
+
+        newExtent = selection.extentOffset;
+        newExtent -= 1; // we always want to jump at least 1 character.
+        while (newExtent > 0 && plainText[newExtent - 1] != ' ' && plainText[newExtent - 1] != '\n') {
+          newExtent -= 1;
+        }
+      } else {
+        newExtent = text.text.moveOffsetUpstreamByCharacter(selection.extentOffset) ?? 0;
+      }
+    } else {
+      if (selection.extentOffset >= text.text.length && selection.isCollapsed) {
+        // Can't move further right.
+        return;
+      }
+
+      if (!selection.isCollapsed && !expandSelection) {
+        // The selection isn't collapsed and the user doesn't
+        // want to continue expanding the selection. Move the
+        // extent to the left side of the selection.
+        newExtent = selection.end;
+      } else if (movementModifier != null && movementModifier == MovementModifier.line) {
+        final endOfLine = textLayout.getPositionAtEndOfLine(TextPosition(offset: selection.extentOffset));
+
+        final endPosition = TextPosition(offset: text.text.length);
+        final plainText = text.text;
+
+        // Note: we compare offset values because we don't care if the affinitys are equal
+        final isAutoWrapLine = endOfLine.offset != endPosition.offset && (plainText[endOfLine.offset] != '\n');
+
+        // Note: For lines that auto-wrap, moving the cursor to `offset` causes the
+        //       cursor to jump to the next line because the cursor is placed after
+        //       the final selected character. We don't want this, so in this case
+        //       we `-1`.
+        //
+        //       However, if the line that is selected ends with an explicit `\n`,
+        //       or if the line is the terminal line for the paragraph then we don't
+        //       want to `-1` because that would leave a dangling character after the
+        //       selection.
+        // TODO: this is the concept of text affinity. Implement support for affinity.
+        // TODO: with affinity, ensure it works as expected for right-aligned text
+        // TODO: this logic fails for justified text - find a solution for that (#55)
+        newExtent = isAutoWrapLine ? endOfLine.offset - 1 : endOfLine.offset;
+      } else if (movementModifier != null && movementModifier == MovementModifier.word) {
+        final extentPosition = selection.extent;
+        final plainText = text.text;
+
+        newExtent = extentPosition.offset;
+        newExtent += 1; // we always want to jump at least 1 character.
+        while (newExtent < plainText.length && plainText[newExtent] != ' ' && plainText[newExtent] != '\n') {
+          newExtent += 1;
+        }
+      } else {
+        newExtent = text.text.moveOffsetDownstreamByCharacter(selection.extentOffset) ?? text.text.length;
+      }
+    }
+
+    _value.execute(
+      ChangeSelectionCommand(
+        newSelection: TextSelection(
+          baseOffset: expandSelection ? selection.baseOffset : newExtent,
+          extentOffset: newExtent,
+        ),
+      ),
+    );
   }
 
   @override
@@ -158,7 +235,30 @@ class EventSourcedAttributedTextEditingController with ChangeNotifier implements
     required bool expandSelection,
     required bool moveUp,
   }) {
-    // TODO: create a command
+    int? newExtent;
+
+    if (moveUp) {
+      newExtent = textLayout.getPositionOneLineUp(TextPosition(offset: selection.start))?.offset;
+
+      // If there is no line above the current selection, move selection
+      // to the beginning of the available text.
+      newExtent ??= 0;
+    } else {
+      newExtent = textLayout.getPositionOneLineDown(TextPosition(offset: selection.end))?.offset;
+
+      // If there is no line below the current selection, move selection
+      // to the end of the available text.
+      newExtent ??= text.text.length;
+    }
+
+    _value.execute(
+      ChangeSelectionCommand(
+        newSelection: TextSelection(
+          baseOffset: expandSelection ? selection.baseOffset : newExtent,
+          extentOffset: newExtent,
+        ),
+      ),
+    );
   }
 
   /// Toggles the presence of each of the given [attributions] within
@@ -431,7 +531,16 @@ class EventSourcedAttributedTextEditingController with ChangeNotifier implements
     TextSelection? newSelection,
     TextRange? newComposingRegion,
   }) {
-    // TODO: create a command
+    _value.execute(
+      ReplaceCommand(
+        newText: newText,
+        replacementRange: TextRange(start: from, end: to),
+        newSelection: newSelection,
+        newComposingRegion: newComposingRegion,
+      ),
+    );
+
+    _updateComposingAttributions();
   }
 
   /// Deletes all the text on the current line that appears upstream from the
@@ -442,15 +551,23 @@ class EventSourcedAttributedTextEditingController with ChangeNotifier implements
   }) {
     assert(selection.isCollapsed);
 
-    // TODO: create a command
+    final startOfLinePosition = textLayout.getPositionAtStartOfLine(selection.extent);
+    _value.execute(
+      DeleteCommand(
+        deletionRange: TextSelection(
+          baseOffset: selection.extentOffset,
+          extentOffset: startOfLinePosition.offset,
+        ),
+        newSelection: TextSelection.collapsed(offset: startOfLinePosition.offset),
+      ),
+    );
   }
 
   // TODO: either this method or the next one should be deleted
   @override
   void deleteSelectedText() {
     assert(!selection.isCollapsed);
-
-    // TODO: create a command
+    deleteSelection();
   }
 
   /// Deletes the text within the current [selection].
@@ -464,7 +581,13 @@ class EventSourcedAttributedTextEditingController with ChangeNotifier implements
       return;
     }
 
-    // TODO: create a command
+    _value.execute(
+      DeleteCommand(
+        deletionRange: TextRange(start: selection.start, end: selection.end + 1),
+        newSelection: TextSelection.collapsed(offset: selection.start),
+        newComposingRegion: newComposingRegion,
+      ),
+    );
   }
 
   @override
@@ -492,12 +615,16 @@ class EventSourcedAttributedTextEditingController with ChangeNotifier implements
     if (!selection.isCollapsed) {
       return;
     }
-
     if (selection.extentOffset == 0) {
       return;
     }
 
-    // TODO: create a command
+    delete(
+      from: selection.extentOffset - 1,
+      to: selection.extentOffset,
+      newSelection: TextSelection.collapsed(offset: selection.extentOffset - 1),
+      newComposingRegion: newComposingRegion,
+    );
   }
 
   /// Deletes the character after the currently collapsed [selection].
@@ -510,12 +637,16 @@ class EventSourcedAttributedTextEditingController with ChangeNotifier implements
     if (!selection.isCollapsed) {
       return;
     }
-
     if (selection.extentOffset >= text.text.length) {
       return;
     }
 
-    // TODO: create a command
+    delete(
+      from: selection.extentOffset,
+      to: selection.extentOffset + 1,
+      newSelection: TextSelection.collapsed(offset: selection.extentOffset),
+      newComposingRegion: newComposingRegion,
+    );
   }
 
   /// Removes the text between [from] (inclusive) and [to] (exclusive).
@@ -533,7 +664,13 @@ class EventSourcedAttributedTextEditingController with ChangeNotifier implements
     TextSelection? newSelection,
     TextRange? newComposingRegion,
   }) {
-    // TODO: create a command
+    _value.execute(DeleteCommand(
+      deletionRange: TextRange(start: from, end: to),
+      newSelection: newSelection ?? const TextSelection.collapsed(offset: -1),
+      newComposingRegion: newComposingRegion,
+    ));
+
+    _updateComposingAttributions();
   }
 
   /// Sets the text to empty and removes the selection and composing region.
@@ -581,7 +718,16 @@ class EventSourcedAttributedTextEditingController with ChangeNotifier implements
     if (clipboardData != null && clipboardData.text != null) {
       final textToPaste = clipboardData.text!;
 
-      // TODO: create a command
+      _value.execute(InsertTextAtOffsetCommand(
+        textToInsert: text.insertString(
+          textToInsert: textToPaste,
+          startOffset: insertionOffset,
+        ),
+        insertionOffset: insertionOffset,
+        selectionAfter: TextSelection.collapsed(
+          offset: insertionOffset + textToPaste.length,
+        ),
+      ));
     }
   }
 

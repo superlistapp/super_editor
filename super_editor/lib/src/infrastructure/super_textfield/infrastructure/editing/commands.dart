@@ -5,6 +5,41 @@ import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/a
 
 import 'event_source_value.dart';
 
+/// Changes the text selection from its current value to the given selection.
+class ChangeSelectionCommand extends AttributedTextEditingValueCommand {
+  ChangeSelectionCommand({
+    required this.newSelection,
+    this.newComposingRange,
+  });
+
+  final TextSelection newSelection;
+  final TextRange? newComposingRange;
+
+  TextSelection? _previousSelection;
+  TextRange? _previousComposingRange;
+
+  @override
+  AttributedTextEditingValue doExecute(AttributedTextEditingValue previousValue) {
+    _previousSelection = previousValue.selection;
+    _previousComposingRange = previousValue.composingRegion;
+
+    return AttributedTextEditingValue(
+      text: previousValue.text,
+      selection: newSelection,
+      composingRegion: newComposingRange ?? TextRange.empty,
+    );
+  }
+
+  @override
+  AttributedTextEditingValue doUndo(AttributedTextEditingValue currentValue) {
+    return AttributedTextEditingValue(
+      text: currentValue.text,
+      selection: _previousSelection!,
+      composingRegion: _previousComposingRange!,
+    );
+  }
+}
+
 /// Selects all text in the editable.
 class SelectAllCommand extends AttributedTextEditingValueCommand {
   TextSelection? _previousSelection;
@@ -283,6 +318,110 @@ class DeleteSelectedTextCommand extends AttributedTextEditingValueCommand {
   }
 }
 
+/// Deletes text within a given range, and updates the selection and composing
+/// region to the given values.
+class DeleteCommand extends AttributedTextEditingValueCommand {
+  DeleteCommand({
+    required this.deletionRange,
+    required this.newSelection,
+    this.newComposingRegion,
+  });
+
+  final TextRange deletionRange;
+  final TextSelection newSelection;
+  final TextRange? newComposingRegion;
+
+  AttributedText? _deletedText;
+  TextSelection? _previousSelection;
+  TextRange? _previousComposingRegion;
+
+  @override
+  AttributedTextEditingValue doExecute(AttributedTextEditingValue previousValue) {
+    _deletedText = previousValue.text.copyText(deletionRange.start, deletionRange.end);
+    _previousSelection = previousValue.selection;
+    _previousComposingRegion = previousValue.composingRegion;
+
+    final updatedText = previousValue.text.removeRegion(startOffset: deletionRange.start, endOffset: deletionRange.end);
+    final updatedSelection = newSelection.isValid
+        ? newSelection
+        : _moveSelectionForDeletion(
+            selection: previousValue.selection, deleteFrom: deletionRange.start, deleteTo: deletionRange.end);
+
+    return AttributedTextEditingValue(
+      text: updatedText,
+      selection: updatedSelection,
+      composingRegion: newComposingRegion ?? TextRange.empty,
+    );
+  }
+
+  @override
+  AttributedTextEditingValue doUndo(AttributedTextEditingValue currentValue) {
+    return AttributedTextEditingValue(
+      text: currentValue.text.insert(textToInsert: _deletedText!, startOffset: deletionRange.start),
+      selection: _previousSelection!,
+      composingRegion: _previousComposingRegion!,
+    );
+  }
+}
+
+class ReplaceCommand extends AttributedTextEditingValueCommand {
+  ReplaceCommand({
+    required this.newText,
+    required this.replacementRange,
+    this.newSelection,
+    this.newComposingRegion,
+  });
+
+  final AttributedText newText;
+  final TextRange replacementRange;
+  final TextSelection? newSelection;
+  final TextRange? newComposingRegion;
+
+  AttributedText? _replacedText;
+  TextSelection? _previousSelection;
+  TextRange? _previousComposingRegion;
+
+  @override
+  AttributedTextEditingValue doExecute(AttributedTextEditingValue previousValue) {
+    _replacedText = previousValue.text.copyText(replacementRange.start, replacementRange.end);
+    _previousSelection = previousValue.selection;
+    _previousComposingRegion = previousValue.composingRegion;
+
+    AttributedText updatedText =
+        previousValue.text.removeRegion(startOffset: replacementRange.start, endOffset: replacementRange.end);
+    TextSelection updatedSelection = newSelection ??
+        _moveSelectionForDeletion(
+          selection: previousValue.selection,
+          deleteFrom: replacementRange.start,
+          deleteTo: replacementRange.end,
+        );
+    updatedText = updatedText.insert(textToInsert: newText, startOffset: replacementRange.start);
+    updatedSelection = newSelection ??
+        _moveSelectionForInsertion(
+          selection: updatedSelection,
+          insertIndex: replacementRange.start,
+          newTextLength: newText.text.length,
+        );
+
+    return AttributedTextEditingValue(
+      text: updatedText,
+      selection: updatedSelection,
+      composingRegion: newComposingRegion ?? TextRange.empty,
+    );
+  }
+
+  @override
+  AttributedTextEditingValue doUndo(AttributedTextEditingValue currentValue) {
+    return AttributedTextEditingValue(
+      text: currentValue.text
+          .removeRegion(startOffset: replacementRange.start, endOffset: replacementRange.start + newText.text.length)
+          .insert(textToInsert: _replacedText!, startOffset: replacementRange.start),
+      selection: _previousSelection!,
+      composingRegion: _previousComposingRegion!,
+    );
+  }
+}
+
 /// Replaces the text, selection, and composing region in the editable.
 class ReplaceEverythingCommand extends AttributedTextEditingValueCommand {
   ReplaceEverythingCommand({
@@ -319,5 +458,62 @@ class ReplaceEverythingCommand extends AttributedTextEditingValueCommand {
       selection: _previousValue!.selection,
       composingRegion: _previousValue!.composingRegion,
     );
+  }
+}
+
+TextSelection _moveSelectionForInsertion({
+  required TextSelection selection,
+  required int insertIndex,
+  required int newTextLength,
+}) {
+  int newBaseOffset = selection.baseOffset;
+  if ((selection.baseOffset == insertIndex && selection.isCollapsed) || (selection.baseOffset > insertIndex)) {
+    newBaseOffset = selection.baseOffset + newTextLength;
+  }
+
+  final newExtentOffset =
+      selection.extentOffset >= insertIndex ? selection.extentOffset + newTextLength : selection.extentOffset;
+
+  return TextSelection(
+    baseOffset: newBaseOffset,
+    extentOffset: newExtentOffset,
+  );
+}
+
+TextSelection _moveSelectionForDeletion({
+  required TextSelection selection,
+  required int deleteFrom,
+  required int deleteTo,
+}) {
+  return TextSelection(
+    baseOffset: _moveCaretForDeletion(
+      caretOffset: selection.baseOffset,
+      deleteFrom: deleteFrom,
+      deleteTo: deleteTo,
+    ),
+    extentOffset: _moveCaretForDeletion(
+      caretOffset: selection.extentOffset,
+      deleteFrom: deleteFrom,
+      deleteTo: deleteTo,
+    ),
+  );
+}
+
+int _moveCaretForDeletion({
+  required int caretOffset,
+  required int deleteFrom,
+  required int deleteTo,
+}) {
+  if (caretOffset <= deleteFrom) {
+    return caretOffset;
+  } else if (caretOffset <= deleteTo) {
+    // The caret is sitting within the deleted text region.
+    // Move the caret to the beginning of the deleted region.
+    return deleteFrom;
+  } else {
+    // The caret is sitting beyond the deleted text region.
+    // Move the caret so that its new distance to deleteFrom
+    // is equal to its current distance from deleteTo.
+    return deleteFrom + (caretOffset - deleteTo);
   }
 }
