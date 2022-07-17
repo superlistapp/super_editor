@@ -14,10 +14,11 @@ void main() {
       // simulation of pasting on desktop
       // Note: This covers cases on mobile as well, so separated tests for mobile
       // is not necessary
-      group("recognizes links in pasted code", () {
+      group('recognizes links in pasted code', () {
         testWidgetsOnMac('when pasting into an empty paragraph', (tester) async {
-          tester.simulateClipboard();
-          tester.setSimulatedClipboardContent("Link: https://flutter.dev and link: https://pub.dev");
+          tester
+            ..simulateClipboard()
+            ..setSimulatedClipboardContent("Link: https://flutter.dev and link: https://pub.dev");
 
           // Configure and render a document.
           await tester //
@@ -41,8 +42,9 @@ void main() {
         });
 
         testWidgetsOnMac('when pasting at the start of text', (tester) async {
-          tester.simulateClipboard();
-          tester.setSimulatedClipboardContent("Link: https://flutter.dev and link: https://pub.dev");
+          tester
+            ..simulateClipboard()
+            ..setSimulatedClipboardContent("Link: https://flutter.dev and link: https://pub.dev");
 
           // Configure and render a document.
           await tester
@@ -70,8 +72,9 @@ void main() {
         });
 
         testWidgetsOnMac('when pasting in the middle of text', (tester) async {
-          tester.simulateClipboard();
-          tester.setSimulatedClipboardContent("Link: https://flutter.dev and link: https://pub.dev");
+          tester
+            ..simulateClipboard()
+            ..setSimulatedClipboardContent("Link: https://flutter.dev and link: https://pub.dev");
 
           // Configure and render a document.
           await tester
@@ -99,8 +102,9 @@ void main() {
         });
 
         testWidgetsOnMac('when pasting at the end of text', (tester) async {
-          tester.simulateClipboard();
-          tester.setSimulatedClipboardContent("Link: https://flutter.dev and link: https://pub.dev");
+          tester
+            ..simulateClipboard()
+            ..setSimulatedClipboardContent("Link: https://flutter.dev and link: https://pub.dev");
 
           // Configure and render a document.
           await tester
@@ -128,8 +132,9 @@ void main() {
         });
 
         testWidgetsOnMac('when pasting at the start of a link', (tester) async {
-          tester.simulateClipboard();
-          tester.setSimulatedClipboardContent("Link: https://flutter.dev");
+          tester
+            ..simulateClipboard()
+            ..setSimulatedClipboardContent("Link: https://flutter.dev");
 
           // Configure and render a document.
           await tester //
@@ -151,8 +156,9 @@ void main() {
         });
 
         testWidgetsOnMac('when pasting at the end of a link', (tester) async {
-          tester.simulateClipboard();
-          tester.setSimulatedClipboardContent("Link: https://flutter.dev");
+          tester
+            ..simulateClipboard()
+            ..setSimulatedClipboardContent("Link: https://flutter.dev");
 
           // Configure and render a document.
           await tester //

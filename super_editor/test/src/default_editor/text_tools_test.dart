@@ -18,6 +18,7 @@ void main() {
       test('does not expand when there are spaces surrounding the caret', () {
         // Notice there is are 2 spaces in the middle
         const text = 'SuperEditor  is awesome';
+
         // Pretend that the caret is in the middle of 2 spaces of the text and expand by word
         // `SuperEditor | is awesome`
         final expandedSelection = expandPositionToWord(text: text, textPosition: const TextPosition(offset: 12));
@@ -29,6 +30,7 @@ void main() {
       test('does not expand when there is a space before the caret', () {
         // Notice there is a space at the end
         const text = 'SuperEditor is awesome ';
+
         // Pretend that the caret is at the end of the text and expand by word
         final expandedSelection =
             expandPositionToWord(text: text, textPosition: const TextPosition(offset: text.length));
@@ -41,7 +43,7 @@ void main() {
         // Notice there is a space at first
         const text = ' SuperEditor is awesome';
 
-        // Pretend that the caret is at the start of the text and expand by word
+        // Pretend that the caret is at the start of the first word and expand by word
         final expandedSelection = expandPositionToWord(text: text, textPosition: const TextPosition(offset: 1));
         expect(
           expandedSelection,
@@ -52,7 +54,7 @@ void main() {
       test('expand when the caret is in the middle of a word', () {
         const text = 'SuperEditor is awesome';
 
-        // Pretend that the caret is at the start of the text and expand by word
+        // Pretend that the caret is in the middle of the first word and expand by word
         final expandedSelection = expandPositionToWord(text: text, textPosition: const TextPosition(offset: 6));
         expect(
           expandedSelection,
@@ -61,15 +63,48 @@ void main() {
       });
 
       test('expand when the caret is at the end of a word', () {
-        // Notice there is a space at first
         const text = 'SuperEditor is awesome';
 
-        // Pretend that the caret is at the start of the text and expand by word
+        // Pretend that the caret is at the end of the text and expand by word
         final expandedSelection =
             expandPositionToWord(text: text, textPosition: const TextPosition(offset: text.length));
         expect(
           expandedSelection,
-          const TextSelection(baseOffset: text.length - 7, extentOffset: text.length),
+          const TextSelection(baseOffset: 15, extentOffset: 22),
+        );
+      });
+
+      test('expand when the caret is just before emoji', () {
+        // Notice there is a space at first
+        const text = '🐢A';
+
+        // Pretend that the caret is at the start of the first word and expand by word
+        final expandedSelection = expandPositionToWord(text: text, textPosition: const TextPosition(offset: 0));
+        expect(
+          expandedSelection,
+          const TextSelection(baseOffset: 0, extentOffset: 3),
+        );
+      });
+
+      test('expand when the caret is in the middle of emojies', () {
+        const text = '🐢🐢';
+
+        // Pretend that the caret is in the middle of the first word and expand by word
+        final expandedSelection = expandPositionToWord(text: text, textPosition: const TextPosition(offset: 1));
+        expect(
+          expandedSelection,
+          const TextSelection(baseOffset: 0, extentOffset: 4),
+        );
+      });
+
+      test('expand when the caret is after of an emoji', () {
+        const text = 'A🐢';
+
+        // Pretend that the caret is at the end of the text and expand by word
+        final expandedSelection = expandPositionToWord(text: text, textPosition: const TextPosition(offset: 0));
+        expect(
+          expandedSelection,
+          const TextSelection(baseOffset: 0, extentOffset: 3),
         );
       });
     });

@@ -1302,19 +1302,12 @@ class CommonEditorOperations {
     final textNode = editor.document.getNode(composer.selection!.extent) as TextNode;
     final initialTextOffset = (composer.selection!.extent.nodePosition as TextNodePosition).offset;
 
-    // Inserting text and both ends of a link should not expand the link attribution
-    Set<Attribution> filteredAttributions = _filterLinkAttributionAtBothEndsOfLink(
-      textNode: textNode,
-      textOffset: initialTextOffset,
-      currentAttributions: composer.preferences.currentAttributions,
-    );
-
     editorOpsLog.fine("Executing text insertion command.");
     editor.executeCommand(
       InsertTextCommand(
         documentPosition: composer.selection!.extent,
         textToInsert: text,
-        attributions: filteredAttributions,
+        attributions: composer.preferences.currentAttributions,
       ),
     );
 
@@ -1329,34 +1322,6 @@ class CommonEditorOperations {
     );
 
     return true;
-  }
-
-  /// Filters [LinkAttribution] from the given [currentAttributions] if the user
-  /// is inserting text at both ends of a link
-  Set<Attribution> _filterLinkAttributionAtBothEndsOfLink({
-    required TextNode textNode,
-    required int textOffset,
-    required Set<Attribution> currentAttributions,
-  }) {
-    final linkAttributionSpan = textNode.text.spans
-        .getAttributionSpansInRange(
-          attributionFilter: (attr) => attr is LinkAttribution,
-          // -1 because TextPosition's offset indexes the character after the
-          // selection, not the final character in the selection.
-          start: textOffset != 0 ? textOffset - 1 : 0,
-          end: textOffset != 0 ? textOffset - 1 : 0,
-        )
-        .firstOrNull;
-
-    if (linkAttributionSpan != null &&
-        (textOffset == linkAttributionSpan.start ||
-            // -1 because TextPosition's offset indexes the character after the
-            // selection, not the final character in the selection.
-            textOffset - 1 == linkAttributionSpan.end)) {
-      return currentAttributions.where((attr) => attr is! LinkAttribution).toSet();
-    }
-
-    return currentAttributions;
   }
 
   /// Inserts the given [character] at the current extent position.
@@ -1637,20 +1602,11 @@ class CommonEditorOperations {
     final textNode = editor.document.getNode(composer.selection!.extent) as TextNode;
     final initialTextOffset = (composer.selection!.extent.nodePosition as TextNodePosition).offset;
 
-    // Inserting text and both ends of a link should not expand the link attribution
-    final attributions = ignoreComposerAttributions
-        ? <Attribution>{}
-        : _filterLinkAttributionAtBothEndsOfLink(
-            textNode: textNode,
-            textOffset: initialTextOffset,
-            currentAttributions: composer.preferences.currentAttributions,
-          );
-
     editor.executeCommand(
       InsertTextCommand(
         documentPosition: composer.selection!.extent,
         textToInsert: character,
-        attributions: attributions,
+        attributions: ignoreComposerAttributions ? {} : composer.preferences.currentAttributions,
       ),
     );
 
@@ -2291,7 +2247,7 @@ class _PasteEditorCommand implements EditorCommand {
       // The attribution splitting happens automatically in the text inserting execution, when the
       // newly inserted text's attributions doesn't contain the original attribution. Hence, we only
       // need to filter out the original link attribution.
-      final filteredLinkAttribution = attributionsAtPasteOffset //
+      final attributionsForPastedText = attributionsAtPasteOffset //
           .where((attribution) => attribution is! LinkAttribution)
           .toSet();
 
@@ -2299,7 +2255,7 @@ class _PasteEditorCommand implements EditorCommand {
       InsertTextCommand(
         documentPosition: _pastePosition,
         textToInsert: splitContent.first,
-        attributions: filteredLinkAttribution,
+        attributions: attributionsForPastedText,
       ).execute(document, transaction);
 
       // Check for url in the pasted text and apply [LinkAttribution] appropriately
@@ -2375,21 +2331,22 @@ class _PasteEditorCommand implements EditorCommand {
     required DocumentEditorTransaction transaction,
   }) {
     final textPosition = _pastePosition.nodePosition as TextNodePosition;
+    final wordBoundaries = text.calculateAllWordBoundaries();
 
-    for (var wordTextSelection in text.wordTextSelections) {
-      final word = wordTextSelection.textInside(text);
+    for (final wordBoundary in wordBoundaries) {
+      final word = wordBoundary.textInside(text);
 
       final link = Uri.tryParse(word);
 
       final documentSelection = DocumentSelection(
         base: _pastePosition.copyWith(
           nodePosition: textPosition.copyWith(
-            offset: textPosition.offset + wordTextSelection.start,
+            offset: textPosition.offset + wordBoundary.start,
           ),
         ),
         extent: _pastePosition.copyWith(
           nodePosition: textPosition.copyWith(
-            offset: textPosition.offset + wordTextSelection.end,
+            offset: textPosition.offset + wordBoundary.end,
           ),
         ),
       );

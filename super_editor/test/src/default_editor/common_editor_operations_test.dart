@@ -167,8 +167,9 @@ void main() {
 
     group('pasting', () {
       testWidgetsOnMac('splits a link in two when pasting in the middle of a link', (tester) async {
-        tester.simulateClipboard();
-        tester.setSimulatedClipboardContent("Some text");
+        tester
+          ..simulateClipboard()
+          ..setSimulatedClipboardContent("Some text");
 
         // Configure and render a document.
         await tester //
