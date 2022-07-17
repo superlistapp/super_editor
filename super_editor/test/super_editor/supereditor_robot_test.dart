@@ -134,5 +134,30 @@ void main() {
       // Verify that SuperEditor displays the text we typed.
       expect(SuperEditorInspector.findTextInParagraph("1").text, "Hello, world!");
     });
+
+    testWidgetsOnDesktop("enters text by placing the carit for second time with hardware keyboard", (tester) async {
+      // Configure and render a document.
+      await tester //
+          .createDocument()
+          .withSingleEmptyParagraph()
+          .forDesktop()
+          .autoFocus(true)
+          .pump();
+
+      // Tap to place the caret in the first paragraph.
+      await tester.placeCaretInParagraph("1", 0);
+
+      // Type some text by simulating hardware keyboard key presses.
+      await tester.typeKeyboardText("Hello, world!");
+
+      // Tap to place the caret in the last position
+      await tester.placeCaretInParagraph("1", 12);
+
+      // Type some text by simulating hardware keyboard key presses.
+      await tester.typeKeyboardText("ABC");
+
+      // Verify that SuperEditor displays the text we typed.
+      expect(SuperEditorInspector.findTextInParagraph("1").text, "Hello, world!ABC");
+    });
   });
 }

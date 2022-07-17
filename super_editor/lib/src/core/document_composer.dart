@@ -48,8 +48,9 @@ class DocumentComposer with ChangeNotifier {
   final selectionNotifier = ValueNotifier<DocumentSelection?>(null);
 
   /// Clears the current [selection].
+  /// Previous extent position is set on base parameter to clear the selection
   void clearSelection() {
-    selection = null;
+    selection = _selection?.copyWith(base: _selection!.extent.copyWith());
   }
 
   final ValueNotifier<ImeConfiguration> imeConfiguration;
