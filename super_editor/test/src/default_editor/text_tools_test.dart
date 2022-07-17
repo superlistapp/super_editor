@@ -86,7 +86,7 @@ void main() {
         );
       });
 
-      test('expand when the caret is in the middle of emojies', () {
+      test('expand when the caret is in the middle of emojis', () {
         const text = '🐢🐢';
 
         // Pretend that the caret is in the middle of the first word and expand by word
