@@ -23,7 +23,7 @@ jobs:
       - run: flutter pub global activate melos ${{ env.MELOS_VERSION }}
 
       # Download all the packages that the app uses and override internal dependencies
-      - run: melos bootstrap
+      - run: melos bootstrap --scope=super_editor
 
       # Run all tests
       - run: flutter test
@@ -46,7 +46,7 @@ jobs:
       - run: flutter pub global activate melos ${{ env.MELOS_VERSION }}
 
       # Download all the packages that the app uses and override internal dependencies
-      - run: melos bootstrap
+      - run: melos bootstrap --scope=super_editor
 
       # Run all tests
       - run: flutter test
@@ -69,7 +69,7 @@ jobs:
       - run: flutter pub global activate melos ${{ env.MELOS_VERSION }}
 
       # Download all the packages that the app uses and override internal dependencies
-      - run: melos bootstrap
+      - run: melos bootstrap --scope=super_editor
 
       # Run all tests
       - run: flutter test
@@ -91,7 +91,7 @@ jobs:
       - run: flutter pub global activate melos ${{ env.MELOS_VERSION }}
 
       # Download all the packages that the app uses and override internal dependencies
-      - run: melos bootstrap
+      - run: melos bootstrap --scope=super_editor_markdown
 
       # Run all tests
       - run: flutter test
@@ -113,7 +113,7 @@ jobs:
       - run: flutter pub global activate melos ${{ env.MELOS_VERSION }}
 
       # Download all the packages that the app uses and override internal dependencies
-      - run: melos bootstrap
+      - run: melos bootstrap --scope=super_text_layout
 
       # Run all tests
       - run: flutter test
@@ -136,7 +136,7 @@ jobs:
       - run: flutter pub global activate melos ${{ env.MELOS_VERSION }}
 
       # Download all the packages that the app uses and override internal dependencies
-      - run: melos bootstrap
+      - run: melos bootstrap --scope=super_text_layout
 
       # Run all golden tests
       - run: flutter test test_goldens
