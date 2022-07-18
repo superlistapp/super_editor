@@ -11,13 +11,15 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-
-  # Specify paths for direct dependencies within the mono-repo.
-  super_text_layout:
-    path: ../
+  super_text_layout: any
 
 dependency_overrides:
-  # Override transitive dependencies within the mono-repo.
+  # Override dependencies within the monorepo. These need to go here otherwise
+  # version solving can break when an internal package depends on the pub-hosted
+  # version of another internal package, such as how super_editor_markdown
+  # depends on super_editor.
+  super_text_layout:
+    path: ../
   attributed_text:
     path: ../../attributed_text
 
