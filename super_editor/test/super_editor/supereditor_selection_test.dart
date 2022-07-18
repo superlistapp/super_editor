@@ -97,7 +97,7 @@ void main() {
       );
     });
 
-    testWidgetsOnArbitraryDesktop("doesn't select an unselectable component at base (upstream)", (tester) async {
+    testWidgetsOnArbitraryDesktop("doesn't select an unselectable component at base (dragging upstream)", (tester) async {
       final testContext = await _pumpUnselectableComponentTestApp(tester);
 
       final firstParagraphId = testContext.editContext.editor.document.nodes.first.id;
@@ -123,7 +123,7 @@ void main() {
       );
     });
 
-    testWidgetsOnArbitraryDesktop("doesn't select an unselectable component at extent (upstream)", (tester) async {
+    testWidgetsOnArbitraryDesktop("doesn't select an unselectable component at extent (dragging upstream)", (tester) async {
       final testContext = await _pumpUnselectableComponentTestApp(tester);
 
       final secondParagraphId = testContext.editContext.editor.document.nodes.last.id;
@@ -149,7 +149,7 @@ void main() {
       );
     });
 
-    testWidgetsOnArbitraryDesktop("doesn't select an unselectable component at base (downstream)", (tester) async {
+    testWidgetsOnArbitraryDesktop("doesn't select an unselectable component at base (dragging downstream)", (tester) async {
       final testContext = await _pumpUnselectableComponentTestApp(tester);
 
       final secondParagraphId = testContext.editContext.editor.document.nodes.last.id;
@@ -175,7 +175,7 @@ void main() {
       );
     });
 
-    testWidgetsOnArbitraryDesktop("doesn't select an unselectable component at extent (downstream)", (tester) async {
+    testWidgetsOnArbitraryDesktop("doesn't select an unselectable component at extent (dragging downstream)", (tester) async {
       final testContext = await _pumpUnselectableComponentTestApp(tester);
 
       final firstParagraphId = testContext.editContext.editor.document.nodes.first.id;
@@ -201,7 +201,7 @@ void main() {
       );
     });
 
-    testWidgetsOnArbitraryDesktop("selects paragraphs surrounding an unselectable component (upstream)", (tester) async {
+    testWidgetsOnArbitraryDesktop("selects paragraphs surrounding an unselectable component (dragging upstream)", (tester) async {
       final testContext = await _pumpUnselectableComponentTestApp(tester);
 
       final firstParagraphId = testContext.editContext.editor.document.nodes.first.id;
@@ -228,7 +228,7 @@ void main() {
       );
     });
 
-    testWidgetsOnArbitraryDesktop("selects paragraphs surrounding an unselectable component (downstream)", (tester) async {
+    testWidgetsOnArbitraryDesktop("selects paragraphs surrounding an unselectable component (dragging downstream)", (tester) async {
       final testContext = await _pumpUnselectableComponentTestApp(tester);
 
       final firstParagraphId = testContext.editContext.editor.document.nodes.first.id;
