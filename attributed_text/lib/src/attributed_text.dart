@@ -308,37 +308,40 @@ class AttributedText {
   }
 
   void visitAttributions(AttributionVisitor visitor) {
-    final emptyAttributions = Set<Attribution>.unmodifiable([]);
+    final startingAttributions = Set<Attribution>();
+    final endingAttributions = Set<Attribution>();
+    int currentIndex = -1;
 
-    // Maps the indexes to the attributions that are changing at that index.
-    Map<int, ChangingAttributions> changingIndexes = {};
+    visitor.onVisitBegin();
 
-    // Groups start/end markers by index.
     for (final marker in spans.markers) {
-      final changingAttributions = changingIndexes.putIfAbsent(
-        marker.offset,
-        () => ChangingAttributions(
-          index: marker.offset,
-          startingAttributions: {},
-          endingAttributions: {},
-        ),
-      );
+      // If the marker offset differs from the currentIndex it means
+      // we already added all the attributions that start or end
+      // at currentIndex.
+      if (marker.offset != currentIndex) {
+        if (currentIndex != -1) {
+          visitor.visitAttributions(this, currentIndex, startingAttributions, endingAttributions);
+        }
+
+        currentIndex = marker.offset;
+        startingAttributions.clear();
+        endingAttributions.clear();
+      }
+
       if (marker.isStart) {
-        changingAttributions.startingAttributions.add(marker.attribution);
+        startingAttributions.add(marker.attribution);
       } else {
-        changingAttributions.endingAttributions.add(marker.attribution);
+        endingAttributions.add(marker.attribution);
       }
     }
 
-    for (int i = 0; i < text.length; i++) {
-      final changingAttributions = changingIndexes[i];
-      visitor(
-        this,
-        i,
-        changingAttributions?.startingAttributions ?? emptyAttributions,
-        changingAttributions?.endingAttributions ?? emptyAttributions,
-      );
+    // After the loop, we still have the last index with markers to visit,
+    // if there is at least one marker.
+    if (startingAttributions.isNotEmpty || endingAttributions.isNotEmpty) {
+      visitor.visitAttributions(this, currentIndex, startingAttributions, endingAttributions);
     }
+
+    visitor.onVisitEnd();
   }
 
   @override
@@ -356,32 +359,13 @@ class AttributedText {
   }
 }
 
-/// Represents the sets of attributions that are starting or ending
-/// at a given index.
-class ChangingAttributions {
-  ChangingAttributions({
-    required this.index,
-    required this.startingAttributions,
-    required this.endingAttributions,
-  });
-
-  /// The [index] at the [AttributedText]
-  final int index;
-
-  /// Attributions that are starting at [index]
-  final Set<Attribution> startingAttributions;
-
-  /// Attributions that are ending at [index]
-  final Set<Attribution> endingAttributions;
-}
-
-/// Visits every [index] in the the given [AttributedText], passing the attributions
-/// that start or end at the [index].
+/// Visits every [index] in the the given [AttributedText] which has at least
+/// one start or end marker, passing the attributions that start or end at the [index].
 ///
 /// Note: most range-based operations expect the
 /// closing [index] to be exclusive, but that is not how this callback
 /// works. Both the start and end [index]es are inclusive.
-typedef AttributionVisitor = void Function(
+typedef VisitAttributionsCallback = void Function(
   AttributedText fullText,
   int index,
   Set<Attribution> startingAttributions,
@@ -391,6 +375,66 @@ typedef AttributionVisitor = void Function(
 enum AttributionVisitEvent {
   start,
   end,
+}
+
+/// Visitor interface that allows performing actions 
+/// before and after visiting the attributions.
+abstract class AttributionVisitor {
+  /// Called exactly one time before visiting the attributions.
+  void onVisitBegin();
+
+  /// Called to each index that has at least one attribution that starts
+  /// or ends at that index.
+  void visitAttributions(
+    AttributedText fullText,
+    int index,
+    Set<Attribution> startingAttributions,
+    Set<Attribution> endingAttributions,
+  );
+
+  /// Called exactly one time after visiting the attributions.
+  void onVisitEnd();
+}
+
+/// [AttributionVisitor] implementation intended for simple use-cases
+/// where callbacks are sufficient.
+class CallbackAttributionVisitor implements AttributionVisitor {
+  /// Creates a callback based [AttributionVisitor]
+  /// 
+  /// [onVisitBegin] will be called exactly one time before
+  /// visiting the attributions.
+  /// 
+  /// [visitAttributions] will be called to each index that
+  /// has at least one attribution that starts or ends at that index.
+  /// 
+  /// [onVisitEnd] will be called exactly one time after
+  /// visiting the attributions.
+  CallbackAttributionVisitor({
+    VoidCallback? onVisitBegin,
+    required VisitAttributionsCallback visitAttributions,
+    VoidCallback? onVisitEnd,
+  })  : _onVisitBegin = onVisitBegin,
+        _onVisitEnd = onVisitEnd,
+        _onVisitAttributions = visitAttributions;
+
+  final VoidCallback? _onVisitBegin;
+  final VoidCallback? _onVisitEnd;
+  final VisitAttributionsCallback _onVisitAttributions;
+
+  @override
+  void onVisitBegin() {
+    _onVisitBegin?.call();
+  }
+
+  @override
+  void visitAttributions(AttributedText fullText, int index, Set<Attribution> startingAttributions, Set<Attribution> endingAttributions) {
+    _onVisitAttributions(fullText, index, startingAttributions, endingAttributions);
+  }
+
+  @override
+  void onVisitEnd() {
+    _onVisitEnd?.call();
+  }
 }
 
 /// A zero-parameter function that returns nothing.
