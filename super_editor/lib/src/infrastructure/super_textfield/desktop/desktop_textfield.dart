@@ -248,6 +248,10 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
   }
 
   double _getEstimatedLineHeight() {
+    final lineHeight = _textKey.currentState?.textLayout.getLineHeightAtPosition(const TextPosition(offset: 0)) ?? 0;
+    if (lineHeight > 0) {
+      return lineHeight;
+    }
     final defaultStyle = widget.textStyleBuilder({});
     return (defaultStyle.height ?? 1.0) * defaultStyle.fontSize!;
   }
