@@ -413,25 +413,22 @@ class _InlineMarkdownToDocument implements md.NodeVisitor {
 
 extension on AttributedText {
   String toMarkdown() {
-    final serializer = MarkdownSerializer(this);
-    return serializer.serialize();
+    final serializer = AttributedTextMarkdownSerializer();
+    return serializer.serialize(this);
   }
 }
 
-class MarkdownSerializer implements AttributionVisitor {
-  MarkdownSerializer(this.attributedText);
-
-  final AttributedText attributedText;
+/// Serializes an [AttributedText] into markdown format
+class AttributedTextMarkdownSerializer extends AttributionVisitor {
+  late String _text;
   int _spanStart = 0;
   final _buffer = StringBuffer();
 
-  String serialize() {
+  String serialize(AttributedText attributedText) {
+    _text = attributedText.text;
     attributedText.visitAttributions(this);
     return _buffer.toString();
   }
-
-  @override
-  void onVisitBegin() {}
 
   @override
   void visitAttributions(AttributedText fullText, int index, Set<Attribution> startingAttributions, Set<Attribution> endingAttributions) {
@@ -475,8 +472,8 @@ class MarkdownSerializer implements AttributionVisitor {
   @override
   void onVisitEnd() {
     // When the last span has no attributions, we still have text that wasn't added to the buffer yet.
-    if (_spanStart <= attributedText.text.length - 1) {
-      _buffer.write(attributedText.text.substring(_spanStart));
+    if (_spanStart <= _text.length - 1) {
+      _buffer.write(_text.substring(_spanStart));
     }
   }
 

@@ -319,7 +319,7 @@ class AttributedText {
       // we already added all the attributions that start or end
       // at currentIndex.
       if (marker.offset != currentIndex) {
-        if (currentIndex != -1) {
+        if (currentIndex >= 0) {
           visitor.visitAttributions(this, currentIndex, startingAttributions, endingAttributions);
         }
 
@@ -335,9 +335,8 @@ class AttributedText {
       }
     }
 
-    // After the loop, we still have the last index with markers to visit,
-    // if there is at least one marker.
-    if (startingAttributions.isNotEmpty || endingAttributions.isNotEmpty) {
+    // Visit the final set of end markers.
+    if (endingAttributions.isNotEmpty) {
       visitor.visitAttributions(this, currentIndex, startingAttributions, endingAttributions);
     }
 
@@ -377,14 +376,14 @@ enum AttributionVisitEvent {
   end,
 }
 
-/// Visitor interface that allows performing actions 
-/// before and after visiting the attributions.
+/// Visitor that visits every start and end attribution marker in an [AttributedText]
 abstract class AttributionVisitor {
-  /// Called exactly one time before visiting the attributions.
-  void onVisitBegin();
+  /// Called before visiting attributions, so that implementers can perform any desired setup.
+  void onVisitBegin() {}
 
-  /// Called to each index that has at least one attribution that starts
-  /// or ends at that index.
+  /// Visits all starting and ending attribution markers at the given [index] within [fullText].
+  ///
+  /// This method isn't called for indices that don't contain any attribution markers.
   void visitAttributions(
     AttributedText fullText,
     int index,
@@ -392,34 +391,23 @@ abstract class AttributionVisitor {
     Set<Attribution> endingAttributions,
   );
 
-  /// Called exactly one time after visiting the attributions.
-  void onVisitEnd();
+  /// Called after all attribution markers have been visited by [visitAttributions].
+  void onVisitEnd() {}
 }
 
-/// [AttributionVisitor] implementation intended for simple use-cases
-/// where callbacks are sufficient.
+/// [AttributionVisitor] that delegates to given callbacks.
 class CallbackAttributionVisitor implements AttributionVisitor {
-  /// Creates a callback based [AttributionVisitor]
-  /// 
-  /// [onVisitBegin] will be called exactly one time before
-  /// visiting the attributions.
-  /// 
-  /// [visitAttributions] will be called to each index that
-  /// has at least one attribution that starts or ends at that index.
-  /// 
-  /// [onVisitEnd] will be called exactly one time after
-  /// visiting the attributions.
   CallbackAttributionVisitor({
     VoidCallback? onVisitBegin,
     required VisitAttributionsCallback visitAttributions,
     VoidCallback? onVisitEnd,
   })  : _onVisitBegin = onVisitBegin,
-        _onVisitEnd = onVisitEnd,
-        _onVisitAttributions = visitAttributions;
+        _onVisitAttributions = visitAttributions,
+        _onVisitEnd = onVisitEnd;
 
   final VoidCallback? _onVisitBegin;
-  final VoidCallback? _onVisitEnd;
   final VisitAttributionsCallback _onVisitAttributions;
+  final VoidCallback? _onVisitEnd;
 
   @override
   void onVisitBegin() {
