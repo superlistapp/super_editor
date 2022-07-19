@@ -283,6 +283,12 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
 
       final component = componentKey.currentState as DocumentComponent;
 
+      // Unselectable components should be avoided at base or extent.
+      // They should only be selected when the surrounding components are selected.
+      if (!component.isVisualSelectionSupported()) {
+        continue;
+      }
+
       final componentOverlap = _getLocalOverlapWithComponent(region, component);
 
       if (componentOverlap != null) {
