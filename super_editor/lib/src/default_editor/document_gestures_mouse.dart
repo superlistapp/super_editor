@@ -521,6 +521,22 @@ Updating drag selection:
     widget.editContext.composer.clearSelection();
   }
 
+  ScrollableState? _findAncestorScrollable(BuildContext context) {
+    final ancestorScrollable = Scrollable.of(context);
+    if (ancestorScrollable == null) {
+      return null;
+    }
+
+    final direction = ancestorScrollable.axisDirection;
+    // If the direction is horizontal, then we are inside a widget like a TabBar 
+    // or a horizontal ListView, so we can't use the ancestor scrollable 
+    if (direction == AxisDirection.left || direction == AxisDirection.right) {
+      return null;
+    }
+
+    return ancestorScrollable;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Listener(
