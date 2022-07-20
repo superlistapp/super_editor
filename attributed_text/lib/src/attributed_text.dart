@@ -308,11 +308,39 @@ class AttributedText {
   }
 
   void visitAttributions(AttributionVisitor visitor) {
-    final collapsedSpans = spans.collapseSpans(contentLength: text.length);
-    for (final span in collapsedSpans) {
-      visitor(this, span.start, span.attributions, AttributionVisitEvent.start);
-      visitor(this, span.end, span.attributions, AttributionVisitEvent.end);
+    final startingAttributions = Set<Attribution>();
+    final endingAttributions = Set<Attribution>();
+    int currentIndex = -1;
+
+    visitor.onVisitBegin();
+
+    for (final marker in spans.markers) {
+      // If the marker offset differs from the currentIndex it means
+      // we already added all the attributions that start or end
+      // at currentIndex.
+      if (marker.offset != currentIndex) {
+        if (currentIndex >= 0) {
+          visitor.visitAttributions(this, currentIndex, startingAttributions, endingAttributions);
+        }
+
+        currentIndex = marker.offset;
+        startingAttributions.clear();
+        endingAttributions.clear();
+      }
+
+      if (marker.isStart) {
+        startingAttributions.add(marker.attribution);
+      } else {
+        endingAttributions.add(marker.attribution);
+      }
     }
+
+    // Visit the final set of end markers.
+    if (endingAttributions.isNotEmpty) {
+      visitor.visitAttributions(this, currentIndex, startingAttributions, endingAttributions);
+    }
+
+    visitor.onVisitEnd();
   }
 
   @override
@@ -330,23 +358,71 @@ class AttributedText {
   }
 }
 
-/// Visits the start and end of every span of attributions in
-/// the given [AttributedText].
+/// Visits every [index] in the the given [AttributedText] which has at least
+/// one start or end marker, passing the attributions that start or end at the [index].
 ///
-/// The [index] is the [String] index of the character where the span
-/// either begins or ends. Note: most range-based operations expect the
-/// closing index to be exclusive, but that is not how this callback
+/// Note: most range-based operations expect the
+/// closing [index] to be exclusive, but that is not how this callback
 /// works. Both the start and end [index]es are inclusive.
-typedef AttributionVisitor = void Function(
+typedef VisitAttributionsCallback = void Function(
   AttributedText fullText,
   int index,
-  Set<Attribution> attributions,
-  AttributionVisitEvent event,
+  Set<Attribution> startingAttributions,
+  Set<Attribution> endingAttributions,
 );
 
 enum AttributionVisitEvent {
   start,
   end,
+}
+
+/// Visitor that visits every start and end attribution marker in an [AttributedText]
+abstract class AttributionVisitor {
+  /// Called before visiting attributions, so that implementers can perform any desired setup.
+  void onVisitBegin() {}
+
+  /// Visits all starting and ending attribution markers at the given [index] within [fullText].
+  ///
+  /// This method isn't called for indices that don't contain any attribution markers.
+  void visitAttributions(
+    AttributedText fullText,
+    int index,
+    Set<Attribution> startingAttributions,
+    Set<Attribution> endingAttributions,
+  );
+
+  /// Called after all attribution markers have been visited by [visitAttributions].
+  void onVisitEnd() {}
+}
+
+/// [AttributionVisitor] that delegates to given callbacks.
+class CallbackAttributionVisitor implements AttributionVisitor {
+  CallbackAttributionVisitor({
+    VoidCallback? onVisitBegin,
+    required VisitAttributionsCallback visitAttributions,
+    VoidCallback? onVisitEnd,
+  })  : _onVisitBegin = onVisitBegin,
+        _onVisitAttributions = visitAttributions,
+        _onVisitEnd = onVisitEnd;
+
+  final VoidCallback? _onVisitBegin;
+  final VisitAttributionsCallback _onVisitAttributions;
+  final VoidCallback? _onVisitEnd;
+
+  @override
+  void onVisitBegin() {
+    _onVisitBegin?.call();
+  }
+
+  @override
+  void visitAttributions(AttributedText fullText, int index, Set<Attribution> startingAttributions, Set<Attribution> endingAttributions) {
+    _onVisitAttributions(fullText, index, startingAttributions, endingAttributions);
+  }
+
+  @override
+  void onVisitEnd() {
+    _onVisitEnd?.call();
+  }
 }
 
 /// A zero-parameter function that returns nothing.

@@ -412,6 +412,71 @@ class _InlineMarkdownToDocument implements md.NodeVisitor {
 }
 
 extension on AttributedText {
+  String toMarkdown() {
+    final serializer = AttributedTextMarkdownSerializer();
+    return serializer.serialize(this);
+  }
+}
+
+/// Serializes an [AttributedText] into markdown format
+class AttributedTextMarkdownSerializer extends AttributionVisitor {
+  late String _text;
+  int _spanStart = 0;
+  final _buffer = StringBuffer();
+
+  String serialize(AttributedText attributedText) {
+    _text = attributedText.text;
+    attributedText.visitAttributions(this);
+    return _buffer.toString();
+  }
+
+  @override
+  void visitAttributions(AttributedText fullText, int index, Set<Attribution> startingAttributions, Set<Attribution> endingAttributions) {
+    // Add end markers.
+    if (endingAttributions.isNotEmpty) {
+      final markdownStyles = _sortAndSerializeAttributions(endingAttributions, AttributionVisitEvent.end);
+      // Links are different from the plain styles since they are both not NamedAttributions (and therefore
+      // can't be checked using equality comparison) and asymmetrical in markdown.
+      final linkMarker = _encodeLinkMarker(endingAttributions, AttributionVisitEvent.end);
+
+      // +1 on end index because this visitor has inclusive indices
+      // whereas substring() expects an exclusive ending index.
+      _buffer
+        ..write(fullText.text.substring(_spanStart, index + 1))
+        ..write(markdownStyles)
+        ..write(linkMarker);
+
+      // When we reach the end of an attribution we need to hold the start of the next span,
+      // because if the last span has no attributions we will not visit any other index with
+      // a start marker.
+      // After we visit all the indexes we add the remaining text to the buffer.
+      _spanStart = index + 1;
+    }
+
+    // Add start markers.
+    if (startingAttributions.isNotEmpty) {
+      final markdownStyles = _sortAndSerializeAttributions(startingAttributions, AttributionVisitEvent.start);
+      // Links are different from the plain styles since they are both not NamedAttributions (and therefore
+      // can't be checked using equality comparison) and asymmetrical in markdown.
+      final linkMarker = _encodeLinkMarker(startingAttributions, AttributionVisitEvent.start);
+
+      _buffer
+        ..write(fullText.text.substring(_spanStart, index))
+        ..write(linkMarker)
+        ..write(markdownStyles);
+
+      _spanStart = index;
+    }
+  }
+
+  @override
+  void onVisitEnd() {
+    // When the last span has no attributions, we still have text that wasn't added to the buffer yet.
+    if (_spanStart <= _text.length - 1) {
+      _buffer.write(_text.substring(_spanStart));
+    }
+  }
+
   /// Serializes style attributions into markdown syntax in a repeatable
   /// order such that opening and closing styles match each other on
   /// the opening and closing ends of a span.
@@ -458,36 +523,5 @@ extension on AttributedText {
       }
     }
     return "";
-  }
-
-  String toMarkdown() {
-    final buffer = StringBuffer();
-    int spanStart = 0;
-
-    visitAttributions((fullText, index, attributions, event) {
-      final markdownStyles = _sortAndSerializeAttributions(attributions, event);
-      // Links are different from the plain styles since they are both not NamedAttributions (and therefore
-      // can't be checked using equality comparison) and asymmetrical in markdown.
-      final linkMarker = _encodeLinkMarker(attributions, event);
-
-      switch (event) {
-        case AttributionVisitEvent.start:
-          spanStart = index;
-          buffer
-            ..write(linkMarker)
-            ..write(markdownStyles);
-          break;
-        case AttributionVisitEvent.end:
-          // +1 on end index because this visitor has inclusive indices
-          // whereas substring() expects an exclusive ending index.
-          buffer
-            ..write(fullText.text.substring(spanStart, index + 1))
-            ..write(markdownStyles)
-            ..write(linkMarker);
-          break;
-      }
-    });
-
-    return buffer.toString();
   }
 }
