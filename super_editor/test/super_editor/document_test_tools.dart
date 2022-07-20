@@ -99,6 +99,7 @@ class TestDocumentConfigurator {
   bool _autoFocus = false;
   ui.Size? _editorSize;
   List<ComponentBuilder>? _componentBuilders;
+  SubtreeBuilder? _subtreeBuilder;
 
   /// Configures the [SuperEditor] for standard desktop interactions,
   /// e.g., mouse and keyboard input.
@@ -147,6 +148,14 @@ class TestDocumentConfigurator {
   /// Configures the [SuperEditor] to use only the given [componentBuilders]
   TestDocumentConfigurator withComponentBuilders(List<ComponentBuilder>? componentBuilders) {
     _componentBuilders = componentBuilders;
+    return this;
+  }
+
+  /// Configures the [SuperEditor] to use a custom subtree between [MaterialApp] and [SuperEditor].
+  ///
+  /// By default, [SuperEditor] is displayed inside a [Scaffold].
+  TestDocumentConfigurator withCustomSubtree(SubtreeBuilder? builder) {
+    _subtreeBuilder = builder;
     return this;
   }
 
@@ -242,27 +251,27 @@ class TestDocumentConfigurator {
       testDocumentContext = _existingContext!;
     }
 
+    final superEditor = _buildContent(
+      SuperEditor(
+        documentLayoutKey: testDocumentContext.layoutKey,
+        editor: testDocumentContext.editContext.editor,
+        composer: testDocumentContext.editContext.composer,
+        focusNode: testDocumentContext.focusNode,
+        inputSource: _inputSource ?? _defaultInputSource,
+        gestureMode: _gestureMode ?? _defaultGestureMode,
+        stylesheet: _stylesheet,
+        componentBuilders: [
+          ..._addedComponents,
+          ...(_componentBuilders ?? defaultComponentBuilders),
+        ],
+        autofocus: _autoFocus,
+      ),
+    );
+
     await _widgetTester.pumpWidget(
       MaterialApp(
         theme: _appTheme,
-        home: Scaffold(
-          body: _buildContent(
-            SuperEditor(
-              documentLayoutKey: testDocumentContext.layoutKey,
-              editor: testDocumentContext.editContext.editor,
-              composer: testDocumentContext.editContext.composer,
-              focusNode: testDocumentContext.focusNode,
-              inputSource: _inputSource ?? _defaultInputSource,
-              gestureMode: _gestureMode ?? _defaultGestureMode,
-              stylesheet: _stylesheet,
-              componentBuilders: [
-                ..._addedComponents,
-                ...(_componentBuilders ?? defaultComponentBuilders),
-              ],
-              autofocus: _autoFocus,
-            ),
-          ),
-        ),
+        home: _buildSubtree(superEditor),
       ),
     );
 
@@ -281,7 +290,19 @@ class TestDocumentConfigurator {
     }
     return superEditor;
   }
+
+  Widget _buildSubtree(Widget superEditor) {
+    if (_subtreeBuilder != null) {
+      return _subtreeBuilder!(superEditor);
+    }
+    return Scaffold(
+      body: superEditor,
+    );
+  }
 }
+
+/// Must return a widget subtree containing the given [superEditor]
+typedef SubtreeBuilder = Widget Function(Widget superEditor);
 
 class TestDocumentContext {
   const TestDocumentContext._({
@@ -417,8 +438,7 @@ class EquivalentDocumentMatcher extends Matcher {
     bool nodeTypeOrContentMismatch = false;
 
     if (_expectedDocument.nodes.length != actualDocument.nodes.length) {
-      messages
-          .add("expected ${_expectedDocument.nodes.length} document nodes but found ${actualDocument.nodes.length}");
+      messages.add("expected ${_expectedDocument.nodes.length} document nodes but found ${actualDocument.nodes.length}");
       nodeCountMismatch = true;
     } else {
       messages.add("document have the same number of nodes");
