@@ -1,5 +1,5 @@
 import 'dart:math';
-import 'dart:ui';
+import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
@@ -113,6 +113,8 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
   late ScrollController _scrollController;
 
   double? _viewportHeight;
+
+  final _textMetrics = _TextMetrics();
 
   @override
   void initState() {
@@ -249,12 +251,14 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
   }
 
   double _getEstimatedLineHeight() {
-    final lineHeight = _textKey.currentState?.textLayout.getLineHeightAtPosition(const TextPosition(offset: 0)) ?? 0;
+    final lineHeight = _controller.text.text.isEmpty //
+        ? 0.0
+        : _textKey.currentState?.textLayout.getLineHeightAtPosition(const TextPosition(offset: 0)) ?? 0;
     if (lineHeight > 0) {
       return lineHeight;
     }
     final defaultStyle = widget.textStyleBuilder({});
-    return (defaultStyle.height ?? 1.0) * defaultStyle.fontSize!;
+    return _textMetrics.estimateLineHeight(defaultStyle);
   }
 
   @override
@@ -666,7 +670,7 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
 
     final gutterAmount = _dragEndInViewport!.dy.clamp(0.0, _dragGutterExtent);
     final speedPercent = 1.0 - (gutterAmount / _dragGutterExtent);
-    final scrollAmount = lerpDouble(0, _maxDragSpeed, speedPercent)!;
+    final scrollAmount = ui.lerpDouble(0, _maxDragSpeed, speedPercent)!;
 
     _textScroll.startScrollingToStart(amountPerFrame: scrollAmount);
   }
@@ -685,7 +689,7 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
     final editorBox = context.findRenderObject() as RenderBox;
     final gutterAmount = (editorBox.size.height - _dragEndInViewport!.dy).clamp(0.0, _dragGutterExtent);
     final speedPercent = 1.0 - (gutterAmount / _dragGutterExtent);
-    final scrollAmount = lerpDouble(0, _maxDragSpeed, speedPercent)!;
+    final scrollAmount = ui.lerpDouble(0, _maxDragSpeed, speedPercent)!;
 
     _textScroll.startScrollingToEnd(amountPerFrame: scrollAmount);
   }
@@ -1675,4 +1679,38 @@ class DefaultSuperTextFieldKeyboardHandlers {
   }
 
   DefaultSuperTextFieldKeyboardHandlers._();
+}
+
+/// Computes the estimated line height of a [TextStyle].
+class _TextMetrics {
+  /// Last computed line height.
+  double? _lastLineHeight;
+
+  /// TextStyle used to compute [_lastLineHeight].
+  TextStyle? _lastComputedStyle;
+
+  /// Computes the estimated line height for the given [style].
+  ///
+  /// The height is computed by laying out a [Paragraph] with an arbitrary
+  /// character and inspecting it's line metrics.
+  ///
+  /// The result is cached for the last [style] used, so it's not computed
+  /// at each call.
+  double estimateLineHeight(TextStyle style) {
+    if (_lastComputedStyle == style && _lastLineHeight != null) {
+      return _lastLineHeight!;
+    }
+
+    final builder = ui.ParagraphBuilder(style.getParagraphStyle())
+      ..pushStyle(style.getTextStyle())
+      ..addText('A');
+
+    final paragraph = builder.build();
+    paragraph.layout(const ui.ParagraphConstraints(width: double.infinity));
+
+    final lineMetrics = paragraph.computeLineMetrics();
+    _lastLineHeight = lineMetrics.first.height;
+    _lastComputedStyle = style;
+    return _lastLineHeight!;
+  }
 }
