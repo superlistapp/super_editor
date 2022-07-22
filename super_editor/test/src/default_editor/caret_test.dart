@@ -39,7 +39,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Ensure that the caret is displayed at the correct (x,y) in the document before resizing the window
-        final initialCaretOffset = _getCurrentDesktopCaretOffset(tester);
+        final initialCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
         final expectedInitialCaretOffset = _computeExpectedDesktopCaretOffset(tester, textPosition);
         expect(initialCaretOffset, expectedInitialCaretOffset);
 
@@ -49,7 +49,7 @@ void main() {
 
         // Ensure that after resizing the window, the caret updated its (x,y) to match the text
         // position that was pushed down to the next line.
-        final finalCaretOffset = _getCurrentDesktopCaretOffset(tester);
+        final finalCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
         final expectedFinalCaretOffset = _computeExpectedDesktopCaretOffset(tester, textPosition);
         expect(finalCaretOffset, expectedFinalCaretOffset);
       });
@@ -75,7 +75,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Ensure that the caret is displayed at the correct (x,y) in the document before resizing the window
-        final initialCaretOffset = _getCurrentDesktopCaretOffset(tester);
+        final initialCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
         final expectedInitialCaretOffset = _computeExpectedDesktopCaretOffset(tester, textPosition);
         expect(initialCaretOffset, expectedInitialCaretOffset);
 
@@ -85,7 +85,7 @@ void main() {
 
         // Ensure that after resizing the window, the caret updated its (x,y) to match the text
         // position that was pushed up to the preceding line.
-        final finalCaretOffset = _getCurrentDesktopCaretOffset(tester);
+        final finalCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
         final expectedFinalCaretOffset = _computeExpectedDesktopCaretOffset(tester, textPosition);
         expect(finalCaretOffset, expectedFinalCaretOffset);
       });
@@ -269,17 +269,6 @@ Offset _getOffsetForPosition(GlobalKey docKey, DocumentPosition position) {
 
 /// Find the caret in the widget tree and return it's (x,y)
 ///
-/// Should be used only when the document gesture mode is equal to [DocumentGestureMode.mouse]
-///
-/// The reason for having different implementations is that depending on the gesture mode,
-/// the widget that holds the caret offset is different
-Offset _getCurrentDesktopCaretOffset(WidgetTester tester) {
-  final caretBox = find.byKey(primaryCaretKey).evaluate().single.renderObject as RenderBox;
-  return caretBox.localToGlobal(Offset.zero);
-}
-
-/// Find the caret in the widget tree and return it's (x,y)
-///
 /// Should be used only when the document gesture mode is equal to [DocumentGestureMode.android]
 ///
 /// The reason for having different implementations is that depending on the gesture mode,
@@ -305,7 +294,7 @@ Offset _getIosCurrentCaretOffset(WidgetTester tester) {
 ///
 /// Should be used only when the document gesture mode is equal to [DocumentGestureMode.mouse]
 Offset _computeExpectedDesktopCaretOffset(WidgetTester tester, TextPosition textPosition) {
-  return SuperEditorInspector.findOffsetForCaret(DocumentPosition(
+  return SuperEditorInspector.calculateOffsetForCaret(DocumentPosition(
     nodeId: "1",
     nodePosition: TextNodePosition(offset: textPosition.offset),
   ));

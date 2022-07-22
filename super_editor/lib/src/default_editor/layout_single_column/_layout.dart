@@ -286,22 +286,25 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
       // Unselectable components should be avoided at base or extent.
       // They should only be selected when the surrounding components are selected.
       if (!component.isVisualSelectionSupported()) {
+        editorLayoutLog.fine(' - component does not allow visual selection. Moving on.');
         continue;
       }
 
       final componentOverlap = _getLocalOverlapWithComponent(region, component);
 
       if (componentOverlap != null) {
-        editorLayoutLog.info(' - drag intersects: $componentKey}');
-        editorLayoutLog.info(' - intersection: $componentOverlap');
+        editorLayoutLog.fine(' - drag intersects: $componentKey}');
+        editorLayoutLog.fine(' - intersection: $componentOverlap');
         final componentBaseOffset = _componentOffset(
           componentKey.currentContext!.findRenderObject() as RenderBox,
           baseOffset,
         );
+        editorLayoutLog.fine(' - base component offset: $componentBaseOffset');
         final componentExtentOffset = _componentOffset(
           componentKey.currentContext!.findRenderObject() as RenderBox,
           extentOffset,
         );
+        editorLayoutLog.fine(' - extent component offset: $componentExtentOffset');
 
         if (topNodeId == null) {
           // Because we're iterating through components from top to bottom, the
@@ -323,11 +326,14 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
 
     if (topNodeId == null || bottomNodeId == null) {
       // No document content exists in the given region.
+      editorLayoutLog
+          .finer(' - no document content exists in the region. Node at top: $topNodeId. Node at bottom: $bottomNodeId');
       return null;
     }
 
     if (topNodeId == bottomNodeId) {
       // Region sits within a single component.
+      editorLayoutLog.fine(' - the entire selection sits within a single node: $topNodeId');
       return DocumentSelection(
         base: DocumentPosition(
           nodeId: topNodeId,
@@ -340,6 +346,7 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
       );
     } else {
       // Region covers multiple components.
+      editorLayoutLog.fine(' - the selection spans nodes: $topNodeId -> $bottomNodeId');
 
       // Drag direction determines whether the extent offset is at the
       // top or bottom of the drag rect.

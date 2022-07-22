@@ -84,49 +84,53 @@ class _CaretDocumentOverlayState extends State<CaretDocumentOverlay> with Single
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<Rect?>(
-      valueListenable: _caret,
-      builder: (context, caret, child) {
-        // We use a LayoutBuilder because the appropriate offset for the caret
-        // is based on the flow of content, which is based on the document's
-        // size/constraints. We need to re-calculate the caret offset when the
-        // constraints change.
-        return LayoutBuilder(builder: (context, constraints) {
-          if (_previousConstraints != null && constraints != _previousConstraints) {
-            // Use a post-frame callback to avoid calling setState() during build.
-            WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-              _updateCaretOffset();
-            });
-          }
-          _previousConstraints = constraints;
+    // IgnorePointer so that when the user double and triple taps, the
+    // caret doesn't intercept those later taps.
+    return IgnorePointer(
+      child: ValueListenableBuilder<Rect?>(
+        valueListenable: _caret,
+        builder: (context, caret, child) {
+          // We use a LayoutBuilder because the appropriate offset for the caret
+          // is based on the flow of content, which is based on the document's
+          // size/constraints. We need to re-calculate the caret offset when the
+          // constraints change.
+          return LayoutBuilder(builder: (context, constraints) {
+            if (_previousConstraints != null && constraints != _previousConstraints) {
+              // Use a post-frame callback to avoid calling setState() during build.
+              WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+                _updateCaretOffset();
+              });
+            }
+            _previousConstraints = constraints;
 
-          return RepaintBoundary(
-            child: Stack(
-              children: [
-                if (caret != null)
-                  Positioned(
-                    top: caret.top,
-                    left: caret.left,
-                    height: caret.height,
-                    child: AnimatedBuilder(
-                      animation: _blinkController,
-                      builder: (context, child) {
-                        return Container(
-                          key: primaryCaretKey,
-                          width: widget.caretStyle.width,
-                          decoration: BoxDecoration(
-                            color: widget.caretStyle.color.withOpacity(_blinkController.opacity),
-                            borderRadius: widget.caretStyle.borderRadius,
-                          ),
-                        );
-                      },
+            return RepaintBoundary(
+              child: Stack(
+                children: [
+                  if (caret != null)
+                    Positioned(
+                      top: caret.top,
+                      left: caret.left,
+                      height: caret.height,
+                      child: AnimatedBuilder(
+                        animation: _blinkController,
+                        builder: (context, child) {
+                          return Container(
+                            key: primaryCaretKey,
+                            width: widget.caretStyle.width,
+                            decoration: BoxDecoration(
+                              color: widget.caretStyle.color.withOpacity(_blinkController.opacity),
+                              borderRadius: widget.caretStyle.borderRadius,
+                            ),
+                          );
+                        },
+                      ),
                     ),
-                  ),
-              ],
-            ),
-          );
-        });
-      },
+                ],
+              ),
+            );
+          });
+        },
+      ),
     );
   }
 }

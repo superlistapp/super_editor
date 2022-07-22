@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:logging/logging.dart';
 import 'package:super_editor/super_editor.dart';
 
 import '../test_tools.dart';
@@ -19,7 +20,6 @@ void main() {
       // drag, once we've merged some new dragging tools in #645.
       final layoutState = (find.byType(SingleColumnDocumentLayout).evaluate().single as StatefulElement).state;
       final layout = layoutState as DocumentLayout;
-      final globalLayoutOrigin = (layoutState.context.findRenderObject() as RenderBox).localToGlobal(Offset.zero);
 
       // Drag from upper-right to lower-left.
       //
@@ -27,8 +27,7 @@ void main() {
       // directions: right-to-left is upstream for a single line, and up-to-down is
       // downstream for multi-node. This test ensures that the single-line direction is
       // honored by the document layout, rather than the more common multi-node calculation.
-      final selection = layout.getDocumentSelectionInRegion(
-          const Offset(200, 40) + globalLayoutOrigin, const Offset(150, 60) + globalLayoutOrigin);
+      final selection = layout.getDocumentSelectionInRegion(const Offset(200, 35), const Offset(150, 45));
       expect(selection, isNotNull);
 
       // Ensure that the document selection is upstream.
@@ -47,7 +46,6 @@ void main() {
       // drag, once we've merged some new dragging tools in #645.
       final layoutState = (find.byType(SingleColumnDocumentLayout).evaluate().single as StatefulElement).state;
       final layout = layoutState as DocumentLayout;
-      final globalLayoutOrigin = (layoutState.context.findRenderObject() as RenderBox).localToGlobal(Offset.zero);
 
       // Drag from lower-left to upper-right.
       //
@@ -55,8 +53,7 @@ void main() {
       // directions: left-to-right is downstream for a single line, and down-to-up is
       // upstream for multi-node. This test ensures that the single-line direction is
       // honored by the document layout, rather than the more common multi-node calculation.
-      final selection = layout.getDocumentSelectionInRegion(
-          const Offset(150, 60) + globalLayoutOrigin, const Offset(200, 40) + globalLayoutOrigin);
+      final selection = layout.getDocumentSelectionInRegion(const Offset(150, 45), const Offset(200, 35));
       expect(selection, isNotNull);
 
       // Ensure that the document selection is downstream.
@@ -97,7 +94,8 @@ void main() {
       );
     });
 
-    testWidgetsOnArbitraryDesktop("doesn't select an unselectable component at base (dragging upstream)", (tester) async {
+    testWidgetsOnArbitraryDesktop("doesn't select an unselectable component at base (dragging upstream)",
+        (tester) async {
       final testContext = await _pumpUnselectableComponentTestApp(tester);
 
       final firstParagraphId = testContext.editContext.editor.document.nodes.first.id;
@@ -123,7 +121,8 @@ void main() {
       );
     });
 
-    testWidgetsOnArbitraryDesktop("doesn't select an unselectable component at extent (dragging upstream)", (tester) async {
+    testWidgetsOnArbitraryDesktop("doesn't select an unselectable component at extent (dragging upstream)",
+        (tester) async {
       final testContext = await _pumpUnselectableComponentTestApp(tester);
 
       final secondParagraphId = testContext.editContext.editor.document.nodes.last.id;
@@ -149,7 +148,8 @@ void main() {
       );
     });
 
-    testWidgetsOnArbitraryDesktop("doesn't select an unselectable component at base (dragging downstream)", (tester) async {
+    testWidgetsOnArbitraryDesktop("doesn't select an unselectable component at base (dragging downstream)",
+        (tester) async {
       final testContext = await _pumpUnselectableComponentTestApp(tester);
 
       final secondParagraphId = testContext.editContext.editor.document.nodes.last.id;
@@ -175,7 +175,8 @@ void main() {
       );
     });
 
-    testWidgetsOnArbitraryDesktop("doesn't select an unselectable component at extent (dragging downstream)", (tester) async {
+    testWidgetsOnArbitraryDesktop("doesn't select an unselectable component at extent (dragging downstream)",
+        (tester) async {
       final testContext = await _pumpUnselectableComponentTestApp(tester);
 
       final firstParagraphId = testContext.editContext.editor.document.nodes.first.id;
@@ -201,7 +202,8 @@ void main() {
       );
     });
 
-    testWidgetsOnArbitraryDesktop("selects paragraphs surrounding an unselectable component (dragging upstream)", (tester) async {
+    testWidgetsOnArbitraryDesktop("selects paragraphs surrounding an unselectable component (dragging upstream)",
+        (tester) async {
       final testContext = await _pumpUnselectableComponentTestApp(tester);
 
       final firstParagraphId = testContext.editContext.editor.document.nodes.first.id;
@@ -228,7 +230,8 @@ void main() {
       );
     });
 
-    testWidgetsOnArbitraryDesktop("selects paragraphs surrounding an unselectable component (dragging downstream)", (tester) async {
+    testWidgetsOnArbitraryDesktop("selects paragraphs surrounding an unselectable component (dragging downstream)",
+        (tester) async {
       final testContext = await _pumpUnselectableComponentTestApp(tester);
 
       final firstParagraphId = testContext.editContext.editor.document.nodes.first.id;
@@ -288,7 +291,8 @@ class _UnselectableHrComponentBuilder implements ComponentBuilder {
   }
 
   @override
-  Widget? createComponent(SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel componentViewModel) {
+  Widget? createComponent(
+      SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel componentViewModel) {
     if (componentViewModel is! HorizontalRuleComponentViewModel) {
       return null;
     }
