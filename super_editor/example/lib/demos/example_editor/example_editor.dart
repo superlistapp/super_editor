@@ -336,6 +336,16 @@ class _ExampleEditorState extends State<ExampleEditor> {
         focusNode: _editorFocusNode,
         scrollController: _scrollController,
         documentLayoutKey: _docLayoutKey,
+        documentOverlayBuilders: [
+          DefaultCaretOverlayBuilder(
+            CaretStyle().copyWith(color: _isLight ? Colors.black : Colors.redAccent),
+          ),
+        ],
+        selectionStyle: _isLight
+            ? defaultSelectionStyle
+            : SelectionStyles(
+                selectionColor: Colors.red.withOpacity(0.3),
+              ),
         stylesheet: defaultStylesheet.copyWith(
           addRulesAfter: [
             if (!_isLight) ..._darkModeStyles,

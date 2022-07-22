@@ -4,6 +4,7 @@ import 'package:logging/logging.dart' as logging;
 
 class LogNames {
   static const editor = 'editor';
+  static const editorScrolling = 'editor.scrolling';
   static const editorGestures = 'editor.gestures';
   static const editorKeys = 'editor.keys';
   static const editorIme = 'editor.ime';
@@ -23,6 +24,7 @@ class LogNames {
 }
 
 final editorLog = logging.Logger(LogNames.editor);
+final editorScrollingLog = logging.Logger(LogNames.editorScrolling);
 final editorGesturesLog = logging.Logger(LogNames.editorGestures);
 final editorKeyLog = logging.Logger(LogNames.editorKeys);
 final editorImeLog = logging.Logger(LogNames.editorIme);
@@ -59,6 +61,18 @@ void initLoggers(logging.Level level, Set<logging.Logger> loggers) {
       _activeLoggers.add(logger);
     }
   }
+}
+
+/// Returns `true` if the given [logger] is currently logging, or
+/// `false` otherwise.
+///
+/// Generally, developers should call loggers, regardless of whether
+/// a given logger is active. However, sometimes you may want to log
+/// information that's costly to compute. In such a case, you can
+/// choose to compute the expensive information only if the given
+/// logger will actually log the information.
+bool isLogActive(logging.Logger logger) {
+  return _activeLoggers.contains(logger);
 }
 
 void deactivateLoggers(Set<logging.Logger> loggers) {

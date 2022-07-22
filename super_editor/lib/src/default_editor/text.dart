@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_renaming_method_parameters
+
 import 'dart:collection';
 import 'dart:math';
 
@@ -270,12 +272,6 @@ mixin TextComponentViewModel on SingleColumnLayoutComponentViewModel {
   Color get selectionColor;
   set selectionColor(Color color);
 
-  TextPosition? get caret;
-  set caret(TextPosition? position);
-
-  Color get caretColor;
-  set caretColor(Color color);
-
   bool get highlightWhenEmpty;
   set highlightWhenEmpty(bool highlight);
 
@@ -308,8 +304,6 @@ class TextWithHintComponent extends StatefulWidget {
     this.metadata = const {},
     this.textSelection,
     this.selectionColor = Colors.lightBlueAccent,
-    this.showCaret = false,
-    this.caretColor = Colors.black,
     this.highlightWhenEmpty = false,
     this.showDebugPaint = false,
   }) : super(key: key);
@@ -323,8 +317,6 @@ class TextWithHintComponent extends StatefulWidget {
   final Map<String, dynamic> metadata;
   final TextSelection? textSelection;
   final Color selectionColor;
-  final bool showCaret;
-  final Color caretColor;
   final bool highlightWhenEmpty;
   final bool showDebugPaint;
 
@@ -371,8 +363,6 @@ class _TextWithHintComponentState extends State<TextWithHintComponent>
           metadata: widget.metadata,
           textSelection: widget.textSelection,
           selectionColor: widget.selectionColor,
-          showCaret: widget.showCaret,
-          caretColor: widget.caretColor,
           highlightWhenEmpty: widget.highlightWhenEmpty,
           showDebugPaint: widget.showDebugPaint,
         ),
@@ -394,8 +384,6 @@ class TextComponent extends StatefulWidget {
     this.metadata = const {},
     this.textSelection,
     this.selectionColor = Colors.lightBlueAccent,
-    this.showCaret = false,
-    this.caretColor = Colors.black,
     this.highlightWhenEmpty = false,
     this.showDebugPaint = false,
   }) : super(key: key);
@@ -407,8 +395,6 @@ class TextComponent extends StatefulWidget {
   final Map<String, dynamic> metadata;
   final TextSelection? textSelection;
   final Color selectionColor;
-  final bool showCaret;
-  final Color caretColor;
   final bool highlightWhenEmpty;
   final bool showDebugPaint;
 
@@ -767,21 +753,20 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
   Widget build(BuildContext context) {
     editorLayoutLog.finer('Building a TextComponent with key: ${widget.key}');
 
-    return SuperTextWithSelection.single(
-      key: _textKey,
-      richText: widget.text.computeTextSpan(_textStyleWithBlockType),
-      textAlign: widget.textAlign ?? TextAlign.left,
-      textDirection: widget.textDirection ?? TextDirection.ltr,
-      userSelection: UserSelection(
-        highlightStyle: SelectionHighlightStyle(
-          color: widget.selectionColor,
+    return IgnorePointer(
+      child: SuperTextWithSelection.single(
+        key: _textKey,
+        richText: widget.text.computeTextSpan(_textStyleWithBlockType),
+        textAlign: widget.textAlign ?? TextAlign.left,
+        textDirection: widget.textDirection ?? TextDirection.ltr,
+        userSelection: UserSelection(
+          highlightStyle: SelectionHighlightStyle(
+            color: widget.selectionColor,
+          ),
+          selection: widget.textSelection ?? const TextSelection.collapsed(offset: -1),
+          highlightWhenEmpty: widget.highlightWhenEmpty,
+          hasCaret: false,
         ),
-        caretStyle: CaretStyle(
-          color: widget.caretColor,
-        ),
-        selection: widget.textSelection ?? const TextSelection.collapsed(offset: -1),
-        hasCaret: widget.showCaret,
-        highlightWhenEmpty: widget.highlightWhenEmpty,
       ),
     );
   }

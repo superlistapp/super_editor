@@ -10,10 +10,13 @@ import 'package:super_editor/src/core/styles.dart';
 import 'package:super_editor/src/default_editor/common_editor_operations.dart';
 import 'package:super_editor/src/default_editor/document_gestures_touch_android.dart';
 import 'package:super_editor/src/default_editor/document_gestures_touch_ios.dart';
+import 'package:super_editor/src/default_editor/document_scrollable.dart';
 import 'package:super_editor/src/default_editor/list_items.dart';
+import 'package:super_text_layout/super_text_layout.dart';
 
 import 'attributions.dart';
 import 'blockquote.dart';
+import 'document_caret_overlay.dart';
 import 'document_gestures_mouse.dart';
 import 'document_input_ime.dart';
 import 'document_input_keyboard.dart';
@@ -91,6 +94,7 @@ class SuperEditor extends StatefulWidget {
         softwareKeyboardHandler = null,
         stylesheet = stylesheet ?? defaultStylesheet,
         selectionStyles = defaultSelectionStyle,
+        documentOverlayBuilders = [const DefaultCaretOverlayBuilder()],
         super(key: key);
 
   @Deprecated("Use unnamed SuperEditor() constructor instead")
@@ -119,6 +123,7 @@ class SuperEditor extends StatefulWidget {
   })  : stylesheet = stylesheet ?? defaultStylesheet,
         selectionStyles = selectionStyle ?? defaultSelectionStyle,
         keyboardActions = keyboardActions ?? defaultKeyboardActions,
+        documentOverlayBuilders = [const DefaultCaretOverlayBuilder()],
         componentBuilders = componentBuilders != null
             ? [...componentBuilders, const UnknownComponentBuilder()]
             : [...defaultComponentBuilders, const UnknownComponentBuilder()],
@@ -146,6 +151,7 @@ class SuperEditor extends StatefulWidget {
     this.iOSHandleColor,
     this.iOSToolbarBuilder,
     this.createOverlayControlsClipper,
+    this.documentOverlayBuilders = const [DefaultCaretOverlayBuilder()],
     this.debugPaint = const DebugPaintConfig(),
     this.autofocus = false,
   })  : stylesheet = stylesheet ?? defaultStylesheet,
@@ -230,6 +236,10 @@ class SuperEditor extends StatefulWidget {
   /// Contains a [Document] and alters that document as desired.
   final DocumentEditor editor;
 
+  /// Layers that are displayed on top of the document layout, aligned
+  /// with the location and size of the document layout.
+  final List<DocumentLayerBuilder> documentOverlayBuilders;
+
   /// Owns the editor's current selection, the current attributions for
   /// text input, and other transitive editor configurations.
   final DocumentComposer? composer;
@@ -276,6 +286,7 @@ class SuperEditorState extends State<SuperEditor> {
 
   late DocumentComposer _composer;
 
+  late AutoScrollController _autoScrollController;
   DocumentPosition? _previousSelectionExtent;
 
   @visibleForTesting
@@ -287,10 +298,12 @@ class SuperEditorState extends State<SuperEditor> {
   void initState() {
     super.initState();
 
+    _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
+
     _composer = widget.composer ?? DocumentComposer();
     _composer.addListener(_updateComposerPreferencesAtSelection);
 
-    _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
+    _autoScrollController = AutoScrollController();
 
     _docLayoutKey = widget.documentLayoutKey ?? GlobalKey();
 
@@ -338,6 +351,8 @@ class SuperEditorState extends State<SuperEditor> {
     if (widget.editor != oldWidget.editor) {
       _createEditContext();
       _createLayoutPresenter();
+    } else if (widget.selectionStyles != oldWidget.selectionStyles) {
+      _docLayoutSelectionStyler.selectionStyles = widget.selectionStyles;
     }
 
     if (widget.stylesheet != oldWidget.stylesheet) {
@@ -470,7 +485,7 @@ class SuperEditorState extends State<SuperEditor> {
   Widget build(BuildContext context) {
     return _buildInputSystem(
       child: _buildGestureSystem(
-        child: SingleColumnDocumentLayout(
+        documentLayout: SingleColumnDocumentLayout(
           key: _docLayoutKey,
           presenter: _docLayoutPresenter!,
           componentBuilders: widget.componentBuilders,
@@ -511,18 +526,11 @@ class SuperEditorState extends State<SuperEditor> {
   /// with the document, e.g., mouse input on desktop, or touch input
   /// on mobile.
   Widget _buildGestureSystem({
-    required Widget child,
+    required Widget documentLayout,
   }) {
     switch (_gestureMode) {
       case DocumentGestureMode.mouse:
-        return DocumentMouseInteractor(
-          focusNode: _focusNode,
-          editContext: editContext,
-          scrollController: widget.scrollController,
-          showDebugPaint: widget.debugPaint.gestures,
-          scrollingMinimapId: widget.debugPaint.scrollingMinimapId,
-          child: child,
-        );
+        return _buildDesktopGestureSystem(documentLayout);
       case DocumentGestureMode.android:
         return AndroidDocumentTouchInteractor(
           focusNode: _focusNode,
@@ -535,7 +543,7 @@ class SuperEditorState extends State<SuperEditor> {
           popoverToolbarBuilder: widget.androidToolbarBuilder ?? (_) => const SizedBox(),
           createOverlayControlsClipper: widget.createOverlayControlsClipper,
           showDebugPaint: widget.debugPaint.gestures,
-          child: child,
+          child: documentLayout,
         );
       case DocumentGestureMode.iOS:
         return IOSDocumentTouchInteractor(
@@ -550,9 +558,64 @@ class SuperEditorState extends State<SuperEditor> {
           floatingCursorController: _floatingCursorController,
           createOverlayControlsClipper: widget.createOverlayControlsClipper,
           showDebugPaint: widget.debugPaint.gestures,
-          child: child,
+          child: documentLayout,
         );
     }
+  }
+
+  Widget _buildDesktopGestureSystem(Widget documentLayout) {
+    return LayoutBuilder(builder: (context, viewportConstraints) {
+      return DocumentScrollable(
+        autoScroller: _autoScrollController,
+        scrollingMinimapId: widget.debugPaint.scrollingMinimapId,
+        showDebugPaint: widget.debugPaint.scrolling,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            // When SuperEditor installs its own Viewport, we want the gesture
+            // detection to span throughout the Viewport. Because the gesture
+            // system sits around the DocumentLayout, within the Viewport, we
+            // have to explicitly tell the gesture area to be at least as tall
+            // as the viewport (in case the document content is shorter than
+            // the viewport).
+            minWidth: viewportConstraints.maxWidth < double.infinity ? viewportConstraints.maxWidth : 0,
+            minHeight: viewportConstraints.maxHeight < double.infinity ? viewportConstraints.maxHeight : 0,
+          ),
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              // A layer that sits beneath the document and handles gestures.
+              // It's beneath the document so that components that include
+              // interactive UI, like a Checkbox, can intercept their own
+              // touch events.
+              Positioned.fill(
+                child: DocumentMouseInteractor(
+                  focusNode: _focusNode,
+                  editContext: editContext,
+                  autoScroller: _autoScrollController,
+                  showDebugPaint: widget.debugPaint.gestures,
+                  child: const SizedBox(),
+                ),
+              ),
+              // The document that the user is editing.
+              Align(
+                alignment: Alignment.topCenter,
+                child: Stack(
+                  children: [
+                    documentLayout,
+                    // We display overlay builders in this inner-Stack so that they
+                    // match the document size, rather than the viewport size.
+                    for (final overlayBuilder in widget.documentOverlayBuilders)
+                      Positioned.fill(
+                        child: overlayBuilder.build(context, editContext),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    });
   }
 }
 
@@ -580,6 +643,46 @@ class DebugPaintConfig {
   final bool gestures;
   final String? scrollingMinimapId;
   final bool layout;
+}
+
+/// Builds widgets that are displayed at the same position and size as
+/// the document layout within a [SuperEditor].
+abstract class DocumentLayerBuilder {
+  Widget build(BuildContext context, EditContext editContext);
+}
+
+/// A [DocumentLayerBuilder] that's implemented with a given function, so
+/// that simple use-cases don't need to sub-class [DocumentLayerBuilder].
+class FunctionalDocumentLayerBuilder implements DocumentLayerBuilder {
+  const FunctionalDocumentLayerBuilder(this._delegate);
+
+  final Widget Function(BuildContext context, EditContext editContext) _delegate;
+
+  @override
+  Widget build(BuildContext context, EditContext editContext) => _delegate(context, editContext);
+}
+
+/// A [DocumentLayerBuilder] that paints a caret at the primary selection extent
+/// in a [SuperEditor].
+class DefaultCaretOverlayBuilder implements DocumentLayerBuilder {
+  const DefaultCaretOverlayBuilder([
+    this.caretStyle = const CaretStyle(
+      width: 2,
+      color: Colors.black,
+    ),
+  ]);
+
+  /// Styles applied to the caret that's painted by this caret overlay.
+  final CaretStyle caretStyle;
+
+  @override
+  Widget build(BuildContext context, EditContext editContext) {
+    return CaretDocumentOverlay(
+      composer: editContext.composer,
+      documentLayoutResolver: () => editContext.documentLayout,
+      caretStyle: caretStyle,
+    );
+  }
 }
 
 /// Creates visual components for the standard [SuperEditor].
@@ -810,6 +913,5 @@ TextStyle defaultStyleBuilder(Set<Attribution> attributions) {
 
 /// Default visual styles related to content selection.
 const defaultSelectionStyle = SelectionStyles(
-  caretColor: Colors.black,
   selectionColor: Color(0xFFACCEF7),
 );

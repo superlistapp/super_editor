@@ -57,7 +57,6 @@ class BlockquoteComponentBuilder implements ComponentBuilder {
       textDirection: textDirection,
       textAlignment: textAlign,
       selectionColor: const Color(0x00000000),
-      caretColor: const Color(0x00000000),
     );
   }
 
@@ -76,8 +75,6 @@ class BlockquoteComponentBuilder implements ComponentBuilder {
       borderRadius: componentViewModel.borderRadius,
       textSelection: componentViewModel.selection,
       selectionColor: componentViewModel.selectionColor,
-      showCaret: componentViewModel.caret != null,
-      caretColor: componentViewModel.caretColor,
       highlightWhenEmpty: componentViewModel.highlightWhenEmpty,
     );
   }
@@ -96,8 +93,6 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel 
     required this.borderRadius,
     this.selection,
     required this.selectionColor,
-    this.caret,
-    required this.caretColor,
     this.highlightWhenEmpty = false,
   }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
 
@@ -113,10 +108,6 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel 
   TextSelection? selection;
   @override
   Color selectionColor;
-  @override
-  TextPosition? caret;
-  @override
-  Color caretColor;
   @override
   bool highlightWhenEmpty;
 
@@ -144,8 +135,6 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel 
       borderRadius: borderRadius,
       selection: selection,
       selectionColor: selectionColor,
-      caret: caret,
-      caretColor: caretColor,
       highlightWhenEmpty: highlightWhenEmpty,
     );
   }
@@ -165,8 +154,6 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel 
           borderRadius == other.borderRadius &&
           selection == other.selection &&
           selectionColor == other.selectionColor &&
-          caret == other.caret &&
-          caretColor == other.caretColor &&
           highlightWhenEmpty == other.highlightWhenEmpty;
 
   @override
@@ -181,8 +168,6 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel 
       borderRadius.hashCode ^
       selection.hashCode ^
       selectionColor.hashCode ^
-      caret.hashCode ^
-      caretColor.hashCode ^
       highlightWhenEmpty.hashCode;
 }
 
@@ -197,8 +182,6 @@ class BlockquoteComponent extends StatelessWidget {
     this.selectionColor = Colors.lightBlueAccent,
     required this.backgroundColor,
     required this.borderRadius,
-    this.showCaret = false,
-    this.caretColor = Colors.black,
     this.showDebugPaint = false,
     this.highlightWhenEmpty = false,
   }) : super(key: key);
@@ -210,8 +193,6 @@ class BlockquoteComponent extends StatelessWidget {
   final Color selectionColor;
   final Color backgroundColor;
   final BorderRadius borderRadius;
-  final bool showCaret;
-  final Color caretColor;
   final bool highlightWhenEmpty;
   final bool showDebugPaint;
 
@@ -229,8 +210,6 @@ class BlockquoteComponent extends StatelessWidget {
         textStyleBuilder: styleBuilder,
         textSelection: textSelection,
         selectionColor: selectionColor,
-        showCaret: showCaret,
-        caretColor: caretColor,
         highlightWhenEmpty: highlightWhenEmpty,
         showDebugPaint: showDebugPaint,
       ),

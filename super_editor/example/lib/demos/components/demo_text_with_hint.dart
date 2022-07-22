@@ -190,7 +190,6 @@ class HeaderWithHintComponentBuilder implements ComponentBuilder {
       ),
       textSelection: textSelection,
       selectionColor: componentViewModel.selectionColor,
-      showCaret: componentViewModel.caret != null,
     );
   }
 }

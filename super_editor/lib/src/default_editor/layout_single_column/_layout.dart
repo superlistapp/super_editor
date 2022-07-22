@@ -286,48 +286,54 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
       // Unselectable components should be avoided at base or extent.
       // They should only be selected when the surrounding components are selected.
       if (!component.isVisualSelectionSupported()) {
+        editorLayoutLog.fine(' - component does not allow visual selection. Moving on.');
         continue;
       }
 
       final componentOverlap = _getLocalOverlapWithComponent(region, component);
 
       if (componentOverlap != null) {
-        editorLayoutLog.info(' - drag intersects: $componentKey}');
-        editorLayoutLog.info(' - intersection: $componentOverlap');
+        editorLayoutLog.fine(' - drag intersects: $componentKey}');
+        editorLayoutLog.fine(' - intersection: $componentOverlap');
         final componentBaseOffset = _componentOffset(
           componentKey.currentContext!.findRenderObject() as RenderBox,
           baseOffset,
         );
+        editorLayoutLog.fine(' - base component offset: $componentBaseOffset');
         final componentExtentOffset = _componentOffset(
           componentKey.currentContext!.findRenderObject() as RenderBox,
           extentOffset,
         );
+        editorLayoutLog.fine(' - extent component offset: $componentExtentOffset');
 
         if (topNodeId == null) {
           // Because we're iterating through components from top to bottom, the
           // first intersecting component that we find must be the top node of
           // the selected area.
           topNodeId = _nodeIdsToComponentKeys.entries.firstWhere((element) => element.value == componentKey).key;
-          topNodeBasePosition = component.getPositionAtOffset(componentBaseOffset);
-          topNodeExtentPosition = component.getPositionAtOffset(componentExtentOffset);
+          topNodeBasePosition = _getNodePositionForComponentOffset(component, componentBaseOffset);
+          topNodeExtentPosition = _getNodePositionForComponentOffset(component, componentExtentOffset);
         }
         // We continuously update the bottom node with every additional
         // intersection that we find. This way, when the iteration ends,
         // the last bottom node that we assigned must be the actual bottom
         // node within the selected area.
         bottomNodeId = _nodeIdsToComponentKeys.entries.firstWhere((element) => element.value == componentKey).key;
-        bottomNodeBasePosition = component.getPositionAtOffset(componentBaseOffset);
-        bottomNodeExtentPosition = component.getPositionAtOffset(componentExtentOffset);
+        bottomNodeBasePosition = _getNodePositionForComponentOffset(component, componentBaseOffset);
+        bottomNodeExtentPosition = _getNodePositionForComponentOffset(component, componentExtentOffset);
       }
     }
 
     if (topNodeId == null || bottomNodeId == null) {
       // No document content exists in the given region.
+      editorLayoutLog
+          .finer(' - no document content exists in the region. Node at top: $topNodeId. Node at bottom: $bottomNodeId');
       return null;
     }
 
     if (topNodeId == bottomNodeId) {
       // Region sits within a single component.
+      editorLayoutLog.fine(' - the entire selection sits within a single node: $topNodeId');
       return DocumentSelection(
         base: DocumentPosition(
           nodeId: topNodeId,
@@ -340,6 +346,7 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
       );
     } else {
       // Region covers multiple components.
+      editorLayoutLog.fine(' - the selection spans nodes: $topNodeId -> $bottomNodeId');
 
       // Drag direction determines whether the extent offset is at the
       // top or bottom of the drag rect.
@@ -373,6 +380,22 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
     } else {
       return null;
     }
+  }
+
+  /// Returns the [NodePosition] that sits at the given [componentOffset].
+  ///
+  /// If the [componentOffset] is above the component, then the component's
+  /// "beginning" position is returned. If the [componentOffset] is below
+  /// the component, then the component's "end" position is returned.
+  NodePosition? _getNodePositionForComponentOffset(DocumentComponent component, Offset componentOffset) {
+    if (componentOffset.dy < 0) {
+      return component.getBeginningPosition();
+    }
+    if (componentOffset.dy > component.getRectForPosition(component.getEndPosition()).bottom) {
+      return component.getEndPosition();
+    }
+
+    return component.getPositionAtOffset(componentOffset);
   }
 
   @override
@@ -488,12 +511,12 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
   }
 
   @override
-  Offset getDocumentOffsetFromAncestorOffset(Offset ancestorOffset, RenderObject ancestor) {
+  Offset getDocumentOffsetFromAncestorOffset(Offset ancestorOffset, [RenderObject? ancestor]) {
     return (context.findRenderObject() as RenderBox).globalToLocal(ancestorOffset, ancestor: ancestor);
   }
 
   @override
-  Offset getAncestorOffsetFromDocumentOffset(Offset documentOffset, RenderObject ancestor) {
+  Offset getAncestorOffsetFromDocumentOffset(Offset documentOffset, [RenderObject? ancestor]) {
     return (context.findRenderObject() as RenderBox).localToGlobal(documentOffset, ancestor: ancestor);
   }
 

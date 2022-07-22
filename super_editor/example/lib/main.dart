@@ -2,6 +2,7 @@ import 'package:example/demos/components/demo_text_with_hint.dart';
 import 'package:example/demos/components/demo_unselectable_hr.dart';
 import 'package:example/demos/debugging/simple_deltas_input.dart';
 import 'package:example/demos/demo_app_shortcuts.dart';
+import 'package:example/demos/demo_empty_document.dart';
 import 'package:example/demos/demo_rtl.dart';
 import 'package:example/demos/demo_markdown_serialization.dart';
 import 'package:example/demos/demo_paragraphs.dart';
@@ -35,6 +36,7 @@ import 'demos/supertextfield/android/demo_superandroidtextfield.dart';
 /// are available in this package.
 Future<void> main() async {
   initLoggers(Level.FINEST, {
+    // editorScrollingLog,
     // editorGesturesLog,
     // editorImeLog,
     // editorKeyLog,
@@ -118,10 +120,10 @@ class _HomeScreenState extends State<HomeScreen> {
     // We need our own [Overlay] instead of the one created by the navigator
     // because overlay entries added to navigator's [Overlay] are always
     // displayed above all routes.
-    //    
+    //
     // We display the editor's toolbar in an [OverlayEntry], so inserting it
-    // at the navigator's [Overlay] causes widgets that are displayed in routes, 
-    // e.g. [DropdownButton] items, to be displayed beneath the toolbar.    
+    // at the navigator's [Overlay] causes widgets that are displayed in routes,
+    // e.g. [DropdownButton] items, to be displayed beneath the toolbar.
     return Overlay(
       initialEntries: [
         OverlayEntry(builder: (context) {
@@ -233,6 +235,13 @@ final _menu = <_MenuGroup>[
         title: 'RTL Demo',
         pageBuilder: (context) {
           return RTLDemo();
+        },
+      ),
+      _MenuItem(
+        icon: Icons.description,
+        title: 'Empty Document',
+        pageBuilder: (context) {
+          return EmptyDocumentDemo();
         },
       ),
     ],

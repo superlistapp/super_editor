@@ -125,7 +125,6 @@ class ListItemComponentBuilder implements ComponentBuilder {
       text: node.text,
       textStyleBuilder: noStyleBuilder,
       selectionColor: const Color(0x00000000),
-      caretColor: const Color(0x00000000),
     );
   }
 
@@ -144,8 +143,6 @@ class ListItemComponentBuilder implements ComponentBuilder {
         indent: componentViewModel.indent,
         textSelection: componentViewModel.selection,
         selectionColor: componentViewModel.selectionColor,
-        showCaret: componentViewModel.caret != null,
-        caretColor: componentViewModel.caretColor,
         highlightWhenEmpty: componentViewModel.highlightWhenEmpty,
       );
     } else if (componentViewModel.type == ListItemType.ordered) {
@@ -157,8 +154,6 @@ class ListItemComponentBuilder implements ComponentBuilder {
         styleBuilder: componentViewModel.textStyleBuilder,
         textSelection: componentViewModel.selection,
         selectionColor: componentViewModel.selectionColor,
-        showCaret: componentViewModel.caret != null,
-        caretColor: componentViewModel.caretColor,
         highlightWhenEmpty: componentViewModel.highlightWhenEmpty,
       );
     }
@@ -183,8 +178,6 @@ class ListItemComponentViewModel extends SingleColumnLayoutComponentViewModel wi
     this.textAlignment = TextAlign.left,
     this.selection,
     required this.selectionColor,
-    this.caret,
-    required this.caretColor,
     this.highlightWhenEmpty = false,
   }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
 
@@ -204,10 +197,6 @@ class ListItemComponentViewModel extends SingleColumnLayoutComponentViewModel wi
   @override
   Color selectionColor;
   @override
-  TextPosition? caret;
-  @override
-  Color caretColor;
-  @override
   bool highlightWhenEmpty;
 
   @override
@@ -224,8 +213,6 @@ class ListItemComponentViewModel extends SingleColumnLayoutComponentViewModel wi
       textDirection: textDirection,
       selection: selection,
       selectionColor: selectionColor,
-      caret: caret,
-      caretColor: caretColor,
     );
   }
 
@@ -243,9 +230,7 @@ class ListItemComponentViewModel extends SingleColumnLayoutComponentViewModel wi
           textStyleBuilder == other.textStyleBuilder &&
           textDirection == other.textDirection &&
           selection == other.selection &&
-          selectionColor == other.selectionColor &&
-          caret == other.caret &&
-          caretColor == other.caretColor;
+          selectionColor == other.selectionColor;
 
   @override
   int get hashCode =>
@@ -258,9 +243,7 @@ class ListItemComponentViewModel extends SingleColumnLayoutComponentViewModel wi
       textStyleBuilder.hashCode ^
       textDirection.hashCode ^
       selection.hashCode ^
-      selectionColor.hashCode ^
-      caret.hashCode ^
-      caretColor.hashCode;
+      selectionColor.hashCode;
 }
 
 /// Displays a un-ordered list item in a document.
@@ -324,8 +307,6 @@ class UnorderedListItemComponent extends StatelessWidget {
             textStyleBuilder: styleBuilder,
             textSelection: textSelection,
             selectionColor: selectionColor,
-            showCaret: showCaret,
-            caretColor: caretColor,
             highlightWhenEmpty: highlightWhenEmpty,
             showDebugPaint: showDebugPaint,
           ),
@@ -414,8 +395,6 @@ class OrderedListItemComponent extends StatelessWidget {
             textStyleBuilder: styleBuilder,
             textSelection: textSelection,
             selectionColor: selectionColor,
-            showCaret: showCaret,
-            caretColor: caretColor,
             highlightWhenEmpty: highlightWhenEmpty,
             showDebugPaint: showDebugPaint,
           ),

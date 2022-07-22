@@ -39,6 +39,41 @@ class SuperEditorInspector {
     return superEditor.editContext.composer.selection;
   }
 
+  /// Returns the (x,y) offset for the caret that's currently visible in the document.
+  static Offset findCaretOffsetInDocument([Finder? finder]) {
+    final caretBox = find.byKey(primaryCaretKey).evaluate().single.renderObject as RenderBox;
+    final globalCaretOffset = caretBox.localToGlobal(Offset.zero);
+    final documentLayout = _findDocumentLayout(finder);
+    final globalToDocumentOffset = documentLayout.getGlobalOffsetFromDocumentOffset(Offset.zero);
+    return globalCaretOffset - globalToDocumentOffset;
+  }
+
+  /// Returns the (x,y) offset for a caret, if that caret appeared at the given [position].
+  ///
+  /// {@macro supereditor_finder}
+  static Offset calculateOffsetForCaret(DocumentPosition position, [Finder? finder]) {
+    final documentLayout = _findDocumentLayout(finder);
+    final positionRect = documentLayout.getRectForPosition(position);
+    assert(positionRect != null);
+    return positionRect!.topLeft;
+  }
+
+  /// Returns `true` if the entire content rectangle at [position] is visible on
+  /// screen, or `false` otherwise.
+  ///
+  /// {@macro supereditor_finder}
+  static bool isPositionVisibleGlobally(DocumentPosition position, Size globalSize, [Finder? finder]) {
+    final documentLayout = _findDocumentLayout(finder);
+    final positionRect = documentLayout.getRectForPosition(position)!;
+    final globalDocumentOffset = documentLayout.getGlobalOffsetFromDocumentOffset(Offset.zero);
+    final globalPositionRect = positionRect.translate(globalDocumentOffset.dx, globalDocumentOffset.dy);
+
+    return globalPositionRect.top >= 0 &&
+        globalPositionRect.left >= 0 &&
+        globalPositionRect.bottom <= globalSize.height &&
+        globalPositionRect.right <= globalSize.width;
+  }
+
   /// Finds and returns the [Widget] that configures the [DocumentComponent] with the
   /// given [nodeId].
   ///

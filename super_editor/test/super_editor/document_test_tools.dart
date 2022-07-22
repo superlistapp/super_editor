@@ -73,6 +73,13 @@ class TestDocumentSelector {
       twoParagraphEmptyDoc(),
     );
   }
+
+  TestDocumentConfigurator withLongTextContent() {
+    return TestDocumentConfigurator._(
+      _widgetTester,
+      longTextDoc(),
+    );
+  }
 }
 
 /// Builder that configures and pumps a [SuperEditor] widget.
@@ -88,6 +95,7 @@ class TestDocumentConfigurator {
   DocumentInputSource? _inputSource;
   ThemeData? _appTheme;
   Stylesheet? _stylesheet;
+  final _addedComponents = <ComponentBuilder>[];
   bool _autoFocus = false;
   ui.Size? _editorSize;
   List<ComponentBuilder>? _componentBuilders;
@@ -186,6 +194,13 @@ class TestDocumentConfigurator {
     return this;
   }
 
+  /// Adds the given component builders to the list of component builders that are
+  /// used to render the document layout in the pumped [SuperEditor].
+  TestDocumentConfigurator withAddedComponents(List<ComponentBuilder> newComponents) {
+    _addedComponents.addAll(newComponents);
+    return this;
+  }
+
   /// Configures the [SuperEditor] to auto-focus when first pumped, or not.
   TestDocumentConfigurator autoFocus(bool autoFocus) {
     _autoFocus = autoFocus;
@@ -240,8 +255,11 @@ class TestDocumentConfigurator {
               inputSource: _inputSource ?? _defaultInputSource,
               gestureMode: _gestureMode ?? _defaultGestureMode,
               stylesheet: _stylesheet,
+              componentBuilders: [
+                ..._addedComponents,
+                ...(_componentBuilders ?? defaultComponentBuilders),
+              ],
               autofocus: _autoFocus,
-              componentBuilders: _componentBuilders ?? defaultComponentBuilders,
             ),
           ),
         ),

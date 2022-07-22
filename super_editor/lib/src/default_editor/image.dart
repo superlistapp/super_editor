@@ -81,7 +81,6 @@ class ImageComponentBuilder implements ComponentBuilder {
       nodeId: node.id,
       imageUrl: node.imageUrl,
       selectionColor: const Color(0x00000000),
-      caretColor: const Color(0x00000000),
     );
   }
 
@@ -97,8 +96,6 @@ class ImageComponentBuilder implements ComponentBuilder {
       imageUrl: componentViewModel.imageUrl,
       selection: componentViewModel.selection,
       selectionColor: componentViewModel.selectionColor,
-      showCaret: componentViewModel.caret != null,
-      caretColor: componentViewModel.caretColor,
     );
   }
 }
@@ -111,15 +108,11 @@ class ImageComponentViewModel extends SingleColumnLayoutComponentViewModel {
     required this.imageUrl,
     this.selection,
     required this.selectionColor,
-    this.caret,
-    required this.caretColor,
   }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
 
   String imageUrl;
   UpstreamDownstreamNodeSelection? selection;
   Color selectionColor;
-  UpstreamDownstreamNodePosition? caret;
-  Color caretColor;
 
   @override
   ImageComponentViewModel copy() {
@@ -130,8 +123,6 @@ class ImageComponentViewModel extends SingleColumnLayoutComponentViewModel {
       imageUrl: imageUrl,
       selection: selection,
       selectionColor: selectionColor,
-      caret: caret,
-      caretColor: caretColor,
     );
   }
 
@@ -144,19 +135,11 @@ class ImageComponentViewModel extends SingleColumnLayoutComponentViewModel {
           nodeId == other.nodeId &&
           imageUrl == other.imageUrl &&
           selection == other.selection &&
-          selectionColor == other.selectionColor &&
-          caret == other.caret &&
-          caretColor == other.caretColor;
+          selectionColor == other.selectionColor;
 
   @override
   int get hashCode =>
-      super.hashCode ^
-      nodeId.hashCode ^
-      imageUrl.hashCode ^
-      selection.hashCode ^
-      selectionColor.hashCode ^
-      caret.hashCode ^
-      caretColor.hashCode;
+      super.hashCode ^ nodeId.hashCode ^ imageUrl.hashCode ^ selection.hashCode ^ selectionColor.hashCode;
 }
 
 /// Displays an image in a document.
@@ -167,16 +150,12 @@ class ImageComponent extends StatelessWidget {
     required this.imageUrl,
     this.selectionColor = Colors.blue,
     this.selection,
-    required this.caretColor,
-    this.showCaret = false,
   }) : super(key: key);
 
   final GlobalKey componentKey;
   final String imageUrl;
   final Color selectionColor;
   final UpstreamDownstreamNodeSelection? selection;
-  final Color caretColor;
-  final bool showCaret;
 
   @override
   Widget build(BuildContext context) {
@@ -184,8 +163,6 @@ class ImageComponent extends StatelessWidget {
       child: SelectableBox(
         selection: selection,
         selectionColor: selectionColor,
-        caretColor: caretColor,
-        showCaret: showCaret,
         child: BoxComponent(
           key: componentKey,
           child: Image.network(
