@@ -833,11 +833,24 @@ void main() {
 
     group("deletes text", () {
       test("between the caret and the beginning of the line", () {
-        // TODO:
-      });
+        final controller = EventSourcedAttributedTextEditingController(
+          AttributedTextEditingValue(
+            text: AttributedText(text: "before the caret:after"),
+            selection: const TextSelection.collapsed(offset: 16),
+          ),
+        );
 
-      test("between the caret and the end of the line", () {
-        // TODO:
+        controller.deleteTextOnLineBeforeCaret(textLayout: _FakeTextLayout(["before the caret:after"]));
+        expect(controller.text.text, ":after");
+        expect(controller.selection, const TextSelection.collapsed(offset: 0));
+
+        // Undo it.
+        controller.undo();
+        expect(controller.text.text, "before the caret:after");
+        expect(
+          controller.selection,
+          const TextSelection.collapsed(offset: 16),
+        );
       });
 
       test("when it's selected", () {
@@ -1137,10 +1150,6 @@ void main() {
               extentOffset: 10,
             ));
       });
-    });
-
-    test("pastes text from clipboard", () {
-      // TODO:
     });
   });
 }

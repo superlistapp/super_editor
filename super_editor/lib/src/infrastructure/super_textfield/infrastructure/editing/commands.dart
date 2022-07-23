@@ -24,7 +24,7 @@ class ChangeSelectionCommand extends AttributedTextEditingValueCommand {
     _previousComposingRange = previousValue.composingRegion;
 
     return AttributedTextEditingValue(
-      text: previousValue.text,
+      text: previousValue.text.copy(),
       selection: newSelection,
       composingRegion: newComposingRange ?? TextRange.empty,
     );
@@ -33,7 +33,7 @@ class ChangeSelectionCommand extends AttributedTextEditingValueCommand {
   @override
   AttributedTextEditingValue doUndo(AttributedTextEditingValue currentValue) {
     return AttributedTextEditingValue(
-      text: currentValue.text,
+      text: currentValue.text.copy(),
       selection: _previousSelection!,
       composingRegion: _previousComposingRange!,
     );
@@ -260,15 +260,6 @@ class InsertTextAtOffsetCommand extends AttributedTextEditingValueCommand {
     _previousComposingRegion = null;
 
     return newValue;
-  }
-}
-
-extension on AttributedText {
-  AttributedText copy() {
-    return AttributedText(
-      text: text,
-      spans: spans.copy(),
-    );
   }
 }
 
@@ -515,5 +506,14 @@ int _moveCaretForDeletion({
     // Move the caret so that its new distance to deleteFrom
     // is equal to its current distance from deleteTo.
     return deleteFrom + (caretOffset - deleteTo);
+  }
+}
+
+extension on AttributedText {
+  AttributedText copy() {
+    return AttributedText(
+      text: text,
+      spans: spans.copy(),
+    );
   }
 }
