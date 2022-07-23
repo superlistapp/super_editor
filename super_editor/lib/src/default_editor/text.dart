@@ -794,7 +794,8 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
               caretStyle: CaretStyle(
                 color: selection.styles.caretColor,
               ),
-              hasCaret: selection.hasCaret,
+              // We moved caret painting into the document overlay.
+              hasCaret: false,
             )
         ],
       ),
