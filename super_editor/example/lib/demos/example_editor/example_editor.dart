@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:example/demos/example_editor/_task.dart';
 import 'package:example/logging.dart';
 import 'package:flutter/foundation.dart';

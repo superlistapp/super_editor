@@ -152,6 +152,29 @@ abstract class NonPrimarySelectionListener {
   void onSelectionRemoved(String id);
 }
 
+/// A [NonPrimarySelectionListener] that delegates to given callbacks.
+abstract class CallbackNonPrimarySelectionListener implements NonPrimarySelectionListener {
+  CallbackNonPrimarySelectionListener({
+    void Function(NonPrimarySelection selection)? onSelectionAdded,
+    void Function(NonPrimarySelection selection)? onSelectionChanged,
+    void Function(String id)? onSelectionRemoved,
+  })  : _onSelectionAdded = onSelectionAdded,
+        _onSelectionChanged = onSelectionChanged,
+        _onSelectionRemoved = onSelectionRemoved;
+
+  final void Function(NonPrimarySelection selection)? _onSelectionAdded;
+  @override
+  void onSelectionAdded(NonPrimarySelection selection) => _onSelectionAdded?.call(selection);
+
+  final void Function(NonPrimarySelection selection)? _onSelectionChanged;
+  @override
+  void onSelectionChanged(NonPrimarySelection selection) => _onSelectionChanged?.call(selection);
+
+  final void Function(String id)? _onSelectionRemoved;
+  @override
+  void onSelectionRemoved(String id) => _onSelectionRemoved?.call(id);
+}
+
 /// Holds preferences about user input, to be used for the
 /// next character that is entered. This facilitates things
 /// like a "bold mode" or "italics mode" when there is no

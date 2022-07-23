@@ -5,7 +5,6 @@ import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/styles.dart';
 import 'package:super_editor/src/default_editor/horizontal_rule.dart';
 import 'package:super_editor/src/default_editor/image.dart';
-import 'package:super_editor/src/default_editor/list_items.dart';
 import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
@@ -15,7 +14,7 @@ import '_presenter.dart';
 
 /// [SingleColumnLayoutStylePhase] that applies visual selections to each component,
 /// e.g., text selections, image selections, caret positioning.
-class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
+class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase implements NonPrimarySelectionListener {
   SingleColumnLayoutSelectionStyler({
     required Document document,
     required DocumentComposer composer,
@@ -27,17 +26,18 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
         _nonPrimarySelectionStyler = nonPrimarySelectionStyler {
     // Our styles need to be re-applied whenever the document selection changes.
     _composer.selectionNotifier.addListener(markDirty);
+    _composer.addNonPrimarySelectionListener(this);
   }
 
   @override
   void dispose() {
     _composer.selectionNotifier.removeListener(markDirty);
+    _composer.removeNonPrimarySelectionListener(this);
     super.dispose();
   }
 
   final Document _document;
   final DocumentComposer _composer;
-  final SelectionStyles _selectionStyles;
   final NonPrimarySelectionStyler? _nonPrimarySelectionStyler;
 
   SelectionStyles _selectionStyles;
@@ -60,6 +60,13 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
     editorStyleLog.fine("Change to 'document should show caret': $_shouldDocumentShowCaret");
     markDirty();
   }
+
+  @override
+  void onSelectionAdded(NonPrimarySelection selection) => markDirty();
+  @override
+  void onSelectionChanged(NonPrimarySelection selection) => markDirty();
+  @override
+  void onSelectionRemoved(String id) => markDirty();
 
   @override
   SingleColumnLayoutViewModel style(Document document, SingleColumnLayoutViewModel viewModel) {
@@ -129,11 +136,9 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
       editorStyleLog.finer('   - extent: ${textSelection?.extent}');
 
       if (viewModel is TextComponentViewModel) {
-        viewModel
-          ..styledSelections = styledSelections
-          ..caret = showCaret ? textSelection?.extent : null
-          ..caretColor = _selectionStyles.caretColor
-          ..highlightWhenEmpty = highlightWhenEmpty;
+        viewModel..styledSelections = styledSelections;
+        // ..caret = showCaret ? textSelection?.extent : null
+        // ..caretColor = _selectionStyles.caretColor;
       }
     }
     if (viewModel is ImageComponentViewModel) {
@@ -195,11 +200,12 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
             TextSelection(baseOffset: textNodeSelection.baseOffset, extentOffset: textNodeSelection.extentOffset);
 
         styledSelections.add(StyledSelection(
-          textSelection,
+          selection: textSelection,
+          hasCaret: false, // non-primary selections never have a caret
           // TODO: the styler decides whether to highlight an empty block, but it shouldn't.
           // That decision needs to be made based on whether the user is selecting multiple
           // blocks.
-          _nonPrimarySelectionStyler!(nonPrimarySelection)!,
+          styles: _nonPrimarySelectionStyler!(nonPrimarySelection)!,
         ));
       }
     }
@@ -233,8 +239,9 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
             TextSelection(baseOffset: textNodeSelection.baseOffset, extentOffset: textNodeSelection.extentOffset);
 
         styledSelections.add(StyledSelection(
-          textSelection,
-          SelectionStyles(
+          selection: textSelection,
+          hasCaret: composer.selection!.extent.nodeId == node.id,
+          styles: SelectionStyles(
             selectionColor: _selectionStyles.selectionColor,
             highlightEmptyTextBlocks: nodeSelection.highlightWhenEmpty,
             caretColor: _selectionStyles.caretColor,

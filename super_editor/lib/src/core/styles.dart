@@ -271,9 +271,14 @@ class CascadingPadding {
 
 /// A document selection with associated visual styles.
 class StyledSelection<SelectionType> {
-  const StyledSelection(this.selection, this.styles);
+  const StyledSelection({
+    required this.selection,
+    this.hasCaret = false,
+    required this.styles,
+  });
 
   final SelectionType selection;
+  final bool hasCaret;
   final SelectionStyles styles;
 
   @override
