@@ -42,10 +42,12 @@ class DocumentScrollable extends StatefulWidget {
   /// debugging, when `true`.
   final bool showDebugPaint;
 
+  /// The [ScrollController] that governs this [DocumentScrollable]'s scroll
+  /// offset.
+  final ScrollController? scrollController;
+
   /// This widget's child, which should include a document.
   final Widget child;
-
-  final ScrollController? scrollController;
 
   @override
   State<DocumentScrollable> createState() => _DocumentScrollableState();
