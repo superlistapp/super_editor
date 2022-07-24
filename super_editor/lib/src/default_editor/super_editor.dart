@@ -567,6 +567,7 @@ class SuperEditorState extends State<SuperEditor> {
     return LayoutBuilder(builder: (context, viewportConstraints) {
       return DocumentScrollable(
         autoScroller: _autoScrollController,
+        scrollController: widget.scrollController,
         scrollingMinimapId: widget.debugPaint.scrollingMinimapId,
         showDebugPaint: widget.debugPaint.scrolling,
         child: ConstrainedBox(

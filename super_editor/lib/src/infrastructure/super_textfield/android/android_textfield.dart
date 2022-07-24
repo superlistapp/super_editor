@@ -397,7 +397,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField> with Ticke
   /// is visible on the viewport when it's focused
   void _autoScrollToKeepTextFieldVisible() {
     // If we are not inside a [Scrollable] we don't autoscroll
-    final ancestorScrollable = Scrollable.of(context);
+    final ancestorScrollable = _findAncestorScrollable(context);
     if (ancestorScrollable == null) {
       return;
     }
@@ -428,6 +428,22 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField> with Ticke
       duration: _autoScrollAnimationDuration,
       curve: _autoScrollAnimationCurve,
     );
+  }
+
+  ScrollableState? _findAncestorScrollable(BuildContext context) {
+    final ancestorScrollable = Scrollable.of(context);
+    if (ancestorScrollable == null) {
+      return null;
+    }
+
+    final direction = ancestorScrollable.axisDirection;
+    // If the direction is horizontal, then we are inside a widget like a TabBar 
+    // or a horizontal ListView, so we can't use the ancestor scrollable 
+    if (direction == AxisDirection.left || direction == AxisDirection.right) {
+      return null;
+    }
+
+    return ancestorScrollable;
   }
 
   @override

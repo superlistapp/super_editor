@@ -56,7 +56,7 @@ void main() {
       await tester.placeCaretInParagraph('1', 0);
 
       // Add new lines so the content will cause editor to scroll
-      await _addNewLines(tester, count: 20);
+      await _addNewLines(tester, count: 40);
       await tester.pumpAndSettle();
 
       // Ensure SuperEditor has scrolled
@@ -110,7 +110,7 @@ void main() {
       await tester.placeCaretInParagraph('1', 0);
 
       // Add new lines so the content will cause editor to scroll
-      await _addNewLines(tester, count: 20);
+      await _addNewLines(tester, count: 40);
       await tester.pumpAndSettle();
 
       // Ensure SuperEditor has scrolled
