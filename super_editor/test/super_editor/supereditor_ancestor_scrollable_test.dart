@@ -7,17 +7,19 @@ import 'document_test_tools.dart';
 import 'supereditor_robot.dart';
 
 void main() {
-  group('SuperEditor', () {
-    group('inside a TabBar', () {
-      testWidgetsOnAllPlatforms("doesn't change TabBar index", (tester) async {
-        final tabController = TabController(length: 2, vsync: tester);
+  group('SuperEditor respects horizontal scrolling', () {
+    testWidgetsOnAllPlatforms('inside a TabBar', (tester) async {
+      final tabController = TabController(length: 2, vsync: tester);
+      final scrollController = ScrollController();
 
-        await tester
-            .createDocument()
-            .withSingleEmptyParagraph()
-            .withInputSource(DocumentInputSource.ime)
-            .withCustomSubtree(
-              (superEditor) => ConstrainedBox(
+      await tester
+          .createDocument()
+          .withSingleEmptyParagraph()
+          .withInputSource(DocumentInputSource.ime)
+          .withScrollController(scrollController)
+          .withCustomWidgetTreeBuilder(
+            (superEditor) => MaterialApp(
+              home: ConstrainedBox(
                 constraints: const BoxConstraints(
                   minWidth: 300,
                   maxHeight: 100,
@@ -41,35 +43,41 @@ void main() {
                   ),
                 ),
               ),
-            )
-            .pump();
+            ),
+          )
+          .pump();
 
-        // Ensure SuperEditor added its own Scrollview.
-        // If the Scrollview wasn't added, the content will overflow
-        // the editor bounds.
-        expect(find.byType(SingleChildScrollView), findsOneWidget);
+      // Ensure SuperEditor added its own Scrollview.
+      // If the Scrollview wasn't added, the content will overflow
+      // the editor bounds.
+      expect(find.byType(SingleChildScrollView), findsOneWidget);
 
-        // Select the editor.
-        await tester.placeCaretInParagraph('1', 0);
+      // Select the editor.
+      await tester.placeCaretInParagraph('1', 0);
 
-        // Add new lines so the content will cause editor to scroll
-        await _addNewLines(tester, count: 20);
+      // Add new lines so the content will cause editor to scroll
+      await _addNewLines(tester, count: 20);
+      await tester.pumpAndSettle();
 
-        // Ensure that scrolling didn't cause a tab change
-        expect(tabController.index, equals(0));
-      });
+      // Ensure SuperEditor has scrolled
+      expect(scrollController.offset, greaterThan(0));
+
+      // Ensure that scrolling didn't cause a tab change
+      expect(tabController.index, equals(0));
     });
 
-    group('inside a horizontal ListView', () {
-      testWidgetsOnAllPlatforms("doesn't scroll the ListView", (tester) async {
-        final scrollController = ScrollController();
+    testWidgetsOnAllPlatforms('inside a horizontal ListView', (tester) async {
+      final listScrollController = ScrollController();
+      final editorScrollController = ScrollController();
 
-        await tester
-            .createDocument()
-            .withSingleEmptyParagraph()
-            .withInputSource(DocumentInputSource.ime)
-            .withCustomSubtree(
-              (superEditor) => Scaffold(
+      await tester
+          .createDocument()
+          .withSingleEmptyParagraph()
+          .withInputSource(DocumentInputSource.ime)
+          .withScrollController(editorScrollController)
+          .withCustomWidgetTreeBuilder(
+            (superEditor) => MaterialApp(
+              home: Scaffold(
                 body: ConstrainedBox(
                   constraints: const BoxConstraints(
                     minWidth: 300,
@@ -78,7 +86,7 @@ void main() {
                   ),
                   child: ListView(
                     scrollDirection: Axis.horizontal,
-                    controller: scrollController,
+                    controller: listScrollController,
                     children: [
                       ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 100),
@@ -89,23 +97,27 @@ void main() {
                   ),
                 ),
               ),
-            )
-            .pump();
+            ),
+          )
+          .pump();
 
-        // Ensure SuperEditor added its own Scrollview.
-        // If the Scrollview wasn't added, the content will overflow
-        // the editor bounds.
-        expect(find.byType(SingleChildScrollView), findsOneWidget);
+      // Ensure SuperEditor added its own Scrollview.
+      // If the Scrollview wasn't added, the content will overflow
+      // the editor bounds.
+      expect(find.byType(SingleChildScrollView), findsOneWidget);
 
-        // Select the editor.
-        await tester.placeCaretInParagraph('1', 0);
+      // Select the editor.
+      await tester.placeCaretInParagraph('1', 0);
 
-        // Add new lines so the content will cause editor to scroll
-        await _addNewLines(tester, count: 20);
+      // Add new lines so the content will cause editor to scroll
+      await _addNewLines(tester, count: 20);
+      await tester.pumpAndSettle();
 
-        // Ensure that scrolling didn't scroll the ListView
-        expect(scrollController.position.pixels, equals(0));
-      });
+      // Ensure SuperEditor has scrolled
+      expect(editorScrollController.offset, greaterThan(0));
+
+      // Ensure that scrolling didn't scroll the ListView
+      expect(listScrollController.position.pixels, equals(0));
     });
   });
 }

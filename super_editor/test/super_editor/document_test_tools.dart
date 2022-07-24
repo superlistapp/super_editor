@@ -99,7 +99,8 @@ class TestDocumentConfigurator {
   bool _autoFocus = false;
   ui.Size? _editorSize;
   List<ComponentBuilder>? _componentBuilders;
-  SubtreeBuilder? _subtreeBuilder;
+  WidgetTreeBuilder? _widgetTreeBuilder;
+  ScrollController? _scrollController;
 
   /// Configures the [SuperEditor] for standard desktop interactions,
   /// e.g., mouse and keyboard input.
@@ -151,11 +152,15 @@ class TestDocumentConfigurator {
     return this;
   }
 
-  /// Configures the [SuperEditor] to use a custom subtree between [MaterialApp] and [SuperEditor].
-  ///
-  /// By default, [SuperEditor] is displayed inside a [Scaffold].
-  TestDocumentConfigurator withCustomSubtree(SubtreeBuilder? builder) {
-    _subtreeBuilder = builder;
+  /// Configures the [SuperEditor] to use a custom widget tree above [SuperEditor].
+  TestDocumentConfigurator withCustomWidgetTreeBuilder(WidgetTreeBuilder? builder) {
+    _widgetTreeBuilder = builder;
+    return this;
+  }
+
+  /// Configures the [SuperEditor] to use the given [scrollController]
+  TestDocumentConfigurator withScrollController(ScrollController? scrollController) {
+    _scrollController = scrollController;
     return this;
   }
 
@@ -265,14 +270,12 @@ class TestDocumentConfigurator {
           ...(_componentBuilders ?? defaultComponentBuilders),
         ],
         autofocus: _autoFocus,
+        scrollController: _scrollController,
       ),
     );
 
     await _widgetTester.pumpWidget(
-      MaterialApp(
-        theme: _appTheme,
-        home: _buildSubtree(superEditor),
-      ),
+      _buildWidgetTree(superEditor),
     );
 
     return testDocumentContext;
@@ -291,18 +294,21 @@ class TestDocumentConfigurator {
     return superEditor;
   }
 
-  Widget _buildSubtree(Widget superEditor) {
-    if (_subtreeBuilder != null) {
-      return _subtreeBuilder!(superEditor);
+  Widget _buildWidgetTree(Widget superEditor) {
+    if (_widgetTreeBuilder != null) {
+      return _widgetTreeBuilder!(superEditor);
     }
-    return Scaffold(
-      body: superEditor,
+    return MaterialApp(
+      theme: _appTheme,
+      home: Scaffold(
+        body: superEditor,
+      ),
     );
   }
 }
 
-/// Must return a widget subtree containing the given [superEditor]
-typedef SubtreeBuilder = Widget Function(Widget superEditor);
+/// Must return a widget tree containing the given [superEditor]
+typedef WidgetTreeBuilder = Widget Function(Widget superEditor);
 
 class TestDocumentContext {
   const TestDocumentContext._({
