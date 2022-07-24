@@ -520,7 +520,7 @@ Updating drag selection:
     editorGesturesLog.fine("Clearing document selection");
     widget.editContext.composer.clearSelection();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Listener(
