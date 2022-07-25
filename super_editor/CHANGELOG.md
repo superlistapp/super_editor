@@ -1,3 +1,7 @@
+## [0.2.1] - July, 2022: Desktop IME
+ * Use the input method engine (IME) on Desktop (previously only available on mobile)
+ * A number of `SuperTextField` fixes and improvements. These changes are part of the path to the next release, which is focused on stabilizing `SuperTextField`.
+
 ## [0.2.0] - Feb, 2022: Mobile Support
  * Mobile document editing
  * Mobile text field editing
