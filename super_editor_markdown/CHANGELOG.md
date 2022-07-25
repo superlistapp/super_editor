@@ -1,4 +1,7 @@
-## [0.1.2] - July, 2022
+## [0.1.3] - July, 2022
+ * Updated `AttributedText` serialization to use new `AttributionVisitor` API.
+ 
+## [0.1.2] - ~July, 2022~ (Removed from pub)
  * Updated `AttributedText` serialization to use new `AttributionVisitor` API.
 
 ## [0.1.1] - June, 2022
