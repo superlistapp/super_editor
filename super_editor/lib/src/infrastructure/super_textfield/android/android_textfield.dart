@@ -278,6 +278,8 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
 
   bool get _isMultiline => (widget.minLines ?? 1) != 1 || widget.maxLines != 1;
 
+  bool get _isBounded => widget.maxLines != null;
+
   void _onFocusChange() {
     if (_focusNode.hasFocus) {
       if (!_textEditingController.isAttachedToIme) {
@@ -472,6 +474,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
             textScrollController: _textScrollController,
             textKey: _textContentKey,
             textEditingController: _textEditingController,
+            textAlign: widget.textAlign,
             minLines: widget.minLines,
             maxLines: widget.maxLines,
             lineHeight: widget.lineHeight,
@@ -509,19 +512,22 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
         ? _textEditingController.text.computeTextSpan(widget.textStyleBuilder)
         : TextSpan(text: "", style: widget.textStyleBuilder({}));
 
-    return SuperTextWithSelection.single(
-      key: _textContentKey,
-      richText: textSpan,
-      textAlign: widget.textAlign,
-      userSelection: UserSelection(
-        highlightStyle: SelectionHighlightStyle(
-          color: widget.selectionColor,
+    return SizedBox(
+      width: _isMultiline && _isBounded ? double.infinity : null,
+      child: SuperTextWithSelection.single(
+        key: _textContentKey,
+        richText: textSpan,
+        textAlign: widget.textAlign,
+        userSelection: UserSelection(
+          highlightStyle: SelectionHighlightStyle(
+            color: widget.selectionColor,
+          ),
+          caretStyle: CaretStyle(
+            color: widget.caretColor,
+          ),
+          selection: _textEditingController.selection,
+          hasCaret: _focusNode.hasFocus,
         ),
-        caretStyle: CaretStyle(
-          color: widget.caretColor,
-        ),
-        selection: _textEditingController.selection,
-        hasCaret: _focusNode.hasFocus,
       ),
     );
   }

@@ -470,6 +470,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
             textScrollController: _textScrollController,
             textKey: _textContentKey,
             textEditingController: _textEditingController,
+            textAlign: widget.textAlign,
             minLines: widget.minLines,
             maxLines: widget.maxLines,
             lineHeight: widget.lineHeight,
@@ -516,19 +517,22 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
         ? _textEditingController.text.computeTextSpan(widget.textStyleBuilder)
         : AttributedText(text: "").computeTextSpan(widget.textStyleBuilder);
 
-    return SuperTextWithSelection.single(
-      key: _textContentKey,
-      richText: textSpan,
-      textAlign: widget.textAlign,
-      userSelection: UserSelection(
-        highlightStyle: SelectionHighlightStyle(
-          color: widget.selectionColor,
+    return SizedBox(
+      width: _isMultiline && _isBounded ? double.infinity : null,
+      child: SuperTextWithSelection.single(
+        key: _textContentKey,
+        richText: textSpan,
+        textAlign: widget.textAlign,
+        userSelection: UserSelection(
+          highlightStyle: SelectionHighlightStyle(
+            color: widget.selectionColor,
+          ),
+          caretStyle: CaretStyle(
+            color: _floatingCursorController.isShowingFloatingCursor ? Colors.grey : widget.caretColor,
+          ),
+          selection: _textEditingController.selection,
+          hasCaret: _focusNode.hasFocus,
         ),
-        caretStyle: CaretStyle(
-          color: _floatingCursorController.isShowingFloatingCursor ? Colors.grey : widget.caretColor,
-        ),
-        selection: _textEditingController.selection,
-        hasCaret: _focusNode.hasFocus,
       ),
     );
   }
