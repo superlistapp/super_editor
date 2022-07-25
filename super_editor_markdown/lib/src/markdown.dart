@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/widgets.dart';
 import 'package:markdown/markdown.dart' as md;
 import 'package:super_editor/super_editor.dart';
 
@@ -411,7 +412,7 @@ class _InlineMarkdownToDocument implements md.NodeVisitor {
   }
 }
 
-extension on AttributedText {
+extension Markdown on AttributedText {
   String toMarkdown() {
     final serializer = AttributedTextMarkdownSerializer();
     return serializer.serialize(this);
@@ -420,18 +421,46 @@ extension on AttributedText {
 
 /// Serializes an [AttributedText] into markdown format
 class AttributedTextMarkdownSerializer extends AttributionVisitor {
-  late String _text;
-  int _spanStart = 0;
-  final _buffer = StringBuffer();
+  late String _fullText;
+  late StringBuffer _buffer;
+  late int _bufferCursor;
 
   String serialize(AttributedText attributedText) {
-    _text = attributedText.text;
+    _fullText = attributedText.text;
+    _buffer = StringBuffer();
+    _bufferCursor = 0;
     attributedText.visitAttributions(this);
     return _buffer.toString();
   }
 
   @override
-  void visitAttributions(AttributedText fullText, int index, Set<Attribution> startingAttributions, Set<Attribution> endingAttributions) {
+  void visitAttributions(
+    AttributedText fullText,
+    int index,
+    Set<Attribution> startingAttributions,
+    Set<Attribution> endingAttributions,
+  ) {
+    // Write out the text between the end of the last markers, and these new markers.
+    _buffer.write(
+      fullText.text.substring(_bufferCursor, index),
+    );
+
+    // Add start markers.
+    if (startingAttributions.isNotEmpty) {
+      final markdownStyles = _sortAndSerializeAttributions(startingAttributions, AttributionVisitEvent.start);
+      // Links are different from the plain styles since they are both not NamedAttributions (and therefore
+      // can't be checked using equality comparison) and asymmetrical in markdown.
+      final linkMarker = _encodeLinkMarker(startingAttributions, AttributionVisitEvent.start);
+
+      _buffer
+        ..write(linkMarker)
+        ..write(markdownStyles);
+    }
+
+    // Write out the character at this index.
+    _buffer.write(_fullText[index]);
+    _bufferCursor = index + 1;
+
     // Add end markers.
     if (endingAttributions.isNotEmpty) {
       final markdownStyles = _sortAndSerializeAttributions(endingAttributions, AttributionVisitEvent.end);
@@ -442,38 +471,16 @@ class AttributedTextMarkdownSerializer extends AttributionVisitor {
       // +1 on end index because this visitor has inclusive indices
       // whereas substring() expects an exclusive ending index.
       _buffer
-        ..write(fullText.text.substring(_spanStart, index + 1))
         ..write(markdownStyles)
         ..write(linkMarker);
-
-      // When we reach the end of an attribution we need to hold the start of the next span,
-      // because if the last span has no attributions we will not visit any other index with
-      // a start marker.
-      // After we visit all the indexes we add the remaining text to the buffer.
-      _spanStart = index + 1;
-    }
-
-    // Add start markers.
-    if (startingAttributions.isNotEmpty) {
-      final markdownStyles = _sortAndSerializeAttributions(startingAttributions, AttributionVisitEvent.start);
-      // Links are different from the plain styles since they are both not NamedAttributions (and therefore
-      // can't be checked using equality comparison) and asymmetrical in markdown.
-      final linkMarker = _encodeLinkMarker(startingAttributions, AttributionVisitEvent.start);
-
-      _buffer
-        ..write(fullText.text.substring(_spanStart, index))
-        ..write(linkMarker)
-        ..write(markdownStyles);
-
-      _spanStart = index;
     }
   }
 
   @override
   void onVisitEnd() {
     // When the last span has no attributions, we still have text that wasn't added to the buffer yet.
-    if (_spanStart <= _text.length - 1) {
-      _buffer.write(_text.substring(_spanStart));
+    if (_bufferCursor <= _fullText.length - 1) {
+      _buffer.write(_fullText.substring(_bufferCursor));
     }
   }
 
