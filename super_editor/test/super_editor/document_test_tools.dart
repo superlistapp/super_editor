@@ -99,6 +99,8 @@ class TestDocumentConfigurator {
   bool _autoFocus = false;
   ui.Size? _editorSize;
   List<ComponentBuilder>? _componentBuilders;
+  WidgetTreeBuilder? _widgetTreeBuilder;
+  ScrollController? _scrollController;
 
   /// Configures the [SuperEditor] for standard desktop interactions,
   /// e.g., mouse and keyboard input.
@@ -147,6 +149,18 @@ class TestDocumentConfigurator {
   /// Configures the [SuperEditor] to use only the given [componentBuilders]
   TestDocumentConfigurator withComponentBuilders(List<ComponentBuilder>? componentBuilders) {
     _componentBuilders = componentBuilders;
+    return this;
+  }
+
+  /// Configures the [SuperEditor] to use a custom widget tree above [SuperEditor].
+  TestDocumentConfigurator withCustomWidgetTreeBuilder(WidgetTreeBuilder? builder) {
+    _widgetTreeBuilder = builder;
+    return this;
+  }
+
+  /// Configures the [SuperEditor] to use the given [scrollController]
+  TestDocumentConfigurator withScrollController(ScrollController? scrollController) {
+    _scrollController = scrollController;
     return this;
   }
 
@@ -242,28 +256,26 @@ class TestDocumentConfigurator {
       testDocumentContext = _existingContext!;
     }
 
-    await _widgetTester.pumpWidget(
-      MaterialApp(
-        theme: _appTheme,
-        home: Scaffold(
-          body: _buildContent(
-            SuperEditor(
-              documentLayoutKey: testDocumentContext.layoutKey,
-              editor: testDocumentContext.editContext.editor,
-              composer: testDocumentContext.editContext.composer,
-              focusNode: testDocumentContext.focusNode,
-              inputSource: _inputSource ?? _defaultInputSource,
-              gestureMode: _gestureMode ?? _defaultGestureMode,
-              stylesheet: _stylesheet,
-              componentBuilders: [
-                ..._addedComponents,
-                ...(_componentBuilders ?? defaultComponentBuilders),
-              ],
-              autofocus: _autoFocus,
-            ),
-          ),
-        ),
+    final superEditor = _buildContent(
+      SuperEditor(
+        documentLayoutKey: testDocumentContext.layoutKey,
+        editor: testDocumentContext.editContext.editor,
+        composer: testDocumentContext.editContext.composer,
+        focusNode: testDocumentContext.focusNode,
+        inputSource: _inputSource ?? _defaultInputSource,
+        gestureMode: _gestureMode ?? _defaultGestureMode,
+        stylesheet: _stylesheet,
+        componentBuilders: [
+          ..._addedComponents,
+          ...(_componentBuilders ?? defaultComponentBuilders),
+        ],
+        autofocus: _autoFocus,
+        scrollController: _scrollController,
       ),
+    );
+
+    await _widgetTester.pumpWidget(
+      _buildWidgetTree(superEditor),
     );
 
     return testDocumentContext;
@@ -281,7 +293,22 @@ class TestDocumentConfigurator {
     }
     return superEditor;
   }
+
+  Widget _buildWidgetTree(Widget superEditor) {
+    if (_widgetTreeBuilder != null) {
+      return _widgetTreeBuilder!(superEditor);
+    }
+    return MaterialApp(
+      theme: _appTheme,
+      home: Scaffold(
+        body: superEditor,
+      ),
+    );
+  }
 }
+
+/// Must return a widget tree containing the given [superEditor]
+typedef WidgetTreeBuilder = Widget Function(Widget superEditor);
 
 class TestDocumentContext {
   const TestDocumentContext._({
@@ -417,8 +444,7 @@ class EquivalentDocumentMatcher extends Matcher {
     bool nodeTypeOrContentMismatch = false;
 
     if (_expectedDocument.nodes.length != actualDocument.nodes.length) {
-      messages
-          .add("expected ${_expectedDocument.nodes.length} document nodes but found ${actualDocument.nodes.length}");
+      messages.add("expected ${_expectedDocument.nodes.length} document nodes but found ${actualDocument.nodes.length}");
       nodeCountMismatch = true;
     } else {
       messages.add("document have the same number of nodes");

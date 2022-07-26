@@ -27,6 +27,7 @@ class DocumentScrollable extends StatefulWidget {
     required this.autoScroller,
     this.scrollingMinimapId,
     this.showDebugPaint = false,
+    this.scrollController,
     required this.child,
   }) : super(key: key);
 
@@ -40,6 +41,13 @@ class DocumentScrollable extends StatefulWidget {
   /// Paints some extra visual ornamentation to help with
   /// debugging, when `true`.
   final bool showDebugPaint;
+
+  /// The [ScrollController] that governs this [DocumentScrollable]'s scroll
+  /// offset.
+  ///
+  /// `scrollController` is not used if this `SuperEditor` has an ancestor
+  /// `Scrollable`.
+  final ScrollController? scrollController;
 
   /// This widget's child, which should include a document.
   final Widget child;
@@ -59,7 +67,7 @@ class _DocumentScrollableState extends State<DocumentScrollable> with SingleTick
   @override
   void initState() {
     super.initState();
-    _scrollController = ScrollController();
+    _scrollController = widget.scrollController ?? ScrollController();
 
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       // Wait until the next frame to attach to auto-scroller because
@@ -90,6 +98,13 @@ class _DocumentScrollableState extends State<DocumentScrollable> with SingleTick
   @override
   void didUpdateWidget(DocumentScrollable oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (widget.scrollController != oldWidget.scrollController) {
+      if (oldWidget.scrollController == null) {
+        _scrollController.dispose();
+      }
+      _scrollController = widget.scrollController ?? ScrollController();
+    }
+
     if (widget.autoScroller != oldWidget.autoScroller) {
       widget.autoScroller.detachScrollable();
       widget.autoScroller.attachScrollable(
@@ -109,6 +124,10 @@ class _DocumentScrollableState extends State<DocumentScrollable> with SingleTick
     //   ScrollingMinimaps.of(context)?.put(widget.scrollingMinimapId!, null);
     // }
 
+    if (widget.scrollController == null) {
+      _scrollController.dispose();
+    }
+
     widget.autoScroller.detachScrollable();
     super.dispose();
   }
@@ -121,8 +140,7 @@ class _DocumentScrollableState extends State<DocumentScrollable> with SingleTick
   /// If this widget doesn't have an ancestor `Scrollable`, then this
   /// widget includes a `ScrollView` and this `State`'s render object
   /// is the viewport `RenderBox`.
-  RenderBox get _viewport =>
-      (Scrollable.of(context)?.context.findRenderObject() ?? context.findRenderObject()) as RenderBox;
+  RenderBox get _viewport => (_findAncestorScrollable(context)?.context.findRenderObject() ?? context.findRenderObject()) as RenderBox;
 
   /// Returns the `ScrollPosition` that controls the scroll offset of
   /// this widget.
@@ -136,9 +154,25 @@ class _DocumentScrollableState extends State<DocumentScrollable> with SingleTick
   /// is returned.
   ScrollPosition get _scrollPosition => _ancestorScrollPosition ?? _scrollController.position;
 
+  ScrollableState? _findAncestorScrollable(BuildContext context) {
+    final ancestorScrollable = Scrollable.of(context);
+    if (ancestorScrollable == null) {
+      return null;
+    }
+
+    final direction = ancestorScrollable.axisDirection;
+    // If the direction is horizontal, then we are inside a widget like a TabBar
+    // or a horizontal ListView, so we can't use the ancestor scrollable
+    if (direction == AxisDirection.left || direction == AxisDirection.right) {
+      return null;
+    }
+
+    return ancestorScrollable;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final ancestorScrollable = Scrollable.of(context);
+    final ancestorScrollable = _findAncestorScrollable(context);
     _ancestorScrollPosition = ancestorScrollable?.position;
 
     return Stack(

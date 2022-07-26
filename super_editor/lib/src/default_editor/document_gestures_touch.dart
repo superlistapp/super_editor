@@ -48,9 +48,25 @@ class ScrollableDocument extends StatelessWidget {
   /// The document layout widget.
   final Widget child;
 
+  ScrollableState? _findAncestorScrollable(BuildContext context) {
+    final ancestorScrollable = Scrollable.of(context);
+    if (ancestorScrollable == null) {
+      return null;
+    }
+
+    final direction = ancestorScrollable.axisDirection;
+    // If the direction is horizontal, then we are inside a widget like a TabBar 
+    // or a horizontal ListView, so we can't use the ancestor scrollable 
+    if (direction == AxisDirection.left || direction == AxisDirection.right) {
+      return null;
+    }
+
+    return ancestorScrollable;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final ancestorScrollable = Scrollable.of(context);
+    final ancestorScrollable = _findAncestorScrollable(context);
     final _ancestorScrollPosition = ancestorScrollable?.position;
     final addScrollView = _ancestorScrollPosition == null;
 

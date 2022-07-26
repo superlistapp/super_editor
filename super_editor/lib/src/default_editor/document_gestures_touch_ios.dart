@@ -169,7 +169,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    _ancestorScrollPosition = Scrollable.of(context)?.position;
+    _ancestorScrollPosition = _findAncestorScrollable(context)?.position;
 
     // On the next frame, check if our active scroll position changed to a
     // different instance. If it did, move our listener to the new one.
@@ -373,7 +373,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   /// widget includes a `ScrollView` and this `State`'s render object
   /// is the viewport `RenderBox`.
   RenderBox get viewportBox =>
-      (Scrollable.of(context)?.context.findRenderObject() ?? context.findRenderObject()) as RenderBox;
+      (_findAncestorScrollable(context)?.context.findRenderObject() ?? context.findRenderObject()) as RenderBox;
 
   RenderBox get interactorBox => context.findRenderObject() as RenderBox;
 
@@ -1012,6 +1012,22 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     widget.composer.selection = DocumentSelection.collapsed(
       position: position,
     );
+  }
+
+  ScrollableState? _findAncestorScrollable(BuildContext context) {
+    final ancestorScrollable = Scrollable.of(context);
+    if (ancestorScrollable == null) {
+      return null;
+    }
+
+    final direction = ancestorScrollable.axisDirection;
+    // If the direction is horizontal, then we are inside a widget like a TabBar 
+    // or a horizontal ListView, so we can't use the ancestor scrollable 
+    if (direction == AxisDirection.left || direction == AxisDirection.right) {
+      return null;
+    }
+
+    return ancestorScrollable;
   }
 
   @override

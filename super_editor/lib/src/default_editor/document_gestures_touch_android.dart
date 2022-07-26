@@ -153,7 +153,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    _ancestorScrollPosition = Scrollable.of(context)?.position;
+    _ancestorScrollPosition = _findAncestorScrollable(context)?.position;
 
     // On the next frame, check if our active scroll position changed to a
     // different instance. If it did, move our listener to the new one.
@@ -370,7 +370,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   /// widget includes a `ScrollView` and this `State`'s render object
   /// is the viewport `RenderBox`.
   RenderBox get viewportBox =>
-      (Scrollable.of(context)?.context.findRenderObject() ?? context.findRenderObject()) as RenderBox;
+      (_findAncestorScrollable(context)?.context.findRenderObject() ?? context.findRenderObject()) as RenderBox;
 
   /// Converts the given [offset] from the [DocumentInteractor]'s coordinate
   /// space to the [DocumentLayout]'s coordinate space.
@@ -838,6 +838,22 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   void _clearSelection() {
     editorGesturesLog.fine("Clearing document selection");
     widget.composer.clearSelection();
+  }
+
+  ScrollableState? _findAncestorScrollable(BuildContext context) {
+    final ancestorScrollable = Scrollable.of(context);
+    if (ancestorScrollable == null) {
+      return null;
+    }
+
+    final direction = ancestorScrollable.axisDirection;
+    // If the direction is horizontal, then we are inside a widget like a TabBar 
+    // or a horizontal ListView, so we can't use the ancestor scrollable 
+    if (direction == AxisDirection.left || direction == AxisDirection.right) {
+      return null;
+    }
+
+    return ancestorScrollable;
   }
 
   @override
