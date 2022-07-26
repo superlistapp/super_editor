@@ -12,6 +12,8 @@ void main() {
       final tabController = TabController(length: 2, vsync: tester);
       final scrollController = ScrollController();
 
+      // Pump a SuperEditor with a small maxHeight, so adding lines
+      // will cause the editor to scroll.
       await tester
           .createDocument()
           .withSingleEmptyParagraph()
@@ -65,6 +67,8 @@ void main() {
       final listScrollController = ScrollController();
       final editorScrollController = ScrollController();
 
+      // Pump a SuperEditor with a small maxHeight, so adding lines
+      // will cause the editor to scroll.
       await tester
           .createDocument()
           .withSingleEmptyParagraph()
