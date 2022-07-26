@@ -44,6 +44,9 @@ class DocumentScrollable extends StatefulWidget {
 
   /// The [ScrollController] that governs this [DocumentScrollable]'s scroll
   /// offset.
+  ///
+  /// `scrollController` is not used if this `SuperEditor` has an ancestor
+  /// `Scrollable`.
   final ScrollController? scrollController;
 
   /// This widget's child, which should include a document.
@@ -99,7 +102,7 @@ class _DocumentScrollableState extends State<DocumentScrollable> with SingleTick
       if (oldWidget.scrollController == null) {
         _scrollController.dispose();
       }
-      _scrollController = widget.scrollController ?? ScrollController();           
+      _scrollController = widget.scrollController ?? ScrollController();
     }
 
     if (widget.autoScroller != oldWidget.autoScroller) {
@@ -120,8 +123,8 @@ class _DocumentScrollableState extends State<DocumentScrollable> with SingleTick
     // if (widget.scrollingMinimapId == null) {
     //   ScrollingMinimaps.of(context)?.put(widget.scrollingMinimapId!, null);
     // }
-    
-    if (widget.scrollController == null){
+
+    if (widget.scrollController == null) {
       _scrollController.dispose();
     }
 
@@ -137,8 +140,7 @@ class _DocumentScrollableState extends State<DocumentScrollable> with SingleTick
   /// If this widget doesn't have an ancestor `Scrollable`, then this
   /// widget includes a `ScrollView` and this `State`'s render object
   /// is the viewport `RenderBox`.
-  RenderBox get _viewport =>
-      (_findAncestorScrollable(context)?.context.findRenderObject() ?? context.findRenderObject()) as RenderBox;
+  RenderBox get _viewport => (_findAncestorScrollable(context)?.context.findRenderObject() ?? context.findRenderObject()) as RenderBox;
 
   /// Returns the `ScrollPosition` that controls the scroll offset of
   /// this widget.
@@ -159,8 +161,8 @@ class _DocumentScrollableState extends State<DocumentScrollable> with SingleTick
     }
 
     final direction = ancestorScrollable.axisDirection;
-    // If the direction is horizontal, then we are inside a widget like a TabBar 
-    // or a horizontal ListView, so we can't use the ancestor scrollable 
+    // If the direction is horizontal, then we are inside a widget like a TabBar
+    // or a horizontal ListView, so we can't use the ancestor scrollable
     if (direction == AxisDirection.left || direction == AxisDirection.right) {
       return null;
     }

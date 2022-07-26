@@ -47,11 +47,6 @@ void main() {
           )
           .pump();
 
-      // Ensure SuperEditor added its own Scrollview.
-      // If the Scrollview wasn't added, the content will overflow
-      // the editor bounds.
-      expect(find.byType(SingleChildScrollView), findsOneWidget);
-
       // Select the editor.
       await tester.placeCaretInParagraph('1', 0);
 
@@ -100,11 +95,6 @@ void main() {
             ),
           )
           .pump();
-
-      // Ensure SuperEditor added its own Scrollview.
-      // If the Scrollview wasn't added, the content will overflow
-      // the editor bounds.
-      expect(find.byType(SingleChildScrollView), findsOneWidget);
 
       // Select the editor.
       await tester.placeCaretInParagraph('1', 0);
