@@ -5,7 +5,10 @@ import 'package:super_editor/super_editor.dart';
 
 import '../test_tools.dart';
 
-void main() {
+void main() async {  
+  
+  await loadAppFonts();
+
   group('SuperTextField', () {
     group('single line', () {
       group('displays different alignments', () {
@@ -107,18 +110,21 @@ void main() {
                 textAlign: TextAlign.left,
                 maxLines: 4,
                 configuration: SuperTextFieldPlatformConfiguration.android,
+                //minHeight: 400,
               ),
               _buildSuperTextField(
                 text: multilineText,
                 textAlign: TextAlign.center,
                 maxLines: 4,
                 configuration: SuperTextFieldPlatformConfiguration.android,
+                //minHeight: 400,
               ),
               _buildSuperTextField(
                 text: multilineText,
                 textAlign: TextAlign.right,
                 maxLines: 4,
                 configuration: SuperTextFieldPlatformConfiguration.android,
+                //minHeight: 400,
               ),
             ],
           );
@@ -210,7 +216,8 @@ void main() {
 Widget _buildSuperTextField({
   required String text,
   required TextAlign textAlign,
-  SuperTextFieldPlatformConfiguration? configuration,
+  //double minHeight = 200, 
+  SuperTextFieldPlatformConfiguration? configuration,  
   int? maxLines,
 }) {
   final controller = AttributedTextEditingController(
@@ -224,12 +231,13 @@ Widget _buildSuperTextField({
       textController: controller,
       textAlign: textAlign,
       maxLines: maxLines,
-      minLines: 1,
-      lineHeight: 20,
+      minLines: 1,      
+      lineHeight: 20,      
       textStyleBuilder: (_) {
         return const TextStyle(
           color: Colors.black,
-          fontSize: 14,
+          fontSize: 20,
+          fontFamily: 'Ahem',
         );
       },
     ),
@@ -242,6 +250,7 @@ Future<void> _pumpScaffold(
 }) async {
   await tester.pumpWidget(
     MaterialApp(
+      debugShowCheckedModeBanner: false,
       home: Scaffold(
         body: Column(children: children),
       ),
