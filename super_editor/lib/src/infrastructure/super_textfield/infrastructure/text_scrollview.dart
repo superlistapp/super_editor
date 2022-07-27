@@ -865,17 +865,31 @@ class TextScrollController with ChangeNotifier {
   void _ensureRectIsVisible(Rect rect) {
     assert(_delegate != null);
 
-    _log.finer('Ensuring rect is visible: $rect');
-    if (rect.top < 0) {
-      // The character is entirely or partially above the top of the viewport.
-      // Scroll the content down.
-      _scrollOffset = rect.top;
-      _log.finer(' - updated _scrollOffset to $_scrollOffset');
-    } else if (rect.bottom > _delegate!.viewportHeight!) {
-      // The character is entirely or partially below the bottom of the viewport.
-      // Scroll the content up.
-      _scrollOffset = rect.bottom - _delegate!.viewportHeight!;
-      _log.finer(' - updated _scrollOffset to $_scrollOffset');
+    _log.finer('Ensuring rect is visible: $rect');   
+    if (_delegate!.isMultiline) {
+      if (rect.top < 0) {
+        // The character is entirely or partially above the top of the viewport.
+        // Scroll the content down.
+        _scrollOffset = rect.top;
+        _log.finer(' - updated _scrollOffset to $_scrollOffset');
+      } else if (rect.bottom > _delegate!.viewportHeight!) {
+        // The character is entirely or partially below the bottom of the viewport.
+        // Scroll the content up.
+        _scrollOffset = rect.bottom - _delegate!.viewportHeight!;
+        _log.finer(' - updated _scrollOffset to $_scrollOffset');
+      }
+    } else {
+      if(rect.left < 0) {
+        // The character is entirely or partially before the start of the viewport.
+        // Scroll the content right.
+        _scrollOffset = rect.left;
+        _log.finer(' - updated _scrollOffset to $_scrollOffset');
+      } else if (rect.right > _delegate!.viewportWidth!){
+        // The character is entirely or partially after the end of the viewport.
+        // Scroll the content left.
+        _scrollOffset = rect.right - _delegate!.viewportWidth!;
+        _log.finer(' - updated _scrollOffset to $_scrollOffset');
+      }
     }
 
     notifyListeners();

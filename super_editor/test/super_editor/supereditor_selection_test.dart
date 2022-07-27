@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:super_editor/src/core/document.dart';
-import 'package:super_editor/src/core/document_layout.dart';
-import 'package:super_editor/src/core/document_selection.dart';
-import 'package:super_editor/src/default_editor/layout_single_column/layout_single_column.dart';
-import 'package:super_editor/src/default_editor/text.dart';
+import 'package:logging/logging.dart';
+import 'package:super_editor/super_editor.dart';
 
 import '../test_tools.dart';
 import 'document_test_tools.dart';
@@ -23,7 +20,6 @@ void main() {
       // drag, once we've merged some new dragging tools in #645.
       final layoutState = (find.byType(SingleColumnDocumentLayout).evaluate().single as StatefulElement).state;
       final layout = layoutState as DocumentLayout;
-      final globalLayoutOrigin = (layoutState.context.findRenderObject() as RenderBox).localToGlobal(Offset.zero);
 
       // Drag from upper-right to lower-left.
       //
@@ -31,8 +27,7 @@ void main() {
       // directions: right-to-left is upstream for a single line, and up-to-down is
       // downstream for multi-node. This test ensures that the single-line direction is
       // honored by the document layout, rather than the more common multi-node calculation.
-      final selection = layout.getDocumentSelectionInRegion(
-          const Offset(200, 40) + globalLayoutOrigin, const Offset(150, 60) + globalLayoutOrigin);
+      final selection = layout.getDocumentSelectionInRegion(const Offset(200, 35), const Offset(150, 45));
       expect(selection, isNotNull);
 
       // Ensure that the document selection is upstream.
@@ -51,7 +46,6 @@ void main() {
       // drag, once we've merged some new dragging tools in #645.
       final layoutState = (find.byType(SingleColumnDocumentLayout).evaluate().single as StatefulElement).state;
       final layout = layoutState as DocumentLayout;
-      final globalLayoutOrigin = (layoutState.context.findRenderObject() as RenderBox).localToGlobal(Offset.zero);
 
       // Drag from lower-left to upper-right.
       //
@@ -59,8 +53,7 @@ void main() {
       // directions: left-to-right is downstream for a single line, and down-to-up is
       // upstream for multi-node. This test ensures that the single-line direction is
       // honored by the document layout, rather than the more common multi-node calculation.
-      final selection = layout.getDocumentSelectionInRegion(
-          const Offset(150, 60) + globalLayoutOrigin, const Offset(200, 40) + globalLayoutOrigin);
+      final selection = layout.getDocumentSelectionInRegion(const Offset(150, 45), const Offset(200, 35));
       expect(selection, isNotNull);
 
       // Ensure that the document selection is downstream.
@@ -100,5 +93,233 @@ void main() {
         ),
       );
     });
+
+    testWidgetsOnArbitraryDesktop("doesn't select an unselectable component at base (dragging upstream)",
+        (tester) async {
+      final testContext = await _pumpUnselectableComponentTestApp(tester);
+
+      final firstParagraphId = testContext.editContext.editor.document.nodes.first.id;
+
+      // TODO: replace the following direct layout access with a simulated user
+      // drag, once we've merged some new dragging tools in #645.
+      final layoutState = (find.byType(SingleColumnDocumentLayout).evaluate().single as StatefulElement).state;
+      final layout = layoutState as DocumentLayout;
+
+      // Attempt to select from the horizontal rule to the beginning of the first paragraph
+      final selection = layout.getDocumentSelectionInRegion(
+        tester.getBottomRight(find.byType(Divider)),
+        tester.getTopLeft(find.text('First Paragraph', findRichText: true)),
+      );
+
+      // Ensure we don't select the horizontal rule
+      expect(
+        selection,
+        DocumentSelection(
+          base: DocumentPosition(nodeId: firstParagraphId, nodePosition: const TextNodePosition(offset: 15)),
+          extent: DocumentPosition(nodeId: firstParagraphId, nodePosition: const TextNodePosition(offset: 0)),
+        ),
+      );
+    });
+
+    testWidgetsOnArbitraryDesktop("doesn't select an unselectable component at extent (dragging upstream)",
+        (tester) async {
+      final testContext = await _pumpUnselectableComponentTestApp(tester);
+
+      final secondParagraphId = testContext.editContext.editor.document.nodes.last.id;
+
+      // TODO: replace the following direct layout access with a simulated user
+      // drag, once we've merged some new dragging tools in #645.
+      final layoutState = (find.byType(SingleColumnDocumentLayout).evaluate().single as StatefulElement).state;
+      final layout = layoutState as DocumentLayout;
+
+      // Attempt to select from the end of the second paragraph to the horizontal rule
+      final selection = layout.getDocumentSelectionInRegion(
+        tester.getBottomRight(find.text('Second Paragraph', findRichText: true)),
+        tester.getTopLeft(find.byType(Divider)),
+      );
+
+      // Ensure we don't select the horizontal rule
+      expect(
+        selection,
+        DocumentSelection(
+          base: DocumentPosition(nodeId: secondParagraphId, nodePosition: const TextNodePosition(offset: 16)),
+          extent: DocumentPosition(nodeId: secondParagraphId, nodePosition: const TextNodePosition(offset: 0)),
+        ),
+      );
+    });
+
+    testWidgetsOnArbitraryDesktop("doesn't select an unselectable component at base (dragging downstream)",
+        (tester) async {
+      final testContext = await _pumpUnselectableComponentTestApp(tester);
+
+      final secondParagraphId = testContext.editContext.editor.document.nodes.last.id;
+
+      // TODO: replace the following direct layout access with a simulated user
+      // drag, once we've merged some new dragging tools in #645.
+      final layoutState = (find.byType(SingleColumnDocumentLayout).evaluate().single as StatefulElement).state;
+      final layout = layoutState as DocumentLayout;
+
+      // Attempt to select from the horizontal rule to the end of the second paragraph
+      final selection = layout.getDocumentSelectionInRegion(
+        tester.getTopLeft(find.byType(Divider)),
+        tester.getBottomRight(find.text('Second Paragraph', findRichText: true)),
+      );
+
+      // Ensure we don't select the horizontal rule
+      expect(
+        selection,
+        DocumentSelection(
+          base: DocumentPosition(nodeId: secondParagraphId, nodePosition: const TextNodePosition(offset: 0)),
+          extent: DocumentPosition(nodeId: secondParagraphId, nodePosition: const TextNodePosition(offset: 16)),
+        ),
+      );
+    });
+
+    testWidgetsOnArbitraryDesktop("doesn't select an unselectable component at extent (dragging downstream)",
+        (tester) async {
+      final testContext = await _pumpUnselectableComponentTestApp(tester);
+
+      final firstParagraphId = testContext.editContext.editor.document.nodes.first.id;
+
+      // TODO: replace the following direct layout access with a simulated user
+      // drag, once we've merged some new dragging tools in #645.
+      final layoutState = (find.byType(SingleColumnDocumentLayout).evaluate().single as StatefulElement).state;
+      final layout = layoutState as DocumentLayout;
+
+      // Attempt to select from first paragraph to the horizontal rule
+      final selection = layout.getDocumentSelectionInRegion(
+        tester.getTopLeft(find.text('First Paragraph', findRichText: true)),
+        tester.getBottomRight(find.byType(Divider)),
+      );
+
+      // Ensure we don't select the horizontal rule
+      expect(
+        selection,
+        DocumentSelection(
+          base: DocumentPosition(nodeId: firstParagraphId, nodePosition: const TextNodePosition(offset: 0)),
+          extent: DocumentPosition(nodeId: firstParagraphId, nodePosition: const TextNodePosition(offset: 15)),
+        ),
+      );
+    });
+
+    testWidgetsOnArbitraryDesktop("selects paragraphs surrounding an unselectable component (dragging upstream)",
+        (tester) async {
+      final testContext = await _pumpUnselectableComponentTestApp(tester);
+
+      final firstParagraphId = testContext.editContext.editor.document.nodes.first.id;
+      final secondParagraphId = testContext.editContext.editor.document.nodes.last.id;
+
+      // TODO: replace the following direct layout access with a simulated user
+      // drag, once we've merged some new dragging tools in #645.
+      final layoutState = (find.byType(SingleColumnDocumentLayout).evaluate().single as StatefulElement).state;
+      final layout = layoutState as DocumentLayout;
+
+      // Attempt to select from the end of the second paragraph to the beginning of the first paragraph
+      final selection = layout.getDocumentSelectionInRegion(
+        tester.getBottomRight(find.text('Second Paragraph', findRichText: true)),
+        tester.getTopLeft(find.text('First Paragraph', findRichText: true)),
+      );
+
+      // Ensure we select the whole document
+      expect(
+        selection,
+        DocumentSelection(
+          base: DocumentPosition(nodeId: secondParagraphId, nodePosition: const TextNodePosition(offset: 16)),
+          extent: DocumentPosition(nodeId: firstParagraphId, nodePosition: const TextNodePosition(offset: 0)),
+        ),
+      );
+    });
+
+    testWidgetsOnArbitraryDesktop("selects paragraphs surrounding an unselectable component (dragging downstream)",
+        (tester) async {
+      final testContext = await _pumpUnselectableComponentTestApp(tester);
+
+      final firstParagraphId = testContext.editContext.editor.document.nodes.first.id;
+      final secondParagraphId = testContext.editContext.editor.document.nodes.last.id;
+
+      // TODO: replace the following direct layout access with a simulated user
+      // drag, once we've merged some new dragging tools in #645.
+      final layoutState = (find.byType(SingleColumnDocumentLayout).evaluate().single as StatefulElement).state;
+      final layout = layoutState as DocumentLayout;
+
+      // Attempt to select from the beginning of the first paragraph to the end of the second paragraph
+      final selection = layout.getDocumentSelectionInRegion(
+        tester.getTopLeft(find.text('First Paragraph', findRichText: true)),
+        tester.getBottomRight(find.text('Second Paragraph', findRichText: true)),
+      );
+
+      // Ensure we select the whole document
+      expect(
+        selection,
+        DocumentSelection(
+          base: DocumentPosition(nodeId: firstParagraphId, nodePosition: const TextNodePosition(offset: 0)),
+          extent: DocumentPosition(nodeId: secondParagraphId, nodePosition: const TextNodePosition(offset: 16)),
+        ),
+      );
+    });
   });
+}
+
+Future<TestDocumentContext> _pumpUnselectableComponentTestApp(WidgetTester tester) async {
+  return await tester //
+      .createDocument() //
+      .fromMarkdown("""
+First Paragraph
+
+---
+
+Second Paragraph
+""")
+      .withComponentBuilders([
+        const _UnselectableHrComponentBuilder(),
+        ...defaultComponentBuilders,
+      ])
+      .withEditorSize(const Size(300, 300))
+      .pump();
+}
+
+/// SuperEditor [ComponentBuilder] that builds a horizontal rule that is
+/// not selectable.
+class _UnselectableHrComponentBuilder implements ComponentBuilder {
+  const _UnselectableHrComponentBuilder();
+
+  @override
+  SingleColumnLayoutComponentViewModel? createViewModel(Document document, DocumentNode node) {
+    // This builder can work with the standard horizontal rule view model, so
+    // we'll defer to the standard horizontal rule builder.
+    return null;
+  }
+
+  @override
+  Widget? createComponent(
+      SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel componentViewModel) {
+    if (componentViewModel is! HorizontalRuleComponentViewModel) {
+      return null;
+    }
+
+    return _UnselectableHorizontalRuleComponent(
+      componentKey: componentContext.componentKey,
+    );
+  }
+}
+
+class _UnselectableHorizontalRuleComponent extends StatelessWidget {
+  const _UnselectableHorizontalRuleComponent({
+    Key? key,
+    required this.componentKey,
+  }) : super(key: key);
+
+  final GlobalKey componentKey;
+
+  @override
+  Widget build(BuildContext context) {
+    return BoxComponent(
+      key: componentKey,
+      isVisuallySelectable: false,
+      child: const Divider(
+        color: Color(0xFF000000),
+        thickness: 1.0,
+      ),
+    );
+  }
 }

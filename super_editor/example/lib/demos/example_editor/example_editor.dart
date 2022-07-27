@@ -132,6 +132,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
       _textFormatBarOverlayEntry ??= OverlayEntry(builder: (context) {
         return EditorToolbar(
           anchor: _textSelectionAnchor,
+          editorFocusNode: _editorFocusNode,
           editor: _docEditor,
           composer: _composer,
           closeToolbar: _hideEditorToolbar,
@@ -335,6 +336,16 @@ class _ExampleEditorState extends State<ExampleEditor> {
         focusNode: _editorFocusNode,
         scrollController: _scrollController,
         documentLayoutKey: _docLayoutKey,
+        documentOverlayBuilders: [
+          DefaultCaretOverlayBuilder(
+            CaretStyle().copyWith(color: _isLight ? Colors.black : Colors.redAccent),
+          ),
+        ],
+        selectionStyle: _isLight
+            ? defaultSelectionStyle
+            : SelectionStyles(
+                selectionColor: Colors.red.withOpacity(0.3),
+              ),
         stylesheet: defaultStylesheet.copyWith(
           addRulesAfter: [
             if (!_isLight) ..._darkModeStyles,

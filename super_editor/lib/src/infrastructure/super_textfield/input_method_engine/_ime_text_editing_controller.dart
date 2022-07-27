@@ -408,6 +408,9 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
   }
 
   @override
+  void insertNewline() => _realController.insertNewline();
+
+  @override
   void insertAtCaret({required String text, TextRange? newComposingRegion}) {
     _realController.insertAtCaret(
       text: text,

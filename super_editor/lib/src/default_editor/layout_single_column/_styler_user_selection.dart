@@ -34,7 +34,16 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
 
   final Document _document;
   final DocumentComposer _composer;
-  final SelectionStyles _selectionStyles;
+
+  SelectionStyles _selectionStyles;
+  set selectionStyles(SelectionStyles selectionStyles) {
+    if (selectionStyles == _selectionStyles) {
+      return;
+    }
+
+    _selectionStyles = selectionStyles;
+    markDirty();
+  }
 
   bool _shouldDocumentShowCaret = false;
   set shouldDocumentShowCaret(bool newValue) {
@@ -113,8 +122,6 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
         viewModel
           ..selection = textSelection
           ..selectionColor = _selectionStyles.selectionColor
-          ..caret = showCaret ? textSelection?.extent : null
-          ..caretColor = _selectionStyles.caretColor
           ..highlightWhenEmpty = highlightWhenEmpty;
       }
     }
@@ -123,18 +130,14 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
 
       viewModel
         ..selection = selection
-        ..selectionColor = _selectionStyles.selectionColor
-        ..caret = _shouldDocumentShowCaret && selection != null && selection.isCollapsed ? selection.extent : null
-        ..caretColor = _selectionStyles.caretColor;
+        ..selectionColor = _selectionStyles.selectionColor;
     }
     if (viewModel is HorizontalRuleComponentViewModel) {
       final selection = nodeSelection == null ? null : nodeSelection.nodeSelection as UpstreamDownstreamNodeSelection;
 
       viewModel
         ..selection = selection
-        ..selectionColor = _selectionStyles.selectionColor
-        ..caret = _shouldDocumentShowCaret && selection != null && selection.isCollapsed ? selection.extent : null
-        ..caretColor = _selectionStyles.caretColor;
+        ..selectionColor = _selectionStyles.selectionColor;
     }
 
     return viewModel;

@@ -73,6 +73,13 @@ class TestDocumentSelector {
       twoParagraphEmptyDoc(),
     );
   }
+
+  TestDocumentConfigurator withLongTextContent() {
+    return TestDocumentConfigurator._(
+      _widgetTester,
+      longTextDoc(),
+    );
+  }
 }
 
 /// Builder that configures and pumps a [SuperEditor] widget.
@@ -88,8 +95,12 @@ class TestDocumentConfigurator {
   DocumentInputSource? _inputSource;
   ThemeData? _appTheme;
   Stylesheet? _stylesheet;
+  final _addedComponents = <ComponentBuilder>[];
   bool _autoFocus = false;
   ui.Size? _editorSize;
+  List<ComponentBuilder>? _componentBuilders;
+  WidgetTreeBuilder? _widgetTreeBuilder;
+  ScrollController? _scrollController;
 
   /// Configures the [SuperEditor] for standard desktop interactions,
   /// e.g., mouse and keyboard input.
@@ -132,6 +143,24 @@ class TestDocumentConfigurator {
   /// Configures the [SuperEditor] to constrain its maxHeight and maxWidth using the given [size].
   TestDocumentConfigurator withEditorSize(ui.Size? size) {
     _editorSize = size;
+    return this;
+  }
+
+  /// Configures the [SuperEditor] to use only the given [componentBuilders]
+  TestDocumentConfigurator withComponentBuilders(List<ComponentBuilder>? componentBuilders) {
+    _componentBuilders = componentBuilders;
+    return this;
+  }
+
+  /// Configures the [SuperEditor] to use a custom widget tree above [SuperEditor].
+  TestDocumentConfigurator withCustomWidgetTreeBuilder(WidgetTreeBuilder? builder) {
+    _widgetTreeBuilder = builder;
+    return this;
+  }
+
+  /// Configures the [SuperEditor] to use the given [scrollController]
+  TestDocumentConfigurator withScrollController(ScrollController? scrollController) {
+    _scrollController = scrollController;
     return this;
   }
 
@@ -179,6 +208,13 @@ class TestDocumentConfigurator {
     return this;
   }
 
+  /// Adds the given component builders to the list of component builders that are
+  /// used to render the document layout in the pumped [SuperEditor].
+  TestDocumentConfigurator withAddedComponents(List<ComponentBuilder> newComponents) {
+    _addedComponents.addAll(newComponents);
+    return this;
+  }
+
   /// Configures the [SuperEditor] to auto-focus when first pumped, or not.
   TestDocumentConfigurator autoFocus(bool autoFocus) {
     _autoFocus = autoFocus;
@@ -220,24 +256,26 @@ class TestDocumentConfigurator {
       testDocumentContext = _existingContext!;
     }
 
-    await _widgetTester.pumpWidget(
-      MaterialApp(
-        theme: _appTheme,
-        home: Scaffold(
-          body: _buildContent(
-            SuperEditor(
-              documentLayoutKey: testDocumentContext.layoutKey,
-              editor: testDocumentContext.editContext.editor,
-              composer: testDocumentContext.editContext.composer,
-              focusNode: testDocumentContext.focusNode,
-              inputSource: _inputSource ?? _defaultInputSource,
-              gestureMode: _gestureMode ?? _defaultGestureMode,
-              stylesheet: _stylesheet,
-              autofocus: _autoFocus,
-            ),
-          ),
-        ),
+    final superEditor = _buildContent(
+      SuperEditor(
+        documentLayoutKey: testDocumentContext.layoutKey,
+        editor: testDocumentContext.editContext.editor,
+        composer: testDocumentContext.editContext.composer,
+        focusNode: testDocumentContext.focusNode,
+        inputSource: _inputSource ?? _defaultInputSource,
+        gestureMode: _gestureMode ?? _defaultGestureMode,
+        stylesheet: _stylesheet,
+        componentBuilders: [
+          ..._addedComponents,
+          ...(_componentBuilders ?? defaultComponentBuilders),
+        ],
+        autofocus: _autoFocus,
+        scrollController: _scrollController,
       ),
+    );
+
+    await _widgetTester.pumpWidget(
+      _buildWidgetTree(superEditor),
     );
 
     return testDocumentContext;
@@ -255,7 +293,22 @@ class TestDocumentConfigurator {
     }
     return superEditor;
   }
+
+  Widget _buildWidgetTree(Widget superEditor) {
+    if (_widgetTreeBuilder != null) {
+      return _widgetTreeBuilder!(superEditor);
+    }
+    return MaterialApp(
+      theme: _appTheme,
+      home: Scaffold(
+        body: superEditor,
+      ),
+    );
+  }
 }
+
+/// Must return a widget tree containing the given [superEditor]
+typedef WidgetTreeBuilder = Widget Function(Widget superEditor);
 
 class TestDocumentContext {
   const TestDocumentContext._({

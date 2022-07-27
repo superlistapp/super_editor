@@ -179,7 +179,7 @@ class SuperTextFieldState extends State<SuperTextField> {
   @visibleForTesting
   ProseTextLayout get textLayout => (_platformFieldKey.currentState as ProseTextBlock).textLayout;
 
-  bool get _isMultiline => (widget.minLines ?? 1) != 1 || (widget.maxLines ?? 1) != 1;
+  bool get _isMultiline => (widget.minLines ?? 1) != 1 || widget.maxLines != 1;
 
   SuperTextFieldPlatformConfiguration get _configuration {
     if (widget.configuration != null) {

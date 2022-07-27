@@ -97,7 +97,6 @@ class TaskComponentBuilder implements ComponentBuilder {
       text: node.text,
       textStyleBuilder: noStyleBuilder,
       selectionColor: const Color(0x00000000),
-      caretColor: const Color(0x00000000),
     );
   }
 
@@ -134,8 +133,6 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
     this.textAlignment = TextAlign.left,
     this.selection,
     required this.selectionColor,
-    required this.caretColor,
-    this.caret,
     this.highlightWhenEmpty = false,
   }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
 
@@ -154,10 +151,6 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
   @override
   Color selectionColor;
   @override
-  TextPosition? caret;
-  @override
-  Color caretColor;
-  @override
   bool highlightWhenEmpty;
 
   @override
@@ -173,8 +166,6 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
       textDirection: textDirection,
       selection: selection,
       selectionColor: selectionColor,
-      caret: caret,
-      caretColor: caretColor,
       highlightWhenEmpty: highlightWhenEmpty,
     );
   }
@@ -193,8 +184,6 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
           textAlignment == other.textAlignment &&
           selection == other.selection &&
           selectionColor == other.selectionColor &&
-          caret == other.caret &&
-          caretColor == other.caretColor &&
           highlightWhenEmpty == other.highlightWhenEmpty;
 
   @override
@@ -208,8 +197,6 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
       textAlignment.hashCode ^
       selection.hashCode ^
       selectionColor.hashCode ^
-      caret.hashCode ^
-      caretColor.hashCode ^
       highlightWhenEmpty.hashCode;
 }
 
@@ -264,8 +251,6 @@ class TaskComponent extends StatelessWidget {
             },
             textSelection: viewModel.selection,
             selectionColor: viewModel.selectionColor,
-            showCaret: viewModel.caret != null,
-            caretColor: viewModel.caretColor,
             highlightWhenEmpty: viewModel.highlightWhenEmpty,
             showDebugPaint: showDebugPaint,
           ),

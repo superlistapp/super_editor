@@ -68,7 +68,6 @@ class ParagraphComponentBuilder implements ComponentBuilder {
       textDirection: textDirection,
       textAlignment: textAlign,
       selectionColor: const Color(0x00000000),
-      caretColor: const Color(0x00000000),
     );
   }
 
@@ -80,10 +79,6 @@ class ParagraphComponentBuilder implements ComponentBuilder {
     }
 
     editorLayoutLog.fine("Building paragraph component for node: ${componentViewModel.nodeId}");
-
-    if (componentViewModel.caret != null) {
-      editorLayoutLog.finer(' - painting caret in paragraph');
-    }
 
     if (componentViewModel.selection != null) {
       editorLayoutLog.finer(' - painting a text selection:');
@@ -106,8 +101,6 @@ class ParagraphComponentBuilder implements ComponentBuilder {
       textDirection: componentViewModel.textDirection,
       textSelection: componentViewModel.selection,
       selectionColor: componentViewModel.selectionColor,
-      showCaret: componentViewModel.caret != null,
-      caretColor: componentViewModel.caretColor,
       highlightWhenEmpty: componentViewModel.highlightWhenEmpty,
     );
   }
@@ -125,8 +118,6 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
     this.textAlignment = TextAlign.left,
     this.selection,
     required this.selectionColor,
-    this.caret,
-    required this.caretColor,
     this.highlightWhenEmpty = false,
   }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
 
@@ -143,10 +134,6 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
   @override
   Color selectionColor;
   @override
-  TextPosition? caret;
-  @override
-  Color caretColor;
-  @override
   bool highlightWhenEmpty;
 
   @override
@@ -162,8 +149,6 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
       textAlignment: textAlignment,
       selection: selection,
       selectionColor: selectionColor,
-      caret: caret,
-      caretColor: caretColor,
       highlightWhenEmpty: highlightWhenEmpty,
     );
   }
@@ -182,8 +167,6 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
           textAlignment == other.textAlignment &&
           selection == other.selection &&
           selectionColor == other.selectionColor &&
-          caret == other.caret &&
-          caretColor == other.caretColor &&
           highlightWhenEmpty == other.highlightWhenEmpty;
 
   @override
@@ -197,8 +180,6 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
       textAlignment.hashCode ^
       selection.hashCode ^
       selectionColor.hashCode ^
-      caret.hashCode ^
-      caretColor.hashCode ^
       highlightWhenEmpty.hashCode;
 }
 

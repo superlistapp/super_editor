@@ -1,7 +1,11 @@
+import 'dart:math';
+
+import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
+import 'package:super_editor/src/infrastructure/focus.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/android/_editing_controls.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/android/_user_interaction.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/hint_text.dart';
@@ -10,6 +14,7 @@ import 'package:super_editor/src/infrastructure/super_textfield/input_method_eng
 import 'package:super_text_layout/super_text_layout.dart';
 
 import '../../_logging.dart';
+import '../metrics.dart';
 import '../styles.dart';
 import 'android_textfield.dart';
 
@@ -122,9 +127,10 @@ class SuperAndroidTextField extends StatefulWidget {
   State createState() => SuperAndroidTextFieldState();
 }
 
-class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
-    with SingleTickerProviderStateMixin
-    implements ProseTextBlock {
+class SuperAndroidTextFieldState extends State<SuperAndroidTextField> with TickerProviderStateMixin, WidgetsBindingObserver implements ProseTextBlock {
+  static const Duration _autoScrollAnimationDuration = Duration(milliseconds: 100);
+  static const Curve _autoScrollAnimationCurve = Curves.fastOutSlowIn;
+
   final _textFieldKey = GlobalKey();
   final _textFieldLayerLink = LayerLink();
   final _textContentLayerLink = LayerLink();
@@ -163,6 +169,8 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
       textController: _textEditingController,
       magnifierFocalPoint: _magnifierLayerLink,
     );
+
+    WidgetsBinding.instance.addObserver(this);
   }
 
   @override
@@ -171,12 +179,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
 
     if (widget.focusNode != oldWidget.focusNode) {
       _focusNode.removeListener(_onFocusChange);
-      if (widget.focusNode != null) {
-        _focusNode = widget.focusNode!;
-      } else {
-        _focusNode = FocusNode();
-      }
-      _focusNode.addListener(_onFocusChange);
+      _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
     }
 
     if (widget.textInputAction != oldWidget.textInputAction && _textEditingController.isAttachedToIme) {
@@ -251,13 +254,26 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
       ..removeListener(_onTextScrollChange)
       ..dispose();
 
+    WidgetsBinding.instance.removeObserver(this);
+
     super.dispose();
+  }
+
+  @override
+  void didChangeMetrics() {
+    // The available screen dimensions may have changed, e.g., due to keyboard
+    // appearance/disappearance.
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      if (mounted && _focusNode.hasFocus) {
+        _autoScrollToKeepTextFieldVisible();
+      }
+    });
   }
 
   @override
   ProseTextLayout get textLayout => _textContentKey.currentState!.textLayout;
 
-  bool get _isMultiline => (widget.minLines ?? 1) != 1 || (widget.maxLines ?? 1) != 1;
+  bool get _isMultiline => (widget.minLines ?? 1) != 1 || widget.maxLines != 1;
 
   void _onFocusChange() {
     if (_focusNode.hasFocus) {
@@ -273,6 +289,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
             textInputType: _isMultiline ? TextInputType.multiline : TextInputType.text,
           );
 
+          _autoScrollToKeepTextFieldVisible();
           _showEditingControlsOverlay();
         });
       }
@@ -290,6 +307,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
     if (_textEditingController.selection.isCollapsed) {
       _editingOverlayController.hideToolbar();
     }
+    _textScrollController.ensureExtentIsVisible();
   }
 
   void _onTextScrollChange() {
@@ -352,11 +370,88 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
     }
   }
 
+  /// Handles key presses
+  ///
+  /// Some third party keyboards report backspace as a key press
+  /// rather than a deletion delta, so we need to handle them manually
+  KeyEventResult _onKeyPressed(FocusNode focusNode, RawKeyEvent keyEvent) {
+    _log.finer('_onKeyPressed - keyEvent: ${keyEvent.character}');
+    if (keyEvent is! RawKeyDownEvent) {
+      _log.finer('_onKeyPressed - not a "down" event. Ignoring.');
+      return KeyEventResult.ignored;
+    }
+    if (keyEvent.logicalKey != LogicalKeyboardKey.backspace) {
+      return KeyEventResult.ignored;
+    }
+
+    if (_textEditingController.selection.isCollapsed) {
+      _textEditingController.deletePreviousCharacter();
+    } else {
+      _textEditingController.deleteSelection();
+    }
+
+    return KeyEventResult.handled;
+  }
+
+  /// Scrolls the ancestor [Scrollable], if any, so [SuperTextField]
+  /// is visible on the viewport when it's focused
+  void _autoScrollToKeepTextFieldVisible() {
+    // If we are not inside a [Scrollable] we don't autoscroll
+    final ancestorScrollable = _findAncestorScrollable(context);
+    if (ancestorScrollable == null) {
+      return;
+    }
+
+    // Compute the text field offset that should be visible to the user
+    final textFieldFocalPoint = widget.maxLines == null && _textEditingController.selection.isValid
+        ? _textContentKey.currentState!.textLayout.getOffsetAtPosition(
+            TextPosition(offset: _textEditingController.selection.extentOffset),
+          )
+        : Offset.zero;
+
+    final lineHeight = _textContentKey.currentState!.textLayout.getLineHeightAtPosition(
+      TextPosition(offset: _textEditingController.selection.extentOffset),
+    );
+    final fieldBox = context.findRenderObject() as RenderBox;
+
+    // The area of the text field that should be revealed.
+    // We add a small margin to leave some space between the text field and the keyboard.    
+    final textFieldFocalRect = Rect.fromLTWH(
+      textFieldFocalPoint.dx,
+      textFieldFocalPoint.dy,
+      fieldBox.size.width,
+      lineHeight + gapBetweenCaretAndKeyboard,
+    );
+
+    fieldBox.showOnScreen(
+      rect: textFieldFocalRect,
+      duration: _autoScrollAnimationDuration,
+      curve: _autoScrollAnimationCurve,
+    );
+  }
+
+  ScrollableState? _findAncestorScrollable(BuildContext context) {
+    final ancestorScrollable = Scrollable.of(context);
+    if (ancestorScrollable == null) {
+      return null;
+    }
+
+    final direction = ancestorScrollable.axisDirection;
+    // If the direction is horizontal, then we are inside a widget like a TabBar 
+    // or a horizontal ListView, so we can't use the ancestor scrollable 
+    if (direction == AxisDirection.left || direction == AxisDirection.right) {
+      return null;
+    }
+
+    return ancestorScrollable;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Focus(
+    return NonReparentingFocus(
       key: _textFieldKey,
       focusNode: _focusNode,
+      onKey: _onKeyPressed,
       child: CompositedTransformTarget(
         link: _textFieldLayerLink,
         child: AndroidTextFieldTouchInteractor(

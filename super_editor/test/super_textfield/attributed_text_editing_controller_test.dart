@@ -1,15 +1,133 @@
+import 'dart:ui';
+
 import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/super_textfield.dart';
+import 'package:super_text_layout/super_text_layout.dart';
 
 void main() {
-  // TODO: handle selection changes.
+  group("AttributedTextEditingController", () {
+    group("word jumping", () {
+      test("does nothing at beginning of text when collapsed", () {
+        final controller = AttributedTextEditingController(
+          text: AttributedText(
+            text: 'one two three',
+          ),
+        )..selection = const TextSelection.collapsed(offset: 0);
 
-  group('AttributedTextEditingController', () {
-    group('user', () {
-      test('types hello **world** into empty field', () {
+        // Move upstream by word.
+        controller.moveCaretHorizontally(
+          textLayout: _NoOpTextLayout(),
+          expandSelection: false,
+          moveLeft: true,
+          movementModifier: MovementModifier.word,
+        );
+
+        // Ensure that the selection didn't change.
+        expect(controller.selection, const TextSelection.collapsed(offset: 0));
+      });
+
+      test("does nothing at beginning of text when expanded", () {
+        final controller = AttributedTextEditingController(
+          text: AttributedText(
+            text: 'one two three',
+          ),
+        )..selection = const TextSelection(extentOffset: 0, baseOffset: 3);
+
+        // Move upstream by word.
+        controller.moveCaretHorizontally(
+          textLayout: _NoOpTextLayout(),
+          expandSelection: true,
+          moveLeft: true,
+          movementModifier: MovementModifier.word,
+        );
+
+        // Ensure that the selection didn't change.
+        expect(controller.selection, const TextSelection(extentOffset: 0, baseOffset: 3));
+      });
+
+      test("does nothing at end of text when collapsed", () {
+        final controller = AttributedTextEditingController(
+          text: AttributedText(
+            text: 'one two three',
+          ),
+        )..selection = const TextSelection.collapsed(offset: 13); // at the end of the text.
+
+        // Move downstream by word.
+        controller.moveCaretHorizontally(
+          textLayout: _NoOpTextLayout(),
+          expandSelection: false,
+          moveLeft: false,
+          movementModifier: MovementModifier.word,
+        );
+
+        // Ensure that the selection didn't change.
+        expect(controller.selection, const TextSelection.collapsed(offset: 13));
+      });
+
+      test("does nothing at end of text when expanded", () {
+        final controller = AttributedTextEditingController(
+          text: AttributedText(
+            text: 'one two three',
+          ),
+        )..selection = const TextSelection(extentOffset: 13, baseOffset: 8);
+
+        // Move upstream by word.
+        controller.moveCaretHorizontally(
+          textLayout: _NoOpTextLayout(),
+          expandSelection: true,
+          moveLeft: false,
+          movementModifier: MovementModifier.word,
+        );
+
+        // Ensure that the selection didn't change.
+        expect(controller.selection, const TextSelection(extentOffset: 13, baseOffset: 8));
+      });
+
+      test("jumps word upstream", () {
+        final controller = AttributedTextEditingController(
+          text: AttributedText(
+            text: 'one two three',
+          ),
+        )..selection = const TextSelection.collapsed(offset: 7);
+
+        // Move upstream by word.
+        controller.moveCaretHorizontally(
+          textLayout: _NoOpTextLayout(),
+          expandSelection: false,
+          moveLeft: true,
+          movementModifier: MovementModifier.word,
+        );
+
+        // Ensure that the selection moved upstream by one word.
+        expect(controller.selection, const TextSelection.collapsed(offset: 4));
+      });
+
+      test("jumps word downstream", () {
+        final controller = AttributedTextEditingController(
+          text: AttributedText(
+            text: 'one two three',
+          ),
+        )..selection = const TextSelection.collapsed(offset: 4);
+
+        // Move downstream by word.
+        controller.moveCaretHorizontally(
+          textLayout: _NoOpTextLayout(),
+          expandSelection: false,
+          moveLeft: false,
+          movementModifier: MovementModifier.word,
+        );
+
+        // Ensure that the selection moved downstream by one word.
+        expect(controller.selection, const TextSelection.collapsed(offset: 7));
+      });
+    });
+
+    group("user", () {
+      test("types hello **world** into empty field", () {
         final controller = AttributedTextEditingController(
           selection: const TextSelection.collapsed(offset: 0),
         )
@@ -711,16 +829,13 @@ void main() {
           );
           expect(controller.composingAttributions.length, 3);
 
-          controller.removeComposingAttributions(
-              {boldAttribution, underlineAttribution});
-              
+          controller.removeComposingAttributions({boldAttribution, underlineAttribution});
+
           expect(controller.composingAttributions.length, 1);
-          expect(controller.composingAttributions.contains(italicsAttribution), true);          
+          expect(controller.composingAttributions.contains(italicsAttribution), true);
         });
-       
-        test(
-            "does nothing when it doesn't have the given composing attributions",
-            () {
+
+        test("does nothing when it doesn't have the given composing attributions", () {
           final controller = AttributedTextEditingController(
             text: AttributedText(text: 'my text'),
           );
@@ -738,4 +853,109 @@ void main() {
       });
     });
   });
+}
+
+/// A [ProseTextLayout] that throws an error if anything is called.
+///
+/// A [_NoOpTextLayout] can be used when a [ProseTextLayout] is needed by
+/// the interface, the specific operation doesn't expect to call anything
+/// on the [ProseTextLayout].
+class _NoOpTextLayout implements ProseTextLayout {
+  @override
+  double get estimatedLineHeight => throw UnimplementedError();
+
+  @override
+  TextSelection expandSelection(TextPosition startingPosition, TextExpansion expansion, TextAffinity affinity) {
+    throw UnimplementedError();
+  }
+
+  @override
+  List<TextBox> getBoxesForSelection(TextSelection selection) {
+    throw UnimplementedError();
+  }
+
+  @override
+  TextBox? getCharacterBox(TextPosition position) {
+    throw UnimplementedError();
+  }
+
+  @override
+  double? getHeightForCaret(TextPosition position) {
+    throw UnimplementedError();
+  }
+
+  @override
+  int getLineCount() {
+    throw UnimplementedError();
+  }
+
+  @override
+  double getLineHeightAtPosition(TextPosition position) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Offset getOffsetAtPosition(TextPosition position) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Offset getOffsetForCaret(TextPosition position) {
+    throw UnimplementedError();
+  }
+
+  @override
+  TextPosition getPositionAtEndOfLine(TextPosition textPosition) {
+    throw UnimplementedError();
+  }
+
+  @override
+  TextPosition? getPositionAtOffset(Offset localOffset) {
+    throw UnimplementedError();
+  }
+
+  @override
+  TextPosition getPositionAtStartOfLine(TextPosition textPosition) {
+    throw UnimplementedError();
+  }
+
+  @override
+  TextPosition getPositionInFirstLineAtX(double x) {
+    throw UnimplementedError();
+  }
+
+  @override
+  TextPosition getPositionInLastLineAtX(double x) {
+    throw UnimplementedError();
+  }
+
+  @override
+  TextPosition getPositionNearestToOffset(Offset localOffset) {
+    throw UnimplementedError();
+  }
+
+  @override
+  TextPosition? getPositionOneLineDown(TextPosition textPosition) {
+    throw UnimplementedError();
+  }
+
+  @override
+  TextPosition? getPositionOneLineUp(TextPosition textPosition) {
+    throw UnimplementedError();
+  }
+
+  @override
+  TextSelection getSelectionInRect(Offset baseOffset, Offset extentOffset) {
+    throw UnimplementedError();
+  }
+
+  @override
+  bool isTextAtOffset(Offset localOffset) {
+    throw UnimplementedError();
+  }
+
+  @override
+  TextSelection getWordSelectionAt(TextPosition position) {
+    throw UnimplementedError();
+  }
 }

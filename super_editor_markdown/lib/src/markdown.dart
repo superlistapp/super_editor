@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/widgets.dart';
 import 'package:markdown/markdown.dart' as md;
 import 'package:super_editor/super_editor.dart';
 
@@ -411,7 +412,78 @@ class _InlineMarkdownToDocument implements md.NodeVisitor {
   }
 }
 
-extension on AttributedText {
+extension Markdown on AttributedText {
+  String toMarkdown() {
+    final serializer = AttributedTextMarkdownSerializer();
+    return serializer.serialize(this);
+  }
+}
+
+/// Serializes an [AttributedText] into markdown format
+class AttributedTextMarkdownSerializer extends AttributionVisitor {
+  late String _fullText;
+  late StringBuffer _buffer;
+  late int _bufferCursor;
+
+  String serialize(AttributedText attributedText) {
+    _fullText = attributedText.text;
+    _buffer = StringBuffer();
+    _bufferCursor = 0;
+    attributedText.visitAttributions(this);
+    return _buffer.toString();
+  }
+
+  @override
+  void visitAttributions(
+    AttributedText fullText,
+    int index,
+    Set<Attribution> startingAttributions,
+    Set<Attribution> endingAttributions,
+  ) {
+    // Write out the text between the end of the last markers, and these new markers.
+    _buffer.write(
+      fullText.text.substring(_bufferCursor, index),
+    );
+
+    // Add start markers.
+    if (startingAttributions.isNotEmpty) {
+      final markdownStyles = _sortAndSerializeAttributions(startingAttributions, AttributionVisitEvent.start);
+      // Links are different from the plain styles since they are both not NamedAttributions (and therefore
+      // can't be checked using equality comparison) and asymmetrical in markdown.
+      final linkMarker = _encodeLinkMarker(startingAttributions, AttributionVisitEvent.start);
+
+      _buffer
+        ..write(linkMarker)
+        ..write(markdownStyles);
+    }
+
+    // Write out the character at this index.
+    _buffer.write(_fullText[index]);
+    _bufferCursor = index + 1;
+
+    // Add end markers.
+    if (endingAttributions.isNotEmpty) {
+      final markdownStyles = _sortAndSerializeAttributions(endingAttributions, AttributionVisitEvent.end);
+      // Links are different from the plain styles since they are both not NamedAttributions (and therefore
+      // can't be checked using equality comparison) and asymmetrical in markdown.
+      final linkMarker = _encodeLinkMarker(endingAttributions, AttributionVisitEvent.end);
+
+      // +1 on end index because this visitor has inclusive indices
+      // whereas substring() expects an exclusive ending index.
+      _buffer
+        ..write(markdownStyles)
+        ..write(linkMarker);
+    }
+  }
+
+  @override
+  void onVisitEnd() {
+    // When the last span has no attributions, we still have text that wasn't added to the buffer yet.
+    if (_bufferCursor <= _fullText.length - 1) {
+      _buffer.write(_fullText.substring(_bufferCursor));
+    }
+  }
+
   /// Serializes style attributions into markdown syntax in a repeatable
   /// order such that opening and closing styles match each other on
   /// the opening and closing ends of a span.
@@ -458,36 +530,5 @@ extension on AttributedText {
       }
     }
     return "";
-  }
-
-  String toMarkdown() {
-    final buffer = StringBuffer();
-    int spanStart = 0;
-
-    visitAttributions((fullText, index, attributions, event) {
-      final markdownStyles = _sortAndSerializeAttributions(attributions, event);
-      // Links are different from the plain styles since they are both not NamedAttributions (and therefore
-      // can't be checked using equality comparison) and asymmetrical in markdown.
-      final linkMarker = _encodeLinkMarker(attributions, event);
-
-      switch (event) {
-        case AttributionVisitEvent.start:
-          spanStart = index;
-          buffer
-            ..write(linkMarker)
-            ..write(markdownStyles);
-          break;
-        case AttributionVisitEvent.end:
-          // +1 on end index because this visitor has inclusive indices
-          // whereas substring() expects an exclusive ending index.
-          buffer
-            ..write(fullText.text.substring(spanStart, index + 1))
-            ..write(markdownStyles)
-            ..write(linkMarker);
-          break;
-      }
-    });
-
-    return buffer.toString();
   }
 }

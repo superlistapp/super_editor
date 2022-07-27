@@ -13,6 +13,10 @@ void initAllLogs(logging.Level level) {
 }
 
 void initLoggers(logging.Level level, Set<logging.Logger> loggers) {
+  if (level == logging.Level.OFF) {
+    return;
+  }
+  
   logging.hierarchicalLoggingEnabled = true;
 
   for (final logger in loggers) {

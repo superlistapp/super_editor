@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
+import 'package:super_editor/src/infrastructure/focus.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/hint_text.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/text_scrollview.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/input_method_engine/_ime_text_editing_controller.dart';
@@ -11,6 +12,7 @@ import 'package:super_editor/src/infrastructure/super_textfield/ios/_editing_con
 import 'package:super_text_layout/super_text_layout.dart';
 
 import '../../platforms/ios/toolbar.dart';
+import '../metrics.dart';
 import '../styles.dart';
 import '_floating_cursor.dart';
 import '_user_interaction.dart';
@@ -126,9 +128,10 @@ class SuperIOSTextField extends StatefulWidget {
   State createState() => SuperIOSTextFieldState();
 }
 
-class SuperIOSTextFieldState extends State<SuperIOSTextField>
-    with SingleTickerProviderStateMixin
-    implements ProseTextBlock {
+class SuperIOSTextFieldState extends State<SuperIOSTextField> with TickerProviderStateMixin, WidgetsBindingObserver implements ProseTextBlock {
+  static const Duration _autoScrollAnimationDuration = Duration(milliseconds: 100);
+  static const Curve _autoScrollAnimationCurve = Curves.fastOutSlowIn;
+
   final _textFieldKey = GlobalKey();
   final _textFieldLayerLink = LayerLink();
   final _textContentLayerLink = LayerLink();
@@ -176,6 +179,8 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
       textController: _textEditingController,
       magnifierFocalPoint: _magnifierLayerLink,
     );
+
+    WidgetsBinding.instance.addObserver(this);
   }
 
   @override
@@ -264,13 +269,26 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
       ..removeListener(_onTextScrollChange)
       ..dispose();
 
+    WidgetsBinding.instance.removeObserver(this);
+
     super.dispose();
+  }
+
+  @override
+  void didChangeMetrics() {
+    // The available screen dimensions may have changed, e.g., due to keyboard
+    // appearance/disappearance.
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      if (mounted && _focusNode.hasFocus) {
+        _autoScrollToKeepTextFieldVisible();
+      }
+    });
   }
 
   @override
   ProseTextLayout get textLayout => _textContentKey.currentState!.textLayout;
 
-  bool get _isMultiline => (widget.minLines ?? 1) != 1 || (widget.maxLines ?? 1) != 1;
+  bool get _isMultiline => (widget.minLines ?? 1) != 1 || widget.maxLines != 1;
 
   void _onFocusChange() {
     if (_focusNode.hasFocus) {
@@ -286,6 +304,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
             textInputType: _isMultiline ? TextInputType.multiline : TextInputType.text,
           );
 
+          _autoScrollToKeepTextFieldVisible();
           _showHandles();
         });
       }
@@ -303,6 +322,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
     if (_textEditingController.selection.isCollapsed) {
       _editingOverlayController.hideToolbar();
     }
+    _textScrollController.ensureExtentIsVisible();
   }
 
   void _onTextScrollChange() {
@@ -369,9 +389,62 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
     }
   }
 
+  /// Scrolls the ancestor [Scrollable], if any, so [SuperTextField]
+  /// is visible on the viewport when it's focused
+  void _autoScrollToKeepTextFieldVisible() {
+    // If we are not inside a [Scrollable] we don't autoscroll
+    final ancestorScrollable = _findAncestorScrollable(context);
+    if (ancestorScrollable == null) {
+      return;
+    }
+
+    // Compute the text field offset that should be visible to the user
+    final textFieldFocalPoint = widget.maxLines == null && _textEditingController.selection.isValid
+        ? _textContentKey.currentState!.textLayout.getOffsetAtPosition(
+            TextPosition(offset: _textEditingController.selection.extentOffset),
+          )
+        : Offset.zero;
+
+    final lineHeight = _textContentKey.currentState!.textLayout.getLineHeightAtPosition(
+      TextPosition(offset: _textEditingController.selection.extentOffset),
+    );
+    final fieldBox = context.findRenderObject() as RenderBox;
+
+    // The area of the text field that should be revealed.
+    // We add a small margin to leave some space between the text field and the keyboard.    
+    final textFieldFocalRect = Rect.fromLTWH(
+      textFieldFocalPoint.dx,
+      textFieldFocalPoint.dy,
+      fieldBox.size.width,
+      lineHeight + gapBetweenCaretAndKeyboard,
+    );
+
+    fieldBox.showOnScreen(
+      rect: textFieldFocalRect,
+      duration: _autoScrollAnimationDuration,
+      curve: _autoScrollAnimationCurve,
+    );
+  }
+
+  ScrollableState? _findAncestorScrollable(BuildContext context) {
+    final ancestorScrollable = Scrollable.of(context);
+    if (ancestorScrollable == null) {
+      return null;
+    }
+
+    final direction = ancestorScrollable.axisDirection;
+    // If the direction is horizontal, then we are inside a widget like a TabBar 
+    // or a horizontal ListView, so we can't use the ancestor scrollable 
+    if (direction == AxisDirection.left || direction == AxisDirection.right) {
+      return null;
+    }
+
+    return ancestorScrollable;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Focus(
+    return NonReparentingFocus(
       key: _textFieldKey,
       focusNode: _focusNode,
       child: CompositedTransformTarget(
