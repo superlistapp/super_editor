@@ -18,6 +18,7 @@ import 'package:super_text_layout/super_text_layout.dart';
 
 import '../../keyboard.dart';
 import '../../multi_tap_gesture.dart';
+import '../infrastructure/fill_width_if_constrained.dart';
 import '../styles.dart';
 
 final _log = textFieldLog;
@@ -174,10 +175,6 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
 
   FocusNode get focusNode => _focusNode;
 
-  bool get _isMultiline => (widget.minLines ?? 1) != 1 || widget.maxLines != 1;
-
-  bool get _isBounded => widget.maxLines != null;
-
   void requestFocus() {
     _focusNode.requestFocus();
   }
@@ -328,8 +325,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
   }
 
   Widget _buildSelectableText() {
-    return SizedBox(
-      width: _isMultiline && _isBounded ? double.infinity : null,
+    return FillWidthIfConstrained(
       child: SuperTextWithSelection.single(
         key: _textKey,
         richText: _controller.text.computeTextSpan(widget.textStyleBuilder),
@@ -1153,9 +1149,8 @@ class SuperTextFieldScrollviewState extends State<SuperTextFieldScrollview> with
 
   @override
   Widget build(BuildContext context) {
-    return Align(
-      alignment: _getAlignment(),
-      child: SizedBox(
+    return _buildWrapper(
+      SizedBox(
         height: widget.viewportHeight,
         child: SingleChildScrollView(
           controller: widget.scrollController,
@@ -1167,6 +1162,20 @@ class SuperTextFieldScrollviewState extends State<SuperTextFieldScrollview> with
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildWrapper(Widget child) {
+    // Multiline textfields are already aligned correctly
+    // because they have a maxWidth constraint.
+    if (widget.isMultiline) {
+      return child;
+    }
+    // Singleline textfields have an infinity maxWidth
+    // so we need to align the whole scrollview
+    return Align(
+      alignment: _getAlignment(),
+      child: child,
     );
   }
 }
