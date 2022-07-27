@@ -74,37 +74,37 @@ void main() {
         );
       });
 
-      test('expand when the caret is just before emoji', () {
+      test('expand when the caret is just before an emoji', () {
         // Notice there is a space at first
-        const text = '🐢A';
+        const text = '🐢🐢 are adorable';
 
-        // Pretend that the caret is at the start of the first word and expand by word
+        // Pretend that the caret is at the start of the emojis and expand by word
         final expandedSelection = expandPositionToWord(text: text, textPosition: const TextPosition(offset: 0));
-        expect(
-          expandedSelection,
-          const TextSelection(baseOffset: 0, extentOffset: 3),
-        );
-      });
-
-      test('expand when the caret is in the middle of emojis', () {
-        const text = '🐢🐢';
-
-        // Pretend that the caret is in the middle of the first word and expand by word
-        final expandedSelection = expandPositionToWord(text: text, textPosition: const TextPosition(offset: 1));
         expect(
           expandedSelection,
           const TextSelection(baseOffset: 0, extentOffset: 4),
         );
       });
 
-      test('expand when the caret is after of an emoji', () {
-        const text = 'A🐢';
+      test('expand when the caret is in the middle of emojis', () {
+        const text = 'Land 🐢🐢 are adorable';
 
-        // Pretend that the caret is at the end of the text and expand by word
-        final expandedSelection = expandPositionToWord(text: text, textPosition: const TextPosition(offset: 0));
+        // Pretend that the caret is in the middle of the emojis and expand by word
+        final expandedSelection = expandPositionToWord(text: text, textPosition: const TextPosition(offset: 7));
         expect(
           expandedSelection,
-          const TextSelection(baseOffset: 0, extentOffset: 3),
+          const TextSelection(baseOffset: 5, extentOffset: 9),
+        );
+      });
+
+      test('expand when the caret is just after an emoji', () {
+        const text = 'Adorable land 🐢🐢';
+
+        // Pretend that the caret is at the end of the emojis and expand by word
+        final expandedSelection = expandPositionToWord(text: text, textPosition: const TextPosition(offset: 18));
+        expect(
+          expandedSelection,
+          const TextSelection(baseOffset: 14, extentOffset: 18),
         );
       });
     });

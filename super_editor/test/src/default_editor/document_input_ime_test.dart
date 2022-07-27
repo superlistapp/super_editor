@@ -289,9 +289,9 @@ void main() {
         await tester.placeCaretInParagraph('1', 0);
 
         // Type characters before the link using the IME
-        await tester.textToType(
+        await tester.insertTextIME(
           softwareKeyboardHandler: softwareKeyboardHandler,
-          text: 'Go to ',
+          textToType: 'Go to ',
           existingText: 'https://google.com',
           insertionOffset: 0,
         );
@@ -320,9 +320,9 @@ void main() {
         await tester.placeCaretInParagraph('1', 18);
 
         // Type characters after the link using the IME
-        await tester.textToType(
+        await tester.insertTextIME(
           softwareKeyboardHandler: softwareKeyboardHandler,
-          text: ' to learn anything',
+          textToType: ' to learn anything',
           existingText: 'https://google.com',
           insertionOffset: 18,
         );
@@ -400,25 +400,25 @@ MutableDocument _singleParagraphWithLinkDoc() {
 
 extension on WidgetTester {
   // TODO: Remove this when `SuperTestRobot` support insert IME
-  Future<void> textToType({
+  Future<void> insertTextIME({
     required SoftwareKeyboardHandler softwareKeyboardHandler,
-    required String text,
+    required String textToType,
     required String existingText,
     required int insertionOffset,
   }) async {
     var oldText = existingText;
-    for (int i = 0; i < text.length; i += 1) {
+    for (int i = 0; i < textToType.length; i += 1) {
       // Insert a character to simulate IME input action
       softwareKeyboardHandler.applyDeltas([
         TextEditingDeltaInsertion(
-          textInserted: text[i],
+          textInserted: textToType[i],
           insertionOffset: insertionOffset + i,
           selection: TextSelection.collapsed(offset: insertionOffset + i),
           composing: const TextRange(start: -1, end: -1),
           oldText: oldText,
         ),
       ]);
-      oldText += text[i];
+      oldText += textToType[i];
 
       await pumpAndSettle();
     }

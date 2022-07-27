@@ -183,7 +183,7 @@ void main() {
         // Simulate the user pasting content from clipboard
         await tester.pressCmdV();
 
-        // Ensure that the link is splitted
+        // Ensure that the link is split
         expect(
           SuperEditorInspector.findDocument(),
           equalsMarkdown('[https://goo](https://google.com)Some text[gle.com](https://google.com)'),

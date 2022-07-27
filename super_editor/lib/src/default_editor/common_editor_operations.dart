@@ -2239,14 +2239,10 @@ class _PasteEditorCommand implements EditorCommand {
         }
       }
 
-      // If a link spans across the past location, we split that link in two. Part
+      // If a link spans across the paste location, we split that link in two. Part
       // of the link sits before the pasted text, and the other part of the link
       // sits after the pasted text. Both of the link parts continue to reference
       // the original URL, even if the text was a URL.
-      //
-      // The attribution splitting happens automatically in the text inserting execution, when the
-      // newly inserted text's attributions doesn't contain the original attribution. Hence, we only
-      // need to filter out the original link attribution.
       final attributionsForPastedText = attributionsAtPasteOffset //
           .where((attribution) => attribution is! LinkAttribution)
           .toSet();
@@ -2258,7 +2254,7 @@ class _PasteEditorCommand implements EditorCommand {
         attributions: attributionsForPastedText,
       ).execute(document, transaction);
 
-      // Check for url in the pasted text and apply [LinkAttribution] appropriately
+      // Check for urls in the pasted text and apply [LinkAttribution] appropriately
       _convertURLsInPastedTextToLink(
         text: splitContent.first,
         textNode: textNode,
@@ -2324,6 +2320,8 @@ class _PasteEditorCommand implements EditorCommand {
     editorOpsLog.fine('Done with paste command.');
   }
 
+  /// Check for each word in the pasted text. If the word is a valid URL,
+  /// convert it into link by adding [LinkAttribution]
   void _convertURLsInPastedTextToLink({
     required String text,
     required TextNode textNode,
@@ -2335,29 +2333,20 @@ class _PasteEditorCommand implements EditorCommand {
 
     for (final wordBoundary in wordBoundaries) {
       final word = wordBoundary.textInside(text);
-
       final link = Uri.tryParse(word);
-
-      final documentSelection = DocumentSelection(
-        base: _pastePosition.copyWith(
-          nodePosition: textPosition.copyWith(
-            offset: textPosition.offset + wordBoundary.start,
-          ),
-        ),
-        extent: _pastePosition.copyWith(
-          nodePosition: textPosition.copyWith(
-            offset: textPosition.offset + wordBoundary.end,
-          ),
-        ),
-      );
 
       if (link != null && link.hasScheme && link.hasAuthority) {
         // Valid url. Apply [LinkAttribution] to the url
         final linkAttribution = LinkAttribution(url: link);
-        AddTextAttributionsCommand(
-          documentSelection: documentSelection,
-          attributions: {linkAttribution},
-        ).execute(document, transaction);
+
+        final startOffset = textPosition.offset + wordBoundary.start;
+        // -1 because TextPosition's offset indexes the character after the
+        // selection, not the final character in the selection.
+        final endOffset = textPosition.offset + wordBoundary.end - 1;
+        final span = SpanRange(start: startOffset, end: endOffset);
+
+        // Add link attribution.
+        textNode.text.addAttribution(linkAttribution, span);
       }
     }
   }
