@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:golden_toolkit/golden_toolkit.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
@@ -65,6 +66,49 @@ void main() {
 
       // Ensure the text field scrolled its content vertically
       expect(textBottom, lessThanOrEqualTo(viewportBottom));
+    });
+
+    testWidgetsOnDesktop("with unlimited lines doesn't scroll vertically", (tester) async {
+      // With the Ahem font the estimated line height is equal to the true line height
+      // so we need to use a custom font.
+      await loadAppFonts();
+
+      const verticalPadding = 6.0;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: ConstrainedBox(
+              constraints: const BoxConstraints(minWidth: 300),
+              child: SuperDesktopTextField(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: verticalPadding),
+                minLines: 1,
+                maxLines: null,
+                textController: AttributedTextEditingController(
+                  text: AttributedText(text: "SuperTextField"),
+                ),
+                textStyleBuilder: (_) => const TextStyle(
+                  fontSize: 14,
+                  height: 1,
+                  fontFamily: 'Roboto',
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      final viewportHeight = tester.getRect(find.byType(SuperTextFieldScrollview)).height;
+
+      final layoutState = (find.byType(SuperDesktopTextField).evaluate().single as StatefulElement).state as SuperDesktopTextFieldState;
+      final contentHeight = layoutState.textLayout.getLineHeightAtPosition(const TextPosition(offset: 0));
+
+      // Vertical padding is added to both top and bottom
+      final totalHeight = contentHeight + (verticalPadding * 2);
+
+      // Ensure the viewport is big enough so the text doesn't scroll vertically
+      expect(viewportHeight, greaterThanOrEqualTo(totalHeight));
     });
   });
 }
