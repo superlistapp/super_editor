@@ -225,7 +225,6 @@ Widget _buildSuperTextField({
       textAlign: textAlign,
       maxLines: maxLines,
       minLines: 1,
-      lineHeight: 14,
       textStyleBuilder: (_) {
         return const TextStyle(
           color: Colors.black,
@@ -237,9 +236,9 @@ Widget _buildSuperTextField({
 }
 
 Future<void> _pumpScaffold(
-  WidgetTester tester, {  
+  WidgetTester tester, {
   required List<Widget> children,
-}) async { 
+}) async {
   await tester.pumpWidget(
     MaterialApp(
       home: Scaffold(
