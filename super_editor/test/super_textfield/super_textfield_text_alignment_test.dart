@@ -5,10 +5,7 @@ import 'package:super_editor/super_editor.dart';
 
 import '../test_tools.dart';
 
-void main() async {  
-  
-  await loadAppFonts();
-
+void main() {  
   group('SuperTextField', () {
     group('single line', () {
       group('displays different alignments', () {
@@ -110,21 +107,18 @@ void main() async {
                 textAlign: TextAlign.left,
                 maxLines: 4,
                 configuration: SuperTextFieldPlatformConfiguration.android,
-                //minHeight: 400,
               ),
               _buildSuperTextField(
                 text: multilineText,
                 textAlign: TextAlign.center,
                 maxLines: 4,
                 configuration: SuperTextFieldPlatformConfiguration.android,
-                //minHeight: 400,
               ),
               _buildSuperTextField(
                 text: multilineText,
                 textAlign: TextAlign.right,
                 maxLines: 4,
                 configuration: SuperTextFieldPlatformConfiguration.android,
-                //minHeight: 400,
               ),
             ],
           );
@@ -215,8 +209,7 @@ void main() async {
 
 Widget _buildSuperTextField({
   required String text,
-  required TextAlign textAlign,
-  //double minHeight = 200, 
+  required TextAlign textAlign,  
   SuperTextFieldPlatformConfiguration? configuration,  
   int? maxLines,
 }) {
@@ -237,7 +230,6 @@ Widget _buildSuperTextField({
         return const TextStyle(
           color: Colors.black,
           fontSize: 20,
-          fontFamily: 'Ahem',
         );
       },
     ),
