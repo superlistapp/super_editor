@@ -38,7 +38,7 @@ void main() {
           );
 
           await screenMatchesGolden(tester, 'super_textfield_alignments_singleline_android');
-        });
+        }, skip: Platform.isMacOS);
 
         testGoldens('(on iOS)', (tester) async {
           await _pumpScaffold(
@@ -66,7 +66,7 @@ void main() {
           );
 
           await screenMatchesGolden(tester, 'super_textfield_alignments_singleline_ios');
-        });
+        }, skip: Platform.isMacOS);
 
         testGoldens('(on Desktop)', (tester) async {
           await _pumpScaffold(
@@ -94,7 +94,7 @@ void main() {
           );
 
           await screenMatchesGolden(tester, 'super_textfield_alignments_singleline_desktop');
-        });
+        }, skip: Platform.isMacOS);
       });
     });
 
