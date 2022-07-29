@@ -150,8 +150,11 @@ void main() {
       // Type some text by simulating hardware keyboard key presses.
       await tester.typeKeyboardText("Hello, world!");
 
+      //Simulate the delay between first tap and second tap
+      await tester.pumpAndSettle(const Duration(milliseconds: 200));
+
       // Tap to place the caret in the last position
-      await tester.placeCaretInParagraph("1", 12);
+      await tester.placeCaretInParagraph("1", 13);
 
       // Type some text by simulating hardware keyboard key presses.
       await tester.typeKeyboardText("ABC");
