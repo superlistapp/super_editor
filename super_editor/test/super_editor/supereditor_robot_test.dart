@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:super_editor/super_editor.dart';
@@ -107,7 +109,7 @@ void main() {
         const DocumentSelection.collapsed(
           position: DocumentPosition(
             nodeId: "1",
-            nodePosition: TextNodePosition(offset: paragraphLength),
+            nodePosition: TextNodePosition(offset: paragraphLength, affinity: TextAffinity.upstream),
           ),
         ),
       );

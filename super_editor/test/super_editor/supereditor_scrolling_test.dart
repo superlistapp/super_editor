@@ -173,7 +173,10 @@ void main() {
         DocumentSelection(
           base: DocumentPosition(
             nodeId: lastParagraph.id,
-            nodePosition: lastParagraph.endPosition,
+            nodePosition: TextNodePosition(
+              offset: lastParagraph.endPosition.offset,
+              affinity: TextAffinity.upstream,
+            ),
           ),
           extent: DocumentPosition(
             nodeId: firstParagraph.id,
