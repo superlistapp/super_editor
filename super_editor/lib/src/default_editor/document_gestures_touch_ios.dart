@@ -128,6 +128,12 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   // avoid handling gestures while we are `_waitingForMoreTaps`.
   bool _waitingForMoreTaps = false;
 
+  // Indicates if we are requesting focus by tapping the editor.
+  bool _requestingFocusByTap = false;
+
+  // Holds the last valid selection, so we can restore it when the editor is focused.
+  DocumentSelection? _lastValidSelection;
+
   @override
   void initState() {
     super.initState();
@@ -300,6 +306,19 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     } else {
       _removeEditingOverlayControls();
     }
+
+    final shouldMoveSelection = !_requestingFocusByTap;
+    _requestingFocusByTap = false;
+
+    if (shouldMoveSelection) {
+      // We move the selection in the next frame, so we don't try to access the
+      // DocumentLayout before it is available when the editor has autofocus
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+        if (mounted && widget.focusNode.hasFocus && widget.composer.selection == null) {
+          _moveSelectionAfterFocus();
+        }
+      });
+    }
   }
 
   void _onDocumentChange() {
@@ -322,6 +341,10 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       _updateHandlesAfterSelectionOrLayoutChange();
     });
+
+    if (widget.composer.selection != null) {
+      _lastValidSelection = widget.composer.selection!;
+    }
   }
 
   void _updateHandlesAfterSelectionOrLayoutChange() {
@@ -458,6 +481,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
 
     _positionToolbar();
 
+    _requestingFocusByTap = !widget.focusNode.hasFocus;
     widget.focusNode.requestFocus();
   }
 
@@ -502,6 +526,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
       _positionToolbar();
     }
 
+    _requestingFocusByTap = !widget.focusNode.hasFocus;
     widget.focusNode.requestFocus();
   }
 
@@ -554,6 +579,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
       _positionToolbar();
     }
 
+    _requestingFocusByTap = !widget.focusNode.hasFocus;
     widget.focusNode.requestFocus();
   }
 
@@ -1021,13 +1047,52 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     }
 
     final direction = ancestorScrollable.axisDirection;
-    // If the direction is horizontal, then we are inside a widget like a TabBar 
-    // or a horizontal ListView, so we can't use the ancestor scrollable 
+    // If the direction is horizontal, then we are inside a widget like a TabBar
+    // or a horizontal ListView, so we can't use the ancestor scrollable
     if (direction == AxisDirection.left || direction == AxisDirection.right) {
       return null;
     }
 
     return ancestorScrollable;
+  }
+
+  DocumentSelection? _findNewSelectionAfterFocus() {
+    if (_lastValidSelection != null) {
+      return _lastValidSelection!;
+    }
+
+    NodePosition? nodePosition;
+    DocumentNode? lastSelectableNode;
+
+    // Find the last selectable component.
+    final docNodes = widget.document.nodes;
+    for (int i = docNodes.length - 1; i >= 0; i--) {
+      final node = docNodes[i];
+      final component = _docLayout.getComponentByNodeId(node.id)!;
+      if (component.isVisualSelectionSupported()) {
+        lastSelectableNode = node;
+        nodePosition = component.getEndPosition();
+        break;
+      }
+    }
+
+    if (lastSelectableNode == null) {
+      return null;
+    }
+
+    return DocumentSelection.collapsed(
+      position: DocumentPosition(
+        nodeId: lastSelectableNode.id,
+        nodePosition: nodePosition!,
+      ),
+    );
+  }
+
+  void _moveSelectionAfterFocus() {
+    final newSelection = _findNewSelectionAfterFocus();
+    if (newSelection != null) {
+      widget.composer.selection = newSelection;
+    }
   }
 
   @override

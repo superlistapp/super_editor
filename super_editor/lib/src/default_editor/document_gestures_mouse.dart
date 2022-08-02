@@ -69,10 +69,16 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
   Offset? _dragEndGlobal;
   bool _expandSelectionDuringDrag = false;
 
+  // Indicates if we are requesting focus by tapping the editor.
+  bool _requestingFocusByTap = false;
+
+  // Holds the last valid selection, so we can restore it when the editor is focused.
+  DocumentSelection? _lastValidSelection;
+
   @override
   void initState() {
     super.initState();
-    _focusNode = widget.focusNode ?? FocusNode();
+    _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
     widget.editContext.composer.selectionNotifier.addListener(_onSelectionChange);
     widget.autoScroller.addListener(_updateDragSelection);
   }
@@ -81,7 +87,8 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
   void didUpdateWidget(DocumentMouseInteractor oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.focusNode != oldWidget.focusNode) {
-      _focusNode = widget.focusNode ?? FocusNode();
+      oldWidget.focusNode?.removeListener(_onFocusChange);
+      _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
     }
     if (widget.editContext.composer != oldWidget.editContext.composer) {
       oldWidget.editContext.composer.selectionNotifier.removeListener(_onSelectionChange);
@@ -95,6 +102,8 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
 
   @override
   void dispose() {
+    _focusNode.removeListener(_onFocusChange);
+
     if (widget.focusNode == null) {
       _focusNode.dispose();
     }
@@ -131,6 +140,10 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
         }
       });
     }
+
+    if (widget.editContext.composer.selection != null) {
+      _lastValidSelection = widget.editContext.composer.selection!;
+    }
   }
 
   Rect? _getSelectionExtentAsGlobalRect() {
@@ -164,6 +177,7 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
     editorGesturesLog.fine(" - tapped document position: $docPosition");
 
+    _requestingFocusByTap = !_focusNode.hasFocus;
     _focusNode.requestFocus();
 
     if (docPosition != null) {
@@ -224,6 +238,7 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
       }
     }
 
+    _requestingFocusByTap = !_focusNode.hasFocus;
     _focusNode.requestFocus();
   }
 
@@ -293,6 +308,7 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
       }
     }
 
+    _requestingFocusByTap = !_focusNode.hasFocus;
     _focusNode.requestFocus();
   }
 
@@ -339,6 +355,7 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
       _clearSelection();
     }
 
+    _requestingFocusByTap = !_focusNode.hasFocus;
     _focusNode.requestFocus();
   }
 
@@ -496,6 +513,60 @@ Updating drag selection:
   void _clearSelection() {
     editorGesturesLog.fine("Clearing document selection");
     widget.editContext.composer.clearSelection();
+  }
+
+  void _onFocusChange() {
+    final shouldMoveSelection = !_requestingFocusByTap;
+    _requestingFocusByTap = false;
+
+    if (shouldMoveSelection) {
+      // We move the selection in the next frame, so we don't try to access the
+      // DocumentLayout before it is available when the editor has autofocus
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+        if (mounted && _focusNode.hasFocus && widget.editContext.composer.selection == null) {
+          _moveSelectionAfterFocus();
+        }
+      });
+    }
+  }
+
+  DocumentSelection? _findNewSelectionAfterFocus() {
+    if (_lastValidSelection != null) {
+      return _lastValidSelection!;
+    }
+
+    NodePosition? nodePosition;
+    DocumentNode? lastSelectableNode;
+
+    // Find the last selectable component.
+    final docNodes = widget.editContext.editor.document.nodes;
+    for (int i = docNodes.length - 1; i >= 0; i--) {
+      final node = docNodes[i];
+      final component = _docLayout.getComponentByNodeId(node.id)!;
+      if (component.isVisualSelectionSupported()) {
+        lastSelectableNode = node;
+        nodePosition = component.getEndPosition();
+        break;
+      }
+    }
+
+    if (lastSelectableNode == null) {
+      return null;
+    }
+
+    return DocumentSelection.collapsed(
+      position: DocumentPosition(
+        nodeId: lastSelectableNode.id,
+        nodePosition: nodePosition!,
+      ),
+    );
+  }
+
+  void _moveSelectionAfterFocus() {
+    final newSelection = _findNewSelectionAfterFocus();
+    if (newSelection != null) {
+      widget.editContext.composer.selection = newSelection;
+    }
   }
 
   @override
