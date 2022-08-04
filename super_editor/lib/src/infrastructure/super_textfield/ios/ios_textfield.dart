@@ -1,4 +1,5 @@
 import 'package:attributed_text/attributed_text.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
@@ -164,7 +165,8 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField> with TickerProvide
     _textEditingController = (widget.textController ?? ImeAttributedTextEditingController())
       ..addListener(_onTextOrSelectionChange)
       ..onIOSFloatingCursorChange = _onFloatingCursorChange
-      ..onPerformActionPressed ??= _onPerformActionPressed;
+      ..onPerformActionPressed ??= _onPerformActionPressed
+      ..onConnectionChange = _onImeConnectionChange;
 
     _textScrollController = TextScrollController(
       textController: _textEditingController,
@@ -200,7 +202,8 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField> with TickerProvide
     if (widget.textController != oldWidget.textController) {
       _textEditingController
         ..removeListener(_onTextOrSelectionChange)
-        ..onIOSFloatingCursorChange = null;
+        ..onIOSFloatingCursorChange = null
+        ..onConnectionChange = null;
       if (_textEditingController.onPerformActionPressed == _onPerformActionPressed) {
         _textEditingController.onPerformActionPressed = null;
       }
@@ -214,7 +217,8 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField> with TickerProvide
       _textEditingController
         ..addListener(_onTextOrSelectionChange)
         ..onIOSFloatingCursorChange = _onFloatingCursorChange
-        ..onPerformActionPressed ??= _onPerformActionPressed;
+        ..onPerformActionPressed ??= _onPerformActionPressed
+        ..onConnectionChange = _onImeConnectionChange;
     }
 
     if (widget.showDebugPaint != oldWidget.showDebugPaint) {
@@ -251,7 +255,8 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField> with TickerProvide
 
     _textEditingController
       ..removeListener(_onTextOrSelectionChange)
-      ..onIOSFloatingCursorChange = null;
+      ..onIOSFloatingCursorChange = null
+      ..onConnectionChange = null;
     if (widget.textController == null) {
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         // Dispose after the current frame so that other widgets have
@@ -411,7 +416,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField> with TickerProvide
     final fieldBox = context.findRenderObject() as RenderBox;
 
     // The area of the text field that should be revealed.
-    // We add a small margin to leave some space between the text field and the keyboard.    
+    // We add a small margin to leave some space between the text field and the keyboard.
     final textFieldFocalRect = Rect.fromLTWH(
       textFieldFocalPoint.dx,
       textFieldFocalPoint.dy,
@@ -433,13 +438,23 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField> with TickerProvide
     }
 
     final direction = ancestorScrollable.axisDirection;
-    // If the direction is horizontal, then we are inside a widget like a TabBar 
-    // or a horizontal ListView, so we can't use the ancestor scrollable 
+    // If the direction is horizontal, then we are inside a widget like a TabBar
+    // or a horizontal ListView, so we can't use the ancestor scrollable
     if (direction == AxisDirection.left || direction == AxisDirection.right) {
       return null;
     }
 
     return ancestorScrollable;
+  }
+
+  void _onImeConnectionChange() {
+    // On iOS web, clicking outside the field or clicking on the OK button
+    // causes the IME connection to close.
+    // We unfocus, so the next time the user taps the field, it will request focus again
+    // and attach to the IME.
+    if (kIsWeb && !_textEditingController.isAttachedToIme) {
+      _focusNode.unfocus();
+    }
   }
 
   @override

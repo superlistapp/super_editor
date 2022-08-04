@@ -339,6 +339,58 @@ void main() {
         expect(controller.text.text, equals('some tex'));
         expect(controller.selection, equals(const TextSelection.collapsed(offset: 8)));
       });
+
+      testWidgets('notifies when IME connection is closed from platform', (tester) async {
+        bool hasNotified = false;
+
+        final controller = ImeAttributedTextEditingController();
+
+        // Start the connection.
+        controller.attachToIme();
+
+        controller.onConnectionChange = () {
+          hasNotified = true;
+        };
+
+        // Simulate being dettached from IME by the platform.
+        tester.testTextInput.closeConnection();
+
+        // Ensure the callback was called.
+        expect(hasNotified, true);
+      });
+
+      testWidgets('notifies when IME connection is closed manually', (tester) async {
+        bool hasNotified = false;
+
+        final controller = ImeAttributedTextEditingController();
+
+        // Start the connection.
+        controller.attachToIme();
+
+        controller.onConnectionChange = () {
+          hasNotified = true;
+        };
+
+        controller.detachFromIme();
+
+        // Ensure the callback was called.
+        expect(hasNotified, true);
+      });
+
+      testWidgets('notifies when IME connection is openned', (tester) async {
+        bool hasNotified = false;
+
+        final controller = ImeAttributedTextEditingController()
+          ..onConnectionChange = () {
+            hasNotified = true;
+          };
+
+        // Start the connection.
+        controller.attachToIme();
+
+        // Ensure the callback was called.
+        expect(hasNotified, true);
+      });
     });
   });
 }
