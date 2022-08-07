@@ -188,18 +188,52 @@ void main() {
         // Ensure we requested the keyboard to the platform
         expect(isShowKeyboardCalled, true);
       });
+
+      testWidgetsOnIos("tap up attaches to IME if the field already has focus", (tester) async {
+        final controller = ImeAttributedTextEditingController();
+
+        await _pumpTestApp(tester, controller: controller);
+
+        // Tap down and up so the field is focused.
+        await tester.tap(find.byType(SuperTextField));
+        await tester.pumpAndSettle();
+
+        // Ensure we are connected.
+        expect(controller.isAttachedToIme, true);
+
+        // Disconnect from IME.
+        controller.detachFromIme();
+        await tester.pumpAndSettle();
+
+        // Ensure we are not connected.
+        expect(controller.isAttachedToIme, false);
+
+        // Avoid a double tap.
+        await tester.pump(kDoubleTapTimeout + const Duration(milliseconds: 1));
+
+        // Tap down and up again.
+        await tester.tap(find.byType(SuperTextField));
+        await tester.pumpAndSettle();
+
+        // Ensure we are connected again.
+        expect(controller.isAttachedToIme, true);
+      });
     });
   });
 }
 
-Future<void> _pumpTestApp(WidgetTester tester) async {
+Future<void> _pumpTestApp(
+  WidgetTester tester, {
+  AttributedTextEditingController? controller,
+}) async {
   await tester.pumpWidget(
     MaterialApp(
       home: Scaffold(
         body: SuperTextField(
-          textController: AttributedTextEditingController(
-            text: AttributedText(text: "abc"),
-          ),
+          textController: controller ??
+              AttributedTextEditingController(
+                text: AttributedText(text: "abc"),
+              ),
         ),
       ),
     ),

@@ -145,6 +145,8 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
 
     if (widget.focusNode.hasFocus && widget.textController.isAttachedToIme) {
       widget.textController.showKeyboard();
+    } else if (widget.focusNode.hasFocus) {
+      widget.textController.attachToIme();
     } else {
       widget.focusNode.requestFocus();
     }
