@@ -31,11 +31,9 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
     AttributedTextEditingController? controller,
     bool disposeClientController = true,
     void Function(RawFloatingCursorPoint)? onIOSFloatingCursorChange,
-    void Function()? onConnectionChange,
   })  : _realController = controller ?? AttributedTextEditingController(),
         _disposeClientController = disposeClientController,
-        _onIOSFloatingCursorChange = onIOSFloatingCursorChange,
-        _onConnectionChange = onConnectionChange {
+        _onIOSFloatingCursorChange = onIOSFloatingCursorChange {
     _realController.addListener(_onTextChange);
   }
 
@@ -57,8 +55,6 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
 
   void Function(RawFloatingCursorPoint)? _onIOSFloatingCursorChange;
 
-  void Function()? _onConnectionChange;
-
   /// Sets the callback that's invoked whenever the floating cursor changes
   /// position on iOS.
   ///
@@ -74,11 +70,6 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
   /// information.
   set onIOSFloatingCursorChange(void Function(RawFloatingCursorPoint)? callback) {
     _onIOSFloatingCursorChange = callback;
-  }
-
-  /// Sets the callback that's invoked whenever the IME connection changes.
-  set onConnectionChange(void Function()? callback) {
-    _onConnectionChange = callback;
   }
 
   TextInputConnection? _inputConnection;
@@ -109,7 +100,6 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
     _inputConnection!
       ..show()
       ..setEditingState(currentTextEditingValue!);
-    _onConnectionChange?.call();
     _log.fine('Is attached to input client? ${_inputConnection!.attached}');
   }
 
@@ -140,14 +130,11 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
     _inputConnection!
       ..show()
       ..setEditingState(currentTextEditingValue!);
-
-    _onConnectionChange?.call();
   }
 
   void detachFromIme() {
     _log.fine('Closing input connection');
     _inputConnection?.close();
-    _onConnectionChange?.call();
   }
 
   void showKeyboard() {
@@ -322,10 +309,8 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
   @override
   void connectionClosed() {
     _log.info('TextInputClient: connectionClosed()');
-    _inputConnection?.connectionClosedReceived();
     _inputConnection = null;
     _latestPlatformTextEditingValue = null;
-    _onConnectionChange?.call();
   }
 
   @override
