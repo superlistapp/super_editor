@@ -526,6 +526,32 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
   }
 
   @override
+  DocumentPosition? findLastSelectablePosition() {
+    NodePosition? nodePosition;
+    String? nodeId;
+    
+    for (int i = _topToBottomComponentKeys.length - 1; i >= 0; i--) {
+      final componentKey = _topToBottomComponentKeys[i];
+      final component = componentKey.currentState as DocumentComponent;
+
+      if (component.isVisualSelectionSupported()) {
+        nodePosition = component.getEndPosition();
+        nodeId = _nodeIdsToComponentKeys.entries.firstWhere((element) => element.value == componentKey).key;
+        break;
+      }
+    }
+
+    if (nodePosition == null) {
+      return null;
+    }
+
+    return DocumentPosition(
+      nodeId: nodeId!,
+      nodePosition: nodePosition,
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     editorLayoutLog.fine("Building document layout");
     return Padding(

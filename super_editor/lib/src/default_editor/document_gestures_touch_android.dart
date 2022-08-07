@@ -13,6 +13,7 @@ import 'package:super_editor/src/infrastructure/blinking_caret.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/magnifier.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/selection_handles.dart';
+import 'package:super_editor/src/default_editor/document_interactor_mixin.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/toolbar_position_delegate.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
 import 'package:super_text_layout/super_text_layout.dart';
@@ -78,8 +79,7 @@ class AndroidDocumentTouchInteractor extends StatefulWidget {
   State createState() => _AndroidDocumentTouchInteractorState();
 }
 
-class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInteractor>
-    with WidgetsBindingObserver, SingleTickerProviderStateMixin {
+class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInteractor> with WidgetsBindingObserver, SingleTickerProviderStateMixin, DocumentInteractorMixin {
   // ScrollController used when this interactor installs its own Scrollable.
   // The alternative case is the one in which this interactor defers to an
   // ancestor scrollable.
@@ -106,12 +106,6 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   Offset? _globalDragOffset;
   Offset? _dragEndInInteractor;
   SelectionType? _selectionType;
-
-  // Indicates if we are requesting focus by tapping the editor.
-  bool _requestingFocusByTap = false;
-
-  // Holds the last valid selection, so we can restore it when the editor is focused.
-  DocumentSelection? _lastValidSelection;
 
   @override
   void initState() {
@@ -152,6 +146,12 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
     widget.composer.addListener(_onSelectionChange);
 
+    initDocumentInteractorMixin(
+      focusNode: widget.focusNode,
+      composer: widget.composer,
+      getDocumentLayout: widget.getDocumentLayout,
+    );
+
     WidgetsBinding.instance.addObserver(this);
   }
 
@@ -190,6 +190,12 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       oldWidget.composer.removeListener(_onSelectionChange);
       widget.composer.addListener(_onSelectionChange);
     }
+
+    updateDocumentInteractorMixin(
+      focusNode: widget.focusNode,
+      composer: widget.composer,
+      getDocumentLayout: widget.getDocumentLayout,
+    );
   }
 
   @override
@@ -294,19 +300,6 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     } else {
       _removeEditingOverlayControls();
     }
-
-    final shouldMoveSelection = !_requestingFocusByTap;
-    _requestingFocusByTap = false;
-
-    if (shouldMoveSelection) {
-      // We move the selection in the next frame, so we don't try to access the
-      // DocumentLayout before it is available when the editor has autofocus
-      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-        if (mounted && widget.focusNode.hasFocus && widget.composer.selection == null) {
-          _moveSelectionAfterFocus();
-        }
-      });
-    }
   }
 
   void _onDocumentChange() {
@@ -328,10 +321,6 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       _updateHandlesAfterSelectionOrLayoutChange();
     });
-
-    if (widget.composer.selection != null) {
-      _lastValidSelection = widget.composer.selection!;
-    }
   }
 
   void _updateHandlesAfterSelectionOrLayoutChange() {
@@ -449,7 +438,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       _editingController.hideToolbar();
     }
 
-    _requestingFocusByTap = !widget.focusNode.hasFocus;
+    requestingFocusByTap = !widget.focusNode.hasFocus;
     widget.focusNode.requestFocus();
   }
 
@@ -491,7 +480,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       }
     }
 
-    _requestingFocusByTap = !widget.focusNode.hasFocus;
+    requestingFocusByTap = !widget.focusNode.hasFocus;
     widget.focusNode.requestFocus();
   }
 
@@ -536,7 +525,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       }
     }
 
-    _requestingFocusByTap = !widget.focusNode.hasFocus;
+    requestingFocusByTap = !widget.focusNode.hasFocus;
     widget.focusNode.requestFocus();
   }
 
@@ -882,45 +871,6 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     return ancestorScrollable;
   }
 
-  DocumentSelection? _findNewSelectionAfterFocus() {
-    if (_lastValidSelection != null) {
-      return _lastValidSelection!;
-    }
-
-    NodePosition? nodePosition;
-    DocumentNode? lastSelectableNode;
-
-    // Find the last selectable component.
-    final docNodes = widget.document.nodes;
-    for (int i = docNodes.length - 1; i >= 0; i--) {
-      final node = docNodes[i];
-      final component = _docLayout.getComponentByNodeId(node.id)!;
-      if (component.isVisualSelectionSupported()) {
-        lastSelectableNode = node;
-        nodePosition = component.getEndPosition();
-        break;
-      }
-    }
-
-    if (lastSelectableNode == null) {
-      return null;
-    }
-
-    return DocumentSelection.collapsed(
-      position: DocumentPosition(
-        nodeId: lastSelectableNode.id,
-        nodePosition: nodePosition!,
-      ),
-    );
-  }
-
-  void _moveSelectionAfterFocus() {
-    final newSelection = _findNewSelectionAfterFocus();
-    if (newSelection != null) {
-      widget.composer.selection = newSelection;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return _buildGestureInput(
@@ -1004,8 +954,7 @@ class AndroidDocumentTouchEditingControls extends StatefulWidget {
   State createState() => _AndroidDocumentTouchEditingControlsState();
 }
 
-class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTouchEditingControls>
-    with SingleTickerProviderStateMixin {
+class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTouchEditingControls> with SingleTickerProviderStateMixin {
   // These global keys are assigned to each draggable handle to
   // prevent a strange dragging issue.
   //
