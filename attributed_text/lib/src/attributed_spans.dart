@@ -109,11 +109,11 @@ class AttributedSpans {
     int offset, {
     Attribution? attribution,
   }) {
-    SpanMarker? markerBefore = _getStartingMarkerAtOrBefore(offset, attribution: attribution);
+    SpanMarker? markerBefore = getStartingMarkerAtOrBefore(offset, attribution: attribution);
     if (markerBefore == null) {
       return false;
     }
-    SpanMarker? markerAfter = _getEndingMarkerAtOrAfter(markerBefore.offset, attribution: attribution);
+    SpanMarker? markerAfter = getEndingMarkerAtOrAfter(markerBefore.offset, attribution: attribution);
     if (markerAfter == null) {
       throw Exception('Found an open-ended attribution. It starts with: $markerBefore');
     }
@@ -140,8 +140,8 @@ class AttributedSpans {
     // The following methods should be guaranteed to produce non-null
     // values because we already verified that the given attribution
     // exists at the given offset.
-    SpanMarker markerBefore = _getStartingMarkerAtOrBefore(offset, attribution: attribution)!;
-    SpanMarker markerAfter = _getEndingMarkerAtOrAfter(markerBefore.offset, attribution: attribution)!;
+    SpanMarker markerBefore = getStartingMarkerAtOrBefore(offset, attribution: attribution)!;
+    SpanMarker markerAfter = getEndingMarkerAtOrAfter(markerBefore.offset, attribution: attribution)!;
 
     return AttributionSpan(
       attribution: attribution,
@@ -218,7 +218,7 @@ class AttributedSpans {
   /// Finds and returns the nearest [start] marker that appears at or before the
   /// given [offset], optionally looking specifically for a marker with
   /// the given [attribution].
-  SpanMarker? _getStartingMarkerAtOrBefore(int offset, {Attribution? attribution}) {
+  SpanMarker? getStartingMarkerAtOrBefore(int offset, {Attribution? attribution}) {
     return markers //
         .reversed // search from the end so its the nearest start marker
         .where((marker) {
@@ -232,7 +232,7 @@ class AttributedSpans {
   /// Finds and returns the nearest [end] marker that appears at or after the
   /// given [offset], optionally looking specifically for a marker with
   /// the given [attribution].
-  SpanMarker? _getEndingMarkerAtOrAfter(int offset, {Attribution? attribution}) {
+  SpanMarker? getEndingMarkerAtOrAfter(int offset, {Attribution? attribution}) {
     return markers
         .where((marker) =>
             attribution == null ||
