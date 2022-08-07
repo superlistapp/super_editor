@@ -68,11 +68,12 @@ void main() {
       expect(textBottom, lessThanOrEqualTo(viewportBottom));
     });
 
-    testWidgetsOnDesktop("with unlimited lines doesn't scroll vertically", (tester) async {
+    testWidgetsOnDesktop("doesn't scroll vertically when maxLines is null", (tester) async {
       // With the Ahem font the estimated line height is equal to the true line height
       // so we need to use a custom font.
       await loadAppFonts();
 
+      // We use some padding because it affects the viewport height calculation.
       const verticalPadding = 6.0;
 
       await tester.pumpWidget(
