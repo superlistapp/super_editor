@@ -1149,7 +1149,7 @@ class SuperTextFieldScrollviewState extends State<SuperTextFieldScrollview> with
 
   @override
   Widget build(BuildContext context) {
-    return _buildWrapper(
+    return _buildAlign(
       SizedBox(
         height: widget.viewportHeight,
         child: SingleChildScrollView(
@@ -1165,7 +1165,7 @@ class SuperTextFieldScrollviewState extends State<SuperTextFieldScrollview> with
     );
   }
 
-  Widget _buildWrapper(Widget child) {
+  Widget _buildAlign(Widget child) {
     // Multiline textfields are already aligned correctly
     // because they have a maxWidth constraint.
     if (widget.isMultiline) {

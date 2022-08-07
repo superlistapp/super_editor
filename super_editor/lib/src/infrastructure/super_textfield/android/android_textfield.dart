@@ -279,8 +279,6 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
 
   bool get _isMultiline => (widget.minLines ?? 1) != 1 || widget.maxLines != 1;
 
-  bool get _isBounded => widget.maxLines != null;
-
   void _onFocusChange() {
     if (_focusNode.hasFocus) {
       if (!_textEditingController.isAttachedToIme) {
