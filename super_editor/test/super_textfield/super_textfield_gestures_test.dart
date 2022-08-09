@@ -201,7 +201,9 @@ void main() {
         // Ensure we are connected.
         expect(controller.isAttachedToIme, true);
 
-        // Disconnect from IME.
+        // Disconnect from IME. 
+        // In a real app this could happen when the user taps outside the field 
+        // or clicks on the OK button of the software keyboard.
         controller.detachFromIme();
         await tester.pumpAndSettle();
 
