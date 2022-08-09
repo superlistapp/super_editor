@@ -13,7 +13,7 @@ import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/magnifier.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/selection_handles.dart';
-import 'package:super_editor/src/default_editor/document_interactor_mixin.dart';
+import 'package:super_editor/src/default_editor/document_selection_on_focus_mixin.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/toolbar_position_delegate.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
 import 'package:super_text_layout/super_text_layout.dart';
@@ -84,8 +84,7 @@ class IOSDocumentTouchInteractor extends StatefulWidget {
   State createState() => _IOSDocumentTouchInteractorState();
 }
 
-class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
-    with WidgetsBindingObserver, SingleTickerProviderStateMixin, DocumentInteractorMixin {
+class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor> with WidgetsBindingObserver, SingleTickerProviderStateMixin, DocumentSelectionOnFocusMixin {
   // ScrollController used when this interactor installs its own Scrollable.
   // The alternative case is the one in which this interactor defers to an
   // ancestor scrollable.
@@ -163,7 +162,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
 
     widget.composer.addListener(_onSelectionChange);
 
-    initDocumentInteractorMixin(
+    startUpdateSelectionOnFocus(
       focusNode: widget.focusNode,
       composer: widget.composer,
       getDocumentLayout: widget.getDocumentLayout,
@@ -203,6 +202,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     if (widget.focusNode != oldWidget.focusNode) {
       oldWidget.focusNode.removeListener(_onFocusChange);
       widget.focusNode.addListener(_onFocusChange);
+      onFocusNodeReplaced(widget.focusNode);
     }
 
     if (widget.document != oldWidget.document) {
@@ -213,13 +213,12 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     if (widget.composer != oldWidget.composer) {
       oldWidget.composer.removeListener(_onSelectionChange);
       widget.composer.addListener(_onSelectionChange);
+      onDocumentComposerReplaced(widget.composer);
     }
 
-    updateDocumentInteractorMixin(
-      focusNode: widget.focusNode,
-      composer: widget.composer,
-      getDocumentLayout: widget.getDocumentLayout,
-    );
+    if (widget.getDocumentLayout != oldWidget.getDocumentLayout) {
+      onDocumentLayoutResolverReplaced(widget.getDocumentLayout);
+    }
   }
 
   @override
@@ -258,6 +257,8 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     _handleAutoScrolling.dispose();
 
     widget.focusNode.removeListener(_onFocusChange);
+
+    stopUpdateSelectionOnFocus();
 
     super.dispose();
   }

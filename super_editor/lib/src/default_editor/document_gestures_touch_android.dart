@@ -13,7 +13,7 @@ import 'package:super_editor/src/infrastructure/blinking_caret.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/magnifier.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/selection_handles.dart';
-import 'package:super_editor/src/default_editor/document_interactor_mixin.dart';
+import 'package:super_editor/src/default_editor/document_selection_on_focus_mixin.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/toolbar_position_delegate.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
 import 'package:super_text_layout/super_text_layout.dart';
@@ -79,7 +79,7 @@ class AndroidDocumentTouchInteractor extends StatefulWidget {
   State createState() => _AndroidDocumentTouchInteractorState();
 }
 
-class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInteractor> with WidgetsBindingObserver, SingleTickerProviderStateMixin, DocumentInteractorMixin {
+class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInteractor> with WidgetsBindingObserver, SingleTickerProviderStateMixin, DocumentSelectionOnFocusMixin {
   // ScrollController used when this interactor installs its own Scrollable.
   // The alternative case is the one in which this interactor defers to an
   // ancestor scrollable.
@@ -146,7 +146,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
     widget.composer.addListener(_onSelectionChange);
 
-    initDocumentInteractorMixin(
+    startUpdateSelectionOnFocus(
       focusNode: widget.focusNode,
       composer: widget.composer,
       getDocumentLayout: widget.getDocumentLayout,
@@ -179,23 +179,23 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     if (widget.focusNode != oldWidget.focusNode) {
       oldWidget.focusNode.removeListener(_onFocusChange);
       widget.focusNode.addListener(_onFocusChange);
+      onFocusNodeReplaced(widget.focusNode);
     }
 
     if (widget.document != oldWidget.document) {
       oldWidget.document.removeListener(_onDocumentChange);
-      widget.document.addListener(_onDocumentChange);
+      widget.document.addListener(_onDocumentChange);      
     }
 
     if (widget.composer != oldWidget.composer) {
       oldWidget.composer.removeListener(_onSelectionChange);
       widget.composer.addListener(_onSelectionChange);
+      onDocumentComposerReplaced(widget.composer);
     }
 
-    updateDocumentInteractorMixin(
-      focusNode: widget.focusNode,
-      composer: widget.composer,
-      getDocumentLayout: widget.getDocumentLayout,
-    );
+    if (widget.getDocumentLayout != oldWidget.getDocumentLayout) {
+      onDocumentLayoutResolverReplaced(widget.getDocumentLayout);
+    }
   }
 
   @override
@@ -245,6 +245,8 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     widget.focusNode.removeListener(_onFocusChange);
 
     _handleAutoScrolling.dispose();
+
+    stopUpdateSelectionOnFocus();
 
     super.dispose();
   }

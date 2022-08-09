@@ -12,7 +12,7 @@ import 'package:super_editor/src/default_editor/selection_upstream_downstream.da
 import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
-import 'package:super_editor/src/default_editor/document_interactor_mixin.dart';
+import 'package:super_editor/src/default_editor/document_selection_on_focus_mixin.dart';
 
 /// Governs mouse gesture interaction with a document, such as scrolling
 /// a document with a scroll wheel, tapping to place a caret, and
@@ -59,7 +59,7 @@ class DocumentMouseInteractor extends StatefulWidget {
   State createState() => _DocumentMouseInteractorState();
 }
 
-class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with SingleTickerProviderStateMixin, DocumentInteractorMixin {
+class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with SingleTickerProviderStateMixin, DocumentSelectionOnFocusMixin {
   final _documentWrapperKey = GlobalKey();
 
   late FocusNode _focusNode;
@@ -77,7 +77,7 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     widget.editContext.composer.selectionNotifier.addListener(_onSelectionChange);
     widget.autoScroller.addListener(_updateDragSelection);
 
-    initDocumentInteractorMixin(
+    startUpdateSelectionOnFocus(
       focusNode: _focusNode,
       composer: widget.editContext.composer,
       getDocumentLayout: () => widget.editContext.documentLayout,
@@ -89,21 +89,18 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     super.didUpdateWidget(oldWidget);
     if (widget.focusNode != oldWidget.focusNode) {
       _focusNode = widget.focusNode ?? FocusNode();
+      onFocusNodeReplaced(_focusNode);
     }
     if (widget.editContext.composer != oldWidget.editContext.composer) {
       oldWidget.editContext.composer.selectionNotifier.removeListener(_onSelectionChange);
       widget.editContext.composer.selectionNotifier.addListener(_onSelectionChange);
+      onDocumentComposerReplaced(widget.editContext.composer);
     }
     if (widget.autoScroller != oldWidget.autoScroller) {
       oldWidget.autoScroller.removeListener(_updateDragSelection);
       widget.autoScroller.addListener(_updateDragSelection);
     }
-
-    updateDocumentInteractorMixin(
-      focusNode: _focusNode,
-      composer: widget.editContext.composer,
-      getDocumentLayout: () => widget.editContext.documentLayout,
-    );
+    onDocumentLayoutResolverReplaced(() => widget.editContext.documentLayout);    
   }
 
   @override
@@ -113,6 +110,7 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     }
     widget.editContext.composer.selectionNotifier.removeListener(_onSelectionChange);
     widget.autoScroller.removeListener(_updateDragSelection);
+    stopUpdateSelectionOnFocus();
     super.dispose();
   }
 
