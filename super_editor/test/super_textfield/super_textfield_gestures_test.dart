@@ -212,7 +212,6 @@ void main() {
 
         // Avoid a double tap.
         await tester.pump(kDoubleTapTimeout + const Duration(milliseconds: 1));
-
         // Tap down and up again.
         await tester.tap(find.byType(SuperTextField));
         await tester.pumpAndSettle();
