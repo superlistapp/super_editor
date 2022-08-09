@@ -444,8 +444,7 @@ class EquivalentDocumentMatcher extends Matcher {
     bool nodeTypeOrContentMismatch = false;
 
     if (_expectedDocument.nodes.length != actualDocument.nodes.length) {
-      messages
-          .add("expected ${_expectedDocument.nodes.length} document nodes but found ${actualDocument.nodes.length}");
+      messages.add("expected ${_expectedDocument.nodes.length} document nodes but found ${actualDocument.nodes.length}");
       nodeCountMismatch = true;
     } else {
       messages.add("document have the same number of nodes");

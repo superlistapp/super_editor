@@ -1118,7 +1118,7 @@ class InsertTextCommand implements EditorCommand {
 
     final textOffset = (documentPosition.nodePosition as TextPosition).offset;
 
-    // Inserting text and both ends of a link should not expand the link attribution
+    // Inserting text at either end of a link should not expand the link attribution
     Set<Attribution> attributionsForInsertedText = _removeLinksBeforeAndAfterInsertionOffset(
       attributedText: textNode.text,
       textOffset: textOffset,
