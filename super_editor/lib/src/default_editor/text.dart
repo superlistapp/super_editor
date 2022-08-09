@@ -4,7 +4,6 @@ import 'dart:collection';
 import 'dart:math';
 
 import 'package:attributed_text/attributed_text.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' hide SelectableText;
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document.dart';
@@ -329,7 +328,7 @@ class _TextWithHintComponentState extends State<TextWithHintComponent>
   final _childTextComponentKey = GlobalKey<TextComponentState>();
 
   @override
-  DocumentComponent<StatefulWidget> get childDocumentComponentKey => _childTextComponentKey.currentState!;
+  GlobalKey get childDocumentComponentKey => _childTextComponentKey;
 
   @override
   TextComposable get childTextComposable => _childTextComponentKey.currentState!;
@@ -351,8 +350,10 @@ class _TextWithHintComponentState extends State<TextWithHintComponent>
     return Stack(
       children: [
         if (widget.text.text.isEmpty)
-          Text.rich(
-            widget.hintText?.computeTextSpan(_styleBuilder) ?? const TextSpan(text: ''),
+          IgnorePointer(
+            child: Text.rich(
+              widget.hintText?.computeTextSpan(_styleBuilder) ?? const TextSpan(text: ''),
+            ),
           ),
         TextComponent(
           key: _childTextComponentKey,
