@@ -220,8 +220,8 @@ Widget _buildSuperTextField({
     text: AttributedText(text: text),
   );
 
-  return ConstrainedBox(
-    constraints: const BoxConstraints(minWidth: 300),
+  return SizedBox(
+    width: double.infinity,
     child: SuperTextField(
       configuration: configuration,
       textController: controller,

@@ -1149,33 +1149,17 @@ class SuperTextFieldScrollviewState extends State<SuperTextFieldScrollview> with
 
   @override
   Widget build(BuildContext context) {
-    return _buildAlign(
-      SizedBox(
-        height: widget.viewportHeight,
-        child: SingleChildScrollView(
-          controller: widget.scrollController,
-          physics: const NeverScrollableScrollPhysics(),
-          scrollDirection: widget.isMultiline ? Axis.vertical : Axis.horizontal,
-          child: Padding(
-            padding: widget.padding,
-            child: widget.child,
-          ),
+    return SizedBox(
+      height: widget.viewportHeight,
+      child: SingleChildScrollView(
+        controller: widget.scrollController,
+        physics: const NeverScrollableScrollPhysics(),
+        scrollDirection: widget.isMultiline ? Axis.vertical : Axis.horizontal,
+        child: Padding(
+          padding: widget.padding,
+          child: widget.child,
         ),
       ),
-    );
-  }
-
-  Widget _buildAlign(Widget child) {
-    // Multiline textfields are already aligned correctly
-    // because they have a maxWidth constraint.
-    if (widget.isMultiline) {
-      return child;
-    }
-    // Singleline textfields have an infinity maxWidth
-    // so we need to align the whole scrollview
-    return Align(
-      alignment: _getAlignment(),
-      child: child,
     );
   }
 }
