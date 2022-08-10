@@ -1,13 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_test_robots/flutter_test_robots.dart';
-import 'package:super_editor/src/default_editor/metrics.dart';
 import 'package:super_editor/src/infrastructure/blinking_caret.dart';
 import 'package:super_editor/super_editor.dart';
 
-import '../../super_editor/document_test_tools.dart';
-import '../../super_editor/supereditor_robot.dart';
-import '../../test_tools.dart';
 import '../_document_test_tools.dart';
 
 void main() {
@@ -49,7 +44,7 @@ void main() {
         final caretOffset = tester.getBottomLeft(caretFinder.last);
 
         // The default trailing boundary of the default `SuperEditor`
-        const trailingBoundary = defaultAutoScrollBoundary;
+        const trailingBoundary = 54.0;
 
         // The caret should be at the trailing boundary, within a small margin of error
         expect(caretOffset.dy, lessThanOrEqualTo(screenSizeWithKeyboard.height - trailingBoundary));
@@ -86,34 +81,11 @@ void main() {
         final caretOffset = tester.getBottomLeft(caretFinder.last);
 
         // The default trailing boundary of the default `SuperEditor`
-        const trailingBoundary = defaultAutoScrollBoundary;
+        const trailingBoundary = 54.0;
 
         // The caret should be at the trailing boundary, within a small margin of error
         expect(caretOffset.dy, lessThanOrEqualTo(screenSizeWithKeyboard.height - trailingBoundary));
         expect(caretOffset.dy, greaterThanOrEqualTo(screenSizeWithKeyboard.height - trailingBoundary));
-      });
-
-      testWidgetsOnAllPlatforms("doesn't jump the content when typing at the first line", (tester) async {
-        final scrollController = ScrollController();
-
-        await tester //
-            .createDocument()
-            .withSingleParagraph()
-            .withScrollController(scrollController)
-            .withInputSource(DocumentInputSource.keyboard)
-            .pump();
-        
-        // Ensure the editor starts without any scrolling.
-        expect(scrollController.position.pixels, 0);
-
-        // Place caret at the beginning of the document.
-        await tester.placeCaretInParagraph('1', 0);
-
-        // Simulate the user typing.
-        await tester.typeKeyboardText("A");
-
-        // Ensure typing doesn't cause the content to jump.
-        expect(scrollController.position.pixels, 0);
       });
     });
   });
