@@ -6,6 +6,7 @@ import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
+import 'package:super_editor/src/default_editor/metrics.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
@@ -32,7 +33,7 @@ class IOSDocumentTouchInteractor extends StatefulWidget {
     required this.documentKey,
     required this.getDocumentLayout,
     this.scrollController,
-    this.dragAutoScrollBoundary = const AxisOffset.symmetric(54),
+    this.dragAutoScrollBoundary = const AxisOffset.symmetric(defaultAutoScrollBoundary),
     required this.handleColor,
     required this.popoverToolbarBuilder,
     required this.floatingCursorController,
@@ -53,7 +54,7 @@ class IOSDocumentTouchInteractor extends StatefulWidget {
   /// The closest that the user's selection drag gesture can get to the
   /// document boundary before auto-scrolling.
   ///
-  /// The default value is `54.0` pixels for both the leading and trailing
+  /// The default value is defined at `defaultAutoScrollBoundary` for both the leading and trailing
   /// edges.
   final AxisOffset dragAutoScrollBoundary;
 
