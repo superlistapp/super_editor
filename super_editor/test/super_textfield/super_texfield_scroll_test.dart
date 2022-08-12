@@ -100,6 +100,23 @@ void main() {
       );
       await tester.pump();
 
+      // The original issue was that the textfield was calculating a viewport height 
+      // that wasn't big enough to display the text, causing it to be scrollable.
+      // The textfield sizes it's viewport based on a estimated line height, so if the
+      // true line height differs from the estimated one, the issue happens.
+      //
+      // Ideally we should test if the textfield's ScrollController has a zero maxScrollExtent,
+      // to prove that it's not scrollable.
+      // However, I couldn't reproduce a failing test with this expectation.
+      // For example: when running the app, the SuperText inside the textfield with a 
+      // fontSize of 14 is 19 pixels tall.
+      // Running the test it is 14 pixels tall, even loading the app fonts.
+      // Because of this, SuperText fits inside the textfield's Scrollview and the scrolling
+      // issue doesn't happen.
+      //
+      // This test only ensures that the viewport height isn't too small, checking if a
+      // calculated line height plus padding fits inside the viewport.
+
       final viewportHeight = tester.getRect(find.byType(SuperTextFieldScrollview)).height;
 
       final layoutState = (find.byType(SuperDesktopTextField).evaluate().single as StatefulElement).state as SuperDesktopTextFieldState;
