@@ -249,18 +249,26 @@ class DragHandleAutoScroller {
     if (offsetInViewport.dy < _dragAutoScrollBoundary.leading) {
       // The offset is above the leading boundary. We need to scroll up
       editorGesturesLog.fine("The scrollable needs to scroll up to make offset visible.");
-      // Jump to the position where the offset sits at the leading boundary
-      scrollPosition.jumpTo(
-        currentScrollOffset + (offsetInViewport.dy - _dragAutoScrollBoundary.leading),
-      );
+
+      // If currentScrollOffset isn't greater than zero it means we are already
+      // at the top edge of the scrollable, so we can't scroll further up.
+      if (currentScrollOffset > 0.0) {
+        // Jump to the position where the offset sits at the leading boundary.
+        scrollPosition.jumpTo(
+          currentScrollOffset + (offsetInViewport.dy - _dragAutoScrollBoundary.leading),
+        );
+      }
     } else if (offsetInViewport.dy > _getViewportBox().size.height - _dragAutoScrollBoundary.trailing) {
       // The offset is below the trailing boundary. We need to scroll down
       editorGesturesLog.fine('The scrollable needs to scroll down to make offset visible.');
-      // Jump to the position where the offset sits at the trailing boundary
-      scrollPosition.jumpTo(
-        currentScrollOffset +
-            (offsetInViewport.dy - (_getViewportBox().size.height - _dragAutoScrollBoundary.trailing)),
-      );
+      // If currentScrollOffset isn't lesser than the maxScrollExtent it means
+      // we are already at the bottom edge of the scrollable, so we can't scroll further down.
+      if (currentScrollOffset < scrollPosition.maxScrollExtent) {
+        // Jump to the position where the offset sits at the trailing boundary
+        scrollPosition.jumpTo(
+          currentScrollOffset + (offsetInViewport.dy - (_getViewportBox().size.height - _dragAutoScrollBoundary.trailing)),
+        );
+      }
     }
   }
 
