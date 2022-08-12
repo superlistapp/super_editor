@@ -10,6 +10,11 @@ PUSHD super_text_layout
 CALL flutter test || GOTO :END
 POPD
 
+@ECHO.
+@ECHO.
+@ECHO Testing complete.
+GOTO :EOF
+
 :END
 @ECHO.
 @ECHO.
