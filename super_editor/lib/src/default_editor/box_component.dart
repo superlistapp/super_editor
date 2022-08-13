@@ -278,13 +278,16 @@ class SelectableBox extends StatelessWidget {
   Widget build(BuildContext context) {
     final isSelected = selection != null && !selection!.isCollapsed;
 
-    return IgnorePointer(
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: isSelected ? selectionColor.withOpacity(0.5) : Colors.transparent,
+    return MouseRegion(
+      cursor: SystemMouseCursors.basic,
+      child: IgnorePointer(
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: isSelected ? selectionColor.withOpacity(0.5) : Colors.transparent,
+          ),
+          position: DecorationPosition.foreground,
+          child: child,
         ),
-        position: DecorationPosition.foreground,
-        child: child,
       ),
     );
   }
