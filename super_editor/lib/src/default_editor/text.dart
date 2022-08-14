@@ -287,21 +287,6 @@ mixin TextComponentViewModel on SingleColumnLayoutComponentViewModel {
   /// list returned from [styledSelections].
   set styledSelections(List<StyledSelection<TextSelection>> styledSelections);
 
-  // TextSelection? get selection;
-  // set selection(TextSelection? selection);
-  //
-  // Color get selectionColor;
-  // set selectionColor(Color color);
-
-  TextPosition? get caret;
-  set caret(TextPosition? position);
-
-  Color get caretColor;
-  set caretColor(Color color);
-
-  // bool get highlightWhenEmpty;
-  // set highlightWhenEmpty(bool highlight);
-
   @override
   void applyStyles(Map<String, dynamic> styles) {
     super.applyStyles(styles);

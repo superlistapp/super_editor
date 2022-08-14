@@ -187,7 +187,6 @@ class HeaderWithHintComponentBuilder implements ComponentBuilder {
         color: const Color(0xFFDDDDDD),
       ),
       styledSelections: componentViewModel.styledSelections,
-      showCaret: componentViewModel.caret != null,
     );
   }
 }

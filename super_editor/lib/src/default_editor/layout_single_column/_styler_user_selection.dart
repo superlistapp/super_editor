@@ -186,9 +186,6 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase imp
         styledSelections.add(StyledSelection(
           selection: textSelection,
           hasCaret: false, // non-primary selections never have a caret
-          // TODO: the styler decides whether to highlight an empty block, but it shouldn't.
-          // That decision needs to be made based on whether the user is selecting multiple
-          // blocks.
           styles: _nonPrimarySelectionStyler!(nonPrimarySelection)!,
         ));
       }

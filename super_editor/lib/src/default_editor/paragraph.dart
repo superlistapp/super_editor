@@ -68,7 +68,6 @@ class ParagraphComponentBuilder implements ComponentBuilder {
       textStyleBuilder: noStyleBuilder,
       textDirection: textDirection,
       textAlignment: textAlign,
-      caretColor: const Color(0x00000000),
     );
   }
 
@@ -80,10 +79,6 @@ class ParagraphComponentBuilder implements ComponentBuilder {
     }
 
     editorLayoutLog.fine("Building paragraph component for node: ${componentViewModel.nodeId}");
-
-    if (componentViewModel.caret != null) {
-      editorLayoutLog.finer(' - painting caret in paragraph');
-    }
 
     if (componentViewModel.styledSelections.isNotEmpty) {
       editorLayoutLog.finer(' - painting a text selection:');
@@ -120,8 +115,6 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
     this.textDirection = TextDirection.ltr,
     this.textAlignment = TextAlign.left,
     List<StyledSelection<TextSelection>>? styledSelections,
-    this.caret,
-    required this.caretColor,
   })  : styledSelections = styledSelections ?? [],
         super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
 
@@ -135,10 +128,6 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
   TextAlign textAlignment;
   @override
   List<StyledSelection<TextSelection>> styledSelections;
-  @override
-  TextPosition? caret;
-  @override
-  Color caretColor;
 
   @override
   ParagraphComponentViewModel copy() {
@@ -152,8 +141,6 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
       textDirection: textDirection,
       textAlignment: textAlignment,
       styledSelections: styledSelections,
-      caret: caret,
-      caretColor: caretColor,
     );
   }
 
@@ -169,8 +156,6 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
           textStyleBuilder == other.textStyleBuilder &&
           textDirection == other.textDirection &&
           textAlignment == other.textAlignment &&
-          caret == other.caret &&
-          caretColor == other.caretColor &&
           const DeepCollectionEquality().equals(styledSelections, other.styledSelections);
 
   @override
@@ -182,9 +167,7 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
       textStyleBuilder.hashCode ^
       textDirection.hashCode ^
       textAlignment.hashCode ^
-      styledSelections.hashCode ^
-      caret.hashCode ^
-      caretColor.hashCode;
+      styledSelections.hashCode;
 }
 
 /// Combines two consecutive `ParagraphNode`s, indicated by `firstNodeId`
