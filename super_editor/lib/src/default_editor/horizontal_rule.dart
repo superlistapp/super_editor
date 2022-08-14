@@ -1,5 +1,7 @@
 import 'package:attributed_text/attributed_text.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:super_editor/src/core/styles.dart';
 import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
 
 import '../core/document.dart';
@@ -51,8 +53,6 @@ class HorizontalRuleComponentBuilder implements ComponentBuilder {
 
     return HorizontalRuleComponentViewModel(
       nodeId: node.id,
-      selectionColor: const Color(0x00000000),
-      caretColor: const Color(0x00000000),
     );
   }
 
@@ -65,10 +65,7 @@ class HorizontalRuleComponentBuilder implements ComponentBuilder {
 
     return HorizontalRuleComponent(
       componentKey: componentContext.componentKey,
-      selection: componentViewModel.selection,
-      selectionColor: componentViewModel.selectionColor,
-      showCaret: componentViewModel.caret != null,
-      caretColor: componentViewModel.caretColor,
+      styledSelections: componentViewModel.styledSelections,
     );
   }
 }
@@ -78,16 +75,11 @@ class HorizontalRuleComponentViewModel extends SingleColumnLayoutComponentViewMo
     required String nodeId,
     double? maxWidth,
     EdgeInsetsGeometry padding = EdgeInsets.zero,
-    this.selection,
-    required this.selectionColor,
-    this.caret,
-    required this.caretColor,
-  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
+    List<StyledSelection<UpstreamDownstreamNodeSelection>>? styledSelections,
+  })  : styledSelections = styledSelections ?? [],
+        super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
 
-  UpstreamDownstreamNodeSelection? selection;
-  Color selectionColor;
-  UpstreamDownstreamNodePosition? caret;
-  Color caretColor;
+  List<StyledSelection<UpstreamDownstreamNodeSelection>> styledSelections;
 
   @override
   HorizontalRuleComponentViewModel copy() {
@@ -95,10 +87,7 @@ class HorizontalRuleComponentViewModel extends SingleColumnLayoutComponentViewMo
       nodeId: nodeId,
       maxWidth: maxWidth,
       padding: padding,
-      selection: selection,
-      selectionColor: selectionColor,
-      caret: caret,
-      caretColor: caretColor,
+      styledSelections: List.from(styledSelections),
     );
   }
 
@@ -109,19 +98,10 @@ class HorizontalRuleComponentViewModel extends SingleColumnLayoutComponentViewMo
           other is HorizontalRuleComponentViewModel &&
           runtimeType == other.runtimeType &&
           nodeId == other.nodeId &&
-          selection == other.selection &&
-          selectionColor == other.selectionColor &&
-          caret == other.caret &&
-          caretColor == other.caretColor;
+          const DeepCollectionEquality().equals(styledSelections, other.styledSelections);
 
   @override
-  int get hashCode =>
-      super.hashCode ^
-      nodeId.hashCode ^
-      selection.hashCode ^
-      selectionColor.hashCode ^
-      caret.hashCode ^
-      caretColor.hashCode;
+  int get hashCode => super.hashCode ^ nodeId.hashCode ^ styledSelections.hashCode;
 }
 
 /// Displays a horizontal rule in a document.
@@ -131,25 +111,18 @@ class HorizontalRuleComponent extends StatelessWidget {
     required this.componentKey,
     this.color = Colors.grey,
     this.thickness = 1,
-    this.selectionColor = Colors.blue,
-    this.selection,
-    required this.caretColor,
-    this.showCaret = false,
+    this.styledSelections = const [],
   }) : super(key: key);
 
   final GlobalKey componentKey;
   final Color color;
   final double thickness;
-  final Color selectionColor;
-  final UpstreamDownstreamNodeSelection? selection;
-  final Color caretColor;
-  final bool showCaret;
+  final List<StyledSelection<UpstreamDownstreamNodeSelection>> styledSelections;
 
   @override
   Widget build(BuildContext context) {
     return SelectableBox(
-      selection: selection,
-      selectionColor: selectionColor,
+      styledSelections: styledSelections,
       child: BoxComponent(
         key: componentKey,
         child: Divider(

@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:example/demos/example_editor/_task.dart';
 import 'package:example/logging.dart';
 import 'package:flutter/foundation.dart';
@@ -55,11 +53,28 @@ class _ExampleEditorState extends State<ExampleEditor> {
               nodeId: nodeId,
               nodePosition: TextNodePosition.fromTextPosition(TextPosition(offset: 10)),
             ),
+            // extent: DocumentPosition(
+            //   nodeId: nodeId,
+            //   nodePosition: TextNodePosition.fromTextPosition(TextPosition(offset: 50)),
+            // ),
             extent: DocumentPosition(
-              nodeId: nodeId,
-              nodePosition: TextNodePosition.fromTextPosition(TextPosition(offset: 50)),
+              nodeId: _doc.nodes[4].id,
+              nodePosition: TextNodePosition.fromTextPosition(TextPosition(offset: 10)),
+            ),
+          ))
+      ..setNonPrimarySelection(
+          "sally",
+          DocumentSelection(
+            base: DocumentPosition(
+              nodeId: _doc.nodes[0].id,
+              nodePosition: _doc.nodes[0].beginningPosition,
+            ),
+            extent: DocumentPosition(
+              nodeId: _doc.nodes[0].id,
+              nodePosition: _doc.nodes[0].endPosition,
             ),
           ));
+    ;
     _docOps = CommonEditorOperations(
       editor: _docEditor,
       composer: _composer,
@@ -370,10 +385,19 @@ class _ExampleEditorState extends State<ExampleEditor> {
           ],
         ),
         nonPrimarySelectionStyler: (NonPrimarySelection selection) {
-          return SelectionStyles(
-            caretColor: Colors.black,
-            selectionColor: Colors.purpleAccent,
-          );
+          if (selection.id == "john") {
+            return SelectionStyles(
+              caretColor: Colors.black,
+              selectionColor: Colors.purpleAccent,
+            );
+          } else if (selection.id == "sally") {
+            return SelectionStyles(
+              caretColor: Colors.black,
+              selectionColor: Colors.yellow,
+            );
+          }
+
+          return SelectionStyles(caretColor: Colors.transparent, selectionColor: Colors.transparent);
         },
         componentBuilders: [
           ...defaultComponentBuilders,
