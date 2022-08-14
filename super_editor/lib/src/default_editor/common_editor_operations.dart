@@ -2256,10 +2256,8 @@ class _PasteEditorCommand implements EditorCommand {
 
       // Check for urls in the pasted text and apply [LinkAttribution] appropriately
       _convertURLsInPastedTextToLink(
-        text: splitContent.first,
+        pastedText: splitContent.first,
         textNode: textNode,
-        document: document,
-        transaction: transaction,
       );
 
       // At this point in the paste process, the document selection
@@ -2320,19 +2318,17 @@ class _PasteEditorCommand implements EditorCommand {
     editorOpsLog.fine('Done with paste command.');
   }
 
-  /// Check for each word in the pasted text. If the word is a valid URL,
-  /// convert it into link by adding [LinkAttribution]
+  /// Finds all URLs in the text within the given [textNode] and applies a
+  /// [LinkAttribution] to each one.
   void _convertURLsInPastedTextToLink({
-    required String text,
+    required String pastedText,
     required TextNode textNode,
-    required Document document,
-    required DocumentEditorTransaction transaction,
   }) {
     final textPosition = _pastePosition.nodePosition as TextNodePosition;
-    final wordBoundaries = text.calculateAllWordBoundaries();
+    final wordBoundaries = pastedText.calculateAllWordBoundaries();
 
     for (final wordBoundary in wordBoundaries) {
-      final word = wordBoundary.textInside(text);
+      final word = wordBoundary.textInside(pastedText);
       final link = Uri.tryParse(word);
 
       if (link != null && link.hasScheme && link.hasAuthority) {
