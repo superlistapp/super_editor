@@ -296,13 +296,9 @@ class StyledSelection<SelectionType> {
 /// Styles applied to a document selection, e.g., caret, selected text.
 class SelectionStyles {
   const SelectionStyles({
-    required this.caretColor,
     required this.selectionColor,
     this.highlightEmptyTextBlocks = true,
   });
-
-  /// The color of the caret.
-  final Color caretColor;
 
   /// The color of selection rectangles.
   final Color selectionColor;
@@ -316,10 +312,9 @@ class SelectionStyles {
       identical(this, other) ||
       other is SelectionStyles &&
           runtimeType == other.runtimeType &&
-          caretColor == other.caretColor &&
           selectionColor == other.selectionColor &&
           highlightEmptyTextBlocks == other.highlightEmptyTextBlocks;
 
   @override
-  int get hashCode => caretColor.hashCode ^ selectionColor.hashCode ^ highlightEmptyTextBlocks.hashCode;
+  int get hashCode => selectionColor.hashCode ^ highlightEmptyTextBlocks.hashCode;
 }

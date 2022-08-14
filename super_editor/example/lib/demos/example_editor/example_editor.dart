@@ -372,12 +372,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
             CaretStyle().copyWith(color: _isLight ? Colors.black : Colors.redAccent),
           ),
         ],
-        selectionStyle: _isLight
-            ? defaultSelectionStyle
-            : SelectionStyles(
-                caretColor: Colors.black,
-                selectionColor: Colors.red.withOpacity(0.3),
-              ),
+        selectionStyle: _isLight ? defaultSelectionStyle : SelectionStyles(selectionColor: Colors.red.withOpacity(0.3)),
         stylesheet: defaultStylesheet.copyWith(
           addRulesAfter: [
             if (!_isLight) ..._darkModeStyles,
@@ -387,17 +382,15 @@ class _ExampleEditorState extends State<ExampleEditor> {
         nonPrimarySelectionStyler: (NonPrimarySelection selection) {
           if (selection.id == "john") {
             return SelectionStyles(
-              caretColor: Colors.black,
               selectionColor: Colors.purpleAccent,
             );
           } else if (selection.id == "sally") {
             return SelectionStyles(
-              caretColor: Colors.black,
               selectionColor: Colors.yellow,
             );
           }
 
-          return SelectionStyles(caretColor: Colors.transparent, selectionColor: Colors.transparent);
+          return SelectionStyles(selectionColor: Colors.transparent);
         },
         componentBuilders: [
           ...defaultComponentBuilders,

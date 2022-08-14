@@ -225,7 +225,6 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase imp
           styles: SelectionStyles(
             selectionColor: _selectionStyles.selectionColor,
             highlightEmptyTextBlocks: nodeSelection.highlightWhenEmpty,
-            caretColor: _selectionStyles.caretColor,
           ),
         ));
       }
@@ -309,7 +308,6 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase imp
           styles: SelectionStyles(
             selectionColor: _selectionStyles.selectionColor,
             highlightEmptyTextBlocks: nodeSelection.highlightWhenEmpty,
-            caretColor: _selectionStyles.caretColor,
           ),
         ));
       }

@@ -922,6 +922,5 @@ TextStyle defaultStyleBuilder(Set<Attribution> attributions) {
 
 /// Default visual styles related to content selection.
 const defaultSelectionStyle = SelectionStyles(
-  caretColor: Color(0xFF000000),
   selectionColor: Color(0xFFACCEF7),
 );
