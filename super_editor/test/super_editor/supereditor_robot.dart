@@ -39,8 +39,14 @@ extension SuperEditorRobot on WidgetTester {
 
     // Collect the various text UI artifacts needed to find the
     // desired caret offset.
-    final textComponentState = documentLayout.getComponentByNodeId(nodeId) as State;
-    final textComponentKey = textComponentState.widget.key as GlobalKey;
+    final componentState = documentLayout.getComponentByNodeId(nodeId) as State;
+    late final GlobalKey textComponentKey;
+    if (componentState is ProxyDocumentComponent) {
+      textComponentKey = componentState.childDocumentComponentKey;
+    } else {
+      textComponentKey = componentState.widget.key as GlobalKey;
+    }
+
     final textLayout = (textComponentKey.currentState as TextComponentState).textLayout;
     final textRenderBox = textComponentKey.currentContext!.findRenderObject() as RenderBox;
 

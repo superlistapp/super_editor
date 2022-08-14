@@ -1,6 +1,3 @@
-import 'dart:math';
-
-import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
@@ -11,6 +8,7 @@ import 'package:super_editor/src/infrastructure/super_textfield/android/_user_in
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/hint_text.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/text_scrollview.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/input_method_engine/_ime_text_editing_controller.dart';
+import 'package:super_editor/src/infrastructure/super_textfield/input_method_engine/ime_input_owner.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
 import '../../_logging.dart';
@@ -127,7 +125,9 @@ class SuperAndroidTextField extends StatefulWidget {
   State createState() => SuperAndroidTextFieldState();
 }
 
-class SuperAndroidTextFieldState extends State<SuperAndroidTextField> with TickerProviderStateMixin, WidgetsBindingObserver implements ProseTextBlock {
+class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
+    with TickerProviderStateMixin, WidgetsBindingObserver
+    implements ProseTextBlock, ImeInputOwner {
   static const Duration _autoScrollAnimationDuration = Duration(milliseconds: 100);
   static const Curve _autoScrollAnimationCurve = Curves.fastOutSlowIn;
 
@@ -273,6 +273,9 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField> with Ticke
   @override
   ProseTextLayout get textLayout => _textContentKey.currentState!.textLayout;
 
+  @override
+  DeltaTextInputClient get imeClient => _textEditingController;
+
   bool get _isMultiline => (widget.minLines ?? 1) != 1 || widget.maxLines != 1;
 
   void _onFocusChange() {
@@ -415,7 +418,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField> with Ticke
     final fieldBox = context.findRenderObject() as RenderBox;
 
     // The area of the text field that should be revealed.
-    // We add a small margin to leave some space between the text field and the keyboard.    
+    // We add a small margin to leave some space between the text field and the keyboard.
     final textFieldFocalRect = Rect.fromLTWH(
       textFieldFocalPoint.dx,
       textFieldFocalPoint.dy,
@@ -437,8 +440,8 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField> with Ticke
     }
 
     final direction = ancestorScrollable.axisDirection;
-    // If the direction is horizontal, then we are inside a widget like a TabBar 
-    // or a horizontal ListView, so we can't use the ancestor scrollable 
+    // If the direction is horizontal, then we are inside a widget like a TabBar
+    // or a horizontal ListView, so we can't use the ancestor scrollable
     if (direction == AxisDirection.left || direction == AxisDirection.right) {
       return null;
     }

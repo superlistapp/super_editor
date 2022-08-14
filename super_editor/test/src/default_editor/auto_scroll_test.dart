@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:super_editor/src/infrastructure/blinking_caret.dart';
 import 'package:super_editor/super_editor.dart';
 
+import '../../super_editor/document_test_tools.dart';
+import '../../super_editor/supereditor_robot.dart';
+import '../../test_tools.dart';
 import '../_document_test_tools.dart';
 
 void main() {
@@ -86,6 +90,97 @@ void main() {
         // The caret should be at the trailing boundary, within a small margin of error
         expect(caretOffset.dy, lessThanOrEqualTo(screenSizeWithKeyboard.height - trailingBoundary));
         expect(caretOffset.dy, greaterThanOrEqualTo(screenSizeWithKeyboard.height - trailingBoundary));
+      });
+
+      testWidgetsOnAllPlatforms("doesn't jump the content when typing at the first line", (tester) async {
+        final scrollController = ScrollController();
+
+        // We use a custom stylesheet to avoid any padding, ensuring that the text
+        // will be close to the edge.
+        await tester //
+            .createDocument()
+            .withSingleParagraph()
+            .withScrollController(scrollController)
+            .withInputSource(DocumentInputSource.keyboard)
+            .useStylesheet(
+              Stylesheet(
+                inlineTextStyler: (Set<Attribution> attributions, TextStyle base) {
+                  return base;
+                },
+                rules: [
+                  StyleRule(BlockSelector.all, (document, node) {
+                    return {
+                      "textStyle": const TextStyle(
+                        color: Colors.black,
+                      ),
+                    };
+                  }),
+                ],
+              ),
+            )
+            .pump();
+
+        // Ensure the editor starts without any scrolling.
+        expect(scrollController.position.pixels, 0);
+
+        // Place caret at the beginning of the document.
+        await tester.placeCaretInParagraph('1', 0);
+
+        // Simulate the user typing.
+        await tester.typeKeyboardText("A");
+
+        // Ensure typing doesn't cause the content to jump.
+        expect(scrollController.position.pixels, 0);
+      });
+
+      testWidgetsOnAllPlatforms("doesn't jump the content when typing at the last line", (tester) async {
+        final scrollController = ScrollController();
+
+        // Pump an editor with a size that will know will cause it to be scrollable.
+        // We use a custom stylesheet to avoid any padding, ensuring that the text
+        // will be close to the edge.
+        await tester //
+            .createDocument()
+            .withSingleParagraph()
+            .withScrollController(scrollController)
+            .withInputSource(DocumentInputSource.keyboard)
+            .withEditorSize(const Size(600, 100))
+            .useStylesheet(
+              Stylesheet(
+                inlineTextStyler: (Set<Attribution> attributions, TextStyle base) {
+                  return base;
+                },
+                rules: [
+                  StyleRule(BlockSelector.all, (document, node) {
+                    return {
+                      "textStyle": const TextStyle(
+                        color: Colors.black,
+                      ),
+                    };
+                  }),
+                ],
+              ),
+            )
+            .pump();
+
+        // Ensure the editor starts without any scrolling.
+        expect(scrollController.position.pixels, 0);
+
+        // Ensure the editor is scrollable.
+        expect(scrollController.position.maxScrollExtent, greaterThan(0));
+
+        // On mobile, changing the selection isn't causing the editor
+        // to reveal the selection, so we manually jump to the end of the scrollable
+        // and then change the selection.
+        scrollController.position.jumpTo(scrollController.position.maxScrollExtent);
+        // Place caret at last line of the editor.
+        await tester.placeCaretInParagraph('1', 444);
+
+        // Simulate the user typing.
+        await tester.typeKeyboardText("A");
+
+        // Ensure typing doesn't cause the content to jump.
+        expect(scrollController.position.pixels, scrollController.position.maxScrollExtent);
       });
     });
   });

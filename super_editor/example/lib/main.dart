@@ -3,21 +3,21 @@ import 'package:example/demos/components/demo_unselectable_hr.dart';
 import 'package:example/demos/debugging/simple_deltas_input.dart';
 import 'package:example/demos/demo_app_shortcuts.dart';
 import 'package:example/demos/demo_empty_document.dart';
-import 'package:example/demos/demo_rtl.dart';
 import 'package:example/demos/demo_markdown_serialization.dart';
 import 'package:example/demos/demo_paragraphs.dart';
+import 'package:example/demos/demo_rtl.dart';
 import 'package:example/demos/demo_selectable_text.dart';
 import 'package:example/demos/editor_configs/demo_mobile_editing_android.dart';
 import 'package:example/demos/editor_configs/demo_mobile_editing_ios.dart';
 import 'package:example/demos/example_editor/example_editor.dart';
 import 'package:example/demos/flutter_features/demo_inline_widgets.dart';
 import 'package:example/demos/flutter_features/textinputclient/basic_text_input_client.dart';
-import 'package:example/demos/scrolling/demo_task_and_chat_with_customscrollview.dart';
-import 'package:example/demos/styles/demo_doc_styles.dart';
-import 'package:example/demos/supertextfield/ios/demo_superiostextfield.dart';
 import 'package:example/demos/flutter_features/textinputclient/textfield.dart';
+import 'package:example/demos/scrolling/demo_task_and_chat_with_customscrollview.dart';
 import 'package:example/demos/sliver_example_editor.dart';
+import 'package:example/demos/styles/demo_doc_styles.dart';
 import 'package:example/demos/supertextfield/demo_textfield.dart';
+import 'package:example/demos/supertextfield/ios/demo_superiostextfield.dart';
 import 'package:example/logging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -117,25 +117,29 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // We need our own [Overlay] instead of the one created by the navigator
-    // because overlay entries added to navigator's [Overlay] are always
-    // displayed above all routes.
-    //
-    // We display the editor's toolbar in an [OverlayEntry], so inserting it
-    // at the navigator's [Overlay] causes widgets that are displayed in routes,
-    // e.g. [DropdownButton] items, to be displayed beneath the toolbar.
-    return Overlay(
-      initialEntries: [
-        OverlayEntry(builder: (context) {
-          return Scaffold(
-            key: _scaffoldKey,
-            appBar: _buildAppBar(context),
-            extendBodyBehindAppBar: true,
-            body: _selectedMenuItem!.pageBuilder(context),
-            drawer: _buildDrawer(),
-          );
-        })
-      ],
+    // We need a FocusScope above the Overlay so that focus can be shared between
+    // SuperEditor in one OverlayEntry, and the popover toolbar in another OverlayEntry.
+    return FocusScope(
+      // We need our own [Overlay] instead of the one created by the navigator
+      // because overlay entries added to navigator's [Overlay] are always
+      // displayed above all routes.
+      //
+      // We display the editor's toolbar in an [OverlayEntry], so inserting it
+      // at the navigator's [Overlay] causes widgets that are displayed in routes,
+      // e.g. [DropdownButton] items, to be displayed beneath the toolbar.
+      child: Overlay(
+        initialEntries: [
+          OverlayEntry(builder: (context) {
+            return Scaffold(
+              key: _scaffoldKey,
+              appBar: _buildAppBar(context),
+              extendBodyBehindAppBar: true,
+              body: _selectedMenuItem!.pageBuilder(context),
+              drawer: _buildDrawer(),
+            );
+          })
+        ],
+      ),
     );
   }
 

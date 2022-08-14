@@ -206,7 +206,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
   bool _updateViewportHeight() {
     final estimatedLineHeight = _getEstimatedLineHeight();
     final estimatedLinesOfText = _getEstimatedLinesOfText();
-    final estimatedContentHeight = estimatedLinesOfText * estimatedLineHeight;
+    final estimatedContentHeight = (estimatedLinesOfText * estimatedLineHeight) + widget.padding.vertical;
     final minHeight = widget.minLines != null ? widget.minLines! * estimatedLineHeight + widget.padding.vertical : null;
     final maxHeight = widget.maxLines != null ? widget.maxLines! * estimatedLineHeight + widget.padding.vertical : null;
     double? viewportHeight;
@@ -248,6 +248,10 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
   }
 
   double _getEstimatedLineHeight() {
+    final lineHeight = _textKey.currentState?.textLayout.getLineHeightAtPosition(const TextPosition(offset: 0)) ?? 0;
+    if (lineHeight > 0) {
+      return lineHeight;
+    }
     final defaultStyle = widget.textStyleBuilder({});
     return (defaultStyle.height ?? 1.0) * defaultStyle.fontSize!;
   }

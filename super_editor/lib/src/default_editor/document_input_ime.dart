@@ -67,7 +67,7 @@ class DocumentImeInteractor extends StatefulWidget {
   final Widget child;
 
   @override
-  _DocumentImeInteractorState createState() => _DocumentImeInteractorState();
+  State createState() => _DocumentImeInteractorState();
 }
 
 class _DocumentImeInteractorState extends State<DocumentImeInteractor> implements DeltaTextInputClient {
@@ -862,7 +862,7 @@ class SoftwareKeyboardHandler {
       // On iOS, newlines are reported here and also to performAction().
       // On Android and web, newlines are only reported here. So, on Android and web,
       // we forward the newline action to performAction.
-      if (defaultTargetPlatform == TargetPlatform.android || kIsWeb) {              
+      if (defaultTargetPlatform == TargetPlatform.android || kIsWeb) {
         editorImeLog.fine("Received a newline insertion on Android. Forwarding to newline input action.");
         performAction(TextInputAction.newline);
       } else {

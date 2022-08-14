@@ -269,76 +269,78 @@ mixin DocumentComponent<T extends StatefulWidget> on State<T> {
 /// to provide is [childDocumentComponentKey], which is a `GlobalKey` that provides
 /// access to the child [DocumentComponent].
 mixin ProxyDocumentComponent<T extends StatefulWidget> implements DocumentComponent<T> {
-  DocumentComponent get childDocumentComponentKey;
+  GlobalKey get childDocumentComponentKey;
+
+  DocumentComponent get childDocumentComponent => childDocumentComponentKey.currentState as DocumentComponent;
 
   @override
   NodePosition? getPositionAtOffset(Offset localOffset) {
-    return childDocumentComponentKey.getPositionAtOffset(localOffset);
+    return childDocumentComponent.getPositionAtOffset(localOffset);
   }
 
   @override
   Offset getOffsetForPosition(NodePosition nodePosition) {
-    return childDocumentComponentKey.getOffsetForPosition(nodePosition);
+    return childDocumentComponent.getOffsetForPosition(nodePosition);
   }
 
   @override
   Rect getRectForPosition(NodePosition nodePosition) {
-    return childDocumentComponentKey.getRectForPosition(nodePosition);
+    return childDocumentComponent.getRectForPosition(nodePosition);
   }
 
   @override
   Rect getRectForSelection(NodePosition baseNodePosition, NodePosition extentNodePosition) {
-    return childDocumentComponentKey.getRectForSelection(baseNodePosition, extentNodePosition);
+    return childDocumentComponent.getRectForSelection(baseNodePosition, extentNodePosition);
   }
 
   @override
   NodePosition getBeginningPosition() {
-    return childDocumentComponentKey.getBeginningPosition();
+    return childDocumentComponent.getBeginningPosition();
   }
 
   @override
   NodePosition getBeginningPositionNearX(double x) {
-    return childDocumentComponentKey.getBeginningPositionNearX(x);
+    return childDocumentComponent.getBeginningPositionNearX(x);
   }
 
   @override
   NodePosition? movePositionLeft(NodePosition currentPosition, [MovementModifier? movementModifier]) {
-    return childDocumentComponentKey.movePositionLeft(currentPosition, movementModifier);
+    return childDocumentComponent.movePositionLeft(currentPosition, movementModifier);
   }
 
   @override
   NodePosition? movePositionRight(NodePosition currentPosition, [MovementModifier? movementModifier]) {
-    return childDocumentComponentKey.movePositionRight(currentPosition, movementModifier);
+    return childDocumentComponent.movePositionRight(currentPosition, movementModifier);
   }
 
   @override
   NodePosition? movePositionUp(NodePosition currentPosition) {
-    return childDocumentComponentKey.movePositionUp(currentPosition);
+    return childDocumentComponent.movePositionUp(currentPosition);
   }
 
   @override
   NodePosition? movePositionDown(NodePosition currentPosition) {
-    return childDocumentComponentKey.movePositionDown(currentPosition);
+    return childDocumentComponent.movePositionDown(currentPosition);
   }
 
   @override
   NodePosition getEndPosition() {
-    return childDocumentComponentKey.getEndPosition();
+    return childDocumentComponent.getEndPosition();
   }
 
   @override
   NodePosition getEndPositionNearX(double x) {
-    return childDocumentComponentKey.getEndPositionNearX(x);
+    return childDocumentComponent.getEndPositionNearX(x);
   }
 
   @override
   NodeSelection? getSelectionInRange(Offset localBaseOffset, Offset localExtentOffset) {
-    return childDocumentComponentKey.getSelectionInRange(localBaseOffset, localExtentOffset);
+    return childDocumentComponent.getSelectionInRange(localBaseOffset, localExtentOffset);
   }
 
   @override
   NodeSelection getCollapsedSelectionAt(NodePosition nodePosition) {
-    return childDocumentComponentKey.getCollapsedSelectionAt(nodePosition);
+    return childDocumentComponent.getCollapsedSelectionAt(nodePosition);
   }
 
   @override
@@ -346,20 +348,20 @@ mixin ProxyDocumentComponent<T extends StatefulWidget> implements DocumentCompon
     required NodePosition basePosition,
     required NodePosition extentPosition,
   }) {
-    return childDocumentComponentKey.getSelectionBetween(basePosition: basePosition, extentPosition: extentPosition);
+    return childDocumentComponent.getSelectionBetween(basePosition: basePosition, extentPosition: extentPosition);
   }
 
   @override
   NodeSelection getSelectionOfEverything() {
-    return childDocumentComponentKey.getSelectionOfEverything();
+    return childDocumentComponent.getSelectionOfEverything();
   }
 
   @override
-  bool isVisualSelectionSupported() => childDocumentComponentKey.isVisualSelectionSupported();
+  bool isVisualSelectionSupported() => childDocumentComponent.isVisualSelectionSupported();
 
   @override
   MouseCursor? getDesiredCursorAtOffset(Offset localOffset) {
-    return childDocumentComponentKey.getDesiredCursorAtOffset(localOffset);
+    return childDocumentComponent.getDesiredCursorAtOffset(localOffset);
   }
 }
 

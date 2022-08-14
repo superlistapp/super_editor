@@ -8,6 +8,7 @@ import 'package:super_editor/src/infrastructure/focus.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/hint_text.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/text_scrollview.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/input_method_engine/_ime_text_editing_controller.dart';
+import 'package:super_editor/src/infrastructure/super_textfield/input_method_engine/ime_input_owner.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/ios/_editing_controls.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
@@ -128,7 +129,9 @@ class SuperIOSTextField extends StatefulWidget {
   State createState() => SuperIOSTextFieldState();
 }
 
-class SuperIOSTextFieldState extends State<SuperIOSTextField> with TickerProviderStateMixin, WidgetsBindingObserver implements ProseTextBlock {
+class SuperIOSTextFieldState extends State<SuperIOSTextField>
+    with TickerProviderStateMixin, WidgetsBindingObserver
+    implements ProseTextBlock, ImeInputOwner {
   static const Duration _autoScrollAnimationDuration = Duration(milliseconds: 100);
   static const Curve _autoScrollAnimationCurve = Curves.fastOutSlowIn;
 
@@ -290,6 +293,9 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField> with TickerProvide
 
   bool get _isMultiline => (widget.minLines ?? 1) != 1 || widget.maxLines != 1;
 
+  @override
+  DeltaTextInputClient get imeClient => _textEditingController;
+
   void _onFocusChange() {
     if (_focusNode.hasFocus) {
       if (!_textEditingController.isAttachedToIme) {
@@ -411,7 +417,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField> with TickerProvide
     final fieldBox = context.findRenderObject() as RenderBox;
 
     // The area of the text field that should be revealed.
-    // We add a small margin to leave some space between the text field and the keyboard.    
+    // We add a small margin to leave some space between the text field and the keyboard.
     final textFieldFocalRect = Rect.fromLTWH(
       textFieldFocalPoint.dx,
       textFieldFocalPoint.dy,
@@ -433,8 +439,8 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField> with TickerProvide
     }
 
     final direction = ancestorScrollable.axisDirection;
-    // If the direction is horizontal, then we are inside a widget like a TabBar 
-    // or a horizontal ListView, so we can't use the ancestor scrollable 
+    // If the direction is horizontal, then we are inside a widget like a TabBar
+    // or a horizontal ListView, so we can't use the ancestor scrollable
     if (direction == AxisDirection.left || direction == AxisDirection.right) {
       return null;
     }

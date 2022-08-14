@@ -32,7 +32,7 @@ dependency_overrides:
 
 dev_dependencies:
   flutter_lints: ^2.0.1
-  flutter_test_robots: ^0.0.15
+  flutter_test_robots: ^0.0.17
   golden_toolkit: ^0.11.0
   mockito: ^5.0.4
   super_editor_markdown:

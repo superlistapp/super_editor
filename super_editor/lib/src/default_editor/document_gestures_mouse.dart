@@ -69,10 +69,6 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
   Offset? _dragEndGlobal;
   bool _expandSelectionDuringDrag = false;
 
-  // Current mouse cursor style displayed on screen.
-  Offset? _cursorGlobalOffset;
-  final _cursorStyle = ValueNotifier<MouseCursor>(SystemMouseCursors.basic);
-
   @override
   void initState() {
     super.initState();
@@ -329,7 +325,6 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     editorGesturesLog.info("Pan start on document, global offset: ${details.globalPosition}");
 
     _dragStartGlobal = details.globalPosition;
-    _cursorGlobalOffset = details.globalPosition;
 
     widget.autoScroller.enableAutoScrolling();
 
@@ -352,9 +347,7 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
       editorGesturesLog.info("Pan update on document, global offset: ${details.globalPosition}");
 
       _dragEndGlobal = details.globalPosition;
-      _cursorGlobalOffset = details.globalPosition;
 
-      _updateCursorStyle();
       _updateDragSelection();
 
       widget.autoScroller.setGlobalAutoScrollRegion(
@@ -391,22 +384,6 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     if (event is PointerScrollEvent) {
       widget.autoScroller.jumpBy(event.scrollDelta.dy);
       _updateDragSelection();
-    }
-  }
-
-  void _onMouseMove(PointerEvent pointerEvent) {
-    _cursorGlobalOffset = pointerEvent.position;
-    _updateCursorStyle();
-  }
-
-  void _updateCursorStyle() {
-    final cursorOffsetInDocument = _getDocOffsetFromGlobalOffset(_cursorGlobalOffset!);
-    final desiredCursor = _docLayout.getDesiredCursorAtOffset(cursorOffsetInDocument);
-
-    if (desiredCursor != null && desiredCursor != _cursorStyle.value) {
-      _cursorStyle.value = desiredCursor;
-    } else if (desiredCursor == null && _cursorStyle.value != SystemMouseCursors.basic) {
-      _cursorStyle.value = SystemMouseCursors.basic;
     }
   }
 
@@ -538,17 +515,8 @@ Updating drag selection:
   Widget _buildCursorStyle({
     required Widget child,
   }) {
-    return AnimatedBuilder(
-      animation: _cursorStyle,
-      builder: (context, child) {
-        return Listener(
-          onPointerHover: _onMouseMove,
-          child: MouseRegion(
-            cursor: _cursorStyle.value,
-            child: child,
-          ),
-        );
-      },
+    return MouseRegion(
+      cursor: SystemMouseCursors.text,
       child: child,
     );
   }

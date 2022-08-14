@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:golden_toolkit/golden_toolkit.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
@@ -65,6 +66,56 @@ void main() {
 
       // Ensure the text field scrolled its content vertically
       expect(textBottom, lessThanOrEqualTo(viewportBottom));
+    });
+
+    testWidgetsOnDesktop("doesn't scroll vertically when maxLines is null", (tester) async {
+      // With the Ahem font the estimated line height is equal to the true line height
+      // so we need to use a custom font.
+      await loadAppFonts();
+
+      // We use some padding because it affects the viewport height calculation.
+      const verticalPadding = 6.0;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: ConstrainedBox(
+              constraints: const BoxConstraints(minWidth: 300),
+              child: SuperDesktopTextField(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: verticalPadding),
+                minLines: 1,
+                maxLines: null,
+                textController: AttributedTextEditingController(
+                  text: AttributedText(text: "SuperTextField"),
+                ),
+                textStyleBuilder: (_) => const TextStyle(
+                  fontSize: 14,
+                  height: 1,
+                  fontFamily: 'Roboto',
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      // In the running app, the estimated line height and actual line height differ. 
+      // This test ensures that we account for that. Ideally, this test would check that the scrollview doesn't scroll. 
+      // However, in test suites, the estimated and actual line heights are always identical.
+      // Therefore, this test ensures that we add up the appropriate dimensions, 
+      // rather than verify the scrollview's max scroll extent.
+
+      final viewportHeight = tester.getRect(find.byType(SuperTextFieldScrollview)).height;
+
+      final layoutState = (find.byType(SuperDesktopTextField).evaluate().single as StatefulElement).state as SuperDesktopTextFieldState;
+      final contentHeight = layoutState.textLayout.getLineHeightAtPosition(const TextPosition(offset: 0));
+
+      // Vertical padding is added to both top and bottom
+      final totalHeight = contentHeight + (verticalPadding * 2);
+
+      // Ensure the viewport is big enough so the text doesn't scroll vertically
+      expect(viewportHeight, greaterThanOrEqualTo(totalHeight));
     });
   });
 }
