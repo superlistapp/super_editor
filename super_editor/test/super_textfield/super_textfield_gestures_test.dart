@@ -197,6 +197,8 @@ void main() {
         // Tap down and up so the field is focused.
         await tester.tap(find.byType(SuperTextField));
         await tester.pumpAndSettle();
+        // Avoid a double tap.
+        await tester.pump(kDoubleTapTimeout + const Duration(milliseconds: 1));
 
         // Ensure we are connected.
         expect(controller.isAttachedToIme, true);
