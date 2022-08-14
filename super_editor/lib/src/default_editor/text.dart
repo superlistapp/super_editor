@@ -775,12 +775,9 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
               ),
               selection: selection.selection,
               highlightWhenEmpty: selection.styles.highlightEmptyTextBlocks,
-              // TODO: remove carets from UserSelection, or add them to StyledSelection
-              caretStyle: const CaretStyle(
-                color: Colors.black,
-              ),
-              // We moved caret painting into the document overlay.
+              // We paint carets in an overlay. Never paint them in an individual component.
               hasCaret: false,
+              blinkCaret: false,
             )
         ],
       ),
