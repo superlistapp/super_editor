@@ -15,18 +15,25 @@ class FillWidthIfConstrained extends SingleChildRenderObjectWidget {
   @override
   RenderObject createRenderObject(BuildContext context) {
     return RenderFillWidthIfConstrained(
-      viewportWidth: _getViewportWidth(context),
+      minWidth: _getViewportWidth(context),
     );
   }
 
   @override
   void updateRenderObject(BuildContext context, RenderFillWidthIfConstrained renderObject) {
-    renderObject.viewportWidth = _getViewportWidth(context);
+    renderObject.minWidth = _getViewportWidth(context);
   }
 
   double? _getViewportWidth(BuildContext context) {
     final scrollable = Scrollable.of(context);
     if (scrollable == null) {
+      return null;
+    }
+
+    final direction = scrollable.axisDirection;
+    // We only need to specify the width if we are inside a horizontal scrollable,
+    // because in this case we might have an infinity maxWidth.    
+    if (direction == AxisDirection.up || direction == AxisDirection.down) {
       return null;
     }
     return (scrollable.context.findRenderObject() as RenderBox?)?.size.width;
@@ -35,15 +42,21 @@ class FillWidthIfConstrained extends SingleChildRenderObjectWidget {
 
 class RenderFillWidthIfConstrained extends RenderProxyBox {
   RenderFillWidthIfConstrained({
-    double? viewportWidth,
-  }) : _viewportWidth = viewportWidth;
+    double? minWidth,
+  }) : _minWidth = minWidth;
 
-  set viewportWidth(double? value) {
-    _viewportWidth = value;
+  /// Sets the minimum width the child widget needs to be.
+  /// 
+  /// This is needed when this widget is inside a horizontal Scrollable.
+  /// In this case, we might have an infinity maxWidth, so we need
+  /// to specify the Scrollable's width to force the child to
+  /// be at least this width.
+  set minWidth(double? value) {
+    _minWidth = value;
     markNeedsLayout();
   }
 
-  double? _viewportWidth = 0;
+  double? _minWidth;
 
   @override
   void performLayout() {
@@ -58,11 +71,11 @@ class RenderFillWidthIfConstrained extends RenderProxyBox {
         maxWidth: constraints.maxWidth,
         maxHeight: constraints.maxHeight,
       );
-    } else if (_viewportWidth != null) {
-      // If a viewport width is given, force the child to be at least this width.
+    } else if (_minWidth != null) {
+      // If a minWidth is given, force the child to be at least this width.
       // This is the case when this widget is placed inside an Scrollable.
       childConstraints = BoxConstraints(
-        minWidth: _viewportWidth!,
+        minWidth: _minWidth!,
         minHeight: constraints.minHeight,
         maxHeight: constraints.maxHeight,
       );
