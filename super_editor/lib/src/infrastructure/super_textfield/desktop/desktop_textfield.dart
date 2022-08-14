@@ -18,6 +18,7 @@ import 'package:super_text_layout/super_text_layout.dart';
 
 import '../../keyboard.dart';
 import '../../multi_tap_gesture.dart';
+import '../infrastructure/fill_width_if_constrained.dart';
 import '../styles.dart';
 
 final _log = textFieldLog;
@@ -301,6 +302,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
                 key: _textScrollKey,
                 textKey: _textKey,
                 textController: _controller,
+                textAlign: widget.textAlign,
                 scrollController: _scrollController,
                 viewportHeight: _viewportHeight,
                 estimatedLineHeight: _getEstimatedLineHeight(),
@@ -327,15 +329,17 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
   }
 
   Widget _buildSelectableText() {
-    return SuperTextWithSelection.single(
-      key: _textKey,
-      richText: _controller.text.computeTextSpan(widget.textStyleBuilder),
-      textAlign: widget.textAlign,
-      userSelection: UserSelection(
-        highlightStyle: widget.selectionHighlightStyle,
-        caretStyle: widget.caretStyle,
-        selection: _controller.selection,
-        hasCaret: _focusNode.hasFocus,
+    return FillWidthIfConstrained(
+      child: SuperTextWithSelection.single(
+        key: _textKey,
+        richText: _controller.text.computeTextSpan(widget.textStyleBuilder),
+        textAlign: widget.textAlign,
+        userSelection: UserSelection(
+          highlightStyle: widget.selectionHighlightStyle,
+          caretStyle: widget.caretStyle,
+          selection: _controller.selection,
+          hasCaret: _focusNode.hasFocus,
+        ),
       ),
     );
   }
@@ -870,6 +874,7 @@ class SuperTextFieldScrollview extends StatefulWidget {
     required this.viewportHeight,
     required this.estimatedLineHeight,
     required this.isMultiline,
+    this.textAlign = TextAlign.left,
     required this.child,
   }) : super(key: key);
 
@@ -898,6 +903,9 @@ class SuperTextFieldScrollview extends StatefulWidget {
 
   /// Whether or not this text field allows multiple lines of text.
   final bool isMultiline;
+
+  /// The text alignment within the scrollview.
+  final TextAlign textAlign;
 
   /// The rest of the subtree for this text field.
   final Widget child;
@@ -1124,6 +1132,22 @@ class SuperTextFieldScrollviewState extends State<SuperTextFieldScrollview> with
     }
     if (_scrollToEndOnTick) {
       scrollToEnd();
+    }
+  }
+
+  Alignment _getAlignment() {
+    switch (widget.textAlign) {
+      case TextAlign.left:
+      case TextAlign.justify:
+        return Alignment.topLeft;
+      case TextAlign.right:
+        return Alignment.topRight;
+      case TextAlign.center:
+        return Alignment.topCenter;
+      case TextAlign.start:
+        return Directionality.of(context) == TextDirection.ltr ? Alignment.topLeft : Alignment.topRight;
+      case TextAlign.end:
+        return Directionality.of(context) == TextDirection.ltr ? Alignment.topRight : Alignment.topLeft;
     }
   }
 

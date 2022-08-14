@@ -32,6 +32,7 @@ class TextScrollView extends StatefulWidget {
     this.lineHeight,
     this.perLineAutoScrollDuration = Duration.zero,
     this.showDebugPaint = false,
+    this.textAlign = TextAlign.left,
     required this.child,
   }) : super(key: key);
 
@@ -88,6 +89,9 @@ class TextScrollView extends StatefulWidget {
 
   /// Whether to paint debug guides.
   final bool showDebugPaint;
+
+  /// The text alignment within the scrollview.
+  final TextAlign textAlign;
 
   /// The child widget.
   final Widget child;
@@ -451,15 +455,34 @@ class _TextScrollViewState extends State<TextScrollView>
     );
   }
 
+  Alignment _getAlignment() {
+    switch (widget.textAlign) {
+      case TextAlign.left:
+      case TextAlign.justify:
+        return Alignment.topLeft;
+      case TextAlign.right:
+        return Alignment.topRight;
+      case TextAlign.center:
+        return Alignment.topCenter;
+      case TextAlign.start:
+        return Directionality.of(context) == TextDirection.ltr ? Alignment.topLeft : Alignment.topRight;
+      case TextAlign.end:
+        return Directionality.of(context) == TextDirection.ltr ? Alignment.topRight : Alignment.topLeft;
+    }
+  }
+
   Widget _buildScrollView({
     required Widget child,
   }) {
-    return SingleChildScrollView(
-      key: _textFieldViewportKey,
-      controller: _scrollController,
-      physics: const NeverScrollableScrollPhysics(),
-      scrollDirection: isMultiline ? Axis.vertical : Axis.horizontal,
-      child: widget.child,
+    return Align(
+      alignment: _getAlignment(),
+      child: SingleChildScrollView(
+        key: _textFieldViewportKey,
+        controller: _scrollController,
+        physics: const NeverScrollableScrollPhysics(),
+        scrollDirection: isMultiline ? Axis.vertical : Axis.horizontal,
+        child: widget.child,
+      ),
     );
   }
 
