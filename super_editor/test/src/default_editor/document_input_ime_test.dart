@@ -285,7 +285,7 @@ void main() {
         await tester.placeCaretInParagraph('1', 0);
 
         // Type characters before the link using the IME
-        await tester.ime.typeText("Go to ", getter: imeClientGetter);
+        await tester.ime.typeText("Go to ", getter: _imeClientGetter);
 
         // Ensure that the link is unchanged
         expect(
@@ -305,7 +305,7 @@ void main() {
         await tester.placeCaretInParagraph('1', 18);
 
         // Type characters after the link using the IME
-        await tester.ime.typeText(" to learn anything", getter: imeClientGetter);
+        await tester.ime.typeText(" to learn anything", getter: _imeClientGetter);
 
         // Ensure that the link is unchanged
         expect(
@@ -315,6 +315,11 @@ void main() {
       });
     });
   });
+}
+
+DeltaTextInputClient _imeClientGetter() {
+  final imeInteractor = find.byType(DocumentImeInteractor).evaluate().first;
+  return (imeInteractor as StatefulElement).state as DeltaTextInputClient;
 }
 
 /// Expects that the given [expectedTextWithSelection] corresponds to a
@@ -376,9 +381,4 @@ MutableDocument _singleParagraphWithLinkDoc() {
       )
     ],
   );
-}
-
-DeltaTextInputClient imeClientGetter() {
-  final imeInteractor = find.byType(DocumentImeInteractor).evaluate().first;
-  return (imeInteractor as StatefulElement).state as DeltaTextInputClient;
 }
