@@ -2247,6 +2247,9 @@ class _PasteEditorCommand implements EditorCommand {
           .where((attribution) => attribution is! LinkAttribution)
           .toSet();
 
+      // Get all link [AttributionSpan]s in the pasted text
+      final linkAttributionSpans = _getURLsInPastedText(pastedText: splitContent.first);
+
       // Paste the first piece of content into the selected TextNode.
       InsertTextCommand(
         documentPosition: _pastePosition,
@@ -2254,11 +2257,13 @@ class _PasteEditorCommand implements EditorCommand {
         attributions: attributionsForPastedText,
       ).execute(document, transaction);
 
-      // Check for urls in the pasted text and apply [LinkAttribution] appropriately
-      _convertURLsInPastedTextToLink(
-        pastedText: splitContent.first,
-        textNode: textNode,
-      );
+      // Apply [LinkAttribution] found in the pasted text
+      for (final linkAttributionSpan in linkAttributionSpans) {
+        textNode.text.addAttribution(
+          linkAttributionSpan.attribution,
+          SpanRange(start: linkAttributionSpan.start, end: linkAttributionSpan.end),
+        );
+      }
 
       // At this point in the paste process, the document selection
       // position is at the end of the text that was just pasted.
@@ -2318,12 +2323,11 @@ class _PasteEditorCommand implements EditorCommand {
     editorOpsLog.fine('Done with paste command.');
   }
 
-  /// Finds all URLs in the text within the given [textNode] and applies a
-  /// [LinkAttribution] to each one.
-  void _convertURLsInPastedTextToLink({
-    required String pastedText,
-    required TextNode textNode,
-  }) {
+  /// Finds all URLs in the [pastedText] and returns a list of link [AttributionSpan]
+  /// from those.
+  List<AttributionSpan> _getURLsInPastedText({required String pastedText}) {
+    final List<AttributionSpan> linkAttributionSpans = [];
+
     final textPosition = _pastePosition.nodePosition as TextNodePosition;
     final wordBoundaries = pastedText.calculateAllWordBoundaries();
 
@@ -2339,11 +2343,16 @@ class _PasteEditorCommand implements EditorCommand {
         // -1 because TextPosition's offset indexes the character after the
         // selection, not the final character in the selection.
         final endOffset = textPosition.offset + wordBoundary.end - 1;
-        final span = SpanRange(start: startOffset, end: endOffset);
 
         // Add link attribution.
-        textNode.text.addAttribution(linkAttribution, span);
+        linkAttributionSpans.add(AttributionSpan(
+          attribution: linkAttribution,
+          start: startOffset,
+          end: endOffset,
+        ));
       }
     }
+
+    return linkAttributionSpans;
   }
 }
