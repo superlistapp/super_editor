@@ -162,7 +162,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
 
     widget.composer.addListener(_onSelectionChange);
 
-    startUpdateSelectionOnFocus(
+    startSyncingSelectionWithFocus(
       focusNode: widget.focusNode,
       composer: widget.composer,
       getDocumentLayout: widget.getDocumentLayout,
@@ -258,7 +258,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
 
     widget.focusNode.removeListener(_onFocusChange);
 
-    stopUpdateSelectionOnFocus();
+    stopSyncingSelectionWithFocus();
 
     super.dispose();
   }
@@ -472,7 +472,6 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
 
     _positionToolbar();
 
-    requestingFocusByTap = !widget.focusNode.hasFocus;
     widget.focusNode.requestFocus();
   }
 
@@ -517,7 +516,6 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
       _positionToolbar();
     }
 
-    requestingFocusByTap = !widget.focusNode.hasFocus;
     widget.focusNode.requestFocus();
   }
 
@@ -570,7 +568,6 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
       _positionToolbar();
     }
 
-    requestingFocusByTap = !widget.focusNode.hasFocus;
     widget.focusNode.requestFocus();
   }
 

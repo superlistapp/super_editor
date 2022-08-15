@@ -77,7 +77,7 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     widget.editContext.composer.selectionNotifier.addListener(_onSelectionChange);
     widget.autoScroller.addListener(_updateDragSelection);
 
-    startUpdateSelectionOnFocus(
+    startSyncingSelectionWithFocus(
       focusNode: _focusNode,
       composer: widget.editContext.composer,
       getDocumentLayout: () => widget.editContext.documentLayout,
@@ -100,7 +100,7 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
       oldWidget.autoScroller.removeListener(_updateDragSelection);
       widget.autoScroller.addListener(_updateDragSelection);
     }
-    onDocumentLayoutResolverReplaced(() => widget.editContext.documentLayout);    
+    onDocumentLayoutResolverReplaced(() => widget.editContext.documentLayout);
   }
 
   @override
@@ -110,7 +110,7 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     }
     widget.editContext.composer.selectionNotifier.removeListener(_onSelectionChange);
     widget.autoScroller.removeListener(_updateDragSelection);
-    stopUpdateSelectionOnFocus();
+    stopSyncingSelectionWithFocus();
     super.dispose();
   }
 
@@ -175,16 +175,18 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
     editorGesturesLog.fine(" - tapped document position: $docPosition");
 
-    requestingFocusByTap = !_focusNode.hasFocus;
     _focusNode.requestFocus();
 
     if (docPosition != null) {
       final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
+      final expandSelection = _isShiftPressed && widget.editContext.composer.selection != null;
+
       if (!tappedComponent.isVisualSelectionSupported()) {
+        _moveToNearestSelectableComponent(docPosition.nodeId, tappedComponent);
         return;
       }
 
-      if (_isShiftPressed && widget.editContext.composer.selection != null) {
+      if (expandSelection) {
         // The user tapped while pressing shift and there's an existing
         // selection. Move the extent of the selection to where the user tapped.
         widget.editContext.composer.selection = widget.editContext.composer.selection!.copyWith(
@@ -236,7 +238,6 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
       }
     }
 
-    requestingFocusByTap = !_focusNode.hasFocus;
     _focusNode.requestFocus();
   }
 
@@ -306,7 +307,6 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
       }
     }
 
-    requestingFocusByTap = !_focusNode.hasFocus;
     _focusNode.requestFocus();
   }
 
@@ -353,7 +353,6 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
       _clearSelection();
     }
 
-    requestingFocusByTap = !_focusNode.hasFocus;
     _focusNode.requestFocus();
   }
 
@@ -511,6 +510,21 @@ Updating drag selection:
   void _clearSelection() {
     editorGesturesLog.fine("Clearing document selection");
     widget.editContext.composer.clearSelection();
+  }
+
+  void _moveToNearestSelectableComponent(
+    String nodeId,
+    DocumentComponent component, {
+    bool expandSelection = false,
+  }) {
+    widget.editContext.commonOps.moveSelectionToNearestSelectableNode(
+      widget.editContext.editor.document.getNodeById(nodeId)!,
+      expand: expandSelection,
+    );
+
+    if (!expandSelection) {
+      _selectionType = SelectionType.position;
+    }
   }
 
   @override

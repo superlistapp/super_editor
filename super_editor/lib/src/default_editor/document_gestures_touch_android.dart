@@ -146,7 +146,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
     widget.composer.addListener(_onSelectionChange);
 
-    startUpdateSelectionOnFocus(
+    startSyncingSelectionWithFocus(
       focusNode: widget.focusNode,
       composer: widget.composer,
       getDocumentLayout: widget.getDocumentLayout,
@@ -246,7 +246,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
     _handleAutoScrolling.dispose();
 
-    stopUpdateSelectionOnFocus();
+    stopSyncingSelectionWithFocus();
 
     super.dispose();
   }
@@ -440,7 +440,6 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       _editingController.hideToolbar();
     }
 
-    requestingFocusByTap = !widget.focusNode.hasFocus;
     widget.focusNode.requestFocus();
   }
 
@@ -482,7 +481,6 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       }
     }
 
-    requestingFocusByTap = !widget.focusNode.hasFocus;
     widget.focusNode.requestFocus();
   }
 
@@ -527,7 +525,6 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       }
     }
 
-    requestingFocusByTap = !widget.focusNode.hasFocus;
     widget.focusNode.requestFocus();
   }
 

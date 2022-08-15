@@ -342,7 +342,7 @@ void main() {
       );
     });
 
-    testWidgetsOnAllPlatforms("rejects selection when user taps on it", (tester) async {
+    testWidgetsOnAllPlatforms("selects nearest selectable node when user taps on it", (tester) async {
       await _pumpEditorWithUnselectableHrs(tester);
 
       await tester.tapAtDocumentPosition(const DocumentPosition(
@@ -351,7 +351,15 @@ void main() {
       ));
       await tester.pumpAndSettle();
 
-      expect(SuperEditorInspector.findDocumentSelection(), isNull);
+      expect(
+        SuperEditorInspector.findDocumentSelection(),
+        const DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: "3",
+            nodePosition: TextNodePosition(offset: 0),
+          ),
+        ),
+      );
     });
   });
 }
