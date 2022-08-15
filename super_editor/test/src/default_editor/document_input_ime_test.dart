@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:super_editor/super_editor.dart';
 
 import '../../super_editor/document_test_tools.dart';
@@ -275,26 +276,16 @@ void main() {
     group('typing characters near a link', () {
       testWidgetsOnMobile('does not expand the link when inserting before the link', (tester) async {
         // Configure and render a document.
-        final testerDocumentContext = await tester //
+        await tester //
             .createDocument()
             .withCustomContent(_singleParagraphWithLinkDoc())
             .pump();
-        final softwareKeyboardHandler = SoftwareKeyboardHandler(
-          composer: testerDocumentContext.editContext.composer,
-          editor: testerDocumentContext.editContext.editor,
-          commonOps: testerDocumentContext.editContext.commonOps,
-        );
 
         // Place the caret at the start of the link.
         await tester.placeCaretInParagraph('1', 0);
 
         // Type characters before the link using the IME
-        await tester.insertTextIME(
-          softwareKeyboardHandler: softwareKeyboardHandler,
-          textToType: 'Go to ',
-          existingText: 'https://google.com',
-          insertionOffset: 0,
-        );
+        await tester.ime.typeText("Go to ", getter: imeClientGetter);
 
         // Ensure that the link is unchanged
         expect(
@@ -305,27 +296,16 @@ void main() {
 
       testWidgetsOnMobile('does not expand the link when inserting after the link', (tester) async {
         // Configure and render a document.
-        final testerDocumentContext = await tester //
+        await tester //
             .createDocument()
             .withCustomContent(_singleParagraphWithLinkDoc())
             .pump();
-
-        final softwareKeyboardHandler = SoftwareKeyboardHandler(
-          composer: testerDocumentContext.editContext.composer,
-          editor: testerDocumentContext.editContext.editor,
-          commonOps: testerDocumentContext.editContext.commonOps,
-        );
 
         // Place the caret at the end of the link.
         await tester.placeCaretInParagraph('1', 18);
 
         // Type characters after the link using the IME
-        await tester.insertTextIME(
-          softwareKeyboardHandler: softwareKeyboardHandler,
-          textToType: ' to learn anything',
-          existingText: 'https://google.com',
-          insertionOffset: 18,
-        );
+        await tester.ime.typeText(" to learn anything", getter: imeClientGetter);
 
         // Ensure that the link is unchanged
         expect(
@@ -398,29 +378,7 @@ MutableDocument _singleParagraphWithLinkDoc() {
   );
 }
 
-extension on WidgetTester {
-  // TODO: Remove this when `SuperTestRobot` support insert IME
-  Future<void> insertTextIME({
-    required SoftwareKeyboardHandler softwareKeyboardHandler,
-    required String textToType,
-    required String existingText,
-    required int insertionOffset,
-  }) async {
-    var oldText = existingText;
-    for (int i = 0; i < textToType.length; i += 1) {
-      // Insert a character to simulate IME input action
-      softwareKeyboardHandler.applyDeltas([
-        TextEditingDeltaInsertion(
-          textInserted: textToType[i],
-          insertionOffset: insertionOffset + i,
-          selection: TextSelection.collapsed(offset: insertionOffset + i),
-          composing: const TextRange(start: -1, end: -1),
-          oldText: oldText,
-        ),
-      ]);
-      oldText += textToType[i];
-
-      await pumpAndSettle();
-    }
-  }
+DeltaTextInputClient imeClientGetter() {
+  final imeInteractor = find.byType(DocumentImeInteractor).evaluate().first;
+  return (imeInteractor as StatefulElement).state as DeltaTextInputClient;
 }
