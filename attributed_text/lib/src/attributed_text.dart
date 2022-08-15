@@ -146,33 +146,7 @@ class AttributedText {
   ///
   /// It will return only the portion in which all attributions are present.
   SpanRange getAttributedRange(Set<Attribution> attributions, int offset) {
-    if (attributions.isEmpty) {
-      throw Exception('getAttributedRange requires a non empty set of attributions');
-    }
-
-    int? maxStartMarkerOffset;
-    int? minEndMarkerOffset;
-
-    for (final attribution in attributions) {
-      if (!hasAttributionAt(offset, attribution: attribution)) {
-        throw Exception('Tried to get the attributed range of ($attribution) at offset "$offset" but the given attribution does not exist at that offset.');
-      }
-      int startMarkerOffset = spans.getStartingMarkerAtOrBefore(offset, attribution: attribution)!.offset;
-      int endMarkerOffset = spans.getEndingMarkerAtOrAfter(offset, attribution: attribution)!.offset;
-
-      if (maxStartMarkerOffset == null || startMarkerOffset > maxStartMarkerOffset) {
-        maxStartMarkerOffset = startMarkerOffset;
-      }
-
-      if (minEndMarkerOffset == null || endMarkerOffset < minEndMarkerOffset) {
-        minEndMarkerOffset = endMarkerOffset;
-      }
-    }
-
-    return SpanRange(
-      start: maxStartMarkerOffset!,
-      end: minEndMarkerOffset!,
-    );
+    return spans.getAttributedRange(attributions, offset);
   }
 
   /// Adds the given [attribution] to all characters within the given

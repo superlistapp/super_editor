@@ -5,6 +5,7 @@ import 'package:meta/meta.dart';
 
 import 'attribution.dart';
 import 'logging.dart';
+import 'span_range.dart';
 
 final _log = attributionsLog;
 
@@ -109,11 +110,11 @@ class AttributedSpans {
     int offset, {
     Attribution? attribution,
   }) {
-    SpanMarker? markerBefore = getStartingMarkerAtOrBefore(offset, attribution: attribution);
+    SpanMarker? markerBefore = _getStartingMarkerAtOrBefore(offset, attribution: attribution);
     if (markerBefore == null) {
       return false;
     }
-    SpanMarker? markerAfter = getEndingMarkerAtOrAfter(markerBefore.offset, attribution: attribution);
+    SpanMarker? markerAfter = _getEndingMarkerAtOrAfter(markerBefore.offset, attribution: attribution);
     if (markerAfter == null) {
       throw Exception('Found an open-ended attribution. It starts with: $markerBefore');
     }
@@ -140,8 +141,8 @@ class AttributedSpans {
     // The following methods should be guaranteed to produce non-null
     // values because we already verified that the given attribution
     // exists at the given offset.
-    SpanMarker markerBefore = getStartingMarkerAtOrBefore(offset, attribution: attribution)!;
-    SpanMarker markerAfter = getEndingMarkerAtOrAfter(markerBefore.offset, attribution: attribution)!;
+    SpanMarker markerBefore = _getStartingMarkerAtOrBefore(offset, attribution: attribution)!;
+    SpanMarker markerAfter = _getEndingMarkerAtOrAfter(markerBefore.offset, attribution: attribution)!;
 
     return AttributionSpan(
       attribution: attribution,
@@ -215,10 +216,43 @@ class AttributedSpans {
     return matchingAttributionSpans;
   }
 
+  /// Returns the range that's attributed around [offset]. [attributions] must not be empty.
+  ///
+  /// It will return only the portion in which all attributions are present.
+  SpanRange getAttributedRange(Set<Attribution> attributions, int offset) {
+    if (attributions.isEmpty) {
+      throw Exception('getAttributedRange requires a non empty set of attributions');
+    }
+
+    int? maxStartMarkerOffset;
+    int? minEndMarkerOffset;
+
+    for (final attribution in attributions) {
+      if (!hasAttributionAt(offset, attribution: attribution)) {
+        throw Exception('Tried to get the attributed range of ($attribution) at offset "$offset" but the given attribution does not exist at that offset.');
+      }
+      int startMarkerOffset = _getStartingMarkerAtOrBefore(offset, attribution: attribution)!.offset;
+      int endMarkerOffset = _getEndingMarkerAtOrAfter(offset, attribution: attribution)!.offset;
+
+      if (maxStartMarkerOffset == null || startMarkerOffset > maxStartMarkerOffset) {
+        maxStartMarkerOffset = startMarkerOffset;
+      }
+
+      if (minEndMarkerOffset == null || endMarkerOffset < minEndMarkerOffset) {
+        minEndMarkerOffset = endMarkerOffset;
+      }
+    }
+
+    return SpanRange(
+      start: maxStartMarkerOffset!,
+      end: minEndMarkerOffset!,
+    );
+  }
+
   /// Finds and returns the nearest [start] marker that appears at or before the
   /// given [offset], optionally looking specifically for a marker with
   /// the given [attribution].
-  SpanMarker? getStartingMarkerAtOrBefore(int offset, {Attribution? attribution}) {
+  SpanMarker? _getStartingMarkerAtOrBefore(int offset, {Attribution? attribution}) {
     return markers //
         .reversed // search from the end so its the nearest start marker
         .where((marker) {
@@ -232,7 +266,7 @@ class AttributedSpans {
   /// Finds and returns the nearest [end] marker that appears at or after the
   /// given [offset], optionally looking specifically for a marker with
   /// the given [attribution].
-  SpanMarker? getEndingMarkerAtOrAfter(int offset, {Attribution? attribution}) {
+  SpanMarker? _getEndingMarkerAtOrAfter(int offset, {Attribution? attribution}) {
     return markers
         .where((marker) =>
             attribution == null ||
