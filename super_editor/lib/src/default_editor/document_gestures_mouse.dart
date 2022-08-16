@@ -59,7 +59,8 @@ class DocumentMouseInteractor extends StatefulWidget {
   State createState() => _DocumentMouseInteractorState();
 }
 
-class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with SingleTickerProviderStateMixin, DocumentSelectionOnFocusMixin {
+class _DocumentMouseInteractorState extends State<DocumentMouseInteractor>
+    with SingleTickerProviderStateMixin, DocumentSelectionOnFocusMixin {
   final _documentWrapperKey = GlobalKey();
 
   late FocusNode _focusNode;
@@ -182,7 +183,11 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
       final expandSelection = _isShiftPressed && widget.editContext.composer.selection != null;
 
       if (!tappedComponent.isVisualSelectionSupported()) {
-        _moveToNearestSelectableComponent(docPosition.nodeId, tappedComponent);
+        _moveToNearestSelectableComponent(
+          docPosition.nodeId,
+          tappedComponent,
+          expandSelection: expandSelection,
+        );
         return;
       }
 

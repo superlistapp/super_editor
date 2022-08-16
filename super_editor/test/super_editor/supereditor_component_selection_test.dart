@@ -378,7 +378,6 @@ Future<TestDocumentContext> _pumpEditorWithUnselectableHrs(
     tester //
         .createDocument() //
         .withCustomContent(customDocument ?? paragraphThenHrThenParagraphDoc()) //
-        .forDesktop() //
         .useStylesheet(_testStylesheet)
         .withAddedComponents([const _UnselectableHrComponentBuilder()]) //
         .pump();

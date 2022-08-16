@@ -6,6 +6,7 @@ import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
+import 'package:super_editor/src/default_editor/common_editor_operations.dart';
 import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
@@ -32,6 +33,7 @@ class AndroidDocumentTouchInteractor extends StatefulWidget {
     required this.document,
     required this.documentKey,
     required this.getDocumentLayout,
+    required this.commonOps,
     this.scrollController,
     this.dragAutoScrollBoundary = const AxisOffset.symmetric(54),
     required this.handleColor,
@@ -47,6 +49,7 @@ class AndroidDocumentTouchInteractor extends StatefulWidget {
   final Document document;
   final GlobalKey documentKey;
   final DocumentLayout Function() getDocumentLayout;
+  final CommonEditorOperations commonOps;
 
   final ScrollController? scrollController;
 
@@ -79,7 +82,8 @@ class AndroidDocumentTouchInteractor extends StatefulWidget {
   State createState() => _AndroidDocumentTouchInteractorState();
 }
 
-class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInteractor> with WidgetsBindingObserver, SingleTickerProviderStateMixin, DocumentSelectionOnFocusMixin {
+class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInteractor>
+    with WidgetsBindingObserver, SingleTickerProviderStateMixin, DocumentSelectionOnFocusMixin {
   // ScrollController used when this interactor installs its own Scrollable.
   // The alternative case is the one in which this interactor defers to an
   // ancestor scrollable.
@@ -184,7 +188,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
     if (widget.document != oldWidget.document) {
       oldWidget.document.removeListener(_onDocumentChange);
-      widget.document.addListener(_onDocumentChange);      
+      widget.document.addListener(_onDocumentChange);
     }
 
     if (widget.composer != oldWidget.composer) {
@@ -420,6 +424,14 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       final selection = widget.composer.selection;
       final didTapOnExistingSelection = selection != null && selection.isCollapsed && selection.extent == docPosition;
 
+      final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
+      if (!tappedComponent.isVisualSelectionSupported()) {
+        widget.commonOps.moveSelectionToNearestSelectableNode(
+          widget.document.getNodeById(docPosition.nodeId)!,
+        );
+        return;
+      }
+
       if (didTapOnExistingSelection) {
         // Toggle the toolbar display when the user taps on the collapsed caret,
         // or on top of an existing selection.
@@ -453,6 +465,11 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     _clearSelection();
 
     if (docPosition != null) {
+      final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
+      if (!tappedComponent.isVisualSelectionSupported()) {
+        return;
+      }
+
       bool didSelectContent = _selectWordAt(
         docPosition: docPosition,
         docLayout: _docLayout,
@@ -513,6 +530,11 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     _clearSelection();
 
     if (docPosition != null) {
+      final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
+      if (!tappedComponent.isVisualSelectionSupported()) {
+        return;
+      }
+
       final didSelectParagraph = _selectParagraphAt(
         docPosition: docPosition,
         docLayout: _docLayout,

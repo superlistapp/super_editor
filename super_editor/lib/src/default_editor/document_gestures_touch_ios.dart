@@ -18,6 +18,7 @@ import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/t
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
+import '../../super_editor.dart';
 import 'document_gestures.dart';
 import 'document_gestures_touch.dart';
 import 'selection_upstream_downstream.dart';
@@ -32,6 +33,7 @@ class IOSDocumentTouchInteractor extends StatefulWidget {
     required this.document,
     required this.documentKey,
     required this.getDocumentLayout,
+    required this.commonOps,
     this.scrollController,
     this.dragAutoScrollBoundary = const AxisOffset.symmetric(54),
     required this.handleColor,
@@ -48,6 +50,7 @@ class IOSDocumentTouchInteractor extends StatefulWidget {
   final Document document;
   final GlobalKey documentKey;
   final DocumentLayout Function() getDocumentLayout;
+  final CommonEditorOperations commonOps;
 
   final ScrollController? scrollController;
 
@@ -84,7 +87,8 @@ class IOSDocumentTouchInteractor extends StatefulWidget {
   State createState() => _IOSDocumentTouchInteractorState();
 }
 
-class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor> with WidgetsBindingObserver, SingleTickerProviderStateMixin, DocumentSelectionOnFocusMixin {
+class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
+    with WidgetsBindingObserver, SingleTickerProviderStateMixin, DocumentSelectionOnFocusMixin {
   // ScrollController used when this interactor installs its own Scrollable.
   // The alternative case is the one in which this interactor defers to an
   // ancestor scrollable.
@@ -453,6 +457,14 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     if (docPosition != null) {
       final didTapOnExistingSelection = selection != null && selection.isCollapsed && selection.extent == docPosition;
 
+      final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
+      if (!tappedComponent.isVisualSelectionSupported()) {
+        widget.commonOps.moveSelectionToNearestSelectableNode(
+          widget.document.getNodeById(docPosition.nodeId)!,
+        );
+        return;
+      }
+
       if (didTapOnExistingSelection) {
         // Toggle the toolbar display when the user taps on the collapsed caret,
         // or on top of an existing selection.
@@ -492,6 +504,11 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     widget.composer.clearSelection();
 
     if (docPosition != null) {
+      final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
+      if (!tappedComponent.isVisualSelectionSupported()) {
+        return;
+      }
+
       bool didSelectContent = _selectWordAt(
         docPosition: docPosition,
         docLayout: _docLayout,
@@ -549,6 +566,11 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     widget.composer.clearSelection();
 
     if (docPosition != null) {
+      final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
+      if (!tappedComponent.isVisualSelectionSupported()) {
+        return;
+      }
+
       final didSelectParagraph = _selectParagraphAt(
         docPosition: docPosition,
         docLayout: _docLayout,
