@@ -18,17 +18,17 @@ void main() {
       await tester.pumpAndSettle();
 
       // When the text field is empty the line height is estimated.
-      final lineHeightWithEmptyText = tester.getSize(find.byType(SingleChildScrollView)).height;
+      final heightWithEmptyText = tester.getSize(find.byType(SuperTextField)).height;
 
       // Change the text, this should recompute viewport height.
       controller.text = AttributedText(text: 'Leave a message');
       await tester.pumpAndSettle();
 
       // When the text field has content the line height should be the true line height.
-      final lineHeightWithText = tester.getSize(find.byType(SingleChildScrollView)).height;
+      final heightWithText = tester.getSize(find.byType(SuperTextField)).height;
 
       // Ensure the text field has ~ the same height when it's empty and when it has content
-      expect(lineHeightWithEmptyText.truncate(), equals(lineHeightWithText.truncate()));
+      expect(heightWithEmptyText.truncate(), equals(heightWithText.truncate()));
     });
   });
 }
