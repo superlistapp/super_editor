@@ -20,6 +20,7 @@ MutableDocument deserializeMarkdownToDocument(
   final markdownDoc = md.Document(
     blockSyntaxes: [
       if (syntax == MarkdownSyntax.superEditor) _ParagraphWithAlignmentSyntax(),
+      const _EmptyParagraphSyntax()
     ],
   );
   final blockParser = md.BlockParser(markdownLines, markdownDoc);
@@ -104,6 +105,13 @@ String serializeDocumentToMarkdown(
           }
         }
         buffer.write(node.text.toMarkdown());
+      }
+
+      // Separates paragraphs with blank lines.
+      // If we are at the last node we don't add a trailing
+      // blank line.
+      if (i != doc.nodes.length - 1) {
+        buffer.writeln();
       }
     }
   }
@@ -718,4 +726,33 @@ enum MarkdownSyntax {
   ///
   /// `---:` represents right alignment.
   superEditor,
+}
+
+/// The line contains only whitespace or is empty.
+final _emptyParagraphPattern = RegExp(r'^(?:[ \t]*)$');
+
+/// Parses blank lines as separators and empty paragraphs.
+class _EmptyParagraphSyntax extends md.BlockSyntax {
+  @override
+  RegExp get pattern => _emptyParagraphPattern;
+
+  const _EmptyParagraphSyntax();
+
+  @override
+  md.Node? parse(md.BlockParser parser) {
+    parser.encounteredBlankLine = true;
+    parser.advance();
+
+    // If we get one single blank line, then it's treated as
+    // a separator and it's ignored.
+    if (!_emptyParagraphPattern.hasMatch(parser.current)) {
+      return null;
+    }
+
+    // If we get two consecutive blank lines, then the second one
+    // is treated as an empty paragraph.
+    parser.encounteredBlankLine = false;
+    parser.advance();
+    return md.Element('p', []);
+  }
 }

@@ -415,6 +415,70 @@ This is some code
         expect(serializeDocumentToMarkdown(doc, syntax: MarkdownSyntax.normal), 'Paragraph1');
       });
 
+      test('empty paragraph', () {
+        final serialized = serializeDocumentToMarkdown(
+          MutableDocument(nodes: [
+            ParagraphNode(id: '1', text: AttributedText(text: 'Paragraph1')),
+            ParagraphNode(id: '2', text: AttributedText(text: '')),
+            ParagraphNode(id: '3', text: AttributedText(text: 'Paragraph3')),
+          ]),
+        );
+
+        expect(serialized, """Paragraph1
+
+
+
+Paragraph3""");
+      });
+
+      test('separates multiple paragraphs with blank lines', () {
+        final serialized = serializeDocumentToMarkdown(
+          MutableDocument(nodes: [
+            ParagraphNode(id: '1', text: AttributedText(text: 'Paragraph1')),
+            ParagraphNode(id: '2', text: AttributedText(text: 'Paragraph2')),
+            ParagraphNode(id: '3', text: AttributedText(text: 'Paragraph3')),
+          ]),
+        );
+
+        expect(serialized, """Paragraph1
+
+Paragraph2
+
+Paragraph3""");
+      });
+
+      test('separates paragraph from other blocks with blank lines', () {
+        final serialized = serializeDocumentToMarkdown(
+          MutableDocument(nodes: [
+            ParagraphNode(id: '1', text: AttributedText(text: 'First Paragraph')),
+            HorizontalRuleNode(id: '2'),
+          ]),
+        );
+
+        expect(serialized, 'First Paragraph\n\n---');
+      });
+
+      test('preserves linebreaks at the end of a paragraph', () {
+        final serialized = serializeDocumentToMarkdown(
+          MutableDocument(nodes: [
+            ParagraphNode(id: '1', text: AttributedText(text: 'Paragraph1\n')),
+            ParagraphNode(id: '2', text: AttributedText(text: 'Paragraph2')),
+          ]),
+        );
+
+        expect(serialized, 'Paragraph1\n\n\nParagraph2');
+      });
+
+      test('preserves linebreaks within a paragraph', () {
+        final serialized = serializeDocumentToMarkdown(
+          MutableDocument(nodes: [
+            ParagraphNode(id: '1', text: AttributedText(text: 'Line1\n\nLine2')),
+          ]),
+        );
+
+        expect(serialized, 'Line1\n\nLine2');
+      });
+
       test('image', () {
         final doc = MutableDocument(nodes: [
           ImageNode(
@@ -627,6 +691,16 @@ This is some code
 
         // ignore: unused_local_variable
         final markdown = serializeDocumentToMarkdown(doc);
+      });
+
+      test("doesn't add empty lines at the end of the document", () {
+        final serialized = serializeDocumentToMarkdown(
+          MutableDocument(nodes: [
+            ParagraphNode(id: '1', text: AttributedText(text: 'Paragraph1')),
+          ]),
+        );
+
+        expect(serialized, 'Paragraph1');
       });
     });
 
@@ -936,6 +1010,20 @@ This is some code
         final paragraph = doc.nodes.first as ParagraphNode;
         expect(paragraph.getMetadataValue('textAlign'), isNull);
         expect(paragraph.text.text, ':---\nParagraph1');
+      });
+
+      test('empty paragraph', () {
+        final input = """Paragraph1
+
+
+
+Paragraph3""";
+        final doc = deserializeMarkdownToDocument(input);
+
+        expect(doc.nodes.length, 3);
+        expect((doc.nodes[0] as ParagraphNode).text.text, 'Paragraph1');
+        expect((doc.nodes[1] as ParagraphNode).text.text, '');
+        expect((doc.nodes[2] as ParagraphNode).text.text, 'Paragraph3');
       });
     });
   });
