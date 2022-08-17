@@ -114,7 +114,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
 
   double? _viewportHeight;
 
-  final _textMetrics = _TextMetrics();
+  final _estimatedLineHeight = _EstimatedLineHeight();
 
   @override
   void initState() {
@@ -258,7 +258,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
       return lineHeight;
     }
     final defaultStyle = widget.textStyleBuilder({});
-    return _textMetrics.estimateLineHeight(defaultStyle);
+    return _estimatedLineHeight.calculate(defaultStyle);
   }
 
   @override
@@ -1682,7 +1682,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
 }
 
 /// Computes the estimated line height of a [TextStyle].
-class _TextMetrics {
+class _EstimatedLineHeight {
   /// Last computed line height.
   double? _lastLineHeight;
 
@@ -1696,7 +1696,7 @@ class _TextMetrics {
   ///
   /// The result is cached for the last [style] used, so it's not computed
   /// at each call.
-  double estimateLineHeight(TextStyle style) {
+  double calculate(TextStyle style) {
     if (_lastComputedStyle == style && _lastLineHeight != null) {
       return _lastLineHeight!;
     }

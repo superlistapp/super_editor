@@ -12,13 +12,13 @@ void main() {
       // is always equal to the true line height.
       await loadAppFonts();
 
-      // Pump an empty SuperTextField.
+      // Pump an empty SuperTextField containing a hint text.
       final controller = AttributedTextEditingController();
       await _pumpScaffold(tester, controller: controller);
       await tester.pumpAndSettle();
 
-      // When the text field is empty the line height is estimated.
-      final heightWithEmptyText = tester.getSize(find.byType(SuperTextField)).height;
+      // When the text field is displaying only the hint, the line height is estimated.
+      final heightWithHintText = tester.getSize(find.byType(SuperTextField)).height;
 
       // Change the text, this should recompute viewport height.
       controller.text = AttributedText(text: 'Leave a message');
@@ -28,7 +28,7 @@ void main() {
       final heightWithText = tester.getSize(find.byType(SuperTextField)).height;
 
       // Ensure the text field has ~ the same height when it's empty and when it has content
-      expect(heightWithEmptyText.truncate(), equals(heightWithText.truncate()));
+      expect((heightWithHintText - heightWithText).abs(), lessThanOrEqualTo(3e-1));
     });
   });
 }
