@@ -424,14 +424,6 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       final selection = widget.composer.selection;
       final didTapOnExistingSelection = selection != null && selection.isCollapsed && selection.extent == docPosition;
 
-      final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
-      if (!tappedComponent.isVisualSelectionSupported()) {
-        widget.commonOps.moveSelectionToNearestSelectableNode(
-          widget.document.getNodeById(docPosition.nodeId)!,
-        );
-        return;
-      }
-
       if (didTapOnExistingSelection) {
         // Toggle the toolbar display when the user taps on the collapsed caret,
         // or on top of an existing selection.
@@ -441,9 +433,19 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
         _editingController.hideToolbar();
       }
 
-      // Place the document selection at the location where the
-      // user tapped.
-      _selectPosition(docPosition);
+      final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
+      if (!tappedComponent.isVisualSelectionSupported()) {
+        // The user tapped a non-selectable component.
+        // Place the document selection at the nearest selectable node
+        // to the tapped component.
+        widget.commonOps.moveSelectionToNearestSelectableNode(
+          widget.document.getNodeById(docPosition.nodeId)!,
+        );
+      } else {
+        // Place the document selection at the location where the
+        // user tapped.
+        _selectPosition(docPosition);
+      }
 
       _positionToolbar();
     } else {
@@ -462,13 +464,16 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
     editorGesturesLog.fine(" - tapped document position: $docPosition");
 
-    _clearSelection();
-
     if (docPosition != null) {
+      // The user tapped a non-selectable component, so we can't select a word.
+      // The editor will remain focused and selection will remain in the nearest
+      // selectable component, as set in _onTapUp.
       final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
       if (!tappedComponent.isVisualSelectionSupported()) {
         return;
       }
+
+      _clearSelection();
 
       bool didSelectContent = _selectWordAt(
         docPosition: docPosition,
@@ -496,6 +501,8 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
           ..unHideCollapsedHandle()
           ..startCollapsedHandleAutoHideCountdown();
       }
+    } else {
+      _clearSelection();
     }
 
     widget.focusNode.requestFocus();
@@ -527,13 +534,16 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
     editorGesturesLog.fine(" - tapped document position: $docPosition");
 
-    _clearSelection();
-
     if (docPosition != null) {
+      // The user tapped a non-selectable component, so we can't select a paragraph.
+      // The editor will remain focused and selection will remain in the nearest
+      // selectable component, as set in _onTapUp.
       final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
       if (!tappedComponent.isVisualSelectionSupported()) {
         return;
       }
+
+      _clearSelection();
 
       final didSelectParagraph = _selectParagraphAt(
         docPosition: docPosition,
@@ -545,6 +555,8 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
         _selectPosition(docPosition);
         _positionToolbar();
       }
+    } else {
+      _clearSelection();
     }
 
     widget.focusNode.requestFocus();
@@ -975,7 +987,8 @@ class AndroidDocumentTouchEditingControls extends StatefulWidget {
   State createState() => _AndroidDocumentTouchEditingControlsState();
 }
 
-class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTouchEditingControls> with SingleTickerProviderStateMixin {
+class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTouchEditingControls>
+    with SingleTickerProviderStateMixin {
   // These global keys are assigned to each draggable handle to
   // prevent a strange dragging issue.
   //

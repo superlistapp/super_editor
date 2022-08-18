@@ -457,14 +457,6 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     if (docPosition != null) {
       final didTapOnExistingSelection = selection != null && selection.isCollapsed && selection.extent == docPosition;
 
-      final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
-      if (!tappedComponent.isVisualSelectionSupported()) {
-        widget.commonOps.moveSelectionToNearestSelectableNode(
-          widget.document.getNodeById(docPosition.nodeId)!,
-        );
-        return;
-      }
-
       if (didTapOnExistingSelection) {
         // Toggle the toolbar display when the user taps on the collapsed caret,
         // or on top of an existing selection.
@@ -474,9 +466,20 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
         _editingController.hideToolbar();
       }
 
-      // Place the document selection at the location where the
-      // user tapped.
-      _selectPosition(docPosition);
+      final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
+      if (!tappedComponent.isVisualSelectionSupported()) {
+        // The user tapped a non-selectable component.
+        // Place the document selection at the nearest selectable node
+        // to the tapped component.
+        widget.commonOps.moveSelectionToNearestSelectableNode(
+          widget.document.getNodeById(docPosition.nodeId)!,
+        );
+        return;
+      } else {
+        // Place the document selection at the location where the
+        // user tapped.
+        _selectPosition(docPosition);
+      }
     } else {
       widget.composer.clearSelection();
       _editingController.hideToolbar();
@@ -501,13 +504,13 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
     editorGesturesLog.fine(" - tapped document position: $docPosition");
 
-    widget.composer.clearSelection();
-
     if (docPosition != null) {
       final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
       if (!tappedComponent.isVisualSelectionSupported()) {
         return;
       }
+
+      widget.composer.clearSelection();
 
       bool didSelectContent = _selectWordAt(
         docPosition: docPosition,
@@ -523,6 +526,8 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
         // user tapped.
         _selectPosition(docPosition);
       }
+    } else {
+      widget.composer.clearSelection();
     }
 
     final newSelection = widget.composer.selection;
@@ -563,13 +568,13 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
     editorGesturesLog.fine(" - tapped document position: $docPosition");
 
-    widget.composer.clearSelection();
-
     if (docPosition != null) {
       final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
       if (!tappedComponent.isVisualSelectionSupported()) {
         return;
       }
+
+      widget.composer.clearSelection();
 
       final didSelectParagraph = _selectParagraphAt(
         docPosition: docPosition,
@@ -580,6 +585,8 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
         // user tapped.
         _selectPosition(docPosition);
       }
+    } else {
+      widget.composer.clearSelection();
     }
 
     final selection = widget.composer.selection;

@@ -342,6 +342,22 @@ void main() {
       );
     });
 
+    testWidgetsOnAllPlatforms("rejects selection when user taps on it and it's the only node in document",
+        (tester) async {
+      await _pumpEditorWithUnselectableHrs(
+        tester,
+        customDocument: singleBlockDoc(),
+      );
+
+      await tester.tapAtDocumentPosition(const DocumentPosition(
+        nodeId: "1",
+        nodePosition: UpstreamDownstreamNodePosition.upstream(),
+      ));
+      await tester.pumpAndSettle();
+
+      expect(SuperEditorInspector.findDocumentSelection(), isNull);
+    });
+
     testWidgetsOnAllPlatforms("selects nearest selectable node when user taps on it", (tester) async {
       await _pumpEditorWithUnselectableHrs(tester);
 

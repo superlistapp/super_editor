@@ -1,20 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:super_editor/super_editor.dart';
 
-/// Provides the functionality of updating the selection when the editor receives focus.
+/// Synchronizes document focus with document selection.
 ///
-/// Whenever the editor receives focus, if it was previously selected, the previous selection
-/// will be restored.
-/// If there is no previous selection, the caret will move to the end of the document.
+/// Whenever the editor receives focus, if it was previously selected, the previous selection is restored.
 ///
-/// `startSyncingSelectionWithFocus` must be called to start this behavior and
-/// `stopSyncingSelectionWithFocus` to stop it. 
-/// 
-/// Whenever the [FocusNode] of the widget using this mixin is replaced, `onFocusNodeReplaced` must be called.
-/// 
-/// Whenever the [DocumentComposer] of the widget using this mixin is replaced, `onDocumentComposerReplaced` must be called.
-/// 
-/// Whenever the [DocumentLayoutResolver] of the widget using this mixin is replaced, `onDocumentLayoutResolverReplaced` must be called.
+/// If there is no previous selection, the caret is moved to the end of the document.
+///
+/// Start watching and synchronizing focus with selection by calling `startSyncingSelectionWithFocus`.
+///
+/// Stop watching and synchronizing focus with selection by calling `stopSyncingSelectionWithFocus`.
+///
+/// When the document's [FocusNode] changes, provide the new [FocusNode] to [onFocusNodeReplaced].
+///
+/// When the document's [DocumentComposer] changes, provide the new [DocumentComposer] to [onDocumentComposerReplaced].
+///
+/// When the document's [DocumentLayoutResolver] changes, provide the new [DocumentLayoutResolver] to [onDocumentLayoutResolverReplaced].
 mixin DocumentSelectionOnFocusMixin<T extends StatefulWidget> on State<T> {
   // Holds the last selection, so we can restore it when the editor is re-focused.
   DocumentSelection? _previousSelection;
@@ -23,7 +24,13 @@ mixin DocumentSelectionOnFocusMixin<T extends StatefulWidget> on State<T> {
   DocumentComposer? _composer;
   DocumentLayoutResolver? _getDocumentLayout;
 
-  /// Starts the behavior of updating the selection when the editor is focused.
+  /// Starts watching and synchronizing focus with selection.
+  ///
+  /// Watches the document selection, so it can be restored after
+  /// the editor receives focus.
+  ///
+  /// If the previous selection isn't avaible when the editor receives focus,
+  /// the caret is moved to the end of the document.
   void startSyncingSelectionWithFocus({
     required FocusNode focusNode,
     required DocumentComposer composer,
@@ -36,7 +43,7 @@ mixin DocumentSelectionOnFocusMixin<T extends StatefulWidget> on State<T> {
     _getDocumentLayout = getDocumentLayout;
   }
 
-  /// Stops the behavior of updating the selection when the editor is focused.
+  // Stops watching and synchronizing focus with selection.
   void stopSyncingSelectionWithFocus() {
     _focusNode?.removeListener(_onFocusChange);
     _composer?.selectionNotifier.removeListener(_onSelectionChange);
