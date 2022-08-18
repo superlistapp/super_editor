@@ -216,9 +216,9 @@ class AttributedSpans {
     return matchingAttributionSpans;
   }
 
-  /// Returns the range that's attributed around [offset]. [attributions] must not be empty.
+  /// Returns the range about [offset], which is attributed with all given [attributions].
   ///
-  /// It will return only the portion in which all attributions are present.
+  /// [attributions] must not be empty.
   SpanRange getAttributedRange(Set<Attribution> attributions, int offset) {
     if (attributions.isEmpty) {
       throw Exception('getAttributedRange requires a non empty set of attributions');
@@ -229,8 +229,12 @@ class AttributedSpans {
 
     for (final attribution in attributions) {
       if (!hasAttributionAt(offset, attribution: attribution)) {
-        throw Exception('Tried to get the attributed range of ($attribution) at offset "$offset" but the given attribution does not exist at that offset.');
+        throw Exception(
+            'Tried to get the attributed range of ($attribution) at offset "$offset" but the given attribution does not exist at that offset.');
       }
+      // The following methods should be guaranteed to produce non-null
+      // values because we already verified that the attribution
+      // exists at the given offset.
       int startMarkerOffset = _getStartingMarkerAtOrBefore(offset, attribution: attribution)!.offset;
       int endMarkerOffset = _getEndingMarkerAtOrAfter(offset, attribution: attribution)!.offset;
 
@@ -243,6 +247,9 @@ class AttributedSpans {
       }
     }
 
+    // Both offsets should be guaranteed to be non-null
+    // because we verify that all attributions are present at 
+    // the given offset.
     return SpanRange(
       start: maxStartMarkerOffset!,
       end: minEndMarkerOffset!,

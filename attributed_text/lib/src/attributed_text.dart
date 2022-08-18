@@ -142,9 +142,9 @@ class AttributedText {
     );
   }
 
-  /// Returns the range that's attributed around [offset]. [attributions] must not be empty.
+  /// Returns the range about [offset], which is attributed with all given [attributions].
   ///
-  /// It will return only the portion in which all attributions are present.
+  /// [attributions] must not be empty.
   SpanRange getAttributedRange(Set<Attribution> attributions, int offset) {
     return spans.getAttributedRange(attributions, offset);
   }
