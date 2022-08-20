@@ -316,6 +316,63 @@ This is some code
         expect(serializeDocumentToMarkdown(doc), '[First Link](https://example.org)[Second Link](https://github.com)');
       });
 
+      test('paragraph with left alignment', () {
+        final doc = MutableDocument(nodes: [
+          ParagraphNode(
+            id: '1',
+            text: AttributedText(text: 'Paragraph1'),
+            metadata: {
+              'textAlign': 'left',
+            },
+          ),
+        ]);
+
+        // Left alignment is the default, so it shouldn't be added.
+        expect(serializeDocumentToMarkdown(doc), 'Paragraph1');
+      });
+
+      test('paragraph with center alignment', () {
+        final doc = MutableDocument(nodes: [
+          ParagraphNode(
+            id: '1',
+            text: AttributedText(text: 'Paragraph1'),
+            metadata: {
+              'textAlign': 'center',
+            },
+          ),
+        ]);
+
+        expect(serializeDocumentToMarkdown(doc), ':---:\nParagraph1');
+      });
+
+      test('paragraph with right alignment', () {
+        final doc = MutableDocument(nodes: [
+          ParagraphNode(
+            id: '1',
+            text: AttributedText(text: 'Paragraph1'),
+            metadata: {
+              'textAlign': 'right',
+            },
+          ),
+        ]);
+
+        expect(serializeDocumentToMarkdown(doc), '---:\nParagraph1');
+      });
+
+      test("doesn't serialize text alignment when not using extended syntax", () {
+        final doc = MutableDocument(nodes: [
+          ParagraphNode(
+            id: '1',
+            text: AttributedText(text: 'Paragraph1'),
+            metadata: {
+              'textAlign': 'center',
+            },
+          ),
+        ]);
+
+        expect(serializeDocumentToMarkdown(doc, extendedSyntax: false), 'Paragraph1');
+      });
+
       test('image', () {
         final doc = MutableDocument(nodes: [
           ImageNode(
@@ -774,6 +831,57 @@ This is some code
 
         // Ensure text outside the range isn't attributed.
         expect(styledText.getAllAttributionsAt(7).contains(strikethroughAttribution), false);
+      });
+
+      test('paragraph with left alignment', () {
+        final doc = deserializeMarkdownToDocument(':---\nParagraph1');
+
+        final paragraph = doc.nodes.first as ParagraphNode;
+        expect(paragraph.getMetadataValue('textAlign'), 'left');
+        expect(paragraph.text.text, 'Paragraph1');
+      });
+
+      test('paragraph with center alignment', () {
+        final doc = deserializeMarkdownToDocument(':---:\nParagraph1');
+
+        final paragraph = doc.nodes.first as ParagraphNode;
+        expect(paragraph.getMetadataValue('textAlign'), 'center');
+        expect(paragraph.text.text, 'Paragraph1');
+      });
+
+      test('paragraph with right alignment', () {
+        final doc = deserializeMarkdownToDocument('---:\nParagraph1');
+
+        final paragraph = doc.nodes.first as ParagraphNode;
+        expect(paragraph.getMetadataValue('textAlign'), 'right');
+        expect(paragraph.text.text, 'Paragraph1');
+      });
+
+      test('treats alignment notation as content at the end of the document', () {
+        final doc = deserializeMarkdownToDocument('---:');
+
+        final paragraph = doc.nodes.first as ParagraphNode;
+        expect(paragraph.getMetadataValue('textAlign'), isNull);
+        expect(paragraph.text.text, '---:');
+      });
+
+      test('treats alignment notation as content when not followed by a paragraph', () {
+        final doc = deserializeMarkdownToDocument('---:\n - - -');
+
+        final paragraph = doc.nodes.first as ParagraphNode;
+        expect(paragraph.getMetadataValue('textAlign'), isNull);
+        expect(paragraph.text.text, '---:');
+
+        // Ensure the horizontal rule is parsed.
+        expect(doc.nodes[1], isA<HorizontalRuleNode>());
+      });
+
+      test('treats alignment notation as content when not using extended syntax', () {
+        final doc = deserializeMarkdownToDocument(':---\nParagraph1', extendedSyntax: false);
+
+        final paragraph = doc.nodes.first as ParagraphNode;
+        expect(paragraph.getMetadataValue('textAlign'), isNull);
+        expect(paragraph.text.text, ':---\nParagraph1');
       });
     });
   });

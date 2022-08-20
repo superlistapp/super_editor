@@ -8,10 +8,22 @@ import 'package:super_editor/super_editor.dart';
 //       For now, we return MutableDocument because DocumentEditor
 //       requires one. When the editing system matures, there should
 //       be a way to return something here that is not concrete.
-MutableDocument deserializeMarkdownToDocument(String markdown) {
+
+/// Deserializes markdown to a document.
+///
+/// If [extendedSyntax] is `true` text alignment is parsed
+/// using a custom notation.
+MutableDocument deserializeMarkdownToDocument(
+  String markdown, {
+  bool extendedSyntax = true,
+}) {
   final markdownLines = const LineSplitter().convert(markdown);
 
-  final markdownDoc = md.Document();
+  final markdownDoc = md.Document(
+    blockSyntaxes: [
+      if (extendedSyntax) _ParagraphWithAlignmentSyntax(),
+    ],
+  );
   final blockParser = md.BlockParser(markdownLines, markdownDoc);
 
   // Parse markdown string to structured markdown.
@@ -26,7 +38,14 @@ MutableDocument deserializeMarkdownToDocument(String markdown) {
   return MutableDocument(nodes: nodeVisitor.content);
 }
 
-String serializeDocumentToMarkdown(Document doc) {
+/// Serializes a document to markdown format.
+///
+/// If [extendedSyntax] is `true` text alignment is serialized
+/// using a custom notation.
+String serializeDocumentToMarkdown(
+  Document doc, {
+  bool extendedSyntax = true,
+}) {
   StringBuffer buffer = StringBuffer();
 
   bool isFirstLine = true;
@@ -80,12 +99,33 @@ String serializeDocumentToMarkdown(Document doc) {
           ..writeln(node.text.toMarkdown()) //
           ..write('```');
       } else {
+        final String? textAlign = node.getMetadataValue('textAlign');
+        // Left alignment is the default, so there is no need to add the indicator.
+        if (extendedSyntax && textAlign != null && textAlign != 'left') {
+          final alignmentIndicator = _convertAlignmentToMarkdown(textAlign);
+          if (alignmentIndicator != null) {
+            buffer.writeln(alignmentIndicator);
+          }
+        }
         buffer.write(node.text.toMarkdown());
       }
     }
   }
 
   return buffer.toString();
+}
+
+String? _convertAlignmentToMarkdown(String alignment) {
+  switch (alignment) {
+    case 'left':
+      return ':---';
+    case 'center':
+      return ':---:';
+    case 'right':
+      return '---:';
+    default:
+      return null;
+  }
 }
 
 /// Converts structured markdown to a list of [DocumentNode]s.
@@ -138,7 +178,7 @@ class _MarkdownToDocument implements md.NodeVisitor {
             altText: inlineVisitor.imageAltText!,
           );
         } else {
-          _addParagraph(inlineVisitor.attributedText);
+          _addParagraph(inlineVisitor.attributedText, element.attributes);
         }
         break;
       case 'blockquote':
@@ -227,11 +267,17 @@ class _MarkdownToDocument implements md.NodeVisitor {
     );
   }
 
-  void _addParagraph(AttributedText attributedText) {
+  void _addParagraph(AttributedText attributedText, Map<String, String> attributes) {
+    final textAlign = attributes['textAlign'];
+    final Map<String, dynamic> metadata = {
+      if (textAlign != null) 'textAlign': textAlign,
+    };
+
     _content.add(
       ParagraphNode(
         id: DocumentEditor.createNodeId(),
         text: attributedText,
+        metadata: metadata,
       ),
     );
   }
@@ -543,5 +589,84 @@ class AttributedTextMarkdownSerializer extends AttributionVisitor {
       }
     }
     return "";
+  }
+}
+
+/// Parses a paragraph preceded by an alignment indicator.
+class _ParagraphWithAlignmentSyntax extends md.ParagraphSyntax {
+  static final _alignmentNotationPattern = RegExp(r'^:-{3}|:-{3}:|-{3}:$');
+
+  static final List<md.BlockSyntax> _standardNonParagraphBlockSyntaxes = [
+    const md.HeaderSyntax(),
+    const md.CodeBlockSyntax(),
+    const md.BlockquoteSyntax(),
+    const md.HorizontalRuleSyntax(),
+    const md.UnorderedListSyntax(),
+    const md.OrderedListSyntax(),
+  ];
+
+  const _ParagraphWithAlignmentSyntax();
+
+  @override
+  bool canParse(md.BlockParser parser) {
+    if (!_alignmentNotationPattern.hasMatch(parser.current)) {
+      return false;
+    }
+
+    final nextLine = parser.peek(1);
+
+    // The indicator is at the end of the document,
+    // should be treated as content.
+    if (nextLine == null) {
+      return false;
+    }
+
+    // The line following the indicator is another block syntax.
+    if (_standardNonParagraphBlockSyntaxes.any((syntax) => syntax.pattern.hasMatch(nextLine))) {
+      return false;
+    }
+
+    return true;
+  }
+
+  @override
+  md.Node parse(md.BlockParser parser) {
+    final match = _alignmentNotationPattern.firstMatch(parser.current);
+
+    // If we get to the parse method than we should have an alignment indicator.
+    // Using the default paragraph parser just to avoid throwing an exception.
+    if (match == null) {
+      return super.parse(parser);
+    }
+
+    // As we already checked that there is a line following the indicator
+    // in canParse, it should be safe to assume the next line will be present.
+    parser.advance();
+
+    // We let the default paragraph parser handle the parsing of the paragraph
+    // and just add the alignment attribute.
+    final paragraph = super.parse(parser);
+
+    // The parser may return an empty text node.
+    if (paragraph is md.Element) {
+      paragraph.attributes.addAll({'textAlign': _convertAlignmentIndicator(match.input)});
+    }
+
+    return paragraph;
+  }
+
+  String _convertAlignmentIndicator(String indicator) {
+    switch (indicator) {
+      case ':---':
+        return 'left';
+      case ':---:':
+        return 'center';
+      case '---:':
+        return 'right';
+      // As we already check that the input matches the notation,
+      // we shouldn't reach this point.
+      default:
+        return 'left';
+    }
   }
 }
