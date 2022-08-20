@@ -763,6 +763,18 @@ This is some code
 
         expect(document.nodes[17], isA<ParagraphNode>());
       });
+
+      test('paragraph with strikethrough', () {
+        final doc = deserializeMarkdownToDocument('~This is~ a paragraph.');
+        final styledText = (doc.nodes[0] as ParagraphNode).text;
+
+        // Ensure text within the range is attributed.
+        expect(styledText.getAllAttributionsAt(0).contains(strikethroughAttribution), true);
+        expect(styledText.getAllAttributionsAt(6).contains(strikethroughAttribution), true);
+
+        // Ensure text outside the range isn't attributed.
+        expect(styledText.getAllAttributionsAt(7).contains(strikethroughAttribution), false);
+      });
     });
   });
 }

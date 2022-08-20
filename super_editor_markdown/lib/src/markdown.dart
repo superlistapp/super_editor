@@ -310,7 +310,12 @@ class _MarkdownToDocument implements md.NodeVisitor {
   }
 
   _InlineMarkdownToDocument _parseInline(md.Element element) {
-    final inlineParser = md.InlineParser(element.textContent, md.Document());
+    final inlineParser = md.InlineParser(
+      element.textContent,
+      md.Document(
+        inlineSyntaxes: [md.StrikethroughSyntax()],
+      ),
+    );
     final inlineVisitor = _InlineMarkdownToDocument();
     final inlineNodes = inlineParser.parse();
     for (final inlineNode in inlineNodes) {
@@ -388,6 +393,14 @@ class _InlineMarkdownToDocument implements md.NodeVisitor {
     } else if (element.tag == 'em') {
       styledText.addAttribution(
         italicsAttribution,
+        SpanRange(
+          start: 0,
+          end: styledText.text.length - 1,
+        ),
+      );
+    } else if (element.tag == "del") {
+      styledText.addAttribution(
+        strikethroughAttribution,
         SpanRange(
           start: 0,
           end: styledText.text.length - 1,
