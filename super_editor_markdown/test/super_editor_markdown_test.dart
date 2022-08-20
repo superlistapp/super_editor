@@ -295,6 +295,24 @@ This is some code
         expect(serializeDocumentToMarkdown(doc), '[This **is a** paragraph](https://example.org).');
       });
 
+      test('paragraph with underline', () {
+        final doc = MutableDocument(nodes: [
+          ParagraphNode(
+            id: '1',
+            text: AttributedText(
+              text: 'This is a paragraph.',
+              spans: AttributedSpans(
+                attributions: [
+                  SpanMarker(attribution: underlineAttribution, offset: 10, markerType: SpanMarkerType.start),
+                  SpanMarker(attribution: underlineAttribution, offset: 18, markerType: SpanMarkerType.end),
+                ],
+              ),
+            ),
+          ),
+        ]);
+
+        expect(serializeDocumentToMarkdown(doc), 'This is a ¬paragraph¬.');
+      });
       test('paragraph with consecutive links', () {
         final doc = MutableDocument(nodes: [
           ParagraphNode(
@@ -831,6 +849,18 @@ This is some code
 
         // Ensure text outside the range isn't attributed.
         expect(styledText.getAllAttributionsAt(7).contains(strikethroughAttribution), false);
+      });
+
+      test('paragraph with underline', () {
+        final doc = deserializeMarkdownToDocument('¬This is¬ a paragraph.');
+        final styledText = (doc.nodes[0] as ParagraphNode).text;
+
+        // Ensure text within the range is attributed.
+        expect(styledText.getAllAttributionsAt(0).contains(underlineAttribution), true);
+        expect(styledText.getAllAttributionsAt(6).contains(underlineAttribution), true);
+
+        // Ensure text outside the range isn't attributed.
+        expect(styledText.getAllAttributionsAt(7).contains(underlineAttribution), false);
       });
 
       test('paragraph with left alignment', () {

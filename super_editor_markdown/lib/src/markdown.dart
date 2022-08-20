@@ -11,8 +11,8 @@ import 'package:super_editor/super_editor.dart';
 
 /// Deserializes markdown to a document.
 ///
-/// If [extendedSyntax] is `true` text alignment is parsed
-/// using a custom notation.
+/// If [extendedSyntax] is `true`, a custom notation is used to allow
+/// text alignment and underline.
 MutableDocument deserializeMarkdownToDocument(
   String markdown, {
   bool extendedSyntax = true,
@@ -40,8 +40,19 @@ MutableDocument deserializeMarkdownToDocument(
 
 /// Serializes a document to markdown format.
 ///
-/// If [extendedSyntax] is `true` text alignment is serialized
-/// using a custom notation.
+/// If [extendedSyntax] is `true`, a custom notation is used to allow
+/// text alignment and underline.
+///
+/// Underline text is serialized between a pair of `¬`.
+///
+/// Text alignment is serialized using an alignment notation at the
+/// line preceding the paragraph:
+///
+/// `:---` represents left alignment. (The default)
+///
+/// `:---:` represents center alignment.
+///
+/// `---:` represents right alignment.
 String serializeDocumentToMarkdown(
   Document doc, {
   bool extendedSyntax = true,
@@ -359,7 +370,10 @@ class _MarkdownToDocument implements md.NodeVisitor {
     final inlineParser = md.InlineParser(
       element.textContent,
       md.Document(
-        inlineSyntaxes: [md.StrikethroughSyntax()],
+        inlineSyntaxes: [
+          md.StrikethroughSyntax(),
+          UnderlineSyntax(),
+        ],
       ),
     );
     final inlineVisitor = _InlineMarkdownToDocument();
@@ -447,6 +461,14 @@ class _InlineMarkdownToDocument implements md.NodeVisitor {
     } else if (element.tag == "del") {
       styledText.addAttribution(
         strikethroughAttribution,
+        SpanRange(
+          start: 0,
+          end: styledText.text.length - 1,
+        ),
+      );
+    } else if (element.tag == "u") {
+      styledText.addAttribution(
+        underlineAttribution,
         SpanRange(
           start: 0,
           end: styledText.text.length - 1,
@@ -547,7 +569,13 @@ class AttributedTextMarkdownSerializer extends AttributionVisitor {
   /// order such that opening and closing styles match each other on
   /// the opening and closing ends of a span.
   static String _sortAndSerializeAttributions(Set<Attribution> attributions, AttributionVisitEvent event) {
-    const startOrder = [codeAttribution, boldAttribution, italicsAttribution, strikethroughAttribution];
+    const startOrder = [
+      codeAttribution,
+      boldAttribution,
+      italicsAttribution,
+      strikethroughAttribution,
+      underlineAttribution,
+    ];
 
     final buffer = StringBuffer();
     final encodingOrder = event == AttributionVisitEvent.start ? startOrder : startOrder.reversed;
@@ -570,6 +598,8 @@ class AttributedTextMarkdownSerializer extends AttributionVisitor {
       return '*';
     } else if (attribution == strikethroughAttribution) {
       return '~';
+    } else if (attribution == underlineAttribution) {
+      return '¬';
     } else {
       return '';
     }
@@ -668,5 +698,20 @@ class _ParagraphWithAlignmentSyntax extends md.ParagraphSyntax {
       default:
         return 'left';
     }
+  }
+}
+
+/// Matches a custom underline syntax.
+///
+/// Underline text should be between a pair of `¬`.
+///
+/// Results in an `Element` with an `u` tag.
+class UnderlineSyntax extends md.TagSyntax {
+  UnderlineSyntax() : super('¬', requiresDelimiterRun: true, allowIntraWord: true);
+
+  @override
+  md.Node close(md.InlineParser parser, md.Delimiter opener, md.Delimiter closer,
+      {required List<md.Node> Function() getChildren}) {
+    return md.Element('u', getChildren());
   }
 }
