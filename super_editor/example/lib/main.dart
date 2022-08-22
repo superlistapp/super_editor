@@ -9,6 +9,7 @@ import 'package:example/demos/demo_rtl.dart';
 import 'package:example/demos/demo_selectable_text.dart';
 import 'package:example/demos/editor_configs/demo_mobile_editing_android.dart';
 import 'package:example/demos/editor_configs/demo_mobile_editing_ios.dart';
+import 'package:example/demos/editor_with_tagging/example_editor_with_tagging.dart';
 import 'package:example/demos/example_editor/example_editor.dart';
 import 'package:example/demos/flutter_features/demo_inline_widgets.dart';
 import 'package:example/demos/flutter_features/textinputclient/basic_text_input_client.dart';
@@ -30,6 +31,7 @@ import 'demos/demo_switch_document_content.dart';
 import 'demos/scrolling/demo_task_and_chat_with_renderobject.dart';
 import 'demos/super_document/demo_read_only_scrolling_document.dart';
 import 'demos/supertextfield/android/demo_superandroidtextfield.dart';
+import 'logging.dart';
 
 /// Demo of a basic text editor, as well as various widgets that
 /// are available in this package.
@@ -196,6 +198,13 @@ final _menu = <_MenuGroup>[
         title: 'Editor Demo',
         pageBuilder: (context) {
           return ExampleEditor();
+        },
+      ),
+      _MenuItem(
+        icon: Icons.description,
+        title: 'Editor with Tagging',
+        pageBuilder: (context) {
+          return ExampleEditorWithTagging();
         },
       ),
       _MenuItem(

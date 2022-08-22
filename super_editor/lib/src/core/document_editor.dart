@@ -2,7 +2,8 @@ import 'dart:math';
 
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:uuid/uuid.dart';
@@ -27,19 +28,34 @@ class DocumentEditor {
   /// [MutableDocument].
   DocumentEditor({
     required MutableDocument document,
-  }) : _document = document;
-
-  final MutableDocument _document;
+    List<DocumentChangePostProcess>? postProcesses,
+  })  : _document = document,
+        _postProcesses = postProcesses ?? [];
 
   /// Returns a read-only version of the [Document] that this editor
   /// is editing.
   Document get document => _document;
+  final MutableDocument _document;
+
+  /// Actions that are run after every document change.
+  final List<DocumentChangePostProcess> _postProcesses;
 
   /// Executes the given [command] to alter the [Document] that is tied
   /// to this [DocumentEditor].
   void executeCommand(EditorCommand command) {
     command.execute(_document, DocumentEditorTransaction._(_document));
+
+    // Run all the post processes.
+    for (final postProcess in _postProcesses) {
+      postProcess.onDocumentChange(this);
+    }
   }
+}
+
+/// An action that runs after a document change, possibly adjusting the content
+/// in response to the change.
+abstract class DocumentChangePostProcess {
+  void onDocumentChange(DocumentEditor editor);
 }
 
 /// A command that alters a [Document] by applying changes in a
