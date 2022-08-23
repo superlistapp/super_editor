@@ -172,6 +172,11 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
       getDocumentLayout: widget.getDocumentLayout,
     );
 
+    // If we already have a selection, we need to display the caret.
+    if (widget.composer.selection != null) {
+      _onSelectionChange();
+    }
+
     WidgetsBinding.instance.addObserver(this);
   }
 
@@ -218,6 +223,11 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
       oldWidget.composer.removeListener(_onSelectionChange);
       widget.composer.addListener(_onSelectionChange);
       onDocumentComposerReplaced(widget.composer);
+
+      // Selection has changed, we need to update the caret.
+      if (widget.composer.selection != oldWidget.composer.selection) {
+        _onSelectionChange();
+      }
     }
 
     if (widget.getDocumentLayout != oldWidget.getDocumentLayout) {

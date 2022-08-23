@@ -41,6 +41,12 @@ mixin DocumentSelectionOnFocusMixin<T extends StatefulWidget> on State<T> {
     _composer = composer;
     _composer!.selectionNotifier.addListener(_onSelectionChange);
     _getDocumentLayout = getDocumentLayout;
+
+    // If we already start focused we need to check if the selection update is needed.
+    // This is happening on desktop when the editor uses autofocus.
+    if (focusNode.hasFocus) {
+      _onFocusChange();
+    }
   }
 
   // Stops watching and synchronizing focus with selection.

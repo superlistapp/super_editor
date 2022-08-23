@@ -102,6 +102,7 @@ class TestDocumentConfigurator {
   WidgetTreeBuilder? _widgetTreeBuilder;
   ScrollController? _scrollController;
   FocusNode? _focusNode;
+  DocumentSelection? _selection;
 
   /// Configures the [SuperEditor] for standard desktop interactions,
   /// e.g., mouse and keyboard input.
@@ -168,6 +169,12 @@ class TestDocumentConfigurator {
   /// Configures the [SuperEditor] to use the given [focusNode]
   TestDocumentConfigurator withFocusNode(FocusNode? focusNode) {
     _focusNode = focusNode;
+    return this;
+  }
+
+  /// Configures the [SuperEditor] to use the given [selection] as its initial selection.
+  TestDocumentConfigurator withSelection(DocumentSelection? selection) {
+    _selection = selection;
     return this;
   }
 
@@ -239,7 +246,7 @@ class TestDocumentConfigurator {
       final layoutKey = GlobalKey();
       final focusNode = _focusNode ?? FocusNode();
       final editor = DocumentEditor(document: _document!);
-      final composer = DocumentComposer();
+      final composer = DocumentComposer(initialSelection: _selection);
       // ignore: prefer_function_declarations_over_variables
       final layoutResolver = () => layoutKey.currentState as DocumentLayout;
       final commonOps = CommonEditorOperations(

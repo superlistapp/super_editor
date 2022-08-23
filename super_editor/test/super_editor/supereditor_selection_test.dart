@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
+import 'package:super_editor/src/infrastructure/blinking_caret.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 
@@ -295,6 +297,9 @@ void main() {
           ),
         ),
       );
+
+      // Ensure caret is displayed.
+      expect(_caretFinder(), findsOneWidget);
     });
 
     testWidgetsOnAllPlatforms("places caret at end of document upon first editor focus with next", (tester) async {
@@ -336,9 +341,13 @@ void main() {
           ),
         ),
       );
+
+      // Ensure caret is displayed.
+      expect(_caretFinder(), findsOneWidget);
     });
 
-    testWidgetsOnAllPlatforms("places caret at end of document upon first editor focus when requesting focus", (tester) async {
+    testWidgetsOnAllPlatforms("places caret at end of document upon first editor focus when requesting focus",
+        (tester) async {
       final focusNode = FocusNode();
 
       await tester //
@@ -366,6 +375,9 @@ void main() {
           ),
         ),
       );
+
+      // Ensure caret is displayed.
+      expect(_caretFinder(), findsOneWidget);
     });
 
     testWidgetsOnAllPlatforms("places caret at end of document upon first editor focus on autofocus", (tester) async {
@@ -389,6 +401,9 @@ void main() {
           ),
         ),
       );
+
+      // Ensure caret is displayed.
+      expect(_caretFinder(), findsOneWidget);
     });
 
     testWidgetsOnAllPlatforms("ignores unselectable components upon first editor focus", (tester) async {
@@ -436,6 +451,9 @@ Second Paragraph
           ),
         ),
       );
+
+      // Ensure caret is displayed.
+      expect(_caretFinder(), findsOneWidget);
     });
 
     testWidgetsOnAllPlatforms("places caret at the previous selection when re-focusing by tab", (tester) async {
@@ -490,6 +508,9 @@ Second Paragraph
           ),
         ),
       );
+
+      // Ensure caret is displayed.
+      expect(_caretFinder(), findsOneWidget);
     });
 
     testWidgetsOnAllPlatforms("places caret at the previous selection when re-focusing by next", (tester) async {
@@ -544,9 +565,13 @@ Second Paragraph
           ),
         ),
       );
+
+      // Ensure caret is displayed.
+      expect(_caretFinder(), findsOneWidget);
     });
 
-    testWidgetsOnAllPlatforms("places caret at the previous selection when re-focusing by requesting focus", (tester) async {
+    testWidgetsOnAllPlatforms("places caret at the previous selection when re-focusing by requesting focus",
+        (tester) async {
       final focusNode = FocusNode();
 
       await tester
@@ -601,7 +626,38 @@ Second Paragraph
           ),
         ),
       );
+
+      // Ensure caret is displayed.
+      expect(_caretFinder(), findsOneWidget);
     });
+
+    testWidgetsOnAllPlatforms('retains composer initial selection upon first editor focus', (tester) async {
+      final focusNode = FocusNode();
+
+      const initialSelection = DocumentSelection.collapsed(
+        position: DocumentPosition(
+          nodeId: '1',
+          nodePosition: TextNodePosition(offset: 6),
+        ),
+      );
+
+      await tester //
+          .createDocument()
+          .withSingleParagraph()
+          .withFocusNode(focusNode)
+          .withSelection(initialSelection)
+          .pump();
+
+      focusNode.requestFocus();
+
+      await tester.pumpAndSettle();
+
+      // Ensure initial selection was retained.
+      expect(SuperEditorInspector.findDocumentSelection(), initialSelection);
+
+      // Ensure caret is displayed.
+      expect(_caretFinder(), findsOneWidget);
+    });  
   });
 }
 
@@ -667,4 +723,12 @@ class _UnselectableHorizontalRuleComponent extends StatelessWidget {
       ),
     );
   }
+}
+
+Finder _caretFinder() {
+  if (debugDefaultTargetPlatformOverride == TargetPlatform.iOS ||
+      debugDefaultTargetPlatformOverride == TargetPlatform.android) {
+    return find.byType(BlinkingCaret);
+  }
+  return find.byKey(primaryCaretKey);
 }
