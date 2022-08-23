@@ -606,8 +606,10 @@ class SuperEditorState extends State<SuperEditor> {
                     // We display overlay builders in this inner-Stack so that they
                     // match the document size, rather than the viewport size.
                     for (final overlayBuilder in widget.documentOverlayBuilders)
-                      Positioned.fill(
-                        child: overlayBuilder.build(context, editContext),
+                      IgnorePointer(
+                        child: Positioned.fill(
+                          child: overlayBuilder.build(context, editContext),
+                        ),
                       ),
                   ],
                 ),
