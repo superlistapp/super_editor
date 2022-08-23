@@ -598,20 +598,24 @@ class SuperEditorState extends State<SuperEditor> {
                 ),
               ),
               // The document that the user is editing.
-              Align(
-                alignment: Alignment.topCenter,
-                child: Stack(
-                  children: [
-                    documentLayout,
-                    // We display overlay builders in this inner-Stack so that they
-                    // match the document size, rather than the viewport size.
-                    for (final overlayBuilder in widget.documentOverlayBuilders)
+              IgnorePointer(
+                ignoring: true,
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: Stack(
+                    children: [
                       IgnorePointer(
-                        child: Positioned.fill(
+                        ignoring: false,
+                        child: documentLayout,
+                      ),
+                      // We display overlay builders in this inner-Stack so that they
+                      // match the document size, rather than the viewport size.
+                      for (final overlayBuilder in widget.documentOverlayBuilders)
+                        Positioned.fill(
                           child: overlayBuilder.build(context, editContext),
                         ),
-                      ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ],
