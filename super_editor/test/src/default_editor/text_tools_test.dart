@@ -40,14 +40,13 @@ void main() {
       });
 
       test('expand when the caret is just before a word', () {
-        // Notice there is a space at first
-        const text = ' SuperEditor is awesome';
+        const text = 'SuperEditor is awesome';
 
         // Pretend that the caret is at the start of the first word and expand by word
-        final expandedSelection = expandPositionToWord(text: text, textPosition: const TextPosition(offset: 1));
+        final expandedSelection = expandPositionToWord(text: text, textPosition: const TextPosition(offset: 0));
         expect(
           expandedSelection,
-          const TextSelection(baseOffset: 1, extentOffset: 12),
+          const TextSelection(baseOffset: 0, extentOffset: 11),
         );
       });
 
@@ -75,7 +74,6 @@ void main() {
       });
 
       test('expand when the caret is just before an emoji', () {
-        // Notice there is a space at first
         const text = '🐢🐢 are adorable';
 
         // Pretend that the caret is at the start of the emojis and expand by word
