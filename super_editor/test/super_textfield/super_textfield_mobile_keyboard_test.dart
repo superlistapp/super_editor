@@ -2,7 +2,6 @@ import 'package:flutter/material.dart' hide SelectableText;
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
-import 'package:super_editor/src/infrastructure/super_textfield/input_method_engine/ime_input_owner.dart';
 import 'package:super_editor/super_editor.dart';
 
 import '../test_tools.dart';
@@ -283,15 +282,6 @@ Future<void> _pumpSuperTextField(
   // for (int i = 0; i < _multilineLayoutText.length; ++i) {
   //   print('$i: ${textLayout.getCharacterBox(TextPosition(offset: i))}');
   // }
-}
-
-DeltaTextInputClient imeClientGetter() {
-  final element = find
-      .byElementPredicate((element) => element is StatefulElement && element.state is ImeInputOwner)
-      .evaluate()
-      .single as StatefulElement;
-  final owner = element.state as ImeInputOwner;
-  return owner.imeClient;
 }
 
 Future<void> _pumpScaffoldForBuggyKeyboards(

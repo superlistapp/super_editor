@@ -1,7 +1,10 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:super_editor/super_editor.dart';
+
+import '../test_tools.dart';
 
 /// Extensions on [WidgetTester] for interacting with a [SuperEditor] the way
 /// a user would.
@@ -187,6 +190,12 @@ extension SuperEditorRobot on WidgetTester {
     await gesture.up();
     await gesture.removePointer();
     await pumpAndSettle();
+  }
+
+  /// Types the given [text] into a [SuperEditor] by simulating IME text deltas from
+  /// the platform.
+  Future<void> typeImeText(String text) async {
+    await ime.typeText(text, getter: imeClientGetter);
   }
 
   DocumentLayout _findDocumentLayout([Finder? superEditorFinder]) {

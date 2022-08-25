@@ -16,6 +16,7 @@ import 'package:super_editor/src/default_editor/selection_upstream_downstream.da
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/ime_input_owner.dart';
 
 import 'attributions.dart';
 import 'document_input_keyboard.dart';
@@ -70,7 +71,7 @@ class DocumentImeInteractor extends StatefulWidget {
   State createState() => _DocumentImeInteractorState();
 }
 
-class _DocumentImeInteractorState extends State<DocumentImeInteractor> implements DeltaTextInputClient {
+class _DocumentImeInteractorState extends State<DocumentImeInteractor> implements DeltaTextInputClient, ImeInputOwner {
   late FocusNode _focusNode;
 
   TextInputConnection? _inputConnection;
@@ -117,6 +118,9 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
 
     super.dispose();
   }
+
+  @override
+  DeltaTextInputClient get imeClient => this;
 
   void _onFocusChange() {
     if (_focusNode.hasFocus) {

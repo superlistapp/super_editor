@@ -1,8 +1,11 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:logging/logging.dart';
 import 'package:logging/logging.dart' as logging;
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/ime_input_owner.dart';
 import 'package:super_editor/src/infrastructure/platform_detector.dart';
 
 import 'src/infrastructure/_platform_test_tools.dart';
@@ -262,4 +265,18 @@ void testWidgetsOnIos(
       Platform.setTestInstance(null);
     }
   }, skip: skip);
+}
+
+/// Provides access to an IME client, to simulate IME input within a test.
+///
+/// The IME client is found by searching the element tree for a [State] object that implements
+/// [ImeInputOwner]. It's expected that only a single such element exists in the tree at a given
+/// moment. If test cases require differentiation, then this method will need to be adjusted.
+DeltaTextInputClient imeClientGetter() {
+  final element = find
+      .byElementPredicate((element) => element is StatefulElement && element.state is ImeInputOwner)
+      .evaluate()
+      .single as StatefulElement;
+  final owner = element.state as ImeInputOwner;
+  return owner.imeClient;
 }

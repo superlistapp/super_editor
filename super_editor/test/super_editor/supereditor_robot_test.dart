@@ -1,8 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
-import 'package:super_editor/src/core/document.dart';
-import 'package:super_editor/src/core/document_selection.dart';
-import 'package:super_editor/src/default_editor/text.dart';
+import 'package:super_editor/super_editor.dart';
 
 import '../test_tools.dart';
 import 'document_test_tools.dart';
@@ -122,6 +120,7 @@ void main() {
           .createDocument()
           .withSingleEmptyParagraph()
           .forDesktop()
+          .withInputSource(DocumentInputSource.keyboard)
           .autoFocus(true)
           .pump();
 
@@ -130,6 +129,26 @@ void main() {
 
       // Type some text by simulating hardware keyboard key presses.
       await tester.typeKeyboardText("Hello, world!");
+
+      // Verify that SuperEditor displays the text we typed.
+      expect(SuperEditorInspector.findTextInParagraph("1").text, "Hello, world!");
+    });
+
+    testWidgetsOnDesktop("enters text with IME keyboard", (tester) async {
+      // Configure and render a document.
+      await tester //
+          .createDocument()
+          .withSingleEmptyParagraph()
+          .forDesktop()
+          .withInputSource(DocumentInputSource.ime)
+          .autoFocus(true)
+          .pump();
+
+      // Tap to place the caret in the first paragraph.
+      await tester.placeCaretInParagraph("1", 0);
+
+      // Type some text by simulating hardware keyboard key presses.
+      await tester.typeImeText("Hello, world!");
 
       // Verify that SuperEditor displays the text we typed.
       expect(SuperEditorInspector.findTextInParagraph("1").text, "Hello, world!");

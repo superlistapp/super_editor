@@ -3,105 +3,141 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:super_editor/super_editor.dart';
 
-import '../test_tools.dart';
 import 'document_test_tools.dart';
 import 'supereditor_inspector.dart';
 import 'supereditor_robot.dart';
+import 'supereditor_test_tools.dart';
 
 void main() {
   group('SuperEditor keyboard', () {
     group('on any desktop', () {
       group('moves caret', () {
-        testWidgetsOnDesktop("left by one character when LEFT_ARROW is pressed", (tester) async {
-          final nodeId = await _pumpSingleLineWithCaret(tester, offset: 2);
+        testSuperEditorOnDesktop("left by one character when LEFT_ARROW is pressed", (
+          tester, {
+          required DocumentInputSource inputSource,
+        }) async {
+          final nodeId = await _pumpSingleLineWithCaret(tester, offset: 2, inputSource: inputSource);
 
           await tester.pressLeftArrow();
 
           expect(SuperEditorInspector.findDocumentSelection(), _caretInParagraph(nodeId, 1));
         });
 
-        testWidgetsOnDesktop("left by one character and expands when SHIFT + LEFT_ARROW is pressed", (tester) async {
-          final nodeId = await _pumpSingleLineWithCaret(tester, offset: 2);
+        testSuperEditorOnDesktop("left by one character and expands when SHIFT + LEFT_ARROW is pressed", (
+          tester, {
+          required DocumentInputSource inputSource,
+        }) async {
+          final nodeId = await _pumpSingleLineWithCaret(tester, offset: 2, inputSource: inputSource);
 
           await tester.pressShiftLeftArrow();
 
           expect(SuperEditorInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 2, to: 1));
         });
 
-        testWidgetsOnDesktop("right by one character when RIGHT_ARROW is pressed", (tester) async {
-          final nodeId = await _pumpSingleLineWithCaret(tester, offset: 2);
+        testSuperEditorOnDesktop("right by one character when RIGHT_ARROW is pressed", (
+          tester, {
+          required DocumentInputSource inputSource,
+        }) async {
+          final nodeId = await _pumpSingleLineWithCaret(tester, offset: 2, inputSource: inputSource);
 
           await tester.pressRightArrow();
 
           expect(SuperEditorInspector.findDocumentSelection(), _caretInParagraph(nodeId, 3));
         });
 
-        testWidgetsOnDesktop("right by one character and expands when SHIFT + RIGHT_ARROW is pressed", (tester) async {
-          final nodeId = await _pumpSingleLineWithCaret(tester, offset: 2);
+        testSuperEditorOnDesktop("right by one character and expands when SHIFT + RIGHT_ARROW is pressed", (
+          tester, {
+          required DocumentInputSource inputSource,
+        }) async {
+          final nodeId = await _pumpSingleLineWithCaret(tester, offset: 2, inputSource: inputSource);
 
           await tester.pressShiftRightArrow();
 
           expect(SuperEditorInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 2, to: 3));
         });
 
-        testWidgetsOnMac("to beginning of word when ALT + LEFT_ARROW is pressed", (tester) async {
-          final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10);
+        testSuperEditorOnMac("to beginning of word when ALT + LEFT_ARROW is pressed", (
+          tester, {
+          required DocumentInputSource inputSource,
+        }) async {
+          final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10, inputSource: inputSource);
 
           await tester.pressAltLeftArrow();
 
           expect(SuperEditorInspector.findDocumentSelection(), _caretInParagraph(nodeId, 8));
         });
 
-        testWidgetsOnMac("to beginning of word and expands when SHIFT + ALT + LEFT_ARROW is pressed", (tester) async {
-          final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10);
+        testSuperEditorOnMac("to beginning of word and expands when SHIFT + ALT + LEFT_ARROW is pressed", (
+          tester, {
+          required DocumentInputSource inputSource,
+        }) async {
+          final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10, inputSource: inputSource);
 
           await tester.pressShiftAltLeftArrow();
 
           expect(SuperEditorInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 10, to: 8));
         });
 
-        testWidgetsOnMac("to end of word when ALT + RIGHT_ARROW is pressed", (tester) async {
-          final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10);
+        testSuperEditorOnMac("to end of word when ALT + RIGHT_ARROW is pressed", (
+          tester, {
+          required DocumentInputSource inputSource,
+        }) async {
+          final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10, inputSource: inputSource);
 
           await tester.pressAltRightArrow();
 
           expect(SuperEditorInspector.findDocumentSelection(), _caretInParagraph(nodeId, 12));
         });
 
-        testWidgetsOnMac("to end of word and expands when SHIFT + ALT + RIGHT_ARROW is pressed", (tester) async {
-          final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10);
+        testSuperEditorOnMac("to end of word and expands when SHIFT + ALT + RIGHT_ARROW is pressed", (
+          tester, {
+          required DocumentInputSource inputSource,
+        }) async {
+          final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10, inputSource: inputSource);
 
           await tester.pressShiftAltRightArrow();
 
           expect(SuperEditorInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 10, to: 12));
         });
 
-        testWidgetsOnMac("to beginning of line when CMD + LEFT_ARROW is pressed", (tester) async {
-          final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10);
+        testSuperEditorOnMac("to beginning of line when CMD + LEFT_ARROW is pressed", (
+          tester, {
+          required DocumentInputSource inputSource,
+        }) async {
+          final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10, inputSource: inputSource);
 
           await tester.pressCmdLeftArrow();
 
           expect(SuperEditorInspector.findDocumentSelection(), _caretInParagraph(nodeId, 0));
         });
 
-        testWidgetsOnMac("to beginning of line and expands when SHIFT + CMD + LEFT_ARROW is pressed", (tester) async {
-          final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10);
+        testSuperEditorOnMac("to beginning of line and expands when SHIFT + CMD + LEFT_ARROW is pressed", (
+          tester, {
+          required DocumentInputSource inputSource,
+        }) async {
+          final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10, inputSource: inputSource);
 
           await tester.pressShiftCmdLeftArrow();
 
           expect(SuperEditorInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 10, to: 0));
         });
 
-        testWidgetsOnMac("to end of line when CMD + RIGHT_ARROW is pressed", (tester) async {
-          final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10);
+        testSuperEditorOnMac("to end of line when CMD + RIGHT_ARROW is pressed", (
+          tester, {
+          required DocumentInputSource inputSource,
+        }) async {
+          final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10, inputSource: inputSource);
 
           await tester.pressCmdRightArrow();
 
           expect(SuperEditorInspector.findDocumentSelection(), _caretInParagraph(nodeId, 26, TextAffinity.upstream));
         });
 
-        testWidgetsOnMac("to end of line and expands when SHIFT + CMD + RIGHT_ARROW is pressed", (tester) async {
-          final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10);
+        testSuperEditorOnMac("to end of line and expands when SHIFT + CMD + RIGHT_ARROW is pressed", (
+          tester, {
+          required DocumentInputSource inputSource,
+        }) async {
+          final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10, inputSource: inputSource);
 
           await tester.pressShiftCmdRightArrow();
 
@@ -111,100 +147,133 @@ void main() {
           );
         });
 
-        testWidgetsOnWindowsAndLinux("to beginning of word when CTL + LEFT_ARROW is pressed", (tester) async {
-          final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10);
+        testSuperEditorOnWindowsAndLinux("to beginning of word when CTL + LEFT_ARROW is pressed", (
+          tester, {
+          required DocumentInputSource inputSource,
+        }) async {
+          final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10, inputSource: inputSource);
 
           await tester.pressCtlLeftArrow();
 
           expect(SuperEditorInspector.findDocumentSelection(), _caretInParagraph(nodeId, 8));
         });
 
-        testWidgetsOnWindowsAndLinux("to beginning of word and expands when SHIFT + CTL + LEFT_ARROW is pressed",
-            (tester) async {
-          final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10);
+        testSuperEditorOnWindowsAndLinux("to beginning of word and expands when SHIFT + CTL + LEFT_ARROW is pressed", (
+          tester, {
+          required DocumentInputSource inputSource,
+        }) async {
+          final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10, inputSource: inputSource);
 
           await tester.pressShiftCtlLeftArrow();
 
           expect(SuperEditorInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 10, to: 8));
         });
 
-        testWidgetsOnWindowsAndLinux("to end of word when CTL + Right_ARROW is pressed", (tester) async {
-          final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10);
+        testSuperEditorOnWindowsAndLinux("to end of word when CTL + Right_ARROW is pressed", (
+          tester, {
+          required DocumentInputSource inputSource,
+        }) async {
+          final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10, inputSource: inputSource);
 
           await tester.pressCtlRightArrow();
 
           expect(SuperEditorInspector.findDocumentSelection(), _caretInParagraph(nodeId, 12));
         });
 
-        testWidgetsOnWindowsAndLinux("to end of word and expands when SHIFT + CTL + RIGHT_ARROW is pressed",
-            (tester) async {
-          final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10);
+        testSuperEditorOnWindowsAndLinux("to end of word and expands when SHIFT + CTL + RIGHT_ARROW is pressed", (
+          tester, {
+          required DocumentInputSource inputSource,
+        }) async {
+          final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10, inputSource: inputSource);
 
           await tester.pressShiftCtlRightArrow();
 
           expect(SuperEditorInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 10, to: 12));
         });
 
-        testWidgetsOnDesktop("up one line when UP_ARROW is pressed", (tester) async {
-          final nodeId = await _pumpDoubleLineWithCaret(tester, offset: 41);
+        testSuperEditorOnDesktop("up one line when UP_ARROW is pressed", (
+          tester, {
+          required DocumentInputSource inputSource,
+        }) async {
+          final nodeId = await _pumpDoubleLineWithCaret(tester, offset: 41, inputSource: inputSource);
 
           await tester.pressUpArrow();
 
           expect(SuperEditorInspector.findDocumentSelection(), _caretInParagraph(nodeId, 12));
         });
 
-        testWidgetsOnDesktop("up one line and expands when SHIFT + UP_ARROW is pressed", (tester) async {
-          final nodeId = await _pumpDoubleLineWithCaret(tester, offset: 41);
+        testSuperEditorOnDesktop("up one line and expands when SHIFT + UP_ARROW is pressed", (
+          tester, {
+          required DocumentInputSource inputSource,
+        }) async {
+          final nodeId = await _pumpDoubleLineWithCaret(tester, offset: 41, inputSource: inputSource);
 
           await tester.pressShiftUpArrow();
 
           expect(SuperEditorInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 41, to: 12));
         });
 
-        testWidgetsOnDesktop("down one line when DOWN_ARROW is pressed", (tester) async {
-          final nodeId = await _pumpDoubleLineWithCaret(tester, offset: 12);
+        testSuperEditorOnDesktop("down one line when DOWN_ARROW is pressed", (
+          tester, {
+          required DocumentInputSource inputSource,
+        }) async {
+          final nodeId = await _pumpDoubleLineWithCaret(tester, offset: 12, inputSource: inputSource);
 
           await tester.pressDownArrow();
 
           expect(SuperEditorInspector.findDocumentSelection(), _caretInParagraph(nodeId, 41));
         });
 
-        testWidgetsOnDesktop("down one line and expands when SHIFT + DOWN_ARROW is pressed", (tester) async {
-          final nodeId = await _pumpDoubleLineWithCaret(tester, offset: 12);
+        testSuperEditorOnDesktop("down one line and expands when SHIFT + DOWN_ARROW is pressed", (
+          tester, {
+          required DocumentInputSource inputSource,
+        }) async {
+          final nodeId = await _pumpDoubleLineWithCaret(tester, offset: 12, inputSource: inputSource);
 
           await tester.pressShiftDownArrow();
 
           expect(SuperEditorInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 12, to: 41));
         });
 
-        testWidgetsOnDesktop("to beginning of line when UP_ARROW is pressed at top of document", (tester) async {
-          final nodeId = await _pumpDoubleLineWithCaret(tester, offset: 12);
+        testSuperEditorOnDesktop("to beginning of line when UP_ARROW is pressed at top of document", (
+          tester, {
+          required DocumentInputSource inputSource,
+        }) async {
+          final nodeId = await _pumpDoubleLineWithCaret(tester, offset: 12, inputSource: inputSource);
 
           await tester.pressUpArrow();
 
           expect(SuperEditorInspector.findDocumentSelection(), _caretInParagraph(nodeId, 0));
         });
 
-        testWidgetsOnDesktop("to beginning of line and expands when SHIFT + UP_ARROW is pressed at top of document",
-            (tester) async {
-          final nodeId = await _pumpDoubleLineWithCaret(tester, offset: 12);
+        testSuperEditorOnDesktop("to beginning of line and expands when SHIFT + UP_ARROW is pressed at top of document",
+            (
+          tester, {
+          required DocumentInputSource inputSource,
+        }) async {
+          final nodeId = await _pumpDoubleLineWithCaret(tester, offset: 12, inputSource: inputSource);
 
           await tester.pressShiftUpArrow();
 
           expect(SuperEditorInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 12, to: 0));
         });
 
-        testWidgetsOnDesktop("to end of line when DOWN_ARROW is pressed at end of document", (tester) async {
-          final nodeId = await _pumpDoubleLineWithCaret(tester, offset: 41);
+        testSuperEditorOnDesktop("to end of line when DOWN_ARROW is pressed at end of document", (
+          tester, {
+          required DocumentInputSource inputSource,
+        }) async {
+          final nodeId = await _pumpDoubleLineWithCaret(tester, offset: 41, inputSource: inputSource);
 
           await tester.pressDownArrow();
 
           expect(SuperEditorInspector.findDocumentSelection(), _caretInParagraph(nodeId, 58));
         });
 
-        testWidgetsOnDesktop("end of line and expands when SHIFT + DOWN_ARROW is pressed at end of document",
-            (tester) async {
-          final nodeId = await _pumpDoubleLineWithCaret(tester, offset: 41);
+        testSuperEditorOnDesktop("end of line and expands when SHIFT + DOWN_ARROW is pressed at end of document", (
+          tester, {
+          required DocumentInputSource inputSource,
+        }) async {
+          final nodeId = await _pumpDoubleLineWithCaret(tester, offset: 41, inputSource: inputSource);
 
           await tester.pressShiftDownArrow();
 
@@ -215,10 +284,15 @@ void main() {
   });
 }
 
-Future<String> _pumpSingleLineWithCaret(WidgetTester tester, {required int offset}) async {
+Future<String> _pumpSingleLineWithCaret(
+  WidgetTester tester, {
+  required int offset,
+  required DocumentInputSource inputSource,
+}) async {
   final testContext = await tester //
       .createDocument()
       .fromMarkdown("This is some testing text.") // Length is 26
+      .withInputSource(inputSource)
       .pump();
 
   final nodeId = testContext.editContext.editor.document.nodes.first.id;
@@ -228,7 +302,8 @@ Future<String> _pumpSingleLineWithCaret(WidgetTester tester, {required int offse
   return nodeId;
 }
 
-Future<String> _pumpDoubleLineWithCaret(WidgetTester tester, {required int offset}) async {
+Future<String> _pumpDoubleLineWithCaret(WidgetTester tester,
+    {required int offset, required DocumentInputSource inputSource}) async {
   final testContext = await tester //
       .createDocument()
       // Text indices:
