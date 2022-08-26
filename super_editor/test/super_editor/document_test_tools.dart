@@ -5,11 +5,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/super_editor.dart';
+import 'package:super_editor/super_editor_test.dart';
 import 'package:super_editor_markdown/super_editor_markdown.dart';
 import 'package:text_table/text_table.dart';
 
 import 'test_documents.dart';
-import 'supereditor_inspector.dart';
 
 /// Extensions on [WidgetTester] that configure and pump [SuperEditor]
 /// document editors.
@@ -444,7 +444,8 @@ class EquivalentDocumentMatcher extends Matcher {
     bool nodeTypeOrContentMismatch = false;
 
     if (_expectedDocument.nodes.length != actualDocument.nodes.length) {
-      messages.add("expected ${_expectedDocument.nodes.length} document nodes but found ${actualDocument.nodes.length}");
+      messages
+          .add("expected ${_expectedDocument.nodes.length} document nodes but found ${actualDocument.nodes.length}");
       nodeCountMismatch = true;
     } else {
       messages.add("document have the same number of nodes");

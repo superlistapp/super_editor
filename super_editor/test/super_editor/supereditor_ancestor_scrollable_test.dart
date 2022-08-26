@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/super_editor.dart';
+import 'package:super_editor/super_editor_test.dart';
 
 import '../test_tools.dart';
 import 'document_test_tools.dart';
-import 'supereditor_robot.dart';
 
 void main() {
   group('SuperEditor respects horizontal scrolling', () {
