@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart' hide SelectableText;
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:super_editor/super_editor.dart';
+import 'package:super_editor/super_editor_test.dart';
 
 import '../test_tools.dart';
 import 'super_textfield_inspector.dart';

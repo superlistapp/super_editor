@@ -2,9 +2,8 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
+import 'package:super_editor/src/test/ime.dart';
 import 'package:super_editor/super_editor.dart';
-
-import '../test_tools.dart';
 
 /// Extensions on [WidgetTester] for interacting with a [SuperEditor] the way
 /// a user would.
