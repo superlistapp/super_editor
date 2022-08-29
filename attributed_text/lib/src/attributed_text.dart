@@ -254,6 +254,7 @@ class AttributedText {
     required String textToInsert,
     required int startOffset,
     Set<Attribution> applyAttributions = const {},
+    Set<AttributionSpan> applyAttributionSpans = const {},
   }) {
     _log.fine('text: "$textToInsert", start: $startOffset, attributions: $applyAttributions');
 
@@ -273,6 +274,13 @@ class AttributedText {
     for (dynamic attribution in applyAttributions) {
       insertedText.addAttribution(attribution, insertTextRange);
     }
+    for (final attribution in applyAttributionSpans) {
+      insertedText.addAttribution(
+        attribution.attribution,
+        SpanRange(start: attribution.start, end: attribution.end),
+      );
+    }
+
     _log.fine('insertedText: $insertedText');
 
     _log.fine('combining left text, insertion text, and right text');

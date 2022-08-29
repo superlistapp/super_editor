@@ -1104,11 +1104,20 @@ class InsertTextCommand implements EditorCommand {
     required this.documentPosition,
     required this.textToInsert,
     required this.attributions,
+    this.attributionSpans = const {},
   }) : assert(documentPosition.nodePosition is TextPosition);
 
   final DocumentPosition documentPosition;
   final String textToInsert;
   final Set<Attribution> attributions;
+
+  /// Set of [AttributionSpan] that would be applied on each spans of the [textToInsert]
+  /// depending on [AttributionSpan.start] and [AttributionSpan.end]
+  ///
+  /// The difference between [attributionSpans] and [attributions] is that [Attribution]s in
+  /// [attributions] would be applied accross [textToInsert], whereas [Attribution]s in
+  /// [attributionSpans] would be applied on fragments of [textToInsert]
+  final Set<AttributionSpan> attributionSpans;
 
   @override
   void execute(Document document, DocumentEditorTransaction transaction) {
@@ -1131,6 +1140,7 @@ class InsertTextCommand implements EditorCommand {
       textToInsert: textToInsert,
       startOffset: textOffset,
       applyAttributions: attributionsForInsertedText,
+      applyAttributionSpans: attributionSpans,
     );
   }
 

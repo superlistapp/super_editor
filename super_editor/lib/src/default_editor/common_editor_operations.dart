@@ -2250,20 +2250,14 @@ class _PasteEditorCommand implements EditorCommand {
       // Get all link [AttributionSpan]s in the pasted text
       final linkAttributionSpans = _getURLsInPastedText(pastedText: splitContent.first);
 
-      // Paste the first piece of content into the selected TextNode.
+      // Paste the first piece of content into the selected TextNode and apply
+      // [LinkAttribution] found in the pasted text
       InsertTextCommand(
         documentPosition: _pastePosition,
         textToInsert: splitContent.first,
         attributions: attributionsForPastedText,
+        attributionSpans: linkAttributionSpans,
       ).execute(document, transaction);
-
-      // Apply [LinkAttribution] found in the pasted text
-      for (final linkAttributionSpan in linkAttributionSpans) {
-        textNode.text.addAttribution(
-          linkAttributionSpan.attribution,
-          SpanRange(start: linkAttributionSpan.start, end: linkAttributionSpan.end),
-        );
-      }
 
       // At this point in the paste process, the document selection
       // position is at the end of the text that was just pasted.
@@ -2325,10 +2319,9 @@ class _PasteEditorCommand implements EditorCommand {
 
   /// Finds all URLs in the [pastedText] and returns a list of link [AttributionSpan]
   /// from those.
-  List<AttributionSpan> _getURLsInPastedText({required String pastedText}) {
-    final List<AttributionSpan> linkAttributionSpans = [];
+  Set<AttributionSpan> _getURLsInPastedText({required String pastedText}) {
+    final Set<AttributionSpan> linkAttributionSpans = {};
 
-    final textPosition = _pastePosition.nodePosition as TextNodePosition;
     final wordBoundaries = pastedText.calculateAllWordBoundaries();
 
     for (final wordBoundary in wordBoundaries) {
@@ -2339,10 +2332,10 @@ class _PasteEditorCommand implements EditorCommand {
         // Valid url. Apply [LinkAttribution] to the url
         final linkAttribution = LinkAttribution(url: link);
 
-        final startOffset = textPosition.offset + wordBoundary.start;
+        final startOffset = wordBoundary.start;
         // -1 because TextPosition's offset indexes the character after the
         // selection, not the final character in the selection.
-        final endOffset = textPosition.offset + wordBoundary.end - 1;
+        final endOffset = wordBoundary.end - 1;
 
         // Add link attribution.
         linkAttributionSpans.add(AttributionSpan(
