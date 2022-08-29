@@ -429,7 +429,7 @@ class SuperEditorState extends State<SuperEditor> {
 
   void _recomputeIfLayoutShouldShowCaret() {
     _docLayoutSelectionStyler.shouldDocumentShowCaret =
-        _focusNode.hasFocus && _gestureMode == DocumentGestureMode.mouse;
+        _focusNode.hasFocus && gestureMode == DocumentGestureMode.mouse;
   }
 
   void _updateComposerPreferencesAtSelection() {
@@ -467,7 +467,8 @@ class SuperEditorState extends State<SuperEditor> {
     }
   }
 
-  DocumentGestureMode get _gestureMode {
+  @visibleForTesting
+  DocumentGestureMode get gestureMode {
     if (widget.gestureMode != null) {
       return widget.gestureMode!;
     }
@@ -528,7 +529,7 @@ class SuperEditorState extends State<SuperEditor> {
   Widget _buildGestureSystem({
     required Widget documentLayout,
   }) {
-    switch (_gestureMode) {
+    switch (gestureMode) {
       case DocumentGestureMode.mouse:
         return _buildDesktopGestureSystem(documentLayout);
       case DocumentGestureMode.android:

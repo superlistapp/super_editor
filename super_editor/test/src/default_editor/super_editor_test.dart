@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/super_editor.dart';
@@ -73,6 +74,26 @@ void main() {
         expect(SuperEditorInspector.findParagraphStyle("1")!.color, Colors.white);
       });
     });
+
+    group("gesture mode", () {
+      testWidgets(
+          '''will default to mouse input for Mac,Windows,Linux'''
+          '''android gestures on Android and iOS gestures on iOS''',
+          (tester) async {
+        // Configure and render a document.
+        debugDefaultTargetPlatformOverride =
+            _targetPlatformAndGestureVariants.currentValue!.platform;
+        await tester //
+            .createDocument()
+            .withSingleParagraph()
+            .pump();
+
+        // Ensure that the gesture mode is correct.
+        expect(SuperEditorInspector.findGestureMode(),
+            _targetPlatformAndGestureVariants.currentValue!.gestureMode);
+        debugDefaultTargetPlatformOverride = null;
+      }, variant: _targetPlatformAndGestureVariants);
+    });
   });
 }
 
@@ -105,7 +126,6 @@ final _stylesheet2 = Stylesheet(
 TextStyle inlineTextStyler(Set<Attribution> attributions, TextStyle base) {
   return base;
 }
-
 class _InputAndGestureTuple {
   final DocumentInputSource inputSource;
   final DocumentGestureMode gestureMode;
@@ -126,5 +146,28 @@ final _inputAndGestureVariants = ValueVariant<_InputAndGestureTuple>(
     const _InputAndGestureTuple(DocumentInputSource.ime, DocumentGestureMode.mouse),
     const _InputAndGestureTuple(DocumentInputSource.ime, DocumentGestureMode.iOS),
     const _InputAndGestureTuple(DocumentInputSource.ime, DocumentGestureMode.android),
+  },
+);
+
+class _TargetPlatformAndGestureTuple {
+  final TargetPlatform platform;
+  final DocumentGestureMode gestureMode;
+
+  const _TargetPlatformAndGestureTuple(this.platform, this.gestureMode);
+
+  @override
+  String toString() {
+    return '${platform.name} Target Platform & ${gestureMode.name} Gesture Mode';
+  }
+}
+
+final _targetPlatformAndGestureVariants =
+    ValueVariant<_TargetPlatformAndGestureTuple>(
+  {
+    const _TargetPlatformAndGestureTuple(TargetPlatform.macOS, DocumentGestureMode.mouse),
+    const _TargetPlatformAndGestureTuple(TargetPlatform.linux, DocumentGestureMode.mouse),
+    const _TargetPlatformAndGestureTuple(TargetPlatform.windows, DocumentGestureMode.mouse),
+    const _TargetPlatformAndGestureTuple(TargetPlatform.iOS, DocumentGestureMode.iOS),
+    const _TargetPlatformAndGestureTuple( TargetPlatform.android, DocumentGestureMode.android),
   },
 );

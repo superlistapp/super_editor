@@ -18,6 +18,16 @@ class SuperEditorInspector {
     return superEditor.focusNode.hasFocus;
   }
 
+  /// Returns the [DocumentGestureMode] within the [SuperEditor] matched by [finder],
+  /// or the singular [SuperEditor] in the widget tree, if [finder] is `null`.
+  ///
+  /// {@macro supereditor_finder}
+  static DocumentGestureMode findGestureMode([Finder? finder]) {
+    final element = (finder ?? find.byType(SuperEditor)).evaluate().single as StatefulElement;
+    final superEditor = element.state as SuperEditorState;
+    return superEditor.gestureMode;
+  }
+
   /// Returns the [Document] within the [SuperEditor] matched by [finder],
   /// or the singular [SuperEditor] in the widget tree, if [finder] is `null`.
   ///
