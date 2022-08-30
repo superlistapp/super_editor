@@ -145,6 +145,12 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
 
     if (widget.focusNode.hasFocus && widget.textController.isAttachedToIme) {
       widget.textController.showKeyboard();
+    } else if (widget.focusNode.hasFocus) {
+      // This situation can happen on iOS web when the user taps outside the field
+      // or clicks on the OK button of the software keyboard.
+      // In this situation, the IME connection is closed but the field remains focused.
+      // We need to attach to IME so the keyboard is displayed again.
+      widget.textController.attachToIme();
     } else {
       widget.focusNode.requestFocus();
     }

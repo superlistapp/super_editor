@@ -6,12 +6,12 @@ import 'package:super_editor/src/default_editor/super_editor.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/focus.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/super_textfield.dart';
+import 'package:super_editor/super_editor_test.dart';
 
 import '../super_textfield/super_textfield_inspector.dart';
 import '../super_textfield/super_textfield_robot.dart';
 import '../test_tools.dart';
 import 'document_test_tools.dart';
-import 'supereditor_inspector.dart';
 
 void main() {
   group("SuperEditor popover focus", () {

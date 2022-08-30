@@ -2,12 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/super_editor.dart';
+import 'package:super_editor/super_editor_test.dart';
 
-import 'document_test_tools.dart';
-import 'supereditor_inspector.dart';
-import 'supereditor_robot.dart';
-import 'test_documents.dart';
 import '../test_tools.dart';
+import 'document_test_tools.dart';
+import 'test_documents.dart';
 
 /// This test suite illustrates the difference between interacting with
 /// selectable non-text nodes and un-selectable non-text nodes.

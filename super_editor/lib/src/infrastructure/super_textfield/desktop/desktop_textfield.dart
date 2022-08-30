@@ -1,5 +1,5 @@
 import 'dart:math';
-import 'dart:ui';
+import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
@@ -18,6 +18,7 @@ import 'package:super_text_layout/super_text_layout.dart';
 
 import '../../keyboard.dart';
 import '../../multi_tap_gesture.dart';
+import '../infrastructure/fill_width_if_constrained.dart';
 import '../styles.dart';
 
 final _log = textFieldLog;
@@ -112,6 +113,8 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
   late ScrollController _scrollController;
 
   double? _viewportHeight;
+
+  final _estimatedLineHeight = _EstimatedLineHeight();
 
   @override
   void initState() {
@@ -248,12 +251,14 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
   }
 
   double _getEstimatedLineHeight() {
-    final lineHeight = _textKey.currentState?.textLayout.getLineHeightAtPosition(const TextPosition(offset: 0)) ?? 0;
+    final lineHeight = _controller.text.text.isEmpty //
+        ? 0.0
+        : _textKey.currentState?.textLayout.getLineHeightAtPosition(const TextPosition(offset: 0)) ?? 0;
     if (lineHeight > 0) {
       return lineHeight;
     }
     final defaultStyle = widget.textStyleBuilder({});
-    return (defaultStyle.height ?? 1.0) * defaultStyle.fontSize!;
+    return _estimatedLineHeight.calculate(defaultStyle);
   }
 
   @override
@@ -301,6 +306,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
                 key: _textScrollKey,
                 textKey: _textKey,
                 textController: _controller,
+                textAlign: widget.textAlign,
                 scrollController: _scrollController,
                 viewportHeight: _viewportHeight,
                 estimatedLineHeight: _getEstimatedLineHeight(),
@@ -327,15 +333,17 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
   }
 
   Widget _buildSelectableText() {
-    return SuperTextWithSelection.single(
-      key: _textKey,
-      richText: _controller.text.computeTextSpan(widget.textStyleBuilder),
-      textAlign: widget.textAlign,
-      userSelection: UserSelection(
-        highlightStyle: widget.selectionHighlightStyle,
-        caretStyle: widget.caretStyle,
-        selection: _controller.selection,
-        hasCaret: _focusNode.hasFocus,
+    return FillWidthIfConstrained(
+      child: SuperTextWithSelection.single(
+        key: _textKey,
+        richText: _controller.text.computeTextSpan(widget.textStyleBuilder),
+        textAlign: widget.textAlign,
+        userSelection: UserSelection(
+          highlightStyle: widget.selectionHighlightStyle,
+          caretStyle: widget.caretStyle,
+          selection: _controller.selection,
+          hasCaret: _focusNode.hasFocus,
+        ),
       ),
     );
   }
@@ -662,7 +670,7 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
 
     final gutterAmount = _dragEndInViewport!.dy.clamp(0.0, _dragGutterExtent);
     final speedPercent = 1.0 - (gutterAmount / _dragGutterExtent);
-    final scrollAmount = lerpDouble(0, _maxDragSpeed, speedPercent)!;
+    final scrollAmount = ui.lerpDouble(0, _maxDragSpeed, speedPercent)!;
 
     _textScroll.startScrollingToStart(amountPerFrame: scrollAmount);
   }
@@ -681,7 +689,7 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
     final editorBox = context.findRenderObject() as RenderBox;
     final gutterAmount = (editorBox.size.height - _dragEndInViewport!.dy).clamp(0.0, _dragGutterExtent);
     final speedPercent = 1.0 - (gutterAmount / _dragGutterExtent);
-    final scrollAmount = lerpDouble(0, _maxDragSpeed, speedPercent)!;
+    final scrollAmount = ui.lerpDouble(0, _maxDragSpeed, speedPercent)!;
 
     _textScroll.startScrollingToEnd(amountPerFrame: scrollAmount);
   }
@@ -870,6 +878,7 @@ class SuperTextFieldScrollview extends StatefulWidget {
     required this.viewportHeight,
     required this.estimatedLineHeight,
     required this.isMultiline,
+    this.textAlign = TextAlign.left,
     required this.child,
   }) : super(key: key);
 
@@ -898,6 +907,9 @@ class SuperTextFieldScrollview extends StatefulWidget {
 
   /// Whether or not this text field allows multiple lines of text.
   final bool isMultiline;
+
+  /// The text alignment within the scrollview.
+  final TextAlign textAlign;
 
   /// The rest of the subtree for this text field.
   final Widget child;
@@ -1124,6 +1136,22 @@ class SuperTextFieldScrollviewState extends State<SuperTextFieldScrollview> with
     }
     if (_scrollToEndOnTick) {
       scrollToEnd();
+    }
+  }
+
+  Alignment _getAlignment() {
+    switch (widget.textAlign) {
+      case TextAlign.left:
+      case TextAlign.justify:
+        return Alignment.topLeft;
+      case TextAlign.right:
+        return Alignment.topRight;
+      case TextAlign.center:
+        return Alignment.topCenter;
+      case TextAlign.start:
+        return Directionality.of(context) == TextDirection.ltr ? Alignment.topLeft : Alignment.topRight;
+      case TextAlign.end:
+        return Directionality.of(context) == TextDirection.ltr ? Alignment.topRight : Alignment.topLeft;
     }
   }
 
@@ -1651,4 +1679,38 @@ class DefaultSuperTextFieldKeyboardHandlers {
   }
 
   DefaultSuperTextFieldKeyboardHandlers._();
+}
+
+/// Computes the estimated line height of a [TextStyle].
+class _EstimatedLineHeight {
+  /// Last computed line height.
+  double? _lastLineHeight;
+
+  /// TextStyle used to compute [_lastLineHeight].
+  TextStyle? _lastComputedStyle;
+
+  /// Computes the estimated line height for the given [style].
+  ///
+  /// The height is computed by laying out a [Paragraph] with an arbitrary
+  /// character and inspecting it's line metrics.
+  ///
+  /// The result is cached for the last [style] used, so it's not computed
+  /// at each call.
+  double calculate(TextStyle style) {
+    if (_lastComputedStyle == style && _lastLineHeight != null) {
+      return _lastLineHeight!;
+    }
+
+    final builder = ui.ParagraphBuilder(style.getParagraphStyle())
+      ..pushStyle(style.getTextStyle())
+      ..addText('A');
+
+    final paragraph = builder.build();
+    paragraph.layout(const ui.ParagraphConstraints(width: double.infinity));
+
+    final lineMetrics = paragraph.computeLineMetrics();
+    _lastLineHeight = lineMetrics.first.height;
+    _lastComputedStyle = style;
+    return _lastLineHeight!;
+  }
 }

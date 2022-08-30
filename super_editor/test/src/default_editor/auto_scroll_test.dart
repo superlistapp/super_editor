@@ -3,9 +3,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:super_editor/src/infrastructure/blinking_caret.dart';
 import 'package:super_editor/super_editor.dart';
+import 'package:super_editor/super_editor_test.dart';
 
 import '../../super_editor/document_test_tools.dart';
-import '../../super_editor/supereditor_robot.dart';
 import '../../test_tools.dart';
 import '../_document_test_tools.dart';
 

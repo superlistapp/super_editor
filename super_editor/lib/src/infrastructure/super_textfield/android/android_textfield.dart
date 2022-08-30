@@ -3,12 +3,13 @@ import 'package:flutter/services.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/focus.dart';
+import 'package:super_editor/src/infrastructure/ime_input_owner.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/android/_editing_controls.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/android/_user_interaction.dart';
+import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/fill_width_if_constrained.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/hint_text.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/text_scrollview.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/input_method_engine/_ime_text_editing_controller.dart';
-import 'package:super_editor/src/infrastructure/super_textfield/input_method_engine/ime_input_owner.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
 import '../../_logging.dart';
@@ -472,6 +473,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
             textScrollController: _textScrollController,
             textKey: _textContentKey,
             textEditingController: _textEditingController,
+            textAlign: widget.textAlign,
             minLines: widget.minLines,
             maxLines: widget.maxLines,
             lineHeight: widget.lineHeight,
@@ -509,19 +511,21 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
         ? _textEditingController.text.computeTextSpan(widget.textStyleBuilder)
         : TextSpan(text: "", style: widget.textStyleBuilder({}));
 
-    return SuperTextWithSelection.single(
-      key: _textContentKey,
-      richText: textSpan,
-      textAlign: widget.textAlign,
-      userSelection: UserSelection(
-        highlightStyle: SelectionHighlightStyle(
-          color: widget.selectionColor,
+    return FillWidthIfConstrained(
+      child: SuperTextWithSelection.single(
+        key: _textContentKey,
+        richText: textSpan,
+        textAlign: widget.textAlign,
+        userSelection: UserSelection(
+          highlightStyle: SelectionHighlightStyle(
+            color: widget.selectionColor,
+          ),
+          caretStyle: CaretStyle(
+            color: widget.caretColor,
+          ),
+          selection: _textEditingController.selection,
+          hasCaret: _focusNode.hasFocus,
         ),
-        caretStyle: CaretStyle(
-          color: widget.caretColor,
-        ),
-        selection: _textEditingController.selection,
-        hasCaret: _focusNode.hasFocus,
       ),
     );
   }
