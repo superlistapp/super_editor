@@ -179,16 +179,14 @@ void main() {
       });
     });
 
-    group('getAttributedRange', () {
-      test('returns the range of a single attribution for an offset in the middle of a span', () {
+    group('attribution queries', () {
+      test('finds all bold text around a character', () {
         final attributedText = AttributedText(
           text: 'Hello world',
           spans: AttributedSpans(
             attributions: [
               SpanMarker(attribution: ExpectedSpans.bold, offset: 4, markerType: SpanMarkerType.start),
               SpanMarker(attribution: ExpectedSpans.bold, offset: 9, markerType: SpanMarkerType.end),
-              SpanMarker(attribution: ExpectedSpans.italics, offset: 0, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: ExpectedSpans.italics, offset: 10, markerType: SpanMarkerType.end),
             ],
           ),
         );
@@ -197,41 +195,7 @@ void main() {
         expect(range, SpanRange(start: 4, end: 9));
       });
 
-      test('returns the range of a single attribution for an offset at the beginning of a span', () {
-        final attributedText = AttributedText(
-          text: 'Hello world',
-          spans: AttributedSpans(
-            attributions: [
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 4, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 9, markerType: SpanMarkerType.end),
-              SpanMarker(attribution: ExpectedSpans.italics, offset: 0, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: ExpectedSpans.italics, offset: 10, markerType: SpanMarkerType.end),
-            ],
-          ),
-        );
-
-        final range = attributedText.getAttributedRange({ExpectedSpans.bold}, 4);
-        expect(range, SpanRange(start: 4, end: 9));
-      });
-
-      test('returns the range of a single attribution for an offset at the end of a span', () {
-        final attributedText = AttributedText(
-          text: 'Hello world',
-          spans: AttributedSpans(
-            attributions: [
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 4, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 9, markerType: SpanMarkerType.end),
-              SpanMarker(attribution: ExpectedSpans.italics, offset: 0, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: ExpectedSpans.italics, offset: 10, markerType: SpanMarkerType.end),
-            ],
-          ),
-        );
-
-        final range = attributedText.getAttributedRange({ExpectedSpans.bold}, 9);
-        expect(range, SpanRange(start: 4, end: 9));
-      });
-
-      test('returns the range for multiple attributions', () {
+      test('finds all bold and italics text around a character', () {
         final attributedText = AttributedText(
           text: 'Hello world',
           spans: AttributedSpans(
@@ -250,25 +214,23 @@ void main() {
         expect(range, SpanRange(start: 4, end: 7));
       });
 
-      test('throws when given an empty attribution set', () {
-        final attributedText = AttributedText(text: 'Hello world');
-
-        expect(() => attributedText.getAttributedRange({}, 0), throwsException);
-      });
-
-      test('throws when any attribution is not present at the given offset', () {
+      test('finds all bold, italic and strikethrough text within a word that also includes a span with only bold and italics', () {
         final attributedText = AttributedText(
           text: 'Hello world',
           spans: AttributedSpans(
             attributions: [
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 6, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 10, markerType: SpanMarkerType.end),
-              
+              SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
+              SpanMarker(attribution: ExpectedSpans.bold, offset: 4, markerType: SpanMarkerType.end),
+              SpanMarker(attribution: ExpectedSpans.italics, offset: 0, markerType: SpanMarkerType.start),
+              SpanMarker(attribution: ExpectedSpans.italics, offset: 4, markerType: SpanMarkerType.end),
+              SpanMarker(attribution: ExpectedSpans.strikethrough, offset: 1, markerType: SpanMarkerType.start),
+              SpanMarker(attribution: ExpectedSpans.strikethrough, offset: 3, markerType: SpanMarkerType.end),
             ],
           ),
         );
 
-        expect(() => attributedText.getAttributedRange({ExpectedSpans.bold, ExpectedSpans.italics}, 7), throwsException);
+        final range = attributedText.getAttributedRange({ExpectedSpans.bold, ExpectedSpans.italics, ExpectedSpans.strikethrough}, 2);
+        expect(range, SpanRange(start: 1, end: 3));
       });
     });
   });
