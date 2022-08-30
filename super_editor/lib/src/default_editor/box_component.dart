@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:super_editor/src/core/document.dart';
+import 'package:super_editor/src/core/styles.dart';
 import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 
@@ -265,28 +266,32 @@ class _BoxComponentState extends State<BoxComponent> with DocumentComponent {
 class SelectableBox extends StatelessWidget {
   const SelectableBox({
     Key? key,
-    this.selection,
-    required this.selectionColor,
+    this.styledSelections = const [],
     required this.child,
   }) : super(key: key);
 
-  final UpstreamDownstreamNodeSelection? selection;
-  final Color selectionColor;
+  final List<StyledSelection<UpstreamDownstreamNodeSelection>> styledSelections;
   final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    final isSelected = selection != null && !selection!.isCollapsed;
-
     return MouseRegion(
       cursor: SystemMouseCursors.basic,
       child: IgnorePointer(
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: isSelected ? selectionColor.withOpacity(0.5) : Colors.transparent,
-          ),
-          position: DecorationPosition.foreground,
-          child: child,
+        child: Stack(
+          children: [
+            child,
+            for (final styledSelection in styledSelections)
+              Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: !styledSelection.selection.isCollapsed
+                        ? styledSelection.styles.selectionColor.withOpacity(0.5)
+                        : Colors.transparent,
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );

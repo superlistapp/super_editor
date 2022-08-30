@@ -265,14 +265,27 @@ mixin TextComponentViewModel on SingleColumnLayoutComponentViewModel {
   TextAlign get textAlignment;
   set textAlignment(TextAlign alignment);
 
-  TextSelection? get selection;
-  set selection(TextSelection? selection);
+  /// A list of styled selections that should appear in a text component.
+  ///
+  /// Typical editor usage includes either zero or one styled selections.
+  /// However, a multi-user editor, or an editor that supports a "find"
+  /// feature might paint multiple text selections.
+  ///
+  /// The list is painted in order. In the case of overlapping selections,
+  /// the first selection in the list is painted first, and the last
+  /// selection in the list is painted last.
+  ///
+  /// To add, remove, or update styled selections, edit the list returned
+  /// from this getter. The view model retains a reference to the original
+  /// list. Any change you make to the list is reflected within the view
+  /// model.
+  List<StyledSelection<TextSelection>> get styledSelections;
 
-  Color get selectionColor;
-  set selectionColor(Color color);
-
-  bool get highlightWhenEmpty;
-  set highlightWhenEmpty(bool highlight);
+  /// Replaces all existing [styledSelections] with the given list.
+  ///
+  /// If you only want to change some [styledSelections], then mutate the
+  /// list returned from [styledSelections].
+  set styledSelections(List<StyledSelection<TextSelection>> styledSelections);
 
   @override
   void applyStyles(Map<String, dynamic> styles) {
@@ -301,9 +314,9 @@ class TextWithHintComponent extends StatefulWidget {
     this.textDirection,
     required this.textStyleBuilder,
     this.metadata = const {},
-    this.textSelection,
-    this.selectionColor = Colors.lightBlueAccent,
-    this.highlightWhenEmpty = false,
+    this.styledSelections = const [],
+    this.showCaret = false,
+    this.caretColor = Colors.black,
     this.showDebugPaint = false,
   }) : super(key: key);
 
@@ -314,9 +327,9 @@ class TextWithHintComponent extends StatefulWidget {
   final TextDirection? textDirection;
   final AttributionStyleBuilder textStyleBuilder;
   final Map<String, dynamic> metadata;
-  final TextSelection? textSelection;
-  final Color selectionColor;
-  final bool highlightWhenEmpty;
+  final List<StyledSelection<TextSelection>> styledSelections;
+  final bool showCaret;
+  final Color caretColor;
   final bool showDebugPaint;
 
   @override
@@ -362,9 +375,7 @@ class _TextWithHintComponentState extends State<TextWithHintComponent>
           textDirection: widget.textDirection,
           textStyleBuilder: widget.textStyleBuilder,
           metadata: widget.metadata,
-          textSelection: widget.textSelection,
-          selectionColor: widget.selectionColor,
-          highlightWhenEmpty: widget.highlightWhenEmpty,
+          styledSelections: widget.styledSelections,
           showDebugPaint: widget.showDebugPaint,
         ),
       ],
@@ -383,9 +394,7 @@ class TextComponent extends StatefulWidget {
     this.textDirection,
     required this.textStyleBuilder,
     this.metadata = const {},
-    this.textSelection,
-    this.selectionColor = Colors.lightBlueAccent,
-    this.highlightWhenEmpty = false,
+    this.styledSelections = const [],
     this.showDebugPaint = false,
   }) : super(key: key);
 
@@ -394,9 +403,7 @@ class TextComponent extends StatefulWidget {
   final TextDirection? textDirection;
   final AttributionStyleBuilder textStyleBuilder;
   final Map<String, dynamic> metadata;
-  final TextSelection? textSelection;
-  final Color selectionColor;
-  final bool highlightWhenEmpty;
+  final List<StyledSelection<TextSelection>> styledSelections;
   final bool showDebugPaint;
 
   @override
@@ -755,19 +762,24 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
     editorLayoutLog.finer('Building a TextComponent with key: ${widget.key}');
 
     return IgnorePointer(
-      child: SuperTextWithSelection.single(
+      child: SuperTextWithSelection.multi(
         key: _textKey,
         richText: widget.text.computeTextSpan(_textStyleWithBlockType),
         textAlign: widget.textAlign ?? TextAlign.left,
         textDirection: widget.textDirection ?? TextDirection.ltr,
-        userSelection: UserSelection(
-          highlightStyle: SelectionHighlightStyle(
-            color: widget.selectionColor,
-          ),
-          selection: widget.textSelection ?? const TextSelection.collapsed(offset: -1),
-          highlightWhenEmpty: widget.highlightWhenEmpty,
-          hasCaret: false,
-        ),
+        userSelections: [
+          for (final selection in widget.styledSelections)
+            UserSelection(
+              highlightStyle: SelectionHighlightStyle(
+                color: selection.styles.selectionColor,
+              ),
+              selection: selection.selection,
+              highlightWhenEmpty: selection.styles.highlightEmptyTextBlocks,
+              // We paint carets in an overlay. Never paint them in an individual component.
+              hasCaret: false,
+              blinkCaret: false,
+            )
+        ],
       ),
     );
   }

@@ -14,26 +14,31 @@ import '_presenter.dart';
 
 /// [SingleColumnLayoutStylePhase] that applies visual selections to each component,
 /// e.g., text selections, image selections, caret positioning.
-class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
+class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase implements NonPrimarySelectionListener {
   SingleColumnLayoutSelectionStyler({
     required Document document,
     required DocumentComposer composer,
-    required SelectionStyles selectionStyles,
+    required SelectionStyles primaryUserSelectionStyles,
+    NonPrimarySelectionStyler? nonPrimarySelectionStyler,
   })  : _document = document,
         _composer = composer,
-        _selectionStyles = selectionStyles {
+        _selectionStyles = primaryUserSelectionStyles,
+        _nonPrimarySelectionStyler = nonPrimarySelectionStyler {
     // Our styles need to be re-applied whenever the document selection changes.
     _composer.selectionNotifier.addListener(markDirty);
+    _composer.addNonPrimarySelectionListener(this);
   }
 
   @override
   void dispose() {
     _composer.selectionNotifier.removeListener(markDirty);
+    _composer.removeNonPrimarySelectionListener(this);
     super.dispose();
   }
 
   final Document _document;
   final DocumentComposer _composer;
+  final NonPrimarySelectionStyler? _nonPrimarySelectionStyler;
 
   SelectionStyles _selectionStyles;
   set selectionStyles(SelectionStyles selectionStyles) {
@@ -55,6 +60,13 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
     editorStyleLog.fine("Change to 'document should show caret': $_shouldDocumentShowCaret");
     markDirty();
   }
+
+  @override
+  void onSelectionAdded(NonPrimarySelection selection) => markDirty();
+  @override
+  void onSelectionChanged(NonPrimarySelection selection) => markDirty();
+  @override
+  void onSelectionRemoved(String id) => markDirty();
 
   @override
   SingleColumnLayoutViewModel style(Document document, SingleColumnLayoutViewModel viewModel) {
@@ -98,6 +110,11 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
 
     editorStyleLog.fine("Node selection (${node.id}): $nodeSelection");
     if (node is TextNode) {
+      final styledSelections = _computeStyledSelectionsForText(
+        composer: _composer,
+        node: node,
+      );
+
       final textSelection = nodeSelection == null || nodeSelection.nodeSelection is! TextSelection
           ? null
           : nodeSelection.nodeSelection as TextSelection;
@@ -106,8 +123,6 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
             'ERROR: Building a paragraph component but the selection is not a TextSelection. Node: ${node.id}, Selection: ${nodeSelection.nodeSelection}');
       }
       final showCaret = _shouldDocumentShowCaret && nodeSelection != null ? nodeSelection.isExtent : false;
-      final highlightWhenEmpty =
-          nodeSelection == null ? false : nodeSelection.highlightWhenEmpty && _selectionStyles.highlightEmptyTextBlocks;
 
       editorStyleLog.finer(' - ${node.id}: $nodeSelection');
       if (showCaret) {
@@ -119,28 +134,186 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
       editorStyleLog.finer('   - extent: ${textSelection?.extent}');
 
       if (viewModel is TextComponentViewModel) {
-        viewModel
-          ..selection = textSelection
-          ..selectionColor = _selectionStyles.selectionColor
-          ..highlightWhenEmpty = highlightWhenEmpty;
+        viewModel.styledSelections = styledSelections;
       }
     }
     if (viewModel is ImageComponentViewModel) {
-      final selection = nodeSelection == null ? null : nodeSelection.nodeSelection as UpstreamDownstreamNodeSelection;
-
-      viewModel
-        ..selection = selection
-        ..selectionColor = _selectionStyles.selectionColor;
+      viewModel.styledSelections = _computeStyledSelectionsForUpstreamDownstreamNodes(composer: _composer, node: node);
     }
     if (viewModel is HorizontalRuleComponentViewModel) {
-      final selection = nodeSelection == null ? null : nodeSelection.nodeSelection as UpstreamDownstreamNodeSelection;
-
-      viewModel
-        ..selection = selection
-        ..selectionColor = _selectionStyles.selectionColor;
+      viewModel.styledSelections = _computeStyledSelectionsForUpstreamDownstreamNodes(composer: _composer, node: node);
     }
 
     return viewModel;
+  }
+
+  List<StyledSelection<TextSelection>> _computeStyledSelectionsForText({
+    required DocumentComposer composer,
+    required DocumentNode node,
+  }) {
+    final styledSelections = <StyledSelection<TextSelection>>[];
+
+    for (final nonPrimarySelection in _composer.getAllNonPrimarySelections()) {
+      late List<DocumentNode> selectedNodes;
+      try {
+        selectedNodes = _document.getNodesInside(
+          nonPrimarySelection.selection.base,
+          nonPrimarySelection.selection.extent,
+        );
+      } catch (exception) {
+        // This situation can happen in the moment between a document change and
+        // a corresponding selection change. For example: deleting an image and
+        // replacing it with an empty paragraph. Between the doc change and the
+        // selection change, the old image selection is applied to the new paragraph.
+        // This results in an exception.
+        //
+        // TODO: introduce a unified event ledger that combines related behaviors
+        //       into atomic transactions (#423)
+        selectedNodes = [];
+      }
+
+      final nodeSelection = _computeNodeSelection(
+        documentSelection: nonPrimarySelection.selection,
+        selectedNodes: selectedNodes,
+        node: node,
+      );
+
+      if (nodeSelection?.nodeSelection is TextNodeSelection) {
+        final textNodeSelection = nodeSelection!.nodeSelection as TextNodeSelection;
+        final textSelection =
+            TextSelection(baseOffset: textNodeSelection.baseOffset, extentOffset: textNodeSelection.extentOffset);
+
+        styledSelections.add(StyledSelection(
+          selection: textSelection,
+          hasCaret: false, // non-primary selections never have a caret
+          styles: _nonPrimarySelectionStyler!(nonPrimarySelection)!,
+        ));
+      }
+    }
+
+    final documentSelection = _composer.selection;
+    if (documentSelection != null) {
+      late List<DocumentNode> selectedNodes;
+      try {
+        selectedNodes = _document.getNodesInside(
+          documentSelection.base,
+          documentSelection.extent,
+        );
+      } catch (exception) {
+        // This situation can happen in the moment between a document change and
+        // a corresponding selection change. For example: deleting an image and
+        // replacing it with an empty paragraph. Between the doc change and the
+        // selection change, the old image selection is applied to the new paragraph.
+        // This results in an exception.
+        //
+        // TODO: introduce a unified event ledger that combines related behaviors
+        //       into atomic transactions (#423)
+        selectedNodes = [];
+      }
+
+      final nodeSelection =
+          _computeNodeSelection(documentSelection: documentSelection, selectedNodes: selectedNodes, node: node);
+
+      if (nodeSelection?.nodeSelection is TextNodeSelection) {
+        final textNodeSelection = nodeSelection!.nodeSelection as TextNodeSelection;
+        final textSelection =
+            TextSelection(baseOffset: textNodeSelection.baseOffset, extentOffset: textNodeSelection.extentOffset);
+
+        styledSelections.add(StyledSelection(
+          selection: textSelection,
+          hasCaret: composer.selection!.extent.nodeId == node.id,
+          styles: SelectionStyles(
+            selectionColor: _selectionStyles.selectionColor,
+            highlightEmptyTextBlocks: nodeSelection.highlightWhenEmpty,
+          ),
+        ));
+      }
+    }
+
+    return styledSelections;
+  }
+
+  List<StyledSelection<UpstreamDownstreamNodeSelection>> _computeStyledSelectionsForUpstreamDownstreamNodes({
+    required DocumentComposer composer,
+    required DocumentNode node,
+  }) {
+    final styledSelections = <StyledSelection<UpstreamDownstreamNodeSelection>>[];
+
+    for (final nonPrimarySelection in _composer.getAllNonPrimarySelections()) {
+      late List<DocumentNode> selectedNodes;
+      try {
+        selectedNodes = _document.getNodesInside(
+          nonPrimarySelection.selection.base,
+          nonPrimarySelection.selection.extent,
+        );
+      } catch (exception) {
+        // This situation can happen in the moment between a document change and
+        // a corresponding selection change. For example: deleting an image and
+        // replacing it with an empty paragraph. Between the doc change and the
+        // selection change, the old image selection is applied to the new paragraph.
+        // This results in an exception.
+        //
+        // TODO: introduce a unified event ledger that combines related behaviors
+        //       into atomic transactions (#423)
+        selectedNodes = [];
+      }
+
+      final nodeSelection = _computeNodeSelection(
+        documentSelection: nonPrimarySelection.selection,
+        selectedNodes: selectedNodes,
+        node: node,
+      );
+
+      if (nodeSelection?.nodeSelection is UpstreamDownstreamNodeSelection) {
+        final upstreamDownstreamSelection = nodeSelection!.nodeSelection as UpstreamDownstreamNodeSelection;
+
+        styledSelections.add(StyledSelection(
+          selection: upstreamDownstreamSelection,
+          // TODO: the styler decides whether to highlight an empty block, but it shouldn't.
+          // That decision needs to be made based on whether the user is selecting multiple
+          // blocks.
+          styles: _nonPrimarySelectionStyler!(nonPrimarySelection)!,
+        ));
+      }
+    }
+
+    final documentSelection = _composer.selection;
+    if (documentSelection != null) {
+      late List<DocumentNode> selectedNodes;
+      try {
+        selectedNodes = _document.getNodesInside(
+          documentSelection.base,
+          documentSelection.extent,
+        );
+      } catch (exception) {
+        // This situation can happen in the moment between a document change and
+        // a corresponding selection change. For example: deleting an image and
+        // replacing it with an empty paragraph. Between the doc change and the
+        // selection change, the old image selection is applied to the new paragraph.
+        // This results in an exception.
+        //
+        // TODO: introduce a unified event ledger that combines related behaviors
+        //       into atomic transactions (#423)
+        selectedNodes = [];
+      }
+
+      final nodeSelection =
+          _computeNodeSelection(documentSelection: documentSelection, selectedNodes: selectedNodes, node: node);
+
+      if (nodeSelection?.nodeSelection is UpstreamDownstreamNodeSelection) {
+        final upstreamDownstreamSelection = nodeSelection!.nodeSelection as UpstreamDownstreamNodeSelection;
+
+        styledSelections.add(StyledSelection(
+          selection: upstreamDownstreamSelection,
+          styles: SelectionStyles(
+            selectionColor: _selectionStyles.selectionColor,
+            highlightEmptyTextBlocks: nodeSelection.highlightWhenEmpty,
+          ),
+        ));
+      }
+    }
+
+    return styledSelections;
   }
 
   /// Computes the [DocumentNodeSelection] for the individual `nodeId` based on
@@ -252,6 +425,11 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
     }
   }
 }
+
+/// Function called to configure [SelectionStyles] for a given [nonPrimarySelection].
+///
+/// If you don't want to display anything for this selection, return `null`.
+typedef NonPrimarySelectionStyler = SelectionStyles? Function(NonPrimarySelection nonPrimarySelection);
 
 /// Description of a selection within a specific node in a document.
 ///

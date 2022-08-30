@@ -52,12 +52,127 @@ class DocumentComposer with ChangeNotifier {
     selection = null;
   }
 
+  final _nonPrimarySelections = <String, NonPrimarySelection>{};
+  final _nonPrimarySelectionListeners = <NonPrimarySelectionListener>{};
+
+  /// Returns the [NonPrimarySelection] for the given [id], or `null` if no
+  /// such selection exists in the composer.
+  DocumentSelection? getNonPrimarySelectionById(String id) {
+    return _nonPrimarySelections[id]?.selection;
+  }
+
+  /// Returns all the [NonPrimarySelection]s in the composer.
+  Set<NonPrimarySelection> getAllNonPrimarySelections() {
+    return _nonPrimarySelections.values.toSet();
+  }
+
+  /// Puts the given [selection] in the composer as a [NonPrimarySelection]
+  /// with the given [id].
+  ///
+  /// If the given [selection] is `null`, the corresponding [NonPrimarySelection]
+  /// is removed from the composer.
+  void setNonPrimarySelection(String id, DocumentSelection? selection) {
+    if (selection != null) {
+      final nonPrimarySelection = NonPrimarySelection(id, selection);
+      if (_nonPrimarySelections.containsKey(id)) {
+        // Update an existing selection.
+        _nonPrimarySelections[id] = nonPrimarySelection;
+        _notifyNonPrimarySelectionChange(nonPrimarySelection);
+      } else {
+        // This is a new selection.
+        _nonPrimarySelections[id] = nonPrimarySelection;
+        _notifyNonPrimarySelectionAdded(nonPrimarySelection);
+      }
+    } else if (_nonPrimarySelections.containsKey(id)) {
+      // Remove an existing selection.
+      _nonPrimarySelections.remove(id);
+      _notifyNonPrimarySelectionRemoval(id);
+    }
+  }
+
+  /// Adds the given [listener] to the composer.
+  void addNonPrimarySelectionListener(NonPrimarySelectionListener listener) {
+    _nonPrimarySelectionListeners.add(listener);
+  }
+
+  /// Removes the given [listener] from the composer.
+  void removeNonPrimarySelectionListener(NonPrimarySelectionListener listener) {
+    _nonPrimarySelectionListeners.remove(listener);
+  }
+
+  void _notifyNonPrimarySelectionAdded(NonPrimarySelection selection) {
+    for (final listener in _nonPrimarySelectionListeners) {
+      listener.onSelectionAdded(selection);
+    }
+  }
+
+  void _notifyNonPrimarySelectionChange(NonPrimarySelection selection) {
+    for (final listener in _nonPrimarySelectionListeners) {
+      listener.onSelectionChanged(selection);
+    }
+  }
+
+  void _notifyNonPrimarySelectionRemoval(String id) {
+    for (final listener in _nonPrimarySelectionListeners) {
+      listener.onSelectionRemoved(id);
+    }
+  }
+
   final ValueNotifier<ImeConfiguration> imeConfiguration;
 
   final ComposerPreferences _preferences;
 
   /// Returns the composition preferences for this composer.
   ComposerPreferences get preferences => _preferences;
+}
+
+/// A selection within a document that's owned by an actor that's not the
+/// primary user.
+class NonPrimarySelection {
+  const NonPrimarySelection(this.id, this.selection);
+
+  /// ID of the actor responsible for this selection.
+  ///
+  /// The actor may, or may not be a human user.
+  final String id;
+
+  /// A selection within a document.
+  final DocumentSelection selection;
+}
+
+/// Listener for changes to non-primary user selections.
+abstract class NonPrimarySelectionListener {
+  /// The given [selection] was added to the composer.
+  void onSelectionAdded(NonPrimarySelection selection);
+
+  /// An existing selection was changed to the new [selection].
+  void onSelectionChanged(NonPrimarySelection selection);
+
+  /// The selection with the given [id] was removed from the document.
+  void onSelectionRemoved(String id);
+}
+
+/// A [NonPrimarySelectionListener] that delegates to given callbacks.
+abstract class CallbackNonPrimarySelectionListener implements NonPrimarySelectionListener {
+  CallbackNonPrimarySelectionListener({
+    void Function(NonPrimarySelection selection)? onSelectionAdded,
+    void Function(NonPrimarySelection selection)? onSelectionChanged,
+    void Function(String id)? onSelectionRemoved,
+  })  : _onSelectionAdded = onSelectionAdded,
+        _onSelectionChanged = onSelectionChanged,
+        _onSelectionRemoved = onSelectionRemoved;
+
+  final void Function(NonPrimarySelection selection)? _onSelectionAdded;
+  @override
+  void onSelectionAdded(NonPrimarySelection selection) => _onSelectionAdded?.call(selection);
+
+  final void Function(NonPrimarySelection selection)? _onSelectionChanged;
+  @override
+  void onSelectionChanged(NonPrimarySelection selection) => _onSelectionChanged?.call(selection);
+
+  final void Function(String id)? _onSelectionRemoved;
+  @override
+  void onSelectionRemoved(String id) => _onSelectionRemoved?.call(id);
 }
 
 /// Holds preferences about user input, to be used for the

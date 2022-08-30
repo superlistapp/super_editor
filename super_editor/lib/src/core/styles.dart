@@ -269,7 +269,31 @@ class CascadingPadding {
   int get hashCode => left.hashCode ^ right.hashCode ^ top.hashCode ^ bottom.hashCode;
 }
 
-/// Styles applied to the user's selection, e.g., selected text.
+/// A document selection with associated visual styles.
+class StyledSelection<SelectionType> {
+  const StyledSelection({
+    required this.selection,
+    this.hasCaret = false,
+    required this.styles,
+  });
+
+  final SelectionType selection;
+  final bool hasCaret;
+  final SelectionStyles styles;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is StyledSelection &&
+          runtimeType == other.runtimeType &&
+          selection == other.selection &&
+          styles == other.styles;
+
+  @override
+  int get hashCode => selection.hashCode ^ styles.hashCode;
+}
+
+/// Styles applied to a document selection, e.g., caret, selected text.
 class SelectionStyles {
   const SelectionStyles({
     required this.selectionColor,

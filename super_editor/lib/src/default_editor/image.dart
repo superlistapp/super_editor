@@ -1,5 +1,7 @@
 import 'package:attributed_text/attributed_text.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:super_editor/src/core/styles.dart';
 import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
 
 import '../core/document.dart';
@@ -80,7 +82,6 @@ class ImageComponentBuilder implements ComponentBuilder {
     return ImageComponentViewModel(
       nodeId: node.id,
       imageUrl: node.imageUrl,
-      selectionColor: const Color(0x00000000),
     );
   }
 
@@ -94,8 +95,7 @@ class ImageComponentBuilder implements ComponentBuilder {
     return ImageComponent(
       componentKey: componentContext.componentKey,
       imageUrl: componentViewModel.imageUrl,
-      selection: componentViewModel.selection,
-      selectionColor: componentViewModel.selectionColor,
+      styledSelections: componentViewModel.styledSelections,
     );
   }
 }
@@ -106,13 +106,12 @@ class ImageComponentViewModel extends SingleColumnLayoutComponentViewModel {
     double? maxWidth,
     EdgeInsetsGeometry padding = EdgeInsets.zero,
     required this.imageUrl,
-    this.selection,
-    required this.selectionColor,
-  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
+    List<StyledSelection<UpstreamDownstreamNodeSelection>>? styledSelections,
+  })  : styledSelections = styledSelections ?? [],
+        super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
 
   String imageUrl;
-  UpstreamDownstreamNodeSelection? selection;
-  Color selectionColor;
+  List<StyledSelection<UpstreamDownstreamNodeSelection>> styledSelections;
 
   @override
   ImageComponentViewModel copy() {
@@ -121,8 +120,7 @@ class ImageComponentViewModel extends SingleColumnLayoutComponentViewModel {
       maxWidth: maxWidth,
       padding: padding,
       imageUrl: imageUrl,
-      selection: selection,
-      selectionColor: selectionColor,
+      styledSelections: List.from(styledSelections),
     );
   }
 
@@ -134,12 +132,10 @@ class ImageComponentViewModel extends SingleColumnLayoutComponentViewModel {
           runtimeType == other.runtimeType &&
           nodeId == other.nodeId &&
           imageUrl == other.imageUrl &&
-          selection == other.selection &&
-          selectionColor == other.selectionColor;
+          const DeepCollectionEquality().equals(styledSelections, other.styledSelections);
 
   @override
-  int get hashCode =>
-      super.hashCode ^ nodeId.hashCode ^ imageUrl.hashCode ^ selection.hashCode ^ selectionColor.hashCode;
+  int get hashCode => super.hashCode ^ nodeId.hashCode ^ imageUrl.hashCode ^ styledSelections.hashCode;
 }
 
 /// Displays an image in a document.
@@ -148,21 +144,18 @@ class ImageComponent extends StatelessWidget {
     Key? key,
     required this.componentKey,
     required this.imageUrl,
-    this.selectionColor = Colors.blue,
-    this.selection,
+    this.styledSelections = const [],
   }) : super(key: key);
 
   final GlobalKey componentKey;
   final String imageUrl;
-  final Color selectionColor;
-  final UpstreamDownstreamNodeSelection? selection;
+  final List<StyledSelection<UpstreamDownstreamNodeSelection>> styledSelections;
 
   @override
   Widget build(BuildContext context) {
     return Center(
       child: SelectableBox(
-        selection: selection,
-        selectionColor: selectionColor,
+        styledSelections: styledSelections,
         child: BoxComponent(
           key: componentKey,
           child: Image.network(

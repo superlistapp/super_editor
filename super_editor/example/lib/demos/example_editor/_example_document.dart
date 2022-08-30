@@ -33,6 +33,12 @@ Document createInitialDocument() {
       ParagraphNode(
         id: DocumentEditor.createNodeId(),
         text: AttributedText(
+          text: "",
+        ),
+      ),
+      ParagraphNode(
+        id: DocumentEditor.createNodeId(),
+        text: AttributedText(
           text: 'Ready-made solutions 📦',
         ),
         metadata: {

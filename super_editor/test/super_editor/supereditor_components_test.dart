@@ -51,8 +51,6 @@ class HintTextComponentBuilder implements ComponentBuilder {
       return null;
     }
 
-    final textSelection = componentViewModel.selection;
-
     return TextWithHintComponent(
       key: componentContext.componentKey,
       text: componentViewModel.text,
@@ -76,8 +74,7 @@ class HintTextComponentBuilder implements ComponentBuilder {
       hintStyleBuilder: (Set<Attribution> attributions) => defaultStyleBuilder(attributions).copyWith(
         color: const Color(0xFFDDDDDD),
       ),
-      textSelection: textSelection,
-      selectionColor: componentViewModel.selectionColor,
+      styledSelections: componentViewModel.styledSelections,
     );
   }
 }

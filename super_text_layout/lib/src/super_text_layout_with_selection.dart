@@ -244,6 +244,7 @@ class UserSelection {
     this.highlightWhenEmpty = false,
     this.highlightBoundsFollower,
     this.caretStyle = const CaretStyle(),
+    // TODO: change blinkCaret and hasCaret to `false` by default
     this.blinkCaret = true,
     this.hasCaret = true,
     this.caretFollower,

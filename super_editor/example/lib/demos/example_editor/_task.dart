@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/super_editor.dart';
 
@@ -96,7 +97,7 @@ class TaskComponentBuilder implements ComponentBuilder {
       },
       text: node.text,
       textStyleBuilder: noStyleBuilder,
-      selectionColor: const Color(0x00000000),
+      caretColor: const Color(0x00000000),
     );
   }
 
@@ -131,10 +132,11 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
     required this.textStyleBuilder,
     this.textDirection = TextDirection.ltr,
     this.textAlignment = TextAlign.left,
-    this.selection,
-    required this.selectionColor,
-    this.highlightWhenEmpty = false,
-  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
+    List<StyledSelection<TextSelection>>? styledSelections,
+    required this.caretColor,
+    this.caret,
+  })  : styledSelections = styledSelections ?? [],
+        super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
 
   bool isComplete;
   void Function(bool) setComplete;
@@ -147,11 +149,11 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
   @override
   TextAlign textAlignment;
   @override
-  TextSelection? selection;
+  List<StyledSelection<TextSelection>> styledSelections;
   @override
-  Color selectionColor;
+  TextPosition? caret;
   @override
-  bool highlightWhenEmpty;
+  Color caretColor;
 
   @override
   TaskComponentViewModel copy() {
@@ -164,9 +166,9 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
       text: text,
       textStyleBuilder: textStyleBuilder,
       textDirection: textDirection,
-      selection: selection,
-      selectionColor: selectionColor,
-      highlightWhenEmpty: highlightWhenEmpty,
+      styledSelections: List.from(styledSelections),
+      caret: caret,
+      caretColor: caretColor,
     );
   }
 
@@ -182,9 +184,9 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
           textStyleBuilder == other.textStyleBuilder &&
           textDirection == other.textDirection &&
           textAlignment == other.textAlignment &&
-          selection == other.selection &&
-          selectionColor == other.selectionColor &&
-          highlightWhenEmpty == other.highlightWhenEmpty;
+          caret == other.caret &&
+          caretColor == other.caretColor &&
+          const DeepCollectionEquality().equals(styledSelections, other.styledSelections);
 
   @override
   int get hashCode =>
@@ -195,9 +197,9 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
       textStyleBuilder.hashCode ^
       textDirection.hashCode ^
       textAlignment.hashCode ^
-      selection.hashCode ^
-      selectionColor.hashCode ^
-      highlightWhenEmpty.hashCode;
+      styledSelections.hashCode ^
+      caret.hashCode ^
+      caretColor.hashCode;
 }
 
 /// A document component that displays a complete-able task.
@@ -249,9 +251,7 @@ class TaskComponent extends StatelessWidget {
                     )
                   : style;
             },
-            textSelection: viewModel.selection,
-            selectionColor: viewModel.selectionColor,
-            highlightWhenEmpty: viewModel.highlightWhenEmpty,
+            styledSelections: viewModel.styledSelections,
             showDebugPaint: showDebugPaint,
           ),
         ),
