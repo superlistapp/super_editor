@@ -313,6 +313,26 @@ This is some code
 
         expect(serializeDocumentToMarkdown(doc), 'This is a ¬paragraph¬.');
       });
+
+      test('paragraph with strikethrough', () {
+        final doc = MutableDocument(nodes: [
+          ParagraphNode(
+            id: '1',
+            text: AttributedText(
+              text: 'This is a paragraph.',
+              spans: AttributedSpans(
+                attributions: [
+                  SpanMarker(attribution: strikethroughAttribution, offset: 10, markerType: SpanMarkerType.start),
+                  SpanMarker(attribution: strikethroughAttribution, offset: 18, markerType: SpanMarkerType.end),
+                ],
+              ),
+            ),
+          ),
+        ]);
+
+        expect(serializeDocumentToMarkdown(doc), 'This is a ~paragraph~.');
+      });
+
       test('paragraph with consecutive links', () {
         final doc = MutableDocument(nodes: [
           ParagraphNode(
@@ -345,7 +365,11 @@ This is some code
           ),
         ]);
 
-        // Left alignment is the default, so it shouldn't be added.
+        // Even when using superEditor markdown syntax, which has support
+        // for text alignment, we don't add an alignment token when
+        // the paragraph is left-aligned.
+        // Paragraphs are left-aligned by default, so it isn't necessary
+        // to serialize the alignment token.
         expect(serializeDocumentToMarkdown(doc), 'Paragraph1');
       });
 
@@ -377,7 +401,7 @@ This is some code
         expect(serializeDocumentToMarkdown(doc), '---:\nParagraph1');
       });
 
-      test("doesn't serialize text alignment when not using extended syntax", () {
+      test("doesn't serialize text alignment when not using supereditor syntax", () {
         final doc = MutableDocument(nodes: [
           ParagraphNode(
             id: '1',
@@ -388,7 +412,7 @@ This is some code
           ),
         ]);
 
-        expect(serializeDocumentToMarkdown(doc, extendedSyntax: false), 'Paragraph1');
+        expect(serializeDocumentToMarkdown(doc, syntax: MarkdownSyntax.normal), 'Paragraph1');
       });
 
       test('image', () {
@@ -887,7 +911,7 @@ This is some code
         expect(paragraph.text.text, 'Paragraph1');
       });
 
-      test('treats alignment notation as content at the end of the document', () {
+      test('treats alignment token as text at the end of the document', () {
         final doc = deserializeMarkdownToDocument('---:');
 
         final paragraph = doc.nodes.first as ParagraphNode;
@@ -895,7 +919,7 @@ This is some code
         expect(paragraph.text.text, '---:');
       });
 
-      test('treats alignment notation as content when not followed by a paragraph', () {
+      test('treats alignment token as text when not followed by a paragraph', () {
         final doc = deserializeMarkdownToDocument('---:\n - - -');
 
         final paragraph = doc.nodes.first as ParagraphNode;
@@ -906,8 +930,8 @@ This is some code
         expect(doc.nodes[1], isA<HorizontalRuleNode>());
       });
 
-      test('treats alignment notation as content when not using extended syntax', () {
-        final doc = deserializeMarkdownToDocument(':---\nParagraph1', extendedSyntax: false);
+      test('treats alignment token as text when not using supereditor syntax', () {
+        final doc = deserializeMarkdownToDocument(':---\nParagraph1', syntax: MarkdownSyntax.normal);
 
         final paragraph = doc.nodes.first as ParagraphNode;
         expect(paragraph.getMetadataValue('textAlign'), isNull);

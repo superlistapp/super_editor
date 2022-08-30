@@ -11,17 +11,17 @@ import 'package:super_editor/super_editor.dart';
 
 /// Deserializes markdown to a document.
 ///
-/// If [extendedSyntax] is `true`, a custom notation is used to allow
+/// If [syntax] is `MarkdownSyntax.superEditor`, a custom notation is used to allow
 /// text alignment and underline.
 MutableDocument deserializeMarkdownToDocument(
   String markdown, {
-  bool extendedSyntax = true,
+  MarkdownSyntax syntax = MarkdownSyntax.superEditor,
 }) {
   final markdownLines = const LineSplitter().convert(markdown);
 
   final markdownDoc = md.Document(
     blockSyntaxes: [
-      if (extendedSyntax) _ParagraphWithAlignmentSyntax(),
+      if (syntax == MarkdownSyntax.superEditor) _ParagraphWithAlignmentSyntax(),
     ],
   );
   final blockParser = md.BlockParser(markdownLines, markdownDoc);
@@ -40,7 +40,7 @@ MutableDocument deserializeMarkdownToDocument(
 
 /// Serializes a document to markdown format.
 ///
-/// If [extendedSyntax] is `true`, a custom notation is used to allow
+/// If [syntax] is `MarkdownSyntax.superEditor`, a custom notation is used to allow
 /// text alignment and underline.
 ///
 /// Underline text is serialized between a pair of `¬`.
@@ -55,7 +55,7 @@ MutableDocument deserializeMarkdownToDocument(
 /// `---:` represents right alignment.
 String serializeDocumentToMarkdown(
   Document doc, {
-  bool extendedSyntax = true,
+  MarkdownSyntax syntax = MarkdownSyntax.superEditor,
 }) {
   StringBuffer buffer = StringBuffer();
 
@@ -111,11 +111,11 @@ String serializeDocumentToMarkdown(
           ..write('```');
       } else {
         final String? textAlign = node.getMetadataValue('textAlign');
-        // Left alignment is the default, so there is no need to add the indicator.
-        if (extendedSyntax && textAlign != null && textAlign != 'left') {
-          final alignmentIndicator = _convertAlignmentToMarkdown(textAlign);
-          if (alignmentIndicator != null) {
-            buffer.writeln(alignmentIndicator);
+        // Left alignment is the default, so there is no need to add the alignment token.
+        if (syntax == MarkdownSyntax.superEditor && textAlign != null && textAlign != 'left') {
+          final alignmentToken = _convertAlignmentToMarkdown(textAlign);
+          if (alignmentToken != null) {
+            buffer.writeln(alignmentToken);
           }
         }
         buffer.write(node.text.toMarkdown());
@@ -280,15 +280,14 @@ class _MarkdownToDocument implements md.NodeVisitor {
 
   void _addParagraph(AttributedText attributedText, Map<String, String> attributes) {
     final textAlign = attributes['textAlign'];
-    final Map<String, dynamic> metadata = {
-      if (textAlign != null) 'textAlign': textAlign,
-    };
 
     _content.add(
       ParagraphNode(
         id: DocumentEditor.createNodeId(),
         text: attributedText,
-        metadata: metadata,
+        metadata: {
+          'textAlign': textAlign != null ? textAlign : null,
+        },
       ),
     );
   }
@@ -622,17 +621,20 @@ class AttributedTextMarkdownSerializer extends AttributionVisitor {
   }
 }
 
-/// Parses a paragraph preceded by an alignment indicator.
+/// Parses a paragraph preceded by an alignment token.
 class _ParagraphWithAlignmentSyntax extends md.ParagraphSyntax {
+  /// This pattern matches the text aligment notation.
+  ///
+  /// Possible values are `:---`, `:---:` and `---:`
   static final _alignmentNotationPattern = RegExp(r'^:-{3}|:-{3}:|-{3}:$');
 
-  static final List<md.BlockSyntax> _standardNonParagraphBlockSyntaxes = [
-    const md.HeaderSyntax(),
-    const md.CodeBlockSyntax(),
-    const md.BlockquoteSyntax(),
-    const md.HorizontalRuleSyntax(),
-    const md.UnorderedListSyntax(),
-    const md.OrderedListSyntax(),
+  static const List<md.BlockSyntax> _standardNonParagraphBlockSyntaxes = [
+    md.HeaderSyntax(),
+    md.CodeBlockSyntax(),
+    md.BlockquoteSyntax(),
+    md.HorizontalRuleSyntax(),
+    md.UnorderedListSyntax(),
+    md.OrderedListSyntax(),
   ];
 
   const _ParagraphWithAlignmentSyntax();
@@ -645,17 +647,22 @@ class _ParagraphWithAlignmentSyntax extends md.ParagraphSyntax {
 
     final nextLine = parser.peek(1);
 
-    // The indicator is at the end of the document,
-    // should be treated as content.
+    // The alignment token is at the last line of the document.
+    // As there are no lines after the token, it is considered a left-aligned paragraph,
+    // containing the alignment token as text.
     if (nextLine == null) {
       return false;
     }
 
-    // The line following the indicator is another block syntax.
+    // There is at least one more line after the current parser offset. The next line represents
+    // a different block element. The parser is not currently looking at an aligned paragraph.
     if (_standardNonParagraphBlockSyntaxes.any((syntax) => syntax.pattern.hasMatch(nextLine))) {
       return false;
     }
 
+    // As we've found an alignment token followed by at least one more line that
+    // isn't a different block element, then it should be enough to consider
+    // we are looking at an aligned paragraph.
     return true;
   }
 
@@ -663,30 +670,28 @@ class _ParagraphWithAlignmentSyntax extends md.ParagraphSyntax {
   md.Node parse(md.BlockParser parser) {
     final match = _alignmentNotationPattern.firstMatch(parser.current);
 
-    // If we get to the parse method than we should have an alignment indicator.
-    // Using the default paragraph parser just to avoid throwing an exception.
-    if (match == null) {
-      return super.parse(parser);
-    }
-
-    // As we already checked that there is a line following the indicator
-    // in canParse, it should be safe to assume the next line will be present.
+    // We've parsed the alignment token on the current line. We know a paragraph starts on the
+    // next line. Move the parser to the next line so that we can parse the paragraph.
     parser.advance();
 
-    // We let the default paragraph parser handle the parsing of the paragraph
-    // and just add the alignment attribute.
+    // Parse the paragraph using the standard Markdown paragraph parser.
     final paragraph = super.parse(parser);
 
-    // The parser may return an empty text node.
+    // The standard paragraph parser may return an empty text node when the paragraph 
+    // contains only reference link definitions. If it's the case, we return the parsed
+    // node as is.
     if (paragraph is md.Element) {
-      paragraph.attributes.addAll({'textAlign': _convertAlignmentIndicator(match.input)});
+      // If we get to the parse method then it should be guaranteed we have an alignment token.      
+      paragraph.attributes.addAll({'textAlign': _convertMarkdownAlignmentTokenToSuperEditorAlignment(match!.input)});
     }
 
     return paragraph;
   }
 
-  String _convertAlignmentIndicator(String indicator) {
-    switch (indicator) {
+  /// Converts a markdown alignment token to the textAlign metadata used to configure
+  /// the [ParagraphNode] alignment.
+  String _convertMarkdownAlignmentTokenToSuperEditorAlignment(String alignmentToken) {
+    switch (alignmentToken) {
       case ':---':
         return 'left';
       case ':---:':
@@ -701,11 +706,10 @@ class _ParagraphWithAlignmentSyntax extends md.ParagraphSyntax {
   }
 }
 
-/// Matches a custom underline syntax.
+/// A Markdown [TagSyntax] that matches underline spans of text, which are represented in
+/// Markdown with surrounding `¬` tags, e.g., "this is ¬underline¬ text".
 ///
-/// Underline text should be between a pair of `¬`.
-///
-/// Results in an `Element` with an `u` tag.
+/// This [TagSyntax] produces `Element`s with a `u` tag.
 class UnderlineSyntax extends md.TagSyntax {
   UnderlineSyntax() : super('¬', requiresDelimiterRun: true, allowIntraWord: true);
 
@@ -714,4 +718,12 @@ class UnderlineSyntax extends md.TagSyntax {
       {required List<md.Node> Function() getChildren}) {
     return md.Element('u', getChildren());
   }
+}
+
+enum MarkdownSyntax {
+  /// Standard markdown syntax.
+  normal,
+
+  /// Extended syntax which supports serialization of text alignment, strikethrough and underline.
+  superEditor,
 }
