@@ -535,6 +535,57 @@ class CommonEditorOperations {
     return true;
   }
 
+  /// Moves the [DocumentComposer]'s selection to the nearest node to [startingNode],
+  /// whose [DocumentComponent] is visually selectable.
+  /// 
+  /// Expands the selection if [expand] is `true`, otherwise collapses the selection.
+  /// 
+  /// If a downstream selectable node if found, it will be used, otherwise,
+  /// a upstream selectable node will be searched.
+  ///
+  /// If a selectable node is found, the selection will move to its beginning.
+  /// If no selectable node is found, the selection will remain unchanged.
+  ///
+  /// Returns `true` if the selection is moved and `false` otherwise, e.g., there
+  /// are no selectable nodes in the document.
+  bool moveSelectionToNearestSelectableNode(
+    DocumentNode startingNode, {
+    bool expand = false,
+  }) {
+    String? newNodeId;
+    NodePosition? newPosition;
+
+    // Try to find a new selection downstream.
+    final downstreamNode = _getDownstreamSelectableNodeAfter(startingNode);
+    if (downstreamNode != null) {
+      newNodeId = downstreamNode.id;
+      final nextComponent = documentLayoutResolver().getComponentByNodeId(newNodeId);
+      newPosition = nextComponent?.getBeginningPosition();
+    }
+
+    // Try to find a new selection upstream.
+    if (newPosition == null) {
+      final upstreamNode = _getUpstreamSelectableNodeBefore(startingNode);
+      if (upstreamNode != null) {
+        newNodeId = upstreamNode.id;
+        final previousComponent = documentLayoutResolver().getComponentByNodeId(newNodeId);
+        newPosition = previousComponent?.getBeginningPosition();
+      }
+    }
+
+    if (newNodeId == null || newPosition == null) {
+      return false;
+    }
+
+    final newExtent = DocumentPosition(
+      nodeId: newNodeId,
+      nodePosition: newPosition,
+    );
+    _updateSelectionExtent(position: newExtent, expandSelection: expand);
+
+    return true;
+  }
+
   void _updateSelectionExtent({
     required DocumentPosition position,
     required bool expandSelection,

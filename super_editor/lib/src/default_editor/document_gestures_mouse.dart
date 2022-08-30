@@ -12,6 +12,7 @@ import 'package:super_editor/src/default_editor/selection_upstream_downstream.da
 import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
+import 'package:super_editor/src/default_editor/document_selection_on_focus_mixin.dart';
 
 /// Governs mouse gesture interaction with a document, such as scrolling
 /// a document with a scroll wheel, tapping to place a caret, and
@@ -58,7 +59,8 @@ class DocumentMouseInteractor extends StatefulWidget {
   State createState() => _DocumentMouseInteractorState();
 }
 
-class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with SingleTickerProviderStateMixin {
+class _DocumentMouseInteractorState extends State<DocumentMouseInteractor>
+    with SingleTickerProviderStateMixin, DocumentSelectionOnFocusMixin {
   final _documentWrapperKey = GlobalKey();
 
   late FocusNode _focusNode;
@@ -75,6 +77,12 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     _focusNode = widget.focusNode ?? FocusNode();
     widget.editContext.composer.selectionNotifier.addListener(_onSelectionChange);
     widget.autoScroller.addListener(_updateDragSelection);
+
+    startSyncingSelectionWithFocus(
+      focusNode: _focusNode,
+      composer: widget.editContext.composer,
+      getDocumentLayout: () => widget.editContext.documentLayout,
+    );
   }
 
   @override
@@ -82,15 +90,18 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     super.didUpdateWidget(oldWidget);
     if (widget.focusNode != oldWidget.focusNode) {
       _focusNode = widget.focusNode ?? FocusNode();
+      onFocusNodeReplaced(_focusNode);
     }
     if (widget.editContext.composer != oldWidget.editContext.composer) {
       oldWidget.editContext.composer.selectionNotifier.removeListener(_onSelectionChange);
       widget.editContext.composer.selectionNotifier.addListener(_onSelectionChange);
+      onDocumentComposerReplaced(widget.editContext.composer);
     }
     if (widget.autoScroller != oldWidget.autoScroller) {
       oldWidget.autoScroller.removeListener(_updateDragSelection);
       widget.autoScroller.addListener(_updateDragSelection);
     }
+    onDocumentLayoutResolverReplaced(() => widget.editContext.documentLayout);
   }
 
   @override
@@ -100,6 +111,7 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     }
     widget.editContext.composer.selectionNotifier.removeListener(_onSelectionChange);
     widget.autoScroller.removeListener(_updateDragSelection);
+    stopSyncingSelectionWithFocus();
     super.dispose();
   }
 
@@ -168,11 +180,18 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
 
     if (docPosition != null) {
       final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
+      final expandSelection = _isShiftPressed && widget.editContext.composer.selection != null;
+
       if (!tappedComponent.isVisualSelectionSupported()) {
+        _moveToNearestSelectableComponent(
+          docPosition.nodeId,
+          tappedComponent,
+          expandSelection: expandSelection,
+        );
         return;
       }
 
-      if (_isShiftPressed && widget.editContext.composer.selection != null) {
+      if (expandSelection) {
         // The user tapped while pressing shift and there's an existing
         // selection. Move the extent of the selection to where the user tapped.
         widget.editContext.composer.selection = widget.editContext.composer.selection!.copyWith(
@@ -496,6 +515,21 @@ Updating drag selection:
   void _clearSelection() {
     editorGesturesLog.fine("Clearing document selection");
     widget.editContext.composer.clearSelection();
+  }
+
+  void _moveToNearestSelectableComponent(
+    String nodeId,
+    DocumentComponent component, {
+    bool expandSelection = false,
+  }) {
+    widget.editContext.commonOps.moveSelectionToNearestSelectableNode(
+      widget.editContext.editor.document.getNodeById(nodeId)!,
+      expand: expandSelection,
+    );
+
+    if (!expandSelection) {
+      _selectionType = SelectionType.position;
+    }
   }
 
   @override

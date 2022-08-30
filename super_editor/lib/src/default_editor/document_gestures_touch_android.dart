@@ -6,6 +6,7 @@ import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
+import 'package:super_editor/src/default_editor/common_editor_operations.dart';
 import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
@@ -13,6 +14,7 @@ import 'package:super_editor/src/infrastructure/blinking_caret.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/magnifier.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/selection_handles.dart';
+import 'package:super_editor/src/default_editor/document_selection_on_focus_mixin.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/toolbar_position_delegate.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
 import 'package:super_text_layout/super_text_layout.dart';
@@ -31,6 +33,7 @@ class AndroidDocumentTouchInteractor extends StatefulWidget {
     required this.document,
     required this.documentKey,
     required this.getDocumentLayout,
+    required this.commonOps,
     this.scrollController,
     this.dragAutoScrollBoundary = const AxisOffset.symmetric(54),
     required this.handleColor,
@@ -46,6 +49,7 @@ class AndroidDocumentTouchInteractor extends StatefulWidget {
   final Document document;
   final GlobalKey documentKey;
   final DocumentLayout Function() getDocumentLayout;
+  final CommonEditorOperations commonOps;
 
   final ScrollController? scrollController;
 
@@ -79,7 +83,7 @@ class AndroidDocumentTouchInteractor extends StatefulWidget {
 }
 
 class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInteractor>
-    with WidgetsBindingObserver, SingleTickerProviderStateMixin {
+    with WidgetsBindingObserver, SingleTickerProviderStateMixin, DocumentSelectionOnFocusMixin {
   // ScrollController used when this interactor installs its own Scrollable.
   // The alternative case is the one in which this interactor defers to an
   // ancestor scrollable.
@@ -146,6 +150,12 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
     widget.composer.addListener(_onSelectionChange);
 
+    startSyncingSelectionWithFocus(
+      focusNode: widget.focusNode,
+      composer: widget.composer,
+      getDocumentLayout: widget.getDocumentLayout,
+    );
+
     WidgetsBinding.instance.addObserver(this);
   }
 
@@ -173,6 +183,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     if (widget.focusNode != oldWidget.focusNode) {
       oldWidget.focusNode.removeListener(_onFocusChange);
       widget.focusNode.addListener(_onFocusChange);
+      onFocusNodeReplaced(widget.focusNode);
     }
 
     if (widget.document != oldWidget.document) {
@@ -183,6 +194,11 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     if (widget.composer != oldWidget.composer) {
       oldWidget.composer.removeListener(_onSelectionChange);
       widget.composer.addListener(_onSelectionChange);
+      onDocumentComposerReplaced(widget.composer);
+    }
+
+    if (widget.getDocumentLayout != oldWidget.getDocumentLayout) {
+      onDocumentLayoutResolverReplaced(widget.getDocumentLayout);
     }
   }
 
@@ -233,6 +249,8 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     widget.focusNode.removeListener(_onFocusChange);
 
     _handleAutoScrolling.dispose();
+
+    stopSyncingSelectionWithFocus();
 
     super.dispose();
   }
@@ -415,9 +433,19 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
         _editingController.hideToolbar();
       }
 
-      // Place the document selection at the location where the
-      // user tapped.
-      _selectPosition(docPosition);
+      final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
+      if (!tappedComponent.isVisualSelectionSupported()) {
+        // The user tapped a non-selectable component.
+        // Place the document selection at the nearest selectable node
+        // to the tapped component.
+        widget.commonOps.moveSelectionToNearestSelectableNode(
+          widget.document.getNodeById(docPosition.nodeId)!,
+        );
+      } else {
+        // Place the document selection at the location where the
+        // user tapped.
+        _selectPosition(docPosition);
+      }
 
       _positionToolbar();
     } else {
@@ -436,9 +464,17 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
     editorGesturesLog.fine(" - tapped document position: $docPosition");
 
-    _clearSelection();
-
     if (docPosition != null) {
+      // The user tapped a non-selectable component, so we can't select a word.
+      // The editor will remain focused and selection will remain in the nearest
+      // selectable component, as set in _onTapUp.
+      final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
+      if (!tappedComponent.isVisualSelectionSupported()) {
+        return;
+      }
+
+      _clearSelection();
+
       bool didSelectContent = _selectWordAt(
         docPosition: docPosition,
         docLayout: _docLayout,
@@ -465,6 +501,8 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
           ..unHideCollapsedHandle()
           ..startCollapsedHandleAutoHideCountdown();
       }
+    } else {
+      _clearSelection();
     }
 
     widget.focusNode.requestFocus();
@@ -496,9 +534,17 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
     editorGesturesLog.fine(" - tapped document position: $docPosition");
 
-    _clearSelection();
-
     if (docPosition != null) {
+      // The user tapped a non-selectable component, so we can't select a paragraph.
+      // The editor will remain focused and selection will remain in the nearest
+      // selectable component, as set in _onTapUp.
+      final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
+      if (!tappedComponent.isVisualSelectionSupported()) {
+        return;
+      }
+
+      _clearSelection();
+
       final didSelectParagraph = _selectParagraphAt(
         docPosition: docPosition,
         docLayout: _docLayout,
@@ -509,6 +555,8 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
         _selectPosition(docPosition);
         _positionToolbar();
       }
+    } else {
+      _clearSelection();
     }
 
     widget.focusNode.requestFocus();
@@ -847,8 +895,8 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     }
 
     final direction = ancestorScrollable.axisDirection;
-    // If the direction is horizontal, then we are inside a widget like a TabBar 
-    // or a horizontal ListView, so we can't use the ancestor scrollable 
+    // If the direction is horizontal, then we are inside a widget like a TabBar
+    // or a horizontal ListView, so we can't use the ancestor scrollable
     if (direction == AxisDirection.left || direction == AxisDirection.right) {
       return null;
     }

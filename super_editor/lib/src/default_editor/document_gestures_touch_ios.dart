@@ -13,10 +13,12 @@ import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/magnifier.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/selection_handles.dart';
+import 'package:super_editor/src/default_editor/document_selection_on_focus_mixin.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/toolbar_position_delegate.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
+import '../../super_editor.dart';
 import 'document_gestures.dart';
 import 'document_gestures_touch.dart';
 import 'selection_upstream_downstream.dart';
@@ -31,6 +33,7 @@ class IOSDocumentTouchInteractor extends StatefulWidget {
     required this.document,
     required this.documentKey,
     required this.getDocumentLayout,
+    required this.commonOps,
     this.scrollController,
     this.dragAutoScrollBoundary = const AxisOffset.symmetric(54),
     required this.handleColor,
@@ -47,6 +50,7 @@ class IOSDocumentTouchInteractor extends StatefulWidget {
   final Document document;
   final GlobalKey documentKey;
   final DocumentLayout Function() getDocumentLayout;
+  final CommonEditorOperations commonOps;
 
   final ScrollController? scrollController;
 
@@ -84,7 +88,7 @@ class IOSDocumentTouchInteractor extends StatefulWidget {
 }
 
 class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
-    with WidgetsBindingObserver, SingleTickerProviderStateMixin {
+    with WidgetsBindingObserver, SingleTickerProviderStateMixin, DocumentSelectionOnFocusMixin {
   // ScrollController used when this interactor installs its own Scrollable.
   // The alternative case is the one in which this interactor defers to an
   // ancestor scrollable.
@@ -162,6 +166,12 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
 
     widget.composer.addListener(_onSelectionChange);
 
+    startSyncingSelectionWithFocus(
+      focusNode: widget.focusNode,
+      composer: widget.composer,
+      getDocumentLayout: widget.getDocumentLayout,
+    );
+
     WidgetsBinding.instance.addObserver(this);
   }
 
@@ -196,6 +206,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     if (widget.focusNode != oldWidget.focusNode) {
       oldWidget.focusNode.removeListener(_onFocusChange);
       widget.focusNode.addListener(_onFocusChange);
+      onFocusNodeReplaced(widget.focusNode);
     }
 
     if (widget.document != oldWidget.document) {
@@ -206,6 +217,11 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     if (widget.composer != oldWidget.composer) {
       oldWidget.composer.removeListener(_onSelectionChange);
       widget.composer.addListener(_onSelectionChange);
+      onDocumentComposerReplaced(widget.composer);
+    }
+
+    if (widget.getDocumentLayout != oldWidget.getDocumentLayout) {
+      onDocumentLayoutResolverReplaced(widget.getDocumentLayout);
     }
   }
 
@@ -245,6 +261,8 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     _handleAutoScrolling.dispose();
 
     widget.focusNode.removeListener(_onFocusChange);
+
+    stopSyncingSelectionWithFocus();
 
     super.dispose();
   }
@@ -448,9 +466,20 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
         _editingController.hideToolbar();
       }
 
-      // Place the document selection at the location where the
-      // user tapped.
-      _selectPosition(docPosition);
+      final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
+      if (!tappedComponent.isVisualSelectionSupported()) {
+        // The user tapped a non-selectable component.
+        // Place the document selection at the nearest selectable node
+        // to the tapped component.
+        widget.commonOps.moveSelectionToNearestSelectableNode(
+          widget.document.getNodeById(docPosition.nodeId)!,
+        );
+        return;
+      } else {
+        // Place the document selection at the location where the
+        // user tapped.
+        _selectPosition(docPosition);
+      }
     } else {
       widget.composer.clearSelection();
       _editingController.hideToolbar();
@@ -475,9 +504,14 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
     editorGesturesLog.fine(" - tapped document position: $docPosition");
 
-    widget.composer.clearSelection();
-
     if (docPosition != null) {
+      final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
+      if (!tappedComponent.isVisualSelectionSupported()) {
+        return;
+      }
+
+      widget.composer.clearSelection();
+
       bool didSelectContent = _selectWordAt(
         docPosition: docPosition,
         docLayout: _docLayout,
@@ -492,6 +526,8 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
         // user tapped.
         _selectPosition(docPosition);
       }
+    } else {
+      widget.composer.clearSelection();
     }
 
     final newSelection = widget.composer.selection;
@@ -532,9 +568,14 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
     editorGesturesLog.fine(" - tapped document position: $docPosition");
 
-    widget.composer.clearSelection();
-
     if (docPosition != null) {
+      final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
+      if (!tappedComponent.isVisualSelectionSupported()) {
+        return;
+      }
+
+      widget.composer.clearSelection();
+
       final didSelectParagraph = _selectParagraphAt(
         docPosition: docPosition,
         docLayout: _docLayout,
@@ -544,6 +585,8 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
         // user tapped.
         _selectPosition(docPosition);
       }
+    } else {
+      widget.composer.clearSelection();
     }
 
     final selection = widget.composer.selection;
@@ -1021,8 +1064,8 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     }
 
     final direction = ancestorScrollable.axisDirection;
-    // If the direction is horizontal, then we are inside a widget like a TabBar 
-    // or a horizontal ListView, so we can't use the ancestor scrollable 
+    // If the direction is horizontal, then we are inside a widget like a TabBar
+    // or a horizontal ListView, so we can't use the ancestor scrollable
     if (direction == AxisDirection.left || direction == AxisDirection.right) {
       return null;
     }

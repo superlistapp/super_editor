@@ -70,6 +70,9 @@ abstract class DocumentLayout {
   /// Converts [documentOffset] from this [DocumentLayout]'s coordinate space
   /// to the same location on the screen in the global coordinate space.
   Offset getGlobalOffsetFromDocumentOffset(Offset documentOffset);
+
+  /// Returns the [DocumentPosition] at the end of the last selectable component.
+  DocumentPosition? findLastSelectablePosition();
 }
 
 /// Contract for all widgets that operate as document components

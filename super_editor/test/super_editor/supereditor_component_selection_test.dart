@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -342,7 +343,23 @@ void main() {
       );
     });
 
-    testWidgetsOnAllPlatforms("rejects selection when user taps on it", (tester) async {
+    testWidgetsOnAllPlatforms("rejects selection when user taps on it and it's the only node in document",
+        (tester) async {
+      await _pumpEditorWithUnselectableHrs(
+        tester,
+        customDocument: singleBlockDoc(),
+      );
+
+      await tester.tapAtDocumentPosition(const DocumentPosition(
+        nodeId: "1",
+        nodePosition: UpstreamDownstreamNodePosition.upstream(),
+      ));
+      await tester.pumpAndSettle();
+
+      expect(SuperEditorInspector.findDocumentSelection(), isNull);
+    });
+
+    testWidgetsOnAllPlatforms("selects nearest selectable node when user taps on it", (tester) async {
       await _pumpEditorWithUnselectableHrs(tester);
 
       await tester.tapAtDocumentPosition(const DocumentPosition(
@@ -351,7 +368,158 @@ void main() {
       ));
       await tester.pumpAndSettle();
 
-      expect(SuperEditorInspector.findDocumentSelection(), isNull);
+      expect(
+        SuperEditorInspector.findDocumentSelection(),
+        const DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: "3",
+            nodePosition: TextNodePosition(offset: 0),
+          ),
+        ),
+      );
+    });
+
+    testWidgetsOnAllPlatforms("selects nearest selectable node when user double taps on it", (tester) async {
+      await _pumpEditorWithUnselectableHrs(tester);
+
+      // Double tap the hr.
+      const position = DocumentPosition(
+        nodeId: "2",
+        nodePosition: UpstreamDownstreamNodePosition.upstream(),
+      );
+      await tester.tapAtDocumentPosition(position);
+      await tester.pump(kTapMinTime + const Duration(milliseconds: 1));
+      await tester.tapAtDocumentPosition(position);
+
+      await tester.pumpAndSettle();
+
+      expect(
+        SuperEditorInspector.findDocumentSelection(),
+        const DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: "3",
+            nodePosition: TextNodePosition(offset: 0),
+          ),
+        ),
+      );
+    });
+
+    testWidgetsOnAllPlatforms("selects nearest selectable node when user triple taps on it", (tester) async {
+      await _pumpEditorWithUnselectableHrs(tester);
+
+      // Triple tap the hr.
+      const position = DocumentPosition(
+        nodeId: "2",
+        nodePosition: UpstreamDownstreamNodePosition.upstream(),
+      );
+      await tester.tapAtDocumentPosition(position);
+      await tester.pump(kTapMinTime + const Duration(milliseconds: 1));
+      await tester.tapAtDocumentPosition(position);
+      await tester.pump(kTapMinTime + const Duration(milliseconds: 1));
+      await tester.tapAtDocumentPosition(position);
+
+      await tester.pumpAndSettle();
+
+      expect(
+        SuperEditorInspector.findDocumentSelection(),
+        const DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: "3",
+            nodePosition: TextNodePosition(offset: 0),
+          ),
+        ),
+      );
+    });
+
+    testWidgetsOnMobile("closes toolbar when user taps on it", (tester) async {
+      final toolbarKey = GlobalKey();
+
+      await _pumpEditorWithUnselectableHrsAndFakeToolbar(
+        tester,
+        toolbarKey: toolbarKey,
+      );
+
+      // Place the selection in the first paragraph.
+      await tester.doubleTapInParagraph("1", 0);
+      // Avoid triple tap.
+      await tester.pump(kTapTimeout);
+      await tester.pumpAndSettle();
+
+      // Ensure the toolbar is displayed.
+      expect(find.byKey(toolbarKey), findsOneWidget);
+
+      // Tap the hr.
+      await tester.tapAtDocumentPosition(const DocumentPosition(
+        nodeId: "2",
+        nodePosition: UpstreamDownstreamNodePosition.upstream(),
+      ));
+
+      await tester.pumpAndSettle();
+
+      // Ensure the toolbar is closed.
+      expect(find.byKey(toolbarKey), findsNothing);
+    });
+
+    testWidgetsOnMobile("closes toolbar when user double taps on it", (tester) async {
+      final toolbarKey = GlobalKey();
+
+      await _pumpEditorWithUnselectableHrsAndFakeToolbar(
+        tester,
+        toolbarKey: toolbarKey,
+      );
+
+      // Place the selection in the first paragraph.
+      await tester.doubleTapInParagraph("1", 0);
+      await tester.pumpAndSettle();
+
+      // Ensure the toolbar is displayed.
+      expect(find.byKey(toolbarKey), findsOneWidget);
+
+      // Double tap the hr.
+      const position = DocumentPosition(
+        nodeId: "2",
+        nodePosition: UpstreamDownstreamNodePosition.upstream(),
+      );
+      await tester.tapAtDocumentPosition(position);
+      await tester.pump(kTapMinTime + const Duration(milliseconds: 1));
+      await tester.tapAtDocumentPosition(position);
+
+      await tester.pumpAndSettle();
+
+      // Ensure the toolbar is closed.
+      expect(find.byKey(toolbarKey), findsNothing);
+    });
+
+    testWidgetsOnMobile("closes toolbar when user triple taps on it", (tester) async {
+      final toolbarKey = GlobalKey();
+
+      await _pumpEditorWithUnselectableHrsAndFakeToolbar(
+        tester,
+        toolbarKey: toolbarKey,
+      );
+
+      // Place the selection in the first paragraph.
+      await tester.doubleTapInParagraph("1", 0);
+      await tester.pumpAndSettle();
+
+      // Ensure the toolbar is displayed.
+      expect(find.byKey(toolbarKey), findsOneWidget);
+
+      // Triple tap the hr.
+      const position = DocumentPosition(
+        nodeId: "2",
+        nodePosition: UpstreamDownstreamNodePosition.upstream(),
+      );
+      await tester.tapAtDocumentPosition(position);
+      await tester.pump(kTapMinTime + const Duration(milliseconds: 1));
+      await tester.tapAtDocumentPosition(position);
+      await tester.pump(kTapMinTime + const Duration(milliseconds: 1));
+      await tester.tapAtDocumentPosition(position);
+
+      await tester.pumpAndSettle();
+
+      // Ensure the toolbar is closed.
+      expect(find.byKey(toolbarKey), findsNothing);
     });
   });
 }
@@ -370,10 +538,37 @@ Future<TestDocumentContext> _pumpEditorWithUnselectableHrs(
     tester //
         .createDocument() //
         .withCustomContent(customDocument ?? paragraphThenHrThenParagraphDoc()) //
-        .forDesktop() //
         .useStylesheet(_testStylesheet)
         .withAddedComponents([const _UnselectableHrComponentBuilder()]) //
         .pump();
+
+Future<void> _pumpEditorWithUnselectableHrsAndFakeToolbar(
+  WidgetTester tester, {
+  required GlobalKey toolbarKey,
+}) async {
+  final editor = DocumentEditor(
+    document: paragraphThenHrThenParagraphDoc(),
+  );
+
+  await tester.pumpWidget(
+    MaterialApp(
+      home: Scaffold(
+        body: SuperEditor(
+          editor: editor,
+          gestureMode: debugDefaultTargetPlatformOverride == TargetPlatform.android
+              ? DocumentGestureMode.android
+              : DocumentGestureMode.iOS,
+          androidToolbarBuilder: (_) => SizedBox(key: toolbarKey),
+          iOSToolbarBuilder: (_) => SizedBox(key: toolbarKey),
+          componentBuilders: [
+            const _UnselectableHrComponentBuilder(),
+            ...defaultComponentBuilders,
+          ],
+        ),
+      ),
+    ),
+  );
+}
 
 /// SuperEditor [ComponentBuilder] that builds a horizontal rule that is
 /// not selectable.

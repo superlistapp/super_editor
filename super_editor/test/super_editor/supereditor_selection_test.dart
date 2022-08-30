@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 
@@ -252,6 +253,352 @@ void main() {
         DocumentSelection(
           base: DocumentPosition(nodeId: firstParagraphId, nodePosition: const TextNodePosition(offset: 0)),
           extent: DocumentPosition(nodeId: secondParagraphId, nodePosition: const TextNodePosition(offset: 16)),
+        ),
+      );
+    });
+
+    testWidgetsOnAllPlatforms("places caret at end of document upon first editor focus with tab", (tester) async {
+      await tester
+          .createDocument()
+          .withLongTextContent()
+          .withAddedComponents([const _UnselectableHrComponentBuilder()])
+          .withCustomWidgetTreeBuilder(
+            (superEditor) => MaterialApp(
+              home: Scaffold(
+                body: Column(
+                  children: [
+                    const TextField(),
+                    Expanded(child: superEditor),
+                  ],
+                ),
+              ),
+            ),
+          )
+          .pump();
+
+      // Focus the textfield.
+      await tester.tap(find.byType(TextField));
+
+      // Press tab to focus the editor.
+      await tester.pressTab();
+      await tester.pumpAndSettle();
+
+      final doc = SuperEditorInspector.findDocument();
+
+      // Ensure selection is at the last character of the last paragraph.
+      expect(
+        SuperEditorInspector.findDocumentSelection(),
+        DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: doc!.nodes.last.id,
+            nodePosition: const TextNodePosition(offset: 477),
+          ),
+        ),
+      );
+    });
+
+    testWidgetsOnAllPlatforms("places caret at end of document upon first editor focus with next", (tester) async {
+      await tester
+          .createDocument()
+          .withLongTextContent()
+          .withInputSource(DocumentInputSource.ime)
+          .withAddedComponents([const _UnselectableHrComponentBuilder()])
+          .withCustomWidgetTreeBuilder(
+            (superEditor) => MaterialApp(
+              home: Scaffold(
+                body: Column(
+                  children: [
+                    const TextField(),
+                    Expanded(child: superEditor),
+                  ],
+                ),
+              ),
+            ),
+          )
+          .pump();
+
+      // Focus the textfield.
+      await tester.tap(find.byType(TextField));
+
+      // Simulate a tap at the action button on the text field.
+      await tester.testTextInput.receiveAction(TextInputAction.next);
+      await tester.pumpAndSettle();
+
+      final doc = SuperEditorInspector.findDocument();
+
+      // Ensure selection is at the last character of the last paragraph.
+      expect(
+        SuperEditorInspector.findDocumentSelection(),
+        DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: doc!.nodes.last.id,
+            nodePosition: const TextNodePosition(offset: 477),
+          ),
+        ),
+      );
+    });
+
+    testWidgetsOnAllPlatforms("places caret at end of document upon first editor focus when requesting focus", (tester) async {
+      final focusNode = FocusNode();
+
+      await tester //
+          .createDocument()
+          .withLongTextContent()
+          .withFocusNode(focusNode)
+          .withAddedComponents([const _UnselectableHrComponentBuilder()]).pump();
+
+      // Ensure the editor doesn't have a selection.
+      expect(SuperEditorInspector.findDocumentSelection(), isNull);
+
+      // Focus the editor.
+      focusNode.requestFocus();
+      await tester.pumpAndSettle();
+
+      final doc = SuperEditorInspector.findDocument();
+
+      // Ensure selection is at the last character of the second paragraph.
+      expect(
+        SuperEditorInspector.findDocumentSelection(),
+        DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: doc!.nodes.last.id,
+            nodePosition: const TextNodePosition(offset: 477),
+          ),
+        ),
+      );
+    });
+
+    testWidgetsOnAllPlatforms("places caret at end of document upon first editor focus on autofocus", (tester) async {
+      await tester //
+          .createDocument()
+          .withLongTextContent()
+          .autoFocus(true)
+          .withAddedComponents([const _UnselectableHrComponentBuilder()]).pump();
+
+      await tester.pumpAndSettle();
+
+      final doc = SuperEditorInspector.findDocument();
+
+      // Ensure selection is at the last character of the last paragraph.
+      expect(
+        SuperEditorInspector.findDocumentSelection(),
+        DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: doc!.nodes.last.id,
+            nodePosition: const TextNodePosition(offset: 477),
+          ),
+        ),
+      );
+    });
+
+    testWidgetsOnAllPlatforms("ignores unselectable components upon first editor focus", (tester) async {
+      await tester
+          .createDocument()
+          .fromMarkdown("""
+First Paragraph
+
+Second Paragraph
+
+---
+""")
+          .withAddedComponents([const _UnselectableHrComponentBuilder()])
+          .withCustomWidgetTreeBuilder(
+            (superEditor) => MaterialApp(
+              home: Scaffold(
+                body: Column(
+                  children: [
+                    const TextField(),
+                    Expanded(child: superEditor),
+                  ],
+                ),
+              ),
+            ),
+          )
+          .pump();
+
+      // Focus the textfield.
+      await tester.tap(find.byType(TextField));
+
+      // Press tab to focus the editor.
+      await tester.pressTab();
+      await tester.pumpAndSettle();
+
+      final doc = SuperEditorInspector.findDocument();
+      final secondParagraphNodeId = doc!.nodes[1].id;
+
+      // Ensure selection is at the last character of the second paragraph.
+      expect(
+        SuperEditorInspector.findDocumentSelection(),
+        DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: secondParagraphNodeId,
+            nodePosition: const TextNodePosition(offset: 16),
+          ),
+        ),
+      );
+    });
+
+    testWidgetsOnAllPlatforms("places caret at the previous selection when re-focusing by tab", (tester) async {
+      await tester
+          .createDocument()
+          .withSingleParagraph()
+          .withInputSource(DocumentInputSource.ime)
+          .withCustomWidgetTreeBuilder(
+            (superEditor) => MaterialApp(
+              home: Scaffold(
+                body: Column(
+                  children: [
+                    const TextField(),
+                    Expanded(child: superEditor),
+                  ],
+                ),
+              ),
+            ),
+          )
+          .pump();
+
+      // Place caret in the middle of a word.
+      await tester.placeCaretInParagraph('1', 8);
+      expect(
+        SuperEditorInspector.findDocumentSelection(),
+        const DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: '1',
+            nodePosition: TextNodePosition(offset: 8),
+          ),
+        ),
+      );
+
+      // Focus the textfield.
+      await tester.tap(find.byType(TextField));
+      await tester.pumpAndSettle();
+
+      // Ensure selection was cleared.
+      expect(SuperEditorInspector.findDocumentSelection(), isNull);
+
+      // Press tab to focus the editor.
+      await tester.pressTab();
+      await tester.pumpAndSettle();
+
+      // Ensure selection is restored.
+      expect(
+        SuperEditorInspector.findDocumentSelection(),
+        const DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: '1',
+            nodePosition: TextNodePosition(offset: 8),
+          ),
+        ),
+      );
+    });
+
+    testWidgetsOnAllPlatforms("places caret at the previous selection when re-focusing by next", (tester) async {
+      await tester
+          .createDocument()
+          .withSingleParagraph()
+          .withInputSource(DocumentInputSource.ime)
+          .withCustomWidgetTreeBuilder(
+            (superEditor) => MaterialApp(
+              home: Scaffold(
+                body: Column(
+                  children: [
+                    const TextField(),
+                    Expanded(child: superEditor),
+                  ],
+                ),
+              ),
+            ),
+          )
+          .pump();
+
+      // Place caret in the middle of a word.
+      await tester.placeCaretInParagraph('1', 8);
+      expect(
+        SuperEditorInspector.findDocumentSelection(),
+        const DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: '1',
+            nodePosition: TextNodePosition(offset: 8),
+          ),
+        ),
+      );
+
+      // Focus the textfield.
+      await tester.tap(find.byType(TextField));
+      await tester.pumpAndSettle();
+
+      // Ensure selection was cleared.
+      expect(SuperEditorInspector.findDocumentSelection(), isNull);
+
+      // Simulate a tap at the action button.
+      await tester.testTextInput.receiveAction(TextInputAction.next);
+      await tester.pumpAndSettle();
+
+      // Ensure selection is restored.
+      expect(
+        SuperEditorInspector.findDocumentSelection(),
+        const DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: '1',
+            nodePosition: TextNodePosition(offset: 8),
+          ),
+        ),
+      );
+    });
+
+    testWidgetsOnAllPlatforms("places caret at the previous selection when re-focusing by requesting focus", (tester) async {
+      final focusNode = FocusNode();
+
+      await tester
+          .createDocument()
+          .withSingleParagraph()
+          .withInputSource(DocumentInputSource.ime)
+          .withFocusNode(focusNode)
+          .withCustomWidgetTreeBuilder(
+            (superEditor) => MaterialApp(
+              home: Scaffold(
+                body: Column(
+                  children: [
+                    const TextField(),
+                    Expanded(child: superEditor),
+                  ],
+                ),
+              ),
+            ),
+          )
+          .pump();
+
+      // Place caret in the middle of a word.
+      await tester.placeCaretInParagraph('1', 8);
+      expect(
+        SuperEditorInspector.findDocumentSelection(),
+        const DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: '1',
+            nodePosition: TextNodePosition(offset: 8),
+          ),
+        ),
+      );
+
+      // Focus the textfield.
+      await tester.tap(find.byType(TextField));
+      await tester.pumpAndSettle();
+
+      // Ensure selection was cleared.
+      expect(SuperEditorInspector.findDocumentSelection(), isNull);
+
+      // Focus the editor.
+      focusNode.requestFocus();
+      await tester.pumpAndSettle();
+
+      // Ensure selection is restored.
+      expect(
+        SuperEditorInspector.findDocumentSelection(),
+        const DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: '1',
+            nodePosition: TextNodePosition(offset: 8),
+          ),
         ),
       );
     });

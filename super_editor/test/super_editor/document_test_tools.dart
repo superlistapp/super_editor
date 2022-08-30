@@ -101,6 +101,7 @@ class TestDocumentConfigurator {
   List<ComponentBuilder>? _componentBuilders;
   WidgetTreeBuilder? _widgetTreeBuilder;
   ScrollController? _scrollController;
+  FocusNode? _focusNode;
 
   /// Configures the [SuperEditor] for standard desktop interactions,
   /// e.g., mouse and keyboard input.
@@ -161,6 +162,12 @@ class TestDocumentConfigurator {
   /// Configures the [SuperEditor] to use the given [scrollController]
   TestDocumentConfigurator withScrollController(ScrollController? scrollController) {
     _scrollController = scrollController;
+    return this;
+  }
+
+  /// Configures the [SuperEditor] to use the given [focusNode]
+  TestDocumentConfigurator withFocusNode(FocusNode? focusNode) {
+    _focusNode = focusNode;
     return this;
   }
 
@@ -230,7 +237,7 @@ class TestDocumentConfigurator {
     late TestDocumentContext testDocumentContext;
     if (_document != null) {
       final layoutKey = GlobalKey();
-      final focusNode = FocusNode();
+      final focusNode = _focusNode ?? FocusNode();
       final editor = DocumentEditor(document: _document!);
       final composer = DocumentComposer();
       // ignore: prefer_function_declarations_over_variables
