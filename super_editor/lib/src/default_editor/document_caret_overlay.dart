@@ -36,6 +36,11 @@ class _CaretDocumentOverlayState extends State<CaretDocumentOverlay> with Single
     super.initState();
     widget.composer.selectionNotifier.addListener(_onSelectionChange);
     _blinkController = BlinkController(tickerProvider: this)..startBlinking();
+
+    // If we already have a selection, we need to display the caret.
+    if (widget.composer.selection != null) {
+      _onSelectionChange();
+    }
   }
 
   @override
@@ -45,6 +50,11 @@ class _CaretDocumentOverlayState extends State<CaretDocumentOverlay> with Single
     if (widget.composer != oldWidget.composer) {
       oldWidget.composer.selectionNotifier.removeListener(_onSelectionChange);
       widget.composer.selectionNotifier.addListener(_onSelectionChange);
+
+      // Selection has changed, we need to update the caret.
+      if (widget.composer.selection != oldWidget.composer.selection) {
+        _onSelectionChange();
+      }
     }
   }
 
