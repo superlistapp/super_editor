@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:math';
 import 'dart:ui';
 
@@ -17,7 +18,6 @@ import 'package:super_editor/src/default_editor/list_items.dart';
 import 'package:super_editor/src/default_editor/paragraph.dart';
 import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
 import 'package:super_editor/src/default_editor/text.dart';
-import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 
 import 'attributions.dart';
@@ -1434,6 +1434,7 @@ class CommonEditorOperations {
       return false;
     }
 
+    editorOpsLog.fine("Running pattern matching on a ParagraphNode, to convert it to another node type.");
     final text = node.text;
     final textSelection = composer.selection!.extent.nodePosition as TextNodePosition;
     final textBeforeCaret = text.text.substring(0, textSelection.offset);
@@ -1547,11 +1548,13 @@ class CommonEditorOperations {
           humanize: false,
         ));
     final int linkCount = extractedLinks.fold(0, (value, element) => element is UrlElement ? value + 1 : value);
+    editorOpsLog.fine("Found $linkCount link(s)");
     final String nonEmptyText =
         extractedLinks.fold('', (value, element) => element is TextElement ? value + element.text.trim() : value);
     if (linkCount == 1 && nonEmptyText.isEmpty) {
       // This node's text is just a URL, try to interpret it
       // as a known type.
+      editorOpsLog.fine("The whole node is one big URL. Trying to convert the node type based on pattern matching...");
       final link = extractedLinks.firstWhereOrNull((element) => element is UrlElement)!.text;
       _processUrlNode(
         document: editor.document,
@@ -1564,6 +1567,7 @@ class CommonEditorOperations {
     }
 
     // No pattern match was found
+    editorOpsLog.fine("ParagraphNode didn't match any conversion pattern.");
     return false;
   }
 
@@ -1574,7 +1578,20 @@ class CommonEditorOperations {
     required String originalText,
     required String url,
   }) async {
-    final response = await http.get(Uri.parse(url));
+    late http.Response response;
+
+    // This function throws [SocketException] when the [url] is not valid.
+    // For instance, when typing for https://f|, it throws
+    // Unhandled Exception: SocketException: Failed host lookup: 'f'
+    //
+    // It doesn't affect any functionality, but it throws exception and preventing
+    // any related test to pass
+    try {
+      response = await http.get(Uri.parse(url));
+    } on SocketException catch (e) {
+      editorOpsLog.fine('Failed to load URL: ${e.message}');
+      return;
+    }
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
       editorOpsLog.fine('Failed to load URL: ${response.statusCode} - ${response.reasonPhrase}');
@@ -2243,102 +2260,137 @@ class _PasteEditorCommand implements EditorCommand {
 
   @override
   void execute(Document document, DocumentEditorTransaction transaction) {
-    final splitContent = _content.split('\n\n');
-    editorOpsLog.fine('Split content:');
-    for (final piece in splitContent) {
-      editorOpsLog.fine(' - "$piece"');
-    }
-
     final currentNodeWithSelection = document.getNodeById(_pastePosition.nodeId);
+    if (currentNodeWithSelection is! ParagraphNode) {
+      throw Exception('Can\'t handle pasting text within node of type: $currentNodeWithSelection');
+    }
 
-    DocumentPosition? newSelectionPosition;
+    editorOpsLog.info("Pasting clipboard content in document.");
 
-    if (currentNodeWithSelection is TextNode) {
-      final textNode = document.getNode(_pastePosition) as TextNode;
-      final pasteTextOffset = (_pastePosition.nodePosition as TextPosition).offset;
-      final attributionsAtPasteOffset = textNode.text.getAllAttributionsAt(pasteTextOffset);
+    // Split the pasted content at newlines, and apply attributions based
+    // on inspection of the pasted content, e.g., link attributions.
+    final attributedLines = _inferAttributionsForLinesOfPastedText(_content);
 
-      if (splitContent.length > 1 && pasteTextOffset < textNode.endPosition.offset) {
-        // There is more than 1 node of content being pasted. Therefore,
-        // new nodes will need to be added, which means that the currently
-        // selected text node will be split at the current text offset.
-        // Configure a new node to be added at the end of the pasted content
-        // which contains the trailing text from the currently selected
-        // node.
-        if (currentNodeWithSelection is ParagraphNode) {
-          SplitParagraphCommand(
-            nodeId: currentNodeWithSelection.id,
-            splitPosition: TextPosition(offset: pasteTextOffset),
-            newNodeId: DocumentEditor.createNodeId(),
-            replicateExistingMetadata: false,
-          ).execute(document, transaction);
-        } else {
-          throw Exception('Can\'t handle pasting text within node of type: $currentNodeWithSelection');
-        }
-      }
+    final textNode = document.getNode(_pastePosition) as TextNode;
+    final pasteTextOffset = (_pastePosition.nodePosition as TextPosition).offset;
 
-      // Paste the first piece of content into the selected TextNode.
-      InsertTextCommand(
-        documentPosition: _pastePosition,
-        textToInsert: splitContent.first,
-        attributions: attributionsAtPasteOffset,
-      ).execute(document, transaction);
-
-      // At this point in the paste process, the document selection
-      // position is at the end of the text that was just pasted.
-      newSelectionPosition = DocumentPosition(
+    if (attributedLines.length > 1 && pasteTextOffset < textNode.endPosition.offset) {
+      // There is more than 1 node of content being pasted. Therefore,
+      // new nodes will need to be added, which means that the currently
+      // selected text node will be split at the current text offset.
+      // Configure a new node to be added at the end of the pasted content
+      // which contains the trailing text from the currently selected
+      // node.
+      SplitParagraphCommand(
         nodeId: currentNodeWithSelection.id,
-        nodePosition: TextNodePosition(
-          offset: pasteTextOffset + splitContent.first.length,
-        ),
-      );
-
-      // Remove the pasted text from the list of pieces of text
-      // to paste.
-      splitContent.removeAt(0);
+        splitPosition: TextPosition(offset: pasteTextOffset),
+        newNodeId: DocumentEditor.createNodeId(),
+        replicateExistingMetadata: true,
+      ).execute(document, transaction);
     }
 
-    final newNodes = splitContent
-        .map(
-          // TODO: create nodes based on content inspection.
-          (nodeText) => ParagraphNode(
-            id: DocumentEditor.createNodeId(),
-            text: AttributedText(
-              text: nodeText,
-            ),
-          ),
-        )
-        .toList();
-    editorOpsLog.fine(' - new nodes: $newNodes');
+    // Paste the first piece of attributed content into the selected TextNode.
+    InsertAttributedTextCommand(
+      documentPosition: _pastePosition,
+      textToInsert: attributedLines.first,
+    ).execute(document, transaction);
 
-    int newNodeToMergeIndex = 0;
-    DocumentNode mergeAfterNode;
-
-    final nodeWithSelection = document.getNodeById(_pastePosition.nodeId);
-    if (nodeWithSelection == null) {
-      throw Exception(
-          'Failed to complete paste process because the node being pasted into disappeared from the document unexpectedly.');
-    }
-    mergeAfterNode = nodeWithSelection;
-
-    for (int i = newNodeToMergeIndex; i < newNodes.length; ++i) {
+    // The first line of pasted text was added to the selected paragraph.
+    // Now, create new nodes for each additional line of pasted text and
+    // insert those nodes.
+    final pastedContentNodes = _convertLinesToParagraphs(attributedLines.sublist(1));
+    DocumentNode previousNode = currentNodeWithSelection;
+    for (final pastedNode in pastedContentNodes) {
       transaction.insertNodeAfter(
-        existingNode: mergeAfterNode,
-        newNode: newNodes[i],
+        existingNode: previousNode,
+        newNode: pastedNode,
       );
-      mergeAfterNode = newNodes[i];
-
-      newSelectionPosition = DocumentPosition(
-        nodeId: mergeAfterNode.id,
-        nodePosition: mergeAfterNode.endPosition,
-      );
+      previousNode = pastedNode;
     }
 
+    // Place the caret at the end of the pasted content.
     _composer.selection = DocumentSelection.collapsed(
-      position: newSelectionPosition!,
+      position: pastedContentNodes.isNotEmpty
+          ? DocumentPosition(
+              nodeId: previousNode.id,
+              nodePosition: previousNode.endPosition,
+            )
+          : DocumentPosition(
+              nodeId: currentNodeWithSelection.id,
+              nodePosition: TextNodePosition(
+                offset: pasteTextOffset + attributedLines.first.text.length,
+              ),
+            ),
     );
-    editorOpsLog.fine(' - new selection: ${_composer.selection}');
+    editorOpsLog.fine('New selection after paste operation: ${_composer.selection}');
 
     editorOpsLog.fine('Done with paste command.');
+  }
+
+  /// Breaks the given [content] at each newline, then applies any inferred
+  /// attributions based on content analysis, e.g., surrounds URLs with
+  /// [LinkAttribution]s.
+  List<AttributedText> _inferAttributionsForLinesOfPastedText(String content) {
+    // Split the pasted content by newlines, because each new line of content
+    // needs to placed in its own ParagraphNode.
+    final lines = content.split('\n\n');
+    editorOpsLog.fine("Breaking pasted content into lines and adding attributions:");
+    editorOpsLog.fine("Lines of content:");
+    for (final line in lines) {
+      editorOpsLog.fine(' - "$line"');
+    }
+
+    final attributedLines = <AttributedText>[];
+    for (final line in lines) {
+      attributedLines.add(
+        AttributedText(
+          text: line,
+          spans: _findUrlSpansInText(pastedText: lines.first),
+        ),
+      );
+    }
+    return attributedLines;
+  }
+
+  /// Finds all URLs in the [pastedText] and returns an [AttributedSpans], which
+  /// contains [LinkAttribution]s that span each URL.
+  AttributedSpans _findUrlSpansInText({required String pastedText}) {
+    final AttributedSpans linkAttributionSpans = AttributedSpans();
+
+    final wordBoundaries = pastedText.calculateAllWordBoundaries();
+
+    for (final wordBoundary in wordBoundaries) {
+      final word = wordBoundary.textInside(pastedText);
+      final link = Uri.tryParse(word);
+
+      if (link != null && link.hasScheme && link.hasAuthority) {
+        // Valid url. Apply [LinkAttribution] to the url
+        final linkAttribution = LinkAttribution(url: link);
+
+        final startOffset = wordBoundary.start;
+        // -1 because TextPosition's offset indexes the character after the
+        // selection, not the final character in the selection.
+        final endOffset = wordBoundary.end - 1;
+
+        // Add link attribution.
+        linkAttributionSpans.addAttribution(
+          newAttribution: linkAttribution,
+          start: startOffset,
+          end: endOffset,
+        );
+      }
+    }
+
+    return linkAttributionSpans;
+  }
+
+  Iterable<ParagraphNode> _convertLinesToParagraphs(Iterable<AttributedText> attributedLines) {
+    return attributedLines.map(
+      // TODO: create nodes based on content inspection (e.g., image, list item).
+      (pastedLine) => ParagraphNode(
+        id: DocumentEditor.createNodeId(),
+        text: pastedLine,
+      ),
+    );
   }
 }

@@ -919,6 +919,49 @@ void main() {
           Platform.setTestInstance(null);
         });
       });
+
+      group('typing characters near a link', () {
+        testWidgets('does not expand the link when inserting before the link', (tester) async {
+          // Configure and render a document.
+          await tester //
+              .createDocument()
+              .withCustomContent(_singleParagraphWithLinkDoc())
+              .pump();
+
+          // Place the caret in the first paragraph at the start of the link.
+          await tester.placeCaretInParagraph('1', 0);
+
+          // Type some text by simulating hardware keyboard key presses.
+          await tester.typeKeyboardText('Go to ');
+
+          // Ensure that the link is unchanged
+          expect(
+            SuperEditorInspector.findDocument(),
+            equalsMarkdown("Go to [https://google.com](https://google.com)"),
+          );
+        });
+
+        testWidgets('does not expand the link when inserting after the link', (tester) async {
+          // Configure and render a document.
+          await tester //
+              .createDocument()
+              .withCustomContent(_singleParagraphWithLinkDoc())
+              .pump();
+
+          // Place the caret in the first paragraph at the start of the link.
+          await tester.placeCaretInParagraph('1', 18);
+
+          // Type some text by simulating hardware keyboard key presses.
+          await tester.typeKeyboardText(' to learn anything');
+
+          // Ensure that the link is unchanged
+          expect(
+            SuperEditorInspector.findDocument(),
+            equalsMarkdown("[https://google.com](https://google.com) to learn anything"),
+          );
+        });
+      });
+
       test('does nothing when escape is pressed if the selection is collapsed', () {
         Platform.setTestInstance(MacPlatform());
 
@@ -1038,4 +1081,31 @@ Future<TestDocumentContext> _pumpExplicitLineBreakTestSetup(
       .forDesktop()
       .withEditorSize(size)
       .pump();
+}
+
+MutableDocument _singleParagraphWithLinkDoc() {
+  return MutableDocument(
+    nodes: [
+      ParagraphNode(
+        id: "1",
+        text: AttributedText(
+          text: "https://google.com",
+          spans: AttributedSpans(
+            attributions: [
+              SpanMarker(
+                attribution: LinkAttribution(url: Uri.parse('https://google.com')),
+                offset: 0,
+                markerType: SpanMarkerType.start,
+              ),
+              SpanMarker(
+                attribution: LinkAttribution(url: Uri.parse('https://google.com')),
+                offset: 17,
+                markerType: SpanMarkerType.end,
+              ),
+            ],
+          ),
+        ),
+      )
+    ],
+  );
 }

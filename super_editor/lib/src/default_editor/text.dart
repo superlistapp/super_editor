@@ -22,6 +22,7 @@ import 'package:super_text_layout/super_text_layout.dart';
 
 import 'document_input_keyboard.dart';
 import 'layout_single_column/layout_single_column.dart';
+import 'text_tools.dart';
 
 class TextNode extends DocumentNode with ChangeNotifier {
   TextNode({
@@ -188,6 +189,29 @@ extension DocumentSelectionWithText on Document {
   }
 }
 
+extension Words on String {
+  /// Returns a list of [TextRange]s, one that spans every word in the [String]
+  /// ordered from upstream to downstream.
+  List<TextRange> calculateAllWordBoundaries() {
+    final List<TextRange> textSelections = [];
+    var offset = 0;
+
+    while (offset < length) {
+      if (this[offset] == ' ') {
+        offset++;
+        continue;
+      }
+
+      final currentPosition = TextPosition(offset: offset);
+      final textSelection = expandPositionToWord(text: this, textPosition: currentPosition);
+      textSelections.add(textSelection);
+
+      offset += textSelection.end - textSelection.start + 1;
+    }
+    return textSelections;
+  }
+}
+
 /// A logical selection within a [TextNode].
 ///
 /// The selection begins at [baseOffset] and ends at [extentOffset].
@@ -237,6 +261,16 @@ class TextNodePosition extends TextPosition implements NodePosition {
     required int offset,
     TextAffinity affinity = TextAffinity.downstream,
   }) : super(offset: offset, affinity: affinity);
+
+  TextNodePosition copyWith({
+    int? offset,
+    TextAffinity? affinity,
+  }) {
+    return TextNodePosition(
+      offset: offset ?? this.offset,
+      affinity: affinity ?? this.affinity,
+    );
+  }
 
   @override
   bool operator ==(Object other) =>
@@ -1081,10 +1115,37 @@ class InsertTextCommand implements EditorCommand {
     }
 
     final textOffset = (documentPosition.nodePosition as TextPosition).offset;
+
     textNode.text = textNode.text.insertString(
       textToInsert: textToInsert,
       startOffset: textOffset,
       applyAttributions: attributions,
+    );
+  }
+}
+
+class InsertAttributedTextCommand implements EditorCommand {
+  InsertAttributedTextCommand({
+    required this.documentPosition,
+    required this.textToInsert,
+  }) : assert(documentPosition.nodePosition is TextPosition);
+
+  final DocumentPosition documentPosition;
+  final AttributedText textToInsert;
+
+  @override
+  void execute(Document document, DocumentEditorTransaction transaction) {
+    final textNode = document.getNodeById(documentPosition.nodeId);
+    if (textNode is! TextNode) {
+      editorDocLog.shout('ERROR: can\'t insert text in a node that isn\'t a TextNode: $textNode');
+      return;
+    }
+
+    final textOffset = (documentPosition.nodePosition as TextPosition).offset;
+
+    textNode.text = textNode.text.insert(
+      textToInsert: textToInsert,
+      startOffset: textOffset,
     );
   }
 }
