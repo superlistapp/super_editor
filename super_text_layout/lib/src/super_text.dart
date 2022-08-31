@@ -176,8 +176,8 @@ class RenderSuperTextLayout extends RenderBox
   /// Returns the [ProseTextLayout] within a [SuperText] that's connected
   /// to the given [key].
   static ProseTextLayout? textLayoutFrom(GlobalKey key) {
-    final renderTextLayout = key.currentContext?.findRenderObject() as RenderSuperTextLayout;
-    if (renderTextLayout.state._paragraph == null) {
+    final renderTextLayout = key.currentContext?.findRenderObject() as RenderSuperTextLayout?;
+    if (renderTextLayout == null || renderTextLayout.state._paragraph == null) {
       return null;
     }
 
