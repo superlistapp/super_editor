@@ -1696,7 +1696,7 @@ class _EstimatedLineHeight {
   /// Computes the estimated line height for the given [style].
   ///
   /// The height is computed by laying out a [Paragraph] with an arbitrary
-  /// character and inspecting it's line metrics.
+  /// character and inspecting it's height.
   ///
   /// The result is cached for the last [style] used, so it's not computed
   /// at each call.
@@ -1712,8 +1712,7 @@ class _EstimatedLineHeight {
     final paragraph = builder.build();
     paragraph.layout(const ui.ParagraphConstraints(width: double.infinity));
 
-    final lineMetrics = paragraph.computeLineMetrics();
-    _lastLineHeight = lineMetrics.first.height;
+    _lastLineHeight = paragraph.height;
     _lastComputedStyle = style;
     return _lastLineHeight!;
   }
