@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
+import 'package:super_editor_markdown/super_editor_markdown.dart';
 
 import '../../super_editor/document_test_tools.dart';
 import '../../test_tools.dart';
@@ -175,6 +176,33 @@ void main() {
           expect(
             SuperEditorInspector.findDocument(),
             equalsMarkdown("[https://google.com](https://google.com)Link: [https://flutter.dev](https://flutter.dev)"),
+          );
+        });
+
+        testWidgetsOnMac('when pasting in the middle of a link', (tester) async {
+          tester
+            ..simulateClipboard()
+            ..setSimulatedClipboardContent("Link: https://flutter.dev");
+
+          // Configure and render a document.
+          await tester //
+              .createDocument()
+              .withCustomContent(_singleParagraphWithLinkDoc())
+              .forDesktop()
+              .pump();
+
+          // Tap to place the caret in the first paragraph.
+          await tester.placeCaretInParagraph("1", 9);
+          // Simulate the user pasting content from clipboard
+          await tester.pressCmdV();
+
+          // Ensure that the link is unchanged
+          expect(
+            SuperEditorInspector.findDocument(),
+            // Notice that the pasted text splits the existing link. Each
+            // piece of the existing link continues to link to the full URL.
+            equalsMarkdown(
+                "[https://g](https://google.com)Link: [https://flutter.dev](https://flutter.dev)[oogle.com](https://google.com)"),
           );
         });
       });

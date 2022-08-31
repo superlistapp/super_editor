@@ -457,12 +457,21 @@ class SuperEditorState extends State<SuperEditor> {
       }
 
       // Inserted text at the very beginning of a text blob assumes the
-      // attributions immediately following it.
-      final allStyles = node.text.getAllAttributionsAt(textPosition.offset + 1);
+      // attributions immediately following it (except links).
+      // TODO: attribution expansion policy should probably be configurable
+      final allStyles = node.text
+          .getAllAttributionsAt(textPosition.offset + 1)
+          .where((attribution) => attribution is! LinkAttribution)
+          .toSet();
       _composer.preferences.addStyles(allStyles);
     } else {
-      // Inserted text assumes the attributions immediately preceding it.
-      final allStyles = node.text.getAllAttributionsAt(textPosition.offset - 1);
+      // Inserted text assumes the attributions immediately preceding it
+      // (except links).
+      // TODO: attribution expansion policy should probably be configurable
+      final allStyles = node.text
+          .getAllAttributionsAt(textPosition.offset - 1)
+          .where((attribution) => attribution is! LinkAttribution)
+          .toSet();
       _composer.preferences.addStyles(allStyles);
     }
   }

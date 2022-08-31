@@ -4,7 +4,6 @@ import 'dart:collection';
 import 'dart:math';
 
 import 'package:attributed_text/attributed_text.dart';
-import 'package:collection/collection.dart';
 import 'package:flutter/material.dart' hide SelectableText;
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document.dart';
@@ -13,7 +12,6 @@ import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/core/styles.dart';
-import 'package:super_editor/src/default_editor/attributions.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/composable_text.dart';
@@ -1104,20 +1102,11 @@ class InsertTextCommand implements EditorCommand {
     required this.documentPosition,
     required this.textToInsert,
     required this.attributions,
-    this.attributionSpans = const {},
   }) : assert(documentPosition.nodePosition is TextPosition);
 
   final DocumentPosition documentPosition;
   final String textToInsert;
   final Set<Attribution> attributions;
-
-  /// Set of [AttributionSpan] that would be applied on each spans of the [textToInsert]
-  /// depending on [AttributionSpan.start] and [AttributionSpan.end]
-  ///
-  /// The difference between [attributionSpans] and [attributions] is that [Attribution]s in
-  /// [attributions] would be applied accross [textToInsert], whereas [Attribution]s in
-  /// [attributionSpans] would be applied on fragments of [textToInsert]
-  final Set<AttributionSpan> attributionSpans;
 
   @override
   void execute(Document document, DocumentEditorTransaction transaction) {
@@ -1129,51 +1118,37 @@ class InsertTextCommand implements EditorCommand {
 
     final textOffset = (documentPosition.nodePosition as TextPosition).offset;
 
-    // Inserting text at either end of a link should not expand the link attribution
-    Set<Attribution> attributionsForInsertedText = _removeLinksBeforeAndAfterInsertionOffset(
-      attributedText: textNode.text,
-      textOffset: textOffset,
-      currentAttributions: attributions,
-    );
-
     textNode.text = textNode.text.insertString(
       textToInsert: textToInsert,
       startOffset: textOffset,
-      applyAttributions: attributionsForInsertedText,
-      applyAttributionSpans: attributionSpans,
+      applyAttributions: attributions,
     );
   }
+}
 
-  /// Removes link attributions from [currentAttributions], if the link begins at the [textOffset], or
-  /// ends at the [textOffset], so that the link attribution doesn't expand with new text.
-  ///
-  /// A new `Set<Attribution>` is returned. [currentAttributions] is not altered.
-  Set<Attribution> _removeLinksBeforeAndAfterInsertionOffset({
-    required AttributedText attributedText,
-    required int textOffset,
-    required Set<Attribution> currentAttributions,
-  }) {
-    final linkAttributionSpan = attributedText.spans
-        .getAttributionSpansInRange(
-          attributionFilter: (attr) => attr is LinkAttribution,
-          // -1 because TextPosition's offset indexes the character after the
-          // selection, not the final character in the selection.
-          start: textOffset > 0 ? textOffset - 1 : 0,
-          end: textOffset > 0 ? textOffset - 1 : 0,
-        )
-        .firstOrNull;
+class InsertAttributedTextCommand implements EditorCommand {
+  InsertAttributedTextCommand({
+    required this.documentPosition,
+    required this.textToInsert,
+  }) : assert(documentPosition.nodePosition is TextPosition);
 
-    // Check if text is being inserted immediately before the first character, or immediately after the
-    // last character in a link. If so, remove that link from the set of attributions so that the new text
-    // isn't added to the link text.
-    //
-    // Note: link attributions can't overlap, so we're either dealing with one attribution, or zero attributions.
-    if (linkAttributionSpan != null &&
-        (textOffset == linkAttributionSpan.start || textOffset - 1 == linkAttributionSpan.end)) {
-      return currentAttributions.where((attr) => attr is! LinkAttribution).toSet();
+  final DocumentPosition documentPosition;
+  final AttributedText textToInsert;
+
+  @override
+  void execute(Document document, DocumentEditorTransaction transaction) {
+    final textNode = document.getNodeById(documentPosition.nodeId);
+    if (textNode is! TextNode) {
+      editorDocLog.shout('ERROR: can\'t insert text in a node that isn\'t a TextNode: $textNode');
+      return;
     }
 
-    return currentAttributions;
+    final textOffset = (documentPosition.nodePosition as TextPosition).offset;
+
+    textNode.text = textNode.text.insert(
+      textToInsert: textToInsert,
+      startOffset: textOffset,
+    );
   }
 }
 

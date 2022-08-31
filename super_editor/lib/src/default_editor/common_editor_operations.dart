@@ -1383,6 +1383,7 @@ class CommonEditorOperations {
       return false;
     }
 
+    editorOpsLog.fine("Running pattern matching on a ParagraphNode, to convert it to another node type.");
     final text = node.text;
     final textSelection = composer.selection!.extent.nodePosition as TextNodePosition;
     final textBeforeCaret = text.text.substring(0, textSelection.offset);
@@ -1496,11 +1497,13 @@ class CommonEditorOperations {
           humanize: false,
         ));
     final int linkCount = extractedLinks.fold(0, (value, element) => element is UrlElement ? value + 1 : value);
+    editorOpsLog.fine("Found $linkCount link(s)");
     final String nonEmptyText =
         extractedLinks.fold('', (value, element) => element is TextElement ? value + element.text.trim() : value);
     if (linkCount == 1 && nonEmptyText.isEmpty) {
       // This node's text is just a URL, try to interpret it
       // as a known type.
+      editorOpsLog.fine("The whole node is one big URL. Trying to convert the node type based on pattern matching...");
       final link = extractedLinks.firstWhereOrNull((element) => element is UrlElement)!.text;
       _processUrlNode(
         document: editor.document,
@@ -1513,6 +1516,7 @@ class CommonEditorOperations {
     }
 
     // No pattern match was found
+    editorOpsLog.fine("ParagraphNode didn't match any conversion pattern.");
     return false;
   }
 
@@ -2205,122 +2209,121 @@ class _PasteEditorCommand implements EditorCommand {
 
   @override
   void execute(Document document, DocumentEditorTransaction transaction) {
-    final splitContent = _content.split('\n\n');
-    editorOpsLog.fine('Split content:');
-    for (final piece in splitContent) {
-      editorOpsLog.fine(' - "$piece"');
-    }
-
     final currentNodeWithSelection = document.getNodeById(_pastePosition.nodeId);
-
-    DocumentPosition? newSelectionPosition;
-
-    if (currentNodeWithSelection is TextNode) {
-      final textNode = document.getNode(_pastePosition) as TextNode;
-      final pasteTextOffset = (_pastePosition.nodePosition as TextPosition).offset;
-      final attributionsAtPasteOffset = textNode.text.getAllAttributionsAt(pasteTextOffset);
-
-      if (splitContent.length > 1 && pasteTextOffset < textNode.endPosition.offset) {
-        // There is more than 1 node of content being pasted. Therefore,
-        // new nodes will need to be added, which means that the currently
-        // selected text node will be split at the current text offset.
-        // Configure a new node to be added at the end of the pasted content
-        // which contains the trailing text from the currently selected
-        // node.
-        if (currentNodeWithSelection is ParagraphNode) {
-          SplitParagraphCommand(
-            nodeId: currentNodeWithSelection.id,
-            splitPosition: TextPosition(offset: pasteTextOffset),
-            newNodeId: DocumentEditor.createNodeId(),
-            replicateExistingMetadata: false,
-          ).execute(document, transaction);
-        } else {
-          throw Exception('Can\'t handle pasting text within node of type: $currentNodeWithSelection');
-        }
-      }
-
-      // If a link spans across the paste location, we split that link in two. Part
-      // of the link sits before the pasted text, and the other part of the link
-      // sits after the pasted text. Both of the link parts continue to reference
-      // the original URL, even if the text was a URL.
-      final attributionsForPastedText = attributionsAtPasteOffset //
-          .where((attribution) => attribution is! LinkAttribution)
-          .toSet();
-
-      // Get all link [AttributionSpan]s in the pasted text
-      final linkAttributionSpans = _getURLsInPastedText(pastedText: splitContent.first);
-
-      // Paste the first piece of content into the selected TextNode and apply
-      // [LinkAttribution] found in the pasted text
-      InsertTextCommand(
-        documentPosition: _pastePosition,
-        textToInsert: splitContent.first,
-        attributions: attributionsForPastedText,
-        attributionSpans: linkAttributionSpans,
-      ).execute(document, transaction);
-
-      // At this point in the paste process, the document selection
-      // position is at the end of the text that was just pasted.
-      newSelectionPosition = DocumentPosition(
-        nodeId: currentNodeWithSelection.id,
-        nodePosition: TextNodePosition(
-          offset: pasteTextOffset + splitContent.first.length,
-        ),
-      );
-
-      // Remove the pasted text from the list of pieces of text
-      // to paste.
-      splitContent.removeAt(0);
+    if (currentNodeWithSelection is! ParagraphNode) {
+      throw Exception('Can\'t handle pasting text within node of type: $currentNodeWithSelection');
     }
 
-    final newNodes = splitContent
+    // Split the pasted content at newlines, and apply attributions based
+    // on inspection of the pasted content, e.g., link attributions.
+    final attributedLines = _inferAttributionsForLinesOfPastedText(_content);
+
+    final textNode = document.getNode(_pastePosition) as TextNode;
+    final pasteTextOffset = (_pastePosition.nodePosition as TextPosition).offset;
+
+    if (attributedLines.length > 1 && pasteTextOffset < textNode.endPosition.offset) {
+      // There is more than 1 node of content being pasted. Therefore,
+      // new nodes will need to be added, which means that the currently
+      // selected text node will be split at the current text offset.
+      // Configure a new node to be added at the end of the pasted content
+      // which contains the trailing text from the currently selected
+      // node.
+      SplitParagraphCommand(
+        nodeId: currentNodeWithSelection.id,
+        splitPosition: TextPosition(offset: pasteTextOffset),
+        newNodeId: DocumentEditor.createNodeId(),
+        replicateExistingMetadata: true,
+      ).execute(document, transaction);
+    }
+
+    // Paste the first piece of content into the selected TextNode and apply
+    // [LinkAttribution] found in the pasted text
+    InsertAttributedTextCommand(
+      documentPosition: _pastePosition,
+      textToInsert: attributedLines.first,
+    ).execute(document, transaction);
+
+    // At this point in the paste process, the document selection
+    // position is at the end of the text that was just pasted.
+    DocumentPosition newSelectionPosition = DocumentPosition(
+      nodeId: currentNodeWithSelection.id,
+      nodePosition: TextNodePosition(
+        offset: pasteTextOffset + attributedLines.first.text.length,
+      ),
+    );
+
+    // The first line of pasted text was added to the selected paragraph.
+    // Now, create new nodes for each additional line of pasted text and
+    // insert those nodes.
+    final pastedContentNodes = attributedLines
+        .sublist(1)
         .map(
-          // TODO: create nodes based on content inspection.
-          (nodeText) => ParagraphNode(
+          // TODO: create nodes based on content inspection (e.g., image, list item).
+          (pastedLine) => ParagraphNode(
             id: DocumentEditor.createNodeId(),
-            text: AttributedText(
-              text: nodeText,
-            ),
+            text: pastedLine,
           ),
         )
         .toList();
-    editorOpsLog.fine(' - new nodes: $newNodes');
-
-    int newNodeToMergeIndex = 0;
-    DocumentNode mergeAfterNode;
+    editorOpsLog.fine(' - new nodes: $pastedContentNodes');
 
     final nodeWithSelection = document.getNodeById(_pastePosition.nodeId);
     if (nodeWithSelection == null) {
       throw Exception(
           'Failed to complete paste process because the node being pasted into disappeared from the document unexpectedly.');
     }
-    mergeAfterNode = nodeWithSelection;
 
-    for (int i = newNodeToMergeIndex; i < newNodes.length; ++i) {
+    DocumentNode previousNode = nodeWithSelection;
+    for (int i = 0; i < pastedContentNodes.length; ++i) {
       transaction.insertNodeAfter(
-        existingNode: mergeAfterNode,
-        newNode: newNodes[i],
+        existingNode: previousNode,
+        newNode: pastedContentNodes[i],
       );
-      mergeAfterNode = newNodes[i];
+      previousNode = pastedContentNodes[i];
 
       newSelectionPosition = DocumentPosition(
-        nodeId: mergeAfterNode.id,
-        nodePosition: mergeAfterNode.endPosition,
+        nodeId: previousNode.id,
+        nodePosition: previousNode.endPosition,
       );
     }
 
     _composer.selection = DocumentSelection.collapsed(
-      position: newSelectionPosition!,
+      position: newSelectionPosition,
     );
     editorOpsLog.fine(' - new selection: ${_composer.selection}');
 
     editorOpsLog.fine('Done with paste command.');
   }
 
-  /// Finds all URLs in the [pastedText] and returns a list of link [AttributionSpan]
-  /// from those.
-  Set<AttributionSpan> _getURLsInPastedText({required String pastedText}) {
-    final Set<AttributionSpan> linkAttributionSpans = {};
+  /// Breaks the given [content] at each newline, then applies any inferred
+  /// attributions based on content analysis, e.g., surrounds URLs with
+  /// [LinkAttribution]s.
+  List<AttributedText> _inferAttributionsForLinesOfPastedText(String content) {
+    // Split the pasted content by newlines, because each new line of content
+    // needs to placed in its own ParagraphNode.
+    final lines = content.split('\n\n');
+    editorOpsLog.fine("Breaking pasted content into lines and adding attributions:");
+    editorOpsLog.fine("Lines of content:");
+    for (final line in lines) {
+      editorOpsLog.fine(' - "$line"');
+    }
+
+    final attributedLines = <AttributedText>[];
+    for (final line in lines) {
+      attributedLines.add(
+        AttributedText(
+          text: line,
+          spans: _findUrlSpansInText(pastedText: lines.first),
+        ),
+      );
+    }
+    return attributedLines;
+  }
+
+  /// Finds all URLs in the [pastedText] and returns an [AttributedSpans], which
+  /// contains [LinkAttribution]s that span each URL.
+  AttributedSpans _findUrlSpansInText({required String pastedText}) {
+    final AttributedSpans linkAttributionSpans = AttributedSpans();
 
     final wordBoundaries = pastedText.calculateAllWordBoundaries();
 
@@ -2338,11 +2341,11 @@ class _PasteEditorCommand implements EditorCommand {
         final endOffset = wordBoundary.end - 1;
 
         // Add link attribution.
-        linkAttributionSpans.add(AttributionSpan(
-          attribution: linkAttribution,
+        linkAttributionSpans.addAttribution(
+          newAttribution: linkAttribution,
           start: startOffset,
           end: endOffset,
-        ));
+        );
       }
     }
 
