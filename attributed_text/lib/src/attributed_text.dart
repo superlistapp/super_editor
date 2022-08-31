@@ -415,8 +415,7 @@ class CallbackAttributionVisitor implements AttributionVisitor {
   }
 
   @override
-  void visitAttributions(
-      AttributedText fullText, int index, Set<Attribution> startingAttributions, Set<Attribution> endingAttributions) {
+  void visitAttributions(AttributedText fullText, int index, Set<Attribution> startingAttributions, Set<Attribution> endingAttributions) {
     _onVisitAttributions(fullText, index, startingAttributions, endingAttributions);
   }
 
