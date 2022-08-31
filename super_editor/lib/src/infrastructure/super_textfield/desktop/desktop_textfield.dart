@@ -251,9 +251,13 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
   }
 
   double _getEstimatedLineHeight() {
-    final lineHeight = _controller.text.text.isEmpty //
+    // After hot reloading, the text layout might be null, so we can't
+    // directly use _textKey.currentState!.textLayout because using it 
+    // we can't check for null.
+    final textLayout = RenderSuperTextLayout.textLayoutFrom(_textKey);
+    final lineHeight = _controller.text.text.isEmpty || textLayout == null
         ? 0.0
-        : _textKey.currentState?.textLayout.getLineHeightAtPosition(const TextPosition(offset: 0)) ?? 0;
+        : textLayout.getLineHeightAtPosition(const TextPosition(offset: 0));
     if (lineHeight > 0) {
       return lineHeight;
     }
