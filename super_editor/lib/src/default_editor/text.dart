@@ -262,8 +262,6 @@ class TextNodePosition extends TextPosition implements NodePosition {
     TextAffinity affinity = TextAffinity.downstream,
   }) : super(offset: offset, affinity: affinity);
 
-  /// Creates a new [TextNodePosition] based on the current position, with the
-  /// provided parameters overridden.
   TextNodePosition copyWith({
     int? offset,
     TextAffinity? affinity,

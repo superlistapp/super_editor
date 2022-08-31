@@ -2214,6 +2214,8 @@ class _PasteEditorCommand implements EditorCommand {
       throw Exception('Can\'t handle pasting text within node of type: $currentNodeWithSelection');
     }
 
+    editorOpsLog.info("Pasting clipboard content in document.");
+
     // Split the pasted content at newlines, and apply attributions based
     // on inspection of the pasted content, e.g., link attributions.
     final attributedLines = _inferAttributionsForLinesOfPastedText(_content);
@@ -2236,61 +2238,40 @@ class _PasteEditorCommand implements EditorCommand {
       ).execute(document, transaction);
     }
 
-    // Paste the first piece of content into the selected TextNode and apply
-    // [LinkAttribution] found in the pasted text
+    // Paste the first piece of attributed content into the selected TextNode.
     InsertAttributedTextCommand(
       documentPosition: _pastePosition,
       textToInsert: attributedLines.first,
     ).execute(document, transaction);
 
-    // At this point in the paste process, the document selection
-    // position is at the end of the text that was just pasted.
-    DocumentPosition newSelectionPosition = DocumentPosition(
-      nodeId: currentNodeWithSelection.id,
-      nodePosition: TextNodePosition(
-        offset: pasteTextOffset + attributedLines.first.text.length,
-      ),
-    );
-
     // The first line of pasted text was added to the selected paragraph.
     // Now, create new nodes for each additional line of pasted text and
     // insert those nodes.
-    final pastedContentNodes = attributedLines
-        .sublist(1)
-        .map(
-          // TODO: create nodes based on content inspection (e.g., image, list item).
-          (pastedLine) => ParagraphNode(
-            id: DocumentEditor.createNodeId(),
-            text: pastedLine,
-          ),
-        )
-        .toList();
-    editorOpsLog.fine(' - new nodes: $pastedContentNodes');
-
-    final nodeWithSelection = document.getNodeById(_pastePosition.nodeId);
-    if (nodeWithSelection == null) {
-      throw Exception(
-          'Failed to complete paste process because the node being pasted into disappeared from the document unexpectedly.');
-    }
-
-    DocumentNode previousNode = nodeWithSelection;
-    for (int i = 0; i < pastedContentNodes.length; ++i) {
+    final pastedContentNodes = _convertLinesToParagraphs(attributedLines.sublist(1));
+    DocumentNode previousNode = currentNodeWithSelection;
+    for (final pastedNode in pastedContentNodes) {
       transaction.insertNodeAfter(
         existingNode: previousNode,
-        newNode: pastedContentNodes[i],
+        newNode: pastedNode,
       );
-      previousNode = pastedContentNodes[i];
-
-      newSelectionPosition = DocumentPosition(
-        nodeId: previousNode.id,
-        nodePosition: previousNode.endPosition,
-      );
+      previousNode = pastedNode;
     }
 
+    // Place the caret at the end of the pasted content.
     _composer.selection = DocumentSelection.collapsed(
-      position: newSelectionPosition,
+      position: pastedContentNodes.isNotEmpty
+          ? DocumentPosition(
+              nodeId: previousNode.id,
+              nodePosition: previousNode.endPosition,
+            )
+          : DocumentPosition(
+              nodeId: currentNodeWithSelection.id,
+              nodePosition: TextNodePosition(
+                offset: pasteTextOffset + attributedLines.first.text.length,
+              ),
+            ),
     );
-    editorOpsLog.fine(' - new selection: ${_composer.selection}');
+    editorOpsLog.fine('New selection after paste operation: ${_composer.selection}');
 
     editorOpsLog.fine('Done with paste command.');
   }
@@ -2350,5 +2331,15 @@ class _PasteEditorCommand implements EditorCommand {
     }
 
     return linkAttributionSpans;
+  }
+
+  Iterable<ParagraphNode> _convertLinesToParagraphs(Iterable<AttributedText> attributedLines) {
+    return attributedLines.map(
+      // TODO: create nodes based on content inspection (e.g., image, list item).
+      (pastedLine) => ParagraphNode(
+        id: DocumentEditor.createNodeId(),
+        text: pastedLine,
+      ),
+    );
   }
 }
