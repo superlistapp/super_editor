@@ -8,10 +8,20 @@ import 'package:super_editor/super_editor.dart';
 //       For now, we return MutableDocument because DocumentEditor
 //       requires one. When the editing system matures, there should
 //       be a way to return something here that is not concrete.
-MutableDocument deserializeMarkdownToDocument(String markdown) {
+
+/// The given [syntax] controls how the [markdown] is parsed, e.g., [MarkdownSyntax.normal] for strict
+/// Markdown parsing, or [MarkdownSyntax.superEditor] to use Super Editor's extended syntax.
+MutableDocument deserializeMarkdownToDocument(
+  String markdown, {
+  MarkdownSyntax syntax = MarkdownSyntax.superEditor,
+}) {
   final markdownLines = const LineSplitter().convert(markdown);
 
-  final markdownDoc = md.Document();
+  final markdownDoc = md.Document(
+    blockSyntaxes: [
+      if (syntax == MarkdownSyntax.superEditor) _ParagraphWithAlignmentSyntax(),
+    ],
+  );
   final blockParser = md.BlockParser(markdownLines, markdownDoc);
 
   // Parse markdown string to structured markdown.
@@ -26,7 +36,12 @@ MutableDocument deserializeMarkdownToDocument(String markdown) {
   return MutableDocument(nodes: nodeVisitor.content);
 }
 
-String serializeDocumentToMarkdown(Document doc) {
+/// The given [syntax] controls how the [doc] is serialized, e.g., [MarkdownSyntax.normal] for standard
+/// Markdown syntax, or [MarkdownSyntax.superEditor] to use Super Editor's extended syntax.
+String serializeDocumentToMarkdown(
+  Document doc, {
+  MarkdownSyntax syntax = MarkdownSyntax.superEditor,
+}) {
   StringBuffer buffer = StringBuffer();
 
   bool isFirstLine = true;
@@ -80,12 +95,33 @@ String serializeDocumentToMarkdown(Document doc) {
           ..writeln(node.text.toMarkdown()) //
           ..write('```');
       } else {
+        final String? textAlign = node.getMetadataValue('textAlign');
+        // Left alignment is the default, so there is no need to add the alignment token.
+        if (syntax == MarkdownSyntax.superEditor && textAlign != null && textAlign != 'left') {
+          final alignmentToken = _convertAlignmentToMarkdown(textAlign);
+          if (alignmentToken != null) {
+            buffer.writeln(alignmentToken);
+          }
+        }
         buffer.write(node.text.toMarkdown());
       }
     }
   }
 
   return buffer.toString();
+}
+
+String? _convertAlignmentToMarkdown(String alignment) {
+  switch (alignment) {
+    case 'left':
+      return ':---';
+    case 'center':
+      return ':---:';
+    case 'right':
+      return '---:';
+    default:
+      return null;
+  }
 }
 
 /// Converts structured markdown to a list of [DocumentNode]s.
@@ -138,7 +174,7 @@ class _MarkdownToDocument implements md.NodeVisitor {
             altText: inlineVisitor.imageAltText!,
           );
         } else {
-          _addParagraph(inlineVisitor.attributedText);
+          _addParagraph(inlineVisitor.attributedText, element.attributes);
         }
         break;
       case 'blockquote':
@@ -227,11 +263,16 @@ class _MarkdownToDocument implements md.NodeVisitor {
     );
   }
 
-  void _addParagraph(AttributedText attributedText) {
+  void _addParagraph(AttributedText attributedText, Map<String, String> attributes) {
+    final textAlign = attributes['textAlign'];
+
     _content.add(
       ParagraphNode(
         id: DocumentEditor.createNodeId(),
         text: attributedText,
+        metadata: {
+          'textAlign': textAlign != null ? textAlign : null,
+        },
       ),
     );
   }
@@ -310,7 +351,15 @@ class _MarkdownToDocument implements md.NodeVisitor {
   }
 
   _InlineMarkdownToDocument _parseInline(md.Element element) {
-    final inlineParser = md.InlineParser(element.textContent, md.Document());
+    final inlineParser = md.InlineParser(
+      element.textContent,
+      md.Document(
+        inlineSyntaxes: [
+          md.StrikethroughSyntax(),
+          UnderlineSyntax(),
+        ],
+      ),
+    );
     final inlineVisitor = _InlineMarkdownToDocument();
     final inlineNodes = inlineParser.parse();
     for (final inlineNode in inlineNodes) {
@@ -388,6 +437,22 @@ class _InlineMarkdownToDocument implements md.NodeVisitor {
     } else if (element.tag == 'em') {
       styledText.addAttribution(
         italicsAttribution,
+        SpanRange(
+          start: 0,
+          end: styledText.text.length - 1,
+        ),
+      );
+    } else if (element.tag == "del") {
+      styledText.addAttribution(
+        strikethroughAttribution,
+        SpanRange(
+          start: 0,
+          end: styledText.text.length - 1,
+        ),
+      );
+    } else if (element.tag == "u") {
+      styledText.addAttribution(
+        underlineAttribution,
         SpanRange(
           start: 0,
           end: styledText.text.length - 1,
@@ -488,7 +553,13 @@ class AttributedTextMarkdownSerializer extends AttributionVisitor {
   /// order such that opening and closing styles match each other on
   /// the opening and closing ends of a span.
   static String _sortAndSerializeAttributions(Set<Attribution> attributions, AttributionVisitEvent event) {
-    const startOrder = [codeAttribution, boldAttribution, italicsAttribution, strikethroughAttribution];
+    const startOrder = [
+      codeAttribution,
+      boldAttribution,
+      italicsAttribution,
+      strikethroughAttribution,
+      underlineAttribution,
+    ];
 
     final buffer = StringBuffer();
     final encodingOrder = event == AttributionVisitEvent.start ? startOrder : startOrder.reversed;
@@ -511,6 +582,8 @@ class AttributedTextMarkdownSerializer extends AttributionVisitor {
       return '*';
     } else if (attribution == strikethroughAttribution) {
       return '~';
+    } else if (attribution == underlineAttribution) {
+      return '¬';
     } else {
       return '';
     }
@@ -531,4 +604,118 @@ class AttributedTextMarkdownSerializer extends AttributionVisitor {
     }
     return "";
   }
+}
+
+/// Parses a paragraph preceded by an alignment token.
+class _ParagraphWithAlignmentSyntax extends md.ParagraphSyntax {
+  /// This pattern matches the text aligment notation.
+  ///
+  /// Possible values are `:---`, `:---:` and `---:`
+  static final _alignmentNotationPattern = RegExp(r'^:-{3}|:-{3}:|-{3}:$');
+
+  static const List<md.BlockSyntax> _standardNonParagraphBlockSyntaxes = [
+    md.HeaderSyntax(),
+    md.CodeBlockSyntax(),
+    md.BlockquoteSyntax(),
+    md.HorizontalRuleSyntax(),
+    md.UnorderedListSyntax(),
+    md.OrderedListSyntax(),
+  ];
+
+  const _ParagraphWithAlignmentSyntax();
+
+  @override
+  bool canParse(md.BlockParser parser) {
+    if (!_alignmentNotationPattern.hasMatch(parser.current)) {
+      return false;
+    }
+
+    final nextLine = parser.peek(1);
+
+    // We found a match for a paragraph alignment token. However, the alignment token is the last
+    // line of content in the document. Therefore, it's not really a paragraph alignment token, and we
+    // should treat it as regular content.
+    if (nextLine == null) {
+      return false;
+    }
+
+    /// We found a paragraph alignment token, but the block after the alignment token isn't a paragraph.
+    /// Therefore, the paragraph alignment token is actually regular content. This parser doesn't need to
+    /// take any action.
+    if (_standardNonParagraphBlockSyntaxes.any((syntax) => syntax.pattern.hasMatch(nextLine))) {
+      return false;
+    }
+
+    // We found a paragraph alignment token, followed by a paragraph. Therefore, this parser should
+    // parse the given content.
+    return true;
+  }
+
+  @override
+  md.Node parse(md.BlockParser parser) {
+    final match = _alignmentNotationPattern.firstMatch(parser.current);
+
+    // We've parsed the alignment token on the current line. We know a paragraph starts on the
+    // next line. Move the parser to the next line so that we can parse the paragraph.
+    parser.advance();
+
+    // Parse the paragraph using the standard Markdown paragraph parser.
+    final paragraph = super.parse(parser);
+
+    if (paragraph is md.Element) {
+      paragraph.attributes.addAll({'textAlign': _convertMarkdownAlignmentTokenToSuperEditorAlignment(match!.input)});
+    }
+
+    return paragraph;
+  }
+
+  /// Converts a markdown alignment token to the textAlign metadata used to configure
+  /// the [ParagraphNode] alignment.
+  String _convertMarkdownAlignmentTokenToSuperEditorAlignment(String alignmentToken) {
+    switch (alignmentToken) {
+      case ':---':
+        return 'left';
+      case ':---:':
+        return 'center';
+      case '---:':
+        return 'right';
+      // As we already check that the input matches the notation,
+      // we shouldn't reach this point.
+      default:
+        return 'left';
+    }
+  }
+}
+
+/// A Markdown [TagSyntax] that matches underline spans of text, which are represented in
+/// Markdown with surrounding `¬` tags, e.g., "this is ¬underline¬ text".
+///
+/// This [TagSyntax] produces `Element`s with a `u` tag.
+class UnderlineSyntax extends md.TagSyntax {
+  UnderlineSyntax() : super('¬', requiresDelimiterRun: true, allowIntraWord: true);
+
+  @override
+  md.Node close(md.InlineParser parser, md.Delimiter opener, md.Delimiter closer,
+      {required List<md.Node> Function() getChildren}) {
+    return md.Element('u', getChildren());
+  }
+}
+
+enum MarkdownSyntax {
+  /// Standard markdown syntax.
+  normal,
+
+  /// Extended syntax which supports serialization of text alignment, strikethrough and underline.
+  ///
+  /// Underline text is serialized between a pair of `¬`.
+  ///
+  /// Text alignment is serialized using an alignment notation at the
+  /// line preceding the paragraph:
+  ///
+  /// `:---` represents left alignment. (The default)
+  ///
+  /// `:---:` represents center alignment.
+  ///
+  /// `---:` represents right alignment.
+  superEditor,
 }

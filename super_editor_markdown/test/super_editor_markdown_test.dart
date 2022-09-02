@@ -295,6 +295,44 @@ This is some code
         expect(serializeDocumentToMarkdown(doc), '[This **is a** paragraph](https://example.org).');
       });
 
+      test('paragraph with underline', () {
+        final doc = MutableDocument(nodes: [
+          ParagraphNode(
+            id: '1',
+            text: AttributedText(
+              text: 'This is a paragraph.',
+              spans: AttributedSpans(
+                attributions: [
+                  SpanMarker(attribution: underlineAttribution, offset: 10, markerType: SpanMarkerType.start),
+                  SpanMarker(attribution: underlineAttribution, offset: 18, markerType: SpanMarkerType.end),
+                ],
+              ),
+            ),
+          ),
+        ]);
+
+        expect(serializeDocumentToMarkdown(doc), 'This is a ¬paragraph¬.');
+      });
+
+      test('paragraph with strikethrough', () {
+        final doc = MutableDocument(nodes: [
+          ParagraphNode(
+            id: '1',
+            text: AttributedText(
+              text: 'This is a paragraph.',
+              spans: AttributedSpans(
+                attributions: [
+                  SpanMarker(attribution: strikethroughAttribution, offset: 10, markerType: SpanMarkerType.start),
+                  SpanMarker(attribution: strikethroughAttribution, offset: 18, markerType: SpanMarkerType.end),
+                ],
+              ),
+            ),
+          ),
+        ]);
+
+        expect(serializeDocumentToMarkdown(doc), 'This is a ~paragraph~.');
+      });
+
       test('paragraph with consecutive links', () {
         final doc = MutableDocument(nodes: [
           ParagraphNode(
@@ -314,6 +352,67 @@ This is some code
         ]);
 
         expect(serializeDocumentToMarkdown(doc), '[First Link](https://example.org)[Second Link](https://github.com)');
+      });
+
+      test('paragraph with left alignment', () {
+        final doc = MutableDocument(nodes: [
+          ParagraphNode(
+            id: '1',
+            text: AttributedText(text: 'Paragraph1'),
+            metadata: {
+              'textAlign': 'left',
+            },
+          ),
+        ]);
+
+        // Even when using superEditor markdown syntax, which has support
+        // for text alignment, we don't add an alignment token when
+        // the paragraph is left-aligned.
+        // Paragraphs are left-aligned by default, so it isn't necessary
+        // to serialize the alignment token.
+        expect(serializeDocumentToMarkdown(doc), 'Paragraph1');
+      });
+
+      test('paragraph with center alignment', () {
+        final doc = MutableDocument(nodes: [
+          ParagraphNode(
+            id: '1',
+            text: AttributedText(text: 'Paragraph1'),
+            metadata: {
+              'textAlign': 'center',
+            },
+          ),
+        ]);
+
+        expect(serializeDocumentToMarkdown(doc), ':---:\nParagraph1');
+      });
+
+      test('paragraph with right alignment', () {
+        final doc = MutableDocument(nodes: [
+          ParagraphNode(
+            id: '1',
+            text: AttributedText(text: 'Paragraph1'),
+            metadata: {
+              'textAlign': 'right',
+            },
+          ),
+        ]);
+
+        expect(serializeDocumentToMarkdown(doc), '---:\nParagraph1');
+      });
+
+      test("doesn't serialize text alignment when not using supereditor syntax", () {
+        final doc = MutableDocument(nodes: [
+          ParagraphNode(
+            id: '1',
+            text: AttributedText(text: 'Paragraph1'),
+            metadata: {
+              'textAlign': 'center',
+            },
+          ),
+        ]);
+
+        expect(serializeDocumentToMarkdown(doc, syntax: MarkdownSyntax.normal), 'Paragraph1');
       });
 
       test('image', () {
@@ -762,6 +861,81 @@ This is some code
         expect(document.nodes[16], isA<ImageNode>());
 
         expect(document.nodes[17], isA<ParagraphNode>());
+      });
+
+      test('paragraph with strikethrough', () {
+        final doc = deserializeMarkdownToDocument('~This is~ a paragraph.');
+        final styledText = (doc.nodes[0] as ParagraphNode).text;
+
+        // Ensure text within the range is attributed.
+        expect(styledText.getAllAttributionsAt(0).contains(strikethroughAttribution), true);
+        expect(styledText.getAllAttributionsAt(6).contains(strikethroughAttribution), true);
+
+        // Ensure text outside the range isn't attributed.
+        expect(styledText.getAllAttributionsAt(7).contains(strikethroughAttribution), false);
+      });
+
+      test('paragraph with underline', () {
+        final doc = deserializeMarkdownToDocument('¬This is¬ a paragraph.');
+        final styledText = (doc.nodes[0] as ParagraphNode).text;
+
+        // Ensure text within the range is attributed.
+        expect(styledText.getAllAttributionsAt(0).contains(underlineAttribution), true);
+        expect(styledText.getAllAttributionsAt(6).contains(underlineAttribution), true);
+
+        // Ensure text outside the range isn't attributed.
+        expect(styledText.getAllAttributionsAt(7).contains(underlineAttribution), false);
+      });
+
+      test('paragraph with left alignment', () {
+        final doc = deserializeMarkdownToDocument(':---\nParagraph1');
+
+        final paragraph = doc.nodes.first as ParagraphNode;
+        expect(paragraph.getMetadataValue('textAlign'), 'left');
+        expect(paragraph.text.text, 'Paragraph1');
+      });
+
+      test('paragraph with center alignment', () {
+        final doc = deserializeMarkdownToDocument(':---:\nParagraph1');
+
+        final paragraph = doc.nodes.first as ParagraphNode;
+        expect(paragraph.getMetadataValue('textAlign'), 'center');
+        expect(paragraph.text.text, 'Paragraph1');
+      });
+
+      test('paragraph with right alignment', () {
+        final doc = deserializeMarkdownToDocument('---:\nParagraph1');
+
+        final paragraph = doc.nodes.first as ParagraphNode;
+        expect(paragraph.getMetadataValue('textAlign'), 'right');
+        expect(paragraph.text.text, 'Paragraph1');
+      });
+
+      test('treats alignment token as text at the end of the document', () {
+        final doc = deserializeMarkdownToDocument('---:');
+
+        final paragraph = doc.nodes.first as ParagraphNode;
+        expect(paragraph.getMetadataValue('textAlign'), isNull);
+        expect(paragraph.text.text, '---:');
+      });
+
+      test('treats alignment token as text when not followed by a paragraph', () {
+        final doc = deserializeMarkdownToDocument('---:\n - - -');
+
+        final paragraph = doc.nodes.first as ParagraphNode;
+        expect(paragraph.getMetadataValue('textAlign'), isNull);
+        expect(paragraph.text.text, '---:');
+
+        // Ensure the horizontal rule is parsed.
+        expect(doc.nodes[1], isA<HorizontalRuleNode>());
+      });
+
+      test('treats alignment token as text when not using supereditor syntax', () {
+        final doc = deserializeMarkdownToDocument(':---\nParagraph1', syntax: MarkdownSyntax.normal);
+
+        final paragraph = doc.nodes.first as ParagraphNode;
+        expect(paragraph.getMetadataValue('textAlign'), isNull);
+        expect(paragraph.text.text, ':---\nParagraph1');
       });
     });
   });
