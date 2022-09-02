@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:collection/collection.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
@@ -30,7 +31,7 @@ class DocumentEditor {
     context.put("document", document);
   }
 
-  final Document document;
+  final MutableDocument document;
 
   /// Chain of Responsibility that maps a given [EditorRequest] to an [EditorCommand].
   final List<EditorRequestHandler> _requestHandlers;
@@ -74,7 +75,14 @@ class DocumentEditor {
 
     // If we ran the root command, it's now complete. Notify listeners.
     if (_commandsBeingProcessed.isEmpty && changes.isNotEmpty) {
-      _notifyListeners(_changeList);
+      // Make a copy of the change-list so that asynchronous listeners
+      // don't lose the contents when we clear it.
+      final changeList = List<DocumentChangeEvent>.from(_changeList);
+
+      final changeLog = DocumentChangeLog(changeList);
+      document.notifyListeners(changeLog);
+      _notifyListeners(changeList);
+
       _changeList.clear();
     }
   }
@@ -348,6 +356,13 @@ class MutableDocument implements Document {
   @override
   void removeListener(DocumentChangeListener listener) {
     _listeners.remove(listener);
+  }
+
+  @protected
+  void notifyListeners(DocumentChangeLog changeLog) {
+    for (final listener in _listeners) {
+      listener(changeLog);
+    }
   }
 
   @override

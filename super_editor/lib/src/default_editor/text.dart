@@ -115,6 +115,9 @@ class TextNode extends DocumentNode {
       identical(this, other) ||
       super == other && other is TextNode && runtimeType == other.runtimeType && id == other.id && _text == other._text;
 
+  // TODO: this is a Mutable object and therefore it probably shouldn't
+  //       change its hash code based on content. Find out why we did
+  //       this, and then find a better way to solve that problem.
   @override
   int get hashCode => super.hashCode ^ id.hashCode ^ _text.hashCode;
 }
@@ -1177,14 +1180,11 @@ class InsertTextCommand implements EditorCommand {
     }
 
     final textOffset = (documentPosition.nodePosition as TextPosition).offset;
-    print("Inserting '$textToInsert' in node ${textNode.id}");
     textNode.text = textNode.text.insertString(
       textToInsert: textToInsert,
       startOffset: textOffset,
       applyAttributions: attributions,
     );
-    print("Text node hash code: ${textNode.hashCode}");
-    print("Now node has text: ${textNode.text.text}");
 
     return [NodeChangeEvent(textNode.id)];
   }

@@ -1,10 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
-import 'package:logging/logging.dart';
-import 'package:super_editor/src/core/document.dart';
-import 'package:super_editor/src/core/document_selection.dart';
-import 'package:super_editor/src/default_editor/text.dart';
-import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 
@@ -119,8 +114,6 @@ void main() {
     });
 
     testWidgetsOnDesktop("enters text with hardware keyboard", (tester) async {
-      initLoggers(Level.ALL, {editorKeyLog, editorLayoutLog});
-
       // Configure and render a document.
       await tester //
           .createDocument()
@@ -132,7 +125,6 @@ void main() {
 
       // Tap to place the caret in the first paragraph.
       await tester.placeCaretInParagraph("1", 0);
-      print("Doc selection after placing caret: ${SuperEditorInspector.findDocumentSelection()}");
 
       // Type some text by simulating hardware keyboard key presses.
       await tester.typeKeyboardText("Hello, world!");

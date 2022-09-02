@@ -285,7 +285,12 @@ void main() {
             position: DocumentPosition(nodeId: "2", nodePosition: UpstreamDownstreamNodePosition.downstream()),
           ),
         );
-        await tester.pumpWidget(_buildHardwareKeyboardEditor(paragraphThenHrThenParagraphDoc(), composer));
+        await tester.pumpWidget(
+          _buildHardwareKeyboardEditor(
+            paragraphThenHrThenParagraphDoc(),
+            composer,
+          ),
+        );
 
         await tester.sendKeyEvent(LogicalKeyboardKey.backspace);
         await tester.pump();

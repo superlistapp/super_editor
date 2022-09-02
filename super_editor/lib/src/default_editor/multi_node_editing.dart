@@ -267,13 +267,14 @@ class ReplaceNodeWithEmptyParagraphWithCaretCommand implements EditorCommand {
     document.replaceNode(oldNode: oldNode, newNode: newNode);
 
     composer.updateSelection(
-        DocumentSelection.collapsed(
-          position: DocumentPosition(
-            nodeId: newNode.id,
-            nodePosition: newNode.beginningPosition,
-          ),
+      DocumentSelection.collapsed(
+        position: DocumentPosition(
+          nodeId: newNode.id,
+          nodePosition: newNode.beginningPosition,
         ),
-        notifyListeners: true);
+      ),
+      notifyListeners: false,
+    );
 
     return [
       NodeRemovedEvent(oldNode.id),

@@ -1664,7 +1664,6 @@ class CommonEditorOperations {
     final textNode = editor.document.getNode(composer.selection!.extent) as TextNode;
     final initialTextOffset = (composer.selection!.extent.nodePosition as TextNodePosition).offset;
 
-    print("Inserting character with an InsertTextRequest");
     editor.execute(
       InsertTextRequest(
         documentPosition: composer.selection!.extent,
