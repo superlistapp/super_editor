@@ -39,8 +39,6 @@ class DocumentEditor {
   /// Service Locator that provides all resources that are relevant for document editing.
   final EditorContext context;
 
-  final _listeners = <EditorListener>{};
-
   final _commandsBeingProcessed = <EditorCommand>[];
   final _changeList = <DocumentChangeEvent>[];
 
@@ -75,29 +73,15 @@ class DocumentEditor {
 
     // If we ran the root command, it's now complete. Notify listeners.
     if (_commandsBeingProcessed.isEmpty && changes.isNotEmpty) {
-      // Make a copy of the change-list so that asynchronous listeners
+      // We make a copy of the change-list so that asynchronous listeners
       // don't lose the contents when we clear it.
-      final changeList = List<DocumentChangeEvent>.from(_changeList);
-
-      final changeLog = DocumentChangeLog(changeList);
-      document.notifyListeners(changeLog);
-      _notifyListeners(changeList);
+      document.notifyListeners(
+        DocumentChangeLog(
+          List<DocumentChangeEvent>.from(_changeList, growable: false),
+        ),
+      );
 
       _changeList.clear();
-    }
-  }
-
-  void addListener(EditorListener listener) {
-    _listeners.add(listener);
-  }
-
-  void removeListener(EditorListener listener) {
-    _listeners.remove(listener);
-  }
-
-  void _notifyListeners(List<DocumentChangeEvent> changes) {
-    for (final listener in _listeners) {
-      listener.onChange(changes);
     }
   }
 }
@@ -137,13 +121,6 @@ abstract class EditorCommand {
   /// Executes this command and returns metadata about any changes that
   /// were made.
   List<DocumentChangeEvent> execute(EditorContext context);
-}
-
-/// A listener that's notified of groups of atomic changes that took place
-/// within a [DocumentEditor].
-abstract class EditorListener {
-  /// The given [changes] took place within the [DocumentEditor].
-  void onChange(List<DocumentChangeEvent> changes);
 }
 
 /// Functional version of an [EditorCommand] for commands that
