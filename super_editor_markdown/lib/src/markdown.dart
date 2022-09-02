@@ -9,10 +9,8 @@ import 'package:super_editor/super_editor.dart';
 //       requires one. When the editing system matures, there should
 //       be a way to return something here that is not concrete.
 
-/// Deserializes markdown to a document.
-///
-/// If [syntax] is `MarkdownSyntax.superEditor`, a custom notation is used to allow
-/// text alignment and underline.
+/// The given [syntax] controls how the [markdown] is parsed, e.g., [MarkdownSyntax.normal] for strict
+/// Markdown parsing, or [MarkdownSyntax.superEditor] to use Super Editor's extended syntax.
 MutableDocument deserializeMarkdownToDocument(
   String markdown, {
   MarkdownSyntax syntax = MarkdownSyntax.superEditor,
@@ -38,21 +36,8 @@ MutableDocument deserializeMarkdownToDocument(
   return MutableDocument(nodes: nodeVisitor.content);
 }
 
-/// Serializes a document to markdown format.
-///
-/// If [syntax] is `MarkdownSyntax.superEditor`, a custom notation is used to allow
-/// text alignment and underline.
-///
-/// Underline text is serialized between a pair of `¬`.
-///
-/// Text alignment is serialized using an alignment notation at the
-/// line preceding the paragraph:
-///
-/// `:---` represents left alignment. (The default)
-///
-/// `:---:` represents center alignment.
-///
-/// `---:` represents right alignment.
+/// The given [syntax] controls how the [doc] is serialized, e.g., [MarkdownSyntax.normal] for standard
+/// Markdown syntax, or [MarkdownSyntax.superEditor] to use Super Editor's extended syntax.
 String serializeDocumentToMarkdown(
   Document doc, {
   MarkdownSyntax syntax = MarkdownSyntax.superEditor,
@@ -647,22 +632,22 @@ class _ParagraphWithAlignmentSyntax extends md.ParagraphSyntax {
 
     final nextLine = parser.peek(1);
 
-    // The alignment token is at the last line of the document.
-    // As there are no lines after the token, it is considered a left-aligned paragraph,
-    // containing the alignment token as text.
+    // We found a match for a paragraph alignment token. However, the alignment token is the last
+    // line of content in the document. Therefore, it's not really a paragraph alignment token, and we
+    // should treat it as regular content.
     if (nextLine == null) {
       return false;
     }
 
-    // There is at least one more line after the current parser offset. The next line represents
-    // a different block element. The parser is not currently looking at an aligned paragraph.
+    /// We found a paragraph alignment token, but the block after the alignment token isn't a paragraph.
+    /// Therefore, the paragraph alignment token is actually regular content. This parser doesn't need to
+    /// take any action.
     if (_standardNonParagraphBlockSyntaxes.any((syntax) => syntax.pattern.hasMatch(nextLine))) {
       return false;
     }
 
-    // As we've found an alignment token followed by at least one more line that
-    // isn't a different block element, then it should be enough to consider
-    // we are looking at an aligned paragraph.
+    // We found a paragraph alignment token, followed by a paragraph. Therefore, this parser should
+    // parse the given content.
     return true;
   }
 
@@ -677,11 +662,7 @@ class _ParagraphWithAlignmentSyntax extends md.ParagraphSyntax {
     // Parse the paragraph using the standard Markdown paragraph parser.
     final paragraph = super.parse(parser);
 
-    // The standard paragraph parser may return an empty text node when the paragraph 
-    // contains only reference link definitions. If it's the case, we return the parsed
-    // node as is.
     if (paragraph is md.Element) {
-      // If we get to the parse method then it should be guaranteed we have an alignment token.      
       paragraph.attributes.addAll({'textAlign': _convertMarkdownAlignmentTokenToSuperEditorAlignment(match!.input)});
     }
 
@@ -725,5 +706,16 @@ enum MarkdownSyntax {
   normal,
 
   /// Extended syntax which supports serialization of text alignment, strikethrough and underline.
+  ///
+  /// Underline text is serialized between a pair of `¬`.
+  ///
+  /// Text alignment is serialized using an alignment notation at the
+  /// line preceding the paragraph:
+  ///
+  /// `:---` represents left alignment. (The default)
+  ///
+  /// `:---:` represents center alignment.
+  ///
+  /// `---:` represents right alignment.
   superEditor,
 }
