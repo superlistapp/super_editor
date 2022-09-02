@@ -26,7 +26,7 @@ class _TextWithHintDemoState extends State<TextWithHintDemo> {
   void initState() {
     super.initState();
     _doc = _createDocument();
-    _docEditor = DocumentEditor(document: _doc);
+    _docEditor = createDefaultDocumentEditor(document: _doc);
   }
 
   @override

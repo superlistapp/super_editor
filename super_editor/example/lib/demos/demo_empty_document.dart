@@ -22,7 +22,7 @@ class _EmptyDocumentDemoState extends State<EmptyDocumentDemo> {
   void initState() {
     super.initState();
     _doc = _createDocument1();
-    _docEditor = DocumentEditor(document: _doc as MutableDocument);
+    _docEditor = createDefaultDocumentEditor(document: _doc as MutableDocument);
   }
 
   @override

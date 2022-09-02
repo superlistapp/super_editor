@@ -1,5 +1,4 @@
 import 'package:attributed_text/attributed_text.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document.dart';
@@ -183,6 +182,18 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
       highlightWhenEmpty.hashCode;
 }
 
+/// [EditorRequest] to combine the [ParagraphNode] with [firstNodeId] with the [ParagraphNode] after it, which
+/// should have the [secondNodeId].
+class CombineParagraphsRequest implements EditorRequest {
+  CombineParagraphsRequest({
+    required this.firstNodeId,
+    required this.secondNodeId,
+  }) : assert(firstNodeId != secondNodeId);
+
+  final String firstNodeId;
+  final String secondNodeId;
+}
+
 /// Combines two consecutive `ParagraphNode`s, indicated by `firstNodeId`
 /// and `secondNodeId`, respectively.
 ///
@@ -200,27 +211,28 @@ class CombineParagraphsCommand implements EditorCommand {
   final String secondNodeId;
 
   @override
-  void execute(Document document, DocumentEditorTransaction transaction) {
+  List<DocumentChangeEvent> execute(EditorContext context) {
     editorDocLog.info('Executing CombineParagraphsCommand');
     editorDocLog.info(' - merging "$firstNodeId" <- "$secondNodeId"');
+    final document = context.find<MutableDocument>("document");
     final secondNode = document.getNodeById(secondNodeId);
     if (secondNode is! TextNode) {
       editorDocLog.info('WARNING: Cannot merge node of type: $secondNode into node above.');
-      return;
+      return [];
     }
 
     final nodeAbove = document.getNodeBefore(secondNode);
     if (nodeAbove == null) {
       editorDocLog.info('At top of document. Cannot merge with node above.');
-      return;
+      return [];
     }
     if (nodeAbove.id != firstNodeId) {
       editorDocLog.info('The specified `firstNodeId` is not the node before `secondNodeId`.');
-      return;
+      return [];
     }
     if (nodeAbove is! TextNode) {
       editorDocLog.info('Cannot merge ParagraphNode into node of type: $nodeAbove');
-      return;
+      return [];
     }
 
     // Combine the text and delete the currently selected node.
@@ -231,11 +243,30 @@ class CombineParagraphsCommand implements EditorCommand {
       // bottom node, including the block attribution and styles.
       nodeAbove.metadata = secondNode.metadata;
     }
-    bool didRemove = transaction.deleteNode(secondNode);
+    bool didRemove = document.deleteNode(secondNode);
     if (!didRemove) {
       editorDocLog.info('ERROR: Failed to delete the currently selected node from the document.');
     }
+
+    return [
+      NodeRemovedEvent(secondNode.id),
+      NodeChangeEvent(nodeAbove.id),
+    ];
   }
+}
+
+class SplitParagraphRequest implements EditorRequest {
+  SplitParagraphRequest({
+    required this.nodeId,
+    required this.splitPosition,
+    required this.newNodeId,
+    required this.replicateExistingMetadata,
+  });
+
+  final String nodeId;
+  final TextPosition splitPosition;
+  final String newNodeId;
+  final bool replicateExistingMetadata;
 }
 
 /// Splits the `ParagraphNode` affiliated with the given `nodeId` at the
@@ -256,13 +287,14 @@ class SplitParagraphCommand implements EditorCommand {
   final bool replicateExistingMetadata;
 
   @override
-  void execute(Document document, DocumentEditorTransaction transaction) {
+  List<DocumentChangeEvent> execute(EditorContext context) {
     editorDocLog.info('Executing SplitParagraphCommand');
 
+    final document = context.find<MutableDocument>("document");
     final node = document.getNodeById(nodeId);
     if (node is! ParagraphNode) {
       editorDocLog.info('WARNING: Cannot split paragraph for node of type: $node.');
-      return;
+      return [];
     }
 
     final text = node.text;
@@ -287,12 +319,17 @@ class SplitParagraphCommand implements EditorCommand {
 
     // Insert the new node after the current node.
     editorDocLog.info(' - inserting new node in document');
-    transaction.insertNodeAfter(
+    document.insertNodeAfter(
       existingNode: node,
       newNode: newNode,
     );
 
     editorDocLog.info(' - inserted new node: ${newNode.id} after old one: ${node.id}');
+
+    return [
+      NodeChangeEvent(node.id),
+      NodeInsertedEvent(newNodeId),
+    ];
   }
 }
 
@@ -342,27 +379,30 @@ ExecutionInstruction anyCharacterToInsertInParagraph({
   return didInsertCharacter ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
 }
 
-class DeleteParagraphsCommand implements EditorCommand {
-  DeleteParagraphsCommand({
+class DeleteParagraphCommand implements EditorCommand {
+  DeleteParagraphCommand({
     required this.nodeId,
   });
 
   final String nodeId;
 
   @override
-  void execute(Document document, DocumentEditorTransaction transaction) {
-    editorDocLog.info('Executing DeleteParagraphsCommand');
+  List<DocumentChangeEvent> execute(EditorContext context) {
+    editorDocLog.info('Executing DeleteParagraphCommand');
     editorDocLog.info(' - deleting "$nodeId"');
+    final document = context.find<MutableDocument>("document");
     final node = document.getNodeById(nodeId);
     if (node is! TextNode) {
       editorDocLog.shout('WARNING: Cannot delete node of type: $node.');
-      return;
+      return [];
     }
 
-    bool didRemove = transaction.deleteNode(node);
+    bool didRemove = document.deleteNode(node);
     if (!didRemove) {
       editorDocLog.shout('ERROR: Failed to delete node "$node" from the document.');
     }
+
+    return [NodeRemovedEvent(node.id)];
   }
 }
 
@@ -444,9 +484,11 @@ ExecutionInstruction moveParagraphSelectionUpWhenBackspaceIsPressed({
     nodePosition: nodeAbove.endPosition,
   );
 
-  editContext.composer.selection = DocumentSelection.collapsed(
-    position: newDocumentPosition,
-  );
+  editContext.composer.updateSelection(
+      DocumentSelection.collapsed(
+        position: newDocumentPosition,
+      ),
+      notifyListeners: true);
 
   return ExecutionInstruction.haltExecution;
 }

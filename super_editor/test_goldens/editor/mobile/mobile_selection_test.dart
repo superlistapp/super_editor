@@ -791,7 +791,7 @@ TextStyle _textStyleBuilder(attributions) {
 }
 
 DocumentEditor _createSingleParagraphEditor() {
-  return DocumentEditor(document: _createSingleParagraphDoc());
+  return createDefaultDocumentEditor(document: _createSingleParagraphDoc());
 }
 
 MutableDocument _createSingleParagraphDoc() {

@@ -28,7 +28,7 @@ class _MarkdownSerializationDemoState extends State<MarkdownSerializationDemo> {
   void initState() {
     super.initState();
     _doc = _createInitialDocument()..addListener(_onDocumentChange);
-    _docEditor = DocumentEditor(document: _doc as MutableDocument);
+    _docEditor = createDefaultDocumentEditor(document: _doc as MutableDocument);
 
     _updateMarkdown();
   }
@@ -39,7 +39,7 @@ class _MarkdownSerializationDemoState extends State<MarkdownSerializationDemo> {
     super.dispose();
   }
 
-  void _onDocumentChange() {
+  void _onDocumentChange(DocumentChangeLog changeLog) {
     _updateTimer?.cancel();
     _updateTimer = Timer(_markdownUpdateWaitTime, _updateMarkdownAndRebuild);
   }

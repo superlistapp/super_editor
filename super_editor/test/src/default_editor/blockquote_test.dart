@@ -10,16 +10,16 @@ void main() {
         MaterialApp(
           home: Scaffold(
             body: SuperEditor(
-              editor: DocumentEditor(document: _singleBlockquoteDoc()),
+              editor: createDefaultDocumentEditor(document: _singleBlockquoteDoc()),
               stylesheet: _styleSheet,
             ),
           ),
         ),
       );
-        
+
       // Ensure that the textStyle from the styleSheet was applied
       expect(find.byType(LayoutAwareRichText), findsOneWidget);
-      final richText = (find.byType(LayoutAwareRichText).evaluate().first.widget) as LayoutAwareRichText;      
+      final richText = (find.byType(LayoutAwareRichText).evaluate().first.widget) as LayoutAwareRichText;
       expect(richText.text.style!.color, Colors.blue);
       expect(richText.text.style!.fontSize, 16);
     });
@@ -27,28 +27,25 @@ void main() {
 }
 
 MutableDocument _singleBlockquoteDoc() => MutableDocument(
-  nodes: [          
-    ParagraphNode(
-      id: '1',
-      text: AttributedText(text: "This is a blockquote."),
-      metadata: {'blockType': blockquoteAttribution},
-    )
-  ],
-);
+      nodes: [
+        ParagraphNode(
+          id: '1',
+          text: AttributedText(text: "This is a blockquote."),
+          metadata: {'blockType': blockquoteAttribution},
+        )
+      ],
+    );
 
 TextStyle _inlineTextStyler(Set<Attribution> attributions, TextStyle base) => base;
-  
+
 final _styleSheet = Stylesheet(
   inlineTextStyler: _inlineTextStyler,
   rules: [
     StyleRule(
       const BlockSelector("blockquote"),
       (doc, docNode) {
-        return {              
-          "textStyle": const TextStyle(
-            color: Colors.blue,  
-            fontSize: 16               
-          ),
+        return {
+          "textStyle": const TextStyle(color: Colors.blue, fontSize: 16),
         };
       },
     ),

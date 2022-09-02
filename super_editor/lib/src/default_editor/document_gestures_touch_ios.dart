@@ -6,6 +6,7 @@ import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
+import 'package:super_editor/src/default_editor/document_selection_on_focus_mixin.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
@@ -13,7 +14,6 @@ import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/magnifier.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/selection_handles.dart';
-import 'package:super_editor/src/default_editor/document_selection_on_focus_mixin.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/toolbar_position_delegate.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
 import 'package:super_text_layout/super_text_layout.dart';
@@ -330,7 +330,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     }
   }
 
-  void _onDocumentChange() {
+  void _onDocumentChange(DocumentChangeLog changeLog) {
     _editingController.hideToolbar();
 
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
@@ -556,16 +556,18 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
       return false;
     }
 
-    widget.composer.selection = DocumentSelection(
-      base: DocumentPosition(
-        nodeId: position.nodeId,
-        nodePosition: const UpstreamDownstreamNodePosition.upstream(),
-      ),
-      extent: DocumentPosition(
-        nodeId: position.nodeId,
-        nodePosition: const UpstreamDownstreamNodePosition.downstream(),
-      ),
-    );
+    widget.composer.updateSelection(
+        DocumentSelection(
+          base: DocumentPosition(
+            nodeId: position.nodeId,
+            nodePosition: const UpstreamDownstreamNodePosition.upstream(),
+          ),
+          extent: DocumentPosition(
+            nodeId: position.nodeId,
+            nodePosition: const UpstreamDownstreamNodePosition.downstream(),
+          ),
+        ),
+        notifyListeners: true);
 
     return true;
   }
@@ -747,17 +749,23 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     }
 
     if (_dragHandleType == HandleType.collapsed) {
-      widget.composer.selection = DocumentSelection.collapsed(
-        position: docDragPosition,
-      );
+      widget.composer.updateSelection(
+          DocumentSelection.collapsed(
+            position: docDragPosition,
+          ),
+          notifyListeners: true);
     } else if (_dragHandleType == HandleType.upstream) {
-      widget.composer.selection = widget.composer.selection!.copyWith(
-        base: docDragPosition,
-      );
+      widget.composer.updateSelection(
+          widget.composer.selection!.copyWith(
+            base: docDragPosition,
+          ),
+          notifyListeners: true);
     } else if (_dragHandleType == HandleType.downstream) {
-      widget.composer.selection = widget.composer.selection!.copyWith(
-        extent: docDragPosition,
-      );
+      widget.composer.updateSelection(
+          widget.composer.selection!.copyWith(
+            extent: docDragPosition,
+          ),
+          notifyListeners: true);
     }
   }
 
@@ -834,10 +842,12 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
         break;
     }
 
-    widget.composer.selection = DocumentSelection(
-      base: basePosition,
-      extent: extentPosition,
-    );
+    widget.composer.updateSelection(
+        DocumentSelection(
+          base: basePosition,
+          extent: extentPosition,
+        ),
+        notifyListeners: true);
     editorGesturesLog.fine("Selected region: ${widget.composer.selection}");
   }
 
@@ -1012,7 +1022,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   }) {
     final newSelection = getWordSelection(docPosition: docPosition, docLayout: docLayout);
     if (newSelection != null) {
-      widget.composer.selection = newSelection;
+      widget.composer.updateSelection(newSelection, notifyListeners: true);
       return true;
     } else {
       return false;
@@ -1037,7 +1047,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   }) {
     final newSelection = getParagraphSelection(docPosition: docPosition, docLayout: docLayout);
     if (newSelection != null) {
-      widget.composer.selection = newSelection;
+      widget.composer.updateSelection(newSelection, notifyListeners: true);
       return true;
     } else {
       return false;
@@ -1062,9 +1072,11 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
 
   void _selectPosition(DocumentPosition position) {
     editorGesturesLog.fine("Setting document selection to $position");
-    widget.composer.selection = DocumentSelection.collapsed(
-      position: position,
-    );
+    widget.composer.updateSelection(
+        DocumentSelection.collapsed(
+          position: position,
+        ),
+        notifyListeners: true);
   }
 
   ScrollableState? _findAncestorScrollable(BuildContext context) {
@@ -1342,7 +1354,8 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
     if (!widget.composer.selection!.isCollapsed) {
       // The selection is expanded. First we need to collapse it, then
       // we can start showing the floating cursor.
-      widget.composer.selection = widget.composer.selection!.collapseDownstream(widget.document);
+      widget.composer
+          .updateSelection(widget.composer.selection!.collapseDownstream(widget.document), notifyListeners: true);
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         _onFloatingCursorChange();
       });

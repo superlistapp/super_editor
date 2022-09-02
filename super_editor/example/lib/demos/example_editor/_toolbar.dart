@@ -161,15 +161,15 @@ class _EditorToolbarState extends State<EditorToolbar> {
     }
 
     if (_isListItem(existingTextType) && _isListItem(newType)) {
-      widget.editor!.executeCommand(
-        ChangeListItemTypeCommand(
+      widget.editor!.execute(
+        ChangeListItemTypeRequest(
           nodeId: widget.composer.selection!.extent.nodeId,
           newType: newType == _TextType.orderedListItem ? ListItemType.ordered : ListItemType.unordered,
         ),
       );
     } else if (_isListItem(existingTextType) && !_isListItem(newType)) {
-      widget.editor!.executeCommand(
-        ConvertListItemToParagraphCommand(
+      widget.editor!.execute(
+        ConvertListItemToParagraphRequest(
           nodeId: widget.composer.selection!.extent.nodeId,
           paragraphMetadata: {
             'blockType': _getBlockTypeAttribution(newType),
@@ -177,8 +177,8 @@ class _EditorToolbarState extends State<EditorToolbar> {
         ),
       );
     } else if (!_isListItem(existingTextType) && _isListItem(newType)) {
-      widget.editor!.executeCommand(
-        ConvertParagraphToListItemCommand(
+      widget.editor!.execute(
+        ConvertParagraphToListItemRequest(
           nodeId: widget.composer.selection!.extent.nodeId,
           type: newType == _TextType.orderedListItem ? ListItemType.ordered : ListItemType.unordered,
         ),
@@ -217,8 +217,8 @@ class _EditorToolbarState extends State<EditorToolbar> {
 
   /// Toggles bold styling for the current selected text.
   void _toggleBold() {
-    widget.editor!.executeCommand(
-      ToggleTextAttributionsCommand(
+    widget.editor!.execute(
+      ToggleTextAttributionsRequest(
         documentSelection: widget.composer.selection!,
         attributions: {boldAttribution},
       ),
@@ -227,8 +227,8 @@ class _EditorToolbarState extends State<EditorToolbar> {
 
   /// Toggles italic styling for the current selected text.
   void _toggleItalics() {
-    widget.editor!.executeCommand(
-      ToggleTextAttributionsCommand(
+    widget.editor!.execute(
+      ToggleTextAttributionsRequest(
         documentSelection: widget.composer.selection!,
         attributions: {italicsAttribution},
       ),
@@ -237,8 +237,8 @@ class _EditorToolbarState extends State<EditorToolbar> {
 
   /// Toggles strikethrough styling for the current selected text.
   void _toggleStrikethrough() {
-    widget.editor!.executeCommand(
-      ToggleTextAttributionsCommand(
+    widget.editor!.execute(
+      ToggleTextAttributionsRequest(
         documentSelection: widget.composer.selection!,
         attributions: {strikethroughAttribution},
       ),

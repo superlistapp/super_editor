@@ -7,11 +7,13 @@ import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/material.dart' hide SelectableText;
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document.dart';
+import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_editor.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/core/styles.dart';
+import 'package:super_editor/src/default_editor/paragraph.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/composable_text.dart';
@@ -22,22 +24,18 @@ import 'package:super_text_layout/super_text_layout.dart';
 
 import 'document_input_keyboard.dart';
 import 'layout_single_column/layout_single_column.dart';
+import 'list_items.dart';
+import 'multi_node_editing.dart';
+import 'selection_upstream_downstream.dart';
 import 'text_tools.dart';
 
-class TextNode extends DocumentNode with ChangeNotifier {
+class TextNode extends DocumentNode {
   TextNode({
     required this.id,
     required AttributedText text,
     Map<String, dynamic>? metadata,
   }) : _text = text {
     this.metadata = metadata;
-    _text.addListener(notifyListeners);
-  }
-
-  @override
-  void dispose() {
-    _text.removeListener(notifyListeners);
-    super.dispose();
   }
 
   @override
@@ -49,11 +47,7 @@ class TextNode extends DocumentNode with ChangeNotifier {
   AttributedText get text => _text;
   set text(AttributedText newText) {
     if (newText != _text) {
-      _text.removeListener(notifyListeners);
       _text = newText;
-      _text.addListener(notifyListeners);
-
-      notifyListeners();
     }
   }
 
@@ -819,6 +813,16 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
   }
 }
 
+class AddTextAttributionsRequest implements EditorRequest {
+  AddTextAttributionsRequest({
+    required this.documentSelection,
+    required this.attributions,
+  });
+
+  final DocumentSelection documentSelection;
+  final Set<Attribution> attributions;
+}
+
 // TODO: the add/remove/toggle commands are almost identical except for what they
 //       do to ranges of text. Pull out the common range calculation behavior.
 /// Applies the given `attributions` to the given `documentSelection`.
@@ -832,13 +836,16 @@ class AddTextAttributionsCommand implements EditorCommand {
   final Set<Attribution> attributions;
 
   @override
-  void execute(Document document, DocumentEditorTransaction transaction) {
+  List<DocumentChangeEvent> execute(EditorContext context) {
     editorDocLog.info('Executing AddTextAttributionsCommand');
+    final document = context.find<MutableDocument>("document");
     final nodes = document.getNodesInside(documentSelection.base, documentSelection.extent);
     if (nodes.isEmpty) {
       editorDocLog.shout(' - Bad DocumentSelection. Could not get range of nodes. Selection: $documentSelection');
-      return;
+      return [];
     }
+
+    final changes = <DocumentChangeEvent>[];
 
     // Calculate a DocumentRange so we know which DocumentPosition
     // belongs to the first node, and which belongs to the last node.
@@ -902,11 +909,25 @@ class AddTextAttributionsCommand implements EditorCommand {
           attribution,
           range,
         );
+
+        changes.add(NodeChangeEvent(node.id));
       }
     }
 
     editorDocLog.info(' - done adding attributions');
+
+    return changes;
   }
+}
+
+class RemoveTextAttributionsRequest implements EditorRequest {
+  RemoveTextAttributionsRequest({
+    required this.documentSelection,
+    required this.attributions,
+  });
+
+  final DocumentSelection documentSelection;
+  final Set<Attribution> attributions;
 }
 
 /// Removes the given `attributions` from the given `documentSelection`.
@@ -920,13 +941,16 @@ class RemoveTextAttributionsCommand implements EditorCommand {
   final Set<Attribution> attributions;
 
   @override
-  void execute(Document document, DocumentEditorTransaction transaction) {
+  List<DocumentChangeEvent> execute(EditorContext context) {
     editorDocLog.info('Executing RemoveTextAttributionsCommand');
+    final document = context.find<MutableDocument>("document");
     final nodes = document.getNodesInside(documentSelection.base, documentSelection.extent);
     if (nodes.isEmpty) {
       editorDocLog.shout(' - Bad DocumentSelection. Could not get range of nodes. Selection: $documentSelection');
-      return;
+      return [];
     }
+
+    final changes = <DocumentChangeEvent>[];
 
     // Calculate a DocumentRange so we know which DocumentPosition
     // belongs to the first node, and which belongs to the last node.
@@ -990,11 +1014,25 @@ class RemoveTextAttributionsCommand implements EditorCommand {
           attribution,
           range,
         );
+
+        changes.add(NodeChangeEvent(node.id));
       }
     }
 
     editorDocLog.info(' - done adding attributions');
+
+    return changes;
   }
+}
+
+class ToggleTextAttributionsRequest implements EditorRequest {
+  ToggleTextAttributionsRequest({
+    required this.documentSelection,
+    required this.attributions,
+  });
+
+  final DocumentSelection documentSelection;
+  final Set<Attribution> attributions;
 }
 
 /// Applies the given `attributions` to the given `documentSelection`,
@@ -1010,14 +1048,21 @@ class ToggleTextAttributionsCommand implements EditorCommand {
   final DocumentSelection documentSelection;
   final Set<Attribution> attributions;
 
+  // TODO: The structure of this command looks nearly identical to the two other attribution
+  // commands above. We collect nodes and then we loop through them to apply an operation.
+  // Try to de-dup this code. Maybe use a private base class called ChangeTextAttributionsCommand
+  // and provide a hook for the specific operation: add, remove, toggle.
   @override
-  void execute(Document document, DocumentEditorTransaction transaction) {
+  List<DocumentChangeEvent> execute(EditorContext context) {
     editorDocLog.info('Executing ToggleTextAttributionsCommand');
+    final document = context.find<Document>("document");
     final nodes = document.getNodesInside(documentSelection.base, documentSelection.extent);
     if (nodes.isEmpty) {
       editorDocLog.shout(' - Bad DocumentSelection. Could not get range of nodes. Selection: $documentSelection');
-      return;
+      return [];
     }
+
+    final changes = <DocumentChangeEvent>[];
 
     // Calculate a DocumentRange so we know which DocumentPosition
     // belongs to the first node, and which belongs to the last node.
@@ -1088,11 +1133,27 @@ class ToggleTextAttributionsCommand implements EditorCommand {
           attribution,
           range,
         );
+
+        changes.add(NodeChangeEvent(node.id));
       }
     }
 
     editorDocLog.info(' - done toggling attributions');
+
+    return changes;
   }
+}
+
+class InsertTextRequest implements EditorRequest {
+  InsertTextRequest({
+    required this.documentPosition,
+    required this.textToInsert,
+    required this.attributions,
+  }) : assert(documentPosition.nodePosition is TextPosition);
+
+  final DocumentPosition documentPosition;
+  final String textToInsert;
+  final Set<Attribution> attributions;
 }
 
 class InsertTextCommand implements EditorCommand {
@@ -1107,20 +1168,65 @@ class InsertTextCommand implements EditorCommand {
   final Set<Attribution> attributions;
 
   @override
-  void execute(Document document, DocumentEditorTransaction transaction) {
+  List<DocumentChangeEvent> execute(EditorContext context) {
+    final document = context.find<Document>("document");
     final textNode = document.getNodeById(documentPosition.nodeId);
     if (textNode is! TextNode) {
       editorDocLog.shout('ERROR: can\'t insert text in a node that isn\'t a TextNode: $textNode');
-      return;
+      return [];
     }
 
     final textOffset = (documentPosition.nodePosition as TextPosition).offset;
-
+    print("Inserting '$textToInsert' in node ${textNode.id}");
     textNode.text = textNode.text.insertString(
       textToInsert: textToInsert,
       startOffset: textOffset,
       applyAttributions: attributions,
     );
+    print("Text node hash code: ${textNode.hashCode}");
+    print("Now node has text: ${textNode.text.text}");
+
+    return [NodeChangeEvent(textNode.id)];
+  }
+}
+
+class ConvertTextNodeToParagraphRequest implements EditorRequest {
+  const ConvertTextNodeToParagraphRequest({
+    required this.nodeId,
+    this.newMetadata,
+  });
+
+  final String nodeId;
+  final Map<String, Attribution>? newMetadata;
+}
+
+class ConvertTextNodeToParagraphCommand extends EditorCommand {
+  ConvertTextNodeToParagraphCommand({
+    required this.nodeId,
+    this.newMetadata,
+  });
+
+  final String nodeId;
+  final Map<String, Attribution>? newMetadata;
+
+  @override
+  List<DocumentChangeEvent> execute(EditorContext context) {
+    final document = context.find<MutableDocument>("document");
+
+    final extentNode = document.getNodeById(nodeId) as TextNode;
+    if (extentNode is ParagraphNode) {
+      extentNode.putMetadataValue('blockType', null);
+    } else {
+      final newParagraphNode = ParagraphNode(
+        id: extentNode.id,
+        text: extentNode.text,
+        metadata: newMetadata,
+      );
+
+      document.replaceNode(oldNode: extentNode, newNode: newParagraphNode);
+    }
+
+    return [NodeChangeEvent(extentNode.id)];
   }
 }
 
@@ -1134,11 +1240,12 @@ class InsertAttributedTextCommand implements EditorCommand {
   final AttributedText textToInsert;
 
   @override
-  void execute(Document document, DocumentEditorTransaction transaction) {
+  List<DocumentChangeEvent> execute(EditorContext context) {
+    final document = context.find<MutableDocument>("document");
     final textNode = document.getNodeById(documentPosition.nodeId);
     if (textNode is! TextNode) {
       editorDocLog.shout('ERROR: can\'t insert text in a node that isn\'t a TextNode: $textNode');
-      return;
+      return [];
     }
 
     final textOffset = (documentPosition.nodePosition as TextPosition).offset;
@@ -1147,6 +1254,11 @@ class InsertAttributedTextCommand implements EditorCommand {
       textToInsert: textToInsert,
       startOffset: textOffset,
     );
+
+    return [
+      NodeChangeEvent(textNode.id),
+      const SelectionChangeEvent(),
+    ];
   }
 }
 
@@ -1195,6 +1307,390 @@ ExecutionInstruction anyCharacterToInsertInTextContent({
   final didInsertCharacter = editContext.commonOps.insertCharacter(character);
 
   return didInsertCharacter ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
+}
+
+class InsertCharacterAtCaretRequest implements EditorRequest {
+  const InsertCharacterAtCaretRequest({
+    required this.character,
+    this.ignoreComposerAttributions = false,
+  });
+
+  final String character;
+  final bool ignoreComposerAttributions;
+}
+
+class InsertCharacterAtCaretCommand extends EditorCommand {
+  InsertCharacterAtCaretCommand({
+    required this.character,
+    this.ignoreComposerAttributions = false,
+  });
+
+  final String character;
+  final bool ignoreComposerAttributions;
+
+  @override
+  List<DocumentChangeEvent> execute(EditorContext context) {
+    final document = context.find<Document>("document");
+    final composer = context.find<DocumentComposer>("composer");
+
+    if (composer.selection == null) {
+      return [];
+    }
+
+    final changes = <DocumentChangeEvent>[];
+
+    if (!composer.selection!.isCollapsed) {
+      changes.addAll(
+        _deleteExpandedSelection(
+          context: context,
+          document: document,
+          composer: composer,
+        ),
+      );
+    }
+
+    final extentNodePosition = composer.selection!.extent.nodePosition;
+    if (extentNodePosition is UpstreamDownstreamNodePosition) {
+      editorOpsLog.fine("The selected position is an UpstreamDownstreamPosition. Inserting new paragraph first.");
+      changes.addAll(
+        _insertBlockLevelNewline(
+          context: context,
+          document: document,
+          composer: composer,
+        ),
+      );
+    }
+
+    final extentNode = document.getNodeById(composer.selection!.extent.nodeId)!;
+    if (extentNode is! TextNode) {
+      editorOpsLog.fine(
+          "Couldn't insert character because Super Editor doesn't know how to handle a node of type: $extentNode");
+      return [];
+    }
+
+    // Delegate the action to the standard insert-character behavior.
+    changes.addAll(
+      _insertCharacterInTextComposable(
+        character,
+        context: context,
+        document: document,
+        composer: composer,
+        ignoreComposerAttributions: ignoreComposerAttributions,
+      ),
+    );
+
+    return changes;
+  }
+}
+
+List<DocumentChangeEvent> _deleteExpandedSelection({
+  required EditorContext context,
+  required Document document,
+  required DocumentComposer composer,
+}) {
+  final newSelectionPosition = _getDocumentPositionAfterExpandedDeletion(
+    document: document,
+    selection: composer.selection!,
+  );
+
+  // Delete the selected content.
+  final changes = DeleteSelectionCommand(
+    documentSelection: composer.selection!,
+  ).execute(context);
+
+  composer.updateSelection(DocumentSelection.collapsed(position: newSelectionPosition), notifyListeners: true);
+
+  return [
+    ...changes,
+    const SelectionChangeEvent(),
+  ];
+}
+
+DocumentPosition _getDocumentPositionAfterExpandedDeletion({
+  required Document document,
+  required DocumentSelection selection,
+}) {
+  // Figure out where the caret should appear after the
+  // deletion.
+  // TODO: This calculation depends upon the first
+  //       selected node still existing after the deletion. This
+  //       is a fragile expectation and should be revisited.
+  final basePosition = selection.base;
+  final baseNode = document.getNode(basePosition);
+  if (baseNode == null) {
+    throw Exception('Failed to _getDocumentPositionAfterDeletion because the base node no longer exists.');
+  }
+  final baseNodeIndex = document.getNodeIndex(baseNode);
+
+  final extentPosition = selection.extent;
+  final extentNode = document.getNode(extentPosition);
+  if (extentNode == null) {
+    throw Exception('Failed to _getDocumentPositionAfterDeletion because the extent node no longer exists.');
+  }
+  final extentNodeIndex = document.getNodeIndex(extentNode);
+
+  final topNodeIndex = min(baseNodeIndex, extentNodeIndex);
+  final topNode = document.getNodeAt(topNodeIndex)!;
+  final topNodePosition = baseNodeIndex < extentNodeIndex ? basePosition.nodePosition : extentPosition.nodePosition;
+
+  final bottomNodeIndex = max(baseNodeIndex, extentNodeIndex);
+  final bottomNode = document.getNodeAt(bottomNodeIndex)!;
+  final bottomNodePosition = baseNodeIndex < extentNodeIndex ? extentPosition.nodePosition : basePosition.nodePosition;
+
+  DocumentPosition newSelectionPosition;
+
+  if (baseNodeIndex != extentNodeIndex) {
+    if (topNodePosition == topNode.beginningPosition && bottomNodePosition == bottomNode.endPosition) {
+      // All nodes in the selection will be deleted. Assume that the base
+      // node will be retained and converted into a paragraph, if it's not
+      // already a paragraph.
+      newSelectionPosition = DocumentPosition(
+        nodeId: baseNode.id,
+        nodePosition: const TextNodePosition(offset: 0),
+      );
+    } else if (topNodePosition == topNode.beginningPosition) {
+      // The top node will be deleted, but only part of the bottom node
+      // will be deleted.
+      newSelectionPosition = DocumentPosition(
+        nodeId: bottomNode.id,
+        nodePosition: bottomNode.beginningPosition,
+      );
+    } else if (bottomNodePosition == bottomNode.endPosition) {
+      // The bottom node will be deleted, but only part of the top node
+      // will be deleted.
+      newSelectionPosition = DocumentPosition(
+        nodeId: topNode.id,
+        nodePosition: topNodePosition,
+      );
+    } else {
+      // Part of the top and bottom nodes will be deleted, but both of
+      // those nodes will remain.
+
+      // The caret should end up at the base position
+      newSelectionPosition = baseNodeIndex <= extentNodeIndex ? selection.base : selection.extent;
+    }
+  } else {
+    // Selection is within a single node.
+    //
+    // If it's an upstream/downstream selection node, then the whole node
+    // is selected, and it will be replaced by a Paragraph Node.
+    //
+    // Otherwise, it must be a TextNode, in which case we need to figure
+    // out which DocumentPosition contains the earlier TextNodePosition.
+    if (basePosition.nodePosition is UpstreamDownstreamNodePosition) {
+      // Assume that the node was replace with an empty paragraph.
+      newSelectionPosition = DocumentPosition(
+        nodeId: baseNode.id,
+        nodePosition: const TextNodePosition(offset: 0),
+      );
+    } else if (basePosition.nodePosition is TextNodePosition) {
+      final baseOffset = (basePosition.nodePosition as TextNodePosition).offset;
+      final extentOffset = (extentPosition.nodePosition as TextNodePosition).offset;
+
+      newSelectionPosition = DocumentPosition(
+        nodeId: baseNode.id,
+        nodePosition: TextNodePosition(offset: min(baseOffset, extentOffset)),
+      );
+    } else {
+      throw Exception(
+          'Unknown selection position type: $basePosition, for node: $baseNode, within document selection: $selection');
+    }
+  }
+
+  return newSelectionPosition;
+}
+
+List<DocumentChangeEvent> _insertBlockLevelNewline({
+  required EditorContext context,
+  required Document document,
+  required DocumentComposer composer,
+}) {
+  if (composer.selection == null) {
+    return [];
+  }
+
+  // Ensure that the entire selection sits within the same node.
+  final baseNode = document.getNodeById(composer.selection!.base.nodeId)!;
+  final extentNode = document.getNodeById(composer.selection!.extent.nodeId)!;
+  if (baseNode.id != extentNode.id) {
+    return [];
+  }
+
+  final changes = <DocumentChangeEvent>[];
+
+  if (!composer.selection!.isCollapsed) {
+    // The selection is not collapsed. Delete the selected content first,
+    // then continue the process.
+    changes.addAll(
+      _deleteExpandedSelection(
+        context: context,
+        document: document,
+        composer: composer,
+      ),
+    );
+  }
+
+  final newNodeId = DocumentEditor.createNodeId();
+
+  if (extentNode is ListItemNode) {
+    if (extentNode.text.text.isEmpty) {
+      // The list item is empty. Convert it to a paragraph.
+      changes.addAll(
+        _convertToParagraph(
+          context: context,
+          document: document,
+          composer: composer,
+        ),
+      );
+      return changes;
+    }
+
+    // Split the list item into two.
+    changes.addAll(
+      SplitListItemCommand(
+        nodeId: extentNode.id,
+        splitPosition: composer.selection!.extent.nodePosition as TextNodePosition,
+        newNodeId: newNodeId,
+      ).execute(context),
+    );
+  } else if (extentNode is ParagraphNode) {
+    // Split the paragraph into two. This includes headers, blockquotes, and
+    // any other block-level paragraph.
+    final currentExtentPosition = composer.selection!.extent.nodePosition as TextNodePosition;
+    final endOfParagraph = extentNode.endPosition;
+
+    changes.addAll(
+      SplitParagraphCommand(
+        nodeId: extentNode.id,
+        splitPosition: currentExtentPosition,
+        newNodeId: newNodeId,
+        replicateExistingMetadata: currentExtentPosition.offset != endOfParagraph.offset,
+      ).execute(context),
+    );
+  } else if (composer.selection!.extent.nodePosition is UpstreamDownstreamNodePosition) {
+    final extentPosition = composer.selection!.extent.nodePosition as UpstreamDownstreamNodePosition;
+    if (extentPosition.affinity == TextAffinity.downstream) {
+      // The caret sits on the downstream edge of block-level content. Insert
+      // a new paragraph after this node.
+      changes.addAll(
+        InsertNodeAfterNodeCommand(
+          existingNodeId: extentNode.id,
+          newNode: ParagraphNode(
+            id: newNodeId,
+            text: AttributedText(text: ''),
+          ),
+        ).execute(context),
+      );
+    } else {
+      // The caret sits on the upstream edge of block-level content. Insert
+      // a new paragraph before this node.
+      changes.addAll(
+        InsertNodeAfterNodeCommand(
+          existingNodeId: extentNode.id,
+          newNode: ParagraphNode(
+            id: newNodeId,
+            text: AttributedText(text: ''),
+          ),
+        ).execute(context),
+      );
+    }
+  } else {
+    // We don't know how to handle this type of node position. Do nothing.
+    return [];
+  }
+
+  // Place the caret at the beginning of the new node.
+  composer.updateSelection(
+      DocumentSelection.collapsed(
+        position: DocumentPosition(
+          nodeId: newNodeId,
+          nodePosition: const TextNodePosition(offset: 0),
+        ),
+      ),
+      notifyListeners: true);
+
+  return [
+    ...changes,
+    const SelectionChangeEvent(),
+  ];
+}
+
+List<DocumentChangeEvent> _insertCharacterInTextComposable(
+  String character, {
+  required EditorContext context,
+  required Document document,
+  required DocumentComposer composer,
+  bool ignoreComposerAttributions = false,
+}) {
+  if (composer.selection == null) {
+    return [];
+  }
+  if (!composer.selection!.isCollapsed) {
+    return [];
+  }
+  if (!_isTextEntryNode(document: document, selection: composer.selection!)) {
+    return [];
+  }
+
+  final changes = <DocumentChangeEvent>[];
+
+  final textNode = document.getNode(composer.selection!.extent) as TextNode;
+  final initialTextOffset = (composer.selection!.extent.nodePosition as TextNodePosition).offset;
+
+  changes.addAll(
+    InsertTextCommand(
+      documentPosition: composer.selection!.extent,
+      textToInsert: character,
+      attributions: ignoreComposerAttributions ? {} : composer.preferences.currentAttributions,
+    ).execute(context),
+  );
+
+  composer.updateSelection(
+      DocumentSelection.collapsed(
+        position: DocumentPosition(
+          nodeId: textNode.id,
+          nodePosition: TextNodePosition(
+            offset: initialTextOffset + character.length,
+          ),
+        ),
+      ),
+      notifyListeners: true);
+
+  return [
+    ...changes,
+    const SelectionChangeEvent(),
+  ];
+}
+
+/// Converts the [TextNode] with the current [DocumentComposer] selection
+/// extent to a [Paragraph], or does nothing if the current node is not
+/// a [TextNode], or if the current selection spans more than one node.
+List<DocumentChangeEvent> _convertToParagraph({
+  required EditorContext context,
+  required Document document,
+  required DocumentComposer composer,
+  Map<String, Attribution>? newMetadata,
+}) {
+  if (composer.selection == null) {
+    return [];
+  }
+
+  final baseNode = document.getNodeById(composer.selection!.base.nodeId)!;
+  final extentNode = document.getNodeById(composer.selection!.extent.nodeId)!;
+  if (baseNode.id != extentNode.id) {
+    return [];
+  }
+  if (extentNode is! TextNode) {
+    return [];
+  }
+  if (extentNode is ParagraphNode && extentNode.hasMetadataValue('blockType')) {
+    // This content is already a regular paragraph.
+    return [];
+  }
+
+  ConvertTextNodeToParagraphCommand(nodeId: extentNode.id, newMetadata: newMetadata).execute(context);
+
+  return [NodeChangeEvent(extentNode.id)];
 }
 
 ExecutionInstruction deleteCharacterWhenBackspaceIsPressed({

@@ -34,7 +34,7 @@ class _MarketingVideoState extends State<MarketingVideo> {
         ),
       ],
     );
-    _editor = DocumentEditor(document: doc);
+    _editor = createDefaultDocumentEditor(document: doc);
     _composer = DocumentComposer(
         initialSelection: DocumentSelection.collapsed(
       position: DocumentPosition(
@@ -272,7 +272,7 @@ class DocumentEditingRobot {
     _actionQueue.add(
       _randomPauseBefore(
         () {
-          _composer.selection = DocumentSelection.collapsed(position: position);
+          _composer.updateSelection(DocumentSelection.collapsed(position: position), notifyListeners: true);
         },
       ),
     );
@@ -282,7 +282,7 @@ class DocumentEditingRobot {
     _actionQueue.add(
       _randomPauseBefore(
         () {
-          _composer.selection = selection;
+          _composer.updateSelection(selection, notifyListeners: true);
         },
       ),
     );
@@ -292,16 +292,18 @@ class DocumentEditingRobot {
     _actionQueue.add(
       _randomPauseBefore(
         () {
-          _composer.selection = DocumentSelection(
-            base: DocumentPosition(
-              nodeId: _editor.document.nodes.first.id,
-              nodePosition: _editor.document.nodes.first.beginningPosition,
-            ),
-            extent: DocumentPosition(
-              nodeId: _editor.document.nodes.last.id,
-              nodePosition: _editor.document.nodes.last.endPosition,
-            ),
-          );
+          _composer.updateSelection(
+              DocumentSelection(
+                base: DocumentPosition(
+                  nodeId: _editor.document.nodes.first.id,
+                  nodePosition: _editor.document.nodes.first.beginningPosition,
+                ),
+                extent: DocumentPosition(
+                  nodeId: _editor.document.nodes.last.id,
+                  nodePosition: _editor.document.nodes.last.endPosition,
+                ),
+              ),
+              notifyListeners: true);
         },
       ),
     );

@@ -310,7 +310,7 @@ Offset _computeExpectedMobileCaretOffset(WidgetTester tester, GlobalKey docKey, 
 }
 
 DocumentEditor _createTestDocEditor() {
-  return DocumentEditor(document: _createTestDocument());
+  return createDefaultDocumentEditor(document: _createTestDocument());
 }
 
 MutableDocument _createTestDocument() {

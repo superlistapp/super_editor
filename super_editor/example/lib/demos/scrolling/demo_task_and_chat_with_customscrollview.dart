@@ -34,7 +34,7 @@ class _TaskAndChatWithCustomScrollViewDemoState extends State<TaskAndChatWithCus
   void initState() {
     super.initState();
 
-    _editor = DocumentEditor(
+    _editor = createDefaultDocumentEditor(
       document: MutableDocument(
         nodes: [
           ParagraphNode(

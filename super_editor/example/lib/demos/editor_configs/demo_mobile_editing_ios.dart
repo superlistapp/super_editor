@@ -17,6 +17,7 @@ class _MobileEditingIOSDemoState extends State<MobileEditingIOSDemo> {
   final GlobalKey _docLayoutKey = GlobalKey();
 
   late Document _doc;
+  final _docChangeNotifier = SignalNotifier();
   late DocumentEditor _docEditor;
   late DocumentComposer _composer;
   late CommonEditorOperations _docOps;
@@ -26,8 +27,8 @@ class _MobileEditingIOSDemoState extends State<MobileEditingIOSDemo> {
   @override
   void initState() {
     super.initState();
-    _doc = _createInitialDocument();
-    _docEditor = DocumentEditor(document: _doc as MutableDocument);
+    _doc = _createInitialDocument()..addListener(_onDocumentChange);
+    _docEditor = createDefaultDocumentEditor(document: _doc as MutableDocument);
     _composer = DocumentComposer();
     _docOps = CommonEditorOperations(
       editor: _docEditor,
@@ -42,6 +43,10 @@ class _MobileEditingIOSDemoState extends State<MobileEditingIOSDemo> {
     _editorFocusNode!.dispose();
     _composer.dispose();
     super.dispose();
+  }
+
+  void _onDocumentChange(DocumentChangeLog changeLog) {
+    _docChangeNotifier.notifyListeners();
   }
 
   @override
@@ -70,7 +75,7 @@ class _MobileEditingIOSDemoState extends State<MobileEditingIOSDemo> {
           ),
           MultiListenableBuilder(
             listenables: <Listenable>{
-              _doc,
+              _docChangeNotifier,
               _composer.selectionNotifier,
             },
             builder: (_) => _buildMountedToolbar(),

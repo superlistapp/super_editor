@@ -23,10 +23,10 @@ class _SwitchDocumentDemoState extends State<SwitchDocumentDemo> {
   void initState() {
     super.initState();
     _doc1 = _createDocument1();
-    _docEditor1 = DocumentEditor(document: _doc1 as MutableDocument);
+    _docEditor1 = createDefaultDocumentEditor(document: _doc1 as MutableDocument);
 
     _doc2 = _createDocument2();
-    _docEditor2 = DocumentEditor(document: _doc2 as MutableDocument);
+    _docEditor2 = createDefaultDocumentEditor(document: _doc2 as MutableDocument);
 
     _activeDocumentEditor = _docEditor1;
   }

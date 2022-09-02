@@ -17,9 +17,9 @@ void main() {
             )
           ],
         );
-        final editor = DocumentEditor(document: document);
+        final editor = createDefaultDocumentEditor(document: document);
 
-        final command = ToggleTextAttributionsCommand(
+        final command = ToggleTextAttributionsRequest(
           documentSelection: const DocumentSelection(
             base: DocumentPosition(
               nodeId: 'paragraph',
@@ -38,7 +38,7 @@ void main() {
           attributions: {boldAttribution},
         );
 
-        editor.executeCommand(command);
+        editor.execute(command);
 
         final boldedText = (document.nodes.first as ParagraphNode).text;
         expect(boldedText.getAllAttributionsAt(0), <dynamic>{});
@@ -115,16 +115,18 @@ void main() {
             );
 
         // Select multiple characters in the paragraph
-        editContext.composer.selection = const DocumentSelection(
-          base: DocumentPosition(
-            nodeId: 'paragraph',
-            nodePosition: TextNodePosition(offset: 0),
-          ),
-          extent: DocumentPosition(
-            nodeId: 'paragraph',
-            nodePosition: TextNodePosition(offset: 1),
-          ),
-        );
+        editContext.composer.updateSelection(
+            const DocumentSelection(
+              base: DocumentPosition(
+                nodeId: 'paragraph',
+                nodePosition: TextNodePosition(offset: 0),
+              ),
+              extent: DocumentPosition(
+                nodeId: 'paragraph',
+                nodePosition: TextNodePosition(offset: 1),
+              ),
+            ),
+            notifyListeners: true);
 
         // Try to type a character.
         var result = anyCharacterToInsertInTextContent(
@@ -150,12 +152,14 @@ void main() {
             );
 
         // Select the horizontal rule node.
-        editContext.composer.selection = const DocumentSelection.collapsed(
-          position: DocumentPosition(
-            nodeId: 'horizontal_rule',
-            nodePosition: UpstreamDownstreamNodePosition.downstream(),
-          ),
-        );
+        editContext.composer.updateSelection(
+            const DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: 'horizontal_rule',
+                nodePosition: UpstreamDownstreamNodePosition.downstream(),
+              ),
+            ),
+            notifyListeners: true);
 
         // Try to type a character.
         var result = anyCharacterToInsertInTextContent(
@@ -184,12 +188,14 @@ void main() {
             );
 
         // Select multiple characters in the paragraph
-        editContext.composer.selection = const DocumentSelection.collapsed(
-          position: DocumentPosition(
-            nodeId: 'paragraph',
-            nodePosition: TextNodePosition(offset: 0),
-          ),
-        );
+        editContext.composer.updateSelection(
+            const DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: 'paragraph',
+                nodePosition: TextNodePosition(offset: 0),
+              ),
+            ),
+            notifyListeners: true);
 
         // Press the "alt" key
         var result = anyCharacterToInsertInTextContent(
@@ -235,12 +241,14 @@ void main() {
             );
 
         // Select multiple characters in the paragraph
-        editContext.composer.selection = const DocumentSelection.collapsed(
-          position: DocumentPosition(
-            nodeId: 'paragraph',
-            nodePosition: TextNodePosition(offset: 0),
-          ),
-        );
+        editContext.composer.updateSelection(
+            const DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: 'paragraph',
+                nodePosition: TextNodePosition(offset: 0),
+              ),
+            ),
+            notifyListeners: true);
 
         // Press the "a" key
         var result = anyCharacterToInsertInTextContent(
@@ -274,12 +282,14 @@ void main() {
             );
 
         // Select multiple characters in the paragraph
-        editContext.composer.selection = const DocumentSelection.collapsed(
-          position: DocumentPosition(
-            nodeId: 'paragraph',
-            nodePosition: TextNodePosition(offset: 0),
-          ),
-        );
+        editContext.composer.updateSelection(
+            const DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: 'paragraph',
+                nodePosition: TextNodePosition(offset: 0),
+              ),
+            ),
+            notifyListeners: true);
 
         // Type a non-English character
         var result = anyCharacterToInsertInTextContent(
@@ -306,7 +316,7 @@ void main() {
 
 EditContext _createEditContext() {
   final document = MutableDocument();
-  final documentEditor = DocumentEditor(document: document);
+  final documentEditor = createDefaultDocumentEditor(document: document);
   final fakeLayout = FakeDocumentLayout();
   final composer = DocumentComposer();
   return EditContext(

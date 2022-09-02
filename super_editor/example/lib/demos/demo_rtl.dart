@@ -19,7 +19,7 @@ class _RTLDemoState extends State<RTLDemo> {
   void initState() {
     super.initState();
     _doc = _createInitialDocument();
-    _docEditor = DocumentEditor(document: _doc);
+    _docEditor = createDefaultDocumentEditor(document: _doc);
   }
 
   @override

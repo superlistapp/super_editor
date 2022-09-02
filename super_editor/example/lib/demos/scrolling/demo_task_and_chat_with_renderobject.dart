@@ -36,7 +36,7 @@ class _TaskAndChatWithRenderObjectDemoState extends State<TaskAndChatWithRenderO
   void initState() {
     super.initState();
 
-    _editor = DocumentEditor(
+    _editor = createDefaultDocumentEditor(
       document: MutableDocument(
         nodes: [
           ParagraphNode(

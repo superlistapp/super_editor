@@ -37,6 +37,7 @@ class DocumentComposer with ChangeNotifier {
   DocumentSelection? get selection => _selection;
 
   /// Sets the current [selection] for a [Document].
+  @Deprecated("Use updateSelectionWithoutNotification instead, and then call notifySelectionListener")
   set selection(DocumentSelection? newSelection) {
     if (newSelection != _selection) {
       _selection = newSelection;
@@ -47,9 +48,22 @@ class DocumentComposer with ChangeNotifier {
 
   final selectionNotifier = ValueNotifier<DocumentSelection?>(null);
 
+  void updateSelection(DocumentSelection? newSelection, {bool notifyListeners = false}) {
+    _selection = newSelection;
+
+    if (notifyListeners) {
+      notifySelectionListeners();
+    }
+  }
+
+  void notifySelectionListeners() {
+    selectionNotifier.value = _selection;
+    notifyListeners();
+  }
+
   /// Clears the current [selection].
   void clearSelection() {
-    selection = null;
+    updateSelection(null, notifyListeners: true);
   }
 
   final ValueNotifier<ImeConfiguration> imeConfiguration;

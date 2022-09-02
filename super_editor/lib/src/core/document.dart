@@ -1,6 +1,7 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/default_editor/text.dart';
+import 'package:super_editor/super_editor.dart';
 
 /// A read-only document with styled text and multimedia elements.
 ///
@@ -18,7 +19,7 @@ import 'package:super_editor/src/default_editor/text.dart';
 /// content.
 ///
 /// To edit the content of a document, see [DocumentEditor].
-abstract class Document with ChangeNotifier {
+abstract class Document {
   /// Returns all of the content within the document as a list
   /// of [DocumentNode]s.
   List<DocumentNode> get nodes;
@@ -73,6 +74,70 @@ abstract class Document with ChangeNotifier {
   ///
   /// To compare [Document] equality, use the standard [==] operator.
   bool hasEquivalentContent(Document other);
+
+  void addListener(DocumentChangeListener listener);
+
+  void removeListener(DocumentChangeListener listener);
+}
+
+typedef DocumentChangeListener = void Function(DocumentChangeLog);
+
+/// One or more document changes that occurred within a single edit transaction.
+///
+/// A [DocumentChangeLog] can be used to rebuild only the parts of a document that changed.
+class DocumentChangeLog {
+  DocumentChangeLog(this.changes);
+
+  final List<DocumentChangeEvent> changes;
+
+  /// Returns `true` if the [DocumentNode] with the given [nodeId] was altered in any way
+  /// by the events in this change log.
+  bool wasNodeChanged(String nodeId) {
+    for (final event in changes) {
+      if (event is DocumentNodeEvent && event.nodeId == nodeId) {
+        return true;
+      }
+    }
+    return false;
+  }
+}
+
+/// A change that took place within a [Document].
+abstract class DocumentChangeEvent {
+  // Marker interface for all editor change events.
+}
+
+/// Base class for change events that refer to a [DocumentNode].
+abstract class DocumentNodeEvent implements DocumentChangeEvent {
+  String get nodeId;
+}
+
+/// A new [DocumentNode] was inserted in the [Document].
+class NodeInsertedEvent implements DocumentNodeEvent {
+  const NodeInsertedEvent(this.nodeId);
+
+  @override
+  final String nodeId;
+}
+
+/// A [DocumentNode] was removed the [Document].
+class NodeRemovedEvent implements DocumentNodeEvent {
+  const NodeRemovedEvent(this.nodeId);
+
+  @override
+  final String nodeId;
+}
+
+/// The content of a [DocumentNode] changed.
+///
+/// A node change might signify a content change, such as text changing in a paragraph, or
+/// it might signify a node changing its type of content, such as converting a paragraph
+/// to an image.
+class NodeChangeEvent implements DocumentNodeEvent {
+  const NodeChangeEvent(this.nodeId);
+
+  @override
+  final String nodeId;
 }
 
 /// A span within a [Document] that begins at [start] and
@@ -183,7 +248,7 @@ class DocumentPosition {
 }
 
 /// A single content node within a [Document].
-abstract class DocumentNode implements ChangeNotifier {
+abstract class DocumentNode {
   /// ID that is unique within a [Document].
   String get id;
 
@@ -261,7 +326,6 @@ abstract class DocumentNode implements ChangeNotifier {
     if (newMetadata != null) {
       _metadata.addAll(newMetadata);
     }
-    notifyListeners();
   }
 
   /// Returns `true` if this node has a non-null metadata value for
@@ -279,7 +343,6 @@ abstract class DocumentNode implements ChangeNotifier {
     }
 
     _metadata[key] = value;
-    notifyListeners();
   }
 
   /// Returns a copy of this node's metadata.

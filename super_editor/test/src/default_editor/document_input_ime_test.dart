@@ -2,14 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
-import 'package:logging/logging.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 
 import '../../super_editor/document_test_tools.dart';
+import '../../super_editor/test_documents.dart';
 import '../../test_tools.dart';
 import '../_document_test_tools.dart';
-import '../../super_editor/test_documents.dart';
 
 void main() {
   group('IME input', () {
@@ -28,7 +27,7 @@ void main() {
             text: AttributedText(text: "This is a sentence"),
           ),
         ]);
-        final editor = DocumentEditor(document: document);
+        final editor = createDefaultDocumentEditor(document: document);
         final composer = DocumentComposer(
           initialSelection: const DocumentSelection.collapsed(
             position: DocumentPosition(

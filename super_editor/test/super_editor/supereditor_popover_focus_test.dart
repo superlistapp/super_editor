@@ -35,7 +35,7 @@ void main() {
           nodePosition: TextNodePosition(offset: 20),
         ),
       );
-      editContext.editContext.composer.selection = documentSelection;
+      editContext.editContext.composer.updateSelection(documentSelection, notifyListeners: true);
       await tester.pumpAndSettle();
       expect(SuperEditorInspector.findDocumentSelection(), documentSelection);
 
@@ -71,7 +71,7 @@ void main() {
           nodePosition: TextNodePosition(offset: 20),
         ),
       );
-      editContext.editContext.composer.selection = documentSelection;
+      editContext.editContext.composer.updateSelection(documentSelection, notifyListeners: true);
       await tester.pumpAndSettle();
       expect(SuperEditorInspector.findDocumentSelection(), documentSelection);
 

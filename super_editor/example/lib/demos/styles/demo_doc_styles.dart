@@ -16,7 +16,7 @@ class _DocumentStylesDemoState extends State<DocumentStylesDemo> {
   void initState() {
     super.initState();
     _doc = _createSampleDocument();
-    _docEditor = DocumentEditor(document: _doc as MutableDocument);
+    _docEditor = createDefaultDocumentEditor(document: _doc as MutableDocument);
   }
 
   Stylesheet _createStyles() {

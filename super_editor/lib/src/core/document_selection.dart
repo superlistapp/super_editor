@@ -1,7 +1,5 @@
 import 'dart:ui';
 
-import 'package:super_editor/src/default_editor/text.dart';
-
 import 'document.dart';
 
 /// A selection within a [Document].
@@ -353,4 +351,9 @@ extension InspectDocumentSelection on Document {
     // Either way, the position is not in the selection.
     return false;
   }
+}
+
+/// A [DocumentChangeEvent] that represents a change to the user's selection within a document.
+class SelectionChangeEvent implements DocumentChangeEvent {
+  const SelectionChangeEvent();
 }

@@ -33,7 +33,7 @@ class _AppShortcutsDemoState extends State<AppShortcutsDemo> {
               children: [
                 Expanded(
                   child: SuperEditor(
-                    editor: DocumentEditor(
+                    editor: createDefaultDocumentEditor(
                       document: MutableDocument(
                         nodes: [
                           ParagraphNode(

@@ -12,7 +12,7 @@ void main() {
             ParagraphNode(id: "1", text: AttributedText(text: "")),
           ],
         );
-        final editor = DocumentEditor(document: document);
+        final editor = createDefaultDocumentEditor(document: document);
         final composer = DocumentComposer(
           initialSelection: const DocumentSelection.collapsed(
             position: DocumentPosition(
@@ -43,16 +43,18 @@ void main() {
         await tester.pumpAndSettle();
 
         // Select the new nodes.
-        composer.selection = DocumentSelection(
-          base: DocumentPosition(
-            nodeId: document.nodes[2].id,
-            nodePosition: document.nodes[2].endPosition,
-          ),
-          extent: DocumentPosition(
-            nodeId: document.nodes[1].id,
-            nodePosition: document.nodes[1].beginningPosition,
-          ),
-        );
+        composer.updateSelection(
+            DocumentSelection(
+              base: DocumentPosition(
+                nodeId: document.nodes[2].id,
+                nodePosition: document.nodes[2].endPosition,
+              ),
+              extent: DocumentPosition(
+                nodeId: document.nodes[1].id,
+                nodePosition: document.nodes[1].beginningPosition,
+              ),
+            ),
+            notifyListeners: true);
         await tester.pumpAndSettle();
 
         // Delete the new nodes.
@@ -78,7 +80,7 @@ void main() {
             ParagraphNode(id: "1", text: AttributedText(text: "")),
           ],
         );
-        final editor = DocumentEditor(document: document);
+        final editor = createDefaultDocumentEditor(document: document);
         final composer = DocumentComposer(
           initialSelection: const DocumentSelection.collapsed(
             position: DocumentPosition(
@@ -109,16 +111,18 @@ void main() {
         await tester.pumpAndSettle();
 
         // Select the new nodes.
-        composer.selection = DocumentSelection(
-          base: DocumentPosition(
-            nodeId: document.nodes[1].id,
-            nodePosition: document.nodes[1].beginningPosition,
-          ),
-          extent: DocumentPosition(
-            nodeId: document.nodes[2].id,
-            nodePosition: document.nodes[2].endPosition,
-          ),
-        );
+        composer.updateSelection(
+            DocumentSelection(
+              base: DocumentPosition(
+                nodeId: document.nodes[1].id,
+                nodePosition: document.nodes[1].beginningPosition,
+              ),
+              extent: DocumentPosition(
+                nodeId: document.nodes[2].id,
+                nodePosition: document.nodes[2].endPosition,
+              ),
+            ),
+            notifyListeners: true);
         await tester.pumpAndSettle();
 
         // Delete the new nodes.

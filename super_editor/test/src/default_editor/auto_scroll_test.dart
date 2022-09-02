@@ -213,7 +213,7 @@ class _SliverTestEditorState extends State<_SliverTestEditor> {
     super.initState();
 
     _doc = createExampleDocument();
-    _docEditor = DocumentEditor(document: _doc as MutableDocument);
+    _docEditor = createDefaultDocumentEditor(document: _doc as MutableDocument);
   }
 
   @override

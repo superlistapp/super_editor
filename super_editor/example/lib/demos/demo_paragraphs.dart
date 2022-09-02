@@ -16,7 +16,7 @@ class _ParagraphsDemoState extends State<ParagraphsDemo> {
   void initState() {
     super.initState();
     _doc = _createInitialDocument();
-    _docEditor = DocumentEditor(document: _doc as MutableDocument);
+    _docEditor = createDefaultDocumentEditor(document: _doc as MutableDocument);
   }
 
   @override

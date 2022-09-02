@@ -85,7 +85,8 @@ class SingleColumnLayoutPresenter {
     _listeners.remove(listener);
   }
 
-  void _onDocumentChange() {
+  void _onDocumentChange(DocumentChangeLog changeLog) {
+    // TODO: pass the change log to the appropriate place so that we only rebuild view models that changed
     editorLayoutLog.info("The document changed. Marking the presenter dirty.");
     final wasDirty = isDirty;
 

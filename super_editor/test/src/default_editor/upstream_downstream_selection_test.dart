@@ -559,7 +559,7 @@ void main() {
 }
 
 Widget _buildHardwareKeyboardEditor(MutableDocument document, DocumentComposer composer) {
-  final editor = DocumentEditor(document: document);
+  final editor = createDefaultDocumentEditor(document: document, composer: composer);
 
   return MaterialApp(
     home: Scaffold(

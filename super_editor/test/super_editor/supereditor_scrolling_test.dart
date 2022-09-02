@@ -69,12 +69,14 @@ void main() {
 
       // Place the caret at the end of the document, which causes the editor to
       // scroll to the bottom.
-      docContext.editContext.composer.selection = DocumentSelection.collapsed(
-        position: DocumentPosition(
-          nodeId: lastParagraph.id,
-          nodePosition: lastParagraph.endPosition,
-        ),
-      );
+      docContext.editContext.composer.updateSelection(
+          DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: lastParagraph.id,
+              nodePosition: lastParagraph.endPosition,
+            ),
+          ),
+          notifyListeners: true);
       docContext.focusNode.requestFocus();
       await tester.pumpAndSettle();
 
@@ -123,12 +125,14 @@ void main() {
 
       // Place the caret at the end of the document, which should cause the
       // editor to scroll to the bottom.
-      docContext.editContext.composer.selection = DocumentSelection.collapsed(
-        position: DocumentPosition(
-          nodeId: lastParagraph.id,
-          nodePosition: lastParagraph.endPosition,
-        ),
-      );
+      docContext.editContext.composer.updateSelection(
+          DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: lastParagraph.id,
+              nodePosition: lastParagraph.endPosition,
+            ),
+          ),
+          notifyListeners: true);
       docContext.focusNode.requestFocus();
       await tester.pumpAndSettle();
 

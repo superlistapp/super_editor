@@ -223,20 +223,22 @@ ExecutionInstruction mergeNodeWithNextWhenDeleteIsPressed({
   final currentParagraphLength = node.text.text.length;
 
   // Send edit command.
-  editContext.editor.executeCommand(
-    CombineParagraphsCommand(
+  editContext.editor.execute(
+    CombineParagraphsRequest(
       firstNodeId: node.id,
       secondNodeId: nextNode.id,
     ),
   );
 
   // Place the cursor at the point where the text came together.
-  editContext.composer.selection = DocumentSelection.collapsed(
-    position: DocumentPosition(
-      nodeId: node.id,
-      nodePosition: TextNodePosition(offset: currentParagraphLength),
-    ),
-  );
+  editContext.composer.updateSelection(
+      DocumentSelection.collapsed(
+        position: DocumentPosition(
+          nodeId: node.id,
+          nodePosition: TextNodePosition(offset: currentParagraphLength),
+        ),
+      ),
+      notifyListeners: true);
 
   return ExecutionInstruction.haltExecution;
 }

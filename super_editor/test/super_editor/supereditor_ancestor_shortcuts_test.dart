@@ -79,7 +79,7 @@ Future<void> _pumpShortcutsAndSuperEditor(
               _VoidCallbackIntent: _VoidCallbackAction(),
             },
             child: SuperEditor(
-              editor: DocumentEditor(
+              editor: createDefaultDocumentEditor(
                 document: MutableDocument(
                   nodes: [
                     ParagraphNode(id: "1", text: AttributedText(text: "")),

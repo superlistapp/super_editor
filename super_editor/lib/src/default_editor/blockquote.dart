@@ -225,14 +225,17 @@ class ConvertBlockquoteToParagraphCommand implements EditorCommand {
   final String nodeId;
 
   @override
-  void execute(Document document, DocumentEditorTransaction transaction) {
+  List<DocumentChangeEvent> execute(EditorContext context) {
+    final document = context.find<MutableDocument>("document");
     final node = document.getNodeById(nodeId);
     final blockquote = node as ParagraphNode;
     final newParagraphNode = ParagraphNode(
       id: blockquote.id,
       text: blockquote.text,
     );
-    transaction.replaceNode(oldNode: blockquote, newNode: newParagraphNode);
+    document.replaceNode(oldNode: blockquote, newNode: newParagraphNode);
+
+    return [NodeChangeEvent(nodeId)];
   }
 }
 
@@ -308,7 +311,8 @@ class SplitBlockquoteCommand implements EditorCommand {
   final String newNodeId;
 
   @override
-  void execute(Document document, DocumentEditorTransaction transaction) {
+  List<DocumentChangeEvent> execute(EditorContext context) {
+    final document = context.find<MutableDocument>("document");
     final node = document.getNodeById(nodeId);
     final blockquote = node as ParagraphNode;
     final text = blockquote.text;
@@ -330,9 +334,14 @@ class SplitBlockquoteCommand implements EditorCommand {
     );
 
     // Insert the new node after the current node.
-    transaction.insertNodeAfter(
+    document.insertNodeAfter(
       existingNode: node,
       newNode: newNode,
     );
+
+    return [
+      NodeChangeEvent(nodeId),
+      NodeInsertedEvent(newNodeId),
+    ];
   }
 }

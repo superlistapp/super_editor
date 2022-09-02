@@ -194,9 +194,11 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor>
       if (expandSelection) {
         // The user tapped while pressing shift and there's an existing
         // selection. Move the extent of the selection to where the user tapped.
-        widget.editContext.composer.selection = widget.editContext.composer.selection!.copyWith(
-          extent: docPosition,
-        );
+        widget.editContext.composer.updateSelection(
+            widget.editContext.composer.selection!.copyWith(
+              extent: docPosition,
+            ),
+            notifyListeners: true);
       } else {
         // Place the document selection at the location where the
         // user tapped.
@@ -252,7 +254,7 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor>
   }) {
     final newSelection = getWordSelection(docPosition: docPosition, docLayout: docLayout);
     if (newSelection != null) {
-      widget.editContext.composer.selection = newSelection;
+      widget.editContext.composer.updateSelection(newSelection, notifyListeners: true);
       return true;
     } else {
       return false;
@@ -264,16 +266,18 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor>
       return false;
     }
 
-    widget.editContext.composer.selection = DocumentSelection(
-      base: DocumentPosition(
-        nodeId: position.nodeId,
-        nodePosition: const UpstreamDownstreamNodePosition.upstream(),
-      ),
-      extent: DocumentPosition(
-        nodeId: position.nodeId,
-        nodePosition: const UpstreamDownstreamNodePosition.downstream(),
-      ),
-    );
+    widget.editContext.composer.updateSelection(
+        DocumentSelection(
+          base: DocumentPosition(
+            nodeId: position.nodeId,
+            nodePosition: const UpstreamDownstreamNodePosition.upstream(),
+          ),
+          extent: DocumentPosition(
+            nodeId: position.nodeId,
+            nodePosition: const UpstreamDownstreamNodePosition.downstream(),
+          ),
+        ),
+        notifyListeners: true);
 
     return true;
   }
@@ -321,7 +325,7 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor>
   }) {
     final newSelection = getParagraphSelection(docPosition: docPosition, docLayout: docLayout);
     if (newSelection != null) {
-      widget.editContext.composer.selection = newSelection;
+      widget.editContext.composer.updateSelection(newSelection, notifyListeners: true);
       return true;
     } else {
       return false;
@@ -335,9 +339,11 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor>
 
   void _selectPosition(DocumentPosition position) {
     editorGesturesLog.fine("Setting document selection to $position");
-    widget.editContext.composer.selection = DocumentSelection.collapsed(
-      position: position,
-    );
+    widget.editContext.composer.updateSelection(
+        DocumentSelection.collapsed(
+          position: position,
+        ),
+        notifyListeners: true);
   }
 
   void _onPanStart(DragStartDetails details) {
@@ -454,7 +460,7 @@ Updating drag selection:
     editorGesturesLog.fine(" - base: $basePosition, extent: $extentPosition");
 
     if (basePosition == null || extentPosition == null) {
-      widget.editContext.composer.selection = null;
+      widget.editContext.composer.updateSelection(null, notifyListeners: true);
       return;
     }
 
@@ -464,7 +470,7 @@ Updating drag selection:
         docLayout: documentLayout,
       );
       if (baseParagraphSelection == null) {
-        widget.editContext.composer.selection = null;
+        widget.editContext.composer.updateSelection(null, notifyListeners: true);
         return;
       }
       basePosition = baseOffsetInDocument.dy < extentOffsetInDocument.dy
@@ -476,7 +482,7 @@ Updating drag selection:
         docLayout: documentLayout,
       );
       if (extentParagraphSelection == null) {
-        widget.editContext.composer.selection = null;
+        widget.editContext.composer.updateSelection(null, notifyListeners: true);
         return;
       }
       extentPosition = baseOffsetInDocument.dy < extentOffsetInDocument.dy
@@ -488,7 +494,7 @@ Updating drag selection:
         docLayout: documentLayout,
       );
       if (baseWordSelection == null) {
-        widget.editContext.composer.selection = null;
+        widget.editContext.composer.updateSelection(null, notifyListeners: true);
         return;
       }
       basePosition = baseWordSelection.base;
@@ -498,17 +504,19 @@ Updating drag selection:
         docLayout: documentLayout,
       );
       if (extentWordSelection == null) {
-        widget.editContext.composer.selection = null;
+        widget.editContext.composer.updateSelection(null, notifyListeners: true);
         return;
       }
       extentPosition = extentWordSelection.extent;
     }
 
-    widget.editContext.composer.selection = (DocumentSelection(
-      // If desired, expand the selection instead of replacing it.
-      base: expandSelection ? widget.editContext.composer.selection?.base ?? basePosition : basePosition,
-      extent: extentPosition,
-    ));
+    widget.editContext.composer.updateSelection(
+        DocumentSelection(
+          // If desired, expand the selection instead of replacing it.
+          base: expandSelection ? widget.editContext.composer.selection?.base ?? basePosition : basePosition,
+          extent: extentPosition,
+        ),
+        notifyListeners: true);
     editorGesturesLog.fine("Selected region: ${widget.editContext.composer.selection}");
   }
 

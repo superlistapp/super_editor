@@ -331,7 +331,7 @@ class SuperEditorState extends State<SuperEditor> {
       // The content displayed in this Editor was switched
       // out. Remove any content selection from the previous
       // document.
-      _composer.selection = null;
+      _composer.updateSelection(null, notifyListeners: true);
     }
     if (widget.focusNode != oldWidget.focusNode) {
       _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);

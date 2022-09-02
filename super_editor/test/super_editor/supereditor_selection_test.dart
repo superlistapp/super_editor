@@ -657,7 +657,7 @@ Second Paragraph
 
       // Ensure caret is displayed.
       expect(_caretFinder(), findsOneWidget);
-    });  
+    });
   });
 }
 

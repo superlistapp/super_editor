@@ -546,7 +546,7 @@ Future<void> _pumpEditorWithUnselectableHrsAndFakeToolbar(
   WidgetTester tester, {
   required GlobalKey toolbarKey,
 }) async {
-  final editor = DocumentEditor(
+  final editor = createDefaultDocumentEditor(
     document: paragraphThenHrThenParagraphDoc(),
   );
 

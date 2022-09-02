@@ -26,7 +26,7 @@ void main() {
                     'Cras vitae sodales nisi. Vivamus dignissim vel purus vel aliquet. Sed viverra diam vel nisi rhoncus pharetra. Donec gravida ut ligula euismod pharetra. Etiam sed urna scelerisque, efficitur mauris vel, semper arcu. Nullam sed vehicula sapien. Donec id tellus volutpat, eleifend nulla eget, rutrum mauris.'),
           ),
         ]);
-        final editor = DocumentEditor(document: document);
+        final editor = createDefaultDocumentEditor(document: document);
         final composer = DocumentComposer(
           initialSelection: const DocumentSelection(
             base: DocumentPosition(
@@ -64,7 +64,7 @@ void main() {
                     'Cras vitae sodales nisi. Vivamus dignissim vel purus vel aliquet. Sed viverra diam vel nisi rhoncus pharetra. Donec gravida ut ligula euismod pharetra. Etiam sed urna scelerisque, efficitur mauris vel, semper arcu. Nullam sed vehicula sapien. Donec id tellus volutpat, eleifend nulla eget, rutrum mauris.'),
           ),
         ]);
-        final editor = DocumentEditor(document: document);
+        final editor = createDefaultDocumentEditor(document: document);
         final composer = DocumentComposer(
           initialSelection: const DocumentSelection(
             base: DocumentPosition(
@@ -102,7 +102,7 @@ void main() {
           ),
           HorizontalRuleNode(id: "2"),
         ]);
-        final editor = DocumentEditor(document: document);
+        final editor = createDefaultDocumentEditor(document: document);
         final composer = DocumentComposer(
           initialSelection: const DocumentSelection(
             base: DocumentPosition(
@@ -135,7 +135,7 @@ void main() {
           HorizontalRuleNode(id: "1"),
           HorizontalRuleNode(id: "2"),
         ]);
-        final editor = DocumentEditor(document: document);
+        final editor = createDefaultDocumentEditor(document: document);
         final composer = DocumentComposer(
           initialSelection: const DocumentSelection(
             base: DocumentPosition(

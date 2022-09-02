@@ -18,8 +18,8 @@ class ExampleEditor extends StatefulWidget {
 
 class _ExampleEditorState extends State<ExampleEditor> {
   final GlobalKey _docLayoutKey = GlobalKey();
-
   late Document _doc;
+  final _docChangeNotifier = SignalNotifier();
   late DocumentEditor _docEditor;
   late DocumentComposer _composer;
   late CommonEditorOperations _docOps;
@@ -41,8 +41,11 @@ class _ExampleEditorState extends State<ExampleEditor> {
   @override
   void initState() {
     super.initState();
-    _doc = createInitialDocument()..addListener(_hideOrShowToolbar);
-    _docEditor = DocumentEditor(document: _doc as MutableDocument);
+    _doc = createInitialDocument()..addListener(_onDocumentChange);
+    _docEditor = DocumentEditor(document: _doc as MutableDocument, requestHandlers: [
+      (request) => request is CompleteTaskRequest ? CompleteTaskCommand(nodeId: request.nodeId) : null,
+      ...defaultRequestHandlers,
+    ]);
     _composer = DocumentComposer()..addListener(_hideOrShowToolbar);
     _docOps = CommonEditorOperations(
       editor: _docEditor,
@@ -63,6 +66,11 @@ class _ExampleEditorState extends State<ExampleEditor> {
     _editorFocusNode.dispose();
     _composer.dispose();
     super.dispose();
+  }
+
+  void _onDocumentChange(DocumentChangeLog changeLog) {
+    _hideOrShowToolbar();
+    _docChangeNotifier.notifyListeners();
   }
 
   void _hideOrShowToolbar() {
@@ -377,7 +385,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
   Widget _buildMountedToolbar() {
     return MultiListenableBuilder(
       listenables: <Listenable>{
-        _doc,
+        _docChangeNotifier,
         _composer.selectionNotifier,
       },
       builder: (_) {

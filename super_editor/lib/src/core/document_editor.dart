@@ -1,8 +1,7 @@
 import 'dart:math';
 
 import 'package:collection/collection.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/painting.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:uuid/uuid.dart';
@@ -23,34 +22,120 @@ class DocumentEditor {
   /// Each generated node ID is universally unique.
   static String createNodeId() => _uuid.v4();
 
-  /// Constructs a [DocumentEditor] that makes changes to the given
-  /// [MutableDocument].
   DocumentEditor({
-    required MutableDocument document,
-  }) : _document = document;
+    required this.document,
+    required List<EditorRequestHandler> requestHandlers,
+  })  : _requestHandlers = requestHandlers,
+        context = EditorContext() {
+    context.put("document", document);
+  }
 
-  final MutableDocument _document;
+  final Document document;
 
-  /// Returns a read-only version of the [Document] that this editor
-  /// is editing.
-  Document get document => _document;
+  /// Chain of Responsibility that maps a given [EditorRequest] to an [EditorCommand].
+  final List<EditorRequestHandler> _requestHandlers;
 
-  /// Executes the given [command] to alter the [Document] that is tied
-  /// to this [DocumentEditor].
-  void executeCommand(EditorCommand command) {
-    command.execute(_document, DocumentEditorTransaction._(_document));
+  /// Service Locator that provides all resources that are relevant for document editing.
+  final EditorContext context;
+
+  final _listeners = <EditorListener>{};
+
+  final _commandsBeingProcessed = <EditorCommand>[];
+  final _changeList = <DocumentChangeEvent>[];
+
+  /// Executes the given [request].
+  ///
+  /// Any changes that result from the given [request] are reported to listeners as a series
+  /// of [DocumentChangeEvent]s.
+  void execute(EditorRequest request) {
+    EditorCommand? command;
+    for (final handler in _requestHandlers) {
+      command = handler(request);
+      if (command != null) {
+        break;
+      }
+    }
+
+    if (command == null) {
+      throw Exception(
+          "Could not handle EditorRequest. DocumentEditor doesn't have a handler that recognizes the request: $request");
+    }
+
+    // Add the command that we're processing to the stack. One command might run other commands. We
+    // track them in a stack so that we can emit change notifications at one time.
+    _commandsBeingProcessed.add(command);
+
+    // Run the command.
+    final changes = command.execute(context);
+    _changeList.addAll(changes);
+
+    // Now that our command is done, remove it from the stack.
+    _commandsBeingProcessed.removeLast();
+
+    // If we ran the root command, it's now complete. Notify listeners.
+    if (_commandsBeingProcessed.isEmpty && changes.isNotEmpty) {
+      _notifyListeners(_changeList);
+      _changeList.clear();
+    }
+  }
+
+  void addListener(EditorListener listener) {
+    _listeners.add(listener);
+  }
+
+  void removeListener(EditorListener listener) {
+    _listeners.remove(listener);
+  }
+
+  void _notifyListeners(List<DocumentChangeEvent> changes) {
+    for (final listener in _listeners) {
+      listener.onChange(changes);
+    }
   }
 }
 
-/// A command that alters a [Document] by applying changes in a
-/// [DocumentEditorTransaction].
+/// All resources that are available when executing [EditorCommand]s, such as a document,
+/// composer, etc.
+class EditorContext {
+  final _resources = <String, dynamic>{};
+
+  T find<T>(String id) {
+    if (!_resources.containsKey(id)) {
+      throw Exception("Tried to find an editor resource for the ID '$id', but there's no resource with that ID.");
+    }
+    if (_resources[id] is! T) {
+      throw Exception(
+          "Tried to find an editor resource of type '$T' for ID '$id', but the resource with that ID is of type '${_resources[id].runtimeType}");
+    }
+
+    return _resources[id];
+  }
+
+  void put(String id, dynamic resource) => _resources[id] = resource;
+}
+
+/// Factory method that creates and returns an [EditorCommand] that can handle
+/// the given [EditorRequest], or `null` if this handler doesn't apply to the given
+/// [EditorRequest].
+typedef EditorRequestHandler = EditorCommand? Function(EditorRequest);
+
+/// An action that a [DocumentEditor] should execute.
+abstract class EditorRequest {
+  // Marker interface for all editor request types.
+}
+
+/// A command that alters something in a [DocumentEditor].
 abstract class EditorCommand {
-  /// Executes this command against the given [document], with changes
-  /// applied to the given [transaction].
-  ///
-  /// The [document] is provided in case this command needs to query
-  /// the current content of the [document] to make appropriate changes.
-  void execute(Document document, DocumentEditorTransaction transaction);
+  /// Executes this command and returns metadata about any changes that
+  /// were made.
+  List<DocumentChangeEvent> execute(EditorContext context);
+}
+
+/// A listener that's notified of groups of atomic changes that took place
+/// within a [DocumentEditor].
+abstract class EditorListener {
+  /// The given [changes] took place within the [DocumentEditor].
+  void onChange(List<DocumentChangeEvent> changes);
 }
 
 /// Functional version of an [EditorCommand] for commands that
@@ -60,89 +145,32 @@ class EditorCommandFunction implements EditorCommand {
   /// function to be stored for execution.
   EditorCommandFunction(this._execute);
 
-  final void Function(Document, DocumentEditorTransaction) _execute;
+  final List<DocumentChangeEvent> Function(EditorContext) _execute;
 
   @override
-  void execute(Document document, DocumentEditorTransaction transaction) {
-    _execute(document, transaction);
-  }
-}
-
-/// Accumulates changes to a document to facilitate editing actions.
-class DocumentEditorTransaction {
-  DocumentEditorTransaction._(
-    MutableDocument document,
-  ) : _document = document;
-
-  final MutableDocument _document;
-
-  /// Inserts the given [node] into the [Document] at the given [index].
-  void insertNodeAt(int index, DocumentNode node) {
-    _document.insertNodeAt(index, node);
-  }
-
-  /// Inserts [newNode] immediately before the given [existingNode].
-  void insertNodeBefore({
-    required DocumentNode existingNode,
-    required DocumentNode newNode,
-  }) {
-    _document.insertNodeBefore(existingNode: existingNode, newNode: newNode);
-  }
-
-  /// Inserts [newNode] immediately after the given [existingNode].
-  void insertNodeAfter({
-    required DocumentNode existingNode,
-    required DocumentNode newNode,
-  }) {
-    _document.insertNodeAfter(existingNode: existingNode, newNode: newNode);
-  }
-
-  /// Deletes the node at the given [index].
-  void deleteNodeAt(int index) {
-    _document.deleteNodeAt(index);
-  }
-
-  /// Moves a [DocumentNode] matching the given [nodeId] from its current index
-  /// in the [Document] to the given [targetIndex].
-  ///
-  /// If none of the nodes in this document match [nodeId], throws an error.
-  void moveNode({required String nodeId, required int targetIndex}) {
-    _document.moveNode(nodeId: nodeId, targetIndex: targetIndex);
-  }
-
-  /// Replaces the given [oldNode] with the given [newNode]
-  void replaceNode({
-    required DocumentNode oldNode,
-    required DocumentNode newNode,
-  }) {
-    _document.replaceNode(oldNode: oldNode, newNode: newNode);
-  }
-
-  /// Deletes the given [node] from the [Document].
-  bool deleteNode(DocumentNode node) {
-    return _document.deleteNode(node);
-  }
+  List<DocumentChangeEvent> execute(EditorContext context) => _execute(context);
 }
 
 /// An in-memory, mutable [Document].
-class MutableDocument with ChangeNotifier implements Document {
+class MutableDocument implements Document {
   /// Creates an in-memory, mutable version of a [Document].
   ///
   /// Initializes the content of this [MutableDocument] with the given [nodes],
   /// if provided, or empty content otherwise.
   MutableDocument({
     List<DocumentNode>? nodes,
-  }) : _nodes = nodes ?? [] {
-    // Register listeners for all initial nodes.
-    for (final node in _nodes) {
-      node.addListener(_forwardNodeChange);
-    }
+  }) : _nodes = nodes ?? [];
+
+  void dispose() {
+    _listeners.clear();
   }
 
   final List<DocumentNode> _nodes;
 
   @override
   List<DocumentNode> get nodes => _nodes;
+
+  final _listeners = <DocumentChangeListener>[];
 
   @override
   DocumentNode? getNodeById(String nodeId) {
@@ -220,8 +248,6 @@ class MutableDocument with ChangeNotifier implements Document {
   void insertNodeAt(int index, DocumentNode node) {
     if (index <= nodes.length) {
       nodes.insert(index, node);
-      node.addListener(_forwardNodeChange);
-      notifyListeners();
     }
   }
 
@@ -232,8 +258,6 @@ class MutableDocument with ChangeNotifier implements Document {
   }) {
     final nodeIndex = nodes.indexOf(existingNode);
     nodes.insert(nodeIndex, newNode);
-    newNode.addListener(_forwardNodeChange);
-    notifyListeners();
   }
 
   /// Inserts [newNode] immediately after the given [existingNode].
@@ -244,17 +268,13 @@ class MutableDocument with ChangeNotifier implements Document {
     final nodeIndex = nodes.indexOf(existingNode);
     if (nodeIndex >= 0 && nodeIndex < nodes.length) {
       nodes.insert(nodeIndex + 1, newNode);
-      newNode.addListener(_forwardNodeChange);
-      notifyListeners();
     }
   }
 
   /// Deletes the node at the given [index].
   void deleteNodeAt(int index) {
     if (index >= 0 && index < nodes.length) {
-      final removedNode = nodes.removeAt(index);
-      removedNode.removeListener(_forwardNodeChange);
-      notifyListeners();
+      nodes.removeAt(index);
     } else {
       editorDocLog.warning('Could not delete node. Index out of range: $index');
     }
@@ -264,10 +284,7 @@ class MutableDocument with ChangeNotifier implements Document {
   bool deleteNode(DocumentNode node) {
     bool isRemoved = false;
 
-    node.removeListener(_forwardNodeChange);
     isRemoved = nodes.remove(node);
-
-    notifyListeners();
 
     return isRemoved;
   }
@@ -284,7 +301,6 @@ class MutableDocument with ChangeNotifier implements Document {
 
     if (nodes.remove(node)) {
       nodes.insert(targetIndex, node);
-      notifyListeners();
     }
   }
 
@@ -296,20 +312,11 @@ class MutableDocument with ChangeNotifier implements Document {
     final index = _nodes.indexOf(oldNode);
 
     if (index != -1) {
-      oldNode.removeListener(_forwardNodeChange);
       _nodes.removeAt(index);
-
-      newNode.addListener(_forwardNodeChange);
       _nodes.insert(index, newNode);
-
-      notifyListeners();
     } else {
       throw Exception('Could not find oldNode: ${oldNode.id}');
     }
-  }
-
-  void _forwardNodeChange() {
-    notifyListeners();
   }
 
   /// Returns [true] if the content of the [other] [Document] is equivalent
@@ -331,6 +338,16 @@ class MutableDocument with ChangeNotifier implements Document {
     }
 
     return true;
+  }
+
+  @override
+  void addListener(DocumentChangeListener listener) {
+    _listeners.add(listener);
+  }
+
+  @override
+  void removeListener(DocumentChangeListener listener) {
+    _listeners.remove(listener);
   }
 
   @override

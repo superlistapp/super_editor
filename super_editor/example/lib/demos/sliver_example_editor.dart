@@ -30,7 +30,7 @@ class _SliverExampleEditorState extends State<SliverExampleEditor> {
     _scrollController = ScrollController();
 
     _doc = _createInitialDocument();
-    _docEditor = DocumentEditor(document: _doc as MutableDocument);
+    _docEditor = createDefaultDocumentEditor(document: _doc as MutableDocument);
   }
 
   @override

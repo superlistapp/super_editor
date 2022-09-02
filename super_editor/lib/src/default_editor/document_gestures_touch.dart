@@ -55,8 +55,8 @@ class ScrollableDocument extends StatelessWidget {
     }
 
     final direction = ancestorScrollable.axisDirection;
-    // If the direction is horizontal, then we are inside a widget like a TabBar 
-    // or a horizontal ListView, so we can't use the ancestor scrollable 
+    // If the direction is horizontal, then we are inside a widget like a TabBar
+    // or a horizontal ListView, so we can't use the ancestor scrollable
     if (direction == AxisDirection.left || direction == AxisDirection.right) {
       return null;
     }
@@ -67,8 +67,8 @@ class ScrollableDocument extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ancestorScrollable = _findAncestorScrollable(context);
-    final _ancestorScrollPosition = ancestorScrollable?.position;
-    final addScrollView = _ancestorScrollPosition == null;
+    final ancestorScrollPosition = ancestorScrollable?.position;
+    final addScrollView = ancestorScrollPosition == null;
 
     return addScrollView
         ? SizedBox(
@@ -266,7 +266,8 @@ class DragHandleAutoScroller {
       if (currentScrollOffset < scrollPosition.maxScrollExtent) {
         // Jump to the position where the offset sits at the trailing boundary
         scrollPosition.jumpTo(
-          currentScrollOffset + (offsetInViewport.dy - (_getViewportBox().size.height - _dragAutoScrollBoundary.trailing)),
+          currentScrollOffset +
+              (offsetInViewport.dy - (_getViewportBox().size.height - _dragAutoScrollBoundary.trailing)),
         );
       }
     }

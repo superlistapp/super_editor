@@ -208,7 +208,7 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
 
     editorImeLog.info('Detaching TextInputClient from TextInput.');
 
-    widget.editContext.composer.selection = null;
+    widget.editContext.composer.updateSelection(null, notifyListeners: true);
 
     _inputConnection!.close();
   }
@@ -949,7 +949,7 @@ class SoftwareKeyboardHandler {
     editorImeLog
         .fine("Updating the Document Composer's selection to place caret at insertion offset:\n$insertionSelection");
     final selectionBeforeInsertion = composer.selection;
-    composer.selection = insertionSelection;
+    composer.updateSelection(insertionSelection, notifyListeners: true);
 
     editorImeLog.fine("Inserting the text at the Document Composer's selection");
     final didInsert = commonOps.insertPlainText(textInserted);
@@ -957,7 +957,7 @@ class SoftwareKeyboardHandler {
 
     if (!didInsert) {
       editorImeLog.fine("Failed to insert characters. Restoring previous selection.");
-      composer.selection = selectionBeforeInsertion;
+      composer.updateSelection(selectionBeforeInsertion, notifyListeners: true);
     }
 
     commonOps.convertParagraphByPatternMatching(
@@ -980,7 +980,7 @@ class SoftwareKeyboardHandler {
     ));
 
     if (replacementSelection != null) {
-      composer.selection = replacementSelection;
+      composer.updateSelection(replacementSelection, notifyListeners: true);
     }
     editorImeLog.fine("Replacing selection: $replacementSelection");
     editorImeLog.fine('With text: "$replacementText"');
@@ -1026,7 +1026,7 @@ class SoftwareKeyboardHandler {
     }
 
     editorImeLog.fine("Running selection deletion operation");
-    composer.selection = docSelectionToDelete;
+    composer.updateSelection(docSelectionToDelete, notifyListeners: true);
     commonOps.deleteSelection();
   }
 
@@ -1174,17 +1174,19 @@ class KeyboardEditingToolbar extends StatelessWidget {
     final selectedNode = document.getNodeById(composer.selection!.extent.nodeId)! as TextNode;
 
     selectedNode.text = AttributedText(text: '--- ');
-    composer.selection = DocumentSelection.collapsed(
-      position: DocumentPosition(
-        nodeId: selectedNode.id,
-        nodePosition: const TextNodePosition(offset: 4),
-      ),
-    );
+    composer.updateSelection(
+        DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: selectedNode.id,
+            nodePosition: const TextNodePosition(offset: 4),
+          ),
+        ),
+        notifyListeners: true);
     commonOps.convertParagraphByPatternMatching(selectedNode.id);
   }
 
   void _closeKeyboard() {
-    composer.selection = null;
+    composer.updateSelection(null, notifyListeners: true);
   }
 
   @override

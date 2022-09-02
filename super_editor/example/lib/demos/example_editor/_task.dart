@@ -37,7 +37,6 @@ class TaskNode extends TextNode {
     }
 
     _isComplete = newValue;
-    notifyListeners();
   }
 
   @override
@@ -52,6 +51,29 @@ class TaskNode extends TextNode {
 
   @override
   int get hashCode => super.hashCode ^ isComplete.hashCode;
+}
+
+class CompleteTaskRequest implements EditorRequest {
+  CompleteTaskRequest({
+    required this.nodeId,
+  });
+
+  final String nodeId;
+}
+
+class CompleteTaskCommand implements EditorCommand {
+  CompleteTaskCommand({
+    required this.nodeId,
+  });
+
+  final String nodeId;
+
+  @override
+  List<DocumentChangeEvent> execute(EditorContext context) {
+    final document = context.find<MutableDocument>("document");
+    (document.getNodeById(nodeId) as TaskNode).isComplete = true;
+    return [NodeChangeEvent(nodeId)];
+  }
 }
 
 /// Styles all task components to apply top padding
@@ -86,13 +108,7 @@ class TaskComponentBuilder implements ComponentBuilder {
       padding: EdgeInsets.zero,
       isComplete: node.isComplete,
       setComplete: (bool isComplete) {
-        _editor.executeCommand(EditorCommandFunction((document, transaction) {
-          // Technically, this line could be called without the editor, but
-          // that's only because Super Editor hasn't fully separated document
-          // queries from document edits. In the future, all edits will have
-          // to go through a dedicated editing interface.
-          node.isComplete = isComplete;
-        }));
+        _editor.execute(CompleteTaskRequest(nodeId: node.id));
       },
       text: node.text,
       textStyleBuilder: noStyleBuilder,
