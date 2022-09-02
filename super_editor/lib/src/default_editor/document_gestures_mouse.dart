@@ -67,6 +67,7 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor>
 
   // Tracks user drag gestures for selection purposes.
   SelectionType _selectionType = SelectionType.position;
+  PointerDeviceKind? _dragDeviceKind;
   Offset? _dragStartGlobal;
   Offset? _dragEndGlobal;
   bool _expandSelectionDuringDrag = false;
@@ -128,6 +129,10 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor>
           RawKeyboard.instance.keysPressed.contains(LogicalKeyboardKey.shiftRight) ||
           RawKeyboard.instance.keysPressed.contains(LogicalKeyboardKey.shift)) &&
       widget.editContext.composer.selection != null;
+
+  bool get _isScrollDrag =>
+      _dragDeviceKind == PointerDeviceKind.trackpad ||
+      _dragDeviceKind == PointerDeviceKind.touch;
 
   void _onSelectionChange() {
     if (mounted) {
@@ -341,7 +346,15 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor>
   }
 
   void _onPanStart(DragStartDetails details) {
-    editorGesturesLog.info("Pan start on document, global offset: ${details.globalPosition}");
+    editorGesturesLog.info(
+      "Pan start on document, kind: ${details.kind}, global offset: ${details.globalPosition}"
+    );
+
+    _dragDeviceKind = details.kind;
+
+    if (_isScrollDrag) {
+      return;
+    }
 
     _dragStartGlobal = details.globalPosition;
 
@@ -363,7 +376,13 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor>
 
   void _onPanUpdate(DragUpdateDetails details) {
     setState(() {
-      editorGesturesLog.info("Pan update on document, global offset: ${details.globalPosition}");
+      editorGesturesLog.info(
+        "Pan update on document, kind: $_dragDeviceKind, global offset: ${details.globalPosition}"
+      );
+
+      if (_isScrollDrag) {
+        return _scrollByOffset(details.delta * -1);
+      }
 
       _dragEndGlobal = details.globalPosition;
 
@@ -376,7 +395,12 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor>
   }
 
   void _onPanEnd(DragEndDetails details) {
-    editorGesturesLog.info("Pan end on document");
+    editorGesturesLog.info("Pan end on document, kind: $_dragDeviceKind");
+
+    if (_isScrollDrag) {
+      return;
+    }
+
     _onDragEnd();
   }
 
@@ -395,14 +419,18 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor>
     widget.autoScroller.disableAutoScrolling();
   }
 
+  void _scrollByOffset(Offset delta) {
+    widget.autoScroller.jumpBy(delta.dy);
+    _updateDragSelection();
+  }
+
   /// We prevent SingleChildScrollView from processing mouse events because
   /// it scrolls by drag by default, which we don't want. However, we do
   /// still want mouse scrolling. This method re-implements a primitive
   /// form of mouse scrolling.
   void _scrollOnMouseWheel(PointerSignalEvent event) {
     if (event is PointerScrollEvent) {
-      widget.autoScroller.jumpBy(event.scrollDelta.dy);
-      _updateDragSelection();
+      _scrollByOffset(event.scrollDelta);
     }
   }
 
