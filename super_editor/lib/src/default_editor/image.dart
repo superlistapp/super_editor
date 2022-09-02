@@ -159,15 +159,17 @@ class ImageComponent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: SelectableBox(
-        selection: selection,
-        selectionColor: selectionColor,
-        child: BoxComponent(
-          key: componentKey,
-          child: Image.network(
-            imageUrl,
-            fit: BoxFit.contain,
+    return IgnorePointer(
+      child: Center(
+        child: SelectableBox(
+          selection: selection,
+          selectionColor: selectionColor,
+          child: BoxComponent(
+            key: componentKey,
+            child: Image.network(
+              imageUrl,
+              fit: BoxFit.contain,
+            ),
           ),
         ),
       ),
