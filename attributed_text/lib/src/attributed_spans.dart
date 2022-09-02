@@ -232,9 +232,7 @@ class AttributedSpans {
         throw Exception(
             'Tried to get the attributed range of ($attribution) at offset "$offset" but the given attribution does not exist at that offset.');
       }
-      // The following methods should be guaranteed to produce non-null
-      // values because we already verified that the attribution
-      // exists at the given offset.
+
       int startMarkerOffset = _getStartingMarkerAtOrBefore(offset, attribution: attribution)!.offset;
       int endMarkerOffset = _getEndingMarkerAtOrAfter(offset, attribution: attribution)!.offset;
 
@@ -247,9 +245,8 @@ class AttributedSpans {
       }
     }
 
-    // Both offsets should be guaranteed to be non-null
-    // because we verify that all attributions are present at 
-    // the given offset.
+    // Note: maxStartMarkerOffset and minEndMarkerOffset are non-null because we verified
+    // that all desired attributions are present at the given offset.
     return SpanRange(
       start: maxStartMarkerOffset!,
       end: minEndMarkerOffset!,
