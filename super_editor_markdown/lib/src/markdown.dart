@@ -20,7 +20,7 @@ MutableDocument deserializeMarkdownToDocument(
   final markdownDoc = md.Document(
     blockSyntaxes: [
       if (syntax == MarkdownSyntax.superEditor) _ParagraphWithAlignmentSyntax(),
-      const _EmptyParagraphSyntax()
+      _EmptyLinePreservingParagraphSyntax(),
     ],
   );
   final blockParser = md.BlockParser(markdownLines, markdownDoc);
@@ -514,7 +514,7 @@ class AttributedTextMarkdownSerializer extends AttributionVisitor {
     Set<Attribution> endingAttributions,
   ) {
     // Write out the text between the end of the last markers, and these new markers.
-    _buffer.write(
+    _writeTextToBuffer(
       fullText.text.substring(_bufferCursor, index),
     );
 
@@ -531,7 +531,7 @@ class AttributedTextMarkdownSerializer extends AttributionVisitor {
     }
 
     // Write out the character at this index.
-    _buffer.write(_fullText[index]);
+    _writeTextToBuffer(_fullText[index]);
     _bufferCursor = index + 1;
 
     // Add end markers.
@@ -553,7 +553,21 @@ class AttributedTextMarkdownSerializer extends AttributionVisitor {
   void onVisitEnd() {
     // When the last span has no attributions, we still have text that wasn't added to the buffer yet.
     if (_bufferCursor <= _fullText.length - 1) {
-      _buffer.write(_fullText.substring(_bufferCursor));
+      _writeTextToBuffer(_fullText.substring(_bufferCursor));
+    }
+  }
+
+  void _writeTextToBuffer(String text) {
+    final lines = text.split('\n');
+    for (int i = 0; i < lines.length; i++) {
+      // Adds two spaces before line breaks,
+      // so all the lines are considered a single paragraph during deserialization.
+      if (i > 0) {
+        _buffer.write('  ');
+        _buffer.write('\n');
+      }
+
+      _buffer.write(lines[i]);
     }
   }
 
@@ -615,20 +629,11 @@ class AttributedTextMarkdownSerializer extends AttributionVisitor {
 }
 
 /// Parses a paragraph preceded by an alignment token.
-class _ParagraphWithAlignmentSyntax extends md.ParagraphSyntax {
+class _ParagraphWithAlignmentSyntax extends _EmptyLinePreservingParagraphSyntax {
   /// This pattern matches the text aligment notation.
   ///
   /// Possible values are `:---`, `:---:` and `---:`
   static final _alignmentNotationPattern = RegExp(r'^:-{3}|:-{3}:|-{3}:$');
-
-  static const List<md.BlockSyntax> _standardNonParagraphBlockSyntaxes = [
-    md.HeaderSyntax(),
-    md.CodeBlockSyntax(),
-    md.BlockquoteSyntax(),
-    md.HorizontalRuleSyntax(),
-    md.UnorderedListSyntax(),
-    md.OrderedListSyntax(),
-  ];
 
   const _ParagraphWithAlignmentSyntax();
 
@@ -660,7 +665,7 @@ class _ParagraphWithAlignmentSyntax extends md.ParagraphSyntax {
   }
 
   @override
-  md.Node parse(md.BlockParser parser) {
+  md.Node? parse(md.BlockParser parser) {
     final match = _alignmentNotationPattern.firstMatch(parser.current);
 
     // We've parsed the alignment token on the current line. We know a paragraph starts on the
@@ -692,6 +697,116 @@ class _ParagraphWithAlignmentSyntax extends md.ParagraphSyntax {
       default:
         return 'left';
     }
+  }
+}
+
+/// A [BlockSyntax] that parses paragraphs.
+///
+/// Allows empty paragraphs and paragraphs containing blank lines.
+class _EmptyLinePreservingParagraphSyntax extends md.BlockSyntax {
+  const _EmptyLinePreservingParagraphSyntax();
+
+  @override
+  RegExp get pattern => RegExp('');
+
+  @override
+  bool canEndBlock(md.BlockParser parser) => false;
+
+  @override
+  bool canParse(md.BlockParser parser) => !_standardNonParagraphBlockSyntaxes.any((e) => e.canParse(parser));
+
+  @override
+  md.Node? parse(md.BlockParser parser) {
+    final childLines = <String>[];
+    final startsWithEmptyLine = parser.current.isEmpty;
+    // Indicates wether or not the following line might be interpreted
+    // as part of the same paragraph.
+    bool hasHardLineBreak = parser.current.endsWith('  ');
+
+    if (startsWithEmptyLine) {
+      // The parser started at an empty line.
+      // Consume the line as an separator between blocks.
+      parser.advance();
+
+      // The document ended with an empty line.
+      // Treat it as an empty paragraph.
+      if (parser.isDone) {
+        return md.Element('p', []);
+      }
+
+      // We found an empty line, but the following line isn't blank.
+      // Therefore, the first empty line is consumed as a separator between blocks and
+      // the remaining of the input is parsed by another syntax.
+      if (!_blankLinePattern.hasMatch(parser.current)) {
+        return null;
+      }
+
+      // We found an empty line followed by a line that is either empty,
+      // or consisting of whitespace only.
+      // Therefore, we are looking at paragraph that starts with a blank line.
+      childLines.add('');
+
+      // After the first line, we can still add more lines to the paragraph,
+      // if the current line ends with at least two spaces.
+      hasHardLineBreak = parser.current.endsWith('  ');
+      parser.advance();
+    }
+
+    // Consume everything until another block element is found.
+    // A line break will cause the parser to stop, unless the preceding line
+    // ends with two spaces.
+    while (!_isAtParagraphEnd(parser, ignoreEmptyBlocks: hasHardLineBreak)) {
+      final currentLine = parser.current;
+      childLines.add(currentLine);
+
+      hasHardLineBreak = currentLine.endsWith('  ');
+
+      parser.advance();
+    }
+
+    // We already started looking at a different block element.
+    // Let another syntax parse it.
+    if (childLines.isEmpty) {
+      return null;
+    }
+
+    var contents = md.UnparsedContent(childLines.map((e) => _removeTrailingSpaces(e)).join('\n'));
+    return _LineBreakSeparatedElement('p', [contents]);
+  }
+
+  /// Checks if another block syntax can parse the current input.
+  ///
+  /// If [ignoreEmptyBlocks] is `true`, empty blocks don't end the paragraph.
+  bool _isAtParagraphEnd(md.BlockParser parser, {required bool ignoreEmptyBlocks}) {
+    if (parser.isDone) return true;
+    for (final syntax in parser.blockSyntaxes) {
+      if (!(syntax is md.EmptyBlockSyntax && ignoreEmptyBlocks) &&
+          syntax.canParse(parser) &&
+          syntax.canEndBlock(parser)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /// Removes whitespace at the end of a line.
+  ///
+  /// Line breaks are preserved.
+  String _removeTrailingSpaces(String text) {
+    final pattern = RegExp(r'[\t ]+$');
+    return text.replaceAll(pattern, '');
+  }
+}
+
+/// An [Element] that preserves line breaks.
+///
+/// The default [Element] implementation ignores all line breaks.
+class _LineBreakSeparatedElement extends md.Element {
+  _LineBreakSeparatedElement(String tag, List<md.Node>? children) : super(tag, children);
+
+  @override
+  String get textContent {
+    return (children ?? []).map((md.Node? child) => child!.textContent).join('\n');
   }
 }
 
@@ -728,31 +843,15 @@ enum MarkdownSyntax {
   superEditor,
 }
 
-/// The line contains only whitespace or is empty.
-final _emptyParagraphPattern = RegExp(r'^(?:[ \t]*)$');
+/// Matches empty lines or lines containing only whitespace.
+final _blankLinePattern = RegExp(r'^(?:[ \t]*)$');
 
-/// Parses blank lines as separators and empty paragraphs.
-class _EmptyParagraphSyntax extends md.BlockSyntax {
-  @override
-  RegExp get pattern => _emptyParagraphPattern;
-
-  const _EmptyParagraphSyntax();
-
-  @override
-  md.Node? parse(md.BlockParser parser) {
-    parser.encounteredBlankLine = true;
-    parser.advance();
-
-    // If we get one single blank line, then it's treated as
-    // a separator and it's ignored.
-    if (!_emptyParagraphPattern.hasMatch(parser.current)) {
-      return null;
-    }
-
-    // If we get two consecutive blank lines, then the second one
-    // is treated as an empty paragraph.
-    parser.encounteredBlankLine = false;
-    parser.advance();
-    return md.Element('p', []);
-  }
-}
+const List<md.BlockSyntax> _standardNonParagraphBlockSyntaxes = [
+  md.HeaderSyntax(),
+  md.CodeBlockSyntax(),
+  md.FencedCodeBlockSyntax(),
+  md.BlockquoteSyntax(),
+  md.HorizontalRuleSyntax(),
+  md.UnorderedListSyntax(),
+  md.OrderedListSyntax(),
+];
