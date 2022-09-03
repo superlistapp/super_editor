@@ -49,6 +49,7 @@ class DocumentKeyboardInteractor extends StatelessWidget {
   final Widget child;
 
   KeyEventResult _onKeyPressed(FocusNode node, RawKeyEvent keyEvent) {
+    print("Physical Keyboard _onKeyPressed: $keyEvent");
     if (keyEvent is! RawKeyDownEvent) {
       editorKeyLog.finer("Received key event, but ignoring because it's not a down event: $keyEvent");
       return KeyEventResult.handled;
@@ -76,6 +77,7 @@ class DocumentKeyboardInteractor extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print("Building - Document keyboard input: hardware keyboard action count: ${keyboardActions.length}");
     return Focus(
       focusNode: focusNode,
       onKey: _onKeyPressed,

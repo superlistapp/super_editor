@@ -307,6 +307,9 @@ class SingleColumnLayoutPresenterChangeListener {
     required List<String> changedComponents,
     required List<String> removedComponents,
   }) {
+    print("Added components: $addedComponents");
+    print("Changed components: $changedComponents");
+    print("Removed components: $removedComponents");
     _onViewModelChange?.call(
       addedComponents: addedComponents,
       changedComponents: changedComponents,
