@@ -560,8 +560,10 @@ class AttributedTextMarkdownSerializer extends AttributionVisitor {
 
   /// Writes the given [text] to [_buffer].
   ///
-  /// Separates multiple lines in a single paragraph according to
-  /// the Markdown spec.
+  /// Separates multiple lines in a single paragraph using two spaces before each line break.
+  /// 
+  /// A line ending with two or more spaces represents a hard line break,
+  /// as defined in the Markdown spec.
   void _writeTextToBuffer(String text) {
     final lines = text.split('\n');
     for (int i = 0; i < lines.length; i++) {
