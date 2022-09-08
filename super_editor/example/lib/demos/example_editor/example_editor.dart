@@ -177,14 +177,14 @@ class _ExampleEditorState extends State<ExampleEditor> {
       // and non-null implies the entry is in the overlay.
       _textFormatBarOverlayEntry!.remove();
       _textFormatBarOverlayEntry = null;
-    }
 
-    // Ensure that focus returns to the editor.
-    //
-    // I tried explicitly unfocus()'ing the URL textfield
-    // in the toolbar but it didn't return focus to the
-    // editor. I'm not sure why.
-    _editorFocusNode.requestFocus();
+      // Ensure that focus returns to the editor.
+      //
+      // I tried explicitly unfocus()'ing the URL textfield
+      // in the toolbar but it didn't return focus to the
+      // editor. I'm not sure why.
+      _editorFocusNode.requestFocus();
+    }
   }
 
   DocumentGestureMode get _gestureMode {
@@ -278,10 +278,10 @@ class _ExampleEditorState extends State<ExampleEditor> {
       // and non-null implies the entry is in the overlay.
       _imageFormatBarOverlayEntry!.remove();
       _imageFormatBarOverlayEntry = null;
-    }
 
-    // Ensure that focus returns to the editor.
-    _editorFocusNode.requestFocus();
+      // Ensure that focus returns to the editor.
+      _editorFocusNode.requestFocus();
+    }
   }
 
   @override
