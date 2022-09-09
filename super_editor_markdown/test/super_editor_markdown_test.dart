@@ -415,6 +415,81 @@ This is some code
         expect(serializeDocumentToMarkdown(doc, syntax: MarkdownSyntax.normal), 'Paragraph1');
       });
 
+      test('empty paragraph', () {
+        final serialized = serializeDocumentToMarkdown(
+          MutableDocument(nodes: [
+            ParagraphNode(id: '1', text: AttributedText(text: 'Paragraph1')),
+            ParagraphNode(id: '2', text: AttributedText(text: '')),
+            ParagraphNode(id: '3', text: AttributedText(text: 'Paragraph3')),
+          ]),
+        );
+
+        expect(serialized, """Paragraph1
+
+
+
+Paragraph3""");
+      });
+
+      test('separates multiple paragraphs with blank lines', () {
+        final serialized = serializeDocumentToMarkdown(
+          MutableDocument(nodes: [
+            ParagraphNode(id: '1', text: AttributedText(text: 'Paragraph1')),
+            ParagraphNode(id: '2', text: AttributedText(text: 'Paragraph2')),
+            ParagraphNode(id: '3', text: AttributedText(text: 'Paragraph3')),
+          ]),
+        );
+
+        expect(serialized, """Paragraph1
+
+Paragraph2
+
+Paragraph3""");
+      });
+
+      test('separates paragraph from other blocks with blank lines', () {
+        final serialized = serializeDocumentToMarkdown(
+          MutableDocument(nodes: [
+            ParagraphNode(id: '1', text: AttributedText(text: 'First Paragraph')),
+            HorizontalRuleNode(id: '2'),
+          ]),
+        );
+
+        expect(serialized, 'First Paragraph\n\n---');
+      });
+
+      test('preserves linebreaks at the end of a paragraph', () {
+        final serialized = serializeDocumentToMarkdown(
+          MutableDocument(nodes: [
+            ParagraphNode(id: '1', text: AttributedText(text: 'Paragraph1\n\n')),
+            ParagraphNode(id: '2', text: AttributedText(text: 'Paragraph2')),
+          ]),
+        );
+
+        expect(serialized, 'Paragraph1  \n  \n\n\nParagraph2');
+      });
+
+      test('preserves linebreaks within a paragraph', () {
+        final serialized = serializeDocumentToMarkdown(
+          MutableDocument(nodes: [
+            ParagraphNode(id: '1', text: AttributedText(text: 'Line1\n\nLine2')),
+          ]),
+        );
+
+        expect(serialized, 'Line1  \n  \nLine2');
+      });
+
+      test('preserves linebreaks at the beginning of a paragraph', () {
+        final serialized = serializeDocumentToMarkdown(
+          MutableDocument(nodes: [
+            ParagraphNode(id: '1', text: AttributedText(text: '\n\nParagraph1')),
+            ParagraphNode(id: '2', text: AttributedText(text: 'Paragraph2')),
+          ]),
+        );
+
+        expect(serialized, '  \n  \nParagraph1\n\nParagraph2');
+      });
+
       test('image', () {
         final doc = MutableDocument(nodes: [
           ImageNode(
@@ -627,6 +702,16 @@ This is some code
 
         // ignore: unused_local_variable
         final markdown = serializeDocumentToMarkdown(doc);
+      });
+
+      test("doesn't add empty lines at the end of the document", () {
+        final serialized = serializeDocumentToMarkdown(
+          MutableDocument(nodes: [
+            ParagraphNode(id: '1', text: AttributedText(text: 'Paragraph1')),
+          ]),
+        );
+
+        expect(serialized, 'Paragraph1');
       });
     });
 
@@ -936,6 +1021,113 @@ This is some code
         final paragraph = doc.nodes.first as ParagraphNode;
         expect(paragraph.getMetadataValue('textAlign'), isNull);
         expect(paragraph.text.text, ':---\nParagraph1');
+      });
+
+      test('multiple paragraphs', () {
+        final input = """Paragraph1
+
+Paragraph2""";
+        final doc = deserializeMarkdownToDocument(input);
+
+        expect(doc.nodes.length, 2);
+        expect((doc.nodes[0] as ParagraphNode).text.text, 'Paragraph1');
+        expect((doc.nodes[1] as ParagraphNode).text.text, 'Paragraph2');
+      });
+
+      test('empty paragraph between paragraphs', () {
+        final input = """Paragraph1
+
+
+
+Paragraph3""";
+        final doc = deserializeMarkdownToDocument(input);
+
+        expect(doc.nodes.length, 3);
+        expect((doc.nodes[0] as ParagraphNode).text.text, 'Paragraph1');
+        expect((doc.nodes[1] as ParagraphNode).text.text, '');
+        expect((doc.nodes[2] as ParagraphNode).text.text, 'Paragraph3');
+      });
+
+      test('multiple empty paragraph between paragraphs', () {
+        final input = """Paragraph1
+
+
+
+
+
+Paragraph4""";
+        final doc = deserializeMarkdownToDocument(input);
+
+        expect(doc.nodes.length, 4);
+        expect((doc.nodes[0] as ParagraphNode).text.text, 'Paragraph1');
+        expect((doc.nodes[1] as ParagraphNode).text.text, '');
+        expect((doc.nodes[2] as ParagraphNode).text.text, '');
+        expect((doc.nodes[3] as ParagraphNode).text.text, 'Paragraph4');
+      });
+
+      test('paragraph ending with one blank line', () {
+        final doc = deserializeMarkdownToDocument('First Paragraph.  \n\n\nSecond Paragraph');
+        expect(doc.nodes.length, 2);
+
+        expect(doc.nodes.first, isA<ParagraphNode>());
+        expect((doc.nodes.first as ParagraphNode).text.text, 'First Paragraph.\n');
+
+        expect(doc.nodes.last, isA<ParagraphNode>());
+        expect((doc.nodes.last as ParagraphNode).text.text, 'Second Paragraph');
+      });
+
+      test('paragraph ending with multiple blank lines', () {
+        final doc = deserializeMarkdownToDocument('First Paragraph.  \n  \n  \n\n\nSecond Paragraph');
+
+        expect(doc.nodes.length, 2);
+
+        expect(doc.nodes.first, isA<ParagraphNode>());
+        expect((doc.nodes.first as ParagraphNode).text.text, 'First Paragraph.\n\n\n');
+
+        expect(doc.nodes.last, isA<ParagraphNode>());
+        expect((doc.nodes.last as ParagraphNode).text.text, 'Second Paragraph');
+      });
+
+      test('paragraph with multiple blank lines at the middle', () {
+        final doc =
+            deserializeMarkdownToDocument('First Paragraph.  \n  \n  \nStill First Paragraph\n\nSecond Paragraph');
+
+        expect(doc.nodes.length, 2);
+
+        expect(doc.nodes.first, isA<ParagraphNode>());
+        expect((doc.nodes.first as ParagraphNode).text.text, 'First Paragraph.\n\n\nStill First Paragraph');
+
+        expect(doc.nodes.last, isA<ParagraphNode>());
+        expect((doc.nodes.last as ParagraphNode).text.text, 'Second Paragraph');
+      });
+
+      test('paragraph beginning with multiple blank lines', () {
+        final doc =
+            deserializeMarkdownToDocument('  \n  \nFirst Paragraph.\n\nSecond Paragraph');
+
+        expect(doc.nodes.length, 2);
+
+        expect(doc.nodes.first, isA<ParagraphNode>());
+        expect((doc.nodes.first as ParagraphNode).text.text, '\n\nFirst Paragraph.');
+
+        expect(doc.nodes.last, isA<ParagraphNode>());
+        expect((doc.nodes.last as ParagraphNode).text.text, 'Second Paragraph');
+      });
+    
+      test('document ending with an empty paragraph', () {
+        final doc = deserializeMarkdownToDocument("""
+First Paragraph.
+
+
+""");
+
+        expect(doc.nodes.length, 2);
+
+        expect(doc.nodes.first, isA<ParagraphNode>());
+        expect((doc.nodes.first as ParagraphNode).text.text, 'First Paragraph.');
+
+        expect(doc.nodes.last, isA<ParagraphNode>());
+        expect((doc.nodes.last as ParagraphNode).text.text, '');
       });
     });
   });

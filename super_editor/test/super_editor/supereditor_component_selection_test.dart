@@ -312,7 +312,7 @@ void main() {
       expect(
         find.byType(SuperEditor),
         equalsMarkdown(
-          "This is the first node in a document.\n"
+          "This is the first node in a document.\n\n"
           "This is the third node in a document.",
         ),
       );
@@ -337,7 +337,7 @@ void main() {
       expect(
         find.byType(SuperEditor),
         equalsMarkdown(
-          "This is the first node in a document.\n"
+          "This is the first node in a document.\n\n"
           "This is the third node in a document.",
         ),
       );

@@ -19,7 +19,9 @@ MutableDocument deserializeMarkdownToDocument(
 
   final markdownDoc = md.Document(
     blockSyntaxes: [
-      if (syntax == MarkdownSyntax.superEditor) _ParagraphWithAlignmentSyntax(),
+      if (syntax == MarkdownSyntax.superEditor) //
+        _ParagraphWithAlignmentSyntax(),
+      _EmptyLinePreservingParagraphSyntax(),
     ],
   );
   final blockParser = md.BlockParser(markdownLines, markdownDoc);
@@ -104,6 +106,13 @@ String serializeDocumentToMarkdown(
           }
         }
         buffer.write(node.text.toMarkdown());
+      }
+
+      // We're not at the end of the document yet. Add a blank line after the
+      // paragraph so that we can tell the difference between separate
+      // paragraphs vs. newlines within a single paragraph.
+      if (i != doc.nodes.length - 1) {
+        buffer.writeln();
       }
     }
   }
@@ -506,7 +515,7 @@ class AttributedTextMarkdownSerializer extends AttributionVisitor {
     Set<Attribution> endingAttributions,
   ) {
     // Write out the text between the end of the last markers, and these new markers.
-    _buffer.write(
+    _writeTextToBuffer(
       fullText.text.substring(_bufferCursor, index),
     );
 
@@ -523,7 +532,7 @@ class AttributedTextMarkdownSerializer extends AttributionVisitor {
     }
 
     // Write out the character at this index.
-    _buffer.write(_fullText[index]);
+    _writeTextToBuffer(_fullText[index]);
     _bufferCursor = index + 1;
 
     // Add end markers.
@@ -545,7 +554,29 @@ class AttributedTextMarkdownSerializer extends AttributionVisitor {
   void onVisitEnd() {
     // When the last span has no attributions, we still have text that wasn't added to the buffer yet.
     if (_bufferCursor <= _fullText.length - 1) {
-      _buffer.write(_fullText.substring(_bufferCursor));
+      _writeTextToBuffer(_fullText.substring(_bufferCursor));
+    }
+  }
+
+  /// Writes the given [text] to [_buffer].
+  ///
+  /// Separates multiple lines in a single paragraph using two spaces before each line break.
+  /// 
+  /// A line ending with two or more spaces represents a hard line break,
+  /// as defined in the Markdown spec.
+  void _writeTextToBuffer(String text) {
+    final lines = text.split('\n');
+    for (int i = 0; i < lines.length; i++) {
+      if (i > 0) {
+        // Adds two spaces before line breaks.
+        // The Markdown spec defines that a line ending with two or more spaces
+        // represents a hard line break, which causes the next line to be part of
+        // the previous paragraph during deserialization.
+        _buffer.write('  ');
+        _buffer.write('\n');
+      }
+
+      _buffer.write(lines[i]);
     }
   }
 
@@ -607,20 +638,11 @@ class AttributedTextMarkdownSerializer extends AttributionVisitor {
 }
 
 /// Parses a paragraph preceded by an alignment token.
-class _ParagraphWithAlignmentSyntax extends md.ParagraphSyntax {
+class _ParagraphWithAlignmentSyntax extends _EmptyLinePreservingParagraphSyntax {
   /// This pattern matches the text aligment notation.
   ///
   /// Possible values are `:---`, `:---:` and `---:`
   static final _alignmentNotationPattern = RegExp(r'^:-{3}|:-{3}:|-{3}:$');
-
-  static const List<md.BlockSyntax> _standardNonParagraphBlockSyntaxes = [
-    md.HeaderSyntax(),
-    md.CodeBlockSyntax(),
-    md.BlockquoteSyntax(),
-    md.HorizontalRuleSyntax(),
-    md.UnorderedListSyntax(),
-    md.OrderedListSyntax(),
-  ];
 
   const _ParagraphWithAlignmentSyntax();
 
@@ -652,7 +674,7 @@ class _ParagraphWithAlignmentSyntax extends md.ParagraphSyntax {
   }
 
   @override
-  md.Node parse(md.BlockParser parser) {
+  md.Node? parse(md.BlockParser parser) {
     final match = _alignmentNotationPattern.firstMatch(parser.current);
 
     // We've parsed the alignment token on the current line. We know a paragraph starts on the
@@ -684,6 +706,134 @@ class _ParagraphWithAlignmentSyntax extends md.ParagraphSyntax {
       default:
         return 'left';
     }
+  }
+}
+
+/// A [BlockSyntax] that parses paragraphs.
+///
+/// Allows empty paragraphs and paragraphs containing blank lines.
+class _EmptyLinePreservingParagraphSyntax extends md.BlockSyntax {
+  const _EmptyLinePreservingParagraphSyntax();
+
+  @override
+  RegExp get pattern => RegExp('');
+
+  @override
+  bool canEndBlock(md.BlockParser parser) => false;
+
+  @override
+  bool canParse(md.BlockParser parser) => !_standardNonParagraphBlockSyntaxes.any((e) => e.canParse(parser));
+
+  @override
+  md.Node? parse(md.BlockParser parser) {
+    final childLines = <String>[];
+    final startsWithEmptyLine = parser.current.isEmpty;
+
+    // A hard line break causes the next line to be treated
+    // as part of the same paragraph, except if the next line is
+    // the beginning of another block element.
+    bool hasHardLineBreak = _endsWithHardLineBreak(parser.current);
+
+    if (startsWithEmptyLine) {
+      // The parser started at an empty line.
+      // Consume the line as a separator between blocks.
+      parser.advance();
+
+      if (parser.isDone) {
+        // The document ended with a single empty line, so we just ignore it.
+        // To be considered as a paragraph starting with an empty line
+        // we need at least two empty lines: 
+        // one to separate the paragraph from the previous block
+        // and another one to be the content of the paragraph.
+        return null;
+      }
+
+      if (!_blankLinePattern.hasMatch(parser.current)) {
+        // We found an empty line, but the following line isn't blank.
+        // As there is no hard line break, the first line is consumed 
+        // as a separator between blocks.
+        // Therefore, we aren't looking at a paragraph with blank lines.
+        return null;
+      }
+
+      // We found a paragraph, and the first line of that paragraph is empty. Add a
+      // corresponding empty line to the parsed version of the paragraph.
+      childLines.add('');
+
+      // Check for a hard line break, so we consume the next line if we found one.
+      hasHardLineBreak = _endsWithHardLineBreak(parser.current);
+      parser.advance();
+    }
+
+    // Consume everything until another block element is found.
+    // A line break will cause the parser to stop, unless the preceding line
+    // ends with a hard line break.
+    while (!_isAtParagraphEnd(parser, ignoreEmptyBlocks: hasHardLineBreak)) {
+      final currentLine = parser.current;
+      childLines.add(currentLine);
+
+      hasHardLineBreak = _endsWithHardLineBreak(currentLine);
+
+      parser.advance();
+    }
+
+    // We already started looking at a different block element.
+    // Let another syntax parse it.
+    if (childLines.isEmpty) {
+      return null;
+    }
+
+    // Remove trailing whitespace from each line of the parsed paragraph
+    // and join them into a single string, separated by a line breaks.
+    final contents = md.UnparsedContent(childLines.map((e) => _removeTrailingSpaces(e)).join('\n'));
+    return _LineBreakSeparatedElement('p', [contents]);
+  }
+
+  /// Checks if the current line ends a paragraph by verifying if another
+  /// block syntax can parse the current input.
+  ///
+  /// An empty line ends the paragraph, unless [ignoreEmptyBlocks] is `true`.
+  bool _isAtParagraphEnd(md.BlockParser parser, {required bool ignoreEmptyBlocks}) {
+    if (parser.isDone) {
+      return true;
+    }
+    for (final syntax in parser.blockSyntaxes) {
+      if (!(syntax is md.EmptyBlockSyntax && ignoreEmptyBlocks) &&
+          syntax.canParse(parser) &&
+          syntax.canEndBlock(parser)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /// Removes all whitespace characters except `"\n"`.
+  String _removeTrailingSpaces(String text) {
+    final pattern = RegExp(r'[\t ]+$');
+    return text.replaceAll(pattern, '');
+  }
+
+  /// Returns `true` if [line] ends with a hard line break.
+  ///
+  /// As per the Markdown spec, a line ending with two or more spaces
+  /// represents a hard line break.
+  /// 
+  /// A hard line break causes the next line to be part of the
+  /// same paragraph, except if it's the beginning of another block element.
+  bool _endsWithHardLineBreak(String line) {
+    return line.endsWith('  ');
+  }
+}
+
+/// An [Element] that preserves line breaks.
+///
+/// The default [Element] implementation ignores all line breaks.
+class _LineBreakSeparatedElement extends md.Element {
+  _LineBreakSeparatedElement(String tag, List<md.Node>? children) : super(tag, children);
+
+  @override
+  String get textContent {
+    return (children ?? []).map((md.Node? child) => child!.textContent).join('\n');
   }
 }
 
@@ -719,3 +869,16 @@ enum MarkdownSyntax {
   /// `---:` represents right alignment.
   superEditor,
 }
+
+/// Matches empty lines or lines containing only whitespace.
+final _blankLinePattern = RegExp(r'^(?:[ \t]*)$');
+
+const List<md.BlockSyntax> _standardNonParagraphBlockSyntaxes = [
+  md.HeaderSyntax(),
+  md.CodeBlockSyntax(),
+  md.FencedCodeBlockSyntax(),
+  md.BlockquoteSyntax(),
+  md.HorizontalRuleSyntax(),
+  md.UnorderedListSyntax(),
+  md.OrderedListSyntax(),
+];
