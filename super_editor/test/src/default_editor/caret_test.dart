@@ -13,6 +13,93 @@ void main() {
     const textPosition = TextPosition(offset: 46);
     final tapPosition = DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: textPosition.offset));
 
+    group('affinity on line wrap', () {
+      // Carefully chosen magic numbers so our taps hit where the text is soft-wrapped.
+      const upstreamTextPosition = TextPosition(
+        offset: 18,
+        affinity: TextAffinity.upstream,
+      );
+      final downstreamTextPosition = TextPosition(
+        offset: upstreamTextPosition.offset,
+        affinity: TextAffinity.downstream,
+      );
+      final tapUpstreamPosition =
+          DocumentPosition(nodeId: '1', nodePosition: TextNodePosition.fromTextPosition(upstreamTextPosition));
+      final tapDownstreamPosition = DocumentPosition(
+        nodeId: '1',
+        nodePosition: TextNodePosition.fromTextPosition(downstreamTextPosition),
+      );
+      const screenSize = Size(400, 400);
+
+      testWidgets('renders caret at end of line when affinity is upstream', (WidgetTester tester) async {
+        tester.binding.window
+          ..devicePixelRatioTestValue = 1.0
+          ..platformDispatcher.textScaleFactorTestValue = 1.0
+          ..physicalSizeTestValue = screenSize;
+
+        final docKey = GlobalKey();
+        final composer = DocumentComposer();
+        await tester.pumpWidget(
+          _createTestApp(
+            gestureMode: DocumentGestureMode.mouse,
+            docKey: docKey,
+            composer: composer,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final tapOffset = _getOffsetForPosition(docKey, tapUpstreamPosition);
+
+        await tester.tapAt(tapOffset);
+        await tester.pumpAndSettle();
+
+        expect(
+            composer.selection,
+            DocumentSelection.collapsed(
+                position: DocumentPosition(
+              nodeId: '1',
+              nodePosition: TextNodePosition.fromTextPosition(upstreamTextPosition),
+            )));
+        final caretOffset = SuperEditorInspector.findCaretOffsetInDocument();
+        final expectedCaretOffset = _computeExpectedDesktopCaretOffset(tester, upstreamTextPosition);
+        expect(caretOffset, expectedCaretOffset);
+      });
+
+      testWidgets('renders caret at start of line when affinity is downstream', (WidgetTester tester) async {
+        tester.binding.window
+          ..devicePixelRatioTestValue = 1.0
+          ..platformDispatcher.textScaleFactorTestValue = 1.0
+          ..physicalSizeTestValue = screenSize;
+
+        final docKey = GlobalKey();
+        final composer = DocumentComposer();
+        await tester.pumpWidget(
+          _createTestApp(
+            gestureMode: DocumentGestureMode.mouse,
+            docKey: docKey,
+            composer: composer,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final tapOffset = _getOffsetForPosition(docKey, tapDownstreamPosition);
+
+        await tester.tapAt(tapOffset);
+        await tester.pumpAndSettle();
+
+        expect(
+            composer.selection,
+            DocumentSelection.collapsed(
+                position: DocumentPosition(
+              nodeId: '1',
+              nodePosition: TextNodePosition.fromTextPosition(downstreamTextPosition),
+            )));
+        final caretOffset = SuperEditorInspector.findCaretOffsetInDocument();
+        final expectedCaretOffset = _computeExpectedDesktopCaretOffset(tester, downstreamTextPosition);
+        expect(caretOffset, expectedCaretOffset);
+      });
+    });
+
     group('window resizing', () {
       const screenSizeBigger = Size(1000.0, 400.0);
       const screenSizeSmaller = Size(250.0, 400.0);
@@ -245,13 +332,18 @@ void main() {
   });
 }
 
-Widget _createTestApp({required DocumentGestureMode gestureMode, required GlobalKey docKey}) {
+Widget _createTestApp({
+  required DocumentGestureMode gestureMode,
+  required GlobalKey docKey,
+  DocumentComposer? composer,
+}) {
   final editor = _createTestDocEditor();
   return MaterialApp(
     home: Scaffold(
       body: SuperEditor(
         documentLayoutKey: docKey,
         editor: editor,
+        composer: composer,
         gestureMode: gestureMode,
       ),
     ),
@@ -295,7 +387,7 @@ Offset _getIosCurrentCaretOffset(WidgetTester tester) {
 Offset _computeExpectedDesktopCaretOffset(WidgetTester tester, TextPosition textPosition) {
   return SuperEditorInspector.calculateOffsetForCaret(DocumentPosition(
     nodeId: "1",
-    nodePosition: TextNodePosition(offset: textPosition.offset),
+    nodePosition: TextNodePosition.fromTextPosition(textPosition),
   ));
 }
 
