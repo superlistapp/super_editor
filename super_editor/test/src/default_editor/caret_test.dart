@@ -13,8 +13,9 @@ void main() {
     const textPosition = TextPosition(offset: 46);
     final tapPosition = DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: textPosition.offset));
 
-    group('affinity on line wrap', () {
+    group('affinity', () {
       // Carefully chosen magic numbers so our taps hit where the text is soft-wrapped.
+      const screenSize = Size(400, 400);
       const upstreamTextPosition = TextPosition(
         offset: 18,
         affinity: TextAffinity.upstream,
@@ -23,13 +24,17 @@ void main() {
         offset: upstreamTextPosition.offset,
         affinity: TextAffinity.downstream,
       );
+      // A position in the middle of a line so text affinity should not affect rendering.
+      const unbrokenTextPosition = TextPosition(offset: 10);
       final tapUpstreamPosition =
-          DocumentPosition(nodeId: '1', nodePosition: TextNodePosition.fromTextPosition(upstreamTextPosition));
+          DocumentPosition(
+        nodeId: '1',
+        nodePosition: TextNodePosition.fromTextPosition(upstreamTextPosition),
+      );
       final tapDownstreamPosition = DocumentPosition(
         nodeId: '1',
         nodePosition: TextNodePosition.fromTextPosition(downstreamTextPosition),
       );
-      const screenSize = Size(400, 400);
 
       testWidgets('renders caret at end of line when affinity is upstream', (WidgetTester tester) async {
         tester.binding.window
@@ -97,6 +102,48 @@ void main() {
         final caretOffset = SuperEditorInspector.findCaretOffsetInDocument();
         final expectedCaretOffset = _computeExpectedDesktopCaretOffset(tester, downstreamTextPosition);
         expect(caretOffset, expectedCaretOffset);
+      });
+
+      testWidgets('upstream and downstream positions render the same if not at a line break',
+          (WidgetTester tester) async {
+        tester.binding.window
+          ..devicePixelRatioTestValue = 1.0
+          ..platformDispatcher.textScaleFactorTestValue = 1.0
+          ..physicalSizeTestValue = screenSize;
+
+        final docKey = GlobalKey();
+        final composer = DocumentComposer(
+          initialSelection: DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: '1',
+              nodePosition: TextNodePosition(
+                offset: unbrokenTextPosition.offset,
+                affinity: TextAffinity.downstream,
+              ),
+            ),
+          ),
+        );
+        var app = _createTestApp(
+          gestureMode: DocumentGestureMode.mouse,
+          docKey: docKey,
+          composer: composer,
+        );
+        await tester.pumpWidget(app);
+        await tester.pumpAndSettle();
+        final downstreamCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
+
+        composer.selection = DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: '1',
+            nodePosition: TextNodePosition(
+              offset: unbrokenTextPosition.offset,
+              affinity: TextAffinity.upstream,
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        final upstreamCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
+        expect(upstreamCaretOffset, downstreamCaretOffset);
       });
     });
 
