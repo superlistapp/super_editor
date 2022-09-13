@@ -69,22 +69,37 @@ void main() {
           .withSingleParagraph()
           .forDesktop()
           .pump();
+      await tester.pumpAndSettle();
 
       // Ensure that the document doesn't have a selection.
       expect(SuperEditorInspector.findDocumentSelection(), null);
 
+      final offsetBeforeLineBreak = await _findOffsetOfLineBreak(tester) - 1;
+
       // Tap to place the caret in the first paragraph.
-      await tester.placeCaretInParagraph("1", 10);
+      await tester.placeCaretInParagraph("1", offsetBeforeLineBreak, affinity: TextAffinity.downstream);
 
       // Ensure that the document has the expected text caret selection.
+      final expectedSelection = DocumentSelection.collapsed(
+        position: DocumentPosition(
+          nodeId: "1",
+          nodePosition: TextNodePosition(offset: offsetBeforeLineBreak),
+        ),
+      );
       expect(
         SuperEditorInspector.findDocumentSelection(),
-        const DocumentSelection.collapsed(
-          position: DocumentPosition(
-            nodeId: "1",
-            nodePosition: TextNodePosition(offset: 10),
-          ),
-        ),
+        expectedSelection,
+      );
+
+      // Pause so we don't double-tap and select a word instead of placing the caret
+      await tester.pump(const Duration(seconds: 2));
+
+      // Tap to place the caret in the first paragraph with a different affinity.
+      await tester.placeCaretInParagraph("1", offsetBeforeLineBreak, affinity: TextAffinity.upstream);
+      // Since we're not tapping at a line break the resulting selection should be the same.
+      expect(
+        SuperEditorInspector.findDocumentSelection(),
+        expectedSelection,
       );
     });
 
@@ -224,6 +239,9 @@ Future<int> _findOffsetOfLineBreak(WidgetTester tester) async {
   final composer = tester.widget<SuperEditor>(find.byType(SuperEditor)).composer;
   expect(composer, isNotNull);
   final previousSelection = composer!.selection;
+  composer.selection = const DocumentSelection.collapsed(
+      position: DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: 0)));
+  await tester.pumpAndSettle();
   final firstLineCaretY = SuperEditorInspector.findCaretOffsetInDocument().dy;
   var offset = 1;
   for (; offset < 2000; offset++) {
