@@ -70,6 +70,8 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor>
   Offset? _dragStartGlobal;
   Offset? _dragEndGlobal;
   bool _expandSelectionDuringDrag = false;
+  /// Holds which kind of device started a pan gesture, e.g., a mouse or a trackpad.
+  PointerDeviceKind? _panGestureDevice;
 
   @override
   void initState() {
@@ -341,7 +343,15 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor>
   }
 
   void _onPanStart(DragStartDetails details) {
-    editorGesturesLog.info("Pan start on document, global offset: ${details.globalPosition}");
+    editorGesturesLog.info("Pan start on document, global offset: ${details.globalPosition}, device: ${details.kind}");
+
+    _panGestureDevice = details.kind;
+
+    if (_panGestureDevice == PointerDeviceKind.trackpad) {
+      // After flutter 3.3, dragging with two fingers on a trackpad triggers a pan gesture.
+      // This gesture should scroll the document and keep the selection unchanged.
+      return;
+    }
 
     _dragStartGlobal = details.globalPosition;
 
@@ -362,9 +372,20 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor>
   }
 
   void _onPanUpdate(DragUpdateDetails details) {
-    setState(() {
-      editorGesturesLog.info("Pan update on document, global offset: ${details.globalPosition}");
+    editorGesturesLog
+        .info("Pan update on document, global offset: ${details.globalPosition}, device: $_panGestureDevice");
 
+    if (_panGestureDevice == PointerDeviceKind.trackpad) {
+      // The user dragged using two fingers on a trackpad.
+      // Scroll the document and keep the selection unchanged.
+      // We multiply by -1 because the scroll should be in the opposite
+      // direction of the drag, e.g., dragging up on a trackpad scrolls
+      // the document to downstream direction.
+      _scrollVertically(details.delta.dy * -1);
+      return;
+    }
+
+    setState(() {
       _dragEndGlobal = details.globalPosition;
 
       _updateDragSelection();
@@ -376,7 +397,13 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor>
   }
 
   void _onPanEnd(DragEndDetails details) {
-    editorGesturesLog.info("Pan end on document");
+    editorGesturesLog.info("Pan end on document, device: $_panGestureDevice");
+
+    if (_panGestureDevice == PointerDeviceKind.trackpad) {
+      // The user ended a pan gesture with two fingers on a trackpad.
+      // We already scrolled the document.
+      return;
+    }
     _onDragEnd();
   }
 
@@ -395,14 +422,19 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor>
     widget.autoScroller.disableAutoScrolling();
   }
 
+  /// Scrolls the document vertically by [delta] pixels.
+  void _scrollVertically(double delta) {
+    widget.autoScroller.jumpBy(delta);
+    _updateDragSelection();
+  }
+
   /// We prevent SingleChildScrollView from processing mouse events because
   /// it scrolls by drag by default, which we don't want. However, we do
   /// still want mouse scrolling. This method re-implements a primitive
   /// form of mouse scrolling.
   void _scrollOnMouseWheel(PointerSignalEvent event) {
     if (event is PointerScrollEvent) {
-      widget.autoScroller.jumpBy(event.scrollDelta.dy);
-      _updateDragSelection();
+      _scrollVertically(event.scrollDelta.dy);
     }
   }
 

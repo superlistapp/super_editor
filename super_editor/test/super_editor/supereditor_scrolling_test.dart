@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/super_editor.dart';
@@ -8,6 +9,79 @@ import 'document_test_tools.dart';
 
 void main() {
   group("SuperEditor scrolling", () {
+    testWidgetsOnArbitraryDesktop('scrolls document when dragging using the trackpad (downstream)', (tester) async {
+      final scrollController = ScrollController();
+      await tester
+          .createDocument() //
+          .withLongTextContent()
+          .withEditorSize(const Size(300, 300))
+          .withScrollController(scrollController)
+          .pump();
+
+      final document = SuperEditorInspector.findDocument()!;
+      final firstParagraph = document.nodes.first as ParagraphNode;
+
+      final dragGesture = await tester.startDocumentDragFromPosition(
+        from: DocumentPosition(
+          nodeId: firstParagraph.id,
+          nodePosition: firstParagraph.beginningPosition,
+        ),
+        startAlignmentWithinPosition: Alignment.topLeft,
+        deviceKind: PointerDeviceKind.trackpad,
+      );
+
+      // Move a distance big enough to ensure a pan gesture.
+      await dragGesture.moveBy(const Offset(0, kPanSlop));
+      await tester.pump();
+
+      // Drag up.
+      await dragGesture.moveBy(const Offset(0, -300));
+      await tester.pump();
+
+      await tester.endDocumentDragGesture(dragGesture);
+
+      // Ensure the document scrolled down.
+      expect(scrollController.offset, greaterThan(0));
+    });
+
+    testWidgetsOnArbitraryDesktop('scrolls document when dragging using the trackpad (upstream)', (tester) async {
+      final scrollController = ScrollController();
+      await tester
+          .createDocument() //
+          .withLongTextContent()
+          .withEditorSize(const Size(300, 300))
+          .withScrollController(scrollController)
+          .pump();
+
+      final document = SuperEditorInspector.findDocument()!;
+      final lastParagraph = document.nodes.last as ParagraphNode;
+
+      // Jump to the end of the document
+      scrollController.jumpTo(scrollController.position.maxScrollExtent);
+
+      final dragGesture = await tester.startDocumentDragFromPosition(
+        from: DocumentPosition(
+          nodeId: lastParagraph.id,
+          nodePosition: lastParagraph.endPosition,
+        ),
+        startAlignmentWithinPosition: Alignment.bottomRight,
+        deviceKind: PointerDeviceKind.trackpad,
+      );
+
+      // Move a distance big enough to ensure a pan gesture.
+      await dragGesture.moveBy(const Offset(0, kPanSlop));
+      await tester.pump();
+
+      // Drag down.
+      await dragGesture.moveBy(const Offset(0, 300));
+      await tester.pump();
+
+      await tester.endDocumentDragGesture(dragGesture);
+
+      // Ensure the document scrolled up.
+      expect(scrollController.offset, lessThan(scrollController.position.maxScrollExtent));
+    });
+
     testWidgetsOnDesktop("auto-scrolls down", (tester) async {
       const windowSize = Size(800, 600);
       tester.binding.window.physicalSizeTestValue = windowSize;

@@ -161,6 +161,7 @@ extension SuperEditorRobot on WidgetTester {
     required DocumentPosition from,
     Alignment startAlignmentWithinPosition = Alignment.center,
     Finder? superEditorFinder,
+    PointerDeviceKind deviceKind = PointerDeviceKind.mouse,
   }) async {
     final documentLayout = _findDocumentLayout(superEditorFinder);
 
@@ -171,7 +172,7 @@ extension SuperEditorRobot on WidgetTester {
     final dragStartOffset = startAlignmentWithinPosition.withinRect(dragStartRect);
 
     // Simulate the drag.
-    final gesture = await startGesture(dragStartOffset, kind: PointerDeviceKind.mouse);
+    final gesture = await startGesture(dragStartOffset, kind: deviceKind);
     await pump();
 
     // Move a tiny amount to start the pan gesture.
