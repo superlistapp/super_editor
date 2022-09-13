@@ -88,6 +88,68 @@ void main() {
       );
     });
 
+    testWidgetsOnAllPlatforms("taps to place caret just before a line break", (tester) async {
+      // Configure and render a document.
+      await tester
+          .createDocument()
+          .withSingleParagraph()
+          .forDesktop()
+          .autoFocus(true)
+          .withEditorSize(const Size(300, 700))
+          .withSelection(
+            const DocumentSelection.collapsed(
+                position: DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: 0))),
+          )
+          .pump();
+      await tester.pumpAndSettle();
+      final offset = await _findOffsetOfLineBreak(tester);
+
+      // Tap to place the at the end of the first line
+      await tester.placeCaretInParagraph("1", offset, affinity: TextAffinity.upstream);
+
+      // Ensure that the document has the expected text caret selection.
+      expect(
+        SuperEditorInspector.findDocumentSelection(),
+        DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: "1",
+            nodePosition: TextNodePosition(offset: offset, affinity: TextAffinity.upstream),
+          ),
+        ),
+      );
+    });
+
+    testWidgetsOnAllPlatforms("taps to place caret just before after a line break", (tester) async {
+      // Configure and render a document.
+      await tester
+          .createDocument()
+          .withSingleParagraph()
+          .forDesktop()
+          .autoFocus(true)
+          .withEditorSize(const Size(300, 700))
+          .withSelection(
+            const DocumentSelection.collapsed(
+                position: DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: 0))),
+          )
+          .pump();
+      await tester.pumpAndSettle();
+      final offsetOfLineBreak = await _findOffsetOfLineBreak(tester);
+
+      // Tap to place the at the end of the first line
+      await tester.placeCaretInParagraph("1", offsetOfLineBreak, affinity: TextAffinity.downstream);
+
+      // Ensure that the document has the expected text caret selection.
+      expect(
+        SuperEditorInspector.findDocumentSelection(),
+        DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: "1",
+            nodePosition: TextNodePosition(offset: offsetOfLineBreak, affinity: TextAffinity.downstream),
+          ),
+        ),
+      );
+    });
+
     testWidgetsOnAllPlatforms("taps to place caret after last character", (tester) async {
       // Configure and render a document.
       await tester //
@@ -155,4 +217,33 @@ void main() {
       expect(SuperEditorInspector.findTextInParagraph("1").text, "Hello, world!");
     });
   });
+}
+
+/// Locates the first line break in a paragraph, or fails the test if it cannot find one.
+Future<int> _findOffsetOfLineBreak(WidgetTester tester) async {
+  final composer = tester.widget<SuperEditor>(find.byType(SuperEditor)).composer;
+  expect(composer, isNotNull);
+  final previousSelection = composer!.selection;
+  final firstLineCaretY = SuperEditorInspector.findCaretOffsetInDocument().dy;
+  var offset = 1;
+  for (; offset < 2000; offset++) {
+    composer.selection = DocumentSelection.collapsed(
+      position: DocumentPosition(
+        nodeId: '1',
+        nodePosition: TextNodePosition(
+          offset: offset,
+          affinity: TextAffinity.downstream,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final caretY = SuperEditorInspector.findCaretOffsetInDocument().dy;
+    if (caretY > firstLineCaretY) break;
+  }
+  expect(offset, lessThan(2000), reason: 'Failed to find line break in paragraph');
+
+  composer.selection = previousSelection;
+  await tester.pumpAndSettle();
+
+  return offset;
 }
