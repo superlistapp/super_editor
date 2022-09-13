@@ -23,6 +23,12 @@ class CaretDocumentOverlay extends StatefulWidget {
   final DocumentLayout Function() documentLayoutResolver;
 
   /// The editor's [Document].
+  /// 
+  /// Some operations that affect caret position don't trigger a selection change, e.g.,
+  /// indenting a list item.
+  /// 
+  /// We need to listen to all document changes to update the caret position when these
+  /// operations happen.
   final Document document;
 
   /// The visual style of the caret that this overlay paints.
@@ -40,13 +46,13 @@ class _CaretDocumentOverlayState extends State<CaretDocumentOverlay> with Single
   @override
   void initState() {
     super.initState();
-    widget.composer.selectionNotifier.addListener(_onSelectionChange);
-    widget.document.addListener(_onSelectionChange);
+    widget.composer.selectionNotifier.addListener(_scheduleCaretUpdate);
+    widget.document.addListener(_scheduleCaretUpdate);
     _blinkController = BlinkController(tickerProvider: this)..startBlinking();
 
     // If we already have a selection, we need to display the caret.
     if (widget.composer.selection != null) {
-      _onSelectionChange();
+      _scheduleCaretUpdate();
     }
   }
 
@@ -55,30 +61,31 @@ class _CaretDocumentOverlayState extends State<CaretDocumentOverlay> with Single
     super.didUpdateWidget(oldWidget);
 
     if (widget.document != oldWidget.document) {
-      oldWidget.document.removeListener(_onSelectionChange);
-      widget.document.addListener(_onSelectionChange);
+      oldWidget.document.removeListener(_scheduleCaretUpdate);
+      widget.document.addListener(_scheduleCaretUpdate);
     }
 
     if (widget.composer != oldWidget.composer) {
-      oldWidget.composer.selectionNotifier.removeListener(_onSelectionChange);
-      widget.composer.selectionNotifier.addListener(_onSelectionChange);
+      oldWidget.composer.selectionNotifier.removeListener(_scheduleCaretUpdate);
+      widget.composer.selectionNotifier.addListener(_scheduleCaretUpdate);
 
       // Selection has changed, we need to update the caret.
       if (widget.composer.selection != oldWidget.composer.selection) {
-        _onSelectionChange();
+        _scheduleCaretUpdate();
       }
     }
   }
 
   @override
   void dispose() {
-    widget.composer.selectionNotifier.removeListener(_onSelectionChange);
-    widget.document.removeListener(_onSelectionChange);
+    widget.composer.selectionNotifier.removeListener(_scheduleCaretUpdate);
+    widget.document.removeListener(_scheduleCaretUpdate);
     _blinkController.dispose();
     super.dispose();
   }
 
-  void _onSelectionChange() {
+  /// Schedules a caret update after the current frame.
+  void _scheduleCaretUpdate() {
     // Give the document a frame to update its layout before we lookup
     // the extent offset.
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {

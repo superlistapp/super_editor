@@ -264,11 +264,8 @@ void main() {
         // Ensure the list indentation was actually performed.
         expect(computedOffsetAfterIndent.dx, greaterThan(caretOffsetBeforeIndent.dx));
 
-        // Find the offset at which the caret is currently being displayed.
-        final caretOffsetAfterIndent = SuperEditorInspector.findCaretOffsetInDocument();
-
         // Ensure the caret is being displayed at the correct position.
-        expect(caretOffsetAfterIndent, offsetMoreOrLessEquals(computedOffsetAfterIndent));
+        expect(SuperEditorInspector.findCaretOffsetInDocument(), offsetMoreOrLessEquals(computedOffsetAfterIndent));
       });
 
       testWidgetsOnArbitraryDesktop('updates caret position when unindenting', (tester) async {
@@ -299,11 +296,8 @@ void main() {
         // Ensure the list indentation was actually performed.
         expect(computedOffsetAfterUnindent.dx, lessThan(caretOffsetBeforeUnindent.dx));
 
-        // Find the offset at which the caret is currently being displayed.
-        final caretOffsetAfterUnindent = SuperEditorInspector.findCaretOffsetInDocument();
-
         // Ensure the caret is being displayed at the correct position.
-        expect(caretOffsetAfterUnindent, offsetMoreOrLessEquals(computedOffsetAfterUnindent));
+        expect(SuperEditorInspector.findCaretOffsetInDocument(), offsetMoreOrLessEquals(computedOffsetAfterUnindent));
       });
     });
 
@@ -330,14 +324,11 @@ void main() {
           ),
         );
 
-        // Find the offset at which the caret is currently being displayed.
-        final caretOffsetAfterIndent = SuperEditorInspector.findCaretOffsetInDocument();
-
         // Ensure the list indentation was actually performed.
         expect(computedOffsetAfterIndent.dx, greaterThan(caretOffsetBeforeIndent.dx));
 
         // Ensure the caret is being displayed at the correct position.
-        expect(caretOffsetAfterIndent, offsetMoreOrLessEquals(computedOffsetAfterIndent));
+        expect(SuperEditorInspector.findCaretOffsetInDocument(), offsetMoreOrLessEquals(computedOffsetAfterIndent));
       });
 
       testWidgetsOnArbitraryDesktop('updates caret position when unindenting', (tester) async {
@@ -363,14 +354,11 @@ void main() {
           nodePosition: const TextNodePosition(offset: 0),
         ));
 
-        // Find the offset at which the caret is currently being displayed.
-        final caretOffsetAfterUnindent = SuperEditorInspector.findCaretOffsetInDocument();
-
         // Ensure the list indentation was actually performed.
         expect(computedOffsetAfterUnindent.dx, lessThan(caretOffsetBeforeUnindent.dx));
 
         // Ensure the caret is being displayed at the correct position.
-        expect(caretOffsetAfterUnindent, offsetMoreOrLessEquals(computedOffsetAfterUnindent));
+        expect(SuperEditorInspector.findCaretOffsetInDocument(), offsetMoreOrLessEquals(computedOffsetAfterUnindent));
       });
     });
   });
