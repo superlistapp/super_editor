@@ -27,7 +27,15 @@ void main() {
           ..physicalSizeTestValue = screenSize;
 
         final docKey = GlobalKey();
-        final composer = DocumentComposer();
+        final composer = DocumentComposer(
+            initialSelection: const DocumentSelection.collapsed(
+          position: DocumentPosition(
+              nodeId: '1',
+              nodePosition: TextNodePosition(
+                offset: lineBreakOffset,
+                affinity: TextAffinity.upstream,
+              )),
+        ));
         await tester.pumpWidget(
           _createTestApp(
             gestureMode: DocumentGestureMode.mouse,
@@ -36,7 +44,6 @@ void main() {
           ),
         );
         await tester.pumpAndSettle();
-        await tester.placeCaretInParagraph('1', lineBreakOffset, affinity: TextAffinity.upstream);
 
         expect(
             composer.selection,
@@ -60,7 +67,15 @@ void main() {
           ..physicalSizeTestValue = screenSize;
 
         final docKey = GlobalKey();
-        final composer = DocumentComposer();
+        final composer = DocumentComposer(
+            initialSelection: const DocumentSelection.collapsed(
+          position: DocumentPosition(
+              nodeId: '1',
+              nodePosition: TextNodePosition(
+                offset: lineBreakOffset,
+                affinity: TextAffinity.downstream,
+              )),
+        ));
         await tester.pumpWidget(
           _createTestApp(
             gestureMode: DocumentGestureMode.mouse,
@@ -69,7 +84,6 @@ void main() {
           ),
         );
         await tester.pumpAndSettle();
-        await tester.placeCaretInParagraph('1', lineBreakOffset, affinity: TextAffinity.downstream);
 
         expect(
             composer.selection,
