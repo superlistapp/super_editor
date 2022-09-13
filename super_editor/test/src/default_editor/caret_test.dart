@@ -16,25 +16,9 @@ void main() {
     group('affinity', () {
       // Carefully chosen magic numbers so our taps hit where the text is soft-wrapped.
       const screenSize = Size(400, 400);
-      const upstreamTextPosition = TextPosition(
-        offset: 18,
-        affinity: TextAffinity.upstream,
-      );
-      final downstreamTextPosition = TextPosition(
-        offset: upstreamTextPosition.offset,
-        affinity: TextAffinity.downstream,
-      );
+      const lineBreakOffset = 18;
       // A position in the middle of a line so text affinity should not affect rendering.
       const unbrokenTextPosition = TextPosition(offset: 10);
-      final tapUpstreamPosition =
-          DocumentPosition(
-        nodeId: '1',
-        nodePosition: TextNodePosition.fromTextPosition(upstreamTextPosition),
-      );
-      final tapDownstreamPosition = DocumentPosition(
-        nodeId: '1',
-        nodePosition: TextNodePosition.fromTextPosition(downstreamTextPosition),
-      );
 
       testWidgets('renders caret at end of line when affinity is upstream', (WidgetTester tester) async {
         tester.binding.window
@@ -52,21 +36,20 @@ void main() {
           ),
         );
         await tester.pumpAndSettle();
-
-        final tapOffset = _getOffsetForPosition(docKey, tapUpstreamPosition);
-
-        await tester.tapAt(tapOffset);
-        await tester.pumpAndSettle();
+        await tester.placeCaretInParagraph('1', lineBreakOffset, affinity: TextAffinity.upstream);
 
         expect(
             composer.selection,
-            DocumentSelection.collapsed(
+            const DocumentSelection.collapsed(
                 position: DocumentPosition(
               nodeId: '1',
-              nodePosition: TextNodePosition.fromTextPosition(upstreamTextPosition),
+              nodePosition: TextNodePosition(offset: lineBreakOffset, affinity: TextAffinity.upstream),
             )));
         final caretOffset = SuperEditorInspector.findCaretOffsetInDocument();
-        final expectedCaretOffset = _computeExpectedDesktopCaretOffset(tester, upstreamTextPosition);
+        final expectedCaretOffset = _computeExpectedDesktopCaretOffset(
+          tester,
+          const TextPosition(offset: lineBreakOffset, affinity: TextAffinity.upstream),
+        );
         expect(caretOffset, expectedCaretOffset);
       });
 
@@ -86,21 +69,20 @@ void main() {
           ),
         );
         await tester.pumpAndSettle();
-
-        final tapOffset = _getOffsetForPosition(docKey, tapDownstreamPosition);
-
-        await tester.tapAt(tapOffset);
-        await tester.pumpAndSettle();
+        await tester.placeCaretInParagraph('1', lineBreakOffset, affinity: TextAffinity.downstream);
 
         expect(
             composer.selection,
-            DocumentSelection.collapsed(
+            const DocumentSelection.collapsed(
                 position: DocumentPosition(
               nodeId: '1',
-              nodePosition: TextNodePosition.fromTextPosition(downstreamTextPosition),
+              nodePosition: TextNodePosition(offset: lineBreakOffset, affinity: TextAffinity.downstream),
             )));
         final caretOffset = SuperEditorInspector.findCaretOffsetInDocument();
-        final expectedCaretOffset = _computeExpectedDesktopCaretOffset(tester, downstreamTextPosition);
+        final expectedCaretOffset = _computeExpectedDesktopCaretOffset(
+          tester,
+          const TextPosition(offset: lineBreakOffset, affinity: TextAffinity.downstream),
+        );
         expect(caretOffset, expectedCaretOffset);
       });
 

@@ -13,23 +13,44 @@ extension SuperEditorRobot on WidgetTester {
   ///
   /// The simulated user gesture is probably a tap, but the only guarantee is that
   /// the caret is placed with a gesture.
-  Future<void> placeCaretInParagraph(String nodeId, int offset, [Finder? superEditorFinder]) async {
-    await _tapInParagraph(nodeId, offset, 1, superEditorFinder);
+  Future<void> placeCaretInParagraph(
+    String nodeId,
+    int offset, {
+    TextAffinity affinity = TextAffinity.downstream,
+    Finder? superEditorFinder,
+  }) async {
+    await _tapInParagraph(nodeId, offset, affinity, 1, superEditorFinder);
   }
 
   /// Simulates a double tap at the given [offset] within the paragraph with the given
   /// [nodeId].
-  Future<void> doubleTapInParagraph(String nodeId, int offset, [Finder? superEditorFinder]) async {
-    await _tapInParagraph(nodeId, offset, 2, superEditorFinder);
+  Future<void> doubleTapInParagraph(
+    String nodeId,
+    int offset, {
+    TextAffinity affinity = TextAffinity.downstream,
+    Finder? superEditorFinder,
+  }) async {
+    await _tapInParagraph(nodeId, offset, affinity, 2, superEditorFinder);
   }
 
   /// Simulates a triple tap at the given [offset] within the paragraph with the given
   /// [nodeId].
-  Future<void> tripleTapInParagraph(String nodeId, int offset, [Finder? superEditorFinder]) async {
-    await _tapInParagraph(nodeId, offset, 3, superEditorFinder);
+  Future<void> tripleTapInParagraph(
+    String nodeId,
+    int offset, {
+    TextAffinity affinity = TextAffinity.downstream,
+    Finder? superEditorFinder,
+  }) async {
+    await _tapInParagraph(nodeId, offset, affinity, 3, superEditorFinder);
   }
 
-  Future<void> _tapInParagraph(String nodeId, int offset, int tapCount, [Finder? superEditorFinder]) async {
+  Future<void> _tapInParagraph(
+    String nodeId,
+    int offset,
+    TextAffinity affinity,
+    int tapCount, [
+    Finder? superEditorFinder,
+  ]) async {
     late final Finder layoutFinder;
     if (superEditorFinder != null) {
       layoutFinder = find.descendant(of: superEditorFinder, matching: find.byType(SingleColumnDocumentLayout));
@@ -54,7 +75,7 @@ extension SuperEditorRobot on WidgetTester {
 
     // Calculate the global tap position based on the TextLayout and desired
     // TextPosition.
-    final position = TextPosition(offset: offset);
+    final position = TextPosition(offset: offset, affinity: affinity);
     // For the local tap offset, we add a small vertical adjustment downward. This
     // prevents flaky edge effects, which might occur if we try to tap exactly at the
     // top of the line. In general, we could use the caret height to choose a vertical
