@@ -74,7 +74,7 @@ void main() {
       // Ensure that the document doesn't have a selection.
       expect(SuperEditorInspector.findDocumentSelection(), null);
 
-      final offsetBeforeLineBreak = await _findOffsetOfLineBreak(tester) - 1;
+      final offsetBeforeLineBreak = await SuperEditorInspector.findOffsetOfLineBreak(tester) - 1;
 
       // Tap to place the caret in the first paragraph.
       await tester.placeCaretInParagraph("1", offsetBeforeLineBreak, affinity: TextAffinity.downstream);
@@ -117,7 +117,7 @@ void main() {
           )
           .pump();
       await tester.pumpAndSettle();
-      final offset = await _findOffsetOfLineBreak(tester);
+      final offset = await SuperEditorInspector.findOffsetOfLineBreak(tester);
 
       // Tap to place the at the end of the first line
       await tester.placeCaretInParagraph("1", offset, affinity: TextAffinity.upstream);
@@ -148,7 +148,7 @@ void main() {
           )
           .pump();
       await tester.pumpAndSettle();
-      final offsetOfLineBreak = await _findOffsetOfLineBreak(tester);
+      final offsetOfLineBreak = await SuperEditorInspector.findOffsetOfLineBreak(tester);
 
       // Tap to place the at the end of the first line
       await tester.placeCaretInParagraph("1", offsetOfLineBreak, affinity: TextAffinity.downstream);
@@ -232,36 +232,4 @@ void main() {
       expect(SuperEditorInspector.findTextInParagraph("1").text, "Hello, world!");
     });
   });
-}
-
-/// Locates the first line break in a paragraph, or fails the test if it cannot find one.
-Future<int> _findOffsetOfLineBreak(WidgetTester tester) async {
-  final composer = tester.widget<SuperEditor>(find.byType(SuperEditor)).composer;
-  expect(composer, isNotNull);
-  final previousSelection = composer!.selection;
-  composer.selection = const DocumentSelection.collapsed(
-      position: DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: 0)));
-  await tester.pumpAndSettle();
-  final firstLineCaretY = SuperEditorInspector.findCaretOffsetInDocument().dy;
-  var offset = 1;
-  for (; offset < 2000; offset++) {
-    composer.selection = DocumentSelection.collapsed(
-      position: DocumentPosition(
-        nodeId: '1',
-        nodePosition: TextNodePosition(
-          offset: offset,
-          affinity: TextAffinity.downstream,
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-    final caretY = SuperEditorInspector.findCaretOffsetInDocument().dy;
-    if (caretY > firstLineCaretY) break;
-  }
-  expect(offset, lessThan(2000), reason: 'Failed to find line break in paragraph');
-
-  composer.selection = previousSelection;
-  await tester.pumpAndSettle();
-
-  return offset;
 }

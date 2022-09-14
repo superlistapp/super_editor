@@ -16,11 +16,8 @@ void main() {
     final tapPosition = DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: textPosition.offset));
 
     group('affinity', () {
-      // Carefully chosen magic numbers so our taps hit where the text is soft-wrapped.
+      // Use a relatively small screen size to make sure we have a line break.
       const screenSize = Size(400, 400);
-      const lineBreakOffset = 18;
-      // A position in the middle of a line so text affinity should not affect rendering.
-      const unbrokenTextPosition = TextPosition(offset: 10);
 
       testWidgetsOnAllPlatforms('renders caret at end of line when affinity is upstream', (WidgetTester tester) async {
         tester.binding.window
@@ -29,15 +26,7 @@ void main() {
           ..physicalSizeTestValue = screenSize;
 
         final docKey = GlobalKey();
-        final composer = DocumentComposer(
-            initialSelection: const DocumentSelection.collapsed(
-          position: DocumentPosition(
-              nodeId: '1',
-              nodePosition: TextNodePosition(
-                offset: lineBreakOffset,
-                affinity: TextAffinity.upstream,
-              )),
-        ));
+        final composer = DocumentComposer();
         await tester.pumpWidget(
           _createTestApp(
             gestureMode: DocumentGestureMode.mouse,
@@ -46,18 +35,22 @@ void main() {
           ),
         );
         await tester.pumpAndSettle();
+        final lineBreakOffset = await SuperEditorInspector.findOffsetOfLineBreak(tester);
+        composer.selection = DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: '1',
+            nodePosition: TextNodePosition(
+              offset: lineBreakOffset,
+              affinity: TextAffinity.upstream,
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
 
-        expect(
-            composer.selection,
-            const DocumentSelection.collapsed(
-                position: DocumentPosition(
-              nodeId: '1',
-              nodePosition: TextNodePosition(offset: lineBreakOffset, affinity: TextAffinity.upstream),
-            )));
         final caretOffset = SuperEditorInspector.findCaretOffsetInDocument();
         final expectedCaretOffset = _computeExpectedDesktopCaretOffset(
           tester,
-          const TextPosition(offset: lineBreakOffset, affinity: TextAffinity.upstream),
+          TextPosition(offset: lineBreakOffset, affinity: TextAffinity.upstream),
         );
         expect(caretOffset, expectedCaretOffset);
       });
@@ -70,15 +63,7 @@ void main() {
           ..physicalSizeTestValue = screenSize;
 
         final docKey = GlobalKey();
-        final composer = DocumentComposer(
-            initialSelection: const DocumentSelection.collapsed(
-          position: DocumentPosition(
-              nodeId: '1',
-              nodePosition: TextNodePosition(
-                offset: lineBreakOffset,
-                affinity: TextAffinity.downstream,
-              )),
-        ));
+        final composer = DocumentComposer();
         await tester.pumpWidget(
           _createTestApp(
             gestureMode: DocumentGestureMode.mouse,
@@ -87,18 +72,22 @@ void main() {
           ),
         );
         await tester.pumpAndSettle();
+        final lineBreakOffset = await SuperEditorInspector.findOffsetOfLineBreak(tester);
+        composer.selection = DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: '1',
+            nodePosition: TextNodePosition(
+              offset: lineBreakOffset,
+              affinity: TextAffinity.upstream,
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
 
-        expect(
-            composer.selection,
-            const DocumentSelection.collapsed(
-                position: DocumentPosition(
-              nodeId: '1',
-              nodePosition: TextNodePosition(offset: lineBreakOffset, affinity: TextAffinity.downstream),
-            )));
         final caretOffset = SuperEditorInspector.findCaretOffsetInDocument();
         final expectedCaretOffset = _computeExpectedDesktopCaretOffset(
           tester,
-          const TextPosition(offset: lineBreakOffset, affinity: TextAffinity.downstream),
+          TextPosition(offset: lineBreakOffset, affinity: TextAffinity.upstream),
         );
         expect(caretOffset, expectedCaretOffset);
       });
@@ -111,17 +100,7 @@ void main() {
           ..physicalSizeTestValue = screenSize;
 
         final docKey = GlobalKey();
-        final composer = DocumentComposer(
-          initialSelection: DocumentSelection.collapsed(
-            position: DocumentPosition(
-              nodeId: '1',
-              nodePosition: TextNodePosition(
-                offset: unbrokenTextPosition.offset,
-                affinity: TextAffinity.downstream,
-              ),
-            ),
-          ),
-        );
+        final composer = DocumentComposer();
         var app = _createTestApp(
           gestureMode: DocumentGestureMode.mouse,
           docKey: docKey,
@@ -129,19 +108,29 @@ void main() {
         );
         await tester.pumpWidget(app);
         await tester.pumpAndSettle();
+        final unbrokenTextOffset = await SuperEditorInspector.findOffsetOfLineBreak(tester) - 1;
+
+        composer.selection = DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: '1',
+            nodePosition: TextNodePosition(offset: unbrokenTextOffset, affinity: TextAffinity.downstream),
+          ),
+        );
+        await tester.pumpAndSettle();
         final downstreamCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
 
         composer.selection = DocumentSelection.collapsed(
           position: DocumentPosition(
             nodeId: '1',
             nodePosition: TextNodePosition(
-              offset: unbrokenTextPosition.offset,
+              offset: unbrokenTextOffset,
               affinity: TextAffinity.upstream,
             ),
           ),
         );
         await tester.pumpAndSettle();
         final upstreamCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
+
         expect(upstreamCaretOffset, downstreamCaretOffset);
       });
     });
