@@ -5,6 +5,8 @@ import 'package:super_editor/src/default_editor/document_gestures_touch_ios.dart
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 
+import '../../test_tools.dart';
+
 void main() {
   group("SuperEditor", () {
     // We're testing the automatic movement of the caret when the available space changes. This
@@ -20,7 +22,7 @@ void main() {
       // A position in the middle of a line so text affinity should not affect rendering.
       const unbrokenTextPosition = TextPosition(offset: 10);
 
-      testWidgets('renders caret at end of line when affinity is upstream', (WidgetTester tester) async {
+      testWidgetsOnAllPlatforms('renders caret at end of line when affinity is upstream', (WidgetTester tester) async {
         tester.binding.window
           ..devicePixelRatioTestValue = 1.0
           ..platformDispatcher.textScaleFactorTestValue = 1.0
@@ -60,7 +62,8 @@ void main() {
         expect(caretOffset, expectedCaretOffset);
       });
 
-      testWidgets('renders caret at start of line when affinity is downstream', (WidgetTester tester) async {
+      testWidgetsOnAllPlatforms('renders caret at start of line when affinity is downstream',
+          (WidgetTester tester) async {
         tester.binding.window
           ..devicePixelRatioTestValue = 1.0
           ..platformDispatcher.textScaleFactorTestValue = 1.0
@@ -100,7 +103,7 @@ void main() {
         expect(caretOffset, expectedCaretOffset);
       });
 
-      testWidgets('upstream and downstream positions render the same if not at a line break',
+      testWidgetsOnAllPlatforms('upstream and downstream positions render the same if not at a line break',
           (WidgetTester tester) async {
         tester.binding.window
           ..devicePixelRatioTestValue = 1.0
