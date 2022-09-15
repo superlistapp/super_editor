@@ -15,7 +15,7 @@ void main() {
 
       await _pumpScaffold(tester, scrollController: controller);
 
-      // Ensure the document hasn't 
+      // Ensure the document started without any scrolling.
       expect(controller.offset, 0.0);
 
       final pointer = TestPointer(1, PointerDeviceKind.mouse);
@@ -48,7 +48,7 @@ void main() {
       await gesture.moveTo(tester.getCenter(find.byType(ImageComponent)));
       await tester.pump();
 
-      // Ensure the cursor type is 'basic' when hovering the image
+      // Ensure the cursor type is 'basic' when hovering the image.
       expect(RendererBinding.instance.mouseTracker.debugDeviceActiveCursor(1), SystemMouseCursors.basic);
     });
   });
@@ -83,7 +83,7 @@ Future<void> _pumpScaffold(
 }
 
 /// A [ComponentBuilder] which builds an [ImageComponent] that always renders 
-/// images as an 100x100 [SizedBox]
+/// images as an 100x100 [SizedBox].
 class _FakeImageComponentBuilder implements ComponentBuilder {
   const _FakeImageComponentBuilder();
 
