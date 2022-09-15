@@ -35,7 +35,18 @@ MutableDocument deserializeMarkdownToDocument(
     node.accept(nodeVisitor);
   }
 
-  return MutableDocument(nodes: nodeVisitor.content);
+  final documentNodes = nodeVisitor.content;
+
+  if (documentNodes.isEmpty) {
+    // An empty markdown was parsed.
+    // For the user to be able to interact with the editor, at least one
+    // node is required, so we add an empty paragraph.
+    documentNodes.add(
+      ParagraphNode(id: DocumentEditor.createNodeId(), text: AttributedText(text: '')),
+    );
+  }
+
+  return MutableDocument(nodes: documentNodes);
 }
 
 /// The given [syntax] controls how the [doc] is serialized, e.g., [MarkdownSyntax.normal] for standard

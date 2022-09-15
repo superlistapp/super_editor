@@ -1129,6 +1129,15 @@ First Paragraph.
         expect(doc.nodes.last, isA<ParagraphNode>());
         expect((doc.nodes.last as ParagraphNode).text.text, '');
       });
+
+      test('empty markdown produces an empty paragraph', () {
+        final doc = deserializeMarkdownToDocument('');
+
+        expect(doc.nodes.length, 1);
+
+        expect(doc.nodes.first, isA<ParagraphNode>());
+        expect((doc.nodes.first as ParagraphNode).text.text, '');
+      });
     });
   });
 }
