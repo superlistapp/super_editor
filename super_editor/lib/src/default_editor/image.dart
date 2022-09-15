@@ -150,24 +150,35 @@ class ImageComponent extends StatelessWidget {
     required this.imageUrl,
     this.selectionColor = Colors.blue,
     this.selection,
+    this.imageBuilder,
   }) : super(key: key);
 
   final GlobalKey componentKey;
   final String imageUrl;
   final Color selectionColor;
   final UpstreamDownstreamNodeSelection? selection;
+  final Widget Function(BuildContext context, String imageUrl)? imageBuilder;
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: SelectableBox(
-        selection: selection,
-        selectionColor: selectionColor,
-        child: BoxComponent(
-          key: componentKey,
-          child: Image.network(
+    final image = imageBuilder != null
+        ? imageBuilder!(context, imageUrl)
+        : Image.network(
             imageUrl,
             fit: BoxFit.contain,
+          );
+    return MouseRegion(
+      cursor: SystemMouseCursors.basic,
+      hitTestBehavior: HitTestBehavior.translucent,
+      child: IgnorePointer(
+        child: Center(
+          child: SelectableBox(
+            selection: selection,
+            selectionColor: selectionColor,
+            child: BoxComponent(
+              key: componentKey,
+              child: image,
+            ),
           ),
         ),
       ),
