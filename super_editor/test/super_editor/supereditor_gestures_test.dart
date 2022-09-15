@@ -407,7 +407,6 @@ spans multiple lines.''',
                 position: DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: 0))),
           )
           .pump();
-      await tester.pumpAndSettle();
       final offset = await SuperEditorInspector.findOffsetOfLineBreak(tester);
 
       // Tap to place the at the end of the first line
@@ -438,7 +437,6 @@ spans multiple lines.''',
                 position: DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: 0))),
           )
           .pump();
-      await tester.pumpAndSettle();
       final offsetOfLineBreak = await SuperEditorInspector.findOffsetOfLineBreak(tester);
 
       // Tap to place the at the end of the first line

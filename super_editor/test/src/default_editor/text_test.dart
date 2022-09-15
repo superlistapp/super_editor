@@ -304,7 +304,7 @@ void main() {
 
     group('TextNode', () {
       group('computeSelection', () {
-        test('it throws if passed other types of NodePosition', () {
+        test('throws if passed other types of NodePosition', () {
           final node = TextNode(
             id: 'text node',
             text: AttributedText(text: 'text'),
@@ -318,7 +318,7 @@ void main() {
           );
         });
 
-        test('it preserves the affinity of extent', () {
+        test('preserves the affinity of extent', () {
           final node = TextNode(
             id: 'text node',
             text: AttributedText(text: 'text'),
@@ -353,7 +353,7 @@ void main() {
 
     group('TextNodeSelection', () {
       group('get base', () {
-        test('it preserves affinity', () {
+        test('preserves affinity', () {
           const selectionWithUpstream = TextNodeSelection.collapsed(offset: 0, affinity: TextAffinity.upstream);
           expect(selectionWithUpstream.base.affinity, TextAffinity.upstream);
 
@@ -363,7 +363,7 @@ void main() {
       });
 
       group('get extent', () {
-        test('it preserves affinity', () {
+        test('preserves affinity', () {
           const selectionWithUpstream = TextNodeSelection.collapsed(offset: 0, affinity: TextAffinity.upstream);
           expect(selectionWithUpstream.extent.affinity, TextAffinity.upstream);
 

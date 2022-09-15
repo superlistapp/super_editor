@@ -15,7 +15,7 @@ void main() {
     const textPosition = TextPosition(offset: 46);
     final tapPosition = DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: textPosition.offset));
 
-    group('affinity', () {
+    group('text affinity', () {
       // Use a relatively small screen size to make sure we have a line break.
       const screenSize = Size(400, 400);
 
@@ -34,7 +34,6 @@ void main() {
             composer: composer,
           ),
         );
-        await tester.pumpAndSettle();
         final lineBreakOffset = await SuperEditorInspector.findOffsetOfLineBreak(tester);
         composer.selection = DocumentSelection.collapsed(
           position: DocumentPosition(
@@ -48,11 +47,13 @@ void main() {
         await tester.pumpAndSettle();
 
         final caretOffset = SuperEditorInspector.findCaretOffsetInDocument();
-        final expectedCaretOffset = _computeExpectedDesktopCaretOffset(
-          tester,
-          TextPosition(offset: lineBreakOffset, affinity: TextAffinity.upstream),
+        expect(
+          caretOffset,
+          _computeExpectedDesktopCaretOffset(
+            tester,
+            TextPosition(offset: lineBreakOffset, affinity: TextAffinity.upstream),
+          ),
         );
-        expect(caretOffset, expectedCaretOffset);
       });
 
       testWidgetsOnAllPlatforms('renders caret at start of line when affinity is downstream',
@@ -71,7 +72,6 @@ void main() {
             composer: composer,
           ),
         );
-        await tester.pumpAndSettle();
         final lineBreakOffset = await SuperEditorInspector.findOffsetOfLineBreak(tester);
         composer.selection = DocumentSelection.collapsed(
           position: DocumentPosition(
@@ -101,19 +101,21 @@ void main() {
 
         final docKey = GlobalKey();
         final composer = DocumentComposer();
-        var app = _createTestApp(
-          gestureMode: DocumentGestureMode.mouse,
-          docKey: docKey,
-          composer: composer,
+        await tester.pumpWidget(
+          _createTestApp(
+            gestureMode: DocumentGestureMode.mouse,
+            docKey: docKey,
+            composer: composer,
+          ),
         );
-        await tester.pumpWidget(app);
-        await tester.pumpAndSettle();
-        final unbrokenTextOffset = await SuperEditorInspector.findOffsetOfLineBreak(tester) - 1;
+        // Find an offset that is not at a line break, so that the caret should render the same with upstream or
+        // downstream affinity.
+        final textOffset = await SuperEditorInspector.findOffsetOfLineBreak(tester) - 1;
 
         composer.selection = DocumentSelection.collapsed(
           position: DocumentPosition(
             nodeId: '1',
-            nodePosition: TextNodePosition(offset: unbrokenTextOffset, affinity: TextAffinity.downstream),
+            nodePosition: TextNodePosition(offset: textOffset, affinity: TextAffinity.downstream),
           ),
         );
         await tester.pumpAndSettle();
@@ -123,7 +125,7 @@ void main() {
           position: DocumentPosition(
             nodeId: '1',
             nodePosition: TextNodePosition(
-              offset: unbrokenTextOffset,
+              offset: textOffset,
               affinity: TextAffinity.upstream,
             ),
           ),
