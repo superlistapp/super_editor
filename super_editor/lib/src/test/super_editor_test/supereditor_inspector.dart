@@ -48,6 +48,18 @@ class SuperEditorInspector {
     return globalCaretOffset - globalToDocumentOffset;
   }
 
+  /// Returns the (x,y) offset for the component which renders the node with the given [nodeId].
+  ///
+  /// {@macro supereditor_finder}
+  static Offset findComponentOffset(String nodeId, Alignment alignment, [Finder? finder]) {
+    final documentLayout = _findDocumentLayout(finder);
+    final component = documentLayout.getComponentByNodeId(nodeId);
+    assert(component != null);
+    final componentBox = component!.context.findRenderObject() as RenderBox;
+    final rect = componentBox.localToGlobal(Offset.zero) & componentBox.size;
+    return alignment.withinRect(rect);
+  }
+
   /// Returns the (x,y) offset for a caret, if that caret appeared at the given [position].
   ///
   /// {@macro supereditor_finder}
