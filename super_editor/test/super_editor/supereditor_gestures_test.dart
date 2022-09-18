@@ -399,7 +399,6 @@ spans multiple lines.''',
       await tester
           .createDocument()
           .withSingleParagraph()
-          .forDesktop()
           .autoFocus(true)
           .withEditorSize(const Size(300, 700))
           .withSelection(
@@ -429,7 +428,6 @@ spans multiple lines.''',
       await tester
           .createDocument()
           .withSingleParagraph()
-          .forDesktop()
           .autoFocus(true)
           .withEditorSize(const Size(300, 700))
           .withSelection(
