@@ -136,6 +136,15 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
     );
     editorLayoutLog.info('Getting document position near offset: $documentOffset');
 
+    if (_isBeyondDocumentEnd(documentOffset)) {
+      // The given offset is beyond the end of the content.
+      // Return the position at the end of the last node.
+      final lastPosition = _findLastPosition();
+      if (lastPosition != null) {
+        return lastPosition;
+      }
+    }
+
     final componentKey = _findComponentClosestToOffset(documentOffset);
     if (componentKey == null || componentKey.currentContext == null) {
       return null;
@@ -161,6 +170,20 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
     );
     editorLayoutLog.info(' - selection at offset: $selectionAtOffset');
     return selectionAtOffset;
+  }
+
+  /// Returns whether or not [documentOffset] is beyond the end of the document.
+  bool _isBeyondDocumentEnd(Offset documentOffset) {
+    if (_topToBottomComponentKeys.isEmpty) {
+      // There is no component in the document.
+      return true;
+    }
+    
+    final componentKey = _topToBottomComponentKeys.last;
+    final componentBox = componentKey.currentContext!.findRenderObject() as RenderBox;
+    final offsetAtComponent = _componentOffset(componentBox, documentOffset);
+
+    return offsetAtComponent.dy > componentBox.size.height;
   }
 
   @override
@@ -454,6 +477,21 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
       }
     }
     return nearestComponentKey;
+  }
+
+  /// Returns the [DocumentPosition] at the end of the last node or `null` if the document is empty.
+  DocumentPosition? _findLastPosition() {
+    if (_topToBottomComponentKeys.isEmpty) {
+      return null;
+    }
+
+    final componentKey = _topToBottomComponentKeys.last;
+    final component = componentKey.currentState as DocumentComponent;
+
+    return DocumentPosition(
+      nodeId: _nodeIdsToComponentKeys.entries.firstWhere((element) => element.value == componentKey).key,
+      nodePosition: component.getEndPosition(),
+    );
   }
 
   bool _isOffsetInComponent(RenderBox componentBox, Offset documentOffset) {

@@ -154,6 +154,31 @@ void main() {
       );
     });
 
+    testWidgetsOnAllPlatforms('places the caret at the end when tapping beyond the end of the document',
+        (tester) async {
+      final testContext = await tester
+          .createDocument() //
+          .fromMarkdown("This is a text")
+          .withEditorSize(const Size(300, 300))
+          .pump();
+
+      // Tap beyond the end of document with a small margin.
+      // As the document has only one line, this offset is after all the content.
+      await tester.tapAt(tester.getBottomLeft(find.byType(SuperEditor)) - const Offset(0, 10));
+      await tester.pump(kTapMinTime);
+
+      // Ensure selection is at the end of the document.
+      expect(
+        SuperEditorInspector.findDocumentSelection(),
+        DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: testContext.editContext.editor.document.nodes.last.id,
+            nodePosition: const TextNodePosition(offset: 14),
+          ),
+        ),
+      );
+    });
+
     testWidgetsOnDesktop(
         "dragging a single component selection above a component selects to the beginning of the component",
         (tester) async {
