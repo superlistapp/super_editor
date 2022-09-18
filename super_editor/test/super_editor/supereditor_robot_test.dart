@@ -74,7 +74,7 @@ void main() {
       // Ensure that the document doesn't have a selection.
       expect(SuperEditorInspector.findDocumentSelection(), null);
 
-      final offsetBeforeLineBreak = await SuperEditorInspector.findOffsetOfLineBreak(tester) - 1;
+      final offsetBeforeLineBreak = SuperEditorInspector.findOffsetOfLineBreak(tester) - 1;
 
       // Tap to place the caret in the first paragraph. Explicitly use a downstream affinity so we can compare it to
       // the results of an upstream affinity later in this test.

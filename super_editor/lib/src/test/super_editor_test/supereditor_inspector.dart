@@ -157,46 +157,26 @@ class SuperEditorInspector {
   }
 
   /// Locates the first line break in a text node, or throws an exception if it cannot find one.
-  static Future<int> findOffsetOfLineBreak(WidgetTester tester, {String nodeId = '1'}) async {
-    final composer = tester.widget<SuperEditor>(find.byType(SuperEditor)).composer;
-    if (composer == null) {
-      throw Exception('Could not find DocumentComposer in widget tree');
+  static int findOffsetOfLineBreak(String nodeId, [Finder? finder]) {
+    late final Finder layoutFinder;
+    if (finder != null) {
+      layoutFinder = find.descendant(of: finder, matching: find.byType(SingleColumnDocumentLayout));
+    } else {
+      layoutFinder = find.byType(SingleColumnDocumentLayout);
     }
-    final previousSelection = composer.selection;
+    final documentLayoutElement = layoutFinder.evaluate().single as StatefulElement;
+    final documentLayout = documentLayoutElement.state as DocumentLayout;
 
-    // Find the y offset of the caret when placed on the first line.
-    composer.selection = DocumentSelection.collapsed(
-      position: DocumentPosition(nodeId: nodeId, nodePosition: const TextNodePosition(offset: 0)),
-    );
-    await tester.pumpAndSettle();
-    final firstLineCaretY = SuperEditorInspector.findCaretOffsetInDocument().dy;
-
-    // Walk the caret forward one offset at a time while keeping the affinity set to downstream. The offset where the
-    // caret moves to a greater y axis is where the line break occurs. This assumes we are working with ltr text.
-    var offset = 1;
-    for (; offset < 2000; offset++) {
-      composer.selection = DocumentSelection.collapsed(
-        position: DocumentPosition(
-          nodeId: nodeId,
-          nodePosition: TextNodePosition(
-            offset: offset,
-            affinity: TextAffinity.downstream,
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-      final caretY = SuperEditorInspector.findCaretOffsetInDocument().dy;
-      if (caretY > firstLineCaretY) break;
-    }
-    if (offset >= 2000) {
-      throw Exception('Failed to find line break in paragraph');
+    final componentState = documentLayout.getComponentByNodeId(nodeId) as State;
+    late final GlobalKey textComponentKey;
+    if (componentState is ProxyDocumentComponent) {
+      textComponentKey = componentState.childDocumentComponentKey;
+    } else {
+      textComponentKey = componentState.widget.key as GlobalKey;
     }
 
-    // Put the selection and widget tree back the way we found it.
-    composer.selection = previousSelection;
-    await tester.pumpAndSettle();
-
-    return offset;
+    final textLayout = (textComponentKey.currentState as TextComponentState).textLayout;
+    return textLayout.getPositionAtEndOfLine(const TextPosition(offset: 0)).offset;
   }
 
   /// Finds the [DocumentLayout] that backs a [SuperEditor] in the widget tree.

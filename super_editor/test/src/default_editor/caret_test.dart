@@ -34,7 +34,7 @@ void main() {
             composer: composer,
           ),
         );
-        final lineBreakOffset = await SuperEditorInspector.findOffsetOfLineBreak(tester);
+        final lineBreakOffset = SuperEditorInspector.findOffsetOfLineBreak('1');
         composer.selection = DocumentSelection.collapsed(
           position: DocumentPosition(
             nodeId: '1',
@@ -72,7 +72,7 @@ void main() {
             composer: composer,
           ),
         );
-        final lineBreakOffset = await SuperEditorInspector.findOffsetOfLineBreak(tester);
+        final lineBreakOffset = SuperEditorInspector.findOffsetOfLineBreak('1');
         composer.selection = DocumentSelection.collapsed(
           position: DocumentPosition(
             nodeId: '1',
@@ -110,7 +110,7 @@ void main() {
         );
         // Find an offset that is not at a line break, so that the caret should render the same with upstream or
         // downstream affinity.
-        final textOffset = await SuperEditorInspector.findOffsetOfLineBreak(tester) - 1;
+        final textOffset = SuperEditorInspector.findOffsetOfLineBreak('1') - 1;
 
         composer.selection = DocumentSelection.collapsed(
           position: DocumentPosition(

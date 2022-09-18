@@ -407,7 +407,7 @@ spans multiple lines.''',
                 position: DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: 0))),
           )
           .pump();
-      final offset = await SuperEditorInspector.findOffsetOfLineBreak(tester);
+      final offset = SuperEditorInspector.findOffsetOfLineBreak('1');
 
       // Tap to place the at the end of the first line
       await tester.placeCaretInParagraph("1", offset, affinity: TextAffinity.upstream);
@@ -437,7 +437,7 @@ spans multiple lines.''',
                 position: DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: 0))),
           )
           .pump();
-      final offsetOfLineBreak = await SuperEditorInspector.findOffsetOfLineBreak(tester);
+      final offsetOfLineBreak = SuperEditorInspector.findOffsetOfLineBreak('1');
 
       // Tap to place the at the end of the first line
       await tester.placeCaretInParagraph("1", offsetOfLineBreak, affinity: TextAffinity.downstream);
