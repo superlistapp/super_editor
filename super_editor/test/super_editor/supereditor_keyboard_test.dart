@@ -285,29 +285,34 @@ void main() {
 
   group('SuperEditor software keyboard', () {
     testWidgetsOnIos('pressing tab indent list', (tester) async {
-      final testContext = await _pumpUnorderedList(tester);
-      final doc = testContext.editContext.editor.document;
-      final nodeId = doc.nodes.first.id;
+      await _pumpUnorderedList(tester);
+
+      final node = SuperEditorInspector.getNodeAt<ListItemNode>(0);
 
       // Ensure we started with indentation level 0.
-      expect((doc.nodes.first as ListItemNode).indent, 0);
+      expect(node.indent, 0);
 
-      await tester.placeCaretInParagraph(nodeId, 0);
-
-      final selectionBeforeTab = SuperEditorInspector.findDocumentSelection();
-      final textBeforeTab = SuperEditorInspector.findTextInParagraph(nodeId);
+      await tester.placeCaretInParagraph(node.id, 0);
 
       // Simulate the user pressing TAB on the software keyboard.
       await tester.typeImeText("\t");
 
       // Ensure we indented the list item.
-      expect((doc.nodes.first as ListItemNode).indent, 1);
+      expect(node.indent, 1);
 
       // Ensure the selection didn't change.
-      expect(SuperEditorInspector.findDocumentSelection(), selectionBeforeTab);
+      expect(
+        SuperEditorInspector.findDocumentSelection(),
+        DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: node.id,
+            nodePosition: const TextNodePosition(offset: 0),
+          ),
+        ),
+      );
 
       // Ensure the content of the list item didn't change.
-      expect(SuperEditorInspector.findTextInParagraph(nodeId), textBeforeTab);
+      expect(node.text.text, 'list item 1');
     });
   });
 }
