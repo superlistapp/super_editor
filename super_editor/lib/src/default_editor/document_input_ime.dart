@@ -875,6 +875,12 @@ class SoftwareKeyboardHandler {
       return;
     }
 
+    if (delta.textInserted == "\t" && (defaultTargetPlatform == TargetPlatform.iOS)) {
+      // On iOS, tabs pressed at the the software keyboard are reported here.
+      commonOps.indentListItem();
+      return;
+    }
+
     editorImeLog.fine(
         "Inserting text: ${delta.textInserted}, insertion offset: ${delta.insertionOffset}, ime selection: ${delta.selection}");
 
@@ -902,6 +908,12 @@ class SoftwareKeyboardHandler {
       } else {
         editorImeLog.fine("Skipping replacement delta because its a newline");
       }
+      return;
+    }
+
+    if (delta.replacementText == "\t" && (defaultTargetPlatform == TargetPlatform.iOS)) {
+      // On iOS, tabs pressed at the the software keyboard are reported here.
+      commonOps.indentListItem();
       return;
     }
 

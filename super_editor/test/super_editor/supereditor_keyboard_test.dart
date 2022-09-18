@@ -4,6 +4,7 @@ import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 
+import '../test_tools.dart';
 import 'document_test_tools.dart';
 import 'supereditor_test_tools.dart';
 
@@ -281,6 +282,34 @@ void main() {
       });
     });
   });
+
+  group('SuperEditor software keyboard', () {
+    testWidgetsOnIos('pressing tab indent list', (tester) async {
+      final testContext = await _pumpUnorderedList(tester);
+      final doc = testContext.editContext.editor.document;
+      final nodeId = doc.nodes.first.id;
+
+      // Ensure we started with indentation level 0.
+      expect((doc.nodes.first as ListItemNode).indent, 0);
+
+      await tester.placeCaretInParagraph(nodeId, 0);
+
+      final selectionBeforeTab = SuperEditorInspector.findDocumentSelection();
+      final textBeforeTab = SuperEditorInspector.findTextInParagraph(nodeId);
+
+      // Simulate the user pressing TAB on the software keyboard.
+      await tester.typeImeText("\t");
+
+      // Ensure we indented the list item.
+      expect((doc.nodes.first as ListItemNode).indent, 1);
+
+      // Ensure the selection didn't change.
+      expect(SuperEditorInspector.findDocumentSelection(), selectionBeforeTab);
+
+      // Ensure the content of the list item didn't change.
+      expect(SuperEditorInspector.findTextInParagraph(nodeId), textBeforeTab);
+    });
+  });
 }
 
 Future<String> _pumpSingleLineWithCaret(
@@ -317,6 +346,25 @@ Future<String> _pumpDoubleLineWithCaret(WidgetTester tester,
   await tester.placeCaretInParagraph(nodeId, offset);
 
   return nodeId;
+}
+
+/// Pumps a [SuperEditor] configure with IME input, containing 2 unordered list items.
+///
+/// Both items have one level of indentation.
+Future<TestDocumentContext> _pumpUnorderedList(WidgetTester tester) async {
+  const markdown = '''
+ * list item 1
+ * list item 2
+
+''';
+
+  final testContext = await tester //
+      .createDocument()
+      .fromMarkdown(markdown)
+      .withInputSource(DocumentInputSource.ime)
+      .pump();
+
+  return testContext;
 }
 
 DocumentSelection _caretInParagraph(String nodeId, int offset, [TextAffinity textAffinity = TextAffinity.downstream]) {
