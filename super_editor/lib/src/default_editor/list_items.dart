@@ -122,7 +122,6 @@ class ListItemComponentBuilder implements ComponentBuilder {
       indent: node.indent,
       ordinalValue: ordinalValue,
       text: node.text,
-      textStyleBuilder: noStyleBuilder,
       selectionColor: const Color(0x00000000),
     );
   }
@@ -172,21 +171,24 @@ class ListItemComponentViewModel extends SingleColumnLayoutComponentViewModel wi
     this.ordinalValue,
     required this.indent,
     required this.text,
-    required this.textStyleBuilder,
+    TextComponentTextStyles? textStyler,
     this.textDirection = TextDirection.ltr,
     this.textAlignment = TextAlign.left,
     this.selection,
     required this.selectionColor,
     this.highlightWhenEmpty = false,
-  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
+  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding) {
+    if (textStyler != null) {
+      super.textStyler = textStyler;
+    }
+  }
 
   ListItemType type;
   int? ordinalValue;
   int indent;
+  @override
   AttributedText text;
 
-  @override
-  AttributionStyleBuilder textStyleBuilder;
   @override
   TextDirection textDirection;
   @override
@@ -208,7 +210,7 @@ class ListItemComponentViewModel extends SingleColumnLayoutComponentViewModel wi
       ordinalValue: ordinalValue,
       indent: indent,
       text: text,
-      textStyleBuilder: textStyleBuilder,
+      textStyler: textStyler,
       textDirection: textDirection,
       selection: selection,
       selectionColor: selectionColor,
@@ -225,24 +227,11 @@ class ListItemComponentViewModel extends SingleColumnLayoutComponentViewModel wi
           type == other.type &&
           ordinalValue == other.ordinalValue &&
           indent == other.indent &&
-          text == other.text &&
-          textStyleBuilder == other.textStyleBuilder &&
-          textDirection == other.textDirection &&
-          selection == other.selection &&
-          selectionColor == other.selectionColor;
+          isTextViewModelEquivalent(other);
 
   @override
   int get hashCode =>
-      super.hashCode ^
-      nodeId.hashCode ^
-      type.hashCode ^
-      ordinalValue.hashCode ^
-      indent.hashCode ^
-      text.hashCode ^
-      textStyleBuilder.hashCode ^
-      textDirection.hashCode ^
-      selection.hashCode ^
-      selectionColor.hashCode;
+      super.hashCode ^ nodeId.hashCode ^ type.hashCode ^ ordinalValue.hashCode ^ indent.hashCode ^ textHashCode;
 }
 
 /// Displays a un-ordered list item in a document.

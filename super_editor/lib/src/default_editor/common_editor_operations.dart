@@ -1369,15 +1369,16 @@ class CommonEditorOperations {
 
     editorOpsLog.fine("Updating Document Composer selection after text insertion.");
     composer.updateSelection(
-        DocumentSelection.collapsed(
-          position: DocumentPosition(
-            nodeId: textNode.id,
-            nodePosition: TextNodePosition(
-              offset: initialTextOffset + text.length,
-            ),
+      DocumentSelection.collapsed(
+        position: DocumentPosition(
+          nodeId: textNode.id,
+          nodePosition: TextNodePosition(
+            offset: initialTextOffset + text.length,
           ),
         ),
-        notifyListeners: true);
+      ),
+      notifyListeners: false,
+    );
 
     return true;
   }
@@ -1673,15 +1674,16 @@ class CommonEditorOperations {
     );
 
     composer.updateSelection(
-        DocumentSelection.collapsed(
-          position: DocumentPosition(
-            nodeId: textNode.id,
-            nodePosition: TextNodePosition(
-              offset: initialTextOffset + character.length,
-            ),
+      DocumentSelection.collapsed(
+        position: DocumentPosition(
+          nodeId: textNode.id,
+          nodePosition: TextNodePosition(
+            offset: initialTextOffset + character.length,
           ),
         ),
-        notifyListeners: true);
+      ),
+      notifyListeners: false,
+    );
 
     return true;
   }

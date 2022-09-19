@@ -1,4 +1,4 @@
-import 'package:flutter/services.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
@@ -30,7 +30,7 @@ void main() {
       );
 
       // Ensure that no components were rebuilt because the caret is moved
-      // in the document overlay.
+      // in the document overlay, not within the document layout.
       expect(buildTracker.getBuildCount("1"), 0);
       expect(buildTracker.getBuildCount("2"), 0);
       expect(buildTracker.getBuildCount("3"), 0);
@@ -40,6 +40,9 @@ void main() {
     testWidgetsOnAllPlatforms("when the caret moves to a different paragraph", (tester) async {
       final buildTracker = await _pumpDocument(tester);
       await tester.placeCaretInParagraph("1", 0);
+      // Add enough time to prevent the next tap being processed as
+      // a drag.
+      await tester.pump(const Duration(milliseconds: 200));
 
       buildTracker.clear();
       await tester.placeCaretInParagraph("2", 0);
@@ -72,16 +75,8 @@ void main() {
             ),
           ));
 
-      initLoggers(Level.ALL, {editorKeyLog, editorImeLog});
-
       buildTracker.clear();
-      // await tester.pressRightArrow();
-      await tester.sendKeyDownEvent(LogicalKeyboardKey.arrowRight);
-      await tester.pumpAndSettle();
-      await tester.sendKeyUpEvent(LogicalKeyboardKey.arrowRight);
-      await tester.pumpAndSettle();
-      // await tester.pressLeftArrow();
-      // await tester.pressEnter();
+      await tester.pressRightArrow();
 
       // Ensure the caret moved.
       expect(
@@ -103,20 +98,17 @@ void main() {
     });
 
     testWidgetsOnAllPlatforms("when the user types into a paragraph", (tester) async {
-      initLoggers(Level.ALL, {editorLayoutLog});
-
       final buildTracker = await _pumpDocument(tester);
       await tester.placeCaretInParagraph("1", 0);
 
       buildTracker.clear();
-      print("--------------------");
-      await tester.typeKeyboardText("Hello ");
+      await tester.typeKeyboardText("H");
 
       // Ensure the text was inserted.
-      expect(SuperEditorInspector.findTextInParagraph("1").text.startsWith("Hello "), true);
+      expect(SuperEditorInspector.findTextInParagraph("1").text.startsWith("H"), true);
 
       // Ensure that we only rebuilt one node, one time for each character.
-      expect(buildTracker.getBuildCount("1"), 6);
+      expect(buildTracker.getBuildCount("1"), 1);
       expect(buildTracker.getBuildCount("2"), 0);
       expect(buildTracker.getBuildCount("3"), 0);
       expect(buildTracker.getBuildCount("4"), 0);

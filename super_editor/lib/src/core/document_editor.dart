@@ -8,6 +8,7 @@ import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:uuid/uuid.dart';
 
 import 'document.dart';
+import 'document_composer.dart';
 
 /// Editor for a [Document].
 ///
@@ -81,6 +82,12 @@ class DocumentEditor {
         ),
       );
 
+      // TODO: move this notification outside DocumentEditor
+      if (_changeList.whereType<SelectionChangeEvent>().isNotEmpty) {
+        final composer = context.find<DocumentComposer>("composer");
+        composer.notifySelectionListeners();
+      }
+
       _changeList.clear();
     }
   }
@@ -93,9 +100,12 @@ class EditorContext {
 
   T find<T>(String id) {
     if (!_resources.containsKey(id)) {
+      editorLog.shout("Tried to find an editor resource for the ID '$id', but there's no resource with that ID.");
       throw Exception("Tried to find an editor resource for the ID '$id', but there's no resource with that ID.");
     }
     if (_resources[id] is! T) {
+      editorLog.shout(
+          "Tried to find an editor resource of type '$T' for ID '$id', but the resource with that ID is of type '${_resources[id].runtimeType}");
       throw Exception(
           "Tried to find an editor resource of type '$T' for ID '$id', but the resource with that ID is of type '${_resources[id].runtimeType}");
     }

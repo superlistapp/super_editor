@@ -334,6 +334,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   void _onSelectionChange() {
     // The selection change might correspond to new content that's not
     // laid out yet. Wait until the next frame to update visuals.
+    WidgetsBinding.instance.scheduleFrame();
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       _updateHandlesAfterSelectionOrLayoutChange();
     });

@@ -68,6 +68,7 @@ class _CaretDocumentOverlayState extends State<CaretDocumentOverlay> with Single
   void _onSelectionChange() {
     // Give the document a frame to update its layout before we lookup
     // the extent offset.
+    WidgetsBinding.instance.scheduleFrame();
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       _updateCaretOffset();
     });

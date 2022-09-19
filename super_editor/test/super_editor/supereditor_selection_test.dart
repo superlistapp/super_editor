@@ -329,14 +329,12 @@ void main() {
       await tester.testTextInput.receiveAction(TextInputAction.next);
       await tester.pumpAndSettle();
 
-      final doc = SuperEditorInspector.findDocument();
-
       // Ensure selection is at the last character of the last paragraph.
       expect(
         SuperEditorInspector.findDocumentSelection(),
         DocumentSelection.collapsed(
           position: DocumentPosition(
-            nodeId: doc!.nodes.last.id,
+            nodeId: SuperEditorInspector.findDocument()!.nodes.last.id,
             nodePosition: const TextNodePosition(offset: 477),
           ),
         ),

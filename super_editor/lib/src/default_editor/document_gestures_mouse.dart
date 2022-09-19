@@ -135,6 +135,10 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor>
       // so that any pending visual document changes can happen before
       // attempting to calculate the visual position of the selection extent.
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+        if (!mounted) {
+          return;
+        }
+
         editorGesturesLog.finer("Ensuring selection extent is visible because the doc selection changed");
 
         final globalExtentRect = _getSelectionExtentAsGlobalRect();

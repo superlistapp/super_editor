@@ -287,8 +287,13 @@ class TextNodePosition extends TextPosition implements NodePosition {
 /// provides consistent application of text-based styling for all
 /// view models that add this mixin.
 mixin TextComponentViewModel on SingleColumnLayoutComponentViewModel {
-  AttributionStyleBuilder get textStyleBuilder;
-  set textStyleBuilder(AttributionStyleBuilder styleBuilder);
+  AttributedText get text;
+
+  TextComponentTextStyles textStyler = const TextComponentTextStyles();
+
+  AttributionStyleBuilder get textStyleBuilder {
+    return textStyler.textStyleBuilder;
+  }
 
   TextDirection get textDirection;
   set textDirection(TextDirection direction);
@@ -309,13 +314,96 @@ mixin TextComponentViewModel on SingleColumnLayoutComponentViewModel {
   void applyStyles(Map<String, dynamic> styles) {
     super.applyStyles(styles);
 
-    textStyleBuilder = (attributions) {
-      final baseStyle = styles["textStyle"] ?? noStyleBuilder({});
-      final inlineTextStyler = styles["inlineTextStyler"] as AttributionStyleAdjuster;
-
-      return inlineTextStyler(attributions, baseStyle);
-    };
+    textStyler = TextComponentTextStyles(
+      styles["textStyle"] ?? noStyleBuilder({}),
+      // Note: whoever provides the "inlineTextStyler" must ensure that equivalent
+      // style functions are identical, i.e., never pass anonymous functions for
+      // this property. We need identical functions to avoid unnecessary component
+      // re-renders.
+      styles["inlineTextStyler"] as AttributionStyleAdjuster,
+    );
+    // print("New _textStyler: ${textStyler.hashCode}, in view model: $hashCode");
+    // print("New _textStyler base color: ${textStyler.baseStyle?.color}");
+    // print("New _textStyler inline styler: ${textStyler.inlineTextStyler}");
   }
+
+  bool isTextViewModelEquivalent(TextComponentViewModel other) {
+    // print("text == other.text? ${text == other.text}");
+    // print("_blockStyles == other? ${_textStyler == other._textStyler}");
+    // print("textDirection == other? ${textDirection == other.textDirection}");
+    // print("textAlignment == other? ${textAlignment == other.textAlignment}");
+    // print("selection == other? ${_isSelectionEquivalent(selection, other.selection)}");
+    // print("selection color == otehr? ${selectionColor == other.selectionColor}");
+    // print("highlight when empty == other? ${highlightWhenEmpty == other.highlightWhenEmpty}");
+
+    return text == other.text &&
+        textStyler == other.textStyler &&
+        textDirection == other.textDirection &&
+        textAlignment == other.textAlignment &&
+        _isSelectionEquivalent(selection, other.selection) &&
+        selectionColor == other.selectionColor &&
+        highlightWhenEmpty == other.highlightWhenEmpty;
+  }
+
+  bool _isSelectionEquivalent(TextSelection? selection1, TextSelection? selection2) {
+    // From a view model perspective, we don't care about the caret, because
+    // the caret isn't rendered in individual paragraphs. So the selection
+    // only changed if an expanded selection changed.
+    if (selection1 == selection2) {
+      return true;
+    }
+
+    if ((selection1 != null && !selection1.isCollapsed) || (selection2 != null && !selection2.isCollapsed)) {
+      // Some kind of expanded selection was changed.
+      return false;
+    }
+
+    return true;
+  }
+
+  int get textHashCode =>
+      super.hashCode ^
+      text.hashCode ^
+      textStyler.hashCode ^
+      textDirection.hashCode ^
+      textAlignment.hashCode ^
+      selection.hashCode ^
+      selectionColor.hashCode ^
+      highlightWhenEmpty.hashCode;
+}
+
+/// [TextComponentTextStyles] produces [TextStyle]s for spans of text in
+/// a text component. We could use a standalone function to produce these
+/// styles, but we use an object so that we can check equality and avoid
+/// unnecessary component re-renders.
+class TextComponentTextStyles {
+  const TextComponentTextStyles([this.baseStyle, this.inlineTextStyler]);
+
+  final TextStyle? baseStyle;
+  final AttributionStyleAdjuster? inlineTextStyler;
+
+  TextStyle textStyleBuilder(Set<Attribution> attributions) {
+    // print("Running _textStyler: $hashCode");
+    // print("Styling attributions: $attributions");
+    // print("Base style: $baseStyle, color: ${baseStyle?.color}");
+    // print("Inline styler: $inlineTextStyler");
+    if (baseStyle == null || inlineTextStyler == null) {
+      return noStyleBuilder(attributions);
+    }
+
+    return inlineTextStyler!(attributions, baseStyle!);
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is TextComponentTextStyles &&
+          runtimeType == other.runtimeType &&
+          baseStyle == other.baseStyle &&
+          inlineTextStyler == other.inlineTextStyler;
+
+  @override
+  int get hashCode => baseStyle.hashCode ^ inlineTextStyler.hashCode;
 }
 
 /// Document component that displays hint text when its content text
@@ -1173,20 +1261,40 @@ class InsertTextCommand implements EditorCommand {
   @override
   List<DocumentChangeEvent> execute(EditorContext context) {
     final document = context.find<Document>("document");
+    final composer = context.find<DocumentComposer>("composer");
+
     final textNode = document.getNodeById(documentPosition.nodeId);
     if (textNode is! TextNode) {
       editorDocLog.shout('ERROR: can\'t insert text in a node that isn\'t a TextNode: $textNode');
       return [];
     }
 
-    final textOffset = (documentPosition.nodePosition as TextPosition).offset;
+    final textPosition = documentPosition.nodePosition as TextPosition;
+    final textOffset = textPosition.offset;
     textNode.text = textNode.text.insertString(
       textToInsert: textToInsert,
       startOffset: textOffset,
       applyAttributions: attributions,
     );
 
-    return [NodeChangeEvent(textNode.id)];
+    editorOpsLog.fine("Updating Document Composer selection after text insertion.");
+    composer.updateSelection(
+      DocumentSelection.collapsed(
+        position: DocumentPosition(
+          nodeId: textNode.id,
+          nodePosition: TextNodePosition(
+            offset: textOffset + textToInsert.length,
+            affinity: TextAffinity.upstream, //textPosition.affinity,
+          ),
+        ),
+      ),
+      notifyListeners: false,
+    );
+
+    return [
+      NodeChangeEvent(textNode.id),
+      const SelectionChangeEvent(),
+    ];
   }
 }
 

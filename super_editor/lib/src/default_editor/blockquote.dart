@@ -48,16 +48,17 @@ class BlockquoteComponentBuilder implements ComponentBuilder {
         break;
     }
 
-    return BlockquoteComponentViewModel(
+    final viewModel = BlockquoteComponentViewModel(
       nodeId: node.id,
       text: node.text,
-      textStyleBuilder: noStyleBuilder,
       backgroundColor: const Color(0x00000000),
       borderRadius: BorderRadius.zero,
       textDirection: textDirection,
       textAlignment: textAlign,
       selectionColor: const Color(0x00000000),
     );
+
+    return viewModel;
   }
 
   @override
@@ -86,7 +87,7 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel 
     double? maxWidth,
     EdgeInsetsGeometry padding = EdgeInsets.zero,
     required this.text,
-    required this.textStyleBuilder,
+    TextComponentTextStyles? textStyler,
     this.textDirection = TextDirection.ltr,
     this.textAlignment = TextAlign.left,
     required this.backgroundColor,
@@ -94,12 +95,14 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel 
     this.selection,
     required this.selectionColor,
     this.highlightWhenEmpty = false,
-  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
-
-  AttributedText text;
+  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding) {
+    if (textStyler != null) {
+      super.textStyler = textStyler;
+    }
+  }
 
   @override
-  AttributionStyleBuilder textStyleBuilder;
+  AttributedText text;
   @override
   TextDirection textDirection;
   @override
@@ -128,7 +131,7 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel 
       maxWidth: maxWidth,
       padding: padding,
       text: text,
-      textStyleBuilder: textStyleBuilder,
+      textStyler: textStyler,
       textDirection: textDirection,
       textAlignment: textAlignment,
       backgroundColor: backgroundColor,
@@ -146,29 +149,13 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel 
           other is BlockquoteComponentViewModel &&
           runtimeType == other.runtimeType &&
           nodeId == other.nodeId &&
-          text == other.text &&
-          textStyleBuilder == other.textStyleBuilder &&
-          textDirection == other.textDirection &&
-          textAlignment == other.textAlignment &&
           backgroundColor == other.backgroundColor &&
           borderRadius == other.borderRadius &&
-          selection == other.selection &&
-          selectionColor == other.selectionColor &&
-          highlightWhenEmpty == other.highlightWhenEmpty;
+          isTextViewModelEquivalent(other);
 
   @override
   int get hashCode =>
-      super.hashCode ^
-      nodeId.hashCode ^
-      text.hashCode ^
-      textStyleBuilder.hashCode ^
-      textDirection.hashCode ^
-      textAlignment.hashCode ^
-      backgroundColor.hashCode ^
-      borderRadius.hashCode ^
-      selection.hashCode ^
-      selectionColor.hashCode ^
-      highlightWhenEmpty.hashCode;
+      super.hashCode ^ nodeId.hashCode ^ backgroundColor.hashCode ^ borderRadius.hashCode ^ textHashCode;
 }
 
 /// Displays a blockquote in a document.

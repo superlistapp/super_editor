@@ -63,7 +63,6 @@ class ParagraphComponentBuilder implements ComponentBuilder {
       nodeId: node.id,
       blockType: node.getMetadataValue('blockType'),
       text: node.text,
-      textStyleBuilder: noStyleBuilder,
       textDirection: textDirection,
       textAlignment: textAlign,
       selectionColor: const Color(0x00000000),
@@ -112,18 +111,21 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
     EdgeInsetsGeometry padding = EdgeInsets.zero,
     this.blockType,
     required this.text,
-    required this.textStyleBuilder,
+    TextComponentTextStyles? textStyler,
     this.textDirection = TextDirection.ltr,
     this.textAlignment = TextAlign.left,
     this.selection,
     required this.selectionColor,
     this.highlightWhenEmpty = false,
-  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
+  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding) {
+    if (textStyler != null) {
+      super.textStyler = textStyler;
+    }
+  }
 
   Attribution? blockType;
-  AttributedText text;
   @override
-  AttributionStyleBuilder textStyleBuilder;
+  AttributedText text;
   @override
   TextDirection textDirection;
   @override
@@ -143,7 +145,7 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
       padding: padding,
       blockType: blockType,
       text: text,
-      textStyleBuilder: textStyleBuilder,
+      textStyler: textStyler,
       textDirection: textDirection,
       textAlignment: textAlignment,
       selection: selection,
@@ -152,34 +154,31 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
     );
   }
 
+  // TODO: we shouldn't override == and hashCode for mutable objects.
+  //       Find another way to implement the use-cases for comparison.
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      super == other &&
-          other is ParagraphComponentViewModel &&
-          runtimeType == other.runtimeType &&
-          nodeId == other.nodeId &&
-          blockType == other.blockType &&
-          text == other.text &&
-          textStyleBuilder == other.textStyleBuilder &&
-          textDirection == other.textDirection &&
-          textAlignment == other.textAlignment &&
-          selection == other.selection &&
-          selectionColor == other.selectionColor &&
-          highlightWhenEmpty == other.highlightWhenEmpty;
+  bool operator ==(Object other) {
+    // print("Comparing $this and $other");
+    // print("super == other? ${super == other}");
+    // print("other is ParagraphComponentViewModel? ${other is ParagraphComponentViewModel}");
+    // if (other is! ParagraphComponentViewModel) {
+    //   return false;
+    // }
+    // print("nodeId == other.nodeId ${nodeId == other.nodeId}");
+    // print("This node $nodeId vs other node ${other.nodeId}");
+    // print("blockType == other.blockType? ${blockType == other.blockType}");
+
+    return identical(this, other) ||
+        super == other &&
+            other is ParagraphComponentViewModel &&
+            runtimeType == other.runtimeType &&
+            nodeId == other.nodeId &&
+            blockType == other.blockType &&
+            isTextViewModelEquivalent(other);
+  }
 
   @override
-  int get hashCode =>
-      super.hashCode ^
-      nodeId.hashCode ^
-      blockType.hashCode ^
-      text.hashCode ^
-      textStyleBuilder.hashCode ^
-      textDirection.hashCode ^
-      textAlignment.hashCode ^
-      selection.hashCode ^
-      selectionColor.hashCode ^
-      highlightWhenEmpty.hashCode;
+  int get hashCode => super.hashCode ^ nodeId.hashCode ^ blockType.hashCode ^ textHashCode;
 }
 
 /// [EditorRequest] to combine the [ParagraphNode] with [firstNodeId] with the [ParagraphNode] after it, which

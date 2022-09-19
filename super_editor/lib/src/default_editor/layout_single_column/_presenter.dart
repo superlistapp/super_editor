@@ -69,6 +69,7 @@ class SingleColumnLayoutPresenter {
   final List<SingleColumnLayoutStylePhase> _pipeline;
   final List<SingleColumnLayoutViewModel?> _phaseViewModels = [];
   int _earliestDirtyPhase = 0;
+  DocumentChangeLog? _documentChangeLog;
 
   bool get isDirty => _earliestDirtyPhase < _pipeline.length;
 
@@ -86,11 +87,11 @@ class SingleColumnLayoutPresenter {
   }
 
   void _onDocumentChange(DocumentChangeLog changeLog) {
-    // TODO: pass the change log to the appropriate place so that we only rebuild view models that changed
     editorLayoutLog.info("The document changed. Marking the presenter dirty.");
     final wasDirty = isDirty;
 
     _earliestDirtyPhase = 0;
+    _documentChangeLog = changeLog;
 
     if (!wasDirty) {
       // The presenter just went from clean to dirty. Notify listeners.
@@ -164,23 +165,31 @@ class SingleColumnLayoutPresenter {
     if (newViewModel == null) {
       // The document changed. All view models were invalidated. Create a
       // new base document view model.
-      final components = <SingleColumnLayoutComponentViewModel>[];
+      final componentViewModels = <SingleColumnLayoutComponentViewModel>[];
       for (int i = 0; i < _document.nodes.length; i += 1) {
-        SingleColumnLayoutComponentViewModel? component;
+        final nodeId = _document.nodes[i].id;
+        if (_documentChangeLog != null && !_documentChangeLog!.wasNodeChanged(nodeId)) {
+          // This node didn't change in the document. Re-use the existing base
+          // view model.
+          componentViewModels.add(_viewModel._viewModelsByNodeId[nodeId]!);
+          continue;
+        }
+
+        SingleColumnLayoutComponentViewModel? componentViewModel;
         for (final builder in _componentBuilders) {
-          component = builder.createViewModel(_document, _document.nodes[i]);
-          if (component != null) {
+          componentViewModel = builder.createViewModel(_document, _document.nodes[i]);
+          if (componentViewModel != null) {
             break;
           }
         }
-        if (component == null) {
+        if (componentViewModel == null) {
           throw Exception("Couldn't find styler to create component for document node: ${_document.nodes[i]}");
         }
-        components.add(component);
+        componentViewModels.add(componentViewModel);
       }
 
       newViewModel = SingleColumnLayoutViewModel(
-        componentViewModels: components,
+        componentViewModels: componentViewModels,
       );
     }
 
@@ -211,7 +220,7 @@ class SingleColumnLayoutPresenter {
     final removedComponents = <String>[];
     final changedComponents = <String>[];
 
-    final nodeIdToComponentMap = <String, SingleColumnLayoutComponentViewModel>{};
+    final nodeIdToComponentViewModelMap = <String, SingleColumnLayoutComponentViewModel>{};
     // Maps a component's node ID to a change code:
     //  -1 - the component was removed
     //   0 - the component is unchanged
@@ -220,16 +229,16 @@ class SingleColumnLayoutPresenter {
     final changeMap = <String, int>{};
     for (final oldComponent in oldViewModel.componentViewModels) {
       final nodeId = oldComponent.nodeId;
-      nodeIdToComponentMap[nodeId] = oldComponent;
+      nodeIdToComponentViewModelMap[nodeId] = oldComponent;
       changeMap[nodeId] = -1;
     }
-    for (final newComponent in newViewModel.componentViewModels) {
-      final nodeId = newComponent.nodeId;
-      if (nodeIdToComponentMap.containsKey(nodeId)) {
-        if (nodeIdToComponentMap[nodeId] == newComponent) {
+    for (final newComponentViewModel in newViewModel.componentViewModels) {
+      final nodeId = newComponentViewModel.nodeId;
+      if (nodeIdToComponentViewModelMap.containsKey(nodeId)) {
+        if (nodeIdToComponentViewModelMap[nodeId] == newComponentViewModel) {
           // The component hasn't changed.
           changeMap[nodeId] = 0;
-        } else if (nodeIdToComponentMap[nodeId].runtimeType == newComponent.runtimeType) {
+        } else if (nodeIdToComponentViewModelMap[nodeId].runtimeType == newComponentViewModel.runtimeType) {
           // The component still exists, but it changed.
           changeMap[nodeId] = 1;
         } else {
@@ -307,9 +316,6 @@ class SingleColumnLayoutPresenterChangeListener {
     required List<String> changedComponents,
     required List<String> removedComponents,
   }) {
-    print("Added components: $addedComponents");
-    print("Changed components: $changedComponents");
-    print("Removed components: $removedComponents");
     _onViewModelChange?.call(
       addedComponents: addedComponents,
       changedComponents: changedComponents,

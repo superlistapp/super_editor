@@ -529,7 +529,7 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
   DocumentPosition? findLastSelectablePosition() {
     NodePosition? nodePosition;
     String? nodeId;
-    
+
     for (int i = _topToBottomComponentKeys.length - 1; i >= 0; i--) {
       final componentKey = _topToBottomComponentKeys[i];
       final component = componentKey.currentState as DocumentComponent;
@@ -631,6 +631,15 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
   }
 }
 
+/// Builds and rebuilds a component widget whenever the associated [watchNode]
+/// changes.
+///
+/// For example, the given [builder] might produce a paragraph component. The
+/// corresponding document node has ID "1", provided as [watchNode]. Whenever
+/// the [presenter] notifies us of a change to node "1", this widget rebuilds
+/// the paragraph component by calling the [builder]. This per-component
+/// rebuild allows individual component widgets to update in the layout, without
+/// rebuilding the entire layout.
 class _PresenterComponentBuilder extends StatefulWidget {
   const _PresenterComponentBuilder({
     Key? key,
@@ -682,6 +691,7 @@ class _PresenterComponentBuilderState extends State<_PresenterComponentBuilder> 
     required List<String> removedComponents,
   }) {
     if (changedComponents.contains(widget.watchNode)) {
+      // TODO: without this setState(), the document layout resolve returns null. Why?
       setState(() {
         // Re-build.
       });

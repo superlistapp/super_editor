@@ -111,7 +111,6 @@ class TaskComponentBuilder implements ComponentBuilder {
         _editor.execute(CompleteTaskRequest(nodeId: node.id));
       },
       text: node.text,
-      textStyleBuilder: noStyleBuilder,
       selectionColor: const Color(0x00000000),
     );
   }
@@ -144,20 +143,23 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
     required this.isComplete,
     required this.setComplete,
     required this.text,
-    required this.textStyleBuilder,
+    TextComponentTextStyles? textStyler,
     this.textDirection = TextDirection.ltr,
     this.textAlignment = TextAlign.left,
     this.selection,
     required this.selectionColor,
     this.highlightWhenEmpty = false,
-  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
+  }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding) {
+    if (textStyler != null) {
+      super.textStyler = textStyler;
+    }
+  }
 
   bool isComplete;
   void Function(bool) setComplete;
-  AttributedText text;
 
   @override
-  AttributionStyleBuilder textStyleBuilder;
+  AttributedText text;
   @override
   TextDirection textDirection;
   @override
@@ -178,7 +180,7 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
       isComplete: isComplete,
       setComplete: setComplete,
       text: text,
-      textStyleBuilder: textStyleBuilder,
+      textStyler: textStyler,
       textDirection: textDirection,
       selection: selection,
       selectionColor: selectionColor,
@@ -194,26 +196,10 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
           runtimeType == other.runtimeType &&
           isComplete == other.isComplete &&
           setComplete == other.setComplete &&
-          text == other.text &&
-          textStyleBuilder == other.textStyleBuilder &&
-          textDirection == other.textDirection &&
-          textAlignment == other.textAlignment &&
-          selection == other.selection &&
-          selectionColor == other.selectionColor &&
-          highlightWhenEmpty == other.highlightWhenEmpty;
+          isTextViewModelEquivalent(other);
 
   @override
-  int get hashCode =>
-      super.hashCode ^
-      isComplete.hashCode ^
-      setComplete.hashCode ^
-      text.hashCode ^
-      textStyleBuilder.hashCode ^
-      textDirection.hashCode ^
-      textAlignment.hashCode ^
-      selection.hashCode ^
-      selectionColor.hashCode ^
-      highlightWhenEmpty.hashCode;
+  int get hashCode => super.hashCode ^ isComplete.hashCode ^ setComplete.hashCode ^ textHashCode;
 }
 
 /// A document component that displays a complete-able task.

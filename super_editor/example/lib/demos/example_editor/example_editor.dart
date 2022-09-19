@@ -42,11 +42,12 @@ class _ExampleEditorState extends State<ExampleEditor> {
   void initState() {
     super.initState();
     _doc = createInitialDocument()..addListener(_onDocumentChange);
+    _composer = DocumentComposer()..addListener(_hideOrShowToolbar);
     _docEditor = DocumentEditor(document: _doc as MutableDocument, requestHandlers: [
       (request) => request is CompleteTaskRequest ? CompleteTaskCommand(nodeId: request.nodeId) : null,
       ...defaultRequestHandlers,
-    ]);
-    _composer = DocumentComposer()..addListener(_hideOrShowToolbar);
+    ])
+      ..context.put("composer", _composer);
     _docOps = CommonEditorOperations(
       editor: _docEditor,
       composer: _composer,
