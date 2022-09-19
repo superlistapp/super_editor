@@ -179,6 +179,30 @@ void main() {
       );
     });
 
+    testWidgetsOnAllPlatforms('places the caret at the beginning when tapping above the start of the content',
+        (tester) async {
+      final testContext = await tester
+          .createDocument() //
+          .withSingleParagraph()
+          .withEditorSize(const Size(300, 300))
+          .pump();
+
+      // Tap above the start of the content a small margin.
+      await tester.tapAt(tester.getTopRight(find.byType(SuperEditor)) - const Offset(10, 0));
+      await tester.pump(kTapMinTime);
+
+      // Ensure selection is at the beginning of the document.
+      expect(
+        SuperEditorInspector.findDocumentSelection(),
+        DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: testContext.editContext.editor.document.nodes.first.id,
+            nodePosition: const TextNodePosition(offset: 0),
+          ),
+        ),
+      );
+    });
+
     testWidgetsOnDesktop(
         "dragging a single component selection above a component selects to the beginning of the component",
         (tester) async {
