@@ -1103,7 +1103,9 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
         // scroller is still attached to the _scrollController.
         //
         // Defer adding the listener to the next frame.
-        setState(() {});
+        WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+          setState(() {});
+        });
       } else {
         if (scrollPosition != _activeScrollPosition) {
           _activeScrollPosition = scrollPosition;
