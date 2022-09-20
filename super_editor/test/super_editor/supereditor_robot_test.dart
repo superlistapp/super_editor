@@ -69,7 +69,6 @@ void main() {
           .withSingleParagraph()
           .forDesktop()
           .pump();
-      await tester.pumpAndSettle();
 
       // Ensure that the document doesn't have a selection.
       expect(SuperEditorInspector.findDocumentSelection(), null);
