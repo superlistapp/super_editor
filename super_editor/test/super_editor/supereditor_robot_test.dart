@@ -94,8 +94,14 @@ void main() {
       // Pause so we don't double-tap and select a word instead of placing the caret
       await tester.pump(const Duration(seconds: 2));
 
+      // Set the selection to something else to prevent false positives in the event that the upstream tap doesn't
+      // change the selection.
+      await tester.placeCaretInParagraph('1', 0);
+      expect(SuperEditorInspector.findDocumentSelection(), isNot(downstreamSelection));
+
       // Tap to place the caret in the first paragraph with an upstream affinity. Since we're tapping at a location that
       // is not a line break, this should produce the same result as our previous tap with a downstream affinity.
+      await tester.pump(const Duration(seconds: 2));
       await tester.placeCaretInParagraph("1", offsetBeforeLineBreak, affinity: TextAffinity.upstream);
       expect(
         SuperEditorInspector.findDocumentSelection(),
