@@ -195,6 +195,9 @@ class SuperEditorInspector {
     }
 
     final textLayout = (textComponentKey.currentState as TextComponentState).textLayout;
+    if (textLayout.getLineCount() < 2) {
+      throw Exception('Specified node does not contain a line break');
+    }
     return textLayout.getPositionAtEndOfLine(const TextPosition(offset: 0)).offset;
   }
 
