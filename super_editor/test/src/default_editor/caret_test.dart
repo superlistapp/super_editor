@@ -18,45 +18,14 @@ void main() {
     group('text affinity', () {
       // Use a relatively small screen size to make sure we have a line break.
       const screenSize = Size(400, 400);
+      // Add some minimum buffer to the greater than x and y offset expectations to reduce the chance of false
+      // positives. The x buffer is chosen to be most of the width of the screen, the y to be slightly less than the
+      // height of the rendered caret. If these tests start to fail check the actual offsets reported in the output
+      // and adjust these numbers if necessary.
+      const xExpectBuffer = 300;
+      const yExpectBuffer = 24;
 
-      testWidgetsOnAllPlatforms('renders caret at end of line when affinity is upstream', (WidgetTester tester) async {
-        tester.binding.window
-          ..devicePixelRatioTestValue = 1.0
-          ..platformDispatcher.textScaleFactorTestValue = 1.0
-          ..physicalSizeTestValue = screenSize;
-
-        final docKey = GlobalKey();
-        final composer = DocumentComposer();
-        await tester.pumpWidget(
-          _createTestApp(
-            gestureMode: DocumentGestureMode.mouse,
-            docKey: docKey,
-            composer: composer,
-          ),
-        );
-        final lineBreakOffset = SuperEditorInspector.findOffsetOfLineBreak('1');
-        composer.selection = DocumentSelection.collapsed(
-          position: DocumentPosition(
-            nodeId: '1',
-            nodePosition: TextNodePosition(
-              offset: lineBreakOffset,
-              affinity: TextAffinity.upstream,
-            ),
-          ),
-        );
-        await tester.pumpAndSettle();
-
-        final caretOffset = SuperEditorInspector.findCaretOffsetInDocument();
-        expect(
-          caretOffset,
-          _computeExpectedDesktopCaretOffset(
-            tester,
-            TextPosition(offset: lineBreakOffset, affinity: TextAffinity.upstream),
-          ),
-        );
-      });
-
-      testWidgetsOnAllPlatforms('renders caret at start of line when affinity is downstream',
+      testWidgetsOnAllPlatforms('upstream and downstream positions render differently at a line break',
           (WidgetTester tester) async {
         tester.binding.window
           ..devicePixelRatioTestValue = 1.0
@@ -72,6 +41,8 @@ void main() {
             composer: composer,
           ),
         );
+        await tester.placeCaretInParagraph('1', 0);
+        final startOfFirstLineCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
         final lineBreakOffset = SuperEditorInspector.findOffsetOfLineBreak('1');
         composer.selection = DocumentSelection.collapsed(
           position: DocumentPosition(
@@ -83,13 +54,24 @@ void main() {
           ),
         );
         await tester.pumpAndSettle();
+        final upstreamCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
 
-        final caretOffset = SuperEditorInspector.findCaretOffsetInDocument();
-        final expectedCaretOffset = _computeExpectedDesktopCaretOffset(
-          tester,
-          TextPosition(offset: lineBreakOffset, affinity: TextAffinity.upstream),
+        composer.selection = DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: '1',
+            nodePosition: TextNodePosition(
+              offset: lineBreakOffset,
+              affinity: TextAffinity.downstream,
+            ),
+          ),
         );
-        expect(caretOffset, expectedCaretOffset);
+        await tester.pumpAndSettle();
+        final downstreamCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
+
+        expect(downstreamCaretOffset.dx, startOfFirstLineCaretOffset.dx);
+        expect(downstreamCaretOffset.dy, greaterThan(startOfFirstLineCaretOffset.dy + yExpectBuffer));
+        expect(upstreamCaretOffset.dx, greaterThan(startOfFirstLineCaretOffset.dx + xExpectBuffer));
+        expect(upstreamCaretOffset.dy, startOfFirstLineCaretOffset.dy);
       });
 
       testWidgetsOnAllPlatforms('upstream and downstream positions render the same if not at a line break',
