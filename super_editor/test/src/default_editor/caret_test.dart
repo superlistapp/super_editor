@@ -33,39 +33,20 @@ void main() {
           ..physicalSizeTestValue = screenSize;
 
         final docKey = GlobalKey();
-        final composer = DocumentComposer();
         await tester.pumpWidget(
           _createTestApp(
             gestureMode: DocumentGestureMode.mouse,
             docKey: docKey,
-            composer: composer,
           ),
         );
         await tester.placeCaretInParagraph('1', 0);
         final startOfFirstLineCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
         final lineBreakOffset = SuperEditorInspector.findOffsetOfLineBreak('1');
-        composer.selection = DocumentSelection.collapsed(
-          position: DocumentPosition(
-            nodeId: '1',
-            nodePosition: TextNodePosition(
-              offset: lineBreakOffset,
-              affinity: TextAffinity.upstream,
-            ),
-          ),
-        );
-        await tester.pumpAndSettle();
+        await tester.pump(const Duration(seconds: 2));
+        await tester.placeCaretInParagraph('1', lineBreakOffset, affinity: TextAffinity.upstream);
         final upstreamCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
-
-        composer.selection = DocumentSelection.collapsed(
-          position: DocumentPosition(
-            nodeId: '1',
-            nodePosition: TextNodePosition(
-              offset: lineBreakOffset,
-              affinity: TextAffinity.downstream,
-            ),
-          ),
-        );
-        await tester.pumpAndSettle();
+        await tester.pump(const Duration(seconds: 2));
+        await tester.placeCaretInParagraph('1', lineBreakOffset, affinity: TextAffinity.downstream);
         final downstreamCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
 
         expect(downstreamCaretOffset.dx, startOfFirstLineCaretOffset.dx);
@@ -82,37 +63,20 @@ void main() {
           ..physicalSizeTestValue = screenSize;
 
         final docKey = GlobalKey();
-        final composer = DocumentComposer();
         await tester.pumpWidget(
           _createTestApp(
             gestureMode: DocumentGestureMode.mouse,
             docKey: docKey,
-            composer: composer,
           ),
         );
         // Find an offset that is not at a line break, so that the caret should render the same with upstream or
         // downstream affinity.
         final textOffset = SuperEditorInspector.findOffsetOfLineBreak('1') - 1;
 
-        composer.selection = DocumentSelection.collapsed(
-          position: DocumentPosition(
-            nodeId: '1',
-            nodePosition: TextNodePosition(offset: textOffset, affinity: TextAffinity.downstream),
-          ),
-        );
-        await tester.pumpAndSettle();
+        await tester.placeCaretInParagraph('1', textOffset, affinity: TextAffinity.downstream);
         final downstreamCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
-
-        composer.selection = DocumentSelection.collapsed(
-          position: DocumentPosition(
-            nodeId: '1',
-            nodePosition: TextNodePosition(
-              offset: textOffset,
-              affinity: TextAffinity.upstream,
-            ),
-          ),
-        );
-        await tester.pumpAndSettle();
+        await tester.pump(const Duration(seconds: 2));
+        await tester.placeCaretInParagraph('1', textOffset, affinity: TextAffinity.upstream);
         final upstreamCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
 
         expect(upstreamCaretOffset, downstreamCaretOffset);
@@ -351,18 +315,13 @@ void main() {
   });
 }
 
-Widget _createTestApp({
-  required DocumentGestureMode gestureMode,
-  required GlobalKey docKey,
-  DocumentComposer? composer,
-}) {
+Widget _createTestApp({required DocumentGestureMode gestureMode, required GlobalKey docKey}) {
   final editor = _createTestDocEditor();
   return MaterialApp(
     home: Scaffold(
       body: SuperEditor(
         documentLayoutKey: docKey,
         editor: editor,
-        composer: composer,
         gestureMode: gestureMode,
       ),
     ),
