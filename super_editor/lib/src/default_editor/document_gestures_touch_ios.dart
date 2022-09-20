@@ -145,7 +145,13 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
 
     widget.focusNode.addListener(_onFocusChange);
     if (widget.focusNode.hasFocus) {
-      _showEditingControlsOverlay();
+      // During Hot Reload, the gesture mode could be changed.
+      // If that's the case, initState is called while the Overlay is being
+      // built. This could crash the app. Because of that, we show the editing
+      // controls overlay in the next frame.
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+        _showEditingControlsOverlay();
+      });
     }
 
     _scrollController = _scrollController = (widget.scrollController ?? ScrollController());
@@ -249,7 +255,12 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
       _removeEditingOverlayControls();
 
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-        _showEditingControlsOverlay();
+        // During Hot Reload, the gesture mode could be changed,
+        // so it's possible that we are no longer mounted after
+        // the post frame callback.
+        if (mounted) {
+          _showEditingControlsOverlay();
+        }
       });
     }
   }
@@ -1086,9 +1097,20 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   @override
   Widget build(BuildContext context) {
     if (_scrollController.hasClients) {
-      if (scrollPosition != _activeScrollPosition) {
-        _activeScrollPosition = scrollPosition;
-        _activeScrollPosition?.addListener(_onScrollChange);
+      if (_scrollController.positions.length > 1) {
+        // During Hot Reload, if the gesture mode was changed,
+        // the widget might be built while the old gesture interactor
+        // scroller is still attached to the _scrollController.
+        //
+        // Defer adding the listener to the next frame.
+        WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+          setState(() {});
+        });
+      } else {
+        if (scrollPosition != _activeScrollPosition) {
+          _activeScrollPosition = scrollPosition;
+          _activeScrollPosition?.addListener(_onScrollChange);
+        }
       }
     }
 

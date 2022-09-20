@@ -123,14 +123,19 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     );
 
     widget.focusNode.addListener(_onFocusChange);
-    if (widget.focusNode.hasFocus) {
-      _showEditingControlsOverlay();
-    }
 
     _scrollController = _scrollController = (widget.scrollController ?? ScrollController());
     // On the next frame, after our ScrollController is attached to the Scrollable,
     // add a listener for scroll changes.
+    //
+    // During Hot Reload, the gesture mode could be changed.
+    // If that's the case, initState is called while the Overlay is being
+    // built. This could crash the app. Because of that, we show the editing
+    // controls overlay in the next frame.
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      if (widget.focusNode.hasFocus) {
+        _showEditingControlsOverlay();
+      }
       _updateScrollPositionListener();
     });
     // I added this listener directly to our ScrollController because the listener we added
@@ -226,7 +231,12 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       _removeEditingOverlayControls();
 
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-        _showEditingControlsOverlay();
+        // During Hot Reload, the gesture mode could be changed,
+        // so it's possible that we are no longer mounted after
+        // the post frame callback.
+        if (mounted) {
+          _showEditingControlsOverlay();
+        }
       });
     }
   }
