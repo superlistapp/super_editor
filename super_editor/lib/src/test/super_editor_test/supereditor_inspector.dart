@@ -1,5 +1,8 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:super_editor/src/default_editor/document_gestures_touch_android.dart';
+import 'package:super_editor/src/default_editor/document_gestures_touch_ios.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
@@ -41,11 +44,27 @@ class SuperEditorInspector {
 
   /// Returns the (x,y) offset for the caret that's currently visible in the document.
   static Offset findCaretOffsetInDocument([Finder? finder]) {
-    final caretBox = find.byKey(primaryCaretKey).evaluate().single.renderObject as RenderBox;
-    final globalCaretOffset = caretBox.localToGlobal(Offset.zero);
-    final documentLayout = _findDocumentLayout(finder);
-    final globalToDocumentOffset = documentLayout.getGlobalOffsetFromDocumentOffset(Offset.zero);
-    return globalCaretOffset - globalToDocumentOffset;
+    final desktopCaretBox = find.byKey(primaryCaretKey).evaluate().singleOrNull?.renderObject as RenderBox?;
+    if (desktopCaretBox != null) {
+      final globalCaretOffset = desktopCaretBox.localToGlobal(Offset.zero);
+      final documentLayout = _findDocumentLayout(finder);
+      final globalToDocumentOffset = documentLayout.getGlobalOffsetFromDocumentOffset(Offset.zero);
+      return globalCaretOffset - globalToDocumentOffset;
+    }
+
+    final androidControls = find.byType(AndroidDocumentTouchEditingControls).evaluate().lastOrNull?.widget
+        as AndroidDocumentTouchEditingControls?;
+    if (androidControls != null) {
+      return androidControls.editingController.caretTop!;
+    }
+
+    final iOSControls =
+        find.byType(IosDocumentTouchEditingControls).evaluate().lastOrNull?.widget as IosDocumentTouchEditingControls?;
+    if (iOSControls != null) {
+      return iOSControls.editingController.caretTop!;
+    }
+
+    throw Exception('Could not locate caret in document');
   }
 
   /// Returns the (x,y) offset for the component which renders the node with the given [nodeId].

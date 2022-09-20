@@ -5,6 +5,7 @@ import 'package:super_editor/src/default_editor/document_gestures_touch_ios.dart
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 
+import '../../super_editor/document_test_tools.dart';
 import '../../test_tools.dart';
 
 void main() {
@@ -16,10 +17,10 @@ void main() {
     final tapPosition = DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: textPosition.offset));
 
     group('text affinity', () {
-      // Use a relatively small screen size to make sure we have a line break.
-      const screenSize = Size(400, 400);
+      // Use a relatively small size to make sure we have a line break.
+      const editorSize = Size(400, 400);
       // Add some minimum buffer to the greater than x and y offset expectations to reduce the chance of false
-      // positives. The x buffer is chosen to be most of the width of the screen, the y to be slightly less than the
+      // positives. The x buffer is chosen to be most of the width of the editor, the y to be slightly less than the
       // height of the rendered caret. If these tests start to fail check the actual offsets reported in the output
       // and adjust these numbers if necessary.
       const xExpectBuffer = 300;
@@ -27,18 +28,12 @@ void main() {
 
       testWidgetsOnAllPlatforms('upstream and downstream positions render differently at a line break',
           (WidgetTester tester) async {
-        tester.binding.window
-          ..devicePixelRatioTestValue = 1.0
-          ..platformDispatcher.textScaleFactorTestValue = 1.0
-          ..physicalSizeTestValue = screenSize;
+        await tester //
+            .createDocument()
+            .withSingleParagraph()
+            .withEditorSize(editorSize)
+            .pump();
 
-        final docKey = GlobalKey();
-        await tester.pumpWidget(
-          _createTestApp(
-            gestureMode: DocumentGestureMode.mouse,
-            docKey: docKey,
-          ),
-        );
         await tester.placeCaretInParagraph('1', 0);
         final startOfFirstLineCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
         final lineBreakOffset = SuperEditorInspector.findOffsetOfLineBreak('1');
@@ -57,18 +52,12 @@ void main() {
 
       testWidgetsOnAllPlatforms('upstream and downstream positions render the same if not at a line break',
           (WidgetTester tester) async {
-        tester.binding.window
-          ..devicePixelRatioTestValue = 1.0
-          ..platformDispatcher.textScaleFactorTestValue = 1.0
-          ..physicalSizeTestValue = screenSize;
+        await tester //
+            .createDocument()
+            .withSingleParagraph()
+            .withEditorSize(editorSize)
+            .pump();
 
-        final docKey = GlobalKey();
-        await tester.pumpWidget(
-          _createTestApp(
-            gestureMode: DocumentGestureMode.mouse,
-            docKey: docKey,
-          ),
-        );
         // Find an offset that is not at a line break, so that the caret should render the same with upstream or
         // downstream affinity.
         final textOffset = SuperEditorInspector.findOffsetOfLineBreak('1') - 1;
