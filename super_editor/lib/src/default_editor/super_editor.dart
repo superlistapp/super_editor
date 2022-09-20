@@ -3,7 +3,9 @@ import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:flutter/material.dart' hide SelectableText;
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
+import 'package:super_editor/src/core/document_debug_paint.dart';
 import 'package:super_editor/src/core/document_editor.dart';
+import 'package:super_editor/src/core/document_interaction.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/core/styles.dart';
@@ -263,7 +265,7 @@ class SuperEditor extends StatefulWidget {
   final SoftwareKeyboardHandler? softwareKeyboardHandler;
 
   /// Paints some extra visual ornamentation to help with
-  /// debugging, when true.
+  /// debugging.
   final DebugPaintConfig debugPaint;
 
   @override
@@ -403,7 +405,7 @@ class SuperEditorState extends State<SuperEditor> {
 
     _docLayoutSelectionStyler = SingleColumnLayoutSelectionStyler(
       document: document,
-      composer: editContext.composer,
+      selection: editContext.composer.selectionNotifier,
       selectionStyles: widget.selectionStyles,
     );
 
@@ -629,32 +631,6 @@ class SuperEditorState extends State<SuperEditor> {
       );
     });
   }
-}
-
-enum DocumentInputSource {
-  keyboard,
-  ime,
-}
-
-enum DocumentGestureMode {
-  mouse,
-  android,
-  iOS,
-}
-
-/// Configures the aspects of the editor that show debug paint.
-class DebugPaintConfig {
-  const DebugPaintConfig({
-    this.scrolling = false,
-    this.gestures = false,
-    this.scrollingMinimapId,
-    this.layout = false,
-  });
-
-  final bool scrolling;
-  final bool gestures;
-  final String? scrollingMinimapId;
-  final bool layout;
 }
 
 /// Builds widgets that are displayed at the same position and size as

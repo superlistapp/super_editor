@@ -5,7 +5,9 @@ export 'package:super_text_layout/src/caret_layer.dart';
 
 export 'src/core/document.dart';
 export 'src/core/document_composer.dart';
+export 'src/core/document_debug_paint.dart';
 export 'src/core/document_editor.dart';
+export 'src/core/document_interaction.dart';
 export 'src/core/document_layout.dart';
 export 'src/core/document_selection.dart';
 export 'src/core/edit_context.dart';
@@ -43,3 +45,4 @@ export 'src/infrastructure/multi_tap_gesture.dart';
 export 'src/infrastructure/scrolling_diagnostics/scrolling_diagnostics.dart';
 export 'src/infrastructure/strings.dart';
 export 'src/infrastructure/super_textfield/super_textfield.dart';
+export 'src/super_document/super_document.dart';

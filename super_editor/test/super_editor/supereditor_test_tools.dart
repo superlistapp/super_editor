@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:super_editor/src/default_editor/super_editor.dart';
+import 'package:super_editor/super_editor.dart';
 
 import '../test_tools.dart';
 
