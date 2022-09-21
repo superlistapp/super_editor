@@ -419,8 +419,8 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
     }
 
     final selection = widget.selection.value;
-    final didTapOnExistingSelection = selection != null && selection.isCollapsed && selection.extent == docPosition;
-
+    final didTapOnExistingSelection =
+        selection != null && widget.document.doesSelectionContainPosition(selection, docPosition);
     if (didTapOnExistingSelection) {
       // Toggle the toolbar display when the user taps on the collapsed caret,
       // or on top of an existing selection.
@@ -428,6 +428,7 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
     } else {
       // The user tapped somewhere else in the document. Hide the toolbar.
       _editingController.hideToolbar();
+      _clearSelection();
     }
 
     widget.focusNode.requestFocus();

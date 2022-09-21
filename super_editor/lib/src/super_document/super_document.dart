@@ -32,16 +32,17 @@ class SuperDocument extends StatefulWidget {
     Key? key,
     this.focusNode,
     required this.document,
-    this.scrollController,
     this.documentLayoutKey,
+    this.selection,
+    this.scrollController,
     Stylesheet? stylesheet,
     this.customStylePhases = const [],
     this.documentOverlayBuilders = const [],
     List<ComponentBuilder>? componentBuilders,
     List<ReadOnlyDocumentKeyboardAction>? keyboardActions,
     SelectionStyles? selectionStyle,
-    this.inputSource = DocumentInputSource.keyboard,
-    this.gestureMode = DocumentGestureMode.mouse,
+    this.inputSource,
+    this.gestureMode,
     this.androidHandleColor,
     this.androidToolbarBuilder,
     this.iOSHandleColor,
@@ -62,19 +63,21 @@ class SuperDocument extends StatefulWidget {
   /// The [Document] displayed in this [SuperDocument], in read-only mode.
   final Document document;
 
-  /// The [ScrollController] that governs this [SuperDocument]'s scroll
-  /// offset.
-  ///
-  /// [scrollController] is not used if this [SuperDocument] has an ancestor
-  /// [Scrollable].
-  final ScrollController? scrollController;
-
   /// [GlobalKey] that's bound to the [DocumentLayout] within
   /// this [SuperDocument].
   ///
   /// This key can be used to lookup visual components in the document
   /// layout within this [SuperDocument].
   final GlobalKey? documentLayoutKey;
+
+  final ValueNotifier<DocumentSelection?>? selection;
+
+  /// The [ScrollController] that governs this [SuperDocument]'s scroll
+  /// offset.
+  ///
+  /// [scrollController] is not used if this [SuperDocument] has an ancestor
+  /// [Scrollable].
+  final ScrollController? scrollController;
 
   /// Style rules applied through the document presentation.
   final Stylesheet stylesheet;
@@ -118,7 +121,7 @@ class SuperDocument extends StatefulWidget {
   final List<ReadOnlyDocumentKeyboardAction> keyboardActions;
 
   /// The [SuperEditor] input source, e.g., keyboard or Input Method Engine.
-  final DocumentInputSource inputSource;
+  final DocumentInputSource? inputSource;
 
   /// The [SuperEditor] gesture mode, e.g., mouse or touch.
   final DocumentGestureMode? gestureMode;
@@ -152,11 +155,17 @@ class SuperDocument extends StatefulWidget {
   final DebugPaintConfig debugPaint;
 
   @override
-  State<SuperDocument> createState() => _SuperDocumentState();
+  State<SuperDocument> createState() => SuperDocumentState();
 }
 
-class _SuperDocumentState extends State<SuperDocument> {
+class SuperDocumentState extends State<SuperDocument> {
   late DocumentEditor _editor;
+  @visibleForTesting
+  Document get document => _editor.document;
+
+  late final ValueNotifier<DocumentSelection?> _selection;
+  @visibleForTesting
+  DocumentSelection? get selection => _selection.value;
 
   // GlobalKey used to access the [DocumentLayoutState] to figure
   // out where in the document the user taps or drags.
@@ -165,8 +174,6 @@ class _SuperDocumentState extends State<SuperDocument> {
   late SingleColumnStylesheetStyler _docStylesheetStyler;
   late SingleColumnLayoutCustomComponentStyler _docLayoutPerComponentBlockStyler;
   late SingleColumnLayoutSelectionStyler _docLayoutSelectionStyler;
-
-  final _selection = ValueNotifier<DocumentSelection?>(null);
 
   late AutoScrollController _autoScrollController;
 
@@ -180,6 +187,7 @@ class _SuperDocumentState extends State<SuperDocument> {
   void initState() {
     super.initState();
     _editor = _ReadOnlyDocumentEditor(document: widget.document);
+    _selection = widget.selection ?? ValueNotifier<DocumentSelection?>(null);
 
     _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
 
@@ -203,6 +211,9 @@ class _SuperDocumentState extends State<SuperDocument> {
 
     if (widget.document != oldWidget.document) {
       _editor = _ReadOnlyDocumentEditor(document: widget.document);
+    }
+    if (widget.selection != oldWidget.selection) {
+      _selection = widget.selection ?? ValueNotifier<DocumentSelection?>(null);
     }
   }
 
