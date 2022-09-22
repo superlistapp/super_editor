@@ -3,14 +3,14 @@ import 'package:flutter/material.dart';
 class IOSTextEditingFloatingToolbar extends StatelessWidget {
   const IOSTextEditingFloatingToolbar({
     Key? key,
-    required this.onCutPressed,
-    required this.onCopyPressed,
-    required this.onPastePressed,
+    this.onCutPressed,
+    this.onCopyPressed,
+    this.onPastePressed,
   }) : super(key: key);
 
-  final VoidCallback onCutPressed;
-  final VoidCallback onCopyPressed;
-  final VoidCallback onPastePressed;
+  final VoidCallback? onCutPressed;
+  final VoidCallback? onCopyPressed;
+  final VoidCallback? onPastePressed;
 
   @override
   Widget build(BuildContext context) {
@@ -21,18 +21,21 @@ class IOSTextEditingFloatingToolbar extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _buildButton(
-            onPressed: onCutPressed,
-            title: 'Cut',
-          ),
-          _buildButton(
-            onPressed: onCopyPressed,
-            title: 'Copy',
-          ),
-          _buildButton(
-            onPressed: onPastePressed,
-            title: 'Paste',
-          ),
+          if (onCutPressed != null)
+            _buildButton(
+              onPressed: onCutPressed!,
+              title: 'Cut',
+            ),
+          if (onCopyPressed != null)
+            _buildButton(
+              onPressed: onCopyPressed!,
+              title: 'Copy',
+            ),
+          if (onPastePressed != null)
+            _buildButton(
+              onPressed: onPastePressed!,
+              title: 'Paste',
+            ),
         ],
       ),
     );
