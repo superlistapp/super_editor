@@ -34,20 +34,30 @@ void main() {
             .withEditorSize(editorSize)
             .pump();
 
+        // Find the coordinates of the caret at the start of the first line.
         await tester.placeCaretInParagraph('1', 0);
         final startOfFirstLineCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
+
+        // Find the offset of the first line break.
         final lineBreakOffset = SuperEditorInspector.findOffsetOfLineBreak('1');
-        await tester.pump(const Duration(seconds: 2));
+
+        // Find the coordinates of the caret at the end of the first line (line break offset w/ upstream affinity).
+        await tester.pump(kTapTimeout * 2); // Simulate a pause to avoid a double tap.
         await tester.placeCaretInParagraph('1', lineBreakOffset, affinity: TextAffinity.upstream);
         final upstreamCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
-        await tester.pump(const Duration(seconds: 2));
+
+        // Find the coordinates of the caret at the start of the second line (line break offset w/ downstream affinity).
+        await tester.pump(kTapTimeout * 2); // Simulate a pause to avoid a double tap.
         await tester.placeCaretInParagraph('1', lineBreakOffset, affinity: TextAffinity.downstream);
         final downstreamCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
 
-        expect(downstreamCaretOffset.dx, startOfFirstLineCaretOffset.dx);
-        expect(downstreamCaretOffset.dy, greaterThan(startOfFirstLineCaretOffset.dy + yExpectBuffer));
+        // The upstream caret should be at the same y and greater x than the caret at the start of the paragraph.
         expect(upstreamCaretOffset.dx, greaterThan(startOfFirstLineCaretOffset.dx + xExpectBuffer));
         expect(upstreamCaretOffset.dy, startOfFirstLineCaretOffset.dy);
+
+        // The downstream caret should be at the same x and greater y than the caret at the start of the paragraph.
+        expect(downstreamCaretOffset.dx, startOfFirstLineCaretOffset.dx);
+        expect(downstreamCaretOffset.dy, greaterThan(startOfFirstLineCaretOffset.dy + yExpectBuffer));
       });
 
       testWidgetsOnAllPlatforms('upstream and downstream positions render the same if not at a line break',
@@ -64,7 +74,7 @@ void main() {
 
         await tester.placeCaretInParagraph('1', textOffset, affinity: TextAffinity.downstream);
         final downstreamCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
-        await tester.pump(const Duration(seconds: 2));
+        await tester.pump(kTapTimeout * 2); // Simulate a pause to avoid a double tap.
         await tester.placeCaretInParagraph('1', textOffset, affinity: TextAffinity.upstream);
         final upstreamCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
 

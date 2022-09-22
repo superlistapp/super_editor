@@ -92,7 +92,7 @@ void main() {
       );
 
       // Pause so we don't double-tap and select a word instead of placing the caret
-      await tester.pump(const Duration(seconds: 2));
+      await tester.pump(kTapTimeout * 2);
 
       // Set the selection to something else to prevent false positives in the event that the upstream tap doesn't
       // change the selection.
