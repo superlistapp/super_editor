@@ -73,40 +73,49 @@ void main() {
       // Ensure that the document doesn't have a selection.
       expect(SuperEditorInspector.findDocumentSelection(), null);
 
-      final offsetBeforeLineBreak = SuperEditorInspector.findOffsetOfLineBreak('1') - 1;
-
-      // Tap to place the caret in the first paragraph. Explicitly use a downstream affinity so we can compare it to
-      // the results of an upstream affinity later in this test.
-      await tester.placeCaretInParagraph("1", offsetBeforeLineBreak, affinity: TextAffinity.downstream);
+      // Tap to place the caret in the first paragraph.
+      await tester.placeCaretInParagraph("1", 10);
 
       // Ensure that the document has the expected text caret selection.
-      final downstreamSelection = DocumentSelection.collapsed(
-        position: DocumentPosition(
-          nodeId: "1",
-          nodePosition: TextNodePosition(offset: offsetBeforeLineBreak),
+      expect(
+        SuperEditorInspector.findDocumentSelection(),
+        const DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: "1",
+            nodePosition: TextNodePosition(offset: 10),
+          ),
         ),
       );
-      expect(
-        SuperEditorInspector.findDocumentSelection(),
-        downstreamSelection,
-      );
+    });
 
-      // Pause so we don't double-tap and select a word instead of placing the caret
-      await tester.pump(kTapTimeout * 2);
+    testWidgetsOnAllPlatforms("taps to place caret at a non-linebreak offset with different affinities",
+        (tester) async {
+      // Configure and render a document.
+      await tester //
+          .createDocument()
+          .withSingleParagraph()
+          .pump();
 
-      // Set the selection to something else to prevent false positives in the event that the upstream tap doesn't
-      // change the selection.
-      await tester.placeCaretInParagraph('1', 0);
-      expect(SuperEditorInspector.findDocumentSelection(), isNot(downstreamSelection));
+      // Ensure that the document doesn't have a selection.
+      expect(SuperEditorInspector.findDocumentSelection(), null);
 
-      // Tap to place the caret in the first paragraph with an upstream affinity. Since we're tapping at a location that
-      // is not a line break, this should produce the same result as our previous tap with a downstream affinity.
-      await tester.pump(const Duration(seconds: 2));
-      await tester.placeCaretInParagraph("1", offsetBeforeLineBreak, affinity: TextAffinity.upstream);
-      expect(
-        SuperEditorInspector.findDocumentSelection(),
-        downstreamSelection,
-      );
+      // Tap to place the caret in the first paragraph with a downstream affinity. This assumes that the paragraph
+      // does not wrap at the second character of the paragraph, which should be true for any reasonable display size.
+      await tester.placeCaretInParagraph("1", 1, affinity: TextAffinity.downstream);
+      final selectionFromDownstreamGesture = SuperEditorInspector.findDocumentSelection();
+
+      // Move the caret somewhere else to avoid false positives if the next gesture does not actually move the caret.
+      await tester.pump(kTapTimeout * 2); // Pause to avoid double tap.
+      await tester.placeCaretInParagraph("1", 0);
+      expect(SuperEditorInspector.findDocumentSelection(), isNot(selectionFromDownstreamGesture));
+
+      // Place the caret at the same offset as before but with an upstream affinity.
+      await tester.pump(kTapTimeout * 2); // Pause to avoid double tap.
+      await tester.placeCaretInParagraph("1", 1, affinity: TextAffinity.upstream);
+      final selectionFromUpstreamGesture = SuperEditorInspector.findDocumentSelection();
+
+      // Ensure that the two selections are the same.
+      expect(selectionFromUpstreamGesture, selectionFromDownstreamGesture);
     });
 
     testWidgetsOnAllPlatforms("taps to place caret after last character", (tester) async {
