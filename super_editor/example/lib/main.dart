@@ -28,7 +28,6 @@ import 'package:super_editor/super_editor.dart';
 import 'demos/demo_attributed_text.dart';
 import 'demos/demo_document_loses_focus.dart';
 import 'demos/demo_switch_document_content.dart';
-import 'demos/scrolling/demo_task_and_chat_with_renderobject.dart';
 import 'demos/super_document/demo_read_only_scrolling_document.dart';
 import 'demos/supertextfield/android/demo_superandroidtextfield.dart';
 import 'logging.dart';
@@ -296,14 +295,7 @@ final _menu = <_MenuGroup>[
   ),
   _MenuGroup(
     title: 'SCROLLING',
-    items: [
-      _MenuItem(
-        icon: Icons.task,
-        title: 'Task and Chat Demo - RenderBox',
-        pageBuilder: (context) {
-          return TaskAndChatWithRenderObjectDemo();
-        },
-      ),
+    items: [      
       _MenuItem(
         icon: Icons.task,
         title: 'Task and Chat Demo - Slivers',
