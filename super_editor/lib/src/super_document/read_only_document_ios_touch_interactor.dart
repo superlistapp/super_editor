@@ -965,7 +965,7 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
     required DocumentLayout docLayout,
   }) {
     final newSelection = getParagraphSelection(docPosition: docPosition, docLayout: docLayout);
-    if (newSelection != null) {
+    if (newSelection != null && !newSelection.isCollapsed) {
       widget.selection.value = newSelection;
       return true;
     } else {

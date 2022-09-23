@@ -115,6 +115,12 @@ Document createInitialDocument() {
               "We hope you enjoy using Super Editor. Let us know what you're building, and please file issues for any bugs that you find.",
         ),
       ),
+      ParagraphNode(
+        id: DocumentEditor.createNodeId(),
+        text: AttributedText(
+          text: "",
+        ),
+      ),
     ],
   );
 }
