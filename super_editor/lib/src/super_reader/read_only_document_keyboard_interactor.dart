@@ -55,11 +55,6 @@ class ReadOnlyDocumentKeyboardInteractor extends StatelessWidget {
   final Widget child;
 
   KeyEventResult _onKeyPressed(FocusNode node, RawKeyEvent keyEvent) {
-    if (keyEvent is! RawKeyDownEvent) {
-      editorKeyLog.finer("Received key event, but ignoring because it's not a down event: $keyEvent");
-      return KeyEventResult.handled;
-    }
-
     editorKeyLog.info("Handling key press: $keyEvent");
     ExecutionInstruction instruction = ExecutionInstruction.continueExecution;
     int index = 0;
@@ -150,6 +145,7 @@ ReadOnlyDocumentKeyboardAction ignoreKeyCombos(List<ShortcutActivator> keys) {
 
 /// Keyboard actions for the standard [SuperEditor].
 final readOnlyDefaultKeyboardActions = <ReadOnlyDocumentKeyboardAction>[
+  removeCollapsedSelectionWhenShiftIsReleased,
   scrollUpDownWithArrowKeys,
   expandSelectionWithArrowKeys,
   expandSelectionToLineStartWithHome,
@@ -159,10 +155,39 @@ final readOnlyDefaultKeyboardActions = <ReadOnlyDocumentKeyboardAction>[
   copyWhenCmdCIsPressed,
 ];
 
+ExecutionInstruction removeCollapsedSelectionWhenShiftIsReleased({
+  required DocumentContext documentContext,
+  required RawKeyEvent keyEvent,
+}) {
+  if (keyEvent is! RawKeyUpEvent) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  if (keyEvent.logicalKey != LogicalKeyboardKey.shift &&
+      keyEvent.logicalKey != LogicalKeyboardKey.shiftLeft &&
+      keyEvent.logicalKey != LogicalKeyboardKey.shiftRight) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  final selection = documentContext.selection.value;
+  if (selection == null || !selection.isCollapsed) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  // The selection is collapsed, and the shift key was released. We don't
+  // want to retain the selection any longer. Remove it.
+  documentContext.selection.value = null;
+  return ExecutionInstruction.haltExecution;
+}
+
 ExecutionInstruction copyWhenCmdCIsPressed({
   required DocumentContext documentContext,
   required RawKeyEvent keyEvent,
 }) {
+  if (keyEvent is! RawKeyDownEvent) {
+    return ExecutionInstruction.continueExecution;
+  }
+
   if (!keyEvent.isPrimaryShortcutKeyPressed || keyEvent.logicalKey != LogicalKeyboardKey.keyC) {
     return ExecutionInstruction.continueExecution;
   }
@@ -186,6 +211,10 @@ ExecutionInstruction selectAllWhenCmdAIsPressed({
   required DocumentContext documentContext,
   required RawKeyEvent keyEvent,
 }) {
+  if (keyEvent is! RawKeyDownEvent) {
+    return ExecutionInstruction.continueExecution;
+  }
+
   if (!keyEvent.isPrimaryShortcutKeyPressed || keyEvent.logicalKey != LogicalKeyboardKey.keyA) {
     return ExecutionInstruction.continueExecution;
   }
@@ -221,6 +250,10 @@ ExecutionInstruction expandSelectionWithArrowKeys({
   required DocumentContext documentContext,
   required RawKeyEvent keyEvent,
 }) {
+  if (keyEvent is! RawKeyDownEvent) {
+    return ExecutionInstruction.continueExecution;
+  }
+
   const arrowKeys = [
     LogicalKeyboardKey.arrowLeft,
     LogicalKeyboardKey.arrowRight,
@@ -260,6 +293,7 @@ ExecutionInstruction expandSelectionWithArrowKeys({
         documentLayout: documentContext.documentLayout,
         selectionNotifier: documentContext.selection,
         movementModifier: movementModifier,
+        retainCollapsedSelection: keyEvent.isShiftPressed,
       );
     } else {
       // Move the caret right/downstream.
@@ -268,6 +302,7 @@ ExecutionInstruction expandSelectionWithArrowKeys({
         documentLayout: documentContext.documentLayout,
         selectionNotifier: documentContext.selection,
         movementModifier: movementModifier,
+        retainCollapsedSelection: keyEvent.isShiftPressed,
       );
     }
   } else if (keyEvent.logicalKey == LogicalKeyboardKey.arrowUp) {
@@ -275,12 +310,14 @@ ExecutionInstruction expandSelectionWithArrowKeys({
       document: documentContext.document,
       documentLayout: documentContext.documentLayout,
       selectionNotifier: documentContext.selection,
+      retainCollapsedSelection: keyEvent.isShiftPressed,
     );
   } else if (keyEvent.logicalKey == LogicalKeyboardKey.arrowDown) {
     didMove = _moveCaretDown(
       document: documentContext.document,
       documentLayout: documentContext.documentLayout,
       selectionNotifier: documentContext.selection,
+      retainCollapsedSelection: keyEvent.isShiftPressed,
     );
   }
 
@@ -292,6 +329,7 @@ bool _moveCaretUpstream({
   required DocumentLayout documentLayout,
   required ValueNotifier<DocumentSelection?> selectionNotifier,
   MovementModifier? movementModifier,
+  required bool retainCollapsedSelection,
 }) {
   final selection = selectionNotifier.value;
   if (selection == null) {
@@ -334,9 +372,11 @@ bool _moveCaretUpstream({
     nodePosition: newExtentNodePosition,
   );
 
-  selectionNotifier.value = selection.expandTo(
-    newExtent,
-  );
+  DocumentSelection? newSelection = selection.expandTo(newExtent);
+  if (newSelection.isCollapsed && !retainCollapsedSelection) {
+    newSelection = null;
+  }
+  selectionNotifier.value = newSelection;
 
   return true;
 }
@@ -364,6 +404,7 @@ bool _moveCaretUp({
   required Document document,
   required ValueNotifier<DocumentSelection?> selectionNotifier,
   required DocumentLayout documentLayout,
+  required bool retainCollapsedSelection,
 }) {
   final selection = selectionNotifier.value;
   if (selection == null) {
@@ -408,7 +449,11 @@ bool _moveCaretUp({
     nodePosition: newExtentNodePosition,
   );
 
-  selectionNotifier.value = selection.expandTo(newExtent);
+  DocumentSelection? newSelection = selection.expandTo(newExtent);
+  if (newSelection.isCollapsed && !retainCollapsedSelection) {
+    newSelection = null;
+  }
+  selectionNotifier.value = newSelection;
 
   return true;
 }
@@ -456,6 +501,7 @@ bool _moveCaretDownstream({
   required DocumentLayout documentLayout,
   required ValueNotifier<DocumentSelection?> selectionNotifier,
   MovementModifier? movementModifier,
+  required bool retainCollapsedSelection,
 }) {
   final selection = selectionNotifier.value;
   if (selection == null) {
@@ -499,9 +545,11 @@ bool _moveCaretDownstream({
     nodePosition: newExtentNodePosition,
   );
 
-  selectionNotifier.value = selection.expandTo(
-    newExtent,
-  );
+  DocumentSelection? newSelection = selection.expandTo(newExtent);
+  if (newSelection.isCollapsed && !retainCollapsedSelection) {
+    newSelection = null;
+  }
+  selectionNotifier.value = newSelection;
 
   return true;
 }
@@ -529,6 +577,7 @@ bool _moveCaretDown({
   required Document document,
   required DocumentLayout documentLayout,
   required ValueNotifier<DocumentSelection?> selectionNotifier,
+  required bool retainCollapsedSelection,
 }) {
   final selection = selectionNotifier.value;
   if (selection == null) {
@@ -573,7 +622,11 @@ bool _moveCaretDown({
     nodePosition: newExtentNodePosition,
   );
 
-  selectionNotifier.value = selection.expandTo(newExtent);
+  DocumentSelection? newSelection = selection.expandTo(newExtent);
+  if (newSelection.isCollapsed && !retainCollapsedSelection) {
+    newSelection = null;
+  }
+  selectionNotifier.value = newSelection;
 
   return true;
 }
@@ -604,6 +657,10 @@ ExecutionInstruction scrollUpDownWithArrowKeys({
   required DocumentContext documentContext,
   required RawKeyEvent keyEvent,
 }) {
+  if (keyEvent is! RawKeyDownEvent) {
+    return ExecutionInstruction.continueExecution;
+  }
+
   if (keyEvent.logicalKey != LogicalKeyboardKey.arrowUp && keyEvent.logicalKey != LogicalKeyboardKey.arrowDown) {
     return ExecutionInstruction.continueExecution;
   }
@@ -623,6 +680,10 @@ ExecutionInstruction expandSelectionToLineStartWithHome({
   required DocumentContext documentContext,
   required RawKeyEvent keyEvent,
 }) {
+  if (keyEvent is! RawKeyDownEvent) {
+    return ExecutionInstruction.continueExecution;
+  }
+
   if (defaultTargetPlatform != TargetPlatform.windows && defaultTargetPlatform != TargetPlatform.linux) {
     return ExecutionInstruction.continueExecution;
   }
@@ -640,6 +701,7 @@ ExecutionInstruction expandSelectionToLineStartWithHome({
       documentLayout: documentContext.documentLayout,
       selectionNotifier: documentContext.selection,
       movementModifier: MovementModifier.line,
+      retainCollapsedSelection: keyEvent.isShiftPressed,
     );
   }
 
@@ -650,6 +712,10 @@ ExecutionInstruction expandSelectionToLineEndWithEnd({
   required DocumentContext documentContext,
   required RawKeyEvent keyEvent,
 }) {
+  if (keyEvent is! RawKeyDownEvent) {
+    return ExecutionInstruction.continueExecution;
+  }
+
   if (defaultTargetPlatform != TargetPlatform.windows && defaultTargetPlatform != TargetPlatform.linux) {
     return ExecutionInstruction.continueExecution;
   }
@@ -667,6 +733,7 @@ ExecutionInstruction expandSelectionToLineEndWithEnd({
       documentLayout: documentContext.documentLayout,
       selectionNotifier: documentContext.selection,
       movementModifier: MovementModifier.line,
+      retainCollapsedSelection: keyEvent.isShiftPressed,
     );
   }
 
@@ -677,6 +744,10 @@ ExecutionInstruction expandSelectionToLineStartOrEndWithCtrlAOrE({
   required DocumentContext documentContext,
   required RawKeyEvent keyEvent,
 }) {
+  if (keyEvent is! RawKeyDownEvent) {
+    return ExecutionInstruction.continueExecution;
+  }
+
   if (Platform.instance.isMac) {
     return ExecutionInstruction.continueExecution;
   }
@@ -698,6 +769,7 @@ ExecutionInstruction expandSelectionToLineStartOrEndWithCtrlAOrE({
       documentLayout: documentContext.documentLayout,
       selectionNotifier: documentContext.selection,
       movementModifier: MovementModifier.line,
+      retainCollapsedSelection: keyEvent.isShiftPressed,
     );
   }
 
@@ -707,6 +779,7 @@ ExecutionInstruction expandSelectionToLineStartOrEndWithCtrlAOrE({
       documentLayout: documentContext.documentLayout,
       selectionNotifier: documentContext.selection,
       movementModifier: MovementModifier.line,
+      retainCollapsedSelection: keyEvent.isShiftPressed,
     );
   }
 

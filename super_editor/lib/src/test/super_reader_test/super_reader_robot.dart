@@ -8,15 +8,6 @@ import 'package:super_editor/super_editor.dart';
 /// Extensions on [WidgetTester] for interacting with a [SuperReader] the way
 /// a user would.
 extension SuperReaderRobot on WidgetTester {
-  /// Place the caret at the given [offset] in a paragraph with the given [nodeId],
-  /// by simulating a user gesture.
-  ///
-  /// The simulated user gesture is probably a tap, but the only guarantee is that
-  /// the caret is placed with a gesture.
-  Future<void> placeCaretInParagraph(String nodeId, int offset, [Finder? superReaderFinder]) async {
-    await _tapInParagraph(nodeId, offset, 1, superReaderFinder);
-  }
-
   /// Simulates a double tap at the given [offset] within the paragraph with the given
   /// [nodeId].
   Future<void> doubleTapInParagraph(String nodeId, int offset, [Finder? superReaderFinder]) async {
