@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:super_editor/super_document_test.dart';
+import 'package:super_editor/super_reader_test.dart';
 import 'package:super_editor/super_editor.dart';
 
 import '../test_tools.dart';
@@ -72,7 +72,7 @@ void main() {
 
       /// Ensure that only the first line is selected.
       expect(
-        SuperDocumentInspector.findDocumentSelection(),
+        SuperReaderInspector.findDocumentSelection(),
         DocumentSelection(
           base: DocumentPosition(nodeId: nodeId, nodePosition: const TextNodePosition(offset: 0)),
           extent: DocumentPosition(nodeId: nodeId, nodePosition: const TextNodePosition(offset: 22)),
@@ -84,7 +84,7 @@ void main() {
 
       /// Ensure that only the second line is selected.
       expect(
-        SuperDocumentInspector.findDocumentSelection(),
+        SuperReaderInspector.findDocumentSelection(),
         DocumentSelection(
           base: DocumentPosition(nodeId: nodeId, nodePosition: const TextNodePosition(offset: 23)),
           extent: DocumentPosition(nodeId: nodeId, nodePosition: const TextNodePosition(offset: 45)),
@@ -275,7 +275,7 @@ spans multiple lines.''',
           .forDesktop()
           .pump();
 
-      final document = SuperDocumentInspector.findDocument()!;
+      final document = SuperReaderInspector.findDocument()!;
       final paragraphNode = document.nodes.first as ParagraphNode;
 
       await tester.dragSelectDocumentFromPositionByOffset(
@@ -289,7 +289,7 @@ spans multiple lines.''',
       // Ensure that the entire paragraph is selected, after dragging
       // above it.
       expect(
-        SuperDocumentInspector.findDocumentSelection(),
+        SuperReaderInspector.findDocumentSelection(),
         DocumentSelection(
           base: DocumentPosition(
             nodeId: paragraphNode.id,
@@ -321,7 +321,7 @@ spans multiple lines.''',
           .forDesktop()
           .pump();
 
-      final document = SuperDocumentInspector.findDocument()!;
+      final document = SuperReaderInspector.findDocument()!;
       final paragraphNode = document.nodes.first as ParagraphNode;
 
       await tester.dragSelectDocumentFromPositionByOffset(
@@ -335,7 +335,7 @@ spans multiple lines.''',
       // Ensure that the entire paragraph is selected, after dragging
       // below it.
       expect(
-        SuperDocumentInspector.findDocumentSelection(),
+        SuperReaderInspector.findDocumentSelection(),
         DocumentSelection(
           base: DocumentPosition(
             nodeId: paragraphNode.id,
@@ -369,7 +369,7 @@ spans multiple lines.''',
           .forDesktop()
           .pump();
 
-      final document = SuperDocumentInspector.findDocument()!;
+      final document = SuperReaderInspector.findDocument()!;
       final titleNode = document.nodes.first as ParagraphNode;
       final paragraphNode = document.nodes[1] as ParagraphNode;
 
@@ -384,7 +384,7 @@ spans multiple lines.''',
       // Ensure that the entire paragraph is selected, after dragging
       // above it.
       expect(
-        SuperDocumentInspector.findDocumentSelection(),
+        SuperReaderInspector.findDocumentSelection(),
         DocumentSelection(
           base: DocumentPosition(
             nodeId: paragraphNode.id,
@@ -418,7 +418,7 @@ spans multiple lines.''',
           .forDesktop()
           .pump();
 
-      final document = SuperDocumentInspector.findDocument()!;
+      final document = SuperReaderInspector.findDocument()!;
       final titleNode = document.nodes.first as ParagraphNode;
       final paragraphNode = document.nodes[1] as ParagraphNode;
 
@@ -433,7 +433,7 @@ spans multiple lines.''',
       // Ensure that the entire paragraph is selected, after dragging
       // above it.
       expect(
-        SuperDocumentInspector.findDocumentSelection(),
+        SuperReaderInspector.findDocumentSelection(),
         DocumentSelection(
           base: DocumentPosition(
             nodeId: titleNode.id,

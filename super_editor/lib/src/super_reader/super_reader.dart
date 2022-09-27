@@ -27,8 +27,8 @@ import 'read_only_document_ios_touch_interactor.dart';
 import 'read_only_document_keyboard_interactor.dart';
 import 'read_only_document_mouse_interactor.dart';
 
-class SuperDocument extends StatefulWidget {
-  SuperDocument({
+class SuperReader extends StatefulWidget {
+  SuperReader({
     Key? key,
     this.focusNode,
     required this.document,
@@ -60,22 +60,22 @@ class SuperDocument extends StatefulWidget {
 
   final FocusNode? focusNode;
 
-  /// The [Document] displayed in this [SuperDocument], in read-only mode.
+  /// The [Document] displayed in this [SuperReader], in read-only mode.
   final Document document;
 
   /// [GlobalKey] that's bound to the [DocumentLayout] within
-  /// this [SuperDocument].
+  /// this [SuperReader].
   ///
   /// This key can be used to lookup visual components in the document
-  /// layout within this [SuperDocument].
+  /// layout within this [SuperReader].
   final GlobalKey? documentLayoutKey;
 
   final ValueNotifier<DocumentSelection?>? selection;
 
-  /// The [ScrollController] that governs this [SuperDocument]'s scroll
+  /// The [ScrollController] that governs this [SuperReader]'s scroll
   /// offset.
   ///
-  /// [scrollController] is not used if this [SuperDocument] has an ancestor
+  /// [scrollController] is not used if this [SuperReader] has an ancestor
   /// [Scrollable].
   final ScrollController? scrollController;
 
@@ -96,7 +96,7 @@ class SuperDocument extends StatefulWidget {
   /// [stylesheet]s.
   ///
   /// You can also use them to apply styles to your custom [DocumentNode]
-  /// types that aren't supported by [SuperDocument]. For example, [SuperDocument]
+  /// types that aren't supported by [SuperReader]. For example, [SuperReader]
   /// doesn't include support for tables within documents, but you could
   /// implement a `TableNode` for that purpose. You may then want to make your
   /// table styleable. To accomplish this, you add a custom style phase that
@@ -147,7 +147,7 @@ class SuperDocument extends StatefulWidget {
   /// (probably the entire screen).
   final CustomClipper<Rect> Function(BuildContext overlayContext)? createOverlayControlsClipper;
 
-  /// Whether or not the [SuperDocument] should autofocus.
+  /// Whether or not the [SuperReader] should autofocus.
   final bool autofocus;
 
   /// Paints some extra visual ornamentation to help with
@@ -155,10 +155,10 @@ class SuperDocument extends StatefulWidget {
   final DebugPaintConfig debugPaint;
 
   @override
-  State<SuperDocument> createState() => SuperDocumentState();
+  State<SuperReader> createState() => SuperReaderState();
 }
 
-class SuperDocumentState extends State<SuperDocument> {
+class SuperReaderState extends State<SuperReader> {
   late DocumentEditor _editor;
   @visibleForTesting
   Document get document => _editor.document;
@@ -206,7 +206,7 @@ class SuperDocumentState extends State<SuperDocument> {
   }
 
   @override
-  void didUpdateWidget(SuperDocument oldWidget) {
+  void didUpdateWidget(SuperReader oldWidget) {
     super.didUpdateWidget(oldWidget);
 
     if (widget.document != oldWidget.document) {
@@ -420,7 +420,7 @@ class _ReadOnlyDocumentEditor implements DocumentEditor {
 }
 
 /// Builds widgets that are displayed at the same position and size as
-/// the document layout within a [SuperDocument].
+/// the document layout within a [SuperReader].
 abstract class ReadOnlyDocumentLayerBuilder {
   Widget build(BuildContext context, DocumentContext documentContext);
 }
@@ -459,7 +459,7 @@ class DocumentContext {
   final AutoScrollController scrollController;
 }
 
-/// Creates visual components for the standard [SuperDocument].
+/// Creates visual components for the standard [SuperReader].
 ///
 /// These builders are in priority order. The first builder
 /// to return a non-null component is used.
@@ -471,7 +471,7 @@ final readOnlyDefaultComponentBuilders = <ComponentBuilder>[
   const HorizontalRuleComponentBuilder(),
 ];
 
-/// Stylesheet applied to all [SuperDocument]s by default.
+/// Stylesheet applied to all [SuperReader]s by default.
 final readOnlyDefaultStylesheet = Stylesheet(
   rules: [
     StyleRule(
@@ -596,7 +596,7 @@ TextStyle readOnlyDefaultInlineTextStyler(Set<Attribution> attributions, TextSty
   return existingStyle.merge(readOnlyDefaultStyleBuilder(attributions));
 }
 
-/// Creates [TextStyles] for the standard [SuperDocument].
+/// Creates [TextStyles] for the standard [SuperReader].
 TextStyle readOnlyDefaultStyleBuilder(Set<Attribution> attributions) {
   TextStyle newStyle = const TextStyle();
 

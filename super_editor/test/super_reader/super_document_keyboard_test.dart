@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:super_editor/super_editor.dart';
-import 'package:super_editor/super_document_test.dart';
+import 'package:super_editor/super_reader_test.dart';
 
 import '../test_tools.dart';
 import 'document_test_tools.dart';
@@ -19,7 +19,7 @@ void main() {
 
           await tester.pressShiftLeftArrow();
 
-          expect(SuperDocumentInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 2, to: 1));
+          expect(SuperReaderInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 2, to: 1));
         });
 
         testAllInputsOnDesktop("right by one character and expands when SHIFT + RIGHT_ARROW is pressed", (
@@ -30,7 +30,7 @@ void main() {
 
           await tester.pressShiftRightArrow();
 
-          expect(SuperDocumentInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 2, to: 3));
+          expect(SuperReaderInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 2, to: 3));
         });
 
         testAllInputsOnMac("to beginning of word and expands when SHIFT + ALT + LEFT_ARROW is pressed", (
@@ -41,7 +41,7 @@ void main() {
 
           await tester.pressShiftAltLeftArrow();
 
-          expect(SuperDocumentInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 10, to: 8));
+          expect(SuperReaderInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 10, to: 8));
         });
 
         testAllInputsOnMac("to end of word and expands when SHIFT + ALT + RIGHT_ARROW is pressed", (
@@ -52,7 +52,7 @@ void main() {
 
           await tester.pressShiftAltRightArrow();
 
-          expect(SuperDocumentInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 10, to: 12));
+          expect(SuperReaderInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 10, to: 12));
         });
 
         testAllInputsOnMac("to beginning of line and expands when SHIFT + CMD + LEFT_ARROW is pressed", (
@@ -63,7 +63,7 @@ void main() {
 
           await tester.pressShiftCmdLeftArrow();
 
-          expect(SuperDocumentInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 10, to: 0));
+          expect(SuperReaderInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 10, to: 0));
         });
 
         testAllInputsOnMac("to end of line and expands when SHIFT + CMD + RIGHT_ARROW is pressed", (
@@ -75,7 +75,7 @@ void main() {
           await tester.pressShiftCmdRightArrow();
 
           expect(
-            SuperDocumentInspector.findDocumentSelection(),
+            SuperReaderInspector.findDocumentSelection(),
             _selectionInParagraph(nodeId, from: 10, to: 26, toAffinity: TextAffinity.upstream),
           );
         });
@@ -88,7 +88,7 @@ void main() {
 
           await tester.pressShiftCtlLeftArrow();
 
-          expect(SuperDocumentInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 10, to: 8));
+          expect(SuperReaderInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 10, to: 8));
         });
 
         testAllInputsOnWindowsAndLinux("to end of word and expands when SHIFT + CTL + RIGHT_ARROW is pressed", (
@@ -99,7 +99,7 @@ void main() {
 
           await tester.pressShiftCtlRightArrow();
 
-          expect(SuperDocumentInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 10, to: 12));
+          expect(SuperReaderInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 10, to: 12));
         });
 
         testAllInputsOnDesktop("up one line and expands when SHIFT + UP_ARROW is pressed", (
@@ -110,7 +110,7 @@ void main() {
 
           await tester.pressShiftUpArrow();
 
-          expect(SuperDocumentInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 41, to: 12));
+          expect(SuperReaderInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 41, to: 12));
         });
 
         testAllInputsOnDesktop("down one line and expands when SHIFT + DOWN_ARROW is pressed", (
@@ -121,7 +121,7 @@ void main() {
 
           await tester.pressShiftDownArrow();
 
-          expect(SuperDocumentInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 12, to: 41));
+          expect(SuperReaderInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 12, to: 41));
         });
 
         testAllInputsOnDesktop("to beginning of line and expands when SHIFT + UP_ARROW is pressed at top of document", (
@@ -132,7 +132,7 @@ void main() {
 
           await tester.pressShiftUpArrow();
 
-          expect(SuperDocumentInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 12, to: 0));
+          expect(SuperReaderInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 12, to: 0));
         });
 
         testAllInputsOnDesktop("end of line and expands when SHIFT + DOWN_ARROW is pressed at end of document", (
@@ -143,7 +143,7 @@ void main() {
 
           await tester.pressShiftDownArrow();
 
-          expect(SuperDocumentInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 41, to: 58));
+          expect(SuperReaderInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 41, to: 58));
         });
       });
     });

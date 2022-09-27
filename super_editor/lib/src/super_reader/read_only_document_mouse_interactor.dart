@@ -13,7 +13,7 @@ import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 
-import 'super_document.dart';
+import 'super_reader.dart';
 
 /// Governs mouse gesture interaction with a read-only document, such as scrolling
 /// a document with a scroll wheel and tap-and-dragging to create an expanded selection.

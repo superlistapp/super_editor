@@ -7,7 +7,7 @@ import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
 import 'package:super_editor/src/infrastructure/platform_detector.dart';
-import 'package:super_editor/src/super_document/super_document.dart';
+import 'package:super_editor/src/super_reader/super_reader.dart';
 
 /// Governs document input that comes from a physical keyboard.
 ///

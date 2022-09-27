@@ -1,7 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:super_editor/super_document_test.dart';
+import 'package:super_editor/super_reader_test.dart';
 import 'package:super_editor/super_editor.dart';
 
 import '../test_tools.dart';
@@ -18,7 +18,7 @@ void main() {
           .withScrollController(scrollController)
           .pump();
 
-      final document = SuperDocumentInspector.findDocument()!;
+      final document = SuperReaderInspector.findDocument()!;
       final firstParagraph = document.nodes.first as ParagraphNode;
 
       final dragGesture = await tester.startDocumentDragFromPosition(
@@ -53,7 +53,7 @@ void main() {
           .withScrollController(scrollController)
           .pump();
 
-      final document = SuperDocumentInspector.findDocument()!;
+      final document = SuperReaderInspector.findDocument()!;
       final lastParagraph = document.nodes.last as ParagraphNode;
 
       // Jump to the end of the document
@@ -92,7 +92,7 @@ void main() {
           .forDesktop() //
           .pump();
 
-      final document = SuperDocumentInspector.findDocument()!;
+      final document = SuperReaderInspector.findDocument()!;
       final firstParagraph = document.nodes.first as ParagraphNode;
       final lastParagraph = document.nodes.last as ParagraphNode;
 
@@ -113,7 +113,7 @@ void main() {
 
       // Ensure that the entire document is selected.
       expect(
-        SuperDocumentInspector.findDocumentSelection(),
+        SuperReaderInspector.findDocumentSelection(),
         DocumentSelection(
           base: DocumentPosition(
             nodeId: firstParagraph.id,
@@ -137,7 +137,7 @@ void main() {
           .forDesktop() //
           .pump();
 
-      final document = SuperDocumentInspector.findDocument()!;
+      final document = SuperReaderInspector.findDocument()!;
       final firstParagraph = document.nodes.first as ParagraphNode;
       final lastParagraph = document.nodes.last as ParagraphNode;
 
@@ -169,7 +169,7 @@ void main() {
 
       // Ensure that the entire document is selected.
       expect(
-        SuperDocumentInspector.findDocumentSelection(),
+        SuperReaderInspector.findDocumentSelection(),
         DocumentSelection(
           base: DocumentPosition(
             nodeId: lastParagraph.id,
@@ -192,7 +192,7 @@ void main() {
           .withLongTextContent() //
           .forDesktop() //
           .pump();
-      final document = SuperDocumentInspector.findDocument()!;
+      final document = SuperReaderInspector.findDocument()!;
       final lastParagraph = document.nodes.last as ParagraphNode;
 
       // Place the caret at the end of the document, which should cause the
@@ -208,7 +208,7 @@ void main() {
 
       // Ensure that the last character in the document is visible.
       expect(
-        SuperDocumentInspector.isPositionVisibleGlobally(
+        SuperReaderInspector.isPositionVisibleGlobally(
           DocumentPosition(
             nodeId: lastParagraph.id,
             nodePosition: lastParagraph.endPosition,

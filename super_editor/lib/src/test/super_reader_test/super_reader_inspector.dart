@@ -1,41 +1,42 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:super_editor/src/super_reader/super_reader.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
-/// Inspects a given [SuperDocument] in the widget tree.
-class SuperDocumentInspector {
-  /// Returns `true` if the given [SuperDocument] widget currently has focus, or
+/// Inspects a given [SuperReader] in the widget tree.
+class SuperReaderInspector {
+  /// Returns `true` if the given [SuperReader] widget currently has focus, or
   /// `false` otherwise.
   ///
   /// {@template super_document_finder}
-  /// By default, this method expects a single [SuperDocument] in the widget tree and
-  /// finds it `byType`. To specify one [SuperDocument] among many, pass a [superDocumentFinder].
+  /// By default, this method expects a single [SuperReader] in the widget tree and
+  /// finds it `byType`. To specify one [SuperReader] among many, pass a [superDocumentFinder].
   /// {@endtemplate}
   static bool hasFocus([Finder? finder]) {
-    final element = (finder ?? find.byType(SuperDocument)).evaluate().single as StatefulElement;
-    final superDocument = element.state as SuperDocumentState;
+    final element = (finder ?? find.byType(SuperReader)).evaluate().single as StatefulElement;
+    final superDocument = element.state as SuperReaderState;
     return superDocument.focusNode.hasFocus;
   }
 
-  /// Returns the [Document] within the [SuperDocument] matched by [finder],
-  /// or the singular [SuperDocument] in the widget tree, if [finder] is `null`.
+  /// Returns the [Document] within the [SuperReader] matched by [finder],
+  /// or the singular [SuperReader] in the widget tree, if [finder] is `null`.
   ///
   /// {@macro super_document_finder}
   static Document? findDocument([Finder? finder]) {
-    final element = (finder ?? find.byType(SuperDocument)).evaluate().single as StatefulElement;
-    final superDocument = element.state as SuperDocumentState;
+    final element = (finder ?? find.byType(SuperReader)).evaluate().single as StatefulElement;
+    final superDocument = element.state as SuperReaderState;
     return superDocument.document;
   }
 
-  /// Returns the current [DocumentSelection] for the [SuperDocument] matched by
-  /// [finder], or the singular [SuperDocument] in the widget tree, if [finder]
+  /// Returns the current [DocumentSelection] for the [SuperReader] matched by
+  /// [finder], or the singular [SuperReader] in the widget tree, if [finder]
   /// is `null`.
   ///
   /// {@macro super_document_finder}
   static DocumentSelection? findDocumentSelection([Finder? finder]) {
-    final element = (finder ?? find.byType(SuperDocument)).evaluate().single as StatefulElement;
-    final superDocument = element.state as SuperDocumentState;
+    final element = (finder ?? find.byType(SuperReader)).evaluate().single as StatefulElement;
+    final superDocument = element.state as SuperReaderState;
     return superDocument.selection;
   }
 
@@ -80,7 +81,7 @@ class SuperDocumentInspector {
   /// Finds and returns the [Widget] that configures the [DocumentComponent] with the
   /// given [nodeId].
   ///
-  /// The given [nodeId] must exist in the [SuperDocument]'s document. The [Widget] that
+  /// The given [nodeId] must exist in the [SuperReader]'s document. The [Widget] that
   /// configures the give node must be of type [WidgetType].
   ///
   /// {@macro super_document_finder}
@@ -98,7 +99,7 @@ class SuperDocumentInspector {
   /// given [nodeId].
   ///
   /// There must be a [ParagraphNode] with the given [nodeId], displayed in a
-  /// [SuperDocument].
+  /// [SuperReader].
   ///
   /// {@macro super_document_finder}
   static AttributedText findTextInParagraph(String nodeId, [Finder? superDocumentFinder]) {
@@ -147,7 +148,7 @@ class SuperDocumentInspector {
     return node;
   }
 
-  /// Finds the [DocumentLayout] that backs a [SuperDocument] in the widget tree.
+  /// Finds the [DocumentLayout] that backs a [SuperReader] in the widget tree.
   ///
   /// {@macro super_document_finder}
   static DocumentLayout _findDocumentLayout([Finder? superDocumentFinder]) {
@@ -161,5 +162,5 @@ class SuperDocumentInspector {
     return documentLayoutElement.state as DocumentLayout;
   }
 
-  SuperDocumentInspector._();
+  SuperReaderInspector._();
 }

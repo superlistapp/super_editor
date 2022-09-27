@@ -15,20 +15,20 @@ import 'test_documents.dart';
 /// Extensions on [WidgetTester] that configure and pump [SuperEditor]
 /// document editors.
 extension DocumentTester on WidgetTester {
-  /// Starts the process for configuring and pumping a new [SuperDocument].
+  /// Starts the process for configuring and pumping a new [SuperReader].
   ///
   /// Use the returned [TestDocumentSelector] to continue configuring the
-  /// [SuperDocument].
+  /// [SuperReader].
   TestDocumentSelector createDocument() {
     return TestDocumentSelector(this);
   }
 }
 
-/// Selects a [Document] configuration when composing a [SuperDocument]
+/// Selects a [Document] configuration when composing a [SuperReader]
 /// widget in a test.
 ///
 /// Each document selection returns a [TestDocumentConfigurator], which
-/// is used to complete the configuration, and to pump the [SuperDocument].
+/// is used to complete the configuration, and to pump the [SuperReader].
 class TestDocumentSelector {
   const TestDocumentSelector(this._widgetTester);
 
@@ -76,7 +76,7 @@ class TestDocumentSelector {
   }
 }
 
-/// Builder that configures and pumps a [SuperDocument] widget.
+/// Builder that configures and pumps a [SuperReader] widget.
 class TestDocumentConfigurator {
   TestDocumentConfigurator._(this._widgetTester, this._document);
 
@@ -95,7 +95,7 @@ class TestDocumentConfigurator {
   FocusNode? _focusNode;
   DocumentSelection? _selection;
 
-  /// Configures the [SuperDocument] for standard desktop interactions,
+  /// Configures the [SuperReader] for standard desktop interactions,
   /// e.g., mouse and keyboard input.
   TestDocumentConfigurator forDesktop({
     DocumentInputSource inputSource = DocumentInputSource.keyboard,
@@ -105,7 +105,7 @@ class TestDocumentConfigurator {
     return this;
   }
 
-  /// Configures the [SuperDocument] for standard Android interactions,
+  /// Configures the [SuperReader] for standard Android interactions,
   /// e.g., touch gestures and IME input.
   TestDocumentConfigurator forAndroid() {
     _gestureMode = DocumentGestureMode.android;
@@ -113,7 +113,7 @@ class TestDocumentConfigurator {
     return this;
   }
 
-  /// Configures the [SuperDocument] for standard iOS interactions,
+  /// Configures the [SuperReader] for standard iOS interactions,
   /// e.g., touch gestures and IME input.
   TestDocumentConfigurator forIOS() {
     _gestureMode = DocumentGestureMode.iOS;
@@ -121,49 +121,49 @@ class TestDocumentConfigurator {
     return this;
   }
 
-  /// Configures the [SuperDocument] to use the given [inputSource].
+  /// Configures the [SuperReader] to use the given [inputSource].
   TestDocumentConfigurator withInputSource(DocumentInputSource inputSource) {
     _inputSource = inputSource;
     return this;
   }
 
-  /// Configures the [SuperDocument] to use the given [gestureMode].
+  /// Configures the [SuperReader] to use the given [gestureMode].
   TestDocumentConfigurator withGestureMode(DocumentGestureMode gestureMode) {
     _gestureMode = gestureMode;
     return this;
   }
 
-  /// Configures the [SuperDocument] to constrain its maxHeight and maxWidth using the given [size].
+  /// Configures the [SuperReader] to constrain its maxHeight and maxWidth using the given [size].
   TestDocumentConfigurator withEditorSize(ui.Size? size) {
     _editorSize = size;
     return this;
   }
 
-  /// Configures the [SuperDocument] to use only the given [componentBuilders]
+  /// Configures the [SuperReader] to use only the given [componentBuilders]
   TestDocumentConfigurator withComponentBuilders(List<ComponentBuilder>? componentBuilders) {
     _componentBuilders = componentBuilders;
     return this;
   }
 
-  /// Configures the [SuperDocument] to use a custom widget tree above [SuperDocument].
+  /// Configures the [SuperReader] to use a custom widget tree above [SuperReader].
   TestDocumentConfigurator withCustomWidgetTreeBuilder(WidgetTreeBuilder? builder) {
     _widgetTreeBuilder = builder;
     return this;
   }
 
-  /// Configures the [SuperDocument] to use the given [scrollController]
+  /// Configures the [SuperReader] to use the given [scrollController]
   TestDocumentConfigurator withScrollController(ScrollController? scrollController) {
     _scrollController = scrollController;
     return this;
   }
 
-  /// Configures the [SuperDocument] to use the given [focusNode]
+  /// Configures the [SuperReader] to use the given [focusNode]
   TestDocumentConfigurator withFocusNode(FocusNode? focusNode) {
     _focusNode = focusNode;
     return this;
   }
 
-  /// Configures the [SuperDocument] to use the given [selection] as its initial selection.
+  /// Configures the [SuperReader] to use the given [selection] as its initial selection.
   TestDocumentConfigurator withSelection(DocumentSelection? selection) {
     _selection = selection;
     return this;
@@ -201,32 +201,32 @@ class TestDocumentConfigurator {
   }
 
   /// Configures the [ThemeData] used for the [MaterialApp] that wraps
-  /// the [SuperDocument].
+  /// the [SuperReader].
   TestDocumentConfigurator useAppTheme(ThemeData theme) {
     _appTheme = theme;
     return this;
   }
 
-  /// Configures the [SuperDocument] to use the given [stylesheet].
+  /// Configures the [SuperReader] to use the given [stylesheet].
   TestDocumentConfigurator useStylesheet(Stylesheet stylesheet) {
     _stylesheet = stylesheet;
     return this;
   }
 
   /// Adds the given component builders to the list of component builders that are
-  /// used to render the document layout in the pumped [SuperDocument].
+  /// used to render the document layout in the pumped [SuperReader].
   TestDocumentConfigurator withAddedComponents(List<ComponentBuilder> newComponents) {
     _addedComponents.addAll(newComponents);
     return this;
   }
 
-  /// Configures the [SuperDocument] to auto-focus when first pumped, or not.
+  /// Configures the [SuperReader] to auto-focus when first pumped, or not.
   TestDocumentConfigurator autoFocus(bool autoFocus) {
     _autoFocus = autoFocus;
     return this;
   }
 
-  /// Pumps a [SuperDocument] widget tree with the desired configuration, and returns
+  /// Pumps a [SuperReader] widget tree with the desired configuration, and returns
   /// a [TestDocumentContext], which includes the artifacts connected to the widget
   /// tree, e.g., the [DocumentEditor], [DocumentComposer], etc.
   Future<TestDocumentContext> pump() async {
@@ -247,7 +247,7 @@ class TestDocumentConfigurator {
     );
 
     final superDocument = _buildContent(
-      SuperDocument(
+      SuperReader(
         focusNode: testContext.focusNode,
         document: documentContext.document,
         documentLayoutKey: layoutKey,

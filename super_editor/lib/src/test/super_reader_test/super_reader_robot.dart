@@ -5,34 +5,34 @@ import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:super_editor/src/test/ime.dart';
 import 'package:super_editor/super_editor.dart';
 
-/// Extensions on [WidgetTester] for interacting with a [SuperEditor] the way
+/// Extensions on [WidgetTester] for interacting with a [SuperReader] the way
 /// a user would.
-extension SuperEditorRobot on WidgetTester {
+extension SuperReaderRobot on WidgetTester {
   /// Place the caret at the given [offset] in a paragraph with the given [nodeId],
   /// by simulating a user gesture.
   ///
   /// The simulated user gesture is probably a tap, but the only guarantee is that
   /// the caret is placed with a gesture.
-  Future<void> placeCaretInParagraph(String nodeId, int offset, [Finder? superEditorFinder]) async {
-    await _tapInParagraph(nodeId, offset, 1, superEditorFinder);
+  Future<void> placeCaretInParagraph(String nodeId, int offset, [Finder? superReaderFinder]) async {
+    await _tapInParagraph(nodeId, offset, 1, superReaderFinder);
   }
 
   /// Simulates a double tap at the given [offset] within the paragraph with the given
   /// [nodeId].
-  Future<void> doubleTapInParagraph(String nodeId, int offset, [Finder? superEditorFinder]) async {
-    await _tapInParagraph(nodeId, offset, 2, superEditorFinder);
+  Future<void> doubleTapInParagraph(String nodeId, int offset, [Finder? superReaderFinder]) async {
+    await _tapInParagraph(nodeId, offset, 2, superReaderFinder);
   }
 
   /// Simulates a triple tap at the given [offset] within the paragraph with the given
   /// [nodeId].
-  Future<void> tripleTapInParagraph(String nodeId, int offset, [Finder? superEditorFinder]) async {
-    await _tapInParagraph(nodeId, offset, 3, superEditorFinder);
+  Future<void> tripleTapInParagraph(String nodeId, int offset, [Finder? superReaderFinder]) async {
+    await _tapInParagraph(nodeId, offset, 3, superReaderFinder);
   }
 
-  Future<void> _tapInParagraph(String nodeId, int offset, int tapCount, [Finder? superEditorFinder]) async {
+  Future<void> _tapInParagraph(String nodeId, int offset, int tapCount, [Finder? superReaderFinder]) async {
     late final Finder layoutFinder;
-    if (superEditorFinder != null) {
-      layoutFinder = find.descendant(of: superEditorFinder, matching: find.byType(SingleColumnDocumentLayout));
+    if (superReaderFinder != null) {
+      layoutFinder = find.descendant(of: superReaderFinder, matching: find.byType(SingleColumnDocumentLayout));
     } else {
       layoutFinder = find.byType(SingleColumnDocumentLayout);
     }
@@ -66,7 +66,7 @@ extension SuperEditorRobot on WidgetTester {
     // TODO: check that the tap offset is visible within the viewport. Add option to
     // auto-scroll, or throw exception when it's not tappable.
 
-    // Tap the desired number of times in SuperEditor at the given position.
+    // Tap the desired number of times in SuperReader at the given position.
     for (int i = 0; i < tapCount; i += 1) {
       await tapAt(globalTapOffset);
       await pump(kTapMinTime + const Duration(milliseconds: 1));
@@ -75,11 +75,11 @@ extension SuperEditorRobot on WidgetTester {
     await pumpAndSettle();
   }
 
-  /// Taps at the center of the content at the given [position] within a [SuperEditor].
+  /// Taps at the center of the content at the given [position] within a [SuperReader].
   ///
-  /// {@macro supereditor_finder}
-  Future<void> tapAtDocumentPosition(DocumentPosition position, [Finder? superEditorFinder]) async {
-    final documentLayout = _findDocumentLayout(superEditorFinder);
+  /// {@macro superreader_finder}
+  Future<void> tapAtDocumentPosition(DocumentPosition position, [Finder? superReaderFinder]) async {
+    final documentLayout = _findDocumentLayout(superReaderFinder);
     final positionRectInDoc = documentLayout.getRectForPosition(position)!;
     final globalTapOffset = documentLayout.getAncestorOffsetFromDocumentOffset(positionRectInDoc.center);
 
@@ -96,9 +96,9 @@ extension SuperEditorRobot on WidgetTester {
   Future<void> dragSelectDocumentFromPositionByOffset({
     required DocumentPosition from,
     required Offset delta,
-    Finder? superEditorFinder,
+    Finder? superReaderFinder,
   }) async {
-    final documentLayout = _findDocumentLayout(superEditorFinder);
+    final documentLayout = _findDocumentLayout(superReaderFinder);
 
     final dragStartRect = documentLayout.getRectForPosition(from)!;
     // TODO: use startDragFromPosition to start the drag instead of re-implementing it here
@@ -160,10 +160,10 @@ extension SuperEditorRobot on WidgetTester {
   Future<TestGesture> startDocumentDragFromPosition({
     required DocumentPosition from,
     Alignment startAlignmentWithinPosition = Alignment.center,
-    Finder? superEditorFinder,
+    Finder? superReaderFinder,
     PointerDeviceKind deviceKind = PointerDeviceKind.mouse,
   }) async {
-    final documentLayout = _findDocumentLayout(superEditorFinder);
+    final documentLayout = _findDocumentLayout(superReaderFinder);
 
     // Find the global offset to start the drag gesture.
     Rect dragStartRect = documentLayout.getRectForPosition(from)!.deflate(1);
@@ -192,16 +192,16 @@ extension SuperEditorRobot on WidgetTester {
     await pumpAndSettle();
   }
 
-  /// Types the given [text] into a [SuperEditor] by simulating IME text deltas from
+  /// Types the given [text] into a [SuperReader] by simulating IME text deltas from
   /// the platform.
   Future<void> typeImeText(String text) async {
     await ime.typeText(text, getter: imeClientGetter);
   }
 
-  DocumentLayout _findDocumentLayout([Finder? superEditorFinder]) {
+  DocumentLayout _findDocumentLayout([Finder? superReaderFinder]) {
     late final Finder layoutFinder;
-    if (superEditorFinder != null) {
-      layoutFinder = find.descendant(of: superEditorFinder, matching: find.byType(SingleColumnDocumentLayout));
+    if (superReaderFinder != null) {
+      layoutFinder = find.descendant(of: superReaderFinder, matching: find.byType(SingleColumnDocumentLayout));
     } else {
       layoutFinder = find.byType(SingleColumnDocumentLayout);
     }

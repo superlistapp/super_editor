@@ -4,14 +4,14 @@ import 'package:super_editor/super_editor.dart';
 
 import 'example_document.dart';
 
-class SuperDocumentDemo extends StatefulWidget {
-  const SuperDocumentDemo({Key? key}) : super(key: key);
+class SuperReaderDemo extends StatefulWidget {
+  const SuperReaderDemo({Key? key}) : super(key: key);
 
   @override
-  State<SuperDocumentDemo> createState() => _SuperDocumentDemoState();
+  State<SuperReaderDemo> createState() => _SuperReaderDemoState();
 }
 
-class _SuperDocumentDemoState extends State<SuperDocumentDemo> {
+class _SuperReaderDemoState extends State<SuperReaderDemo> {
   late final Document _document;
   final _selection = ValueNotifier<DocumentSelection?>(null);
 
@@ -115,7 +115,7 @@ class _SuperDocumentDemoState extends State<SuperDocumentDemo> {
 
   @override
   Widget build(BuildContext context) {
-    return SuperDocument(
+    return SuperReader(
       document: _document,
       selection: _selection,
       androidToolbarBuilder: (_) => AndroidTextEditingFloatingToolbar(
