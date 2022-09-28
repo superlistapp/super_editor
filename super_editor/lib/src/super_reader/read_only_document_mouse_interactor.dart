@@ -39,7 +39,7 @@ class ReadOnlyDocumentMouseInteractor extends StatefulWidget {
   final FocusNode? focusNode;
 
   /// Service locator for document dependencies.
-  final DocumentContext documentContext;
+  final ReaderContext documentContext;
 
   /// Auto-scrolling delegate.
   final AutoScrollController autoScroller;

@@ -177,7 +177,7 @@ class SuperReaderState extends State<SuperReader> {
 
   late AutoScrollController _autoScrollController;
 
-  late DocumentContext _documentContext;
+  late ReaderContext _documentContext;
 
   @visibleForTesting
   FocusNode get focusNode => _focusNode;
@@ -195,7 +195,7 @@ class SuperReaderState extends State<SuperReader> {
 
     _docLayoutKey = widget.documentLayoutKey ?? GlobalKey();
 
-    _documentContext = DocumentContext(
+    _documentContext = ReaderContext(
       document: widget.document,
       getDocumentLayout: () => _docLayoutKey.currentState as DocumentLayout,
       selection: _selection,
@@ -295,7 +295,7 @@ class SuperReaderState extends State<SuperReader> {
     // as arrow keys.
     return ReadOnlyDocumentKeyboardInteractor(
       focusNode: _focusNode,
-      documentContext: _documentContext,
+      readerContext: _documentContext,
       keyboardActions: widget.keyboardActions,
       autofocus: widget.autofocus,
       child: child,
@@ -422,20 +422,20 @@ class _ReadOnlyDocumentEditor implements DocumentEditor {
 /// Builds widgets that are displayed at the same position and size as
 /// the document layout within a [SuperReader].
 abstract class ReadOnlyDocumentLayerBuilder {
-  Widget build(BuildContext context, DocumentContext documentContext);
+  Widget build(BuildContext context, ReaderContext documentContext);
 }
 
 /// Collection of core artifacts used to display a read-only document.
 ///
 /// In particular, the context contains the [Document], [DocumentSelection],
 /// and [DocumentLayout].
-class DocumentContext {
+class ReaderContext {
   /// Creates document context that makes up a collection of core artifacts for
   /// displaying a read-only document.
   ///
   /// The [documentLayout] is passed as a [getDocumentLayout] callback that
   /// should return the current layout as it might change.
-  DocumentContext({
+  ReaderContext({
     required this.document,
     required DocumentLayout Function() getDocumentLayout,
     required this.selection,

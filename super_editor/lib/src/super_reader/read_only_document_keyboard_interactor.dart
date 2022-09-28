@@ -1,22 +1,21 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
-import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_layout.dart';
-import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
-import 'package:super_editor/src/infrastructure/platform_detector.dart';
 import 'package:super_editor/src/super_reader/super_reader.dart';
+
+import 'document_operations.dart';
 
 /// Governs document input that comes from a physical keyboard.
 ///
 /// Keyboard input won't work on a mobile device with a software
 /// keyboard because the software keyboard sends input through
 /// the operating system's Input Method Engine. For mobile use-cases,
-/// see super_editor's IME input support.
+/// see IME input support.
 
-/// Receives all keyboard input, when focused, and changes the read-only
+/// Receives all hardware keyboard input, when focused, and changes the read-only
 /// document display, as needed.
 ///
 /// [keyboardActions] determines the mapping from keyboard key presses
@@ -26,7 +25,7 @@ class ReadOnlyDocumentKeyboardInteractor extends StatelessWidget {
   const ReadOnlyDocumentKeyboardInteractor({
     Key? key,
     required this.focusNode,
-    required this.documentContext,
+    required this.readerContext,
     required this.keyboardActions,
     required this.child,
     this.autofocus = false,
@@ -36,7 +35,7 @@ class ReadOnlyDocumentKeyboardInteractor extends StatelessWidget {
   final FocusNode focusNode;
 
   /// Service locator for document display dependencies.
-  final DocumentContext documentContext;
+  final ReaderContext readerContext;
 
   /// All the actions that the user can execute with keyboard keys.
   ///
@@ -55,12 +54,12 @@ class ReadOnlyDocumentKeyboardInteractor extends StatelessWidget {
   final Widget child;
 
   KeyEventResult _onKeyPressed(FocusNode node, RawKeyEvent keyEvent) {
-    editorKeyLog.info("Handling key press: $keyEvent");
+    readerKeyLog.info("Handling key press: $keyEvent");
     ExecutionInstruction instruction = ExecutionInstruction.continueExecution;
     int index = 0;
     while (instruction == ExecutionInstruction.continueExecution && index < keyboardActions.length) {
       instruction = keyboardActions[index](
-        documentContext: documentContext,
+        documentContext: readerContext,
         keyEvent: keyEvent,
       );
       index += 1;
@@ -96,7 +95,7 @@ class ReadOnlyDocumentKeyboardInteractor extends StatelessWidget {
 /// It is possible that an action does nothing and then returns
 /// [ExecutionInstruction.haltExecution] to prevent further execution.
 typedef ReadOnlyDocumentKeyboardAction = ExecutionInstruction Function({
-  required DocumentContext documentContext,
+  required ReaderContext documentContext,
   required RawKeyEvent keyEvent,
 });
 
@@ -127,736 +126,492 @@ enum ExecutionInstruction {
   haltExecution,
 }
 
-/// A [ReadOnlyDocumentKeyboardAction] that reports [ExecutionInstruction.blocked]
-/// for any key combination that matches one of the given [keys].
-ReadOnlyDocumentKeyboardAction ignoreKeyCombos(List<ShortcutActivator> keys) {
-  return ({
-    required DocumentContext documentContext,
-    required RawKeyEvent keyEvent,
-  }) {
-    for (final key in keys) {
-      if (key.accepts(keyEvent, RawKeyboard.instance)) {
-        return ExecutionInstruction.blocked;
-      }
-    }
-    return ExecutionInstruction.continueExecution;
-  };
-}
-
-/// Keyboard actions for the standard [SuperEditor].
+/// Keyboard actions for the standard [SuperReader].
 final readOnlyDefaultKeyboardActions = <ReadOnlyDocumentKeyboardAction>[
   removeCollapsedSelectionWhenShiftIsReleased,
-  scrollUpDownWithArrowKeys,
-  expandSelectionWithArrowKeys,
-  expandSelectionToLineStartWithHome,
-  expandSelectionToLineEndWithEnd,
-  expandSelectionToLineStartOrEndWithCtrlAOrE,
-  selectAllWhenCmdAIsPressed,
-  copyWhenCmdCIsPressed,
+  scrollUpWithArrowKey,
+  scrollDownWithArrowKey,
+  expandSelectionWithLeftArrow,
+  expandSelectionWithRightArrow,
+  expandSelectionWithUpArrow,
+  expandSelectionWithDownArrow,
+  expandSelectionToLineStartWithHomeOnWindowsAndLinux,
+  expandSelectionToLineEndWithEndOnWindowsAndLinux,
+  expandSelectionToLineStartWithCtrlAOnWindowsAndLinux,
+  expandSelectionToLineEndWithCtrlEOnWindowsAndLinux,
+  selectAllWhenCmdAIsPressedOnMac,
+  selectAllWhenCtlAIsPressedOnWindowsAndLinux,
+  copyWhenCmdCIsPressedOnMac,
+  copyWhenCtlCIsPressedOnWindowsAndLinux,
 ];
 
-ExecutionInstruction removeCollapsedSelectionWhenShiftIsReleased({
-  required DocumentContext documentContext,
-  required RawKeyEvent keyEvent,
-}) {
-  if (keyEvent is! RawKeyUpEvent) {
-    return ExecutionInstruction.continueExecution;
-  }
+/// Shortcut to remove a document selection when the shift key is released
+/// and the selection is collapsed.
+///
+/// Read-only documents should only display expanded selections (selections that
+/// contain at least one character or block of content). The user might expand
+/// or contract a selection while holding the shift key. As long as the user is
+/// pressing shift, we want to allow any selection. When the user releases the
+/// shift key (and triggers this shortcut), we want to remove the document selection
+/// if it's collapsed.
+final removeCollapsedSelectionWhenShiftIsReleased = createShortcut(
+  ({
+    required ReaderContext documentContext,
+    required RawKeyEvent keyEvent,
+  }) {
+    final selection = documentContext.selection.value;
+    if (selection == null || !selection.isCollapsed) {
+      return ExecutionInstruction.continueExecution;
+    }
 
-  if (keyEvent.logicalKey != LogicalKeyboardKey.shift &&
-      keyEvent.logicalKey != LogicalKeyboardKey.shiftLeft &&
-      keyEvent.logicalKey != LogicalKeyboardKey.shiftRight) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  final selection = documentContext.selection.value;
-  if (selection == null || !selection.isCollapsed) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  // The selection is collapsed, and the shift key was released. We don't
-  // want to retain the selection any longer. Remove it.
-  documentContext.selection.value = null;
-  return ExecutionInstruction.haltExecution;
-}
-
-ExecutionInstruction copyWhenCmdCIsPressed({
-  required DocumentContext documentContext,
-  required RawKeyEvent keyEvent,
-}) {
-  if (keyEvent is! RawKeyDownEvent) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  if (!keyEvent.isPrimaryShortcutKeyPressed || keyEvent.logicalKey != LogicalKeyboardKey.keyC) {
-    return ExecutionInstruction.continueExecution;
-  }
-  if (documentContext.selection.value == null) {
-    return ExecutionInstruction.continueExecution;
-  }
-  if (documentContext.selection.value!.isCollapsed) {
-    // Nothing to copy, but we technically handled the task.
+    // The selection is collapsed, and the shift key was released. We don't
+    // want to retain the selection any longer. Remove it.
+    documentContext.selection.value = null;
     return ExecutionInstruction.haltExecution;
-  }
+  },
+  keyPressedOrReleased: LogicalKeyboardKey.shift,
+  isShiftPressed: false,
+  onKeyUp: true,
+  onKeyDown: false,
+);
 
-  copy(
-    document: documentContext.document,
-    selection: documentContext.selection.value!,
-  );
+final scrollUpWithArrowKey = createShortcut(
+  ({
+    required ReaderContext documentContext,
+    required RawKeyEvent keyEvent,
+  }) {
+    documentContext.scrollController.jumpBy(-20);
+    return ExecutionInstruction.haltExecution;
+  },
+  keyPressedOrReleased: LogicalKeyboardKey.arrowUp,
+  isShiftPressed: false,
+);
 
-  return ExecutionInstruction.haltExecution;
-}
+final scrollDownWithArrowKey = createShortcut(
+  ({
+    required ReaderContext documentContext,
+    required RawKeyEvent keyEvent,
+  }) {
+    documentContext.scrollController.jumpBy(20);
+    return ExecutionInstruction.haltExecution;
+  },
+  keyPressedOrReleased: LogicalKeyboardKey.arrowDown,
+  isShiftPressed: false,
+);
 
-ExecutionInstruction selectAllWhenCmdAIsPressed({
-  required DocumentContext documentContext,
-  required RawKeyEvent keyEvent,
-}) {
-  if (keyEvent is! RawKeyDownEvent) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  if (!keyEvent.isPrimaryShortcutKeyPressed || keyEvent.logicalKey != LogicalKeyboardKey.keyA) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  final didSelectAll = selectAll(documentContext.document, documentContext.selection);
-  return didSelectAll ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
-}
-
-/// Sets the [selection]'s value to include the entire [Document].
-///
-/// Always returns [true].
-bool selectAll(Document document, ValueNotifier<DocumentSelection?> selection) {
-  final nodes = document.nodes;
-  if (nodes.isEmpty) {
-    return false;
-  }
-
-  selection.value = DocumentSelection(
-    base: DocumentPosition(
-      nodeId: nodes.first.id,
-      nodePosition: nodes.first.beginningPosition,
-    ),
-    extent: DocumentPosition(
-      nodeId: nodes.last.id,
-      nodePosition: nodes.last.endPosition,
-    ),
-  );
-
-  return true;
-}
-
-ExecutionInstruction expandSelectionWithArrowKeys({
-  required DocumentContext documentContext,
-  required RawKeyEvent keyEvent,
-}) {
-  if (keyEvent is! RawKeyDownEvent) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  const arrowKeys = [
-    LogicalKeyboardKey.arrowLeft,
-    LogicalKeyboardKey.arrowRight,
-    LogicalKeyboardKey.arrowUp,
-    LogicalKeyboardKey.arrowDown,
-  ];
-  if (!arrowKeys.contains(keyEvent.logicalKey)) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  if (defaultTargetPlatform == TargetPlatform.windows && keyEvent.isAltPressed) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  if (defaultTargetPlatform == TargetPlatform.linux &&
-      keyEvent.isAltPressed &&
-      (keyEvent.logicalKey == LogicalKeyboardKey.arrowUp || keyEvent.logicalKey == LogicalKeyboardKey.arrowDown)) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  bool didMove = false;
-  if (keyEvent.logicalKey == LogicalKeyboardKey.arrowLeft || keyEvent.logicalKey == LogicalKeyboardKey.arrowRight) {
-    MovementModifier? movementModifier;
-    if ((defaultTargetPlatform == TargetPlatform.windows || defaultTargetPlatform == TargetPlatform.linux) &&
-        keyEvent.isControlPressed) {
-      movementModifier = MovementModifier.word;
-    } else if (defaultTargetPlatform == TargetPlatform.macOS && keyEvent.isMetaPressed) {
-      movementModifier = MovementModifier.line;
-    } else if (defaultTargetPlatform == TargetPlatform.macOS && keyEvent.isAltPressed) {
-      movementModifier = MovementModifier.word;
+final expandSelectionWithLeftArrow = createShortcut(
+  ({
+    required ReaderContext documentContext,
+    required RawKeyEvent keyEvent,
+  }) {
+    if (defaultTargetPlatform == TargetPlatform.windows && keyEvent.isAltPressed) {
+      return ExecutionInstruction.continueExecution;
     }
 
-    if (keyEvent.logicalKey == LogicalKeyboardKey.arrowLeft) {
-      // Move the caret left/upstream.
-      didMove = _moveCaretUpstream(
-        document: documentContext.document,
-        documentLayout: documentContext.documentLayout,
-        selectionNotifier: documentContext.selection,
-        movementModifier: movementModifier,
-        retainCollapsedSelection: keyEvent.isShiftPressed,
-      );
-    } else {
-      // Move the caret right/downstream.
-      didMove = _moveCaretDownstream(
-        document: documentContext.document,
-        documentLayout: documentContext.documentLayout,
-        selectionNotifier: documentContext.selection,
-        movementModifier: movementModifier,
-        retainCollapsedSelection: keyEvent.isShiftPressed,
-      );
+    if (defaultTargetPlatform == TargetPlatform.linux &&
+        keyEvent.isAltPressed &&
+        (keyEvent.logicalKey == LogicalKeyboardKey.arrowUp || keyEvent.logicalKey == LogicalKeyboardKey.arrowDown)) {
+      return ExecutionInstruction.continueExecution;
     }
-  } else if (keyEvent.logicalKey == LogicalKeyboardKey.arrowUp) {
-    didMove = _moveCaretUp(
+
+    // Move the caret left/upstream.
+    final didMove = moveCaretUpstream(
+      document: documentContext.document,
+      documentLayout: documentContext.documentLayout,
+      selectionNotifier: documentContext.selection,
+      movementModifier: _getHorizontalMovementModifier(keyEvent),
+      retainCollapsedSelection: keyEvent.isShiftPressed,
+    );
+
+    return didMove ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
+  },
+  keyPressedOrReleased: LogicalKeyboardKey.arrowLeft,
+);
+
+final expandSelectionWithRightArrow = createShortcut(
+  ({
+    required ReaderContext documentContext,
+    required RawKeyEvent keyEvent,
+  }) {
+    if (defaultTargetPlatform == TargetPlatform.windows && keyEvent.isAltPressed) {
+      return ExecutionInstruction.continueExecution;
+    }
+
+    if (defaultTargetPlatform == TargetPlatform.linux &&
+        keyEvent.isAltPressed &&
+        (keyEvent.logicalKey == LogicalKeyboardKey.arrowUp || keyEvent.logicalKey == LogicalKeyboardKey.arrowDown)) {
+      return ExecutionInstruction.continueExecution;
+    }
+
+    // Move the caret right/downstream.
+    final didMove = moveCaretDownstream(
+      document: documentContext.document,
+      documentLayout: documentContext.documentLayout,
+      selectionNotifier: documentContext.selection,
+      movementModifier: _getHorizontalMovementModifier(keyEvent),
+      retainCollapsedSelection: keyEvent.isShiftPressed,
+    );
+
+    return didMove ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
+  },
+  keyPressedOrReleased: LogicalKeyboardKey.arrowRight,
+);
+
+MovementModifier? _getHorizontalMovementModifier(RawKeyEvent keyEvent) {
+  if ((defaultTargetPlatform == TargetPlatform.windows || defaultTargetPlatform == TargetPlatform.linux) &&
+      keyEvent.isControlPressed) {
+    return MovementModifier.word;
+  } else if (defaultTargetPlatform == TargetPlatform.macOS && keyEvent.isMetaPressed) {
+    return MovementModifier.line;
+  } else if (defaultTargetPlatform == TargetPlatform.macOS && keyEvent.isAltPressed) {
+    return MovementModifier.word;
+  }
+
+  return null;
+}
+
+final expandSelectionWithUpArrow = createShortcut(
+  ({
+    required ReaderContext documentContext,
+    required RawKeyEvent keyEvent,
+  }) {
+    if (defaultTargetPlatform == TargetPlatform.windows && keyEvent.isAltPressed) {
+      return ExecutionInstruction.continueExecution;
+    }
+
+    if (defaultTargetPlatform == TargetPlatform.linux &&
+        keyEvent.isAltPressed &&
+        (keyEvent.logicalKey == LogicalKeyboardKey.arrowUp || keyEvent.logicalKey == LogicalKeyboardKey.arrowDown)) {
+      return ExecutionInstruction.continueExecution;
+    }
+
+    final didMove = moveCaretUp(
       document: documentContext.document,
       documentLayout: documentContext.documentLayout,
       selectionNotifier: documentContext.selection,
       retainCollapsedSelection: keyEvent.isShiftPressed,
     );
-  } else if (keyEvent.logicalKey == LogicalKeyboardKey.arrowDown) {
-    didMove = _moveCaretDown(
+
+    return didMove ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
+  },
+  keyPressedOrReleased: LogicalKeyboardKey.arrowUp,
+);
+
+final expandSelectionWithDownArrow = createShortcut(
+  ({
+    required ReaderContext documentContext,
+    required RawKeyEvent keyEvent,
+  }) {
+    const arrowKeys = [
+      LogicalKeyboardKey.arrowLeft,
+      LogicalKeyboardKey.arrowRight,
+      LogicalKeyboardKey.arrowUp,
+      LogicalKeyboardKey.arrowDown,
+    ];
+    if (!arrowKeys.contains(keyEvent.logicalKey)) {
+      return ExecutionInstruction.continueExecution;
+    }
+
+    if (defaultTargetPlatform == TargetPlatform.windows && keyEvent.isAltPressed) {
+      return ExecutionInstruction.continueExecution;
+    }
+
+    if (defaultTargetPlatform == TargetPlatform.linux &&
+        keyEvent.isAltPressed &&
+        (keyEvent.logicalKey == LogicalKeyboardKey.arrowUp || keyEvent.logicalKey == LogicalKeyboardKey.arrowDown)) {
+      return ExecutionInstruction.continueExecution;
+    }
+
+    final didMove = moveCaretDown(
       document: documentContext.document,
       documentLayout: documentContext.documentLayout,
       selectionNotifier: documentContext.selection,
       retainCollapsedSelection: keyEvent.isShiftPressed,
     );
-  }
 
-  return didMove ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
-}
+    return didMove ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
+  },
+  keyPressedOrReleased: LogicalKeyboardKey.arrowDown,
+);
 
-bool _moveCaretUpstream({
-  required Document document,
-  required DocumentLayout documentLayout,
-  required ValueNotifier<DocumentSelection?> selectionNotifier,
-  MovementModifier? movementModifier,
-  required bool retainCollapsedSelection,
-}) {
-  final selection = selectionNotifier.value;
-  if (selection == null) {
-    return false;
-  }
-
-  final currentExtent = selection.extent;
-  final nodeId = currentExtent.nodeId;
-  final node = document.getNodeById(nodeId);
-  if (node == null) {
-    return false;
-  }
-  final extentComponent = documentLayout.getComponentByNodeId(nodeId);
-  if (extentComponent == null) {
-    return false;
-  }
-
-  String newExtentNodeId = nodeId;
-  NodePosition? newExtentNodePosition = extentComponent.movePositionLeft(currentExtent.nodePosition, movementModifier);
-
-  if (newExtentNodePosition == null) {
-    // Move to next node
-    final nextNode = _getUpstreamSelectableNodeBefore(document, documentLayout, node);
-
-    if (nextNode == null) {
-      // We're at the beginning of the document and can't go anywhere.
-      return false;
-    }
-
-    newExtentNodeId = nextNode.id;
-    final nextComponent = documentLayout.getComponentByNodeId(nextNode.id);
-    if (nextComponent == null) {
-      return false;
-    }
-    newExtentNodePosition = nextComponent.getEndPosition();
-  }
-
-  final newExtent = DocumentPosition(
-    nodeId: newExtentNodeId,
-    nodePosition: newExtentNodePosition,
-  );
-
-  DocumentSelection? newSelection = selection.expandTo(newExtent);
-  if (newSelection.isCollapsed && !retainCollapsedSelection) {
-    newSelection = null;
-  }
-  selectionNotifier.value = newSelection;
-
-  return true;
-}
-
-/// Moves the [DocumentComposer]'s selection extent position up,
-/// vertically, either by moving the selection extent up one line of
-/// text, or by moving the selection extent up to the node above the
-/// current extent.
-///
-/// If the current selection extent wants to move to the node above,
-/// but there is no node above the current extent, the extent is moved
-/// to the "start" position of the current node. For example: the extent
-/// moves from the middle of the first line of text in a paragraph to
-/// the beginning of the paragraph.
-///
-/// {@macro skip_unselectable_components}
-///
-/// Expands/contracts the selection if [expand] is [true], otherwise
-/// collapses the selection or keeps it collapsed.
-///
-/// Returns [true] if the extent moved, or the selection changed, e.g., the
-/// selection collapsed but the extent stayed in the same place. Returns
-/// [false] if the extent did not move and the selection did not change.
-bool _moveCaretUp({
-  required Document document,
-  required ValueNotifier<DocumentSelection?> selectionNotifier,
-  required DocumentLayout documentLayout,
-  required bool retainCollapsedSelection,
-}) {
-  final selection = selectionNotifier.value;
-  if (selection == null) {
-    return false;
-  }
-
-  final currentExtent = selection.extent;
-  final nodeId = currentExtent.nodeId;
-  final node = document.getNodeById(nodeId);
-  if (node == null) {
-    return false;
-  }
-  final extentComponent = documentLayout.getComponentByNodeId(nodeId);
-  if (extentComponent == null) {
-    return false;
-  }
-
-  String newExtentNodeId = nodeId;
-  NodePosition? newExtentNodePosition = extentComponent.movePositionUp(currentExtent.nodePosition);
-
-  if (newExtentNodePosition == null) {
-    // Move to next node
-    final nextNode = _getUpstreamSelectableNodeBefore(document, documentLayout, node);
-    if (nextNode != null) {
-      newExtentNodeId = nextNode.id;
-      final nextComponent = documentLayout.getComponentByNodeId(nextNode.id);
-      if (nextComponent == null) {
-        editorOpsLog.shout("Tried to obtain non-existent component by node id: $newExtentNodeId");
-        return false;
-      }
-      final offsetToMatch = extentComponent.getOffsetForPosition(currentExtent.nodePosition);
-      newExtentNodePosition = nextComponent.getEndPositionNearX(offsetToMatch.dx);
-    } else {
-      // We're at the top of the document. Move the cursor to the
-      // beginning of the current node.
-      newExtentNodePosition = extentComponent.getBeginningPosition();
-    }
-  }
-
-  final newExtent = DocumentPosition(
-    nodeId: newExtentNodeId,
-    nodePosition: newExtentNodePosition,
-  );
-
-  DocumentSelection? newSelection = selection.expandTo(newExtent);
-  if (newSelection.isCollapsed && !retainCollapsedSelection) {
-    newSelection = null;
-  }
-  selectionNotifier.value = newSelection;
-
-  return true;
-}
-
-/// Returns the first [DocumentNode] before [startingNode] whose
-/// [DocumentComponent] is visually selectable.
-DocumentNode? _getUpstreamSelectableNodeBefore(
-    Document document, DocumentLayout documentLayout, DocumentNode startingNode) {
-  bool foundSelectableNode = false;
-  DocumentNode prevNode = startingNode;
-  DocumentNode? selectableNode;
-  do {
-    selectableNode = document.getNodeBefore(prevNode);
-
-    if (selectableNode != null) {
-      final nextComponent = documentLayout.getComponentByNodeId(selectableNode.id);
-      if (nextComponent != null) {
-        foundSelectableNode = nextComponent.isVisualSelectionSupported();
-      }
-      prevNode = selectableNode;
-    }
-  } while (!foundSelectableNode && selectableNode != null);
-
-  return selectableNode;
-}
-
-/// Moves the [DocumentComposer]'s selection extent position in the
-/// downstream direction (to the right for left-to-right languages).
-///
-/// {@macro skip_unselectable_components}
-///
-/// Expands/contracts the selection if [expand] is [true], otherwise
-/// collapses the selection or keeps it collapsed.
-///
-/// By default, moves one character at a time when the extent sits in
-/// a [TextNode]. To move word-by-word, pass [MovementModifier.word]
-/// in [movementModifier]. To move to the end of a line, pass
-/// [MovementModifier.line] in [movementModifier].
-///
-/// Returns [true] if the extent moved, or the selection changed, e.g., the
-/// selection collapsed but the extent stayed in the same place. Returns
-/// [false] if the extent did not move and the selection did not change.
-bool _moveCaretDownstream({
-  required Document document,
-  required DocumentLayout documentLayout,
-  required ValueNotifier<DocumentSelection?> selectionNotifier,
-  MovementModifier? movementModifier,
-  required bool retainCollapsedSelection,
-}) {
-  final selection = selectionNotifier.value;
-  if (selection == null) {
-    return false;
-  }
-
-  final currentExtent = selection.extent;
-  final nodeId = currentExtent.nodeId;
-  final node = document.getNodeById(nodeId);
-  if (node == null) {
-    return false;
-  }
-  final extentComponent = documentLayout.getComponentByNodeId(nodeId);
-  if (extentComponent == null) {
-    return false;
-  }
-
-  String newExtentNodeId = nodeId;
-  NodePosition? newExtentNodePosition = extentComponent.movePositionRight(currentExtent.nodePosition, movementModifier);
-
-  if (newExtentNodePosition == null) {
-    // Move to next node
-    final nextNode = _getDownstreamSelectableNodeAfter(document, documentLayout, node);
-
-    if (nextNode == null) {
-      // We're at the beginning/end of the document and can't go
-      // anywhere.
-      return false;
-    }
-
-    newExtentNodeId = nextNode.id;
-    final nextComponent = documentLayout.getComponentByNodeId(nextNode.id);
-    if (nextComponent == null) {
-      throw Exception('Could not find next component to move the selection horizontally. Next node ID: ${nextNode.id}');
-    }
-    newExtentNodePosition = nextComponent.getBeginningPosition();
-  }
-
-  final newExtent = DocumentPosition(
-    nodeId: newExtentNodeId,
-    nodePosition: newExtentNodePosition,
-  );
-
-  DocumentSelection? newSelection = selection.expandTo(newExtent);
-  if (newSelection.isCollapsed && !retainCollapsedSelection) {
-    newSelection = null;
-  }
-  selectionNotifier.value = newSelection;
-
-  return true;
-}
-
-/// Moves the [DocumentComposer]'s selection extent position down,
-/// vertically, either by moving the selection extent down one line of
-/// text, or by moving the selection extent down to the node below the
-/// current extent.
-///
-/// If the current selection extent wants to move to the node below,
-/// but there is no node below the current extent, the extent is moved
-/// to the "end" position of the current node. For example: the extent
-/// moves from the middle of the last line of text in a paragraph to
-/// the end of the paragraph.
-///
-/// {@macro skip_unselectable_components}
-///
-/// Expands/contracts the selection if [expand] is [true], otherwise
-/// collapses the selection or keeps it collapsed.
-///
-/// Returns [true] if the extent moved, or the selection changed, e.g., the
-/// selection collapsed but the extent stayed in the same place. Returns
-/// [false] if the extent did not move and the selection did not change.
-bool _moveCaretDown({
-  required Document document,
-  required DocumentLayout documentLayout,
-  required ValueNotifier<DocumentSelection?> selectionNotifier,
-  required bool retainCollapsedSelection,
-}) {
-  final selection = selectionNotifier.value;
-  if (selection == null) {
-    return false;
-  }
-
-  final currentExtent = selection.extent;
-  final nodeId = currentExtent.nodeId;
-  final node = document.getNodeById(nodeId);
-  if (node == null) {
-    return false;
-  }
-  final extentComponent = documentLayout.getComponentByNodeId(nodeId);
-  if (extentComponent == null) {
-    return false;
-  }
-
-  String newExtentNodeId = nodeId;
-  NodePosition? newExtentNodePosition = extentComponent.movePositionDown(currentExtent.nodePosition);
-
-  if (newExtentNodePosition == null) {
-    // Move to next node
-    final nextNode = _getDownstreamSelectableNodeAfter(document, documentLayout, node);
-    if (nextNode != null) {
-      newExtentNodeId = nextNode.id;
-      final nextComponent = documentLayout.getComponentByNodeId(nextNode.id);
-      if (nextComponent == null) {
-        editorOpsLog.shout("Tried to obtain non-existent component by node id: $newExtentNodeId");
-        return false;
-      }
-      final offsetToMatch = extentComponent.getOffsetForPosition(currentExtent.nodePosition);
-      newExtentNodePosition = nextComponent.getBeginningPositionNearX(offsetToMatch.dx);
-    } else {
-      // We're at the bottom of the document. Move the cursor to the
-      // end of the current node.
-      newExtentNodePosition = extentComponent.getEndPosition();
-    }
-  }
-
-  final newExtent = DocumentPosition(
-    nodeId: newExtentNodeId,
-    nodePosition: newExtentNodePosition,
-  );
-
-  DocumentSelection? newSelection = selection.expandTo(newExtent);
-  if (newSelection.isCollapsed && !retainCollapsedSelection) {
-    newSelection = null;
-  }
-  selectionNotifier.value = newSelection;
-
-  return true;
-}
-
-/// Returns the first [DocumentNode] after [startingNode] whose
-/// [DocumentComponent] is visually selectable.
-DocumentNode? _getDownstreamSelectableNodeAfter(
-    Document document, DocumentLayout documentLayout, DocumentNode startingNode) {
-  bool foundSelectableNode = false;
-  DocumentNode prevNode = startingNode;
-  DocumentNode? selectableNode;
-  do {
-    selectableNode = document.getNodeAfter(prevNode);
-
-    if (selectableNode != null) {
-      final nextComponent = documentLayout.getComponentByNodeId(selectableNode.id);
-      if (nextComponent != null) {
-        foundSelectableNode = nextComponent.isVisualSelectionSupported();
-      }
-      prevNode = selectableNode;
-    }
-  } while (!foundSelectableNode && selectableNode != null);
-
-  return selectableNode;
-}
-
-ExecutionInstruction scrollUpDownWithArrowKeys({
-  required DocumentContext documentContext,
-  required RawKeyEvent keyEvent,
-}) {
-  if (keyEvent is! RawKeyDownEvent) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  if (keyEvent.logicalKey != LogicalKeyboardKey.arrowUp && keyEvent.logicalKey != LogicalKeyboardKey.arrowDown) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  if (keyEvent.isShiftPressed) {
-    // When shift is pressed, the user wants a selection change, not scrolling.
-    return ExecutionInstruction.continueExecution;
-  }
-
-  final delta = keyEvent.logicalKey == LogicalKeyboardKey.arrowDown ? 20.0 : -20.0;
-  documentContext.scrollController.jumpBy(delta);
-
-  return ExecutionInstruction.haltExecution;
-}
-
-ExecutionInstruction expandSelectionToLineStartWithHome({
-  required DocumentContext documentContext,
-  required RawKeyEvent keyEvent,
-}) {
-  if (keyEvent is! RawKeyDownEvent) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  if (defaultTargetPlatform != TargetPlatform.windows && defaultTargetPlatform != TargetPlatform.linux) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  if (!keyEvent.isShiftPressed) {
-    // Read-only documents only support expanded selections. Shift isn't
-    // pressed. This action doesn't apply to an expanding selection.
-    return ExecutionInstruction.continueExecution;
-  }
-
-  bool didMove = false;
-  if (keyEvent.logicalKey == LogicalKeyboardKey.home) {
-    didMove = _moveCaretUpstream(
+final expandSelectionToLineStartWithHomeOnWindowsAndLinux = createShortcut(
+  ({
+    required ReaderContext documentContext,
+    required RawKeyEvent keyEvent,
+  }) {
+    final didMove = moveCaretUpstream(
       document: documentContext.document,
       documentLayout: documentContext.documentLayout,
       selectionNotifier: documentContext.selection,
       movementModifier: MovementModifier.line,
       retainCollapsedSelection: keyEvent.isShiftPressed,
     );
-  }
 
-  return didMove ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
-}
+    return didMove ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
+  },
+  keyPressedOrReleased: LogicalKeyboardKey.home,
+  isShiftPressed: true,
+  platforms: {TargetPlatform.windows, TargetPlatform.linux, TargetPlatform.fuchsia},
+);
 
-ExecutionInstruction expandSelectionToLineEndWithEnd({
-  required DocumentContext documentContext,
-  required RawKeyEvent keyEvent,
-}) {
-  if (keyEvent is! RawKeyDownEvent) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  if (defaultTargetPlatform != TargetPlatform.windows && defaultTargetPlatform != TargetPlatform.linux) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  if (!keyEvent.isShiftPressed) {
-    // Read-only documents only support expanded selections. Shift isn't
-    // pressed. This action doesn't apply to an expanding selection.
-    return ExecutionInstruction.continueExecution;
-  }
-
-  bool didMove = false;
-  if (keyEvent.logicalKey == LogicalKeyboardKey.end) {
-    didMove = _moveCaretDownstream(
+final expandSelectionToLineEndWithEndOnWindowsAndLinux = createShortcut(
+  ({
+    required ReaderContext documentContext,
+    required RawKeyEvent keyEvent,
+  }) {
+    final didMove = moveCaretDownstream(
       document: documentContext.document,
       documentLayout: documentContext.documentLayout,
       selectionNotifier: documentContext.selection,
       movementModifier: MovementModifier.line,
       retainCollapsedSelection: keyEvent.isShiftPressed,
     );
-  }
 
-  return didMove ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
-}
+    return didMove ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
+  },
+  keyPressedOrReleased: LogicalKeyboardKey.end,
+  isShiftPressed: true,
+  platforms: {TargetPlatform.windows, TargetPlatform.linux, TargetPlatform.fuchsia},
+);
 
-ExecutionInstruction expandSelectionToLineStartOrEndWithCtrlAOrE({
-  required DocumentContext documentContext,
-  required RawKeyEvent keyEvent,
-}) {
-  if (keyEvent is! RawKeyDownEvent) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  if (Platform.instance.isMac) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  if (!keyEvent.isControlPressed) {
-    return ExecutionInstruction.continueExecution;
-  }
-
-  if (!keyEvent.isShiftPressed) {
-    // Read-only documents only support expanded selections. Shift isn't
-    // pressed. This action doesn't apply to an expanding selection.
-    return ExecutionInstruction.continueExecution;
-  }
-
-  bool didMove = false;
-  if (keyEvent.logicalKey == LogicalKeyboardKey.keyA) {
-    didMove = _moveCaretUpstream(
+final expandSelectionToLineStartWithCtrlAOnWindowsAndLinux = createShortcut(
+  ({
+    required ReaderContext documentContext,
+    required RawKeyEvent keyEvent,
+  }) {
+    final didMove = moveCaretUpstream(
       document: documentContext.document,
       documentLayout: documentContext.documentLayout,
       selectionNotifier: documentContext.selection,
       movementModifier: MovementModifier.line,
       retainCollapsedSelection: keyEvent.isShiftPressed,
     );
-  }
 
-  if (keyEvent.logicalKey == LogicalKeyboardKey.keyE) {
-    didMove = _moveCaretDownstream(
+    return didMove ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
+  },
+  keyPressedOrReleased: LogicalKeyboardKey.keyA,
+  isShiftPressed: true,
+  isCtlPressed: true,
+  platforms: {TargetPlatform.windows, TargetPlatform.linux, TargetPlatform.fuchsia},
+);
+
+final expandSelectionToLineEndWithCtrlEOnWindowsAndLinux = createShortcut(
+  ({
+    required ReaderContext documentContext,
+    required RawKeyEvent keyEvent,
+  }) {
+    final didMove = moveCaretDownstream(
       document: documentContext.document,
       documentLayout: documentContext.documentLayout,
       selectionNotifier: documentContext.selection,
       movementModifier: MovementModifier.line,
       retainCollapsedSelection: keyEvent.isShiftPressed,
     );
-  }
 
-  return didMove ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
-}
+    return didMove ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
+  },
+  keyPressedOrReleased: LogicalKeyboardKey.keyE,
+  isShiftPressed: true,
+  isCtlPressed: true,
+  platforms: {TargetPlatform.windows, TargetPlatform.linux, TargetPlatform.fuchsia},
+);
 
-/// Serializes the current selection to plain text, and adds it to the
-/// clipboard.
-void copy({
-  required Document document,
-  required DocumentSelection selection,
-}) {
-  final textToCopy = _textInSelection(
-    document: document,
-    documentSelection: selection,
-  );
-  // TODO: figure out a general approach for asynchronous behaviors that
-  //       need to be carried out in response to user input.
-  _saveToClipboard(textToCopy);
-}
-
-String _textInSelection({
-  required Document document,
-  required DocumentSelection documentSelection,
-}) {
-  final selectedNodes = document.getNodesInside(
-    documentSelection.base,
-    documentSelection.extent,
-  );
-
-  final buffer = StringBuffer();
-  for (int i = 0; i < selectedNodes.length; ++i) {
-    final selectedNode = selectedNodes[i];
-    dynamic nodeSelection;
-
-    if (i == 0) {
-      // This is the first node and it may be partially selected.
-      final baseSelectionPosition = selectedNode.id == documentSelection.base.nodeId
-          ? documentSelection.base.nodePosition
-          : documentSelection.extent.nodePosition;
-
-      final extentSelectionPosition =
-          selectedNodes.length > 1 ? selectedNode.endPosition : documentSelection.extent.nodePosition;
-
-      nodeSelection = selectedNode.computeSelection(
-        base: baseSelectionPosition,
-        extent: extentSelectionPosition,
-      );
-    } else if (i == selectedNodes.length - 1) {
-      // This is the last node and it may be partially selected.
-      final nodePosition = selectedNode.id == documentSelection.base.nodeId
-          ? documentSelection.base.nodePosition
-          : documentSelection.extent.nodePosition;
-
-      nodeSelection = selectedNode.computeSelection(
-        base: selectedNode.beginningPosition,
-        extent: nodePosition,
-      );
-    } else {
-      // This node is fully selected. Copy the whole thing.
-      nodeSelection = selectedNode.computeSelection(
-        base: selectedNode.beginningPosition,
-        extent: selectedNode.endPosition,
-      );
+final selectAllWhenCmdAIsPressedOnMac = createShortcut(
+  ({
+    required ReaderContext documentContext,
+    required RawKeyEvent keyEvent,
+  }) {
+    if (!keyEvent.isPrimaryShortcutKeyPressed || keyEvent.logicalKey != LogicalKeyboardKey.keyA) {
+      return ExecutionInstruction.continueExecution;
     }
 
-    final nodeContent = selectedNode.copyContent(nodeSelection);
-    if (nodeContent != null) {
-      buffer.write(nodeContent);
-      if (i < selectedNodes.length - 1) {
-        buffer.writeln();
+    final didSelectAll = selectAll(documentContext.document, documentContext.selection);
+    return didSelectAll ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
+  },
+  keyPressedOrReleased: LogicalKeyboardKey.keyA,
+  isCmdPressed: true,
+  platforms: {TargetPlatform.macOS, TargetPlatform.iOS},
+);
+
+final selectAllWhenCtlAIsPressedOnWindowsAndLinux = createShortcut(
+  ({
+    required ReaderContext documentContext,
+    required RawKeyEvent keyEvent,
+  }) {
+    if (!keyEvent.isPrimaryShortcutKeyPressed || keyEvent.logicalKey != LogicalKeyboardKey.keyA) {
+      return ExecutionInstruction.continueExecution;
+    }
+
+    final didSelectAll = selectAll(documentContext.document, documentContext.selection);
+    return didSelectAll ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
+  },
+  keyPressedOrReleased: LogicalKeyboardKey.keyA,
+  isCtlPressed: true,
+  platforms: {
+    TargetPlatform.windows,
+    TargetPlatform.linux,
+    TargetPlatform.fuchsia,
+    TargetPlatform.android,
+  },
+);
+
+final copyWhenCmdCIsPressedOnMac = createShortcut(
+  ({
+    required ReaderContext documentContext,
+    required RawKeyEvent keyEvent,
+  }) {
+    if (documentContext.selection.value == null) {
+      return ExecutionInstruction.continueExecution;
+    }
+    if (documentContext.selection.value!.isCollapsed) {
+      // Nothing to copy, but we technically handled the task.
+      return ExecutionInstruction.haltExecution;
+    }
+
+    copy(
+      document: documentContext.document,
+      selection: documentContext.selection.value!,
+    );
+
+    return ExecutionInstruction.haltExecution;
+  },
+  keyPressedOrReleased: LogicalKeyboardKey.keyC,
+  isCmdPressed: true,
+  platforms: {TargetPlatform.macOS, TargetPlatform.iOS},
+);
+
+final copyWhenCtlCIsPressedOnWindowsAndLinux = createShortcut(
+  ({
+    required ReaderContext documentContext,
+    required RawKeyEvent keyEvent,
+  }) {
+    if (documentContext.selection.value == null) {
+      return ExecutionInstruction.continueExecution;
+    }
+    if (documentContext.selection.value!.isCollapsed) {
+      // Nothing to copy, but we technically handled the task.
+      return ExecutionInstruction.haltExecution;
+    }
+
+    copy(
+      document: documentContext.document,
+      selection: documentContext.selection.value!,
+    );
+
+    return ExecutionInstruction.haltExecution;
+  },
+  keyPressedOrReleased: LogicalKeyboardKey.keyC,
+  isCtlPressed: true,
+  platforms: {
+    TargetPlatform.windows,
+    TargetPlatform.linux,
+    TargetPlatform.fuchsia,
+    TargetPlatform.android,
+  },
+);
+
+/// A proxy for a [ReadOnlyDocumentKeyboardAction] that filters events based
+/// on [onKeyUp], [onKeyDown], and [shortcut].
+///
+/// If [onKeyUp] is `false`, all key-up events are ignored. If [onKeyDown] is
+/// `false`, all key-down events are ignored. If [shortcut] is non-null, all
+/// events that don't match the [shortcut] key presses are ignored.
+///
+/// This proxy is optional. Individual [ReadOnlyDocumentKeyboardAction]s can
+/// make these same decisions about key handling. This proxy is provided as
+/// a convenience for the average use-case, which typically tries to match
+/// a specific shortcut for either an up or down key event.
+ReadOnlyDocumentKeyboardAction createShortcut(
+  ReadOnlyDocumentKeyboardAction action, {
+  LogicalKeyboardKey? keyPressedOrReleased,
+  Set<LogicalKeyboardKey>? triggers,
+  bool? isShiftPressed,
+  bool? isCmdPressed,
+  bool? isCtlPressed,
+  bool? isAltPressed,
+  bool onKeyUp = true,
+  bool onKeyDown = false,
+  Set<TargetPlatform>? platforms,
+}) {
+  if (onKeyUp == false && onKeyDown == false) {
+    throw Exception(
+        "Invalid shortcut definition. Both onKeyUp and onKeyDown are false. This shortcut will never be triggered.");
+  }
+
+  return ({required ReaderContext documentContext, required RawKeyEvent keyEvent}) {
+    if (keyEvent is RawKeyUpEvent && !onKeyUp) {
+      return ExecutionInstruction.continueExecution;
+    }
+
+    if (keyEvent is RawKeyDownEvent && !onKeyDown) {
+      return ExecutionInstruction.continueExecution;
+    }
+
+    if (isCmdPressed != null && isCmdPressed != keyEvent.isMetaPressed) {
+      return ExecutionInstruction.continueExecution;
+    }
+
+    if (isCtlPressed != null && isCtlPressed != keyEvent.isControlPressed) {
+      return ExecutionInstruction.continueExecution;
+    }
+
+    if (isAltPressed != null && isAltPressed != keyEvent.isAltPressed) {
+      return ExecutionInstruction.continueExecution;
+    }
+
+    if (isShiftPressed != null) {
+      if (isShiftPressed && !keyEvent.isShiftPressed) {
+        return ExecutionInstruction.continueExecution;
+      } else if (!isShiftPressed && keyEvent.isShiftPressed) {
+        return ExecutionInstruction.continueExecution;
       }
     }
-  }
-  return buffer.toString();
-}
 
-Future<void> _saveToClipboard(String text) {
-  return Clipboard.setData(ClipboardData(text: text));
+    if (keyPressedOrReleased != null && keyEvent.logicalKey != keyPressedOrReleased) {
+      // Manually account for the fact that Flutter pretends that different
+      // shift keys mean different things.
+      if ((keyPressedOrReleased == LogicalKeyboardKey.shift ||
+              keyPressedOrReleased == LogicalKeyboardKey.shiftLeft ||
+              keyPressedOrReleased == LogicalKeyboardKey.shiftRight) &&
+          (keyEvent.logicalKey == LogicalKeyboardKey.shift ||
+              keyEvent.logicalKey == LogicalKeyboardKey.shiftLeft ||
+              keyEvent.logicalKey == LogicalKeyboardKey.shiftRight)) {
+        // This is a false positive signal. We're looking for a shift key trigger, and
+        // one of the shifts is the trigger. We don't care which one.
+      } else {
+        return ExecutionInstruction.continueExecution;
+      }
+    }
+
+    if (triggers != null) {
+      for (final key in triggers) {
+        if (!keyEvent.isKeyPressed(key)) {
+          // Manually account for the fact that Flutter pretends that different
+          // shift keys mean different things.
+          if (key == LogicalKeyboardKey.shift ||
+              key == LogicalKeyboardKey.shiftLeft ||
+              key == LogicalKeyboardKey.shiftRight) {
+            if (keyEvent.logicalKey == LogicalKeyboardKey.shift ||
+                keyEvent.logicalKey == LogicalKeyboardKey.shiftLeft ||
+                keyEvent.logicalKey == LogicalKeyboardKey.shiftRight) {
+              // This is a false positive signal. We're looking for a shift key trigger, and
+              // one of the shifts is the trigger. We don't care which one.
+              continue;
+            }
+          }
+
+          // A required trigger key isn't currently pressed. We don't
+          // want to respond to this key event.
+          return ExecutionInstruction.continueExecution;
+        }
+      }
+    }
+
+    if (platforms != null && !platforms.contains(defaultTargetPlatform)) {
+      return ExecutionInstruction.continueExecution;
+    }
+
+    // The key event has passed all the proxy conditions. Run the real key action.
+    return action(documentContext: documentContext, keyEvent: keyEvent);
+  };
 }
