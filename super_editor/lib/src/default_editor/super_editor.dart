@@ -14,6 +14,7 @@ import 'package:super_editor/src/default_editor/document_gestures_touch_android.
 import 'package:super_editor/src/default_editor/document_gestures_touch_ios.dart';
 import 'package:super_editor/src/default_editor/document_scrollable.dart';
 import 'package:super_editor/src/default_editor/list_items.dart';
+import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
 import 'attributions.dart';
