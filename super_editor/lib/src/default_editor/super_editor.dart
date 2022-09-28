@@ -605,8 +605,10 @@ class SuperEditorState extends State<SuperEditor> {
               Positioned.fill(
                 child: DocumentMouseInteractor(
                   focusNode: _focusNode,
-                  editContext: editContext,
+                  document: editContext.editor.document,
+                  getDocumentLayout: () => editContext.documentLayout,
                   selection: editContext.composer.selectionNotifier,
+                  commonOps: editContext.commonOps,
                   autoScroller: _autoScrollController,
                   showDebugPaint: widget.debugPaint.gestures,
                   child: const SizedBox(),
