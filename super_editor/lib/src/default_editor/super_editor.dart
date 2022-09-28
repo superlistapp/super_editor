@@ -546,9 +546,9 @@ class SuperEditorState extends State<SuperEditor> {
       case DocumentGestureMode.android:
         return AndroidDocumentTouchInteractor(
           focusNode: _focusNode,
-          composer: editContext.composer,
           document: editContext.editor.document,
           getDocumentLayout: () => editContext.documentLayout,
+          selection: editContext.composer.selectionNotifier,
           commonOps: editContext.commonOps,
           scrollController: widget.scrollController,
           documentKey: _docLayoutKey,
@@ -561,9 +561,9 @@ class SuperEditorState extends State<SuperEditor> {
       case DocumentGestureMode.iOS:
         return IOSDocumentTouchInteractor(
           focusNode: _focusNode,
-          composer: editContext.composer,
           document: editContext.editor.document,
           getDocumentLayout: () => editContext.documentLayout,
+          selection: editContext.composer.selectionNotifier,
           commonOps: editContext.commonOps,
           scrollController: widget.scrollController,
           documentKey: _docLayoutKey,
@@ -606,6 +606,7 @@ class SuperEditorState extends State<SuperEditor> {
                 child: DocumentMouseInteractor(
                   focusNode: _focusNode,
                   editContext: editContext,
+                  selection: editContext.composer.selectionNotifier,
                   autoScroller: _autoScrollController,
                   showDebugPaint: widget.debugPaint.gestures,
                   child: const SizedBox(),

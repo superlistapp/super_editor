@@ -35,6 +35,7 @@ class DocumentMouseInteractor extends StatefulWidget {
     Key? key,
     this.focusNode,
     required this.editContext,
+    required this.selection,
     required this.autoScroller,
     this.showDebugPaint = false,
     required this.child,
@@ -44,6 +45,8 @@ class DocumentMouseInteractor extends StatefulWidget {
 
   /// Service locator for document editing dependencies.
   final EditContext editContext;
+
+  final ValueNotifier<DocumentSelection?> selection;
 
   /// Auto-scrolling delegate.
   final AutoScrollController autoScroller;
@@ -83,8 +86,8 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor>
 
     startSyncingSelectionWithFocus(
       focusNode: _focusNode,
-      composer: widget.editContext.composer,
       getDocumentLayout: () => widget.editContext.documentLayout,
+      selection: widget.selection,
     );
   }
 
@@ -98,7 +101,7 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor>
     if (widget.editContext.composer != oldWidget.editContext.composer) {
       oldWidget.editContext.composer.selectionNotifier.removeListener(_onSelectionChange);
       widget.editContext.composer.selectionNotifier.addListener(_onSelectionChange);
-      onDocumentComposerReplaced(widget.editContext.composer);
+      onDocumentSelectionNotifierReplaced(widget.selection);
     }
     if (widget.autoScroller != oldWidget.autoScroller) {
       oldWidget.autoScroller.removeListener(_updateDragSelection);
