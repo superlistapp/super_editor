@@ -1,12 +1,242 @@
+import 'dart:ui';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
+import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
+import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 
 /// Logical operations for interacting with a read-only document.
 // TODO: de-dup with analogous SuperEditor operations
+
+/// Calculates an appropriate [DocumentSelection] from an (x,y)
+/// [baseOffsetInDocument], to an (x,y) [extentOffsetInDocument], setting
+/// the new document selection in the given [selection].
+void selectRegion({
+  required DocumentLayout documentLayout,
+  required Offset baseOffsetInDocument,
+  required Offset extentOffsetInDocument,
+  required SelectionType selectionType,
+  bool expandSelection = false,
+  required ValueNotifier<DocumentSelection?> selection,
+}) {
+  readerGesturesLog.info("Selecting region with selection mode: $selectionType");
+  DocumentSelection? regionSelection = documentLayout.getDocumentSelectionInRegion(
+    baseOffsetInDocument,
+    extentOffsetInDocument,
+  );
+  DocumentPosition? basePosition = regionSelection?.base;
+  DocumentPosition? extentPosition = regionSelection?.extent;
+  readerGesturesLog.fine(" - base: $basePosition, extent: $extentPosition");
+
+  if (basePosition == null || extentPosition == null) {
+    selection.value = null;
+    return;
+  }
+
+  if (selectionType == SelectionType.paragraph) {
+    final baseParagraphSelection = getParagraphSelection(
+      docPosition: basePosition,
+      docLayout: documentLayout,
+    );
+    if (baseParagraphSelection == null) {
+      selection.value = null;
+      return;
+    }
+    basePosition = baseOffsetInDocument.dy < extentOffsetInDocument.dy
+        ? baseParagraphSelection.base
+        : baseParagraphSelection.extent;
+
+    final extentParagraphSelection = getParagraphSelection(
+      docPosition: extentPosition,
+      docLayout: documentLayout,
+    );
+    if (extentParagraphSelection == null) {
+      selection.value = null;
+      return;
+    }
+    extentPosition = baseOffsetInDocument.dy < extentOffsetInDocument.dy
+        ? extentParagraphSelection.extent
+        : extentParagraphSelection.base;
+  } else if (selectionType == SelectionType.word) {
+    final baseWordSelection = getWordSelection(
+      docPosition: basePosition,
+      docLayout: documentLayout,
+    );
+    if (baseWordSelection == null) {
+      selection.value = null;
+      return;
+    }
+    basePosition = baseWordSelection.base;
+
+    final extentWordSelection = getWordSelection(
+      docPosition: extentPosition,
+      docLayout: documentLayout,
+    );
+    if (extentWordSelection == null) {
+      selection.value = null;
+      return;
+    }
+    extentPosition = extentWordSelection.extent;
+  }
+
+  selection.value = (DocumentSelection(
+    // If desired, expand the selection instead of replacing it.
+    base: expandSelection ? selection.value?.base ?? basePosition : basePosition,
+    extent: extentPosition,
+  ));
+  readerGesturesLog.fine("Selected region: ${selection.value}");
+}
+
+enum SelectionType {
+  position,
+  word,
+  paragraph,
+}
+
+bool selectWordAt({
+  required DocumentPosition docPosition,
+  required DocumentLayout docLayout,
+  required ValueNotifier<DocumentSelection?> selection,
+}) {
+  final newSelection = getWordSelection(docPosition: docPosition, docLayout: docLayout);
+  if (newSelection != null) {
+    selection.value = newSelection;
+    return true;
+  } else {
+    return false;
+  }
+}
+
+bool selectBlockAt(DocumentPosition position, ValueNotifier<DocumentSelection?> selection) {
+  if (position.nodePosition is! UpstreamDownstreamNodePosition) {
+    return false;
+  }
+
+  selection.value = DocumentSelection(
+    base: DocumentPosition(
+      nodeId: position.nodeId,
+      nodePosition: const UpstreamDownstreamNodePosition.upstream(),
+    ),
+    extent: DocumentPosition(
+      nodeId: position.nodeId,
+      nodePosition: const UpstreamDownstreamNodePosition.downstream(),
+    ),
+  );
+
+  return true;
+}
+
+bool selectParagraphAt({
+  required DocumentPosition docPosition,
+  required DocumentLayout docLayout,
+  required ValueNotifier<DocumentSelection?> selection,
+}) {
+  final newSelection = getParagraphSelection(docPosition: docPosition, docLayout: docLayout);
+  if (newSelection != null) {
+    selection.value = newSelection;
+    return true;
+  } else {
+    return false;
+  }
+}
+
+void moveToNearestSelectableComponent(
+  Document document,
+  DocumentLayout documentLayout,
+  ValueNotifier<DocumentSelection?> selection,
+  String nodeId,
+  DocumentComponent component,
+) {
+  // TODO: this was taken from CommonOps. We don't have CommonOps in this
+  // interactor, because it's for read-only documents. Selection operations
+  // should probably be moved to something outside of CommonOps
+  DocumentNode startingNode = document.getNodeById(nodeId)!;
+  String? newNodeId;
+  NodePosition? newPosition;
+
+  // Try to find a new selection downstream.
+  final downstreamNode = _getDownstreamSelectableNodeAfter(document, documentLayout, startingNode);
+  if (downstreamNode != null) {
+    newNodeId = downstreamNode.id;
+    final nextComponent = documentLayout.getComponentByNodeId(newNodeId);
+    newPosition = nextComponent?.getBeginningPosition();
+  }
+
+  // Try to find a new selection upstream.
+  if (newPosition == null) {
+    final upstreamNode = _getUpstreamSelectableNodeBefore(document, documentLayout, startingNode);
+    if (upstreamNode != null) {
+      newNodeId = upstreamNode.id;
+      final previousComponent = documentLayout.getComponentByNodeId(newNodeId);
+      newPosition = previousComponent?.getBeginningPosition();
+    }
+  }
+
+  if (newNodeId == null || newPosition == null) {
+    return;
+  }
+
+  selection.value = selection.value!.expandTo(
+    DocumentPosition(
+      nodeId: newNodeId,
+      nodePosition: newPosition,
+    ),
+  );
+}
+
+/// Returns the first [DocumentNode] before [startingNode] whose
+/// [DocumentComponent] is visually selectable.
+DocumentNode? _getUpstreamSelectableNodeBefore(
+  Document document,
+  DocumentLayout documentLayout,
+  DocumentNode startingNode,
+) {
+  bool foundSelectableNode = false;
+  DocumentNode prevNode = startingNode;
+  DocumentNode? selectableNode;
+  do {
+    selectableNode = document.getNodeBefore(prevNode);
+
+    if (selectableNode != null) {
+      final nextComponent = documentLayout.getComponentByNodeId(selectableNode.id);
+      if (nextComponent != null) {
+        foundSelectableNode = nextComponent.isVisualSelectionSupported();
+      }
+      prevNode = selectableNode;
+    }
+  } while (!foundSelectableNode && selectableNode != null);
+
+  return selectableNode;
+}
+
+/// Returns the first [DocumentNode] after [startingNode] whose
+/// [DocumentComponent] is visually selectable.
+DocumentNode? _getDownstreamSelectableNodeAfter(
+  Document document,
+  DocumentLayout documentLayout,
+  DocumentNode startingNode,
+) {
+  bool foundSelectableNode = false;
+  DocumentNode prevNode = startingNode;
+  DocumentNode? selectableNode;
+  do {
+    selectableNode = document.getNodeAfter(prevNode);
+
+    if (selectableNode != null) {
+      final nextComponent = documentLayout.getComponentByNodeId(selectableNode.id);
+      if (nextComponent != null) {
+        foundSelectableNode = nextComponent.isVisualSelectionSupported();
+      }
+      prevNode = selectableNode;
+    }
+  } while (!foundSelectableNode && selectableNode != null);
+
+  return selectableNode;
+}
 
 bool moveCaretUpstream({
   required Document document,
@@ -291,53 +521,6 @@ bool moveCaretDown({
   selectionNotifier.value = newSelection;
 
   return true;
-}
-
-/// Returns the first [DocumentNode] before [startingNode] whose
-/// [DocumentComponent] is visually selectable.
-DocumentNode? _getUpstreamSelectableNodeBefore(
-  Document document,
-  DocumentLayout documentLayout,
-  DocumentNode startingNode,
-) {
-  bool foundSelectableNode = false;
-  DocumentNode prevNode = startingNode;
-  DocumentNode? selectableNode;
-  do {
-    selectableNode = document.getNodeBefore(prevNode);
-
-    if (selectableNode != null) {
-      final nextComponent = documentLayout.getComponentByNodeId(selectableNode.id);
-      if (nextComponent != null) {
-        foundSelectableNode = nextComponent.isVisualSelectionSupported();
-      }
-      prevNode = selectableNode;
-    }
-  } while (!foundSelectableNode && selectableNode != null);
-
-  return selectableNode;
-}
-
-/// Returns the first [DocumentNode] after [startingNode] whose
-/// [DocumentComponent] is visually selectable.
-DocumentNode? _getDownstreamSelectableNodeAfter(
-    Document document, DocumentLayout documentLayout, DocumentNode startingNode) {
-  bool foundSelectableNode = false;
-  DocumentNode prevNode = startingNode;
-  DocumentNode? selectableNode;
-  do {
-    selectableNode = document.getNodeAfter(prevNode);
-
-    if (selectableNode != null) {
-      final nextComponent = documentLayout.getComponentByNodeId(selectableNode.id);
-      if (nextComponent != null) {
-        foundSelectableNode = nextComponent.isVisualSelectionSupported();
-      }
-      prevNode = selectableNode;
-    }
-  } while (!foundSelectableNode && selectableNode != null);
-
-  return selectableNode;
 }
 
 /// Sets the [selection]'s value to include the entire [Document].

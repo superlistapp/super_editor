@@ -5,14 +5,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_layout.dart';
-
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/default_editor/document_scrollable.dart';
-import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
-import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 
+import 'document_operations.dart';
 import 'super_reader.dart';
 
 /// Governs mouse gesture interaction with a read-only document, such as scrolling
@@ -30,7 +28,7 @@ class ReadOnlyDocumentMouseInteractor extends StatefulWidget {
   const ReadOnlyDocumentMouseInteractor({
     Key? key,
     this.focusNode,
-    required this.documentContext,
+    required this.readerContext,
     required this.autoScroller,
     this.showDebugPaint = false,
     required this.child,
@@ -39,7 +37,7 @@ class ReadOnlyDocumentMouseInteractor extends StatefulWidget {
   final FocusNode? focusNode;
 
   /// Service locator for document dependencies.
-  final ReaderContext documentContext;
+  final ReaderContext readerContext;
 
   /// Auto-scrolling delegate.
   final AutoScrollController autoScroller;
@@ -74,7 +72,7 @@ class _ReadOnlyDocumentMouseInteractorState extends State<ReadOnlyDocumentMouseI
   void initState() {
     super.initState();
     _focusNode = widget.focusNode ?? FocusNode();
-    widget.documentContext.selection.addListener(_onSelectionChange);
+    widget.readerContext.selection.addListener(_onSelectionChange);
     widget.autoScroller.addListener(_updateDragSelection);
   }
 
@@ -84,9 +82,9 @@ class _ReadOnlyDocumentMouseInteractorState extends State<ReadOnlyDocumentMouseI
     if (widget.focusNode != oldWidget.focusNode) {
       _focusNode = widget.focusNode ?? FocusNode();
     }
-    if (widget.documentContext.selection != oldWidget.documentContext.selection) {
-      oldWidget.documentContext.selection.removeListener(_onSelectionChange);
-      widget.documentContext.selection.addListener(_onSelectionChange);
+    if (widget.readerContext.selection != oldWidget.readerContext.selection) {
+      oldWidget.readerContext.selection.removeListener(_onSelectionChange);
+      widget.readerContext.selection.addListener(_onSelectionChange);
     }
     if (widget.autoScroller != oldWidget.autoScroller) {
       oldWidget.autoScroller.removeListener(_updateDragSelection);
@@ -99,25 +97,22 @@ class _ReadOnlyDocumentMouseInteractorState extends State<ReadOnlyDocumentMouseI
     if (widget.focusNode == null) {
       _focusNode.dispose();
     }
-    widget.documentContext.selection.removeListener(_onSelectionChange);
+    widget.readerContext.selection.removeListener(_onSelectionChange);
     widget.autoScroller.removeListener(_updateDragSelection);
     super.dispose();
   }
 
   /// Returns the layout for the current document, which answers questions
   /// about the locations and sizes of visual components within the layout.
-  DocumentLayout get _docLayout => widget.documentContext.documentLayout;
+  DocumentLayout get _docLayout => widget.readerContext.documentLayout;
 
   Offset _getDocOffsetFromGlobalOffset(Offset globalOffset) {
     return _docLayout.getDocumentOffsetFromAncestorOffset(globalOffset);
   }
 
-  bool get _isShiftPressed =>
-      (RawKeyboard.instance.keysPressed.contains(LogicalKeyboardKey.shiftLeft) ||
-          RawKeyboard.instance.keysPressed.contains(LogicalKeyboardKey.shiftRight) ||
-          RawKeyboard.instance.keysPressed.contains(LogicalKeyboardKey.shift)) &&
-      // TODO: this condition doesn't belong here. Move it to where it applies
-      widget.documentContext.selection.value != null;
+  bool get _isShiftPressed => (RawKeyboard.instance.keysPressed.contains(LogicalKeyboardKey.shiftLeft) ||
+      RawKeyboard.instance.keysPressed.contains(LogicalKeyboardKey.shiftRight) ||
+      RawKeyboard.instance.keysPressed.contains(LogicalKeyboardKey.shift));
 
   void _onSelectionChange() {
     if (mounted) {
@@ -125,7 +120,7 @@ class _ReadOnlyDocumentMouseInteractorState extends State<ReadOnlyDocumentMouseI
       // so that any pending visual document changes can happen before
       // attempting to calculate the visual position of the selection extent.
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-        editorGesturesLog.finer("Ensuring selection extent is visible because the doc selection changed");
+        readerGesturesLog.finer("Ensuring selection extent is visible because the doc selection changed");
 
         final globalExtentRect = _getSelectionExtentAsGlobalRect();
         if (globalExtentRect != null) {
@@ -136,7 +131,7 @@ class _ReadOnlyDocumentMouseInteractorState extends State<ReadOnlyDocumentMouseI
   }
 
   Rect? _getSelectionExtentAsGlobalRect() {
-    final selection = widget.documentContext.selection.value;
+    final selection = widget.readerContext.selection.value;
     if (selection == null) {
       return null;
     }
@@ -149,7 +144,7 @@ class _ReadOnlyDocumentMouseInteractorState extends State<ReadOnlyDocumentMouseI
       selection.extent,
     );
     if (selectionExtentRectInDoc == null) {
-      editorGesturesLog.warning(
+      readerGesturesLog.warning(
           "Tried to ensure that position ${selection.extent} is visible on screen but no bounding box was returned for that position.");
       return null;
     }
@@ -160,32 +155,35 @@ class _ReadOnlyDocumentMouseInteractorState extends State<ReadOnlyDocumentMouseI
   }
 
   void _onTapUp(TapUpDetails details) {
-    editorGesturesLog.info("Tap up on document");
+    readerGesturesLog.info("Tap up on document");
     final docOffset = _getDocOffsetFromGlobalOffset(details.globalPosition);
-    editorGesturesLog.fine(" - document offset: $docOffset");
+    readerGesturesLog.fine(" - document offset: $docOffset");
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
-    editorGesturesLog.fine(" - tapped document position: $docPosition");
+    readerGesturesLog.fine(" - tapped document position: $docPosition");
 
     _focusNode.requestFocus();
 
     if (docPosition == null) {
-      editorGesturesLog.fine("No document content at ${details.globalPosition}.");
-      _clearSelection();
+      readerGesturesLog.fine("No document content at ${details.globalPosition}.");
+      widget.readerContext.selection.value = null;
       return;
     }
 
-    final expandSelection = _isShiftPressed && widget.documentContext.selection.value != null;
+    final expandSelection = _isShiftPressed && widget.readerContext.selection.value != null;
     if (!expandSelection) {
       // Read-only documents don't show carets. Therefore, we only care about
       // a tap when we're expanding an existing selection.
-      _clearSelection();
+      widget.readerContext.selection.value = null;
       _selectionType = SelectionType.position;
       return;
     }
 
     final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
     if (!tappedComponent.isVisualSelectionSupported()) {
-      _moveToNearestSelectableComponent(
+      moveToNearestSelectableComponent(
+        widget.readerContext.document,
+        widget.readerContext.documentLayout,
+        widget.readerContext.selection,
         docPosition.nodeId,
         tappedComponent,
       );
@@ -194,17 +192,17 @@ class _ReadOnlyDocumentMouseInteractorState extends State<ReadOnlyDocumentMouseI
 
     // The user tapped while pressing shift and there's an existing
     // selection. Move the extent of the selection to where the user tapped.
-    widget.documentContext.selection.value = widget.documentContext.selection.value!.copyWith(
+    widget.readerContext.selection.value = widget.readerContext.selection.value!.copyWith(
       extent: docPosition,
     );
   }
 
   void _onDoubleTapDown(TapDownDetails details) {
-    editorGesturesLog.info("Double tap down on document");
+    readerGesturesLog.info("Double tap down on document");
     final docOffset = _getDocOffsetFromGlobalOffset(details.globalPosition);
-    editorGesturesLog.fine(" - document offset: $docOffset");
+    readerGesturesLog.fine(" - document offset: $docOffset");
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
-    editorGesturesLog.fine(" - tapped document position: $docPosition");
+    readerGesturesLog.fine(" - tapped document position: $docPosition");
 
     final tappedComponent = docPosition != null ? _docLayout.getComponentByNodeId(docPosition.nodeId)! : null;
     if (tappedComponent != null && !tappedComponent.isVisualSelectionSupported()) {
@@ -214,16 +212,17 @@ class _ReadOnlyDocumentMouseInteractorState extends State<ReadOnlyDocumentMouseI
     }
 
     _selectionType = SelectionType.word;
-    _clearSelection();
+    widget.readerContext.selection.value = null;
 
     if (docPosition != null) {
-      bool didSelectContent = _selectWordAt(
+      bool didSelectContent = selectWordAt(
         docPosition: docPosition,
         docLayout: _docLayout,
+        selection: widget.readerContext.selection,
       );
 
       if (!didSelectContent) {
-        didSelectContent = _selectBlockAt(docPosition);
+        didSelectContent = selectBlockAt(docPosition, widget.readerContext.selection);
       }
 
       if (!didSelectContent) {
@@ -236,49 +235,17 @@ class _ReadOnlyDocumentMouseInteractorState extends State<ReadOnlyDocumentMouseI
     _focusNode.requestFocus();
   }
 
-  bool _selectWordAt({
-    required DocumentPosition docPosition,
-    required DocumentLayout docLayout,
-  }) {
-    final newSelection = getWordSelection(docPosition: docPosition, docLayout: docLayout);
-    if (newSelection != null) {
-      widget.documentContext.selection.value = newSelection;
-      return true;
-    } else {
-      return false;
-    }
-  }
-
-  bool _selectBlockAt(DocumentPosition position) {
-    if (position.nodePosition is! UpstreamDownstreamNodePosition) {
-      return false;
-    }
-
-    widget.documentContext.selection.value = DocumentSelection(
-      base: DocumentPosition(
-        nodeId: position.nodeId,
-        nodePosition: const UpstreamDownstreamNodePosition.upstream(),
-      ),
-      extent: DocumentPosition(
-        nodeId: position.nodeId,
-        nodePosition: const UpstreamDownstreamNodePosition.downstream(),
-      ),
-    );
-
-    return true;
-  }
-
   void _onDoubleTap() {
-    editorGesturesLog.info("Double tap up on document");
+    readerGesturesLog.info("Double tap up on document");
     _selectionType = SelectionType.position;
   }
 
   void _onTripleTapDown(TapDownDetails details) {
-    editorGesturesLog.info("Triple down down on document");
+    readerGesturesLog.info("Triple down down on document");
     final docOffset = _getDocOffsetFromGlobalOffset(details.globalPosition);
-    editorGesturesLog.fine(" - document offset: $docOffset");
+    readerGesturesLog.fine(" - document offset: $docOffset");
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
-    editorGesturesLog.fine(" - tapped document position: $docPosition");
+    readerGesturesLog.fine(" - tapped document position: $docPosition");
 
     if (docPosition != null) {
       final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
@@ -288,12 +255,13 @@ class _ReadOnlyDocumentMouseInteractorState extends State<ReadOnlyDocumentMouseI
     }
 
     _selectionType = SelectionType.paragraph;
-    _clearSelection();
+    widget.readerContext.selection.value = null;
 
     if (docPosition != null) {
-      final didSelectParagraph = _selectParagraphAt(
+      final didSelectParagraph = selectParagraphAt(
         docPosition: docPosition,
         docLayout: _docLayout,
+        selection: widget.readerContext.selection,
       );
       if (!didSelectParagraph) {
         // Place the document selection at the location where the
@@ -305,33 +273,20 @@ class _ReadOnlyDocumentMouseInteractorState extends State<ReadOnlyDocumentMouseI
     _focusNode.requestFocus();
   }
 
-  bool _selectParagraphAt({
-    required DocumentPosition docPosition,
-    required DocumentLayout docLayout,
-  }) {
-    final newSelection = getParagraphSelection(docPosition: docPosition, docLayout: docLayout);
-    if (newSelection != null) {
-      widget.documentContext.selection.value = newSelection;
-      return true;
-    } else {
-      return false;
-    }
-  }
-
   void _onTripleTap() {
-    editorGesturesLog.info("Triple tap up on document");
+    readerGesturesLog.info("Triple tap up on document");
     _selectionType = SelectionType.position;
   }
 
   void _selectPosition(DocumentPosition position) {
-    editorGesturesLog.fine("Setting document selection to $position");
-    widget.documentContext.selection.value = DocumentSelection.collapsed(
+    readerGesturesLog.fine("Setting document selection to $position");
+    widget.readerContext.selection.value = DocumentSelection.collapsed(
       position: position,
     );
   }
 
   void _onPanStart(DragStartDetails details) {
-    editorGesturesLog.info("Pan start on document, global offset: ${details.globalPosition}, device: ${details.kind}");
+    readerGesturesLog.info("Pan start on document, global offset: ${details.globalPosition}, device: ${details.kind}");
 
     _panGestureDevice = details.kind;
 
@@ -352,15 +307,15 @@ class _ReadOnlyDocumentMouseInteractorState extends State<ReadOnlyDocumentMouseI
     if (!_isShiftPressed) {
       // Only clear the selection if the user isn't pressing shift. Shift is
       // used to expand the current selection, not replace it.
-      editorGesturesLog.fine("Shift isn't pressed. Clearing any existing selection before panning.");
-      _clearSelection();
+      readerGesturesLog.fine("Shift isn't pressed. Clearing any existing selection before panning.");
+      widget.readerContext.selection.value = null;
     }
 
     _focusNode.requestFocus();
   }
 
   void _onPanUpdate(DragUpdateDetails details) {
-    editorGesturesLog
+    readerGesturesLog
         .info("Pan update on document, global offset: ${details.globalPosition}, device: $_panGestureDevice");
 
     if (_panGestureDevice == PointerDeviceKind.trackpad) {
@@ -385,7 +340,7 @@ class _ReadOnlyDocumentMouseInteractorState extends State<ReadOnlyDocumentMouseI
   }
 
   void _onPanEnd(DragEndDetails details) {
-    editorGesturesLog.info("Pan end on document, device: $_panGestureDevice");
+    readerGesturesLog.info("Pan end on document, device: $_panGestureDevice");
 
     if (_panGestureDevice == PointerDeviceKind.trackpad) {
       // The user ended a pan gesture with two fingers on a trackpad.
@@ -396,7 +351,7 @@ class _ReadOnlyDocumentMouseInteractorState extends State<ReadOnlyDocumentMouseI
   }
 
   void _onPanCancel() {
-    editorGesturesLog.info("Pan cancel on document");
+    readerGesturesLog.info("Pan cancel on document");
     _onDragEnd();
   }
 
@@ -410,12 +365,6 @@ class _ReadOnlyDocumentMouseInteractorState extends State<ReadOnlyDocumentMouseI
     widget.autoScroller.disableAutoScrolling();
   }
 
-  /// Scrolls the document vertically by [delta] pixels.
-  void _scrollVertically(double delta) {
-    widget.autoScroller.jumpBy(delta);
-    _updateDragSelection();
-  }
-
   /// We prevent SingleChildScrollView from processing mouse events because
   /// it scrolls by drag by default, which we don't want. However, we do
   /// still want mouse scrolling. This method re-implements a primitive
@@ -424,6 +373,12 @@ class _ReadOnlyDocumentMouseInteractorState extends State<ReadOnlyDocumentMouseI
     if (event is PointerScrollEvent) {
       _scrollVertically(event.scrollDelta.dy);
     }
+  }
+
+  /// Scrolls the document vertically by [delta] pixels.
+  void _scrollVertically(double delta) {
+    widget.autoScroller.jumpBy(delta);
+    _updateDragSelection();
   }
 
   void _updateDragSelection() {
@@ -435,19 +390,20 @@ class _ReadOnlyDocumentMouseInteractorState extends State<ReadOnlyDocumentMouseI
     final dragStartInDoc =
         _getDocOffsetFromGlobalOffset(_dragStartGlobal!) + Offset(0, widget.autoScroller.deltaWhileAutoScrolling);
     final dragEndInDoc = _getDocOffsetFromGlobalOffset(_dragEndGlobal!);
-    editorGesturesLog.finest(
+    readerGesturesLog.finest(
       '''
 Updating drag selection:
  - drag start in doc: $dragStartInDoc
  - drag end in doc: $dragEndInDoc''',
     );
 
-    _selectRegion(
+    selectRegion(
       documentLayout: _docLayout,
       baseOffsetInDocument: dragStartInDoc,
       extentOffsetInDocument: dragEndInDoc,
       selectionType: _selectionType,
       expandSelection: _expandSelectionDuringDrag,
+      selection: widget.readerContext.selection,
     );
 
     if (widget.showDebugPaint) {
@@ -455,169 +411,6 @@ Updating drag selection:
         // Repaint the debug UI.
       });
     }
-  }
-
-  void _selectRegion({
-    required DocumentLayout documentLayout,
-    required Offset baseOffsetInDocument,
-    required Offset extentOffsetInDocument,
-    required SelectionType selectionType,
-    bool expandSelection = false,
-  }) {
-    editorGesturesLog.info("Selecting region with selection mode: $selectionType");
-    DocumentSelection? selection = documentLayout.getDocumentSelectionInRegion(
-      baseOffsetInDocument,
-      extentOffsetInDocument,
-    );
-    DocumentPosition? basePosition = selection?.base;
-    DocumentPosition? extentPosition = selection?.extent;
-    editorGesturesLog.fine(" - base: $basePosition, extent: $extentPosition");
-
-    if (basePosition == null || extentPosition == null) {
-      widget.documentContext.selection.value = null;
-      return;
-    }
-
-    if (selectionType == SelectionType.paragraph) {
-      final baseParagraphSelection = getParagraphSelection(
-        docPosition: basePosition,
-        docLayout: documentLayout,
-      );
-      if (baseParagraphSelection == null) {
-        widget.documentContext.selection.value = null;
-        return;
-      }
-      basePosition = baseOffsetInDocument.dy < extentOffsetInDocument.dy
-          ? baseParagraphSelection.base
-          : baseParagraphSelection.extent;
-
-      final extentParagraphSelection = getParagraphSelection(
-        docPosition: extentPosition,
-        docLayout: documentLayout,
-      );
-      if (extentParagraphSelection == null) {
-        widget.documentContext.selection.value = null;
-        return;
-      }
-      extentPosition = baseOffsetInDocument.dy < extentOffsetInDocument.dy
-          ? extentParagraphSelection.extent
-          : extentParagraphSelection.base;
-    } else if (selectionType == SelectionType.word) {
-      final baseWordSelection = getWordSelection(
-        docPosition: basePosition,
-        docLayout: documentLayout,
-      );
-      if (baseWordSelection == null) {
-        widget.documentContext.selection.value = null;
-        return;
-      }
-      basePosition = baseWordSelection.base;
-
-      final extentWordSelection = getWordSelection(
-        docPosition: extentPosition,
-        docLayout: documentLayout,
-      );
-      if (extentWordSelection == null) {
-        widget.documentContext.selection.value = null;
-        return;
-      }
-      extentPosition = extentWordSelection.extent;
-    }
-
-    widget.documentContext.selection.value = (DocumentSelection(
-      // If desired, expand the selection instead of replacing it.
-      base: expandSelection ? widget.documentContext.selection.value?.base ?? basePosition : basePosition,
-      extent: extentPosition,
-    ));
-    editorGesturesLog.fine("Selected region: ${widget.documentContext.selection.value}");
-  }
-
-  void _clearSelection() {
-    editorGesturesLog.fine("Clearing document selection");
-    widget.documentContext.selection.value = null;
-  }
-
-  void _moveToNearestSelectableComponent(
-    String nodeId,
-    DocumentComponent component,
-  ) {
-    // TODO: this was taken from CommonOps. We don't have CommonOps in this
-    // interactor, because it's for read-only documents. Selection operations
-    // should probably be moved to something outside of CommonOps
-    DocumentNode startingNode = widget.documentContext.document.getNodeById(nodeId)!;
-    String? newNodeId;
-    NodePosition? newPosition;
-
-    // Try to find a new selection downstream.
-    final downstreamNode = _getDownstreamSelectableNodeAfter(startingNode);
-    if (downstreamNode != null) {
-      newNodeId = downstreamNode.id;
-      final nextComponent = widget.documentContext.documentLayout.getComponentByNodeId(newNodeId);
-      newPosition = nextComponent?.getBeginningPosition();
-    }
-
-    // Try to find a new selection upstream.
-    if (newPosition == null) {
-      final upstreamNode = _getUpstreamSelectableNodeBefore(startingNode);
-      if (upstreamNode != null) {
-        newNodeId = upstreamNode.id;
-        final previousComponent = widget.documentContext.documentLayout.getComponentByNodeId(newNodeId);
-        newPosition = previousComponent?.getBeginningPosition();
-      }
-    }
-
-    if (newNodeId == null || newPosition == null) {
-      return;
-    }
-
-    widget.documentContext.selection.value = widget.documentContext.selection.value!.expandTo(
-      DocumentPosition(
-        nodeId: newNodeId,
-        nodePosition: newPosition,
-      ),
-    );
-  }
-
-  /// Returns the first [DocumentNode] before [startingNode] whose
-  /// [DocumentComponent] is visually selectable.
-  DocumentNode? _getUpstreamSelectableNodeBefore(DocumentNode startingNode) {
-    bool foundSelectableNode = false;
-    DocumentNode prevNode = startingNode;
-    DocumentNode? selectableNode;
-    do {
-      selectableNode = widget.documentContext.document.getNodeBefore(prevNode);
-
-      if (selectableNode != null) {
-        final nextComponent = widget.documentContext.documentLayout.getComponentByNodeId(selectableNode.id);
-        if (nextComponent != null) {
-          foundSelectableNode = nextComponent.isVisualSelectionSupported();
-        }
-        prevNode = selectableNode;
-      }
-    } while (!foundSelectableNode && selectableNode != null);
-
-    return selectableNode;
-  }
-
-  /// Returns the first [DocumentNode] after [startingNode] whose
-  /// [DocumentComponent] is visually selectable.
-  DocumentNode? _getDownstreamSelectableNodeAfter(DocumentNode startingNode) {
-    bool foundSelectableNode = false;
-    DocumentNode prevNode = startingNode;
-    DocumentNode? selectableNode;
-    do {
-      selectableNode = widget.documentContext.document.getNodeAfter(prevNode);
-
-      if (selectableNode != null) {
-        final nextComponent = widget.documentContext.documentLayout.getComponentByNodeId(selectableNode.id);
-        if (nextComponent != null) {
-          foundSelectableNode = nextComponent.isVisualSelectionSupported();
-        }
-        prevNode = selectableNode;
-      }
-    } while (!foundSelectableNode && selectableNode != null);
-
-    return selectableNode;
   }
 
   @override
@@ -746,12 +539,6 @@ Updating drag selection:
         ),
     ];
   }
-}
-
-enum SelectionType {
-  position,
-  word,
-  paragraph,
 }
 
 /// Paints a rectangle border around the given `selectionRect`.

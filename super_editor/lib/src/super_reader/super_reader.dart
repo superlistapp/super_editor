@@ -370,7 +370,7 @@ class SuperReaderState extends State<SuperReader> {
               Positioned.fill(
                 child: ReadOnlyDocumentMouseInteractor(
                   focusNode: _focusNode,
-                  documentContext: _documentContext,
+                  readerContext: _documentContext,
                   autoScroller: _autoScrollController,
                   showDebugPaint: widget.debugPaint.gestures,
                   child: const SizedBox(),
