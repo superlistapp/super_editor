@@ -6,7 +6,7 @@ import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
-import 'package:super_editor/src/default_editor/common_editor_operations.dart';
+import 'package:super_editor/src/core/selection_operations.dart';
 import 'package:super_editor/src/default_editor/document_scrollable.dart';
 import 'package:super_editor/src/default_editor/document_selection_on_focus_mixin.dart';
 import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
@@ -37,7 +37,6 @@ class DocumentMouseInteractor extends StatefulWidget {
     required this.document,
     required this.getDocumentLayout,
     required this.selection,
-    required this.commonOps,
     required this.autoScroller,
     this.showDebugPaint = false,
     required this.child,
@@ -48,8 +47,6 @@ class DocumentMouseInteractor extends StatefulWidget {
   final Document document;
   final DocumentLayoutResolver getDocumentLayout;
   final ValueNotifier<DocumentSelection?> selection;
-
-  final CommonEditorOperations commonOps;
 
   /// Auto-scrolling delegate.
   final AutoScrollController autoScroller;
@@ -563,8 +560,11 @@ Updating drag selection:
     DocumentComponent component, {
     bool expandSelection = false,
   }) {
-    widget.commonOps.moveSelectionToNearestSelectableNode(
-      widget.document.getNodeById(nodeId)!,
+    moveSelectionToNearestSelectableNode(
+      document: widget.document,
+      documentLayoutResolver: widget.getDocumentLayout,
+      selection: widget.selection,
+      startingNode: widget.document.getNodeById(nodeId)!,
       expand: expandSelection,
     );
 

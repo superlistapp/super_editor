@@ -2,10 +2,9 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:super_editor/src/core/document.dart';
-import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
-import 'package:super_editor/src/default_editor/common_editor_operations.dart';
+import 'package:super_editor/src/core/selection_operations.dart';
 import 'package:super_editor/src/default_editor/document_selection_on_focus_mixin.dart';
 import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
@@ -34,7 +33,6 @@ class AndroidDocumentTouchInteractor extends StatefulWidget {
     required this.documentKey,
     required this.getDocumentLayout,
     required this.selection,
-    required this.commonOps,
     this.scrollController,
     this.dragAutoScrollBoundary = const AxisOffset.symmetric(54),
     required this.handleColor,
@@ -50,7 +48,6 @@ class AndroidDocumentTouchInteractor extends StatefulWidget {
   final GlobalKey documentKey;
   final DocumentLayout Function() getDocumentLayout;
   final ValueNotifier<DocumentSelection?> selection;
-  final CommonEditorOperations commonOps;
 
   final ScrollController? scrollController;
 
@@ -447,8 +444,11 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
         // The user tapped a non-selectable component.
         // Place the document selection at the nearest selectable node
         // to the tapped component.
-        widget.commonOps.moveSelectionToNearestSelectableNode(
-          widget.document.getNodeById(docPosition.nodeId)!,
+        moveSelectionToNearestSelectableNode(
+          document: widget.document,
+          documentLayoutResolver: widget.getDocumentLayout,
+          selection: widget.selection,
+          startingNode: widget.document.getNodeById(docPosition.nodeId)!,
         );
       } else {
         // Place the document selection at the location where the
