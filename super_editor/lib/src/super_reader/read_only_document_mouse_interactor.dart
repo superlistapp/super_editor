@@ -7,23 +7,29 @@ import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/default_editor/document_scrollable.dart';
+import 'package:super_editor/src/document_operations/selection_operations.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 
-import 'document_operations.dart';
-import 'super_reader.dart';
+import 'reader_context.dart';
 
 /// Governs mouse gesture interaction with a read-only document, such as scrolling
 /// a document with a scroll wheel and tap-and-dragging to create an expanded selection.
 
-/// Document gesture interactor that's designed for mouse input, e.g.,
-/// drag to select, and mouse wheel to scroll.
+/// Document gesture interactor that's designed for read-only mouse input,
+/// e.g., drag to select, and mouse wheel to scroll.
 ///
 ///  - selects content on double, and triple taps
 ///  - selects content on drag, after single, double, or triple tap
 ///  - scrolls with the mouse wheel
 ///  - automatically scrolls up or down when the user drags near
 ///    a boundary
+///
+/// The primary difference between a read-only mouse interactor, and an
+/// editing mouse interactor, is that read-only documents don't support
+/// collapsed selections, i.e., caret display. When the user taps on
+/// a read-only document, nothing happens. The user must drag an expanded
+/// selection, or double/triple tap to select content.
 class ReadOnlyDocumentMouseInteractor extends StatefulWidget {
   const ReadOnlyDocumentMouseInteractor({
     Key? key,
@@ -538,30 +544,5 @@ Updating drag selection:
           ),
         ),
     ];
-  }
-}
-
-/// Paints a rectangle border around the given `selectionRect`.
-class DragRectanglePainter extends CustomPainter {
-  DragRectanglePainter({
-    this.selectionRect,
-    Listenable? repaint,
-  }) : super(repaint: repaint);
-
-  final Rect? selectionRect;
-  final Paint _selectionPaint = Paint()
-    ..color = const Color(0xFFFF0000)
-    ..style = PaintingStyle.stroke;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (selectionRect != null) {
-      canvas.drawRect(selectionRect!, _selectionPaint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(DragRectanglePainter oldDelegate) {
-    return oldDelegate.selectionRect != selectionRect;
   }
 }

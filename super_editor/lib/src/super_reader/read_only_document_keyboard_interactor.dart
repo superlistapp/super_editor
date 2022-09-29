@@ -2,11 +2,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/document_layout.dart';
+import 'package:super_editor/src/document_operations/selection_operations.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
-import 'package:super_editor/src/super_reader/super_reader.dart';
 
-import 'document_operations.dart';
+import 'reader_context.dart';
 
 /// Governs document input that comes from a physical keyboard.
 ///
@@ -21,6 +21,11 @@ import 'document_operations.dart';
 /// [keyboardActions] determines the mapping from keyboard key presses
 /// to document editing behaviors. [keyboardActions] operates as a
 /// Chain of Responsibility.
+///
+/// The difference between a read-only keyboard interactor, and an editing keyboard
+/// interactor, is the type of service locator that's passed to each handler. For
+/// example, the read-only keyboard interactor can't pass a `DocumentEditor` to
+/// the keyboard handlers, because read-only documents don't support edits.
 class ReadOnlyDocumentKeyboardInteractor extends StatelessWidget {
   const ReadOnlyDocumentKeyboardInteractor({
     Key? key,
@@ -98,33 +103,6 @@ typedef ReadOnlyDocumentKeyboardAction = ExecutionInstruction Function({
   required ReaderContext documentContext,
   required RawKeyEvent keyEvent,
 });
-
-enum ExecutionInstruction {
-  /// The handler has no relation to the key event and
-  /// took no action.
-  ///
-  /// Other handlers should be given a chance to act on
-  /// the key press.
-  continueExecution,
-
-  /// The handler recognized the key event but chose to
-  /// take no action.
-  ///
-  /// No other handler should receive the key event.
-  ///
-  /// The key event **should** bubble up the tree to
-  /// (possibly) be handled by other keyboard/shortcut
-  /// listeners.
-  blocked,
-
-  /// The handler recognized the key event and chose to
-  /// take an action.
-  ///
-  /// No other handler should receive the key event.
-  ///
-  /// The key event **shouldn't** bubble up the tree.
-  haltExecution,
-}
 
 /// Keyboard actions for the standard [SuperReader].
 final readOnlyDefaultKeyboardActions = <ReadOnlyDocumentKeyboardAction>[

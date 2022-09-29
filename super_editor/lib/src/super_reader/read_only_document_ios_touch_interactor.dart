@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
+import 'package:super_editor/src/document_operations/selection_operations.dart';
 import 'package:super_editor/src/infrastructure/document_gestures.dart';
 import 'package:super_editor/src/default_editor/document_gestures_touch.dart';
 import 'package:super_editor/src/default_editor/document_gestures_touch_ios.dart';
@@ -14,10 +15,14 @@ import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_contr
 import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
 
-import 'document_operations.dart';
-
 /// Document gesture interactor that's designed for iOS touch input, e.g.,
 /// drag to scroll, and handles to control selection.
+///
+/// The primary difference between a read-only touch interactor, and an
+/// editing touch interactor, is that read-only documents don't support
+/// collapsed selections, i.e., caret display. When the user taps on
+/// a read-only document, nothing happens. The user must drag an expanded
+/// selection, or double/triple tap to select content.
 class ReadOnlyIOSDocumentTouchInteractor extends StatefulWidget {
   const ReadOnlyIOSDocumentTouchInteractor({
     Key? key,

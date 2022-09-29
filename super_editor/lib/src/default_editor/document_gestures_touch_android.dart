@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
-import 'package:super_editor/src/core/selection_operations.dart';
+import 'package:super_editor/src/document_operations/selection_operations.dart';
 import 'package:super_editor/src/default_editor/document_selection_on_focus_mixin.dart';
 import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
@@ -107,7 +107,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   double? _dragStartScrollOffset;
   Offset? _globalDragOffset;
   Offset? _dragEndInInteractor;
-  SelectionType? _selectionType;
+  SelectionHandleType? _selectionType;
 
   @override
   void initState() {
@@ -596,13 +596,15 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     final selectionAffinity = widget.document.getAffinityForSelection(widget.selection.value!);
     switch (handleType) {
       case HandleType.collapsed:
-        _selectionType = SelectionType.collapsed;
+        _selectionType = SelectionHandleType.collapsed;
         break;
       case HandleType.upstream:
-        _selectionType = selectionAffinity == TextAffinity.downstream ? SelectionType.base : SelectionType.extent;
+        _selectionType =
+            selectionAffinity == TextAffinity.downstream ? SelectionHandleType.base : SelectionHandleType.extent;
         break;
       case HandleType.downstream:
-        _selectionType = selectionAffinity == TextAffinity.downstream ? SelectionType.extent : SelectionType.base;
+        _selectionType =
+            selectionAffinity == TextAffinity.downstream ? SelectionHandleType.extent : SelectionHandleType.base;
         break;
     }
 
@@ -613,7 +615,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
     _startDragPositionOffset = _docLayout
         .getRectForPosition(
-          _selectionType == SelectionType.base ? widget.selection.value!.base : widget.selection.value!.extent,
+          _selectionType == SelectionHandleType.base ? widget.selection.value!.base : widget.selection.value!.extent,
         )!
         .center;
 
@@ -628,7 +630,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
     _handleAutoScrolling.startAutoScrollHandleMonitoring();
 
-    if (_selectionType == SelectionType.collapsed) {
+    if (_selectionType == SelectionHandleType.collapsed) {
       // Don't let the handle fade out while dragging it.
       _editingController.cancelCollapsedHandleAutoHideCountdown();
     }
@@ -661,15 +663,15 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       return;
     }
 
-    if (_selectionType == SelectionType.collapsed) {
+    if (_selectionType == SelectionHandleType.collapsed) {
       widget.selection.value = DocumentSelection.collapsed(
         position: docDragPosition,
       );
-    } else if (_selectionType == SelectionType.base) {
+    } else if (_selectionType == SelectionHandleType.base) {
       widget.selection.value = widget.selection.value!.copyWith(
         base: docDragPosition,
       );
-    } else if (_selectionType == SelectionType.extent) {
+    } else if (_selectionType == SelectionHandleType.extent) {
       widget.selection.value = widget.selection.value!.copyWith(
         extent: docDragPosition,
       );
@@ -720,15 +722,15 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     late DocumentPosition basePosition;
     late DocumentPosition extentPosition;
     switch (_selectionType!) {
-      case SelectionType.collapsed:
+      case SelectionHandleType.collapsed:
         basePosition = dragPosition;
         extentPosition = dragPosition;
         break;
-      case SelectionType.base:
+      case SelectionHandleType.base:
         basePosition = dragPosition;
         extentPosition = widget.selection.value!.extent;
         break;
-      case SelectionType.extent:
+      case SelectionHandleType.extent:
         basePosition = widget.selection.value!.base;
         extentPosition = dragPosition;
         break;
@@ -1366,7 +1368,7 @@ class HandleStartDragEvent {
   });
 
   /// The type of selection that the user started to drag, e.g., collapsed, base, extent.
-  final SelectionType selectionType;
+  final SelectionHandleType selectionType;
 
   /// The global offset where the user started dragging.
   ///
@@ -1388,14 +1390,14 @@ class HandleUpdateDragEvent {
   });
 
   /// The type of selection that the user started to drag, e.g., collapsed, base, extent.
-  final SelectionType selectionType;
+  final SelectionHandleType selectionType;
 
   /// The current global offset of the user's pointer during
   /// a handle drag event.
   final Offset globalHandleDragOffset;
 }
 
-enum SelectionType {
+enum SelectionHandleType {
   collapsed,
   base,
   extent,

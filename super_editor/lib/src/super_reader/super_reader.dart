@@ -26,6 +26,7 @@ import 'read_only_document_android_touch_interactor.dart';
 import 'read_only_document_ios_touch_interactor.dart';
 import 'read_only_document_keyboard_interactor.dart';
 import 'read_only_document_mouse_interactor.dart';
+import 'reader_context.dart';
 
 class SuperReader extends StatefulWidget {
   SuperReader({
@@ -177,7 +178,7 @@ class SuperReaderState extends State<SuperReader> {
 
   late AutoScrollController _autoScrollController;
 
-  late ReaderContext _documentContext;
+  late ReaderContext _readerContext;
 
   @visibleForTesting
   FocusNode get focusNode => _focusNode;
@@ -195,7 +196,7 @@ class SuperReaderState extends State<SuperReader> {
 
     _docLayoutKey = widget.documentLayoutKey ?? GlobalKey();
 
-    _documentContext = ReaderContext(
+    _readerContext = ReaderContext(
       document: widget.document,
       getDocumentLayout: () => _docLayoutKey.currentState as DocumentLayout,
       selection: _selection,
@@ -295,7 +296,7 @@ class SuperReaderState extends State<SuperReader> {
     // as arrow keys.
     return ReadOnlyDocumentKeyboardInteractor(
       focusNode: _focusNode,
-      readerContext: _documentContext,
+      readerContext: _readerContext,
       keyboardActions: widget.keyboardActions,
       autofocus: widget.autofocus,
       child: child,
@@ -314,10 +315,10 @@ class SuperReaderState extends State<SuperReader> {
       case DocumentGestureMode.android:
         return ReadOnlyAndroidDocumentTouchInteractor(
           focusNode: _focusNode,
-          document: _documentContext.document,
+          document: _readerContext.document,
           documentKey: _docLayoutKey,
-          getDocumentLayout: () => _documentContext.documentLayout,
-          selection: _documentContext.selection,
+          getDocumentLayout: () => _readerContext.documentLayout,
+          selection: _readerContext.selection,
           scrollController: widget.scrollController,
           handleColor: widget.androidHandleColor ?? Theme.of(context).primaryColor,
           popoverToolbarBuilder: widget.androidToolbarBuilder ?? (_) => const SizedBox(),
@@ -328,9 +329,9 @@ class SuperReaderState extends State<SuperReader> {
       case DocumentGestureMode.iOS:
         return ReadOnlyIOSDocumentTouchInteractor(
           focusNode: _focusNode,
-          document: _documentContext.document,
-          getDocumentLayout: () => _documentContext.documentLayout,
-          selection: _documentContext.selection,
+          document: _readerContext.document,
+          getDocumentLayout: () => _readerContext.documentLayout,
+          selection: _readerContext.selection,
           scrollController: widget.scrollController,
           documentKey: _docLayoutKey,
           handleColor: widget.iOSHandleColor ?? Theme.of(context).primaryColor,
@@ -370,7 +371,7 @@ class SuperReaderState extends State<SuperReader> {
               Positioned.fill(
                 child: ReadOnlyDocumentMouseInteractor(
                   focusNode: _focusNode,
-                  readerContext: _documentContext,
+                  readerContext: _readerContext,
                   autoScroller: _autoScrollController,
                   showDebugPaint: widget.debugPaint.gestures,
                   child: const SizedBox(),
@@ -386,7 +387,7 @@ class SuperReaderState extends State<SuperReader> {
                     // match the document size, rather than the viewport size.
                     for (final overlayBuilder in widget.documentOverlayBuilders)
                       Positioned.fill(
-                        child: overlayBuilder.build(context, _documentContext),
+                        child: overlayBuilder.build(context, _readerContext),
                       ),
                   ],
                 ),
@@ -423,40 +424,6 @@ class _ReadOnlyDocumentEditor implements DocumentEditor {
 /// the document layout within a [SuperReader].
 abstract class ReadOnlyDocumentLayerBuilder {
   Widget build(BuildContext context, ReaderContext documentContext);
-}
-
-/// Collection of core artifacts used to display a read-only document.
-///
-/// In particular, the context contains the [Document], [DocumentSelection],
-/// and [DocumentLayout].
-class ReaderContext {
-  /// Creates document context that makes up a collection of core artifacts for
-  /// displaying a read-only document.
-  ///
-  /// The [documentLayout] is passed as a [getDocumentLayout] callback that
-  /// should return the current layout as it might change.
-  ReaderContext({
-    required this.document,
-    required DocumentLayout Function() getDocumentLayout,
-    required this.selection,
-    required this.scrollController,
-  }) : _getDocumentLayout = getDocumentLayout;
-
-  /// The [Document] that's currently being displayed.
-  final Document document;
-
-  /// The document layout that is a visual representation of the document.
-  ///
-  /// This member might change over time.
-  DocumentLayout get documentLayout => _getDocumentLayout();
-  final DocumentLayout Function() _getDocumentLayout;
-
-  /// The current selection within the displayed document.
-  final ValueNotifier<DocumentSelection?> selection;
-
-  /// The [AutoScrollController] that scrolls a document up/down within the
-  /// document's viewport.
-  final AutoScrollController scrollController;
 }
 
 /// Creates visual components for the standard [SuperReader].

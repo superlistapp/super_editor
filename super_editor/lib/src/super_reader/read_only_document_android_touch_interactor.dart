@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
+import 'package:super_editor/src/document_operations/selection_operations.dart';
 import 'package:super_editor/src/infrastructure/document_gestures.dart';
 import 'package:super_editor/src/default_editor/document_gestures_touch.dart';
 import 'package:super_editor/src/default_editor/document_gestures_touch_android.dart';
@@ -13,10 +14,14 @@ import 'package:super_editor/src/infrastructure/platforms/android/android_docume
 import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
 
-import 'document_operations.dart' hide SelectionType;
-
 /// Read-only document gesture interactor that's designed for Android touch input, e.g.,
 /// drag to scroll, and handles to control selection.
+///
+/// The primary difference between a read-only touch interactor, and an
+/// editing touch interactor, is that read-only documents don't support
+/// collapsed selections, i.e., caret display. When the user taps on
+/// a read-only document, nothing happens. The user must drag an expanded
+/// selection, or double/triple tap to select content.
 class ReadOnlyAndroidDocumentTouchInteractor extends StatefulWidget {
   const ReadOnlyAndroidDocumentTouchInteractor({
     Key? key,
@@ -99,7 +104,7 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
   double? _dragStartScrollOffset;
   Offset? _globalDragOffset;
   Offset? _dragEndInInteractor;
-  SelectionType? _selectionType;
+  SelectionHandleType? _selectionType;
 
   @override
   void initState() {
@@ -527,13 +532,15 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
     final selectionAffinity = widget.document.getAffinityForSelection(widget.selection.value!);
     switch (handleType) {
       case HandleType.collapsed:
-        _selectionType = SelectionType.collapsed;
+        _selectionType = SelectionHandleType.collapsed;
         break;
       case HandleType.upstream:
-        _selectionType = selectionAffinity == TextAffinity.downstream ? SelectionType.base : SelectionType.extent;
+        _selectionType =
+            selectionAffinity == TextAffinity.downstream ? SelectionHandleType.base : SelectionHandleType.extent;
         break;
       case HandleType.downstream:
-        _selectionType = selectionAffinity == TextAffinity.downstream ? SelectionType.extent : SelectionType.base;
+        _selectionType =
+            selectionAffinity == TextAffinity.downstream ? SelectionHandleType.extent : SelectionHandleType.base;
         break;
     }
 
@@ -544,7 +551,7 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
 
     _startDragPositionOffset = _docLayout
         .getRectForPosition(
-          _selectionType == SelectionType.base ? widget.selection.value!.base : widget.selection.value!.extent,
+          _selectionType == SelectionHandleType.base ? widget.selection.value!.base : widget.selection.value!.extent,
         )!
         .center;
 
@@ -559,7 +566,7 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
 
     _handleAutoScrolling.startAutoScrollHandleMonitoring();
 
-    if (_selectionType == SelectionType.collapsed) {
+    if (_selectionType == SelectionHandleType.collapsed) {
       // Don't let the handle fade out while dragging it.
       _editingController.cancelCollapsedHandleAutoHideCountdown();
     }
@@ -592,15 +599,15 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
       return;
     }
 
-    if (_selectionType == SelectionType.collapsed) {
+    if (_selectionType == SelectionHandleType.collapsed) {
       widget.selection.value = DocumentSelection.collapsed(
         position: docDragPosition,
       );
-    } else if (_selectionType == SelectionType.base) {
+    } else if (_selectionType == SelectionHandleType.base) {
       widget.selection.value = widget.selection.value!.copyWith(
         base: docDragPosition,
       );
-    } else if (_selectionType == SelectionType.extent) {
+    } else if (_selectionType == SelectionHandleType.extent) {
       widget.selection.value = widget.selection.value!.copyWith(
         extent: docDragPosition,
       );
@@ -647,15 +654,15 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
     late DocumentPosition basePosition;
     late DocumentPosition extentPosition;
     switch (_selectionType!) {
-      case SelectionType.collapsed:
+      case SelectionHandleType.collapsed:
         basePosition = dragPosition;
         extentPosition = dragPosition;
         break;
-      case SelectionType.base:
+      case SelectionHandleType.base:
         basePosition = dragPosition;
         extentPosition = widget.selection.value!.extent;
         break;
-      case SelectionType.extent:
+      case SelectionHandleType.extent:
         basePosition = widget.selection.value!.base;
         extentPosition = dragPosition;
         break;

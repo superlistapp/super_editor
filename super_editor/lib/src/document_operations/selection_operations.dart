@@ -1,16 +1,123 @@
-import 'dart:ui';
-
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-import 'package:super_editor/src/core/document.dart';
+import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/document_layout.dart';
-import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
 import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 
-/// Logical operations for interacting with a read-only document.
-// TODO: de-dup with analogous SuperEditor operations
+import '../core/document.dart';
+import '../core/document_selection.dart';
+
+/// Moves the [DocumentComposer]'s selection to the nearest node to [startingNode],
+/// whose [DocumentComponent] is visually selectable.
+///
+/// Expands the selection if [expand] is `true`, otherwise collapses the selection.
+///
+/// If a downstream selectable node if found, it will be used, otherwise,
+/// a upstream selectable node will be searched.
+///
+/// If a selectable node is found, the selection will move to its beginning.
+/// If no selectable node is found, the selection will remain unchanged.
+///
+/// Returns `true` if the selection is moved and `false` otherwise, e.g., there
+/// are no selectable nodes in the document.
+bool moveSelectionToNearestSelectableNode({
+  required Document document,
+  required DocumentLayoutResolver documentLayoutResolver,
+  required ValueNotifier<DocumentSelection?> selection,
+  required DocumentNode startingNode,
+  bool expand = false,
+}) {
+  String? newNodeId;
+  NodePosition? newPosition;
+
+  // Try to find a new selection downstream.
+  final downstreamNode = _getDownstreamSelectableNodeAfter(document, documentLayoutResolver, startingNode);
+  if (downstreamNode != null) {
+    newNodeId = downstreamNode.id;
+    final nextComponent = documentLayoutResolver().getComponentByNodeId(newNodeId);
+    newPosition = nextComponent?.getBeginningPosition();
+  }
+
+  // Try to find a new selection upstream.
+  if (newPosition == null) {
+    final upstreamNode = _getUpstreamSelectableNodeBefore(document, documentLayoutResolver, startingNode);
+    if (upstreamNode != null) {
+      newNodeId = upstreamNode.id;
+      final previousComponent = documentLayoutResolver().getComponentByNodeId(newNodeId);
+      newPosition = previousComponent?.getBeginningPosition();
+    }
+  }
+
+  if (newNodeId == null || newPosition == null) {
+    return false;
+  }
+
+  final newExtent = DocumentPosition(
+    nodeId: newNodeId,
+    nodePosition: newPosition,
+  );
+
+  if (expand) {
+    // Selection should be expanded.
+    selection.value = selection.value!.expandTo(newExtent);
+  } else {
+    // Selection should be replaced by new collapsed position.
+    selection.value = DocumentSelection.collapsed(position: newExtent);
+  }
+
+  return true;
+}
+
+/// Returns the first [DocumentNode] after [startingNode] whose
+/// [DocumentComponent] is visually selectable.
+DocumentNode? _getDownstreamSelectableNodeAfter(
+  Document document,
+  DocumentLayoutResolver documentLayoutResolver,
+  DocumentNode startingNode,
+) {
+  bool foundSelectableNode = false;
+  DocumentNode prevNode = startingNode;
+  DocumentNode? selectableNode;
+  do {
+    selectableNode = document.getNodeAfter(prevNode);
+
+    if (selectableNode != null) {
+      final nextComponent = documentLayoutResolver().getComponentByNodeId(selectableNode.id);
+      if (nextComponent != null) {
+        foundSelectableNode = nextComponent.isVisualSelectionSupported();
+      }
+      prevNode = selectableNode;
+    }
+  } while (!foundSelectableNode && selectableNode != null);
+
+  return selectableNode;
+}
+
+/// Returns the first [DocumentNode] before [startingNode] whose
+/// [DocumentComponent] is visually selectable.
+DocumentNode? _getUpstreamSelectableNodeBefore(
+  Document document,
+  DocumentLayoutResolver documentLayoutResolver,
+  DocumentNode startingNode,
+) {
+  bool foundSelectableNode = false;
+  DocumentNode prevNode = startingNode;
+  DocumentNode? selectableNode;
+  do {
+    selectableNode = document.getNodeBefore(prevNode);
+
+    if (selectableNode != null) {
+      final nextComponent = documentLayoutResolver().getComponentByNodeId(selectableNode.id);
+      if (nextComponent != null) {
+        foundSelectableNode = nextComponent.isVisualSelectionSupported();
+      }
+      prevNode = selectableNode;
+    }
+  } while (!foundSelectableNode && selectableNode != null);
+
+  return selectableNode;
+}
 
 /// Calculates an appropriate [DocumentSelection] from an (x,y)
 /// [baseOffsetInDocument], to an (x,y) [extentOffsetInDocument], setting
@@ -23,14 +130,14 @@ void selectRegion({
   bool expandSelection = false,
   required ValueNotifier<DocumentSelection?> selection,
 }) {
-  readerGesturesLog.info("Selecting region with selection mode: $selectionType");
+  docGesturesLog.info("Selecting region with selection mode: $selectionType");
   DocumentSelection? regionSelection = documentLayout.getDocumentSelectionInRegion(
     baseOffsetInDocument,
     extentOffsetInDocument,
   );
   DocumentPosition? basePosition = regionSelection?.base;
   DocumentPosition? extentPosition = regionSelection?.extent;
-  readerGesturesLog.fine(" - base: $basePosition, extent: $extentPosition");
+  docGesturesLog.fine(" - base: $basePosition, extent: $extentPosition");
 
   if (basePosition == null || extentPosition == null) {
     selection.value = null;
@@ -88,7 +195,7 @@ void selectRegion({
     base: expandSelection ? selection.value?.base ?? basePosition : basePosition,
     extent: extentPosition,
   ));
-  readerGesturesLog.fine("Selected region: ${selection.value}");
+  docGesturesLog.fine("Selected region: ${selection.value}");
 }
 
 enum SelectionType {
@@ -159,7 +266,7 @@ void moveToNearestSelectableComponent(
   NodePosition? newPosition;
 
   // Try to find a new selection downstream.
-  final downstreamNode = _getDownstreamSelectableNodeAfter(document, documentLayout, startingNode);
+  final downstreamNode = _getDownstreamSelectableNodeAfter(document, () => documentLayout, startingNode);
   if (downstreamNode != null) {
     newNodeId = downstreamNode.id;
     final nextComponent = documentLayout.getComponentByNodeId(newNodeId);
@@ -168,7 +275,7 @@ void moveToNearestSelectableComponent(
 
   // Try to find a new selection upstream.
   if (newPosition == null) {
-    final upstreamNode = _getUpstreamSelectableNodeBefore(document, documentLayout, startingNode);
+    final upstreamNode = _getUpstreamSelectableNodeBefore(document, () => documentLayout, startingNode);
     if (upstreamNode != null) {
       newNodeId = upstreamNode.id;
       final previousComponent = documentLayout.getComponentByNodeId(newNodeId);
@@ -186,56 +293,6 @@ void moveToNearestSelectableComponent(
       nodePosition: newPosition,
     ),
   );
-}
-
-/// Returns the first [DocumentNode] before [startingNode] whose
-/// [DocumentComponent] is visually selectable.
-DocumentNode? _getUpstreamSelectableNodeBefore(
-  Document document,
-  DocumentLayout documentLayout,
-  DocumentNode startingNode,
-) {
-  bool foundSelectableNode = false;
-  DocumentNode prevNode = startingNode;
-  DocumentNode? selectableNode;
-  do {
-    selectableNode = document.getNodeBefore(prevNode);
-
-    if (selectableNode != null) {
-      final nextComponent = documentLayout.getComponentByNodeId(selectableNode.id);
-      if (nextComponent != null) {
-        foundSelectableNode = nextComponent.isVisualSelectionSupported();
-      }
-      prevNode = selectableNode;
-    }
-  } while (!foundSelectableNode && selectableNode != null);
-
-  return selectableNode;
-}
-
-/// Returns the first [DocumentNode] after [startingNode] whose
-/// [DocumentComponent] is visually selectable.
-DocumentNode? _getDownstreamSelectableNodeAfter(
-  Document document,
-  DocumentLayout documentLayout,
-  DocumentNode startingNode,
-) {
-  bool foundSelectableNode = false;
-  DocumentNode prevNode = startingNode;
-  DocumentNode? selectableNode;
-  do {
-    selectableNode = document.getNodeAfter(prevNode);
-
-    if (selectableNode != null) {
-      final nextComponent = documentLayout.getComponentByNodeId(selectableNode.id);
-      if (nextComponent != null) {
-        foundSelectableNode = nextComponent.isVisualSelectionSupported();
-      }
-      prevNode = selectableNode;
-    }
-  } while (!foundSelectableNode && selectableNode != null);
-
-  return selectableNode;
 }
 
 bool moveCaretUpstream({
@@ -266,7 +323,7 @@ bool moveCaretUpstream({
 
   if (newExtentNodePosition == null) {
     // Move to next node
-    final nextNode = _getUpstreamSelectableNodeBefore(document, documentLayout, node);
+    final nextNode = _getUpstreamSelectableNodeBefore(document, () => documentLayout, node);
 
     if (nextNode == null) {
       // We're at the beginning of the document and can't go anywhere.
@@ -339,7 +396,7 @@ bool moveCaretDownstream({
 
   if (newExtentNodePosition == null) {
     // Move to next node
-    final nextNode = _getDownstreamSelectableNodeAfter(document, documentLayout, node);
+    final nextNode = _getDownstreamSelectableNodeAfter(document, () => documentLayout, node);
 
     if (nextNode == null) {
       // We're at the beginning/end of the document and can't go
@@ -415,7 +472,7 @@ bool moveCaretUp({
 
   if (newExtentNodePosition == null) {
     // Move to next node
-    final nextNode = _getUpstreamSelectableNodeBefore(document, documentLayout, node);
+    final nextNode = _getUpstreamSelectableNodeBefore(document, () => documentLayout, node);
     if (nextNode != null) {
       newExtentNodeId = nextNode.id;
       final nextComponent = documentLayout.getComponentByNodeId(nextNode.id);
@@ -492,7 +549,7 @@ bool moveCaretDown({
 
   if (newExtentNodePosition == null) {
     // Move to next node
-    final nextNode = _getDownstreamSelectableNodeAfter(document, documentLayout, node);
+    final nextNode = _getDownstreamSelectableNodeAfter(document, () => documentLayout, node);
     if (nextNode != null) {
       newExtentNodeId = nextNode.id;
       final nextComponent = documentLayout.getComponentByNodeId(nextNode.id);

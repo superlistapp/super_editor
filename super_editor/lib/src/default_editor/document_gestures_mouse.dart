@@ -6,7 +6,7 @@ import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
-import 'package:super_editor/src/core/selection_operations.dart';
+import 'package:super_editor/src/document_operations/selection_operations.dart';
 import 'package:super_editor/src/default_editor/document_scrollable.dart';
 import 'package:super_editor/src/default_editor/document_selection_on_focus_mixin.dart';
 import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
@@ -699,12 +699,6 @@ Updating drag selection:
         ),
     ];
   }
-}
-
-enum SelectionType {
-  position,
-  word,
-  paragraph,
 }
 
 /// Paints a rectangle border around the given `selectionRect`.

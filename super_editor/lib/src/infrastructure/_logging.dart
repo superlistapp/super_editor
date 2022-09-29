@@ -23,6 +23,8 @@ class LogNames {
   static const readerDocument = 'reader.document';
   static const readerCommonOps = 'reader.ops';
 
+  static const documentGestures = 'document.gestures';
+
   static const textField = 'textfield';
   static const scrollingTextField = 'textfield.scrolling';
   static const imeTextField = 'textfield.ime';
@@ -59,6 +61,7 @@ final imeTextFieldLog = logging.Logger(LogNames.imeTextField);
 final androidTextFieldLog = logging.Logger(LogNames.androidTextField);
 final iosTextFieldLog = logging.Logger(LogNames.iosTextField);
 
+final docGesturesLog = logging.Logger(LogNames.documentGestures);
 final infrastructureLog = logging.Logger(LogNames.infrastructure);
 final attributionsLog = logging.Logger(LogNames.attributions);
 
