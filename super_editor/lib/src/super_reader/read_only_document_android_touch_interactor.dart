@@ -104,7 +104,7 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
   double? _dragStartScrollOffset;
   Offset? _globalDragOffset;
   Offset? _dragEndInInteractor;
-  SelectionHandleType? _selectionType;
+  SelectionHandleType? _handleType;
 
   @override
   void initState() {
@@ -262,7 +262,7 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
   }
 
   void _ensureSelectionExtentIsVisible() {
-    editorGesturesLog.fine("Ensuring selection extent is visible");
+    readerGesturesLog.fine("Ensuring selection extent is visible");
     final collapsedHandleOffset = _editingController.collapsedHandleOffset;
     final extentHandleOffset = _editingController.downstreamHandleOffset;
     if (collapsedHandleOffset == null && extentHandleOffset == null) {
@@ -278,10 +278,10 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
     late Offset handleInViewportOffset;
 
     if (collapsedHandleOffset != null) {
-      editorGesturesLog.fine("The selection is collapsed");
+      readerGesturesLog.fine("The selection is collapsed");
       handleInViewportOffset = collapsedHandleOffset - editorInViewportOffset;
     } else {
-      editorGesturesLog.fine("The selection is expanded");
+      readerGesturesLog.fine("The selection is expanded");
       handleInViewportOffset = extentHandleOffset! - editorInViewportOffset;
     }
     _handleAutoScrolling.ensureOffsetIsVisible(handleInViewportOffset);
@@ -330,11 +330,7 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
         ..downstreamHandleOffset = null
         ..collapsedHandleOffset = null
         ..cancelCollapsedHandleAutoHideCountdown();
-    } else if (newSelection.isCollapsed) {
-      _positionCaret();
-      _positionCollapsedHandle();
-    } else {
-      // The selection is expanded
+    } else if (!newSelection.isCollapsed) {
       _positionExpandedHandles();
     }
   }
@@ -403,11 +399,11 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
   }
 
   void _onTapUp(TapUpDetails details) {
-    editorGesturesLog.info("Tap down on document");
+    readerGesturesLog.info("Tap down on document");
     final docOffset = _getDocOffset(details.localPosition);
-    editorGesturesLog.fine(" - document offset: $docOffset");
+    readerGesturesLog.fine(" - document offset: $docOffset");
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
-    editorGesturesLog.fine(" - tapped document position: $docPosition");
+    readerGesturesLog.fine(" - tapped document position: $docPosition");
 
     if (docPosition == null) {
       widget.selection.value = null;
@@ -434,11 +430,11 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
   }
 
   void _onDoubleTapDown(TapDownDetails details) {
-    editorGesturesLog.info("Double tap down on document");
+    readerGesturesLog.info("Double tap down on document");
     final docOffset = _getDocOffset(details.localPosition);
-    editorGesturesLog.fine(" - document offset: $docOffset");
+    readerGesturesLog.fine(" - document offset: $docOffset");
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
-    editorGesturesLog.fine(" - tapped document position: $docPosition");
+    readerGesturesLog.fine(" - tapped document position: $docPosition");
 
     widget.selection.value = null;
 
@@ -465,13 +461,6 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
         if (!widget.selection.value!.isCollapsed) {
           _editingController.showToolbar();
           _positionToolbar();
-        } else {
-          // The selection is collapsed. The collapsed handle should disappear
-          // after some inactivity. Start the countdown (or restart an in-progress
-          // countdown).
-          _editingController
-            ..unHideCollapsedHandle()
-            ..startCollapsedHandleAutoHideCountdown();
         }
       }
     }
@@ -480,11 +469,11 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
   }
 
   void _onTripleTapDown(TapDownDetails details) {
-    editorGesturesLog.info("Triple down down on document");
+    readerGesturesLog.info("Triple down down on document");
     final docOffset = _getDocOffset(details.localPosition);
-    editorGesturesLog.fine(" - document offset: $docOffset");
+    readerGesturesLog.fine(" - document offset: $docOffset");
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
-    editorGesturesLog.fine(" - tapped document position: $docPosition");
+    readerGesturesLog.fine(" - tapped document position: $docPosition");
 
     widget.selection.value = null;
 
@@ -532,14 +521,14 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
     final selectionAffinity = widget.document.getAffinityForSelection(widget.selection.value!);
     switch (handleType) {
       case HandleType.collapsed:
-        _selectionType = SelectionHandleType.collapsed;
+        // no-op for read-only documents
         break;
       case HandleType.upstream:
-        _selectionType =
+        _handleType =
             selectionAffinity == TextAffinity.downstream ? SelectionHandleType.base : SelectionHandleType.extent;
         break;
       case HandleType.downstream:
-        _selectionType =
+        _handleType =
             selectionAffinity == TextAffinity.downstream ? SelectionHandleType.extent : SelectionHandleType.base;
         break;
     }
@@ -551,7 +540,7 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
 
     _startDragPositionOffset = _docLayout
         .getRectForPosition(
-          _selectionType == SelectionHandleType.base ? widget.selection.value!.base : widget.selection.value!.extent,
+          _handleType == SelectionHandleType.base ? widget.selection.value!.base : widget.selection.value!.extent,
         )!
         .center;
 
@@ -565,11 +554,6 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
     _dragStartScrollOffset = scrollPosition.pixels;
 
     _handleAutoScrolling.startAutoScrollHandleMonitoring();
-
-    if (_selectionType == SelectionHandleType.collapsed) {
-      // Don't let the handle fade out while dragging it.
-      _editingController.cancelCollapsedHandleAutoHideCountdown();
-    }
 
     scrollPosition.addListener(_updateDragSelection);
   }
@@ -599,15 +583,11 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
       return;
     }
 
-    if (_selectionType == SelectionHandleType.collapsed) {
-      widget.selection.value = DocumentSelection.collapsed(
-        position: docDragPosition,
-      );
-    } else if (_selectionType == SelectionHandleType.base) {
+    if (_handleType == SelectionHandleType.base) {
       widget.selection.value = widget.selection.value!.copyWith(
         base: docDragPosition,
       );
-    } else if (_selectionType == SelectionHandleType.extent) {
+    } else if (_handleType == SelectionHandleType.extent) {
       widget.selection.value = widget.selection.value!.copyWith(
         extent: docDragPosition,
       );
@@ -645,7 +625,7 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
     final dragEndInDoc = _getDocOffset(_dragEndInInteractor!);
 
     final dragPosition = _docLayout.getDocumentPositionNearestToOffset(dragEndInDoc);
-    editorGesturesLog.info("Selecting new position during drag: $dragPosition");
+    readerGesturesLog.info("Selecting new position during drag: $dragPosition");
 
     if (dragPosition == null) {
       return;
@@ -653,11 +633,10 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
 
     late DocumentPosition basePosition;
     late DocumentPosition extentPosition;
-    switch (_selectionType!) {
+    switch (_handleType!) {
       case SelectionHandleType.collapsed:
-        basePosition = dragPosition;
-        extentPosition = dragPosition;
-        break;
+        // no-op for read-only documents
+        return;
       case SelectionHandleType.base:
         basePosition = dragPosition;
         extentPosition = widget.selection.value!.extent;
@@ -672,38 +651,17 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
       base: basePosition,
       extent: extentPosition,
     );
-    editorGesturesLog.fine("Selected region: ${widget.selection.value}");
-  }
-
-  void _positionCollapsedHandle() {
-    final selection = widget.selection.value;
-    if (selection == null) {
-      editorGesturesLog.shout("Tried to update collapsed handle offset but there is no document selection");
-      return;
-    }
-    if (!selection.isCollapsed) {
-      editorGesturesLog.shout("Tried to update collapsed handle offset but the selection is expanded");
-      return;
-    }
-
-    // Calculate the new (x,y) offset for the collapsed handle.
-    final extentRect = _docLayout.getRectForPosition(selection.extent);
-    late Offset handleOffset = extentRect!.bottomLeft;
-
-    _editingController
-      ..collapsedHandleOffset = handleOffset
-      ..unHideCollapsedHandle()
-      ..startCollapsedHandleAutoHideCountdown();
+    readerGesturesLog.fine("Selected region: ${widget.selection.value}");
   }
 
   void _positionExpandedHandles() {
     final selection = widget.selection.value;
     if (selection == null) {
-      editorGesturesLog.shout("Tried to update expanded handle offsets but there is no document selection");
+      readerGesturesLog.shout("Tried to update expanded handle offsets but there is no document selection");
       return;
     }
     if (selection.isCollapsed) {
-      editorGesturesLog.shout("Tried to update expanded handle offsets but the selection is collapsed");
+      readerGesturesLog.shout("Tried to update expanded handle offsets but the selection is collapsed");
       return;
     }
 
@@ -722,17 +680,15 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
       ..cancelCollapsedHandleAutoHideCountdown();
   }
 
-  void _positionCaret() {
-    final extentRect = _docLayout.getRectForPosition(widget.selection.value!.extent)!;
-
-    _editingController.updateCaret(
-      top: extentRect.topLeft,
-      height: extentRect.height,
-    );
-  }
-
   void _positionToolbar() {
     if (!_editingController.shouldDisplayToolbar) {
+      return;
+    }
+
+    final selection = widget.selection.value!;
+    if (selection.isCollapsed) {
+      readerGesturesLog.warning(
+          "Tried to position toolbar for a collapsed selection in a read-only interactor. Collapsed selections shouldn't exist.");
       return;
     }
 
@@ -741,31 +697,22 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
     Offset toolbarTopAnchor;
     Offset toolbarBottomAnchor;
 
-    final selection = widget.selection.value!;
-    if (selection.isCollapsed) {
-      final extentRectInDoc = _docLayout.getRectForPosition(selection.extent)!;
-      selectionRect = Rect.fromPoints(
-        _docLayout.getGlobalOffsetFromDocumentOffset(extentRectInDoc.topLeft),
-        _docLayout.getGlobalOffsetFromDocumentOffset(extentRectInDoc.bottomRight),
-      );
-    } else {
-      final baseRectInDoc = _docLayout.getRectForPosition(selection.base)!;
-      final extentRectInDoc = _docLayout.getRectForPosition(selection.extent)!;
-      final selectionRectInDoc = Rect.fromPoints(
-        Offset(
-          min(baseRectInDoc.left, extentRectInDoc.left),
-          min(baseRectInDoc.top, extentRectInDoc.top),
-        ),
-        Offset(
-          max(baseRectInDoc.right, extentRectInDoc.right),
-          max(baseRectInDoc.bottom, extentRectInDoc.bottom),
-        ),
-      );
-      selectionRect = Rect.fromPoints(
-        _docLayout.getGlobalOffsetFromDocumentOffset(selectionRectInDoc.topLeft),
-        _docLayout.getGlobalOffsetFromDocumentOffset(selectionRectInDoc.bottomRight),
-      );
-    }
+    final baseRectInDoc = _docLayout.getRectForPosition(selection.base)!;
+    final extentRectInDoc = _docLayout.getRectForPosition(selection.extent)!;
+    final selectionRectInDoc = Rect.fromPoints(
+      Offset(
+        min(baseRectInDoc.left, extentRectInDoc.left),
+        min(baseRectInDoc.top, extentRectInDoc.top),
+      ),
+      Offset(
+        max(baseRectInDoc.right, extentRectInDoc.right),
+        max(baseRectInDoc.bottom, extentRectInDoc.bottom),
+      ),
+    );
+    selectionRect = Rect.fromPoints(
+      _docLayout.getGlobalOffsetFromDocumentOffset(selectionRectInDoc.topLeft),
+      _docLayout.getGlobalOffsetFromDocumentOffset(selectionRectInDoc.bottomRight),
+    );
 
     // TODO: fix the horizontal placement
     //       The logic to position the toolbar horizontally is wrong.

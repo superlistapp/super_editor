@@ -42,7 +42,6 @@ class SuperReader extends StatefulWidget {
     List<ComponentBuilder>? componentBuilders,
     List<ReadOnlyDocumentKeyboardAction>? keyboardActions,
     SelectionStyles? selectionStyle,
-    this.inputSource,
     this.gestureMode,
     this.androidHandleColor,
     this.androidToolbarBuilder,
@@ -121,10 +120,7 @@ class SuperReader extends StatefulWidget {
   /// mode.
   final List<ReadOnlyDocumentKeyboardAction> keyboardActions;
 
-  /// The [SuperEditor] input source, e.g., keyboard or Input Method Engine.
-  final DocumentInputSource? inputSource;
-
-  /// The [SuperEditor] gesture mode, e.g., mouse or touch.
+  /// The [SuperReader] gesture mode, e.g., mouse or touch.
   final DocumentGestureMode? gestureMode;
 
   /// Color of the text selection drag handles on Android.
@@ -286,8 +282,6 @@ class SuperReaderState extends State<SuperReader> {
     );
   }
 
-  /// Builds the widget tree that applies user input, e.g., key
-  /// presses from a keyboard, or text deltas from the IME.
   Widget _buildInputSystem({
     required Widget child,
   }) {
@@ -352,7 +346,7 @@ class SuperReaderState extends State<SuperReader> {
         showDebugPaint: widget.debugPaint.scrolling,
         child: ConstrainedBox(
           constraints: BoxConstraints(
-            // When SuperEditor installs its own Viewport, we want the gesture
+            // When SuperReader installs its own Viewport, we want the gesture
             // detection to span throughout the Viewport. Because the gesture
             // system sits around the DocumentLayout, within the Viewport, we
             // have to explicitly tell the gesture area to be at least as tall
@@ -402,7 +396,7 @@ class SuperReaderState extends State<SuperReader> {
 
 /// A [DocumentEditor] that doesn't edit the given [Document].
 ///
-/// A [_ReadOnlyDocumentEditor] can be used to display a [SuperEditor], while
+/// A [_ReadOnlyDocumentEditor] can be used to display a [SuperReader], while
 /// forcibly preventing any changes to the underlying document.
 class _ReadOnlyDocumentEditor implements DocumentEditor {
   const _ReadOnlyDocumentEditor({

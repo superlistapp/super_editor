@@ -5,14 +5,14 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/src/default_editor/document_scrollable.dart';
+import 'package:super_editor/src/test/super_reader_test/super_reader_inspector.dart';
 import 'package:super_editor/super_editor.dart';
-import 'package:super_editor/super_editor_test.dart';
 import 'package:super_editor_markdown/super_editor_markdown.dart';
 import 'package:text_table/text_table.dart';
 
 import 'test_documents.dart';
 
-/// Extensions on [WidgetTester] that configure and pump [SuperEditor]
+/// Extensions on [WidgetTester] that configure and pump [SuperReader]
 /// document editors.
 extension DocumentTester on WidgetTester {
   /// Starts the process for configuring and pumping a new [SuperReader].
@@ -83,7 +83,6 @@ class TestDocumentConfigurator {
   final WidgetTester _widgetTester;
   final MutableDocument? _document;
   DocumentGestureMode? _gestureMode;
-  DocumentInputSource? _inputSource;
   ThemeData? _appTheme;
   Stylesheet? _stylesheet;
   final _addedComponents = <ComponentBuilder>[];
@@ -100,7 +99,6 @@ class TestDocumentConfigurator {
   TestDocumentConfigurator forDesktop({
     DocumentInputSource inputSource = DocumentInputSource.keyboard,
   }) {
-    _inputSource = inputSource;
     _gestureMode = DocumentGestureMode.mouse;
     return this;
   }
@@ -109,7 +107,6 @@ class TestDocumentConfigurator {
   /// e.g., touch gestures and IME input.
   TestDocumentConfigurator forAndroid() {
     _gestureMode = DocumentGestureMode.android;
-    _inputSource = DocumentInputSource.ime;
     return this;
   }
 
@@ -117,13 +114,6 @@ class TestDocumentConfigurator {
   /// e.g., touch gestures and IME input.
   TestDocumentConfigurator forIOS() {
     _gestureMode = DocumentGestureMode.iOS;
-    _inputSource = DocumentInputSource.ime;
-    return this;
-  }
-
-  /// Configures the [SuperReader] to use the given [inputSource].
-  TestDocumentConfigurator withInputSource(DocumentInputSource inputSource) {
-    _inputSource = inputSource;
     return this;
   }
 
@@ -185,21 +175,6 @@ class TestDocumentConfigurator {
     }
   }
 
-  DocumentInputSource get _defaultInputSource {
-    switch (debugDefaultTargetPlatformOverride) {
-      case TargetPlatform.android:
-      case TargetPlatform.iOS:
-        return DocumentInputSource.ime;
-      case TargetPlatform.fuchsia:
-      case TargetPlatform.linux:
-      case TargetPlatform.macOS:
-      case TargetPlatform.windows:
-        return DocumentInputSource.keyboard;
-      default:
-        return DocumentInputSource.keyboard;
-    }
-  }
-
   /// Configures the [ThemeData] used for the [MaterialApp] that wraps
   /// the [SuperReader].
   TestDocumentConfigurator useAppTheme(ThemeData theme) {
@@ -252,7 +227,6 @@ class TestDocumentConfigurator {
         document: documentContext.document,
         documentLayoutKey: layoutKey,
         selection: documentContext.selection,
-        inputSource: _inputSource ?? _defaultInputSource,
         gestureMode: _gestureMode ?? _defaultGestureMode,
         stylesheet: _stylesheet,
         componentBuilders: [
@@ -271,34 +245,34 @@ class TestDocumentConfigurator {
     return testContext;
   }
 
-  Widget _buildContent(Widget superEditor) {
+  Widget _buildContent(Widget superReader) {
     if (_editorSize != null) {
       return ConstrainedBox(
         constraints: BoxConstraints(
           maxWidth: _editorSize!.width,
           maxHeight: _editorSize!.height,
         ),
-        child: superEditor,
+        child: superReader,
       );
     }
-    return superEditor;
+    return superReader;
   }
 
-  Widget _buildWidgetTree(Widget superEditor) {
+  Widget _buildWidgetTree(Widget superReader) {
     if (_widgetTreeBuilder != null) {
-      return _widgetTreeBuilder!(superEditor);
+      return _widgetTreeBuilder!(superReader);
     }
     return MaterialApp(
       theme: _appTheme,
       home: Scaffold(
-        body: superEditor,
+        body: superReader,
       ),
     );
   }
 }
 
-/// Must return a widget tree containing the given [superEditor]
-typedef WidgetTreeBuilder = Widget Function(Widget superEditor);
+/// Must return a widget tree containing the given [superReader]
+typedef WidgetTreeBuilder = Widget Function(Widget superReader);
 
 class TestDocumentContext {
   const TestDocumentContext._({
@@ -356,14 +330,14 @@ class DocumentEqualsMarkdownMatcher extends Matcher {
       actualDocument = target;
     } else {
       // If we weren't given a Document, then we expect to receive a Finder
-      // that locates a SuperEditor, which contains a Document.
+      // that locates a SuperReader, which contains a Document.
       if (target is! Finder) {
         return "the given target isn't a Document or a Finder: $target";
       }
 
-      final document = SuperEditorInspector.findDocument(target);
+      final document = SuperReaderInspector.findDocument(target);
       if (document == null) {
-        return "Finder didn't match any SuperEditor widgets: $Finder";
+        return "Finder didn't match any SuperReader widgets: $Finder";
       }
       actualDocument = document;
     }
@@ -421,14 +395,14 @@ class EquivalentDocumentMatcher extends Matcher {
       actualDocument = target;
     } else {
       // If we weren't given a Document, then we expect to receive a Finder
-      // that locates a SuperEditor, which contains a Document.
+      // that locates a SuperReader, which contains a Document.
       if (target is! Finder) {
         return "the given target isn't a Document or a Finder: $target";
       }
 
-      final document = SuperEditorInspector.findDocument(target);
+      final document = SuperReaderInspector.findDocument(target);
       if (document == null) {
-        return "Finder didn't match any SuperEditor widgets: $Finder";
+        return "Finder didn't match any SuperReader widgets: $Finder";
       }
       actualDocument = document;
     }

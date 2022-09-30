@@ -183,12 +183,6 @@ extension SuperReaderRobot on WidgetTester {
     await pumpAndSettle();
   }
 
-  /// Types the given [text] into a [SuperReader] by simulating IME text deltas from
-  /// the platform.
-  Future<void> typeImeText(String text) async {
-    await ime.typeText(text, getter: imeClientGetter);
-  }
-
   DocumentLayout _findDocumentLayout([Finder? superReaderFinder]) {
     late final Finder layoutFinder;
     if (superReaderFinder != null) {

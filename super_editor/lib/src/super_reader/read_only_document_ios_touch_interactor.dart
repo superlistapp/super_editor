@@ -272,7 +272,7 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
   }
 
   void _ensureSelectionExtentIsVisible() {
-    editorGesturesLog.fine("Ensuring selection extent is visible");
+    readerGesturesLog.fine("Ensuring selection extent is visible");
     final collapsedHandleOffset = _editingController.collapsedHandleOffset;
     final extentHandleOffset = _editingController.downstreamHandleOffset;
     if (collapsedHandleOffset == null && extentHandleOffset == null) {
@@ -280,18 +280,18 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
       return;
     }
 
-    // Determines the offset of the editor in the viewport coordinate
+    // Determine the offset of the editor in the viewport coordinate
     final editorBox = widget.documentKey.currentContext!.findRenderObject() as RenderBox;
     final editorInViewportOffset = viewportBox.localToGlobal(Offset.zero) - editorBox.localToGlobal(Offset.zero);
 
-    // Determines the offset of the bottom of the handle in the viewport coordinate
+    // Determine the offset of the bottom of the handle in the viewport coordinate
     late Offset handleInViewportOffset;
 
     if (collapsedHandleOffset != null) {
-      editorGesturesLog.fine("The selection is collapsed");
+      readerGesturesLog.fine("The selection is collapsed");
       handleInViewportOffset = collapsedHandleOffset - editorInViewportOffset;
     } else {
-      editorGesturesLog.fine("The selection is expanded");
+      readerGesturesLog.fine("The selection is expanded");
       handleInViewportOffset = extentHandleOffset! - editorInViewportOffset;
     }
     _handleAutoScrolling.ensureOffsetIsVisible(handleInViewportOffset);
@@ -340,11 +340,7 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
         ..upstreamHandleOffset = null
         ..downstreamHandleOffset = null
         ..collapsedHandleOffset = null;
-    } else if (newSelection.isCollapsed) {
-      _positionCaret();
-      _positionCollapsedHandle();
-    } else {
-      // The selection is expanded
+    } else if (!newSelection.isCollapsed) {
       _positionExpandedSelectionHandles();
     }
   }
@@ -420,11 +416,11 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
       return;
     }
 
-    editorGesturesLog.info("Tap down on document");
+    readerGesturesLog.info("Tap down on document");
     final docOffset = _interactorOffsetToDocOffset(details.localPosition);
-    editorGesturesLog.fine(" - document offset: $docOffset");
+    readerGesturesLog.fine(" - document offset: $docOffset");
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
-    editorGesturesLog.fine(" - tapped document position: $docPosition");
+    readerGesturesLog.fine(" - tapped document position: $docPosition");
 
     if (docPosition != null &&
         selection != null &&
@@ -455,11 +451,11 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
       return;
     }
 
-    editorGesturesLog.info("Double tap down on document");
+    readerGesturesLog.info("Double tap down on document");
     final docOffset = _interactorOffsetToDocOffset(details.localPosition);
-    editorGesturesLog.fine(" - document offset: $docOffset");
+    readerGesturesLog.fine(" - document offset: $docOffset");
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
-    editorGesturesLog.fine(" - tapped document position: $docPosition");
+    readerGesturesLog.fine(" - tapped document position: $docPosition");
 
     widget.selection.value = null;
 
@@ -494,12 +490,12 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
   }
 
   void _onTripleTapUp(TapUpDetails details) {
-    editorGesturesLog.info("Triple down down on document");
+    readerGesturesLog.info("Triple down down on document");
 
     final docOffset = _interactorOffsetToDocOffset(details.localPosition);
-    editorGesturesLog.fine(" - document offset: $docOffset");
+    readerGesturesLog.fine(" - document offset: $docOffset");
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
-    editorGesturesLog.fine(" - tapped document position: $docPosition");
+    readerGesturesLog.fine(" - tapped document position: $docPosition");
 
     widget.selection.value = null;
 
@@ -541,10 +537,7 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
       return;
     }
 
-    if (selection.isCollapsed && _isOverCollapsedHandle(details.localPosition)) {
-      _dragMode = DragMode.collapsed;
-      _dragHandleType = HandleType.collapsed;
-    } else if (_isOverBaseHandle(details.localPosition)) {
+    if (_isOverBaseHandle(details.localPosition)) {
       _dragMode = DragMode.base;
       _dragHandleType = HandleType.upstream;
     } else if (_isOverExtentHandle(details.localPosition)) {
@@ -581,19 +574,6 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
     scrollPosition.addListener(_updateDragSelection);
 
     _controlsOverlayEntry!.markNeedsBuild();
-  }
-
-  bool _isOverCollapsedHandle(Offset interactorOffset) {
-    final collapsedPosition = widget.selection.value?.extent;
-    if (collapsedPosition == null) {
-      return false;
-    }
-
-    final extentRect = _docLayout.getRectForPosition(collapsedPosition)!;
-    final caretRect = Rect.fromLTWH(extentRect.left - 1, extentRect.center.dy, 1, 1).inflate(24);
-
-    final docOffset = _docLayout.getDocumentOffsetFromAncestorOffset(interactorOffset, context.findRenderObject()!);
-    return caretRect.contains(docOffset);
   }
 
   bool _isOverBaseHandle(Offset interactorOffset) {
@@ -663,11 +643,7 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
       return;
     }
 
-    if (_dragHandleType == HandleType.collapsed) {
-      widget.selection.value = DocumentSelection.collapsed(
-        position: docDragPosition,
-      );
-    } else if (_dragHandleType == HandleType.upstream) {
+    if (_dragHandleType == HandleType.upstream) {
       widget.selection.value = widget.selection.value!.copyWith(
         base: docDragPosition,
       );
@@ -731,7 +707,7 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
 
     final dragEndInDoc = _interactorOffsetToDocOffset(_dragEndInInteractor!);
     final dragPosition = _docLayout.getDocumentPositionNearestToOffset(dragEndInDoc);
-    editorGesturesLog.info("Selecting new position during drag: $dragPosition");
+    readerGesturesLog.info("Selecting new position during drag: $dragPosition");
 
     if (dragPosition == null) {
       return;
@@ -741,9 +717,8 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
     late DocumentPosition extentPosition;
     switch (_dragHandleType!) {
       case HandleType.collapsed:
-        basePosition = dragPosition;
-        extentPosition = dragPosition;
-        break;
+        // no-op for read-only documents
+        return;
       case HandleType.upstream:
         basePosition = dragPosition;
         extentPosition = widget.selection.value!.extent;
@@ -758,7 +733,7 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
       base: basePosition,
       extent: extentPosition,
     );
-    editorGesturesLog.fine("Selected region: ${widget.selection.value}");
+    readerGesturesLog.fine("Selected region: ${widget.selection.value}");
   }
 
   void _showEditingControlsOverlay() {
@@ -787,41 +762,14 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
     Overlay.of(context)!.insert(_controlsOverlayEntry!);
   }
 
-  void _positionCaret() {
-    final extentRect = _docLayout.getRectForPosition(widget.selection.value!.extent)!;
-
-    _editingController.updateCaret(
-      top: extentRect.topLeft,
-      height: extentRect.height,
-    );
-  }
-
-  void _positionCollapsedHandle() {
-    final selection = widget.selection.value;
-    if (selection == null) {
-      editorGesturesLog.shout("Tried to update collapsed handle offset but there is no document selection");
-      return;
-    }
-    if (!selection.isCollapsed) {
-      editorGesturesLog.shout("Tried to update collapsed handle offset but the selection is expanded");
-      return;
-    }
-
-    // Calculate the new (x,y) offset for the collapsed handle.
-    final extentRect = _docLayout.getRectForPosition(selection.extent);
-    late Offset handleOffset = extentRect!.bottomLeft;
-
-    _editingController.collapsedHandleOffset = handleOffset;
-  }
-
   void _positionExpandedSelectionHandles() {
     final selection = widget.selection.value;
     if (selection == null) {
-      editorGesturesLog.shout("Tried to update expanded handle offsets but there is no document selection");
+      readerGesturesLog.shout("Tried to update expanded handle offsets but there is no document selection");
       return;
     }
     if (selection.isCollapsed) {
-      editorGesturesLog.shout("Tried to update expanded handle offsets but the selection is collapsed");
+      readerGesturesLog.shout("Tried to update expanded handle offsets but the selection is collapsed");
       return;
     }
 
@@ -854,36 +802,34 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
       return;
     }
 
+    final selection = widget.selection.value!;
+    if (selection.isCollapsed) {
+      readerGesturesLog.warning(
+          "Tried to position toolbar for a collapsed selection in a read-only interactor. Collapsed selections shouldn't exist.");
+      return;
+    }
+
     const toolbarGap = 24.0;
     late Rect selectionRect;
     Offset toolbarTopAnchor;
     Offset toolbarBottomAnchor;
 
-    final selection = widget.selection.value!;
-    if (selection.isCollapsed) {
-      final extentRectInDoc = _docLayout.getRectForPosition(selection.extent)!;
-      selectionRect = Rect.fromPoints(
-        _docLayout.getGlobalOffsetFromDocumentOffset(extentRectInDoc.topLeft),
-        _docLayout.getGlobalOffsetFromDocumentOffset(extentRectInDoc.bottomRight),
-      );
-    } else {
-      final baseRectInDoc = _docLayout.getRectForPosition(selection.base)!;
-      final extentRectInDoc = _docLayout.getRectForPosition(selection.extent)!;
-      final selectionRectInDoc = Rect.fromPoints(
-        Offset(
-          min(baseRectInDoc.left, extentRectInDoc.left),
-          min(baseRectInDoc.top, extentRectInDoc.top),
-        ),
-        Offset(
-          max(baseRectInDoc.right, extentRectInDoc.right),
-          max(baseRectInDoc.bottom, extentRectInDoc.bottom),
-        ),
-      );
-      selectionRect = Rect.fromPoints(
-        _docLayout.getGlobalOffsetFromDocumentOffset(selectionRectInDoc.topLeft),
-        _docLayout.getGlobalOffsetFromDocumentOffset(selectionRectInDoc.bottomRight),
-      );
-    }
+    final baseRectInDoc = _docLayout.getRectForPosition(selection.base)!;
+    final extentRectInDoc = _docLayout.getRectForPosition(selection.extent)!;
+    final selectionRectInDoc = Rect.fromPoints(
+      Offset(
+        min(baseRectInDoc.left, extentRectInDoc.left),
+        min(baseRectInDoc.top, extentRectInDoc.top),
+      ),
+      Offset(
+        max(baseRectInDoc.right, extentRectInDoc.right),
+        max(baseRectInDoc.bottom, extentRectInDoc.bottom),
+      ),
+    );
+    selectionRect = Rect.fromPoints(
+      _docLayout.getGlobalOffsetFromDocumentOffset(selectionRectInDoc.topLeft),
+      _docLayout.getGlobalOffsetFromDocumentOffset(selectionRectInDoc.bottomRight),
+    );
 
     // TODO: fix the horizontal placement
     //       The logic to position the toolbar horizontally is wrong.
@@ -956,9 +902,20 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
   @override
   Widget build(BuildContext context) {
     if (_scrollController.hasClients) {
-      if (scrollPosition != _activeScrollPosition) {
-        _activeScrollPosition = scrollPosition;
-        _activeScrollPosition?.addListener(_onScrollChange);
+      if (_scrollController.positions.length > 1) {
+        // During Hot Reload, if the gesture mode was changed,
+        // the widget might be built while the old gesture interactor
+        // scroller is still attached to the _scrollController.
+        //
+        // Defer adding the listener to the next frame.
+        WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+          setState(() {});
+        });
+      } else {
+        if (scrollPosition != _activeScrollPosition) {
+          _activeScrollPosition = scrollPosition;
+          _activeScrollPosition?.addListener(_onScrollChange);
+        }
       }
     }
 

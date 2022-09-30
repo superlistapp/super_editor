@@ -8,7 +8,7 @@ import '../test_tools.dart';
 import 'reader_test_tools.dart';
 
 void main() {
-  group("SuperDocument scrolling", () {
+  group("SuperReader scrolling", () {
     testWidgetsOnArbitraryDesktop('scrolls document when dragging using the trackpad (downstream)', (tester) async {
       final scrollController = ScrollController();
       await tester

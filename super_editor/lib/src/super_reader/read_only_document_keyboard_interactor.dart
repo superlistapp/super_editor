@@ -257,9 +257,7 @@ final expandSelectionWithUpArrow = createShortcut(
       return ExecutionInstruction.continueExecution;
     }
 
-    if (defaultTargetPlatform == TargetPlatform.linux &&
-        keyEvent.isAltPressed &&
-        (keyEvent.logicalKey == LogicalKeyboardKey.arrowUp || keyEvent.logicalKey == LogicalKeyboardKey.arrowDown)) {
+    if (defaultTargetPlatform == TargetPlatform.linux && keyEvent.isAltPressed) {
       return ExecutionInstruction.continueExecution;
     }
 
@@ -280,23 +278,11 @@ final expandSelectionWithDownArrow = createShortcut(
     required ReaderContext documentContext,
     required RawKeyEvent keyEvent,
   }) {
-    const arrowKeys = [
-      LogicalKeyboardKey.arrowLeft,
-      LogicalKeyboardKey.arrowRight,
-      LogicalKeyboardKey.arrowUp,
-      LogicalKeyboardKey.arrowDown,
-    ];
-    if (!arrowKeys.contains(keyEvent.logicalKey)) {
-      return ExecutionInstruction.continueExecution;
-    }
-
     if (defaultTargetPlatform == TargetPlatform.windows && keyEvent.isAltPressed) {
       return ExecutionInstruction.continueExecution;
     }
 
-    if (defaultTargetPlatform == TargetPlatform.linux &&
-        keyEvent.isAltPressed &&
-        (keyEvent.logicalKey == LogicalKeyboardKey.arrowUp || keyEvent.logicalKey == LogicalKeyboardKey.arrowDown)) {
+    if (defaultTargetPlatform == TargetPlatform.linux && keyEvent.isAltPressed) {
       return ExecutionInstruction.continueExecution;
     }
 
@@ -399,10 +385,6 @@ final selectAllWhenCmdAIsPressedOnMac = createShortcut(
     required ReaderContext documentContext,
     required RawKeyEvent keyEvent,
   }) {
-    if (!keyEvent.isPrimaryShortcutKeyPressed || keyEvent.logicalKey != LogicalKeyboardKey.keyA) {
-      return ExecutionInstruction.continueExecution;
-    }
-
     final didSelectAll = selectAll(documentContext.document, documentContext.selection);
     return didSelectAll ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
   },
@@ -416,10 +398,6 @@ final selectAllWhenCtlAIsPressedOnWindowsAndLinux = createShortcut(
     required ReaderContext documentContext,
     required RawKeyEvent keyEvent,
   }) {
-    if (!keyEvent.isPrimaryShortcutKeyPressed || keyEvent.logicalKey != LogicalKeyboardKey.keyA) {
-      return ExecutionInstruction.continueExecution;
-    }
-
     final didSelectAll = selectAll(documentContext.document, documentContext.selection);
     return didSelectAll ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
   },

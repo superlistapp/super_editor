@@ -7,7 +7,7 @@ import '../test_tools.dart';
 import 'reader_test_tools.dart';
 
 void main() {
-  group("SuperDocument selection", () {
+  group("SuperReader selection", () {
     testWidgetsOnArbitraryDesktop("calculates upstream document selection within a single node", (tester) async {
       await tester //
           .createDocument() //

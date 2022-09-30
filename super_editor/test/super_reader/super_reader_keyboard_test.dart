@@ -8,7 +8,7 @@ import '../test_tools.dart';
 import 'reader_test_tools.dart';
 
 void main() {
-  group('SuperDocument keyboard', () {
+  group('SuperReader keyboard', () {
     group('moves selection', () {
       testAllInputsOnDesktop("left by one character and expands when SHIFT + LEFT_ARROW is pressed", (
         tester, {
@@ -274,7 +274,6 @@ Future<String> _pumpSingleLineAndSelectAWord(
   final testContext = await tester //
       .createDocument()
       .fromMarkdown("This is some testing text.") // Length is 26
-      .withInputSource(inputSource)
       .autoFocus(true)
       .pump();
 

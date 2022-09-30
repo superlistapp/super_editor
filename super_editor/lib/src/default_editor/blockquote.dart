@@ -199,22 +199,23 @@ class BlockquoteComponent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return IgnorePointer(
-        child: Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      decoration: BoxDecoration(
-        borderRadius: borderRadius,
-        color: backgroundColor,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        decoration: BoxDecoration(
+          borderRadius: borderRadius,
+          color: backgroundColor,
+        ),
+        child: TextComponent(
+          key: textKey,
+          text: text,
+          textStyleBuilder: styleBuilder,
+          textSelection: textSelection,
+          selectionColor: selectionColor,
+          highlightWhenEmpty: highlightWhenEmpty,
+          showDebugPaint: showDebugPaint,
+        ),
       ),
-      child: TextComponent(
-        key: textKey,
-        text: text,
-        textStyleBuilder: styleBuilder,
-        textSelection: textSelection,
-        selectionColor: selectionColor,
-        highlightWhenEmpty: highlightWhenEmpty,
-        showDebugPaint: showDebugPaint,
-      ),
-    ));
+    );
   }
 }
 

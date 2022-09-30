@@ -5,7 +5,7 @@ import '../test_tools.dart';
 import 'reader_test_tools.dart';
 
 void main() {
-  group("SuperEditor test tools", () {
+  group("SuperReader test tools", () {
     group("configures document from markdown", () {
       testWidgetsOnMac("when the document is empty", (tester) async {
         await tester //

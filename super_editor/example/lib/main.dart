@@ -288,7 +288,7 @@ final _menu = <_MenuGroup>[
     items: [
       _MenuItem(
         icon: Icons.text_snippet,
-        title: 'SuperDocument',
+        title: 'SuperReader',
         pageBuilder: (context) {
           return SuperReaderDemo();
         },

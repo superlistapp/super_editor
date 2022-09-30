@@ -333,7 +333,7 @@ bool moveCaretUpstream({
     newExtentNodeId = nextNode.id;
     final nextComponent = documentLayout.getComponentByNodeId(nextNode.id);
     if (nextComponent == null) {
-      return false;
+      throw Exception('Could not find component in document layout for the upstream node with ID: ${nextNode.id}');
     }
     newExtentNodePosition = nextComponent.getEndPosition();
   }
@@ -407,7 +407,7 @@ bool moveCaretDownstream({
     newExtentNodeId = nextNode.id;
     final nextComponent = documentLayout.getComponentByNodeId(nextNode.id);
     if (nextComponent == null) {
-      throw Exception('Could not find next component to move the selection horizontally. Next node ID: ${nextNode.id}');
+      throw Exception('Could not find component in document layout for the downstream node with ID: ${nextNode.id}');
     }
     newExtentNodePosition = nextComponent.getBeginningPosition();
   }
@@ -582,7 +582,8 @@ bool moveCaretDown({
 
 /// Sets the [selection]'s value to include the entire [Document].
 ///
-/// Always returns [true].
+/// Returns `true` if any content was selected, or `false` if the document
+/// is empty.
 bool selectAll(Document document, ValueNotifier<DocumentSelection?> selection) {
   final nodes = document.nodes;
   if (nodes.isEmpty) {
