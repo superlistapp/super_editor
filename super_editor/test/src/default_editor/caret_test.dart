@@ -72,12 +72,21 @@ void main() {
         // downstream affinity.
         final textOffset = SuperEditorInspector.findOffsetOfLineBreak('1') - 1;
 
+        // Place the caret at that offset with a downstream affinity.
         await tester.placeCaretInParagraph('1', textOffset, affinity: TextAffinity.downstream);
         final downstreamCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
+        final downstreamSelection = SuperEditorInspector.findDocumentSelection();
+
+        // Place the caret at the same offset but with an upstream affinity.
         await tester.pump(kTapTimeout * 2); // Simulate a pause to avoid a double tap.
         await tester.placeCaretInParagraph('1', textOffset, affinity: TextAffinity.upstream);
         final upstreamCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
+        final upstreamSelection = SuperEditorInspector.findDocumentSelection();
 
+        // Make sure the selection actually changed.
+        expect(downstreamSelection, isNot(upstreamSelection));
+
+        // Make sure that the caret renders at the same location for both upstream and downstream affinities.
         expect(upstreamCaretOffset, downstreamCaretOffset);
       });
     });
