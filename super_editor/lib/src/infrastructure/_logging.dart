@@ -13,6 +13,18 @@ class LogNames {
   static const editorDocument = 'editor.document';
   static const editorCommonOps = 'editor.ops';
 
+  static const reader = 'reader';
+  static const readerScrolling = 'reader.scrolling';
+  static const readerGestures = 'reader.gestures';
+  static const readerKeys = 'reader.keys';
+  static const readerIme = 'reader.ime';
+  static const readerLayout = 'reader.layout';
+  static const readerStyle = 'reader.style';
+  static const readerDocument = 'reader.document';
+  static const readerCommonOps = 'reader.ops';
+
+  static const documentGestures = 'document.gestures';
+
   static const textField = 'textfield';
   static const scrollingTextField = 'textfield.scrolling';
   static const imeTextField = 'textfield.ime';
@@ -33,12 +45,23 @@ final editorStyleLog = logging.Logger(LogNames.editorStyle);
 final editorDocLog = logging.Logger(LogNames.editorDocument);
 final editorOpsLog = logging.Logger(LogNames.editorCommonOps);
 
+final readerLog = logging.Logger(LogNames.reader);
+final readerScrollingLog = logging.Logger(LogNames.readerScrolling);
+final readerGesturesLog = logging.Logger(LogNames.readerGestures);
+final readerKeyLog = logging.Logger(LogNames.readerKeys);
+final readerImeLog = logging.Logger(LogNames.readerIme);
+final readerLayoutLog = logging.Logger(LogNames.readerLayout);
+final readerStyleLog = logging.Logger(LogNames.readerStyle);
+final readerDocLog = logging.Logger(LogNames.readerDocument);
+final readerOpsLog = logging.Logger(LogNames.readerCommonOps);
+
 final textFieldLog = logging.Logger(LogNames.textField);
 final scrollingTextFieldLog = logging.Logger(LogNames.scrollingTextField);
 final imeTextFieldLog = logging.Logger(LogNames.imeTextField);
 final androidTextFieldLog = logging.Logger(LogNames.androidTextField);
 final iosTextFieldLog = logging.Logger(LogNames.iosTextField);
 
+final docGesturesLog = logging.Logger(LogNames.documentGestures);
 final infrastructureLog = logging.Logger(LogNames.infrastructure);
 final attributionsLog = logging.Logger(LogNames.attributions);
 

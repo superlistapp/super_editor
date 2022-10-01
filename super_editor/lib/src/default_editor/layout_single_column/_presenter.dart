@@ -173,7 +173,8 @@ class SingleColumnLayoutPresenter {
           }
         }
         if (component == null) {
-          throw Exception("Couldn't find styler to create component for document node: ${_document.nodes[i]}");
+          throw Exception(
+              "Couldn't find styler to create component for document node: ${_document.nodes[i].runtimeType}");
         }
         components.add(component);
       }

@@ -405,6 +405,9 @@ class MovementModifier {
   final String id;
 
   @override
+  String toString() => id;
+
+  @override
   bool operator ==(Object other) =>
       identical(this, other) || other is MovementModifier && runtimeType == other.runtimeType && id == other.id;
 

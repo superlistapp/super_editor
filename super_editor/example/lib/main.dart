@@ -16,6 +16,7 @@ import 'package:example/demos/flutter_features/textinputclient/textfield.dart';
 import 'package:example/demos/scrolling/demo_task_and_chat_with_customscrollview.dart';
 import 'package:example/demos/sliver_example_editor.dart';
 import 'package:example/demos/styles/demo_doc_styles.dart';
+import 'package:example/demos/super_document/demo_super_reader.dart';
 import 'package:example/demos/supertextfield/demo_textfield.dart';
 import 'package:example/demos/supertextfield/ios/demo_superiostextfield.dart';
 import 'package:example/logging.dart';
@@ -284,6 +285,13 @@ final _menu = <_MenuGroup>[
   _MenuGroup(
     title: 'READ-ONLY DOCS',
     items: [
+      _MenuItem(
+        icon: Icons.text_snippet,
+        title: 'SuperReader',
+        pageBuilder: (context) {
+          return SuperReaderDemo();
+        },
+      ),
       _MenuItem(
         icon: Icons.text_snippet,
         title: 'In CustomScrollView',

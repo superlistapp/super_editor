@@ -3,16 +3,16 @@ import 'package:flutter/material.dart';
 class AndroidTextEditingFloatingToolbar extends StatelessWidget {
   const AndroidTextEditingFloatingToolbar({
     Key? key,
-    required this.onCutPressed,
-    required this.onCopyPressed,
-    required this.onPastePressed,
-    required this.onSelectAllPressed,
+    this.onCutPressed,
+    this.onCopyPressed,
+    this.onPastePressed,
+    this.onSelectAllPressed,
   }) : super(key: key);
 
-  final VoidCallback onCutPressed;
-  final VoidCallback onCopyPressed;
-  final VoidCallback onPastePressed;
-  final VoidCallback onSelectAllPressed;
+  final VoidCallback? onCutPressed;
+  final VoidCallback? onCopyPressed;
+  final VoidCallback? onPastePressed;
+  final VoidCallback? onSelectAllPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -23,22 +23,26 @@ class AndroidTextEditingFloatingToolbar extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _buildButton(
-            onPressed: onCutPressed,
-            title: 'Cut',
-          ),
-          _buildButton(
-            onPressed: onCopyPressed,
-            title: 'Copy',
-          ),
-          _buildButton(
-            onPressed: onPastePressed,
-            title: 'Paste',
-          ),
-          _buildButton(
-            onPressed: onSelectAllPressed,
-            title: 'Select All',
-          ),
+          if (onCutPressed != null)
+            _buildButton(
+              onPressed: onCutPressed!,
+              title: 'Cut',
+            ),
+          if (onCopyPressed != null)
+            _buildButton(
+              onPressed: onCopyPressed!,
+              title: 'Copy',
+            ),
+          if (onPastePressed != null)
+            _buildButton(
+              onPressed: onPastePressed!,
+              title: 'Paste',
+            ),
+          if (onSelectAllPressed != null)
+            _buildButton(
+              onPressed: onSelectAllPressed!,
+              title: 'Select All',
+            ),
         ],
       ),
     );

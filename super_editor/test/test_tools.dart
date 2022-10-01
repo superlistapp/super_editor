@@ -1,10 +1,9 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:logging/logging.dart';
 import 'package:logging/logging.dart' as logging;
-import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/platform_detector.dart';
+import 'package:super_editor/super_editor.dart';
 
 import 'src/infrastructure/_platform_test_tools.dart';
 
@@ -15,6 +14,57 @@ void groupWithLogging(String description, Level logLevel, Set<logging.Logger> lo
 
   deactivateLoggers(loggers);
 }
+
+/// A widget test that runs a variant for every desktop platform, e.g.,
+/// Mac, Windows, Linux, and for all [DocumentInputSource]s.
+void testAllInputsOnDesktop(
+  String description,
+  InputModeTesterCallback test, {
+  bool skip = false,
+}) {
+  testWidgetsOnDesktop("$description (keyboard)", (WidgetTester tester) async {
+    await test(tester, inputSource: DocumentInputSource.keyboard);
+  }, skip: skip);
+
+  testWidgetsOnDesktop("$description (IME)", (WidgetTester tester) async {
+    await test(tester, inputSource: DocumentInputSource.ime);
+  }, skip: skip);
+}
+
+/// A widget test that runs as a Mac, and for all [DocumentInputSource]s.
+void testAllInputsOnMac(
+  String description,
+  InputModeTesterCallback test, {
+  bool skip = false,
+}) {
+  testWidgetsOnMac("$description (keyboard)", (WidgetTester tester) async {
+    await test(tester, inputSource: DocumentInputSource.keyboard);
+  }, skip: skip);
+
+  testWidgetsOnMac("$description (IME)", (WidgetTester tester) async {
+    await test(tester, inputSource: DocumentInputSource.ime);
+  }, skip: skip);
+}
+
+/// A widget test that runs a variant for Windows and Linux, and for all [DocumentInputSource]s.
+void testAllInputsOnWindowsAndLinux(
+  String description,
+  InputModeTesterCallback test, {
+  bool skip = false,
+}) {
+  testWidgetsOnWindowsAndLinux("$description (keyboard)", (WidgetTester tester) async {
+    await test(tester, inputSource: DocumentInputSource.keyboard);
+  }, skip: skip);
+
+  testWidgetsOnWindowsAndLinux("$description (IME)", (WidgetTester tester) async {
+    await test(tester, inputSource: DocumentInputSource.ime);
+  }, skip: skip);
+}
+
+typedef InputModeTesterCallback = Future<void> Function(
+  WidgetTester widgetTester, {
+  required DocumentInputSource inputSource,
+});
 
 /// A widget test that runs a variant for every desktop platform, e.g.,
 /// Mac, Windows, Linux.
