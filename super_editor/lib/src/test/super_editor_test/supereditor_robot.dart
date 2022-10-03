@@ -80,8 +80,11 @@ extension SuperEditorRobot on WidgetTester {
     // prevents flaky edge effects, which might occur if we try to tap exactly at the
     // top of the line. In general, we could use the caret height to choose a vertical
     // offset, but the caret height is null when the text is empty. So we use a
-    // hard-coded value, instead.
-    final localTapOffset = textLayout.getOffsetForCaret(position) + const Offset(0, 5);
+    // hard-coded value, instead. We also adjust the horizontal offset by a pixel left
+    // or right depending on the requested affinity. Without this the resulting selection
+    // may contain an incorrect affinity if the gesture did not occur at a line break.
+    final localTapOffset =
+        textLayout.getOffsetForCaret(position) + Offset(affinity == TextAffinity.upstream ? -1 : 1, 5);
     final globalTapOffset = localTapOffset + textRenderBox.localToGlobal(Offset.zero);
 
     // TODO: check that the tap offset is visible within the viewport. Add option to

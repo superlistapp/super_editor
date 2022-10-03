@@ -102,20 +102,36 @@ void main() {
       // Tap to place the caret in the first paragraph with a downstream affinity. This assumes that the paragraph
       // does not wrap at the second character of the paragraph, which should be true for any reasonable display size.
       await tester.placeCaretInParagraph("1", 1, affinity: TextAffinity.downstream);
-      final selectionFromDownstreamGesture = SuperEditorInspector.findDocumentSelection();
-
-      // Move the caret somewhere else to avoid false positives if the next gesture does not actually move the caret.
-      await tester.pump(kTapTimeout * 2); // Pause to avoid double tap.
-      await tester.placeCaretInParagraph("1", 0);
-      expect(SuperEditorInspector.findDocumentSelection(), isNot(selectionFromDownstreamGesture));
+      // Ensure the document has the correct selection, including affinity;
+      expect(
+        SuperEditorInspector.findDocumentSelection(),
+        const DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: '1',
+            nodePosition: TextNodePosition(
+              offset: 1,
+              affinity: TextAffinity.downstream,
+            ),
+          ),
+        ),
+      );
 
       // Place the caret at the same offset as before but with an upstream affinity.
       await tester.pump(kTapTimeout * 2); // Pause to avoid double tap.
       await tester.placeCaretInParagraph("1", 1, affinity: TextAffinity.upstream);
-      final selectionFromUpstreamGesture = SuperEditorInspector.findDocumentSelection();
-
-      // Ensure that the two selections are the same.
-      expect(selectionFromUpstreamGesture, selectionFromDownstreamGesture);
+      // Ensure the document has the correct selection, including affinity;
+      expect(
+        SuperEditorInspector.findDocumentSelection(),
+        const DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: '1',
+            nodePosition: TextNodePosition(
+              offset: 1,
+              affinity: TextAffinity.upstream,
+            ),
+          ),
+        ),
+      );
     });
 
     testWidgetsOnAllPlatforms("taps to place caret after last character", (tester) async {
