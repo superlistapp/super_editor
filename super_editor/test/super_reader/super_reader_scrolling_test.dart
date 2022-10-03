@@ -173,7 +173,7 @@ void main() {
         DocumentSelection(
           base: DocumentPosition(
             nodeId: lastParagraph.id,
-            nodePosition: lastParagraph.endPosition,
+            nodePosition: lastParagraph.endPosition.copyWith(affinity: TextAffinity.upstream),
           ),
           extent: DocumentPosition(
             nodeId: firstParagraph.id,

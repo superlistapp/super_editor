@@ -140,7 +140,13 @@ void main() {
       expect(
         selection,
         DocumentSelection(
-          base: DocumentPosition(nodeId: secondParagraphId, nodePosition: const TextNodePosition(offset: 16)),
+          base: DocumentPosition(
+            nodeId: secondParagraphId,
+            nodePosition: const TextNodePosition(
+              offset: 16,
+              affinity: TextAffinity.upstream,
+            ),
+          ),
           extent: DocumentPosition(nodeId: secondParagraphId, nodePosition: const TextNodePosition(offset: 0)),
         ),
       );
@@ -168,7 +174,13 @@ void main() {
         selection,
         DocumentSelection(
           base: DocumentPosition(nodeId: secondParagraphId, nodePosition: const TextNodePosition(offset: 0)),
-          extent: DocumentPosition(nodeId: secondParagraphId, nodePosition: const TextNodePosition(offset: 16)),
+          extent: DocumentPosition(
+            nodeId: secondParagraphId,
+            nodePosition: const TextNodePosition(
+              offset: 16,
+              affinity: TextAffinity.upstream,
+            ),
+          ),
         ),
       );
     });
@@ -222,7 +234,13 @@ void main() {
       expect(
         selection,
         DocumentSelection(
-          base: DocumentPosition(nodeId: secondParagraphId, nodePosition: const TextNodePosition(offset: 16)),
+          base: DocumentPosition(
+            nodeId: secondParagraphId,
+            nodePosition: const TextNodePosition(
+              offset: 16,
+              affinity: TextAffinity.upstream,
+            ),
+          ),
           extent: DocumentPosition(nodeId: firstParagraphId, nodePosition: const TextNodePosition(offset: 0)),
         ),
       );
@@ -251,7 +269,13 @@ void main() {
         selection,
         DocumentSelection(
           base: DocumentPosition(nodeId: firstParagraphId, nodePosition: const TextNodePosition(offset: 0)),
-          extent: DocumentPosition(nodeId: secondParagraphId, nodePosition: const TextNodePosition(offset: 16)),
+          extent: DocumentPosition(
+            nodeId: secondParagraphId,
+            nodePosition: const TextNodePosition(
+              offset: 16,
+              affinity: TextAffinity.upstream,
+            ),
+          ),
         ),
       );
     });
