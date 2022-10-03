@@ -103,6 +103,8 @@ class TestDocumentConfigurator {
   ScrollController? _scrollController;
   FocusNode? _focusNode;
   DocumentSelection? _selection;
+  WidgetBuilder? _androidToolbarBuilder;
+  WidgetBuilder? _iOSToolbarBuilder;
 
   /// Configures the [SuperEditor] for standard desktop interactions,
   /// e.g., mouse and keyboard input.
@@ -178,20 +180,16 @@ class TestDocumentConfigurator {
     return this;
   }
 
-  DocumentGestureMode get _defaultGestureMode {
-    switch (debugDefaultTargetPlatformOverride) {
-      case TargetPlatform.android:
-        return DocumentGestureMode.android;
-      case TargetPlatform.iOS:
-        return DocumentGestureMode.iOS;
-      case TargetPlatform.fuchsia:
-      case TargetPlatform.linux:
-      case TargetPlatform.macOS:
-      case TargetPlatform.windows:
-        return DocumentGestureMode.mouse;
-      default:
-        return DocumentGestureMode.mouse;
-    }
+  /// Configures the [SuperEditor] to use the given [builder] as its android toolbar builder.
+  TestDocumentConfigurator withAndroidToolbarBuilder(WidgetBuilder? builder) {
+    _androidToolbarBuilder = builder;
+    return this;
+  }
+
+  /// Configures the [SuperEditor] to use the given [builder] as its iOS toolbar builder.
+  TestDocumentConfigurator withiOSToolbarBuilder(WidgetBuilder? builder) {
+    _iOSToolbarBuilder = builder;
+    return this;
   }
 
   DocumentInputSource get _defaultInputSource {
@@ -277,7 +275,9 @@ class TestDocumentConfigurator {
         composer: testDocumentContext.editContext.composer,
         focusNode: testDocumentContext.focusNode,
         inputSource: _inputSource ?? _defaultInputSource,
-        gestureMode: _gestureMode ?? _defaultGestureMode,
+        gestureMode: _gestureMode,
+        androidToolbarBuilder: _androidToolbarBuilder,
+        iOSToolbarBuilder: _iOSToolbarBuilder,
         stylesheet: _stylesheet,
         componentBuilders: [
           ..._addedComponents,
