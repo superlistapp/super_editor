@@ -1,9 +1,8 @@
 import 'package:flutter/widgets.dart';
+import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_text_layout/super_text_layout.dart';
-
-import '../../super_editor.dart';
 
 /// Document overlay that paints a caret with the given [caretStyle].
 class CaretDocumentOverlay extends StatefulWidget {
@@ -23,10 +22,10 @@ class CaretDocumentOverlay extends StatefulWidget {
   final DocumentLayout Function() documentLayoutResolver;
 
   /// The editor's [Document].
-  /// 
+  ///
   /// Some operations that affect caret position don't trigger a selection change, e.g.,
   /// indenting a list item.
-  /// 
+  ///
   /// We need to listen to all document changes to update the caret position when these
   /// operations happen.
   final Document document;

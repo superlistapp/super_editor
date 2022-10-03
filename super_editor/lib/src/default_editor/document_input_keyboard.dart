@@ -2,6 +2,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/keyboard.dart';
 
 /// Governs document input that comes from a physical keyboard.
 ///
@@ -98,33 +99,6 @@ typedef DocumentKeyboardAction = ExecutionInstruction Function({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 });
-
-enum ExecutionInstruction {
-  /// The handler has no relation to the key event and
-  /// took no action.
-  ///
-  /// Other handlers should be given a chance to act on
-  /// the key press.
-  continueExecution,
-
-  /// The handler recognized the key event but chose to
-  /// take no action.
-  ///
-  /// No other handler should receive the key event.
-  ///
-  /// The key event **should** bubble up the tree to
-  /// (possibly) be handled by other keyboard/shortcut
-  /// listeners.
-  blocked,
-
-  /// The handler recognized the key event and chose to
-  /// take an action.
-  ///
-  /// No other handler should receive the key event.
-  ///
-  /// The key event **shouldn't** bubble up the tree.
-  haltExecution,
-}
 
 /// A [DocumentKeyboardAction] that reports [ExecutionInstruction.blocked]
 /// for any key combination that matches one of the given [keys].

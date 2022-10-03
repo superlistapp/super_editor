@@ -6,13 +6,12 @@ import 'package:super_editor/super_editor_test.dart';
 
 import '../test_tools.dart';
 import 'document_test_tools.dart';
-import 'supereditor_test_tools.dart';
 
 void main() {
   group('SuperEditor keyboard', () {
     group('on any desktop', () {
       group('moves caret', () {
-        testSuperEditorOnDesktop("left by one character when LEFT_ARROW is pressed", (
+        testAllInputsOnDesktop("left by one character when LEFT_ARROW is pressed", (
           tester, {
           required DocumentInputSource inputSource,
         }) async {
@@ -23,7 +22,7 @@ void main() {
           expect(SuperEditorInspector.findDocumentSelection(), _caretInParagraph(nodeId, 1));
         });
 
-        testSuperEditorOnDesktop("left by one character and expands when SHIFT + LEFT_ARROW is pressed", (
+        testAllInputsOnDesktop("left by one character and expands when SHIFT + LEFT_ARROW is pressed", (
           tester, {
           required DocumentInputSource inputSource,
         }) async {
@@ -34,7 +33,7 @@ void main() {
           expect(SuperEditorInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 2, to: 1));
         });
 
-        testSuperEditorOnDesktop("right by one character when RIGHT_ARROW is pressed", (
+        testAllInputsOnDesktop("right by one character when RIGHT_ARROW is pressed", (
           tester, {
           required DocumentInputSource inputSource,
         }) async {
@@ -45,7 +44,7 @@ void main() {
           expect(SuperEditorInspector.findDocumentSelection(), _caretInParagraph(nodeId, 3));
         });
 
-        testSuperEditorOnDesktop("right by one character and expands when SHIFT + RIGHT_ARROW is pressed", (
+        testAllInputsOnDesktop("right by one character and expands when SHIFT + RIGHT_ARROW is pressed", (
           tester, {
           required DocumentInputSource inputSource,
         }) async {
@@ -56,7 +55,7 @@ void main() {
           expect(SuperEditorInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 2, to: 3));
         });
 
-        testSuperEditorOnMac("to beginning of word when ALT + LEFT_ARROW is pressed", (
+        testAllInputsOnMac("to beginning of word when ALT + LEFT_ARROW is pressed", (
           tester, {
           required DocumentInputSource inputSource,
         }) async {
@@ -67,7 +66,7 @@ void main() {
           expect(SuperEditorInspector.findDocumentSelection(), _caretInParagraph(nodeId, 8));
         });
 
-        testSuperEditorOnMac("to beginning of word and expands when SHIFT + ALT + LEFT_ARROW is pressed", (
+        testAllInputsOnMac("to beginning of word and expands when SHIFT + ALT + LEFT_ARROW is pressed", (
           tester, {
           required DocumentInputSource inputSource,
         }) async {
@@ -78,7 +77,7 @@ void main() {
           expect(SuperEditorInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 10, to: 8));
         });
 
-        testSuperEditorOnMac("to end of word when ALT + RIGHT_ARROW is pressed", (
+        testAllInputsOnMac("to end of word when ALT + RIGHT_ARROW is pressed", (
           tester, {
           required DocumentInputSource inputSource,
         }) async {
@@ -89,7 +88,7 @@ void main() {
           expect(SuperEditorInspector.findDocumentSelection(), _caretInParagraph(nodeId, 12));
         });
 
-        testSuperEditorOnMac("to end of word and expands when SHIFT + ALT + RIGHT_ARROW is pressed", (
+        testAllInputsOnMac("to end of word and expands when SHIFT + ALT + RIGHT_ARROW is pressed", (
           tester, {
           required DocumentInputSource inputSource,
         }) async {
@@ -100,7 +99,7 @@ void main() {
           expect(SuperEditorInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 10, to: 12));
         });
 
-        testSuperEditorOnMac("to beginning of line when CMD + LEFT_ARROW is pressed", (
+        testAllInputsOnMac("to beginning of line when CMD + LEFT_ARROW is pressed", (
           tester, {
           required DocumentInputSource inputSource,
         }) async {
@@ -111,7 +110,7 @@ void main() {
           expect(SuperEditorInspector.findDocumentSelection(), _caretInParagraph(nodeId, 0));
         });
 
-        testSuperEditorOnMac("to beginning of line and expands when SHIFT + CMD + LEFT_ARROW is pressed", (
+        testAllInputsOnMac("to beginning of line and expands when SHIFT + CMD + LEFT_ARROW is pressed", (
           tester, {
           required DocumentInputSource inputSource,
         }) async {
@@ -122,7 +121,7 @@ void main() {
           expect(SuperEditorInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 10, to: 0));
         });
 
-        testSuperEditorOnMac("to end of line when CMD + RIGHT_ARROW is pressed", (
+        testAllInputsOnMac("to end of line when CMD + RIGHT_ARROW is pressed", (
           tester, {
           required DocumentInputSource inputSource,
         }) async {
@@ -133,7 +132,7 @@ void main() {
           expect(SuperEditorInspector.findDocumentSelection(), _caretInParagraph(nodeId, 26, TextAffinity.upstream));
         });
 
-        testSuperEditorOnMac("to end of line and expands when SHIFT + CMD + RIGHT_ARROW is pressed", (
+        testAllInputsOnMac("to end of line and expands when SHIFT + CMD + RIGHT_ARROW is pressed", (
           tester, {
           required DocumentInputSource inputSource,
         }) async {
@@ -147,7 +146,7 @@ void main() {
           );
         });
 
-        testSuperEditorOnWindowsAndLinux("to beginning of word when CTL + LEFT_ARROW is pressed", (
+        testAllInputsOnWindowsAndLinux("to beginning of word when CTL + LEFT_ARROW is pressed", (
           tester, {
           required DocumentInputSource inputSource,
         }) async {
@@ -158,7 +157,7 @@ void main() {
           expect(SuperEditorInspector.findDocumentSelection(), _caretInParagraph(nodeId, 8));
         });
 
-        testSuperEditorOnWindowsAndLinux("to beginning of word and expands when SHIFT + CTL + LEFT_ARROW is pressed", (
+        testAllInputsOnWindowsAndLinux("to beginning of word and expands when SHIFT + CTL + LEFT_ARROW is pressed", (
           tester, {
           required DocumentInputSource inputSource,
         }) async {
@@ -169,7 +168,7 @@ void main() {
           expect(SuperEditorInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 10, to: 8));
         });
 
-        testSuperEditorOnWindowsAndLinux("to end of word when CTL + Right_ARROW is pressed", (
+        testAllInputsOnWindowsAndLinux("to end of word when CTL + Right_ARROW is pressed", (
           tester, {
           required DocumentInputSource inputSource,
         }) async {
@@ -180,7 +179,7 @@ void main() {
           expect(SuperEditorInspector.findDocumentSelection(), _caretInParagraph(nodeId, 12));
         });
 
-        testSuperEditorOnWindowsAndLinux("to end of word and expands when SHIFT + CTL + RIGHT_ARROW is pressed", (
+        testAllInputsOnWindowsAndLinux("to end of word and expands when SHIFT + CTL + RIGHT_ARROW is pressed", (
           tester, {
           required DocumentInputSource inputSource,
         }) async {
@@ -191,7 +190,7 @@ void main() {
           expect(SuperEditorInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 10, to: 12));
         });
 
-        testSuperEditorOnDesktop("up one line when UP_ARROW is pressed", (
+        testAllInputsOnDesktop("up one line when UP_ARROW is pressed", (
           tester, {
           required DocumentInputSource inputSource,
         }) async {
@@ -202,7 +201,7 @@ void main() {
           expect(SuperEditorInspector.findDocumentSelection(), _caretInParagraph(nodeId, 12));
         });
 
-        testSuperEditorOnDesktop("up one line and expands when SHIFT + UP_ARROW is pressed", (
+        testAllInputsOnDesktop("up one line and expands when SHIFT + UP_ARROW is pressed", (
           tester, {
           required DocumentInputSource inputSource,
         }) async {
@@ -213,7 +212,7 @@ void main() {
           expect(SuperEditorInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 41, to: 12));
         });
 
-        testSuperEditorOnDesktop("down one line when DOWN_ARROW is pressed", (
+        testAllInputsOnDesktop("down one line when DOWN_ARROW is pressed", (
           tester, {
           required DocumentInputSource inputSource,
         }) async {
@@ -224,7 +223,7 @@ void main() {
           expect(SuperEditorInspector.findDocumentSelection(), _caretInParagraph(nodeId, 41));
         });
 
-        testSuperEditorOnDesktop("down one line and expands when SHIFT + DOWN_ARROW is pressed", (
+        testAllInputsOnDesktop("down one line and expands when SHIFT + DOWN_ARROW is pressed", (
           tester, {
           required DocumentInputSource inputSource,
         }) async {
@@ -235,7 +234,7 @@ void main() {
           expect(SuperEditorInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 12, to: 41));
         });
 
-        testSuperEditorOnDesktop("to beginning of line when UP_ARROW is pressed at top of document", (
+        testAllInputsOnDesktop("to beginning of line when UP_ARROW is pressed at top of document", (
           tester, {
           required DocumentInputSource inputSource,
         }) async {
@@ -246,8 +245,7 @@ void main() {
           expect(SuperEditorInspector.findDocumentSelection(), _caretInParagraph(nodeId, 0));
         });
 
-        testSuperEditorOnDesktop("to beginning of line and expands when SHIFT + UP_ARROW is pressed at top of document",
-            (
+        testAllInputsOnDesktop("to beginning of line and expands when SHIFT + UP_ARROW is pressed at top of document", (
           tester, {
           required DocumentInputSource inputSource,
         }) async {
@@ -258,7 +256,7 @@ void main() {
           expect(SuperEditorInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 12, to: 0));
         });
 
-        testSuperEditorOnDesktop("to end of line when DOWN_ARROW is pressed at end of document", (
+        testAllInputsOnDesktop("to end of line when DOWN_ARROW is pressed at end of document", (
           tester, {
           required DocumentInputSource inputSource,
         }) async {
@@ -269,7 +267,7 @@ void main() {
           expect(SuperEditorInspector.findDocumentSelection(), _caretInParagraph(nodeId, 58));
         });
 
-        testSuperEditorOnDesktop("end of line and expands when SHIFT + DOWN_ARROW is pressed at end of document", (
+        testAllInputsOnDesktop("end of line and expands when SHIFT + DOWN_ARROW is pressed at end of document", (
           tester, {
           required DocumentInputSource inputSource,
         }) async {

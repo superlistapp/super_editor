@@ -38,12 +38,6 @@ import 'text_tools.dart';
 /// [DocumentComposer]. Use those core artifacts to implement any
 /// operations that are not supported by [CommonEditorOperations].
 ///
-/// For example, compare the following [CommonEditorOperations] calls
-/// to their respective implementation:
-/// TODO: show 2-3 examples that compare the [CommonEditorOperations]
-///       call with the comparable implementation to make it clear
-///       that anything this class does, the developer can do directly.
-///
 /// If you implement operations for your editor that are not provided
 /// by [CommonEditorOperations], consider implementing those operations
 /// as extension methods on top of [CommonEditorOperations] so that the
@@ -238,7 +232,7 @@ class CommonEditorOperations {
   /// change it's visual state when it's selected.
   /// {@endtemplate}
   ///
-  /// Expands/contracts the selection if [expand] is [true], otherwise
+  /// Expands/contracts the selection if [expand] is `true`, otherwise
   /// collapses the selection or keeps it collapsed.
   ///
   /// By default, moves one character at a time when the extent sits in
@@ -537,9 +531,9 @@ class CommonEditorOperations {
 
   /// Moves the [DocumentComposer]'s selection to the nearest node to [startingNode],
   /// whose [DocumentComponent] is visually selectable.
-  /// 
+  ///
   /// Expands the selection if [expand] is `true`, otherwise collapses the selection.
-  /// 
+  ///
   /// If a downstream selectable node if found, it will be used, otherwise,
   /// a upstream selectable node will be searched.
   ///
