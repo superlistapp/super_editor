@@ -330,7 +330,7 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
     final globalOffset = (context.findRenderObject() as RenderBox).localToGlobal(localOffset);
     final textOffset =
         (widget.selectableTextKey.currentContext!.findRenderObject() as RenderBox).globalToLocal(globalOffset);
-    return _textLayout.getPositionAtOffset(textOffset);
+    return _textLayout.getPositionNearestToOffset(textOffset);
   }
 
   /// Returns a [TextSelection] that selects the word surrounding the given

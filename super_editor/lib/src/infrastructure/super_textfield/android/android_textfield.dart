@@ -123,7 +123,8 @@ class SuperAndroidTextField extends StatefulWidget {
   /// Builder that creates the popover toolbar widget that appears when text is selected.
   final Widget Function(BuildContext, AndroidEditingOverlayController) popoverToolbarBuilder;
 
-  /// Padding placed around the text content of this text field.
+  /// Padding placed around the text content of this text field, but within the
+  /// scrollable viewport.
   final EdgeInsets? padding;
 
   @override

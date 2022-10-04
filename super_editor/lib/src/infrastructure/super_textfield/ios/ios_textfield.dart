@@ -127,7 +127,8 @@ class SuperIOSTextField extends StatefulWidget {
   /// Whether to paint debug guides.
   final bool showDebugPaint;
 
-  /// Padding placed around the text content of this text field.
+  /// Padding placed around the text content of this text field, but within the
+  /// scrollable viewport.
   final EdgeInsets? padding;
 
   @override

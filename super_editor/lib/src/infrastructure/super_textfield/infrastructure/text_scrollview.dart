@@ -94,7 +94,8 @@ class TextScrollView extends StatefulWidget {
   /// The text alignment within the scrollview.
   final TextAlign textAlign;
 
-  /// Padding placed around the text content of this text field.
+  /// Padding placed around the text content of this text field, but within the
+  /// scrollable viewport.
   final EdgeInsets? padding;
 
   /// The child widget.
@@ -348,18 +349,25 @@ class _TextScrollViewState extends State<TextScrollView>
       }
     }
 
-    final verticalPadding = widget.padding?.vertical ?? 0.0;
+    final totalVerticalPadding = widget.padding?.vertical ?? 0.0;
 
-    final estimatedContentHeight = (linesOfText * estimatedLineHeight) + verticalPadding;
+    final estimatedContentHeight = (linesOfText * estimatedLineHeight) + totalVerticalPadding;
     _log.finer(' - estimated content height: $estimatedContentHeight');
 
-    final minHeight = (widget.minLines != null //
-            ? widget.minLines! * estimatedLineHeight
-            : estimatedLineHeight) + // Can't be shorter than 1 line
-        verticalPadding;
-    final maxHeight = (widget.maxLines != null //
-        ? (widget.maxLines! * estimatedLineHeight) + verticalPadding //
+    final minContentHeight = (widget.minLines != null //
+        ? widget.minLines! * estimatedLineHeight
+        : estimatedLineHeight); // Can't be shorter than 1 line.
+
+    final minHeight = minContentHeight + totalVerticalPadding;
+
+    final maxContentHeight = (widget.maxLines != null //
+        ? (widget.maxLines! * estimatedLineHeight) //
         : null);
+
+    final maxHeight = (maxContentHeight != null //
+        ? maxContentHeight + totalVerticalPadding
+        : null);
+
     _log.finer(' - minHeight: $minHeight, maxHeight: $maxHeight');
 
     double? viewportHeight;
@@ -483,13 +491,13 @@ class _TextScrollViewState extends State<TextScrollView>
   }) {
     return Align(
       alignment: _getAlignment(),
-      child: Padding(
-        padding: widget.padding ?? EdgeInsets.zero,
-        child: SingleChildScrollView(
-          key: _textFieldViewportKey,
-          controller: _scrollController,
-          physics: const NeverScrollableScrollPhysics(),
-          scrollDirection: isMultiline ? Axis.vertical : Axis.horizontal,
+      child: SingleChildScrollView(
+        key: _textFieldViewportKey,
+        controller: _scrollController,
+        physics: const NeverScrollableScrollPhysics(),
+        scrollDirection: isMultiline ? Axis.vertical : Axis.horizontal,
+        child: Padding(
+          padding: widget.padding ?? EdgeInsets.zero,
           child: widget.child,
         ),
       ),
