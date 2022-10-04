@@ -421,6 +421,19 @@ spans multiple lines.''',
           ),
         ),
       );
+
+    testWidgetsOnAndroid('configures default gesture mode (on Android)', (tester) async {
+      await tester //
+          .createDocument()
+          .withSingleParagraph()
+          .pump();
+
+      // Double tap to show the drag handle.
+      await tester.doubleTapInParagraph(SuperEditorInspector.findDocument()!.nodes.first.id, 0);
+
+      // Ensure the drag handle is displayed.
+      // There are two AndroidSelectionHandle's. I'm not sure why.
+      expect(find.byType(AndroidSelectionHandle), findsWidgets);
     });
 
     testWidgetsOnAllPlatforms("places the caret at the beginning of a wrapped line when tapping there", (tester) async {
@@ -450,6 +463,33 @@ spans multiple lines.''',
           ),
         ),
       );
+    });
+  });
+
+    testWidgetsOnIos('configures default gesture mode (on iOS)', (tester) async {
+      await tester //
+          .createDocument()
+          .withSingleParagraph()
+          .pump();
+
+      // Double tap to show the drag handle.
+      await tester.doubleTapInParagraph(SuperEditorInspector.findDocument()!.nodes.first.id, 0);
+
+      // Ensure the drag handle is displayed.
+      expect(find.byType(IosDocumentTouchEditingControls), findsOneWidget);
+    });
+
+    testWidgetsOnDesktop('configures default gesture mode', (tester) async {
+      await tester //
+          .createDocument()
+          .withSingleParagraph()
+          .pump();
+
+      await tester.doubleTapInParagraph(SuperEditorInspector.findDocument()!.nodes.first.id, 0);
+
+      // Ensure no drag handle is displayed.
+      expect(find.byType(AndroidSelectionHandle), findsNothing);
+      expect(find.byType(IosDocumentTouchEditingControls), findsNothing);
     });
   });
 }
