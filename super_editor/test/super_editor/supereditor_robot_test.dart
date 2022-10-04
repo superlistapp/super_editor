@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:super_editor/super_editor.dart';
@@ -86,6 +88,52 @@ void main() {
       );
     });
 
+    testWidgetsOnAllPlatforms("taps to place caret at a non-linebreak offset with different affinities",
+        (tester) async {
+      // Configure and render a document.
+      await tester //
+          .createDocument()
+          .withSingleParagraph()
+          .pump();
+
+      // Ensure that the document doesn't have a selection.
+      expect(SuperEditorInspector.findDocumentSelection(), null);
+
+      // Tap to place the caret in the first paragraph with a downstream affinity. This assumes that the paragraph
+      // does not wrap at the second character of the paragraph, which should be true for any reasonable display size.
+      await tester.placeCaretInParagraph("1", 1, affinity: TextAffinity.downstream);
+      // Ensure the document has the correct selection, including affinity;
+      expect(
+        SuperEditorInspector.findDocumentSelection(),
+        const DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: '1',
+            nodePosition: TextNodePosition(
+              offset: 1,
+              affinity: TextAffinity.downstream,
+            ),
+          ),
+        ),
+      );
+
+      // Place the caret at the same offset as before but with an upstream affinity.
+      await tester.pump(kTapTimeout * 2); // Pause to avoid double tap.
+      await tester.placeCaretInParagraph("1", 1, affinity: TextAffinity.upstream);
+      // Ensure the document has the correct selection, including affinity;
+      expect(
+        SuperEditorInspector.findDocumentSelection(),
+        const DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: '1',
+            nodePosition: TextNodePosition(
+              offset: 1,
+              affinity: TextAffinity.upstream,
+            ),
+          ),
+        ),
+      );
+    });
+
     testWidgetsOnAllPlatforms("taps to place caret after last character", (tester) async {
       // Configure and render a document.
       await tester //
@@ -107,7 +155,7 @@ void main() {
         const DocumentSelection.collapsed(
           position: DocumentPosition(
             nodeId: "1",
-            nodePosition: TextNodePosition(offset: paragraphLength),
+            nodePosition: TextNodePosition(offset: paragraphLength, affinity: TextAffinity.upstream),
           ),
         ),
       );

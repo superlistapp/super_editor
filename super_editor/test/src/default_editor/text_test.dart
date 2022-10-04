@@ -301,6 +301,77 @@ void main() {
         );
       });
     });
+
+    group('TextNode', () {
+      group('computeSelection', () {
+        test('throws if passed other types of NodePosition', () {
+          final node = TextNode(
+            id: 'text node',
+            text: AttributedText(text: 'text'),
+          );
+          expect(
+            () => node.computeSelection(
+              base: const UpstreamDownstreamNodePosition.upstream(),
+              extent: const UpstreamDownstreamNodePosition.downstream(),
+            ),
+            throwsAssertionError,
+          );
+        });
+
+        test('preserves the affinity of extent', () {
+          final node = TextNode(
+            id: 'text node',
+            text: AttributedText(text: 'text'),
+          );
+
+          final selectionWithUpstream = node.computeSelection(
+            base: const TextNodePosition(
+              offset: 0,
+              affinity: TextAffinity.downstream,
+            ),
+            extent: const TextNodePosition(
+              offset: 3,
+              affinity: TextAffinity.upstream,
+            ),
+          );
+          expect(selectionWithUpstream.affinity, TextAffinity.upstream);
+
+          final selectionWithDownstream = node.computeSelection(
+            base: const TextNodePosition(
+              offset: 0,
+              affinity: TextAffinity.upstream,
+            ),
+            extent: const TextNodePosition(
+              offset: 3,
+              affinity: TextAffinity.downstream,
+            ),
+          );
+          expect(selectionWithDownstream.affinity, TextAffinity.downstream);
+        });
+      });
+    });
+
+    group('TextNodeSelection', () {
+      group('get base', () {
+        test('preserves affinity', () {
+          const selectionWithUpstream = TextNodeSelection.collapsed(offset: 0, affinity: TextAffinity.upstream);
+          expect(selectionWithUpstream.base.affinity, TextAffinity.upstream);
+
+          const selectionWithDownstream = TextNodeSelection.collapsed(offset: 0, affinity: TextAffinity.downstream);
+          expect(selectionWithDownstream.base.affinity, TextAffinity.downstream);
+        });
+      });
+
+      group('get extent', () {
+        test('preserves affinity', () {
+          const selectionWithUpstream = TextNodeSelection.collapsed(offset: 0, affinity: TextAffinity.upstream);
+          expect(selectionWithUpstream.extent.affinity, TextAffinity.upstream);
+
+          const selectionWithDownstream = TextNodeSelection.collapsed(offset: 0, affinity: TextAffinity.downstream);
+          expect(selectionWithDownstream.extent.affinity, TextAffinity.downstream);
+        });
+      });
+    });
   });
 }
 
