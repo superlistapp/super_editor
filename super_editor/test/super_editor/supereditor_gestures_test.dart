@@ -421,36 +421,6 @@ spans multiple lines.''',
           ),
         ),
       );
-
-      testWidgetsOnAllPlatforms("places the caret at the beginning of a wrapped line when tapping there",
-          (tester) async {
-        // Configure and render a document.
-        await tester
-            .createDocument()
-            .withSingleParagraph()
-            .autoFocus(true)
-            .withEditorSize(const Size(300, 700))
-            .withSelection(
-              const DocumentSelection.collapsed(
-                  position: DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: 0))),
-            )
-            .pump();
-        final offsetOfLineBreak = SuperEditorInspector.findOffsetOfLineBreak('1');
-
-        // Tap to place the at the end of the first line
-        await tester.placeCaretInParagraph("1", offsetOfLineBreak, affinity: TextAffinity.downstream);
-
-        // Ensure that the document has the expected text caret selection.
-        expect(
-          SuperEditorInspector.findDocumentSelection(),
-          DocumentSelection.collapsed(
-            position: DocumentPosition(
-              nodeId: "1",
-              nodePosition: TextNodePosition(offset: offsetOfLineBreak, affinity: TextAffinity.downstream),
-            ),
-          ),
-        );
-      });
     });
 
     testWidgetsOnAllPlatforms("places the caret at the beginning of a wrapped line when tapping there", (tester) async {
