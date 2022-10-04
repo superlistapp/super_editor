@@ -33,6 +33,7 @@ class TextScrollView extends StatefulWidget {
     this.perLineAutoScrollDuration = Duration.zero,
     this.showDebugPaint = false,
     this.textAlign = TextAlign.left,
+    this.padding,
     required this.child,
   }) : super(key: key);
 
@@ -92,6 +93,9 @@ class TextScrollView extends StatefulWidget {
 
   /// The text alignment within the scrollview.
   final TextAlign textAlign;
+
+  /// Padding placed around the text content of this text field.
+  final EdgeInsets? padding;
 
   /// The child widget.
   final Widget child;
@@ -344,15 +348,18 @@ class _TextScrollViewState extends State<TextScrollView>
       }
     }
 
-    final estimatedContentHeight = linesOfText * estimatedLineHeight;
+    final verticalPadding = widget.padding?.vertical ?? 0.0;
+
+    final estimatedContentHeight = (linesOfText * estimatedLineHeight) + verticalPadding;
     _log.finer(' - estimated content height: $estimatedContentHeight');
 
-    final minHeight = widget.minLines != null
-        ? widget.minLines! * estimatedLineHeight
-        : estimatedLineHeight; // Can't be shorter than 1 line
-    final maxHeight = widget.maxLines != null //
-        ? widget.maxLines! * estimatedLineHeight //
-        : null;
+    final minHeight = (widget.minLines != null //
+            ? widget.minLines! * estimatedLineHeight
+            : estimatedLineHeight) + // Can't be shorter than 1 line
+        verticalPadding;
+    final maxHeight = (widget.maxLines != null //
+        ? (widget.maxLines! * estimatedLineHeight) + verticalPadding //
+        : null);
     _log.finer(' - minHeight: $minHeight, maxHeight: $maxHeight');
 
     double? viewportHeight;
@@ -476,12 +483,15 @@ class _TextScrollViewState extends State<TextScrollView>
   }) {
     return Align(
       alignment: _getAlignment(),
-      child: SingleChildScrollView(
-        key: _textFieldViewportKey,
-        controller: _scrollController,
-        physics: const NeverScrollableScrollPhysics(),
-        scrollDirection: isMultiline ? Axis.vertical : Axis.horizontal,
-        child: widget.child,
+      child: Padding(
+        padding: widget.padding ?? EdgeInsets.zero,
+        child: SingleChildScrollView(
+          key: _textFieldViewportKey,
+          controller: _scrollController,
+          physics: const NeverScrollableScrollPhysics(),
+          scrollDirection: isMultiline ? Axis.vertical : Axis.horizontal,
+          child: widget.child,
+        ),
       ),
     );
   }
@@ -888,7 +898,7 @@ class TextScrollController with ChangeNotifier {
   void _ensureRectIsVisible(Rect rect) {
     assert(_delegate != null);
 
-    _log.finer('Ensuring rect is visible: $rect');   
+    _log.finer('Ensuring rect is visible: $rect');
     if (_delegate!.isMultiline) {
       if (rect.top < 0) {
         // The character is entirely or partially above the top of the viewport.
@@ -902,12 +912,12 @@ class TextScrollController with ChangeNotifier {
         _log.finer(' - updated _scrollOffset to $_scrollOffset');
       }
     } else {
-      if(rect.left < 0) {
+      if (rect.left < 0) {
         // The character is entirely or partially before the start of the viewport.
         // Scroll the content right.
         _scrollOffset = rect.left;
         _log.finer(' - updated _scrollOffset to $_scrollOffset');
-      } else if (rect.right > _delegate!.viewportWidth!){
+      } else if (rect.right > _delegate!.viewportWidth!) {
         // The character is entirely or partially after the end of the viewport.
         // Scroll the content left.
         _scrollOffset = rect.right - _delegate!.viewportWidth!;

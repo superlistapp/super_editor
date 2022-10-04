@@ -44,6 +44,80 @@ void main() {
       });
     });
 
+    group('tapping at padding', () {
+      testWidgetsOnAllPlatforms('at left places the caret', (tester) async {
+        await _pumpTestApp(
+          tester,
+          padding: const EdgeInsets.only(left: 20),
+          text: '',
+        );
+
+        // Tap in a place inside the padding.
+        await tester.tapAt(tester.getTopLeft(find.byType(SuperTextField)) + const Offset(18, 1));
+        await tester.pumpAndSettle();
+
+        // Ensure caret was placed.
+        expect(
+          SuperTextFieldInspector.findSelection(),
+          const TextSelection.collapsed(offset: 0),
+        );
+      });
+
+      testWidgetsOnAllPlatforms('at top places the caret', (tester) async {
+        await _pumpTestApp(
+          tester,
+          padding: const EdgeInsets.only(top: 20),
+          text: '',
+        );
+
+        // Tap in a place inside the padding.
+        await tester.tapAt(tester.getTopLeft(find.byType(SuperTextField)) + const Offset(2, 18));
+        await tester.pumpAndSettle();
+
+        // Ensure caret was placed.
+        expect(
+          SuperTextFieldInspector.findSelection(),
+          const TextSelection.collapsed(offset: 0),
+        );
+      });
+
+      testWidgetsOnAllPlatforms('at bottom places the caret', (tester) async {
+        await _pumpTestApp(
+          tester,
+          padding: const EdgeInsets.only(bottom: 20),
+          text: '',
+        );
+
+        // Tap in a place inside the padding.
+        await tester.tapAt(tester.getBottomRight(find.byType(SuperTextField)) - const Offset(2, 18));
+        await tester.pumpAndSettle();
+
+        // Ensure caret was placed.
+        expect(
+          SuperTextFieldInspector.findSelection(),
+          const TextSelection.collapsed(offset: 0),
+        );
+      });
+
+      testWidgetsOnAllPlatforms('at right places the caret', (tester) async {
+        await _pumpTestApp(
+          tester,
+          padding: const EdgeInsets.only(right: 20),
+          text: '',
+        );
+
+        // Tap in a place inside the padding.
+        await tester.tapAt(tester.getBottomRight(find.byType(SuperTextField)) - const Offset(18, 2));
+        await tester.pumpAndSettle();
+
+        // Ensure caret was placed.
+        expect(
+          SuperTextFieldInspector.findSelection(),
+          const TextSelection.collapsed(offset: 0),
+        );
+      });
+    });
+
     group('tapping in an area containing text places the caret at tap position', () {
       testWidgetsOnMobile("when the field does not have focus", (tester) async {
         await _pumpTestApp(tester);
@@ -226,14 +300,17 @@ void main() {
 Future<void> _pumpTestApp(
   WidgetTester tester, {
   AttributedTextEditingController? controller,
+  EdgeInsets? padding,
+  String text = 'abc',
 }) async {
   await tester.pumpWidget(
     MaterialApp(
       home: Scaffold(
         body: SuperTextField(
+          padding: padding,
           textController: controller ??
               AttributedTextEditingController(
-                text: AttributedText(text: "abc"),
+                text: AttributedText(text: text),
               ),
         ),
       ),
