@@ -313,6 +313,62 @@ void main() {
       expect(node.text.text, 'list item 1');
     });
   });
+
+  group('SuperEditor inputSource', () {
+    testWidgetsOnMobile('configures for IME input', (tester) async {
+      await tester //
+          .createDocument()
+          .withSingleEmptyParagraph()
+          .pump();
+
+      final document = SuperEditorInspector.findDocument()!;
+
+      // Ensure the document was created with one node.
+      expect(document.nodes.length, 1);
+
+      // Tap to give focus to the editor.
+      await tester.placeCaretInParagraph(document.nodes.first.id, 0);
+
+      // Simulate a tap in the newline button, which will be handled
+      // by the IME interactor.
+      await tester.testTextInput.receiveAction(TextInputAction.newline);
+      await tester.pumpAndSettle();
+
+      // Ensure a new node was added.
+      expect(document.nodes.length, 2);
+    });
+
+    testWidgetsOnDesktop('configures for keyboard input', (tester) async {
+      await tester //
+          .createDocument()
+          .withSingleEmptyParagraph()
+          .pump();
+
+      final document = SuperEditorInspector.findDocument()!;
+
+      // Ensure the document was created with one node.
+      expect(document.nodes.length, 1);
+
+      // Tap to give focus to the editor.
+      await tester.placeCaretInParagraph(document.nodes.first.id, 0);
+
+      // Simulate a tap in the newline button, which is handled
+      // only by the IME interactor.
+      // As the editor should be configured for keyboard input,
+      // this shouldn't change the document.
+      await tester.testTextInput.receiveAction(TextInputAction.newline);
+      await tester.pumpAndSettle();
+
+      // Ensure no node was added.
+      expect(document.nodes.length, 1);
+
+      // Simulate typing on a keyboard.
+      await tester.typeKeyboardText('abc');
+
+      // Ensure text was added.
+      expect(SuperEditorInspector.findTextInParagraph(document.nodes.first.id).text, 'abc');
+    });
+  });
 }
 
 Future<String> _pumpSingleLineWithCaret(

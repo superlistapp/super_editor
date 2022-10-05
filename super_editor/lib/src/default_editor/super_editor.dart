@@ -1,5 +1,5 @@
 import 'package:attributed_text/attributed_text.dart';
-import 'package:flutter/foundation.dart' show defaultTargetPlatform;
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb;
 import 'package:flutter/material.dart' hide SelectableText;
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
@@ -145,7 +145,7 @@ class SuperEditor extends StatefulWidget {
     this.customStylePhases = const [],
     List<ComponentBuilder>? componentBuilders,
     SelectionStyles? selectionStyle,
-    this.inputSource = DocumentInputSource.keyboard,
+    this.inputSource,
     this.gestureMode,
     List<DocumentKeyboardAction>? keyboardActions,
     this.softwareKeyboardHandler,
@@ -210,7 +210,7 @@ class SuperEditor extends StatefulWidget {
   final List<SingleColumnLayoutStylePhase> customStylePhases;
 
   /// The `SuperEditor` input source, e.g., keyboard or Input Method Engine.
-  final DocumentInputSource inputSource;
+  final DocumentInputSource? inputSource;
 
   /// The `SuperEditor` gesture mode, e.g., mouse or touch.
   final DocumentGestureMode? gestureMode;
@@ -493,6 +493,26 @@ class SuperEditorState extends State<SuperEditor> {
     }
   }
 
+  /// Returns the [DocumentInputSource] which should be used.
+  ///
+  /// If the `inputSource` is configured, it is used. Otherwise,
+  /// the [DocumentInputSource] is chosen based on the platform.
+  DocumentInputSource get _inputSource {
+    if (widget.inputSource != null) {
+      return widget.inputSource!;
+    }
+    if (kIsWeb) {
+      return DocumentInputSource.keyboard;
+    }
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+      case TargetPlatform.iOS:
+        return DocumentInputSource.ime;
+      default:
+        return DocumentInputSource.keyboard;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return _buildInputSystem(
@@ -512,7 +532,7 @@ class SuperEditorState extends State<SuperEditor> {
   Widget _buildInputSystem({
     required Widget child,
   }) {
-    switch (widget.inputSource) {
+    switch (_inputSource) {
       case DocumentInputSource.keyboard:
         return DocumentKeyboardInteractor(
           focusNode: _focusNode,
