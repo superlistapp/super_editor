@@ -239,8 +239,7 @@ void main() {
         Platform.setTestInstance(null);
       });
 
-      testWidgetsOnArbitraryDesktop(
-          "respects stylesheet when converting unordered list item to paragraph and back again",
+      testWidgetsOnArbitraryDesktop("applies styles when unordered list item is converted to and from a paragraph",
           (WidgetTester tester) async {
         final testContext = await _pumpUnorderedList(
           tester,
@@ -284,7 +283,7 @@ void main() {
         expect(richText.text.style!.color, Colors.blue);
       });
 
-      testWidgetsOnArbitraryDesktop("respects stylesheet when converting ordered list item to paragraph and back again",
+      testWidgetsOnArbitraryDesktop("applies styles when ordered list item is converted to and from a paragraph",
           (WidgetTester tester) async {
         final testContext = await _pumpOrderedList(
           tester,
