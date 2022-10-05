@@ -124,7 +124,7 @@ class _MobileEditingIOSDemoState extends State<MobileEditingIOSDemo> {
   }) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(56),
+        padding: const EdgeInsets.only(left: 56, right: 56, bottom: 24),
         child: AspectRatio(
           aspectRatio: 9 / 19.5,
           child: Container(

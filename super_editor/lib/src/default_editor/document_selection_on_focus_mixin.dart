@@ -76,6 +76,7 @@ mixin DocumentSelectionOnFocusMixin<T extends StatefulWidget> on State<T> {
 
   void _onFocusChange() {
     if (!_focusNode!.hasFocus) {
+      _selection?.value = null;
       return;
     }
 

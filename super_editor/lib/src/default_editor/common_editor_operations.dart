@@ -1689,7 +1689,9 @@ class CommonEditorOperations {
   /// Returns [true] if a new node was inserted or a node was split into two.
   /// Returns [false] if there was no selection.
   bool insertBlockLevelNewline() {
+    editorOpsLog.fine("Inserting block-level newline");
     if (composer.selection == null) {
+      editorOpsLog.finer("Selection is null. Can't insert newline.");
       return false;
     }
 
@@ -1697,12 +1699,14 @@ class CommonEditorOperations {
     final baseNode = editor.document.getNodeById(composer.selection!.base.nodeId)!;
     final extentNode = editor.document.getNodeById(composer.selection!.extent.nodeId)!;
     if (baseNode.id != extentNode.id) {
+      editorOpsLog.finer("The selection spans multiple nodes. Can't insert block-level newline.");
       return false;
     }
 
     if (!composer.selection!.isCollapsed) {
       // The selection is not collapsed. Delete the selected content first,
       // then continue the process.
+      editorOpsLog.finer("Deleting selection before inserting block-level newline");
       _deleteExpandedSelection();
     }
 
@@ -1711,10 +1715,13 @@ class CommonEditorOperations {
     if (extentNode is ListItemNode) {
       if (extentNode.text.text.isEmpty) {
         // The list item is empty. Convert it to a paragraph.
+        editorOpsLog.finer(
+            "The current node is an empty list item. Converting it to a paragraph instead of inserting block-level newline.");
         return convertToParagraph();
       }
 
       // Split the list item into two.
+      editorOpsLog.finer("Splitting list item in two.");
       editor.executeCommand(
         SplitListItemCommand(
           nodeId: extentNode.id,
@@ -1728,6 +1735,7 @@ class CommonEditorOperations {
       final currentExtentPosition = composer.selection!.extent.nodePosition as TextNodePosition;
       final endOfParagraph = extentNode.endPosition;
 
+      editorOpsLog.finer("Splitting paragraph in two.");
       editor.executeCommand(
         SplitParagraphCommand(
           nodeId: extentNode.id,
@@ -1741,6 +1749,7 @@ class CommonEditorOperations {
       if (extentPosition.affinity == TextAffinity.downstream) {
         // The caret sits on the downstream edge of block-level content. Insert
         // a new paragraph after this node.
+        editorOpsLog.finer("Inserting paragraph after block-level node.");
         editor.executeCommand(EditorCommandFunction((doc, transaction) {
           transaction.insertNodeAfter(
             existingNode: extentNode,
@@ -1753,6 +1762,7 @@ class CommonEditorOperations {
       } else {
         // The caret sits on the upstream edge of block-level content. Insert
         // a new paragraph before this node.
+        editorOpsLog.finer("Inserting paragraph before block-level node.");
         editor.executeCommand(EditorCommandFunction((doc, transaction) {
           transaction.insertNodeBefore(
             existingNode: extentNode,
@@ -1765,6 +1775,7 @@ class CommonEditorOperations {
       }
     } else {
       // We don't know how to handle this type of node position. Do nothing.
+      editorOpsLog.fine("Can't insert new block-level inline because we don't recognize the selected content type.");
       return false;
     }
 
