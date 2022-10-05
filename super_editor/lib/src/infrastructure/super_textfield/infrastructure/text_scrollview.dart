@@ -354,19 +354,19 @@ class _TextScrollViewState extends State<TextScrollView>
     final estimatedContentHeight = (linesOfText * estimatedLineHeight) + totalVerticalPadding;
     _log.finer(' - estimated content height: $estimatedContentHeight');
 
-    final minContentHeight = (widget.minLines != null //
+    final minContentHeight = widget.minLines != null //
         ? widget.minLines! * estimatedLineHeight
-        : estimatedLineHeight); // Can't be shorter than 1 line.
+        : estimatedLineHeight; // Can't be shorter than 1 line.
 
     final minHeight = minContentHeight + totalVerticalPadding;
 
-    final maxContentHeight = (widget.maxLines != null //
+    final maxContentHeight = widget.maxLines != null //
         ? (widget.maxLines! * estimatedLineHeight) //
-        : null);
+        : null;
 
-    final maxHeight = (maxContentHeight != null //
+    final maxHeight = maxContentHeight != null //
         ? maxContentHeight + totalVerticalPadding
-        : null);
+        : null;
 
     _log.finer(' - minHeight: $minHeight, maxHeight: $maxHeight');
 
