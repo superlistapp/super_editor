@@ -259,6 +259,37 @@ void main() {
       );
     });
 
+    testWidgetsOnAllPlatforms("removes caret when it loses focus", (tester) async {
+      await tester
+          .createDocument()
+          .withLongTextContent()
+          .withCustomWidgetTreeBuilder(
+            (superEditor) => MaterialApp(
+              home: Scaffold(
+                body: Column(
+                  children: [
+                    const TextField(),
+                    Expanded(child: superEditor),
+                  ],
+                ),
+              ),
+            ),
+          )
+          .pump();
+
+      // Place the caret in the document.
+      await tester.placeCaretInParagraph("1", 0);
+
+      // Focus the textfield.
+      await tester.tap(find.byType(TextField));
+      await tester.pumpAndSettle();
+
+      // Ensure that the document doesn't have focus, and isn't displaying a caret.
+      expect(SuperEditorInspector.hasFocus(), isFalse);
+      expect(SuperEditorInspector.findDocumentSelection(), isNull);
+      expect(_caretFinder(), findsNothing); // TODO: move caret finding into inspector
+    });
+
     testWidgetsOnAllPlatforms("places caret at end of document upon first editor focus with tab", (tester) async {
       await tester
           .createDocument()
@@ -657,7 +688,7 @@ Second Paragraph
 
       // Ensure caret is displayed.
       expect(_caretFinder(), findsOneWidget);
-    });  
+    });
   });
 }
 

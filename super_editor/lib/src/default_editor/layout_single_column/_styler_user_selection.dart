@@ -106,6 +106,7 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
             'ERROR: Building a paragraph component but the selection is not a TextSelection. Node: ${node.id}, Selection: ${nodeSelection.nodeSelection}');
       }
       final showCaret = _shouldDocumentShowCaret && nodeSelection != null ? nodeSelection.isExtent : false;
+      editorStyleLog.fine("Showing caret? $showCaret");
       final highlightWhenEmpty =
           nodeSelection == null ? false : nodeSelection.highlightWhenEmpty && _selectionStyles.highlightEmptyTextBlocks;
 
