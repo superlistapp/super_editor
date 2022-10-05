@@ -458,12 +458,11 @@ spans multiple lines.''',
           .withSingleParagraph()
           .pump();
 
-      // Double tap to show the drag handle.
-      await tester.doubleTapInParagraph(SuperEditorInspector.findDocument()!.nodes.first.id, 0);
+      // Tap to place caret.
+      await tester.placeCaretInParagraph(SuperEditorInspector.findDocument()!.nodes.first.id, 0);
 
       // Ensure the drag handle is displayed.
-      // There are two AndroidSelectionHandle's. I'm not sure why.
-      expect(find.byType(AndroidSelectionHandle), findsWidgets);
+      expect(find.byType(AndroidSelectionHandle), findsOneWidget);
     });
 
     testWidgetsOnIos('configures default gesture mode (on iOS)', (tester) async {
@@ -472,8 +471,8 @@ spans multiple lines.''',
           .withSingleParagraph()
           .pump();
 
-      // Double tap to show the drag handle.
-      await tester.doubleTapInParagraph(SuperEditorInspector.findDocument()!.nodes.first.id, 0);
+      // Tap to place caret.
+      await tester.placeCaretInParagraph(SuperEditorInspector.findDocument()!.nodes.first.id, 0);
 
       // Ensure the drag handle is displayed.
       expect(find.byType(IosDocumentTouchEditingControls), findsOneWidget);
@@ -485,7 +484,7 @@ spans multiple lines.''',
           .withSingleParagraph()
           .pump();
 
-      await tester.doubleTapInParagraph(SuperEditorInspector.findDocument()!.nodes.first.id, 0);
+      await tester.placeCaretInParagraph(SuperEditorInspector.findDocument()!.nodes.first.id, 0);
 
       // Ensure no drag handle is displayed.
       expect(find.byType(AndroidSelectionHandle), findsNothing);
