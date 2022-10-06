@@ -451,5 +451,44 @@ spans multiple lines.''',
         ),
       );
     });
+
+    testWidgetsOnAndroid('configures default gesture mode (on Android)', (tester) async {
+      await tester //
+          .createDocument()
+          .withSingleParagraph()
+          .pump();
+
+      // Tap to place caret.
+      await tester.placeCaretInParagraph(SuperEditorInspector.findDocument()!.nodes.first.id, 0);
+
+      // Ensure the drag handle is displayed.
+      expect(find.byType(AndroidSelectionHandle), findsOneWidget);
+    });
+
+    testWidgetsOnIos('configures default gesture mode (on iOS)', (tester) async {
+      await tester //
+          .createDocument()
+          .withSingleParagraph()
+          .pump();
+
+      // Tap to place caret.
+      await tester.placeCaretInParagraph(SuperEditorInspector.findDocument()!.nodes.first.id, 0);
+
+      // Ensure the drag handle is displayed.
+      expect(find.byType(IosDocumentTouchEditingControls), findsOneWidget);
+    });
+
+    testWidgetsOnDesktop('configures default gesture mode', (tester) async {
+      await tester //
+          .createDocument()
+          .withSingleParagraph()
+          .pump();
+
+      await tester.placeCaretInParagraph(SuperEditorInspector.findDocument()!.nodes.first.id, 0);
+
+      // Ensure no drag handle is displayed.
+      expect(find.byType(AndroidSelectionHandle), findsNothing);
+      expect(find.byType(IosDocumentTouchEditingControls), findsNothing);
+    });
   });
 }

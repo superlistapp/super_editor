@@ -146,7 +146,7 @@ class SuperEditor extends StatefulWidget {
     List<ComponentBuilder>? componentBuilders,
     SelectionStyles? selectionStyle,
     this.inputSource = DocumentInputSource.keyboard,
-    this.gestureMode = DocumentGestureMode.mouse,
+    this.gestureMode,
     List<DocumentKeyboardAction>? keyboardActions,
     this.softwareKeyboardHandler,
     this.androidHandleColor,
