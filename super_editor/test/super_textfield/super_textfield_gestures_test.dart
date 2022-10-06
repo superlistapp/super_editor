@@ -85,6 +85,7 @@ void main() {
         await _pumpTestApp(
           tester,
           padding: const EdgeInsets.only(bottom: 20),
+          textAlign: TextAlign.center,
         );
 
         final finder = find.byType(SuperTextField);
@@ -95,7 +96,7 @@ void main() {
         // Ensure caret was placed.
         expect(
           SuperTextFieldInspector.findSelection(),
-          const TextSelection.collapsed(offset: 3),
+          const TextSelection.collapsed(offset: 2),
         );
       });
 
@@ -301,12 +302,14 @@ Future<void> _pumpTestApp(
   WidgetTester tester, {
   AttributedTextEditingController? controller,
   EdgeInsets? padding,
+  TextAlign? textAlign,
 }) async {
   await tester.pumpWidget(
     MaterialApp(
       home: Scaffold(
         body: SuperTextField(
           padding: padding,
+          textAlign: textAlign ?? TextAlign.left,
           textController: controller ??
               AttributedTextEditingController(
                 text: AttributedText(text: 'abc'),
