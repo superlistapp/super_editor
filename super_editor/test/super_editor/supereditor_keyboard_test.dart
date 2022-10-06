@@ -315,7 +315,7 @@ void main() {
   });
 
   group('SuperEditor inputSource', () {
-    testWidgetsOnMobile('configures for IME input', (tester) async {
+    testWidgetsOnMobile('configures for IME input by default', (tester) async {
       await tester //
           .createDocument()
           .withSingleEmptyParagraph()
@@ -338,7 +338,7 @@ void main() {
       expect(document.nodes.length, 2);
     });
 
-    testWidgetsOnDesktop('configures for keyboard input', (tester) async {
+    testWidgetsOnDesktop('configures for keyboard input by default', (tester) async {
       await tester //
           .createDocument()
           .withSingleEmptyParagraph()

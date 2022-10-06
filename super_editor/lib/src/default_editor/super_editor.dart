@@ -501,9 +501,6 @@ class SuperEditorState extends State<SuperEditor> {
     if (widget.inputSource != null) {
       return widget.inputSource!;
     }
-    if (kIsWeb) {
-      return DocumentInputSource.keyboard;
-    }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
       case TargetPlatform.iOS:
