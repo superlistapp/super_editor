@@ -90,7 +90,8 @@ void main() {
 
         final finder = find.byType(SuperTextField);
         // Tap in a place inside the padding.
-        await tester.tapAt(tester.getBottomRight(finder) - Offset(tester.getSize(finder).width / 2, 1));
+        // On linux, tapping exactly at middle is placing caret at offset 1.
+        await tester.tapAt(tester.getBottomRight(finder) - Offset((tester.getSize(finder).width / 2) - 1, 1));
         await tester.pumpAndSettle();
 
         // Ensure caret was placed.
