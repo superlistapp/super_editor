@@ -215,7 +215,7 @@ class TestDocumentConfigurator {
   }
 
   /// Configures the [SuperEditor] to use the given [stylesheet].
-  TestDocumentConfigurator useStylesheet(Stylesheet stylesheet) {
+  TestDocumentConfigurator useStylesheet(Stylesheet? stylesheet) {
     _stylesheet = stylesheet;
     return this;
   }
