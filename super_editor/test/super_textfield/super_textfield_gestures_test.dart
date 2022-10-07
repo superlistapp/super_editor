@@ -52,7 +52,7 @@ void main() {
         );
 
         final finder = find.byType(SuperTextField);
-        // Tap in a place inside the padding.
+        // Tap at the left side of the text field, at the vertical center.
         await tester.tapAt(tester.getTopLeft(finder) + Offset(1, tester.getSize(finder).height / 2));
         await tester.pumpAndSettle();
 
@@ -64,24 +64,28 @@ void main() {
       });
 
       testWidgetsOnAllPlatforms('on the top', (tester) async {
+        /// Pump a center-aligned text field so we can tap at the middle of the text.
         await _pumpTestApp(
           tester,
           padding: const EdgeInsets.only(top: 20),
+          textAlign: TextAlign.center,
         );
 
         final finder = find.byType(SuperTextField);
-        // Tap in a place inside the padding.
-        await tester.tapAt(tester.getTopLeft(finder) + Offset(tester.getSize(finder).width / 2, 1));
+        // Tap at the top of the text field, at the horizontal center.
+        // On linux, tapping exactly at middle is placing caret at offset 1.
+        await tester.tapAt(tester.getTopLeft(finder) + Offset((tester.getSize(finder).width / 2) + 1, 1));
         await tester.pumpAndSettle();
 
         // Ensure caret was placed.
         expect(
           SuperTextFieldInspector.findSelection(),
-          const TextSelection.collapsed(offset: 3),
+          const TextSelection.collapsed(offset: 2),
         );
       });
 
       testWidgetsOnAllPlatforms('on the bottom', (tester) async {
+        /// Pump a center-aligned text field so we can tap at the middle of the text.
         await _pumpTestApp(
           tester,
           padding: const EdgeInsets.only(bottom: 20),
@@ -89,7 +93,7 @@ void main() {
         );
 
         final finder = find.byType(SuperTextField);
-        // Tap in a place inside the padding.
+        // Tap at the bottom of the text field, at the horizontal center.
         // On linux, tapping exactly at middle is placing caret at offset 1.
         await tester.tapAt(tester.getBottomRight(finder) - Offset((tester.getSize(finder).width / 2) - 1, 1));
         await tester.pumpAndSettle();
@@ -108,7 +112,7 @@ void main() {
         );
 
         final finder = find.byType(SuperTextField);
-        // Tap in a place inside the padding.
+        // Tap at the right side of the text field, at the vertical center.
         await tester.tapAt(tester.getBottomRight(finder) - Offset(1, tester.getSize(finder).height / 2));
         await tester.pumpAndSettle();
 
