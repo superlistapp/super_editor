@@ -201,6 +201,31 @@ void main() {
         expect(_isCaretPresent(tester), isTrue);
       });
     });
+
+    group('padding', () {
+      testWidgetsOnAllPlatforms('is applied when configured', (tester) async {
+        await tester.pumpWidget(
+          _buildScaffold(
+            child: const SuperTextField(
+              padding: EdgeInsets.fromLTRB(5, 10, 15, 20),
+              minLines: 1,
+              maxLines: 2,
+            ),
+          ),
+        );
+
+        await tester.pumpAndSettle();
+
+        final textFieldRect = tester.getRect(find.byType(SuperTextField));
+        final contentRect = tester.getRect(find.byType(SuperTextWithSelection));
+
+        // Ensure padding was applied.
+        expect(contentRect.left - textFieldRect.left, 5);
+        expect(contentRect.top - textFieldRect.top, 10);
+        expect(textFieldRect.right - contentRect.right, 15);
+        expect(textFieldRect.bottom - contentRect.bottom, 20);
+      });
+    });
   });
 }
 

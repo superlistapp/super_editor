@@ -44,6 +44,86 @@ void main() {
       });
     });
 
+    group('tapping on padding places caret', () {
+      testWidgetsOnAllPlatforms('on the left side', (tester) async {
+        await _pumpTestApp(
+          tester,
+          padding: const EdgeInsets.only(left: 20),
+        );
+
+        final finder = find.byType(SuperTextField);
+        // Tap at the left side of the text field, at the vertical center.
+        await tester.tapAt(tester.getTopLeft(finder) + Offset(1, tester.getSize(finder).height / 2));
+        await tester.pumpAndSettle();
+
+        // Ensure caret was placed.
+        expect(
+          SuperTextFieldInspector.findSelection(),
+          const TextSelection.collapsed(offset: 0),
+        );
+      });
+
+      testWidgetsOnAllPlatforms('on the top', (tester) async {
+        /// Pump a center-aligned text field so we can tap at the middle of the text.
+        await _pumpTestApp(
+          tester,
+          padding: const EdgeInsets.only(top: 20),
+          textAlign: TextAlign.center,
+        );
+
+        final finder = find.byType(SuperTextField);
+        // Tap at the top of the text field, at the horizontal center.
+        // On linux, tapping exactly at middle is placing caret at offset 1.
+        await tester.tapAt(tester.getTopLeft(finder) + Offset((tester.getSize(finder).width / 2) + 1, 1));
+        await tester.pumpAndSettle();
+
+        // Ensure caret was placed.
+        expect(
+          SuperTextFieldInspector.findSelection(),
+          const TextSelection.collapsed(offset: 2),
+        );
+      });
+
+      testWidgetsOnAllPlatforms('on the bottom', (tester) async {
+        /// Pump a center-aligned text field so we can tap at the middle of the text.
+        await _pumpTestApp(
+          tester,
+          padding: const EdgeInsets.only(bottom: 20),
+          textAlign: TextAlign.center,
+        );
+
+        final finder = find.byType(SuperTextField);
+        // Tap at the bottom of the text field, at the horizontal center.
+        // On linux, tapping exactly at middle is placing caret at offset 1.
+        await tester.tapAt(tester.getBottomRight(finder) - Offset((tester.getSize(finder).width / 2) - 1, 1));
+        await tester.pumpAndSettle();
+
+        // Ensure caret was placed.
+        expect(
+          SuperTextFieldInspector.findSelection(),
+          const TextSelection.collapsed(offset: 2),
+        );
+      });
+
+      testWidgetsOnAllPlatforms('on the right side', (tester) async {
+        await _pumpTestApp(
+          tester,
+          padding: const EdgeInsets.only(right: 20),
+        );
+
+        final finder = find.byType(SuperTextField);
+        // Tap at the right side of the text field, at the vertical center.
+        await tester.tapAt(tester.getBottomRight(finder) - Offset(1, tester.getSize(finder).height / 2));
+        await tester.pumpAndSettle();
+
+        // Ensure caret was placed.
+        expect(
+          SuperTextFieldInspector.findSelection(),
+          const TextSelection.collapsed(offset: 3),
+        );
+      });
+    });
+
     group('tapping in an area containing text places the caret at tap position', () {
       testWidgetsOnMobile("when the field does not have focus", (tester) async {
         await _pumpTestApp(tester);
@@ -226,14 +306,18 @@ void main() {
 Future<void> _pumpTestApp(
   WidgetTester tester, {
   AttributedTextEditingController? controller,
+  EdgeInsets? padding,
+  TextAlign? textAlign,
 }) async {
   await tester.pumpWidget(
     MaterialApp(
       home: Scaffold(
         body: SuperTextField(
+          padding: padding,
+          textAlign: textAlign ?? TextAlign.left,
           textController: controller ??
               AttributedTextEditingController(
-                text: AttributedText(text: "abc"),
+                text: AttributedText(text: 'abc'),
               ),
         ),
       ),

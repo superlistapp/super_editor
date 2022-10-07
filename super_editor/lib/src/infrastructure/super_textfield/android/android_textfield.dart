@@ -41,6 +41,7 @@ class SuperAndroidTextField extends StatefulWidget {
     this.textInputAction = TextInputAction.done,
     this.popoverToolbarBuilder = _defaultAndroidToolbarBuilder,
     this.showDebugPaint = false,
+    this.padding,
   }) : super(key: key);
 
   /// [FocusNode] attached to this text field.
@@ -121,6 +122,10 @@ class SuperAndroidTextField extends StatefulWidget {
 
   /// Builder that creates the popover toolbar widget that appears when text is selected.
   final Widget Function(BuildContext, AndroidEditingOverlayController) popoverToolbarBuilder;
+
+  /// Padding placed around the text content of this text field, but within the
+  /// scrollable viewport.
+  final EdgeInsets? padding;
 
   @override
   State createState() => SuperAndroidTextFieldState();
@@ -479,6 +484,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
             lineHeight: widget.lineHeight,
             perLineAutoScrollDuration: const Duration(milliseconds: 100),
             showDebugPaint: widget.showDebugPaint,
+            padding: widget.padding,
             child: ListenableBuilder(
               listenable: _textEditingController,
               builder: (context) {

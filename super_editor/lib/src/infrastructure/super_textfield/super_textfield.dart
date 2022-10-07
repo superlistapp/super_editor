@@ -63,6 +63,7 @@ class SuperTextField extends StatefulWidget {
     this.maxLines = 1,
     this.lineHeight,
     this.keyboardHandlers = defaultTextFieldKeyboardHandlers,
+    this.padding,
   }) : super(key: key);
 
   final FocusNode? focusNode;
@@ -140,6 +141,10 @@ class SuperTextField extends StatefulWidget {
   ///
   /// Only used on desktop.
   final List<TextFieldKeyboardHandler> keyboardHandlers;
+
+  /// Padding placed around the text content of this text field, but within the
+  /// scrollable viewport.
+  final EdgeInsets? padding;
 
   @override
   State<SuperTextField> createState() => SuperTextFieldState();
@@ -238,6 +243,7 @@ class SuperTextFieldState extends State<SuperTextField> {
           minLines: widget.minLines,
           maxLines: widget.maxLines,
           keyboardHandlers: widget.keyboardHandlers,
+          padding: widget.padding ?? EdgeInsets.zero,
         );
       case SuperTextFieldPlatformConfiguration.android:
         return Shortcuts(
@@ -257,6 +263,7 @@ class SuperTextFieldState extends State<SuperTextField> {
             maxLines: widget.maxLines,
             lineHeight: widget.lineHeight,
             textInputAction: _isMultiline ? TextInputAction.newline : TextInputAction.done,
+            padding: widget.padding,
           ),
         );
       case SuperTextFieldPlatformConfiguration.iOS:
@@ -277,6 +284,7 @@ class SuperTextFieldState extends State<SuperTextField> {
             maxLines: widget.maxLines,
             lineHeight: widget.lineHeight,
             textInputAction: _isMultiline ? TextInputAction.newline : TextInputAction.done,
+            padding: widget.padding,
           ),
         );
     }

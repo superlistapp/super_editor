@@ -45,6 +45,7 @@ class SuperIOSTextField extends StatefulWidget {
     this.textInputAction = TextInputAction.done,
     this.popoverToolbarBuilder = _defaultPopoverToolbarBuilder,
     this.showDebugPaint = false,
+    this.padding,
   }) : super(key: key);
 
   /// [FocusNode] attached to this text field.
@@ -125,6 +126,10 @@ class SuperIOSTextField extends StatefulWidget {
 
   /// Whether to paint debug guides.
   final bool showDebugPaint;
+
+  /// Padding placed around the text content of this text field, but within the
+  /// scrollable viewport.
+  final EdgeInsets? padding;
 
   @override
   State createState() => SuperIOSTextFieldState();
@@ -477,6 +482,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
             lineHeight: widget.lineHeight,
             perLineAutoScrollDuration: const Duration(milliseconds: 100),
             showDebugPaint: widget.showDebugPaint,
+            padding: widget.padding,
             child: ListenableBuilder(
               listenable: _textEditingController,
               builder: (context) {
