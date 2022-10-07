@@ -126,7 +126,7 @@ class _TextScrollViewState extends State<TextScrollView>
       ..delegate = this
       ..addListener(_onTextScrollChange);
 
-    widget.textEditingController.addListener(_onSelectionOrContentChange);
+    widget.textEditingController.addListener(_scheduleViewportHeightUpdate);
   }
 
   @override
@@ -144,18 +144,16 @@ class _TextScrollViewState extends State<TextScrollView>
     }
 
     if (widget.textEditingController != oldWidget.textEditingController) {
-      oldWidget.textEditingController.removeListener(_onSelectionOrContentChange);
-      widget.textEditingController.addListener(_onSelectionOrContentChange);
+      oldWidget.textEditingController.removeListener(_scheduleViewportHeightUpdate);
+      widget.textEditingController.addListener(_scheduleViewportHeightUpdate);
+
+      _scheduleViewportHeightUpdate();
     }
 
     if (widget.minLines != oldWidget.minLines ||
         widget.maxLines != oldWidget.maxLines ||
         widget.lineHeight != oldWidget.lineHeight) {
-      // Force a new viewport height calculation.
-      setState(() {
-        _log.fine('Need another viewport height');
-        _needViewportHeight = true;
-      });
+      _scheduleViewportHeightUpdate();
     }
   }
 
@@ -165,7 +163,7 @@ class _TextScrollViewState extends State<TextScrollView>
       ..delegate = null
       ..removeListener(_onTextScrollChange);
 
-    widget.textEditingController.removeListener(_onSelectionOrContentChange);
+    widget.textEditingController.removeListener(_scheduleViewportHeightUpdate);
 
     super.dispose();
   }
@@ -411,8 +409,8 @@ class _TextScrollViewState extends State<TextScrollView>
 
     if (viewportHeight == null && isMultiline && maxHeight != null && estimatedContentHeight <= maxHeight) {
       // We don't have a viewport height, but we're multiline and
-      // our estimated content height fits inside our max height,
-      // so a null viewport height is fine.
+      // our estimated content height fits inside our max height.
+      // The viewport should expand to fit its content.
       final didChange = viewportHeight != _viewportHeight;
       if (mounted) {
         setState(() {
@@ -459,7 +457,7 @@ class _TextScrollViewState extends State<TextScrollView>
     return _textLayout.getLineCount();
   }
 
-  void _onSelectionOrContentChange() {
+  void _scheduleViewportHeightUpdate() {
     // The viewport height is calculated using the number of the lines of text.
     // Therefore, when text changes we need to recalculate the viewport height
     // to accommodate the new text.
