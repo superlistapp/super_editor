@@ -315,7 +315,7 @@ void main() {
   });
 
   group('SuperEditor inputSource', () {
-    testWidgetsOnMobile('configures for IME input by default', (tester) async {
+    testWidgetsOnMobile('configures for IME input by default on mobile', (tester) async {
       await tester //
           .createDocument()
           .withSingleEmptyParagraph()
@@ -331,6 +331,12 @@ void main() {
 
       // Simulate a tap in the newline button, which will be handled
       // by the IME interactor.
+      //
+      // When using a software keyboard, pressing the newline button
+      // will dispatch a TextInputAction to the connected TextInputClient.
+      // This action will cause the editor to add a new paragraph to the document.
+      //
+      // TextInputAction's can only be received in IME mode.
       await tester.testTextInput.receiveAction(TextInputAction.newline);
       await tester.pumpAndSettle();
 
@@ -338,7 +344,7 @@ void main() {
       expect(document.nodes.length, 2);
     });
 
-    testWidgetsOnDesktop('configures for keyboard input by default', (tester) async {
+    testWidgetsOnDesktop('configures for keyboard input by default on desktop', (tester) async {
       await tester //
           .createDocument()
           .withSingleEmptyParagraph()
@@ -352,10 +358,9 @@ void main() {
       // Tap to give focus to the editor.
       await tester.placeCaretInParagraph(document.nodes.first.id, 0);
 
-      // Simulate a tap in the newline button, which is handled
-      // only by the IME interactor.
-      // As the editor should be configured for keyboard input,
-      // this shouldn't change the document.
+      // When we are in keyboard mode, we can't receive input actions.
+      // So, simulating an input action will have no effect.
+      // Therefore, this operation shouldn't change the document's content.
       await tester.testTextInput.receiveAction(TextInputAction.newline);
       await tester.pumpAndSettle();
 
