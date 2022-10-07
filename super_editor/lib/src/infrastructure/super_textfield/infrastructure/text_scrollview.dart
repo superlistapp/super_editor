@@ -392,25 +392,15 @@ class _TextScrollViewState extends State<TextScrollView>
       return false;
     }
 
-    if (viewportHeight == null && isMultiline && !isBounded) {
-      // We don't have a viewport height, but we're multiline and
-      // unbounded so a null viewport height is fine. We'll wrap
-      // the intrinsic height of the text.
-      _log.finer(' - viewport height is null, but TextScrollView is unbounded so that is OK');
-      final didChange = viewportHeight != _viewportHeight;
-      if (mounted) {
-        setState(() {
-          _needViewportHeight = false;
-          _viewportHeight = null;
-        });
-      }
-      return didChange;
-    }
+    final wantsUnboundedIntrinsicHeight = viewportHeight == null && isMultiline && !isBounded;
+    final multilineContentFitsMaxHeight =
+        viewportHeight == null && isMultiline && isBounded && estimatedContentHeight <= maxHeight!;
 
-    if (viewportHeight == null && isMultiline && maxHeight != null && estimatedContentHeight <= maxHeight) {
-      // We don't have a viewport height, but we're multiline and
-      // our estimated content height fits inside our max height.
+    if (wantsUnboundedIntrinsicHeight || multilineContentFitsMaxHeight) {
+      // We have either an unbounded height or our estimated content height fits inside our max height.
       // The viewport should expand to fit its content.
+      _log.finer(
+          ' - viewport height is null, but TextScrollView is unbounded or the content fits max height, so that is OK');
       final didChange = viewportHeight != _viewportHeight;
       if (mounted) {
         setState(() {
