@@ -192,20 +192,6 @@ class TestDocumentConfigurator {
     return this;
   }
 
-  DocumentInputSource get _defaultInputSource {
-    switch (debugDefaultTargetPlatformOverride) {
-      case TargetPlatform.android:
-      case TargetPlatform.iOS:
-        return DocumentInputSource.ime;
-      case TargetPlatform.fuchsia:
-      case TargetPlatform.linux:
-      case TargetPlatform.macOS:
-      case TargetPlatform.windows:
-        return DocumentInputSource.keyboard;
-      default:
-        return DocumentInputSource.keyboard;
-    }
-  }
 
   /// Configures the [ThemeData] used for the [MaterialApp] that wraps
   /// the [SuperEditor].
@@ -274,7 +260,7 @@ class TestDocumentConfigurator {
         editor: testDocumentContext.editContext.editor,
         composer: testDocumentContext.editContext.composer,
         focusNode: testDocumentContext.focusNode,
-        inputSource: _inputSource ?? _defaultInputSource,
+        inputSource: _inputSource,
         gestureMode: _gestureMode,
         androidToolbarBuilder: _androidToolbarBuilder,
         iOSToolbarBuilder: _iOSToolbarBuilder,

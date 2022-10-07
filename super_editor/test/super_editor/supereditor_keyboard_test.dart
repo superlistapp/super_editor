@@ -313,6 +313,62 @@ void main() {
       expect(node.text.text, 'list item 1');
     });
   });
+
+  group('SuperEditor inputSource', () {
+    testWidgetsOnMobile('configures for IME input by default on mobile', (tester) async {
+      await tester //
+          .createDocument()
+          .withSingleEmptyParagraph()
+          .pump();
+
+      final document = SuperEditorInspector.findDocument()!;
+
+      // Ensure the document was created with one node.
+      expect(document.nodes.length, 1);
+
+      // Tap to give focus to the editor.
+      await tester.placeCaretInParagraph(document.nodes.first.id, 0);
+
+      // Ensure that IME input is enabled. To check IME input, we arbitrarily simulate a newline action from
+      // the IME. If the editor responds to the newline, it means IME input is enabled.
+      // We expect the newline to insert a new paragraph node.
+      await tester.testTextInput.receiveAction(TextInputAction.newline);
+      await tester.pumpAndSettle();
+
+      // Ensure a new node was added.
+      expect(document.nodes.length, 2);
+    });
+
+    testWidgetsOnDesktop('configures for keyboard input by default on desktop', (tester) async {
+      await tester //
+          .createDocument()
+          .withSingleEmptyParagraph()
+          .pump();
+
+      final document = SuperEditorInspector.findDocument()!;
+
+      // Ensure the document was created with one node.
+      expect(document.nodes.length, 1);
+
+      // Tap to give focus to the editor.
+      await tester.placeCaretInParagraph(document.nodes.first.id, 0);
+
+      // Ensure that IME input is disabled. To check IME input, we arbitrarily simulate a newline action from
+      // the IME. If the editor doesn't respond to the newline, it means IME input is disabled.
+      // We expect that the document content remains unchanged.
+      await tester.testTextInput.receiveAction(TextInputAction.newline);
+      await tester.pumpAndSettle();
+
+      // Ensure no node was added.
+      expect(document.nodes.length, 1);
+
+      // Simulate typing on a keyboard.
+      await tester.typeKeyboardText('abc');
+
+      // Ensure text was added.
+      expect(SuperEditorInspector.findTextInParagraph(document.nodes.first.id).text, 'abc');
+    });
+  });
 }
 
 Future<String> _pumpSingleLineWithCaret(
