@@ -329,14 +329,9 @@ void main() {
       // Tap to give focus to the editor.
       await tester.placeCaretInParagraph(document.nodes.first.id, 0);
 
-      // Simulate a tap in the newline button, which will be handled
-      // by the IME interactor.
-      //
-      // When using a software keyboard, pressing the newline button
-      // will dispatch a TextInputAction to the connected TextInputClient.
-      // This action will cause the editor to add a new paragraph to the document.
-      //
-      // TextInputAction's can only be received in IME mode.
+      // Ensure that IME input is enabled. To check IME input, we arbitrarily simulate a newline action from
+      // the IME. If the editor responds to the newline, it means IME input is enabled.
+      // We expect the newline to insert a new paragraph node.
       await tester.testTextInput.receiveAction(TextInputAction.newline);
       await tester.pumpAndSettle();
 
@@ -358,9 +353,9 @@ void main() {
       // Tap to give focus to the editor.
       await tester.placeCaretInParagraph(document.nodes.first.id, 0);
 
-      // When we are in keyboard mode, we can't receive input actions.
-      // So, simulating an input action will have no effect.
-      // Therefore, this operation shouldn't change the document's content.
+      // Ensure that IME input is disabled. To check IME input, we arbitrarily simulate a newline action from
+      // the IME. If the editor doesn't respond to the newline, it means IME input is disabled.
+      // We expect that the document content remains unchanged.
       await tester.testTextInput.receiveAction(TextInputAction.newline);
       await tester.pumpAndSettle();
 
