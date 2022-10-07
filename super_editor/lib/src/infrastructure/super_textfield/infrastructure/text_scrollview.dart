@@ -125,6 +125,8 @@ class _TextScrollViewState extends State<TextScrollView>
     widget.textScrollController
       ..delegate = this
       ..addListener(_onTextScrollChange);
+
+    widget.textEditingController.addListener(_scheduleViewportHeightUpdate);
   }
 
   @override
@@ -141,14 +143,17 @@ class _TextScrollViewState extends State<TextScrollView>
         ..addListener(_onTextScrollChange);
     }
 
+    if (widget.textEditingController != oldWidget.textEditingController) {
+      oldWidget.textEditingController.removeListener(_scheduleViewportHeightUpdate);
+      widget.textEditingController.addListener(_scheduleViewportHeightUpdate);
+
+      _scheduleViewportHeightUpdate();
+    }
+
     if (widget.minLines != oldWidget.minLines ||
         widget.maxLines != oldWidget.maxLines ||
         widget.lineHeight != oldWidget.lineHeight) {
-      // Force a new viewport height calculation.
-      setState(() {
-        _log.fine('Need another viewport height');
-        _needViewportHeight = true;
-      });
+      _scheduleViewportHeightUpdate();
     }
   }
 
@@ -157,6 +162,8 @@ class _TextScrollViewState extends State<TextScrollView>
     widget.textScrollController
       ..delegate = null
       ..removeListener(_onTextScrollChange);
+
+    widget.textEditingController.removeListener(_scheduleViewportHeightUpdate);
 
     super.dispose();
   }
@@ -385,11 +392,15 @@ class _TextScrollViewState extends State<TextScrollView>
       return false;
     }
 
-    if (viewportHeight == null && isMultiline && !isBounded) {
-      // We don't have a viewport height, but we're multiline and
-      // unbounded so a null viewport height is fine. We'll wrap
-      // the intrinsic height of the text.
-      _log.finer(' - viewport height is null, but TextScrollView is unbounded so that is OK');
+    final wantsUnboundedIntrinsicHeight = viewportHeight == null && isMultiline && !isBounded;
+    final multilineContentFitsMaxHeight =
+        viewportHeight == null && isMultiline && isBounded && estimatedContentHeight <= maxHeight!;
+
+    if (wantsUnboundedIntrinsicHeight || multilineContentFitsMaxHeight) {
+      // We have either an unbounded height or our estimated content height fits inside our max height.
+      // The viewport should expand to fit its content.
+      _log.finer(
+          ' - viewport height is null, but TextScrollView is unbounded or the content fits max height, so that is OK');
       final didChange = viewportHeight != _viewportHeight;
       if (mounted) {
         setState(() {
@@ -436,6 +447,17 @@ class _TextScrollViewState extends State<TextScrollView>
     return _textLayout.getLineCount();
   }
 
+  void _scheduleViewportHeightUpdate() {
+    // The viewport height is calculated using the number of the lines of text.
+    // Therefore, when text changes we need to recalculate the viewport height
+    // to accommodate the new text.
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      if (mounted) {
+        _updateViewportHeight();
+      }
+    });
+  }
+
   /// Returns the [ProseTextLayout] that lays out and renders the
   /// text in this text field.
   ProseTextLayout get _textLayout => widget.textKey.currentState!.textLayout;
@@ -454,7 +476,9 @@ class _TextScrollViewState extends State<TextScrollView>
     }
 
     return Opacity(
-      opacity: (widget.maxLines != null && widget.maxLines! > 1 && _viewportHeight == null) ? 0.0 : 1.0,
+      opacity: (widget.maxLines != null && widget.maxLines! > 1 && _viewportHeight == null && _needViewportHeight)
+          ? 0.0
+          : 1.0,
       child: SizedBox(
         width: double.infinity,
         height: _viewportHeight,
