@@ -226,6 +226,72 @@ void main() {
         expect(textFieldRect.bottom - contentRect.bottom, 20);
       });
     });
+
+    testWidgetsOnAllPlatforms('recalculates its viewport height when text changes for text smaller than maxLines',
+        (tester) async {
+      final controller = AttributedTextEditingController();
+
+      await tester.pumpWidget(
+        _buildScaffold(
+          child: SuperTextField(
+            minLines: 1,
+            maxLines: 10,
+            textController: controller,
+          ),
+        ),
+      );
+
+      // Change the text so the content height is greater
+      // than the initial content height.
+      controller.text = AttributedText(
+        text: """
+This is
+a
+multi-line
+SuperTextField
+""",
+      );
+      await tester.pumpAndSettle();
+
+      final textSize = tester.getSize(find.byType(SuperTextWithSelection));
+      final textFieldSize = tester.getSize(find.byType(SuperTextField));
+
+      // Ensure the text field height is big enough to display the whole content.
+      expect(textFieldSize.height, greaterThanOrEqualTo(textSize.height));
+    });
+
+    testWidgetsOnAllPlatforms('recalculates its viewport height when text changes for text bigger than maxLines',
+        (tester) async {
+      final controller = AttributedTextEditingController();
+
+      await tester.pumpWidget(
+        _buildScaffold(
+          child: SuperTextField(
+            minLines: 1,
+            maxLines: 2,
+            textController: controller,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final textFieldSizeBefore = tester.getSize(find.byType(SuperTextField));
+
+      // Change the text, so the content height is greater
+      // than the initial content height.
+      controller.text = AttributedText(
+        text: """
+This is
+a
+multi-line
+SuperTextField
+""",
+      );
+      await tester.pumpAndSettle();
+
+      // Ensure the text field height has increased.
+      expect(tester.getSize(find.byType(SuperTextField)).height, greaterThan(textFieldSizeBefore.height));
+    });
   });
 }
 

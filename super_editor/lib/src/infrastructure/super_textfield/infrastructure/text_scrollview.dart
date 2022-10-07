@@ -125,6 +125,8 @@ class _TextScrollViewState extends State<TextScrollView>
     widget.textScrollController
       ..delegate = this
       ..addListener(_onTextScrollChange);
+
+    widget.textEditingController.addListener(_onSelectionOrContentChange);
   }
 
   @override
@@ -139,6 +141,11 @@ class _TextScrollViewState extends State<TextScrollView>
       widget.textScrollController
         ..delegate = this
         ..addListener(_onTextScrollChange);
+    }
+
+    if (widget.textEditingController != oldWidget.textEditingController) {
+      oldWidget.textEditingController.removeListener(_onSelectionOrContentChange);
+      widget.textEditingController.addListener(_onSelectionOrContentChange);
     }
 
     if (widget.minLines != oldWidget.minLines ||
@@ -157,6 +164,8 @@ class _TextScrollViewState extends State<TextScrollView>
     widget.textScrollController
       ..delegate = null
       ..removeListener(_onTextScrollChange);
+
+    widget.textEditingController.removeListener(_onSelectionOrContentChange);
 
     super.dispose();
   }
@@ -400,6 +409,20 @@ class _TextScrollViewState extends State<TextScrollView>
       return didChange;
     }
 
+    if (viewportHeight == null && isMultiline && maxHeight != null && estimatedContentHeight <= maxHeight) {
+      // We don't have a viewport height, but we're multiline and
+      // our estimated content height fits inside our max height,
+      // so a null viewport height is fine.
+      final didChange = viewportHeight != _viewportHeight;
+      if (mounted) {
+        setState(() {
+          _needViewportHeight = false;
+          _viewportHeight = null;
+        });
+      }
+      return didChange;
+    }
+
     if (viewportHeight != null) {
       setState(() {
         _log.finer(' - new viewport height: $viewportHeight');
@@ -436,6 +459,17 @@ class _TextScrollViewState extends State<TextScrollView>
     return _textLayout.getLineCount();
   }
 
+  void _onSelectionOrContentChange() {
+    // The viewport height is calculated using the number of the lines of text.
+    // Therefore, when text changes we need to recalculate the viewport height
+    // to accommodate the new text.
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      if (mounted) {
+        _updateViewportHeight();
+      }
+    });
+  }
+
   /// Returns the [ProseTextLayout] that lays out and renders the
   /// text in this text field.
   ProseTextLayout get _textLayout => widget.textKey.currentState!.textLayout;
@@ -454,7 +488,9 @@ class _TextScrollViewState extends State<TextScrollView>
     }
 
     return Opacity(
-      opacity: (widget.maxLines != null && widget.maxLines! > 1 && _viewportHeight == null) ? 0.0 : 1.0,
+      opacity: (widget.maxLines != null && widget.maxLines! > 1 && _viewportHeight == null && _needViewportHeight)
+          ? 0.0
+          : 1.0,
       child: SizedBox(
         width: double.infinity,
         height: _viewportHeight,
