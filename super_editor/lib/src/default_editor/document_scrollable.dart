@@ -360,6 +360,8 @@ class AutoScrollController with ChangeNotifier {
     );
   }
 
+  /// Animates the scroll position like a ballistic particle with friction, beginning
+  /// with the given [pixelsPerSecond] velocity.
   void goBallistic(double pixelsPerSecond) {
     final pos = _getScrollPosition?.call();
     if (pos == null) {
@@ -373,6 +375,7 @@ class AutoScrollController with ChangeNotifier {
     }
   }
 
+  /// Immediately stops scrolling animation/momentum.
   void goIdle() {
     final pos = _getScrollPosition?.call();
     if (pos == null) {
