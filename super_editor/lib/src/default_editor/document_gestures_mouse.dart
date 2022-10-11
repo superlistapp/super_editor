@@ -408,6 +408,7 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor>
     if (_panGestureDevice == PointerDeviceKind.trackpad) {
       // The user ended a pan gesture with two fingers on a trackpad.
       // We already scrolled the document.
+      widget.autoScroller.goBallistic(-details.velocity.pixelsPerSecond.dy);
       return;
     }
     _onDragEnd();
@@ -442,6 +443,13 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor>
     if (event is PointerScrollEvent) {
       _scrollVertically(event.scrollDelta.dy);
     }
+  }
+
+  /// Beginning with Flutter 3.3.3, we are responsible for starting and
+  /// stopping scroll momentum. This method cancels any scroll momentum
+  /// in our scroll controller.
+  void _cancelScrollMomentum() {
+    widget.autoScroller.goIdle();
   }
 
   void _updateDragSelection() {
@@ -577,6 +585,8 @@ Updating drag selection:
   Widget build(BuildContext context) {
     return Listener(
       onPointerSignal: _scrollOnMouseWheel,
+      onPointerHover: (event) => _cancelScrollMomentum(),
+      onPointerDown: (event) => _cancelScrollMomentum(),
       child: _buildCursorStyle(
         child: _buildGestureInput(
           child: _buildDocumentContainer(
