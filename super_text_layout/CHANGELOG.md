@@ -1,3 +1,7 @@
+## [0.1.4] - Oct, 2022
+
+Fixed a `NullPointerException` in `SuperTextLayout`.
+
 ## [0.1.3] - July, 2022
 
 Upgraded the dependency on `attributed_text` from `0.1.3` to `0.2.0`.
