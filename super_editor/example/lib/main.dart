@@ -147,16 +147,18 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildDrawerButton() {
-    return Material(
-      color: Colors.transparent,
-      child: SizedBox(
-        height: 56,
-        width: 56,
-        child: IconButton(
-          icon: const Icon(Icons.menu),
-          color: Theme.of(context).colorScheme.onSurface,
-          splashRadius: 24,
-          onPressed: _toggleDrawer,
+    return SafeArea(
+      child: Material(
+        color: Colors.transparent,
+        child: SizedBox(
+          height: 56,
+          width: 56,
+          child: IconButton(
+            icon: const Icon(Icons.menu),
+            color: Theme.of(context).colorScheme.onSurface,
+            splashRadius: 24,
+            onPressed: _toggleDrawer,
+          ),
         ),
       ),
     );
