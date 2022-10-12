@@ -6,11 +6,11 @@ import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
-import 'package:super_editor/src/document_operations/selection_operations.dart';
 import 'package:super_editor/src/default_editor/document_scrollable.dart';
 import 'package:super_editor/src/default_editor/document_selection_on_focus_mixin.dart';
 import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
 import 'package:super_editor/src/default_editor/text_tools.dart';
+import 'package:super_editor/src/document_operations/selection_operations.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 
@@ -408,6 +408,7 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor>
     if (_panGestureDevice == PointerDeviceKind.trackpad) {
       // The user ended a pan gesture with two fingers on a trackpad.
       // We already scrolled the document.
+      widget.autoScroller.goBallistic(-details.velocity.pixelsPerSecond.dy);
       return;
     }
     _onDragEnd();
@@ -442,6 +443,13 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor>
     if (event is PointerScrollEvent) {
       _scrollVertically(event.scrollDelta.dy);
     }
+  }
+
+  /// Beginning with Flutter 3.3.3, we are responsible for starting and
+  /// stopping scroll momentum. This method cancels any scroll momentum
+  /// in our scroll controller.
+  void _cancelScrollMomentum() {
+    widget.autoScroller.goIdle();
   }
 
   void _updateDragSelection() {
@@ -577,6 +585,9 @@ Updating drag selection:
   Widget build(BuildContext context) {
     return Listener(
       onPointerSignal: _scrollOnMouseWheel,
+      onPointerHover: (event) => _cancelScrollMomentum(),
+      onPointerDown: (event) => _cancelScrollMomentum(),
+      onPointerPanZoomStart: (event) => _cancelScrollMomentum(),
       child: _buildCursorStyle(
         child: _buildGestureInput(
           child: _buildDocumentContainer(

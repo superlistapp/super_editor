@@ -360,6 +360,36 @@ class AutoScrollController with ChangeNotifier {
     );
   }
 
+  /// Animates the scroll position like a ballistic particle with friction, beginning
+  /// with the given [pixelsPerSecond] velocity.
+  void goBallistic(double pixelsPerSecond) {
+    final pos = _getScrollPosition?.call();
+    if (pos == null) {
+      // We're not attached to a scroll position. We can't go ballistic.
+      return;
+    }
+
+    if (pos is ScrollPositionWithSingleContext) {
+      pos.goBallistic(pixelsPerSecond);
+      pos.context.setIgnorePointer(false);
+    }
+  }
+
+  /// Immediately stops scrolling animation/momentum.
+  void goIdle() {
+    final pos = _getScrollPosition?.call();
+    if (pos == null) {
+      // We're not attached to a scroll position. There's nothing to idle.
+      return;
+    }
+
+    if (pos is ScrollPositionWithSingleContext) {
+      if (pos.pixels > pos.minScrollExtent && pos.pixels < pos.maxScrollExtent) {
+        pos.goIdle();
+      }
+    }
+  }
+
   /// Immediately changes the attached [Scrollable]'s scroll offset so that all
   /// of the given [globalRegion] is visible.
   void ensureGlobalRectIsVisible(Rect globalRegion) {
