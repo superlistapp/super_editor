@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:io' as io;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_toolkit/golden_toolkit.dart';
@@ -38,7 +38,7 @@ void main() {
           );
 
           await screenMatchesGolden(tester, 'super_textfield_alignments_singleline_android');
-        }, skip: Platform.isMacOS);
+        }, skip: io.Platform.isMacOS);
 
         testGoldens('(on iOS)', (tester) async {
           await _pumpScaffold(
@@ -66,7 +66,7 @@ void main() {
           );
 
           await screenMatchesGolden(tester, 'super_textfield_alignments_singleline_ios');
-        }, skip: Platform.isMacOS);
+        }, skip: io.Platform.isMacOS);
 
         testGoldens('(on Desktop)', (tester) async {
           await _pumpScaffold(
@@ -94,7 +94,7 @@ void main() {
           );
 
           await screenMatchesGolden(tester, 'super_textfield_alignments_singleline_desktop');
-        }, skip: Platform.isMacOS);
+        }, skip: io.Platform.isMacOS);
       });
     });
 
@@ -127,7 +127,7 @@ void main() {
           );
 
           await screenMatchesGolden(tester, 'super_textfield_alignments_multiline_android');
-        }, skip: Platform.isMacOS);
+        }, skip: io.Platform.isMacOS);
 
         testGoldens('(on iOS)', (tester) async {
           await _pumpScaffold(
@@ -155,7 +155,7 @@ void main() {
           );
 
           await screenMatchesGolden(tester, 'super_textfield_alignments_multiline_ios');
-        }, skip: Platform.isMacOS);
+        }, skip: io.Platform.isMacOS);
 
         testGoldens('(on Desktop)', (tester) async {
           await _pumpScaffold(
@@ -184,7 +184,7 @@ void main() {
 
           await screenMatchesGolden(tester, 'super_textfield_alignments_multiline_desktop');
         });
-      }, skip: Platform.isMacOS);
+      }, skip: io.Platform.isMacOS);
 
       testWidgetsOnAllPlatforms('makes scrollview fill all the field width', (tester) async {
         await _pumpScaffold(
