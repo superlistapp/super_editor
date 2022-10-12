@@ -313,6 +313,8 @@ mixin TextComponentViewModel on SingleColumnLayoutComponentViewModel {
   void applyStyles(Map<String, dynamic> styles) {
     super.applyStyles(styles);
 
+    textAlignment = styles["textAlign"] ?? textAlignment;
+
     textStyleBuilder = (attributions) {
       final baseStyle = styles["textStyle"] ?? noStyleBuilder({});
       final inlineTextStyler = styles["inlineTextStyler"] as AttributionStyleAdjuster;
