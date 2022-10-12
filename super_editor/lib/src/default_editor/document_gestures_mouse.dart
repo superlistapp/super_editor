@@ -6,11 +6,11 @@ import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
-import 'package:super_editor/src/document_operations/selection_operations.dart';
 import 'package:super_editor/src/default_editor/document_scrollable.dart';
 import 'package:super_editor/src/default_editor/document_selection_on_focus_mixin.dart';
 import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
 import 'package:super_editor/src/default_editor/text_tools.dart';
+import 'package:super_editor/src/document_operations/selection_operations.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 
@@ -587,6 +587,7 @@ Updating drag selection:
       onPointerSignal: _scrollOnMouseWheel,
       onPointerHover: (event) => _cancelScrollMomentum(),
       onPointerDown: (event) => _cancelScrollMomentum(),
+      onPointerPanZoomStart: (event) => _cancelScrollMomentum(),
       child: _buildCursorStyle(
         child: _buildGestureInput(
           child: _buildDocumentContainer(
