@@ -132,9 +132,12 @@ class _HomeScreenState extends State<HomeScreen> {
           OverlayEntry(builder: (context) {
             return Scaffold(
               key: _scaffoldKey,
-              appBar: _buildAppBar(context),
-              extendBodyBehindAppBar: true,
-              body: _selectedMenuItem!.pageBuilder(context),
+              body: Stack(
+                children: [
+                  _selectedMenuItem!.pageBuilder(context),
+                  _buildDrawerButton(),
+                ],
+              ),
               drawer: _buildDrawer(),
             );
           })
@@ -143,15 +146,20 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  PreferredSizeWidget _buildAppBar(BuildContext context) {
-    return AppBar(
-      backgroundColor: Colors.transparent,
-      elevation: 0,
-      leading: IconButton(
-        icon: const Icon(Icons.menu),
-        color: Theme.of(context).colorScheme.onSurface,
-        splashRadius: 24,
-        onPressed: _toggleDrawer,
+  Widget _buildDrawerButton() {
+    return SafeArea(
+      child: Material(
+        color: Colors.transparent,
+        child: SizedBox(
+          height: 56,
+          width: 56,
+          child: IconButton(
+            icon: const Icon(Icons.menu),
+            color: Theme.of(context).colorScheme.onSurface,
+            splashRadius: 24,
+            onPressed: _toggleDrawer,
+          ),
+        ),
       ),
     );
   }
