@@ -403,7 +403,7 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
           handle: Container(
             width: 2,
             height: _floatingCursorHeight,
-            color: Colors.red,
+            color: Colors.red.withOpacity(0.75),
           ),
           debugColor: Colors.blue,
         );
