@@ -203,3 +203,21 @@ class _InlineMarkdownToDocument implements md.NodeVisitor {
     }
   }
 }
+
+class CalloutSerializer implements DocumentNodeMarkdownSerializer {
+  @override
+  String? serialize(DocumentNode node) {
+    if (node is! ParagraphNode) {
+      return null;
+    }
+    if (node.metadata["blockType"] != const NamedAttribution("callout")) {
+      return null;
+    }
+
+    final buffer = StringBuffer();
+    buffer.writeln("@@@ callout");
+    buffer.writeln(node.text.toMarkdown());
+    buffer.write("@@@");
+    return buffer.toString();
+  }
+}

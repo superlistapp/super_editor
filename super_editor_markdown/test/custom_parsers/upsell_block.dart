@@ -53,3 +53,14 @@ class UpsellElementToNodeConverter implements ElementToNodeConverter {
     return UpsellNode(DocumentEditor.createNodeId());
   }
 }
+
+class UpsellSerializer implements DocumentNodeMarkdownSerializer {
+  @override
+  String? serialize(DocumentNode node) {
+    if (node is! UpsellNode) {
+      return null;
+    }
+
+    return "@@@ upsell";
+  }
+}

@@ -2,11 +2,18 @@ import 'package:super_editor/super_editor.dart';
 
 import 'super_editor_syntax.dart';
 
-/// The given [syntax] controls how the [doc] is serialized, e.g., [MarkdownSyntax.normal] for standard
-/// Markdown syntax, or [MarkdownSyntax.superEditor] to use Super Editor's extended syntax.
+/// Serializes the given [doc] to Markdown text.
+///
+/// The given [syntax] controls how the [doc] is serialized, e.g., [MarkdownSyntax.normal]
+/// for standard Markdown syntax, or [MarkdownSyntax.superEditor] to use Super Editor's
+/// extended syntax.
+///
+/// To serialize [DocumentNode]s that aren't part of Super Editor's standard serialization,
+/// provide [customNodeSerializers] to serialize those custom nodes.
 String serializeDocumentToMarkdown(
   Document doc, {
   MarkdownSyntax syntax = MarkdownSyntax.superEditor,
+  List<DocumentNodeMarkdownSerializer> customNodeSerializers = const [],
 }) {
   StringBuffer buffer = StringBuffer();
 
@@ -19,6 +26,19 @@ String serializeDocumentToMarkdown(
       buffer.writeln("");
     } else {
       isFirstLine = false;
+    }
+
+    bool didCustomSerialization = false;
+    for (final serializer in customNodeSerializers) {
+      final customSerialization = serializer.serialize(node);
+      if (customSerialization != null) {
+        buffer.writeln(customSerialization);
+        didCustomSerialization = true;
+        break;
+      }
+    }
+    if (didCustomSerialization) {
+      continue;
     }
 
     if (node is ImageNode) {
@@ -82,6 +102,10 @@ String serializeDocumentToMarkdown(
   }
 
   return buffer.toString();
+}
+
+abstract class DocumentNodeMarkdownSerializer {
+  String? serialize(DocumentNode node);
 }
 
 String? _convertAlignmentToMarkdown(String alignment) {
