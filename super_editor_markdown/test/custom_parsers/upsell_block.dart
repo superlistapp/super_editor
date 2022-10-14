@@ -54,13 +54,9 @@ class UpsellElementToNodeConverter implements ElementToNodeConverter {
   }
 }
 
-class UpsellSerializer implements DocumentNodeMarkdownSerializer {
+class UpsellSerializer extends NodeTypedDocumentNodeMarkdownSerializer<UpsellNode> {
   @override
-  String? serialize(DocumentNode node) {
-    if (node is! UpsellNode) {
-      return null;
-    }
-
-    return "@@@ upsell";
+  String doSerialization(Document document, UpsellNode node) {
+    return "@@@ upsell\n";
   }
 }

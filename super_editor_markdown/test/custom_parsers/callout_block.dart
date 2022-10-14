@@ -206,7 +206,7 @@ class _InlineMarkdownToDocument implements md.NodeVisitor {
 
 class CalloutSerializer implements DocumentNodeMarkdownSerializer {
   @override
-  String? serialize(DocumentNode node) {
+  String? serialize(Document document, DocumentNode node) {
     if (node is! ParagraphNode) {
       return null;
     }
@@ -217,7 +217,7 @@ class CalloutSerializer implements DocumentNodeMarkdownSerializer {
     final buffer = StringBuffer();
     buffer.writeln("@@@ callout");
     buffer.writeln(node.text.toMarkdown());
-    buffer.write("@@@");
+    buffer.writeln("@@@");
     return buffer.toString();
   }
 }

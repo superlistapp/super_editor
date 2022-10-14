@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:super_editor/super_editor.dart';
 
 import 'super_editor_syntax.dart';
@@ -15,88 +16,32 @@ String serializeDocumentToMarkdown(
   MarkdownSyntax syntax = MarkdownSyntax.superEditor,
   List<DocumentNodeMarkdownSerializer> customNodeSerializers = const [],
 }) {
+  final nodeSerializers = [
+    // Custom serializers first, in case the custom serializers handle
+    // specialized cases of traditional nodes, such as serializing a
+    // `ParagraphNode` with a special `"blockType"`.
+    ...customNodeSerializers,
+    const ImageNodeSerializer(),
+    const HorizontalRuleNodeSerializer(),
+    const ListItemNodeSerializer(),
+    ParagraphNodeSerializer(syntax),
+  ];
+
   StringBuffer buffer = StringBuffer();
 
-  bool isFirstLine = true;
   for (int i = 0; i < doc.nodes.length; ++i) {
-    final node = doc.nodes[i];
-
-    if (!isFirstLine) {
-      // Create a new line to encode the given node.
+    if (i > 0) {
+      // Add a new line before every node, except the first node.
       buffer.writeln("");
-    } else {
-      isFirstLine = false;
     }
 
-    bool didCustomSerialization = false;
-    for (final serializer in customNodeSerializers) {
-      final customSerialization = serializer.serialize(node);
-      if (customSerialization != null) {
-        buffer.writeln(customSerialization);
-        didCustomSerialization = true;
+    // Serialize the current node to markdown.
+    final node = doc.nodes[i];
+    for (final serializer in nodeSerializers) {
+      final serialization = serializer.serialize(doc, node);
+      if (serialization != null) {
+        buffer.write(serialization);
         break;
-      }
-    }
-    if (didCustomSerialization) {
-      continue;
-    }
-
-    if (node is ImageNode) {
-      buffer.write('![${node.altText}](${node.imageUrl})');
-    } else if (node is HorizontalRuleNode) {
-      buffer.write('---');
-    } else if (node is ListItemNode) {
-      final indent = List.generate(node.indent + 1, (index) => '  ').join('');
-      final symbol = node.type == ListItemType.unordered ? '*' : '1.';
-
-      buffer.write('$indent$symbol ${node.text.toMarkdown()}');
-
-      final nodeBelow = i < doc.nodes.length - 1 ? doc.nodes[i + 1] : null;
-      if (nodeBelow != null && (nodeBelow is! ListItemNode || nodeBelow.type != node.type)) {
-        // This list item is the last item in the list. Add an extra
-        // blank line after it.
-        buffer.writeln('');
-      }
-    } else if (node is ParagraphNode) {
-      final Attribution? blockType = node.getMetadataValue('blockType');
-
-      if (blockType == header1Attribution) {
-        buffer.write('# ${node.text.toMarkdown()}');
-      } else if (blockType == header2Attribution) {
-        buffer.write('## ${node.text.toMarkdown()}');
-      } else if (blockType == header3Attribution) {
-        buffer.write('### ${node.text.toMarkdown()}');
-      } else if (blockType == header4Attribution) {
-        buffer.write('#### ${node.text.toMarkdown()}');
-      } else if (blockType == header5Attribution) {
-        buffer.write('##### ${node.text.toMarkdown()}');
-      } else if (blockType == header6Attribution) {
-        buffer.write('###### ${node.text.toMarkdown()}');
-      } else if (blockType == blockquoteAttribution) {
-        // TODO: handle multiline
-        buffer.write('> ${node.text.toMarkdown()}');
-      } else if (blockType == codeAttribution) {
-        buffer //
-          ..writeln('```') //
-          ..writeln(node.text.toMarkdown()) //
-          ..write('```');
-      } else {
-        final String? textAlign = node.getMetadataValue('textAlign');
-        // Left alignment is the default, so there is no need to add the alignment token.
-        if (syntax == MarkdownSyntax.superEditor && textAlign != null && textAlign != 'left') {
-          final alignmentToken = _convertAlignmentToMarkdown(textAlign);
-          if (alignmentToken != null) {
-            buffer.writeln(alignmentToken);
-          }
-        }
-        buffer.write(node.text.toMarkdown());
-      }
-
-      // We're not at the end of the document yet. Add a blank line after the
-      // paragraph so that we can tell the difference between separate
-      // paragraphs vs. newlines within a single paragraph.
-      if (i != doc.nodes.length - 1) {
-        buffer.writeln();
       }
     }
   }
@@ -104,8 +49,139 @@ String serializeDocumentToMarkdown(
   return buffer.toString();
 }
 
+/// Serializes a given [DocumentNode] to a Markdown `String`.
 abstract class DocumentNodeMarkdownSerializer {
-  String? serialize(DocumentNode node);
+  String? serialize(Document document, DocumentNode node);
+}
+
+/// A [DocumentNodeMarkdownSerializer] that automatically rejects any
+/// [DocumentNode] that doesn't match the given [NodeType].
+///
+/// Use this base class to avoid repeating type checks across various
+/// serializers.
+abstract class NodeTypedDocumentNodeMarkdownSerializer<NodeType> implements DocumentNodeMarkdownSerializer {
+  const NodeTypedDocumentNodeMarkdownSerializer();
+
+  @override
+  String? serialize(Document document, DocumentNode node) {
+    if (node is! NodeType) {
+      return null;
+    }
+
+    return doSerialization(document, node as NodeType);
+  }
+
+  @protected
+  String doSerialization(Document document, NodeType node);
+}
+
+/// [DocumentNodeMarkdownSerializer] for serializing [ImageNode]s as standard Markdown
+/// images.
+class ImageNodeSerializer extends NodeTypedDocumentNodeMarkdownSerializer<ImageNode> {
+  const ImageNodeSerializer();
+
+  @override
+  String doSerialization(Document document, ImageNode node) {
+    return '![${node.altText}](${node.imageUrl})';
+  }
+}
+
+/// [DocumentNodeMarkdownSerializer] for serializing [HorizontalRuleNode]s as standard
+/// Markdown horizontal rules.
+class HorizontalRuleNodeSerializer extends NodeTypedDocumentNodeMarkdownSerializer<HorizontalRuleNode> {
+  const HorizontalRuleNodeSerializer();
+
+  @override
+  String doSerialization(Document document, HorizontalRuleNode node) {
+    return '---';
+  }
+}
+
+/// [DocumentNodeMarkdownSerializer] for serializing [ListItemNode]s as standard Markdown
+/// list items.
+///
+/// Includes support for ordered and unordered list items.
+class ListItemNodeSerializer extends NodeTypedDocumentNodeMarkdownSerializer<ListItemNode> {
+  const ListItemNodeSerializer();
+
+  @override
+  String doSerialization(Document document, ListItemNode node) {
+    final buffer = StringBuffer();
+
+    final indent = List.generate(node.indent + 1, (index) => '  ').join('');
+    final symbol = node.type == ListItemType.unordered ? '*' : '1.';
+
+    buffer.write('$indent$symbol ${node.text.toMarkdown()}');
+
+    final nodeIndex = document.getNodeIndex(node);
+    final nodeBelow = nodeIndex < document.nodes.length - 1 ? document.nodes[nodeIndex + 1] : null;
+    if (nodeBelow != null && (nodeBelow is! ListItemNode || nodeBelow.type != node.type)) {
+      // This list item is the last item in the list. Add an extra
+      // blank line after it.
+      buffer.writeln('');
+    }
+
+    return buffer.toString();
+  }
+}
+
+/// [DocumentNodeMarkdownSerializer] for serializing [ParagraphNode]s as standard Markdown
+/// paragraphs.
+///
+/// Includes support for headers, blockquotes, and code blocks.
+class ParagraphNodeSerializer extends NodeTypedDocumentNodeMarkdownSerializer<ParagraphNode> {
+  const ParagraphNodeSerializer(this.markdownSyntax);
+
+  final MarkdownSyntax markdownSyntax;
+
+  @override
+  String doSerialization(Document document, ParagraphNode node) {
+    final buffer = StringBuffer();
+
+    final Attribution? blockType = node.getMetadataValue('blockType');
+
+    if (blockType == header1Attribution) {
+      buffer.write('# ${node.text.toMarkdown()}');
+    } else if (blockType == header2Attribution) {
+      buffer.write('## ${node.text.toMarkdown()}');
+    } else if (blockType == header3Attribution) {
+      buffer.write('### ${node.text.toMarkdown()}');
+    } else if (blockType == header4Attribution) {
+      buffer.write('#### ${node.text.toMarkdown()}');
+    } else if (blockType == header5Attribution) {
+      buffer.write('##### ${node.text.toMarkdown()}');
+    } else if (blockType == header6Attribution) {
+      buffer.write('###### ${node.text.toMarkdown()}');
+    } else if (blockType == blockquoteAttribution) {
+      // TODO: handle multiline
+      buffer.write('> ${node.text.toMarkdown()}');
+    } else if (blockType == codeAttribution) {
+      buffer //
+        ..writeln('```') //
+        ..writeln(node.text.toMarkdown()) //
+        ..write('```');
+    } else {
+      final String? textAlign = node.getMetadataValue('textAlign');
+      // Left alignment is the default, so there is no need to add the alignment token.
+      if (markdownSyntax == MarkdownSyntax.superEditor && textAlign != null && textAlign != 'left') {
+        final alignmentToken = _convertAlignmentToMarkdown(textAlign);
+        if (alignmentToken != null) {
+          buffer.writeln(alignmentToken);
+        }
+      }
+      buffer.write(node.text.toMarkdown());
+    }
+
+    // We're not at the end of the document yet. Add a blank line after the
+    // paragraph so that we can tell the difference between separate
+    // paragraphs vs. newlines within a single paragraph.
+    final nodeIndex = document.getNodeIndex(node);
+    if (nodeIndex != document.nodes.length - 1) {
+      buffer.writeln();
+    }
+
+    return buffer.toString();
+  }
 }
 
 String? _convertAlignmentToMarkdown(String alignment) {
@@ -121,6 +197,7 @@ String? _convertAlignmentToMarkdown(String alignment) {
   }
 }
 
+/// Extension on [AttributedText] to serialize the [AttributedText] to a Markdown `String`.
 extension Markdown on AttributedText {
   String toMarkdown() {
     final serializer = AttributedTextMarkdownSerializer();
