@@ -22,6 +22,7 @@ import 'package:super_editor/src/default_editor/list_items.dart';
 import 'package:super_editor/src/default_editor/paragraph.dart';
 import 'package:super_editor/src/default_editor/unknown_component.dart';
 
+import 'document_tap_handling.dart';
 import 'read_only_document_android_touch_interactor.dart';
 import 'read_only_document_ios_touch_interactor.dart';
 import 'read_only_document_keyboard_interactor.dart';
@@ -43,6 +44,7 @@ class SuperReader extends StatefulWidget {
     List<ReadOnlyDocumentKeyboardAction>? keyboardActions,
     SelectionStyles? selectionStyle,
     this.gestureMode,
+    this.documentTapDelegate,
     this.androidHandleColor,
     this.androidToolbarBuilder,
     this.iOSHandleColor,
@@ -122,6 +124,10 @@ class SuperReader extends StatefulWidget {
 
   /// The [SuperReader] gesture mode, e.g., mouse or touch.
   final DocumentGestureMode? gestureMode;
+
+  /// A delegate that's given an opportunity to react to user taps at specific locations
+  /// within the document, e.g., opening a link when tapped.
+  final DocumentTapDelegate? documentTapDelegate;
 
   /// Color of the text selection drag handles on Android.
   final Color? androidHandleColor;
@@ -367,6 +373,7 @@ class SuperReaderState extends State<SuperReader> {
                   focusNode: _focusNode,
                   readerContext: _readerContext,
                   autoScroller: _autoScrollController,
+                  documentTapDelegate: widget.documentTapDelegate,
                   showDebugPaint: widget.debugPaint.gestures,
                   child: const SizedBox(),
                 ),

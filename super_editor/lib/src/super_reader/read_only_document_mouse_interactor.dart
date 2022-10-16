@@ -11,6 +11,7 @@ import 'package:super_editor/src/document_operations/selection_operations.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 
+import 'document_tap_handling.dart';
 import 'reader_context.dart';
 
 /// Governs mouse gesture interaction with a read-only document, such as scrolling
@@ -36,6 +37,7 @@ class ReadOnlyDocumentMouseInteractor extends StatefulWidget {
     this.focusNode,
     required this.readerContext,
     required this.autoScroller,
+    this.documentTapDelegate,
     this.showDebugPaint = false,
     required this.child,
   }) : super(key: key);
@@ -47,6 +49,10 @@ class ReadOnlyDocumentMouseInteractor extends StatefulWidget {
 
   /// Auto-scrolling delegate.
   final AutoScrollController autoScroller;
+
+  /// A delegate that's given an opportunity to react to user taps at specific locations
+  /// within the document, e.g., opening a link when tapped.
+  final DocumentTapDelegate? documentTapDelegate;
 
   /// Paints some extra visual ornamentation to help with
   /// debugging, when `true`.
@@ -175,6 +181,22 @@ class _ReadOnlyDocumentMouseInteractorState extends State<ReadOnlyDocumentMouseI
       return;
     }
 
+    final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
+
+    // Give our document tap delegate a chance to respond to this tap.
+    final componentTapOffset =
+        (tappedComponent.context.findRenderObject() as RenderBox).globalToLocal(details.globalPosition);
+    final didDelegateHandleTap = widget.documentTapDelegate?.onTap(
+          document: widget.readerContext.document,
+          node: widget.readerContext.document.getNodeById(docPosition.nodeId)!,
+          component: tappedComponent,
+          componentTapOffset: componentTapOffset,
+        ) ??
+        false;
+    if (didDelegateHandleTap) {
+      return;
+    }
+
     final expandSelection = _isShiftPressed && widget.readerContext.selection.value != null;
     if (!expandSelection) {
       // Read-only documents don't show carets. Therefore, we only care about
@@ -184,7 +206,6 @@ class _ReadOnlyDocumentMouseInteractorState extends State<ReadOnlyDocumentMouseI
       return;
     }
 
-    final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
     if (!tappedComponent.isVisualSelectionSupported()) {
       moveToNearestSelectableComponent(
         widget.readerContext.document,
