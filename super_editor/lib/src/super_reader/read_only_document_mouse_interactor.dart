@@ -1,12 +1,15 @@
 import 'dart:math';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
+import 'package:super_editor/src/default_editor/attributions.dart';
 import 'package:super_editor/src/default_editor/document_scrollable.dart';
+import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/document_operations/selection_operations.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
@@ -70,6 +73,8 @@ class _ReadOnlyDocumentMouseInteractorState extends State<ReadOnlyDocumentMouseI
   final _documentWrapperKey = GlobalKey();
 
   late FocusNode _focusNode;
+
+  final _mouseCursor = ValueNotifier<SystemMouseCursor>(SystemMouseCursors.text);
 
   // Tracks user drag gestures for selection purposes.
   SelectionType _selectionType = SelectionType.position;
@@ -440,6 +445,29 @@ Updating drag selection:
     }
   }
 
+  void _updateCursorStyle(PointerHoverEvent event) {
+    final documentOffset = widget.readerContext.documentLayout.getDocumentOffsetFromAncestorOffset(event.position);
+    final documentPosition = widget.readerContext.documentLayout.getDocumentPositionAtOffset(documentOffset);
+    if (documentPosition == null) {
+      _mouseCursor.value = SystemMouseCursors.text;
+      return;
+    }
+
+    final hoveredNode = widget.readerContext.document.getNode(documentPosition);
+    if (hoveredNode is! TextNode) {
+      _mouseCursor.value = SystemMouseCursors.text;
+      return;
+    }
+
+    final hoverAttributions =
+        hoveredNode.text.getAllAttributionsAt((documentPosition.nodePosition as TextNodePosition).offset);
+    if (hoverAttributions.firstWhereOrNull((attribution) => attribution is LinkAttribution) != null) {
+      _mouseCursor.value = SystemMouseCursors.click;
+    } else {
+      _mouseCursor.value = SystemMouseCursors.text;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Listener(
@@ -457,8 +485,15 @@ Updating drag selection:
   Widget _buildCursorStyle({
     required Widget child,
   }) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.text,
+    return ValueListenableBuilder<SystemMouseCursor>(
+      valueListenable: _mouseCursor,
+      builder: (context, cursor, child) {
+        return MouseRegion(
+          cursor: cursor,
+          onHover: _updateCursorStyle,
+          child: child,
+        );
+      },
       child: child,
     );
   }
