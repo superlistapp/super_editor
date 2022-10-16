@@ -254,8 +254,6 @@ class AttributedTextMarkdownSerializer extends AttributionVisitor {
       // can't be checked using equality comparison) and asymmetrical in markdown.
       final linkMarker = _encodeLinkMarker(endingAttributions, AttributionVisitEvent.end);
 
-      // +1 on end index because this visitor has inclusive indices
-      // whereas substring() expects an exclusive ending index.
       _buffer
         ..write(markdownStyles)
         ..write(linkMarker);
