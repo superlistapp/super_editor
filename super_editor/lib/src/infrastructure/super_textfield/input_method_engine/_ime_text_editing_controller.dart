@@ -530,4 +530,9 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
   void clear() {
     _realController.clear();
   }
+
+  @override
+  void performSelector(String selectorName) {
+    // TODO: implement performSelector
+  }
 }

@@ -303,4 +303,9 @@ class _BareBonesTextFieldWithInputClientState extends State<_BareBonesTextFieldW
       ),
     );
   }
+
+  @override
+  void performSelector(String selectorName) {
+    // TODO: implement performSelector
+  }
 }

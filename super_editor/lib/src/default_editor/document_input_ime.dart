@@ -414,6 +414,11 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
       child: widget.child,
     );
   }
+
+  @override
+  void performSelector(String selectorName) {
+    // TODO: implement performSelector
+  }
 }
 
 class DocumentImeSerializer {
