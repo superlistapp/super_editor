@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
-import 'package:super_editor/src/infrastructure/platform_detector.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 import 'package:super_text_layout/super_text_layout.dart';
@@ -11,14 +10,11 @@ import '../../super_editor/document_test_tools.dart';
 import '../../test_tools.dart';
 import '../_document_test_tools.dart';
 import '../_text_entry_test_tools.dart';
-import '../infrastructure/_platform_test_tools.dart';
 
 void main() {
   group('List items', () {
     group('node conversion', () {
-      test('converts paragraph with "1. " to ordered list item', () {
-        Platform.setTestInstance(MacPlatform());
-
+      testOnMac('converts paragraph with "1. " to ordered list item', () {
         final _editContext = _createEditContextWithParagraph();
 
         _typeKeys(_editContext, [
@@ -48,13 +44,9 @@ void main() {
         final listItemNode = _editContext.editor.document.nodes.first;
         expect(listItemNode, isA<ListItemNode>());
         expect((listItemNode as ListItemNode).text.text.isEmpty, isTrue);
-
-        Platform.setTestInstance(null);
       });
 
-      test('converts paragraph with " 1. " to ordered list item', () {
-        Platform.setTestInstance(MacPlatform());
-
+      testOnMac('converts paragraph with " 1. " to ordered list item', () {
         final _editContext = _createEditContextWithParagraph();
 
         _typeKeys(_editContext, [
@@ -91,13 +83,9 @@ void main() {
         final listItemNode = _editContext.editor.document.nodes.first;
         expect(listItemNode, isA<ListItemNode>());
         expect((listItemNode as ListItemNode).text.text.isEmpty, isTrue);
-
-        Platform.setTestInstance(null);
       });
 
-      test('converts paragraph with "1) " to ordered list item', () {
-        Platform.setTestInstance(MacPlatform());
-
+      testOnMac('converts paragraph with "1) " to ordered list item', () {
         final _editContext = _createEditContextWithParagraph();
 
         _typeKeys(_editContext, [
@@ -127,13 +115,9 @@ void main() {
         final listItemNode = _editContext.editor.document.nodes.first;
         expect(listItemNode, isA<ListItemNode>());
         expect((listItemNode as ListItemNode).text.text.isEmpty, isTrue);
-
-        Platform.setTestInstance(null);
       });
 
-      test('converts paragraph with " 1) " to ordered list item', () {
-        Platform.setTestInstance(MacPlatform());
-
+      testOnMac('converts paragraph with " 1) " to ordered list item', () {
         final _editContext = _createEditContextWithParagraph();
 
         _typeKeys(_editContext, [
@@ -170,13 +154,9 @@ void main() {
         final listItemNode = _editContext.editor.document.nodes.first;
         expect(listItemNode, isA<ListItemNode>());
         expect((listItemNode as ListItemNode).text.text.isEmpty, isTrue);
-
-        Platform.setTestInstance(null);
       });
 
-      test('does not convert paragraph with "1 " to ordered list item', () {
-        Platform.setTestInstance(MacPlatform());
-
+      testOnMac('does not convert paragraph with "1 " to ordered list item', () {
         final _editContext = _createEditContextWithParagraph();
 
         _typeKeys(_editContext, [
@@ -199,13 +179,9 @@ void main() {
         final paragraphNode = _editContext.editor.document.nodes.first;
         expect(paragraphNode, isA<ParagraphNode>());
         expect((paragraphNode as ParagraphNode).text.text, "1 ");
-
-        Platform.setTestInstance(null);
       });
 
-      test('does not convert paragraph with " 1 " to ordered list item', () {
-        Platform.setTestInstance(MacPlatform());
-
+      testOnMac('does not convert paragraph with " 1 " to ordered list item', () {
         final _editContext = _createEditContextWithParagraph();
 
         _typeKeys(_editContext, [
@@ -235,8 +211,6 @@ void main() {
         final paragraphNode = _editContext.editor.document.nodes.first;
         expect(paragraphNode, isA<ParagraphNode>());
         expect((paragraphNode as ParagraphNode).text.text, " 1 ");
-
-        Platform.setTestInstance(null);
       });
 
       testWidgetsOnArbitraryDesktop("applies styles when unordered list item is converted to and from a paragraph",
