@@ -11,7 +11,6 @@ import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/focus.dart';
-import 'package:super_editor/src/infrastructure/platform_detector.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/attributed_text_editing_controller.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/hint_text.dart';
 import 'package:super_text_layout/super_text_layout.dart';
@@ -252,7 +251,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
 
   double _getEstimatedLineHeight() {
     // After hot reloading, the text layout might be null, so we can't
-    // directly use _textKey.currentState!.textLayout because using it 
+    // directly use _textKey.currentState!.textLayout because using it
     // we can't check for null.
     final textLayout = RenderSuperTextLayout.textLayoutFrom(_textKey);
     final lineHeight = _controller.text.text.isEmpty || textLayout == null
@@ -1354,7 +1353,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
     if (!keyEvent.isControlPressed) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
-    if (!Platform.instance.isMac) {
+    if (defaultTargetPlatform != TargetPlatform.macOS) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
     if (keyEvent.logicalKey != LogicalKeyboardKey.keyA && keyEvent.logicalKey != LogicalKeyboardKey.keyE) {

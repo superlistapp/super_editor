@@ -2,10 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:logging/logging.dart';
 import 'package:logging/logging.dart' as logging;
-import 'package:super_editor/src/infrastructure/platform_detector.dart';
 import 'package:super_editor/super_editor.dart';
-
-import 'src/infrastructure/_platform_test_tools.dart';
 
 void groupWithLogging(String description, Level logLevel, Set<logging.Logger> loggers, VoidCallback body) {
   initLoggers(logLevel, loggers);
@@ -139,7 +136,6 @@ void testWidgetsOnMac(
   bool skip = false,
 }) {
   testWidgets(description, (tester) async {
-    Platform.setTestInstance(MacPlatform());
     debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
 
     tester.binding.window
@@ -150,7 +146,6 @@ void testWidgetsOnMac(
       await test(tester);
     } finally {
       debugDefaultTargetPlatformOverride = null;
-      Platform.setTestInstance(null);
     }
   }, skip: skip);
 }
@@ -169,12 +164,11 @@ void testOnMac(
   bool skip = false,
 }) {
   test(description, () {
-    Platform.setTestInstance(MacPlatform());
-
+    debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
     try {
       realTest();
     } finally {
-      Platform.setTestInstance(null);
+      debugDefaultTargetPlatformOverride = null;
     }
   }, skip: skip);
 }
@@ -187,7 +181,6 @@ void testWidgetsOnWindows(
   bool skip = false,
 }) {
   testWidgets(description, (tester) async {
-    Platform.setTestInstance(WindowsPlatform());
     debugDefaultTargetPlatformOverride = TargetPlatform.windows;
 
     tester.binding.window
@@ -198,7 +191,6 @@ void testWidgetsOnWindows(
       await test(tester);
     } finally {
       debugDefaultTargetPlatformOverride = null;
-      Platform.setTestInstance(null);
     }
   }, skip: skip);
 }
@@ -217,12 +209,11 @@ void testOnWindows(
   bool skip = false,
 }) {
   test(description, () {
-    Platform.setTestInstance(WindowsPlatform());
-
+    debugDefaultTargetPlatformOverride = TargetPlatform.windows;
     try {
       realTest();
     } finally {
-      Platform.setTestInstance(null);
+      debugDefaultTargetPlatformOverride = null;
     }
   }, skip: skip);
 }
@@ -235,7 +226,6 @@ void testWidgetsOnLinux(
   bool skip = false,
 }) {
   testWidgets(description, (tester) async {
-    Platform.setTestInstance(LinuxPlatform());
     debugDefaultTargetPlatformOverride = TargetPlatform.linux;
 
     tester.binding.window
@@ -246,7 +236,6 @@ void testWidgetsOnLinux(
       await test(tester);
     } finally {
       debugDefaultTargetPlatformOverride = null;
-      Platform.setTestInstance(null);
     }
   }, skip: skip);
 }
@@ -265,12 +254,11 @@ void testOnLinux(
   bool skip = false,
 }) {
   test(description, () {
-    Platform.setTestInstance(LinuxPlatform());
-
+    debugDefaultTargetPlatformOverride = TargetPlatform.linux;
     try {
       realTest();
     } finally {
-      Platform.setTestInstance(null);
+      debugDefaultTargetPlatformOverride = null;
     }
   }, skip: skip);
 }
@@ -283,14 +271,11 @@ void testWidgetsOnAndroid(
   bool skip = false,
 }) {
   testWidgets(description, (tester) async {
-    Platform.setTestInstance(AndroidPlatform());
     debugDefaultTargetPlatformOverride = TargetPlatform.android;
-
     try {
       await test(tester);
     } finally {
       debugDefaultTargetPlatformOverride = null;
-      Platform.setTestInstance(null);
     }
   }, skip: skip);
 }
@@ -303,14 +288,11 @@ void testWidgetsOnIos(
   bool skip = false,
 }) {
   testWidgets(description, (tester) async {
-    Platform.setTestInstance(IosPlatform());
     debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
-
     try {
       await test(tester);
     } finally {
       debugDefaultTargetPlatformOverride = null;
-      Platform.setTestInstance(null);
     }
   }, skip: skip);
 }
