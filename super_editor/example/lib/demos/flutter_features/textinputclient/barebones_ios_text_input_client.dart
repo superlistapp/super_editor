@@ -167,6 +167,11 @@ class _BareBonesTextFieldWithInputClientState extends State<_BareBonesTextFieldW
   }
 
   @override
+  void performSelector(String selectorName) {
+    // TODO: implement this method starting with Flutter 3.3.4
+  }
+
+  @override
   void performPrivateCommand(String action, Map<String, dynamic> data) {
     print('My TextInputClient: performPrivateCommand() - action: $action, data: $data');
 

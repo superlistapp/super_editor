@@ -336,6 +336,11 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
   }
 
   @override
+  void performSelector(String selectorName) {
+    // TODO: implement this method starting with Flutter 3.3.4
+  }
+
+  @override
   void performPrivateCommand(String action, Map<String, dynamic> data) {
     // TODO: implement performPrivateCommand
   }
