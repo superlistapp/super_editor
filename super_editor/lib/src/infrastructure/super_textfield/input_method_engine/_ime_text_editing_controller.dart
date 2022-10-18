@@ -327,6 +327,11 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
   void showToolbar() {
     // No-op: this is for scribble
   }
+
+  @override
+  void performSelector(String selectorName) {
+    // TODO: implement this method starting with Flutter 3.3.4
+  }
   //------ End TextInputClient -----
 
   @override

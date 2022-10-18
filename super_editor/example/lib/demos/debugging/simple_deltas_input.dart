@@ -113,6 +113,11 @@ class _SimpleDeltasInputState extends State<SimpleDeltasInputDemo> implements De
   }
 
   @override
+  void performSelector(String selectorName) {
+    // TODO: implement this method starting with Flutter 3.3.4
+  }
+
+  @override
   void performPrivateCommand(String action, Map<String, dynamic> data) {
     // no-op
   }
