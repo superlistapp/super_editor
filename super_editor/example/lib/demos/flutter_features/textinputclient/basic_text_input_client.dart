@@ -241,6 +241,11 @@ class _BareBonesTextFieldWithInputClientState extends State<_BareBonesTextFieldW
   }
 
   @override
+  void didChangeInputControl(TextInputControl? oldControl, TextInputControl? newControl) {
+    // TODO: implement didChangeInputControl for virtual keyboard support.
+  }
+
+  @override
   void connectionClosed() {
     print('My TextInputClient: connectionClosed()');
     _textInputConnection = null;

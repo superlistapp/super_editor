@@ -329,6 +329,11 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
   }
 
   @override
+  void didChangeInputControl(TextInputControl? oldControl, TextInputControl? newControl) {
+    // TODO: implement didChangeInputControl for virtual keyboard support.
+  }
+
+  @override
   void performSelector(String selectorName) {
     // TODO: implement this method starting with Flutter 3.3.4
   }

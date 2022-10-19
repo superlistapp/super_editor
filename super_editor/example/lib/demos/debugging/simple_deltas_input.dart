@@ -184,6 +184,11 @@ class _SimpleDeltasInputState extends State<SimpleDeltasInputDemo> implements De
   }
 
   @override
+  void didChangeInputControl(TextInputControl? oldControl, TextInputControl? newControl) {
+    // TODO: implement didChangeInputControl for virtual keyboard support.
+  }
+
+  @override
   void connectionClosed() {
     // no-op
   }

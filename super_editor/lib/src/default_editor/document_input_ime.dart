@@ -379,6 +379,11 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
   }
 
   @override
+  void didChangeInputControl(TextInputControl? oldControl, TextInputControl? newControl) {
+    // TODO: implement didChangeInputControl for virtual keyboard support.
+  }
+
+  @override
   void connectionClosed() {
     editorImeLog.info("IME connection closed");
     _inputConnection = null;
