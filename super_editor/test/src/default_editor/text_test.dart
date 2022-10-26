@@ -107,12 +107,13 @@ void main() {
         final editContext = _createEditContext();
 
         // Add a paragraph to the document.
-        (editContext.editor.document as MutableDocument).nodes.add(
-              ParagraphNode(
-                id: 'paragraph',
-                text: AttributedText(text: 'This is some text'),
-              ),
-            );
+        (editContext.editor.document as MutableDocument).insertNodeAt(
+          0,
+          ParagraphNode(
+            id: 'paragraph',
+            text: AttributedText(text: 'This is some text'),
+          ),
+        );
 
         // Select multiple characters in the paragraph
         editContext.composer.selection = const DocumentSelection(
@@ -145,9 +146,10 @@ void main() {
         final editContext = _createEditContext();
 
         // Add a non-text node to the document.
-        (editContext.editor.document as MutableDocument).nodes.add(
-              HorizontalRuleNode(id: 'horizontal_rule'),
-            );
+        (editContext.editor.document as MutableDocument).insertNodeAt(
+          0,
+          HorizontalRuleNode(id: 'horizontal_rule'),
+        );
 
         // Select the horizontal rule node.
         editContext.composer.selection = const DocumentSelection.collapsed(
@@ -176,12 +178,13 @@ void main() {
         final editContext = _createEditContext();
 
         // Add a paragraph to the document.
-        (editContext.editor.document as MutableDocument).nodes.add(
-              ParagraphNode(
-                id: 'paragraph',
-                text: AttributedText(text: 'This is some text'),
-              ),
-            );
+        (editContext.editor.document as MutableDocument).insertNodeAt(
+          0,
+          ParagraphNode(
+            id: 'paragraph',
+            text: AttributedText(text: 'This is some text'),
+          ),
+        );
 
         // Select multiple characters in the paragraph
         editContext.composer.selection = const DocumentSelection.collapsed(
@@ -227,12 +230,13 @@ void main() {
         final editContext = _createEditContext();
 
         // Add a paragraph to the document.
-        (editContext.editor.document as MutableDocument).nodes.add(
-              ParagraphNode(
-                id: 'paragraph',
-                text: AttributedText(text: 'This is some text'),
-              ),
-            );
+        (editContext.editor.document as MutableDocument).insertNodeAt(
+          0,
+          ParagraphNode(
+            id: 'paragraph',
+            text: AttributedText(text: 'This is some text'),
+          ),
+        );
 
         // Select multiple characters in the paragraph
         editContext.composer.selection = const DocumentSelection.collapsed(
@@ -266,12 +270,13 @@ void main() {
         final editContext = _createEditContext();
 
         // Add a paragraph to the document.
-        (editContext.editor.document as MutableDocument).nodes.add(
-              ParagraphNode(
-                id: 'paragraph',
-                text: AttributedText(text: 'This is some text'),
-              ),
-            );
+        (editContext.editor.document as MutableDocument).insertNodeAt(
+          0,
+          ParagraphNode(
+            id: 'paragraph',
+            text: AttributedText(text: 'This is some text'),
+          ),
+        );
 
         // Select multiple characters in the paragraph
         editContext.composer.selection = const DocumentSelection.collapsed(

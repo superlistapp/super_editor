@@ -887,9 +887,19 @@ class AddTextAttributionsCommand implements EditorCommand {
         final node = entry.key;
         final range = entry.value.toSpanRange();
         editorDocLog.info(' - adding attribution: $attribution. Range: $range');
-        node.text.addAttribution(
-          attribution,
-          range,
+
+        // During style phase, we check which components changed, so we only re-style those components.
+        // If we just add the attribution on the same instance of AttributedText, we can't detect the change,
+        // because comparing the same instance will always evaluate to true.
+        final spans = node.text.spans.copy();
+        spans.addAttribution(
+          newAttribution: attribution,
+          start: range.start,
+          end: range.end,
+        );
+        node.text = AttributedText(
+          text: node.text.text,
+          spans: spans,
         );
       }
     }
@@ -975,9 +985,19 @@ class RemoveTextAttributionsCommand implements EditorCommand {
         final node = entry.key;
         final range = entry.value.toSpanRange();
         editorDocLog.info(' - removing attribution: $attribution. Range: $range');
-        node.text.removeAttribution(
-          attribution,
-          range,
+
+        // During style phase, we check which components changed, so we only re-style those components.
+        // If we just remove the attribution on the same instance of AttributedText, we can't detect the change,
+        // because comparing the same instance will always evaluate to true.
+        final spans = node.text.spans.copy();
+        spans.removeAttribution(
+          attributionToRemove: attribution,
+          start: range.start,
+          end: range.end,
+        );
+        node.text = AttributedText(
+          text: node.text.text,
+          spans: spans,
         );
       }
     }
@@ -1073,9 +1093,19 @@ class ToggleTextAttributionsCommand implements EditorCommand {
         final node = entry.key;
         final range = entry.value;
         editorDocLog.info(' - toggling attribution: $attribution. Range: $range');
-        node.text.toggleAttribution(
-          attribution,
-          range,
+
+        // During style phase, we check which components changed, so we only re-style those components.
+        // If we just toggle the attribution on the same instance of AttributedText, we can't detect the change,
+        // because comparing the same instance will always evaluate to true.
+        final spans = node.text.spans.copy();
+        spans.toggleAttribution(
+          attribution: attribution,
+          start: range.start,
+          end: range.end,
+        );
+        node.text = AttributedText(
+          text: node.text.text,
+          spans: spans,
         );
       }
     }

@@ -179,7 +179,6 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
           isComplete == other.isComplete &&
           setComplete == other.setComplete &&
           text == other.text &&
-          textStyleBuilder == other.textStyleBuilder &&
           textDirection == other.textDirection &&
           textAlignment == other.textAlignment &&
           selection == other.selection &&
@@ -192,7 +191,6 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
       isComplete.hashCode ^
       setComplete.hashCode ^
       text.hashCode ^
-      textStyleBuilder.hashCode ^
       textDirection.hashCode ^
       textAlignment.hashCode ^
       selection.hashCode ^

@@ -162,7 +162,6 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
           nodeId == other.nodeId &&
           blockType == other.blockType &&
           text == other.text &&
-          textStyleBuilder == other.textStyleBuilder &&
           textDirection == other.textDirection &&
           textAlignment == other.textAlignment &&
           selection == other.selection &&
@@ -175,7 +174,6 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
       nodeId.hashCode ^
       blockType.hashCode ^
       text.hashCode ^
-      textStyleBuilder.hashCode ^
       textDirection.hashCode ^
       textAlignment.hashCode ^
       selection.hashCode ^

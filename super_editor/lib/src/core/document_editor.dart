@@ -1,7 +1,6 @@
 import 'dart:math';
 
 import 'package:collection/collection.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
@@ -133,22 +132,29 @@ class MutableDocument with ChangeNotifier implements Document {
   MutableDocument({
     List<DocumentNode>? nodes,
   }) : _nodes = nodes ?? [] {
-    // Register listeners for all initial nodes.
-    for (final node in _nodes) {
+    // Register listeners for all initial nodes and populates the node maps.
+    for (int i = 0; i < _nodes.length; i++) {
+      final node = _nodes[i];
       node.addListener(_forwardNodeChange);
+      _nodeIndicesById[node.id] = i;
+      _nodesById[node.id] = node;
     }
   }
 
   final List<DocumentNode> _nodes;
 
   @override
-  List<DocumentNode> get nodes => _nodes;
+  List<DocumentNode> get nodes => List.unmodifiable(_nodes);
+
+  /// Maps a node id to its index in the node list.
+  final Map<String, int> _nodeIndicesById = {};
+
+  /// Maps a node id to its node.
+  final Map<String, DocumentNode> _nodesById = {};
 
   @override
   DocumentNode? getNodeById(String nodeId) {
-    return _nodes.firstWhereOrNull(
-      (element) => element.id == nodeId,
-    );
+    return _nodesById[nodeId];
   }
 
   @override
@@ -162,7 +168,10 @@ class MutableDocument with ChangeNotifier implements Document {
 
   @override
   int getNodeIndex(DocumentNode node) {
-    return _nodes.indexOf(node);
+    // We always update _nodeIndicesById when the node list changes.
+    // If the id isn't present in the map it means the node isn't present
+    // in the document.
+    return _nodeIndicesById[node.id] ?? -1;
   }
 
   @override
@@ -180,12 +189,11 @@ class MutableDocument with ChangeNotifier implements Document {
   @override
   DocumentNode? getNodeAfter(DocumentNode node) {
     final nodeIndex = getNodeIndex(node);
-    return nodeIndex >= 0 && nodeIndex < nodes.length - 1 ? getNodeAt(nodeIndex + 1) : null;
+    return nodeIndex >= 0 && nodeIndex < _nodes.length - 1 ? getNodeAt(nodeIndex + 1) : null;
   }
 
   @override
-  DocumentNode? getNode(DocumentPosition position) =>
-      _nodes.firstWhereOrNull((element) => element.id == position.nodeId);
+  DocumentNode? getNode(DocumentPosition position) => getNodeById(position.nodeId);
 
   @override
   DocumentRange getRangeBetween(DocumentPosition position1, DocumentPosition position2) {
@@ -202,13 +210,13 @@ class MutableDocument with ChangeNotifier implements Document {
     if (node1 == null) {
       throw Exception('No such position in document: $position1');
     }
-    final index1 = _nodes.indexOf(node1);
+    final index1 = getNodeIndex(node1);
 
     final node2 = getNode(position2);
     if (node2 == null) {
       throw Exception('No such position in document: $position2');
     }
-    final index2 = _nodes.indexOf(node2);
+    final index2 = getNodeIndex(node2);
 
     final from = min(index1, index2);
     final to = max(index1, index2);
@@ -218,9 +226,13 @@ class MutableDocument with ChangeNotifier implements Document {
 
   /// Inserts the given [node] into the [Document] at the given [index].
   void insertNodeAt(int index, DocumentNode node) {
-    if (index <= nodes.length) {
-      nodes.insert(index, node);
+    if (index <= _nodes.length) {
+      _nodes.insert(index, node);
       node.addListener(_forwardNodeChange);
+
+      // The node list changed, we need to update the map to consider the new indices.
+      _updateNodeIdMappings();
+
       notifyListeners();
     }
   }
@@ -230,9 +242,13 @@ class MutableDocument with ChangeNotifier implements Document {
     required DocumentNode existingNode,
     required DocumentNode newNode,
   }) {
-    final nodeIndex = nodes.indexOf(existingNode);
-    nodes.insert(nodeIndex, newNode);
+    final nodeIndex = getNodeIndex(existingNode);
+    _nodes.insert(nodeIndex, newNode);
     newNode.addListener(_forwardNodeChange);
+
+    // The node list changed, we need to update the map to consider the new indices.
+    _updateNodeIdMappings();
+
     notifyListeners();
   }
 
@@ -241,19 +257,27 @@ class MutableDocument with ChangeNotifier implements Document {
     required DocumentNode existingNode,
     required DocumentNode newNode,
   }) {
-    final nodeIndex = nodes.indexOf(existingNode);
-    if (nodeIndex >= 0 && nodeIndex < nodes.length) {
-      nodes.insert(nodeIndex + 1, newNode);
+    final nodeIndex = getNodeIndex(existingNode);
+    if (nodeIndex >= 0 && nodeIndex < _nodes.length) {
+      _nodes.insert(nodeIndex + 1, newNode);
       newNode.addListener(_forwardNodeChange);
+
+      // The node list changed, we need to update the map to consider the new indices.
+      _updateNodeIdMappings();
+
       notifyListeners();
     }
   }
 
   /// Deletes the node at the given [index].
   void deleteNodeAt(int index) {
-    if (index >= 0 && index < nodes.length) {
-      final removedNode = nodes.removeAt(index);
+    if (index >= 0 && index < _nodes.length) {
+      final removedNode = _nodes.removeAt(index);
       removedNode.removeListener(_forwardNodeChange);
+
+      // The node list changed, we need to update the map to consider the new indices.
+      _updateNodeIdMappings();
+
       notifyListeners();
     } else {
       editorDocLog.warning('Could not delete node. Index out of range: $index');
@@ -265,7 +289,11 @@ class MutableDocument with ChangeNotifier implements Document {
     bool isRemoved = false;
 
     node.removeListener(_forwardNodeChange);
-    isRemoved = nodes.remove(node);
+
+    isRemoved = _nodes.remove(node);
+
+    // The node list changed, we need to update the map to consider the new indices.
+    _updateNodeIdMappings();
 
     notifyListeners();
 
@@ -282,8 +310,12 @@ class MutableDocument with ChangeNotifier implements Document {
       throw Exception('Could not find node with nodeId: $nodeId');
     }
 
-    if (nodes.remove(node)) {
-      nodes.insert(targetIndex, node);
+    if (_nodes.remove(node)) {
+      _nodes.insert(targetIndex, node);
+
+      // The node list changed, we need to update the map to consider the new indices.
+      _updateNodeIdMappings();
+
       notifyListeners();
     }
   }
@@ -301,6 +333,9 @@ class MutableDocument with ChangeNotifier implements Document {
 
       newNode.addListener(_forwardNodeChange);
       _nodes.insert(index, newNode);
+
+      // The node list changed, we need to update the map to consider the new indices.
+      _updateNodeIdMappings();
 
       notifyListeners();
     } else {
@@ -320,17 +355,31 @@ class MutableDocument with ChangeNotifier implements Document {
   /// ignores the runtime type of the [Document], itself.
   @override
   bool hasEquivalentContent(Document other) {
-    if (_nodes.length != other.nodes.length) {
+    final otherNodes = other.nodes;
+    if (_nodes.length != otherNodes.length) {
       return false;
     }
 
     for (int i = 0; i < _nodes.length; ++i) {
-      if (!_nodes[i].hasEquivalentContent(other.nodes[i])) {
+      if (!_nodes[i].hasEquivalentContent(otherNodes[i])) {
         return false;
       }
     }
 
     return true;
+  }
+
+  /// Updates all the maps which use the node id as the key.
+  ///
+  /// All the maps are cleared and re-populated.
+  void _updateNodeIdMappings() {
+    _nodeIndicesById.clear();
+    _nodesById.clear();
+    for (int i = 0; i < _nodes.length; i++) {
+      final node = _nodes[i];
+      _nodeIndicesById[node.id] = i;
+      _nodesById[node.id] = node;
+    }
   }
 
   @override
