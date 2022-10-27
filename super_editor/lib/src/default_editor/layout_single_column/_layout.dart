@@ -367,6 +367,13 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
         bottomNodeId = _nodeIdsToComponentKeys.entries.firstWhere((element) => element.value == componentKey).key;
         bottomNodeBasePosition = _getNodePositionForComponentOffset(component, componentBaseOffset);
         bottomNodeExtentPosition = _getNodePositionForComponentOffset(component, componentExtentOffset);
+      } else if (topNodeId != null) {
+        // We already found an overlapping component and the current component doesn't
+        // overlap with the region.
+        // Because we're iterating through components from top to bottom,
+        // it means that there isn't any other component which will overlap,
+        // so we can skip the rest of the list.
+        break;
       }
     }
 
@@ -605,7 +612,7 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
   DocumentPosition? findLastSelectablePosition() {
     NodePosition? nodePosition;
     String? nodeId;
-    
+
     for (int i = _topToBottomComponentKeys.length - 1; i >= 0; i--) {
       final componentKey = _topToBottomComponentKeys[i];
       final component = componentKey.currentState as DocumentComponent;
