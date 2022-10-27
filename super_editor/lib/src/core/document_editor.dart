@@ -168,9 +168,6 @@ class MutableDocument with ChangeNotifier implements Document {
 
   @override
   int getNodeIndex(DocumentNode node) {
-    // We always update _nodeIndicesById when the node list changes.
-    // If the id isn't present in the map it means the node isn't present
-    // in the document.
     return _nodeIndicesById[node.id] ?? -1;
   }
 

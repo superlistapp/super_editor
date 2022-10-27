@@ -9,7 +9,7 @@ import 'document_test_tools.dart';
 
 void main() {
   group('SuperEditor', () {
-    testWidgetsOnArbitraryDesktop('applies style when toggling attributions', (tester) async {
+    testWidgetsOnArbitraryDesktop('changes visual text style when attributions change', (tester) async {
       final testContext = await tester
           .createDocument() //
           .withSingleParagraph()
