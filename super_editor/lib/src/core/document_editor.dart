@@ -144,7 +144,7 @@ class MutableDocument with ChangeNotifier implements Document {
   final List<DocumentNode> _nodes;
 
   @override
-  List<DocumentNode> get nodes => List.unmodifiable(_nodes);
+  List<DocumentNode> get nodes => UnmodifiableListView(_nodes);
 
   /// Maps a node id to its index in the node list.
   final Map<String, int> _nodeIndicesById = {};
