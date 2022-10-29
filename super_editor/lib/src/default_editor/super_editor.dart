@@ -297,6 +297,9 @@ class SuperEditorState extends State<SuperEditor> {
   late SoftwareKeyboardHandler _softwareKeyboardHandler;
   final _floatingCursorController = FloatingCursorController();
 
+  @visibleForTesting
+  SingleColumnLayoutPresenter get presenter => _docLayoutPresenter!;
+
   @override
   void initState() {
     super.initState();
