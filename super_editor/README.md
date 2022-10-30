@@ -3,7 +3,10 @@
   <span><b>Open source, configurable, extensible text editor and document renderer for Flutter.</b></span><br><br>
 </p>
 
+<p align="center"><b>Super Editor works with any backend. Plug yours in and go!</b></p><br>
+
 <img src="https://raw.githubusercontent.com/superlistapp/super_editor/main/super_editor/doc/marketing/readme-header.png" width="100%" alt="Super Editor">
+<br> 
 
 `super_editor` was initiated by [Superlist](https://superlist.com) and is being implemented and maintained by the [Flutter Bounty Hunters](https://flutterbountyhunters.com), Superlist, and the contributors.
 
@@ -22,7 +25,7 @@ Super Editor is actively developed against these platforms.
 
 **Unverified**
 
-These platforms might work, but Super Editor is not developing against them.
+These platforms probably work, but our verification on these platforms is spotty.
 
  * Windows
  * Linux
