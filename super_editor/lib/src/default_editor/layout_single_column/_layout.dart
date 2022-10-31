@@ -317,8 +317,8 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
     dynamic bottomNodeBasePosition;
     dynamic bottomNodeExtentPosition;
 
-    final startingOffset = min(baseOffset.dy, extentOffset.dy);
-    final startIndex = max(_findComponentIndexAtOffset(startingOffset), 0);
+    final startOffset = min(baseOffset.dy, extentOffset.dy);
+    final startIndex = max(_findComponentIndexAtOffset(startOffset), 0);
 
     for (int i = startIndex; i < _topToBottomComponentKeys.length; i++) {
       final componentKey = _topToBottomComponentKeys[i];
@@ -720,10 +720,17 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
     return newComponentKeyMap[nodeId]!;
   }
 
+  /// Finds the component whose vertical bounds contains the offset [dy].
+  ///
+  /// Returns the index of the component, from top to bottom order.
   int _findComponentIndexAtOffset(double dy) {
     return _binarySearchComponentIndexAtOffset(dy, 0, _topToBottomComponentKeys.length);
   }
 
+  /// Performs a binary search starting from [minIndex] to [maxIndex] to find
+  /// a component whose bounds contains the offset [dy].
+  ///
+  /// Returns the index of the component, from top to bottom order.
   int _binarySearchComponentIndexAtOffset(double dy, int minIndex, int maxIndex) {
     if (minIndex > maxIndex) {
       return -1;
