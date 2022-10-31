@@ -120,10 +120,12 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
     super.initState();
 
     _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
-    _hasFocus = _focusNode.hasFocus;
 
     _controller = (widget.textController ?? AttributedTextEditingController())
       ..addListener(_onSelectionOrContentChange);
+
+    _onFocusChange();
+
     _scrollController = ScrollController();
   }
 
