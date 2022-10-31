@@ -228,7 +228,7 @@ class MutableDocument with ChangeNotifier implements Document {
       node.addListener(_forwardNodeChange);
 
       // The node list changed, we need to update the map to consider the new indices.
-      _updateNodeIdMappings();
+      _refreshNodeIdCaches();
 
       notifyListeners();
     }
@@ -244,7 +244,7 @@ class MutableDocument with ChangeNotifier implements Document {
     newNode.addListener(_forwardNodeChange);
 
     // The node list changed, we need to update the map to consider the new indices.
-    _updateNodeIdMappings();
+    _refreshNodeIdCaches();
 
     notifyListeners();
   }
@@ -260,10 +260,21 @@ class MutableDocument with ChangeNotifier implements Document {
       newNode.addListener(_forwardNodeChange);
 
       // The node list changed, we need to update the map to consider the new indices.
-      _updateNodeIdMappings();
+      _refreshNodeIdCaches();
 
       notifyListeners();
     }
+  }
+
+  /// Inserts [node] at the end of the document.
+  void insertNode(DocumentNode node) {
+    _nodes.insert(_nodes.length, node);
+    node.addListener(_forwardNodeChange);
+
+    // The node list changed, we need to update the map to consider the new indices.
+    _refreshNodeIdCaches();
+
+    notifyListeners();
   }
 
   /// Deletes the node at the given [index].
@@ -273,7 +284,7 @@ class MutableDocument with ChangeNotifier implements Document {
       removedNode.removeListener(_forwardNodeChange);
 
       // The node list changed, we need to update the map to consider the new indices.
-      _updateNodeIdMappings();
+      _refreshNodeIdCaches();
 
       notifyListeners();
     } else {
@@ -290,7 +301,7 @@ class MutableDocument with ChangeNotifier implements Document {
     isRemoved = _nodes.remove(node);
 
     // The node list changed, we need to update the map to consider the new indices.
-    _updateNodeIdMappings();
+    _refreshNodeIdCaches();
 
     notifyListeners();
 
@@ -310,8 +321,8 @@ class MutableDocument with ChangeNotifier implements Document {
     if (_nodes.remove(node)) {
       _nodes.insert(targetIndex, node);
 
-      // The node list changed, we need to update the map to consider the new indices.
-      _updateNodeIdMappings();
+      // An existing node's index changed. Update our Node ID -> Node Index cache.
+      _refreshNodeIdCaches();
 
       notifyListeners();
     }
@@ -331,8 +342,8 @@ class MutableDocument with ChangeNotifier implements Document {
       newNode.addListener(_forwardNodeChange);
       _nodes.insert(index, newNode);
 
-      // The node list changed, we need to update the map to consider the new indices.
-      _updateNodeIdMappings();
+      // An existing node's index changed. Update our Node ID -> Node Index cache.
+      _refreshNodeIdCaches();
 
       notifyListeners();
     } else {
@@ -369,7 +380,7 @@ class MutableDocument with ChangeNotifier implements Document {
   /// Updates all the maps which use the node id as the key.
   ///
   /// All the maps are cleared and re-populated.
-  void _updateNodeIdMappings() {
+  void _refreshNodeIdCaches() {
     _nodeIndicesById.clear();
     _nodesById.clear();
     for (int i = 0; i < _nodes.length; i++) {

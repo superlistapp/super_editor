@@ -317,10 +317,12 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
     dynamic bottomNodeBasePosition;
     dynamic bottomNodeExtentPosition;
 
-    final startOffset = min(baseOffset.dy, extentOffset.dy);
-    final startIndex = max(_findComponentIndexAtOffset(startOffset), 0);
-
-    for (int i = startIndex; i < _topToBottomComponentKeys.length; i++) {
+    // Find the top and bottom nodes in the selection region. We do this by finding the component
+    // at the top of the selection, then we iterate down the document until we find the bottom
+    // component in the selection region. We obtain the document nodes from the components.
+    final selectionRegionTopOffset = min(baseOffset.dy, extentOffset.dy);
+    final componentSearchStartIndex = max(_findComponentIndexAtOffset(selectionRegionTopOffset), 0);
+    for (int i = componentSearchStartIndex; i < _topToBottomComponentKeys.length; i++) {
       final componentKey = _topToBottomComponentKeys[i];
       editorLayoutLog.info(' - considering component "$componentKey"');
       if (componentKey.currentState is! DocumentComponent) {
@@ -724,7 +726,10 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
   ///
   /// Returns the index of the component, from top to bottom order.
   int _findComponentIndexAtOffset(double dy) {
-    return _binarySearchComponentIndexAtOffset(dy, 0, _topToBottomComponentKeys.length);
+    if (_topToBottomComponentKeys.isEmpty) {
+      return -1;
+    }
+    return _binarySearchComponentIndexAtOffset(dy, 0, _topToBottomComponentKeys.length - 1);
   }
 
   /// Performs a binary search starting from [minIndex] to [maxIndex] to find
@@ -736,31 +741,34 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
       return -1;
     }
 
-    final midleIndex = ((minIndex + maxIndex) / 2).floor();
-    final componentBounds = _getComponentBoundsByIndex(midleIndex);
+    final middleIndex = ((minIndex + maxIndex) / 2).floor();
+    final componentBounds = _getComponentBoundsByIndex(middleIndex);
 
-    if (dy >= componentBounds.top && dy <= componentBounds.bottom) {
-      return midleIndex;
+    if (componentBounds.top <= dy && dy <= componentBounds.bottom) {
+      // The component in the middle of the search region is the one we're looking for. Return its index.
+      return middleIndex;
     }
 
     if (dy > componentBounds.bottom) {
-      if (midleIndex + 1 < _topToBottomComponentKeys.length) {
+      if (middleIndex + 1 < _topToBottomComponentKeys.length) {
         // Check the gap between two components.
-        final nextComponentBounds = _getComponentBoundsByIndex(midleIndex + 1);
-        if (dy > componentBounds.bottom && dy < nextComponentBounds.top) {
-          return midleIndex;
+        final nextComponentBounds = _getComponentBoundsByIndex(middleIndex + 1);
+        if (componentBounds.bottom < dy && dy < nextComponentBounds.top) {
+          // The component we're looking for is somewhere in the bottom half of the current search region.
+          return middleIndex;
         }
       }
-      return _binarySearchComponentIndexAtOffset(dy, midleIndex + 1, maxIndex);
+      return _binarySearchComponentIndexAtOffset(dy, middleIndex + 1, maxIndex);
     } else {
-      if (midleIndex - 1 >= 0) {
+      if (middleIndex - 1 >= 0) {
         // Check the gap between two components.
-        final previousComponentBounds = _getComponentBoundsByIndex(midleIndex - 1);
-        if (dy < componentBounds.top && dy > previousComponentBounds.bottom) {
-          return midleIndex;
+        final previousComponentBounds = _getComponentBoundsByIndex(middleIndex - 1);
+        if (previousComponentBounds.bottom < dy && dy < componentBounds.top) {
+          // The component we're looking for is somewhere in the top half of the current search region.
+          return middleIndex;
         }
       }
-      return _binarySearchComponentIndexAtOffset(dy, minIndex, midleIndex - 1);
+      return _binarySearchComponentIndexAtOffset(dy, minIndex, middleIndex - 1);
     }
   }
 

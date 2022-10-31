@@ -107,8 +107,7 @@ void main() {
         final editContext = _createEditContext();
 
         // Add a paragraph to the document.
-        (editContext.editor.document as MutableDocument).insertNodeAt(
-          0,
+        (editContext.editor.document as MutableDocument).insertNode(
           ParagraphNode(
             id: 'paragraph',
             text: AttributedText(text: 'This is some text'),
@@ -146,8 +145,7 @@ void main() {
         final editContext = _createEditContext();
 
         // Add a non-text node to the document.
-        (editContext.editor.document as MutableDocument).insertNodeAt(
-          0,
+        (editContext.editor.document as MutableDocument).insertNode(
           HorizontalRuleNode(id: 'horizontal_rule'),
         );
 
@@ -178,8 +176,7 @@ void main() {
         final editContext = _createEditContext();
 
         // Add a paragraph to the document.
-        (editContext.editor.document as MutableDocument).insertNodeAt(
-          0,
+        (editContext.editor.document as MutableDocument).insertNode(
           ParagraphNode(
             id: 'paragraph',
             text: AttributedText(text: 'This is some text'),
@@ -230,8 +227,7 @@ void main() {
         final editContext = _createEditContext();
 
         // Add a paragraph to the document.
-        (editContext.editor.document as MutableDocument).insertNodeAt(
-          0,
+        (editContext.editor.document as MutableDocument).insertNode(
           ParagraphNode(
             id: 'paragraph',
             text: AttributedText(text: 'This is some text'),
@@ -270,8 +266,7 @@ void main() {
         final editContext = _createEditContext();
 
         // Add a paragraph to the document.
-        (editContext.editor.document as MutableDocument).insertNodeAt(
-          0,
+        (editContext.editor.document as MutableDocument).insertNode(
           ParagraphNode(
             id: 'paragraph',
             text: AttributedText(text: 'This is some text'),

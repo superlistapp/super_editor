@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
@@ -71,9 +69,13 @@ void main() {
       final presenter = tester.state<SuperEditorState>(find.byType(SuperEditor)).presenter;
       presenter.addChangeListener(SingleColumnLayoutPresenterChangeListener(
         onViewModelChange: ({required addedComponents, required changedComponents, required removedComponents}) {
-          // The listener is called two times. The first one for the text change,
-          // and the second one for the selection change.
-          componentChangedCount = max(componentChangedCount, changedComponents.length);
+          if (componentChangedCount != 0) {
+            // The listener is called two times. The first one for the text change, which is the one
+            // we care about, and the second one for the selection change.
+            // Return early to avoid overriding the value.
+            return;
+          }
+          componentChangedCount = changedComponents.length;
         },
       ));
 
