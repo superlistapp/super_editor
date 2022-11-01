@@ -72,7 +72,9 @@ class DocumentImeInteractor extends StatefulWidget {
   State createState() => _DocumentImeInteractorState();
 }
 
-class _DocumentImeInteractorState extends State<DocumentImeInteractor> implements DeltaTextInputClient, ImeInputOwner {
+class _DocumentImeInteractorState extends State<DocumentImeInteractor>
+    with TextInputClient, DeltaTextInputClient
+    implements ImeInputOwner {
   late FocusNode _focusNode;
 
   TextInputConnection? _inputConnection;
@@ -361,21 +363,6 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
         widget.floatingCursorController?.offset = null;
         break;
     }
-  }
-
-  @override
-  void insertTextPlaceholder(Size size) {
-    // No-op: this is for scribble
-  }
-
-  @override
-  void removeTextPlaceholder() {
-    // No-op: this is for scribble
-  }
-
-  @override
-  void showToolbar() {
-    // No-op: this is for scribble
   }
 
   @override

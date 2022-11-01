@@ -12,7 +12,7 @@ class SimpleDeltasInputDemo extends StatefulWidget {
   _SimpleDeltasInputState createState() => _SimpleDeltasInputState();
 }
 
-class _SimpleDeltasInputState extends State<SimpleDeltasInputDemo> implements DeltaTextInputClient {
+class _SimpleDeltasInputState extends State<SimpleDeltasInputDemo> with TextInputClient, DeltaTextInputClient {
   final _textGlobalKey = GlobalKey(debugLabel: "text_input");
   AttributedText _text = AttributedText(text: "Hello, world!");
 
@@ -166,21 +166,6 @@ class _SimpleDeltasInputState extends State<SimpleDeltasInputDemo> implements De
   @override
   void updateFloatingCursor(RawFloatingCursorPoint point) {
     // no-op
-  }
-
-  @override
-  void insertTextPlaceholder(Size size) {
-    // TODO: implement insertTextPlaceholder
-  }
-
-  @override
-  void removeTextPlaceholder() {
-    // TODO: implement removeTextPlaceholder
-  }
-
-  @override
-  void showToolbar() {
-    // TODO: implement showToolbar
   }
 
   @override
