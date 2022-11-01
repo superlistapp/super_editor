@@ -36,8 +36,7 @@ class _BareBonesTextFieldWithInputClient extends StatefulWidget {
   _BareBonesTextFieldWithInputClientState createState() => _BareBonesTextFieldWithInputClientState();
 }
 
-class _BareBonesTextFieldWithInputClientState extends State<_BareBonesTextFieldWithInputClient>
-    implements TextInputClient {
+class _BareBonesTextFieldWithInputClientState extends State<_BareBonesTextFieldWithInputClient> with TextInputClient {
   final _textKey = GlobalKey<ProseTextState>();
 
   late FocusNode _focusNode;
@@ -223,21 +222,6 @@ class _BareBonesTextFieldWithInputClientState extends State<_BareBonesTextFieldW
         _floatingCursorCurrentOffset = null;
         break;
     }
-  }
-
-  @override
-  void insertTextPlaceholder(Size size) {
-    // No-op: this is for scribble
-  }
-
-  @override
-  void removeTextPlaceholder() {
-    // No-op: this is for scribble
-  }
-
-  @override
-  void showToolbar() {
-    // No-op: this is for scribble
   }
 
   @override

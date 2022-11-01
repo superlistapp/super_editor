@@ -26,7 +26,8 @@ final _log = imeTextFieldLog;
 /// By default, an [ImeAttributedTextEditingController] is not connected to the platform
 /// IME. To connect to the IME, call `attachToIme`. To detach from the IME, call
 /// `detachFromIme`.
-class ImeAttributedTextEditingController extends AttributedTextEditingController implements DeltaTextInputClient {
+class ImeAttributedTextEditingController extends AttributedTextEditingController
+    with TextInputClient, DeltaTextInputClient {
   ImeAttributedTextEditingController({
     AttributedTextEditingController? controller,
     bool disposeClientController = true,
@@ -311,21 +312,6 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
     _log.info('TextInputClient: connectionClosed()');
     _inputConnection = null;
     _latestPlatformTextEditingValue = null;
-  }
-
-  @override
-  void insertTextPlaceholder(Size size) {
-    // No-op: this is for scribble
-  }
-
-  @override
-  void removeTextPlaceholder() {
-    // No-op: this is for scribble
-  }
-
-  @override
-  void showToolbar() {
-    // No-op: this is for scribble
   }
 
   @override
