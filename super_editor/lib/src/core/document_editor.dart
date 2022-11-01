@@ -168,7 +168,17 @@ class MutableDocument with ChangeNotifier implements Document {
 
   @override
   int getNodeIndex(DocumentNode node) {
-    return _nodeIndicesById[node.id] ?? -1;
+    final index = _nodeIndicesById[node.id] ?? -1;
+    if (index < 0) {
+      return -1;
+    }
+
+    if (_nodes[index] != node) {
+      // We found a node by id, but the contents aren't equal.
+      return -1;
+    }
+
+    return index;
   }
 
   @override
