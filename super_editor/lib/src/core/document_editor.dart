@@ -266,8 +266,8 @@ class MutableDocument with ChangeNotifier implements Document {
     }
   }
 
-  /// Inserts [node] at the end of the document.
-  void insertNode(DocumentNode node) {
+  /// Adds [node] to the end of the document.
+  void add(DocumentNode node) {
     _nodes.insert(_nodes.length, node);
     node.addListener(_forwardNodeChange);
 
