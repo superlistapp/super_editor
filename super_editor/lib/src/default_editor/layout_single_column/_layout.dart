@@ -753,7 +753,8 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
       if (middleIndex + 1 < _topToBottomComponentKeys.length) {
         // Check the gap between two components.
         final nextComponentBounds = _getComponentBoundsByIndex(middleIndex + 1);
-        if (componentBounds.bottom < dy && dy < nextComponentBounds.top) {
+        final gap = nextComponentBounds.top - componentBounds.bottom;
+        if (componentBounds.bottom < dy && dy < (componentBounds.bottom + gap / 2)) {
           // The component we're looking for is somewhere in the bottom half of the current search region.
           return middleIndex;
         }
@@ -763,7 +764,8 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
       if (middleIndex - 1 >= 0) {
         // Check the gap between two components.
         final previousComponentBounds = _getComponentBoundsByIndex(middleIndex - 1);
-        if (previousComponentBounds.bottom < dy && dy < componentBounds.top) {
+        final gap = componentBounds.top - previousComponentBounds.bottom;
+        if ((componentBounds.top - gap / 2) < dy && dy < componentBounds.top) {
           // The component we're looking for is somewhere in the top half of the current search region.
           return middleIndex;
         }
