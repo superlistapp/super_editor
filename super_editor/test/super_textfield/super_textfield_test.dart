@@ -182,6 +182,30 @@ void main() {
         expect(_isCaretPresent(tester), isTrue);
       });
 
+      // TODO: Enable this test on mobile once text fields are fixed
+      testWidgetsOnDesktop("is inserted automatically when the field is initialized with focused node", (tester) async {
+        final node = FocusNode()..requestFocus();
+        await tester.pumpWidget(
+          _buildScaffold(
+            child: Focus.withExternalFocusNode(
+              focusNode: node,
+              child: const SizedBox.shrink(),
+            ),
+          ),
+        );
+        await tester.pumpWidget(
+          _buildScaffold(
+            child: SuperTextField(
+              focusNode: node,
+            ),
+          ),
+        );
+        await tester.pump();
+        node.dispose();
+
+        expect(_isCaretPresent(tester), isTrue);
+      });
+
       testWidgetsOnAllPlatforms("is inserted automatically when the field is given focus", (tester) async {
         final focusNode = FocusNode();
         await tester.pumpWidget(
