@@ -174,7 +174,7 @@ class MutableDocument with ChangeNotifier implements Document {
     }
 
     if (_nodes[index] != node) {
-      // We found a node by id, but the contents aren't equal.
+      // We found a node by id, but it wasn't the node we expected. Therefore, we couldn't find the requested node.
       return -1;
     }
 
