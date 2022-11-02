@@ -887,9 +887,17 @@ class AddTextAttributionsCommand implements EditorCommand {
         final node = entry.key;
         final range = entry.value.toSpanRange();
         editorDocLog.info(' - adding attribution: $attribution. Range: $range');
-        node.text.addAttribution(
-          attribution,
-          range,
+
+        // Create a new AttributedText with updated attribution spans, so that the presentation system can
+        // see that we made a change, and re-renders the text in the document.
+        node.text = AttributedText(
+          text: node.text.text,
+          spans: node.text.spans.copy()
+            ..addAttribution(
+              newAttribution: attribution,
+              start: range.start,
+              end: range.end,
+            ),
         );
       }
     }
@@ -975,9 +983,17 @@ class RemoveTextAttributionsCommand implements EditorCommand {
         final node = entry.key;
         final range = entry.value.toSpanRange();
         editorDocLog.info(' - removing attribution: $attribution. Range: $range');
-        node.text.removeAttribution(
-          attribution,
-          range,
+
+        // Create a new AttributedText with updated attribution spans, so that the presentation system can
+        // see that we made a change, and re-renders the text in the document.
+        node.text = AttributedText(
+          text: node.text.text,
+          spans: node.text.spans.copy()
+            ..removeAttribution(
+              attributionToRemove: attribution,
+              start: range.start,
+              end: range.end,
+            ),
         );
       }
     }
@@ -1073,9 +1089,17 @@ class ToggleTextAttributionsCommand implements EditorCommand {
         final node = entry.key;
         final range = entry.value;
         editorDocLog.info(' - toggling attribution: $attribution. Range: $range');
-        node.text.toggleAttribution(
-          attribution,
-          range,
+
+        // Create a new AttributedText with updated attribution spans, so that the presentation system can
+        // see that we made a change, and re-renders the text in the document.
+        node.text = AttributedText(
+          text: node.text.text,
+          spans: node.text.spans.copy()
+            ..toggleAttribution(
+              attribution: attribution,
+              start: range.start,
+              end: range.end,
+            ),
         );
       }
     }

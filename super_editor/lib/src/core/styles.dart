@@ -183,7 +183,7 @@ class _FirstBlockMatcher implements _BlockMatcher {
 
   @override
   bool matches(Document document, DocumentNode node) {
-    return document.getNodeIndex(node) == 0;
+    return document.getNodeIndexById(node.id) == 0;
   }
 }
 
@@ -192,7 +192,7 @@ class _LastBlockMatcher implements _BlockMatcher {
 
   @override
   bool matches(Document document, DocumentNode node) {
-    return document.getNodeIndex(node) == document.nodes.length - 1;
+    return document.getNodeIndexById(node.id) == document.nodes.length - 1;
   }
 }
 
@@ -203,7 +203,7 @@ class _IndexBlockMatcher implements _BlockMatcher {
 
   @override
   bool matches(Document document, DocumentNode node) {
-    return document.getNodeIndex(node) == _index;
+    return document.getNodeIndexById(node.id) == _index;
   }
 }
 

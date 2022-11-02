@@ -147,7 +147,6 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel 
           runtimeType == other.runtimeType &&
           nodeId == other.nodeId &&
           text == other.text &&
-          textStyleBuilder == other.textStyleBuilder &&
           textDirection == other.textDirection &&
           textAlignment == other.textAlignment &&
           backgroundColor == other.backgroundColor &&
@@ -161,7 +160,6 @@ class BlockquoteComponentViewModel extends SingleColumnLayoutComponentViewModel 
       super.hashCode ^
       nodeId.hashCode ^
       text.hashCode ^
-      textStyleBuilder.hashCode ^
       textDirection.hashCode ^
       textAlignment.hashCode ^
       backgroundColor.hashCode ^

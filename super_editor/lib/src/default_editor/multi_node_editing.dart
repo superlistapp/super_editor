@@ -48,7 +48,7 @@ class DeleteSelectionCommand implements EditorCommand {
     final startNodePosition = startNode.id == documentSelection.base.nodeId
         ? documentSelection.base.nodePosition
         : documentSelection.extent.nodePosition;
-    final startNodeIndex = document.getNodeIndex(startNode);
+    final startNodeIndex = document.getNodeIndexById(startNode.id);
 
     final endNode = document.getNode(range.end);
     if (endNode == null) {
@@ -57,7 +57,7 @@ class DeleteSelectionCommand implements EditorCommand {
     final endNodePosition = startNode.id == documentSelection.base.nodeId
         ? documentSelection.extent.nodePosition
         : documentSelection.base.nodePosition;
-    final endNodeIndex = document.getNodeIndex(endNode);
+    final endNodeIndex = document.getNodeIndexById(endNode.id);
 
     _deleteNodesBetweenFirstAndLast(
       document: document,
@@ -163,8 +163,8 @@ class DeleteSelectionCommand implements EditorCommand {
     required DocumentEditorTransaction transaction,
   }) {
     // Delete all nodes between the first node and the last node.
-    final startIndex = document.getNodeIndex(startNode);
-    final endIndex = document.getNodeIndex(endNode);
+    final startIndex = document.getNodeIndexById(startNode.id);
+    final endIndex = document.getNodeIndexById(endNode.id);
 
     _log.log('_deleteNodesBetweenFirstAndLast', ' - start node index: $startIndex');
     _log.log('_deleteNodesBetweenFirstAndLast', ' - end node index: $endIndex');

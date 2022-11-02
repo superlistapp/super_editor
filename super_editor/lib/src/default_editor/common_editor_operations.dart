@@ -1110,14 +1110,14 @@ class CommonEditorOperations {
     if (baseNode == null) {
       throw Exception('Failed to _getDocumentPositionAfterDeletion because the base node no longer exists.');
     }
-    final baseNodeIndex = document.getNodeIndex(baseNode);
+    final baseNodeIndex = document.getNodeIndexById(baseNode.id);
 
     final extentPosition = selection.extent;
     final extentNode = document.getNode(extentPosition);
     if (extentNode == null) {
       throw Exception('Failed to _getDocumentPositionAfterDeletion because the extent node no longer exists.');
     }
-    final extentNodeIndex = document.getNodeIndex(extentNode);
+    final extentNodeIndex = document.getNodeIndexById(extentNode.id);
 
     final topNodeIndex = min(baseNodeIndex, extentNodeIndex);
     final topNode = document.getNodeAt(topNodeIndex)!;
@@ -1477,7 +1477,7 @@ class CommonEditorOperations {
       editorOpsLog.fine('Paragraph has an HR match');
       // Insert an HR before this paragraph and then clear the
       // paragraph's content.
-      final paragraphNodeIndex = editor.document.getNodeIndex(node);
+      final paragraphNodeIndex = editor.document.getNodeIndexById(node.id);
 
       editor.executeCommand(
         EditorCommandFunction((document, transaction) {
