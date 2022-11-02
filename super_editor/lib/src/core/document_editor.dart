@@ -167,6 +167,7 @@ class MutableDocument with ChangeNotifier implements Document {
   }
 
   @override
+  @Deprecated("Use getNodeIndexById() instead")
   int getNodeIndex(DocumentNode node) {
     final index = _nodeIndicesById[node.id] ?? -1;
     if (index < 0) {
@@ -183,19 +184,18 @@ class MutableDocument with ChangeNotifier implements Document {
 
   @override
   int getNodeIndexById(String nodeId) {
-    final node = getNodeById(nodeId);
-    return node != null ? getNodeIndex(node) : -1;
+    return _nodeIndicesById[nodeId] ?? -1;
   }
 
   @override
   DocumentNode? getNodeBefore(DocumentNode node) {
-    final nodeIndex = getNodeIndex(node);
+    final nodeIndex = getNodeIndexById(node.id);
     return nodeIndex > 0 ? getNodeAt(nodeIndex - 1) : null;
   }
 
   @override
   DocumentNode? getNodeAfter(DocumentNode node) {
-    final nodeIndex = getNodeIndex(node);
+    final nodeIndex = getNodeIndexById(node.id);
     return nodeIndex >= 0 && nodeIndex < _nodes.length - 1 ? getNodeAt(nodeIndex + 1) : null;
   }
 
@@ -217,13 +217,13 @@ class MutableDocument with ChangeNotifier implements Document {
     if (node1 == null) {
       throw Exception('No such position in document: $position1');
     }
-    final index1 = getNodeIndex(node1);
+    final index1 = getNodeIndexById(node1.id);
 
     final node2 = getNode(position2);
     if (node2 == null) {
       throw Exception('No such position in document: $position2');
     }
-    final index2 = getNodeIndex(node2);
+    final index2 = getNodeIndexById(node2.id);
 
     final from = min(index1, index2);
     final to = max(index1, index2);
@@ -249,7 +249,7 @@ class MutableDocument with ChangeNotifier implements Document {
     required DocumentNode existingNode,
     required DocumentNode newNode,
   }) {
-    final nodeIndex = getNodeIndex(existingNode);
+    final nodeIndex = getNodeIndexById(existingNode.id);
     _nodes.insert(nodeIndex, newNode);
     newNode.addListener(_forwardNodeChange);
 
@@ -264,7 +264,7 @@ class MutableDocument with ChangeNotifier implements Document {
     required DocumentNode existingNode,
     required DocumentNode newNode,
   }) {
-    final nodeIndex = getNodeIndex(existingNode);
+    final nodeIndex = getNodeIndexById(existingNode.id);
     if (nodeIndex >= 0 && nodeIndex < _nodes.length) {
       _nodes.insert(nodeIndex + 1, newNode);
       newNode.addListener(_forwardNodeChange);

@@ -132,7 +132,7 @@ class DocumentSelection {
       );
     }
 
-    return document.getNodeIndex(baseNode) < document.getNodeIndex(extentNode)
+    return document.getNodeIndexById(baseNode.id) < document.getNodeIndexById(extentNode.id)
         ? DocumentSelection.collapsed(position: base)
         : DocumentSelection.collapsed(position: extent);
   }
@@ -171,7 +171,7 @@ class DocumentSelection {
       );
     }
 
-    return document.getNodeIndex(baseNode) > document.getNodeIndex(extentNode)
+    return document.getNodeIndexById(baseNode.id) > document.getNodeIndexById(extentNode.id)
         ? DocumentSelection.collapsed(position: base)
         : DocumentSelection.collapsed(position: extent);
   }
@@ -223,13 +223,13 @@ extension InspectDocumentAffinity on Document {
     if (baseNode == null) {
       throw Exception('No such position in document: $base');
     }
-    final baseIndex = getNodeIndex(getNode(base)!);
+    final baseIndex = getNodeIndexById(baseNode.id);
 
     final extentNode = getNode(extent);
     if (extentNode == null) {
       throw Exception('No such position in document: $extent');
     }
-    final extentIndex = getNodeIndex(extentNode);
+    final extentIndex = getNodeIndexById(extentNode.id);
 
     late TextAffinity affinity;
     if (extentIndex > baseIndex) {
@@ -251,9 +251,9 @@ extension InspectDocumentSelection on Document {
   /// from upstream to downstream.
   List<DocumentNode> getNodesInContentOrder(DocumentSelection selection) {
     final upstreamPosition = selectUpstreamPosition(selection.base, selection.extent);
-    final upstreamIndex = getNodeIndex(getNode(upstreamPosition)!);
+    final upstreamIndex = getNodeIndexById(upstreamPosition.nodeId);
     final downstreamPosition = selectDownstreamPosition(selection.base, selection.extent);
-    final downstreamIndex = getNodeIndex(getNode(downstreamPosition)!);
+    final downstreamIndex = getNodeIndexById(downstreamPosition.nodeId);
 
     return nodes.sublist(upstreamIndex, downstreamIndex + 1);
   }
@@ -262,9 +262,9 @@ extension InspectDocumentSelection on Document {
   /// appears first in the document.
   DocumentPosition selectUpstreamPosition(DocumentPosition docPosition1, DocumentPosition docPosition2) {
     final docPosition1Node = getNodeById(docPosition1.nodeId)!;
-    final docPosition1NodeIndex = getNodeIndex(docPosition1Node);
+    final docPosition1NodeIndex = getNodeIndexById(docPosition1Node.id);
     final docPosition2Node = getNodeById(docPosition2.nodeId)!;
-    final docPosition2NodeIndex = getNodeIndex(docPosition2Node);
+    final docPosition2NodeIndex = getNodeIndexById(docPosition2Node.id);
 
     if (docPosition1NodeIndex < docPosition2NodeIndex) {
       return docPosition1;
@@ -296,16 +296,16 @@ extension InspectDocumentSelection on Document {
     }
 
     final baseNode = getNodeById(selection.base.nodeId)!;
-    final baseNodeIndex = getNodeIndex(baseNode);
+    final baseNodeIndex = getNodeIndexById(baseNode.id);
     final extentNode = getNodeById(selection.extent.nodeId)!;
-    final extentNodeIndex = getNodeIndex(extentNode);
+    final extentNodeIndex = getNodeIndexById(extentNode.id);
 
     final upstreamNode = baseNodeIndex < extentNodeIndex ? baseNode : extentNode;
     final upstreamNodeIndex = baseNodeIndex < extentNodeIndex ? baseNodeIndex : extentNodeIndex;
     final downstreamNode = baseNodeIndex < extentNodeIndex ? extentNode : baseNode;
     final downstreamNodeIndex = baseNodeIndex < extentNodeIndex ? extentNodeIndex : baseNodeIndex;
 
-    final positionNodeIndex = getNodeIndex(getNodeById(position.nodeId)!);
+    final positionNodeIndex = getNodeIndexById(position.nodeId);
 
     if (upstreamNodeIndex < positionNodeIndex && positionNodeIndex < downstreamNodeIndex) {
       // The given position is sandwiched between two other nodes that form

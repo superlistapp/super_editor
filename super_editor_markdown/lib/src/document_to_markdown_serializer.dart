@@ -113,7 +113,7 @@ class ListItemNodeSerializer extends NodeTypedDocumentNodeMarkdownSerializer<Lis
 
     buffer.write('$indent$symbol ${node.text.toMarkdown()}');
 
-    final nodeIndex = document.getNodeIndex(node);
+    final nodeIndex = document.getNodeIndexById(node.id);
     final nodeBelow = nodeIndex < document.nodes.length - 1 ? document.nodes[nodeIndex + 1] : null;
     if (nodeBelow != null && (nodeBelow is! ListItemNode || nodeBelow.type != node.type)) {
       // This list item is the last item in the list. Add an extra
@@ -175,7 +175,7 @@ class ParagraphNodeSerializer extends NodeTypedDocumentNodeMarkdownSerializer<Pa
     // We're not at the end of the document yet. Add a blank line after the
     // paragraph so that we can tell the difference between separate
     // paragraphs vs. newlines within a single paragraph.
-    final nodeIndex = document.getNodeIndex(node);
+    final nodeIndex = document.getNodeIndexById(node.id);
     if (nodeIndex != document.nodes.length - 1) {
       buffer.writeln();
     }

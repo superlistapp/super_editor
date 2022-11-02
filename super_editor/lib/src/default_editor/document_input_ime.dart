@@ -504,7 +504,7 @@ class DocumentImeSerializer {
     // the IME would assume that there's no content before the current node and
     // therefore it wouldn't report the backspace button.
     final selectedNode = _doc.getNode(_selection.extent)!;
-    final selectedNodeIndex = _doc.getNodeIndex(selectedNode);
+    final selectedNodeIndex = _doc.getNodeIndexById(selectedNode.id);
     return selectedNodeIndex > 0 &&
         _selection.isCollapsed &&
         _selection.extent.nodePosition == selectedNode.beginningPosition;
@@ -653,16 +653,16 @@ class DocumentImeSerializer {
   /// If there is no text content within the [selection], `null` is returned.
   DocumentSelection? _constrictToTextSelectionEndCaps(DocumentSelection selection) {
     final baseNode = _doc.getNodeById(selection.base.nodeId)!;
-    final baseNodeIndex = _doc.getNodeIndex(baseNode);
+    final baseNodeIndex = _doc.getNodeIndexById(baseNode.id);
     final extentNode = _doc.getNodeById(selection.extent.nodeId)!;
-    final extentNodeIndex = _doc.getNodeIndex(extentNode);
+    final extentNodeIndex = _doc.getNodeIndexById(extentNode.id);
 
     final startNode = baseNodeIndex <= extentNodeIndex ? baseNode : extentNode;
-    final startNodeIndex = _doc.getNodeIndex(startNode);
+    final startNodeIndex = _doc.getNodeIndexById(startNode.id);
     final startPosition =
         baseNodeIndex <= extentNodeIndex ? selection.base.nodePosition : selection.extent.nodePosition;
     final endNode = baseNodeIndex <= extentNodeIndex ? extentNode : baseNode;
-    final endNodeIndex = _doc.getNodeIndex(endNode);
+    final endNodeIndex = _doc.getNodeIndexById(endNode.id);
     final endPosition = baseNodeIndex <= extentNodeIndex ? selection.extent.nodePosition : selection.base.nodePosition;
 
     if (startNodeIndex == endNodeIndex) {
@@ -737,16 +737,16 @@ class DocumentImeSerializer {
   /// so that the IME sends us the delete delta.
   String _getMinimumTextForIME(DocumentSelection selection) {
     final baseNode = _doc.getNodeById(selection.base.nodeId)!;
-    final baseNodeIndex = _doc.getNodeIndex(baseNode);
+    final baseNodeIndex = _doc.getNodeIndexById(baseNode.id);
     final extentNode = _doc.getNodeById(selection.extent.nodeId)!;
-    final extentNodeIndex = _doc.getNodeIndex(extentNode);
+    final extentNodeIndex = _doc.getNodeIndexById(extentNode.id);
 
     final selectionStartNode = baseNodeIndex <= extentNodeIndex ? baseNode : extentNode;
-    final selectionStartNodeIndex = _doc.getNodeIndex(selectionStartNode);
+    final selectionStartNodeIndex = _doc.getNodeIndexById(selectionStartNode.id);
     final startNodeIndex = max(selectionStartNodeIndex - 1, 0);
 
     final selectionEndNode = baseNodeIndex <= extentNodeIndex ? extentNode : baseNode;
-    final selectionEndNodeIndex = _doc.getNodeIndex(selectionEndNode);
+    final selectionEndNodeIndex = _doc.getNodeIndexById(selectionEndNode.id);
     final endNodeIndex = min(selectionEndNodeIndex + 1, _doc.nodes.length - 1);
 
     final buffer = StringBuffer();

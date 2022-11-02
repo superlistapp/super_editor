@@ -71,7 +71,7 @@ void main() {
       );
     });
 
-    group("getNodeIndex returns the correct index", () {
+    group("getNodeIndexById returns the correct index", () {
       test("when creating a document", () {
         final document = _createThreeParagraphDoc();
         final firstNode = document.nodes[0];
@@ -79,9 +79,9 @@ void main() {
         final thirdNode = document.nodes[2];
 
         // Ensure the indices are correct when creating the document.
-        expect(document.getNodeIndex(firstNode), 0);
-        expect(document.getNodeIndex(secondNode), 1);
-        expect(document.getNodeIndex(thirdNode), 2);
+        expect(document.getNodeIndexById(firstNode.id), 0);
+        expect(document.getNodeIndexById(secondNode.id), 1);
+        expect(document.getNodeIndexById(thirdNode.id), 2);
       });
 
       test("when inserting a node at the beginning by index", () {
@@ -97,9 +97,9 @@ void main() {
         document.insertNodeAt(0, thirdNode);
 
         // Ensure the indices are correct.
-        expect(document.getNodeIndex(thirdNode), 0);
-        expect(document.getNodeIndex(firstNode), 1);
-        expect(document.getNodeIndex(secondNode), 2);
+        expect(document.getNodeIndexById(thirdNode.id), 0);
+        expect(document.getNodeIndexById(firstNode.id), 1);
+        expect(document.getNodeIndexById(secondNode.id), 2);
       });
 
       test("when inserting a node at the middle by index", () {
@@ -115,9 +115,9 @@ void main() {
         document.insertNodeAt(1, thirdNode);
 
         // Ensure the indices are correct.
-        expect(document.getNodeIndex(firstNode), 0);
-        expect(document.getNodeIndex(thirdNode), 1);
-        expect(document.getNodeIndex(secondNode), 2);
+        expect(document.getNodeIndexById(firstNode.id), 0);
+        expect(document.getNodeIndexById(thirdNode.id), 1);
+        expect(document.getNodeIndexById(secondNode.id), 2);
       });
 
       test("when inserting a node at the end by index", () {
@@ -133,9 +133,9 @@ void main() {
         document.insertNodeAt(2, thirdNode);
 
         // Ensure the indices are correct.
-        expect(document.getNodeIndex(firstNode), 0);
-        expect(document.getNodeIndex(secondNode), 1);
-        expect(document.getNodeIndex(thirdNode), 2);
+        expect(document.getNodeIndexById(firstNode.id), 0);
+        expect(document.getNodeIndexById(secondNode.id), 1);
+        expect(document.getNodeIndexById(thirdNode.id), 2);
       });
 
       test("when inserting a node before the first node", () {
@@ -154,9 +154,9 @@ void main() {
         );
 
         // Ensure the indices are correct.
-        expect(document.getNodeIndex(thirdNode), 0);
-        expect(document.getNodeIndex(firstNode), 1);
-        expect(document.getNodeIndex(secondNode), 2);
+        expect(document.getNodeIndexById(thirdNode.id), 0);
+        expect(document.getNodeIndexById(firstNode.id), 1);
+        expect(document.getNodeIndexById(secondNode.id), 2);
       });
 
       test("when inserting a node before the last node", () {
@@ -175,9 +175,9 @@ void main() {
         );
 
         // Ensure the indices are correct.
-        expect(document.getNodeIndex(firstNode), 0);
-        expect(document.getNodeIndex(thirdNode), 1);
-        expect(document.getNodeIndex(secondNode), 2);
+        expect(document.getNodeIndexById(firstNode.id), 0);
+        expect(document.getNodeIndexById(thirdNode.id), 1);
+        expect(document.getNodeIndexById(secondNode.id), 2);
       });
 
       test("when inserting a node after the first node", () {
@@ -196,9 +196,9 @@ void main() {
         );
 
         // Ensure the indices are correct.
-        expect(document.getNodeIndex(firstNode), 0);
-        expect(document.getNodeIndex(thirdNode), 1);
-        expect(document.getNodeIndex(secondNode), 2);
+        expect(document.getNodeIndexById(firstNode.id), 0);
+        expect(document.getNodeIndexById(thirdNode.id), 1);
+        expect(document.getNodeIndexById(secondNode.id), 2);
       });
 
       test("when inserting a node after the last node", () {
@@ -217,9 +217,9 @@ void main() {
         );
 
         // Ensure the indices are correct.
-        expect(document.getNodeIndex(firstNode), 0);
-        expect(document.getNodeIndex(secondNode), 1);
-        expect(document.getNodeIndex(thirdNode), 2);
+        expect(document.getNodeIndexById(firstNode.id), 0);
+        expect(document.getNodeIndexById(secondNode.id), 1);
+        expect(document.getNodeIndexById(thirdNode.id), 2);
       });
 
       test("when moving a node from the beginning to the middle", () {
@@ -234,9 +234,9 @@ void main() {
         );
 
         // Ensure the indices are correct.
-        expect(document.getNodeIndex(secondNode), 0);
-        expect(document.getNodeIndex(firstNode), 1);
-        expect(document.getNodeIndex(thirdNode), 2);
+        expect(document.getNodeIndexById(secondNode.id), 0);
+        expect(document.getNodeIndexById(firstNode.id), 1);
+        expect(document.getNodeIndexById(thirdNode.id), 2);
       });
 
       test("when moving a node from the middle to the end", () {
@@ -251,9 +251,9 @@ void main() {
         );
 
         // Ensure the indices are correct.
-        expect(document.getNodeIndex(firstNode), 0);
-        expect(document.getNodeIndex(thirdNode), 1);
-        expect(document.getNodeIndex(secondNode), 2);
+        expect(document.getNodeIndexById(firstNode.id), 0);
+        expect(document.getNodeIndexById(thirdNode.id), 1);
+        expect(document.getNodeIndexById(secondNode.id), 2);
       });
 
       test("when moving a node from the end to the middle", () {
@@ -268,9 +268,9 @@ void main() {
         );
 
         // Ensure the indices are correct.
-        expect(document.getNodeIndex(firstNode), 0);
-        expect(document.getNodeIndex(thirdNode), 1);
-        expect(document.getNodeIndex(secondNode), 2);
+        expect(document.getNodeIndexById(firstNode.id), 0);
+        expect(document.getNodeIndexById(thirdNode.id), 1);
+        expect(document.getNodeIndexById(secondNode.id), 2);
       });
 
       test("when moving a node from the middle to the beginning", () {
@@ -285,9 +285,9 @@ void main() {
         );
 
         // Ensure the indices are correct.
-        expect(document.getNodeIndex(secondNode), 0);
-        expect(document.getNodeIndex(firstNode), 1);
-        expect(document.getNodeIndex(thirdNode), 2);
+        expect(document.getNodeIndexById(secondNode.id), 0);
+        expect(document.getNodeIndexById(firstNode.id), 1);
+        expect(document.getNodeIndexById(thirdNode.id), 2);
       });
 
       test("when deleting a node at the beginning", () {
@@ -299,9 +299,9 @@ void main() {
         document.deleteNode(firstNode);
 
         // Ensure the indices are correct.
-        expect(document.getNodeIndex(firstNode), -1);
-        expect(document.getNodeIndex(secondNode), 0);
-        expect(document.getNodeIndex(thirdNode), 1);
+        expect(document.getNodeIndexById(firstNode.id), -1);
+        expect(document.getNodeIndexById(secondNode.id), 0);
+        expect(document.getNodeIndexById(thirdNode.id), 1);
       });
 
       test("when deleting a node at the middle", () {
@@ -313,9 +313,9 @@ void main() {
         document.deleteNode(secondNode);
 
         // Ensure the indices are correct.
-        expect(document.getNodeIndex(secondNode), -1);
-        expect(document.getNodeIndex(firstNode), 0);
-        expect(document.getNodeIndex(thirdNode), 1);
+        expect(document.getNodeIndexById(secondNode.id), -1);
+        expect(document.getNodeIndexById(firstNode.id), 0);
+        expect(document.getNodeIndexById(thirdNode.id), 1);
       });
 
       test("when deleting a node at the end", () {
@@ -327,9 +327,9 @@ void main() {
         document.deleteNode(thirdNode);
 
         // Ensure the indices are correct.
-        expect(document.getNodeIndex(thirdNode), -1);
-        expect(document.getNodeIndex(firstNode), 0);
-        expect(document.getNodeIndex(secondNode), 1);
+        expect(document.getNodeIndexById(thirdNode.id), -1);
+        expect(document.getNodeIndexById(firstNode.id), 0);
+        expect(document.getNodeIndexById(secondNode.id), 1);
       });
 
       test("when replacing a node at the beginning", () {
@@ -349,10 +349,10 @@ void main() {
         );
 
         // Ensure the indices are correct.
-        expect(document.getNodeIndex(firstNode), -1);
-        expect(document.getNodeIndex(fourthNode), 0);
-        expect(document.getNodeIndex(secondNode), 1);
-        expect(document.getNodeIndex(thirdNode), 2);
+        expect(document.getNodeIndexById(firstNode.id), -1);
+        expect(document.getNodeIndexById(fourthNode.id), 0);
+        expect(document.getNodeIndexById(secondNode.id), 1);
+        expect(document.getNodeIndexById(thirdNode.id), 2);
       });
 
       test("when replacing a node at the middle", () {
@@ -372,10 +372,10 @@ void main() {
         );
 
         // Ensure the indices are correct.
-        expect(document.getNodeIndex(secondNode), -1);
-        expect(document.getNodeIndex(firstNode), 0);
-        expect(document.getNodeIndex(fourthNode), 1);
-        expect(document.getNodeIndex(thirdNode), 2);
+        expect(document.getNodeIndexById(secondNode.id), -1);
+        expect(document.getNodeIndexById(firstNode.id), 0);
+        expect(document.getNodeIndexById(fourthNode.id), 1);
+        expect(document.getNodeIndexById(thirdNode.id), 2);
       });
 
       test("when replacing a node at the end", () {
@@ -395,10 +395,10 @@ void main() {
         );
 
         // Ensure the indices are correct.
-        expect(document.getNodeIndex(thirdNode), -1);
-        expect(document.getNodeIndex(firstNode), 0);
-        expect(document.getNodeIndex(secondNode), 1);
-        expect(document.getNodeIndex(fourthNode), 2);
+        expect(document.getNodeIndexById(thirdNode.id), -1);
+        expect(document.getNodeIndexById(firstNode.id), 0);
+        expect(document.getNodeIndexById(secondNode.id), 1);
+        expect(document.getNodeIndexById(fourthNode.id), 2);
       });
     });
   });
