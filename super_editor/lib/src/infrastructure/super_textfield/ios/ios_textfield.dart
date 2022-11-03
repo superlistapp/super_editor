@@ -208,13 +208,6 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
         _focusNode = FocusNode();
       }
       _focusNode.addListener(_onFocusChange);
-
-      if ((widget.focusNode?.hasFocus ?? false) != (oldWidget.focusNode?.hasFocus ?? false)) {
-        // Focus changed, check in the next frame if we need to update selection and attach/detach to IME.
-        WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-          _onFocusChange();
-        });
-      }
     }
 
     if (widget.textController != oldWidget.textController) {
