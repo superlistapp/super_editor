@@ -120,11 +120,13 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
     super.initState();
 
     _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
-    _hasFocus = _focusNode.hasFocus;
 
     _controller = (widget.textController ?? AttributedTextEditingController())
       ..addListener(_onSelectionOrContentChange);
     _scrollController = ScrollController();
+
+    // Check if we need to update the selection.
+    _onFocusChange();
   }
 
   @override
@@ -137,7 +139,9 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
         _focusNode.dispose();
       }
       _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
-      _hasFocus = _focusNode.hasFocus;
+
+      // Check if we need to update the selection.
+      _onFocusChange();
     }
 
     if (widget.textController != oldWidget.textController) {

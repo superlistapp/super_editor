@@ -177,6 +177,13 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
     );
 
     WidgetsBinding.instance.addObserver(this);
+
+    if (_focusNode.hasFocus) {
+      // The given FocusNode already has focus, we need to update selection and attach to IME.
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+        _onFocusChange();
+      });
+    }
   }
 
   @override
@@ -186,6 +193,13 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
     if (widget.focusNode != oldWidget.focusNode) {
       _focusNode.removeListener(_onFocusChange);
       _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
+
+      if ((widget.focusNode?.hasFocus ?? false) != (oldWidget.focusNode?.hasFocus ?? false)) {
+        // Focus changed, check in the next frame if we need to update selection and attach/detach to IME.
+        WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+          _onFocusChange();
+        });
+      }
     }
 
     if (widget.textInputAction != oldWidget.textInputAction && _textEditingController.isAttachedToIme) {

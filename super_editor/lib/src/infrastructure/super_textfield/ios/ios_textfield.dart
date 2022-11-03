@@ -166,9 +166,6 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
   void initState() {
     super.initState();
     _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
-    if (_focusNode.hasFocus) {
-      _showHandles();
-    }
 
     _textEditingController = (widget.textController ?? ImeAttributedTextEditingController())
       ..addListener(_onTextOrSelectionChange)
@@ -190,6 +187,13 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
     );
 
     WidgetsBinding.instance.addObserver(this);
+
+    if (_focusNode.hasFocus) {
+      // The given FocusNode already has focus, we need to update selection and attach to IME.
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+        _onFocusChange();
+      });
+    }
   }
 
   @override
@@ -204,6 +208,13 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
         _focusNode = FocusNode();
       }
       _focusNode.addListener(_onFocusChange);
+
+      if ((widget.focusNode?.hasFocus ?? false) != (oldWidget.focusNode?.hasFocus ?? false)) {
+        // Focus changed, check in the next frame if we need to update selection and attach/detach to IME.
+        WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+          _onFocusChange();
+        });
+      }
     }
 
     if (widget.textController != oldWidget.textController) {
