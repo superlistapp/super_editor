@@ -948,7 +948,7 @@ class AttributedSpans {
       }
     }
 
-    if (collapsedSpans.last.end < contentLength - 1) {
+    if (collapsedSpans.isNotEmpty && collapsedSpans.last.end < contentLength - 1) {
       // The last span committed during the loop does not reach the end of the requested content range. We either ran
       // out of markers or the remaining markers are outside the content range. In both cases the value in currentSpan
       // should already have the correct start, end, and attributions values to cover the remaining content.
