@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:super_editor/src/core/document.dart';
+import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/default_editor/document_scrollable.dart';
@@ -17,7 +18,7 @@ class ReaderContext {
   ReaderContext({
     required this.document,
     required DocumentLayout Function() getDocumentLayout,
-    required this.selection,
+    required this.selectionChange,
     required this.scrollController,
   }) : _getDocumentLayout = getDocumentLayout;
 
@@ -31,7 +32,7 @@ class ReaderContext {
   final DocumentLayout Function() _getDocumentLayout;
 
   /// The current selection within the displayed document.
-  final ValueNotifier<DocumentSelection?> selection;
+  final ValueNotifier<DocumentSelectionChange> selectionChange;
 
   /// The [AutoScrollController] that scrolls a document up/down within the
   /// document's viewport.

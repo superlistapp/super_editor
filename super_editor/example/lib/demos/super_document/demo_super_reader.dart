@@ -13,7 +13,7 @@ class SuperReaderDemo extends StatefulWidget {
 
 class _SuperReaderDemoState extends State<SuperReaderDemo> {
   late final Document _document;
-  final _selection = ValueNotifier<DocumentSelection?>(null);
+  final _selectionChange = ValueNotifier<DocumentSelectionChange>(DocumentSelectionChange());
 
   @override
   void initState() {
@@ -22,13 +22,13 @@ class _SuperReaderDemoState extends State<SuperReaderDemo> {
   }
 
   void _copy() {
-    if (_selection.value == null) {
+    if (_selectionChange.value.selection == null) {
       return;
     }
 
     final textToCopy = _textInSelection(
       document: _document,
-      documentSelection: _selection.value!,
+      documentSelection: _selectionChange.value.selection!,
     );
     // TODO: figure out a general approach for asynchronous behaviors that
     //       need to be carried out in response to user input.
@@ -101,14 +101,16 @@ class _SuperReaderDemoState extends State<SuperReaderDemo> {
       return;
     }
 
-    _selection.value = DocumentSelection(
-      base: DocumentPosition(
-        nodeId: nodes.first.id,
-        nodePosition: nodes.first.beginningPosition,
-      ),
-      extent: DocumentPosition(
-        nodeId: nodes.last.id,
-        nodePosition: nodes.last.endPosition,
+    _selectionChange.value = DocumentSelectionChange(
+      selection: DocumentSelection(
+        base: DocumentPosition(
+          nodeId: nodes.first.id,
+          nodePosition: nodes.first.beginningPosition,
+        ),
+        extent: DocumentPosition(
+          nodeId: nodes.last.id,
+          nodePosition: nodes.last.endPosition,
+        ),
       ),
     );
   }
@@ -117,7 +119,7 @@ class _SuperReaderDemoState extends State<SuperReaderDemo> {
   Widget build(BuildContext context) {
     return SuperReader(
       document: _document,
-      selection: _selection,
+      selectionChange: _selectionChange,
       androidToolbarBuilder: (_) => AndroidTextEditingFloatingToolbar(
         onCopyPressed: _copy,
         onSelectAllPressed: _selectAll,

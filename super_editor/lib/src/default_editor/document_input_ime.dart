@@ -85,7 +85,7 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor>
 
     _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
 
-    widget.editContext.composer.selectionNotifier.addListener(_onComposerChange);
+    widget.editContext.composer.selectionChangeNotifier.addListener(_onComposerChange);
     widget.editContext.composer.imeConfiguration.addListener(_onClientWantsDifferentImeConfiguration);
   }
 
@@ -98,9 +98,9 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor>
       _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
     }
 
-    if (widget.editContext.composer.selectionNotifier != oldWidget.editContext.composer.selectionNotifier) {
-      oldWidget.editContext.composer.selectionNotifier.removeListener(_onComposerChange);
-      widget.editContext.composer.selectionNotifier.addListener(_onComposerChange);
+    if (widget.editContext.composer.selectionChangeNotifier != oldWidget.editContext.composer.selectionChangeNotifier) {
+      oldWidget.editContext.composer.selectionChangeNotifier.removeListener(_onComposerChange);
+      widget.editContext.composer.selectionChangeNotifier.addListener(_onComposerChange);
     }
     if (widget.editContext.composer.imeConfiguration != oldWidget.editContext.composer.imeConfiguration) {
       oldWidget.editContext.composer.imeConfiguration.removeListener(_onClientWantsDifferentImeConfiguration);
@@ -113,7 +113,7 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor>
     _detachFromIme();
 
     widget.editContext.composer.imeConfiguration.removeListener(_onClientWantsDifferentImeConfiguration);
-    widget.editContext.composer.selectionNotifier.removeListener(_onComposerChange);
+    widget.editContext.composer.selectionChangeNotifier.removeListener(_onComposerChange);
 
     if (widget.focusNode == null) {
       _focusNode.dispose();

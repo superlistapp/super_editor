@@ -18,11 +18,11 @@ import 'package:super_editor/super_editor.dart';
 /// When the document's [DocumentLayoutResolver] changes, provide the new [DocumentLayoutResolver] to [onDocumentLayoutResolverReplaced].
 mixin DocumentSelectionOnFocusMixin<T extends StatefulWidget> on State<T> {
   // Holds the last selection, so we can restore it when the editor is re-focused.
-  DocumentSelection? _previousSelection;
+  DocumentSelectionChange? _previousSelection;
 
   FocusNode? _focusNode;
   DocumentLayoutResolver? _getDocumentLayout;
-  ValueNotifier<DocumentSelection?>? _selection;
+  late ValueNotifier<DocumentSelectionChange> _selectionChange;
 
   /// Starts watching and synchronizing focus with selection.
   ///
@@ -34,13 +34,13 @@ mixin DocumentSelectionOnFocusMixin<T extends StatefulWidget> on State<T> {
   void startSyncingSelectionWithFocus({
     required FocusNode focusNode,
     required DocumentLayoutResolver getDocumentLayout,
-    required ValueNotifier<DocumentSelection?> selection,
+    required ValueNotifier<DocumentSelectionChange> selectionChange,
   }) {
     _focusNode = focusNode;
     _focusNode!.addListener(_onFocusChange);
     _getDocumentLayout = getDocumentLayout;
-    _selection = selection;
-    _selection!.addListener(_onSelectionChange);
+    _selectionChange = selectionChange;
+    _selectionChange.addListener(_onSelectionChange);
 
     // If we already start focused we need to check if the selection update is needed.
     // This is happening on desktop when the editor uses autofocus.
@@ -52,7 +52,7 @@ mixin DocumentSelectionOnFocusMixin<T extends StatefulWidget> on State<T> {
   // Stops watching and synchronizing focus with selection.
   void stopSyncingSelectionWithFocus() {
     _focusNode?.removeListener(_onFocusChange);
-    _selection?.removeListener(_onSelectionChange);
+    _selectionChange.removeListener(_onSelectionChange);
   }
 
   /// Should be called whenever the editor `focusNode` is replaced.
@@ -63,10 +63,10 @@ mixin DocumentSelectionOnFocusMixin<T extends StatefulWidget> on State<T> {
   }
 
   /// Should be called whenever the editor selection notifier is replaced.
-  void onDocumentSelectionNotifierReplaced(ValueNotifier<DocumentSelection?>? selection) {
-    _selection?.removeListener(_onSelectionChange);
-    _selection = selection;
-    _selection?.addListener(_onSelectionChange);
+  void onDocumentSelectionNotifierReplaced(ValueNotifier<DocumentSelectionChange> selection) {
+    _selectionChange.removeListener(_onSelectionChange);
+    _selectionChange = selection;
+    _selectionChange.addListener(_onSelectionChange);
   }
 
   /// Should be called whenever the [DocumentLayoutResolver] is replaced.
@@ -76,7 +76,7 @@ mixin DocumentSelectionOnFocusMixin<T extends StatefulWidget> on State<T> {
 
   void _onFocusChange() {
     if (!_focusNode!.hasFocus) {
-      _selection?.value = null;
+      _selectionChange.value = DocumentSelectionChange();
       return;
     }
 
@@ -86,16 +86,18 @@ mixin DocumentSelectionOnFocusMixin<T extends StatefulWidget> on State<T> {
       // We only update the selection when it's null
       // because, when the user taps at the document the selection is
       // already set to the correct position, so we don't override it.
-      if (mounted && _focusNode!.hasFocus && _selection!.value == null) {
+      if (mounted && _focusNode!.hasFocus && _selectionChange.value.selection == null) {
         if (_previousSelection != null) {
-          _selection?.value = _previousSelection;
+          _selectionChange.value = _previousSelection ?? DocumentSelectionChange();
           return;
         }
 
         DocumentPosition? position = _getDocumentLayout?.call().findLastSelectablePosition();
         if (position != null) {
-          _selection?.value = DocumentSelection.collapsed(
-            position: position,
+          _selectionChange.value = DocumentSelectionChange(
+            selection: DocumentSelection.collapsed(
+              position: position,
+            ),
           );
         }
       }
@@ -105,8 +107,8 @@ mixin DocumentSelectionOnFocusMixin<T extends StatefulWidget> on State<T> {
   void _onSelectionChange() {
     // We store the last selection so the next time the editor is focused
     // the selection is restored.
-    if (_selection?.value != null) {
-      _previousSelection = _selection?.value;
+    if (_selectionChange.value.selection != null) {
+      _previousSelection = _selectionChange.value;
     }
   }
 }

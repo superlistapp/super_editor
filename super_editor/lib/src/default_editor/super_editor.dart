@@ -409,7 +409,7 @@ class SuperEditorState extends State<SuperEditor> {
 
     _docLayoutSelectionStyler = SingleColumnLayoutSelectionStyler(
       document: document,
-      selection: editContext.composer.selectionNotifier,
+      selectionChange: editContext.composer.selectionChangeNotifier,
       selectionStyles: widget.selectionStyles,
     );
 
@@ -568,7 +568,7 @@ class SuperEditorState extends State<SuperEditor> {
           focusNode: _focusNode,
           document: editContext.editor.document,
           getDocumentLayout: () => editContext.documentLayout,
-          selection: editContext.composer.selectionNotifier,
+          selectionChange: editContext.composer.selectionChangeNotifier,
           scrollController: widget.scrollController,
           documentKey: _docLayoutKey,
           handleColor: widget.androidHandleColor ?? Theme.of(context).primaryColor,
@@ -582,7 +582,7 @@ class SuperEditorState extends State<SuperEditor> {
           focusNode: _focusNode,
           document: editContext.editor.document,
           getDocumentLayout: () => editContext.documentLayout,
-          selection: editContext.composer.selectionNotifier,
+          selectionChange: editContext.composer.selectionChangeNotifier,
           scrollController: widget.scrollController,
           documentKey: _docLayoutKey,
           handleColor: widget.iOSHandleColor ?? Theme.of(context).primaryColor,
@@ -625,7 +625,7 @@ class SuperEditorState extends State<SuperEditor> {
                   focusNode: _focusNode,
                   document: editContext.editor.document,
                   getDocumentLayout: () => editContext.documentLayout,
-                  selection: editContext.composer.selectionNotifier,
+                  selectionChange: editContext.composer.selectionChangeNotifier,
                   autoScroller: _autoScrollController,
                   showDebugPaint: widget.debugPaint.gestures,
                   child: const SizedBox(),

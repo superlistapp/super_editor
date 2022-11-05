@@ -71,7 +71,7 @@ class _MobileEditingIOSDemoState extends State<MobileEditingIOSDemo> {
           MultiListenableBuilder(
             listenables: <Listenable>{
               _doc,
-              _composer.selectionNotifier,
+              _composer.selectionChangeNotifier,
             },
             builder: (_) => _buildMountedToolbar(),
           ),

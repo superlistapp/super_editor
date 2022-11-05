@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:super_editor/src/core/document.dart';
+import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/document_operations/selection_operations.dart';
@@ -29,7 +30,7 @@ class ReadOnlyAndroidDocumentTouchInteractor extends StatefulWidget {
     required this.document,
     required this.documentKey,
     required this.getDocumentLayout,
-    required this.selection,
+    required this.selectionChange,
     this.scrollController,
     this.dragAutoScrollBoundary = const AxisOffset.symmetric(54),
     required this.handleColor,
@@ -44,7 +45,7 @@ class ReadOnlyAndroidDocumentTouchInteractor extends StatefulWidget {
   final Document document;
   final GlobalKey documentKey;
   final DocumentLayout Function() getDocumentLayout;
-  final ValueNotifier<DocumentSelection?> selection;
+  final ValueNotifier<DocumentSelectionChange> selectionChange;
 
   final ScrollController? scrollController;
 
@@ -106,6 +107,8 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
   Offset? _dragEndInInteractor;
   SelectionHandleType? _handleType;
 
+  DocumentSelection? get _currentSelection => widget.selectionChange.value.selection;
+
   @override
   void initState() {
     super.initState();
@@ -142,10 +145,10 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
     );
 
     widget.document.addListener(_onDocumentChange);
-    widget.selection.addListener(_onSelectionChange);
+    widget.selectionChange.addListener(_onSelectionChange);
 
     // If we already have a selection, we need to display the caret.
-    if (widget.selection.value != null) {
+    if (_currentSelection != null) {
       _onSelectionChange();
     }
 
@@ -183,13 +186,13 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
       widget.document.addListener(_onDocumentChange);
     }
 
-    if (widget.selection != oldWidget.selection) {
-      oldWidget.selection.removeListener(_onSelectionChange);
-      widget.selection.addListener(_onSelectionChange);
+    if (widget.selectionChange != oldWidget.selectionChange) {
+      oldWidget.selectionChange.removeListener(_onSelectionChange);
+      widget.selectionChange.addListener(_onSelectionChange);
     }
 
     // Selection has changed, we need to update the caret.
-    if (widget.selection.value != oldWidget.selection.value) {
+    if (widget.selectionChange.value.selection != oldWidget.selectionChange.value.selection) {
       _onSelectionChange();
     }
   }
@@ -229,7 +232,7 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
     });
 
     widget.document.removeListener(_onDocumentChange);
-    widget.selection.removeListener(_onSelectionChange);
+    widget.selectionChange.removeListener(_onSelectionChange);
 
     _removeEditingOverlayControls();
 
@@ -319,7 +322,7 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
   }
 
   void _updateHandlesAfterSelectionOrLayoutChange() {
-    final newSelection = widget.selection.value;
+    final newSelection = _currentSelection;
 
     if (newSelection == null) {
       _editingController
@@ -406,14 +409,14 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
     readerGesturesLog.fine(" - tapped document position: $docPosition");
 
     if (docPosition == null) {
-      widget.selection.value = null;
+      widget.selectionChange.value = DocumentSelectionChange();
       _editingController.hideToolbar();
       widget.focusNode.requestFocus();
 
       return;
     }
 
-    final selection = widget.selection.value;
+    final selection = _currentSelection;
     final didTapOnExistingSelection =
         selection != null && widget.document.doesSelectionContainPosition(selection, docPosition);
     if (didTapOnExistingSelection) {
@@ -423,7 +426,7 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
     } else {
       // The user tapped somewhere else in the document. Hide the toolbar.
       _editingController.hideToolbar();
-      widget.selection.value = null;
+      widget.selectionChange.value = DocumentSelectionChange();
     }
 
     widget.focusNode.requestFocus();
@@ -436,7 +439,7 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
     readerGesturesLog.fine(" - tapped document position: $docPosition");
 
-    widget.selection.value = null;
+    widget.selectionChange.value = DocumentSelectionChange();
 
     if (docPosition != null) {
       // The user tapped a non-selectable component, so we can't select a word.
@@ -450,15 +453,15 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
       bool didSelectContent = selectWordAt(
         docPosition: docPosition,
         docLayout: _docLayout,
-        selection: widget.selection,
+        selectionChange: widget.selectionChange,
       );
 
       if (!didSelectContent) {
-        didSelectContent = selectBlockAt(docPosition, widget.selection);
+        didSelectContent = selectBlockAt(docPosition, widget.selectionChange);
       }
 
-      if (widget.selection.value != null) {
-        if (!widget.selection.value!.isCollapsed) {
+      if (_currentSelection != null) {
+        if (!_currentSelection!.isCollapsed) {
           _editingController.showToolbar();
           _positionToolbar();
         }
@@ -475,7 +478,7 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
     readerGesturesLog.fine(" - tapped document position: $docPosition");
 
-    widget.selection.value = null;
+    widget.selectionChange.value = DocumentSelectionChange();
 
     if (docPosition != null) {
       // The user tapped a non-selectable component, so we can't select a paragraph.
@@ -489,7 +492,7 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
       selectParagraphAt(
         docPosition: docPosition,
         docLayout: _docLayout,
-        selection: widget.selection,
+        selectionChange: widget.selectionChange,
       );
     }
 
@@ -518,7 +521,7 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
   }
 
   void _onHandleDragStart(HandleType handleType, Offset globalOffset) {
-    final selectionAffinity = widget.document.getAffinityForSelection(widget.selection.value!);
+    final selectionAffinity = widget.document.getAffinityForSelection(_currentSelection!);
     switch (handleType) {
       case HandleType.collapsed:
         // no-op for read-only documents
@@ -540,7 +543,9 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
 
     _startDragPositionOffset = _docLayout
         .getRectForPosition(
-          _handleType == SelectionHandleType.base ? widget.selection.value!.base : widget.selection.value!.extent,
+          _handleType == SelectionHandleType.base //
+              ? _currentSelection!.base
+              : _currentSelection!.extent,
         )!
         .center;
 
@@ -584,12 +589,16 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
     }
 
     if (_handleType == SelectionHandleType.base) {
-      widget.selection.value = widget.selection.value!.copyWith(
-        base: docDragPosition,
+      widget.selectionChange.value = DocumentSelectionChange(
+        selection: _currentSelection!.copyWith(
+          base: docDragPosition,
+        ),
       );
     } else if (_handleType == SelectionHandleType.extent) {
-      widget.selection.value = widget.selection.value!.copyWith(
-        extent: docDragPosition,
+      widget.selectionChange.value = DocumentSelectionChange(
+        selection: _currentSelection!.copyWith(
+          extent: docDragPosition,
+        ),
       );
     }
   }
@@ -604,10 +613,10 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
     _dragStartInDoc = null;
     _dragEndInInteractor = null;
 
-    if (widget.selection.value!.isCollapsed) {
+    if (_currentSelection!.isCollapsed) {
       // The selection is collapsed. Read-only documents don't display
       // collapsed selections. Clear the selection.
-      widget.selection.value = null;
+      widget.selectionChange.value = DocumentSelectionChange();
     } else {
       _editingController.showToolbar();
       _positionToolbar();
@@ -639,23 +648,25 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
         return;
       case SelectionHandleType.base:
         basePosition = dragPosition;
-        extentPosition = widget.selection.value!.extent;
+        extentPosition = _currentSelection!.extent;
         break;
       case SelectionHandleType.extent:
-        basePosition = widget.selection.value!.base;
+        basePosition = _currentSelection!.base;
         extentPosition = dragPosition;
         break;
     }
 
-    widget.selection.value = DocumentSelection(
-      base: basePosition,
-      extent: extentPosition,
+    widget.selectionChange.value = DocumentSelectionChange(
+      selection: DocumentSelection(
+        base: basePosition,
+        extent: extentPosition,
+      ),
     );
-    readerGesturesLog.fine("Selected region: ${widget.selection.value}");
+    readerGesturesLog.fine("Selected region: $_currentSelection");
   }
 
   void _positionExpandedHandles() {
-    final selection = widget.selection.value;
+    final selection = _currentSelection;
     if (selection == null) {
       readerGesturesLog.shout("Tried to update expanded handle offsets but there is no document selection");
       return;
@@ -685,7 +696,7 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
       return;
     }
 
-    final selection = widget.selection.value!;
+    final selection = _currentSelection!;
     if (selection.isCollapsed) {
       readerGesturesLog.warning(
           "Tried to position toolbar for a collapsed selection in a read-only interactor. Collapsed selections shouldn't exist.");

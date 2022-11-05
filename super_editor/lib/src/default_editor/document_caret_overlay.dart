@@ -45,7 +45,7 @@ class _CaretDocumentOverlayState extends State<CaretDocumentOverlay> with Single
   @override
   void initState() {
     super.initState();
-    widget.composer.selectionNotifier.addListener(_scheduleCaretUpdate);
+    widget.composer.selectionChangeNotifier.addListener(_scheduleCaretUpdate);
     widget.document.addListener(_scheduleCaretUpdate);
     _blinkController = BlinkController(tickerProvider: this)..startBlinking();
 
@@ -65,8 +65,8 @@ class _CaretDocumentOverlayState extends State<CaretDocumentOverlay> with Single
     }
 
     if (widget.composer != oldWidget.composer) {
-      oldWidget.composer.selectionNotifier.removeListener(_scheduleCaretUpdate);
-      widget.composer.selectionNotifier.addListener(_scheduleCaretUpdate);
+      oldWidget.composer.selectionChangeNotifier.removeListener(_scheduleCaretUpdate);
+      widget.composer.selectionChangeNotifier.addListener(_scheduleCaretUpdate);
 
       // Selection has changed, we need to update the caret.
       if (widget.composer.selection != oldWidget.composer.selection) {
@@ -77,7 +77,7 @@ class _CaretDocumentOverlayState extends State<CaretDocumentOverlay> with Single
 
   @override
   void dispose() {
-    widget.composer.selectionNotifier.removeListener(_scheduleCaretUpdate);
+    widget.composer.selectionChangeNotifier.removeListener(_scheduleCaretUpdate);
     widget.document.removeListener(_scheduleCaretUpdate);
     _blinkController.dispose();
     super.dispose();

@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:super_editor/src/core/document.dart';
+import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/document_operations/selection_operations.dart';
@@ -32,7 +33,7 @@ class AndroidDocumentTouchInteractor extends StatefulWidget {
     required this.document,
     required this.documentKey,
     required this.getDocumentLayout,
-    required this.selection,
+    required this.selectionChange,
     this.scrollController,
     this.dragAutoScrollBoundary = const AxisOffset.symmetric(54),
     required this.handleColor,
@@ -47,7 +48,7 @@ class AndroidDocumentTouchInteractor extends StatefulWidget {
   final Document document;
   final GlobalKey documentKey;
   final DocumentLayout Function() getDocumentLayout;
-  final ValueNotifier<DocumentSelection?> selection;
+  final ValueNotifier<DocumentSelectionChange> selectionChange;
 
   final ScrollController? scrollController;
 
@@ -109,6 +110,8 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   Offset? _dragEndInInteractor;
   SelectionHandleType? _selectionType;
 
+  DocumentSelection? get _currentSelection => widget.selectionChange.value.selection;
+
   @override
   void initState() {
     super.initState();
@@ -150,16 +153,16 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     );
 
     widget.document.addListener(_onDocumentChange);
-    widget.selection.addListener(_onSelectionChange);
+    widget.selectionChange.addListener(_onSelectionChange);
 
     startSyncingSelectionWithFocus(
       focusNode: widget.focusNode,
       getDocumentLayout: widget.getDocumentLayout,
-      selection: widget.selection,
+      selectionChange: widget.selectionChange,
     );
 
     // If we already have a selection, we need to display the caret.
-    if (widget.selection.value != null) {
+    if (_currentSelection != null) {
       _onSelectionChange();
     }
 
@@ -198,13 +201,13 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       widget.document.addListener(_onDocumentChange);
     }
 
-    if (widget.selection != oldWidget.selection) {
-      oldWidget.selection.removeListener(_onSelectionChange);
-      widget.selection.addListener(_onSelectionChange);
-      onDocumentSelectionNotifierReplaced(widget.selection);
+    if (widget.selectionChange != oldWidget.selectionChange) {
+      oldWidget.selectionChange.removeListener(_onSelectionChange);
+      widget.selectionChange.addListener(_onSelectionChange);
+      onDocumentSelectionNotifierReplaced(widget.selectionChange);
 
-      // Selection has changed, we need to update the caret.
-      if (widget.selection.value != oldWidget.selection.value) {
+      if (widget.selectionChange.value.selection != oldWidget.selectionChange.value.selection) {
+        // Selection has changed, we need to update the caret.
         _onSelectionChange();
       }
     }
@@ -254,7 +257,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     });
 
     widget.document.removeListener(_onDocumentChange);
-    widget.selection.removeListener(_onSelectionChange);
+    widget.selectionChange.removeListener(_onSelectionChange);
 
     _removeEditingOverlayControls();
 
@@ -346,7 +349,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   }
 
   void _updateHandlesAfterSelectionOrLayoutChange() {
-    final newSelection = widget.selection.value;
+    final newSelection = _currentSelection;
 
     if (newSelection == null) {
       _editingController
@@ -437,7 +440,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     editorGesturesLog.fine(" - tapped document position: $docPosition");
 
     if (docPosition != null) {
-      final selection = widget.selection.value;
+      final selection = _currentSelection;
       final didTapOnExistingSelection = selection != null && selection.isCollapsed && selection.extent == docPosition;
 
       if (didTapOnExistingSelection) {
@@ -457,7 +460,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
         moveSelectionToNearestSelectableNode(
           document: widget.document,
           documentLayoutResolver: widget.getDocumentLayout,
-          selection: widget.selection,
+          selectionChange: widget.selectionChange,
           startingNode: widget.document.getNodeById(docPosition.nodeId)!,
         );
       } else {
@@ -509,7 +512,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
         _selectPosition(docPosition);
       }
 
-      if (!widget.selection.value!.isCollapsed) {
+      if (!_currentSelection!.isCollapsed) {
         _editingController.showToolbar();
         _positionToolbar();
       } else {
@@ -532,14 +535,16 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       return false;
     }
 
-    widget.selection.value = DocumentSelection(
-      base: DocumentPosition(
-        nodeId: position.nodeId,
-        nodePosition: const UpstreamDownstreamNodePosition.upstream(),
-      ),
-      extent: DocumentPosition(
-        nodeId: position.nodeId,
-        nodePosition: const UpstreamDownstreamNodePosition.downstream(),
+    widget.selectionChange.value = DocumentSelectionChange(
+      selection: DocumentSelection(
+        base: DocumentPosition(
+          nodeId: position.nodeId,
+          nodePosition: const UpstreamDownstreamNodePosition.upstream(),
+        ),
+        extent: DocumentPosition(
+          nodeId: position.nodeId,
+          nodePosition: const UpstreamDownstreamNodePosition.downstream(),
+        ),
       ),
     );
 
@@ -603,7 +608,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   }
 
   void _onHandleDragStart(HandleType handleType, Offset globalOffset) {
-    final selectionAffinity = widget.document.getAffinityForSelection(widget.selection.value!);
+    final selectionAffinity = widget.document.getAffinityForSelection(_currentSelection!);
     switch (handleType) {
       case HandleType.collapsed:
         _selectionType = SelectionHandleType.collapsed;
@@ -625,7 +630,9 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
     _startDragPositionOffset = _docLayout
         .getRectForPosition(
-          _selectionType == SelectionHandleType.base ? widget.selection.value!.base : widget.selection.value!.extent,
+          _selectionType == SelectionHandleType.base //
+              ? _currentSelection!.base
+              : _currentSelection!.extent,
         )!
         .center;
 
@@ -674,16 +681,22 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     }
 
     if (_selectionType == SelectionHandleType.collapsed) {
-      widget.selection.value = DocumentSelection.collapsed(
-        position: docDragPosition,
+      widget.selectionChange.value = DocumentSelectionChange(
+        selection: DocumentSelection.collapsed(
+          position: docDragPosition,
+        ),
       );
     } else if (_selectionType == SelectionHandleType.base) {
-      widget.selection.value = widget.selection.value!.copyWith(
-        base: docDragPosition,
+      widget.selectionChange.value = DocumentSelectionChange(
+        selection: _currentSelection!.copyWith(
+          base: docDragPosition,
+        ),
       );
     } else if (_selectionType == SelectionHandleType.extent) {
-      widget.selection.value = widget.selection.value!.copyWith(
-        extent: docDragPosition,
+      widget.selectionChange.value = DocumentSelectionChange(
+        selection: _currentSelection!.copyWith(
+          extent: docDragPosition,
+        ),
       );
     }
   }
@@ -698,7 +711,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     _dragStartInDoc = null;
     _dragEndInInteractor = null;
 
-    if (widget.selection.value!.isCollapsed) {
+    if (_currentSelection!.isCollapsed) {
       // The selection is collapsed. The collapsed handle should disappear
       // after some inactivity. Start the countdown (or restart an in-progress
       // countdown).
@@ -738,23 +751,25 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
         break;
       case SelectionHandleType.base:
         basePosition = dragPosition;
-        extentPosition = widget.selection.value!.extent;
+        extentPosition = _currentSelection!.extent;
         break;
       case SelectionHandleType.extent:
-        basePosition = widget.selection.value!.base;
+        basePosition = _currentSelection!.base;
         extentPosition = dragPosition;
         break;
     }
 
-    widget.selection.value = DocumentSelection(
-      base: basePosition,
-      extent: extentPosition,
+    widget.selectionChange.value = DocumentSelectionChange(
+      selection: DocumentSelection(
+        base: basePosition,
+        extent: extentPosition,
+      ),
     );
-    editorGesturesLog.fine("Selected region: ${widget.selection.value}");
+    editorGesturesLog.fine("Selected region: $_currentSelection");
   }
 
   void _positionCollapsedHandle() {
-    final selection = widget.selection.value;
+    final selection = _currentSelection;
     if (selection == null) {
       editorGesturesLog.shout("Tried to update collapsed handle offset but there is no document selection");
       return;
@@ -775,7 +790,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   }
 
   void _positionExpandedHandles() {
-    final selection = widget.selection.value;
+    final selection = _currentSelection;
     if (selection == null) {
       editorGesturesLog.shout("Tried to update expanded handle offsets but there is no document selection");
       return;
@@ -801,7 +816,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   }
 
   void _positionCaret() {
-    final extentRect = _docLayout.getRectForPosition(widget.selection.value!.extent)!;
+    final extentRect = _docLayout.getRectForPosition(_currentSelection!.extent)!;
 
     _editingController.updateCaret(
       top: extentRect.topLeft,
@@ -819,7 +834,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     Offset toolbarTopAnchor;
     Offset toolbarBottomAnchor;
 
-    final selection = widget.selection.value!;
+    final selection = _currentSelection!;
     if (selection.isCollapsed) {
       final extentRectInDoc = _docLayout.getRectForPosition(selection.extent)!;
       selectionRect = Rect.fromPoints(
@@ -877,7 +892,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   }) {
     final newSelection = getWordSelection(docPosition: docPosition, docLayout: docLayout);
     if (newSelection != null) {
-      widget.selection.value = newSelection;
+      widget.selectionChange.value = DocumentSelectionChange(selection: newSelection);
       return true;
     } else {
       return false;
@@ -890,7 +905,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   }) {
     final newSelection = getParagraphSelection(docPosition: docPosition, docLayout: docLayout);
     if (newSelection != null) {
-      widget.selection.value = newSelection;
+      widget.selectionChange.value = DocumentSelectionChange(selection: newSelection);
       return true;
     } else {
       return false;
@@ -899,14 +914,16 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
   void _selectPosition(DocumentPosition position) {
     editorGesturesLog.fine("Setting document selection to $position");
-    widget.selection.value = DocumentSelection.collapsed(
-      position: position,
+    widget.selectionChange.value = DocumentSelectionChange(
+      selection: DocumentSelection.collapsed(
+        position: position,
+      ),
     );
   }
 
   void _clearSelection() {
     editorGesturesLog.fine("Clearing document selection");
-    widget.selection.value = null;
+    widget.selectionChange.value = DocumentSelectionChange();
   }
 
   ScrollableState? _findAncestorScrollable(BuildContext context) {

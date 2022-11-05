@@ -18,7 +18,7 @@ class DocumentComposer with ChangeNotifier {
     ImeConfiguration? imeConfiguration,
   })  : imeConfiguration = ValueNotifier(imeConfiguration ?? const ImeConfiguration()),
         _preferences = ComposerPreferences() {
-    selectionNotifier.value = initialSelection;
+    selectionChangeNotifier.value = DocumentSelectionChange(selection: initialSelection);
 
     _preferences.addListener(() {
       editorLog.fine("Composer preferences changed");
@@ -33,21 +33,32 @@ class DocumentComposer with ChangeNotifier {
   }
 
   /// Returns the current [DocumentSelection] for a [Document].
-  DocumentSelection? get selection => selectionNotifier.value;
+  DocumentSelection? get selection => selectionChange.selection;
+
+  /// Returns the current [DocumentSelectionChange] for a [Document].
+  DocumentSelectionChange get selectionChange => selectionChangeNotifier.value;
 
   /// Sets the current [selection] for a [Document].
   set selection(DocumentSelection? newSelection) {
-    if (newSelection != selectionNotifier.value) {
-      selectionNotifier.value = newSelection;
+    if (newSelection != selectionChange.selection) {
+      selectionChangeNotifier.value = DocumentSelectionChange(selection: newSelection);
       notifyListeners();
     }
   }
 
-  final selectionNotifier = ValueNotifier<DocumentSelection?>(null);
+  /// Sets the current [selectionChange] for a [Document].
+  set selectionChange(DocumentSelectionChange change) {
+    if (change != selectionChange) {
+      selectionChangeNotifier.value = change;
+      notifyListeners();
+    }
+  }
+
+  final selectionChangeNotifier = ValueNotifier<DocumentSelectionChange>(DocumentSelectionChange());
 
   /// Clears the current [selection].
   void clearSelection() {
-    selection = null;
+    selectionChangeNotifier.value = DocumentSelectionChange();
   }
 
   final ValueNotifier<ImeConfiguration> imeConfiguration;
@@ -122,4 +133,52 @@ class ComposerPreferences with ChangeNotifier {
     _currentAttributions.clear();
     notifyListeners();
   }
+}
+
+/// Represents a change of a [DocumentSelection].
+///
+/// The [reason] represents what cause the selection to change.
+/// For example, [CommonSelectionChangeReasons.userInteraction] represents
+/// a selection change caused by the user interacting with the editor.
+class DocumentSelectionChange {
+  DocumentSelectionChange({
+    this.selection,
+    this.reason = CommonSelectionChangeReasons.userInteraction,
+  });
+
+  final DocumentSelection? selection;
+  final SelectionChangeReason reason;
+}
+
+/// Represents what caused a [DocumentSelection] to change.
+class SelectionChangeReason {
+  const SelectionChangeReason();
+}
+
+/// A [SelectionChangeReason] that is defined by the given [name].
+///
+/// Any two [NamedSelectionChangeReason]'s with the same [name] are considered equal.
+class NamedSelectionChangeReason extends SelectionChangeReason {
+  const NamedSelectionChangeReason(this.name);
+
+  final String name;
+
+  @override
+  String toString() => '[NamedSelectionChangeReason]: $name';
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is NamedSelectionChangeReason && runtimeType == other.runtimeType && name == other.name;
+
+  @override
+  int get hashCode => name.hashCode;
+}
+
+class CommonSelectionChangeReasons {
+  /// A [SelectionChangeReason] that represents an user interaction.
+  static const userInteraction = NamedSelectionChangeReason("userInteraction");
+
+  /// A [SelectionChangeReason] that represents an event which was not caused by the user.
+  static const contentChange = NamedSelectionChangeReason("contentChange");
 }

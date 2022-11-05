@@ -44,7 +44,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
     _doc = createInitialDocument()..addListener(_hideOrShowToolbar);
     _docEditor = DocumentEditor(document: _doc as MutableDocument);
     _composer = DocumentComposer();
-    _composer.selectionNotifier.addListener(_hideOrShowToolbar);
+    _composer.selectionChangeNotifier.addListener(_hideOrShowToolbar);
     _docOps = CommonEditorOperations(
       editor: _docEditor,
       composer: _composer,
@@ -132,11 +132,11 @@ class _ExampleEditorState extends State<ExampleEditor> {
       //       application overlay
       _textFormatBarOverlayEntry ??= OverlayEntry(builder: (context) {
         return EditorToolbar(
-          anchor: _textSelectionAnchor,
-          editorFocusNode: _editorFocusNode,
-          editor: _docEditor,
-          composer: _composer,
-          closeToolbar: _hideEditorToolbar,
+            anchor: _textSelectionAnchor,
+            editorFocusNode: _editorFocusNode,
+            editor: _docEditor,
+            composer: _composer,
+            closeToolbar: _hideEditorToolbar,
         );
       });
 
@@ -379,7 +379,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
     return MultiListenableBuilder(
       listenables: <Listenable>{
         _doc,
-        _composer.selectionNotifier,
+        _composer.selectionChangeNotifier,
       },
       builder: (_) {
         final selection = _composer.selection;

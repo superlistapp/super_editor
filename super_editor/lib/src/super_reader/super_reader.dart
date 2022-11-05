@@ -2,6 +2,7 @@ import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/src/core/document.dart';
+import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_debug_paint.dart';
 import 'package:super_editor/src/core/document_editor.dart';
 import 'package:super_editor/src/core/document_interaction.dart';
@@ -34,7 +35,7 @@ class SuperReader extends StatefulWidget {
     this.focusNode,
     required this.document,
     this.documentLayoutKey,
-    this.selection,
+    this.selectionChange,
     this.scrollController,
     Stylesheet? stylesheet,
     this.customStylePhases = const [],
@@ -70,7 +71,7 @@ class SuperReader extends StatefulWidget {
   /// layout within this [SuperReader].
   final GlobalKey? documentLayoutKey;
 
-  final ValueNotifier<DocumentSelection?>? selection;
+  final ValueNotifier<DocumentSelectionChange>? selectionChange;
 
   /// The [ScrollController] that governs this [SuperReader]'s scroll
   /// offset.
@@ -160,9 +161,9 @@ class SuperReaderState extends State<SuperReader> {
   @visibleForTesting
   Document get document => _editor.document;
 
-  late final ValueNotifier<DocumentSelection?> _selection;
+  late final ValueNotifier<DocumentSelectionChange> _selectionChange;
   @visibleForTesting
-  DocumentSelection? get selection => _selection.value;
+  DocumentSelection? get selection => _selectionChange.value.selection;
 
   // GlobalKey used to access the [DocumentLayoutState] to figure
   // out where in the document the user taps or drags.
@@ -184,7 +185,7 @@ class SuperReaderState extends State<SuperReader> {
   void initState() {
     super.initState();
     _editor = _ReadOnlyDocumentEditor(document: widget.document);
-    _selection = widget.selection ?? ValueNotifier<DocumentSelection?>(null);
+    _selectionChange = widget.selectionChange ?? ValueNotifier<DocumentSelectionChange>(DocumentSelectionChange());
 
     _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
 
@@ -195,7 +196,7 @@ class SuperReaderState extends State<SuperReader> {
     _readerContext = ReaderContext(
       document: widget.document,
       getDocumentLayout: () => _docLayoutKey.currentState as DocumentLayout,
-      selection: _selection,
+      selectionChange: _selectionChange,
       scrollController: _autoScrollController,
     );
 
@@ -209,8 +210,8 @@ class SuperReaderState extends State<SuperReader> {
     if (widget.document != oldWidget.document) {
       _editor = _ReadOnlyDocumentEditor(document: widget.document);
     }
-    if (widget.selection != oldWidget.selection) {
-      _selection = widget.selection ?? ValueNotifier<DocumentSelection?>(null);
+    if (widget.selectionChange != oldWidget.selectionChange) {
+      _selectionChange = widget.selectionChange ?? ValueNotifier<DocumentSelectionChange>(DocumentSelectionChange());
     }
   }
 
@@ -225,7 +226,7 @@ class SuperReaderState extends State<SuperReader> {
 
     _docLayoutSelectionStyler = SingleColumnLayoutSelectionStyler(
       document: _editor.document,
-      selection: _selection,
+      selectionChange: _selectionChange,
       selectionStyles: widget.selectionStyles,
     );
 
@@ -312,7 +313,7 @@ class SuperReaderState extends State<SuperReader> {
           document: _readerContext.document,
           documentKey: _docLayoutKey,
           getDocumentLayout: () => _readerContext.documentLayout,
-          selection: _readerContext.selection,
+          selectionChange: _readerContext.selectionChange,
           scrollController: widget.scrollController,
           handleColor: widget.androidHandleColor ?? Theme.of(context).primaryColor,
           popoverToolbarBuilder: widget.androidToolbarBuilder ?? (_) => const SizedBox(),
@@ -325,7 +326,7 @@ class SuperReaderState extends State<SuperReader> {
           focusNode: _focusNode,
           document: _readerContext.document,
           getDocumentLayout: () => _readerContext.documentLayout,
-          selection: _readerContext.selection,
+          selectionChange: _readerContext.selectionChange,
           scrollController: widget.scrollController,
           documentKey: _docLayoutKey,
           handleColor: widget.iOSHandleColor ?? Theme.of(context).primaryColor,
