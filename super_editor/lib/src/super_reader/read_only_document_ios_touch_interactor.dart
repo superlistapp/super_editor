@@ -442,7 +442,7 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
       _controlsOverlayEntry?.markNeedsBuild();
     });
 
-    widget.selectionChange.value = DocumentSelectionChange();
+    widget.selectionChange.value = const DocumentSelectionChange.empty();
     _editingController.hideToolbar();
 
     widget.focusNode.requestFocus();
@@ -462,7 +462,7 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
     readerGesturesLog.fine(" - tapped document position: $docPosition");
 
-    widget.selectionChange.value = DocumentSelectionChange();
+    widget.selectionChange.value = const DocumentSelectionChange.empty();
 
     if (docPosition != null) {
       final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
@@ -470,7 +470,7 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
         return;
       }
 
-      widget.selectionChange.value = DocumentSelectionChange();
+      widget.selectionChange.value = const DocumentSelectionChange.empty();
 
       bool didSelectContent = selectWordAt(
         docPosition: docPosition,
@@ -502,7 +502,7 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
     readerGesturesLog.fine(" - tapped document position: $docPosition");
 
-    widget.selectionChange.value = DocumentSelectionChange();
+    widget.selectionChange.value = const DocumentSelectionChange.empty();
 
     if (docPosition != null) {
       final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
@@ -696,7 +696,7 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
       _positionToolbar();
     } else {
       // Read-only documents don't support collapsed selections.
-      widget.selectionChange.value = DocumentSelectionChange();
+      widget.selectionChange.value = const DocumentSelectionChange.empty();
     }
 
     _controlsOverlayEntry!.markNeedsBuild();

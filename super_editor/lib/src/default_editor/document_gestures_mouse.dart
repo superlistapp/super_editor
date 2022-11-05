@@ -4,7 +4,6 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/document.dart';
-import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/default_editor/document_scrollable.dart';
@@ -516,7 +515,7 @@ Updating drag selection:
     editorGesturesLog.fine(" - base: $basePosition, extent: $extentPosition");
 
     if (basePosition == null || extentPosition == null) {
-      widget.selectionChange.value = DocumentSelectionChange();
+      widget.selectionChange.value = const DocumentSelectionChange.empty();
       return;
     }
 
@@ -526,7 +525,7 @@ Updating drag selection:
         docLayout: documentLayout,
       );
       if (baseParagraphSelection == null) {
-        widget.selectionChange.value = DocumentSelectionChange();
+        widget.selectionChange.value = const DocumentSelectionChange.empty();
         return;
       }
       basePosition = baseOffsetInDocument.dy < extentOffsetInDocument.dy
@@ -538,7 +537,7 @@ Updating drag selection:
         docLayout: documentLayout,
       );
       if (extentParagraphSelection == null) {
-        widget.selectionChange.value = DocumentSelectionChange();
+        widget.selectionChange.value = const DocumentSelectionChange.empty();
         return;
       }
       extentPosition = baseOffsetInDocument.dy < extentOffsetInDocument.dy
@@ -550,7 +549,7 @@ Updating drag selection:
         docLayout: documentLayout,
       );
       if (baseWordSelection == null) {
-        widget.selectionChange.value = DocumentSelectionChange();
+        widget.selectionChange.value = const DocumentSelectionChange.empty();
         return;
       }
       basePosition = baseWordSelection.base;
@@ -560,7 +559,7 @@ Updating drag selection:
         docLayout: documentLayout,
       );
       if (extentWordSelection == null) {
-        widget.selectionChange.value = DocumentSelectionChange();
+        widget.selectionChange.value = const DocumentSelectionChange.empty();
         return;
       }
       extentPosition = extentWordSelection.extent;
@@ -578,7 +577,7 @@ Updating drag selection:
 
   void _clearSelection() {
     editorGesturesLog.fine("Clearing document selection");
-    widget.selectionChange.value = DocumentSelectionChange();
+    widget.selectionChange.value = const DocumentSelectionChange.empty();
   }
 
   void _moveToNearestSelectableComponent(

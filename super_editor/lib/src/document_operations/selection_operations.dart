@@ -1,6 +1,5 @@
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
-import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
 import 'package:super_editor/src/default_editor/text_tools.dart';
@@ -145,7 +144,7 @@ void selectRegion({
   docGesturesLog.fine(" - base: $basePosition, extent: $extentPosition");
 
   if (basePosition == null || extentPosition == null) {
-    selection.value = DocumentSelectionChange();
+    selection.value = const DocumentSelectionChange.empty();
     return;
   }
 
@@ -155,7 +154,7 @@ void selectRegion({
       docLayout: documentLayout,
     );
     if (baseParagraphSelection == null) {
-      selection.value = DocumentSelectionChange();
+      selection.value = const DocumentSelectionChange.empty();
       return;
     }
     basePosition = baseOffsetInDocument.dy < extentOffsetInDocument.dy
@@ -167,7 +166,7 @@ void selectRegion({
       docLayout: documentLayout,
     );
     if (extentParagraphSelection == null) {
-      selection.value = DocumentSelectionChange();
+      selection.value = const DocumentSelectionChange.empty();
       return;
     }
     extentPosition = baseOffsetInDocument.dy < extentOffsetInDocument.dy
@@ -179,7 +178,7 @@ void selectRegion({
       docLayout: documentLayout,
     );
     if (baseWordSelection == null) {
-      selection.value = DocumentSelectionChange();
+      selection.value = const DocumentSelectionChange.empty();
       return;
     }
     basePosition = baseWordSelection.base;
@@ -189,7 +188,7 @@ void selectRegion({
       docLayout: documentLayout,
     );
     if (extentWordSelection == null) {
-      selection.value = DocumentSelectionChange();
+      selection.value = const DocumentSelectionChange.empty();
       return;
     }
     extentPosition = extentWordSelection.extent;

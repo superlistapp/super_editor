@@ -3,7 +3,6 @@ import 'dart:math';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/src/core/document.dart';
-import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/document_operations/selection_operations.dart';
@@ -499,7 +498,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
         _selectPosition(docPosition);
       }
     } else {
-      widget.selectionChange.value = DocumentSelectionChange();
+      widget.selectionChange.value = const DocumentSelectionChange.empty();
       _editingController.hideToolbar();
     }
 
@@ -528,7 +527,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
         return;
       }
 
-      widget.selectionChange.value = DocumentSelectionChange();
+      widget.selectionChange.value = const DocumentSelectionChange.empty();
 
       bool didSelectContent = _selectWordAt(
         docPosition: docPosition,
@@ -545,7 +544,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
         _selectPosition(docPosition);
       }
     } else {
-      widget.selectionChange.value = DocumentSelectionChange();
+      widget.selectionChange.value = const DocumentSelectionChange.empty();
     }
 
     final newSelection = _currentSelection;
@@ -594,7 +593,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
         return;
       }
 
-      widget.selectionChange.value = DocumentSelectionChange();
+      widget.selectionChange.value = const DocumentSelectionChange.empty();
 
       final didSelectParagraph = _selectParagraphAt(
         docPosition: docPosition,
@@ -606,7 +605,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
         _selectPosition(docPosition);
       }
     } else {
-      widget.selectionChange.value = DocumentSelectionChange();
+      widget.selectionChange.value = const DocumentSelectionChange.empty();
     }
 
     final selection = widget.selectionChange.value.selection;

@@ -1,12 +1,12 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
-import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/document_operations/selection_operations.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
 
+import '../core/document_selection.dart';
 import 'reader_context.dart';
 
 /// Governs document input that comes from a physical keyboard.
@@ -145,7 +145,7 @@ final removeCollapsedSelectionWhenShiftIsReleased = createShortcut(
 
     // The selection is collapsed, and the shift key was released. We don't
     // want to retain the selection any longer. Remove it.
-    documentContext.selectionChange.value = DocumentSelectionChange();
+    documentContext.selectionChange.value = const DocumentSelectionChange.empty();
     return ExecutionInstruction.haltExecution;
   },
   keyPressedOrReleased: LogicalKeyboardKey.shift,

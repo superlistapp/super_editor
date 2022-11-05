@@ -13,7 +13,7 @@ class SuperReaderDemo extends StatefulWidget {
 
 class _SuperReaderDemoState extends State<SuperReaderDemo> {
   late final Document _document;
-  final _selectionChange = ValueNotifier<DocumentSelectionChange>(DocumentSelectionChange());
+  final _selectionChange = ValueNotifier<DocumentSelectionChange>(const DocumentSelectionChange.empty());
 
   @override
   void initState() {

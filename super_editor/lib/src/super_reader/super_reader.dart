@@ -2,7 +2,6 @@ import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/src/core/document.dart';
-import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_debug_paint.dart';
 import 'package:super_editor/src/core/document_editor.dart';
 import 'package:super_editor/src/core/document_interaction.dart';
@@ -185,7 +184,8 @@ class SuperReaderState extends State<SuperReader> {
   void initState() {
     super.initState();
     _editor = _ReadOnlyDocumentEditor(document: widget.document);
-    _selectionChange = widget.selectionChange ?? ValueNotifier<DocumentSelectionChange>(DocumentSelectionChange());
+    _selectionChange =
+        widget.selectionChange ?? ValueNotifier<DocumentSelectionChange>(const DocumentSelectionChange.empty());
 
     _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
 
@@ -211,7 +211,8 @@ class SuperReaderState extends State<SuperReader> {
       _editor = _ReadOnlyDocumentEditor(document: widget.document);
     }
     if (widget.selectionChange != oldWidget.selectionChange) {
-      _selectionChange = widget.selectionChange ?? ValueNotifier<DocumentSelectionChange>(DocumentSelectionChange());
+      _selectionChange =
+          widget.selectionChange ?? ValueNotifier<DocumentSelectionChange>(const DocumentSelectionChange.empty());
     }
   }
 

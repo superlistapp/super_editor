@@ -2,7 +2,6 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:super_editor/src/core/document.dart';
-import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/document_operations/selection_operations.dart';
@@ -409,7 +408,7 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
     readerGesturesLog.fine(" - tapped document position: $docPosition");
 
     if (docPosition == null) {
-      widget.selectionChange.value = DocumentSelectionChange();
+      widget.selectionChange.value = const DocumentSelectionChange.empty();
       _editingController.hideToolbar();
       widget.focusNode.requestFocus();
 
@@ -426,7 +425,7 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
     } else {
       // The user tapped somewhere else in the document. Hide the toolbar.
       _editingController.hideToolbar();
-      widget.selectionChange.value = DocumentSelectionChange();
+      widget.selectionChange.value = const DocumentSelectionChange.empty();
     }
 
     widget.focusNode.requestFocus();
@@ -439,7 +438,7 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
     readerGesturesLog.fine(" - tapped document position: $docPosition");
 
-    widget.selectionChange.value = DocumentSelectionChange();
+    widget.selectionChange.value = const DocumentSelectionChange.empty();
 
     if (docPosition != null) {
       // The user tapped a non-selectable component, so we can't select a word.
@@ -478,7 +477,7 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
     readerGesturesLog.fine(" - tapped document position: $docPosition");
 
-    widget.selectionChange.value = DocumentSelectionChange();
+    widget.selectionChange.value = const DocumentSelectionChange.empty();
 
     if (docPosition != null) {
       // The user tapped a non-selectable component, so we can't select a paragraph.
@@ -616,7 +615,7 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
     if (_currentSelection!.isCollapsed) {
       // The selection is collapsed. Read-only documents don't display
       // collapsed selections. Clear the selection.
-      widget.selectionChange.value = DocumentSelectionChange();
+      widget.selectionChange.value = const DocumentSelectionChange.empty();
     } else {
       _editingController.showToolbar();
       _positionToolbar();

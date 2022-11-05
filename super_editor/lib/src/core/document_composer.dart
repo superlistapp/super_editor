@@ -54,11 +54,11 @@ class DocumentComposer with ChangeNotifier {
     }
   }
 
-  final selectionChangeNotifier = ValueNotifier<DocumentSelectionChange>(DocumentSelectionChange());
+  final selectionChangeNotifier = ValueNotifier<DocumentSelectionChange>(const DocumentSelectionChange.empty());
 
   /// Clears the current [selection].
   void clearSelection() {
-    selectionChangeNotifier.value = DocumentSelectionChange();
+    selectionChangeNotifier.value = const DocumentSelectionChange.empty();
   }
 
   final ValueNotifier<ImeConfiguration> imeConfiguration;
@@ -133,52 +133,4 @@ class ComposerPreferences with ChangeNotifier {
     _currentAttributions.clear();
     notifyListeners();
   }
-}
-
-/// Represents a change of a [DocumentSelection].
-///
-/// The [reason] represents what cause the selection to change.
-/// For example, [CommonSelectionChangeReasons.userInteraction] represents
-/// a selection change caused by the user interacting with the editor.
-class DocumentSelectionChange {
-  DocumentSelectionChange({
-    this.selection,
-    this.reason = CommonSelectionChangeReasons.userInteraction,
-  });
-
-  final DocumentSelection? selection;
-  final SelectionChangeReason reason;
-}
-
-/// Represents what caused a [DocumentSelection] to change.
-class SelectionChangeReason {
-  const SelectionChangeReason();
-}
-
-/// A [SelectionChangeReason] that is defined by the given [name].
-///
-/// Any two [NamedSelectionChangeReason]'s with the same [name] are considered equal.
-class NamedSelectionChangeReason extends SelectionChangeReason {
-  const NamedSelectionChangeReason(this.name);
-
-  final String name;
-
-  @override
-  String toString() => '[NamedSelectionChangeReason]: $name';
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is NamedSelectionChangeReason && runtimeType == other.runtimeType && name == other.name;
-
-  @override
-  int get hashCode => name.hashCode;
-}
-
-class CommonSelectionChangeReasons {
-  /// A [SelectionChangeReason] that represents an user interaction.
-  static const userInteraction = NamedSelectionChangeReason("userInteraction");
-
-  /// A [SelectionChangeReason] that represents an event which was not caused by the user.
-  static const contentChange = NamedSelectionChangeReason("contentChange");
 }

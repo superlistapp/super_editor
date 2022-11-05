@@ -4,7 +4,6 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/document.dart';
-import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/default_editor/document_scrollable.dart';
@@ -174,7 +173,7 @@ class _ReadOnlyDocumentMouseInteractorState extends State<ReadOnlyDocumentMouseI
 
     if (docPosition == null) {
       readerGesturesLog.fine("No document content at ${details.globalPosition}.");
-      widget.readerContext.selectionChange.value = DocumentSelectionChange();
+      widget.readerContext.selectionChange.value = const DocumentSelectionChange.empty();
       return;
     }
 
@@ -182,7 +181,7 @@ class _ReadOnlyDocumentMouseInteractorState extends State<ReadOnlyDocumentMouseI
     if (!expandSelection) {
       // Read-only documents don't show carets. Therefore, we only care about
       // a tap when we're expanding an existing selection.
-      widget.readerContext.selectionChange.value = DocumentSelectionChange();
+      widget.readerContext.selectionChange.value = const DocumentSelectionChange.empty();
       _selectionType = SelectionType.position;
       return;
     }
@@ -223,7 +222,7 @@ class _ReadOnlyDocumentMouseInteractorState extends State<ReadOnlyDocumentMouseI
     }
 
     _selectionType = SelectionType.word;
-    widget.readerContext.selectionChange.value = DocumentSelectionChange();
+    widget.readerContext.selectionChange.value = const DocumentSelectionChange.empty();
 
     if (docPosition != null) {
       bool didSelectContent = selectWordAt(
@@ -266,7 +265,7 @@ class _ReadOnlyDocumentMouseInteractorState extends State<ReadOnlyDocumentMouseI
     }
 
     _selectionType = SelectionType.paragraph;
-    widget.readerContext.selectionChange.value = DocumentSelectionChange();
+    widget.readerContext.selectionChange.value = const DocumentSelectionChange.empty();
 
     if (docPosition != null) {
       final didSelectParagraph = selectParagraphAt(
@@ -321,7 +320,7 @@ class _ReadOnlyDocumentMouseInteractorState extends State<ReadOnlyDocumentMouseI
       // Only clear the selection if the user isn't pressing shift. Shift is
       // used to expand the current selection, not replace it.
       readerGesturesLog.fine("Shift isn't pressed. Clearing any existing selection before panning.");
-      widget.readerContext.selectionChange.value = DocumentSelectionChange();
+      widget.readerContext.selectionChange.value = const DocumentSelectionChange.empty();
     }
 
     _focusNode.requestFocus();

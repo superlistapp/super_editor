@@ -76,7 +76,7 @@ mixin DocumentSelectionOnFocusMixin<T extends StatefulWidget> on State<T> {
 
   void _onFocusChange() {
     if (!_focusNode!.hasFocus) {
-      _selectionChange.value = DocumentSelectionChange();
+      _selectionChange.value = const DocumentSelectionChange.empty();
       return;
     }
 
@@ -88,7 +88,7 @@ mixin DocumentSelectionOnFocusMixin<T extends StatefulWidget> on State<T> {
       // already set to the correct position, so we don't override it.
       if (mounted && _focusNode!.hasFocus && _selectionChange.value.selection == null) {
         if (_previousSelection != null) {
-          _selectionChange.value = _previousSelection ?? DocumentSelectionChange();
+          _selectionChange.value = _previousSelection ?? const DocumentSelectionChange.empty();
           return;
         }
 
