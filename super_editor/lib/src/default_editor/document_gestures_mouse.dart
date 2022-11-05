@@ -572,7 +572,7 @@ Updating drag selection:
         extent: extentPosition,
       ),
     );
-    editorGesturesLog.fine("Selected region: ${widget.selectionChange.value}");
+    editorGesturesLog.fine("Selected region: $_currentSelection");
   }
 
   void _clearSelection() {

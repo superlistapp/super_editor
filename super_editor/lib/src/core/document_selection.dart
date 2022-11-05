@@ -208,7 +208,7 @@ class DocumentSelection {
 
 /// Represents a change of a [DocumentSelection].
 ///
-/// The [reason] represents what cause the selection to change.
+/// The [reason] represents what caused the selection to change.
 /// For example, [CommonSelectionChangeReasons.userInteraction] represents
 /// a selection change caused by the user interacting with the editor.
 class DocumentSelectionChange {
@@ -224,6 +224,9 @@ class DocumentSelectionChange {
 
   final DocumentSelection? selection;
   final SelectionChangeReason reason;
+
+  @override
+  String toString() => '[DocumentSelectionChange]: selection: $selection, reason: $reason';
 }
 
 /// Represents what caused a [DocumentSelection] to change.

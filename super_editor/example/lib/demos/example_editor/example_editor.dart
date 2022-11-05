@@ -132,11 +132,11 @@ class _ExampleEditorState extends State<ExampleEditor> {
       //       application overlay
       _textFormatBarOverlayEntry ??= OverlayEntry(builder: (context) {
         return EditorToolbar(
-            anchor: _textSelectionAnchor,
-            editorFocusNode: _editorFocusNode,
-            editor: _docEditor,
-            composer: _composer,
-            closeToolbar: _hideEditorToolbar,
+          anchor: _textSelectionAnchor,
+          editorFocusNode: _editorFocusNode,
+          editor: _docEditor,
+          composer: _composer,
+          closeToolbar: _hideEditorToolbar,
         );
       });
 
