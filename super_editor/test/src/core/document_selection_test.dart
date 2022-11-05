@@ -189,6 +189,22 @@ void main() {
       });
     });
   });
+
+  group("Document selection change", () {
+    test("reason defaults to user interaction", () {
+      const selectionChange1 = DocumentSelectionChange(
+        selection: DocumentSelection.collapsed(
+          position: DocumentPosition(nodeId: "1", nodePosition: TextNodePosition(offset: 0)),
+        ),
+      );
+
+      expect(selectionChange1.reason, CommonSelectionChangeReasons.userInteraction);
+
+      const selectionChange2 = DocumentSelectionChange.empty();
+
+      expect(selectionChange2.reason, CommonSelectionChangeReasons.userInteraction);
+    });
+  });
 }
 
 final _testDoc = MutableDocument(
