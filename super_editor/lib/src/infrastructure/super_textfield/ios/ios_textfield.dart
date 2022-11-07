@@ -165,7 +165,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
   @override
   void initState() {
     super.initState();
-    _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
+    _focusNode = (widget.focusNode ?? FocusNode())..addListener(_updateSelectionAndImeConnectionOnFocusChange);
 
     _textEditingController = (widget.textController ?? ImeAttributedTextEditingController())
       ..addListener(_onTextOrSelectionChange)
@@ -191,7 +191,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
     if (_focusNode.hasFocus) {
       // The given FocusNode already has focus, we need to update selection and attach to IME.
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-        _onFocusChange();
+        _updateSelectionAndImeConnectionOnFocusChange();
       });
     }
   }
@@ -201,13 +201,13 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
     super.didUpdateWidget(oldWidget);
 
     if (widget.focusNode != oldWidget.focusNode) {
-      _focusNode.removeListener(_onFocusChange);
+      _focusNode.removeListener(_updateSelectionAndImeConnectionOnFocusChange);
       if (widget.focusNode != null) {
         _focusNode = widget.focusNode!;
       } else {
         _focusNode = FocusNode();
       }
-      _focusNode.addListener(_onFocusChange);
+      _focusNode.addListener(_updateSelectionAndImeConnectionOnFocusChange);
     }
 
     if (widget.textController != oldWidget.textController) {
@@ -273,7 +273,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
       });
     }
 
-    _focusNode.removeListener(_onFocusChange);
+    _focusNode.removeListener(_updateSelectionAndImeConnectionOnFocusChange);
     if (widget.focusNode == null) {
       _focusNode.dispose();
     }
@@ -306,7 +306,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
   @override
   DeltaTextInputClient get imeClient => _textEditingController;
 
-  void _onFocusChange() {
+  void _updateSelectionAndImeConnectionOnFocusChange() {
     if (_focusNode.hasFocus) {
       if (!_textEditingController.isAttachedToIme) {
         _log.info('Attaching TextInputClient to TextInput');

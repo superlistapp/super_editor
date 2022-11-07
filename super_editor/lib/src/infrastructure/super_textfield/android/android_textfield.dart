@@ -160,7 +160,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
   @override
   void initState() {
     super.initState();
-    _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
+    _focusNode = (widget.focusNode ?? FocusNode())..addListener(_updateSelectionAndImeConnectionOnFocusChange);
 
     _textEditingController = (widget.textController ?? ImeAttributedTextEditingController())
       ..addListener(_onTextOrSelectionChange)
@@ -181,7 +181,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
     if (_focusNode.hasFocus) {
       // The given FocusNode already has focus, we need to update selection and attach to IME.
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-        _onFocusChange();
+        _updateSelectionAndImeConnectionOnFocusChange();
       });
     }
   }
@@ -191,8 +191,8 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
     super.didUpdateWidget(oldWidget);
 
     if (widget.focusNode != oldWidget.focusNode) {
-      _focusNode.removeListener(_onFocusChange);
-      _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
+      _focusNode.removeListener(_updateSelectionAndImeConnectionOnFocusChange);
+      _focusNode = (widget.focusNode ?? FocusNode())..addListener(_updateSelectionAndImeConnectionOnFocusChange);
     }
 
     if (widget.textInputAction != oldWidget.textInputAction && _textEditingController.isAttachedToIme) {
@@ -258,7 +258,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
       });
     }
 
-    _focusNode.removeListener(_onFocusChange);
+    _focusNode.removeListener(_updateSelectionAndImeConnectionOnFocusChange);
     if (widget.focusNode == null) {
       _focusNode.dispose();
     }
@@ -291,7 +291,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
 
   bool get _isMultiline => (widget.minLines ?? 1) != 1 || widget.maxLines != 1;
 
-  void _onFocusChange() {
+  void _updateSelectionAndImeConnectionOnFocusChange() {
     if (_focusNode.hasFocus) {
       if (!_textEditingController.isAttachedToIme) {
         _log.info('Attaching TextInputClient to TextInput');
