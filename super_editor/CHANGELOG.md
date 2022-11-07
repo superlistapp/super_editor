@@ -1,3 +1,6 @@
+## [0.2.3+1] - Nov, 2022: Pub.dev listing updates
+ * No functional changes
+
 ## [0.2.3] - Nov, 2022: SuperReader, Bug Fixes
  * FEATURE: SuperReader - Created a `SuperReader` for read-only documents (0424ff1c6695629d2dba8214a950d261a3002b02)
  * FEATURE: SuperEditor - Simulate IME text input for tests (3b67328722288d9c31ac52bed1bce4a550868e58)
