@@ -211,7 +211,7 @@ class TestDocumentConfigurator {
     final documentContext = ReaderContext(
       document: _document!,
       getDocumentLayout: () => layoutKey.currentState as DocumentLayout,
-      selectionChange: ValueNotifier<DocumentSelectionChange>(DocumentSelectionChange(selection: _selection)),
+      selection: ValueNotifier<DocumentSelection?>(_selection),
       scrollController: AutoScrollController(),
     );
     final testContext = TestDocumentContext._(
@@ -226,7 +226,7 @@ class TestDocumentConfigurator {
         focusNode: testContext.focusNode,
         document: documentContext.document,
         documentLayoutKey: layoutKey,
-        selectionChange: documentContext.selectionChange,
+        selection: documentContext.selection,
         gestureMode: _gestureMode ?? _defaultGestureMode,
         stylesheet: _stylesheet,
         componentBuilders: [

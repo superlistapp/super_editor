@@ -206,62 +206,6 @@ class DocumentSelection {
   }
 }
 
-/// Represents a change of a [DocumentSelection].
-///
-/// The [reason] represents what caused the selection to change.
-/// For example, [CommonSelectionChangeReasons.userInteraction] represents
-/// a selection change caused by the user interacting with the editor.
-class DocumentSelectionChange {
-  const DocumentSelectionChange({
-    this.selection,
-    this.reason = CommonSelectionChangeReasons.userInteraction,
-  });
-
-  /// Creates a [DocumentSelectionChange] with a `null` [selection].
-  const DocumentSelectionChange.empty()
-      : selection = null,
-        reason = CommonSelectionChangeReasons.userInteraction;
-
-  final DocumentSelection? selection;
-  final SelectionChangeReason reason;
-
-  @override
-  String toString() => '[DocumentSelectionChange]: selection: $selection, reason: $reason';
-}
-
-/// Represents what caused a [DocumentSelection] to change.
-class SelectionChangeReason {
-  const SelectionChangeReason();
-}
-
-/// A [SelectionChangeReason] that is defined by the given [name].
-///
-/// Any two [NamedSelectionChangeReason]'s with the same [name] are considered equal.
-class NamedSelectionChangeReason extends SelectionChangeReason {
-  const NamedSelectionChangeReason(this.name);
-
-  final String name;
-
-  @override
-  String toString() => '[NamedSelectionChangeReason]: $name';
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is NamedSelectionChangeReason && runtimeType == other.runtimeType && name == other.name;
-
-  @override
-  int get hashCode => name.hashCode;
-}
-
-class CommonSelectionChangeReasons {
-  /// A [SelectionChangeReason] that represents an user interaction.
-  static const userInteraction = NamedSelectionChangeReason("userInteraction");
-
-  /// A [SelectionChangeReason] that represents an event which was not caused by the user.
-  static const contentChange = NamedSelectionChangeReason("contentChange");
-}
-
 extension InspectDocumentAffinity on Document {
   TextAffinity getAffinityForSelection(DocumentSelection selection) {
     return getAffinityBetween(base: selection.base, extent: selection.extent);

@@ -24,7 +24,7 @@ import '../core/document_selection.dart';
 bool moveSelectionToNearestSelectableNode({
   required Document document,
   required DocumentLayoutResolver documentLayoutResolver,
-  required ValueNotifier<DocumentSelectionChange> selectionChange,
+  required ValueNotifier<DocumentSelection?> selection,
   required DocumentNode startingNode,
   bool expand = false,
 }) {
@@ -60,14 +60,10 @@ bool moveSelectionToNearestSelectableNode({
 
   if (expand) {
     // Selection should be expanded.
-    selectionChange.value = DocumentSelectionChange(
-      selection: selectionChange.value.selection!.expandTo(newExtent),
-    );
+    selection.value = selection.value!.expandTo(newExtent);
   } else {
     // Selection should be replaced by new collapsed position.
-    selectionChange.value = DocumentSelectionChange(
-      selection: DocumentSelection.collapsed(position: newExtent),
-    );
+    selection.value = DocumentSelection.collapsed(position: newExtent);
   }
 
   return true;
@@ -132,7 +128,7 @@ void selectRegion({
   required Offset extentOffsetInDocument,
   required SelectionType selectionType,
   bool expandSelection = false,
-  required ValueNotifier<DocumentSelectionChange> selection,
+  required ValueNotifier<DocumentSelection?> selection,
 }) {
   docGesturesLog.info("Selecting region with selection mode: $selectionType");
   DocumentSelection? regionSelection = documentLayout.getDocumentSelectionInRegion(
@@ -144,7 +140,7 @@ void selectRegion({
   docGesturesLog.fine(" - base: $basePosition, extent: $extentPosition");
 
   if (basePosition == null || extentPosition == null) {
-    selection.value = const DocumentSelectionChange.empty();
+    selection.value = null;
     return;
   }
 
@@ -154,7 +150,7 @@ void selectRegion({
       docLayout: documentLayout,
     );
     if (baseParagraphSelection == null) {
-      selection.value = const DocumentSelectionChange.empty();
+      selection.value = null;
       return;
     }
     basePosition = baseOffsetInDocument.dy < extentOffsetInDocument.dy
@@ -166,7 +162,7 @@ void selectRegion({
       docLayout: documentLayout,
     );
     if (extentParagraphSelection == null) {
-      selection.value = const DocumentSelectionChange.empty();
+      selection.value = null;
       return;
     }
     extentPosition = baseOffsetInDocument.dy < extentOffsetInDocument.dy
@@ -178,7 +174,7 @@ void selectRegion({
       docLayout: documentLayout,
     );
     if (baseWordSelection == null) {
-      selection.value = const DocumentSelectionChange.empty();
+      selection.value = null;
       return;
     }
     basePosition = baseWordSelection.base;
@@ -188,16 +184,15 @@ void selectRegion({
       docLayout: documentLayout,
     );
     if (extentWordSelection == null) {
-      selection.value = const DocumentSelectionChange.empty();
+      selection.value = null;
       return;
     }
     extentPosition = extentWordSelection.extent;
   }
 
-  selection.value = DocumentSelectionChange(
-      selection: DocumentSelection(
+  selection.value = (DocumentSelection(
     // If desired, expand the selection instead of replacing it.
-    base: expandSelection ? selection.value.selection?.base ?? basePosition : basePosition,
+    base: expandSelection ? selection.value?.base ?? basePosition : basePosition,
     extent: extentPosition,
   ));
   docGesturesLog.fine("Selected region: ${selection.value}");
@@ -212,32 +207,30 @@ enum SelectionType {
 bool selectWordAt({
   required DocumentPosition docPosition,
   required DocumentLayout docLayout,
-  required ValueNotifier<DocumentSelectionChange> selectionChange,
+  required ValueNotifier<DocumentSelection?> selection,
 }) {
   final newSelection = getWordSelection(docPosition: docPosition, docLayout: docLayout);
   if (newSelection != null) {
-    selectionChange.value = DocumentSelectionChange(selection: newSelection);
+    selection.value = newSelection;
     return true;
   } else {
     return false;
   }
 }
 
-bool selectBlockAt(DocumentPosition position, ValueNotifier<DocumentSelectionChange> selectionChange) {
+bool selectBlockAt(DocumentPosition position, ValueNotifier<DocumentSelection?> selection) {
   if (position.nodePosition is! UpstreamDownstreamNodePosition) {
     return false;
   }
 
-  selectionChange.value = DocumentSelectionChange(
-    selection: DocumentSelection(
-      base: DocumentPosition(
-        nodeId: position.nodeId,
-        nodePosition: const UpstreamDownstreamNodePosition.upstream(),
-      ),
-      extent: DocumentPosition(
-        nodeId: position.nodeId,
-        nodePosition: const UpstreamDownstreamNodePosition.downstream(),
-      ),
+  selection.value = DocumentSelection(
+    base: DocumentPosition(
+      nodeId: position.nodeId,
+      nodePosition: const UpstreamDownstreamNodePosition.upstream(),
+    ),
+    extent: DocumentPosition(
+      nodeId: position.nodeId,
+      nodePosition: const UpstreamDownstreamNodePosition.downstream(),
     ),
   );
 
@@ -247,11 +240,11 @@ bool selectBlockAt(DocumentPosition position, ValueNotifier<DocumentSelectionCha
 bool selectParagraphAt({
   required DocumentPosition docPosition,
   required DocumentLayout docLayout,
-  required ValueNotifier<DocumentSelectionChange> selectionChange,
+  required ValueNotifier<DocumentSelection?> selection,
 }) {
   final newSelection = getParagraphSelection(docPosition: docPosition, docLayout: docLayout);
   if (newSelection != null) {
-    selectionChange.value = DocumentSelectionChange(selection: newSelection);
+    selection.value = newSelection;
     return true;
   } else {
     return false;
@@ -261,7 +254,7 @@ bool selectParagraphAt({
 void moveToNearestSelectableComponent(
   Document document,
   DocumentLayout documentLayout,
-  ValueNotifier<DocumentSelectionChange> selectionChange,
+  ValueNotifier<DocumentSelection?> selection,
   String nodeId,
   DocumentComponent component,
 ) {
@@ -294,12 +287,10 @@ void moveToNearestSelectableComponent(
     return;
   }
 
-  selectionChange.value = DocumentSelectionChange(
-    selection: selectionChange.value.selection?.expandTo(
-      DocumentPosition(
-        nodeId: newNodeId,
-        nodePosition: newPosition,
-      ),
+  selection.value = selection.value!.expandTo(
+    DocumentPosition(
+      nodeId: newNodeId,
+      nodePosition: newPosition,
     ),
   );
 }
@@ -307,11 +298,11 @@ void moveToNearestSelectableComponent(
 bool moveCaretUpstream({
   required Document document,
   required DocumentLayout documentLayout,
-  required ValueNotifier<DocumentSelectionChange> selectionChangeNotifier,
+  required ValueNotifier<DocumentSelection?> selectionNotifier,
   MovementModifier? movementModifier,
   required bool retainCollapsedSelection,
 }) {
-  final selection = selectionChangeNotifier.value.selection;
+  final selection = selectionNotifier.value;
   if (selection == null) {
     return false;
   }
@@ -356,7 +347,7 @@ bool moveCaretUpstream({
   if (newSelection.isCollapsed && !retainCollapsedSelection) {
     newSelection = null;
   }
-  selectionChangeNotifier.value = DocumentSelectionChange(selection: newSelection);
+  selectionNotifier.value = newSelection;
 
   return true;
 }
@@ -380,11 +371,11 @@ bool moveCaretUpstream({
 bool moveCaretDownstream({
   required Document document,
   required DocumentLayout documentLayout,
-  required ValueNotifier<DocumentSelectionChange> selectionChangeNotifier,
+  required ValueNotifier<DocumentSelection?> selectionNotifier,
   MovementModifier? movementModifier,
   required bool retainCollapsedSelection,
 }) {
-  final selection = selectionChangeNotifier.value.selection;
+  final selection = selectionNotifier.value;
   if (selection == null) {
     return false;
   }
@@ -430,7 +421,7 @@ bool moveCaretDownstream({
   if (newSelection.isCollapsed && !retainCollapsedSelection) {
     newSelection = null;
   }
-  selectionChangeNotifier.value = DocumentSelectionChange(selection: newSelection);
+  selectionNotifier.value = newSelection;
 
   return true;
 }
@@ -456,11 +447,11 @@ bool moveCaretDownstream({
 /// [false] if the extent did not move and the selection did not change.
 bool moveCaretUp({
   required Document document,
-  required ValueNotifier<DocumentSelectionChange> selectionChangeNotifier,
+  required ValueNotifier<DocumentSelection?> selectionNotifier,
   required DocumentLayout documentLayout,
   required bool retainCollapsedSelection,
 }) {
-  final selection = selectionChangeNotifier.value.selection;
+  final selection = selectionNotifier.value;
   if (selection == null) {
     return false;
   }
@@ -507,7 +498,7 @@ bool moveCaretUp({
   if (newSelection.isCollapsed && !retainCollapsedSelection) {
     newSelection = null;
   }
-  selectionChangeNotifier.value = DocumentSelectionChange(selection: newSelection);
+  selectionNotifier.value = newSelection;
 
   return true;
 }
@@ -534,10 +525,10 @@ bool moveCaretUp({
 bool moveCaretDown({
   required Document document,
   required DocumentLayout documentLayout,
-  required ValueNotifier<DocumentSelectionChange> selectionChangeNotifier,
+  required ValueNotifier<DocumentSelection?> selectionNotifier,
   required bool retainCollapsedSelection,
 }) {
-  final selection = selectionChangeNotifier.value.selection;
+  final selection = selectionNotifier.value;
   if (selection == null) {
     return false;
   }
@@ -584,7 +575,7 @@ bool moveCaretDown({
   if (newSelection.isCollapsed && !retainCollapsedSelection) {
     newSelection = null;
   }
-  selectionChangeNotifier.value = DocumentSelectionChange(selection: newSelection);
+  selectionNotifier.value = newSelection;
 
   return true;
 }
@@ -593,22 +584,20 @@ bool moveCaretDown({
 ///
 /// Returns `true` if any content was selected, or `false` if the document
 /// is empty.
-bool selectAll(Document document, ValueNotifier<DocumentSelectionChange> selection) {
+bool selectAll(Document document, ValueNotifier<DocumentSelection?> selection) {
   final nodes = document.nodes;
   if (nodes.isEmpty) {
     return false;
   }
 
-  selection.value = DocumentSelectionChange(
-    selection: DocumentSelection(
-      base: DocumentPosition(
-        nodeId: nodes.first.id,
-        nodePosition: nodes.first.beginningPosition,
-      ),
-      extent: DocumentPosition(
-        nodeId: nodes.last.id,
-        nodePosition: nodes.last.endPosition,
-      ),
+  selection.value = DocumentSelection(
+    base: DocumentPosition(
+      nodeId: nodes.first.id,
+      nodePosition: nodes.first.beginningPosition,
+    ),
+    extent: DocumentPosition(
+      nodeId: nodes.last.id,
+      nodePosition: nodes.last.endPosition,
     ),
   );
 

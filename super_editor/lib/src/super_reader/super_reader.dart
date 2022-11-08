@@ -34,7 +34,7 @@ class SuperReader extends StatefulWidget {
     this.focusNode,
     required this.document,
     this.documentLayoutKey,
-    this.selectionChange,
+    this.selection,
     this.scrollController,
     Stylesheet? stylesheet,
     this.customStylePhases = const [],
@@ -70,7 +70,7 @@ class SuperReader extends StatefulWidget {
   /// layout within this [SuperReader].
   final GlobalKey? documentLayoutKey;
 
-  final ValueNotifier<DocumentSelectionChange>? selectionChange;
+  final ValueNotifier<DocumentSelection?>? selection;
 
   /// The [ScrollController] that governs this [SuperReader]'s scroll
   /// offset.
@@ -160,9 +160,9 @@ class SuperReaderState extends State<SuperReader> {
   @visibleForTesting
   Document get document => _editor.document;
 
-  late final ValueNotifier<DocumentSelectionChange> _selectionChange;
+  late final ValueNotifier<DocumentSelection?> _selection;
   @visibleForTesting
-  DocumentSelection? get selection => _selectionChange.value.selection;
+  DocumentSelection? get selection => _selection.value;
 
   // GlobalKey used to access the [DocumentLayoutState] to figure
   // out where in the document the user taps or drags.
@@ -184,8 +184,7 @@ class SuperReaderState extends State<SuperReader> {
   void initState() {
     super.initState();
     _editor = _ReadOnlyDocumentEditor(document: widget.document);
-    _selectionChange =
-        widget.selectionChange ?? ValueNotifier<DocumentSelectionChange>(const DocumentSelectionChange.empty());
+    _selection = widget.selection ?? ValueNotifier<DocumentSelection?>(null);
 
     _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
 
@@ -196,7 +195,7 @@ class SuperReaderState extends State<SuperReader> {
     _readerContext = ReaderContext(
       document: widget.document,
       getDocumentLayout: () => _docLayoutKey.currentState as DocumentLayout,
-      selectionChange: _selectionChange,
+      selection: _selection,
       scrollController: _autoScrollController,
     );
 
@@ -210,9 +209,8 @@ class SuperReaderState extends State<SuperReader> {
     if (widget.document != oldWidget.document) {
       _editor = _ReadOnlyDocumentEditor(document: widget.document);
     }
-    if (widget.selectionChange != oldWidget.selectionChange) {
-      _selectionChange =
-          widget.selectionChange ?? ValueNotifier<DocumentSelectionChange>(const DocumentSelectionChange.empty());
+    if (widget.selection != oldWidget.selection) {
+      _selection = widget.selection ?? ValueNotifier<DocumentSelection?>(null);
     }
   }
 
@@ -227,7 +225,7 @@ class SuperReaderState extends State<SuperReader> {
 
     _docLayoutSelectionStyler = SingleColumnLayoutSelectionStyler(
       document: _editor.document,
-      selectionChange: _selectionChange,
+      selection: _selection,
       selectionStyles: widget.selectionStyles,
     );
 
@@ -314,7 +312,7 @@ class SuperReaderState extends State<SuperReader> {
           document: _readerContext.document,
           documentKey: _docLayoutKey,
           getDocumentLayout: () => _readerContext.documentLayout,
-          selectionChange: _readerContext.selectionChange,
+          selection: _readerContext.selection,
           scrollController: widget.scrollController,
           handleColor: widget.androidHandleColor ?? Theme.of(context).primaryColor,
           popoverToolbarBuilder: widget.androidToolbarBuilder ?? (_) => const SizedBox(),
@@ -327,7 +325,7 @@ class SuperReaderState extends State<SuperReader> {
           focusNode: _focusNode,
           document: _readerContext.document,
           getDocumentLayout: () => _readerContext.documentLayout,
-          selectionChange: _readerContext.selectionChange,
+          selection: _readerContext.selection,
           scrollController: widget.scrollController,
           documentKey: _docLayoutKey,
           handleColor: widget.iOSHandleColor ?? Theme.of(context).primaryColor,

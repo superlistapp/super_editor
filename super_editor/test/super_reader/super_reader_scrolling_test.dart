@@ -143,12 +143,10 @@ void main() {
 
       // Place the caret at the end of the document, which causes the editor to
       // scroll to the bottom.
-      testDocContext.documentContext.selectionChange.value = DocumentSelectionChange(
-        selection: DocumentSelection.collapsed(
-          position: DocumentPosition(
-            nodeId: lastParagraph.id,
-            nodePosition: lastParagraph.endPosition,
-          ),
+      testDocContext.documentContext.selection.value = DocumentSelection.collapsed(
+        position: DocumentPosition(
+          nodeId: lastParagraph.id,
+          nodePosition: lastParagraph.endPosition,
         ),
       );
       testDocContext.focusNode.requestFocus();
@@ -199,12 +197,10 @@ void main() {
 
       // Place the caret at the end of the document, which should cause the
       // editor to scroll to the bottom.
-      docContext.documentContext.selectionChange.value = DocumentSelectionChange(
-        selection: DocumentSelection.collapsed(
-          position: DocumentPosition(
-            nodeId: lastParagraph.id,
-            nodePosition: lastParagraph.endPosition,
-          ),
+      docContext.documentContext.selection.value = DocumentSelection.collapsed(
+        position: DocumentPosition(
+          nodeId: lastParagraph.id,
+          nodePosition: lastParagraph.endPosition,
         ),
       );
       docContext.focusNode.requestFocus();

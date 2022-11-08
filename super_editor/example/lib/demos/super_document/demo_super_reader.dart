@@ -13,7 +13,7 @@ class SuperReaderDemo extends StatefulWidget {
 
 class _SuperReaderDemoState extends State<SuperReaderDemo> {
   late final Document _document;
-  final _selectionChange = ValueNotifier<DocumentSelectionChange>(const DocumentSelectionChange.empty());
+  final _selection = ValueNotifier<DocumentSelection?>(null);
 
   @override
   void initState() {
@@ -22,13 +22,13 @@ class _SuperReaderDemoState extends State<SuperReaderDemo> {
   }
 
   void _copy() {
-    if (_selectionChange.value.selection == null) {
+    if (_selection.value == null) {
       return;
     }
 
     final textToCopy = _textInSelection(
       document: _document,
-      documentSelection: _selectionChange.value.selection!,
+      documentSelection: _selection.value!,
     );
     // TODO: figure out a general approach for asynchronous behaviors that
     //       need to be carried out in response to user input.
@@ -101,16 +101,14 @@ class _SuperReaderDemoState extends State<SuperReaderDemo> {
       return;
     }
 
-    _selectionChange.value = DocumentSelectionChange(
-      selection: DocumentSelection(
-        base: DocumentPosition(
-          nodeId: nodes.first.id,
-          nodePosition: nodes.first.beginningPosition,
-        ),
-        extent: DocumentPosition(
-          nodeId: nodes.last.id,
-          nodePosition: nodes.last.endPosition,
-        ),
+    _selection.value = DocumentSelection(
+      base: DocumentPosition(
+        nodeId: nodes.first.id,
+        nodePosition: nodes.first.beginningPosition,
+      ),
+      extent: DocumentPosition(
+        nodeId: nodes.last.id,
+        nodePosition: nodes.last.endPosition,
       ),
     );
   }
@@ -119,7 +117,7 @@ class _SuperReaderDemoState extends State<SuperReaderDemo> {
   Widget build(BuildContext context) {
     return SuperReader(
       document: _document,
-      selectionChange: _selectionChange,
+      selection: _selection,
       androidToolbarBuilder: (_) => AndroidTextEditingFloatingToolbar(
         onCopyPressed: _copy,
         onSelectAllPressed: _selectAll,

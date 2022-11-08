@@ -17,7 +17,7 @@ class ReaderContext {
   ReaderContext({
     required this.document,
     required DocumentLayout Function() getDocumentLayout,
-    required this.selectionChange,
+    required this.selection,
     required this.scrollController,
   }) : _getDocumentLayout = getDocumentLayout;
 
@@ -31,7 +31,7 @@ class ReaderContext {
   final DocumentLayout Function() _getDocumentLayout;
 
   /// The current selection within the displayed document.
-  final ValueNotifier<DocumentSelectionChange> selectionChange;
+  final ValueNotifier<DocumentSelection?> selection;
 
   /// The [AutoScrollController] that scrolls a document up/down within the
   /// document's viewport.

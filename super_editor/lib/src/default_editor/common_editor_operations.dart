@@ -5,6 +5,7 @@ import 'dart:ui';
 import 'package:attributed_text/attributed_text.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:linkify/linkify.dart';
@@ -22,7 +23,9 @@ import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'attributions.dart';
 import 'horizontal_rule.dart';
 import 'image.dart';
+import 'list_items.dart';
 import 'multi_node_editing.dart';
+import 'text.dart';
 import 'text_tools.dart';
 
 /// Performs common, high-level editing and composition tasks

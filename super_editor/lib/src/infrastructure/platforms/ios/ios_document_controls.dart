@@ -20,7 +20,7 @@ class IosDocumentTouchEditingControls extends StatefulWidget {
     required this.floatingCursorController,
     required this.documentLayout,
     required this.document,
-    required this.selectionChange,
+    required this.selection,
     required this.handleColor,
     this.onDoubleTapOnCaret,
     this.onTripleTapOnCaret,
@@ -38,7 +38,7 @@ class IosDocumentTouchEditingControls extends StatefulWidget {
 
   final Document document;
 
-  final ValueNotifier<DocumentSelectionChange> selectionChange;
+  final ValueNotifier<DocumentSelection?> selection;
 
   final FloatingCursorController floatingCursorController;
 
@@ -187,18 +187,15 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
       return;
     }
 
-    final selection = widget.selectionChange.value.selection;
-    if (selection == null) {
+    if (widget.selection.value == null) {
       // The floating cursor doesn't mean anything when nothing is selected.
       return;
     }
 
-    if (!selection.isCollapsed) {
+    if (!widget.selection.value!.isCollapsed) {
       // The selection is expanded. First we need to collapse it, then
       // we can start showing the floating cursor.
-      widget.selectionChange.value = DocumentSelectionChange(
-        selection: selection.collapseDownstream(widget.document),
-      );
+      widget.selection.value = widget.selection.value!.collapseDownstream(widget.document);
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         _onFloatingCursorChange();
       });

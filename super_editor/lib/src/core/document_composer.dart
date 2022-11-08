@@ -18,7 +18,7 @@ class DocumentComposer with ChangeNotifier {
     ImeConfiguration? imeConfiguration,
   })  : imeConfiguration = ValueNotifier(imeConfiguration ?? const ImeConfiguration()),
         _preferences = ComposerPreferences() {
-    selectionChangeNotifier.value = DocumentSelectionChange(selection: initialSelection);
+    selectionNotifier.value = initialSelection;
 
     _preferences.addListener(() {
       editorLog.fine("Composer preferences changed");
@@ -33,32 +33,21 @@ class DocumentComposer with ChangeNotifier {
   }
 
   /// Returns the current [DocumentSelection] for a [Document].
-  DocumentSelection? get selection => selectionChange.selection;
-
-  /// Returns the current [DocumentSelectionChange] for a [Document].
-  DocumentSelectionChange get selectionChange => selectionChangeNotifier.value;
+  DocumentSelection? get selection => selectionNotifier.value;
 
   /// Sets the current [selection] for a [Document].
   set selection(DocumentSelection? newSelection) {
-    if (newSelection != selectionChange.selection) {
-      selectionChangeNotifier.value = DocumentSelectionChange(selection: newSelection);
+    if (newSelection != selectionNotifier.value) {
+      selectionNotifier.value = newSelection;
       notifyListeners();
     }
   }
 
-  /// Sets the current [selectionChange] for a [Document].
-  set selectionChange(DocumentSelectionChange change) {
-    if (change != selectionChange) {
-      selectionChangeNotifier.value = change;
-      notifyListeners();
-    }
-  }
-
-  final selectionChangeNotifier = ValueNotifier<DocumentSelectionChange>(const DocumentSelectionChange.empty());
+  final selectionNotifier = ValueNotifier<DocumentSelection?>(null);
 
   /// Clears the current [selection].
   void clearSelection() {
-    selectionChangeNotifier.value = const DocumentSelectionChange.empty();
+    selection = null;
   }
 
   final ValueNotifier<ImeConfiguration> imeConfiguration;
