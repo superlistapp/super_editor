@@ -1,8 +1,5 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:super_editor/src/infrastructure/document_gestures.dart';
-import 'package:super_editor/src/infrastructure/_logging.dart';
-import 'package:super_editor/src/infrastructure/_scrolling.dart';
 
 /// Platform independent tools for touch gesture interaction with a
 /// document, such as dragging to scroll a document, and dragging
@@ -49,7 +46,7 @@ class ScrollableDocument extends StatelessWidget {
   final Widget child;
 
   ScrollableState? _findAncestorScrollable(BuildContext context) {
-    final ancestorScrollable = Scrollable.of(context);
+    final ancestorScrollable = Scrollable.maybeOf(context);
     if (ancestorScrollable == null) {
       return null;
     }

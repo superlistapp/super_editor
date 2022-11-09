@@ -89,8 +89,8 @@ class _DocumentScrollableState extends State<DocumentScrollable> with SingleTick
     // ancestor ScrollingMinimaps.
     if (widget.scrollingMinimapId != null) {
       _debugInstrumentation = ScrollableInstrumentation()
-        ..viewport.value = Scrollable.of(context)!.context
-        ..scrollPosition.value = Scrollable.of(context)!.position;
+        ..viewport.value = Scrollable.of(context).context
+        ..scrollPosition.value = Scrollable.of(context).position;
       ScrollingMinimaps.of(context)?.put(widget.scrollingMinimapId!, _debugInstrumentation);
     }
   }
@@ -156,7 +156,7 @@ class _DocumentScrollableState extends State<DocumentScrollable> with SingleTick
   ScrollPosition get _scrollPosition => _ancestorScrollPosition ?? _scrollController.position;
 
   ScrollableState? _findAncestorScrollable(BuildContext context) {
-    final ancestorScrollable = Scrollable.of(context);
+    final ancestorScrollable = Scrollable.maybeOf(context);
     if (ancestorScrollable == null) {
       return null;
     }

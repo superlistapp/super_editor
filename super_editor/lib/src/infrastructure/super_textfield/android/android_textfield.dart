@@ -440,7 +440,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
   }
 
   ScrollableState? _findAncestorScrollable(BuildContext context) {
-    final ancestorScrollable = Scrollable.of(context);
+    final ancestorScrollable = Scrollable.maybeOf(context);
     if (ancestorScrollable == null) {
       return null;
     }
