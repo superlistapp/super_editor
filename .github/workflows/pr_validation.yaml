@@ -14,7 +14,7 @@ jobs:
       # Setup Flutter environment
       - uses: subosito/flutter-action@v2
         with:
-          channel: "stable"
+          channel: "master"
           architecture: x64
 
       # Download all the packages that the app uses
@@ -38,7 +38,7 @@ jobs:
       # Setup Flutter environment
       - uses: subosito/flutter-action@v2
         with:
-          channel: "stable"
+          channel: "master"
 
       # Download all the packages that the app uses
       - run: flutter pub get
@@ -61,7 +61,7 @@ jobs:
       # Setup Flutter environment
       - uses: subosito/flutter-action@v2
         with:
-          channel: "stable"
+          channel: "master"
 
       # Download all the packages that the app uses
       - run: flutter pub get
@@ -83,7 +83,7 @@ jobs:
       # Setup Flutter environment
       - uses: subosito/flutter-action@v2
         with:
-          channel: "stable"
+          channel: "master"
 
       # Download all the packages that the app uses
       - run: flutter pub get
@@ -105,7 +105,7 @@ jobs:
       # Setup Flutter environment
       - uses: subosito/flutter-action@v2
         with:
-          channel: "stable"
+          channel: "master"
 
       # Download all the packages that the app uses
       - run: flutter pub get
@@ -128,7 +128,7 @@ jobs:
       # Setup Flutter environment
       - uses: subosito/flutter-action@v2
         with:
-          channel: "stable"
+          channel: "master"
           architecture: x64
 
       # Download all the packages that the app uses
