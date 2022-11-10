@@ -200,6 +200,34 @@ void main() {
 
         expect(_isCaretPresent(tester), isTrue);
       });
+
+      testWidgetsOnAllPlatforms(
+          "is inserted automatically when the field is initialized with a focused node used by another widget",
+          (tester) async {
+        final node = FocusNode()..requestFocus();
+
+        await tester.pumpWidget(
+          _buildScaffold(
+            child: Focus(
+              focusNode: node,
+              child: const SizedBox.shrink(),
+            ),
+          ),
+        );
+
+        // Pumps a second widget tree, to simulate switching the FocusNode
+        // from one widget to another.
+        await tester.pumpWidget(
+          _buildScaffold(
+            child: SuperTextField(
+              focusNode: node,
+            ),
+          ),
+        );
+        await tester.pump();
+
+        expect(_isCaretPresent(tester), isTrue);
+      });
     });
 
     group('padding', () {
