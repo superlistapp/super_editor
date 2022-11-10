@@ -212,11 +212,11 @@ class SuperTextFieldState extends State<SuperTextField> {
   /// pressing [LogicalKeyboardKey.space] scrolls the scrollview.
   final Map<LogicalKeySet, Intent> _scrollShortcutOverrides = kIsWeb
       ? {
-          LogicalKeySet(LogicalKeyboardKey.space): DoNothingAndStopPropagationIntent(),
-          LogicalKeySet(LogicalKeyboardKey.arrowUp): DoNothingAndStopPropagationIntent(),
-          LogicalKeySet(LogicalKeyboardKey.arrowDown): DoNothingAndStopPropagationIntent(),
-          LogicalKeySet(LogicalKeyboardKey.arrowLeft): DoNothingAndStopPropagationIntent(),
-          LogicalKeySet(LogicalKeyboardKey.arrowRight): DoNothingAndStopPropagationIntent(),
+          LogicalKeySet(LogicalKeyboardKey.space): const DoNothingAndStopPropagationIntent(),
+          LogicalKeySet(LogicalKeyboardKey.arrowUp): const DoNothingAndStopPropagationIntent(),
+          LogicalKeySet(LogicalKeyboardKey.arrowDown): const DoNothingAndStopPropagationIntent(),
+          LogicalKeySet(LogicalKeyboardKey.arrowLeft): const DoNothingAndStopPropagationIntent(),
+          LogicalKeySet(LogicalKeyboardKey.arrowRight): const DoNothingAndStopPropagationIntent(),
         }
       : const <LogicalKeySet, Intent>{};
 

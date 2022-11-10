@@ -75,7 +75,7 @@ class AndroidEditingOverlayControls extends StatefulWidget {
   final Widget Function(BuildContext, AndroidEditingOverlayController) popoverToolbarBuilder;
 
   @override
-  _AndroidEditingOverlayControlsState createState() => _AndroidEditingOverlayControlsState();
+  State createState() => _AndroidEditingOverlayControlsState();
 }
 
 class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayControls> with WidgetsBindingObserver {

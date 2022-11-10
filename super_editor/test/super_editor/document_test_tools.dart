@@ -1,7 +1,6 @@
 import 'dart:math';
 import 'dart:ui' as ui;
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/super_editor.dart';
@@ -191,7 +190,6 @@ class TestDocumentConfigurator {
     _iOSToolbarBuilder = builder;
     return this;
   }
-
 
   /// Configures the [ThemeData] used for the [MaterialApp] that wraps
   /// the [SuperEditor].

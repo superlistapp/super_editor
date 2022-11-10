@@ -291,12 +291,12 @@ class SingleColumnLayoutPresenter {
 class SingleColumnLayoutPresenterChangeListener {
   const SingleColumnLayoutPresenterChangeListener({
     VoidCallback? onPresenterMarkedDirty,
-    _ViewModelChangeCallback? onViewModelChange,
+    ViewModelChangeCallback? onViewModelChange,
   })  : _onPresenterMarkedDirty = onPresenterMarkedDirty,
         _onViewModelChange = onViewModelChange;
 
   final VoidCallback? _onPresenterMarkedDirty;
-  final _ViewModelChangeCallback? _onViewModelChange;
+  final ViewModelChangeCallback? _onViewModelChange;
 
   void onPresenterMarkedDirty() {
     _onPresenterMarkedDirty?.call();
@@ -315,7 +315,7 @@ class SingleColumnLayoutPresenterChangeListener {
   }
 }
 
-typedef _ViewModelChangeCallback = void Function({
+typedef ViewModelChangeCallback = void Function({
   required List<String> addedComponents,
   required List<String> changedComponents,
   required List<String> removedComponents,
