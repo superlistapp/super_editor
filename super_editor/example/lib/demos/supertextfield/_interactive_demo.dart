@@ -46,7 +46,7 @@ class _InteractiveTextFieldDemoState extends State<InteractiveTextFieldDemo> {
       return;
     }
 
-    final overlay = Overlay.of(context)!;
+    final overlay = Overlay.of(context);
     final overlayBox = overlay.context.findRenderObject() as RenderBox?;
     final textFieldBox = textFieldContext.findRenderObject() as RenderBox;
     _popupOffset = textFieldBox.localToGlobal(localOffset, ancestor: overlayBox);

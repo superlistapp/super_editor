@@ -343,7 +343,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
         );
       });
 
-      Overlay.of(context)!.insert(_controlsOverlayEntry!);
+      Overlay.of(context).insert(_controlsOverlayEntry!);
     }
   }
 

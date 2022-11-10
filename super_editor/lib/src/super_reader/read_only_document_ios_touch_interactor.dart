@@ -759,7 +759,7 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
       );
     });
 
-    Overlay.of(context)!.insert(_controlsOverlayEntry!);
+    Overlay.of(context).insert(_controlsOverlayEntry!);
   }
 
   void _positionExpandedSelectionHandles() {
@@ -884,7 +884,7 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
   }
 
   ScrollableState? _findAncestorScrollable(BuildContext context) {
-    final ancestorScrollable = Scrollable.of(context);
+    final ancestorScrollable = Scrollable.maybeOf(context);
     if (ancestorScrollable == null) {
       return null;
     }
