@@ -144,7 +144,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
       });
 
       // Display the toolbar in the application overlay.
-      final overlay = Overlay.of(context)!;
+      final overlay = Overlay.of(context);
       overlay.insert(_textFormatBarOverlayEntry!);
     }
 
@@ -257,7 +257,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
       });
 
       // Display the toolbar in the application overlay.
-      final overlay = Overlay.of(context)!;
+      final overlay = Overlay.of(context);
       overlay.insert(_imageFormatBarOverlayEntry!);
     }
 
