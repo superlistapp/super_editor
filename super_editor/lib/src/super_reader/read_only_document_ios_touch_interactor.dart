@@ -386,6 +386,7 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
 
   /// Converts the given [documentOffset] to an `Offset` in the interactor's
   /// coordinate space.
+  // ignore: unused_element
   Offset _docOffsetToInteractorOffset(Offset documentOffset) {
     return _docLayout.getAncestorOffsetFromDocumentOffset(documentOffset, context.findRenderObject()!);
   }

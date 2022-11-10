@@ -43,7 +43,7 @@ class AndroidTextFieldCaret extends StatefulWidget {
   final BorderRadius caretBorderRadius;
 
   @override
-  _AndroidTextFieldCaretState createState() => _AndroidTextFieldCaretState();
+  State createState() => _AndroidTextFieldCaretState();
 }
 
 class _AndroidTextFieldCaretState extends State<AndroidTextFieldCaret> with SingleTickerProviderStateMixin {

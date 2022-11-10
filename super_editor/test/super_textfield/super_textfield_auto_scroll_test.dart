@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/metrics.dart';
 import 'package:super_editor/super_editor.dart';
-import 'package:super_text_layout/super_text_layout.dart';
 
 import '../test_tools.dart';
 
@@ -12,7 +11,7 @@ const screenSizeWithKeyboard = Size(400, 300);
 void main() {
   group('SuperTextField on mobile', () {
     group('with an ancestor Scrollable', () {
-      testWidgetsOnMobileWithKeyboard('auto scrolls when focused in single-line', (tester, keyboardToggle) async {
+      _testWidgetsOnMobileWithKeyboard('auto scrolls when focused in single-line', (tester, keyboardToggle) async {
         await _pumpTestApp(
           tester,
           text: 'Single line SuperTextField',
@@ -33,13 +32,14 @@ void main() {
         expect(selectionOffset.dy.floor(), lessThanOrEqualTo(screenSizeWithKeyboard.height));
 
         // Ensure we scroll only the necessary to reveal the selection, plus a small gap
-        expect(screenSizeWithKeyboard.height - selectionOffset.dy.floor(), lessThanOrEqualTo(gapBetweenCaretAndKeyboard));
+        expect(
+            screenSizeWithKeyboard.height - selectionOffset.dy.floor(), lessThanOrEqualTo(gapBetweenCaretAndKeyboard));
 
         // Ensure selection doesn't scroll beyond the top
         expect(selectionOffset.dy.floor(), greaterThanOrEqualTo(0));
       });
 
-      testWidgetsOnMobileWithKeyboard('auto scrolls when focused in single-line', (tester, keyboardToggle) async {
+      _testWidgetsOnMobileWithKeyboard('auto scrolls when focused in single-line', (tester, keyboardToggle) async {
         await _pumpTestApp(
           tester,
           text: 'Single line SuperTextField',
@@ -60,13 +60,14 @@ void main() {
         expect(selectionOffset.dy.floor(), lessThanOrEqualTo(screenSizeWithKeyboard.height));
 
         // Ensure we scroll only the necessary to reveal the selection, plus a small gap
-        expect(screenSizeWithKeyboard.height - selectionOffset.dy.floor(), lessThanOrEqualTo(gapBetweenCaretAndKeyboard));
+        expect(
+            screenSizeWithKeyboard.height - selectionOffset.dy.floor(), lessThanOrEqualTo(gapBetweenCaretAndKeyboard));
 
         // Ensure selection doesn't scroll beyond the top
         expect(selectionOffset.dy.floor(), greaterThanOrEqualTo(0));
       });
 
-      testWidgetsOnMobileWithKeyboard('auto scrolls when focused in multi-line', (tester, keyboardToggle) async {
+      _testWidgetsOnMobileWithKeyboard('auto scrolls when focused in multi-line', (tester, keyboardToggle) async {
         await _pumpTestApp(
           tester,
           text: 'This is\na multiline\nSuperTextField',
@@ -87,13 +88,14 @@ void main() {
         expect(selectionOffset.dy.floor(), lessThanOrEqualTo(screenSizeWithKeyboard.height));
 
         // Ensure we scroll only the necessary to reveal the selection, plus a small gap
-        expect(screenSizeWithKeyboard.height - selectionOffset.dy.floor(), lessThanOrEqualTo(gapBetweenCaretAndKeyboard));
+        expect(
+            screenSizeWithKeyboard.height - selectionOffset.dy.floor(), lessThanOrEqualTo(gapBetweenCaretAndKeyboard));
 
         // Ensure selection doesn't scroll beyond the top
         expect(selectionOffset.dy.floor(), greaterThanOrEqualTo(0));
       });
 
-      testWidgetsOnMobileWithKeyboard('doest not auto scroll when not focused', (tester, keyboardToggle) async {
+      _testWidgetsOnMobileWithKeyboard('doest not auto scroll when not focused', (tester, keyboardToggle) async {
         await _pumpTestApp(
           tester,
           text: 'Single line SuperTextField',
@@ -142,7 +144,7 @@ Future<void> _pumpTestApp(
   );
 }
 
-void testWidgetsOnMobileWithKeyboard(
+void _testWidgetsOnMobileWithKeyboard(
   String description,
   Future<void> Function(WidgetTester tester, _KeyboardToggle keyboardToggle) test,
 ) {
@@ -168,6 +170,7 @@ class _KeyboardToggle {
     required this.tester,
     required this.sizeWithoutKeyboard,
     required this.sizeWithKeyboard,
+    // ignore: unused_element
     this.frameCount = 60,
   });
 
