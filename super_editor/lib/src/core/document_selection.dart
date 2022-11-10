@@ -1,7 +1,5 @@
 import 'dart:ui';
 
-import 'package:super_editor/src/default_editor/text.dart';
-
 import 'document.dart';
 
 /// A selection within a [Document].

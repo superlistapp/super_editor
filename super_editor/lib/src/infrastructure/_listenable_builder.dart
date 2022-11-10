@@ -12,7 +12,7 @@ class MultiListenableBuilder extends StatefulWidget {
   final WidgetBuilder builder;
 
   @override
-  _MultiListenableBuilderState createState() => _MultiListenableBuilderState();
+  State createState() => _MultiListenableBuilderState();
 }
 
 class _MultiListenableBuilderState extends State<MultiListenableBuilder> {

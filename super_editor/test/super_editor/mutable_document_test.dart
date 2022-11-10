@@ -1,8 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/super_editor.dart';
 
-import 'test_documents.dart';
-
 void main() {
   group("MutableDocument", () {
     test("calculates a range from an upstream selection within a single node", () {

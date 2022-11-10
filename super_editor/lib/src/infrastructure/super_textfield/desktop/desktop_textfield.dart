@@ -716,11 +716,6 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
     return _textLayout.getPositionNearestToOffset(textOffset);
   }
 
-  bool _isTextAtOffset(Offset textFieldOffset) {
-    final textOffset = _getTextOffset(textFieldOffset);
-    return _textLayout.isTextAtOffset(textOffset);
-  }
-
   Offset _getTextOffset(Offset textFieldOffset) {
     final textFieldBox = context.findRenderObject() as RenderBox;
     final textBox = widget.textKey.currentContext!.findRenderObject() as RenderBox;
@@ -1139,22 +1134,6 @@ class SuperTextFieldScrollviewState extends State<SuperTextFieldScrollview> with
     }
     if (_scrollToEndOnTick) {
       scrollToEnd();
-    }
-  }
-
-  Alignment _getAlignment() {
-    switch (widget.textAlign) {
-      case TextAlign.left:
-      case TextAlign.justify:
-        return Alignment.topLeft;
-      case TextAlign.right:
-        return Alignment.topRight;
-      case TextAlign.center:
-        return Alignment.topCenter;
-      case TextAlign.start:
-        return Directionality.of(context) == TextDirection.ltr ? Alignment.topLeft : Alignment.topRight;
-      case TextAlign.end:
-        return Directionality.of(context) == TextDirection.ltr ? Alignment.topRight : Alignment.topLeft;
     }
   }
 
