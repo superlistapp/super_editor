@@ -381,7 +381,7 @@ class _TextScrollViewState extends State<TextScrollView>
     if (maxHeight != null && estimatedContentHeight >= maxHeight) {
       _log.finer(' - setting viewport height to maxHeight');
       viewportHeight = maxHeight;
-    } else if (minHeight != null && estimatedContentHeight <= minHeight) {
+    } else if (estimatedContentHeight <= minHeight) {
       _log.finer(' - setting viewport height to minHeight');
       viewportHeight = minHeight;
     }

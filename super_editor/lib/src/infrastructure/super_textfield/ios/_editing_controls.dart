@@ -71,7 +71,7 @@ class IOSEditingControls extends StatefulWidget {
   final Widget Function(BuildContext, IOSEditingOverlayController) popoverToolbarBuilder;
 
   @override
-  _IOSEditingControlsState createState() => _IOSEditingControlsState();
+  State createState() => _IOSEditingControlsState();
 }
 
 class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBindingObserver {
