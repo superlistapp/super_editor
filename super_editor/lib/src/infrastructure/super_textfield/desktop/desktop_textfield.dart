@@ -119,12 +119,14 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
   void initState() {
     super.initState();
 
-    _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
-    _hasFocus = _focusNode.hasFocus;
+    _focusNode = (widget.focusNode ?? FocusNode())..addListener(_updateSelectionOnFocusChange);
 
     _controller = (widget.textController ?? AttributedTextEditingController())
       ..addListener(_onSelectionOrContentChange);
     _scrollController = ScrollController();
+
+    // Check if we need to update the selection.
+    _updateSelectionOnFocusChange();
   }
 
   @override
@@ -132,12 +134,14 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
     super.didUpdateWidget(oldWidget);
 
     if (widget.focusNode != oldWidget.focusNode) {
-      _focusNode.removeListener(_onFocusChange);
+      _focusNode.removeListener(_updateSelectionOnFocusChange);
       if (oldWidget.focusNode == null) {
         _focusNode.dispose();
       }
-      _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
-      _hasFocus = _focusNode.hasFocus;
+      _focusNode = (widget.focusNode ?? FocusNode())..addListener(_updateSelectionOnFocusChange);
+
+      // Check if we need to update the selection.
+      _updateSelectionOnFocusChange();
     }
 
     if (widget.textController != oldWidget.textController) {
@@ -159,7 +163,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
   @override
   void dispose() {
     _scrollController.dispose();
-    _focusNode.removeListener(_onFocusChange);
+    _focusNode.removeListener(_updateSelectionOnFocusChange);
     if (widget.focusNode == null) {
       _focusNode.dispose();
     }
@@ -180,7 +184,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
     _focusNode.requestFocus();
   }
 
-  void _onFocusChange() {
+  void _updateSelectionOnFocusChange() {
     // If our FocusNode just received focus, automatically set our
     // controller's text position to the end of the available content.
     //
