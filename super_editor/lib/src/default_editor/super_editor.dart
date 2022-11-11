@@ -337,7 +337,7 @@ class SuperEditorState extends State<SuperEditor> {
       // The content displayed in this Editor was switched
       // out. Remove any content selection from the previous
       // document.
-      _composer.selection = null;
+      _composer.clearSelection();
     }
     if (widget.focusNode != oldWidget.focusNode) {
       _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
@@ -409,7 +409,7 @@ class SuperEditorState extends State<SuperEditor> {
 
     _docLayoutSelectionStyler = SingleColumnLayoutSelectionStyler(
       document: document,
-      selection: editContext.composer.selectionNotifier,
+      composer: editContext.composer,
       selectionStyles: widget.selectionStyles,
     );
 
@@ -568,7 +568,7 @@ class SuperEditorState extends State<SuperEditor> {
           focusNode: _focusNode,
           document: editContext.editor.document,
           getDocumentLayout: () => editContext.documentLayout,
-          selection: editContext.composer.selectionNotifier,
+          composer: editContext.composer,
           scrollController: widget.scrollController,
           documentKey: _docLayoutKey,
           handleColor: widget.androidHandleColor ?? Theme.of(context).primaryColor,
@@ -582,7 +582,7 @@ class SuperEditorState extends State<SuperEditor> {
           focusNode: _focusNode,
           document: editContext.editor.document,
           getDocumentLayout: () => editContext.documentLayout,
-          selection: editContext.composer.selectionNotifier,
+          composer: editContext.composer,
           scrollController: widget.scrollController,
           documentKey: _docLayoutKey,
           handleColor: widget.iOSHandleColor ?? Theme.of(context).primaryColor,
@@ -625,7 +625,7 @@ class SuperEditorState extends State<SuperEditor> {
                   focusNode: _focusNode,
                   document: editContext.editor.document,
                   getDocumentLayout: () => editContext.documentLayout,
-                  selection: editContext.composer.selectionNotifier,
+                  composer: editContext.composer,
                   autoScroller: _autoScrollController,
                   showDebugPaint: widget.debugPaint.gestures,
                   child: const SizedBox(),

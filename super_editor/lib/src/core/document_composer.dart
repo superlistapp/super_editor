@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/foundation.dart';
 import 'package:super_editor/src/core/document.dart';
@@ -18,8 +20,8 @@ class DocumentComposer with ChangeNotifier {
     ImeConfiguration? imeConfiguration,
   })  : imeConfiguration = ValueNotifier(imeConfiguration ?? const ImeConfiguration()),
         _preferences = ComposerPreferences() {
-    selectionNotifier.value = initialSelection;
-
+    _streamController = StreamController<DocumentSelectionChange>.broadcast();
+    setSelection(initialSelection);
     _preferences.addListener(() {
       editorLog.fine("Composer preferences changed");
       notifyListeners();
@@ -33,21 +35,33 @@ class DocumentComposer with ChangeNotifier {
   }
 
   /// Returns the current [DocumentSelection] for a [Document].
-  DocumentSelection? get selection => selectionNotifier.value;
+  DocumentSelection? get selection => _latestSelectionChange.selection;
 
   /// Sets the current [selection] for a [Document].
-  set selection(DocumentSelection? newSelection) {
-    if (newSelection != selectionNotifier.value) {
-      selectionNotifier.value = newSelection;
-      notifyListeners();
-    }
+  ///
+  /// [reason] represents what caused the selection change to happen.
+  void setSelection(DocumentSelection? newSelection, [Object reason = SelectionReason.userInteraction]) {
+    _latestSelectionChange = DocumentSelectionChange(
+      selection: newSelection,
+      reason: reason,
+    );
+    _streamController.sink.add(_latestSelectionChange);
   }
 
-  final selectionNotifier = ValueNotifier<DocumentSelection?>(null);
+  /// Emits a [DocumentSelectionChange] every time the selection changes.
+  Stream<DocumentSelectionChange> get selectionChanges => _streamController.stream;
+  late StreamController<DocumentSelectionChange> _streamController;
+
+  /// Holds the reason of the last selection change.
+  Object? get latestSelectionChangeReason => _latestSelectionChange.reason;
+
+  /// Holds the last selection change.
+  DocumentSelectionChange get latestSelectionChange => _latestSelectionChange;
+  late DocumentSelectionChange _latestSelectionChange;
 
   /// Clears the current [selection].
   void clearSelection() {
-    selection = null;
+    setSelection(null);
   }
 
   final ValueNotifier<ImeConfiguration> imeConfiguration;
@@ -122,4 +136,28 @@ class ComposerPreferences with ChangeNotifier {
     _currentAttributions.clear();
     notifyListeners();
   }
+}
+
+/// Represents a change of a [DocumentSelection].
+///
+/// The [reason] represents what cause the selection to change.
+/// For example, [SelectionReason.userInteraction] represents
+/// a selection change caused by the user interacting with the editor.
+class DocumentSelectionChange {
+  DocumentSelectionChange({
+    this.selection,
+    required this.reason,
+  });
+
+  final DocumentSelection? selection;
+  final Object reason;
+}
+
+/// Holds commons reasons for selection changes.
+class SelectionReason {
+  /// Represents a change caused by an user interaction.
+  static const userInteraction = "userInteraction";
+
+  /// Represents a changed caused by an event which was not initiated by the user.
+  static const contentChange = "contentChange";
 }

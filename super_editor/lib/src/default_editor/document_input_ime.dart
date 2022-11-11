@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:attributed_text/attributed_text.dart';
@@ -79,13 +80,15 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor>
 
   TextInputConnection? _inputConnection;
 
+  late StreamSubscription<DocumentSelectionChange> _selectionSubscription;
+
   @override
   void initState() {
     super.initState();
 
     _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
 
-    widget.editContext.composer.selectionNotifier.addListener(_onComposerChange);
+    _selectionSubscription = widget.editContext.composer.selectionChanges.listen(_onSelectionChange);
     widget.editContext.composer.imeConfiguration.addListener(_onClientWantsDifferentImeConfiguration);
   }
 
@@ -98,9 +101,9 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor>
       _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
     }
 
-    if (widget.editContext.composer.selectionNotifier != oldWidget.editContext.composer.selectionNotifier) {
-      oldWidget.editContext.composer.selectionNotifier.removeListener(_onComposerChange);
-      widget.editContext.composer.selectionNotifier.addListener(_onComposerChange);
+    if (widget.editContext.composer != oldWidget.editContext.composer) {
+      _selectionSubscription.cancel();
+      _selectionSubscription = widget.editContext.composer.selectionChanges.listen(_onSelectionChange);
     }
     if (widget.editContext.composer.imeConfiguration != oldWidget.editContext.composer.imeConfiguration) {
       oldWidget.editContext.composer.imeConfiguration.removeListener(_onClientWantsDifferentImeConfiguration);
@@ -113,7 +116,7 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor>
     _detachFromIme();
 
     widget.editContext.composer.imeConfiguration.removeListener(_onClientWantsDifferentImeConfiguration);
-    widget.editContext.composer.selectionNotifier.removeListener(_onComposerChange);
+    _selectionSubscription.cancel();
 
     if (widget.focusNode == null) {
       _focusNode.dispose();
@@ -135,7 +138,7 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor>
     }
   }
 
-  void _onComposerChange() {
+  void _onSelectionChange(DocumentSelectionChange selectionChange) {
     final selection = widget.editContext.composer.selection;
     editorImeLog.info("Document composer (${widget.editContext.composer.hashCode}) changed. New selection: $selection");
 
@@ -211,7 +214,7 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor>
 
     editorImeLog.info('Detaching TextInputClient from TextInput.');
 
-    widget.editContext.composer.selection = null;
+    widget.editContext.composer.clearSelection();
 
     _inputConnection!.close();
   }
@@ -954,7 +957,7 @@ class SoftwareKeyboardHandler {
     editorImeLog
         .fine("Updating the Document Composer's selection to place caret at insertion offset:\n$insertionSelection");
     final selectionBeforeInsertion = composer.selection;
-    composer.selection = insertionSelection;
+    composer.setSelection(insertionSelection);
 
     editorImeLog.fine("Inserting the text at the Document Composer's selection");
     final didInsert = commonOps.insertPlainText(textInserted);
@@ -962,7 +965,7 @@ class SoftwareKeyboardHandler {
 
     if (!didInsert) {
       editorImeLog.fine("Failed to insert characters. Restoring previous selection.");
-      composer.selection = selectionBeforeInsertion;
+      composer.setSelection(selectionBeforeInsertion);
     }
 
     commonOps.convertParagraphByPatternMatching(
@@ -985,7 +988,7 @@ class SoftwareKeyboardHandler {
     ));
 
     if (replacementSelection != null) {
-      composer.selection = replacementSelection;
+      composer.setSelection(replacementSelection);
     }
     editorImeLog.fine("Replacing selection: $replacementSelection");
     editorImeLog.fine('With text: "$replacementText"');
@@ -1031,7 +1034,7 @@ class SoftwareKeyboardHandler {
     }
 
     editorImeLog.fine("Running selection deletion operation");
-    composer.selection = docSelectionToDelete;
+    composer.setSelection(docSelectionToDelete);
     commonOps.deleteSelection();
   }
 
@@ -1179,17 +1182,17 @@ class KeyboardEditingToolbar extends StatelessWidget {
     final selectedNode = document.getNodeById(composer.selection!.extent.nodeId)! as TextNode;
 
     selectedNode.text = AttributedText(text: '--- ');
-    composer.selection = DocumentSelection.collapsed(
+    composer.setSelection(DocumentSelection.collapsed(
       position: DocumentPosition(
         nodeId: selectedNode.id,
         nodePosition: const TextNodePosition(offset: 4),
       ),
-    );
+    ));
     commonOps.convertParagraphByPatternMatching(selectedNode.id);
   }
 
   void _closeKeyboard() {
-    composer.selection = null;
+    composer.clearSelection();
   }
 
   @override

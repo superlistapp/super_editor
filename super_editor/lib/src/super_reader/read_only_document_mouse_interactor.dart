@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/document.dart';
+import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/default_editor/document_scrollable.dart';
@@ -74,11 +76,13 @@ class _ReadOnlyDocumentMouseInteractorState extends State<ReadOnlyDocumentMouseI
   /// Holds which kind of device started a pan gesture, e.g., a mouse or a trackpad.
   PointerDeviceKind? _panGestureDevice;
 
+  late StreamSubscription<DocumentSelectionChange> _selectionSubscription;
+
   @override
   void initState() {
     super.initState();
     _focusNode = widget.focusNode ?? FocusNode();
-    widget.readerContext.selection.addListener(_onSelectionChange);
+    _selectionSubscription = widget.readerContext.composer.selectionChanges.listen(_onSelectionChange);
     widget.autoScroller.addListener(_updateDragSelection);
   }
 
@@ -88,9 +92,9 @@ class _ReadOnlyDocumentMouseInteractorState extends State<ReadOnlyDocumentMouseI
     if (widget.focusNode != oldWidget.focusNode) {
       _focusNode = widget.focusNode ?? FocusNode();
     }
-    if (widget.readerContext.selection != oldWidget.readerContext.selection) {
-      oldWidget.readerContext.selection.removeListener(_onSelectionChange);
-      widget.readerContext.selection.addListener(_onSelectionChange);
+    if (widget.readerContext.composer != oldWidget.readerContext.composer) {
+      _selectionSubscription.cancel();
+      _selectionSubscription = widget.readerContext.composer.selectionChanges.listen(_onSelectionChange);
     }
     if (widget.autoScroller != oldWidget.autoScroller) {
       oldWidget.autoScroller.removeListener(_updateDragSelection);
@@ -103,7 +107,7 @@ class _ReadOnlyDocumentMouseInteractorState extends State<ReadOnlyDocumentMouseI
     if (widget.focusNode == null) {
       _focusNode.dispose();
     }
-    widget.readerContext.selection.removeListener(_onSelectionChange);
+    _selectionSubscription.cancel();
     widget.autoScroller.removeListener(_updateDragSelection);
     super.dispose();
   }
@@ -120,7 +124,7 @@ class _ReadOnlyDocumentMouseInteractorState extends State<ReadOnlyDocumentMouseI
       RawKeyboard.instance.keysPressed.contains(LogicalKeyboardKey.shiftRight) ||
       RawKeyboard.instance.keysPressed.contains(LogicalKeyboardKey.shift));
 
-  void _onSelectionChange() {
+  void _onSelectionChange(DocumentSelectionChange selectionChange) {
     if (mounted) {
       // Use a post-frame callback to "ensure selection extent is visible"
       // so that any pending visual document changes can happen before
@@ -137,7 +141,7 @@ class _ReadOnlyDocumentMouseInteractorState extends State<ReadOnlyDocumentMouseI
   }
 
   Rect? _getSelectionExtentAsGlobalRect() {
-    final selection = widget.readerContext.selection.value;
+    final selection = widget.readerContext.composer.selection;
     if (selection == null) {
       return null;
     }
@@ -171,15 +175,15 @@ class _ReadOnlyDocumentMouseInteractorState extends State<ReadOnlyDocumentMouseI
 
     if (docPosition == null) {
       readerGesturesLog.fine("No document content at ${details.globalPosition}.");
-      widget.readerContext.selection.value = null;
+      widget.readerContext.composer.clearSelection();
       return;
     }
 
-    final expandSelection = _isShiftPressed && widget.readerContext.selection.value != null;
+    final expandSelection = _isShiftPressed && widget.readerContext.composer.selection != null;
     if (!expandSelection) {
       // Read-only documents don't show carets. Therefore, we only care about
       // a tap when we're expanding an existing selection.
-      widget.readerContext.selection.value = null;
+      widget.readerContext.composer.clearSelection();
       _selectionType = SelectionType.position;
       return;
     }
@@ -189,7 +193,7 @@ class _ReadOnlyDocumentMouseInteractorState extends State<ReadOnlyDocumentMouseI
       moveToNearestSelectableComponent(
         widget.readerContext.document,
         widget.readerContext.documentLayout,
-        widget.readerContext.selection,
+        widget.readerContext.composer,
         docPosition.nodeId,
         tappedComponent,
       );
@@ -198,9 +202,9 @@ class _ReadOnlyDocumentMouseInteractorState extends State<ReadOnlyDocumentMouseI
 
     // The user tapped while pressing shift and there's an existing
     // selection. Move the extent of the selection to where the user tapped.
-    widget.readerContext.selection.value = widget.readerContext.selection.value!.copyWith(
+    widget.readerContext.composer.setSelection(widget.readerContext.composer.selection!.copyWith(
       extent: docPosition,
-    );
+    ));
   }
 
   void _onDoubleTapDown(TapDownDetails details) {
@@ -218,17 +222,17 @@ class _ReadOnlyDocumentMouseInteractorState extends State<ReadOnlyDocumentMouseI
     }
 
     _selectionType = SelectionType.word;
-    widget.readerContext.selection.value = null;
+    widget.readerContext.composer.clearSelection();
 
     if (docPosition != null) {
       bool didSelectContent = selectWordAt(
         docPosition: docPosition,
         docLayout: _docLayout,
-        selection: widget.readerContext.selection,
+        composer: widget.readerContext.composer,
       );
 
       if (!didSelectContent) {
-        didSelectContent = selectBlockAt(docPosition, widget.readerContext.selection);
+        didSelectContent = selectBlockAt(docPosition, widget.readerContext.composer);
       }
 
       if (!didSelectContent) {
@@ -261,13 +265,13 @@ class _ReadOnlyDocumentMouseInteractorState extends State<ReadOnlyDocumentMouseI
     }
 
     _selectionType = SelectionType.paragraph;
-    widget.readerContext.selection.value = null;
+    widget.readerContext.composer.clearSelection();
 
     if (docPosition != null) {
       final didSelectParagraph = selectParagraphAt(
         docPosition: docPosition,
         docLayout: _docLayout,
-        selection: widget.readerContext.selection,
+        composer: widget.readerContext.composer,
       );
       if (!didSelectParagraph) {
         // Place the document selection at the location where the
@@ -286,9 +290,9 @@ class _ReadOnlyDocumentMouseInteractorState extends State<ReadOnlyDocumentMouseI
 
   void _selectPosition(DocumentPosition position) {
     readerGesturesLog.fine("Setting document selection to $position");
-    widget.readerContext.selection.value = DocumentSelection.collapsed(
+    widget.readerContext.composer.setSelection(DocumentSelection.collapsed(
       position: position,
-    );
+    ));
   }
 
   void _onPanStart(DragStartDetails details) {
@@ -314,7 +318,7 @@ class _ReadOnlyDocumentMouseInteractorState extends State<ReadOnlyDocumentMouseI
       // Only clear the selection if the user isn't pressing shift. Shift is
       // used to expand the current selection, not replace it.
       readerGesturesLog.fine("Shift isn't pressed. Clearing any existing selection before panning.");
-      widget.readerContext.selection.value = null;
+      widget.readerContext.composer.clearSelection();
     }
 
     _focusNode.requestFocus();
@@ -409,7 +413,7 @@ Updating drag selection:
       extentOffsetInDocument: dragEndInDoc,
       selectionType: _selectionType,
       expandSelection: _expandSelectionDuringDrag,
-      selection: widget.readerContext.selection,
+      composer: widget.readerContext.composer,
     );
 
     if (widget.showDebugPaint) {

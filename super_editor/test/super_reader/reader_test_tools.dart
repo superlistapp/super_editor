@@ -208,10 +208,11 @@ class TestDocumentConfigurator {
     assert(_document != null);
 
     final layoutKey = GlobalKey();
+    final composer = DocumentComposer(initialSelection: _selection);
     final documentContext = ReaderContext(
       document: _document!,
       getDocumentLayout: () => layoutKey.currentState as DocumentLayout,
-      selection: ValueNotifier<DocumentSelection?>(_selection),
+      composer: composer,
       scrollController: AutoScrollController(),
     );
     final testContext = TestDocumentContext._(
@@ -226,7 +227,7 @@ class TestDocumentConfigurator {
         focusNode: testContext.focusNode,
         document: documentContext.document,
         documentLayoutKey: layoutKey,
-        selection: documentContext.selection,
+        composer: documentContext.composer,
         gestureMode: _gestureMode ?? _defaultGestureMode,
         stylesheet: _stylesheet,
         componentBuilders: [

@@ -13,7 +13,7 @@ class SuperReaderDemo extends StatefulWidget {
 
 class _SuperReaderDemoState extends State<SuperReaderDemo> {
   late final Document _document;
-  final _selection = ValueNotifier<DocumentSelection?>(null);
+  final DocumentComposer _composer = DocumentComposer();  
 
   @override
   void initState() {
@@ -22,13 +22,13 @@ class _SuperReaderDemoState extends State<SuperReaderDemo> {
   }
 
   void _copy() {
-    if (_selection.value == null) {
+    if (_composer.selection == null) {
       return;
     }
 
     final textToCopy = _textInSelection(
       document: _document,
-      documentSelection: _selection.value!,
+      documentSelection: _composer.selection!,
     );
     // TODO: figure out a general approach for asynchronous behaviors that
     //       need to be carried out in response to user input.
@@ -101,7 +101,7 @@ class _SuperReaderDemoState extends State<SuperReaderDemo> {
       return;
     }
 
-    _selection.value = DocumentSelection(
+    _composer.setSelection(DocumentSelection(
       base: DocumentPosition(
         nodeId: nodes.first.id,
         nodePosition: nodes.first.beginningPosition,
@@ -110,14 +110,14 @@ class _SuperReaderDemoState extends State<SuperReaderDemo> {
         nodeId: nodes.last.id,
         nodePosition: nodes.last.endPosition,
       ),
-    );
+    ));
   }
 
   @override
   Widget build(BuildContext context) {
     return SuperReader(
       document: _document,
-      selection: _selection,
+      composer: _composer,
       androidToolbarBuilder: (_) => AndroidTextEditingFloatingToolbar(
         onCopyPressed: _copy,
         onSelectAllPressed: _selectAll,

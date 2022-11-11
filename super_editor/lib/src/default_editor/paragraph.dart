@@ -440,9 +440,9 @@ ExecutionInstruction moveParagraphSelectionUpWhenBackspaceIsPressed({
     nodePosition: nodeAbove.endPosition,
   );
 
-  editContext.composer.selection = DocumentSelection.collapsed(
+  editContext.composer.setSelection(DocumentSelection.collapsed(
     position: newDocumentPosition,
-  );
+  ));
 
   return ExecutionInstruction.haltExecution;
 }

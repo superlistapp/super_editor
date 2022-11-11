@@ -272,7 +272,7 @@ class DocumentEditingRobot {
     _actionQueue.add(
       _randomPauseBefore(
         () {
-          _composer.selection = DocumentSelection.collapsed(position: position);
+          _composer.setSelection(DocumentSelection.collapsed(position: position));
         },
       ),
     );
@@ -282,7 +282,7 @@ class DocumentEditingRobot {
     _actionQueue.add(
       _randomPauseBefore(
         () {
-          _composer.selection = selection;
+          _composer.setSelection(selection);
         },
       ),
     );
@@ -292,7 +292,7 @@ class DocumentEditingRobot {
     _actionQueue.add(
       _randomPauseBefore(
         () {
-          _composer.selection = DocumentSelection(
+          _composer.setSelection(DocumentSelection(
             base: DocumentPosition(
               nodeId: _editor.document.nodes.first.id,
               nodePosition: _editor.document.nodes.first.beginningPosition,
@@ -301,7 +301,7 @@ class DocumentEditingRobot {
               nodeId: _editor.document.nodes.last.id,
               nodePosition: _editor.document.nodes.last.endPosition,
             ),
-          );
+          ));
         },
       ),
     );

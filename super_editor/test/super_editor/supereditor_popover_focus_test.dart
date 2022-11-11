@@ -30,7 +30,7 @@ void main() {
           nodePosition: TextNodePosition(offset: 20),
         ),
       );
-      editContext.editContext.composer.selection = documentSelection;
+      editContext.editContext.composer.setSelection(documentSelection);
       await tester.pumpAndSettle();
       expect(SuperEditorInspector.findDocumentSelection(), documentSelection);
 
@@ -66,7 +66,7 @@ void main() {
           nodePosition: TextNodePosition(offset: 20),
         ),
       );
-      editContext.editContext.composer.selection = documentSelection;
+      editContext.editContext.composer.setSelection(documentSelection);
       await tester.pumpAndSettle();
       expect(SuperEditorInspector.findDocumentSelection(), documentSelection);
 

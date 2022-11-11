@@ -229,12 +229,12 @@ ExecutionInstruction mergeNodeWithNextWhenDeleteIsPressed({
   );
 
   // Place the cursor at the point where the text came together.
-  editContext.composer.selection = DocumentSelection.collapsed(
+  editContext.composer.setSelection(DocumentSelection.collapsed(
     position: DocumentPosition(
       nodeId: node.id,
       nodePosition: TextNodePosition(offset: currentParagraphLength),
     ),
-  );
+  ));
 
   return ExecutionInstruction.haltExecution;
 }
