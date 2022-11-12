@@ -71,7 +71,7 @@ class CommonEditorOperations {
       return false;
     }
 
-    composer.setSelection(DocumentSelection.collapsed(position: documentPosition));
+    composer.selection = DocumentSelection.collapsed(position: documentPosition);
     return true;
   }
 
@@ -98,7 +98,7 @@ class CommonEditorOperations {
     }
 
     if (position != null) {
-      composer.setSelection(DocumentSelection.collapsed(position: position));
+      composer.selection = DocumentSelection.collapsed(position: position);
       return true;
     } else {
       return false;
@@ -124,10 +124,10 @@ class CommonEditorOperations {
       return false;
     }
 
-    composer.setSelection(DocumentSelection(
+    composer.selection = DocumentSelection(
       base: baseDocumentPosition,
       extent: extentDocumentPosition,
-    ));
+    );
 
     return true;
   }
@@ -170,7 +170,7 @@ class CommonEditorOperations {
     );
     final wordNodeSelection = TextNodeSelection.fromTextSelection(wordTextSelection);
 
-    composer.setSelection(DocumentSelection(
+    composer.selection = DocumentSelection(
       base: DocumentPosition(
         nodeId: selectedNode.id,
         nodePosition: wordNodeSelection.base,
@@ -179,7 +179,7 @@ class CommonEditorOperations {
         nodeId: selectedNode.id,
         nodePosition: wordNodeSelection.extent,
       ),
-    ));
+    );
 
     return true;
   }
@@ -194,7 +194,7 @@ class CommonEditorOperations {
       return false;
     }
 
-    composer.setSelection(DocumentSelection(
+    composer.selection = DocumentSelection(
       base: DocumentPosition(
         nodeId: nodes.first.id,
         nodePosition: nodes.first.beginningPosition,
@@ -203,7 +203,7 @@ class CommonEditorOperations {
         nodeId: nodes.last.id,
         nodePosition: nodes.last.endPosition,
       ),
-    ));
+    );
 
     return true;
   }
@@ -218,7 +218,7 @@ class CommonEditorOperations {
       return false;
     }
 
-    composer.setSelection(composer.selection!.collapse());
+    composer.selection = composer.selection!.collapse();
 
     return true;
   }
@@ -252,7 +252,7 @@ class CommonEditorOperations {
     }
 
     if (!composer.selection!.isCollapsed && !expand) {
-      composer.setSelection(composer.selection!.collapseUpstream(editor.document));
+      composer.selection = composer.selection!.collapseUpstream(editor.document);
       return true;
     }
 
@@ -295,14 +295,14 @@ class CommonEditorOperations {
 
     if (expand) {
       // Selection should be expanded.
-      composer.setSelection(composer.selection!.expandTo(
+      composer.selection = composer.selection!.expandTo(
         newExtent,
-      ));
+      );
     } else {
       // Selection should be replaced by new collapsed position.
-      composer.setSelection(DocumentSelection.collapsed(
+      composer.selection = DocumentSelection.collapsed(
         position: newExtent,
-      ));
+      );
     }
 
     return true;
@@ -333,7 +333,7 @@ class CommonEditorOperations {
     }
 
     if (!composer.selection!.isCollapsed && !expand) {
-      composer.setSelection(composer.selection!.collapseDownstream(editor.document));
+      composer.selection = composer.selection!.collapseDownstream(editor.document);
       return true;
     }
 
@@ -378,14 +378,14 @@ class CommonEditorOperations {
 
     if (expand) {
       // Selection should be expanded.
-      composer.setSelection(composer.selection!.expandTo(
+      composer.selection = composer.selection!.expandTo(
         newExtent,
-      ));
+      );
     } else {
       // Selection should be replaced by new collapsed position.
-      composer.setSelection(DocumentSelection.collapsed(
+      composer.selection = DocumentSelection.collapsed(
         position: newExtent,
-      ));
+      );
     }
 
     return true;
@@ -586,10 +586,10 @@ class CommonEditorOperations {
   }) {
     if (expandSelection) {
       // Selection should be expanded.
-      composer.setSelection(composer.selection!.expandTo(position));
+      composer.selection = composer.selection!.expandTo(position);
     } else {
       // Selection should be replaced by new collapsed position.
-      composer.setSelection(DocumentSelection.collapsed(position: position));
+      composer.selection = DocumentSelection.collapsed(position: position);
     }
   }
 
@@ -725,12 +725,12 @@ class CommonEditorOperations {
       return false;
     }
 
-    composer.setSelection(DocumentSelection.collapsed(
+    composer.selection = DocumentSelection.collapsed(
       position: DocumentPosition(
         nodeId: nodeAfter.id,
         nodePosition: nodeAfter.beginningPosition,
       ),
-    ));
+    );
 
     return true;
   }
@@ -763,12 +763,12 @@ class CommonEditorOperations {
     );
 
     // Place the cursor at the point where the text came together.
-    composer.setSelection(DocumentSelection.collapsed(
+    composer.selection = DocumentSelection.collapsed(
       position: DocumentPosition(
         nodeId: node.id,
         nodePosition: TextNodePosition(offset: firstNodeTextLength),
       ),
-    ));
+    );
 
     return true;
   }
@@ -939,12 +939,12 @@ class CommonEditorOperations {
       return false;
     }
 
-    composer.setSelection(DocumentSelection.collapsed(
+    composer.selection = DocumentSelection.collapsed(
       position: DocumentPosition(
         nodeId: nodeBefore.id,
         nodePosition: nodeBefore.endPosition,
       ),
-    ));
+    );
 
     return true;
   }
@@ -974,12 +974,12 @@ class CommonEditorOperations {
     );
 
     // Place the cursor at the point where the text came together.
-    composer.setSelection(DocumentSelection.collapsed(
+    composer.selection = DocumentSelection.collapsed(
       position: DocumentPosition(
         nodeId: nodeAbove.id,
         nodePosition: TextNodePosition(offset: aboveParagraphLength),
       ),
-    ));
+    );
 
     return true;
   }
@@ -1021,7 +1021,7 @@ class CommonEditorOperations {
       ),
     );
 
-    composer.setSelection(DocumentSelection.collapsed(position: newSelectionPosition));
+    composer.selection = DocumentSelection.collapsed(position: newSelectionPosition);
 
     return true;
   }
@@ -1045,12 +1045,12 @@ class CommonEditorOperations {
 
       transaction.replaceNode(oldNode: oldNode, newNode: newNode);
 
-      composer.setSelection(DocumentSelection.collapsed(
+      composer.selection = DocumentSelection.collapsed(
         position: DocumentPosition(
           nodeId: newNode.id,
           nodePosition: newNode.beginningPosition,
         ),
-      ));
+      );
     }));
   }
 
@@ -1084,7 +1084,7 @@ class CommonEditorOperations {
       DeleteSelectionCommand(documentSelection: composer.selection!),
     );
 
-    composer.setSelection(DocumentSelection.collapsed(position: newSelectionPosition));
+    composer.selection = DocumentSelection.collapsed(position: newSelectionPosition);
   }
 
   /// Returns the [DocumentPosition] where the caret should sit after deleting
@@ -1357,14 +1357,14 @@ class CommonEditorOperations {
     );
 
     editorOpsLog.fine("Updating Document Composer selection after text insertion.");
-    composer.setSelection(DocumentSelection.collapsed(
+    composer.selection = DocumentSelection.collapsed(
       position: DocumentPosition(
         nodeId: textNode.id,
         nodePosition: TextNodePosition(
           offset: initialTextOffset + text.length,
         ),
       ),
-    ));
+    );
 
     return true;
   }
@@ -1461,12 +1461,12 @@ class CommonEditorOperations {
       // We removed some text at the beginning of the list item.
       // Move the selection back by that same amount.
       final textPosition = composer.selection!.extent.nodePosition as TextNodePosition;
-      composer.setSelection(DocumentSelection.collapsed(
+      composer.selection = DocumentSelection.collapsed(
         position: DocumentPosition(
           nodeId: node.id,
           nodePosition: TextNodePosition(offset: textPosition.offset - startOfNewText),
         ),
-      ));
+      );
 
       return true;
     }
@@ -1492,12 +1492,12 @@ class CommonEditorOperations {
 
       node.text = node.text.removeRegion(startOffset: 0, endOffset: hrMatch.firstMatch(textBeforeCaret)!.end);
 
-      composer.setSelection(DocumentSelection.collapsed(
+      composer.selection = DocumentSelection.collapsed(
         position: DocumentPosition(
           nodeId: node.id,
           nodePosition: const TextNodePosition(offset: 0),
         ),
-      ));
+      );
 
       return true;
     }
@@ -1525,12 +1525,12 @@ class CommonEditorOperations {
       // We removed some text at the beginning of the list item.
       // Move the selection back by that same amount.
       final textPosition = composer.selection!.extent.nodePosition as TextNodePosition;
-      composer.setSelection(DocumentSelection.collapsed(
+      composer.selection = DocumentSelection.collapsed(
         position: DocumentPosition(
           nodeId: node.id,
           nodePosition: TextNodePosition(offset: textPosition.offset - startOfNewText),
         ),
-      ));
+      );
 
       return true;
     }
@@ -1626,12 +1626,12 @@ class CommonEditorOperations {
       }),
     );
 
-    composer.setSelection(DocumentSelection.collapsed(
+    composer.selection = DocumentSelection.collapsed(
       position: DocumentPosition(
         nodeId: node.id,
         nodePosition: imageNode.endPosition,
       ),
-    ));
+    );
   }
 
   bool _insertCharacterInTextComposable(
@@ -1659,14 +1659,14 @@ class CommonEditorOperations {
       ),
     );
 
-    composer.setSelection(DocumentSelection.collapsed(
+    composer.selection = DocumentSelection.collapsed(
       position: DocumentPosition(
         nodeId: textNode.id,
         nodePosition: TextNodePosition(
           offset: initialTextOffset + character.length,
         ),
       ),
-    ));
+    );
 
     return true;
   }
@@ -1780,12 +1780,12 @@ class CommonEditorOperations {
     }
 
     // Place the caret at the beginning of the new node.
-    composer.setSelection(DocumentSelection.collapsed(
+    composer.selection = DocumentSelection.collapsed(
       position: DocumentPosition(
         nodeId: newNodeId,
         nodePosition: const TextNodePosition(offset: 0),
       ),
-    ));
+    );
 
     return true;
   }
@@ -1929,7 +1929,7 @@ class CommonEditorOperations {
           );
         }
 
-        composer.setSelection(newSelection);
+        composer.selection = newSelection;
       }),
     );
 
@@ -2219,7 +2219,7 @@ class CommonEditorOperations {
         DeleteSelectionCommand(documentSelection: composer.selection!),
       );
 
-      composer.setSelection(DocumentSelection.collapsed(position: pastePosition));
+      composer.selection = DocumentSelection.collapsed(position: pastePosition);
     }
 
     // TODO: figure out a general approach for asynchronous behaviors that
@@ -2314,7 +2314,7 @@ class _PasteEditorCommand implements EditorCommand {
     }
 
     // Place the caret at the end of the pasted content.
-    _composer.setSelection(DocumentSelection.collapsed(
+    _composer.selection = DocumentSelection.collapsed(
       position: pastedContentNodes.isNotEmpty
           ? DocumentPosition(
               nodeId: previousNode.id,
@@ -2326,7 +2326,7 @@ class _PasteEditorCommand implements EditorCommand {
                 offset: pasteTextOffset + attributedLines.first.text.length,
               ),
             ),
-    ));
+    );
     editorOpsLog.fine('New selection after paste operation: ${_composer.selection}');
 
     editorOpsLog.fine('Done with paste command.');

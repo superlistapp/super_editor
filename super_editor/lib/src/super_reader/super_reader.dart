@@ -22,7 +22,6 @@ import 'package:super_editor/src/default_editor/list_items.dart';
 import 'package:super_editor/src/default_editor/paragraph.dart';
 import 'package:super_editor/src/default_editor/unknown_component.dart';
 
-import '../core/document_composer.dart';
 import 'read_only_document_android_touch_interactor.dart';
 import 'read_only_document_ios_touch_interactor.dart';
 import 'read_only_document_keyboard_interactor.dart';
@@ -35,8 +34,8 @@ class SuperReader extends StatefulWidget {
     this.focusNode,
     required this.document,
     this.documentLayoutKey,
+    this.selection,
     this.scrollController,
-    this.composer,
     Stylesheet? stylesheet,
     this.customStylePhases = const [],
     this.documentOverlayBuilders = const [],
@@ -71,7 +70,7 @@ class SuperReader extends StatefulWidget {
   /// layout within this [SuperReader].
   final GlobalKey? documentLayoutKey;
 
-  final DocumentComposer? composer;
+  final ValueNotifier<DocumentSelection?>? selection;
 
   /// The [ScrollController] that governs this [SuperReader]'s scroll
   /// offset.
@@ -161,9 +160,9 @@ class SuperReaderState extends State<SuperReader> {
   @visibleForTesting
   Document get document => _editor.document;
 
-  late final DocumentComposer _composer;
+  late final ValueNotifier<DocumentSelection?> _selection;
   @visibleForTesting
-  DocumentSelection? get selection => _composer.selection;
+  DocumentSelection? get selection => _selection.value;
 
   // GlobalKey used to access the [DocumentLayoutState] to figure
   // out where in the document the user taps or drags.
@@ -185,7 +184,7 @@ class SuperReaderState extends State<SuperReader> {
   void initState() {
     super.initState();
     _editor = _ReadOnlyDocumentEditor(document: widget.document);
-    _composer = widget.composer ?? DocumentComposer();
+    _selection = widget.selection ?? ValueNotifier<DocumentSelection?>(null);
 
     _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
 
@@ -196,7 +195,7 @@ class SuperReaderState extends State<SuperReader> {
     _readerContext = ReaderContext(
       document: widget.document,
       getDocumentLayout: () => _docLayoutKey.currentState as DocumentLayout,
-      composer: _composer,
+      selection: _selection,
       scrollController: _autoScrollController,
     );
 
@@ -210,8 +209,8 @@ class SuperReaderState extends State<SuperReader> {
     if (widget.document != oldWidget.document) {
       _editor = _ReadOnlyDocumentEditor(document: widget.document);
     }
-    if (widget.composer != oldWidget.composer) {
-      _composer = widget.composer ?? DocumentComposer();
+    if (widget.selection != oldWidget.selection) {
+      _selection = widget.selection ?? ValueNotifier<DocumentSelection?>(null);
     }
   }
 
@@ -226,7 +225,7 @@ class SuperReaderState extends State<SuperReader> {
 
     _docLayoutSelectionStyler = SingleColumnLayoutSelectionStyler(
       document: _editor.document,
-      composer: _composer,
+      selection: _selection,
       selectionStyles: widget.selectionStyles,
     );
 
@@ -313,7 +312,7 @@ class SuperReaderState extends State<SuperReader> {
           document: _readerContext.document,
           documentKey: _docLayoutKey,
           getDocumentLayout: () => _readerContext.documentLayout,
-          composer: _readerContext.composer,
+          selection: _readerContext.selection,
           scrollController: widget.scrollController,
           handleColor: widget.androidHandleColor ?? Theme.of(context).primaryColor,
           popoverToolbarBuilder: widget.androidToolbarBuilder ?? (_) => const SizedBox(),
@@ -326,7 +325,7 @@ class SuperReaderState extends State<SuperReader> {
           focusNode: _focusNode,
           document: _readerContext.document,
           getDocumentLayout: () => _readerContext.documentLayout,
-          composer: _readerContext.composer,
+          selection: _readerContext.selection,
           scrollController: widget.scrollController,
           documentKey: _docLayoutKey,
           handleColor: widget.iOSHandleColor ?? Theme.of(context).primaryColor,

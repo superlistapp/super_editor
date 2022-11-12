@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
@@ -43,12 +41,11 @@ class _CaretDocumentOverlayState extends State<CaretDocumentOverlay> with Single
   final _caret = ValueNotifier<Rect?>(null);
   late final BlinkController _blinkController;
   BoxConstraints? _previousConstraints;
-  late StreamSubscription<DocumentSelectionChange> _selectionSubscription;
 
   @override
   void initState() {
     super.initState();
-    _selectionSubscription = widget.composer.selectionChanges.listen(onSelectionChange);
+    widget.composer.selectionNotifier.addListener(_scheduleCaretUpdate);
     widget.document.addListener(_scheduleCaretUpdate);
     _blinkController = BlinkController(tickerProvider: this)..startBlinking();
 
@@ -68,8 +65,8 @@ class _CaretDocumentOverlayState extends State<CaretDocumentOverlay> with Single
     }
 
     if (widget.composer != oldWidget.composer) {
-      _selectionSubscription.cancel();
-      _selectionSubscription = widget.composer.selectionChanges.listen(onSelectionChange);
+      oldWidget.composer.selectionNotifier.removeListener(_scheduleCaretUpdate);
+      widget.composer.selectionNotifier.addListener(_scheduleCaretUpdate);
 
       // Selection has changed, we need to update the caret.
       if (widget.composer.selection != oldWidget.composer.selection) {
@@ -80,7 +77,7 @@ class _CaretDocumentOverlayState extends State<CaretDocumentOverlay> with Single
 
   @override
   void dispose() {
-    _selectionSubscription.cancel();
+    widget.composer.selectionNotifier.removeListener(_scheduleCaretUpdate);
     widget.document.removeListener(_scheduleCaretUpdate);
     _blinkController.dispose();
     super.dispose();
@@ -112,10 +109,6 @@ class _CaretDocumentOverlayState extends State<CaretDocumentOverlay> with Single
 
     final documentLayout = widget.documentLayoutResolver();
     _caret.value = documentLayout.getRectForPosition(documentSelection.extent)!;
-  }
-
-  void onSelectionChange(DocumentSelectionChange selectionChange) {
-    _scheduleCaretUpdate();
   }
 
   @override

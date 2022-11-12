@@ -43,7 +43,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Select the new nodes.
-        composer.setSelection(DocumentSelection(
+        composer.selection = DocumentSelection(
           base: DocumentPosition(
             nodeId: document.nodes[2].id,
             nodePosition: document.nodes[2].endPosition,
@@ -52,7 +52,7 @@ void main() {
             nodeId: document.nodes[1].id,
             nodePosition: document.nodes[1].beginningPosition,
           ),
-        ));
+        );
         await tester.pumpAndSettle();
 
         // Delete the new nodes.
@@ -109,7 +109,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Select the new nodes.
-        composer.setSelection(DocumentSelection(
+        composer.selection = DocumentSelection(
           base: DocumentPosition(
             nodeId: document.nodes[1].id,
             nodePosition: document.nodes[1].beginningPosition,
@@ -118,7 +118,7 @@ void main() {
             nodeId: document.nodes[2].id,
             nodePosition: document.nodes[2].endPosition,
           ),
-        ));
+        );
         await tester.pumpAndSettle();
 
         // Delete the new nodes.

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_layout.dart';
+import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
@@ -10,7 +11,6 @@ import 'package:super_editor/src/infrastructure/toolbar_position_delegate.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
-import '../../../core/document_composer.dart';
 import 'magnifier.dart';
 
 class IosDocumentTouchEditingControls extends StatefulWidget {
@@ -20,7 +20,7 @@ class IosDocumentTouchEditingControls extends StatefulWidget {
     required this.floatingCursorController,
     required this.documentLayout,
     required this.document,
-    required this.composer,
+    required this.selection,
     required this.handleColor,
     this.onDoubleTapOnCaret,
     this.onTripleTapOnCaret,
@@ -38,7 +38,7 @@ class IosDocumentTouchEditingControls extends StatefulWidget {
 
   final Document document;
 
-  final DocumentComposer composer;
+  final ValueNotifier<DocumentSelection?> selection;
 
   final FloatingCursorController floatingCursorController;
 
@@ -187,15 +187,15 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
       return;
     }
 
-    if (widget.composer.selection == null) {
+    if (widget.selection.value == null) {
       // The floating cursor doesn't mean anything when nothing is selected.
       return;
     }
 
-    if (!widget.composer.selection!.isCollapsed) {
+    if (!widget.selection.value!.isCollapsed) {
       // The selection is expanded. First we need to collapse it, then
       // we can start showing the floating cursor.
-      widget.composer.setSelection(widget.composer.selection!.collapseDownstream(widget.document));
+      widget.selection.value = widget.selection.value!.collapseDownstream(widget.document);
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         _onFloatingCursorChange();
       });

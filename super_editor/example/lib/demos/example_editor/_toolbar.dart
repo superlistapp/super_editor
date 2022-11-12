@@ -446,11 +446,9 @@ class _EditorToolbarState extends State<EditorToolbar> {
         _PositionedToolbar(
           anchor: widget.anchor,
           composer: widget.composer,
-          child: StreamBuilder<DocumentSelectionChange>(
-            stream: widget.composer.selectionChanges,
-            initialData: widget.composer.latestSelectionChange,
-            builder: (context, snapshot) {
-              final selection = snapshot.data?.selection;
+          child: ValueListenableBuilder<DocumentSelection?>(
+            valueListenable: widget.composer.selectionNotifier,
+            builder: (context, selection, child) {
               appLog.fine("Building toolbar. Selection: $selection");
               if (selection == null) {
                 return const SizedBox();
@@ -734,11 +732,9 @@ class _ImageFormatToolbarState extends State<ImageFormatToolbar> {
     return _PositionedToolbar(
       anchor: widget.anchor,
       composer: widget.composer,
-      child: StreamBuilder<DocumentSelectionChange>(
-        stream: widget.composer.selectionChanges,
-        initialData: widget.composer.latestSelectionChange,
-        builder: (context, snapshot) {
-          final selection = snapshot.data?.selection;
+      child: ValueListenableBuilder<DocumentSelection?>(
+        valueListenable: widget.composer.selectionNotifier,
+        builder: (context, selection, child) {
           appLog.fine("Building image toolbar. Selection: $selection");
           if (selection == null) {
             return const SizedBox();

@@ -21,6 +21,7 @@ class DocumentComposer with ChangeNotifier {
   })  : imeConfiguration = ValueNotifier(imeConfiguration ?? const ImeConfiguration()),
         _preferences = ComposerPreferences() {
     _streamController = StreamController<DocumentSelectionChange>.broadcast();
+    selectionNotifier.addListener(_onSelectionChangedBySelectionNotifier);
     setSelection(initialSelection);
     _preferences.addListener(() {
       editorLog.fine("Composer preferences changed");
@@ -31,11 +32,20 @@ class DocumentComposer with ChangeNotifier {
   @override
   void dispose() {
     _preferences.dispose();
+    selectionNotifier.removeListener(_onSelectionChangedBySelectionNotifier);
     super.dispose();
   }
 
   /// Returns the current [DocumentSelection] for a [Document].
   DocumentSelection? get selection => _latestSelectionChange.selection;
+
+  /// Sets the current [selection] for a [Document] using [SelectionReason.userInteraction] as the reason.
+  set selection(DocumentSelection? newSelection) {
+    if (newSelection != selectionNotifier.value) {
+      selectionNotifier.value = newSelection;
+      notifyListeners();
+    }
+  }
 
   /// Sets the current [selection] for a [Document].
   ///
@@ -46,18 +56,47 @@ class DocumentComposer with ChangeNotifier {
       reason: reason,
     );
     _streamController.sink.add(_latestSelectionChange);
+
+    if (_updatingSelection) {
+      // The selection was changed by the selectionNotifier.
+      return;
+    }
+
+    _updatingSelection = true;
+    try {
+      // Updates the selection, so both _latestSelectionChange and selectionNotifier are in sync.
+      selectionNotifier.value = newSelection;
+    } finally {
+      _updatingSelection = false;
+    }
   }
 
-  /// Emits a [DocumentSelectionChange] every time the selection changes.
+  /// A stream of document selection changes.
+  ///
+  /// Each new [DocumentSelectionChange] includes the most recent document selection,
+  /// along with the reason that the selection changed.
+  ///
+  /// Listen to this [Stream] when the selection reason is needed. Otherwise, use [selectionNotifier].
   Stream<DocumentSelectionChange> get selectionChanges => _streamController.stream;
   late StreamController<DocumentSelectionChange> _streamController;
 
-  /// Holds the reason of the last selection change.
+  /// Returns the reason for the most recent selection change in the composer.
+  ///
+  /// For example, a selection might change as a result of user interaction, or as
+  /// a result of another user editing content, or some other reason.
   Object? get latestSelectionChangeReason => _latestSelectionChange.reason;
 
-  /// Holds the last selection change.
+  /// Returns the most recent selection change in the composer.
+  ///
+  /// The [DocumentSelectionChange] includes the most recent document selection,
+  /// along with the reason that the selection changed.
   DocumentSelectionChange get latestSelectionChange => _latestSelectionChange;
   late DocumentSelectionChange _latestSelectionChange;
+
+  /// Notifies whenever the current [DocumentSelection] changes.
+  ///
+  /// If the selection change reason is needed, use [selectionChanges] instead.
+  final selectionNotifier = ValueNotifier<DocumentSelection?>(null);
 
   /// Clears the current [selection].
   void clearSelection() {
@@ -70,6 +109,28 @@ class DocumentComposer with ChangeNotifier {
 
   /// Returns the composition preferences for this composer.
   ComposerPreferences get preferences => _preferences;
+
+  /// Indicates wheter or not we are in the process of updating the selection.
+  ///
+  /// The selection can be changed by [selectionNotifier] or by [setSelection].
+  bool _updatingSelection = false;
+
+  void _onSelectionChangedBySelectionNotifier() {
+    if (_updatingSelection) {
+      // We are already emitted a [DocumentSelectionChange].
+      return;
+    }
+
+    _updatingSelection = true;
+    try {
+      // The selection was changed using the selectionNotifier.
+      // We need to emit a new DocumentSelectionChange and sync the selectionNotifier
+      // selection with _latestSelectionChange selection.
+      setSelection(selectionNotifier.value);
+    } finally {
+      _updatingSelection = false;
+    }
+  }
 }
 
 /// Holds preferences about user input, to be used for the
@@ -151,9 +212,17 @@ class DocumentSelectionChange {
 
   final DocumentSelection? selection;
   final Object reason;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is DocumentSelectionChange && selection == other.selection && reason == other.reason;
+
+  @override
+  int get hashCode => (selection?.hashCode ?? 0) ^ reason.hashCode;
 }
 
-/// Holds commons reasons for selection changes.
+/// Holds common reasons for selection changes.
 class SelectionReason {
   /// Represents a change caused by an user interaction.
   static const userInteraction = "userInteraction";

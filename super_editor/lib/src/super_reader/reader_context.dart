@@ -4,8 +4,6 @@ import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/default_editor/document_scrollable.dart';
 
-import '../core/document_composer.dart';
-
 /// Collection of core artifacts used to display a read-only document.
 ///
 /// In particular, the context contains the [Document], [DocumentSelection],
@@ -19,7 +17,7 @@ class ReaderContext {
   ReaderContext({
     required this.document,
     required DocumentLayout Function() getDocumentLayout,
-    required this.composer,
+    required this.selection,
     required this.scrollController,
   }) : _getDocumentLayout = getDocumentLayout;
 
@@ -32,8 +30,8 @@ class ReaderContext {
   DocumentLayout get documentLayout => _getDocumentLayout();
   final DocumentLayout Function() _getDocumentLayout;
 
-  /// The [DocumentComposer] that maintains selection and applies changes to the document selection.
-  final DocumentComposer composer;
+  /// The current selection within the displayed document.
+  final ValueNotifier<DocumentSelection?> selection;
 
   /// The [AutoScrollController] that scrolls a document up/down within the
   /// document's viewport.

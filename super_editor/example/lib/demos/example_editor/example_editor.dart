@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:example/demos/example_editor/_task.dart';
 import 'package:example/logging.dart';
 import 'package:flutter/foundation.dart';
@@ -39,7 +37,6 @@ class _ExampleEditorState extends State<ExampleEditor> {
 
   OverlayEntry? _imageFormatBarOverlayEntry;
   final _imageSelectionAnchor = ValueNotifier<Offset?>(null);
-  late StreamSubscription<DocumentSelectionChange> _selectionSubscription;
 
   @override
   void initState() {
@@ -47,7 +44,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
     _doc = createInitialDocument()..addListener(_hideOrShowToolbar);
     _docEditor = DocumentEditor(document: _doc as MutableDocument);
     _composer = DocumentComposer();
-    _selectionSubscription = _composer.selectionChanges.listen(_onSelectionChange);    
+    _composer.selectionNotifier.addListener(_hideOrShowToolbar);
     _docOps = CommonEditorOperations(
       editor: _docEditor,
       composer: _composer,
@@ -63,15 +60,10 @@ class _ExampleEditorState extends State<ExampleEditor> {
       _textFormatBarOverlayEntry!.remove();
     }
 
-    _selectionSubscription.cancel();
     _scrollController.dispose();
     _editorFocusNode.dispose();
     _composer.dispose();
     super.dispose();
-  }
-
-  void _onSelectionChange(DocumentSelectionChange? selectionChange) {
-    _hideOrShowToolbar();
   }
 
   void _hideOrShowToolbar() {
@@ -384,24 +376,22 @@ class _ExampleEditorState extends State<ExampleEditor> {
   }
 
   Widget _buildMountedToolbar() {
-    return ListenableBuilder(
-      listenable: _doc,
+    return MultiListenableBuilder(
+      listenables: <Listenable>{
+        _doc,
+        _composer.selectionNotifier,
+      },
       builder: (_) {
-        return StreamBuilder<DocumentSelectionChange>(
-          stream: _composer.selectionChanges,
-          builder: (context, _) {
-            final selection = _composer.selection;
+        final selection = _composer.selection;
 
-            if (selection == null) {
-              return const SizedBox();
-            }
+        if (selection == null) {
+          return const SizedBox();
+        }
 
-            return KeyboardEditingToolbar(
-              document: _doc,
-              composer: _composer,
-              commonOps: _docOps,
-            );
-          },
+        return KeyboardEditingToolbar(
+          document: _doc,
+          composer: _composer,
+          commonOps: _docOps,
         );
       },
     );

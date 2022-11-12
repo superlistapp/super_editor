@@ -137,14 +137,14 @@ final removeCollapsedSelectionWhenShiftIsReleased = createShortcut(
     required ReaderContext documentContext,
     required RawKeyEvent keyEvent,
   }) {
-    final selection = documentContext.composer.selection;
+    final selection = documentContext.selection.value;
     if (selection == null || !selection.isCollapsed) {
       return ExecutionInstruction.continueExecution;
     }
 
     // The selection is collapsed, and the shift key was released. We don't
     // want to retain the selection any longer. Remove it.
-    documentContext.composer.clearSelection();
+    documentContext.selection.value = null;
     return ExecutionInstruction.haltExecution;
   },
   keyPressedOrReleased: LogicalKeyboardKey.shift,
@@ -196,7 +196,7 @@ final expandSelectionWithLeftArrow = createShortcut(
     final didMove = moveCaretUpstream(
       document: documentContext.document,
       documentLayout: documentContext.documentLayout,
-      composer: documentContext.composer,
+      selectionNotifier: documentContext.selection,
       movementModifier: _getHorizontalMovementModifier(keyEvent),
       retainCollapsedSelection: keyEvent.isShiftPressed,
     );
@@ -225,7 +225,7 @@ final expandSelectionWithRightArrow = createShortcut(
     final didMove = moveCaretDownstream(
       document: documentContext.document,
       documentLayout: documentContext.documentLayout,
-      composer: documentContext.composer,
+      selectionNotifier: documentContext.selection,
       movementModifier: _getHorizontalMovementModifier(keyEvent),
       retainCollapsedSelection: keyEvent.isShiftPressed,
     );
@@ -264,7 +264,7 @@ final expandSelectionWithUpArrow = createShortcut(
     final didMove = moveCaretUp(
       document: documentContext.document,
       documentLayout: documentContext.documentLayout,
-      composer: documentContext.composer,
+      selectionNotifier: documentContext.selection,
       retainCollapsedSelection: keyEvent.isShiftPressed,
     );
 
@@ -289,7 +289,7 @@ final expandSelectionWithDownArrow = createShortcut(
     final didMove = moveCaretDown(
       document: documentContext.document,
       documentLayout: documentContext.documentLayout,
-      composer: documentContext.composer,
+      selectionNotifier: documentContext.selection,
       retainCollapsedSelection: keyEvent.isShiftPressed,
     );
 
@@ -306,7 +306,7 @@ final expandSelectionToLineStartWithHomeOnWindowsAndLinux = createShortcut(
     final didMove = moveCaretUpstream(
       document: documentContext.document,
       documentLayout: documentContext.documentLayout,
-      composer: documentContext.composer,
+      selectionNotifier: documentContext.selection,
       movementModifier: MovementModifier.line,
       retainCollapsedSelection: keyEvent.isShiftPressed,
     );
@@ -326,7 +326,7 @@ final expandSelectionToLineEndWithEndOnWindowsAndLinux = createShortcut(
     final didMove = moveCaretDownstream(
       document: documentContext.document,
       documentLayout: documentContext.documentLayout,
-      composer: documentContext.composer,
+      selectionNotifier: documentContext.selection,
       movementModifier: MovementModifier.line,
       retainCollapsedSelection: keyEvent.isShiftPressed,
     );
@@ -346,7 +346,7 @@ final expandSelectionToLineStartWithCtrlAOnWindowsAndLinux = createShortcut(
     final didMove = moveCaretUpstream(
       document: documentContext.document,
       documentLayout: documentContext.documentLayout,
-      composer: documentContext.composer,
+      selectionNotifier: documentContext.selection,
       movementModifier: MovementModifier.line,
       retainCollapsedSelection: keyEvent.isShiftPressed,
     );
@@ -367,7 +367,7 @@ final expandSelectionToLineEndWithCtrlEOnWindowsAndLinux = createShortcut(
     final didMove = moveCaretDownstream(
       document: documentContext.document,
       documentLayout: documentContext.documentLayout,
-      composer: documentContext.composer,
+      selectionNotifier: documentContext.selection,
       movementModifier: MovementModifier.line,
       retainCollapsedSelection: keyEvent.isShiftPressed,
     );
@@ -385,7 +385,7 @@ final selectAllWhenCmdAIsPressedOnMac = createShortcut(
     required ReaderContext documentContext,
     required RawKeyEvent keyEvent,
   }) {
-    final didSelectAll = selectAll(documentContext.document, documentContext.composer);
+    final didSelectAll = selectAll(documentContext.document, documentContext.selection);
     return didSelectAll ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
   },
   keyPressedOrReleased: LogicalKeyboardKey.keyA,
@@ -398,7 +398,7 @@ final selectAllWhenCtlAIsPressedOnWindowsAndLinux = createShortcut(
     required ReaderContext documentContext,
     required RawKeyEvent keyEvent,
   }) {
-    final didSelectAll = selectAll(documentContext.document, documentContext.composer);
+    final didSelectAll = selectAll(documentContext.document, documentContext.selection);
     return didSelectAll ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
   },
   keyPressedOrReleased: LogicalKeyboardKey.keyA,
@@ -416,17 +416,17 @@ final copyWhenCmdCIsPressedOnMac = createShortcut(
     required ReaderContext documentContext,
     required RawKeyEvent keyEvent,
   }) {
-    if (documentContext.composer.selection == null) {
+    if (documentContext.selection.value == null) {
       return ExecutionInstruction.continueExecution;
     }
-    if (documentContext.composer.selection!.isCollapsed) {
+    if (documentContext.selection.value!.isCollapsed) {
       // Nothing to copy, but we technically handled the task.
       return ExecutionInstruction.haltExecution;
     }
 
     copy(
       document: documentContext.document,
-      selection: documentContext.composer.selection!,
+      selection: documentContext.selection.value!,
     );
 
     return ExecutionInstruction.haltExecution;
@@ -441,17 +441,17 @@ final copyWhenCtlCIsPressedOnWindowsAndLinux = createShortcut(
     required ReaderContext documentContext,
     required RawKeyEvent keyEvent,
   }) {
-    if (documentContext.composer.selection == null) {
+    if (documentContext.selection.value == null) {
       return ExecutionInstruction.continueExecution;
     }
-    if (documentContext.composer.selection!.isCollapsed) {
+    if (documentContext.selection.value!.isCollapsed) {
       // Nothing to copy, but we technically handled the task.
       return ExecutionInstruction.haltExecution;
     }
 
     copy(
       document: documentContext.document,
-      selection: documentContext.composer.selection!,
+      selection: documentContext.selection.value!,
     );
 
     return ExecutionInstruction.haltExecution;

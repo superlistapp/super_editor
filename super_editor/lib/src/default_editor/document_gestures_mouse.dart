@@ -91,7 +91,7 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor>
     startSyncingSelectionWithFocus(
       focusNode: _focusNode,
       getDocumentLayout: widget.getDocumentLayout,
-      composer: widget.composer,
+      selection: widget.composer.selectionNotifier,
     );
   }
 
@@ -105,7 +105,7 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor>
     if (widget.composer != oldWidget.composer) {
       _selectionSubscription.cancel();
       _selectionSubscription = widget.composer.selectionChanges.listen(_onSelectionChange);
-      onComposerReplaced(widget.composer);
+      onDocumentSelectionNotifierReplaced(widget.composer.selectionNotifier);
     }
     if (widget.autoScroller != oldWidget.autoScroller) {
       oldWidget.autoScroller.removeListener(_updateDragSelection);
@@ -580,7 +580,7 @@ Updating drag selection:
     moveSelectionToNearestSelectableNode(
       document: widget.document,
       documentLayoutResolver: widget.getDocumentLayout,
-      composer: widget.composer,
+      selection: widget.composer.selectionNotifier,
       startingNode: widget.document.getNodeById(nodeId)!,
       expand: expandSelection,
     );

@@ -707,6 +707,55 @@ Second Paragraph
       // Ensure caret is displayed.
       expect(_caretFinder(), findsOneWidget);
     });
+
+    test("emits a DocumentSelectionChange when changing selection by the notifier", () async {
+      final composer = DocumentComposer();
+
+      const newSelection = DocumentSelection.collapsed(
+        position: DocumentPosition(
+          nodeId: "1",
+          nodePosition: TextNodePosition(offset: 0),
+        ),
+      );
+
+      // Ensure the stream emits the DocumentSelectionChange.
+      expectLater(
+        composer.selectionChanges,
+        emits(
+          DocumentSelectionChange(
+            selection: newSelection,
+            reason: SelectionReason.userInteraction,
+          ),
+        ),
+      );
+
+      // Update the selection, which should cause the stream to emit a value.
+      composer.selection = newSelection;
+    }, timeout: const Timeout(Duration(milliseconds: 500)));
+
+    test("notifies selectionNotifier when a new DocumentSelection is emitted", () {
+      final composer = DocumentComposer();
+
+      // Holds the selection emitted by the selectionNotifier.
+      DocumentSelection? emittedSelection;
+
+      const newSelection = DocumentSelection.collapsed(
+        position: DocumentPosition(
+          nodeId: "1",
+          nodePosition: TextNodePosition(offset: 0),
+        ),
+      );
+
+      composer.selectionNotifier.addListener(() {
+        emittedSelection = composer.selectionNotifier.value;
+      });
+
+      // Emit a DocumentSelectionChange.
+      composer.setSelection(newSelection);
+
+      // Ensure the listener was called and the selection in the selectionNotifier is correct.
+      expect(emittedSelection, newSelection);
+    });
   });
 }
 

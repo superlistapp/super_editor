@@ -98,12 +98,12 @@ class _MobileEditingAndroidDemoState extends State<MobileEditingAndroidDemo> {
               createOverlayControlsClipper: (_) => const KeyboardToolbarClipper(),
             ),
           ),
-          ListenableBuilder(
-            listenable: _doc,
-            builder: (_) => StreamBuilder<DocumentSelectionChange>(
-              stream: _composer.selectionChanges,
-              builder: (context, _) => _buildMountedToolbar(),
-            ),
+          MultiListenableBuilder(
+            listenables: <Listenable>{
+              _doc,
+              _composer.selectionNotifier,
+            },
+            builder: (_) => _buildMountedToolbar(),
           ),
         ],
       ),
