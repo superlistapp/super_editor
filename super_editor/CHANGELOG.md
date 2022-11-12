@@ -1,3 +1,6 @@
+## [0.2.3-dev.1] - Nov 11, 2022: SuperReader, Bug Fixes (pre-release)
+ * The same as v0.2.3+1, but compatible with Flutter `master`
+
 ## [0.2.3+1] - Nov, 2022: Pub.dev listing updates
  * No functional changes
 
