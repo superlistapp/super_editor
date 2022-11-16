@@ -751,7 +751,7 @@ Second Paragraph
       });
 
       // Emit a DocumentSelectionChange.
-      composer.setSelection(newSelection);
+      composer.setSelectionWithReason(newSelection);
 
       // Ensure the listener was called and the selection in the selectionNotifier is correct.
       expect(emittedSelection, newSelection);

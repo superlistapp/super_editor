@@ -22,7 +22,7 @@ class DocumentComposer with ChangeNotifier {
         _preferences = ComposerPreferences() {
     _streamController = StreamController<DocumentSelectionChange>.broadcast();
     selectionNotifier.addListener(_onSelectionChangedBySelectionNotifier);
-    setSelection(initialSelection);
+    setSelectionWithReason(initialSelection);
     _preferences.addListener(() {
       editorLog.fine("Composer preferences changed");
       notifyListeners();
@@ -50,7 +50,7 @@ class DocumentComposer with ChangeNotifier {
   /// Sets the current [selection] for a [Document].
   ///
   /// [reason] represents what caused the selection change to happen.
-  void setSelection(DocumentSelection? newSelection, [Object reason = SelectionReason.userInteraction]) {
+  void setSelectionWithReason(DocumentSelection? newSelection, [Object reason = SelectionReason.userInteraction]) {
     _latestSelectionChange = DocumentSelectionChange(
       selection: newSelection,
       reason: reason,
@@ -71,15 +71,6 @@ class DocumentComposer with ChangeNotifier {
     }
   }
 
-  /// A stream of document selection changes.
-  ///
-  /// Each new [DocumentSelectionChange] includes the most recent document selection,
-  /// along with the reason that the selection changed.
-  ///
-  /// Listen to this [Stream] when the selection reason is needed. Otherwise, use [selectionNotifier].
-  Stream<DocumentSelectionChange> get selectionChanges => _streamController.stream;
-  late StreamController<DocumentSelectionChange> _streamController;
-
   /// Returns the reason for the most recent selection change in the composer.
   ///
   /// For example, a selection might change as a result of user interaction, or as
@@ -93,6 +84,15 @@ class DocumentComposer with ChangeNotifier {
   DocumentSelectionChange get latestSelectionChange => _latestSelectionChange;
   late DocumentSelectionChange _latestSelectionChange;
 
+  /// A stream of document selection changes.
+  ///
+  /// Each new [DocumentSelectionChange] includes the most recent document selection,
+  /// along with the reason that the selection changed.
+  ///
+  /// Listen to this [Stream] when the selection reason is needed. Otherwise, use [selectionNotifier].
+  Stream<DocumentSelectionChange> get selectionChanges => _streamController.stream;
+  late StreamController<DocumentSelectionChange> _streamController;
+
   /// Notifies whenever the current [DocumentSelection] changes.
   ///
   /// If the selection change reason is needed, use [selectionChanges] instead.
@@ -100,19 +100,12 @@ class DocumentComposer with ChangeNotifier {
 
   /// Clears the current [selection].
   void clearSelection() {
-    setSelection(null);
+    selection = null;
   }
 
-  final ValueNotifier<ImeConfiguration> imeConfiguration;
-
-  final ComposerPreferences _preferences;
-
-  /// Returns the composition preferences for this composer.
-  ComposerPreferences get preferences => _preferences;
-
-  /// Indicates wheter or not we are in the process of updating the selection.
+  /// Indicates whether or not we are in the process of updating the selection.
   ///
-  /// The selection can be changed by [selectionNotifier] or by [setSelection].
+  /// The selection can be changed by [selectionNotifier] or by [setSelectionWithReason].
   bool _updatingSelection = false;
 
   void _onSelectionChangedBySelectionNotifier() {
@@ -126,11 +119,18 @@ class DocumentComposer with ChangeNotifier {
       // The selection was changed using the selectionNotifier.
       // We need to emit a new DocumentSelectionChange and sync the selectionNotifier
       // selection with _latestSelectionChange selection.
-      setSelection(selectionNotifier.value);
+      setSelectionWithReason(selectionNotifier.value);
     } finally {
       _updatingSelection = false;
     }
   }
+
+  final ValueNotifier<ImeConfiguration> imeConfiguration;
+
+  final ComposerPreferences _preferences;
+
+  /// Returns the composition preferences for this composer.
+  ComposerPreferences get preferences => _preferences;
 }
 
 /// Holds preferences about user input, to be used for the
@@ -223,6 +223,8 @@ class DocumentSelectionChange {
 }
 
 /// Holds common reasons for selection changes.
+/// Developers aren't limited to these selection change reasons. Any object can be passed as
+/// a reason for a selection change. However, some Super Editor behavior is based on [userInteraction].
 class SelectionReason {
   /// Represents a change caused by an user interaction.
   static const userInteraction = "userInteraction";
