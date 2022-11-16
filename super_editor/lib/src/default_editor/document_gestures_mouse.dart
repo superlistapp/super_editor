@@ -32,6 +32,9 @@ import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 ///    components
 ///  - automatically scrolls up or down when the user drags near
 ///    a boundary
+///
+/// Whenever a selection change caused by a [SelectionReason.userInteraction] happens,
+/// [DocumentMouseInteractor] auto-scrolls the editor to make the selection region visible.
 class DocumentMouseInteractor extends StatefulWidget {
   const DocumentMouseInteractor({
     Key? key,

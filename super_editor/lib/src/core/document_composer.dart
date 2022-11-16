@@ -63,12 +63,11 @@ class DocumentComposer with ChangeNotifier {
     }
 
     _updatingSelection = true;
-    try {
-      // Updates the selection, so both _latestSelectionChange and selectionNotifier are in sync.
-      selectionNotifier.value = newSelection;
-    } finally {
-      _updatingSelection = false;
-    }
+
+    // Updates the selection, so both _latestSelectionChange and selectionNotifier are in sync.
+    selectionNotifier.value = newSelection;
+
+    _updatingSelection = false;
   }
 
   /// Returns the reason for the most recent selection change in the composer.
@@ -115,14 +114,13 @@ class DocumentComposer with ChangeNotifier {
     }
 
     _updatingSelection = true;
-    try {
-      // The selection was changed using the selectionNotifier.
-      // We need to emit a new DocumentSelectionChange and sync the selectionNotifier
-      // selection with _latestSelectionChange selection.
-      setSelectionWithReason(selectionNotifier.value);
-    } finally {
-      _updatingSelection = false;
-    }
+
+    // The selection was changed using the selectionNotifier.
+    // We need to emit a new DocumentSelectionChange and sync the selectionNotifier
+    // selection with _latestSelectionChange selection.
+    setSelectionWithReason(selectionNotifier.value);
+
+    _updatingSelection = false;
   }
 
   final ValueNotifier<ImeConfiguration> imeConfiguration;
