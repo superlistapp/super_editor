@@ -22,7 +22,7 @@ class DocumentComposer with ChangeNotifier {
         _preferences = ComposerPreferences() {
     _streamController = StreamController<DocumentSelectionChange>.broadcast();
     selectionNotifier.addListener(_onSelectionChangedBySelectionNotifier);
-    setSelectionWithReason(initialSelection);
+    selectionNotifier.value = initialSelection;
     _preferences.addListener(() {
       editorLog.fine("Composer preferences changed");
       notifyListeners();
@@ -37,7 +37,7 @@ class DocumentComposer with ChangeNotifier {
   }
 
   /// Returns the current [DocumentSelection] for a [Document].
-  DocumentSelection? get selection => _latestSelectionChange.selection;
+  DocumentSelection? get selection => selectionNotifier.value;
 
   /// Sets the current [selection] for a [Document] using [SelectionReason.userInteraction] as the reason.
   set selection(DocumentSelection? newSelection) {
@@ -57,17 +57,13 @@ class DocumentComposer with ChangeNotifier {
     );
     _streamController.sink.add(_latestSelectionChange);
 
-    if (_updatingSelection) {
-      // The selection was changed by the selectionNotifier.
-      return;
-    }
-
-    _updatingSelection = true;
+    // Remove the listener, so we don't emit another DocumentSelectionChange.
+    selectionNotifier.removeListener(_onSelectionChangedBySelectionNotifier);
 
     // Updates the selection, so both _latestSelectionChange and selectionNotifier are in sync.
     selectionNotifier.value = newSelection;
 
-    _updatingSelection = false;
+    selectionNotifier.addListener(_onSelectionChangedBySelectionNotifier);
   }
 
   /// Returns the reason for the most recent selection change in the composer.
@@ -102,25 +98,12 @@ class DocumentComposer with ChangeNotifier {
     selection = null;
   }
 
-  /// Indicates whether or not we are in the process of updating the selection.
-  ///
-  /// The selection can be changed by [selectionNotifier] or by [setSelectionWithReason].
-  bool _updatingSelection = false;
-
   void _onSelectionChangedBySelectionNotifier() {
-    if (_updatingSelection) {
-      // We are already emitted a [DocumentSelectionChange].
-      return;
-    }
-
-    _updatingSelection = true;
-
-    // The selection was changed using the selectionNotifier.
-    // We need to emit a new DocumentSelectionChange and sync the selectionNotifier
-    // selection with _latestSelectionChange selection.
-    setSelectionWithReason(selectionNotifier.value);
-
-    _updatingSelection = false;
+    _latestSelectionChange = DocumentSelectionChange(
+      selection: selectionNotifier.value,
+      reason: SelectionReason.userInteraction,
+    );
+    _streamController.sink.add(_latestSelectionChange);
   }
 
   final ValueNotifier<ImeConfiguration> imeConfiguration;

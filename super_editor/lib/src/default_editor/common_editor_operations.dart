@@ -22,9 +22,7 @@ import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'attributions.dart';
 import 'horizontal_rule.dart';
 import 'image.dart';
-import 'list_items.dart';
 import 'multi_node_editing.dart';
-import 'text.dart';
 import 'text_tools.dart';
 
 /// Performs common, high-level editing and composition tasks
