@@ -140,6 +140,20 @@ class ParagraphNodeSerializer extends NodeTypedDocumentNodeMarkdownSerializer<Pa
 
     final Attribution? blockType = node.getMetadataValue('blockType');
 
+    final String? textAlign = node.getMetadataValue('textAlign');
+    // Left alignment is the default, so there is no need to add the alignment token.
+    // The alignment markdown excluded for BLock Quote and Block Code
+    if (markdownSyntax == MarkdownSyntax.superEditor &&
+        textAlign != null &&
+        textAlign != 'left' &&
+        blockType != blockquoteAttribution &&
+        blockType != codeAttribution) {
+      final alignmentToken = _convertAlignmentToMarkdown(textAlign);
+      if (alignmentToken != null) {
+        buffer.writeln(alignmentToken);
+      }
+    }
+
     if (blockType == header1Attribution) {
       buffer.write('# ${node.text.toMarkdown()}');
     } else if (blockType == header2Attribution) {
@@ -161,14 +175,6 @@ class ParagraphNodeSerializer extends NodeTypedDocumentNodeMarkdownSerializer<Pa
         ..writeln(node.text.toMarkdown()) //
         ..write('```');
     } else {
-      final String? textAlign = node.getMetadataValue('textAlign');
-      // Left alignment is the default, so there is no need to add the alignment token.
-      if (markdownSyntax == MarkdownSyntax.superEditor && textAlign != null && textAlign != 'left') {
-        final alignmentToken = _convertAlignmentToMarkdown(textAlign);
-        if (alignmentToken != null) {
-          buffer.writeln(alignmentToken);
-        }
-      }
       buffer.write(node.text.toMarkdown());
     }
 
