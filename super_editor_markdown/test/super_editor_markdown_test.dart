@@ -391,22 +391,10 @@ This is some code
               text: 'First LinkSecond Link',
               spans: AttributedSpans(
                 attributions: [
-                  SpanMarker(
-                      attribution: LinkAttribution(url: Uri.https('example.org', '')),
-                      offset: 0,
-                      markerType: SpanMarkerType.start),
-                  SpanMarker(
-                      attribution: LinkAttribution(url: Uri.https('example.org', '')),
-                      offset: 9,
-                      markerType: SpanMarkerType.end),
-                  SpanMarker(
-                      attribution: LinkAttribution(url: Uri.https('github.com', '')),
-                      offset: 10,
-                      markerType: SpanMarkerType.start),
-                  SpanMarker(
-                      attribution: LinkAttribution(url: Uri.https('github.com', '')),
-                      offset: 20,
-                      markerType: SpanMarkerType.end),
+                  SpanMarker(attribution: LinkAttribution(url: Uri.https('example.org', '')), offset: 0, markerType: SpanMarkerType.start),
+                  SpanMarker(attribution: LinkAttribution(url: Uri.https('example.org', '')), offset: 9, markerType: SpanMarkerType.end),
+                  SpanMarker(attribution: LinkAttribution(url: Uri.https('github.com', '')), offset: 10, markerType: SpanMarkerType.start),
+                  SpanMarker(attribution: LinkAttribution(url: Uri.https('github.com', '')), offset: 20, markerType: SpanMarkerType.end),
                 ],
               ),
             ),
@@ -1164,7 +1152,8 @@ Paragraph4""";
       });
 
       test('paragraph beginning with multiple blank lines', () {
-        final doc = deserializeMarkdownToDocument('  \n  \nFirst Paragraph.\n\nSecond Paragraph');
+        final doc =
+            deserializeMarkdownToDocument('  \n  \nFirst Paragraph.\n\nSecond Paragraph');
 
         expect(doc.nodes.length, 2);
 
@@ -1174,7 +1163,7 @@ Paragraph4""";
         expect(doc.nodes.last, isA<ParagraphNode>());
         expect((doc.nodes.last as ParagraphNode).text.text, 'Second Paragraph');
       });
-
+  
       test('document ending with an empty paragraph', () {
         final doc = deserializeMarkdownToDocument("""
 First Paragraph.
