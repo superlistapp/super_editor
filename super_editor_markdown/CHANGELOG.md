@@ -1,3 +1,7 @@
+## [0.1.4+2] - Nov, 2022
+ * Added support for header alignment.
+ * Updated `markdown` to ^6.0.1.
+
 ## [0.1.4+1] - Nov, 2022
  * Added support for custom Markdown block syntax.
  * Fix: parsing empty markdown into a document.
