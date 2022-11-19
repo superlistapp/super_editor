@@ -478,15 +478,18 @@ class _HeaderWithAlignmentSyntax extends md.BlockSyntax {
   md.Node? parse(md.BlockParser parser) {
     final match = _ParagraphWithAlignmentSyntax._alignmentNotationPattern.firstMatch(parser.current);
 
-    // Move to the next line because the current line is alignment patterm
+    // We've parsed the alignment token on the current line. We know a paragraph starts on the
+    // next line. Move the parser to the next line so that we can parse the paragraph.
     parser.advance();
 
-    final headerNode = _headerSyntax.parse(parser) as md.Element;
+    final headerNode = _headerSyntax.parse(parser);
 
     // Use markdown alignment converter from [_ParagraphWithAlignmentSyntax]
-    headerNode.attributes.addAll({
-      'textAlign': _ParagraphWithAlignmentSyntax._convertMarkdownAlignmentTokenToSuperEditorAlignment(match!.input)
-    });
+    if (headerNode is md.Element) {
+      headerNode.attributes.addAll({
+        'textAlign': _ParagraphWithAlignmentSyntax._convertMarkdownAlignmentTokenToSuperEditorAlignment(match!.input)
+      });
+    }
 
     return headerNode;
   }
