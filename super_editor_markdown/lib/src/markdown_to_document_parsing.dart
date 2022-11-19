@@ -446,11 +446,6 @@ class UnderlineSyntax extends md.DelimiterSyntax {
 
 /// Parses a header preceded by an alignment token.
 class _HeaderWithAlignmentSyntax extends md.BlockSyntax {
-  /// This pattern matches the text aligment notation.
-  ///
-  /// Possible values are `:---`, `:---:` and `---:`
-  static final _alignmentNotationPattern = RegExp(r'^:-{3}|:-{3}:|-{3}:$');
-
   /// Use internal HeaderSyntax
   final _headerSyntax = const md.HeaderSyntax();
 
@@ -460,7 +455,7 @@ class _HeaderWithAlignmentSyntax extends md.BlockSyntax {
   @override
   bool canParse(md.BlockParser parser) {
     //
-    if (!_alignmentNotationPattern.hasMatch(parser.current)) {
+    if (!_ParagraphWithAlignmentSyntax._alignmentNotationPattern.hasMatch(parser.current)) {
       return false;
     }
 
@@ -481,7 +476,7 @@ class _HeaderWithAlignmentSyntax extends md.BlockSyntax {
 
   @override
   md.Node? parse(md.BlockParser parser) {
-    final match = _alignmentNotationPattern.firstMatch(parser.current);
+    final match = _ParagraphWithAlignmentSyntax._alignmentNotationPattern.firstMatch(parser.current);
 
     // Move to the next line because the current line is alignment patterm
     parser.advance();
