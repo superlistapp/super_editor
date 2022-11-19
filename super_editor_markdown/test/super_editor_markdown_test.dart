@@ -32,6 +32,56 @@ void main() {
         expect(serializeDocumentToMarkdown(doc), '###### My Header');
       });
 
+      test('header with left alignment', () {
+        final doc = MutableDocument(nodes: [
+          ParagraphNode(
+            id: '1',
+            text: AttributedText(text: 'Header1'),
+            metadata: {
+              'textAlign': 'left',
+              'blockType': header1Attribution,
+            },
+          ),
+        ]);
+
+        // Even when using superEditor markdown syntax, which has support
+        // for text alignment, we don't add an alignment token when
+        // the paragraph is left-aligned.
+        // Paragraphs are left-aligned by default, so it isn't necessary
+        // to serialize the alignment token.
+        expect(serializeDocumentToMarkdown(doc), '# Header1');
+      });
+
+      test('header with center alignment', () {
+        final doc = MutableDocument(nodes: [
+          ParagraphNode(
+            id: '1',
+            text: AttributedText(text: 'Header1'),
+            metadata: {
+              'textAlign': 'center',
+              'blockType': header1Attribution,
+            },
+          ),
+        ]);
+
+        expect(serializeDocumentToMarkdown(doc), ':---:\n# Header1');
+      });
+
+      test('header with right alignment', () {
+        final doc = MutableDocument(nodes: [
+          ParagraphNode(
+            id: '1',
+            text: AttributedText(text: 'Header1'),
+            metadata: {
+              'textAlign': 'right',
+              'blockType': header1Attribution,
+            },
+          ),
+        ]);
+
+        expect(serializeDocumentToMarkdown(doc), '---:\n# Header1');
+      });
+
       test('header with styles', () {
         final doc = MutableDocument(nodes: [
           ParagraphNode(
@@ -341,10 +391,22 @@ This is some code
               text: 'First LinkSecond Link',
               spans: AttributedSpans(
                 attributions: [
-                  SpanMarker(attribution: LinkAttribution(url: Uri.https('example.org', '')), offset: 0, markerType: SpanMarkerType.start),
-                  SpanMarker(attribution: LinkAttribution(url: Uri.https('example.org', '')), offset: 9, markerType: SpanMarkerType.end),
-                  SpanMarker(attribution: LinkAttribution(url: Uri.https('github.com', '')), offset: 10, markerType: SpanMarkerType.start),
-                  SpanMarker(attribution: LinkAttribution(url: Uri.https('github.com', '')), offset: 20, markerType: SpanMarkerType.end),
+                  SpanMarker(
+                      attribution: LinkAttribution(url: Uri.https('example.org', '')),
+                      offset: 0,
+                      markerType: SpanMarkerType.start),
+                  SpanMarker(
+                      attribution: LinkAttribution(url: Uri.https('example.org', '')),
+                      offset: 9,
+                      markerType: SpanMarkerType.end),
+                  SpanMarker(
+                      attribution: LinkAttribution(url: Uri.https('github.com', '')),
+                      offset: 10,
+                      markerType: SpanMarkerType.start),
+                  SpanMarker(
+                      attribution: LinkAttribution(url: Uri.https('github.com', '')),
+                      offset: 20,
+                      markerType: SpanMarkerType.end),
                 ],
               ),
             ),
@@ -1102,8 +1164,7 @@ Paragraph4""";
       });
 
       test('paragraph beginning with multiple blank lines', () {
-        final doc =
-            deserializeMarkdownToDocument('  \n  \nFirst Paragraph.\n\nSecond Paragraph');
+        final doc = deserializeMarkdownToDocument('  \n  \nFirst Paragraph.\n\nSecond Paragraph');
 
         expect(doc.nodes.length, 2);
 
@@ -1113,7 +1174,7 @@ Paragraph4""";
         expect(doc.nodes.last, isA<ParagraphNode>());
         expect((doc.nodes.last as ParagraphNode).text.text, 'Second Paragraph');
       });
-    
+
       test('document ending with an empty paragraph', () {
         final doc = deserializeMarkdownToDocument("""
 First Paragraph.
