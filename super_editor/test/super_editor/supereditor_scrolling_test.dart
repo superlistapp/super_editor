@@ -149,6 +149,7 @@ void main() {
           nodePosition: lastParagraph.endPosition,
         ),
       );
+
       docContext.focusNode.requestFocus();
       await tester.pumpAndSettle();
 
@@ -220,6 +221,37 @@ void main() {
         ),
         isTrue,
       );
+    });
+
+    testWidgetsOnDesktop("doesn't auto-scroll for selection changes that aren't user interactions", (tester) async {
+      final scrollController = ScrollController();
+
+      // Pump a editor with a size we know will cause the editor to be scrollable.
+      final testContext = await tester //
+          .createDocument()
+          .withLongTextContent()
+          .withEditorSize(const Size(300, 100))
+          .withScrollController(scrollController)
+          .pump();
+
+      // Select the first paragraph.
+      await tester.placeCaretInParagraph('1', 0);
+
+      // Place the caret at the last paragraph, simulating an event that wasn't initiated by the user.
+      // This paragraph is outside the viewport.
+      testContext.editContext.composer.setSelectionWithReason(
+        const DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: '4',
+            nodePosition: TextNodePosition(offset: 0),
+          ),
+        ),
+        SelectionReason.contentChange,
+      );
+      await tester.pumpAndSettle();
+
+      // Ensure the editor didn't scroll.
+      expect(scrollController.position.pixels, 0.0);
     });
   });
 }
