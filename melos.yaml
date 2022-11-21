@@ -2,14 +2,11 @@ name: super_editor
 repository: https://github.com/superlistapp/super_editor
 
 packages:
-  - attributed_text/pubspec.yaml
-  - super_editor/example/pubspec.yaml
-  - super_editor/pubspec.yaml
-  - super_editor_markdown/pubspec.yaml
-  - super_text/pubspec.yaml
-  - super_text_layout/example/pubspec.yaml
-  - super_text_layout/pubspec.yaml
-  - website/pubspec.yaml
+  - attributed_text/*
+  - super_editor/*
+  - super_editor_markdown/*
+  - super_text_layout/*
+  - website/*
 
 command:
   bootstrap:
