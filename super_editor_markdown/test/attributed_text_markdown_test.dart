@@ -17,10 +17,8 @@ void main() {
           text: "This is single character styles.",
           spans: AttributedSpans(
             attributions: [
-              SpanMarker(attribution: boldAttribution, offset: 8, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: boldAttribution, offset: 8, markerType: SpanMarkerType.end),
-              SpanMarker(attribution: italicsAttribution, offset: 23, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: italicsAttribution, offset: 23, markerType: SpanMarkerType.end),
+              AttributionSpan(attribution: boldAttribution, start: 8, end: 9),
+              AttributionSpan(attribution: italicsAttribution, start: 23, end: 24),
             ],
           ),
         ).toMarkdown(),
@@ -34,8 +32,7 @@ void main() {
           text: "This is bold text.",
           spans: AttributedSpans(
             attributions: [
-              SpanMarker(attribution: boldAttribution, offset: 8, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: boldAttribution, offset: 11, markerType: SpanMarkerType.end),
+              AttributionSpan(attribution: boldAttribution, start: 8, end: 12),
             ],
           ),
         ).toMarkdown(),
@@ -49,8 +46,7 @@ void main() {
           text: "This is italics text.",
           spans: AttributedSpans(
             attributions: [
-              SpanMarker(attribution: italicsAttribution, offset: 8, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: italicsAttribution, offset: 14, markerType: SpanMarkerType.end),
+              AttributionSpan(attribution: italicsAttribution, start: 8, end: 15),
             ],
           ),
         ).toMarkdown(),
@@ -64,10 +60,8 @@ void main() {
           text: "This is multiple styled text.",
           spans: AttributedSpans(
             attributions: [
-              SpanMarker(attribution: boldAttribution, offset: 8, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: boldAttribution, offset: 22, markerType: SpanMarkerType.end),
-              SpanMarker(attribution: italicsAttribution, offset: 8, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: italicsAttribution, offset: 22, markerType: SpanMarkerType.end),
+              AttributionSpan(attribution: boldAttribution, start: 8, end: 23),
+              AttributionSpan(attribution: italicsAttribution, start: 8, end: 23),
             ],
           ),
         ).toMarkdown(),
@@ -80,11 +74,9 @@ void main() {
         AttributedText(
           text: "This is overlapping styles.",
           spans: AttributedSpans(
-            attributions: [
-              SpanMarker(attribution: boldAttribution, offset: 8, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: boldAttribution, offset: 13, markerType: SpanMarkerType.end),
-              SpanMarker(attribution: italicsAttribution, offset: 11, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: italicsAttribution, offset: 18, markerType: SpanMarkerType.end),
+            attributions: const [
+              AttributionSpan(attribution: boldAttribution, start: 8, end: 14),
+              AttributionSpan(attribution: italicsAttribution, start: 11, end: 19),
             ],
           ),
         ).toMarkdown(),

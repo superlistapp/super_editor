@@ -247,15 +247,10 @@ MutableDocument _createInitialDocument() {
           text: 'The missing WYSIWYG editor for Flutter.',
           spans: AttributedSpans(
             attributions: [
-              const SpanMarker(
+              const AttributionSpan(
                 attribution: boldAttribution,
-                offset: 0,
-                markerType: SpanMarkerType.start,
-              ),
-              const SpanMarker(
-                attribution: boldAttribution,
-                offset: 25,
-                markerType: SpanMarkerType.end,
+                start: 0,
+                end: 26,
               ),
             ],
           ),
@@ -268,15 +263,10 @@ MutableDocument _createInitialDocument() {
               'Open source and written entirely in Dart. Comes with a modular architecture that allows you to customize it to your needs.',
           spans: AttributedSpans(
             attributions: [
-              const SpanMarker(
+              const AttributionSpan(
                 attribution: _underlineAttribution,
-                offset: 16,
-                markerType: SpanMarkerType.start,
-              ),
-              const SpanMarker(
-                attribution: _underlineAttribution,
-                offset: 40,
-                markerType: SpanMarkerType.end,
+                start: 16,
+                end: 41,
               ),
             ],
           ),

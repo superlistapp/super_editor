@@ -1,5 +1,5 @@
-import 'package:super_editor/super_editor.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:super_editor/super_editor.dart';
 import 'package:super_editor_markdown/super_editor_markdown.dart';
 
 void main() {
@@ -40,8 +40,7 @@ void main() {
               text: 'My Header',
               spans: AttributedSpans(
                 attributions: [
-                  const SpanMarker(attribution: boldAttribution, offset: 3, markerType: SpanMarkerType.start),
-                  const SpanMarker(attribution: boldAttribution, offset: 8, markerType: SpanMarkerType.end),
+                  AttributionSpan(attribution: boldAttribution, start: 3, end: 9),
                 ],
               ),
             ),
@@ -72,8 +71,7 @@ void main() {
               text: 'This is a blockquote',
               spans: AttributedSpans(
                 attributions: [
-                  const SpanMarker(attribution: boldAttribution, offset: 10, markerType: SpanMarkerType.start),
-                  const SpanMarker(attribution: boldAttribution, offset: 19, markerType: SpanMarkerType.end),
+                  AttributionSpan(attribution: boldAttribution, start: 10, end: 20),
                 ],
               ),
             ),
@@ -121,8 +119,7 @@ This is some code
               text: 'This is a paragraph.',
               spans: AttributedSpans(
                 attributions: [
-                  const SpanMarker(attribution: boldAttribution, offset: 5, markerType: SpanMarkerType.start),
-                  const SpanMarker(attribution: boldAttribution, offset: 8, markerType: SpanMarkerType.end),
+                  AttributionSpan(attribution: boldAttribution, start: 5, end: 9),
                 ],
               ),
             ),
@@ -140,10 +137,8 @@ This is some code
               text: 'This is a paragraph.',
               spans: AttributedSpans(
                 attributions: [
-                  const SpanMarker(attribution: boldAttribution, offset: 5, markerType: SpanMarkerType.start),
-                  const SpanMarker(attribution: boldAttribution, offset: 8, markerType: SpanMarkerType.end),
-                  const SpanMarker(attribution: italicsAttribution, offset: 5, markerType: SpanMarkerType.start),
-                  const SpanMarker(attribution: italicsAttribution, offset: 8, markerType: SpanMarkerType.end),
+                  AttributionSpan(attribution: boldAttribution, start: 5, end: 9),
+                  AttributionSpan(attribution: italicsAttribution, start: 5, end: 9),
                 ],
               ),
             ),
@@ -160,11 +155,9 @@ This is some code
             text: AttributedText(
               text: 'This is a paragraph.',
               spans: AttributedSpans(
-                attributions: [
-                  const SpanMarker(attribution: boldAttribution, offset: 0, markerType: SpanMarkerType.start),
-                  const SpanMarker(attribution: boldAttribution, offset: 6, markerType: SpanMarkerType.end),
-                  const SpanMarker(attribution: italicsAttribution, offset: 8, markerType: SpanMarkerType.start),
-                  const SpanMarker(attribution: italicsAttribution, offset: 19, markerType: SpanMarkerType.end),
+                attributions: const [
+                  AttributionSpan(attribution: boldAttribution, start: 0, end: 7),
+                  AttributionSpan(attribution: italicsAttribution, start: 8, end: 20),
                 ],
               ),
             ),
@@ -182,10 +175,8 @@ This is some code
               text: 'This is a paragraph.',
               spans: AttributedSpans(
                 attributions: [
-                  const SpanMarker(attribution: boldAttribution, offset: 5, markerType: SpanMarkerType.start),
-                  const SpanMarker(attribution: boldAttribution, offset: 8, markerType: SpanMarkerType.end),
-                  const SpanMarker(attribution: italicsAttribution, offset: 5, markerType: SpanMarkerType.start),
-                  const SpanMarker(attribution: italicsAttribution, offset: 18, markerType: SpanMarkerType.end),
+                  AttributionSpan(attribution: boldAttribution, start: 5, end: 9),
+                  AttributionSpan(attribution: italicsAttribution, start: 5, end: 19),
                 ],
               ),
             ),
@@ -203,10 +194,8 @@ This is some code
               text: 'This is a paragraph.',
               spans: AttributedSpans(
                 attributions: [
-                  const SpanMarker(attribution: boldAttribution, offset: 5, markerType: SpanMarkerType.start),
-                  const SpanMarker(attribution: boldAttribution, offset: 8, markerType: SpanMarkerType.end),
-                  const SpanMarker(attribution: codeAttribution, offset: 5, markerType: SpanMarkerType.start),
-                  const SpanMarker(attribution: codeAttribution, offset: 8, markerType: SpanMarkerType.end),
+                  AttributionSpan(attribution: boldAttribution, start: 5, end: 9),
+                  AttributionSpan(attribution: codeAttribution, start: 5, end: 9),
                 ],
               ),
             ),
@@ -224,14 +213,11 @@ This is some code
               text: 'This is a paragraph.',
               spans: AttributedSpans(
                 attributions: [
-                  SpanMarker(
-                      attribution: LinkAttribution(url: Uri.https('example.org', '')),
-                      offset: 10,
-                      markerType: SpanMarkerType.start),
-                  SpanMarker(
-                      attribution: LinkAttribution(url: Uri.https('example.org', '')),
-                      offset: 18,
-                      markerType: SpanMarkerType.end),
+                  AttributionSpan(
+                    attribution: LinkAttribution(url: Uri.https('example.org', '')),
+                    start: 10,
+                    end: 19,
+                  ),
                 ],
               ),
             ),
@@ -249,16 +235,12 @@ This is some code
               text: 'This is a paragraph.',
               spans: AttributedSpans(
                 attributions: [
-                  SpanMarker(
-                      attribution: LinkAttribution(url: Uri.https('example.org', '')),
-                      offset: 10,
-                      markerType: SpanMarkerType.start),
-                  SpanMarker(
-                      attribution: LinkAttribution(url: Uri.https('example.org', '')),
-                      offset: 18,
-                      markerType: SpanMarkerType.end),
-                  const SpanMarker(attribution: boldAttribution, offset: 10, markerType: SpanMarkerType.start),
-                  const SpanMarker(attribution: boldAttribution, offset: 18, markerType: SpanMarkerType.end),
+                  AttributionSpan(
+                    attribution: LinkAttribution(url: Uri.https('example.org', '')),
+                    start: 10,
+                    end: 19,
+                  ),
+                  AttributionSpan(attribution: boldAttribution, start: 10, end: 19),
                 ],
               ),
             ),
@@ -276,16 +258,12 @@ This is some code
               text: 'This is a paragraph.',
               spans: AttributedSpans(
                 attributions: [
-                  SpanMarker(
-                      attribution: LinkAttribution(url: Uri.https('example.org', '')),
-                      offset: 0,
-                      markerType: SpanMarkerType.start),
-                  SpanMarker(
-                      attribution: LinkAttribution(url: Uri.https('example.org', '')),
-                      offset: 18,
-                      markerType: SpanMarkerType.end),
-                  const SpanMarker(attribution: boldAttribution, offset: 5, markerType: SpanMarkerType.start),
-                  const SpanMarker(attribution: boldAttribution, offset: 8, markerType: SpanMarkerType.end),
+                  AttributionSpan(
+                    attribution: LinkAttribution(url: Uri.https('example.org', '')),
+                    start: 0,
+                    end: 19,
+                  ),
+                  AttributionSpan(attribution: boldAttribution, start: 5, end: 9),
                 ],
               ),
             ),
@@ -303,8 +281,11 @@ This is some code
               text: 'This is a paragraph.',
               spans: AttributedSpans(
                 attributions: [
-                  SpanMarker(attribution: underlineAttribution, offset: 10, markerType: SpanMarkerType.start),
-                  SpanMarker(attribution: underlineAttribution, offset: 18, markerType: SpanMarkerType.end),
+                  AttributionSpan(
+                    attribution: underlineAttribution,
+                    start: 10,
+                    end: 19,
+                  ),
                 ],
               ),
             ),
@@ -322,8 +303,11 @@ This is some code
               text: 'This is a paragraph.',
               spans: AttributedSpans(
                 attributions: [
-                  SpanMarker(attribution: strikethroughAttribution, offset: 10, markerType: SpanMarkerType.start),
-                  SpanMarker(attribution: strikethroughAttribution, offset: 18, markerType: SpanMarkerType.end),
+                  AttributionSpan(
+                    attribution: strikethroughAttribution,
+                    start: 10,
+                    end: 19,
+                  ),
                 ],
               ),
             ),
@@ -341,10 +325,8 @@ This is some code
               text: 'First LinkSecond Link',
               spans: AttributedSpans(
                 attributions: [
-                  SpanMarker(attribution: LinkAttribution(url: Uri.https('example.org', '')), offset: 0, markerType: SpanMarkerType.start),
-                  SpanMarker(attribution: LinkAttribution(url: Uri.https('example.org', '')), offset: 9, markerType: SpanMarkerType.end),
-                  SpanMarker(attribution: LinkAttribution(url: Uri.https('github.com', '')), offset: 10, markerType: SpanMarkerType.start),
-                  SpanMarker(attribution: LinkAttribution(url: Uri.https('github.com', '')), offset: 20, markerType: SpanMarkerType.end),
+                  AttributionSpan(attribution: LinkAttribution(url: Uri.https('example.org', '')), start: 0, end: 10),
+                  AttributionSpan(attribution: LinkAttribution(url: Uri.https('github.com', '')), start: 10, end: 21),
                 ],
               ),
             ),
@@ -563,8 +545,7 @@ Paragraph3""");
               text: 'Unordered 1',
               spans: AttributedSpans(
                 attributions: [
-                  const SpanMarker(attribution: boldAttribution, offset: 0, markerType: SpanMarkerType.start),
-                  const SpanMarker(attribution: boldAttribution, offset: 8, markerType: SpanMarkerType.end),
+                  AttributionSpan(attribution: boldAttribution, start: 0, end: 9),
                 ],
               ),
             ),
@@ -625,8 +606,7 @@ Paragraph3""");
               text: 'Ordered 1',
               spans: AttributedSpans(
                 attributions: [
-                  const SpanMarker(attribution: boldAttribution, offset: 0, markerType: SpanMarkerType.start),
-                  const SpanMarker(attribution: boldAttribution, offset: 6, markerType: SpanMarkerType.end),
+                  AttributionSpan(attribution: boldAttribution, start: 0, end: 7),
                 ],
               ),
             ),
@@ -1102,8 +1082,7 @@ Paragraph4""";
       });
 
       test('paragraph beginning with multiple blank lines', () {
-        final doc =
-            deserializeMarkdownToDocument('  \n  \nFirst Paragraph.\n\nSecond Paragraph');
+        final doc = deserializeMarkdownToDocument('  \n  \nFirst Paragraph.\n\nSecond Paragraph');
 
         expect(doc.nodes.length, 2);
 
@@ -1113,7 +1092,7 @@ Paragraph4""";
         expect(doc.nodes.last, isA<ParagraphNode>());
         expect((doc.nodes.last as ParagraphNode).text.text, 'Second Paragraph');
       });
-    
+
       test('document ending with an empty paragraph', () {
         final doc = deserializeMarkdownToDocument("""
 First Paragraph.

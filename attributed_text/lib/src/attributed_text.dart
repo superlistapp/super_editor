@@ -63,7 +63,7 @@ class AttributedText {
 
   /// Returns true if this [AttributedText] contains at least one
   /// character with each of the given [attributions] within the
-  /// given [range] (inclusive).
+  /// given [range].
   bool hasAttributionsWithin({
     required Set<Attribution> attributions,
     required SpanRange range,
@@ -76,12 +76,12 @@ class AttributedText {
   }
 
   /// Returns true if this [AttributedText] contains each of the
-  /// given [attributions] throughout the given [range] (inclusive).
+  /// given [attributions] throughout the given [range].
   bool hasAttributionsThroughout({
     required Set<Attribution> attributions,
     required SpanRange range,
   }) {
-    for (int i = range.start; i <= range.end; i += 1) {
+    for (int i = range.start; i < range.end; i += 1) {
       for (final attribution in attributions) {
         if (!spans.hasAttributionAt(i, attribution: attribution)) {
           return false;
@@ -150,14 +150,14 @@ class AttributedText {
   }
 
   /// Adds the given [attribution] to all characters within the given
-  /// [range], inclusive.
+  /// [range].
   void addAttribution(Attribution attribution, SpanRange range) {
     spans.addAttribution(newAttribution: attribution, start: range.start, end: range.end);
     _notifyListeners();
   }
 
   /// Removes the given [attribution] from all characters within the
-  /// given [range], inclusive.
+  /// given [range].
   void removeAttribution(Attribution attribution, SpanRange range) {
     spans.removeAttribution(attributionToRemove: attribution, start: range.start, end: range.end);
     _notifyListeners();
@@ -180,29 +180,27 @@ class AttributedText {
     }
   }
 
-  /// If ALL of the text in [range], inclusive, contains the given [attribution],
-  /// that [attribution] is removed from the text in [range], inclusive.
-  /// Otherwise, all of the text in [range], inclusive, is given the [attribution].
+  /// If ALL of the text in [range], contains the given [attribution],
+  /// that [attribution] is removed from the text in [range].
+  /// Otherwise, all of the text in [range] is given the [attribution].
   void toggleAttribution(Attribution attribution, SpanRange range) {
     spans.toggleAttribution(attribution: attribution, start: range.start, end: range.end);
     _notifyListeners();
   }
 
-  /// Copies all text and attributions from [startOffset] to
-  /// [endOffset], inclusive, and returns them as a new [AttributedText].
+  /// Copies all text and attributions from [startOffset] (inclusive) to
+  /// [endOffset] (exclusive), and returns them as a new [AttributedText].
   AttributedText copyText(int startOffset, [int? endOffset]) {
     _log.fine('start: $startOffset, end: $endOffset');
 
-    // Note: -1 because copyText() uses an exclusive `start` and `end` but
-    // _copyAttributionRegion() uses an inclusive `start` and `end`.
     final startCopyOffset = startOffset < text.length ? startOffset : text.length - 1;
     int endCopyOffset;
     if (endOffset == startOffset) {
       endCopyOffset = startCopyOffset;
     } else if (endOffset != null) {
-      endCopyOffset = endOffset - 1;
+      endCopyOffset = endOffset;
     } else {
-      endCopyOffset = text.length - 1;
+      endCopyOffset = text.length;
     }
     _log.fine('offsets, start: $startCopyOffset, end: $endCopyOffset');
 
@@ -276,7 +274,7 @@ class AttributedText {
     final insertedText = AttributedText(
       text: textToInsert,
     );
-    final insertTextRange = SpanRange(start: 0, end: textToInsert.length - 1);
+    final insertTextRange = SpanRange(start: 0, end: textToInsert.length);
     for (dynamic attribution in applyAttributions) {
       insertedText.addAttribution(attribution, insertTextRange);
     }
@@ -422,7 +420,8 @@ class CallbackAttributionVisitor implements AttributionVisitor {
   }
 
   @override
-  void visitAttributions(AttributedText fullText, int index, Set<Attribution> startingAttributions, Set<Attribution> endingAttributions) {
+  void visitAttributions(
+      AttributedText fullText, int index, Set<Attribution> startingAttributions, Set<Attribution> endingAttributions) {
     _onVisitAttributions(fullText, index, startingAttributions, endingAttributions);
   }
 

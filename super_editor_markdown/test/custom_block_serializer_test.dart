@@ -40,8 +40,11 @@ Paragraph 2''',
                 text: "This is a callout!",
                 spans: AttributedSpans(
                   attributions: [
-                    SpanMarker(attribution: boldAttribution, offset: 10, markerType: SpanMarkerType.start),
-                    SpanMarker(attribution: boldAttribution, offset: 17, markerType: SpanMarkerType.end),
+                    AttributionSpan(
+                      attribution: boldAttribution,
+                      start: 10,
+                      end: 18,
+                    ),
                   ],
                 ),
               ),

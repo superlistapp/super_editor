@@ -1047,28 +1047,21 @@ class ToggleTextAttributionsCommand implements EditorCommand {
         final extentOffset = (documentSelection.extent.nodePosition as TextPosition).offset;
         startOffset = baseOffset < extentOffset ? baseOffset : extentOffset;
         endOffset = baseOffset < extentOffset ? extentOffset : baseOffset;
-
-        // -1 because TextPosition's offset indexes the character after the
-        // selection, not the final character in the selection.
-        endOffset -= 1;
       } else if (textNode == nodes.first) {
         // Handle partial node selection in first node.
         editorDocLog.info(' - selecting part of the first node: ${textNode.id}');
         startOffset = (nodeRange.start.nodePosition as TextPosition).offset;
-        endOffset = max(textNode.text.text.length - 1, 0);
+        endOffset = max(textNode.text.text.length, 0);
       } else if (textNode == nodes.last) {
         // Handle partial node selection in last node.
         editorDocLog.info(' - toggling part of the last node: ${textNode.id}');
         startOffset = 0;
-
-        // -1 because TextPosition's offset indexes the character after the
-        // selection, not the final character in the selection.
-        endOffset = (nodeRange.end.nodePosition as TextPosition).offset - 1;
+        endOffset = (nodeRange.end.nodePosition as TextPosition).offset;
       } else {
         // Handle full node selection.
         editorDocLog.info(' - toggling full node: ${textNode.id}');
         startOffset = 0;
-        endOffset = max(textNode.text.text.length - 1, 0);
+        endOffset = max(textNode.text.text.length, 0);
       }
 
       final selectionRange = SpanRange(start: startOffset, end: endOffset);

@@ -135,14 +135,11 @@ Document _createInitialDocument() {
             text: 'This is a 3rd list item, with a link',
             spans: AttributedSpans(
               attributions: [
-                SpanMarker(
-                    attribution: LinkAttribution(url: Uri.https('example.org', '')),
-                    offset: 30,
-                    markerType: SpanMarkerType.start),
-                SpanMarker(
-                    attribution: LinkAttribution(url: Uri.https('example.org', '')),
-                    offset: 35,
-                    markerType: SpanMarkerType.end),
+                AttributionSpan(
+                  attribution: LinkAttribution(url: Uri.https('example.org', '')),
+                  start: 30,
+                  end: 36,
+                ),
               ],
             )),
       ),

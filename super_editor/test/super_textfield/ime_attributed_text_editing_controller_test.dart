@@ -125,8 +125,7 @@ void main() {
             text: 'before [] after',
             spans: AttributedSpans(
               attributions: [
-                const SpanMarker(attribution: boldAttribution, offset: 7, markerType: SpanMarkerType.start),
-                const SpanMarker(attribution: boldAttribution, offset: 8, markerType: SpanMarkerType.end),
+                const AttributionSpan(attribution: boldAttribution, start: 7, end: 9),
               ],
             ),
           ),
@@ -156,8 +155,7 @@ void main() {
               text: 'before [] after',
               spans: AttributedSpans(
                 attributions: [
-                  const SpanMarker(attribution: boldAttribution, offset: 7, markerType: SpanMarkerType.start),
-                  const SpanMarker(attribution: boldAttribution, offset: 8, markerType: SpanMarkerType.end),
+                  const AttributionSpan(attribution: boldAttribution, start: 7, end: 9),
                 ],
               ),
             ),
@@ -188,8 +186,7 @@ void main() {
               text: 'before [] after',
               spans: AttributedSpans(
                 attributions: [
-                  const SpanMarker(attribution: boldAttribution, offset: 7, markerType: SpanMarkerType.start),
-                  const SpanMarker(attribution: boldAttribution, offset: 8, markerType: SpanMarkerType.end),
+                  const AttributionSpan(attribution: boldAttribution, start: 7, end: 9),
                 ],
               ),
             ),
@@ -220,8 +217,7 @@ void main() {
               text: 'before [] after',
               spans: AttributedSpans(
                 attributions: [
-                  const SpanMarker(attribution: boldAttribution, offset: 7, markerType: SpanMarkerType.start),
-                  const SpanMarker(attribution: boldAttribution, offset: 8, markerType: SpanMarkerType.end),
+                  const AttributionSpan(attribution: boldAttribution, start: 7, end: 9),
                 ],
               ),
             ),

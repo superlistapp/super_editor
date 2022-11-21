@@ -266,7 +266,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
     final extentOffset = (selection.extent.nodePosition as TextPosition).offset;
     final selectionStart = min(baseOffset, extentOffset);
     final selectionEnd = max(baseOffset, extentOffset);
-    final selectionRange = SpanRange(start: selectionStart, end: selectionEnd - 1);
+    final selectionRange = SpanRange(start: selectionStart, end: selectionEnd);
 
     final textNode = widget.editor!.document.getNodeById(selection.extent.nodeId) as TextNode;
     final text = textNode.text;
@@ -287,7 +287,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
     final extentOffset = (selection.extent.nodePosition as TextPosition).offset;
     final selectionStart = min(baseOffset, extentOffset);
     final selectionEnd = max(baseOffset, extentOffset);
-    final selectionRange = SpanRange(start: selectionStart, end: selectionEnd - 1);
+    final selectionRange = SpanRange(start: selectionStart, end: selectionEnd);
 
     final textNode = widget.editor!.document.getNodeById(selection.extent.nodeId) as TextNode;
     final text = textNode.text;

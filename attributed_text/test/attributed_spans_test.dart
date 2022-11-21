@@ -161,10 +161,16 @@ void main() {
         test('returns the range of a single attribution for an offset in the middle of a span', () {
           final spans = AttributedSpans(
             attributions: [
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 4, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 9, markerType: SpanMarkerType.end),
-              SpanMarker(attribution: ExpectedSpans.italics, offset: 0, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: ExpectedSpans.italics, offset: 10, markerType: SpanMarkerType.end),
+              AttributionSpan(
+                attribution: ExpectedSpans.bold,
+                start: 4,
+                end: 9,
+              ),
+              AttributionSpan(
+                attribution: ExpectedSpans.italics,
+                start: 0,
+                end: 10,
+              ),
             ],
           );
 
@@ -175,10 +181,16 @@ void main() {
         test('returns the range of a single attribution for an offset at the beginning of a span', () {
           final spans = AttributedSpans(
             attributions: [
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 4, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 9, markerType: SpanMarkerType.end),
-              SpanMarker(attribution: ExpectedSpans.italics, offset: 0, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: ExpectedSpans.italics, offset: 10, markerType: SpanMarkerType.end),
+              AttributionSpan(
+                attribution: ExpectedSpans.bold,
+                start: 4,
+                end: 9,
+              ),
+              AttributionSpan(
+                attribution: ExpectedSpans.italics,
+                start: 0,
+                end: 10,
+              ),
             ],
           );
 
@@ -189,26 +201,41 @@ void main() {
         test('returns the range of a single attribution for an offset at the end of a span', () {
           final spans = AttributedSpans(
             attributions: [
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 4, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 9, markerType: SpanMarkerType.end),
-              SpanMarker(attribution: ExpectedSpans.italics, offset: 0, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: ExpectedSpans.italics, offset: 10, markerType: SpanMarkerType.end),
+              AttributionSpan(
+                attribution: ExpectedSpans.bold,
+                start: 4,
+                end: 9,
+              ),
+              AttributionSpan(
+                attribution: ExpectedSpans.italics,
+                start: 0,
+                end: 10,
+              ),
             ],
           );
 
-          final range = spans.getAttributedRange({ExpectedSpans.bold}, 9);
+          final range = spans.getAttributedRange({ExpectedSpans.bold}, 8);
           expect(range, SpanRange(start: 4, end: 9));
         });
 
         test('returns the range for multiple attributions for an offset in the middle of the overlapping range', () {
           final spans = AttributedSpans(
             attributions: [
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 4, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 9, markerType: SpanMarkerType.end),
-              SpanMarker(attribution: ExpectedSpans.italics, offset: 0, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: ExpectedSpans.italics, offset: 7, markerType: SpanMarkerType.end),
-              SpanMarker(attribution: ExpectedSpans.strikethrough, offset: 0, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: ExpectedSpans.strikethrough, offset: 10, markerType: SpanMarkerType.end),
+              AttributionSpan(
+                attribution: ExpectedSpans.bold,
+                start: 4,
+                end: 9,
+              ),
+              AttributionSpan(
+                attribution: ExpectedSpans.italics,
+                start: 0,
+                end: 7,
+              ),
+              AttributionSpan(
+                attribution: ExpectedSpans.strikethrough,
+                start: 0,
+                end: 10,
+              ),
             ],
           );
 
@@ -219,12 +246,21 @@ void main() {
         test('returns the range for multiple attributions for an offset at the beginning of the overlapping range', () {
           final spans = AttributedSpans(
             attributions: [
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 4, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 9, markerType: SpanMarkerType.end),
-              SpanMarker(attribution: ExpectedSpans.italics, offset: 0, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: ExpectedSpans.italics, offset: 7, markerType: SpanMarkerType.end),
-              SpanMarker(attribution: ExpectedSpans.strikethrough, offset: 0, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: ExpectedSpans.strikethrough, offset: 10, markerType: SpanMarkerType.end),
+              AttributionSpan(
+                attribution: ExpectedSpans.bold,
+                start: 4,
+                end: 9,
+              ),
+              AttributionSpan(
+                attribution: ExpectedSpans.italics,
+                start: 0,
+                end: 7,
+              ),
+              AttributionSpan(
+                attribution: ExpectedSpans.strikethrough,
+                start: 0,
+                end: 10,
+              ),
             ],
           );
 
@@ -235,16 +271,25 @@ void main() {
         test('returns the range for multiple attributions for an offset at the end of the overlapping range', () {
           final spans = AttributedSpans(
             attributions: [
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 4, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 9, markerType: SpanMarkerType.end),
-              SpanMarker(attribution: ExpectedSpans.italics, offset: 0, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: ExpectedSpans.italics, offset: 7, markerType: SpanMarkerType.end),
-              SpanMarker(attribution: ExpectedSpans.strikethrough, offset: 0, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: ExpectedSpans.strikethrough, offset: 10, markerType: SpanMarkerType.end),
+              AttributionSpan(
+                attribution: ExpectedSpans.bold,
+                start: 4,
+                end: 9,
+              ),
+              AttributionSpan(
+                attribution: ExpectedSpans.italics,
+                start: 0,
+                end: 7,
+              ),
+              AttributionSpan(
+                attribution: ExpectedSpans.strikethrough,
+                start: 0,
+                end: 10,
+              ),
             ],
           );
 
-          final range = spans.getAttributedRange({ExpectedSpans.bold, ExpectedSpans.italics}, 7);
+          final range = spans.getAttributedRange({ExpectedSpans.bold, ExpectedSpans.italics}, 6);
           expect(range, SpanRange(start: 4, end: 7));
         });
 
@@ -257,13 +302,49 @@ void main() {
         test('throws when any attribution is not present at the given offset', () {
           final spans = AttributedSpans(
             attributions: [
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 6, markerType: SpanMarkerType.start),
-              SpanMarker(attribution: ExpectedSpans.bold, offset: 10, markerType: SpanMarkerType.end),
+              AttributionSpan(
+                attribution: ExpectedSpans.bold,
+                start: 6,
+                end: 10,
+              ),
             ],
           );
 
           expect(() => spans.getAttributedRange({ExpectedSpans.bold, ExpectedSpans.italics}, 7), throwsException);
         });
+      });
+    });
+
+    group('getMatchingAttributionsWithin', () {
+      final spans = AttributedSpans()
+        ..addAttribution(newAttribution: ExpectedSpans.bold, start: 3, end: 10)
+        ..addAttribution(newAttribution: ExpectedSpans.italics, start: 7, end: 15);
+
+      test('query outside any spans', () {
+        final matching = spans.getMatchingAttributionsWithin(attributions: {
+          ExpectedSpans.bold,
+          ExpectedSpans.italics,
+        }, start: 0, end: 2);
+        expect(matching, isEmpty);
+      });
+
+      test('query a single span', () {
+        final matching = spans.getMatchingAttributionsWithin(attributions: {
+          ExpectedSpans.bold,
+          ExpectedSpans.italics,
+        }, start: 3, end: 5);
+        expect(matching, hasLength(1));
+        expect(matching, contains(ExpectedSpans.bold));
+      });
+
+      test('query within multiple spans', () {
+        final matching = spans.getMatchingAttributionsWithin(attributions: {
+          ExpectedSpans.bold,
+          ExpectedSpans.italics,
+        }, start: 6, end: 9);
+        expect(matching, hasLength(2));
+        expect(matching, contains(ExpectedSpans.bold));
+        expect(matching, contains(ExpectedSpans.italics));
       });
     });
 
@@ -303,9 +384,8 @@ void main() {
 
       test('removes attribution from full span', () {
         final spans = AttributedSpans(
-          attributions: [
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 16, markerType: SpanMarkerType.end)
+          attributions: const [
+            AttributionSpan(attribution: ExpectedSpans.bold, start: 0, end: 16),
           ],
         )..removeAttribution(attributionToRemove: ExpectedSpans.bold, start: 0, end: 16);
 
@@ -314,9 +394,8 @@ void main() {
 
       test('removes attribution from single unit', () {
         final spans = AttributedSpans(
-          attributions: [
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 8, markerType: SpanMarkerType.start),
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 8, markerType: SpanMarkerType.end)
+          attributions: const [
+            AttributionSpan(attribution: ExpectedSpans.bold, start: 8, end: 9),
           ],
         );
 
@@ -324,7 +403,7 @@ void main() {
           '________b_______',
         ]).expectSpans(spans);
 
-        spans.removeAttribution(attributionToRemove: ExpectedSpans.bold, start: 8, end: 8);
+        spans.removeAttribution(attributionToRemove: ExpectedSpans.bold, start: 8, end: 9);
 
         ExpectedSpans([
           '________________',
@@ -334,8 +413,7 @@ void main() {
       test('removes attribution from single unit at end of span', () {
         final spans = AttributedSpans(
           attributions: [
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 8, markerType: SpanMarkerType.end)
+            AttributionSpan(attribution: ExpectedSpans.bold, start: 0, end: 8),
           ],
         );
 
@@ -343,7 +421,7 @@ void main() {
           'bbbbbbbb_______',
         ]).expectSpans(spans);
 
-        spans.removeAttribution(attributionToRemove: ExpectedSpans.bold, start: 8, end: 8);
+        spans.removeAttribution(attributionToRemove: ExpectedSpans.bold, start: 8, end: 9);
 
         ExpectedSpans([
           'bbbbbbb_________',
@@ -353,8 +431,7 @@ void main() {
       test('removes attribution from all units except the last', () {
         final spans = AttributedSpans(
           attributions: [
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 8, markerType: SpanMarkerType.end)
+            AttributionSpan(attribution: ExpectedSpans.bold, start: 0, end: 9),
           ],
         );
 
@@ -372,8 +449,7 @@ void main() {
       test('removes attribution from single unit at start of span', () {
         final spans = AttributedSpans(
           attributions: [
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 8, markerType: SpanMarkerType.end)
+            AttributionSpan(attribution: ExpectedSpans.bold, start: 0, end: 8),
           ],
         );
 
@@ -381,7 +457,7 @@ void main() {
           'bbbbbbbb_______',
         ]).expectSpans(spans);
 
-        spans.removeAttribution(attributionToRemove: ExpectedSpans.bold, start: 0, end: 0);
+        spans.removeAttribution(attributionToRemove: ExpectedSpans.bold, start: 0, end: 1);
 
         ExpectedSpans([
           '_bbbbbbb_______',
@@ -391,8 +467,7 @@ void main() {
       test('removes attribution from all units except the first', () {
         final spans = AttributedSpans(
           attributions: [
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 8, markerType: SpanMarkerType.end)
+            AttributionSpan(attribution: ExpectedSpans.bold, start: 0, end: 8),
           ],
         );
 
@@ -410,8 +485,7 @@ void main() {
       test('removes attribution from inner text span', () {
         final spans = AttributedSpans(
           attributions: [
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 2, markerType: SpanMarkerType.start),
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 7, markerType: SpanMarkerType.end)
+            AttributionSpan(attribution: ExpectedSpans.bold, start: 2, end: 7),
           ],
         )..removeAttribution(attributionToRemove: ExpectedSpans.bold, start: 2, end: 7);
 
@@ -421,8 +495,7 @@ void main() {
       test('removes attribution from partial beginning span', () {
         final spans = AttributedSpans(
           attributions: [
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 2, markerType: SpanMarkerType.start),
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 7, markerType: SpanMarkerType.end)
+            AttributionSpan(attribution: ExpectedSpans.bold, start: 2, end: 7),
           ],
         )..removeAttribution(attributionToRemove: ExpectedSpans.bold, start: 2, end: 4);
 
@@ -432,8 +505,7 @@ void main() {
       test('removes attribution from partial inner span', () {
         final spans = AttributedSpans(
           attributions: [
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 2, markerType: SpanMarkerType.start),
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 7, markerType: SpanMarkerType.end)
+            AttributionSpan(attribution: ExpectedSpans.bold, start: 2, end: 7),
           ],
         )..removeAttribution(attributionToRemove: ExpectedSpans.bold, start: 4, end: 5);
 
@@ -444,8 +516,7 @@ void main() {
       test('removes attribution from partial ending span', () {
         final spans = AttributedSpans(
           attributions: [
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 2, markerType: SpanMarkerType.start),
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 7, markerType: SpanMarkerType.end)
+            AttributionSpan(attribution: ExpectedSpans.bold, start: 2, end: 7),
           ],
         )..removeAttribution(attributionToRemove: ExpectedSpans.bold, start: 5, end: 7);
 
@@ -455,8 +526,7 @@ void main() {
       test('applies attribution when mixed span is toggled', () {
         final spans = AttributedSpans(
           attributions: [
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 8, markerType: SpanMarkerType.start),
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 16, markerType: SpanMarkerType.end)
+            AttributionSpan(attribution: ExpectedSpans.bold, start: 8, end: 16),
           ],
         )..toggleAttribution(attribution: ExpectedSpans.bold, start: 0, end: 16);
 
@@ -466,8 +536,7 @@ void main() {
       test('removes attribution when contiguous span is toggled', () {
         final spans = AttributedSpans(
           attributions: [
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 16, markerType: SpanMarkerType.end)
+            AttributionSpan(attribution: ExpectedSpans.bold, start: 0, end: 16),
           ],
         )..toggleAttribution(attribution: ExpectedSpans.bold, start: 0, end: 16);
 
@@ -478,8 +547,8 @@ void main() {
     group('multiple attributions', () {
       test('full length overlap', () {
         final spans = AttributedSpans()
-          ..addAttribution(newAttribution: ExpectedSpans.bold, start: 0, end: 9)
-          ..addAttribution(newAttribution: ExpectedSpans.italics, start: 0, end: 9);
+          ..addAttribution(newAttribution: ExpectedSpans.bold, start: 0, end: 10)
+          ..addAttribution(newAttribution: ExpectedSpans.italics, start: 0, end: 10);
 
         ExpectedSpans([
           'bbbbbbbbbb',
@@ -489,8 +558,8 @@ void main() {
 
       test('half and half', () {
         final spans = AttributedSpans()
-          ..addAttribution(newAttribution: ExpectedSpans.bold, start: 5, end: 9)
-          ..addAttribution(newAttribution: ExpectedSpans.italics, start: 0, end: 4);
+          ..addAttribution(newAttribution: ExpectedSpans.bold, start: 5, end: 10)
+          ..addAttribution(newAttribution: ExpectedSpans.italics, start: 0, end: 5);
 
         ExpectedSpans([
           '_____bbbbb',
@@ -500,8 +569,8 @@ void main() {
 
       test('two partial overlap', () {
         final spans = AttributedSpans()
-          ..addAttribution(newAttribution: ExpectedSpans.bold, start: 4, end: 8)
-          ..addAttribution(newAttribution: ExpectedSpans.italics, start: 1, end: 5);
+          ..addAttribution(newAttribution: ExpectedSpans.bold, start: 4, end: 9)
+          ..addAttribution(newAttribution: ExpectedSpans.italics, start: 1, end: 6);
 
         ExpectedSpans([
           '____bbbbb_',
@@ -511,9 +580,9 @@ void main() {
 
       test('three partial overlap', () {
         final spans = AttributedSpans()
-          ..addAttribution(newAttribution: ExpectedSpans.bold, start: 4, end: 8)
-          ..addAttribution(newAttribution: ExpectedSpans.italics, start: 1, end: 5)
-          ..addAttribution(newAttribution: ExpectedSpans.strikethrough, start: 5, end: 9);
+          ..addAttribution(newAttribution: ExpectedSpans.bold, start: 4, end: 9)
+          ..addAttribution(newAttribution: ExpectedSpans.italics, start: 1, end: 6)
+          ..addAttribution(newAttribution: ExpectedSpans.strikethrough, start: 5, end: 10);
 
         ExpectedSpans([
           '____bbbbb_',
@@ -524,11 +593,11 @@ void main() {
 
       test('many small segments', () {
         final spans = AttributedSpans()
-          ..addAttribution(newAttribution: ExpectedSpans.bold, start: 0, end: 1)
-          ..addAttribution(newAttribution: ExpectedSpans.italics, start: 2, end: 3)
-          ..addAttribution(newAttribution: ExpectedSpans.strikethrough, start: 4, end: 5)
-          ..addAttribution(newAttribution: ExpectedSpans.bold, start: 6, end: 7)
-          ..addAttribution(newAttribution: ExpectedSpans.italics, start: 8, end: 9);
+          ..addAttribution(newAttribution: ExpectedSpans.bold, start: 0, end: 2)
+          ..addAttribution(newAttribution: ExpectedSpans.italics, start: 2, end: 4)
+          ..addAttribution(newAttribution: ExpectedSpans.strikethrough, start: 4, end: 6)
+          ..addAttribution(newAttribution: ExpectedSpans.bold, start: 6, end: 8)
+          ..addAttribution(newAttribution: ExpectedSpans.italics, start: 8, end: 10);
 
         ExpectedSpans([
           'bb____bb__',
@@ -544,7 +613,7 @@ void main() {
         spans.addAttribution(
           newAttribution: _LinkAttribution(url: 'https://flutter.dev'),
           start: 0,
-          end: 6,
+          end: 7,
         );
 
         // Try to add a different link at the end but overlapping
@@ -590,48 +659,72 @@ void main() {
         final collapsedSpans = AttributedSpans().collapseSpans(contentLength: 10);
         expect(collapsedSpans, hasLength(1));
         expect(collapsedSpans.first.start, 0);
-        expect(collapsedSpans.first.end, 9);
+        expect(collapsedSpans.first.end, 10);
         expect(collapsedSpans.first.attributions, isEmpty);
       });
 
-      test('single continuous attribution', () {
-        final collapsedSpans = AttributedSpans(
+      group('single continuous attribution', () {
+        final spans = AttributedSpans(
           attributions: [
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 16, markerType: SpanMarkerType.end),
+            AttributionSpan(attribution: ExpectedSpans.bold, start: 0, end: 16),
           ],
-        ).collapseSpans(contentLength: 17);
+        );
 
-        expect(collapsedSpans.length, 1);
-        expect(collapsedSpans.first.start, 0);
-        expect(collapsedSpans.first.end, 16);
-        expect(collapsedSpans.first.attributions.length, 1);
-        expect(collapsedSpans.first.attributions.first, ExpectedSpans.bold);
+        test('collapse at span end', () {
+          final collapsedSpans = spans.collapseSpans(contentLength: 16);
+
+          expect(collapsedSpans, hasLength(1));
+          expect(collapsedSpans.first.start, 0);
+          expect(collapsedSpans.first.end, 16);
+          expect(collapsedSpans.first.attributions.length, 1);
+          expect(collapsedSpans.first.attributions.first, ExpectedSpans.bold);
+        });
+
+        test('collapse before span end', () {
+          final collapsedSpans = spans.collapseSpans(contentLength: 10);
+
+          expect(collapsedSpans.length, 1);
+          expect(collapsedSpans.first.start, 0);
+          expect(collapsedSpans.first.end, 10);
+          expect(collapsedSpans.first.attributions.length, 1);
+          expect(collapsedSpans.first.attributions.first, ExpectedSpans.bold);
+        });
+
+        test('collapse after span end', () {
+          final collapsedSpans = spans.collapseSpans(contentLength: 20);
+
+          expect(collapsedSpans.length, 2);
+          expect(collapsedSpans[0].start, 0);
+          expect(collapsedSpans[0].end, 16);
+          expect(collapsedSpans[0].attributions.length, 1);
+          expect(collapsedSpans[0].attributions.first, ExpectedSpans.bold);
+          expect(collapsedSpans[1].start, 16);
+          expect(collapsedSpans[1].end, 20);
+          expect(collapsedSpans[1].attributions, isEmpty);
+        });
       });
 
       test('single fractured attribution', () {
         final collapsedSpans = AttributedSpans(
           attributions: [
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 3, markerType: SpanMarkerType.end),
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 7, markerType: SpanMarkerType.start),
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 10, markerType: SpanMarkerType.end),
+            AttributionSpan(attribution: ExpectedSpans.bold, start: 0, end: 4),
+            AttributionSpan(attribution: ExpectedSpans.bold, start: 7, end: 10),
           ],
-        ).collapseSpans(contentLength: 17);
+        ).collapseSpans(contentLength: 16);
 
         expect(collapsedSpans.length, 4);
         expect(collapsedSpans[0].start, 0);
-        expect(collapsedSpans[0].end, 3);
+        expect(collapsedSpans[0].end, 4);
         expect(collapsedSpans[0].attributions.length, 1);
         expect(collapsedSpans[0].attributions.first, ExpectedSpans.bold);
         expect(collapsedSpans[1].start, 4);
-        expect(collapsedSpans[1].end, 6);
+        expect(collapsedSpans[1].end, 7);
         expect(collapsedSpans[1].attributions.length, 0);
         expect(collapsedSpans[2].start, 7);
         expect(collapsedSpans[2].end, 10);
         expect(collapsedSpans[2].attributions.length, 1);
         expect(collapsedSpans[2].attributions.first, ExpectedSpans.bold);
-        expect(collapsedSpans[3].start, 11);
+        expect(collapsedSpans[3].start, 10);
         expect(collapsedSpans[3].end, 16);
         expect(collapsedSpans[3].attributions.length, 0);
       });
@@ -639,67 +732,61 @@ void main() {
       test('adjacent non-overlapping attributions', () {
         final collapsedSpans = AttributedSpans(
           attributions: [
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 4, markerType: SpanMarkerType.end),
-            const SpanMarker(attribution: ExpectedSpans.italics, offset: 5, markerType: SpanMarkerType.start),
-            const SpanMarker(attribution: ExpectedSpans.italics, offset: 9, markerType: SpanMarkerType.end),
+            AttributionSpan(attribution: ExpectedSpans.bold, start: 0, end: 5),
+            AttributionSpan(attribution: ExpectedSpans.italics, start: 5, end: 10),
           ],
         ).collapseSpans(contentLength: 10);
 
         expect(collapsedSpans, hasLength(2));
         expect(collapsedSpans.first.start, 0);
-        expect(collapsedSpans.first.end, 4);
+        expect(collapsedSpans.first.end, 5);
         expect(collapsedSpans.last.start, 5);
-        expect(collapsedSpans.last.end, 9);
+        expect(collapsedSpans.last.end, 10);
       });
 
       test('multiple non-overlapping attributions', () {
         final collapsedSpans = AttributedSpans(
           attributions: [
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 3, markerType: SpanMarkerType.end),
-            const SpanMarker(attribution: ExpectedSpans.italics, offset: 7, markerType: SpanMarkerType.start),
-            const SpanMarker(attribution: ExpectedSpans.italics, offset: 10, markerType: SpanMarkerType.end),
+            AttributionSpan(attribution: ExpectedSpans.bold, start: 0, end: 4),
+            AttributionSpan(attribution: ExpectedSpans.italics, start: 7, end: 10),
           ],
         ).collapseSpans(contentLength: 17);
 
         expect(collapsedSpans.length, 4);
         expect(collapsedSpans[0].start, 0);
-        expect(collapsedSpans[0].end, 3);
+        expect(collapsedSpans[0].end, 4);
         expect(collapsedSpans[0].attributions.length, 1);
         expect(collapsedSpans[0].attributions.first, ExpectedSpans.bold);
         expect(collapsedSpans[1].start, 4);
-        expect(collapsedSpans[1].end, 6);
+        expect(collapsedSpans[1].end, 7);
         expect(collapsedSpans[1].attributions.length, 0);
         expect(collapsedSpans[2].start, 7);
         expect(collapsedSpans[2].end, 10);
         expect(collapsedSpans[2].attributions.length, 1);
         expect(collapsedSpans[2].attributions.first, ExpectedSpans.italics);
-        expect(collapsedSpans[3].start, 11);
-        expect(collapsedSpans[3].end, 16);
+        expect(collapsedSpans[3].start, 10);
+        expect(collapsedSpans[3].end, 17);
         expect(collapsedSpans[3].attributions.length, 0);
       });
 
       test('multiple overlapping attributions', () {
         final collapsedSpans = AttributedSpans(
           attributions: [
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 8, markerType: SpanMarkerType.end),
-            const SpanMarker(attribution: ExpectedSpans.italics, offset: 6, markerType: SpanMarkerType.start),
-            const SpanMarker(attribution: ExpectedSpans.italics, offset: 16, markerType: SpanMarkerType.end),
+            AttributionSpan(attribution: ExpectedSpans.bold, start: 0, end: 8),
+            AttributionSpan(attribution: ExpectedSpans.italics, start: 6, end: 16),
           ],
-        ).collapseSpans(contentLength: 17);
+        ).collapseSpans(contentLength: 16);
 
         expect(collapsedSpans.length, 3);
         expect(collapsedSpans[0].start, 0);
-        expect(collapsedSpans[0].end, 5);
+        expect(collapsedSpans[0].end, 6);
         expect(collapsedSpans[0].attributions.length, 1);
         expect(collapsedSpans[0].attributions.first, ExpectedSpans.bold);
         expect(collapsedSpans[1].start, 6);
         expect(collapsedSpans[1].end, 8);
         expect(collapsedSpans[1].attributions.length, 2);
         expect(collapsedSpans[1].attributions, equals({ExpectedSpans.bold, ExpectedSpans.italics}));
-        expect(collapsedSpans[2].start, 9);
+        expect(collapsedSpans[2].start, 8);
         expect(collapsedSpans[2].end, 16);
         expect(collapsedSpans[2].attributions.length, 1);
         expect(collapsedSpans[2].attributions.first, ExpectedSpans.italics);
@@ -714,15 +801,15 @@ void main() {
       final italicEnd = italicStart.copyWith(markerType: SpanMarkerType.end, offset: 1);
 
       test('it is equal to another AttributedSpans with equivalent markers that are stored in the same order', () {
-        final span1 = AttributedSpans(attributions: [boldStart, italicStart, boldEnd, italicEnd]);
-        final span2 = AttributedSpans(attributions: [boldStart, italicStart, boldEnd, italicEnd]);
+        final span1 = AttributedSpans()..markers.addAll([boldStart, italicStart, boldEnd, italicEnd]);
+        final span2 = AttributedSpans()..markers.addAll([boldStart, italicStart, boldEnd, italicEnd]);
 
         expect(span1 == span2, isTrue);
       });
 
       test('it is equal to another AttributedSpans with equivalent markers that are stored in a different order', () {
-        final boldBeforeitalicspan = AttributedSpans(attributions: [boldStart, italicStart, boldEnd, italicEnd]);
-        final italicsBeforeBoldSpan = AttributedSpans(attributions: [italicStart, boldStart, italicEnd, boldEnd]);
+        final boldBeforeitalicspan = AttributedSpans()..markers.addAll([boldStart, italicStart, boldEnd, italicEnd]);
+        final italicsBeforeBoldSpan = AttributedSpans()..markers.addAll([italicStart, boldStart, italicEnd, boldEnd]);
 
         expect(boldBeforeitalicspan == italicsBeforeBoldSpan, isTrue);
       });
@@ -735,8 +822,8 @@ void main() {
       });
 
       test('it is NOT equal to another AttributedSpans with different markers', () {
-        final span1 = AttributedSpans(attributions: [boldStart, boldEnd]);
-        final span2 = AttributedSpans(attributions: [italicStart, italicEnd]);
+        final span1 = AttributedSpans()..markers.addAll([boldStart, boldEnd]);
+        final span2 = AttributedSpans()..markers.addAll([italicStart, italicEnd]);
 
         expect(span1 == span2, isFalse);
       });
@@ -760,7 +847,8 @@ class _LinkAttribution implements Attribution {
   }
 
   @override
-  bool operator ==(Object other) => identical(this, other) || other is _LinkAttribution && runtimeType == other.runtimeType && url == other.url;
+  bool operator ==(Object other) =>
+      identical(this, other) || other is _LinkAttribution && runtimeType == other.runtimeType && url == other.url;
 
   @override
   int get hashCode => url.hashCode;

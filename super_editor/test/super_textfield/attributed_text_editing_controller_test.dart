@@ -156,8 +156,7 @@ void main() {
             text: 'before [] after',
             spans: AttributedSpans(
               attributions: [
-                const SpanMarker(attribution: boldAttribution, offset: 7, markerType: SpanMarkerType.start),
-                const SpanMarker(attribution: boldAttribution, offset: 8, markerType: SpanMarkerType.end),
+                const AttributionSpan(attribution: boldAttribution, start: 7, end: 9),
               ],
             ),
           ),
@@ -178,8 +177,7 @@ void main() {
             text: 'before [] after',
             spans: AttributedSpans(
               attributions: [
-                const SpanMarker(attribution: boldAttribution, offset: 7, markerType: SpanMarkerType.start),
-                const SpanMarker(attribution: boldAttribution, offset: 8, markerType: SpanMarkerType.end),
+                const AttributionSpan(attribution: boldAttribution, start: 7, end: 9),
               ],
             ),
           ),
@@ -200,8 +198,7 @@ void main() {
             text: 'before [] after',
             spans: AttributedSpans(
               attributions: [
-                const SpanMarker(attribution: boldAttribution, offset: 7, markerType: SpanMarkerType.start),
-                const SpanMarker(attribution: boldAttribution, offset: 8, markerType: SpanMarkerType.end),
+                const AttributionSpan(attribution: boldAttribution, start: 7, end: 9),
               ],
             ),
           ),
@@ -222,8 +219,7 @@ void main() {
             text: 'before [] after',
             spans: AttributedSpans(
               attributions: [
-                const SpanMarker(attribution: boldAttribution, offset: 7, markerType: SpanMarkerType.start),
-                const SpanMarker(attribution: boldAttribution, offset: 8, markerType: SpanMarkerType.end),
+                const AttributionSpan(attribution: boldAttribution, start: 7, end: 9),
               ],
             ),
           ),
@@ -479,8 +475,7 @@ void main() {
             text: '[]:unstyled text',
             spans: AttributedSpans(
               attributions: [
-                const SpanMarker(attribution: boldAttribution, offset: 0, markerType: SpanMarkerType.start),
-                const SpanMarker(attribution: boldAttribution, offset: 2, markerType: SpanMarkerType.end),
+                const AttributionSpan(attribution: boldAttribution, start: 0, end: 3),
               ],
             ),
           ),
@@ -500,8 +495,7 @@ void main() {
             text: '[]:unstyled text',
             spans: AttributedSpans(
               attributions: [
-                const SpanMarker(attribution: boldAttribution, offset: 0, markerType: SpanMarkerType.start),
-                const SpanMarker(attribution: boldAttribution, offset: 2, markerType: SpanMarkerType.end),
+                const AttributionSpan(attribution: boldAttribution, start: 0, end: 3),
               ],
             ),
           ),
@@ -521,8 +515,7 @@ void main() {
             text: '[]:unstyled text',
             spans: AttributedSpans(
               attributions: [
-                const SpanMarker(attribution: boldAttribution, offset: 0, markerType: SpanMarkerType.start),
-                const SpanMarker(attribution: boldAttribution, offset: 0, markerType: SpanMarkerType.end),
+                const AttributionSpan(attribution: boldAttribution, start: 0, end: 1),
               ],
             ),
           ),
@@ -617,8 +610,7 @@ void main() {
             text: '[replaceme]',
             spans: AttributedSpans(
               attributions: [
-                const SpanMarker(attribution: boldAttribution, offset: 0, markerType: SpanMarkerType.start),
-                const SpanMarker(attribution: boldAttribution, offset: 10, markerType: SpanMarkerType.end),
+                const AttributionSpan(attribution: boldAttribution, start: 0, end: 11),
               ],
             ),
           ),
@@ -627,8 +619,7 @@ void main() {
           text: 'newtext',
           spans: AttributedSpans(
             attributions: [
-              const SpanMarker(attribution: italicsAttribution, offset: 0, markerType: SpanMarkerType.start),
-              const SpanMarker(attribution: italicsAttribution, offset: 6, markerType: SpanMarkerType.end),
+              const AttributionSpan(attribution: italicsAttribution, start: 0, end: 7),
             ],
           ),
         );

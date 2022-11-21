@@ -32,7 +32,7 @@ extension ComputeTextSpan on AttributedText {
     final collapsedSpans = spans.collapseSpans(contentLength: text.length);
     final textSpans = collapsedSpans
         .map((attributedSpan) => TextSpan(
-              text: text.substring(attributedSpan.start, attributedSpan.end + 1),
+              text: text.substring(attributedSpan.start, attributedSpan.end),
               style: styleBuilder(attributedSpan.attributions),
             ))
         .toList();

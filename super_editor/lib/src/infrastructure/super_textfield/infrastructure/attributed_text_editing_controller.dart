@@ -119,7 +119,7 @@ class AttributedTextEditingController with ChangeNotifier {
     for (final attribution in attributions) {
       _text.toggleAttribution(
         attribution,
-        SpanRange(start: selection.start, end: selection.end - 1),
+        SpanRange(start: selection.start, end: selection.end),
       );
     }
 
@@ -133,7 +133,7 @@ class AttributedTextEditingController with ChangeNotifier {
     }
 
     _text.clearAttributions(
-      SpanRange(start: selection.start, end: selection.end - 1),
+      SpanRange(start: selection.start, end: selection.end),
     );
 
     notifyListeners();
@@ -583,7 +583,7 @@ class AttributedTextEditingController with ChangeNotifier {
       text: updatedText,
       selection: updatedSelection,
     );
-    
+
     _updateComposingAttributions();
     // TODO: do we need to implement composing region update behavior like selections?
     composingRegion = newComposingRegion ?? TextRange.empty;

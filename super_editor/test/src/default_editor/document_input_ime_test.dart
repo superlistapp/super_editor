@@ -6,9 +6,9 @@ import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 
 import '../../super_editor/document_test_tools.dart';
+import '../../super_editor/test_documents.dart';
 import '../../test_tools.dart';
 import '../_document_test_tools.dart';
-import '../../super_editor/test_documents.dart';
 
 void main() {
   group('IME input', () {
@@ -359,15 +359,10 @@ MutableDocument _singleParagraphWithLinkDoc() {
           text: "https://google.com",
           spans: AttributedSpans(
             attributions: [
-              SpanMarker(
+              AttributionSpan(
                 attribution: LinkAttribution(url: Uri.parse('https://google.com')),
-                offset: 0,
-                markerType: SpanMarkerType.start,
-              ),
-              SpanMarker(
-                attribution: LinkAttribution(url: Uri.parse('https://google.com')),
-                offset: 17,
-                markerType: SpanMarkerType.end,
+                start: 0,
+                end: 18,
               ),
             ],
           ),
