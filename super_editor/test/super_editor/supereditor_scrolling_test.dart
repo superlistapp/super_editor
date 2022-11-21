@@ -253,5 +253,91 @@ void main() {
       // Ensure the editor didn't scroll.
       expect(scrollController.position.pixels, 0.0);
     });
+
+    testWidgetsOnArbitraryDesktop("doesn't scroll when dragging over an image", (tester) async {
+      const editorSize = Size(300, 300);
+
+      await tester
+          .createDocument()
+          .withCustomContent(
+            MutableDocument(
+              nodes: [
+                ParagraphNode(
+                  id: "1",
+                  text: AttributedText(text: "First Paragraph"),
+                ),
+                ParagraphNode(
+                  id: "2",
+                  text: AttributedText(text: "Second Paragraph"),
+                ),
+                ImageNode(
+                  id: "img-node",
+                  imageUrl: 'https://this.is.a.fake.image',
+                  metadata: const SingleColumnLayoutComponentStyles(
+                    width: double.infinity,
+                  ).toMetadata(),
+                ),
+              ],
+            ),
+          )
+          .withAddedComponents([const _FakeImageComponentBuilder(size: editorSize)])
+          .withEditorSize(editorSize)
+          .pump();
+
+      // Drag from the second paragraph to the image.
+      await tester.dragSelectDocumentFromPositionByOffset(
+        from: const DocumentPosition(
+          nodeId: '2',
+          nodePosition: TextNodePosition(offset: 1),
+        ),
+        delta: const Offset(0, 50),
+      );
+
+      // Ensure the bottom of the image isn't visible.
+      expect(
+        SuperEditorInspector.isPositionVisibleGlobally(
+          const DocumentPosition(
+            nodeId: 'img-node',
+            nodePosition: UpstreamDownstreamNodePosition.downstream(),
+          ),
+          editorSize,
+        ),
+        false,
+      );
+    });
   });
+}
+
+/// A [ComponentBuilder] which builds an [ImageComponent] that always renders
+/// images as a [SizedBox] with the given [size].
+class _FakeImageComponentBuilder implements ComponentBuilder {
+  const _FakeImageComponentBuilder({
+    required this.size,
+  });
+
+  final Size size;
+
+  @override
+  SingleColumnLayoutComponentViewModel? createViewModel(Document document, DocumentNode node) {
+    return null;
+  }
+
+  @override
+  Widget? createComponent(
+      SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel componentViewModel) {
+    if (componentViewModel is! ImageComponentViewModel) {
+      return null;
+    }
+
+    return ImageComponent(
+      componentKey: componentContext.componentKey,
+      imageUrl: componentViewModel.imageUrl,
+      selection: componentViewModel.selection,
+      selectionColor: componentViewModel.selectionColor,
+      imageBuilder: (context, imageUrl) => SizedBox(
+        height: size.height,
+        width: size.width,
+      ),
+    );
+  }
 }
