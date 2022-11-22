@@ -1,7 +1,6 @@
 import 'dart:math';
 import 'dart:ui' as ui;
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/super_editor.dart';
@@ -103,6 +102,8 @@ class TestDocumentConfigurator {
   ScrollController? _scrollController;
   FocusNode? _focusNode;
   DocumentSelection? _selection;
+  WidgetBuilder? _androidToolbarBuilder;
+  WidgetBuilder? _iOSToolbarBuilder;
 
   /// Configures the [SuperEditor] for standard desktop interactions,
   /// e.g., mouse and keyboard input.
@@ -178,35 +179,16 @@ class TestDocumentConfigurator {
     return this;
   }
 
-  DocumentGestureMode get _defaultGestureMode {
-    switch (debugDefaultTargetPlatformOverride) {
-      case TargetPlatform.android:
-        return DocumentGestureMode.android;
-      case TargetPlatform.iOS:
-        return DocumentGestureMode.iOS;
-      case TargetPlatform.fuchsia:
-      case TargetPlatform.linux:
-      case TargetPlatform.macOS:
-      case TargetPlatform.windows:
-        return DocumentGestureMode.mouse;
-      default:
-        return DocumentGestureMode.mouse;
-    }
+  /// Configures the [SuperEditor] to use the given [builder] as its android toolbar builder.
+  TestDocumentConfigurator withAndroidToolbarBuilder(WidgetBuilder? builder) {
+    _androidToolbarBuilder = builder;
+    return this;
   }
 
-  DocumentInputSource get _defaultInputSource {
-    switch (debugDefaultTargetPlatformOverride) {
-      case TargetPlatform.android:
-      case TargetPlatform.iOS:
-        return DocumentInputSource.ime;
-      case TargetPlatform.fuchsia:
-      case TargetPlatform.linux:
-      case TargetPlatform.macOS:
-      case TargetPlatform.windows:
-        return DocumentInputSource.keyboard;
-      default:
-        return DocumentInputSource.keyboard;
-    }
+  /// Configures the [SuperEditor] to use the given [builder] as its iOS toolbar builder.
+  TestDocumentConfigurator withiOSToolbarBuilder(WidgetBuilder? builder) {
+    _iOSToolbarBuilder = builder;
+    return this;
   }
 
   /// Configures the [ThemeData] used for the [MaterialApp] that wraps
@@ -217,7 +199,7 @@ class TestDocumentConfigurator {
   }
 
   /// Configures the [SuperEditor] to use the given [stylesheet].
-  TestDocumentConfigurator useStylesheet(Stylesheet stylesheet) {
+  TestDocumentConfigurator useStylesheet(Stylesheet? stylesheet) {
     _stylesheet = stylesheet;
     return this;
   }
@@ -276,8 +258,10 @@ class TestDocumentConfigurator {
         editor: testDocumentContext.editContext.editor,
         composer: testDocumentContext.editContext.composer,
         focusNode: testDocumentContext.focusNode,
-        inputSource: _inputSource ?? _defaultInputSource,
-        gestureMode: _gestureMode ?? _defaultGestureMode,
+        inputSource: _inputSource,
+        gestureMode: _gestureMode,
+        androidToolbarBuilder: _androidToolbarBuilder,
+        iOSToolbarBuilder: _iOSToolbarBuilder,
         stylesheet: _stylesheet,
         componentBuilders: [
           ..._addedComponents,

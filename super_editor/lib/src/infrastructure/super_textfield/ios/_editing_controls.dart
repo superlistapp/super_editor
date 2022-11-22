@@ -3,7 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
-import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/toolbar_position_delegate.dart';
+import 'package:super_editor/src/infrastructure/toolbar_position_delegate.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/magnifier.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/super_textfield.dart';
 import 'package:super_text_layout/super_text_layout.dart';
@@ -71,7 +71,7 @@ class IOSEditingControls extends StatefulWidget {
   final Widget Function(BuildContext, IOSEditingOverlayController) popoverToolbarBuilder;
 
   @override
-  _IOSEditingControlsState createState() => _IOSEditingControlsState();
+  State createState() => _IOSEditingControlsState();
 }
 
 class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBindingObserver {
@@ -414,14 +414,14 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
         ? widget.editingController.textController.selection.base
         : widget.editingController.textController.selection.extent;
     final upstreamHandleOffsetInText = _textPositionToTextOffset(upstreamTextPosition);
-    final upstreamLineHeight = 
+    final upstreamLineHeight =
         _textLayout.getCharacterBox(upstreamTextPosition)?.toRect().height ?? _textLayout.estimatedLineHeight;
 
     final downstreamTextPosition = selectionDirection == TextAffinity.downstream
         ? widget.editingController.textController.selection.extent
         : widget.editingController.textController.selection.base;
     final downstreamHandleOffsetInText = _textPositionToTextOffset(downstreamTextPosition);
-    final downstreamLineHeight = 
+    final downstreamLineHeight =
         _textLayout.getCharacterBox(downstreamTextPosition)?.toRect().height ?? _textLayout.estimatedLineHeight;
 
     if (upstreamLineHeight == 0 || downstreamLineHeight == 0) {

@@ -200,6 +200,125 @@ void main() {
 
         expect(_isCaretPresent(tester), isTrue);
       });
+
+      testWidgetsOnAllPlatforms(
+          "is inserted automatically when the field is initialized with a focused node used by another widget",
+          (tester) async {
+        final node = FocusNode()..requestFocus();
+
+        await tester.pumpWidget(
+          _buildScaffold(
+            child: Focus(
+              focusNode: node,
+              child: const SizedBox.shrink(),
+            ),
+          ),
+        );
+
+        // Pumps a second widget tree, to simulate switching the FocusNode
+        // from one widget to another.
+        await tester.pumpWidget(
+          _buildScaffold(
+            child: SuperTextField(
+              focusNode: node,
+            ),
+          ),
+        );
+        await tester.pump();
+
+        expect(_isCaretPresent(tester), isTrue);
+      });
+    });
+
+    group('padding', () {
+      testWidgetsOnAllPlatforms('is applied when configured', (tester) async {
+        await tester.pumpWidget(
+          _buildScaffold(
+            child: const SuperTextField(
+              padding: EdgeInsets.fromLTRB(5, 10, 15, 20),
+              minLines: 1,
+              maxLines: 2,
+            ),
+          ),
+        );
+
+        await tester.pumpAndSettle();
+
+        final textFieldRect = tester.getRect(find.byType(SuperTextField));
+        final contentRect = tester.getRect(find.byType(SuperTextWithSelection));
+
+        // Ensure padding was applied.
+        expect(contentRect.left - textFieldRect.left, 5);
+        expect(contentRect.top - textFieldRect.top, 10);
+        expect(textFieldRect.right - contentRect.right, 15);
+        expect(textFieldRect.bottom - contentRect.bottom, 20);
+      });
+    });
+
+    testWidgetsOnAllPlatforms('recalculates its viewport height when text changes for text smaller than maxLines',
+        (tester) async {
+      final controller = AttributedTextEditingController();
+
+      await tester.pumpWidget(
+        _buildScaffold(
+          child: SuperTextField(
+            minLines: 1,
+            maxLines: 10,
+            textController: controller,
+          ),
+        ),
+      );
+
+      // Change the text so the content height is greater
+      // than the initial content height.
+      controller.text = AttributedText(
+        text: """
+This is
+a
+multi-line
+SuperTextField
+""",
+      );
+      await tester.pumpAndSettle();
+
+      final textSize = tester.getSize(find.byType(SuperTextWithSelection));
+      final textFieldSize = tester.getSize(find.byType(SuperTextField));
+
+      // Ensure the text field height is big enough to display the whole content.
+      expect(textFieldSize.height, greaterThanOrEqualTo(textSize.height));
+    });
+
+    testWidgetsOnAllPlatforms('recalculates its viewport height when text changes for text bigger than maxLines',
+        (tester) async {
+      final controller = AttributedTextEditingController();
+
+      await tester.pumpWidget(
+        _buildScaffold(
+          child: SuperTextField(
+            minLines: 1,
+            maxLines: 2,
+            textController: controller,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final textFieldSizeBefore = tester.getSize(find.byType(SuperTextField));
+
+      // Change the text, so the content height is greater
+      // than the initial content height.
+      controller.text = AttributedText(
+        text: """
+This is
+a
+multi-line
+SuperTextField
+""",
+      );
+      await tester.pumpAndSettle();
+
+      // Ensure the text field height has increased.
+      expect(tester.getSize(find.byType(SuperTextField)).height, greaterThan(textFieldSizeBefore.height));
     });
   });
 }

@@ -55,7 +55,7 @@ void main() {
         const DocumentSelection(
           base: DocumentPosition(
             nodeId: "1",
-            nodePosition: TextNodePosition(offset: 37),
+            nodePosition: TextNodePosition(offset: 37, affinity: TextAffinity.upstream),
           ),
           extent: DocumentPosition(
             nodeId: "2",
@@ -225,7 +225,10 @@ void main() {
       expect(
         SuperEditorInspector.findDocumentSelection(),
         const DocumentSelection.collapsed(
-          position: DocumentPosition(nodeId: "1", nodePosition: TextNodePosition(offset: 11)),
+          position: DocumentPosition(
+            nodeId: "1",
+            nodePosition: TextNodePosition(offset: 11, affinity: TextAffinity.upstream),
+          ),
         ),
       );
     });
@@ -305,14 +308,14 @@ void main() {
         const DocumentSelection.collapsed(
           position: DocumentPosition(
             nodeId: "1",
-            nodePosition: TextNodePosition(offset: 37),
+            nodePosition: TextNodePosition(offset: 37, affinity: TextAffinity.upstream),
           ),
         ),
       );
       expect(
         find.byType(SuperEditor),
         equalsMarkdown(
-          "This is the first node in a document.\n"
+          "This is the first node in a document.\n\n"
           "This is the third node in a document.",
         ),
       );
@@ -337,7 +340,7 @@ void main() {
       expect(
         find.byType(SuperEditor),
         equalsMarkdown(
-          "This is the first node in a document.\n"
+          "This is the first node in a document.\n\n"
           "This is the third node in a document.",
         ),
       );

@@ -1,5 +1,7 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:super_editor/src/default_editor/document_gestures_touch_android.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
@@ -41,11 +43,39 @@ class SuperEditorInspector {
 
   /// Returns the (x,y) offset for the caret that's currently visible in the document.
   static Offset findCaretOffsetInDocument([Finder? finder]) {
-    final caretBox = find.byKey(primaryCaretKey).evaluate().single.renderObject as RenderBox;
-    final globalCaretOffset = caretBox.localToGlobal(Offset.zero);
+    final desktopCaretBox = find.byKey(primaryCaretKey).evaluate().singleOrNull?.renderObject as RenderBox?;
+    if (desktopCaretBox != null) {
+      final globalCaretOffset = desktopCaretBox.localToGlobal(Offset.zero);
+      final documentLayout = _findDocumentLayout(finder);
+      final globalToDocumentOffset = documentLayout.getGlobalOffsetFromDocumentOffset(Offset.zero);
+      return globalCaretOffset - globalToDocumentOffset;
+    }
+
+    final androidControls = find.byType(AndroidDocumentTouchEditingControls).evaluate().lastOrNull?.widget
+        as AndroidDocumentTouchEditingControls?;
+    if (androidControls != null) {
+      return androidControls.editingController.caretTop!;
+    }
+
+    final iOSControls =
+        find.byType(IosDocumentTouchEditingControls).evaluate().lastOrNull?.widget as IosDocumentTouchEditingControls?;
+    if (iOSControls != null) {
+      return iOSControls.editingController.caretTop!;
+    }
+
+    throw Exception('Could not locate caret in document');
+  }
+
+  /// Returns the (x,y) offset for the component which renders the node with the given [nodeId].
+  ///
+  /// {@macro supereditor_finder}
+  static Offset findComponentOffset(String nodeId, Alignment alignment, [Finder? finder]) {
     final documentLayout = _findDocumentLayout(finder);
-    final globalToDocumentOffset = documentLayout.getGlobalOffsetFromDocumentOffset(Offset.zero);
-    return globalCaretOffset - globalToDocumentOffset;
+    final component = documentLayout.getComponentByNodeId(nodeId);
+    assert(component != null);
+    final componentBox = component!.context.findRenderObject() as RenderBox;
+    final rect = componentBox.localToGlobal(Offset.zero) & componentBox.size;
+    return alignment.withinRect(rect);
   }
 
   /// Returns the (x,y) offset for a caret, if that caret appeared at the given [position].
@@ -117,6 +147,57 @@ class SuperEditorInspector {
         .single
         .widget as SuperTextWithSelection;
     return superTextWithSelection.richText.style;
+  }
+
+  /// Returns the [DocumentNode] at given the [index].
+  ///
+  /// The given [index] must be a valid node index inside the [Document].The node at [index]
+  /// must be of type [NodeType].
+  ///
+  /// {@macro supereditor_finder}
+  static NodeType getNodeAt<NodeType extends DocumentNode>(int index, [Finder? superEditorFinder]) {
+    final doc = findDocument(superEditorFinder);
+
+    if (doc == null) {
+      throw Exception('SuperEditor not found');
+    }
+
+    if (index >= doc.nodes.length) {
+      throw Exception('Tried to access index $index in a document where the max index is ${doc.nodes.length - 1}');
+    }
+
+    final node = doc.nodes[index];
+    if (node is! NodeType) {
+      throw Exception('Tried to access a ${node.runtimeType} as $NodeType');
+    }
+
+    return node;
+  }
+
+  /// Locates the first line break in a text node, or throws an exception if it cannot find one.
+  static int findOffsetOfLineBreak(String nodeId, [Finder? finder]) {
+    late final Finder layoutFinder;
+    if (finder != null) {
+      layoutFinder = find.descendant(of: finder, matching: find.byType(SingleColumnDocumentLayout));
+    } else {
+      layoutFinder = find.byType(SingleColumnDocumentLayout);
+    }
+    final documentLayoutElement = layoutFinder.evaluate().single as StatefulElement;
+    final documentLayout = documentLayoutElement.state as DocumentLayout;
+
+    final componentState = documentLayout.getComponentByNodeId(nodeId) as State;
+    late final GlobalKey textComponentKey;
+    if (componentState is ProxyDocumentComponent) {
+      textComponentKey = componentState.childDocumentComponentKey;
+    } else {
+      textComponentKey = componentState.widget.key as GlobalKey;
+    }
+
+    final textLayout = (textComponentKey.currentState as TextComponentState).textLayout;
+    if (textLayout.getLineCount() < 2) {
+      throw Exception('Specified node does not contain a line break');
+    }
+    return textLayout.getPositionAtEndOfLine(const TextPosition(offset: 0)).offset;
   }
 
   /// Finds the [DocumentLayout] that backs a [SuperEditor] in the widget tree.

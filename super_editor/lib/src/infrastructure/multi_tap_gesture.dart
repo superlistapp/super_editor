@@ -24,7 +24,7 @@ class TapSequenceGestureRecognizer extends GestureRecognizer {
   TapSequenceGestureRecognizer({
     Object? debugOwner,
     Set<PointerDeviceKind>? supportedDevices,
-    final this.reportPrecedingGestures = true,
+    this.reportPrecedingGestures = true,
   }) : super(debugOwner: debugOwner, supportedDevices: supportedDevices);
 
   /// If `true`, reports the gestures that lead up to the final

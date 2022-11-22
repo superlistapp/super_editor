@@ -13,7 +13,7 @@ import 'package:super_editor/super_editor.dart';
 ///
 /// When the document's [FocusNode] changes, provide the new [FocusNode] to [onFocusNodeReplaced].
 ///
-/// When the document's [DocumentComposer] changes, provide the new [DocumentComposer] to [onDocumentComposerReplaced].
+/// When the document's [DocumentComposer] changes, provide the new [DocumentComposer] to [onDocumentSelectionNotifierReplaced].
 ///
 /// When the document's [DocumentLayoutResolver] changes, provide the new [DocumentLayoutResolver] to [onDocumentLayoutResolverReplaced].
 mixin DocumentSelectionOnFocusMixin<T extends StatefulWidget> on State<T> {
@@ -21,8 +21,8 @@ mixin DocumentSelectionOnFocusMixin<T extends StatefulWidget> on State<T> {
   DocumentSelection? _previousSelection;
 
   FocusNode? _focusNode;
-  DocumentComposer? _composer;
   DocumentLayoutResolver? _getDocumentLayout;
+  ValueNotifier<DocumentSelection?>? _selection;
 
   /// Starts watching and synchronizing focus with selection.
   ///
@@ -33,14 +33,14 @@ mixin DocumentSelectionOnFocusMixin<T extends StatefulWidget> on State<T> {
   /// the caret is moved to the end of the document.
   void startSyncingSelectionWithFocus({
     required FocusNode focusNode,
-    required DocumentComposer composer,
     required DocumentLayoutResolver getDocumentLayout,
+    required ValueNotifier<DocumentSelection?> selection,
   }) {
     _focusNode = focusNode;
     _focusNode!.addListener(_onFocusChange);
-    _composer = composer;
-    _composer!.selectionNotifier.addListener(_onSelectionChange);
     _getDocumentLayout = getDocumentLayout;
+    _selection = selection;
+    _selection!.addListener(_onSelectionChange);
 
     // If we already start focused we need to check if the selection update is needed.
     // This is happening on desktop when the editor uses autofocus.
@@ -52,7 +52,7 @@ mixin DocumentSelectionOnFocusMixin<T extends StatefulWidget> on State<T> {
   // Stops watching and synchronizing focus with selection.
   void stopSyncingSelectionWithFocus() {
     _focusNode?.removeListener(_onFocusChange);
-    _composer?.selectionNotifier.removeListener(_onSelectionChange);
+    _selection?.removeListener(_onSelectionChange);
   }
 
   /// Should be called whenever the editor `focusNode` is replaced.
@@ -62,11 +62,11 @@ mixin DocumentSelectionOnFocusMixin<T extends StatefulWidget> on State<T> {
     _focusNode!.addListener(_onFocusChange);
   }
 
-  /// Should be called whenever the editor `composer` is replaced.
-  void onDocumentComposerReplaced(DocumentComposer? composer) {
-    _composer?.removeListener(_onSelectionChange);
-    _composer = composer;
-    _composer!.addListener(_onSelectionChange);
+  /// Should be called whenever the editor selection notifier is replaced.
+  void onDocumentSelectionNotifierReplaced(ValueNotifier<DocumentSelection?>? selection) {
+    _selection?.removeListener(_onSelectionChange);
+    _selection = selection;
+    _selection?.addListener(_onSelectionChange);
   }
 
   /// Should be called whenever the [DocumentLayoutResolver] is replaced.
@@ -76,6 +76,7 @@ mixin DocumentSelectionOnFocusMixin<T extends StatefulWidget> on State<T> {
 
   void _onFocusChange() {
     if (!_focusNode!.hasFocus) {
+      _selection?.value = null;
       return;
     }
 
@@ -85,15 +86,15 @@ mixin DocumentSelectionOnFocusMixin<T extends StatefulWidget> on State<T> {
       // We only update the selection when it's null
       // because, when the user taps at the document the selection is
       // already set to the correct position, so we don't override it.
-      if (mounted && _focusNode!.hasFocus && _composer!.selection == null) {
+      if (mounted && _focusNode!.hasFocus && _selection!.value == null) {
         if (_previousSelection != null) {
-          _composer?.selection = _previousSelection;
+          _selection?.value = _previousSelection;
           return;
         }
 
         DocumentPosition? position = _getDocumentLayout?.call().findLastSelectablePosition();
         if (position != null) {
-          _composer?.selection = DocumentSelection.collapsed(
+          _selection?.value = DocumentSelection.collapsed(
             position: position,
           );
         }
@@ -104,8 +105,8 @@ mixin DocumentSelectionOnFocusMixin<T extends StatefulWidget> on State<T> {
   void _onSelectionChange() {
     // We store the last selection so the next time the editor is focused
     // the selection is restored.
-    if (_composer?.selection != null) {
-      _previousSelection = _composer?.selection;
+    if (_selection?.value != null) {
+      _previousSelection = _selection?.value;
     }
   }
 }

@@ -33,6 +33,7 @@ class TextScrollView extends StatefulWidget {
     this.perLineAutoScrollDuration = Duration.zero,
     this.showDebugPaint = false,
     this.textAlign = TextAlign.left,
+    this.padding,
     required this.child,
   }) : super(key: key);
 
@@ -93,6 +94,10 @@ class TextScrollView extends StatefulWidget {
   /// The text alignment within the scrollview.
   final TextAlign textAlign;
 
+  /// Padding placed around the text content of this text field, but within the
+  /// scrollable viewport.
+  final EdgeInsets? padding;
+
   /// The child widget.
   final Widget child;
 
@@ -120,6 +125,8 @@ class _TextScrollViewState extends State<TextScrollView>
     widget.textScrollController
       ..delegate = this
       ..addListener(_onTextScrollChange);
+
+    widget.textEditingController.addListener(_scheduleViewportHeightUpdate);
   }
 
   @override
@@ -136,14 +143,17 @@ class _TextScrollViewState extends State<TextScrollView>
         ..addListener(_onTextScrollChange);
     }
 
+    if (widget.textEditingController != oldWidget.textEditingController) {
+      oldWidget.textEditingController.removeListener(_scheduleViewportHeightUpdate);
+      widget.textEditingController.addListener(_scheduleViewportHeightUpdate);
+
+      _scheduleViewportHeightUpdate();
+    }
+
     if (widget.minLines != oldWidget.minLines ||
         widget.maxLines != oldWidget.maxLines ||
         widget.lineHeight != oldWidget.lineHeight) {
-      // Force a new viewport height calculation.
-      setState(() {
-        _log.fine('Need another viewport height');
-        _needViewportHeight = true;
-      });
+      _scheduleViewportHeightUpdate();
     }
   }
 
@@ -152,6 +162,8 @@ class _TextScrollViewState extends State<TextScrollView>
     widget.textScrollController
       ..delegate = null
       ..removeListener(_onTextScrollChange);
+
+    widget.textEditingController.removeListener(_scheduleViewportHeightUpdate);
 
     super.dispose();
   }
@@ -344,22 +356,32 @@ class _TextScrollViewState extends State<TextScrollView>
       }
     }
 
-    final estimatedContentHeight = linesOfText * estimatedLineHeight;
+    final totalVerticalPadding = widget.padding?.vertical ?? 0.0;
+
+    final estimatedContentHeight = (linesOfText * estimatedLineHeight) + totalVerticalPadding;
     _log.finer(' - estimated content height: $estimatedContentHeight');
 
-    final minHeight = widget.minLines != null
+    final minContentHeight = widget.minLines != null //
         ? widget.minLines! * estimatedLineHeight
-        : estimatedLineHeight; // Can't be shorter than 1 line
-    final maxHeight = widget.maxLines != null //
-        ? widget.maxLines! * estimatedLineHeight //
+        : estimatedLineHeight; // Can't be shorter than 1 line.
+
+    final minHeight = minContentHeight + totalVerticalPadding;
+
+    final maxContentHeight = widget.maxLines != null //
+        ? (widget.maxLines! * estimatedLineHeight) //
         : null;
+
+    final maxHeight = maxContentHeight != null //
+        ? maxContentHeight + totalVerticalPadding
+        : null;
+
     _log.finer(' - minHeight: $minHeight, maxHeight: $maxHeight');
 
     double? viewportHeight;
     if (maxHeight != null && estimatedContentHeight >= maxHeight) {
       _log.finer(' - setting viewport height to maxHeight');
       viewportHeight = maxHeight;
-    } else if (minHeight != null && estimatedContentHeight <= minHeight) {
+    } else if (estimatedContentHeight <= minHeight) {
       _log.finer(' - setting viewport height to minHeight');
       viewportHeight = minHeight;
     }
@@ -370,11 +392,15 @@ class _TextScrollViewState extends State<TextScrollView>
       return false;
     }
 
-    if (viewportHeight == null && isMultiline && !isBounded) {
-      // We don't have a viewport height, but we're multiline and
-      // unbounded so a null viewport height is fine. We'll wrap
-      // the intrinsic height of the text.
-      _log.finer(' - viewport height is null, but TextScrollView is unbounded so that is OK');
+    final wantsUnboundedIntrinsicHeight = viewportHeight == null && isMultiline && !isBounded;
+    final multilineContentFitsMaxHeight =
+        viewportHeight == null && isMultiline && isBounded && estimatedContentHeight <= maxHeight!;
+
+    if (wantsUnboundedIntrinsicHeight || multilineContentFitsMaxHeight) {
+      // We have either an unbounded height or our estimated content height fits inside our max height.
+      // The viewport should expand to fit its content.
+      _log.finer(
+          ' - viewport height is null, but TextScrollView is unbounded or the content fits max height, so that is OK');
       final didChange = viewportHeight != _viewportHeight;
       if (mounted) {
         setState(() {
@@ -421,6 +447,17 @@ class _TextScrollViewState extends State<TextScrollView>
     return _textLayout.getLineCount();
   }
 
+  void _scheduleViewportHeightUpdate() {
+    // The viewport height is calculated using the number of the lines of text.
+    // Therefore, when text changes we need to recalculate the viewport height
+    // to accommodate the new text.
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      if (mounted) {
+        _updateViewportHeight();
+      }
+    });
+  }
+
   /// Returns the [ProseTextLayout] that lays out and renders the
   /// text in this text field.
   ProseTextLayout get _textLayout => widget.textKey.currentState!.textLayout;
@@ -439,7 +476,9 @@ class _TextScrollViewState extends State<TextScrollView>
     }
 
     return Opacity(
-      opacity: (widget.maxLines != null && widget.maxLines! > 1 && _viewportHeight == null) ? 0.0 : 1.0,
+      opacity: (widget.maxLines != null && widget.maxLines! > 1 && _viewportHeight == null && _needViewportHeight)
+          ? 0.0
+          : 1.0,
       child: SizedBox(
         width: double.infinity,
         height: _viewportHeight,
@@ -481,7 +520,10 @@ class _TextScrollViewState extends State<TextScrollView>
         controller: _scrollController,
         physics: const NeverScrollableScrollPhysics(),
         scrollDirection: isMultiline ? Axis.vertical : Axis.horizontal,
-        child: widget.child,
+        child: Padding(
+          padding: widget.padding ?? EdgeInsets.zero,
+          child: widget.child,
+        ),
       ),
     );
   }
@@ -888,7 +930,7 @@ class TextScrollController with ChangeNotifier {
   void _ensureRectIsVisible(Rect rect) {
     assert(_delegate != null);
 
-    _log.finer('Ensuring rect is visible: $rect');   
+    _log.finer('Ensuring rect is visible: $rect');
     if (_delegate!.isMultiline) {
       if (rect.top < 0) {
         // The character is entirely or partially above the top of the viewport.
@@ -902,12 +944,12 @@ class TextScrollController with ChangeNotifier {
         _log.finer(' - updated _scrollOffset to $_scrollOffset');
       }
     } else {
-      if(rect.left < 0) {
+      if (rect.left < 0) {
         // The character is entirely or partially before the start of the viewport.
         // Scroll the content right.
         _scrollOffset = rect.left;
         _log.finer(' - updated _scrollOffset to $_scrollOffset');
-      } else if (rect.right > _delegate!.viewportWidth!){
+      } else if (rect.right > _delegate!.viewportWidth!) {
         // The character is entirely or partially after the end of the viewport.
         // Scroll the content left.
         _scrollOffset = rect.right - _delegate!.viewportWidth!;

@@ -11,7 +11,6 @@ import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/focus.dart';
-import 'package:super_editor/src/infrastructure/platform_detector.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/attributed_text_editing_controller.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/hint_text.dart';
 import 'package:super_text_layout/super_text_layout.dart';
@@ -120,12 +119,14 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
   void initState() {
     super.initState();
 
-    _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
-    _hasFocus = _focusNode.hasFocus;
+    _focusNode = (widget.focusNode ?? FocusNode())..addListener(_updateSelectionOnFocusChange);
 
     _controller = (widget.textController ?? AttributedTextEditingController())
       ..addListener(_onSelectionOrContentChange);
     _scrollController = ScrollController();
+
+    // Check if we need to update the selection.
+    _updateSelectionOnFocusChange();
   }
 
   @override
@@ -133,12 +134,14 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
     super.didUpdateWidget(oldWidget);
 
     if (widget.focusNode != oldWidget.focusNode) {
-      _focusNode.removeListener(_onFocusChange);
+      _focusNode.removeListener(_updateSelectionOnFocusChange);
       if (oldWidget.focusNode == null) {
         _focusNode.dispose();
       }
-      _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
-      _hasFocus = _focusNode.hasFocus;
+      _focusNode = (widget.focusNode ?? FocusNode())..addListener(_updateSelectionOnFocusChange);
+
+      // Check if we need to update the selection.
+      _updateSelectionOnFocusChange();
     }
 
     if (widget.textController != oldWidget.textController) {
@@ -160,7 +163,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
   @override
   void dispose() {
     _scrollController.dispose();
-    _focusNode.removeListener(_onFocusChange);
+    _focusNode.removeListener(_updateSelectionOnFocusChange);
     if (widget.focusNode == null) {
       _focusNode.dispose();
     }
@@ -181,7 +184,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
     _focusNode.requestFocus();
   }
 
-  void _onFocusChange() {
+  void _updateSelectionOnFocusChange() {
     // If our FocusNode just received focus, automatically set our
     // controller's text position to the end of the available content.
     //
@@ -252,7 +255,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
 
   double _getEstimatedLineHeight() {
     // After hot reloading, the text layout might be null, so we can't
-    // directly use _textKey.currentState!.textLayout because using it 
+    // directly use _textKey.currentState!.textLayout because using it
     // we can't check for null.
     final textLayout = RenderSuperTextLayout.textLayoutFrom(_textKey);
     final lineHeight = _controller.text.text.isEmpty || textLayout == null
@@ -717,11 +720,6 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
     return _textLayout.getPositionNearestToOffset(textOffset);
   }
 
-  bool _isTextAtOffset(Offset textFieldOffset) {
-    final textOffset = _getTextOffset(textFieldOffset);
-    return _textLayout.isTextAtOffset(textOffset);
-  }
-
   Offset _getTextOffset(Offset textFieldOffset) {
     final textFieldBox = context.findRenderObject() as RenderBox;
     final textBox = widget.textKey.currentContext!.findRenderObject() as RenderBox;
@@ -1143,22 +1141,6 @@ class SuperTextFieldScrollviewState extends State<SuperTextFieldScrollview> with
     }
   }
 
-  Alignment _getAlignment() {
-    switch (widget.textAlign) {
-      case TextAlign.left:
-      case TextAlign.justify:
-        return Alignment.topLeft;
-      case TextAlign.right:
-        return Alignment.topRight;
-      case TextAlign.center:
-        return Alignment.topCenter;
-      case TextAlign.start:
-        return Directionality.of(context) == TextDirection.ltr ? Alignment.topLeft : Alignment.topRight;
-      case TextAlign.end:
-        return Directionality.of(context) == TextDirection.ltr ? Alignment.topRight : Alignment.topLeft;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return SizedBox(
@@ -1354,7 +1336,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
     if (!keyEvent.isControlPressed) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
-    if (!Platform.instance.isMac) {
+    if (defaultTargetPlatform != TargetPlatform.macOS) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
     if (keyEvent.logicalKey != LogicalKeyboardKey.keyA && keyEvent.logicalKey != LogicalKeyboardKey.keyE) {

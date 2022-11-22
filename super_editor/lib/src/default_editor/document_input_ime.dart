@@ -10,13 +10,14 @@ import 'package:super_editor/src/core/document_editor.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/default_editor/common_editor_operations.dart';
-import 'package:super_editor/src/default_editor/document_gestures_touch_ios.dart';
 import 'package:super_editor/src/default_editor/paragraph.dart';
 import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/ime_input_owner.dart';
+import 'package:super_editor/src/infrastructure/keyboard.dart';
+import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
 
 import 'attributions.dart';
 import 'document_input_keyboard.dart';
@@ -71,7 +72,9 @@ class DocumentImeInteractor extends StatefulWidget {
   State createState() => _DocumentImeInteractorState();
 }
 
-class _DocumentImeInteractorState extends State<DocumentImeInteractor> implements DeltaTextInputClient, ImeInputOwner {
+class _DocumentImeInteractorState extends State<DocumentImeInteractor>
+    with TextInputClient, DeltaTextInputClient
+    implements ImeInputOwner {
   late FocusNode _focusNode;
 
   TextInputConnection? _inputConnection;
@@ -335,6 +338,11 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
   }
 
   @override
+  void performSelector(String selectorName) {
+    // TODO: implement this method starting with Flutter 3.3.4
+  }
+
+  @override
   void performPrivateCommand(String action, Map<String, dynamic> data) {
     // TODO: implement performPrivateCommand
   }
@@ -355,21 +363,6 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
         widget.floatingCursorController?.offset = null;
         break;
     }
-  }
-
-  @override
-  void insertTextPlaceholder(Size size) {
-    // No-op: this is for scribble
-  }
-
-  @override
-  void removeTextPlaceholder() {
-    // No-op: this is for scribble
-  }
-
-  @override
-  void showToolbar() {
-    // No-op: this is for scribble
   }
 
   @override
@@ -498,7 +491,7 @@ class DocumentImeSerializer {
     // the IME would assume that there's no content before the current node and
     // therefore it wouldn't report the backspace button.
     final selectedNode = _doc.getNode(_selection.extent)!;
-    final selectedNodeIndex = _doc.getNodeIndex(selectedNode);
+    final selectedNodeIndex = _doc.getNodeIndexById(selectedNode.id);
     return selectedNodeIndex > 0 &&
         _selection.isCollapsed &&
         _selection.extent.nodePosition == selectedNode.beginningPosition;
@@ -647,16 +640,16 @@ class DocumentImeSerializer {
   /// If there is no text content within the [selection], `null` is returned.
   DocumentSelection? _constrictToTextSelectionEndCaps(DocumentSelection selection) {
     final baseNode = _doc.getNodeById(selection.base.nodeId)!;
-    final baseNodeIndex = _doc.getNodeIndex(baseNode);
+    final baseNodeIndex = _doc.getNodeIndexById(baseNode.id);
     final extentNode = _doc.getNodeById(selection.extent.nodeId)!;
-    final extentNodeIndex = _doc.getNodeIndex(extentNode);
+    final extentNodeIndex = _doc.getNodeIndexById(extentNode.id);
 
     final startNode = baseNodeIndex <= extentNodeIndex ? baseNode : extentNode;
-    final startNodeIndex = _doc.getNodeIndex(startNode);
+    final startNodeIndex = _doc.getNodeIndexById(startNode.id);
     final startPosition =
         baseNodeIndex <= extentNodeIndex ? selection.base.nodePosition : selection.extent.nodePosition;
     final endNode = baseNodeIndex <= extentNodeIndex ? extentNode : baseNode;
-    final endNodeIndex = _doc.getNodeIndex(endNode);
+    final endNodeIndex = _doc.getNodeIndexById(endNode.id);
     final endPosition = baseNodeIndex <= extentNodeIndex ? selection.extent.nodePosition : selection.base.nodePosition;
 
     if (startNodeIndex == endNodeIndex) {
@@ -731,16 +724,16 @@ class DocumentImeSerializer {
   /// so that the IME sends us the delete delta.
   String _getMinimumTextForIME(DocumentSelection selection) {
     final baseNode = _doc.getNodeById(selection.base.nodeId)!;
-    final baseNodeIndex = _doc.getNodeIndex(baseNode);
+    final baseNodeIndex = _doc.getNodeIndexById(baseNode.id);
     final extentNode = _doc.getNodeById(selection.extent.nodeId)!;
-    final extentNodeIndex = _doc.getNodeIndex(extentNode);
+    final extentNodeIndex = _doc.getNodeIndexById(extentNode.id);
 
     final selectionStartNode = baseNodeIndex <= extentNodeIndex ? baseNode : extentNode;
-    final selectionStartNodeIndex = _doc.getNodeIndex(selectionStartNode);
+    final selectionStartNodeIndex = _doc.getNodeIndexById(selectionStartNode.id);
     final startNodeIndex = max(selectionStartNodeIndex - 1, 0);
 
     final selectionEndNode = baseNodeIndex <= extentNodeIndex ? extentNode : baseNode;
-    final selectionEndNodeIndex = _doc.getNodeIndex(selectionEndNode);
+    final selectionEndNodeIndex = _doc.getNodeIndexById(selectionEndNode.id);
     final endNodeIndex = min(selectionEndNodeIndex + 1, _doc.nodes.length - 1);
 
     final buffer = StringBuffer();
@@ -875,6 +868,12 @@ class SoftwareKeyboardHandler {
       return;
     }
 
+    if (delta.textInserted == "\t" && (defaultTargetPlatform == TargetPlatform.iOS)) {
+      // On iOS, tabs pressed at the the software keyboard are reported here.
+      commonOps.indentListItem();
+      return;
+    }
+
     editorImeLog.fine(
         "Inserting text: ${delta.textInserted}, insertion offset: ${delta.insertionOffset}, ime selection: ${delta.selection}");
 
@@ -902,6 +901,12 @@ class SoftwareKeyboardHandler {
       } else {
         editorImeLog.fine("Skipping replacement delta because its a newline");
       }
+      return;
+    }
+
+    if (delta.replacementText == "\t" && (defaultTargetPlatform == TargetPlatform.iOS)) {
+      // On iOS, tabs pressed at the the software keyboard are reported here.
+      commonOps.indentListItem();
       return;
     }
 

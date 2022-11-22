@@ -63,6 +63,7 @@ class SuperTextField extends StatefulWidget {
     this.maxLines = 1,
     this.lineHeight,
     this.keyboardHandlers = defaultTextFieldKeyboardHandlers,
+    this.padding,
   }) : super(key: key);
 
   final FocusNode? focusNode;
@@ -141,6 +142,10 @@ class SuperTextField extends StatefulWidget {
   /// Only used on desktop.
   final List<TextFieldKeyboardHandler> keyboardHandlers;
 
+  /// Padding placed around the text content of this text field, but within the
+  /// scrollable viewport.
+  final EdgeInsets? padding;
+
   @override
   State<SuperTextField> createState() => SuperTextFieldState();
 }
@@ -207,11 +212,11 @@ class SuperTextFieldState extends State<SuperTextField> {
   /// pressing [LogicalKeyboardKey.space] scrolls the scrollview.
   final Map<LogicalKeySet, Intent> _scrollShortcutOverrides = kIsWeb
       ? {
-          LogicalKeySet(LogicalKeyboardKey.space): DoNothingAndStopPropagationIntent(),
-          LogicalKeySet(LogicalKeyboardKey.arrowUp): DoNothingAndStopPropagationIntent(),
-          LogicalKeySet(LogicalKeyboardKey.arrowDown): DoNothingAndStopPropagationIntent(),
-          LogicalKeySet(LogicalKeyboardKey.arrowLeft): DoNothingAndStopPropagationIntent(),
-          LogicalKeySet(LogicalKeyboardKey.arrowRight): DoNothingAndStopPropagationIntent(),
+          LogicalKeySet(LogicalKeyboardKey.space): const DoNothingAndStopPropagationIntent(),
+          LogicalKeySet(LogicalKeyboardKey.arrowUp): const DoNothingAndStopPropagationIntent(),
+          LogicalKeySet(LogicalKeyboardKey.arrowDown): const DoNothingAndStopPropagationIntent(),
+          LogicalKeySet(LogicalKeyboardKey.arrowLeft): const DoNothingAndStopPropagationIntent(),
+          LogicalKeySet(LogicalKeyboardKey.arrowRight): const DoNothingAndStopPropagationIntent(),
         }
       : const <LogicalKeySet, Intent>{};
 
@@ -238,6 +243,7 @@ class SuperTextFieldState extends State<SuperTextField> {
           minLines: widget.minLines,
           maxLines: widget.maxLines,
           keyboardHandlers: widget.keyboardHandlers,
+          padding: widget.padding ?? EdgeInsets.zero,
         );
       case SuperTextFieldPlatformConfiguration.android:
         return Shortcuts(
@@ -257,6 +263,7 @@ class SuperTextFieldState extends State<SuperTextField> {
             maxLines: widget.maxLines,
             lineHeight: widget.lineHeight,
             textInputAction: _isMultiline ? TextInputAction.newline : TextInputAction.done,
+            padding: widget.padding,
           ),
         );
       case SuperTextFieldPlatformConfiguration.iOS:
@@ -277,6 +284,7 @@ class SuperTextFieldState extends State<SuperTextField> {
             maxLines: widget.maxLines,
             lineHeight: widget.lineHeight,
             textInputAction: _isMultiline ? TextInputAction.newline : TextInputAction.done,
+            padding: widget.padding,
           ),
         );
     }

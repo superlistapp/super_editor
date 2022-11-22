@@ -1,6 +1,6 @@
 import 'package:collection/collection.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart';
-import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/styles.dart';
 import 'package:super_editor/src/default_editor/horizontal_rule.dart';
@@ -17,23 +17,23 @@ import '_presenter.dart';
 class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
   SingleColumnLayoutSelectionStyler({
     required Document document,
-    required DocumentComposer composer,
+    required ValueNotifier<DocumentSelection?> selection,
     required SelectionStyles selectionStyles,
   })  : _document = document,
-        _composer = composer,
+        _selection = selection,
         _selectionStyles = selectionStyles {
     // Our styles need to be re-applied whenever the document selection changes.
-    _composer.selectionNotifier.addListener(markDirty);
+    _selection.addListener(markDirty);
   }
 
   @override
   void dispose() {
-    _composer.selectionNotifier.removeListener(markDirty);
+    _selection.removeListener(markDirty);
     super.dispose();
   }
 
   final Document _document;
-  final DocumentComposer _composer;
+  final ValueNotifier<DocumentSelection?> _selection;
 
   SelectionStyles _selectionStyles;
   set selectionStyles(SelectionStyles selectionStyles) {
@@ -59,7 +59,7 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
   @override
   SingleColumnLayoutViewModel style(Document document, SingleColumnLayoutViewModel viewModel) {
     editorStyleLog.info("(Re)calculating selection view model for document layout");
-    editorStyleLog.fine("Applying selection to components: ${_composer.selection}");
+    editorStyleLog.fine("Applying selection to components: ${_selection.value}");
     return SingleColumnLayoutViewModel(
       padding: viewModel.padding,
       componentViewModels: [
@@ -70,7 +70,7 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
   }
 
   SingleColumnLayoutComponentViewModel _applySelection(SingleColumnLayoutComponentViewModel viewModel) {
-    final documentSelection = _composer.selection;
+    final documentSelection = _selection.value;
     final node = _document.getNodeById(viewModel.nodeId)!;
 
     DocumentNodeSelection? nodeSelection;
@@ -106,6 +106,7 @@ class SingleColumnLayoutSelectionStyler extends SingleColumnLayoutStylePhase {
             'ERROR: Building a paragraph component but the selection is not a TextSelection. Node: ${node.id}, Selection: ${nodeSelection.nodeSelection}');
       }
       final showCaret = _shouldDocumentShowCaret && nodeSelection != null ? nodeSelection.isExtent : false;
+      editorStyleLog.fine("Showing caret? $showCaret");
       final highlightWhenEmpty =
           nodeSelection == null ? false : nodeSelection.highlightWhenEmpty && _selectionStyles.highlightEmptyTextBlocks;
 

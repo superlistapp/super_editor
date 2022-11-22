@@ -6,9 +6,7 @@ import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
-import 'package:super_editor/src/infrastructure/platform_detector.dart';
 
-import 'document_input_keyboard.dart';
 import 'paragraph.dart';
 import 'text.dart';
 
@@ -305,7 +303,7 @@ ExecutionInstruction moveToLineStartOrEndWithCtrlAOrE({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
-  if (Platform.instance.isMac) {
+  if (defaultTargetPlatform == TargetPlatform.macOS) {
     return ExecutionInstruction.continueExecution;
   }
 

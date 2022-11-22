@@ -1,3 +1,11 @@
+## [0.1.4+1] - Nov, 2022
+ * Added support for custom Markdown block syntax.
+ * Fix: parsing empty markdown into a document.
+ * Fix: serialization of paragraph alignment, text strikethrough and underline.
+
+## [0.1.4] - Nov, 2022
+ * De-listed because we forgot to upgrade the super_editor dependency
+
 ## [0.1.3] - July, 2022
  * Updated `AttributedText` serialization to use new `AttributionVisitor` API.
  

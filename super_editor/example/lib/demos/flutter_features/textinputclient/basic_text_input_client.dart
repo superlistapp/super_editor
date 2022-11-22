@@ -36,8 +36,7 @@ class _BareBonesTextFieldWithInputClient extends StatefulWidget {
   _BareBonesTextFieldWithInputClientState createState() => _BareBonesTextFieldWithInputClientState();
 }
 
-class _BareBonesTextFieldWithInputClientState extends State<_BareBonesTextFieldWithInputClient>
-    implements TextInputClient {
+class _BareBonesTextFieldWithInputClientState extends State<_BareBonesTextFieldWithInputClient> with TextInputClient {
   final _textKey = GlobalKey<ProseTextState>();
 
   late FocusNode _focusNode;
@@ -167,6 +166,11 @@ class _BareBonesTextFieldWithInputClientState extends State<_BareBonesTextFieldW
   }
 
   @override
+  void performSelector(String selectorName) {
+    // TODO: implement this method starting with Flutter 3.3.4
+  }
+
+  @override
   void performPrivateCommand(String action, Map<String, dynamic> data) {
     print('My TextInputClient: performPrivateCommand() - action: $action, data: $data');
 
@@ -218,21 +222,6 @@ class _BareBonesTextFieldWithInputClientState extends State<_BareBonesTextFieldW
         _floatingCursorCurrentOffset = null;
         break;
     }
-  }
-
-  @override
-  void insertTextPlaceholder(Size size) {
-    // No-op: this is for scribble
-  }
-
-  @override
-  void removeTextPlaceholder() {
-    // No-op: this is for scribble
-  }
-
-  @override
-  void showToolbar() {
-    // No-op: this is for scribble
   }
 
   @override

@@ -4,7 +4,6 @@ import 'package:super_editor/super_editor.dart';
 /// Demo of an [SuperEditor] widget that can lose focus to a nearby
 /// [TextField] to ensure that the [SuperEditor] correctly removes
 /// its caret.
-// TODO: Add widget tests for focus interaction verifications
 class LoseFocusDemo extends StatefulWidget {
   @override
   _LoseFocusDemoState createState() => _LoseFocusDemoState();
@@ -31,7 +30,7 @@ class _LoseFocusDemoState extends State<LoseFocusDemo> {
     return SafeArea(
       child: Column(
         children: [
-          _buildDocSelector(),
+          _buildTextField(),
           Expanded(
             child: SuperEditor(
               editor: _docEditor,
@@ -45,7 +44,7 @@ class _LoseFocusDemoState extends State<LoseFocusDemo> {
     );
   }
 
-  Widget _buildDocSelector() {
+  Widget _buildTextField() {
     return const Padding(
       padding: EdgeInsets.symmetric(horizontal: 48.0),
       child: TextField(

@@ -1,12 +1,8 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:logging/logging.dart';
 import 'package:logging/logging.dart' as logging;
-import 'package:super_editor/src/infrastructure/_logging.dart';
-import 'package:super_editor/src/infrastructure/platform_detector.dart';
-
-import 'src/infrastructure/_platform_test_tools.dart';
+import 'package:super_editor/super_editor.dart';
 
 void groupWithLogging(String description, Level logLevel, Set<logging.Logger> loggers, VoidCallback body) {
   initLoggers(logLevel, loggers);
@@ -15,6 +11,57 @@ void groupWithLogging(String description, Level logLevel, Set<logging.Logger> lo
 
   deactivateLoggers(loggers);
 }
+
+/// A widget test that runs a variant for every desktop platform, e.g.,
+/// Mac, Windows, Linux, and for all [DocumentInputSource]s.
+void testAllInputsOnDesktop(
+  String description,
+  InputModeTesterCallback test, {
+  bool skip = false,
+}) {
+  testWidgetsOnDesktop("$description (keyboard)", (WidgetTester tester) async {
+    await test(tester, inputSource: DocumentInputSource.keyboard);
+  }, skip: skip);
+
+  testWidgetsOnDesktop("$description (IME)", (WidgetTester tester) async {
+    await test(tester, inputSource: DocumentInputSource.ime);
+  }, skip: skip);
+}
+
+/// A widget test that runs as a Mac, and for all [DocumentInputSource]s.
+void testAllInputsOnMac(
+  String description,
+  InputModeTesterCallback test, {
+  bool skip = false,
+}) {
+  testWidgetsOnMac("$description (keyboard)", (WidgetTester tester) async {
+    await test(tester, inputSource: DocumentInputSource.keyboard);
+  }, skip: skip);
+
+  testWidgetsOnMac("$description (IME)", (WidgetTester tester) async {
+    await test(tester, inputSource: DocumentInputSource.ime);
+  }, skip: skip);
+}
+
+/// A widget test that runs a variant for Windows and Linux, and for all [DocumentInputSource]s.
+void testAllInputsOnWindowsAndLinux(
+  String description,
+  InputModeTesterCallback test, {
+  bool skip = false,
+}) {
+  testWidgetsOnWindowsAndLinux("$description (keyboard)", (WidgetTester tester) async {
+    await test(tester, inputSource: DocumentInputSource.keyboard);
+  }, skip: skip);
+
+  testWidgetsOnWindowsAndLinux("$description (IME)", (WidgetTester tester) async {
+    await test(tester, inputSource: DocumentInputSource.ime);
+  }, skip: skip);
+}
+
+typedef InputModeTesterCallback = Future<void> Function(
+  WidgetTester widgetTester, {
+  required DocumentInputSource inputSource,
+});
 
 /// A widget test that runs a variant for every desktop platform, e.g.,
 /// Mac, Windows, Linux.
@@ -89,7 +136,6 @@ void testWidgetsOnMac(
   bool skip = false,
 }) {
   testWidgets(description, (tester) async {
-    Platform.setTestInstance(MacPlatform());
     debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
 
     tester.binding.window
@@ -100,7 +146,6 @@ void testWidgetsOnMac(
       await test(tester);
     } finally {
       debugDefaultTargetPlatformOverride = null;
-      Platform.setTestInstance(null);
     }
   }, skip: skip);
 }
@@ -119,12 +164,11 @@ void testOnMac(
   bool skip = false,
 }) {
   test(description, () {
-    Platform.setTestInstance(MacPlatform());
-
+    debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
     try {
       realTest();
     } finally {
-      Platform.setTestInstance(null);
+      debugDefaultTargetPlatformOverride = null;
     }
   }, skip: skip);
 }
@@ -137,7 +181,6 @@ void testWidgetsOnWindows(
   bool skip = false,
 }) {
   testWidgets(description, (tester) async {
-    Platform.setTestInstance(WindowsPlatform());
     debugDefaultTargetPlatformOverride = TargetPlatform.windows;
 
     tester.binding.window
@@ -148,7 +191,6 @@ void testWidgetsOnWindows(
       await test(tester);
     } finally {
       debugDefaultTargetPlatformOverride = null;
-      Platform.setTestInstance(null);
     }
   }, skip: skip);
 }
@@ -167,12 +209,11 @@ void testOnWindows(
   bool skip = false,
 }) {
   test(description, () {
-    Platform.setTestInstance(WindowsPlatform());
-
+    debugDefaultTargetPlatformOverride = TargetPlatform.windows;
     try {
       realTest();
     } finally {
-      Platform.setTestInstance(null);
+      debugDefaultTargetPlatformOverride = null;
     }
   }, skip: skip);
 }
@@ -185,7 +226,6 @@ void testWidgetsOnLinux(
   bool skip = false,
 }) {
   testWidgets(description, (tester) async {
-    Platform.setTestInstance(LinuxPlatform());
     debugDefaultTargetPlatformOverride = TargetPlatform.linux;
 
     tester.binding.window
@@ -196,7 +236,6 @@ void testWidgetsOnLinux(
       await test(tester);
     } finally {
       debugDefaultTargetPlatformOverride = null;
-      Platform.setTestInstance(null);
     }
   }, skip: skip);
 }
@@ -215,12 +254,11 @@ void testOnLinux(
   bool skip = false,
 }) {
   test(description, () {
-    Platform.setTestInstance(LinuxPlatform());
-
+    debugDefaultTargetPlatformOverride = TargetPlatform.linux;
     try {
       realTest();
     } finally {
-      Platform.setTestInstance(null);
+      debugDefaultTargetPlatformOverride = null;
     }
   }, skip: skip);
 }
@@ -233,14 +271,11 @@ void testWidgetsOnAndroid(
   bool skip = false,
 }) {
   testWidgets(description, (tester) async {
-    Platform.setTestInstance(AndroidPlatform());
     debugDefaultTargetPlatformOverride = TargetPlatform.android;
-
     try {
       await test(tester);
     } finally {
       debugDefaultTargetPlatformOverride = null;
-      Platform.setTestInstance(null);
     }
   }, skip: skip);
 }
@@ -253,14 +288,11 @@ void testWidgetsOnIos(
   bool skip = false,
 }) {
   testWidgets(description, (tester) async {
-    Platform.setTestInstance(IosPlatform());
     debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
-
     try {
       await test(tester);
     } finally {
       debugDefaultTargetPlatformOverride = null;
-      Platform.setTestInstance(null);
     }
   }, skip: skip);
 }

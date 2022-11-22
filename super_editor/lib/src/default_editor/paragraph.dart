@@ -11,7 +11,6 @@ import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
 import 'package:super_editor/src/infrastructure/raw_key_event_extensions.dart';
 
-import 'document_input_keyboard.dart';
 import 'layout_single_column/layout_single_column.dart';
 import 'text_tools.dart';
 

@@ -45,6 +45,7 @@ class SuperIOSTextField extends StatefulWidget {
     this.textInputAction = TextInputAction.done,
     this.popoverToolbarBuilder = _defaultPopoverToolbarBuilder,
     this.showDebugPaint = false,
+    this.padding,
   }) : super(key: key);
 
   /// [FocusNode] attached to this text field.
@@ -126,6 +127,10 @@ class SuperIOSTextField extends StatefulWidget {
   /// Whether to paint debug guides.
   final bool showDebugPaint;
 
+  /// Padding placed around the text content of this text field, but within the
+  /// scrollable viewport.
+  final EdgeInsets? padding;
+
   @override
   State createState() => SuperIOSTextFieldState();
 }
@@ -160,10 +165,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
   @override
   void initState() {
     super.initState();
-    _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
-    if (_focusNode.hasFocus) {
-      _showHandles();
-    }
+    _focusNode = (widget.focusNode ?? FocusNode())..addListener(_updateSelectionAndImeConnectionOnFocusChange);
 
     _textEditingController = (widget.textController ?? ImeAttributedTextEditingController())
       ..addListener(_onTextOrSelectionChange)
@@ -185,6 +187,13 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
     );
 
     WidgetsBinding.instance.addObserver(this);
+
+    if (_focusNode.hasFocus) {
+      // The given FocusNode already has focus, we need to update selection and attach to IME.
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+        _updateSelectionAndImeConnectionOnFocusChange();
+      });
+    }
   }
 
   @override
@@ -192,13 +201,13 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
     super.didUpdateWidget(oldWidget);
 
     if (widget.focusNode != oldWidget.focusNode) {
-      _focusNode.removeListener(_onFocusChange);
+      _focusNode.removeListener(_updateSelectionAndImeConnectionOnFocusChange);
       if (widget.focusNode != null) {
         _focusNode = widget.focusNode!;
       } else {
         _focusNode = FocusNode();
       }
-      _focusNode.addListener(_onFocusChange);
+      _focusNode.addListener(_updateSelectionAndImeConnectionOnFocusChange);
     }
 
     if (widget.textController != oldWidget.textController) {
@@ -264,7 +273,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
       });
     }
 
-    _focusNode.removeListener(_onFocusChange);
+    _focusNode.removeListener(_updateSelectionAndImeConnectionOnFocusChange);
     if (widget.focusNode == null) {
       _focusNode.dispose();
     }
@@ -297,7 +306,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
   @override
   DeltaTextInputClient get imeClient => _textEditingController;
 
-  void _onFocusChange() {
+  void _updateSelectionAndImeConnectionOnFocusChange() {
     if (_focusNode.hasFocus) {
       if (!_textEditingController.isAttachedToIme) {
         _log.info('Attaching TextInputClient to TextInput');
@@ -477,6 +486,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
             lineHeight: widget.lineHeight,
             perLineAutoScrollDuration: const Duration(milliseconds: 100),
             showDebugPaint: widget.showDebugPaint,
+            padding: widget.padding,
             child: ListenableBuilder(
               listenable: _textEditingController,
               builder: (context) {

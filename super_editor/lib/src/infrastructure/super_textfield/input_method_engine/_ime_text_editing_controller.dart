@@ -26,7 +26,8 @@ final _log = imeTextFieldLog;
 /// By default, an [ImeAttributedTextEditingController] is not connected to the platform
 /// IME. To connect to the IME, call `attachToIme`. To detach from the IME, call
 /// `detachFromIme`.
-class ImeAttributedTextEditingController extends AttributedTextEditingController implements DeltaTextInputClient {
+class ImeAttributedTextEditingController extends AttributedTextEditingController
+    with TextInputClient, DeltaTextInputClient {
   ImeAttributedTextEditingController({
     AttributedTextEditingController? controller,
     bool disposeClientController = true,
@@ -314,18 +315,8 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
   }
 
   @override
-  void insertTextPlaceholder(Size size) {
-    // No-op: this is for scribble
-  }
-
-  @override
-  void removeTextPlaceholder() {
-    // No-op: this is for scribble
-  }
-
-  @override
-  void showToolbar() {
-    // No-op: this is for scribble
+  void performSelector(String selectorName) {
+    // TODO: implement this method starting with Flutter 3.3.4
   }
   //------ End TextInputClient -----
 

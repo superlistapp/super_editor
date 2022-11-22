@@ -3,11 +3,37 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
-import 'platform_detector.dart';
+enum ExecutionInstruction {
+  /// The handler has no relation to the key event and
+  /// took no action.
+  ///
+  /// Other handlers should be given a chance to act on
+  /// the key press.
+  continueExecution,
+
+  /// The handler recognized the key event but chose to
+  /// take no action.
+  ///
+  /// No other handler should receive the key event.
+  ///
+  /// The key event **should** bubble up the tree to
+  /// (possibly) be handled by other keyboard/shortcut
+  /// listeners.
+  blocked,
+
+  /// The handler recognized the key event and chose to
+  /// take an action.
+  ///
+  /// No other handler should receive the key event.
+  ///
+  /// The key event **shouldn't** bubble up the tree.
+  haltExecution,
+}
 
 extension PrimaryShortcutKey on RawKeyEvent {
   bool get isPrimaryShortcutKeyPressed =>
-      (Platform.instance.isMac && isMetaPressed) || (!Platform.instance.isMac && isControlPressed);
+      (defaultTargetPlatform == TargetPlatform.macOS && isMetaPressed) ||
+      (defaultTargetPlatform != TargetPlatform.macOS && isControlPressed);
 }
 
 /// Whether the given [character] should be ignored when it's received within

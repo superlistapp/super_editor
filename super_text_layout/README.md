@@ -5,6 +5,8 @@
 
 ---
 
+Flutter lacks a useful mechanism for painting custom decorations around text. If you want to paint custom text selections, highlights, carets, or any other decoration that depends on text layout, then `super_text_layout` is a package you need to use!
+
 ## `SuperTextWithSelection`
 Use the `SuperTextWithSelection` widget when you want to paint text with traditional user selections.
 

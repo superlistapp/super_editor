@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/super_editor.dart';
@@ -8,6 +9,79 @@ import 'document_test_tools.dart';
 
 void main() {
   group("SuperEditor scrolling", () {
+    testWidgetsOnArbitraryDesktop('scrolls document when dragging using the trackpad (downstream)', (tester) async {
+      final scrollController = ScrollController();
+      await tester
+          .createDocument() //
+          .withLongTextContent()
+          .withEditorSize(const Size(300, 300))
+          .withScrollController(scrollController)
+          .pump();
+
+      final document = SuperEditorInspector.findDocument()!;
+      final firstParagraph = document.nodes.first as ParagraphNode;
+
+      final dragGesture = await tester.startDocumentDragFromPosition(
+        from: DocumentPosition(
+          nodeId: firstParagraph.id,
+          nodePosition: firstParagraph.beginningPosition,
+        ),
+        startAlignmentWithinPosition: Alignment.topLeft,
+        deviceKind: PointerDeviceKind.trackpad,
+      );
+
+      // Move a distance big enough to ensure a pan gesture.
+      await dragGesture.moveBy(const Offset(0, kPanSlop));
+      await tester.pump();
+
+      // Drag up.
+      await dragGesture.moveBy(const Offset(0, -300));
+      await tester.pump();
+
+      await tester.endDocumentDragGesture(dragGesture);
+
+      // Ensure the document scrolled down.
+      expect(scrollController.offset, greaterThan(0));
+    });
+
+    testWidgetsOnArbitraryDesktop('scrolls document when dragging using the trackpad (upstream)', (tester) async {
+      final scrollController = ScrollController();
+      await tester
+          .createDocument() //
+          .withLongTextContent()
+          .withEditorSize(const Size(300, 300))
+          .withScrollController(scrollController)
+          .pump();
+
+      final document = SuperEditorInspector.findDocument()!;
+      final lastParagraph = document.nodes.last as ParagraphNode;
+
+      // Jump to the end of the document
+      scrollController.jumpTo(scrollController.position.maxScrollExtent);
+
+      final dragGesture = await tester.startDocumentDragFromPosition(
+        from: DocumentPosition(
+          nodeId: lastParagraph.id,
+          nodePosition: lastParagraph.endPosition,
+        ),
+        startAlignmentWithinPosition: Alignment.bottomRight,
+        deviceKind: PointerDeviceKind.trackpad,
+      );
+
+      // Move a distance big enough to ensure a pan gesture.
+      await dragGesture.moveBy(const Offset(0, kPanSlop));
+      await tester.pump();
+
+      // Drag down.
+      await dragGesture.moveBy(const Offset(0, 300));
+      await tester.pump();
+
+      await tester.endDocumentDragGesture(dragGesture);
+
+      // Ensure the document scrolled up.
+      expect(scrollController.offset, lessThan(scrollController.position.maxScrollExtent));
+    });
+
     testWidgetsOnDesktop("auto-scrolls down", (tester) async {
       const windowSize = Size(800, 600);
       tester.binding.window.physicalSizeTestValue = windowSize;
@@ -70,13 +144,14 @@ void main() {
       // Place the caret at the end of the document, which causes the editor to
       // scroll to the bottom.
       docContext.editContext.composer.updateSelection(
-          DocumentSelection.collapsed(
-            position: DocumentPosition(
-              nodeId: lastParagraph.id,
-              nodePosition: lastParagraph.endPosition,
-            ),
+        DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: lastParagraph.id,
+            nodePosition: lastParagraph.endPosition,
           ),
-          notifyListeners: true);
+        ),
+        notifyListeners: true,
+      );
       docContext.focusNode.requestFocus();
       await tester.pumpAndSettle();
 
@@ -101,7 +176,10 @@ void main() {
         DocumentSelection(
           base: DocumentPosition(
             nodeId: lastParagraph.id,
-            nodePosition: lastParagraph.endPosition,
+            nodePosition: TextNodePosition(
+              offset: lastParagraph.endPosition.offset,
+              affinity: TextAffinity.upstream,
+            ),
           ),
           extent: DocumentPosition(
             nodeId: firstParagraph.id,
@@ -147,6 +225,37 @@ void main() {
         ),
         isTrue,
       );
+    });
+
+    testWidgetsOnDesktop("doesn't auto-scroll for selection changes that aren't user interactions", (tester) async {
+      final scrollController = ScrollController();
+
+      // Pump a editor with a size we know will cause the editor to be scrollable.
+      final testContext = await tester //
+          .createDocument()
+          .withLongTextContent()
+          .withEditorSize(const Size(300, 100))
+          .withScrollController(scrollController)
+          .pump();
+
+      // Select the first paragraph.
+      await tester.placeCaretInParagraph('1', 0);
+
+      // Place the caret at the last paragraph, simulating an event that wasn't initiated by the user.
+      // This paragraph is outside the viewport.
+      testContext.editContext.composer.setSelectionWithReason(
+        const DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: '4',
+            nodePosition: TextNodePosition(offset: 0),
+          ),
+        ),
+        SelectionReason.contentChange,
+      );
+      await tester.pumpAndSettle();
+
+      // Ensure the editor didn't scroll.
+      expect(scrollController.position.pixels, 0.0);
     });
   });
 }

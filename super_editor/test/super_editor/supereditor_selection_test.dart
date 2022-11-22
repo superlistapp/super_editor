@@ -143,7 +143,12 @@ void main() {
       expect(
         selection,
         DocumentSelection(
-          base: DocumentPosition(nodeId: secondParagraphId, nodePosition: const TextNodePosition(offset: 16)),
+          base: DocumentPosition(
+              nodeId: secondParagraphId,
+              nodePosition: const TextNodePosition(
+                offset: 16,
+                affinity: TextAffinity.upstream,
+              )),
           extent: DocumentPosition(nodeId: secondParagraphId, nodePosition: const TextNodePosition(offset: 0)),
         ),
       );
@@ -171,7 +176,12 @@ void main() {
         selection,
         DocumentSelection(
           base: DocumentPosition(nodeId: secondParagraphId, nodePosition: const TextNodePosition(offset: 0)),
-          extent: DocumentPosition(nodeId: secondParagraphId, nodePosition: const TextNodePosition(offset: 16)),
+          extent: DocumentPosition(
+              nodeId: secondParagraphId,
+              nodePosition: const TextNodePosition(
+                offset: 16,
+                affinity: TextAffinity.upstream,
+              )),
         ),
       );
     });
@@ -225,7 +235,10 @@ void main() {
       expect(
         selection,
         DocumentSelection(
-          base: DocumentPosition(nodeId: secondParagraphId, nodePosition: const TextNodePosition(offset: 16)),
+          base: DocumentPosition(
+            nodeId: secondParagraphId,
+            nodePosition: const TextNodePosition(offset: 16, affinity: TextAffinity.upstream),
+          ),
           extent: DocumentPosition(nodeId: firstParagraphId, nodePosition: const TextNodePosition(offset: 0)),
         ),
       );
@@ -254,9 +267,45 @@ void main() {
         selection,
         DocumentSelection(
           base: DocumentPosition(nodeId: firstParagraphId, nodePosition: const TextNodePosition(offset: 0)),
-          extent: DocumentPosition(nodeId: secondParagraphId, nodePosition: const TextNodePosition(offset: 16)),
+          extent: DocumentPosition(
+              nodeId: secondParagraphId,
+              nodePosition: const TextNodePosition(
+                offset: 16,
+                affinity: TextAffinity.upstream,
+              )),
         ),
       );
+    });
+
+    testWidgetsOnAllPlatforms("removes caret when it loses focus", (tester) async {
+      await tester
+          .createDocument()
+          .withLongTextContent()
+          .withCustomWidgetTreeBuilder(
+            (superEditor) => MaterialApp(
+              home: Scaffold(
+                body: Column(
+                  children: [
+                    const TextField(),
+                    Expanded(child: superEditor),
+                  ],
+                ),
+              ),
+            ),
+          )
+          .pump();
+
+      // Place the caret in the document.
+      await tester.placeCaretInParagraph("1", 0);
+
+      // Focus the textfield.
+      await tester.tap(find.byType(TextField));
+      await tester.pumpAndSettle();
+
+      // Ensure that the document doesn't have focus, and isn't displaying a caret.
+      expect(SuperEditorInspector.hasFocus(), isFalse);
+      expect(SuperEditorInspector.findDocumentSelection(), isNull);
+      expect(_caretFinder(), findsNothing); // TODO: move caret finding into inspector
     });
 
     testWidgetsOnAllPlatforms("places caret at end of document upon first editor focus with tab", (tester) async {
@@ -655,6 +704,55 @@ Second Paragraph
 
       // Ensure caret is displayed.
       expect(_caretFinder(), findsOneWidget);
+    });
+
+    test("emits a DocumentSelectionChange when changing selection by the notifier", () async {
+      final composer = DocumentComposer();
+
+      const newSelection = DocumentSelection.collapsed(
+        position: DocumentPosition(
+          nodeId: "1",
+          nodePosition: TextNodePosition(offset: 0),
+        ),
+      );
+
+      // Ensure the stream emits the DocumentSelectionChange.
+      expectLater(
+        composer.selectionChanges,
+        emits(
+          DocumentSelectionChange(
+            selection: newSelection,
+            reason: SelectionReason.userInteraction,
+          ),
+        ),
+      );
+
+      // Update the selection, which should cause the stream to emit a value.
+      composer.selection = newSelection;
+    }, timeout: const Timeout(Duration(milliseconds: 500)));
+
+    test("notifies selectionNotifier when a new DocumentSelection is emitted", () {
+      final composer = DocumentComposer();
+
+      // Holds the selection emitted by the selectionNotifier.
+      DocumentSelection? emittedSelection;
+
+      const newSelection = DocumentSelection.collapsed(
+        position: DocumentPosition(
+          nodeId: "1",
+          nodePosition: TextNodePosition(offset: 0),
+        ),
+      );
+
+      composer.selectionNotifier.addListener(() {
+        emittedSelection = composer.selectionNotifier.value;
+      });
+
+      // Emit a DocumentSelectionChange.
+      composer.setSelectionWithReason(newSelection);
+
+      // Ensure the listener was called and the selection in the selectionNotifier is correct.
+      expect(emittedSelection, newSelection);
     });
   });
 }

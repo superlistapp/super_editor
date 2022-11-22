@@ -154,6 +154,55 @@ void main() {
       );
     });
 
+    testWidgetsOnAllPlatforms('places the caret at the end when tapping beyond the end of the document',
+        (tester) async {
+      final testContext = await tester
+          .createDocument() //
+          .fromMarkdown("This is a text")
+          .withEditorSize(const Size(300, 300))
+          .pump();
+
+      // Tap beyond the end of document with a small margin.
+      // As the document has only one line, this offset is after all the content.
+      await tester.tapAt(tester.getBottomLeft(find.byType(SuperEditor)) - const Offset(0, 10));
+      await tester.pump(kTapMinTime);
+
+      // Ensure selection is at the end of the document.
+      expect(
+        SuperEditorInspector.findDocumentSelection(),
+        DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: testContext.editContext.editor.document.nodes.last.id,
+            nodePosition: const TextNodePosition(offset: 14),
+          ),
+        ),
+      );
+    });
+
+    testWidgetsOnAllPlatforms('places the caret at the beginning when tapping above the start of the content',
+        (tester) async {
+      final testContext = await tester
+          .createDocument() //
+          .withSingleParagraph()
+          .withEditorSize(const Size(300, 300))
+          .pump();
+
+      // Tap above the start of the content a small margin.
+      await tester.tapAt(tester.getTopRight(find.byType(SuperEditor)) - const Offset(10, 0));
+      await tester.pump(kTapMinTime);
+
+      // Ensure selection is at the beginning of the document.
+      expect(
+        SuperEditorInspector.findDocumentSelection(),
+        DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: testContext.editContext.editor.document.nodes.first.id,
+            nodePosition: const TextNodePosition(offset: 0),
+          ),
+        ),
+      );
+    });
+
     testWidgetsOnDesktop(
         "dragging a single component selection above a component selects to the beginning of the component",
         (tester) async {
@@ -343,6 +392,103 @@ spans multiple lines.''',
           ),
         ),
       );
+    });
+
+    testWidgetsOnAllPlatforms("places the caret at the end of a wrapped line when tapping there", (tester) async {
+      // Configure and render a document.
+      await tester
+          .createDocument()
+          .withSingleParagraph()
+          .autoFocus(true)
+          .withEditorSize(const Size(300, 700))
+          .withSelection(
+            const DocumentSelection.collapsed(
+                position: DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: 0))),
+          )
+          .pump();
+      final offset = SuperEditorInspector.findOffsetOfLineBreak('1');
+
+      // Tap to place the at the end of the first line
+      await tester.placeCaretInParagraph("1", offset, affinity: TextAffinity.upstream);
+
+      // Ensure that the document has the expected text caret selection.
+      expect(
+        SuperEditorInspector.findDocumentSelection(),
+        DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: "1",
+            nodePosition: TextNodePosition(offset: offset, affinity: TextAffinity.upstream),
+          ),
+        ),
+      );
+    });
+
+    testWidgetsOnAllPlatforms("places the caret at the beginning of a wrapped line when tapping there", (tester) async {
+      // Configure and render a document.
+      await tester
+          .createDocument()
+          .withSingleParagraph()
+          .autoFocus(true)
+          .withEditorSize(const Size(300, 700))
+          .withSelection(
+            const DocumentSelection.collapsed(
+                position: DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: 0))),
+          )
+          .pump();
+      final offsetOfLineBreak = SuperEditorInspector.findOffsetOfLineBreak('1');
+
+      // Tap to place the at the end of the first line
+      await tester.placeCaretInParagraph("1", offsetOfLineBreak, affinity: TextAffinity.downstream);
+
+      // Ensure that the document has the expected text caret selection.
+      expect(
+        SuperEditorInspector.findDocumentSelection(),
+        DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: "1",
+            nodePosition: TextNodePosition(offset: offsetOfLineBreak, affinity: TextAffinity.downstream),
+          ),
+        ),
+      );
+    });
+
+    testWidgetsOnAndroid('configures default gesture mode (on Android)', (tester) async {
+      await tester //
+          .createDocument()
+          .withSingleParagraph()
+          .pump();
+
+      // Tap to place caret.
+      await tester.placeCaretInParagraph(SuperEditorInspector.findDocument()!.nodes.first.id, 0);
+
+      // Ensure the drag handle is displayed.
+      expect(find.byType(AndroidSelectionHandle), findsOneWidget);
+    });
+
+    testWidgetsOnIos('configures default gesture mode (on iOS)', (tester) async {
+      await tester //
+          .createDocument()
+          .withSingleParagraph()
+          .pump();
+
+      // Tap to place caret.
+      await tester.placeCaretInParagraph(SuperEditorInspector.findDocument()!.nodes.first.id, 0);
+
+      // Ensure the drag handle is displayed.
+      expect(find.byType(IosDocumentTouchEditingControls), findsOneWidget);
+    });
+
+    testWidgetsOnDesktop('configures default gesture mode', (tester) async {
+      await tester //
+          .createDocument()
+          .withSingleParagraph()
+          .pump();
+
+      await tester.placeCaretInParagraph(SuperEditorInspector.findDocument()!.nodes.first.id, 0);
+
+      // Ensure no drag handle is displayed.
+      expect(find.byType(AndroidSelectionHandle), findsNothing);
+      expect(find.byType(IosDocumentTouchEditingControls), findsNothing);
     });
   });
 }

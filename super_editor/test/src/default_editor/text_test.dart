@@ -107,12 +107,12 @@ void main() {
         final editContext = _createEditContext();
 
         // Add a paragraph to the document.
-        (editContext.editor.document).nodes.add(
-              ParagraphNode(
-                id: 'paragraph',
-                text: AttributedText(text: 'This is some text'),
-              ),
-            );
+        (editContext.editor.document as MutableDocument).add(
+          ParagraphNode(
+            id: 'paragraph',
+            text: AttributedText(text: 'This is some text'),
+          ),
+        );
 
         // Select multiple characters in the paragraph
         editContext.composer.updateSelection(
@@ -147,9 +147,9 @@ void main() {
         final editContext = _createEditContext();
 
         // Add a non-text node to the document.
-        (editContext.editor.document).nodes.add(
-              HorizontalRuleNode(id: 'horizontal_rule'),
-            );
+        (editContext.editor.document as MutableDocument).add(
+          HorizontalRuleNode(id: 'horizontal_rule'),
+        );
 
         // Select the horizontal rule node.
         editContext.composer.updateSelection(
@@ -180,12 +180,12 @@ void main() {
         final editContext = _createEditContext();
 
         // Add a paragraph to the document.
-        (editContext.editor.document).nodes.add(
-              ParagraphNode(
-                id: 'paragraph',
-                text: AttributedText(text: 'This is some text'),
-              ),
-            );
+        (editContext.editor.document as MutableDocument).add(
+          ParagraphNode(
+            id: 'paragraph',
+            text: AttributedText(text: 'This is some text'),
+          ),
+        );
 
         // Select multiple characters in the paragraph
         editContext.composer.updateSelection(
@@ -233,12 +233,12 @@ void main() {
         final editContext = _createEditContext();
 
         // Add a paragraph to the document.
-        (editContext.editor.document).nodes.add(
-              ParagraphNode(
-                id: 'paragraph',
-                text: AttributedText(text: 'This is some text'),
-              ),
-            );
+        (editContext.editor.document as MutableDocument).add(
+          ParagraphNode(
+            id: 'paragraph',
+            text: AttributedText(text: 'This is some text'),
+          ),
+        );
 
         // Select multiple characters in the paragraph
         editContext.composer.updateSelection(
@@ -274,12 +274,12 @@ void main() {
         final editContext = _createEditContext();
 
         // Add a paragraph to the document.
-        (editContext.editor.document).nodes.add(
-              ParagraphNode(
-                id: 'paragraph',
-                text: AttributedText(text: 'This is some text'),
-              ),
-            );
+        (editContext.editor.document as MutableDocument).add(
+          ParagraphNode(
+            id: 'paragraph',
+            text: AttributedText(text: 'This is some text'),
+          ),
+        );
 
         // Select multiple characters in the paragraph
         editContext.composer.updateSelection(
@@ -309,6 +309,77 @@ void main() {
           (editContext.editor.document.nodes.first as TextNode).text.text,
           'ßThis is some text',
         );
+      });
+    });
+
+    group('TextNode', () {
+      group('computeSelection', () {
+        test('throws if passed other types of NodePosition', () {
+          final node = TextNode(
+            id: 'text node',
+            text: AttributedText(text: 'text'),
+          );
+          expect(
+            () => node.computeSelection(
+              base: const UpstreamDownstreamNodePosition.upstream(),
+              extent: const UpstreamDownstreamNodePosition.downstream(),
+            ),
+            throwsAssertionError,
+          );
+        });
+
+        test('preserves the affinity of extent', () {
+          final node = TextNode(
+            id: 'text node',
+            text: AttributedText(text: 'text'),
+          );
+
+          final selectionWithUpstream = node.computeSelection(
+            base: const TextNodePosition(
+              offset: 0,
+              affinity: TextAffinity.downstream,
+            ),
+            extent: const TextNodePosition(
+              offset: 3,
+              affinity: TextAffinity.upstream,
+            ),
+          );
+          expect(selectionWithUpstream.affinity, TextAffinity.upstream);
+
+          final selectionWithDownstream = node.computeSelection(
+            base: const TextNodePosition(
+              offset: 0,
+              affinity: TextAffinity.upstream,
+            ),
+            extent: const TextNodePosition(
+              offset: 3,
+              affinity: TextAffinity.downstream,
+            ),
+          );
+          expect(selectionWithDownstream.affinity, TextAffinity.downstream);
+        });
+      });
+    });
+
+    group('TextNodeSelection', () {
+      group('get base', () {
+        test('preserves affinity', () {
+          const selectionWithUpstream = TextNodeSelection.collapsed(offset: 0, affinity: TextAffinity.upstream);
+          expect(selectionWithUpstream.base.affinity, TextAffinity.upstream);
+
+          const selectionWithDownstream = TextNodeSelection.collapsed(offset: 0, affinity: TextAffinity.downstream);
+          expect(selectionWithDownstream.base.affinity, TextAffinity.downstream);
+        });
+      });
+
+      group('get extent', () {
+        test('preserves affinity', () {
+          const selectionWithUpstream = TextNodeSelection.collapsed(offset: 0, affinity: TextAffinity.upstream);
+          expect(selectionWithUpstream.extent.affinity, TextAffinity.upstream);
+
+          const selectionWithDownstream = TextNodeSelection.collapsed(offset: 0, affinity: TextAffinity.downstream);
+          expect(selectionWithDownstream.extent.affinity, TextAffinity.downstream);
+        });
       });
     });
   });

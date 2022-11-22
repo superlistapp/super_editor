@@ -34,7 +34,7 @@ class IOSFloatingCursor extends StatelessWidget {
                 child: Container(
                   width: 2,
                   height: controller.floatingCursorHeight,
-                  color: Colors.red,
+                  color: Colors.red.withOpacity(0.75),
                 ),
               ),
           ],

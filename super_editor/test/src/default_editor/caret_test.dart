@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/src/default_editor/document_gestures_touch_android.dart';
-import 'package:super_editor/src/default_editor/document_gestures_touch_ios.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
+
+import '../../super_editor/document_test_tools.dart';
+import '../../test_tools.dart';
 
 void main() {
   group("SuperEditor", () {
@@ -12,6 +14,81 @@ void main() {
     // is reduced.
     const textPosition = TextPosition(offset: 46);
     final tapPosition = DocumentPosition(nodeId: '1', nodePosition: TextNodePosition(offset: textPosition.offset));
+
+    group('text affinity', () {
+      // Use a relatively small size to make sure we have a line break.
+      const editorSize = Size(400, 400);
+      // Add some minimum buffer to the greater than x and y offset expectations to reduce the chance of false
+      // positives. The x buffer is chosen to be most of the width of the editor, the y to be slightly less than the
+      // height of the rendered caret. If these tests start to fail check the actual offsets reported in the output
+      // and adjust these numbers if necessary.
+      const xExpectBuffer = 300;
+      const yExpectBuffer = 24;
+
+      testWidgetsOnAllPlatforms('upstream and downstream positions render differently at a line break',
+          (WidgetTester tester) async {
+        await tester //
+            .createDocument()
+            .withSingleParagraph()
+            .withEditorSize(editorSize)
+            .pump();
+
+        // Find the coordinates of the caret at the start of the first line.
+        await tester.placeCaretInParagraph('1', 0);
+        final startOfFirstLineCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
+
+        // Find the offset of the first line break.
+        final lineBreakOffset = SuperEditorInspector.findOffsetOfLineBreak('1');
+
+        // Find the coordinates of the caret at the end of the first line (line break offset w/ upstream affinity).
+        await tester.pump(kTapTimeout * 2); // Simulate a pause to avoid a double tap.
+        await tester.placeCaretInParagraph('1', lineBreakOffset, affinity: TextAffinity.upstream);
+        final upstreamCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
+
+        // Find the coordinates of the caret at the start of the second line (line break offset w/ downstream affinity).
+        await tester.pump(kTapTimeout * 2); // Simulate a pause to avoid a double tap.
+        await tester.placeCaretInParagraph('1', lineBreakOffset, affinity: TextAffinity.downstream);
+        final downstreamCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
+
+        // The upstream caret should be at the same y and greater x than the caret at the start of the paragraph.
+        expect(upstreamCaretOffset.dx, greaterThan(startOfFirstLineCaretOffset.dx + xExpectBuffer));
+        expect(upstreamCaretOffset.dy, startOfFirstLineCaretOffset.dy);
+
+        // The downstream caret should be at the same x and greater y than the caret at the start of the paragraph.
+        expect(downstreamCaretOffset.dx, startOfFirstLineCaretOffset.dx);
+        expect(downstreamCaretOffset.dy, greaterThan(startOfFirstLineCaretOffset.dy + yExpectBuffer));
+      });
+
+      testWidgetsOnAllPlatforms('upstream and downstream positions render the same if not at a line break',
+          (WidgetTester tester) async {
+        await tester //
+            .createDocument()
+            .withSingleParagraph()
+            .withEditorSize(editorSize)
+            .pump();
+
+        // Find an offset that is not at a line break, so that the caret should render the same with upstream or
+        // downstream affinity.
+        final textOffset = SuperEditorInspector.findOffsetOfLineBreak('1') - 1;
+
+        // Place the caret at that offset with a downstream affinity.
+        await tester.placeCaretInParagraph('1', textOffset, affinity: TextAffinity.downstream);
+        final downstreamCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
+        final downstreamSelection = SuperEditorInspector.findDocumentSelection();
+
+        // Place the caret at the same offset but with an upstream affinity.
+        await tester.pump(kTapTimeout * 2); // Simulate a pause to avoid a double tap.
+        await tester.placeCaretInParagraph('1', textOffset, affinity: TextAffinity.upstream);
+        final upstreamCaretOffset = SuperEditorInspector.findCaretOffsetInDocument();
+        final upstreamSelection = SuperEditorInspector.findDocumentSelection();
+
+        // Make sure the selection actually changed.
+        expect(downstreamSelection, isNot(upstreamSelection));
+
+        // Make sure that the caret renders at the same location for both upstream and downstream affinities.
+        expect(upstreamCaretOffset, downstreamCaretOffset);
+      });
+    });
 
     group('window resizing', () {
       const screenSizeBigger = Size(1000.0, 400.0);
@@ -295,7 +372,7 @@ Offset _getIosCurrentCaretOffset(WidgetTester tester) {
 Offset _computeExpectedDesktopCaretOffset(WidgetTester tester, TextPosition textPosition) {
   return SuperEditorInspector.calculateOffsetForCaret(DocumentPosition(
     nodeId: "1",
-    nodePosition: TextNodePosition(offset: textPosition.offset),
+    nodePosition: TextNodePosition.fromTextPosition(textPosition),
   ));
 }
 

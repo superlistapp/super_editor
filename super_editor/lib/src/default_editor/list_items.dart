@@ -4,10 +4,10 @@ import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
+import 'package:super_editor/src/infrastructure/keyboard.dart';
 
 import '../core/document.dart';
 import '../core/document_editor.dart';
-import 'document_input_keyboard.dart';
 import 'layout_single_column/layout_single_column.dart';
 import 'paragraph.dart';
 import 'text.dart';
@@ -56,8 +56,12 @@ class ListItemNode extends TextNode {
         super(
           id: id,
           text: text,
-          metadata: metadata,
-        );
+          metadata: metadata ?? {},
+        ) {
+    if (!hasMetadataValue("blockType")) {
+      putMetadataValue("blockType", const NamedAttribution("listItem"));
+    }
+  }
 
   final ListItemType type;
 

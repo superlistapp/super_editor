@@ -5,6 +5,7 @@ import 'package:meta/meta.dart';
 
 import 'attribution.dart';
 import 'logging.dart';
+import 'span_range.dart';
 
 final _log = attributionsLog;
 
@@ -213,6 +214,43 @@ class AttributedSpans {
     }
 
     return matchingAttributionSpans;
+  }
+
+  /// Returns the range about [offset], which is attributed with all given [attributions].
+  ///
+  /// [attributions] must not be empty.
+  SpanRange getAttributedRange(Set<Attribution> attributions, int offset) {
+    if (attributions.isEmpty) {
+      throw Exception('getAttributedRange requires a non empty set of attributions');
+    }
+
+    int? maxStartMarkerOffset;
+    int? minEndMarkerOffset;
+
+    for (final attribution in attributions) {
+      if (!hasAttributionAt(offset, attribution: attribution)) {
+        throw Exception(
+            'Tried to get the attributed range of ($attribution) at offset "$offset" but the given attribution does not exist at that offset.');
+      }
+
+      int startMarkerOffset = _getStartingMarkerAtOrBefore(offset, attribution: attribution)!.offset;
+      int endMarkerOffset = _getEndingMarkerAtOrAfter(offset, attribution: attribution)!.offset;
+
+      if (maxStartMarkerOffset == null || startMarkerOffset > maxStartMarkerOffset) {
+        maxStartMarkerOffset = startMarkerOffset;
+      }
+
+      if (minEndMarkerOffset == null || endMarkerOffset < minEndMarkerOffset) {
+        minEndMarkerOffset = endMarkerOffset;
+      }
+    }
+
+    // Note: maxStartMarkerOffset and minEndMarkerOffset are non-null because we verified
+    // that all desired attributions are present at the given offset.
+    return SpanRange(
+      start: maxStartMarkerOffset!,
+      end: minEndMarkerOffset!,
+    );
   }
 
   /// Finds and returns the nearest [start] marker that appears at or before the
@@ -910,7 +948,7 @@ class AttributedSpans {
       }
     }
 
-    if (collapsedSpans.last.end < contentLength - 1) {
+    if (collapsedSpans.isNotEmpty && collapsedSpans.last.end < contentLength - 1) {
       // The last span committed during the loop does not reach the end of the requested content range. We either ran
       // out of markers or the remaining markers are outside the content range. In both cases the value in currentSpan
       // should already have the correct start, end, and attributions values to cover the remaining content.

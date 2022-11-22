@@ -150,6 +150,7 @@ class ImageComponent extends StatelessWidget {
     required this.imageUrl,
     this.selectionColor = Colors.blue,
     this.selection,
+    this.imageBuilder,
   }) : super(key: key);
 
   final GlobalKey componentKey;
@@ -157,17 +158,32 @@ class ImageComponent extends StatelessWidget {
   final Color selectionColor;
   final UpstreamDownstreamNodeSelection? selection;
 
+  /// Called to obtain the inner image for the given [imageUrl].
+  ///
+  /// This builder is used in tests to 'mock' an [Image], avoiding accessing the network.
+  ///
+  /// If [imageBuilder] is `null` an [Image] is used.
+  final Widget Function(BuildContext context, String imageUrl)? imageBuilder;
+
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: SelectableBox(
-        selection: selection,
-        selectionColor: selectionColor,
-        child: BoxComponent(
-          key: componentKey,
-          child: Image.network(
-            imageUrl,
-            fit: BoxFit.contain,
+    return MouseRegion(
+      cursor: SystemMouseCursors.basic,
+      hitTestBehavior: HitTestBehavior.translucent,
+      child: IgnorePointer(
+        child: Center(
+          child: SelectableBox(
+            selection: selection,
+            selectionColor: selectionColor,
+            child: BoxComponent(
+              key: componentKey,
+              child: imageBuilder != null
+                  ? imageBuilder!(context, imageUrl)
+                  : Image.network(
+                      imageUrl,
+                      fit: BoxFit.contain,
+                    ),
+            ),
           ),
         ),
       ),

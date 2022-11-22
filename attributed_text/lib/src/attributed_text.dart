@@ -142,6 +142,13 @@ class AttributedText {
     );
   }
 
+  /// Returns the range about [offset], which is attributed with all given [attributions].
+  ///
+  /// [attributions] must not be empty.
+  SpanRange getAttributedRange(Set<Attribution> attributions, int offset) {
+    return spans.getAttributedRange(attributions, offset);
+  }
+
   /// Adds the given [attribution] to all characters within the given
   /// [range], inclusive.
   void addAttribution(Attribution attribution, SpanRange range) {

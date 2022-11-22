@@ -34,6 +34,7 @@ abstract class Document {
 
   /// Returns the index of the given [node], or [-1] if the [node]
   /// does not exist within this [Document].
+  @Deprecated("Use getNodeIndexById() instead")
   int getNodeIndex(DocumentNode node);
 
   /// Returns the index of the `DocumentNode` in this `Document` that

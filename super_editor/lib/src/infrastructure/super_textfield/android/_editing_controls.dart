@@ -8,7 +8,7 @@ import 'package:super_editor/src/infrastructure/platforms/android/magnifier.dart
 import 'package:super_editor/src/infrastructure/super_textfield/android/android_textfield.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/attributed_text_editing_controller.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/text_scrollview.dart';
-import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/toolbar_position_delegate.dart';
+import 'package:super_editor/src/infrastructure/toolbar_position_delegate.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
@@ -75,7 +75,7 @@ class AndroidEditingOverlayControls extends StatefulWidget {
   final Widget Function(BuildContext, AndroidEditingOverlayController) popoverToolbarBuilder;
 
   @override
-  _AndroidEditingOverlayControlsState createState() => _AndroidEditingOverlayControlsState();
+  State createState() => _AndroidEditingOverlayControlsState();
 }
 
 class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayControls> with WidgetsBindingObserver {

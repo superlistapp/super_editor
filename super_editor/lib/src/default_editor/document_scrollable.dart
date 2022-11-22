@@ -6,7 +6,7 @@ import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/scrolling_diagnostics/_scrolling_minimap.dart';
 
-import 'document_gestures.dart';
+import '../infrastructure/document_gestures.dart';
 
 /// Scroller for a document.
 ///
@@ -140,7 +140,8 @@ class _DocumentScrollableState extends State<DocumentScrollable> with SingleTick
   /// If this widget doesn't have an ancestor `Scrollable`, then this
   /// widget includes a `ScrollView` and this `State`'s render object
   /// is the viewport `RenderBox`.
-  RenderBox get _viewport => (_findAncestorScrollable(context)?.context.findRenderObject() ?? context.findRenderObject()) as RenderBox;
+  RenderBox get _viewport =>
+      (_findAncestorScrollable(context)?.context.findRenderObject() ?? context.findRenderObject()) as RenderBox;
 
   /// Returns the `ScrollPosition` that controls the scroll offset of
   /// this widget.
@@ -357,6 +358,36 @@ class AutoScrollController with ChangeNotifier {
     scrollPosition.jumpTo(
       (scrollPosition.pixels + delta).clamp(0.0, scrollPosition.maxScrollExtent),
     );
+  }
+
+  /// Animates the scroll position like a ballistic particle with friction, beginning
+  /// with the given [pixelsPerSecond] velocity.
+  void goBallistic(double pixelsPerSecond) {
+    final pos = _getScrollPosition?.call();
+    if (pos == null) {
+      // We're not attached to a scroll position. We can't go ballistic.
+      return;
+    }
+
+    if (pos is ScrollPositionWithSingleContext) {
+      pos.goBallistic(pixelsPerSecond);
+      pos.context.setIgnorePointer(false);
+    }
+  }
+
+  /// Immediately stops scrolling animation/momentum.
+  void goIdle() {
+    final pos = _getScrollPosition?.call();
+    if (pos == null) {
+      // We're not attached to a scroll position. There's nothing to idle.
+      return;
+    }
+
+    if (pos is ScrollPositionWithSingleContext) {
+      if (pos.pixels > pos.minScrollExtent && pos.pixels < pos.maxScrollExtent) {
+        pos.goIdle();
+      }
+    }
   }
 
   /// Immediately changes the attached [Scrollable]'s scroll offset so that all

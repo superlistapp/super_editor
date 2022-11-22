@@ -1,11 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:super_editor/src/core/document.dart';
-import 'package:super_editor/src/core/document_selection.dart';
-import 'package:super_editor/src/default_editor/super_editor.dart';
-import 'package:super_editor/src/default_editor/text.dart';
-import 'package:super_editor/src/infrastructure/focus.dart';
-import 'package:super_editor/src/infrastructure/super_textfield/super_textfield.dart';
+import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 
 import '../super_textfield/super_textfield_inspector.dart';

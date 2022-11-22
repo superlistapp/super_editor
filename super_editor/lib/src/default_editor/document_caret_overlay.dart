@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_text_layout/super_text_layout.dart';
@@ -10,6 +11,7 @@ class CaretDocumentOverlay extends StatefulWidget {
     required this.composer,
     required this.documentLayoutResolver,
     required this.caretStyle,
+    required this.document,
   }) : super(key: key);
 
   /// The editor's [DocumentComposer], which reports the current selection.
@@ -18,6 +20,15 @@ class CaretDocumentOverlay extends StatefulWidget {
   /// Delegate that returns a reference to the editor's [DocumentLayout], so
   /// that the current selection can be mapped to an (x,y) offset and a height.
   final DocumentLayout Function() documentLayoutResolver;
+
+  /// The editor's [Document].
+  ///
+  /// Some operations that affect caret position don't trigger a selection change, e.g.,
+  /// indenting a list item.
+  ///
+  /// We need to listen to all document changes to update the caret position when these
+  /// operations happen.
+  final Document document;
 
   /// The visual style of the caret that this overlay paints.
   final CaretStyle caretStyle;
@@ -34,12 +45,13 @@ class _CaretDocumentOverlayState extends State<CaretDocumentOverlay> with Single
   @override
   void initState() {
     super.initState();
-    widget.composer.selectionNotifier.addListener(_onSelectionChange);
+    widget.composer.selectionNotifier.addListener(_scheduleCaretUpdate);
+    widget.document.addListener(_scheduleCaretUpdate);
     _blinkController = BlinkController(tickerProvider: this)..startBlinking();
 
     // If we already have a selection, we need to display the caret.
     if (widget.composer.selection != null) {
-      _onSelectionChange();
+      _scheduleCaretUpdate();
     }
   }
 
@@ -47,25 +59,32 @@ class _CaretDocumentOverlayState extends State<CaretDocumentOverlay> with Single
   void didUpdateWidget(CaretDocumentOverlay oldWidget) {
     super.didUpdateWidget(oldWidget);
 
+    if (widget.document != oldWidget.document) {
+      oldWidget.document.removeListener(_scheduleCaretUpdate);
+      widget.document.addListener(_scheduleCaretUpdate);
+    }
+
     if (widget.composer != oldWidget.composer) {
-      oldWidget.composer.selectionNotifier.removeListener(_onSelectionChange);
-      widget.composer.selectionNotifier.addListener(_onSelectionChange);
+      oldWidget.composer.selectionNotifier.removeListener(_scheduleCaretUpdate);
+      widget.composer.selectionNotifier.addListener(_scheduleCaretUpdate);
 
       // Selection has changed, we need to update the caret.
       if (widget.composer.selection != oldWidget.composer.selection) {
-        _onSelectionChange();
+        _scheduleCaretUpdate();
       }
     }
   }
 
   @override
   void dispose() {
-    widget.composer.selectionNotifier.removeListener(_onSelectionChange);
+    widget.composer.selectionNotifier.removeListener(_scheduleCaretUpdate);
+    widget.document.removeListener(_scheduleCaretUpdate);
     _blinkController.dispose();
     super.dispose();
   }
 
-  void _onSelectionChange() {
+  /// Schedules a caret update after the current frame.
+  void _scheduleCaretUpdate() {
     // Give the document a frame to update its layout before we lookup
     // the extent offset.
     WidgetsBinding.instance.scheduleFrame();

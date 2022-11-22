@@ -37,7 +37,9 @@ void main() {
         await tester //
             .createDocument() //
             .fromMarkdown('''This is **paragraph 1**.
+
 This is *paragraph 2*.
+
 This is [paragraph 3](https://flutter.dev).''') //
             .forDesktop() //
             .pump();
@@ -45,7 +47,9 @@ This is [paragraph 3](https://flutter.dev).''') //
         expect(
           SuperEditorInspector.findDocument()!,
           equalsMarkdown('''This is **paragraph 1**.
+
 This is *paragraph 2*.
+
 This is [paragraph 3](https://flutter.dev).'''),
         );
       });

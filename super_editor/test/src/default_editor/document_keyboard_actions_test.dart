@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
-import 'package:super_editor/src/infrastructure/platform_detector.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 
@@ -11,7 +10,6 @@ import '../../super_editor/test_documents.dart';
 import '../../test_tools.dart';
 import '../_document_test_tools.dart';
 import '../_text_entry_test_tools.dart';
-import '../infrastructure/_platform_test_tools.dart';
 
 void main() {
   group(
@@ -456,11 +454,9 @@ void main() {
       group(
         'CMD + A to select all',
         () {
-          test(
+          testOnMac(
             'it does nothing when meta key is pressed but A-key is not pressed',
             () {
-              Platform.setTestInstance(MacPlatform());
-
               final editContext = createEditContext(document: MutableDocument());
               var result = selectAllWhenCmdAIsPressed(
                 editContext: editContext,
@@ -477,16 +473,12 @@ void main() {
 
               // The handler should pass on handling the key.
               expect(result, ExecutionInstruction.continueExecution);
-
-              Platform.setTestInstance(null);
             },
           );
 
-          test(
+          testOnMac(
             'it does nothing when A-key is pressed but meta key is not pressed',
             () {
-              Platform.setTestInstance(MacPlatform());
-
               final editContext = createEditContext(document: MutableDocument());
               var result = selectAllWhenCmdAIsPressed(
                 editContext: editContext,
@@ -503,16 +495,12 @@ void main() {
 
               // The handler should pass on handling the key.
               expect(result, ExecutionInstruction.continueExecution);
-
-              Platform.setTestInstance(null);
             },
           );
 
-          test(
+          testOnMac(
             'it does nothing when CMD+A is pressed but the document is empty',
             () {
-              Platform.setTestInstance(MacPlatform());
-
               final editContext = createEditContext(document: MutableDocument());
               var result = selectAllWhenCmdAIsPressed(
                 editContext: editContext,
@@ -528,16 +516,12 @@ void main() {
 
               // The handler should pass on handling the key.
               expect(result, ExecutionInstruction.continueExecution);
-
-              Platform.setTestInstance(null);
             },
           );
 
-          test(
+          testOnMac(
             'it selects all when CMD+A is pressed with a single-node document',
             () {
-              Platform.setTestInstance(MacPlatform());
-
               final editContext = createEditContext(
                 document: MutableDocument(
                   nodes: [
@@ -576,15 +560,11 @@ void main() {
                   nodePosition: TextNodePosition(offset: 'This is some text'.length),
                 ),
               );
-
-              Platform.setTestInstance(null);
             },
           );
-          test(
+          testOnMac(
             'it selects all when CMD+A is pressed with a two-node document',
             () {
-              Platform.setTestInstance(MacPlatform());
-
               final editContext = createEditContext(
                 document: MutableDocument(
                   nodes: [
@@ -627,15 +607,11 @@ void main() {
                   nodePosition: TextNodePosition(offset: 'This is some text'.length),
                 ),
               );
-
-              Platform.setTestInstance(null);
             },
           );
-          test(
+          testOnMac(
             'it selects all when CMD+A is pressed with a three-node document',
             () {
-              Platform.setTestInstance(MacPlatform());
-
               final editContext = createEditContext(
                 document: MutableDocument(
                   nodes: [
@@ -682,17 +658,13 @@ void main() {
                   nodePosition: UpstreamDownstreamNodePosition.downstream(),
                 ),
               );
-
-              Platform.setTestInstance(null);
             },
           );
         },
       );
 
       group('key pressed with selection', () {
-        test('deletes selection if backspace is pressed', () {
-          Platform.setTestInstance(MacPlatform());
-
+        testOnMac('deletes selection if backspace is pressed', () {
           final editContext = createEditContext(
             document: MutableDocument(
               nodes: [
@@ -742,13 +714,9 @@ void main() {
               ),
             ),
           );
-
-          Platform.setTestInstance(null);
         });
 
-        test('deletes selection if delete is pressed', () {
-          Platform.setTestInstance(MacPlatform());
-
+        testOnMac('deletes selection if delete is pressed', () {
           final editContext = createEditContext(
             document: MutableDocument(
               nodes: [
@@ -798,13 +766,9 @@ void main() {
               ),
             ),
           );
-
-          Platform.setTestInstance(null);
         });
 
-        test('deletes selection when character key is pressed', () {
-          Platform.setTestInstance(MacPlatform());
-
+        testOnMac('deletes selection when character key is pressed', () {
           final editContext = createEditContext(
             document: MutableDocument(
               nodes: [
@@ -857,13 +821,9 @@ void main() {
               ),
             ),
           );
-
-          Platform.setTestInstance(null);
         });
 
-        test('collapses selection if escape is pressed', () {
-          Platform.setTestInstance(MacPlatform());
-
+        testOnMac('collapses selection if escape is pressed', () {
           final editContext = createEditContext(
             document: MutableDocument(
               nodes: [
@@ -915,8 +875,6 @@ void main() {
               ),
             ),
           );
-
-          Platform.setTestInstance(null);
         });
       });
 
@@ -962,9 +920,7 @@ void main() {
         });
       });
 
-      test('does nothing when escape is pressed if the selection is collapsed', () {
-        Platform.setTestInstance(MacPlatform());
-
+      testOnMac('does nothing when escape is pressed if the selection is collapsed', () {
         final editContext = createEditContext(
           document: MutableDocument(
             nodes: [
@@ -1013,8 +969,6 @@ void main() {
             ),
           ),
         );
-
-        Platform.setTestInstance(null);
       });
     },
   );

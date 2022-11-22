@@ -361,7 +361,7 @@ class AndroidTextFieldTouchInteractorState extends State<AndroidTextFieldTouchIn
 
     final globalOffset = (context.findRenderObject() as RenderBox).localToGlobal(localOffset);
     final textOffset = (widget.textKey.currentContext!.findRenderObject() as RenderBox).globalToLocal(globalOffset);
-    return _textLayout.getPositionAtOffset(textOffset);
+    return _textLayout.getPositionNearestToOffset(textOffset);
   }
 
   /// Returns a [TextSelection] that selects the word surrounding the given

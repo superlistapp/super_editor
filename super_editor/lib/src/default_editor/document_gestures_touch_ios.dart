@@ -3,23 +3,20 @@ import 'dart:math';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/src/core/document.dart';
-import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/default_editor/document_selection_on_focus_mixin.dart';
 import 'package:super_editor/src/default_editor/text.dart';
+import 'package:super_editor/src/document_operations/selection_operations.dart';
 import 'package:super_editor/src/default_editor/text_tools.dart';
-import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/magnifier.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/selection_handles.dart';
-import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/toolbar_position_delegate.dart';
+import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
-import 'package:super_text_layout/super_text_layout.dart';
 
-import '../../super_editor.dart';
-import 'document_gestures.dart';
+import '../infrastructure/document_gestures.dart';
 import 'document_gestures_touch.dart';
 import 'selection_upstream_downstream.dart';
 
@@ -29,11 +26,10 @@ class IOSDocumentTouchInteractor extends StatefulWidget {
   const IOSDocumentTouchInteractor({
     Key? key,
     required this.focusNode,
-    required this.composer,
     required this.document,
     required this.documentKey,
     required this.getDocumentLayout,
-    required this.commonOps,
+    required this.selection,
     this.scrollController,
     this.dragAutoScrollBoundary = const AxisOffset.symmetric(54),
     required this.handleColor,
@@ -46,11 +42,10 @@ class IOSDocumentTouchInteractor extends StatefulWidget {
 
   final FocusNode focusNode;
 
-  final DocumentComposer composer;
   final Document document;
   final GlobalKey documentKey;
   final DocumentLayout Function() getDocumentLayout;
-  final CommonEditorOperations commonOps;
+  final ValueNotifier<DocumentSelection?> selection;
 
   final ScrollController? scrollController;
 
@@ -113,7 +108,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   double? _dragStartScrollOffset;
   Offset? _globalDragOffset;
   Offset? _dragEndInInteractor;
-  _DragMode? _dragMode;
+  DragMode? _dragMode;
   // TODO: HandleType is the wrong type here, we need collapsed/base/extent,
   //       not collapsed/upstream/downstream. Change the type once it's working.
   HandleType? _dragHandleType;
@@ -145,7 +140,13 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
 
     widget.focusNode.addListener(_onFocusChange);
     if (widget.focusNode.hasFocus) {
-      _showEditingControlsOverlay();
+      // During Hot Reload, the gesture mode could be changed.
+      // If that's the case, initState is called while the Overlay is being
+      // built. This could crash the app. Because of that, we show the editing
+      // controls overlay in the next frame.
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+        _showEditingControlsOverlay();
+      });
     }
 
     _scrollController = _scrollController = (widget.scrollController ?? ScrollController());
@@ -163,17 +164,16 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     );
 
     widget.document.addListener(_onDocumentChange);
-
-    widget.composer.addListener(_onSelectionChange);
+    widget.selection.addListener(_onSelectionChange);
 
     startSyncingSelectionWithFocus(
       focusNode: widget.focusNode,
-      composer: widget.composer,
       getDocumentLayout: widget.getDocumentLayout,
+      selection: widget.selection,
     );
 
     // If we already have a selection, we need to display the caret.
-    if (widget.composer.selection != null) {
+    if (widget.selection.value != null) {
       _onSelectionChange();
     }
 
@@ -219,13 +219,13 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
       widget.document.addListener(_onDocumentChange);
     }
 
-    if (widget.composer != oldWidget.composer) {
-      oldWidget.composer.removeListener(_onSelectionChange);
-      widget.composer.addListener(_onSelectionChange);
-      onDocumentComposerReplaced(widget.composer);
+    if (widget.selection != oldWidget.selection) {
+      oldWidget.selection.removeListener(_onSelectionChange);
+      widget.selection.addListener(_onSelectionChange);
+      onDocumentSelectionNotifierReplaced(widget.selection);
 
       // Selection has changed, we need to update the caret.
-      if (widget.composer.selection != oldWidget.composer.selection) {
+      if (widget.selection.value != oldWidget.selection.value) {
         _onSelectionChange();
       }
     }
@@ -249,7 +249,12 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
       _removeEditingOverlayControls();
 
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-        _showEditingControlsOverlay();
+        // During Hot Reload, the gesture mode could be changed,
+        // so it's possible that we are no longer mounted after
+        // the post frame callback.
+        if (mounted) {
+          _showEditingControlsOverlay();
+        }
       });
     }
   }
@@ -259,8 +264,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     WidgetsBinding.instance.removeObserver(this);
 
     widget.document.removeListener(_onDocumentChange);
-
-    widget.composer.removeListener(_onSelectionChange);
+    widget.selection.removeListener(_onSelectionChange);
 
     _removeEditingOverlayControls();
 
@@ -354,7 +358,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   }
 
   void _updateHandlesAfterSelectionOrLayoutChange() {
-    final newSelection = widget.composer.selection;
+    final newSelection = widget.selection.value;
 
     if (newSelection == null) {
       _editingController
@@ -435,7 +439,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   }
 
   void _onTapUp(TapUpDetails details) {
-    final selection = widget.composer.selection;
+    final selection = widget.selection.value;
     if (selection != null &&
         !selection.isCollapsed &&
         (_isOverBaseHandle(details.localPosition) || _isOverExtentHandle(details.localPosition))) {
@@ -482,8 +486,11 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
         // The user tapped a non-selectable component.
         // Place the document selection at the nearest selectable node
         // to the tapped component.
-        widget.commonOps.moveSelectionToNearestSelectableNode(
-          widget.document.getNodeById(docPosition.nodeId)!,
+        moveSelectionToNearestSelectableNode(
+          document: widget.document,
+          documentLayoutResolver: widget.getDocumentLayout,
+          selection: widget.selection,
+          startingNode: widget.document.getNodeById(docPosition.nodeId)!,
         );
         return;
       } else {
@@ -492,7 +499,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
         _selectPosition(docPosition);
       }
     } else {
-      widget.composer.clearSelection();
+      widget.selection.value = null;
       _editingController.hideToolbar();
     }
 
@@ -502,7 +509,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   }
 
   void _onDoubleTapUp(TapUpDetails details) {
-    final selection = widget.composer.selection;
+    final selection = widget.selection.value;
     if (selection != null &&
         !selection.isCollapsed &&
         (_isOverBaseHandle(details.localPosition) || _isOverExtentHandle(details.localPosition))) {
@@ -521,7 +528,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
         return;
       }
 
-      widget.composer.clearSelection();
+      widget.selection.value = null;
 
       bool didSelectContent = _selectWordAt(
         docPosition: docPosition,
@@ -538,10 +545,10 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
         _selectPosition(docPosition);
       }
     } else {
-      widget.composer.clearSelection();
+      widget.selection.value = null;
     }
 
-    final newSelection = widget.composer.selection;
+    final newSelection = widget.selection.value;
     if (newSelection == null || newSelection.isCollapsed) {
       _editingController.hideToolbar();
     } else {
@@ -558,17 +565,18 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     }
 
     widget.composer.updateSelection(
-        DocumentSelection(
-          base: DocumentPosition(
-            nodeId: position.nodeId,
-            nodePosition: const UpstreamDownstreamNodePosition.upstream(),
-          ),
-          extent: DocumentPosition(
-            nodeId: position.nodeId,
-            nodePosition: const UpstreamDownstreamNodePosition.downstream(),
-          ),
+      DocumentSelection(
+        base: DocumentPosition(
+          nodeId: position.nodeId,
+          nodePosition: const UpstreamDownstreamNodePosition.upstream(),
         ),
-        notifyListeners: true);
+        extent: DocumentPosition(
+          nodeId: position.nodeId,
+          nodePosition: const UpstreamDownstreamNodePosition.downstream(),
+        ),
+      ),
+      notifyListeners: true,
+    );
 
     return true;
   }
@@ -587,7 +595,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
         return;
       }
 
-      widget.composer.clearSelection();
+      widget.selection.value = null;
 
       final didSelectParagraph = _selectParagraphAt(
         docPosition: docPosition,
@@ -599,10 +607,10 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
         _selectPosition(docPosition);
       }
     } else {
-      widget.composer.clearSelection();
+      widget.selection.value = null;
     }
 
-    final selection = widget.composer.selection;
+    final selection = widget.selection.value;
     if (selection == null || selection.isCollapsed) {
       _editingController.hideToolbar();
     } else {
@@ -622,19 +630,19 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     // TODO: to help the user drag handles instead of scrolling, try checking touch
     //       placement during onTapDown, and then pick that up here. I think the little
     //       bit of slop might be the problem.
-    final selection = widget.composer.selection;
+    final selection = widget.selection.value;
     if (selection == null) {
       return;
     }
 
     if (selection.isCollapsed && _isOverCollapsedHandle(details.localPosition)) {
-      _dragMode = _DragMode.collapsed;
+      _dragMode = DragMode.collapsed;
       _dragHandleType = HandleType.collapsed;
     } else if (_isOverBaseHandle(details.localPosition)) {
-      _dragMode = _DragMode.base;
+      _dragMode = DragMode.base;
       _dragHandleType = HandleType.upstream;
     } else if (_isOverExtentHandle(details.localPosition)) {
-      _dragMode = _DragMode.extent;
+      _dragMode = DragMode.extent;
       _dragHandleType = HandleType.downstream;
     } else {
       return;
@@ -670,7 +678,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   }
 
   bool _isOverCollapsedHandle(Offset interactorOffset) {
-    final collapsedPosition = widget.composer.selection?.extent;
+    final collapsedPosition = widget.selection.value?.extent;
     if (collapsedPosition == null) {
       return false;
     }
@@ -683,7 +691,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   }
 
   bool _isOverBaseHandle(Offset interactorOffset) {
-    final basePosition = widget.composer.selection?.base;
+    final basePosition = widget.selection.value?.base;
     if (basePosition == null) {
       return false;
     }
@@ -698,7 +706,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   }
 
   bool _isOverExtentHandle(Offset interactorOffset) {
-    final extentPosition = widget.composer.selection?.extent;
+    final extentPosition = widget.selection.value?.extent;
     if (extentPosition == null) {
       return false;
     }
@@ -751,22 +759,25 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
 
     if (_dragHandleType == HandleType.collapsed) {
       widget.composer.updateSelection(
-          DocumentSelection.collapsed(
-            position: docDragPosition,
-          ),
-          notifyListeners: true);
+        DocumentSelection.collapsed(
+          position: docDragPosition,
+        ),
+        notifyListeners: true,
+      );
     } else if (_dragHandleType == HandleType.upstream) {
       widget.composer.updateSelection(
-          widget.composer.selection!.copyWith(
-            base: docDragPosition,
-          ),
-          notifyListeners: true);
+        widget.composer.selection!.copyWith(
+          base: docDragPosition,
+        ),
+        notifyListeners: true,
+      );
     } else if (_dragHandleType == HandleType.downstream) {
       widget.composer.updateSelection(
-          widget.composer.selection!.copyWith(
-            extent: docDragPosition,
-          ),
-          notifyListeners: true);
+        widget.composer.selection!.copyWith(
+          extent: docDragPosition,
+        ),
+        notifyListeners: true,
+      );
     }
   }
 
@@ -798,7 +809,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     _dragMode = null;
 
     _editingController.hideMagnifier();
-    if (!widget.composer.selection!.isCollapsed) {
+    if (!widget.selection.value!.isCollapsed) {
       _editingController.showToolbar();
       _positionToolbar();
     }
@@ -835,20 +846,21 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
         break;
       case HandleType.upstream:
         basePosition = dragPosition;
-        extentPosition = widget.composer.selection!.extent;
+        extentPosition = widget.selection.value!.extent;
         break;
       case HandleType.downstream:
-        basePosition = widget.composer.selection!.base;
+        basePosition = widget.selection.value!.base;
         extentPosition = dragPosition;
         break;
     }
 
     widget.composer.updateSelection(
-        DocumentSelection(
-          base: basePosition,
-          extent: extentPosition,
-        ),
-        notifyListeners: true);
+      DocumentSelection(
+        base: basePosition,
+        extent: extentPosition,
+      ),
+      notifyListeners: true,
+    );
     editorGesturesLog.fine("Selected region: ${widget.composer.selection}");
   }
 
@@ -863,7 +875,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
         floatingCursorController: widget.floatingCursorController,
         documentLayout: _docLayout,
         document: widget.document,
-        composer: widget.composer,
+        selection: widget.selection,
         handleColor: widget.handleColor,
         onDoubleTapOnCaret: _selectWordAtCaret,
         onTripleTapOnCaret: _selectParagraphAtCaret,
@@ -882,7 +894,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   }
 
   void _positionCaret() {
-    final extentRect = _docLayout.getRectForPosition(widget.composer.selection!.extent)!;
+    final extentRect = _docLayout.getRectForPosition(widget.selection.value!.extent)!;
 
     _editingController.updateCaret(
       top: extentRect.topLeft,
@@ -891,7 +903,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   }
 
   void _positionCollapsedHandle() {
-    final selection = widget.composer.selection;
+    final selection = widget.selection.value;
     if (selection == null) {
       editorGesturesLog.shout("Tried to update collapsed handle offset but there is no document selection");
       return;
@@ -909,7 +921,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   }
 
   void _positionExpandedSelectionHandles() {
-    final selection = widget.composer.selection;
+    final selection = widget.selection.value;
     if (selection == null) {
       editorGesturesLog.shout("Tried to update expanded handle offsets but there is no document selection");
       return;
@@ -953,7 +965,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     Offset toolbarTopAnchor;
     Offset toolbarBottomAnchor;
 
-    final selection = widget.composer.selection!;
+    final selection = widget.selection.value!;
     if (selection.isCollapsed) {
       final extentRectInDoc = _docLayout.getRectForPosition(selection.extent)!;
       selectionRect = Rect.fromPoints(
@@ -1006,7 +1018,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   }
 
   void _selectWordAtCaret() {
-    final docSelection = widget.composer.selection;
+    final docSelection = widget.selection.value;
     if (docSelection == null) {
       return;
     }
@@ -1031,7 +1043,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   }
 
   void _selectParagraphAtCaret() {
-    final docSelection = widget.composer.selection;
+    final docSelection = widget.selection.value;
     if (docSelection == null) {
       return;
     }
@@ -1074,10 +1086,11 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   void _selectPosition(DocumentPosition position) {
     editorGesturesLog.fine("Setting document selection to $position");
     widget.composer.updateSelection(
-        DocumentSelection.collapsed(
-          position: position,
-        ),
-        notifyListeners: true);
+      DocumentSelection.collapsed(
+        position: position,
+      ),
+      notifyListeners: true,
+    );
   }
 
   ScrollableState? _findAncestorScrollable(BuildContext context) {
@@ -1099,9 +1112,20 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   @override
   Widget build(BuildContext context) {
     if (_scrollController.hasClients) {
-      if (scrollPosition != _activeScrollPosition) {
-        _activeScrollPosition = scrollPosition;
-        _activeScrollPosition?.addListener(_onScrollChange);
+      if (_scrollController.positions.length > 1) {
+        // During Hot Reload, if the gesture mode was changed,
+        // the widget might be built while the old gesture interactor
+        // scroller is still attached to the _scrollController.
+        //
+        // Defer adding the listener to the next frame.
+        WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+          setState(() {});
+        });
+      } else {
+        if (scrollPosition != _activeScrollPosition) {
+          _activeScrollPosition = scrollPosition;
+          _activeScrollPosition?.addListener(_onScrollChange);
+        }
       }
     }
 
@@ -1152,19 +1176,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   }
 }
 
-class FloatingCursorController with ChangeNotifier {
-  Offset? get offset => _offset;
-  Offset? _offset;
-  set offset(Offset? newOffset) {
-    if (newOffset == _offset) {
-      return;
-    }
-    _offset = newOffset;
-    notifyListeners();
-  }
-}
-
-enum _DragMode {
+enum DragMode {
   // Dragging the collapsed handle
   collapsed,
   // Dragging the base handle

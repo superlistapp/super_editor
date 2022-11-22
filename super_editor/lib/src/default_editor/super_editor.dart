@@ -3,7 +3,9 @@ import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:flutter/material.dart' hide SelectableText;
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
+import 'package:super_editor/src/core/document_debug_paint.dart';
 import 'package:super_editor/src/core/document_editor.dart';
+import 'package:super_editor/src/core/document_interaction.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/core/styles.dart';
@@ -12,6 +14,7 @@ import 'package:super_editor/src/default_editor/document_gestures_touch_android.
 import 'package:super_editor/src/default_editor/document_gestures_touch_ios.dart';
 import 'package:super_editor/src/default_editor/document_scrollable.dart';
 import 'package:super_editor/src/default_editor/list_items.dart';
+import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
 import 'attributions.dart';
@@ -142,8 +145,8 @@ class SuperEditor extends StatefulWidget {
     this.customStylePhases = const [],
     List<ComponentBuilder>? componentBuilders,
     SelectionStyles? selectionStyle,
-    this.inputSource = DocumentInputSource.keyboard,
-    this.gestureMode = DocumentGestureMode.mouse,
+    this.inputSource,
+    this.gestureMode,
     List<DocumentKeyboardAction>? keyboardActions,
     this.softwareKeyboardHandler,
     this.androidHandleColor,
@@ -207,7 +210,7 @@ class SuperEditor extends StatefulWidget {
   final List<SingleColumnLayoutStylePhase> customStylePhases;
 
   /// The `SuperEditor` input source, e.g., keyboard or Input Method Engine.
-  final DocumentInputSource inputSource;
+  final DocumentInputSource? inputSource;
 
   /// The `SuperEditor` gesture mode, e.g., mouse or touch.
   final DocumentGestureMode? gestureMode;
@@ -263,7 +266,7 @@ class SuperEditor extends StatefulWidget {
   final SoftwareKeyboardHandler? softwareKeyboardHandler;
 
   /// Paints some extra visual ornamentation to help with
-  /// debugging, when true.
+  /// debugging.
   final DebugPaintConfig debugPaint;
 
   @override
@@ -293,6 +296,9 @@ class SuperEditorState extends State<SuperEditor> {
   late EditContext editContext;
   late SoftwareKeyboardHandler _softwareKeyboardHandler;
   final _floatingCursorController = FloatingCursorController();
+
+  @visibleForTesting
+  SingleColumnLayoutPresenter get presenter => _docLayoutPresenter!;
 
   @override
   void initState() {
@@ -403,7 +409,7 @@ class SuperEditorState extends State<SuperEditor> {
 
     _docLayoutSelectionStyler = SingleColumnLayoutSelectionStyler(
       document: document,
-      composer: editContext.composer,
+      selection: editContext.composer.selectionNotifier,
       selectionStyles: widget.selectionStyles,
     );
 
@@ -490,6 +496,23 @@ class SuperEditorState extends State<SuperEditor> {
     }
   }
 
+  /// Returns the [DocumentInputSource] which should be used.
+  ///
+  /// If the `inputSource` is configured, it is used. Otherwise,
+  /// the [DocumentInputSource] is chosen based on the platform.
+  DocumentInputSource get _inputSource {
+    if (widget.inputSource != null) {
+      return widget.inputSource!;
+    }
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+      case TargetPlatform.iOS:
+        return DocumentInputSource.ime;
+      default:
+        return DocumentInputSource.keyboard;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return _buildInputSystem(
@@ -509,7 +532,7 @@ class SuperEditorState extends State<SuperEditor> {
   Widget _buildInputSystem({
     required Widget child,
   }) {
-    switch (widget.inputSource) {
+    switch (_inputSource) {
       case DocumentInputSource.keyboard:
         return DocumentKeyboardInteractor(
           focusNode: _focusNode,
@@ -543,10 +566,9 @@ class SuperEditorState extends State<SuperEditor> {
       case DocumentGestureMode.android:
         return AndroidDocumentTouchInteractor(
           focusNode: _focusNode,
-          composer: editContext.composer,
           document: editContext.editor.document,
           getDocumentLayout: () => editContext.documentLayout,
-          commonOps: editContext.commonOps,
+          selection: editContext.composer.selectionNotifier,
           scrollController: widget.scrollController,
           documentKey: _docLayoutKey,
           handleColor: widget.androidHandleColor ?? Theme.of(context).primaryColor,
@@ -558,10 +580,9 @@ class SuperEditorState extends State<SuperEditor> {
       case DocumentGestureMode.iOS:
         return IOSDocumentTouchInteractor(
           focusNode: _focusNode,
-          composer: editContext.composer,
           document: editContext.editor.document,
           getDocumentLayout: () => editContext.documentLayout,
-          commonOps: editContext.commonOps,
+          selection: editContext.composer.selectionNotifier,
           scrollController: widget.scrollController,
           documentKey: _docLayoutKey,
           handleColor: widget.iOSHandleColor ?? Theme.of(context).primaryColor,
@@ -602,7 +623,10 @@ class SuperEditorState extends State<SuperEditor> {
               Positioned.fill(
                 child: DocumentMouseInteractor(
                   focusNode: _focusNode,
-                  editContext: editContext,
+                  document: editContext.editor.document,
+                  getDocumentLayout: () => editContext.documentLayout,
+                  selectionChanges: editContext.composer.selectionChanges,
+                  selectionNotifier: editContext.composer.selectionNotifier,
                   autoScroller: _autoScrollController,
                   showDebugPaint: widget.debugPaint.gestures,
                   child: const SizedBox(),
@@ -629,32 +653,6 @@ class SuperEditorState extends State<SuperEditor> {
       );
     });
   }
-}
-
-enum DocumentInputSource {
-  keyboard,
-  ime,
-}
-
-enum DocumentGestureMode {
-  mouse,
-  android,
-  iOS,
-}
-
-/// Configures the aspects of the editor that show debug paint.
-class DebugPaintConfig {
-  const DebugPaintConfig({
-    this.scrolling = false,
-    this.gestures = false,
-    this.scrollingMinimapId,
-    this.layout = false,
-  });
-
-  final bool scrolling;
-  final bool gestures;
-  final String? scrollingMinimapId;
-  final bool layout;
 }
 
 /// Builds widgets that are displayed at the same position and size as
@@ -693,6 +691,7 @@ class DefaultCaretOverlayBuilder implements DocumentLayerBuilder {
       composer: editContext.composer,
       documentLayoutResolver: () => editContext.documentLayout,
       caretStyle: caretStyle,
+      document: editContext.editor.document,
     );
   }
 }
