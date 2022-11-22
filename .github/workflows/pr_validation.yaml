@@ -1,7 +1,7 @@
 name: Test project in a PR
 on: [pull_request]
 env:
-  MELOS_VERSION: ^2.5.0
+  MELOS_VERSION: ^2.8.0
 
 jobs:
   test_mac:
