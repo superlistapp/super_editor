@@ -115,6 +115,9 @@ jobs:
       # Download all the packages that the app uses and override internal dependencies
       - run: melos bootstrap --scope=super_text_layout
 
+      # Enforce static analysis
+      - run: flutter analyze
+
       # Run all tests
       - run: flutter test
 
@@ -157,6 +160,9 @@ jobs:
       # Not using Melos here because it tries to call `flutter pub` instead of `dart pub`
       # For now attributed_text doesn't depend on any other packages in the monorepo so it doesn't matter
       - run: dart pub get
+
+      # Enforce static analysis
+      - run: dart analyze
 
       # Run all tests
       - run: dart test
