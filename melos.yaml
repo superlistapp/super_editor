@@ -10,12 +10,12 @@ packages:
 
 command:
   bootstrap:
-   usePubspecOverrides: true
+    usePubspecOverrides: true
 
 scripts:
   analyze:
-   exec: dart analyze .
+    exec: dart analyze .
   test:
-   exec: flutter test -r expanded
-   select-package:
-    dir-exists: test
+    exec: flutter test -r expanded
+    select-package:
+      dir-exists: test
