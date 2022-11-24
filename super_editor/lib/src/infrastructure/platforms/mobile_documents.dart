@@ -5,14 +5,7 @@ import 'package:super_editor/src/infrastructure/document_gestures.dart';
 
 /// Controls the display and position of a magnifier and a floating toolbar.
 class MagnifierAndToolbarController with ChangeNotifier {
-  MagnifierAndToolbarController({
-    required LayerLink magnifierFocalPointLink,
-  }) : _magnifierFocalPointLink = magnifierFocalPointLink;
-
-  /// A `LayerLink` whose top-left corner sits at the location where the
-  /// magnifier should magnify.
-  LayerLink get magnifierFocalPointLink => _magnifierFocalPointLink;
-  final LayerLink _magnifierFocalPointLink;
+  MagnifierAndToolbarController();
 
   /// Whether the magnifier should be displayed.
   bool get shouldDisplayMagnifier => _isMagnifierVisible;

@@ -35,6 +35,7 @@ class IOSDocumentTouchInteractor extends StatefulWidget {
     required this.floatingCursorController,
     this.createOverlayControlsClipper,
     this.showDebugPaint = false,
+    this.toolbarController,
     required this.child,
   }) : super(key: key);
 
@@ -46,6 +47,10 @@ class IOSDocumentTouchInteractor extends StatefulWidget {
   final ValueNotifier<DocumentSelection?> selection;
 
   final ScrollController? scrollController;
+
+  /// [MagnifierAndToolbarController] that governs the display and position of
+  /// the magnifier and the floating toolbar.
+  final MagnifierAndToolbarController? toolbarController;
 
   /// The closest that the user's selection drag gesture can get to the
   /// document boundary before auto-scrolling.
@@ -86,6 +91,10 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   // The alternative case is the one in which this interactor defers to an
   // ancestor scrollable.
   late ScrollController _scrollController;
+
+  /// [MagnifierAndToolbarController] that governs the display and position of
+  /// the magnifier and the floating toolbar.
+  late MagnifierAndToolbarController _toolbarController;
   // The ScrollPosition attached to the _ancestorScrollable.
   ScrollPosition? _ancestorScrollPosition;
   // The actual ScrollPosition that's used for the document layout, either
@@ -156,9 +165,12 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     // TODO: rely solely on a ScrollPosition listener, not a ScrollController listener.
     _scrollController.addListener(_onScrollChange);
 
+    _toolbarController = widget.toolbarController ?? MagnifierAndToolbarController();
+
     _editingController = IosDocumentGestureEditingController(
       documentLayoutLink: _documentLayerLink,
       magnifierFocalPointLink: _magnifierFocalPointLink,
+      toolbarController: _toolbarController,
     );
 
     widget.document.addListener(_onDocumentChange);
@@ -226,6 +238,11 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
       if (widget.selection.value != oldWidget.selection.value) {
         _onSelectionChange();
       }
+    }
+
+    if (widget.toolbarController != oldWidget.toolbarController) {
+      _toolbarController = widget.toolbarController ?? MagnifierAndToolbarController();
+      _editingController.toolbarController = _toolbarController;
     }
 
     if (widget.getDocumentLayout != oldWidget.getDocumentLayout) {

@@ -39,6 +39,7 @@ class AndroidDocumentTouchInteractor extends StatefulWidget {
     required this.popoverToolbarBuilder,
     this.createOverlayControlsClipper,
     this.showDebugPaint = false,
+    this.toolbarController,
     required this.child,
   }) : super(key: key);
 
@@ -50,6 +51,10 @@ class AndroidDocumentTouchInteractor extends StatefulWidget {
   final ValueNotifier<DocumentSelection?> selection;
 
   final ScrollController? scrollController;
+
+  /// [MagnifierAndToolbarController] that governs the display and position of
+  /// the magnifier and the floating toolbar.
+  final MagnifierAndToolbarController? toolbarController;
 
   /// The closest that the user's selection drag gesture can get to the
   /// document boundary before auto-scrolling.
@@ -86,6 +91,10 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   // The alternative case is the one in which this interactor defers to an
   // ancestor scrollable.
   late ScrollController _scrollController;
+
+  /// [MagnifierAndToolbarController] that governs the display and position of
+  /// the magnifier and the floating toolbar.
+  late MagnifierAndToolbarController _toolbarController;
   // The ScrollPosition attached to the _ancestorScrollable, if there's an ancestor
   // Scrollable.
   ScrollPosition? _ancestorScrollPosition;
@@ -144,9 +153,12 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     // TODO: rely solely on a ScrollPosition listener, not a ScrollController listener.
     _scrollController.addListener(_onScrollChange);
 
+    _toolbarController = widget.toolbarController ?? MagnifierAndToolbarController();
+
     _editingController = AndroidDocumentGestureEditingController(
       documentLayoutLink: _documentLayoutLink,
       magnifierFocalPointLink: _magnifierFocalPointLink,
+      toolbarController: _toolbarController,
     );
 
     widget.document.addListener(_onDocumentChange);
@@ -211,6 +223,11 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
     if (widget.getDocumentLayout != oldWidget.getDocumentLayout) {
       onDocumentLayoutResolverReplaced(widget.getDocumentLayout);
+    }
+
+    if (widget.toolbarController != oldWidget.toolbarController) {
+      _toolbarController = widget.toolbarController ?? MagnifierAndToolbarController();
+      _editingController.toolbarController = _toolbarController;
     }
   }
 

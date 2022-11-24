@@ -17,6 +17,7 @@ import 'package:super_editor/src/default_editor/list_items.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
+import '../infrastructure/platforms/mobile_documents.dart';
 import 'attributions.dart';
 import 'blockquote.dart';
 import 'document_caret_overlay.dart';
@@ -92,6 +93,7 @@ class SuperEditor extends StatefulWidget {
     this.createOverlayControlsClipper,
     this.debugPaint = const DebugPaintConfig(),
     this.autofocus = false,
+    this.toolbarController,
   })  : componentBuilders = defaultComponentBuilders,
         keyboardActions = defaultKeyboardActions,
         softwareKeyboardHandler = null,
@@ -123,6 +125,7 @@ class SuperEditor extends StatefulWidget {
     this.createOverlayControlsClipper,
     this.debugPaint = const DebugPaintConfig(),
     this.autofocus = false,
+    this.toolbarController,
   })  : stylesheet = stylesheet ?? defaultStylesheet,
         selectionStyles = selectionStyle ?? defaultSelectionStyle,
         keyboardActions = keyboardActions ?? defaultKeyboardActions,
@@ -157,6 +160,7 @@ class SuperEditor extends StatefulWidget {
     this.documentOverlayBuilders = const [DefaultCaretOverlayBuilder()],
     this.debugPaint = const DebugPaintConfig(),
     this.autofocus = false,
+    this.toolbarController,
   })  : stylesheet = stylesheet ?? defaultStylesheet,
         selectionStyles = selectionStyle ?? defaultSelectionStyle,
         keyboardActions = keyboardActions ?? defaultKeyboardActions,
@@ -177,6 +181,10 @@ class SuperEditor extends StatefulWidget {
   /// `scrollController` is not used if this `SuperEditor` has an ancestor
   /// `Scrollable`.
   final ScrollController? scrollController;
+
+  /// [MagnifierAndToolbarController] that governs the display and position of
+  /// the magnifier and the floating toolbar for Android and iOS.
+  final MagnifierAndToolbarController? toolbarController;
 
   /// [GlobalKey] that's bound to the [DocumentLayout] within
   /// this `SuperEditor`.
@@ -574,6 +582,7 @@ class SuperEditorState extends State<SuperEditor> {
           handleColor: widget.androidHandleColor ?? Theme.of(context).primaryColor,
           popoverToolbarBuilder: widget.androidToolbarBuilder ?? (_) => const SizedBox(),
           createOverlayControlsClipper: widget.createOverlayControlsClipper,
+          toolbarController: widget.toolbarController,
           showDebugPaint: widget.debugPaint.gestures,
           child: documentLayout,
         );
@@ -589,6 +598,7 @@ class SuperEditorState extends State<SuperEditor> {
           popoverToolbarBuilder: widget.iOSToolbarBuilder ?? (_) => const SizedBox(),
           floatingCursorController: _floatingCursorController,
           createOverlayControlsClipper: widget.createOverlayControlsClipper,
+          toolbarController: widget.toolbarController,
           showDebugPaint: widget.debugPaint.gestures,
           child: documentLayout,
         );

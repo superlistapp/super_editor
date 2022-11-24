@@ -36,6 +36,7 @@ class ReadOnlyIOSDocumentTouchInteractor extends StatefulWidget {
     required this.handleColor,
     required this.popoverToolbarBuilder,
     this.createOverlayControlsClipper,
+    this.toolbarController,
     this.showDebugPaint = false,
     required this.child,
   }) : super(key: key);
@@ -48,6 +49,10 @@ class ReadOnlyIOSDocumentTouchInteractor extends StatefulWidget {
   final ValueNotifier<DocumentSelection?> selection;
 
   final ScrollController? scrollController;
+
+  /// [MagnifierAndToolbarController] that governs the display and position of
+  /// the magnifier and the floating toolbar.
+  final MagnifierAndToolbarController? toolbarController;
 
   /// The closest that the user's selection drag gesture can get to the
   /// document boundary before auto-scrolling.
@@ -125,6 +130,10 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
   // avoid handling gestures while we are `_waitingForMoreTaps`.
   bool _waitingForMoreTaps = false;
 
+  /// [MagnifierAndToolbarController] that governs the display and position of
+  /// the magnifier and the floating toolbar.
+  late MagnifierAndToolbarController _toolbarController;
+
   @override
   void initState() {
     super.initState();
@@ -150,9 +159,12 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
     // TODO: rely solely on a ScrollPosition listener, not a ScrollController listener.
     _scrollController.addListener(_onScrollChange);
 
+    _toolbarController = widget.toolbarController ?? MagnifierAndToolbarController();
+
     _editingController = IosDocumentGestureEditingController(
       documentLayoutLink: _documentLayerLink,
       magnifierFocalPointLink: _magnifierFocalPointLink,
+      toolbarController: _toolbarController,
     );
 
     widget.document.addListener(_onDocumentChange);
@@ -202,6 +214,11 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
     if (widget.document != oldWidget.document) {
       oldWidget.document.removeListener(_onDocumentChange);
       widget.document.addListener(_onDocumentChange);
+    }
+
+    if (widget.toolbarController != oldWidget.toolbarController) {
+      _toolbarController = widget.toolbarController ?? MagnifierAndToolbarController();
+      _editingController.toolbarController = _toolbarController;
     }
 
     if (widget.selection != oldWidget.selection) {

@@ -477,12 +477,23 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
 /// Controls the display of drag handles, a magnifier, and a
 /// floating toolbar, assuming iOS-style behavior for the
 /// handles.
-class IosDocumentGestureEditingController extends MagnifierAndToolbarController {
+class IosDocumentGestureEditingController extends ChangeNotifier {
   IosDocumentGestureEditingController({
     required LayerLink documentLayoutLink,
     required LayerLink magnifierFocalPointLink,
+    required MagnifierAndToolbarController toolbarController,
   })  : _documentLayoutLink = documentLayoutLink,
-        super(magnifierFocalPointLink: magnifierFocalPointLink);
+        _magnifierFocalPointLink = magnifierFocalPointLink,
+        _toolbarController = toolbarController,
+        super() {
+    _toolbarController.addListener(_toolbarChanged);
+  }
+
+  @override
+  void dispose() {
+    _toolbarController.removeListener(_toolbarChanged);
+    super.dispose();
+  }
 
   /// Layer link that's aligned to the top-left corner of the document layout.
   ///
@@ -493,6 +504,11 @@ class IosDocumentGestureEditingController extends MagnifierAndToolbarController 
   /// document layout.
   LayerLink get documentLayoutLink => _documentLayoutLink;
   final LayerLink _documentLayoutLink;
+
+  /// A `LayerLink` whose top-left corner sits at the location where the
+  /// magnifier should magnify.
+  LayerLink get magnifierFocalPointLink => _magnifierFocalPointLink;
+  final LayerLink _magnifierFocalPointLink;
 
   /// Whether or not a caret should be displayed.
   bool get hasCaret => caretTop != null;
@@ -509,6 +525,17 @@ class IosDocumentGestureEditingController extends MagnifierAndToolbarController 
   /// The height of the caret, or `null` if no caret should be displayed.
   double? get caretHeight => _caretHeight;
   double? _caretHeight;
+
+  /// Controls the magnifier and the toolbar.
+  MagnifierAndToolbarController get toolbarController => _toolbarController;
+  late MagnifierAndToolbarController _toolbarController;
+  set toolbarController(MagnifierAndToolbarController value) {
+    if (_toolbarController != value) {
+      _toolbarController.removeListener(_toolbarChanged);
+      _toolbarController = value;
+      _toolbarController.addListener(_toolbarChanged);
+    }
+  }
 
   /// Updates the caret's size and position.
   ///
@@ -598,6 +625,75 @@ class IosDocumentGestureEditingController extends MagnifierAndToolbarController 
       _downstreamHandleOffset = offset;
       notifyListeners();
     }
+  }
+
+  /// Whether the toolbar currently has a designated display position.
+  ///
+  /// The toolbar should not be displayed if this is `false`, even if
+  /// [shouldDisplayToolbar] is `true`.
+  bool get isToolbarPositioned => _toolbarController.isToolbarPositioned;
+
+  /// Whether the toolbar should be displayed.
+  bool get shouldDisplayToolbar => _toolbarController.shouldDisplayToolbar;
+
+  /// Whether the magnifier should be displayed.
+  bool get shouldDisplayMagnifier => _toolbarController.shouldDisplayMagnifier;
+
+  /// The point about which the floating toolbar should focus, when the toolbar
+  /// appears above the selected content.
+  ///
+  /// It's the clients responsibility to determine whether there's room for the
+  /// toolbar above this point. If not, use [toolbarBottomAnchor].
+  Offset? get toolbarTopAnchor => _toolbarController.toolbarTopAnchor;
+
+  /// The point about which the floating toolbar should focus, when the toolbar
+  /// appears below the selected content.
+  ///
+  /// It's the clients responsibility to determine whether there's room for the
+  /// toolbar below this point. If not, use [toolbarTopAnchor].
+  Offset? get toolbarBottomAnchor => _toolbarController.toolbarBottomAnchor;
+
+  /// Shows the toolbar, and hides the magnifier.
+  void showToolbar() {
+    _toolbarController.showToolbar();
+  }
+
+  /// Hides the toolbar.
+  void hideToolbar() {
+    _toolbarController.hideToolbar();
+  }
+
+  /// Shows the magnify, and hides the toolbar.
+  void showMagnifier() {
+    _toolbarController.showMagnifier();
+  }
+
+  /// Hides the magnifier.
+  void hideMagnifier() {
+    _toolbarController.hideMagnifier();
+  }
+
+  /// Toggles the toolbar from visible to not visible, or vis-a-versa.
+  void toggleToolbar() {
+    _toolbarController.toggleToolbar();
+  }
+
+  /// Sets the toolbar's position to the given [topAnchor] and [bottomAnchor].
+  ///
+  /// Setting the position will not cause the toolbar to be displayed on it's own.
+  /// To display the toolbar, call [showToolbar], too.
+  void positionToolbar({
+    required Offset topAnchor,
+    required Offset bottomAnchor,
+  }) {
+    _toolbarController.positionToolbar(
+      topAnchor: topAnchor,
+      bottomAnchor: bottomAnchor,
+    );
+  }
+
+  void _toolbarChanged() {
+    notifyListeners();
   }
 }
 

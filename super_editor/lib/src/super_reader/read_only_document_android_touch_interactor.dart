@@ -36,6 +36,7 @@ class ReadOnlyAndroidDocumentTouchInteractor extends StatefulWidget {
     required this.popoverToolbarBuilder,
     this.createOverlayControlsClipper,
     this.showDebugPaint = false,
+    this.toolbarController,
     required this.child,
   }) : super(key: key);
 
@@ -68,6 +69,10 @@ class ReadOnlyAndroidDocumentTouchInteractor extends StatefulWidget {
   /// will be allowed to appear anywhere in the overlay in which they sit
   /// (probably the entire screen).
   final CustomClipper<Rect> Function(BuildContext overlayContext)? createOverlayControlsClipper;
+
+  /// [MagnifierAndToolbarController] that governs the display and position of
+  /// the magnifier and the floating toolbar.
+  final MagnifierAndToolbarController? toolbarController;
 
   final bool showDebugPaint;
 
@@ -106,6 +111,10 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
   Offset? _dragEndInInteractor;
   SelectionHandleType? _handleType;
 
+  /// [MagnifierAndToolbarController] that governs the display and position of
+  /// the magnifier and the floating toolbar.
+  late MagnifierAndToolbarController _toolbarController;
+
   @override
   void initState() {
     super.initState();
@@ -136,9 +145,12 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
     // TODO: rely solely on a ScrollPosition listener, not a ScrollController listener.
     _scrollController.addListener(_onScrollChange);
 
+    _toolbarController = widget.toolbarController ?? MagnifierAndToolbarController();
+
     _editingController = AndroidDocumentGestureEditingController(
       documentLayoutLink: _documentLayoutLink,
       magnifierFocalPointLink: _magnifierFocalPointLink,
+      toolbarController: _toolbarController,
     );
 
     widget.document.addListener(_onDocumentChange);
@@ -186,6 +198,11 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
     if (widget.selection != oldWidget.selection) {
       oldWidget.selection.removeListener(_onSelectionChange);
       widget.selection.addListener(_onSelectionChange);
+    }
+
+    if (widget.toolbarController != oldWidget.toolbarController) {
+      _toolbarController = widget.toolbarController ?? MagnifierAndToolbarController();
+      _editingController.toolbarController = _toolbarController;
     }
 
     // Selection has changed, we need to update the caret.
