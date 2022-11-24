@@ -1,7 +1,6 @@
 import 'dart:math';
 
 import 'package:collection/collection.dart';
-import 'package:flutter/painting.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
@@ -62,7 +61,7 @@ class DocumentEditor {
     }
 
     // Add the command that we're processing to the stack. One command might run other commands. We
-    // track them in a stack so that we can emit change notifications at one time.
+    // track them in a stack so that we can emit change notifications all at once.
     _commandsBeingProcessed.add(command);
 
     // Run the command.
@@ -70,6 +69,7 @@ class DocumentEditor {
     _changeList.addAll(changes);
 
     // Now that our command is done, remove it from the stack.
+    // TODO: is it correct to remove the last command? If other commands are added, then ours is somwhere in the middle...
     _commandsBeingProcessed.removeLast();
 
     // If we ran the root command, it's now complete. Notify listeners.
@@ -85,7 +85,7 @@ class DocumentEditor {
       // TODO: move this notification outside DocumentEditor
       if (_changeList.whereType<SelectionChangeEvent>().isNotEmpty) {
         final composer = context.find<DocumentComposer>("composer");
-        composer.notifySelectionListeners();
+        composer.selectionComponent.notifySelectionListeners();
       }
 
       _changeList.clear();
@@ -154,7 +154,9 @@ class MutableDocument implements Document {
   /// if provided, or empty content otherwise.
   MutableDocument({
     List<DocumentNode>? nodes,
-  }) : _nodes = nodes ?? [];
+  }) : _nodes = nodes ?? [] {
+    _refreshNodeIdCaches();
+  }
 
   void dispose() {
     _listeners.clear();
@@ -254,8 +256,9 @@ class MutableDocument implements Document {
 
   /// Inserts the given [node] into the [Document] at the given [index].
   void insertNodeAt(int index, DocumentNode node) {
-    if (index <= nodes.length) {
-      nodes.insert(index, node);
+    if (index <= _nodes.length) {
+      _nodes.insert(index, node);
+      _refreshNodeIdCaches();
     }
   }
 
@@ -264,8 +267,9 @@ class MutableDocument implements Document {
     required DocumentNode existingNode,
     required DocumentNode newNode,
   }) {
-    final nodeIndex = nodes.indexOf(existingNode);
-    nodes.insert(nodeIndex, newNode);
+    final nodeIndex = _nodes.indexOf(existingNode);
+    _nodes.insert(nodeIndex, newNode);
+    _refreshNodeIdCaches();
   }
 
   /// Inserts [newNode] immediately after the given [existingNode].
@@ -273,27 +277,26 @@ class MutableDocument implements Document {
     required DocumentNode existingNode,
     required DocumentNode newNode,
   }) {
-    final nodeIndex = nodes.indexOf(existingNode);
-    if (nodeIndex >= 0 && nodeIndex < nodes.length) {
-      nodes.insert(nodeIndex + 1, newNode);
+    final nodeIndex = _nodes.indexOf(existingNode);
+    if (nodeIndex >= 0 && nodeIndex < _nodes.length) {
+      _nodes.insert(nodeIndex + 1, newNode);
+      _refreshNodeIdCaches();
     }
   }
 
   /// Adds [node] to the end of the document.
   void add(DocumentNode node) {
     _nodes.insert(_nodes.length, node);
-    node.addListener(_forwardNodeChange);
 
     // The node list changed, we need to update the map to consider the new indices.
     _refreshNodeIdCaches();
-
-    notifyListeners();
   }
 
   /// Deletes the node at the given [index].
   void deleteNodeAt(int index) {
-    if (index >= 0 && index < nodes.length) {
-      nodes.removeAt(index);
+    if (index >= 0 && index < _nodes.length) {
+      _nodes.removeAt(index);
+      _refreshNodeIdCaches();
     } else {
       editorDocLog.warning('Could not delete node. Index out of range: $index');
     }
@@ -303,7 +306,10 @@ class MutableDocument implements Document {
   bool deleteNode(DocumentNode node) {
     bool isRemoved = false;
 
-    isRemoved = nodes.remove(node);
+    isRemoved = _nodes.remove(node);
+    if (isRemoved) {
+      _refreshNodeIdCaches();
+    }
 
     return isRemoved;
   }
@@ -318,8 +324,9 @@ class MutableDocument implements Document {
       throw Exception('Could not find node with nodeId: $nodeId');
     }
 
-    if (nodes.remove(node)) {
-      nodes.insert(targetIndex, node);
+    if (_nodes.remove(node)) {
+      _nodes.insert(targetIndex, node);
+      _refreshNodeIdCaches();
     }
   }
 
@@ -333,6 +340,7 @@ class MutableDocument implements Document {
     if (index != -1) {
       _nodes.removeAt(index);
       _nodes.insert(index, newNode);
+      _refreshNodeIdCaches();
     } else {
       throw Exception('Could not find oldNode: ${oldNode.id}');
     }

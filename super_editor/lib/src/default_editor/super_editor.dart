@@ -337,7 +337,7 @@ class SuperEditorState extends State<SuperEditor> {
       // The content displayed in this Editor was switched
       // out. Remove any content selection from the previous
       // document.
-      _composer.updateSelection(null, notifyListeners: true);
+      _composer.selectionComponent.updateSelection(null, notifyListeners: true);
     }
     if (widget.focusNode != oldWidget.focusNode) {
       _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
@@ -409,7 +409,7 @@ class SuperEditorState extends State<SuperEditor> {
 
     _docLayoutSelectionStyler = SingleColumnLayoutSelectionStyler(
       document: document,
-      selection: editContext.composer.selectionNotifier,
+      selection: editContext.composer.selectionComponent.selectionNotifier,
       selectionStyles: widget.selectionStyles,
     );
 
@@ -439,23 +439,23 @@ class SuperEditorState extends State<SuperEditor> {
   }
 
   void _updateComposerPreferencesAtSelection() {
-    if (_composer.selection?.extent == _previousSelectionExtent) {
+    if (_composer.selectionComponent.selection?.extent == _previousSelectionExtent) {
       return;
     }
-    _previousSelectionExtent = _composer.selection?.extent;
+    _previousSelectionExtent = _composer.selectionComponent.selection?.extent;
 
     _composer.preferences.clearStyles();
 
-    if (_composer.selection == null || !_composer.selection!.isCollapsed) {
+    if (_composer.selectionComponent.selection == null || !_composer.selectionComponent.selection!.isCollapsed) {
       return;
     }
 
-    final node = widget.editor.document.getNodeById(_composer.selection!.extent.nodeId);
+    final node = widget.editor.document.getNodeById(_composer.selectionComponent.selection!.extent.nodeId);
     if (node is! TextNode) {
       return;
     }
 
-    final textPosition = _composer.selection!.extent.nodePosition as TextPosition;
+    final textPosition = _composer.selectionComponent.selection!.extent.nodePosition as TextPosition;
 
     if (textPosition.offset == 0) {
       if (node.text.text.isEmpty) {
@@ -568,7 +568,7 @@ class SuperEditorState extends State<SuperEditor> {
           focusNode: _focusNode,
           document: editContext.editor.document,
           getDocumentLayout: () => editContext.documentLayout,
-          selection: editContext.composer.selectionNotifier,
+          selection: editContext.composer.selectionComponent.selectionNotifier,
           scrollController: widget.scrollController,
           documentKey: _docLayoutKey,
           handleColor: widget.androidHandleColor ?? Theme.of(context).primaryColor,
@@ -582,7 +582,7 @@ class SuperEditorState extends State<SuperEditor> {
           focusNode: _focusNode,
           document: editContext.editor.document,
           getDocumentLayout: () => editContext.documentLayout,
-          selection: editContext.composer.selectionNotifier,
+          selection: editContext.composer.selectionComponent.selectionNotifier,
           scrollController: widget.scrollController,
           documentKey: _docLayoutKey,
           handleColor: widget.iOSHandleColor ?? Theme.of(context).primaryColor,
@@ -625,8 +625,7 @@ class SuperEditorState extends State<SuperEditor> {
                   focusNode: _focusNode,
                   document: editContext.editor.document,
                   getDocumentLayout: () => editContext.documentLayout,
-                  selectionChanges: editContext.composer.selectionChanges,
-                  selectionNotifier: editContext.composer.selectionNotifier,
+                  selectionComponent: editContext.composer.selectionComponent,
                   autoScroller: _autoScrollController,
                   showDebugPaint: widget.debugPaint.gestures,
                   child: const SizedBox(),

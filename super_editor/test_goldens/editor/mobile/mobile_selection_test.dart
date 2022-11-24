@@ -65,7 +65,7 @@ void main() {
             // Even though this is a golden test, we verify the final selection
             // to make it easier to spot rendering problems vs selection problems.
             expect(
-              composer.selection,
+              composer.selectionComponent.selection,
               const DocumentSelection.collapsed(
                 position: DocumentPosition(
                   nodeId: "1",
@@ -113,7 +113,7 @@ void main() {
             // Even though this is a golden test, we verify the final selection
             // to make it easier to spot rendering problems vs selection problems.
             expect(
-              composer.selection,
+              composer.selectionComponent.selection,
               const DocumentSelection.collapsed(
                 position: DocumentPosition(
                   nodeId: "1",
@@ -143,7 +143,7 @@ void main() {
             // Even though this is a golden test, we verify the final selection
             // to make it easier to spot rendering problems vs selection problems.
             expect(
-              composer.selection,
+              composer.selectionComponent.selection,
               const DocumentSelection(
                 base: DocumentPosition(
                   nodeId: "1",
@@ -177,7 +177,7 @@ void main() {
             // Even though this is a golden test, we verify the final selection
             // to make it easier to spot rendering problems vs selection problems.
             expect(
-              composer.selection,
+              composer.selectionComponent.selection,
               const DocumentSelection(
                 base: DocumentPosition(
                   nodeId: "1",
@@ -230,7 +230,7 @@ void main() {
             // Even though this is a golden test, we verify the final selection
             // to make it easier to spot rendering problems vs selection problems.
             expect(
-              composer.selection,
+              composer.selectionComponent.selection,
               const DocumentSelection(
                 base: DocumentPosition(
                   nodeId: "1",
@@ -282,7 +282,7 @@ void main() {
             // Even though this is a golden test, we verify the final selection
             // to make it easier to spot rendering problems vs selection problems.
             expect(
-              composer.selection,
+              composer.selectionComponent.selection,
               const DocumentSelection(
                 base: DocumentPosition(
                   nodeId: "1",
@@ -334,7 +334,7 @@ void main() {
             // Even though this is a golden test, we verify the final selection
             // to make it easier to spot rendering problems vs selection problems.
             expect(
-              composer.selection,
+              composer.selectionComponent.selection,
               const DocumentSelection(
                 base: DocumentPosition(
                   nodeId: "1",
@@ -370,7 +370,7 @@ void main() {
             // Even though this is a golden test, we verify the final selection
             // to make it easier to spot rendering problems vs selection problems.
             expect(
-              composer.selection,
+              composer.selectionComponent.selection,
               const DocumentSelection.collapsed(
                 position: DocumentPosition(
                   nodeId: "1",
@@ -421,7 +421,7 @@ void main() {
             // Even though this is a golden test, we verify the final selection
             // to make it easier to spot rendering problems vs selection problems.
             expect(
-              composer.selection,
+              composer.selectionComponent.selection,
               const DocumentSelection.collapsed(
                 position: DocumentPosition(
                   nodeId: "1",
@@ -472,7 +472,7 @@ void main() {
             // Even though this is a golden test, we verify the final selection
             // to make it easier to spot rendering problems vs selection problems.
             expect(
-              composer.selection,
+              composer.selectionComponent.selection,
               const DocumentSelection.collapsed(
                 position: DocumentPosition(
                   nodeId: "1",
@@ -502,7 +502,7 @@ void main() {
             // Even though this is a golden test, we verify the final selection
             // to make it easier to spot rendering problems vs selection problems.
             expect(
-              composer.selection,
+              composer.selectionComponent.selection,
               const DocumentSelection(
                 base: DocumentPosition(
                   nodeId: "1",
@@ -536,7 +536,7 @@ void main() {
             // Even though this is a golden test, we verify the final selection
             // to make it easier to spot rendering problems vs selection problems.
             expect(
-              composer.selection,
+              composer.selectionComponent.selection,
               const DocumentSelection(
                 base: DocumentPosition(
                   nodeId: "1",
@@ -589,7 +589,7 @@ void main() {
             // Even though this is a golden test, we verify the final selection
             // to make it easier to spot rendering problems vs selection problems.
             expect(
-              composer.selection,
+              composer.selectionComponent.selection,
               const DocumentSelection(
                 base: DocumentPosition(
                   nodeId: "1",
@@ -641,7 +641,7 @@ void main() {
             // Even though this is a golden test, we verify the final selection
             // to make it easier to spot rendering problems vs selection problems.
             expect(
-              composer.selection,
+              composer.selectionComponent.selection,
               const DocumentSelection(
                 base: DocumentPosition(
                   nodeId: "1",
@@ -693,7 +693,7 @@ void main() {
             // Even though this is a golden test, we verify the final selection
             // to make it easier to spot rendering problems vs selection problems.
             expect(
-              composer.selection,
+              composer.selectionComponent.selection,
               const DocumentSelection(
                 base: DocumentPosition(
                   nodeId: "1",

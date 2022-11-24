@@ -703,18 +703,19 @@ ExecutionInstruction backspaceToUnIndentListItem({
     return ExecutionInstruction.continueExecution;
   }
 
-  if (editContext.composer.selection == null) {
+  if (editContext.composer.selectionComponent.selection == null) {
     return ExecutionInstruction.continueExecution;
   }
-  if (!editContext.composer.selection!.isCollapsed) {
+  if (!editContext.composer.selectionComponent.selection!.isCollapsed) {
     return ExecutionInstruction.continueExecution;
   }
 
-  final node = editContext.editor.document.getNodeById(editContext.composer.selection!.extent.nodeId);
+  final node =
+      editContext.editor.document.getNodeById(editContext.composer.selectionComponent.selection!.extent.nodeId);
   if (node is! ListItemNode) {
     return ExecutionInstruction.continueExecution;
   }
-  if ((editContext.composer.selection!.extent.nodePosition as TextPosition).offset > 0) {
+  if ((editContext.composer.selectionComponent.selection!.extent.nodePosition as TextPosition).offset > 0) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -731,7 +732,8 @@ ExecutionInstruction splitListItemWhenEnterPressed({
     return ExecutionInstruction.continueExecution;
   }
 
-  final node = editContext.editor.document.getNodeById(editContext.composer.selection!.extent.nodeId);
+  final node =
+      editContext.editor.document.getNodeById(editContext.composer.selectionComponent.selection!.extent.nodeId);
   if (node is! ListItemNode) {
     return ExecutionInstruction.continueExecution;
   }

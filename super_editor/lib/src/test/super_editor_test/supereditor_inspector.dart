@@ -1,7 +1,6 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:super_editor/src/default_editor/document_gestures_touch_android.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
@@ -38,7 +37,7 @@ class SuperEditorInspector {
   static DocumentSelection? findDocumentSelection([Finder? finder]) {
     final element = (finder ?? find.byType(SuperEditor)).evaluate().single as StatefulElement;
     final superEditor = element.state as SuperEditorState;
-    return superEditor.editContext.composer.selection;
+    return superEditor.editContext.composer.selectionComponent.selection;
   }
 
   /// Returns the (x,y) offset for the caret that's currently visible in the document.

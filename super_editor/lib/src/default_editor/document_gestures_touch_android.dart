@@ -5,7 +5,7 @@ import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/default_editor/document_selection_on_focus_mixin.dart';
-import 'package:super_editor/src/document_operations/selection_operations.dart';
+import 'package:super_editor/src/document_operations/selection_operations.dart' hide SelectionType;
 import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
@@ -14,7 +14,6 @@ import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/android_document_controls.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/magnifier.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/selection_handles.dart';
-import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
 import 'package:super_editor/src/infrastructure/toolbar_position_delegate.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
 import 'package:super_text_layout/super_text_layout.dart';
@@ -533,18 +532,15 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       return false;
     }
 
-    widget.composer.updateSelection(
-      DocumentSelection(
-        base: DocumentPosition(
-          nodeId: position.nodeId,
-          nodePosition: const UpstreamDownstreamNodePosition.upstream(),
-        ),
-        extent: DocumentPosition(
-          nodeId: position.nodeId,
-          nodePosition: const UpstreamDownstreamNodePosition.downstream(),
-        ),
+    widget.selection.value = DocumentSelection(
+      base: DocumentPosition(
+        nodeId: position.nodeId,
+        nodePosition: const UpstreamDownstreamNodePosition.upstream(),
       ),
-      notifyListeners: true,
+      extent: DocumentPosition(
+        nodeId: position.nodeId,
+        nodePosition: const UpstreamDownstreamNodePosition.downstream(),
+      ),
     );
 
     return true;
@@ -677,26 +673,17 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       return;
     }
 
-    if (_selectionType == SelectionType.collapsed) {
-      widget.composer.updateSelection(
-        DocumentSelection.collapsed(
-          position: docDragPosition,
-        ),
-        notifyListeners: true,
+    if (_selectionType == HandleType.collapsed) {
+      widget.selection.value = DocumentSelection.collapsed(
+        position: docDragPosition,
       );
-    } else if (_selectionType == SelectionType.base) {
-      widget.composer.updateSelection(
-        widget.composer.selection!.copyWith(
-          base: docDragPosition,
-        ),
-        notifyListeners: true,
+    } else if (_selectionType == HandleType.upstream) {
+      widget.selection.value = widget.selection.value!.copyWith(
+        base: docDragPosition,
       );
-    } else if (_selectionType == SelectionType.extent) {
-      widget.composer.updateSelection(
-        widget.composer.selection!.copyWith(
-          extent: docDragPosition,
-        ),
-        notifyListeners: true,
+    } else if (_selectionType == HandleType.downstream) {
+      widget.selection.value = widget.selection.value!.copyWith(
+        extent: docDragPosition,
       );
     }
   }
@@ -759,14 +746,11 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
         break;
     }
 
-    widget.composer.updateSelection(
-      DocumentSelection(
-        base: basePosition,
-        extent: extentPosition,
-      ),
-      notifyListeners: true,
+    widget.selection.value = DocumentSelection(
+      base: basePosition,
+      extent: extentPosition,
     );
-    editorGesturesLog.fine("Selected region: ${widget.composer.selection}");
+    editorGesturesLog.fine("Selected region: ${widget.selection.value}");
   }
 
   void _positionCollapsedHandle() {
@@ -893,7 +877,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   }) {
     final newSelection = getWordSelection(docPosition: docPosition, docLayout: docLayout);
     if (newSelection != null) {
-      widget.composer.updateSelection(newSelection, notifyListeners: true);
+      widget.selection.value = newSelection;
       return true;
     } else {
       return false;
@@ -906,7 +890,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   }) {
     final newSelection = getParagraphSelection(docPosition: docPosition, docLayout: docLayout);
     if (newSelection != null) {
-      widget.composer.updateSelection(newSelection, notifyListeners: true);
+      widget.selection.value = newSelection;
       return true;
     } else {
       return false;
@@ -915,11 +899,8 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
   void _selectPosition(DocumentPosition position) {
     editorGesturesLog.fine("Setting document selection to $position");
-    widget.composer.updateSelection(
-      DocumentSelection.collapsed(
-        position: position,
-      ),
-      notifyListeners: true,
+    widget.selection.value = DocumentSelection.collapsed(
+      position: position,
     );
   }
 

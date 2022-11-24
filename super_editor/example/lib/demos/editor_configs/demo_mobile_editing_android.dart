@@ -57,14 +57,14 @@ class _MobileEditingAndroidDemoState extends State<MobileEditingAndroidDemo> {
   }
 
   void _configureImeActionButton() {
-    if (_composer.selection == null || !_composer.selection!.isCollapsed) {
+    if (_composer.selectionComponent.selection == null || !_composer.selectionComponent.selection!.isCollapsed) {
       _composer.imeConfiguration.value = _composer.imeConfiguration.value.copyWith(
         keyboardActionButton: TextInputAction.newline,
       );
       return;
     }
 
-    final selectedNode = _doc.getNodeById(_composer.selection!.extent.nodeId);
+    final selectedNode = _doc.getNodeById(_composer.selectionComponent.selection!.extent.nodeId);
     if (selectedNode is ListItemNode) {
       _composer.imeConfiguration.value = _composer.imeConfiguration.value.copyWith(
         keyboardActionButton: TextInputAction.done,
@@ -106,7 +106,7 @@ class _MobileEditingAndroidDemoState extends State<MobileEditingAndroidDemo> {
           MultiListenableBuilder(
             listenables: <Listenable>{
               _docChangeNotifier,
-              _composer.selectionNotifier,
+              _composer.selectionComponent.selectionNotifier,
             },
             builder: (_) => _buildMountedToolbar(),
           ),
@@ -116,7 +116,7 @@ class _MobileEditingAndroidDemoState extends State<MobileEditingAndroidDemo> {
   }
 
   Widget _buildMountedToolbar() {
-    final selection = _composer.selection;
+    final selection = _composer.selectionComponent.selection;
 
     if (selection == null) {
       return const SizedBox();

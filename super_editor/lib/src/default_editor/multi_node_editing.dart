@@ -120,14 +120,14 @@ class InsertNodeAtCaretCommand extends EditorCommand {
     final document = context.find<MutableDocument>("document");
     final composer = context.find<DocumentComposer>("composer");
 
-    if (composer.selection == null) {
+    if (composer.selectionComponent.selection == null) {
       return [];
     }
-    if (composer.selection!.base.nodeId != composer.selection!.extent.nodeId) {
+    if (composer.selectionComponent.selection!.base.nodeId != composer.selectionComponent.selection!.extent.nodeId) {
       return [];
     }
 
-    final nodeId = composer.selection!.base.nodeId;
+    final nodeId = composer.selectionComponent.selection!.base.nodeId;
     final node = document.getNodeById(nodeId);
     if (node is! ParagraphNode) {
       return [];
@@ -135,7 +135,7 @@ class InsertNodeAtCaretCommand extends EditorCommand {
 
     final changes = <DocumentChangeEvent>[];
 
-    final paragraphPosition = composer.selection!.extent.nodePosition as TextNodePosition;
+    final paragraphPosition = composer.selectionComponent.selection!.extent.nodePosition as TextNodePosition;
     final endOfParagraph = node.endPosition;
 
     DocumentSelection newSelection;
@@ -193,7 +193,7 @@ class InsertNodeAtCaretCommand extends EditorCommand {
       );
     }
 
-    composer.updateSelection(newSelection);
+    composer.selectionComponent.updateSelection(newSelection);
 
     return [
       ...changes,
@@ -266,7 +266,7 @@ class ReplaceNodeWithEmptyParagraphWithCaretCommand implements EditorCommand {
 
     document.replaceNode(oldNode: oldNode, newNode: newNode);
 
-    composer.updateSelection(
+    composer.selectionComponent.updateSelection(
       DocumentSelection.collapsed(
         position: DocumentPosition(
           nodeId: newNode.id,

@@ -41,9 +41,9 @@ class _ExampleEditorState extends State<ExampleEditor> {
   @override
   void initState() {
     super.initState();
-    _doc = createInitialDocument()..addListener(_hideOrShowToolbar);
+    _doc = createInitialDocument();
     _composer = DocumentComposer();
-    _composer.selectionNotifier.addListener(_hideOrShowToolbar);
+    _composer.selectionComponent.selectionNotifier.addListener(_hideOrShowToolbar);
     _docEditor = DocumentEditor(document: _doc as MutableDocument, requestHandlers: [
       (request) => request is CompleteTaskRequest ? CompleteTaskCommand(nodeId: request.nodeId) : null,
       ...defaultRequestHandlers,
@@ -82,7 +82,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
       return;
     }
 
-    final selection = _composer.selection;
+    final selection = _composer.selectionComponent.selection;
     if (selection == null) {
       // Nothing is selected. We don't want to show a toolbar
       // in this case.
@@ -162,8 +162,8 @@ class _ExampleEditorState extends State<ExampleEditor> {
         return;
       }
 
-      final docBoundingBox = (_docLayoutKey.currentState as DocumentLayout)
-          .getRectForSelection(_composer.selection!.base, _composer.selection!.extent)!;
+      final docBoundingBox = (_docLayoutKey.currentState as DocumentLayout).getRectForSelection(
+          _composer.selectionComponent.selection!.base, _composer.selectionComponent.selection!.extent)!;
       final docBox = _docLayoutKey.currentContext!.findRenderObject() as RenderBox;
       final overlayBoundingBox = Rect.fromPoints(
         docBox.localToGlobal(docBoundingBox.topLeft),
@@ -263,8 +263,8 @@ class _ExampleEditorState extends State<ExampleEditor> {
         return;
       }
 
-      final docBoundingBox = (_docLayoutKey.currentState as DocumentLayout)
-          .getRectForSelection(_composer.selection!.base, _composer.selection!.extent)!;
+      final docBoundingBox = (_docLayoutKey.currentState as DocumentLayout).getRectForSelection(
+          _composer.selectionComponent.selection!.base, _composer.selectionComponent.selection!.extent)!;
       final docBox = _docLayoutKey.currentContext!.findRenderObject() as RenderBox;
       final overlayBoundingBox = Rect.fromPoints(
         docBox.localToGlobal(docBoundingBox.topLeft),
@@ -388,10 +388,10 @@ class _ExampleEditorState extends State<ExampleEditor> {
     return MultiListenableBuilder(
       listenables: <Listenable>{
         _docChangeNotifier,
-        _composer.selectionNotifier,
+        _composer.selectionComponent.selectionNotifier,
       },
       builder: (_) {
-        final selection = _composer.selection;
+        final selection = _composer.selectionComponent.selection;
 
         if (selection == null) {
           return const SizedBox();

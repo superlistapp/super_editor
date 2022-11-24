@@ -143,7 +143,7 @@ void main() {
 
       // Place the caret at the end of the document, which causes the editor to
       // scroll to the bottom.
-      docContext.editContext.composer.updateSelection(
+      docContext.editContext.composer.selectionComponent.updateSelection(
         DocumentSelection.collapsed(
           position: DocumentPosition(
             nodeId: lastParagraph.id,
@@ -203,7 +203,7 @@ void main() {
 
       // Place the caret at the end of the document, which should cause the
       // editor to scroll to the bottom.
-      docContext.editContext.composer.updateSelection(
+      docContext.editContext.composer.selectionComponent.updateSelection(
           DocumentSelection.collapsed(
             position: DocumentPosition(
               nodeId: lastParagraph.id,
@@ -243,7 +243,7 @@ void main() {
 
       // Place the caret at the last paragraph, simulating an event that wasn't initiated by the user.
       // This paragraph is outside the viewport.
-      testContext.editContext.composer.setSelectionWithReason(
+      testContext.editContext.composer.selectionComponent.setSelectionWithReason(
         const DocumentSelection.collapsed(
           position: DocumentPosition(
             nodeId: '4',

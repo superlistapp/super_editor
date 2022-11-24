@@ -45,12 +45,12 @@ class _CaretDocumentOverlayState extends State<CaretDocumentOverlay> with Single
   @override
   void initState() {
     super.initState();
-    widget.composer.selectionNotifier.addListener(_scheduleCaretUpdate);
-    widget.document.addListener(_scheduleCaretUpdate);
+    widget.composer.selectionComponent.selectionNotifier.addListener(_scheduleCaretUpdate);
+    widget.document.addListener(_onDocumentChange);
     _blinkController = BlinkController(tickerProvider: this)..startBlinking();
 
     // If we already have a selection, we need to display the caret.
-    if (widget.composer.selection != null) {
+    if (widget.composer.selectionComponent.selection != null) {
       _scheduleCaretUpdate();
     }
   }
@@ -60,16 +60,16 @@ class _CaretDocumentOverlayState extends State<CaretDocumentOverlay> with Single
     super.didUpdateWidget(oldWidget);
 
     if (widget.document != oldWidget.document) {
-      oldWidget.document.removeListener(_scheduleCaretUpdate);
-      widget.document.addListener(_scheduleCaretUpdate);
+      oldWidget.document.removeListener(_onDocumentChange);
+      widget.document.addListener(_onDocumentChange);
     }
 
     if (widget.composer != oldWidget.composer) {
-      oldWidget.composer.selectionNotifier.removeListener(_scheduleCaretUpdate);
-      widget.composer.selectionNotifier.addListener(_scheduleCaretUpdate);
+      oldWidget.composer.selectionComponent.selectionNotifier.removeListener(_scheduleCaretUpdate);
+      widget.composer.selectionComponent.selectionNotifier.addListener(_scheduleCaretUpdate);
 
       // Selection has changed, we need to update the caret.
-      if (widget.composer.selection != oldWidget.composer.selection) {
+      if (widget.composer.selectionComponent.selection != oldWidget.composer.selectionComponent.selection) {
         _scheduleCaretUpdate();
       }
     }
@@ -77,10 +77,14 @@ class _CaretDocumentOverlayState extends State<CaretDocumentOverlay> with Single
 
   @override
   void dispose() {
-    widget.composer.selectionNotifier.removeListener(_scheduleCaretUpdate);
-    widget.document.removeListener(_scheduleCaretUpdate);
+    widget.composer.selectionComponent.selectionNotifier.removeListener(_scheduleCaretUpdate);
+    widget.document.removeListener(_onDocumentChange);
     _blinkController.dispose();
     super.dispose();
+  }
+
+  void _onDocumentChange(DocumentChangeLog changes) {
+    _scheduleCaretUpdate();
   }
 
   /// Schedules a caret update after the current frame.
@@ -98,7 +102,7 @@ class _CaretDocumentOverlayState extends State<CaretDocumentOverlay> with Single
       return;
     }
 
-    final documentSelection = widget.composer.selection;
+    final documentSelection = widget.composer.selectionComponent.selection;
     if (documentSelection == null) {
       _caret.value = null;
       _blinkController.stopBlinking();

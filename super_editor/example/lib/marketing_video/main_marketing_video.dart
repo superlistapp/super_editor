@@ -272,7 +272,9 @@ class DocumentEditingRobot {
     _actionQueue.add(
       _randomPauseBefore(
         () {
-          _composer.updateSelection(DocumentSelection.collapsed(position: position), notifyListeners: true);
+          _composer
+            ..selectionComponent
+                .updateSelection(DocumentSelection.collapsed(position: position), notifyListeners: true);
         },
       ),
     );
@@ -282,7 +284,7 @@ class DocumentEditingRobot {
     _actionQueue.add(
       _randomPauseBefore(
         () {
-          _composer.updateSelection(selection, notifyListeners: true);
+          _composer.selectionComponent.updateSelection(selection, notifyListeners: true);
         },
       ),
     );
@@ -292,7 +294,7 @@ class DocumentEditingRobot {
     _actionQueue.add(
       _randomPauseBefore(
         () {
-          _composer.updateSelection(
+          _composer.selectionComponent.updateSelection(
               DocumentSelection(
                 base: DocumentPosition(
                   nodeId: _editor.document.nodes.first.id,
@@ -367,7 +369,7 @@ class DocumentEditingRobot {
             _editorOps.insertCharacter(character);
 
             if (character == ' ') {
-              _editorOps.convertParagraphByPatternMatching(_composer.selection!.extent.nodeId);
+              _editorOps.convertParagraphByPatternMatching(_composer.selectionComponent.selection!.extent.nodeId);
             }
           },
         ),
@@ -383,7 +385,7 @@ class DocumentEditingRobot {
             _editorOps.insertCharacter(character);
 
             if (character == ' ') {
-              _editorOps.convertParagraphByPatternMatching(_composer.selection!.extent.nodeId);
+              _editorOps.convertParagraphByPatternMatching(_composer.selectionComponent.selection!.extent.nodeId);
             }
           },
           true,

@@ -76,7 +76,7 @@ class _MobileEditingIOSDemoState extends State<MobileEditingIOSDemo> {
           MultiListenableBuilder(
             listenables: <Listenable>{
               _docChangeNotifier,
-              _composer.selectionNotifier,
+              _composer.selectionComponent.selectionNotifier,
             },
             builder: (_) => _buildMountedToolbar(),
           ),
@@ -86,7 +86,7 @@ class _MobileEditingIOSDemoState extends State<MobileEditingIOSDemo> {
   }
 
   Widget _buildMountedToolbar() {
-    final selection = _composer.selection;
+    final selection = _composer.selectionComponent.selection;
 
     if (selection == null) {
       return const SizedBox();

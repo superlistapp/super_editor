@@ -115,7 +115,7 @@ void main() {
         );
 
         // Select multiple characters in the paragraph
-        editContext.composer.updateSelection(
+        editContext.composer.selectionComponent.updateSelection(
             const DocumentSelection(
               base: DocumentPosition(
                 nodeId: 'paragraph',
@@ -152,7 +152,7 @@ void main() {
         );
 
         // Select the horizontal rule node.
-        editContext.composer.updateSelection(
+        editContext.composer.selectionComponent.updateSelection(
             const DocumentSelection.collapsed(
               position: DocumentPosition(
                 nodeId: 'horizontal_rule',
@@ -188,7 +188,7 @@ void main() {
         );
 
         // Select multiple characters in the paragraph
-        editContext.composer.updateSelection(
+        editContext.composer.selectionComponent.updateSelection(
             const DocumentSelection.collapsed(
               position: DocumentPosition(
                 nodeId: 'paragraph',
@@ -241,7 +241,7 @@ void main() {
         );
 
         // Select multiple characters in the paragraph
-        editContext.composer.updateSelection(
+        editContext.composer.selectionComponent.updateSelection(
             const DocumentSelection.collapsed(
               position: DocumentPosition(
                 nodeId: 'paragraph',
@@ -282,7 +282,7 @@ void main() {
         );
 
         // Select multiple characters in the paragraph
-        editContext.composer.updateSelection(
+        editContext.composer.selectionComponent.updateSelection(
             const DocumentSelection.collapsed(
               position: DocumentPosition(
                 nodeId: 'paragraph',

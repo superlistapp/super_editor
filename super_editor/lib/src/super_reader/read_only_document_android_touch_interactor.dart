@@ -11,7 +11,6 @@ import 'package:super_editor/src/default_editor/document_gestures_touch_android.
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/android_document_controls.dart';
-import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
 
 /// Read-only document gesture interactor that's designed for Android touch input, e.g.,
@@ -297,7 +296,7 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
     }
   }
 
-  void _onDocumentChange() {
+  void _onDocumentChange(DocumentChangeLog changes) {
     _editingController.hideToolbar();
 
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {

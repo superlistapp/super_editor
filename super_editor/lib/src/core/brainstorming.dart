@@ -63,12 +63,12 @@ class InsertAtCaretCommand implements EditorCommand {
     final composer = context.find<DocumentComposer>("composer");
 
     // Do the work
-    if (composer.selection == null) {
+    if (composer.selectionComponent.selection == null) {
       editorDocLog.shout('ERROR: can\'t insert text at caret because there is no document selection');
       return [];
     }
 
-    final documentPosition = composer.selection!.extent;
+    final documentPosition = composer.selectionComponent.selection!.extent;
     final textNode = document.getNodeById(documentPosition.nodeId);
     if (textNode is! TextNode) {
       editorDocLog.shout('ERROR: can\'t insert text in a node that isn\'t a TextNode: $textNode');
@@ -103,7 +103,7 @@ class DeleteSelectionCommand implements EditorCommand {
     // aren't limited to what ships with super_editor
     final document = context.find<MutableDocument>("document");
     final composer = context.find<DocumentComposer>("composer");
-    final documentSelection = composer.selection;
+    final documentSelection = composer.selectionComponent.selection;
     if (documentSelection == null) {
       editorDocLog.shout('ERROR: can\'t delete selection because there is no document selection');
       return [];

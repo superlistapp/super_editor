@@ -5,14 +5,13 @@ import 'package:flutter/material.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
+import 'package:super_editor/src/default_editor/document_gestures_touch.dart';
+import 'package:super_editor/src/default_editor/document_gestures_touch_ios.dart' hide IosDocumentTouchEditingControls;
 import 'package:super_editor/src/document_operations/selection_operations.dart';
 import 'package:super_editor/src/infrastructure/document_gestures.dart';
-import 'package:super_editor/src/default_editor/document_gestures_touch.dart';
-import 'package:super_editor/src/default_editor/document_gestures_touch_ios.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
-import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
 
 /// Document gesture interactor that's designed for iOS touch input, e.g.,
@@ -307,7 +306,7 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
     }
   }
 
-  void _onDocumentChange() {
+  void _onDocumentChange(DocumentChangeLog changes) {
     _editingController.hideToolbar();
 
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {

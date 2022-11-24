@@ -240,12 +240,14 @@ ExecutionInstruction insertNewlineInBlockquote({
     return ExecutionInstruction.continueExecution;
   }
 
-  if (editContext.composer.selection == null) {
+  if (editContext.composer.selectionComponent.selection == null) {
     return ExecutionInstruction.continueExecution;
   }
 
-  final baseNode = editContext.editor.document.getNodeById(editContext.composer.selection!.base.nodeId)!;
-  final extentNode = editContext.editor.document.getNodeById(editContext.composer.selection!.extent.nodeId)!;
+  final baseNode =
+      editContext.editor.document.getNodeById(editContext.composer.selectionComponent.selection!.base.nodeId)!;
+  final extentNode =
+      editContext.editor.document.getNodeById(editContext.composer.selectionComponent.selection!.extent.nodeId)!;
   if (baseNode.id != extentNode.id) {
     return ExecutionInstruction.continueExecution;
   }
@@ -268,12 +270,14 @@ ExecutionInstruction splitBlockquoteWhenEnterPressed({
     return ExecutionInstruction.continueExecution;
   }
 
-  if (editContext.composer.selection == null) {
+  if (editContext.composer.selectionComponent.selection == null) {
     return ExecutionInstruction.continueExecution;
   }
 
-  final baseNode = editContext.editor.document.getNodeById(editContext.composer.selection!.base.nodeId)!;
-  final extentNode = editContext.editor.document.getNodeById(editContext.composer.selection!.extent.nodeId)!;
+  final baseNode =
+      editContext.editor.document.getNodeById(editContext.composer.selectionComponent.selection!.base.nodeId)!;
+  final extentNode =
+      editContext.editor.document.getNodeById(editContext.composer.selectionComponent.selection!.extent.nodeId)!;
   if (baseNode.id != extentNode.id) {
     return ExecutionInstruction.continueExecution;
   }

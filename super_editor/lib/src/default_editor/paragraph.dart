@@ -7,7 +7,6 @@ import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
-import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
 import 'package:super_editor/src/infrastructure/raw_key_event_extensions.dart';
 
@@ -335,7 +334,7 @@ ExecutionInstruction anyCharacterToInsertInParagraph({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
-  if (editContext.composer.selection == null) {
+  if (editContext.composer.selectionComponent.selection == null) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -370,7 +369,7 @@ ExecutionInstruction anyCharacterToInsertInParagraph({
 
   if (didInsertCharacter && character == ' ') {
     editContext.commonOps.convertParagraphByPatternMatching(
-      editContext.composer.selection!.extent.nodeId,
+      editContext.composer.selectionComponent.selection!.extent.nodeId,
     );
   }
 
@@ -415,20 +414,21 @@ ExecutionInstruction backspaceToClearParagraphBlockType({
     return ExecutionInstruction.continueExecution;
   }
 
-  if (editContext.composer.selection == null) {
+  if (editContext.composer.selectionComponent.selection == null) {
     return ExecutionInstruction.continueExecution;
   }
 
-  if (!editContext.composer.selection!.isCollapsed) {
+  if (!editContext.composer.selectionComponent.selection!.isCollapsed) {
     return ExecutionInstruction.continueExecution;
   }
 
-  final node = editContext.editor.document.getNodeById(editContext.composer.selection!.extent.nodeId);
+  final node =
+      editContext.editor.document.getNodeById(editContext.composer.selectionComponent.selection!.extent.nodeId);
   if (node is! ParagraphNode) {
     return ExecutionInstruction.continueExecution;
   }
 
-  final textPosition = editContext.composer.selection!.extent.nodePosition;
+  final textPosition = editContext.composer.selectionComponent.selection!.extent.nodePosition;
   if (textPosition is! TextNodePosition || textPosition.offset > 0) {
     return ExecutionInstruction.continueExecution;
   }
@@ -457,14 +457,15 @@ ExecutionInstruction moveParagraphSelectionUpWhenBackspaceIsPressed({
   if (keyEvent.logicalKey != LogicalKeyboardKey.backspace) {
     return ExecutionInstruction.continueExecution;
   }
-  if (editContext.composer.selection == null) {
+  if (editContext.composer.selectionComponent.selection == null) {
     return ExecutionInstruction.continueExecution;
   }
-  if (!editContext.composer.selection!.isCollapsed) {
+  if (!editContext.composer.selectionComponent.selection!.isCollapsed) {
     return ExecutionInstruction.continueExecution;
   }
 
-  final node = editContext.editor.document.getNodeById(editContext.composer.selection!.extent.nodeId);
+  final node =
+      editContext.editor.document.getNodeById(editContext.composer.selectionComponent.selection!.extent.nodeId);
   if (node is! ParagraphNode) {
     return ExecutionInstruction.continueExecution;
   }
@@ -482,7 +483,7 @@ ExecutionInstruction moveParagraphSelectionUpWhenBackspaceIsPressed({
     nodePosition: nodeAbove.endPosition,
   );
 
-  editContext.composer.updateSelection(
+  editContext.composer.selectionComponent.updateSelection(
       DocumentSelection.collapsed(
         position: newDocumentPosition,
       ),

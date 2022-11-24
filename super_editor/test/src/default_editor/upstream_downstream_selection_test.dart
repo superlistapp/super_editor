@@ -22,9 +22,10 @@ void main() {
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
         await tester.pump();
 
-        expect(composer.selection!.isCollapsed, true);
-        expect(composer.selection!.extent.nodeId, "2");
-        expect(composer.selection!.extent.nodePosition, const UpstreamDownstreamNodePosition.upstream());
+        expect(composer.selectionComponent.selection!.isCollapsed, true);
+        expect(composer.selectionComponent.selection!.extent.nodeId, "2");
+        expect(composer.selectionComponent.selection!.extent.nodePosition,
+            const UpstreamDownstreamNodePosition.upstream());
       });
 
       testWidgets("up arrow moves text caret to downstream edge of block from node below", (tester) async {
@@ -39,9 +40,10 @@ void main() {
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
         await tester.pump();
 
-        expect(composer.selection!.isCollapsed, true);
-        expect(composer.selection!.extent.nodeId, "2");
-        expect(composer.selection!.extent.nodePosition, const UpstreamDownstreamNodePosition.downstream());
+        expect(composer.selectionComponent.selection!.isCollapsed, true);
+        expect(composer.selectionComponent.selection!.extent.nodeId, "2");
+        expect(composer.selectionComponent.selection!.extent.nodePosition,
+            const UpstreamDownstreamNodePosition.downstream());
       });
 
       testWidgets("up arrow moves caret from upstream edge to text node above", (tester) async {
@@ -55,9 +57,9 @@ void main() {
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
         await tester.pump();
 
-        expect(composer.selection!.isCollapsed, true);
-        expect(composer.selection!.extent.nodeId, "1");
-        expect(composer.selection!.extent.nodePosition, isA<TextNodePosition>());
+        expect(composer.selectionComponent.selection!.isCollapsed, true);
+        expect(composer.selectionComponent.selection!.extent.nodeId, "1");
+        expect(composer.selectionComponent.selection!.extent.nodePosition, isA<TextNodePosition>());
       });
 
       testWidgets("up arrow moves caret from downstream edge to text node above", (tester) async {
@@ -71,9 +73,9 @@ void main() {
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
         await tester.pump();
 
-        expect(composer.selection!.isCollapsed, true);
-        expect(composer.selection!.extent.nodeId, "1");
-        expect(composer.selection!.extent.nodePosition, isA<TextNodePosition>());
+        expect(composer.selectionComponent.selection!.isCollapsed, true);
+        expect(composer.selectionComponent.selection!.extent.nodeId, "1");
+        expect(composer.selectionComponent.selection!.extent.nodePosition, isA<TextNodePosition>());
       });
 
       testWidgets("left arrow moves caret to text node above", (tester) async {
@@ -87,10 +89,10 @@ void main() {
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
         await tester.pump();
 
-        expect(composer.selection!.isCollapsed, true);
-        expect(composer.selection!.extent.nodeId, "1");
-        expect(composer.selection!.extent.nodePosition, isA<TextNodePosition>());
-        expect((composer.selection!.extent.nodePosition as TextNodePosition).offset, 37);
+        expect(composer.selectionComponent.selection!.isCollapsed, true);
+        expect(composer.selectionComponent.selection!.extent.nodeId, "1");
+        expect(composer.selectionComponent.selection!.extent.nodePosition, isA<TextNodePosition>());
+        expect((composer.selectionComponent.selection!.extent.nodePosition as TextNodePosition).offset, 37);
       });
 
       testWidgets("right arrow moves caret to text node below", (tester) async {
@@ -104,10 +106,10 @@ void main() {
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
         await tester.pump();
 
-        expect(composer.selection!.isCollapsed, true);
-        expect(composer.selection!.extent.nodeId, "3");
-        expect(composer.selection!.extent.nodePosition, isA<TextNodePosition>());
-        expect((composer.selection!.extent.nodePosition as TextNodePosition).offset, 0);
+        expect(composer.selectionComponent.selection!.isCollapsed, true);
+        expect(composer.selectionComponent.selection!.extent.nodeId, "3");
+        expect(composer.selectionComponent.selection!.extent.nodePosition, isA<TextNodePosition>());
+        expect((composer.selectionComponent.selection!.extent.nodePosition as TextNodePosition).offset, 0);
       });
 
       testWidgets("delete moves caret down to block from node above", (tester) async {
@@ -121,9 +123,10 @@ void main() {
         await tester.sendKeyEvent(LogicalKeyboardKey.delete);
         await tester.pump();
 
-        expect(composer.selection!.isCollapsed, true);
-        expect(composer.selection!.extent.nodeId, "2");
-        expect(composer.selection!.extent.nodePosition, const UpstreamDownstreamNodePosition.upstream());
+        expect(composer.selectionComponent.selection!.isCollapsed, true);
+        expect(composer.selectionComponent.selection!.extent.nodeId, "2");
+        expect(composer.selectionComponent.selection!.extent.nodePosition,
+            const UpstreamDownstreamNodePosition.upstream());
       });
 
       testWidgets("backspace moves caret up to block from node below", (tester) async {
@@ -137,9 +140,10 @@ void main() {
         await tester.sendKeyEvent(LogicalKeyboardKey.backspace);
         await tester.pump();
 
-        expect(composer.selection!.isCollapsed, true);
-        expect(composer.selection!.extent.nodeId, "2");
-        expect(composer.selection!.extent.nodePosition, const UpstreamDownstreamNodePosition.downstream());
+        expect(composer.selectionComponent.selection!.isCollapsed, true);
+        expect(composer.selectionComponent.selection!.extent.nodeId, "2");
+        expect(composer.selectionComponent.selection!.extent.nodePosition,
+            const UpstreamDownstreamNodePosition.downstream());
       });
     });
 
@@ -156,9 +160,10 @@ void main() {
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
         await tester.pump();
 
-        expect(composer.selection!.isCollapsed, true);
-        expect(composer.selection!.extent.nodeId, "2");
-        expect(composer.selection!.extent.nodePosition, const UpstreamDownstreamNodePosition.upstream());
+        expect(composer.selectionComponent.selection!.isCollapsed, true);
+        expect(composer.selectionComponent.selection!.extent.nodeId, "2");
+        expect(composer.selectionComponent.selection!.extent.nodePosition,
+            const UpstreamDownstreamNodePosition.upstream());
       });
 
       testWidgets("text caret moves to downstream edge of block from node above", (tester) async {
@@ -173,9 +178,10 @@ void main() {
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
         await tester.pump();
 
-        expect(composer.selection!.isCollapsed, true);
-        expect(composer.selection!.extent.nodeId, "2");
-        expect(composer.selection!.extent.nodePosition, const UpstreamDownstreamNodePosition.downstream());
+        expect(composer.selectionComponent.selection!.isCollapsed, true);
+        expect(composer.selectionComponent.selection!.extent.nodeId, "2");
+        expect(composer.selectionComponent.selection!.extent.nodePosition,
+            const UpstreamDownstreamNodePosition.downstream());
       });
 
       testWidgets("upstream block caret moves to text node below", (tester) async {
@@ -189,9 +195,9 @@ void main() {
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
         await tester.pump();
 
-        expect(composer.selection!.isCollapsed, true);
-        expect(composer.selection!.extent.nodeId, "3");
-        expect(composer.selection!.extent.nodePosition, isA<TextNodePosition>());
+        expect(composer.selectionComponent.selection!.isCollapsed, true);
+        expect(composer.selectionComponent.selection!.extent.nodeId, "3");
+        expect(composer.selectionComponent.selection!.extent.nodePosition, isA<TextNodePosition>());
       });
 
       testWidgets("downstream block caret moves to text node below", (tester) async {
@@ -205,9 +211,9 @@ void main() {
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
         await tester.pump();
 
-        expect(composer.selection!.isCollapsed, true);
-        expect(composer.selection!.extent.nodeId, "3");
-        expect(composer.selection!.extent.nodePosition, isA<TextNodePosition>());
+        expect(composer.selectionComponent.selection!.isCollapsed, true);
+        expect(composer.selectionComponent.selection!.extent.nodeId, "3");
+        expect(composer.selectionComponent.selection!.extent.nodePosition, isA<TextNodePosition>());
       });
 
       testWidgets("right arrow moves caret to text node below", (tester) async {
@@ -221,10 +227,10 @@ void main() {
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
         await tester.pump();
 
-        expect(composer.selection!.isCollapsed, true);
-        expect(composer.selection!.extent.nodeId, "3");
-        expect(composer.selection!.extent.nodePosition, isA<TextNodePosition>());
-        expect((composer.selection!.extent.nodePosition as TextNodePosition).offset, 0);
+        expect(composer.selectionComponent.selection!.isCollapsed, true);
+        expect(composer.selectionComponent.selection!.extent.nodeId, "3");
+        expect(composer.selectionComponent.selection!.extent.nodePosition, isA<TextNodePosition>());
+        expect((composer.selectionComponent.selection!.extent.nodePosition as TextNodePosition).offset, 0);
       });
     });
 
@@ -240,9 +246,10 @@ void main() {
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
         await tester.pump();
 
-        expect(composer.selection!.isCollapsed, true);
-        expect(composer.selection!.extent.nodeId, "2");
-        expect(composer.selection!.extent.nodePosition, const UpstreamDownstreamNodePosition.downstream());
+        expect(composer.selectionComponent.selection!.isCollapsed, true);
+        expect(composer.selectionComponent.selection!.extent.nodeId, "2");
+        expect(composer.selectionComponent.selection!.extent.nodePosition,
+            const UpstreamDownstreamNodePosition.downstream());
       });
 
       testWidgets("left arrow moves caret upstream", (tester) async {
@@ -256,9 +263,10 @@ void main() {
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
         await tester.pump();
 
-        expect(composer.selection!.isCollapsed, true);
-        expect(composer.selection!.extent.nodeId, "2");
-        expect(composer.selection!.extent.nodePosition, const UpstreamDownstreamNodePosition.upstream());
+        expect(composer.selectionComponent.selection!.isCollapsed, true);
+        expect(composer.selectionComponent.selection!.extent.nodeId, "2");
+        expect(composer.selectionComponent.selection!.extent.nodePosition,
+            const UpstreamDownstreamNodePosition.upstream());
       });
     });
 
@@ -274,9 +282,9 @@ void main() {
         await tester.sendKeyEvent(LogicalKeyboardKey.backspace);
         await tester.pump();
 
-        expect(composer.selection!.isCollapsed, true);
-        expect(composer.selection!.extent.nodeId, "1");
-        expect((composer.selection!.extent.nodePosition as TextNodePosition).offset, 37);
+        expect(composer.selectionComponent.selection!.isCollapsed, true);
+        expect(composer.selectionComponent.selection!.extent.nodeId, "1");
+        expect((composer.selectionComponent.selection!.extent.nodePosition as TextNodePosition).offset, 37);
       });
 
       testWidgets("backspace removes block node when caret is on downstream edge", (tester) async {
@@ -295,9 +303,9 @@ void main() {
         await tester.sendKeyEvent(LogicalKeyboardKey.backspace);
         await tester.pump();
 
-        expect(composer.selection!.isCollapsed, true);
-        expect(composer.selection!.extent.nodeId, "2");
-        expect((composer.selection!.extent.nodePosition as TextNodePosition).offset, 0);
+        expect(composer.selectionComponent.selection!.isCollapsed, true);
+        expect(composer.selectionComponent.selection!.extent.nodeId, "2");
+        expect((composer.selectionComponent.selection!.extent.nodePosition as TextNodePosition).offset, 0);
       });
 
       testWidgets("delete moves caret to node below when caret is at downstream edge", (tester) async {
@@ -311,9 +319,9 @@ void main() {
         await tester.sendKeyEvent(LogicalKeyboardKey.delete);
         await tester.pump();
 
-        expect(composer.selection!.isCollapsed, true);
-        expect(composer.selection!.extent.nodeId, "3");
-        expect((composer.selection!.extent.nodePosition as TextNodePosition).offset, 0);
+        expect(composer.selectionComponent.selection!.isCollapsed, true);
+        expect(composer.selectionComponent.selection!.extent.nodeId, "3");
+        expect((composer.selectionComponent.selection!.extent.nodePosition as TextNodePosition).offset, 0);
       });
 
       testWidgets("delete removes block node when caret is at upstream edge", (tester) async {
@@ -327,9 +335,9 @@ void main() {
         await tester.sendKeyEvent(LogicalKeyboardKey.delete);
         await tester.pump();
 
-        expect(composer.selection!.isCollapsed, true);
-        expect(composer.selection!.extent.nodeId, "2");
-        expect((composer.selection!.extent.nodePosition as TextNodePosition).offset, 0);
+        expect(composer.selectionComponent.selection!.isCollapsed, true);
+        expect(composer.selectionComponent.selection!.extent.nodeId, "2");
+        expect((composer.selectionComponent.selection!.extent.nodePosition as TextNodePosition).offset, 0);
       });
 
       testWidgets("backspace removes block node when selected", (tester) async {
@@ -344,9 +352,9 @@ void main() {
         await tester.sendKeyEvent(LogicalKeyboardKey.backspace);
         await tester.pump();
 
-        expect(composer.selection!.isCollapsed, true);
-        expect(composer.selection!.extent.nodeId, "2");
-        expect((composer.selection!.extent.nodePosition as TextNodePosition).offset, 0);
+        expect(composer.selectionComponent.selection!.isCollapsed, true);
+        expect(composer.selectionComponent.selection!.extent.nodeId, "2");
+        expect((composer.selectionComponent.selection!.extent.nodePosition as TextNodePosition).offset, 0);
       });
 
       testWidgets("delete removes block node when selected", (tester) async {
@@ -361,9 +369,9 @@ void main() {
         await tester.sendKeyEvent(LogicalKeyboardKey.delete);
         await tester.pump();
 
-        expect(composer.selection!.isCollapsed, true);
-        expect(composer.selection!.extent.nodeId, "2");
-        expect((composer.selection!.extent.nodePosition as TextNodePosition).offset, 0);
+        expect(composer.selectionComponent.selection!.isCollapsed, true);
+        expect(composer.selectionComponent.selection!.extent.nodeId, "2");
+        expect((composer.selectionComponent.selection!.extent.nodePosition as TextNodePosition).offset, 0);
       });
 
       testWidgets("backspace removes block and part of node above", (tester) async {
@@ -379,10 +387,10 @@ void main() {
         await tester.sendKeyEvent(LogicalKeyboardKey.backspace);
         await tester.pump();
 
-        expect(composer.selection!.isCollapsed, true);
+        expect(composer.selectionComponent.selection!.isCollapsed, true);
         expect(document.nodes.length, 2);
-        expect(composer.selection!.extent.nodeId, "1");
-        expect((composer.selection!.extent.nodePosition as TextNodePosition).offset, 20);
+        expect(composer.selectionComponent.selection!.extent.nodeId, "1");
+        expect((composer.selectionComponent.selection!.extent.nodePosition as TextNodePosition).offset, 20);
       });
 
       testWidgets("backspace removes block and part of node below", (tester) async {
@@ -398,10 +406,10 @@ void main() {
         await tester.sendKeyEvent(LogicalKeyboardKey.backspace);
         await tester.pump();
 
-        expect(composer.selection!.isCollapsed, true);
+        expect(composer.selectionComponent.selection!.isCollapsed, true);
         expect(document.nodes.length, 2);
-        expect(composer.selection!.extent.nodeId, "3");
-        expect((composer.selection!.extent.nodePosition as TextNodePosition).offset, 0);
+        expect(composer.selectionComponent.selection!.extent.nodeId, "3");
+        expect((composer.selectionComponent.selection!.extent.nodePosition as TextNodePosition).offset, 0);
       });
 
       testWidgets("backspace removes block and merges surrounding text nodes", (tester) async {
@@ -417,10 +425,10 @@ void main() {
         await tester.sendKeyEvent(LogicalKeyboardKey.backspace);
         await tester.pump();
 
-        expect(composer.selection!.isCollapsed, true);
+        expect(composer.selectionComponent.selection!.isCollapsed, true);
         expect(document.nodes.length, 1);
-        expect(composer.selection!.extent.nodeId, "1");
-        expect((composer.selection!.extent.nodePosition as TextNodePosition).offset, 20);
+        expect(composer.selectionComponent.selection!.extent.nodeId, "1");
+        expect((composer.selectionComponent.selection!.extent.nodePosition as TextNodePosition).offset, 20);
       });
 
       testWidgets("backspace does nothing at beginning of document", (tester) async {
@@ -435,9 +443,10 @@ void main() {
         await tester.sendKeyEvent(LogicalKeyboardKey.backspace);
         await tester.pump();
 
-        expect(composer.selection!.isCollapsed, true);
-        expect(composer.selection!.extent.nodeId, "1");
-        expect(composer.selection!.extent.nodePosition, const UpstreamDownstreamNodePosition.upstream());
+        expect(composer.selectionComponent.selection!.isCollapsed, true);
+        expect(composer.selectionComponent.selection!.extent.nodeId, "1");
+        expect(composer.selectionComponent.selection!.extent.nodePosition,
+            const UpstreamDownstreamNodePosition.upstream());
       });
 
       testWidgets("delete does nothing at end of document", (tester) async {
@@ -452,9 +461,10 @@ void main() {
         await tester.sendKeyEvent(LogicalKeyboardKey.delete);
         await tester.pump();
 
-        expect(composer.selection!.isCollapsed, true);
-        expect(composer.selection!.extent.nodeId, "1");
-        expect(composer.selection!.extent.nodePosition, const UpstreamDownstreamNodePosition.downstream());
+        expect(composer.selectionComponent.selection!.isCollapsed, true);
+        expect(composer.selectionComponent.selection!.extent.nodeId, "1");
+        expect(composer.selectionComponent.selection!.extent.nodePosition,
+            const UpstreamDownstreamNodePosition.downstream());
       });
     });
 
@@ -471,11 +481,11 @@ void main() {
         await tester.sendKeyEvent(LogicalKeyboardKey.enter);
         await tester.pump();
 
-        expect(composer.selection!.isCollapsed, true);
+        expect(composer.selectionComponent.selection!.isCollapsed, true);
         expect(document.nodes.length, 2);
-        expect(composer.selection!.extent.nodePosition, isA<TextNodePosition>());
-        expect((composer.selection!.extent.nodePosition as TextNodePosition).offset, 0);
-        expect(document.getNodeAt(0)!.id, composer.selection!.extent.nodeId);
+        expect(composer.selectionComponent.selection!.extent.nodePosition, isA<TextNodePosition>());
+        expect((composer.selectionComponent.selection!.extent.nodePosition as TextNodePosition).offset, 0);
+        expect(document.getNodeAt(0)!.id, composer.selectionComponent.selection!.extent.nodeId);
       });
 
       testWidgets("newline inserts paragraph after block", (tester) async {
@@ -490,11 +500,11 @@ void main() {
         await tester.sendKeyEvent(LogicalKeyboardKey.enter);
         await tester.pump();
 
-        expect(composer.selection!.isCollapsed, true);
+        expect(composer.selectionComponent.selection!.isCollapsed, true);
         expect(document.nodes.length, 2);
-        expect(composer.selection!.extent.nodePosition, isA<TextNodePosition>());
-        expect((composer.selection!.extent.nodePosition as TextNodePosition).offset, 0);
-        expect(document.getNodeAt(1)!.id, composer.selection!.extent.nodeId);
+        expect(composer.selectionComponent.selection!.extent.nodePosition, isA<TextNodePosition>());
+        expect((composer.selectionComponent.selection!.extent.nodePosition as TextNodePosition).offset, 0);
+        expect(document.getNodeAt(1)!.id, composer.selectionComponent.selection!.extent.nodeId);
       });
     });
 
@@ -511,11 +521,11 @@ void main() {
         await tester.sendKeyEvent(LogicalKeyboardKey.keyA);
         await tester.pump();
 
-        expect(composer.selection!.isCollapsed, true);
+        expect(composer.selectionComponent.selection!.isCollapsed, true);
         expect(document.nodes.length, 2);
         expect(document.nodes[0], isA<ParagraphNode>());
         expect(document.nodes[1], isA<HorizontalRuleNode>());
-        expect(composer.selection!.extent.nodePosition, const TextNodePosition(offset: 1));
+        expect(composer.selectionComponent.selection!.extent.nodePosition, const TextNodePosition(offset: 1));
       });
 
       testWidgets("inserts paragraph after downstream edge", (tester) async {
@@ -530,11 +540,11 @@ void main() {
         await tester.sendKeyEvent(LogicalKeyboardKey.keyA);
         await tester.pump();
 
-        expect(composer.selection!.isCollapsed, true);
+        expect(composer.selectionComponent.selection!.isCollapsed, true);
         expect(document.nodes.length, 2);
         expect(document.nodes[0], isA<HorizontalRuleNode>());
         expect(document.nodes[1], isA<ParagraphNode>());
-        expect(composer.selection!.extent.nodePosition, const TextNodePosition(offset: 1));
+        expect(composer.selectionComponent.selection!.extent.nodePosition, const TextNodePosition(offset: 1));
       });
 
       testWidgets("deletes empty paragraph in node above when backspace pressed from upstream edge", (tester) async {
@@ -554,10 +564,11 @@ void main() {
         await tester.sendKeyEvent(LogicalKeyboardKey.backspace);
         await tester.pump();
 
-        expect(composer.selection!.isCollapsed, true);
+        expect(composer.selectionComponent.selection!.isCollapsed, true);
         expect(document.nodes.length, 1);
         expect(document.nodes[0], isA<HorizontalRuleNode>());
-        expect(composer.selection!.extent.nodePosition, const UpstreamDownstreamNodePosition.upstream());
+        expect(composer.selectionComponent.selection!.extent.nodePosition,
+            const UpstreamDownstreamNodePosition.upstream());
       });
     });
   });

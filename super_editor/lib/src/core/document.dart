@@ -121,7 +121,7 @@ class NodeInsertedEvent implements DocumentNodeEvent {
   final String nodeId;
 }
 
-/// A [DocumentNode] was removed the [Document].
+/// A [DocumentNode] was removed from the [Document].
 class NodeRemovedEvent implements DocumentNodeEvent {
   const NodeRemovedEvent(this.nodeId);
 

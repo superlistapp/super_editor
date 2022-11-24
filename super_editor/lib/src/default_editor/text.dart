@@ -1290,13 +1290,13 @@ class InsertTextCommand implements EditorCommand {
     );
 
     editorOpsLog.fine("Updating Document Composer selection after text insertion.");
-    composer.updateSelection(
+    composer.selectionComponent.updateSelection(
       DocumentSelection.collapsed(
         position: DocumentPosition(
           nodeId: textNode.id,
           nodePosition: TextNodePosition(
             offset: textOffset + textToInsert.length,
-            affinity: TextAffinity.upstream, //textPosition.affinity,
+            affinity: textPosition.affinity,
           ),
         ),
       ),
@@ -1391,15 +1391,15 @@ ExecutionInstruction anyCharacterToInsertInTextContent({
   if (keyEvent.isControlPressed || keyEvent.isMetaPressed) {
     return ExecutionInstruction.continueExecution;
   }
-  if (editContext.composer.selection == null) {
+  if (editContext.composer.selectionComponent.selection == null) {
     return ExecutionInstruction.continueExecution;
   }
-  if (!editContext.composer.selection!.isCollapsed) {
+  if (!editContext.composer.selectionComponent.selection!.isCollapsed) {
     return ExecutionInstruction.continueExecution;
   }
   if (!_isTextEntryNode(
     document: editContext.editor.document,
-    selection: editContext.composer.selection!,
+    selection: editContext.composer.selectionComponent.selection!,
   )) {
     return ExecutionInstruction.continueExecution;
   }
@@ -1453,13 +1453,13 @@ class InsertCharacterAtCaretCommand extends EditorCommand {
     final document = context.find<Document>("document");
     final composer = context.find<DocumentComposer>("composer");
 
-    if (composer.selection == null) {
+    if (composer.selectionComponent.selection == null) {
       return [];
     }
 
     final changes = <DocumentChangeEvent>[];
 
-    if (!composer.selection!.isCollapsed) {
+    if (!composer.selectionComponent.selection!.isCollapsed) {
       changes.addAll(
         _deleteExpandedSelection(
           context: context,
@@ -1469,7 +1469,7 @@ class InsertCharacterAtCaretCommand extends EditorCommand {
       );
     }
 
-    final extentNodePosition = composer.selection!.extent.nodePosition;
+    final extentNodePosition = composer.selectionComponent.selection!.extent.nodePosition;
     if (extentNodePosition is UpstreamDownstreamNodePosition) {
       editorOpsLog.fine("The selected position is an UpstreamDownstreamPosition. Inserting new paragraph first.");
       changes.addAll(
@@ -1481,7 +1481,7 @@ class InsertCharacterAtCaretCommand extends EditorCommand {
       );
     }
 
-    final extentNode = document.getNodeById(composer.selection!.extent.nodeId)!;
+    final extentNode = document.getNodeById(composer.selectionComponent.selection!.extent.nodeId)!;
     if (extentNode is! TextNode) {
       editorOpsLog.fine(
           "Couldn't insert character because Super Editor doesn't know how to handle a node of type: $extentNode");
@@ -1510,15 +1510,16 @@ List<DocumentChangeEvent> _deleteExpandedSelection({
 }) {
   final newSelectionPosition = _getDocumentPositionAfterExpandedDeletion(
     document: document,
-    selection: composer.selection!,
+    selection: composer.selectionComponent.selection!,
   );
 
   // Delete the selected content.
   final changes = DeleteSelectionCommand(
-    documentSelection: composer.selection!,
+    documentSelection: composer.selectionComponent.selection!,
   ).execute(context);
 
-  composer.updateSelection(DocumentSelection.collapsed(position: newSelectionPosition), notifyListeners: true);
+  composer.selectionComponent
+      .updateSelection(DocumentSelection.collapsed(position: newSelectionPosition), notifyListeners: true);
 
   return [
     ...changes,
@@ -1625,20 +1626,20 @@ List<DocumentChangeEvent> _insertBlockLevelNewline({
   required Document document,
   required DocumentComposer composer,
 }) {
-  if (composer.selection == null) {
+  if (composer.selectionComponent.selection == null) {
     return [];
   }
 
   // Ensure that the entire selection sits within the same node.
-  final baseNode = document.getNodeById(composer.selection!.base.nodeId)!;
-  final extentNode = document.getNodeById(composer.selection!.extent.nodeId)!;
+  final baseNode = document.getNodeById(composer.selectionComponent.selection!.base.nodeId)!;
+  final extentNode = document.getNodeById(composer.selectionComponent.selection!.extent.nodeId)!;
   if (baseNode.id != extentNode.id) {
     return [];
   }
 
   final changes = <DocumentChangeEvent>[];
 
-  if (!composer.selection!.isCollapsed) {
+  if (!composer.selectionComponent.selection!.isCollapsed) {
     // The selection is not collapsed. Delete the selected content first,
     // then continue the process.
     changes.addAll(
@@ -1669,14 +1670,14 @@ List<DocumentChangeEvent> _insertBlockLevelNewline({
     changes.addAll(
       SplitListItemCommand(
         nodeId: extentNode.id,
-        splitPosition: composer.selection!.extent.nodePosition as TextNodePosition,
+        splitPosition: composer.selectionComponent.selection!.extent.nodePosition as TextNodePosition,
         newNodeId: newNodeId,
       ).execute(context),
     );
   } else if (extentNode is ParagraphNode) {
     // Split the paragraph into two. This includes headers, blockquotes, and
     // any other block-level paragraph.
-    final currentExtentPosition = composer.selection!.extent.nodePosition as TextNodePosition;
+    final currentExtentPosition = composer.selectionComponent.selection!.extent.nodePosition as TextNodePosition;
     final endOfParagraph = extentNode.endPosition;
 
     changes.addAll(
@@ -1687,8 +1688,8 @@ List<DocumentChangeEvent> _insertBlockLevelNewline({
         replicateExistingMetadata: currentExtentPosition.offset != endOfParagraph.offset,
       ).execute(context),
     );
-  } else if (composer.selection!.extent.nodePosition is UpstreamDownstreamNodePosition) {
-    final extentPosition = composer.selection!.extent.nodePosition as UpstreamDownstreamNodePosition;
+  } else if (composer.selectionComponent.selection!.extent.nodePosition is UpstreamDownstreamNodePosition) {
+    final extentPosition = composer.selectionComponent.selection!.extent.nodePosition as UpstreamDownstreamNodePosition;
     if (extentPosition.affinity == TextAffinity.downstream) {
       // The caret sits on the downstream edge of block-level content. Insert
       // a new paragraph after this node.
@@ -1720,7 +1721,7 @@ List<DocumentChangeEvent> _insertBlockLevelNewline({
   }
 
   // Place the caret at the beginning of the new node.
-  composer.updateSelection(
+  composer.selectionComponent.updateSelection(
       DocumentSelection.collapsed(
         position: DocumentPosition(
           nodeId: newNodeId,
@@ -1742,30 +1743,30 @@ List<DocumentChangeEvent> _insertCharacterInTextComposable(
   required DocumentComposer composer,
   bool ignoreComposerAttributions = false,
 }) {
-  if (composer.selection == null) {
+  if (composer.selectionComponent.selection == null) {
     return [];
   }
-  if (!composer.selection!.isCollapsed) {
+  if (!composer.selectionComponent.selection!.isCollapsed) {
     return [];
   }
-  if (!_isTextEntryNode(document: document, selection: composer.selection!)) {
+  if (!_isTextEntryNode(document: document, selection: composer.selectionComponent.selection!)) {
     return [];
   }
 
   final changes = <DocumentChangeEvent>[];
 
-  final textNode = document.getNode(composer.selection!.extent) as TextNode;
-  final initialTextOffset = (composer.selection!.extent.nodePosition as TextNodePosition).offset;
+  final textNode = document.getNode(composer.selectionComponent.selection!.extent) as TextNode;
+  final initialTextOffset = (composer.selectionComponent.selection!.extent.nodePosition as TextNodePosition).offset;
 
   changes.addAll(
     InsertTextCommand(
-      documentPosition: composer.selection!.extent,
+      documentPosition: composer.selectionComponent.selection!.extent,
       textToInsert: character,
       attributions: ignoreComposerAttributions ? {} : composer.preferences.currentAttributions,
     ).execute(context),
   );
 
-  composer.updateSelection(
+  composer.selectionComponent.updateSelection(
       DocumentSelection.collapsed(
         position: DocumentPosition(
           nodeId: textNode.id,
@@ -1791,12 +1792,12 @@ List<DocumentChangeEvent> _convertToParagraph({
   required DocumentComposer composer,
   Map<String, Attribution>? newMetadata,
 }) {
-  if (composer.selection == null) {
+  if (composer.selectionComponent.selection == null) {
     return [];
   }
 
-  final baseNode = document.getNodeById(composer.selection!.base.nodeId)!;
-  final extentNode = document.getNodeById(composer.selection!.extent.nodeId)!;
+  final baseNode = document.getNodeById(composer.selectionComponent.selection!.base.nodeId)!;
+  final extentNode = document.getNodeById(composer.selectionComponent.selection!.extent.nodeId)!;
   if (baseNode.id != extentNode.id) {
     return [];
   }
@@ -1820,19 +1821,19 @@ ExecutionInstruction deleteCharacterWhenBackspaceIsPressed({
   if (keyEvent.logicalKey != LogicalKeyboardKey.backspace) {
     return ExecutionInstruction.continueExecution;
   }
-  if (editContext.composer.selection == null) {
+  if (editContext.composer.selectionComponent.selection == null) {
     return ExecutionInstruction.continueExecution;
   }
   if (!_isTextEntryNode(
     document: editContext.editor.document,
-    selection: editContext.composer.selection!,
+    selection: editContext.composer.selectionComponent.selection!,
   )) {
     return ExecutionInstruction.continueExecution;
   }
-  if (!editContext.composer.selection!.isCollapsed) {
+  if (!editContext.composer.selectionComponent.selection!.isCollapsed) {
     return ExecutionInstruction.continueExecution;
   }
-  if ((editContext.composer.selection!.extent.nodePosition as TextPosition).offset <= 0) {
+  if ((editContext.composer.selectionComponent.selection!.extent.nodePosition as TextPosition).offset <= 0) {
     return ExecutionInstruction.continueExecution;
   }
 

@@ -43,7 +43,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Select the new nodes.
-        composer.updateSelection(
+        composer.selectionComponent.updateSelection(
             DocumentSelection(
               base: DocumentPosition(
                 nodeId: document.nodes[2].id,
@@ -64,9 +64,9 @@ void main() {
         // Bug #429 - the deletion threw an error due to a selection
         // type mismatch.
         expect(document.nodes.length, 2);
-        expect(composer.selection!.isCollapsed, true);
+        expect(composer.selectionComponent.selection!.isCollapsed, true);
         expect(
-          composer.selection!.extent,
+          composer.selectionComponent.selection!.extent,
           DocumentPosition(
             nodeId: document.nodes.last.id,
             nodePosition: const TextNodePosition(offset: 0),
@@ -111,7 +111,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Select the new nodes.
-        composer.updateSelection(
+        composer.selectionComponent.updateSelection(
             DocumentSelection(
               base: DocumentPosition(
                 nodeId: document.nodes[1].id,
@@ -133,9 +133,9 @@ void main() {
         // Here we make sure that deleting an expanded downstream
         // selection works, too.
         expect(document.nodes.length, 2);
-        expect(composer.selection!.isCollapsed, true);
+        expect(composer.selectionComponent.selection!.isCollapsed, true);
         expect(
-          composer.selection!.extent,
+          composer.selectionComponent.selection!.extent,
           DocumentPosition(
             nodeId: document.nodes.last.id,
             nodePosition: const TextNodePosition(offset: 0),

@@ -1,4 +1,7 @@
+import 'dart:async';
 import 'dart:ui';
+
+import 'package:flutter/foundation.dart';
 
 import 'document.dart';
 
@@ -356,4 +359,150 @@ extension InspectDocumentSelection on Document {
 /// A [DocumentChangeEvent] that represents a change to the user's selection within a document.
 class SelectionChangeEvent implements DocumentChangeEvent {
   const SelectionChangeEvent();
+}
+
+/// A selection, along with tools to change the selection, and listen for
+/// selection changes.
+///
+/// A [SelectionComponent] provides a drop-in solution for to hold, change,
+/// and monitor selection changes. A [SelectionComponent] could be used, for example,
+/// within a document composer, which tracks selection along with other transient
+/// editor settings. On the other side, a document mouse interactor might take
+/// a [SelectionComponent] as a property, so that the document mouse interactor can
+/// monitor selection changes, as well as change the current selection.
+class SelectionComponent {
+  SelectionComponent([DocumentSelection? initialSelection]) {
+    _streamController = StreamController<DocumentSelectionChange>.broadcast();
+    selectionNotifier.addListener(_onSelectionChangedBySelectionNotifier);
+    selectionNotifier.value = initialSelection;
+  }
+
+  void dispose() {
+    selectionNotifier.removeListener(_onSelectionChangedBySelectionNotifier);
+  }
+
+  /// Returns the current [DocumentSelection] for a [Document].
+  DocumentSelection? get selection => selectionNotifier.value;
+
+  /// Sets the current [selection] for a [Document] using [SelectionReason.userInteraction] as the reason.
+  @Deprecated("Use updateSelectionWithoutNotification instead, and then call notifySelectionListener")
+  set selection(DocumentSelection? newSelection) {
+    selectionNotifier.value = newSelection;
+    _streamController.add(
+      DocumentSelectionChange(
+        selection: newSelection,
+        reason: SelectionReason.userInteraction,
+      ),
+    );
+  }
+
+  /// Sets the current [selection] for a [Document], with the given [reason]
+  /// for the change.
+  ///
+  /// The default [reason] is [SelectionReason.userInteraction].
+  void setSelectionWithReason(DocumentSelection? newSelection, [Object reason = SelectionReason.userInteraction]) {
+    _latestSelectionChange = DocumentSelectionChange(
+      selection: newSelection,
+      reason: reason,
+    );
+    _streamController.sink.add(_latestSelectionChange);
+
+    // Remove the listener, so we don't emit another DocumentSelectionChange.
+    selectionNotifier.removeListener(_onSelectionChangedBySelectionNotifier);
+
+    // Updates the selection, so both _latestSelectionChange and selectionNotifier are in sync.
+    selectionNotifier.value = newSelection;
+
+    selectionNotifier.addListener(_onSelectionChangedBySelectionNotifier);
+  }
+
+  /// Returns the reason for the most recent selection change in the composer.
+  ///
+  /// For example, a selection might change as a result of user interaction, or as
+  /// a result of another user editing content, or some other reason.
+  Object? get latestSelectionChangeReason => _latestSelectionChange.reason;
+
+  /// Returns the most recent selection change in the composer.
+  ///
+  /// The [DocumentSelectionChange] includes the most recent document selection,
+  /// along with the reason that the selection changed.
+  DocumentSelectionChange get latestSelectionChange => _latestSelectionChange;
+  late DocumentSelectionChange _latestSelectionChange;
+
+  /// A stream of document selection changes.
+  ///
+  /// Each new [DocumentSelectionChange] includes the most recent document selection,
+  /// along with the reason that the selection changed.
+  ///
+  /// Listen to this [Stream] when the selection reason is needed. Otherwise, use [selectionNotifier].
+  Stream<DocumentSelectionChange> get selectionChanges => _streamController.stream;
+  late StreamController<DocumentSelectionChange> _streamController;
+
+  /// Notifies whenever the current [DocumentSelection] changes.
+  ///
+  /// If the selection change reason is needed, use [selectionChanges] instead.
+  final selectionNotifier = ValueNotifier<DocumentSelection?>(null);
+
+  void updateSelection(DocumentSelection? newSelection, {bool notifyListeners = false}) {
+    _latestSelectionChange = DocumentSelectionChange(
+      selection: newSelection,
+      reason: SelectionReason.userInteraction,
+    );
+
+    if (notifyListeners) {
+      notifySelectionListeners();
+    }
+  }
+
+  void notifySelectionListeners() {
+    selectionNotifier.value = _latestSelectionChange.selection;
+    _streamController.add(_latestSelectionChange);
+  }
+
+  /// Clears the current [selection].
+  void clearSelection() {
+    updateSelection(null, notifyListeners: true);
+  }
+
+  void _onSelectionChangedBySelectionNotifier() {
+    _latestSelectionChange = DocumentSelectionChange(
+      selection: selectionNotifier.value,
+      reason: SelectionReason.userInteraction,
+    );
+    _streamController.sink.add(_latestSelectionChange);
+  }
+}
+
+/// Represents a change of a [DocumentSelection].
+///
+/// The [reason] represents what cause the selection to change.
+/// For example, [SelectionReason.userInteraction] represents
+/// a selection change caused by the user interacting with the editor.
+class DocumentSelectionChange {
+  DocumentSelectionChange({
+    required this.selection,
+    required this.reason,
+  });
+
+  final DocumentSelection? selection;
+  final Object reason;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is DocumentSelectionChange && selection == other.selection && reason == other.reason;
+
+  @override
+  int get hashCode => (selection?.hashCode ?? 0) ^ reason.hashCode;
+}
+
+/// Holds common reasons for selection changes.
+/// Developers aren't limited to these selection change reasons. Any object can be passed as
+/// a reason for a selection change. However, some Super Editor behavior is based on [userInteraction].
+class SelectionReason {
+  /// Represents a change caused by an user interaction.
+  static const userInteraction = "userInteraction";
+
+  /// Represents a changed caused by an event which was not initiated by the user.
+  static const contentChange = "contentChange";
 }

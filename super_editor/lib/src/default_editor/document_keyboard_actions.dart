@@ -14,7 +14,7 @@ ExecutionInstruction doNothingWhenThereIsNoSelection({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
-  if (editContext.composer.selection == null) {
+  if (editContext.composer.selectionComponent.selection == null) {
     return ExecutionInstruction.haltExecution;
   } else {
     return ExecutionInstruction.continueExecution;
@@ -28,7 +28,7 @@ ExecutionInstruction pasteWhenCmdVIsPressed({
   if (!keyEvent.isPrimaryShortcutKeyPressed || keyEvent.logicalKey != LogicalKeyboardKey.keyV) {
     return ExecutionInstruction.continueExecution;
   }
-  if (editContext.composer.selection == null) {
+  if (editContext.composer.selectionComponent.selection == null) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -56,10 +56,10 @@ ExecutionInstruction copyWhenCmdCIsPressed({
   if (!keyEvent.isPrimaryShortcutKeyPressed || keyEvent.logicalKey != LogicalKeyboardKey.keyC) {
     return ExecutionInstruction.continueExecution;
   }
-  if (editContext.composer.selection == null) {
+  if (editContext.composer.selectionComponent.selection == null) {
     return ExecutionInstruction.continueExecution;
   }
-  if (editContext.composer.selection!.isCollapsed) {
+  if (editContext.composer.selectionComponent.selection!.isCollapsed) {
     // Nothing to copy, but we technically handled the task.
     return ExecutionInstruction.haltExecution;
   }
@@ -76,10 +76,10 @@ ExecutionInstruction cutWhenCmdXIsPressed({
   if (!keyEvent.isPrimaryShortcutKeyPressed || keyEvent.logicalKey != LogicalKeyboardKey.keyX) {
     return ExecutionInstruction.continueExecution;
   }
-  if (editContext.composer.selection == null) {
+  if (editContext.composer.selectionComponent.selection == null) {
     return ExecutionInstruction.continueExecution;
   }
-  if (editContext.composer.selection!.isCollapsed) {
+  if (editContext.composer.selectionComponent.selection!.isCollapsed) {
     // Nothing to cut, but we technically handled the task.
     return ExecutionInstruction.haltExecution;
   }
@@ -97,7 +97,7 @@ ExecutionInstruction cmdBToToggleBold({
     return ExecutionInstruction.continueExecution;
   }
 
-  if (editContext.composer.selection!.isCollapsed) {
+  if (editContext.composer.selectionComponent.selection!.isCollapsed) {
     editContext.commonOps.toggleComposerAttributions({boldAttribution});
     return ExecutionInstruction.haltExecution;
   } else {
@@ -114,7 +114,7 @@ ExecutionInstruction cmdIToToggleItalics({
     return ExecutionInstruction.continueExecution;
   }
 
-  if (editContext.composer.selection!.isCollapsed) {
+  if (editContext.composer.selectionComponent.selection!.isCollapsed) {
     editContext.commonOps.toggleComposerAttributions({italicsAttribution});
     return ExecutionInstruction.haltExecution;
   } else {
@@ -127,7 +127,8 @@ ExecutionInstruction anyCharacterOrDestructiveKeyToDeleteSelection({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
-  if (editContext.composer.selection == null || editContext.composer.selection!.isCollapsed) {
+  if (editContext.composer.selectionComponent.selection == null ||
+      editContext.composer.selectionComponent.selection!.isCollapsed) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -201,11 +202,12 @@ ExecutionInstruction mergeNodeWithNextWhenDeleteIsPressed({
     return ExecutionInstruction.continueExecution;
   }
 
-  if (editContext.composer.selection == null) {
+  if (editContext.composer.selectionComponent.selection == null) {
     return ExecutionInstruction.continueExecution;
   }
 
-  final node = editContext.editor.document.getNodeById(editContext.composer.selection!.extent.nodeId);
+  final node =
+      editContext.editor.document.getNodeById(editContext.composer.selectionComponent.selection!.extent.nodeId);
   if (node is! TextNode) {
     return ExecutionInstruction.continueExecution;
   }
@@ -229,7 +231,7 @@ ExecutionInstruction mergeNodeWithNextWhenDeleteIsPressed({
   );
 
   // Place the cursor at the point where the text came together.
-  editContext.composer.updateSelection(
+  editContext.composer.selectionComponent.updateSelection(
       DocumentSelection.collapsed(
         position: DocumentPosition(
           nodeId: node.id,
@@ -374,7 +376,7 @@ ExecutionInstruction deleteLineWithCmdBksp({
   if (!keyEvent.isPrimaryShortcutKeyPressed || keyEvent.logicalKey != LogicalKeyboardKey.backspace) {
     return ExecutionInstruction.continueExecution;
   }
-  if (editContext.composer.selection == null) {
+  if (editContext.composer.selectionComponent.selection == null) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -400,7 +402,7 @@ ExecutionInstruction deleteWordWithAltBksp({
   if (!keyEvent.isAltPressed || keyEvent.logicalKey != LogicalKeyboardKey.backspace) {
     return ExecutionInstruction.continueExecution;
   }
-  if (editContext.composer.selection == null) {
+  if (editContext.composer.selectionComponent.selection == null) {
     return ExecutionInstruction.continueExecution;
   }
 
@@ -429,7 +431,8 @@ ExecutionInstruction collapseSelectionWhenEscIsPressed({
   if (keyEvent.logicalKey != LogicalKeyboardKey.escape) {
     return ExecutionInstruction.continueExecution;
   }
-  if (editContext.composer.selection == null || editContext.composer.selection!.isCollapsed) {
+  if (editContext.composer.selectionComponent.selection == null ||
+      editContext.composer.selectionComponent.selection!.isCollapsed) {
     return ExecutionInstruction.continueExecution;
   }
 

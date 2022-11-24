@@ -24,6 +24,7 @@ export 'src/default_editor/document_caret_overlay.dart';
 export 'src/infrastructure/document_gestures.dart';
 export 'src/default_editor/document_gestures_mouse.dart';
 export 'src/default_editor/document_gestures_touch.dart';
+export 'src/default_editor/document_gestures_touch_android.dart';
 export 'src/default_editor/document_input_ime.dart';
 export 'src/default_editor/document_input_keyboard.dart';
 export 'src/default_editor/document_keyboard_actions.dart';

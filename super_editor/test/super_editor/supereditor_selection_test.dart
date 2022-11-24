@@ -718,7 +718,7 @@ Second Paragraph
 
       // Ensure the stream emits the DocumentSelectionChange.
       expectLater(
-        composer.selectionChanges,
+        composer.selectionComponent.selectionChanges,
         emits(
           DocumentSelectionChange(
             selection: newSelection,
@@ -728,7 +728,7 @@ Second Paragraph
       );
 
       // Update the selection, which should cause the stream to emit a value.
-      composer.selection = newSelection;
+      composer.selectionComponent.selection = newSelection;
     }, timeout: const Timeout(Duration(milliseconds: 500)));
 
     test("notifies selectionNotifier when a new DocumentSelection is emitted", () {
@@ -744,12 +744,12 @@ Second Paragraph
         ),
       );
 
-      composer.selectionNotifier.addListener(() {
-        emittedSelection = composer.selectionNotifier.value;
+      composer.selectionComponent.selectionNotifier.addListener(() {
+        emittedSelection = composer.selectionComponent.selectionNotifier.value;
       });
 
       // Emit a DocumentSelectionChange.
-      composer.setSelectionWithReason(newSelection);
+      composer.selectionComponent.setSelectionWithReason(newSelection);
 
       // Ensure the listener was called and the selection in the selectionNotifier is correct.
       expect(emittedSelection, newSelection);

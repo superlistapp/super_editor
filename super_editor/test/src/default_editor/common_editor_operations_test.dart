@@ -50,8 +50,8 @@ void main() {
         final doc = editor.document;
         expect(doc.nodes.length, 1);
         expect(doc.nodes.first.id, "2");
-        expect(composer.selection!.extent.nodeId, "2");
-        expect(composer.selection!.extent.nodePosition, const TextNodePosition(offset: 0));
+        expect(composer.selectionComponent.selection!.extent.nodeId, "2");
+        expect(composer.selectionComponent.selection!.extent.nodePosition, const TextNodePosition(offset: 0));
       });
 
       test("from block node (inclusive) to text node (partial)", () {
@@ -88,8 +88,8 @@ void main() {
         final doc = editor.document;
         expect(doc.nodes.length, 1);
         expect(doc.nodes.first.id, "2");
-        expect(composer.selection!.extent.nodeId, "2");
-        expect(composer.selection!.extent.nodePosition, const TextNodePosition(offset: 0));
+        expect(composer.selectionComponent.selection!.extent.nodeId, "2");
+        expect(composer.selectionComponent.selection!.extent.nodePosition, const TextNodePosition(offset: 0));
       });
 
       test("from text node (partial) to block node (inclusive)", () {
@@ -126,8 +126,8 @@ void main() {
         final doc = editor.document;
         expect(doc.nodes.length, 1);
         expect(doc.nodes.first.id, "1");
-        expect(composer.selection!.extent.nodeId, "1");
-        expect(composer.selection!.extent.nodePosition, const TextNodePosition(offset: 50));
+        expect(composer.selectionComponent.selection!.extent.nodeId, "1");
+        expect(composer.selectionComponent.selection!.extent.nodePosition, const TextNodePosition(offset: 50));
       });
 
       test("from block node (inclusive) to block node (inclusive)", () {
@@ -160,7 +160,7 @@ void main() {
         expect(doc.nodes.length, 1);
         expect(doc.nodes.first, isA<ParagraphNode>());
         expect(doc.nodes.first.id, "1");
-        expect(composer.selection!.extent.nodePosition, const TextNodePosition(offset: 0));
+        expect(composer.selectionComponent.selection!.extent.nodePosition, const TextNodePosition(offset: 0));
       });
     });
 

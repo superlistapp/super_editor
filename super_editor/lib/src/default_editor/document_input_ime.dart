@@ -85,7 +85,7 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor>
 
     _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
 
-    widget.editContext.composer.selectionNotifier.addListener(_onComposerChange);
+    widget.editContext.composer.selectionComponent.selectionNotifier.addListener(_onComposerChange);
     widget.editContext.composer.imeConfiguration.addListener(_onClientWantsDifferentImeConfiguration);
   }
 
@@ -98,9 +98,10 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor>
       _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
     }
 
-    if (widget.editContext.composer.selectionNotifier != oldWidget.editContext.composer.selectionNotifier) {
-      oldWidget.editContext.composer.selectionNotifier.removeListener(_onComposerChange);
-      widget.editContext.composer.selectionNotifier.addListener(_onComposerChange);
+    if (widget.editContext.composer.selectionComponent.selectionNotifier !=
+        oldWidget.editContext.composer.selectionComponent.selectionNotifier) {
+      oldWidget.editContext.composer.selectionComponent.selectionNotifier.removeListener(_onComposerChange);
+      widget.editContext.composer.selectionComponent.selectionNotifier.addListener(_onComposerChange);
     }
     if (widget.editContext.composer.imeConfiguration != oldWidget.editContext.composer.imeConfiguration) {
       oldWidget.editContext.composer.imeConfiguration.removeListener(_onClientWantsDifferentImeConfiguration);
@@ -113,7 +114,7 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor>
     _detachFromIme();
 
     widget.editContext.composer.imeConfiguration.removeListener(_onClientWantsDifferentImeConfiguration);
-    widget.editContext.composer.selectionNotifier.removeListener(_onComposerChange);
+    widget.editContext.composer.selectionComponent.selectionNotifier.removeListener(_onComposerChange);
 
     if (widget.focusNode == null) {
       _focusNode.dispose();
@@ -136,7 +137,7 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor>
   }
 
   void _onComposerChange() {
-    final selection = widget.editContext.composer.selection;
+    final selection = widget.editContext.composer.selectionComponent.selection;
     editorImeLog.info("Document composer (${widget.editContext.composer.hashCode}) changed. New selection: $selection");
 
     if (selection == null) {
@@ -211,7 +212,7 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor>
 
     editorImeLog.info('Detaching TextInputClient from TextInput.');
 
-    widget.editContext.composer.updateSelection(null, notifyListeners: true);
+    widget.editContext.composer.selectionComponent.updateSelection(null, notifyListeners: true);
 
     _inputConnection!.close();
   }
@@ -241,7 +242,7 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor>
   bool _isApplyingDeltas = false;
 
   void _syncImeWithDocumentAndComposer([TextRange? newComposingRegion]) {
-    final selection = widget.editContext.composer.selection;
+    final selection = widget.editContext.composer.selectionComponent.selection;
     if (selection != null) {
       editorImeLog.fine("Syncing IME with Doc and Composer, given composing region: $newComposingRegion");
 
@@ -945,7 +946,7 @@ class SoftwareKeyboardHandler {
     editorImeLog.fine("Serializing document to perform IME operation");
     final docSerializer = DocumentImeSerializer(
       editor.document,
-      composer.selection!,
+      composer.selectionComponent.selection!,
     );
     editorImeLog.fine("Converting IME insertion offset into a DocumentSelection");
     final insertionSelection = docSerializer.imeToDocumentSelection(
@@ -953,8 +954,8 @@ class SoftwareKeyboardHandler {
     );
     editorImeLog
         .fine("Updating the Document Composer's selection to place caret at insertion offset:\n$insertionSelection");
-    final selectionBeforeInsertion = composer.selection;
-    composer.updateSelection(insertionSelection, notifyListeners: true);
+    final selectionBeforeInsertion = composer.selectionComponent.selection;
+    composer.selectionComponent.updateSelection(insertionSelection, notifyListeners: true);
 
     editorImeLog.fine("Inserting the text at the Document Composer's selection");
     final didInsert = commonOps.insertPlainText(textInserted);
@@ -962,18 +963,18 @@ class SoftwareKeyboardHandler {
 
     if (!didInsert) {
       editorImeLog.fine("Failed to insert characters. Restoring previous selection.");
-      composer.updateSelection(selectionBeforeInsertion, notifyListeners: true);
+      composer.selectionComponent.updateSelection(selectionBeforeInsertion, notifyListeners: true);
     }
 
     commonOps.convertParagraphByPatternMatching(
-      composer.selection!.extent.nodeId,
+      composer.selectionComponent.selection!.extent.nodeId,
     );
   }
 
   void replace(TextRange replacedRange, String replacementText) {
     final docSerializer = DocumentImeSerializer(
       editor.document,
-      composer.selection!,
+      composer.selectionComponent.selection!,
     );
 
     final replacementSelection = docSerializer.imeToDocumentSelection(TextSelection(
@@ -985,7 +986,7 @@ class SoftwareKeyboardHandler {
     ));
 
     if (replacementSelection != null) {
-      composer.updateSelection(replacementSelection, notifyListeners: true);
+      composer.selectionComponent.updateSelection(replacementSelection, notifyListeners: true);
     }
     editorImeLog.fine("Replacing selection: $replacementSelection");
     editorImeLog.fine('With text: "$replacementText"');
@@ -998,7 +999,7 @@ class SoftwareKeyboardHandler {
     commonOps.insertPlainText(replacementText);
 
     commonOps.convertParagraphByPatternMatching(
-      composer.selection!.extent.nodeId,
+      composer.selectionComponent.selection!.extent.nodeId,
     );
   }
 
@@ -1006,7 +1007,7 @@ class SoftwareKeyboardHandler {
     final rangeToDelete = deletedRange;
     final docSerializer = DocumentImeSerializer(
       editor.document,
-      composer.selection!,
+      composer.selectionComponent.selection!,
     );
     final docSelectionToDelete = docSerializer.imeToDocumentSelection(TextSelection(
       baseOffset: rangeToDelete.start,
@@ -1016,7 +1017,7 @@ class SoftwareKeyboardHandler {
 
     if (docSelectionToDelete == null) {
       final selectedNodeIndex = editor.document.getNodeIndexById(
-        composer.selection!.extent.nodeId,
+        composer.selectionComponent.selection!.extent.nodeId,
       );
       if (selectedNodeIndex > 0) {
         // The user is trying to delete upstream at the start of a node.
@@ -1025,20 +1026,20 @@ class SoftwareKeyboardHandler {
         // to run a delete action upstream, which will take the desired
         // "backspace" behavior at the start of this node.
         commonOps.deleteUpstream();
-        editorImeLog.fine("Deleted upstream. New selection: ${composer.selection}");
+        editorImeLog.fine("Deleted upstream. New selection: ${composer.selectionComponent.selection}");
         return;
       }
     }
 
     editorImeLog.fine("Running selection deletion operation");
-    composer.updateSelection(docSelectionToDelete, notifyListeners: true);
+    composer.selectionComponent.updateSelection(docSelectionToDelete, notifyListeners: true);
     commonOps.deleteSelection();
   }
 
   void performAction(TextInputAction action) {
     switch (action) {
       case TextInputAction.newline:
-        if (!composer.selection!.isCollapsed) {
+        if (!composer.selectionComponent.selection!.isCollapsed) {
           commonOps.deleteSelection();
         }
         commonOps.insertBlockLevelNewline();
@@ -1096,7 +1097,7 @@ class KeyboardEditingToolbar extends StatelessWidget {
   void _toggleStrikethrough() => _toggleAttributions({strikethroughAttribution});
 
   bool _doesSelectionHaveAttributions(Set<Attribution> attributions) {
-    final selection = composer.selection;
+    final selection = composer.selectionComponent.selection;
     if (selection == null) {
       return false;
     }
@@ -1109,7 +1110,7 @@ class KeyboardEditingToolbar extends StatelessWidget {
   }
 
   void _toggleAttributions(Set<Attribution> attributions) {
-    final selection = composer.selection;
+    final selection = composer.selectionComponent.selection;
     if (selection == null) {
       return;
     }
@@ -1120,7 +1121,7 @@ class KeyboardEditingToolbar extends StatelessWidget {
   }
 
   void _convertToHeader1() {
-    final selectedNode = document.getNodeById(composer.selection!.extent.nodeId);
+    final selectedNode = document.getNodeById(composer.selectionComponent.selection!.extent.nodeId);
     if (selectedNode is! TextNode) {
       return;
     }
@@ -1137,7 +1138,7 @@ class KeyboardEditingToolbar extends StatelessWidget {
   }
 
   void _convertToHeader2() {
-    final selectedNode = document.getNodeById(composer.selection!.extent.nodeId);
+    final selectedNode = document.getNodeById(composer.selectionComponent.selection!.extent.nodeId);
     if (selectedNode is! TextNode) {
       return;
     }
@@ -1158,28 +1159,28 @@ class KeyboardEditingToolbar extends StatelessWidget {
   }
 
   void _convertToOrderedListItem() {
-    final selectedNode = document.getNodeById(composer.selection!.extent.nodeId)! as TextNode;
+    final selectedNode = document.getNodeById(composer.selectionComponent.selection!.extent.nodeId)! as TextNode;
 
     commonOps.convertToListItem(ListItemType.ordered, selectedNode.text);
   }
 
   void _convertToUnorderedListItem() {
-    final selectedNode = document.getNodeById(composer.selection!.extent.nodeId)! as TextNode;
+    final selectedNode = document.getNodeById(composer.selectionComponent.selection!.extent.nodeId)! as TextNode;
 
     commonOps.convertToListItem(ListItemType.unordered, selectedNode.text);
   }
 
   void _convertToBlockquote() {
-    final selectedNode = document.getNodeById(composer.selection!.extent.nodeId)! as TextNode;
+    final selectedNode = document.getNodeById(composer.selectionComponent.selection!.extent.nodeId)! as TextNode;
 
     commonOps.convertToBlockquote(selectedNode.text);
   }
 
   void _convertToHr() {
-    final selectedNode = document.getNodeById(composer.selection!.extent.nodeId)! as TextNode;
+    final selectedNode = document.getNodeById(composer.selectionComponent.selection!.extent.nodeId)! as TextNode;
 
     selectedNode.text = AttributedText(text: '--- ');
-    composer.updateSelection(
+    composer.selectionComponent.updateSelection(
         DocumentSelection.collapsed(
           position: DocumentPosition(
             nodeId: selectedNode.id,
@@ -1191,12 +1192,12 @@ class KeyboardEditingToolbar extends StatelessWidget {
   }
 
   void _closeKeyboard() {
-    composer.updateSelection(null, notifyListeners: true);
+    composer.selectionComponent.updateSelection(null, notifyListeners: true);
   }
 
   @override
   Widget build(BuildContext context) {
-    final selection = composer.selection;
+    final selection = composer.selectionComponent.selection;
 
     if (selection == null) {
       return const SizedBox();

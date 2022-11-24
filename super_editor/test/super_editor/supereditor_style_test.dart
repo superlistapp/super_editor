@@ -46,8 +46,8 @@ void main() {
       expect(SuperEditorInspector.findParagraphStyle(firstParagraphId)!.color, Colors.red);
 
       // Remove the second paragraph.
-      testContext.editContext.editor.executeCommand(
-        DeleteNodeCommand(nodeId: secondParagraphId),
+      testContext.editContext.editor.execute(
+        DeleteNodeRequest(nodeId: secondParagraphId),
       );
       await tester.pump();
 

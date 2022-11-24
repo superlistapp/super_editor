@@ -547,14 +547,14 @@ void main() {
 
               expect(result, ExecutionInstruction.haltExecution);
               expect(
-                editContext.composer.selection!.base,
+                editContext.composer.selectionComponent.selection!.base,
                 const DocumentPosition(
                   nodeId: 'paragraph',
                   nodePosition: TextNodePosition(offset: 0),
                 ),
               );
               expect(
-                editContext.composer.selection!.extent,
+                editContext.composer.selectionComponent.selection!.extent,
                 const DocumentPosition(
                   nodeId: 'paragraph',
                   nodePosition: TextNodePosition(offset: 'This is some text'.length),
@@ -594,14 +594,14 @@ void main() {
 
               expect(result, ExecutionInstruction.haltExecution);
               expect(
-                editContext.composer.selection!.base,
+                editContext.composer.selectionComponent.selection!.base,
                 const DocumentPosition(
                   nodeId: 'paragraph_1',
                   nodePosition: TextNodePosition(offset: 0),
                 ),
               );
               expect(
-                editContext.composer.selection!.extent,
+                editContext.composer.selectionComponent.selection!.extent,
                 const DocumentPosition(
                   nodeId: 'paragraph_2',
                   nodePosition: TextNodePosition(offset: 'This is some text'.length),
@@ -645,14 +645,14 @@ void main() {
 
               expect(result, ExecutionInstruction.haltExecution);
               expect(
-                editContext.composer.selection!.base,
+                editContext.composer.selectionComponent.selection!.base,
                 const DocumentPosition(
                   nodeId: 'image_1',
                   nodePosition: UpstreamDownstreamNodePosition.upstream(),
                 ),
               );
               expect(
-                editContext.composer.selection!.extent,
+                editContext.composer.selectionComponent.selection!.extent,
                 const DocumentPosition(
                   nodeId: 'image_2',
                   nodePosition: UpstreamDownstreamNodePosition.downstream(),
@@ -704,7 +704,7 @@ void main() {
           expect(paragraph.text.text, 'Text with [] selection');
 
           expect(
-            editContext.composer.selection,
+            editContext.composer.selectionComponent.selection,
             equals(
               const DocumentSelection.collapsed(
                 position: DocumentPosition(
@@ -756,7 +756,7 @@ void main() {
           expect(paragraph.text.text, 'Text with [] selection');
 
           expect(
-            editContext.composer.selection,
+            editContext.composer.selectionComponent.selection,
             equals(
               const DocumentSelection.collapsed(
                 position: DocumentPosition(
@@ -811,7 +811,7 @@ void main() {
           expect(paragraph.text.text, 'Text with [] selection');
 
           expect(
-            editContext.composer.selection,
+            editContext.composer.selectionComponent.selection,
             equals(
               const DocumentSelection.collapsed(
                 position: DocumentPosition(
@@ -865,7 +865,7 @@ void main() {
 
           // The selection should be collapsed
           expect(
-            editContext.composer.selection,
+            editContext.composer.selectionComponent.selection,
             equals(
               const DocumentSelection.collapsed(
                 position: DocumentPosition(
@@ -959,7 +959,7 @@ void main() {
 
         // The selection should remain the same
         expect(
-          editContext.composer.selection,
+          editContext.composer.selectionComponent.selection,
           equals(
             const DocumentSelection.collapsed(
               position: DocumentPosition(
