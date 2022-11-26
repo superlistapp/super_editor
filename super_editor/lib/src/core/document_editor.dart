@@ -133,19 +133,6 @@ abstract class EditorCommand {
   List<DocumentChangeEvent> execute(EditorContext context);
 }
 
-/// Functional version of an [EditorCommand] for commands that
-/// don't require variables or private functions.
-class EditorCommandFunction implements EditorCommand {
-  /// Creates a functional editor command given the [EditorCommand.execute]
-  /// function to be stored for execution.
-  EditorCommandFunction(this._execute);
-
-  final List<DocumentChangeEvent> Function(EditorContext) _execute;
-
-  @override
-  List<DocumentChangeEvent> execute(EditorContext context) => _execute(context);
-}
-
 /// An in-memory, mutable [Document].
 class MutableDocument implements Document {
   /// Creates an in-memory, mutable version of a [Document].

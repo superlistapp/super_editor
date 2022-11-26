@@ -1,9 +1,8 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/default_editor/text.dart';
-import 'package:super_editor/super_editor.dart';
 
-/// A read-only document with styled text and multimedia elements.
+/// A document with styled text and multimedia elements.
 ///
 /// A [Document] is comprised of a list of [DocumentNode]s,
 /// which describe the type and substance of a piece of content
@@ -81,7 +80,11 @@ abstract class Document {
   void removeListener(DocumentChangeListener listener);
 }
 
-typedef DocumentChangeListener = void Function(DocumentChangeLog);
+/// Listener that's notified when a document changes.
+///
+/// The [changeLog] includes an ordered list of all changes that were applied
+/// to the [Document] since the last time this listener was notified.
+typedef DocumentChangeListener = void Function(DocumentChangeLog changeLog);
 
 /// One or more document changes that occurred within a single edit transaction.
 ///
