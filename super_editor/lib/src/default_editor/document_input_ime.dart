@@ -291,7 +291,10 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor>
     editorImeLog.fine("IME value before applying deltas: $imeValueBeforeChange");
 
     _isApplyingDeltas = true;
-    widget.softwareKeyboardHandler.applyDeltas(textEditingDeltas);
+    widget.softwareKeyboardHandler.applyDeltas(
+      textEditingDeltas,
+      onConvertSelection: (selection) => _currentImeSerialization?.imeToDocumentSelection(selection),
+    );
     _isApplyingDeltas = false;
 
     editorImeLog.fine("Done applying deltas. Serializing the document and sending to IME.");
@@ -816,6 +819,9 @@ class ImeConfiguration {
       keyboardActionButton.hashCode;
 }
 
+/// A function that converts a [TextSelection] from the platform to a [DocumentSelection].
+typedef ImeSelectionConverter = DocumentSelection? Function(TextSelection selection);
+
 /// Applies software keyboard edits to a document.
 class SoftwareKeyboardHandler {
   const SoftwareKeyboardHandler({
@@ -829,7 +835,10 @@ class SoftwareKeyboardHandler {
   final CommonEditorOperations commonOps;
 
   /// Applies the given [textEditingDeltas] to the [Document].
-  void applyDeltas(List<TextEditingDelta> textEditingDeltas) {
+  void applyDeltas(
+    List<TextEditingDelta> textEditingDeltas, {
+    ImeSelectionConverter? onConvertSelection,
+  }) {
     editorImeLog.info("Applying ${textEditingDeltas.length} IME deltas to document");
 
     for (final delta in textEditingDeltas) {
@@ -841,7 +850,7 @@ class SoftwareKeyboardHandler {
       } else if (delta is TextEditingDeltaDeletion) {
         _applyDeletion(delta);
       } else if (delta is TextEditingDeltaNonTextUpdate) {
-        _applyNonTextChange(delta);
+        _applyNonTextChange(delta, onConvertSelection: onConvertSelection);
       } else {
         editorImeLog.shout("Unknown IME delta type: ${delta.runtimeType}");
       }
@@ -926,13 +935,23 @@ class SoftwareKeyboardHandler {
     editorImeLog.fine("Deletion operation complete");
   }
 
-  void _applyNonTextChange(TextEditingDeltaNonTextUpdate delta) {
+  void _applyNonTextChange(
+    TextEditingDeltaNonTextUpdate delta, {
+    ImeSelectionConverter? onConvertSelection,
+  }) {
     editorImeLog.fine("Non-text change:");
     // editorImeLog.fine("App-side selection - ${currentTextEditingValue.selection}");
     // editorImeLog.fine("App-side composing - ${currentTextEditingValue.composing}");
     editorImeLog.fine("OS-side selection - ${delta.selection}");
     editorImeLog.fine("OS-side composing - ${delta.composing}");
-    // currentTextEditingValue = _currentTextEditingValue.copyWith(composing: delta.composing);
+
+    final docSelection = onConvertSelection?.call(delta.selection);
+    if (docSelection != null) {
+      // We got a selection from the platform.
+      // This could happen in some software keyboards, like GBoard,
+      // where the user can swipe over the spacebar to change the selection.
+      composer.selection = docSelection;
+    }
   }
 
   void insert(TextPosition insertionPosition, String textInserted) {
