@@ -730,13 +730,14 @@ void _testParagraphSelection(
 
     final dragLine = ValueNotifier<_Line?>(null);
 
-    final composer = DocumentComposer();
+    final editor = _createSingleParagraphEditor();
+    final composer = DocumentComposer(document: editor.document);
 
     final content = _buildScaffold(
       dragLine: dragLine,
       child: SuperEditor(
         documentLayoutKey: docKey,
-        editor: _createSingleParagraphEditor(),
+        editor: editor,
         composer: composer,
         gestureMode: platform,
         stylesheet: Stylesheet(

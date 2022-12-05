@@ -429,16 +429,19 @@ void main() {
 }
 
 EditContext _createEditContextWithParagraph() {
+  final document = MutableDocument(
+    nodes: [
+      ParagraphNode(
+        id: 'paragraph',
+        text: AttributedText(text: ''),
+      ),
+    ],
+  );
+
   return createEditContext(
-    document: MutableDocument(
-      nodes: [
-        ParagraphNode(
-          id: 'paragraph',
-          text: AttributedText(text: ''),
-        ),
-      ],
-    ),
+    document: document,
     documentComposer: DocumentComposer(
+      document: document,
       initialSelection: const DocumentSelection.collapsed(
         position: DocumentPosition(
           nodeId: 'paragraph',

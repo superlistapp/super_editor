@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
+import 'package:super_editor/src/core/document_ime.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 
@@ -29,6 +30,7 @@ void main() {
         ]);
         final editor = DocumentEditor(document: document);
         final composer = DocumentComposer(
+          document: document,
           initialSelection: const DocumentSelection.collapsed(
             position: DocumentPosition(
               nodeId: "1",
@@ -79,6 +81,8 @@ void main() {
       });
 
       testWidgets('can type compound character in an empty paragraph', (tester) async {
+        final document = twoParagraphEmptyDoc();
+
         // Inserting special characters, or compound characters, like ü, requires
         // multiple key presses, which are combined by the IME, based on the
         // composing region.
@@ -95,8 +99,9 @@ void main() {
         final editContext = createEditContext(
           // Use a two-paragraph document so that the selection in the 2nd
           // paragraph sends a hidden placeholder to the IME for backspace.
-          document: twoParagraphEmptyDoc(),
+          document: document,
           documentComposer: DocumentComposer(
+            document: document,
             initialSelection: const DocumentSelection.collapsed(
               position: DocumentPosition(
                 // Start the caret in the 2nd paragraph so that we send a

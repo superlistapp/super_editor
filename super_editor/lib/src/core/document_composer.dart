@@ -2,10 +2,13 @@ import 'dart:async';
 
 import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/default_editor/document_input_ime.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
 
+import 'document_ime.dart';
 import 'document_selection.dart';
 
 /// Maintains a [DocumentSelection] within a [Document] and
@@ -16,9 +19,11 @@ class DocumentComposer with ChangeNotifier {
   /// The [initialSelection] may be omitted if no initial selection is
   /// desired.
   DocumentComposer({
+    required Document document,
     DocumentSelection? initialSelection,
     ImeConfiguration? imeConfiguration,
-  })  : imeConfiguration = ValueNotifier(imeConfiguration ?? const ImeConfiguration()),
+  })  : _document = document,
+        imeConfiguration = ValueNotifier(imeConfiguration ?? const ImeConfiguration()),
         _preferences = ComposerPreferences() {
     _streamController = StreamController<DocumentSelectionChange>.broadcast();
     selectionNotifier.addListener(_onSelectionChangedBySelectionNotifier);
@@ -35,6 +40,9 @@ class DocumentComposer with ChangeNotifier {
     selectionNotifier.removeListener(_onSelectionChangedBySelectionNotifier);
     super.dispose();
   }
+
+  /// The document that's being edited by this [DocumentComposer].
+  final Document _document;
 
   /// Returns the current [DocumentSelection] for a [Document].
   DocumentSelection? get selection => selectionNotifier.value;
@@ -106,7 +114,130 @@ class DocumentComposer with ChangeNotifier {
     _streamController.sink.add(_latestSelectionChange);
   }
 
+  bool get isAttachedToIme => _imeConnection != null;
+
+  TextInputConnection? _imeConnection;
+  @visibleForTesting
+  EditorImeClient? imeClient;
+
   final ValueNotifier<ImeConfiguration> imeConfiguration;
+
+  DocumentImeSerializer? _currentImeSerialization;
+  TextEditingValue _currentTextEditingValue = TextEditingValue.empty;
+
+  // TODO: get rid of this parameters. They should be constructor injected, or perhaps set explicitly
+  void openIme(SoftwareKeyboardHandler softwareKeyboardHandler, [FloatingCursorController? floatingCursorController]) {
+    print("Opening IME");
+    if (isAttachedToIme) {
+      print("Already attached to the IME");
+      // We're already connected to the IME.
+      return;
+    }
+
+    editorImeLog.info('Attaching TextInputClient to TextInput');
+
+    imeClient = EditorImeClient(
+      softwareKeyboardHandler: softwareKeyboardHandler,
+      floatingCursorController: floatingCursorController,
+      sendDocumentToIme: _syncImeWithDocumentAndSelection,
+    );
+
+    _imeConnection = TextInput.attach(
+      imeClient!,
+      _createInputConfiguration(),
+    );
+
+    _syncImeWithDocumentAndSelection();
+
+    _imeConnection!
+      ..show()
+      ..setEditingState(_currentTextEditingValue);
+
+    print('Is attached to input client? ${_imeConnection!.attached}');
+    editorImeLog.fine('Is attached to input client? ${_imeConnection!.attached}');
+  }
+
+  // TODO: get rid of this parameters. They should be constructor injected, or perhaps set explicitly
+  void showImeInput(SoftwareKeyboardHandler softwareKeyboardHandler,
+      [FloatingCursorController? floatingCursorController]) {
+    if (isAttachedToIme && !imeClient!.isApplyingDeltas) {
+      // Note: ^ We don't re-serialize and send to IME while we're in the middle
+      // of applying deltas because we might be in an inconsistent state. A sync
+      // will be done when all the deltas have been applied.
+      _imeConnection!.show();
+      editorImeLog
+          .fine("Document composer changed while attached to IME. Re-serializing the document and sending to the IME.");
+      _syncImeWithDocumentAndSelection();
+    } else if (!isAttachedToIme) {
+      openIme(softwareKeyboardHandler, floatingCursorController);
+    }
+  }
+
+  void updateImeConfig(TextInputConfiguration config) {
+    _imeConnection?.updateConfig(config);
+  }
+
+  TextInputConfiguration _createInputConfiguration() {
+    final imeConfig = imeConfiguration.value;
+
+    return TextInputConfiguration(
+      enableDeltaModel: true,
+      inputType: TextInputType.multiline,
+      textCapitalization: TextCapitalization.sentences,
+      autocorrect: imeConfig.enableAutocorrect,
+      enableSuggestions: imeConfig.enableSuggestions,
+      inputAction: imeConfig.keyboardActionButton,
+      keyboardAppearance: imeConfig.keyboardBrightness,
+    );
+  }
+
+  void _syncImeWithDocumentAndSelection([TextRange? newComposingRegion]) {
+    if (selection != null) {
+      editorImeLog.fine("Syncing IME with Doc and Composer, given composing region: $newComposingRegion");
+
+      final newDocSerialization = DocumentImeSerializer(
+        _document,
+        selection!,
+      );
+
+      editorImeLog.fine("Previous doc serialization did prepend? ${_currentImeSerialization?.didPrependPlaceholder}");
+      editorImeLog.fine("Desired composing region: $newComposingRegion");
+      editorImeLog.fine("Did new doc prepend placeholder? ${newDocSerialization.didPrependPlaceholder}");
+      TextRange composingRegion = newComposingRegion ?? _currentTextEditingValue.composing;
+      if (_currentImeSerialization != null &&
+          _currentImeSerialization!.didPrependPlaceholder &&
+          composingRegion.isValid &&
+          !newDocSerialization.didPrependPlaceholder) {
+        // The IME's desired composing region includes the prepended placeholder.
+        // The updated IME value doesn't have a prepended placeholder, adjust
+        // the composing region bounds.
+        composingRegion = TextRange(
+          start: composingRegion.start - 2,
+          end: composingRegion.end - 2,
+        );
+      }
+
+      _currentImeSerialization = newDocSerialization;
+      _currentTextEditingValue = newDocSerialization.toTextEditingValue().copyWith(composing: composingRegion);
+    }
+  }
+
+  void closeIme() {
+    if (!isAttachedToIme) {
+      print("Not attached to the IME. _imeConnection: $_imeConnection");
+      return;
+    }
+
+    editorImeLog.info('Detaching TextInputClient from TextInput.');
+
+    if (imeConfiguration.value.clearSelectionWhenImeDisconnects) {
+      selection = null;
+    }
+
+    _imeConnection!.close();
+    print("Null'ing out the _imeConnection");
+    _imeConnection = null;
+  }
 
   final ComposerPreferences _preferences;
 

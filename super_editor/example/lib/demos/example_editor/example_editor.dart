@@ -43,7 +43,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
     super.initState();
     _doc = createInitialDocument()..addListener(_hideOrShowToolbar);
     _docEditor = DocumentEditor(document: _doc as MutableDocument);
-    _composer = DocumentComposer();
+    _composer = DocumentComposer(document: _doc);
     _composer.selectionNotifier.addListener(_hideOrShowToolbar);
     _docOps = CommonEditorOperations(
       editor: _docEditor,

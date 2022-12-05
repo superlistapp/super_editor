@@ -665,16 +665,19 @@ void main() {
 
       group('key pressed with selection', () {
         testOnMac('deletes selection if backspace is pressed', () {
+          final document = MutableDocument(
+            nodes: [
+              ParagraphNode(
+                id: '1',
+                text: AttributedText(text: 'Text with [DELETEME] selection'),
+              ),
+            ],
+          );
+
           final editContext = createEditContext(
-            document: MutableDocument(
-              nodes: [
-                ParagraphNode(
-                  id: '1',
-                  text: AttributedText(text: 'Text with [DELETEME] selection'),
-                ),
-              ],
-            ),
+            document: document,
             documentComposer: DocumentComposer(
+              document: document,
               initialSelection: const DocumentSelection(
                 base: DocumentPosition(
                   nodeId: '1',
@@ -717,16 +720,18 @@ void main() {
         });
 
         testOnMac('deletes selection if delete is pressed', () {
+          final document = MutableDocument(
+            nodes: [
+              ParagraphNode(
+                id: '1',
+                text: AttributedText(text: 'Text with [DELETEME] selection'),
+              ),
+            ],
+          );
           final editContext = createEditContext(
-            document: MutableDocument(
-              nodes: [
-                ParagraphNode(
-                  id: '1',
-                  text: AttributedText(text: 'Text with [DELETEME] selection'),
-                ),
-              ],
-            ),
+            document: document,
             documentComposer: DocumentComposer(
+              document: document,
               initialSelection: const DocumentSelection(
                 base: DocumentPosition(
                   nodeId: '1',
@@ -769,16 +774,18 @@ void main() {
         });
 
         testOnMac('deletes selection when character key is pressed', () {
+          final document = MutableDocument(
+            nodes: [
+              ParagraphNode(
+                id: '1',
+                text: AttributedText(text: 'Text with [DELETEME] selection'),
+              ),
+            ],
+          );
           final editContext = createEditContext(
-            document: MutableDocument(
-              nodes: [
-                ParagraphNode(
-                  id: '1',
-                  text: AttributedText(text: 'Text with [DELETEME] selection'),
-                ),
-              ],
-            ),
+            document: document,
             documentComposer: DocumentComposer(
+              document: document,
               initialSelection: const DocumentSelection(
                 base: DocumentPosition(
                   nodeId: '1',
@@ -824,16 +831,18 @@ void main() {
         });
 
         testOnMac('collapses selection if escape is pressed', () {
+          final document = MutableDocument(
+            nodes: [
+              ParagraphNode(
+                id: '1',
+                text: AttributedText(text: 'Text with [SELECTME] selection'),
+              ),
+            ],
+          );
           final editContext = createEditContext(
-            document: MutableDocument(
-              nodes: [
-                ParagraphNode(
-                  id: '1',
-                  text: AttributedText(text: 'Text with [SELECTME] selection'),
-                ),
-              ],
-            ),
+            document: document,
             documentComposer: DocumentComposer(
+              document: document,
               initialSelection: const DocumentSelection(
                 base: DocumentPosition(
                   nodeId: '1',
@@ -921,16 +930,18 @@ void main() {
       });
 
       testOnMac('does nothing when escape is pressed if the selection is collapsed', () {
+        final document = MutableDocument(
+          nodes: [
+            ParagraphNode(
+              id: '1',
+              text: AttributedText(text: 'This is some text'),
+            ),
+          ],
+        );
         final editContext = createEditContext(
-          document: MutableDocument(
-            nodes: [
-              ParagraphNode(
-                id: '1',
-                text: AttributedText(text: 'This is some text'),
-              ),
-            ],
-          ),
+          document: document,
           documentComposer: DocumentComposer(
+            document: document,
             initialSelection: const DocumentSelection.collapsed(
               position: DocumentPosition(
                 nodeId: '1',
@@ -983,7 +994,9 @@ Future<EditContext> _pumpCaretMovementTestSetup(
   WidgetTester tester, {
   required int textOffsetInFirstNode,
 }) async {
+  final document = singleParagraphDoc();
   final composer = DocumentComposer(
+    document: document,
     initialSelection: DocumentSelection.collapsed(
       position: DocumentPosition(
         nodeId: "1",
@@ -992,7 +1005,7 @@ Future<EditContext> _pumpCaretMovementTestSetup(
     ),
   );
   final editContext = createEditContext(
-    document: singleParagraphDoc(),
+    document: document,
     documentComposer: composer,
   );
 

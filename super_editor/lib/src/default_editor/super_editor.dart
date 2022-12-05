@@ -306,7 +306,7 @@ class SuperEditorState extends State<SuperEditor> {
 
     _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
 
-    _composer = widget.composer ?? DocumentComposer();
+    _composer = widget.composer ?? DocumentComposer(document: widget.editor.document);
     _composer.addListener(_updateComposerPreferencesAtSelection);
 
     _autoScrollController = AutoScrollController();
@@ -330,7 +330,7 @@ class SuperEditorState extends State<SuperEditor> {
     if (widget.composer != oldWidget.composer) {
       _composer.removeListener(_updateComposerPreferencesAtSelection);
 
-      _composer = widget.composer ?? DocumentComposer();
+      _composer = widget.composer ?? DocumentComposer(document: widget.editor.document);
       _composer.addListener(_updateComposerPreferencesAtSelection);
     }
     if (widget.editor != oldWidget.editor) {

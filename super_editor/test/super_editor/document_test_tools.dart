@@ -228,7 +228,7 @@ class TestDocumentConfigurator {
       final layoutKey = GlobalKey();
       final focusNode = _focusNode ?? FocusNode();
       final editor = DocumentEditor(document: _document!);
-      final composer = DocumentComposer(initialSelection: _selection);
+      final composer = DocumentComposer(document: _document!, initialSelection: _selection);
       // ignore: prefer_function_declarations_over_variables
       final layoutResolver = () => layoutKey.currentState as DocumentLayout;
       final commonOps = CommonEditorOperations(

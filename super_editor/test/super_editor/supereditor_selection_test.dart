@@ -709,7 +709,7 @@ Second Paragraph
     });
 
     test("emits a DocumentSelectionChange when changing selection by the notifier", () async {
-      final composer = DocumentComposer();
+      final composer = DocumentComposer(document: MutableDocument());
 
       const newSelection = DocumentSelection.collapsed(
         position: DocumentPosition(
@@ -734,7 +734,7 @@ Second Paragraph
     }, timeout: const Timeout(Duration(milliseconds: 500)));
 
     test("notifies selectionNotifier when a new DocumentSelection is emitted", () {
-      final composer = DocumentComposer();
+      final composer = DocumentComposer(document: MutableDocument());
 
       // Holds the selection emitted by the selectionNotifier.
       DocumentSelection? emittedSelection;

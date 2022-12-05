@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:super_editor/super_editor.dart';
 
 // This demo is for Android, only. You need to make changes to the Android
 // Activity config for this demo to work.
@@ -17,74 +18,61 @@ class PanelBehindKeyboardDemo extends StatefulWidget {
   State<PanelBehindKeyboardDemo> createState() => _PanelBehindKeyboardDemoState();
 }
 
-class _PanelBehindKeyboardDemoState extends State<PanelBehindKeyboardDemo> with TextInputClient {
+class _PanelBehindKeyboardDemoState extends State<PanelBehindKeyboardDemo> {
+  final _layoutKey = GlobalKey();
+
+  late DocumentEditor _editor;
+  late DocumentComposer _composer;
+  late SoftwareKeyboardHandler _softwareKeyboardHandler;
+
   TextInputConnection? _imeConnection;
 
   @override
   void initState() {
     super.initState();
+    _editor = DocumentEditor(
+      document: MutableDocument(nodes: [
+        ParagraphNode(
+          id: DocumentEditor.createNodeId(),
+          text: AttributedText(text: ""),
+        ),
+      ]),
+    );
+
+    _composer = DocumentComposer(document: _editor.document);
+
+    _softwareKeyboardHandler = SoftwareKeyboardHandler(
+      editor: _editor,
+      composer: _composer,
+      commonOps: CommonEditorOperations(
+        editor: _editor,
+        composer: _composer,
+        documentLayoutResolver: () => _layoutKey.currentState as DocumentLayout,
+      ),
+    );
   }
 
   @override
   void dispose() {
-    _disconnectFromIme();
+    _closeKeyboard();
+    _composer.dispose();
     super.dispose();
   }
 
-  void _connectToIme() {
-    print("Connecting to IME");
-    if (_imeConnection == null) {
-      _imeConnection = TextInput.attach(this, const TextInputConfiguration());
-    } else {
-      print(" - already connected");
-    }
-
-    print(" - showing keyboard");
-    _imeConnection!
-      ..show()
-      ..setEditingState(currentTextEditingValue!);
+  void _openKeyboard() {
+    print("Opening keyboard (also connecting to IME, if needed)");
+    _composer.openIme(_softwareKeyboardHandler);
   }
 
-  void _disconnectFromIme() {
-    if (_imeConnection == null) {
-      return;
-    }
-
-    _imeConnection!.close();
-    _imeConnection = null;
+  void _closeKeyboard() {
+    print("Closing keyboard (and disconnecting from IME)");
+    _composer.closeIme();
   }
 
-  @override
-  AutofillScope? get currentAutofillScope => null;
-
-  @override
-  TextEditingValue? get currentTextEditingValue => const TextEditingValue(
-        text: "",
-        selection: TextSelection(baseOffset: 0, extentOffset: 0),
-      );
-
-  @override
-  void updateEditingValue(TextEditingValue value) {}
-
-  @override
-  void performAction(TextInputAction action) {}
-
-  @override
-  void performSelector(String selectorName) {}
-
-  @override
-  void performPrivateCommand(String action, Map<String, dynamic> data) {}
-
-  @override
-  void showAutocorrectionPromptRect(int start, int end) {}
-
-  @override
-  void updateFloatingCursor(RawFloatingCursorPoint point) {}
-
-  @override
-  void connectionClosed() {
-    print('Text input connection closed');
-    _imeConnection = null;
+  void _endEditing() {
+    print("End editing");
+    _composer.closeIme();
+    _composer.selection = null;
   }
 
   @override
@@ -93,10 +81,10 @@ class _PanelBehindKeyboardDemoState extends State<PanelBehindKeyboardDemo> with 
       resizeToAvoidBottomInset: false,
       body: Stack(
         children: [
-          GestureDetector(
-            onTap: _connectToIme,
-            child: Container(
-              color: Colors.white,
+          Positioned.fill(
+            child: SuperEditor(
+              editor: _editor,
+              composer: _composer,
             ),
           ),
           Positioned(
@@ -104,7 +92,9 @@ class _PanelBehindKeyboardDemoState extends State<PanelBehindKeyboardDemo> with 
             right: 0,
             bottom: 0,
             child: BehindKeyboardPanel(
-              onCollapseKeyboard: _disconnectFromIme,
+              onOpenKeyboard: _openKeyboard,
+              onCloseKeyboard: _closeKeyboard,
+              onEndEditing: _endEditing,
             ),
           ),
         ],
@@ -116,10 +106,14 @@ class _PanelBehindKeyboardDemoState extends State<PanelBehindKeyboardDemo> with 
 class BehindKeyboardPanel extends StatefulWidget {
   const BehindKeyboardPanel({
     Key? key,
-    required this.onCollapseKeyboard,
+    required this.onOpenKeyboard,
+    required this.onCloseKeyboard,
+    required this.onEndEditing,
   }) : super(key: key);
 
-  final VoidCallback onCollapseKeyboard;
+  final VoidCallback onOpenKeyboard;
+  final VoidCallback onCloseKeyboard;
+  final VoidCallback onEndEditing;
 
   @override
   State<BehindKeyboardPanel> createState() => _BehindKeyboardPanelState();
@@ -127,6 +121,7 @@ class BehindKeyboardPanel extends StatefulWidget {
 
 class _BehindKeyboardPanelState extends State<BehindKeyboardPanel> {
   bool _isExpanded = false;
+  bool _isKeyboardOpen = false;
   double _maxBottomInsets = 0.0;
   double _latestBottomInsets = 0.0;
 
@@ -136,27 +131,53 @@ class _BehindKeyboardPanelState extends State<BehindKeyboardPanel> {
 
     final newBottomInset = MediaQuery.of(context).viewInsets.bottom;
     print("BehindKeyboardPanel didChangeDependencies() - bottom inset: $newBottomInset");
-    _latestBottomInsets = newBottomInset;
     if (newBottomInset > _maxBottomInsets) {
       print("Setting max bottom insets to: $newBottomInset");
-      _isExpanded = true;
       _maxBottomInsets = newBottomInset;
+      _isExpanded = true;
+
+      if (!_isKeyboardOpen) {
+        setState(() {
+          _isKeyboardOpen = true;
+        });
+      }
+    } else if (newBottomInset > _latestBottomInsets) {
+      print("Keyboard is opening. We're already expanded");
+      // The keyboard is expanding, but we're already expanded. Make sure
+      // that our internal accounting for keyboard state is updated.
+      if (!_isKeyboardOpen) {
+        setState(() {
+          _isKeyboardOpen = true;
+        });
+      }
     } else if (!_isExpanded) {
       // We don't want to be expanded. Follow the keyboard back down.
       _maxBottomInsets = newBottomInset;
+    } else {
+      // The keyboard is collapsing, but we want to stay expanded. Make sure
+      // our internal accounting for keyboard state is udpated.
+      if (_isKeyboardOpen) {
+        setState(() {
+          _isKeyboardOpen = false;
+        });
+      }
     }
+
+    _latestBottomInsets = newBottomInset;
   }
 
   void _closeKeyboardAndPanel() {
     setState(() {
       _isExpanded = false;
       _maxBottomInsets = min(_latestBottomInsets, _maxBottomInsets);
-      widget.onCollapseKeyboard();
     });
+
+    widget.onEndEditing();
   }
 
   @override
   Widget build(BuildContext context) {
+    print("Building toolbar. Is expanded? $_isKeyboardOpen");
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -173,8 +194,8 @@ class _BehindKeyboardPanelState extends State<BehindKeyboardPanel> {
               ),
               Spacer(),
               GestureDetector(
-                onTap: widget.onCollapseKeyboard,
-                child: Icon(Icons.keyboard_hide),
+                onTap: _isKeyboardOpen ? widget.onCloseKeyboard : widget.onOpenKeyboard,
+                child: Icon(_isKeyboardOpen ? Icons.keyboard_hide : Icons.keyboard),
               ),
               const SizedBox(width: 24),
             ],

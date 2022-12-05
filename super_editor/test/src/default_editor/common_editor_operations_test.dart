@@ -28,6 +28,7 @@ void main() {
         ]);
         final editor = DocumentEditor(document: document);
         final composer = DocumentComposer(
+          document: document,
           initialSelection: const DocumentSelection(
             base: DocumentPosition(
               nodeId: "1",
@@ -66,6 +67,7 @@ void main() {
         ]);
         final editor = DocumentEditor(document: document);
         final composer = DocumentComposer(
+          document: document,
           initialSelection: const DocumentSelection(
             base: DocumentPosition(
               nodeId: "1",
@@ -104,6 +106,7 @@ void main() {
         ]);
         final editor = DocumentEditor(document: document);
         final composer = DocumentComposer(
+          document: document,
           initialSelection: const DocumentSelection(
             base: DocumentPosition(
               nodeId: "1",
@@ -137,6 +140,7 @@ void main() {
         ]);
         final editor = DocumentEditor(document: document);
         final composer = DocumentComposer(
+          document: document,
           initialSelection: const DocumentSelection(
             base: DocumentPosition(
               nodeId: "1",

@@ -30,7 +30,7 @@ class _MobileEditingAndroidDemoState extends State<MobileEditingAndroidDemo> {
     super.initState();
     _doc = _createInitialDocument();
     _docEditor = DocumentEditor(document: _doc as MutableDocument);
-    _composer = DocumentComposer()..addListener(_configureImeActionButton);
+    _composer = DocumentComposer(document: _doc)..addListener(_configureImeActionButton);
     _docOps = CommonEditorOperations(
       editor: _docEditor,
       composer: _composer,
