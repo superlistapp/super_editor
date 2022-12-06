@@ -172,6 +172,13 @@ void main() {
           ),
         ]);
 
+        // We need a final pump and settle to propagate selection changes while we still
+        // have access to the document layout. Otherwise, the selection change callback
+        // will execute after the end of this test, and the layout isn't available any
+        // more.
+        // TODO: trace the selection change call stack and adjust it so that we don't need this pump
+        await tester.pumpAndSettle();
+
         // Ensure that the empty paragraph now reads "ü".
         expect((editContext.editor.document.nodes[1] as ParagraphNode).text.text, "ü");
       });
