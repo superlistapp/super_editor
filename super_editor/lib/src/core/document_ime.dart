@@ -28,7 +28,7 @@ class EditorImeClient with TextInputClient, DeltaTextInputClient {
   /// be serialized and sent to the IME.
   final void Function([TextRange? composingRegion]) sendDocumentToIme;
 
-  TextInputConnection? _inputConnection;
+  TextInputConnection? imeConnection;
   late FloatingCursorController? _floatingCursorController;
 
   @override
@@ -43,7 +43,7 @@ class EditorImeClient with TextInputClient, DeltaTextInputClient {
     _currentTextEditingValue = newValue;
     if (newValue != _lastTextEditingValueSentToOs && !isApplyingDeltas) {
       editorImeLog.info("Sending new text editing value to OS: $_currentTextEditingValue");
-      _inputConnection?.setEditingState(_currentTextEditingValue);
+      imeConnection?.setEditingState(_currentTextEditingValue);
       _lastTextEditingValueSentToOs = _currentTextEditingValue;
     } else if (isApplyingDeltas) {
       editorImeLog.fine("Ignoring new TextEditingValue because we're applying deltas");
@@ -80,9 +80,9 @@ class EditorImeClient with TextInputClient, DeltaTextInputClient {
 
     editorImeLog.fine("IME value after applying deltas: $currentTextEditingValue");
 
-    final hasDestructiveUpdate =
+    final hasMutatingUpdate =
         textEditingDeltas.where((element) => element is! TextEditingDeltaNonTextUpdate).toList().isNotEmpty;
-    if (hasDestructiveUpdate && imeValueBeforeChange == currentTextEditingValue) {
+    if (hasMutatingUpdate && imeValueBeforeChange == currentTextEditingValue) {
       // Sometimes the IME reports changes to us, but our document doesn't change
       // in ways that's reflected in the IME. In this case, we need to "reset"
       // the IME value to what it was before the deltas.
@@ -108,7 +108,7 @@ class EditorImeClient with TextInputClient, DeltaTextInputClient {
       // think there's a "\n" sitting in the edit region.
       editorImeLog.fine(
           "Sending forceful update to IME because our local TextEditingValue didn't change, but the IME may have");
-      _inputConnection!.setEditingState(currentTextEditingValue);
+      imeConnection!.setEditingState(currentTextEditingValue);
     }
   }
 
@@ -149,7 +149,7 @@ class EditorImeClient with TextInputClient, DeltaTextInputClient {
   @override
   void connectionClosed() {
     editorImeLog.info("IME connection closed");
-    _inputConnection = null;
+    imeConnection = null;
   }
 }
 

@@ -123,7 +123,6 @@ class DocumentComposer with ChangeNotifier {
   final ValueNotifier<ImeConfiguration> imeConfiguration;
 
   DocumentImeSerializer? _currentImeSerialization;
-  TextEditingValue _currentTextEditingValue = TextEditingValue.empty;
 
   // TODO: get rid of this parameters. They should be constructor injected, or perhaps set explicitly
   void openIme(SoftwareKeyboardHandler softwareKeyboardHandler, [FloatingCursorController? floatingCursorController]) {
@@ -147,11 +146,13 @@ class DocumentComposer with ChangeNotifier {
       _createInputConfiguration(),
     );
 
+    imeClient!.imeConnection = _imeConnection;
+
     _syncImeWithDocumentAndSelection();
 
     _imeConnection!
       ..show()
-      ..setEditingState(_currentTextEditingValue);
+      ..setEditingState(imeClient!.currentTextEditingValue);
 
     print('Is attached to input client? ${_imeConnection!.attached}');
     editorImeLog.fine('Is attached to input client? ${_imeConnection!.attached}');
@@ -203,7 +204,7 @@ class DocumentComposer with ChangeNotifier {
       editorImeLog.fine("Previous doc serialization did prepend? ${_currentImeSerialization?.didPrependPlaceholder}");
       editorImeLog.fine("Desired composing region: $newComposingRegion");
       editorImeLog.fine("Did new doc prepend placeholder? ${newDocSerialization.didPrependPlaceholder}");
-      TextRange composingRegion = newComposingRegion ?? _currentTextEditingValue.composing;
+      TextRange composingRegion = newComposingRegion ?? imeClient!.currentTextEditingValue.composing;
       if (_currentImeSerialization != null &&
           _currentImeSerialization!.didPrependPlaceholder &&
           composingRegion.isValid &&
@@ -218,7 +219,8 @@ class DocumentComposer with ChangeNotifier {
       }
 
       _currentImeSerialization = newDocSerialization;
-      _currentTextEditingValue = newDocSerialization.toTextEditingValue().copyWith(composing: composingRegion);
+      imeClient!.currentTextEditingValue =
+          newDocSerialization.toTextEditingValue().copyWith(composing: composingRegion);
     }
   }
 
@@ -234,6 +236,7 @@ class DocumentComposer with ChangeNotifier {
       selection = null;
     }
 
+    imeClient?.imeConnection = null;
     _imeConnection!.close();
     print("Null'ing out the _imeConnection");
     _imeConnection = null;

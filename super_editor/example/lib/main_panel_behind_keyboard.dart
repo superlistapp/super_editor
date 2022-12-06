@@ -1,6 +1,8 @@
 import 'package:example/demos/experiments/demo_panel_behind_keyboard.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:logging/logging.dart';
+import 'package:super_editor/super_editor.dart';
 
 /// Demo with a panel that appears behind the keyboard.
 ///
@@ -12,6 +14,8 @@ import 'package:flutter/material.dart';
 /// `Scaffold` behavior for insets, which is hard-coded for all demos in the
 /// regular example entrypoint.
 void main() {
+  initLoggers(Level.FINE, {editorImeLog});
+
   runApp(MaterialApp(
     home: PanelBehindKeyboardDemo(),
   ));
