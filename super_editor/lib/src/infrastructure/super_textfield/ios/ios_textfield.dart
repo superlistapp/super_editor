@@ -1,5 +1,5 @@
 import 'package:attributed_text/attributed_text.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide ListenableBuilder;
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
@@ -489,7 +489,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
             padding: widget.padding,
             child: ListenableBuilder(
               listenable: _textEditingController,
-              builder: (context) {
+              builder: (context, _) {
                 final isTextEmpty = _textEditingController.text.text.isEmpty;
                 final showHint = widget.hintBuilder != null &&
                     ((isTextEmpty && widget.hintBehavior == HintBehavior.displayHintUntilTextEntered) ||

@@ -2,7 +2,7 @@ import 'dart:math';
 
 import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide ListenableBuilder;
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
@@ -1223,7 +1223,7 @@ class KeyboardEditingToolbar extends StatelessWidget {
                     scrollDirection: Axis.horizontal,
                     child: ListenableBuilder(
                         listenable: composer,
-                        builder: (context) {
+                        builder: (context, _) {
                           final selectedNode = document.getNodeById(selection.extent.nodeId);
                           final isSingleNodeSelected = selection.extent.nodeId == selection.base.nodeId;
 
