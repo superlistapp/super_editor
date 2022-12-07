@@ -14,7 +14,10 @@ import 'package:super_editor/super_editor.dart';
 /// `Scaffold` behavior for insets, which is hard-coded for all demos in the
 /// regular example entrypoint.
 void main() {
-  initLoggers(Level.FINE, {editorImeLog});
+  initLoggers(Level.FINE, {
+    editorGesturesLog,
+    editorImeLog,
+  });
 
   runApp(MaterialApp(
     home: PanelBehindKeyboardDemo(),

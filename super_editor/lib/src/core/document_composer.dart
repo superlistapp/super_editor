@@ -158,7 +158,7 @@ class DocumentComposer with ChangeNotifier {
     editorImeLog.fine('Is attached to input client? ${_imeConnection!.attached}');
   }
 
-  // TODO: get rid of this parameters. They should be constructor injected, or perhaps set explicitly
+  // TODO: get rid of these parameters. They should be constructor injected, or perhaps set explicitly
   void showImeInput(SoftwareKeyboardHandler softwareKeyboardHandler,
       [FloatingCursorController? floatingCursorController]) {
     if (isAttachedToIme && !imeClient!.isApplyingDeltas) {
@@ -168,7 +168,9 @@ class DocumentComposer with ChangeNotifier {
       _imeConnection!.show();
       editorImeLog
           .fine("Document composer changed while attached to IME. Re-serializing the document and sending to the IME.");
-      _syncImeWithDocumentAndSelection();
+      // Pass an empty composing region because the user may have dragged the caret
+      // across nodes, in which case the previous composing region might be invalid.
+      _syncImeWithDocumentAndSelection(TextRange.empty);
     } else if (!isAttachedToIme) {
       openIme(softwareKeyboardHandler, floatingCursorController);
     }
@@ -205,6 +207,7 @@ class DocumentComposer with ChangeNotifier {
       editorImeLog.fine("Desired composing region: $newComposingRegion");
       editorImeLog.fine("Did new doc prepend placeholder? ${newDocSerialization.didPrependPlaceholder}");
       TextRange composingRegion = newComposingRegion ?? imeClient!.currentTextEditingValue.composing;
+      editorImeLog.fine("New composing region: $composingRegion");
       if (_currentImeSerialization != null &&
           _currentImeSerialization!.didPrependPlaceholder &&
           composingRegion.isValid &&
@@ -212,6 +215,10 @@ class DocumentComposer with ChangeNotifier {
         // The IME's desired composing region includes the prepended placeholder.
         // The updated IME value doesn't have a prepended placeholder, adjust
         // the composing region bounds.
+        assert(composingRegion.start - 2 >= 0, "Invalid composing start index: ${composingRegion.start - 2}");
+        assert(composingRegion.end - 2 >= 0, "Invalid composing end index: ${composingRegion.end - 2}");
+        assert(composingRegion.end - 2 < newDocSerialization.toTextEditingValue().text.length,
+            "Invalid composing end index: ${composingRegion.end - 2}");
         composingRegion = TextRange(
           start: composingRegion.start - 2,
           end: composingRegion.end - 2,

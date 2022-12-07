@@ -63,6 +63,10 @@ class EditorImeClient with TextInputClient, DeltaTextInputClient {
 
   @override
   void updateEditingValueWithDeltas(List<TextEditingDelta> textEditingDeltas) {
+    if (textEditingDeltas.isEmpty) {
+      return;
+    }
+
     editorImeLog.info("Received edit deltas from platform: ${textEditingDeltas.length} deltas");
     for (final delta in textEditingDeltas) {
       editorImeLog.info("$delta");

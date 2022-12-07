@@ -1,7 +1,6 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:super_editor/super_editor.dart';
 
 // This demo is for Android, only. You need to make changes to the Android
@@ -25,8 +24,6 @@ class _PanelBehindKeyboardDemoState extends State<PanelBehindKeyboardDemo> {
   late DocumentComposer _composer;
   late SoftwareKeyboardHandler _softwareKeyboardHandler;
 
-  TextInputConnection? _imeConnection;
-
   @override
   void initState() {
     super.initState();
@@ -34,7 +31,19 @@ class _PanelBehindKeyboardDemoState extends State<PanelBehindKeyboardDemo> {
       document: MutableDocument(nodes: [
         ParagraphNode(
           id: DocumentEditor.createNodeId(),
-          text: AttributedText(text: ""),
+          text: AttributedText(),
+        ),
+        ParagraphNode(
+          id: DocumentEditor.createNodeId(),
+          text: AttributedText(),
+        ),
+        ParagraphNode(
+          id: DocumentEditor.createNodeId(),
+          text: AttributedText(text: 'Friend'),
+        ),
+        ParagraphNode(
+          id: DocumentEditor.createNodeId(),
+          text: AttributedText(text: 'Hello'),
         ),
       ]),
     );
