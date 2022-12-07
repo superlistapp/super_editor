@@ -217,7 +217,7 @@ class DocumentComposer with ChangeNotifier {
         // the composing region bounds.
         assert(composingRegion.start - 2 >= 0, "Invalid composing start index: ${composingRegion.start - 2}");
         assert(composingRegion.end - 2 >= 0, "Invalid composing end index: ${composingRegion.end - 2}");
-        assert(composingRegion.end - 2 < newDocSerialization.toTextEditingValue().text.length,
+        assert(composingRegion.end - 2 <= newDocSerialization.toTextEditingValue().text.length,
             "Invalid composing end index: ${composingRegion.end - 2}");
         composingRegion = TextRange(
           start: composingRegion.start - 2,
