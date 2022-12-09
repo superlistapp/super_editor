@@ -291,10 +291,7 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor>
     editorImeLog.fine("IME value before applying deltas: $imeValueBeforeChange");
 
     _isApplyingDeltas = true;
-    widget.softwareKeyboardHandler.applyDeltas(
-      textEditingDeltas,
-      onConvertSelection: (selection) => _currentImeSerialization?.imeToDocumentSelection(selection),
-    );
+    widget.softwareKeyboardHandler.applyDeltas(textEditingDeltas);
     _isApplyingDeltas = false;
 
     editorImeLog.fine("Done applying deltas. Serializing the document and sending to IME.");
@@ -528,19 +525,26 @@ class DocumentImeSerializer {
       editorImeLog.fine("Mapping the IME base/extent to their corresponding doc positions without modification.");
     }
 
+    final base = _imeToDocumentPosition(
+      imeSelection.base,
+      isUpstream: imeSelection.base.affinity == TextAffinity.upstream,
+    );
+    final extent = _imeToDocumentPosition(
+      imeSelection.extent,
+      isUpstream: imeSelection.extent.affinity == TextAffinity.upstream,
+    );
+
+    if (base == null || extent == null) {
+      return null;
+    }
+
     return DocumentSelection(
-      base: _imeToDocumentPosition(
-        imeSelection.base,
-        isUpstream: imeSelection.base.affinity == TextAffinity.upstream,
-      ),
-      extent: _imeToDocumentPosition(
-        imeSelection.extent,
-        isUpstream: imeSelection.extent.affinity == TextAffinity.upstream,
-      ),
+      base: base,
+      extent: extent,
     );
   }
 
-  DocumentPosition _imeToDocumentPosition(TextPosition imePosition, {required bool isUpstream}) {
+  DocumentPosition? _imeToDocumentPosition(TextPosition imePosition, {required bool isUpstream}) {
     for (final range in _imeRangesToDocTextNodes.keys) {
       if (imePosition.offset >= range.start && imePosition.offset <= range.end) {
         final node = _doc.getNodeById(_imeRangesToDocTextNodes[range]!)!;
@@ -570,7 +574,7 @@ class DocumentImeSerializer {
 
     editorImeLog.shout(
         "Couldn't map an IME position to a document position. IME position: $imePosition. The selected offset range is: ${_imeRangesToDocTextNodes.keys.last.start} -> ${_imeRangesToDocTextNodes.keys.last.end}");
-    throw Exception("Couldn't map an IME position to a document position. IME position: $imePosition");
+    return null;
   }
 
   TextSelection documentToImeSelection(DocumentSelection docSelection) {
@@ -835,10 +839,7 @@ class SoftwareKeyboardHandler {
   final CommonEditorOperations commonOps;
 
   /// Applies the given [textEditingDeltas] to the [Document].
-  void applyDeltas(
-    List<TextEditingDelta> textEditingDeltas, {
-    ImeSelectionConverter? onConvertSelection,
-  }) {
+  void applyDeltas(List<TextEditingDelta> textEditingDeltas) {
     editorImeLog.info("Applying ${textEditingDeltas.length} IME deltas to document");
 
     for (final delta in textEditingDeltas) {
@@ -850,7 +851,7 @@ class SoftwareKeyboardHandler {
       } else if (delta is TextEditingDeltaDeletion) {
         _applyDeletion(delta);
       } else if (delta is TextEditingDeltaNonTextUpdate) {
-        _applyNonTextChange(delta, onConvertSelection: onConvertSelection);
+        _applyNonTextChange(delta);
       } else {
         editorImeLog.shout("Unknown IME delta type: ${delta.runtimeType}");
       }
@@ -935,17 +936,19 @@ class SoftwareKeyboardHandler {
     editorImeLog.fine("Deletion operation complete");
   }
 
-  void _applyNonTextChange(
-    TextEditingDeltaNonTextUpdate delta, {
-    ImeSelectionConverter? onConvertSelection,
-  }) {
+  void _applyNonTextChange(TextEditingDeltaNonTextUpdate delta) {
     editorImeLog.fine("Non-text change:");
     // editorImeLog.fine("App-side selection - ${currentTextEditingValue.selection}");
     // editorImeLog.fine("App-side composing - ${currentTextEditingValue.composing}");
     editorImeLog.fine("OS-side selection - ${delta.selection}");
     editorImeLog.fine("OS-side composing - ${delta.composing}");
 
-    final docSelection = onConvertSelection?.call(delta.selection);
+    final docSerializer = DocumentImeSerializer(
+      editor.document,
+      composer.selection!,
+    );
+
+    final docSelection = docSerializer.imeToDocumentSelection(delta.selection);
     if (docSelection != null) {
       // We got a selection from the platform.
       // This could happen in some software keyboards, like GBoard,
