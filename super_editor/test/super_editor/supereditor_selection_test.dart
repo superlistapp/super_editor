@@ -721,22 +721,18 @@ Second Paragraph
       // Place the caret at the middle of the first word.
       await tester.placeCaretInParagraph('1', 2);
 
-      // Construct and dispatch a TextEditingDeltaNonTextUpdate that the changes the selection.
-      //
-      // This could happen using some Android software keyboards, like GBoard,
-      // where the user can swipe over the spacebar to change the selection.
       final text = SuperEditorInspector.findTextInParagraph('1').text;
-      final delta = <String, dynamic>{
-        'oldText': text,
-        'deltaText': text,
-        'deltaStart': -1,
-        'deltaEnd': -1,
-        'selectionBase': 6,
-        'selectionExtent': 6,
-        'composingBase': 6,
-        'composingExtent': 6
-      };
-      await _receiveTextInputDeltas([delta]);
+
+      await tester.ime.sendDeltas(
+        [
+          TextEditingDeltaNonTextUpdate(
+            oldText: text,
+            selection: const TextSelection.collapsed(offset: 6),
+            composing: const TextSelection.collapsed(offset: 6),
+          )
+        ],
+        getter: imeClientGetter,
+      );
 
       expect(
         SuperEditorInspector.findDocumentSelection(),
@@ -748,6 +744,7 @@ Second Paragraph
         ),
       );
     });
+
     test("emits a DocumentSelectionChange when changing selection by the notifier", () async {
       final composer = DocumentComposer();
 
@@ -869,39 +866,4 @@ Finder _caretFinder() {
     return find.byType(BlinkingCaret);
   }
   return find.byKey(primaryCaretKey);
-}
-
-/// Simulates receiving [TextEditingDelta]s from the platform.
-///
-/// Adapted from [TestTextInput.receiveAction].
-Future<void> _receiveTextInputDeltas(List<Map<String, dynamic>> textEditingDeltas) {
-  return TestAsyncUtils.guard(() {
-    final Completer<void> completer = Completer<void>();
-    TestDefaultBinaryMessengerBinding.instance!.defaultBinaryMessenger.handlePlatformMessage(
-      SystemChannels.textInput.name,
-      SystemChannels.textInput.codec.encodeMethodCall(
-        MethodCall('TextInputClient.updateEditingStateWithDeltas', <dynamic>[
-          -1,
-          <String, dynamic>{
-            'deltas': textEditingDeltas,
-          },
-        ]),
-      ),
-      (ByteData? data) {
-        assert(data != null);
-        try {
-          // Decoding throws a PlatformException if the data represents an
-          // error, and that's all we care about here.
-          SystemChannels.textInput.codec.decodeEnvelope(data!);
-          // If we reach here then no error was found. Complete without issue.
-          completer.complete();
-        } catch (error) {
-          // An exception occurred as a result of receiveAction()'ing. Report
-          // that error.
-          completer.completeError(error);
-        }
-      },
-    );
-    return completer.future;
-  });
 }

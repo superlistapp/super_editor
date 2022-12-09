@@ -823,9 +823,6 @@ class ImeConfiguration {
       keyboardActionButton.hashCode;
 }
 
-/// A function that converts a [TextSelection] from the platform to a [DocumentSelection].
-typedef ImeSelectionConverter = DocumentSelection? Function(TextSelection selection);
-
 /// Applies software keyboard edits to a document.
 class SoftwareKeyboardHandler {
   const SoftwareKeyboardHandler({
