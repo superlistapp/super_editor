@@ -211,6 +211,41 @@ class RenderSuperTextLayout extends RenderBox
   }
 
   @override
+  double computeMinIntrinsicWidth(double height) {
+    final children = getChildrenAsList();
+    final text = children[1];
+    return text.getMinIntrinsicWidth(height);
+  }
+
+  @override
+  double computeMaxIntrinsicWidth(double height) {
+    final children = getChildrenAsList();
+    final text = children[1];
+    return text.getMaxIntrinsicWidth(height);
+  }
+
+  @override
+  double computeMinIntrinsicHeight(double width) {
+    final children = getChildrenAsList();
+    final text = children[1];
+    return text.getMinIntrinsicHeight(width);
+  }
+
+  @override
+  double computeMaxIntrinsicHeight(double width) {
+    final children = getChildrenAsList();
+    final text = children[1];
+    return text.getMaxIntrinsicHeight(width);
+  }
+
+  @override
+  Size computeDryLayout(BoxConstraints constraints) {
+    final children = getChildrenAsList();
+    final text = children[1];
+    return text.getDryLayout(constraints);
+  }
+
+  @override
   void performLayout() {
     layoutLog.info("Running SuperText layout. Incoming constraints: $constraints");
     final children = getChildrenAsList();
