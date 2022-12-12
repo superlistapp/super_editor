@@ -15,6 +15,8 @@ import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_contr
 import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
 
+import 'document_tap_handling.dart';
+
 /// Document gesture interactor that's designed for iOS touch input, e.g.,
 /// drag to scroll, and handles to control selection.
 ///
@@ -30,6 +32,7 @@ class ReadOnlyIOSDocumentTouchInteractor extends StatefulWidget {
     required this.document,
     required this.documentKey,
     required this.getDocumentLayout,
+    this.documentTapDelegate,
     required this.selection,
     this.scrollController,
     this.dragAutoScrollBoundary = const AxisOffset.symmetric(54),
@@ -44,6 +47,10 @@ class ReadOnlyIOSDocumentTouchInteractor extends StatefulWidget {
   final Document document;
   final GlobalKey documentKey;
   final DocumentLayout Function() getDocumentLayout;
+
+  /// A delegate that's given an opportunity to react to user taps at specific locations
+  /// within the document, e.g., opening a link when tapped.
+  final DocumentTapDelegate? documentTapDelegate;
 
   final ValueNotifier<DocumentSelection?> selection;
 
@@ -421,6 +428,23 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
     readerGesturesLog.fine(" - document offset: $docOffset");
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
     readerGesturesLog.fine(" - tapped document position: $docPosition");
+
+    if (docPosition != null) {
+      // Give our document tap delegate a chance to respond to this tap.
+      final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
+      final componentTapOffset =
+          (tappedComponent.context.findRenderObject() as RenderBox).globalToLocal(details.globalPosition);
+      final didDelegateHandleTap = widget.documentTapDelegate?.onTap(
+            document: widget.document,
+            node: widget.document.getNodeById(docPosition.nodeId)!,
+            component: tappedComponent,
+            componentTapOffset: componentTapOffset,
+          ) ??
+          false;
+      if (didDelegateHandleTap) {
+        return;
+      }
+    }
 
     if (docPosition != null &&
         selection != null &&

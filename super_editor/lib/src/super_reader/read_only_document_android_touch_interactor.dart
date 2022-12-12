@@ -14,6 +14,8 @@ import 'package:super_editor/src/infrastructure/platforms/android/android_docume
 import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
 
+import 'document_tap_handling.dart';
+
 /// Read-only document gesture interactor that's designed for Android touch input, e.g.,
 /// drag to scroll, and handles to control selection.
 ///
@@ -29,6 +31,7 @@ class ReadOnlyAndroidDocumentTouchInteractor extends StatefulWidget {
     required this.document,
     required this.documentKey,
     required this.getDocumentLayout,
+    this.documentTapDelegate,
     required this.selection,
     this.scrollController,
     this.dragAutoScrollBoundary = const AxisOffset.symmetric(54),
@@ -44,6 +47,11 @@ class ReadOnlyAndroidDocumentTouchInteractor extends StatefulWidget {
   final Document document;
   final GlobalKey documentKey;
   final DocumentLayout Function() getDocumentLayout;
+
+  /// A delegate that's given an opportunity to react to user taps at specific locations
+  /// within the document, e.g., opening a link when tapped.
+  final DocumentTapDelegate? documentTapDelegate;
+
   final ValueNotifier<DocumentSelection?> selection;
 
   final ScrollController? scrollController;
@@ -410,6 +418,21 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
       _editingController.hideToolbar();
       widget.focusNode.requestFocus();
 
+      return;
+    }
+
+    // Give our document tap delegate a chance to respond to this tap.
+    final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
+    final componentTapOffset =
+        (tappedComponent.context.findRenderObject() as RenderBox).globalToLocal(details.globalPosition);
+    final didDelegateHandleTap = widget.documentTapDelegate?.onTap(
+          document: widget.document,
+          node: widget.document.getNodeById(docPosition.nodeId)!,
+          component: tappedComponent,
+          componentTapOffset: componentTapOffset,
+        ) ??
+        false;
+    if (didDelegateHandleTap) {
       return;
     }
 
