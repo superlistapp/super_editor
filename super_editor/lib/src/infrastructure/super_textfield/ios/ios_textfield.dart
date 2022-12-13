@@ -541,7 +541,15 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
         ? _textEditingController.text.computeTextSpan(widget.textStyleBuilder)
         : AttributedText(text: "").computeTextSpan(widget.textStyleBuilder);
 
+    CaretStyle caretStyle = widget.caretStyle ??
+        CaretStyle(
+          color: widget.caretColor!,
+        );
+
     final caretColorOverride = _floatingCursorController.isShowingFloatingCursor ? Colors.grey : null;
+    if (caretColorOverride != null) {
+      caretStyle = caretStyle.copyWith(color: caretColorOverride);
+    }
 
     return FillWidthIfConstrained(
       child: SuperTextWithSelection.single(
@@ -552,12 +560,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
           highlightStyle: SelectionHighlightStyle(
             color: widget.selectionColor,
           ),
-          caretStyle: widget.caretStyle?.copyWith(
-                color: caretColorOverride ?? widget.caretStyle!.color,
-              ) ??
-              CaretStyle(
-                color: caretColorOverride ?? widget.caretColor!,
-              ),
+          caretStyle: caretStyle,
           selection: _textEditingController.selection,
           hasCaret: _focusNode.hasFocus,
         ),

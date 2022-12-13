@@ -94,10 +94,12 @@ class SuperTextField extends StatefulWidget {
 
   /// The color of the caret, drag handles, and other controls.
   ///
-  /// If [caretStyle] is used, the color of the caret is the [caretStyle]'s color.
+  /// The color in [caretStyle] overrides the [controlsColor].
   final Color? controlsColor;
 
   /// The visual representation of the caret.
+  ///
+  /// The color in [caretStyle] overrides the [controlsColor].
   final CaretStyle? caretStyle;
 
   /// The color of selection rectangles that appear around selected text.
