@@ -58,6 +58,7 @@ class SuperTextField extends StatefulWidget {
     this.hintBehavior = HintBehavior.displayHintUntilFocus,
     this.hintBuilder,
     this.controlsColor,
+    this.caretStyle,
     this.selectionColor,
     this.minLines,
     this.maxLines = 1,
@@ -92,7 +93,12 @@ class SuperTextField extends StatefulWidget {
   final WidgetBuilder? hintBuilder;
 
   /// The color of the caret, drag handles, and other controls.
+  ///
+  /// If [caretStyle] is used, the color of the caret is the [caretStyle]'s color.
   final Color? controlsColor;
+
+  /// The visual representation of the caret.
+  final CaretStyle? caretStyle;
 
   /// The color of selection rectangles that appear around selected text.
   final Color? selectionColor;
@@ -235,11 +241,12 @@ class SuperTextFieldState extends State<SuperTextField> {
           selectionHighlightStyle: SelectionHighlightStyle(
             color: widget.selectionColor ?? defaultSelectionColor,
           ),
-          caretStyle: CaretStyle(
-            color: widget.controlsColor ?? defaultDesktopCaretColor,
-            width: 1,
-            borderRadius: BorderRadius.zero,
-          ),
+          caretStyle: widget.caretStyle ??
+              CaretStyle(
+                color: widget.controlsColor ?? defaultDesktopCaretColor,
+                width: 1,
+                borderRadius: BorderRadius.zero,
+              ),
           minLines: widget.minLines,
           maxLines: widget.maxLines,
           keyboardHandlers: widget.keyboardHandlers,
@@ -256,7 +263,10 @@ class SuperTextFieldState extends State<SuperTextField> {
             textStyleBuilder: widget.textStyleBuilder,
             hintBehavior: widget.hintBehavior,
             hintBuilder: widget.hintBuilder,
-            caretColor: widget.controlsColor ?? defaultAndroidControlsColor,
+            caretStyle: widget.caretStyle ??
+                CaretStyle(
+                  color: widget.controlsColor ?? defaultAndroidControlsColor,
+                ),
             selectionColor: widget.selectionColor ?? defaultSelectionColor,
             handlesColor: widget.controlsColor ?? defaultAndroidControlsColor,
             minLines: widget.minLines,
@@ -277,7 +287,10 @@ class SuperTextFieldState extends State<SuperTextField> {
             textStyleBuilder: widget.textStyleBuilder,
             hintBehavior: widget.hintBehavior,
             hintBuilder: widget.hintBuilder,
-            caretColor: widget.controlsColor ?? defaultIOSControlsColor,
+            caretStyle: widget.caretStyle ??
+                CaretStyle(
+                  color: widget.controlsColor ?? defaultIOSControlsColor,
+                ),
             selectionColor: widget.selectionColor ?? defaultSelectionColor,
             handlesColor: widget.controlsColor ?? defaultIOSControlsColor,
             minLines: widget.minLines,
