@@ -119,6 +119,35 @@ void main() {
 
       expect(_isCaretPresent(tester), isTrue);
     });
+
+    testWidgetsOnAllPlatforms("uses the given caretStyle", (tester) async {
+      final controller = AttributedTextEditingController(
+        selection: const TextSelection.collapsed(offset: 0),
+      );
+
+      const caretStyle = CaretStyle(
+        color: Colors.red,
+        width: 5,
+        borderRadius: BorderRadius.all(Radius.circular(2.0)),
+      );
+
+      await tester.pumpWidget(
+        _buildScaffold(
+          child: SuperTextField(
+            focusNode: FocusNode()..requestFocus(),
+            textController: controller,
+            caretStyle: caretStyle,
+          ),
+        ),
+      );
+      await tester.pump();
+
+      final caret = tester.widget<TextLayoutCaret>(find.byType(TextLayoutCaret));
+
+      expect(caret.style.color, caretStyle.color);
+      expect(caret.style.width, caretStyle.width);
+      expect(caret.style.borderRadius, caretStyle.borderRadius);
+    });
   });
 }
 

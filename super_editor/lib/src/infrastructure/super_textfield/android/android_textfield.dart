@@ -35,7 +35,7 @@ class SuperAndroidTextField extends StatefulWidget {
     this.minLines,
     this.maxLines = 1,
     this.lineHeight,
-    required this.caretColor,
+    required this.caretStyle,
     required this.selectionColor,
     required this.handlesColor,
     this.textInputAction = TextInputAction.done,
@@ -66,8 +66,8 @@ class SuperAndroidTextField extends StatefulWidget {
   /// To easily build a hint with styled text, see [StyledHintBuilder].
   final WidgetBuilder? hintBuilder;
 
-  /// Color of the caret.
-  final Color caretColor;
+  /// The visual representation of the caret.
+  final CaretStyle caretStyle;
 
   /// Color of the selection rectangle for selected text.
   final Color selectionColor;
@@ -533,9 +533,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
           highlightStyle: SelectionHighlightStyle(
             color: widget.selectionColor,
           ),
-          caretStyle: CaretStyle(
-            color: widget.caretColor,
-          ),
+          caretStyle: widget.caretStyle,
           selection: _textEditingController.selection,
           hasCaret: _focusNode.hasFocus,
         ),
