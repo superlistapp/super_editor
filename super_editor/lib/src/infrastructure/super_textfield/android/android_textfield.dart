@@ -35,20 +35,14 @@ class SuperAndroidTextField extends StatefulWidget {
     this.minLines,
     this.maxLines = 1,
     this.lineHeight,
-    this.caretColor,
-    this.caretStyle,
+    required this.caretStyle,
     required this.selectionColor,
     required this.handlesColor,
     this.textInputAction = TextInputAction.done,
     this.popoverToolbarBuilder = _defaultAndroidToolbarBuilder,
     this.showDebugPaint = false,
     this.padding,
-  })  : assert(caretStyle != null || caretColor != null, 'A caretStyle or a caretColor is required.'),
-        assert(
-            caretStyle == null || caretColor == null,
-            'Cannot provide both caretStyle and caretColor.\n'
-            'Use "caretStyle: CaretStyle(color: color)"'),
-        super(key: key);
+  }) : super(key: key);
 
   /// [FocusNode] attached to this text field.
   final FocusNode? focusNode;
@@ -72,15 +66,8 @@ class SuperAndroidTextField extends StatefulWidget {
   /// To easily build a hint with styled text, see [StyledHintBuilder].
   final WidgetBuilder? hintBuilder;
 
-  /// Color of the caret.
-  ///
-  /// If the [caretStyle] is used, this property must be null.
-  final Color? caretColor;
-
   /// The visual representation of the caret.
-  ///
-  /// If the [caretColor] is used, this property must be null.
-  final CaretStyle? caretStyle;
+  final CaretStyle caretStyle;
 
   /// Color of the selection rectangle for selected text.
   final Color selectionColor;
@@ -546,10 +533,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
           highlightStyle: SelectionHighlightStyle(
             color: widget.selectionColor,
           ),
-          caretStyle: widget.caretStyle ??
-              CaretStyle(
-                color: widget.caretColor!,
-              ),
+          caretStyle: widget.caretStyle,
           selection: _textEditingController.selection,
           hasCaret: _focusNode.hasFocus,
         ),
