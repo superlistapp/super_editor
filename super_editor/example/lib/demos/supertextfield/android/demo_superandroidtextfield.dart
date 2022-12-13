@@ -46,7 +46,7 @@ class _SuperAndroidTextFieldDemoState extends State<SuperAndroidTextFieldDemo> {
             return config.styleBuilder(attributions).copyWith(color: Colors.grey);
           }).build,
       selectionColor: Colors.blue.withOpacity(0.4),
-      caretColor: Colors.green,
+      caretStyle: CaretStyle(color: Colors.green),
       handlesColor: Colors.lightGreen,
       minLines: config.minLines,
       maxLines: config.maxLines,

@@ -47,7 +47,7 @@ class _SuperIOSTextFieldDemoState extends State<SuperIOSTextFieldDemo> {
             return config.styleBuilder(attributions).copyWith(color: Colors.grey);
           }).build,
       selectionColor: Colors.blue.withOpacity(0.4),
-      caretColor: Colors.blue,
+      caretStyle: CaretStyle(color: Colors.blue),
       handlesColor: Colors.blue,
       minLines: config.minLines,
       maxLines: config.maxLines,
