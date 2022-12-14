@@ -31,19 +31,67 @@ class _PanelBehindKeyboardDemoState extends State<PanelBehindKeyboardDemo> {
       document: MutableDocument(nodes: [
         ParagraphNode(
           id: DocumentEditor.createNodeId(),
-          text: AttributedText(),
+          text: AttributedText(text: "Example Doc"),
+          metadata: {"blockType": header1Attribution},
+        ),
+        HorizontalRuleNode(id: DocumentEditor.createNodeId()),
+        ParagraphNode(
+          id: DocumentEditor.createNodeId(),
+          text: AttributedText(text: "Unordered list:"),
+        ),
+        ListItemNode(
+          id: DocumentEditor.createNodeId(),
+          itemType: ListItemType.unordered,
+          text: AttributedText(text: "Unordered 1"),
+        ),
+        ListItemNode(
+          id: DocumentEditor.createNodeId(),
+          itemType: ListItemType.unordered,
+          text: AttributedText(text: "Unordered 2"),
         ),
         ParagraphNode(
           id: DocumentEditor.createNodeId(),
-          text: AttributedText(),
+          text: AttributedText(text: "Ordered list:"),
+        ),
+        ListItemNode(
+          id: DocumentEditor.createNodeId(),
+          itemType: ListItemType.unordered,
+          text: AttributedText(text: "Ordered 1"),
+        ),
+        ListItemNode(
+          id: DocumentEditor.createNodeId(),
+          itemType: ListItemType.unordered,
+          text: AttributedText(text: "Ordered 2"),
         ),
         ParagraphNode(
           id: DocumentEditor.createNodeId(),
-          text: AttributedText(text: 'Friend'),
+          text: AttributedText(text: 'A blockquote:'),
         ),
         ParagraphNode(
           id: DocumentEditor.createNodeId(),
-          text: AttributedText(text: 'Hello'),
+          text: AttributedText(text: 'This is a blockquote.'),
+          metadata: {"blockType": blockquoteAttribution},
+        ),
+        ParagraphNode(
+          id: DocumentEditor.createNodeId(),
+          text: AttributedText(text: 'Some code:'),
+        ),
+        ParagraphNode(
+          id: DocumentEditor.createNodeId(),
+          text: AttributedText(text: '{\n  // This is come code.\n}'),
+        ),
+        ParagraphNode(
+          id: DocumentEditor.createNodeId(),
+          text: AttributedText(text: "Header"),
+          metadata: {"blockType": header2Attribution},
+        ),
+        ParagraphNode(
+          id: DocumentEditor.createNodeId(),
+          text: AttributedText(text: 'More stuff 1'),
+        ),
+        ParagraphNode(
+          id: DocumentEditor.createNodeId(),
+          text: AttributedText(text: 'More stuff 2'),
         ),
       ]),
     );
@@ -91,9 +139,12 @@ class _PanelBehindKeyboardDemoState extends State<PanelBehindKeyboardDemo> {
       body: Stack(
         children: [
           Positioned.fill(
-            child: SuperEditor(
-              editor: _editor,
-              composer: _composer,
+            child: Padding(
+              padding: MediaQuery.of(context).viewInsets,
+              child: SuperEditor(
+                editor: _editor,
+                composer: _composer,
+              ),
             ),
           ),
           Positioned(
