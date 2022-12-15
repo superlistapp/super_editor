@@ -2370,9 +2370,7 @@ class _PasteEditorCommand implements EditorCommand {
         final linkAttribution = LinkAttribution(url: link);
 
         final startOffset = wordBoundary.start;
-        // -1 because TextPosition's offset indexes the character after the
-        // selection, not the final character in the selection.
-        final endOffset = wordBoundary.end - 1;
+        final endOffset = wordBoundary.end;
 
         // Add link attribution.
         linkAttributionSpans.addAttribution(

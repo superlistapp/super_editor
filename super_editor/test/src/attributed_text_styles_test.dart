@@ -20,8 +20,7 @@ void main() {
         text: 'abcdefghij',
         spans: AttributedSpans(
           attributions: [
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 9, markerType: SpanMarkerType.end),
+            const AttributionSpan(attribution: ExpectedSpans.bold, start: 0, end: 10),
           ],
         ),
       );
@@ -37,32 +36,7 @@ void main() {
         text: 'abcdefghij',
         spans: AttributedSpans(
           attributions: [
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 1, markerType: SpanMarkerType.start),
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 1, markerType: SpanMarkerType.end),
-          ],
-        ),
-      );
-      final textSpan = text.computeTextSpan(_styleBuilder);
-
-      expect(textSpan.text, null);
-      expect(textSpan.children!.length, 3);
-      expect(textSpan.children![0].toPlainText(), 'a');
-      expect(textSpan.children![1].toPlainText(), 'b');
-      expect(textSpan.children![1].style!.fontWeight, FontWeight.bold);
-      expect(textSpan.children![2].toPlainText(), 'cdefghij');
-      expect(textSpan.children![2].style!.fontWeight, null);
-    });
-
-    test('single character style - reverse order', () {
-      final text = AttributedText(
-        text: 'abcdefghij',
-        spans: AttributedSpans(
-          attributions: [
-            // Notice that the markers are provided in reverse order:
-            // end then start. Order shouldn't matter within a single
-            // position index. This test ensures that.
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 1, markerType: SpanMarkerType.end),
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 1, markerType: SpanMarkerType.start),
+            const AttributionSpan(attribution: ExpectedSpans.bold, start: 1, end: 2),
           ],
         ),
       );
@@ -79,7 +53,7 @@ void main() {
 
     test('add single character style', () {
       final text = AttributedText(text: 'abcdefghij');
-      text.addAttribution(ExpectedSpans.bold, const SpanRange(start: 1, end: 1));
+      text.addAttribution(ExpectedSpans.bold, const SpanRange(start: 1, end: 2));
       final textSpan = text.computeTextSpan(_styleBuilder);
 
       expect(textSpan.text, null);
@@ -96,8 +70,7 @@ void main() {
         text: 'abcdefghij',
         spans: AttributedSpans(
           attributions: [
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 2, markerType: SpanMarkerType.start),
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 7, markerType: SpanMarkerType.end),
+            const AttributionSpan(attribution: ExpectedSpans.bold, start: 2, end: 8),
           ],
         ),
       );
@@ -116,8 +89,7 @@ void main() {
         text: 'abcdefghij',
         spans: AttributedSpans(
           attributions: [
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 9, markerType: SpanMarkerType.start),
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 9, markerType: SpanMarkerType.end),
+            const AttributionSpan(attribution: ExpectedSpans.bold, start: 9, end: 10),
           ],
         ),
       );
@@ -126,8 +98,7 @@ void main() {
         text: 'k',
         spans: AttributedSpans(
           attributions: [
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.end),
+            const AttributionSpan(attribution: ExpectedSpans.bold, start: 0, end: 1),
           ],
         ),
       ));
@@ -151,10 +122,8 @@ void main() {
         text: 'abcdefghij',
         spans: AttributedSpans(
           attributions: [
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 0, markerType: SpanMarkerType.start),
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 4, markerType: SpanMarkerType.end),
-            const SpanMarker(attribution: ExpectedSpans.italics, offset: 5, markerType: SpanMarkerType.start),
-            const SpanMarker(attribution: ExpectedSpans.italics, offset: 9, markerType: SpanMarkerType.end),
+            const AttributionSpan(attribution: ExpectedSpans.bold, start: 0, end: 5),
+            const AttributionSpan(attribution: ExpectedSpans.italics, start: 5, end: 10),
           ],
         ),
       );
@@ -175,10 +144,8 @@ void main() {
         text: 'abcdefghij',
         spans: AttributedSpans(
           attributions: [
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 2, markerType: SpanMarkerType.start),
-            const SpanMarker(attribution: ExpectedSpans.italics, offset: 4, markerType: SpanMarkerType.start),
-            const SpanMarker(attribution: ExpectedSpans.bold, offset: 5, markerType: SpanMarkerType.end),
-            const SpanMarker(attribution: ExpectedSpans.italics, offset: 7, markerType: SpanMarkerType.end),
+            const AttributionSpan(attribution: ExpectedSpans.bold, start: 2, end: 6),
+            const AttributionSpan(attribution: ExpectedSpans.italics, start: 4, end: 8),
           ],
         ),
       );

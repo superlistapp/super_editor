@@ -178,9 +178,8 @@ class HeaderWithHintComponentBuilder implements ComponentBuilder {
       hintText: AttributedText(
         text: 'header goes here...',
         spans: AttributedSpans(
-          attributions: [
-            const SpanMarker(attribution: italicsAttribution, offset: 12, markerType: SpanMarkerType.start),
-            const SpanMarker(attribution: italicsAttribution, offset: 15, markerType: SpanMarkerType.end),
+          attributions: const [
+            AttributionSpan(attribution: italicsAttribution, start: 12, end: 16),
           ],
         ),
       ),

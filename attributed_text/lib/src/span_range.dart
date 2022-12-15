@@ -40,6 +40,9 @@ class SpanRange {
   /// If [start] and [end] are both -1, the text range is empty.
   final int end;
 
+  /// The index of the last character in the range.
+  int get endIndex => end - 1;
+
   /// Whether this range represents a valid position in the text.
   bool get isValid => start >= 0 && end >= 0;
 

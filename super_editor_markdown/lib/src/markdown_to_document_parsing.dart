@@ -372,7 +372,7 @@ class _InlineMarkdownToDocument implements md.NodeVisitor {
         boldAttribution,
         SpanRange(
           start: 0,
-          end: styledText.text.length - 1,
+          end: styledText.text.length,
         ),
       );
     } else if (element.tag == 'em') {
@@ -380,7 +380,7 @@ class _InlineMarkdownToDocument implements md.NodeVisitor {
         italicsAttribution,
         SpanRange(
           start: 0,
-          end: styledText.text.length - 1,
+          end: styledText.text.length,
         ),
       );
     } else if (element.tag == "del") {
@@ -388,7 +388,7 @@ class _InlineMarkdownToDocument implements md.NodeVisitor {
         strikethroughAttribution,
         SpanRange(
           start: 0,
-          end: styledText.text.length - 1,
+          end: styledText.text.length,
         ),
       );
     } else if (element.tag == "u") {
@@ -396,7 +396,7 @@ class _InlineMarkdownToDocument implements md.NodeVisitor {
         underlineAttribution,
         SpanRange(
           start: 0,
-          end: styledText.text.length - 1,
+          end: styledText.text.length,
         ),
       );
     } else if (element.tag == 'a') {
@@ -404,7 +404,7 @@ class _InlineMarkdownToDocument implements md.NodeVisitor {
         LinkAttribution(url: Uri.parse(element.attributes['href']!)),
         SpanRange(
           start: 0,
-          end: styledText.text.length - 1,
+          end: styledText.text.length,
         ),
       );
     }
