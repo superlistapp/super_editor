@@ -15,7 +15,7 @@ import 'package:super_editor/super_editor.dart';
 /// regular example entrypoint.
 void main() {
   initLoggers(Level.FINE, {
-    editorGesturesLog,
+    // editorGesturesLog,
     editorImeLog,
   });
 

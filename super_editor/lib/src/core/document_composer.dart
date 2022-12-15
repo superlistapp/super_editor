@@ -111,6 +111,7 @@ class DocumentComposer with ChangeNotifier {
       selection: selectionNotifier.value,
       reason: SelectionReason.userInteraction,
     );
+
     _streamController.sink.add(_latestSelectionChange);
   }
 
@@ -138,7 +139,7 @@ class DocumentComposer with ChangeNotifier {
     imeClient = EditorImeClient(
       softwareKeyboardHandler: softwareKeyboardHandler,
       floatingCursorController: floatingCursorController,
-      sendDocumentToIme: _syncImeWithDocumentAndSelection,
+      sendDocumentToIme: syncImeWithDocumentAndSelection,
     );
 
     _imeConnection = TextInput.attach(
@@ -148,7 +149,7 @@ class DocumentComposer with ChangeNotifier {
 
     imeClient!.imeConnection = _imeConnection;
 
-    _syncImeWithDocumentAndSelection();
+    syncImeWithDocumentAndSelection();
 
     _imeConnection!
       ..show()
@@ -170,7 +171,7 @@ class DocumentComposer with ChangeNotifier {
           .fine("Document composer changed while attached to IME. Re-serializing the document and sending to the IME.");
       // Pass an empty composing region because the user may have dragged the caret
       // across nodes, in which case the previous composing region might be invalid.
-      _syncImeWithDocumentAndSelection(TextRange.empty);
+      syncImeWithDocumentAndSelection(TextRange.empty);
     } else if (!isAttachedToIme) {
       openIme(softwareKeyboardHandler, floatingCursorController);
     }
@@ -194,7 +195,12 @@ class DocumentComposer with ChangeNotifier {
     );
   }
 
-  void _syncImeWithDocumentAndSelection([TextRange? newComposingRegion]) {
+  void syncImeWithDocumentAndSelection([TextRange? newComposingRegion]) {
+    if (imeClient!.isApplyingDeltas) {
+      editorImeLog.fine("Tried to syncImeWithDocumentAndSelection() but we're applying deltas. Ignoring.");
+      return;
+    }
+
     if (selection != null) {
       editorImeLog.fine("Syncing IME with Doc and Composer, given composing region: $newComposingRegion");
 

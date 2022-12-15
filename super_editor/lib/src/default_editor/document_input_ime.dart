@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -12,7 +10,6 @@ import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/default_editor/common_editor_operations.dart';
 import 'package:super_editor/src/default_editor/paragraph.dart';
-import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
@@ -42,6 +39,7 @@ class DocumentImeInteractor extends StatefulWidget {
     this.autofocus = false,
     required this.editContext,
     this.clearSelectionWhenImeDisconnects = true,
+    this.automaticallyOpenKeyboardOnSelectionChange = true,
     required this.softwareKeyboardHandler,
     this.hardwareKeyboardActions = const [],
     this.floatingCursorController,
@@ -68,6 +66,15 @@ class DocumentImeInteractor extends StatefulWidget {
   /// be cleared when the keyboard closes, because the special options behind the
   /// keyboard still need to operate on that selection.
   final bool clearSelectionWhenImeDisconnects;
+
+  /// Whether the software keyboard should be raised whenever the editor's selection
+  /// changes, such as when a user taps to place the caret.
+  ///
+  /// In a typical app, this property should be `true`. In some apps, the keyboard
+  /// needs to be closed and opened to reveal special editing controls. In those cases
+  /// this property should probably be `false`, and the app should take responsibility
+  /// for opening and closing the keyboard.
+  final bool automaticallyOpenKeyboardOnSelectionChange;
 
   final SoftwareKeyboardHandler softwareKeyboardHandler;
 
@@ -98,7 +105,7 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
 
     _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
 
-    widget.editContext.composer.selectionNotifier.addListener(_onComposerChange);
+    widget.editContext.composer.selectionNotifier.addListener(_onSelectionChange);
     widget.editContext.composer.imeConfiguration.addListener(_onClientWantsDifferentImeConfiguration);
   }
 
@@ -112,8 +119,8 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
     }
 
     if (widget.editContext.composer.selectionNotifier != oldWidget.editContext.composer.selectionNotifier) {
-      oldWidget.editContext.composer.selectionNotifier.removeListener(_onComposerChange);
-      widget.editContext.composer.selectionNotifier.addListener(_onComposerChange);
+      oldWidget.editContext.composer.selectionNotifier.removeListener(_onSelectionChange);
+      widget.editContext.composer.selectionNotifier.addListener(_onSelectionChange);
     }
     if (widget.editContext.composer.imeConfiguration != oldWidget.editContext.composer.imeConfiguration) {
       oldWidget.editContext.composer.imeConfiguration.removeListener(_onClientWantsDifferentImeConfiguration);
@@ -126,7 +133,7 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
     _detachFromIme();
 
     widget.editContext.composer.imeConfiguration.removeListener(_onClientWantsDifferentImeConfiguration);
-    widget.editContext.composer.selectionNotifier.removeListener(_onComposerChange);
+    widget.editContext.composer.selectionNotifier.removeListener(_onSelectionChange);
 
     if (widget.focusNode == null) {
       _focusNode.dispose();
@@ -142,21 +149,26 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
   void _onFocusChange() {
     if (_focusNode.hasFocus) {
       editorImeLog.info('Gained focus');
-      _attachToIme();
+      if (widget.automaticallyOpenKeyboardOnSelectionChange) {
+        editorImeLog.info('Attaching to IME');
+        _attachToIme();
+      }
     } else {
       editorImeLog.info('Lost focus');
       _detachFromIme();
     }
   }
 
-  void _onComposerChange() {
+  void _onSelectionChange() {
     final selection = widget.editContext.composer.selection;
     editorImeLog.info("Document composer (${widget.editContext.composer.hashCode}) changed. New selection: $selection");
 
     if (selection == null) {
       _detachFromIme();
-    } else {
+    } else if (widget.automaticallyOpenKeyboardOnSelectionChange) {
       widget.editContext.composer.showImeInput(widget.softwareKeyboardHandler, widget.floatingCursorController);
+    } else if (isAttachedToIme) {
+      widget.editContext.composer.syncImeWithDocumentAndSelection();
     }
   }
 

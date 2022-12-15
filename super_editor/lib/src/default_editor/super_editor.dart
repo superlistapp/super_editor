@@ -85,6 +85,8 @@ class SuperEditor extends StatefulWidget {
     this.customStylePhases = const [],
     this.inputSource = DocumentInputSource.keyboard,
     this.gestureMode = DocumentGestureMode.mouse,
+    this.clearSelectionWhenImeDisconnects = true,
+    this.automaticallyOpenKeyboardOnSelectionChange = true,
     this.androidHandleColor,
     this.androidToolbarBuilder,
     this.iOSHandleColor,
@@ -116,6 +118,8 @@ class SuperEditor extends StatefulWidget {
     this.gestureMode = DocumentGestureMode.mouse,
     List<DocumentKeyboardAction>? keyboardActions,
     this.softwareKeyboardHandler,
+    this.clearSelectionWhenImeDisconnects = true,
+    this.automaticallyOpenKeyboardOnSelectionChange = true,
     this.androidHandleColor,
     this.androidToolbarBuilder,
     this.iOSHandleColor,
@@ -149,6 +153,8 @@ class SuperEditor extends StatefulWidget {
     this.gestureMode,
     List<DocumentKeyboardAction>? keyboardActions,
     this.softwareKeyboardHandler,
+    this.clearSelectionWhenImeDisconnects = true,
+    this.automaticallyOpenKeyboardOnSelectionChange = true,
     this.androidHandleColor,
     this.androidToolbarBuilder,
     this.iOSHandleColor,
@@ -264,6 +270,30 @@ class SuperEditor extends StatefulWidget {
   ///
   /// This handler is only used when in [DocumentInputSource.ime] mode.
   final SoftwareKeyboardHandler? softwareKeyboardHandler;
+
+  /// Whether the document's selection should be cleared (removed) when the
+  /// IME disconnects, i.e., the software keyboard closes.
+  ///
+  /// Typically, on devices with software keyboards, the keyboard is critical
+  /// to all document editing. In such cases, it should be reasonable to clear
+  /// the selection when the keyboard closes.
+  ///
+  /// Some apps include editing features that can operate when the keyboard is
+  /// closed. For example, some apps display special editing options behind the
+  /// keyboard. The user closes the keyboard, uses the special options, and then
+  /// re-opens the keyboard. In this case, the document selection **shouldn't**
+  /// be cleared when the keyboard closes, because the special options behind the
+  /// keyboard still need to operate on that selection.
+  final bool clearSelectionWhenImeDisconnects;
+
+  /// Whether the software keyboard should be raised whenever the editor's selection
+  /// changes, such as when a user taps to place the caret.
+  ///
+  /// In a typical app, this property should be `true`. In some apps, the keyboard
+  /// needs to be closed and opened to reveal special editing controls. In those cases
+  /// this property should probably be `false`, and the app should take responsibility
+  /// for opening and closing the keyboard.
+  final bool automaticallyOpenKeyboardOnSelectionChange;
 
   /// Paints some extra visual ornamentation to help with
   /// debugging.
@@ -547,6 +577,8 @@ class SuperEditorState extends State<SuperEditor> {
           autofocus: widget.autofocus,
           editContext: editContext,
           softwareKeyboardHandler: _softwareKeyboardHandler,
+          clearSelectionWhenImeDisconnects: widget.clearSelectionWhenImeDisconnects,
+          automaticallyOpenKeyboardOnSelectionChange: widget.automaticallyOpenKeyboardOnSelectionChange,
           hardwareKeyboardActions: widget.keyboardActions,
           floatingCursorController: _floatingCursorController,
           child: child,

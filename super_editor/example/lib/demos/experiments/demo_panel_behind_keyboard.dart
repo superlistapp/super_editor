@@ -23,6 +23,8 @@ class _PanelBehindKeyboardDemoState extends State<PanelBehindKeyboardDemo> {
   late DocumentEditor _editor;
   late DocumentComposer _composer;
   late SoftwareKeyboardHandler _softwareKeyboardHandler;
+  final _keyboardState = ValueNotifier(_InputState.closed);
+  final _nonKeyboardEditorState = ValueNotifier(_InputState.closed);
 
   @override
   void initState() {
@@ -96,7 +98,9 @@ class _PanelBehindKeyboardDemoState extends State<PanelBehindKeyboardDemo> {
       ]),
     );
 
-    _composer = DocumentComposer(document: _editor.document);
+    _composer = DocumentComposer(document: _editor.document) //
+      ..selectionNotifier.addListener(_onSelectionChange);
+    _keyboardState.value = _composer.isAttachedToIme ? _InputState.open : _InputState.closed;
 
     _softwareKeyboardHandler = SoftwareKeyboardHandler(
       editor: _editor,
@@ -114,6 +118,23 @@ class _PanelBehindKeyboardDemoState extends State<PanelBehindKeyboardDemo> {
     _closeKeyboard();
     _composer.dispose();
     super.dispose();
+  }
+
+  void _onSelectionChange() {
+    print("Demo: _onSelectionChange()");
+    if (_nonKeyboardEditorState.value == _InputState.open) {
+      // If the user is currently editing with the non-keyboard editing
+      // panel, don't open the keyboard to cover it.
+      return;
+    }
+
+    if (_composer.selection == null) {
+      // If there's no selection, we don't want to pop open the keyboard.
+      return;
+    }
+
+    print("Opening keyboard from _onSelectionChange()");
+    _openKeyboard();
   }
 
   void _openKeyboard() {
@@ -144,6 +165,7 @@ class _PanelBehindKeyboardDemoState extends State<PanelBehindKeyboardDemo> {
               child: SuperEditor(
                 editor: _editor,
                 composer: _composer,
+                automaticallyOpenKeyboardOnSelectionChange: false,
               ),
             ),
           ),
@@ -152,6 +174,8 @@ class _PanelBehindKeyboardDemoState extends State<PanelBehindKeyboardDemo> {
             right: 0,
             bottom: 0,
             child: BehindKeyboardPanel(
+              keyboardState: _keyboardState,
+              nonKeyboardEditorState: _nonKeyboardEditorState,
               onOpenKeyboard: _openKeyboard,
               onCloseKeyboard: _closeKeyboard,
               onEndEditing: _endEditing,
@@ -166,11 +190,15 @@ class _PanelBehindKeyboardDemoState extends State<PanelBehindKeyboardDemo> {
 class BehindKeyboardPanel extends StatefulWidget {
   const BehindKeyboardPanel({
     Key? key,
+    required this.keyboardState,
+    required this.nonKeyboardEditorState,
     required this.onOpenKeyboard,
     required this.onCloseKeyboard,
     required this.onEndEditing,
   }) : super(key: key);
 
+  final ValueNotifier<_InputState> keyboardState;
+  final ValueNotifier<_InputState> nonKeyboardEditorState;
   final VoidCallback onOpenKeyboard;
   final VoidCallback onCloseKeyboard;
   final VoidCallback onEndEditing;
@@ -180,8 +208,6 @@ class BehindKeyboardPanel extends StatefulWidget {
 }
 
 class _BehindKeyboardPanelState extends State<BehindKeyboardPanel> {
-  bool _isExpanded = false;
-  bool _isKeyboardOpen = false;
   double _maxBottomInsets = 0.0;
   double _latestBottomInsets = 0.0;
 
@@ -194,31 +220,31 @@ class _BehindKeyboardPanelState extends State<BehindKeyboardPanel> {
     if (newBottomInset > _maxBottomInsets) {
       print("Setting max bottom insets to: $newBottomInset");
       _maxBottomInsets = newBottomInset;
-      _isExpanded = true;
+      widget.nonKeyboardEditorState.value = _InputState.open;
 
-      if (!_isKeyboardOpen) {
+      if (widget.keyboardState.value != _InputState.open) {
         setState(() {
-          _isKeyboardOpen = true;
+          widget.keyboardState.value = _InputState.open;
         });
       }
     } else if (newBottomInset > _latestBottomInsets) {
       print("Keyboard is opening. We're already expanded");
       // The keyboard is expanding, but we're already expanded. Make sure
       // that our internal accounting for keyboard state is updated.
-      if (!_isKeyboardOpen) {
+      if (widget.keyboardState.value != _InputState.open) {
         setState(() {
-          _isKeyboardOpen = true;
+          widget.keyboardState.value = _InputState.open;
         });
       }
-    } else if (!_isExpanded) {
+    } else if (widget.nonKeyboardEditorState.value == _InputState.closed) {
       // We don't want to be expanded. Follow the keyboard back down.
       _maxBottomInsets = newBottomInset;
     } else {
       // The keyboard is collapsing, but we want to stay expanded. Make sure
-      // our internal accounting for keyboard state is udpated.
-      if (_isKeyboardOpen) {
+      // our internal accounting for keyboard state is updated.
+      if (widget.keyboardState.value == _InputState.open) {
         setState(() {
-          _isKeyboardOpen = false;
+          widget.keyboardState.value = _InputState.closed;
         });
       }
     }
@@ -228,7 +254,7 @@ class _BehindKeyboardPanelState extends State<BehindKeyboardPanel> {
 
   void _closeKeyboardAndPanel() {
     setState(() {
-      _isExpanded = false;
+      widget.nonKeyboardEditorState.value = _InputState.closed;
       _maxBottomInsets = min(_latestBottomInsets, _maxBottomInsets);
     });
 
@@ -237,7 +263,7 @@ class _BehindKeyboardPanelState extends State<BehindKeyboardPanel> {
 
   @override
   Widget build(BuildContext context) {
-    print("Building toolbar. Is expanded? $_isKeyboardOpen");
+    print("Building toolbar. Is expanded? ${widget.keyboardState.value == _InputState.open}");
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -254,8 +280,8 @@ class _BehindKeyboardPanelState extends State<BehindKeyboardPanel> {
               ),
               Spacer(),
               GestureDetector(
-                onTap: _isKeyboardOpen ? widget.onCloseKeyboard : widget.onOpenKeyboard,
-                child: Icon(_isKeyboardOpen ? Icons.keyboard_hide : Icons.keyboard),
+                onTap: widget.keyboardState.value == _InputState.open ? widget.onCloseKeyboard : widget.onOpenKeyboard,
+                child: Icon(widget.keyboardState.value == _InputState.open ? Icons.keyboard_hide : Icons.keyboard),
               ),
               const SizedBox(width: 24),
             ],
@@ -271,4 +297,9 @@ class _BehindKeyboardPanelState extends State<BehindKeyboardPanel> {
       ],
     );
   }
+}
+
+enum _InputState {
+  open,
+  closed,
 }
