@@ -313,10 +313,10 @@ packages:
     dependency: transitive
     description:
       name: matcher
-      sha256: "16db949ceee371e9b99d22f88fa3a73c4e59fd0afed0bd25fc336eb76c198b72"
+      sha256: c94db23593b89766cda57aab9ac311e3616cf87c6fa4e9749df032f66f30dcb8
       url: "https://pub.dev"
     source: hosted
-    version: "0.12.13"
+    version: "0.12.14"
   material_color_utilities:
     dependency: transitive
     description:
@@ -361,10 +361,10 @@ packages:
     dependency: transitive
     description:
       name: path
-      sha256: db9d4f58c908a4ba5953fcee2ae317c94889433e5024c27ce74a37f94267945b
+      sha256: "8829d8a55c13fc0e37127c29fedf290c102f4e40ae94ada574091fe0ff96c917"
       url: "https://pub.dev"
     source: hosted
-    version: "1.8.2"
+    version: "1.8.3"
   path_provider:
     dependency: transitive
     description:
@@ -542,17 +542,17 @@ packages:
     dependency: transitive
     description:
       name: string_scanner
-      sha256: "862015c5db1f3f3c4ea3b94dc2490363a84262994b88902315ed74be1155612f"
+      sha256: "556692adab6cfa87322a115640c11f13cb77b3f076ddcc5d6ae3c20242bedcde"
       url: "https://pub.dev"
     source: hosted
-    version: "1.1.1"
+    version: "1.2.0"
   super_editor:
     dependency: "direct main"
     description:
       path: ".."
       relative: true
     source: path
-    version: "0.2.3+1"
+    version: "0.2.3-dev.1"
   super_editor_markdown:
     dependency: "direct main"
     description:
@@ -579,26 +579,26 @@ packages:
     dependency: transitive
     description:
       name: test
-      sha256: "03dbf5cb87d56394ffe951eef93893b43624240aa8dd16f6f063ee01fcb22aee"
+      sha256: "98403d1090ac0aa9e33dfc8bf45cc2e0c1d5c58d7cb832cee1e50bf14f37961d"
       url: "https://pub.dev"
     source: hosted
-    version: "1.21.7"
+    version: "1.22.1"
   test_api:
     dependency: transitive
     description:
       name: test_api
-      sha256: c9aba3b3dbfe8878845dfab5fa096eb8de7b62231baeeb1cea8e3ee81ca8c6d8
+      sha256: c9282698e2982b6c3817037554e52f99d4daba493e8028f8112a83d68ccd0b12
       url: "https://pub.dev"
     source: hosted
-    version: "0.4.15"
+    version: "0.4.17"
   test_core:
     dependency: transitive
     description:
       name: test_core
-      sha256: f99f8a4c093d6c5adbe100494ccc259ec69c8f86eb769d661e5af18f9b6b9375
+      sha256: c9e4661a5e6285b795d47ba27957ed8b6f980fc020e98b218e276e88aff02168
       url: "https://pub.dev"
     source: hosted
-    version: "0.4.19"
+    version: "0.4.21"
   typed_data:
     dependency: transitive
     description:
