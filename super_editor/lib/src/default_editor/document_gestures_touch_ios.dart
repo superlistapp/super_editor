@@ -525,8 +525,6 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
         return;
       }
 
-      widget.selection.value = null;
-
       bool didSelectContent = _selectWordAt(
         docPosition: docPosition,
         docLayout: _docLayout,
@@ -588,8 +586,6 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
       if (!tappedComponent.isVisualSelectionSupported()) {
         return;
       }
-
-      widget.selection.value = null;
 
       final didSelectParagraph = _selectParagraphAt(
         docPosition: docPosition,

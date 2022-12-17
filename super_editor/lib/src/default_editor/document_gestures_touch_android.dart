@@ -492,8 +492,6 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
         return;
       }
 
-      _clearSelection();
-
       bool didSelectContent = _selectWordAt(
         docPosition: docPosition,
         docLayout: _docLayout,
@@ -547,7 +545,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   }
 
   void _onTripleTapDown(TapDownDetails details) {
-    editorGesturesLog.info("Triple down down on document");
+    editorGesturesLog.info("Triple tap down on document");
     final docOffset = _getDocOffset(details.localPosition);
     editorGesturesLog.fine(" - document offset: $docOffset");
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
@@ -561,8 +559,6 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       if (!tappedComponent.isVisualSelectionSupported()) {
         return;
       }
-
-      _clearSelection();
 
       final didSelectParagraph = _selectParagraphAt(
         docPosition: docPosition,
