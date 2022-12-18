@@ -8,9 +8,9 @@ import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
+import 'package:super_editor/src/default_editor/box_component.dart';
 import 'package:super_editor/src/default_editor/document_scrollable.dart';
 import 'package:super_editor/src/default_editor/document_selection_on_focus_mixin.dart';
-import 'package:super_editor/src/default_editor/image.dart';
 import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
 import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/document_operations/selection_operations.dart';
@@ -164,8 +164,8 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor>
     final selection = widget.selectionNotifier.value;
     if (selection != null) {
       final node = widget.document.getNodeById(selection.extent.nodeId);
-      if (node is ImageNode) {
-        // We don't want auto-scroll images.
+      if (node is BlockNode) {
+        // We don't want auto-scroll block components.
         return;
       }
     }
