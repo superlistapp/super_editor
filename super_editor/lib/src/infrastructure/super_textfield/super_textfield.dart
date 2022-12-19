@@ -65,6 +65,7 @@ class SuperTextField extends StatefulWidget {
     this.lineHeight,
     this.keyboardHandlers = defaultTextFieldKeyboardHandlers,
     this.padding,
+    this.inputSource,
   }) : super(key: key);
 
   final FocusNode? focusNode;
@@ -154,6 +155,11 @@ class SuperTextField extends StatefulWidget {
   /// scrollable viewport.
   final EdgeInsets? padding;
 
+  /// The `SuperTextField` input source, e.g., keyboard or Input Method Engine.
+  ///
+  /// Only used on desktop. On mobile platforms, only [SuperTextFieldInputSource.ime] is available.
+  final SuperTextFieldInputSource? inputSource;
+
   @override
   State<SuperTextField> createState() => SuperTextFieldState();
 }
@@ -212,6 +218,26 @@ class SuperTextFieldState extends State<SuperTextField> {
     }
   }
 
+  /// Returns the [SuperTextFieldInputSource] which should be used.
+  ///
+  /// If the `inputSource` is configured, it is used. Otherwise,
+  /// the [SuperTextFieldInputSource] is chosen based on the platform.
+  SuperTextFieldInputSource get _inputSource {
+    if (widget.inputSource != null) {
+      return widget.inputSource!;
+    }
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+      case TargetPlatform.iOS:
+        return SuperTextFieldInputSource.ime;
+      case TargetPlatform.fuchsia:
+      case TargetPlatform.linux:
+      case TargetPlatform.macOS:
+      case TargetPlatform.windows:
+        return SuperTextFieldInputSource.keyboard;
+    }
+  }
+
   /// Shortcuts that should be ignored on web.
   ///
   /// Without this we can't handle space and arrow keys inside [SuperTextField].
@@ -253,6 +279,7 @@ class SuperTextFieldState extends State<SuperTextField> {
           maxLines: widget.maxLines,
           keyboardHandlers: widget.keyboardHandlers,
           padding: widget.padding ?? EdgeInsets.zero,
+          inputSource: _inputSource,
         );
       case SuperTextFieldPlatformConfiguration.android:
         return Shortcuts(
@@ -316,4 +343,10 @@ enum SuperTextFieldPlatformConfiguration {
   desktop,
   android,
   iOS,
+}
+
+/// The mode of user text input.
+enum SuperTextFieldInputSource {
+  keyboard,
+  ime,
 }

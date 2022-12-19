@@ -893,11 +893,11 @@ class AttributedTextEditingController with ChangeNotifier {
       deleteEndIndex = getCharacterEndBounds(text.text, deleteStartIndex);
     }
 
-    text = text.removeRegion(
-      startOffset: deleteStartIndex,
-      endOffset: deleteEndIndex,
+    delete(
+      from: deleteStartIndex,
+      to: deleteEndIndex,
+      newSelection: TextSelection.collapsed(offset: deleteStartIndex),
     );
-    selection = TextSelection.collapsed(offset: deleteStartIndex);
   }
 
   void deleteTextOnLineBeforeCaret({
@@ -922,11 +922,11 @@ class AttributedTextEditingController with ChangeNotifier {
     final deleteStartIndex = selection.start;
     final deleteEndIndex = selection.end;
 
-    text = text.removeRegion(
-      startOffset: deleteStartIndex,
-      endOffset: deleteEndIndex,
+    delete(
+      from: deleteStartIndex,
+      to: deleteEndIndex,
+      newSelection: TextSelection.collapsed(offset: deleteStartIndex),
     );
-    selection = TextSelection.collapsed(offset: deleteStartIndex);
   }
 
   void insertNewline() {
