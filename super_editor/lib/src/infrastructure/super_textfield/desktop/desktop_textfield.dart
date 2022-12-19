@@ -155,7 +155,9 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
 
     if (widget.textController != oldWidget.textController) {
       _controller.removeListener(_onSelectionOrContentChange);
-      if (oldWidget.textController == null) {
+      // When the given textController isn't an ImeAttributedTextEditingController,
+      // we wrap it with one. So we need to dispose it.
+      if (oldWidget.textController == null || oldWidget.textController is! ImeAttributedTextEditingController) {
         _controller.dispose();
       }
       _controller = widget.textController != null
@@ -968,6 +970,22 @@ class _SuperTextFieldImeInteractorState extends State<SuperTextFieldImeInteracto
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         _updateSelectionAndImeConnectionOnFocusChange();
       });
+    }
+  }
+
+  @override
+  void didUpdateWidget(SuperTextFieldImeInteractor oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.focusNode != oldWidget.focusNode) {
+      oldWidget.focusNode.removeListener(_updateSelectionAndImeConnectionOnFocusChange);
+      widget.focusNode.addListener(_updateSelectionAndImeConnectionOnFocusChange);
+
+      if (widget.focusNode.hasFocus) {
+        // We got an already focused FocusNode, we need to attach to the IME.
+        WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+          _updateSelectionAndImeConnectionOnFocusChange();
+        });
+      }
     }
   }
 
