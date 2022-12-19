@@ -22,6 +22,8 @@ class DocumentComposer with ChangeNotifier {
     required Document document,
     DocumentSelection? initialSelection,
     ImeConfiguration? imeConfiguration,
+    this.automaticallyOpenKeyboardOnSelectionChange = true,
+    this.clearSelectionWhenImeDisconnects = true,
   })  : _document = document,
         imeConfiguration = ValueNotifier(imeConfiguration ?? const ImeConfiguration()),
         _preferences = ComposerPreferences() {
@@ -44,6 +46,60 @@ class DocumentComposer with ChangeNotifier {
   /// The document that's being edited by this [DocumentComposer].
   final Document _document;
 
+  /// Processes all IME input.
+  @visibleForTesting
+  SoftwareKeyboardHandler? get softwareKeyboardHandler => _softwareKeyboardHandler;
+
+  SoftwareKeyboardHandler? _softwareKeyboardHandler;
+
+  set softwareKeyboardHandler(SoftwareKeyboardHandler? newHandler) {
+    if (newHandler == _softwareKeyboardHandler) {
+      return;
+    }
+
+    final wasHandlerNull = _softwareKeyboardHandler == null;
+    _softwareKeyboardHandler = newHandler;
+
+    if (wasHandlerNull && selection != null && automaticallyOpenKeyboardOnSelectionChange) {
+      // Previously, we had no IME support, and now we do. We also have an existing
+      // document selection, and we want to automatically open the keyboard when the
+      // selection changes. We'll treat our new IME support like a selection change, and
+      // open the keyboard.
+      showImeInput();
+    }
+  }
+
+  /// Whether this [DocumentComposer] is configured to open, close,
+  /// and to talk the IME.
+  ///
+  /// When an editor uses a physical keyboard, this property is
+  /// expected to be `false`.
+  bool get _isConfiguredToUseIme => softwareKeyboardHandler != null;
+
+  /// Whether the document's selection should be cleared (removed) when the
+  /// IME disconnects, i.e., the software keyboard closes.
+  ///
+  /// Typically, on devices with software keyboards, the keyboard is critical
+  /// to all document editing. In such cases, it should be reasonable to clear
+  /// the selection when the keyboard closes.
+  ///
+  /// Some apps include editing features that can operate when the keyboard is
+  /// closed. For example, some apps display special editing options behind the
+  /// keyboard. The user closes the keyboard, uses the special options, and then
+  /// re-opens the keyboard. In this case, the document selection **shouldn't**
+  /// be cleared when the keyboard closes, because the special options behind the
+  /// keyboard still need to operate on that selection.
+  bool clearSelectionWhenImeDisconnects;
+
+  /// Whether the software keyboard should be raised whenever the editor's selection
+  /// changes, such as when a user taps to place the caret.
+  ///
+  /// In a typical app, this property should be `true`. In some apps, the keyboard
+  /// needs to be closed and opened to reveal special editing controls. In those cases
+  /// this property should probably be `false`, and the app should take responsibility
+  /// for opening and closing the keyboard.
+  bool automaticallyOpenKeyboardOnSelectionChange;
+
   /// Returns the current [DocumentSelection] for a [Document].
   DocumentSelection? get selection => selectionNotifier.value;
 
@@ -51,7 +107,10 @@ class DocumentComposer with ChangeNotifier {
   set selection(DocumentSelection? newSelection) {
     if (newSelection != selectionNotifier.value) {
       selectionNotifier.value = newSelection;
+
       notifyListeners();
+
+      _updateImeConnectionAfterSelectionChange();
     }
   }
 
@@ -63,6 +122,7 @@ class DocumentComposer with ChangeNotifier {
       selection: newSelection,
       reason: reason,
     );
+
     _streamController.sink.add(_latestSelectionChange);
 
     // Remove the listener, so we don't emit another DocumentSelectionChange.
@@ -72,6 +132,8 @@ class DocumentComposer with ChangeNotifier {
     selectionNotifier.value = newSelection;
 
     selectionNotifier.addListener(_onSelectionChangedBySelectionNotifier);
+
+    _updateImeConnectionAfterSelectionChange();
   }
 
   /// Returns the reason for the most recent selection change in the composer.
@@ -113,6 +175,18 @@ class DocumentComposer with ChangeNotifier {
     );
 
     _streamController.sink.add(_latestSelectionChange);
+
+    _updateImeConnectionAfterSelectionChange();
+  }
+
+  void _updateImeConnectionAfterSelectionChange() {
+    if (!_isConfiguredToUseIme) {
+      return;
+    }
+
+    if (selection != null && automaticallyOpenKeyboardOnSelectionChange) {
+      showImeInput();
+    }
   }
 
   bool get isAttachedToIme => _imeConnection != null;
@@ -126,18 +200,21 @@ class DocumentComposer with ChangeNotifier {
   DocumentImeSerializer? _currentImeSerialization;
 
   // TODO: get rid of this parameters. They should be constructor injected, or perhaps set explicitly
-  void openIme(SoftwareKeyboardHandler softwareKeyboardHandler, [FloatingCursorController? floatingCursorController]) {
+  void openIme([FloatingCursorController? floatingCursorController]) {
     print("Opening IME");
     if (isAttachedToIme) {
       print("Already attached to the IME");
       // We're already connected to the IME.
       return;
     }
+    if (softwareKeyboardHandler == null) {
+      throw Exception("Tried to open an IME connection without an existing softwareKeyboardHandler");
+    }
 
     editorImeLog.info('Attaching TextInputClient to TextInput');
 
     imeClient = EditorImeClient(
-      softwareKeyboardHandler: softwareKeyboardHandler,
+      softwareKeyboardHandler: softwareKeyboardHandler!,
       floatingCursorController: floatingCursorController,
       sendDocumentToIme: syncImeWithDocumentAndSelection,
     );
@@ -160,8 +237,7 @@ class DocumentComposer with ChangeNotifier {
   }
 
   // TODO: get rid of these parameters. They should be constructor injected, or perhaps set explicitly
-  void showImeInput(SoftwareKeyboardHandler softwareKeyboardHandler,
-      [FloatingCursorController? floatingCursorController]) {
+  void showImeInput([FloatingCursorController? floatingCursorController]) {
     if (isAttachedToIme && !imeClient!.isApplyingDeltas) {
       // Note: ^ We don't re-serialize and send to IME while we're in the middle
       // of applying deltas because we might be in an inconsistent state. A sync
@@ -173,7 +249,7 @@ class DocumentComposer with ChangeNotifier {
       // across nodes, in which case the previous composing region might be invalid.
       syncImeWithDocumentAndSelection(TextRange.empty);
     } else if (!isAttachedToIme) {
-      openIme(softwareKeyboardHandler, floatingCursorController);
+      openIme(floatingCursorController);
     }
   }
 
@@ -239,7 +315,6 @@ class DocumentComposer with ChangeNotifier {
 
   void closeIme() {
     if (!isAttachedToIme) {
-      print("Not attached to the IME. _imeConnection: $_imeConnection");
       return;
     }
 
@@ -251,8 +326,11 @@ class DocumentComposer with ChangeNotifier {
 
     imeClient?.imeConnection = null;
     _imeConnection!.close();
-    print("Null'ing out the _imeConnection");
     _imeConnection = null;
+
+    if (clearSelectionWhenImeDisconnects) {
+      selection = null;
+    }
   }
 
   final ComposerPreferences _preferences;

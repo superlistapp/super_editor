@@ -99,6 +99,8 @@ class _PanelBehindKeyboardDemoState extends State<PanelBehindKeyboardDemo> {
     );
 
     _composer = DocumentComposer(document: _editor.document) //
+      ..automaticallyOpenKeyboardOnSelectionChange = false
+      ..clearSelectionWhenImeDisconnects = false
       ..selectionNotifier.addListener(_onSelectionChange);
     _keyboardState.value = _composer.isAttachedToIme ? _InputState.open : _InputState.closed;
 
@@ -139,12 +141,14 @@ class _PanelBehindKeyboardDemoState extends State<PanelBehindKeyboardDemo> {
 
   void _openKeyboard() {
     print("Opening keyboard (also connecting to IME, if needed)");
-    _composer.openIme(_softwareKeyboardHandler);
+    _composer.softwareKeyboardHandler = _softwareKeyboardHandler;
+    _composer.openIme();
   }
 
   void _closeKeyboard() {
     print("Closing keyboard (and disconnecting from IME)");
     _composer.closeIme();
+    _composer.softwareKeyboardHandler = null;
   }
 
   void _endEditing() {
@@ -165,7 +169,6 @@ class _PanelBehindKeyboardDemoState extends State<PanelBehindKeyboardDemo> {
               child: SuperEditor(
                 editor: _editor,
                 composer: _composer,
-                automaticallyOpenKeyboardOnSelectionChange: false,
               ),
             ),
           ),

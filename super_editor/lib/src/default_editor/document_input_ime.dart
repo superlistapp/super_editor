@@ -38,8 +38,6 @@ class DocumentImeInteractor extends StatefulWidget {
     this.focusNode,
     this.autofocus = false,
     required this.editContext,
-    this.clearSelectionWhenImeDisconnects = true,
-    this.automaticallyOpenKeyboardOnSelectionChange = true,
     required this.softwareKeyboardHandler,
     this.hardwareKeyboardActions = const [],
     this.floatingCursorController,
@@ -51,30 +49,6 @@ class DocumentImeInteractor extends StatefulWidget {
   final bool autofocus;
 
   final EditContext editContext;
-
-  /// Whether the document's selection should be cleared (removed) when the
-  /// IME disconnects, i.e., the software keyboard closes.
-  ///
-  /// Typically, on devices with software keyboards, the keyboard is critical
-  /// to all document editing. In such cases, it should be reasonable to clear
-  /// the selection when the keyboard closes.
-  ///
-  /// Some apps include editing features that can operate when the keyboard is
-  /// closed. For example, some apps display special editing options behind the
-  /// keyboard. The user closes the keyboard, uses the special options, and then
-  /// re-opens the keyboard. In this case, the document selection **shouldn't**
-  /// be cleared when the keyboard closes, because the special options behind the
-  /// keyboard still need to operate on that selection.
-  final bool clearSelectionWhenImeDisconnects;
-
-  /// Whether the software keyboard should be raised whenever the editor's selection
-  /// changes, such as when a user taps to place the caret.
-  ///
-  /// In a typical app, this property should be `true`. In some apps, the keyboard
-  /// needs to be closed and opened to reveal special editing controls. In those cases
-  /// this property should probably be `false`, and the app should take responsibility
-  /// for opening and closing the keyboard.
-  final bool automaticallyOpenKeyboardOnSelectionChange;
 
   final SoftwareKeyboardHandler softwareKeyboardHandler;
 
@@ -107,6 +81,7 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
 
     widget.editContext.composer.selectionNotifier.addListener(_onSelectionChange);
     widget.editContext.composer.imeConfiguration.addListener(_onClientWantsDifferentImeConfiguration);
+    widget.editContext.composer.softwareKeyboardHandler = widget.softwareKeyboardHandler;
   }
 
   @override
@@ -126,12 +101,16 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
       oldWidget.editContext.composer.imeConfiguration.removeListener(_onClientWantsDifferentImeConfiguration);
       oldWidget.editContext.composer.imeConfiguration.addListener(_onClientWantsDifferentImeConfiguration);
     }
+    if (widget.softwareKeyboardHandler != oldWidget.softwareKeyboardHandler) {
+      widget.editContext.composer.softwareKeyboardHandler = widget.softwareKeyboardHandler;
+    }
   }
 
   @override
   void dispose() {
     _detachFromIme();
 
+    widget.editContext.composer.softwareKeyboardHandler = null;
     widget.editContext.composer.imeConfiguration.removeListener(_onClientWantsDifferentImeConfiguration);
     widget.editContext.composer.selectionNotifier.removeListener(_onSelectionChange);
 
@@ -149,10 +128,11 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
   void _onFocusChange() {
     if (_focusNode.hasFocus) {
       editorImeLog.info('Gained focus');
-      if (widget.automaticallyOpenKeyboardOnSelectionChange) {
-        editorImeLog.info('Attaching to IME');
-        _attachToIme();
-      }
+      // TODO: Do we actually want to attach to IME when we gain focus, even if there's no selection?
+      // if (widget.automaticallyOpenKeyboardOnSelectionChange) {
+      //   editorImeLog.info('Attaching to IME');
+      //   _attachToIme();
+      // }
     } else {
       editorImeLog.info('Lost focus');
       _detachFromIme();
@@ -165,8 +145,8 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
 
     if (selection == null) {
       _detachFromIme();
-    } else if (widget.automaticallyOpenKeyboardOnSelectionChange) {
-      widget.editContext.composer.showImeInput(widget.softwareKeyboardHandler, widget.floatingCursorController);
+      // } else if (widget.automaticallyOpenKeyboardOnSelectionChange) {
+      //   widget.editContext.composer.showImeInput(widget.floatingCursorController);
     } else if (isAttachedToIme) {
       widget.editContext.composer.syncImeWithDocumentAndSelection();
     }
@@ -184,9 +164,9 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor> implement
 
   bool get isAttachedToIme => widget.editContext.composer.isAttachedToIme;
 
-  void _attachToIme() {
-    widget.editContext.composer.openIme(widget.softwareKeyboardHandler, widget.floatingCursorController);
-  }
+  // void _attachToIme() {
+  //   widget.editContext.composer.openIme(widget.floatingCursorController);
+  // }
 
   TextInputConfiguration _createInputConfiguration() {
     final imeConfig = widget.editContext.composer.imeConfiguration.value;
