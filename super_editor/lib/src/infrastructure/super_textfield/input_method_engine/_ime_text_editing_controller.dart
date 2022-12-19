@@ -83,6 +83,7 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
     bool enableSuggestions = true,
     TextInputAction textInputAction = TextInputAction.done,
     TextInputType textInputType = TextInputType.text,
+    Brightness keyboardAppearance = Brightness.light,
   }) {
     if (isAttachedToIme) {
       // We're already connected to the IME.
@@ -97,6 +98,7 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
           enableSuggestions: enableSuggestions,
           inputAction: textInputAction,
           inputType: textInputType,
+          keyboardAppearance: keyboardAppearance,
         ));
     _inputConnection!
       ..show()
@@ -109,6 +111,7 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
     bool enableSuggestions = true,
     TextInputAction textInputAction = TextInputAction.done,
     TextInputType textInputType = TextInputType.text,
+    Brightness keyboardAppearance = Brightness.light,
   }) {
     if (!isAttachedToIme) {
       // We're not attached to the IME, so there is nothing to update.
@@ -127,6 +130,7 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
           enableSuggestions: enableSuggestions,
           inputAction: textInputAction,
           inputType: textInputType,
+          keyboardAppearance: keyboardAppearance,
         ));
     _inputConnection!
       ..show()
