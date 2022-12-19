@@ -8,6 +8,7 @@ import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
+import 'package:super_editor/src/default_editor/box_component.dart';
 import 'package:super_editor/src/default_editor/document_scrollable.dart';
 import 'package:super_editor/src/default_editor/document_selection_on_focus_mixin.dart';
 import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
@@ -150,24 +151,36 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor>
       _currentSelection != null;
 
   void _onSelectionChange(DocumentSelectionChange selectionChange) {
+    if (!mounted) {
+      return;
+    }
+
     if (selectionChange.reason != SelectionReason.userInteraction) {
       // The selection changed, but it isn't caused by an user interaction.
       // We don't want auto-scroll.
       return;
     }
-    if (mounted) {
-      // Use a post-frame callback to "ensure selection extent is visible"
-      // so that any pending visual document changes can happen before
-      // attempting to calculate the visual position of the selection extent.
-      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-        editorGesturesLog.finer("Ensuring selection extent is visible because the doc selection changed");
 
-        final globalExtentRect = _getSelectionExtentAsGlobalRect();
-        if (globalExtentRect != null) {
-          widget.autoScroller.ensureGlobalRectIsVisible(globalExtentRect);
-        }
-      });
+    final selection = widget.selectionNotifier.value;
+    if (selection != null) {
+      final node = widget.document.getNodeById(selection.extent.nodeId);
+      if (node is BlockNode) {
+        // We don't want auto-scroll block components.
+        return;
+      }
     }
+
+    // Use a post-frame callback to "ensure selection extent is visible"
+    // so that any pending visual document changes can happen before
+    // attempting to calculate the visual position of the selection extent.
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      editorGesturesLog.finer("Ensuring selection extent is visible because the doc selection changed");
+
+      final globalExtentRect = _getSelectionExtentAsGlobalRect();
+      if (globalExtentRect != null) {
+        widget.autoScroller.ensureGlobalRectIsVisible(globalExtentRect);
+      }
+    });
   }
 
   Rect? _getSelectionExtentAsGlobalRect() {
