@@ -57,8 +57,8 @@ class SuperDesktopTextField extends StatefulWidget {
     this.maxLines = 1,
     this.decorationBuilder,
     this.onRightClick,
-    this.keyboardHandlers = defaultTextFieldKeyboardHandlers,
     this.inputSource = SuperTextFieldInputSource.keyboard,
+    this.keyboardHandlers = defaultTextFieldKeyboardHandlers,
   }) : super(key: key);
 
   final FocusNode? focusNode;
@@ -95,12 +95,12 @@ class SuperDesktopTextField extends StatefulWidget {
 
   final RightClickListener? onRightClick;
 
+  /// The `SuperDesktopTextField` input source, e.g., keyboard or Input Method Engine.
+  final SuperTextFieldInputSource inputSource;
+
   /// Priority list of handlers that process all physical keyboard
   /// key presses, for text input, deletion, caret movement, etc.
   final List<TextFieldKeyboardHandler> keyboardHandlers;
-
-  /// The `SuperDesktopTextField` input source, e.g., keyboard or Input Method Engine.
-  final SuperTextFieldInputSource inputSource;
 
   @override
   SuperDesktopTextFieldState createState() => SuperDesktopTextFieldState();
@@ -195,6 +195,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
   ProseTextLayout get textLayout => _textKey.currentState!.textLayout;
 
   @override
+  @visibleForTesting
   DeltaTextInputClient get imeClient => _controller;
 
   FocusNode get focusNode => _focusNode;
@@ -304,7 +305,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
 
     final isMultiline = widget.minLines != 1 || widget.maxLines != 1;
 
-    return _buildInputSystem(
+    return _buildTextInputSystem(
       isMultiline: isMultiline,
       child: SuperTextFieldGestureInteractor(
         focusNode: _focusNode,
@@ -355,9 +356,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
     return widget.decorationBuilder != null ? widget.decorationBuilder!(context, child) : child;
   }
 
-  /// Builds the widget tree that applies user input, e.g., key
-  /// presses from a keyboard, or text deltas from the IME.
-  Widget _buildInputSystem({
+  Widget _buildTextInputSystem({
     required bool isMultiline,
     required Widget child,
   }) {
@@ -904,8 +903,13 @@ class _SuperTextFieldKeyboardInteractorState extends State<SuperTextFieldKeyboar
   }
 }
 
-/// Governs input that comes from the operating system's
-/// Input Method Engine (IME).
+/// Handles the connection with the platform IME through an [ImeAttributedTextEditingController] and dispatches key events.
+///
+/// The key events are passed down the [keyboardActions] Chain of Responsibility.
+/// Each handler is given a reference to the [textController], to manipulate the
+/// text content, and a [TextLayout] via the [textKey], which can be used to make
+/// decisions about manipulations, such as moving the caret to the beginning/end
+/// of a line.
 class SuperTextFieldImeInteractor extends StatefulWidget {
   const SuperTextFieldImeInteractor({
     Key? key,

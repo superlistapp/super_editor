@@ -63,9 +63,9 @@ class SuperTextField extends StatefulWidget {
     this.minLines,
     this.maxLines = 1,
     this.lineHeight,
+    this.inputSource,
     this.keyboardHandlers = defaultTextFieldKeyboardHandlers,
     this.padding,
-    this.inputSource,
   }) : super(key: key);
 
   final FocusNode? focusNode;
@@ -145,6 +145,11 @@ class SuperTextField extends StatefulWidget {
   /// provided and used for all text field height calculations.
   final double? lineHeight;
 
+  /// The `SuperTextField` input source, e.g., keyboard or Input Method Engine.
+  ///
+  /// Only used on desktop. On mobile platforms, only [SuperTextFieldInputSource.ime] is available.
+  final SuperTextFieldInputSource? inputSource;
+
   /// Priority list of handlers that process all physical keyboard
   /// key presses, for text input, deletion, caret movement, etc.
   ///
@@ -154,11 +159,6 @@ class SuperTextField extends StatefulWidget {
   /// Padding placed around the text content of this text field, but within the
   /// scrollable viewport.
   final EdgeInsets? padding;
-
-  /// The `SuperTextField` input source, e.g., keyboard or Input Method Engine.
-  ///
-  /// Only used on desktop. On mobile platforms, only [SuperTextFieldInputSource.ime] is available.
-  final SuperTextFieldInputSource? inputSource;
 
   @override
   State<SuperTextField> createState() => SuperTextFieldState();
@@ -218,9 +218,9 @@ class SuperTextFieldState extends State<SuperTextField> {
     }
   }
 
-  /// Returns the [SuperTextFieldInputSource] which should be used.
+  /// Returns the desired [SuperTextFieldInputSource] for this text field.
   ///
-  /// If the `inputSource` is configured, it is used. Otherwise,
+  /// If the [widget.inputSource] is configured, it is used. Otherwise,
   /// the [SuperTextFieldInputSource] is chosen based on the platform.
   SuperTextFieldInputSource get _inputSource {
     if (widget.inputSource != null) {
