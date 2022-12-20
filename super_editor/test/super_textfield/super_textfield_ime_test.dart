@@ -258,7 +258,7 @@ Future<void> _pumpSuperTextField(
           width: 320,
           child: SuperTextField(
             textController: controller,
-            inputSource: SuperTextFieldInputSource.ime,
+            inputSource: TextInputSource.ime,
             minLines: minLines,
             maxLines: maxLines,
             lineHeight: 18,

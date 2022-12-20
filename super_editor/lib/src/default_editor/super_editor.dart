@@ -83,7 +83,7 @@ class SuperEditor extends StatefulWidget {
     this.documentLayoutKey,
     Stylesheet? stylesheet,
     this.customStylePhases = const [],
-    this.inputSource = DocumentInputSource.keyboard,
+    this.inputSource = TextInputSource.keyboard,
     this.gestureMode = DocumentGestureMode.mouse,
     this.androidHandleColor,
     this.androidToolbarBuilder,
@@ -112,7 +112,7 @@ class SuperEditor extends StatefulWidget {
     this.customStylePhases = const [],
     List<ComponentBuilder>? componentBuilders,
     SelectionStyles? selectionStyle,
-    this.inputSource = DocumentInputSource.keyboard,
+    this.inputSource = TextInputSource.keyboard,
     this.gestureMode = DocumentGestureMode.mouse,
     List<DocumentKeyboardAction>? keyboardActions,
     this.softwareKeyboardHandler,
@@ -210,7 +210,7 @@ class SuperEditor extends StatefulWidget {
   final List<SingleColumnLayoutStylePhase> customStylePhases;
 
   /// The `SuperEditor` input source, e.g., keyboard or Input Method Engine.
-  final DocumentInputSource? inputSource;
+  final TextInputSource? inputSource;
 
   /// The `SuperEditor` gesture mode, e.g., mouse or touch.
   final DocumentGestureMode? gestureMode;
@@ -256,13 +256,13 @@ class SuperEditor extends StatefulWidget {
   /// events, e.g., text entry, newlines, character deletion,
   /// copy, paste, etc.
   ///
-  /// These actions are only used when in [DocumentInputSource.keyboard]
+  /// These actions are only used when in [TextInputSource.keyboard]
   /// mode.
   final List<DocumentKeyboardAction> keyboardActions;
 
   /// Applies all software keyboard edits to the document.
   ///
-  /// This handler is only used when in [DocumentInputSource.ime] mode.
+  /// This handler is only used when in [TextInputSource.ime] mode.
   final SoftwareKeyboardHandler? softwareKeyboardHandler;
 
   /// Paints some extra visual ornamentation to help with
@@ -496,20 +496,20 @@ class SuperEditorState extends State<SuperEditor> {
     }
   }
 
-  /// Returns the [DocumentInputSource] which should be used.
+  /// Returns the [TextInputSource] which should be used.
   ///
   /// If the `inputSource` is configured, it is used. Otherwise,
-  /// the [DocumentInputSource] is chosen based on the platform.
-  DocumentInputSource get _inputSource {
+  /// the [TextInputSource] is chosen based on the platform.
+  TextInputSource get _inputSource {
     if (widget.inputSource != null) {
       return widget.inputSource!;
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
       case TargetPlatform.iOS:
-        return DocumentInputSource.ime;
+        return TextInputSource.ime;
       default:
-        return DocumentInputSource.keyboard;
+        return TextInputSource.keyboard;
     }
   }
 
@@ -533,7 +533,7 @@ class SuperEditorState extends State<SuperEditor> {
     required Widget child,
   }) {
     switch (_inputSource) {
-      case DocumentInputSource.keyboard:
+      case TextInputSource.keyboard:
         return DocumentKeyboardInteractor(
           focusNode: _focusNode,
           autofocus: widget.autofocus,
@@ -541,7 +541,7 @@ class SuperEditorState extends State<SuperEditor> {
           keyboardActions: widget.keyboardActions,
           child: child,
         );
-      case DocumentInputSource.ime:
+      case TextInputSource.ime:
         return DocumentImeInteractor(
           focusNode: _focusNode,
           autofocus: widget.autofocus,

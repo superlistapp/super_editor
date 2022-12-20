@@ -14,6 +14,7 @@ import 'package:super_editor/src/infrastructure/focus.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/super_textfield.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
+import '../../../core/document_interaction.dart';
 import '../../ime_input_owner.dart';
 import '../../keyboard.dart';
 import '../../multi_tap_gesture.dart';
@@ -57,7 +58,7 @@ class SuperDesktopTextField extends StatefulWidget {
     this.maxLines = 1,
     this.decorationBuilder,
     this.onRightClick,
-    this.inputSource = SuperTextFieldInputSource.keyboard,
+    this.inputSource = TextInputSource.keyboard,
     this.keyboardHandlers = defaultTextFieldKeyboardHandlers,
   }) : super(key: key);
 
@@ -96,7 +97,7 @@ class SuperDesktopTextField extends StatefulWidget {
   final RightClickListener? onRightClick;
 
   /// The `SuperDesktopTextField` input source, e.g., keyboard or Input Method Engine.
-  final SuperTextFieldInputSource inputSource;
+  final TextInputSource inputSource;
 
   /// Priority list of handlers that process all physical keyboard
   /// key presses, for text input, deletion, caret movement, etc.
@@ -361,7 +362,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
     required Widget child,
   }) {
     switch (widget.inputSource) {
-      case SuperTextFieldInputSource.keyboard:
+      case TextInputSource.keyboard:
         return SuperTextFieldKeyboardInteractor(
           focusNode: _focusNode,
           textController: _controller,
@@ -369,7 +370,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
           keyboardActions: widget.keyboardHandlers,
           child: child,
         );
-      case SuperTextFieldInputSource.ime:
+      case TextInputSource.ime:
         return SuperTextFieldImeInteractor(
           focusNode: _focusNode,
           textController: _controller,

@@ -11,6 +11,7 @@ import 'package:super_editor/src/infrastructure/super_textfield/input_method_eng
 import 'package:super_editor/src/infrastructure/super_textfield/ios/ios_textfield.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
+import '../../core/document_interaction.dart';
 import 'styles.dart';
 
 export 'android/android_textfield.dart';
@@ -147,8 +148,8 @@ class SuperTextField extends StatefulWidget {
 
   /// The `SuperTextField` input source, e.g., keyboard or Input Method Engine.
   ///
-  /// Only used on desktop. On mobile platforms, only [SuperTextFieldInputSource.ime] is available.
-  final SuperTextFieldInputSource? inputSource;
+  /// Only used on desktop. On mobile platforms, only [TextInputSource.ime] is available.
+  final TextInputSource? inputSource;
 
   /// Priority list of handlers that process all physical keyboard
   /// key presses, for text input, deletion, caret movement, etc.
@@ -218,23 +219,23 @@ class SuperTextFieldState extends State<SuperTextField> {
     }
   }
 
-  /// Returns the desired [SuperTextFieldInputSource] for this text field.
+  /// Returns the desired [TextInputSource] for this text field.
   ///
   /// If the [widget.inputSource] is configured, it is used. Otherwise,
-  /// the [SuperTextFieldInputSource] is chosen based on the platform.
-  SuperTextFieldInputSource get _inputSource {
+  /// the [TextInputSource] is chosen based on the platform.
+  TextInputSource get _inputSource {
     if (widget.inputSource != null) {
       return widget.inputSource!;
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
       case TargetPlatform.iOS:
-        return SuperTextFieldInputSource.ime;
+        return TextInputSource.ime;
       case TargetPlatform.fuchsia:
       case TargetPlatform.linux:
       case TargetPlatform.macOS:
       case TargetPlatform.windows:
-        return SuperTextFieldInputSource.keyboard;
+        return TextInputSource.keyboard;
     }
   }
 
@@ -343,10 +344,4 @@ enum SuperTextFieldPlatformConfiguration {
   desktop,
   android,
   iOS,
-}
-
-/// The mode of user text input.
-enum SuperTextFieldInputSource {
-  keyboard,
-  ime,
 }

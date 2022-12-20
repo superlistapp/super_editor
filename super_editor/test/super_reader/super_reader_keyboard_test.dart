@@ -12,7 +12,7 @@ void main() {
     group('moves selection', () {
       testAllInputsOnDesktop("left by one character and expands when SHIFT + LEFT_ARROW is pressed", (
         tester, {
-        required DocumentInputSource inputSource,
+        required TextInputSource inputSource,
       }) async {
         final nodeId = await _pumpSingleLineAndSelectAWord(tester, offset: 10, inputSource: inputSource);
         expect(SuperReaderInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 8, to: 12));
@@ -24,7 +24,7 @@ void main() {
 
       testAllInputsOnDesktop("right by one character and expands when SHIFT + RIGHT_ARROW is pressed", (
         tester, {
-        required DocumentInputSource inputSource,
+        required TextInputSource inputSource,
       }) async {
         final nodeId = await _pumpSingleLineAndSelectAWord(tester, offset: 10, inputSource: inputSource);
         expect(SuperReaderInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 8, to: 12));
@@ -36,7 +36,7 @@ void main() {
 
       testAllInputsOnMac("to beginning of word and expands when SHIFT + ALT + LEFT_ARROW is pressed", (
         tester, {
-        required DocumentInputSource inputSource,
+        required TextInputSource inputSource,
       }) async {
         final nodeId = await _pumpSingleLineAndSelectAWord(tester, offset: 10, inputSource: inputSource);
         expect(SuperReaderInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 8, to: 12));
@@ -60,7 +60,7 @@ void main() {
 
       testAllInputsOnMac("to end of word and expands when SHIFT + ALT + RIGHT_ARROW is pressed", (
         tester, {
-        required DocumentInputSource inputSource,
+        required TextInputSource inputSource,
       }) async {
         final nodeId = await _pumpSingleLineAndSelectAWord(tester, offset: 10, inputSource: inputSource);
         expect(SuperReaderInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 8, to: 12));
@@ -72,7 +72,7 @@ void main() {
 
       testAllInputsOnMac("to beginning of line and expands when SHIFT + CMD + LEFT_ARROW is pressed", (
         tester, {
-        required DocumentInputSource inputSource,
+        required TextInputSource inputSource,
       }) async {
         final nodeId = await _pumpSingleLineAndSelectAWord(tester, offset: 10, inputSource: inputSource);
         expect(SuperReaderInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 8, to: 12));
@@ -84,7 +84,7 @@ void main() {
 
       testAllInputsOnMac("to end of line and expands when SHIFT + CMD + RIGHT_ARROW is pressed", (
         tester, {
-        required DocumentInputSource inputSource,
+        required TextInputSource inputSource,
       }) async {
         final nodeId = await _pumpSingleLineAndSelectAWord(tester, offset: 10, inputSource: inputSource);
         expect(SuperReaderInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 8, to: 12));
@@ -99,7 +99,7 @@ void main() {
 
       testAllInputsOnWindowsAndLinux("to beginning of word and expands when SHIFT + CTL + LEFT_ARROW is pressed", (
         tester, {
-        required DocumentInputSource inputSource,
+        required TextInputSource inputSource,
       }) async {
         final nodeId = await _pumpSingleLineAndSelectAWord(tester, offset: 10, inputSource: inputSource);
         expect(SuperReaderInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 8, to: 12));
@@ -123,7 +123,7 @@ void main() {
 
       testAllInputsOnWindowsAndLinux("to end of word and expands when SHIFT + CTL + RIGHT_ARROW is pressed", (
         tester, {
-        required DocumentInputSource inputSource,
+        required TextInputSource inputSource,
       }) async {
         final nodeId = await _pumpSingleLineAndSelectAWord(tester, offset: 10, inputSource: inputSource);
         expect(SuperReaderInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 8, to: 12));
@@ -135,7 +135,7 @@ void main() {
 
       testAllInputsOnDesktop("up one line and expands when SHIFT + UP_ARROW is pressed", (
         tester, {
-        required DocumentInputSource inputSource,
+        required TextInputSource inputSource,
       }) async {
         final nodeId = await _pumpDoubleLine(tester, offset: 44, inputSource: inputSource);
         expect(SuperReaderInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 41, to: 47));
@@ -147,7 +147,7 @@ void main() {
 
       testAllInputsOnDesktop("down one line and expands when SHIFT + DOWN_ARROW is pressed", (
         tester, {
-        required DocumentInputSource inputSource,
+        required TextInputSource inputSource,
       }) async {
         final nodeId = await _pumpDoubleLine(tester, offset: 12, inputSource: inputSource);
         expect(SuperReaderInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 12, to: 17));
@@ -159,7 +159,7 @@ void main() {
 
       testAllInputsOnDesktop("to beginning of line and expands when SHIFT + UP_ARROW is pressed at top of document", (
         tester, {
-        required DocumentInputSource inputSource,
+        required TextInputSource inputSource,
       }) async {
         final nodeId = await _pumpDoubleLine(tester, offset: 12, inputSource: inputSource);
         expect(SuperReaderInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 12, to: 17));
@@ -171,7 +171,7 @@ void main() {
 
       testAllInputsOnDesktop("end of line and expands when SHIFT + DOWN_ARROW is pressed at end of document", (
         tester, {
-        required DocumentInputSource inputSource,
+        required TextInputSource inputSource,
       }) async {
         final nodeId = await _pumpDoubleLine(tester, offset: 41, inputSource: inputSource);
         expect(SuperReaderInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 41, to: 47));
@@ -184,7 +184,7 @@ void main() {
 
     testAllInputsOnMac("and removes selection when it collapses without holding the SHIFT key", (
       tester, {
-      required DocumentInputSource inputSource,
+      required TextInputSource inputSource,
     }) async {
       final nodeId = await _pumpSingleLineAndSelectAWord(tester, offset: 10, inputSource: inputSource);
       expect(SuperReaderInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 8, to: 12));
@@ -205,7 +205,7 @@ void main() {
 
     testAllInputsOnWindowsAndLinux("and removes selection when it collapses without holding the SHIFT key", (
       tester, {
-      required DocumentInputSource inputSource,
+      required TextInputSource inputSource,
     }) async {
       final nodeId = await _pumpSingleLineAndSelectAWord(tester, offset: 10, inputSource: inputSource);
       expect(SuperReaderInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 8, to: 12));
@@ -226,7 +226,7 @@ void main() {
 
     testAllInputsOnMac("and retains the selection when collapsed and the SHIFT key is pressed", (
       tester, {
-      required DocumentInputSource inputSource,
+      required TextInputSource inputSource,
     }) async {
       final nodeId = await _pumpSingleLineAndSelectAWord(tester, offset: 10, inputSource: inputSource);
       expect(SuperReaderInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 8, to: 12));
@@ -246,7 +246,7 @@ void main() {
 
     testAllInputsOnWindowsAndLinux("and retains the selection when collapsed and the SHIFT key is pressed", (
       tester, {
-      required DocumentInputSource inputSource,
+      required TextInputSource inputSource,
     }) async {
       final nodeId = await _pumpSingleLineAndSelectAWord(tester, offset: 10, inputSource: inputSource);
       expect(SuperReaderInspector.findDocumentSelection(), _selectionInParagraph(nodeId, from: 8, to: 12));
@@ -269,7 +269,7 @@ void main() {
 Future<String> _pumpSingleLineAndSelectAWord(
   WidgetTester tester, {
   required int offset,
-  required DocumentInputSource inputSource,
+  required TextInputSource inputSource,
 }) async {
   final testContext = await tester //
       .createDocument()
@@ -287,7 +287,7 @@ Future<String> _pumpSingleLineAndSelectAWord(
 Future<String> _pumpDoubleLine(
   WidgetTester tester, {
   required int offset,
-  required DocumentInputSource inputSource,
+  required TextInputSource inputSource,
 }) async {
   final testContext = await tester //
       .createDocument()

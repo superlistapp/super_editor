@@ -1,5 +1,5 @@
 /// The mode of user text input.
-enum DocumentInputSource {
+enum TextInputSource {
   keyboard,
   ime,
 }

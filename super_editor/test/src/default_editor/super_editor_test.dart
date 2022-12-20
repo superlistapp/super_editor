@@ -106,7 +106,7 @@ TextStyle inlineTextStyler(Set<Attribution> attributions, TextStyle base) {
 }
 
 class _InputAndGestureTuple {
-  final DocumentInputSource inputSource;
+  final TextInputSource inputSource;
   final DocumentGestureMode gestureMode;
 
   const _InputAndGestureTuple(this.inputSource, this.gestureMode);
@@ -119,11 +119,11 @@ class _InputAndGestureTuple {
 
 final _inputAndGestureVariants = ValueVariant<_InputAndGestureTuple>(
   {
-    const _InputAndGestureTuple(DocumentInputSource.keyboard, DocumentGestureMode.mouse),
-    const _InputAndGestureTuple(DocumentInputSource.keyboard, DocumentGestureMode.iOS),
-    const _InputAndGestureTuple(DocumentInputSource.keyboard, DocumentGestureMode.android),
-    const _InputAndGestureTuple(DocumentInputSource.ime, DocumentGestureMode.mouse),
-    const _InputAndGestureTuple(DocumentInputSource.ime, DocumentGestureMode.iOS),
-    const _InputAndGestureTuple(DocumentInputSource.ime, DocumentGestureMode.android),
+    const _InputAndGestureTuple(TextInputSource.keyboard, DocumentGestureMode.mouse),
+    const _InputAndGestureTuple(TextInputSource.keyboard, DocumentGestureMode.iOS),
+    const _InputAndGestureTuple(TextInputSource.keyboard, DocumentGestureMode.android),
+    const _InputAndGestureTuple(TextInputSource.ime, DocumentGestureMode.mouse),
+    const _InputAndGestureTuple(TextInputSource.ime, DocumentGestureMode.iOS),
+    const _InputAndGestureTuple(TextInputSource.ime, DocumentGestureMode.android),
   },
 );

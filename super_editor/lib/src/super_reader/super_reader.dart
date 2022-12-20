@@ -116,7 +116,7 @@ class SuperReader extends StatefulWidget {
   /// events, e.g., text entry, newlines, character deletion,
   /// copy, paste, etc.
   ///
-  /// These actions are only used when in [DocumentInputSource.keyboard]
+  /// These actions are only used when in [TextInputSource.keyboard]
   /// mode.
   final List<ReadOnlyDocumentKeyboardAction> keyboardActions;
 
