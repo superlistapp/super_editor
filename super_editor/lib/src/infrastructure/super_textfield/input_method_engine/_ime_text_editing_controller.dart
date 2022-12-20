@@ -32,6 +32,7 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
     AttributedTextEditingController? controller,
     bool disposeClientController = true,
     void Function(RawFloatingCursorPoint)? onIOSFloatingCursorChange,
+    this.keyboardAppearance = Brightness.light,
   })  : _realController = controller ?? AttributedTextEditingController(),
         _disposeClientController = disposeClientController,
         _onIOSFloatingCursorChange = onIOSFloatingCursorChange {
@@ -46,6 +47,11 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
 
     super.dispose();
   }
+
+  /// The appearance of the software keyboard.
+  ///
+  /// Only used for iOS devices.
+  final Brightness keyboardAppearance;
 
   final AttributedTextEditingController _realController;
 
@@ -83,7 +89,6 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
     bool enableSuggestions = true,
     TextInputAction textInputAction = TextInputAction.done,
     TextInputType textInputType = TextInputType.text,
-    Brightness keyboardAppearance = Brightness.light,
   }) {
     if (isAttachedToIme) {
       // We're already connected to the IME.
@@ -111,7 +116,6 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
     bool enableSuggestions = true,
     TextInputAction textInputAction = TextInputAction.done,
     TextInputType textInputType = TextInputType.text,
-    Brightness keyboardAppearance = Brightness.light,
   }) {
     if (!isAttachedToIme) {
       // We're not attached to the IME, so there is nothing to update.

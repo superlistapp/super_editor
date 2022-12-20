@@ -172,8 +172,10 @@ void main() {
       testWidgetsOnIos('applies keyboard appearance', (tester) async {
         await tester.pumpWidget(
           _buildScaffold(
-            child: const SuperTextField(
-              keyboardAppearance: Brightness.dark,
+            child: SuperTextField(
+              textController: ImeAttributedTextEditingController(
+                keyboardAppearance: Brightness.dark,
+              ),
             ),
           ),
         );

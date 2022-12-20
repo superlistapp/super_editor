@@ -60,7 +60,6 @@ class SuperTextField extends StatefulWidget {
     this.controlsColor,
     this.caretStyle,
     this.selectionColor,
-    this.keyboardAppearance,
     this.minLines,
     this.maxLines = 1,
     this.lineHeight,
@@ -105,13 +104,6 @@ class SuperTextField extends StatefulWidget {
 
   /// The color of selection rectangles that appear around selected text.
   final Color? selectionColor;
-
-  /// The appearance of the software keyboard.
-  ///
-  /// Only used for iOS devices.
-  ///
-  /// Defaults to [ThemeData.brightness].
-  final Brightness? keyboardAppearance;
 
   /// The minimum height of this text field, represented as a
   /// line count.
@@ -303,7 +295,6 @@ class SuperTextFieldState extends State<SuperTextField> {
                 ),
             selectionColor: widget.selectionColor ?? defaultSelectionColor,
             handlesColor: widget.controlsColor ?? defaultIOSControlsColor,
-            keyboardAppearance: widget.keyboardAppearance ?? Theme.of(context).brightness,
             minLines: widget.minLines,
             maxLines: widget.maxLines,
             lineHeight: widget.lineHeight,

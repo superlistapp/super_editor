@@ -42,7 +42,6 @@ class SuperIOSTextField extends StatefulWidget {
     required this.caretStyle,
     required this.selectionColor,
     required this.handlesColor,
-    this.keyboardAppearance = Brightness.light,
     this.textInputAction = TextInputAction.done,
     this.popoverToolbarBuilder = _defaultPopoverToolbarBuilder,
     this.showDebugPaint = false,
@@ -79,9 +78,6 @@ class SuperIOSTextField extends StatefulWidget {
 
   /// Color of the selection handles.
   final Color handlesColor;
-
-  /// The appearance of the software keyboard.
-  final Brightness keyboardAppearance;
 
   /// The minimum height of this text field, represented as a
   /// line count.
@@ -322,7 +318,6 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
           _textEditingController.attachToIme(
             textInputAction: widget.textInputAction,
             textInputType: _isMultiline ? TextInputType.multiline : TextInputType.text,
-            keyboardAppearance: widget.keyboardAppearance,
           );
 
           _autoScrollToKeepTextFieldVisible();
