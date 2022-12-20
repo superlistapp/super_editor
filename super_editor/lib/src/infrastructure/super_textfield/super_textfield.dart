@@ -146,7 +146,7 @@ class SuperTextField extends StatefulWidget {
   /// provided and used for all text field height calculations.
   final double? lineHeight;
 
-  /// The `SuperTextField` input source, e.g., keyboard or Input Method Engine.
+  /// The [SuperTextField] input source, e.g., keyboard or Input Method Engine.
   ///
   /// Only used on desktop. On mobile platforms, only [TextInputSource.ime] is available.
   final TextInputSource? inputSource;
