@@ -36,7 +36,7 @@ class ReadOnlyAndroidDocumentTouchInteractor extends StatefulWidget {
     required this.popoverToolbarBuilder,
     this.createOverlayControlsClipper,
     this.showDebugPaint = false,
-    this.toolbarController,
+    this.overlayController,
     required this.child,
   }) : super(key: key);
 
@@ -70,9 +70,8 @@ class ReadOnlyAndroidDocumentTouchInteractor extends StatefulWidget {
   /// (probably the entire screen).
   final CustomClipper<Rect> Function(BuildContext overlayContext)? createOverlayControlsClipper;
 
-  /// [MagnifierAndToolbarController] that governs the display and position of
-  /// the magnifier and the floating toolbar.
-  final MagnifierAndToolbarController? toolbarController;
+  /// Shows, hides, and positions a floating toolbar and magnifier.
+  final MagnifierAndToolbarController? overlayController;
 
   final bool showDebugPaint;
 
@@ -111,9 +110,8 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
   Offset? _dragEndInInteractor;
   SelectionHandleType? _handleType;
 
-  /// [MagnifierAndToolbarController] that governs the display and position of
-  /// the magnifier and the floating toolbar.
-  late MagnifierAndToolbarController _toolbarController;
+  /// Shows, hides, and positions a floating toolbar and magnifier.
+  late MagnifierAndToolbarController _overlayController;
 
   @override
   void initState() {
@@ -145,12 +143,12 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
     // TODO: rely solely on a ScrollPosition listener, not a ScrollController listener.
     _scrollController.addListener(_onScrollChange);
 
-    _toolbarController = widget.toolbarController ?? MagnifierAndToolbarController();
+    _overlayController = widget.overlayController ?? MagnifierAndToolbarController();
 
     _editingController = AndroidDocumentGestureEditingController(
       documentLayoutLink: _documentLayoutLink,
       magnifierFocalPointLink: _magnifierFocalPointLink,
-      toolbarController: _toolbarController,
+      overlayController: _overlayController,
     );
 
     widget.document.addListener(_onDocumentChange);
@@ -200,9 +198,9 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
       widget.selection.addListener(_onSelectionChange);
     }
 
-    if (widget.toolbarController != oldWidget.toolbarController) {
-      _toolbarController = widget.toolbarController ?? MagnifierAndToolbarController();
-      _editingController.toolbarController = _toolbarController;
+    if (widget.overlayController != oldWidget.overlayController) {
+      _overlayController = widget.overlayController ?? MagnifierAndToolbarController();
+      _editingController.overlayController = _overlayController;
     }
 
     // Selection has changed, we need to update the caret.

@@ -5,8 +5,6 @@ import 'package:super_editor/src/infrastructure/document_gestures.dart';
 
 /// Controls the display and position of a magnifier and a floating toolbar.
 class MagnifierAndToolbarController with ChangeNotifier {
-  MagnifierAndToolbarController();
-
   /// Whether the magnifier should be displayed.
   bool get shouldDisplayMagnifier => _isMagnifierVisible;
   bool _isMagnifierVisible = false;

@@ -39,7 +39,7 @@ class AndroidDocumentTouchInteractor extends StatefulWidget {
     required this.popoverToolbarBuilder,
     this.createOverlayControlsClipper,
     this.showDebugPaint = false,
-    this.toolbarController,
+    this.overlayController,
     required this.child,
   }) : super(key: key);
 
@@ -52,9 +52,8 @@ class AndroidDocumentTouchInteractor extends StatefulWidget {
 
   final ScrollController? scrollController;
 
-  /// [MagnifierAndToolbarController] that governs the display and position of
-  /// the magnifier and the floating toolbar.
-  final MagnifierAndToolbarController? toolbarController;
+  /// Shows, hides, and positions a floating toolbar and magnifier.
+  final MagnifierAndToolbarController? overlayController;
 
   /// The closest that the user's selection drag gesture can get to the
   /// document boundary before auto-scrolling.
@@ -92,9 +91,8 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   // ancestor scrollable.
   late ScrollController _scrollController;
 
-  /// [MagnifierAndToolbarController] that governs the display and position of
-  /// the magnifier and the floating toolbar.
-  late MagnifierAndToolbarController _toolbarController;
+  /// Shows, hides, and positions a floating toolbar and magnifier.
+  late MagnifierAndToolbarController _overlayController;
   // The ScrollPosition attached to the _ancestorScrollable, if there's an ancestor
   // Scrollable.
   ScrollPosition? _ancestorScrollPosition;
@@ -153,12 +151,12 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     // TODO: rely solely on a ScrollPosition listener, not a ScrollController listener.
     _scrollController.addListener(_onScrollChange);
 
-    _toolbarController = widget.toolbarController ?? MagnifierAndToolbarController();
+    _overlayController = widget.overlayController ?? MagnifierAndToolbarController();
 
     _editingController = AndroidDocumentGestureEditingController(
       documentLayoutLink: _documentLayoutLink,
       magnifierFocalPointLink: _magnifierFocalPointLink,
-      toolbarController: _toolbarController,
+      overlayController: _overlayController,
     );
 
     widget.document.addListener(_onDocumentChange);
@@ -225,9 +223,9 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       onDocumentLayoutResolverReplaced(widget.getDocumentLayout);
     }
 
-    if (widget.toolbarController != oldWidget.toolbarController) {
-      _toolbarController = widget.toolbarController ?? MagnifierAndToolbarController();
-      _editingController.toolbarController = _toolbarController;
+    if (widget.overlayController != oldWidget.overlayController) {
+      _overlayController = widget.overlayController ?? MagnifierAndToolbarController();
+      _editingController.overlayController = _overlayController;
     }
   }
 

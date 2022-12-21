@@ -50,7 +50,7 @@ class SuperReader extends StatefulWidget {
     this.iOSToolbarBuilder,
     this.createOverlayControlsClipper,
     this.autofocus = false,
-    this.toolbarController,
+    this.overlayController,
     this.debugPaint = const DebugPaintConfig(),
   })  : stylesheet = stylesheet ?? readOnlyDefaultStylesheet,
         selectionStyles = selectionStyle ?? readOnlyDefaultSelectionStyle,
@@ -81,9 +81,8 @@ class SuperReader extends StatefulWidget {
   /// [Scrollable].
   final ScrollController? scrollController;
 
-  /// [MagnifierAndToolbarController] that governs the display and position of
-  /// the magnifier and the floating toolbar for Android and iOS.
-  final MagnifierAndToolbarController? toolbarController;
+  /// Shows, hides, and positions a floating toolbar and magnifier.
+  final MagnifierAndToolbarController? overlayController;
 
   /// Style rules applied through the document presentation.
   final Stylesheet stylesheet;
@@ -324,7 +323,7 @@ class SuperReaderState extends State<SuperReader> {
           popoverToolbarBuilder: widget.androidToolbarBuilder ?? (_) => const SizedBox(),
           createOverlayControlsClipper: widget.createOverlayControlsClipper,
           showDebugPaint: widget.debugPaint.gestures,
-          toolbarController: widget.toolbarController,
+          overlayController: widget.overlayController,
           child: documentLayout,
         );
       case DocumentGestureMode.iOS:
@@ -339,7 +338,7 @@ class SuperReaderState extends State<SuperReader> {
           popoverToolbarBuilder: widget.iOSToolbarBuilder ?? (_) => const SizedBox(),
           createOverlayControlsClipper: widget.createOverlayControlsClipper,
           showDebugPaint: widget.debugPaint.gestures,
-          toolbarController: widget.toolbarController,
+          overlayController: widget.overlayController,
           child: documentLayout,
         );
     }

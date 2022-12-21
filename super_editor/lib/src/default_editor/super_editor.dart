@@ -93,7 +93,7 @@ class SuperEditor extends StatefulWidget {
     this.createOverlayControlsClipper,
     this.debugPaint = const DebugPaintConfig(),
     this.autofocus = false,
-    this.toolbarController,
+    this.overlayController,
   })  : componentBuilders = defaultComponentBuilders,
         keyboardActions = defaultKeyboardActions,
         softwareKeyboardHandler = null,
@@ -125,7 +125,7 @@ class SuperEditor extends StatefulWidget {
     this.createOverlayControlsClipper,
     this.debugPaint = const DebugPaintConfig(),
     this.autofocus = false,
-    this.toolbarController,
+    this.overlayController,
   })  : stylesheet = stylesheet ?? defaultStylesheet,
         selectionStyles = selectionStyle ?? defaultSelectionStyle,
         keyboardActions = keyboardActions ?? defaultKeyboardActions,
@@ -160,7 +160,7 @@ class SuperEditor extends StatefulWidget {
     this.documentOverlayBuilders = const [DefaultCaretOverlayBuilder()],
     this.debugPaint = const DebugPaintConfig(),
     this.autofocus = false,
-    this.toolbarController,
+    this.overlayController,
   })  : stylesheet = stylesheet ?? defaultStylesheet,
         selectionStyles = selectionStyle ?? defaultSelectionStyle,
         keyboardActions = keyboardActions ?? defaultKeyboardActions,
@@ -182,9 +182,8 @@ class SuperEditor extends StatefulWidget {
   /// `Scrollable`.
   final ScrollController? scrollController;
 
-  /// [MagnifierAndToolbarController] that governs the display and position of
-  /// the magnifier and the floating toolbar for Android and iOS.
-  final MagnifierAndToolbarController? toolbarController;
+  /// Shows, hides, and positions a floating toolbar and magnifier.
+  final MagnifierAndToolbarController? overlayController;
 
   /// [GlobalKey] that's bound to the [DocumentLayout] within
   /// this `SuperEditor`.
@@ -582,7 +581,7 @@ class SuperEditorState extends State<SuperEditor> {
           handleColor: widget.androidHandleColor ?? Theme.of(context).primaryColor,
           popoverToolbarBuilder: widget.androidToolbarBuilder ?? (_) => const SizedBox(),
           createOverlayControlsClipper: widget.createOverlayControlsClipper,
-          toolbarController: widget.toolbarController,
+          overlayController: widget.overlayController,
           showDebugPaint: widget.debugPaint.gestures,
           child: documentLayout,
         );
@@ -598,7 +597,7 @@ class SuperEditorState extends State<SuperEditor> {
           popoverToolbarBuilder: widget.iOSToolbarBuilder ?? (_) => const SizedBox(),
           floatingCursorController: _floatingCursorController,
           createOverlayControlsClipper: widget.createOverlayControlsClipper,
-          toolbarController: widget.toolbarController,
+          overlayController: widget.overlayController,
           showDebugPaint: widget.debugPaint.gestures,
           child: documentLayout,
         );
