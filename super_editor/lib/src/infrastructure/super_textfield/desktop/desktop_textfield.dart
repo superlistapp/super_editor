@@ -37,7 +37,7 @@ final _log = textFieldLog;
 /// is composed of a few widgets that you can recompose to create your own
 /// flavor of a text field.
 class SuperDesktopTextField extends StatefulWidget {
-  const SuperDesktopTextField({
+  SuperDesktopTextField({
     Key? key,
     this.focusNode,
     this.textController,
@@ -59,8 +59,14 @@ class SuperDesktopTextField extends StatefulWidget {
     this.decorationBuilder,
     this.onRightClick,
     this.inputSource = TextInputSource.keyboard,
-    this.keyboardHandlers = defaultTextFieldKeyboardHandlers,
-  }) : super(key: key);
+    List<TextFieldKeyboardHandler>? keyboardHandlers,
+  }) : super(key: key) {
+    final defaultKeyboardHandlers = inputSource == TextInputSource.keyboard
+        ? defaultTextFieldKeyboardHandlers
+        : defaultTextFieldImeKeyboardHandlers;
+
+    this.keyboardHandlers = keyboardHandlers ?? defaultKeyboardHandlers;
+  }
 
   final FocusNode? focusNode;
 
@@ -101,7 +107,7 @@ class SuperDesktopTextField extends StatefulWidget {
 
   /// Priority list of handlers that process all physical keyboard
   /// key presses, for text input, deletion, caret movement, etc.
-  final List<TextFieldKeyboardHandler> keyboardHandlers;
+  late final List<TextFieldKeyboardHandler> keyboardHandlers;
 
   @override
   SuperDesktopTextFieldState createState() => SuperDesktopTextFieldState();
@@ -361,25 +367,26 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
     required bool isMultiline,
     required Widget child,
   }) {
-    switch (widget.inputSource) {
-      case TextInputSource.keyboard:
-        return SuperTextFieldKeyboardInteractor(
-          focusNode: _focusNode,
-          textController: _controller,
-          textKey: _textKey,
-          keyboardActions: widget.keyboardHandlers,
-          child: child,
-        );
-      case TextInputSource.ime:
-        return SuperTextFieldImeInteractor(
-          focusNode: _focusNode,
-          textController: _controller,
-          textKey: _textKey,
-          keyboardActions: widget.keyboardHandlers,
-          isMultiline: isMultiline,
-          child: child,
-        );
+    Widget keyboardChild = child;
+
+    if (widget.inputSource == TextInputSource.ime) {
+      keyboardChild = SuperTextFieldImeInteractor(
+        focusNode: _focusNode,
+        textController: _controller,
+        textKey: _textKey,
+        keyboardActions: widget.keyboardHandlers,
+        isMultiline: isMultiline,
+        child: keyboardChild,
+      );
     }
+
+    return SuperTextFieldKeyboardInteractor(
+      focusNode: _focusNode,
+      textController: _controller,
+      textKey: _textKey,
+      keyboardActions: widget.keyboardHandlers,
+      child: keyboardChild,
+    );
   }
 
   Widget _buildSelectableText() {
@@ -1000,33 +1007,6 @@ class _SuperTextFieldImeInteractorState extends State<SuperTextFieldImeInteracto
     super.dispose();
   }
 
-  KeyEventResult _onKeyPressed(FocusNode focusNode, RawKeyEvent keyEvent) {
-    if (keyEvent.character != null) {
-      // Character keys are handled as deltas in the text controller.
-      return KeyEventResult.ignored;
-    }
-
-    _log.fine('_onKeyPressed - keyEvent: ${keyEvent.logicalKey}, character: ${keyEvent.character}');
-    if (keyEvent is! RawKeyDownEvent) {
-      _log.finer('_onKeyPressed - not a "down" event. Ignoring.');
-      return KeyEventResult.ignored;
-    }
-
-    TextFieldKeyboardHandlerResult result = TextFieldKeyboardHandlerResult.notHandled;
-    int index = 0;
-    while (result == TextFieldKeyboardHandlerResult.notHandled && index < widget.keyboardActions.length) {
-      result = widget.keyboardActions[index](
-        controller: widget.textController,
-        textLayout: widget.textKey.currentState!.textLayout,
-        keyEvent: keyEvent,
-      );
-      index += 1;
-    }
-
-    _log.finest("Key handler result: $result");
-    return result == TextFieldKeyboardHandlerResult.handled ? KeyEventResult.handled : KeyEventResult.ignored;
-  }
-
   void _updateSelectionAndImeConnectionOnFocusChange() {
     if (widget.focusNode.hasFocus) {
       if (!widget.textController.isAttachedToIme) {
@@ -1052,11 +1032,7 @@ class _SuperTextFieldImeInteractorState extends State<SuperTextFieldImeInteracto
 
   @override
   Widget build(BuildContext context) {
-    return NonReparentingFocus(
-      focusNode: widget.focusNode,
-      onKey: _onKeyPressed,
-      child: widget.child,
-    );
+    return widget.child;
   }
 }
 
@@ -1454,6 +1430,35 @@ const defaultTextFieldKeyboardHandlers = <TextFieldKeyboardHandler>[
   DefaultSuperTextFieldKeyboardHandlers.deleteTextWhenBackspaceOrDeleteIsPressed,
   DefaultSuperTextFieldKeyboardHandlers.insertNewlineWhenEnterIsPressed,
   DefaultSuperTextFieldKeyboardHandlers.insertCharacterWhenKeyIsPressed,
+];
+
+/// The keyboard actions that a [SuperTextField] uses by default when using [TextInputSource.ime].
+///
+/// It's common for developers to want all of these actions, but also
+/// want to add more actions that take priority. To achieve that,
+/// add the new actions to the front of the list:
+///
+/// ```
+/// SuperTextField(
+///   keyboardActions: [
+///     myNewAction1,
+///     myNewAction2,
+///     ...defaultTextFieldImeKeyboardHandlers,
+///   ],
+/// );
+/// ```
+const defaultTextFieldImeKeyboardHandlers = <TextFieldKeyboardHandler>[
+  DefaultSuperTextFieldKeyboardHandlers.copyTextWhenCmdCIsPressed,
+  DefaultSuperTextFieldKeyboardHandlers.pasteTextWhenCmdVIsPressed,
+  DefaultSuperTextFieldKeyboardHandlers.selectAllTextFieldWhenCmdAIsPressed,
+  DefaultSuperTextFieldKeyboardHandlers.moveCaretToStartOrEnd,
+  DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys,
+  DefaultSuperTextFieldKeyboardHandlers.moveToLineStartWithHome,
+  DefaultSuperTextFieldKeyboardHandlers.moveToLineEndWithEnd,
+  DefaultSuperTextFieldKeyboardHandlers.deleteWordWhenAltBackSpaceIsPressedOnMac,
+  DefaultSuperTextFieldKeyboardHandlers.deleteWordWhenCtlBackSpaceIsPressedOnWindowsAndLinux,
+  DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed,
+  DefaultSuperTextFieldKeyboardHandlers.deleteTextWhenBackspaceOrDeleteIsPressed,
 ];
 
 class DefaultSuperTextFieldKeyboardHandlers {
