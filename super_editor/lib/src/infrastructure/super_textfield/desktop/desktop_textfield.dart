@@ -367,23 +367,19 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
     required bool isMultiline,
     required Widget child,
   }) {
-    Widget keyboardChild = child;
-
-    if (widget.inputSource == TextInputSource.ime) {
-      keyboardChild = SuperTextFieldImeInteractor(
-        focusNode: _focusNode,
-        textController: _controller,
-        isMultiline: isMultiline,
-        child: keyboardChild,
-      );
-    }
-
     return SuperTextFieldKeyboardInteractor(
       focusNode: _focusNode,
       textController: _controller,
       textKey: _textKey,
       keyboardActions: widget.keyboardHandlers,
-      child: keyboardChild,
+      child: widget.inputSource == TextInputSource.ime
+          ? SuperTextFieldImeInteractor(
+              focusNode: _focusNode,
+              textController: _controller,
+              isMultiline: isMultiline,
+              child: child,
+            )
+          : child,
     );
   }
 
@@ -909,14 +905,24 @@ class _SuperTextFieldKeyboardInteractorState extends State<SuperTextFieldKeyboar
   }
 }
 
-/// Handles the connection with the platform IME when focus changes.
+/// Opens and closes an IME connection based on changes to focus and selection.
+///
+/// This widget watches [focusNode] for focus changes, and [textController] for
+/// selection changes.
+///
+/// All IME commands are handled and applied to text field text by the given [textController].
+///
+/// When [focusNode] gains focus, if the [textController] doesn't have a selection, the caret is
+/// placed at the end of the text.
+///
+/// When [focusNode] loses focus, the [textController]'s selection is cleared.
 class SuperTextFieldImeInteractor extends StatefulWidget {
   const SuperTextFieldImeInteractor({
     Key? key,
     required this.focusNode,
     required this.textController,
-    required this.child,
     required this.isMultiline,
+    required this.child,
   }) : super(key: key);
 
   /// [FocusNode] for this text field.
@@ -1397,6 +1403,12 @@ const defaultTextFieldKeyboardHandlers = <TextFieldKeyboardHandler>[
 ];
 
 /// The keyboard actions that a [SuperTextField] uses by default when using [TextInputSource.ime].
+///
+/// Using the IME on desktop involves partial input from the IME and partial input from non-content keys,
+/// like arrow keys.
+///
+/// This list has the same handlers as [defaultTextFieldKeyboardHandlers], except the handlers that
+/// input text. Text input is handled using [TextEditingDelta]s from the IME.
 ///
 /// It's common for developers to want all of these actions, but also
 /// want to add more actions that take priority. To achieve that,
