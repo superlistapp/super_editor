@@ -38,6 +38,8 @@ class _ExampleEditorState extends State<ExampleEditor> {
   OverlayEntry? _imageFormatBarOverlayEntry;
   final _imageSelectionAnchor = ValueNotifier<Offset?>(null);
 
+  final _overlayController = MagnifierAndToolbarController();
+
   @override
   void initState() {
     super.initState();
@@ -217,9 +219,21 @@ class _ExampleEditorState extends State<ExampleEditor> {
     }
   }
 
-  void _cut() => _docOps.cut();
-  void _copy() => _docOps.copy();
-  void _paste() => _docOps.paste();
+  void _cut() {
+    _docOps.cut();
+    _overlayController.hideToolbar();
+  }
+
+  void _copy() {
+    _docOps.copy();
+    _overlayController.hideToolbar();
+  }
+
+  void _paste() {
+    _docOps.paste();
+    _overlayController.hideToolbar();
+  }
+
   void _selectAll() => _docOps.selectAll();
 
   void _showImageToolbar() {
@@ -371,6 +385,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
           onCopyPressed: _copy,
           onPastePressed: _paste,
         ),
+        overlayController: _overlayController,
       ),
     );
   }

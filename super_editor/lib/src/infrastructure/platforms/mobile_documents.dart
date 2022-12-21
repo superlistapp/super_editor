@@ -5,15 +5,6 @@ import 'package:super_editor/src/infrastructure/document_gestures.dart';
 
 /// Controls the display and position of a magnifier and a floating toolbar.
 class MagnifierAndToolbarController with ChangeNotifier {
-  MagnifierAndToolbarController({
-    required LayerLink magnifierFocalPointLink,
-  }) : _magnifierFocalPointLink = magnifierFocalPointLink;
-
-  /// A `LayerLink` whose top-left corner sits at the location where the
-  /// magnifier should magnify.
-  LayerLink get magnifierFocalPointLink => _magnifierFocalPointLink;
-  final LayerLink _magnifierFocalPointLink;
-
   /// Whether the magnifier should be displayed.
   bool get shouldDisplayMagnifier => _isMagnifierVisible;
   bool _isMagnifierVisible = false;
@@ -103,6 +94,109 @@ class MagnifierAndToolbarController with ChangeNotifier {
 
     _shouldDisplayToolbar = false;
 
+    notifyListeners();
+  }
+}
+
+/// Controls the display and position of a magnifier and a floating toolbar
+/// using a [MagnifierAndToolbarController] as the source of truth.
+class GestureEditingController with ChangeNotifier {
+  GestureEditingController({
+    required MagnifierAndToolbarController overlayController,
+    required LayerLink magnifierFocalPointLink,
+  })  : _magnifierFocalPointLink = magnifierFocalPointLink,
+        _overlayController = overlayController {
+    _overlayController.addListener(_toolbarChanged);
+  }
+
+  @override
+  void dispose() {
+    _overlayController.removeListener(_toolbarChanged);
+    super.dispose();
+  }
+
+  /// A `LayerLink` whose top-left corner sits at the location where the
+  /// magnifier should magnify.
+  LayerLink get magnifierFocalPointLink => _magnifierFocalPointLink;
+  final LayerLink _magnifierFocalPointLink;
+
+  /// Controls the magnifier and the toolbar.
+  MagnifierAndToolbarController get overlayController => _overlayController;
+  late MagnifierAndToolbarController _overlayController;
+  set overlayController(MagnifierAndToolbarController value) {
+    if (_overlayController != value) {
+      _overlayController.removeListener(_toolbarChanged);
+      _overlayController = value;
+      _overlayController.addListener(_toolbarChanged);
+    }
+  }
+
+  /// Whether the toolbar currently has a designated display position.
+  ///
+  /// The toolbar should not be displayed if this is `false`, even if
+  /// [shouldDisplayToolbar] is `true`.
+  bool get isToolbarPositioned => _overlayController.isToolbarPositioned;
+
+  /// Whether the toolbar should be displayed.
+  bool get shouldDisplayToolbar => _overlayController.shouldDisplayToolbar;
+
+  /// Whether the magnifier should be displayed.
+  bool get shouldDisplayMagnifier => _overlayController.shouldDisplayMagnifier;
+
+  /// The point about which the floating toolbar should focus, when the toolbar
+  /// appears above the selected content.
+  ///
+  /// It's the clients responsibility to determine whether there's room for the
+  /// toolbar above this point. If not, use [toolbarBottomAnchor].
+  Offset? get toolbarTopAnchor => _overlayController.toolbarTopAnchor;
+
+  /// The point about which the floating toolbar should focus, when the toolbar
+  /// appears below the selected content.
+  ///
+  /// It's the clients responsibility to determine whether there's room for the
+  /// toolbar below this point. If not, use [toolbarTopAnchor].
+  Offset? get toolbarBottomAnchor => _overlayController.toolbarBottomAnchor;
+
+  /// Shows the toolbar, and hides the magnifier.
+  void showToolbar() {
+    _overlayController.showToolbar();
+  }
+
+  /// Hides the toolbar.
+  void hideToolbar() {
+    _overlayController.hideToolbar();
+  }
+
+  /// Shows the magnify, and hides the toolbar.
+  void showMagnifier() {
+    _overlayController.showMagnifier();
+  }
+
+  /// Hides the magnifier.
+  void hideMagnifier() {
+    _overlayController.hideMagnifier();
+  }
+
+  /// Toggles the toolbar from visible to not visible, or vis-a-versa.
+  void toggleToolbar() {
+    _overlayController.toggleToolbar();
+  }
+
+  /// Sets the toolbar's position to the given [topAnchor] and [bottomAnchor].
+  ///
+  /// Setting the position will not cause the toolbar to be displayed on it's own.
+  /// To display the toolbar, call [showToolbar], too.
+  void positionToolbar({
+    required Offset topAnchor,
+    required Offset bottomAnchor,
+  }) {
+    _overlayController.positionToolbar(
+      topAnchor: topAnchor,
+      bottomAnchor: bottomAnchor,
+    );
+  }
+
+  void _toolbarChanged() {
     notifyListeners();
   }
 }
