@@ -373,8 +373,6 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
       keyboardChild = SuperTextFieldImeInteractor(
         focusNode: _focusNode,
         textController: _controller,
-        textKey: _textKey,
-        keyboardActions: widget.keyboardHandlers,
         isMultiline: isMultiline,
         child: keyboardChild,
       );
@@ -911,20 +909,12 @@ class _SuperTextFieldKeyboardInteractorState extends State<SuperTextFieldKeyboar
   }
 }
 
-/// Handles the connection with the platform IME through an [ImeAttributedTextEditingController] and dispatches key events.
-///
-/// The key events are passed down the [keyboardActions] Chain of Responsibility.
-/// Each handler is given a reference to the [textController], to manipulate the
-/// text content, and a [TextLayout] via the [textKey], which can be used to make
-/// decisions about manipulations, such as moving the caret to the beginning/end
-/// of a line.
+/// Handles the connection with the platform IME when focus changes.
 class SuperTextFieldImeInteractor extends StatefulWidget {
   const SuperTextFieldImeInteractor({
     Key? key,
     required this.focusNode,
     required this.textController,
-    required this.textKey,
-    required this.keyboardActions,
     required this.child,
     required this.isMultiline,
   }) : super(key: key);
@@ -934,32 +924,6 @@ class SuperTextFieldImeInteractor extends StatefulWidget {
 
   /// Controller for the text/selection within this text field.
   final ImeAttributedTextEditingController textController;
-
-  /// [GlobalKey] that links this [SuperTextFieldImeInteractor] to
-  /// the [ProseTextLayout] widget that paints the text for this text field.
-  final GlobalKey<ProseTextState> textKey;
-
-  /// Ordered list of actions that correspond to various key events.
-  ///
-  /// Each handler in the list may be given a key event from the keyboard. That
-  /// handler chooses to take an action, or not. A handler must respond with
-  /// a [TextFieldKeyboardHandlerResult], which indicates how the key event was handled,
-  /// or not.
-  ///
-  /// When a handler reports [TextFieldKeyboardHandlerResult.notHandled], the key event
-  /// is sent to the next handler.
-  ///
-  /// As soon as a handler reports [TextFieldKeyboardHandlerResult.handled], no other
-  /// handler is executed and the key event is prevented from propagating up
-  /// the widget tree.
-  ///
-  /// When a handler reports [TextFieldKeyboardHandlerResult.blocked], no other
-  /// handler is executed, but the key event **continues** to propagate up
-  /// the widget tree for other listeners to act upon.
-  ///
-  /// If all handlers report [TextFieldKeyboardHandlerResult.notHandled], the key
-  /// event propagates up the widget tree for other listeners to act upon.
-  final List<TextFieldKeyboardHandler> keyboardActions;
 
   /// Whether or not this text field supports multiple lines of text.
   final bool isMultiline;
