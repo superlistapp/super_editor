@@ -477,12 +477,16 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
 /// Controls the display of drag handles, a magnifier, and a
 /// floating toolbar, assuming iOS-style behavior for the
 /// handles.
-class IosDocumentGestureEditingController extends MagnifierAndToolbarController {
+class IosDocumentGestureEditingController extends GestureEditingController {
   IosDocumentGestureEditingController({
     required LayerLink documentLayoutLink,
     required LayerLink magnifierFocalPointLink,
+    required MagnifierAndToolbarController overlayController,
   })  : _documentLayoutLink = documentLayoutLink,
-        super(magnifierFocalPointLink: magnifierFocalPointLink);
+        super(
+          magnifierFocalPointLink: magnifierFocalPointLink,
+          overlayController: overlayController,
+        );
 
   /// Layer link that's aligned to the top-left corner of the document layout.
   ///

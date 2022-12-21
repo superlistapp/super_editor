@@ -35,6 +35,7 @@ class IOSDocumentTouchInteractor extends StatefulWidget {
     required this.floatingCursorController,
     this.createOverlayControlsClipper,
     this.showDebugPaint = false,
+    this.overlayController,
     required this.child,
   }) : super(key: key);
 
@@ -46,6 +47,9 @@ class IOSDocumentTouchInteractor extends StatefulWidget {
   final ValueNotifier<DocumentSelection?> selection;
 
   final ScrollController? scrollController;
+
+  /// Shows, hides, and positions a floating toolbar and magnifier.
+  final MagnifierAndToolbarController? overlayController;
 
   /// The closest that the user's selection drag gesture can get to the
   /// document boundary before auto-scrolling.
@@ -86,6 +90,9 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   // The alternative case is the one in which this interactor defers to an
   // ancestor scrollable.
   late ScrollController _scrollController;
+
+  /// Shows, hides, and positions a floating toolbar and magnifier.
+  late MagnifierAndToolbarController _overlayController;
   // The ScrollPosition attached to the _ancestorScrollable.
   ScrollPosition? _ancestorScrollPosition;
   // The actual ScrollPosition that's used for the document layout, either
@@ -156,9 +163,12 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     // TODO: rely solely on a ScrollPosition listener, not a ScrollController listener.
     _scrollController.addListener(_onScrollChange);
 
+    _overlayController = widget.overlayController ?? MagnifierAndToolbarController();
+
     _editingController = IosDocumentGestureEditingController(
       documentLayoutLink: _documentLayerLink,
       magnifierFocalPointLink: _magnifierFocalPointLink,
+      overlayController: _overlayController,
     );
 
     widget.document.addListener(_onDocumentChange);
@@ -226,6 +236,11 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
       if (widget.selection.value != oldWidget.selection.value) {
         _onSelectionChange();
       }
+    }
+
+    if (widget.overlayController != oldWidget.overlayController) {
+      _overlayController = widget.overlayController ?? MagnifierAndToolbarController();
+      _editingController.overlayController = _overlayController;
     }
 
     if (widget.getDocumentLayout != oldWidget.getDocumentLayout) {
