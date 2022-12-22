@@ -134,6 +134,7 @@ class _InteractiveTextFieldDemoState extends State<InteractiveTextFieldDemo> {
               width: double.infinity,
               child: SuperDesktopTextField(
                 textController: _textFieldController,
+                inputSource: TextInputSource.ime,
                 focusNode: _focusNode,
                 textStyleBuilder: _textStyleBuilder,
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),

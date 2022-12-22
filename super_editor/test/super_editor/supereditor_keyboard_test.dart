@@ -13,7 +13,7 @@ void main() {
       group('moves caret', () {
         testAllInputsOnDesktop("left by one character when LEFT_ARROW is pressed", (
           tester, {
-          required DocumentInputSource inputSource,
+          required TextInputSource inputSource,
         }) async {
           final nodeId = await _pumpSingleLineWithCaret(tester, offset: 2, inputSource: inputSource);
 
@@ -24,7 +24,7 @@ void main() {
 
         testAllInputsOnDesktop("left by one character and expands when SHIFT + LEFT_ARROW is pressed", (
           tester, {
-          required DocumentInputSource inputSource,
+          required TextInputSource inputSource,
         }) async {
           final nodeId = await _pumpSingleLineWithCaret(tester, offset: 2, inputSource: inputSource);
 
@@ -35,7 +35,7 @@ void main() {
 
         testAllInputsOnDesktop("right by one character when RIGHT_ARROW is pressed", (
           tester, {
-          required DocumentInputSource inputSource,
+          required TextInputSource inputSource,
         }) async {
           final nodeId = await _pumpSingleLineWithCaret(tester, offset: 2, inputSource: inputSource);
 
@@ -46,7 +46,7 @@ void main() {
 
         testAllInputsOnDesktop("right by one character and expands when SHIFT + RIGHT_ARROW is pressed", (
           tester, {
-          required DocumentInputSource inputSource,
+          required TextInputSource inputSource,
         }) async {
           final nodeId = await _pumpSingleLineWithCaret(tester, offset: 2, inputSource: inputSource);
 
@@ -57,7 +57,7 @@ void main() {
 
         testAllInputsOnMac("to beginning of word when ALT + LEFT_ARROW is pressed", (
           tester, {
-          required DocumentInputSource inputSource,
+          required TextInputSource inputSource,
         }) async {
           final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10, inputSource: inputSource);
 
@@ -68,7 +68,7 @@ void main() {
 
         testAllInputsOnMac("to beginning of word and expands when SHIFT + ALT + LEFT_ARROW is pressed", (
           tester, {
-          required DocumentInputSource inputSource,
+          required TextInputSource inputSource,
         }) async {
           final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10, inputSource: inputSource);
 
@@ -79,7 +79,7 @@ void main() {
 
         testAllInputsOnMac("to end of word when ALT + RIGHT_ARROW is pressed", (
           tester, {
-          required DocumentInputSource inputSource,
+          required TextInputSource inputSource,
         }) async {
           final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10, inputSource: inputSource);
 
@@ -90,7 +90,7 @@ void main() {
 
         testAllInputsOnMac("to end of word and expands when SHIFT + ALT + RIGHT_ARROW is pressed", (
           tester, {
-          required DocumentInputSource inputSource,
+          required TextInputSource inputSource,
         }) async {
           final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10, inputSource: inputSource);
 
@@ -101,7 +101,7 @@ void main() {
 
         testAllInputsOnMac("to beginning of line when CMD + LEFT_ARROW is pressed", (
           tester, {
-          required DocumentInputSource inputSource,
+          required TextInputSource inputSource,
         }) async {
           final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10, inputSource: inputSource);
 
@@ -112,7 +112,7 @@ void main() {
 
         testAllInputsOnMac("to beginning of line and expands when SHIFT + CMD + LEFT_ARROW is pressed", (
           tester, {
-          required DocumentInputSource inputSource,
+          required TextInputSource inputSource,
         }) async {
           final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10, inputSource: inputSource);
 
@@ -123,7 +123,7 @@ void main() {
 
         testAllInputsOnMac("to end of line when CMD + RIGHT_ARROW is pressed", (
           tester, {
-          required DocumentInputSource inputSource,
+          required TextInputSource inputSource,
         }) async {
           final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10, inputSource: inputSource);
 
@@ -134,7 +134,7 @@ void main() {
 
         testAllInputsOnMac("to end of line and expands when SHIFT + CMD + RIGHT_ARROW is pressed", (
           tester, {
-          required DocumentInputSource inputSource,
+          required TextInputSource inputSource,
         }) async {
           final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10, inputSource: inputSource);
 
@@ -148,7 +148,7 @@ void main() {
 
         testAllInputsOnWindowsAndLinux("to beginning of word when CTL + LEFT_ARROW is pressed", (
           tester, {
-          required DocumentInputSource inputSource,
+          required TextInputSource inputSource,
         }) async {
           final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10, inputSource: inputSource);
 
@@ -159,7 +159,7 @@ void main() {
 
         testAllInputsOnWindowsAndLinux("to beginning of word and expands when SHIFT + CTL + LEFT_ARROW is pressed", (
           tester, {
-          required DocumentInputSource inputSource,
+          required TextInputSource inputSource,
         }) async {
           final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10, inputSource: inputSource);
 
@@ -170,7 +170,7 @@ void main() {
 
         testAllInputsOnWindowsAndLinux("to end of word when CTL + Right_ARROW is pressed", (
           tester, {
-          required DocumentInputSource inputSource,
+          required TextInputSource inputSource,
         }) async {
           final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10, inputSource: inputSource);
 
@@ -181,7 +181,7 @@ void main() {
 
         testAllInputsOnWindowsAndLinux("to end of word and expands when SHIFT + CTL + RIGHT_ARROW is pressed", (
           tester, {
-          required DocumentInputSource inputSource,
+          required TextInputSource inputSource,
         }) async {
           final nodeId = await _pumpSingleLineWithCaret(tester, offset: 10, inputSource: inputSource);
 
@@ -192,7 +192,7 @@ void main() {
 
         testAllInputsOnDesktop("up one line when UP_ARROW is pressed", (
           tester, {
-          required DocumentInputSource inputSource,
+          required TextInputSource inputSource,
         }) async {
           final nodeId = await _pumpDoubleLineWithCaret(tester, offset: 41, inputSource: inputSource);
 
@@ -203,7 +203,7 @@ void main() {
 
         testAllInputsOnDesktop("up one line and expands when SHIFT + UP_ARROW is pressed", (
           tester, {
-          required DocumentInputSource inputSource,
+          required TextInputSource inputSource,
         }) async {
           final nodeId = await _pumpDoubleLineWithCaret(tester, offset: 41, inputSource: inputSource);
 
@@ -214,7 +214,7 @@ void main() {
 
         testAllInputsOnDesktop("down one line when DOWN_ARROW is pressed", (
           tester, {
-          required DocumentInputSource inputSource,
+          required TextInputSource inputSource,
         }) async {
           final nodeId = await _pumpDoubleLineWithCaret(tester, offset: 12, inputSource: inputSource);
 
@@ -225,7 +225,7 @@ void main() {
 
         testAllInputsOnDesktop("down one line and expands when SHIFT + DOWN_ARROW is pressed", (
           tester, {
-          required DocumentInputSource inputSource,
+          required TextInputSource inputSource,
         }) async {
           final nodeId = await _pumpDoubleLineWithCaret(tester, offset: 12, inputSource: inputSource);
 
@@ -236,7 +236,7 @@ void main() {
 
         testAllInputsOnDesktop("to beginning of line when UP_ARROW is pressed at top of document", (
           tester, {
-          required DocumentInputSource inputSource,
+          required TextInputSource inputSource,
         }) async {
           final nodeId = await _pumpDoubleLineWithCaret(tester, offset: 12, inputSource: inputSource);
 
@@ -247,7 +247,7 @@ void main() {
 
         testAllInputsOnDesktop("to beginning of line and expands when SHIFT + UP_ARROW is pressed at top of document", (
           tester, {
-          required DocumentInputSource inputSource,
+          required TextInputSource inputSource,
         }) async {
           final nodeId = await _pumpDoubleLineWithCaret(tester, offset: 12, inputSource: inputSource);
 
@@ -258,7 +258,7 @@ void main() {
 
         testAllInputsOnDesktop("to end of line when DOWN_ARROW is pressed at end of document", (
           tester, {
-          required DocumentInputSource inputSource,
+          required TextInputSource inputSource,
         }) async {
           final nodeId = await _pumpDoubleLineWithCaret(tester, offset: 41, inputSource: inputSource);
 
@@ -269,7 +269,7 @@ void main() {
 
         testAllInputsOnDesktop("end of line and expands when SHIFT + DOWN_ARROW is pressed at end of document", (
           tester, {
-          required DocumentInputSource inputSource,
+          required TextInputSource inputSource,
         }) async {
           final nodeId = await _pumpDoubleLineWithCaret(tester, offset: 41, inputSource: inputSource);
 
@@ -374,7 +374,7 @@ void main() {
 Future<String> _pumpSingleLineWithCaret(
   WidgetTester tester, {
   required int offset,
-  required DocumentInputSource inputSource,
+  required TextInputSource inputSource,
 }) async {
   final testContext = await tester //
       .createDocument()
@@ -390,7 +390,7 @@ Future<String> _pumpSingleLineWithCaret(
 }
 
 Future<String> _pumpDoubleLineWithCaret(WidgetTester tester,
-    {required int offset, required DocumentInputSource inputSource}) async {
+    {required int offset, required TextInputSource inputSource}) async {
   final testContext = await tester //
       .createDocument()
       // Text indices:
@@ -420,7 +420,7 @@ Future<TestDocumentContext> _pumpUnorderedList(WidgetTester tester) async {
   final testContext = await tester //
       .createDocument()
       .fromMarkdown(markdown)
-      .withInputSource(DocumentInputSource.ime)
+      .withInputSource(TextInputSource.ime)
       .pump();
 
   return testContext;

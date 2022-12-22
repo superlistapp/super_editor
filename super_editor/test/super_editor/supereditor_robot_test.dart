@@ -167,7 +167,7 @@ void main() {
           .createDocument()
           .withSingleEmptyParagraph()
           .forDesktop()
-          .withInputSource(DocumentInputSource.keyboard)
+          .withInputSource(TextInputSource.keyboard)
           .autoFocus(true)
           .pump();
 
@@ -187,7 +187,7 @@ void main() {
           .createDocument()
           .withSingleEmptyParagraph()
           .forDesktop()
-          .withInputSource(DocumentInputSource.ime)
+          .withInputSource(TextInputSource.ime)
           .autoFocus(true)
           .pump();
 
