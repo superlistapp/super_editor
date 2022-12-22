@@ -1,7 +1,6 @@
 name: super_editor_markdown
 description: Markdown (de)serialization for super_editor documents.
-version: 0.1.4+1
-homepage: https://github.com/superlistapp/super_editor
+publish_to: 'none'
 
 environment:
   sdk: ">=2.12.0 <3.0.0"
@@ -12,7 +11,10 @@ dependencies:
     sdk: flutter
 
   super_editor:
-    path: ../super_editor
+    git:
+      url: https://github.com/simpleclub-extended/super_editor
+      path: super_editor
+      ref: stable
   logging: ^1.0.1
   markdown: ^5.0.0
 
