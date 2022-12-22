@@ -37,7 +37,7 @@ final _log = textFieldLog;
 /// is composed of a few widgets that you can recompose to create your own
 /// flavor of a text field.
 class SuperDesktopTextField extends StatefulWidget {
-  SuperDesktopTextField({
+  const SuperDesktopTextField({
     Key? key,
     this.focusNode,
     this.textController,
@@ -60,13 +60,11 @@ class SuperDesktopTextField extends StatefulWidget {
     this.onRightClick,
     this.inputSource = TextInputSource.keyboard,
     List<TextFieldKeyboardHandler>? keyboardHandlers,
-  }) : super(key: key) {
-    final defaultKeyboardHandlers = inputSource == TextInputSource.keyboard
-        ? defaultTextFieldKeyboardHandlers
-        : defaultTextFieldImeKeyboardHandlers;
-
-    this.keyboardHandlers = keyboardHandlers ?? defaultKeyboardHandlers;
-  }
+  })  : keyboardHandlers = keyboardHandlers ??
+            (inputSource == TextInputSource.keyboard
+                ? defaultTextFieldKeyboardHandlers
+                : defaultTextFieldImeKeyboardHandlers),
+        super(key: key);
 
   final FocusNode? focusNode;
 
@@ -102,12 +100,16 @@ class SuperDesktopTextField extends StatefulWidget {
 
   final RightClickListener? onRightClick;
 
-  /// The `SuperDesktopTextField` input source, e.g., keyboard or Input Method Engine.
+  /// The [SuperDesktopTextField] input source, e.g., keyboard or Input Method Engine.
   final TextInputSource inputSource;
 
   /// Priority list of handlers that process all physical keyboard
   /// key presses, for text input, deletion, caret movement, etc.
-  late final List<TextFieldKeyboardHandler> keyboardHandlers;
+  ///
+  /// If the [inputSource] is [TextInputSource.ime], text input is already handled
+  /// using [TextEditingDelta]s, so this list shouldn't include handlers
+  /// that input text based on individual character key presses.
+  final List<TextFieldKeyboardHandler> keyboardHandlers;
 
   @override
   SuperDesktopTextFieldState createState() => SuperDesktopTextFieldState();
