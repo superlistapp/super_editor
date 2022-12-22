@@ -9,6 +9,7 @@ import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/a
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/hint_text.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/input_method_engine/_ime_text_editing_controller.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/ios/ios_textfield.dart';
+import 'package:super_editor/src/infrastructure/text_input.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
 import 'styles.dart';
@@ -63,6 +64,7 @@ class SuperTextField extends StatefulWidget {
     this.minLines,
     this.maxLines = 1,
     this.lineHeight,
+    this.inputSource,
     this.keyboardHandlers = defaultTextFieldKeyboardHandlers,
     this.padding,
   }) : super(key: key);
@@ -144,6 +146,11 @@ class SuperTextField extends StatefulWidget {
   /// provided and used for all text field height calculations.
   final double? lineHeight;
 
+  /// The [SuperTextField] input source, e.g., keyboard or Input Method Engine.
+  ///
+  /// Only used on desktop. On mobile platforms, only [TextInputSource.ime] is available.
+  final TextInputSource? inputSource;
+
   /// Priority list of handlers that process all physical keyboard
   /// key presses, for text input, deletion, caret movement, etc.
   ///
@@ -212,6 +219,26 @@ class SuperTextFieldState extends State<SuperTextField> {
     }
   }
 
+  /// Returns the desired [TextInputSource] for this text field.
+  ///
+  /// If the [widget.inputSource] is configured, it is used. Otherwise,
+  /// the [TextInputSource] is chosen based on the platform.
+  TextInputSource get _inputSource {
+    if (widget.inputSource != null) {
+      return widget.inputSource!;
+    }
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+      case TargetPlatform.iOS:
+        return TextInputSource.ime;
+      case TargetPlatform.fuchsia:
+      case TargetPlatform.linux:
+      case TargetPlatform.macOS:
+      case TargetPlatform.windows:
+        return TextInputSource.keyboard;
+    }
+  }
+
   /// Shortcuts that should be ignored on web.
   ///
   /// Without this we can't handle space and arrow keys inside [SuperTextField].
@@ -253,6 +280,7 @@ class SuperTextFieldState extends State<SuperTextField> {
           maxLines: widget.maxLines,
           keyboardHandlers: widget.keyboardHandlers,
           padding: widget.padding ?? EdgeInsets.zero,
+          inputSource: _inputSource,
         );
       case SuperTextFieldPlatformConfiguration.android:
         return Shortcuts(

@@ -97,7 +97,7 @@ class TestDocumentConfigurator {
   /// Configures the [SuperReader] for standard desktop interactions,
   /// e.g., mouse and keyboard input.
   TestDocumentConfigurator forDesktop({
-    DocumentInputSource inputSource = DocumentInputSource.keyboard,
+    TextInputSource inputSource = TextInputSource.keyboard,
   }) {
     _gestureMode = DocumentGestureMode.mouse;
     return this;

@@ -17,7 +17,7 @@ void main() {
       await tester
           .createDocument()
           .withSingleEmptyParagraph()
-          .withInputSource(DocumentInputSource.ime)
+          .withInputSource(TextInputSource.ime)
           .withScrollController(scrollController)
           .withCustomWidgetTreeBuilder(
             (superEditor) => MaterialApp(
@@ -72,7 +72,7 @@ void main() {
       await tester
           .createDocument()
           .withSingleEmptyParagraph()
-          .withInputSource(DocumentInputSource.ime)
+          .withInputSource(TextInputSource.ime)
           .withScrollController(editorScrollController)
           .withCustomWidgetTreeBuilder(
             (superEditor) => MaterialApp(

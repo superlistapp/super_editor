@@ -58,6 +58,7 @@ export 'src/infrastructure/scrolling_diagnostics/scrolling_diagnostics.dart';
 export 'src/infrastructure/strings.dart';
 export 'src/infrastructure/super_textfield/super_textfield.dart';
 export 'src/infrastructure/touch_controls.dart';
+export 'src/infrastructure/text_input.dart';
 
 // Super Reader
 export 'src/super_reader/read_only_document_android_touch_interactor.dart';

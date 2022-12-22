@@ -10,9 +10,9 @@ import 'super_textfield_robot.dart';
 
 void main() {
   group('SuperTextField', () {
-    group('on mobile', () {
+    group('with IME input source', () {
       group('inserts character', () {
-        testWidgetsOnMobile('in empty text', (tester) async {
+        testWidgetsOnAllPlatforms('in empty text', (tester) async {
           await _pumpEmptySuperTextField(tester);
           await tester.placeCaretInSuperTextField(0);
 
@@ -22,7 +22,7 @@ void main() {
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 1));
         });
 
-        testWidgetsOnMobile('in middle of text', (tester) async {
+        testWidgetsOnAllPlatforms('in middle of text', (tester) async {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
@@ -37,7 +37,7 @@ void main() {
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 4));
         });
 
-        testWidgetsOnMobile('at end of text', (tester) async {
+        testWidgetsOnAllPlatforms('at end of text', (tester) async {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
@@ -52,7 +52,7 @@ void main() {
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 4));
         });
 
-        testWidgetsOnMobile('and replaces selected text', (tester) async {
+        testWidgetsOnAllPlatforms('and replaces selected text', (tester) async {
           // TODO: We create the controller outside the pump so that we can explicitly set its selection
           //  because we don't support gesture selection on mobile, yet.
           final controller = AttributedTextEditingController(
@@ -122,7 +122,7 @@ void main() {
       //   });
       //
       group('delete text', () {
-        testWidgetsOnMobile('BACKSPACE does nothing when text is empty', (tester) async {
+        testWidgetsOnAllPlatforms('BACKSPACE does nothing when text is empty', (tester) async {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
@@ -137,7 +137,7 @@ void main() {
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 0));
         });
 
-        testWidgetsOnMobile('BACKSPACE deletes the previous character', (tester) async {
+        testWidgetsOnAllPlatforms('BACKSPACE deletes the previous character', (tester) async {
           await _pumpSuperTextField(
             tester,
             AttributedTextEditingController(
@@ -152,7 +152,7 @@ void main() {
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 1));
         });
 
-        testWidgetsOnMobile('BACKSPACE deletes selection when selection is expanded', (tester) async {
+        testWidgetsOnAllPlatforms('BACKSPACE deletes selection when selection is expanded', (tester) async {
           // TODO: We create the controller outside the pump so that we can explicitly set its selection
           //  because we don't support gesture selection on mobile, yet.
           final controller = AttributedTextEditingController(
@@ -258,6 +258,7 @@ Future<void> _pumpSuperTextField(
           width: 320,
           child: SuperTextField(
             textController: controller,
+            inputSource: TextInputSource.ime,
             minLines: minLines,
             maxLines: maxLines,
             lineHeight: 18,

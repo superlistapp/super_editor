@@ -14,7 +14,7 @@ void main() {
       final editContext = await tester
           .createDocument()
           .withSingleParagraph()
-          .withInputSource(DocumentInputSource.ime)
+          .withInputSource(TextInputSource.ime)
           .autoFocus(true)
           .pump();
 
