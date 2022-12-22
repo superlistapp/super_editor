@@ -101,7 +101,7 @@ void main() {
             .createDocument()
             .withSingleParagraph()
             .withScrollController(scrollController)
-            .withInputSource(DocumentInputSource.keyboard)
+            .withInputSource(TextInputSource.keyboard)
             .useStylesheet(
               Stylesheet(
                 inlineTextStyler: (Set<Attribution> attributions, TextStyle base) {
@@ -143,7 +143,7 @@ void main() {
             .createDocument()
             .withSingleParagraph()
             .withScrollController(scrollController)
-            .withInputSource(DocumentInputSource.keyboard)
+            .withInputSource(TextInputSource.keyboard)
             .withEditorSize(const Size(600, 100))
             .useStylesheet(
               Stylesheet(
@@ -251,7 +251,7 @@ class _SliverTestEditorState extends State<_SliverTestEditor> {
                     documentPadding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),
                   ),
                   gestureMode: widget.gestureMode,
-                  inputSource: DocumentInputSource.ime,
+                  inputSource: TextInputSource.ime,
                 ),
               ),
               SliverList(

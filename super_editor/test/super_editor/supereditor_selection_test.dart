@@ -358,7 +358,7 @@ void main() {
       await tester
           .createDocument()
           .withLongTextContent()
-          .withInputSource(DocumentInputSource.ime)
+          .withInputSource(TextInputSource.ime)
           .withAddedComponents([const _UnselectableHrComponentBuilder()])
           .withCustomWidgetTreeBuilder(
             (superEditor) => MaterialApp(
@@ -512,7 +512,7 @@ Second Paragraph
       await tester
           .createDocument()
           .withSingleParagraph()
-          .withInputSource(DocumentInputSource.ime)
+          .withInputSource(TextInputSource.ime)
           .withCustomWidgetTreeBuilder(
             (superEditor) => MaterialApp(
               home: Scaffold(
@@ -569,7 +569,7 @@ Second Paragraph
       await tester
           .createDocument()
           .withSingleParagraph()
-          .withInputSource(DocumentInputSource.ime)
+          .withInputSource(TextInputSource.ime)
           .withCustomWidgetTreeBuilder(
             (superEditor) => MaterialApp(
               home: Scaffold(
@@ -629,7 +629,7 @@ Second Paragraph
       await tester
           .createDocument()
           .withSingleParagraph()
-          .withInputSource(DocumentInputSource.ime)
+          .withInputSource(TextInputSource.ime)
           .withFocusNode(focusNode)
           .withCustomWidgetTreeBuilder(
             (superEditor) => MaterialApp(
@@ -715,7 +715,7 @@ Second Paragraph
       await tester //
           .createDocument()
           .withSingleParagraph()
-          .withInputSource(DocumentInputSource.ime)
+          .withInputSource(TextInputSource.ime)
           .pump();
 
       // Place the caret at the middle of the first word.

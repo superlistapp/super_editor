@@ -91,7 +91,7 @@ class TestDocumentConfigurator {
   final MutableDocument? _document;
   final TestDocumentContext? _existingContext;
   DocumentGestureMode? _gestureMode;
-  DocumentInputSource? _inputSource;
+  TextInputSource? _inputSource;
   ThemeData? _appTheme;
   Stylesheet? _stylesheet;
   final _addedComponents = <ComponentBuilder>[];
@@ -108,7 +108,7 @@ class TestDocumentConfigurator {
   /// Configures the [SuperEditor] for standard desktop interactions,
   /// e.g., mouse and keyboard input.
   TestDocumentConfigurator forDesktop({
-    DocumentInputSource inputSource = DocumentInputSource.keyboard,
+    TextInputSource inputSource = TextInputSource.keyboard,
   }) {
     _inputSource = inputSource;
     _gestureMode = DocumentGestureMode.mouse;
@@ -119,7 +119,7 @@ class TestDocumentConfigurator {
   /// e.g., touch gestures and IME input.
   TestDocumentConfigurator forAndroid() {
     _gestureMode = DocumentGestureMode.android;
-    _inputSource = DocumentInputSource.ime;
+    _inputSource = TextInputSource.ime;
     return this;
   }
 
@@ -127,12 +127,12 @@ class TestDocumentConfigurator {
   /// e.g., touch gestures and IME input.
   TestDocumentConfigurator forIOS() {
     _gestureMode = DocumentGestureMode.iOS;
-    _inputSource = DocumentInputSource.ime;
+    _inputSource = TextInputSource.ime;
     return this;
   }
 
   /// Configures the [SuperEditor] to use the given [inputSource].
-  TestDocumentConfigurator withInputSource(DocumentInputSource inputSource) {
+  TestDocumentConfigurator withInputSource(TextInputSource inputSource) {
     _inputSource = inputSource;
     return this;
   }
