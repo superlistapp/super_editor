@@ -50,9 +50,11 @@ class CommonEditorOperations {
   // Marked as protected for extension methods and subclasses
   @protected
   final DocumentEditor editor;
+
   // Marked as protected for extension methods and subclasses
   @protected
   final DocumentComposer composer;
+
   // Marked as protected for extension methods and subclasses
   @protected
   final DocumentLayoutResolver documentLayoutResolver;
@@ -1469,7 +1471,7 @@ class CommonEditorOperations {
     }
 
     final hrMatch = RegExp(r'^---*\s$');
-    final hasHrMatch = hrMatch.hasMatch(textBeforeCaret);
+    final hasHrMatch = false;
     if (hasHrMatch) {
       editorOpsLog.fine('Paragraph has an HR match');
       // Insert an HR before this paragraph and then clear the
@@ -1532,6 +1534,110 @@ class CommonEditorOperations {
       return true;
     }
 
+    final headerMatch = RegExp(r'^#{1,6}\s$');
+    final hasHeaderMatch = headerMatch.hasMatch(textBeforeCaret);
+    if (hasHeaderMatch) {
+      final match = headerMatch.firstMatch(textBeforeCaret);
+      final attribution = _getHeaderAttributionFromMatch(match!);
+
+      int startOfNewText = textBeforeCaret.length;
+      while (startOfNewText < node.text.text.length && node.text.text[startOfNewText] == ' ') {
+        startOfNewText += 1;
+      }
+      final adjustedText = node.text.copyText(startOfNewText);
+      final newNode = ParagraphNode(
+        id: node.id,
+        text: adjustedText,
+        metadata: {'blockType': attribution},
+      );
+
+      editor.executeCommand(
+        EditorCommandFunction((document, transaction) {
+          transaction.replaceNode(oldNode: node, newNode: newNode);
+        }),
+      );
+
+      // We removed some text at the beginning of the list item.
+      // Move the selection back by that same amount.
+      final textPosition = composer.selection!.extent.nodePosition as TextNodePosition;
+      composer.selection = DocumentSelection.collapsed(
+        position: DocumentPosition(
+          nodeId: node.id,
+          nodePosition: TextNodePosition(offset: textPosition.offset - startOfNewText),
+        ),
+      );
+
+      return true;
+    }
+
+    final inlineTeXMatch = RegExp(r'\$(.*?)\$\s');
+    final hasTeXMatch = inlineTeXMatch.hasMatch(textBeforeCaret);
+    if (hasTeXMatch) {
+      final match = inlineTeXMatch.firstMatch(textBeforeCaret);
+      final texValue = match!.group(1)!.trim();
+
+      // Inline TeX is wrapped with $ and a space at both sides.
+      // texValue field contains the value wrapped inside, e.g:
+      //
+      // $ 5 ^ 2 = x $
+      //   |       |
+      // The value contained in `texValue` (it was also trimmed!).
+      //
+      // Now, if the whole text (`textBeforeCaret`) was:
+      //
+      // `Solve the equation $5 ^ 2 = x $ `
+      //
+      // We now try to construct the following:
+      //
+      // `Solve the equation 5 ^ 2 = x `
+      //
+      // And also wrap the TeX part with `simpleclubTeXAttribution`.
+
+      final startOfTeXIndex = node.text.text.lastIndexOf(texValue);
+      final endOfTeXIndex = startOfTeXIndex + texValue.length;
+
+      var adjustedText = node.text;
+
+      adjustedText.addAttribution(
+          simpleclubTeXAttribution,
+          SpanRange(
+            start: startOfTeXIndex,
+            end: endOfTeXIndex - 1,
+          ));
+
+      final textBeforeTeX = adjustedText.copyText(0, startOfTeXIndex - 2);
+      final texText = adjustedText.copyText(startOfTeXIndex, endOfTeXIndex + 1);
+      adjustedText = textBeforeTeX.copyAndAppend(texText);
+
+      final texNode = ParagraphNode(
+        id: node.id,
+        text: adjustedText,
+      );
+
+      editor.executeCommand(
+        EditorCommandFunction((document, transaction) {
+          transaction.replaceNode(oldNode: node, newNode: texNode);
+        }),
+      );
+
+      // Move the cursor back to the initial position, but 4 symbols back (because we removed `$_` and `_$`).
+      final textPosition = composer.selection!.extent.nodePosition as TextNodePosition;
+      composer.selection = DocumentSelection.collapsed(
+        position: DocumentPosition(
+          nodeId: node.id,
+          nodePosition: TextNodePosition(offset: textPosition.offset - 4),
+        ),
+      );
+
+      return true;
+    }
+
+    // No pattern match was found
+    editorOpsLog.fine("ParagraphNode didn't match any conversion pattern.");
+    return false;
+
+    // (!) Dead url match code below left in place to resolve conflicts with base package repo easier in the future.
+
     // URL match, e.g., images, social, etc.
     editorOpsLog.fine('Looking for URL match...');
     final extractedLinks = linkify(node.text.text,
@@ -1560,6 +1666,21 @@ class CommonEditorOperations {
     // No pattern match was found
     editorOpsLog.fine("ParagraphNode didn't match any conversion pattern.");
     return false;
+  }
+
+  /// Get header level attribution depending on number of # signs, e.g:
+  /// # - Header 1: [header1Attribution]
+  /// ###### - Header 6: [header6Attribution].
+  Attribution _getHeaderAttributionFromMatch(RegExpMatch match) {
+    final headerLevel = match.group(0)!.trim().length;
+    return {
+      1: header1Attribution,
+      2: header2Attribution,
+      3: header3Attribution,
+      4: header4Attribution,
+      5: header5Attribution,
+      6: header6Attribution,
+    }[headerLevel]!;
   }
 
   Future<void> _processUrlNode({

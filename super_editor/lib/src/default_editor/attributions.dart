@@ -36,6 +36,50 @@ const strikethroughAttribution = NamedAttribution('strikethrough');
 /// Code style attribution.
 const codeAttribution = NamedAttribution('code');
 
+/// TeX attribution.
+///
+/// This is a custom simpleclub attribution.
+/// Its styling must be handled on the package user level.
+///
+/// In case of simpleclub, styling of TeX is handled in "shared".
+const simpleclubTeXAttribution = NamedAttribution('simpleclubTeX');
+
+/// Color attribution.
+///
+/// This is a custom simpleclub attribution.
+/// Its styling must be handled on the package user level.
+///
+/// See: [ContentColorScheme] in simpleclub shared.
+class SimpleclubColorAttribution implements Attribution {
+  SimpleclubColorAttribution({
+    required this.colorIndex,
+  });
+
+  @override
+  String get id => 'simpleclubColor$colorIndex';
+
+  /// Index of the color from 1 to 9.
+  final int colorIndex;
+
+  @override
+  bool canMergeWith(Attribution other) {
+    return this == other;
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SimpleclubColorAttribution && runtimeType == other.runtimeType && colorIndex == other.colorIndex;
+
+  @override
+  int get hashCode => colorIndex.hashCode;
+
+  @override
+  String toString() {
+    return '[ColorAttribution]: $colorIndex';
+  }
+}
+
 /// Attribution to be used within [AttributedText] to
 /// represent a link.
 ///

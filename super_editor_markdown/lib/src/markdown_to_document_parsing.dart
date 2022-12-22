@@ -14,11 +14,16 @@ import 'super_editor_syntax.dart';
 /// To add support for parsing non-standard Markdown blocks, provide [customBlockSyntax]s
 /// that parse Markdown text into [md.Element]s, and provide [customElementToNodeConverters] that
 /// turn those [md.Element]s into [DocumentNode]s.
+///
+/// To handle custom inline markdown syntax pass [customInlineSyntax] and
+/// a custom instance of [customInlineMarkdownToDocument].
 MutableDocument deserializeMarkdownToDocument(
   String markdown, {
   MarkdownSyntax syntax = MarkdownSyntax.superEditor,
   List<md.BlockSyntax> customBlockSyntax = const [],
   List<ElementToNodeConverter> customElementToNodeConverters = const [],
+  List<md.InlineSyntax> customInlineSyntax = const [],
+  InlineMarkdownToDocument Function()? inlineMarkdownToDocumentBuilder,
 }) {
   final markdownLines = const LineSplitter().convert(markdown);
 
@@ -36,7 +41,11 @@ MutableDocument deserializeMarkdownToDocument(
   final markdownNodes = blockParser.parseLines();
 
   // Convert structured markdown to a Document.
-  final nodeVisitor = _MarkdownToDocument(customElementToNodeConverters);
+  final nodeVisitor = _MarkdownToDocument(
+    elementToNodeConverters: customElementToNodeConverters,
+    customInlineSyntax: customInlineSyntax,
+    inlineMarkdownToDocumentBuilder: inlineMarkdownToDocumentBuilder,
+  );
   for (final node in markdownNodes) {
     node.accept(nodeVisitor);
   }
@@ -64,18 +73,25 @@ MutableDocument deserializeMarkdownToDocument(
 /// contains [DocumentNode]s that correspond to the visited
 /// markdown content.
 class _MarkdownToDocument implements md.NodeVisitor {
-  _MarkdownToDocument([this._elementToNodeConverters = const []]);
+  _MarkdownToDocument({
+    this.elementToNodeConverters = const [],
+    this.customInlineSyntax = const [],
+    this.inlineMarkdownToDocumentBuilder,
+  });
 
-  final List<ElementToNodeConverter> _elementToNodeConverters;
+  final List<ElementToNodeConverter> elementToNodeConverters;
+  final List<md.InlineSyntax> customInlineSyntax;
+  final InlineMarkdownToDocument Function()? inlineMarkdownToDocumentBuilder;
 
   final _content = <DocumentNode>[];
+
   List<DocumentNode> get content => _content;
 
   final _listItemTypeStack = <ListItemType>[];
 
   @override
   bool visitElementBefore(md.Element element) {
-    for (final converter in _elementToNodeConverters) {
+    for (final converter in elementToNodeConverters) {
       final node = converter.handleElement(element);
       if (node != null) {
         _content.add(node);
@@ -291,17 +307,18 @@ class _MarkdownToDocument implements md.NodeVisitor {
     return inlineVisitor.attributedText;
   }
 
-  _InlineMarkdownToDocument _parseInline(md.Element element) {
+  InlineMarkdownToDocument _parseInline(md.Element element) {
     final inlineParser = md.InlineParser(
       element.textContent,
       md.Document(
         inlineSyntaxes: [
           md.StrikethroughSyntax(),
           UnderlineSyntax(),
+          ...customInlineSyntax,
         ],
       ),
     );
-    final inlineVisitor = _InlineMarkdownToDocument();
+    final inlineVisitor = inlineMarkdownToDocumentBuilder?.call() ?? InlineMarkdownToDocument();
     final inlineNodes = inlineParser.parse();
     for (final inlineNode in inlineNodes) {
       inlineNode.accept(inlineVisitor);
@@ -312,18 +329,18 @@ class _MarkdownToDocument implements md.NodeVisitor {
 
 /// Parses inline markdown content.
 ///
-/// Apply [_InlineMarkdownToDocument] to a text [Element] to
+/// Apply [InlineMarkdownToDocument] to a text [Element] to
 /// obtain an [AttributedText] that represents the inline
 /// styles within the given text.
 ///
-/// Apply [_InlineMarkdownToDocument] to an [Element] whose
+/// Apply [InlineMarkdownToDocument] to an [Element] whose
 /// content is an image tag to obtain image data.
 ///
-/// [_InlineMarkdownToDocument] does not support parsing text
+/// [InlineMarkdownToDocument] does not support parsing text
 /// that contains image tags. If any non-image text is found,
 /// the content is treated as styled text.
-class _InlineMarkdownToDocument implements md.NodeVisitor {
-  _InlineMarkdownToDocument();
+class InlineMarkdownToDocument implements md.NodeVisitor {
+  InlineMarkdownToDocument();
 
   // For our purposes, we only support block-level images. Therefore,
   // if we find an image without any text, we're parsing an image.
@@ -337,9 +354,9 @@ class _InlineMarkdownToDocument implements md.NodeVisitor {
   String? _imageAltText;
   String? get imageAltText => _imageAltText;
 
-  AttributedText get attributedText => _textStack.first;
+  AttributedText get attributedText => textStack.first;
 
-  final List<AttributedText> _textStack = [AttributedText()];
+  final List<AttributedText> textStack = [AttributedText()];
 
   @override
   bool visitElementBefore(md.Element element) {
@@ -350,22 +367,22 @@ class _InlineMarkdownToDocument implements md.NodeVisitor {
       return true;
     }
 
-    _textStack.add(AttributedText());
+    textStack.add(AttributedText());
 
     return true;
   }
 
   @override
   void visitText(md.Text text) {
-    final attributedText = _textStack.removeLast();
-    _textStack.add(attributedText.copyAndAppend(AttributedText(text: text.text)));
+    final attributedText = textStack.removeLast();
+    textStack.add(attributedText.copyAndAppend(AttributedText(text: text.text)));
   }
 
   @override
   void visitElementAfter(md.Element element) {
     // Reset to normal text style because a plain text element does
     // not receive a call to visitElementBefore().
-    final styledText = _textStack.removeLast();
+    var styledText = textStack.removeLast();
 
     if (element.tag == 'strong') {
       styledText.addAttribution(
@@ -409,11 +426,11 @@ class _InlineMarkdownToDocument implements md.NodeVisitor {
       );
     }
 
-    if (_textStack.isNotEmpty) {
-      final surroundingText = _textStack.removeLast();
-      _textStack.add(surroundingText.copyAndAppend(styledText));
+    if (textStack.isNotEmpty) {
+      final surroundingText = textStack.removeLast();
+      textStack.add(surroundingText.copyAndAppend(styledText));
     } else {
-      _textStack.add(styledText);
+      textStack.add(styledText);
     }
   }
 }

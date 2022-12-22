@@ -249,7 +249,7 @@ class AttributedTextMarkdownSerializer extends AttributionVisitor {
 
     // Add end markers.
     if (endingAttributions.isNotEmpty) {
-      final markdownStyles = _sortAndSerializeAttributions(endingAttributions, AttributionVisitEvent.end);
+      final markdownStyles = _sortAndSerializeAttributions(endingAttributions, AttributionVisitEvent.end, atEnd: true);
       // Links are different from the plain styles since they are both not NamedAttributions (and therefore
       // can't be checked using equality comparison) and asymmetrical in markdown.
       final linkMarker = _encodeLinkMarker(endingAttributions, AttributionVisitEvent.end);
@@ -293,7 +293,26 @@ class AttributedTextMarkdownSerializer extends AttributionVisitor {
   /// Serializes style attributions into markdown syntax in a repeatable
   /// order such that opening and closing styles match each other on
   /// the opening and closing ends of a span.
-  static String _sortAndSerializeAttributions(Set<Attribution> attributions, AttributionVisitEvent event) {
+  ///
+  /// [atEnd] is passed `true` when serialization needed for the end position
+  /// of the attribution.
+  static String _sortAndSerializeAttributions(Set<Attribution> attributions, AttributionVisitEvent event,
+      {bool atEnd = false}) {
+    // Checks if attributions contains a SimpleclubColorAttribution.
+    //
+    // Called before or after other attributions in `startOrder` depending on atEnd.
+    // This is needed, because color attribution must wrap others.
+    void checkForColor(StringBuffer buffer) {
+      try {
+        final colorAttribution = attributions.firstWhere((attr) => attr is SimpleclubColorAttribution);
+        final colorIndex = (colorAttribution as SimpleclubColorAttribution).colorIndex;
+        final prefixOrSuffix = atEnd ? '}' : '\\color$colorIndex{';
+        buffer.write(prefixOrSuffix);
+      } catch (ex) {
+        // ignore.
+      }
+    }
+
     const startOrder = [
       codeAttribution,
       boldAttribution,
@@ -305,16 +324,28 @@ class AttributedTextMarkdownSerializer extends AttributionVisitor {
     final buffer = StringBuffer();
     final encodingOrder = event == AttributionVisitEvent.start ? startOrder : startOrder.reversed;
 
+    if (!atEnd) {
+      checkForColor(buffer);
+    }
+    if (attributions.contains(simpleclubTeXAttribution)) {
+      buffer.write(_encodeMarkdownStyle(simpleclubTeXAttribution, atEnd: atEnd));
+
+      // TeX attribution can not be combined with any of other attributions.
+      return buffer.toString();
+    }
     for (final markdownStyleAttribution in encodingOrder) {
       if (attributions.contains(markdownStyleAttribution)) {
-        buffer.write(_encodeMarkdownStyle(markdownStyleAttribution));
+        buffer.write(_encodeMarkdownStyle(markdownStyleAttribution, atEnd: atEnd));
       }
+    }
+    if (atEnd) {
+      checkForColor(buffer);
     }
 
     return buffer.toString();
   }
 
-  static String _encodeMarkdownStyle(Attribution attribution) {
+  static String _encodeMarkdownStyle(Attribution attribution, {bool atEnd = false}) {
     if (attribution == codeAttribution) {
       return '`';
     } else if (attribution == boldAttribution) {
@@ -325,6 +356,8 @@ class AttributedTextMarkdownSerializer extends AttributionVisitor {
       return '~';
     } else if (attribution == underlineAttribution) {
       return '¬';
+    } else if (attribution == simpleclubTeXAttribution) {
+      return atEnd ? ' \$' : '\$ ';
     } else {
       return '';
     }
