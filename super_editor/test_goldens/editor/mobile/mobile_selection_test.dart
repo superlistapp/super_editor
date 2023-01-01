@@ -731,7 +731,7 @@ void _testParagraphSelection(
     final dragLine = ValueNotifier<_Line?>(null);
 
     final editor = _createSingleParagraphEditor();
-    final composer = DocumentComposer(document: editor.document);
+    final composer = DocumentComposer();
 
     final content = _buildScaffold(
       dragLine: dragLine,

@@ -18,17 +18,19 @@ class PanelBehindKeyboardDemo extends StatefulWidget {
 }
 
 class _PanelBehindKeyboardDemoState extends State<PanelBehindKeyboardDemo> {
-  final _layoutKey = GlobalKey();
-
+  late final FocusNode _focusNode;
   late DocumentEditor _editor;
   late DocumentComposer _composer;
-  late SoftwareKeyboardHandler _softwareKeyboardHandler;
+  final _keyboardController = SoftwareKeyboardController();
   final _keyboardState = ValueNotifier(_InputState.closed);
   final _nonKeyboardEditorState = ValueNotifier(_InputState.closed);
 
   @override
   void initState() {
     super.initState();
+
+    _focusNode = FocusNode();
+
     _editor = DocumentEditor(
       document: MutableDocument(nodes: [
         ParagraphNode(
@@ -98,32 +100,27 @@ class _PanelBehindKeyboardDemoState extends State<PanelBehindKeyboardDemo> {
       ]),
     );
 
-    _composer = DocumentComposer(document: _editor.document) //
-      ..automaticallyOpenKeyboardOnSelectionChange = false
-      ..clearSelectionWhenImeDisconnects = false
+    _composer = DocumentComposer() //
       ..selectionNotifier.addListener(_onSelectionChange);
-    _keyboardState.value = _composer.isAttachedToIme ? _InputState.open : _InputState.closed;
 
-    _softwareKeyboardHandler = SoftwareKeyboardHandler(
-      editor: _editor,
-      composer: _composer,
-      commonOps: CommonEditorOperations(
-        editor: _editor,
-        composer: _composer,
-        documentLayoutResolver: () => _layoutKey.currentState as DocumentLayout,
-      ),
-    );
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      // Check the IME connection at the end of the frame so that SuperEditor has
+      // an opportunity to connect to our software keyboard controller.
+      _keyboardState.value = _keyboardController.isConnectedToIme ? _InputState.open : _InputState.closed;
+    });
   }
 
   @override
   void dispose() {
     _closeKeyboard();
     _composer.dispose();
+    _focusNode.dispose();
     super.dispose();
   }
 
   void _onSelectionChange() {
     print("Demo: _onSelectionChange()");
+    print(" - selection: ${_composer.selection}");
     if (_nonKeyboardEditorState.value == _InputState.open) {
       // If the user is currently editing with the non-keyboard editing
       // panel, don't open the keyboard to cover it.
@@ -141,20 +138,25 @@ class _PanelBehindKeyboardDemoState extends State<PanelBehindKeyboardDemo> {
 
   void _openKeyboard() {
     print("Opening keyboard (also connecting to IME, if needed)");
-    _composer.softwareKeyboardHandler = _softwareKeyboardHandler;
-    _composer.openIme();
+    _keyboardController.open();
   }
 
   void _closeKeyboard() {
     print("Closing keyboard (and disconnecting from IME)");
-    _composer.closeIme();
-    _composer.softwareKeyboardHandler = null;
+    _keyboardController.close();
   }
 
   void _endEditing() {
     print("End editing");
-    _composer.closeIme();
+    _keyboardController.close();
     _composer.selection = null;
+
+    // If we clear SuperEditor's selection, but leave SuperEditor focused, then
+    // SuperEditor will automatically place the caret at the end of the document.
+    // This is because SuperEditor always expects a place for text input when it
+    // has focus. To prevent this from happening, we explicitly remove focus
+    // from SuperEditor.
+    _focusNode.unfocus();
   }
 
   @override
@@ -167,8 +169,12 @@ class _PanelBehindKeyboardDemoState extends State<PanelBehindKeyboardDemo> {
             child: Padding(
               padding: MediaQuery.of(context).viewInsets,
               child: SuperEditor(
+                focusNode: _focusNode,
                 editor: _editor,
                 composer: _composer,
+                softwareKeyboardController: _keyboardController,
+                openKeyboardOnSelectionChange: false,
+                clearSelectionWhenImeDisconnects: false,
               ),
             ),
           ),

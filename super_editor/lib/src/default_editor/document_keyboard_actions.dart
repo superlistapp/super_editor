@@ -188,6 +188,7 @@ ExecutionInstruction backspaceToRemoveUpstreamContent({
     return ExecutionInstruction.continueExecution;
   }
 
+  print("Backspacing to remove upstream content");
   final didDelete = editContext.commonOps.deleteUpstream();
 
   return didDelete ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;

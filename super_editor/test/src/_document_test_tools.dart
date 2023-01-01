@@ -15,7 +15,7 @@ EditContext createEditContext({
 }) {
   final editor = documentEditor ?? DocumentEditor(document: document);
   DocumentLayout layoutResolver() => documentLayout ?? FakeDocumentLayout();
-  final composer = documentComposer ?? DocumentComposer(document: document);
+  final composer = documentComposer ?? DocumentComposer();
 
   return EditContext(
     editor: editor,

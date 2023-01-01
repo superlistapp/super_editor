@@ -524,6 +524,8 @@ Second Paragraph
           )
           .pump();
 
+      print("--- placing caret in document");
+
       // Place caret in the middle of a word.
       await tester.placeCaretInParagraph('1', 8);
       expect(
@@ -536,12 +538,16 @@ Second Paragraph
         ),
       );
 
+      print("----- Moving focus to text field");
+
       // Focus the textfield.
       await tester.tap(find.byType(TextField));
       await tester.pumpAndSettle();
 
       // Ensure selection was cleared.
       expect(SuperEditorInspector.findDocumentSelection(), isNull);
+
+      print("----- Moving focus back to editor");
 
       // Press tab to focus the editor.
       await tester.pressTab();
@@ -709,7 +715,7 @@ Second Paragraph
     });
 
     test("emits a DocumentSelectionChange when changing selection by the notifier", () async {
-      final composer = DocumentComposer(document: MutableDocument());
+      final composer = DocumentComposer();
 
       const newSelection = DocumentSelection.collapsed(
         position: DocumentPosition(
@@ -734,7 +740,7 @@ Second Paragraph
     }, timeout: const Timeout(Duration(milliseconds: 500)));
 
     test("notifies selectionNotifier when a new DocumentSelection is emitted", () {
-      final composer = DocumentComposer(document: MutableDocument());
+      final composer = DocumentComposer();
 
       // Holds the selection emitted by the selectionNotifier.
       DocumentSelection? emittedSelection;

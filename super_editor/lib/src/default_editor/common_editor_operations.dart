@@ -841,8 +841,10 @@ class CommonEditorOperations {
     }
 
     if (composer.selection!.extent.nodePosition is UpstreamDownstreamNodePosition) {
+      print("Backspacing block node selection");
       final nodePosition = composer.selection!.extent.nodePosition as UpstreamDownstreamNodePosition;
       if (nodePosition.affinity == TextAffinity.downstream) {
+        print("Caret is on the downstream edge. Deleting the block.");
         // The caret is sitting on the downstream edge of block-level content. Delete the
         // whole block by replacing it with an empty paragraph.
         final nodeId = composer.selection!.extent.nodeId;
@@ -850,6 +852,7 @@ class CommonEditorOperations {
 
         return true;
       } else {
+        print("The caret is at the upstream edge.");
         // The caret is sitting on the upstream edge of block-level content and
         // the user is trying to delete upstream.
         //  * If the node above is an empty paragraph, delete it.
@@ -863,6 +866,7 @@ class CommonEditorOperations {
         final componentBefore = documentLayoutResolver().getComponentByNodeId(nodeBefore.id)!;
 
         if (nodeBefore is TextNode && nodeBefore.text.text.isEmpty) {
+          print("Deleting paragraph before block");
           editor.executeCommand(EditorCommandFunction((doc, transaction) {
             transaction.deleteNode(nodeBefore);
           }));
@@ -870,11 +874,13 @@ class CommonEditorOperations {
         }
 
         if (!componentBefore.isVisualSelectionSupported()) {
+          print("Deleting non-selectable node before caret");
           // The node/component above is not selectable. Delete it.
           _deleteNonSelectedNode(nodeBefore);
           return true;
         }
 
+        print("Moving selection to send of paragraph above");
         return _moveSelectionToEndOfPrecedingNode();
       }
     }
@@ -936,6 +942,7 @@ class CommonEditorOperations {
       return false;
     }
 
+    print("Setting selection to end of node: ${nodeBefore.id} -> ${nodeBefore.endPosition}");
     composer.selection = DocumentSelection.collapsed(
       position: DocumentPosition(
         nodeId: nodeBefore.id,
@@ -1040,8 +1047,10 @@ class CommonEditorOperations {
         text: AttributedText(),
       );
 
+      print("Replacing block node with empty paragraph - ${newNode.id}");
       transaction.replaceNode(oldNode: oldNode, newNode: newNode);
 
+      print("Setting selection to ${newNode.id} -> ${newNode.beginningPosition}");
       composer.selection = DocumentSelection.collapsed(
         position: DocumentPosition(
           nodeId: newNode.id,
@@ -1345,6 +1354,7 @@ class CommonEditorOperations {
     final initialTextOffset = (composer.selection!.extent.nodePosition as TextNodePosition).offset;
 
     editorOpsLog.fine("Executing text insertion command.");
+    editorOpsLog.finer("Text before insertion: '${textNode.text.text}'");
     editor.executeCommand(
       InsertTextCommand(
         documentPosition: composer.selection!.extent,
@@ -1352,6 +1362,7 @@ class CommonEditorOperations {
         attributions: composer.preferences.currentAttributions,
       ),
     );
+    editorOpsLog.finer("Text after insertion: '${textNode.text.text}'");
 
     editorOpsLog.fine("Updating Document Composer selection after text insertion.");
     composer.selection = DocumentSelection.collapsed(

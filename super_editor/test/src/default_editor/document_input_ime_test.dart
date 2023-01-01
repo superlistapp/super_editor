@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
-import 'package:super_editor/src/core/document_ime.dart';
+import 'package:logging/logging.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 
@@ -30,7 +30,6 @@ void main() {
         ]);
         final editor = DocumentEditor(document: document);
         final composer = DocumentComposer(
-          document: document,
           initialSelection: const DocumentSelection.collapsed(
             position: DocumentPosition(
               nodeId: "1",
@@ -43,9 +42,10 @@ void main() {
           composer: composer,
           documentLayoutResolver: () => FakeDocumentLayout(),
         );
-        final softwareKeyboardHandler = SoftwareKeyboardHandler(
+        final softwareKeyboardHandler = TextDeltasDocumentEditor(
           editor: editor,
-          composer: composer,
+          selection: composer.selectionNotifier,
+          imeComposingRegion: composer.imeComposingRegion,
           commonOps: commonOps,
         );
 
@@ -81,6 +81,7 @@ void main() {
       });
 
       testWidgets('can type compound character in an empty paragraph', (tester) async {
+        initLoggers(Level.FINER, {editorImeLog, editorOpsLog});
         final document = twoParagraphEmptyDoc();
 
         // Inserting special characters, or compound characters, like ü, requires
@@ -101,7 +102,6 @@ void main() {
           // paragraph sends a hidden placeholder to the IME for backspace.
           document: document,
           documentComposer: DocumentComposer(
-            document: document,
             initialSelection: const DocumentSelection.collapsed(
               position: DocumentPosition(
                 // Start the caret in the 2nd paragraph so that we send a
@@ -152,6 +152,7 @@ void main() {
             composing: TextRange(start: 2, end: 3),
           ),
         ]);
+        await tester.pumpAndSettle();
 
         // Ensure that the empty paragraph now reads "¨".
         expect((editContext.editor.document.nodes[1] as ParagraphNode).text.text, "¨");

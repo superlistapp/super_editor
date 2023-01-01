@@ -677,7 +677,6 @@ void main() {
           final editContext = createEditContext(
             document: document,
             documentComposer: DocumentComposer(
-              document: document,
               initialSelection: const DocumentSelection(
                 base: DocumentPosition(
                   nodeId: '1',
@@ -731,7 +730,6 @@ void main() {
           final editContext = createEditContext(
             document: document,
             documentComposer: DocumentComposer(
-              document: document,
               initialSelection: const DocumentSelection(
                 base: DocumentPosition(
                   nodeId: '1',
@@ -785,7 +783,6 @@ void main() {
           final editContext = createEditContext(
             document: document,
             documentComposer: DocumentComposer(
-              document: document,
               initialSelection: const DocumentSelection(
                 base: DocumentPosition(
                   nodeId: '1',
@@ -842,7 +839,6 @@ void main() {
           final editContext = createEditContext(
             document: document,
             documentComposer: DocumentComposer(
-              document: document,
               initialSelection: const DocumentSelection(
                 base: DocumentPosition(
                   nodeId: '1',
@@ -941,7 +937,6 @@ void main() {
         final editContext = createEditContext(
           document: document,
           documentComposer: DocumentComposer(
-            document: document,
             initialSelection: const DocumentSelection.collapsed(
               position: DocumentPosition(
                 nodeId: '1',
@@ -996,7 +991,6 @@ Future<EditContext> _pumpCaretMovementTestSetup(
 }) async {
   final document = singleParagraphDoc();
   final composer = DocumentComposer(
-    document: document,
     initialSelection: DocumentSelection.collapsed(
       position: DocumentPosition(
         nodeId: "1",

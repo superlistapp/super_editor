@@ -92,6 +92,9 @@ class TestDocumentConfigurator {
   final TestDocumentContext? _existingContext;
   DocumentGestureMode? _gestureMode;
   DocumentInputSource? _inputSource;
+  SoftwareKeyboardController? _softwareKeyboardController;
+  bool _openKeyboardOnSelectionChange = true;
+  bool _clearSelectionWhenImeDisconnects = true;
   ThemeData? _appTheme;
   Stylesheet? _stylesheet;
   final _addedComponents = <ComponentBuilder>[];
@@ -134,6 +137,26 @@ class TestDocumentConfigurator {
   /// Configures the [SuperEditor] to use the given [inputSource].
   TestDocumentConfigurator withInputSource(DocumentInputSource inputSource) {
     _inputSource = inputSource;
+    return this;
+  }
+
+  /// Configures the [SuperEditor]'s [SoftwareKeyboardController].
+  TestDocumentConfigurator withSoftwareKeyboardController(SoftwareKeyboardController controller) {
+    _softwareKeyboardController = controller;
+    return this;
+  }
+
+  /// Configures the [SuperEditor] to automatically open the software keyboard when
+  /// the selection changes, or not.
+  TestDocumentConfigurator withOpenKeyboardOnSelectionChange(bool openKeyboardOnSelectionChange) {
+    _openKeyboardOnSelectionChange = openKeyboardOnSelectionChange;
+    return this;
+  }
+
+  /// Configures the [SuperEditor] to automatically clear the document selection when
+  /// the connection to the platform IME is closed, or not.
+  TestDocumentConfigurator withClearSelectionWhenImeDisconnects(bool clearSelectionWhenImeDisconnects) {
+    _clearSelectionWhenImeDisconnects = clearSelectionWhenImeDisconnects;
     return this;
   }
 
@@ -228,7 +251,7 @@ class TestDocumentConfigurator {
       final layoutKey = GlobalKey();
       final focusNode = _focusNode ?? FocusNode();
       final editor = DocumentEditor(document: _document!);
-      final composer = DocumentComposer(document: _document!, initialSelection: _selection);
+      final composer = DocumentComposer(initialSelection: _selection);
       // ignore: prefer_function_declarations_over_variables
       final layoutResolver = () => layoutKey.currentState as DocumentLayout;
       final commonOps = CommonEditorOperations(
@@ -259,6 +282,9 @@ class TestDocumentConfigurator {
         composer: testDocumentContext.editContext.composer,
         focusNode: testDocumentContext.focusNode,
         inputSource: _inputSource,
+        softwareKeyboardController: _softwareKeyboardController,
+        openKeyboardOnSelectionChange: _openKeyboardOnSelectionChange,
+        clearSelectionWhenImeDisconnects: _clearSelectionWhenImeDisconnects,
         gestureMode: _gestureMode,
         androidToolbarBuilder: _androidToolbarBuilder,
         iOSToolbarBuilder: _iOSToolbarBuilder,

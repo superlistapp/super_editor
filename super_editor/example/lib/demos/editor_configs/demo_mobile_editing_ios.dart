@@ -28,7 +28,7 @@ class _MobileEditingIOSDemoState extends State<MobileEditingIOSDemo> {
     super.initState();
     _doc = _createInitialDocument();
     _docEditor = DocumentEditor(document: _doc as MutableDocument);
-    _composer = DocumentComposer(document: _doc);
+    _composer = DocumentComposer();
     _docOps = CommonEditorOperations(
       editor: _docEditor,
       composer: _composer,

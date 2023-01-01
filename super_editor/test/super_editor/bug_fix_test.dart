@@ -14,7 +14,6 @@ void main() {
         );
         final editor = DocumentEditor(document: document);
         final composer = DocumentComposer(
-          document: document,
           initialSelection: const DocumentSelection.collapsed(
             position: DocumentPosition(
               nodeId: "1",
@@ -81,7 +80,6 @@ void main() {
         );
         final editor = DocumentEditor(document: document);
         final composer = DocumentComposer(
-          document: document,
           initialSelection: const DocumentSelection.collapsed(
             position: DocumentPosition(
               nodeId: "1",

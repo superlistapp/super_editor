@@ -21,7 +21,6 @@ class _MobileEditingAndroidDemoState extends State<MobileEditingAndroidDemo> {
   late DocumentEditor _docEditor;
   late DocumentComposer _composer;
   late CommonEditorOperations _docOps;
-  late SoftwareKeyboardHandler _softwareKeyboardHandler;
 
   FocusNode? _editorFocusNode;
 
@@ -30,16 +29,11 @@ class _MobileEditingAndroidDemoState extends State<MobileEditingAndroidDemo> {
     super.initState();
     _doc = _createInitialDocument();
     _docEditor = DocumentEditor(document: _doc as MutableDocument);
-    _composer = DocumentComposer(document: _doc)..addListener(_configureImeActionButton);
+    _composer = DocumentComposer()..addListener(_configureImeActionButton);
     _docOps = CommonEditorOperations(
       editor: _docEditor,
       composer: _composer,
       documentLayoutResolver: () => _docLayoutKey.currentState as DocumentLayout,
-    );
-    _softwareKeyboardHandler = SoftwareKeyboardHandler(
-      editor: _docEditor,
-      composer: _composer,
-      commonOps: _docOps,
     );
     _editorFocusNode = FocusNode();
   }
@@ -83,7 +77,6 @@ class _MobileEditingAndroidDemoState extends State<MobileEditingAndroidDemo> {
               documentLayoutKey: _docLayoutKey,
               editor: _docEditor,
               composer: _composer,
-              softwareKeyboardHandler: _softwareKeyboardHandler,
               gestureMode: DocumentGestureMode.android,
               inputSource: DocumentInputSource.ime,
               androidToolbarBuilder: (_) => AndroidTextEditingFloatingToolbar(

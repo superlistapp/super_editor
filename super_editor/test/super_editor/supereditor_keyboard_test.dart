@@ -284,9 +284,13 @@ void main() {
   group('SuperEditor software keyboard', () {
     group('in automatic control mode', () {
       testWidgetsOnAndroid('clears selection when it closes', (tester) async {
+        final keyboardController = SoftwareKeyboardController();
         final testContext = await tester //
             .createDocument()
             .withSingleEmptyParagraph()
+            .withSoftwareKeyboardController(keyboardController)
+            .withOpenKeyboardOnSelectionChange(true)
+            .withClearSelectionWhenImeDisconnects(true)
             .withCustomWidgetTreeBuilder(
               (superEditor) => MaterialApp(
                 home: Scaffold(
@@ -296,13 +300,6 @@ void main() {
               ),
             )
             .pump();
-
-        final composer = testContext.editContext.composer;
-
-        // Put the composer in automatic IME mode.
-        composer //
-          ..automaticallyOpenKeyboardOnSelectionChange = true
-          ..clearSelectionWhenImeDisconnects = true;
 
         // Place the caret in Super Editor to open the IME.
         final nodeId = testContext.editContext.editor.document.nodes.first.id;
@@ -315,23 +312,27 @@ void main() {
         expect(selectionBefore.extent.nodeId, nodeId);
 
         // Ensure the IME is open
-        expect(composer.isAttachedToIme, isTrue);
+        expect(keyboardController.isConnectedToIme, isTrue);
 
         // Close the IME
-        composer.closeIme();
+        keyboardController.close();
         await tester.pumpAndSettle();
 
         // Ensure the IME is closed
-        expect(composer.isAttachedToIme, isFalse);
+        expect(keyboardController.isConnectedToIme, isFalse);
 
         // Ensure the document selection is gone
         expect(SuperEditorInspector.findDocumentSelection(), null);
       });
 
       testWidgetsOnAndroid('re-opens when selection changes', (tester) async {
+        final keyboardController = SoftwareKeyboardController();
         final testContext = await tester //
             .createDocument()
             .withSingleParagraph()
+            .withSoftwareKeyboardController(keyboardController)
+            .withOpenKeyboardOnSelectionChange(true)
+            .withClearSelectionWhenImeDisconnects(true)
             .withCustomWidgetTreeBuilder(
               (superEditor) => MaterialApp(
                 home: Scaffold(
@@ -341,13 +342,6 @@ void main() {
               ),
             )
             .pump();
-
-        final composer = testContext.editContext.composer;
-
-        // Put the composer in automatic IME mode.
-        composer //
-          ..automaticallyOpenKeyboardOnSelectionChange = true
-          ..clearSelectionWhenImeDisconnects = true;
 
         // Place the caret in Super Editor.
         final nodeId = testContext.editContext.editor.document.nodes.first.id;
@@ -360,47 +354,51 @@ void main() {
         expect(selectionBefore.extent.nodeId, nodeId);
 
         // Close the IME
-        composer.closeIme();
+        keyboardController.close();
         await tester.pumpAndSettle();
         // Ensure the IME is closed
-        expect(composer.isAttachedToIme, isFalse);
+        expect(keyboardController.isConnectedToIme, isFalse);
 
         // Move the caret somewhere else.
         await tester.placeCaretInParagraph(nodeId, 5);
         // Ensure the selection changed.
         expect(SuperEditorInspector.findDocumentSelection(), isNot(selectionBefore));
         // Ensure the keyboard re-opened.
-        expect(composer.isAttachedToIme, isTrue);
+        expect(keyboardController.isConnectedToIme, isTrue);
 
         // Close the IME
-        composer.closeIme();
+        keyboardController.close();
         await tester.pumpAndSettle();
         // Ensure the IME is closed
-        expect(composer.isAttachedToIme, isFalse);
+        expect(keyboardController.isConnectedToIme, isFalse);
 
         // Select a word
         await tester.doubleTapInParagraph(nodeId, 10);
         // Ensure the keyboard re-opened.
-        expect(composer.isAttachedToIme, isTrue);
+        expect(keyboardController.isConnectedToIme, isTrue);
 
         // Close the IME
-        composer.closeIme();
+        keyboardController.close();
         await tester.pumpAndSettle();
         // Ensure the IME is closed
-        expect(composer.isAttachedToIme, isFalse);
+        expect(keyboardController.isConnectedToIme, isFalse);
 
         // Select a paragraph
         await tester.tripleTapInParagraph(nodeId, 15);
         // Ensure the keyboard re-opened.
-        expect(composer.isAttachedToIme, isTrue);
+        expect(keyboardController.isConnectedToIme, isTrue);
       });
     });
 
     group('in manual control mode', () {
       testWidgetsOnAndroid('leaves selection active when it closes', (tester) async {
+        final keyboardController = SoftwareKeyboardController();
         final testContext = await tester //
             .createDocument()
             .withSingleEmptyParagraph()
+            .withSoftwareKeyboardController(keyboardController)
+            .withOpenKeyboardOnSelectionChange(false)
+            .withClearSelectionWhenImeDisconnects(false)
             .withCustomWidgetTreeBuilder(
               (superEditor) => MaterialApp(
                 home: Scaffold(
@@ -410,13 +408,6 @@ void main() {
               ),
             )
             .pump();
-
-        final composer = testContext.editContext.composer;
-
-        // Put the composer in manual IME mode.
-        composer //
-          ..automaticallyOpenKeyboardOnSelectionChange = false
-          ..clearSelectionWhenImeDisconnects = false;
 
         // Place the caret in Super Editor to open the IME.
         final nodeId = testContext.editContext.editor.document.nodes.first.id;
@@ -429,27 +420,31 @@ void main() {
         expect(selectionBefore.extent.nodeId, nodeId);
 
         // Open the keyboard
-        composer.openIme();
+        keyboardController.open();
         await tester.pump();
 
         // Ensure the IME is open
-        expect(composer.isAttachedToIme, isTrue);
+        expect(keyboardController.isConnectedToIme, isTrue);
 
         // Close the IME
-        composer.closeIme();
+        keyboardController.close();
         await tester.pumpAndSettle();
 
         // Ensure the IME is closed
-        expect(composer.isAttachedToIme, isFalse);
+        expect(keyboardController.isConnectedToIme, isFalse);
 
         // Ensure the document selection hasn't changed
         expect(SuperEditorInspector.findDocumentSelection(), selectionBefore);
       });
 
       testWidgetsOnAndroid('stays closed when changing selection', (tester) async {
+        final keyboardController = SoftwareKeyboardController();
         final testContext = await tester //
             .createDocument()
             .withSingleParagraph()
+            .withSoftwareKeyboardController(keyboardController)
+            .withOpenKeyboardOnSelectionChange(false)
+            .withClearSelectionWhenImeDisconnects(false)
             .withCustomWidgetTreeBuilder(
               (superEditor) => MaterialApp(
                 home: Scaffold(
@@ -459,13 +454,6 @@ void main() {
               ),
             )
             .pump();
-
-        final composer = testContext.editContext.composer;
-
-        // Put the composer in manual IME mode.
-        composer //
-          ..automaticallyOpenKeyboardOnSelectionChange = false
-          ..clearSelectionWhenImeDisconnects = false;
 
         // Place the caret in Super Editor.
         final nodeId = testContext.editContext.editor.document.nodes.first.id;
@@ -478,41 +466,45 @@ void main() {
         expect(selectionBefore.extent.nodeId, nodeId);
 
         // Open the keyboard
-        composer.openIme();
+        keyboardController.open();
         await tester.pump();
 
         // Ensure the IME is open
-        expect(composer.isAttachedToIme, isTrue);
+        expect(keyboardController.isConnectedToIme, isTrue);
 
         // Close the IME
-        composer.closeIme();
+        keyboardController.close();
         await tester.pumpAndSettle();
 
         // Ensure the IME is closed
-        expect(composer.isAttachedToIme, isFalse);
+        expect(keyboardController.isConnectedToIme, isFalse);
 
         // Move the caret somewhere else.
         await tester.placeCaretInParagraph(nodeId, 5);
         // Ensure the selection changed.
         expect(SuperEditorInspector.findDocumentSelection()!.extent, isNot(selectionBefore.extent));
         // Ensure the keyboard is still closed.
-        expect(composer.isAttachedToIme, isFalse);
+        expect(keyboardController.isConnectedToIme, isFalse);
 
         // Select a word
         await tester.doubleTapInParagraph(nodeId, 10);
         // Ensure the keyboard is still closed.
-        expect(composer.isAttachedToIme, isFalse);
+        expect(keyboardController.isConnectedToIme, isFalse);
 
         // Select a paragraph
         await tester.tripleTapInParagraph(nodeId, 15);
         // Ensure the keyboard is still closed.
-        expect(composer.isAttachedToIme, isFalse);
+        expect(keyboardController.isConnectedToIme, isFalse);
       });
 
       testWidgetsOnAndroid('opens when requested after previously closing', (tester) async {
+        final keyboardController = SoftwareKeyboardController();
         final testContext = await tester //
             .createDocument()
             .withSingleParagraph()
+            .withSoftwareKeyboardController(keyboardController)
+            .withOpenKeyboardOnSelectionChange(false)
+            .withClearSelectionWhenImeDisconnects(false)
             .withCustomWidgetTreeBuilder(
               (superEditor) => MaterialApp(
                 home: Scaffold(
@@ -522,13 +514,6 @@ void main() {
               ),
             )
             .pump();
-
-        final composer = testContext.editContext.composer;
-
-        // Put the composer in manual IME mode.
-        composer //
-          ..automaticallyOpenKeyboardOnSelectionChange = false
-          ..clearSelectionWhenImeDisconnects = false;
 
         // Place the caret in Super Editor.
         final nodeId = testContext.editContext.editor.document.nodes.first.id;
@@ -541,25 +526,25 @@ void main() {
         expect(selectionBefore.extent.nodeId, nodeId);
 
         // Open the keyboard
-        composer.openIme();
+        keyboardController.open();
         await tester.pump();
 
         // Ensure the IME is open
-        expect(composer.isAttachedToIme, isTrue);
+        expect(keyboardController.isConnectedToIme, isTrue);
 
         // Close the IME
-        composer.closeIme();
+        keyboardController.close();
         await tester.pumpAndSettle();
 
         // Ensure the IME is closed
-        expect(composer.isAttachedToIme, isFalse);
+        expect(keyboardController.isConnectedToIme, isFalse);
 
         // Re-open the IME
-        composer.openIme();
+        keyboardController.open();
         await tester.pumpAndSettle();
 
         // Ensure the IME is re-opened
-        expect(composer.isAttachedToIme, isTrue);
+        expect(keyboardController.isConnectedToIme, isTrue);
 
         // Ensure the selection is unchanged.
         expect(SuperEditorInspector.findDocumentSelection(), selectionBefore);
@@ -636,6 +621,9 @@ void main() {
 
       // Tap to give focus to the editor.
       await tester.placeCaretInParagraph(document.nodes.first.id, 0);
+
+      // Ensure the document has a selection.
+      expect(SuperEditorInspector.findDocumentSelection(), isNotNull);
 
       // Ensure that IME input is disabled. To check IME input, we arbitrarily simulate a newline action from
       // the IME. If the editor doesn't respond to the newline, it means IME input is disabled.

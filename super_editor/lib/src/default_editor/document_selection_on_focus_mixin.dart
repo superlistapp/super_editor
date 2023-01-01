@@ -75,6 +75,7 @@ mixin DocumentSelectionOnFocusMixin<T extends StatefulWidget> on State<T> {
   }
 
   void _onFocusChange() {
+    print("SuperEditor focus change. Is focused? ${_focusNode?.hasFocus}. Previous selection: $_previousSelection");
     if (!_focusNode!.hasFocus) {
       _selection?.value = null;
       return;
@@ -83,30 +84,42 @@ mixin DocumentSelectionOnFocusMixin<T extends StatefulWidget> on State<T> {
     // We move the selection in the next frame, so we don't try to access the
     // DocumentLayout before it is available when the editor has autofocus
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      // We only update the selection when it's null
-      // because, when the user taps at the document the selection is
-      // already set to the correct position, so we don't override it.
-      if (mounted && _focusNode!.hasFocus && _selection!.value == null) {
-        if (_previousSelection != null) {
-          _selection?.value = _previousSelection;
-          return;
-        }
+      print("On next frame. Has focus? ${_focusNode!.hasFocus}, Current selection :${_selection!.value}");
+      if (!mounted) {
+        return;
+      }
 
-        DocumentPosition? position = _getDocumentLayout?.call().findLastSelectablePosition();
-        if (position != null) {
-          _selection?.value = DocumentSelection.collapsed(
-            position: position,
-          );
-        }
+      if (!_focusNode!.hasFocus || _selection!.value != null) {
+        return;
+      }
+
+      // The editor has focus, but there's no selection. Whenever the editor
+      // is focused, there needs to be a place for user input to go. Place
+      // the caret at the end of the document.
+      if (_previousSelection != null) {
+        print("Restoring previous selection");
+        _selection?.value = _previousSelection;
+        return;
+      }
+
+      print("Placing caret at end of document because we didn't have a previous selection");
+      DocumentPosition? position = _getDocumentLayout?.call().findLastSelectablePosition();
+      if (position != null) {
+        _selection?.value = DocumentSelection.collapsed(
+          position: position,
+        );
       }
     });
   }
 
   void _onSelectionChange() {
+    print("On selection change");
     // We store the last selection so the next time the editor is focused
     // the selection is restored.
     if (_selection?.value != null) {
+      print("Setting previous selection to :${_selection?.value}");
       _previousSelection = _selection?.value;
+      print("Previous selection is now: $_previousSelection");
     }
   }
 }

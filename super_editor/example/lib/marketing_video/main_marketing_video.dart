@@ -36,13 +36,12 @@ class _MarketingVideoState extends State<MarketingVideo> {
     );
     _editor = DocumentEditor(document: doc);
     _composer = DocumentComposer(
-        document: doc,
         initialSelection: DocumentSelection.collapsed(
-          position: DocumentPosition(
-            nodeId: doc.nodes.first.id,
-            nodePosition: doc.nodes.first.endPosition,
-          ),
-        ));
+      position: DocumentPosition(
+        nodeId: doc.nodes.first.id,
+        nodePosition: doc.nodes.first.endPosition,
+      ),
+    ));
 
     _startRobot();
   }

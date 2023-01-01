@@ -441,7 +441,6 @@ EditContext _createEditContextWithParagraph() {
   return createEditContext(
     document: document,
     documentComposer: DocumentComposer(
-      document: document,
       initialSelection: const DocumentSelection.collapsed(
         position: DocumentPosition(
           nodeId: 'paragraph',

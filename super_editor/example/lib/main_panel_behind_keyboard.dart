@@ -14,8 +14,8 @@ import 'package:super_editor/super_editor.dart';
 /// `Scaffold` behavior for insets, which is hard-coded for all demos in the
 /// regular example entrypoint.
 void main() {
-  initLoggers(Level.FINE, {
-    // editorGesturesLog,
+  initLoggers(Level.FINEST, {
+    editorGesturesLog,
     editorImeLog,
   });
 
