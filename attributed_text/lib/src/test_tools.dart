@@ -1,4 +1,4 @@
-import 'package:test/expect.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 import 'attributed_spans.dart';
 import 'attribution.dart';

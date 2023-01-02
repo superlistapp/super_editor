@@ -11,6 +11,8 @@ dependencies:
   collection: ^1.15.0
   logging: ^1.0.1
   meta: ^1.7.0
+  flutter_test:
+    sdk: flutter
 
 dev_dependencies:
   flutter_lints: ^2.0.1
