@@ -11,7 +11,11 @@ dependencies:
   flutter:
     sdk: flutter
 
-  attributed_text: ^0.2.0
+  attributed_text:
+    git:
+      url: https://github.com/simpleclub-extended/super_editor
+      path: attributed_text
+      ref: stable
   logging: ^1.0.1
 
 dependency_overrides:
