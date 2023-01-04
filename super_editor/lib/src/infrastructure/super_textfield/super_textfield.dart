@@ -67,6 +67,7 @@ class SuperTextField extends StatefulWidget {
     this.inputSource,
     this.keyboardHandlers = defaultTextFieldKeyboardHandlers,
     this.padding,
+    this.textInputAction,
   }) : super(key: key);
 
   final FocusNode? focusNode;
@@ -161,6 +162,11 @@ class SuperTextField extends StatefulWidget {
   /// scrollable viewport.
   final EdgeInsets? padding;
 
+  /// Only used on mobile: sets the action for the virtual keyboard.
+  ///
+  /// When null, it depends on weather the text field is multiline or not.
+  final TextInputAction? textInputAction;
+
   @override
   State<SuperTextField> createState() => SuperTextFieldState();
 }
@@ -200,6 +206,8 @@ class SuperTextFieldState extends State<SuperTextField> {
   ProseTextLayout get textLayout => (_platformFieldKey.currentState as ProseTextBlock).textLayout;
 
   bool get _isMultiline => (widget.minLines ?? 1) != 1 || widget.maxLines != 1;
+
+  TextInputAction get _defaultTextInputAction => _isMultiline ? TextInputAction.newline : TextInputAction.done;
 
   SuperTextFieldPlatformConfiguration get _configuration {
     if (widget.configuration != null) {
@@ -302,7 +310,7 @@ class SuperTextFieldState extends State<SuperTextField> {
             minLines: widget.minLines,
             maxLines: widget.maxLines,
             lineHeight: widget.lineHeight,
-            textInputAction: _isMultiline ? TextInputAction.newline : TextInputAction.done,
+            textInputAction: widget.textInputAction ?? _defaultTextInputAction,
             padding: widget.padding,
           ),
         );
@@ -326,7 +334,7 @@ class SuperTextFieldState extends State<SuperTextField> {
             minLines: widget.minLines,
             maxLines: widget.maxLines,
             lineHeight: widget.lineHeight,
-            textInputAction: _isMultiline ? TextInputAction.newline : TextInputAction.done,
+            textInputAction: widget.textInputAction ?? _defaultTextInputAction,
             padding: widget.padding,
           ),
         );
