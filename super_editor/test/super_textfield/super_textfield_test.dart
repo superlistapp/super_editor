@@ -289,6 +289,38 @@ void main() {
       });
     });
 
+    group('textInputAction', () {
+      group("is applied when configured", () {
+        testWidgetsOnAndroid('(on Android)', (tester) async {
+          await tester.pumpWidget(
+            _buildScaffold(
+              child: const SuperTextField(
+                textInputAction: TextInputAction.next,
+              ),
+            ),
+          );
+
+          final innerTextField = tester.widget<SuperAndroidTextField>(find.byType(SuperAndroidTextField).first);
+
+          expect(innerTextField.textInputAction, TextInputAction.next);
+        });
+
+        testWidgetsOnIos('(on iOS)', (tester) async {
+          await tester.pumpWidget(
+            _buildScaffold(
+              child: const SuperTextField(
+                textInputAction: TextInputAction.next,
+              ),
+            ),
+          );
+
+          final innerTextField = tester.widget<SuperIOSTextField>(find.byType(SuperIOSTextField).first);
+
+          expect(innerTextField.textInputAction, TextInputAction.next);
+        });
+      });
+    });
+
     testWidgetsOnAllPlatforms('recalculates its viewport height when text changes for text smaller than maxLines',
         (tester) async {
       final controller = AttributedTextEditingController();
