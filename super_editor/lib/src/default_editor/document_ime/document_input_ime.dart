@@ -6,6 +6,8 @@ export 'supereditor_ime_interactor.dart';
 export 'document_serialization.dart';
 export 'mobile_toolbar.dart';
 
+/// This file exports various document IME tools.
+///
 /// The term Input Method Engine (IME) refers to an operating system's
 /// intermediary between the user's input, such as through a software
 /// keyboard, and the app that receives the input. The IME might make

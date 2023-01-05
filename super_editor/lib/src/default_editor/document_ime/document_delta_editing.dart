@@ -25,22 +25,25 @@ class TextDeltasDocumentEditor {
   void applyDeltas(List<TextEditingDelta> textEditingDeltas) {
     editorImeLog.info("Applying ${textEditingDeltas.length} IME deltas to document");
 
-    // Make note of whether the version of the document before these
-    // deltas included hidden characters.
-    final didPrependPlaceholderInPreviousDocument = DocumentImeSerializer(
+    editorImeLog.fine("Serializing document to perform IME operation");
+    final docSerializer = DocumentImeSerializer(
       editor.document,
       selection.value!,
-    ).didPrependPlaceholder;
+    );
+
+    // Make note of whether the version of the document before these
+    // deltas included hidden characters.
+    final didPrependPlaceholderInPreviousDocument = docSerializer.didPrependPlaceholder;
 
     // Apply deltas to the document.
     for (final delta in textEditingDeltas) {
       editorImeLog.info("Applying delta: $delta");
       if (delta is TextEditingDeltaInsertion) {
-        _applyInsertion(delta);
+        _applyInsertion(delta, docSerializer);
       } else if (delta is TextEditingDeltaReplacement) {
-        _applyReplacement(delta);
+        _applyReplacement(delta, docSerializer);
       } else if (delta is TextEditingDeltaDeletion) {
-        _applyDeletion(delta);
+        _applyDeletion(delta, docSerializer);
       } else if (delta is TextEditingDeltaNonTextUpdate) {
         _applyNonTextChange(delta);
       } else {
@@ -60,7 +63,7 @@ class TextDeltasDocumentEditor {
         : textEditingDeltas.last.composing;
   }
 
-  void _applyInsertion(TextEditingDeltaInsertion delta) {
+  void _applyInsertion(TextEditingDeltaInsertion delta, DocumentImeSerializer docSerializer) {
     editorImeLog.fine('Inserted text: "${delta.textInserted}"');
     editorImeLog.fine("Insertion offset: ${delta.insertionOffset}");
     editorImeLog.fine("Selection: ${delta.selection}");
@@ -89,13 +92,21 @@ class TextDeltasDocumentEditor {
     editorImeLog.fine(
         "Inserting text: '${delta.textInserted}', at insertion offset: ${delta.insertionOffset}, with ime selection: ${delta.selection}");
 
+    editorImeLog.fine("Converting IME insertion offset into a DocumentSelection");
+    final insertionSelection = docSerializer.imeToDocumentSelection(
+      TextSelection.fromPosition(TextPosition(
+        offset: delta.insertionOffset,
+        affinity: delta.selection.affinity,
+      )),
+    )!;
+
     insert(
-      TextPosition(offset: delta.insertionOffset, affinity: delta.selection.affinity),
+      insertionSelection,
       delta.textInserted,
     );
   }
 
-  void _applyReplacement(TextEditingDeltaReplacement delta) {
+  void _applyReplacement(TextEditingDeltaReplacement delta, DocumentImeSerializer docSerializer) {
     editorImeLog.fine("Text replaced: '${delta.textReplaced}'");
     editorImeLog.fine("Replacement text: '${delta.replacementText}'");
     editorImeLog.fine("Replaced range: ${delta.replacedRange}");
@@ -122,10 +133,10 @@ class TextDeltasDocumentEditor {
       return;
     }
 
-    replace(delta.replacedRange, delta.replacementText);
+    replace(delta.replacedRange, delta.replacementText, docSerializer);
   }
 
-  void _applyDeletion(TextEditingDeltaDeletion delta) {
+  void _applyDeletion(TextEditingDeltaDeletion delta, DocumentImeSerializer docSerializer) {
     editorImeLog.fine("Delete delta:\n"
         "Text deleted: '${delta.textDeleted}'\n"
         "Deleted Range: ${delta.deletedRange}\n"
@@ -133,7 +144,7 @@ class TextDeltasDocumentEditor {
         "Composing: ${delta.composing}\n"
         "Old text: '${delta.oldText}'");
 
-    delete(delta.deletedRange);
+    delete(delta.deletedRange, docSerializer);
 
     editorImeLog.fine("Deletion operation complete");
   }
@@ -147,22 +158,8 @@ class TextDeltasDocumentEditor {
     // currentTextEditingValue = _currentTextEditingValue.copyWith(composing: delta.composing);
   }
 
-  void insert(TextPosition insertionPosition, String textInserted) {
-    if (textInserted == "\n") {
-      // Newlines are handled in performAction()
-      return;
-    }
-
-    editorImeLog.fine('Inserting "$textInserted" at position "$insertionPosition"');
-    editorImeLog.fine("Serializing document to perform IME operation");
-    final docSerializer = DocumentImeSerializer(
-      editor.document,
-      selection.value!,
-    );
-    editorImeLog.fine("Converting IME insertion offset into a DocumentSelection");
-    final insertionSelection = docSerializer.imeToDocumentSelection(
-      TextSelection.fromPosition(insertionPosition),
-    );
+  void insert(DocumentSelection insertionSelection, String textInserted) {
+    editorImeLog.fine('Inserting "$textInserted" at position "$insertionSelection"');
     editorImeLog
         .fine("Updating the Document Composer's selection to place caret at insertion offset:\n$insertionSelection");
     final selectionBeforeInsertion = selection.value;
@@ -182,12 +179,7 @@ class TextDeltasDocumentEditor {
     );
   }
 
-  void replace(TextRange replacedRange, String replacementText) {
-    final docSerializer = DocumentImeSerializer(
-      editor.document,
-      selection.value!,
-    );
-
+  void replace(TextRange replacedRange, String replacementText, DocumentImeSerializer docSerializer) {
     final replacementSelection = docSerializer.imeToDocumentSelection(TextSelection(
       baseOffset: replacedRange.start,
       // TODO: the delta API is wrong for TextRange.end, it should be exclusive,
@@ -214,12 +206,8 @@ class TextDeltasDocumentEditor {
     );
   }
 
-  void delete(TextRange deletedRange) {
+  void delete(TextRange deletedRange, DocumentImeSerializer docSerializer) {
     final rangeToDelete = deletedRange;
-    final docSerializer = DocumentImeSerializer(
-      editor.document,
-      selection.value!,
-    );
     final docSelectionToDelete = docSerializer.imeToDocumentSelection(TextSelection(
       baseOffset: rangeToDelete.start,
       extentOffset: rangeToDelete.end,

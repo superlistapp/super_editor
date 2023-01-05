@@ -17,9 +17,6 @@ import 'document_serialization.dart';
 ///
 /// When the [document] or its [selection] changes, the [document] and [selection]
 /// are serialized and sent to the IME.
-///
-/// This widget requires that the given [ImeValue] be tied to an open IME connection.
-/// In other words, this widget should only be built when connected to the IME.
 class DocumentToImeSynchronizer extends StatefulWidget {
   const DocumentToImeSynchronizer({
     Key? key,
@@ -42,6 +39,7 @@ class DocumentToImeSynchronizer extends StatefulWidget {
   /// autocorrection.
   final ValueNotifier<TextRange> imeComposingRegion;
 
+  /// A connection to the platform IME, which might be open or closed.
   final ImeConnection imeConnection;
 
   /// The IME's current editing value.
@@ -117,6 +115,7 @@ class _DocumentToImeSynchronizerState extends State<DocumentToImeSynchronizer> {
 
   void _onImeConnectionChange() {
     if (widget.imeConnection.isAttached) {
+      print("An IME connection was just opened. Sending current document and selection to IME.");
       // The IME just connected. Send over our current document and selection.
       _sendDocumentToImeOnNextFrame();
     }
