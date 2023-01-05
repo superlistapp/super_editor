@@ -178,7 +178,7 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor>
     print("BUILDING IME Interactor");
     return ImeFocusPolicy(
       focusNode: _focusNode,
-      closeIme: _documentImeConnection.close,
+      imeConnection: _documentImeConnection.imeConnection,
       child: DocumentSelectionOpenAndCloseImePolicy(
         focusNode: _focusNode,
         selection: widget.editContext.composer.selectionNotifier,

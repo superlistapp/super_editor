@@ -1,30 +1,30 @@
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 
 import 'document_ime_communication.dart';
 
-/// Widget that watches a [FocusNode] and instructs the client to [closeIme] when
+/// Widget that watches a [FocusNode] and closes the [imeConnection] when
 /// the [FocusNode] loses focus.
 class ImeFocusPolicy extends StatefulWidget {
   const ImeFocusPolicy({
     Key? key,
     this.focusNode,
     this.closeImeOnFocusLost = true,
-    required this.closeIme,
+    this.imeConnection,
     required this.child,
   }) : super(key: key);
 
   final FocusNode? focusNode;
 
-  /// Whether to instruct the client to [closeIme] when the [FocusNode] loses
-  /// focus.
+  /// Whether to close the [imeConnection] when the [FocusNode] loses focus.
   ///
   /// Defaults to `true`.
   final bool closeImeOnFocusLost;
 
-  /// Callback that should close the IME connection.
-  final VoidCallback closeIme;
+  /// The connection between this app and the platform Input Method Engine (IME).
+  final TextInputConnection? imeConnection;
 
   final Widget child;
 
@@ -62,7 +62,7 @@ class _ImeFocusPolicyState extends State<ImeFocusPolicy> {
   void _onFocusChange() {
     if (!_focusNode.hasFocus && widget.closeImeOnFocusLost) {
       editorImeLog.fine("Editor IME interactor lost focus. Closing the IME connection.");
-      widget.closeIme;
+      widget.imeConnection?.close();
     }
   }
 
