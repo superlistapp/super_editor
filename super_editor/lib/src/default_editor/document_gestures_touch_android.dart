@@ -954,6 +954,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   Widget _buildGestureInput({
     required Widget child,
   }) {
+    final gestureSettings = MediaQuery.maybeOf(context)?.gestureSettings;
     return RawGestureDetector(
       behavior: HitTestBehavior.translucent,
       gestures: <Type, GestureRecognizerFactory>{
@@ -963,7 +964,8 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
             recognizer
               ..onTapUp = _onTapUp
               ..onDoubleTapDown = _onDoubleTapDown
-              ..onTripleTapDown = _onTripleTapDown;
+              ..onTripleTapDown = _onTripleTapDown
+              ..gestureSettings = gestureSettings;
           },
         ),
       },
