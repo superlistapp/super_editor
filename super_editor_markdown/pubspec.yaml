@@ -14,7 +14,7 @@ dependencies:
     git:
       url: https://github.com/simpleclub-extended/super_editor
       path: super_editor
-      ref: stable
+      ref: simpleclub-stable
   logging: ^1.0.1
   markdown: ^5.0.0
 
