@@ -107,6 +107,8 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor>
   late final DocumentImeInputClient _documentImeClient;
   late final TextDeltasDocumentEditor _textDeltasDocumentEditor;
 
+  final _imeConnection = ValueNotifier<TextInputConnection?>(null);
+
   @override
   void initState() {
     super.initState();
@@ -125,7 +127,9 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor>
         _documentImeConnection.imeConnection?.setEditingState(newValue);
       },
     );
-    _documentImeConnection = DocumentImeConnection(imeClient: _documentImeClient);
+    _documentImeConnection = DocumentImeConnection(imeClient: _documentImeClient)
+      ..addListener(_onDocumentImeConnectionChange);
+    _imeConnection.addListener(_onImeConnectionChange);
 
     widget.softwareKeyboardController?.attach(this);
   }
@@ -144,7 +148,11 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor>
   void dispose() {
     widget.softwareKeyboardController?.detach();
 
-    _documentImeConnection.close();
+    _imeConnection.removeListener(_onImeConnectionChange);
+
+    _documentImeConnection
+      ..removeListener(_onDocumentImeConnectionChange)
+      ..close();
 
     if (widget.focusNode == null) {
       _focusNode.dispose();
@@ -173,29 +181,41 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor>
     _documentImeConnection.close();
   }
 
+  void _onDocumentImeConnectionChange() {
+    // Sync our local TextInputConnection reference with our DocumentImeConnection.
+    _imeConnection.value = _documentImeConnection.imeConnection;
+  }
+
+  void _onImeConnectionChange() {
+    // Sync our DocumentImeConnection with the latest TextInputConnection.
+    _documentImeConnection.imeConnection = _imeConnection.value;
+  }
+
   @override
   Widget build(BuildContext context) {
     print("BUILDING IME Interactor");
-    return ImeFocusPolicy(
+    return DocumentImeHardwareKeyEditor(
       focusNode: _focusNode,
-      imeConnection: _documentImeConnection.imeConnection,
-      child: DocumentSelectionOpenAndCloseImePolicy(
-        focusNode: _focusNode,
-        selection: widget.editContext.composer.selectionNotifier,
-        imeConnectionController: _documentImeConnection,
-        openKeyboardOnSelectionChange: widget.openKeyboardOnSelectionChange,
-        clearSelectionWhenImeDisconnects: widget.clearSelectionWhenImeDisconnects,
-        child: DocumentImeHardwareKeyEditor(
-          focusNode: _focusNode,
-          autofocus: widget.autofocus,
-          editContext: widget.editContext,
-          hardwareKeyboardActions: widget.hardwareKeyboardActions,
-          child: ListenableBuilder(
-            // Rebuilds whenever an IME connection opens or closes.
-            listenable: _documentImeConnection,
-            builder: (context) {
-              print("BUILDING Document IME connection listenable builder");
-              return DocumentToImeSynchronizer(
+      autofocus: widget.autofocus,
+      editContext: widget.editContext,
+      hardwareKeyboardActions: widget.hardwareKeyboardActions,
+      child: ListenableBuilder(
+        // Rebuilds whenever an IME connection opens or closes.
+        listenable: _documentImeConnection,
+        builder: (context) {
+          print("BUILDING Document IME connection listenable builder");
+          return ImeFocusPolicy(
+            focusNode: _focusNode,
+            imeConnection: _imeConnection.value,
+            child: DocumentSelectionOpenAndCloseImePolicy(
+              focusNode: _focusNode,
+              selection: widget.editContext.composer.selectionNotifier,
+              imeConnection: _imeConnection,
+              imeClientFactory: () => _documentImeClient,
+              imeConfiguration: _documentImeConnection.imeConfiguration.toTextInputConfiguration(),
+              openKeyboardOnSelectionChange: widget.openKeyboardOnSelectionChange,
+              clearSelectionWhenImeDisconnects: widget.clearSelectionWhenImeDisconnects,
+              child: DocumentToImeSynchronizer(
                 document: widget.editContext.editor.document,
                 selection: widget.editContext.composer.selectionNotifier,
                 imeConnection: _documentImeConnection,
@@ -205,10 +225,10 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor>
                   _documentImeClient,
                 ),
                 child: widget.child,
-              );
-            },
-          ),
-        ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }

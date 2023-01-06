@@ -282,6 +282,18 @@ class DocumentImeConnection with ChangeNotifier implements ImeConnection {
 
   TextInputConnection? get imeConnection => _imeConnection;
   TextInputConnection? _imeConnection;
+  set imeConnection(TextInputConnection? newConnection) {
+    if (newConnection == _imeConnection) {
+      return;
+    }
+
+    _imeConnection = newConnection;
+    if (_imeConnection != null) {
+      configureIme(_imeConfig);
+    }
+  }
+
+  DocumentImeConfiguration get imeConfiguration => _imeConfig;
   DocumentImeConfiguration _imeConfig = const DocumentImeConfiguration();
 
   /// Connects the platform Input Method Engine (IME) and (optionally) shows the
@@ -297,7 +309,7 @@ class DocumentImeConnection with ChangeNotifier implements ImeConnection {
       return true;
     }
 
-    _imeConnection = TextInput.attach(_imeClient, _createInputConfiguration());
+    _imeConnection = TextInput.attach(_imeClient, _imeConfig.toTextInputConfiguration());
     print("Opened IME connection: $imeConnection");
     if (imeConnection!.attached == false) {
       // We failed to connect to the platform IME.
@@ -341,20 +353,8 @@ class DocumentImeConnection with ChangeNotifier implements ImeConnection {
 
     _imeConfig = config;
     if (isAttached) {
-      _imeConnection!.updateConfig(_createInputConfiguration());
+      _imeConnection!.updateConfig(_imeConfig.toTextInputConfiguration());
     }
-  }
-
-  TextInputConfiguration _createInputConfiguration() {
-    return TextInputConfiguration(
-      enableDeltaModel: true,
-      inputType: TextInputType.multiline,
-      textCapitalization: TextCapitalization.sentences,
-      autocorrect: _imeConfig.enableAutocorrect,
-      enableSuggestions: _imeConfig.enableSuggestions,
-      inputAction: _imeConfig.keyboardActionButton,
-      keyboardAppearance: _imeConfig.keyboardBrightness,
-    );
   }
 
   /// Closes an open connection to the platform's Input Method Engine (IME).
@@ -675,6 +675,18 @@ class DocumentImeConfiguration {
   /// be cleared when the keyboard closes, because the special options behind the
   /// keyboard still need to operate on that selection.
   final bool clearSelectionWhenImeDisconnects;
+
+  TextInputConfiguration toTextInputConfiguration() {
+    return TextInputConfiguration(
+      enableDeltaModel: true,
+      inputType: TextInputType.multiline,
+      textCapitalization: TextCapitalization.sentences,
+      autocorrect: enableAutocorrect,
+      enableSuggestions: enableSuggestions,
+      inputAction: keyboardActionButton,
+      keyboardAppearance: keyboardBrightness,
+    );
+  }
 
   DocumentImeConfiguration copyWith({
     bool? enableAutocorrect,
