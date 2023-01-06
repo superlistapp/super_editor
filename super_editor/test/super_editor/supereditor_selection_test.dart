@@ -524,8 +524,6 @@ Second Paragraph
           )
           .pump();
 
-      print("--- placing caret in document");
-
       // Place caret in the middle of a word.
       await tester.placeCaretInParagraph('1', 8);
       expect(
@@ -538,16 +536,12 @@ Second Paragraph
         ),
       );
 
-      print("----- Moving focus to text field");
-
       // Focus the textfield.
       await tester.tap(find.byType(TextField));
       await tester.pumpAndSettle();
 
       // Ensure selection was cleared.
       expect(SuperEditorInspector.findDocumentSelection(), isNull);
-
-      print("----- Moving focus back to editor");
 
       // Press tab to focus the editor.
       await tester.pressTab();

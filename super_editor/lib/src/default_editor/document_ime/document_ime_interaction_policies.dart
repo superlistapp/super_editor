@@ -2,6 +2,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/flutter_scheduler.dart';
 
 /// Widget that watches a [FocusNode] and closes the [imeConnection] when
 /// the [FocusNode] loses focus.
@@ -61,7 +62,7 @@ class _ImeFocusPolicyState extends State<ImeFocusPolicy> {
 
   void _onFocusChange() {
     editorImeLog.finer(
-        "[${widget.runtimeType}] - onFocusChange(). Has focus: ${widget.focusNode.hashCode}. Close IME policy enabled: ${widget.closeImeOnFocusLost}");
+        "[${widget.runtimeType}] - onFocusChange(). Has focus: ${_focusNode.hasFocus}. Close IME policy enabled: ${widget.closeImeOnFocusLost}");
     if (!_focusNode.hasFocus && widget.closeImeOnFocusLost) {
       editorImeLog.info("[${widget.runtimeType}] - Document editor lost focus. Closing the IME connection.");
       widget.imeConnection?.close();
@@ -204,7 +205,7 @@ class _DocumentSelectionOpenAndCloseImePolicyState extends State<DocumentSelecti
 
   void _onSelectionChange() {
     editorImeLog.finer(
-        "[${widget.runtimeType}] onSelectionChange() - widget enabled: ${widget.isEnabled}, open keyboard on selection enabled: ${widget.openKeyboardOnSelectionChange}");
+        "[${widget.runtimeType}] onSelectionChange() - widget enabled: ${widget.isEnabled}, open keyboard on selection enabled: ${widget.openKeyboardOnSelectionChange}, selection: ${widget.selection.value}");
     if (!widget.isEnabled) {
       return;
     }
@@ -213,22 +214,36 @@ class _DocumentSelectionOpenAndCloseImePolicyState extends State<DocumentSelecti
       // There's a new document selection, and our policy wants the keyboard to be
       // displayed whenever the selection changes. Show the keyboard.
       editorImeLog.info("[${widget.runtimeType}] - opening the IME keyboard because the document selection changed");
-      widget.imeConnection.value ??= TextInput.attach(
-        widget.imeClientFactory(),
-        widget.imeConfiguration,
-      );
-      widget.imeConnection.value!.show();
+
+      if (widget.imeConnection.value == null || !widget.imeConnection.value!.attached) {
+        WidgetsBinding.instance.runAsSoonAsPossible(() {
+          if (!mounted) {
+            return;
+          }
+
+          editorImeLog.finer("[${widget.runtimeType}] - creating new TextInputConnection to IME");
+          widget.imeConnection.value = TextInput.attach(
+            widget.imeClientFactory(),
+            widget.imeConfiguration,
+          )..show();
+        }, debugLabel: 'Open IME Connection on Selection Change');
+      } else {
+        widget.imeConnection.value!.show();
+      }
     }
   }
 
   void _onConnectionChange() {
-    editorImeLog.finer(
-        "[${widget.runtimeType}] onConnectionChange() - widget enabled: ${widget.isEnabled}, clear selection when IME disconnects enabled: ${widget.clearSelectionWhenImeDisconnects}");
-    if (!widget.isEnabled) {
+    if (!mounted) {
       return;
     }
 
-    if (_wasAttached && !(widget.imeConnection.value?.attached ?? false) && widget.clearSelectionWhenImeDisconnects) {
+    editorImeLog.finer(
+        "[${widget.runtimeType}] onConnectionChange() - widget enabled: ${widget.isEnabled}, clear selection when IME disconnects enabled: ${widget.clearSelectionWhenImeDisconnects}, new connection: ${widget.imeConnection.value}, was attached before: $_wasAttached");
+    if (widget.isEnabled &&
+        widget.clearSelectionWhenImeDisconnects &&
+        _wasAttached &&
+        !(widget.imeConnection.value?.attached ?? false)) {
       // The IME connection closed and our policy wants us to clear the document
       // selection when that happens.
       editorImeLog.info("[${widget.runtimeType}] - clearing document selection because the IME closed");

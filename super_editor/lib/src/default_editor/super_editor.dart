@@ -12,7 +12,6 @@ import 'package:super_editor/src/core/styles.dart';
 import 'package:super_editor/src/default_editor/common_editor_operations.dart';
 import 'package:super_editor/src/default_editor/document_gestures_touch_android.dart';
 import 'package:super_editor/src/default_editor/document_gestures_touch_ios.dart';
-import 'package:super_editor/src/default_editor/document_hardware_keyboard/document_keyboard_actions.dart';
 import 'package:super_editor/src/default_editor/document_scrollable.dart';
 import 'package:super_editor/src/default_editor/list_items.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
@@ -473,7 +472,6 @@ class SuperEditorState extends State<SuperEditor> {
 
   @override
   Widget build(BuildContext context) {
-    print("BUILDING SuperEditor");
     return _buildInputSystem(
       child: _buildGestureSystem(
         documentLayout: SingleColumnDocumentLayout(
@@ -491,7 +489,6 @@ class SuperEditorState extends State<SuperEditor> {
   Widget _buildInputSystem({
     required Widget child,
   }) {
-    print("BUILDING input system with source: $_inputSource");
     switch (_inputSource) {
       case DocumentInputSource.keyboard:
         return SuperEditorHardwareKeyHandler(
@@ -502,7 +499,7 @@ class SuperEditorState extends State<SuperEditor> {
           child: child,
         );
       case DocumentInputSource.ime:
-        return DocumentImeInteractor(
+        return SuperEditorImeInteractor(
           focusNode: _focusNode,
           autofocus: widget.autofocus,
           editContext: editContext,
@@ -522,7 +519,6 @@ class SuperEditorState extends State<SuperEditor> {
   Widget _buildGestureSystem({
     required Widget documentLayout,
   }) {
-    print("BUILDING gesture mode: $_gestureMode");
     switch (_gestureMode) {
       case DocumentGestureMode.mouse:
         return _buildDesktopGestureSystem(documentLayout);

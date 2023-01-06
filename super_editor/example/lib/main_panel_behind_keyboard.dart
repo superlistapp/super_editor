@@ -1,5 +1,4 @@
 import 'package:example/demos/experiments/demo_panel_behind_keyboard.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:super_editor/super_editor.dart';

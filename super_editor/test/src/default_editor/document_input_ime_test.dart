@@ -129,11 +129,14 @@ void main() {
           ),
         );
 
+        // TODO: and this pump is for document_ime_communication
+        // await tester.pump();
+
         // Send the deltas that should produce a ü.
         //
         // We have to use implementation details to send the simulated IME deltas
         // because Flutter doesn't have any testing tools for IME deltas.
-        final imeInteractor = find.byType(DocumentImeInteractor).evaluate().first;
+        final imeInteractor = find.byType(SuperEditorImeInteractor).evaluate().first;
         final deltaClient = ((imeInteractor as StatefulElement).state as ImeInputOwner).imeClient;
 
         // Ensure that the delta client starts with the expected invisible placeholder

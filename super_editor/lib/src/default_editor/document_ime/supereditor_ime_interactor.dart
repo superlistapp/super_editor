@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
+import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/ime_input_owner.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
 
@@ -10,7 +11,7 @@ import 'document_delta_editing.dart';
 import 'document_ime_communication.dart';
 import 'document_ime_interaction_policies.dart';
 
-/// Document interactor that edits a document based on IME input
+/// [SuperEditor] interactor that edits a document based on IME input
 /// from the operating system.
 // TODO: instead of an IME interactor, try defining more granular interactors, e.g.,
 //       TextDeltaInteractor, FloatingCursorInteractor, ScribbleInteractor.
@@ -19,8 +20,8 @@ import 'document_ime_interaction_policies.dart';
 //       To make this division of responsibility possible, each of those interactors
 //       could receive a proxy TextInputClient, which allows each interactor to say
 //       proxyInputClient.addClient(myFocusedClient).
-class DocumentImeInteractor extends StatefulWidget {
-  const DocumentImeInteractor({
+class SuperEditorImeInteractor extends StatefulWidget {
+  const SuperEditorImeInteractor({
     Key? key,
     this.focusNode,
     this.autofocus = false,
@@ -95,10 +96,10 @@ class DocumentImeInteractor extends StatefulWidget {
   final Widget child;
 
   @override
-  State createState() => _DocumentImeInteractorState();
+  State createState() => _SuperEditorImeInteractorState();
 }
 
-class _DocumentImeInteractorState extends State<DocumentImeInteractor>
+class _SuperEditorImeInteractorState extends State<SuperEditorImeInteractor>
     implements ImeInputOwner, SoftwareKeyboardControllerDelegate {
   late FocusNode _focusNode;
 
@@ -134,7 +135,7 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor>
   }
 
   @override
-  void didUpdateWidget(DocumentImeInteractor oldWidget) {
+  void didUpdateWidget(SuperEditorImeInteractor oldWidget) {
     super.didUpdateWidget(oldWidget);
 
     if (widget.softwareKeyboardController != oldWidget.softwareKeyboardController) {
@@ -171,12 +172,13 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor>
 
   @override
   void open() {
-    print("IME Interactor: showing keyboard");
+    editorImeLog.info("[SuperEditorImeInteractor] - showing keyboard");
     _documentImeConnection.show();
   }
 
   @override
   void close() {
+    editorImeLog.info("[SuperEditorImeInteractor] - closing IME connection");
     _documentImeConnection.close();
   }
 
@@ -192,7 +194,6 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor>
 
   @override
   Widget build(BuildContext context) {
-    print("BUILDING IME Interactor");
     return SuperEditorHardwareKeyHandler(
       focusNode: _focusNode,
       editContext: widget.editContext,
@@ -200,9 +201,9 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor>
       autofocus: widget.autofocus,
       child: ListenableBuilder(
         // Rebuilds whenever an IME connection opens or closes.
-        listenable: _documentImeConnection,
+        // listenable: _documentImeConnection,
+        listenable: _imeConnection,
         builder: (context) {
-          print("BUILDING Document IME connection listenable builder");
           return ImeFocusPolicy(
             focusNode: _focusNode,
             imeConnection: _imeConnection.value,
@@ -245,7 +246,7 @@ class SoftwareKeyboardController {
   /// Attaches this controller to a delegate that knows how to open and
   /// close the software keyboard.
   void attach(SoftwareKeyboardControllerDelegate delegate) {
-    print("Attaching software keyboard controller to delegate: $delegate");
+    editorImeLog.finer("[SoftwareKeyboardController] - Attaching to delegate: $delegate");
     _delegate = delegate;
   }
 
@@ -254,7 +255,7 @@ class SoftwareKeyboardController {
   /// This controller can't open or close the software keyboard while
   /// detached from a delegate that knows how to make that happen.
   void detach() {
-    print("Detaching software keyboard controller from delegate");
+    editorImeLog.finer("[SoftwareKeyboardController] - Detaching from delegate: $_delegate");
     _delegate = null;
   }
 
@@ -310,5 +311,8 @@ class SuperEditorImeValue implements ImeValue {
   bool get isConnectedToIme => _imeConnection.isAttached;
 
   @override
-  void closeConnection() => _imeConnection.close();
+  void closeConnection() {
+    editorImeLog.finer("[SuperEditorImeValue] - Closing IME connection. Current connection: $_imeConnection");
+    _imeConnection.close();
+  }
 }

@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/flutter_scheduler.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
 
 import 'document_delta_editing.dart';
@@ -53,6 +54,7 @@ class DocumentToImeSynchronizer extends StatefulWidget {
 
 class _DocumentToImeSynchronizerState extends State<DocumentToImeSynchronizer> {
   DocumentImeSerializer? _currentImeSerialization;
+  bool _hasSentInitialImeValue = false;
   bool _needsSync = false;
 
   @override
@@ -99,31 +101,53 @@ class _DocumentToImeSynchronizerState extends State<DocumentToImeSynchronizer> {
   }
 
   void _onDocumentChange() {
-    print("[DocumentToImeSynchronizer] - document change. Sending document and selection to IME on the next frame.");
+    editorImeLog.finer(
+        "[DocumentToImeSynchronizer] - document change. Sending document and selection to IME on the next frame.");
     _sendDocumentToImeOnNextFrame();
   }
 
   void _onSelectionChange() {
     if (widget.selection.value == null) {
       // Without a selection, there's no place for IME input to go. Close the IME.
+      editorImeLog.info("[DocumentToImeSynchronizer] - Closing the IME connection because there's no selection");
       widget.imeValue.closeConnection();
     } else {
-      print("[DocumentToImeSynchronizer] - selection change. Sending document and selection to IME on the next frame.");
+      editorImeLog.finer(
+          "[DocumentToImeSynchronizer] - selection change. Sending document and selection to IME on the next frame.");
       _sendDocumentToImeOnNextFrame();
     }
   }
 
   void _onImeConnectionChange() {
     if (widget.imeConnection.isAttached) {
-      print("An IME connection was just opened. Sending current document and selection to IME.");
       // The IME just connected. Send over our current document and selection.
+      editorImeLog.fine(
+          "[DocumentToImeSynchronizer] - An IME connection was just opened. Sending current document and selection to IME.");
       _sendDocumentToImeOnNextFrame();
     }
   }
 
   void _sendDocumentToImeOnNextFrame() {
+    if (!_hasSentInitialImeValue) {
+      // If we haven't sent any version of the document to the IME, yet, then
+      // go ahead and greedily send the current document and selection. This is
+      // important in tests because tests run a single `pump()` and expect the
+      // initial document to be in the IME already. If we wait another frame, then
+      // some tests will need to `pump()` a 2nd time, but those tests won't understand
+      // why they need to do that. We avoid that confusion by immediately sending
+      // the document to the IME for the first version of the document that we get.
+      WidgetsBinding.instance.runAsSoonAsPossible(_sendDocumentToIme);
+      return;
+    }
+
     _needsSync = true;
     WidgetsBinding.instance.scheduleFrameCallback((timeStamp) {
+      if (!mounted) {
+        // This widget is no longer in the tree. Assume that means we shouldn't
+        // talk to the IME, anymore.
+        return;
+      }
+
       // Send the document to the IME so that we give the editing system an opportunity to
       // make all desired changes. Otherwise, we might send the document and selection to
       // the IME in the middle of an operation that's in an inconsistent state.
@@ -140,20 +164,21 @@ class _DocumentToImeSynchronizerState extends State<DocumentToImeSynchronizer> {
   }
 
   void _sendDocumentToIme() {
+    editorImeLog.fine("[DocumentToImeSynchronizer] - Trying to send document to IME");
     if (!widget.imeValue.isConnectedToIme) {
+      editorImeLog.fine("[DocumentToImeSynchronizer] - Not connected to IME. Not sending document to IME.");
       return;
     }
-
-    print("Sending document to IME with composing region: ${widget.imeComposingRegion.value}");
 
     if (widget.selection.value == null) {
       // There's no selection, which means there's nothing to edit. Return.
-      print("There's no document selection. Not sending anything to IME.");
+      editorImeLog.fine("[DocumentToImeSynchronizer] - There's no document selection. Not sending anything to IME.");
       return;
     }
 
-    editorImeLog.fine("Serializing and sending document and selection to IME");
-    editorImeLog.fine("Selection: ${widget.selection.value}");
+    editorImeLog.fine("[DocumentToImeSynchronizer] - Serializing and sending document and selection to IME");
+    editorImeLog.fine("[DocumentToImeSynchronizer] - Selection: ${widget.selection.value}");
+    editorImeLog.fine("[DocumentToImeSynchronizer] - Composing region: ${widget.imeComposingRegion.value}");
     final newDocSerialization = DocumentImeSerializer(
       widget.document,
       widget.selection.value!,
@@ -206,10 +231,11 @@ class _DocumentToImeSynchronizerState extends State<DocumentToImeSynchronizer> {
 
     _currentImeSerialization = newDocSerialization;
     final textEditingValue = newDocSerialization.toTextEditingValue().copyWith(composing: composingRegion);
-    print("Sending IME serialization:");
-    print("$textEditingValue");
-    print("Setting currentTextEditingValue on ImeValue");
+    editorImeLog.fine("[DocumentToImeSynchronizer] - Sending IME serialization:");
+    editorImeLog.fine("[DocumentToImeSynchronizer] - $textEditingValue");
     widget.imeValue.currentTextEditingValue = textEditingValue;
+    editorImeLog.fine("[DocumentToImeSynchronizer] - Done sending document to IME");
+    _hasSentInitialImeValue = true;
   }
 
   @override
@@ -287,10 +313,12 @@ class DocumentImeConnection with ChangeNotifier implements ImeConnection {
       return;
     }
 
+    editorImeLog.fine("[DocumentImeConnection] - received new IME connection: $newConnection");
     _imeConnection = newConnection;
     if (_imeConnection != null) {
       configureIme(_imeConfig);
     }
+    notifyListeners();
   }
 
   DocumentImeConfiguration get imeConfiguration => _imeConfig;
@@ -310,10 +338,10 @@ class DocumentImeConnection with ChangeNotifier implements ImeConnection {
     }
 
     _imeConnection = TextInput.attach(_imeClient, _imeConfig.toTextInputConfiguration());
-    print("Opened IME connection: $imeConnection");
+    editorImeLog.fine("[DocumentImeConnection] - Opened IME connection: $imeConnection");
     if (imeConnection!.attached == false) {
       // We failed to connect to the platform IME.
-      print("IME connection is not attached. Null'ing it out");
+      editorImeLog.warning("[DocumentImeConnection] - new IME connection is not attached. Null'ing it out");
       _imeConnection = null;
       return false;
     }
@@ -333,13 +361,15 @@ class DocumentImeConnection with ChangeNotifier implements ImeConnection {
   /// To open an IME connection, use [open].
   @override
   void show() {
+    editorImeLog.info("[DocumentImeConnection] - Showing IME");
     if (!isAttached) {
-      print("Not attached. Opening connection to show keyboard.");
+      editorImeLog
+          .info("[DocumentImeConnection] - IME is not yet connected/attached. Opening connection to show keyboard.");
       open();
       return;
     }
 
-    print("Already attached. Calling show()");
+    editorImeLog.info("[DocumentImeConnection] - IME is already attached. Calling show()");
     imeConnection!.show();
   }
 
@@ -364,7 +394,7 @@ class DocumentImeConnection with ChangeNotifier implements ImeConnection {
       return;
     }
 
-    print("Closing IME connection");
+    editorImeLog.info("[DocumentImeConnection] - Closing IME connection");
     _imeConnection!.close();
     _imeConnection = null;
 
@@ -397,7 +427,7 @@ class _ClosureAwareImeClientDecorator implements DeltaTextInputClient {
 
   @override
   void connectionClosed() {
-    print("[_ClosureAwareImeClientDecorator] - IME connection was closed");
+    editorImeLog.fine("[_ClosureAwareImeClientDecorator] - IME connection was closed");
     _onConnectionClosed();
     _client.connectionClosed();
   }
@@ -492,7 +522,6 @@ class DocumentImeInputClient with TextInputClient, DeltaTextInputClient {
   TextEditingValue _currentTextEditingValue = const TextEditingValue();
   TextEditingValue? _lastTextEditingValueSentToOs;
   set currentTextEditingValue(TextEditingValue newValue) {
-    print("Setting currentTextEditingValue to $newValue");
     _currentTextEditingValue = newValue;
 
     if (isApplyingDeltas) {
@@ -553,14 +582,12 @@ class DocumentImeInputClient with TextInputClient, DeltaTextInputClient {
 
   @override
   void updateEditingValue(TextEditingValue value) {
-    print("updateEditingValue: $value");
     editorImeLog.info("Received new TextEditingValue from OS: $value");
     _currentTextEditingValue = value;
   }
 
   @override
   void updateEditingValueWithDeltas(List<TextEditingDelta> textEditingDeltas) {
-    print("updateEditingValueWithDeltas: $textEditingDeltas");
     if (textEditingDeltas.isEmpty) {
       return;
     }
