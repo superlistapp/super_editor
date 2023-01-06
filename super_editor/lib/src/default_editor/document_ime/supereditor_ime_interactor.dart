@@ -5,10 +5,9 @@ import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/ime_input_owner.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
 
-import '../document_input_keyboard.dart';
+import '../document_hardware_keyboard/document_input_keyboard.dart';
 import 'document_delta_editing.dart';
 import 'document_ime_communication.dart';
-import 'document_ime_hardware_keyboard.dart';
 import 'document_ime_interaction_policies.dart';
 
 /// Document interactor that edits a document based on IME input
@@ -194,11 +193,11 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor>
   @override
   Widget build(BuildContext context) {
     print("BUILDING IME Interactor");
-    return DocumentImeHardwareKeyEditor(
+    return SuperEditorHardwareKeyHandler(
       focusNode: _focusNode,
-      autofocus: widget.autofocus,
       editContext: widget.editContext,
-      hardwareKeyboardActions: widget.hardwareKeyboardActions,
+      keyboardActions: widget.hardwareKeyboardActions,
+      autofocus: widget.autofocus,
       child: ListenableBuilder(
         // Rebuilds whenever an IME connection opens or closes.
         listenable: _documentImeConnection,

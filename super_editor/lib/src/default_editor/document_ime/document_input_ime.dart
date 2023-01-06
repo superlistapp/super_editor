@@ -1,6 +1,5 @@
 export 'document_delta_editing.dart';
 export 'document_ime_communication.dart';
-export 'document_ime_hardware_keyboard.dart';
 export 'document_ime_interaction_policies.dart';
 export 'supereditor_ime_interactor.dart';
 export 'document_serialization.dart';

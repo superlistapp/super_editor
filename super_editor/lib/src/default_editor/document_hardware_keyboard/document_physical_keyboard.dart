@@ -1,55 +1,57 @@
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/edit_context.dart';
-import 'package:super_editor/src/default_editor/document_input_keyboard.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
 
 /// Applies appropriate edits to a document and selection when the user presses
-/// hardware keys during IME editing.
+/// hardware keys.
 ///
 /// Hardware key events are dispatched through [FocusNode]s, therefore, this
 /// widget's [FocusNode] needs to be focused for key events to be applied. A
 /// [FocusNode] can be provided, or this widget will create its own [FocusNode]
 /// internally, which is wrapped around the given [child].
 ///
-/// Flutter reports certain IME key presses as if they were physical key presses.
-/// For example, we might receive arrow key or tab presses through the standard
-/// hardware key reporting system, even though the user is typing on a software
-/// keyboard.
-class DocumentImeHardwareKeyEditor extends StatefulWidget {
-  const DocumentImeHardwareKeyEditor({
+/// [keyboardActions] determines the mapping from keyboard key presses
+/// to document editing behaviors. [keyboardActions] operates as a
+/// Chain of Responsibility.
+class SuperEditorHardwareKeyHandler extends StatefulWidget {
+  const SuperEditorHardwareKeyHandler({
     Key? key,
     this.focusNode,
-    this.autofocus = false,
     required this.editContext,
-    this.hardwareKeyboardActions = const [],
+    this.keyboardActions = const [],
+    this.autofocus = false,
     required this.child,
   }) : super(key: key);
 
+  /// The source of all key events.
   final FocusNode? focusNode;
 
-  final bool autofocus;
-
+  /// Service locator for document editing dependencies.
   final EditContext editContext;
 
-  /// All the actions that the user can execute with physical hardware
-  /// keyboard keys.
+  /// All the actions that the user can execute with keyboard keys.
   ///
   /// [keyboardActions] operates as a Chain of Responsibility. Starting
   /// from the beginning of the list, a [DocumentKeyboardAction] is
   /// given the opportunity to handle the currently pressed keys. If that
   /// [DocumentKeyboardAction] reports the keys as handled, then execution
   /// stops. Otherwise, execution continues to the next [DocumentKeyboardAction].
-  final List<DocumentKeyboardAction> hardwareKeyboardActions;
+  final List<DocumentKeyboardAction> keyboardActions;
 
+  /// Whether or not the [SuperEditorHardwareKeyHandler] should autofocus
+  final bool autofocus;
+
+  /// The [child] widget, which is expected to include the document UI
+  /// somewhere in the sub-tree.
   final Widget child;
 
   @override
-  State<DocumentImeHardwareKeyEditor> createState() => _DocumentImeHardwareKeyEditorState();
+  State<SuperEditorHardwareKeyHandler> createState() => _SuperEditorHardwareKeyHandlerState();
 }
 
-class _DocumentImeHardwareKeyEditorState extends State<DocumentImeHardwareKeyEditor> {
+class _SuperEditorHardwareKeyHandlerState extends State<SuperEditorHardwareKeyHandler> {
   late FocusNode _focusNode;
 
   @override
@@ -72,11 +74,11 @@ class _DocumentImeHardwareKeyEditorState extends State<DocumentImeHardwareKeyEdi
       return KeyEventResult.handled;
     }
 
-    editorKeyLog.fine("Handling key press: $keyEvent");
+    editorKeyLog.info("Handling key press: $keyEvent");
     ExecutionInstruction instruction = ExecutionInstruction.continueExecution;
     int index = 0;
-    while (instruction == ExecutionInstruction.continueExecution && index < widget.hardwareKeyboardActions.length) {
-      instruction = widget.hardwareKeyboardActions[index](
+    while (instruction == ExecutionInstruction.continueExecution && index < widget.keyboardActions.length) {
+      instruction = widget.keyboardActions[index](
         editContext: widget.editContext,
         keyEvent: keyEvent,
       );
@@ -96,9 +98,39 @@ class _DocumentImeHardwareKeyEditorState extends State<DocumentImeHardwareKeyEdi
   Widget build(BuildContext context) {
     return Focus(
       focusNode: _focusNode,
+      onKey: widget.keyboardActions.isEmpty ? null : _onKeyPressed,
       autofocus: widget.autofocus,
-      onKey: widget.hardwareKeyboardActions.isEmpty ? null : _onKeyPressed,
       child: widget.child,
     );
   }
+}
+
+/// Executes this action, if the action wants to run, and returns
+/// a desired `ExecutionInstruction` to either continue or halt
+/// execution of actions.
+///
+/// It is possible that an action makes changes and then returns
+/// `ExecutionInstruction.continueExecution` to continue execution.
+///
+/// It is possible that an action does nothing and then returns
+/// `ExecutionInstruction.haltExecution` to prevent further execution.
+typedef DocumentKeyboardAction = ExecutionInstruction Function({
+  required EditContext editContext,
+  required RawKeyEvent keyEvent,
+});
+
+/// A [DocumentKeyboardAction] that reports [ExecutionInstruction.blocked]
+/// for any key combination that matches one of the given [keys].
+DocumentKeyboardAction ignoreKeyCombos(List<ShortcutActivator> keys) {
+  return ({
+    required EditContext editContext,
+    required RawKeyEvent keyEvent,
+  }) {
+    for (final key in keys) {
+      if (key.accepts(keyEvent, RawKeyboard.instance)) {
+        return ExecutionInstruction.blocked;
+      }
+    }
+    return ExecutionInstruction.continueExecution;
+  };
 }

@@ -12,6 +12,7 @@ import 'package:super_editor/src/core/styles.dart';
 import 'package:super_editor/src/default_editor/common_editor_operations.dart';
 import 'package:super_editor/src/default_editor/document_gestures_touch_android.dart';
 import 'package:super_editor/src/default_editor/document_gestures_touch_ios.dart';
+import 'package:super_editor/src/default_editor/document_hardware_keyboard/document_keyboard_actions.dart';
 import 'package:super_editor/src/default_editor/document_scrollable.dart';
 import 'package:super_editor/src/default_editor/list_items.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
@@ -22,8 +23,7 @@ import 'blockquote.dart';
 import 'document_caret_overlay.dart';
 import 'document_gestures_mouse.dart';
 import 'document_ime/document_input_ime.dart';
-import 'document_input_keyboard.dart';
-import 'document_keyboard_actions.dart';
+import 'document_hardware_keyboard/document_input_keyboard.dart';
 import 'horizontal_rule.dart';
 import 'image.dart';
 import 'layout_single_column/layout_single_column.dart';
@@ -494,7 +494,7 @@ class SuperEditorState extends State<SuperEditor> {
     print("BUILDING input system with source: $_inputSource");
     switch (_inputSource) {
       case DocumentInputSource.keyboard:
-        return DocumentKeyboardInteractor(
+        return SuperEditorHardwareKeyHandler(
           focusNode: _focusNode,
           autofocus: widget.autofocus,
           editContext: editContext,

@@ -5,10 +5,9 @@ import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
+import 'package:super_editor/src/default_editor/paragraph.dart';
+import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
-
-import 'paragraph.dart';
-import 'text.dart';
 
 ExecutionInstruction doNothingWhenThereIsNoSelection({
   required EditContext editContext,
