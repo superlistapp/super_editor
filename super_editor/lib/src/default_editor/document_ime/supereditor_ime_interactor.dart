@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/edit_context.dart';
-import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/ime_input_owner.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
@@ -127,6 +126,7 @@ class _SuperEditorImeInteractorState extends State<SuperEditorImeInteractor>
         _documentImeConnection.imeConnection?.setEditingState(newValue);
       },
     );
+    // TODO: replace DocumentImeConnection with the regular TextInputConnection
     _documentImeConnection = DocumentImeConnection(imeClient: _documentImeClient)
       ..addListener(_onDocumentImeConnectionChange);
     _imeConnection.addListener(_onImeConnectionChange);
@@ -188,6 +188,7 @@ class _SuperEditorImeInteractorState extends State<SuperEditorImeInteractor>
   }
 
   void _onImeConnectionChange() {
+    print("[IME Interactor] - on IME connection change: ${_imeConnection.value}");
     // Sync our DocumentImeConnection with the latest TextInputConnection.
     _documentImeConnection.imeConnection = _imeConnection.value;
   }
@@ -199,43 +200,35 @@ class _SuperEditorImeInteractorState extends State<SuperEditorImeInteractor>
       editContext: widget.editContext,
       keyboardActions: widget.hardwareKeyboardActions,
       autofocus: widget.autofocus,
-      child: ListenableBuilder(
-        // Rebuilds whenever an IME connection opens or closes.
-        // listenable: _documentImeConnection,
-        listenable: _imeConnection,
-        builder: (context) {
-          return ImeFocusPolicy(
-            focusNode: _focusNode,
-            imeConnection: _imeConnection.value,
-            child: DocumentSelectionOpenAndCloseImePolicy(
-              focusNode: _focusNode,
-              selection: widget.editContext.composer.selectionNotifier,
-              imeConnection: _imeConnection,
-              imeClientFactory: () => _documentImeClient,
-              imeConfiguration: _documentImeConnection.imeConfiguration.toTextInputConfiguration(),
-              openKeyboardOnSelectionChange: widget.openKeyboardOnSelectionChange,
-              clearSelectionWhenImeDisconnects: widget.clearSelectionWhenImeDisconnects,
-              child: DocumentToImeSynchronizer(
-                document: widget.editContext.editor.document,
-                selection: widget.editContext.composer.selectionNotifier,
-                imeConnection: _documentImeConnection,
-                imeComposingRegion: widget.editContext.composer.imeComposingRegion,
-                imeValue: SuperEditorImeValue(
-                  _documentImeConnection,
-                  _documentImeClient,
-                ),
-                child: widget.child,
-              ),
-            ),
-          );
-        },
+      child: DocumentSelectionOpenAndCloseImePolicy(
+        focusNode: _focusNode,
+        selection: widget.editContext.composer.selectionNotifier,
+        imeConnection: _imeConnection,
+        imeClientFactory: () => _documentImeClient,
+        imeConfiguration: _documentImeConnection.imeConfiguration,
+        openKeyboardOnSelectionChange: widget.openKeyboardOnSelectionChange,
+        clearSelectionWhenImeDisconnects: widget.clearSelectionWhenImeDisconnects,
+        child: ImeFocusPolicy(
+          focusNode: _focusNode,
+          imeConnection: _imeConnection,
+          child: DocumentToImeSynchronizer(
+            document: widget.editContext.editor.document,
+            selection: widget.editContext.composer.selectionNotifier,
+            imeComposingRegion: widget.editContext.composer.imeComposingRegion,
+            imeConnection: _imeConnection,
+            documentImeClient: _documentImeClient,
+            child: widget.child,
+          ),
+        ),
       ),
     );
   }
 }
 
-/// Controller that can be used to open and close the software keyboard
-/// from outside of `SuperEditor`.
+/// `SuperEditor` controller that opens and closes the software keyboard.
+///
+/// A [SoftwareKeyboardController] must be attached to a
+/// [SoftwareKeyboardControllerDelegate] to open and close the software keyboard.
 class SoftwareKeyboardController {
   SoftwareKeyboardControllerDelegate? _delegate;
 
@@ -278,7 +271,7 @@ class SoftwareKeyboardController {
   }
 }
 
-/// Delegate that's attached to a [SoftwareKeyboardController] to implement
+/// Delegate that's attached to a [SoftwareKeyboardController], which implements
 /// the opening and closing of the software keyboard.
 abstract class SoftwareKeyboardControllerDelegate {
   /// Whether this delegate is currently connected to the platform IME.
@@ -315,4 +308,96 @@ class SuperEditorImeValue implements ImeValue {
     editorImeLog.finer("[SuperEditorImeValue] - Closing IME connection. Current connection: $_imeConnection");
     _imeConnection.close();
   }
+}
+
+/// Input Method Engine (IME) configuration for document text input.
+///
+/// The IME is an operating system component that observes text that's
+/// being edited, and intercepts keyboard input to apply transforms to
+/// the user's input. The alternative to IME input is for an app to
+/// listen and respond to each individual keyboard key. On mobile, IME
+/// input is the only available input system because there is no physical
+/// keyboard.
+class SuperEditorImeConfiguration {
+  const SuperEditorImeConfiguration({
+    this.enableAutocorrect = true,
+    this.enableSuggestions = true,
+    this.keyboardBrightness = Brightness.light,
+    this.keyboardActionButton = TextInputAction.newline,
+    this.clearSelectionWhenImeDisconnects = false,
+  });
+
+  /// Whether the OS should offer auto-correction options to the user.
+  final bool enableAutocorrect;
+
+  /// Whether the OS should offer text completion suggestions to the user.
+  final bool enableSuggestions;
+
+  /// The brightness of the software keyboard (only applies to platforms
+  /// with a software keyboard).
+  final Brightness keyboardBrightness;
+
+  /// The action button that's displayed on a software keyboard, e.g.,
+  /// new-line, done, go, etc.
+  final TextInputAction keyboardActionButton;
+
+  /// Whether the document's selection should be cleared (removed) when the
+  /// IME disconnects, i.e., the software keyboard closes.
+  ///
+  /// Typically, on devices with software keyboards, the keyboard is critical
+  /// to all document editing. In such cases, it should be reasonable to clear
+  /// the selection when the keyboard closes.
+  ///
+  /// Some apps include editing features that can operate when the keyboard is
+  /// closed. For example, some apps display special editing options behind the
+  /// keyboard. The user closes the keyboard, uses the special options, and then
+  /// re-opens the keyboard. In this case, the document selection **shouldn't**
+  /// be cleared when the keyboard closes, because the special options behind the
+  /// keyboard still need to operate on that selection.
+  final bool clearSelectionWhenImeDisconnects;
+
+  TextInputConfiguration toTextInputConfiguration() {
+    return TextInputConfiguration(
+      enableDeltaModel: true,
+      inputType: TextInputType.multiline,
+      textCapitalization: TextCapitalization.sentences,
+      autocorrect: enableAutocorrect,
+      enableSuggestions: enableSuggestions,
+      inputAction: keyboardActionButton,
+      keyboardAppearance: keyboardBrightness,
+    );
+  }
+
+  SuperEditorImeConfiguration copyWith({
+    bool? enableAutocorrect,
+    bool? enableSuggestions,
+    Brightness? keyboardBrightness,
+    TextInputAction? keyboardActionButton,
+    bool? clearSelectionWhenImeDisconnects,
+  }) {
+    return SuperEditorImeConfiguration(
+      enableAutocorrect: enableAutocorrect ?? this.enableAutocorrect,
+      enableSuggestions: enableSuggestions ?? this.enableSuggestions,
+      keyboardBrightness: keyboardBrightness ?? this.keyboardBrightness,
+      keyboardActionButton: keyboardActionButton ?? this.keyboardActionButton,
+      clearSelectionWhenImeDisconnects: clearSelectionWhenImeDisconnects ?? this.clearSelectionWhenImeDisconnects,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SuperEditorImeConfiguration &&
+          runtimeType == other.runtimeType &&
+          enableAutocorrect == other.enableAutocorrect &&
+          enableSuggestions == other.enableSuggestions &&
+          keyboardBrightness == other.keyboardBrightness &&
+          keyboardActionButton == other.keyboardActionButton;
+
+  @override
+  int get hashCode =>
+      enableAutocorrect.hashCode ^
+      enableSuggestions.hashCode ^
+      keyboardBrightness.hashCode ^
+      keyboardActionButton.hashCode;
 }

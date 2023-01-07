@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/document_selection.dart';
@@ -11,7 +12,7 @@ class ImeFocusPolicy extends StatefulWidget {
     Key? key,
     this.focusNode,
     this.closeImeOnFocusLost = true,
-    this.imeConnection,
+    required this.imeConnection,
     required this.child,
   }) : super(key: key);
 
@@ -25,7 +26,7 @@ class ImeFocusPolicy extends StatefulWidget {
   final bool closeImeOnFocusLost;
 
   /// The connection between this app and the platform Input Method Engine (IME).
-  final TextInputConnection? imeConnection;
+  final ValueListenable<TextInputConnection?> imeConnection;
 
   final Widget child;
 
@@ -65,7 +66,7 @@ class _ImeFocusPolicyState extends State<ImeFocusPolicy> {
         "[${widget.runtimeType}] - onFocusChange(). Has focus: ${_focusNode.hasFocus}. Close IME policy enabled: ${widget.closeImeOnFocusLost}");
     if (!_focusNode.hasFocus && widget.closeImeOnFocusLost) {
       editorImeLog.info("[${widget.runtimeType}] - Document editor lost focus. Closing the IME connection.");
-      widget.imeConnection?.close();
+      widget.imeConnection.value?.close();
     }
   }
 

@@ -25,26 +25,37 @@ class DocumentToImeSynchronizer extends StatefulWidget {
     required this.selection,
     required this.imeComposingRegion,
     required this.imeConnection,
-    required this.imeValue,
+    required this.documentImeClient,
     required this.child,
   }) : super(key: key);
 
   /// [Document] whose content is serialized and sent to the platform IME.
   final Document document;
 
-  /// Notifies this widget of changes to a document's selection.
+  /// The document's current selection.
   final ValueNotifier<DocumentSelection?> selection;
 
   /// The platform IME's desired composing region, which represents a section
   /// of IME text that the platform is thinking about changing, such as spelling
   /// autocorrection.
-  final ValueNotifier<TextRange> imeComposingRegion;
+  final ValueListenable<TextRange> imeComposingRegion;
 
   /// A connection to the platform IME, which might be open or closed.
-  final ImeConnection imeConnection;
+  ///
+  /// For Flutter test timing purposes, it's critical that [imeConnection] be
+  /// a [ValueListenable]. By notifying this widget through a [ValueListenable],
+  /// this widget is able to talk to the IME immediately, without waiting for
+  /// another tree pump, i.e., `didUpdateWidget()`. In other words, by using
+  /// a [ValueListenable] instead of a raw [TextInputConnection], this widget
+  /// can setup the initial IME content on the very first `pumpWidget()` within
+  /// a test, without requiring additional `pump()`s. Existing tests depend on
+  /// this fact.
+  final ValueListenable<TextInputConnection?> imeConnection;
 
-  /// The IME's current editing value.
-  final ImeValue imeValue;
+  /// A client that knows how to talk to the platform IME, by receiving
+  /// content updates from the platform, and then subsequently sending
+  /// new content values to the platform.
+  final DocumentImeInputClient documentImeClient;
 
   final Widget child;
 
@@ -77,7 +88,7 @@ class _DocumentToImeSynchronizerState extends State<DocumentToImeSynchronizer> {
     if (widget.document != oldWidget.document) {
       oldWidget.document.removeListener(_onDocumentChange);
       widget.document.addListener(_onDocumentChange);
-      _sendDocumentToIme();
+      _sendDocumentToImeOnNextFrame();
     }
 
     if (widget.selection != oldWidget.selection) {
@@ -89,6 +100,7 @@ class _DocumentToImeSynchronizerState extends State<DocumentToImeSynchronizer> {
     if (widget.imeConnection != oldWidget.imeConnection) {
       oldWidget.imeConnection.removeListener(_onImeConnectionChange);
       widget.imeConnection.addListener(_onImeConnectionChange);
+      _onImeConnectionChange();
     }
   }
 
@@ -108,9 +120,10 @@ class _DocumentToImeSynchronizerState extends State<DocumentToImeSynchronizer> {
 
   void _onSelectionChange() {
     if (widget.selection.value == null) {
+      // TODO: move this to a policy widget
       // Without a selection, there's no place for IME input to go. Close the IME.
       editorImeLog.info("[DocumentToImeSynchronizer] - Closing the IME connection because there's no selection");
-      widget.imeValue.closeConnection();
+      widget.imeConnection.value?.close();
     } else {
       editorImeLog.finer(
           "[DocumentToImeSynchronizer] - selection change. Sending document and selection to IME on the next frame.");
@@ -119,7 +132,9 @@ class _DocumentToImeSynchronizerState extends State<DocumentToImeSynchronizer> {
   }
 
   void _onImeConnectionChange() {
-    if (widget.imeConnection.isAttached) {
+    print(
+        "[IME synchronizer] - connection changed: ${widget.imeConnection}, attached: ${widget.imeConnection.value?.attached}");
+    if (widget.imeConnection.value != null && widget.imeConnection.value!.attached) {
       // The IME just connected. Send over our current document and selection.
       editorImeLog.fine(
           "[DocumentToImeSynchronizer] - An IME connection was just opened. Sending current document and selection to IME.");
@@ -165,7 +180,8 @@ class _DocumentToImeSynchronizerState extends State<DocumentToImeSynchronizer> {
 
   void _sendDocumentToIme() {
     editorImeLog.fine("[DocumentToImeSynchronizer] - Trying to send document to IME");
-    if (!widget.imeValue.isConnectedToIme) {
+    // if (!widget.imeValue.isConnectedToIme) {
+    if (widget.imeConnection.value == null || !widget.imeConnection.value!.attached) {
       editorImeLog.fine("[DocumentToImeSynchronizer] - Not connected to IME. Not sending document to IME.");
       return;
     }
@@ -233,7 +249,9 @@ class _DocumentToImeSynchronizerState extends State<DocumentToImeSynchronizer> {
     final textEditingValue = newDocSerialization.toTextEditingValue().copyWith(composing: composingRegion);
     editorImeLog.fine("[DocumentToImeSynchronizer] - Sending IME serialization:");
     editorImeLog.fine("[DocumentToImeSynchronizer] - $textEditingValue");
-    widget.imeValue.currentTextEditingValue = textEditingValue;
+    // widget.imeValue.currentTextEditingValue = textEditingValue;
+    // widget.imeConnection!.setEditingState(textEditingValue);
+    widget.documentImeClient.currentTextEditingValue = textEditingValue;
     editorImeLog.fine("[DocumentToImeSynchronizer] - Done sending document to IME");
     _hasSentInitialImeValue = true;
   }
@@ -321,8 +339,8 @@ class DocumentImeConnection with ChangeNotifier implements ImeConnection {
     notifyListeners();
   }
 
-  DocumentImeConfiguration get imeConfiguration => _imeConfig;
-  DocumentImeConfiguration _imeConfig = const DocumentImeConfiguration();
+  TextInputConfiguration get imeConfiguration => _imeConfig;
+  TextInputConfiguration _imeConfig = const TextInputConfiguration();
 
   /// Connects the platform Input Method Engine (IME) and (optionally) shows the
   /// standard input UI, e.g., a software keyboard.
@@ -337,7 +355,7 @@ class DocumentImeConnection with ChangeNotifier implements ImeConnection {
       return true;
     }
 
-    _imeConnection = TextInput.attach(_imeClient, _imeConfig.toTextInputConfiguration());
+    _imeConnection = TextInput.attach(_imeClient, _imeConfig);
     editorImeLog.fine("[DocumentImeConnection] - Opened IME connection: $imeConnection");
     if (imeConnection!.attached == false) {
       // We failed to connect to the platform IME.
@@ -376,14 +394,14 @@ class DocumentImeConnection with ChangeNotifier implements ImeConnection {
   /// Sets the desired [TextInputConfiguration] for the IME to the given [config],
   /// and updates the existing platform configuration, if this [DocumentImeConnection] is
   /// currently connected to the platform IME.
-  void configureIme(DocumentImeConfiguration config) {
+  void configureIme(TextInputConfiguration config) {
     if (config == _imeConfig) {
       return;
     }
 
     _imeConfig = config;
     if (isAttached) {
-      _imeConnection!.updateConfig(_imeConfig.toTextInputConfiguration());
+      _imeConnection!.updateConfig(_imeConfig);
     }
   }
 
@@ -655,96 +673,4 @@ class DocumentImeInputClient with TextInputClient, DeltaTextInputClient {
   void connectionClosed() {
     editorImeLog.info("IME connection closed");
   }
-}
-
-/// Input Method Engine (IME) configuration for document text input.
-///
-/// The IME is an operating system component that observes text that's
-/// being edited, and intercepts keyboard input to apply transforms to
-/// the user's input. The alternative to IME input is for an app to
-/// listen and respond to each individual keyboard key. On mobile, IME
-/// input is the only available input system because there is no physical
-/// keyboard.
-class DocumentImeConfiguration {
-  const DocumentImeConfiguration({
-    this.enableAutocorrect = true,
-    this.enableSuggestions = true,
-    this.keyboardBrightness = Brightness.light,
-    this.keyboardActionButton = TextInputAction.newline,
-    this.clearSelectionWhenImeDisconnects = false,
-  });
-
-  /// Whether the OS should offer auto-correction options to the user.
-  final bool enableAutocorrect;
-
-  /// Whether the OS should offer text completion suggestions to the user.
-  final bool enableSuggestions;
-
-  /// The brightness of the software keyboard (only applies to platforms
-  /// with a software keyboard).
-  final Brightness keyboardBrightness;
-
-  /// The action button that's displayed on a software keyboard, e.g.,
-  /// new-line, done, go, etc.
-  final TextInputAction keyboardActionButton;
-
-  /// Whether the document's selection should be cleared (removed) when the
-  /// IME disconnects, i.e., the software keyboard closes.
-  ///
-  /// Typically, on devices with software keyboards, the keyboard is critical
-  /// to all document editing. In such cases, it should be reasonable to clear
-  /// the selection when the keyboard closes.
-  ///
-  /// Some apps include editing features that can operate when the keyboard is
-  /// closed. For example, some apps display special editing options behind the
-  /// keyboard. The user closes the keyboard, uses the special options, and then
-  /// re-opens the keyboard. In this case, the document selection **shouldn't**
-  /// be cleared when the keyboard closes, because the special options behind the
-  /// keyboard still need to operate on that selection.
-  final bool clearSelectionWhenImeDisconnects;
-
-  TextInputConfiguration toTextInputConfiguration() {
-    return TextInputConfiguration(
-      enableDeltaModel: true,
-      inputType: TextInputType.multiline,
-      textCapitalization: TextCapitalization.sentences,
-      autocorrect: enableAutocorrect,
-      enableSuggestions: enableSuggestions,
-      inputAction: keyboardActionButton,
-      keyboardAppearance: keyboardBrightness,
-    );
-  }
-
-  DocumentImeConfiguration copyWith({
-    bool? enableAutocorrect,
-    bool? enableSuggestions,
-    Brightness? keyboardBrightness,
-    TextInputAction? keyboardActionButton,
-    bool? clearSelectionWhenImeDisconnects,
-  }) {
-    return DocumentImeConfiguration(
-      enableAutocorrect: enableAutocorrect ?? this.enableAutocorrect,
-      enableSuggestions: enableSuggestions ?? this.enableSuggestions,
-      keyboardBrightness: keyboardBrightness ?? this.keyboardBrightness,
-      keyboardActionButton: keyboardActionButton ?? this.keyboardActionButton,
-      clearSelectionWhenImeDisconnects: clearSelectionWhenImeDisconnects ?? this.clearSelectionWhenImeDisconnects,
-    );
-  }
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is DocumentImeConfiguration &&
-          runtimeType == other.runtimeType &&
-          enableAutocorrect == other.enableAutocorrect &&
-          enableSuggestions == other.enableSuggestions &&
-          keyboardBrightness == other.keyboardBrightness &&
-          keyboardActionButton == other.keyboardActionButton;
-
-  @override
-  int get hashCode =>
-      enableAutocorrect.hashCode ^
-      enableSuggestions.hashCode ^
-      keyboardBrightness.hashCode ^
-      keyboardActionButton.hashCode;
 }
