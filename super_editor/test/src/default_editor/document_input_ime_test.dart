@@ -2,14 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
-import 'package:logging/logging.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 
 import '../../super_editor/document_test_tools.dart';
+import '../../super_editor/test_documents.dart';
 import '../../test_tools.dart';
 import '../_document_test_tools.dart';
-import '../../super_editor/test_documents.dart';
 
 void main() {
   group('IME input', () {
@@ -81,7 +80,6 @@ void main() {
       });
 
       testWidgets('can type compound character in an empty paragraph', (tester) async {
-        initLoggers(Level.FINER, {editorImeLog, editorOpsLog});
         final document = twoParagraphEmptyDoc();
 
         // Inserting special characters, or compound characters, like ü, requires
@@ -128,9 +126,6 @@ void main() {
             ),
           ),
         );
-
-        // TODO: and this pump is for document_ime_communication
-        // await tester.pump();
 
         // Send the deltas that should produce a ü.
         //

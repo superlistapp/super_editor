@@ -102,11 +102,11 @@ class _SuperEditorImeInteractorState extends State<SuperEditorImeInteractor>
     implements ImeInputOwner, SoftwareKeyboardControllerDelegate {
   late FocusNode _focusNode;
 
-  late final DocumentImeConnection _documentImeConnection;
+  final _imeConnection = ValueNotifier<TextInputConnection?>(null);
+  // TODO: take an incoming document input configuration and use that for this config
+  TextInputConfiguration _textInputConfiguration = TextInputConfiguration();
   late final DocumentImeInputClient _documentImeClient;
   late final TextDeltasDocumentEditor _textDeltasDocumentEditor;
-
-  final _imeConnection = ValueNotifier<TextInputConnection?>(null);
 
   @override
   void initState() {
@@ -123,13 +123,9 @@ class _SuperEditorImeInteractorState extends State<SuperEditorImeInteractor>
       textDeltasDocumentEditor: _textDeltasDocumentEditor,
       floatingCursorController: widget.floatingCursorController,
       sendTextEditingValueToIme: (newValue) {
-        _documentImeConnection.imeConnection?.setEditingState(newValue);
+        _imeConnection.value?.setEditingState(newValue);
       },
     );
-    // TODO: replace DocumentImeConnection with the regular TextInputConnection
-    _documentImeConnection = DocumentImeConnection(imeClient: _documentImeClient)
-      ..addListener(_onDocumentImeConnectionChange);
-    _imeConnection.addListener(_onImeConnectionChange);
 
     widget.softwareKeyboardController?.attach(this);
   }
@@ -148,11 +144,7 @@ class _SuperEditorImeInteractorState extends State<SuperEditorImeInteractor>
   void dispose() {
     widget.softwareKeyboardController?.detach();
 
-    _imeConnection.removeListener(_onImeConnectionChange);
-
-    _documentImeConnection
-      ..removeListener(_onDocumentImeConnectionChange)
-      ..close();
+    _imeConnection.value?.close();
 
     if (widget.focusNode == null) {
       _focusNode.dispose();
@@ -165,7 +157,7 @@ class _SuperEditorImeInteractorState extends State<SuperEditorImeInteractor>
   @override
   DeltaTextInputClient get imeClient => _documentImeClient;
 
-  bool get isAttachedToIme => _documentImeConnection.isAttached;
+  bool get isAttachedToIme => _imeConnection.value?.attached ?? false;
 
   @override
   bool get isConnectedToIme => isAttachedToIme;
@@ -173,25 +165,27 @@ class _SuperEditorImeInteractorState extends State<SuperEditorImeInteractor>
   @override
   void open() {
     editorImeLog.info("[SuperEditorImeInteractor] - showing keyboard");
-    _documentImeConnection.show();
+    _imeConnection.value ??= TextInput.attach(_documentImeClient, _textInputConfiguration);
+    _imeConnection.value!.show();
   }
 
   @override
   void close() {
-    editorImeLog.info("[SuperEditorImeInteractor] - closing IME connection");
-    _documentImeConnection.close();
+    editorImeLog.info("[SuperEditorImeInteractor] - closing IME connection.");
+    _imeConnection.value?.close();
+    _imeConnection.value = null;
   }
 
-  void _onDocumentImeConnectionChange() {
-    // Sync our local TextInputConnection reference with our DocumentImeConnection.
-    _imeConnection.value = _documentImeConnection.imeConnection;
-  }
+  // void _onDocumentImeConnectionChange() {
+  //   // Sync our local TextInputConnection reference with our DocumentImeConnection.
+  //   _imeConnection.value = _documentImeConnection.imeConnection;
+  // }
 
-  void _onImeConnectionChange() {
-    print("[IME Interactor] - on IME connection change: ${_imeConnection.value}");
-    // Sync our DocumentImeConnection with the latest TextInputConnection.
-    _documentImeConnection.imeConnection = _imeConnection.value;
-  }
+  // void _onImeConnectionChange() {
+  //   print("[IME Interactor] - on IME connection change: ${_imeConnection.value}");
+  //   // Sync our DocumentImeConnection with the latest TextInputConnection.
+  //   _documentImeConnection.imeConnection = _imeConnection.value;
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -205,7 +199,7 @@ class _SuperEditorImeInteractorState extends State<SuperEditorImeInteractor>
         selection: widget.editContext.composer.selectionNotifier,
         imeConnection: _imeConnection,
         imeClientFactory: () => _documentImeClient,
-        imeConfiguration: _documentImeConnection.imeConfiguration,
+        imeConfiguration: _textInputConfiguration,
         openKeyboardOnSelectionChange: widget.openKeyboardOnSelectionChange,
         clearSelectionWhenImeDisconnects: widget.clearSelectionWhenImeDisconnects,
         child: ImeFocusPolicy(
@@ -282,32 +276,6 @@ abstract class SoftwareKeyboardControllerDelegate {
 
   /// Closes the software keyboard.
   void close();
-}
-
-/// An [ImeValue] that's implemented specifically for use with a `SuperEditor` widget.
-class SuperEditorImeValue implements ImeValue {
-  SuperEditorImeValue(this._imeConnection, this._client);
-
-  final DocumentImeConnection _imeConnection;
-  final DocumentImeInputClient _client;
-
-  @override
-  TextEditingValue get currentTextEditingValue => _client.currentTextEditingValue;
-
-  @override
-  set currentTextEditingValue(TextEditingValue newValue) {
-    _client.currentTextEditingValue = newValue;
-    _imeConnection.imeConnection?.setEditingState(newValue);
-  }
-
-  @override
-  bool get isConnectedToIme => _imeConnection.isAttached;
-
-  @override
-  void closeConnection() {
-    editorImeLog.finer("[SuperEditorImeValue] - Closing IME connection. Current connection: $_imeConnection");
-    _imeConnection.close();
-  }
 }
 
 /// Input Method Engine (IME) configuration for document text input.
