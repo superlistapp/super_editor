@@ -176,7 +176,7 @@ class _SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> imp
         child: ImeFocusPolicy(
           focusNode: _focusNode,
           imeConnection: _imeConnection,
-          child: SoftwareKeyboard(
+          child: SoftwareKeyboardOpener(
             controller: widget.softwareKeyboardController,
             imeConnection: _imeConnection,
             createImeClient: () => _documentImeClient,

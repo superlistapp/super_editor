@@ -10,8 +10,8 @@ import 'package:super_editor/src/infrastructure/_logging.dart';
 /// Opening the software keyboard requires that a connection be established to the
 /// platform IME. Therefore, this widget requires [createImeClient] and [createImeConfiguration]
 /// to establish that connection, if it doesn't exist already.
-class SoftwareKeyboard extends StatefulWidget {
-  const SoftwareKeyboard({
+class SoftwareKeyboardOpener extends StatefulWidget {
+  const SoftwareKeyboardOpener({
     Key? key,
     required this.controller,
     required this.imeConnection,
@@ -31,10 +31,10 @@ class SoftwareKeyboard extends StatefulWidget {
   final Widget child;
 
   @override
-  State<SoftwareKeyboard> createState() => _SoftwareKeyboardState();
+  State<SoftwareKeyboardOpener> createState() => _SoftwareKeyboardOpenerState();
 }
 
-class _SoftwareKeyboardState extends State<SoftwareKeyboard> implements SoftwareKeyboardControllerDelegate {
+class _SoftwareKeyboardOpenerState extends State<SoftwareKeyboardOpener> implements SoftwareKeyboardControllerDelegate {
   @override
   void initState() {
     super.initState();
@@ -42,7 +42,7 @@ class _SoftwareKeyboardState extends State<SoftwareKeyboard> implements Software
   }
 
   @override
-  void didUpdateWidget(SoftwareKeyboard oldWidget) {
+  void didUpdateWidget(SoftwareKeyboardOpener oldWidget) {
     super.didUpdateWidget(oldWidget);
 
     if (widget.controller != oldWidget.controller) {
