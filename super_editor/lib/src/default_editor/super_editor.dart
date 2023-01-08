@@ -87,8 +87,7 @@ class SuperEditor extends StatefulWidget {
     SelectionStyles? selectionStyle,
     this.inputSource,
     this.softwareKeyboardController,
-    this.openKeyboardOnSelectionChange = true,
-    this.clearSelectionWhenImeDisconnects = true,
+    this.imePolicies = const SuperEditorImePolicies(),
     List<DocumentKeyboardAction>? keyboardActions,
     this.gestureMode,
     this.androidHandleColor,
@@ -162,29 +161,10 @@ class SuperEditor extends StatefulWidget {
   /// behavior might conflict with commands to this controller.
   final SoftwareKeyboardController? softwareKeyboardController;
 
-  /// Whether the software keyboard should be raised whenever the editor's selection
-  /// changes, such as when a user taps to place the caret.
-  ///
-  /// In a typical app, this property should be `true`. In some apps, the keyboard
-  /// needs to be closed and opened to reveal special editing controls. In those cases
-  /// this property should probably be `false`, and the app should take responsibility
-  /// for opening and closing the keyboard.
-  final bool openKeyboardOnSelectionChange;
-
-  /// Whether the document's selection should be cleared (removed) when the
-  /// IME disconnects, i.e., the software keyboard closes.
-  ///
-  /// Typically, on devices with software keyboards, the keyboard is critical
-  /// to all document editing. In such cases, it should be reasonable to clear
-  /// the selection when the keyboard closes.
-  ///
-  /// Some apps include editing features that can operate when the keyboard is
-  /// closed. For example, some apps display special editing options behind the
-  /// keyboard. The user closes the keyboard, uses the special options, and then
-  /// re-opens the keyboard. In this case, the document selection **shouldn't**
-  /// be cleared when the keyboard closes, because the special options behind the
-  /// keyboard still need to operate on that selection.
-  final bool clearSelectionWhenImeDisconnects;
+  /// Policies that dictate when and how [SuperEditor] should interact with the
+  /// platform IME, such as automatically opening the software keyboard when
+  /// [SuperEditor]'s selection changes.
+  final SuperEditorImePolicies imePolicies;
 
   /// The `SuperEditor` gesture mode, e.g., mouse or touch.
   final DocumentGestureMode? gestureMode;
@@ -504,8 +484,7 @@ class SuperEditorState extends State<SuperEditor> {
           autofocus: widget.autofocus,
           editContext: editContext,
           softwareKeyboardController: widget.softwareKeyboardController,
-          openKeyboardOnSelectionChange: widget.openKeyboardOnSelectionChange,
-          clearSelectionWhenImeDisconnects: widget.clearSelectionWhenImeDisconnects,
+          imePolicies: widget.imePolicies,
           hardwareKeyboardActions: widget.keyboardActions,
           floatingCursorController: _floatingCursorController,
           child: child,

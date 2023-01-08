@@ -283,8 +283,10 @@ class TestDocumentConfigurator {
         focusNode: testDocumentContext.focusNode,
         inputSource: _inputSource,
         softwareKeyboardController: _softwareKeyboardController,
-        openKeyboardOnSelectionChange: _openKeyboardOnSelectionChange,
-        clearSelectionWhenImeDisconnects: _clearSelectionWhenImeDisconnects,
+        imePolicies: SuperEditorImePolicies(
+          openKeyboardOnSelectionChange: _openKeyboardOnSelectionChange,
+          clearSelectionWhenImeDisconnects: _clearSelectionWhenImeDisconnects,
+        ),
         gestureMode: _gestureMode,
         androidToolbarBuilder: _androidToolbarBuilder,
         iOSToolbarBuilder: _iOSToolbarBuilder,

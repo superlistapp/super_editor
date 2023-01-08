@@ -26,8 +26,7 @@ class SuperEditorImeInteractor extends StatefulWidget {
     this.autofocus = false,
     required this.editContext,
     this.softwareKeyboardController,
-    this.openKeyboardOnSelectionChange = true,
-    this.clearSelectionWhenImeDisconnects = true,
+    this.imePolicies = const SuperEditorImePolicies(),
     this.hardwareKeyboardActions = const [],
     this.floatingCursorController,
     required this.child,
@@ -51,29 +50,9 @@ class SuperEditorImeInteractor extends StatefulWidget {
   /// to open and close the keyboard might conflict with teh automated behavior.
   final SoftwareKeyboardController? softwareKeyboardController;
 
-  /// Whether the software keyboard should be raised whenever the editor's selection
-  /// changes, such as when a user taps to place the caret.
-  ///
-  /// In a typical app, this property should be `true`. In some apps, the keyboard
-  /// needs to be closed and opened to reveal special editing controls. In those cases
-  /// this property should probably be `false`, and the app should take responsibility
-  /// for opening and closing the keyboard.
-  final bool openKeyboardOnSelectionChange;
-
-  /// Whether the document's selection should be cleared (removed) when the
-  /// IME disconnects, i.e., the software keyboard closes.
-  ///
-  /// Typically, on devices with software keyboards, the keyboard is critical
-  /// to all document editing. In such cases, it would be reasonable to clear
-  /// the selection when the keyboard closes.
-  ///
-  /// Some apps include editing features that can operate when the keyboard is
-  /// closed. For example, some apps display special editing options behind the
-  /// keyboard. The user closes the keyboard, uses the special options, and then
-  /// re-opens the keyboard. In this case, the document selection **shouldn't**
-  /// be cleared when the keyboard closes, because the special options behind the
-  /// keyboard still need to operate on that selection.
-  final bool clearSelectionWhenImeDisconnects;
+  /// Policies that dictate when and how `SuperEditor` should interact with the
+  /// platform IME.
+  final SuperEditorImePolicies imePolicies;
 
   /// All the actions that the user can execute with physical hardware
   /// keyboard keys.
@@ -157,8 +136,8 @@ class _SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> imp
         imeConnection: _imeConnection,
         imeClientFactory: () => _documentImeClient,
         imeConfiguration: _textInputConfiguration,
-        openKeyboardOnSelectionChange: widget.openKeyboardOnSelectionChange,
-        clearSelectionWhenImeDisconnects: widget.clearSelectionWhenImeDisconnects,
+        openKeyboardOnSelectionChange: widget.imePolicies.openKeyboardOnSelectionChange,
+        clearSelectionWhenImeDisconnects: widget.imePolicies.clearSelectionWhenImeDisconnects,
         child: ImeFocusPolicy(
           focusNode: _focusNode,
           imeConnection: _imeConnection,
@@ -180,6 +159,40 @@ class _SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> imp
       ),
     );
   }
+}
+
+/// A collection of policies that dictate how and when `SuperEditor` should
+/// interact with the IME, such as opening the software keyboard whenever
+/// `SuperEditor`'s selection changes ([openKeyboardOnSelectionChange]).
+class SuperEditorImePolicies {
+  const SuperEditorImePolicies({
+    this.openKeyboardOnSelectionChange = true,
+    this.clearSelectionWhenImeDisconnects = true,
+  });
+
+  /// Whether the software keyboard should be raised whenever the editor's selection
+  /// changes, such as when a user taps to place the caret.
+  ///
+  /// In a typical app, this property should be `true`. In some apps, the keyboard
+  /// needs to be closed and opened to reveal special editing controls. In those cases
+  /// this property should probably be `false`, and the app should take responsibility
+  /// for opening and closing the keyboard.
+  final bool openKeyboardOnSelectionChange;
+
+  /// Whether the document's selection should be cleared (removed) when the
+  /// IME disconnects, i.e., the software keyboard closes.
+  ///
+  /// Typically, on devices with software keyboards, the keyboard is critical
+  /// to all document editing. In such cases, it would be reasonable to clear
+  /// the selection when the keyboard closes.
+  ///
+  /// Some apps include editing features that can operate when the keyboard is
+  /// closed. For example, some apps display special editing options behind the
+  /// keyboard. The user closes the keyboard, uses the special options, and then
+  /// re-opens the keyboard. In this case, the document selection **shouldn't**
+  /// be cleared when the keyboard closes, because the special options behind the
+  /// keyboard still need to operate on that selection.
+  final bool clearSelectionWhenImeDisconnects;
 }
 
 /// Input Method Engine (IME) configuration for document text input.
