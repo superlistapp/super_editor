@@ -86,7 +86,7 @@ class DocumentRange {
   ///
   /// The [start] position must come before the [end] position in
   /// the document.
-  DocumentRange({
+  const DocumentRange({
     required this.start,
     required this.end,
   });

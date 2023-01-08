@@ -99,7 +99,7 @@ class _SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> imp
     _textDeltasDocumentEditor = TextDeltasDocumentEditor(
       editor: widget.editContext.editor,
       selection: widget.editContext.composer.selectionNotifier,
-      imeComposingRegion: widget.editContext.composer.imeComposingRegion,
+      composingRegion: widget.editContext.composer.composingRegion,
       commonOps: widget.editContext.commonOps,
     );
     _documentImeClient = DocumentImeInputClient(
@@ -167,7 +167,7 @@ class _SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> imp
             child: DocumentToImeSynchronizer(
               document: widget.editContext.editor.document,
               selection: widget.editContext.composer.selectionNotifier,
-              imeComposingRegion: widget.editContext.composer.imeComposingRegion,
+              composingRegion: widget.editContext.composer.composingRegion,
               imeConnection: _imeConnection,
               documentImeClient: _documentImeClient,
               child: widget.child,

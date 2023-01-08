@@ -20,20 +20,27 @@ import 'package:super_editor/src/infrastructure/_logging.dart';
 class DocumentImeSerializer {
   static const _leadingCharacter = '. ';
 
-  DocumentImeSerializer(this._doc, this._selection) {
+  DocumentImeSerializer(
+    this._doc,
+    this._selection,
+    this._composingRegion, [
+    this._prependedCharacterPolicy = PrependedCharacterPolicy.automatic,
+  ]) {
     _serialize();
   }
 
   final Document _doc;
   final DocumentSelection _selection;
+  final DocumentRange? _composingRegion;
   final _imeRangesToDocTextNodes = <TextRange, String>{};
   final _docTextNodesToImeRanges = <String, TextRange>{};
   final _selectedNodes = <DocumentNode>[];
   late String _imeText;
+  final PrependedCharacterPolicy _prependedCharacterPolicy;
   String _prependedPlaceholder = '';
 
   void _serialize() {
-    editorImeLog.fine("Creating an IME model from document and selection");
+    editorImeLog.fine("Creating an IME model from document, selection, and composing region");
     final buffer = StringBuffer();
     int characterCount = 0;
 
@@ -94,6 +101,17 @@ class DocumentImeSerializer {
   }
 
   bool _shouldPrependPlaceholder() {
+    if (_prependedCharacterPolicy == PrependedCharacterPolicy.include) {
+      // The client explicitly requested prepended characters. This is
+      // useful, for example, when a client has an existing serialization that
+      // includes prepended characters and wants to compare that serialization
+      // to a new serialization. The client wants to ensure that the new
+      // serialization has prepended characters, too.
+      return true;
+    } else if (_prependedCharacterPolicy == PrependedCharacterPolicy.exclude) {
+      return false;
+    }
+
     // We want to prepend an arbitrary placeholder character whenever the
     // user's selection is collapsed at the beginning of a node, and there's
     // another node above the selected node. Without the arbitrary character,
@@ -110,28 +128,33 @@ class DocumentImeSerializer {
 
   DocumentSelection? imeToDocumentSelection(TextSelection imeSelection) {
     editorImeLog.fine("Creating doc selection from IME selection: $imeSelection");
-    if (didPrependPlaceholder &&
-        ((!imeSelection.isCollapsed && imeSelection.start < _prependedPlaceholder.length) ||
-            (imeSelection.isCollapsed && imeSelection.extentOffset <= _prependedPlaceholder.length))) {
-      // The IME is trying to select our artificial prepended character.
-      // If that's the only character that the IME is trying to select, then
-      // return a null selection to indicate that there's nothing to select.
-      // If the selection is expanded, then remove the arbitrary character from
-      // the selection.
+    if (!imeSelection.isValid) {
+      editorImeLog.fine("The IME selection is empty. Returning a null document selection.");
+      return null;
+    }
+
+    if (didPrependPlaceholder) {
+      // The IME might be trying to select our invisible prepended characters.
+      // If so, we need to adjust the IME selection bounds.
       if ((imeSelection.isCollapsed && imeSelection.extentOffset < _prependedPlaceholder.length) ||
           (imeSelection.start < _prependedPlaceholder.length && imeSelection.end == _prependedPlaceholder.length)) {
-        editorImeLog.fine("Returning null doc selection");
+        // The IME is only trying to select our invisible characters. Return null
+        // for an empty document selection.
+        editorImeLog.fine("The IME only selected invisible characters. Returning a null document selection.");
         return null;
       } else {
-        editorImeLog.fine("Removing arbitrary character from IME selection");
+        // The IME is trying to select some invisible characters and some real
+        // characters. Remove the invisible characters from the IME selection before
+        // converting it to a document selection.
+        editorImeLog.fine("Removing invisible characters from IME selection.");
         imeSelection = imeSelection.copyWith(
-          baseOffset: min(imeSelection.baseOffset, _prependedPlaceholder.length),
-          extentOffset: min(imeSelection.extentOffset, _prependedPlaceholder.length),
+          baseOffset: max(imeSelection.baseOffset, _prependedPlaceholder.length),
+          extentOffset: max(imeSelection.extentOffset, _prependedPlaceholder.length),
         );
         editorImeLog.fine("Adjusted IME selection is: $imeSelection");
       }
     } else {
-      editorImeLog.fine("Mapping the IME base/extent to their corresponding doc positions without modification.");
+      editorImeLog.fine("The IME only selected visible characters. No adjustment necessary.");
     }
 
     return DocumentSelection(
@@ -146,9 +169,56 @@ class DocumentImeSerializer {
     );
   }
 
+  DocumentRange? imeToDocumentRange(TextRange imeRange) {
+    editorImeLog.fine("Creating doc range from IME range: $imeRange");
+    if (!imeRange.isValid) {
+      editorImeLog.fine("The IME range is empty. Returning null document range.");
+      // The range is empty. Return null.
+      return null;
+    }
+
+    if (didPrependPlaceholder) {
+      // The IME might be trying to select our invisible prepended characters.
+      // If so, we need to adjust the IME selection bounds.
+      if ((imeRange.isCollapsed && imeRange.end < _prependedPlaceholder.length) ||
+          (imeRange.start < _prependedPlaceholder.length && imeRange.end == _prependedPlaceholder.length)) {
+        // The IME is only trying to select our invisible characters. Return null
+        // for an empty document range.
+        editorImeLog
+            .fine("The IME tried to create a range around invisible characters. Returning null document range.");
+        return null;
+      } else {
+        // The IME is trying to select some invisible characters and some real
+        // characters. Remove the invisible characters from the IME range before
+        // converting it to a document range.
+        editorImeLog.fine("Removing arbitrary character from IME range.");
+        editorImeLog.fine("Before adjustment, range: $imeRange");
+        editorImeLog.fine("Prepended characters length: ${_prependedPlaceholder.length}");
+        imeRange = TextRange(
+          start: max(imeRange.start, _prependedPlaceholder.length),
+          end: max(imeRange.end, _prependedPlaceholder.length),
+        );
+        editorImeLog.fine("Adjusted IME range to: $imeRange");
+      }
+    } else {
+      editorImeLog.fine("The IME is only composing visible characters. No adjustment necessary.");
+    }
+
+    return DocumentRange(
+      start: _imeToDocumentPosition(
+        TextPosition(offset: imeRange.start),
+        isUpstream: false,
+      ),
+      end: _imeToDocumentPosition(
+        TextPosition(offset: imeRange.end),
+        isUpstream: false,
+      ),
+    );
+  }
+
   DocumentPosition _imeToDocumentPosition(TextPosition imePosition, {required bool isUpstream}) {
     for (final range in _imeRangesToDocTextNodes.keys) {
-      if (imePosition.offset >= range.start && imePosition.offset <= range.end) {
+      if (range.start <= imePosition.offset && imePosition.offset <= range.end) {
         final node = _doc.getNodeById(_imeRangesToDocTextNodes[range]!)!;
 
         if (node is TextNode) {
@@ -174,8 +244,11 @@ class DocumentImeSerializer {
       }
     }
 
-    editorImeLog.shout(
-        "Couldn't map an IME position to a document position. IME position: $imePosition. The selected offset range is: ${_imeRangesToDocTextNodes.keys.last.start} -> ${_imeRangesToDocTextNodes.keys.last.end}");
+    editorImeLog
+        .shout("Couldn't map an IME position to a document position. IME position: $imePosition. Available ranges:");
+    for (final range in _imeRangesToDocTextNodes.keys) {
+      editorImeLog.shout("Range: ${range.start} -> ${range.end}");
+    }
     throw Exception("Couldn't map an IME position to a document position. IME position: $imePosition");
   }
 
@@ -195,6 +268,25 @@ class DocumentImeSerializer {
       baseOffset: startImePosition.offset,
       extentOffset: endImePosition.offset,
       affinity: startImePosition == endImePosition ? endImePosition.affinity : TextAffinity.downstream,
+    );
+  }
+
+  TextRange documentToImeRange(DocumentRange? documentRange) {
+    editorImeLog.fine("Converting doc range to ime range: $documentRange");
+    if (documentRange == null) {
+      editorImeLog.fine("The document range is null. Returning an empty IME range.");
+      return const TextRange(start: -1, end: -1);
+    }
+
+    final startImePosition = _documentToImePosition(documentRange.start);
+    final endImePosition = _documentToImePosition(documentRange.end);
+
+    editorImeLog.fine("After converting DocumentRange to TextRange:");
+    editorImeLog.fine("Start IME position: $startImePosition");
+    editorImeLog.fine("End IME position: $endImePosition");
+    return TextRange(
+      start: startImePosition.offset,
+      end: endImePosition.offset,
     );
   }
 
@@ -233,10 +325,13 @@ class DocumentImeSerializer {
     editorImeLog.fine("Text:\n'$_imeText'");
     final imeSelection = documentToImeSelection(_selection);
     editorImeLog.fine("Selection: $imeSelection");
+    final imeComposingRegion = documentToImeRange(_composingRegion);
+    editorImeLog.fine("Composing region: $imeComposingRegion");
 
     return TextEditingValue(
       text: _imeText,
       selection: imeSelection,
+      composing: imeComposingRegion,
     );
   }
 
@@ -361,4 +456,10 @@ class DocumentImeSerializer {
 
     return buffer.toString();
   }
+}
+
+enum PrependedCharacterPolicy {
+  automatic,
+  include,
+  exclude,
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_editor.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/default_editor/common_editor_operations.dart';
@@ -12,13 +13,13 @@ class TextDeltasDocumentEditor {
   const TextDeltasDocumentEditor({
     required this.editor,
     required this.selection,
-    required this.imeComposingRegion,
+    required this.composingRegion,
     required this.commonOps,
   });
 
   final DocumentEditor editor;
   final ValueNotifier<DocumentSelection?> selection;
-  final ValueNotifier<TextRange> imeComposingRegion;
+  final ValueNotifier<DocumentRange?> composingRegion;
   final CommonEditorOperations commonOps;
 
   /// Applies the given [textEditingDeltas] to the [Document].
@@ -26,24 +27,21 @@ class TextDeltasDocumentEditor {
     editorImeLog.info("Applying ${textEditingDeltas.length} IME deltas to document");
 
     editorImeLog.fine("Serializing document to perform IME operation");
-    final docSerializer = DocumentImeSerializer(
+    final serializedDocBeforeDelta = DocumentImeSerializer(
       editor.document,
       selection.value!,
+      composingRegion.value,
     );
-
-    // Make note of whether the version of the document before these
-    // deltas included hidden characters.
-    final didPrependPlaceholderInPreviousDocument = docSerializer.didPrependPlaceholder;
 
     // Apply deltas to the document.
     for (final delta in textEditingDeltas) {
       editorImeLog.info("Applying delta: $delta");
       if (delta is TextEditingDeltaInsertion) {
-        _applyInsertion(delta, docSerializer);
+        _applyInsertion(delta, serializedDocBeforeDelta);
       } else if (delta is TextEditingDeltaReplacement) {
-        _applyReplacement(delta, docSerializer);
+        _applyReplacement(delta, serializedDocBeforeDelta);
       } else if (delta is TextEditingDeltaDeletion) {
-        _applyDeletion(delta, docSerializer);
+        _applyDeletion(delta, serializedDocBeforeDelta);
       } else if (delta is TextEditingDeltaNonTextUpdate) {
         _applyNonTextChange(delta);
       } else {
@@ -55,12 +53,20 @@ class TextDeltasDocumentEditor {
     // for the last delta. If the version of our document serialized hidden
     // characters in the IME, adjust for those hidden characters before setting
     // the IME composing region.
-    imeComposingRegion.value = didPrependPlaceholderInPreviousDocument
-        ? TextRange(
-            start: textEditingDeltas.last.composing.start - 2,
-            end: textEditingDeltas.last.composing.end - 2,
-          )
-        : textEditingDeltas.last.composing;
+    editorImeLog.fine("After applying all deltas, converting the final composing region to a document range.");
+    editorImeLog
+        .fine("Serializing the latest document and selection to use to compute final document composing region.");
+    final finalSerializedDoc = DocumentImeSerializer(
+      editor.document,
+      selection.value!,
+      null,
+      serializedDocBeforeDelta.didPrependPlaceholder //
+          ? PrependedCharacterPolicy.include
+          : PrependedCharacterPolicy.exclude,
+    );
+    editorImeLog.fine("Raw IME delta composing region: ${textEditingDeltas.last.composing}");
+    composingRegion.value = finalSerializedDoc.imeToDocumentRange(textEditingDeltas.last.composing);
+    editorImeLog.fine("Document composing region: ${composingRegion.value}");
   }
 
   void _applyInsertion(TextEditingDeltaInsertion delta, DocumentImeSerializer docSerializer) {

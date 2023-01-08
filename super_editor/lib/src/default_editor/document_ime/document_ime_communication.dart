@@ -23,7 +23,7 @@ class DocumentToImeSynchronizer extends StatefulWidget {
     Key? key,
     required this.document,
     required this.selection,
-    required this.imeComposingRegion,
+    required this.composingRegion,
     required this.imeConnection,
     required this.documentImeClient,
     required this.child,
@@ -35,10 +35,10 @@ class DocumentToImeSynchronizer extends StatefulWidget {
   /// The document's current selection.
   final ValueNotifier<DocumentSelection?> selection;
 
-  /// The platform IME's desired composing region, which represents a section
-  /// of IME text that the platform is thinking about changing, such as spelling
+  /// The document's current composing region, which represents a section
+  /// of content that the platform IME is thinking about changing, such as spelling
   /// autocorrection.
-  final ValueListenable<TextRange> imeComposingRegion;
+  final ValueListenable<DocumentRange?> composingRegion;
 
   /// A connection to the platform IME, which might be open or closed.
   ///
@@ -191,25 +191,19 @@ class _DocumentToImeSynchronizerState extends State<DocumentToImeSynchronizer> {
 
     editorImeLog.fine("[DocumentToImeSynchronizer] - Serializing and sending document and selection to IME");
     editorImeLog.fine("[DocumentToImeSynchronizer] - Selection: ${widget.selection.value}");
-    editorImeLog.fine("[DocumentToImeSynchronizer] - Composing region: ${widget.imeComposingRegion.value}");
-    final newDocSerialization = DocumentImeSerializer(
+    editorImeLog.fine("[DocumentToImeSynchronizer] - Composing region: ${widget.composingRegion.value}");
+    _currentImeSerialization = DocumentImeSerializer(
       widget.document,
       widget.selection.value!,
+      widget.composingRegion.value,
     );
-    TextRange composingRegion = widget.imeComposingRegion.value;
-
-    editorImeLog.finer(
-        "Did we prepend a placeholder in the previous document serialization? ${_currentImeSerialization?.didPrependPlaceholder}");
-    editorImeLog.finer("Desired composing region: ${widget.imeComposingRegion.value}");
-    editorImeLog
-        .finer("Did new document serialization prepend a placeholder? ${newDocSerialization.didPrependPlaceholder}");
-    editorImeLog.finer("New composing region: $composingRegion");
+    TextEditingValue textEditingValue = _currentImeSerialization!.toTextEditingValue();
 
     // if (_currentImeSerialization != null &&
     //     _currentImeSerialization!.didPrependPlaceholder &&
     //     composingRegion.isValid &&
     //     !newDocSerialization.didPrependPlaceholder) {
-    if (composingRegion.isValid && newDocSerialization.didPrependPlaceholder) {
+    if (textEditingValue.composing.isValid && _currentImeSerialization!.didPrependPlaceholder) {
       // // The IME's desired composing region includes the prepended placeholder.
       // // The updated IME value doesn't have a prepended placeholder, adjust
       // // the composing region bounds.
@@ -236,14 +230,21 @@ class _DocumentToImeSynchronizerState extends State<DocumentToImeSynchronizer> {
       //       This is something that has become complicated because we separated the
       //       application of IME deltas to a document, from the serialization of a
       //       document to IME.
-      composingRegion = TextRange(
-        start: composingRegion.start + 2,
-        end: composingRegion.end + 2,
+      textEditingValue = textEditingValue.copyWith(
+        composing: TextRange(
+          start: textEditingValue.composing.start + 2,
+          end: textEditingValue.composing.end + 2,
+        ),
       );
     }
 
-    _currentImeSerialization = newDocSerialization;
-    final textEditingValue = newDocSerialization.toTextEditingValue().copyWith(composing: composingRegion);
+    editorImeLog.finer(
+        "Did we prepend a placeholder in the previous document serialization? ${_currentImeSerialization?.didPrependPlaceholder}");
+    editorImeLog.finer("Desired composing region: ${widget.composingRegion.value}");
+    editorImeLog.finer(
+        "Did new document serialization prepend a placeholder? ${_currentImeSerialization!.didPrependPlaceholder}");
+    editorImeLog.finer("New composing region: ${textEditingValue.composing}");
+
     editorImeLog.fine("[DocumentToImeSynchronizer] - Sending IME serialization:");
     editorImeLog.fine("[DocumentToImeSynchronizer] - $textEditingValue");
     widget.documentImeClient.currentTextEditingValue = textEditingValue;

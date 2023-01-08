@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ui';
 
 import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/foundation.dart';
@@ -106,19 +105,19 @@ class DocumentComposer with ChangeNotifier {
       reason: SelectionReason.userInteraction,
     );
 
-    // Reset the IME composing region whenever the selection changes.
+    // Reset the composing region whenever the selection changes.
     // After a selection change, if the IME wants a composing region,
     // we expect the IME to call us back with that region.
-    imeComposingRegion.value = TextRange.empty;
+    composingRegion.value = null;
 
     _streamController.sink.add(_latestSelectionChange);
   }
 
-  /// The current IME composing region, which signifies spans of text
+  /// The current composing region, which signifies spans of text
   /// that the IME is thinking about changing.
   ///
   /// Only valid when editing a document with an IME input method.
-  final imeComposingRegion = ValueNotifier<TextRange>(TextRange.empty);
+  final composingRegion = ValueNotifier<DocumentRange?>(null);
 
   final ComposerPreferences _preferences;
 

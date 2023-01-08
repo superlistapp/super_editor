@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
+import 'package:logging/logging.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 
@@ -44,7 +45,7 @@ void main() {
         final softwareKeyboardHandler = TextDeltasDocumentEditor(
           editor: editor,
           selection: composer.selectionNotifier,
-          imeComposingRegion: composer.imeComposingRegion,
+          composingRegion: composer.composingRegion,
           commonOps: commonOps,
         );
 
@@ -80,6 +81,8 @@ void main() {
       });
 
       testWidgets('can type compound character in an empty paragraph', (tester) async {
+        initLoggers(Level.FINER, {editorImeLog});
+
         final document = twoParagraphEmptyDoc();
 
         // Inserting special characters, or compound characters, like ü, requires
@@ -202,6 +205,7 @@ void main() {
                 nodePosition: TextNodePosition(offset: 19),
               ),
             ),
+            null,
           ).toTextEditingValue(),
           expectedTextWithSelection: "This is a |paragraph| of text.",
         );
@@ -227,6 +231,7 @@ void main() {
                 nodePosition: TextNodePosition(offset: 28),
               ),
             ),
+            null,
           ).toTextEditingValue(),
           expectedTextWithSelection: "This is the |first paragraph of text.\nThis is the second paragraph| of text.",
         );
@@ -252,6 +257,7 @@ void main() {
                 nodePosition: TextNodePosition(offset: 19),
               ),
             ),
+            null,
           ).toTextEditingValue(),
           expectedTextWithSelection: "This is a |paragraph of text.\n~\nThis is a paragraph| of text.",
         );
@@ -277,6 +283,7 @@ void main() {
                 nodePosition: UpstreamDownstreamNodePosition.downstream(),
               ),
             ),
+            null,
           ).toTextEditingValue(),
           expectedTextWithSelection: "|~\nThis is the first paragraph of text.\n~|",
         );
