@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/edit_context.dart';
-import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/ime_input_owner.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
 
@@ -9,6 +8,7 @@ import '../document_hardware_keyboard/document_input_keyboard.dart';
 import 'document_delta_editing.dart';
 import 'document_ime_communication.dart';
 import 'document_ime_interaction_policies.dart';
+import 'ime_keyboard_control.dart';
 
 /// [SuperEditor] interactor that edits a document based on IME input
 /// from the operating system.
@@ -98,8 +98,7 @@ class SuperEditorImeInteractor extends StatefulWidget {
   State createState() => _SuperEditorImeInteractorState();
 }
 
-class _SuperEditorImeInteractorState extends State<SuperEditorImeInteractor>
-    implements ImeInputOwner, SoftwareKeyboardControllerDelegate {
+class _SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> implements ImeInputOwner {
   late FocusNode _focusNode;
 
   final _imeConnection = ValueNotifier<TextInputConnection?>(null);
@@ -126,24 +125,10 @@ class _SuperEditorImeInteractorState extends State<SuperEditorImeInteractor>
         _imeConnection.value?.setEditingState(newValue);
       },
     );
-
-    widget.softwareKeyboardController?.attach(this);
-  }
-
-  @override
-  void didUpdateWidget(SuperEditorImeInteractor oldWidget) {
-    super.didUpdateWidget(oldWidget);
-
-    if (widget.softwareKeyboardController != oldWidget.softwareKeyboardController) {
-      oldWidget.softwareKeyboardController?.detach();
-      widget.softwareKeyboardController?.attach(this);
-    }
   }
 
   @override
   void dispose() {
-    widget.softwareKeyboardController?.detach();
-
     _imeConnection.value?.close();
 
     if (widget.focusNode == null) {
@@ -158,34 +143,6 @@ class _SuperEditorImeInteractorState extends State<SuperEditorImeInteractor>
   DeltaTextInputClient get imeClient => _documentImeClient;
 
   bool get isAttachedToIme => _imeConnection.value?.attached ?? false;
-
-  @override
-  bool get isConnectedToIme => isAttachedToIme;
-
-  @override
-  void open() {
-    editorImeLog.info("[SuperEditorImeInteractor] - showing keyboard");
-    _imeConnection.value ??= TextInput.attach(_documentImeClient, _textInputConfiguration);
-    _imeConnection.value!.show();
-  }
-
-  @override
-  void close() {
-    editorImeLog.info("[SuperEditorImeInteractor] - closing IME connection.");
-    _imeConnection.value?.close();
-    _imeConnection.value = null;
-  }
-
-  // void _onDocumentImeConnectionChange() {
-  //   // Sync our local TextInputConnection reference with our DocumentImeConnection.
-  //   _imeConnection.value = _documentImeConnection.imeConnection;
-  // }
-
-  // void _onImeConnectionChange() {
-  //   print("[IME Interactor] - on IME connection change: ${_imeConnection.value}");
-  //   // Sync our DocumentImeConnection with the latest TextInputConnection.
-  //   _documentImeConnection.imeConnection = _imeConnection.value;
-  // }
 
   @override
   Widget build(BuildContext context) {
@@ -205,77 +162,24 @@ class _SuperEditorImeInteractorState extends State<SuperEditorImeInteractor>
         child: ImeFocusPolicy(
           focusNode: _focusNode,
           imeConnection: _imeConnection,
-          child: DocumentToImeSynchronizer(
-            document: widget.editContext.editor.document,
-            selection: widget.editContext.composer.selectionNotifier,
-            imeComposingRegion: widget.editContext.composer.imeComposingRegion,
+          child: SoftwareKeyboard(
+            controller: widget.softwareKeyboardController,
             imeConnection: _imeConnection,
-            documentImeClient: _documentImeClient,
-            child: widget.child,
+            createImeClient: () => _documentImeClient,
+            createImeConfiguration: () => _textInputConfiguration,
+            child: DocumentToImeSynchronizer(
+              document: widget.editContext.editor.document,
+              selection: widget.editContext.composer.selectionNotifier,
+              imeComposingRegion: widget.editContext.composer.imeComposingRegion,
+              imeConnection: _imeConnection,
+              documentImeClient: _documentImeClient,
+              child: widget.child,
+            ),
           ),
         ),
       ),
     );
   }
-}
-
-/// `SuperEditor` controller that opens and closes the software keyboard.
-///
-/// A [SoftwareKeyboardController] must be attached to a
-/// [SoftwareKeyboardControllerDelegate] to open and close the software keyboard.
-class SoftwareKeyboardController {
-  SoftwareKeyboardControllerDelegate? _delegate;
-
-  /// Whether this controller is currently attached to a delegate that
-  /// knows how to open and close the software keyboard.
-  bool get hasDelegate => _delegate != null;
-
-  /// Attaches this controller to a delegate that knows how to open and
-  /// close the software keyboard.
-  void attach(SoftwareKeyboardControllerDelegate delegate) {
-    editorImeLog.finer("[SoftwareKeyboardController] - Attaching to delegate: $delegate");
-    _delegate = delegate;
-  }
-
-  /// Detaches this controller from its delegate.
-  ///
-  /// This controller can't open or close the software keyboard while
-  /// detached from a delegate that knows how to make that happen.
-  void detach() {
-    editorImeLog.finer("[SoftwareKeyboardController] - Detaching from delegate: $_delegate");
-    _delegate = null;
-  }
-
-  /// Whether the delegate is currently connected to the platform IME.
-  bool get isConnectedToIme {
-    assert(hasDelegate);
-    return _delegate?.isConnectedToIme ?? false;
-  }
-
-  /// Opens the software keyboard.
-  void open() {
-    assert(hasDelegate);
-    _delegate?.open();
-  }
-
-  /// Closes the software keyboard.
-  void close() {
-    assert(hasDelegate);
-    _delegate?.close();
-  }
-}
-
-/// Delegate that's attached to a [SoftwareKeyboardController], which implements
-/// the opening and closing of the software keyboard.
-abstract class SoftwareKeyboardControllerDelegate {
-  /// Whether this delegate is currently connected to the platform IME.
-  bool get isConnectedToIme;
-
-  /// Opens the software keyboard.
-  void open();
-
-  /// Closes the software keyboard.
-  void close();
 }
 
 /// Input Method Engine (IME) configuration for document text input.

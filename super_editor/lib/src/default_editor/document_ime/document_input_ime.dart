@@ -1,9 +1,11 @@
 export 'document_delta_editing.dart';
 export 'document_ime_communication.dart';
 export 'document_ime_interaction_policies.dart';
-export 'supereditor_ime_interactor.dart';
 export 'document_serialization.dart';
+export 'ime_decoration.dart';
+export 'ime_keyboard_control.dart';
 export 'mobile_toolbar.dart';
+export 'supereditor_ime_interactor.dart';
 
 /// This file exports various document IME tools.
 ///
