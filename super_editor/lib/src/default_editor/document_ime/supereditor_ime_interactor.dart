@@ -27,6 +27,7 @@ class SuperEditorImeInteractor extends StatefulWidget {
     required this.editContext,
     this.softwareKeyboardController,
     this.imePolicies = const SuperEditorImePolicies(),
+    this.imeConfiguration = const SuperEditorImeConfiguration(),
     this.hardwareKeyboardActions = const [],
     this.floatingCursorController,
     required this.child,
@@ -41,18 +42,23 @@ class SuperEditorImeInteractor extends StatefulWidget {
 
   /// Controller that opens and closes the software keyboard.
   ///
-  /// When [openKeyboardOnSelectionChange] and [clearSelectionWhenImeDisconnects]
-  /// are `false`, an app can use this controller to manually open and close the
-  /// software keyboard, as needed.
+  /// When [SuperEditorImePolicies.openKeyboardOnSelectionChange] and
+  /// [SuperEditorImePolicies.clearSelectionWhenImeDisconnects] are `false`,
+  /// an app can use this controller to manually open and close the software
+  /// keyboard, as needed.
   ///
-  /// When [openKeyboardOnSelectionChange] and [clearSelectionWhenImeDisconnects]
-  /// are `true`, this controller probably shouldn't be used, because the commands
-  /// to open and close the keyboard might conflict with teh automated behavior.
+  /// When [SuperEditorImePolicies.openKeyboardOnSelectionChange] and
+  /// [clearSelectionWhenImeDisconnects] are `true`, this controller probably
+  /// shouldn't be used, because the commands to open and close the keyboard
+  /// might conflict with teh automated behavior.
   final SoftwareKeyboardController? softwareKeyboardController;
 
   /// Policies that dictate when and how `SuperEditor` should interact with the
   /// platform IME.
   final SuperEditorImePolicies imePolicies;
+
+  /// Preferences for how the platform IME should look and behave during editing.
+  final SuperEditorImeConfiguration imeConfiguration;
 
   /// All the actions that the user can execute with physical hardware
   /// keyboard keys.
@@ -81,8 +87,7 @@ class _SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> imp
   late FocusNode _focusNode;
 
   final _imeConnection = ValueNotifier<TextInputConnection?>(null);
-  // TODO: take an incoming document input configuration and use that for this config
-  TextInputConfiguration _textInputConfiguration = TextInputConfiguration();
+  late TextInputConfiguration _textInputConfiguration;
   late final DocumentImeInputClient _documentImeClient;
   late final TextDeltasDocumentEditor _textDeltasDocumentEditor;
 
@@ -99,11 +104,23 @@ class _SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> imp
     );
     _documentImeClient = DocumentImeInputClient(
       textDeltasDocumentEditor: _textDeltasDocumentEditor,
+      imeConnection: _imeConnection,
       floatingCursorController: widget.floatingCursorController,
-      sendTextEditingValueToIme: (newValue) {
-        _imeConnection.value?.setEditingState(newValue);
-      },
     );
+
+    _textInputConfiguration = widget.imeConfiguration.toTextInputConfiguration();
+  }
+
+  @override
+  void didUpdateWidget(SuperEditorImeInteractor oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (widget.imeConfiguration != oldWidget.imeConfiguration) {
+      _textInputConfiguration = widget.imeConfiguration.toTextInputConfiguration();
+      if (isAttachedToIme) {
+        _imeConnection.value!.updateConfig(_textInputConfiguration);
+      }
+    }
   }
 
   @override
@@ -137,6 +154,7 @@ class _SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> imp
         imeClientFactory: () => _documentImeClient,
         imeConfiguration: _textInputConfiguration,
         openKeyboardOnSelectionChange: widget.imePolicies.openKeyboardOnSelectionChange,
+        closeKeyboardOnSelectionLost: widget.imePolicies.closeKeyboardOnSelectionLost,
         clearSelectionWhenImeDisconnects: widget.imePolicies.clearSelectionWhenImeDisconnects,
         child: ImeFocusPolicy(
           focusNode: _focusNode,
@@ -167,6 +185,7 @@ class _SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> imp
 class SuperEditorImePolicies {
   const SuperEditorImePolicies({
     this.openKeyboardOnSelectionChange = true,
+    this.closeKeyboardOnSelectionLost = true,
     this.clearSelectionWhenImeDisconnects = true,
   });
 
@@ -178,6 +197,13 @@ class SuperEditorImePolicies {
   /// this property should probably be `false`, and the app should take responsibility
   /// for opening and closing the keyboard.
   final bool openKeyboardOnSelectionChange;
+
+  /// Whether the software keyboard should be closed whenever the editor goes from
+  /// having a selection to not having a selection.
+  ///
+  /// In a typical app, this property should be `true`, because there's no place to
+  /// apply IME input when there's no editor selection.
+  final bool closeKeyboardOnSelectionLost;
 
   /// Whether the document's selection should be cleared (removed) when the
   /// IME disconnects, i.e., the software keyboard closes.
@@ -196,20 +222,12 @@ class SuperEditorImePolicies {
 }
 
 /// Input Method Engine (IME) configuration for document text input.
-///
-/// The IME is an operating system component that observes text that's
-/// being edited, and intercepts keyboard input to apply transforms to
-/// the user's input. The alternative to IME input is for an app to
-/// listen and respond to each individual keyboard key. On mobile, IME
-/// input is the only available input system because there is no physical
-/// keyboard.
 class SuperEditorImeConfiguration {
   const SuperEditorImeConfiguration({
     this.enableAutocorrect = true,
     this.enableSuggestions = true,
     this.keyboardBrightness = Brightness.light,
     this.keyboardActionButton = TextInputAction.newline,
-    this.clearSelectionWhenImeDisconnects = false,
   });
 
   /// Whether the OS should offer auto-correction options to the user.
@@ -225,21 +243,6 @@ class SuperEditorImeConfiguration {
   /// The action button that's displayed on a software keyboard, e.g.,
   /// new-line, done, go, etc.
   final TextInputAction keyboardActionButton;
-
-  /// Whether the document's selection should be cleared (removed) when the
-  /// IME disconnects, i.e., the software keyboard closes.
-  ///
-  /// Typically, on devices with software keyboards, the keyboard is critical
-  /// to all document editing. In such cases, it should be reasonable to clear
-  /// the selection when the keyboard closes.
-  ///
-  /// Some apps include editing features that can operate when the keyboard is
-  /// closed. For example, some apps display special editing options behind the
-  /// keyboard. The user closes the keyboard, uses the special options, and then
-  /// re-opens the keyboard. In this case, the document selection **shouldn't**
-  /// be cleared when the keyboard closes, because the special options behind the
-  /// keyboard still need to operate on that selection.
-  final bool clearSelectionWhenImeDisconnects;
 
   TextInputConfiguration toTextInputConfiguration() {
     return TextInputConfiguration(
@@ -265,7 +268,6 @@ class SuperEditorImeConfiguration {
       enableSuggestions: enableSuggestions ?? this.enableSuggestions,
       keyboardBrightness: keyboardBrightness ?? this.keyboardBrightness,
       keyboardActionButton: keyboardActionButton ?? this.keyboardActionButton,
-      clearSelectionWhenImeDisconnects: clearSelectionWhenImeDisconnects ?? this.clearSelectionWhenImeDisconnects,
     );
   }
 

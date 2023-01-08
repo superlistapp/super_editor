@@ -88,6 +88,7 @@ class SuperEditor extends StatefulWidget {
     this.inputSource,
     this.softwareKeyboardController,
     this.imePolicies = const SuperEditorImePolicies(),
+    this.imeConfiguration = const SuperEditorImeConfiguration(),
     List<DocumentKeyboardAction>? keyboardActions,
     this.gestureMode,
     this.androidHandleColor,
@@ -156,15 +157,18 @@ class SuperEditor extends StatefulWidget {
   /// Opens and closes the software keyboard.
   ///
   /// Typically, this controller should only be used when the keyboard is configured
-  /// for manual control, e.g., [openKeyboardOnSelectionChange] and
-  /// [clearSelectionWhenImeDisconnects] are `false`. Otherwise, the automatic
-  /// behavior might conflict with commands to this controller.
+  /// for manual control, e.g., [SuperEditorImePolicies.openKeyboardOnSelectionChange] and
+  /// [SuperEditorImePolicies.clearSelectionWhenImeDisconnects] are `false`. Otherwise,
+  /// the automatic behavior might conflict with commands to this controller.
   final SoftwareKeyboardController? softwareKeyboardController;
 
   /// Policies that dictate when and how [SuperEditor] should interact with the
   /// platform IME, such as automatically opening the software keyboard when
   /// [SuperEditor]'s selection changes.
   final SuperEditorImePolicies imePolicies;
+
+  /// Preferences for how the platform IME should look and behave during editing.
+  final SuperEditorImeConfiguration imeConfiguration;
 
   /// The `SuperEditor` gesture mode, e.g., mouse or touch.
   final DocumentGestureMode? gestureMode;
@@ -485,6 +489,7 @@ class SuperEditorState extends State<SuperEditor> {
           editContext: editContext,
           softwareKeyboardController: widget.softwareKeyboardController,
           imePolicies: widget.imePolicies,
+          imeConfiguration: widget.imeConfiguration,
           hardwareKeyboardActions: widget.keyboardActions,
           floatingCursorController: _floatingCursorController,
           child: child,

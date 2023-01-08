@@ -19,8 +19,7 @@ class DocumentComposer with ChangeNotifier {
   DocumentComposer({
     DocumentSelection? initialSelection,
     SuperEditorImeConfiguration? imeConfiguration,
-  })  : imeConfiguration = ValueNotifier(imeConfiguration ?? const SuperEditorImeConfiguration()),
-        _preferences = ComposerPreferences() {
+  }) : _preferences = ComposerPreferences() {
     _streamController = StreamController<DocumentSelectionChange>.broadcast();
     selectionNotifier.addListener(_onSelectionChangedBySelectionNotifier);
     selectionNotifier.value = initialSelection;
@@ -114,8 +113,6 @@ class DocumentComposer with ChangeNotifier {
 
     _streamController.sink.add(_latestSelectionChange);
   }
-
-  final ValueNotifier<SuperEditorImeConfiguration> imeConfiguration;
 
   /// The current IME composing region, which signifies spans of text
   /// that the IME is thinking about changing.

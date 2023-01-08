@@ -123,12 +123,7 @@ class _DocumentToImeSynchronizerState extends State<DocumentToImeSynchronizer> {
   }
 
   void _onSelectionChange() {
-    if (widget.selection.value == null) {
-      // TODO: move this to a policy widget
-      // Without a selection, there's no place for IME input to go. Close the IME.
-      editorImeLog.info("[DocumentToImeSynchronizer] - Closing the IME connection because there's no selection");
-      widget.imeConnection.value?.close();
-    } else {
+    if (widget.selection.value != null) {
       editorImeLog.finer(
           "[DocumentToImeSynchronizer] - selection change. Sending document and selection to IME on the next frame.");
       _sendDocumentToImeOnNextFrame();
@@ -136,8 +131,6 @@ class _DocumentToImeSynchronizerState extends State<DocumentToImeSynchronizer> {
   }
 
   void _onImeConnectionChange() {
-    print(
-        "[IME synchronizer] - connection changed: ${widget.imeConnection}, attached: ${widget.imeConnection.value?.attached}");
     if (widget.imeConnection.value != null && widget.imeConnection.value!.attached) {
       // The IME just connected. Send over our current document and selection.
       editorImeLog.fine(
@@ -253,8 +246,6 @@ class _DocumentToImeSynchronizerState extends State<DocumentToImeSynchronizer> {
     final textEditingValue = newDocSerialization.toTextEditingValue().copyWith(composing: composingRegion);
     editorImeLog.fine("[DocumentToImeSynchronizer] - Sending IME serialization:");
     editorImeLog.fine("[DocumentToImeSynchronizer] - $textEditingValue");
-    // widget.imeValue.currentTextEditingValue = textEditingValue;
-    // widget.imeConnection!.setEditingState(textEditingValue);
     widget.documentImeClient.currentTextEditingValue = textEditingValue;
     editorImeLog.fine("[DocumentToImeSynchronizer] - Done sending document to IME");
     _hasSentInitialImeValue = true;
@@ -269,10 +260,8 @@ class _DocumentToImeSynchronizerState extends State<DocumentToImeSynchronizer> {
 /// A [TextInputClient] that applies IME operations to a [Document].
 class DocumentImeInputClient with TextInputClient, DeltaTextInputClient {
   DocumentImeInputClient({
-    // TODO: textDeltasDocumentEditor is enough for text editing deltas, but what about
-    //       the non-delta IME operations, like perform selector?
     required this.textDeltasDocumentEditor,
-    required this.sendTextEditingValueToIme,
+    required this.imeConnection,
     FloatingCursorController? floatingCursorController,
   }) {
     _floatingCursorController = floatingCursorController;
@@ -280,7 +269,7 @@ class DocumentImeInputClient with TextInputClient, DeltaTextInputClient {
 
   final TextDeltasDocumentEditor textDeltasDocumentEditor;
 
-  final void Function(TextEditingValue value) sendTextEditingValueToIme;
+  final ValueListenable<TextInputConnection?> imeConnection;
 
   late FloatingCursorController? _floatingCursorController;
 
@@ -296,7 +285,7 @@ class DocumentImeInputClient with TextInputClient, DeltaTextInputClient {
   set currentTextEditingValue(TextEditingValue newValue) {
     _currentTextEditingValue = newValue;
 
-    if (isApplyingDeltas) {
+    if (_isApplyingDeltas) {
       // We're in the middle of applying a series of text deltas. Don't
       // send any updates to the IME because it will conflict with the
       // changes we're actively processing.
@@ -307,7 +296,7 @@ class DocumentImeInputClient with TextInputClient, DeltaTextInputClient {
     if (newValue != _lastTextEditingValueSentToOs) {
       editorImeLog.info("Sending new text editing value to OS: $_currentTextEditingValue");
       _lastTextEditingValueSentToOs = _currentTextEditingValue;
-      sendTextEditingValueToIme(_currentTextEditingValue);
+      imeConnection.value?.setEditingState(_currentTextEditingValue);
     } else if (_hasOutstandingMutatingChanges) {
       // We've been given a new IME value, and it's the same as our existing IME
       // value. But, we also have outstanding mutating changes.
@@ -342,15 +331,14 @@ class DocumentImeInputClient with TextInputClient, DeltaTextInputClient {
       editorImeLog.fine(
           "Sending forceful update to IME because our local TextEditingValue didn't change, but the IME may have:");
       editorImeLog.fine("$currentTextEditingValue");
-      sendTextEditingValueToIme(currentTextEditingValue);
+      imeConnection.value?.setEditingState(currentTextEditingValue);
       _hasOutstandingMutatingChanges = false;
     } else {
       editorImeLog.fine("Ignoring new TextEditingValue because it's the same as the existing one: $newValue");
     }
   }
 
-  // TODO: make this private again
-  bool isApplyingDeltas = false;
+  bool _isApplyingDeltas = false;
 
   @override
   void updateEditingValue(TextEditingValue value) {
@@ -372,9 +360,9 @@ class DocumentImeInputClient with TextInputClient, DeltaTextInputClient {
     final imeValueBeforeChange = currentTextEditingValue;
     editorImeLog.fine("IME value before applying deltas: $imeValueBeforeChange");
 
-    isApplyingDeltas = true;
+    _isApplyingDeltas = true;
     textDeltasDocumentEditor.applyDeltas(textEditingDeltas);
-    isApplyingDeltas = false;
+    _isApplyingDeltas = false;
 
     // If we had 1+ delta that changed the content of the document, remember that.
     // We need this accounting in "set currentTextEditingValue" because, in some
@@ -397,18 +385,14 @@ class DocumentImeInputClient with TextInputClient, DeltaTextInputClient {
 
   @override
   void performSelector(String selectorName) {
-    // TODO: implement this method starting with Flutter 3.3.4
+    editorImeLog.fine("IME says to perform selector (not implemented): $selectorName");
   }
 
   @override
-  void performPrivateCommand(String action, Map<String, dynamic> data) {
-    // TODO: implement performPrivateCommand
-  }
+  void performPrivateCommand(String action, Map<String, dynamic> data) {}
 
   @override
-  void showAutocorrectionPromptRect(int start, int end) {
-    // TODO: implement showAutocorrectionPromptRect
-  }
+  void showAutocorrectionPromptRect(int start, int end) {}
 
   @override
   void updateFloatingCursor(RawFloatingCursorPoint point) {
@@ -425,6 +409,6 @@ class DocumentImeInputClient with TextInputClient, DeltaTextInputClient {
 
   @override
   void connectionClosed() {
-    editorImeLog.info("IME connection closed");
+    editorImeLog.info("IME connection was closed");
   }
 }

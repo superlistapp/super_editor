@@ -78,7 +78,7 @@ class _ImeFocusPolicyState extends State<ImeFocusPolicy> {
 
 /// Widget that enforces policies between IME connections and document selections.
 ///
-/// This widget can automatically open the software keyboard when the document
+/// This widget can automatically open and close the software keyboard when the document
 /// selection changes, such as when the user places the caret in the middle of a
 /// paragraph.
 ///
@@ -94,6 +94,7 @@ class DocumentSelectionOpenAndCloseImePolicy extends StatefulWidget {
     required this.imeClientFactory,
     required this.imeConfiguration,
     this.openKeyboardOnSelectionChange = true,
+    this.closeKeyboardOnSelectionLost = true,
     this.clearSelectionWhenImeDisconnects = true,
     required this.child,
   }) : super(key: key);
@@ -131,6 +132,13 @@ class DocumentSelectionOpenAndCloseImePolicy extends StatefulWidget {
   /// this property should probably be `false`, and the app should take responsibility
   /// for opening and closing the keyboard.
   final bool openKeyboardOnSelectionChange;
+
+  /// Whether the software keyboard should be closed whenever the editor goes from
+  /// having a selection to not having a selection.
+  ///
+  /// In a typical app, this property should be `true`, because there's no place to
+  /// apply IME input when there's no editor selection.
+  final bool closeKeyboardOnSelectionLost;
 
   /// Whether the document's selection should be cleared (removed) when the
   /// IME disconnects, i.e., the software keyboard closes.
@@ -231,6 +239,14 @@ class _DocumentSelectionOpenAndCloseImePolicyState extends State<DocumentSelecti
       } else {
         widget.imeConnection.value!.show();
       }
+    } else if (widget.imeConnection.value != null &&
+        widget.selection.value == null &&
+        widget.closeKeyboardOnSelectionLost) {
+      // There's no document selection, and our policy wants the keyboard to be
+      // closed whenever the editor loses its selection. Close the keyboard.
+      editorImeLog
+          .info("[${widget.runtimeType}] - closing the IME keyboard because the document selection was cleared");
+      widget.imeConnection.value!.close();
     }
   }
 
