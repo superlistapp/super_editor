@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide ListenableBuilder;
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
@@ -230,7 +230,7 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
   Widget build(BuildContext context) {
     return ListenableBuilder(
         listenable: widget.editingController,
-        builder: (context) {
+        builder: (context, _) {
           return Padding(
             // Remove the keyboard from the space that we occupy so that
             // clipping calculations apply to the expected visual borders,
@@ -477,12 +477,16 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
 /// Controls the display of drag handles, a magnifier, and a
 /// floating toolbar, assuming iOS-style behavior for the
 /// handles.
-class IosDocumentGestureEditingController extends MagnifierAndToolbarController {
+class IosDocumentGestureEditingController extends GestureEditingController {
   IosDocumentGestureEditingController({
     required LayerLink documentLayoutLink,
     required LayerLink magnifierFocalPointLink,
+    required MagnifierAndToolbarController overlayController,
   })  : _documentLayoutLink = documentLayoutLink,
-        super(magnifierFocalPointLink: magnifierFocalPointLink);
+        super(
+          magnifierFocalPointLink: magnifierFocalPointLink,
+          overlayController: overlayController,
+        );
 
   /// Layer link that's aligned to the top-left corner of the document layout.
   ///

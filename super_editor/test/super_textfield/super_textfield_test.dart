@@ -1,10 +1,12 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
 import '../test_tools.dart';
+import 'super_textfield_robot.dart';
 
 void main() {
   group("SuperTextField", () {
@@ -165,6 +167,38 @@ void main() {
           // because we should NOT receive new lines
           expect(innerTextField.textInputAction, TextInputAction.done);
         });
+      });
+
+      testWidgetsOnIos('applies keyboard appearance', (tester) async {
+        await tester.pumpWidget(
+          _buildScaffold(
+            child: SuperTextField(
+              textController: ImeAttributedTextEditingController(
+                keyboardAppearance: Brightness.dark,
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // Holds the keyboard appearance sent to the platform.
+        String? keyboardAppearance;
+
+        // Intercept messages sent to the platform.
+        tester.binding.defaultBinaryMessenger.setMockMessageHandler(SystemChannels.textInput.name, (message) async {
+          final methodCall = const JSONMethodCodec().decodeMethodCall(message);
+          if (methodCall.method == 'TextInput.setClient') {
+            final params = methodCall.arguments[1] as Map;
+            keyboardAppearance = params['keyboardAppearance'];
+          }
+          return null;
+        });
+
+        // Tap the text field to show the software keyboard.
+        await tester.placeCaretInSuperTextField(0);
+
+        // Ensure the given keyboardAppearance was applied.
+        expect(keyboardAppearance, 'Brightness.dark');
       });
     });
 

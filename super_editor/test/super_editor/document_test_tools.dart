@@ -91,7 +91,7 @@ class TestDocumentConfigurator {
   final MutableDocument? _document;
   final TestDocumentContext? _existingContext;
   DocumentGestureMode? _gestureMode;
-  DocumentInputSource? _inputSource;
+  TextInputSource? _inputSource;
   SoftwareKeyboardController? _softwareKeyboardController;
   bool _openKeyboardOnSelectionChange = true;
   bool _clearSelectionWhenImeDisconnects = true;
@@ -111,7 +111,7 @@ class TestDocumentConfigurator {
   /// Configures the [SuperEditor] for standard desktop interactions,
   /// e.g., mouse and keyboard input.
   TestDocumentConfigurator forDesktop({
-    DocumentInputSource inputSource = DocumentInputSource.keyboard,
+    TextInputSource inputSource = TextInputSource.keyboard,
   }) {
     _inputSource = inputSource;
     _gestureMode = DocumentGestureMode.mouse;
@@ -122,7 +122,7 @@ class TestDocumentConfigurator {
   /// e.g., touch gestures and IME input.
   TestDocumentConfigurator forAndroid() {
     _gestureMode = DocumentGestureMode.android;
-    _inputSource = DocumentInputSource.ime;
+    _inputSource = TextInputSource.ime;
     return this;
   }
 
@@ -130,12 +130,12 @@ class TestDocumentConfigurator {
   /// e.g., touch gestures and IME input.
   TestDocumentConfigurator forIOS() {
     _gestureMode = DocumentGestureMode.iOS;
-    _inputSource = DocumentInputSource.ime;
+    _inputSource = TextInputSource.ime;
     return this;
   }
 
   /// Configures the [SuperEditor] to use the given [inputSource].
-  TestDocumentConfigurator withInputSource(DocumentInputSource inputSource) {
+  TestDocumentConfigurator withInputSource(TextInputSource inputSource) {
     _inputSource = inputSource;
     return this;
   }
@@ -510,5 +510,39 @@ class EquivalentDocumentMatcher extends Matcher {
     }
 
     return null;
+  }
+}
+
+/// A [ComponentBuilder] which builds an [ImageComponent] that always renders
+/// images as a [SizedBox] with the given [size].
+class FakeImageComponentBuilder implements ComponentBuilder {
+  const FakeImageComponentBuilder({
+    required this.size,
+  });
+
+  final ui.Size size;
+
+  @override
+  SingleColumnLayoutComponentViewModel? createViewModel(Document document, DocumentNode node) {
+    return null;
+  }
+
+  @override
+  Widget? createComponent(
+      SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel componentViewModel) {
+    if (componentViewModel is! ImageComponentViewModel) {
+      return null;
+    }
+
+    return ImageComponent(
+      componentKey: componentContext.componentKey,
+      imageUrl: componentViewModel.imageUrl,
+      selection: componentViewModel.selection,
+      selectionColor: componentViewModel.selectionColor,
+      imageBuilder: (context, imageUrl) => SizedBox(
+        height: size.height,
+        width: size.width,
+      ),
+    );
   }
 }

@@ -22,6 +22,7 @@ import 'package:super_editor/src/default_editor/list_items.dart';
 import 'package:super_editor/src/default_editor/paragraph.dart';
 import 'package:super_editor/src/default_editor/unknown_component.dart';
 
+import '../infrastructure/platforms/mobile_documents.dart';
 import 'read_only_document_android_touch_interactor.dart';
 import 'read_only_document_ios_touch_interactor.dart';
 import 'read_only_document_keyboard_interactor.dart';
@@ -49,6 +50,7 @@ class SuperReader extends StatefulWidget {
     this.iOSToolbarBuilder,
     this.createOverlayControlsClipper,
     this.autofocus = false,
+    this.overlayController,
     this.debugPaint = const DebugPaintConfig(),
   })  : stylesheet = stylesheet ?? readOnlyDefaultStylesheet,
         selectionStyles = selectionStyle ?? readOnlyDefaultSelectionStyle,
@@ -78,6 +80,9 @@ class SuperReader extends StatefulWidget {
   /// [scrollController] is not used if this [SuperReader] has an ancestor
   /// [Scrollable].
   final ScrollController? scrollController;
+
+  /// Shows, hides, and positions a floating toolbar and magnifier.
+  final MagnifierAndToolbarController? overlayController;
 
   /// Style rules applied through the document presentation.
   final Stylesheet stylesheet;
@@ -116,7 +121,7 @@ class SuperReader extends StatefulWidget {
   /// events, e.g., text entry, newlines, character deletion,
   /// copy, paste, etc.
   ///
-  /// These actions are only used when in [DocumentInputSource.keyboard]
+  /// These actions are only used when in [TextInputSource.keyboard]
   /// mode.
   final List<ReadOnlyDocumentKeyboardAction> keyboardActions;
 
@@ -318,6 +323,7 @@ class SuperReaderState extends State<SuperReader> {
           popoverToolbarBuilder: widget.androidToolbarBuilder ?? (_) => const SizedBox(),
           createOverlayControlsClipper: widget.createOverlayControlsClipper,
           showDebugPaint: widget.debugPaint.gestures,
+          overlayController: widget.overlayController,
           child: documentLayout,
         );
       case DocumentGestureMode.iOS:
@@ -332,6 +338,7 @@ class SuperReaderState extends State<SuperReader> {
           popoverToolbarBuilder: widget.iOSToolbarBuilder ?? (_) => const SizedBox(),
           createOverlayControlsClipper: widget.createOverlayControlsClipper,
           showDebugPaint: widget.debugPaint.gestures,
+          overlayController: widget.overlayController,
           child: documentLayout,
         );
     }

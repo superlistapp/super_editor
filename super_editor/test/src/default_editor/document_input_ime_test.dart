@@ -120,7 +120,7 @@ void main() {
               body: SuperEditor(
                 editor: editContext.editor,
                 composer: editContext.composer,
-                inputSource: DocumentInputSource.ime,
+                inputSource: TextInputSource.ime,
                 gestureMode: DocumentGestureMode.mouse,
                 autofocus: true,
               ),

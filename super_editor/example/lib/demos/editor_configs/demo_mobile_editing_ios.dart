@@ -56,7 +56,7 @@ class _MobileEditingIOSDemoState extends State<MobileEditingIOSDemo> {
               editor: _docEditor,
               composer: _composer,
               gestureMode: DocumentGestureMode.iOS,
-              inputSource: DocumentInputSource.ime,
+              inputSource: TextInputSource.ime,
               iOSToolbarBuilder: (_) => IOSTextEditingFloatingToolbar(
                 onCutPressed: () => _docOps.cut(),
                 onCopyPressed: () => _docOps.copy(),

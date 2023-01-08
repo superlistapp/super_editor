@@ -15,8 +15,10 @@ import 'package:super_editor/src/default_editor/document_gestures_touch_ios.dart
 import 'package:super_editor/src/default_editor/document_scrollable.dart';
 import 'package:super_editor/src/default_editor/list_items.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
+import 'package:super_editor/src/infrastructure/text_input.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
+import '../infrastructure/platforms/mobile_documents.dart';
 import 'attributions.dart';
 import 'blockquote.dart';
 import 'document_caret_overlay.dart';
@@ -99,6 +101,7 @@ class SuperEditor extends StatefulWidget {
     this.documentOverlayBuilders = const [DefaultCaretOverlayBuilder()],
     this.debugPaint = const DebugPaintConfig(),
     this.autofocus = false,
+    this.overlayController,
   })  : stylesheet = stylesheet ?? defaultStylesheet,
         selectionStyles = selectionStyle ?? defaultSelectionStyle,
         keyboardActions = keyboardActions ?? defaultKeyboardActions,
@@ -119,6 +122,9 @@ class SuperEditor extends StatefulWidget {
   /// `scrollController` is not used if this `SuperEditor` has an ancestor
   /// `Scrollable`.
   final ScrollController? scrollController;
+
+  /// Shows, hides, and positions a floating toolbar and magnifier.
+  final MagnifierAndToolbarController? overlayController;
 
   /// [GlobalKey] that's bound to the [DocumentLayout] within
   /// this `SuperEditor`.
@@ -152,7 +158,7 @@ class SuperEditor extends StatefulWidget {
   final List<SingleColumnLayoutStylePhase> customStylePhases;
 
   /// The `SuperEditor` input source, e.g., keyboard or Input Method Engine.
-  final DocumentInputSource? inputSource;
+  final TextInputSource? inputSource;
 
   /// Opens and closes the software keyboard.
   ///
@@ -214,7 +220,7 @@ class SuperEditor extends StatefulWidget {
   /// events, e.g., text entry, newlines, character deletion,
   /// copy, paste, etc.
   ///
-  /// These actions are only used when in [DocumentInputSource.keyboard]
+  /// These actions are only used when in [TextInputSource.keyboard]
   /// mode.
   final List<DocumentKeyboardAction> keyboardActions;
 
@@ -437,20 +443,20 @@ class SuperEditorState extends State<SuperEditor> {
     }
   }
 
-  /// Returns the [DocumentInputSource] which should be used.
+  /// Returns the [TextInputSource] which should be used.
   ///
   /// If the `inputSource` is configured, it is used. Otherwise,
-  /// the [DocumentInputSource] is chosen based on the platform.
-  DocumentInputSource get _inputSource {
+  /// the [TextInputSource] is chosen based on the platform.
+  TextInputSource get _inputSource {
     if (widget.inputSource != null) {
       return widget.inputSource!;
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
       case TargetPlatform.iOS:
-        return DocumentInputSource.ime;
+        return TextInputSource.ime;
       default:
-        return DocumentInputSource.keyboard;
+        return TextInputSource.keyboard;
     }
   }
 
@@ -474,7 +480,7 @@ class SuperEditorState extends State<SuperEditor> {
     required Widget child,
   }) {
     switch (_inputSource) {
-      case DocumentInputSource.keyboard:
+      case TextInputSource.keyboard:
         return SuperEditorHardwareKeyHandler(
           focusNode: _focusNode,
           autofocus: widget.autofocus,
@@ -482,7 +488,7 @@ class SuperEditorState extends State<SuperEditor> {
           keyboardActions: widget.keyboardActions,
           child: child,
         );
-      case DocumentInputSource.ime:
+      case TextInputSource.ime:
         return SuperEditorImeInteractor(
           focusNode: _focusNode,
           autofocus: widget.autofocus,
@@ -517,6 +523,7 @@ class SuperEditorState extends State<SuperEditor> {
           handleColor: widget.androidHandleColor ?? Theme.of(context).primaryColor,
           popoverToolbarBuilder: widget.androidToolbarBuilder ?? (_) => const SizedBox(),
           createOverlayControlsClipper: widget.createOverlayControlsClipper,
+          overlayController: widget.overlayController,
           showDebugPaint: widget.debugPaint.gestures,
           child: documentLayout,
         );
@@ -532,6 +539,7 @@ class SuperEditorState extends State<SuperEditor> {
           popoverToolbarBuilder: widget.iOSToolbarBuilder ?? (_) => const SizedBox(),
           floatingCursorController: _floatingCursorController,
           createOverlayControlsClipper: widget.createOverlayControlsClipper,
+          overlayController: widget.overlayController,
           showDebugPaint: widget.debugPaint.gestures,
           child: documentLayout,
         );

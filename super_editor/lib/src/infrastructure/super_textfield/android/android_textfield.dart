@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide ListenableBuilder;
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
@@ -35,7 +35,7 @@ class SuperAndroidTextField extends StatefulWidget {
     this.minLines,
     this.maxLines = 1,
     this.lineHeight,
-    required this.caretColor,
+    required this.caretStyle,
     required this.selectionColor,
     required this.handlesColor,
     this.textInputAction = TextInputAction.done,
@@ -66,8 +66,8 @@ class SuperAndroidTextField extends StatefulWidget {
   /// To easily build a hint with styled text, see [StyledHintBuilder].
   final WidgetBuilder? hintBuilder;
 
-  /// Color of the caret.
-  final Color caretColor;
+  /// The visual representation of the caret.
+  final CaretStyle caretStyle;
 
   /// Color of the selection rectangle for selected text.
   final Color selectionColor;
@@ -494,7 +494,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
             padding: widget.padding,
             child: ListenableBuilder(
               listenable: _textEditingController,
-              builder: (context) {
+              builder: (context, _) {
                 final isTextEmpty = _textEditingController.text.text.isEmpty;
                 final showHint = widget.hintBuilder != null &&
                     ((isTextEmpty && widget.hintBehavior == HintBehavior.displayHintUntilTextEntered) ||
@@ -533,9 +533,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
           highlightStyle: SelectionHighlightStyle(
             color: widget.selectionColor,
           ),
-          caretStyle: CaretStyle(
-            color: widget.caretColor,
-          ),
+          caretStyle: widget.caretStyle,
           selection: _textEditingController.selection,
           hasCaret: _focusNode.hasFocus,
         ),

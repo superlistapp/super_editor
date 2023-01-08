@@ -1,5 +1,5 @@
 import 'package:attributed_text/attributed_text.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide ListenableBuilder;
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
@@ -39,7 +39,7 @@ class SuperIOSTextField extends StatefulWidget {
     this.minLines,
     this.maxLines = 1,
     this.lineHeight,
-    required this.caretColor,
+    required this.caretStyle,
     required this.selectionColor,
     required this.handlesColor,
     this.textInputAction = TextInputAction.done,
@@ -70,8 +70,8 @@ class SuperIOSTextField extends StatefulWidget {
   /// To easily build a hint with styled text, see [StyledHintBuilder].
   final WidgetBuilder? hintBuilder;
 
-  /// Color of the caret.
-  final Color caretColor;
+  /// The visual representation of the caret.
+  final CaretStyle caretStyle;
 
   /// Color of the selection rectangle for selected text.
   final Color selectionColor;
@@ -489,7 +489,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
             padding: widget.padding,
             child: ListenableBuilder(
               listenable: _textEditingController,
-              builder: (context) {
+              builder: (context, _) {
                 final isTextEmpty = _textEditingController.text.text.isEmpty;
                 final showHint = widget.hintBuilder != null &&
                     ((isTextEmpty && widget.hintBehavior == HintBehavior.displayHintUntilTextEntered) ||
@@ -528,6 +528,13 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
         ? _textEditingController.text.computeTextSpan(widget.textStyleBuilder)
         : AttributedText(text: "").computeTextSpan(widget.textStyleBuilder);
 
+    CaretStyle caretStyle = widget.caretStyle;
+
+    final caretColorOverride = _floatingCursorController.isShowingFloatingCursor ? Colors.grey : null;
+    if (caretColorOverride != null) {
+      caretStyle = caretStyle.copyWith(color: caretColorOverride);
+    }
+
     return FillWidthIfConstrained(
       child: SuperTextWithSelection.single(
         key: _textContentKey,
@@ -537,9 +544,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
           highlightStyle: SelectionHighlightStyle(
             color: widget.selectionColor,
           ),
-          caretStyle: CaretStyle(
-            color: _floatingCursorController.isShowingFloatingCursor ? Colors.grey : widget.caretColor,
-          ),
+          caretStyle: caretStyle,
           selection: _textEditingController.selection,
           hasCaret: _focusNode.hasFocus,
         ),

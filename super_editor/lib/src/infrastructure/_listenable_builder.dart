@@ -77,13 +77,13 @@ class ListenableBuilder extends StatelessWidget {
   }) : super(key: key);
 
   final Listenable listenable;
-  final WidgetBuilder builder;
+  final TransitionBuilder builder;
 
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: listenable,
-      builder: (context, _) => builder(context),
+      builder: builder,
     );
   }
 }

@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:super_editor/src/infrastructure/blinking_caret.dart';
@@ -355,7 +358,7 @@ void main() {
       await tester
           .createDocument()
           .withLongTextContent()
-          .withInputSource(DocumentInputSource.ime)
+          .withInputSource(TextInputSource.ime)
           .withAddedComponents([const _UnselectableHrComponentBuilder()])
           .withCustomWidgetTreeBuilder(
             (superEditor) => MaterialApp(
@@ -509,7 +512,7 @@ Second Paragraph
       await tester
           .createDocument()
           .withSingleParagraph()
-          .withInputSource(DocumentInputSource.ime)
+          .withInputSource(TextInputSource.ime)
           .withCustomWidgetTreeBuilder(
             (superEditor) => MaterialApp(
               home: Scaffold(
@@ -566,7 +569,7 @@ Second Paragraph
       await tester
           .createDocument()
           .withSingleParagraph()
-          .withInputSource(DocumentInputSource.ime)
+          .withInputSource(TextInputSource.ime)
           .withCustomWidgetTreeBuilder(
             (superEditor) => MaterialApp(
               home: Scaffold(
@@ -626,7 +629,7 @@ Second Paragraph
       await tester
           .createDocument()
           .withSingleParagraph()
-          .withInputSource(DocumentInputSource.ime)
+          .withInputSource(TextInputSource.ime)
           .withFocusNode(focusNode)
           .withCustomWidgetTreeBuilder(
             (superEditor) => MaterialApp(
@@ -706,6 +709,40 @@ Second Paragraph
 
       // Ensure caret is displayed.
       expect(_caretFinder(), findsOneWidget);
+    });
+
+    testWidgetsOnAllPlatforms("applies selection changes from the platform", (tester) async {
+      await tester //
+          .createDocument()
+          .withSingleParagraph()
+          .withInputSource(TextInputSource.ime)
+          .pump();
+
+      // Place the caret at the middle of the first word.
+      await tester.placeCaretInParagraph('1', 2);
+
+      final text = SuperEditorInspector.findTextInParagraph('1').text;
+
+      await tester.ime.sendDeltas(
+        [
+          TextEditingDeltaNonTextUpdate(
+            oldText: text,
+            selection: const TextSelection.collapsed(offset: 6),
+            composing: const TextSelection.collapsed(offset: 6),
+          )
+        ],
+        getter: imeClientGetter,
+      );
+
+      expect(
+        SuperEditorInspector.findDocumentSelection(),
+        const DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: '1',
+            nodePosition: TextNodePosition(offset: 6),
+          ),
+        ),
+      );
     });
 
     test("emits a DocumentSelectionChange when changing selection by the notifier", () async {

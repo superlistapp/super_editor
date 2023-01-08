@@ -42,6 +42,9 @@ dependency_overrides:
     path: ../attributed_text
   super_text_layout:
     path: ../super_text_layout
+  flutter_test_robots:
+    git: 
+      url: https://github.com/Flutter-Bounty-Hunters/flutter_test_robots
 
 dev_dependencies:
   flutter_lints: ^2.0.1
@@ -50,6 +53,7 @@ dev_dependencies:
   super_editor_markdown:
     path: ../super_editor_markdown
   text_table: ^4.0.1
+  meta: ^1.8.0
 
 flutter:
   # no Flutter configuration

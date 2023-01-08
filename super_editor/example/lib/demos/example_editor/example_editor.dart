@@ -38,6 +38,8 @@ class _ExampleEditorState extends State<ExampleEditor> {
   OverlayEntry? _imageFormatBarOverlayEntry;
   final _imageSelectionAnchor = ValueNotifier<Offset?>(null);
 
+  final _overlayController = MagnifierAndToolbarController();
+
   @override
   void initState() {
     super.initState();
@@ -204,7 +206,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
 
   bool get _isMobile => _gestureMode != DocumentGestureMode.mouse;
 
-  DocumentInputSource get _inputSource {
+  TextInputSource get _inputSource {
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
       case TargetPlatform.iOS:
@@ -212,14 +214,26 @@ class _ExampleEditorState extends State<ExampleEditor> {
       case TargetPlatform.linux:
       case TargetPlatform.macOS:
       case TargetPlatform.windows:
-        return DocumentInputSource.ime;
+        return TextInputSource.ime;
       // return DocumentInputSource.keyboard;
     }
   }
 
-  void _cut() => _docOps.cut();
-  void _copy() => _docOps.copy();
-  void _paste() => _docOps.paste();
+  void _cut() {
+    _docOps.cut();
+    _overlayController.hideToolbar();
+  }
+
+  void _copy() {
+    _docOps.copy();
+    _overlayController.hideToolbar();
+  }
+
+  void _paste() {
+    _docOps.paste();
+    _overlayController.hideToolbar();
+  }
+
   void _selectAll() => _docOps.selectAll();
 
   void _showImageToolbar() {
@@ -359,7 +373,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
         ],
         gestureMode: _gestureMode,
         inputSource: _inputSource,
-        keyboardActions: _inputSource == DocumentInputSource.ime ? defaultImeKeyboardActions : defaultKeyboardActions,
+        keyboardActions: _inputSource == TextInputSource.ime ? defaultImeKeyboardActions : defaultKeyboardActions,
         androidToolbarBuilder: (_) => AndroidTextEditingFloatingToolbar(
           onCutPressed: _cut,
           onCopyPressed: _copy,
@@ -371,6 +385,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
           onCopyPressed: _copy,
           onPastePressed: _paste,
         ),
+        overlayController: _overlayController,
       ),
     );
   }

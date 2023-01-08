@@ -11,10 +11,11 @@ import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/focus.dart';
-import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/attributed_text_editing_controller.dart';
-import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/hint_text.dart';
+import 'package:super_editor/src/infrastructure/super_textfield/super_textfield.dart';
+import 'package:super_editor/src/infrastructure/text_input.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
+import '../../ime_input_owner.dart';
 import '../../keyboard.dart';
 import '../../multi_tap_gesture.dart';
 import '../infrastructure/fill_width_if_constrained.dart';
@@ -57,8 +58,13 @@ class SuperDesktopTextField extends StatefulWidget {
     this.maxLines = 1,
     this.decorationBuilder,
     this.onRightClick,
-    this.keyboardHandlers = defaultTextFieldKeyboardHandlers,
-  }) : super(key: key);
+    this.inputSource = TextInputSource.keyboard,
+    List<TextFieldKeyboardHandler>? keyboardHandlers,
+  })  : keyboardHandlers = keyboardHandlers ??
+            (inputSource == TextInputSource.keyboard
+                ? defaultTextFieldKeyboardHandlers
+                : defaultTextFieldImeKeyboardHandlers),
+        super(key: key);
 
   final FocusNode? focusNode;
 
@@ -94,21 +100,28 @@ class SuperDesktopTextField extends StatefulWidget {
 
   final RightClickListener? onRightClick;
 
+  /// The [SuperDesktopTextField] input source, e.g., keyboard or Input Method Engine.
+  final TextInputSource inputSource;
+
   /// Priority list of handlers that process all physical keyboard
   /// key presses, for text input, deletion, caret movement, etc.
+  ///
+  /// If the [inputSource] is [TextInputSource.ime], text input is already handled
+  /// using [TextEditingDelta]s, so this list shouldn't include handlers
+  /// that input text based on individual character key presses.
   final List<TextFieldKeyboardHandler> keyboardHandlers;
 
   @override
   SuperDesktopTextFieldState createState() => SuperDesktopTextFieldState();
 }
 
-class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements ProseTextBlock {
+class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements ProseTextBlock, ImeInputOwner {
   final _textKey = GlobalKey<ProseTextState>();
   final _textScrollKey = GlobalKey<SuperTextFieldScrollviewState>();
   late FocusNode _focusNode;
   bool _hasFocus = false; // cache whether we have focus so we know when it changes
 
-  late AttributedTextEditingController _controller;
+  late ImeAttributedTextEditingController _controller;
   late ScrollController _scrollController;
 
   double? _viewportHeight;
@@ -121,8 +134,13 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
 
     _focusNode = (widget.focusNode ?? FocusNode())..addListener(_updateSelectionOnFocusChange);
 
-    _controller = (widget.textController ?? AttributedTextEditingController())
-      ..addListener(_onSelectionOrContentChange);
+    _controller = widget.textController != null
+        ? widget.textController is ImeAttributedTextEditingController
+            ? (widget.textController as ImeAttributedTextEditingController)
+            : ImeAttributedTextEditingController(controller: widget.textController, disposeClientController: false)
+        : ImeAttributedTextEditingController();
+    _controller.addListener(_onSelectionOrContentChange);
+
     _scrollController = ScrollController();
 
     // Check if we need to update the selection.
@@ -146,11 +164,18 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
 
     if (widget.textController != oldWidget.textController) {
       _controller.removeListener(_onSelectionOrContentChange);
-      if (oldWidget.textController == null) {
+      // When the given textController isn't an ImeAttributedTextEditingController,
+      // we wrap it with one. So we need to dispose it.
+      if (oldWidget.textController == null || oldWidget.textController is! ImeAttributedTextEditingController) {
         _controller.dispose();
       }
-      _controller = (widget.textController ?? AttributedTextEditingController())
-        ..addListener(_onSelectionOrContentChange);
+      _controller = widget.textController != null
+          ? widget.textController is ImeAttributedTextEditingController
+              ? (widget.textController as ImeAttributedTextEditingController)
+              : ImeAttributedTextEditingController(controller: widget.textController, disposeClientController: false)
+          : ImeAttributedTextEditingController();
+
+      _controller.addListener(_onSelectionOrContentChange);
     }
 
     if (widget.padding != oldWidget.padding ||
@@ -177,6 +202,10 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
 
   @override
   ProseTextLayout get textLayout => _textKey.currentState!.textLayout;
+
+  @override
+  @visibleForTesting
+  DeltaTextInputClient get imeClient => _controller;
 
   FocusNode get focusNode => _focusNode;
 
@@ -285,11 +314,8 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
 
     final isMultiline = widget.minLines != 1 || widget.maxLines != 1;
 
-    return SuperTextFieldKeyboardInteractor(
-      focusNode: _focusNode,
-      textController: _controller,
-      textKey: _textKey,
-      keyboardActions: widget.keyboardHandlers,
+    return _buildTextInputSystem(
+      isMultiline: isMultiline,
       child: SuperTextFieldGestureInteractor(
         focusNode: _focusNode,
         textController: _controller,
@@ -337,6 +363,26 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
     required Widget child,
   }) {
     return widget.decorationBuilder != null ? widget.decorationBuilder!(context, child) : child;
+  }
+
+  Widget _buildTextInputSystem({
+    required bool isMultiline,
+    required Widget child,
+  }) {
+    return SuperTextFieldKeyboardInteractor(
+      focusNode: _focusNode,
+      textController: _controller,
+      textKey: _textKey,
+      keyboardActions: widget.keyboardHandlers,
+      child: widget.inputSource == TextInputSource.ime
+          ? SuperTextFieldImeInteractor(
+              focusNode: _focusNode,
+              textController: _controller,
+              isMultiline: isMultiline,
+              child: child,
+            )
+          : child,
+    );
   }
 
   Widget _buildSelectableText() {
@@ -861,6 +907,107 @@ class _SuperTextFieldKeyboardInteractorState extends State<SuperTextFieldKeyboar
   }
 }
 
+/// Opens and closes an IME connection based on changes to focus and selection.
+///
+/// This widget watches [focusNode] for focus changes, and [textController] for
+/// selection changes.
+///
+/// All IME commands are handled and applied to text field text by the given [textController].
+///
+/// When [focusNode] gains focus, if the [textController] doesn't have a selection, the caret is
+/// placed at the end of the text.
+///
+/// When [focusNode] loses focus, the [textController]'s selection is cleared.
+class SuperTextFieldImeInteractor extends StatefulWidget {
+  const SuperTextFieldImeInteractor({
+    Key? key,
+    required this.focusNode,
+    required this.textController,
+    required this.isMultiline,
+    required this.child,
+  }) : super(key: key);
+
+  /// [FocusNode] for this text field.
+  final FocusNode focusNode;
+
+  /// Controller for the text/selection within this text field.
+  final ImeAttributedTextEditingController textController;
+
+  /// Whether or not this text field supports multiple lines of text.
+  final bool isMultiline;
+
+  /// The rest of the subtree for this text field.
+  final Widget child;
+
+  @override
+  State<SuperTextFieldImeInteractor> createState() => _SuperTextFieldImeInteractorState();
+}
+
+class _SuperTextFieldImeInteractorState extends State<SuperTextFieldImeInteractor> {
+  @override
+  void initState() {
+    super.initState();
+    widget.focusNode.addListener(_updateSelectionAndImeConnectionOnFocusChange);
+
+    if (widget.focusNode.hasFocus) {
+      // We got an already focused FocusNode, we need to attach to the IME.
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+        _updateSelectionAndImeConnectionOnFocusChange();
+      });
+    }
+  }
+
+  @override
+  void didUpdateWidget(SuperTextFieldImeInteractor oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.focusNode != oldWidget.focusNode) {
+      oldWidget.focusNode.removeListener(_updateSelectionAndImeConnectionOnFocusChange);
+      widget.focusNode.addListener(_updateSelectionAndImeConnectionOnFocusChange);
+
+      if (widget.focusNode.hasFocus) {
+        // We got an already focused FocusNode, we need to attach to the IME.
+        WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+          _updateSelectionAndImeConnectionOnFocusChange();
+        });
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.focusNode.removeListener(_updateSelectionAndImeConnectionOnFocusChange);
+    super.dispose();
+  }
+
+  void _updateSelectionAndImeConnectionOnFocusChange() {
+    if (widget.focusNode.hasFocus) {
+      if (!widget.textController.isAttachedToIme) {
+        _log.info('Attaching TextInputClient to TextInput');
+        setState(() {
+          if (!widget.textController.selection.isValid) {
+            widget.textController.selection = TextSelection.collapsed(offset: widget.textController.text.text.length);
+          }
+
+          widget.textController.attachToIme(
+            textInputType: widget.isMultiline ? TextInputType.multiline : TextInputType.text,
+          );
+        });
+      }
+    } else {
+      _log.info('Lost focus. Detaching TextInputClient from TextInput.');
+      setState(() {
+        widget.textController.detachFromIme();
+        widget.textController.selection = const TextSelection.collapsed(offset: -1);
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return widget.child;
+  }
+}
+
 /// Handles all scrolling behavior for a text field.
 ///
 /// [SuperTextFieldScrollview] is intended to operate as a piece within
@@ -1255,6 +1402,41 @@ const defaultTextFieldKeyboardHandlers = <TextFieldKeyboardHandler>[
   DefaultSuperTextFieldKeyboardHandlers.deleteTextWhenBackspaceOrDeleteIsPressed,
   DefaultSuperTextFieldKeyboardHandlers.insertNewlineWhenEnterIsPressed,
   DefaultSuperTextFieldKeyboardHandlers.insertCharacterWhenKeyIsPressed,
+];
+
+/// The keyboard actions that a [SuperTextField] uses by default when using [TextInputSource.ime].
+///
+/// Using the IME on desktop involves partial input from the IME and partial input from non-content keys,
+/// like arrow keys.
+///
+/// This list has the same handlers as [defaultTextFieldKeyboardHandlers], except the handlers that
+/// input text. Text input is handled using [TextEditingDelta]s from the IME.
+///
+/// It's common for developers to want all of these actions, but also
+/// want to add more actions that take priority. To achieve that,
+/// add the new actions to the front of the list:
+///
+/// ```
+/// SuperTextField(
+///   keyboardActions: [
+///     myNewAction1,
+///     myNewAction2,
+///     ...defaultTextFieldImeKeyboardHandlers,
+///   ],
+/// );
+/// ```
+const defaultTextFieldImeKeyboardHandlers = <TextFieldKeyboardHandler>[
+  DefaultSuperTextFieldKeyboardHandlers.copyTextWhenCmdCIsPressed,
+  DefaultSuperTextFieldKeyboardHandlers.pasteTextWhenCmdVIsPressed,
+  DefaultSuperTextFieldKeyboardHandlers.selectAllTextFieldWhenCmdAIsPressed,
+  DefaultSuperTextFieldKeyboardHandlers.moveCaretToStartOrEnd,
+  DefaultSuperTextFieldKeyboardHandlers.moveUpDownLeftAndRightWithArrowKeys,
+  DefaultSuperTextFieldKeyboardHandlers.moveToLineStartWithHome,
+  DefaultSuperTextFieldKeyboardHandlers.moveToLineEndWithEnd,
+  DefaultSuperTextFieldKeyboardHandlers.deleteWordWhenAltBackSpaceIsPressedOnMac,
+  DefaultSuperTextFieldKeyboardHandlers.deleteWordWhenCtlBackSpaceIsPressedOnWindowsAndLinux,
+  DefaultSuperTextFieldKeyboardHandlers.deleteTextOnLineBeforeCaretWhenShortcutKeyAndBackspaceIsPressed,
+  DefaultSuperTextFieldKeyboardHandlers.deleteTextWhenBackspaceOrDeleteIsPressed,
 ];
 
 class DefaultSuperTextFieldKeyboardHandlers {

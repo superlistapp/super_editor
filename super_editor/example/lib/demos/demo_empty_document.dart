@@ -36,7 +36,7 @@ class _EmptyDocumentDemoState extends State<EmptyDocumentDemo> {
       child: SuperEditor(
         editor: _docEditor,
         gestureMode: DocumentGestureMode.mouse,
-        inputSource: DocumentInputSource.keyboard,
+        inputSource: TextInputSource.keyboard,
       ),
     );
   }

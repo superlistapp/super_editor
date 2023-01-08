@@ -157,11 +157,20 @@ class TextDeltasDocumentEditor {
 
   void _applyNonTextChange(TextEditingDeltaNonTextUpdate delta) {
     editorImeLog.fine("Non-text change:");
-    // editorImeLog.fine("App-side selection - ${currentTextEditingValue.selection}");
-    // editorImeLog.fine("App-side composing - ${currentTextEditingValue.composing}");
     editorImeLog.fine("OS-side selection - ${delta.selection}");
     editorImeLog.fine("OS-side composing - ${delta.composing}");
-    // currentTextEditingValue = _currentTextEditingValue.copyWith(composing: delta.composing);
+
+    final docSelection = DocumentImeSerializer(
+      editor.document,
+      selection.value!,
+      null,
+    ).imeToDocumentSelection(delta.selection);
+    if (docSelection != null) {
+      // We got a selection from the platform.
+      // This could happen in some software keyboards, like GBoard,
+      // where the user can swipe over the spacebar to change the selection.
+      selection.value = docSelection;
+    }
   }
 
   void insert(DocumentSelection insertionSelection, String textInserted) {

@@ -1,17 +1,21 @@
 import 'dart:async';
 
-import 'package:flutter/rendering.dart';
+import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
 
 /// Controls the display of drag handles, a magnifier, and a
 /// floating toolbar, assuming Android-style behavior for the
 /// handles.
-class AndroidDocumentGestureEditingController extends MagnifierAndToolbarController {
+class AndroidDocumentGestureEditingController extends GestureEditingController {
   AndroidDocumentGestureEditingController({
     required LayerLink documentLayoutLink,
     required LayerLink magnifierFocalPointLink,
+    required MagnifierAndToolbarController overlayController,
   })  : _documentLayoutLink = documentLayoutLink,
-        super(magnifierFocalPointLink: magnifierFocalPointLink);
+        super(
+          magnifierFocalPointLink: magnifierFocalPointLink,
+          overlayController: overlayController,
+        );
 
   @override
   void dispose() {

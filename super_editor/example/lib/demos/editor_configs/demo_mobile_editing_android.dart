@@ -85,7 +85,7 @@ class _MobileEditingAndroidDemoState extends State<MobileEditingAndroidDemo> {
               editor: _docEditor,
               composer: _composer,
               gestureMode: DocumentGestureMode.android,
-              inputSource: DocumentInputSource.ime,
+              inputSource: TextInputSource.ime,
               imeConfiguration: _imeConfiguration,
               androidToolbarBuilder: (_) => AndroidTextEditingFloatingToolbar(
                 onCutPressed: () => _docOps.cut(),

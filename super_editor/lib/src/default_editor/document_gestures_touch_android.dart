@@ -1,6 +1,6 @@
 import 'dart:math';
 
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide ListenableBuilder;
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
@@ -39,6 +39,7 @@ class AndroidDocumentTouchInteractor extends StatefulWidget {
     required this.popoverToolbarBuilder,
     this.createOverlayControlsClipper,
     this.showDebugPaint = false,
+    this.overlayController,
     required this.child,
   }) : super(key: key);
 
@@ -50,6 +51,9 @@ class AndroidDocumentTouchInteractor extends StatefulWidget {
   final ValueNotifier<DocumentSelection?> selection;
 
   final ScrollController? scrollController;
+
+  /// Shows, hides, and positions a floating toolbar and magnifier.
+  final MagnifierAndToolbarController? overlayController;
 
   /// The closest that the user's selection drag gesture can get to the
   /// document boundary before auto-scrolling.
@@ -86,6 +90,9 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   // The alternative case is the one in which this interactor defers to an
   // ancestor scrollable.
   late ScrollController _scrollController;
+
+  /// Shows, hides, and positions a floating toolbar and magnifier.
+  late MagnifierAndToolbarController _overlayController;
   // The ScrollPosition attached to the _ancestorScrollable, if there's an ancestor
   // Scrollable.
   ScrollPosition? _ancestorScrollPosition;
@@ -144,9 +151,12 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     // TODO: rely solely on a ScrollPosition listener, not a ScrollController listener.
     _scrollController.addListener(_onScrollChange);
 
+    _overlayController = widget.overlayController ?? MagnifierAndToolbarController();
+
     _editingController = AndroidDocumentGestureEditingController(
       documentLayoutLink: _documentLayoutLink,
       magnifierFocalPointLink: _magnifierFocalPointLink,
+      overlayController: _overlayController,
     );
 
     widget.document.addListener(_onDocumentChange);
@@ -211,6 +221,11 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
     if (widget.getDocumentLayout != oldWidget.getDocumentLayout) {
       onDocumentLayoutResolverReplaced(widget.getDocumentLayout);
+    }
+
+    if (widget.overlayController != oldWidget.overlayController) {
+      _overlayController = widget.overlayController ?? MagnifierAndToolbarController();
+      _editingController.overlayController = _overlayController;
     }
   }
 
@@ -1147,7 +1162,7 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
   Widget build(BuildContext context) {
     return ListenableBuilder(
       listenable: widget.editingController,
-      builder: (context) {
+      builder: (context, _) {
         return Padding(
           // Remove the keyboard from the space that we occupy so that
           // clipping calculations apply to the expected visual borders,
