@@ -81,8 +81,6 @@ void main() {
       });
 
       testWidgets('can type compound character in an empty paragraph', (tester) async {
-        initLoggers(Level.FINER, {editorImeLog});
-
         final document = twoParagraphEmptyDoc();
 
         // Inserting special characters, or compound characters, like ü, requires

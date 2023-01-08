@@ -297,8 +297,6 @@ void main() {
       });
 
       testWidgets("backspace removes block node when caret is on downstream edge", (tester) async {
-        initLoggers(Level.FINER, {editorImeLog});
-
         final document = paragraphThenHrThenParagraphDoc();
         final composer = DocumentComposer(
           initialSelection: const DocumentSelection.collapsed(

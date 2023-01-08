@@ -1,6 +1,67 @@
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 
+/// Base class for [TextInputConnection] decorators.
+///
+/// A decorator is an object that forwards calls to another, existing implementation
+/// of a given interface, but adds or alters some of those behaviors.
+abstract class TextInputConnectionDecorator implements TextInputConnection {
+  TextInputConnectionDecorator([this.client]);
+
+  TextInputConnection? client;
+
+  @override
+  bool get attached => client?.attached ?? false;
+
+  @override
+  bool get scribbleInProgress => client?.scribbleInProgress ?? false;
+
+  @override
+  void show() => client?.show();
+
+  @override
+  void setEditingState(TextEditingValue value) => client?.setEditingState(value);
+
+  @override
+  void updateConfig(TextInputConfiguration configuration) => client?.updateConfig(configuration);
+
+  @override
+  void setCaretRect(Rect rect) => client?.setCaretRect(rect);
+
+  @override
+  void setSelectionRects(List<SelectionRect> selectionRects) => client?.setSelectionRects(selectionRects);
+
+  @override
+  void setComposingRect(Rect rect) => client?.setComposingRect(rect);
+
+  @override
+  void setStyle(
+          {required String? fontFamily,
+          required double? fontSize,
+          required FontWeight? fontWeight,
+          required TextDirection textDirection,
+          required TextAlign textAlign}) =>
+      client?.setStyle(
+          fontFamily: fontFamily,
+          fontSize: fontSize,
+          fontWeight: fontWeight,
+          textDirection: textDirection,
+          textAlign: textAlign);
+
+  @override
+  void requestAutofill() => client?.requestAutofill();
+
+  @override
+  void setEditableSizeAndTransform(Size editableBoxSize, Matrix4 transform) =>
+      client?.setEditableSizeAndTransform(editableBoxSize, transform);
+
+  @override
+  void connectionClosedReceived() => client?.connectionClosedReceived();
+
+  @override
+  void close() => client?.close();
+}
+
 /// A [DeltaTextInputClient] that forwards all calls to the given [_client], and
 /// also notifies [_onConnectionClosed] when the IME connection closes.
 ///

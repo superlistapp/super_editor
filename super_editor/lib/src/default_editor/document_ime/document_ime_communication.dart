@@ -9,15 +9,16 @@ import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_contr
 
 import 'document_delta_editing.dart';
 import 'document_serialization.dart';
+import 'ime_decoration.dart';
 
 /// Sends messages to, and receives messages from, the platform Input Method Engine (IME),
 /// for the purpose of document editing.
 
-/// Widget that keeps a document and its selection synchronized with the value
-/// in the platform Input Method Engine (IME).
+/// Widget that keeps a document, selection, and composing region synchronized
+/// with the value in the platform Input Method Engine (IME).
 ///
-/// When the [document] or its [selection] changes, the [document] and [selection]
-/// are serialized and sent to the IME.
+/// When the [document], [selection], or [composingRegion] changes, are serialized
+/// and sent to the IME.
 class DocumentToImeSynchronizer extends StatefulWidget {
   const DocumentToImeSynchronizer({
     Key? key,
@@ -25,7 +26,6 @@ class DocumentToImeSynchronizer extends StatefulWidget {
     required this.selection,
     required this.composingRegion,
     required this.imeConnection,
-    required this.documentImeClient,
     required this.child,
   }) : super(key: key);
 
@@ -52,15 +52,6 @@ class DocumentToImeSynchronizer extends StatefulWidget {
   /// this fact.
   final ValueListenable<TextInputConnection?> imeConnection;
 
-  // TODO: the only reason we require a DocumentImeInputClient instead of
-  //       a regular client is so we can set the editing value on it. We should
-  //       either get this working with a regular client, or define a much more
-  //       narrow API
-  /// A client that knows how to talk to the platform IME, by receiving
-  /// content updates from the platform, and then subsequently sending
-  /// new content values to the platform.
-  final DocumentImeInputClient documentImeClient;
-
   final Widget child;
 
   @override
@@ -68,7 +59,6 @@ class DocumentToImeSynchronizer extends StatefulWidget {
 }
 
 class _DocumentToImeSynchronizerState extends State<DocumentToImeSynchronizer> {
-  DocumentImeSerializer? _currentImeSerialization;
   bool _hasSentInitialImeValue = false;
   bool _needsSync = false;
 
@@ -177,7 +167,6 @@ class _DocumentToImeSynchronizerState extends State<DocumentToImeSynchronizer> {
 
   void _sendDocumentToIme() {
     editorImeLog.fine("[DocumentToImeSynchronizer] - Trying to send document to IME");
-    // if (!widget.imeValue.isConnectedToIme) {
     if (widget.imeConnection.value == null || !widget.imeConnection.value!.attached) {
       editorImeLog.fine("[DocumentToImeSynchronizer] - Not connected to IME. Not sending document to IME.");
       return;
@@ -192,62 +181,18 @@ class _DocumentToImeSynchronizerState extends State<DocumentToImeSynchronizer> {
     editorImeLog.fine("[DocumentToImeSynchronizer] - Serializing and sending document and selection to IME");
     editorImeLog.fine("[DocumentToImeSynchronizer] - Selection: ${widget.selection.value}");
     editorImeLog.fine("[DocumentToImeSynchronizer] - Composing region: ${widget.composingRegion.value}");
-    _currentImeSerialization = DocumentImeSerializer(
+    final imeSerialization = DocumentImeSerializer(
       widget.document,
       widget.selection.value!,
       widget.composingRegion.value,
     );
-    TextEditingValue textEditingValue = _currentImeSerialization!.toTextEditingValue();
-
-    // if (_currentImeSerialization != null &&
-    //     _currentImeSerialization!.didPrependPlaceholder &&
-    //     composingRegion.isValid &&
-    //     !newDocSerialization.didPrependPlaceholder) {
-    if (textEditingValue.composing.isValid && _currentImeSerialization!.didPrependPlaceholder) {
-      // // The IME's desired composing region includes the prepended placeholder.
-      // // The updated IME value doesn't have a prepended placeholder, adjust
-      // // the composing region bounds.
-      // editorImeLog.finer(
-      //     "Pulling back the composing region bounds because the serialized IME value no longer includes prepended placeholder text");
-      // assert(composingRegion.start - 2 >= 0, "Invalid composing start index: ${composingRegion.start - 2}");
-      // assert(composingRegion.end - 2 >= 0, "Invalid composing end index: ${composingRegion.end - 2}");
-      // assert(composingRegion.end - 2 <= newDocSerialization.toTextEditingValue().text.length,
-      //     "Invalid composing end index: ${composingRegion.end - 2}");
-      // composingRegion = TextRange(
-      //   start: composingRegion.start - 2,
-      //   end: composingRegion.end - 2,
-      // );
-
-      // TODO: we only want to push back the composing region if the original composing
-      //       region was defined without prepended characters.
-      //
-      //       We have 4 possibilities:
-      //       - new composing region expects prepended characters, and there are
-      //       - new composing region expects prepended characters, but there aren't any
-      //       - new composing region doesn't expect prepended characters, and there aren't
-      //       - new composing region doesn't expect prepended characters, and there are
-      //
-      //       This is something that has become complicated because we separated the
-      //       application of IME deltas to a document, from the serialization of a
-      //       document to IME.
-      textEditingValue = textEditingValue.copyWith(
-        composing: TextRange(
-          start: textEditingValue.composing.start + 2,
-          end: textEditingValue.composing.end + 2,
-        ),
-      );
-    }
-
-    editorImeLog.finer(
-        "Did we prepend a placeholder in the previous document serialization? ${_currentImeSerialization?.didPrependPlaceholder}");
-    editorImeLog.finer("Desired composing region: ${widget.composingRegion.value}");
-    editorImeLog.finer(
-        "Did new document serialization prepend a placeholder? ${_currentImeSerialization!.didPrependPlaceholder}");
-    editorImeLog.finer("New composing region: ${textEditingValue.composing}");
+    editorImeLog
+        .fine("[DocumentToImeSynchronizer] - Adding invisible characters?: ${imeSerialization.didPrependPlaceholder}");
+    TextEditingValue textEditingValue = imeSerialization.toTextEditingValue();
 
     editorImeLog.fine("[DocumentToImeSynchronizer] - Sending IME serialization:");
     editorImeLog.fine("[DocumentToImeSynchronizer] - $textEditingValue");
-    widget.documentImeClient.currentTextEditingValue = textEditingValue;
+    widget.imeConnection.value!.setEditingState(textEditingValue);
     editorImeLog.fine("[DocumentToImeSynchronizer] - Done sending document to IME");
     _hasSentInitialImeValue = true;
   }
@@ -259,31 +204,50 @@ class _DocumentToImeSynchronizerState extends State<DocumentToImeSynchronizer> {
 }
 
 /// A [TextInputClient] that applies IME operations to a [Document].
-class DocumentImeInputClient with TextInputClient, DeltaTextInputClient {
+///
+/// Ideally, this class *wouldn't* implement [TextInputConnection], but there are situations
+/// where this class needs to care about what's sent to the IME. For more information, see
+/// the [setEditingState] override in this class.
+class DocumentImeInputClient extends TextInputConnectionDecorator with TextInputClient, DeltaTextInputClient {
   DocumentImeInputClient({
     required this.textDeltasDocumentEditor,
     required this.imeConnection,
     FloatingCursorController? floatingCursorController,
   }) {
+    imeConnection.addListener(_onImeConnectionChange);
     _floatingCursorController = floatingCursorController;
+  }
+
+  void dispose() {
+    imeConnection.removeListener(_onImeConnectionChange);
   }
 
   final TextDeltasDocumentEditor textDeltasDocumentEditor;
 
   final ValueListenable<TextInputConnection?> imeConnection;
 
+  // TODO: get floating cursor out of here. Use a multi-client IME decorator to split responsibilities
   late FloatingCursorController? _floatingCursorController;
 
   bool _hasOutstandingMutatingChanges = false;
 
-  @override
-  AutofillScope? get currentAutofillScope => throw UnimplementedError();
+  void _onImeConnectionChange() {
+    client = imeConnection.value;
+  }
 
+  /// Override on [TextInputConnection] base class.
+  ///
+  /// This method is the reason that this class extends [TextInputConnectionDecorator].
+  /// Ideally, this object would be exclusively responsible for responding to IME
+  /// deltas, and some other object would be exclusively responsible for sending the
+  /// document to the IME. However, in certain situations, the decision to send the
+  /// document to the IME depends upon knowledge of recent deltas received from the
+  /// IME. As a result, this class is not only responsible for applying deltas to
+  /// the editor, but also making some decisions about when to send new values to the
+  /// IME. This method provides an override to do that, with minimal impact on other
+  /// areas of responsibility.
   @override
-  TextEditingValue get currentTextEditingValue => _currentTextEditingValue;
-  TextEditingValue _currentTextEditingValue = const TextEditingValue();
-  TextEditingValue? _lastTextEditingValueSentToOs;
-  set currentTextEditingValue(TextEditingValue newValue) {
+  void setEditingState(TextEditingValue newValue) {
     _currentTextEditingValue = newValue;
 
     if (_isApplyingDeltas) {
@@ -339,12 +303,19 @@ class DocumentImeInputClient with TextInputClient, DeltaTextInputClient {
     }
   }
 
+  @override
+  AutofillScope? get currentAutofillScope => throw UnimplementedError();
+
+  @override
+  TextEditingValue get currentTextEditingValue => _currentTextEditingValue;
+  TextEditingValue _currentTextEditingValue = const TextEditingValue();
+  TextEditingValue? _lastTextEditingValueSentToOs;
+
   bool _isApplyingDeltas = false;
 
   @override
   void updateEditingValue(TextEditingValue value) {
-    editorImeLog.info("Received new TextEditingValue from OS: $value");
-    _currentTextEditingValue = value;
+    editorImeLog.shout("Delta text input client received a non-delta TextEditingValue from OS: $value");
   }
 
   @override

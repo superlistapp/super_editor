@@ -89,6 +89,12 @@ class _SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> imp
   final _imeConnection = ValueNotifier<TextInputConnection?>(null);
   late TextInputConfiguration _textInputConfiguration;
   late final DocumentImeInputClient _documentImeClient;
+  // _documentImeConnection functions as both a TextInputConnection and a
+  // DeltaTextInputClient. This is required for a very specific reason that
+  // occurs in specific situations. To understand why we need it, check the
+  // implementation of DocumentImeInputClient. If we find a less confusing
+  // way to handle that scenario, then get rid of this property.
+  final _documentImeConnection = ValueNotifier<DocumentImeInputClient?>(null);
   late final TextDeltasDocumentEditor _textDeltasDocumentEditor;
 
   @override
@@ -108,6 +114,8 @@ class _SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> imp
       floatingCursorController: widget.floatingCursorController,
     );
 
+    _imeConnection.addListener(_onImeConnectionChange);
+
     _textInputConfiguration = widget.imeConfiguration.toTextInputConfiguration();
   }
 
@@ -117,7 +125,7 @@ class _SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> imp
 
     if (widget.imeConfiguration != oldWidget.imeConfiguration) {
       _textInputConfiguration = widget.imeConfiguration.toTextInputConfiguration();
-      if (isAttachedToIme) {
+      if (_isAttachedToIme) {
         _imeConnection.value!.updateConfig(_textInputConfiguration);
       }
     }
@@ -125,6 +133,7 @@ class _SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> imp
 
   @override
   void dispose() {
+    _imeConnection.removeListener(_onImeConnectionChange);
     _imeConnection.value?.close();
 
     if (widget.focusNode == null) {
@@ -138,7 +147,15 @@ class _SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> imp
   @override
   DeltaTextInputClient get imeClient => _documentImeClient;
 
-  bool get isAttachedToIme => _imeConnection.value?.attached ?? false;
+  bool get _isAttachedToIme => _imeConnection.value?.attached ?? false;
+
+  void _onImeConnectionChange() {
+    if (_imeConnection.value == null) {
+      _documentImeConnection.value = null;
+    } else {
+      _documentImeConnection.value = _documentImeClient;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -168,8 +185,7 @@ class _SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> imp
               document: widget.editContext.editor.document,
               selection: widget.editContext.composer.selectionNotifier,
               composingRegion: widget.editContext.composer.composingRegion,
-              imeConnection: _imeConnection,
-              documentImeClient: _documentImeClient,
+              imeConnection: _documentImeConnection,
               child: widget.child,
             ),
           ),
