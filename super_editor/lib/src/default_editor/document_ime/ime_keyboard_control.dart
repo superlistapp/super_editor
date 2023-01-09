@@ -53,7 +53,13 @@ class _SoftwareKeyboardOpenerState extends State<SoftwareKeyboardOpener> impleme
 
   @override
   void dispose() {
-    widget.controller?.detach();
+    // Detach from the controller at the end of the frame, so that
+    // ancestor widgets can still call `close()` on the keyboard in
+    // their `dispose()` methods. If we `detach()` right now, the
+    // ancestor widgets would cause errors in their `dispose()` methods.
+    WidgetsBinding.instance.scheduleFrameCallback((timeStamp) {
+      widget.controller?.detach();
+    });
     super.dispose();
   }
 

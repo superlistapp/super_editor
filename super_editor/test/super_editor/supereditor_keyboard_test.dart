@@ -549,6 +549,80 @@ void main() {
         // Ensure the selection is unchanged.
         expect(SuperEditorInspector.findDocumentSelection(), selectionBefore);
       });
+
+      testWidgetsOnAndroid('closes when requested before navigation', (tester) async {
+        final keyboardController = SoftwareKeyboardController();
+        final navigationKey = GlobalKey<NavigatorState>();
+        final firstPageKey = GlobalKey();
+
+        // Display a page without SuperEditor. We'll pop() back to this page, later.
+        await tester.pumpWidget(
+          MaterialApp(
+            navigatorKey: navigationKey,
+            home: Scaffold(
+              key: firstPageKey,
+              body: const Center(
+                child: Text("Starting Page"),
+              ),
+            ),
+          ),
+        );
+        expect(find.byKey(firstPageKey), findsOneWidget);
+
+        // Push a page with SuperEditor.
+        final superEditorAndContext = tester //
+            .createDocument()
+            .withSingleParagraph()
+            .withSoftwareKeyboardController(keyboardController)
+            .withOpenKeyboardOnSelectionChange(false)
+            .withClearSelectionWhenImeDisconnects(false)
+            .withCustomWidgetTreeBuilder(
+              (superEditor) => _CloseKeyboardOnDispose(
+                keyboardController: keyboardController,
+                child: Scaffold(
+                  resizeToAvoidBottomInset: false,
+                  body: superEditor,
+                ),
+              ),
+            )
+            .build();
+        navigationKey.currentState!.push(MaterialPageRoute(builder: (context) {
+          return superEditorAndContext.widget;
+        }));
+        await tester.pumpAndSettle(); // navigation transition
+
+        // Ensure the first page is no longer visible.
+        expect(find.byKey(firstPageKey), findsNothing);
+
+        // Place the caret in Super Editor.
+        final nodeId = superEditorAndContext.context.editContext.editor.document.nodes.first.id;
+        await tester.placeCaretInParagraph(nodeId, 0);
+
+        // Ensure that the document has a selection
+        final selectionBefore = SuperEditorInspector.findDocumentSelection();
+        expect(selectionBefore, isNotNull);
+        expect(selectionBefore!.isCollapsed, isTrue);
+        expect(selectionBefore.extent.nodeId, nodeId);
+
+        // Open the keyboard
+        keyboardController.open();
+        await tester.pump();
+
+        // Ensure the IME is open
+        expect(keyboardController.isConnectedToIme, isTrue);
+
+        // Pop navigation back to the first screen.
+        navigationKey.currentState!.pop();
+        await tester.pumpAndSettle();
+
+        // Ensure first page is visible again.
+        expect(find.byKey(firstPageKey), findsOneWidget);
+
+        // By getting to this point in the test without crashing, we know that the
+        // _CloseKeyboardOnDispose widget was able to instruct the keyboard to
+        // close in its `dispose()` method. This should mean that Super Editor users
+        // can close the keyboard when their Super Editor screen navigates elsewhere.
+      });
     });
 
     testWidgetsOnIos('tab indents list item', (tester) async {
@@ -715,4 +789,35 @@ DocumentSelection _selectionInParagraph(
     base: DocumentPosition(nodeId: nodeId, nodePosition: TextNodePosition(offset: from, affinity: fromAffinity)),
     extent: DocumentPosition(nodeId: nodeId, nodePosition: TextNodePosition(offset: to, affinity: toAffinity)),
   );
+}
+
+/// A widget that calls [SoftwareKeyboardController.close] during `dispose()`.
+///
+/// This behavior ensures that Super Editor users can close the keyboard as their
+/// Super Editor experience goes out of existence, such as navigation.
+class _CloseKeyboardOnDispose extends StatefulWidget {
+  const _CloseKeyboardOnDispose({
+    Key? key,
+    required this.keyboardController,
+    required this.child,
+  }) : super(key: key);
+
+  final SoftwareKeyboardController keyboardController;
+  final Widget child;
+
+  @override
+  State<_CloseKeyboardOnDispose> createState() => _CloseKeyboardOnDisposeState();
+}
+
+class _CloseKeyboardOnDisposeState extends State<_CloseKeyboardOnDispose> {
+  @override
+  void dispose() {
+    widget.keyboardController.close();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return widget.child;
+  }
 }
