@@ -7,6 +7,16 @@ import 'package:super_editor/super_editor.dart';
 import '../test_tools.dart';
 import 'super_textfield_inspector.dart';
 
+// Custom gesture settings that ensure panSlop equal to touchSlop
+class _GestureSettings extends DeviceGestureSettings {
+  const _GestureSettings({
+    required double slop,
+  }) : super(touchSlop: slop);
+
+  @override
+  double? get panSlop => touchSlop;
+}
+
 void main() {
   group('SuperTextField gestures', () {
     group('tapping in empty space places the caret at the end of the text', () {
@@ -238,6 +248,66 @@ void main() {
 
         // Ensure the caret moved to the beginning of the text.
         expect(SuperTextFieldInspector.findSelection()!.extent.offset, 0);
+      });
+
+      // mobile only because precise input (mouse) doesn't use touch slop
+      testWidgetsOnMobile("MediaQuery gesture settings are respected", (tester) async {
+        bool horizontalDragStartCalled = false;
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: GestureDetector(
+                onHorizontalDragStart: (d) {
+                  horizontalDragStartCalled = true;
+                },
+                child: Builder(builder: (context) {
+                  // Custom gesture settings that ensure same value for touchSlop
+                  // and panSlop
+                  final data = MediaQuery.of(context).copyWith(
+                    gestureSettings: const _GestureSettings(
+                      slop: 18,
+                    ),
+                  );
+                  return MediaQuery(
+                    data: data,
+                    child: SuperTextField(
+                      textAlign: TextAlign.left,
+                      textController: AttributedTextEditingController(
+                        text: AttributedText(text: 'a b c'),
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ),
+          ),
+        );
+
+        // Tap down and up so the field is focused.
+        await tester.tapAt(tester.getTopLeft(find.byType(SuperTextField)));
+        await tester.pumpAndSettle();
+
+        expect(
+          SuperTextFieldInspector.findSelection(),
+          const TextSelection.collapsed(offset: 0),
+        );
+
+        // The gesture should trigger the selection PanGestureRecognizer instead
+        // the HorizontalDragGestureRecognizer below.
+
+        final gesture = await tester.startGesture(tester.getTopLeft(find.byType(SuperTextField)));
+        addTearDown(() => gesture.removePointer());
+        await tester.pumpAndSettle();
+        await gesture.moveBy(const Offset(19, 0));
+        await tester.pumpAndSettle();
+        await gesture.up();
+        await tester.pumpAndSettle();
+
+        expect(horizontalDragStartCalled, isFalse);
+        expect(
+          SuperTextFieldInspector.findSelection(),
+          const TextSelection.collapsed(offset: 1),
+        );
       });
 
       testWidgetsOnMobile("tap up shows the keyboard if the field already has focus", (tester) async {
