@@ -173,6 +173,38 @@ void main() {
         });
       });
     });
+
+    group('textInputAction', () {
+      group("is applied when configured", () {
+        testWidgetsOnAndroid('(on Android)', (tester) async {
+          await tester.pumpWidget(
+            _buildScaffold(
+              child: const SuperTextField(
+                textInputAction: TextInputAction.next,
+              ),
+            ),
+          );
+
+          final innerTextField = tester.widget<SuperAndroidTextField>(find.byType(SuperAndroidTextField).first);
+
+          expect(innerTextField.textInputAction, TextInputAction.next);
+        });
+
+        testWidgetsOnIos('(on iOS)', (tester) async {
+          await tester.pumpWidget(
+            _buildScaffold(
+              child: const SuperTextField(
+                textInputAction: TextInputAction.next,
+              ),
+            ),
+          );
+
+          final innerTextField = tester.widget<SuperIOSTextField>(find.byType(SuperIOSTextField).first);
+
+          expect(innerTextField.textInputAction, TextInputAction.next);
+        });
+      });
+    });
   });
 
   group('SuperTextField on some bad Android software keyboards', () {
@@ -298,6 +330,19 @@ Future<void> _pumpScaffoldForBuggyKeyboards(
             textController: controller,
           ),
         ),
+      ),
+    ),
+  );
+}
+
+Widget _buildScaffold({
+  required Widget child,
+}) {
+  return MaterialApp(
+    home: Scaffold(
+      body: SizedBox(
+        width: 300,
+        child: child,
       ),
     ),
   );

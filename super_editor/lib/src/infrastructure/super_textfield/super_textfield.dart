@@ -162,9 +162,9 @@ class SuperTextField extends StatefulWidget {
   /// scrollable viewport.
   final EdgeInsets? padding;
 
-  /// The main action for the virtual keyboard. When `null`, it depends on whether the text
-  /// field is multiline or single line.
+  /// The main action for the virtual keyboard, e.g. [TextInputAction.done].
   ///
+  /// When `null`, it depends on whether the text field is multiline or single line.
   /// Only used on mobile.
   final TextInputAction? textInputAction;
 
@@ -208,7 +208,12 @@ class SuperTextFieldState extends State<SuperTextField> {
 
   bool get _isMultiline => (widget.minLines ?? 1) != 1 || widget.maxLines != 1;
 
-  TextInputAction get _defaultTextInputAction => _isMultiline ? TextInputAction.newline : TextInputAction.done;
+  TextInputAction get _textInputAction {
+    if (widget.textInputAction != null) {
+      return widget.textInputAction!;
+    }
+    return _isMultiline ? TextInputAction.newline : TextInputAction.done;
+  }
 
   SuperTextFieldPlatformConfiguration get _configuration {
     if (widget.configuration != null) {
@@ -311,7 +316,7 @@ class SuperTextFieldState extends State<SuperTextField> {
             minLines: widget.minLines,
             maxLines: widget.maxLines,
             lineHeight: widget.lineHeight,
-            textInputAction: widget.textInputAction ?? _defaultTextInputAction,
+            textInputAction: _textInputAction,
             padding: widget.padding,
           ),
         );
@@ -335,7 +340,7 @@ class SuperTextFieldState extends State<SuperTextField> {
             minLines: widget.minLines,
             maxLines: widget.maxLines,
             lineHeight: widget.lineHeight,
-            textInputAction: widget.textInputAction ?? _defaultTextInputAction,
+            textInputAction: _textInputAction,
             padding: widget.padding,
           ),
         );
