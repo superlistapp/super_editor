@@ -1345,6 +1345,7 @@ class CommonEditorOperations {
     final initialTextOffset = (composer.selection!.extent.nodePosition as TextNodePosition).offset;
 
     editorOpsLog.fine("Executing text insertion command.");
+    editorOpsLog.finer("Text before insertion: '${textNode.text.text}'");
     editor.executeCommand(
       InsertTextCommand(
         documentPosition: composer.selection!.extent,
@@ -1352,6 +1353,7 @@ class CommonEditorOperations {
         attributions: composer.preferences.currentAttributions,
       ),
     );
+    editorOpsLog.finer("Text after insertion: '${textNode.text.text}'");
 
     editorOpsLog.fine("Updating Document Composer selection after text insertion.");
     composer.selection = DocumentSelection.collapsed(

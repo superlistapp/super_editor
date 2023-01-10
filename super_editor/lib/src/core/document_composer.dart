@@ -3,9 +3,9 @@ import 'dart:async';
 import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/foundation.dart';
 import 'package:super_editor/src/core/document.dart';
-import 'package:super_editor/src/default_editor/document_input_ime.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 
+import '../default_editor/document_ime/document_input_ime.dart';
 import 'document_selection.dart';
 
 /// Maintains a [DocumentSelection] within a [Document] and
@@ -17,9 +17,8 @@ class DocumentComposer with ChangeNotifier {
   /// desired.
   DocumentComposer({
     DocumentSelection? initialSelection,
-    ImeConfiguration? imeConfiguration,
-  })  : imeConfiguration = ValueNotifier(imeConfiguration ?? const ImeConfiguration()),
-        _preferences = ComposerPreferences() {
+    SuperEditorImeConfiguration? imeConfiguration,
+  }) : _preferences = ComposerPreferences() {
     _streamController = StreamController<DocumentSelectionChange>.broadcast();
     selectionNotifier.addListener(_onSelectionChangedBySelectionNotifier);
     selectionNotifier.value = initialSelection;
@@ -43,6 +42,7 @@ class DocumentComposer with ChangeNotifier {
   set selection(DocumentSelection? newSelection) {
     if (newSelection != selectionNotifier.value) {
       selectionNotifier.value = newSelection;
+
       notifyListeners();
     }
   }
@@ -55,6 +55,7 @@ class DocumentComposer with ChangeNotifier {
       selection: newSelection,
       reason: reason,
     );
+
     _streamController.sink.add(_latestSelectionChange);
 
     // Remove the listener, so we don't emit another DocumentSelectionChange.
@@ -103,10 +104,20 @@ class DocumentComposer with ChangeNotifier {
       selection: selectionNotifier.value,
       reason: SelectionReason.userInteraction,
     );
+
+    // Reset the composing region whenever the selection changes.
+    // After a selection change, if the IME wants a composing region,
+    // we expect the IME to call us back with that region.
+    composingRegion.value = null;
+
     _streamController.sink.add(_latestSelectionChange);
   }
 
-  final ValueNotifier<ImeConfiguration> imeConfiguration;
+  /// The current composing region, which signifies spans of text
+  /// that the IME is thinking about changing.
+  ///
+  /// Only valid when editing a document with an IME input method.
+  final composingRegion = ValueNotifier<DocumentRange?>(null);
 
   final ComposerPreferences _preferences;
 

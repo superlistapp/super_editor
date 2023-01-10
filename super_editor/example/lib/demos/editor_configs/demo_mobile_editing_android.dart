@@ -21,9 +21,9 @@ class _MobileEditingAndroidDemoState extends State<MobileEditingAndroidDemo> {
   late DocumentEditor _docEditor;
   late DocumentComposer _composer;
   late CommonEditorOperations _docOps;
-  late SoftwareKeyboardHandler _softwareKeyboardHandler;
 
   FocusNode? _editorFocusNode;
+  SuperEditorImeConfiguration _imeConfiguration = const SuperEditorImeConfiguration();
 
   @override
   void initState() {
@@ -35,11 +35,6 @@ class _MobileEditingAndroidDemoState extends State<MobileEditingAndroidDemo> {
       editor: _docEditor,
       composer: _composer,
       documentLayoutResolver: () => _docLayoutKey.currentState as DocumentLayout,
-    );
-    _softwareKeyboardHandler = SoftwareKeyboardHandler(
-      editor: _docEditor,
-      composer: _composer,
-      commonOps: _docOps,
     );
     _editorFocusNode = FocusNode();
   }
@@ -53,23 +48,29 @@ class _MobileEditingAndroidDemoState extends State<MobileEditingAndroidDemo> {
 
   void _configureImeActionButton() {
     if (_composer.selection == null || !_composer.selection!.isCollapsed) {
-      _composer.imeConfiguration.value = _composer.imeConfiguration.value.copyWith(
-        keyboardActionButton: TextInputAction.newline,
-      );
+      setState(() {
+        _imeConfiguration = _imeConfiguration.copyWith(
+          keyboardActionButton: TextInputAction.newline,
+        );
+      });
       return;
     }
 
     final selectedNode = _doc.getNodeById(_composer.selection!.extent.nodeId);
     if (selectedNode is ListItemNode) {
-      _composer.imeConfiguration.value = _composer.imeConfiguration.value.copyWith(
-        keyboardActionButton: TextInputAction.done,
-      );
+      setState(() {
+        _imeConfiguration = _imeConfiguration.copyWith(
+          keyboardActionButton: TextInputAction.done,
+        );
+      });
       return;
     }
 
-    _composer.imeConfiguration.value = _composer.imeConfiguration.value.copyWith(
-      keyboardActionButton: TextInputAction.newline,
-    );
+    setState(() {
+      _imeConfiguration = _imeConfiguration.copyWith(
+        keyboardActionButton: TextInputAction.newline,
+      );
+    });
   }
 
   @override
@@ -83,9 +84,9 @@ class _MobileEditingAndroidDemoState extends State<MobileEditingAndroidDemo> {
               documentLayoutKey: _docLayoutKey,
               editor: _docEditor,
               composer: _composer,
-              softwareKeyboardHandler: _softwareKeyboardHandler,
               gestureMode: DocumentGestureMode.android,
               inputSource: TextInputSource.ime,
+              imeConfiguration: _imeConfiguration,
               androidToolbarBuilder: (_) => AndroidTextEditingFloatingToolbar(
                 onCutPressed: () => _docOps.cut(),
                 onCopyPressed: () => _docOps.copy(),

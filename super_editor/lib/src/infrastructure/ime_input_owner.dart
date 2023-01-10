@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 /// A widget that internally accepts IME input.
@@ -9,5 +10,6 @@ import 'package:flutter/services.dart';
 /// This interface hides those details and ensures that the [DeltaTextInputClient] is available, by contract,
 /// from whichever class implements this interface.
 abstract class ImeInputOwner {
+  @visibleForTesting
   DeltaTextInputClient get imeClient;
 }
