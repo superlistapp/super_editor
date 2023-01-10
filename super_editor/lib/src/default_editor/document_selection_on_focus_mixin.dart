@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:super_editor/src/infrastructure/flutter_scheduler.dart';
 import 'package:super_editor/super_editor.dart';
 
 /// Synchronizes document focus with document selection.
@@ -75,31 +76,45 @@ mixin DocumentSelectionOnFocusMixin<T extends StatefulWidget> on State<T> {
   }
 
   void _onFocusChange() {
+    editorImeLog.finer("[DocumentSelectionOnFocusMixin] - Focus change. Is focused? ${_focusNode?.hasFocus}.");
     if (!_focusNode!.hasFocus) {
+      editorImeLog.finer("[DocumentSelectionOnFocusMixin] - Editor doesn't have focus. Ignoring focus change.");
       _selection?.value = null;
       return;
     }
 
-    // We move the selection in the next frame, so we don't try to access the
-    // DocumentLayout before it is available when the editor has autofocus
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      // We only update the selection when it's null
-      // because, when the user taps at the document the selection is
-      // already set to the correct position, so we don't override it.
-      if (mounted && _focusNode!.hasFocus && _selection!.value == null) {
-        if (_previousSelection != null) {
-          _selection?.value = _previousSelection;
-          return;
-        }
-
-        DocumentPosition? position = _getDocumentLayout?.call().findLastSelectablePosition();
-        if (position != null) {
-          _selection?.value = DocumentSelection.collapsed(
-            position: position,
-          );
-        }
+    WidgetsBinding.instance.runAsSoonAsPossible(() {
+      editorImeLog.finer("[DocumentSelectionOnFocusMixin] - Editor received focus. Setting a selection, if needed.");
+      if (!mounted) {
+        editorImeLog.finer("[DocumentSelectionOnFocusMixin] - We're no longer mounted. Fizzling.");
+        return;
       }
-    });
+
+      if (!_focusNode!.hasFocus || _selection!.value != null) {
+        editorImeLog.finer(
+            "[DocumentSelectionOnFocusMixin] - Either we already lost focus (has focus? ${_focusNode!.hasFocus}), or the editor already has a selection (has selection? ${_selection!.value != null}). Fizzling.");
+        return;
+      }
+
+      // The editor has focus, but there's no selection. Whenever the editor
+      // is focused, there needs to be a place for user input to go. Place
+      // the caret at the end of the document.
+      if (_previousSelection != null) {
+        editorImeLog
+            .finer("[DocumentSelectionOnFocusMixin] - Restoring the previous editor selection: $_previousSelection");
+        _selection?.value = _previousSelection;
+        return;
+      }
+
+      editorImeLog.finer(
+          "[DocumentSelectionOnFocusMixin] - Placing caret at end of document because we didn't have a previous selection");
+      DocumentPosition? position = _getDocumentLayout?.call().findLastSelectablePosition();
+      if (position != null) {
+        _selection?.value = DocumentSelection.collapsed(
+          position: position,
+        );
+      }
+    }, debugLabel: "Set Document Selection Because Received Focus");
   }
 
   void _onSelectionChange() {

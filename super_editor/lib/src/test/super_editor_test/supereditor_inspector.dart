@@ -30,6 +30,16 @@ class SuperEditorInspector {
     return superEditor.editContext.editor.document;
   }
 
+  /// Returns the [DocumentComposer] within the [SuperEditor] matched by [finder],
+  /// or the singular [SuperEditor] in the widget tree, if [finder] is `null`.
+  ///
+  /// {@macro supereditor_finder}
+  static DocumentComposer? findComposer([Finder? finder]) {
+    final element = (finder ?? find.byType(SuperEditor)).evaluate().single as StatefulElement;
+    final superEditor = element.state as SuperEditorState;
+    return superEditor.editContext.composer;
+  }
+
   /// Returns the current [DocumentSelection] for the [SuperEditor] matched by
   /// [finder], or the singular [SuperEditor] in the widget tree, if [finder]
   /// is `null`.

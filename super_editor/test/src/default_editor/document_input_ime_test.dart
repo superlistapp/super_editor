@@ -6,9 +6,9 @@ import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 
 import '../../super_editor/document_test_tools.dart';
+import '../../super_editor/test_documents.dart';
 import '../../test_tools.dart';
 import '../_document_test_tools.dart';
-import '../../super_editor/test_documents.dart';
 
 void main() {
   group('IME input', () {
@@ -41,9 +41,10 @@ void main() {
           composer: composer,
           documentLayoutResolver: () => FakeDocumentLayout(),
         );
-        final softwareKeyboardHandler = SoftwareKeyboardHandler(
+        final softwareKeyboardHandler = TextDeltasDocumentEditor(
           editor: editor,
-          composer: composer,
+          selection: composer.selectionNotifier,
+          composingRegion: composer.composingRegion,
           commonOps: commonOps,
         );
 
@@ -79,6 +80,8 @@ void main() {
       });
 
       testWidgets('can type compound character in an empty paragraph', (tester) async {
+        final document = twoParagraphEmptyDoc();
+
         // Inserting special characters, or compound characters, like ü, requires
         // multiple key presses, which are combined by the IME, based on the
         // composing region.
@@ -95,7 +98,7 @@ void main() {
         final editContext = createEditContext(
           // Use a two-paragraph document so that the selection in the 2nd
           // paragraph sends a hidden placeholder to the IME for backspace.
-          document: twoParagraphEmptyDoc(),
+          document: document,
           documentComposer: DocumentComposer(
             initialSelection: const DocumentSelection.collapsed(
               position: DocumentPosition(
@@ -128,8 +131,8 @@ void main() {
         //
         // We have to use implementation details to send the simulated IME deltas
         // because Flutter doesn't have any testing tools for IME deltas.
-        final imeInteractor = find.byType(DocumentImeInteractor).evaluate().first;
-        final deltaClient = (imeInteractor as StatefulElement).state as DeltaTextInputClient;
+        final imeInteractor = find.byType(SuperEditorImeInteractor).evaluate().first;
+        final deltaClient = ((imeInteractor as StatefulElement).state as ImeInputOwner).imeClient;
 
         // Ensure that the delta client starts with the expected invisible placeholder
         // characters.
@@ -147,6 +150,7 @@ void main() {
             composing: TextRange(start: 2, end: 3),
           ),
         ]);
+        await tester.pumpAndSettle();
 
         // Ensure that the empty paragraph now reads "¨".
         expect((editContext.editor.document.nodes[1] as ParagraphNode).text.text, "¨");
@@ -166,6 +170,13 @@ void main() {
             composing: TextRange(start: -1, end: -1),
           ),
         ]);
+
+        // We need a final pump and settle to propagate selection changes while we still
+        // have access to the document layout. Otherwise, the selection change callback
+        // will execute after the end of this test, and the layout isn't available any
+        // more.
+        // TODO: trace the selection change call stack and adjust it so that we don't need this pump
+        await tester.pumpAndSettle();
 
         // Ensure that the empty paragraph now reads "ü".
         expect((editContext.editor.document.nodes[1] as ParagraphNode).text.text, "ü");
@@ -191,6 +202,7 @@ void main() {
                 nodePosition: TextNodePosition(offset: 19),
               ),
             ),
+            null,
           ).toTextEditingValue(),
           expectedTextWithSelection: "This is a |paragraph| of text.",
         );
@@ -216,6 +228,7 @@ void main() {
                 nodePosition: TextNodePosition(offset: 28),
               ),
             ),
+            null,
           ).toTextEditingValue(),
           expectedTextWithSelection: "This is the |first paragraph of text.\nThis is the second paragraph| of text.",
         );
@@ -241,6 +254,7 @@ void main() {
                 nodePosition: TextNodePosition(offset: 19),
               ),
             ),
+            null,
           ).toTextEditingValue(),
           expectedTextWithSelection: "This is a |paragraph of text.\n~\nThis is a paragraph| of text.",
         );
@@ -266,6 +280,7 @@ void main() {
                 nodePosition: UpstreamDownstreamNodePosition.downstream(),
               ),
             ),
+            null,
           ).toTextEditingValue(),
           expectedTextWithSelection: "|~\nThis is the first paragraph of text.\n~|",
         );
