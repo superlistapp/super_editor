@@ -152,6 +152,10 @@ class AttributedTextEditingController with ChangeNotifier {
     required AttributedText text,
     required TextSelection selection,
   }) {
+    if (text == _text && selection == _selection) {
+      return;
+    }
+
     _switchText(text);
     _selection = selection;
 
@@ -583,7 +587,7 @@ class AttributedTextEditingController with ChangeNotifier {
       text: updatedText,
       selection: updatedSelection,
     );
-    
+
     _updateComposingAttributions();
     // TODO: do we need to implement composing region update behavior like selections?
     composingRegion = newComposingRegion ?? TextRange.empty;
@@ -625,6 +629,13 @@ class AttributedTextEditingController with ChangeNotifier {
     TextSelection? selection,
     TextRange? composingRegion,
   }) {
+    if ((text == null || text == _text) &&
+        (selection == null || selection == _selection) &&
+        (composingRegion == null || composingRegion == _composingRegion)) {
+      // The updated values are the same as existing values. Do nothing.
+      return;
+    }
+
     if (text != null) {
       _switchText(text);
     }
