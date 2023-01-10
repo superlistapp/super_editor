@@ -7,16 +7,6 @@ import 'package:super_editor/super_editor.dart';
 import '../test_tools.dart';
 import 'super_textfield_inspector.dart';
 
-// Custom gesture settings that ensure panSlop equal to touchSlop
-class _GestureSettings extends DeviceGestureSettings {
-  const _GestureSettings({
-    required double slop,
-  }) : super(touchSlop: slop);
-
-  @override
-  double? get panSlop => touchSlop;
-}
-
 void main() {
   group('SuperTextField gestures', () {
     group('tapping in empty space places the caret at the end of the text', () {
@@ -271,7 +261,6 @@ void main() {
                   return MediaQuery(
                     data: data,
                     child: SuperTextField(
-                      textAlign: TextAlign.left,
                       textController: AttributedTextEditingController(
                         text: AttributedText(text: 'a b c'),
                       ),
@@ -297,9 +286,7 @@ void main() {
 
         final gesture = await tester.startGesture(tester.getTopLeft(find.byType(SuperTextField)));
         addTearDown(() => gesture.removePointer());
-        await tester.pumpAndSettle();
         await gesture.moveBy(const Offset(19, 0));
-        await tester.pumpAndSettle();
         await gesture.up();
         await tester.pumpAndSettle();
 
@@ -393,4 +380,14 @@ Future<void> _pumpTestApp(
       ),
     ),
   );
+}
+
+// Custom gesture settings that ensure panSlop equal to touchSlop
+class _GestureSettings extends DeviceGestureSettings {
+  const _GestureSettings({
+    required double slop,
+  }) : super(touchSlop: slop);
+
+  @override
+  double? get panSlop => touchSlop;
 }
