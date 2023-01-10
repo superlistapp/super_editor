@@ -22,10 +22,10 @@ void main() {
             body: SuperEditor(
               editor: DocumentEditor(document: document),
               inputSource: TextInputSource.ime,
-              // imeOverrides: _TestImeOverrides((action) {
-              //   performActionCount += 1;
-              //   performedAction = action;
-              // }),
+              imeOverrides: _TestImeOverrides((action) {
+                performActionCount += 1;
+                performedAction = action;
+              }),
             ),
           ),
         ),
@@ -35,12 +35,20 @@ void main() {
       await tester.placeCaretInParagraph("1", 0);
 
       // Simulate a "Newline" action from the platform.
-      SystemChannels.textInput.invokeMethod("TextInputClient.performAction", ["TextInputAction.newline"]);
-      await tester.pumpAndSettle();
+      await TestDefaultBinaryMessengerBinding.instance!.defaultBinaryMessenger.handlePlatformMessage(
+        SystemChannels.textInput.name,
+        SystemChannels.textInput.codec.encodeMethodCall(
+          const MethodCall(
+            "TextInputClient.performAction",
+            [-1, "TextInputAction.newline"],
+          ),
+        ),
+        null,
+      );
 
       // Ensure that our override got the performAction call.
-      // expect(performActionCount, 1);
-      // expect(performedAction, TextInputAction.done);
+      expect(performActionCount, 1);
+      expect(performedAction, TextInputAction.newline);
 
       // Ensure that the editor didn't receive the performAction call, and didn't
       // insert a new node.
