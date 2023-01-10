@@ -58,6 +58,12 @@ final defaultRequestHandlers = [
           textToInsert: request.textToInsert,
           attributions: request.attributions)
       : null,
+  (request) => request is InsertCharacterAtCaretRequest
+      ? InsertCharacterAtCaretCommand(
+          character: request.character,
+          ignoreComposerAttributions: request.ignoreComposerAttributions,
+        )
+      : null,
   (request) => request is SplitParagraphRequest
       ? SplitParagraphCommand(
           nodeId: request.nodeId,

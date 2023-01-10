@@ -436,7 +436,7 @@ class IndentListItemCommand implements EditorCommand {
   final String nodeId;
 
   @override
-  List<DocumentChangeEvent> execute(EditorContext context) {
+  List<DocumentChangeEvent> execute(EditorContext context, CommandExpander expandActiveCommand) {
     final document = context.find<Document>("document");
     final node = document.getNodeById(nodeId);
     final listItem = node as ListItemNode;
@@ -467,7 +467,7 @@ class UnIndentListItemCommand implements EditorCommand {
   final String nodeId;
 
   @override
-  List<DocumentChangeEvent> execute(EditorContext context) {
+  List<DocumentChangeEvent> execute(EditorContext context, CommandExpander expandActiveCommand) {
     final document = context.find<Document>("document");
     final node = document.getNodeById(nodeId);
     final listItem = node as ListItemNode;
@@ -480,7 +480,7 @@ class UnIndentListItemCommand implements EditorCommand {
     } else {
       return ConvertListItemToParagraphCommand(
         nodeId: nodeId,
-      ).execute(context);
+      ).execute(context, expandActiveCommand);
     }
   }
 }
@@ -505,7 +505,7 @@ class ConvertListItemToParagraphCommand implements EditorCommand {
   final Map<String, dynamic>? paragraphMetadata;
 
   @override
-  List<DocumentChangeEvent> execute(EditorContext context) {
+  List<DocumentChangeEvent> execute(EditorContext context, CommandExpander expandActiveCommand) {
     final document = context.find<MutableDocument>("document");
     final node = document.getNodeById(nodeId);
     final listItem = node as ListItemNode;
@@ -541,7 +541,7 @@ class ConvertParagraphToListItemCommand implements EditorCommand {
   final ListItemType type;
 
   @override
-  List<DocumentChangeEvent> execute(EditorContext context) {
+  List<DocumentChangeEvent> execute(EditorContext context, CommandExpander expandActiveCommand) {
     final document = context.find<MutableDocument>("document");
     final node = document.getNodeById(nodeId);
     final paragraphNode = node as ParagraphNode;
@@ -577,7 +577,7 @@ class ChangeListItemTypeCommand implements EditorCommand {
   final ListItemType newType;
 
   @override
-  List<DocumentChangeEvent> execute(EditorContext context) {
+  List<DocumentChangeEvent> execute(EditorContext context, CommandExpander expandActiveCommand) {
     final document = context.find<MutableDocument>("context");
     final existingListItem = document.getNodeById(nodeId) as ListItemNode;
 
@@ -616,7 +616,7 @@ class SplitListItemCommand implements EditorCommand {
   final String newNodeId;
 
   @override
-  List<DocumentChangeEvent> execute(EditorContext context) {
+  List<DocumentChangeEvent> execute(EditorContext context, CommandExpander expandActiveCommand) {
     final document = context.find<MutableDocument>("document");
     final node = document.getNodeById(nodeId);
     final listItemNode = node as ListItemNode;

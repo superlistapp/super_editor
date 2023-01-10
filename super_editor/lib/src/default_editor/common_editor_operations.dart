@@ -2249,7 +2249,7 @@ class PasteEditorCommand implements EditorCommand {
   final DocumentComposer _composer;
 
   @override
-  List<DocumentChangeEvent> execute(EditorContext context) {
+  List<DocumentChangeEvent> execute(EditorContext context, CommandExpander expandActiveCommand) {
     final document = context.find<MutableDocument>("document");
     final currentNodeWithSelection = document.getNodeById(_pastePosition.nodeId);
     if (currentNodeWithSelection is! ParagraphNode) {
@@ -2280,7 +2280,7 @@ class PasteEditorCommand implements EditorCommand {
           splitPosition: TextPosition(offset: pasteTextOffset),
           newNodeId: DocumentEditor.createNodeId(),
           replicateExistingMetadata: true,
-        ).execute(context),
+        ).execute(context, expandActiveCommand),
       );
     }
 
@@ -2289,7 +2289,7 @@ class PasteEditorCommand implements EditorCommand {
       InsertAttributedTextCommand(
         documentPosition: _pastePosition,
         textToInsert: attributedLines.first,
-      ).execute(context),
+      ).execute(context, expandActiveCommand),
     );
 
     // The first line of pasted text was added to the selected paragraph.
@@ -2324,7 +2324,7 @@ class PasteEditorCommand implements EditorCommand {
         ),
         notifyListeners: true);
     editorOpsLog.fine('New selection after paste operation: ${_composer.selectionComponent.selection}');
-    changes.add(const SelectionChangeEvent());
+    changes.add(SelectionChangeEvent(_composer.selectionComponent.selection));
 
     editorOpsLog.fine('Done with paste command.');
     return changes;

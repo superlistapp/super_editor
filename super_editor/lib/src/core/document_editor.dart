@@ -24,14 +24,17 @@ class DocumentEditor {
   static String createNodeId() => _uuid.v4();
 
   DocumentEditor({
-    required this.document,
+    required MutableDocument document,
     required List<EditorRequestHandler> requestHandlers,
-  })  : _requestHandlers = requestHandlers,
+  })  : _document = document,
+        _requestHandlers = requestHandlers,
         context = EditorContext() {
     context.put("document", document);
   }
 
-  final MutableDocument document;
+  /// The [Document] that this [DocumentEditor] edits.
+  Document get document => _document;
+  final MutableDocument _document;
 
   /// Chain of Responsibility that maps a given [EditorRequest] to an [EditorCommand].
   final List<EditorRequestHandler> _requestHandlers;
@@ -39,7 +42,11 @@ class DocumentEditor {
   /// Service Locator that provides all resources that are relevant for document editing.
   final EditorContext context;
 
-  final _commandsBeingProcessed = <EditorCommand>[];
+  /// The queue of editor commands that are currently being processed.
+  final _commandsBeingProcessed = EditorCommandQueue();
+
+  /// A list of all document changes that were made during the current series of
+  /// command executions, based on commands that were queued in [_commandsBeingProcessed].
   final _changeList = <DocumentChangeEvent>[];
 
   /// Executes the given [request].
@@ -51,6 +58,7 @@ class DocumentEditor {
     for (final handler in _requestHandlers) {
       command = handler(request);
       if (command != null) {
+        // We found a command that implements the given request.
         break;
       }
     }
@@ -60,30 +68,22 @@ class DocumentEditor {
           "Could not handle EditorRequest. DocumentEditor doesn't have a handler that recognizes the request: $request");
     }
 
-    // Add the command that we're processing to the stack. One command might run other commands. We
-    // track them in a stack so that we can emit change notifications all at once.
-    _commandsBeingProcessed.add(command);
+    // TODO: use new executor here
 
-    // Run the command.
-    final changes = command.execute(context);
-    _changeList.addAll(changes);
-
-    // Now that our command is done, remove it from the stack.
-    // TODO: is it correct to remove the last command? If other commands are added, then ours is somwhere in the middle...
-    _commandsBeingProcessed.removeLast();
-
-    // If we ran the root command, it's now complete. Notify listeners.
-    if (_commandsBeingProcessed.isEmpty && changes.isNotEmpty) {
-      // We make a copy of the change-list so that asynchronous listeners
-      // don't lose the contents when we clear it.
-      document.notifyListeners(
+    if (_changeList.isNotEmpty) {
+      // We finished running all commands in the queue. Notify listeners
+      // of all the changes that were made.
+      _document.notifyListeners(
         DocumentChangeLog(
+          // We make a copy of the change-list so that asynchronous listeners
+          // don't lose the contents when we clear it.
           List<DocumentChangeEvent>.from(_changeList, growable: false),
         ),
       );
 
-      // TODO: move this notification outside DocumentEditor
+      // TODO: have the composer listen for document changes and find selection updates
       if (_changeList.whereType<SelectionChangeEvent>().isNotEmpty) {
+        // TODO: don't use magic strings
         final composer = context.find<DocumentComposer>("composer");
         composer.selectionComponent.notifySelectionListeners();
       }
@@ -116,6 +116,105 @@ class EditorContext {
   void put(String id, dynamic resource) => _resources[id] = resource;
 }
 
+// TODO: this is a WIP - I'm figuring out what API makes sense.
+abstract class CommandExecutor {
+  /// Immediately executes the given [command].
+  ///
+  /// Client's can use this method to run an initial command, or to run
+  /// a sub-command in the middle of an active command.
+  void executeCommand(EditorCommand command);
+
+  /// Replaces the active command in the queue with the given [replacementCommands].
+  ///
+  /// This is useful for composite commands, which are defined by a series of other
+  /// commands.
+  void replaceActiveCommand(List<EditorCommand> replacementCommands);
+
+  /// Log a series of document changes that were just made by the active command.
+  void logChanges(List<DocumentChangeEvent> changes);
+}
+
+class _DocumentEditorCommandExecutor implements CommandExecutor {
+  final _commandsBeingProcessed = EditorCommandQueue();
+
+  final _changeList = <DocumentChangeEvent>[];
+  List<DocumentChangeEvent> copyChangeList() => List.from(_changeList);
+
+  @override
+  void executeCommand(EditorCommand command) {
+    _commandsBeingProcessed.append(command);
+
+    // Run the given command, and any other commands that it spawns.
+    while (_commandsBeingProcessed.hasCommands) {
+      _commandsBeingProcessed.prepareForExecution();
+
+      final command = _commandsBeingProcessed.activeCommand!;
+      final changes = command.execute(context, _commandsBeingProcessed.expandActiveCommand);
+      _changeList.addAll(changes);
+
+      _commandsBeingProcessed.onCommandExecutionComplete();
+    }
+  }
+
+  @override
+  void replaceActiveCommand(List<EditorCommand> replacementCommands) {
+    _commandsBeingProcessed.expandActiveCommand(replacementCommands);
+  }
+
+  @override
+  void logChanges(List<DocumentChangeEvent> changes) {
+    _changeList.addAll(changes);
+  }
+
+  void reset() {
+    _changeList.clear();
+  }
+}
+
+class EditorCommandQueue {
+  /// A command that's in the process of being executed.
+  EditorCommand? _activeCommand;
+
+  /// The command that's currently being executed, along with any commands
+  /// that the active command adds during execution.
+  final _activeCommandExpansionQueue = <EditorCommand>[];
+
+  /// All commands waiting to be executed after [_activeCommandExpansionQueue].
+  final _commandBacklog = <EditorCommand>[];
+
+  bool get hasCommands => _commandBacklog.isNotEmpty;
+
+  void prepareForExecution() {
+    assert(_activeCommandExpansionQueue.isEmpty,
+        "Tried to prepare for command execution but there are already commands in the active queue. Did you forget to call onCommandExecutionComplete?");
+
+    // Set the active command to the next command in the backlog.
+    _activeCommand = _commandBacklog.removeAt(0);
+  }
+
+  EditorCommand? get activeCommand => _activeCommand;
+
+  void expandActiveCommand(List<EditorCommand> replacementCommands) {
+    _activeCommandExpansionQueue.addAll(replacementCommands);
+  }
+
+  void onCommandExecutionComplete() {
+    // Now that the active command is done, move any expansion commands
+    // to the primary backlog.
+    _commandBacklog.insertAll(0, _activeCommandExpansionQueue);
+    _activeCommandExpansionQueue.clear();
+
+    // Clear the active command, now that its complete.
+    _activeCommand = null;
+  }
+
+  void append(EditorCommand command) {
+    _commandBacklog.add(command);
+  }
+}
+
+typedef CommandExpander = void Function(EditorCommand newCommand);
+
 /// Factory method that creates and returns an [EditorCommand] that can handle
 /// the given [EditorRequest], or `null` if this handler doesn't apply to the given
 /// [EditorRequest].
@@ -128,9 +227,12 @@ abstract class EditorRequest {
 
 /// A command that alters something in a [DocumentEditor].
 abstract class EditorCommand {
+  // TODO: instead of returning changes, we need commands to set their changes
+  //       on some kind of executor that we pass in. Otherwise, it's unclear how
+  //       we're supposed to gather changes from expanded commands.
   /// Executes this command and returns metadata about any changes that
   /// were made.
-  List<DocumentChangeEvent> execute(EditorContext context);
+  List<DocumentChangeEvent> execute(EditorContext context, CommandExpander expandActiveCommand);
 }
 
 /// An in-memory, mutable [Document].

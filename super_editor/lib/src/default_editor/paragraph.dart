@@ -208,7 +208,7 @@ class CombineParagraphsCommand implements EditorCommand {
   final String secondNodeId;
 
   @override
-  List<DocumentChangeEvent> execute(EditorContext context) {
+  List<DocumentChangeEvent> execute(EditorContext context, CommandExpander expandActiveCommand) {
     editorDocLog.info('Executing CombineParagraphsCommand');
     editorDocLog.info(' - merging "$firstNodeId" <- "$secondNodeId"');
     final document = context.find<MutableDocument>("document");
@@ -284,7 +284,7 @@ class SplitParagraphCommand implements EditorCommand {
   final bool replicateExistingMetadata;
 
   @override
-  List<DocumentChangeEvent> execute(EditorContext context) {
+  List<DocumentChangeEvent> execute(EditorContext context, CommandExpander expandActiveCommand) {
     editorDocLog.info('Executing SplitParagraphCommand');
 
     final document = context.find<MutableDocument>("document");
@@ -384,7 +384,7 @@ class DeleteParagraphCommand implements EditorCommand {
   final String nodeId;
 
   @override
-  List<DocumentChangeEvent> execute(EditorContext context) {
+  List<DocumentChangeEvent> execute(EditorContext context, CommandExpander expandActiveCommand) {
     editorDocLog.info('Executing DeleteParagraphCommand');
     editorDocLog.info(' - deleting "$nodeId"');
     final document = context.find<MutableDocument>("document");

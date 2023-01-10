@@ -142,6 +142,9 @@ class NodeChangeEvent implements DocumentNodeEvent {
 
   @override
   final String nodeId;
+
+  @override
+  String toString() => "[NodeChangeEvent] - Node: $nodeId";
 }
 
 /// A span within a [Document] that begins at [start] and

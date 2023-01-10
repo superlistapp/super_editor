@@ -34,7 +34,7 @@ class InsertNodeAtIndexCommand extends EditorCommand {
   final DocumentNode newNode;
 
   @override
-  List<DocumentChangeEvent> execute(EditorContext context) {
+  List<DocumentChangeEvent> execute(EditorContext context, CommandExpander expandActiveCommand) {
     final document = context.find<MutableDocument>("document");
     document.insertNodeAt(nodeIndex, newNode);
 
@@ -62,7 +62,7 @@ class InsertNodeBeforeNodeCommand extends EditorCommand {
   final DocumentNode newNode;
 
   @override
-  List<DocumentChangeEvent> execute(EditorContext context) {
+  List<DocumentChangeEvent> execute(EditorContext context, CommandExpander expandActiveCommand) {
     final document = context.find<MutableDocument>("document");
     final existingNode = document.getNodeById(existingNodeId)!;
     document.insertNodeBefore(existingNode: existingNode, newNode: newNode);
@@ -91,7 +91,7 @@ class InsertNodeAfterNodeCommand extends EditorCommand {
   final DocumentNode newNode;
 
   @override
-  List<DocumentChangeEvent> execute(EditorContext context) {
+  List<DocumentChangeEvent> execute(EditorContext context, CommandExpander expandActiveCommand) {
     final document = context.find<MutableDocument>("document");
     final existingNode = document.getNodeById(existingNodeId)!;
     document.insertNodeAfter(existingNode: existingNode, newNode: newNode);
@@ -116,7 +116,7 @@ class InsertNodeAtCaretCommand extends EditorCommand {
   final DocumentNode newNode;
 
   @override
-  List<DocumentChangeEvent> execute(EditorContext context) {
+  List<DocumentChangeEvent> execute(EditorContext context, CommandExpander expandActiveCommand) {
     final document = context.find<MutableDocument>("document");
     final composer = context.find<DocumentComposer>("composer");
 
@@ -197,7 +197,7 @@ class InsertNodeAtCaretCommand extends EditorCommand {
 
     return [
       ...changes,
-      const SelectionChangeEvent(),
+      SelectionChangeEvent(newSelection),
     ];
   }
 }
@@ -222,7 +222,7 @@ class ReplaceNodeCommand extends EditorCommand {
   final DocumentNode newNode;
 
   @override
-  List<DocumentChangeEvent> execute(EditorContext context) {
+  List<DocumentChangeEvent> execute(EditorContext context, CommandExpander expandActiveCommand) {
     final document = context.find<MutableDocument>("document");
     final oldNode = document.getNodeById(existingNodeId)!;
     document.replaceNode(oldNode: oldNode, newNode: newNode);
@@ -250,7 +250,7 @@ class ReplaceNodeWithEmptyParagraphWithCaretCommand implements EditorCommand {
   final String nodeId;
 
   @override
-  List<DocumentChangeEvent> execute(EditorContext context) {
+  List<DocumentChangeEvent> execute(EditorContext context, CommandExpander expandActiveCommand) {
     final document = context.find<MutableDocument>("document");
     final composer = context.find<DocumentComposer>("composer");
 
@@ -266,20 +266,22 @@ class ReplaceNodeWithEmptyParagraphWithCaretCommand implements EditorCommand {
 
     document.replaceNode(oldNode: oldNode, newNode: newNode);
 
-    composer.selectionComponent.updateSelection(
-      DocumentSelection.collapsed(
-        position: DocumentPosition(
-          nodeId: newNode.id,
-          nodePosition: newNode.beginningPosition,
-        ),
+    final newSelection = DocumentSelection.collapsed(
+      position: DocumentPosition(
+        nodeId: newNode.id,
+        nodePosition: newNode.beginningPosition,
       ),
+    );
+
+    composer.selectionComponent.updateSelection(
+      newSelection,
       notifyListeners: false,
     );
 
     return [
       NodeRemovedEvent(oldNode.id),
       NodeInsertedEvent(newNode.id),
-      const SelectionChangeEvent(),
+      SelectionChangeEvent(newSelection),
     ];
   }
 }
@@ -300,7 +302,7 @@ class DeleteSelectionCommand implements EditorCommand {
   final DocumentSelection documentSelection;
 
   @override
-  List<DocumentChangeEvent> execute(EditorContext context) {
+  List<DocumentChangeEvent> execute(EditorContext context, CommandExpander expandActiveCommand) {
     _log.log('DeleteSelectionCommand', 'DocumentEditor: deleting selection: $documentSelection');
     final document = context.find<MutableDocument>("document");
     final nodes = document.getNodesInside(documentSelection.base, documentSelection.extent);
@@ -605,7 +607,7 @@ class DeleteNodeCommand implements EditorCommand {
   final String nodeId;
 
   @override
-  List<DocumentChangeEvent> execute(EditorContext context) {
+  List<DocumentChangeEvent> execute(EditorContext context, CommandExpander expandActiveCommand) {
     _log.log('DeleteNodeCommand', 'DocumentEditor: deleting node: $nodeId');
 
     final document = context.find<MutableDocument>("document");

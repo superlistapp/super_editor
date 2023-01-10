@@ -358,7 +358,12 @@ extension InspectDocumentSelection on Document {
 
 /// A [DocumentChangeEvent] that represents a change to the user's selection within a document.
 class SelectionChangeEvent implements DocumentChangeEvent {
-  const SelectionChangeEvent();
+  const SelectionChangeEvent(this.newSelection);
+
+  final DocumentSelection? newSelection;
+
+  @override
+  String toString() => "[SelectionChangeEvent] - New selection: $newSelection";
 }
 
 /// A selection, along with tools to change the selection, and listen for
