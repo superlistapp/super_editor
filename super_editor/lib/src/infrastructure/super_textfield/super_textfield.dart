@@ -162,9 +162,9 @@ class SuperTextField extends StatefulWidget {
   /// scrollable viewport.
   final EdgeInsets? padding;
 
-  /// The main action for the virtual keyboard. When `null`, it depends on whether the text
-  /// field is multiline or single line.
+  /// The main action for the virtual keyboard, e.g. [TextInputAction.done].
   ///
+  /// When `null`, it depends on whether the text field is multiline or single line.
   /// Only used on mobile.
   final TextInputAction? textInputAction;
 

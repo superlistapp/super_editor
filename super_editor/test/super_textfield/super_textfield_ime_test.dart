@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart' hide SelectableText;
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:super_editor/super_editor.dart';
@@ -174,36 +175,33 @@ void main() {
       });
     });
 
-    group('textInputAction', () {
-      group("is applied when configured", () {
-        testWidgetsOnAndroid('(on Android)', (tester) async {
-          await tester.pumpWidget(
-            _buildScaffold(
-              child: const SuperTextField(
-                textInputAction: TextInputAction.next,
-              ),
-            ),
-          );
+    testWidgetsOnMobile('configures the software keyboard action button', (tester) async {
+      await tester.pumpWidget(
+        _buildScaffold(
+          child: const SuperTextField(
+            textInputAction: TextInputAction.next,
+          ),
+        ),
+      );
 
-          final innerTextField = tester.widget<SuperAndroidTextField>(find.byType(SuperAndroidTextField).first);
+      // Holds the keyboard input action sent to the platform.
+      String? inputAction;
 
-          expect(innerTextField.textInputAction, TextInputAction.next);
-        });
-
-        testWidgetsOnIos('(on iOS)', (tester) async {
-          await tester.pumpWidget(
-            _buildScaffold(
-              child: const SuperTextField(
-                textInputAction: TextInputAction.next,
-              ),
-            ),
-          );
-
-          final innerTextField = tester.widget<SuperIOSTextField>(find.byType(SuperIOSTextField).first);
-
-          expect(innerTextField.textInputAction, TextInputAction.next);
-        });
+      // Intercept messages sent to the platform.
+      tester.binding.defaultBinaryMessenger.setMockMessageHandler(SystemChannels.textInput.name, (message) async {
+        final methodCall = const JSONMethodCodec().decodeMethodCall(message);
+        if (methodCall.method == 'TextInput.setClient') {
+          final params = methodCall.arguments[1] as Map;
+          inputAction = params['inputAction'];
+        }
+        return null;
       });
+
+      // Tap the text field to show the software keyboard.
+      await tester.placeCaretInSuperTextField(0);
+
+      // Ensure the given TextInputAction was applied.
+      expect(inputAction, 'TextInputAction.next');
     });
   });
 
