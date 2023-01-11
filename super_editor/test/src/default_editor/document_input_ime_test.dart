@@ -14,22 +14,22 @@ void main() {
   group('IME input', () {
     testWidgets('allows apps to handle performAction in their own way', (tester) async {
       final document = singleParagraphEmptyDoc();
+
       int performActionCount = 0;
       TextInputAction? performedAction;
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: SuperEditor(
-              editor: DocumentEditor(document: document),
-              inputSource: TextInputSource.ime,
-              imeOverrides: _TestImeOverrides((action) {
-                performActionCount += 1;
-                performedAction = action;
-              }),
-            ),
-          ),
-        ),
+      final imeOverrides = _TestImeOverrides(
+        (action) {
+          performActionCount += 1;
+          performedAction = action;
+        },
       );
+
+      await tester //
+          .createDocument()
+          .withSingleEmptyParagraph()
+          .withInputSource(TextInputSource.ime)
+          .withImeOverrides(imeOverrides)
+          .pump();
 
       // Place the caret in the document so that we open an IME connection.
       await tester.placeCaretInParagraph("1", 0);
