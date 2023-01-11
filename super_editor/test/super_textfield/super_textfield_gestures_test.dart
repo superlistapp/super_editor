@@ -6,6 +6,7 @@ import 'package:super_editor/super_editor.dart';
 
 import '../test_tools.dart';
 import 'super_textfield_inspector.dart';
+import 'super_textfield_robot.dart';
 
 void main() {
   group('SuperTextField gestures', () {
@@ -273,8 +274,7 @@ void main() {
         );
 
         // Tap down and up so the field is focused.
-        await tester.tapAt(tester.getTopLeft(find.byType(SuperTextField)));
-        await tester.pumpAndSettle();
+        await tester.placeCaretInSuperTextField(0);
 
         expect(
           SuperTextFieldInspector.findSelection(),
