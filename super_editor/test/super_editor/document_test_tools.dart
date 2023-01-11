@@ -95,6 +95,8 @@ class TestDocumentConfigurator {
   SoftwareKeyboardController? _softwareKeyboardController;
   bool _openKeyboardOnSelectionChange = true;
   bool _clearSelectionWhenImeDisconnects = true;
+  SuperEditorImeConfiguration? _imeConfiguration;
+  DeltaTextInputClientDecorator? _imeOverrides;
   ThemeData? _appTheme;
   Stylesheet? _stylesheet;
   final _addedComponents = <ComponentBuilder>[];
@@ -157,6 +159,19 @@ class TestDocumentConfigurator {
   /// the connection to the platform IME is closed, or not.
   TestDocumentConfigurator withClearSelectionWhenImeDisconnects(bool clearSelectionWhenImeDisconnects) {
     _clearSelectionWhenImeDisconnects = clearSelectionWhenImeDisconnects;
+    return this;
+  }
+
+  /// Configures the way in which the user interacts with the IME, e.g., brightness, autocorrection, etc.
+  TestDocumentConfigurator withImeConfiguration(SuperEditorImeConfiguration configuration) {
+    _imeConfiguration = configuration;
+    return this;
+  }
+
+  /// Configures the [SuperEditor] to intercept and override desired IME signals, as
+  /// determined by the given [imeOverrides].
+  TestDocumentConfigurator withImeOverrides(DeltaTextInputClientDecorator imeOverrides) {
+    _imeOverrides = imeOverrides;
     return this;
   }
 
@@ -362,6 +377,8 @@ class TestDocumentConfigurator {
         openKeyboardOnSelectionChange: _openKeyboardOnSelectionChange,
         clearSelectionWhenImeDisconnects: _clearSelectionWhenImeDisconnects,
       ),
+      imeConfiguration: _imeConfiguration ?? const SuperEditorImeConfiguration(),
+      imeOverrides: _imeOverrides,
       gestureMode: _gestureMode,
       androidToolbarBuilder: _androidToolbarBuilder,
       iOSToolbarBuilder: _iOSToolbarBuilder,
