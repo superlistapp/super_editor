@@ -12,6 +12,49 @@ import '../_document_test_tools.dart';
 
 void main() {
   group('IME input', () {
+    testWidgets('allows apps to handle performAction in their own way', (tester) async {
+      final document = singleParagraphEmptyDoc();
+
+      int performActionCount = 0;
+      TextInputAction? performedAction;
+      final imeOverrides = _TestImeOverrides(
+        (action) {
+          performActionCount += 1;
+          performedAction = action;
+        },
+      );
+
+      await tester //
+          .createDocument()
+          .withSingleEmptyParagraph()
+          .withInputSource(TextInputSource.ime)
+          .withImeOverrides(imeOverrides)
+          .pump();
+
+      // Place the caret in the document so that we open an IME connection.
+      await tester.placeCaretInParagraph("1", 0);
+
+      // Simulate a "Newline" action from the platform.
+      await TestDefaultBinaryMessengerBinding.instance!.defaultBinaryMessenger.handlePlatformMessage(
+        SystemChannels.textInput.name,
+        SystemChannels.textInput.codec.encodeMethodCall(
+          const MethodCall(
+            "TextInputClient.performAction",
+            [-1, "TextInputAction.newline"],
+          ),
+        ),
+        null,
+      );
+
+      // Ensure that our override got the performAction call.
+      expect(performActionCount, 1);
+      expect(performedAction, TextInputAction.newline);
+
+      // Ensure that the editor didn't receive the performAction call, and didn't
+      // insert a new node.
+      expect(document.nodes.length, 1);
+    });
+
     group('delta use-cases', () {
       test('can handle an auto-inserted period', () {
         // On iOS, adding 2 spaces causes the two spaces to be replaced by a
@@ -390,4 +433,15 @@ MutableDocument _singleParagraphWithLinkDoc() {
       )
     ],
   );
+}
+
+class _TestImeOverrides extends DeltaTextInputClientDecorator {
+  _TestImeOverrides(this.performActionCallback);
+
+  final void Function(TextInputAction) performActionCallback;
+
+  @override
+  void performAction(TextInputAction action) {
+    performActionCallback(action);
+  }
 }

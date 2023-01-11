@@ -52,8 +52,11 @@ import 'unknown_component.dart';
 ///    selected text and components
 ///
 /// A [SuperEditor] determines how a physical keyboard interacts with the document
-/// by way of [keyboardActions]. Software keyboards are integrated with the
-/// [softwareKeyboardHandler].
+/// by way of [keyboardActions].
+///
+/// A [SuperEditor] works with software keyboards through the platform's Input Method
+/// Engine (IME). To customize how [SuperEditor] works with the IME, see [imePolicies],
+/// [imeConfiguration], and [softwareKeyboardController].
 ///
 /// ## Deeper explanation of core artifacts:
 ///
@@ -91,6 +94,7 @@ class SuperEditor extends StatefulWidget {
     this.softwareKeyboardController,
     this.imePolicies = const SuperEditorImePolicies(),
     this.imeConfiguration = const SuperEditorImeConfiguration(),
+    this.imeOverrides,
     List<DocumentKeyboardAction>? keyboardActions,
     this.gestureMode,
     this.androidHandleColor,
@@ -175,6 +179,19 @@ class SuperEditor extends StatefulWidget {
 
   /// Preferences for how the platform IME should look and behave during editing.
   final SuperEditorImeConfiguration imeConfiguration;
+
+  /// Overrides for IME actions.
+  ///
+  /// When the user edits document content in IME mode, those edits and actions
+  /// are reported to a [DeltaTextInputClient], which is then responsible for
+  /// applying those changes to a document. [SuperEditor] includes an implementation
+  /// for all relevant editing behaviors. However, some apps may wish to implement
+  /// their own custom behavior, such as when the user presses the action button,
+  /// such as "Next" or "Done".
+  ///
+  /// Provide a [DeltaTextInputClientDecorator], to override the default [SuperEditor]
+  /// behaviors for various IME messages.
+  final DeltaTextInputClientDecorator? imeOverrides;
 
   /// The `SuperEditor` gesture mode, e.g., mouse or touch.
   final DocumentGestureMode? gestureMode;
@@ -496,6 +513,7 @@ class SuperEditorState extends State<SuperEditor> {
           softwareKeyboardController: widget.softwareKeyboardController,
           imePolicies: widget.imePolicies,
           imeConfiguration: widget.imeConfiguration,
+          imeOverrides: widget.imeOverrides,
           hardwareKeyboardActions: widget.keyboardActions,
           floatingCursorController: _floatingCursorController,
           child: child,
