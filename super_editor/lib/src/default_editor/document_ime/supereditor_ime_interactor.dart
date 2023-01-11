@@ -8,6 +8,7 @@ import '../document_hardware_keyboard/document_input_keyboard.dart';
 import 'document_delta_editing.dart';
 import 'document_ime_communication.dart';
 import 'document_ime_interaction_policies.dart';
+import 'ime_decoration.dart';
 import 'ime_keyboard_control.dart';
 
 /// [SuperEditor] interactor that edits a document based on IME input
@@ -28,6 +29,7 @@ class SuperEditorImeInteractor extends StatefulWidget {
     this.softwareKeyboardController,
     this.imePolicies = const SuperEditorImePolicies(),
     this.imeConfiguration = const SuperEditorImeConfiguration(),
+    this.imeOverrides,
     this.hardwareKeyboardActions = const [],
     this.floatingCursorController,
     required this.child,
@@ -60,6 +62,16 @@ class SuperEditorImeInteractor extends StatefulWidget {
   /// Preferences for how the platform IME should look and behave during editing.
   final SuperEditorImeConfiguration imeConfiguration;
 
+  /// Overrides for IME actions.
+  ///
+  /// When the user edits document content in IME mode, those edits and actions
+  /// are reported to a [DeltaTextInputClient], which is then responsible for
+  /// applying those changes to a document.
+  ///
+  /// Provide a [DeltaTextInputClientDecorator], to override the default behaviors
+  /// for various IME messages.
+  final DeltaTextInputClientDecorator? imeOverrides;
+
   /// All the actions that the user can execute with physical hardware
   /// keyboard keys.
   ///
@@ -89,12 +101,15 @@ class _SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> imp
   final _imeConnection = ValueNotifier<TextInputConnection?>(null);
   late TextInputConfiguration _textInputConfiguration;
   late final DocumentImeInputClient _documentImeClient;
+  // The _imeClient is either a direct reference to _documentImeClient, or
+  // _imeClient is a decoration around _documentImeClient. See widget.imeOverrides.
+  late DeltaTextInputClient _imeClient;
   // _documentImeConnection functions as both a TextInputConnection and a
   // DeltaTextInputClient. This is required for a very specific reason that
   // occurs in specific situations. To understand why we need it, check the
   // implementation of DocumentImeInputClient. If we find a less confusing
   // way to handle that scenario, then get rid of this property.
-  final _documentImeConnection = ValueNotifier<DocumentImeInputClient?>(null);
+  final _documentImeConnection = ValueNotifier<TextInputConnection?>(null);
   late final TextDeltasDocumentEditor _textDeltasDocumentEditor;
 
   @override
@@ -114,6 +129,12 @@ class _SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> imp
       floatingCursorController: widget.floatingCursorController,
     );
 
+    if (widget.imeOverrides != null) {
+      _imeClient = widget.imeOverrides!;
+    } else {
+      _imeClient = _documentImeClient;
+    }
+
     _imeConnection.addListener(_onImeConnectionChange);
 
     _textInputConfiguration = widget.imeConfiguration.toTextInputConfiguration();
@@ -127,6 +148,17 @@ class _SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> imp
       _textInputConfiguration = widget.imeConfiguration.toTextInputConfiguration();
       if (_isAttachedToIme) {
         _imeConnection.value!.updateConfig(_textInputConfiguration);
+      }
+    }
+
+    if (widget.imeOverrides != oldWidget.imeOverrides) {
+      oldWidget.imeOverrides?.client = null;
+      widget.imeOverrides?.client = _documentImeClient;
+
+      if (widget.imeOverrides != null) {
+        _imeClient = widget.imeOverrides!;
+      } else {
+        _imeClient = _documentImeClient;
       }
     }
   }
@@ -145,13 +177,14 @@ class _SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> imp
 
   @visibleForTesting
   @override
-  DeltaTextInputClient get imeClient => _documentImeClient;
+  DeltaTextInputClient get imeClient => _imeClient;
 
   bool get _isAttachedToIme => _imeConnection.value?.attached ?? false;
 
   void _onImeConnectionChange() {
     if (_imeConnection.value == null) {
       _documentImeConnection.value = null;
+      widget.imeOverrides?.client = null;
     } else {
       _documentImeConnection.value = _documentImeClient;
     }
@@ -168,7 +201,7 @@ class _SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> imp
         focusNode: _focusNode,
         selection: widget.editContext.composer.selectionNotifier,
         imeConnection: _imeConnection,
-        imeClientFactory: () => _documentImeClient,
+        imeClientFactory: () => _imeClient,
         imeConfiguration: _textInputConfiguration,
         openKeyboardOnSelectionChange: widget.imePolicies.openKeyboardOnSelectionChange,
         closeKeyboardOnSelectionLost: widget.imePolicies.closeKeyboardOnSelectionLost,
