@@ -157,7 +157,7 @@ class ClosureAwareDeltaTextInputClientDecorator extends DeltaTextInputClientDeco
 
   @override
   void connectionClosed() {
-    editorImeLog.fine("[_ClosureAwareImeClientDecorator] - IME connection was closed");
+    editorImeLog.fine("[ClosureAwareDeltaTextInputClientDecorator] - IME connection was closed");
     _onConnectionClosed();
     _client?.connectionClosed();
   }
