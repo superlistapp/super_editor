@@ -256,7 +256,8 @@ void main() {
                   // and panSlop
                   final data = MediaQuery.of(context).copyWith(
                     gestureSettings: const _GestureSettings(
-                      slop: 18,
+                      panSlop: 18,
+                      touchSlop: 18,
                     ),
                   );
                   return MediaQuery(
@@ -294,6 +295,50 @@ void main() {
         expect(
           SuperTextFieldInspector.findSelection(),
           const TextSelection.collapsed(offset: 1),
+        );
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: GestureDetector(
+                onHorizontalDragStart: (d) {
+                  horizontalDragStartCalled = true;
+                },
+                child: Builder(builder: (context) {
+                  // Gesture settings that mimic flutter default where
+                  // panSlop = 2x touchSlop
+                  final data = MediaQuery.of(context).copyWith(
+                    gestureSettings: const _GestureSettings(
+                      touchSlop: 18,
+                      panSlop: 36,
+                    ),
+                  );
+                  return MediaQuery(
+                    data: data,
+                    child: SuperTextField(
+                      textController: AttributedTextEditingController(
+                        text: AttributedText(text: 'a b c'),
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ),
+          ),
+        );
+
+        final gesture2 = await tester.startGesture(tester.getTopLeft(find.byType(SuperTextField)));
+        addTearDown(() => gesture2.removePointer());
+        await gesture2.moveBy(const Offset(19, 0));
+        await gesture2.up();
+        await tester.pumpAndSettle();
+
+        // With default gesture settings the horizontal drag recognizer will
+        // win instead of the selection PanGestureRecognizer.
+        expect(horizontalDragStartCalled, isTrue);
+        expect(
+          SuperTextFieldInspector.findSelection(),
+          const TextSelection.collapsed(offset: 0),
         );
       });
 
@@ -385,9 +430,10 @@ Future<void> _pumpTestApp(
 // Custom gesture settings that ensure panSlop equal to touchSlop
 class _GestureSettings extends DeviceGestureSettings {
   const _GestureSettings({
-    required double slop,
-  }) : super(touchSlop: slop);
+    required double touchSlop,
+    required this.panSlop,
+  }) : super(touchSlop: touchSlop);
 
   @override
-  double? get panSlop => touchSlop;
+  final double panSlop;
 }
