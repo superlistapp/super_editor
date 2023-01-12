@@ -17,7 +17,7 @@ void main() {
 
           await tester.pumpWidget(
             _buildScaffold(
-              child: SuperTextField(),
+              child: const SuperTextField(),
             ),
           );
 
@@ -29,7 +29,7 @@ void main() {
         testWidgets("when requested", (tester) async {
           await tester.pumpWidget(
             _buildScaffold(
-              child: SuperTextField(
+              child: const SuperTextField(
                 configuration: SuperTextFieldPlatformConfiguration.desktop,
               ),
             ),
@@ -45,7 +45,7 @@ void main() {
 
           await tester.pumpWidget(
             _buildScaffold(
-              child: SuperTextField(),
+              child: const SuperTextField(),
             ),
           );
 
@@ -57,7 +57,7 @@ void main() {
         testWidgets("when requested", (tester) async {
           await tester.pumpWidget(
             _buildScaffold(
-              child: SuperTextField(
+              child: const SuperTextField(
                 configuration: SuperTextFieldPlatformConfiguration.android,
               ),
             ),
@@ -73,7 +73,7 @@ void main() {
 
           await tester.pumpWidget(
             _buildScaffold(
-              child: SuperTextField(),
+              child: const SuperTextField(),
             ),
           );
 
@@ -85,7 +85,7 @@ void main() {
         testWidgets("when requested", (tester) async {
           await tester.pumpWidget(
             _buildScaffold(
-              child: SuperTextField(
+              child: const SuperTextField(
                 configuration: SuperTextFieldPlatformConfiguration.iOS,
               ),
             ),
@@ -101,7 +101,7 @@ void main() {
         testWidgetsOnAndroid('(on Android)', (tester) async {
           await tester.pumpWidget(
             _buildScaffold(
-              child: SuperTextField(
+              child: const SuperTextField(
                 minLines: 10,
                 maxLines: 10,
               ),
@@ -118,7 +118,7 @@ void main() {
         testWidgetsOnIos('(on iOS)', (tester) async {
           await tester.pumpWidget(
             _buildScaffold(
-              child: SuperTextField(
+              child: const SuperTextField(
                 minLines: 10,
                 maxLines: 10,
               ),
@@ -137,7 +137,7 @@ void main() {
         testWidgetsOnAndroid('(on Android)', (tester) async {
           await tester.pumpWidget(
             _buildScaffold(
-              child: SuperTextField(
+              child: const SuperTextField(
                 minLines: 1,
                 maxLines: 1,
               ),
@@ -154,7 +154,7 @@ void main() {
         testWidgetsOnIos('(on iOS)', (tester) async {
           await tester.pumpWidget(
             _buildScaffold(
-              child: SuperTextField(
+              child: const SuperTextField(
                 minLines: 1,
                 maxLines: 1,
               ),
@@ -268,8 +268,8 @@ void main() {
       testWidgetsOnAllPlatforms('is applied when configured', (tester) async {
         await tester.pumpWidget(
           _buildScaffold(
-            child: SuperTextField(
-              padding: const EdgeInsets.fromLTRB(5, 10, 15, 20),
+            child: const SuperTextField(
+              padding: EdgeInsets.fromLTRB(5, 10, 15, 20),
               minLines: 1,
               maxLines: 2,
             ),
