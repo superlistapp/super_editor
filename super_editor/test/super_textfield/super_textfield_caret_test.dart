@@ -94,7 +94,7 @@ void main() {
     testWidgetsOnAllPlatforms("is NOT displayed without a text selection", (tester) async {
       await tester.pumpWidget(
         _buildScaffold(
-          child: const SuperTextField(),
+          child: SuperTextField(),
         ),
       );
       await tester.pump();
