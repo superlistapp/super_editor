@@ -255,19 +255,15 @@ class DocumentImeSerializer {
   TextSelection documentToImeSelection(DocumentSelection docSelection) {
     editorImeLog.fine("Converting doc selection to ime selection: $docSelection");
     final selectionAffinity = _doc.getAffinityForSelection(docSelection);
-
-    final startDocPosition = selectionAffinity == TextAffinity.downstream ? docSelection.base : docSelection.extent;
-    final startImePosition = _documentToImePosition(startDocPosition);
-
-    final endDocPosition = selectionAffinity == TextAffinity.downstream ? docSelection.extent : docSelection.base;
-    final endImePosition = _documentToImePosition(endDocPosition);
+    final startImePosition = _documentToImePosition(docSelection.base);
+    final endImePosition = _documentToImePosition(docSelection.extent);
 
     editorImeLog.fine("Start IME position: $startImePosition");
     editorImeLog.fine("End IME position: $endImePosition");
     return TextSelection(
       baseOffset: startImePosition.offset,
       extentOffset: endImePosition.offset,
-      affinity: startImePosition == endImePosition ? endImePosition.affinity : TextAffinity.downstream,
+      affinity: selectionAffinity,
     );
   }
 
