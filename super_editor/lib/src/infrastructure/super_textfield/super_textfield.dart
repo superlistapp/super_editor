@@ -65,7 +65,7 @@ class SuperTextField extends StatefulWidget {
     this.maxLines = 1,
     this.lineHeight,
     this.inputSource,
-    this.keyboardHandlers = defaultTextFieldKeyboardHandlers,
+    this.keyboardHandlers,
     this.padding,
   }) : super(key: key);
 
@@ -155,7 +155,7 @@ class SuperTextField extends StatefulWidget {
   /// key presses, for text input, deletion, caret movement, etc.
   ///
   /// Only used on desktop.
-  final List<TextFieldKeyboardHandler> keyboardHandlers;
+  final List<TextFieldKeyboardHandler>? keyboardHandlers;
 
   /// Padding placed around the text content of this text field, but within the
   /// scrollable viewport.
