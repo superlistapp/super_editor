@@ -164,7 +164,9 @@ class SuperTextField extends StatefulWidget {
 
   /// The main action for the virtual keyboard, e.g. [TextInputAction.done].
   ///
-  /// When `null`, it depends on whether the text field is multiline or single line.
+  /// When `null`, and in single-line mode, the action will be [TextInputAction.done],
+  /// and when in multi-line mode, the action will be  [TextInputAction.newline].
+  ///
   /// Only used on mobile.
   final TextInputAction? textInputAction;
 
