@@ -328,6 +328,45 @@ void main() {
           expectedTextWithSelection: "|~\nThis is the first paragraph of text.\n~|",
         );
       });
+
+      testWidgetsOnArbitraryDesktop('sends selection to platform', (tester) async {
+        final context = await tester //
+            .createDocument()
+            .withSingleParagraph()
+            .withInputSource(TextInputSource.ime)
+            .pump();
+
+        // Place caret at Lorem| ipsum.
+        await tester.placeCaretInParagraph('1', 5);
+
+        int selectionBase = -1;
+        int selectionExtent = -1;
+        String selectionAffinity = "";
+
+        // Intercept messages sent to the platform.
+        tester.binding.defaultBinaryMessenger.setMockMessageHandler(SystemChannels.textInput.name, (message) async {
+          final methodCall = const JSONMethodCodec().decodeMethodCall(message);
+          if (methodCall.method == 'TextInput.setEditingState') {
+            selectionBase = methodCall.arguments['selectionBase'];
+            selectionExtent = methodCall.arguments['selectionExtent'];
+            selectionAffinity = methodCall.arguments['selectionAffinity'];
+          }
+          return null;
+        });
+
+        // Press shift+left to expand the selection upstream.
+        await tester.pressShiftLeftArrow();
+
+        final selection = SuperEditorInspector.findDocumentSelection()!;
+        final base = (selection.base.nodePosition as TextNodePosition).offset;
+        final extent = (selection.extent.nodePosition as TextNodePosition).offset;
+        final affinity = context.editContext.editor.document.getAffinityForSelection(selection);
+
+        // Ensure we sent the same base, extent and affinity to the platform.
+        expect(selectionBase, base);
+        expect(selectionExtent, extent);
+        expect(selectionAffinity, affinity.toString());
+      });
     });
 
     group('typing characters near a link', () {
