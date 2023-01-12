@@ -408,6 +408,7 @@ class AndroidTextFieldTouchInteractorState extends State<AndroidTextFieldTouchIn
   }
 
   Widget _buildTapAndDragDetector() {
+    final gestureSettings = MediaQuery.maybeOf(context)?.gestureSettings;
     return Positioned(
       left: 0,
       top: 0,
@@ -423,7 +424,8 @@ class AndroidTextFieldTouchInteractorState extends State<AndroidTextFieldTouchIn
                 ..onTapDown = _onTapDown
                 ..onTapUp = _onTapUp
                 ..onDoubleTapDown = _onDoubleTapDown
-                ..onTripleTapDown = _onTripleTapDown;
+                ..onTripleTapDown = _onTripleTapDown
+                ..gestureSettings = gestureSettings;
             },
           ),
           PanGestureRecognizer: GestureRecognizerFactoryWithHandlers<PanGestureRecognizer>(
@@ -433,7 +435,8 @@ class AndroidTextFieldTouchInteractorState extends State<AndroidTextFieldTouchIn
                 ..onStart = widget.focusNode.hasFocus ? _onTextPanStart : null
                 ..onUpdate = widget.focusNode.hasFocus ? _onPanUpdate : null
                 ..onEnd = widget.focusNode.hasFocus || _isDraggingCaret ? _onPanEnd : null
-                ..onCancel = widget.focusNode.hasFocus || _isDraggingCaret ? _onPanCancel : null;
+                ..onCancel = widget.focusNode.hasFocus || _isDraggingCaret ? _onPanCancel : null
+                ..gestureSettings = gestureSettings;
             },
           ),
         },

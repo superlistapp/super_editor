@@ -645,6 +645,7 @@ Updating drag selection:
   Widget _buildGestureInput({
     required Widget child,
   }) {
+    final gestureSettings = MediaQuery.maybeOf(context)?.gestureSettings;
     return RawGestureDetector(
       behavior: HitTestBehavior.translucent,
       gestures: <Type, GestureRecognizerFactory>{
@@ -656,7 +657,8 @@ Updating drag selection:
               ..onDoubleTapDown = _onDoubleTapDown
               ..onDoubleTap = _onDoubleTap
               ..onTripleTapDown = _onTripleTapDown
-              ..onTripleTap = _onTripleTap;
+              ..onTripleTap = _onTripleTap
+              ..gestureSettings = gestureSettings;
           },
         ),
         PanGestureRecognizer: GestureRecognizerFactoryWithHandlers<PanGestureRecognizer>(
@@ -666,7 +668,8 @@ Updating drag selection:
               ..onStart = _onPanStart
               ..onUpdate = _onPanUpdate
               ..onEnd = _onPanEnd
-              ..onCancel = _onPanCancel;
+              ..onCancel = _onPanCancel
+              ..gestureSettings = gestureSettings;
           },
         ),
       },
