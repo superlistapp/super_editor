@@ -67,6 +67,7 @@ class SuperTextField extends StatefulWidget {
     this.inputSource,
     this.keyboardHandlers,
     this.padding,
+    this.textInputAction,
   }) : super(key: key);
 
   final FocusNode? focusNode;
@@ -161,6 +162,14 @@ class SuperTextField extends StatefulWidget {
   /// scrollable viewport.
   final EdgeInsets? padding;
 
+  /// The main action for the virtual keyboard, e.g. [TextInputAction.done].
+  ///
+  /// When `null`, and in single-line mode, the action will be [TextInputAction.done],
+  /// and when in multi-line mode, the action will be  [TextInputAction.newline].
+  ///
+  /// Only used on mobile.
+  final TextInputAction? textInputAction;
+
   @override
   State<SuperTextField> createState() => SuperTextFieldState();
 }
@@ -200,6 +209,9 @@ class SuperTextFieldState extends State<SuperTextField> {
   ProseTextLayout get textLayout => (_platformFieldKey.currentState as ProseTextBlock).textLayout;
 
   bool get _isMultiline => (widget.minLines ?? 1) != 1 || widget.maxLines != 1;
+
+  TextInputAction get _textInputAction =>
+      widget.textInputAction ?? (_isMultiline ? TextInputAction.newline : TextInputAction.done);
 
   SuperTextFieldPlatformConfiguration get _configuration {
     if (widget.configuration != null) {
@@ -302,7 +314,7 @@ class SuperTextFieldState extends State<SuperTextField> {
             minLines: widget.minLines,
             maxLines: widget.maxLines,
             lineHeight: widget.lineHeight,
-            textInputAction: _isMultiline ? TextInputAction.newline : TextInputAction.done,
+            textInputAction: _textInputAction,
             padding: widget.padding,
           ),
         );
@@ -326,7 +338,7 @@ class SuperTextFieldState extends State<SuperTextField> {
             minLines: widget.minLines,
             maxLines: widget.maxLines,
             lineHeight: widget.lineHeight,
-            textInputAction: _isMultiline ? TextInputAction.newline : TextInputAction.done,
+            textInputAction: _textInputAction,
             padding: widget.padding,
           ),
         );
