@@ -69,10 +69,10 @@ class CompleteTaskCommand implements EditorCommand {
   final String nodeId;
 
   @override
-  List<DocumentChangeEvent> execute(EditorContext context, CommandExpander expandActiveCommand) {
-    final document = context.find<MutableDocument>("document");
+  void execute(EditorContext context, CommandExecutor executor) {
+    final document = context.find<MutableDocument>(EditorContext.document);
     (document.getNodeById(nodeId) as TaskNode).isComplete = true;
-    return [NodeChangeEvent(nodeId)];
+    executor.logChanges([NodeChangeEvent(nodeId)]);
   }
 }
 

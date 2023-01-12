@@ -2249,8 +2249,8 @@ class PasteEditorCommand implements EditorCommand {
   final DocumentComposer _composer;
 
   @override
-  List<DocumentChangeEvent> execute(EditorContext context, CommandExpander expandActiveCommand) {
-    final document = context.find<MutableDocument>("document");
+  void execute(EditorContext context, CommandExecutor executor) {
+    final document = context.find<MutableDocument>(EditorContext.document);
     final currentNodeWithSelection = document.getNodeById(_pastePosition.nodeId);
     if (currentNodeWithSelection is! ParagraphNode) {
       throw Exception('Can\'t handle pasting text within node of type: $currentNodeWithSelection');
@@ -2274,22 +2274,22 @@ class PasteEditorCommand implements EditorCommand {
       // Configure a new node to be added at the end of the pasted content
       // which contains the trailing text from the currently selected
       // node.
-      changes.addAll(
+      executor.executeCommand(
         SplitParagraphCommand(
           nodeId: currentNodeWithSelection.id,
           splitPosition: TextPosition(offset: pasteTextOffset),
           newNodeId: DocumentEditor.createNodeId(),
           replicateExistingMetadata: true,
-        ).execute(context, expandActiveCommand),
+        ),
       );
     }
 
     // Paste the first piece of attributed content into the selected TextNode.
-    changes.addAll(
+    executor.executeCommand(
       InsertAttributedTextCommand(
         documentPosition: _pastePosition,
         textToInsert: attributedLines.first,
-      ).execute(context, expandActiveCommand),
+      ),
     );
 
     // The first line of pasted text was added to the selected paragraph.
@@ -2327,7 +2327,7 @@ class PasteEditorCommand implements EditorCommand {
     changes.add(SelectionChangeEvent(_composer.selectionComponent.selection));
 
     editorOpsLog.fine('Done with paste command.');
-    return changes;
+    executor.logChanges(changes);
   }
 
   /// Breaks the given [content] at each newline, then applies any inferred

@@ -30,6 +30,8 @@ class DocumentEditor {
         _requestHandlers = requestHandlers,
         context = EditorContext() {
     context.put("document", document);
+
+    _commandExecutor = _DocumentEditorCommandExecutor(context);
   }
 
   /// The [Document] that this [DocumentEditor] edits.
@@ -42,12 +44,8 @@ class DocumentEditor {
   /// Service Locator that provides all resources that are relevant for document editing.
   final EditorContext context;
 
-  /// The queue of editor commands that are currently being processed.
-  final _commandsBeingProcessed = EditorCommandQueue();
-
-  /// A list of all document changes that were made during the current series of
-  /// command executions, based on commands that were queued in [_commandsBeingProcessed].
-  final _changeList = <DocumentChangeEvent>[];
+  /// Executes [EditorCommand]s and collects a list of changes.
+  late final _DocumentEditorCommandExecutor _commandExecutor;
 
   /// Executes the given [request].
   ///
@@ -68,27 +66,29 @@ class DocumentEditor {
           "Could not handle EditorRequest. DocumentEditor doesn't have a handler that recognizes the request: $request");
     }
 
-    // TODO: use new executor here
+    // Execute the given command, and any other commands that it spawns.
+    _commandExecutor.executeCommand(command);
 
-    if (_changeList.isNotEmpty) {
+    // Collect all the changes from the executed commands.
+    //
+    // We make a copy of the change-list so that asynchronous listeners
+    // don't lose the contents when we clear it.
+    final changeList = _commandExecutor.copyChangeList();
+
+    // Reset the command executor so that it's ready for the next command
+    // that comes in.
+    _commandExecutor.reset();
+
+    if (changeList.isNotEmpty) {
       // We finished running all commands in the queue. Notify listeners
       // of all the changes that were made.
-      _document.notifyListeners(
-        DocumentChangeLog(
-          // We make a copy of the change-list so that asynchronous listeners
-          // don't lose the contents when we clear it.
-          List<DocumentChangeEvent>.from(_changeList, growable: false),
-        ),
-      );
+      _document.notifyListeners(DocumentChangeLog(changeList));
 
       // TODO: have the composer listen for document changes and find selection updates
-      if (_changeList.whereType<SelectionChangeEvent>().isNotEmpty) {
-        // TODO: don't use magic strings
-        final composer = context.find<DocumentComposer>("composer");
+      if (changeList.whereType<SelectionChangeEvent>().isNotEmpty) {
+        final composer = context.find<DocumentComposer>(EditorContext.composer);
         composer.selectionComponent.notifySelectionListeners();
       }
-
-      _changeList.clear();
     }
   }
 }
@@ -96,6 +96,14 @@ class DocumentEditor {
 /// All resources that are available when executing [EditorCommand]s, such as a document,
 /// composer, etc.
 class EditorContext {
+  /// Service locator key to obtain a [Document] from [find], if a [Document]
+  /// is available in the [EditorContext].
+  static const document = "document";
+
+  /// Service locator key to obtain a [DocumentComposer] from [find], if a
+  /// [DocumentComposer] is available in the [EditorContext].
+  static const composer = "composer";
+
   final _resources = <String, dynamic>{};
 
   T find<T>(String id) {
@@ -116,7 +124,11 @@ class EditorContext {
   void put(String id, dynamic resource) => _resources[id] = resource;
 }
 
-// TODO: this is a WIP - I'm figuring out what API makes sense.
+/// Executes [EditorCommands] in the order in which they're queued.
+///
+/// Each [EditorCommand] is given access to this [CommandExecutor] during
+/// the command's execution. Each [EditorCommand] is expected to [logChanges]
+/// with the given [CommandExecutor].
 abstract class CommandExecutor {
   /// Immediately executes the given [command].
   ///
@@ -124,17 +136,22 @@ abstract class CommandExecutor {
   /// a sub-command in the middle of an active command.
   void executeCommand(EditorCommand command);
 
-  /// Replaces the active command in the queue with the given [replacementCommands].
-  ///
-  /// This is useful for composite commands, which are defined by a series of other
-  /// commands.
-  void replaceActiveCommand(List<EditorCommand> replacementCommands);
+  /// Adds the given [command] to the beginning of the command queue, but
+  /// after any set of commands that are currently executing.
+  void prependCommand(EditorCommand command);
+
+  /// Adds the given [command] to the end of the command queue.
+  void appendCommand(EditorCommand command);
 
   /// Log a series of document changes that were just made by the active command.
   void logChanges(List<DocumentChangeEvent> changes);
 }
 
 class _DocumentEditorCommandExecutor implements CommandExecutor {
+  _DocumentEditorCommandExecutor(this._context);
+
+  final EditorContext _context;
+
   final _commandsBeingProcessed = EditorCommandQueue();
 
   final _changeList = <DocumentChangeEvent>[];
@@ -149,16 +166,20 @@ class _DocumentEditorCommandExecutor implements CommandExecutor {
       _commandsBeingProcessed.prepareForExecution();
 
       final command = _commandsBeingProcessed.activeCommand!;
-      final changes = command.execute(context, _commandsBeingProcessed.expandActiveCommand);
-      _changeList.addAll(changes);
+      command.execute(_context, this);
 
       _commandsBeingProcessed.onCommandExecutionComplete();
     }
   }
 
   @override
-  void replaceActiveCommand(List<EditorCommand> replacementCommands) {
-    _commandsBeingProcessed.expandActiveCommand(replacementCommands);
+  void prependCommand(command) {
+    _commandsBeingProcessed.prepend(command);
+  }
+
+  @override
+  void appendCommand(command) {
+    _commandsBeingProcessed.append(command);
   }
 
   @override
@@ -208,12 +229,16 @@ class EditorCommandQueue {
     _activeCommand = null;
   }
 
+  /// Prepends the given [command] at the front of the execution queue.
+  void prepend(EditorCommand command) {
+    _commandBacklog.insert(0, command);
+  }
+
+  /// Appends the given [command] to the end of the execution queue.
   void append(EditorCommand command) {
     _commandBacklog.add(command);
   }
 }
-
-typedef CommandExpander = void Function(EditorCommand newCommand);
 
 /// Factory method that creates and returns an [EditorCommand] that can handle
 /// the given [EditorRequest], or `null` if this handler doesn't apply to the given
@@ -227,12 +252,8 @@ abstract class EditorRequest {
 
 /// A command that alters something in a [DocumentEditor].
 abstract class EditorCommand {
-  // TODO: instead of returning changes, we need commands to set their changes
-  //       on some kind of executor that we pass in. Otherwise, it's unclear how
-  //       we're supposed to gather changes from expanded commands.
-  /// Executes this command and returns metadata about any changes that
-  /// were made.
-  List<DocumentChangeEvent> execute(EditorContext context, CommandExpander expandActiveCommand);
+  /// Executes this command and logs all changes with the [executor].
+  void execute(EditorContext context, CommandExecutor executor);
 }
 
 /// An in-memory, mutable [Document].

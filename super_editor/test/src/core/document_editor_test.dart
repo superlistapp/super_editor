@@ -73,10 +73,14 @@ void main() {
         // This test ensures that if one command expands into multiple commands,
         // and those commands expand to additional commands, the overall command
         // order is what we expect.
+        DocumentChangeLog? changeLog;
+        final document = MutableDocument(
+          nodes: [ParagraphNode(id: DocumentEditor.createNodeId(), text: AttributedText(text: ""))],
+        )..addListener((newLog) {
+            changeLog = newLog;
+          });
         final editor = DocumentEditor(
-          document: MutableDocument(
-            nodes: [ParagraphNode(id: DocumentEditor.createNodeId(), text: AttributedText(text: ""))],
-          ),
+          document: document,
           requestHandlers: [
             (request) => request is _ExpandingCommandRequest ? _ExpandingCommand(request) : null,
           ],
@@ -89,15 +93,14 @@ void main() {
             ),
           ),
         );
-        // TODO: get rid of magic strings
-        editor.context.put("composer", composer);
+        editor.context.put(EditorContext.composer, composer);
 
         editor.execute(
           const _ExpandingCommandRequest(
             generationId: 0,
             batchId: 0,
             newCommandCount: 3,
-            levelsOfGeneration: 3,
+            levelsOfGeneration: 2,
           ),
         );
 
@@ -113,44 +116,84 @@ void main() {
           '''(0.0)
   (1.0)
     (2.0)
-      (3.0)
-      (3.1)
-      (3.2)
     (2.1)
-      (3.0)
-      (3.1)
-      (3.2)
     (2.2)
-      (3.0)
-      (3.1)
-      (3.2)
   (1.1)
     (2.0)
-      (3.0)
-      (3.1)
-      (3.2)
     (2.1)
-      (3.0)
-      (3.1)
-      (3.2)
     (2.2)
-      (3.0)
-      (3.1)
-      (3.2)
   (1.2)
     (2.0)
-      (3.0)
-      (3.1)
-      (3.2)
     (2.1)
-      (3.0)
-      (3.1)
-      (3.2)
-    (2.2)
-      (3.0)
-      (3.1)
-      (3.2)''',
+    (2.2)''',
         );
+
+        expect(changeLog, isNotNull);
+        expect(changeLog!.changes.length, 13 * 2); // 13 commands * 2 events per command
+      });
+
+      test('inserts new paragraph node at caret', () {
+        final editor = _createStandardEditor(
+          initialSelection: const DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: "1",
+              nodePosition: TextNodePosition(offset: 0),
+            ),
+          ),
+        );
+        int changeLogCount = 0;
+        int changeEventCount = 0;
+        final document = editor.document;
+        document.addListener((newChangeLog) {
+          changeLogCount += 1;
+          changeEventCount += newChangeLog.changes.length;
+        });
+
+        editor.execute(SplitParagraphRequest(
+          nodeId: "1",
+          splitPosition: const TextNodePosition(offset: 0),
+          newNodeId: "2",
+          replicateExistingMetadata: true,
+        ));
+
+        // Verify content changes.
+        expect(document.nodes.length, 2);
+        expect(document.getNodeAt(0)!.id, "1");
+        expect(document.getNodeAt(1)!.id, "2");
+
+        // Verify reported changes.
+        expect(changeLogCount, 1);
+        expect(changeEventCount, 2); // 2 -> Create the node, move the selection
+      });
+
+      test('moves a document node to a new position', () {
+        final editor = _createStandardEditor(
+          initialDocument: longTextDoc(),
+          initialSelection: const DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: "1",
+              nodePosition: TextNodePosition(offset: 0),
+            ),
+          ),
+        );
+        int changeLogCount = 0;
+        int changeEventCount = 0;
+        final document = editor.document;
+        document.addListener((newChangeLog) {
+          changeLogCount += 1;
+          changeEventCount += newChangeLog.changes.length;
+        });
+
+        editor.execute(const MoveNodeRequest(nodeId: "1", newIndex: 2));
+
+        // Verify final node indices.
+        expect(document.getNodeAt(0)!.id, "2");
+        expect(document.getNodeAt(1)!.id, "3");
+        expect(document.getNodeAt(2)!.id, "1");
+
+        // Verify reported changes.
+        expect(changeLogCount, 1);
+        expect(changeEventCount, 3); // 3 nodes were moved
       });
     });
   });
@@ -168,8 +211,7 @@ DocumentEditor _createStandardEditor({
   );
 
   final composer = DocumentComposer(initialSelection: initialSelection);
-  // TODO: get rid of magic strings
-  editor.context.put("composer", composer);
+  editor.context.put(EditorContext.composer, composer);
 
   return editor;
 }
@@ -212,13 +254,12 @@ class _ExpandingCommand implements EditorCommand {
   final _ExpandingCommandRequest request;
 
   @override
-  List<DocumentChangeEvent> execute(EditorContext context, CommandExpander expandActiveCommand) {
-    // TODO: get rid of magic strings
-    final document = context.find<Document>("document");
+  void execute(EditorContext context, CommandExecutor executor) {
+    final document = context.find<Document>(EditorContext.document);
     final paragraph = document.getNodeAt(0) as ParagraphNode;
 
-    final changes = [
-      ...InsertTextCommand(
+    executor.executeCommand(
+      InsertTextCommand(
         documentPosition: DocumentPosition(
           nodeId: paragraph.id,
           nodePosition: TextNodePosition(offset: paragraph.text.text.length),
@@ -226,12 +267,12 @@ class _ExpandingCommand implements EditorCommand {
         textToInsert:
             "${request.generationId > 0 ? "\n" : ""}${List.filled(request.generationId, "  ").join()}(${request.generationId}.${request.batchId})",
         attributions: {},
-      ).execute(context, expandActiveCommand),
-    ];
+      ),
+    );
 
     if (request.levelsOfGeneration > 0) {
       for (int i = 0; i < request.newCommandCount; i += 1) {
-        expandActiveCommand(
+        executor.executeCommand(
           _ExpandingCommand(
             _ExpandingCommandRequest(
               generationId: request.generationId + 1, // +1 for next generation
@@ -243,7 +284,5 @@ class _ExpandingCommand implements EditorCommand {
         );
       }
     }
-
-    return changes;
   }
 }

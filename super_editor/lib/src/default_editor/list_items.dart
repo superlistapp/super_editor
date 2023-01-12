@@ -436,18 +436,18 @@ class IndentListItemCommand implements EditorCommand {
   final String nodeId;
 
   @override
-  List<DocumentChangeEvent> execute(EditorContext context, CommandExpander expandActiveCommand) {
-    final document = context.find<Document>("document");
+  void execute(EditorContext context, CommandExecutor executor) {
+    final document = context.find<Document>(EditorContext.document);
     final node = document.getNodeById(nodeId);
     final listItem = node as ListItemNode;
     if (listItem.indent >= 6) {
       _log.log('IndentListItemCommand', 'WARNING: Editor does not support an indent level beyond 6.');
-      return [];
+      return;
     }
 
     listItem.indent += 1;
 
-    return [NodeChangeEvent(nodeId)];
+    executor.logChanges([NodeChangeEvent(nodeId)]);
   }
 }
 
@@ -467,8 +467,8 @@ class UnIndentListItemCommand implements EditorCommand {
   final String nodeId;
 
   @override
-  List<DocumentChangeEvent> execute(EditorContext context, CommandExpander expandActiveCommand) {
-    final document = context.find<Document>("document");
+  void execute(EditorContext context, CommandExecutor executor) {
+    final document = context.find<Document>(EditorContext.document);
     final node = document.getNodeById(nodeId);
     final listItem = node as ListItemNode;
     if (listItem.indent > 0) {
@@ -476,11 +476,13 @@ class UnIndentListItemCommand implements EditorCommand {
       //       a DocumentEditorTransaction (#67)
       listItem.indent -= 1;
 
-      return [NodeChangeEvent(nodeId)];
+      executor.logChanges([NodeChangeEvent(nodeId)]);
     } else {
-      return ConvertListItemToParagraphCommand(
-        nodeId: nodeId,
-      ).execute(context, expandActiveCommand);
+      executor.executeCommand(
+        ConvertListItemToParagraphCommand(
+          nodeId: nodeId,
+        ),
+      );
     }
   }
 }
@@ -505,8 +507,8 @@ class ConvertListItemToParagraphCommand implements EditorCommand {
   final Map<String, dynamic>? paragraphMetadata;
 
   @override
-  List<DocumentChangeEvent> execute(EditorContext context, CommandExpander expandActiveCommand) {
-    final document = context.find<MutableDocument>("document");
+  void execute(EditorContext context, CommandExecutor executor) {
+    final document = context.find<MutableDocument>(EditorContext.document);
     final node = document.getNodeById(nodeId);
     final listItem = node as ListItemNode;
 
@@ -517,7 +519,7 @@ class ConvertListItemToParagraphCommand implements EditorCommand {
     );
     document.replaceNode(oldNode: listItem, newNode: newParagraphNode);
 
-    return [NodeChangeEvent(listItem.id)];
+    executor.logChanges([NodeChangeEvent(listItem.id)]);
   }
 }
 
@@ -541,8 +543,8 @@ class ConvertParagraphToListItemCommand implements EditorCommand {
   final ListItemType type;
 
   @override
-  List<DocumentChangeEvent> execute(EditorContext context, CommandExpander expandActiveCommand) {
-    final document = context.find<MutableDocument>("document");
+  void execute(EditorContext context, CommandExecutor executor) {
+    final document = context.find<MutableDocument>(EditorContext.document);
     final node = document.getNodeById(nodeId);
     final paragraphNode = node as ParagraphNode;
 
@@ -553,7 +555,7 @@ class ConvertParagraphToListItemCommand implements EditorCommand {
     );
     document.replaceNode(oldNode: paragraphNode, newNode: newListItemNode);
 
-    return [NodeChangeEvent(paragraphNode.id)];
+    executor.logChanges([NodeChangeEvent(paragraphNode.id)]);
   }
 }
 
@@ -577,8 +579,8 @@ class ChangeListItemTypeCommand implements EditorCommand {
   final ListItemType newType;
 
   @override
-  List<DocumentChangeEvent> execute(EditorContext context, CommandExpander expandActiveCommand) {
-    final document = context.find<MutableDocument>("context");
+  void execute(EditorContext context, CommandExecutor executor) {
+    final document = context.find<MutableDocument>(EditorContext.document);
     final existingListItem = document.getNodeById(nodeId) as ListItemNode;
 
     final newListItemNode = ListItemNode(
@@ -588,7 +590,7 @@ class ChangeListItemTypeCommand implements EditorCommand {
     );
     document.replaceNode(oldNode: existingListItem, newNode: newListItemNode);
 
-    return [NodeChangeEvent(existingListItem.id)];
+    executor.logChanges([NodeChangeEvent(existingListItem.id)]);
   }
 }
 
@@ -616,8 +618,8 @@ class SplitListItemCommand implements EditorCommand {
   final String newNodeId;
 
   @override
-  List<DocumentChangeEvent> execute(EditorContext context, CommandExpander expandActiveCommand) {
-    final document = context.find<MutableDocument>("document");
+  void execute(EditorContext context, CommandExecutor executor) {
+    final document = context.find<MutableDocument>(EditorContext.document);
     final node = document.getNodeById(nodeId);
     final listItemNode = node as ListItemNode;
     final text = listItemNode.text;
@@ -656,10 +658,10 @@ class SplitListItemCommand implements EditorCommand {
 
     _log.log('SplitListItemCommand', ' - inserted new node: ${newNode.id} after old one: ${node.id}');
 
-    return [
+    executor.logChanges([
       NodeChangeEvent(nodeId),
       NodeInsertedEvent(newNodeId),
-    ];
+    ]);
   }
 }
 

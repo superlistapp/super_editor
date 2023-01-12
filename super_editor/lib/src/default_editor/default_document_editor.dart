@@ -39,7 +39,12 @@ final defaultRequestHandlers = [
   (request) => request is InsertNodeAfterNodeRequest
       ? InsertNodeAfterNodeCommand(existingNodeId: request.existingNodeId, newNode: request.newNode)
       : null,
-  (request) => request is InsertNodeAtCaretRequest ? InsertNodeAtCaretCommand(newNode: request.node) : null,
+  (request) => request is InsertNodeAtCaretRequest //
+      ? InsertNodeAtCaretCommand(newNode: request.node)
+      : null,
+  (request) => request is MoveNodeRequest //
+      ? MoveNodeCommand(nodeId: request.nodeId, newIndex: request.newIndex)
+      : null,
   (request) => request is CombineParagraphsRequest
       ? CombineParagraphsCommand(firstNodeId: request.firstNodeId, secondNodeId: request.secondNodeId)
       : null,

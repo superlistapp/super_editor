@@ -122,6 +122,40 @@ class NodeInsertedEvent implements DocumentNodeEvent {
 
   @override
   final String nodeId;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is NodeInsertedEvent && runtimeType == other.runtimeType && nodeId == other.nodeId;
+
+  @override
+  int get hashCode => nodeId.hashCode;
+}
+
+/// A [DocumentNode] was moved to a new index.
+class NodeMovedEvent implements DocumentNodeEvent {
+  const NodeMovedEvent({
+    required this.nodeId,
+    required this.from,
+    required this.to,
+  });
+
+  @override
+  final String nodeId;
+  final int from;
+  final int to;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is NodeMovedEvent &&
+          runtimeType == other.runtimeType &&
+          nodeId == other.nodeId &&
+          from == other.from &&
+          to == other.to;
+
+  @override
+  int get hashCode => nodeId.hashCode ^ from.hashCode ^ to.hashCode;
 }
 
 /// A [DocumentNode] was removed from the [Document].
@@ -130,6 +164,13 @@ class NodeRemovedEvent implements DocumentNodeEvent {
 
   @override
   final String nodeId;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) || other is NodeRemovedEvent && runtimeType == other.runtimeType && nodeId == other.nodeId;
+
+  @override
+  int get hashCode => nodeId.hashCode;
 }
 
 /// The content of a [DocumentNode] changed.
@@ -142,6 +183,13 @@ class NodeChangeEvent implements DocumentNodeEvent {
 
   @override
   final String nodeId;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) || other is NodeChangeEvent && runtimeType == other.runtimeType && nodeId == other.nodeId;
+
+  @override
+  int get hashCode => nodeId.hashCode;
 
   @override
   String toString() => "[NodeChangeEvent] - Node: $nodeId";

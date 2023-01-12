@@ -208,28 +208,28 @@ class CombineParagraphsCommand implements EditorCommand {
   final String secondNodeId;
 
   @override
-  List<DocumentChangeEvent> execute(EditorContext context, CommandExpander expandActiveCommand) {
+  void execute(EditorContext context, CommandExecutor executor) {
     editorDocLog.info('Executing CombineParagraphsCommand');
     editorDocLog.info(' - merging "$firstNodeId" <- "$secondNodeId"');
-    final document = context.find<MutableDocument>("document");
+    final document = context.find<MutableDocument>(EditorContext.document);
     final secondNode = document.getNodeById(secondNodeId);
     if (secondNode is! TextNode) {
       editorDocLog.info('WARNING: Cannot merge node of type: $secondNode into node above.');
-      return [];
+      return;
     }
 
     final nodeAbove = document.getNodeBefore(secondNode);
     if (nodeAbove == null) {
       editorDocLog.info('At top of document. Cannot merge with node above.');
-      return [];
+      return;
     }
     if (nodeAbove.id != firstNodeId) {
       editorDocLog.info('The specified `firstNodeId` is not the node before `secondNodeId`.');
-      return [];
+      return;
     }
     if (nodeAbove is! TextNode) {
       editorDocLog.info('Cannot merge ParagraphNode into node of type: $nodeAbove');
-      return [];
+      return;
     }
 
     // Combine the text and delete the currently selected node.
@@ -245,10 +245,10 @@ class CombineParagraphsCommand implements EditorCommand {
       editorDocLog.info('ERROR: Failed to delete the currently selected node from the document.');
     }
 
-    return [
+    executor.logChanges([
       NodeRemovedEvent(secondNode.id),
       NodeChangeEvent(nodeAbove.id),
-    ];
+    ]);
   }
 }
 
@@ -284,14 +284,14 @@ class SplitParagraphCommand implements EditorCommand {
   final bool replicateExistingMetadata;
 
   @override
-  List<DocumentChangeEvent> execute(EditorContext context, CommandExpander expandActiveCommand) {
+  void execute(EditorContext context, CommandExecutor executor) {
     editorDocLog.info('Executing SplitParagraphCommand');
 
-    final document = context.find<MutableDocument>("document");
+    final document = context.find<MutableDocument>(EditorContext.document);
     final node = document.getNodeById(nodeId);
     if (node is! ParagraphNode) {
       editorDocLog.info('WARNING: Cannot split paragraph for node of type: $node.');
-      return [];
+      return;
     }
 
     final text = node.text;
@@ -323,10 +323,10 @@ class SplitParagraphCommand implements EditorCommand {
 
     editorDocLog.info(' - inserted new node: ${newNode.id} after old one: ${node.id}');
 
-    return [
+    executor.logChanges([
       NodeChangeEvent(node.id),
       NodeInsertedEvent(newNodeId),
-    ];
+    ]);
   }
 }
 
@@ -384,14 +384,14 @@ class DeleteParagraphCommand implements EditorCommand {
   final String nodeId;
 
   @override
-  List<DocumentChangeEvent> execute(EditorContext context, CommandExpander expandActiveCommand) {
+  void execute(EditorContext context, CommandExecutor executor) {
     editorDocLog.info('Executing DeleteParagraphCommand');
     editorDocLog.info(' - deleting "$nodeId"');
-    final document = context.find<MutableDocument>("document");
+    final document = context.find<MutableDocument>(EditorContext.document);
     final node = document.getNodeById(nodeId);
     if (node is! TextNode) {
       editorDocLog.shout('WARNING: Cannot delete node of type: $node.');
-      return [];
+      return;
     }
 
     bool didRemove = document.deleteNode(node);
@@ -399,7 +399,7 @@ class DeleteParagraphCommand implements EditorCommand {
       editorDocLog.shout('ERROR: Failed to delete node "$node" from the document.');
     }
 
-    return [NodeRemovedEvent(node.id)];
+    executor.logChanges([NodeRemovedEvent(node.id)]);
   }
 }
 

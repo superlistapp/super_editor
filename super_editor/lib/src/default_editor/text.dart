@@ -915,16 +915,14 @@ class AddTextAttributionsCommand implements EditorCommand {
   final Set<Attribution> attributions;
 
   @override
-  List<DocumentChangeEvent> execute(EditorContext context, CommandExpander expandActiveCommand) {
+  void execute(EditorContext context, CommandExecutor executor) {
     editorDocLog.info('Executing AddTextAttributionsCommand');
-    final document = context.find<MutableDocument>("document");
+    final document = context.find<MutableDocument>(EditorContext.document);
     final nodes = document.getNodesInside(documentSelection.base, documentSelection.extent);
     if (nodes.isEmpty) {
       editorDocLog.shout(' - Bad DocumentSelection. Could not get range of nodes. Selection: $documentSelection');
-      return [];
+      return;
     }
-
-    final changes = <DocumentChangeEvent>[];
 
     // Calculate a DocumentRange so we know which DocumentPosition
     // belongs to the first node, and which belongs to the last node.
@@ -996,14 +994,11 @@ class AddTextAttributionsCommand implements EditorCommand {
               end: range.end,
             ),
         );
-
-        changes.add(NodeChangeEvent(node.id));
+        executor.logChanges([NodeChangeEvent(node.id)]);
       }
     }
 
     editorDocLog.info(' - done adding attributions');
-
-    return changes;
   }
 }
 
@@ -1028,16 +1023,14 @@ class RemoveTextAttributionsCommand implements EditorCommand {
   final Set<Attribution> attributions;
 
   @override
-  List<DocumentChangeEvent> execute(EditorContext context, CommandExpander expandActiveCommand) {
+  void execute(EditorContext context, CommandExecutor executor) {
     editorDocLog.info('Executing RemoveTextAttributionsCommand');
-    final document = context.find<MutableDocument>("document");
+    final document = context.find<MutableDocument>(EditorContext.document);
     final nodes = document.getNodesInside(documentSelection.base, documentSelection.extent);
     if (nodes.isEmpty) {
       editorDocLog.shout(' - Bad DocumentSelection. Could not get range of nodes. Selection: $documentSelection');
-      return [];
+      return;
     }
-
-    final changes = <DocumentChangeEvent>[];
 
     // Calculate a DocumentRange so we know which DocumentPosition
     // belongs to the first node, and which belongs to the last node.
@@ -1110,13 +1103,11 @@ class RemoveTextAttributionsCommand implements EditorCommand {
             ),
         );
 
-        changes.add(NodeChangeEvent(node.id));
+        executor.logChanges([NodeChangeEvent(node.id)]);
       }
     }
 
     editorDocLog.info(' - done adding attributions');
-
-    return changes;
   }
 }
 
@@ -1148,16 +1139,14 @@ class ToggleTextAttributionsCommand implements EditorCommand {
   // Try to de-dup this code. Maybe use a private base class called ChangeTextAttributionsCommand
   // and provide a hook for the specific operation: add, remove, toggle.
   @override
-  List<DocumentChangeEvent> execute(EditorContext context, CommandExpander expandActiveCommand) {
+  void execute(EditorContext context, CommandExecutor executor) {
     editorDocLog.info('Executing ToggleTextAttributionsCommand');
-    final document = context.find<Document>("document");
+    final document = context.find<Document>(EditorContext.document);
     final nodes = document.getNodesInside(documentSelection.base, documentSelection.extent);
     if (nodes.isEmpty) {
       editorDocLog.shout(' - Bad DocumentSelection. Could not get range of nodes. Selection: $documentSelection');
-      return [];
+      return;
     }
-
-    final changes = <DocumentChangeEvent>[];
 
     // Calculate a DocumentRange so we know which DocumentPosition
     // belongs to the first node, and which belongs to the last node.
@@ -1237,13 +1226,11 @@ class ToggleTextAttributionsCommand implements EditorCommand {
             ),
         );
 
-        changes.add(NodeChangeEvent(node.id));
+        executor.logChanges([NodeChangeEvent(node.id)]);
       }
     }
 
     editorDocLog.info(' - done toggling attributions');
-
-    return changes;
   }
 }
 
@@ -1271,14 +1258,14 @@ class InsertTextCommand implements EditorCommand {
   final Set<Attribution> attributions;
 
   @override
-  List<DocumentChangeEvent> execute(EditorContext context, CommandExpander expandActiveCommand) {
-    final document = context.find<Document>("document");
-    final composer = context.find<DocumentComposer>("composer");
+  void execute(EditorContext context, CommandExecutor executor) {
+    final document = context.find<Document>(EditorContext.document);
+    final composer = context.find<DocumentComposer>(EditorContext.composer);
 
     final textNode = document.getNodeById(documentPosition.nodeId);
     if (textNode is! TextNode) {
       editorDocLog.shout('ERROR: can\'t insert text in a node that isn\'t a TextNode: $textNode');
-      return [];
+      return;
     }
 
     final textPosition = documentPosition.nodePosition as TextPosition;
@@ -1305,10 +1292,10 @@ class InsertTextCommand implements EditorCommand {
       notifyListeners: false,
     );
 
-    return [
+    executor.logChanges([
       NodeChangeEvent(textNode.id),
       SelectionChangeEvent(newSelection),
-    ];
+    ]);
   }
 }
 
@@ -1332,8 +1319,8 @@ class ConvertTextNodeToParagraphCommand extends EditorCommand {
   final Map<String, Attribution>? newMetadata;
 
   @override
-  List<DocumentChangeEvent> execute(EditorContext context, CommandExpander expandActiveCommand) {
-    final document = context.find<MutableDocument>("document");
+  void execute(EditorContext context, CommandExecutor executor) {
+    final document = context.find<MutableDocument>(EditorContext.document);
 
     final extentNode = document.getNodeById(nodeId) as TextNode;
     if (extentNode is ParagraphNode) {
@@ -1348,7 +1335,7 @@ class ConvertTextNodeToParagraphCommand extends EditorCommand {
       document.replaceNode(oldNode: extentNode, newNode: newParagraphNode);
     }
 
-    return [NodeChangeEvent(extentNode.id)];
+    executor.logChanges([NodeChangeEvent(extentNode.id)]);
   }
 }
 
@@ -1362,12 +1349,12 @@ class InsertAttributedTextCommand implements EditorCommand {
   final AttributedText textToInsert;
 
   @override
-  List<DocumentChangeEvent> execute(EditorContext context, CommandExpander expandActiveCommand) {
-    final document = context.find<MutableDocument>("document");
+  void execute(EditorContext context, CommandExecutor executor) {
+    final document = context.find<MutableDocument>(EditorContext.document);
     final textNode = document.getNodeById(documentPosition.nodeId);
     if (textNode is! TextNode) {
       editorDocLog.shout('ERROR: can\'t insert text in a node that isn\'t a TextNode: $textNode');
-      return [];
+      return;
     }
 
     final textOffset = (documentPosition.nodePosition as TextPosition).offset;
@@ -1377,7 +1364,7 @@ class InsertAttributedTextCommand implements EditorCommand {
       startOffset: textOffset,
     );
 
-    return [NodeChangeEvent(textNode.id)];
+    executor.logChanges([NodeChangeEvent(textNode.id)]);
   }
 }
 
@@ -1448,37 +1435,31 @@ class InsertCharacterAtCaretCommand extends EditorCommand {
   final bool ignoreComposerAttributions;
 
   @override
-  List<DocumentChangeEvent> execute(EditorContext context, CommandExpander expandActiveCommand) {
-    final document = context.find<Document>("document");
-    final composer = context.find<DocumentComposer>("composer");
+  void execute(EditorContext context, CommandExecutor executor) {
+    final document = context.find<Document>(EditorContext.document);
+    final composer = context.find<DocumentComposer>(EditorContext.composer);
 
     if (composer.selectionComponent.selection == null) {
-      return [];
+      return;
     }
 
-    final changes = <DocumentChangeEvent>[];
-
     if (!composer.selectionComponent.selection!.isCollapsed) {
-      changes.addAll(
-        _deleteExpandedSelection(
-          context: context,
-          expandActiveCommand: expandActiveCommand,
-          document: document,
-          composer: composer,
-        ),
+      _deleteExpandedSelection(
+        context: context,
+        executor: executor,
+        document: document,
+        composer: composer,
       );
     }
 
     final extentNodePosition = composer.selectionComponent.selection!.extent.nodePosition;
     if (extentNodePosition is UpstreamDownstreamNodePosition) {
       editorOpsLog.fine("The selected position is an UpstreamDownstreamPosition. Inserting new paragraph first.");
-      changes.addAll(
-        _insertBlockLevelNewline(
-          context: context,
-          expandActiveCommand: expandActiveCommand,
-          document: document,
-          composer: composer,
-        ),
+      _insertBlockLevelNewline(
+        context: context,
+        executor: executor,
+        document: document,
+        composer: composer,
       );
     }
 
@@ -1486,28 +1467,24 @@ class InsertCharacterAtCaretCommand extends EditorCommand {
     if (extentNode is! TextNode) {
       editorOpsLog.fine(
           "Couldn't insert character because Super Editor doesn't know how to handle a node of type: $extentNode");
-      return [];
+      return;
     }
 
     // Delegate the action to the standard insert-character behavior.
-    changes.addAll(
-      _insertCharacterInTextComposable(
-        character,
-        context: context,
-        document: document,
-        composer: composer,
-        ignoreComposerAttributions: ignoreComposerAttributions,
-        expandActiveCommand: expandActiveCommand,
-      ),
+    _insertCharacterInTextComposable(
+      character,
+      context: context,
+      document: document,
+      composer: composer,
+      ignoreComposerAttributions: ignoreComposerAttributions,
+      executor: executor,
     );
-
-    return changes;
   }
 }
 
-List<DocumentChangeEvent> _deleteExpandedSelection({
+void _deleteExpandedSelection({
   required EditorContext context,
-  required CommandExpander expandActiveCommand,
+  required CommandExecutor executor,
   required Document document,
   required DocumentComposer composer,
 }) {
@@ -1517,21 +1494,18 @@ List<DocumentChangeEvent> _deleteExpandedSelection({
   );
 
   // Delete the selected content.
-  final changes = DeleteSelectionCommand(
-    documentSelection: composer.selectionComponent.selection!,
-  ).execute(context, expandActiveCommand);
+  executor.executeCommand(
+    DeleteSelectionCommand(
+      documentSelection: composer.selectionComponent.selection!,
+    ),
+  );
 
   final newSelection = DocumentSelection.collapsed(position: newSelectionPosition);
-
   composer.selectionComponent.updateSelection(
     newSelection,
     notifyListeners: true,
   );
-
-  return [
-    ...changes,
-    SelectionChangeEvent(newSelection),
-  ];
+  executor.logChanges([SelectionChangeEvent(newSelection)]);
 }
 
 DocumentPosition _getDocumentPositionAfterExpandedDeletion({
@@ -1628,21 +1602,21 @@ DocumentPosition _getDocumentPositionAfterExpandedDeletion({
   return newSelectionPosition;
 }
 
-List<DocumentChangeEvent> _insertBlockLevelNewline({
+void _insertBlockLevelNewline({
   required EditorContext context,
-  required CommandExpander expandActiveCommand,
+  required CommandExecutor executor,
   required Document document,
   required DocumentComposer composer,
 }) {
   if (composer.selectionComponent.selection == null) {
-    return [];
+    return;
   }
 
   // Ensure that the entire selection sits within the same node.
   final baseNode = document.getNodeById(composer.selectionComponent.selection!.base.nodeId)!;
   final extentNode = document.getNodeById(composer.selectionComponent.selection!.extent.nodeId)!;
   if (baseNode.id != extentNode.id) {
-    return [];
+    return;
   }
 
   final changes = <DocumentChangeEvent>[];
@@ -1650,13 +1624,11 @@ List<DocumentChangeEvent> _insertBlockLevelNewline({
   if (!composer.selectionComponent.selection!.isCollapsed) {
     // The selection is not collapsed. Delete the selected content first,
     // then continue the process.
-    changes.addAll(
-      _deleteExpandedSelection(
-        context: context,
-        expandActiveCommand: expandActiveCommand,
-        document: document,
-        composer: composer,
-      ),
+    _deleteExpandedSelection(
+      context: context,
+      executor: executor,
+      document: document,
+      composer: composer,
     );
   }
 
@@ -1665,24 +1637,22 @@ List<DocumentChangeEvent> _insertBlockLevelNewline({
   if (extentNode is ListItemNode) {
     if (extentNode.text.text.isEmpty) {
       // The list item is empty. Convert it to a paragraph.
-      changes.addAll(
-        _convertToParagraph(
-          context: context,
-          expandActiveCommand: expandActiveCommand,
-          document: document,
-          composer: composer,
-        ),
+      _convertToParagraph(
+        context: context,
+        executor: executor,
+        document: document,
+        composer: composer,
       );
-      return changes;
+      return;
     }
 
     // Split the list item into two.
-    changes.addAll(
+    executor.executeCommand(
       SplitListItemCommand(
         nodeId: extentNode.id,
         splitPosition: composer.selectionComponent.selection!.extent.nodePosition as TextNodePosition,
         newNodeId: newNodeId,
-      ).execute(context, expandActiveCommand),
+      ),
     );
   } else if (extentNode is ParagraphNode) {
     // Split the paragraph into two. This includes headers, blockquotes, and
@@ -1690,44 +1660,44 @@ List<DocumentChangeEvent> _insertBlockLevelNewline({
     final currentExtentPosition = composer.selectionComponent.selection!.extent.nodePosition as TextNodePosition;
     final endOfParagraph = extentNode.endPosition;
 
-    changes.addAll(
+    executor.executeCommand(
       SplitParagraphCommand(
         nodeId: extentNode.id,
         splitPosition: currentExtentPosition,
         newNodeId: newNodeId,
         replicateExistingMetadata: currentExtentPosition.offset != endOfParagraph.offset,
-      ).execute(context, expandActiveCommand),
+      ),
     );
   } else if (composer.selectionComponent.selection!.extent.nodePosition is UpstreamDownstreamNodePosition) {
     final extentPosition = composer.selectionComponent.selection!.extent.nodePosition as UpstreamDownstreamNodePosition;
     if (extentPosition.affinity == TextAffinity.downstream) {
       // The caret sits on the downstream edge of block-level content. Insert
       // a new paragraph after this node.
-      changes.addAll(
+      executor.executeCommand(
         InsertNodeAfterNodeCommand(
           existingNodeId: extentNode.id,
           newNode: ParagraphNode(
             id: newNodeId,
             text: AttributedText(text: ''),
           ),
-        ).execute(context, expandActiveCommand),
+        ),
       );
     } else {
       // The caret sits on the upstream edge of block-level content. Insert
       // a new paragraph before this node.
-      changes.addAll(
+      executor.executeCommand(
         InsertNodeAfterNodeCommand(
           existingNodeId: extentNode.id,
           newNode: ParagraphNode(
             id: newNodeId,
             text: AttributedText(text: ''),
           ),
-        ).execute(context, expandActiveCommand),
+        ),
       );
     }
   } else {
     // We don't know how to handle this type of node position. Do nothing.
-    return [];
+    return;
   }
 
   // Place the caret at the beginning of the new node.
@@ -1737,47 +1707,40 @@ List<DocumentChangeEvent> _insertBlockLevelNewline({
       nodePosition: const TextNodePosition(offset: 0),
     ),
   );
-
   composer.selectionComponent.updateSelection(
     newSelection,
     notifyListeners: true,
   );
-
-  return [
-    ...changes,
-    SelectionChangeEvent(newSelection),
-  ];
+  executor.logChanges([SelectionChangeEvent(newSelection)]);
 }
 
-List<DocumentChangeEvent> _insertCharacterInTextComposable(
+void _insertCharacterInTextComposable(
   String character, {
   required EditorContext context,
   required Document document,
   required DocumentComposer composer,
   bool ignoreComposerAttributions = false,
-  required CommandExpander expandActiveCommand,
+  required CommandExecutor executor,
 }) {
   if (composer.selectionComponent.selection == null) {
-    return [];
+    return;
   }
   if (!composer.selectionComponent.selection!.isCollapsed) {
-    return [];
+    return;
   }
   if (!_isTextEntryNode(document: document, selection: composer.selectionComponent.selection!)) {
-    return [];
+    return;
   }
-
-  final changes = <DocumentChangeEvent>[];
 
   final textNode = document.getNode(composer.selectionComponent.selection!.extent) as TextNode;
   final initialTextOffset = (composer.selectionComponent.selection!.extent.nodePosition as TextNodePosition).offset;
 
-  changes.addAll(
+  executor.executeCommand(
     InsertTextCommand(
       documentPosition: composer.selectionComponent.selection!.extent,
       textToInsert: character,
       attributions: ignoreComposerAttributions ? {} : composer.preferences.currentAttributions,
-    ).execute(context, expandActiveCommand),
+    ),
   );
 
   // TODO: I commented out this code because it looks like InsertTextCommand is already
@@ -1801,41 +1764,38 @@ List<DocumentChangeEvent> _insertCharacterInTextComposable(
   //   ...changes,
   //   SelectionChangeEvent(newSelection),
   // ];
-
-  return changes;
 }
 
 /// Converts the [TextNode] with the current [DocumentComposer] selection
 /// extent to a [Paragraph], or does nothing if the current node is not
 /// a [TextNode], or if the current selection spans more than one node.
-List<DocumentChangeEvent> _convertToParagraph({
+void _convertToParagraph({
   required EditorContext context,
-  required CommandExpander expandActiveCommand,
+  required CommandExecutor executor,
   required Document document,
   required DocumentComposer composer,
   Map<String, Attribution>? newMetadata,
 }) {
   if (composer.selectionComponent.selection == null) {
-    return [];
+    return;
   }
 
   final baseNode = document.getNodeById(composer.selectionComponent.selection!.base.nodeId)!;
   final extentNode = document.getNodeById(composer.selectionComponent.selection!.extent.nodeId)!;
   if (baseNode.id != extentNode.id) {
-    return [];
+    return;
   }
   if (extentNode is! TextNode) {
-    return [];
+    return;
   }
   if (extentNode is ParagraphNode && extentNode.hasMetadataValue('blockType')) {
     // This content is already a regular paragraph.
-    return [];
+    return;
   }
 
-  ConvertTextNodeToParagraphCommand(nodeId: extentNode.id, newMetadata: newMetadata)
-      .execute(context, expandActiveCommand);
-
-  return [NodeChangeEvent(extentNode.id)];
+  executor.executeCommand(
+    ConvertTextNodeToParagraphCommand(nodeId: extentNode.id, newMetadata: newMetadata),
+  );
 }
 
 ExecutionInstruction deleteCharacterWhenBackspaceIsPressed({
