@@ -785,6 +785,7 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
   Widget _buildGestureInput({
     required Widget child,
   }) {
+    final gestureSettings = MediaQuery.maybeOf(context)?.gestureSettings;
     return RawGestureDetector(
       behavior: HitTestBehavior.translucent,
       gestures: <Type, GestureRecognizerFactory>{
@@ -794,7 +795,8 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
             recognizer
               ..onTapUp = _onTapUp
               ..onDoubleTapDown = _onDoubleTapDown
-              ..onTripleTapDown = _onTripleTapDown;
+              ..onTripleTapDown = _onTripleTapDown
+              ..gestureSettings = gestureSettings;
           },
         ),
       },

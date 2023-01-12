@@ -1136,6 +1136,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   Widget _buildGestureInput({
     required Widget child,
   }) {
+    final gestureSettings = MediaQuery.maybeOf(context)?.gestureSettings;
     return RawGestureDetector(
       behavior: HitTestBehavior.opaque,
       gestures: <Type, GestureRecognizerFactory>{
@@ -1146,7 +1147,8 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
               ..onTapUp = _onTapUp
               ..onDoubleTapUp = _onDoubleTapUp
               ..onTripleTapUp = _onTripleTapUp
-              ..onTimeout = _onTapTimeout;
+              ..onTimeout = _onTapTimeout
+              ..gestureSettings = gestureSettings;
           },
         ),
         // We use a VerticalDragGestureRecognizer instead of a PanGestureRecognizer
@@ -1161,7 +1163,8 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
               ..onStart = _onPanStart
               ..onUpdate = _onPanUpdate
               ..onEnd = _onPanEnd
-              ..onCancel = _onPanCancel;
+              ..onCancel = _onPanCancel
+              ..gestureSettings = gestureSettings;
           },
         ),
       },

@@ -377,6 +377,7 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
   }
 
   Widget _buildTapAndDragDetector() {
+    final gestureSettings = MediaQuery.maybeOf(context)?.gestureSettings;
     return Positioned(
       left: 0,
       top: 0,
@@ -392,7 +393,8 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
                 ..onTapDown = _onTapDown
                 ..onTapUp = _onTapUp
                 ..onDoubleTapDown = _onDoubleTapDown
-                ..onTripleTapDown = _onTripleTapDown;
+                ..onTripleTapDown = _onTripleTapDown
+                ..gestureSettings = gestureSettings;
             },
           ),
           PanGestureRecognizer: GestureRecognizerFactoryWithHandlers<PanGestureRecognizer>(
@@ -402,7 +404,8 @@ class IOSTextFieldTouchInteractorState extends State<IOSTextFieldTouchInteractor
                 ..onStart = widget.focusNode.hasFocus ? _onTextPanStart : null
                 ..onUpdate = widget.focusNode.hasFocus ? _onPanUpdate : null
                 ..onEnd = widget.focusNode.hasFocus || _isDraggingCaret ? _onPanEnd : null
-                ..onCancel = widget.focusNode.hasFocus || _isDraggingCaret ? _onPanCancel : null;
+                ..onCancel = widget.focusNode.hasFocus || _isDraggingCaret ? _onPanCancel : null
+                ..gestureSettings = gestureSettings;
             },
           ),
         },
