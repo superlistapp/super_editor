@@ -65,7 +65,7 @@ class SuperTextField extends StatefulWidget {
     this.maxLines = 1,
     this.lineHeight,
     this.inputSource,
-    List<TextFieldKeyboardHandler>? keyboardHandlers,
+    this.keyboardHandlers = defaultTextFieldKeyboardHandlers,
     this.padding,
     this.textInputAction,
   }) : super(key: key);
