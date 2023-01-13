@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:flutter/foundation.dart';
 
 import 'document.dart';
+import 'document_composer.dart';
 
 /// A selection within a [Document].
 ///
@@ -356,16 +357,6 @@ extension InspectDocumentSelection on Document {
   }
 }
 
-/// A [DocumentChangeEvent] that represents a change to the user's selection within a document.
-class SelectionChangeEvent implements DocumentChangeEvent {
-  const SelectionChangeEvent(this.newSelection);
-
-  final DocumentSelection? newSelection;
-
-  @override
-  String toString() => "[SelectionChangeEvent] - New selection: $newSelection";
-}
-
 /// A selection, along with tools to change the selection, and listen for
 /// selection changes.
 ///
@@ -475,6 +466,14 @@ class SelectionComponent {
       reason: SelectionReason.userInteraction,
     );
     _streamController.sink.add(_latestSelectionChange);
+  }
+
+  void onEditorChange(List<DocumentChangeEvent> changeList) {
+    if (changeList.isNotEmpty) {
+      if (changeList.whereType<SelectionChangeEvent>().isNotEmpty) {
+        notifySelectionListeners();
+      }
+    }
   }
 }
 

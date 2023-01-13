@@ -26,12 +26,27 @@ class DocumentEditor {
   DocumentEditor({
     required MutableDocument document,
     required List<EditorRequestHandler> requestHandlers,
+    List<EditorChangeReaction>? reactionPipeline,
+    List<EditorChangeListener>? listeners,
   })  : _document = document,
         _requestHandlers = requestHandlers,
+        _reactionPipeline = reactionPipeline ?? [],
+        _changeListeners = listeners ?? [],
         context = EditorContext() {
     context.put("document", document);
 
     _commandExecutor = _DocumentEditorCommandExecutor(context);
+
+    // We always want the document notified of changes so that the
+    // document can notify its own listeners. Also, we want the document
+    // to receive notifications first, because everything else is based
+    // on document structure.
+    _changeListeners.insert(0, _document.onDocumentChange);
+  }
+
+  void dispose() {
+    _reactionPipeline.clear();
+    _changeListeners.clear();
   }
 
   /// The [Document] that this [DocumentEditor] edits.
@@ -47,25 +62,84 @@ class DocumentEditor {
   /// Executes [EditorCommand]s and collects a list of changes.
   late final _DocumentEditorCommandExecutor _commandExecutor;
 
+  /// A pipeline of objects that receive change lists from command execution
+  /// and get the first opportunity to spawn additional commands before the
+  /// change list is dispatched to regular listeners.
+  final List<EditorChangeReaction> _reactionPipeline;
+
+  /// Adds a [reaction], which is given an opportunity to spawn new [EditorCommands],
+  /// based on the latest series of [DocumentChangeEvent]s.
+  ///
+  /// Reactions are executed in the order that they're added.
+  void addReaction(EditorChangeReaction reaction, {int? index}) {
+    if (index != null) {
+      _reactionPipeline.insert(index, reaction);
+    } else {
+      _reactionPipeline.add(reaction);
+    }
+  }
+
+  /// Removes a [reaction] from the reaction pipeline.
+  void removeReaction(EditorChangeReaction reaction) {
+    _reactionPipeline.remove(reaction);
+  }
+
+  /// Listeners that are notified of changes in the form of a change list
+  /// after all pending [EditorCommand]s are executed, and all members of
+  /// the reaction pipeline are done reacting.
+  final List<EditorChangeListener> _changeListeners;
+
+  /// Adds a [listener], which is notified of each series of [DocumentChangeEvent]s
+  /// after a batch of [EditorCommand]s complete.
+  ///
+  /// Listeners are held and called as a list because some listeners might need
+  /// to be notified ahead of others. Generally, you should avoid that complexity,
+  /// if possible, but sometimes its relevant. For example, by default, the
+  /// [Document] is the highest priority listener that's registered with this
+  /// [DocumentEditor]. That's because document structure is central to everything
+  /// else, and therefore, we don't want other parts of the system being notified
+  /// about changes, before the [Document], itself.
+  void addListener(EditorChangeListener listener, {int? index}) {
+    if (index != null) {
+      _changeListeners.insert(index, listener);
+    } else {
+      _changeListeners.add(listener);
+    }
+  }
+
+  /// Removes a [listener] from the set of change listeners.
+  void removeListener(EditorChangeListener listener) {
+    _changeListeners.remove(listener);
+  }
+
   /// Executes the given [request].
   ///
   /// Any changes that result from the given [request] are reported to listeners as a series
   /// of [DocumentChangeEvent]s.
   void execute(EditorRequest request) {
+    final command = _findCommandForRequest(request);
+    final changeList = _executeCommand(command);
+
+    // TODO: notify reactions
+    // TODO: if reactions spawn new commands, where do they execute?
+
+    _notifyListeners(changeList);
+  }
+
+  EditorCommand _findCommandForRequest(EditorRequest request) {
     EditorCommand? command;
     for (final handler in _requestHandlers) {
       command = handler(request);
       if (command != null) {
-        // We found a command that implements the given request.
-        break;
+        return command;
       }
     }
 
-    if (command == null) {
-      throw Exception(
-          "Could not handle EditorRequest. DocumentEditor doesn't have a handler that recognizes the request: $request");
-    }
+    throw Exception(
+        "Could not handle EditorRequest. DocumentEditor doesn't have a handler that recognizes the request: $request");
+  }
 
+  List<DocumentChangeEvent> _executeCommand(EditorCommand command) {
     // Execute the given command, and any other commands that it spawns.
     _commandExecutor.executeCommand(command);
 
@@ -75,22 +149,28 @@ class DocumentEditor {
     // don't lose the contents when we clear it.
     final changeList = _commandExecutor.copyChangeList();
 
+    // TODO: we could run the reactions here. Do we give them all a single chance
+    //       to respond? Or do we keep running them until there aren't any further
+    //       changes?
+
     // Reset the command executor so that it's ready for the next command
     // that comes in.
     _commandExecutor.reset();
 
-    if (changeList.isNotEmpty) {
-      // We finished running all commands in the queue. Notify listeners
-      // of all the changes that were made.
-      _document.notifyListeners(DocumentChangeLog(changeList));
+    return changeList;
+  }
 
-      // TODO: have the composer listen for document changes and find selection updates
-      if (changeList.whereType<SelectionChangeEvent>().isNotEmpty) {
-        final composer = context.find<DocumentComposer>(EditorContext.composer);
-        composer.selectionComponent.notifySelectionListeners();
-      }
+  void _notifyListeners(List<DocumentChangeEvent> changeList) {
+    for (final listener in _changeListeners) {
+      listener(changeList);
     }
   }
+}
+
+/// A command that alters something in a [DocumentEditor].
+abstract class EditorCommand {
+  /// Executes this command and logs all changes with the [executor].
+  void execute(EditorContext context, CommandExecutor executor);
 }
 
 /// All resources that are available when executing [EditorCommand]s, such as a document,
@@ -124,7 +204,7 @@ class EditorContext {
   void put(String id, dynamic resource) => _resources[id] = resource;
 }
 
-/// Executes [EditorCommands] in the order in which they're queued.
+/// Executes [EditorCommand]s in the order in which they're queued.
 ///
 /// Each [EditorCommand] is given access to this [CommandExecutor] during
 /// the command's execution. Each [EditorCommand] is expected to [logChanges]
@@ -250,11 +330,22 @@ abstract class EditorRequest {
   // Marker interface for all editor request types.
 }
 
-/// A command that alters something in a [DocumentEditor].
-abstract class EditorCommand {
-  /// Executes this command and logs all changes with the [executor].
-  void execute(EditorContext context, CommandExecutor executor);
-}
+/// An object that's notified with a change list from one or more
+/// commands that were just executed.
+///
+/// An [EditorChangeReaction] can use the given [executor] to spawn additional
+/// [EditorCommand]s that should run in response the [changeList].
+typedef EditorChangeReaction = Function(CommandExecutor executor, List<DocumentChangeEvent> changeList);
+
+/// An object that's notified with a change list from one or more
+/// commands that were just executed.
+///
+/// An [EditorChangeListener] can propagate secondary effects that are based on
+/// editor changes. However, an [EditorChangeListener] shouldn't spawn additional
+/// editor behaviors. This can result in infinite loops, back-and-forth changes,
+/// and other undesirable effects. To spawn new [EditorCommand]s based on a
+/// [changeList], register an [EditorChangeReaction].
+typedef EditorChangeListener = Function(List<DocumentChangeEvent> changeList);
 
 /// An in-memory, mutable [Document].
 class MutableDocument implements Document {
@@ -488,8 +579,15 @@ class MutableDocument implements Document {
     _listeners.remove(listener);
   }
 
-  @protected
-  void notifyListeners(DocumentChangeLog changeLog) {
+  void onDocumentChange(List<DocumentChangeEvent> changes) {
+    if (changes.isEmpty) {
+      return;
+    }
+
+    // TODO: separate the concept of a "document change event" from a generic
+    // "editor change event". We don't want the document dispatching selection
+    // changes or other non-document changes.
+    final changeLog = DocumentChangeLog(changes);
     for (final listener in _listeners) {
       listener(changeLog);
     }

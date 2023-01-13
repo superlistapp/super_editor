@@ -6,6 +6,9 @@ import '../../super_editor/test_documents.dart';
 void main() {
   group('DocumentEditor', () {
     group('editing', () {
+      // TODO: test that Document gets notified of changes before Composer, because selection
+      //       is based on document structure, not the other way around
+
       test('throws exception when there is no command for a given request', () {
         final editor = DocumentEditor(
           document: MutableDocument(
@@ -205,13 +208,14 @@ DocumentEditor _createStandardEditor({
 }) {
   final document = initialDocument ?? singleParagraphEmptyDoc();
 
+  final composer = DocumentComposer(initialSelection: initialSelection);
   final editor = DocumentEditor(
     document: document,
     requestHandlers: defaultRequestHandlers,
-  );
-
-  final composer = DocumentComposer(initialSelection: initialSelection);
-  editor.context.put(EditorContext.composer, composer);
+    listeners: [
+      composer.selectionComponent.onEditorChange,
+    ],
+  )..context.put(EditorContext.composer, composer);
 
   return editor;
 }

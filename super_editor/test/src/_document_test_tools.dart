@@ -13,10 +13,13 @@ EditContext createEditContext({
   DocumentComposer? documentComposer,
   CommonEditorOperations? commonOps,
 }) {
-  final editor = documentEditor ?? createDefaultDocumentEditor(document: document);
-  DocumentLayout layoutResolver() => documentLayout ?? FakeDocumentLayout();
   final composer = documentComposer ?? DocumentComposer();
-  editor.context.put("composer", composer);
+  final editor = documentEditor ??
+      createDefaultDocumentEditor(
+        document: document,
+        composer: composer,
+      );
+  DocumentLayout layoutResolver() => documentLayout ?? FakeDocumentLayout();
 
   return EditContext(
     editor: editor,

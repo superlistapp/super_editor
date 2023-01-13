@@ -184,8 +184,10 @@ class InsertNodeAtCaretCommand extends EditorCommand {
       );
     }
 
-    composer.selectionComponent.updateSelection(newSelection);
-    executor.logChanges([SelectionChangeEvent(newSelection)]);
+    executor.executeCommand(ChangeSelectionCommand(
+      newSelection,
+      SelectionReason.userInteraction,
+    ));
   }
 }
 
@@ -275,11 +277,21 @@ class ReplaceNodeCommand extends EditorCommand {
 }
 
 class ReplaceNodeWithEmptyParagraphWithCaretRequest implements EditorRequest {
-  ReplaceNodeWithEmptyParagraphWithCaretRequest({
+  const ReplaceNodeWithEmptyParagraphWithCaretRequest({
     required this.nodeId,
   });
 
   final String nodeId;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ReplaceNodeWithEmptyParagraphWithCaretRequest &&
+          runtimeType == other.runtimeType &&
+          nodeId == other.nodeId;
+
+  @override
+  int get hashCode => nodeId.hashCode;
 }
 
 class ReplaceNodeWithEmptyParagraphWithCaretCommand implements EditorCommand {
@@ -292,7 +304,6 @@ class ReplaceNodeWithEmptyParagraphWithCaretCommand implements EditorCommand {
   @override
   void execute(EditorContext context, CommandExecutor executor) {
     final document = context.find<MutableDocument>(EditorContext.document);
-    final composer = context.find<DocumentComposer>(EditorContext.composer);
 
     final oldNode = document.getNodeById(nodeId);
     if (oldNode == null) {
@@ -303,26 +314,22 @@ class ReplaceNodeWithEmptyParagraphWithCaretCommand implements EditorCommand {
       id: oldNode.id,
       text: AttributedText(),
     );
-
     document.replaceNode(oldNode: oldNode, newNode: newNode);
-
-    final newSelection = DocumentSelection.collapsed(
-      position: DocumentPosition(
-        nodeId: newNode.id,
-        nodePosition: newNode.beginningPosition,
-      ),
-    );
-
-    composer.selectionComponent.updateSelection(
-      newSelection,
-      notifyListeners: false,
-    );
-
     executor.logChanges([
       NodeRemovedEvent(oldNode.id),
       NodeInsertedEvent(newNode.id),
-      SelectionChangeEvent(newSelection),
     ]);
+
+    executor.executeCommand(ChangeSelectionCommand(
+      DocumentSelection.collapsed(
+        position: DocumentPosition(
+          nodeId: newNode.id,
+          nodePosition: newNode.beginningPosition,
+        ),
+      ),
+      SelectionReason.userInteraction,
+      notifyListeners: false,
+    ));
   }
 }
 

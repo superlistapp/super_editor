@@ -389,7 +389,10 @@ EditContext _createEditContext() {
   final document = MutableDocument();
   final fakeLayout = FakeDocumentLayout();
   final composer = DocumentComposer();
-  final documentEditor = createDefaultDocumentEditor(document: document)..context.put("composer", composer);
+  final documentEditor = createDefaultDocumentEditor(
+    document: document,
+    composer: composer,
+  );
   return EditContext(
     editor: documentEditor,
     getDocumentLayout: () => fakeLayout,

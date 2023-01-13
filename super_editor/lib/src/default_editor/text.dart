@@ -1260,7 +1260,6 @@ class InsertTextCommand implements EditorCommand {
   @override
   void execute(EditorContext context, CommandExecutor executor) {
     final document = context.find<Document>(EditorContext.document);
-    final composer = context.find<DocumentComposer>(EditorContext.composer);
 
     final textNode = document.getNodeById(documentPosition.nodeId);
     if (textNode is! TextNode) {
@@ -1275,27 +1274,24 @@ class InsertTextCommand implements EditorCommand {
       startOffset: textOffset,
       applyAttributions: attributions,
     );
-
-    final newSelection = DocumentSelection.collapsed(
-      position: DocumentPosition(
-        nodeId: textNode.id,
-        nodePosition: TextNodePosition(
-          offset: textOffset + textToInsert.length,
-          affinity: textPosition.affinity,
-        ),
-      ),
-    );
+    executor.logChanges([NodeChangeEvent(textNode.id)]);
 
     editorOpsLog.fine("Updating Document Composer selection after text insertion.");
-    composer.selectionComponent.updateSelection(
-      newSelection,
-      notifyListeners: false,
+    executor.executeCommand(
+      ChangeSelectionCommand(
+        DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: textNode.id,
+            nodePosition: TextNodePosition(
+              offset: textOffset + textToInsert.length,
+              affinity: textPosition.affinity,
+            ),
+          ),
+        ),
+        SelectionReason.userInteraction,
+        notifyListeners: false,
+      ),
     );
-
-    executor.logChanges([
-      NodeChangeEvent(textNode.id),
-      SelectionChangeEvent(newSelection),
-    ]);
   }
 }
 
@@ -1500,12 +1496,10 @@ void _deleteExpandedSelection({
     ),
   );
 
-  final newSelection = DocumentSelection.collapsed(position: newSelectionPosition);
-  composer.selectionComponent.updateSelection(
-    newSelection,
-    notifyListeners: true,
-  );
-  executor.logChanges([SelectionChangeEvent(newSelection)]);
+  executor.executeCommand(ChangeSelectionCommand(
+    DocumentSelection.collapsed(position: newSelectionPosition),
+    SelectionReason.userInteraction,
+  ));
 }
 
 DocumentPosition _getDocumentPositionAfterExpandedDeletion({
@@ -1619,8 +1613,6 @@ void _insertBlockLevelNewline({
     return;
   }
 
-  final changes = <DocumentChangeEvent>[];
-
   if (!composer.selectionComponent.selection!.isCollapsed) {
     // The selection is not collapsed. Delete the selected content first,
     // then continue the process.
@@ -1701,17 +1693,17 @@ void _insertBlockLevelNewline({
   }
 
   // Place the caret at the beginning of the new node.
-  final newSelection = DocumentSelection.collapsed(
-    position: DocumentPosition(
-      nodeId: newNodeId,
-      nodePosition: const TextNodePosition(offset: 0),
+  executor.executeCommand(
+    ChangeSelectionCommand(
+      DocumentSelection.collapsed(
+        position: DocumentPosition(
+          nodeId: newNodeId,
+          nodePosition: const TextNodePosition(offset: 0),
+        ),
+      ),
+      SelectionReason.userInteraction,
     ),
   );
-  composer.selectionComponent.updateSelection(
-    newSelection,
-    notifyListeners: true,
-  );
-  executor.logChanges([SelectionChangeEvent(newSelection)]);
 }
 
 void _insertCharacterInTextComposable(

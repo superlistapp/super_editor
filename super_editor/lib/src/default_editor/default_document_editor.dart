@@ -14,16 +14,26 @@ DocumentEditor createDefaultDocumentEditor({
   final editor = DocumentEditor(
     document: document,
     requestHandlers: defaultRequestHandlers,
+    listeners: [
+      if (composer != null) composer.selectionComponent.onEditorChange,
+    ],
   );
 
   if (composer != null) {
-    editor.context.put("composer", composer);
+    editor.context.put(EditorContext.composer, composer);
   }
 
   return editor;
 }
 
 final defaultRequestHandlers = [
+  (request) => request is ChangeSelectionRequest
+      ? ChangeSelectionCommand(
+          request.newSelection,
+          request.reason,
+          notifyListeners: request.notifyListeners,
+        )
+      : null,
   (request) => request is InsertTextRequest
       ? InsertTextCommand(
           documentPosition: request.documentPosition,

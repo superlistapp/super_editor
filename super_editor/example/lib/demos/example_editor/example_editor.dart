@@ -44,11 +44,16 @@ class _ExampleEditorState extends State<ExampleEditor> {
     _doc = createInitialDocument();
     _composer = DocumentComposer();
     _composer.selectionComponent.selectionNotifier.addListener(_hideOrShowToolbar);
-    _docEditor = DocumentEditor(document: _doc as MutableDocument, requestHandlers: [
-      (request) => request is CompleteTaskRequest ? CompleteTaskCommand(nodeId: request.nodeId) : null,
-      ...defaultRequestHandlers,
-    ])
-      ..context.put("composer", _composer);
+    _docEditor = DocumentEditor(
+      document: _doc as MutableDocument,
+      requestHandlers: [
+        (request) => request is CompleteTaskRequest ? CompleteTaskCommand(nodeId: request.nodeId) : null,
+        ...defaultRequestHandlers,
+      ],
+      listeners: [
+        _composer.selectionComponent.onEditorChange,
+      ],
+    )..context.put("composer", _composer);
     _docOps = CommonEditorOperations(
       editor: _docEditor,
       composer: _composer,

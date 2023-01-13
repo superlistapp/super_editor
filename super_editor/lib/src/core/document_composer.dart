@@ -4,6 +4,7 @@ import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/default_editor/document_input_ime.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 
+import 'document_editor.dart';
 import 'document_selection.dart';
 
 /// Maintains a [DocumentSelection] within a [Document] and
@@ -106,4 +107,85 @@ class ComposerPreferences with ChangeNotifier {
     _currentAttributions.clear();
     notifyListeners();
   }
+}
+
+/// [EditorRequest] that changes the [DocumentSelection] to the given [newSelection].
+class ChangeSelectionRequest implements EditorRequest {
+  const ChangeSelectionRequest(
+    this.newSelection,
+    this.reason, {
+    this.notifyListeners = true,
+  });
+
+  final DocumentSelection? newSelection;
+
+  /// Whether to notify [DocumentComposer] listeners when the selection is changed.
+  // TODO: configure the composer so it plugs into the editor in way that this is unnecessary.
+  final bool notifyListeners;
+
+  /// The reason that the selection changed, such as "user interaction".
+  final String reason;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ChangeSelectionRequest &&
+          runtimeType == other.runtimeType &&
+          newSelection == other.newSelection &&
+          notifyListeners == other.notifyListeners &&
+          reason == other.reason;
+
+  @override
+  int get hashCode => newSelection.hashCode ^ notifyListeners.hashCode ^ reason.hashCode;
+}
+
+/// An [EditorCommand] that changes the [DocumentSelection] in the [DocumentComposer]
+/// to the [newSelection].
+class ChangeSelectionCommand implements EditorCommand {
+  const ChangeSelectionCommand(
+    this.newSelection,
+    this.reason, {
+    this.notifyListeners = true,
+  });
+
+  final DocumentSelection? newSelection;
+
+  /// Whether to notify [DocumentComposer] listeners when the selection is changed.
+  // TODO: configure the composer so it plugs into the editor in way that this is unnecessary.
+  final bool notifyListeners;
+
+  final String reason;
+
+  @override
+  void execute(EditorContext context, CommandExecutor executor) {
+    final composer = context.find<DocumentComposer>(EditorContext.composer);
+    final initialSelection = composer.selectionComponent.selection;
+    composer.selectionComponent.updateSelection(
+      newSelection,
+      notifyListeners: notifyListeners,
+    );
+    executor.logChanges([
+      SelectionChangeEvent(
+        oldSelection: initialSelection,
+        newSelection: newSelection,
+        reason: reason,
+      )
+    ]);
+  }
+}
+
+/// A [DocumentChangeEvent] that represents a change to the user's selection within a document.
+class SelectionChangeEvent implements DocumentChangeEvent {
+  const SelectionChangeEvent({
+    required this.oldSelection,
+    required this.newSelection,
+    required this.reason,
+  });
+
+  final DocumentSelection? oldSelection;
+  final DocumentSelection? newSelection;
+  final String reason;
+
+  @override
+  String toString() => "[SelectionChangeEvent] - New selection: $newSelection";
 }

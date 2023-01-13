@@ -728,7 +728,7 @@ Second Paragraph
       );
 
       // Update the selection, which should cause the stream to emit a value.
-      composer.selectionComponent.selection = newSelection;
+      composer.selectionComponent.selectionNotifier.value = newSelection;
     }, timeout: const Timeout(Duration(milliseconds: 500)));
 
     test("notifies selectionNotifier when a new DocumentSelection is emitted", () {

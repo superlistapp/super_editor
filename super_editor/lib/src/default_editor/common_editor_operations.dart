@@ -2258,8 +2258,6 @@ class PasteEditorCommand implements EditorCommand {
 
     editorOpsLog.info("Pasting clipboard content in document.");
 
-    final changes = <DocumentChangeEvent>[];
-
     // Split the pasted content at newlines, and apply attributions based
     // on inspection of the pasted content, e.g., link attributions.
     final attributedLines = _inferAttributionsForLinesOfPastedText(_content);
@@ -2304,11 +2302,12 @@ class PasteEditorCommand implements EditorCommand {
       );
       previousNode = pastedNode;
 
-      changes.add(NodeInsertedEvent(pastedNode.id));
+      executor.logChanges([NodeInsertedEvent(pastedNode.id)]);
     }
 
     // Place the caret at the end of the pasted content.
-    _composer.selectionComponent.updateSelection(
+    executor.executeCommand(
+      ChangeSelectionCommand(
         DocumentSelection.collapsed(
           position: pastedContentNodes.isNotEmpty
               ? DocumentPosition(
@@ -2322,12 +2321,11 @@ class PasteEditorCommand implements EditorCommand {
                   ),
                 ),
         ),
-        notifyListeners: true);
+        SelectionReason.userInteraction,
+      ),
+    );
     editorOpsLog.fine('New selection after paste operation: ${_composer.selectionComponent.selection}');
-    changes.add(SelectionChangeEvent(_composer.selectionComponent.selection));
-
     editorOpsLog.fine('Done with paste command.');
-    executor.logChanges(changes);
   }
 
   /// Breaks the given [content] at each newline, then applies any inferred
