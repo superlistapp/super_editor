@@ -44,6 +44,7 @@ extension SuperEditorRobot on WidgetTester {
     await _tapInParagraph(nodeId, offset, affinity, 3, superEditorFinder);
   }
 
+  // TODO: rename all of these related behaviors to "text" instead of "paragraph"
   Future<void> _tapInParagraph(
     String nodeId,
     int offset,

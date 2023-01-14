@@ -607,6 +607,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
                   textController: _urlController,
                   minLines: 1,
                   maxLines: 1,
+                  inputSource: TextInputSource.ime,
                   hintBehavior: HintBehavior.displayHintUntilTextEntered,
                   hintBuilder: (context) {
                     return Text(
