@@ -1,8 +1,6 @@
 import 'package:flutter/rendering.dart';
 import 'package:super_editor/super_editor.dart';
 
-import '_task.dart';
-
 Document createInitialDocument() {
   return MutableDocument(
     nodes: [

@@ -123,7 +123,7 @@ class SuperEditorInspector {
   /// {@macro supereditor_finder}
   static WidgetType findWidgetForComponent<WidgetType>(String nodeId, [Finder? superEditorFinder]) {
     final documentLayout = _findDocumentLayout(superEditorFinder);
-    final widget = (documentLayout.getComponentByNodeId(nodeId) as TextComponentState).widget;
+    final widget = (documentLayout.getComponentByNodeId(nodeId) as State).widget;
     if (widget is! WidgetType) {
       throw Exception("Looking for a component's widget. Expected type $WidgetType, but found ${widget.runtimeType}");
     }
