@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:super_editor/super_editor.dart';
 
 /// This file includes everything needed to add the concept of a task
@@ -108,7 +109,7 @@ class TaskComponentBuilder implements ComponentBuilder {
     }
 
     return TaskComponent(
-      textKey: componentContext.componentKey,
+      key: componentContext.componentKey,
       viewModel: componentViewModel,
     );
   }
@@ -206,17 +207,28 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
 ///
 /// The appearance of a [TaskComponent] is configured by the given
 /// [viewModel].
-class TaskComponent extends StatelessWidget {
+class TaskComponent extends StatefulWidget {
   const TaskComponent({
     Key? key,
-    required this.textKey,
     required this.viewModel,
     this.showDebugPaint = false,
   }) : super(key: key);
 
-  final GlobalKey textKey;
   final TaskComponentViewModel viewModel;
   final bool showDebugPaint;
+
+  @override
+  State<TaskComponent> createState() => _TaskComponentState();
+}
+
+class _TaskComponentState extends State<TaskComponent> with ProxyDocumentComponent<TaskComponent>, ProxyTextComposable {
+  final _textKey = GlobalKey();
+
+  @override
+  GlobalKey<State<StatefulWidget>> get childDocumentComponentKey => _textKey;
+
+  @override
+  TextComposable get childTextComposable => childDocumentComponentKey.currentState as TextComposable;
 
   @override
   Widget build(BuildContext context) {
@@ -226,20 +238,20 @@ class TaskComponent extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.only(left: 16, right: 4),
           child: Checkbox(
-            value: viewModel.isComplete,
+            value: widget.viewModel.isComplete,
             onChanged: (newValue) {
-              viewModel.setComplete(newValue!);
+              widget.viewModel.setComplete(newValue!);
             },
           ),
         ),
         Expanded(
           child: TextComponent(
-            key: textKey,
-            text: viewModel.text,
+            key: _textKey,
+            text: widget.viewModel.text,
             textStyleBuilder: (attributions) {
               // Show a strikethrough across the entire task if it's complete.
-              final style = viewModel.textStyleBuilder(attributions);
-              return viewModel.isComplete
+              final style = widget.viewModel.textStyleBuilder(attributions);
+              return widget.viewModel.isComplete
                   ? style.copyWith(
                       decoration: style.decoration == null
                           ? TextDecoration.lineThrough
@@ -247,13 +259,115 @@ class TaskComponent extends StatelessWidget {
                     )
                   : style;
             },
-            textSelection: viewModel.selection,
-            selectionColor: viewModel.selectionColor,
-            highlightWhenEmpty: viewModel.highlightWhenEmpty,
-            showDebugPaint: showDebugPaint,
+            textSelection: widget.viewModel.selection,
+            selectionColor: widget.viewModel.selectionColor,
+            highlightWhenEmpty: widget.viewModel.highlightWhenEmpty,
+            showDebugPaint: widget.showDebugPaint,
           ),
         ),
       ],
+    );
+  }
+}
+
+ExecutionInstruction enterToInsertNewTask({
+  required EditContext editContext,
+  required RawKeyEvent keyEvent,
+}) {
+  // We only care about ENTER.
+  if (keyEvent.logicalKey != LogicalKeyboardKey.enter && keyEvent.logicalKey != LogicalKeyboardKey.numpadEnter) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  // We only care when the selection is collapsed to a caret.
+  final selection = editContext.composer.selection;
+  if (selection == null || !selection.isCollapsed) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  // We only care about TaskNodes.
+  final node = editContext.editor.document.getNodeById(selection.extent.nodeId);
+  if (node is! TaskNode) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  // The document selection is a caret sitting at the end of a TaskNode.
+  // Insert a new TaskNode below the current TaskNode, and move the caret down.
+  editContext.editor.executeCommand(
+    InsertNewTaskOrSplitExistingTaskCommand(editContext.composer),
+  );
+
+  return ExecutionInstruction.haltExecution;
+}
+
+class ConvertParagraphToTaskCommand implements EditorCommand {
+  const ConvertParagraphToTaskCommand({
+    required this.nodeId,
+    this.isCompleted = false,
+  });
+
+  final String nodeId;
+  final bool isCompleted;
+
+  @override
+  void execute(Document document, DocumentEditorTransaction transaction) {
+    final existingNode = document.getNodeById(nodeId);
+    if (existingNode is! ParagraphNode) {
+      editorOpsLog.warning(
+          "Tried to convert ParagraphNode with ID '$nodeId' to TaskNode, but that node has the wrong type: ${existingNode.runtimeType}");
+      return;
+    }
+
+    final taskNode = TaskNode(
+      id: existingNode.id,
+      text: existingNode.text,
+      isComplete: false,
+    );
+
+    transaction.replaceNode(oldNode: existingNode, newNode: taskNode);
+  }
+}
+
+class InsertNewTaskOrSplitExistingTaskCommand implements EditorCommand {
+  const InsertNewTaskOrSplitExistingTaskCommand(this._composer);
+
+  final DocumentComposer _composer;
+
+  @override
+  void execute(Document document, DocumentEditorTransaction transaction) {
+    final selection = _composer.selection;
+
+    // We only care when the caret sits at the end of a TaskNode.
+    if (selection == null || !selection.isCollapsed) {
+      return;
+    }
+
+    // We only care about TaskNodes.
+    final node = document.getNodeById(selection.extent.nodeId);
+    if (node is! TaskNode) {
+      return;
+    }
+
+    // Split the task text at the caret, moving everything after the caret down to the
+    // new TaskNode.
+    //
+    // If the caret sits at the end of the task text, then this behavior is equivalent
+    // to inserting a new, empty TaskNode after the current TaskNode.
+    final selectionTextOffset = (selection.extent.nodePosition as TextNodePosition).offset;
+    final newTaskNode = TaskNode(
+      id: DocumentEditor.createNodeId(),
+      text: node.text.copyText(selectionTextOffset),
+      isComplete: false,
+    );
+    node.text = node.text.removeRegion(startOffset: selectionTextOffset, endOffset: node.text.text.length);
+
+    transaction.insertNodeAfter(existingNode: node, newNode: newTaskNode);
+
+    _composer.selectionNotifier.value = DocumentSelection.collapsed(
+      position: DocumentPosition(
+        nodeId: newTaskNode.id,
+        nodePosition: const TextNodePosition(offset: 0),
+      ),
     );
   }
 }

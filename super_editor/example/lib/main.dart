@@ -38,7 +38,7 @@ Future<void> main() async {
   initLoggers(Level.FINEST, {
     // editorScrollingLog,
     // editorGesturesLog,
-    editorImeLog,
+    // editorImeLog,
     // editorKeyLog,
     // editorOpsLog,
     // editorLayoutLog,
