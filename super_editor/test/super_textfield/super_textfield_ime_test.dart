@@ -203,6 +203,23 @@ void main() {
       // Ensure the given TextInputAction was applied.
       expect(inputAction, 'TextInputAction.next');
     });
+
+    testWidgetsOnAllPlatforms('disconnects from IME when disposed', (tester) async {
+      final controller = ImeAttributedTextEditingController();
+      await _pumpSuperTextField(tester, controller);
+
+      // Place the caret to open an IME connection.
+      await tester.placeCaretInSuperTextField(0);
+
+      // Ensure the IME connection is open.
+      expect(controller.isAttachedToIme, isTrue);
+
+      // Pump a different tree to cause the text field to dispose.
+      await tester.pumpWidget(const MaterialApp());
+
+      // Ensure the IME connection is closed.
+      expect(controller.isAttachedToIme, isFalse);
+    });
   });
 
   group('SuperTextField on some bad Android software keyboards', () {
