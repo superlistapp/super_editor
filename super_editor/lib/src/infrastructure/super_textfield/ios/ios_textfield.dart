@@ -264,7 +264,8 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
 
     _textEditingController
       ..removeListener(_onTextOrSelectionChange)
-      ..onIOSFloatingCursorChange = null;
+      ..onIOSFloatingCursorChange = null
+      ..detachFromIme();
     if (widget.textController == null) {
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         // Dispose after the current frame so that other widgets have

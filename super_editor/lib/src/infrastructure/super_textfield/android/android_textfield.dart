@@ -249,7 +249,9 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
       _editingOverlayController.dispose();
     });
 
-    _textEditingController.removeListener(_onTextOrSelectionChange);
+    _textEditingController
+      ..removeListener(_onTextOrSelectionChange)
+      ..detachFromIme();
     if (widget.textController == null) {
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         // Dispose after the current frame so that other widgets have
