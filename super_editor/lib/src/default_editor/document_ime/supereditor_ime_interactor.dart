@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/edit_context.dart';
+import 'package:super_editor/src/default_editor/debug_visualization.dart';
 import 'package:super_editor/src/infrastructure/ime_input_owner.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
 
@@ -205,36 +206,39 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
 
   @override
   Widget build(BuildContext context) {
-    return SuperEditorHardwareKeyHandler(
-      focusNode: _focusNode,
-      editContext: widget.editContext,
-      keyboardActions: widget.hardwareKeyboardActions,
-      autofocus: widget.autofocus,
-      child: DocumentSelectionOpenAndCloseImePolicy(
+    return SuperEditorImeDebugVisuals(
+      imeConnection: _imeConnection,
+      child: SuperEditorHardwareKeyHandler(
         focusNode: _focusNode,
-        selection: widget.editContext.composer.selectionNotifier,
-        imeConnection: _imeConnection,
-        imeClientFactory: () => _imeClient,
-        imeConfiguration: _textInputConfiguration,
-        openKeyboardOnSelectionChange: widget.imePolicies.openKeyboardOnSelectionChange,
-        closeKeyboardOnSelectionLost: widget.imePolicies.closeKeyboardOnSelectionLost,
-        clearSelectionWhenImeConnectionCloses: widget.clearSelectionWhenImeConnectionCloses,
-        child: ImeFocusPolicy(
+        editContext: widget.editContext,
+        keyboardActions: widget.hardwareKeyboardActions,
+        autofocus: widget.autofocus,
+        child: DocumentSelectionOpenAndCloseImePolicy(
           focusNode: _focusNode,
+          selection: widget.editContext.composer.selectionNotifier,
           imeConnection: _imeConnection,
           imeClientFactory: () => _imeClient,
           imeConfiguration: _textInputConfiguration,
-          child: SoftwareKeyboardOpener(
-            controller: widget.softwareKeyboardController,
+          openKeyboardOnSelectionChange: widget.imePolicies.openKeyboardOnSelectionChange,
+          closeKeyboardOnSelectionLost: widget.imePolicies.closeKeyboardOnSelectionLost,
+          clearSelectionWhenImeConnectionCloses: widget.clearSelectionWhenImeConnectionCloses,
+          child: ImeFocusPolicy(
+            focusNode: _focusNode,
             imeConnection: _imeConnection,
-            createImeClient: () => _documentImeClient,
-            createImeConfiguration: () => _textInputConfiguration,
-            child: DocumentToImeSynchronizer(
-              document: widget.editContext.editor.document,
-              selection: widget.editContext.composer.selectionNotifier,
-              composingRegion: widget.editContext.composer.composingRegion,
-              imeConnection: _documentImeConnection,
-              child: widget.child,
+            imeClientFactory: () => _imeClient,
+            imeConfiguration: _textInputConfiguration,
+            child: SoftwareKeyboardOpener(
+              controller: widget.softwareKeyboardController,
+              imeConnection: _imeConnection,
+              createImeClient: () => _documentImeClient,
+              createImeConfiguration: () => _textInputConfiguration,
+              child: DocumentToImeSynchronizer(
+                document: widget.editContext.editor.document,
+                selection: widget.editContext.composer.selectionNotifier,
+                composingRegion: widget.editContext.composer.composingRegion,
+                imeConnection: _documentImeConnection,
+                child: widget.child,
+              ),
             ),
           ),
         ),
