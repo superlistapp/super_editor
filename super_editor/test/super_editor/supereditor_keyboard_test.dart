@@ -289,8 +289,17 @@ void main() {
             .createDocument()
             .withSingleEmptyParagraph()
             .withSoftwareKeyboardController(keyboardController)
-            .withOpenKeyboardOnSelectionChange(true)
-            .withClearSelectionWhenImeDisconnects(true)
+            .withSelectionPolicies(
+              const SuperEditorSelectionPolicies(
+                clearSelectionWhenEditorLosesFocus: true,
+                clearSelectionWhenImeConnectionCloses: true,
+              ),
+            )
+            .withImePolicies(
+              const SuperEditorImePolicies(
+                openKeyboardOnSelectionChange: true,
+              ),
+            )
             .withCustomWidgetTreeBuilder(
               (superEditor) => MaterialApp(
                 home: Scaffold(
@@ -331,8 +340,16 @@ void main() {
             .createDocument()
             .withSingleParagraph()
             .withSoftwareKeyboardController(keyboardController)
-            .withOpenKeyboardOnSelectionChange(true)
-            .withClearSelectionWhenImeDisconnects(true)
+            .withSelectionPolicies(
+              const SuperEditorSelectionPolicies(
+                clearSelectionWhenEditorLosesFocus: true,
+              ),
+            )
+            .withImePolicies(
+              const SuperEditorImePolicies(
+                openKeyboardOnSelectionChange: true,
+              ),
+            )
             .withCustomWidgetTreeBuilder(
               (superEditor) => MaterialApp(
                 home: Scaffold(
@@ -397,8 +414,17 @@ void main() {
             .createDocument()
             .withSingleEmptyParagraph()
             .withSoftwareKeyboardController(keyboardController)
-            .withOpenKeyboardOnSelectionChange(false)
-            .withClearSelectionWhenImeDisconnects(false)
+            .withSelectionPolicies(
+              const SuperEditorSelectionPolicies(
+                clearSelectionWhenEditorLosesFocus: false,
+                clearSelectionWhenImeConnectionCloses: false,
+              ),
+            )
+            .withImePolicies(
+              const SuperEditorImePolicies(
+                openKeyboardOnSelectionChange: false,
+              ),
+            )
             .withCustomWidgetTreeBuilder(
               (superEditor) => MaterialApp(
                 home: Scaffold(
@@ -443,8 +469,17 @@ void main() {
             .createDocument()
             .withSingleParagraph()
             .withSoftwareKeyboardController(keyboardController)
-            .withOpenKeyboardOnSelectionChange(false)
-            .withClearSelectionWhenImeDisconnects(false)
+            .withSelectionPolicies(
+              const SuperEditorSelectionPolicies(
+                clearSelectionWhenEditorLosesFocus: false,
+                clearSelectionWhenImeConnectionCloses: false,
+              ),
+            )
+            .withImePolicies(
+              const SuperEditorImePolicies(
+                openKeyboardOnSelectionChange: false,
+              ),
+            )
             .withCustomWidgetTreeBuilder(
               (superEditor) => MaterialApp(
                 home: Scaffold(
@@ -503,8 +538,17 @@ void main() {
             .createDocument()
             .withSingleParagraph()
             .withSoftwareKeyboardController(keyboardController)
-            .withOpenKeyboardOnSelectionChange(false)
-            .withClearSelectionWhenImeDisconnects(false)
+            .withSelectionPolicies(
+              const SuperEditorSelectionPolicies(
+                clearSelectionWhenEditorLosesFocus: false,
+                clearSelectionWhenImeConnectionCloses: false,
+              ),
+            )
+            .withImePolicies(
+              const SuperEditorImePolicies(
+                openKeyboardOnSelectionChange: false,
+              ),
+            )
             .withCustomWidgetTreeBuilder(
               (superEditor) => MaterialApp(
                 home: Scaffold(
@@ -574,8 +618,16 @@ void main() {
             .createDocument()
             .withSingleParagraph()
             .withSoftwareKeyboardController(keyboardController)
-            .withOpenKeyboardOnSelectionChange(false)
-            .withClearSelectionWhenImeDisconnects(false)
+            .withSelectionPolicies(
+              const SuperEditorSelectionPolicies(
+                clearSelectionWhenEditorLosesFocus: false,
+              ),
+            )
+            .withImePolicies(
+              const SuperEditorImePolicies(
+                openKeyboardOnSelectionChange: false,
+              ),
+            )
             .withCustomWidgetTreeBuilder(
               (superEditor) => _CloseKeyboardOnDispose(
                 keyboardController: keyboardController,
