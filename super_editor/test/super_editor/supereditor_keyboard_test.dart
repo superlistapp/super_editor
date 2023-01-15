@@ -289,10 +289,12 @@ void main() {
             .createDocument()
             .withSingleEmptyParagraph()
             .withSoftwareKeyboardController(keyboardController)
-            .withSelectionPolicies(const SuperEditorSelectionPolicies(
-              clearSelectionWhenEditorLosesFocus: true,
-              clearSelectionWhenImeConnectionCloses: true,
-            ))
+            .withSelectionPolicies(
+              const SuperEditorSelectionPolicies(
+                clearSelectionWhenEditorLosesFocus: true,
+                clearSelectionWhenImeConnectionCloses: true,
+              ),
+            )
             .withImePolicies(
               const SuperEditorImePolicies(
                 openKeyboardOnSelectionChange: true,
@@ -338,9 +340,11 @@ void main() {
             .createDocument()
             .withSingleParagraph()
             .withSoftwareKeyboardController(keyboardController)
-            .withSelectionPolicies(const SuperEditorSelectionPolicies(
-              clearSelectionWhenEditorLosesFocus: true,
-            ))
+            .withSelectionPolicies(
+              const SuperEditorSelectionPolicies(
+                clearSelectionWhenEditorLosesFocus: true,
+              ),
+            )
             .withImePolicies(
               const SuperEditorImePolicies(
                 openKeyboardOnSelectionChange: true,
@@ -465,10 +469,12 @@ void main() {
             .createDocument()
             .withSingleParagraph()
             .withSoftwareKeyboardController(keyboardController)
-            .withSelectionPolicies(const SuperEditorSelectionPolicies(
-              clearSelectionWhenEditorLosesFocus: false,
-              clearSelectionWhenImeConnectionCloses: false,
-            ))
+            .withSelectionPolicies(
+              const SuperEditorSelectionPolicies(
+                clearSelectionWhenEditorLosesFocus: false,
+                clearSelectionWhenImeConnectionCloses: false,
+              ),
+            )
             .withImePolicies(
               const SuperEditorImePolicies(
                 openKeyboardOnSelectionChange: false,
@@ -532,10 +538,12 @@ void main() {
             .createDocument()
             .withSingleParagraph()
             .withSoftwareKeyboardController(keyboardController)
-            .withSelectionPolicies(const SuperEditorSelectionPolicies(
-              clearSelectionWhenEditorLosesFocus: false,
-              clearSelectionWhenImeConnectionCloses: false,
-            ))
+            .withSelectionPolicies(
+              const SuperEditorSelectionPolicies(
+                clearSelectionWhenEditorLosesFocus: false,
+                clearSelectionWhenImeConnectionCloses: false,
+              ),
+            )
             .withImePolicies(
               const SuperEditorImePolicies(
                 openKeyboardOnSelectionChange: false,
@@ -610,9 +618,11 @@ void main() {
             .createDocument()
             .withSingleParagraph()
             .withSoftwareKeyboardController(keyboardController)
-            .withSelectionPolicies(const SuperEditorSelectionPolicies(
-              clearSelectionWhenEditorLosesFocus: false,
-            ))
+            .withSelectionPolicies(
+              const SuperEditorSelectionPolicies(
+                clearSelectionWhenEditorLosesFocus: false,
+              ),
+            )
             .withImePolicies(
               const SuperEditorImePolicies(
                 openKeyboardOnSelectionChange: false,
