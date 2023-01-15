@@ -10,6 +10,7 @@ import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/core/styles.dart';
 import 'package:super_editor/src/default_editor/common_editor_operations.dart';
+import 'package:super_editor/src/default_editor/debug_visualization.dart';
 import 'package:super_editor/src/default_editor/document_gestures_touch_android.dart';
 import 'package:super_editor/src/default_editor/document_gestures_touch_ios.dart';
 import 'package:super_editor/src/default_editor/document_scrollable.dart';
@@ -487,20 +488,23 @@ class SuperEditorState extends State<SuperEditor> {
 
   @override
   Widget build(BuildContext context) {
-    return EditorSelectionAndFocusPolicy(
+    return SuperEditorFocusDebugVisuals(
       focusNode: _focusNode,
-      selection: _composer.selectionNotifier,
-      getDocumentLayout: () => editContext.documentLayout,
-      placeCaretAtEndOfDocumentOnGainFocus: widget.selectionPolicies.placeCaretAtEndOfDocumentOnGainFocus,
-      restorePreviousSelectionOnGainFocus: widget.selectionPolicies.restorePreviousSelectionOnGainFocus,
-      clearSelectionWhenEditorLosesFocus: widget.selectionPolicies.clearSelectionWhenEditorLosesFocus,
-      child: _buildInputSystem(
-        child: _buildGestureSystem(
-          documentLayout: SingleColumnDocumentLayout(
-            key: _docLayoutKey,
-            presenter: _docLayoutPresenter!,
-            componentBuilders: widget.componentBuilders,
-            showDebugPaint: widget.debugPaint.layout,
+      child: EditorSelectionAndFocusPolicy(
+        focusNode: _focusNode,
+        selection: _composer.selectionNotifier,
+        getDocumentLayout: () => editContext.documentLayout,
+        placeCaretAtEndOfDocumentOnGainFocus: widget.selectionPolicies.placeCaretAtEndOfDocumentOnGainFocus,
+        restorePreviousSelectionOnGainFocus: widget.selectionPolicies.restorePreviousSelectionOnGainFocus,
+        clearSelectionWhenEditorLosesFocus: widget.selectionPolicies.clearSelectionWhenEditorLosesFocus,
+        child: _buildInputSystem(
+          child: _buildGestureSystem(
+            documentLayout: SingleColumnDocumentLayout(
+              key: _docLayoutKey,
+              presenter: _docLayoutPresenter!,
+              componentBuilders: widget.componentBuilders,
+              showDebugPaint: widget.debugPaint.layout,
+            ),
           ),
         ),
       ),

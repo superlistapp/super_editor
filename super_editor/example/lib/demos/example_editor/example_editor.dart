@@ -31,6 +31,8 @@ class _ExampleEditorState extends State<ExampleEditor> {
   final _lightBackground = Colors.white;
   Brightness _brightness = Brightness.light;
 
+  SuperEditorDebugVisualsConfig? _debugConfig;
+
   OverlayEntry? _textFormatBarOverlayEntry;
   final _textSelectionAnchor = ValueNotifier<Offset?>(null);
 
@@ -316,7 +318,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
             ),
             Align(
               alignment: Alignment.bottomRight,
-              child: _buildLightAndDarkModeToggle(),
+              child: _buildCornerFabs(),
             ),
           ],
         );
@@ -324,26 +326,59 @@ class _ExampleEditorState extends State<ExampleEditor> {
     );
   }
 
-  Widget _buildLightAndDarkModeToggle() {
+  Widget _buildCornerFabs() {
     return Padding(
-      padding: const EdgeInsets.only(right: 16.0, bottom: 16.0),
-      child: FloatingActionButton(
-        backgroundColor: _brightness == Brightness.light ? _darkBackground : _lightBackground,
-        foregroundColor: _brightness == Brightness.light ? _lightBackground : _darkBackground,
-        elevation: 5,
-        onPressed: () {
-          setState(() {
-            _brightness = _brightness == Brightness.light ? Brightness.dark : Brightness.light;
-          });
-        },
-        child: _brightness == Brightness.light
-            ? const Icon(
-                Icons.dark_mode,
-              )
-            : const Icon(
-                Icons.light_mode,
-              ),
+      padding: const EdgeInsets.only(right: 16, bottom: 16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          _buildDebugVisualsToggle(),
+          const SizedBox(height: 16),
+          _buildLightAndDarkModeToggle(),
+        ],
       ),
+    );
+  }
+
+  Widget _buildDebugVisualsToggle() {
+    return FloatingActionButton(
+      backgroundColor: _brightness == Brightness.light ? _darkBackground : _lightBackground,
+      foregroundColor: _brightness == Brightness.light ? _lightBackground : _darkBackground,
+      elevation: 5,
+      onPressed: () {
+        setState(() {
+          _debugConfig = _debugConfig != null
+              ? null
+              : SuperEditorDebugVisualsConfig(
+                  showFocus: true,
+                  showImeConnection: true,
+                );
+        });
+      },
+      child: const Icon(
+        Icons.bug_report,
+      ),
+    );
+  }
+
+  Widget _buildLightAndDarkModeToggle() {
+    return FloatingActionButton(
+      backgroundColor: _brightness == Brightness.light ? _darkBackground : _lightBackground,
+      foregroundColor: _brightness == Brightness.light ? _lightBackground : _darkBackground,
+      elevation: 5,
+      onPressed: () {
+        setState(() {
+          _brightness = _brightness == Brightness.light ? Brightness.dark : Brightness.light;
+        });
+      },
+      child: _brightness == Brightness.light
+          ? const Icon(
+              Icons.dark_mode,
+            )
+          : const Icon(
+              Icons.light_mode,
+            ),
     );
   }
 
@@ -352,47 +387,50 @@ class _ExampleEditorState extends State<ExampleEditor> {
 
     return ColoredBox(
       color: isLight ? _lightBackground : _darkBackground,
-      child: SuperEditor(
-        editor: _docEditor,
-        composer: _composer,
-        focusNode: _editorFocusNode,
-        scrollController: _scrollController,
-        documentLayoutKey: _docLayoutKey,
-        documentOverlayBuilders: [
-          DefaultCaretOverlayBuilder(
-            CaretStyle().copyWith(color: isLight ? Colors.black : Colors.redAccent),
-          ),
-        ],
-        selectionStyle: isLight
-            ? defaultSelectionStyle
-            : SelectionStyles(
-                selectionColor: Colors.red.withOpacity(0.3),
-              ),
-        stylesheet: defaultStylesheet.copyWith(
-          addRulesAfter: [
-            if (!isLight) ..._darkModeStyles,
-            taskStyles,
+      child: SuperEditorDebugVisuals(
+        config: _debugConfig ?? const SuperEditorDebugVisualsConfig(),
+        child: SuperEditor(
+          editor: _docEditor,
+          composer: _composer,
+          focusNode: _editorFocusNode,
+          scrollController: _scrollController,
+          documentLayoutKey: _docLayoutKey,
+          documentOverlayBuilders: [
+            DefaultCaretOverlayBuilder(
+              CaretStyle().copyWith(color: isLight ? Colors.black : Colors.redAccent),
+            ),
           ],
+          selectionStyle: isLight
+              ? defaultSelectionStyle
+              : SelectionStyles(
+                  selectionColor: Colors.red.withOpacity(0.3),
+                ),
+          stylesheet: defaultStylesheet.copyWith(
+            addRulesAfter: [
+              if (!isLight) ..._darkModeStyles,
+              taskStyles,
+            ],
+          ),
+          componentBuilders: [
+            TaskComponentBuilder(_docEditor),
+            ...defaultComponentBuilders,
+          ],
+          gestureMode: _gestureMode,
+          inputSource: _inputSource,
+          keyboardActions: _inputSource == TextInputSource.ime ? defaultImeKeyboardActions : defaultKeyboardActions,
+          androidToolbarBuilder: (_) => AndroidTextEditingFloatingToolbar(
+            onCutPressed: _cut,
+            onCopyPressed: _copy,
+            onPastePressed: _paste,
+            onSelectAllPressed: _selectAll,
+          ),
+          iOSToolbarBuilder: (_) => IOSTextEditingFloatingToolbar(
+            onCutPressed: _cut,
+            onCopyPressed: _copy,
+            onPastePressed: _paste,
+          ),
+          overlayController: _overlayController,
         ),
-        componentBuilders: [
-          TaskComponentBuilder(_docEditor),
-          ...defaultComponentBuilders,
-        ],
-        gestureMode: _gestureMode,
-        inputSource: _inputSource,
-        keyboardActions: _inputSource == TextInputSource.ime ? defaultImeKeyboardActions : defaultKeyboardActions,
-        androidToolbarBuilder: (_) => AndroidTextEditingFloatingToolbar(
-          onCutPressed: _cut,
-          onCopyPressed: _copy,
-          onPastePressed: _paste,
-          onSelectAllPressed: _selectAll,
-        ),
-        iOSToolbarBuilder: (_) => IOSTextEditingFloatingToolbar(
-          onCutPressed: _cut,
-          onCopyPressed: _copy,
-          onPastePressed: _paste,
-        ),
-        overlayController: _overlayController,
       ),
     );
   }
