@@ -7,6 +7,7 @@ import 'package:super_editor/src/infrastructure/blinking_caret.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 
+import '../super_textfield/super_textfield_robot.dart';
 import '../test_tools.dart';
 import 'document_test_tools.dart';
 
@@ -505,6 +506,128 @@ Second Paragraph
       // Ensure caret is displayed.
       expect(_caretFinder(), findsOneWidget);
     });
+
+    testWidgetsOnAllPlatforms("closes IME connection when it loses primary focus", (tester) async {
+      final textFieldFocus = FocusNode();
+      final editorFocus = FocusNode();
+      await tester
+          .createDocument()
+          .withSingleParagraph()
+          .withInputSource(TextInputSource.ime)
+          .withFocusNode(editorFocus)
+          .withCustomWidgetTreeBuilder(
+            (superEditor) => MaterialApp(
+              home: Scaffold(
+                body: Column(
+                  children: [
+                    FocusWithCustomParent(
+                      focusNode: textFieldFocus,
+                      parentFocusNode: editorFocus,
+                      child: SuperTextField(
+                        focusNode: textFieldFocus,
+                        // We put the SuperTextField in keyboard mode so that the SuperTextField
+                        // doesn't steal the IME connection. This way, we ensure that SuperEditor,
+                        // left to its own devices, will proactively close the IME connection when
+                        // it loses primary focus.
+                        inputSource: TextInputSource.keyboard,
+                      ),
+                    ),
+                    Expanded(
+                      child: superEditor,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          )
+          .autoFocus(true)
+          .pump();
+
+      // Ensure that SuperEditor begins with focus, a selection, and IME connection
+      expect(editorFocus.hasPrimaryFocus, isTrue);
+      expect(SuperEditorInspector.findDocumentSelection(), isNotNull);
+      expect(SuperEditorInspector.isImeConnectionOpen(), isTrue);
+
+      // Focus the textfield.
+      await tester.placeCaretInSuperTextField(0);
+
+      // Ensure that the textfield has primary focus, the editor doesn't, and the editor
+      // closed the IME connection.
+      expect(textFieldFocus.hasPrimaryFocus, isTrue);
+      expect(editorFocus.hasPrimaryFocus, isFalse);
+      expect(editorFocus.hasFocus, isTrue);
+      expect(SuperEditorInspector.findDocumentSelection(), isNotNull);
+      expect(SuperEditorInspector.isImeConnectionOpen(), isFalse);
+
+      // Give focus back to the editor.
+      textFieldFocus.unfocus(disposition: UnfocusDisposition.previouslyFocusedChild);
+      await tester.pump();
+
+      // Ensure that the textfield doesn't have any focus, and the editor has primary focus again.
+      expect(textFieldFocus.hasFocus, isFalse);
+      expect(editorFocus.hasPrimaryFocus, isTrue);
+      expect(SuperEditorInspector.findDocumentSelection(), isNotNull);
+      expect(SuperEditorInspector.isImeConnectionOpen(), isTrue);
+    });
+
+    testWidgetsOnAllPlatforms("retains selection when user types in sub-focus text field", (tester) async {
+      final textFieldFocus = FocusNode();
+      final textFieldController = ImeAttributedTextEditingController();
+      final editorFocus = FocusNode();
+      const initialEditorSelection = DocumentSelection(
+        base: DocumentPosition(nodeId: "1", nodePosition: TextNodePosition(offset: 6)),
+        extent: DocumentPosition(nodeId: "1", nodePosition: TextNodePosition(offset: 11)),
+      );
+      await tester
+          .createDocument()
+          .withSingleParagraph()
+          .withInputSource(TextInputSource.ime)
+          .withFocusNode(editorFocus)
+          .withSelection(initialEditorSelection)
+          .withSelectionPolicies(const SuperEditorSelectionPolicies(
+            clearSelectionWhenEditorLosesFocus: true,
+          ))
+          .withCustomWidgetTreeBuilder(
+            (superEditor) => MaterialApp(
+              home: Scaffold(
+                body: Column(
+                  children: [
+                    FocusWithCustomParent(
+                      focusNode: textFieldFocus,
+                      parentFocusNode: editorFocus,
+                      child: SuperTextField(
+                        focusNode: textFieldFocus,
+                        textController: textFieldController,
+                        inputSource: TextInputSource.ime,
+                      ),
+                    ),
+                    Expanded(
+                      child: superEditor,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          )
+          .autoFocus(true)
+          .pump();
+
+      // Ensure that SuperEditor has focus, a selection, and IME connection
+      expect(editorFocus.hasPrimaryFocus, isTrue);
+      expect(SuperEditorInspector.findDocumentSelection(), initialEditorSelection);
+
+      // Type into the text field.
+      await tester.placeCaretInSuperTextField(0);
+      await tester.typeImeText("Hello, world", find.byType(SuperTextField));
+
+      // Ensure the text field received the text.
+      expect(textFieldController.text.text, "Hello, world");
+
+      // Ensure that SuperEditor has the same selection as before.
+      expect(SuperEditorInspector.findDocumentSelection(), initialEditorSelection);
+    });
+
+    // TODO: make sure caret disappears when editor has focus, but not primary focus
 
     testWidgetsOnAllPlatforms("places caret at the previous selection when re-focusing by tab", (tester) async {
       await tester

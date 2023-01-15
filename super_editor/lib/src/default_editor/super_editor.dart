@@ -26,6 +26,7 @@ import 'document_caret_overlay.dart';
 import 'document_gestures_mouse.dart';
 import 'document_ime/document_input_ime.dart';
 import 'document_hardware_keyboard/document_input_keyboard.dart';
+import 'document_focus_and_selection_policies.dart';
 import 'horizontal_rule.dart';
 import 'image.dart';
 import 'layout_single_column/layout_single_column.dart';
@@ -91,6 +92,7 @@ class SuperEditor extends StatefulWidget {
     this.customStylePhases = const [],
     List<ComponentBuilder>? componentBuilders,
     SelectionStyles? selectionStyle,
+    this.selectionPolicies = const SuperEditorSelectionPolicies(),
     this.inputSource,
     this.softwareKeyboardController,
     this.imePolicies = const SuperEditorImePolicies(),
@@ -144,6 +146,10 @@ class SuperEditor extends StatefulWidget {
   /// Styles applied to selected content.
   final SelectionStyles selectionStyles;
 
+  /// Policies that determine how selection is modified by other factors, such as
+  /// gaining or losing focus.
+  final SuperEditorSelectionPolicies selectionPolicies;
+
   /// Custom style phases that are added to the standard style phases.
   ///
   /// Documents are styled in a series of phases. A number of such
@@ -169,7 +175,7 @@ class SuperEditor extends StatefulWidget {
   ///
   /// Typically, this controller should only be used when the keyboard is configured
   /// for manual control, e.g., [SuperEditorImePolicies.openKeyboardOnSelectionChange] and
-  /// [SuperEditorImePolicies.clearSelectionWhenImeDisconnects] are `false`. Otherwise,
+  /// [SuperEditorImePolicies.clearSelectionWhenEditorLosesFocus] are `false`. Otherwise,
   /// the automatic behavior might conflict with commands to this controller.
   final SoftwareKeyboardController? softwareKeyboardController;
 
@@ -399,8 +405,7 @@ class SuperEditorState extends State<SuperEditor> {
   }
 
   void _recomputeIfLayoutShouldShowCaret() {
-    _docLayoutSelectionStyler.shouldDocumentShowCaret =
-        _focusNode.hasFocus && _gestureMode == DocumentGestureMode.mouse;
+    _docLayoutSelectionStyler.shouldDocumentShowCaret = _focusNode.hasFocus && gestureMode == DocumentGestureMode.mouse;
   }
 
   void _updateComposerPreferencesAtSelection() {
@@ -447,7 +452,8 @@ class SuperEditorState extends State<SuperEditor> {
     }
   }
 
-  DocumentGestureMode get _gestureMode {
+  @visibleForTesting
+  DocumentGestureMode get gestureMode {
     if (widget.gestureMode != null) {
       return widget.gestureMode!;
     }
@@ -465,7 +471,8 @@ class SuperEditorState extends State<SuperEditor> {
   ///
   /// If the `inputSource` is configured, it is used. Otherwise,
   /// the [TextInputSource] is chosen based on the platform.
-  TextInputSource get _inputSource {
+  @visibleForTesting
+  TextInputSource get inputSource {
     if (widget.inputSource != null) {
       return widget.inputSource!;
     }
@@ -480,13 +487,21 @@ class SuperEditorState extends State<SuperEditor> {
 
   @override
   Widget build(BuildContext context) {
-    return _buildInputSystem(
-      child: _buildGestureSystem(
-        documentLayout: SingleColumnDocumentLayout(
-          key: _docLayoutKey,
-          presenter: _docLayoutPresenter!,
-          componentBuilders: widget.componentBuilders,
-          showDebugPaint: widget.debugPaint.layout,
+    return EditorSelectionAndFocusPolicy(
+      focusNode: _focusNode,
+      selection: _composer.selectionNotifier,
+      getDocumentLayout: () => editContext.documentLayout,
+      placeCaretAtEndOfDocumentOnGainFocus: widget.selectionPolicies.placeCaretAtEndOfDocumentOnGainFocus,
+      restorePreviousSelectionOnGainFocus: widget.selectionPolicies.restorePreviousSelectionOnGainFocus,
+      clearSelectionWhenEditorLosesFocus: widget.selectionPolicies.clearSelectionWhenEditorLosesFocus,
+      child: _buildInputSystem(
+        child: _buildGestureSystem(
+          documentLayout: SingleColumnDocumentLayout(
+            key: _docLayoutKey,
+            presenter: _docLayoutPresenter!,
+            componentBuilders: widget.componentBuilders,
+            showDebugPaint: widget.debugPaint.layout,
+          ),
         ),
       ),
     );
@@ -497,7 +512,7 @@ class SuperEditorState extends State<SuperEditor> {
   Widget _buildInputSystem({
     required Widget child,
   }) {
-    switch (_inputSource) {
+    switch (inputSource) {
       case TextInputSource.keyboard:
         return SuperEditorHardwareKeyHandler(
           focusNode: _focusNode,
@@ -511,6 +526,7 @@ class SuperEditorState extends State<SuperEditor> {
           focusNode: _focusNode,
           autofocus: widget.autofocus,
           editContext: editContext,
+          clearSelectionWhenImeConnectionCloses: widget.selectionPolicies.clearSelectionWhenImeConnectionCloses,
           softwareKeyboardController: widget.softwareKeyboardController,
           imePolicies: widget.imePolicies,
           imeConfiguration: widget.imeConfiguration,
@@ -528,7 +544,7 @@ class SuperEditorState extends State<SuperEditor> {
   Widget _buildGestureSystem({
     required Widget documentLayout,
   }) {
-    switch (_gestureMode) {
+    switch (gestureMode) {
       case DocumentGestureMode.mouse:
         return _buildDesktopGestureSystem(documentLayout);
       case DocumentGestureMode.android:
@@ -623,6 +639,67 @@ class SuperEditorState extends State<SuperEditor> {
       );
     });
   }
+}
+
+/// A collection of policies that dictate how a [SuperEditor]'s selection will change
+/// based on other behaviors, such as focus changes.
+class SuperEditorSelectionPolicies {
+  const SuperEditorSelectionPolicies({
+    this.placeCaretAtEndOfDocumentOnGainFocus = true,
+    this.restorePreviousSelectionOnGainFocus = true,
+    this.clearSelectionWhenEditorLosesFocus = true,
+    this.clearSelectionWhenImeConnectionCloses = true,
+  });
+
+  /// Whether the editor should automatically place the caret at the end of the document,
+  /// if the editor receives focus without an existing selection.
+  ///
+  /// [restorePreviousSelectionOnGainFocus] takes priority over this policy.
+  final bool placeCaretAtEndOfDocumentOnGainFocus;
+
+  /// Whether the editor's previous selection should be restored when the editor re-gains
+  /// focus, after having previous lost focus.
+  final bool restorePreviousSelectionOnGainFocus;
+
+  /// Whether the editor's selection should be removed when the editor loses
+  /// all focus (not just primary focus).
+  ///
+  /// If `true`, when focus moves to a different subtree, such as a popup text
+  /// field, or a button somewhere else on the screen, the editor will remove
+  /// its selection. When focus returns to the editor, the previous selection can
+  /// be restored, but that's controlled by other policies.
+  ///
+  /// If `false`, the editor will retain its selection, including a visual caret
+  /// and selected content, even when the editor doesn't have any focus, and can't
+  /// process any input.
+  final bool clearSelectionWhenEditorLosesFocus;
+
+  /// Whether the editor's selection should be removed when the editor closes or loses
+  /// its IME connection.
+  ///
+  /// Defaults to `true`.
+  ///
+  /// Apps that include a custom input mode, such as an editing panel that sometimes
+  /// replaces the software keyboard, should set this to `false` and instead control the
+  /// IME connection manually.
+  final bool clearSelectionWhenImeConnectionCloses;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SuperEditorSelectionPolicies &&
+          runtimeType == other.runtimeType &&
+          placeCaretAtEndOfDocumentOnGainFocus == other.placeCaretAtEndOfDocumentOnGainFocus &&
+          restorePreviousSelectionOnGainFocus == other.restorePreviousSelectionOnGainFocus &&
+          clearSelectionWhenEditorLosesFocus == other.clearSelectionWhenEditorLosesFocus &&
+          clearSelectionWhenImeConnectionCloses == other.clearSelectionWhenImeConnectionCloses;
+
+  @override
+  int get hashCode =>
+      placeCaretAtEndOfDocumentOnGainFocus.hashCode ^
+      restorePreviousSelectionOnGainFocus.hashCode ^
+      clearSelectionWhenEditorLosesFocus.hashCode ^
+      clearSelectionWhenImeConnectionCloses.hashCode;
 }
 
 /// Builds widgets that are displayed at the same position and size as
