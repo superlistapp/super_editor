@@ -10,7 +10,6 @@ import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/default_editor/box_component.dart';
 import 'package:super_editor/src/default_editor/document_scrollable.dart';
-import 'package:super_editor/src/default_editor/document_selection_on_focus_mixin.dart';
 import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
 import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/document_operations/selection_operations.dart';
@@ -70,8 +69,7 @@ class DocumentMouseInteractor extends StatefulWidget {
   State createState() => _DocumentMouseInteractorState();
 }
 
-class _DocumentMouseInteractorState extends State<DocumentMouseInteractor>
-    with SingleTickerProviderStateMixin, DocumentSelectionOnFocusMixin {
+class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with SingleTickerProviderStateMixin {
   final _documentWrapperKey = GlobalKey();
 
   late FocusNode _focusNode;
@@ -95,12 +93,6 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor>
     _focusNode = widget.focusNode ?? FocusNode();
     _selectionSubscription = widget.selectionChanges.listen(_onSelectionChange);
     widget.autoScroller.addListener(_updateDragSelection);
-
-    startSyncingSelectionWithFocus(
-      focusNode: _focusNode,
-      getDocumentLayout: widget.getDocumentLayout,
-      selection: widget.selectionNotifier,
-    );
   }
 
   @override
@@ -108,20 +100,15 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor>
     super.didUpdateWidget(oldWidget);
     if (widget.focusNode != oldWidget.focusNode) {
       _focusNode = widget.focusNode ?? FocusNode();
-      onFocusNodeReplaced(_focusNode);
     }
     if (widget.selectionChanges != oldWidget.selectionChanges) {
       _selectionSubscription.cancel();
       _selectionSubscription = widget.selectionChanges.listen(_onSelectionChange);
     }
-    if (widget.selectionNotifier != oldWidget.selectionNotifier) {
-      onDocumentSelectionNotifierReplaced(widget.selectionNotifier);
-    }
     if (widget.autoScroller != oldWidget.autoScroller) {
       oldWidget.autoScroller.removeListener(_updateDragSelection);
       widget.autoScroller.addListener(_updateDragSelection);
     }
-    onDocumentLayoutResolverReplaced(widget.getDocumentLayout);
   }
 
   @override
@@ -131,7 +118,6 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor>
     }
     _selectionSubscription.cancel();
     widget.autoScroller.removeListener(_updateDragSelection);
-    stopSyncingSelectionWithFocus();
     super.dispose();
   }
 

@@ -26,6 +26,7 @@ class SuperEditorImeInteractor extends StatefulWidget {
     this.focusNode,
     this.autofocus = false,
     required this.editContext,
+    this.clearSelectionWhenImeConnectionCloses = true,
     this.softwareKeyboardController,
     this.imePolicies = const SuperEditorImePolicies(),
     this.imeConfiguration = const SuperEditorImeConfiguration(),
@@ -42,10 +43,20 @@ class SuperEditorImeInteractor extends StatefulWidget {
   /// All resources that are needed to edit a document.
   final EditContext editContext;
 
+  /// Whether the editor's selection should be removed when the editor closes or loses
+  /// its IME connection.
+  ///
+  /// Defaults to `true`.
+  ///
+  /// Apps that include a custom input mode, such as an editing panel that sometimes
+  /// replaces the software keyboard, should set this to `false` and instead control the
+  /// IME connection manually.
+  final bool clearSelectionWhenImeConnectionCloses;
+
   /// Controller that opens and closes the software keyboard.
   ///
   /// When [SuperEditorImePolicies.openKeyboardOnSelectionChange] and
-  /// [SuperEditorImePolicies.clearSelectionWhenImeDisconnects] are `false`,
+  /// [SuperEditorImePolicies.clearSelectionWhenEditorLosesFocus] are `false`,
   /// an app can use this controller to manually open and close the software
   /// keyboard, as needed.
   ///
@@ -92,10 +103,11 @@ class SuperEditorImeInteractor extends StatefulWidget {
   final Widget child;
 
   @override
-  State createState() => _SuperEditorImeInteractorState();
+  State createState() => SuperEditorImeInteractorState();
 }
 
-class _SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> implements ImeInputOwner {
+@visibleForTesting
+class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> implements ImeInputOwner {
   late FocusNode _focusNode;
 
   final _imeConnection = ValueNotifier<TextInputConnection?>(null);
@@ -146,7 +158,7 @@ class _SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> imp
 
     if (widget.imeConfiguration != oldWidget.imeConfiguration) {
       _textInputConfiguration = widget.imeConfiguration.toTextInputConfiguration();
-      if (_isAttachedToIme) {
+      if (isAttachedToIme) {
         _imeConnection.value!.updateConfig(_textInputConfiguration);
       }
     }
@@ -179,7 +191,8 @@ class _SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> imp
   @override
   DeltaTextInputClient get imeClient => _imeClient;
 
-  bool get _isAttachedToIme => _imeConnection.value?.attached ?? false;
+  @visibleForTesting
+  bool get isAttachedToIme => _imeConnection.value?.attached ?? false;
 
   void _onImeConnectionChange() {
     if (_imeConnection.value == null) {
@@ -205,10 +218,12 @@ class _SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> imp
         imeConfiguration: _textInputConfiguration,
         openKeyboardOnSelectionChange: widget.imePolicies.openKeyboardOnSelectionChange,
         closeKeyboardOnSelectionLost: widget.imePolicies.closeKeyboardOnSelectionLost,
-        clearSelectionWhenImeDisconnects: widget.imePolicies.clearSelectionWhenImeDisconnects,
+        clearSelectionWhenImeConnectionCloses: widget.clearSelectionWhenImeConnectionCloses,
         child: ImeFocusPolicy(
           focusNode: _focusNode,
           imeConnection: _imeConnection,
+          imeClientFactory: () => _imeClient,
+          imeConfiguration: _textInputConfiguration,
           child: SoftwareKeyboardOpener(
             controller: widget.softwareKeyboardController,
             imeConnection: _imeConnection,
@@ -228,15 +243,28 @@ class _SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> imp
   }
 }
 
-/// A collection of policies that dictate how and when `SuperEditor` should
-/// interact with the IME, such as opening the software keyboard whenever
-/// `SuperEditor`'s selection changes ([openKeyboardOnSelectionChange]).
+/// A collection of policies that dictate how a [SuperEditor]'s focus, selection, and
+/// IME should interact, such as opening the software keyboard whenever [SuperEditor]'s
+/// selection changes ([openKeyboardOnSelectionChange]).
 class SuperEditorImePolicies {
   const SuperEditorImePolicies({
+    this.openKeyboardOnGainPrimaryFocus = true,
+    this.closeKeyboardOnLosePrimaryFocus = true,
     this.openKeyboardOnSelectionChange = true,
     this.closeKeyboardOnSelectionLost = true,
-    this.clearSelectionWhenImeDisconnects = true,
   });
+
+  /// Whether to automatically raise the software keyboard when [SuperEditor]
+  /// gains primary focus (not just regular focus).
+  ///
+  /// Defaults to `true`.
+  final bool openKeyboardOnGainPrimaryFocus;
+
+  /// Whether to automatically close the software keyboard when [SuperEditor]
+  /// loses primary focus (even if it retains regular focus).
+  ///
+  /// Defaults to `true`.
+  final bool closeKeyboardOnLosePrimaryFocus;
 
   /// Whether the software keyboard should be raised whenever the editor's selection
   /// changes, such as when a user taps to place the caret.
@@ -254,20 +282,22 @@ class SuperEditorImePolicies {
   /// apply IME input when there's no editor selection.
   final bool closeKeyboardOnSelectionLost;
 
-  /// Whether the document's selection should be cleared (removed) when the
-  /// IME disconnects, i.e., the software keyboard closes.
-  ///
-  /// Typically, on devices with software keyboards, the keyboard is critical
-  /// to all document editing. In such cases, it would be reasonable to clear
-  /// the selection when the keyboard closes.
-  ///
-  /// Some apps include editing features that can operate when the keyboard is
-  /// closed. For example, some apps display special editing options behind the
-  /// keyboard. The user closes the keyboard, uses the special options, and then
-  /// re-opens the keyboard. In this case, the document selection **shouldn't**
-  /// be cleared when the keyboard closes, because the special options behind the
-  /// keyboard still need to operate on that selection.
-  final bool clearSelectionWhenImeDisconnects;
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SuperEditorImePolicies &&
+          runtimeType == other.runtimeType &&
+          openKeyboardOnGainPrimaryFocus == other.openKeyboardOnGainPrimaryFocus &&
+          closeKeyboardOnLosePrimaryFocus == other.closeKeyboardOnLosePrimaryFocus &&
+          openKeyboardOnSelectionChange == other.openKeyboardOnSelectionChange &&
+          closeKeyboardOnSelectionLost == other.closeKeyboardOnSelectionLost;
+
+  @override
+  int get hashCode =>
+      openKeyboardOnGainPrimaryFocus.hashCode ^
+      closeKeyboardOnLosePrimaryFocus.hashCode ^
+      openKeyboardOnSelectionChange.hashCode ^
+      closeKeyboardOnSelectionLost.hashCode;
 }
 
 /// Input Method Engine (IME) configuration for document text input.

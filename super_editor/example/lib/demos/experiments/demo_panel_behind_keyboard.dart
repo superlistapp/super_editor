@@ -173,9 +173,11 @@ class _PanelBehindKeyboardDemoState extends State<PanelBehindKeyboardDemo> {
                 editor: _editor,
                 composer: _composer,
                 softwareKeyboardController: _keyboardController,
+                selectionPolicies: SuperEditorSelectionPolicies(
+                  clearSelectionWhenEditorLosesFocus: false,
+                ),
                 imePolicies: SuperEditorImePolicies(
                   openKeyboardOnSelectionChange: false,
-                  clearSelectionWhenImeDisconnects: false,
                 ),
               ),
             ),
