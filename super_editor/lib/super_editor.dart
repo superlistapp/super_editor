@@ -19,6 +19,7 @@ export 'src/default_editor/attributions.dart';
 export 'src/default_editor/blockquote.dart';
 export 'src/default_editor/box_component.dart';
 export 'src/default_editor/common_editor_operations.dart';
+export 'src/default_editor/debug_visualization.dart';
 export 'src/default_editor/document_caret_overlay.dart';
 export 'src/default_editor/document_focus_and_selection_policies.dart';
 export 'src/infrastructure/document_gestures.dart';

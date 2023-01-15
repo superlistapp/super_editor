@@ -32,10 +32,17 @@ class _LoseFocusDemoState extends State<LoseFocusDemo> {
         children: [
           _buildTextField(),
           Expanded(
-            child: SuperEditor(
-              editor: _docEditor,
-              stylesheet: defaultStylesheet.copyWith(
-                documentPadding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),
+            child: SuperEditorDebugVisuals(
+              config: SuperEditorDebugVisualsConfig(
+                showFocus: true,
+                showImeConnection: true,
+              ),
+              child: SuperEditor(
+                editor: _docEditor,
+                inputSource: TextInputSource.ime,
+                stylesheet: defaultStylesheet.copyWith(
+                  documentPadding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),
+                ),
               ),
             ),
           ),
