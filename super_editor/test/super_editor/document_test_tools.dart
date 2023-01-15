@@ -92,9 +92,9 @@ class TestDocumentConfigurator {
   final TestDocumentContext? _existingContext;
   DocumentGestureMode? _gestureMode;
   TextInputSource? _inputSource;
+  SuperEditorSelectionPolicies? _selectionPolicies;
   SoftwareKeyboardController? _softwareKeyboardController;
-  bool _openKeyboardOnSelectionChange = true;
-  bool _clearSelectionWhenImeDisconnects = true;
+  SuperEditorImePolicies? _imePolicies;
   SuperEditorImeConfiguration? _imeConfiguration;
   DeltaTextInputClientDecorator? _imeOverrides;
   ThemeData? _appTheme;
@@ -142,23 +142,23 @@ class TestDocumentConfigurator {
     return this;
   }
 
+  /// Configures the [SuperEditor] with the given selection [policies], which dictate the interactions
+  /// between selection and other details, such as focus change.
+  TestDocumentConfigurator withSelectionPolicies(SuperEditorSelectionPolicies policies) {
+    _selectionPolicies = policies;
+    return this;
+  }
+
   /// Configures the [SuperEditor]'s [SoftwareKeyboardController].
   TestDocumentConfigurator withSoftwareKeyboardController(SoftwareKeyboardController controller) {
     _softwareKeyboardController = controller;
     return this;
   }
 
-  /// Configures the [SuperEditor] to automatically open the software keyboard when
-  /// the selection changes, or not.
-  TestDocumentConfigurator withOpenKeyboardOnSelectionChange(bool openKeyboardOnSelectionChange) {
-    _openKeyboardOnSelectionChange = openKeyboardOnSelectionChange;
-    return this;
-  }
-
-  /// Configures the [SuperEditor] to automatically clear the document selection when
-  /// the connection to the platform IME is closed, or not.
-  TestDocumentConfigurator withClearSelectionWhenImeDisconnects(bool clearSelectionWhenImeDisconnects) {
-    _clearSelectionWhenImeDisconnects = clearSelectionWhenImeDisconnects;
+  /// Configures the [SuperEditor] with the given IME [policies], which dictate the interactions
+  /// between focus, selection, and the platform IME, including software keyborads on mobile.
+  TestDocumentConfigurator withImePolicies(SuperEditorImePolicies policies) {
+    _imePolicies = policies;
     return this;
   }
 
@@ -372,11 +372,9 @@ class TestDocumentConfigurator {
       composer: testDocumentContext.editContext.composer,
       focusNode: testDocumentContext.focusNode,
       inputSource: _inputSource,
+      selectionPolicies: _selectionPolicies ?? const SuperEditorSelectionPolicies(),
       softwareKeyboardController: _softwareKeyboardController,
-      imePolicies: SuperEditorImePolicies(
-        openKeyboardOnSelectionChange: _openKeyboardOnSelectionChange,
-        clearSelectionWhenImeDisconnects: _clearSelectionWhenImeDisconnects,
-      ),
+      imePolicies: _imePolicies ?? const SuperEditorImePolicies(),
       imeConfiguration: _imeConfiguration ?? const SuperEditorImeConfiguration(),
       imeOverrides: _imeOverrides,
       gestureMode: _gestureMode,

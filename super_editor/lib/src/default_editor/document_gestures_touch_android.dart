@@ -1,12 +1,11 @@
 import 'dart:math';
 
-import 'package:flutter/material.dart' hide ListenableBuilder;
+import 'package:flutter/material.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
-import 'package:super_editor/src/document_operations/selection_operations.dart';
-import 'package:super_editor/src/default_editor/document_selection_on_focus_mixin.dart';
 import 'package:super_editor/src/default_editor/text_tools.dart';
+import 'package:super_editor/src/document_operations/selection_operations.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/blinking_caret.dart';
@@ -85,7 +84,7 @@ class AndroidDocumentTouchInteractor extends StatefulWidget {
 }
 
 class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInteractor>
-    with WidgetsBindingObserver, SingleTickerProviderStateMixin, DocumentSelectionOnFocusMixin {
+    with WidgetsBindingObserver, SingleTickerProviderStateMixin {
   // ScrollController used when this interactor installs its own Scrollable.
   // The alternative case is the one in which this interactor defers to an
   // ancestor scrollable.
@@ -162,12 +161,6 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     widget.document.addListener(_onDocumentChange);
     widget.selection.addListener(_onSelectionChange);
 
-    startSyncingSelectionWithFocus(
-      focusNode: widget.focusNode,
-      getDocumentLayout: widget.getDocumentLayout,
-      selection: widget.selection,
-    );
-
     // If we already have a selection, we need to display the caret.
     if (widget.selection.value != null) {
       _onSelectionChange();
@@ -200,7 +193,6 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     if (widget.focusNode != oldWidget.focusNode) {
       oldWidget.focusNode.removeListener(_onFocusChange);
       widget.focusNode.addListener(_onFocusChange);
-      onFocusNodeReplaced(widget.focusNode);
     }
 
     if (widget.document != oldWidget.document) {
@@ -211,16 +203,11 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     if (widget.selection != oldWidget.selection) {
       oldWidget.selection.removeListener(_onSelectionChange);
       widget.selection.addListener(_onSelectionChange);
-      onDocumentSelectionNotifierReplaced(widget.selection);
 
       // Selection has changed, we need to update the caret.
       if (widget.selection.value != oldWidget.selection.value) {
         _onSelectionChange();
       }
-    }
-
-    if (widget.getDocumentLayout != oldWidget.getDocumentLayout) {
-      onDocumentLayoutResolverReplaced(widget.getDocumentLayout);
     }
 
     if (widget.overlayController != oldWidget.overlayController) {
@@ -280,8 +267,6 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     widget.focusNode.removeListener(_onFocusChange);
 
     _handleAutoScrolling.dispose();
-
-    stopSyncingSelectionWithFocus();
 
     super.dispose();
   }

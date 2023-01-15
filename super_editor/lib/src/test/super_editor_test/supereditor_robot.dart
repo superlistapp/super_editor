@@ -219,8 +219,11 @@ extension SuperEditorRobot on WidgetTester {
 
   /// Types the given [text] into a [SuperEditor] by simulating IME text deltas from
   /// the platform.
-  Future<void> typeImeText(String text) async {
-    await ime.typeText(text, getter: imeClientGetter);
+  ///
+  /// Provide an [imeOwnerFinder] if there are multiple [ImeOwner]s in the current
+  /// widget tree.
+  Future<void> typeImeText(String text, [Finder? imeOwnerFinder]) async {
+    await ime.typeText(text, getter: () => imeClientGetter(imeOwnerFinder));
   }
 
   DocumentLayout _findDocumentLayout([Finder? superEditorFinder]) {

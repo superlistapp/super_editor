@@ -5,9 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
-import 'package:super_editor/src/document_operations/selection_operations.dart';
-import 'package:super_editor/src/default_editor/document_selection_on_focus_mixin.dart';
 import 'package:super_editor/src/default_editor/text_tools.dart';
+import 'package:super_editor/src/document_operations/selection_operations.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
@@ -85,7 +84,7 @@ class IOSDocumentTouchInteractor extends StatefulWidget {
 }
 
 class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
-    with WidgetsBindingObserver, SingleTickerProviderStateMixin, DocumentSelectionOnFocusMixin {
+    with WidgetsBindingObserver, SingleTickerProviderStateMixin {
   // ScrollController used when this interactor installs its own Scrollable.
   // The alternative case is the one in which this interactor defers to an
   // ancestor scrollable.
@@ -174,12 +173,6 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     widget.document.addListener(_onDocumentChange);
     widget.selection.addListener(_onSelectionChange);
 
-    startSyncingSelectionWithFocus(
-      focusNode: widget.focusNode,
-      getDocumentLayout: widget.getDocumentLayout,
-      selection: widget.selection,
-    );
-
     // If we already have a selection, we need to display the caret.
     if (widget.selection.value != null) {
       _onSelectionChange();
@@ -219,7 +212,6 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     if (widget.focusNode != oldWidget.focusNode) {
       oldWidget.focusNode.removeListener(_onFocusChange);
       widget.focusNode.addListener(_onFocusChange);
-      onFocusNodeReplaced(widget.focusNode);
     }
 
     if (widget.document != oldWidget.document) {
@@ -230,7 +222,6 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     if (widget.selection != oldWidget.selection) {
       oldWidget.selection.removeListener(_onSelectionChange);
       widget.selection.addListener(_onSelectionChange);
-      onDocumentSelectionNotifierReplaced(widget.selection);
 
       // Selection has changed, we need to update the caret.
       if (widget.selection.value != oldWidget.selection.value) {
@@ -241,10 +232,6 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     if (widget.overlayController != oldWidget.overlayController) {
       _overlayController = widget.overlayController ?? MagnifierAndToolbarController();
       _editingController.overlayController = _overlayController;
-    }
-
-    if (widget.getDocumentLayout != oldWidget.getDocumentLayout) {
-      onDocumentLayoutResolverReplaced(widget.getDocumentLayout);
     }
   }
 
@@ -288,8 +275,6 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     _handleAutoScrolling.dispose();
 
     widget.focusNode.removeListener(_onFocusChange);
-
-    stopSyncingSelectionWithFocus();
 
     super.dispose();
   }

@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
+import 'package:super_editor/src/infrastructure/ime_input_owner.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/android/android_textfield.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/desktop/desktop_textfield.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/attributed_text_editing_controller.dart';
@@ -174,7 +175,7 @@ class SuperTextField extends StatefulWidget {
   State<SuperTextField> createState() => SuperTextFieldState();
 }
 
-class SuperTextFieldState extends State<SuperTextField> {
+class SuperTextFieldState extends State<SuperTextField> implements ImeInputOwner {
   final _platformFieldKey = GlobalKey();
   late ImeAttributedTextEditingController _controller;
 
@@ -207,6 +208,20 @@ class SuperTextFieldState extends State<SuperTextField> {
 
   @visibleForTesting
   ProseTextLayout get textLayout => (_platformFieldKey.currentState as ProseTextBlock).textLayout;
+
+  @visibleForTesting
+  @override
+  DeltaTextInputClient get imeClient {
+    switch (_configuration) {
+      case SuperTextFieldPlatformConfiguration.desktop:
+        // ignore: invalid_use_of_visible_for_testing_member
+        return (_platformFieldKey.currentState as SuperDesktopTextFieldState).imeClient;
+      case SuperTextFieldPlatformConfiguration.android:
+        return (_platformFieldKey.currentState as SuperAndroidTextFieldState).imeClient;
+      case SuperTextFieldPlatformConfiguration.iOS:
+        return (_platformFieldKey.currentState as SuperIOSTextFieldState).imeClient;
+    }
+  }
 
   bool get _isMultiline => (widget.minLines ?? 1) != 1 || widget.maxLines != 1;
 

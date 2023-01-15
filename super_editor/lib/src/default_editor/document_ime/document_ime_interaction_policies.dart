@@ -1,32 +1,48 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/flutter_scheduler.dart';
 
-/// Widget that watches a [FocusNode] and closes the [imeConnection] when
-/// the [FocusNode] loses focus.
+/// Widget that opens and closes an [imeConnection] based on the [focusNode] gaining
+/// and losing primary focus.
 class ImeFocusPolicy extends StatefulWidget {
   const ImeFocusPolicy({
     Key? key,
     this.focusNode,
-    this.closeImeOnFocusLost = true,
     required this.imeConnection,
+    required this.imeClientFactory,
+    required this.imeConfiguration,
+    this.openImeOnPrimaryFocusGain = true,
+    this.closeImeOnPrimaryFocusLost = true,
     required this.child,
   }) : super(key: key);
 
   /// The document editor's [FocusNode], which is watched for changes based
-  /// on this widget's [closeImeOnFocusLost] policy.
+  /// on this widget's [closeImeOnPrimaryFocusLost] policy.
   final FocusNode? focusNode;
 
-  /// Whether to close the [imeConnection] when the [FocusNode] loses focus.
+  /// The connection between this app and the platform Input Method Engine (IME).
+  final ValueNotifier<TextInputConnection?> imeConnection;
+
+  /// Factory method that creates a [TextInputClient], which is used to
+  /// attach to the platform IME based on this widget's policy.
+  final TextInputClient Function() imeClientFactory;
+
+  /// The desired [TextInputConfiguration] for the IME connection, used
+  /// when this widget attaches to the platform IME based on this widget's
+  /// policy.
+  final TextInputConfiguration imeConfiguration;
+
+  /// Whether to open an [imeConnection] when the [FocusNode] gains primary focus.
   ///
   /// Defaults to `true`.
-  final bool closeImeOnFocusLost;
+  final bool openImeOnPrimaryFocusGain;
 
-  /// The connection between this app and the platform Input Method Engine (IME).
-  final ValueListenable<TextInputConnection?> imeConnection;
+  /// Whether to close the [imeConnection] when the [FocusNode] loses primary focus.
+  ///
+  /// Defaults to `true`.
+  final bool closeImeOnPrimaryFocusLost;
 
   final Widget child;
 
@@ -62,11 +78,29 @@ class _ImeFocusPolicyState extends State<ImeFocusPolicy> {
   }
 
   void _onFocusChange() {
-    editorImeLog.finer(
-        "[${widget.runtimeType}] - onFocusChange(). Has focus: ${_focusNode.hasFocus}. Close IME policy enabled: ${widget.closeImeOnFocusLost}");
-    if (!_focusNode.hasFocus && widget.closeImeOnFocusLost) {
-      editorImeLog.info("[${widget.runtimeType}] - Document editor lost focus. Closing the IME connection.");
+    if (_focusNode.hasPrimaryFocus &&
+        widget.openImeOnPrimaryFocusGain &&
+        (widget.imeConnection.value == null || !widget.imeConnection.value!.attached)) {
+      editorPoliciesLog
+          .info("[${widget.runtimeType}] - Document editor gained primary focus. Opening an IME connection.");
+      WidgetsBinding.instance.runAsSoonAsPossible(() {
+        if (!mounted) {
+          return;
+        }
+
+        editorImeLog.finer("[${widget.runtimeType}] - creating new TextInputConnection to IME");
+        widget.imeConnection.value = TextInput.attach(
+          widget.imeClientFactory(),
+          widget.imeConfiguration,
+        )..show();
+      }, debugLabel: 'Open IME Connection on Primary Focus Change');
+    }
+
+    if (!_focusNode.hasPrimaryFocus && widget.closeImeOnPrimaryFocusLost) {
+      editorPoliciesLog
+          .info("[${widget.runtimeType}] - Document editor lost primary focus. Closing the IME connection.");
       widget.imeConnection.value?.close();
+      widget.imeConnection.value = null;
     }
   }
 
@@ -76,14 +110,13 @@ class _ImeFocusPolicyState extends State<ImeFocusPolicy> {
   }
 }
 
-/// Widget that enforces policies between IME connections and document selections.
+/// Widget that enforces policies between IME connections, focus, and document selections.
 ///
 /// This widget can automatically open and close the software keyboard when the document
 /// selection changes, such as when the user places the caret in the middle of a
 /// paragraph.
 ///
-/// This widget can automatically remove the document selection when the IME
-/// connection closes.
+/// This widget can automatically remove the document selection when the editor loses focus.
 class DocumentSelectionOpenAndCloseImePolicy extends StatefulWidget {
   const DocumentSelectionOpenAndCloseImePolicy({
     Key? key,
@@ -95,13 +128,18 @@ class DocumentSelectionOpenAndCloseImePolicy extends StatefulWidget {
     required this.imeConfiguration,
     this.openKeyboardOnSelectionChange = true,
     this.closeKeyboardOnSelectionLost = true,
-    this.clearSelectionWhenImeDisconnects = true,
+    this.clearSelectionWhenEditorLosesFocus = true,
+    this.clearSelectionWhenImeConnectionCloses = true,
     required this.child,
   }) : super(key: key);
 
   /// The document editor's [FocusNode].
   ///
-  /// When this widget closes the IME connection, it unfocuses this [focusNode].
+  /// Focus plays a role in multiple policies:
+  ///
+  ///  * When focus is lost, this widget may clear the editor's selection.
+  ///
+  ///  * When this widget closes the IME connection, it unfocuses this [focusNode].
   final FocusNode focusNode;
 
   /// Whether this widget's policies should be enabled.
@@ -109,7 +147,7 @@ class DocumentSelectionOpenAndCloseImePolicy extends StatefulWidget {
   /// When `false`, this widget does nothing.
   final bool isEnabled;
 
-  /// Notifies this widget of changes to a document's selection.
+  /// The document editor's current selection.
   final ValueNotifier<DocumentSelection?> selection;
 
   /// The current connection from this app to the platform IME.
@@ -140,20 +178,28 @@ class DocumentSelectionOpenAndCloseImePolicy extends StatefulWidget {
   /// apply IME input when there's no editor selection.
   final bool closeKeyboardOnSelectionLost;
 
-  /// Whether the document's selection should be cleared (removed) when the
-  /// IME disconnects, i.e., the software keyboard closes.
+  /// Whether the document's selection should be removed when the editor loses
+  /// all focus (not just primary focus).
   ///
-  /// Typically, on devices with software keyboards, the keyboard is critical
-  /// to all document editing. In such cases, it should be reasonable to clear
-  /// the selection when the keyboard closes.
+  /// If `true`, when focus moves to a different subtree, such as a popup text
+  /// field, or a button somewhere else on the screen, the editor will remove
+  /// its selection. When focus returns to the editor, the previous selection can
+  /// be restored, but that's controlled by other policies.
   ///
-  /// Some apps include editing features that can operate when the keyboard is
-  /// closed. For example, some apps display special editing options behind the
-  /// keyboard. The user closes the keyboard, uses the special options, and then
-  /// re-opens the keyboard. In this case, the document selection **shouldn't**
-  /// be cleared when the keyboard closes, because the special options behind the
-  /// keyboard still need to operate on that selection.
-  final bool clearSelectionWhenImeDisconnects;
+  /// If `false`, the editor will retain its selection, including a visual caret
+  /// and selected content, even when the editor doesn't have any focus, and can't
+  /// process any input.
+  final bool clearSelectionWhenEditorLosesFocus;
+
+  /// Whether the editor's selection should be removed when the editor closes or loses
+  /// its IME connection.
+  ///
+  /// Defaults to `true`.
+  ///
+  /// Apps that include a custom input mode, such as an editing panel that sometimes
+  /// replaces the software keyboard, should set this to `false` and instead control the
+  /// IME connection manually.
+  final bool clearSelectionWhenImeConnectionCloses;
 
   final Widget child;
 
@@ -171,6 +217,8 @@ class _DocumentSelectionOpenAndCloseImePolicyState extends State<DocumentSelecti
     _wasAttached = widget.imeConnection.value?.attached ?? false;
     widget.imeConnection.addListener(_onConnectionChange);
 
+    widget.focusNode.addListener(_onFocusChange);
+
     widget.selection.addListener(_onSelectionChange);
     if (widget.selection.value != null) {
       _onSelectionChange();
@@ -181,6 +229,12 @@ class _DocumentSelectionOpenAndCloseImePolicyState extends State<DocumentSelecti
   @override
   void didUpdateWidget(DocumentSelectionOpenAndCloseImePolicy oldWidget) {
     super.didUpdateWidget(oldWidget);
+
+    if (widget.focusNode != oldWidget.focusNode) {
+      oldWidget.focusNode.removeListener(_onFocusChange);
+      widget.focusNode.addListener(_onFocusChange);
+      _onFocusChange();
+    }
 
     if (widget.selection != oldWidget.selection) {
       oldWidget.selection.removeListener(_onSelectionChange);
@@ -207,14 +261,24 @@ class _DocumentSelectionOpenAndCloseImePolicyState extends State<DocumentSelecti
 
   @override
   void dispose() {
+    widget.focusNode.removeListener(_onFocusChange);
     widget.selection.removeListener(_onSelectionChange);
     widget.imeConnection.removeListener(_onConnectionChange);
     super.dispose();
   }
 
+  void _onFocusChange() {
+    if (!widget.isEnabled) {
+      return;
+    }
+
+    if (!widget.focusNode.hasFocus && widget.clearSelectionWhenEditorLosesFocus) {
+      editorPoliciesLog.info("[${widget.runtimeType}] - clearing editor selection because the editor lost all focus");
+      widget.selection.value = null;
+    }
+  }
+
   void _onSelectionChange() {
-    editorImeLog.finer(
-        "[${widget.runtimeType}] onSelectionChange() - widget enabled: ${widget.isEnabled}, open keyboard on selection enabled: ${widget.openKeyboardOnSelectionChange}, selection: ${widget.selection.value}");
     if (!widget.isEnabled) {
       return;
     }
@@ -222,15 +286,15 @@ class _DocumentSelectionOpenAndCloseImePolicyState extends State<DocumentSelecti
     if (widget.selection.value != null && widget.openKeyboardOnSelectionChange) {
       // There's a new document selection, and our policy wants the keyboard to be
       // displayed whenever the selection changes. Show the keyboard.
-      editorImeLog.info("[${widget.runtimeType}] - opening the IME keyboard because the document selection changed");
-
       if (widget.imeConnection.value == null || !widget.imeConnection.value!.attached) {
         WidgetsBinding.instance.runAsSoonAsPossible(() {
           if (!mounted) {
             return;
           }
 
-          editorImeLog.finer("[${widget.runtimeType}] - creating new TextInputConnection to IME");
+          editorPoliciesLog
+              .info("[${widget.runtimeType}] - opening the IME keyboard because the document selection changed");
+          editorImeConnectionLog.finer("[${widget.runtimeType}] - creating new TextInputConnection to IME");
           widget.imeConnection.value = TextInput.attach(
             widget.imeClientFactory(),
             widget.imeConfiguration,
@@ -244,7 +308,7 @@ class _DocumentSelectionOpenAndCloseImePolicyState extends State<DocumentSelecti
         widget.closeKeyboardOnSelectionLost) {
       // There's no document selection, and our policy wants the keyboard to be
       // closed whenever the editor loses its selection. Close the keyboard.
-      editorImeLog
+      editorPoliciesLog
           .info("[${widget.runtimeType}] - closing the IME keyboard because the document selection was cleared");
       widget.imeConnection.value!.close();
     }
@@ -255,26 +319,51 @@ class _DocumentSelectionOpenAndCloseImePolicyState extends State<DocumentSelecti
       return;
     }
 
-    editorImeLog.finer(
-        "[${widget.runtimeType}] onConnectionChange() - widget enabled: ${widget.isEnabled}, clear selection when IME disconnects enabled: ${widget.clearSelectionWhenImeDisconnects}, new connection: ${widget.imeConnection.value}, was attached before: $_wasAttached");
-    if (widget.isEnabled &&
-        widget.clearSelectionWhenImeDisconnects &&
-        _wasAttached &&
-        !(widget.imeConnection.value?.attached ?? false)) {
-      // The IME connection closed and our policy wants us to clear the document
-      // selection when that happens.
-      editorImeLog.info("[${widget.runtimeType}] - clearing document selection because the IME closed");
-      widget.selection.value = null;
-
-      // If we clear SuperEditor's selection, but leave SuperEditor focused, then
-      // SuperEditor will automatically place the caret at the end of the document.
-      // This is because SuperEditor always expects a place for text input when it
-      // has focus. To prevent this from happening, we explicitly remove focus
-      // from SuperEditor.
-      widget.focusNode.unfocus();
-    }
+    _clearSelectionIfDesired();
 
     _wasAttached = widget.imeConnection.value?.attached ?? false;
+  }
+
+  void _clearSelectionIfDesired() {
+    if (!widget.isEnabled) {
+      // None of this widget's policies are activated.
+      return;
+    }
+
+    if (!widget.clearSelectionWhenImeConnectionCloses) {
+      // This policy isn't activated.
+      return;
+    }
+
+    if (!_wasAttached || (widget.imeConnection.value?.attached ?? false)) {
+      // We didn't go from closed to open. Our policy doesn't apply.
+
+      return;
+    }
+
+    final hasNonPrimaryFocus = widget.focusNode.hasFocus && !widget.focusNode.hasPrimaryFocus;
+    if (hasNonPrimaryFocus) {
+      // We don't want to mess with selection when the editor has non-primary focus. Non-primary
+      // focus means that the editor is in the focus path, but isn't receiving input. The editor
+      // might currently be deferring to something like a URL toolbar, where the user is typing
+      // a URL. The user expects the editor to keep its current selection while they type the URL.
+      editorPoliciesLog.info(
+          "[${widget.runtimeType}] - policy wants to clear selection because IME closed, but the editor has non-primary focus, so we aren't clearing the selection");
+      return;
+    }
+
+    // The IME connection closed and our policy wants us to clear the document
+    // selection when that happens.
+    editorPoliciesLog.info(
+        "[${widget.runtimeType}] - clearing document selection because the IME closed and the editor didn't have non-primary focus");
+    widget.selection.value = null;
+
+    // If we clear SuperEditor's selection, but leave SuperEditor with primary focus,
+    // then SuperEditor will automatically place the caret at the end of the document.
+    // This is because SuperEditor always expects a place for text input when it
+    // has primary focus. To prevent this from happening, we explicitly remove focus
+    // from SuperEditor.
+    widget.focusNode.unfocus();
   }
 
   @override
