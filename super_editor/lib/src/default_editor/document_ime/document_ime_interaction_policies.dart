@@ -283,7 +283,7 @@ class _DocumentSelectionOpenAndCloseImePolicyState extends State<DocumentSelecti
       return;
     }
 
-    if (widget.selection.value != null && widget.openKeyboardOnSelectionChange) {
+    if (widget.selection.value != null && widget.focusNode.hasPrimaryFocus && widget.openKeyboardOnSelectionChange) {
       // There's a new document selection, and our policy wants the keyboard to be
       // displayed whenever the selection changes. Show the keyboard.
       if (widget.imeConnection.value == null || !widget.imeConnection.value!.attached) {
