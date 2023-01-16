@@ -114,9 +114,11 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
   final _imeConnection = ValueNotifier<TextInputConnection?>(null);
   late TextInputConfiguration _textInputConfiguration;
   late final DocumentImeInputClient _documentImeClient;
-  // The _imeClient is either a direct reference to _documentImeClient, or
-  // _imeClient is a decoration around _documentImeClient. See widget.imeOverrides.
-  late DeltaTextInputClient _imeClient;
+  // The _imeClient is setup in one of two ways at any given time:
+  //   _imeClient -> _documentImeClient, or
+  //   _imeClient -> widget.imeOverrides -> _documentImeClient
+  // See widget.imeOverrides for more info.
+  late DeltaTextInputClientDecorator _imeClient;
   // _documentImeConnection functions as both a TextInputConnection and a
   // DeltaTextInputClient. This is required for a very specific reason that
   // occurs in specific situations. To understand why we need it, check the
@@ -142,11 +144,8 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
       floatingCursorController: widget.floatingCursorController,
     );
 
-    if (widget.imeOverrides != null) {
-      _imeClient = widget.imeOverrides!;
-    } else {
-      _imeClient = _documentImeClient;
-    }
+    _imeClient = DeltaTextInputClientDecorator();
+    _configureImeClientDecorators();
 
     _imeConnection.addListener(_onImeConnectionChange);
 
@@ -166,13 +165,7 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
 
     if (widget.imeOverrides != oldWidget.imeOverrides) {
       oldWidget.imeOverrides?.client = null;
-      widget.imeOverrides?.client = _documentImeClient;
-
-      if (widget.imeOverrides != null) {
-        _imeClient = widget.imeOverrides!;
-      } else {
-        _imeClient = _documentImeClient;
-      }
+      _configureImeClientDecorators();
     }
   }
 
@@ -180,6 +173,9 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
   void dispose() {
     _imeConnection.removeListener(_onImeConnectionChange);
     _imeConnection.value?.close();
+
+    widget.imeOverrides?.client = null;
+    _imeClient.client = null;
 
     if (widget.focusNode == null) {
       _focusNode.dispose();
@@ -200,8 +196,18 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
       _documentImeConnection.value = null;
       widget.imeOverrides?.client = null;
     } else {
+      _configureImeClientDecorators();
       _documentImeConnection.value = _documentImeClient;
     }
+  }
+
+  void _configureImeClientDecorators() {
+    // If we were given IME overrides, use those overrides to decorate our _documentImeClient.
+    widget.imeOverrides?.client = _documentImeClient;
+
+    // If we were given IME overrides, point our primary IME client to that client. Otherwise,
+    // point our primary IME client directly towards the _documentImeClient.
+    _imeClient.client = widget.imeOverrides ?? _documentImeClient;
   }
 
   @override
