@@ -26,7 +26,7 @@ class TextDeltasDocumentEditor {
   void applyDeltas(List<TextEditingDelta> textEditingDeltas) {
     editorImeLog.info("Applying ${textEditingDeltas.length} IME deltas to document");
 
-    editorImeLog.fine("Serializing document to perform IME operation");
+    editorImeLog.fine("Serializing document to perform IME operations");
     final serializedDocBeforeDelta = DocumentImeSerializer(
       editor.document,
       selection.value!,
@@ -35,6 +35,7 @@ class TextDeltasDocumentEditor {
 
     // Apply deltas to the document.
     for (final delta in textEditingDeltas) {
+      editorImeLog.info("---------------------------------------------------");
       editorImeLog.info("Applying delta: $delta");
       if (delta is TextEditingDeltaInsertion) {
         _applyInsertion(delta, serializedDocBeforeDelta);
@@ -47,6 +48,7 @@ class TextDeltasDocumentEditor {
       } else {
         editorImeLog.shout("Unknown IME delta type: ${delta.runtimeType}");
       }
+      editorImeLog.info("---------------------------------------------------");
     }
 
     // Update the editor's IME composing region based on the composing region
