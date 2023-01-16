@@ -142,7 +142,7 @@ class DocumentImeSerializer {
         // for an empty document selection.
         editorImeLog.fine("The IME only selected invisible characters. Returning a null document selection.");
         return null;
-      } else {
+      } else if (imeSelection.start < _prependedPlaceholder.length){
         // The IME is trying to select some invisible characters and some real
         // characters. Remove the invisible characters from the IME selection before
         // converting it to a document selection.
@@ -152,9 +152,11 @@ class DocumentImeSerializer {
           extentOffset: max(imeSelection.extentOffset, _prependedPlaceholder.length),
         );
         editorImeLog.fine("Adjusted IME selection is: $imeSelection");
+      } else {
+        editorImeLog.fine("The IME only selected visible characters. No adjustment necessary.");
       }
     } else {
-      editorImeLog.fine("The IME only selected visible characters. No adjustment necessary.");
+      editorImeLog.fine("The serialization doesn't have any invisible characters. No adjustment necessary.");
     }
 
     return DocumentSelection(

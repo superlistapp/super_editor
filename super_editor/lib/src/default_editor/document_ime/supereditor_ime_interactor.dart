@@ -139,6 +139,8 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
       commonOps: widget.editContext.commonOps,
     );
     _documentImeClient = DocumentImeInputClient(
+      selection: widget.editContext.composer.selectionNotifier,
+      composingRegion: widget.editContext.composer.composingRegion,
       textDeltasDocumentEditor: _textDeltasDocumentEditor,
       imeConnection: _imeConnection,
       floatingCursorController: widget.floatingCursorController,
@@ -176,6 +178,7 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
 
     widget.imeOverrides?.client = null;
     _imeClient.client = null;
+    _documentImeClient.dispose();
 
     if (widget.focusNode == null) {
       _focusNode.dispose();
@@ -238,13 +241,7 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
               imeConnection: _imeConnection,
               createImeClient: () => _documentImeClient,
               createImeConfiguration: () => _textInputConfiguration,
-              child: DocumentToImeSynchronizer(
-                document: widget.editContext.editor.document,
-                selection: widget.editContext.composer.selectionNotifier,
-                composingRegion: widget.editContext.composer.composingRegion,
-                imeConnection: _documentImeConnection,
-                child: widget.child,
-              ),
+              child: widget.child,
             ),
           ),
         ),
