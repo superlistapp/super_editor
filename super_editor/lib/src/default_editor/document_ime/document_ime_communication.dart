@@ -4,7 +4,6 @@ import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
-import 'package:super_editor/src/infrastructure/flutter_scheduler.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
 
 import 'document_delta_editing.dart';
@@ -14,23 +13,39 @@ import 'ime_decoration.dart';
 /// Sends messages to, and receives messages from, the platform Input Method Engine (IME),
 /// for the purpose of document editing.
 
-/// Widget that keeps a document, selection, and composing region synchronized
-/// with the value in the platform Input Method Engine (IME).
+/// A [TextInputClient] that applies IME operations to a [Document].
 ///
-/// When the [document], [selection], or [composingRegion] changes, are serialized
-/// and sent to the IME.
-class DocumentToImeSynchronizer extends StatefulWidget {
-  const DocumentToImeSynchronizer({
-    Key? key,
-    required this.document,
+/// Ideally, this class *wouldn't* implement [TextInputConnection], but there are situations
+/// where this class needs to care about what's sent to the IME. For more information, see
+/// the [setEditingState] override in this class.
+class DocumentImeInputClient extends TextInputConnectionDecorator with TextInputClient, DeltaTextInputClient {
+  DocumentImeInputClient({
     required this.selection,
     required this.composingRegion,
+    required this.textDeltasDocumentEditor,
     required this.imeConnection,
-    required this.child,
-  }) : super(key: key);
+    FloatingCursorController? floatingCursorController,
+  }) {
+    // Note: we don't listen to document changes because we expect that any change during IME
+    // editing will also include a selection change. If we listen to documents and selections, then
+    // we'll attempt to serialize the document change before the selection change is made. This
+    // results in a new document with an old selection and blows up the serializer. By listening
+    // only to selection, we void this race condition.
+    selection.addListener(_onContentChange);
+    composingRegion.addListener(_onContentChange);
+    imeConnection.addListener(_onImeConnectionChange);
+    _floatingCursorController = floatingCursorController;
 
-  /// [Document] whose content is serialized and sent to the platform IME.
-  final Document document;
+    if (attached) {
+      _sendDocumentToIme();
+    }
+  }
+
+  void dispose() {
+    selection.removeListener(_onContentChange);
+    composingRegion.removeListener(_onContentChange);
+    imeConnection.removeListener(_onImeConnectionChange);
+  }
 
   /// The document's current selection.
   final ValueNotifier<DocumentSelection?> selection;
@@ -40,188 +55,6 @@ class DocumentToImeSynchronizer extends StatefulWidget {
   /// autocorrection.
   final ValueListenable<DocumentRange?> composingRegion;
 
-  /// A connection to the platform IME, which might be open or closed.
-  ///
-  /// For Flutter test timing purposes, it's critical that [imeConnection] be
-  /// a [ValueListenable]. By notifying this widget through a [ValueListenable],
-  /// this widget is able to talk to the IME immediately, without waiting for
-  /// another tree pump, i.e., `didUpdateWidget()`. In other words, by using
-  /// a [ValueListenable] instead of a raw [TextInputConnection], this widget
-  /// can setup the initial IME content on the very first `pumpWidget()` within
-  /// a test, without requiring additional `pump()`s. Existing tests depend on
-  /// this fact.
-  final ValueListenable<TextInputConnection?> imeConnection;
-
-  final Widget child;
-
-  @override
-  State<DocumentToImeSynchronizer> createState() => _DocumentToImeSynchronizerState();
-}
-
-class _DocumentToImeSynchronizerState extends State<DocumentToImeSynchronizer> {
-  bool _hasSentInitialImeValue = false;
-  bool _needsSync = false;
-
-  @override
-  void initState() {
-    super.initState();
-
-    widget.document.addListener(_onDocumentChange);
-    widget.selection.addListener(_onSelectionChange);
-    widget.imeConnection.addListener(_onImeConnectionChange);
-
-    if (widget.selection.value != null) {
-      _sendDocumentToIme();
-    }
-  }
-
-  @override
-  void didUpdateWidget(DocumentToImeSynchronizer oldWidget) {
-    super.didUpdateWidget(oldWidget);
-
-    if (widget.document != oldWidget.document) {
-      oldWidget.document.removeListener(_onDocumentChange);
-      widget.document.addListener(_onDocumentChange);
-      _sendDocumentToImeOnNextFrame();
-    }
-
-    if (widget.selection != oldWidget.selection) {
-      oldWidget.selection.removeListener(_onSelectionChange);
-      widget.selection.addListener(_onSelectionChange);
-      _onSelectionChange();
-    }
-
-    if (widget.imeConnection != oldWidget.imeConnection) {
-      oldWidget.imeConnection.removeListener(_onImeConnectionChange);
-      widget.imeConnection.addListener(_onImeConnectionChange);
-      _onImeConnectionChange();
-    }
-  }
-
-  @override
-  void dispose() {
-    widget.document.removeListener(_onDocumentChange);
-    widget.selection.removeListener(_onSelectionChange);
-    widget.imeConnection.removeListener(_onImeConnectionChange);
-    super.dispose();
-  }
-
-  void _onDocumentChange() {
-    editorImeLog.finer(
-        "[DocumentToImeSynchronizer] - document change. Sending document and selection to IME on the next frame.");
-    _sendDocumentToImeOnNextFrame();
-  }
-
-  void _onSelectionChange() {
-    if (widget.selection.value != null) {
-      editorImeLog.finer(
-          "[DocumentToImeSynchronizer] - selection change. Sending document and selection to IME on the next frame.");
-      _sendDocumentToImeOnNextFrame();
-    }
-  }
-
-  void _onImeConnectionChange() {
-    if (widget.imeConnection.value != null && widget.imeConnection.value!.attached) {
-      // The IME just connected. Send over our current document and selection.
-      editorImeLog.fine(
-          "[DocumentToImeSynchronizer] - An IME connection was just opened. Sending current document and selection to IME.");
-      _sendDocumentToImeOnNextFrame();
-    }
-  }
-
-  void _sendDocumentToImeOnNextFrame() {
-    if (!_hasSentInitialImeValue) {
-      // If we haven't sent any version of the document to the IME, yet, then
-      // go ahead and greedily send the current document and selection. This is
-      // important in tests because tests run a single `pump()` and expect the
-      // initial document to be in the IME already. If we wait another frame, then
-      // some tests will need to `pump()` a 2nd time, but those tests won't understand
-      // why they need to do that. We avoid that confusion by immediately sending
-      // the document to the IME for the first version of the document that we get.
-      WidgetsBinding.instance.runAsSoonAsPossible(_sendDocumentToIme);
-      return;
-    }
-
-    _needsSync = true;
-    WidgetsBinding.instance.scheduleFrameCallback((timeStamp) {
-      if (!mounted) {
-        // This widget is no longer in the tree. Assume that means we shouldn't
-        // talk to the IME, anymore.
-        return;
-      }
-
-      // Send the document to the IME so that we give the editing system an opportunity to
-      // make all desired changes. Otherwise, we might send the document and selection to
-      // the IME in the middle of an operation that's in an inconsistent state.
-      // TODO: When atomic commands are implemented, remove this frame callback.
-      if (!_needsSync) {
-        // We might get a bunch of change events, leading to a bunch of these post frame
-        // callbacks. We only want to sync one time. We track that with _needsSync.
-        return;
-      }
-
-      _needsSync = false;
-      _sendDocumentToIme();
-    });
-  }
-
-  void _sendDocumentToIme() {
-    editorImeLog.fine("[DocumentToImeSynchronizer] - Trying to send document to IME");
-    if (widget.imeConnection.value == null || !widget.imeConnection.value!.attached) {
-      editorImeLog.fine("[DocumentToImeSynchronizer] - Not connected to IME. Not sending document to IME.");
-      return;
-    }
-
-    if (widget.selection.value == null) {
-      // There's no selection, which means there's nothing to edit. Return.
-      editorImeLog.fine("[DocumentToImeSynchronizer] - There's no document selection. Not sending anything to IME.");
-      return;
-    }
-
-    editorImeLog.fine("[DocumentToImeSynchronizer] - Serializing and sending document and selection to IME");
-    editorImeLog.fine("[DocumentToImeSynchronizer] - Selection: ${widget.selection.value}");
-    editorImeLog.fine("[DocumentToImeSynchronizer] - Composing region: ${widget.composingRegion.value}");
-    final imeSerialization = DocumentImeSerializer(
-      widget.document,
-      widget.selection.value!,
-      widget.composingRegion.value,
-    );
-    editorImeLog
-        .fine("[DocumentToImeSynchronizer] - Adding invisible characters?: ${imeSerialization.didPrependPlaceholder}");
-    TextEditingValue textEditingValue = imeSerialization.toTextEditingValue();
-
-    editorImeLog.fine("[DocumentToImeSynchronizer] - Sending IME serialization:");
-    editorImeLog.fine("[DocumentToImeSynchronizer] - $textEditingValue");
-    widget.imeConnection.value!.setEditingState(textEditingValue);
-    editorImeLog.fine("[DocumentToImeSynchronizer] - Done sending document to IME");
-    _hasSentInitialImeValue = true;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return widget.child;
-  }
-}
-
-/// A [TextInputClient] that applies IME operations to a [Document].
-///
-/// Ideally, this class *wouldn't* implement [TextInputConnection], but there are situations
-/// where this class needs to care about what's sent to the IME. For more information, see
-/// the [setEditingState] override in this class.
-class DocumentImeInputClient extends TextInputConnectionDecorator with TextInputClient, DeltaTextInputClient {
-  DocumentImeInputClient({
-    required this.textDeltasDocumentEditor,
-    required this.imeConnection,
-    FloatingCursorController? floatingCursorController,
-  }) {
-    imeConnection.addListener(_onImeConnectionChange);
-    _floatingCursorController = floatingCursorController;
-  }
-
-  void dispose() {
-    imeConnection.removeListener(_onImeConnectionChange);
-  }
-
   final TextDeltasDocumentEditor textDeltasDocumentEditor;
 
   final ValueListenable<TextInputConnection?> imeConnection;
@@ -229,10 +62,20 @@ class DocumentImeInputClient extends TextInputConnectionDecorator with TextInput
   // TODO: get floating cursor out of here. Use a multi-client IME decorator to split responsibilities
   late FloatingCursorController? _floatingCursorController;
 
-  bool _hasOutstandingMutatingChanges = false;
+  void _onContentChange() {
+    if (_isApplyingDeltas) {
+      return;
+    }
+
+    _sendDocumentToIme();
+  }
 
   void _onImeConnectionChange() {
     client = imeConnection.value;
+
+    if (attached) {
+      _sendDocumentToIme();
+    }
   }
 
   /// Override on [TextInputConnection] base class.
@@ -248,8 +91,6 @@ class DocumentImeInputClient extends TextInputConnectionDecorator with TextInput
   /// areas of responsibility.
   @override
   void setEditingState(TextEditingValue newValue) {
-    _currentTextEditingValue = newValue;
-
     if (_isApplyingDeltas) {
       // We're in the middle of applying a series of text deltas. Don't
       // send any updates to the IME because it will conflict with the
@@ -258,17 +99,9 @@ class DocumentImeInputClient extends TextInputConnectionDecorator with TextInput
       return;
     }
 
-    if (newValue != _lastTextEditingValueSentToOs) {
-      editorImeLog.info("Sending new text editing value to OS: $_currentTextEditingValue");
-      _lastTextEditingValueSentToOs = _currentTextEditingValue;
-      imeConnection.value?.setEditingState(_currentTextEditingValue);
-    } else if (_hasOutstandingMutatingChanges) {
-      // We've been given a new IME value, and it's the same as our existing IME
-      // value. But, we also have outstanding mutating changes.
-      //
-      // We applied at least one delta that should have altered the content in
-      // the serialized IME value, but our local value before the edit is the same
-      // as the local value after the edit. Why is that, and what should we do?
+    if (newValue != _platformTextEditingValue) {
+      // We've been given a new IME value. We compare its value to _platformTextEditingValue
+      // instead of _currentTextEditingValue. Why is that?
       //
       // Sometimes the IME reports changes to us, but our document doesn't change
       // in ways that's reflected in the IME.
@@ -295,12 +128,14 @@ class DocumentImeInputClient extends TextInputConnectionDecorator with TextInput
       // sitting in the edit region.
       editorImeLog.fine(
           "Sending forceful update to IME because our local TextEditingValue didn't change, but the IME may have:");
-      editorImeLog.fine("$currentTextEditingValue");
-      imeConnection.value?.setEditingState(currentTextEditingValue);
-      _hasOutstandingMutatingChanges = false;
+      editorImeLog.fine("$newValue");
+      imeConnection.value?.setEditingState(newValue);
     } else {
       editorImeLog.fine("Ignoring new TextEditingValue because it's the same as the existing one: $newValue");
     }
+
+    _currentTextEditingValue = newValue;
+    _platformTextEditingValue = newValue;
   }
 
   @override
@@ -309,7 +144,17 @@ class DocumentImeInputClient extends TextInputConnectionDecorator with TextInput
   @override
   TextEditingValue get currentTextEditingValue => _currentTextEditingValue;
   TextEditingValue _currentTextEditingValue = const TextEditingValue();
-  TextEditingValue? _lastTextEditingValueSentToOs;
+
+  // What the platform IME *thinks* the current value is.
+  TextEditingValue _platformTextEditingValue = const TextEditingValue();
+
+  void _updatePlatformImeValueWithDeltas(List<TextEditingDelta> textEditingDeltas) {
+    // Apply the deltas to the previous platform-side IME value, to find out
+    // what the platform thinks the IME value is, right now.
+    for (final delta in textEditingDeltas) {
+      delta.apply(_platformTextEditingValue);
+    }
+  }
 
   bool _isApplyingDeltas = false;
 
@@ -333,20 +178,57 @@ class DocumentImeInputClient extends TextInputConnectionDecorator with TextInput
     editorImeLog.fine("IME value before applying deltas: $imeValueBeforeChange");
 
     _isApplyingDeltas = true;
+    editorImeLog.fine("===================================================");
+    // Update our local knowledge of what the platform thinks the IME value is right now.
+    _updatePlatformImeValueWithDeltas(textEditingDeltas);
+
+    // Apply the deltas to our document, selection, and composing region.
     textDeltasDocumentEditor.applyDeltas(textEditingDeltas);
+    editorImeLog.fine("===================================================");
     _isApplyingDeltas = false;
 
-    // If we had 1+ delta that changed the content of the document, remember that.
-    // We need this accounting in "set currentTextEditingValue" because, in some
-    // cases, our serialized IME value needs to be forcefully set because the IME
-    // thinks there's content that shouldn't be there, such as a newline "/n".
-    // See "set currentTextEditingValue" for more info.
-    _hasOutstandingMutatingChanges =
-        textEditingDeltas.where((element) => element is! TextEditingDeltaNonTextUpdate).toList().isNotEmpty;
+    // Send latest doc and selection to IME
+    _sendDocumentToIme();
+  }
 
-    // Note: after the completion of applying deltas, we expect some other part of the
-    // system to call us back with "set currentTextEditingValue" with whatever that
-    // final serialized value should be. That's where execution should pick up from here.
+  bool _isSendingToIme = false;
+
+  void _sendDocumentToIme() {
+    if (_isApplyingDeltas) {
+      editorImeLog.fine("[DocumentImeInputClient] - Tried to send document to IME, but we're applying deltas. Fizzling.");
+      return;
+    }
+
+    if (_isSendingToIme) {
+      editorImeLog.warning("[DocumentImeInputClient] - Tried to send document to IME, while we're sending document to IME.");
+      return;
+    }
+    _isSendingToIme = true;
+
+    if (textDeltasDocumentEditor.selection.value == null) {
+      // There's no selection, which means there's nothing to edit. Return.
+      editorImeLog.fine("[DocumentImeInputClient] - There's no document selection. Not sending anything to IME.");
+      return;
+    }
+
+    editorImeLog.fine("[DocumentImeInputClient] - Serializing and sending document and selection to IME");
+    editorImeLog.fine("[DocumentImeInputClient] - Selection: ${textDeltasDocumentEditor.selection.value}");
+    editorImeLog.fine("[DocumentImeInputClient] - Composing region: ${textDeltasDocumentEditor.composingRegion.value}");
+    final imeSerialization = DocumentImeSerializer(
+      textDeltasDocumentEditor.editor.document,
+      textDeltasDocumentEditor.selection.value!,
+      textDeltasDocumentEditor.composingRegion.value,
+    );
+    editorImeLog
+        .fine("[DocumentImeInputClient] - Adding invisible characters?: ${imeSerialization.didPrependPlaceholder}");
+    TextEditingValue textEditingValue = imeSerialization.toTextEditingValue();
+
+    editorImeLog.fine("[DocumentImeInputClient] - Sending IME serialization:");
+    editorImeLog.fine("[DocumentImeInputClient] - $textEditingValue");
+    setEditingState(textEditingValue);
+    editorImeLog.fine("[DocumentImeInputClient] - Done sending document to IME");
+
+    _isSendingToIme = false;
   }
 
   @override
