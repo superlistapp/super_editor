@@ -12,7 +12,78 @@ import '../_document_test_tools.dart';
 
 void main() {
   group('IME input', () {
-    testWidgets('allows apps to handle performAction in their own way', (tester) async {
+    group('types characters', () {
+      testWidgetsOnAllPlatforms('at the beginning of existing text', (tester) async {
+        final document = MutableDocument(
+          nodes: [
+            ParagraphNode(id: "1", text: AttributedText(text: "<- text here")),
+          ],
+        );
+
+        await tester //
+            .createDocument()
+            .withCustomContent(document)
+            .withInputSource(TextInputSource.ime)
+            .pump();
+
+        // Place caret at the beginning of the paragraph content.
+        await tester.placeCaretInParagraph("1", 0);
+
+        // Type some text.
+        await tester.typeImeText("Hello");
+
+        // Ensure the text was typed.
+        expect((document.nodes.first as ParagraphNode).text.text, "Hello<- text here");
+      });
+
+      testWidgetsOnAllPlatforms('in the middle of existing text', (tester) async {
+        final document = MutableDocument(
+          nodes: [
+            ParagraphNode(id: "1", text: AttributedText(text: "text here -><---")),
+          ],
+        );
+
+        await tester //
+            .createDocument()
+            .withCustomContent(document)
+            .withInputSource(TextInputSource.ime)
+            .pump();
+
+        // Place caret at the beginning of the paragraph content.
+        await tester.placeCaretInParagraph("1", 12);
+
+        // Type some text.
+        await tester.typeImeText("Hello");
+
+        // Ensure the text was typed.
+        expect((document.nodes.first as ParagraphNode).text.text, "text here ->Hello<---");
+      });
+
+      testWidgetsOnAllPlatforms('at the end of existing text', (tester) async {
+        final document = MutableDocument(
+          nodes: [
+            ParagraphNode(id: "1", text: AttributedText(text: "text here ->")),
+          ],
+        );
+
+        await tester //
+            .createDocument()
+            .withCustomContent(document)
+            .withInputSource(TextInputSource.ime)
+            .pump();
+
+        // Place caret at the beginning of the paragraph content.
+        await tester.placeCaretInParagraph("1", 12);
+
+        // Type some text.
+        await tester.typeImeText("Hello");
+
+        // Ensure the text was typed.
+        expect((document.nodes.first as ParagraphNode).text.text, "text here ->Hello");
+      });
+    });
+
+    testWidgetsOnAllPlatforms('allows apps to handle performAction in their own way', (tester) async {
       final document = singleParagraphEmptyDoc();
 
       int performActionCount = 0;
@@ -26,7 +97,7 @@ void main() {
 
       await tester //
           .createDocument()
-          .withSingleEmptyParagraph()
+          .withCustomContent(document)
           .withInputSource(TextInputSource.ime)
           .withImeOverrides(imeOverrides)
           .pump();
