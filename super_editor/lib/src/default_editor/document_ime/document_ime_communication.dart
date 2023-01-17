@@ -63,6 +63,9 @@ class DocumentImeInputClient extends TextInputConnectionDecorator with TextInput
   late FloatingCursorController? _floatingCursorController;
 
   void _onContentChange() {
+    if (!attached) {
+      return;
+    }
     if (_isApplyingDeltas) {
       return;
     }
@@ -213,7 +216,6 @@ class DocumentImeInputClient extends TextInputConnectionDecorator with TextInput
           .warning("[DocumentImeInputClient] - Tried to send document to IME, while we're sending document to IME.");
       return;
     }
-    _isSendingToIme = true;
 
     if (textDeltasDocumentEditor.selection.value == null) {
       // There's no selection, which means there's nothing to edit. Return.
@@ -221,6 +223,7 @@ class DocumentImeInputClient extends TextInputConnectionDecorator with TextInput
       return;
     }
 
+    _isSendingToIme = true;
     editorImeLog.fine("[DocumentImeInputClient] - Serializing and sending document and selection to IME");
     editorImeLog.fine("[DocumentImeInputClient] - Selection: ${textDeltasDocumentEditor.selection.value}");
     editorImeLog.fine("[DocumentImeInputClient] - Composing region: ${textDeltasDocumentEditor.composingRegion.value}");
