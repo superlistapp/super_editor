@@ -74,6 +74,11 @@ class DocumentImeInputClient extends TextInputConnectionDecorator with TextInput
     client = imeConnection.value;
 
     if (attached) {
+      // This is a new IME connection for us. As far as we're concerned, there is no current
+      // IME value.
+      _currentTextEditingValue = const TextEditingValue();
+      _platformTextEditingValue = const TextEditingValue();
+
       _sendDocumentToIme();
     }
   }
@@ -99,6 +104,9 @@ class DocumentImeInputClient extends TextInputConnectionDecorator with TextInput
       return;
     }
 
+    editorImeLog.fine("Wants to send a value to IME: $newValue");
+    editorImeLog.fine("The current local IME value: $_currentTextEditingValue");
+    editorImeLog.fine("The current platform IME value: $_currentTextEditingValue");
     if (newValue != _platformTextEditingValue) {
       // We've been given a new IME value. We compare its value to _platformTextEditingValue
       // instead of _currentTextEditingValue. Why is that?
@@ -195,12 +203,14 @@ class DocumentImeInputClient extends TextInputConnectionDecorator with TextInput
 
   void _sendDocumentToIme() {
     if (_isApplyingDeltas) {
-      editorImeLog.fine("[DocumentImeInputClient] - Tried to send document to IME, but we're applying deltas. Fizzling.");
+      editorImeLog
+          .fine("[DocumentImeInputClient] - Tried to send document to IME, but we're applying deltas. Fizzling.");
       return;
     }
 
     if (_isSendingToIme) {
-      editorImeLog.warning("[DocumentImeInputClient] - Tried to send document to IME, while we're sending document to IME.");
+      editorImeLog
+          .warning("[DocumentImeInputClient] - Tried to send document to IME, while we're sending document to IME.");
       return;
     }
     _isSendingToIme = true;
