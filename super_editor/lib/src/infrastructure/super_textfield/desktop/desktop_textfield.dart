@@ -797,7 +797,9 @@ class _SuperTextFieldGestureInteractorState extends State<SuperTextFieldGestureI
               },
             ),
             PanGestureRecognizer: GestureRecognizerFactoryWithHandlers<PanGestureRecognizer>(
-              () => PanGestureRecognizer(),
+              () => PanGestureRecognizer(
+                supportedDevices: {PointerDeviceKind.mouse},
+              ),
               (PanGestureRecognizer recognizer) {
                 recognizer
                   ..onStart = _onPanStart

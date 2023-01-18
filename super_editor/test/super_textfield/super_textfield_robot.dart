@@ -207,7 +207,11 @@ extension SuperTextFieldRobot on WidgetTester {
     final globalStartDragOffset = adjustedStartOffset + textFieldBox.localToGlobal(Offset.zero);
     final globalEndDragOffset = adjustedEndOffset + textFieldBox.localToGlobal(Offset.zero);
 
-    await dragFrom(globalStartDragOffset, globalEndDragOffset - globalStartDragOffset);
+    await dragFrom(
+      globalStartDragOffset,
+      globalEndDragOffset - globalStartDragOffset,
+      kind: PointerDeviceKind.mouse,
+    );
 
     return true;
   }

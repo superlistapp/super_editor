@@ -82,7 +82,7 @@ class _EditorSelectionAndFocusPolicyState extends State<EditorSelectionAndFocusP
     }
 
     if (widget.selection != oldWidget.selection) {
-      oldWidget.selection.removeListener(_onFocusChange);
+      oldWidget.selection.removeListener(_onSelectionChange);
       widget.selection.addListener(_onSelectionChange);
       _onSelectionChange();
     }
