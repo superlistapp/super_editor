@@ -188,6 +188,12 @@ class DocumentImeInputClient extends TextInputConnectionDecorator with TextInput
       editorImeLog.fine("$delta");
     }
 
+    // After we call setEditingState(), we ignore non-text deltas until the end of the current frame.
+    //
+    // This is because, in some platforms, we get a TextEditingDeltaNonTextUpdate after this call.
+    // The engine sends this delta to synchronize the editing value.
+    //
+    // Handling this synchronization delta may cause endless loops.
     final allowedDeltas = _allowNonTextDeltas
         ? textEditingDeltas
         : textEditingDeltas.where((e) => e is! TextEditingDeltaNonTextUpdate).toList();
@@ -233,7 +239,7 @@ class DocumentImeInputClient extends TextInputConnectionDecorator with TextInput
       return;
     }
 
-    // In some platforms, like macOS, whenever we call setEditing state, the engine send us back a
+    // In some platforms, like macOS, whenever we call setEditingState(), the engine send us back a
     // non-text delta to sync its state with our state.
     //
     // We have no way to know if the delta means that the selection/composing region changed,
