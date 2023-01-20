@@ -1,8 +1,10 @@
 import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter/services.dart';
+import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/super_textfield.dart';
+import 'package:super_text_layout/super_text_layout.dart';
 
 import '../../_logging.dart';
 
@@ -535,6 +537,69 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
   @override
   void clear() {
     _realController.clear();
+  }
+
+  @override
+  void deleteCharacter(TextAffinity direction) {
+    _realController.deleteCharacter(direction);
+  }
+
+  @override
+  void copySelectedTextToClipboard() {
+    _realController.copySelectedTextToClipboard();
+  }
+
+  @override
+  void deleteSelectedText() {
+    _realController.deleteSelectedText();
+  }
+
+  @override
+  void deleteTextOnLineBeforeCaret({required ProseTextLayout textLayout}) {
+    _realController.deleteTextOnLineBeforeCaret(textLayout: textLayout);
+  }
+
+  @override
+  void insertCharacter(String character) {
+    _realController.insertCharacter(character);
+  }
+
+  @override
+  void moveCaretHorizontally({
+    required ProseTextLayout textLayout,
+    required bool expandSelection,
+    required bool moveLeft,
+    required MovementModifier? movementModifier,
+  }) {
+    _realController.moveCaretHorizontally(
+      textLayout: textLayout,
+      expandSelection: expandSelection,
+      moveLeft: moveLeft,
+      movementModifier: movementModifier,
+    );
+  }
+
+  @override
+  void moveCaretVertically({
+    required ProseTextLayout textLayout,
+    required bool expandSelection,
+    required bool moveUp,
+  }) {
+    _realController.moveCaretVertically(
+      textLayout: textLayout,
+      expandSelection: expandSelection,
+      moveUp: moveUp,
+    );
+  }
+
+  @override
+  Future<void> pasteClipboard() {
+    return _realController.pasteClipboard();
+  }
+
+  @override
+  void selectAll() {
+    _realController.selectAll();
   }
 }
 
