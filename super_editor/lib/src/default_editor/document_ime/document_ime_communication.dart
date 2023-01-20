@@ -166,7 +166,7 @@ class DocumentImeInputClient extends TextInputConnectionDecorator with TextInput
     // Apply the deltas to the previous platform-side IME value, to find out
     // what the platform thinks the IME value is, right now.
     for (final delta in textEditingDeltas) {
-      delta.apply(_platformTextEditingValue);
+      _platformTextEditingValue = delta.apply(_platformTextEditingValue);
     }
   }
 
