@@ -2,6 +2,7 @@ import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document_layout.dart';
+import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/super_textfield.dart';
 import 'package:super_text_layout/super_text_layout.dart';
@@ -178,6 +179,9 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
   // to the platform as changes. This flag differentiates between the two situations.
   bool _sendTextChangesToPlatform = true;
 
+  /// Whether we should handle [TextEditingDeltaNonTextUpdate]s.
+  bool _allowNonTextDeltas = true;
+
   void _onInnerControllerChange() {
     if (_sendTextChangesToPlatform) {
       _sendEditingValueToPlatform();
@@ -203,11 +207,28 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
   }
 
   void _sendEditingValueToPlatform() {
-    if (isAttachedToIme) {
-      _log.fine('Sending TextEditingValue to platform: $currentTextEditingValue');
-      _latestPlatformTextEditingValue = currentTextEditingValue;
-      _inputConnection!.setEditingState(currentTextEditingValue!);
+    if (!isAttachedToIme) {
+      return;
     }
+
+    // In some platforms, like macOS, whenever we call setEditing state, the engine send us back a
+    // non-text delta to sync its state with our state.
+    //
+    // We have no way to know if the delta means that the selection/composing region changed,
+    // or if it means that the engine is syncing its state.
+    //
+    // If we always handle the non-text deltas, we might end up in an endless loop of deltas.
+    // To avoid this, we don't handle any non-text deltas until the next frame, after we call setEditingState.
+    //
+    // Remove this as soon as https://github.com/flutter/flutter/issues/118759 is resolved.
+    _allowNonTextDeltas = false;
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      _allowNonTextDeltas = true;
+    });
+
+    _log.fine('Sending TextEditingValue to platform: $currentTextEditingValue');
+    _latestPlatformTextEditingValue = currentTextEditingValue;
+    _inputConnection!.setEditingState(currentTextEditingValue!);
   }
 
   void Function(TextInputAction)? _onPerformActionPressed;
@@ -242,11 +263,17 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
       return;
     }
 
+    final allowedDeltas =
+        _allowNonTextDeltas ? deltas : deltas.where((e) => e is! TextEditingDeltaNonTextUpdate).toList();
+    if (allowedDeltas.isEmpty) {
+      return;
+    }
+
     // Prevent us from sending these changes back to the platform as we alter
     // the _realController. Turn this flag back to `true` after the changes.
     _sendTextChangesToPlatform = false;
 
-    for (final delta in deltas) {
+    for (final delta in allowedDeltas) {
       if (delta is TextEditingDeltaInsertion) {
         _log.fine('Processing insertion: $delta');
         if (selection.isCollapsed && delta.insertionOffset == selection.extentOffset) {

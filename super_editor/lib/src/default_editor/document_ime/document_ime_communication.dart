@@ -62,6 +62,9 @@ class DocumentImeInputClient extends TextInputConnectionDecorator with TextInput
   // TODO: get floating cursor out of here. Use a multi-client IME decorator to split responsibilities
   late FloatingCursorController? _floatingCursorController;
 
+  /// Whether we should handle [TextEditingDeltaNonTextUpdate]s.
+  bool _allowNonTextDeltas = true;
+
   void _onContentChange() {
     if (!attached) {
       return;
@@ -185,16 +188,23 @@ class DocumentImeInputClient extends TextInputConnectionDecorator with TextInput
       editorImeLog.fine("$delta");
     }
 
+    final allowedDeltas = _allowNonTextDeltas
+        ? textEditingDeltas
+        : textEditingDeltas.where((e) => e is! TextEditingDeltaNonTextUpdate).toList();
+    if (allowedDeltas.isEmpty) {
+      return;
+    }
+
     final imeValueBeforeChange = currentTextEditingValue;
     editorImeLog.fine("IME value before applying deltas: $imeValueBeforeChange");
 
     _isApplyingDeltas = true;
     editorImeLog.fine("===================================================");
     // Update our local knowledge of what the platform thinks the IME value is right now.
-    _updatePlatformImeValueWithDeltas(textEditingDeltas);
+    _updatePlatformImeValueWithDeltas(allowedDeltas);
 
     // Apply the deltas to our document, selection, and composing region.
-    textDeltasDocumentEditor.applyDeltas(textEditingDeltas);
+    textDeltasDocumentEditor.applyDeltas(allowedDeltas);
     editorImeLog.fine("===================================================");
     _isApplyingDeltas = false;
 
@@ -222,6 +232,21 @@ class DocumentImeInputClient extends TextInputConnectionDecorator with TextInput
       editorImeLog.fine("[DocumentImeInputClient] - There's no document selection. Not sending anything to IME.");
       return;
     }
+
+    // In some platforms, like macOS, whenever we call setEditing state, the engine send us back a
+    // non-text delta to sync its state with our state.
+    //
+    // We have no way to know if the delta means that the selection/composing region changed,
+    // or if it means that the engine is syncing its state.
+    //
+    // If we always handle the non-text deltas, we might end up in an endless loop of deltas.
+    // To avoid this, we don't handle any non-text deltas until the next frame, after we call setEditingState.
+    //
+    // Remove this as soon as https://github.com/flutter/flutter/issues/118759 is resolved.
+    _allowNonTextDeltas = false;
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      _allowNonTextDeltas = true;
+    });
 
     _isSendingToIme = true;
     editorImeLog.fine("[DocumentImeInputClient] - Serializing and sending document and selection to IME");
