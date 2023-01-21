@@ -11,6 +11,10 @@
 
 <hr>
 
+<p align="center">Do you use Flutter's <b>stable</b> branch? Be sure to checkout <code>super_editor</code>'s <b><a href="https://github.com/superlistapp/super_editor/commits/stable">stable</a></b> branch, for compatibility.<br>Do you use Flutter's <b>master</b> branch? Be sure to checkout <code>super_editor</code>'s <b><a href="https://github.com/superlistapp/super_editor/commits/main">main</a></b> branch, for compabitility.</p>
+
+<hr>
+
 <p align="center"><img src="https://raw.githubusercontent.com/superlistapp/super_editor/main/super_editor/doc/marketing/readme-header.png" width="500" alt="Super Editor"></p>
 
 <h2 align="center">Super Editor & Super Text Field</h2>
