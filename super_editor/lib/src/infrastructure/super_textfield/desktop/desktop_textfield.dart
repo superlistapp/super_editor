@@ -1842,7 +1842,7 @@ class DefaultSuperTextFieldKeyboardHandlers {
     ProseTextLayout? textLayout,
     required RawKeyEvent keyEvent,
   }) {
-    if (keyEvent.logicalKey != LogicalKeyboardKey.enter) {
+    if (keyEvent.logicalKey != LogicalKeyboardKey.enter && keyEvent.logicalKey != LogicalKeyboardKey.numpadEnter) {
       return TextFieldKeyboardHandlerResult.notHandled;
     }
     if (!controller.selection.isCollapsed) {
