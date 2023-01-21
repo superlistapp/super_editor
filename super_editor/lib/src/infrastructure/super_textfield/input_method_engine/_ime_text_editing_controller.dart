@@ -253,6 +253,7 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
           // This action appears to be user input at the caret.
           insertAtCaret(
             text: delta.textInserted,
+            newComposingRegion: delta.composing,
           );
         } else {
           // We're not sure what this action represents. Either the current selection
@@ -264,6 +265,8 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
               text: delta.textInserted,
             ),
             insertIndex: delta.insertionOffset,
+            newSelection: delta.selection,
+            newComposingRegion: delta.composing,
           );
         }
       } else if (delta is TextEditingDeltaDeletion) {

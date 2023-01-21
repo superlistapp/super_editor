@@ -72,6 +72,46 @@ void main() {
           expect(SuperTextFieldInspector.findText().text, "-->f<--");
           expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 4));
         });
+
+        testWidgetsOnAllPlatforms('and sends composing region to the platform', (tester) async {
+          await _pumpEmptySuperTextField(tester);
+          await tester.placeCaretInSuperTextField(0);
+
+          int composingBase = -1;
+          int composingExtent = -1;
+
+          // Intercept messages sent to the platform.
+          tester.binding.defaultBinaryMessenger.setMockMessageHandler(SystemChannels.textInput.name, (message) async {
+            final methodCall = const JSONMethodCodec().decodeMethodCall(message);
+            if (methodCall.method == 'TextInput.setEditingState') {
+              composingBase = methodCall.arguments["composingBase"];
+              composingExtent = methodCall.arguments["composingExtent"];
+            }
+            return null;
+          });
+
+          // Simulate the user begining the input of the compound character 'ã'.
+          //
+          // To input this character, the user first presses the '~' key, and then the 'a' key.
+          // The IME first sends us an insertion delta of '~' with a composing region set,
+          // followed by a replacement delta, which replaces '~' with 'ã'.
+          //
+          // For this to work, we need to send the correct composing region to the IME.
+          // Otherwise, we get two insertion deltas and the final text will be '~a'.
+          await tester.ime.sendDeltas(const [
+            TextEditingDeltaInsertion(
+              oldText: "",
+              textInserted: "~",
+              insertionOffset: 0,
+              selection: TextSelection.collapsed(offset: 1),
+              composing: TextRange(start: 0, end: 0),
+            )
+          ], getter: imeClientGetter);
+
+          // Ensure we honored the composing region we got from the IME.
+          expect(composingBase, 0);
+          expect(composingExtent, 0);
+        });
       });
 
       // TODO: implement newline tests when SuperTextField supports configuration of the action button
