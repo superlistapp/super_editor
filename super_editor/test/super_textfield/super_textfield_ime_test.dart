@@ -114,54 +114,98 @@ void main() {
         });
       });
 
-      // TODO: implement newline tests when SuperTextField supports configuration of the action button
-      //   group('inserts line', () {
-      //     testWidgetsOnDesktop('when ENTER is pressed in middle of text', (tester) async {
-      //       await _pumpSuperTextField(
-      //         tester,
-      //         AttributedTextEditingController(
-      //           text: AttributedText(text: 'this is some text'),
-      //         ),
-      //       );
-      //       await tester.placeCaretInSuperTextField(8);
-      //
-      //       await tester.pressEnter();
-      //
-      //       expect(SuperTextFieldInspector.findText().text, "this is \nsome text");
-      //       expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 9));
-      //     });
-      //
-      //     testWidgetsOnDesktop('when ENTER is pressed at beginning of text', (tester) async {
-      //       await _pumpSuperTextField(
-      //         tester,
-      //         AttributedTextEditingController(
-      //           text: AttributedText(text: 'this is some text'),
-      //         ),
-      //       );
-      //       await tester.placeCaretInSuperTextField(0);
-      //
-      //       await tester.pressEnter();
-      //
-      //       expect(SuperTextFieldInspector.findText().text, "\nthis is some text");
-      //       expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 1));
-      //     });
-      //
-      //     testWidgetsOnDesktop('when ENTER is pressed at end of text', (tester) async {
-      //       await _pumpSuperTextField(
-      //         tester,
-      //         AttributedTextEditingController(
-      //           text: AttributedText(text: 'this is some text'),
-      //         ),
-      //       );
-      //       await tester.placeCaretInSuperTextField(17);
-      //
-      //       await tester.pressEnter();
-      //
-      //       expect(SuperTextFieldInspector.findText().text, "this is some text\n");
-      //       expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 18));
-      //     });
-      //   });
-      //
+      group('inserts line', () {
+        testWidgetsOnDesktop('when ENTER is pressed in middle of text', (tester) async {
+          await _pumpSuperTextField(
+            tester,
+            AttributedTextEditingController(
+              text: AttributedText(text: 'this is some text'),
+            ),
+          );
+          await tester.placeCaretInSuperTextField(8);
+
+          await tester.pressEnter();
+
+          expect(SuperTextFieldInspector.findText().text, "this is \nsome text");
+          expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 9));
+        });
+
+        testWidgetsOnDesktop('when ENTER is pressed at beginning of text', (tester) async {
+          await _pumpSuperTextField(
+            tester,
+            AttributedTextEditingController(
+              text: AttributedText(text: 'this is some text'),
+            ),
+          );
+          await tester.placeCaretInSuperTextField(0);
+
+          await tester.pressEnter();
+
+          expect(SuperTextFieldInspector.findText().text, "\nthis is some text");
+          expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 1));
+        });
+
+        testWidgetsOnDesktop('when ENTER is pressed at end of text', (tester) async {
+          await _pumpSuperTextField(
+            tester,
+            AttributedTextEditingController(
+              text: AttributedText(text: 'this is some text'),
+            ),
+          );
+          await tester.placeCaretInSuperTextField(17);
+
+          await tester.pressEnter();
+
+          expect(SuperTextFieldInspector.findText().text, "this is some text\n");
+          expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 18));
+        });
+
+        testWidgetsOnDesktop('when NUMPAD ENTER is pressed in middle of text', (tester) async {
+          await _pumpSuperTextField(
+            tester,
+            AttributedTextEditingController(
+              text: AttributedText(text: 'this is some text'),
+            ),
+          );
+          await tester.placeCaretInSuperTextField(8);
+
+          await tester.pressNumpadEnter();
+
+          expect(SuperTextFieldInspector.findText().text, "this is \nsome text");
+          expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 9));
+        });
+
+        testWidgetsOnDesktop('when NUMPAD ENTER is pressed at beginning of text', (tester) async {
+          await _pumpSuperTextField(
+            tester,
+            AttributedTextEditingController(
+              text: AttributedText(text: 'this is some text'),
+            ),
+          );
+          await tester.placeCaretInSuperTextField(0);
+
+          await tester.pressNumpadEnter();
+
+          expect(SuperTextFieldInspector.findText().text, "\nthis is some text");
+          expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 1));
+        });
+
+        testWidgetsOnDesktop('when NUMPAD ENTER is pressed at end of text', (tester) async {
+          await _pumpSuperTextField(
+            tester,
+            AttributedTextEditingController(
+              text: AttributedText(text: 'this is some text'),
+            ),
+          );
+          await tester.placeCaretInSuperTextField(17);
+
+          await tester.pressNumpadEnter();
+
+          expect(SuperTextFieldInspector.findText().text, "this is some text\n");
+          expect(SuperTextFieldInspector.findSelection(), const TextSelection.collapsed(offset: 18));
+        });
+      });
+
       group('delete text', () {
         testWidgetsOnAllPlatforms('BACKSPACE does nothing when text is empty', (tester) async {
           await _pumpSuperTextField(
