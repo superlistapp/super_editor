@@ -429,13 +429,12 @@ class SuperEditorState extends State<SuperEditor> {
 
     final textPosition = _composer.selection!.extent.nodePosition as TextPosition;
 
-    int currentAttributionsOffset = -1;
+    if (textPosition.offset == 0 && (node.text.text.isEmpty)) {
+      return;
+    }
 
+    late int currentAttributionsOffset;
     if (textPosition.offset == 0) {
-      if (node.text.text.isEmpty) {
-        return;
-      }
-
       // Inserted text at the very beginning of a text blob assumes the
       // attributions immediately following it.
       currentAttributionsOffset = textPosition.offset + 1;
