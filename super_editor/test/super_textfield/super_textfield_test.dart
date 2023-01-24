@@ -200,6 +200,46 @@ void main() {
         // Ensure the given keyboardAppearance was applied.
         expect(keyboardAppearance, 'Brightness.dark');
       });
+
+      testWidgetsOnIos('updates keyboard appearance', (tester) async {
+        final controller = ImeAttributedTextEditingController(
+          keyboardAppearance: Brightness.light,
+        );
+
+        await tester.pumpWidget(
+          _buildScaffold(
+            child: SuperTextField(
+              textController: controller,
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // Tap the text field to show the software keyboard with the light appearance.
+        await tester.placeCaretInSuperTextField(0);
+
+        // Holds the keyboard appearance sent to the platform.
+        String? keyboardAppearance;
+
+        // Intercept messages sent to the platform.
+        tester.binding.defaultBinaryMessenger.setMockMessageHandler(SystemChannels.textInput.name, (message) async {
+          final methodCall = const JSONMethodCodec().decodeMethodCall(message);
+          if (methodCall.method == 'TextInput.setClient') {
+            final params = methodCall.arguments[1] as Map;
+            keyboardAppearance = params['keyboardAppearance'];
+          }
+          return null;
+        });
+
+        // Change the keyboard appearance from light to dark.
+        controller.updateTextInputConfiguration(
+          keyboardAppearance: Brightness.dark,
+        );
+        await tester.pumpAndSettle();
+
+        // Ensure the given keyboardAppearance was applied.
+        expect(keyboardAppearance, 'Brightness.dark');
+      });
     });
 
     group("selection", () {

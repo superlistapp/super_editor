@@ -56,7 +56,7 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
   /// The appearance of the software keyboard.
   ///
   /// Only used for iOS devices.
-  final Brightness keyboardAppearance;
+  Brightness keyboardAppearance;
 
   final AttributedTextEditingController _realController;
 
@@ -122,11 +122,14 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
     bool enableSuggestions = true,
     TextInputAction textInputAction = TextInputAction.done,
     TextInputType textInputType = TextInputType.text,
+    Brightness keyboardAppearance = Brightness.light,
   }) {
     if (!isAttachedToIme) {
       // We're not attached to the IME, so there is nothing to update.
       return;
     }
+
+    this.keyboardAppearance = keyboardAppearance;
 
     // Close the current connection.
     _inputConnection?.close();
