@@ -222,7 +222,13 @@ class CombineParagraphsCommand implements EditorCommand {
     // Combine the text and delete the currently selected node.
     final isTopNodeEmpty = nodeAbove.text.text.isEmpty;
     nodeAbove.text = nodeAbove.text.copyAndAppend(secondNode.text);
-    if (isTopNodeEmpty) {
+
+    // Avoid overring the metadata when the nodeAbove isn't a ParagraphNode.
+    //
+    // If we are combining different kinds of nodes, e.g., a list item and a paragraph,
+    // overriding the metadata will cause the nodeAbove to end up with an incorrect blockType.
+    // This will cause incorrect styles to be applied.
+    if (isTopNodeEmpty && nodeAbove is ParagraphNode) {
       // If the top node was empty, we want to retain everything in the
       // bottom node, including the block attribution and styles.
       nodeAbove.metadata = secondNode.metadata;
