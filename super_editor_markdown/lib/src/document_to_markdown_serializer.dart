@@ -192,6 +192,8 @@ String? _convertAlignmentToMarkdown(String alignment) {
       return ':---:';
     case 'right':
       return '---:';
+    case 'justify':
+      return '----';
     default:
       return null;
   }
