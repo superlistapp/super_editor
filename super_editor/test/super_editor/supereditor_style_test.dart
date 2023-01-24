@@ -56,6 +56,78 @@ void main() {
       expect(SuperEditorInspector.findParagraphStyle(firstParagraphId)!.color, Colors.blue);
     });
 
+    testWidgetsOnArbitraryDesktop('retains visual text style when combining a list item with a paragraph',
+        (tester) async {
+      await tester //
+          .createDocument()
+          .fromMarkdown("""
+* 1
+* 2
+
+A paragraph
+          """)
+          .useStylesheet(Stylesheet(
+            inlineTextStyler: inlineTextStyler,
+            rules: [
+              StyleRule(
+                const BlockSelector("listItem"),
+                (doc, docNode) {
+                  return {
+                    "textStyle": const TextStyle(
+                      color: Colors.blue,
+                      fontSize: 16,
+                    ),
+                  };
+                },
+              ),
+              StyleRule(
+                const BlockSelector("paragraph"),
+                (doc, docNode) {
+                  return {
+                    "textStyle": const TextStyle(
+                      color: Colors.red,
+                      fontSize: 16,
+                    ),
+                  };
+                },
+              ),
+            ],
+          ))
+          .pump();
+
+      // Ensure the correct style was applied to the list item.
+      expect(
+        SuperEditorInspector.findParagraphStyle(SuperEditorInspector.getNodeAt(1).id)!.color,
+        Colors.blue,
+      );
+
+      // Ensure the correct style was applied to the paragraph.
+      expect(
+        SuperEditorInspector.findParagraphStyle(SuperEditorInspector.getNodeAt(2).id)!.color,
+        Colors.red,
+      );
+
+      // Place the caret at the end of the second list item.
+      final secondListItem = SuperEditorInspector.getNodeAt<ListItemNode>(1);
+      await tester.placeCaretInParagraph(secondListItem.id, 1);
+
+      // Press backspace to delete the list item text. The content will be empty.
+      await tester.pressBackspace();
+
+      // Place the caret at the beginning of the paragraph.
+      final paragraph = SuperEditorInspector.getNodeAt<ParagraphNode>(2);
+      await tester.placeCaretInParagraph(paragraph.id, 0);
+
+      // Press backspace to combine the list item and the paragraph.
+      await tester.pressBackspace();
+
+      // Ensure the list item retained the correct style.
+      expect(
+        SuperEditorInspector.findParagraphStyle(SuperEditorInspector.getNodeAt(1).id)!.color,
+        Colors.blue,
+      );
+    });
+
     testWidgetsOnArbitraryDesktop('rebuilds only changed nodes', (tester) async {
       int componentChangedCount = 0;
 
