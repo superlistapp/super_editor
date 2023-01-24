@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
+import '../super_editor/document_test_tools.dart';
 import '../test_tools.dart';
 import 'super_textfield_robot.dart';
 
@@ -221,15 +222,17 @@ void main() {
         // Holds the keyboard appearance sent to the platform.
         String? keyboardAppearance;
 
-        // Intercept messages sent to the platform.
-        tester.binding.defaultBinaryMessenger.setMockMessageHandler(SystemChannels.textInput.name, (message) async {
-          final methodCall = const JSONMethodCodec().decodeMethodCall(message);
-          if (methodCall.method == 'TextInput.setClient') {
+        // Intercept the setClient message sent to the platform.
+        tester
+            .interceptChannel(SystemChannels.textInput.name) //
+            .interceptMethod(
+          'TextInput.setClient',
+          (methodCall) {
             final params = methodCall.arguments[1] as Map;
             keyboardAppearance = params['keyboardAppearance'];
-          }
-          return null;
-        });
+            return null;
+          },
+        );
 
         // Change the keyboard appearance from light to dark.
         controller.updateTextInputConfiguration(
