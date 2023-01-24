@@ -97,7 +97,7 @@ class _FeaturedEditorState extends State<FeaturedEditor> {
 
       // Display the toolbar in the application overlay.
       final overlay = Overlay.of(context);
-      overlay!.insert(_formatBarOverlayEntry!);
+      overlay.insert(_formatBarOverlayEntry!);
 
       // Schedule a callback after this frame to locate the selection
       // bounds on the screen and display the toolbar near the selected
