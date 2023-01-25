@@ -51,11 +51,6 @@ class _SuperTextExampleScreenState extends State<SuperTextExampleScreen> with Ti
   }
 
   @override
-  void dispose() {
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SingleChildScrollView(
