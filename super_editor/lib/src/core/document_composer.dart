@@ -42,8 +42,6 @@ class DocumentComposer with ChangeNotifier {
   set selection(DocumentSelection? newSelection) {
     if (newSelection != selectionNotifier.value) {
       selectionNotifier.value = newSelection;
-
-      notifyListeners();
     }
   }
 
@@ -111,6 +109,8 @@ class DocumentComposer with ChangeNotifier {
     composingRegion.value = null;
 
     _streamController.sink.add(_latestSelectionChange);
+
+    notifyListeners();
   }
 
   /// The current composing region, which signifies spans of text
