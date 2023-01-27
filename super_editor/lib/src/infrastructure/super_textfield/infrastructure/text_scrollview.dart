@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/super_textfield.dart';
 import 'package:super_text_layout/super_text_layout.dart';
@@ -340,7 +341,7 @@ class _TextScrollViewState extends State<TextScrollView>
       _log.finer(' - explicit line height provided: ${widget.lineHeight}');
       // Use the line height that was explicitly provided by the widget.
       estimatedLineHeight = widget.lineHeight!;
-    } else {
+    } else if (widget.textKey.currentState != null) {
       _log.finer(' - calculating an estimated line height for the field');
       // No line height was provided. Calculate a best-guess.
       final textLayout = widget.textKey.currentState!.textLayout;
@@ -354,6 +355,20 @@ class _TextScrollViewState extends State<TextScrollView>
         estimatedLineHeight = widget.textKey.currentState!.textLayout.estimatedLineHeight;
         _log.finer(' - estimated line height based on text styles: $estimatedLineHeight');
       }
+    } else {
+      estimatedLineHeight = 0;
+    }
+
+    if (estimatedLineHeight == 0) {
+      _log.finer(' - could not calculate the estimated line height. Rescheduling calculation.');
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+        if (mounted) {
+          setState(() {
+            _updateViewportHeight();
+          });
+        }
+      });
+      return false;
     }
 
     final totalVerticalPadding = widget.padding?.vertical ?? 0.0;
@@ -402,20 +417,28 @@ class _TextScrollViewState extends State<TextScrollView>
       _log.finer(
           ' - viewport height is null, but TextScrollView is unbounded or the content fits max height, so that is OK');
       final didChange = viewportHeight != _viewportHeight;
-      if (mounted) {
-        setState(() {
-          _needViewportHeight = false;
-          _viewportHeight = null;
-        });
-      }
+      // We set these values outside of setState, because this method
+      // can be called during the build phase.
+      _needViewportHeight = false;
+      _viewportHeight = null;
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+        if (mounted) {
+          setState(() {});
+        }
+      });
       return didChange;
     }
 
     if (viewportHeight != null) {
-      setState(() {
-        _log.finer(' - new viewport height: $viewportHeight');
-        _needViewportHeight = false;
-        _viewportHeight = viewportHeight;
+      _log.finer(' - new viewport height: $viewportHeight');
+      // We set these values outside of setState, because this method
+      // can be called during the build phase.
+      _needViewportHeight = false;
+      _viewportHeight = viewportHeight;
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+        if (mounted) {
+          setState(() {});
+        }
       });
 
       return true;
@@ -441,7 +464,8 @@ class _TextScrollViewState extends State<TextScrollView>
     }
 
     if (widget.textKey.currentState == null) {
-      return 0;
+      // If we can't get a text layout, compute the line count by counting the line breaks.
+      return widget.textEditingController.text.text.split('\n').length;
     }
 
     return _textLayout.getLineCount();
@@ -465,20 +489,14 @@ class _TextScrollViewState extends State<TextScrollView>
   @override
   Widget build(BuildContext context) {
     if (widget.textKey.currentContext == null || _needViewportHeight) {
-      // The text hasn't been laid out yet, which means our calculations
-      // for text height is probably wrong. Schedule a post frame callback
-      // to re-calculate the height after initial layout.
-      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-        if (mounted) {
-          _updateViewportHeight();
-        }
-      });
+      // Try to update the viewport height synchronously.
+      // If we can't, the viewport height is calculated at the end of the frame
+      // and the widget is rebuilt.
+      _updateViewportHeight();
     }
 
-    return Opacity(
-      opacity: (widget.maxLines != null && widget.maxLines! > 1 && _viewportHeight == null && _needViewportHeight)
-          ? 0.0
-          : 1.0,
+    return Offstage(
+      offstage: (widget.maxLines != null && widget.maxLines! > 1 && _viewportHeight == null && _needViewportHeight),
       child: SizedBox(
         width: double.infinity,
         height: _viewportHeight,
