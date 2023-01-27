@@ -1,4 +1,5 @@
 import 'package:attributed_text/attributed_text.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:flutter/material.dart' hide SelectableText;
 import 'package:super_editor/src/core/document.dart';
@@ -428,29 +429,42 @@ class SuperEditorState extends State<SuperEditor> {
 
     final textPosition = _composer.selection!.extent.nodePosition as TextPosition;
 
-    if (textPosition.offset == 0) {
-      if (node.text.text.isEmpty) {
-        return;
-      }
-
-      // Inserted text at the very beginning of a text blob assumes the
-      // attributions immediately following it (except links).
-      // TODO: attribution expansion policy should probably be configurable
-      final allStyles = node.text
-          .getAllAttributionsAt(textPosition.offset + 1)
-          .where((attribution) => attribution is! LinkAttribution)
-          .toSet();
-      _composer.preferences.addStyles(allStyles);
-    } else {
-      // Inserted text assumes the attributions immediately preceding it
-      // (except links).
-      // TODO: attribution expansion policy should probably be configurable
-      final allStyles = node.text
-          .getAllAttributionsAt(textPosition.offset - 1)
-          .where((attribution) => attribution is! LinkAttribution)
-          .toSet();
-      _composer.preferences.addStyles(allStyles);
+    if (textPosition.offset == 0 && node.text.text.isEmpty) {
+      return;
     }
+
+    late int currentAttributionsOffset;
+    if (textPosition.offset == 0) {
+      // The inserted text is at the very beginning of the text blob. Therefore, we should apply the
+      // same attributions to the inserted text, as the text that immediately follows the inserted text.
+      currentAttributionsOffset = textPosition.offset + 1;
+    } else {
+      // The inserted text is NOT at the very beginning of the text blob. Therefore, we should apply the
+      // same attributions to the inserted text, as the text that immediately precedes the inserted text.
+      currentAttributionsOffset = textPosition.offset - 1;
+    }
+
+    Set<Attribution> allAttributions = node.text.getAllAttributionsAt(currentAttributionsOffset);
+
+    // TODO: attribution expansion policy should probably be configurable
+
+    // Add non-link attributions.
+    final newStyles = allAttributions.where((attribution) => attribution is! LinkAttribution).toSet();
+
+    // Add a link attribution only if the selection sits at the middle of the link.
+    // As we are dealing with a collapsed selection, we shouldn't have more than one link.
+    final linkAttribution = allAttributions.firstWhereOrNull((attribution) => attribution is LinkAttribution);
+    if (linkAttribution != null) {
+      final range = node.text.getAttributedRange({linkAttribution}, currentAttributionsOffset);
+
+      if (textPosition.offset > 0 &&
+          currentAttributionsOffset >= range.start &&
+          currentAttributionsOffset < range.end) {
+        newStyles.add(linkAttribution);
+      }
+    }
+
+    _composer.preferences.addStyles(newStyles);
   }
 
   @visibleForTesting
