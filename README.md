@@ -7,7 +7,7 @@
 
 <p align="center">Super Editor was initiated by <a href="https://superlist.com">Superlist</a> and is implemented and maintained by the <a href="https://flutterbountyhunters.com">Flutter Bounty Hunters</a>, Superlist, and the contributors.</p>
 
-<p align="center">Feel free to <a href="https://join.slack.com/t/superlist-community/shared_invite/zt-10cpx277q-uZ~pmjlTWg9QQzH64OK9_w">join us on Slack</a> and say hello 👋.</p>
+
 
 <hr>
 
