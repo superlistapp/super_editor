@@ -11,6 +11,7 @@ import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/h
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/text_scrollview.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/input_method_engine/_ime_text_editing_controller.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/ios/_editing_controls.dart';
+import 'package:super_editor/src/infrastructure/touch_controls.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
 import '../../platforms/ios/toolbar.dart';
@@ -122,7 +123,7 @@ class SuperIOSTextField extends StatefulWidget {
   final TextInputAction textInputAction;
 
   /// Builder that creates the popover toolbar widget that appears when text is selected.
-  final Widget Function(BuildContext, IOSEditingOverlayController) popoverToolbarBuilder;
+  final Widget Function(BuildContext, IOSEditingOverlayController, ToolbarConfig) popoverToolbarBuilder;
 
   /// Whether to paint debug guides.
   final bool showDebugPaint;
@@ -555,8 +556,10 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
   }
 }
 
-Widget _defaultPopoverToolbarBuilder(BuildContext context, IOSEditingOverlayController controller) {
+Widget _defaultPopoverToolbarBuilder(
+    BuildContext context, IOSEditingOverlayController controller, ToolbarConfig config) {
   return IOSTextEditingFloatingToolbar(
+    focalPoint: config.focalPoint,
     onCutPressed: () {
       final textController = controller.textController;
       final selection = textController.selection;

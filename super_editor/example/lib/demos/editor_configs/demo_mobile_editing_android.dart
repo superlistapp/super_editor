@@ -87,7 +87,7 @@ class _MobileEditingAndroidDemoState extends State<MobileEditingAndroidDemo> {
               gestureMode: DocumentGestureMode.android,
               inputSource: TextInputSource.ime,
               imeConfiguration: _imeConfiguration,
-              androidToolbarBuilder: (_) => AndroidTextEditingFloatingToolbar(
+              androidToolbarBuilder: (_, __) => AndroidTextEditingFloatingToolbar(
                 onCutPressed: () => _docOps.cut(),
                 onCopyPressed: () => _docOps.copy(),
                 onPastePressed: () => _docOps.paste(),

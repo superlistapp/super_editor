@@ -57,10 +57,11 @@ class _MobileEditingIOSDemoState extends State<MobileEditingIOSDemo> {
               composer: _composer,
               gestureMode: DocumentGestureMode.iOS,
               inputSource: TextInputSource.ime,
-              iOSToolbarBuilder: (_) => IOSTextEditingFloatingToolbar(
+              iOSToolbarBuilder: (_, config) => IOSTextEditingFloatingToolbar(
                 onCutPressed: () => _docOps.cut(),
                 onCopyPressed: () => _docOps.copy(),
                 onPastePressed: () => _docOps.paste(),
+                focalPoint: config.focalPoint,
               ),
               stylesheet: defaultStylesheet.copyWith(
                 documentPadding: const EdgeInsets.all(16),

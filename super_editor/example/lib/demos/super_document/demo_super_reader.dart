@@ -118,12 +118,13 @@ class _SuperReaderDemoState extends State<SuperReaderDemo> {
     return SuperReader(
       document: _document,
       selection: _selection,
-      androidToolbarBuilder: (_) => AndroidTextEditingFloatingToolbar(
+      androidToolbarBuilder: (_, __) => AndroidTextEditingFloatingToolbar(
         onCopyPressed: _copy,
         onSelectAllPressed: _selectAll,
       ),
-      iOSToolbarBuilder: (_) => IOSTextEditingFloatingToolbar(
+      iOSToolbarBuilder: (_, config) => IOSTextEditingFloatingToolbar(
         onCopyPressed: _copy,
+        focalPoint: config.focalPoint,
       ),
     );
   }

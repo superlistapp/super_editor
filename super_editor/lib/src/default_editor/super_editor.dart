@@ -22,6 +22,7 @@ import 'package:super_editor/src/infrastructure/content_layers.dart';
 import 'package:super_editor/src/infrastructure/links.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
 import 'package:super_editor/src/infrastructure/text_input.dart';
+import 'package:super_editor/src/infrastructure/touch_controls.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
 import '../infrastructure/platforms/mobile_documents.dart';
@@ -221,13 +222,13 @@ class SuperEditor extends StatefulWidget {
   final Color? androidHandleColor;
 
   /// Builder that creates a floating toolbar when running on Android.
-  final WidgetBuilder? androidToolbarBuilder;
+  final FloatingToolbarBuilder? androidToolbarBuilder;
 
   /// Color of the text selection drag handles on iOS.
   final Color? iOSHandleColor;
 
   /// Builder that creates a floating toolbar when running on iOS.
-  final WidgetBuilder? iOSToolbarBuilder;
+  final FloatingToolbarBuilder? iOSToolbarBuilder;
 
   /// Creates a clipper that applies to overlay controls, like drag
   /// handles, magnifiers, and popover toolbars, preventing the overlay
@@ -613,7 +614,7 @@ class SuperEditorState extends State<SuperEditor> {
           scrollController: widget.scrollController,
           documentKey: _docLayoutKey,
           handleColor: widget.androidHandleColor ?? Theme.of(context).primaryColor,
-          popoverToolbarBuilder: widget.androidToolbarBuilder ?? (_) => const SizedBox(),
+          popoverToolbarBuilder: widget.androidToolbarBuilder ?? (_, __) => const SizedBox(),
           createOverlayControlsClipper: widget.createOverlayControlsClipper,
           overlayController: widget.overlayController,
           showDebugPaint: widget.debugPaint.gestures,
@@ -629,7 +630,7 @@ class SuperEditorState extends State<SuperEditor> {
           scrollController: widget.scrollController,
           documentKey: _docLayoutKey,
           handleColor: widget.iOSHandleColor ?? Theme.of(context).primaryColor,
-          popoverToolbarBuilder: widget.iOSToolbarBuilder ?? (_) => const SizedBox(),
+          popoverToolbarBuilder: widget.iOSToolbarBuilder ?? (_, __) => const SizedBox(),
           floatingCursorController: _floatingCursorController,
           createOverlayControlsClipper: widget.createOverlayControlsClipper,
           overlayController: widget.overlayController,

@@ -13,6 +13,7 @@ import 'package:super_editor/src/infrastructure/super_textfield/input_method_eng
 import 'package:super_text_layout/super_text_layout.dart';
 
 import '../../_logging.dart';
+import '../../touch_controls.dart';
 import '../metrics.dart';
 import '../styles.dart';
 import 'android_textfield.dart';
@@ -121,7 +122,7 @@ class SuperAndroidTextField extends StatefulWidget {
   final bool showDebugPaint;
 
   /// Builder that creates the popover toolbar widget that appears when text is selected.
-  final Widget Function(BuildContext, AndroidEditingOverlayController) popoverToolbarBuilder;
+  final Widget Function(BuildContext, AndroidEditingOverlayController, ToolbarConfig) popoverToolbarBuilder;
 
   /// Padding placed around the text content of this text field, but within the
   /// scrollable viewport.
@@ -545,7 +546,8 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
   }
 }
 
-Widget _defaultAndroidToolbarBuilder(BuildContext context, AndroidEditingOverlayController controller) {
+Widget _defaultAndroidToolbarBuilder(
+    BuildContext context, AndroidEditingOverlayController controller, ToolbarConfig config) {
   return AndroidTextEditingFloatingToolbar(
     onCutPressed: () {
       final textController = controller.textController;

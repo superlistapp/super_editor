@@ -1,19 +1,22 @@
 import 'dart:math';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+
+import 'super_textfield/metrics.dart';
 
 final _log = textFieldLog;
 
 /// A [SingleChildLayoutDelegate] that interprets its child as a text editing
 /// toolbar and positions that toolbar either above [desiredTopAnchorInTextField],
 /// or below [desiredBottomAnchorInTextField].
-// TODO: offer optional padding from screen edges
 class ToolbarPositionDelegate extends SingleChildLayoutDelegate {
   ToolbarPositionDelegate({
     required this.textFieldGlobalOffset,
     required this.desiredTopAnchorInTextField,
     required this.desiredBottomAnchorInTextField,
+    this.screenPadding,
   });
 
   /// The global screen `Offset` of the text field, used to map local anchor
@@ -45,17 +48,21 @@ class ToolbarPositionDelegate extends SingleChildLayoutDelegate {
   /// sits on the bottom of a line of text.
   final Offset desiredBottomAnchorInTextField;
 
+  /// Minimum space from the screen edges.
+  final EdgeInsets? screenPadding;
+
   @override
   Offset getPositionForChild(Size size, Size childSize) {
-    final fitsAboveTextField = (textFieldGlobalOffset.dy + desiredTopAnchorInTextField.dy) > 100;
+    final heightNeeded = childSize.height + gapBetweenToolbarAndContent + (screenPadding?.top ?? 0.0);
+    final fitsAboveTextField = (textFieldGlobalOffset.dy + desiredTopAnchorInTextField.dy) > heightNeeded;
     final desiredAnchor = fitsAboveTextField
         ? desiredTopAnchorInTextField
         : (desiredBottomAnchorInTextField + Offset(0, childSize.height));
 
     final desiredTopLeft = (desiredAnchor - Offset(childSize.width / 2, childSize.height)) + textFieldGlobalOffset;
 
-    double x = max(desiredTopLeft.dx, 0);
-    x = min(x, size.width - childSize.width);
+    double x = max(desiredTopLeft.dx, (screenPadding?.left ?? 0));
+    x = min(x, size.width - childSize.width - (screenPadding?.right ?? 0));
 
     final constrainedOffset = Offset(x, desiredTopLeft.dy);
 

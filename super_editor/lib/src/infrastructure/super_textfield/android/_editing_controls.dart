@@ -12,6 +12,8 @@ import 'package:super_editor/src/infrastructure/toolbar_position_delegate.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
+import '../metrics.dart';
+
 final _log = androidTextFieldLog;
 
 /// Overlay editing controls for an Android-style text field.
@@ -72,7 +74,7 @@ class AndroidEditingOverlayControls extends StatefulWidget {
   /// selected text.
   ///
   /// Typically, this bar includes actions like "copy", "cut", "paste", etc.
-  final Widget Function(BuildContext, AndroidEditingOverlayController) popoverToolbarBuilder;
+  final Widget Function(BuildContext, AndroidEditingOverlayController, ToolbarConfig) popoverToolbarBuilder;
 
   @override
   State createState() => _AndroidEditingOverlayControlsState();
@@ -405,7 +407,6 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
       return const SizedBox();
     }
 
-    const toolbarGap = 24.0;
     Offset toolbarTopAnchor;
     Offset toolbarBottomAnchor;
 
@@ -414,8 +415,9 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
           _textPositionToViewportOffset(widget.editingController.textController.selection.extent);
       final lineHeight = _textLayout.getLineHeightAtPosition(widget.editingController.textController.selection.extent);
 
-      toolbarTopAnchor = extentOffsetInViewport - const Offset(0, toolbarGap);
-      toolbarBottomAnchor = extentOffsetInViewport + Offset(0, lineHeight) + const Offset(0, toolbarGap);
+      toolbarTopAnchor = extentOffsetInViewport - const Offset(0, gapBetweenToolbarAndContent);
+      toolbarBottomAnchor =
+          extentOffsetInViewport + Offset(0, lineHeight) + const Offset(0, gapBetweenToolbarAndContent);
     } else {
       final selectionBoxes = _textLayout.getBoxesForSelection(widget.editingController.textController.selection);
       Rect selectionBounds = selectionBoxes.first.toRect();
@@ -424,33 +426,33 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
       }
       final selectionTopInText = selectionBounds.topCenter;
       final selectionTopInViewport = _textOffsetToViewportOffset(selectionTopInText);
-      toolbarTopAnchor = selectionTopInViewport - const Offset(0, toolbarGap);
+      toolbarTopAnchor = selectionTopInViewport - const Offset(0, gapBetweenToolbarAndContent);
 
       final selectionBottomInText = selectionBounds.bottomCenter;
       final selectionBottomInViewport = _textOffsetToViewportOffset(selectionBottomInText);
-      toolbarBottomAnchor = selectionBottomInViewport + const Offset(0, toolbarGap);
+      toolbarBottomAnchor = selectionBottomInViewport + const Offset(0, gapBetweenToolbarAndContent);
     }
 
     // The selection might start above the visible area in a scrollable
     // text field. In that case, we don't want the toolbar to sit more
-    // than [toolbarGap] above the text field.
+    // than [gapBetweenToolbarAndContent] above the text field.
     toolbarTopAnchor = Offset(
       toolbarTopAnchor.dx,
       max(
         toolbarTopAnchor.dy,
-        -toolbarGap,
+        -gapBetweenToolbarAndContent,
       ),
     );
 
     // The selection might end below the visible area in a scrollable
     // text field. In that case, we don't want the toolbar to sit more
-    // than [toolbarGap] below the text field.
+    // than [gapBetweenToolbarAndContent] below the text field.
     final viewportHeight = (widget.textFieldKey.currentContext!.findRenderObject() as RenderBox).size.height;
     toolbarTopAnchor = Offset(
       toolbarTopAnchor.dx,
       min(
         toolbarTopAnchor.dy,
-        viewportHeight + toolbarGap,
+        viewportHeight + gapBetweenToolbarAndContent,
       ),
     );
 
@@ -483,7 +485,11 @@ class _AndroidEditingOverlayControlsState extends State<AndroidEditingOverlayCon
           opacity: widget.editingController.isToolbarVisible ? 1.0 : 0.0,
           duration: const Duration(milliseconds: 150),
           child: Builder(builder: (context) {
-            return widget.popoverToolbarBuilder(context, widget.editingController);
+            return widget.popoverToolbarBuilder(
+              context,
+              widget.editingController,
+              ToolbarConfig(focalPoint: textFieldGlobalOffset + toolbarTopAnchor),
+            );
           }),
         ),
       ),
