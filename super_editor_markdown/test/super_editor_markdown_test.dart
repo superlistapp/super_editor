@@ -412,7 +412,7 @@ This is some code
           ),
         ]);
 
-        expect(serializeDocumentToMarkdown(doc), '----\nParagraph1');
+        expect(serializeDocumentToMarkdown(doc), '-::-\nParagraph1');
       });
 
       test("doesn't serialize text alignment when not using supereditor syntax", () {
@@ -1011,7 +1011,7 @@ This is some code
       });
 
       test('paragraph with justify alignment', () {
-        final doc = deserializeMarkdownToDocument('----\nParagraph1');
+        final doc = deserializeMarkdownToDocument('-::-\nParagraph1');
 
         final paragraph = doc.nodes.first as ParagraphNode;
         expect(paragraph.getMetadataValue('textAlign'), 'justify');
@@ -1135,7 +1135,7 @@ Paragraph4""";
         expect(doc.nodes.last, isA<ParagraphNode>());
         expect((doc.nodes.last as ParagraphNode).text.text, 'Second Paragraph');
       });
-    
+
       test('document ending with an empty paragraph', () {
         final doc = deserializeMarkdownToDocument("""
 First Paragraph.

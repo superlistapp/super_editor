@@ -446,8 +446,8 @@ class UnderlineSyntax extends md.TagSyntax {
 class _ParagraphWithAlignmentSyntax extends _EmptyLinePreservingParagraphSyntax {
   /// This pattern matches the text aligment notation.
   ///
-  /// Possible values are `:---`, `:---:`, `---:` and `----`.
-  static final _alignmentNotationPattern = RegExp(r'^:-{3}|:-{3}:|-{3}:|-{4}$');
+  /// Possible values are `:---`, `:---:`, `---:` and `-::-`.
+  static final _alignmentNotationPattern = RegExp(r'^:-{3}|:-{3}:|-{3}:|-::-$');
 
   const _ParagraphWithAlignmentSyntax();
 
@@ -506,7 +506,7 @@ class _ParagraphWithAlignmentSyntax extends _EmptyLinePreservingParagraphSyntax 
         return 'center';
       case '---:':
         return 'right';
-      case '----':
+      case '-::-':
         return 'justify';
       // As we already check that the input matches the notation,
       // we shouldn't reach this point.

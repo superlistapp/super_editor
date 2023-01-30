@@ -15,6 +15,6 @@ enum MarkdownSyntax {
   ///
   /// `---:` represents right alignment.
   ///
-  /// `----` represents justify alignment.
+  /// `-::-` represents justify alignment.
   superEditor,
 }
