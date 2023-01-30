@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/super_editor.dart';
 
-import '../../main.dart';
 import '_example_document.dart';
 import '_toolbar.dart';
 
@@ -30,6 +29,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
 
   final _darkBackground = const Color(0xFF222222);
   final _lightBackground = Colors.white;
+  ValueNotifier<Brightness> _brightness = ValueNotifier<Brightness>(Brightness.light);
 
   SuperEditorDebugVisualsConfig? _debugConfig;
 
@@ -303,21 +303,34 @@ class _ExampleEditorState extends State<ExampleEditor> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Column(
-          children: [
-            Expanded(
-              child: _buildEditor(),
-            ),
-            if (_isMobile) _buildMountedToolbar(),
-          ],
-        ),
-        Align(
-          alignment: Alignment.bottomRight,
-          child: _buildCornerFabs(),
-        ),
-      ],
+    return ListenableBuilder(
+      listenable: _brightness,
+      builder: (context, _) {
+        return Theme(
+          data: ThemeData(brightness: _brightness.value),
+          child: Builder(
+            builder: (themedContext) {
+              // This builder captures the new theme
+              return Stack(
+                children: [
+                  Column(
+                    children: [
+                      Expanded(
+                        child: _buildEditor(themedContext),
+                      ),
+                      if (_isMobile) _buildMountedToolbar(),
+                    ],
+                  ),
+                  Align(
+                    alignment: Alignment.bottomRight,
+                    child: _buildCornerFabs(),
+                  ),
+                ],
+              );
+            },
+          ),
+        );
+      },
     );
   }
 
@@ -337,10 +350,9 @@ class _ExampleEditorState extends State<ExampleEditor> {
   }
 
   Widget _buildDebugVisualsToggle() {
-    final brightness = Theme.of(context).brightness;
     return FloatingActionButton(
-      backgroundColor: brightness == Brightness.light ? _darkBackground : _lightBackground,
-      foregroundColor: brightness == Brightness.light ? _lightBackground : _darkBackground,
+      backgroundColor: _brightness.value == Brightness.light ? _darkBackground : _lightBackground,
+      foregroundColor: _brightness.value == Brightness.light ? _lightBackground : _darkBackground,
       elevation: 5,
       onPressed: () {
         setState(() {
@@ -359,15 +371,14 @@ class _ExampleEditorState extends State<ExampleEditor> {
   }
 
   Widget _buildLightAndDarkModeToggle() {
-    final brightness = Theme.of(context).brightness;
     return FloatingActionButton(
-      backgroundColor: brightness == Brightness.light ? _darkBackground : _lightBackground,
-      foregroundColor: brightness == Brightness.light ? _lightBackground : _darkBackground,
+      backgroundColor: _brightness.value == Brightness.light ? _darkBackground : _lightBackground,
+      foregroundColor: _brightness.value == Brightness.light ? _lightBackground : _darkBackground,
       elevation: 5,
       onPressed: () {
-        AppSettings.of(context).toggleThemeBrightness();
+        _brightness.value = _brightness.value == Brightness.light ? Brightness.dark : Brightness.light;
       },
-      child: brightness == Brightness.light
+      child: _brightness.value == Brightness.light
           ? const Icon(
               Icons.dark_mode,
             )
@@ -377,7 +388,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
     );
   }
 
-  Widget _buildEditor() {
+  Widget _buildEditor(BuildContext context) {
     final isLight = Theme.of(context).brightness == Brightness.light;
 
     return ColoredBox(
@@ -413,17 +424,33 @@ class _ExampleEditorState extends State<ExampleEditor> {
           gestureMode: _gestureMode,
           inputSource: _inputSource,
           keyboardActions: _inputSource == TextInputSource.ime ? defaultImeKeyboardActions : defaultKeyboardActions,
-          androidToolbarBuilder: (_, __) => AndroidTextEditingFloatingToolbar(
-            onCutPressed: _cut,
-            onCopyPressed: _copy,
-            onPastePressed: _paste,
-            onSelectAllPressed: _selectAll,
+          androidToolbarBuilder: (_, __) => ListenableBuilder(
+            listenable: _brightness,
+            builder: (context, _) {
+              return Theme(
+                data: ThemeData(brightness: _brightness.value),
+                child: AndroidTextEditingFloatingToolbar(
+                  onCutPressed: _cut,
+                  onCopyPressed: _copy,
+                  onPastePressed: _paste,
+                  onSelectAllPressed: _selectAll,
+                ),
+              );
+            },
           ),
-          iOSToolbarBuilder: (_, config) => IOSTextEditingFloatingToolbar(
-            onCutPressed: _cut,
-            onCopyPressed: _copy,
-            onPastePressed: _paste,
-            focalPoint: config.focalPoint,
+          iOSToolbarBuilder: (_, config) => ListenableBuilder(
+            listenable: _brightness,
+            builder: (context, _) {
+              return Theme(
+                data: ThemeData(brightness: _brightness.value),
+                child: IOSTextEditingFloatingToolbar(
+                  onCutPressed: _cut,
+                  onCopyPressed: _copy,
+                  onPastePressed: _paste,
+                  focalPoint: config.focalPoint,
+                ),
+              );
+            },
           ),
           overlayController: _overlayController,
         ),

@@ -60,9 +60,7 @@ class SuperEditorDemoApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.red,
       ),
-      home: AppSettings(
-        child: HomeScreen(),
-      ),
+      home: HomeScreen(),
       supportedLocales: const [
         Locale('en', ''),
         Locale('es', ''),
@@ -123,36 +121,28 @@ class _HomeScreenState extends State<HomeScreen> {
     // We need a FocusScope above the Overlay so that focus can be shared between
     // SuperEditor in one OverlayEntry, and the popover toolbar in another OverlayEntry.
     return FocusScope(
-      child: ListenableBuilder(
-        listenable: AppSettings.of(context).brightness,
-        builder: (context, _) {
-          return Theme(
-            data: ThemeData(brightness: AppSettings.of(context).brightness.value),
-            // We need our own [Overlay] instead of the one created by the navigator
-            // because overlay entries added to navigator's [Overlay] are always
-            // displayed above all routes.
-            //
-            // We display the editor's toolbar in an [OverlayEntry], so inserting it
-            // at the navigator's [Overlay] causes widgets that are displayed in routes,
-            // e.g. [DropdownButton] items, to be displayed beneath the toolbar.
-            child: Overlay(
-              initialEntries: [
-                OverlayEntry(builder: (context) {
-                  return Scaffold(
-                    key: _scaffoldKey,
-                    body: Stack(
-                      children: [
-                        _selectedMenuItem!.pageBuilder(context),
-                        _buildDrawerButton(),
-                      ],
-                    ),
-                    drawer: _buildDrawer(),
-                  );
-                })
-              ],
-            ),
-          );
-        },
+      // We need our own [Overlay] instead of the one created by the navigator
+      // because overlay entries added to navigator's [Overlay] are always
+      // displayed above all routes.
+      //
+      // We display the editor's toolbar in an [OverlayEntry], so inserting it
+      // at the navigator's [Overlay] causes widgets that are displayed in routes,
+      // e.g. [DropdownButton] items, to be displayed beneath the toolbar.
+      child: Overlay(
+        initialEntries: [
+          OverlayEntry(builder: (context) {
+            return Scaffold(
+              key: _scaffoldKey,
+              body: Stack(
+                children: [
+                  _selectedMenuItem!.pageBuilder(context),
+                  _buildDrawerButton(),
+                ],
+              ),
+              drawer: _buildDrawer(),
+            );
+          })
+        ],
       ),
     );
   }
