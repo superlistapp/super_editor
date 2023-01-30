@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/super_textfield.dart';
 import 'package:super_text_layout/super_text_layout.dart';
@@ -336,7 +335,7 @@ class _TextScrollViewState extends State<TextScrollView>
     final linesOfText = _getLineCount();
     _log.finer(' - lines of text: $linesOfText');
 
-    late double estimatedLineHeight;
+    double? estimatedLineHeight;
     if (widget.lineHeight != null) {
       _log.finer(' - explicit line height provided: ${widget.lineHeight}');
       // Use the line height that was explicitly provided by the widget.
@@ -355,11 +354,9 @@ class _TextScrollViewState extends State<TextScrollView>
         estimatedLineHeight = widget.textKey.currentState!.textLayout.estimatedLineHeight;
         _log.finer(' - estimated line height based on text styles: $estimatedLineHeight');
       }
-    } else {
-      estimatedLineHeight = 0;
     }
 
-    if (estimatedLineHeight == 0) {
+    if (estimatedLineHeight == null) {
       _log.finer(' - could not calculate the estimated line height. Rescheduling calculation.');
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         if (mounted) {
@@ -489,9 +486,12 @@ class _TextScrollViewState extends State<TextScrollView>
   @override
   Widget build(BuildContext context) {
     if (widget.textKey.currentContext == null || _needViewportHeight) {
-      // Try to update the viewport height synchronously.
-      // If we can't, the viewport height is calculated at the end of the frame
-      // and the widget is rebuilt.
+      /// The text hasn't been laid out yet, which means we don't know how tall to
+      /// make the viewport, based on lines of text. Try to calculate a viewport height
+      /// based on available information. If there's not enough information to choose
+      /// a viewport height, then schedule a post-frame callback to inspect the final
+      /// text layout and select a viewport height based on the number of actual lines
+      /// of text in the layout.
       _updateViewportHeight();
     }
 
