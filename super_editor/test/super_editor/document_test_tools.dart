@@ -614,17 +614,3 @@ class FakeImageComponentBuilder implements ComponentBuilder {
     );
   }
 }
-
-/// Extension on [WidgetTester] to easily intercept platform messages.
-extension TestMessageInterceptor on WidgetTester {
-  /// Creates a handler to intercept messages of the given [channel].
-  PlatformMessageHandler interceptChannel(String channel) {
-    final handler = PlatformMessageHandler();
-
-    binding.defaultBinaryMessenger.setMockMessageHandler(channel, (message) async {
-      return await handler.handleMessage(message);
-    });
-
-    return handler;
-  }
-}

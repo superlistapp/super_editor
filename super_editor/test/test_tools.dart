@@ -316,6 +316,20 @@ void testWidgetsOnIos(
   }, skip: skip);
 }
 
+/// Extension on [WidgetTester] to easily intercept platform messages.
+extension TestMessageInterceptor on WidgetTester {
+  /// Creates a handler to intercept messages of the given [channel].
+  PlatformMessageHandler interceptChannel(String channel) {
+    final handler = PlatformMessageHandler();
+
+    binding.defaultBinaryMessenger.setMockMessageHandler(channel, (message) async {
+      return await handler.handleMessage(message);
+    });
+
+    return handler;
+  }
+}
+
 /// A method to handle plaftorm method calls.
 typedef PlatformMethodHandler = Future<ByteData?>? Function(MethodCall methodCall);
 

@@ -35,12 +35,13 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
     AttributedTextEditingController? controller,
     bool disposeClientController = true,
     void Function(RawFloatingCursorPoint)? onIOSFloatingCursorChange,
-    this.keyboardAppearance = Brightness.light,
+    Brightness keyboardAppearance = Brightness.light,
     TextInputConnectionFactory? inputConnectionFactory,
   })  : _realController = controller ?? AttributedTextEditingController(),
         _disposeClientController = disposeClientController,
         _inputConnectionFactory = inputConnectionFactory,
-        _onIOSFloatingCursorChange = onIOSFloatingCursorChange {
+        _onIOSFloatingCursorChange = onIOSFloatingCursorChange,
+        _keyboardAppearance = keyboardAppearance {
     _realController.addListener(_onInnerControllerChange);
   }
 
@@ -56,7 +57,8 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
   /// The appearance of the software keyboard.
   ///
   /// Only used for iOS devices.
-  Brightness keyboardAppearance;
+  Brightness get keyboardAppearance => _keyboardAppearance;
+  Brightness _keyboardAppearance;
 
   final AttributedTextEditingController _realController;
 
@@ -129,7 +131,7 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
       return;
     }
 
-    this.keyboardAppearance = keyboardAppearance;
+    _keyboardAppearance = keyboardAppearance;
 
     // Close the current connection.
     _inputConnection?.close();
