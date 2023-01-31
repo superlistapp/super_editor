@@ -401,6 +401,20 @@ This is some code
         expect(serializeDocumentToMarkdown(doc), '---:\nParagraph1');
       });
 
+      test('paragraph with justify alignment', () {
+        final doc = MutableDocument(nodes: [
+          ParagraphNode(
+            id: '1',
+            text: AttributedText(text: 'Paragraph1'),
+            metadata: {
+              'textAlign': 'justify',
+            },
+          ),
+        ]);
+
+        expect(serializeDocumentToMarkdown(doc), '-::-\nParagraph1');
+      });
+
       test("doesn't serialize text alignment when not using supereditor syntax", () {
         final doc = MutableDocument(nodes: [
           ParagraphNode(
@@ -996,6 +1010,14 @@ This is some code
         expect(paragraph.text.text, 'Paragraph1');
       });
 
+      test('paragraph with justify alignment', () {
+        final doc = deserializeMarkdownToDocument('-::-\nParagraph1');
+
+        final paragraph = doc.nodes.first as ParagraphNode;
+        expect(paragraph.getMetadataValue('textAlign'), 'justify');
+        expect(paragraph.text.text, 'Paragraph1');
+      });
+
       test('treats alignment token as text at the end of the document', () {
         final doc = deserializeMarkdownToDocument('---:');
 
@@ -1113,7 +1135,7 @@ Paragraph4""";
         expect(doc.nodes.last, isA<ParagraphNode>());
         expect((doc.nodes.last as ParagraphNode).text.text, 'Second Paragraph');
       });
-    
+
       test('document ending with an empty paragraph', () {
         final doc = deserializeMarkdownToDocument("""
 First Paragraph.
