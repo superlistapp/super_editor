@@ -216,9 +216,6 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        // Tap the text field to show the software keyboard with the light appearance.
-        await tester.placeCaretInSuperTextField(0);
-
         // Holds the keyboard appearance sent to the platform.
         String? keyboardAppearance;
 
@@ -234,11 +231,17 @@ void main() {
           },
         );
 
+        // Tap the text field to show the software keyboard with the light appearance.
+        await tester.placeCaretInSuperTextField(0);
+
+        // Ensure the initial keyboardAppearance was applied.
+        expect(keyboardAppearance, 'Brightness.light');
+
         // Change the keyboard appearance from light to dark.
         controller.updateTextInputConfiguration(
           keyboardAppearance: Brightness.dark,
         );
-        await tester.pumpAndSettle();
+        await tester.pump();
 
         // Ensure the given keyboardAppearance was applied.
         expect(keyboardAppearance, 'Brightness.dark');

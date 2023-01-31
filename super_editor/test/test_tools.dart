@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:logging/logging.dart';
 import 'package:logging/logging.dart' as logging;
@@ -313,4 +314,32 @@ void testWidgetsOnIos(
       debugDefaultTargetPlatformOverride = null;
     }
   }, skip: skip);
+}
+
+/// A method to handle plaftorm method calls.
+typedef PlatformMethodHandler = Future<ByteData?>? Function(MethodCall methodCall);
+
+/// Configures handlers to intercept platform method calls.
+///
+/// Use [interceptMethod] to configure a handler for a method.
+class PlatformMessageHandler {
+  final _handlers = <String, PlatformMethodHandler>{};
+
+  /// Configures a [handler] to a [method].
+  PlatformMessageHandler interceptMethod(String method, PlatformMethodHandler handler) {
+    _handlers[method] = handler;
+    return this;
+  }
+
+  /// Decodes platform messages and dispatches to the configured handlers.
+  Future<ByteData?>? handleMessage(ByteData? message) async {
+    final methodCall = const JSONMethodCodec().decodeMethodCall(message);
+    final handler = _handlers[methodCall.method];
+
+    if (handler == null) {
+      return null;
+    }
+
+    return await handler(methodCall);
+  }
 }
