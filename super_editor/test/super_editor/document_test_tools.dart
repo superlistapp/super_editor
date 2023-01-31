@@ -1,16 +1,13 @@
 import 'dart:math';
 import 'dart:ui' as ui;
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 import 'package:super_editor_markdown/super_editor_markdown.dart';
 import 'package:text_table/text_table.dart';
 
-import '../test_tools.dart';
 import 'test_documents.dart';
 
 /// Extensions on [WidgetTester] that configure and pump [SuperEditor]
