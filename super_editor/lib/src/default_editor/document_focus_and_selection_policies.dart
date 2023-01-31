@@ -9,12 +9,16 @@ class EditorSelectionAndFocusPolicy extends StatefulWidget {
     Key? key,
     required this.focusNode,
     required this.selection,
+    required this.documentLayoutKey,
     required this.getDocumentLayout,
     this.placeCaretAtEndOfDocumentOnGainFocus = true,
     this.restorePreviousSelectionOnGainFocus = true,
     this.clearSelectionWhenEditorLosesFocus = true,
     required this.child,
   }) : super(key: key);
+
+  /// [GlobalKey] to access the document layout.
+  final GlobalKey documentLayoutKey;
 
   /// The document editor's [FocusNode].
   ///
@@ -60,6 +64,11 @@ class EditorSelectionAndFocusPolicy extends StatefulWidget {
 class _EditorSelectionAndFocusPolicyState extends State<EditorSelectionAndFocusPolicy> {
   bool _wasFocused = false;
   DocumentSelection? _previousSelection;
+
+  /// Whether or not the document has been laid out.
+  ///
+  /// If `true`, we can access the document layout.
+  bool get _isDocumentLaidOut => widget.documentLayoutKey.currentContext != null;
 
   @override
   void initState() {
@@ -107,6 +116,17 @@ class _EditorSelectionAndFocusPolicyState extends State<EditorSelectionAndFocusP
         // Place the caret at the end of the document.
         editorPoliciesLog
             .info("[${widget.runtimeType}] - placing caret at end of document because the editor gained focus");
+        if (!_isDocumentLaidOut) {
+          // We are focused, but the document hasn't been laid out yet. This could happen if SuperEditor has autofocus.
+          // Wait until the end of the frame, so we have access to the document layout.
+          editorPoliciesLog.info(
+              "[${widget.runtimeType}] - the document hasn't been laid out yet. Trying again at the end of the frame");
+          WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+            _onFocusChange();
+          });
+          return;
+        }
+
         DocumentPosition? position = widget.getDocumentLayout().findLastSelectablePosition();
         if (position != null) {
           widget.selection.value = DocumentSelection.collapsed(
