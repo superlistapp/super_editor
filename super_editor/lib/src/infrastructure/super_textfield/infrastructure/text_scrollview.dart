@@ -462,7 +462,7 @@ class _TextScrollViewState extends State<TextScrollView>
 
     if (widget.textKey.currentState == null) {
       // If we can't get a text layout, compute the line count by counting the line breaks.
-      return widget.textEditingController.text.text.split('\n').length;
+      return 0;
     }
 
     return _textLayout.getLineCount();
