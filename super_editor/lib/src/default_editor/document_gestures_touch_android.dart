@@ -1460,9 +1460,7 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
         child: AnimatedOpacity(
           opacity: widget.editingController.shouldDisplayToolbar ? 1.0 : 0.0,
           duration: const Duration(milliseconds: 150),
-          child: Builder(builder: (context) {
-            return widget.popoverToolbarBuilder(context);
-          }),
+          child: Builder(builder: widget.popoverToolbarBuilder),
         ),
       ),
     );
