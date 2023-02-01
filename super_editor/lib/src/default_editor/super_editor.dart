@@ -222,13 +222,13 @@ class SuperEditor extends StatefulWidget {
   final Color? androidHandleColor;
 
   /// Builder that creates a floating toolbar when running on Android.
-  final FloatingToolbarBuilder? androidToolbarBuilder;
+  final WidgetBuilder? androidToolbarBuilder;
 
   /// Color of the text selection drag handles on iOS.
   final Color? iOSHandleColor;
 
   /// Builder that creates a floating toolbar when running on iOS.
-  final FloatingToolbarBuilder? iOSToolbarBuilder;
+  final WidgetBuilder? iOSToolbarBuilder;
 
   /// Creates a clipper that applies to overlay controls, like drag
   /// handles, magnifiers, and popover toolbars, preventing the overlay
@@ -614,7 +614,7 @@ class SuperEditorState extends State<SuperEditor> {
           scrollController: widget.scrollController,
           documentKey: _docLayoutKey,
           handleColor: widget.androidHandleColor ?? Theme.of(context).primaryColor,
-          popoverToolbarBuilder: widget.androidToolbarBuilder ?? (_, __) => const SizedBox(),
+          popoverToolbarBuilder: widget.androidToolbarBuilder ?? (_) => const SizedBox(),
           createOverlayControlsClipper: widget.createOverlayControlsClipper,
           overlayController: widget.overlayController,
           showDebugPaint: widget.debugPaint.gestures,
@@ -630,7 +630,7 @@ class SuperEditorState extends State<SuperEditor> {
           scrollController: widget.scrollController,
           documentKey: _docLayoutKey,
           handleColor: widget.iOSHandleColor ?? Theme.of(context).primaryColor,
-          popoverToolbarBuilder: widget.iOSToolbarBuilder ?? (_, __) => const SizedBox(),
+          popoverToolbarBuilder: widget.iOSToolbarBuilder ?? (_) => const SizedBox(),
           floatingCursorController: _floatingCursorController,
           createOverlayControlsClipper: widget.createOverlayControlsClipper,
           overlayController: widget.overlayController,

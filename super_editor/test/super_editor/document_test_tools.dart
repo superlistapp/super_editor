@@ -121,8 +121,8 @@ class TestDocumentConfigurator {
   ScrollController? _scrollController;
   FocusNode? _focusNode;
   DocumentSelection? _selection;
-  FloatingToolbarBuilder? _androidToolbarBuilder;
-  FloatingToolbarBuilder? _iOSToolbarBuilder;
+  WidgetBuilder? _androidToolbarBuilder;
+  WidgetBuilder? _iOSToolbarBuilder;
   Key? _key;
 
   /// Configures the [SuperEditor] for standard desktop interactions,
@@ -233,13 +233,13 @@ class TestDocumentConfigurator {
   }
 
   /// Configures the [SuperEditor] to use the given [builder] as its android toolbar builder.
-  TestDocumentConfigurator withAndroidToolbarBuilder(FloatingToolbarBuilder? builder) {
+  TestDocumentConfigurator withAndroidToolbarBuilder(WidgetBuilder? builder) {
     _androidToolbarBuilder = builder;
     return this;
   }
 
   /// Configures the [SuperEditor] to use the given [builder] as its iOS toolbar builder.
-  TestDocumentConfigurator withiOSToolbarBuilder(FloatingToolbarBuilder? builder) {
+  TestDocumentConfigurator withiOSToolbarBuilder(WidgetBuilder? builder) {
     _iOSToolbarBuilder = builder;
     return this;
   }

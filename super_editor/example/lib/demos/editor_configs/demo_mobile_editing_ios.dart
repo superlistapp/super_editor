@@ -20,6 +20,7 @@ class _MobileEditingIOSDemoState extends State<MobileEditingIOSDemo> {
   late DocumentEditor _docEditor;
   late DocumentComposer _composer;
   late CommonEditorOperations _docOps;
+  late MagnifierAndToolbarController _overlayController;
 
   FocusNode? _editorFocusNode;
 
@@ -35,6 +36,7 @@ class _MobileEditingIOSDemoState extends State<MobileEditingIOSDemo> {
       documentLayoutResolver: () => _docLayoutKey.currentState as DocumentLayout,
     );
     _editorFocusNode = FocusNode();
+    _overlayController = MagnifierAndToolbarController();
   }
 
   @override
@@ -57,11 +59,11 @@ class _MobileEditingIOSDemoState extends State<MobileEditingIOSDemo> {
               composer: _composer,
               gestureMode: DocumentGestureMode.iOS,
               inputSource: TextInputSource.ime,
-              iOSToolbarBuilder: (_, config) => IOSTextEditingFloatingToolbar(
+              iOSToolbarBuilder: (_) => IOSTextEditingFloatingToolbar(
                 onCutPressed: () => _docOps.cut(),
                 onCopyPressed: () => _docOps.copy(),
                 onPastePressed: () => _docOps.paste(),
-                focalPoint: config.focalPoint,
+                focalPoint: _overlayController.toolbarTopAnchor!,
               ),
               stylesheet: defaultStylesheet.copyWith(
                 documentPadding: const EdgeInsets.all(16),

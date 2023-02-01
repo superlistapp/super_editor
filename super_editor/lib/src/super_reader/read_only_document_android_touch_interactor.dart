@@ -61,7 +61,7 @@ class ReadOnlyAndroidDocumentTouchInteractor extends StatefulWidget {
   /// The color of the Android-style drag handles.
   final Color handleColor;
 
-  final FloatingToolbarBuilder popoverToolbarBuilder;
+  final WidgetBuilder popoverToolbarBuilder;
 
   /// Creates a clipper that applies to overlay controls, preventing
   /// the overlay controls from appearing outside the given clipping

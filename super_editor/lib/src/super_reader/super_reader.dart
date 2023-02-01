@@ -133,13 +133,13 @@ class SuperReader extends StatefulWidget {
   final Color? androidHandleColor;
 
   /// Builder that creates a floating toolbar when running on Android.
-  final FloatingToolbarBuilder? androidToolbarBuilder;
+  final WidgetBuilder? androidToolbarBuilder;
 
   /// Color of the text selection drag handles on iOS.
   final Color? iOSHandleColor;
 
   /// Builder that creates a floating toolbar when running on iOS.
-  final FloatingToolbarBuilder? iOSToolbarBuilder;
+  final WidgetBuilder? iOSToolbarBuilder;
 
   /// Creates a clipper that applies to overlay controls, like drag
   /// handles, magnifiers, and popover toolbars, preventing the overlay
@@ -321,7 +321,7 @@ class SuperReaderState extends State<SuperReader> {
           selection: _readerContext.selection,
           scrollController: widget.scrollController,
           handleColor: widget.androidHandleColor ?? Theme.of(context).primaryColor,
-          popoverToolbarBuilder: widget.androidToolbarBuilder ?? (_, __) => const SizedBox(),
+          popoverToolbarBuilder: widget.androidToolbarBuilder ?? (_) => const SizedBox(),
           createOverlayControlsClipper: widget.createOverlayControlsClipper,
           showDebugPaint: widget.debugPaint.gestures,
           overlayController: widget.overlayController,
@@ -336,7 +336,7 @@ class SuperReaderState extends State<SuperReader> {
           scrollController: widget.scrollController,
           documentKey: _docLayoutKey,
           handleColor: widget.iOSHandleColor ?? Theme.of(context).primaryColor,
-          popoverToolbarBuilder: widget.iOSToolbarBuilder ?? (_, __) => const SizedBox(),
+          popoverToolbarBuilder: widget.iOSToolbarBuilder ?? (_) => const SizedBox(),
           createOverlayControlsClipper: widget.createOverlayControlsClipper,
           showDebugPaint: widget.debugPaint.gestures,
           overlayController: widget.overlayController,

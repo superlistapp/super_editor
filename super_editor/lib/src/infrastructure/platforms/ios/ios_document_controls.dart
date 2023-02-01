@@ -82,7 +82,7 @@ class IosDocumentTouchEditingControls extends StatefulWidget {
   /// selected text.
   ///
   /// Typically, this bar includes actions like "copy", "cut", "paste", etc.
-  final FloatingToolbarBuilder popoverToolbarBuilder;
+  final WidgetBuilder popoverToolbarBuilder;
 
   /// Disables all gesture interaction for these editing controls,
   /// allowing gestures to pass through these controls to whatever
@@ -489,7 +489,6 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
     //         - If this same approach were used in a situation where the
     //           distance between the left edge of the available space and the
     //           text field changed, I think it would fail.
-
     return CustomSingleChildLayout(
       delegate: ToolbarPositionDelegate(
         // TODO: handle situation where document isn't full screen
@@ -504,12 +503,7 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
           opacity: widget.editingController.shouldDisplayToolbar ? 1.0 : 0.0,
           duration: const Duration(milliseconds: 150),
           child: Builder(builder: (context) {
-            return widget.popoverToolbarBuilder(
-              context,
-              ToolbarConfig(
-                focalPoint: widget.editingController.toolbarTopAnchor!,
-              ),
-            );
+            return widget.popoverToolbarBuilder(context);
           }),
         ),
       ),

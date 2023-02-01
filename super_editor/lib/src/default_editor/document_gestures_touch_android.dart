@@ -71,7 +71,7 @@ class AndroidDocumentTouchInteractor extends StatefulWidget {
   /// The color of the Android-style drag handles.
   final Color handleColor;
 
-  final FloatingToolbarBuilder popoverToolbarBuilder;
+  final WidgetBuilder popoverToolbarBuilder;
 
   /// Creates a clipper that applies to overlay controls, preventing
   /// the overlay controls from appearing outside the given clipping
@@ -1096,7 +1096,7 @@ class AndroidDocumentTouchEditingControls extends StatefulWidget {
   /// selected text.
   ///
   /// Typically, this bar includes actions like "copy", "cut", "paste", etc.
-  final FloatingToolbarBuilder popoverToolbarBuilder;
+  final WidgetBuilder popoverToolbarBuilder;
 
   final bool showDebugPaint;
 
@@ -1461,12 +1461,7 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
           opacity: widget.editingController.shouldDisplayToolbar ? 1.0 : 0.0,
           duration: const Duration(milliseconds: 150),
           child: Builder(builder: (context) {
-            return widget.popoverToolbarBuilder(
-              context,
-              ToolbarConfig(
-                focalPoint: widget.editingController.toolbarTopAnchor!,
-              ),
-            );
+            return widget.popoverToolbarBuilder(context);
           }),
         ),
       ),

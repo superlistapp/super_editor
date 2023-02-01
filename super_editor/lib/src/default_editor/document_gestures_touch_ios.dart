@@ -67,7 +67,7 @@ class IOSDocumentTouchInteractor extends StatefulWidget {
   /// Color the iOS-style text selection drag handles.
   final Color handleColor;
 
-  final FloatingToolbarBuilder popoverToolbarBuilder;
+  final WidgetBuilder popoverToolbarBuilder;
 
   /// Controller that reports the current offset of the iOS floating
   /// cursor.

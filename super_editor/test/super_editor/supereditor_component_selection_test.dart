@@ -561,8 +561,8 @@ Future<void> _pumpEditorWithUnselectableHrsAndFakeToolbar(
           gestureMode: debugDefaultTargetPlatformOverride == TargetPlatform.android
               ? DocumentGestureMode.android
               : DocumentGestureMode.iOS,
-          androidToolbarBuilder: (_, __) => SizedBox(key: toolbarKey),
-          iOSToolbarBuilder: (_, __) => SizedBox(key: toolbarKey),
+          androidToolbarBuilder: (_) => SizedBox(key: toolbarKey),
+          iOSToolbarBuilder: (_) => SizedBox(key: toolbarKey),
           componentBuilders: [
             const _UnselectableHrComponentBuilder(),
             ...defaultComponentBuilders,

@@ -14,11 +14,13 @@ class SuperReaderDemo extends StatefulWidget {
 class _SuperReaderDemoState extends State<SuperReaderDemo> {
   late final Document _document;
   final _selection = ValueNotifier<DocumentSelection?>(null);
+  late MagnifierAndToolbarController _overlayController;
 
   @override
   void initState() {
     super.initState();
     _document = createInitialDocument();
+    _overlayController = MagnifierAndToolbarController();
   }
 
   void _copy() {
@@ -118,13 +120,14 @@ class _SuperReaderDemoState extends State<SuperReaderDemo> {
     return SuperReader(
       document: _document,
       selection: _selection,
-      androidToolbarBuilder: (_, __) => AndroidTextEditingFloatingToolbar(
+      overlayController: _overlayController,
+      androidToolbarBuilder: (_) => AndroidTextEditingFloatingToolbar(
         onCopyPressed: _copy,
         onSelectAllPressed: _selectAll,
       ),
-      iOSToolbarBuilder: (_, config) => IOSTextEditingFloatingToolbar(
+      iOSToolbarBuilder: (_) => IOSTextEditingFloatingToolbar(
         onCopyPressed: _copy,
-        focalPoint: config.focalPoint,
+        focalPoint: _overlayController.toolbarTopAnchor!,
       ),
     );
   }

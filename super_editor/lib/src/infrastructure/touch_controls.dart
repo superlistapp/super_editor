@@ -12,8 +12,6 @@ enum HandleType {
   downstream,
 }
 
-typedef FloatingToolbarBuilder = Widget Function(BuildContext context, ToolbarConfig config);
-
 /// Configuration used to display a toolbar.
 class ToolbarConfig {
   ToolbarConfig({

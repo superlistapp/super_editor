@@ -1,6 +1,6 @@
 import 'package:example/logging.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide ListenableBuilder;
 import 'package:super_editor/super_editor.dart';
 
 import '_example_document.dart';
@@ -424,7 +424,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
           gestureMode: _gestureMode,
           inputSource: _inputSource,
           keyboardActions: _inputSource == TextInputSource.ime ? defaultImeKeyboardActions : defaultKeyboardActions,
-          androidToolbarBuilder: (_, __) => ListenableBuilder(
+          androidToolbarBuilder: (_) => ListenableBuilder(
             listenable: _brightness,
             builder: (context, _) {
               return Theme(
@@ -438,7 +438,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
               );
             },
           ),
-          iOSToolbarBuilder: (_, config) => ListenableBuilder(
+          iOSToolbarBuilder: (_) => ListenableBuilder(
             listenable: _brightness,
             builder: (context, _) {
               return Theme(
@@ -447,7 +447,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
                   onCutPressed: _cut,
                   onCopyPressed: _copy,
                   onPastePressed: _paste,
-                  focalPoint: config.focalPoint,
+                  focalPoint: _overlayController.toolbarTopAnchor!,
                 ),
               );
             },

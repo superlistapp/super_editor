@@ -66,7 +66,7 @@ class ReadOnlyIOSDocumentTouchInteractor extends StatefulWidget {
   /// Color the iOS-style text selection drag handles.
   final Color handleColor;
 
-  final FloatingToolbarBuilder popoverToolbarBuilder;
+  final WidgetBuilder popoverToolbarBuilder;
 
   /// Creates a clipper that applies to overlay controls, preventing
   /// the overlay controls from appearing outside the given clipping
