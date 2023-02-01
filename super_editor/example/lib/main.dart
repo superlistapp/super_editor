@@ -543,25 +543,3 @@ class _DrawerButton extends StatelessWidget {
     );
   }
 }
-
-class AppSettings extends InheritedWidget {
-  static AppSettings of(BuildContext context) {
-    return context.dependOnInheritedWidgetOfExactType<AppSettings>()!;
-  }
-
-  AppSettings({required Widget child}) : super(child: child);
-
-  final brightness = ValueNotifier<Brightness>(Brightness.light);
-
-  /// Toggle the [brightness] between [Brightness.dark] and [Brightness.light].
-  void toggleThemeBrightness() {
-    brightness.value = brightness.value == Brightness.light //
-        ? Brightness.dark
-        : Brightness.light;
-  }
-
-  @override
-  bool updateShouldNotify(covariant AppSettings oldWidget) {
-    return brightness != oldWidget.brightness;
-  }
-}
