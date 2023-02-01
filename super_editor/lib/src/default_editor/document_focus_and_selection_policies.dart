@@ -9,12 +9,22 @@ class EditorSelectionAndFocusPolicy extends StatefulWidget {
     Key? key,
     required this.focusNode,
     required this.selection,
+    required this.isDocumentLayoutAvailable,
     required this.getDocumentLayout,
     this.placeCaretAtEndOfDocumentOnGainFocus = true,
     this.restorePreviousSelectionOnGainFocus = true,
     this.clearSelectionWhenEditorLosesFocus = true,
     required this.child,
   }) : super(key: key);
+
+  /// Returns whether or not we can access the document layout, which is needed for [placeCaretAtEndOfDocumentOnGainFocus].
+  ///
+  /// When [SuperEditor] has `autofocus`, the focus change callback is called before we can access
+  /// the document layout using [getDocumentLayout]. If [getDocumentLayout] is called before we can
+  /// access the document layout we get an exception.
+  ///
+  /// When this method returns `true`, we assume it's safe to call [getDocumentLayout].
+  final bool Function() isDocumentLayoutAvailable;
 
   /// The document editor's [FocusNode].
   ///
@@ -107,6 +117,17 @@ class _EditorSelectionAndFocusPolicyState extends State<EditorSelectionAndFocusP
         // Place the caret at the end of the document.
         editorPoliciesLog
             .info("[${widget.runtimeType}] - placing caret at end of document because the editor gained focus");
+        if (!widget.isDocumentLayoutAvailable()) {
+          // We are focused, but the document hasn't been laid out yet. This could happen if SuperEditor has autofocus.
+          // Wait until the end of the frame, so we have access to the document layout.
+          editorPoliciesLog.info(
+              "[${widget.runtimeType}] - the document hasn't been laid out yet. Trying again at the end of the frame");
+          WidgetsBinding.instance.scheduleFrameCallback((timeStamp) {
+            _onFocusChange();
+          });
+          return;
+        }
+
         DocumentPosition? position = widget.getDocumentLayout().findLastSelectablePosition();
         if (position != null) {
           widget.selection.value = DocumentSelection.collapsed(
