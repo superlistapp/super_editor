@@ -9,7 +9,7 @@ class EditorSelectionAndFocusPolicy extends StatefulWidget {
     Key? key,
     required this.focusNode,
     required this.selection,
-    required this.documentLayoutKey,
+    required this.isDocumentLayoutAvailable,
     required this.getDocumentLayout,
     this.placeCaretAtEndOfDocumentOnGainFocus = true,
     this.restorePreviousSelectionOnGainFocus = true,
@@ -17,8 +17,14 @@ class EditorSelectionAndFocusPolicy extends StatefulWidget {
     required this.child,
   }) : super(key: key);
 
-  /// [GlobalKey] to access the document layout.
-  final GlobalKey documentLayoutKey;
+  /// Returns whether or not we can access the document layout, which is needed for [placeCaretAtEndOfDocumentOnGainFocus].
+  ///
+  /// When [SuperEditor] has `autofocus`, the focus change callback is called before we can access
+  /// the document layout using [getDocumentLayout]. If [getDocumentLayout] is called before we can
+  /// access the document layout we get an exception.
+  ///
+  /// When this method returns `true`, we assume it's safe to call [getDocumentLayout].
+  final bool Function() isDocumentLayoutAvailable;
 
   /// The document editor's [FocusNode].
   ///
@@ -64,11 +70,6 @@ class EditorSelectionAndFocusPolicy extends StatefulWidget {
 class _EditorSelectionAndFocusPolicyState extends State<EditorSelectionAndFocusPolicy> {
   bool _wasFocused = false;
   DocumentSelection? _previousSelection;
-
-  /// Whether or not the document has been laid out.
-  ///
-  /// If `true`, we can access the document layout.
-  bool get _isDocumentLaidOut => widget.documentLayoutKey.currentContext != null;
 
   @override
   void initState() {
@@ -116,12 +117,12 @@ class _EditorSelectionAndFocusPolicyState extends State<EditorSelectionAndFocusP
         // Place the caret at the end of the document.
         editorPoliciesLog
             .info("[${widget.runtimeType}] - placing caret at end of document because the editor gained focus");
-        if (!_isDocumentLaidOut) {
+        if (!widget.isDocumentLayoutAvailable()) {
           // We are focused, but the document hasn't been laid out yet. This could happen if SuperEditor has autofocus.
           // Wait until the end of the frame, so we have access to the document layout.
           editorPoliciesLog.info(
               "[${widget.runtimeType}] - the document hasn't been laid out yet. Trying again at the end of the frame");
-          WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+          WidgetsBinding.instance.scheduleFrameCallback((timeStamp) {
             _onFocusChange();
           });
           return;
