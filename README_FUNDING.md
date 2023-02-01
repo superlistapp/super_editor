@@ -1,10 +1,12 @@
 # How to fund work with the Flutter Bounty Hunters
-Most development on `super_editor` and other Flutter Bounty Hunter projects are funded by companies in the Flutter community. This document describes the protocol for identifying funders and budgeting the work.
+Most development on `super_editor` and other [Flutter Bounty Hunter](https://flutterbountyhunters.com/) projects are funded by companies in the Flutter community. This document describes the protocol for identifying funders and budgeting the work.
 
 Work is funded at an hourly rate, on a per-ticket basis.
 
 ## Identifying funders
 Each funded ticket is assigned a label for each company that chooses to fund that particular ticket. For example, if Superlist chooses to fund a ticket, the ticket will include a label that says `f:superlist`.
+
+Multiple funders can fund the same ticket. In fact, multiple funders per ticket is the ideal approach.
 
 ## Setting a budget
 Work is budgeted by time. A funded ticket will include a label that describes the maximum number of hours that the funders are comfortable funding that ticket. For example, if the funders are willing to fund 10 hours or less of work, the ticket will have the label `maxHours:10`.
