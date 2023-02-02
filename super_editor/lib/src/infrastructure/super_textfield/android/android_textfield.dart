@@ -491,6 +491,7 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
             minLines: widget.minLines,
             maxLines: widget.maxLines,
             lineHeight: widget.lineHeight,
+            textStyleBuilder: widget.textStyleBuilder,
             perLineAutoScrollDuration: const Duration(milliseconds: 100),
             showDebugPaint: widget.showDebugPaint,
             padding: widget.padding,
