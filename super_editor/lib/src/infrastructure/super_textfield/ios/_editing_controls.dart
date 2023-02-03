@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
 import 'package:super_editor/src/infrastructure/toolbar_position_delegate.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/magnifier.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/super_textfield.dart';
@@ -71,7 +72,7 @@ class IOSEditingControls extends StatefulWidget {
   /// selected text.
   ///
   /// Typically, this bar includes actions like "copy", "cut", "paste", etc.
-  final Widget Function(BuildContext, IOSEditingOverlayController, ToolbarConfig) popoverToolbarBuilder;
+  final Widget Function(BuildContext, IOSEditingOverlayController) popoverToolbarBuilder;
 
   @override
   State createState() => _IOSEditingControlsState();
@@ -360,6 +361,11 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
     final textFieldGlobalOffset =
         (widget.textFieldKey.currentContext!.findRenderObject() as RenderBox).localToGlobal(Offset.zero);
 
+    widget.editingController.overlayController.positionToolbar(
+      topAnchor: toolbarTopAnchor,
+      bottomAnchor: toolbarBottomAnchor,
+    );
+
     // TODO: figure out why this approach works. Why isn't the text field's
     //       RenderBox offset stale when the keyboard opens or closes? Shouldn't
     //       we end up with the previous offset because no rebuild happens?
@@ -386,11 +392,7 @@ class _IOSEditingControlsState extends State<IOSEditingControls> with WidgetsBin
           opacity: widget.editingController.isToolbarVisible ? 1.0 : 0.0,
           duration: const Duration(milliseconds: 150),
           child: Builder(builder: (context) {
-            return widget.popoverToolbarBuilder(
-              context,
-              widget.editingController,
-              ToolbarConfig(focalPoint: toolbarTopAnchor + textFieldGlobalOffset),
-            );
+            return widget.popoverToolbarBuilder(context, widget.editingController);
           }),
         ),
       ),
@@ -554,10 +556,18 @@ class IOSEditingOverlayController with ChangeNotifier {
   IOSEditingOverlayController({
     required this.textController,
     required LayerLink magnifierFocalPoint,
-  }) : _magnifierFocalPoint = magnifierFocalPoint;
+    required this.overlayController,
+  }) : _magnifierFocalPoint = magnifierFocalPoint {
+    overlayController.addListener(_overlayControllerChanged);
+  }
 
-  bool _isToolbarVisible = false;
-  bool get isToolbarVisible => _isToolbarVisible;
+  @override
+  void dispose() {
+    overlayController.removeListener(_overlayControllerChanged);
+    super.dispose();
+  }
+
+  bool get isToolbarVisible => overlayController.shouldDisplayToolbar;
 
   /// The [AttributedTextEditingController] controlling the text
   /// and selection within the text field with which this
@@ -570,44 +580,32 @@ class IOSEditingOverlayController with ChangeNotifier {
   /// this [textController].
   final AttributedTextEditingController textController;
 
+  /// Shows, hides, and positions a floating toolbar and magnifier.
+  final MagnifierAndToolbarController overlayController;
+
   void toggleToolbar() {
-    if (isToolbarVisible) {
-      hideToolbar();
-    } else {
-      showToolbar();
-    }
+    overlayController.toggleToolbar();
   }
 
   void showToolbar() {
-    hideMagnifier();
-
-    _isToolbarVisible = true;
-
-    notifyListeners();
+    overlayController.showToolbar();
   }
 
   void hideToolbar() {
-    _isToolbarVisible = false;
-    notifyListeners();
+    overlayController.hideToolbar();
   }
 
   final LayerLink _magnifierFocalPoint;
   LayerLink get magnifierFocalPoint => _magnifierFocalPoint;
 
-  bool _isMagnifierVisible = false;
-  bool get isMagnifierVisible => _isMagnifierVisible;
+  bool get isMagnifierVisible => overlayController.shouldDisplayMagnifier;
 
   void showMagnifier(Offset globalOffset) {
-    hideToolbar();
-
-    _isMagnifierVisible = true;
-
-    notifyListeners();
+    overlayController.showMagnifier();
   }
 
   void hideMagnifier() {
-    _isMagnifierVisible = false;
-    notifyListeners();
+    overlayController.hideMagnifier();
   }
 
   bool _areSelectionHandlesVisible = false;
@@ -620,6 +618,10 @@ class IOSEditingOverlayController with ChangeNotifier {
 
   void hideSelectionHandles() {
     _areSelectionHandlesVisible = false;
+    notifyListeners();
+  }
+
+  void _overlayControllerChanged() {
     notifyListeners();
   }
 }
