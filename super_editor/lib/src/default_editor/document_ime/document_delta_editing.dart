@@ -15,12 +15,16 @@ class TextDeltasDocumentEditor {
     required this.selection,
     required this.composingRegion,
     required this.commonOps,
+    this.onPerformAction,
   });
 
   final DocumentEditor editor;
   final ValueNotifier<DocumentSelection?> selection;
   final ValueNotifier<DocumentRange?> composingRegion;
   final CommonEditorOperations commonOps;
+
+  /// Override the handling of a [TextInputAction]s.
+  final void Function(TextInputAction action)? onPerformAction;
 
   /// Applies the given [textEditingDeltas] to the [Document].
   void applyDeltas(List<TextEditingDelta> textEditingDeltas) {
@@ -84,7 +88,7 @@ class TextDeltasDocumentEditor {
       // we forward the newline action to performAction.
       if (defaultTargetPlatform == TargetPlatform.android || kIsWeb) {
         editorImeLog.fine("Received a newline insertion on Android. Forwarding to newline input action.");
-        performAction(TextInputAction.newline);
+        _dispatchTextInputAction(TextInputAction.newline);
       } else {
         editorImeLog.fine("Skipping insertion delta because its a newline");
       }
@@ -128,7 +132,7 @@ class TextDeltasDocumentEditor {
       // we forward the newline action to performAction.
       if (defaultTargetPlatform == TargetPlatform.android || kIsWeb) {
         editorImeLog.fine("Received a newline replacement on Android. Forwarding to newline input action.");
-        performAction(TextInputAction.newline);
+        _dispatchTextInputAction(TextInputAction.newline);
       } else {
         editorImeLog.fine("Skipping replacement delta because its a newline");
       }
@@ -212,7 +216,7 @@ class TextDeltasDocumentEditor {
     editorImeLog.fine('With text: "$replacementText"');
 
     if (replacementText == "\n") {
-      performAction(TextInputAction.newline);
+      _dispatchTextInputAction(TextInputAction.newline);
       return;
     }
 
@@ -276,6 +280,14 @@ class TextDeltasDocumentEditor {
       case TextInputAction.unspecified:
         editorImeLog.warning("User pressed unhandled action button: $action");
         break;
+    }
+  }
+
+  void _dispatchTextInputAction(TextInputAction action) {
+    if (onPerformAction != null) {
+      onPerformAction!(action);
+    } else {
+      performAction(action);
     }
   }
 }
