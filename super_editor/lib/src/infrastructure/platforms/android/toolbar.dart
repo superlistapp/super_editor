@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../colors.dart';
+
 class AndroidTextEditingFloatingToolbar extends StatelessWidget {
   const AndroidTextEditingFloatingToolbar({
     Key? key,
@@ -17,39 +19,43 @@ class AndroidTextEditingFloatingToolbar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
-    return Material(
-      borderRadius: BorderRadius.circular(1),
-      elevation: 1,
-      color: brightness == Brightness.dark ? const Color(0xFF424242) : Colors.white,
-      type: MaterialType.card,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (onCutPressed != null)
-            _buildButton(
-              onPressed: onCutPressed!,
-              title: 'Cut',
-              brightness: brightness,
-            ),
-          if (onCopyPressed != null)
-            _buildButton(
-              onPressed: onCopyPressed!,
-              title: 'Copy',
-              brightness: brightness,
-            ),
-          if (onPastePressed != null)
-            _buildButton(
-              onPressed: onPastePressed!,
-              title: 'Paste',
-              brightness: brightness,
-            ),
-          if (onSelectAllPressed != null)
-            _buildButton(
-              onPressed: onSelectAllPressed!,
-              title: 'Select All',
-              brightness: brightness,
-            ),
-        ],
+    return Theme(
+      data: ThemeData(
+        colorScheme: brightness == Brightness.light //
+            ? const ColorScheme.light(primary: Colors.black)
+            : const ColorScheme.dark(primary: Colors.white),
+      ),
+      child: Material(
+        borderRadius: BorderRadius.circular(1),
+        elevation: 1,
+        color: brightness == Brightness.dark //
+            ? androidToolbarDarkBackgroundColor
+            : androidToolbarLightBackgroundColor,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (onCutPressed != null)
+              _buildButton(
+                onPressed: onCutPressed!,
+                title: 'Cut',
+              ),
+            if (onCopyPressed != null)
+              _buildButton(
+                onPressed: onCopyPressed!,
+                title: 'Copy',
+              ),
+            if (onPastePressed != null)
+              _buildButton(
+                onPressed: onPastePressed!,
+                title: 'Paste',
+              ),
+            if (onSelectAllPressed != null)
+              _buildButton(
+                onPressed: onSelectAllPressed!,
+                title: 'Select All',
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -57,7 +63,6 @@ class AndroidTextEditingFloatingToolbar extends StatelessWidget {
   Widget _buildButton({
     required String title,
     required VoidCallback onPressed,
-    required Brightness brightness,
   }) {
     return TextButton(
       onPressed: onPressed,
@@ -68,10 +73,7 @@ class AndroidTextEditingFloatingToolbar extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 8.0),
         child: Text(
           title,
-          style: TextStyle(
-            color: brightness == Brightness.dark ? Colors.white : Colors.black,
-            fontSize: 14,
-          ),
+          style: const TextStyle(fontSize: 14),
         ),
       ),
     );
