@@ -1038,10 +1038,13 @@ class SoftwareKeyboardHandler {
   void performAction(TextInputAction action) {
     switch (action) {
       case TextInputAction.newline:
-        if (!composer.selection!.isCollapsed) {
-          commonOps.deleteSelection();
-        }
-        commonOps.insertBlockLevelNewline();
+        // Logic below was commented out to fix https://simpleclub.atlassian.net/browse/SC-9328.
+        // This action is now handled by [enterToInsertBlockNewline]. See it in [defaultImeKeyboardActions].
+        //
+        // if (!composer.selection!.isCollapsed) {
+        //   commonOps.deleteSelection();
+        // }
+        // commonOps.insertBlockLevelNewline();
         break;
       case TextInputAction.none:
         // no-op

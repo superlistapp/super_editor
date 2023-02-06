@@ -758,6 +758,7 @@ final defaultImeKeyboardActions = <DocumentKeyboardAction>[
   cmdBToToggleBold,
   cmdIToToggleItalics,
   shiftEnterToInsertNewlineInBlock,
+  enterToInsertBlockNewline,
   backspaceToRemoveUpstreamContent,
   deleteToRemoveDownstreamContent,
 ];
