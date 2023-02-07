@@ -1570,7 +1570,7 @@ class CommonEditorOperations {
       return true;
     }
 
-    final inlineTeXMatch = RegExp(r'\$(.*?)\$\s');
+    final inlineTeXMatch = RegExp(r'\$\s(.*?)\s\$\s');
     final hasTeXMatch = inlineTeXMatch.hasMatch(textBeforeCaret);
     if (hasTeXMatch) {
       final match = inlineTeXMatch.firstMatch(textBeforeCaret);

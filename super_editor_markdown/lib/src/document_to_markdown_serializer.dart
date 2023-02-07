@@ -357,6 +357,15 @@ class AttributedTextMarkdownSerializer extends AttributionVisitor {
     } else if (attribution == underlineAttribution) {
       return '¬';
     } else if (attribution == simpleclubTeXAttribution) {
+      // Simpleclub inline TeX is marked with $ and a *space* at both sides.
+      // There has to be *space* between TeX value and the signs e.g.:
+      //
+      // $ 5 ^ 2 = x $ – is a valid inline TeX;
+      // $5 ^ 2 = x$ – is not a valid inline TeX.
+      //
+      // $ 5 ^ 2 = x $
+      //  /\        /\
+      // We must add these spaces together with $ signs.
       return atEnd ? ' \$' : '\$ ';
     } else {
       return '';
