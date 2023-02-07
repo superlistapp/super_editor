@@ -1806,7 +1806,7 @@ class CommonEditorOperations {
   ///
   /// If the selection extent sits in any other kind of node, nothing happens.
   ///
-  /// Returns [true] if an image was inserted, [false] if it wasn't.
+  /// Returns `true` if an image was inserted, `false` if it wasn't.
   bool insertImage(String url) {
     if (composer.selection == null) {
       return false;
@@ -1815,8 +1815,7 @@ class CommonEditorOperations {
       return false;
     }
 
-    final nodeId = composer.selection!.base.nodeId;
-    return _insertBlockLevelContent(ImageNode(id: nodeId, imageUrl: url));
+    return _insertBlockLevelContent(ImageNode(id: DocumentEditor.createNodeId(), imageUrl: url));
   }
 
   /// Inserts horizontal rule at the current selection extent.
@@ -1845,8 +1844,7 @@ class CommonEditorOperations {
       return false;
     }
 
-    final nodeId = composer.selection!.base.nodeId;
-    return _insertBlockLevelContent(HorizontalRuleNode(id: nodeId));
+    return _insertBlockLevelContent(HorizontalRuleNode(id: DocumentEditor.createNodeId()));
   }
 
   /// Inserts the given [blockNode] after the caret.
@@ -1866,7 +1864,7 @@ class CommonEditorOperations {
   ///
   /// If the selection extent sits in any other kind of node, nothing happens.
   ///
-  /// Returns [true] if the [blockNode] was inserted, [false] if it wasn't.
+  /// Returns `true` if the [blockNode] was inserted, `false` if it wasn't.
   bool _insertBlockLevelContent(DocumentNode blockNode) {
     if (composer.selection == null) {
       return false;
@@ -1888,23 +1886,32 @@ class CommonEditorOperations {
 
         DocumentSelection newSelection;
         if (node.text.text.isEmpty) {
-          // Convert empty paragraph to block item.
-          transaction.replaceNode(oldNode: node, newNode: blockNode);
+          final emptyParagraph = ParagraphNode(id: DocumentEditor.createNodeId(), text: AttributedText());
+
+          // Convert empty paragraph to block item and add an empty paragraph.
+          transaction
+            ..replaceNode(oldNode: node, newNode: blockNode)
+            ..insertNodeAfter(existingNode: blockNode, newNode: emptyParagraph);
 
           newSelection = DocumentSelection.collapsed(
             position: DocumentPosition(
-              nodeId: nodeId,
-              nodePosition: blockNode.endPosition,
+              nodeId: emptyParagraph.id,
+              nodePosition: emptyParagraph.beginningPosition,
             ),
           );
-        } else if (paragraphPosition == endOfParagraph) {
-          // Insert block item after the paragraph.
-          transaction.insertNodeAfter(existingNode: node, newNode: blockNode);
+        } else if (paragraphPosition.offset == endOfParagraph.offset) {
+          final emptyParagraph = ParagraphNode(id: DocumentEditor.createNodeId(), text: AttributedText());
 
+          // Insert block item after the paragraph and insert a new empty paragraph.
+          transaction
+            ..insertNodeAfter(existingNode: node, newNode: blockNode)
+            ..insertNodeAfter(existingNode: blockNode, newNode: emptyParagraph);
+
+          // Place the selection at the empty paragraph.
           newSelection = DocumentSelection.collapsed(
             position: DocumentPosition(
-              nodeId: nodeId,
-              nodePosition: blockNode.endPosition,
+              nodeId: emptyParagraph.id,
+              nodePosition: emptyParagraph.beginningPosition,
             ),
           );
         } else {
@@ -1922,7 +1929,7 @@ class CommonEditorOperations {
 
           newSelection = DocumentSelection.collapsed(
             position: DocumentPosition(
-              nodeId: nodeId,
+              nodeId: newParagraph.id,
               nodePosition: newParagraph.beginningPosition,
             ),
           );
