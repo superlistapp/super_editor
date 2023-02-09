@@ -108,7 +108,30 @@ class _CaretDocumentOverlayState extends State<CaretDocumentOverlay> with Single
     _blinkController.jumpToOpaque();
 
     final documentLayout = widget.documentLayoutResolver();
-    _caret.value = documentLayout.getRectForPosition(documentSelection.extent)!;
+    final newCaretRect = documentLayout.getRectForPosition(documentSelection.extent)!;
+
+    if (_caret.value == newCaretRect) {
+      // The caret is already positioned at the correct place. No need to update.
+      return;
+    }
+
+    _caret.value = newCaretRect;
+
+    // The document might have components that animate their sizes.
+    //
+    // Consider this case where components shrink their sizes when they lose selection:
+    //
+    // After we move the selection from one component to a component bellow it,
+    // the caret offset is calculated considering that the previous component
+    // still has its expanded height.
+    //
+    // After this, the previously selected component shrinks its size, moving the selected
+    // component up and leaving the caret siting at an incorret offset.
+    //
+    // Schedule a caret update so we can see the selected component updated offset.
+    //
+    // Stop scheduling updates when we get the same caret position for two consecutive frames.
+    _scheduleCaretUpdate();
   }
 
   @override

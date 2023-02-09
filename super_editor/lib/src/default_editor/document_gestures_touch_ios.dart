@@ -171,11 +171,11 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     );
 
     widget.document.addListener(_onDocumentChange);
-    widget.selection.addListener(_onSelectionChange);
+    widget.selection.addListener(_scheduleCaretUpdate);
 
     // If we already have a selection, we need to display the caret.
     if (widget.selection.value != null) {
-      _onSelectionChange();
+      _scheduleCaretUpdate();
     }
 
     WidgetsBinding.instance.addObserver(this);
@@ -220,12 +220,12 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     }
 
     if (widget.selection != oldWidget.selection) {
-      oldWidget.selection.removeListener(_onSelectionChange);
-      widget.selection.addListener(_onSelectionChange);
+      oldWidget.selection.removeListener(_scheduleCaretUpdate);
+      widget.selection.addListener(_scheduleCaretUpdate);
 
       // Selection has changed, we need to update the caret.
       if (widget.selection.value != oldWidget.selection.value) {
-        _onSelectionChange();
+        _scheduleCaretUpdate();
       }
     }
 
@@ -264,7 +264,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     WidgetsBinding.instance.removeObserver(this);
 
     widget.document.removeListener(_onDocumentChange);
-    widget.selection.removeListener(_onSelectionChange);
+    widget.selection.removeListener(_scheduleCaretUpdate);
 
     _removeEditingOverlayControls();
 
@@ -346,7 +346,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     });
   }
 
-  void _onSelectionChange() {
+  void _scheduleCaretUpdate() {
     // The selection change might correspond to new content that's not
     // laid out yet. Wait until the next frame to update visuals.
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
@@ -358,20 +358,50 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     });
   }
 
+  void _removeCaretAndHandles() {
+    _editingController
+      ..removeCaret()
+      ..hideToolbar()
+      ..collapsedHandleOffset = null
+      ..upstreamHandleOffset = null
+      ..downstreamHandleOffset = null
+      ..collapsedHandleOffset = null;
+  }
+
+  void _updateCaretAndCollapsedHandle() {
+    final extentRect = _docLayout.getRectForPosition(widget.selection.value!.extent)!;
+    if (extentRect.top == _editingController.caretTop?.dy && extentRect.left == _editingController.caretTop?.dx) {
+      // The caret is already positioned at the correct place. No need to update.
+      return;
+    }
+
+    _positionCaret();
+    _positionCollapsedHandle();
+
+    // The document might have components that animate their sizes.
+    //
+    // Consider this case where components shrink their sizes when they lose selection:
+    //
+    // After we move the selection from one component to a component bellow it,
+    // the caret offset is calculated considering that the previous component
+    // still has its expanded height.
+    //
+    // After this, the previously selected component shrinks its size, moving the selected
+    // component up and leaving the caret siting at an incorret offset.
+    //
+    // Schedule a caret update so we can see the selected component updated offset.
+    //
+    // Stop scheduling updates when we get the same caret position for two consecutive frames.
+    _scheduleCaretUpdate();
+  }
+
   void _updateHandlesAfterSelectionOrLayoutChange() {
     final newSelection = widget.selection.value;
 
     if (newSelection == null) {
-      _editingController
-        ..removeCaret()
-        ..hideToolbar()
-        ..collapsedHandleOffset = null
-        ..upstreamHandleOffset = null
-        ..downstreamHandleOffset = null
-        ..collapsedHandleOffset = null;
+      _removeCaretAndHandles();
     } else if (newSelection.isCollapsed) {
-      _positionCaret();
-      _positionCollapsedHandle();
+      _updateCaretAndCollapsedHandle();
     } else {
       // The selection is expanded
       _positionExpandedSelectionHandles();
@@ -928,6 +958,12 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     final downstreamHandleOffset = affinity == TextAffinity.downstream ? extentHandleOffset : baseHandleOffset;
     final downstreamHandleHeight = affinity == TextAffinity.downstream ? extentRect.height : baseRect.height;
 
+    if (upstreamHandleOffset == _editingController.upstreamHandleOffset &&
+        downstreamHandleOffset == _editingController.downstreamHandleOffset) {
+      // The caret is already positioned at the correct place. No need to update.
+      return;
+    }
+
     _editingController
       ..removeCaret()
       ..collapsedHandleOffset = null
@@ -935,6 +971,22 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
       ..upstreamCaretHeight = upstreamHandleHeight
       ..downstreamHandleOffset = downstreamHandleOffset
       ..downstreamCaretHeight = downstreamHandleHeight;
+
+    // The document might have components that animate their sizes.
+    //
+    // Consider this case where components shrink their sizes when they lose selection:
+    //
+    // After we move the selection from one component to a component bellow it,
+    // the caret offset is calculated considering that the previous component
+    // still has its expanded height.
+    //
+    // After this, the previously selected component shrinks its size, moving the selected
+    // component up and leaving the caret siting at an incorret offset.
+    //
+    // Schedule a caret update so we can see the selected component updated offset.
+    //
+    // Stop scheduling updates when we get the same caret position for two consecutive frames.
+    _scheduleCaretUpdate();
   }
 
   void _positionToolbar() {

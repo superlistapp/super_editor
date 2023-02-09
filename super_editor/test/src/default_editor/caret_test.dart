@@ -319,6 +319,43 @@ void main() {
         });
       });
     });
+
+    group('component height animation', () {
+      testWidgetsOnAllPlatforms('updates caret position', (tester) async {
+        await tester //
+            .createDocument()
+            .withCustomContent(
+              MutableDocument(
+                nodes: [
+                  TaskNode(id: '1', text: AttributedText(text: 'Task Item 1'), isComplete: false),
+                  TaskNode(id: '2', text: AttributedText(text: 'Task Item 2'), isComplete: false),
+                  TaskNode(id: '3', text: AttributedText(text: 'Task Item 3'), isComplete: false),
+                ],
+              ),
+            )
+            .withAddedComponents([_TestAnimatedTaskComponentBuilder()]) //
+            .pump();
+
+        // Place the caret at the first task item.
+        await tester.placeCaretInParagraph('1', 0);
+
+        // Place the caret at the second task item.
+        // This will trigger an animation that will cause this component
+        // and the previously selected component to animate their heights.
+        await tester.placeCaretInParagraph('2', 0);
+
+        // Ensure the caret is positioned at the expected offset.
+        expect(
+          SuperEditorInspector.findCaretOffsetInDocument(),
+          SuperEditorInspector.calculateOffsetForCaret(
+            DocumentPosition(
+              nodeId: "2",
+              nodePosition: TextNodePosition.fromTextPosition(const TextPosition(offset: 0)),
+            ),
+          ),
+        );
+      });
+    });
   });
 }
 
@@ -422,5 +459,101 @@ Future<void> _resizeWindow({
     final currentScreenSize = (initialScreenSize - Offset(resizedWidth, resizedHeight)) as Size;
     tester.binding.window.physicalSizeTestValue = currentScreenSize;
     await tester.pumpAndSettle();
+  }
+}
+
+/// A [ComponentBuilder] that builds an animated task [DocumentComponent].
+class _TestAnimatedTaskComponentBuilder implements ComponentBuilder {
+  @override
+  TaskComponentViewModel? createViewModel(Document document, DocumentNode node) {
+    if (node is! TaskNode) {
+      return null;
+    }
+
+    return TaskComponentViewModel(
+      nodeId: node.id,
+      padding: EdgeInsets.zero,
+      isComplete: node.isComplete,
+      setComplete: (bool isComplete) {},
+      text: node.text,
+      textStyleBuilder: (noStyleBuilder),
+      selectionColor: const Color(0x00000000),
+    );
+  }
+
+  @override
+  Widget? createComponent(
+      SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel componentViewModel) {
+    if (componentViewModel is! TaskComponentViewModel) {
+      return null;
+    }
+
+    return _TestAnimatedTaskComponent(
+      key: componentContext.componentKey,
+      viewModel: componentViewModel,
+    );
+  }
+}
+
+/// A [DocumentComponent] that displays a task item a [SizedBox] when the selection changes.
+class _TestAnimatedTaskComponent extends StatefulWidget {
+  const _TestAnimatedTaskComponent({
+    Key? key,
+    required this.viewModel,
+  }) : super(key: key);
+
+  final TaskComponentViewModel viewModel;
+
+  @override
+  State<_TestAnimatedTaskComponent> createState() => _TestAnimatedTaskComponentState();
+}
+
+class _TestAnimatedTaskComponentState extends State<_TestAnimatedTaskComponent>
+    with ProxyDocumentComponent<_TestAnimatedTaskComponent> {
+  final _textKey = GlobalKey();
+
+  @override
+  GlobalKey<State<StatefulWidget>> get childDocumentComponentKey => _textKey;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(left: 16, right: 4),
+              child: Checkbox(
+                value: widget.viewModel.isComplete,
+                onChanged: (newValue) {},
+              ),
+            ),
+            Expanded(
+              child: TextComponent(
+                key: _textKey,
+                text: widget.viewModel.text,
+                textStyleBuilder: (attributions) {
+                  return widget.viewModel.textStyleBuilder(attributions);
+                },
+                textSelection: widget.viewModel.selection,
+                selectionColor: widget.viewModel.selectionColor,
+                highlightWhenEmpty: widget.viewModel.highlightWhenEmpty,
+              ),
+            ),
+          ],
+        ),
+        AnimatedSize(
+          duration: const Duration(milliseconds: 100),
+          child: widget.viewModel.selection != null
+              ? const SizedBox(
+                  height: 40,
+                  child: Text('some metadata'),
+                )
+              : const SizedBox.shrink(),
+        ),
+      ],
+    );
   }
 }
