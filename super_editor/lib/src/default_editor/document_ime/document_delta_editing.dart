@@ -23,7 +23,13 @@ class TextDeltasDocumentEditor {
   final ValueNotifier<DocumentRange?> composingRegion;
   final CommonEditorOperations commonOps;
 
-  /// Override the handling of a [TextInputAction]s.
+  /// Callback invoked when the client should handle a given [TextInputAction].
+  ///
+  /// Typically, [TextInputAction]s are reported through a different part of Flutter's IME
+  /// API. However, some actions, on some platforms, are converted into text editing
+  /// deltas, rather than reported as explicit actions. For example, on Android, the `newline`
+  /// action is reported as a text insertion with a `\n` character. That change is intercepted
+  /// by this editor and reported as a [TextInputAction.newline] instead.
   final void Function(TextInputAction action)? onPerformAction;
 
   /// Applies the given [textEditingDeltas] to the [Document].

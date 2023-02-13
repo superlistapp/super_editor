@@ -131,7 +131,6 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
   void initState() {
     super.initState();
     _focusNode = (widget.focusNode ?? FocusNode());
-    _imeClient = DeltaTextInputClientDecorator();
 
     _textDeltasDocumentEditor = TextDeltasDocumentEditor(
       editor: widget.editContext.editor,
@@ -148,6 +147,7 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
       floatingCursorController: widget.floatingCursorController,
     );
 
+    _imeClient = DeltaTextInputClientDecorator();
     _configureImeClientDecorators();
 
     _imeConnection.addListener(_onImeConnectionChange);

@@ -126,8 +126,7 @@ void main() {
       expect(document.nodes.length, 1);
     });
 
-    testWidgetsOnAndroid('allows apps to handle performAction in their own way upon new line insertion',
-        (tester) async {
+    testWidgetsOnAndroid('allows app to handle newline action', (tester) async {
       // On Android, when the user presses an action button configured as TextInputAction.newline,
       // instead of dispatching the action, the OS sends an insertion delta of '\n'.
       //
