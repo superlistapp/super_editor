@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 import 'package:super_editor_markdown/super_editor_markdown.dart';
+import 'package:super_text_layout/super_text_layout.dart';
 import 'package:text_table/text_table.dart';
 
 import 'test_documents.dart';
@@ -321,11 +322,13 @@ class TestDocumentConfigurator {
       documentLayoutResolver: layoutResolver,
       composer: composer,
     );
+    final componentSizeNotifier = SignalListenable();
     final editContext = EditContext(
       editor: editor,
       getDocumentLayout: layoutResolver,
       composer: composer,
       commonOps: commonOps,
+      componentSizeNotifier: componentSizeNotifier,
     );
 
     return TestDocumentContext._(

@@ -897,13 +897,15 @@ class _Component extends StatelessWidget {
     for (final componentBuilder in componentBuilders) {
       var component = componentBuilder.createComponent(componentContext, componentViewModel);
       if (component != null) {
-        component = ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: componentViewModel.maxWidth ?? double.infinity),
-          child: SizedBox(
-            width: double.infinity,
-            child: Padding(
-              padding: componentViewModel.padding,
-              child: component,
+        component = SizeChangedLayoutNotifier(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: componentViewModel.maxWidth ?? double.infinity),
+            child: SizedBox(
+              width: double.infinity,
+              child: Padding(
+                padding: componentViewModel.padding,
+                child: component,
+              ),
             ),
           ),
         );

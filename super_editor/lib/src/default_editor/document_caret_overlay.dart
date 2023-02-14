@@ -12,6 +12,7 @@ class CaretDocumentOverlay extends StatefulWidget {
     required this.documentLayoutResolver,
     required this.caretStyle,
     required this.document,
+    required this.componentSizeNotifier,
   }) : super(key: key);
 
   /// The editor's [DocumentComposer], which reports the current selection.
@@ -33,6 +34,11 @@ class CaretDocumentOverlay extends StatefulWidget {
   /// The visual style of the caret that this overlay paints.
   final CaretStyle caretStyle;
 
+  /// A [ChangeNotifier] that is triggered whenever a component changes its size.
+  ///
+  /// We need to listen to size changes to position the caret at the correct offset.
+  final SignalListenable componentSizeNotifier;
+
   @override
   State<CaretDocumentOverlay> createState() => _CaretDocumentOverlayState();
 }
@@ -47,6 +53,7 @@ class _CaretDocumentOverlayState extends State<CaretDocumentOverlay> with Single
     super.initState();
     widget.composer.selectionNotifier.addListener(_scheduleCaretUpdate);
     widget.document.addListener(_scheduleCaretUpdate);
+    widget.componentSizeNotifier.addListener(_scheduleCaretUpdate);
     _blinkController = BlinkController(tickerProvider: this)..startBlinking();
 
     // If we already have a selection, we need to display the caret.
@@ -73,12 +80,18 @@ class _CaretDocumentOverlayState extends State<CaretDocumentOverlay> with Single
         _scheduleCaretUpdate();
       }
     }
+
+    if (widget.componentSizeNotifier != oldWidget.componentSizeNotifier) {
+      oldWidget.componentSizeNotifier.removeListener(_scheduleCaretUpdate);
+      widget.componentSizeNotifier.addListener(_scheduleCaretUpdate);
+    }
   }
 
   @override
   void dispose() {
     widget.composer.selectionNotifier.removeListener(_scheduleCaretUpdate);
     widget.document.removeListener(_scheduleCaretUpdate);
+    widget.componentSizeNotifier.removeListener(_scheduleCaretUpdate);
     _blinkController.dispose();
     super.dispose();
   }

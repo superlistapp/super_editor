@@ -1,5 +1,6 @@
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/default_editor/common_editor_operations.dart';
+import 'package:super_text_layout/super_text_layout.dart';
 
 import 'document_composer.dart';
 import 'document_editor.dart';
@@ -22,6 +23,7 @@ class EditContext {
     required DocumentLayout Function() getDocumentLayout,
     required this.composer,
     required this.commonOps,
+    required this.componentSizeNotifier,
   }) : _getDocumentLayout = getDocumentLayout;
 
   /// The editor of the [Document] that allows executing commands that alter the
@@ -41,4 +43,7 @@ class EditContext {
   /// Common operations that can be executed to apply common, complex changes to
   /// the document.
   final CommonEditorOperations commonOps;
+
+  /// A [ChangeNotifier] that is triggered whenever a component changes its size.
+  final SignalListenable componentSizeNotifier;
 }

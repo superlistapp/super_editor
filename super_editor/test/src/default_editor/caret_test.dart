@@ -320,7 +320,7 @@ void main() {
       });
     });
 
-    group('component height animation', () {
+    group('component height changes', () {
       testWidgetsOnAllPlatforms('updates caret position', (tester) async {
         await tester //
             .createDocument()

@@ -37,6 +37,7 @@ class AndroidDocumentTouchInteractor extends StatefulWidget {
     required this.handleColor,
     required this.popoverToolbarBuilder,
     this.createOverlayControlsClipper,
+    required this.componentSizeNotifier,
     this.showDebugPaint = false,
     this.overlayController,
     required this.child,
@@ -74,6 +75,11 @@ class AndroidDocumentTouchInteractor extends StatefulWidget {
   /// will be allowed to appear anywhere in the overlay in which they sit
   /// (probably the entire screen).
   final CustomClipper<Rect> Function(BuildContext overlayContext)? createOverlayControlsClipper;
+
+  /// A [ChangeNotifier] that is triggered whenever a component changes its size.
+  ///
+  /// We need to listen to size changes to position the caret at the correct offset.
+  final SignalListenable componentSizeNotifier;
 
   final bool showDebugPaint;
 
@@ -160,6 +166,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
     widget.document.addListener(_onDocumentChange);
     widget.selection.addListener(_onSelectionChange);
+    widget.componentSizeNotifier.addListener(_scheduleCaretUpdate);
 
     // If we already have a selection, we need to display the caret.
     if (widget.selection.value != null) {
@@ -210,6 +217,11 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       }
     }
 
+    if (widget.componentSizeNotifier != oldWidget.componentSizeNotifier) {
+      oldWidget.componentSizeNotifier.removeListener(_scheduleCaretUpdate);
+      widget.componentSizeNotifier.addListener(_scheduleCaretUpdate);
+    }
+
     if (widget.overlayController != oldWidget.overlayController) {
       _overlayController = widget.overlayController ?? MagnifierAndToolbarController();
       _editingController.overlayController = _overlayController;
@@ -257,6 +269,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
     widget.document.removeListener(_onDocumentChange);
     widget.selection.removeListener(_onSelectionChange);
+    widget.componentSizeNotifier.removeListener(_scheduleCaretUpdate);
 
     _removeEditingOverlayControls();
 
@@ -340,11 +353,15 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   void _onSelectionChange() {
     // The selection change might correspond to new content that's not
     // laid out yet. Wait until the next frame to update visuals.
+    _scheduleCaretUpdate();
+  }
+
+  /// Updates the caret and handle positions at the end of the current frame.
+  void _scheduleCaretUpdate() {
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       if (!mounted) {
         return;
       }
-
       _updateHandlesAfterSelectionOrLayoutChange();
     });
   }

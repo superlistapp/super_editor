@@ -12,6 +12,7 @@ import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
 import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
+import 'package:super_text_layout/super_text_layout.dart';
 
 import '../infrastructure/document_gestures.dart';
 import 'document_gestures_touch.dart';
@@ -35,6 +36,7 @@ class IOSDocumentTouchInteractor extends StatefulWidget {
     this.createOverlayControlsClipper,
     this.showDebugPaint = false,
     this.overlayController,
+    required this.componentSizeNotifier,
     required this.child,
   }) : super(key: key);
 
@@ -74,6 +76,11 @@ class IOSDocumentTouchInteractor extends StatefulWidget {
   /// will be allowed to appear anywhere in the overlay in which they sit
   /// (probably the entire screen).
   final CustomClipper<Rect> Function(BuildContext overlayContext)? createOverlayControlsClipper;
+
+  /// A [ChangeNotifier] that is triggered whenever a component changes its size.
+  ///
+  /// We need to listen to size changes to position the caret at the correct offset.
+  final SignalListenable componentSizeNotifier;
 
   final bool showDebugPaint;
 
@@ -172,6 +179,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
 
     widget.document.addListener(_onDocumentChange);
     widget.selection.addListener(_onSelectionChange);
+    widget.componentSizeNotifier.addListener(_scheduleCaretUpdate);
 
     // If we already have a selection, we need to display the caret.
     if (widget.selection.value != null) {
@@ -233,6 +241,11 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
       _overlayController = widget.overlayController ?? MagnifierAndToolbarController();
       _editingController.overlayController = _overlayController;
     }
+
+    if (widget.componentSizeNotifier != oldWidget.componentSizeNotifier) {
+      oldWidget.componentSizeNotifier.removeListener(_scheduleCaretUpdate);
+      widget.componentSizeNotifier.addListener(_scheduleCaretUpdate);
+    }
   }
 
   @override
@@ -265,6 +278,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
 
     widget.document.removeListener(_onDocumentChange);
     widget.selection.removeListener(_onSelectionChange);
+    widget.componentSizeNotifier.removeListener(_scheduleCaretUpdate);
 
     _removeEditingOverlayControls();
 
@@ -349,6 +363,11 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   void _onSelectionChange() {
     // The selection change might correspond to new content that's not
     // laid out yet. Wait until the next frame to update visuals.
+    _scheduleCaretUpdate();
+  }
+
+  /// Updates the caret and handle positions at the end of the current frame.
+  void _scheduleCaretUpdate() {
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       if (!mounted) {
         return;

@@ -1,6 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/super_editor.dart';
+import 'package:super_text_layout/super_text_layout.dart';
 
 import '../_document_test_tools.dart';
 import '../_text_entry_test_tools.dart';
@@ -380,6 +381,7 @@ EditContext _createEditContext() {
   final documentEditor = DocumentEditor(document: document);
   final fakeLayout = FakeDocumentLayout();
   final composer = DocumentComposer();
+  final componentSizeNotifier = SignalListenable();
   return EditContext(
     editor: documentEditor,
     getDocumentLayout: () => fakeLayout,
@@ -389,5 +391,6 @@ EditContext _createEditContext() {
       composer: composer,
       documentLayoutResolver: () => fakeLayout,
     ),
+    componentSizeNotifier: componentSizeNotifier,
   );
 }

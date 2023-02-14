@@ -285,6 +285,9 @@ class SuperEditorState extends State<SuperEditor> {
   @visibleForTesting
   SingleColumnLayoutPresenter get presenter => _docLayoutPresenter!;
 
+  /// A [ChangeNotifier] that is triggered whenever a component changes its size.
+  final SignalListenable _componentSizeNotifier = SignalListenable();
+
   @override
   void initState() {
     super.initState();
@@ -353,6 +356,8 @@ class SuperEditorState extends State<SuperEditor> {
       _focusNode.dispose();
     }
 
+    _componentSizeNotifier.dispose();
+
     super.dispose();
   }
 
@@ -366,6 +371,7 @@ class SuperEditorState extends State<SuperEditor> {
         composer: _composer,
         documentLayoutResolver: () => _docLayoutKey.currentState as DocumentLayout,
       ),
+      componentSizeNotifier: _componentSizeNotifier,
     );
   }
 
@@ -500,6 +506,12 @@ class SuperEditorState extends State<SuperEditor> {
     }
   }
 
+  bool _componentSizeChanged(SizeChangedLayoutNotification notification) {
+    // Let layers and editing controls to react to size changes.
+    _componentSizeNotifier.sendSignal();
+    return true;
+  }
+
   @override
   Widget build(BuildContext context) {
     return SuperEditorFocusDebugVisuals(
@@ -514,11 +526,14 @@ class SuperEditorState extends State<SuperEditor> {
         clearSelectionWhenEditorLosesFocus: widget.selectionPolicies.clearSelectionWhenEditorLosesFocus,
         child: _buildInputSystem(
           child: _buildGestureSystem(
-            documentLayout: SingleColumnDocumentLayout(
-              key: _docLayoutKey,
-              presenter: _docLayoutPresenter!,
-              componentBuilders: widget.componentBuilders,
-              showDebugPaint: widget.debugPaint.layout,
+            documentLayout: NotificationListener<SizeChangedLayoutNotification>(
+              onNotification: _componentSizeChanged,
+              child: SingleColumnDocumentLayout(
+                key: _docLayoutKey,
+                presenter: _docLayoutPresenter!,
+                componentBuilders: widget.componentBuilders,
+                showDebugPaint: widget.debugPaint.layout,
+              ),
             ),
           ),
         ),
@@ -578,6 +593,7 @@ class SuperEditorState extends State<SuperEditor> {
           popoverToolbarBuilder: widget.androidToolbarBuilder ?? (_) => const SizedBox(),
           createOverlayControlsClipper: widget.createOverlayControlsClipper,
           overlayController: widget.overlayController,
+          componentSizeNotifier: editContext.componentSizeNotifier,
           showDebugPaint: widget.debugPaint.gestures,
           child: documentLayout,
         );
@@ -594,6 +610,7 @@ class SuperEditorState extends State<SuperEditor> {
           floatingCursorController: _floatingCursorController,
           createOverlayControlsClipper: widget.createOverlayControlsClipper,
           overlayController: widget.overlayController,
+          componentSizeNotifier: editContext.componentSizeNotifier,
           showDebugPaint: widget.debugPaint.gestures,
           child: documentLayout,
         );
@@ -758,6 +775,7 @@ class DefaultCaretOverlayBuilder implements DocumentLayerBuilder {
       documentLayoutResolver: () => editContext.documentLayout,
       caretStyle: caretStyle,
       document: editContext.editor.document,
+      componentSizeNotifier: editContext.componentSizeNotifier,
     );
   }
 }

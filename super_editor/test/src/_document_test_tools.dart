@@ -1,5 +1,6 @@
 import 'package:mockito/mockito.dart';
 import 'package:super_editor/super_editor.dart';
+import 'package:super_text_layout/super_text_layout.dart';
 
 /// Fake [DocumentLayout], intended for tests that interact with
 /// a logical [DocumentLayout] but do not depend upon a real
@@ -16,6 +17,7 @@ EditContext createEditContext({
   final editor = documentEditor ?? DocumentEditor(document: document);
   DocumentLayout layoutResolver() => documentLayout ?? FakeDocumentLayout();
   final composer = documentComposer ?? DocumentComposer();
+  final componentSizeNotifier = SignalListenable();
 
   return EditContext(
     editor: editor,
@@ -27,6 +29,7 @@ EditContext createEditContext({
           composer: composer,
           documentLayoutResolver: layoutResolver,
         ),
+    componentSizeNotifier: componentSizeNotifier,
   );
 }
 
