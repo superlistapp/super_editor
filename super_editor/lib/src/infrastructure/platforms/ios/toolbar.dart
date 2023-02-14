@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:overlord/overlord.dart';
-import 'package:super_editor/src/infrastructure/colors.dart';
+import 'package:super_editor/src/infrastructure/platforms/ios/colors.dart';
 
 class IOSTextEditingFloatingToolbar extends StatelessWidget {
   const IOSTextEditingFloatingToolbar({

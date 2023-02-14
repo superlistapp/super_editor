@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-
-import '../../colors.dart';
+import 'package:super_editor/src/infrastructure/platforms/android/colors.dart';
 
 class AndroidTextEditingFloatingToolbar extends StatelessWidget {
   const AndroidTextEditingFloatingToolbar({
