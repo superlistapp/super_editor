@@ -349,61 +349,21 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     });
   }
 
-  /// Updates the caret and handle positions at the end of the current frame.
-  void _scheduleCaretUpdate() {
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      if (!mounted) {
-        return;
-      }
-      _updateHandlesAfterSelectionOrLayoutChange();
-    });
-  }
-
-  void _removeCaretAndHandles() {
-    _editingController
-      ..removeCaret()
-      ..hideToolbar()
-      ..collapsedHandleOffset = null
-      ..upstreamHandleOffset = null
-      ..downstreamHandleOffset = null
-      ..collapsedHandleOffset = null
-      ..cancelCollapsedHandleAutoHideCountdown();
-  }
-
-  void _updateCaretAndCollapsedHandle() {
-    final newCaretRect = _docLayout.getRectForPosition(widget.selection.value!.extent)!;
-    if (newCaretRect.top == _editingController.caretTop?.dy && newCaretRect.left == _editingController.caretTop?.dx) {
-      // The caret is already positioned at the correct place. No need to update.
-      return;
-    }
-
-    _positionCaret();
-    _positionCollapsedHandle();
-
-    // The document might have components that animate their sizes.
-    //
-    // Consider this case where components shrink their sizes when they lose selection:
-    //
-    // After we move the selection from one component to a component bellow it,
-    // the caret offset is calculated considering that the previous component
-    // still has its expanded height.
-    //
-    // After this, the previously selected component shrinks its size, moving the selected
-    // component up and leaving the caret siting at an incorret offset.
-    //
-    // Schedule a caret update so we can see the selected component updated offset.
-    //
-    // Stop scheduling updates when we get the same caret position for two consecutive frames.
-    _scheduleCaretUpdate();
-  }
-
   void _updateHandlesAfterSelectionOrLayoutChange() {
     final newSelection = widget.selection.value;
 
     if (newSelection == null) {
-      _removeCaretAndHandles();
+      _editingController
+        ..removeCaret()
+        ..hideToolbar()
+        ..collapsedHandleOffset = null
+        ..upstreamHandleOffset = null
+        ..downstreamHandleOffset = null
+        ..collapsedHandleOffset = null
+        ..cancelCollapsedHandleAutoHideCountdown();
     } else if (newSelection.isCollapsed) {
-      _updateCaretAndCollapsedHandle();
+      _positionCaret();
+      _positionCollapsedHandle();
     } else {
       // The selection is expanded
       _positionExpandedHandles();
@@ -832,34 +792,12 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     late Offset upstreamHandleOffset = affinity == TextAffinity.downstream ? baseHandleOffset : extentHandleOffset;
     late Offset downstreamHandleOffset = affinity == TextAffinity.downstream ? extentHandleOffset : baseHandleOffset;
 
-    if (upstreamHandleOffset == _editingController.upstreamHandleOffset &&
-        downstreamHandleOffset == _editingController.downstreamHandleOffset) {
-      // The caret is already positioned at the correct place. No need to update.
-      return;
-    }
-
     _editingController
       ..removeCaret()
       ..collapsedHandleOffset = null
       ..upstreamHandleOffset = upstreamHandleOffset
       ..downstreamHandleOffset = downstreamHandleOffset
       ..cancelCollapsedHandleAutoHideCountdown();
-
-    // The document might have components that animate their sizes.
-    //
-    // Consider this case where components shrink their sizes when they lose selection:
-    //
-    // After we move the selection from one component to a component bellow it,
-    // the caret offset is calculated considering that the previous component
-    // still has its expanded height.
-    //
-    // After this, the previously selected component shrinks its size, moving the selected
-    // component up and leaving the caret siting at an incorret offset.
-    //
-    // Schedule a caret update so we can see the selected component updated offset.
-    //
-    // Stop scheduling updates when we get the same caret position for two consecutive frames.
-    _scheduleCaretUpdate();
   }
 
   void _positionCaret() {
