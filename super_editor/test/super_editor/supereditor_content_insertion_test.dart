@@ -31,7 +31,7 @@ void main() {
 
         // Insert the image at the current selection.
         context.editContext.commonOps.insertImage('http://image.fake');
-        await tester.pumpAndSettle();
+        await tester.pump();
 
         final doc = SuperEditorInspector.findDocument()!;
 
