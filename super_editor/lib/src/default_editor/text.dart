@@ -1274,7 +1274,13 @@ class InsertTextCommand implements EditorCommand {
       startOffset: textOffset,
       applyAttributions: attributions,
     );
-    executor.logChanges([NodeChangeEvent(textNode.id)]);
+    executor.logChanges([
+      TextInsertionEvent(
+        nodeId: textNode.id,
+        offset: textOffset,
+        text: textToInsert,
+      )
+    ]);
 
     editorOpsLog.fine("Updating Document Composer selection after text insertion.");
     executor.executeCommand(
@@ -1293,6 +1299,32 @@ class InsertTextCommand implements EditorCommand {
       ),
     );
   }
+}
+
+class TextInsertionEvent extends NodeChangeEvent {
+  TextInsertionEvent({
+    required String nodeId,
+    required this.offset,
+    required this.text,
+  }) : super(nodeId);
+
+  final int offset;
+  final String text;
+
+  @override
+  String toString() => "[TextInsertionEvent] - node: $nodeId, insertion offset: $offset, text: '$text'";
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      super == other &&
+          other is TextInsertionEvent &&
+          runtimeType == other.runtimeType &&
+          offset == other.offset &&
+          text == other.text;
+
+  @override
+  int get hashCode => super.hashCode ^ offset.hashCode ^ text.hashCode;
 }
 
 class ConvertTextNodeToParagraphRequest implements EditorRequest {

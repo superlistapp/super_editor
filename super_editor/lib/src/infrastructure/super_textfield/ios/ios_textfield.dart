@@ -365,7 +365,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
         );
       });
 
-      Overlay.of(context)!.insert(_controlsOverlayEntry!);
+      Overlay.of(context).insert(_controlsOverlayEntry!);
     }
   }
 
@@ -443,7 +443,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
   }
 
   ScrollableState? _findAncestorScrollable(BuildContext context) {
-    final ancestorScrollable = Scrollable.of(context);
+    final ancestorScrollable = Scrollable.maybeOf(context);
     if (ancestorScrollable == null) {
       return null;
     }

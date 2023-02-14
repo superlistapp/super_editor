@@ -202,6 +202,7 @@ void main() {
   });
 }
 
+// TODO: check how/why this is different from default_document_editor.dart method called createDefaultDocumentEditor()
 DocumentEditor _createStandardEditor({
   MutableDocument? initialDocument,
   DocumentSelection? initialSelection,
@@ -212,8 +213,18 @@ DocumentEditor _createStandardEditor({
   final editor = DocumentEditor(
     document: document,
     requestHandlers: defaultRequestHandlers,
+    reactionPipeline: [
+      LinkifyReaction(),
+      UnorderedListItemConversionReaction(),
+      OrderedListItemConversionReaction(),
+      BlockquoteConversionReaction(),
+      HorizontalRuleConversionReaction(),
+      ImageUrlConversionReaction(),
+    ],
     listeners: [
-      composer.selectionComponent.onEditorChange,
+      FunctionalEditorChangeListener(
+        composer.selectionComponent.onEditorChange,
+      ),
     ],
   )..context.put(EditorContext.composer, composer);
 

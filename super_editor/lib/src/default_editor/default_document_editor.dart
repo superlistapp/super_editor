@@ -6,6 +6,7 @@ import 'package:super_editor/src/default_editor/paragraph.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 
 import 'common_editor_operations.dart';
+import 'default_document_editor_reactions.dart';
 
 DocumentEditor createDefaultDocumentEditor({
   required MutableDocument document,
@@ -14,8 +15,19 @@ DocumentEditor createDefaultDocumentEditor({
   final editor = DocumentEditor(
     document: document,
     requestHandlers: defaultRequestHandlers,
+    reactionPipeline: [
+      LinkifyReaction(),
+      UnorderedListItemConversionReaction(),
+      OrderedListItemConversionReaction(),
+      BlockquoteConversionReaction(),
+      HorizontalRuleConversionReaction(),
+      ImageUrlConversionReaction(),
+    ],
     listeners: [
-      if (composer != null) composer.selectionComponent.onEditorChange,
+      if (composer != null) //
+        FunctionalEditorChangeListener(
+          composer.selectionComponent.onEditorChange,
+        ),
     ],
   );
 

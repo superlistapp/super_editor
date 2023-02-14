@@ -1373,19 +1373,6 @@ class CommonEditorOperations {
       ),
     );
 
-    editorOpsLog.fine("Updating Document Composer selection after text insertion.");
-    composer.selectionComponent.updateSelection(
-      DocumentSelection.collapsed(
-        position: DocumentPosition(
-          nodeId: textNode.id,
-          nodePosition: TextNodePosition(
-            offset: initialTextOffset + text.length,
-          ),
-        ),
-      ),
-      notifyListeners: false,
-    );
-
     return true;
   }
 
@@ -1440,148 +1427,45 @@ class CommonEditorOperations {
 
   // TODO: refactor to make prefix matching extensible (#68)
   bool convertParagraphByPatternMatching(String nodeId) {
-    final node = editor.document.getNodeById(nodeId);
-    if (node == null) {
-      return false;
-    }
-    if (node is! ParagraphNode) {
-      return false;
-    }
-
-    editorOpsLog.fine("Running pattern matching on a ParagraphNode, to convert it to another node type.");
-    final text = node.text;
-    final textSelection = composer.selectionComponent.selection!.extent.nodePosition as TextNodePosition;
-    final textBeforeCaret = text.text.substring(0, textSelection.offset);
-
-    final unorderedListItemMatch = RegExp(r'^\s*[\*-]\s+$');
-    final hasUnorderedListItemMatch = unorderedListItemMatch.hasMatch(textBeforeCaret);
-
-    // We want to match "1. ", " 1. ", "1) ", " 1) ".
-    final orderedListItemMatch = RegExp(r'^\s*1[.)]\s+$');
-    final hasOrderedListItemMatch = orderedListItemMatch.hasMatch(textBeforeCaret);
-
-    editorOpsLog.fine('_convertParagraphIfDesired', ' - text before caret: "$textBeforeCaret"');
-    if (hasUnorderedListItemMatch || hasOrderedListItemMatch) {
-      editorOpsLog.fine('_convertParagraphIfDesired', ' - found unordered list item prefix');
-      int startOfNewText = textBeforeCaret.length;
-      while (startOfNewText < node.text.text.length && node.text.text[startOfNewText] == ' ') {
-        startOfNewText += 1;
-      }
-      final adjustedText = node.text.copyText(startOfNewText);
-      final newNode = hasUnorderedListItemMatch
-          ? ListItemNode.unordered(id: node.id, text: adjustedText)
-          : ListItemNode.ordered(id: node.id, text: adjustedText);
-
-      editor.execute(
-        ReplaceNodeRequest(existingNodeId: node.id, newNode: newNode),
-      );
-
-      // We removed some text at the beginning of the list item.
-      // Move the selection back by that same amount.
-      final textPosition = composer.selectionComponent.selection!.extent.nodePosition as TextNodePosition;
-      composer.selectionComponent.updateSelection(
-          DocumentSelection.collapsed(
-            position: DocumentPosition(
-              nodeId: node.id,
-              nodePosition: TextNodePosition(offset: textPosition.offset - startOfNewText),
-            ),
-          ),
-          notifyListeners: true);
-
-      return true;
-    }
-
-    final hrMatch = RegExp(r'^---*\s$');
-    final hasHrMatch = hrMatch.hasMatch(textBeforeCaret);
-    if (hasHrMatch) {
-      editorOpsLog.fine('Paragraph has an HR match');
-      // Insert an HR before this paragraph and then clear the
-      // paragraph's content.
-      final paragraphNodeIndex = editor.document.getNodeIndexById(node.id);
-
-      editor.execute(
-        InsertNodeAtIndexRequest(
-          nodeIndex: paragraphNodeIndex,
-          newNode: HorizontalRuleNode(
-            id: DocumentEditor.createNodeId(),
-          ),
-        ),
-      );
-
-      node.text = node.text.removeRegion(startOffset: 0, endOffset: hrMatch.firstMatch(textBeforeCaret)!.end);
-
-      composer.selectionComponent.updateSelection(
-          DocumentSelection.collapsed(
-            position: DocumentPosition(
-              nodeId: node.id,
-              nodePosition: const TextNodePosition(offset: 0),
-            ),
-          ),
-          notifyListeners: true);
-
-      return true;
-    }
-
-    final blockquoteMatch = RegExp(r'^>\s$');
-    final hasBlockquoteMatch = blockquoteMatch.hasMatch(textBeforeCaret);
-    if (hasBlockquoteMatch) {
-      int startOfNewText = textBeforeCaret.length;
-      while (startOfNewText < node.text.text.length && node.text.text[startOfNewText] == ' ') {
-        startOfNewText += 1;
-      }
-      final adjustedText = node.text.copyText(startOfNewText);
-      final newNode = ParagraphNode(
-        id: node.id,
-        text: adjustedText,
-        metadata: {'blockType': blockquoteAttribution},
-      );
-
-      editor.execute(
-        ReplaceNodeRequest(existingNodeId: node.id, newNode: newNode),
-      );
-
-      // We removed some text at the beginning of the list item.
-      // Move the selection back by that same amount.
-      final textPosition = composer.selectionComponent.selection!.extent.nodePosition as TextNodePosition;
-      composer.selectionComponent.updateSelection(
-          DocumentSelection.collapsed(
-            position: DocumentPosition(
-              nodeId: node.id,
-              nodePosition: TextNodePosition(offset: textPosition.offset - startOfNewText),
-            ),
-          ),
-          notifyListeners: true);
-
-      return true;
-    }
-
-    // URL match, e.g., images, social, etc.
-    editorOpsLog.fine('Looking for URL match...');
-    final extractedLinks = linkify(node.text.text,
-        options: const LinkifyOptions(
-          humanize: false,
-        ));
-    final int linkCount = extractedLinks.fold(0, (value, element) => element is UrlElement ? value + 1 : value);
-    editorOpsLog.fine("Found $linkCount link(s)");
-    final String nonEmptyText =
-        extractedLinks.fold('', (value, element) => element is TextElement ? value + element.text.trim() : value);
-    if (linkCount == 1 && nonEmptyText.isEmpty) {
-      // This node's text is just a URL, try to interpret it
-      // as a known type.
-      editorOpsLog.fine("The whole node is one big URL. Trying to convert the node type based on pattern matching...");
-      final link = extractedLinks.firstWhereOrNull((element) => element is UrlElement)!.text;
-      _processUrlNode(
-        document: editor.document,
-        editor: editor,
-        nodeId: node.id,
-        originalText: node.text.text,
-        url: link,
-      );
-      return true;
-    }
-
-    // No pattern match was found
-    editorOpsLog.fine("ParagraphNode didn't match any conversion pattern.");
+    // final node = editor.document.getNodeById(nodeId);
+    // if (node == null) {
+    //   return false;
+    // }
+    // if (node is! ParagraphNode) {
+    //   return false;
+    // }
+    //
+    // editorOpsLog.fine("Running pattern matching on a ParagraphNode, to convert it to another node type.");
+    //
+    // // URL match, e.g., images, social, etc.
+    // editorOpsLog.fine('Looking for URL match...');
+    // final extractedLinks = linkify(
+    //   node.text.text,
+    //   options: const LinkifyOptions(
+    //     humanize: false,
+    //   ),
+    // );
+    // final int linkCount = extractedLinks.fold(0, (value, element) => element is UrlElement ? value + 1 : value);
+    // editorOpsLog.fine("Found $linkCount link(s)");
+    // final String nonEmptyText =
+    //     extractedLinks.fold('', (value, element) => element is TextElement ? value + element.text.trim() : value);
+    // if (linkCount == 1 && nonEmptyText.isEmpty) {
+    //   // This node's text is just a URL, try to interpret it
+    //   // as a known type.
+    //   editorOpsLog.fine("The whole node is one big URL. Trying to convert the node type based on pattern matching...");
+    //   final link = extractedLinks.firstWhereOrNull((element) => element is UrlElement)!.text;
+    //   _processUrlNode(
+    //     document: editor.document,
+    //     editor: editor,
+    //     nodeId: node.id,
+    //     originalText: node.text.text,
+    //     url: link,
+    //   );
+    //   return true;
+    // }
+    //
+    // // No pattern match was found
+    // editorOpsLog.fine("ParagraphNode didn't match any conversion pattern.");
     return false;
   }
 

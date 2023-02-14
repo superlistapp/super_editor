@@ -26,7 +26,7 @@ class DocumentEditor {
   DocumentEditor({
     required MutableDocument document,
     required List<EditorRequestHandler> requestHandlers,
-    List<EditorChangeReaction>? reactionPipeline,
+    List<EditReaction>? reactionPipeline,
     List<EditorChangeListener>? listeners,
   })  : _document = document,
         _requestHandlers = requestHandlers,
@@ -41,7 +41,7 @@ class DocumentEditor {
     // document can notify its own listeners. Also, we want the document
     // to receive notifications first, because everything else is based
     // on document structure.
-    _changeListeners.insert(0, _document.onDocumentChange);
+    _changeListeners.insert(0, FunctionalEditorChangeListener(_document.onDocumentChange));
   }
 
   void dispose() {
@@ -65,13 +65,13 @@ class DocumentEditor {
   /// A pipeline of objects that receive change lists from command execution
   /// and get the first opportunity to spawn additional commands before the
   /// change list is dispatched to regular listeners.
-  final List<EditorChangeReaction> _reactionPipeline;
+  final List<EditReaction> _reactionPipeline;
 
   /// Adds a [reaction], which is given an opportunity to spawn new [EditorCommands],
   /// based on the latest series of [DocumentChangeEvent]s.
   ///
   /// Reactions are executed in the order that they're added.
-  void addReaction(EditorChangeReaction reaction, {int? index}) {
+  void addReaction(EditReaction reaction, {int? index}) {
     if (index != null) {
       _reactionPipeline.insert(index, reaction);
     } else {
@@ -80,7 +80,7 @@ class DocumentEditor {
   }
 
   /// Removes a [reaction] from the reaction pipeline.
-  void removeReaction(EditorChangeReaction reaction) {
+  void removeReaction(EditReaction reaction) {
     _reactionPipeline.remove(reaction);
   }
 
@@ -119,9 +119,7 @@ class DocumentEditor {
   void execute(EditorRequest request) {
     final command = _findCommandForRequest(request);
     final changeList = _executeCommand(command);
-
-    // TODO: notify reactions
-    // TODO: if reactions spawn new commands, where do they execute?
+    _reactToChanges(changeList);
 
     _notifyListeners(changeList);
   }
@@ -160,9 +158,16 @@ class DocumentEditor {
     return changeList;
   }
 
+  void _reactToChanges(List<DocumentChangeEvent> changeList) {
+    // TODO: if reactions spawn new commands, where do they execute?
+    for (final reaction in _reactionPipeline) {
+      reaction.react(context, _commandExecutor, changeList);
+    }
+  }
+
   void _notifyListeners(List<DocumentChangeEvent> changeList) {
     for (final listener in _changeListeners) {
-      listener(changeList);
+      listener.onEdit(changeList);
     }
   }
 }
@@ -333,9 +338,22 @@ abstract class EditorRequest {
 /// An object that's notified with a change list from one or more
 /// commands that were just executed.
 ///
-/// An [EditorChangeReaction] can use the given [executor] to spawn additional
+/// An [EditReaction] can use the given [executor] to spawn additional
 /// [EditorCommand]s that should run in response the [changeList].
-typedef EditorChangeReaction = Function(CommandExecutor executor, List<DocumentChangeEvent> changeList);
+abstract class EditReaction {
+  void react(EditorContext editorContext, CommandExecutor executor, List<DocumentChangeEvent> changeList);
+}
+
+class FunctionalEditorChangeReaction implements EditReaction {
+  FunctionalEditorChangeReaction(this._react);
+
+  final void Function(EditorContext editorContext, CommandExecutor executor, List<DocumentChangeEvent> changeList)
+      _react;
+
+  @override
+  void react(EditorContext editorContext, CommandExecutor executor, List<DocumentChangeEvent> changeList) =>
+      _react(editorContext, executor, changeList);
+}
 
 /// An object that's notified with a change list from one or more
 /// commands that were just executed.
@@ -344,8 +362,19 @@ typedef EditorChangeReaction = Function(CommandExecutor executor, List<DocumentC
 /// editor changes. However, an [EditorChangeListener] shouldn't spawn additional
 /// editor behaviors. This can result in infinite loops, back-and-forth changes,
 /// and other undesirable effects. To spawn new [EditorCommand]s based on a
-/// [changeList], register an [EditorChangeReaction].
-typedef EditorChangeListener = Function(List<DocumentChangeEvent> changeList);
+/// [changeList], register an [EditReaction].
+abstract class EditorChangeListener {
+  void onEdit(List<DocumentChangeEvent> changeList);
+}
+
+class FunctionalEditorChangeListener implements EditorChangeListener {
+  FunctionalEditorChangeListener(this._onEdit);
+
+  final void Function(List<DocumentChangeEvent> changeList) _onEdit;
+
+  @override
+  void onEdit(List<DocumentChangeEvent> changeList) => _onEdit(changeList);
+}
 
 /// An in-memory, mutable [Document].
 class MutableDocument implements Document {

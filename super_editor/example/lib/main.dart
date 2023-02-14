@@ -41,11 +41,11 @@ Future<void> main() async {
     // editorImeLog,
     editorKeyLog,
     editorOpsLog,
-    editorLayoutLog,
-    editorDocLog,
+    // editorLayoutLog,
+    // editorDocLog,
     // editorStyleLog,
     // textFieldLog,
-    appLog,
+    // appLog,
   });
 
   runApp(SuperEditorDemoApp());

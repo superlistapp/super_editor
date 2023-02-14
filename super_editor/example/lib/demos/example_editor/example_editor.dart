@@ -2,6 +2,7 @@ import 'package:example/demos/example_editor/_task.dart';
 import 'package:example/logging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:linkify/linkify.dart';
 import 'package:super_editor/super_editor.dart';
 
 import '_example_document.dart';
@@ -50,8 +51,18 @@ class _ExampleEditorState extends State<ExampleEditor> {
         (request) => request is CompleteTaskRequest ? CompleteTaskCommand(nodeId: request.nodeId) : null,
         ...defaultRequestHandlers,
       ],
+      reactionPipeline: [
+        LinkifyReaction(),
+        UnorderedListItemConversionReaction(),
+        OrderedListItemConversionReaction(),
+        BlockquoteConversionReaction(),
+        HorizontalRuleConversionReaction(),
+        ImageUrlConversionReaction(),
+      ],
       listeners: [
-        _composer.selectionComponent.onEditorChange,
+        FunctionalEditorChangeListener(
+          _composer.selectionComponent.onEditorChange,
+        ),
       ],
     )..context.put("composer", _composer);
     _docOps = CommonEditorOperations(

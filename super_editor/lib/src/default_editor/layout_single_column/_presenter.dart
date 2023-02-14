@@ -168,7 +168,9 @@ class SingleColumnLayoutPresenter {
       final componentViewModels = <SingleColumnLayoutComponentViewModel>[];
       for (int i = 0; i < _document.nodes.length; i += 1) {
         final nodeId = _document.nodes[i].id;
-        if (_documentChangeLog != null && !_documentChangeLog!.wasNodeChanged(nodeId)) {
+        if (_documentChangeLog != null &&
+            _viewModel._viewModelsByNodeId[nodeId] != null &&
+            !_documentChangeLog!.wasNodeChanged(nodeId)) {
           // This node didn't change in the document. Re-use the existing base
           // view model.
           componentViewModels.add(_viewModel._viewModelsByNodeId[nodeId]!);

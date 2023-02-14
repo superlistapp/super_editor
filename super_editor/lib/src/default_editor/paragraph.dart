@@ -2,6 +2,7 @@ import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document.dart';
+import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_editor.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/edit_context.dart';
@@ -323,11 +324,68 @@ class SplitParagraphCommand implements EditorCommand {
 
     editorDocLog.info(' - inserted new node: ${newNode.id} after old one: ${node.id}');
 
-    executor.logChanges([
+    // Move the caret to the new node.
+    final composer = context.find<DocumentComposer>(EditorContext.composer);
+    final oldSelection = composer.selectionComponent.selection;
+    final newSelection = DocumentSelection.collapsed(
+      position: DocumentPosition(
+        nodeId: newNodeId,
+        nodePosition: const TextNodePosition(offset: 0),
+      ),
+    );
+    composer.selectionComponent.setSelectionWithReason(
+      newSelection,
+      SelectionReason.userInteraction,
+    );
+
+    final documentChanges = [
       NodeChangeEvent(node.id),
       NodeInsertedEvent(newNodeId),
-    ]);
+      SelectionChangeEvent(
+        oldSelection: oldSelection,
+        newSelection: newSelection,
+        reason: SelectionReason.userInteraction,
+      ),
+    ];
+
+    if (newNode.text.text.isEmpty) {
+      executor.logChanges([
+        SubmitParagraphIntention.start(),
+        ...documentChanges,
+        SubmitParagraphIntention.end(),
+      ]);
+    } else {
+      executor.logChanges([
+        SplitParagraphIntention.start(),
+        ...documentChanges,
+        SplitParagraphIntention.end(),
+      ]);
+    }
   }
+}
+
+class Intention implements DocumentChangeEvent {
+  Intention.start() : _isStart = true;
+
+  Intention.end() : _isStart = false;
+
+  final bool _isStart;
+
+  bool get isStart => _isStart;
+
+  bool get isEnd => !_isStart;
+}
+
+class SplitParagraphIntention extends Intention {
+  SplitParagraphIntention.start() : super.start();
+
+  SplitParagraphIntention.end() : super.end();
+}
+
+class SubmitParagraphIntention extends Intention {
+  SubmitParagraphIntention.start() : super.start();
+
+  SubmitParagraphIntention.end() : super.end();
 }
 
 ExecutionInstruction anyCharacterToInsertInParagraph({
