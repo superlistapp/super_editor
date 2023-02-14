@@ -200,6 +200,7 @@ void main() {
           selection: composer.selectionNotifier,
           composingRegion: composer.composingRegion,
           commonOps: commonOps,
+          onPerformAction: (_) {},
         );
 
         softwareKeyboardHandler.applyDeltas([
