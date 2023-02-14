@@ -439,7 +439,6 @@ class TextComponent extends StatefulWidget {
   TextComponentState createState() => TextComponentState();
 }
 
-@visibleForTesting
 class TextComponentState extends State<TextComponent> with DocumentComponent implements TextComposable {
   final _textKey = GlobalKey<ProseTextState>();
 
