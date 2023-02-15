@@ -359,6 +359,8 @@ class PlatformMessageHandler {
   }
 }
 
+/// A [UrlLauncher] that logs each attempt to launch a URL, but doesn't
+/// attempt to actually launch the URLs.
 class TestUrlLauncher implements UrlLauncher {
   final _urlLaunchLog = <Uri>[];
 

@@ -14,7 +14,7 @@ extension SuperEditorRobot on WidgetTester {
   /// The simulated user gesture is probably a tap, but the only guarantee is that
   /// the caret is placed with a gesture.
   ///
-  /// To explicitly simulate a tap within a paragraph, user [tapInParagraph].
+  /// To explicitly simulate a tap within a paragraph, use [tapInParagraph].
   Future<void> placeCaretInParagraph(
     String nodeId,
     int offset, {

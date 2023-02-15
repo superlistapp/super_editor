@@ -3,16 +3,16 @@ import 'package:flutter/services.dart';
 /// Concrete version of [RawKeyEvent] used to manually simulate
 /// a specific key event sent from Flutter.
 ///
-/// [FakeRawKeyEvent] does not validate its configuration. It will
+/// [FakeRawKeyDownEvent] does not validate its configuration. It will
 /// reflect whatever information you provide in the constructor, even
 /// if that configuration couldn't exist in reality.
 ///
-/// [FakeRawKeyEvent] might lack some controls or functionality. It's
+/// [FakeRawKeyDownEvent] might lack some controls or functionality. It's
 /// a tool designed to meet the needs of specific tests. If new tests
 /// require broader functionality, then that functionality should be
-/// added to [FakeRawKeyEvent] and other associated classes.
-class FakeRawKeyEvent extends RawKeyEvent {
-  const FakeRawKeyEvent({
+/// added to [FakeRawKeyDownEvent] and other associated classes.
+class FakeRawKeyDownEvent extends RawKeyDownEvent {
+  const FakeRawKeyDownEvent({
     required RawKeyEventData data,
     String? character,
   }) : super(data: data, character: character);
