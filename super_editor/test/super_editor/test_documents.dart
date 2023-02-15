@@ -48,6 +48,30 @@ MutableDocument singleParagraphDoc() => MutableDocument(
       ],
     );
 
+MutableDocument singleParagraphWithLinkDoc() => MutableDocument(
+      nodes: [
+        ParagraphNode(
+          id: "1",
+          text: AttributedText(
+            // "link" is 26->30
+            text: "This paragraph includes a link that the user can tap",
+            spans: AttributedSpans(
+              attributions: [
+                SpanMarker(
+                    attribution: LinkAttribution(url: Uri.parse("https://fake.url")),
+                    offset: 26,
+                    markerType: SpanMarkerType.start),
+                SpanMarker(
+                    attribution: LinkAttribution(url: Uri.parse("https://fake.url")),
+                    offset: 30,
+                    markerType: SpanMarkerType.end),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+
 MutableDocument singleBlockDoc() => MutableDocument(
       nodes: [
         HorizontalRuleNode(id: "1"),

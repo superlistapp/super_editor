@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:logging/logging.dart';
 import 'package:logging/logging.dart' as logging;
 import 'package:meta/meta.dart';
+import 'package:super_editor/src/infrastructure/links.dart';
 import 'package:super_editor/super_editor.dart';
 
 @isTestGroup
@@ -355,5 +356,19 @@ class PlatformMessageHandler {
     }
 
     return await handler(methodCall);
+  }
+}
+
+class TestUrlLauncher implements UrlLauncher {
+  final _urlLaunchLog = <Uri>[];
+
+  List<Uri> get urlLaunchLog => _urlLaunchLog;
+
+  void clearUrlLaunchLog() => _urlLaunchLog.clear();
+
+  @override
+  Future<bool> launchUrl(Uri url) async {
+    _urlLaunchLog.add(url);
+    return true;
   }
 }

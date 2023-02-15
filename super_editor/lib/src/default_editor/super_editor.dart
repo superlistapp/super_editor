@@ -18,19 +18,19 @@ import 'package:super_editor/src/default_editor/document_scrollable.dart';
 import 'package:super_editor/src/default_editor/list_items.dart';
 import 'package:super_editor/src/default_editor/tasks.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/links.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
 import 'package:super_editor/src/infrastructure/text_input.dart';
 import 'package:super_text_layout/super_text_layout.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../infrastructure/platforms/mobile_documents.dart';
 import 'attributions.dart';
 import 'blockquote.dart';
 import 'document_caret_overlay.dart';
-import 'document_gestures_mouse.dart';
-import 'document_ime/document_input_ime.dart';
-import 'document_hardware_keyboard/document_input_keyboard.dart';
 import 'document_focus_and_selection_policies.dart';
+import 'document_gestures_mouse.dart';
+import 'document_hardware_keyboard/document_input_keyboard.dart';
+import 'document_ime/document_input_ime.dart';
 import 'horizontal_rule.dart';
 import 'image.dart';
 import 'layout_single_column/layout_single_column.dart';
@@ -1046,7 +1046,7 @@ class LaunchLinkTapHandler extends ContentTapDelegate {
     final link = _getLinkAtPosition(tapPosition);
     if (link != null) {
       // The user tapped on a link. Launch it.
-      launchUrl(link);
+      UrlLauncher.instance.launchUrl(link);
       return TapHandlingInstruction.halt;
     } else {
       // The user didn't tap on a link.

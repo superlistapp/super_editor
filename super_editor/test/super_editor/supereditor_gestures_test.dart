@@ -1,6 +1,7 @@
-import 'dart:ui';
-
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:super_editor/src/infrastructure/links.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 
@@ -489,6 +490,66 @@ spans multiple lines.''',
       // Ensure no drag handle is displayed.
       expect(find.byType(AndroidSelectionHandle), findsNothing);
       expect(find.byType(IosDocumentTouchEditingControls), findsNothing);
+    });
+
+    group("interaction mode", () {
+      group("when active", () {
+        testWidgetsOnDesktop("launches URL on tap", (tester) async {
+          // Setup test version of UrlLauncher to log URL launches.
+          final testUrlLauncher = TestUrlLauncher();
+          UrlLauncher.instance = testUrlLauncher;
+          addTearDown(() => UrlLauncher.instance = null);
+
+          // Pump the UI.
+          final context = await tester //
+              .createDocument()
+              .withSingleParagraphAndLink()
+              .autoFocus(true)
+              .pump();
+
+          // Activate interaction mode.
+          if (defaultTargetPlatform == TargetPlatform.macOS) {
+            await tester.sendKeyDownEvent(LogicalKeyboardKey.meta);
+          } else {
+            await tester.sendKeyDownEvent(LogicalKeyboardKey.control);
+          }
+
+          // Ensure that interaction mode is "on".
+          expect(context.editContext.composer.isInInteractionMode.value, isTrue);
+
+          // Tap on the link.
+          await tester.tapInParagraph("1", 27);
+
+          // Ensure that we tried to launch the URL.
+          expect(testUrlLauncher.urlLaunchLog.length, 1);
+          expect(testUrlLauncher.urlLaunchLog.first.toString(), "https://fake.url");
+        });
+      });
+
+      group("when inactive", () {
+        testWidgetsOnDesktop("doesn't launch URL on tap", (tester) async {
+          // Setup test version of UrlLauncher to log URL launches.
+          final testUrlLauncher = TestUrlLauncher();
+          UrlLauncher.instance = testUrlLauncher;
+          addTearDown(() => UrlLauncher.instance = null);
+
+          // Pump the UI.
+          final context = await tester //
+              .createDocument()
+              .withSingleParagraphAndLink()
+              .autoFocus(true)
+              .pump();
+
+          // Ensure that interaction mode is "off".
+          expect(context.editContext.composer.isInInteractionMode.value, isFalse);
+
+          // Tap on the link.
+          await tester.tapInParagraph("1", 27);
+
+          // Ensure that we DIDN'T try to launch the URL.
+          expect(testUrlLauncher.urlLaunchLog.length, 0);
+        });
+      });
     });
   });
 }
