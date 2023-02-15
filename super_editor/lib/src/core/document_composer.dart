@@ -119,6 +119,13 @@ class DocumentComposer with ChangeNotifier {
   /// Only valid when editing a document with an IME input method.
   final composingRegion = ValueNotifier<DocumentRange?>(null);
 
+  /// Whether the editor should allow special user interactions with the
+  /// document content, such as clicking to open a link.
+  ///
+  /// Typically, this mode should be enabled and disabled with a special
+  /// keyboard key such as `cmd` or `ctrl`.
+  ValueNotifier<bool> isInInteractionMode = ValueNotifier(false);
+
   final ComposerPreferences _preferences;
 
   /// Returns the composition preferences for this composer.

@@ -302,6 +302,10 @@ ExecutionInstruction anyCharacterToInsertInParagraph({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
+  if (keyEvent is! RawKeyDownEvent) {
+    return ExecutionInstruction.continueExecution;
+  }
+
   if (editContext.composer.selection == null) {
     return ExecutionInstruction.continueExecution;
   }
@@ -405,6 +409,10 @@ ExecutionInstruction enterToInsertBlockNewline({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
+  if (keyEvent is! RawKeyDownEvent) {
+    return ExecutionInstruction.continueExecution;
+  }
+
   if (keyEvent.logicalKey != LogicalKeyboardKey.enter && keyEvent.logicalKey != LogicalKeyboardKey.numpadEnter) {
     return ExecutionInstruction.continueExecution;
   }

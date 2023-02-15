@@ -43,6 +43,7 @@ class DocumentMouseInteractor extends StatefulWidget {
     required this.getDocumentLayout,
     required this.selectionNotifier,
     required this.selectionChanges,
+    this.contentTapHandler,
     required this.autoScroller,
     this.showDebugPaint = false,
     required this.child,
@@ -54,6 +55,10 @@ class DocumentMouseInteractor extends StatefulWidget {
   final DocumentLayoutResolver getDocumentLayout;
   final Stream<DocumentSelectionChange> selectionChanges;
   final ValueNotifier<DocumentSelection?> selectionNotifier;
+
+  /// Optional handler that responds to taps on content, e.g., opening
+  /// a link when the user taps on text with a link attribution.
+  final ContentTapDelegate? contentTapHandler;
 
   /// Auto-scrolling delegate.
   final AutoScrollController autoScroller;
@@ -87,12 +92,18 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
 
   DocumentSelection? get _currentSelection => widget.selectionNotifier.value;
 
+  final _mouseCursor = ValueNotifier<MouseCursor>(SystemMouseCursors.text);
+  Offset? _lastHoverOffset;
+
   @override
   void initState() {
     super.initState();
     _focusNode = widget.focusNode ?? FocusNode();
     _selectionSubscription = widget.selectionChanges.listen(_onSelectionChange);
-    widget.autoScroller.addListener(_updateDragSelection);
+    widget.autoScroller
+      ..addListener(_updateDragSelection)
+      ..addListener(_updateMouseCursorAtLatestOffset);
+    widget.contentTapHandler?.addListener(_updateMouseCursorAtLatestOffset);
   }
 
   @override
@@ -106,18 +117,29 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
       _selectionSubscription = widget.selectionChanges.listen(_onSelectionChange);
     }
     if (widget.autoScroller != oldWidget.autoScroller) {
-      oldWidget.autoScroller.removeListener(_updateDragSelection);
-      widget.autoScroller.addListener(_updateDragSelection);
+      oldWidget.autoScroller
+        ..removeListener(_updateDragSelection)
+        ..removeListener(_updateMouseCursorAtLatestOffset);
+      widget.autoScroller
+        ..addListener(_updateDragSelection)
+        ..addListener(_updateMouseCursorAtLatestOffset);
+    }
+    if (widget.contentTapHandler != oldWidget.contentTapHandler) {
+      oldWidget.contentTapHandler?.removeListener(_updateMouseCursorAtLatestOffset);
+      widget.contentTapHandler?.addListener(_updateMouseCursorAtLatestOffset);
     }
   }
 
   @override
   void dispose() {
+    widget.contentTapHandler?.removeListener(_updateMouseCursorAtLatestOffset);
     if (widget.focusNode == null) {
       _focusNode.dispose();
     }
     _selectionSubscription.cancel();
-    widget.autoScroller.removeListener(_updateDragSelection);
+    widget.autoScroller
+      ..removeListener(_updateDragSelection)
+      ..removeListener(_updateMouseCursorAtLatestOffset);
     super.dispose();
   }
 
@@ -212,6 +234,15 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
       return;
     }
 
+    if (widget.contentTapHandler != null) {
+      final result = widget.contentTapHandler!.onTap(docPosition);
+      if (result == TapHandlingInstruction.halt) {
+        // The custom tap handler doesn't want us to react at all
+        // to the tap.
+        return;
+      }
+    }
+
     final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
     final expandSelection = _isShiftPressed && _currentSelection != null;
 
@@ -244,6 +275,15 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     editorGesturesLog.fine(" - document offset: $docOffset");
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
     editorGesturesLog.fine(" - tapped document position: $docPosition");
+
+    if (docPosition != null && widget.contentTapHandler != null) {
+      final result = widget.contentTapHandler!.onDoubleTap(docPosition);
+      if (result == TapHandlingInstruction.halt) {
+        // The custom tap handler doesn't want us to react at all
+        // to the tap.
+        return;
+      }
+    }
 
     if (docPosition != null) {
       final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
@@ -602,11 +642,36 @@ Updating drag selection:
     }
   }
 
+  void _onMouseMove(PointerHoverEvent event) {
+    _cancelScrollMomentum();
+    _updateMouseCursor(event.position);
+    _lastHoverOffset = event.position;
+  }
+
+  void _updateMouseCursorAtLatestOffset() {
+    if (_lastHoverOffset == null) {
+      return;
+    }
+    _updateMouseCursor(_lastHoverOffset!);
+  }
+
+  void _updateMouseCursor(Offset globalPosition) {
+    final docOffset = _getDocOffsetFromGlobalOffset(globalPosition);
+    final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
+    if (docPosition == null) {
+      _mouseCursor.value = SystemMouseCursors.text;
+      return;
+    }
+
+    final cursorForContent = widget.contentTapHandler?.mouseCursorForContentHover(docPosition);
+    _mouseCursor.value = cursorForContent ?? SystemMouseCursors.text;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Listener(
       onPointerSignal: _scrollOnMouseWheel,
-      onPointerHover: (event) => _cancelScrollMomentum(),
+      onPointerHover: _onMouseMove,
       onPointerDown: (event) => _cancelScrollMomentum(),
       onPointerPanZoomStart: (event) => _cancelScrollMomentum(),
       child: _buildCursorStyle(
@@ -622,8 +687,15 @@ Updating drag selection:
   Widget _buildCursorStyle({
     required Widget child,
   }) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.text,
+    return ValueListenableBuilder(
+      valueListenable: _mouseCursor,
+      builder: (context, value, child) {
+        return MouseRegion(
+          cursor: _mouseCursor.value,
+          onExit: (_) => _lastHoverOffset = null,
+          child: child,
+        );
+      },
       child: child,
     );
   }
@@ -734,6 +806,34 @@ Updating drag selection:
         ),
     ];
   }
+}
+
+/// Delegate for mouse status and clicking on special types of content,
+/// e.g., tapping on a link open the URL.
+///
+/// Listeners are notified when any time that the desired mouse cursor
+/// may have changed.
+abstract class ContentTapDelegate with ChangeNotifier {
+  MouseCursor? mouseCursorForContentHover(DocumentPosition hoverPosition) {
+    return null;
+  }
+
+  TapHandlingInstruction onTap(DocumentPosition tapPosition) {
+    return TapHandlingInstruction.continueHandling;
+  }
+
+  TapHandlingInstruction onDoubleTap(DocumentPosition tapPosition) {
+    return TapHandlingInstruction.continueHandling;
+  }
+
+  TapHandlingInstruction onTripleTap(DocumentPosition tapPosition) {
+    return TapHandlingInstruction.continueHandling;
+  }
+}
+
+enum TapHandlingInstruction {
+  halt,
+  continueHandling,
 }
 
 /// Paints a rectangle border around the given `selectionRect`.

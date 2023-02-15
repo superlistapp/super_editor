@@ -17,9 +17,11 @@ import 'package:super_editor/src/default_editor/document_gestures_touch_ios.dart
 import 'package:super_editor/src/default_editor/document_scrollable.dart';
 import 'package:super_editor/src/default_editor/list_items.dart';
 import 'package:super_editor/src/default_editor/tasks.dart';
+import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
 import 'package:super_editor/src/infrastructure/text_input.dart';
 import 'package:super_text_layout/super_text_layout.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../infrastructure/platforms/mobile_documents.dart';
 import 'attributions.dart';
@@ -280,6 +282,8 @@ class SuperEditorState extends State<SuperEditor> {
   @visibleForTesting
   late EditContext editContext;
 
+  late final LaunchLinkTapHandler _linkTapHandler;
+
   final _floatingCursorController = FloatingCursorController();
 
   @visibleForTesting
@@ -300,6 +304,11 @@ class SuperEditorState extends State<SuperEditor> {
 
     _createEditContext();
     _createLayoutPresenter();
+
+    _linkTapHandler = LaunchLinkTapHandler(
+      editContext.editor.document,
+      editContext.composer,
+    );
   }
 
   @override
@@ -343,6 +352,8 @@ class SuperEditorState extends State<SuperEditor> {
 
   @override
   void dispose() {
+    _linkTapHandler.dispose();
+
     if (widget.composer == null) {
       _composer.dispose();
     }
@@ -632,6 +643,7 @@ class SuperEditorState extends State<SuperEditor> {
                   getDocumentLayout: () => editContext.documentLayout,
                   selectionChanges: editContext.composer.selectionChanges,
                   selectionNotifier: editContext.composer.selectionNotifier,
+                  contentTapHandler: _linkTapHandler,
                   autoScroller: _autoScrollController,
                   showDebugPaint: widget.debugPaint.gestures,
                   child: const SizedBox(),
@@ -776,6 +788,7 @@ final defaultComponentBuilders = <ComponentBuilder>[
 
 /// Keyboard actions for the standard [SuperEditor].
 final defaultKeyboardActions = <DocumentKeyboardAction>[
+  toggleInteractionModeWhenCmdOrCtrlPressed,
   doNothingWhenThereIsNoSelection,
   pasteWhenCmdVIsPressed,
   copyWhenCmdCIsPressed,
@@ -810,6 +823,7 @@ final defaultKeyboardActions = <DocumentKeyboardAction>[
 /// Using the IME on desktop involves partial input from the IME
 /// and partial input from non-content keys, like arrow keys.
 final defaultImeKeyboardActions = <DocumentKeyboardAction>[
+  toggleInteractionModeWhenCmdOrCtrlPressed,
   doNothingWhenThereIsNoSelection,
   pasteWhenCmdVIsPressed,
   copyWhenCmdCIsPressed,
@@ -995,3 +1009,71 @@ TextStyle defaultStyleBuilder(Set<Attribution> attributions) {
 const defaultSelectionStyle = SelectionStyles(
   selectionColor: Color(0xFFACCEF7),
 );
+
+class LaunchLinkTapHandler extends ContentTapDelegate {
+  LaunchLinkTapHandler(this.document, this.composer) {
+    composer.isInInteractionMode.addListener(notifyListeners);
+  }
+
+  @override
+  void dispose() {
+    composer.isInInteractionMode.removeListener(notifyListeners);
+    super.dispose();
+  }
+
+  final Document document;
+  final DocumentComposer composer;
+
+  @override
+  MouseCursor? mouseCursorForContentHover(DocumentPosition hoverPosition) {
+    if (!composer.isInInteractionMode.value) {
+      // The editor isn't in "interaction mode". We don't want a special cursor
+      return null;
+    }
+
+    final link = _getLinkAtPosition(hoverPosition);
+    return link != null ? SystemMouseCursors.click : null;
+  }
+
+  @override
+  TapHandlingInstruction onTap(DocumentPosition tapPosition) {
+    if (!composer.isInInteractionMode.value) {
+      // The editor isn't in "interaction mode". We don't want to allow
+      // users to open links by tapping on them.
+      return TapHandlingInstruction.continueHandling;
+    }
+
+    final link = _getLinkAtPosition(tapPosition);
+    if (link != null) {
+      // The user tapped on a link. Launch it.
+      launchUrl(link);
+      return TapHandlingInstruction.halt;
+    } else {
+      // The user didn't tap on a link.
+      return TapHandlingInstruction.continueHandling;
+    }
+  }
+
+  Uri? _getLinkAtPosition(DocumentPosition position) {
+    final nodePosition = position.nodePosition;
+    if (nodePosition is! TextNodePosition) {
+      return null;
+    }
+
+    final textNode = document.getNodeById(position.nodeId);
+    if (textNode is! TextNode) {
+      editorGesturesLog
+          .shout("Received a report of a tap on a TextNodePosition, but the node with that ID is a: $textNode");
+      return null;
+    }
+
+    final tappedAttributions = textNode.text.getAllAttributionsAt(nodePosition.offset);
+    for (final tappedAttribution in tappedAttributions) {
+      if (tappedAttribution is LinkAttribution) {
+        return tappedAttribution.url;
+      }
+    }
+
+    return null;
+  }
+}
