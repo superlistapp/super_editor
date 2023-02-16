@@ -137,6 +137,7 @@ class SuperEditorImeInteractorState extends State<SuperEditorImeInteractor> impl
       selection: widget.editContext.composer.selectionNotifier,
       composingRegion: widget.editContext.composer.composingRegion,
       commonOps: widget.editContext.commonOps,
+      onPerformAction: (action) => _imeClient.performAction(action),
     );
     _documentImeClient = DocumentImeInputClient(
       selection: widget.editContext.composer.selectionNotifier,
