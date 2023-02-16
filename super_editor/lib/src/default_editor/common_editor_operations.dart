@@ -1815,7 +1815,17 @@ class CommonEditorOperations {
       return false;
     }
 
-    return _insertBlockLevelContent(ImageNode(id: DocumentEditor.createNodeId(), imageUrl: url));
+    final node = editor.document.getNodeById(composer.selection!.base.nodeId);
+    if (node is! ParagraphNode) {
+      return false;
+    }
+
+    // When the selected node is empty, we convert it to an ImageNode.
+    final nodeId = node.text.text.isEmpty //
+        ? composer.selection!.base.nodeId
+        : DocumentEditor.createNodeId();
+
+    return _insertBlockLevelContent(ImageNode(id: nodeId, imageUrl: url));
   }
 
   /// Inserts horizontal rule at the current selection extent.
@@ -1844,7 +1854,17 @@ class CommonEditorOperations {
       return false;
     }
 
-    return _insertBlockLevelContent(HorizontalRuleNode(id: DocumentEditor.createNodeId()));
+    final node = editor.document.getNodeById(composer.selection!.base.nodeId);
+    if (node is! ParagraphNode) {
+      return false;
+    }
+
+    // When the selected node is empty, we convert it to a HorizontalRuleNode.
+    final nodeId = node.text.text.isEmpty //
+        ? composer.selection!.base.nodeId
+        : DocumentEditor.createNodeId();
+
+    return _insertBlockLevelContent(HorizontalRuleNode(id: nodeId));
   }
 
   /// Inserts the given [blockNode] after the caret.
