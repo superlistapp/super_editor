@@ -120,8 +120,15 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
   late BlinkController _caretBlinkController;
   Offset? _prevCaretOffset;
 
+  /// Represents the maximum distance an offset can be from the end of a text
+  /// and still be considered to be near it.
+  static const _maximumDistanceToBeNearText = 30.0;
+
   static const _defaultFloatingCursorHeight = 20.0;
+  static const _defaultFloatingCursorWidth = 2.0;
+
   final _isShowingFloatingCursor = ValueNotifier<bool>(false);
+  final _isFloatingCursorOverOrNearText = ValueNotifier<bool>(false);
   final _floatingCursorKey = GlobalKey();
   Offset? _initialFloatingCursorOffset;
   final _floatingCursorOffset = ValueNotifier<Offset?>(null);
@@ -177,6 +184,7 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
 
         _caretBlinkController.startBlinking();
 
+        _isFloatingCursorOverOrNearText.value = false;
         _initialFloatingCursorOffset = null;
         _floatingCursorOffset.value = null;
         _floatingCursorHeight = _defaultFloatingCursorHeight;
@@ -204,6 +212,7 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
     if (_floatingCursorOffset.value == null) {
       // The floating cursor just started.
       widget.onFloatingCursorStart?.call();
+      _isShowingFloatingCursor.value = true;
     }
 
     _caretBlinkController.stopBlinking();
@@ -218,19 +227,63 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
     if (nearestDocPosition.nodePosition is TextNodePosition) {
       final nearestComponent = widget.documentLayout.getComponentByNodeId(nearestDocPosition.nodeId)!;
       _floatingCursorHeight = nearestComponent.getRectForPosition(nearestDocPosition.nodePosition).height;
+
+      if (_isFloatingCursorOverText(nearestComponent)) {
+        _isFloatingCursorOverOrNearText.value = true;
+      } else {
+        final distance = _floatingCursorDistanceFromSelectedPosition(nearestComponent, nearestDocPosition.nodePosition);
+        _isFloatingCursorOverOrNearText.value = distance.dx.abs() < _maximumDistanceToBeNearText;
+      }
     } else {
       final nearestComponent = widget.documentLayout.getComponentByNodeId(nearestDocPosition.nodeId)!;
       _floatingCursorHeight = (nearestComponent.context.findRenderObject() as RenderBox).size.height;
+      _isFloatingCursorOverOrNearText.value = false;
     }
 
     widget.onFloatingCursorMoved?.call(_floatingCursorOffset.value!);
   }
 
+  bool _isFloatingCursorOverText(DocumentComponent nearestComponent) {
+    if (nearestComponent is! TextComponentState) {
+      return false;
+    }
+
+    final selectionBoxes = nearestComponent.textLayout.getBoxesForSelection(
+      TextSelection(
+        baseOffset: 0,
+        extentOffset: nearestComponent.getEndPosition().offset,
+      ),
+    );
+
+    final renderBox = nearestComponent.context.findRenderObject() as RenderBox;
+
+    final globalFloatingCursorOffset =
+        widget.documentLayout.getGlobalOffsetFromDocumentOffset(_floatingCursorOffset.value!);
+    final localFloatingCursorOffset = renderBox.globalToLocal(globalFloatingCursorOffset);
+    final floatingCursorRect = localFloatingCursorOffset & Size(_defaultFloatingCursorWidth, _floatingCursorHeight);
+
+    for (final box in selectionBoxes) {
+      if (box.toRect().overlaps(floatingCursorRect)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  Offset _floatingCursorDistanceFromSelectedPosition(DocumentComponent component, NodePosition position) {
+    final renderBox = component.context.findRenderObject() as RenderBox;
+    final selectedPositionOffet = component.getOffsetForPosition(position);
+    final selectedPositionLocalOffet =
+        renderBox.localToGlobal(widget.documentLayout.getGlobalOffsetFromDocumentOffset(selectedPositionOffet));
+    return _floatingCursorOffset.value! - selectedPositionLocalOffet;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return ListenableBuilder(
-        listenable: widget.editingController,
-        builder: (context, _) {
+    return MultiListenableBuilder(
+        listenables: {widget.editingController, _isFloatingCursorOverOrNearText},
+        builder: (context) {
           return Padding(
             // Remove the keyboard from the space that we occupy so that
             // clipping calculations apply to the expected visual borders,
@@ -247,7 +300,7 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
                 child: Stack(
                   children: [
                     // Build caret or drag handles
-                    ..._buildHandles(),
+                    if (!_isFloatingCursorOverOrNearText.value) ..._buildHandles(),
                     // Build the floating cursor
                     _buildFloatingCursor(),
                     // Build the editing toolbar
@@ -401,7 +454,7 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
           handleKey: _floatingCursorKey,
           handleOffset: floatingCursorOffset - Offset(0, _floatingCursorHeight / 2),
           handle: Container(
-            width: 2,
+            width: _defaultFloatingCursorWidth,
             height: _floatingCursorHeight,
             color: Colors.red.withOpacity(0.75),
           ),
