@@ -21,6 +21,9 @@ void main() {
         // Place caret at "|This is a paragraph".
         await tester.placeCaretInParagraph(SuperEditorInspector.findDocument()!.nodes.first.id, 0);
 
+        // Ensure the caret is displayed.
+        expect(_caretFinder(), findsOneWidget);
+
         // Moves the floating cursor to a position that is over text.
         final floatingCursor = _FloatingCursorSimulator();
         await floatingCursor.start();
@@ -30,6 +33,13 @@ void main() {
 
         // Ensure the caret isn't displayed.
         expect(_caretFinder(), findsNothing);
+
+        // Release the floating cursor.
+        await floatingCursor.stop();
+        await tester.pump();
+
+        // Ensure the caret is displayed.
+        expect(_caretFinder(), findsOneWidget);
       });
 
       testWidgetsOnIos('hides caret when near text (on iOS)', (tester) async {
@@ -43,6 +53,9 @@ void main() {
         // This is the last position of the first line.
         await tester.placeCaretInParagraph(SuperEditorInspector.findDocument()!.nodes.first.id, 9);
 
+        // Ensure the caret is displayed.
+        expect(_caretFinder(), findsOneWidget);
+
         // Moves the floating cursor to a position that is close to the text.
         final floatingCursor = _FloatingCursorSimulator();
         await floatingCursor.start();
@@ -52,6 +65,13 @@ void main() {
 
         // Ensure the caret isn't displayed.
         expect(_caretFinder(), findsNothing);
+
+        // Release the floating cursor.
+        await floatingCursor.stop();
+        await tester.pump();
+
+        // Ensure the caret is displayed.
+        expect(_caretFinder(), findsOneWidget);
       });
 
       testWidgetsOnIos('shows grey caret when far from text (on iOS)', (tester) async {
@@ -75,8 +95,19 @@ void main() {
         expect(_caretFinder(), findsOneWidget);
 
         // Ensure the caret is grey.
-        final caret = tester.widget<BlinkingCaret>(_caretFinder());
+        BlinkingCaret caret = tester.widget<BlinkingCaret>(_caretFinder());
         expect(caret.color, Colors.grey);
+
+        // Release the floating cursor.
+        await floatingCursor.stop();
+        await tester.pump();
+
+        // Ensure the caret is displayed.
+        expect(_caretFinder(), findsOneWidget);
+
+        // Ensure the caret is blue.
+        caret = tester.widget<BlinkingCaret>(_caretFinder());
+        expect(caret.color, Colors.blue);
       });
     });
   });
