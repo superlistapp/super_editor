@@ -126,6 +126,46 @@ void main() {
       expect(document.nodes.length, 1);
     });
 
+    testWidgetsOnAndroid('allows app to handle newline action', (tester) async {
+      // On Android, when the user presses an action button configured as TextInputAction.newline,
+      // instead of dispatching the action, the OS sends an insertion delta of '\n'.
+      //
+      // Then, the IME code that handles deltas translates this insertion into a performAction call.
+      // This test ensures that this performAction call honors the IME overrides.
+
+      final document = singleParagraphEmptyDoc();
+
+      int performActionCount = 0;
+      TextInputAction? performedAction;
+      final imeOverrides = _TestImeOverrides(
+        (action) {
+          performActionCount += 1;
+          performedAction = action;
+        },
+      );
+
+      await tester //
+          .createDocument()
+          .withCustomContent(document)
+          .withInputSource(TextInputSource.ime)
+          .withImeOverrides(imeOverrides)
+          .pump();
+
+      // Place the caret in the document so that we open an IME connection.
+      await tester.placeCaretInParagraph("1", 0);
+
+      // Simulate the user pressing an action button that generates an insertion of a new line.
+      await tester.typeImeText('\n');
+
+      // Ensure that our override got the performAction call.
+      expect(performActionCount, 1);
+      expect(performedAction, TextInputAction.newline);
+
+      // Ensure that the editor didn't receive the performAction call, and didn't
+      // insert a new node.
+      expect(document.nodes.length, 1);
+    });
+
     group('delta use-cases', () {
       test('can handle an auto-inserted period', () {
         // On iOS, adding 2 spaces causes the two spaces to be replaced by a
@@ -160,6 +200,7 @@ void main() {
           selection: composer.selectionNotifier,
           composingRegion: composer.composingRegion,
           commonOps: commonOps,
+          onPerformAction: (_) {},
         );
 
         softwareKeyboardHandler.applyDeltas([

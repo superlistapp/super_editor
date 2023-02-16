@@ -278,7 +278,9 @@ class DocumentImeInputClient extends TextInputConnectionDecorator with TextInput
   @override
   void performAction(TextInputAction action) {
     editorImeLog.fine("IME says to perform action: $action");
-    textDeltasDocumentEditor.performAction(action);
+    if (action == TextInputAction.newline) {
+      textDeltasDocumentEditor.insertNewline();
+    }
   }
 
   @override

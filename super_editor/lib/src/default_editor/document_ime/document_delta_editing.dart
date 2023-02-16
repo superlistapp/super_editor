@@ -15,12 +15,22 @@ class TextDeltasDocumentEditor {
     required this.selection,
     required this.composingRegion,
     required this.commonOps,
+    required this.onPerformAction,
   });
 
   final DocumentEditor editor;
   final ValueNotifier<DocumentSelection?> selection;
   final ValueNotifier<DocumentRange?> composingRegion;
   final CommonEditorOperations commonOps;
+
+  /// Callback invoked when the client should handle a given [TextInputAction].
+  ///
+  /// Typically, [TextInputAction]s are reported through a different part of Flutter's IME
+  /// API. However, some actions, on some platforms, are converted into text editing
+  /// deltas, rather than reported as explicit actions. For example, on Android, the `newline`
+  /// action is reported as a text insertion with a `\n` character. That change is intercepted
+  /// by this editor and reported as a [TextInputAction.newline] instead.
+  final void Function(TextInputAction action) onPerformAction;
 
   /// Applies the given [textEditingDeltas] to the [Document].
   void applyDeltas(List<TextEditingDelta> textEditingDeltas) {
@@ -84,7 +94,7 @@ class TextDeltasDocumentEditor {
       // we forward the newline action to performAction.
       if (defaultTargetPlatform == TargetPlatform.android || kIsWeb) {
         editorImeLog.fine("Received a newline insertion on Android. Forwarding to newline input action.");
-        performAction(TextInputAction.newline);
+        onPerformAction(TextInputAction.newline);
       } else {
         editorImeLog.fine("Skipping insertion delta because its a newline");
       }
@@ -128,7 +138,7 @@ class TextDeltasDocumentEditor {
       // we forward the newline action to performAction.
       if (defaultTargetPlatform == TargetPlatform.android || kIsWeb) {
         editorImeLog.fine("Received a newline replacement on Android. Forwarding to newline input action.");
-        performAction(TextInputAction.newline);
+        onPerformAction(TextInputAction.newline);
       } else {
         editorImeLog.fine("Skipping replacement delta because its a newline");
       }
@@ -212,7 +222,7 @@ class TextDeltasDocumentEditor {
     editorImeLog.fine('With text: "$replacementText"');
 
     if (replacementText == "\n") {
-      performAction(TextInputAction.newline);
+      onPerformAction(TextInputAction.newline);
       return;
     }
 
@@ -252,30 +262,10 @@ class TextDeltasDocumentEditor {
     commonOps.deleteSelection();
   }
 
-  void performAction(TextInputAction action) {
-    switch (action) {
-      case TextInputAction.newline:
-        if (!selection.value!.isCollapsed) {
-          commonOps.deleteSelection();
-        }
-        commonOps.insertBlockLevelNewline();
-        break;
-      case TextInputAction.none:
-        // no-op
-        break;
-      case TextInputAction.done:
-      case TextInputAction.go:
-      case TextInputAction.search:
-      case TextInputAction.send:
-      case TextInputAction.next:
-      case TextInputAction.previous:
-      case TextInputAction.continueAction:
-      case TextInputAction.join:
-      case TextInputAction.route:
-      case TextInputAction.emergencyCall:
-      case TextInputAction.unspecified:
-        editorImeLog.warning("User pressed unhandled action button: $action");
-        break;
+  void insertNewline() {
+    if (!selection.value!.isCollapsed) {
+      commonOps.deleteSelection();
     }
+    commonOps.insertBlockLevelNewline();
   }
 }
