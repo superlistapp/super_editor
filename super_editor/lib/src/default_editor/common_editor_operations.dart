@@ -1820,7 +1820,8 @@ class CommonEditorOperations {
       return false;
     }
 
-    // When the selected node is empty, we convert it to an ImageNode.
+    // When the selected node is empty, we convert it to an ImageNode by reusing the same id.
+    // Otherwise, generate a new id and insert the node as a new one.
     final nodeId = node.text.text.isEmpty //
         ? composer.selection!.base.nodeId
         : DocumentEditor.createNodeId();
@@ -1859,7 +1860,8 @@ class CommonEditorOperations {
       return false;
     }
 
-    // When the selected node is empty, we convert it to a HorizontalRuleNode.
+    // When the selected node is empty, we convert it to a HorizontalRuleNode by reusing the same id.
+    // Otherwise, generate a new id and insert the node as a new one.
     final nodeId = node.text.text.isEmpty //
         ? composer.selection!.base.nodeId
         : DocumentEditor.createNodeId();
