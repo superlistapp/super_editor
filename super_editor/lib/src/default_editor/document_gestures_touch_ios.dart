@@ -488,17 +488,16 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     // scrolling has already stopped. So we log whether we're scrolling "on tap down"
     // and then check this flag in "on tap up".
     _wasScrollingOnTapDown = _isScrolling;
-  }
 
-  void _onTapUp(TapUpDetails details) {
     if (_isScrolling) {
       // On iOS, unlike Android, tapping while scrolling doesn't seem to stop the scrolling
-      // momentum. If we're actively scrolling, stop the momentum and return without further
-      // action.
+      // momentum. If we're actively scrolling, stop the momentum.
       (scrollPosition as ScrollPositionWithSingleContext).goIdle();
       return;
     }
+  }
 
+  void _onTapUp(TapUpDetails details) {
     if (_wasScrollingOnTapDown) {
       // The scrollable was scrolling when the user touched down. We expect that the
       // touch down stopped the scrolling momentum. We don't want to take any further
