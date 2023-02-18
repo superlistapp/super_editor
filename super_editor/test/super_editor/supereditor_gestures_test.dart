@@ -494,7 +494,7 @@ spans multiple lines.''',
 
     group("interaction mode", () {
       group("when active", () {
-        testWidgetsOnDesktop("launches URL on tap", (tester) async {
+        testWidgetsOnAllPlatforms("launches URL on tap", (tester) async {
           // Setup test version of UrlLauncher to log URL launches.
           final testUrlLauncher = TestUrlLauncher();
           UrlLauncher.instance = testUrlLauncher;
@@ -508,9 +508,18 @@ spans multiple lines.''',
               .pump();
 
           // Activate interaction mode.
-          if (defaultTargetPlatform == TargetPlatform.macOS) {
+          if (defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS) {
+            // On mobile, there's no hardware keyboard to easily activate
+            // interaction mode. In practice, app developers will decide
+            // when/how to activate interaction mode on mobile. Rather than
+            // add buttons in our test just for this purpose, we'll explicitly
+            // activate interaction mode.
+            context.editContext.composer.isInInteractionMode.value = true;
+          } else if (defaultTargetPlatform == TargetPlatform.macOS) {
+            // Press CMD to activate interaction mode on Mac.
             await tester.sendKeyDownEvent(LogicalKeyboardKey.meta);
           } else {
+            // Press CTRL to activate interaction mode on Windows and Linux.
             await tester.sendKeyDownEvent(LogicalKeyboardKey.control);
           }
 
@@ -527,7 +536,7 @@ spans multiple lines.''',
       });
 
       group("when inactive", () {
-        testWidgetsOnDesktop("doesn't launch URL on tap", (tester) async {
+        testWidgetsOnAllPlatforms("doesn't launch URL on tap", (tester) async {
           // Setup test version of UrlLauncher to log URL launches.
           final testUrlLauncher = TestUrlLauncher();
           UrlLauncher.instance = testUrlLauncher;

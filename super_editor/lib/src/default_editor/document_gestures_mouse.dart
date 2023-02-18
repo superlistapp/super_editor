@@ -16,6 +16,8 @@ import 'package:super_editor/src/document_operations/selection_operations.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 
+import 'document_gestures_interaction_overrides.dart';
+
 /// Governs mouse gesture interaction with a document, such as scrolling
 /// a document with a scroll wheel, tapping to place a caret, and
 /// tap-and-dragging to create an expanded selection.
@@ -358,6 +360,15 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     editorGesturesLog.fine(" - document offset: $docOffset");
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
     editorGesturesLog.fine(" - tapped document position: $docPosition");
+
+    if (docPosition != null && widget.contentTapHandler != null) {
+      final result = widget.contentTapHandler!.onTripleTap(docPosition);
+      if (result == TapHandlingInstruction.halt) {
+        // The custom tap handler doesn't want us to react at all
+        // to the tap.
+        return;
+      }
+    }
 
     if (docPosition != null) {
       final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
@@ -806,34 +817,6 @@ Updating drag selection:
         ),
     ];
   }
-}
-
-/// Delegate for mouse status and clicking on special types of content,
-/// e.g., tapping on a link open the URL.
-///
-/// Listeners are notified when any time that the desired mouse cursor
-/// may have changed.
-abstract class ContentTapDelegate with ChangeNotifier {
-  MouseCursor? mouseCursorForContentHover(DocumentPosition hoverPosition) {
-    return null;
-  }
-
-  TapHandlingInstruction onTap(DocumentPosition tapPosition) {
-    return TapHandlingInstruction.continueHandling;
-  }
-
-  TapHandlingInstruction onDoubleTap(DocumentPosition tapPosition) {
-    return TapHandlingInstruction.continueHandling;
-  }
-
-  TapHandlingInstruction onTripleTap(DocumentPosition tapPosition) {
-    return TapHandlingInstruction.continueHandling;
-  }
-}
-
-enum TapHandlingInstruction {
-  halt,
-  continueHandling,
 }
 
 /// Paints a rectangle border around the given `selectionRect`.

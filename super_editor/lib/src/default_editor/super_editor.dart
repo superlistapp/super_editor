@@ -28,6 +28,7 @@ import 'attributions.dart';
 import 'blockquote.dart';
 import 'document_caret_overlay.dart';
 import 'document_focus_and_selection_policies.dart';
+import 'document_gestures_interaction_overrides.dart';
 import 'document_gestures_mouse.dart';
 import 'document_hardware_keyboard/document_input_keyboard.dart';
 import 'document_ime/document_input_ime.dart';
@@ -104,6 +105,7 @@ class SuperEditor extends StatefulWidget {
     this.imeOverrides,
     List<DocumentKeyboardAction>? keyboardActions,
     this.gestureMode,
+    this.contentTapDelegateFactory = launchLinkTapHandlerFactory,
     this.androidHandleColor,
     this.androidToolbarBuilder,
     this.iOSHandleColor,
@@ -207,6 +209,13 @@ class SuperEditor extends StatefulWidget {
   /// The `SuperEditor` gesture mode, e.g., mouse or touch.
   final DocumentGestureMode? gestureMode;
 
+  /// Factory that creates a [ContentTapDelegate], which is given an
+  /// opportunity to respond to taps on content before the editor, itself.
+  ///
+  /// A [ContentTapDelegate] might be used, for example, to launch a URL
+  /// when a user taps on a link.
+  final ContentTapDelegateFactory? contentTapDelegateFactory;
+
   /// Color of the text selection drag handles on Android.
   final Color? androidHandleColor;
 
@@ -282,7 +291,7 @@ class SuperEditorState extends State<SuperEditor> {
   @visibleForTesting
   late EditContext editContext;
 
-  late final LaunchLinkTapHandler _linkTapHandler;
+  ContentTapDelegate? _contentTapDelegate;
 
   final _floatingCursorController = FloatingCursorController();
 
@@ -304,11 +313,6 @@ class SuperEditorState extends State<SuperEditor> {
 
     _createEditContext();
     _createLayoutPresenter();
-
-    _linkTapHandler = LaunchLinkTapHandler(
-      editContext.editor.document,
-      editContext.composer,
-    );
   }
 
   @override
@@ -352,7 +356,7 @@ class SuperEditorState extends State<SuperEditor> {
 
   @override
   void dispose() {
-    _linkTapHandler.dispose();
+    _contentTapDelegate?.dispose();
 
     if (widget.composer == null) {
       _composer.dispose();
@@ -378,6 +382,11 @@ class SuperEditorState extends State<SuperEditor> {
         documentLayoutResolver: () => _docLayoutKey.currentState as DocumentLayout,
       ),
     );
+
+    // The ContentTapDelegate depends upon the EditContext. Recreate the
+    // delegate, now that we've created a new EditContext.
+    _contentTapDelegate?.dispose();
+    _contentTapDelegate = widget.contentTapDelegateFactory?.call(editContext);
   }
 
   void _createLayoutPresenter() {
@@ -583,6 +592,7 @@ class SuperEditorState extends State<SuperEditor> {
           document: editContext.editor.document,
           getDocumentLayout: () => editContext.documentLayout,
           selection: editContext.composer.selectionNotifier,
+          contentTapHandler: _contentTapDelegate,
           scrollController: widget.scrollController,
           documentKey: _docLayoutKey,
           handleColor: widget.androidHandleColor ?? Theme.of(context).primaryColor,
@@ -598,6 +608,7 @@ class SuperEditorState extends State<SuperEditor> {
           document: editContext.editor.document,
           getDocumentLayout: () => editContext.documentLayout,
           selection: editContext.composer.selectionNotifier,
+          contentTapHandler: _contentTapDelegate,
           scrollController: widget.scrollController,
           documentKey: _docLayoutKey,
           handleColor: widget.iOSHandleColor ?? Theme.of(context).primaryColor,
@@ -643,7 +654,7 @@ class SuperEditorState extends State<SuperEditor> {
                   getDocumentLayout: () => editContext.documentLayout,
                   selectionChanges: editContext.composer.selectionChanges,
                   selectionNotifier: editContext.composer.selectionNotifier,
-                  contentTapHandler: _linkTapHandler,
+                  contentTapHandler: _contentTapDelegate,
                   autoScroller: _autoScrollController,
                   showDebugPaint: widget.debugPaint.gestures,
                   child: const SizedBox(),
@@ -1010,6 +1021,14 @@ const defaultSelectionStyle = SelectionStyles(
   selectionColor: Color(0xFFACCEF7),
 );
 
+LaunchLinkTapHandler launchLinkTapHandlerFactory(EditContext editContext) =>
+    LaunchLinkTapHandler(editContext.editor.document, editContext.composer);
+
+/// A [ContentTapDelegate] that opens links when the user taps text with
+/// a [LinkAttribution].
+///
+/// This delegate only opens links when [composer.isInInteractionMode] is
+/// `true`.
 class LaunchLinkTapHandler extends ContentTapDelegate {
   LaunchLinkTapHandler(this.document, this.composer) {
     composer.isInInteractionMode.addListener(notifyListeners);
