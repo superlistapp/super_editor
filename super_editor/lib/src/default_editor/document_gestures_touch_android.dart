@@ -302,7 +302,9 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   }
 
   void _teardownScrollController() {
-    scrollPosition.isScrollingNotifier.removeListener(_onScrollActivityChange);
+    if (_scrollController.hasClients) {
+      scrollPosition.isScrollingNotifier.removeListener(_onScrollActivityChange);
+    }
 
     if (widget.scrollController == null) {
       _scrollController.dispose();
