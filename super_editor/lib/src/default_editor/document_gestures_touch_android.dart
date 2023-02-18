@@ -89,6 +89,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   // The alternative case is the one in which this interactor defers to an
   // ancestor scrollable.
   late ScrollController _scrollController;
+  bool _isScrolling = false;
 
   /// Shows, hides, and positions a floating toolbar and magnifier.
   late MagnifierAndToolbarController _overlayController;
@@ -128,7 +129,8 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
     widget.focusNode.addListener(_onFocusChange);
 
-    _scrollController = _scrollController = (widget.scrollController ?? ScrollController());
+    _configureScrollController();
+
     // On the next frame, after our ScrollController is attached to the Scrollable,
     // add a listener for scroll changes.
     //
@@ -210,6 +212,11 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       }
     }
 
+    if (widget.scrollController != oldWidget.scrollController) {
+      _teardownScrollController();
+      _configureScrollController();
+    }
+
     if (widget.overlayController != oldWidget.overlayController) {
       _overlayController = widget.overlayController ?? MagnifierAndToolbarController();
       _editingController.overlayController = _overlayController;
@@ -260,9 +267,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
     _removeEditingOverlayControls();
 
-    if (widget.scrollController == null) {
-      _scrollController.dispose();
-    }
+    _teardownScrollController();
 
     widget.focusNode.removeListener(_onFocusChange);
 
@@ -286,6 +291,39 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
         });
       }
     });
+  }
+
+  void _configureScrollController() {
+    _scrollController = (widget.scrollController ?? ScrollController());
+
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      scrollPosition.isScrollingNotifier.addListener(_onScrollActivityChange);
+    });
+  }
+
+  void _teardownScrollController() {
+    scrollPosition.isScrollingNotifier.removeListener(_onScrollActivityChange);
+
+    if (widget.scrollController == null) {
+      _scrollController.dispose();
+    }
+  }
+
+  void _onScrollActivityChange() {
+    final isScrolling = scrollPosition.isScrollingNotifier.value;
+
+    if (isScrolling) {
+      _isScrolling = true;
+    } else {
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+        // Set our scrolling flag to false on the next frame, so that our tap handlers
+        // have an opportunity to see that the scrollable was scrolling when the user
+        // tapped down.
+        //
+        // See the "on tap down" handler for more info about why this flag is important.
+        _isScrolling = false;
+      });
+    }
   }
 
   void _ensureSelectionExtentIsVisible() {
@@ -433,7 +471,27 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     );
   }
 
+  bool _wasScrollingOnTapDown = false;
+  void _onTapDown(TapDownDetails details) {
+    // When the user scrolls and releases, the scrolling continues with momentum.
+    // If the user then taps down again, the momentum stops. When this happens, we
+    // still receive tap callbacks. But we don't want to take any further action,
+    // like moving the caret, when the user taps to stop scroll momentum. We have
+    // to carefully watch the scrolling activity to recognize when this happens.
+    // We can't check whether we're scrolling in "on tap up" because by then the
+    // scrolling has already stopped. So we log whether we're scrolling "on tap down"
+    // and then check this flag in "on tap up".
+    _wasScrollingOnTapDown = _isScrolling;
+  }
+
   void _onTapUp(TapUpDetails details) {
+    if (_wasScrollingOnTapDown) {
+      // The scrollable was scrolling when the user touched down. We expect that the
+      // touch down stopped the scrolling momentum. We don't want to take any further
+      // action on this touch event. The user will tap again to change the selection.
+      return;
+    }
+
     editorGesturesLog.info("Tap down on document");
     final docOffset = _getDocOffset(details.localPosition);
     editorGesturesLog.fine(" - document offset: $docOffset");
@@ -947,6 +1005,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
           () => TapSequenceGestureRecognizer(),
           (TapSequenceGestureRecognizer recognizer) {
             recognizer
+              ..onTapDown = _onTapDown
               ..onTapUp = _onTapUp
               ..onDoubleTapDown = _onDoubleTapDown
               ..onTripleTapDown = _onTripleTapDown
