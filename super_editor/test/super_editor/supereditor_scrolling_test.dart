@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -304,6 +305,40 @@ void main() {
         ),
         false,
       );
+    });
+
+    testWidgetsOnMobile("stops momentum on tap down and doesn't place the caret", (tester) async {
+      final scrollController = ScrollController();
+
+      await tester //
+          .createDocument() //
+          .withLongDoc() //
+          .withScrollController(scrollController) //
+          .pump();
+
+      // Ensure the editor initially has no selection.
+      expect(SuperEditorInspector.findDocumentSelection(), isNull);
+
+      // Fling scroll the editor.
+      await tester.fling(find.byType(SuperEditor), const Offset(0.0, -1000), 1000);
+
+      // Pump a few frames of momentum.
+      for (int i = 0; i < 25; i += 1) {
+        await tester.pump(const Duration(milliseconds: 16));
+      }
+      final scrollOffsetInMiddleOfMomentum = scrollController.offset;
+
+      // Tap to stop the momentum.
+      await tester.tap(find.byType(SuperEditor));
+
+      // Let any remaining momentum run (there shouldn't be any).
+      await tester.pumpAndSettle();
+
+      // Ensure that the momentum stopped exactly where we tapped.
+      expect(scrollOffsetInMiddleOfMomentum, scrollController.offset);
+
+      // Ensure that tapping on the editor didn't place the caret.
+      expect(SuperEditorInspector.findDocumentSelection(), isNull);
     });
   });
 }

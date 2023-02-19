@@ -79,6 +79,13 @@ class TestDocumentSelector {
       longTextDoc(),
     );
   }
+
+  TestDocumentConfigurator withLongDoc() {
+    return TestDocumentConfigurator._(
+      _widgetTester,
+      longDoc(),
+    );
+  }
 }
 
 /// Builder that configures and pumps a [SuperEditor] widget.
