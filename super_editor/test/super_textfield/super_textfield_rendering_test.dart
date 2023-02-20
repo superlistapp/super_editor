@@ -6,112 +6,30 @@ import '../test_tools.dart';
 
 void main() {
   group('SuperTextField', () {
-    group('single-line', () {
-      testWidgetsOnAllPlatforms('renders text on the first frame when given a line height', (tester) async {
-        final controller = AttributedTextEditingController(
-          text: AttributedText(text: 'Editing text'),
-        );
+    testWidgetsOnAllPlatforms('renders text on the first frame when given a line height', (tester) async {
+      final controller = AttributedTextEditingController(
+        text: AttributedText(text: 'Editing text'),
+      );
 
-        // Indicates whether we should display the Text or the SuperTextField.
-        final showTextField = ValueNotifier<bool>(false);
+      // Indicates whether we should display the Text or the SuperTextField.
+      final showTextField = ValueNotifier<bool>(false);
 
-        // Pump the widget tree showing the Text widget.
-        await _pumpSwitchableTestApp(
-          tester,
-          controller: controller,
-          showTextField: showTextField,
-          lineHeight: 16,
-        );
+      // Pump the widget tree showing the Text widget.
+      await _pumpSwitchableTestApp(
+        tester,
+        controller: controller,
+        showTextField: showTextField,
+        lineHeight: 16,
+      );
 
-        // Switch to display the SuperTextField.
-        showTextField.value = true;
+      // Switch to display the SuperTextField.
+      showTextField.value = true;
 
-        // Pump exactly one frame to inspect if the text was rendered.
-        await tester.pump();
+      // Pump exactly one frame to inspect if the text was rendered.
+      await tester.pump();
 
-        // Ensure the SuperTextField rendered the text.
-        expect(find.text('Editing text', findRichText: true), findsOneWidget);
-      });
-
-      testWidgetsOnAllPlatforms('renders text on the first frame when not given a line height', (tester) async {
-        final controller = AttributedTextEditingController(
-          text: AttributedText(text: 'Editing text'),
-        );
-
-        // Indicates whether we should display the Text or the SuperTextField.
-        final showTextField = ValueNotifier<bool>(false);
-
-        // Pump the widget tree showing the Text widget.
-        await _pumpSwitchableTestApp(
-          tester,
-          controller: controller,
-          showTextField: showTextField,
-        );
-
-        // Switch to display the SuperTextField.
-        showTextField.value = true;
-
-        // Pump exactly one frame to inspect if the text was rendered.
-        await tester.pump();
-
-        // Ensure the SuperTextField rendered the text.
-        expect(find.text('Editing text', findRichText: true), findsOneWidget);
-      });
-    });
-
-    group('multi-line', () {
-      testWidgetsOnAllPlatforms('renders text on the first frame when given a line height', (tester) async {
-        final controller = AttributedTextEditingController(
-          text: AttributedText(text: 'Multi-line\ntext field'),
-        );
-
-        // Indicates whether we should display the Text or the SuperTextField.
-        final showTextField = ValueNotifier<bool>(false);
-
-        // Pump the widget tree showing the Text widget.
-        await _pumpSwitchableTestApp(
-          tester,
-          controller: controller,
-          showTextField: showTextField,
-          lineHeight: 16,
-          maxLines: 3,
-        );
-
-        // Switch to display the SuperTextField.
-        showTextField.value = true;
-
-        // Pump exactly one frame to inspect if the text was rendered.
-        await tester.pump();
-
-        // Ensure the SuperTextField rendered the text.
-        expect(find.text('Multi-line\ntext field', findRichText: true), findsOneWidget);
-      });
-
-      testWidgetsOnAllPlatforms('renders text on the first frame when not given a line height', (tester) async {
-        final controller = AttributedTextEditingController(
-          text: AttributedText(text: 'Multi-line\ntext field'),
-        );
-
-        // Indicates whether we should display the Text or the SuperTextField.
-        final showTextField = ValueNotifier<bool>(false);
-
-        // Pump the widget tree showing the Text widget.
-        await _pumpSwitchableTestApp(
-          tester,
-          controller: controller,
-          showTextField: showTextField,
-          maxLines: 3,
-        );
-
-        // Switch to display the SuperTextField.
-        showTextField.value = true;
-
-        // Pump exactly one frame to inspect if the text was rendered.
-        await tester.pump();
-
-        // Ensure the SuperTextField rendered the text.
-        expect(find.text('Multi-line\ntext field', findRichText: true), findsOneWidget);
-      });
+      // Ensure the SuperTextField rendered the text.
+      expect(find.text('Editing text', findRichText: true), findsOneWidget);
     });
   });
 }
@@ -122,7 +40,6 @@ Future<void> _pumpSwitchableTestApp(
   required AttributedTextEditingController controller,
   required ValueNotifier<bool> showTextField,
   double? lineHeight,
-  int? maxLines,
 }) async {
   await tester.pumpWidget(
     MaterialApp(
@@ -134,7 +51,7 @@ Future<void> _pumpSwitchableTestApp(
                 ? SuperTextField(
                     textController: controller,
                     lineHeight: lineHeight,
-                    maxLines: maxLines,
+                    maxLines: 3,
                   )
                 : const Text('');
           },
