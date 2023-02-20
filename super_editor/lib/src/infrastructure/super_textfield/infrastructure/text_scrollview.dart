@@ -356,8 +356,27 @@ class _TextScrollViewState extends State<TextScrollView>
       }
     }
 
-    if (estimatedLineHeight == null) {
-      _log.finer(' - could not calculate the estimated line height. Rescheduling calculation.');
+    final hasLineConstraints = widget.maxLines != null || widget.minLines != null;
+    if (!hasLineConstraints) {
+      // We don't have line constraints so we don't need to estimate the content height
+      // and compute a fixed viewport height. The viewport will size itself based on the
+      // text intrinsic height.
+
+      final didChange = _viewportHeight != null;
+      // We set these values outside of setState, because this method
+      // can be called during the build phase.
+      _needViewportHeight = false;
+      _viewportHeight = null;
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+        if (mounted) {
+          setState(() {});
+        }
+      });
+      return didChange;
+    }
+
+    if (estimatedLineHeight == null || linesOfText == null) {
+      _log.finer(' - could not calculate the estimated line height or content height. Rescheduling calculation.');
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         if (mounted) {
           setState(() {
@@ -389,31 +408,31 @@ class _TextScrollViewState extends State<TextScrollView>
 
     _log.finer(' - minHeight: $minHeight, maxHeight: $maxHeight');
 
-    double? viewportHeight;
+    double? newViewportHeight;
     if (maxHeight != null && estimatedContentHeight >= maxHeight) {
       _log.finer(' - setting viewport height to maxHeight');
-      viewportHeight = maxHeight;
+      newViewportHeight = maxHeight;
     } else if (estimatedContentHeight <= minHeight) {
       _log.finer(' - setting viewport height to minHeight');
-      viewportHeight = minHeight;
+      newViewportHeight = minHeight;
     }
 
-    if (!_needViewportHeight && viewportHeight == _viewportHeight) {
+    if (!_needViewportHeight && newViewportHeight == _viewportHeight) {
       // The height of the viewport hasn't changed. Return.
       _log.finer(' - viewport height hasn\'t changed');
       return false;
     }
 
-    final wantsUnboundedIntrinsicHeight = viewportHeight == null && isMultiline && !isBounded;
+    final wantsUnboundedIntrinsicHeight = newViewportHeight == null && isMultiline && !isBounded;
     final multilineContentFitsMaxHeight =
-        viewportHeight == null && isMultiline && isBounded && estimatedContentHeight <= maxHeight!;
+        newViewportHeight == null && isMultiline && isBounded && estimatedContentHeight <= maxHeight!;
 
     if (wantsUnboundedIntrinsicHeight || multilineContentFitsMaxHeight) {
       // We have either an unbounded height or our estimated content height fits inside our max height.
       // The viewport should expand to fit its content.
       _log.finer(
           ' - viewport height is null, but TextScrollView is unbounded or the content fits max height, so that is OK');
-      final didChange = viewportHeight != _viewportHeight;
+      final didChange = newViewportHeight != _viewportHeight;
       // We set these values outside of setState, because this method
       // can be called during the build phase.
       _needViewportHeight = false;
@@ -426,12 +445,12 @@ class _TextScrollViewState extends State<TextScrollView>
       return didChange;
     }
 
-    if (viewportHeight != null) {
-      _log.finer(' - new viewport height: $viewportHeight');
+    if (newViewportHeight != null) {
+      _log.finer(' - new viewport height: $newViewportHeight');
       // We set these values outside of setState, because this method
       // can be called during the build phase.
       _needViewportHeight = false;
-      _viewportHeight = viewportHeight;
+      _viewportHeight = newViewportHeight;
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         if (mounted) {
           setState(() {});
@@ -455,14 +474,18 @@ class _TextScrollViewState extends State<TextScrollView>
     }
   }
 
-  int _getLineCount() {
+  /// Retuns the number of lines required to display the text.
+  ///
+  /// This isn't necessarily equal to the number of lines in the string.
+  /// For example, the content might have a single line of text that doesn't fit on the available width,
+  /// causing it to span multiple lines.
+  int? _getLineCount() {
     if (widget.textEditingController.text.text.isEmpty) {
       return 0;
     }
 
     if (widget.textKey.currentState == null) {
-      // If we can't get a text layout, compute the line count by counting the line breaks.
-      return 0;
+      return null;
     }
 
     return _textLayout.getLineCount();

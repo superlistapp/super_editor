@@ -51,7 +51,6 @@ Future<void> _pumpSwitchableTestApp(
                 ? SuperTextField(
                     textController: controller,
                     lineHeight: lineHeight,
-                    maxLines: 3,
                   )
                 : const Text('');
           },
