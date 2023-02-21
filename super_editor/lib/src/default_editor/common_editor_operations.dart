@@ -1875,6 +1875,9 @@ class CommonEditorOperations {
   /// is converted into the given [blockNode] and a new empty paragraph
   /// is inserted after the [blockNode].
   ///
+  /// If the selection extent sits at the beginning of a non-empty paragraph,
+  /// the [blockNode] is inserted as a new node before that paragraph.
+  ///
   /// If the selection extent sits at the end of a paragraph, the [blockNode]
   /// is inserted as a new node after that paragraph, and then a new
   /// empty paragraph is inserted after the [blockNode].
@@ -1904,6 +1907,7 @@ class CommonEditorOperations {
     editor.executeCommand(
       EditorCommandFunction((document, transaction) {
         final paragraphPosition = composer.selection!.extent.nodePosition as TextNodePosition;
+        final beginningOfParagraph = node.beginningPosition;
         final endOfParagraph = node.endPosition;
 
         DocumentSelection newSelection;
@@ -1919,6 +1923,17 @@ class CommonEditorOperations {
             position: DocumentPosition(
               nodeId: emptyParagraph.id,
               nodePosition: emptyParagraph.beginningPosition,
+            ),
+          );
+        } else if (paragraphPosition.offset == beginningOfParagraph.offset) {
+          // Insert block item before the paragraph.
+          transaction.insertNodeBefore(existingNode: node, newNode: blockNode);
+
+          // Place the selection at the beginning of the paragraph.
+          newSelection = DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: node.id,
+              nodePosition: node.beginningPosition,
             ),
           );
         } else if (paragraphPosition.offset == endOfParagraph.offset) {
