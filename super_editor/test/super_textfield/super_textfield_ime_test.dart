@@ -354,6 +354,22 @@ void main() {
       // Ensure text is deleted
       expect(controller.text.text, 'This is a');
     });
+
+    testWidgetsOnAndroid('deletes emojis with BACKSPACE (on Android)', (tester) async {
+      final controller = AttributedTextEditingController(
+        text: AttributedText(text: 'This is a text with an emoji 🐢'),
+      );
+      await _pumpScaffoldForBuggyKeyboards(tester, controller: controller);
+
+      // Place the caret at the end of the text field.
+      await tester.placeCaretInSuperTextField(controller.text.text.length);
+
+      // Press backspace to delete the previous character.
+      await tester.pressBackspace();
+
+      // Ensure the emoji is deleted.
+      expect(controller.text.text, 'This is a text with an emoji ');
+    });
   });
 }
 
