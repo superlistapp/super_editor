@@ -73,6 +73,11 @@ abstract class DocumentLayout {
 
   /// Returns the [DocumentPosition] at the end of the last selectable component.
   DocumentPosition? findLastSelectablePosition();
+
+  /// Holds the [LayerLink]s linked to the caret and handle positions.
+  ///
+  /// Use a [CompositedTransformFollower] to display widgets at these positions.
+  LayoutLinks get layerLinks;
 }
 
 /// Contract for all widgets that operate as document components
@@ -438,4 +443,16 @@ class MovementModifier {
 
   @override
   int get hashCode => id.hashCode;
+}
+
+/// Holds [LayerLink]s for the caret and the drag handles.
+class LayoutLinks {
+  LayoutLinks({
+    required this.caret,
+    required this.upstreamHandle,
+    required this.downstreamHandle,
+  });
+  final LayerLink caret;
+  final LayerLink upstreamHandle;
+  final LayerLink downstreamHandle;
 }

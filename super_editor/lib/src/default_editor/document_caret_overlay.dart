@@ -10,9 +10,10 @@ class CaretDocumentOverlay extends StatefulWidget {
     Key? key,
     required this.composer,
     required this.documentLayoutResolver,
+    required this.isDocumentLayoutAvailable,
+    required this.layoutLinksResolver,
     required this.caretStyle,
     required this.document,
-    required this.componentSizeNotifier,
   }) : super(key: key);
 
   /// The editor's [DocumentComposer], which reports the current selection.
@@ -21,6 +22,14 @@ class CaretDocumentOverlay extends StatefulWidget {
   /// Delegate that returns a reference to the editor's [DocumentLayout], so
   /// that the current selection can be mapped to an (x,y) offset and a height.
   final DocumentLayout Function() documentLayoutResolver;
+
+  /// Returns whether or not we can access the document layout.
+  ///
+  /// When this method returns `true`, we assume it's safe to call [documentLayoutResolver].
+  final bool Function() isDocumentLayoutAvailable;
+
+  /// Returns the [LayerLink]s used to position the caret.
+  final LayoutLinks Function() layoutLinksResolver;
 
   /// The editor's [Document].
   ///
@@ -34,26 +43,24 @@ class CaretDocumentOverlay extends StatefulWidget {
   /// The visual style of the caret that this overlay paints.
   final CaretStyle caretStyle;
 
-  /// A [ChangeNotifier] that is triggered whenever a component changes its size.
-  ///
-  /// We need to listen to size changes to position the caret at the correct offset.
-  final SignalListenable componentSizeNotifier;
-
   @override
   State<CaretDocumentOverlay> createState() => _CaretDocumentOverlayState();
 }
 
 class _CaretDocumentOverlayState extends State<CaretDocumentOverlay> with SingleTickerProviderStateMixin {
-  final _caret = ValueNotifier<Rect?>(null);
   late final BlinkController _blinkController;
-  BoxConstraints? _previousConstraints;
+
+  /// Holds the current caret height.
+  ///
+  /// When the selection moves between nodes, the caret height might change.
+  /// Holds `null` when there is no selection.
+  double? _caretHeight = null;
 
   @override
   void initState() {
     super.initState();
     widget.composer.selectionNotifier.addListener(_scheduleCaretUpdate);
     widget.document.addListener(_scheduleCaretUpdate);
-    widget.componentSizeNotifier.addListener(_scheduleCaretUpdate);
     _blinkController = BlinkController(tickerProvider: this)..startBlinking();
 
     // If we already have a selection, we need to display the caret.
@@ -80,18 +87,12 @@ class _CaretDocumentOverlayState extends State<CaretDocumentOverlay> with Single
         _scheduleCaretUpdate();
       }
     }
-
-    if (widget.componentSizeNotifier != oldWidget.componentSizeNotifier) {
-      oldWidget.componentSizeNotifier.removeListener(_scheduleCaretUpdate);
-      widget.componentSizeNotifier.addListener(_scheduleCaretUpdate);
-    }
   }
 
   @override
   void dispose() {
     widget.composer.selectionNotifier.removeListener(_scheduleCaretUpdate);
     widget.document.removeListener(_scheduleCaretUpdate);
-    widget.componentSizeNotifier.removeListener(_scheduleCaretUpdate);
     _blinkController.dispose();
     super.dispose();
   }
@@ -101,77 +102,74 @@ class _CaretDocumentOverlayState extends State<CaretDocumentOverlay> with Single
     // Give the document a frame to update its layout before we lookup
     // the extent offset.
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      _updateCaretOffset();
+      _updateCaretHeight();
     });
   }
 
-  void _updateCaretOffset() {
+  void _updateCaretHeight() {
     if (!mounted) {
       return;
     }
 
     final documentSelection = widget.composer.selection;
     if (documentSelection == null) {
-      _caret.value = null;
       _blinkController.stopBlinking();
+      setState(() {
+        _caretHeight = null;
+      });
       return;
     }
-
     _blinkController.startBlinking();
     _blinkController.jumpToOpaque();
 
     final documentLayout = widget.documentLayoutResolver();
-    _caret.value = documentLayout.getRectForPosition(documentSelection.extent)!;
+    setState(() {
+      _caretHeight = documentLayout.getRectForPosition(documentSelection.extent)!.height;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    if (!widget.isDocumentLayoutAvailable()) {
+      // We don't have a layout yet so we can't access the caret layer link to position the caret.
+      // Wait until the next frame.
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+        setState(() {});
+      });
+      return const SizedBox();
+    }
+
+    if (widget.composer.selection == null) {
+      // There isn't a selection so we don't need to show the caret.
+      return const SizedBox();
+    }
+
     // IgnorePointer so that when the user double and triple taps, the
     // caret doesn't intercept those later taps.
     return IgnorePointer(
-      child: ValueListenableBuilder<Rect?>(
-        valueListenable: _caret,
-        builder: (context, caret, child) {
-          // We use a LayoutBuilder because the appropriate offset for the caret
-          // is based on the flow of content, which is based on the document's
-          // size/constraints. We need to re-calculate the caret offset when the
-          // constraints change.
-          return LayoutBuilder(builder: (context, constraints) {
-            if (_previousConstraints != null && constraints != _previousConstraints) {
-              // Use a post-frame callback to avoid calling setState() during build.
-              WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-                _updateCaretOffset();
-              });
-            }
-            _previousConstraints = constraints;
-
-            return RepaintBoundary(
-              child: Stack(
-                children: [
-                  if (caret != null)
-                    Positioned(
-                      top: caret.top,
-                      left: caret.left,
-                      height: caret.height,
-                      child: AnimatedBuilder(
-                        animation: _blinkController,
-                        builder: (context, child) {
-                          return Container(
-                            key: primaryCaretKey,
-                            width: widget.caretStyle.width,
-                            decoration: BoxDecoration(
-                              color: widget.caretStyle.color.withOpacity(_blinkController.opacity),
-                              borderRadius: widget.caretStyle.borderRadius,
-                            ),
-                          );
-                        },
-                      ),
+      child: CompositedTransformFollower(
+        link: widget.layoutLinksResolver().caret,
+        showWhenUnlinked: false,
+        child: RepaintBoundary(
+          child: Stack(
+            children: [
+              AnimatedBuilder(
+                animation: _blinkController,
+                builder: (context, child) {
+                  return Container(
+                    key: primaryCaretKey,
+                    height: _caretHeight,
+                    width: widget.caretStyle.width,
+                    decoration: BoxDecoration(
+                      color: widget.caretStyle.color.withOpacity(_blinkController.opacity),
+                      borderRadius: widget.caretStyle.borderRadius,
                     ),
-                ],
+                  );
+                },
               ),
-            );
-          });
-        },
+            ],
+          ),
+        ),
       ),
     );
   }

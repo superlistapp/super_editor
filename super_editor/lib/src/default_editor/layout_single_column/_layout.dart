@@ -29,6 +29,8 @@ class SingleColumnDocumentLayout extends StatefulWidget {
     Key? key,
     required this.presenter,
     required this.componentBuilders,
+    required this.document,
+    required this.selectionNotifier,
     this.showDebugPaint = false,
   }) : super(key: key);
 
@@ -43,6 +45,18 @@ class SingleColumnDocumentLayout extends StatefulWidget {
   /// [SingleColumnDocumentComponentBuilder] that knows how to render
   /// that piece of content.
   final List<ComponentBuilder> componentBuilders;
+
+  /// The editor's [Document].
+  ///
+  /// Some operations that affect caret position don't trigger a selection change, e.g.,
+  /// indenting a list item.
+  ///
+  /// We need to listen to all document changes to update the caret position when these
+  /// operations happen.
+  final Document document;
+
+  /// Notifies whenever the current [DocumentSelection] changes.
+  final ValueNotifier<DocumentSelection?> selectionNotifier;
 
   /// Adds a debugging UI to the document layout, when true.
   final bool showDebugPaint;
@@ -63,6 +77,18 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
   late SingleColumnLayoutPresenterChangeListener _presenterListener;
 
   @override
+  LayoutLinks get layerLinks => _layerLinks;
+  final LayoutLinks _layerLinks = LayoutLinks(
+    caret: LayerLink(),
+    upstreamHandle: LayerLink(),
+    downstreamHandle: LayerLink(),
+  );
+
+  final ValueNotifier<Rect?> _caretRect = ValueNotifier(null);
+  final ValueNotifier<Rect?> _downstreamHandleRect = ValueNotifier(null);
+  final ValueNotifier<Rect?> _upstreamHandleRect = ValueNotifier(null);
+
+  @override
   void initState() {
     super.initState();
 
@@ -71,6 +97,8 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
       onViewModelChange: _onViewModelChange,
     );
     widget.presenter.addChangeListener(_presenterListener);
+    widget.selectionNotifier.addListener(_onDocumentOrSelectionChange);
+    widget.document.addListener(_onDocumentOrSelectionChange);
 
     // Build the view model now, so that any further changes to the
     // presenter send us a dirty notification.
@@ -85,11 +113,23 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
       oldWidget.presenter.removeChangeListener(_presenterListener);
       widget.presenter.addChangeListener(_presenterListener);
     }
+
+    if (widget.selectionNotifier != oldWidget.selectionNotifier) {
+      oldWidget.selectionNotifier.removeListener(_onDocumentOrSelectionChange);
+      widget.selectionNotifier.addListener(_onDocumentOrSelectionChange);
+    }
+
+    if (widget.document != oldWidget.document) {
+      oldWidget.document.removeListener(_onDocumentOrSelectionChange);
+      widget.document.addListener(_onDocumentOrSelectionChange);
+    }
   }
 
   @override
   void dispose() {
     widget.presenter.removeChangeListener(_presenterListener);
+    widget.selectionNotifier.removeListener(_onDocumentOrSelectionChange);
+    widget.document.removeListener(_onDocumentOrSelectionChange);
     super.dispose();
   }
 
@@ -637,15 +677,55 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
     );
   }
 
+  void _onDocumentOrSelectionChange() {
+    WidgetsBinding.instance.addPostFrameCallback((timestamp) {
+      if (mounted) {
+        _updateCaretPosition();
+      }
+    });
+  }
+
+  bool _onComponentSizeChanged(SizeChangedLayoutNotification changedLayoutNotification) {
+    WidgetsBinding.instance.addPostFrameCallback((timestamp) {
+      if (mounted) {
+        _updateCaretPosition();
+      }
+    });
+
+    // We don't want this notification to bubble up.
+    return true;
+  }
+
+  void _updateCaretPosition() {
+    final selection = widget.selectionNotifier.value;
+
+    final baseRect = selection != null ? getRectForPosition(selection.base) : null;
+    final extentRect = selection != null ? getRectForPosition(selection.extent) : null;
+    final affinity = selection != null ? widget.document.getAffinityForSelection(selection) : null;
+
+    _caretRect.value = extentRect;
+
+    _upstreamHandleRect.value = affinity == TextAffinity.downstream ? baseRect : extentRect;
+    _downstreamHandleRect.value = affinity == TextAffinity.downstream ? extentRect : baseRect;
+  }
+
   @override
   Widget build(BuildContext context) {
     editorLayoutLog.fine("Building document layout");
     return Padding(
       padding: widget.presenter.viewModel.padding,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: _buildDocComponents(),
+      child: Stack(
+        children: [
+          NotificationListener<SizeChangedLayoutNotification>(
+            onNotification: _onComponentSizeChanged,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: _buildDocComponents(),
+            ),
+          ),
+          _buildCaretAndHandlesPlaceHolders(),
+        ],
       ),
     );
   }
@@ -782,6 +862,63 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
     final componentBox = component.context.findRenderObject() as RenderBox;
     final contentOffset = componentBox.localToGlobal(Offset.zero, ancestor: context.findRenderObject());
     return contentOffset & componentBox.size;
+  }
+
+  Widget _buildCaretAndHandlesPlaceHolders() {
+    return Positioned.fill(
+      child: Stack(
+        children: [
+          ValueListenableBuilder<Rect?>(
+            valueListenable: _caretRect,
+            builder: (context, rect, child) {
+              if (rect == null) {
+                return const SizedBox();
+              }
+              return Positioned.fromRect(
+                rect: rect,
+                child: CompositedTransformTarget(
+                  link: _layerLinks.caret,
+                  child: SizedBox(
+                    width: rect.width,
+                    height: rect.height,
+                  ),
+                ),
+              );
+            },
+          ),
+          ValueListenableBuilder<Rect?>(
+            valueListenable: _downstreamHandleRect,
+            builder: (context, rect, child) {
+              if (rect == null) {
+                return const SizedBox();
+              }
+              return Positioned.fromRect(
+                rect: rect,
+                child: CompositedTransformTarget(
+                  link: _layerLinks.downstreamHandle,
+                  child: const SizedBox(),
+                ),
+              );
+            },
+          ),
+          ValueListenableBuilder<Rect?>(
+            valueListenable: _upstreamHandleRect,
+            builder: (context, rect, child) {
+              if (rect == null) {
+                return const SizedBox();
+              }
+              return Positioned.fromRect(
+                rect: rect,
+                child: CompositedTransformTarget(
+                  link: _layerLinks.upstreamHandle,
+                  child: const SizedBox(),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
   }
 }
 

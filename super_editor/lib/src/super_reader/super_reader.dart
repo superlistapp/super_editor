@@ -279,8 +279,10 @@ class SuperReaderState extends State<SuperReader> {
       child: _buildGestureSystem(
         documentLayout: SingleColumnDocumentLayout(
           key: _docLayoutKey,
+          document: widget.document,
           presenter: _docLayoutPresenter!,
           componentBuilders: widget.componentBuilders,
+          selectionNotifier: _selection,
           showDebugPaint: widget.debugPaint.layout,
         ),
       ),

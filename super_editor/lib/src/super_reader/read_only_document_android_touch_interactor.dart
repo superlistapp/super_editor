@@ -278,8 +278,17 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
 
   void _ensureSelectionExtentIsVisible() {
     readerGesturesLog.fine("Ensuring selection extent is visible");
-    final collapsedHandleOffset = _editingController.collapsedHandleOffset;
-    final extentHandleOffset = _editingController.downstreamHandleOffset;
+    final documentLayout = widget.getDocumentLayout();
+
+    final collapsedHandleOffset = documentLayout.layerLinks.caret.leader != null //
+        ? documentLayout.layerLinks.caret.leader!.offset +
+            Offset(0.0, documentLayout.layerLinks.caret.leaderSize!.height)
+        : null;
+
+    final extentHandleOffset = documentLayout.layerLinks.downstreamHandle.leader != null
+        ? documentLayout.layerLinks.downstreamHandle.leader!.offset +
+            Offset(0.0, documentLayout.layerLinks.caret.leaderSize!.height)
+        : null;
     if (collapsedHandleOffset == null && extentHandleOffset == null) {
       // There's no selection. We don't need to take any action.
       return;
@@ -338,15 +347,13 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
 
     if (newSelection == null) {
       _editingController
-        ..removeCaret()
+        ..hideCaret()
         ..hideToolbar()
-        ..collapsedHandleOffset = null
-        ..upstreamHandleOffset = null
-        ..downstreamHandleOffset = null
-        ..collapsedHandleOffset = null
+        ..hideExpandedHandles()
+        ..hideCollapsedHandle()
         ..cancelCollapsedHandleAutoHideCountdown();
     } else if (!newSelection.isCollapsed) {
-      _positionExpandedHandles();
+      _showExpandedHandles();
     }
   }
 
@@ -669,7 +676,7 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
     readerGesturesLog.fine("Selected region: ${widget.selection.value}");
   }
 
-  void _positionExpandedHandles() {
+  void _showExpandedHandles() {
     final selection = widget.selection.value;
     if (selection == null) {
       readerGesturesLog.shout("Tried to update expanded handle offsets but there is no document selection");
@@ -680,18 +687,10 @@ class _ReadOnlyAndroidDocumentTouchInteractorState extends State<ReadOnlyAndroid
       return;
     }
 
-    // Calculate the new (x,y) offsets for the upstream and downstream handles.
-    final baseHandleOffset = _docLayout.getRectForPosition(selection.base)!.bottomLeft;
-    final extentHandleOffset = _docLayout.getRectForPosition(selection.extent)!.bottomRight;
-    final affinity = widget.document.getAffinityBetween(base: selection.base, extent: selection.extent);
-    late Offset upstreamHandleOffset = affinity == TextAffinity.downstream ? baseHandleOffset : extentHandleOffset;
-    late Offset downstreamHandleOffset = affinity == TextAffinity.downstream ? extentHandleOffset : baseHandleOffset;
-
     _editingController
-      ..removeCaret()
-      ..collapsedHandleOffset = null
-      ..upstreamHandleOffset = upstreamHandleOffset
-      ..downstreamHandleOffset = downstreamHandleOffset
+      ..hideCaret()
+      ..hideCollapsedHandle()
+      ..showExpandedHandles()
       ..cancelCollapsedHandleAutoHideCountdown();
   }
 

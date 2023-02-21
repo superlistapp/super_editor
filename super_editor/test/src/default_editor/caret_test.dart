@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:super_editor/src/default_editor/document_gestures_touch_android.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 
@@ -193,7 +192,7 @@ void main() {
           await tester.pumpAndSettle();
 
           // Ensure that the caret is displayed at the correct (x,y) in the document before phone rotation
-          final initialCaretOffset = _getCurrentAndroidCaretOffset(tester);
+          final initialCaretOffset = _getCurrentAndroidCaretOffset(tester, docKey);
           final expectedInitialCaretOffset = _computeExpectedMobileCaretOffset(tester, docKey, tapPosition);
           expect(initialCaretOffset, expectedInitialCaretOffset);
 
@@ -203,7 +202,7 @@ void main() {
 
           // Ensure that after rotating the phone, the caret updated its (x,y) to match the text
           // position that was pushed up to the preceding line.
-          final finalCaretOffset = _getCurrentAndroidCaretOffset(tester);
+          final finalCaretOffset = _getCurrentAndroidCaretOffset(tester, docKey);
           final expectedFinalCaretOffset = _computeExpectedMobileCaretOffset(tester, docKey, tapPosition);
           expect(finalCaretOffset, expectedFinalCaretOffset);
         });
@@ -229,7 +228,7 @@ void main() {
           await tester.pumpAndSettle();
 
           // Ensure that the caret is displayed at the correct (x,y) in the document before phone rotation
-          final initialCaretOffset = _getCurrentAndroidCaretOffset(tester);
+          final initialCaretOffset = _getCurrentAndroidCaretOffset(tester, docKey);
           final expectedInitialCaretOffset = _computeExpectedMobileCaretOffset(tester, docKey, tapPosition);
           expect(initialCaretOffset, expectedInitialCaretOffset);
 
@@ -239,7 +238,7 @@ void main() {
 
           // Ensure that after rotating the phone, the caret updated its (x,y) to match the text
           // position that was pushed down to the next line.
-          final finalCaretOffset = _getCurrentAndroidCaretOffset(tester);
+          final finalCaretOffset = _getCurrentAndroidCaretOffset(tester, docKey);
           final expectedFinalCaretOffset = _computeExpectedMobileCaretOffset(tester, docKey, tapPosition);
           expect(finalCaretOffset, expectedFinalCaretOffset);
         });
@@ -267,7 +266,7 @@ void main() {
           await tester.pumpAndSettle();
 
           // Ensure that the caret is displayed at the correct (x,y) in the document before phone rotation
-          final initialOffset = _getIosCurrentCaretOffset(tester);
+          final initialOffset = _getIosCurrentCaretOffset(tester, docKey);
           final expectedInitialCaretOffset = _computeExpectedMobileCaretOffset(tester, docKey, tapPosition);
           expect(initialOffset, expectedInitialCaretOffset);
 
@@ -277,7 +276,7 @@ void main() {
 
           // Ensure that after rotating the phone, the caret updated its (x,y) to match the text
           // position that was pushed up to the preceding line.
-          final finalCaretOffset = _getIosCurrentCaretOffset(tester);
+          final finalCaretOffset = _getIosCurrentCaretOffset(tester, docKey);
           final expectedFinalCaretOffset = _computeExpectedMobileCaretOffset(tester, docKey, tapPosition);
           expect(finalCaretOffset, expectedFinalCaretOffset);
         });
@@ -303,7 +302,7 @@ void main() {
           await tester.pumpAndSettle();
 
           // Ensure that the caret is displayed at the correct (x,y) in the document before phone rotation
-          final initialOffset = _getIosCurrentCaretOffset(tester);
+          final initialOffset = _getIosCurrentCaretOffset(tester, docKey);
           final expectedInitialCaretOffset = _computeExpectedMobileCaretOffset(tester, docKey, tapPosition);
           expect(initialOffset, expectedInitialCaretOffset);
 
@@ -313,7 +312,7 @@ void main() {
 
           // Ensure that after rotating the phone, the caret updated its (x,y) to match the text
           // position that was pushed down to the next line.
-          final finalCaretOffset = _getIosCurrentCaretOffset(tester);
+          final finalCaretOffset = _getIosCurrentCaretOffset(tester, docKey);
           final expectedFinalCaretOffset = _computeExpectedMobileCaretOffset(tester, docKey, tapPosition);
           expect(finalCaretOffset, expectedFinalCaretOffset);
         });
@@ -386,10 +385,9 @@ Offset _getOffsetForPosition(GlobalKey docKey, DocumentPosition position) {
 ///
 /// The reason for having different implementations is that depending on the gesture mode,
 /// the widget that holds the caret offset is different
-Offset _getCurrentAndroidCaretOffset(WidgetTester tester) {
-  final controls =
-      tester.widget<AndroidDocumentTouchEditingControls>(find.byType(AndroidDocumentTouchEditingControls).last);
-  return controls.editingController.caretTop!;
+Offset _getCurrentAndroidCaretOffset(WidgetTester tester, GlobalKey docKey) {
+  final docLayout = docKey.currentState as DocumentLayout;
+  return docLayout.layerLinks.caret.leader!.offset;
 }
 
 /// Find the caret in the widget tree and return it's (x,y)
@@ -398,9 +396,9 @@ Offset _getCurrentAndroidCaretOffset(WidgetTester tester) {
 ///
 /// The reason for having different implementations is that depending on the gesture mode,
 /// the widget that holds the caret offset is different
-Offset _getIosCurrentCaretOffset(WidgetTester tester) {
-  final controls = tester.widget<IosDocumentTouchEditingControls>(find.byType(IosDocumentTouchEditingControls).last);
-  return controls.editingController.caretTop!;
+Offset _getIosCurrentCaretOffset(WidgetTester tester, GlobalKey docKey) {
+  final docLayout = docKey.currentState as DocumentLayout;
+  return docLayout.layerLinks.caret.leader!.offset;
 }
 
 /// Given a [textPosition], compute the expected (x,y) for the caret

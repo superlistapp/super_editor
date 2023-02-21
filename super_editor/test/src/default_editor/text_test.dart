@@ -381,16 +381,15 @@ EditContext _createEditContext() {
   final documentEditor = DocumentEditor(document: document);
   final fakeLayout = FakeDocumentLayout();
   final composer = DocumentComposer();
-  final componentSizeNotifier = SignalListenable();
   return EditContext(
     editor: documentEditor,
     getDocumentLayout: () => fakeLayout,
+    isDocumentLayoutAvailable: () => true,
     composer: composer,
     commonOps: CommonEditorOperations(
       editor: documentEditor,
       composer: composer,
       documentLayoutResolver: () => fakeLayout,
     ),
-    componentSizeNotifier: componentSizeNotifier,
   );
 }

@@ -288,8 +288,17 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
 
   void _ensureSelectionExtentIsVisible() {
     readerGesturesLog.fine("Ensuring selection extent is visible");
-    final collapsedHandleOffset = _editingController.collapsedHandleOffset;
-    final extentHandleOffset = _editingController.downstreamHandleOffset;
+    final documentLayout = widget.getDocumentLayout();
+
+    final collapsedHandleOffset = documentLayout.layerLinks.caret.leader != null //
+        ? documentLayout.layerLinks.caret.leader!.offset +
+            Offset(0.0, documentLayout.layerLinks.caret.leaderSize!.height)
+        : null;
+    final extentHandleOffset = documentLayout.layerLinks.downstreamHandle.leader != null //
+        ? documentLayout.layerLinks.downstreamHandle.leader!.offset +
+            Offset(0.0, documentLayout.layerLinks.caret.leaderSize!.height)
+        : null;
+
     if (collapsedHandleOffset == null && extentHandleOffset == null) {
       // There's no selection. We don't need to take any action.
       return;
@@ -349,12 +358,10 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
 
     if (newSelection == null) {
       _editingController
-        ..removeCaret()
-        ..hideToolbar()
-        ..collapsedHandleOffset = null
-        ..upstreamHandleOffset = null
-        ..downstreamHandleOffset = null
-        ..collapsedHandleOffset = null;
+        ..hideCaret()
+        ..hideCollapsedHandle()
+        ..hideExpandedHandles()
+        ..hideToolbar();
     } else if (!newSelection.isCollapsed) {
       _positionExpandedSelectionHandles();
     }
@@ -789,28 +796,20 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
       return;
     }
 
-    // Calculate the new (x,y) offsets for the upstream and downstream handles.
+    // Calculate the new height for the upstream and downstream handles.
     final baseRect = _docLayout.getRectForPosition(selection.base)!;
-    final baseHandleOffset = baseRect.bottomLeft;
-
     final extentRect = _docLayout.getRectForPosition(selection.extent)!;
-    final extentHandleOffset = extentRect.bottomRight;
-
     final affinity = widget.document.getAffinityForSelection(selection);
 
-    final upstreamHandleOffset = affinity == TextAffinity.downstream ? baseHandleOffset : extentHandleOffset;
     final upstreamHandleHeight = affinity == TextAffinity.downstream ? baseRect.height : extentRect.height;
-
-    final downstreamHandleOffset = affinity == TextAffinity.downstream ? extentHandleOffset : baseHandleOffset;
     final downstreamHandleHeight = affinity == TextAffinity.downstream ? extentRect.height : baseRect.height;
 
     _editingController
-      ..removeCaret()
-      ..collapsedHandleOffset = null
-      ..upstreamHandleOffset = upstreamHandleOffset
+      ..hideCaret()
+      ..hideCollapsedHandle()
       ..upstreamCaretHeight = upstreamHandleHeight
-      ..downstreamHandleOffset = downstreamHandleOffset
-      ..downstreamCaretHeight = downstreamHandleHeight;
+      ..downstreamCaretHeight = downstreamHandleHeight
+      ..showExpandedHandles();
   }
 
   void _positionToolbar() {

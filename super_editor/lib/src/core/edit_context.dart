@@ -1,6 +1,5 @@
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/default_editor/common_editor_operations.dart';
-import 'package:super_text_layout/super_text_layout.dart';
 
 import 'document_composer.dart';
 import 'document_editor.dart';
@@ -21,9 +20,9 @@ class EditContext {
   EditContext({
     required this.editor,
     required DocumentLayout Function() getDocumentLayout,
+    required this.isDocumentLayoutAvailable,
     required this.composer,
     required this.commonOps,
-    required this.componentSizeNotifier,
   }) : _getDocumentLayout = getDocumentLayout;
 
   /// The editor of the [Document] that allows executing commands that alter the
@@ -36,6 +35,11 @@ class EditContext {
   DocumentLayout get documentLayout => _getDocumentLayout();
   final DocumentLayout Function() _getDocumentLayout;
 
+  /// Returns whether or not we can access the document layout.
+  ///
+  /// When this method returns `true`, we assume it's safe to access the [documentLayout].
+  final bool Function() isDocumentLayoutAvailable;
+
   /// The [DocumentComposer] that maintains selection and attributions to work
   /// in conjunction with the [editor] to apply changes to the document.
   final DocumentComposer composer;
@@ -44,6 +48,8 @@ class EditContext {
   /// the document.
   final CommonEditorOperations commonOps;
 
-  /// A [ChangeNotifier] that is triggered whenever a component changes its size.
-  final SignalListenable componentSizeNotifier;
+  /// Holds the [LayerLink]s linked to the caret and handle positions.
+  ///
+  /// Use a [CompositedTransformFollower] to display widgets at these positions.
+  LayoutLinks get layoutLinks => _getDocumentLayout().layerLinks;
 }

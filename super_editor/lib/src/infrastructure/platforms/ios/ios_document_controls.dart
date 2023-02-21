@@ -131,7 +131,6 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
   void initState() {
     super.initState();
     _caretBlinkController = BlinkController(tickerProvider: this);
-    _prevCaretOffset = widget.editingController.caretTop;
     widget.editingController.addListener(_onEditingControllerChange);
     widget.floatingCursorController.addListener(_onFloatingCursorChange);
   }
@@ -159,14 +158,15 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
   }
 
   void _onEditingControllerChange() {
-    if (_prevCaretOffset != widget.editingController.caretTop) {
-      if (widget.editingController.caretTop == null) {
+    final caretTop = widget.documentLayout.layerLinks.caret.leader?.offset;
+    if (_prevCaretOffset != caretTop) {
+      if (caretTop == null) {
         _caretBlinkController.stopBlinking();
       } else {
         _caretBlinkController.jumpToOpaque();
       }
 
-      _prevCaretOffset = widget.editingController.caretTop;
+      _prevCaretOffset = caretTop;
     }
   }
 
@@ -210,8 +210,10 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
     widget.editingController.hideToolbar();
     widget.editingController.hideMagnifier();
 
+    final caretTop = widget.documentLayout.layerLinks.caret.leader?.offset;
+
     _initialFloatingCursorOffset ??=
-        widget.editingController.caretTop! + const Offset(-1, 0) + Offset(0, widget.editingController.caretHeight! / 2);
+        caretTop! + const Offset(-1, 0) + Offset(0, widget.editingController.caretHeight! / 2);
     _floatingCursorOffset.value = _initialFloatingCursorOffset! + widget.floatingCursorController.offset!;
 
     final nearestDocPosition = widget.documentLayout.getDocumentPositionNearestToOffset(_floatingCursorOffset.value!)!;
@@ -323,9 +325,11 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
 
     late Widget handle;
     late Offset handleOffset;
+    late LayerLink layerLink;
     switch (handleType) {
       case HandleType.collapsed:
-        handleOffset = widget.editingController.caretTop! + const Offset(-1, 0);
+        layerLink = widget.documentLayout.layerLinks.caret;
+        handleOffset = const Offset(-1, 0);
         handle = ValueListenableBuilder<bool>(
           valueListenable: _isShowingFloatingCursor,
           builder: (context, isShowingFloatingCursor, child) {
@@ -338,9 +342,8 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
         );
         break;
       case HandleType.upstream:
-        handleOffset = widget.editingController.upstreamHandleOffset! -
-            Offset(0, widget.editingController.upstreamCaretHeight!) +
-            const Offset(-ballDiameter / 2, -3 * ballDiameter / 4);
+        layerLink = widget.documentLayout.layerLinks.upstreamHandle;
+        handleOffset = const Offset(-ballDiameter / 2, -3 * ballDiameter / 4);
         handle = IOSSelectionHandle.upstream(
           color: widget.handleColor,
           handleType: handleType,
@@ -349,9 +352,8 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
         );
         break;
       case HandleType.downstream:
-        handleOffset = widget.editingController.downstreamHandleOffset! -
-            Offset(0, widget.editingController.downstreamCaretHeight!) +
-            const Offset(-ballDiameter / 2, -3 * ballDiameter / 4);
+        layerLink = widget.documentLayout.layerLinks.downstreamHandle;
+        handleOffset = const Offset(-ballDiameter / 2, -3 * ballDiameter / 4);
         handle = IOSSelectionHandle.upstream(
           color: widget.handleColor,
           handleType: handleType,
@@ -363,6 +365,7 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
 
     return _buildHandle(
       handleKey: handleKey,
+      layerLink: layerLink,
       handleOffset: handleOffset,
       handle: handle,
       debugColor: debugColor,
@@ -371,13 +374,14 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
 
   Widget _buildHandle({
     required Key handleKey,
+    required LayerLink layerLink,
     required Offset handleOffset,
     required Widget handle,
     required Color debugColor,
   }) {
     return CompositedTransformFollower(
       key: handleKey,
-      link: widget.editingController.documentLayoutLink,
+      link: layerLink,
       offset: handleOffset + const Offset(-5, 0),
       child: IgnorePointer(
         child: Container(
@@ -399,6 +403,7 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
 
         return _buildHandle(
           handleKey: _floatingCursorKey,
+          layerLink: widget.editingController.documentLayoutLink,
           handleOffset: floatingCursorOffset - Offset(0, _floatingCursorHeight / 2),
           handle: Container(
             width: 2,
@@ -498,71 +503,16 @@ class IosDocumentGestureEditingController extends GestureEditingController {
   LayerLink get documentLayoutLink => _documentLayoutLink;
   final LayerLink _documentLayoutLink;
 
-  /// Whether or not a caret should be displayed.
-  bool get hasCaret => caretTop != null;
-
-  /// The offset of the top of the caret, or `null` if no caret should
-  /// be displayed.
-  ///
-  /// When the caret is drawn, the caret will have a thickness. That width
-  /// should be placed either on the left or right of this offset, based on
-  /// whether the [caretAffinity] is upstream or downstream, respectively.
-  Offset? get caretTop => _caretTop;
-  Offset? _caretTop;
-
   /// The height of the caret, or `null` if no caret should be displayed.
   double? get caretHeight => _caretHeight;
+  set caretHeight(double? value) {
+    if (value != _caretHeight) {
+      _caretHeight = value;
+      notifyListeners();
+    }
+  }
+
   double? _caretHeight;
-
-  /// Updates the caret's size and position.
-  ///
-  /// The [top] offset is in the document layout's coordinate space.
-  void updateCaret({
-    Offset? top,
-    double? height,
-  }) {
-    bool changed = false;
-    if (top != null) {
-      _caretTop = top;
-      changed = true;
-    }
-    if (height != null) {
-      _caretHeight = height;
-      changed = true;
-    }
-
-    if (changed) {
-      notifyListeners();
-    }
-  }
-
-  /// Removes the caret from the display.
-  void removeCaret() {
-    if (!hasCaret) {
-      return;
-    }
-
-    _caretTop = null;
-    _caretHeight = null;
-    notifyListeners();
-  }
-
-  /// Whether a collapsed handle should be displayed.
-  bool get shouldDisplayCollapsedHandle => _collapsedHandleOffset != null;
-
-  /// The offset of the collapsed handle focal point, within the coordinate space
-  /// of the document layout, or `null` if no collapsed handle should be displayed.
-  Offset? get collapsedHandleOffset => _collapsedHandleOffset;
-  Offset? _collapsedHandleOffset;
-  set collapsedHandleOffset(Offset? offset) {
-    if (offset != _collapsedHandleOffset) {
-      _collapsedHandleOffset = offset;
-      notifyListeners();
-    }
-  }
-
-  /// Whether the expanded handles (base + extent) should be displayed.
-  bool get shouldDisplayExpandedHandles => _upstreamHandleOffset != null && _downstreamHandleOffset != null;
 
   double? get upstreamCaretHeight => _upstreamCaretHeight;
   double? _upstreamCaretHeight;
@@ -573,33 +523,11 @@ class IosDocumentGestureEditingController extends GestureEditingController {
     }
   }
 
-  /// The offset of the upstream handle focal point, within the coordinate space
-  /// of the document layout, or `null` if no upstream handle should be displayed.
-  Offset? get upstreamHandleOffset => _upstreamHandleOffset;
-  Offset? _upstreamHandleOffset;
-  set upstreamHandleOffset(Offset? offset) {
-    if (offset != _upstreamHandleOffset) {
-      _upstreamHandleOffset = offset;
-      notifyListeners();
-    }
-  }
-
   double? get downstreamCaretHeight => _downstreamCaretHeight;
   double? _downstreamCaretHeight;
   set downstreamCaretHeight(double? height) {
     if (height != _downstreamCaretHeight) {
       _downstreamCaretHeight = height;
-      notifyListeners();
-    }
-  }
-
-  /// The offset of the downstream handle focal point, within the coordinate space
-  /// of the document layout, or `null` if no downstream handle should be displayed.
-  Offset? get downstreamHandleOffset => _downstreamHandleOffset;
-  Offset? _downstreamHandleOffset;
-  set downstreamHandleOffset(Offset? offset) {
-    if (offset != _downstreamHandleOffset) {
-      _downstreamHandleOffset = offset;
       notifyListeners();
     }
   }

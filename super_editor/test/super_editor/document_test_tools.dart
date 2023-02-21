@@ -322,13 +322,12 @@ class TestDocumentConfigurator {
       documentLayoutResolver: layoutResolver,
       composer: composer,
     );
-    final componentSizeNotifier = SignalListenable();
     final editContext = EditContext(
       editor: editor,
       getDocumentLayout: layoutResolver,
+      isDocumentLayoutAvailable: () => layoutKey.currentContext != null,
       composer: composer,
       commonOps: commonOps,
-      componentSizeNotifier: componentSizeNotifier,
     );
 
     return TestDocumentContext._(

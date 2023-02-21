@@ -92,13 +92,15 @@ class SuperEditorInspector {
     final androidControls = find.byType(AndroidDocumentTouchEditingControls).evaluate().lastOrNull?.widget
         as AndroidDocumentTouchEditingControls?;
     if (androidControls != null) {
-      return androidControls.editingController.caretTop!;
+      final documentLayout = _findDocumentLayout(finder);
+      return documentLayout.layerLinks.caret.leader!.offset;
     }
 
     final iOSControls =
         find.byType(IosDocumentTouchEditingControls).evaluate().lastOrNull?.widget as IosDocumentTouchEditingControls?;
     if (iOSControls != null) {
-      return iOSControls.editingController.caretTop!;
+      final documentLayout = _findDocumentLayout(finder);
+      return documentLayout.layerLinks.caret.leader!.offset;
     }
 
     throw Exception('Could not locate caret in document');

@@ -12,7 +12,6 @@ import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
 import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
-import 'package:super_text_layout/super_text_layout.dart';
 
 import '../infrastructure/document_gestures.dart';
 import 'document_gestures_touch.dart';
@@ -36,7 +35,6 @@ class IOSDocumentTouchInteractor extends StatefulWidget {
     this.createOverlayControlsClipper,
     this.showDebugPaint = false,
     this.overlayController,
-    required this.componentSizeNotifier,
     required this.child,
   }) : super(key: key);
 
@@ -76,11 +74,6 @@ class IOSDocumentTouchInteractor extends StatefulWidget {
   /// will be allowed to appear anywhere in the overlay in which they sit
   /// (probably the entire screen).
   final CustomClipper<Rect> Function(BuildContext overlayContext)? createOverlayControlsClipper;
-
-  /// A [ChangeNotifier] that is triggered whenever a component changes its size.
-  ///
-  /// We need to listen to size changes to position the caret at the correct offset.
-  final SignalListenable componentSizeNotifier;
 
   final bool showDebugPaint;
 
@@ -179,7 +172,6 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
 
     widget.document.addListener(_onDocumentChange);
     widget.selection.addListener(_onSelectionChange);
-    widget.componentSizeNotifier.addListener(_scheduleCaretUpdate);
 
     // If we already have a selection, we need to display the caret.
     if (widget.selection.value != null) {
@@ -241,11 +233,6 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
       _overlayController = widget.overlayController ?? MagnifierAndToolbarController();
       _editingController.overlayController = _overlayController;
     }
-
-    if (widget.componentSizeNotifier != oldWidget.componentSizeNotifier) {
-      oldWidget.componentSizeNotifier.removeListener(_scheduleCaretUpdate);
-      widget.componentSizeNotifier.addListener(_scheduleCaretUpdate);
-    }
   }
 
   @override
@@ -278,7 +265,6 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
 
     widget.document.removeListener(_onDocumentChange);
     widget.selection.removeListener(_onSelectionChange);
-    widget.componentSizeNotifier.removeListener(_scheduleCaretUpdate);
 
     _removeEditingOverlayControls();
 
@@ -312,8 +298,17 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
 
   void _ensureSelectionExtentIsVisible() {
     editorGesturesLog.fine("Ensuring selection extent is visible");
-    final collapsedHandleOffset = _editingController.collapsedHandleOffset;
-    final extentHandleOffset = _editingController.downstreamHandleOffset;
+    final documentLayout = widget.getDocumentLayout();
+
+    final collapsedHandleOffset = documentLayout.layerLinks.caret.leader != null //
+        ? documentLayout.layerLinks.caret.leader!.offset +
+            Offset(0.0, documentLayout.layerLinks.caret.leaderSize!.height)
+        : null;
+
+    final extentHandleOffset = documentLayout.layerLinks.downstreamHandle.leader != null
+        ? documentLayout.layerLinks.downstreamHandle.leader!.offset +
+            Offset(0.0, documentLayout.layerLinks.caret.leaderSize!.height)
+        : null;
     if (collapsedHandleOffset == null && extentHandleOffset == null) {
       // There's no selection. We don't need to take any action.
       return;
@@ -354,9 +349,11 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
       // blockquote, which impacts the caret size and position. Reposition
       // the caret on the next frame.
       // TODO: find a way to only do this when something relevant changes
-      _updateHandlesAfterSelectionOrLayoutChange();
+      if (mounted) {
+        _updateHandlesAfterSelectionOrLayoutChange();
 
-      _ensureSelectionExtentIsVisible();
+        _ensureSelectionExtentIsVisible();
+      }
     });
   }
 
@@ -382,18 +379,16 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
 
     if (newSelection == null) {
       _editingController
-        ..removeCaret()
-        ..hideToolbar()
-        ..collapsedHandleOffset = null
-        ..upstreamHandleOffset = null
-        ..downstreamHandleOffset = null
-        ..collapsedHandleOffset = null;
+        ..hideCaret()
+        ..hideCollapsedHandle()
+        ..hideExpandedHandles()
+        ..hideToolbar();
     } else if (newSelection.isCollapsed) {
-      _positionCaret();
-      _positionCollapsedHandle();
+      _showCaret();
+      _showCollapsedHandle();
     } else {
       // The selection is expanded
-      _positionExpandedSelectionHandles();
+      _showExpandedSelectionHandles();
     }
   }
 
@@ -894,16 +889,14 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     Overlay.of(context).insert(_controlsOverlayEntry!);
   }
 
-  void _positionCaret() {
+  void _showCaret() {
     final extentRect = _docLayout.getRectForPosition(widget.selection.value!.extent)!;
-
-    _editingController.updateCaret(
-      top: extentRect.topLeft,
-      height: extentRect.height,
-    );
+    _editingController
+      ..caretHeight = extentRect.height
+      ..showCaret();
   }
 
-  void _positionCollapsedHandle() {
+  void _showCollapsedHandle() {
     final selection = widget.selection.value;
     if (selection == null) {
       editorGesturesLog.shout("Tried to update collapsed handle offset but there is no document selection");
@@ -914,14 +907,10 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
       return;
     }
 
-    // Calculate the new (x,y) offset for the collapsed handle.
-    final extentRect = _docLayout.getRectForPosition(selection.extent);
-    late Offset handleOffset = extentRect!.bottomLeft;
-
-    _editingController.collapsedHandleOffset = handleOffset;
+    _editingController.showCollapsedHandle();
   }
 
-  void _positionExpandedSelectionHandles() {
+  void _showExpandedSelectionHandles() {
     final selection = widget.selection.value;
     if (selection == null) {
       editorGesturesLog.shout("Tried to update expanded handle offsets but there is no document selection");
@@ -932,28 +921,20 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
       return;
     }
 
-    // Calculate the new (x,y) offsets for the upstream and downstream handles.
+    // Calculate the new height for the upstream and downstream handles.
     final baseRect = _docLayout.getRectForPosition(selection.base)!;
-    final baseHandleOffset = baseRect.bottomLeft;
-
     final extentRect = _docLayout.getRectForPosition(selection.extent)!;
-    final extentHandleOffset = extentRect.bottomRight;
-
     final affinity = widget.document.getAffinityForSelection(selection);
 
-    final upstreamHandleOffset = affinity == TextAffinity.downstream ? baseHandleOffset : extentHandleOffset;
     final upstreamHandleHeight = affinity == TextAffinity.downstream ? baseRect.height : extentRect.height;
-
-    final downstreamHandleOffset = affinity == TextAffinity.downstream ? extentHandleOffset : baseHandleOffset;
     final downstreamHandleHeight = affinity == TextAffinity.downstream ? extentRect.height : baseRect.height;
 
     _editingController
-      ..removeCaret()
-      ..collapsedHandleOffset = null
-      ..upstreamHandleOffset = upstreamHandleOffset
+      ..hideCaret()
+      ..hideCollapsedHandle()
       ..upstreamCaretHeight = upstreamHandleHeight
-      ..downstreamHandleOffset = downstreamHandleOffset
-      ..downstreamCaretHeight = downstreamHandleHeight;
+      ..downstreamCaretHeight = downstreamHandleHeight
+      ..showExpandedHandles();
   }
 
   void _positionToolbar() {

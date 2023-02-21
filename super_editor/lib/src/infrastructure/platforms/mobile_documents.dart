@@ -143,6 +143,18 @@ class GestureEditingController with ChangeNotifier {
   /// Whether the magnifier should be displayed.
   bool get shouldDisplayMagnifier => _overlayController.shouldDisplayMagnifier;
 
+  /// Whether the caret should be displayed.
+  bool get shouldDisplayCaret => _shouldDisplayCaret;
+  bool _shouldDisplayCaret = false;
+
+  /// Whether the expanded handles should be displayed.
+  bool get shouldDisplayExpandedHandles => _shouldDisplayExpandedHandles;
+  bool _shouldDisplayExpandedHandles = false;
+
+  /// Whether the collapsed handle should be displayed.
+  bool get shouldDisplayCollapsedHandle => _shouldDisplayCollapsedHandle;
+  bool _shouldDisplayCollapsedHandle = false;
+
   /// The point about which the floating toolbar should focus, when the toolbar
   /// appears above the selected content.
   ///
@@ -180,6 +192,42 @@ class GestureEditingController with ChangeNotifier {
   /// Toggles the toolbar from visible to not visible, or vis-a-versa.
   void toggleToolbar() {
     _overlayController.toggleToolbar();
+  }
+
+  /// Shows the caret.
+  void showCaret() {
+    _shouldDisplayCaret = true;
+    notifyListeners();
+  }
+
+  /// Hides the caret.
+  void hideCaret() {
+    _shouldDisplayCaret = false;
+    notifyListeners();
+  }
+
+  /// Shows the expanded handles.
+  void showExpandedHandles() {
+    _shouldDisplayExpandedHandles = true;
+    notifyListeners();
+  }
+
+  /// Hides the expanded handles.
+  void hideExpandedHandles() {
+    _shouldDisplayExpandedHandles = false;
+    notifyListeners();
+  }
+
+  /// Shows the collapsed handle.
+  void showCollapsedHandle() {
+    _shouldDisplayCollapsedHandle = true;
+    notifyListeners();
+  }
+
+  /// Hides the collapsed handle.
+  void hideCollapsedHandle() {
+    _shouldDisplayCollapsedHandle = false;
+    notifyListeners();
   }
 
   /// Sets the toolbar's position to the given [topAnchor] and [bottomAnchor].

@@ -13,15 +13,16 @@ EditContext createEditContext({
   DocumentLayout? documentLayout,
   DocumentComposer? documentComposer,
   CommonEditorOperations? commonOps,
+  bool Function()? isDocumentLayoutAvailable,
 }) {
   final editor = documentEditor ?? DocumentEditor(document: document);
   DocumentLayout layoutResolver() => documentLayout ?? FakeDocumentLayout();
   final composer = documentComposer ?? DocumentComposer();
-  final componentSizeNotifier = SignalListenable();
 
   return EditContext(
     editor: editor,
     getDocumentLayout: layoutResolver,
+    isDocumentLayoutAvailable: isDocumentLayoutAvailable ?? () => true,
     composer: composer,
     commonOps: commonOps ??
         CommonEditorOperations(
@@ -29,7 +30,6 @@ EditContext createEditContext({
           composer: composer,
           documentLayoutResolver: layoutResolver,
         ),
-    componentSizeNotifier: componentSizeNotifier,
   );
 }
 

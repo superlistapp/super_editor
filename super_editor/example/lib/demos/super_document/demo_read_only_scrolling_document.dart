@@ -16,6 +16,7 @@ class ReadOnlyCustomScrollViewDemo extends StatefulWidget {
 
 class _ReadOnlyCustomScrollViewDemoState extends State<ReadOnlyCustomScrollViewDemo> {
   late Document _doc;
+  ValueNotifier<DocumentSelection?> _selection = ValueNotifier(null);
 
   @override
   void initState() {
@@ -25,6 +26,7 @@ class _ReadOnlyCustomScrollViewDemoState extends State<ReadOnlyCustomScrollViewD
 
   @override
   void dispose() {
+    _selection.dispose();
     super.dispose();
   }
 
@@ -74,6 +76,8 @@ class _ReadOnlyCustomScrollViewDemoState extends State<ReadOnlyCustomScrollViewD
           ],
         ),
         componentBuilders: defaultComponentBuilders,
+        document: _doc,
+        selectionNotifier: _selection,
       ),
     );
   }

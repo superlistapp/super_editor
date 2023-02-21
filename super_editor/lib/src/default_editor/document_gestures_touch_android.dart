@@ -37,7 +37,6 @@ class AndroidDocumentTouchInteractor extends StatefulWidget {
     required this.handleColor,
     required this.popoverToolbarBuilder,
     this.createOverlayControlsClipper,
-    required this.componentSizeNotifier,
     this.showDebugPaint = false,
     this.overlayController,
     required this.child,
@@ -75,11 +74,6 @@ class AndroidDocumentTouchInteractor extends StatefulWidget {
   /// will be allowed to appear anywhere in the overlay in which they sit
   /// (probably the entire screen).
   final CustomClipper<Rect> Function(BuildContext overlayContext)? createOverlayControlsClipper;
-
-  /// A [ChangeNotifier] that is triggered whenever a component changes its size.
-  ///
-  /// We need to listen to size changes to position the caret at the correct offset.
-  final SignalListenable componentSizeNotifier;
 
   final bool showDebugPaint;
 
@@ -166,7 +160,6 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
     widget.document.addListener(_onDocumentChange);
     widget.selection.addListener(_onSelectionChange);
-    widget.componentSizeNotifier.addListener(_scheduleCaretUpdate);
 
     // If we already have a selection, we need to display the caret.
     if (widget.selection.value != null) {
@@ -217,11 +210,6 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       }
     }
 
-    if (widget.componentSizeNotifier != oldWidget.componentSizeNotifier) {
-      oldWidget.componentSizeNotifier.removeListener(_scheduleCaretUpdate);
-      widget.componentSizeNotifier.addListener(_scheduleCaretUpdate);
-    }
-
     if (widget.overlayController != oldWidget.overlayController) {
       _overlayController = widget.overlayController ?? MagnifierAndToolbarController();
       _editingController.overlayController = _overlayController;
@@ -269,7 +257,6 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
     widget.document.removeListener(_onDocumentChange);
     widget.selection.removeListener(_onSelectionChange);
-    widget.componentSizeNotifier.removeListener(_scheduleCaretUpdate);
 
     _removeEditingOverlayControls();
 
@@ -303,8 +290,17 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
   void _ensureSelectionExtentIsVisible() {
     editorGesturesLog.fine("Ensuring selection extent is visible");
-    final collapsedHandleOffset = _editingController.collapsedHandleOffset;
-    final extentHandleOffset = _editingController.downstreamHandleOffset;
+    final documentLayout = widget.getDocumentLayout();
+
+    final collapsedHandleOffset = documentLayout.layerLinks.caret.leader != null //
+        ? documentLayout.layerLinks.caret.leader!.offset +
+            Offset(0.0, documentLayout.layerLinks.caret.leaderSize!.height)
+        : null;
+
+    final extentHandleOffset = documentLayout.layerLinks.downstreamHandle.leader != null
+        ? documentLayout.layerLinks.downstreamHandle.leader!.offset +
+            Offset(0.0, documentLayout.layerLinks.caret.leaderSize!.height)
+        : null;
     if (collapsedHandleOffset == null && extentHandleOffset == null) {
       // There's no selection. We don't need to take any action.
       return;
@@ -344,9 +340,11 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       // The user may have changed the type of node, e.g., paragraph to
       // blockquote, which impacts the caret size and position. Reposition
       // the caret on the next frame.
-      _updateHandlesAfterSelectionOrLayoutChange();
+      if (mounted) {
+        _updateHandlesAfterSelectionOrLayoutChange();
 
-      _ensureSelectionExtentIsVisible();
+        _ensureSelectionExtentIsVisible();
+      }
     });
   }
 
@@ -371,19 +369,17 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
 
     if (newSelection == null) {
       _editingController
-        ..removeCaret()
+        ..hideCaret()
+        ..hideCollapsedHandle()
+        ..hideExpandedHandles()
         ..hideToolbar()
-        ..collapsedHandleOffset = null
-        ..upstreamHandleOffset = null
-        ..downstreamHandleOffset = null
-        ..collapsedHandleOffset = null
         ..cancelCollapsedHandleAutoHideCountdown();
     } else if (newSelection.isCollapsed) {
-      _positionCaret();
-      _positionCollapsedHandle();
+      _showCaret();
+      _showCollapsedHandle();
     } else {
       // The selection is expanded
-      _positionExpandedHandles();
+      _showExpandedHandles();
     }
   }
 
@@ -770,7 +766,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     editorGesturesLog.fine("Selected region: ${widget.selection.value}");
   }
 
-  void _positionCollapsedHandle() {
+  void _showCollapsedHandle() {
     final selection = widget.selection.value;
     if (selection == null) {
       editorGesturesLog.shout("Tried to update collapsed handle offset but there is no document selection");
@@ -781,17 +777,13 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       return;
     }
 
-    // Calculate the new (x,y) offset for the collapsed handle.
-    final extentRect = _docLayout.getRectForPosition(selection.extent);
-    late Offset handleOffset = extentRect!.bottomLeft;
-
     _editingController
-      ..collapsedHandleOffset = handleOffset
+      ..showCollapsedHandle()
       ..unHideCollapsedHandle()
       ..startCollapsedHandleAutoHideCountdown();
   }
 
-  void _positionExpandedHandles() {
+  void _showExpandedHandles() {
     final selection = widget.selection.value;
     if (selection == null) {
       editorGesturesLog.shout("Tried to update expanded handle offsets but there is no document selection");
@@ -802,28 +794,18 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       return;
     }
 
-    // Calculate the new (x,y) offsets for the upstream and downstream handles.
-    final baseHandleOffset = _docLayout.getRectForPosition(selection.base)!.bottomLeft;
-    final extentHandleOffset = _docLayout.getRectForPosition(selection.extent)!.bottomRight;
-    final affinity = widget.document.getAffinityBetween(base: selection.base, extent: selection.extent);
-    late Offset upstreamHandleOffset = affinity == TextAffinity.downstream ? baseHandleOffset : extentHandleOffset;
-    late Offset downstreamHandleOffset = affinity == TextAffinity.downstream ? extentHandleOffset : baseHandleOffset;
-
     _editingController
-      ..removeCaret()
-      ..collapsedHandleOffset = null
-      ..upstreamHandleOffset = upstreamHandleOffset
-      ..downstreamHandleOffset = downstreamHandleOffset
+      ..hideCaret()
+      ..hideCollapsedHandle()
+      ..showExpandedHandles()
       ..cancelCollapsedHandleAutoHideCountdown();
   }
 
-  void _positionCaret() {
+  void _showCaret() {
     final extentRect = _docLayout.getRectForPosition(widget.selection.value!.extent)!;
-
-    _editingController.updateCaret(
-      top: extentRect.topLeft,
-      height: extentRect.height,
-    );
+    _editingController
+      ..caretHeight = extentRect.height
+      ..showCaret();
   }
 
   void _positionToolbar() {
@@ -1057,7 +1039,6 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
   void initState() {
     super.initState();
     _caretBlinkController = BlinkController(tickerProvider: this);
-    _prevCaretOffset = widget.editingController.caretTop;
     widget.editingController.addListener(_onEditingControllerChange);
 
     if (widget.editingController.shouldDisplayCollapsedHandle) {
@@ -1083,14 +1064,15 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
   }
 
   void _onEditingControllerChange() {
-    if (_prevCaretOffset != widget.editingController.caretTop) {
-      if (widget.editingController.caretTop == null) {
+    final caretTop = widget.documentLayout.layerLinks.caret.leader?.offset;
+    if (_prevCaretOffset != caretTop) {
+      if (caretTop == null) {
         _caretBlinkController.stopBlinking();
       } else {
         _caretBlinkController.jumpToOpaque();
       }
 
-      _prevCaretOffset = widget.editingController.caretTop;
+      _prevCaretOffset = caretTop;
     }
   }
 
@@ -1213,13 +1195,12 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
   }
 
   Widget _buildCaret() {
-    if (!widget.editingController.hasCaret) {
+    if (!widget.editingController.shouldDisplayCaret) {
       return const SizedBox();
     }
 
     return CompositedTransformFollower(
-      link: widget.editingController.documentLayoutLink,
-      offset: widget.editingController.caretTop!,
+      link: widget.documentLayout.layerLinks.caret,
       child: IgnorePointer(
         child: BlinkingCaret(
           controller: _caretBlinkController,
@@ -1259,7 +1240,9 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
   Widget _buildCollapsedHandle() {
     return _buildHandle(
       handleKey: _collapsedHandleKey,
-      handleOffset: widget.editingController.collapsedHandleOffset! + const Offset(0, 5),
+      layerLink: widget.documentLayout.layerLinks.caret,
+      targetAnchor: Alignment.bottomLeft,
+      handleOffset: const Offset(0, 5),
       handleFractionalTranslation: const Offset(-0.5, 0.0),
       handleType: HandleType.collapsed,
       debugColor: Colors.green,
@@ -1272,7 +1255,9 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
       // upstream-bounding (left side of a RTL line of text) handle touch target
       _buildHandle(
         handleKey: _upstreamHandleKey,
-        handleOffset: widget.editingController.upstreamHandleOffset! + const Offset(0, 2),
+        layerLink: widget.documentLayout.layerLinks.upstreamHandle,
+        targetAnchor: Alignment.bottomLeft,
+        handleOffset: const Offset(0, 2),
         handleFractionalTranslation: const Offset(-1.0, 0.0),
         handleType: HandleType.upstream,
         debugColor: Colors.green,
@@ -1281,7 +1266,9 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
       // downstream-bounding (right side of a RTL line of text) handle touch target
       _buildHandle(
         handleKey: _downstreamHandleKey,
-        handleOffset: widget.editingController.downstreamHandleOffset! + const Offset(0, 2),
+        layerLink: widget.documentLayout.layerLinks.downstreamHandle,
+        targetAnchor: Alignment.bottomLeft,
+        handleOffset: const Offset(0, 2),
         handleType: HandleType.downstream,
         debugColor: Colors.red,
         onPanStart: _onDownstreamHandlePanStart,
@@ -1291,16 +1278,19 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
 
   Widget _buildHandle({
     required Key handleKey,
+    required LayerLink layerLink,
     required Offset handleOffset,
     Offset handleFractionalTranslation = Offset.zero,
     required HandleType handleType,
     required Color debugColor,
     required void Function(DragStartDetails) onPanStart,
+    Alignment targetAnchor = Alignment.topLeft,
   }) {
     return CompositedTransformFollower(
       key: handleKey,
-      link: widget.editingController.documentLayoutLink,
+      link: layerLink,
       offset: handleOffset,
+      targetAnchor: targetAnchor,
       child: FractionalTranslation(
         translation: handleFractionalTranslation,
         child: GestureDetector(
