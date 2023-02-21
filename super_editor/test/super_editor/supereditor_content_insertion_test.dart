@@ -17,6 +17,45 @@ import 'document_test_tools.dart';
 void main() {
   group('SuperEditor', () {
     group('inserts an image', () {
+      testWidgetsOnAllPlatforms('when the selection sits at the beginning of a non-empty paragraph', (tester) async {
+        // Pump a widget with an arbitrary size for the images.
+        final context = await tester //
+            .createDocument()
+            .fromMarkdown("First paragraph")
+            .withAddedComponents(
+          [const FakeImageComponentBuilder(size: Size(100, 100))],
+        ).pump();
+
+        // Place caret at the beginning of the paragraph.
+        await tester.placeCaretInParagraph(context.editContext.editor.document.nodes.first.id, 0);
+
+        // Insert the image at the current selection.
+        context.editContext.commonOps.insertImage('http://image.fake');
+        await tester.pumpAndSettle();
+
+        final doc = SuperEditorInspector.findDocument()!;
+
+        // Ensure that one node was inserted.
+        expect(doc.nodes.length, 2);
+
+        // Ensure that the image was added.
+        expect(doc.nodes[0], isA<ImageNode>());
+
+        // Ensure that the paragraph node content remains unchanged, but is moved down.
+        expect(doc.nodes[1], isA<ParagraphNode>());
+        expect((doc.nodes[1] as ParagraphNode).text.text, 'First paragraph');
+
+        // Ensure the selection was placed at the beginning of the paragraph.
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: doc.nodes[1].id,
+              nodePosition: const TextNodePosition(offset: 0),
+            ),
+          ),
+        );
+      });
       testWidgetsOnAllPlatforms('when the selection sits at the middle of a paragraph', (tester) async {
         // Pump a widget with an arbitrary size for the images.
         final context = await tester //
@@ -146,7 +185,43 @@ void main() {
       });
     });
 
-    group('inserts an horizontal rule', () {
+    group('inserts a horizontal rule', () {
+      testWidgetsOnAllPlatforms('when the selection sits at the beginning of a non-empty paragraph', (tester) async {
+        final context = await tester //
+            .createDocument()
+            .fromMarkdown("First paragraph")
+            .pump();
+
+        // Place caret at the beginning of the paragraph.
+        await tester.placeCaretInParagraph(context.editContext.editor.document.nodes.first.id, 0);
+
+        // Insert the horizontal rule at the current selection.
+        context.editContext.commonOps.insertHorizontalRule();
+        await tester.pumpAndSettle();
+
+        final doc = SuperEditorInspector.findDocument()!;
+
+        // Ensure that one node was inserted.
+        expect(doc.nodes.length, 2);
+
+        // Ensure that the horizontal rule was added.
+        expect(doc.nodes[0], isA<HorizontalRuleNode>());
+
+        // Ensure that the paragraph node content remains unchanged, but is moved down.
+        expect(doc.nodes[1], isA<ParagraphNode>());
+        expect((doc.nodes[1] as ParagraphNode).text.text, 'First paragraph');
+
+        // Ensure the selection was placed at the beginning of the paragraph.
+        expect(
+          SuperEditorInspector.findDocumentSelection(),
+          DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: doc.nodes[1].id,
+              nodePosition: const TextNodePosition(offset: 0),
+            ),
+          ),
+        );
+      });
       testWidgetsOnAllPlatforms('when the selection sits at the middle of a paragraph', (tester) async {
         final context = await tester //
             .createDocument()
