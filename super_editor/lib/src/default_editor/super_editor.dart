@@ -358,6 +358,8 @@ class SuperEditorState extends State<SuperEditor> {
   void dispose() {
     _contentTapDelegate?.dispose();
 
+    _composer.removeListener(_updateComposerPreferencesAtSelection);
+
     if (widget.composer == null) {
       _composer.dispose();
     }
@@ -434,6 +436,21 @@ class SuperEditorState extends State<SuperEditor> {
     if (_composer.selection?.extent == _previousSelectionExtent) {
       return;
     }
+
+    final selectedNodePosition = _composer.selection?.extent.nodePosition;
+    final previousSelectedNodePosition = _previousSelectionExtent?.nodePosition;
+
+    if (_composer.selection != null &&
+        _previousSelectionExtent != null &&
+        _composer.selection!.extent.nodeId == _previousSelectionExtent!.nodeId &&
+        (selectedNodePosition is TextNodePosition) &&
+        (previousSelectedNodePosition is TextNodePosition) &&
+        selectedNodePosition.offset == previousSelectedNodePosition.offset) {
+      // The selection changed, but the selected node and offset are the same.
+      // It might be the case that the OS sent us a selection with a different affinity.
+      return;
+    }
+
     _previousSelectionExtent = _composer.selection?.extent;
 
     _composer.preferences.clearStyles();
