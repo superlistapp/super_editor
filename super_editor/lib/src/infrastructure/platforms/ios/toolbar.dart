@@ -36,6 +36,12 @@ class IOSTextEditingFloatingToolbar extends StatelessWidget {
         backgroundColor: brightness == Brightness.dark //
             ? iOSToolbarDarkBackgroundColor
             : iOSToolbarLightBackgroundColor,
+        activeArrowColor: brightness == Brightness.dark //
+            ? iOSToolbarDarkArrowActiveColor
+            : iOSToolbarLightArrowActiveColor,
+        inactiveArrowColor: brightness == Brightness.dark //
+            ? iOSToolbarDarkArrowInactiveColor
+            : iOSToolbarLightArrowInactiveColor,
         children: [
           if (onCutPressed != null)
             _buildButton(
@@ -68,6 +74,8 @@ class IOSTextEditingFloatingToolbar extends StatelessWidget {
         style: TextButton.styleFrom(
           minimumSize: Size.zero,
           padding: EdgeInsets.zero,
+          splashFactory: NoSplash.splashFactory,
+          shape: const LinearBorder(),
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12.0),
