@@ -73,7 +73,6 @@ class IOSTextEditingFloatingToolbar extends StatelessWidget {
         minimumSize: Size.zero,
         padding: EdgeInsets.zero,
         splashFactory: NoSplash.splashFactory,
-        shape: const LinearBorder(),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12.0),
