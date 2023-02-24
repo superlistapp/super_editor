@@ -62,6 +62,10 @@ dependency_overrides:
     path: ../../super_text_layout
   attributed_text:
     path: ../../attributed_text
+  overlord:
+    git:
+      url: https://github.com/angelosilvestre/overlord.git
+      ref: update_toolbar_design
 
 
 dev_dependencies:

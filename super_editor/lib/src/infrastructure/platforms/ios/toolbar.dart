@@ -36,10 +36,10 @@ class IOSTextEditingFloatingToolbar extends StatelessWidget {
         backgroundColor: brightness == Brightness.dark //
             ? iOSToolbarDarkBackgroundColor
             : iOSToolbarLightBackgroundColor,
-        activeArrowColor: brightness == Brightness.dark //
+        activeButtonTextColor: brightness == Brightness.dark //
             ? iOSToolbarDarkArrowActiveColor
             : iOSToolbarLightArrowActiveColor,
-        inactiveArrowColor: brightness == Brightness.dark //
+        inactiveButtonTextColor: brightness == Brightness.dark //
             ? iOSToolbarDarkArrowInactiveColor
             : iOSToolbarLightArrowInactiveColor,
         children: [
@@ -67,24 +67,21 @@ class IOSTextEditingFloatingToolbar extends StatelessWidget {
     required String title,
     required VoidCallback onPressed,
   }) {
-    return SizedBox(
-      height: 36,
-      child: TextButton(
-        onPressed: onPressed,
-        style: TextButton.styleFrom(
-          minimumSize: Size.zero,
-          padding: EdgeInsets.zero,
-          splashFactory: NoSplash.splashFactory,
-          shape: const LinearBorder(),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12.0),
-          child: Text(
-            title,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w300,
-            ),
+    return TextButton(
+      onPressed: onPressed,
+      style: TextButton.styleFrom(
+        minimumSize: Size.zero,
+        padding: EdgeInsets.zero,
+        splashFactory: NoSplash.splashFactory,
+        shape: const LinearBorder(),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12.0),
+        child: Text(
+          title,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w300,
           ),
         ),
       ),
