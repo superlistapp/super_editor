@@ -40,7 +40,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
   final _imageSelectionAnchor = ValueNotifier<Offset?>(null);
 
   final _overlayController = MagnifierAndToolbarController() //
-    ..screenPadding = const EdgeInsets.all(8.0);
+    ..screenPadding = const EdgeInsets.all(20.0);
 
   @override
   void initState() {
