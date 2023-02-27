@@ -70,9 +70,10 @@ class IOSTextEditingFloatingToolbar extends StatelessWidget {
     return TextButton(
       onPressed: onPressed,
       style: TextButton.styleFrom(
-        minimumSize: Size.zero,
+        minimumSize: const Size(kMinInteractiveDimension, 0),
         padding: EdgeInsets.zero,
         splashFactory: NoSplash.splashFactory,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12.0),
