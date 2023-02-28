@@ -20,6 +20,7 @@ class ListItemNode extends TextNode {
     required AttributedText text,
     Map<String, dynamic>? metadata,
     int indent = 0,
+    this.startIndex,
   })  : type = ListItemType.ordered,
         _indent = indent,
         super(
@@ -37,6 +38,7 @@ class ListItemNode extends TextNode {
     int indent = 0,
   })  : type = ListItemType.unordered,
         _indent = indent,
+        startIndex = null,
         super(
           id: id,
           text: text,
@@ -51,6 +53,7 @@ class ListItemNode extends TextNode {
     required AttributedText text,
     Map<String, dynamic>? metadata,
     int indent = 0,
+    this.startIndex,
   })  : type = itemType,
         _indent = indent,
         super(
@@ -64,6 +67,18 @@ class ListItemNode extends TextNode {
   }
 
   final ListItemType type;
+
+  /// Starting index of an ordered list. Integer 1..n.
+  ///
+  /// Only valid when [type] is [ListItemType.ordered].
+  /// When null, ordered list is by default starting with 1.
+  ///
+  /// Keep in mind:
+  /// * This field is used to correctly parse **markdown**, when
+  ///   it contains a numbered list that is starting from index greater than 1.
+  /// * Currently super editor does not support creating numbered lists that start with
+  ///   index greater than 1. Therefore, behavior is still buggy, when working with such lists.
+  final int? startIndex;
 
   int _indent;
   int get indent => _indent;
@@ -108,7 +123,7 @@ class ListItemComponentBuilder implements ComponentBuilder {
 
     int? ordinalValue;
     if (node.type == ListItemType.ordered) {
-      ordinalValue = 1;
+      ordinalValue = node.startIndex ?? 1;
       DocumentNode? nodeAbove = document.getNodeBefore(node);
       while (nodeAbove != null &&
           nodeAbove is ListItemNode &&

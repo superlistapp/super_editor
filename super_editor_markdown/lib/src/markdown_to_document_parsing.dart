@@ -87,7 +87,10 @@ class _MarkdownToDocument implements md.NodeVisitor {
 
   List<DocumentNode> get content => _content;
 
-  final _listItemTypeStack = <ListItemType>[];
+  final _listItemStack = <_ListItemMetadata>[];
+
+  /// Next list item of the list that is currently being parsed.
+  _ListItemMetadata? _runningListItem;
 
   @override
   bool visitElementBefore(md.Element element) {
@@ -122,6 +125,12 @@ class _MarkdownToDocument implements md.NodeVisitor {
         _addHeader(element, level: 6);
         break;
       case 'p':
+        if (_listItemStack.isNotEmpty) {
+          // If we are inside of a list, NOT ignoring this paragraph would
+          // sometimes result in duplication.
+          // See: https://simpleclub.atlassian.net/browse/SC-9632
+          break;
+        }
         final inlineVisitor = _parseInline(element);
 
         if (inlineVisitor.isImage) {
@@ -145,21 +154,30 @@ class _MarkdownToDocument implements md.NodeVisitor {
         break;
       case 'ul':
         // A list just started. Push that list type on top of the list type stack.
-        _listItemTypeStack.add(ListItemType.unordered);
+        _listItemStack.add(_ListItemMetadata(ListItemType.unordered));
         break;
       case 'ol':
         // A list just started. Push that list type on top of the list type stack.
-        _listItemTypeStack.add(ListItemType.ordered);
+        int? startIndex;
+        if (element.attributes.containsKey('start')) {
+          startIndex = int.tryParse(element.attributes['start']!);
+        }
+        _listItemStack.add(_ListItemMetadata(ListItemType.ordered, startIndex: startIndex));
         break;
       case 'li':
-        if (_listItemTypeStack.isEmpty) {
+        if (_listItemStack.isEmpty) {
           throw Exception('Tried to parse a markdown list item but the list item type was null');
         }
-
+        int? firstIndex;
+        if (_runningListItem == null) {
+          _runningListItem = _listItemStack.last;
+          firstIndex = _runningListItem!.startIndex;
+        }
         _addListItem(
           element,
-          listItemType: _listItemTypeStack.last,
-          indent: _listItemTypeStack.length - 1,
+          itemMetadata: _runningListItem!,
+          indent: _listItemStack.length - 1,
+          firstItemIndex: firstIndex,
         );
         break;
       case 'hr':
@@ -176,7 +194,8 @@ class _MarkdownToDocument implements md.NodeVisitor {
       // A list has ended. Pop the most recent list type from the stack.
       case 'ul':
       case 'ol':
-        _listItemTypeStack.removeLast();
+        _runningListItem = null;
+        _listItemStack.removeLast();
         break;
     }
   }
@@ -287,17 +306,21 @@ class _MarkdownToDocument implements md.NodeVisitor {
     ));
   }
 
+  /// [firstItemIndex] is passed, when this list item is first in the list
+  /// but starts from index, that not equals 1.
   void _addListItem(
     md.Element element, {
-    required ListItemType listItemType,
+    required _ListItemMetadata itemMetadata,
     required int indent,
+    int? firstItemIndex,
   }) {
     _content.add(
       ListItemNode(
         id: DocumentEditor.createNodeId(),
-        itemType: listItemType,
+        itemType: itemMetadata.type,
         indent: indent,
         text: _parseInlineText(element),
+        startIndex: firstItemIndex,
       ),
     );
   }
@@ -657,6 +680,19 @@ class _LineBreakSeparatedElement extends md.Element {
   String get textContent {
     return (children ?? []).map((md.Node? child) => child!.textContent).join('\n');
   }
+}
+
+class _ListItemMetadata {
+  _ListItemMetadata(this.type, {this.startIndex});
+
+  /// Type of the list item.
+  final ListItemType type;
+
+  /// Index of the first item in list.
+  ///
+  /// Will be null for [type] is [ListItemType.unordered].
+  /// Can be present when [type] is [ListItemType.ordered].
+  final int? startIndex;
 }
 
 /// Matches empty lines or lines containing only whitespace.
