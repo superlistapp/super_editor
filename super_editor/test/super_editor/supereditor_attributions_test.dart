@@ -220,21 +220,18 @@ void main() {
 
         // Toggle the bold attribution.
         composer.preferences.toggleStyle(boldAttribution);
-        await tester.pumpAndSettle();
+        await tester.pump();
 
-        // Invert the selection affinity.
-        final newAffinity =
-            (composer.selection!.extent.nodePosition as TextNodePosition).affinity == TextAffinity.downstream //
-                ? TextAffinity.upstream
-                : TextAffinity.downstream;
+        // Ensure we have an upstream selection.
+        expect((composer.selection!.extent.nodePosition as TextNodePosition).affinity, TextAffinity.upstream);
 
         // Simulate the IME sending us a selection at the same offset
         // but with a different affinity.
         await tester.ime.sendDeltas(
           [
-            TextEditingDeltaNonTextUpdate(
+            const TextEditingDeltaNonTextUpdate(
               oldText: "This text should be",
-              selection: TextSelection.collapsed(offset: 19, affinity: newAffinity),
+              selection: TextSelection.collapsed(offset: 19, affinity: TextAffinity.downstream),
               composing: TextRange.empty,
             ),
           ],

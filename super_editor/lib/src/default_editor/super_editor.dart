@@ -437,18 +437,22 @@ class SuperEditorState extends State<SuperEditor> {
       return;
     }
 
-    final selectedNodePosition = _composer.selection?.extent.nodePosition;
-    final previousSelectedNodePosition = _previousSelectionExtent?.nodePosition;
-
-    if (_composer.selection != null &&
+    final selectionExtent = _composer.selection?.extent;
+    if (selectionExtent != null &&
+        selectionExtent.nodePosition is TextNodePosition &&
         _previousSelectionExtent != null &&
-        _composer.selection!.extent.nodeId == _previousSelectionExtent!.nodeId &&
-        (selectedNodePosition is TextNodePosition) &&
-        (previousSelectedNodePosition is TextNodePosition) &&
-        selectedNodePosition.offset == previousSelectedNodePosition.offset) {
-      // The selection changed, but the selected node and offset are the same.
-      // It might be the case that the OS sent us a selection with a different affinity.
-      return;
+        _previousSelectionExtent!.nodePosition is TextNodePosition) {
+      // The current and previous selections are text positions. Check for the situation where the two
+      // selections are functionally equivalent, but the affinity changed.
+      final selectedNodePosition = selectionExtent.nodePosition as TextNodePosition;
+      final previousSelectedNodePosition = _previousSelectionExtent!.nodePosition as TextNodePosition;
+
+      if (selectionExtent.nodeId == _previousSelectionExtent!.nodeId &&
+          selectedNodePosition.offset == previousSelectedNodePosition.offset) {
+        // The text selection changed, but only the affinity is different. An affinity change doesn't alter
+        // the selection from the user's perspective, so don't alter any preferences. Return.
+        return;
+      }
     }
 
     _previousSelectionExtent = _composer.selection?.extent;
