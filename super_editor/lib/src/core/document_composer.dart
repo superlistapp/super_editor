@@ -124,6 +124,14 @@ class DocumentComposer with ChangeNotifier {
   ///
   /// Typically, this mode should be enabled and disabled with a special
   /// keyboard key such as `cmd` or `ctrl`.
+  ///
+  /// On desktop, when using interaction mode to launch URLs, window focus
+  /// will jump from the Flutter app to the new browser window. This jump
+  /// prevents the `cmd` or `ctrl` key release from being processed by Flutter,
+  /// thereby locking the Flutter app in interaction mode. If this happens in
+  /// your app, consider using the `window_manager` plugin to find out when
+  /// your app window loses focus (called "blurring") and then set this value
+  /// to `false`.
   ValueNotifier<bool> isInInteractionMode = ValueNotifier(false);
 
   final ComposerPreferences _preferences;
