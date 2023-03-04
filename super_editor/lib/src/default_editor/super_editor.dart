@@ -17,6 +17,8 @@ import 'package:super_editor/src/default_editor/document_gestures_touch_ios.dart
 import 'package:super_editor/src/default_editor/document_scrollable.dart';
 import 'package:super_editor/src/default_editor/list_items.dart';
 import 'package:super_editor/src/default_editor/tasks.dart';
+import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/links.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
 import 'package:super_editor/src/infrastructure/text_input.dart';
 import 'package:super_text_layout/super_text_layout.dart';
@@ -25,10 +27,11 @@ import '../infrastructure/platforms/mobile_documents.dart';
 import 'attributions.dart';
 import 'blockquote.dart';
 import 'document_caret_overlay.dart';
-import 'document_gestures_mouse.dart';
-import 'document_ime/document_input_ime.dart';
-import 'document_hardware_keyboard/document_input_keyboard.dart';
 import 'document_focus_and_selection_policies.dart';
+import 'document_gestures_interaction_overrides.dart';
+import 'document_gestures_mouse.dart';
+import 'document_hardware_keyboard/document_input_keyboard.dart';
+import 'document_ime/document_input_ime.dart';
 import 'horizontal_rule.dart';
 import 'image.dart';
 import 'layout_single_column/layout_single_column.dart';
@@ -102,6 +105,7 @@ class SuperEditor extends StatefulWidget {
     this.imeOverrides,
     List<DocumentKeyboardAction>? keyboardActions,
     this.gestureMode,
+    this.contentTapDelegateFactory = launchLinkTapHandlerFactory,
     this.androidHandleColor,
     this.androidToolbarBuilder,
     this.iOSHandleColor,
@@ -205,6 +209,13 @@ class SuperEditor extends StatefulWidget {
   /// The `SuperEditor` gesture mode, e.g., mouse or touch.
   final DocumentGestureMode? gestureMode;
 
+  /// Factory that creates a [ContentTapDelegate], which is given an
+  /// opportunity to respond to taps on content before the editor, itself.
+  ///
+  /// A [ContentTapDelegate] might be used, for example, to launch a URL
+  /// when a user taps on a link.
+  final ContentTapDelegateFactory? contentTapDelegateFactory;
+
   /// Color of the text selection drag handles on Android.
   final Color? androidHandleColor;
 
@@ -280,6 +291,8 @@ class SuperEditorState extends State<SuperEditor> {
   @visibleForTesting
   late EditContext editContext;
 
+  ContentTapDelegate? _contentTapDelegate;
+
   final _floatingCursorController = FloatingCursorController();
 
   @visibleForTesting
@@ -343,6 +356,8 @@ class SuperEditorState extends State<SuperEditor> {
 
   @override
   void dispose() {
+    _contentTapDelegate?.dispose();
+
     _composer.removeListener(_updateComposerPreferencesAtSelection);
 
     if (widget.composer == null) {
@@ -369,6 +384,11 @@ class SuperEditorState extends State<SuperEditor> {
         documentLayoutResolver: () => _docLayoutKey.currentState as DocumentLayout,
       ),
     );
+
+    // The ContentTapDelegate depends upon the EditContext. Recreate the
+    // delegate, now that we've created a new EditContext.
+    _contentTapDelegate?.dispose();
+    _contentTapDelegate = widget.contentTapDelegateFactory?.call(editContext);
   }
 
   void _createLayoutPresenter() {
@@ -593,6 +613,7 @@ class SuperEditorState extends State<SuperEditor> {
           document: editContext.editor.document,
           getDocumentLayout: () => editContext.documentLayout,
           selection: editContext.composer.selectionNotifier,
+          contentTapHandler: _contentTapDelegate,
           scrollController: widget.scrollController,
           documentKey: _docLayoutKey,
           handleColor: widget.androidHandleColor ?? Theme.of(context).primaryColor,
@@ -608,6 +629,7 @@ class SuperEditorState extends State<SuperEditor> {
           document: editContext.editor.document,
           getDocumentLayout: () => editContext.documentLayout,
           selection: editContext.composer.selectionNotifier,
+          contentTapHandler: _contentTapDelegate,
           scrollController: widget.scrollController,
           documentKey: _docLayoutKey,
           handleColor: widget.iOSHandleColor ?? Theme.of(context).primaryColor,
@@ -653,6 +675,7 @@ class SuperEditorState extends State<SuperEditor> {
                   getDocumentLayout: () => editContext.documentLayout,
                   selectionChanges: editContext.composer.selectionChanges,
                   selectionNotifier: editContext.composer.selectionNotifier,
+                  contentTapHandler: _contentTapDelegate,
                   autoScroller: _autoScrollController,
                   showDebugPaint: widget.debugPaint.gestures,
                   child: const SizedBox(),
@@ -797,6 +820,7 @@ final defaultComponentBuilders = <ComponentBuilder>[
 
 /// Keyboard actions for the standard [SuperEditor].
 final defaultKeyboardActions = <DocumentKeyboardAction>[
+  toggleInteractionModeWhenCmdOrCtrlPressed,
   doNothingWhenThereIsNoSelection,
   pasteWhenCmdVIsPressed,
   copyWhenCmdCIsPressed,
@@ -831,6 +855,7 @@ final defaultKeyboardActions = <DocumentKeyboardAction>[
 /// Using the IME on desktop involves partial input from the IME
 /// and partial input from non-content keys, like arrow keys.
 final defaultImeKeyboardActions = <DocumentKeyboardAction>[
+  toggleInteractionModeWhenCmdOrCtrlPressed,
   doNothingWhenThereIsNoSelection,
   pasteWhenCmdVIsPressed,
   copyWhenCmdCIsPressed,
@@ -1016,3 +1041,79 @@ TextStyle defaultStyleBuilder(Set<Attribution> attributions) {
 const defaultSelectionStyle = SelectionStyles(
   selectionColor: Color(0xFFACCEF7),
 );
+
+LaunchLinkTapHandler launchLinkTapHandlerFactory(EditContext editContext) =>
+    LaunchLinkTapHandler(editContext.editor.document, editContext.composer);
+
+/// A [ContentTapDelegate] that opens links when the user taps text with
+/// a [LinkAttribution].
+///
+/// This delegate only opens links when [composer.isInInteractionMode] is
+/// `true`.
+class LaunchLinkTapHandler extends ContentTapDelegate {
+  LaunchLinkTapHandler(this.document, this.composer) {
+    composer.isInInteractionMode.addListener(notifyListeners);
+  }
+
+  @override
+  void dispose() {
+    composer.isInInteractionMode.removeListener(notifyListeners);
+    super.dispose();
+  }
+
+  final Document document;
+  final DocumentComposer composer;
+
+  @override
+  MouseCursor? mouseCursorForContentHover(DocumentPosition hoverPosition) {
+    if (!composer.isInInteractionMode.value) {
+      // The editor isn't in "interaction mode". We don't want a special cursor
+      return null;
+    }
+
+    final link = _getLinkAtPosition(hoverPosition);
+    return link != null ? SystemMouseCursors.click : null;
+  }
+
+  @override
+  TapHandlingInstruction onTap(DocumentPosition tapPosition) {
+    if (!composer.isInInteractionMode.value) {
+      // The editor isn't in "interaction mode". We don't want to allow
+      // users to open links by tapping on them.
+      return TapHandlingInstruction.continueHandling;
+    }
+
+    final link = _getLinkAtPosition(tapPosition);
+    if (link != null) {
+      // The user tapped on a link. Launch it.
+      UrlLauncher.instance.launchUrl(link);
+      return TapHandlingInstruction.halt;
+    } else {
+      // The user didn't tap on a link.
+      return TapHandlingInstruction.continueHandling;
+    }
+  }
+
+  Uri? _getLinkAtPosition(DocumentPosition position) {
+    final nodePosition = position.nodePosition;
+    if (nodePosition is! TextNodePosition) {
+      return null;
+    }
+
+    final textNode = document.getNodeById(position.nodeId);
+    if (textNode is! TextNode) {
+      editorGesturesLog
+          .shout("Received a report of a tap on a TextNodePosition, but the node with that ID is a: $textNode");
+      return null;
+    }
+
+    final tappedAttributions = textNode.text.getAllAttributionsAt(nodePosition.offset);
+    for (final tappedAttribution in tappedAttributions) {
+      if (tappedAttribution is LinkAttribution) {
+        return tappedAttribution.url;
+      }
+    }
+
+    return null;
+  }
+}

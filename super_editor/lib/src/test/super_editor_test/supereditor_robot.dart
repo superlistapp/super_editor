@@ -13,7 +13,28 @@ extension SuperEditorRobot on WidgetTester {
   ///
   /// The simulated user gesture is probably a tap, but the only guarantee is that
   /// the caret is placed with a gesture.
+  ///
+  /// To explicitly simulate a tap within a paragraph, use [tapInParagraph].
   Future<void> placeCaretInParagraph(
+    String nodeId,
+    int offset, {
+    TextAffinity affinity = TextAffinity.downstream,
+    Finder? superEditorFinder,
+  }) async {
+    await _tapInParagraph(nodeId, offset, affinity, 1, superEditorFinder);
+  }
+
+  /// Simulates a tap at the given [offset] within the paragraph with the
+  /// given [nodeId].
+  ///
+  /// This simulated interaction is intended primarily for purposes other
+  /// than changing the document selection, such as tapping on a link to
+  /// launch a URL.
+  ///
+  /// To place the caret in a paragraph, consider using [placeCaretInParagraph],
+  /// which might choose a different execution path to simulate the selection
+  /// change.
+  Future<void> tapInParagraph(
     String nodeId,
     int offset, {
     TextAffinity affinity = TextAffinity.downstream,
