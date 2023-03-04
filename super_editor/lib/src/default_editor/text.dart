@@ -1165,6 +1165,10 @@ ExecutionInstruction anyCharacterToInsertInTextContent({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
+  if (keyEvent is! RawKeyDownEvent) {
+    return ExecutionInstruction.continueExecution;
+  }
+
   // Do nothing if CMD or CTRL are pressed because this signifies an attempted
   // shortcut.
   if (keyEvent.isControlPressed || keyEvent.isMetaPressed) {
@@ -1240,6 +1244,10 @@ ExecutionInstruction deleteToRemoveDownstreamContent({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
+  if (keyEvent is! RawKeyDownEvent) {
+    return ExecutionInstruction.continueExecution;
+  }
+
   if (keyEvent.logicalKey != LogicalKeyboardKey.delete) {
     return ExecutionInstruction.continueExecution;
   }
@@ -1253,6 +1261,10 @@ ExecutionInstruction shiftEnterToInsertNewlineInBlock({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
+  if (keyEvent is! RawKeyDownEvent) {
+    return ExecutionInstruction.continueExecution;
+  }
+
   if (keyEvent.logicalKey != LogicalKeyboardKey.enter && keyEvent.logicalKey != LogicalKeyboardKey.numpadEnter) {
     return ExecutionInstruction.continueExecution;
   }

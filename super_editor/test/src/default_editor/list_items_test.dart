@@ -18,21 +18,21 @@ void main() {
         final editContext = _createEditContextWithParagraph();
 
         _typeKeys(editContext, [
-          const FakeRawKeyEvent(
+          const FakeRawKeyDownEvent(
             data: FakeRawKeyEventData(
               logicalKey: LogicalKeyboardKey.numpad1,
               physicalKey: PhysicalKeyboardKey.numpad1,
             ),
             character: '1',
           ),
-          const FakeRawKeyEvent(
+          const FakeRawKeyDownEvent(
             data: FakeRawKeyEventData(
               logicalKey: LogicalKeyboardKey.period,
               physicalKey: PhysicalKeyboardKey.period,
             ),
             character: '.',
           ),
-          const FakeRawKeyEvent(
+          const FakeRawKeyDownEvent(
             data: FakeRawKeyEventData(
               logicalKey: LogicalKeyboardKey.space,
               physicalKey: PhysicalKeyboardKey.space,
@@ -50,28 +50,28 @@ void main() {
         final editContext = _createEditContextWithParagraph();
 
         _typeKeys(editContext, [
-          const FakeRawKeyEvent(
+          const FakeRawKeyDownEvent(
             data: FakeRawKeyEventData(
               logicalKey: LogicalKeyboardKey.space,
               physicalKey: PhysicalKeyboardKey.space,
             ),
             character: ' ',
           ),
-          const FakeRawKeyEvent(
+          const FakeRawKeyDownEvent(
             data: FakeRawKeyEventData(
               logicalKey: LogicalKeyboardKey.numpad1,
               physicalKey: PhysicalKeyboardKey.numpad1,
             ),
             character: '1',
           ),
-          const FakeRawKeyEvent(
+          const FakeRawKeyDownEvent(
             data: FakeRawKeyEventData(
               logicalKey: LogicalKeyboardKey.period,
               physicalKey: PhysicalKeyboardKey.period,
             ),
             character: '.',
           ),
-          const FakeRawKeyEvent(
+          const FakeRawKeyDownEvent(
             data: FakeRawKeyEventData(
               logicalKey: LogicalKeyboardKey.space,
               physicalKey: PhysicalKeyboardKey.space,
@@ -89,21 +89,21 @@ void main() {
         final editContext = _createEditContextWithParagraph();
 
         _typeKeys(editContext, [
-          const FakeRawKeyEvent(
+          const FakeRawKeyDownEvent(
             data: FakeRawKeyEventData(
               logicalKey: LogicalKeyboardKey.numpad1,
               physicalKey: PhysicalKeyboardKey.numpad1,
             ),
             character: '1',
           ),
-          const FakeRawKeyEvent(
+          const FakeRawKeyDownEvent(
             data: FakeRawKeyEventData(
               logicalKey: LogicalKeyboardKey.parenthesisRight,
               physicalKey: PhysicalKeyboardKey.digit0,
             ),
             character: ')',
           ),
-          const FakeRawKeyEvent(
+          const FakeRawKeyDownEvent(
             data: FakeRawKeyEventData(
               logicalKey: LogicalKeyboardKey.space,
               physicalKey: PhysicalKeyboardKey.space,
@@ -121,28 +121,28 @@ void main() {
         final editContext = _createEditContextWithParagraph();
 
         _typeKeys(editContext, [
-          const FakeRawKeyEvent(
+          const FakeRawKeyDownEvent(
             data: FakeRawKeyEventData(
               logicalKey: LogicalKeyboardKey.space,
               physicalKey: PhysicalKeyboardKey.space,
             ),
             character: ' ',
           ),
-          const FakeRawKeyEvent(
+          const FakeRawKeyDownEvent(
             data: FakeRawKeyEventData(
               logicalKey: LogicalKeyboardKey.numpad1,
               physicalKey: PhysicalKeyboardKey.numpad1,
             ),
             character: '1',
           ),
-          const FakeRawKeyEvent(
+          const FakeRawKeyDownEvent(
             data: FakeRawKeyEventData(
               logicalKey: LogicalKeyboardKey.parenthesisRight,
               physicalKey: PhysicalKeyboardKey.digit0,
             ),
             character: ')',
           ),
-          const FakeRawKeyEvent(
+          const FakeRawKeyDownEvent(
             data: FakeRawKeyEventData(
               logicalKey: LogicalKeyboardKey.space,
               physicalKey: PhysicalKeyboardKey.space,
@@ -160,14 +160,14 @@ void main() {
         final editContext = _createEditContextWithParagraph();
 
         _typeKeys(editContext, [
-          const FakeRawKeyEvent(
+          const FakeRawKeyDownEvent(
             data: FakeRawKeyEventData(
               logicalKey: LogicalKeyboardKey.numpad1,
               physicalKey: PhysicalKeyboardKey.numpad1,
             ),
             character: '1',
           ),
-          const FakeRawKeyEvent(
+          const FakeRawKeyDownEvent(
             data: FakeRawKeyEventData(
               logicalKey: LogicalKeyboardKey.space,
               physicalKey: PhysicalKeyboardKey.space,
@@ -185,21 +185,21 @@ void main() {
         final editContext = _createEditContextWithParagraph();
 
         _typeKeys(editContext, [
-          const FakeRawKeyEvent(
+          const FakeRawKeyDownEvent(
             data: FakeRawKeyEventData(
               logicalKey: LogicalKeyboardKey.space,
               physicalKey: PhysicalKeyboardKey.space,
             ),
             character: ' ',
           ),
-          const FakeRawKeyEvent(
+          const FakeRawKeyDownEvent(
             data: FakeRawKeyEventData(
               logicalKey: LogicalKeyboardKey.numpad1,
               physicalKey: PhysicalKeyboardKey.numpad1,
             ),
             character: '1',
           ),
-          const FakeRawKeyEvent(
+          const FakeRawKeyDownEvent(
             data: FakeRawKeyEventData(
               logicalKey: LogicalKeyboardKey.space,
               physicalKey: PhysicalKeyboardKey.space,
@@ -451,7 +451,7 @@ EditContext _createEditContextWithParagraph() {
   );
 }
 
-void _typeKeys(EditContext editContext, List<FakeRawKeyEvent> keys) {
+void _typeKeys(EditContext editContext, List<FakeRawKeyDownEvent> keys) {
   for (final key in keys) {
     anyCharacterToInsertInParagraph(
       editContext: editContext,

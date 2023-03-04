@@ -66,6 +66,13 @@ class TestDocumentSelector {
     );
   }
 
+  TestDocumentConfigurator withSingleParagraphAndLink() {
+    return TestDocumentConfigurator._(
+      _widgetTester,
+      singleParagraphWithLinkDoc(),
+    );
+  }
+
   TestDocumentConfigurator withTwoEmptyParagraphs() {
     return TestDocumentConfigurator._(
       _widgetTester,

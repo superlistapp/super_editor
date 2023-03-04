@@ -69,11 +69,6 @@ class _SuperEditorHardwareKeyHandlerState extends State<SuperEditorHardwareKeyHa
   }
 
   KeyEventResult _onKeyPressed(FocusNode node, RawKeyEvent keyEvent) {
-    if (keyEvent is! RawKeyDownEvent) {
-      editorKeyLog.finer("Received key event, but ignoring because it's not a down event: $keyEvent");
-      return KeyEventResult.handled;
-    }
-
     editorKeyLog.info("Handling key press: $keyEvent");
     ExecutionInstruction instruction = ExecutionInstruction.continueExecution;
     int index = 0;
