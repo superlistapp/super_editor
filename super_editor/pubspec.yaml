@@ -28,6 +28,7 @@ dependencies:
   linkify: ^4.0.0
   logging: ^1.0.1
   super_text_layout: ^0.1.4
+  url_launcher: ^6.1.9
   uuid: ^3.0.3
 
   # Dependencies for testing tools that we ship with super_editor

@@ -460,7 +460,7 @@ void main() {
               final editContext = createEditContext(document: MutableDocument());
               var result = selectAllWhenCmdAIsPressed(
                 editContext: editContext,
-                keyEvent: const FakeRawKeyEvent(
+                keyEvent: const FakeRawKeyDownEvent(
                   data: FakeRawKeyEventData(
                     logicalKey: LogicalKeyboardKey.keyC,
                     physicalKey: PhysicalKeyboardKey.keyC,
@@ -482,7 +482,7 @@ void main() {
               final editContext = createEditContext(document: MutableDocument());
               var result = selectAllWhenCmdAIsPressed(
                 editContext: editContext,
-                keyEvent: const FakeRawKeyEvent(
+                keyEvent: const FakeRawKeyDownEvent(
                   data: FakeRawKeyEventData(
                     logicalKey: LogicalKeyboardKey.keyA,
                     physicalKey: PhysicalKeyboardKey.keyA,
@@ -504,7 +504,7 @@ void main() {
               final editContext = createEditContext(document: MutableDocument());
               var result = selectAllWhenCmdAIsPressed(
                 editContext: editContext,
-                keyEvent: const FakeRawKeyEvent(
+                keyEvent: const FakeRawKeyDownEvent(
                     data: FakeRawKeyEventData(
                       logicalKey: LogicalKeyboardKey.keyA,
                       physicalKey: PhysicalKeyboardKey.keyA,
@@ -534,7 +534,7 @@ void main() {
               );
               var result = selectAllWhenCmdAIsPressed(
                 editContext: editContext,
-                keyEvent: const FakeRawKeyEvent(
+                keyEvent: const FakeRawKeyDownEvent(
                   data: FakeRawKeyEventData(
                     logicalKey: LogicalKeyboardKey.keyA,
                     physicalKey: PhysicalKeyboardKey.keyA,
@@ -581,7 +581,7 @@ void main() {
               );
               var result = selectAllWhenCmdAIsPressed(
                 editContext: editContext,
-                keyEvent: const FakeRawKeyEvent(
+                keyEvent: const FakeRawKeyDownEvent(
                   data: FakeRawKeyEventData(
                     logicalKey: LogicalKeyboardKey.keyA,
                     physicalKey: PhysicalKeyboardKey.keyA,
@@ -632,7 +632,7 @@ void main() {
               );
               var result = selectAllWhenCmdAIsPressed(
                 editContext: editContext,
-                keyEvent: const FakeRawKeyEvent(
+                keyEvent: const FakeRawKeyDownEvent(
                   data: FakeRawKeyEventData(
                     logicalKey: LogicalKeyboardKey.keyA,
                     physicalKey: PhysicalKeyboardKey.keyA,
@@ -692,7 +692,7 @@ void main() {
 
           var result = anyCharacterOrDestructiveKeyToDeleteSelection(
             editContext: editContext,
-            keyEvent: const FakeRawKeyEvent(
+            keyEvent: const FakeRawKeyDownEvent(
               data: FakeRawKeyEventData(
                 logicalKey: LogicalKeyboardKey.backspace,
                 physicalKey: PhysicalKeyboardKey.backspace,
@@ -745,7 +745,7 @@ void main() {
 
           var result = anyCharacterOrDestructiveKeyToDeleteSelection(
             editContext: editContext,
-            keyEvent: const FakeRawKeyEvent(
+            keyEvent: const FakeRawKeyDownEvent(
               data: FakeRawKeyEventData(
                 logicalKey: LogicalKeyboardKey.delete,
                 physicalKey: PhysicalKeyboardKey.delete,
@@ -798,7 +798,7 @@ void main() {
 
           var result = anyCharacterOrDestructiveKeyToDeleteSelection(
             editContext: editContext,
-            keyEvent: const FakeRawKeyEvent(
+            keyEvent: const FakeRawKeyDownEvent(
               data: FakeRawKeyEventData(
                 logicalKey: LogicalKeyboardKey.keyA,
                 physicalKey: PhysicalKeyboardKey.keyA,
@@ -854,7 +854,7 @@ void main() {
 
           final result = collapseSelectionWhenEscIsPressed(
             editContext: editContext,
-            keyEvent: const FakeRawKeyEvent(
+            keyEvent: const FakeRawKeyDownEvent(
               data: FakeRawKeyEventData(
                 logicalKey: LogicalKeyboardKey.escape,
                 physicalKey: PhysicalKeyboardKey.escape,
@@ -948,7 +948,7 @@ void main() {
 
         final result = collapseSelectionWhenEscIsPressed(
           editContext: editContext,
-          keyEvent: const FakeRawKeyEvent(
+          keyEvent: const FakeRawKeyDownEvent(
             data: FakeRawKeyEventData(
               logicalKey: LogicalKeyboardKey.escape,
               physicalKey: PhysicalKeyboardKey.escape,
