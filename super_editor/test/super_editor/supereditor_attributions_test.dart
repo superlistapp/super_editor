@@ -1,6 +1,10 @@
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
+import 'package:super_editor/src/default_editor/attributions.dart';
+import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/text_input.dart';
+import 'package:super_editor/src/test/ime.dart';
 import 'package:super_editor/src/test/super_editor_test/supereditor_inspector.dart';
 import 'package:super_editor/src/test/super_editor_test/supereditor_robot.dart';
 
@@ -197,6 +201,48 @@ void main() {
 
         // Ensure the bold attribution wasn't applied to the inserted text.
         expect(doc, equalsMarkdown("A very **bold** text"));
+      });
+    });
+
+    group("doesn't clear attributions", () {
+      testWidgetsOnAllPlatforms("when changing the selection affinity", (tester) async {
+        final context = await tester //
+            .createDocument()
+            .fromMarkdown("This text should be")
+            .withInputSource(TextInputSource.ime)
+            .pump();
+
+        final doc = context.editContext.editor.document;
+        final composer = context.editContext.composer;
+
+        // Place the caret at the end of the paragraph.
+        await tester.placeCaretInParagraph(doc.nodes.first.id, 19);
+
+        // Toggle the bold attribution.
+        composer.preferences.toggleStyle(boldAttribution);
+        await tester.pump();
+
+        // Ensure we have an upstream selection.
+        expect((composer.selection!.extent.nodePosition as TextNodePosition).affinity, TextAffinity.upstream);
+
+        // Simulate the IME sending us a selection at the same offset
+        // but with a different affinity.
+        await tester.ime.sendDeltas(
+          [
+            const TextEditingDeltaNonTextUpdate(
+              oldText: "This text should be",
+              selection: TextSelection.collapsed(offset: 19, affinity: TextAffinity.downstream),
+              composing: TextRange.empty,
+            ),
+          ],
+          getter: imeClientGetter,
+        );
+
+        // Type text at the end of the paragraph.
+        await tester.typeImeText(" bold");
+
+        // Ensure the bold attribution is applied.
+        expect(doc, equalsMarkdown("This text should be** bold**"));
       });
     });
   });
