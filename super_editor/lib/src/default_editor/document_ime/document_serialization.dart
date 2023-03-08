@@ -88,7 +88,7 @@ class DocumentImeSerializer {
       // Cache mappings between the IME text range and the document position
       // so that we can easily convert between the two, when requested.
       final imeRange = TextRange(start: characterCount, end: characterCount + node.text.text.length);
-      editorImeLog.finer("IME range $imeRange -> text node content '${node.text.text.length}'");
+      editorImeLog.finer("IME range $imeRange -> text node content '${node.text.text}'");
       _imeRangesToDocTextNodes[imeRange] = node.id;
       _docTextNodesToImeRanges[node.id] = imeRange;
 
@@ -160,16 +160,21 @@ class DocumentImeSerializer {
       editorImeLog.fine("The serialization doesn't have any invisible characters. No adjustment necessary.");
     }
 
-    return DocumentSelection(
-      base: _imeToDocumentPosition(
-        imeSelection.base,
-        isUpstream: imeSelection.base.affinity == TextAffinity.upstream,
-      ),
-      extent: _imeToDocumentPosition(
-        imeSelection.extent,
-        isUpstream: imeSelection.extent.affinity == TextAffinity.upstream,
-      ),
+    editorImeLog.fine("Calculating the base DocumentPosition for the DocumentSelection");
+    final base = _imeToDocumentPosition(
+      imeSelection.base,
+      isUpstream: imeSelection.base.affinity == TextAffinity.upstream,
     );
+    editorImeLog.fine("Selection base: $base");
+
+    editorImeLog.fine("Calculating the extent DocumentPosition for the DocumentSelection");
+    final extent = _imeToDocumentPosition(
+      imeSelection.extent,
+      isUpstream: imeSelection.extent.affinity == TextAffinity.upstream,
+    );
+    editorImeLog.fine("Selection extent: $extent");
+
+    return DocumentSelection(base: base, extent: extent);
   }
 
   DocumentRange? imeToDocumentRange(TextRange imeRange) {
