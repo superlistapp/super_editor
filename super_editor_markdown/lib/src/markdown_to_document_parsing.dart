@@ -25,7 +25,20 @@ MutableDocument deserializeMarkdownToDocument(
   List<md.InlineSyntax> customInlineSyntax = const [],
   InlineMarkdownToDocument Function()? inlineMarkdownToDocumentBuilder,
 }) {
-  final markdownLines = const LineSplitter().convert(markdown);
+  // We need to remove whitespaces on 'empty lines' because otherwise the
+  // parsing.
+  final markdownLines = const LineSplitter().convert(markdown).map((line) {
+    // Trim lines that only contain whitespaces. Otherwise we could mess up
+    // indented lists or remove support for different line breaks.
+    // e.g.
+    // * two whitespaces at the end of a line to insert a line break
+    // * two whitespaces at the start of a bullet to indent the bullet
+    if (line.trim().length == 0) {
+      return line.trim();
+    }
+
+    return line;
+  }).toList();
 
   final markdownDoc = md.Document(
     blockSyntaxes: [
