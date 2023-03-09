@@ -515,10 +515,12 @@ class AttributedTextEditingController with ChangeNotifier {
       return;
     }
 
+    final previousCharacterOffset = getCharacterStartBounds(_text.text, selection.extentOffset);
+
     delete(
-      from: selection.extentOffset - 1,
+      from: previousCharacterOffset,
       to: selection.extentOffset,
-      newSelection: TextSelection.collapsed(offset: selection.extentOffset - 1),
+      newSelection: TextSelection.collapsed(offset: previousCharacterOffset),
       newComposingRegion: newComposingRegion,
     );
   }
@@ -537,9 +539,11 @@ class AttributedTextEditingController with ChangeNotifier {
       return;
     }
 
+    final nextCharacterOffset = getCharacterEndBounds(_text.text, selection.extentOffset);
+
     delete(
       from: selection.extentOffset,
-      to: selection.extentOffset + 1,
+      to: nextCharacterOffset,
       newSelection: TextSelection.collapsed(offset: selection.extentOffset),
       newComposingRegion: newComposingRegion,
     );
