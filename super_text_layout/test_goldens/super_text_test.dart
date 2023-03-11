@@ -10,16 +10,25 @@ void main() {
         await _pumpThreeLinePlainText(tester);
         await screenMatchesGolden(tester, "SuperText-reference-render");
       });
+
+      testGoldens("applies textScaleFactor", (tester) async {
+        await _pumpThreeLinePlainText(tester, textScaleFactor: 2.0);
+        await screenMatchesGolden(tester, "SuperText-text-scale-factor");
+      });
     });
   });
 }
 
-Future<void> _pumpThreeLinePlainText(WidgetTester tester) async {
+Future<void> _pumpThreeLinePlainText(
+  WidgetTester tester, {
+  double textScaleFactor = 1.0,
+}) async {
   await tester.pumpWidget(
     _buildScaffold(
       child: SuperText(
         key: _textKey,
         richText: _threeLineSpan,
+        textScaleFactor: textScaleFactor,
       ),
     ),
   );
