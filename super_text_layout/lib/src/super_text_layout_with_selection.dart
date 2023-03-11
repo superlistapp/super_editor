@@ -22,6 +22,7 @@ class SuperTextWithSelection extends StatefulWidget {
     required this.richText,
     this.textAlign = TextAlign.left,
     this.textDirection = TextDirection.ltr,
+    this.textScaleFactor = 1.0,
     UserSelection? userSelection,
   })  : userSelections = userSelection != null ? [userSelection] : const [],
         super(key: key);
@@ -32,6 +33,7 @@ class SuperTextWithSelection extends StatefulWidget {
     required this.richText,
     this.textAlign = TextAlign.left,
     this.textDirection = TextDirection.ltr,
+    this.textScaleFactor = 1.0,
     this.userSelections = const [],
   }) : super(key: key);
 
@@ -51,6 +53,14 @@ class SuperTextWithSelection extends StatefulWidget {
   ///
   /// A user selection includes a caret and a selection highlight.
   final List<UserSelection> userSelections;
+
+  /// The number of font pixels for each logical pixel.
+  ///
+  /// For example, if the text scale factor is 1.5, text will be 50% larger than
+  /// the specified font size.
+  ///
+  /// Defaults to `1.0`.
+  final double textScaleFactor;
 
   @override
   State<SuperTextWithSelection> createState() => _SuperTextWithSelectionState();
@@ -98,6 +108,7 @@ class _SuperTextWithSelectionState extends ProseTextState<SuperTextWithSelection
       textLayoutKey: _textLayoutKey,
       richText: widget.richText,
       textAlign: widget.textAlign,
+      textScaleFactor: widget.textScaleFactor,
       userSelections: _userSelections,
     );
   }
@@ -109,12 +120,14 @@ class _RebuildOptimizedSuperTextWithSelection extends StatefulWidget {
     this.textLayoutKey,
     required this.richText,
     this.textAlign = TextAlign.left,
+    this.textScaleFactor = 1.0,
     required this.userSelections,
   }) : super(key: key);
 
   final Key? textLayoutKey;
   final InlineSpan richText;
   final TextAlign textAlign;
+  final double textScaleFactor;
 
   final ValueNotifier<List<UserSelection>> userSelections;
 
@@ -151,6 +164,14 @@ class _RebuildOptimizedSuperTextWithSelectionState extends State<_RebuildOptimiz
       // the cache so that the full SuperText widget subtree is rebuilt.
       _cachedSubtree = null;
     }
+
+    if (widget.textScaleFactor != oldWidget.textScaleFactor) {
+      buildsLog.fine("Text scaleFactor changed. Invalidating the cached SuperText widget.");
+
+      // The text scaleFactor changed, which means the text layout changed. Invalidate
+      // the cache so that the full SuperText widget subtree is rebuilt.
+      _cachedSubtree = null;
+    }
   }
 
   // The current length of the text displayed by this widget. The value
@@ -177,6 +198,7 @@ class _RebuildOptimizedSuperTextWithSelectionState extends State<_RebuildOptimiz
       key: widget.textLayoutKey,
       richText: widget.richText,
       textAlign: widget.textAlign,
+      textScaleFactor: widget.textScaleFactor,
       layerBeneathBuilder: _buildLayerBeneath,
       layerAboveBuilder: _buildLayerAbove,
     );
