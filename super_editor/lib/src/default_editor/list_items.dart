@@ -285,7 +285,7 @@ class UnorderedListItemComponent extends StatelessWidget {
   Widget build(BuildContext context) {
     final textStyle = styleBuilder({});
     final indentSpace = indentCalculator(textStyle, indent);
-    final lineHeight = textStyle.fontSize! * (textStyle.height ?? 1.25);
+    final lineHeight = textStyle.fontSize! * (textStyle.height ?? 1.25) * MediaQuery.textScaleFactorOf(context);
     const manualVerticalAdjustment = 3.0;
 
     return Row(
@@ -374,7 +374,7 @@ class OrderedListItemComponent extends StatelessWidget {
   Widget build(BuildContext context) {
     final textStyle = styleBuilder({});
     final indentSpace = indentCalculator(textStyle, indent);
-    final lineHeight = textStyle.fontSize! * (textStyle.height ?? 1.0);
+    final lineHeight = textStyle.fontSize! * (textStyle.height ?? 1.0) * MediaQuery.textScaleFactorOf(context);
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,

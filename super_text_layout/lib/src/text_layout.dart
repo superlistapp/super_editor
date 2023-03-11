@@ -14,12 +14,12 @@ abstract class TextLayout {
   /// Returns the height of the character at the given [position].
   double getLineHeightAtPosition(TextPosition position);
 
-  /// Returns the estimated line height  
-  /// 
-  /// This is needed because if the text contains only emojis 
+  /// Returns the estimated line height
+  ///
+  /// This is needed because if the text contains only emojis
   /// we can't get a [TextBox] from flutter to determine
   /// the line height
-  /// 
+  ///
   /// WARNING: This method should be called only when absolutely necessary
   /// and may be removed in the future
   double get estimatedLineHeight;
@@ -49,10 +49,10 @@ abstract class TextLayout {
   /// Returns a [List] of [TextBox]es that contain the given [selection].
   List<TextBox> getBoxesForSelection(TextSelection selection);
 
-  /// Returns a bounding [TextBox] for the character at the given [position] or `null` 
+  /// Returns a bounding [TextBox] for the character at the given [position] or `null`
   /// if a character box couldn't be found.
-  /// 
-  /// The only situation where this could return null is when the text 
+  ///
+  /// The only situation where this could return null is when the text
   /// contains only emojis
   TextBox? getCharacterBox(TextPosition position);
 
@@ -197,6 +197,8 @@ class RenderParagraphProseTextLayout implements ProseTextLayout {
   final RenderLayoutAwareParagraph _renderParagraph;
   late final int _textLength;
 
+  double get textScaleFactor => _renderParagraph.textScaleFactor;
+
   @override
   double get estimatedLineHeight {
     final fontSize = _richText.style?.fontSize;
@@ -246,7 +248,8 @@ class RenderParagraphProseTextLayout implements ProseTextLayout {
     // If no text is currently displayed, we can't use a character box
     // to measure, but we may be able to use related metrics.
     if (_textLength == 0) {
-      final estimatedLineHeight = _renderParagraph.getFullHeightForCaret(position) ?? _richText.style?.fontSize ?? 0.0;
+      final estimatedLineHeight =
+          _renderParagraph.getFullHeightForCaret(position) ?? (_richText.style?.fontSize ?? 0.0) * textScaleFactor;
       return estimatedLineHeight * lineHeightMultiplier;
     }
 
@@ -255,8 +258,8 @@ class RenderParagraphProseTextLayout implements ProseTextLayout {
     final characterBox = getCharacterBox(position);
     if (characterBox == null) {
       return estimatedLineHeight;
-    }    
-    return characterBox.toRect().height * lineHeightMultiplier;    
+    }
+    return characterBox.toRect().height * lineHeightMultiplier;
   }
 
   @override
