@@ -1,6 +1,7 @@
 import 'package:example/demos/components/demo_text_with_hint.dart';
 import 'package:example/demos/components/demo_unselectable_hr.dart';
 import 'package:example/demos/debugging/simple_deltas_input.dart';
+import 'package:example/demos/demo_animated_task_height.dart';
 import 'package:example/demos/demo_app_shortcuts.dart';
 import 'package:example/demos/demo_empty_document.dart';
 import 'package:example/demos/demo_markdown_serialization.dart';
@@ -254,6 +255,13 @@ final _menu = <_MenuGroup>[
         title: 'Empty Document',
         pageBuilder: (context) {
           return EmptyDocumentDemo();
+        },
+      ),
+      _MenuItem(
+        icon: Icons.description,
+        title: 'Animated task height demo',
+        pageBuilder: (context) {
+          return AnimatedTaskHeightDemo();
         },
       ),
     ],
