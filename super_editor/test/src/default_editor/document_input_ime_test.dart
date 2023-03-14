@@ -189,70 +189,24 @@ void main() {
           ),
           TextEditingDeltaInsertion(
             oldText: '',
-            textInserted: 'Goin',
+            textInserted: 'Goi',
             insertionOffset: 0,
-            selection: TextSelection.collapsed(offset: 4),
-            composing: TextRange(start: 0, end: 4),
-          )
-        ],
-        getter: imeClientGetter,
-      );
-
-      // Send the insertion of 'h'.
-      // The current text is 'Goinh'. This is a typo, which will be auto-corrected later.
-      await tester.ime.sendDeltas(
-        const [
-          TextEditingDeltaNonTextUpdate(
-            oldText: 'Goin',
-            selection: TextSelection.collapsed(offset: 4),
-            composing: TextRange(start: 0, end: 4),
-          ),
-          TextEditingDeltaInsertion(
-            oldText: 'Goin',
-            textInserted: 'h',
-            insertionOffset: 4,
-            selection: TextSelection.collapsed(offset: 5),
-            composing: TextRange(start: 0, end: 5),
-          )
-        ],
-        getter: imeClientGetter,
-      );
-
-      // Simulate the IME changing the composing region.
-      await tester.ime.sendDeltas(
-        const [
-          TextEditingDeltaNonTextUpdate(
-            oldText: 'Goinh',
-            selection: TextSelection.collapsed(offset: 5),
-            composing: TextRange(start: -1, end: -1),
+            selection: TextSelection.collapsed(offset: 3),
+            composing: TextRange(start: 0, end: 3),
           )
         ],
         getter: imeClientGetter,
       );
 
       // Send the insertion of '.'.
-      // The current text is 'Goinh.'.
+      // The current text is 'Goin.'.
       await tester.ime.sendDeltas(
         const [
           TextEditingDeltaInsertion(
-            oldText: 'Goinh',
+            oldText: 'Goi',
             textInserted: '.',
-            insertionOffset: 5,
-            selection: TextSelection.collapsed(offset: 6),
-            composing: TextRange(start: -1, end: -1),
-          )
-        ],
-        getter: imeClientGetter,
-      );
-
-      // Simulate the auto-correction kicking in.
-      // First, delete everything.
-      await tester.ime.sendDeltas(
-        const [
-          TextEditingDeltaDeletion(
-            oldText: 'Goinh.',
-            deletedRange: TextRange(start: 0, end: 6),
-            selection: TextSelection.collapsed(offset: 0),
+            insertionOffset: 3,
+            selection: TextSelection.collapsed(offset: 4),
             composing: TextRange(start: -1, end: -1),
           )
         ],
@@ -263,10 +217,86 @@ void main() {
       // followed by the insertion of the '.' that were typed.
       await tester.ime.sendDeltas(
         const [
+          TextEditingDeltaReplacement(
+            oldText: 'Goi.',
+            replacedRange: TextRange(start: 3, end: 4),
+            replacementText: 'ng',
+            selection: TextSelection.collapsed(offset: 5),
+            composing: TextRange(start: -1, end: -1),
+          ),
+          TextEditingDeltaInsertion(
+            oldText: 'Going',
+            textInserted: '.',
+            insertionOffset: 5,
+            selection: TextSelection.collapsed(offset: 6),
+            composing: TextRange(start: -1, end: -1),
+          ),
+        ],
+        getter: imeClientGetter,
+      );
+
+      // Ensure the text was inserted.
+      expect(
+        SuperEditorInspector.findTextInParagraph('1').text,
+        'Going.',
+      );
+    });
+
+    testWidgetsOnAllPlatforms('applies replacement and insertion deltas at once', (tester) async {
+      // This test simulates an auto-correction scenario,
+      // where the IME sends replacement and insertion deltas at once.
+
+      await tester //
+          .createDocument()
+          .withSingleEmptyParagraph()
+          .withInputSource(TextInputSource.ime)
+          .pump();
+
+      // Place caret at the start of the document.
+      await tester.placeCaretInParagraph('1', 0);
+
+      // Send initial delta, insertion of 'Goi'.
+      await tester.ime.sendDeltas(
+        const [
+          TextEditingDeltaNonTextUpdate(
+            oldText: '',
+            selection: TextSelection.collapsed(offset: 0),
+            composing: TextRange(start: -1, end: -1),
+          ),
           TextEditingDeltaInsertion(
             oldText: '',
-            textInserted: 'Going',
+            textInserted: 'Goi',
             insertionOffset: 0,
+            selection: TextSelection.collapsed(offset: 3),
+            composing: TextRange(start: 0, end: 3),
+          )
+        ],
+        getter: imeClientGetter,
+      );
+
+      // Send the insertion of '.'.
+      // The current text is 'Goi.'.
+      await tester.ime.sendDeltas(
+        const [
+          TextEditingDeltaInsertion(
+            oldText: 'Goi',
+            textInserted: '.',
+            insertionOffset: 3,
+            selection: TextSelection.collapsed(offset: 4),
+            composing: TextRange(start: -1, end: -1),
+          )
+        ],
+        getter: imeClientGetter,
+      );
+
+      // Send the replacement of the auto-corrected word,
+      // followed by the insertion of the '.' that were typed.
+      await tester.ime.sendDeltas(
+        const [
+          TextEditingDeltaReplacement(
+            oldText: 'Goi.',
+            replacedRange: TextRange(start: 3, end: 4),
+            replacementText: 'ng',
             selection: TextSelection.collapsed(offset: 5),
             composing: TextRange(start: -1, end: -1),
           ),
