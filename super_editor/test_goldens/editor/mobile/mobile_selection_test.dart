@@ -425,7 +425,7 @@ void main() {
               const DocumentSelection.collapsed(
                 position: DocumentPosition(
                   nodeId: "1",
-                  nodePosition: TextNodePosition(offset: 28, affinity: TextAffinity.upstream),
+                  nodePosition: TextNodePosition(offset: 28),
                 ),
               ),
             );
@@ -476,7 +476,7 @@ void main() {
               const DocumentSelection.collapsed(
                 position: DocumentPosition(
                   nodeId: "1",
-                  nodePosition: TextNodePosition(offset: 39, affinity: TextAffinity.upstream),
+                  nodePosition: TextNodePosition(offset: 39),
                 ),
               ),
             );

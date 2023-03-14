@@ -2,6 +2,8 @@ name: super_text_layout
 description: Configurable, composable, extensible text display for Flutter.
 version: 0.1.4
 homepage: https://github.com/superlistapp/super_editor
+executables:
+  goldens:
 
 environment:
   sdk: ">=2.12.0 <3.0.0"
@@ -25,6 +27,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   golden_toolkit: ^0.11.0
+  args: ^2.3.1
 
 flutter:
   # no Flutter configuration
