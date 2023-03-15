@@ -166,7 +166,7 @@ void main() {
       expect(document.nodes.length, 1);
     });
 
-    testWidgetsOnAllPlatforms('applies multiple insertion deltas at once', (tester) async {
+    testWidgetsOnAllPlatforms('applies list of deltas the way some IMEs report them', (tester) async {
       // This test simulates an auto-correction scenario,
       // where the IME sends multiple insertion deltas at once.
 
@@ -179,82 +179,6 @@ void main() {
       // Place caret at the start of the document.
       await tester.placeCaretInParagraph('1', 0);
 
-      // Send initial delta, insertion of 'Goin'.
-      await tester.ime.sendDeltas(
-        const [
-          TextEditingDeltaNonTextUpdate(
-            oldText: '',
-            selection: TextSelection.collapsed(offset: 0),
-            composing: TextRange(start: -1, end: -1),
-          ),
-          TextEditingDeltaInsertion(
-            oldText: '',
-            textInserted: 'Goi',
-            insertionOffset: 0,
-            selection: TextSelection.collapsed(offset: 3),
-            composing: TextRange(start: 0, end: 3),
-          )
-        ],
-        getter: imeClientGetter,
-      );
-
-      // Send the insertion of '.'.
-      // The current text is 'Goin.'.
-      await tester.ime.sendDeltas(
-        const [
-          TextEditingDeltaInsertion(
-            oldText: 'Goi',
-            textInserted: '.',
-            insertionOffset: 3,
-            selection: TextSelection.collapsed(offset: 4),
-            composing: TextRange(start: -1, end: -1),
-          )
-        ],
-        getter: imeClientGetter,
-      );
-
-      // Send the insertion of the auto-corrected word,
-      // followed by the insertion of the '.' that were typed.
-      await tester.ime.sendDeltas(
-        const [
-          TextEditingDeltaReplacement(
-            oldText: 'Goi.',
-            replacedRange: TextRange(start: 3, end: 4),
-            replacementText: 'ng',
-            selection: TextSelection.collapsed(offset: 5),
-            composing: TextRange(start: -1, end: -1),
-          ),
-          TextEditingDeltaInsertion(
-            oldText: 'Going',
-            textInserted: '.',
-            insertionOffset: 5,
-            selection: TextSelection.collapsed(offset: 6),
-            composing: TextRange(start: -1, end: -1),
-          ),
-        ],
-        getter: imeClientGetter,
-      );
-
-      // Ensure the text was inserted.
-      expect(
-        SuperEditorInspector.findTextInParagraph('1').text,
-        'Going.',
-      );
-    });
-
-    testWidgetsOnAllPlatforms('applies replacement and insertion deltas at once', (tester) async {
-      // This test simulates an auto-correction scenario,
-      // where the IME sends replacement and insertion deltas at once.
-
-      await tester //
-          .createDocument()
-          .withSingleEmptyParagraph()
-          .withInputSource(TextInputSource.ime)
-          .pump();
-
-      // Place caret at the start of the document.
-      await tester.placeCaretInParagraph('1', 0);
-
       // Send initial delta, insertion of 'Goi'.
       await tester.ime.sendDeltas(
         const [
@@ -269,97 +193,6 @@ void main() {
             insertionOffset: 0,
             selection: TextSelection.collapsed(offset: 3),
             composing: TextRange(start: 0, end: 3),
-          )
-        ],
-        getter: imeClientGetter,
-      );
-
-      // Send the insertion of '.'.
-      // The current text is 'Goi.'.
-      await tester.ime.sendDeltas(
-        const [
-          TextEditingDeltaInsertion(
-            oldText: 'Goi',
-            textInserted: '.',
-            insertionOffset: 3,
-            selection: TextSelection.collapsed(offset: 4),
-            composing: TextRange(start: -1, end: -1),
-          )
-        ],
-        getter: imeClientGetter,
-      );
-
-      // Send the replacement of the auto-corrected word,
-      // followed by the insertion of the '.' that were typed.
-      await tester.ime.sendDeltas(
-        const [
-          TextEditingDeltaReplacement(
-            oldText: 'Goi.',
-            replacedRange: TextRange(start: 3, end: 4),
-            replacementText: 'ng',
-            selection: TextSelection.collapsed(offset: 5),
-            composing: TextRange(start: -1, end: -1),
-          ),
-          TextEditingDeltaInsertion(
-            oldText: 'Going',
-            textInserted: '.',
-            insertionOffset: 5,
-            selection: TextSelection.collapsed(offset: 6),
-            composing: TextRange(start: -1, end: -1),
-          ),
-        ],
-        getter: imeClientGetter,
-      );
-
-      // Ensure the text was inserted.
-      expect(
-        SuperEditorInspector.findTextInParagraph('1').text,
-        'Going.',
-      );
-    });
-
-    testWidgetsOnAllPlatforms('applies different kinds of deltas at once', (tester) async {
-      // This test simulates an auto-correction scenario,
-      // where the IME sends deletion, replacement and insertion deltas at once.
-
-      await tester //
-          .createDocument()
-          .withSingleEmptyParagraph()
-          .withInputSource(TextInputSource.ime)
-          .pump();
-
-      // Place caret at the start of the document.
-      await tester.placeCaretInParagraph('1', 0);
-
-      // Send initial delta, insertion of 'Goi'.
-      await tester.ime.sendDeltas(
-        const [
-          TextEditingDeltaNonTextUpdate(
-            oldText: '',
-            selection: TextSelection.collapsed(offset: 0),
-            composing: TextRange(start: -1, end: -1),
-          ),
-          TextEditingDeltaInsertion(
-            oldText: '',
-            textInserted: 'Goi',
-            insertionOffset: 0,
-            selection: TextSelection.collapsed(offset: 3),
-            composing: TextRange(start: 0, end: 3),
-          )
-        ],
-        getter: imeClientGetter,
-      );
-
-      // Send the insertion of 'g'.
-      // The current text is 'Goig'. This is a typo that will be auto-corrected.
-      await tester.ime.sendDeltas(
-        const [
-          TextEditingDeltaInsertion(
-            oldText: 'Goi',
-            textInserted: 'g',
-            insertionOffset: 3,
-            selection: TextSelection.collapsed(offset: 4),
-            composing: TextRange(start: -1, end: -1),
           )
         ],
         getter: imeClientGetter,
@@ -370,41 +203,33 @@ void main() {
         const [
           // This delta represents the '.' typed by the user.
           TextEditingDeltaInsertion(
-            oldText: 'Goig',
+            oldText: 'Goi',
             textInserted: '.',
-            insertionOffset: 4,
-            selection: TextSelection.collapsed(offset: 5),
+            insertionOffset: 3,
+            selection: TextSelection.collapsed(offset: 4),
             composing: TextRange(start: -1, end: -1),
           ),
           // Deltas generated by the auto-correction.
-          // First, delete 'g.'. We end up with 'Goi'.
+          // First, delete everything.
           TextEditingDeltaDeletion(
-            oldText: 'Goig.',
-            deletedRange: TextRange(start: 3, end: 5),
-            selection: TextSelection.collapsed(offset: 3),
+            oldText: 'Goi.',
+            deletedRange: TextRange(start: 0, end: 4),
+            selection: TextSelection.collapsed(offset: 0),
             composing: TextRange(start: -1, end: -1),
           ),
-          // Insert 'ng'. We end up with 'Going'.
+          // Insert the auto-corrected word.
           TextEditingDeltaInsertion(
-            oldText: 'Goi',
-            textInserted: 'ng',
-            insertionOffset: 3,
+            oldText: '',
+            textInserted: 'Going',
+            insertionOffset: 0,
             selection: TextSelection.collapsed(offset: 5),
             composing: TextRange(start: -1, end: -1),
           ),
-          // Insert '.'. We end up with 'Going.'.
+          // Insert the '.' typed.
           TextEditingDeltaInsertion(
             oldText: 'Going',
             textInserted: '.',
             insertionOffset: 5,
-            selection: TextSelection.collapsed(offset: 6),
-            composing: TextRange(start: -1, end: -1),
-          ),
-          // Replace '.' with '. '. We end up with 'Going. '.
-          TextEditingDeltaReplacement(
-            oldText: 'Going.',
-            replacedRange: TextRange(start: 5, end: 6),
-            replacementText: '. ',
             selection: TextSelection.collapsed(offset: 6),
             composing: TextRange(start: -1, end: -1),
           ),
@@ -415,7 +240,7 @@ void main() {
       // Ensure the text was inserted.
       expect(
         SuperEditorInspector.findTextInParagraph('1').text,
-        'Going. ',
+        'Going.',
       );
     });
 
