@@ -36,16 +36,17 @@ class TextDeltasDocumentEditor {
   void applyDeltas(List<TextEditingDelta> textEditingDeltas) {
     editorImeLog.info("Applying ${textEditingDeltas.length} IME deltas to document");
 
-    editorImeLog.fine("Serializing document to perform IME operations");
-    final serializedDocBeforeDelta = DocumentImeSerializer(
-      editor.document,
-      selection.value!,
-      composingRegion.value,
-    );
-
     // Apply deltas to the document.
+    late DocumentImeSerializer serializedDocBeforeDelta;
     for (final delta in textEditingDeltas) {
       editorImeLog.info("---------------------------------------------------");
+      editorImeLog.fine("Serializing document to perform IME operations");
+      serializedDocBeforeDelta = DocumentImeSerializer(
+        editor.document,
+        selection.value!,
+        composingRegion.value,
+      );
+
       editorImeLog.info("Applying delta: $delta");
       if (delta is TextEditingDeltaInsertion) {
         _applyInsertion(delta, serializedDocBeforeDelta);
