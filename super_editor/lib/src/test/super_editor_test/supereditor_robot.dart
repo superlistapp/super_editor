@@ -118,6 +118,9 @@ extension SuperEditorRobot on WidgetTester {
       await pump(kTapMinTime + const Duration(milliseconds: 1));
     }
 
+    // Pump long enough to prevent the next tap from being seen as a sequence on top of these taps.
+    await pump(kTapTimeout);
+
     await pumpAndSettle();
   }
 

@@ -38,9 +38,12 @@ class CaretDocumentOverlay extends StatefulWidget {
 }
 
 class _CaretDocumentOverlayState extends State<CaretDocumentOverlay> with SingleTickerProviderStateMixin {
-  final _caret = ValueNotifier<Rect?>(null);
+  Rect? _caret;
   late final BlinkController _blinkController;
   BoxConstraints? _previousConstraints;
+
+  bool _didFirstBuild = false;
+  bool _isCaretDirty = false;
 
   @override
   void initState() {
@@ -50,9 +53,9 @@ class _CaretDocumentOverlayState extends State<CaretDocumentOverlay> with Single
     _blinkController = BlinkController(tickerProvider: this)..startBlinking();
 
     // If we already have a selection, we need to display the caret.
-    if (widget.composer.selection != null) {
-      _scheduleCaretUpdate();
-    }
+    // if (widget.composer.selection != null) {
+    //   _scheduleCaretUpdate();
+    // }
   }
 
   @override
@@ -69,9 +72,9 @@ class _CaretDocumentOverlayState extends State<CaretDocumentOverlay> with Single
       widget.composer.selectionNotifier.addListener(_scheduleCaretUpdate);
 
       // Selection has changed, we need to update the caret.
-      if (widget.composer.selection != oldWidget.composer.selection) {
-        _scheduleCaretUpdate();
-      }
+      // if (widget.composer.selection != oldWidget.composer.selection) {
+      //   _scheduleCaretUpdate();
+      // }
     }
   }
 
@@ -85,79 +88,120 @@ class _CaretDocumentOverlayState extends State<CaretDocumentOverlay> with Single
 
   /// Schedules a caret update after the current frame.
   void _scheduleCaretUpdate() {
+    // print("");
+    // print("Scheduling caret update at the end of the frame");
     // Give the document a frame to update its layout before we lookup
     // the extent offset.
+    _isCaretDirty = true;
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      _updateCaretOffset();
+      if (!_isCaretDirty) {
+        return;
+      }
+
+      // print("");
+      // print("At the end of the frame - updating caret after content change");
+      _updateCaretAfterContentChange();
     });
   }
 
-  void _updateCaretOffset() {
+  /// Updates the caret rect, adjusts the blinking behavior, and schedules a rebuild so that the
+  /// new caret rect and blinking state are reflected in the widget tree.
+  void _updateCaretAfterContentChange() {
     if (!mounted) {
       return;
     }
 
+    // print("");
+    // print("Updating caret after content change");
+    setState(() {
+      final documentSelection = widget.composer.selection;
+      if (documentSelection == null) {
+        _caret = null;
+        _blinkController.stopBlinking();
+        return;
+      }
+
+      _blinkController.startBlinking();
+      _blinkController.jumpToOpaque();
+
+      _positionCaret();
+
+      _isCaretDirty = false;
+    });
+  }
+
+  /// Updates the caret rect, immediately, without scheduling a rebuild.
+  void _positionCaret() {
     final documentSelection = widget.composer.selection;
     if (documentSelection == null) {
-      _caret.value = null;
-      _blinkController.stopBlinking();
+      return;
+    }
+    // print("Positioning caret for selection $documentSelection");
+
+    final documentLayout = widget.documentLayoutResolver();
+    final selectedComponent = documentLayout.getComponentByNodeId(widget.composer.selection!.extent.nodeId);
+    // print("Selected component: $selectedComponent");
+    if (selectedComponent == null) {
+      // Assume that we're in a momentary transitive state where the document layout
+      // just gained or lost a component. We expect this method ot run again in a moment
+      // to correct for this.
       return;
     }
 
-    _blinkController.startBlinking();
-    _blinkController.jumpToOpaque();
-
-    final documentLayout = widget.documentLayoutResolver();
-    _caret.value = documentLayout.getRectForPosition(documentSelection.extent)!;
+    // print("Calculating caret rect...");
+    _caret = documentLayout.getRectForPosition(documentSelection.extent)!;
+    // print("New caret rect: $_caret");
   }
 
   @override
   Widget build(BuildContext context) {
+    // print("Building caret overlay");
+
+    _positionCaret();
+
     // IgnorePointer so that when the user double and triple taps, the
     // caret doesn't intercept those later taps.
     return IgnorePointer(
-      child: ValueListenableBuilder<Rect?>(
-        valueListenable: _caret,
-        builder: (context, caret, child) {
-          // We use a LayoutBuilder because the appropriate offset for the caret
-          // is based on the flow of content, which is based on the document's
-          // size/constraints. We need to re-calculate the caret offset when the
-          // constraints change.
-          return LayoutBuilder(builder: (context, constraints) {
-            if (_previousConstraints != null && constraints != _previousConstraints) {
-              // Use a post-frame callback to avoid calling setState() during build.
-              WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-                _updateCaretOffset();
-              });
-            }
-            _previousConstraints = constraints;
+      // We use a LayoutBuilder because the appropriate offset for the caret
+      // is based on the flow of content, which is based on the document's
+      // size/constraints. We need to re-calculate the caret offset when the
+      // constraints change.
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // if (_previousConstraints != null && constraints != _previousConstraints) {
+          //   // Use a post-frame callback to avoid calling setState() during build.
+          //   WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+          //     _updateCaretAfterContentChange();
+          //   });
+          // }
+          // _previousConstraints = constraints;
 
-            return RepaintBoundary(
-              child: Stack(
-                children: [
-                  if (caret != null)
-                    Positioned(
-                      top: caret.top,
-                      left: caret.left,
-                      height: caret.height,
-                      child: AnimatedBuilder(
-                        animation: _blinkController,
-                        builder: (context, child) {
-                          return Container(
-                            key: primaryCaretKey,
-                            width: widget.caretStyle.width,
-                            decoration: BoxDecoration(
-                              color: widget.caretStyle.color.withOpacity(_blinkController.opacity),
-                              borderRadius: widget.caretStyle.borderRadius,
-                            ),
-                          );
-                        },
-                      ),
+          // print("Caret position: ${_caret?.bottomLeft}");
+          return RepaintBoundary(
+            child: Stack(
+              children: [
+                if (_caret != null)
+                  Positioned(
+                    top: _caret!.top,
+                    left: _caret!.left,
+                    height: _caret!.height,
+                    child: AnimatedBuilder(
+                      animation: _blinkController,
+                      builder: (context, child) {
+                        return Container(
+                          key: primaryCaretKey,
+                          width: widget.caretStyle.width,
+                          decoration: BoxDecoration(
+                            color: widget.caretStyle.color.withOpacity(_blinkController.opacity),
+                            borderRadius: widget.caretStyle.borderRadius,
+                          ),
+                        );
+                      },
                     ),
-                ],
-              ),
-            );
-          });
+                  ),
+              ],
+            ),
+          );
         },
       ),
     );

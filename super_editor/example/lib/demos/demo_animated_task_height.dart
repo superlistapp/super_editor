@@ -48,6 +48,7 @@ class _AnimatedTaskHeightDemoState extends State<AnimatedTaskHeightDemo> {
 
   @override
   Widget build(BuildContext context) {
+    print("Building the entire demo");
     return SuperEditor(
       editor: _docEditor,
       stylesheet: defaultStylesheet.copyWith(
@@ -83,6 +84,7 @@ class AnimatedTaskComponentBuilder implements ComponentBuilder {
       return null;
     }
 
+    print("Creating animated task component");
     return _AnimatedTaskComponent(
       key: componentContext.componentKey,
       viewModel: componentViewModel,
@@ -116,6 +118,7 @@ class _AnimatedTaskComponentState extends State<_AnimatedTaskComponent>
 
   @override
   Widget build(BuildContext context) {
+    print("Building animated task component");
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -156,23 +159,35 @@ class _AnimatedTaskComponentState extends State<_AnimatedTaskComponent>
         ),
         Padding(
           padding: const EdgeInsets.only(left: 56),
-          child: AnimatedSize(
-            duration: const Duration(milliseconds: 100),
-            child: widget.viewModel.selection != null
-                ? SizedBox(
-                    height: 20,
-                    child: Row(
-                      children: [
-                        Icon(Icons.label_important_outline, size: 16),
-                        const SizedBox(width: 4),
-                        Icon(Icons.timelapse_sharp, size: 16),
-                      ],
-                    ),
-                  )
-                : const SizedBox.shrink(),
+          child: NotificationListener<SizeChangedLayoutNotification>(
+            onNotification: (SizeChangedLayoutNotification notification) {
+              print(
+                  "AnimatedSize reported a size change ($this) - new size: ${(_animatedSizeKey.currentContext!.findRenderObject() as RenderBox).size}");
+              return true;
+            },
+            child: SizeChangedLayoutNotifier(
+              child: AnimatedSize(
+                key: _animatedSizeKey,
+                duration: const Duration(milliseconds: 100),
+                child: widget.viewModel.selection != null
+                    ? SizedBox(
+                        height: 20,
+                        child: Row(
+                          children: [
+                            Icon(Icons.label_important_outline, size: 16),
+                            const SizedBox(width: 4),
+                            Icon(Icons.timelapse_sharp, size: 16),
+                          ],
+                        ),
+                      )
+                    : const SizedBox.shrink(),
+              ),
+            ),
           ),
         ),
       ],
     );
   }
+
+  final _animatedSizeKey = GlobalKey();
 }

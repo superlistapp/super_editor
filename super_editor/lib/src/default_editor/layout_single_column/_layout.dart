@@ -640,6 +640,7 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
   @override
   Widget build(BuildContext context) {
     editorLayoutLog.fine("Building document layout");
+    // print("Building document layout");
     return Padding(
       padding: widget.presenter.viewModel.padding,
       child: Column(
@@ -897,6 +898,8 @@ class _Component extends StatelessWidget {
     for (final componentBuilder in componentBuilders) {
       var component = componentBuilder.createComponent(componentContext, componentViewModel);
       if (component != null) {
+        // TODO: we might need a SizeChangedNotifier here for the case where two components
+        //       change size exactly inversely
         component = ConstrainedBox(
           constraints: BoxConstraints(maxWidth: componentViewModel.maxWidth ?? double.infinity),
           child: SizedBox(

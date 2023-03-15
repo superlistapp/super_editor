@@ -18,6 +18,7 @@ import 'package:super_editor/src/default_editor/document_scrollable.dart';
 import 'package:super_editor/src/default_editor/list_items.dart';
 import 'package:super_editor/src/default_editor/tasks.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/content_layers.dart';
 import 'package:super_editor/src/infrastructure/links.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
 import 'package:super_editor/src/infrastructure/text_input.dart';
@@ -668,6 +669,10 @@ class SuperEditorState extends State<SuperEditor> {
               // It's beneath the document so that components that include
               // interactive UI, like a Checkbox, can intercept their own
               // touch events.
+              //
+              // This layer is placed outside of `ContentLayers` because this
+              // layer needs to be wider than the document, to fill all available
+              // space.
               Positioned.fill(
                 child: DocumentMouseInteractor(
                   focusNode: _focusNode,
@@ -681,18 +686,13 @@ class SuperEditorState extends State<SuperEditor> {
                   child: const SizedBox(),
                 ),
               ),
-              // The document that the user is editing.
               Align(
                 alignment: Alignment.topCenter,
-                child: Stack(
-                  children: [
-                    documentLayout,
-                    // We display overlay builders in this inner-Stack so that they
-                    // match the document size, rather than the viewport size.
+                child: ContentLayers(
+                  content: documentLayout,
+                  overlays: [
                     for (final overlayBuilder in widget.documentOverlayBuilders)
-                      Positioned.fill(
-                        child: overlayBuilder.build(context, editContext),
-                      ),
+                      overlayBuilder.build(context, editContext),
                   ],
                 ),
               ),
@@ -797,11 +797,15 @@ class DefaultCaretOverlayBuilder implements DocumentLayerBuilder {
 
   @override
   Widget build(BuildContext context, EditContext editContext) {
-    return CaretDocumentOverlay(
-      composer: editContext.composer,
-      documentLayoutResolver: () => editContext.documentLayout,
-      caretStyle: caretStyle,
-      document: editContext.editor.document,
+    return IgnorePointer(
+      // ^ ignore pointer so that user gestures fall through to the document gesture
+      //   system, which sits beneath the document.
+      child: CaretDocumentOverlay(
+        composer: editContext.composer,
+        documentLayoutResolver: () => editContext.documentLayout,
+        caretStyle: caretStyle,
+        document: editContext.editor.document,
+      ),
     );
   }
 }
