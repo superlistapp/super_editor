@@ -40,6 +40,10 @@ class ContentLayers extends RenderObjectWidget {
   }
 }
 
+// For reference to similar framework implementations:
+// MultiChildRenderObjectElement
+// ContainerRenderObjectMixin
+
 class ContentLayersElement extends RenderObjectElement {
   ContentLayersElement(RenderObjectWidget widget) : super(widget);
 
@@ -78,12 +82,14 @@ class ContentLayersElement extends RenderObjectElement {
   }
 
   void buildLayers() {
+    print("Building layers in ContentLayersElement");
     // FIXME: To get the layers to rebuild, we have to deactivate the existing layer Element and re-inflate
     //        the layer's widget. This probably creates a lot of extra work for layers that don't
     //        need to be rebuilt. Create a way for layers to opt-in to this behavior.
 
     owner!.buildScope(this, () {
       for (final underlay in _underlays) {
+        print("Deactivating underlay: $underlay");
         deactivateChild(underlay);
       }
       final List<Element> underlays = List<Element>.filled(widget.underlays.length, _NullElement.instance);
@@ -94,6 +100,7 @@ class ContentLayersElement extends RenderObjectElement {
       _underlays = underlays;
 
       for (final overlay in _overlays) {
+        print("Deactivating overlay: $overlay");
         deactivateChild(overlay);
       }
       final List<Element> overlays = List<Element>.filled(widget.overlays.length, _NullElement.instance);
@@ -172,6 +179,7 @@ class ContentLayersElement extends RenderObjectElement {
 
   @override
   void removeRenderObjectChild(RenderObject child, Object? slot) {
+    print("Remove RenderObject child from element: $slot -> $child");
     assert(child is RenderBox);
     assert(child.parent == renderObject);
     assert(slot != null);
@@ -349,15 +357,15 @@ class RenderContentLayers extends RenderBox {
   }
 
   void removeChild(RenderBox child, Object slot) {
-    // print("Removing $slot - $child");
+    print("Removing $slot - $child");
     assert(_isContentLayersSlot(slot));
 
     if (slot == _contentSlot) {
       _content = null;
     } else if (slot is _UnderlaySlot) {
-      _underlays.removeAt(slot.index);
+      _underlays.remove(child);
     } else if (slot is _OverlaySlot) {
-      _overlays.removeAt(slot.index);
+      _overlays.remove(child);
     }
 
     dropChild(child);
@@ -496,10 +504,16 @@ const _contentSlot = "content";
 
 class _UnderlaySlot extends _IndexedSlot {
   const _UnderlaySlot(int index) : super(index);
+
+  @override
+  String toString() => "[$_UnderlaySlot] - underlay index: $index";
 }
 
 class _OverlaySlot extends _IndexedSlot {
   const _OverlaySlot(int index) : super(index);
+
+  @override
+  String toString() => "[$_OverlaySlot] - overlay index: $index";
 }
 
 class _IndexedSlot {
