@@ -40,9 +40,7 @@ class CaretDocumentOverlay extends StatefulWidget {
 class _CaretDocumentOverlayState extends State<CaretDocumentOverlay> with SingleTickerProviderStateMixin {
   Rect? _caret;
   late final BlinkController _blinkController;
-  BoxConstraints? _previousConstraints;
 
-  bool _didFirstBuild = false;
   bool _isCaretDirty = false;
 
   @override
@@ -51,11 +49,6 @@ class _CaretDocumentOverlayState extends State<CaretDocumentOverlay> with Single
     widget.composer.selectionNotifier.addListener(_scheduleCaretUpdate);
     widget.document.addListener(_scheduleCaretUpdate);
     _blinkController = BlinkController(tickerProvider: this)..startBlinking();
-
-    // If we already have a selection, we need to display the caret.
-    // if (widget.composer.selection != null) {
-    //   _scheduleCaretUpdate();
-    // }
   }
 
   @override
@@ -70,11 +63,6 @@ class _CaretDocumentOverlayState extends State<CaretDocumentOverlay> with Single
     if (widget.composer != oldWidget.composer) {
       oldWidget.composer.selectionNotifier.removeListener(_scheduleCaretUpdate);
       widget.composer.selectionNotifier.addListener(_scheduleCaretUpdate);
-
-      // Selection has changed, we need to update the caret.
-      // if (widget.composer.selection != oldWidget.composer.selection) {
-      //   _scheduleCaretUpdate();
-      // }
     }
   }
 
@@ -88,8 +76,6 @@ class _CaretDocumentOverlayState extends State<CaretDocumentOverlay> with Single
 
   /// Schedules a caret update after the current frame.
   void _scheduleCaretUpdate() {
-    // print("");
-    // print("Scheduling caret update at the end of the frame");
     // Give the document a frame to update its layout before we lookup
     // the extent offset.
     _isCaretDirty = true;
@@ -98,8 +84,6 @@ class _CaretDocumentOverlayState extends State<CaretDocumentOverlay> with Single
         return;
       }
 
-      // print("");
-      // print("At the end of the frame - updating caret after content change");
       _updateCaretAfterContentChange();
     });
   }
@@ -111,8 +95,6 @@ class _CaretDocumentOverlayState extends State<CaretDocumentOverlay> with Single
       return;
     }
 
-    // print("");
-    // print("Updating caret after content change");
     setState(() {
       final documentSelection = widget.composer.selection;
       if (documentSelection == null) {
@@ -136,11 +118,9 @@ class _CaretDocumentOverlayState extends State<CaretDocumentOverlay> with Single
     if (documentSelection == null) {
       return;
     }
-    // print("Positioning caret for selection $documentSelection");
 
     final documentLayout = widget.documentLayoutResolver();
     final selectedComponent = documentLayout.getComponentByNodeId(widget.composer.selection!.extent.nodeId);
-    // print("Selected component: $selectedComponent");
     if (selectedComponent == null) {
       // Assume that we're in a momentary transitive state where the document layout
       // just gained or lost a component. We expect this method ot run again in a moment
@@ -148,15 +128,11 @@ class _CaretDocumentOverlayState extends State<CaretDocumentOverlay> with Single
       return;
     }
 
-    // print("Calculating caret rect...");
     _caret = documentLayout.getRectForPosition(documentSelection.extent)!;
-    // print("New caret rect: $_caret");
   }
 
   @override
   Widget build(BuildContext context) {
-    // print("Building caret overlay");
-
     _positionCaret();
 
     // IgnorePointer so that when the user double and triple taps, the
@@ -168,15 +144,6 @@ class _CaretDocumentOverlayState extends State<CaretDocumentOverlay> with Single
       // constraints change.
       child: LayoutBuilder(
         builder: (context, constraints) {
-          // if (_previousConstraints != null && constraints != _previousConstraints) {
-          //   // Use a post-frame callback to avoid calling setState() during build.
-          //   WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-          //     _updateCaretAfterContentChange();
-          //   });
-          // }
-          // _previousConstraints = constraints;
-
-          // print("Caret position: ${_caret?.bottomLeft}");
           return RepaintBoundary(
             child: Stack(
               children: [
