@@ -804,7 +804,6 @@ class DefaultCaretOverlayBuilder implements DocumentLayerBuilder {
         composer: editContext.composer,
         documentLayoutResolver: () => editContext.documentLayout,
         caretStyle: caretStyle,
-        document: editContext.editor.document,
       ),
     );
   }
