@@ -19,7 +19,6 @@ import '../../ime_input_owner.dart';
 import '../../keyboard.dart';
 import '../../multi_tap_gesture.dart';
 import '../infrastructure/fill_width_if_constrained.dart';
-import '../styles.dart';
 
 final _log = textFieldLog;
 

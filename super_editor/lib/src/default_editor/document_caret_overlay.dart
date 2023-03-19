@@ -1,3 +1,4 @@
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_layout.dart';
@@ -30,13 +31,11 @@ class _CaretDocumentOverlayState extends State<CaretDocumentOverlay> with Single
   Rect? _caret;
   late final BlinkController _blinkController;
 
-  bool _isCaretDirty = false;
-
   @override
   void initState() {
     super.initState();
-    widget.composer.selectionNotifier.addListener(_scheduleCaretUpdate);
     _blinkController = BlinkController(tickerProvider: this)..startBlinking();
+    widget.composer.selectionNotifier.addListener(_onSelectionChange);
   }
 
   @override
@@ -44,54 +43,39 @@ class _CaretDocumentOverlayState extends State<CaretDocumentOverlay> with Single
     super.didUpdateWidget(oldWidget);
 
     if (widget.composer != oldWidget.composer) {
-      oldWidget.composer.selectionNotifier.removeListener(_scheduleCaretUpdate);
-      widget.composer.selectionNotifier.addListener(_scheduleCaretUpdate);
+      oldWidget.composer.selectionNotifier.removeListener(_onSelectionChange);
+      widget.composer.selectionNotifier.addListener(_onSelectionChange);
     }
   }
 
   @override
   void dispose() {
-    widget.composer.selectionNotifier.removeListener(_scheduleCaretUpdate);
+    widget.composer.selectionNotifier.removeListener(_onSelectionChange);
     _blinkController.dispose();
     super.dispose();
   }
 
-  /// Schedules a caret update after the current frame.
-  void _scheduleCaretUpdate() {
-    // Give the document a frame to update its layout before we lookup
-    // the extent offset.
-    _isCaretDirty = true;
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      if (!_isCaretDirty) {
-        return;
-      }
+  void _onSelectionChange() {
+    _updateCaretFlash();
 
-      _updateCaretAfterContentChange();
-    });
+    if (SchedulerBinding.instance.schedulerPhase != SchedulerPhase.persistentCallbacks) {
+      // The Flutter pipeline isn't running. Schedule a re-build and re-position the caret.
+      setState(() {
+        // The caret is positioned in the build() call.
+      });
+    }
   }
 
-  /// Updates the caret rect, adjusts the blinking behavior, and schedules a rebuild so that the
-  /// new caret rect and blinking state are reflected in the widget tree.
-  void _updateCaretAfterContentChange() {
-    if (!mounted) {
+  void _updateCaretFlash() {
+    final documentSelection = widget.composer.selection;
+    if (documentSelection == null) {
+      _caret = null;
+      _blinkController.stopBlinking();
       return;
     }
 
-    setState(() {
-      final documentSelection = widget.composer.selection;
-      if (documentSelection == null) {
-        _caret = null;
-        _blinkController.stopBlinking();
-        return;
-      }
-
-      _blinkController.startBlinking();
-      _blinkController.jumpToOpaque();
-
-      _positionCaret();
-
-      _isCaretDirty = false;
-    });
+    _blinkController.startBlinking();
+    _blinkController.jumpToOpaque();
   }
 
   /// Updates the caret rect, immediately, without scheduling a rebuild.
@@ -117,6 +101,8 @@ class _CaretDocumentOverlayState extends State<CaretDocumentOverlay> with Single
   Widget build(BuildContext context) {
     _positionCaret();
 
+    // Use a RepaintBoundary so that caret flashing doesn't invalidate our
+    // ancestor painting.
     return RepaintBoundary(
       child: Stack(
         children: [
