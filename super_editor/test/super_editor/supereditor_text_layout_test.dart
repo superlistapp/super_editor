@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:super_editor/super_editor_test.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
 import '../test_tools.dart';
@@ -7,7 +9,7 @@ import 'document_test_tools.dart';
 
 void main() {
   group('SuperEditor', () {
-    testWidgetsOnAllPlatforms('textScaleFactor defaults to OS configuration', (tester) async {
+    testWidgetsOnAllPlatforms('respects the OS text scaling preference', (tester) async {
       // Pump an editor with a custom textScaleFactor.
       await tester
           .createDocument()
@@ -25,10 +27,10 @@ void main() {
           .pump();
 
       // Find the widget used to render the paragraph.
-      final superText = tester.widget<SuperTextWithSelection>(find.byType(SuperTextWithSelection));
+      final renderParagraph = tester.firstRenderObject(find.byType(LayoutAwareRichText)) as RenderLayoutAwareParagraph;
 
       // Ensure the configure textScaleFactor was applied.
-      expect(superText.textScaleFactor, 1.5);
+      expect(renderParagraph.textScaleFactor, 1.5);
     });
   });
 }
