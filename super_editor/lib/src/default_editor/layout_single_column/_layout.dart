@@ -6,6 +6,7 @@ import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/content_layers.dart';
 
 import '_presenter.dart';
 
@@ -635,6 +636,23 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
       nodeId: nodeId!,
       nodePosition: nodePosition,
     );
+  }
+
+  @override
+  void setState(VoidCallback fn) {
+    ContentLayersElement? contentLayers;
+    context.visitAncestorElements((element) {
+      if (element is ContentLayersElement) {
+        contentLayers = element;
+        return false;
+      }
+      return true;
+    });
+    if (contentLayers != null) {
+      contentLayers!.markNeedsBuild();
+    }
+
+    super.setState(fn);
   }
 
   @override

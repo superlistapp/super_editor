@@ -1,10 +1,27 @@
+import 'dart:async';
+
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
+import 'package:super_editor/src/infrastructure/_logging.dart';
 
 /// Widget that displays [content] above a number of [underlays], and beneath a number of
-/// [overlays], sizing those layers to be exactly the same size as the [content], and
-/// building those layers after [content] is laid out, so that the layers can inspect the
-/// [content].
+/// [overlays].
+///
+/// This widget is similar in behavior to a `Stack`, except this widget alters the build
+/// and layout order to support use-cases where various layers depend upon the layout of
+/// a single [content] layer.
+///
+/// This widget is useful for use-cases where decorations need to be positioned relative
+/// to content within the [content] widget. For example, this [ContentLayers] might be
+/// used to display a document as [content] and then display text selection as an
+/// underlay, the caret as an overlay, and user comments as another overlay.
+///
+/// The layers are sized to be exactly the same as the [content], and the layers are
+/// positioned at the same (x,y) as [content].
+///
+/// The layers are built after [content] is laid out, so that the layers can inspect the
+/// [content] layout during the layers' build phase. This makes it easy, for example, to
+/// position a caret on top of a document, using only the widget tree.
 class ContentLayers extends RenderObjectWidget {
   const ContentLayers({
     this.underlays = const [],
@@ -12,38 +29,36 @@ class ContentLayers extends RenderObjectWidget {
     this.overlays = const [],
   });
 
+  /// Layers displayed beneath the [content].
+  ///
+  /// These layers are placed at the same (x,y) as [content], and they're forced to layout
+  /// at the exact same size as [content].
   final List<Widget> underlays;
+
+  /// The primary content displayed in this widget, which determines the size and location
+  /// of all [underlays] and [overlays].
   final Widget content;
+
+  /// Layers displayed above the [content].
+  ///
+  /// These layers are placed at the same (x,y) as [content], and they're forced to layout
+  /// at the exact same size as [content].
   final List<Widget> overlays;
 
   @override
   RenderObjectElement createElement() {
-    // print("ContentLayers - createElement()");
     return ContentLayersElement(this);
   }
 
   @override
   RenderContentLayers createRenderObject(BuildContext context) {
-    // print("ContentLayers - createRenderObject()");
     return RenderContentLayers(context as ContentLayersElement);
-  }
-
-  @override
-  void updateRenderObject(BuildContext context, RenderObject renderObject) {
-    // print("ContentLayers - updateRenderObject");
-  }
-
-  @override
-  void didUnmountRenderObject(RenderObject renderObject) {
-    // print("ContentLayers - didUnmountRenderObject");
-    super.didUnmountRenderObject(renderObject);
   }
 }
 
-// For reference to similar framework implementations:
-// MultiChildRenderObjectElement
-// ContainerRenderObjectMixin
-
+/// `Element` for a [ContentLayers] widget.
+///
+/// Must have a [renderObject] of type [RenderContentLayers].
 class ContentLayersElement extends RenderObjectElement {
   ContentLayersElement(RenderObjectWidget widget) : super(widget);
 
@@ -57,15 +72,36 @@ class ContentLayersElement extends RenderObjectElement {
   @override
   RenderContentLayers get renderObject => super.renderObject as RenderContentLayers;
 
+  /// The BuildOwner.onBuildScheduled callback that exists when we're mounted, which we
+  /// override with our own callback.
+  VoidCallback? _originalBuildCallback;
+
+  /// Whether we've scheduled a microtask to run after all `Element`s are marked dirty,
+  /// so that we can check if our content subtree is dirty.
+  bool _isDirtyBuildMicrotaskScheduled = false;
+
   @override
   void mount(Element? parent, Object? newSlot) {
+    contentLayersLog.fine("ContentLayersElement - mounting");
     super.mount(parent, newSlot);
+
+    // Intercept calls to onBuildScheduled so that we know when we need to check for
+    // a dirty content subtree.
+    _originalBuildCallback = owner!.onBuildScheduled;
+    owner!.onBuildScheduled = _onBuildScheduled;
 
     _content = inflateWidget(widget.content, _contentSlot);
   }
 
   @override
+  void activate() {
+    contentLayersLog.fine("ContentLayersElement - activating");
+    super.activate();
+  }
+
+  @override
   void deactivate() {
+    contentLayersLog.fine("ContentLayersElement - deactivating");
     // We have to deactivate the underlays and overlays ourselves, because we
     // intentionally don't visit them in visitChildren().
     for (final underlay in _underlays) {
@@ -81,15 +117,59 @@ class ContentLayersElement extends RenderObjectElement {
     super.deactivate();
   }
 
+  @override
+  void unmount() {
+    contentLayersLog.fine("ContentLayersElement - unmounting");
+    owner!.onBuildScheduled = _originalBuildCallback;
+    super.unmount();
+  }
+
+  /// Override for `BuildOwner.onBuildScheduled`, which checks when our content subtree is dirty,
+  /// and detached the layer `Element`s so that they don't rebuild before the content subtree
+  /// is rebuilt and laid out.
+  void _onBuildScheduled() {
+    _originalBuildCallback?.call();
+
+    if (!_isDirtyBuildMicrotaskScheduled) {
+      _isDirtyBuildMicrotaskScheduled = true;
+
+      // We need to check if our content subtree is dirty (needs to build). The onBuildScheduled
+      // callback only runs one time per frame, no matter how many elements are added to the dirty
+      // list. Therefore, we check for dirty in a microtask, which should run after all relevant
+      // `Element`s are marked dirty.
+      scheduleMicrotask(() {
+        if (_content?.dirty == true) {
+          contentLayersLog
+              .finer("ContentLayersElement - content subtree needs to re-build, deactivating layer Elements");
+          // The content subtree needs to rebuild and re-lay-out. Detach the layer `Element`s
+          // until after that build and layout finishes. These layers will be re-attached
+          // when our `RenderContentLayers` runs its layout pass.
+          _deactivateLayers();
+        }
+
+        _isDirtyBuildMicrotaskScheduled = false;
+      });
+    }
+  }
+
+  @override
+  void markNeedsBuild() {
+    contentLayersLog.finer("ContentLayersElement - marking needs build");
+    // Deactivate the layers whenever we rebuild, to make sure that the layers don't run
+    // their build methods before `RenderContentLayers` runs layout.
+    _deactivateLayers();
+    super.markNeedsBuild();
+  }
+
   void buildLayers() {
+    contentLayersLog.finer("ContentLayersElement - (re)building layers");
     // FIXME: To get the layers to rebuild, we have to deactivate the existing layer Element and re-inflate
     //        the layer's widget. This probably creates a lot of extra work for layers that don't
     //        need to be rebuilt. Create a way for layers to opt-in to this behavior.
 
     owner!.buildScope(this, () {
-      for (final underlay in _underlays) {
-        deactivateChild(underlay);
-      }
+      _deactivateLayers();
+
       final List<Element> underlays = List<Element>.filled(widget.underlays.length, _NullElement.instance);
       for (int i = 0; i < underlays.length; i += 1) {
         final Element newChild = inflateWidget(widget.underlays[i], _UnderlaySlot(i));
@@ -97,9 +177,6 @@ class ContentLayersElement extends RenderObjectElement {
       }
       _underlays = underlays;
 
-      for (final overlay in _overlays) {
-        deactivateChild(overlay);
-      }
       final List<Element> overlays = List<Element>.filled(widget.overlays.length, _NullElement.instance);
       for (int i = 0; i < overlays.length; i += 1) {
         final Element newChild = inflateWidget(widget.overlays[i], _OverlaySlot(i));
@@ -118,9 +195,21 @@ class ContentLayersElement extends RenderObjectElement {
     return newChild;
   }
 
+  void _deactivateLayers() {
+    contentLayersLog.finer("ContentLayersElement - deactivating layers");
+    for (final underlay in _underlays) {
+      deactivateChild(underlay);
+    }
+    _underlays = [];
+
+    for (final overlay in _overlays) {
+      deactivateChild(overlay);
+    }
+    _overlays = [];
+  }
+
   @override
   void update(ContentLayers newWidget) {
-    // print("update() - new widget: $newWidget");
     super.update(newWidget);
 
     assert(widget == newWidget);
@@ -129,15 +218,10 @@ class ContentLayersElement extends RenderObjectElement {
     assert(!debugChildrenHaveDuplicateKeys(widget, widget.overlays));
 
     _content = updateChild(_content, widget.content, _contentSlot);
-    // _underlays = updateChildren(_underlays, widget.underlays,
-    //     slots: List.generate(widget.underlays.length, (index) => _UnderlaySlot(index)));
-    // _overlays = updateChildren(_overlays, widget.overlays,
-    //     slots: List.generate(widget.overlays.length, (index) => _OverlaySlot(index)));
   }
 
   @override
   Element? updateChild(Element? child, Widget? newWidget, Object? newSlot) {
-    // print("updateChild - element: $child, widget: $newWidget, slot: $newSlot");
     if (newSlot != _contentSlot) {
       // Never update underlays or overlays because they MUST only build during
       // layout.
@@ -186,8 +270,6 @@ class ContentLayersElement extends RenderObjectElement {
 
   @override
   void visitChildren(ElementVisitor visitor) {
-    // print(
-    //     "ContentLayersElement - visitChildren() - pipeline phase: ${WidgetsBinding.instance.schedulerPhase}, is locked: ${WidgetsBinding.instance.locked}");
     if (_content != null) {
       visitor(_content!);
     }
@@ -200,14 +282,13 @@ class ContentLayersElement extends RenderObjectElement {
 
     // FIXME: locked is supposed to be private. We're using it as a proxy indication for when
     //        the build owner wants to build. Find an appropriate way to distinguish this.
+    // ignore: invalid_use_of_protected_member
     if (!WidgetsBinding.instance.locked) {
       for (final Element child in _underlays) {
-        // print("Visiting underlay: $child");
         visitor(child);
       }
 
       for (final Element child in _overlays) {
-        // print("Visiting overlay: $child");
         visitor(child);
       }
     }
@@ -236,6 +317,9 @@ class ContentLayersElement extends RenderObjectElement {
   }
 }
 
+/// `RenderObject` for a [ContentLayers] widget.
+///
+/// Must be associated with an `Element` of type [ContentLayersElement].
 class RenderContentLayers extends RenderBox {
   RenderContentLayers(this._element);
 
@@ -253,7 +337,7 @@ class RenderContentLayers extends RenderBox {
 
   @override
   void attach(PipelineOwner owner) {
-    // print("Attaching RenderContentLayers to owner: $owner");
+    contentLayersLog.info("Attaching RenderContentLayers to owner: $owner");
     super.attach(owner);
 
     visitChildren((child) {
@@ -263,7 +347,7 @@ class RenderContentLayers extends RenderBox {
 
   @override
   void detach() {
-    // print("detach()'ing RenderContentLayers from pipeline");
+    contentLayersLog.info("detach()'ing RenderContentLayers from pipeline");
     // IMPORTANT: we must detach ourselves before detaching our children.
     // This is a Flutter framework requirement.
     super.detach();
@@ -293,7 +377,6 @@ class RenderContentLayers extends RenderBox {
   }
 
   void insertChild(RenderBox child, Object slot) {
-    // print("Inserting $slot - $child");
     assert(_isContentLayersSlot(slot));
 
     if (slot == _contentSlot) {
@@ -368,10 +451,6 @@ class RenderContentLayers extends RenderBox {
 
   @override
   void visitChildren(RenderObjectVisitor visitor) {
-    // print(
-    //     "RenderContentLayers visitChildren() - pipeline phase: ${WidgetsBinding.instance.schedulerPhase}, is locked: ${WidgetsBinding.instance.locked}");
-    // print(" ^ visitor: $visitor");
-
     if (_content != null) {
       visitor(_content!);
     }
@@ -390,14 +469,15 @@ class RenderContentLayers extends RenderBox {
 
   @override
   void performLayout() {
+    contentLayersLog.info("Laying out ContentLayers");
     if (_content == null) {
       size = Size.zero;
       return;
     }
 
     // Always layout the content first, so that layers can inspect the content layout.
+    contentLayersLog.fine("Laying out content - $_content");
     _content!.layout(constraints, parentUsesSize: true);
-    // print("Content after layout: $_content");
 
     // The size of the layers, and the our size, is exactly the same as the content.
     size = _content!.size;
@@ -407,27 +487,23 @@ class RenderContentLayers extends RenderBox {
     //
     // This behavior is what allows us to avoid layers that are always one frame behind the
     // content changes.
+    contentLayersLog.fine("Building layers");
     invokeLayoutCallback((constraints) {
-      // print("Building layers");
       _element!.buildLayers();
     });
+    contentLayersLog.finer("Done building layers");
 
-    // print("Laying out ContentLayers with ${_underlays.length} underlays and ${_overlays.length} overlays");
-    // for (final overlay in _overlays) {
-    //   print(" - overlay: $overlay");
-    // }
-
+    contentLayersLog.fine("Laying out layers (${_underlays.length} underlays, ${_overlays.length} overlays");
     // Layout the layers below and above the content.
     final layerConstraints = BoxConstraints.tight(size);
 
-    // print("Laying out underlays");
     for (final underlay in _underlays) {
       underlay.layout(layerConstraints);
     }
-    // print("Laying out overlays");
     for (final overlay in _overlays) {
       overlay.layout(layerConstraints);
     }
+    contentLayersLog.finer("Done laying out layers");
   }
 
   @override
@@ -443,7 +519,6 @@ class RenderContentLayers extends RenderBox {
     for (final overlay in _overlays) {
       didHit = overlay.hitTest(result, position: position);
       if (didHit) {
-        // print("Hit overlay: $overlay");
         return true;
       }
     }
@@ -451,7 +526,6 @@ class RenderContentLayers extends RenderBox {
     // Second, hit-test the content.
     didHit = _content!.hitTest(result, position: position);
     if (didHit) {
-      // print("Hit content");
       return true;
     }
 
@@ -459,7 +533,6 @@ class RenderContentLayers extends RenderBox {
     for (final underlay in _underlays) {
       didHit = underlay.hitTest(result, position: position) || didHit;
       if (didHit) {
-        // print("Hit underlay: $underlay");
         return true;
       }
     }
@@ -473,20 +546,15 @@ class RenderContentLayers extends RenderBox {
       return;
     }
 
-    // print("Painting ContentLayers with ${_underlays.length} underlays and ${_overlays.length} overlays");
-
     // First, paint the underlays.
-    // print("Painting underlays");
     for (final underlay in _underlays) {
       context.paintChild(underlay, offset);
     }
 
     // Second, paint the content.
-    // print("Painting content");
     context.paintChild(_content!, offset);
 
     // Third, paint the overlays.
-    // print("Painting overlays");
     for (final overlay in _overlays) {
       context.paintChild(overlay, offset);
     }
@@ -519,6 +587,8 @@ class _IndexedSlot {
 
 /// Used as a placeholder in [List<Element>] objects when the actual
 /// elements are not yet determined.
+///
+/// Copied from the framework.
 class _NullElement extends Element {
   _NullElement() : super(const _NullWidget());
 
