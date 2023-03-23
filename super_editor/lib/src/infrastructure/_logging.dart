@@ -35,6 +35,7 @@ class LogNames {
 
   static const infrastructure = 'infrastructure';
   static const scheduler = 'infrastructure.scheduler';
+  static const contentLayers = 'infrastructure.content_layers';
   static const attributions = 'infrastructure.attributions';
 }
 
@@ -69,6 +70,7 @@ final iosTextFieldLog = logging.Logger(LogNames.iosTextField);
 final docGesturesLog = logging.Logger(LogNames.documentGestures);
 final infrastructureLog = logging.Logger(LogNames.infrastructure);
 final schedulerLog = logging.Logger(LogNames.scheduler);
+final contentLayersLog = logging.Logger(LogNames.contentLayers);
 final attributionsLog = logging.Logger(LogNames.attributions);
 
 final _activeLoggers = <logging.Logger>{};

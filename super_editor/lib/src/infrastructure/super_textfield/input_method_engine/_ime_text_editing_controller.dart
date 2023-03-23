@@ -1,8 +1,7 @@
 import 'package:attributed_text/attributed_text.dart';
-import 'package:flutter/painting.dart';
 import 'package:flutter/services.dart';
-import 'package:super_editor/src/core/document_layout.dart';
 import 'package:flutter/widgets.dart';
+import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/super_textfield.dart';
 import 'package:super_text_layout/super_text_layout.dart';

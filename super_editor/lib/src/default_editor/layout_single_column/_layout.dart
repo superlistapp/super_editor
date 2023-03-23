@@ -29,6 +29,7 @@ class SingleColumnDocumentLayout extends StatefulWidget {
     Key? key,
     required this.presenter,
     required this.componentBuilders,
+    this.onBuildScheduled,
     this.showDebugPaint = false,
   }) : super(key: key);
 
@@ -43,6 +44,16 @@ class SingleColumnDocumentLayout extends StatefulWidget {
   /// [SingleColumnDocumentComponentBuilder] that knows how to render
   /// that piece of content.
   final List<ComponentBuilder> componentBuilders;
+
+  /// Callback that's invoked whenever this widget schedules a build with
+  /// `setState()`.
+  ///
+  /// This callback was added to facilitate the ContentLayers widget, because
+  /// Flutter makes it impossible to monitor the dirty state of a sub-tree.
+  ///
+  /// TODO: Get rid of this as soon as Flutter makes it possible to monitor
+  ///       dirty subtrees.
+  final VoidCallback? onBuildScheduled;
 
   /// Adds a debugging UI to the document layout, when true.
   final bool showDebugPaint;
@@ -638,9 +649,15 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
   }
 
   @override
+  void setState(VoidCallback fn) {
+    super.setState(fn);
+    widget.onBuildScheduled?.call();
+  }
+
+  @override
   Widget build(BuildContext context) {
     editorLayoutLog.fine("Building document layout");
-    return Padding(
+    final result = Padding(
       padding: widget.presenter.viewModel.padding,
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -648,6 +665,9 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
         children: _buildDocComponents(),
       ),
     );
+
+    editorLayoutLog.fine("Done building document");
+    return result;
   }
 
   List<Widget> _buildDocComponents() {
@@ -897,6 +917,8 @@ class _Component extends StatelessWidget {
     for (final componentBuilder in componentBuilders) {
       var component = componentBuilder.createComponent(componentContext, componentViewModel);
       if (component != null) {
+        // TODO: we might need a SizeChangedNotifier here for the case where two components
+        //       change size exactly inversely
         component = ConstrainedBox(
           constraints: BoxConstraints(maxWidth: componentViewModel.maxWidth ?? double.infinity),
           child: SizedBox(

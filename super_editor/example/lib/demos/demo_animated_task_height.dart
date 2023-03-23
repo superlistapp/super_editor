@@ -48,6 +48,7 @@ class _AnimatedTaskHeightDemoState extends State<AnimatedTaskHeightDemo> {
 
   @override
   Widget build(BuildContext context) {
+    print("Building the entire demo");
     return SuperEditor(
       editor: _docEditor,
       stylesheet: defaultStylesheet.copyWith(
@@ -156,23 +157,28 @@ class _AnimatedTaskComponentState extends State<_AnimatedTaskComponent>
         ),
         Padding(
           padding: const EdgeInsets.only(left: 56),
-          child: AnimatedSize(
-            duration: const Duration(milliseconds: 100),
-            child: widget.viewModel.selection != null
-                ? SizedBox(
-                    height: 20,
-                    child: Row(
-                      children: [
-                        Icon(Icons.label_important_outline, size: 16),
-                        const SizedBox(width: 4),
-                        Icon(Icons.timelapse_sharp, size: 16),
-                      ],
-                    ),
-                  )
-                : const SizedBox.shrink(),
+          child: SizeChangedLayoutNotifier(
+            child: AnimatedSize(
+              key: _animatedSizeKey,
+              duration: const Duration(milliseconds: 100),
+              child: widget.viewModel.selection != null
+                  ? SizedBox(
+                      height: 20,
+                      child: Row(
+                        children: [
+                          Icon(Icons.label_important_outline, size: 16),
+                          const SizedBox(width: 4),
+                          Icon(Icons.timelapse_sharp, size: 16),
+                        ],
+                      ),
+                    )
+                  : const SizedBox.shrink(),
+            ),
           ),
         ),
       ],
     );
   }
+
+  final _animatedSizeKey = GlobalKey();
 }
