@@ -153,6 +153,7 @@ class TapSequenceGestureRecognizer extends GestureRecognizer {
   void _handleEvent(PointerEvent event) {
     final _TapTracker tracker = _trackers[event.pointer]!;
     if (event is PointerUpEvent) {
+      // print("_handleEvent() - pointer up - _firstTap: $_firstTap, _secondTap: $_secondTap");
       if (_firstTap == null) {
         _registerFirstTap(event, tracker);
       } else if (_secondTap == null) {
