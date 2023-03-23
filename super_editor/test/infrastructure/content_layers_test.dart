@@ -9,7 +9,7 @@ void main() {
       await _pumpScaffold(
         tester,
         child: ContentLayers(
-          content: LayoutBuilder(
+          content: (_) => LayoutBuilder(
             builder: (context, constraints) {
               // The content should be able to take up whatever size it wants, within the available space.
               expect(constraints.isTight, isFalse);
@@ -29,7 +29,7 @@ void main() {
       await _pumpScaffold(
         tester,
         child: ContentLayers(
-          content: const SizedBox.expand(),
+          content: (_) => const SizedBox.expand(),
           underlays: [
             _buildSizeValidatingLayer(),
           ],
@@ -43,7 +43,7 @@ void main() {
       await _pumpScaffold(
         tester,
         child: ContentLayers(
-          content: const SizedBox.expand(),
+          content: (_) => const SizedBox.expand(),
           overlays: [
             _buildSizeValidatingLayer(),
           ],
@@ -57,7 +57,7 @@ void main() {
       await _pumpScaffold(
         tester,
         child: ContentLayers(
-          content: const SizedBox.expand(),
+          content: (_) => const SizedBox.expand(),
           underlays: [
             _buildSizeValidatingLayer(),
           ],
@@ -74,7 +74,7 @@ void main() {
       await _pumpScaffold(
         tester,
         child: ContentLayers(
-          content: const SizedBox.expand(),
+          content: (_) => const SizedBox.expand(),
           underlays: [
             _buildSizeValidatingLayer(),
             _buildSizeValidatingLayer(),
@@ -104,9 +104,10 @@ void main() {
       await _pumpScaffold(
         tester,
         child: ContentLayers(
-          content: _RebuildableWidget(
+          content: (onBuildScheduled) => _RebuildableWidget(
             rebuildSignal: contentRebuildSignal,
             buildTracker: contentBuildTracker,
+            onBuildScheduled: onBuildScheduled,
             child: const SizedBox(),
           ),
           underlays: [
@@ -149,7 +150,7 @@ void main() {
       await _pumpScaffold(
         tester,
         child: ContentLayers(
-          content: _LayoutTrackingWidget(
+          content: (_) => _LayoutTrackingWidget(
             onLayout: () {
               didContentLayout.value = true;
             },
@@ -188,9 +189,10 @@ void main() {
       await _pumpScaffold(
         tester,
         child: ContentLayers(
-          content: _RebuildableWidget(
+          content: (onBuildScheduled) => _RebuildableWidget(
             rebuildSignal: rebuildSignal,
             buildTracker: buildTracker,
+            onBuildScheduled: onBuildScheduled,
             child: _LayoutTrackingWidget(
               onLayout: () {
                 contentLayoutCount.value += 1;
@@ -241,11 +243,13 @@ void main() {
         child: ContentLayers(
           // Place a couple stateful widgets above the _RebuildableWidget to ensure that
           // when a widget deeper in the tree rebuilds, we still rebuild ContentLayers.
-          content: _NoRebuildWidget(
+          content: (_) => _NoRebuildWidget(
             child: _NoRebuildWidget(
               child: _RebuildableWidget(
                 rebuildSignal: rebuildSignal,
                 buildTracker: buildTracker,
+                // We don't pass in the onBuildScheduled callback here because we're simulating
+                // an entire subtree that a client might provide as content.
                 child: _LayoutTrackingWidget(
                   onLayout: () {
                     contentLayoutCount.value += 1;
@@ -291,7 +295,7 @@ void main() {
       await _pumpScaffold(
         tester,
         child: ContentLayers(
-          content: const SizedBox.expand(),
+          content: (_) => const SizedBox.expand(),
           underlays: [
             Builder(
               builder: (context) {
@@ -388,11 +392,13 @@ class _RebuildableWidget extends StatefulWidget {
     Key? key,
     required this.rebuildSignal,
     this.buildTracker,
+    this.onBuildScheduled,
     required this.child,
   }) : super(key: key);
 
   final Listenable rebuildSignal;
   final ValueNotifier<int>? buildTracker;
+  final VoidCallback? onBuildScheduled;
   final Widget child;
 
   @override
@@ -433,6 +439,17 @@ class _RebuildableWidgetState extends State<_RebuildableWidget> {
     // layout pass so that our tests can inspect the order of operations and ensure that
     // when the content layout changes, the content is always laid out before layers.
     context.findRenderObject()?.markNeedsLayout();
+  }
+
+  // This override is a regrettable requirement for ContentLayers, which is needed so
+  // that ContentLayers can remove the layers to prevent them from building during a
+  // regular build phase when the content changes. This is the result of Flutter making
+  // it impossible to monitor dirty subtrees, and making it impossible to control build
+  // order.
+  @override
+  void setState(VoidCallback fn) {
+    super.setState(fn);
+    widget.onBuildScheduled?.call();
   }
 
   @override
