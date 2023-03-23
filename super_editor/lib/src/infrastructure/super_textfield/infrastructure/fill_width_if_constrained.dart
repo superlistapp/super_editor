@@ -25,7 +25,7 @@ class FillWidthIfConstrained extends SingleChildRenderObjectWidget {
   }
 
   double? _getViewportWidth(BuildContext context) {
-    final scrollable = Scrollable.of(context);
+    final scrollable = Scrollable.maybeOf(context);
     if (scrollable == null) {
       return null;
     }

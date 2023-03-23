@@ -598,7 +598,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
         );
       });
 
-      Overlay.of(context)!.insert(_controlsOverlayEntry!);
+      Overlay.of(context).insert(_controlsOverlayEntry!);
     }
   }
 
@@ -910,7 +910,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   }
 
   ScrollableState? _findAncestorScrollable(BuildContext context) {
-    final ancestorScrollable = Scrollable.of(context);
+    final ancestorScrollable = Scrollable.maybeOf(context);
     if (ancestorScrollable == null) {
       return null;
     }
