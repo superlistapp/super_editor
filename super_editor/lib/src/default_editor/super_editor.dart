@@ -556,12 +556,7 @@ class SuperEditorState extends State<SuperEditor> {
         clearSelectionWhenEditorLosesFocus: widget.selectionPolicies.clearSelectionWhenEditorLosesFocus,
         child: _buildInputSystem(
           child: _buildGestureSystem(
-            documentLayout: SingleColumnDocumentLayout(
-              key: _docLayoutKey,
-              presenter: _docLayoutPresenter!,
-              componentBuilders: widget.componentBuilders,
-              showDebugPaint: widget.debugPaint.layout,
-            ),
+            documentLayout: _buildDocumentLayout(),
           ),
         ),
       ),
@@ -645,62 +640,86 @@ class SuperEditorState extends State<SuperEditor> {
   }
 
   Widget _buildDesktopGestureSystem(Widget documentLayout) {
-    return LayoutBuilder(builder: (context, viewportConstraints) {
-      return DocumentScrollable(
-        autoScroller: _autoScrollController,
-        scrollController: widget.scrollController,
-        scrollingMinimapId: widget.debugPaint.scrollingMinimapId,
-        showDebugPaint: widget.debugPaint.scrolling,
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            // When SuperEditor installs its own Viewport, we want the gesture
-            // detection to span throughout the Viewport. Because the gesture
-            // system sits around the DocumentLayout, within the Viewport, we
-            // have to explicitly tell the gesture area to be at least as tall
-            // as the viewport (in case the document content is shorter than
-            // the viewport).
-            minWidth: viewportConstraints.maxWidth < double.infinity ? viewportConstraints.maxWidth : 0,
-            minHeight: viewportConstraints.maxHeight < double.infinity ? viewportConstraints.maxHeight : 0,
-          ),
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              // A layer that sits beneath the document and handles gestures.
-              // It's beneath the document so that components that include
-              // interactive UI, like a Checkbox, can intercept their own
-              // touch events.
-              //
-              // This layer is placed outside of `ContentLayers` because this
-              // layer needs to be wider than the document, to fill all available
-              // space.
-              Positioned.fill(
-                child: DocumentMouseInteractor(
-                  focusNode: _focusNode,
-                  document: editContext.editor.document,
-                  getDocumentLayout: () => editContext.documentLayout,
-                  selectionChanges: editContext.composer.selectionChanges,
-                  selectionNotifier: editContext.composer.selectionNotifier,
-                  contentTapHandler: _contentTapDelegate,
-                  autoScroller: _autoScrollController,
-                  showDebugPaint: widget.debugPaint.gestures,
-                  child: const SizedBox(),
+    return LayoutBuilder(
+      builder: (context, viewportConstraints) {
+        return DocumentScrollable(
+          autoScroller: _autoScrollController,
+          scrollController: widget.scrollController,
+          scrollingMinimapId: widget.debugPaint.scrollingMinimapId,
+          showDebugPaint: widget.debugPaint.scrolling,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              // When SuperEditor installs its own Viewport, we want the gesture
+              // detection to span throughout the Viewport. Because the gesture
+              // system sits around the DocumentLayout, within the Viewport, we
+              // have to explicitly tell the gesture area to be at least as tall
+              // as the viewport (in case the document content is shorter than
+              // the viewport).
+              minWidth: viewportConstraints.maxWidth < double.infinity ? viewportConstraints.maxWidth : 0,
+              minHeight: viewportConstraints.maxHeight < double.infinity ? viewportConstraints.maxHeight : 0,
+            ),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                // A layer that sits beneath the document and handles gestures.
+                // It's beneath the document so that components that include
+                // interactive UI, like a Checkbox, can intercept their own
+                // touch events.
+                //
+                // This layer is placed outside of `ContentLayers` because this
+                // layer needs to be wider than the document, to fill all available
+                // space.
+                Positioned.fill(
+                  child: DocumentMouseInteractor(
+                    focusNode: _focusNode,
+                    document: editContext.editor.document,
+                    getDocumentLayout: () => editContext.documentLayout,
+                    selectionChanges: editContext.composer.selectionChanges,
+                    selectionNotifier: editContext.composer.selectionNotifier,
+                    contentTapHandler: _contentTapDelegate,
+                    autoScroller: _autoScrollController,
+                    showDebugPaint: widget.debugPaint.gestures,
+                    child: const SizedBox(),
+                  ),
                 ),
-              ),
-              Align(
-                alignment: Alignment.topCenter,
-                child: ContentLayers(
-                  content: documentLayout,
-                  overlays: [
-                    for (final overlayBuilder in widget.documentOverlayBuilders)
-                      overlayBuilder.build(context, editContext),
-                  ],
+                Align(
+                  alignment: Alignment.topCenter,
+                  child: documentLayout,
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      );
-    });
+        );
+      },
+    );
+  }
+
+  Widget _buildDocumentLayout() {
+    switch (gestureMode) {
+      case DocumentGestureMode.mouse:
+        return ContentLayers(
+          content: (onBuildScheduled) => SingleColumnDocumentLayout(
+            key: _docLayoutKey,
+            presenter: _docLayoutPresenter!,
+            componentBuilders: widget.componentBuilders,
+            onBuildScheduled: onBuildScheduled,
+            showDebugPaint: widget.debugPaint.layout,
+          ),
+          overlays: [
+            for (final overlayBuilder in widget.documentOverlayBuilders) //
+              overlayBuilder.build(context, editContext),
+          ],
+        );
+      case DocumentGestureMode.android:
+      case DocumentGestureMode.iOS:
+        // TODO: bring overlay builders to mobile, then get rid of this switch statement
+        return SingleColumnDocumentLayout(
+          key: _docLayoutKey,
+          presenter: _docLayoutPresenter!,
+          componentBuilders: widget.componentBuilders,
+          showDebugPaint: widget.debugPaint.layout,
+        );
+    }
   }
 }
 

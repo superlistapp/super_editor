@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
@@ -37,7 +35,7 @@ class ContentLayers extends RenderObjectWidget {
 
   /// The primary content displayed in this widget, which determines the size and location
   /// of all [underlays] and [overlays].
-  final Widget content;
+  final Widget Function(VoidCallback onBuildScheduled) content;
 
   /// Layers displayed above the [content].
   ///
@@ -72,25 +70,12 @@ class ContentLayersElement extends RenderObjectElement {
   @override
   RenderContentLayers get renderObject => super.renderObject as RenderContentLayers;
 
-  /// The BuildOwner.onBuildScheduled callback that exists when we're mounted, which we
-  /// override with our own callback.
-  VoidCallback? _originalBuildCallback;
-
-  /// Whether we've scheduled a microtask to run after all `Element`s are marked dirty,
-  /// so that we can check if our content subtree is dirty.
-  bool _isDirtyBuildMicrotaskScheduled = false;
-
   @override
   void mount(Element? parent, Object? newSlot) {
     contentLayersLog.fine("ContentLayersElement - mounting");
     super.mount(parent, newSlot);
 
-    // Intercept calls to onBuildScheduled so that we know when we need to check for
-    // a dirty content subtree.
-    _originalBuildCallback = owner!.onBuildScheduled;
-    owner!.onBuildScheduled = _onBuildScheduled;
-
-    _content = inflateWidget(widget.content, _contentSlot);
+    _content = inflateWidget(widget.content(_onContentBuildScheduled), _contentSlot);
   }
 
   @override
@@ -120,36 +105,15 @@ class ContentLayersElement extends RenderObjectElement {
   @override
   void unmount() {
     contentLayersLog.fine("ContentLayersElement - unmounting");
-    owner!.onBuildScheduled = _originalBuildCallback;
     super.unmount();
   }
 
-  /// Override for `BuildOwner.onBuildScheduled`, which checks when our content subtree is dirty,
-  /// and detached the layer `Element`s so that they don't rebuild before the content subtree
-  /// is rebuilt and laid out.
-  void _onBuildScheduled() {
-    _originalBuildCallback?.call();
+  void _onContentBuildScheduled() {
+    _deactivateLayers();
+  }
 
-    if (!_isDirtyBuildMicrotaskScheduled) {
-      _isDirtyBuildMicrotaskScheduled = true;
-
-      // We need to check if our content subtree is dirty (needs to build). The onBuildScheduled
-      // callback only runs one time per frame, no matter how many elements are added to the dirty
-      // list. Therefore, we check for dirty in a microtask, which should run after all relevant
-      // `Element`s are marked dirty.
-      scheduleMicrotask(() {
-        if (_content?.dirty == true) {
-          contentLayersLog
-              .finer("ContentLayersElement - content subtree needs to re-build, deactivating layer Elements");
-          // The content subtree needs to rebuild and re-lay-out. Detach the layer `Element`s
-          // until after that build and layout finishes. These layers will be re-attached
-          // when our `RenderContentLayers` runs its layout pass.
-          _deactivateLayers();
-        }
-
-        _isDirtyBuildMicrotaskScheduled = false;
-      });
-    }
+  void checkContent() {
+    contentLayersLog.finer("ContentLayersElement - checkContent(). Is content dirty? ${_content?.dirty}");
   }
 
   @override
@@ -212,12 +176,14 @@ class ContentLayersElement extends RenderObjectElement {
   void update(ContentLayers newWidget) {
     super.update(newWidget);
 
+    final newContent = widget.content(_onContentBuildScheduled);
+
     assert(widget == newWidget);
-    assert(!debugChildrenHaveDuplicateKeys(widget, [widget.content]));
+    assert(!debugChildrenHaveDuplicateKeys(widget, [newContent]));
     assert(!debugChildrenHaveDuplicateKeys(widget, widget.underlays));
     assert(!debugChildrenHaveDuplicateKeys(widget, widget.overlays));
 
-    _content = updateChild(_content, widget.content, _contentSlot);
+    _content = updateChild(_content, newContent, _contentSlot);
   }
 
   @override
