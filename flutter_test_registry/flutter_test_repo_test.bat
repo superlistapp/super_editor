@@ -1,5 +1,5 @@
 PUSHD attributed_text
-CALL flutter test || GOTO :END
+CALL dart test || GOTO :END
 POPD
 
 PUSHD super_editor
