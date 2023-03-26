@@ -210,6 +210,8 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
 
   FocusNode get focusNode => _focusNode;
 
+  double get _textScaleFactor => MediaQuery.textScaleFactorOf(context);
+
   void requestFocus() {
     _focusNode.requestFocus();
   }
@@ -295,7 +297,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
       return lineHeight;
     }
     final defaultStyle = widget.textStyleBuilder({});
-    return _estimatedLineHeight.calculate(defaultStyle, MediaQuery.textScaleFactorOf(context));
+    return _estimatedLineHeight.calculate(defaultStyle, _textScaleFactor);
   }
 
   @override
@@ -392,7 +394,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
         key: _textKey,
         richText: _controller.text.computeTextSpan(widget.textStyleBuilder),
         textAlign: widget.textAlign,
-        textScaleFactor: MediaQuery.textScaleFactorOf(context),
+        textScaleFactor: _textScaleFactor,
         userSelection: UserSelection(
           highlightStyle: widget.selectionHighlightStyle,
           caretStyle: widget.caretStyle,

@@ -203,7 +203,7 @@ class RenderParagraphProseTextLayout implements ProseTextLayout {
   double get estimatedLineHeight {
     final fontSize = _richText.style?.fontSize;
     final lineHeight = _richText.style?.height;
-    return (fontSize ?? 16) * (lineHeight ?? 1.0);
+    return (fontSize ?? 16) * (lineHeight ?? 1.0) * textScaleFactor;
   }
 
   @override

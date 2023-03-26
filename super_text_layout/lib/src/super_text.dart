@@ -27,7 +27,7 @@ class SuperText extends StatefulWidget {
     required this.richText,
     this.textAlign = TextAlign.left,
     this.textDirection = TextDirection.ltr,
-    this.textScaleFactor = 1.0,
+    this.textScaleFactor,
     this.layerBeneathBuilder,
     this.layerAboveBuilder,
     this.debugTrackTextBuilds = false,
@@ -59,8 +59,8 @@ class SuperText extends StatefulWidget {
   /// For example, if the text scale factor is 1.5, text will be 50% larger than
   /// the specified font size.
   ///
-  /// Defaults to `1.0`.
-  final double textScaleFactor;
+  /// Defaults to the value obtained from `MediaQuery.textScaleFactorOf`.
+  final double? textScaleFactor;
 
   @override
   State<SuperText> createState() => SuperTextState();
@@ -93,7 +93,7 @@ class SuperTextState extends State<SuperText> with ProseTextBlock {
       text: LayoutAwareRichText(
         text: widget.richText,
         textAlign: widget.textAlign,
-        textScaleFactor: widget.textScaleFactor,
+        textScaleFactor: widget.textScaleFactor ?? MediaQuery.textScaleFactorOf(context),
         onMarkNeedsLayout: _invalidateParagraph,
       ),
       background: LayoutBuilder(

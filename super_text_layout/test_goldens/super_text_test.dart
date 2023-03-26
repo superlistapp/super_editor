@@ -12,23 +12,40 @@ void main() {
       });
 
       testGoldens("applies textScaleFactor", (tester) async {
-        await _pumpThreeLinePlainText(tester, textScaleFactor: 2.0);
+        await tester.pumpWidget(
+          _buildScaffold(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: const [
+                Expanded(
+                  child: SuperText(
+                    richText: _threeLineSpan,
+                    textScaleFactor: 1.0,
+                  ),
+                ),
+                Expanded(
+                  child: SuperText(
+                    richText: _threeLineSpan,
+                    textScaleFactor: 2.0,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+
         await screenMatchesGolden(tester, "SuperText-text-scale-factor");
       });
     });
   });
 }
 
-Future<void> _pumpThreeLinePlainText(
-  WidgetTester tester, {
-  double textScaleFactor = 1.0,
-}) async {
+Future<void> _pumpThreeLinePlainText(WidgetTester tester) async {
   await tester.pumpWidget(
     _buildScaffold(
       child: SuperText(
         key: _textKey,
         richText: _threeLineSpan,
-        textScaleFactor: textScaleFactor,
       ),
     ),
   );

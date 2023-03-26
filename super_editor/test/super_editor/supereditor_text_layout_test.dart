@@ -26,11 +26,8 @@ void main() {
           )
           .pump();
 
-      // Find the widget used to render the paragraph.
-      final renderParagraph = tester.firstRenderObject(find.byType(LayoutAwareRichText)) as RenderLayoutAwareParagraph;
-
       // Ensure the configure textScaleFactor was applied.
-      expect(renderParagraph.textScaleFactor, 1.5);
+      expect(SuperTextInspector.findTextScaleFactor(), 1.5);
     });
   });
 }

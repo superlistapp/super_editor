@@ -22,7 +22,7 @@ class SuperTextWithSelection extends StatefulWidget {
     required this.richText,
     this.textAlign = TextAlign.left,
     this.textDirection = TextDirection.ltr,
-    this.textScaleFactor = 1.0,
+    this.textScaleFactor,
     UserSelection? userSelection,
   })  : userSelections = userSelection != null ? [userSelection] : const [],
         super(key: key);
@@ -33,7 +33,7 @@ class SuperTextWithSelection extends StatefulWidget {
     required this.richText,
     this.textAlign = TextAlign.left,
     this.textDirection = TextDirection.ltr,
-    this.textScaleFactor = 1.0,
+    this.textScaleFactor,
     this.userSelections = const [],
   }) : super(key: key);
 
@@ -59,8 +59,8 @@ class SuperTextWithSelection extends StatefulWidget {
   /// For example, if the text scale factor is 1.5, text will be 50% larger than
   /// the specified font size.
   ///
-  /// Defaults to `1.0`.
-  final double textScaleFactor;
+  /// Defaults to the value obtained from `MediaQuery.textScaleFactorOf`.
+  final double? textScaleFactor;
 
   @override
   State<SuperTextWithSelection> createState() => _SuperTextWithSelectionState();
@@ -108,7 +108,7 @@ class _SuperTextWithSelectionState extends ProseTextState<SuperTextWithSelection
       textLayoutKey: _textLayoutKey,
       richText: widget.richText,
       textAlign: widget.textAlign,
-      textScaleFactor: widget.textScaleFactor,
+      textScaleFactor: widget.textScaleFactor ?? MediaQuery.textScaleFactorOf(context),
       userSelections: _userSelections,
     );
   }
