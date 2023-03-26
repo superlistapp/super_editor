@@ -367,10 +367,6 @@ class DocumentEditingRobot {
         _randomPauseBefore(
           () {
             _editorOps.insertCharacter(character);
-
-            if (character == ' ') {
-              _editorOps.convertParagraphByPatternMatching(_composer.selectionComponent.selection!.extent.nodeId);
-            }
           },
         ),
       );
@@ -383,10 +379,6 @@ class DocumentEditingRobot {
         _randomPauseBefore(
           () {
             _editorOps.insertCharacter(character);
-
-            if (character == ' ') {
-              _editorOps.convertParagraphByPatternMatching(_composer.selectionComponent.selection!.extent.nodeId);
-            }
           },
           true,
         ),

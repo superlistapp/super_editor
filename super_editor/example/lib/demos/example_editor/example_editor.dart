@@ -2,7 +2,6 @@ import 'package:example/demos/example_editor/_task.dart';
 import 'package:example/logging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:linkify/linkify.dart';
 import 'package:super_editor/super_editor.dart';
 
 import '_example_document.dart';
@@ -49,6 +48,9 @@ class _ExampleEditorState extends State<ExampleEditor> {
       document: _doc as MutableDocument,
       requestHandlers: [
         (request) => request is CompleteTaskRequest ? CompleteTaskCommand(nodeId: request.nodeId) : null,
+        (request) => request is _ChangeImageWidthRequest
+            ? _ChangeImageWidthCommand(nodeId: request.nodeId, imageWidth: request.imageWidth)
+            : null,
         ...defaultRequestHandlers,
       ],
       reactionPipeline: [
@@ -84,11 +86,6 @@ class _ExampleEditorState extends State<ExampleEditor> {
     _editorFocusNode.dispose();
     _composer.dispose();
     super.dispose();
-  }
-
-  void _onDocumentChange(DocumentChangeLog changeLog) {
-    _hideOrShowToolbar();
-    _docChangeNotifier.notifyListeners();
   }
 
   void _hideOrShowToolbar() {
@@ -166,7 +163,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
       });
 
       // Display the toolbar in the application overlay.
-      final overlay = Overlay.of(context)!;
+      final overlay = Overlay.of(context);
       overlay.insert(_textFormatBarOverlayEntry!);
     }
 
@@ -255,19 +252,14 @@ class _ExampleEditorState extends State<ExampleEditor> {
           anchor: _imageSelectionAnchor,
           composer: _composer,
           setWidth: (nodeId, width) {
-            final node = _doc.getNodeById(nodeId)!;
-            final currentStyles = SingleColumnLayoutComponentStyles.fromMetadata(node);
-            SingleColumnLayoutComponentStyles(
-              width: width,
-              padding: currentStyles.padding,
-            ).applyTo(node);
+            _docEditor.execute(_ChangeImageWidthRequest(nodeId: nodeId, imageWidth: width));
           },
           closeToolbar: _hideImageToolbar,
         );
       });
 
       // Display the toolbar in the application overlay.
-      final overlay = Overlay.of(context)!;
+      final overlay = Overlay.of(context);
       overlay.insert(_imageFormatBarOverlayEntry!);
     }
 
@@ -420,6 +412,51 @@ class _ExampleEditorState extends State<ExampleEditor> {
         );
       },
     );
+  }
+}
+
+class _ChangeImageWidthRequest implements EditorRequest {
+  const _ChangeImageWidthRequest({
+    required this.nodeId,
+    required this.imageWidth,
+  });
+
+  final String nodeId;
+  final double? imageWidth;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is _ChangeImageWidthRequest &&
+          runtimeType == other.runtimeType &&
+          nodeId == other.nodeId &&
+          imageWidth == other.imageWidth;
+
+  @override
+  int get hashCode => nodeId.hashCode ^ imageWidth.hashCode;
+}
+
+class _ChangeImageWidthCommand implements EditorCommand {
+  const _ChangeImageWidthCommand({
+    required this.nodeId,
+    required this.imageWidth,
+  });
+
+  final String nodeId;
+  final double? imageWidth;
+
+  @override
+  void execute(EditorContext context, RequestDispatcher requestDispatcher, CommandExecutor executor) {
+    final node = context.find(EditorContext.document).getNodeById(nodeId)!;
+    final currentStyles = SingleColumnLayoutComponentStyles.fromMetadata(node);
+    SingleColumnLayoutComponentStyles(
+      width: imageWidth,
+      padding: currentStyles.padding,
+    ).applyTo(node);
+
+    executor.logChanges([
+      NodeChangeEvent(nodeId),
+    ]);
   }
 }
 

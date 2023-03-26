@@ -34,7 +34,7 @@ class InsertNodeAtIndexCommand extends EditorCommand {
   final DocumentNode newNode;
 
   @override
-  void execute(EditorContext context, CommandExecutor executor) {
+  void execute(EditorContext context, RequestDispatcher requestDispatcher, CommandExecutor executor) {
     final document = context.find<MutableDocument>(EditorContext.document);
     document.insertNodeAt(nodeIndex, newNode);
     executor.logChanges([NodeInsertedEvent(newNode.id)]);
@@ -61,7 +61,7 @@ class InsertNodeBeforeNodeCommand extends EditorCommand {
   final DocumentNode newNode;
 
   @override
-  void execute(EditorContext context, CommandExecutor executor) {
+  void execute(EditorContext context, RequestDispatcher requestDispatcher, CommandExecutor executor) {
     final document = context.find<MutableDocument>(EditorContext.document);
     final existingNode = document.getNodeById(existingNodeId)!;
     document.insertNodeBefore(existingNode: existingNode, newNode: newNode);
@@ -89,7 +89,7 @@ class InsertNodeAfterNodeCommand extends EditorCommand {
   final DocumentNode newNode;
 
   @override
-  void execute(EditorContext context, CommandExecutor executor) {
+  void execute(EditorContext context, RequestDispatcher requestDispatcher, CommandExecutor executor) {
     final document = context.find<MutableDocument>(EditorContext.document);
     final existingNode = document.getNodeById(existingNodeId)!;
     document.insertNodeAfter(existingNode: existingNode, newNode: newNode);
@@ -113,7 +113,7 @@ class InsertNodeAtCaretCommand extends EditorCommand {
   final DocumentNode newNode;
 
   @override
-  void execute(EditorContext context, CommandExecutor executor) {
+  void execute(EditorContext context, RequestDispatcher requestDispatcher, CommandExecutor executor) {
     final document = context.find<MutableDocument>(EditorContext.document);
     final composer = context.find<DocumentComposer>(EditorContext.composer);
 
@@ -211,7 +211,7 @@ class MoveNodeCommand extends EditorCommand {
   final int newIndex;
 
   @override
-  void execute(EditorContext context, CommandExecutor executor) {
+  void execute(EditorContext context, RequestDispatcher requestDispatcher, CommandExecutor executor) {
     final document = context.find<MutableDocument>(EditorContext.document);
 
     // Log all the move changes that will happen when we move the target node
@@ -264,7 +264,7 @@ class ReplaceNodeCommand extends EditorCommand {
   final DocumentNode newNode;
 
   @override
-  void execute(EditorContext context, CommandExecutor executor) {
+  void execute(EditorContext context, RequestDispatcher requestDispatcher, CommandExecutor executor) {
     final document = context.find<MutableDocument>(EditorContext.document);
     final oldNode = document.getNodeById(existingNodeId)!;
     document.replaceNode(oldNode: oldNode, newNode: newNode);
@@ -302,7 +302,7 @@ class ReplaceNodeWithEmptyParagraphWithCaretCommand implements EditorCommand {
   final String nodeId;
 
   @override
-  void execute(EditorContext context, CommandExecutor executor) {
+  void execute(EditorContext context, RequestDispatcher requestDispatcher, CommandExecutor executor) {
     final document = context.find<MutableDocument>(EditorContext.document);
 
     final oldNode = document.getNodeById(nodeId);
@@ -349,7 +349,7 @@ class DeleteSelectionCommand implements EditorCommand {
   final DocumentSelection documentSelection;
 
   @override
-  void execute(EditorContext context, CommandExecutor executor) {
+  void execute(EditorContext context, RequestDispatcher requestDispatcher, CommandExecutor executor) {
     _log.log('DeleteSelectionCommand', 'DocumentEditor: deleting selection: $documentSelection');
     final document = context.find<MutableDocument>(EditorContext.document);
     final nodes = document.getNodesInside(documentSelection.base, documentSelection.extent);
@@ -646,7 +646,7 @@ class DeleteNodeCommand implements EditorCommand {
   final String nodeId;
 
   @override
-  void execute(EditorContext context, CommandExecutor executor) {
+  void execute(EditorContext context, RequestDispatcher requestDispatcher, CommandExecutor executor) {
     _log.log('DeleteNodeCommand', 'DocumentEditor: deleting node: $nodeId');
 
     final document = context.find<MutableDocument>(EditorContext.document);

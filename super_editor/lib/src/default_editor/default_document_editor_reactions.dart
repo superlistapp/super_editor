@@ -1,10 +1,9 @@
 import 'dart:io';
 
-import 'package:http/http.dart' as http;
-
 import 'package:attributed_text/attributed_text.dart';
 import 'package:characters/characters.dart';
 import 'package:collection/collection.dart';
+import 'package:http/http.dart' as http;
 import 'package:linkify/linkify.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
@@ -24,7 +23,8 @@ import 'multi_node_editing.dart';
 /// user types "* " (or similar) at the start of the paragraph.
 class UnorderedListItemConversionReaction implements EditReaction {
   @override
-  void react(EditorContext editorContext, CommandExecutor executor, List<DocumentChangeEvent> changeList) {
+  void react(EditorContext editorContext, RequestDispatcher requestDispatcher, CommandExecutor executor,
+      List<DocumentChangeEvent> changeList) {
     final document = editorContext.find<Document>(EditorContext.document);
     final didTypeSpaceAtEnd = EditInspector.didTypeSpace(document, changeList);
     if (!didTypeSpaceAtEnd) {
@@ -63,7 +63,8 @@ class UnorderedListItemConversionReaction implements EditReaction {
 /// user types " 1. " (or similar) at the start of the paragraph.
 class OrderedListItemConversionReaction implements EditReaction {
   @override
-  void react(EditorContext editorContext, CommandExecutor executor, List<DocumentChangeEvent> changeList) {
+  void react(EditorContext editorContext, RequestDispatcher requestDispatcher, CommandExecutor executor,
+      List<DocumentChangeEvent> changeList) {
     final document = editorContext.find<Document>(EditorContext.document);
     final didTypeSpaceAtEnd = EditInspector.didTypeSpace(document, changeList);
     if (!didTypeSpaceAtEnd) {
@@ -103,7 +104,8 @@ class OrderedListItemConversionReaction implements EditReaction {
 /// user types " > " (or similar) at the start of the paragraph.
 class BlockquoteConversionReaction implements EditReaction {
   @override
-  void react(EditorContext editorContext, CommandExecutor executor, List<DocumentChangeEvent> changeList) {
+  void react(EditorContext editorContext, RequestDispatcher requestDispatcher, CommandExecutor executor,
+      List<DocumentChangeEvent> changeList) {
     final document = editorContext.find<Document>(EditorContext.document);
     final didTypeSpaceAtEnd = EditInspector.didTypeSpace(document, changeList);
     if (!didTypeSpaceAtEnd) {
@@ -147,7 +149,8 @@ class BlockquoteConversionReaction implements EditReaction {
 /// Converts full node content that looks like "--- " into a horizontal rule.
 class HorizontalRuleConversionReaction implements EditReaction {
   @override
-  void react(EditorContext editorContext, CommandExecutor executor, List<DocumentChangeEvent> changeList) {
+  void react(EditorContext editorContext, RequestDispatcher requestDispatcher, CommandExecutor executor,
+      List<DocumentChangeEvent> changeList) {
     final document = editorContext.find<Document>(EditorContext.document);
     final didTypeSpaceAtEnd = EditInspector.didTypeSpace(document, changeList);
     if (!didTypeSpaceAtEnd) {
@@ -197,7 +200,8 @@ class HorizontalRuleConversionReaction implements EditReaction {
 /// to an image, the replaces the previous node with the referenced image.
 class ImageUrlConversionReaction implements EditReaction {
   @override
-  void react(EditorContext editorContext, CommandExecutor executor, List<DocumentChangeEvent> changeList) {
+  void react(EditorContext editorContext, RequestDispatcher requestDispatcher, CommandExecutor executor,
+      List<DocumentChangeEvent> changeList) {
     if (changeList.isEmpty) {
       return;
     }
@@ -205,7 +209,7 @@ class ImageUrlConversionReaction implements EditReaction {
       return;
     }
 
-    print("Checking for image URL after paragraph submission");
+    editorOpsLog.finer("Checking for image URL after paragraph submission");
 
     // The user pressed "enter" at the end of a paragraph. Check if the
     // paragraph is comprised of a URL.
@@ -214,7 +218,7 @@ class ImageUrlConversionReaction implements EditReaction {
     if (selectionChange == null || selectionChange.oldSelection == null) {
       // There was no selection change. There should be a selection change when
       // a paragraph is inserted. We don't know what's going on. Bail out.
-      print("There was no selection change. Not an image URL.");
+      editorOpsLog.finer("There was no selection change. Not an image URL.");
       return;
     }
 
@@ -224,7 +228,7 @@ class ImageUrlConversionReaction implements EditReaction {
       // The intention indicated that the user pressed "enter" from a paragraph
       // but the previously selected node isn't a paragraph. We don't know why.
       // Bail out.
-      print("Previous node wasn't a paragraph. Bailing.");
+      editorOpsLog.finer("Previous node wasn't a paragraph. Bailing.");
       return;
     }
 
@@ -239,7 +243,7 @@ class ImageUrlConversionReaction implements EditReaction {
     if (linkCount != 1) {
       // Either there aren't any URLs, or there are multiple. This reaction
       // doesn't apply.
-      print("Didn't find exactly 1 link. Found: $linkCount");
+      editorOpsLog.finer("Didn't find exactly 1 link. Found: $linkCount");
       return;
     }
 
@@ -247,7 +251,7 @@ class ImageUrlConversionReaction implements EditReaction {
     if (url != previousNode.text.text.trim()) {
       // There's more in the paragraph than just a URL. This reaction
       // doesn't apply.
-      print("Paragraph had more than just a URL");
+      editorOpsLog.finer("Paragraph had more than just a URL");
       return;
     }
 
@@ -258,20 +262,20 @@ class ImageUrlConversionReaction implements EditReaction {
     final originalText = previousNode.text.text;
     _isImageUrl(url).then((isImage) {
       if (!isImage) {
-        print("Checked URL, but it's not an image");
+        editorOpsLog.finer("Checked URL, but it's not an image");
         return;
       }
 
       // The URL is an image. Convert the node.
-      editorOpsLog.fine('The URL is an image. Converting the ParagraphNode to an ImageNode.');
+      editorOpsLog.finer('The URL is an image. Converting the ParagraphNode to an ImageNode.');
       final node = document.getNodeById(previousNode.id);
       if (node is! ParagraphNode) {
-        editorOpsLog.fine('The node has become something other than a ParagraphNode ($node). Can\'t convert ndoe.');
+        editorOpsLog.finer('The node has become something other than a ParagraphNode ($node). Can\'t convert ndoe.');
         return;
       }
       final currentText = node.text.text;
       if (currentText.trim() != originalText.trim()) {
-        editorOpsLog.fine('The node content changed in a non-trivial way. Aborting node conversion.');
+        editorOpsLog.finer('The node content changed in a non-trivial way. Aborting node conversion.');
         return;
       }
 
@@ -280,11 +284,8 @@ class ImageUrlConversionReaction implements EditReaction {
         imageUrl: url,
       );
 
-      // TODO: the problem here is that this code runs after the DocumentEditor
-      // is done executing the original command, so the change-list reported
-      // by this execution never goes anywhere.
-      executor.executeCommand(
-        ReplaceNodeCommand(
+      requestDispatcher.execute(
+        ReplaceNodeRequest(
           existingNodeId: node.id,
           newNode: imageNode,
         ),
@@ -329,7 +330,8 @@ class ImageUrlConversionReaction implements EditReaction {
 
 class LinkifyReaction implements EditReaction {
   @override
-  void react(EditorContext editorContext, CommandExecutor executor, List<DocumentChangeEvent> changeList) {
+  void react(EditorContext editorContext, RequestDispatcher requestDispatcher, CommandExecutor executor,
+      List<DocumentChangeEvent> changeList) {
     final document = editorContext.find<Document>(EditorContext.document);
     TextInsertionEvent? linkifyCandidate;
     for (final change in changeList) {

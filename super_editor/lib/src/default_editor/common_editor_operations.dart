@@ -1,13 +1,9 @@
-import 'dart:io';
 import 'dart:math';
 import 'dart:ui';
 
 import 'package:attributed_text/attributed_text.dart';
-import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-import 'package:http/http.dart' as http;
-import 'package:linkify/linkify.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_editor.dart';
@@ -1361,9 +1357,6 @@ class CommonEditorOperations {
       return false;
     }
 
-    final textNode = editor.document.getNode(composer.selectionComponent.selection!.extent) as TextNode;
-    final initialTextOffset = (composer.selectionComponent.selection!.extent.nodePosition as TextNodePosition).offset;
-
     editorOpsLog.fine("Executing text insertion command.");
     editor.execute(
       InsertTextRequest(
@@ -1425,119 +1418,6 @@ class CommonEditorOperations {
     return inserted;
   }
 
-  // TODO: refactor to make prefix matching extensible (#68)
-  bool convertParagraphByPatternMatching(String nodeId) {
-    // final node = editor.document.getNodeById(nodeId);
-    // if (node == null) {
-    //   return false;
-    // }
-    // if (node is! ParagraphNode) {
-    //   return false;
-    // }
-    //
-    // editorOpsLog.fine("Running pattern matching on a ParagraphNode, to convert it to another node type.");
-    //
-    // // URL match, e.g., images, social, etc.
-    // editorOpsLog.fine('Looking for URL match...');
-    // final extractedLinks = linkify(
-    //   node.text.text,
-    //   options: const LinkifyOptions(
-    //     humanize: false,
-    //   ),
-    // );
-    // final int linkCount = extractedLinks.fold(0, (value, element) => element is UrlElement ? value + 1 : value);
-    // editorOpsLog.fine("Found $linkCount link(s)");
-    // final String nonEmptyText =
-    //     extractedLinks.fold('', (value, element) => element is TextElement ? value + element.text.trim() : value);
-    // if (linkCount == 1 && nonEmptyText.isEmpty) {
-    //   // This node's text is just a URL, try to interpret it
-    //   // as a known type.
-    //   editorOpsLog.fine("The whole node is one big URL. Trying to convert the node type based on pattern matching...");
-    //   final link = extractedLinks.firstWhereOrNull((element) => element is UrlElement)!.text;
-    //   _processUrlNode(
-    //     document: editor.document,
-    //     editor: editor,
-    //     nodeId: node.id,
-    //     originalText: node.text.text,
-    //     url: link,
-    //   );
-    //   return true;
-    // }
-    //
-    // // No pattern match was found
-    // editorOpsLog.fine("ParagraphNode didn't match any conversion pattern.");
-    return false;
-  }
-
-  Future<void> _processUrlNode({
-    required Document document,
-    required DocumentEditor editor,
-    required String nodeId,
-    required String originalText,
-    required String url,
-  }) async {
-    late http.Response response;
-
-    // This function throws [SocketException] when the [url] is not valid.
-    // For instance, when typing for https://f|, it throws
-    // Unhandled Exception: SocketException: Failed host lookup: 'f'
-    //
-    // It doesn't affect any functionality, but it throws exception and preventing
-    // any related test to pass
-    try {
-      response = await http.get(Uri.parse(url));
-    } on SocketException catch (e) {
-      editorOpsLog.fine('Failed to load URL: ${e.message}');
-      return;
-    }
-
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      editorOpsLog.fine('Failed to load URL: ${response.statusCode} - ${response.reasonPhrase}');
-      return;
-    }
-
-    final contentType = response.headers['content-type'];
-    if (contentType == null) {
-      editorOpsLog.fine('Failed to determine URL content type.');
-      return;
-    }
-    if (!contentType.startsWith('image/')) {
-      editorOpsLog.fine('URL is not an image. Ignoring');
-      return;
-    }
-
-    // The URL is an image. Convert the node.
-    editorOpsLog.fine('The URL is an image. Converting the ParagraphNode to an ImageNode.');
-    final node = document.getNodeById(nodeId);
-    if (node is! ParagraphNode) {
-      editorOpsLog.fine('The node has become something other than a ParagraphNode ($node). Can\'t convert ndoe.');
-      return;
-    }
-    final currentText = node.text.text;
-    if (currentText.trim() != originalText.trim()) {
-      editorOpsLog.fine('The node content changed in a non-trivial way. Aborting node conversion.');
-      return;
-    }
-
-    final imageNode = ImageNode(
-      id: node.id,
-      imageUrl: url,
-    );
-
-    editor.execute(
-      ReplaceNodeRequest(existingNodeId: node.id, newNode: imageNode),
-    );
-
-    composer.selectionComponent.updateSelection(
-        DocumentSelection.collapsed(
-          position: DocumentPosition(
-            nodeId: node.id,
-            nodePosition: imageNode.endPosition,
-          ),
-        ),
-        notifyListeners: true);
-  }
-
   bool _insertCharacterInTextComposable(
     String character, {
     bool ignoreComposerAttributions = false,
@@ -1552,9 +1432,6 @@ class CommonEditorOperations {
       return false;
     }
 
-    final textNode = editor.document.getNode(composer.selectionComponent.selection!.extent) as TextNode;
-    final initialTextOffset = (composer.selectionComponent.selection!.extent.nodePosition as TextNodePosition).offset;
-
     editor.execute(
       InsertTextRequest(
         documentPosition: composer.selectionComponent.selection!.extent,
@@ -1562,30 +1439,6 @@ class CommonEditorOperations {
         attributions: ignoreComposerAttributions ? {} : composer.preferences.currentAttributions,
       ),
     );
-
-    // final newSelection = DocumentSelection.collapsed(
-    //   position: DocumentPosition(
-    //     nodeId: textNode.id,
-    //     nodePosition: TextNodePosition(
-    //       offset: initialTextOffset + character.length,
-    //     ),
-    //   ),
-    // );
-    // print("Setting new selection to: ${newSelection.extent.nodePosition}");
-    //
-    // composer.selectionComponent.updateSelection(
-    //   DocumentSelection.collapsed(
-    //     position: DocumentPosition(
-    //       nodeId: textNode.id,
-    //       nodePosition: TextNodePosition(
-    //         offset: initialTextOffset + character.length,
-    //       ),
-    //     ),
-    //   ),
-    //   notifyListeners: false,
-    // );
-    // print(
-    //     "Selection immediately after running insertion command: ${composer.selectionComponent.selection!.extent.nodePosition}");
 
     return true;
   }
@@ -2133,7 +1986,7 @@ class PasteEditorCommand implements EditorCommand {
   final DocumentComposer _composer;
 
   @override
-  void execute(EditorContext context, CommandExecutor executor) {
+  void execute(EditorContext context, RequestDispatcher requestDispatcher, CommandExecutor executor) {
     final document = context.find<MutableDocument>(EditorContext.document);
     final currentNodeWithSelection = document.getNodeById(_pastePosition.nodeId);
     if (currentNodeWithSelection is! ParagraphNode) {

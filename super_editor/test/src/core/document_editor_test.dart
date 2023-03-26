@@ -166,7 +166,13 @@ void main() {
 
         // Verify reported changes.
         expect(changeLogCount, 1);
-        expect(changeEventCount, 2); // 2 -> Create the node, move the selection
+        // Expected events:
+        //  - submit paragraph intention: start
+        //  - node change event: node 1
+        //  - node inserted event
+        //  - selection change event
+        //  - submit paragraph intention: end
+        expect(changeEventCount, 5);
       });
 
       test('moves a document node to a new position', () {
@@ -269,7 +275,7 @@ class _ExpandingCommand implements EditorCommand {
   final _ExpandingCommandRequest request;
 
   @override
-  void execute(EditorContext context, CommandExecutor executor) {
+  void execute(EditorContext context, RequestDispatcher requestDispatcher, CommandExecutor executor) {
     final document = context.find<Document>(EditorContext.document);
     final paragraph = document.getNodeAt(0) as ParagraphNode;
 

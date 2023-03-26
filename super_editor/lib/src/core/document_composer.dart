@@ -157,7 +157,7 @@ class ChangeSelectionCommand implements EditorCommand {
   final String reason;
 
   @override
-  void execute(EditorContext context, CommandExecutor executor) {
+  void execute(EditorContext context, RequestDispatcher requestDispatcher, CommandExecutor executor) {
     final composer = context.find<DocumentComposer>(EditorContext.composer);
     final initialSelection = composer.selectionComponent.selection;
     composer.selectionComponent.updateSelection(

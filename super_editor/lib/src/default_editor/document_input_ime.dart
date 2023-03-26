@@ -965,10 +965,6 @@ class SoftwareKeyboardHandler {
       editorImeLog.fine("Failed to insert characters. Restoring previous selection.");
       composer.selectionComponent.updateSelection(selectionBeforeInsertion, notifyListeners: true);
     }
-
-    commonOps.convertParagraphByPatternMatching(
-      composer.selectionComponent.selection!.extent.nodeId,
-    );
   }
 
   void replace(TextRange replacedRange, String replacementText) {
@@ -997,10 +993,6 @@ class SoftwareKeyboardHandler {
     }
 
     commonOps.insertPlainText(replacementText);
-
-    commonOps.convertParagraphByPatternMatching(
-      composer.selectionComponent.selection!.extent.nodeId,
-    );
   }
 
   void delete(TextRange deletedRange) {
@@ -1181,14 +1173,14 @@ class KeyboardEditingToolbar extends StatelessWidget {
 
     selectedNode.text = AttributedText(text: '--- ');
     composer.selectionComponent.updateSelection(
-        DocumentSelection.collapsed(
-          position: DocumentPosition(
-            nodeId: selectedNode.id,
-            nodePosition: const TextNodePosition(offset: 4),
-          ),
+      DocumentSelection.collapsed(
+        position: DocumentPosition(
+          nodeId: selectedNode.id,
+          nodePosition: const TextNodePosition(offset: 4),
         ),
-        notifyListeners: true);
-    commonOps.convertParagraphByPatternMatching(selectedNode.id);
+      ),
+      notifyListeners: true,
+    );
   }
 
   void _closeKeyboard() {

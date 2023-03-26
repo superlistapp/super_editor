@@ -25,14 +25,14 @@ class FillWidthIfConstrained extends SingleChildRenderObjectWidget {
   }
 
   double? _getViewportWidth(BuildContext context) {
-    final scrollable = Scrollable.of(context);
+    final scrollable = Scrollable.maybeOf(context);
     if (scrollable == null) {
       return null;
     }
 
     final direction = scrollable.axisDirection;
     // We only need to specify the width if we are inside a horizontal scrollable,
-    // because in this case we might have an infinity maxWidth.    
+    // because in this case we might have an infinity maxWidth.
     if (direction == AxisDirection.up || direction == AxisDirection.down) {
       return null;
     }
@@ -46,7 +46,7 @@ class RenderFillWidthIfConstrained extends RenderProxyBox {
   }) : _minWidth = minWidth;
 
   /// Sets the minimum width the child widget needs to be.
-  /// 
+  ///
   /// This is needed when this widget is inside a horizontal Scrollable.
   /// In this case, we might have an infinity maxWidth, so we need
   /// to specify the Scrollable's width to force the child to
@@ -62,7 +62,7 @@ class RenderFillWidthIfConstrained extends RenderProxyBox {
   void performLayout() {
     BoxConstraints childConstraints = constraints;
 
-    // If the available width is bounded, 
+    // If the available width is bounded,
     // force the child to be as wide as the available width.
     if (constraints.hasBoundedWidth) {
       childConstraints = BoxConstraints(

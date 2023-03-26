@@ -209,7 +209,7 @@ class CombineParagraphsCommand implements EditorCommand {
   final String secondNodeId;
 
   @override
-  void execute(EditorContext context, CommandExecutor executor) {
+  void execute(EditorContext context, RequestDispatcher requestDispatcher, CommandExecutor executor) {
     editorDocLog.info('Executing CombineParagraphsCommand');
     editorDocLog.info(' - merging "$firstNodeId" <- "$secondNodeId"');
     final document = context.find<MutableDocument>(EditorContext.document);
@@ -285,7 +285,7 @@ class SplitParagraphCommand implements EditorCommand {
   final bool replicateExistingMetadata;
 
   @override
-  void execute(EditorContext context, CommandExecutor executor) {
+  void execute(EditorContext context, RequestDispatcher requestDispatcher, CommandExecutor executor) {
     editorDocLog.info('Executing SplitParagraphCommand');
 
     final document = context.find<MutableDocument>(EditorContext.document);
@@ -425,12 +425,6 @@ ExecutionInstruction anyCharacterToInsertInParagraph({
 
   final didInsertCharacter = editContext.commonOps.insertCharacter(character);
 
-  if (didInsertCharacter && character == ' ') {
-    editContext.commonOps.convertParagraphByPatternMatching(
-      editContext.composer.selectionComponent.selection!.extent.nodeId,
-    );
-  }
-
   return didInsertCharacter ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
 }
 
@@ -442,7 +436,7 @@ class DeleteParagraphCommand implements EditorCommand {
   final String nodeId;
 
   @override
-  void execute(EditorContext context, CommandExecutor executor) {
+  void execute(EditorContext context, RequestDispatcher requestDispatcher, CommandExecutor executor) {
     editorDocLog.info('Executing DeleteParagraphCommand');
     editorDocLog.info(' - deleting "$nodeId"');
     final document = context.find<MutableDocument>(EditorContext.document);

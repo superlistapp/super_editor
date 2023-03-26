@@ -915,7 +915,7 @@ class AddTextAttributionsCommand implements EditorCommand {
   final Set<Attribution> attributions;
 
   @override
-  void execute(EditorContext context, CommandExecutor executor) {
+  void execute(EditorContext context, RequestDispatcher requestDispatcher, CommandExecutor executor) {
     editorDocLog.info('Executing AddTextAttributionsCommand');
     final document = context.find<MutableDocument>(EditorContext.document);
     final nodes = document.getNodesInside(documentSelection.base, documentSelection.extent);
@@ -1023,7 +1023,7 @@ class RemoveTextAttributionsCommand implements EditorCommand {
   final Set<Attribution> attributions;
 
   @override
-  void execute(EditorContext context, CommandExecutor executor) {
+  void execute(EditorContext context, RequestDispatcher requestDispatcher, CommandExecutor executor) {
     editorDocLog.info('Executing RemoveTextAttributionsCommand');
     final document = context.find<MutableDocument>(EditorContext.document);
     final nodes = document.getNodesInside(documentSelection.base, documentSelection.extent);
@@ -1139,7 +1139,7 @@ class ToggleTextAttributionsCommand implements EditorCommand {
   // Try to de-dup this code. Maybe use a private base class called ChangeTextAttributionsCommand
   // and provide a hook for the specific operation: add, remove, toggle.
   @override
-  void execute(EditorContext context, CommandExecutor executor) {
+  void execute(EditorContext context, RequestDispatcher requestDispatcher, CommandExecutor executor) {
     editorDocLog.info('Executing ToggleTextAttributionsCommand');
     final document = context.find<Document>(EditorContext.document);
     final nodes = document.getNodesInside(documentSelection.base, documentSelection.extent);
@@ -1258,7 +1258,7 @@ class InsertTextCommand implements EditorCommand {
   final Set<Attribution> attributions;
 
   @override
-  void execute(EditorContext context, CommandExecutor executor) {
+  void execute(EditorContext context, RequestDispatcher requestDispatcher, CommandExecutor executor) {
     final document = context.find<Document>(EditorContext.document);
 
     final textNode = document.getNodeById(documentPosition.nodeId);
@@ -1347,7 +1347,7 @@ class ConvertTextNodeToParagraphCommand extends EditorCommand {
   final Map<String, Attribution>? newMetadata;
 
   @override
-  void execute(EditorContext context, CommandExecutor executor) {
+  void execute(EditorContext context, RequestDispatcher requestDispatcher, CommandExecutor executor) {
     final document = context.find<MutableDocument>(EditorContext.document);
 
     final extentNode = document.getNodeById(nodeId) as TextNode;
@@ -1377,7 +1377,7 @@ class InsertAttributedTextCommand implements EditorCommand {
   final AttributedText textToInsert;
 
   @override
-  void execute(EditorContext context, CommandExecutor executor) {
+  void execute(EditorContext context, RequestDispatcher requestDispatcher, CommandExecutor executor) {
     final document = context.find<MutableDocument>(EditorContext.document);
     final textNode = document.getNodeById(documentPosition.nodeId);
     if (textNode is! TextNode) {
@@ -1463,7 +1463,7 @@ class InsertCharacterAtCaretCommand extends EditorCommand {
   final bool ignoreComposerAttributions;
 
   @override
-  void execute(EditorContext context, CommandExecutor executor) {
+  void execute(EditorContext context, RequestDispatcher requestDispatcher, CommandExecutor executor) {
     final document = context.find<Document>(EditorContext.document);
     final composer = context.find<DocumentComposer>(EditorContext.composer);
 

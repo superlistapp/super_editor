@@ -436,7 +436,7 @@ class IndentListItemCommand implements EditorCommand {
   final String nodeId;
 
   @override
-  void execute(EditorContext context, CommandExecutor executor) {
+  void execute(EditorContext context, RequestDispatcher requestDispatcher, CommandExecutor executor) {
     final document = context.find<Document>(EditorContext.document);
     final node = document.getNodeById(nodeId);
     final listItem = node as ListItemNode;
@@ -467,7 +467,7 @@ class UnIndentListItemCommand implements EditorCommand {
   final String nodeId;
 
   @override
-  void execute(EditorContext context, CommandExecutor executor) {
+  void execute(EditorContext context, RequestDispatcher requestDispatcher, CommandExecutor executor) {
     final document = context.find<Document>(EditorContext.document);
     final node = document.getNodeById(nodeId);
     final listItem = node as ListItemNode;
@@ -507,7 +507,7 @@ class ConvertListItemToParagraphCommand implements EditorCommand {
   final Map<String, dynamic>? paragraphMetadata;
 
   @override
-  void execute(EditorContext context, CommandExecutor executor) {
+  void execute(EditorContext context, RequestDispatcher requestDispatcher, CommandExecutor executor) {
     final document = context.find<MutableDocument>(EditorContext.document);
     final node = document.getNodeById(nodeId);
     final listItem = node as ListItemNode;
@@ -543,7 +543,7 @@ class ConvertParagraphToListItemCommand implements EditorCommand {
   final ListItemType type;
 
   @override
-  void execute(EditorContext context, CommandExecutor executor) {
+  void execute(EditorContext context, RequestDispatcher requestDispatcher, CommandExecutor executor) {
     final document = context.find<MutableDocument>(EditorContext.document);
     final node = document.getNodeById(nodeId);
     final paragraphNode = node as ParagraphNode;
@@ -579,7 +579,7 @@ class ChangeListItemTypeCommand implements EditorCommand {
   final ListItemType newType;
 
   @override
-  void execute(EditorContext context, CommandExecutor executor) {
+  void execute(EditorContext context, RequestDispatcher requestDispatcher, CommandExecutor executor) {
     final document = context.find<MutableDocument>(EditorContext.document);
     final existingListItem = document.getNodeById(nodeId) as ListItemNode;
 
@@ -618,7 +618,7 @@ class SplitListItemCommand implements EditorCommand {
   final String newNodeId;
 
   @override
-  void execute(EditorContext context, CommandExecutor executor) {
+  void execute(EditorContext context, RequestDispatcher requestDispatcher, CommandExecutor executor) {
     final document = context.find<MutableDocument>(EditorContext.document);
     final node = document.getNodeById(nodeId);
     final listItemNode = node as ListItemNode;

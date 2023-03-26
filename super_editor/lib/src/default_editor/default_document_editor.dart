@@ -31,9 +31,7 @@ DocumentEditor createDefaultDocumentEditor({
     ],
   );
 
-  if (composer != null) {
-    editor.context.put(EditorContext.composer, composer);
-  }
+  editor.context.put(EditorContext.composer, composer ?? DocumentComposer());
 
   return editor;
 }
