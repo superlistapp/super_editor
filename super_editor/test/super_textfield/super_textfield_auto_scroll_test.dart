@@ -142,7 +142,7 @@ Future<void> _pumpTestApp(
       ),
     ),
   );
-  await tester.pumpAndSettle();
+  await tester.pump();
 }
 
 void _testWidgetsOnMobileWithKeyboard(

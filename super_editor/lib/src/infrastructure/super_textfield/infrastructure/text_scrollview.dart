@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/flutter_scheduler.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/super_textfield.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
@@ -332,6 +333,27 @@ class _TextScrollViewState extends State<TextScrollView>
   bool _updateViewportHeight() {
     _log.finer('Updating viewport height...');
 
+    final hasLineConstraints = widget.maxLines != null || widget.minLines != null;
+    if (!hasLineConstraints) {
+      _log.finer(' - the widget does\'n have line number constraints. Sizing by intrinsic height.');
+
+      // We don't have line constraints so we don't need to estimate the content height
+      // and compute a fixed viewport height. The viewport will size itself based on the
+      // text intrinsic height.
+
+      final didChange = _viewportHeight != null;
+      // We set these values outside of setState, because this method
+      // can be called during the build phase.
+      _needViewportHeight = false;
+      _viewportHeight = null;
+      WidgetsBinding.instance.runAsSoonAsPossible(() {
+        if (mounted) {
+          setState(() {});
+        }
+      });
+      return didChange;
+    }
+
     final linesOfText = _getLineCount();
     _log.finer(' - lines of text: $linesOfText');
 
@@ -356,26 +378,9 @@ class _TextScrollViewState extends State<TextScrollView>
       }
     }
 
-    final hasLineConstraints = widget.maxLines != null || widget.minLines != null;
-    if (!hasLineConstraints) {
-      // We don't have line constraints so we don't need to estimate the content height
-      // and compute a fixed viewport height. The viewport will size itself based on the
-      // text intrinsic height.
-
-      final didChange = _viewportHeight != null;
-      // We set these values outside of setState, because this method
-      // can be called during the build phase.
-      _needViewportHeight = false;
-      _viewportHeight = null;
-      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-        if (mounted) {
-          setState(() {});
-        }
-      });
-      return didChange;
-    }
-
     if (estimatedLineHeight == null || linesOfText == null) {
+      // We need to estimate the content total height and we don't have enough information to compute it.
+      // Run again in the next frame.
       _log.finer(' - could not calculate the estimated line height or content height. Rescheduling calculation.');
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         if (mounted) {
