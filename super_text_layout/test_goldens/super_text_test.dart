@@ -49,5 +49,6 @@ Widget _buildScaffold({
         child: child,
       ),
     ),
+    debugShowCheckedModeBanner: false,
   );
 }

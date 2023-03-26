@@ -359,6 +359,7 @@ class TestDocumentConfigurator {
       home: Scaffold(
         body: superEditor,
       ),
+      debugShowCheckedModeBanner: false,
     );
   }
 

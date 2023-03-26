@@ -2,17 +2,15 @@ name: super_editor
 description: Configurable, composable, extensible text editor and document renderer for Flutter.
 version: 0.2.3-dev.1
 homepage: https://github.com/superlistapp/super_editor
-executables:
-  goldens:
 
 screenshots:
-  - description: 'SuperEditor on Mac desktop'
+  - description: "SuperEditor on Mac desktop"
     path: doc/marketing/screenshot_mac_desktop.png
-  - description: 'SuperEditor dark mode'
+  - description: "SuperEditor dark mode"
     path: doc/marketing/screenshot_mac_desktop_dark-mode.png
-  - description: 'SuperEditor text selection'
+  - description: "SuperEditor text selection"
     path: doc/marketing/screenshot_mac_desktop_text-selection.png
-  - description: 'SuperEditor text styles'
+  - description: "SuperEditor text styles"
     path: doc/marketing/screenshot_mac_desktop_bold-selection.png
 
 environment:
@@ -46,8 +44,11 @@ dependency_overrides:
   super_text_layout:
     path: ../super_text_layout
   flutter_test_robots:
-    git: 
+    git:
       url: https://github.com/Flutter-Bounty-Hunters/flutter_test_robots
+
+executables:
+  goldens:
 
 dev_dependencies:
   flutter_lints: ^2.0.1

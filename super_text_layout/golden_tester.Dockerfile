@@ -8,6 +8,6 @@ USER root
 RUN apt update
 
 RUN apt install -y git curl unzip
-RUN git clone --depth 1 --branch stable https://github.com/flutter/flutter.git ${FLUTTER_HOME}
+RUN git clone https://github.com/flutter/flutter.git ${FLUTTER_HOME}
 
 RUN flutter doctor
