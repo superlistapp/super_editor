@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/src/infrastructure/blinking_caret.dart';
 import 'package:super_editor/src/test/super_editor_test/supereditor_inspector.dart';
@@ -11,11 +10,12 @@ import 'document_test_tools.dart';
 void main() {
   group('SuperEditor', () {
     group('floating cursor', () {
-      testWidgetsOnIos('hides caret when over text (on iOS)', (tester) async {
+      testWidgetsOnIos('hides caret when over text', (tester) async {
+        // Pump a SuperEditor which displays the content in a single line.
         await tester //
             .createDocument()
             .fromMarkdown('This is a paragraph')
-            .withEditorSize(const Size(300, 300))
+            .withEditorSize(const Size(500, 500))
             .pump();
 
         // Place caret at "|This is a paragraph".
@@ -24,71 +24,92 @@ void main() {
         // Ensure the caret is displayed.
         expect(_caretFinder(), findsOneWidget);
 
-        // Moves the floating cursor to a position that is over text.
-        final floatingCursor = _FloatingCursorSimulator();
-        await floatingCursor.start();
+        // Show the floating cursor.
+        await tester.startFloatingCursorGesture();
         await tester.pump();
-        await floatingCursor.moveTo(const Offset(10, 0));
+
+        // Move the floating cursor to the right.
+        // The floating cursor will be over the text.
+        await tester.updateFloatingCursorGesture(const Offset(50, 0));
+        await tester.pump();
+
+        // Ensure the caret isn't displayed.
+        expect(_caretFinder(), findsNothing);
+
+        // Move the floating cursor to the right.
+        // The floating cursor will be over the text.
+        await tester.updateFloatingCursorGesture(const Offset(100, 0));
+        await tester.pump();
+
+        // Ensure the caret isn't displayed.
+        expect(_caretFinder(), findsNothing);
+
+        // Move the floating cursor to the right.
+        // The floating cursor will be over the text.
+        await tester.updateFloatingCursorGesture(const Offset(175, 0));
         await tester.pump();
 
         // Ensure the caret isn't displayed.
         expect(_caretFinder(), findsNothing);
 
         // Release the floating cursor.
-        await floatingCursor.stop();
+        await tester.stopFloatingCursorGesture();
         await tester.pump();
 
         // Ensure the caret is displayed.
         expect(_caretFinder(), findsOneWidget);
       });
 
-      testWidgetsOnIos('hides caret when near text (on iOS)', (tester) async {
+      testWidgetsOnIos('hides caret when near text', (tester) async {
+        // Pump a SuperEditor which displays the content in a single line.
         await tester //
             .createDocument()
             .fromMarkdown('This is a paragraph')
-            .withEditorSize(const Size(300, 300))
+            .withEditorSize(const Size(500, 500))
             .pump();
 
-        // Place caret at "This is a| paragraph".
-        // This is the last position of the first line.
-        await tester.placeCaretInParagraph(SuperEditorInspector.findDocument()!.nodes.first.id, 9);
+        // Place caret at the end of the text.
+        await tester.placeCaretInParagraph(SuperEditorInspector.findDocument()!.nodes.first.id, 19);
 
         // Ensure the caret is displayed.
         expect(_caretFinder(), findsOneWidget);
 
-        // Moves the floating cursor to a position that is close to the text.
-        final floatingCursor = _FloatingCursorSimulator();
-        await floatingCursor.start();
+        // Show the floating cursor.
+        await tester.startFloatingCursorGesture();
         await tester.pump();
-        await floatingCursor.moveTo(const Offset(10, 0));
+
+        // Moves the floating cursor to the maximum distance before the grey caret is displayed.
+        await tester.updateFloatingCursorGesture(const Offset(30, 0));
         await tester.pump();
 
         // Ensure the caret isn't displayed.
         expect(_caretFinder(), findsNothing);
 
         // Release the floating cursor.
-        await floatingCursor.stop();
+        await tester.stopFloatingCursorGesture();
         await tester.pump();
 
         // Ensure the caret is displayed.
         expect(_caretFinder(), findsOneWidget);
       });
 
-      testWidgetsOnIos('shows grey caret when far from text (on iOS)', (tester) async {
+      testWidgetsOnIos('shows grey caret when far from text', (tester) async {
+        // Pump a SuperEditor which displays the content in a single line.
         await tester //
             .createDocument()
             .fromMarkdown('This is a paragraph')
-            .withEditorSize(const Size(300, 300))
+            .withEditorSize(const Size(500, 500))
             .pump();
 
-        // Place caret at "This is a paragraph|".
-        await tester.placeCaretInParagraph(SuperEditorInspector.findDocument()!.nodes.first.id, 9);
+        // Place caret at the end of the text.
+        await tester.placeCaretInParagraph(SuperEditorInspector.findDocument()!.nodes.first.id, 19);
 
-        // Moves the floating cursor to a position that is far from text.
-        final floatingCursor = _FloatingCursorSimulator();
-        await floatingCursor.start();
+        // Show the floating cursor.
+        await tester.startFloatingCursorGesture();
         await tester.pump();
-        await floatingCursor.moveTo(const Offset(60, 0));
+
+        // Moves the floating cursor to the first pixel where the grey caret should be displayed.
+        await tester.updateFloatingCursorGesture(const Offset(31, 0));
         await tester.pump();
 
         // Ensure the caret is displayed.
@@ -99,7 +120,7 @@ void main() {
         expect(caret.color, Colors.grey);
 
         // Release the floating cursor.
-        await floatingCursor.stop();
+        await tester.stopFloatingCursorGesture();
         await tester.pump();
 
         // Ensure the caret is displayed.
@@ -115,42 +136,4 @@ void main() {
 
 Finder _caretFinder() {
   return find.byType(BlinkingCaret);
-}
-
-class _FloatingCursorSimulator {
-  /// Simulates the user holding the spacebar and starting the floating cursor gesture.
-  ///
-  /// The initial offset is at (0,0).
-  Future<void> start() async {
-    await _updateFloatingCursor(action: "FloatingCursorDragState.start", offset: Offset.zero);
-  }
-
-  /// Simulates the user swiping the spacebar by [offset].
-  ///
-  /// (0,0) means the point where the user started the gesture.
-  Future<void> moveTo(Offset offset) async {
-    await _updateFloatingCursor(action: "FloatingCursorDragState.update", offset: offset);
-  }
-
-  /// Simulates the user releasing the spacebar and stopping the floating cursor gesture.
-  Future<void> stop() async {
-    await _updateFloatingCursor(action: "FloatingCursorDragState.end", offset: Offset.zero);
-  }
-
-  Future<void> _updateFloatingCursor({required String action, required Offset offset}) async {
-    await TestDefaultBinaryMessengerBinding.instance!.defaultBinaryMessenger.handlePlatformMessage(
-      SystemChannels.textInput.name,
-      SystemChannels.textInput.codec.encodeMethodCall(
-        MethodCall(
-          "TextInputClient.updateFloatingCursor",
-          [
-            -1,
-            action,
-            {"X": offset.dx, "Y": offset.dy}
-          ],
-        ),
-      ),
-      null,
-    );
-  }
 }

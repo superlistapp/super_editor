@@ -100,6 +100,13 @@ class IosDocumentTouchEditingControls extends StatefulWidget {
 
 class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditingControls>
     with SingleTickerProviderStateMixin {
+  /// Represents the maximum distance an offset can be from the end of a text
+  /// and still be considered to be near it.
+  static const _maximumDistanceToBeNearText = 30.0;
+
+  static const _defaultFloatingCursorHeight = 20.0;
+  static const _defaultFloatingCursorWidth = 2.0;
+
   // These global keys are assigned to each draggable handle to
   // prevent a strange dragging issue.
   //
@@ -119,13 +126,6 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
 
   late BlinkController _caretBlinkController;
   Offset? _prevCaretOffset;
-
-  /// Represents the maximum distance an offset can be from the end of a text
-  /// and still be considered to be near it.
-  static const _maximumDistanceToBeNearText = 30.0;
-
-  static const _defaultFloatingCursorHeight = 20.0;
-  static const _defaultFloatingCursorWidth = 2.0;
 
   final _isShowingFloatingCursor = ValueNotifier<bool>(false);
   final _isFloatingCursorOverOrNearText = ValueNotifier<bool>(false);
@@ -225,15 +225,11 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
 
     final nearestDocPosition = widget.documentLayout.getDocumentPositionNearestToOffset(_floatingCursorOffset.value!)!;
     if (nearestDocPosition.nodePosition is TextNodePosition) {
-      final nearestComponent = widget.documentLayout.getComponentByNodeId(nearestDocPosition.nodeId)!;
-      _floatingCursorHeight = nearestComponent.getRectForPosition(nearestDocPosition.nodePosition).height;
+      final nearestPositionRect = widget.documentLayout.getRectForPosition(nearestDocPosition)!;
+      _floatingCursorHeight = nearestPositionRect.height;
 
-      if (_isFloatingCursorOverText(nearestComponent)) {
-        _isFloatingCursorOverOrNearText.value = true;
-      } else {
-        final distance = _floatingCursorDistanceFromSelectedPosition(nearestComponent, nearestDocPosition.nodePosition);
-        _isFloatingCursorOverOrNearText.value = distance.dx.abs() < _maximumDistanceToBeNearText;
-      }
+      final distance = _floatingCursorOffset.value! - nearestPositionRect.topLeft + const Offset(1.0, 0.0);
+      _isFloatingCursorOverOrNearText.value = distance.dx.abs() <= _maximumDistanceToBeNearText;
     } else {
       final nearestComponent = widget.documentLayout.getComponentByNodeId(nearestDocPosition.nodeId)!;
       _floatingCursorHeight = (nearestComponent.context.findRenderObject() as RenderBox).size.height;
@@ -243,47 +239,11 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
     widget.onFloatingCursorMoved?.call(_floatingCursorOffset.value!);
   }
 
-  bool _isFloatingCursorOverText(DocumentComponent nearestComponent) {
-    if (nearestComponent is! TextComponentState) {
-      return false;
-    }
-
-    final selectionBoxes = nearestComponent.textLayout.getBoxesForSelection(
-      TextSelection(
-        baseOffset: 0,
-        extentOffset: nearestComponent.getEndPosition().offset,
-      ),
-    );
-
-    final renderBox = nearestComponent.context.findRenderObject() as RenderBox;
-
-    final globalFloatingCursorOffset =
-        widget.documentLayout.getGlobalOffsetFromDocumentOffset(_floatingCursorOffset.value!);
-    final localFloatingCursorOffset = renderBox.globalToLocal(globalFloatingCursorOffset);
-    final floatingCursorRect = localFloatingCursorOffset & Size(_defaultFloatingCursorWidth, _floatingCursorHeight);
-
-    for (final box in selectionBoxes) {
-      if (box.toRect().overlaps(floatingCursorRect)) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  Offset _floatingCursorDistanceFromSelectedPosition(DocumentComponent component, NodePosition position) {
-    final renderBox = component.context.findRenderObject() as RenderBox;
-    final selectedPositionOffet = component.getOffsetForPosition(position);
-    final selectedPositionLocalOffet =
-        renderBox.localToGlobal(widget.documentLayout.getGlobalOffsetFromDocumentOffset(selectedPositionOffet));
-    return _floatingCursorOffset.value! - selectedPositionLocalOffet;
-  }
-
   @override
   Widget build(BuildContext context) {
-    return MultiListenableBuilder(
-        listenables: {widget.editingController, _isFloatingCursorOverOrNearText},
-        builder: (context) {
+    return ListenableBuilder(
+        listenable: widget.editingController,
+        builder: (context, _) {
           return Padding(
             // Remove the keyboard from the space that we occupy so that
             // clipping calculations apply to the expected visual borders,
@@ -300,7 +260,7 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
                 child: Stack(
                   children: [
                     // Build caret or drag handles
-                    if (!_isFloatingCursorOverOrNearText.value) ..._buildHandles(),
+                    _buildHandles(),
                     // Build the floating cursor
                     _buildFloatingCursor(),
                     // Build the editing toolbar
@@ -326,20 +286,35 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
         });
   }
 
-  List<Widget> _buildHandles() {
-    if (!widget.editingController.shouldDisplayCollapsedHandle &&
-        !widget.editingController.shouldDisplayExpandedHandles) {
-      editorGesturesLog.finer('Not building overlay handles because they aren\'t desired');
-      return [];
-    }
+  Widget _buildHandles() {
+    return ValueListenableBuilder<bool>(
+      valueListenable: _isFloatingCursorOverOrNearText,
+      builder: (context, isNearText, __) {
+        if (isNearText) {
+          return const SizedBox.shrink();
+        }
 
-    if (widget.editingController.shouldDisplayCollapsedHandle) {
-      return [
-        _buildCollapsedHandle(),
-      ];
-    } else {
-      return _buildExpandedHandles();
-    }
+        if (!widget.editingController.shouldDisplayCollapsedHandle &&
+            !widget.editingController.shouldDisplayExpandedHandles) {
+          editorGesturesLog.finer('Not building overlay handles because they aren\'t desired');
+          return const SizedBox.shrink();
+        }
+
+        late List<Widget> handles;
+
+        if (widget.editingController.shouldDisplayCollapsedHandle) {
+          handles = [
+            _buildCollapsedHandle(),
+          ];
+        } else {
+          handles = _buildExpandedHandles();
+        }
+
+        return Stack(
+          children: handles,
+        );
+      },
+    );
   }
 
   Widget _buildCollapsedHandle() {
