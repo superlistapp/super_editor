@@ -14,6 +14,7 @@ void main() {
       testGoldens("applies textScaleFactor", (tester) async {
         await tester.pumpWidget(
           _buildScaffold(
+            // ignore: prefer_const_constructors
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: const [
