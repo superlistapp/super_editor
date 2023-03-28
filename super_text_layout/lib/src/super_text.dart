@@ -27,6 +27,7 @@ class SuperText extends StatefulWidget {
     required this.richText,
     this.textAlign = TextAlign.left,
     this.textDirection = TextDirection.ltr,
+    this.textScaleFactor,
     this.layerBeneathBuilder,
     this.layerAboveBuilder,
     this.debugTrackTextBuilds = false,
@@ -52,6 +53,14 @@ class SuperText extends StatefulWidget {
   /// builds its inner rich text, so that tests can ensure the inner text
   /// is not rebuilt unnecessarily, due to text decorations.
   final bool debugTrackTextBuilds;
+
+  /// The number of font pixels for each logical pixel.
+  ///
+  /// For example, if the text scale factor is 1.5, text will be 50% larger than
+  /// the specified font size.
+  ///
+  /// Defaults to the value obtained from `MediaQuery.textScaleFactorOf`.
+  final double? textScaleFactor;
 
   @override
   State<SuperText> createState() => SuperTextState();
@@ -84,6 +93,7 @@ class SuperTextState extends State<SuperText> with ProseTextBlock {
       text: LayoutAwareRichText(
         text: widget.richText,
         textAlign: widget.textAlign,
+        textScaleFactor: widget.textScaleFactor ?? MediaQuery.textScaleFactorOf(context),
         onMarkNeedsLayout: _invalidateParagraph,
       ),
       background: LayoutBuilder(
@@ -288,8 +298,14 @@ class LayoutAwareRichText extends RichText {
     Key? key,
     required InlineSpan text,
     TextAlign textAlign = TextAlign.left,
+    double textScaleFactor = 1.0,
     required this.onMarkNeedsLayout,
-  }) : super(key: key, text: text, textAlign: textAlign);
+  }) : super(
+          key: key,
+          text: text,
+          textAlign: textAlign,
+          textScaleFactor: textScaleFactor,
+        );
 
   /// Callback invoked when the underlying [RenderParagraph] invalidates
   /// its layout.

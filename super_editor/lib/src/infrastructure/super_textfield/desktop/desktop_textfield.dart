@@ -210,6 +210,8 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
 
   FocusNode get focusNode => _focusNode;
 
+  double get _textScaleFactor => MediaQuery.textScaleFactorOf(context);
+
   void requestFocus() {
     _focusNode.requestFocus();
   }
@@ -295,7 +297,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
       return lineHeight;
     }
     final defaultStyle = widget.textStyleBuilder({});
-    return _estimatedLineHeight.calculate(defaultStyle);
+    return _estimatedLineHeight.calculate(defaultStyle, _textScaleFactor);
   }
 
   @override
@@ -392,6 +394,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
         key: _textKey,
         richText: _controller.text.computeTextSpan(widget.textStyleBuilder),
         textAlign: widget.textAlign,
+        textScaleFactor: _textScaleFactor,
         userSelection: UserSelection(
           highlightStyle: widget.selectionHighlightStyle,
           caretStyle: widget.caretStyle,
@@ -1864,20 +1867,26 @@ class _EstimatedLineHeight {
   /// TextStyle used to compute [_lastLineHeight].
   TextStyle? _lastComputedStyle;
 
+  /// Text scale factor used to compute [_lastLineHeight].
+  double? _lastTextScaleFactor;
+
   /// Computes the estimated line height for the given [style].
   ///
   /// The height is computed by laying out a [Paragraph] with an arbitrary
   /// character and inspecting it's height.
   ///
-  /// The result is cached for the last [style] used, so it's not computed
+  /// The result is cached for the last [style] and [textScaleFactor] used, so it's not computed
   /// at each call.
-  double calculate(TextStyle style) {
-    if (_lastComputedStyle == style && _lastLineHeight != null) {
+  double calculate(TextStyle style, double textScaleFactor) {
+    if (_lastComputedStyle == style &&
+        _lastLineHeight != null &&
+        _lastTextScaleFactor == textScaleFactor &&
+        _lastTextScaleFactor != null) {
       return _lastLineHeight!;
     }
 
     final builder = ui.ParagraphBuilder(style.getParagraphStyle())
-      ..pushStyle(style.getTextStyle())
+      ..pushStyle(style.getTextStyle(textScaleFactor: textScaleFactor))
       ..addText('A');
 
     final paragraph = builder.build();
@@ -1885,6 +1894,7 @@ class _EstimatedLineHeight {
 
     _lastLineHeight = paragraph.height;
     _lastComputedStyle = style;
+    _lastTextScaleFactor = textScaleFactor;
     return _lastLineHeight!;
   }
 }
