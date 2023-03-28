@@ -541,6 +541,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
         key: _textContentKey,
         richText: textSpan,
         textAlign: widget.textAlign,
+        textScaleFactor: MediaQuery.textScaleFactorOf(context),
         userSelection: UserSelection(
           highlightStyle: SelectionHighlightStyle(
             color: widget.selectionColor,
