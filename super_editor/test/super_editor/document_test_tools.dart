@@ -123,6 +123,7 @@ class TestDocumentConfigurator {
   DocumentSelection? _selection;
   WidgetBuilder? _androidToolbarBuilder;
   WidgetBuilder? _iOSToolbarBuilder;
+  Key? _key;
 
   /// Configures the [SuperEditor] for standard desktop interactions,
   /// e.g., mouse and keyboard input.
@@ -269,6 +270,12 @@ class TestDocumentConfigurator {
     return this;
   }
 
+  /// Configures the [SuperEditor] to use the given [key].
+  TestDocumentConfigurator withKey(Key? key) {
+    _key = key;
+    return this;
+  }
+
   /// Pumps a [SuperEditor] widget tree with the desired configuration, and returns
   /// a [TestDocumentContext], which includes the artifacts connected to the widget
   /// tree, e.g., the [DocumentEditor], [DocumentComposer], etc.
@@ -382,6 +389,7 @@ class TestDocumentConfigurator {
   /// [testDocumentContext], as well as other configurations in this class.
   Widget _buildSuperEditor(TestDocumentContext testDocumentContext) {
     return SuperEditor(
+      key: _key,
       documentLayoutKey: testDocumentContext.layoutKey,
       editor: testDocumentContext.editContext.editor,
       composer: testDocumentContext.editContext.composer,
