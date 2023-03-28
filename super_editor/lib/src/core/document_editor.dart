@@ -36,7 +36,7 @@ class DocumentEditor implements RequestDispatcher {
         context = EditorContext() {
     context.put("document", document);
 
-    _commandExecutor = _DocumentEditorCommandExecutor(context, this);
+    _commandExecutor = _DocumentEditorCommandExecutor(context);
 
     // We always want the document notified of changes so that the
     // document can notify its own listeners. Also, we want the document
@@ -161,9 +161,8 @@ class DocumentEditor implements RequestDispatcher {
   }
 
   void _reactToChanges(List<DocumentChangeEvent> changeList) {
-    // TODO: if reactions spawn new commands, where do they execute?
     for (final reaction in _reactionPipeline) {
-      reaction.react(context, this, _commandExecutor, changeList);
+      reaction.react(context, this, changeList);
     }
   }
 
@@ -181,7 +180,7 @@ abstract class RequestDispatcher {
 /// A command that alters something in a [DocumentEditor].
 abstract class EditorCommand {
   /// Executes this command and logs all changes with the [executor].
-  void execute(EditorContext context, RequestDispatcher requestDispatcher, CommandExecutor executor);
+  void execute(EditorContext context, CommandExecutor executor);
 }
 
 /// All resources that are available when executing [EditorCommand]s, such as a document,
@@ -239,10 +238,9 @@ abstract class CommandExecutor {
 }
 
 class _DocumentEditorCommandExecutor implements CommandExecutor {
-  _DocumentEditorCommandExecutor(this._context, this._requestDispatcher);
+  _DocumentEditorCommandExecutor(this._context);
 
   final EditorContext _context;
-  final RequestDispatcher _requestDispatcher;
 
   final _commandsBeingProcessed = EditorCommandQueue();
 
@@ -258,7 +256,7 @@ class _DocumentEditorCommandExecutor implements CommandExecutor {
       _commandsBeingProcessed.prepareForExecution();
 
       final command = _commandsBeingProcessed.activeCommand!;
-      command.execute(_context, _requestDispatcher, this);
+      command.execute(_context, this);
 
       _commandsBeingProcessed.onCommandExecutionComplete();
     }
@@ -348,20 +346,18 @@ abstract class EditorRequest {
 /// An [EditReaction] can use the given [executor] to spawn additional
 /// [EditorCommand]s that should run in response the [changeList].
 abstract class EditReaction {
-  void react(EditorContext editorContext, RequestDispatcher requestDispatcher, CommandExecutor executor,
-      List<DocumentChangeEvent> changeList);
+  void react(EditorContext editorContext, RequestDispatcher requestDispatcher, List<DocumentChangeEvent> changeList);
 }
 
 class FunctionalEditorChangeReaction implements EditReaction {
   FunctionalEditorChangeReaction(this._react);
 
-  final void Function(EditorContext editorContext, RequestDispatcher requestDispatcher, CommandExecutor executor,
-      List<DocumentChangeEvent> changeList) _react;
+  final void Function(
+      EditorContext editorContext, RequestDispatcher requestDispatcher, List<DocumentChangeEvent> changeList) _react;
 
   @override
-  void react(EditorContext editorContext, RequestDispatcher requestDispatcher, CommandExecutor executor,
-          List<DocumentChangeEvent> changeList) =>
-      _react(editorContext, requestDispatcher, executor, changeList);
+  void react(EditorContext editorContext, RequestDispatcher requestDispatcher, List<DocumentChangeEvent> changeList) =>
+      _react(editorContext, requestDispatcher, changeList);
 }
 
 /// An object that's notified with a change list from one or more

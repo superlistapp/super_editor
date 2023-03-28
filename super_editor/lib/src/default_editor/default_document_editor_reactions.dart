@@ -23,8 +23,7 @@ import 'multi_node_editing.dart';
 /// user types "* " (or similar) at the start of the paragraph.
 class UnorderedListItemConversionReaction implements EditReaction {
   @override
-  void react(EditorContext editorContext, RequestDispatcher requestDispatcher, CommandExecutor executor,
-      List<DocumentChangeEvent> changeList) {
+  void react(EditorContext editorContext, RequestDispatcher requestDispatcher, List<DocumentChangeEvent> changeList) {
     final document = editorContext.find<Document>(EditorContext.document);
     final didTypeSpaceAtEnd = EditInspector.didTypeSpace(document, changeList);
     if (!didTypeSpaceAtEnd) {
@@ -33,29 +32,31 @@ class UnorderedListItemConversionReaction implements EditReaction {
 
     final textInsertionEvent = changeList[changeList.length - 2] as TextInsertionEvent;
     final paragraph = document.getNodeById(textInsertionEvent.nodeId) as ParagraphNode;
-    final unorderedListItemMatch = RegExp(r'^\s*[\*-]\s+$');
+    final unorderedListItemMatch = RegExp(r'^\s*[*-]\s+$');
     if (!paragraph.text.text.startsWith(unorderedListItemMatch)) {
       return;
     }
 
     // The user started a paragraph with an unordered list item pattern.
     // Convert the paragraph to an unordered list item.
-    executor
-      ..executeCommand(
-        ReplaceNodeCommand(
+    requestDispatcher
+      ..execute(
+        ReplaceNodeRequest(
           existingNodeId: paragraph.id,
           newNode: ListItemNode.unordered(id: paragraph.id, text: AttributedText(text: "")),
         ),
       )
-      ..executeCommand(ChangeSelectionCommand(
-        DocumentSelection.collapsed(
-          position: DocumentPosition(
-            nodeId: textInsertionEvent.nodeId,
-            nodePosition: const TextNodePosition(offset: 0),
+      ..execute(
+        ChangeSelectionRequest(
+          DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: textInsertionEvent.nodeId,
+              nodePosition: const TextNodePosition(offset: 0),
+            ),
           ),
+          SelectionReason.contentChange,
         ),
-        SelectionReason.contentChange,
-      ));
+      );
   }
 }
 
@@ -63,8 +64,7 @@ class UnorderedListItemConversionReaction implements EditReaction {
 /// user types " 1. " (or similar) at the start of the paragraph.
 class OrderedListItemConversionReaction implements EditReaction {
   @override
-  void react(EditorContext editorContext, RequestDispatcher requestDispatcher, CommandExecutor executor,
-      List<DocumentChangeEvent> changeList) {
+  void react(EditorContext editorContext, RequestDispatcher requestDispatcher, List<DocumentChangeEvent> changeList) {
     final document = editorContext.find<Document>(EditorContext.document);
     final didTypeSpaceAtEnd = EditInspector.didTypeSpace(document, changeList);
     if (!didTypeSpaceAtEnd) {
@@ -81,22 +81,24 @@ class OrderedListItemConversionReaction implements EditReaction {
 
     // The user started a paragraph with an ordered list item pattern.
     // Convert the paragraph to an unordered list item.
-    executor
-      ..executeCommand(
-        ReplaceNodeCommand(
+    requestDispatcher
+      ..execute(
+        ReplaceNodeRequest(
           existingNodeId: paragraph.id,
           newNode: ListItemNode.ordered(id: paragraph.id, text: AttributedText(text: "")),
         ),
       )
-      ..executeCommand(ChangeSelectionCommand(
-        DocumentSelection.collapsed(
-          position: DocumentPosition(
-            nodeId: textInsertionEvent.nodeId,
-            nodePosition: const TextNodePosition(offset: 0),
+      ..execute(
+        ChangeSelectionRequest(
+          DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: textInsertionEvent.nodeId,
+              nodePosition: const TextNodePosition(offset: 0),
+            ),
           ),
+          SelectionReason.contentChange,
         ),
-        SelectionReason.contentChange,
-      ));
+      );
   }
 }
 
@@ -104,8 +106,7 @@ class OrderedListItemConversionReaction implements EditReaction {
 /// user types " > " (or similar) at the start of the paragraph.
 class BlockquoteConversionReaction implements EditReaction {
   @override
-  void react(EditorContext editorContext, RequestDispatcher requestDispatcher, CommandExecutor executor,
-      List<DocumentChangeEvent> changeList) {
+  void react(EditorContext editorContext, RequestDispatcher requestDispatcher, List<DocumentChangeEvent> changeList) {
     final document = editorContext.find<Document>(EditorContext.document);
     final didTypeSpaceAtEnd = EditInspector.didTypeSpace(document, changeList);
     if (!didTypeSpaceAtEnd) {
@@ -121,9 +122,9 @@ class BlockquoteConversionReaction implements EditReaction {
 
     // The user started a paragraph with blockquote pattern.
     // Convert the paragraph to a blockquote.
-    executor
-      ..executeCommand(
-        ReplaceNodeCommand(
+    requestDispatcher
+      ..execute(
+        ReplaceNodeRequest(
           existingNodeId: paragraph.id,
           newNode: ParagraphNode(
             id: paragraph.id,
@@ -134,23 +135,24 @@ class BlockquoteConversionReaction implements EditReaction {
           ),
         ),
       )
-      ..executeCommand(ChangeSelectionCommand(
-        DocumentSelection.collapsed(
-          position: DocumentPosition(
-            nodeId: textInsertionEvent.nodeId,
-            nodePosition: const TextNodePosition(offset: 0),
+      ..execute(
+        ChangeSelectionRequest(
+          DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: textInsertionEvent.nodeId,
+              nodePosition: const TextNodePosition(offset: 0),
+            ),
           ),
+          SelectionReason.contentChange,
         ),
-        SelectionReason.contentChange,
-      ));
+      );
   }
 }
 
 /// Converts full node content that looks like "--- " into a horizontal rule.
 class HorizontalRuleConversionReaction implements EditReaction {
   @override
-  void react(EditorContext editorContext, RequestDispatcher requestDispatcher, CommandExecutor executor,
-      List<DocumentChangeEvent> changeList) {
+  void react(EditorContext editorContext, RequestDispatcher requestDispatcher, List<DocumentChangeEvent> changeList) {
     final document = editorContext.find<Document>(EditorContext.document);
     final didTypeSpaceAtEnd = EditInspector.didTypeSpace(document, changeList);
     if (!didTypeSpaceAtEnd) {
@@ -166,17 +168,17 @@ class HorizontalRuleConversionReaction implements EditReaction {
 
     // The user started a paragraph with a horizontal rule pattern.
     // Convert the paragraph to a horizontal rule.
-    executor
-      ..executeCommand(
-        InsertNodeAtIndexCommand(
+    requestDispatcher
+      ..execute(
+        InsertNodeAtIndexRequest(
           nodeIndex: document.getNodeIndexById(paragraph.id),
           newNode: HorizontalRuleNode(
             id: DocumentEditor.createNodeId(),
           ),
         ),
       )
-      ..executeCommand(
-        ReplaceNodeCommand(
+      ..execute(
+        ReplaceNodeRequest(
           existingNodeId: paragraph.id,
           newNode: ParagraphNode(
             id: paragraph.id,
@@ -184,15 +186,17 @@ class HorizontalRuleConversionReaction implements EditReaction {
           ),
         ),
       )
-      ..executeCommand(ChangeSelectionCommand(
-        DocumentSelection.collapsed(
-          position: DocumentPosition(
-            nodeId: paragraph.id,
-            nodePosition: const TextNodePosition(offset: 0),
+      ..execute(
+        ChangeSelectionRequest(
+          DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: paragraph.id,
+              nodePosition: const TextNodePosition(offset: 0),
+            ),
           ),
+          SelectionReason.contentChange,
         ),
-        SelectionReason.contentChange,
-      ));
+      );
   }
 }
 
@@ -200,8 +204,7 @@ class HorizontalRuleConversionReaction implements EditReaction {
 /// to an image, the replaces the previous node with the referenced image.
 class ImageUrlConversionReaction implements EditReaction {
   @override
-  void react(EditorContext editorContext, RequestDispatcher requestDispatcher, CommandExecutor executor,
-      List<DocumentChangeEvent> changeList) {
+  void react(EditorContext editorContext, RequestDispatcher requestDispatcher, List<DocumentChangeEvent> changeList) {
     if (changeList.isEmpty) {
       return;
     }
@@ -330,8 +333,7 @@ class ImageUrlConversionReaction implements EditReaction {
 
 class LinkifyReaction implements EditReaction {
   @override
-  void react(EditorContext editorContext, RequestDispatcher requestDispatcher, CommandExecutor executor,
-      List<DocumentChangeEvent> changeList) {
+  void react(EditorContext editorContext, RequestDispatcher requestDispatcher, List<DocumentChangeEvent> changeList) {
     final document = editorContext.find<Document>(EditorContext.document);
     TextInsertionEvent? linkifyCandidate;
     for (final change in changeList) {

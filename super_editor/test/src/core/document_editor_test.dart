@@ -275,7 +275,7 @@ class _ExpandingCommand implements EditorCommand {
   final _ExpandingCommandRequest request;
 
   @override
-  void execute(EditorContext context, RequestDispatcher requestDispatcher, CommandExecutor executor) {
+  void execute(EditorContext context, CommandExecutor executor) {
     final document = context.find<Document>(EditorContext.document);
     final paragraph = document.getNodeAt(0) as ParagraphNode;
 

@@ -214,7 +214,7 @@ class ConvertBlockquoteToParagraphCommand implements EditorCommand {
   final String nodeId;
 
   @override
-  void execute(EditorContext context, RequestDispatcher requestDispatcher, CommandExecutor executor) {
+  void execute(EditorContext context, CommandExecutor executor) {
     final document = context.find<MutableDocument>(EditorContext.document);
     final node = document.getNodeById(nodeId);
     final blockquote = node as ParagraphNode;
@@ -304,7 +304,7 @@ class SplitBlockquoteCommand implements EditorCommand {
   final String newNodeId;
 
   @override
-  void execute(EditorContext context, RequestDispatcher requestDispatcher, CommandExecutor executor) {
+  void execute(EditorContext context, CommandExecutor executor) {
     final document = context.find<MutableDocument>(EditorContext.document);
     final node = document.getNodeById(nodeId);
     final blockquote = node as ParagraphNode;

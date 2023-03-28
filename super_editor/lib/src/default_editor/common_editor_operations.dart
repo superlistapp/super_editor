@@ -1986,7 +1986,7 @@ class PasteEditorCommand implements EditorCommand {
   final DocumentComposer _composer;
 
   @override
-  void execute(EditorContext context, RequestDispatcher requestDispatcher, CommandExecutor executor) {
+  void execute(EditorContext context, CommandExecutor executor) {
     final document = context.find<MutableDocument>(EditorContext.document);
     final currentNodeWithSelection = document.getNodeById(_pastePosition.nodeId);
     if (currentNodeWithSelection is! ParagraphNode) {
