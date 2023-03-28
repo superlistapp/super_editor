@@ -1585,7 +1585,7 @@ class CommonEditorOperations {
       //
       // Now, if the whole text (`textBeforeCaret`) was:
       //
-      // `Solve the equation $5 ^ 2 = x $ `
+      // `Solve the equation $ 5 ^ 2 = x $ `
       //
       // We now try to construct the following:
       //
@@ -1606,8 +1606,10 @@ class CommonEditorOperations {
           ));
 
       final textBeforeTeX = adjustedText.copyText(0, startOfTeXIndex - 2);
+      final textAfterTeX = adjustedText.copyText(endOfTeXIndex + 2);
       final texText = adjustedText.copyText(startOfTeXIndex, endOfTeXIndex + 1);
       adjustedText = textBeforeTeX.copyAndAppend(texText);
+      adjustedText = adjustedText.copyAndAppend(textAfterTeX);
 
       final texNode = ParagraphNode(
         id: node.id,

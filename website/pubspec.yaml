@@ -10,8 +10,15 @@ dependencies:
   flutter_web_plugins:
     sdk: flutter
   super_editor:
-    path: ../super_editor
-  super_text_layout: ^0.1.0
+    git:
+      url: https://github.com/simpleclub-extended/super_editor
+      path: super_editor
+      ref: simpleclub-stable
+  super_text_layout:
+    git:
+      url: https://github.com/simpleclub-extended/super_editor
+      path: super_text_layout
+      ref: simpleclub-stable
   url_launcher:
 
 dev_dependencies:
