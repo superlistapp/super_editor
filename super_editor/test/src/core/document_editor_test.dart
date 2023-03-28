@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:super_editor/src/test/super_editor_test/supereditor_inspector.dart';
 import 'package:super_editor/super_editor.dart';
 
 import '../../super_editor/test_documents.dart';
@@ -133,6 +134,185 @@ void main() {
 
         expect(changeLog, isNotNull);
         expect(changeLog!.changes.length, 13 * 2); // 13 commands * 2 events per command
+      });
+
+      test('runs reactions after a command', () {
+        int reactionCount = 0;
+
+        final document = MutableDocument(
+          nodes: [ParagraphNode(id: DocumentEditor.createNodeId(), text: AttributedText(text: ""))],
+        );
+
+        final editor = DocumentEditor(
+          document: document,
+          requestHandlers: defaultRequestHandlers,
+          reactionPipeline: [
+            FunctionalEditorChangeReaction((editorContext, requestDispatcher, changeList) {
+              reactionCount += 1;
+            }),
+          ],
+        );
+
+        final composer = DocumentComposer(
+          initialSelection: const DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: "1",
+              nodePosition: TextNodePosition(offset: 0),
+            ),
+          ),
+        );
+        editor.context.put(EditorContext.composer, composer);
+
+        editor.execute(
+          InsertTextRequest(
+            documentPosition: const DocumentPosition(
+              nodeId: "1",
+              nodePosition: TextNodePosition(offset: 0),
+            ),
+            textToInsert: "H",
+            attributions: const {},
+          ),
+        );
+
+        // Ensure that our reaction ran after the requested command.
+        expect(reactionCount, 1);
+      });
+
+      test('interrupts back-to-back commands to run a reaction', () {
+        final document = MutableDocument(
+          nodes: [ParagraphNode(id: "1", text: AttributedText(text: ""))],
+        );
+
+        final composer = DocumentComposer(
+          initialSelection: const DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: "1",
+              nodePosition: TextNodePosition(offset: 0),
+            ),
+          ),
+        );
+
+        final editor = DocumentEditor(
+          document: document,
+          requestHandlers: defaultRequestHandlers,
+          reactionPipeline: [
+            FunctionalEditorChangeReaction((editorContext, requestDispatcher, changeList) {
+              TextInsertionEvent? insertEEvent;
+              for (final change in changeList) {
+                if (change is! TextInsertionEvent) {
+                  continue;
+                }
+
+                insertEEvent = change.text.endsWith("e") ? change : null;
+              }
+
+              if (insertEEvent == null) {
+                return;
+              }
+
+              // Insert "ll" after "e" to get "Hello" when all the commands are done.
+              requestDispatcher.execute(
+                InsertTextRequest(
+                  documentPosition: DocumentPosition(
+                    nodeId: insertEEvent.nodeId,
+                    nodePosition: TextNodePosition(offset: insertEEvent.offset + 1), // +1 for "e"
+                  ),
+                  textToInsert: "ll",
+                  attributions: {},
+                ),
+              );
+            }),
+          ],
+          listeners: [
+            FunctionalEditorChangeListener(
+              composer.selectionComponent.onEditorChange,
+            ),
+          ],
+        )..context.put(EditorContext.composer, composer);
+
+        editor
+          ..execute(
+            InsertTextRequest(
+              documentPosition: const DocumentPosition(
+                nodeId: "1",
+                nodePosition: TextNodePosition(offset: 0),
+              ),
+              textToInsert: "H",
+              attributions: const {},
+            ),
+          )
+          ..execute(
+            InsertTextRequest(
+              documentPosition: const DocumentPosition(
+                nodeId: "1",
+                nodePosition: TextNodePosition(offset: 1),
+              ),
+              textToInsert: "e",
+              attributions: const {},
+            ),
+          )
+          ..execute(
+            InsertTextRequest(
+              documentPosition: const DocumentPosition(
+                nodeId: "1",
+                nodePosition: TextNodePosition(offset: 4),
+              ),
+              textToInsert: "o",
+              attributions: const {},
+            ),
+          );
+
+        // Ensure that our reaction ran in the middle of the requests.
+        expect((document.nodes.first as TextNode).text.text, "Hello");
+      });
+
+      test('inserts character at caret', () {
+        final editor = _createStandardEditor(
+          initialSelection: const DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: "1",
+              nodePosition: TextNodePosition(offset: 0),
+            ),
+          ),
+        );
+        final document = editor.document;
+        final composer = editor.context.find(EditorContext.composer) as DocumentComposer;
+
+        editor
+          ..execute(
+            InsertTextRequest(
+              documentPosition: const DocumentPosition(
+                nodeId: "1",
+                nodePosition: TextNodePosition(offset: 0),
+              ),
+              textToInsert: 'H',
+              attributions: const {},
+            ),
+          )
+          ..execute(
+            const ChangeSelectionRequest(
+              DocumentSelection.collapsed(
+                position: DocumentPosition(
+                  nodeId: "1",
+                  nodePosition: TextNodePosition(offset: 1),
+                ),
+              ),
+              "test",
+            ),
+          );
+
+        // Ensure the character was inserted, and the caret moved forward.
+        expect((document.getNodeAt(0) as TextNode).text.text, "H");
+        expect(composer.selectionComponent.selection, isNotNull);
+        expect(
+          composer.selectionComponent.selection,
+          const DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: "1",
+              nodePosition: TextNodePosition(offset: 1),
+            ),
+          ),
+        );
       });
 
       test('inserts new paragraph node at caret', () {

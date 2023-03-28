@@ -48,7 +48,8 @@ final defaultRequestHandlers = [
       ? InsertTextCommand(
           documentPosition: request.documentPosition,
           textToInsert: request.textToInsert,
-          attributions: request.attributions)
+          attributions: request.attributions,
+        )
       : null,
   (request) => request is InsertNodeAtIndexRequest
       ? InsertNodeAtIndexCommand(nodeIndex: request.nodeIndex, newNode: request.newNode)
