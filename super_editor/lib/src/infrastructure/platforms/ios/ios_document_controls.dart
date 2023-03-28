@@ -100,8 +100,10 @@ class IosDocumentTouchEditingControls extends StatefulWidget {
 
 class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditingControls>
     with SingleTickerProviderStateMixin {
-  /// Represents the maximum distance an offset can be from the end of a text
-  /// and still be considered to be near it.
+  /// The maximum horizontal distance from the bounds of selectable text, for which we want to render
+  /// the floating cursor.
+  ///
+  /// Beyond this distance, no floating cursor is rendered.
   static const _maximumDistanceToBeNearText = 30.0;
 
   static const _defaultFloatingCursorHeight = 20.0;
@@ -287,6 +289,12 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
   }
 
   Widget _buildHandles() {
+    // When the floating cursor is over text or near text,
+    // we don't show the drag handles.
+    //
+    // Every time the floating cursor moves to a position which
+    // changes this state or when it changes its visibility,
+    // this widget is rebuilt.
     return ValueListenableBuilder<bool>(
       valueListenable: _isFloatingCursorOverOrNearText,
       builder: (context, isNearText, __) {
