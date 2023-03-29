@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
-import 'package:super_editor/src/infrastructure/flutter_scheduler.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/super_textfield.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
@@ -127,7 +126,7 @@ class _TextScrollViewState extends State<TextScrollView>
       ..delegate = this
       ..addListener(_onTextScrollChange);
 
-    widget.textEditingController.addListener(_scheduleViewportHeightUpdate);
+    widget.textEditingController.addListener(_scheduleViewportHeightUpdateAndRebuild);
   }
 
   @override
@@ -145,16 +144,16 @@ class _TextScrollViewState extends State<TextScrollView>
     }
 
     if (widget.textEditingController != oldWidget.textEditingController) {
-      oldWidget.textEditingController.removeListener(_scheduleViewportHeightUpdate);
-      widget.textEditingController.addListener(_scheduleViewportHeightUpdate);
+      oldWidget.textEditingController.removeListener(_scheduleViewportHeightUpdateAndRebuild);
+      widget.textEditingController.addListener(_scheduleViewportHeightUpdateAndRebuild);
 
-      _scheduleViewportHeightUpdate();
+      _scheduleViewportHeightUpdateAndRebuild();
     }
 
     if (widget.minLines != oldWidget.minLines ||
         widget.maxLines != oldWidget.maxLines ||
         widget.lineHeight != oldWidget.lineHeight) {
-      _scheduleViewportHeightUpdate();
+      _scheduleViewportHeightUpdateAndRebuild();
     }
   }
 
@@ -164,7 +163,7 @@ class _TextScrollViewState extends State<TextScrollView>
       ..delegate = null
       ..removeListener(_onTextScrollChange);
 
-    widget.textEditingController.removeListener(_scheduleViewportHeightUpdate);
+    widget.textEditingController.removeListener(_scheduleViewportHeightUpdateAndRebuild);
 
     super.dispose();
   }
@@ -329,10 +328,7 @@ class _TextScrollViewState extends State<TextScrollView>
     }
   }
 
-  /// Returns true if the viewport height changed, false otherwise.
-  bool _updateViewportHeight() {
-    _log.finer('Updating viewport height...');
-
+  _ViewportComputationResult _computeNewViewportHeight() {
     final hasLineConstraints = widget.maxLines != null || widget.minLines != null;
     if (!hasLineConstraints) {
       _log.finer(' - the widget does\'n have line number constraints. Sizing by intrinsic height.');
@@ -340,18 +336,9 @@ class _TextScrollViewState extends State<TextScrollView>
       // We don't have line constraints so we don't need to estimate the content height
       // and compute a fixed viewport height. The viewport will size itself based on the
       // text intrinsic height.
-
-      final didChange = _viewportHeight != null;
-      // We set these values outside of setState, because this method
-      // can be called during the build phase.
-      _needViewportHeight = false;
-      _viewportHeight = null;
-      WidgetsBinding.instance.runAsSoonAsPossible(() {
-        if (mounted) {
-          setState(() {});
-        }
-      });
-      return didChange;
+      return _ViewportComputationResult(
+        pending: false,
+      );
     }
 
     final linesOfText = _getLineCount();
@@ -380,16 +367,10 @@ class _TextScrollViewState extends State<TextScrollView>
 
     if (estimatedLineHeight == null || linesOfText == null) {
       // We need to estimate the content total height and we don't have enough information to compute it.
-      // Run again in the next frame.
-      _log.finer(' - could not calculate the estimated line height or content height. Rescheduling calculation.');
-      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-        if (mounted) {
-          setState(() {
-            _updateViewportHeight();
-          });
-        }
-      });
-      return false;
+      _log.finer(' - could not calculate the estimated line height or content height.');
+      return _ViewportComputationResult(
+        pending: true,
+      );
     }
 
     final totalVerticalPadding = widget.padding?.vertical ?? 0.0;
@@ -424,8 +405,10 @@ class _TextScrollViewState extends State<TextScrollView>
 
     if (!_needViewportHeight && newViewportHeight == _viewportHeight) {
       // The height of the viewport hasn't changed. Return.
-      _log.finer(' - viewport height hasn\'t changed');
-      return false;
+      return _ViewportComputationResult(
+        pending: false,
+        viewportHeight: newViewportHeight,
+      );
     }
 
     final wantsUnboundedIntrinsicHeight = newViewportHeight == null && isMultiline && !isBounded;
@@ -437,46 +420,64 @@ class _TextScrollViewState extends State<TextScrollView>
       // The viewport should expand to fit its content.
       _log.finer(
           ' - viewport height is null, but TextScrollView is unbounded or the content fits max height, so that is OK');
-      final didChange = newViewportHeight != _viewportHeight;
-      // We set these values outside of setState, because this method
-      // can be called during the build phase.
-      _needViewportHeight = false;
-      _viewportHeight = null;
-      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-        if (mounted) {
-          setState(() {});
-        }
-      });
-      return didChange;
+
+      return _ViewportComputationResult(
+        pending: false,
+        viewportHeight: newViewportHeight,
+      );
     }
 
     if (newViewportHeight != null) {
       _log.finer(' - new viewport height: $newViewportHeight');
-      // We set these values outside of setState, because this method
-      // can be called during the build phase.
-      _needViewportHeight = false;
-      _viewportHeight = newViewportHeight;
-      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-        if (mounted) {
-          setState(() {});
-        }
-      });
-
-      return true;
+      return _ViewportComputationResult(
+        pending: false,
+        viewportHeight: newViewportHeight,
+      );
     } else {
-      _log.finer(' - could not calculate a viewport height. Rescheduling calculation.');
-
-      // We still don't have a resolved viewport height. Run again next frame.
-      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-        if (mounted) {
-          setState(() {
-            _updateViewportHeight();
-          });
-        }
-      });
-
-      return false;
+      // We still don't have a resolved viewport height.
+      return _ViewportComputationResult(
+        pending: true,
+      );
     }
+  }
+
+  /// Updates the viewport height and requests a rebuild.
+  void _updateViewportHeightAndRebuild() {
+    _log.finer('Updating viewport height...');
+
+    final result = _computeNewViewportHeight();
+    if (result.pending) {
+      _log.finer(' - could not calculate a viewport height. Rescheduling calculation.');
+      // We still don't have a resolved viewport height.
+      // Reschedule the calculation.
+      _scheduleViewportHeightUpdateAndRebuild();
+      return;
+    }
+
+    bool didChange = _needViewportHeight || _viewportHeight != result.viewportHeight;
+
+    if (didChange) {
+      setState(() {
+        _needViewportHeight = false;
+        _viewportHeight = result.viewportHeight;
+      });
+    }
+  }
+
+  void _updateViewportHeight() {
+    _log.finer('Updating viewport height...');
+
+    final result = _computeNewViewportHeight();
+    if (result.pending) {
+      _log.finer(' - could not calculate a viewport height. Rescheduling calculation.');
+      // We still don't have a resolved viewport height.
+      // Reschedule the calculation.
+      _scheduleViewportHeightUpdateAndRebuild();
+      return;
+    }
+
+    _needViewportHeight = false;
+    _viewportHeight = result.viewportHeight;
   }
 
   /// Retuns the number of lines required to display the text.
@@ -496,13 +497,10 @@ class _TextScrollViewState extends State<TextScrollView>
     return _textLayout.getLineCount();
   }
 
-  void _scheduleViewportHeightUpdate() {
-    // The viewport height is calculated using the number of the lines of text.
-    // Therefore, when text changes we need to recalculate the viewport height
-    // to accommodate the new text.
+  void _scheduleViewportHeightUpdateAndRebuild() {
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       if (mounted) {
-        _updateViewportHeight();
+        _updateViewportHeightAndRebuild();
       }
     });
   }
@@ -1052,4 +1050,26 @@ abstract class TextScrollControllerDelegate {
 enum _AutoScrollDirection {
   start,
   end,
+}
+
+/// The result of the viewport height computation.
+///
+/// When [pending] is `true`, the computation needs to be rescheduled to the next frame.
+///
+/// When [pending] is `false`, [viewportHeight] must be used as the new viewport height.
+class _ViewportComputationResult {
+  _ViewportComputationResult({
+    required this.pending,
+    this.viewportHeight,
+  });
+
+  /// Whether or not the computation is still pending.
+  ///
+  /// `true` if we don't have enough information to compute [viewportHeight].
+  final bool pending;
+
+  /// The new viewport height, when [pending] is `false`.
+  ///
+  /// If `null`, the viewport will size itself based on the text intrinsic height.
+  final double? viewportHeight;
 }

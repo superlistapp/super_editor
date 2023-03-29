@@ -227,8 +227,8 @@ Widget _buildSuperTextField({
       textController: controller,
       textAlign: textAlign,
       maxLines: maxLines,
-      lineHeight: 20,
       minLines: 1,
+      lineHeight: 20,
       textStyleBuilder: (_) {
         return const TextStyle(
           color: Colors.black,
