@@ -143,6 +143,9 @@ Future<void> _pumpTestApp(
       ),
     ),
   );
+
+  // A SuperTextField configured with maxLines can't render in the first frame.
+  // Ask another frame, so the text field can be found by the finder.
   await tester.pump();
 }
 

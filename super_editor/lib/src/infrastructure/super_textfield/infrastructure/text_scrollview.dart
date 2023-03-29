@@ -451,6 +451,15 @@ class _TextScrollViewState extends State<TextScrollView>
       // We still don't have a resolved viewport height.
       // Reschedule the calculation.
       _scheduleViewportHeightUpdateAndRebuild();
+
+      if (widget.maxLines == null || widget.maxLines! == 1) {
+        setState(() {
+          // We have either unbounded height or we are a single line tall.
+          // Allow the text to be displayed in the next frame and let the calculation run again.
+          _needViewportHeight = false;
+        });
+      }
+
       return;
     }
 
@@ -473,6 +482,14 @@ class _TextScrollViewState extends State<TextScrollView>
       // We still don't have a resolved viewport height.
       // Reschedule the calculation.
       _scheduleViewportHeightUpdateAndRebuild();
+
+      if (widget.maxLines == null || widget.maxLines! == 1) {
+        // We have either unbounded height or we are a single line tall.
+        // Allow the text to be displayed in the current frame and let
+        // the calculation run again in the next frame.
+        _needViewportHeight = false;
+      }
+
       return;
     }
 
@@ -522,7 +539,7 @@ class _TextScrollViewState extends State<TextScrollView>
     }
 
     return Offstage(
-      offstage: (widget.maxLines != null && widget.maxLines! > 1 && _viewportHeight == null && _needViewportHeight),
+      offstage: _needViewportHeight,
       child: SizedBox(
         width: double.infinity,
         height: _viewportHeight,
