@@ -147,13 +147,13 @@ class _TextScrollViewState extends State<TextScrollView>
       oldWidget.textEditingController.removeListener(_scheduleViewportHeightUpdateAndRebuild);
       widget.textEditingController.addListener(_scheduleViewportHeightUpdateAndRebuild);
 
-      _scheduleViewportHeightUpdateAndRebuild();
+      _updateViewportHeight();
     }
 
     if (widget.minLines != oldWidget.minLines ||
         widget.maxLines != oldWidget.maxLines ||
         widget.lineHeight != oldWidget.lineHeight) {
-      _scheduleViewportHeightUpdateAndRebuild();
+      _updateViewportHeight();
     }
   }
 
@@ -328,117 +328,12 @@ class _TextScrollViewState extends State<TextScrollView>
     }
   }
 
-  _ViewportComputationResult _computeNewViewportHeight() {
-    final hasLineConstraints = widget.maxLines != null || widget.minLines != null;
-    if (!hasLineConstraints) {
-      _log.finer(' - the widget does\'n have line number constraints. Sizing by intrinsic height.');
-
-      // We don't have line constraints so we don't need to estimate the content height
-      // and compute a fixed viewport height. The viewport will size itself based on the
-      // text intrinsic height.
-      return _ViewportComputationResult(
-        pending: false,
-      );
-    }
-
-    final linesOfText = _getLineCount();
-    _log.finer(' - lines of text: $linesOfText');
-
-    double? estimatedLineHeight;
-    if (widget.lineHeight != null) {
-      _log.finer(' - explicit line height provided: ${widget.lineHeight}');
-      // Use the line height that was explicitly provided by the widget.
-      estimatedLineHeight = widget.lineHeight!;
-    } else if (widget.textKey.currentState != null) {
-      _log.finer(' - calculating an estimated line height for the field');
-      // No line height was provided. Calculate a best-guess.
-      final textLayout = widget.textKey.currentState!.textLayout;
-      estimatedLineHeight = textLayout.getLineHeightAtPosition(const TextPosition(offset: 0));
-      _log.finer(' - line height at position 0: $estimatedLineHeight');
-
-      // We got 0.0 for the line height at the beginning of text. Maybe the
-      // text is empty. Ask the TextLayout to estimate a height for us that's
-      // based on the text style.
-      if (estimatedLineHeight == 0) {
-        estimatedLineHeight = widget.textKey.currentState!.textLayout.estimatedLineHeight;
-        _log.finer(' - estimated line height based on text styles: $estimatedLineHeight');
+  void _scheduleViewportHeightUpdateAndRebuild() {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      if (mounted) {
+        _updateViewportHeightAndRebuild();
       }
-    }
-
-    if (estimatedLineHeight == null || linesOfText == null) {
-      // We need to estimate the content total height and we don't have enough information to compute it.
-      _log.finer(' - could not calculate the estimated line height or content height.');
-      return _ViewportComputationResult(
-        pending: true,
-      );
-    }
-
-    final totalVerticalPadding = widget.padding?.vertical ?? 0.0;
-
-    final estimatedContentHeight = (linesOfText * estimatedLineHeight) + totalVerticalPadding;
-    _log.finer(' - estimated content height: $estimatedContentHeight');
-
-    final minContentHeight = widget.minLines != null //
-        ? widget.minLines! * estimatedLineHeight
-        : estimatedLineHeight; // Can't be shorter than 1 line.
-
-    final minHeight = minContentHeight + totalVerticalPadding;
-
-    final maxContentHeight = widget.maxLines != null //
-        ? (widget.maxLines! * estimatedLineHeight) //
-        : null;
-
-    final maxHeight = maxContentHeight != null //
-        ? maxContentHeight + totalVerticalPadding
-        : null;
-
-    _log.finer(' - minHeight: $minHeight, maxHeight: $maxHeight');
-
-    double? newViewportHeight;
-    if (maxHeight != null && estimatedContentHeight >= maxHeight) {
-      _log.finer(' - setting viewport height to maxHeight');
-      newViewportHeight = maxHeight;
-    } else if (estimatedContentHeight <= minHeight) {
-      _log.finer(' - setting viewport height to minHeight');
-      newViewportHeight = minHeight;
-    }
-
-    if (!_needViewportHeight && newViewportHeight == _viewportHeight) {
-      // The height of the viewport hasn't changed. Return.
-      return _ViewportComputationResult(
-        pending: false,
-        viewportHeight: newViewportHeight,
-      );
-    }
-
-    final wantsUnboundedIntrinsicHeight = newViewportHeight == null && isMultiline && !isBounded;
-    final multilineContentFitsMaxHeight =
-        newViewportHeight == null && isMultiline && isBounded && estimatedContentHeight <= maxHeight!;
-
-    if (wantsUnboundedIntrinsicHeight || multilineContentFitsMaxHeight) {
-      // We have either an unbounded height or our estimated content height fits inside our max height.
-      // The viewport should expand to fit its content.
-      _log.finer(
-          ' - viewport height is null, but TextScrollView is unbounded or the content fits max height, so that is OK');
-
-      return _ViewportComputationResult(
-        pending: false,
-        viewportHeight: newViewportHeight,
-      );
-    }
-
-    if (newViewportHeight != null) {
-      _log.finer(' - new viewport height: $newViewportHeight');
-      return _ViewportComputationResult(
-        pending: false,
-        viewportHeight: newViewportHeight,
-      );
-    } else {
-      // We still don't have a resolved viewport height.
-      return _ViewportComputationResult(
-        pending: true,
-      );
-    }
+    });
   }
 
   /// Updates the viewport height and requests a rebuild.
@@ -497,6 +392,119 @@ class _TextScrollViewState extends State<TextScrollView>
     _viewportHeight = result.viewportHeight;
   }
 
+  _ViewportComputationStatus _computeNewViewportHeight() {
+    final hasLineConstraints = widget.maxLines != null || widget.minLines != null;
+    if (!hasLineConstraints) {
+      _log.finer(' - the widget does\'n have line number constraints. Sizing by intrinsic height.');
+
+      // We don't have line constraints so we don't need to estimate the content height
+      // and compute a fixed viewport height. The viewport will size itself based on the
+      // text intrinsic height.
+      return _ViewportComputationStatus(
+        pending: false,
+      );
+    }
+
+    final linesOfText = _getLineCount();
+    _log.finer(' - lines of text: $linesOfText');
+
+    double? estimatedLineHeight;
+    if (widget.lineHeight != null) {
+      _log.finer(' - explicit line height provided: ${widget.lineHeight}');
+      // Use the line height that was explicitly provided by the widget.
+      estimatedLineHeight = widget.lineHeight!;
+    } else if (widget.textKey.currentState != null) {
+      _log.finer(' - calculating an estimated line height for the field');
+      // No line height was provided. Calculate a best-guess.
+      final textLayout = widget.textKey.currentState!.textLayout;
+      estimatedLineHeight = textLayout.getLineHeightAtPosition(const TextPosition(offset: 0));
+      _log.finer(' - line height at position 0: $estimatedLineHeight');
+
+      // We got 0.0 for the line height at the beginning of text. Maybe the
+      // text is empty. Ask the TextLayout to estimate a height for us that's
+      // based on the text style.
+      if (estimatedLineHeight == 0) {
+        estimatedLineHeight = widget.textKey.currentState!.textLayout.estimatedLineHeight;
+        _log.finer(' - estimated line height based on text styles: $estimatedLineHeight');
+      }
+    }
+
+    if (estimatedLineHeight == null || linesOfText == null) {
+      // We need to estimate the content total height and we don't have enough information to compute it.
+      _log.finer(' - could not calculate the estimated line height or content height.');
+      return _ViewportComputationStatus(
+        pending: true,
+      );
+    }
+
+    final totalVerticalPadding = widget.padding?.vertical ?? 0.0;
+
+    final estimatedContentHeight = (linesOfText * estimatedLineHeight) + totalVerticalPadding;
+    _log.finer(' - estimated content height: $estimatedContentHeight');
+
+    final minContentHeight = widget.minLines != null //
+        ? widget.minLines! * estimatedLineHeight
+        : estimatedLineHeight; // Can't be shorter than 1 line.
+
+    final minHeight = minContentHeight + totalVerticalPadding;
+
+    final maxContentHeight = widget.maxLines != null //
+        ? (widget.maxLines! * estimatedLineHeight) //
+        : null;
+
+    final maxHeight = maxContentHeight != null //
+        ? maxContentHeight + totalVerticalPadding
+        : null;
+
+    _log.finer(' - minHeight: $minHeight, maxHeight: $maxHeight');
+
+    double? newViewportHeight;
+    if (maxHeight != null && estimatedContentHeight >= maxHeight) {
+      _log.finer(' - setting viewport height to maxHeight');
+      newViewportHeight = maxHeight;
+    } else if (estimatedContentHeight <= minHeight) {
+      _log.finer(' - setting viewport height to minHeight');
+      newViewportHeight = minHeight;
+    }
+
+    if (!_needViewportHeight && newViewportHeight == _viewportHeight) {
+      // The height of the viewport hasn't changed. Return.
+      return _ViewportComputationStatus(
+        pending: false,
+        viewportHeight: newViewportHeight,
+      );
+    }
+
+    final wantsUnboundedIntrinsicHeight = newViewportHeight == null && isMultiline && !isBounded;
+    final multilineContentFitsMaxHeight =
+        newViewportHeight == null && isMultiline && isBounded && estimatedContentHeight <= maxHeight!;
+
+    if (wantsUnboundedIntrinsicHeight || multilineContentFitsMaxHeight) {
+      // We have either an unbounded height or our estimated content height fits inside our max height.
+      // The viewport should expand to fit its content.
+      _log.finer(
+          ' - viewport height is null, but TextScrollView is unbounded or the content fits max height, so that is OK');
+
+      return _ViewportComputationStatus(
+        pending: false,
+        viewportHeight: newViewportHeight,
+      );
+    }
+
+    if (newViewportHeight != null) {
+      _log.finer(' - new viewport height: $newViewportHeight');
+      return _ViewportComputationStatus(
+        pending: false,
+        viewportHeight: newViewportHeight,
+      );
+    } else {
+      // We still don't have a resolved viewport height.
+      return _ViewportComputationStatus(
+        pending: true,
+      );
+    }
+  }
+
   /// Retuns the number of lines required to display the text.
   ///
   /// This isn't necessarily equal to the number of lines in the string.
@@ -512,14 +520,6 @@ class _TextScrollViewState extends State<TextScrollView>
     }
 
     return _textLayout.getLineCount();
-  }
-
-  void _scheduleViewportHeightUpdateAndRebuild() {
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      if (mounted) {
-        _updateViewportHeightAndRebuild();
-      }
-    });
   }
 
   /// Returns the [ProseTextLayout] that lays out and renders the
@@ -1069,13 +1069,13 @@ enum _AutoScrollDirection {
   end,
 }
 
-/// The result of the viewport height computation.
+/// The status of the viewport height computation.
 ///
 /// When [pending] is `true`, the computation needs to be rescheduled to the next frame.
 ///
 /// When [pending] is `false`, [viewportHeight] must be used as the new viewport height.
-class _ViewportComputationResult {
-  _ViewportComputationResult({
+class _ViewportComputationStatus {
+  _ViewportComputationStatus({
     required this.pending,
     this.viewportHeight,
   });
