@@ -1,4 +1,5 @@
 import 'package:flutter/gestures.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_test_robots/flutter_test_robots.dart';
@@ -250,6 +251,29 @@ extension SuperEditorRobot on WidgetTester {
     await ime.typeText(text, getter: () => imeClientGetter(imeOwnerFinder));
   }
 
+  /// Simulates the user holding the spacebar and starting the floating cursor gesture.
+  ///
+  /// The initial offset is at (0,0).
+  Future<void> startFloatingCursorGesture() async {
+    await _updateFloatingCursor(action: "FloatingCursorDragState.start", offset: Offset.zero);
+  }
+
+  /// Simulates the user swiping the spacebar by [offset].
+  ///
+  /// (0,0) means the point where the user started the gesture.
+  ///
+  /// A floating cursor gesture must be started before calling this method.
+  Future<void> updateFloatingCursorGesture(Offset offset) async {
+    await _updateFloatingCursor(action: "FloatingCursorDragState.update", offset: offset);
+  }
+
+  /// Simulates the user releasing the spacebar and stopping the floating cursor gesture.
+  ///
+  /// A floating cursor gesture must be started before calling this method.
+  Future<void> stopFloatingCursorGesture() async {
+    await _updateFloatingCursor(action: "FloatingCursorDragState.end", offset: Offset.zero);
+  }
+
   DocumentLayout _findDocumentLayout([Finder? superEditorFinder]) {
     late final Finder layoutFinder;
     if (superEditorFinder != null) {
@@ -259,5 +283,22 @@ extension SuperEditorRobot on WidgetTester {
     }
     final documentLayoutElement = layoutFinder.evaluate().single as StatefulElement;
     return documentLayoutElement.state as DocumentLayout;
+  }
+
+  Future<void> _updateFloatingCursor({required String action, required Offset offset}) async {
+    await TestDefaultBinaryMessengerBinding.instance!.defaultBinaryMessenger.handlePlatformMessage(
+      SystemChannels.textInput.name,
+      SystemChannels.textInput.codec.encodeMethodCall(
+        MethodCall(
+          "TextInputClient.updateFloatingCursor",
+          [
+            -1,
+            action,
+            {"X": offset.dx, "Y": offset.dy}
+          ],
+        ),
+      ),
+      null,
+    );
   }
 }
