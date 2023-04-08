@@ -100,6 +100,15 @@ class IosDocumentTouchEditingControls extends StatefulWidget {
 
 class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditingControls>
     with SingleTickerProviderStateMixin {
+  /// The maximum horizontal distance from the bounds of selectable text, for which we want to render
+  /// the floating cursor.
+  ///
+  /// Beyond this distance, no floating cursor is rendered.
+  static const _maximumDistanceToBeNearText = 30.0;
+
+  static const _defaultFloatingCursorHeight = 20.0;
+  static const _defaultFloatingCursorWidth = 2.0;
+
   // These global keys are assigned to each draggable handle to
   // prevent a strange dragging issue.
   //
@@ -120,8 +129,8 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
   late BlinkController _caretBlinkController;
   Offset? _prevCaretOffset;
 
-  static const _defaultFloatingCursorHeight = 20.0;
   final _isShowingFloatingCursor = ValueNotifier<bool>(false);
+  final _isFloatingCursorOverOrNearText = ValueNotifier<bool>(false);
   final _floatingCursorKey = GlobalKey();
   Offset? _initialFloatingCursorOffset;
   final _floatingCursorOffset = ValueNotifier<Offset?>(null);
@@ -177,6 +186,7 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
 
         _caretBlinkController.startBlinking();
 
+        _isFloatingCursorOverOrNearText.value = false;
         _initialFloatingCursorOffset = null;
         _floatingCursorOffset.value = null;
         _floatingCursorHeight = _defaultFloatingCursorHeight;
@@ -204,6 +214,7 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
     if (_floatingCursorOffset.value == null) {
       // The floating cursor just started.
       widget.onFloatingCursorStart?.call();
+      _isShowingFloatingCursor.value = true;
     }
 
     _caretBlinkController.stopBlinking();
@@ -216,11 +227,15 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
 
     final nearestDocPosition = widget.documentLayout.getDocumentPositionNearestToOffset(_floatingCursorOffset.value!)!;
     if (nearestDocPosition.nodePosition is TextNodePosition) {
-      final nearestComponent = widget.documentLayout.getComponentByNodeId(nearestDocPosition.nodeId)!;
-      _floatingCursorHeight = nearestComponent.getRectForPosition(nearestDocPosition.nodePosition).height;
+      final nearestPositionRect = widget.documentLayout.getRectForPosition(nearestDocPosition)!;
+      _floatingCursorHeight = nearestPositionRect.height;
+
+      final distance = _floatingCursorOffset.value! - nearestPositionRect.topLeft + const Offset(1.0, 0.0);
+      _isFloatingCursorOverOrNearText.value = distance.dx.abs() <= _maximumDistanceToBeNearText;
     } else {
       final nearestComponent = widget.documentLayout.getComponentByNodeId(nearestDocPosition.nodeId)!;
       _floatingCursorHeight = (nearestComponent.context.findRenderObject() as RenderBox).size.height;
+      _isFloatingCursorOverOrNearText.value = false;
     }
 
     widget.onFloatingCursorMoved?.call(_floatingCursorOffset.value!);
@@ -247,7 +262,7 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
                 child: Stack(
                   children: [
                     // Build caret or drag handles
-                    ..._buildHandles(),
+                    _buildHandles(),
                     // Build the floating cursor
                     _buildFloatingCursor(),
                     // Build the editing toolbar
@@ -273,20 +288,41 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
         });
   }
 
-  List<Widget> _buildHandles() {
-    if (!widget.editingController.shouldDisplayCollapsedHandle &&
-        !widget.editingController.shouldDisplayExpandedHandles) {
-      editorGesturesLog.finer('Not building overlay handles because they aren\'t desired');
-      return [];
-    }
+  Widget _buildHandles() {
+    // When the floating cursor is over text or near text,
+    // we don't show the drag handles.
+    //
+    // Every time the floating cursor moves to a position which
+    // changes this state or when it changes its visibility,
+    // this widget is rebuilt.
+    return ValueListenableBuilder<bool>(
+      valueListenable: _isFloatingCursorOverOrNearText,
+      builder: (context, isNearText, __) {
+        if (isNearText) {
+          return const SizedBox.shrink();
+        }
 
-    if (widget.editingController.shouldDisplayCollapsedHandle) {
-      return [
-        _buildCollapsedHandle(),
-      ];
-    } else {
-      return _buildExpandedHandles();
-    }
+        if (!widget.editingController.shouldDisplayCollapsedHandle &&
+            !widget.editingController.shouldDisplayExpandedHandles) {
+          editorGesturesLog.finer('Not building overlay handles because they aren\'t desired');
+          return const SizedBox.shrink();
+        }
+
+        late List<Widget> handles;
+
+        if (widget.editingController.shouldDisplayCollapsedHandle) {
+          handles = [
+            _buildCollapsedHandle(),
+          ];
+        } else {
+          handles = _buildExpandedHandles();
+        }
+
+        return Stack(
+          children: handles,
+        );
+      },
+    );
   }
 
   Widget _buildCollapsedHandle() {
@@ -401,7 +437,7 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
           handleKey: _floatingCursorKey,
           handleOffset: floatingCursorOffset - Offset(0, _floatingCursorHeight / 2),
           handle: Container(
-            width: 2,
+            width: _defaultFloatingCursorWidth,
             height: _floatingCursorHeight,
             color: Colors.red.withOpacity(0.75),
           ),
