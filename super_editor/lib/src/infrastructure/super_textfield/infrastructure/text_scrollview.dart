@@ -341,7 +341,7 @@ class _TextScrollViewState extends State<TextScrollView>
     _log.finer('Updating viewport height...');
 
     final result = _computeNewViewportHeight();
-    if (result.pending) {
+    if (result == null) {
       _log.finer(' - could not calculate a viewport height. Rescheduling calculation.');
       // We still don't have a resolved viewport height.
       // Reschedule the calculation.
@@ -358,12 +358,12 @@ class _TextScrollViewState extends State<TextScrollView>
       return;
     }
 
-    bool didChange = _needViewportHeight || _viewportHeight != result.viewportHeight;
+    bool didChange = _needViewportHeight || _viewportHeight != result.value;
 
     if (didChange) {
       setState(() {
         _needViewportHeight = false;
-        _viewportHeight = result.viewportHeight;
+        _viewportHeight = result.value;
       });
     }
   }
@@ -372,7 +372,7 @@ class _TextScrollViewState extends State<TextScrollView>
     _log.finer('Updating viewport height...');
 
     final result = _computeNewViewportHeight();
-    if (result.pending) {
+    if (result == null) {
       _log.finer(' - could not calculate a viewport height. Rescheduling calculation.');
       // We still don't have a resolved viewport height.
       // Reschedule the calculation.
@@ -389,10 +389,16 @@ class _TextScrollViewState extends State<TextScrollView>
     }
 
     _needViewportHeight = false;
-    _viewportHeight = result.viewportHeight;
+    _viewportHeight = result.value;
   }
 
-  _ViewportComputationStatus _computeNewViewportHeight() {
+  /// Computes the new viewport height.
+  ///
+  /// If the result is `null`, we couldn't determine the viewport height yet.
+  /// The computation must be re-scheduled.
+  ///
+  /// If the result is non `null`, the computation is completed.
+  _ViewportHeight? _computeNewViewportHeight() {
     final hasLineConstraints = widget.maxLines != null || widget.minLines != null;
     if (!hasLineConstraints) {
       _log.finer(' - the widget does\'n have line number constraints. Sizing by intrinsic height.');
@@ -400,9 +406,7 @@ class _TextScrollViewState extends State<TextScrollView>
       // We don't have line constraints so we don't need to estimate the content height
       // and compute a fixed viewport height. The viewport will size itself based on the
       // text intrinsic height.
-      return _ViewportComputationStatus(
-        pending: false,
-      );
+      return _ViewportHeight();
     }
 
     final linesOfText = _getLineCount();
@@ -432,9 +436,7 @@ class _TextScrollViewState extends State<TextScrollView>
     if (estimatedLineHeight == null || linesOfText == null) {
       // We need to estimate the content total height and we don't have enough information to compute it.
       _log.finer(' - could not calculate the estimated line height or content height.');
-      return _ViewportComputationStatus(
-        pending: true,
-      );
+      return null;
     }
 
     final totalVerticalPadding = widget.padding?.vertical ?? 0.0;
@@ -469,9 +471,8 @@ class _TextScrollViewState extends State<TextScrollView>
 
     if (!_needViewportHeight && newViewportHeight == _viewportHeight) {
       // The height of the viewport hasn't changed. Return.
-      return _ViewportComputationStatus(
-        pending: false,
-        viewportHeight: newViewportHeight,
+      return _ViewportHeight(
+        value: newViewportHeight,
       );
     }
 
@@ -485,23 +486,19 @@ class _TextScrollViewState extends State<TextScrollView>
       _log.finer(
           ' - viewport height is null, but TextScrollView is unbounded or the content fits max height, so that is OK');
 
-      return _ViewportComputationStatus(
-        pending: false,
-        viewportHeight: newViewportHeight,
+      return _ViewportHeight(
+        value: newViewportHeight,
       );
     }
 
     if (newViewportHeight != null) {
       _log.finer(' - new viewport height: $newViewportHeight');
-      return _ViewportComputationStatus(
-        pending: false,
-        viewportHeight: newViewportHeight,
+      return _ViewportHeight(
+        value: newViewportHeight,
       );
     } else {
       // We still don't have a resolved viewport height.
-      return _ViewportComputationStatus(
-        pending: true,
-      );
+      return null;
     }
   }
 
@@ -1069,24 +1066,24 @@ enum _AutoScrollDirection {
   end,
 }
 
-/// The status of the viewport height computation.
+/// The height of the viewport.
 ///
-/// When [pending] is `true`, the computation needs to be rescheduled to the next frame.
-///
-/// When [pending] is `false`, [viewportHeight] must be used as the new viewport height.
-class _ViewportComputationStatus {
-  _ViewportComputationStatus({
-    required this.pending,
-    this.viewportHeight,
+/// The viewport can be bounded, which means it should have a fixed height,
+/// or unbounded, which means it should expand to fit its content.
+class _ViewportHeight {
+  _ViewportHeight({
+    this.value,
   });
 
-  /// Whether or not the computation is still pending.
+  /// Whether or not the viewport height is bounded.
   ///
-  /// `true` if we don't have enough information to compute [viewportHeight].
-  final bool pending;
+  /// If `true`, the viewport height is exactly [value] pixels.
+  ///
+  /// If `false`, the viewport expands to fit its content.
+  bool get isBounded => value != null;
 
-  /// The new viewport height, when [pending] is `false`.
+  /// The viewport height in pixels.
   ///
-  /// If `null`, the viewport will size itself based on the text intrinsic height.
-  final double? viewportHeight;
+  /// If `null`, the viewport expands to fit its content.
+  final double? value;
 }
