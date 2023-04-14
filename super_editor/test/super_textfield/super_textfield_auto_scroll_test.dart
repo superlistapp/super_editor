@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:meta/meta.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/metrics.dart';
 import 'package:super_editor/super_editor.dart';
 
@@ -142,8 +143,13 @@ Future<void> _pumpTestApp(
       ),
     ),
   );
+
+  // A SuperTextField configured with maxLines can't render in the first frame.
+  // Ask another frame, so the text field can be found by the finder.
+  await tester.pump();
 }
 
+@isTestGroup
 void _testWidgetsOnMobileWithKeyboard(
   String description,
   Future<void> Function(WidgetTester tester, _KeyboardToggle keyboardToggle) test,

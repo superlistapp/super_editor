@@ -6,7 +6,7 @@ import 'package:super_editor/super_editor.dart';
 
 import '../test_tools.dart';
 
-void main() {  
+void main() {
   // These golden tests are being skipped on macOS because the text seems to be
   // a bit bigger in this platform, causing the tests to fail.
   group('SuperTextField', () {
@@ -212,8 +212,8 @@ void main() {
 
 Widget _buildSuperTextField({
   required String text,
-  required TextAlign textAlign,  
-  SuperTextFieldPlatformConfiguration? configuration,  
+  required TextAlign textAlign,
+  SuperTextFieldPlatformConfiguration? configuration,
   int? maxLines,
 }) {
   final controller = AttributedTextEditingController(
@@ -227,8 +227,8 @@ Widget _buildSuperTextField({
       textController: controller,
       textAlign: textAlign,
       maxLines: maxLines,
-      minLines: 1,      
-      lineHeight: 20,      
+      minLines: 1,
+      lineHeight: 20,
       textStyleBuilder: (_) {
         return const TextStyle(
           color: Colors.black,
