@@ -12,7 +12,7 @@ import 'package:super_editor/src/infrastructure/toolbar_position_delegate.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
-import '../metrics.dart';
+import 'package:super_editor/src/infrastructure/super_textfield/metrics.dart';
 
 final _log = androidTextFieldLog;
 
