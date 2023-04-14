@@ -32,6 +32,7 @@ class DocumentComposer with ChangeNotifier {
   void dispose() {
     _preferences.dispose();
     selectionNotifier.removeListener(_onSelectionChangedBySelectionNotifier);
+    _streamController.close();
     super.dispose();
   }
 
