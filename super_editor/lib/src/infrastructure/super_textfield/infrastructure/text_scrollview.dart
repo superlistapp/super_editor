@@ -406,7 +406,7 @@ class _TextScrollViewState extends State<TextScrollView>
       // We don't have line constraints so we don't need to estimate the content height
       // and compute a fixed viewport height. The viewport will size itself based on the
       // text intrinsic height.
-      return _ViewportHeight();
+      return const _ViewportHeight();
     }
 
     final linesOfText = _getLineCount();
@@ -1071,7 +1071,7 @@ enum _AutoScrollDirection {
 /// The viewport can be bounded, which means it should have a fixed height,
 /// or unbounded, which means it should expand to fit its content.
 class _ViewportHeight {
-  _ViewportHeight({
+  const _ViewportHeight({
     this.value,
   });
 
