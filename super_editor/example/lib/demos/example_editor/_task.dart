@@ -53,7 +53,7 @@ class TaskNode extends TextNode {
   int get hashCode => super.hashCode ^ isComplete.hashCode;
 }
 
-class CompleteTaskRequest implements EditorRequest {
+class CompleteTaskRequest implements EditRequest {
   CompleteTaskRequest({
     required this.nodeId,
   });
@@ -61,7 +61,7 @@ class CompleteTaskRequest implements EditorRequest {
   final String nodeId;
 }
 
-class CompleteTaskCommand implements EditorCommand {
+class CompleteTaskCommand implements EditCommand {
   CompleteTaskCommand({
     required this.nodeId,
   });
@@ -108,7 +108,7 @@ class TaskComponentBuilder implements ComponentBuilder {
       padding: EdgeInsets.zero,
       isComplete: node.isComplete,
       setComplete: (bool isComplete) {
-        _editor.execute(CompleteTaskRequest(nodeId: node.id));
+        _editor.execute([CompleteTaskRequest(nodeId: node.id)]);
       },
       text: node.text,
       selectionColor: const Color(0x00000000),

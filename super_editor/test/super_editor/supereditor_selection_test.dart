@@ -706,31 +706,6 @@ Second Paragraph
       expect(_caretFinder(), findsOneWidget);
     });
 
-    test("emits a DocumentSelectionChange when changing selection by the notifier", () async {
-      final composer = DocumentComposer();
-
-      const newSelection = DocumentSelection.collapsed(
-        position: DocumentPosition(
-          nodeId: "1",
-          nodePosition: TextNodePosition(offset: 0),
-        ),
-      );
-
-      // Ensure the stream emits the DocumentSelectionChange.
-      expectLater(
-        composer.selectionComponent.selectionChanges,
-        emits(
-          DocumentSelectionChange(
-            selection: newSelection,
-            reason: SelectionReason.userInteraction,
-          ),
-        ),
-      );
-
-      // Update the selection, which should cause the stream to emit a value.
-      composer.selectionComponent.selectionNotifier.value = newSelection;
-    }, timeout: const Timeout(Duration(milliseconds: 500)));
-
     test("notifies selectionNotifier when a new DocumentSelection is emitted", () {
       final composer = DocumentComposer();
 

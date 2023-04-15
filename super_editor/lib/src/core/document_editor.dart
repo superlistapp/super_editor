@@ -28,7 +28,7 @@ class DocumentEditor implements RequestDispatcher {
     required MutableDocument document,
     required List<EditorRequestHandler> requestHandlers,
     List<EditReaction>? reactionPipeline,
-    List<EditorChangeListener>? listeners,
+    List<EditListener>? listeners,
   })  : _document = document,
         _requestHandlers = requestHandlers,
         _reactionPipeline = reactionPipeline ?? [],
@@ -54,13 +54,13 @@ class DocumentEditor implements RequestDispatcher {
   Document get document => _document;
   final MutableDocument _document;
 
-  /// Chain of Responsibility that maps a given [EditorRequest] to an [EditorCommand].
+  /// Chain of Responsibility that maps a given [EditRequest] to an [EditCommand].
   final List<EditorRequestHandler> _requestHandlers;
 
   /// Service Locator that provides all resources that are relevant for document editing.
   final EditorContext context;
 
-  /// Executes [EditorCommand]s and collects a list of changes.
+  /// Executes [EditCommand]s and collects a list of changes.
   late final _DocumentEditorCommandExecutor _commandExecutor;
 
   /// A pipeline of objects that receive change lists from command execution
@@ -69,7 +69,7 @@ class DocumentEditor implements RequestDispatcher {
   final List<EditReaction> _reactionPipeline;
 
   /// Adds a [reaction], which is given an opportunity to spawn new [EditorCommands],
-  /// based on the latest series of [DocumentChangeEvent]s.
+  /// based on the latest series of [EditEvent]s.
   ///
   /// Reactions are executed in the order that they're added.
   void addReaction(EditReaction reaction, {int? index}) {
@@ -86,12 +86,12 @@ class DocumentEditor implements RequestDispatcher {
   }
 
   /// Listeners that are notified of changes in the form of a change list
-  /// after all pending [EditorCommand]s are executed, and all members of
+  /// after all pending [EditCommand]s are executed, and all members of
   /// the reaction pipeline are done reacting.
-  final List<EditorChangeListener> _changeListeners;
+  final List<EditListener> _changeListeners;
 
-  /// Adds a [listener], which is notified of each series of [DocumentChangeEvent]s
-  /// after a batch of [EditorCommand]s complete.
+  /// Adds a [listener], which is notified of each series of [EditEvent]s
+  /// after a batch of [EditCommand]s complete.
   ///
   /// Listeners are held and called as a list because some listeners might need
   /// to be notified ahead of others. Generally, you should avoid that complexity,
@@ -100,7 +100,7 @@ class DocumentEditor implements RequestDispatcher {
   /// [DocumentEditor]. That's because document structure is central to everything
   /// else, and therefore, we don't want other parts of the system being notified
   /// about changes, before the [Document], itself.
-  void addListener(EditorChangeListener listener, {int? index}) {
+  void addListener(EditListener listener, {int? index}) {
     if (index != null) {
       _changeListeners.insert(index, listener);
     } else {
@@ -109,25 +109,58 @@ class DocumentEditor implements RequestDispatcher {
   }
 
   /// Removes a [listener] from the set of change listeners.
-  void removeListener(EditorChangeListener listener) {
+  void removeListener(EditListener listener) {
     _changeListeners.remove(listener);
   }
+
+  /// An accumulation of changes during the current execution stack.
+  ///
+  /// This list is tracked in local state to facilitate reactions. When Reaction 1 runs,
+  /// it might submit another request, which adds more changes. When Reaction 2 runs, that
+  /// reaction needs to know about the original change list, plus all changes caused by
+  /// Reaction 1. This list lives across multiple request executions to make that possible.
+  List<EditEvent>? _activeChangeList;
+
+  /// Tracks the number of request executions that are in the process of running.
+  int _activeCommandCount = 0;
 
   /// Executes the given [request].
   ///
   /// Any changes that result from the given [request] are reported to listeners as a series
-  /// of [DocumentChangeEvent]s.
+  /// of [EditEvent]s.
   @override
-  void execute(EditorRequest request) {
-    final command = _findCommandForRequest(request);
-    final changeList = _executeCommand(command);
-    _reactToChanges(changeList);
+  void execute(List<EditRequest> requests) {
+    _activeChangeList ??= <EditEvent>[];
+    _activeCommandCount += 1;
 
-    _notifyListeners(changeList);
+    for (final request in requests) {
+      // Execute the given request.
+      final command = _findCommandForRequest(request);
+      final commandChanges = _executeCommand(command);
+      _activeChangeList!.addAll(commandChanges);
+    }
+
+    // Run reactions and notify listeners, but only do it once per batch of executions.
+    // If we reacted and notified listeners on every execution, then every sub-request
+    // would also run the reactions and notify listeners. At best this would result in
+    // many superfluous calls, but in practice it would probably break lots of features
+    // by notifying listeners too early, and running the same reactions over and over.
+    if (_activeCommandCount == 1) {
+      // Run all reactions. These reactions will likely call `execute()` again, with
+      // their own requests, to make additional changes.
+      _reactToChanges(_activeChangeList!);
+
+      // Notify all listeners that care about changes, but won't spawn additional requests.
+      _notifyListeners(_activeChangeList!);
+
+      _activeChangeList = null;
+    }
+
+    _activeCommandCount -= 1;
   }
 
-  EditorCommand _findCommandForRequest(EditorRequest request) {
-    EditorCommand? command;
+  EditCommand _findCommandForRequest(EditRequest request) {
+    EditCommand? command;
     for (final handler in _requestHandlers) {
       command = handler(request);
       if (command != null) {
@@ -139,7 +172,7 @@ class DocumentEditor implements RequestDispatcher {
         "Could not handle EditorRequest. DocumentEditor doesn't have a handler that recognizes the request: $request");
   }
 
-  List<DocumentChangeEvent> _executeCommand(EditorCommand command) {
+  List<EditEvent> _executeCommand(EditCommand command) {
     // Execute the given command, and any other commands that it spawns.
     _commandExecutor.executeCommand(command);
 
@@ -160,13 +193,13 @@ class DocumentEditor implements RequestDispatcher {
     return changeList;
   }
 
-  void _reactToChanges(List<DocumentChangeEvent> changeList) {
+  void _reactToChanges(List<EditEvent> changeList) {
     for (final reaction in _reactionPipeline) {
       reaction.react(context, this, changeList);
     }
   }
 
-  void _notifyListeners(List<DocumentChangeEvent> changeList) {
+  void _notifyListeners(List<EditEvent> changeList) {
     for (final listener in _changeListeners) {
       listener.onEdit(changeList);
     }
@@ -174,16 +207,16 @@ class DocumentEditor implements RequestDispatcher {
 }
 
 abstract class RequestDispatcher {
-  void execute(EditorRequest request);
+  void execute(List<EditRequest> request);
 }
 
 /// A command that alters something in a [DocumentEditor].
-abstract class EditorCommand {
+abstract class EditCommand {
   /// Executes this command and logs all changes with the [executor].
   void execute(EditorContext context, CommandExecutor executor);
 }
 
-/// All resources that are available when executing [EditorCommand]s, such as a document,
+/// All resources that are available when executing [EditCommand]s, such as a document,
 /// composer, etc.
 class EditorContext {
   /// Service locator key to obtain a [Document] from [find], if a [Document]
@@ -214,27 +247,27 @@ class EditorContext {
   void put(String id, dynamic resource) => _resources[id] = resource;
 }
 
-/// Executes [EditorCommand]s in the order in which they're queued.
+/// Executes [EditCommand]s in the order in which they're queued.
 ///
-/// Each [EditorCommand] is given access to this [CommandExecutor] during
-/// the command's execution. Each [EditorCommand] is expected to [logChanges]
+/// Each [EditCommand] is given access to this [CommandExecutor] during
+/// the command's execution. Each [EditCommand] is expected to [logChanges]
 /// with the given [CommandExecutor].
 abstract class CommandExecutor {
   /// Immediately executes the given [command].
   ///
   /// Client's can use this method to run an initial command, or to run
   /// a sub-command in the middle of an active command.
-  void executeCommand(EditorCommand command);
+  void executeCommand(EditCommand command);
 
   /// Adds the given [command] to the beginning of the command queue, but
   /// after any set of commands that are currently executing.
-  void prependCommand(EditorCommand command);
+  void prependCommand(EditCommand command);
 
   /// Adds the given [command] to the end of the command queue.
-  void appendCommand(EditorCommand command);
+  void appendCommand(EditCommand command);
 
   /// Log a series of document changes that were just made by the active command.
-  void logChanges(List<DocumentChangeEvent> changes);
+  void logChanges(List<EditEvent> changes);
 }
 
 class _DocumentEditorCommandExecutor implements CommandExecutor {
@@ -244,11 +277,11 @@ class _DocumentEditorCommandExecutor implements CommandExecutor {
 
   final _commandsBeingProcessed = EditorCommandQueue();
 
-  final _changeList = <DocumentChangeEvent>[];
-  List<DocumentChangeEvent> copyChangeList() => List.from(_changeList);
+  final _changeList = <EditEvent>[];
+  List<EditEvent> copyChangeList() => List.from(_changeList);
 
   @override
-  void executeCommand(EditorCommand command) {
+  void executeCommand(EditCommand command) {
     _commandsBeingProcessed.append(command);
 
     // Run the given command, and any other commands that it spawns.
@@ -273,7 +306,7 @@ class _DocumentEditorCommandExecutor implements CommandExecutor {
   }
 
   @override
-  void logChanges(List<DocumentChangeEvent> changes) {
+  void logChanges(List<EditEvent> changes) {
     _changeList.addAll(changes);
   }
 
@@ -284,14 +317,14 @@ class _DocumentEditorCommandExecutor implements CommandExecutor {
 
 class EditorCommandQueue {
   /// A command that's in the process of being executed.
-  EditorCommand? _activeCommand;
+  EditCommand? _activeCommand;
 
   /// The command that's currently being executed, along with any commands
   /// that the active command adds during execution.
-  final _activeCommandExpansionQueue = <EditorCommand>[];
+  final _activeCommandExpansionQueue = <EditCommand>[];
 
   /// All commands waiting to be executed after [_activeCommandExpansionQueue].
-  final _commandBacklog = <EditorCommand>[];
+  final _commandBacklog = <EditCommand>[];
 
   bool get hasCommands => _commandBacklog.isNotEmpty;
 
@@ -303,9 +336,9 @@ class EditorCommandQueue {
     _activeCommand = _commandBacklog.removeAt(0);
   }
 
-  EditorCommand? get activeCommand => _activeCommand;
+  EditCommand? get activeCommand => _activeCommand;
 
-  void expandActiveCommand(List<EditorCommand> replacementCommands) {
+  void expandActiveCommand(List<EditCommand> replacementCommands) {
     _activeCommandExpansionQueue.addAll(replacementCommands);
   }
 
@@ -320,65 +353,154 @@ class EditorCommandQueue {
   }
 
   /// Prepends the given [command] at the front of the execution queue.
-  void prepend(EditorCommand command) {
+  void prepend(EditCommand command) {
     _commandBacklog.insert(0, command);
   }
 
   /// Appends the given [command] to the end of the execution queue.
-  void append(EditorCommand command) {
+  void append(EditCommand command) {
     _commandBacklog.add(command);
   }
 }
 
-/// Factory method that creates and returns an [EditorCommand] that can handle
-/// the given [EditorRequest], or `null` if this handler doesn't apply to the given
-/// [EditorRequest].
-typedef EditorRequestHandler = EditorCommand? Function(EditorRequest);
+/// Factory method that creates and returns an [EditCommand] that can handle
+/// the given [EditRequest], or `null` if this handler doesn't apply to the given
+/// [EditRequest].
+typedef EditorRequestHandler = EditCommand? Function(EditRequest);
 
 /// An action that a [DocumentEditor] should execute.
-abstract class EditorRequest {
+abstract class EditRequest {
   // Marker interface for all editor request types.
+}
+
+/// A change that took place within a [DocumentEditor].
+abstract class EditEvent {
+  // Marker interface for all editor change events.
+}
+
+/// Base class for change events that refer to a [DocumentNode].
+abstract class DocumentNodeEvent implements EditEvent {
+  String get nodeId;
+}
+
+/// A new [DocumentNode] was inserted in the [Document].
+class NodeInsertedEvent implements DocumentNodeEvent {
+  const NodeInsertedEvent(this.nodeId);
+
+  @override
+  final String nodeId;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is NodeInsertedEvent && runtimeType == other.runtimeType && nodeId == other.nodeId;
+
+  @override
+  int get hashCode => nodeId.hashCode;
+}
+
+/// A [DocumentNode] was moved to a new index.
+class NodeMovedEvent implements DocumentNodeEvent {
+  const NodeMovedEvent({
+    required this.nodeId,
+    required this.from,
+    required this.to,
+  });
+
+  @override
+  final String nodeId;
+  final int from;
+  final int to;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is NodeMovedEvent &&
+          runtimeType == other.runtimeType &&
+          nodeId == other.nodeId &&
+          from == other.from &&
+          to == other.to;
+
+  @override
+  int get hashCode => nodeId.hashCode ^ from.hashCode ^ to.hashCode;
+}
+
+/// A [DocumentNode] was removed from the [Document].
+class NodeRemovedEvent implements DocumentNodeEvent {
+  const NodeRemovedEvent(this.nodeId);
+
+  @override
+  final String nodeId;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) || other is NodeRemovedEvent && runtimeType == other.runtimeType && nodeId == other.nodeId;
+
+  @override
+  int get hashCode => nodeId.hashCode;
+}
+
+/// The content of a [DocumentNode] changed.
+///
+/// A node change might signify a content change, such as text changing in a paragraph, or
+/// it might signify a node changing its type of content, such as converting a paragraph
+/// to an image.
+class NodeChangeEvent implements DocumentNodeEvent {
+  const NodeChangeEvent(this.nodeId);
+
+  @override
+  final String nodeId;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) || other is NodeChangeEvent && runtimeType == other.runtimeType && nodeId == other.nodeId;
+
+  @override
+  int get hashCode => nodeId.hashCode;
+
+  @override
+  String toString() => "[NodeChangeEvent] - Node: $nodeId";
 }
 
 /// An object that's notified with a change list from one or more
 /// commands that were just executed.
 ///
 /// An [EditReaction] can use the given [executor] to spawn additional
-/// [EditorCommand]s that should run in response the [changeList].
+/// [EditCommand]s that should run in response the [changeList].
 abstract class EditReaction {
-  void react(EditorContext editorContext, RequestDispatcher requestDispatcher, List<DocumentChangeEvent> changeList);
+  void react(EditorContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList);
 }
 
-class FunctionalEditorChangeReaction implements EditReaction {
-  FunctionalEditorChangeReaction(this._react);
+class FunctionalEditReaction implements EditReaction {
+  FunctionalEditReaction(this._react);
 
-  final void Function(
-      EditorContext editorContext, RequestDispatcher requestDispatcher, List<DocumentChangeEvent> changeList) _react;
+  final void Function(EditorContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList)
+      _react;
 
   @override
-  void react(EditorContext editorContext, RequestDispatcher requestDispatcher, List<DocumentChangeEvent> changeList) =>
+  void react(EditorContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) =>
       _react(editorContext, requestDispatcher, changeList);
 }
 
 /// An object that's notified with a change list from one or more
 /// commands that were just executed.
 ///
-/// An [EditorChangeListener] can propagate secondary effects that are based on
-/// editor changes. However, an [EditorChangeListener] shouldn't spawn additional
+/// An [EditListener] can propagate secondary effects that are based on
+/// editor changes. However, an [EditListener] shouldn't spawn additional
 /// editor behaviors. This can result in infinite loops, back-and-forth changes,
-/// and other undesirable effects. To spawn new [EditorCommand]s based on a
+/// and other undesirable effects. To spawn new [EditCommand]s based on a
 /// [changeList], register an [EditReaction].
-abstract class EditorChangeListener {
-  void onEdit(List<DocumentChangeEvent> changeList);
+abstract class EditListener {
+  void onEdit(List<EditEvent> changeList);
 }
 
-class FunctionalEditorChangeListener implements EditorChangeListener {
+class FunctionalEditorChangeListener implements EditListener {
   FunctionalEditorChangeListener(this._onEdit);
 
-  final void Function(List<DocumentChangeEvent> changeList) _onEdit;
+  final void Function(List<EditEvent> changeList) _onEdit;
 
   @override
-  void onEdit(List<DocumentChangeEvent> changeList) => _onEdit(changeList);
+  void onEdit(List<EditEvent> changeList) => _onEdit(changeList);
 }
 
 /// An in-memory, mutable [Document].
@@ -613,7 +735,7 @@ class MutableDocument implements Document {
     _listeners.remove(listener);
   }
 
-  void onDocumentChange(List<DocumentChangeEvent> changes) {
+  void onDocumentChange(List<EditEvent> changes) {
     if (changes.isEmpty) {
       return;
     }

@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 
 import 'document.dart';
 import 'document_composer.dart';
+import 'document_editor.dart';
 
 /// A selection within a [Document].
 ///
@@ -369,21 +370,23 @@ extension InspectDocumentSelection on Document {
 class SelectionComponent {
   SelectionComponent([DocumentSelection? initialSelection]) {
     _streamController = StreamController<DocumentSelectionChange>.broadcast();
-    selectionNotifier.addListener(_onSelectionChangedBySelectionNotifier);
-    selectionNotifier.value = initialSelection;
+    _selectionNotifier.addListener(_onSelectionChangedBySelectionNotifier);
+    _selectionNotifier.value = initialSelection;
+    _latestSelectionChange =
+        DocumentSelectionChange(selection: initialSelection, reason: SelectionReason.contentChange);
   }
 
   void dispose() {
-    selectionNotifier.removeListener(_onSelectionChangedBySelectionNotifier);
+    _selectionNotifier.removeListener(_onSelectionChangedBySelectionNotifier);
   }
 
   /// Returns the current [DocumentSelection] for a [Document].
-  DocumentSelection? get selection => selectionNotifier.value;
+  DocumentSelection? get selection => _latestSelectionChange.selection; //_selectionNotifier.value;
 
   /// Sets the current [selection] for a [Document] using [SelectionReason.userInteraction] as the reason.
   @Deprecated("Use updateSelectionWithoutNotification instead, and then call notifySelectionListener")
   set selection(DocumentSelection? newSelection) {
-    selectionNotifier.value = newSelection;
+    _selectionNotifier.value = newSelection;
     _streamController.add(
       DocumentSelectionChange(
         selection: newSelection,
@@ -404,12 +407,12 @@ class SelectionComponent {
     _streamController.sink.add(_latestSelectionChange);
 
     // Remove the listener, so we don't emit another DocumentSelectionChange.
-    selectionNotifier.removeListener(_onSelectionChangedBySelectionNotifier);
+    _selectionNotifier.removeListener(_onSelectionChangedBySelectionNotifier);
 
     // Updates the selection, so both _latestSelectionChange and selectionNotifier are in sync.
-    selectionNotifier.value = newSelection;
+    _selectionNotifier.value = newSelection;
 
-    selectionNotifier.addListener(_onSelectionChangedBySelectionNotifier);
+    _selectionNotifier.addListener(_onSelectionChangedBySelectionNotifier);
   }
 
   /// Returns the reason for the most recent selection change in the composer.
@@ -434,10 +437,12 @@ class SelectionComponent {
   Stream<DocumentSelectionChange> get selectionChanges => _streamController.stream;
   late StreamController<DocumentSelectionChange> _streamController;
 
+  ValueListenable<DocumentSelection?> get selectionNotifier => _selectionNotifier;
+
   /// Notifies whenever the current [DocumentSelection] changes.
   ///
   /// If the selection change reason is needed, use [selectionChanges] instead.
-  final selectionNotifier = ValueNotifier<DocumentSelection?>(null);
+  final _selectionNotifier = ValueNotifier<DocumentSelection?>(null);
 
   void updateSelection(DocumentSelection? newSelection, {bool notifyListeners = false}) {
     _latestSelectionChange = DocumentSelectionChange(
@@ -451,7 +456,7 @@ class SelectionComponent {
   }
 
   void notifySelectionListeners() {
-    selectionNotifier.value = _latestSelectionChange.selection;
+    _selectionNotifier.value = _latestSelectionChange.selection;
     _streamController.add(_latestSelectionChange);
   }
 
@@ -462,13 +467,14 @@ class SelectionComponent {
 
   void _onSelectionChangedBySelectionNotifier() {
     _latestSelectionChange = DocumentSelectionChange(
-      selection: selectionNotifier.value,
+      selection: _selectionNotifier.value,
       reason: SelectionReason.userInteraction,
     );
     _streamController.sink.add(_latestSelectionChange);
   }
 
-  void onEditorChange(List<DocumentChangeEvent> changeList) {
+  void onEditorChange(List<EditEvent> changeList) {
+    _selectionNotifier.value = _latestSelectionChange.selection;
     if (changeList.isNotEmpty) {
       if (changeList.whereType<SelectionChangeEvent>().isNotEmpty) {
         notifySelectionListeners();

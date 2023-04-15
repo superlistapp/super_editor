@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/super_editor.dart';
 
@@ -13,7 +14,7 @@ import 'package:super_editor/super_editor.dart';
 ///
 /// When the document's [FocusNode] changes, provide the new [FocusNode] to [onFocusNodeReplaced].
 ///
-/// When the document's [DocumentComposer] changes, provide the new [DocumentComposer] to [onDocumentSelectionNotifierReplaced].
+/// When the document's [DocumentComposer] changes, provide the new [DocumentComposer] to [onDocumentSelectionListenableReplaced].
 ///
 /// When the document's [DocumentLayoutResolver] changes, provide the new [DocumentLayoutResolver] to [onDocumentLayoutResolverReplaced].
 mixin DocumentSelectionOnFocusMixin<T extends StatefulWidget> on State<T> {
@@ -22,7 +23,8 @@ mixin DocumentSelectionOnFocusMixin<T extends StatefulWidget> on State<T> {
 
   FocusNode? _focusNode;
   DocumentLayoutResolver? _getDocumentLayout;
-  ValueNotifier<DocumentSelection?>? _selection;
+  void Function(DocumentSelection?, SelectionChangeType)? _changeSelection;
+  ValueListenable<DocumentSelection?>? _selection;
 
   /// Starts watching and synchronizing focus with selection.
   ///
@@ -34,11 +36,13 @@ mixin DocumentSelectionOnFocusMixin<T extends StatefulWidget> on State<T> {
   void startSyncingSelectionWithFocus({
     required FocusNode focusNode,
     required DocumentLayoutResolver getDocumentLayout,
-    required ValueNotifier<DocumentSelection?> selection,
+    required void Function(DocumentSelection?, SelectionChangeType) changeSelection,
+    required ValueListenable<DocumentSelection?> selection,
   }) {
     _focusNode = focusNode;
     _focusNode!.addListener(_onFocusChange);
     _getDocumentLayout = getDocumentLayout;
+    _changeSelection = changeSelection;
     _selection = selection;
     _selection!.addListener(_onSelectionChange);
 
@@ -63,7 +67,7 @@ mixin DocumentSelectionOnFocusMixin<T extends StatefulWidget> on State<T> {
   }
 
   /// Should be called whenever the editor selection notifier is replaced.
-  void onDocumentSelectionNotifierReplaced(ValueNotifier<DocumentSelection?>? selection) {
+  void onDocumentSelectionListenableReplaced(ValueListenable<DocumentSelection?>? selection) {
     _selection?.removeListener(_onSelectionChange);
     _selection = selection;
     _selection?.addListener(_onSelectionChange);
@@ -76,7 +80,7 @@ mixin DocumentSelectionOnFocusMixin<T extends StatefulWidget> on State<T> {
 
   void _onFocusChange() {
     if (!_focusNode!.hasFocus) {
-      _selection?.value = null;
+      _changeSelection?.call(null, SelectionChangeType.clearSelection);
       return;
     }
 
@@ -88,14 +92,17 @@ mixin DocumentSelectionOnFocusMixin<T extends StatefulWidget> on State<T> {
       // already set to the correct position, so we don't override it.
       if (mounted && _focusNode!.hasFocus && _selection!.value == null) {
         if (_previousSelection != null) {
-          _selection?.value = _previousSelection;
+          _changeSelection?.call(_previousSelection, SelectionChangeType.place);
           return;
         }
 
         DocumentPosition? position = _getDocumentLayout?.call().findLastSelectablePosition();
         if (position != null) {
-          _selection?.value = DocumentSelection.collapsed(
-            position: position,
+          _changeSelection?.call(
+            DocumentSelection.collapsed(
+              position: position,
+            ),
+            SelectionChangeType.place,
           );
         }
       }

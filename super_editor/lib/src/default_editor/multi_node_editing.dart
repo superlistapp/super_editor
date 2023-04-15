@@ -14,7 +14,7 @@ import 'paragraph.dart';
 
 final _log = Logger(scope: 'multi_node_editing.dart');
 
-class InsertNodeAtIndexRequest implements EditorRequest {
+class InsertNodeAtIndexRequest implements EditRequest {
   InsertNodeAtIndexRequest({
     required this.nodeIndex,
     required this.newNode,
@@ -24,7 +24,7 @@ class InsertNodeAtIndexRequest implements EditorRequest {
   final DocumentNode newNode;
 }
 
-class InsertNodeAtIndexCommand extends EditorCommand {
+class InsertNodeAtIndexCommand extends EditCommand {
   InsertNodeAtIndexCommand({
     required this.nodeIndex,
     required this.newNode,
@@ -41,7 +41,7 @@ class InsertNodeAtIndexCommand extends EditorCommand {
   }
 }
 
-class InsertNodeBeforeNodeRequest implements EditorRequest {
+class InsertNodeBeforeNodeRequest implements EditRequest {
   const InsertNodeBeforeNodeRequest({
     required this.existingNodeId,
     required this.newNode,
@@ -51,7 +51,7 @@ class InsertNodeBeforeNodeRequest implements EditorRequest {
   final DocumentNode newNode;
 }
 
-class InsertNodeBeforeNodeCommand extends EditorCommand {
+class InsertNodeBeforeNodeCommand extends EditCommand {
   InsertNodeBeforeNodeCommand({
     required this.existingNodeId,
     required this.newNode,
@@ -69,7 +69,7 @@ class InsertNodeBeforeNodeCommand extends EditorCommand {
   }
 }
 
-class InsertNodeAfterNodeRequest implements EditorRequest {
+class InsertNodeAfterNodeRequest implements EditRequest {
   const InsertNodeAfterNodeRequest({
     required this.existingNodeId,
     required this.newNode,
@@ -79,7 +79,7 @@ class InsertNodeAfterNodeRequest implements EditorRequest {
   final DocumentNode newNode;
 }
 
-class InsertNodeAfterNodeCommand extends EditorCommand {
+class InsertNodeAfterNodeCommand extends EditCommand {
   InsertNodeAfterNodeCommand({
     required this.existingNodeId,
     required this.newNode,
@@ -97,7 +97,7 @@ class InsertNodeAfterNodeCommand extends EditorCommand {
   }
 }
 
-class InsertNodeAtCaretRequest implements EditorRequest {
+class InsertNodeAtCaretRequest implements EditRequest {
   InsertNodeAtCaretRequest({
     required this.node,
   });
@@ -105,7 +105,7 @@ class InsertNodeAtCaretRequest implements EditorRequest {
   final DocumentNode node;
 }
 
-class InsertNodeAtCaretCommand extends EditorCommand {
+class InsertNodeAtCaretCommand extends EditCommand {
   InsertNodeAtCaretCommand({
     required this.newNode,
   });
@@ -186,12 +186,13 @@ class InsertNodeAtCaretCommand extends EditorCommand {
 
     executor.executeCommand(ChangeSelectionCommand(
       newSelection,
+      SelectionChangeType.insertContent,
       SelectionReason.userInteraction,
     ));
   }
 }
 
-class MoveNodeRequest implements EditorRequest {
+class MoveNodeRequest implements EditRequest {
   const MoveNodeRequest({
     required this.nodeId,
     required this.newIndex,
@@ -201,7 +202,7 @@ class MoveNodeRequest implements EditorRequest {
   final int newIndex;
 }
 
-class MoveNodeCommand extends EditorCommand {
+class MoveNodeCommand extends EditCommand {
   MoveNodeCommand({
     required this.nodeId,
     required this.newIndex,
@@ -244,7 +245,7 @@ class MoveNodeCommand extends EditorCommand {
   }
 }
 
-class ReplaceNodeRequest implements EditorRequest {
+class ReplaceNodeRequest implements EditRequest {
   ReplaceNodeRequest({
     required this.existingNodeId,
     required this.newNode,
@@ -254,7 +255,7 @@ class ReplaceNodeRequest implements EditorRequest {
   final DocumentNode newNode;
 }
 
-class ReplaceNodeCommand extends EditorCommand {
+class ReplaceNodeCommand extends EditCommand {
   ReplaceNodeCommand({
     required this.existingNodeId,
     required this.newNode,
@@ -276,7 +277,7 @@ class ReplaceNodeCommand extends EditorCommand {
   }
 }
 
-class ReplaceNodeWithEmptyParagraphWithCaretRequest implements EditorRequest {
+class ReplaceNodeWithEmptyParagraphWithCaretRequest implements EditRequest {
   const ReplaceNodeWithEmptyParagraphWithCaretRequest({
     required this.nodeId,
   });
@@ -294,7 +295,7 @@ class ReplaceNodeWithEmptyParagraphWithCaretRequest implements EditorRequest {
   int get hashCode => nodeId.hashCode;
 }
 
-class ReplaceNodeWithEmptyParagraphWithCaretCommand implements EditorCommand {
+class ReplaceNodeWithEmptyParagraphWithCaretCommand implements EditCommand {
   ReplaceNodeWithEmptyParagraphWithCaretCommand({
     required this.nodeId,
   });
@@ -315,6 +316,7 @@ class ReplaceNodeWithEmptyParagraphWithCaretCommand implements EditorCommand {
       text: AttributedText(),
     );
     document.replaceNode(oldNode: oldNode, newNode: newNode);
+
     executor.logChanges([
       NodeRemovedEvent(oldNode.id),
       NodeInsertedEvent(newNode.id),
@@ -327,13 +329,14 @@ class ReplaceNodeWithEmptyParagraphWithCaretCommand implements EditorCommand {
           nodePosition: newNode.beginningPosition,
         ),
       ),
+      SelectionChangeType.place,
       SelectionReason.userInteraction,
       notifyListeners: false,
     ));
   }
 }
 
-class DeleteSelectionRequest implements EditorRequest {
+class DeleteSelectionRequest implements EditRequest {
   DeleteSelectionRequest({
     required this.documentSelection,
   });
@@ -341,7 +344,7 @@ class DeleteSelectionRequest implements EditorRequest {
   final DocumentSelection documentSelection;
 }
 
-class DeleteSelectionCommand implements EditorCommand {
+class DeleteSelectionCommand implements EditCommand {
   DeleteSelectionCommand({
     required this.documentSelection,
   });
@@ -356,13 +359,13 @@ class DeleteSelectionCommand implements EditorCommand {
 
     if (nodes.length == 1) {
       // This is a selection within a single node.
-      _deleteSelectionWithinSingleNode(
+      final changeList = _deleteSelectionWithinSingleNode(
         document: document,
         documentSelection: documentSelection,
         node: nodes.first,
       );
 
-      executor.logChanges([NodeChangeEvent(nodes.first.id)]);
+      executor.logChanges(changeList);
       return;
     }
 
@@ -452,7 +455,7 @@ class DeleteSelectionCommand implements EditorCommand {
     _log.log('DeleteSelectionCommand', ' - done with selection deletion');
   }
 
-  List<DocumentChangeEvent> _deleteSelectionWithinSingleNode({
+  List<EditEvent> _deleteSelectionWithinSingleNode({
     required MutableDocument document,
     required DocumentSelection documentSelection,
     required DocumentNode node,
@@ -484,18 +487,25 @@ class DeleteSelectionCommand implements EditorCommand {
       final endOffset = baseOffset < extentOffset ? extentOffset : baseOffset;
       _log.log('_deleteSelectionWithinSingleNode', ' - deleting from $startOffset to $endOffset');
 
+      final deletedText = node.text.copyText(startOffset, endOffset);
       node.text = node.text.removeRegion(
         startOffset: startOffset,
         endOffset: endOffset,
       );
 
-      return [NodeChangeEvent(node.id)];
+      return [
+        TextDeletedEvent(
+          node.id,
+          deletedText: deletedText,
+          offset: startOffset,
+        ),
+      ];
     }
 
     return [];
   }
 
-  List<DocumentChangeEvent> _deleteNodesBetweenFirstAndLast({
+  List<EditEvent> _deleteNodesBetweenFirstAndLast({
     required MutableDocument document,
     required DocumentNode startNode,
     required DocumentNode endNode,
@@ -510,7 +520,7 @@ class DeleteSelectionCommand implements EditorCommand {
 
     // Remove nodes from last to first so that indices don't get
     // screwed up during removal.
-    final changes = <DocumentChangeEvent>[];
+    final changes = <EditEvent>[];
     for (int i = endIndex - 1; i > startIndex; --i) {
       _log.log('_deleteNodesBetweenFirstAndLast', ' - deleting node $i: ${document.getNodeAt(i)?.id}');
       changes.add(NodeRemovedEvent(document.getNodeAt(i)!.id));
@@ -519,7 +529,7 @@ class DeleteSelectionCommand implements EditorCommand {
     return changes;
   }
 
-  List<DocumentChangeEvent> _deleteSelectionWithinNodeFromPositionToEnd({
+  List<EditEvent> _deleteSelectionWithinNodeFromPositionToEnd({
     required MutableDocument document,
     required DocumentNode node,
     required dynamic nodePosition,
@@ -558,7 +568,7 @@ class DeleteSelectionCommand implements EditorCommand {
     }
   }
 
-  List<DocumentChangeEvent> _deleteSelectionWithinNodeFromStartToPosition({
+  List<EditEvent> _deleteSelectionWithinNodeFromStartToPosition({
     required MutableDocument document,
     required DocumentNode node,
     required dynamic nodePosition,
@@ -596,7 +606,7 @@ class DeleteSelectionCommand implements EditorCommand {
     }
   }
 
-  List<DocumentChangeEvent> _deleteBlockLevelNode({
+  List<EditEvent> _deleteBlockLevelNode({
     required MutableDocument document,
     required DocumentNode node,
     required bool replaceWithParagraph,
@@ -630,7 +640,7 @@ class DeleteSelectionCommand implements EditorCommand {
   }
 }
 
-class DeleteNodeRequest implements EditorRequest {
+class DeleteNodeRequest implements EditRequest {
   DeleteNodeRequest({
     required this.nodeId,
   });
@@ -638,7 +648,7 @@ class DeleteNodeRequest implements EditorRequest {
   final String nodeId;
 }
 
-class DeleteNodeCommand implements EditorCommand {
+class DeleteNodeCommand implements EditCommand {
   DeleteNodeCommand({
     required this.nodeId,
   });

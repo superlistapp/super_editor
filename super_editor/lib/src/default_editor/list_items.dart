@@ -420,7 +420,7 @@ Widget _defaultOrderedListItemNumeralBuilder(BuildContext context, OrderedListIt
   );
 }
 
-class IndentListItemRequest implements EditorRequest {
+class IndentListItemRequest implements EditRequest {
   IndentListItemRequest({
     required this.nodeId,
   });
@@ -428,7 +428,7 @@ class IndentListItemRequest implements EditorRequest {
   final String nodeId;
 }
 
-class IndentListItemCommand implements EditorCommand {
+class IndentListItemCommand implements EditCommand {
   IndentListItemCommand({
     required this.nodeId,
   });
@@ -451,7 +451,7 @@ class IndentListItemCommand implements EditorCommand {
   }
 }
 
-class UnIndentListItemRequest implements EditorRequest {
+class UnIndentListItemRequest implements EditRequest {
   UnIndentListItemRequest({
     required this.nodeId,
   });
@@ -459,7 +459,7 @@ class UnIndentListItemRequest implements EditorRequest {
   final String nodeId;
 }
 
-class UnIndentListItemCommand implements EditorCommand {
+class UnIndentListItemCommand implements EditCommand {
   UnIndentListItemCommand({
     required this.nodeId,
   });
@@ -487,7 +487,7 @@ class UnIndentListItemCommand implements EditorCommand {
   }
 }
 
-class ConvertListItemToParagraphRequest implements EditorRequest {
+class ConvertListItemToParagraphRequest implements EditRequest {
   ConvertListItemToParagraphRequest({
     required this.nodeId,
     this.paragraphMetadata,
@@ -497,7 +497,7 @@ class ConvertListItemToParagraphRequest implements EditorRequest {
   final Map<String, dynamic>? paragraphMetadata;
 }
 
-class ConvertListItemToParagraphCommand implements EditorCommand {
+class ConvertListItemToParagraphCommand implements EditCommand {
   ConvertListItemToParagraphCommand({
     required this.nodeId,
     this.paragraphMetadata,
@@ -523,7 +523,7 @@ class ConvertListItemToParagraphCommand implements EditorCommand {
   }
 }
 
-class ConvertParagraphToListItemRequest implements EditorRequest {
+class ConvertParagraphToListItemRequest implements EditRequest {
   ConvertParagraphToListItemRequest({
     required this.nodeId,
     required this.type,
@@ -533,7 +533,7 @@ class ConvertParagraphToListItemRequest implements EditorRequest {
   final ListItemType type;
 }
 
-class ConvertParagraphToListItemCommand implements EditorCommand {
+class ConvertParagraphToListItemCommand implements EditCommand {
   ConvertParagraphToListItemCommand({
     required this.nodeId,
     required this.type,
@@ -559,7 +559,7 @@ class ConvertParagraphToListItemCommand implements EditorCommand {
   }
 }
 
-class ChangeListItemTypeRequest implements EditorRequest {
+class ChangeListItemTypeRequest implements EditRequest {
   ChangeListItemTypeRequest({
     required this.nodeId,
     required this.newType,
@@ -569,7 +569,7 @@ class ChangeListItemTypeRequest implements EditorRequest {
   final ListItemType newType;
 }
 
-class ChangeListItemTypeCommand implements EditorCommand {
+class ChangeListItemTypeCommand implements EditCommand {
   ChangeListItemTypeCommand({
     required this.nodeId,
     required this.newType,
@@ -594,7 +594,7 @@ class ChangeListItemTypeCommand implements EditorCommand {
   }
 }
 
-class SplitListItemRequest implements EditorRequest {
+class SplitListItemRequest implements EditRequest {
   SplitListItemRequest({
     required this.nodeId,
     required this.splitPosition,
@@ -606,7 +606,7 @@ class SplitListItemRequest implements EditorRequest {
   final String newNodeId;
 }
 
-class SplitListItemCommand implements EditorCommand {
+class SplitListItemCommand implements EditCommand {
   SplitListItemCommand({
     required this.nodeId,
     required this.splitPosition,

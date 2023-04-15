@@ -46,9 +46,9 @@ void main() {
       expect(SuperEditorInspector.findParagraphStyle(firstParagraphId)!.color, Colors.red);
 
       // Remove the second paragraph.
-      testContext.editContext.editor.execute(
+      testContext.editContext.editor.execute([
         DeleteNodeRequest(nodeId: secondParagraphId),
-      );
+      ]);
       await tester.pump();
 
       // The first paragraph is now the only paragraph in the document.

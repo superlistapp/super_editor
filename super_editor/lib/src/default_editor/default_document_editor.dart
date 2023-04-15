@@ -12,6 +12,8 @@ DocumentEditor createDefaultDocumentEditor({
   required MutableDocument document,
   DocumentComposer? composer,
 }) {
+  composer ??= DocumentComposer();
+
   final editor = DocumentEditor(
     document: document,
     requestHandlers: defaultRequestHandlers,
@@ -24,14 +26,13 @@ DocumentEditor createDefaultDocumentEditor({
       ImageUrlConversionReaction(),
     ],
     listeners: [
-      if (composer != null) //
-        FunctionalEditorChangeListener(
-          composer.selectionComponent.onEditorChange,
-        ),
+      FunctionalEditorChangeListener(
+        composer.selectionComponent.onEditorChange,
+      ),
     ],
   );
 
-  editor.context.put(EditorContext.composer, composer ?? DocumentComposer());
+  editor.context.put(EditorContext.composer, composer);
 
   return editor;
 }
@@ -40,6 +41,7 @@ final defaultRequestHandlers = [
   (request) => request is ChangeSelectionRequest
       ? ChangeSelectionCommand(
           request.newSelection,
+          request.changeType,
           request.reason,
           notifyListeners: request.notifyListeners,
         )
@@ -78,6 +80,8 @@ final defaultRequestHandlers = [
   (request) =>
       request is DeleteSelectionRequest ? DeleteSelectionCommand(documentSelection: request.documentSelection) : null,
   (request) => request is DeleteNodeRequest ? DeleteNodeCommand(nodeId: request.nodeId) : null,
+  (request) => request is DeleteUpstreamCharacterRequest ? const DeleteUpstreamCharacterCommand() : null,
+  (request) => request is DeleteDownstreamCharacterRequest ? const DeleteDownstreamCharacterCommand() : null,
   (request) => request is InsertTextRequest
       ? InsertTextCommand(
           documentPosition: request.documentPosition,

@@ -19,7 +19,7 @@ void main() {
         );
 
         expectLater(() {
-          editor.execute(const InsertCharacterAtCaretRequest(character: "a"));
+          editor.execute([const InsertCharacterAtCaretRequest(character: "a")]);
         }, throwsException);
       });
 
@@ -37,7 +37,7 @@ void main() {
           changeLog = newChangeLog;
         });
 
-        editor.execute(const InsertCharacterAtCaretRequest(character: "a"));
+        editor.execute([const InsertCharacterAtCaretRequest(character: "a")]);
 
         expect(changeLog, isNotNull);
         expect(changeLog!.changes.length, 2);
@@ -62,11 +62,11 @@ void main() {
         });
 
         editor
-          ..execute(const InsertCharacterAtCaretRequest(character: "H"))
-          ..execute(const InsertCharacterAtCaretRequest(character: "e"))
-          ..execute(const InsertCharacterAtCaretRequest(character: "l"))
-          ..execute(const InsertCharacterAtCaretRequest(character: "l"))
-          ..execute(const InsertCharacterAtCaretRequest(character: "o"));
+          ..execute([const InsertCharacterAtCaretRequest(character: "H")])
+          ..execute([const InsertCharacterAtCaretRequest(character: "e")])
+          ..execute([const InsertCharacterAtCaretRequest(character: "l")])
+          ..execute([const InsertCharacterAtCaretRequest(character: "l")])
+          ..execute([const InsertCharacterAtCaretRequest(character: "o")]);
 
         expect(changeLogCount, 5);
         expect(changeEventCount, 10); // 2 events per character insertion
@@ -99,14 +99,14 @@ void main() {
         );
         editor.context.put(EditorContext.composer, composer);
 
-        editor.execute(
+        editor.execute([
           const _ExpandingCommandRequest(
             generationId: 0,
             batchId: 0,
             newCommandCount: 3,
             levelsOfGeneration: 2,
           ),
-        );
+        ]);
 
         // Ensure that the commands printed the number and spacing that we expected,
         // given the expansion order.
@@ -147,7 +147,7 @@ void main() {
           document: document,
           requestHandlers: defaultRequestHandlers,
           reactionPipeline: [
-            FunctionalEditorChangeReaction((editorContext, requestDispatcher, changeList) {
+            FunctionalEditReaction((editorContext, requestDispatcher, changeList) {
               reactionCount += 1;
             }),
           ],
@@ -163,7 +163,7 @@ void main() {
         );
         editor.context.put(EditorContext.composer, composer);
 
-        editor.execute(
+        editor.execute([
           InsertTextRequest(
             documentPosition: const DocumentPosition(
               nodeId: "1",
@@ -172,7 +172,7 @@ void main() {
             textToInsert: "H",
             attributions: const {},
           ),
-        );
+        ]);
 
         // Ensure that our reaction ran after the requested command.
         expect(reactionCount, 1);
@@ -196,7 +196,7 @@ void main() {
           document: document,
           requestHandlers: defaultRequestHandlers,
           reactionPipeline: [
-            FunctionalEditorChangeReaction((editorContext, requestDispatcher, changeList) {
+            FunctionalEditReaction((editorContext, requestDispatcher, changeList) {
               TextInsertionEvent? insertEEvent;
               for (final change in changeList) {
                 if (change is! TextInsertionEvent) {
@@ -211,7 +211,7 @@ void main() {
               }
 
               // Insert "ll" after "e" to get "Hello" when all the commands are done.
-              requestDispatcher.execute(
+              requestDispatcher.execute([
                 InsertTextRequest(
                   documentPosition: DocumentPosition(
                     nodeId: insertEEvent.nodeId,
@@ -220,7 +220,7 @@ void main() {
                   textToInsert: "ll",
                   attributions: {},
                 ),
-              );
+              ]);
             }),
           ],
           listeners: [
@@ -231,7 +231,7 @@ void main() {
         )..context.put(EditorContext.composer, composer);
 
         editor
-          ..execute(
+          ..execute([
             InsertTextRequest(
               documentPosition: const DocumentPosition(
                 nodeId: "1",
@@ -240,8 +240,8 @@ void main() {
               textToInsert: "H",
               attributions: const {},
             ),
-          )
-          ..execute(
+          ])
+          ..execute([
             InsertTextRequest(
               documentPosition: const DocumentPosition(
                 nodeId: "1",
@@ -250,8 +250,8 @@ void main() {
               textToInsert: "e",
               attributions: const {},
             ),
-          )
-          ..execute(
+          ])
+          ..execute([
             InsertTextRequest(
               documentPosition: const DocumentPosition(
                 nodeId: "1",
@@ -260,10 +260,90 @@ void main() {
               textToInsert: "o",
               attributions: const {},
             ),
-          );
+          ]);
 
         // Ensure that our reaction ran in the middle of the requests.
         expect((document.nodes.first as TextNode).text.text, "Hello");
+      });
+
+      test('reactions receive a change list with events from earlier reactions', () {
+        final document = MutableDocument(
+          nodes: [ParagraphNode(id: "1", text: AttributedText(text: ""))],
+        );
+
+        final composer = DocumentComposer(
+          initialSelection: const DocumentSelection.collapsed(
+            position: DocumentPosition(
+              nodeId: "1",
+              nodePosition: TextNodePosition(offset: 0),
+            ),
+          ),
+        );
+
+        final editor = DocumentEditor(
+          document: document,
+          requestHandlers: defaultRequestHandlers,
+          reactionPipeline: [
+            // Reaction 1 causes a change
+            FunctionalEditReaction((editorContext, requestDispatcher, changeList) {
+              TextInsertionEvent? insertHEvent;
+              for (final change in changeList) {
+                if (change is! TextInsertionEvent) {
+                  continue;
+                }
+
+                insertHEvent = change.text == "H" ? change : null;
+              }
+
+              if (insertHEvent == null) {
+                return;
+              }
+
+              // Insert "e" after "H".
+              requestDispatcher.execute([
+                InsertTextRequest(
+                  documentPosition: DocumentPosition(
+                    nodeId: insertHEvent.nodeId,
+                    nodePosition: TextNodePosition(offset: insertHEvent.offset),
+                  ),
+                  textToInsert: "e",
+                  attributions: {},
+                ),
+              ]);
+            }),
+            // Reaction 2 verifies that it sees the change event from reaction 1.
+            FunctionalEditReaction((editorContext, requestDispatcher, changeList) {
+              TextInsertionEvent? insertEEvent;
+              for (final change in changeList) {
+                if (change is! TextInsertionEvent) {
+                  continue;
+                }
+
+                insertEEvent = change.text == "e" ? change : null;
+              }
+
+              expect(insertEEvent, isNotNull, reason: "Reaction 2 didn't receive the change from reaction 1");
+            }),
+          ],
+          listeners: [
+            FunctionalEditorChangeListener(
+              composer.selectionComponent.onEditorChange,
+            ),
+          ],
+        )..context.put(EditorContext.composer, composer);
+
+        editor.execute([
+          InsertTextRequest(
+            documentPosition: const DocumentPosition(
+              nodeId: "1",
+              nodePosition: TextNodePosition(offset: 0),
+            ),
+            textToInsert: "H",
+            attributions: const {},
+          ),
+        ]);
+
+        // If execution makes it here then the test is successful.
       });
 
       test('inserts character at caret', () {
@@ -279,7 +359,7 @@ void main() {
         final composer = editor.context.find(EditorContext.composer) as DocumentComposer;
 
         editor
-          ..execute(
+          ..execute([
             InsertTextRequest(
               documentPosition: const DocumentPosition(
                 nodeId: "1",
@@ -288,8 +368,8 @@ void main() {
               textToInsert: 'H',
               attributions: const {},
             ),
-          )
-          ..execute(
+          ])
+          ..execute([
             const ChangeSelectionRequest(
               DocumentSelection.collapsed(
                 position: DocumentPosition(
@@ -297,9 +377,10 @@ void main() {
                   nodePosition: TextNodePosition(offset: 1),
                 ),
               ),
+              SelectionChangeType.place,
               "test",
             ),
-          );
+          ]);
 
         // Ensure the character was inserted, and the caret moved forward.
         expect((document.getNodeAt(0) as TextNode).text.text, "H");
@@ -332,12 +413,14 @@ void main() {
           changeEventCount += newChangeLog.changes.length;
         });
 
-        editor.execute(SplitParagraphRequest(
-          nodeId: "1",
-          splitPosition: const TextNodePosition(offset: 0),
-          newNodeId: "2",
-          replicateExistingMetadata: true,
-        ));
+        editor.execute([
+          SplitParagraphRequest(
+            nodeId: "1",
+            splitPosition: const TextNodePosition(offset: 0),
+            newNodeId: "2",
+            replicateExistingMetadata: true,
+          )
+        ]);
 
         // Verify content changes.
         expect(document.nodes.length, 2);
@@ -373,7 +456,7 @@ void main() {
           changeEventCount += newChangeLog.changes.length;
         });
 
-        editor.execute(const MoveNodeRequest(nodeId: "1", newIndex: 2));
+        editor.execute([const MoveNodeRequest(nodeId: "1", newIndex: 2)]);
 
         // Verify final node indices.
         expect(document.getNodeAt(0)!.id, "2");
@@ -423,7 +506,7 @@ DocumentEditor _createStandardEditor({
 /// This request, and its command, are used to test the command spawning and
 /// ordering behavior of [DocumentEditor] without finding real commands that
 /// exemplify the necessary spawning behavior.
-class _ExpandingCommandRequest implements EditorRequest {
+class _ExpandingCommandRequest implements EditRequest {
   const _ExpandingCommandRequest({
     required this.generationId,
     required this.batchId,
@@ -449,7 +532,7 @@ class _ExpandingCommandRequest implements EditorRequest {
   final int levelsOfGeneration;
 }
 
-class _ExpandingCommand implements EditorCommand {
+class _ExpandingCommand implements EditCommand {
   const _ExpandingCommand(this.request);
 
   final _ExpandingCommandRequest request;

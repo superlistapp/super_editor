@@ -206,7 +206,7 @@ class BlockquoteComponent extends StatelessWidget {
   }
 }
 
-class ConvertBlockquoteToParagraphCommand implements EditorCommand {
+class ConvertBlockquoteToParagraphCommand implements EditCommand {
   ConvertBlockquoteToParagraphCommand({
     required this.nodeId,
   });
@@ -292,7 +292,7 @@ ExecutionInstruction splitBlockquoteWhenEnterPressed({
   return didSplit ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
 }
 
-class SplitBlockquoteCommand implements EditorCommand {
+class SplitBlockquoteCommand implements EditCommand {
   SplitBlockquoteCommand({
     required this.nodeId,
     required this.splitPosition,

@@ -892,7 +892,7 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
   }
 }
 
-class AddTextAttributionsRequest implements EditorRequest {
+class AddTextAttributionsRequest implements EditRequest {
   AddTextAttributionsRequest({
     required this.documentSelection,
     required this.attributions,
@@ -905,7 +905,7 @@ class AddTextAttributionsRequest implements EditorRequest {
 // TODO: the add/remove/toggle commands are almost identical except for what they
 //       do to ranges of text. Pull out the common range calculation behavior.
 /// Applies the given `attributions` to the given `documentSelection`.
-class AddTextAttributionsCommand implements EditorCommand {
+class AddTextAttributionsCommand implements EditCommand {
   AddTextAttributionsCommand({
     required this.documentSelection,
     required this.attributions,
@@ -1002,7 +1002,7 @@ class AddTextAttributionsCommand implements EditorCommand {
   }
 }
 
-class RemoveTextAttributionsRequest implements EditorRequest {
+class RemoveTextAttributionsRequest implements EditRequest {
   RemoveTextAttributionsRequest({
     required this.documentSelection,
     required this.attributions,
@@ -1013,7 +1013,7 @@ class RemoveTextAttributionsRequest implements EditorRequest {
 }
 
 /// Removes the given `attributions` from the given `documentSelection`.
-class RemoveTextAttributionsCommand implements EditorCommand {
+class RemoveTextAttributionsCommand implements EditCommand {
   RemoveTextAttributionsCommand({
     required this.documentSelection,
     required this.attributions,
@@ -1111,7 +1111,7 @@ class RemoveTextAttributionsCommand implements EditorCommand {
   }
 }
 
-class ToggleTextAttributionsRequest implements EditorRequest {
+class ToggleTextAttributionsRequest implements EditRequest {
   ToggleTextAttributionsRequest({
     required this.documentSelection,
     required this.attributions,
@@ -1125,7 +1125,7 @@ class ToggleTextAttributionsRequest implements EditorRequest {
 /// if none of the content in the selection contains any of the
 /// given `attributions`. Otherwise, all the given `attributions`
 /// are removed from the content within the `documentSelection`.
-class ToggleTextAttributionsCommand implements EditorCommand {
+class ToggleTextAttributionsCommand implements EditCommand {
   ToggleTextAttributionsCommand({
     required this.documentSelection,
     required this.attributions,
@@ -1234,7 +1234,85 @@ class ToggleTextAttributionsCommand implements EditorCommand {
   }
 }
 
-class InsertTextRequest implements EditorRequest {
+// /// Requests that [textToInsert] is inserted at the caret, or in place of the
+// /// expanded selection.
+// ///
+// /// This request inserts the text and changes the selection within a single command, so
+// /// that reactions don't process the typing as two discrete events.
+// class TypeTextRequest implements EditorRequest {
+//   TypeTextRequest({
+//     required this.textToInsert,
+//     this.attributions = const {},
+//   });
+//
+//   final String textToInsert;
+//   final Set<Attribution> attributions;
+// }
+//
+// class TypeTextCommand implements EditorCommand {
+//   TypeTextCommand({
+//     required this.textToInsert,
+//     required this.attributions,
+//   });
+//
+//   final String textToInsert;
+//   final Set<Attribution> attributions;
+//
+//   @override
+//   void execute(EditorContext context, CommandExecutor executor) {
+//     final document = context.find<Document>(EditorContext.document);
+//     final composer = context.find<DocumentComposer>(EditorContext.composer);
+//
+//
+//
+//     if (composer.selectionComponent.selection != null) {
+//       executor.executeCommand(
+//         DeleteSelectionCommand(documentSelection: composer.selectionComponent.selection!),
+//       );
+//     }
+//
+//     final caretPosition = composer.selectionComponent.selection!.extent.nodePosition as TextNodePosition;
+//     final textNode = document.getNodeById(documentPosition.nodeId);
+//     if (textNode is! TextNode) {
+//       editorDocLog.shout('ERROR: can\'t insert text in a node that isn\'t a TextNode: $textNode');
+//       return;
+//     }
+//
+//     final textPosition = documentPosition.nodePosition as TextPosition;
+//     final textOffset = textPosition.offset;
+//     textNode.text = textNode.text.insertString(
+//       textToInsert: textToInsert,
+//       startOffset: textOffset,
+//       applyAttributions: attributions,
+//     );
+//     executor.logChanges([
+//       TextInsertionEvent(
+//         nodeId: textNode.id,
+//         offset: textOffset,
+//         text: textToInsert,
+//       )
+//     ]);
+//
+//     editorOpsLog.fine("Updating Document Composer selection after text insertion.");
+//     executor.executeCommand(
+//       ChangeSelectionCommand(
+//         DocumentSelection.collapsed(
+//           position: DocumentPosition(
+//             nodeId: textNode.id,
+//             nodePosition: TextNodePosition(
+//               offset: textOffset + textToInsert.length,
+//               affinity: textPosition.affinity,
+//             ),
+//           ),
+//         ),
+//         SelectionReason.userInteraction,
+//         notifyListeners: false,
+//       ),
+//     );
+//   }
+// }
+
+class InsertTextRequest implements EditRequest {
   InsertTextRequest({
     required this.documentPosition,
     required this.textToInsert,
@@ -1246,7 +1324,7 @@ class InsertTextRequest implements EditorRequest {
   final Set<Attribution> attributions;
 }
 
-class InsertTextCommand implements EditorCommand {
+class InsertTextCommand implements EditCommand {
   InsertTextCommand({
     required this.documentPosition,
     required this.textToInsert,
@@ -1282,7 +1360,6 @@ class InsertTextCommand implements EditorCommand {
       )
     ]);
 
-    editorOpsLog.fine("Updating Document Composer selection after text insertion.");
     executor.executeCommand(
       ChangeSelectionCommand(
         DocumentSelection.collapsed(
@@ -1294,6 +1371,7 @@ class InsertTextCommand implements EditorCommand {
             ),
           ),
         ),
+        SelectionChangeType.insertContent,
         SelectionReason.userInteraction,
         notifyListeners: false,
       ),
@@ -1327,7 +1405,33 @@ class TextInsertionEvent extends NodeChangeEvent {
   int get hashCode => super.hashCode ^ offset.hashCode ^ text.hashCode;
 }
 
-class ConvertTextNodeToParagraphRequest implements EditorRequest {
+class TextDeletedEvent extends NodeChangeEvent {
+  const TextDeletedEvent(
+    String nodeId, {
+    required this.offset,
+    required this.deletedText,
+  }) : super(nodeId);
+
+  final int offset;
+  final AttributedText deletedText;
+
+  @override
+  String toString() => "[TextDeletedEvent] - node: $nodeId, offset: $offset, deleted text: '$deletedText'";
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      super == other &&
+          other is TextDeletedEvent &&
+          runtimeType == other.runtimeType &&
+          offset == other.offset &&
+          deletedText == other.deletedText;
+
+  @override
+  int get hashCode => super.hashCode ^ offset.hashCode ^ deletedText.hashCode;
+}
+
+class ConvertTextNodeToParagraphRequest implements EditRequest {
   const ConvertTextNodeToParagraphRequest({
     required this.nodeId,
     this.newMetadata,
@@ -1337,7 +1441,7 @@ class ConvertTextNodeToParagraphRequest implements EditorRequest {
   final Map<String, Attribution>? newMetadata;
 }
 
-class ConvertTextNodeToParagraphCommand extends EditorCommand {
+class ConvertTextNodeToParagraphCommand extends EditCommand {
   ConvertTextNodeToParagraphCommand({
     required this.nodeId,
     this.newMetadata,
@@ -1367,7 +1471,7 @@ class ConvertTextNodeToParagraphCommand extends EditorCommand {
   }
 }
 
-class InsertAttributedTextCommand implements EditorCommand {
+class InsertAttributedTextCommand implements EditCommand {
   InsertAttributedTextCommand({
     required this.documentPosition,
     required this.textToInsert,
@@ -1443,7 +1547,7 @@ ExecutionInstruction anyCharacterToInsertInTextContent({
   return didInsertCharacter ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
 }
 
-class InsertCharacterAtCaretRequest implements EditorRequest {
+class InsertCharacterAtCaretRequest implements EditRequest {
   const InsertCharacterAtCaretRequest({
     required this.character,
     this.ignoreComposerAttributions = false,
@@ -1453,7 +1557,7 @@ class InsertCharacterAtCaretRequest implements EditorRequest {
   final bool ignoreComposerAttributions;
 }
 
-class InsertCharacterAtCaretCommand extends EditorCommand {
+class InsertCharacterAtCaretCommand extends EditCommand {
   InsertCharacterAtCaretCommand({
     required this.character,
     this.ignoreComposerAttributions = false,
@@ -1528,10 +1632,13 @@ void _deleteExpandedSelection({
     ),
   );
 
-  executor.executeCommand(ChangeSelectionCommand(
-    DocumentSelection.collapsed(position: newSelectionPosition),
-    SelectionReason.userInteraction,
-  ));
+  executor.executeCommand(
+    ChangeSelectionCommand(
+      DocumentSelection.collapsed(position: newSelectionPosition),
+      SelectionChangeType.deleteContent,
+      SelectionReason.userInteraction,
+    ),
+  );
 }
 
 DocumentPosition _getDocumentPositionAfterExpandedDeletion({
@@ -1733,6 +1840,7 @@ void _insertBlockLevelNewline({
           nodePosition: const TextNodePosition(offset: 0),
         ),
       ),
+      SelectionChangeType.insertContent,
       SelectionReason.userInteraction,
     ),
   );
@@ -1756,9 +1864,6 @@ void _insertCharacterInTextComposable(
     return;
   }
 
-  final textNode = document.getNode(composer.selectionComponent.selection!.extent) as TextNode;
-  final initialTextOffset = (composer.selectionComponent.selection!.extent.nodePosition as TextNodePosition).offset;
-
   executor.executeCommand(
     InsertTextCommand(
       documentPosition: composer.selectionComponent.selection!.extent,
@@ -1766,28 +1871,6 @@ void _insertCharacterInTextComposable(
       attributions: ignoreComposerAttributions ? {} : composer.preferences.currentAttributions,
     ),
   );
-
-  // TODO: I commented out this code because it looks like InsertTextCommand is already
-  //       doing the selection change. No need to do it again. If nothing breaks, delete
-  //       this code.
-  // final newSelection = DocumentSelection.collapsed(
-  //   position: DocumentPosition(
-  //     nodeId: textNode.id,
-  //     nodePosition: TextNodePosition(
-  //       offset: initialTextOffset + character.length,
-  //     ),
-  //   ),
-  // );
-  //
-  // composer.selectionComponent.updateSelection(
-  //   newSelection,
-  //   notifyListeners: true,
-  // );
-  //
-  // return [
-  //   ...changes,
-  //   SelectionChangeEvent(newSelection),
-  // ];
 }
 
 /// Converts the [TextNode] with the current [DocumentComposer] selection

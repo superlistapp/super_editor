@@ -7,6 +7,7 @@ import 'package:super_editor/src/core/document_debug_paint.dart';
 import 'package:super_editor/src/core/document_editor.dart';
 import 'package:super_editor/src/core/document_interaction.dart';
 import 'package:super_editor/src/core/document_layout.dart';
+import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/core/styles.dart';
 import 'package:super_editor/src/default_editor/common_editor_operations.dart';
@@ -569,6 +570,11 @@ class SuperEditorState extends State<SuperEditor> {
           document: editContext.editor.document,
           getDocumentLayout: () => editContext.documentLayout,
           selection: editContext.composer.selectionComponent.selectionNotifier,
+          changeSelection: (DocumentSelection? newSelection, SelectionChangeType changeType) {
+            editContext.editor.execute([
+              ChangeSelectionRequest(newSelection, changeType, SelectionReason.userInteraction),
+            ]);
+          },
           scrollController: widget.scrollController,
           documentKey: _docLayoutKey,
           handleColor: widget.androidHandleColor ?? Theme.of(context).primaryColor,
@@ -583,6 +589,11 @@ class SuperEditorState extends State<SuperEditor> {
           document: editContext.editor.document,
           getDocumentLayout: () => editContext.documentLayout,
           selection: editContext.composer.selectionComponent.selectionNotifier,
+          changeSelection: (DocumentSelection? newSelection, SelectionChangeType changeType) {
+            editContext.editor.execute([
+              ChangeSelectionRequest(newSelection, changeType, SelectionReason.userInteraction),
+            ]);
+          },
           scrollController: widget.scrollController,
           documentKey: _docLayoutKey,
           handleColor: widget.iOSHandleColor ?? Theme.of(context).primaryColor,
@@ -625,7 +636,13 @@ class SuperEditorState extends State<SuperEditor> {
                   focusNode: _focusNode,
                   document: editContext.editor.document,
                   getDocumentLayout: () => editContext.documentLayout,
-                  selectionComponent: editContext.composer.selectionComponent,
+                  selection: editContext.composer.selectionComponent.selectionNotifier,
+                  selectionChanges: editContext.composer.selectionComponent.selectionChanges,
+                  changeSelection: (DocumentSelection? newSelection, SelectionChangeType changeType) {
+                    editContext.editor.execute([
+                      ChangeSelectionRequest(newSelection, changeType, SelectionReason.userInteraction),
+                    ]);
+                  },
                   autoScroller: _autoScrollController,
                   showDebugPaint: widget.debugPaint.gestures,
                   child: const SizedBox(),

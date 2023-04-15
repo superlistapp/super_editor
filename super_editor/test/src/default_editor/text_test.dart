@@ -38,7 +38,7 @@ void main() {
           attributions: {boldAttribution},
         );
 
-        editor.execute(command);
+        editor.execute([command]);
 
         final boldedText = (document.nodes.first as ParagraphNode).text;
         expect(boldedText.getAllAttributionsAt(0), <dynamic>{});

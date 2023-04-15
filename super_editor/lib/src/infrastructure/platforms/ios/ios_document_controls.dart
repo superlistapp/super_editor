@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/src/core/document.dart';
+import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/default_editor/text.dart';
@@ -21,6 +23,7 @@ class IosDocumentTouchEditingControls extends StatefulWidget {
     required this.documentLayout,
     required this.document,
     required this.selection,
+    required this.changeSelection,
     required this.handleColor,
     this.onDoubleTapOnCaret,
     this.onTripleTapOnCaret,
@@ -38,7 +41,8 @@ class IosDocumentTouchEditingControls extends StatefulWidget {
 
   final Document document;
 
-  final ValueNotifier<DocumentSelection?> selection;
+  final ValueListenable<DocumentSelection?> selection;
+  final void Function(DocumentSelection?, SelectionChangeType) changeSelection;
 
   final FloatingCursorController floatingCursorController;
 
@@ -195,7 +199,10 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
     if (!widget.selection.value!.isCollapsed) {
       // The selection is expanded. First we need to collapse it, then
       // we can start showing the floating cursor.
-      widget.selection.value = widget.selection.value!.collapseDownstream(widget.document);
+      widget.changeSelection(
+        widget.selection.value!.collapseDownstream(widget.document),
+        SelectionChangeType.place,
+      );
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         _onFloatingCursorChange();
       });

@@ -12,7 +12,6 @@ void main() {
             ParagraphNode(id: "1", text: AttributedText(text: "")),
           ],
         );
-        final editor = createDefaultDocumentEditor(document: document);
         final composer = DocumentComposer(
           initialSelection: const DocumentSelection.collapsed(
             position: DocumentPosition(
@@ -20,6 +19,10 @@ void main() {
               nodePosition: TextNodePosition(offset: 0),
             ),
           ),
+        );
+        final editor = createDefaultDocumentEditor(
+          document: document,
+          composer: composer,
         );
 
         await tester.pumpWidget(
@@ -80,7 +83,6 @@ void main() {
             ParagraphNode(id: "1", text: AttributedText(text: "")),
           ],
         );
-        final editor = createDefaultDocumentEditor(document: document);
         final composer = DocumentComposer(
           initialSelection: const DocumentSelection.collapsed(
             position: DocumentPosition(
@@ -88,6 +90,10 @@ void main() {
               nodePosition: TextNodePosition(offset: 0),
             ),
           ),
+        );
+        final editor = createDefaultDocumentEditor(
+          document: document,
+          composer: composer,
         );
 
         await tester.pumpWidget(

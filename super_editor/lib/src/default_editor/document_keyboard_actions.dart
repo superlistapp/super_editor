@@ -223,12 +223,12 @@ ExecutionInstruction mergeNodeWithNextWhenDeleteIsPressed({
   final currentParagraphLength = node.text.text.length;
 
   // Send edit command.
-  editContext.editor.execute(
+  editContext.editor.execute([
     CombineParagraphsRequest(
       firstNodeId: node.id,
       secondNodeId: nextNode.id,
     ),
-  );
+  ]);
 
   // Place the cursor at the point where the text came together.
   editContext.composer.selectionComponent.updateSelection(

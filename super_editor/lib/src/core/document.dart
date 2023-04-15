@@ -2,6 +2,8 @@ import 'package:collection/collection.dart';
 import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 
+import 'document_editor.dart';
+
 /// A document with styled text and multimedia elements.
 ///
 /// A [Document] is comprised of a list of [DocumentNode]s,
@@ -80,6 +82,11 @@ abstract class Document {
   void removeListener(DocumentChangeListener listener);
 }
 
+// TODO: we'd like to remove the concept of EditEvent from this class, but it's
+//       used indirectly by the `Document`'s change notification system. See if
+//       there's a way to get it out of here. Maybe move the listener to `MutableDocument`,
+//       which is defined within document_editor.dart
+
 /// Listener that's notified when a document changes.
 ///
 /// The [changeLog] includes an ordered list of all changes that were applied
@@ -92,7 +99,7 @@ typedef DocumentChangeListener = void Function(DocumentChangeLog changeLog);
 class DocumentChangeLog {
   DocumentChangeLog(this.changes);
 
-  final List<DocumentChangeEvent> changes;
+  final List<EditEvent> changes;
 
   /// Returns `true` if the [DocumentNode] with the given [nodeId] was altered in any way
   /// by the events in this change log.
@@ -104,95 +111,6 @@ class DocumentChangeLog {
     }
     return false;
   }
-}
-
-/// A change that took place within a [Document].
-abstract class DocumentChangeEvent {
-  // Marker interface for all editor change events.
-}
-
-/// Base class for change events that refer to a [DocumentNode].
-abstract class DocumentNodeEvent implements DocumentChangeEvent {
-  String get nodeId;
-}
-
-/// A new [DocumentNode] was inserted in the [Document].
-class NodeInsertedEvent implements DocumentNodeEvent {
-  const NodeInsertedEvent(this.nodeId);
-
-  @override
-  final String nodeId;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is NodeInsertedEvent && runtimeType == other.runtimeType && nodeId == other.nodeId;
-
-  @override
-  int get hashCode => nodeId.hashCode;
-}
-
-/// A [DocumentNode] was moved to a new index.
-class NodeMovedEvent implements DocumentNodeEvent {
-  const NodeMovedEvent({
-    required this.nodeId,
-    required this.from,
-    required this.to,
-  });
-
-  @override
-  final String nodeId;
-  final int from;
-  final int to;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is NodeMovedEvent &&
-          runtimeType == other.runtimeType &&
-          nodeId == other.nodeId &&
-          from == other.from &&
-          to == other.to;
-
-  @override
-  int get hashCode => nodeId.hashCode ^ from.hashCode ^ to.hashCode;
-}
-
-/// A [DocumentNode] was removed from the [Document].
-class NodeRemovedEvent implements DocumentNodeEvent {
-  const NodeRemovedEvent(this.nodeId);
-
-  @override
-  final String nodeId;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) || other is NodeRemovedEvent && runtimeType == other.runtimeType && nodeId == other.nodeId;
-
-  @override
-  int get hashCode => nodeId.hashCode;
-}
-
-/// The content of a [DocumentNode] changed.
-///
-/// A node change might signify a content change, such as text changing in a paragraph, or
-/// it might signify a node changing its type of content, such as converting a paragraph
-/// to an image.
-class NodeChangeEvent implements DocumentNodeEvent {
-  const NodeChangeEvent(this.nodeId);
-
-  @override
-  final String nodeId;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) || other is NodeChangeEvent && runtimeType == other.runtimeType && nodeId == other.nodeId;
-
-  @override
-  int get hashCode => nodeId.hashCode;
-
-  @override
-  String toString() => "[NodeChangeEvent] - Node: $nodeId";
 }
 
 /// A span within a [Document] that begins at [start] and

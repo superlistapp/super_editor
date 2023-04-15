@@ -180,9 +180,9 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
   int get hashCode => super.hashCode ^ nodeId.hashCode ^ blockType.hashCode ^ textHashCode;
 }
 
-/// [EditorRequest] to combine the [ParagraphNode] with [firstNodeId] with the [ParagraphNode] after it, which
+/// [EditRequest] to combine the [ParagraphNode] with [firstNodeId] with the [ParagraphNode] after it, which
 /// should have the [secondNodeId].
-class CombineParagraphsRequest implements EditorRequest {
+class CombineParagraphsRequest implements EditRequest {
   CombineParagraphsRequest({
     required this.firstNodeId,
     required this.secondNodeId,
@@ -199,7 +199,7 @@ class CombineParagraphsRequest implements EditorRequest {
 /// in reverse order, the command fizzles.
 ///
 /// If both nodes are not `ParagraphNode`s, the command fizzles.
-class CombineParagraphsCommand implements EditorCommand {
+class CombineParagraphsCommand implements EditCommand {
   CombineParagraphsCommand({
     required this.firstNodeId,
     required this.secondNodeId,
@@ -253,7 +253,7 @@ class CombineParagraphsCommand implements EditorCommand {
   }
 }
 
-class SplitParagraphRequest implements EditorRequest {
+class SplitParagraphRequest implements EditRequest {
   SplitParagraphRequest({
     required this.nodeId,
     required this.splitPosition,
@@ -271,7 +271,7 @@ class SplitParagraphRequest implements EditorRequest {
 /// given `splitPosition`, placing all text after `splitPosition` in a
 /// new `ParagraphNode` with the given `newNodeId`, inserted after the
 /// original node.
-class SplitParagraphCommand implements EditorCommand {
+class SplitParagraphCommand implements EditCommand {
   SplitParagraphCommand({
     required this.nodeId,
     required this.splitPosition,
@@ -333,10 +333,11 @@ class SplitParagraphCommand implements EditorCommand {
         nodePosition: const TextNodePosition(offset: 0),
       ),
     );
-    composer.selectionComponent.setSelectionWithReason(
-      newSelection,
-      SelectionReason.userInteraction,
-    );
+    composer.selectionComponent.updateSelection(newSelection);
+    // composer.selectionComponent.setSelectionWithReason(
+    //   newSelection,
+    //   SelectionReason.userInteraction,
+    // );
 
     final documentChanges = [
       NodeChangeEvent(node.id),
@@ -344,6 +345,7 @@ class SplitParagraphCommand implements EditorCommand {
       SelectionChangeEvent(
         oldSelection: oldSelection,
         newSelection: newSelection,
+        changeType: SelectionChangeType.insertContent,
         reason: SelectionReason.userInteraction,
       ),
     ];
@@ -364,7 +366,7 @@ class SplitParagraphCommand implements EditorCommand {
   }
 }
 
-class Intention implements DocumentChangeEvent {
+class Intention implements EditEvent {
   Intention.start() : _isStart = true;
 
   Intention.end() : _isStart = false;
@@ -428,7 +430,7 @@ ExecutionInstruction anyCharacterToInsertInParagraph({
   return didInsertCharacter ? ExecutionInstruction.haltExecution : ExecutionInstruction.continueExecution;
 }
 
-class DeleteParagraphCommand implements EditorCommand {
+class DeleteParagraphCommand implements EditCommand {
   DeleteParagraphCommand({
     required this.nodeId,
   });

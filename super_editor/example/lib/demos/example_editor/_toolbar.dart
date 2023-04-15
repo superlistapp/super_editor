@@ -163,28 +163,28 @@ class _EditorToolbarState extends State<EditorToolbar> {
     }
 
     if (_isListItem(existingTextType) && _isListItem(newType)) {
-      widget.editor!.execute(
+      widget.editor!.execute([
         ChangeListItemTypeRequest(
           nodeId: widget.composer.selectionComponent.selection!.extent.nodeId,
           newType: newType == _TextType.orderedListItem ? ListItemType.ordered : ListItemType.unordered,
         ),
-      );
+      ]);
     } else if (_isListItem(existingTextType) && !_isListItem(newType)) {
-      widget.editor!.execute(
+      widget.editor!.execute([
         ConvertListItemToParagraphRequest(
           nodeId: widget.composer.selectionComponent.selection!.extent.nodeId,
           paragraphMetadata: {
             'blockType': _getBlockTypeAttribution(newType),
           },
         ),
-      );
+      ]);
     } else if (!_isListItem(existingTextType) && _isListItem(newType)) {
-      widget.editor!.execute(
+      widget.editor!.execute([
         ConvertParagraphToListItemRequest(
           nodeId: widget.composer.selectionComponent.selection!.extent.nodeId,
           type: newType == _TextType.orderedListItem ? ListItemType.ordered : ListItemType.unordered,
         ),
-      );
+      ]);
     } else {
       // Apply a new block type to an existing paragraph node.
       final existingNode = widget.editor!.document
@@ -219,32 +219,32 @@ class _EditorToolbarState extends State<EditorToolbar> {
 
   /// Toggles bold styling for the current selected text.
   void _toggleBold() {
-    widget.editor!.execute(
+    widget.editor!.execute([
       ToggleTextAttributionsRequest(
         documentSelection: widget.composer.selectionComponent.selection!,
         attributions: {boldAttribution},
       ),
-    );
+    ]);
   }
 
   /// Toggles italic styling for the current selected text.
   void _toggleItalics() {
-    widget.editor!.execute(
+    widget.editor!.execute([
       ToggleTextAttributionsRequest(
         documentSelection: widget.composer.selectionComponent.selection!,
         attributions: {italicsAttribution},
       ),
-    );
+    ]);
   }
 
   /// Toggles strikethrough styling for the current selected text.
   void _toggleStrikethrough() {
-    widget.editor!.execute(
+    widget.editor!.execute([
       ToggleTextAttributionsRequest(
         documentSelection: widget.composer.selectionComponent.selection!,
         attributions: {strikethroughAttribution},
       ),
-    );
+    ]);
   }
 
   /// Returns true if the current text selection includes part

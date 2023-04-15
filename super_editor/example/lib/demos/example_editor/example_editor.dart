@@ -1,4 +1,5 @@
 import 'package:example/demos/example_editor/_task.dart';
+import 'package:example/demos/example_editor/tagging/user_tagging.dart';
 import 'package:example/logging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -60,6 +61,8 @@ class _ExampleEditorState extends State<ExampleEditor> {
         BlockquoteConversionReaction(),
         HorizontalRuleConversionReaction(),
         ImageUrlConversionReaction(),
+        TagUserReaction(),
+        KeepCaretOutOfTagReaction(),
       ],
       listeners: [
         FunctionalEditorChangeListener(
@@ -252,7 +255,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
           anchor: _imageSelectionAnchor,
           composer: _composer,
           setWidth: (nodeId, width) {
-            _docEditor.execute(_ChangeImageWidthRequest(nodeId: nodeId, imageWidth: width));
+            _docEditor.execute([_ChangeImageWidthRequest(nodeId: nodeId, imageWidth: width)]);
           },
           closeToolbar: _hideImageToolbar,
         );
@@ -365,6 +368,25 @@ class _ExampleEditorState extends State<ExampleEditor> {
                 selectionColor: Colors.red.withOpacity(0.3),
               ),
         stylesheet: defaultStylesheet.copyWith(
+          inlineTextStyler: (Set<Attribution> attributions, TextStyle existingStyle) {
+            TextStyle style = defaultInlineTextStyler(attributions, existingStyle);
+
+            if (attributions.contains(userTagComposingAttribution)) {
+              style = style.copyWith(
+                color: Colors.blue,
+                decoration: TextDecoration.underline,
+              );
+            }
+
+            if (attributions.any((attribution) => attribution is UserTagAttribution)) {
+              style = style.copyWith(
+                color: Colors.red,
+                decoration: TextDecoration.underline,
+              );
+            }
+
+            return style;
+          },
           addRulesAfter: [
             if (!_isLight) ..._darkModeStyles,
             taskStyles,
@@ -415,7 +437,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
   }
 }
 
-class _ChangeImageWidthRequest implements EditorRequest {
+class _ChangeImageWidthRequest implements EditRequest {
   const _ChangeImageWidthRequest({
     required this.nodeId,
     required this.imageWidth,
@@ -436,7 +458,7 @@ class _ChangeImageWidthRequest implements EditorRequest {
   int get hashCode => nodeId.hashCode ^ imageWidth.hashCode;
 }
 
-class _ChangeImageWidthCommand implements EditorCommand {
+class _ChangeImageWidthCommand implements EditCommand {
   const _ChangeImageWidthCommand({
     required this.nodeId,
     required this.imageWidth,
