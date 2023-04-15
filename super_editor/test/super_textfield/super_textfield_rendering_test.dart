@@ -46,7 +46,7 @@ Future<void> _pumpSwitchableTestApp(
       home: Scaffold(
         body: ListenableBuilder(
           listenable: showTextField,
-          builder: (context, _) {
+          builder: (context) {
             return showTextField.value
                 ? SuperTextField(
                     textController: controller,
