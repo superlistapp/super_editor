@@ -2028,7 +2028,7 @@ class PasteEditorCommand implements EditCommand {
 
   @override
   void execute(EditorContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(EditorContext.document);
+    final document = context.find<MutableDocument>(DocumentEditor.documentKey);
     final currentNodeWithSelection = document.getNodeById(_pastePosition.nodeId);
     if (currentNodeWithSelection is! ParagraphNode) {
       throw Exception('Can\'t handle pasting text within node of type: $currentNodeWithSelection');
@@ -2184,8 +2184,8 @@ class DeleteUpstreamCharacterCommand implements EditCommand {
 
   @override
   void execute(EditorContext context, CommandExecutor executor) {
-    final document = context.find<Document>(EditorContext.document);
-    final composer = context.find<DocumentComposer>(EditorContext.composer);
+    final document = context.find<Document>(DocumentEditor.documentKey);
+    final composer = context.find<DocumentComposer>(DocumentEditor.composerKey);
     final selection = composer.selectionComponent.selection;
 
     if (selection == null) {
@@ -2246,8 +2246,8 @@ class DeleteDownstreamCharacterCommand implements EditCommand {
 
   @override
   void execute(EditorContext context, CommandExecutor executor) {
-    final document = context.find<Document>(EditorContext.document);
-    final composer = context.find<DocumentComposer>(EditorContext.composer);
+    final document = context.find<Document>(DocumentEditor.documentKey);
+    final composer = context.find<DocumentComposer>(DocumentEditor.composerKey);
     final selection = composer.selectionComponent.selection;
 
     if (selection == null) {

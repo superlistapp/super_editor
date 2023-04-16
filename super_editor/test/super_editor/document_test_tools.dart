@@ -484,3 +484,11 @@ class EquivalentDocumentMatcher extends Matcher {
     return null;
   }
 }
+
+class StandardEditorPieces {
+  StandardEditorPieces(this.document, this.composer, this.editor);
+
+  final Document document;
+  final DocumentComposer composer;
+  final DocumentEditor editor;
+}

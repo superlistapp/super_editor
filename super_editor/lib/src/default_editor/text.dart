@@ -917,7 +917,7 @@ class AddTextAttributionsCommand implements EditCommand {
   @override
   void execute(EditorContext context, CommandExecutor executor) {
     editorDocLog.info('Executing AddTextAttributionsCommand');
-    final document = context.find<MutableDocument>(EditorContext.document);
+    final document = context.find<MutableDocument>(DocumentEditor.documentKey);
     final nodes = document.getNodesInside(documentSelection.base, documentSelection.extent);
     if (nodes.isEmpty) {
       editorDocLog.shout(' - Bad DocumentSelection. Could not get range of nodes. Selection: $documentSelection');
@@ -1025,7 +1025,7 @@ class RemoveTextAttributionsCommand implements EditCommand {
   @override
   void execute(EditorContext context, CommandExecutor executor) {
     editorDocLog.info('Executing RemoveTextAttributionsCommand');
-    final document = context.find<MutableDocument>(EditorContext.document);
+    final document = context.find<MutableDocument>(DocumentEditor.documentKey);
     final nodes = document.getNodesInside(documentSelection.base, documentSelection.extent);
     if (nodes.isEmpty) {
       editorDocLog.shout(' - Bad DocumentSelection. Could not get range of nodes. Selection: $documentSelection');
@@ -1141,7 +1141,7 @@ class ToggleTextAttributionsCommand implements EditCommand {
   @override
   void execute(EditorContext context, CommandExecutor executor) {
     editorDocLog.info('Executing ToggleTextAttributionsCommand');
-    final document = context.find<Document>(EditorContext.document);
+    final document = context.find<Document>(DocumentEditor.documentKey);
     final nodes = document.getNodesInside(documentSelection.base, documentSelection.extent);
     if (nodes.isEmpty) {
       editorDocLog.shout(' - Bad DocumentSelection. Could not get range of nodes. Selection: $documentSelection');
@@ -1260,8 +1260,8 @@ class ToggleTextAttributionsCommand implements EditCommand {
 //
 //   @override
 //   void execute(EditorContext context, CommandExecutor executor) {
-//     final document = context.find<Document>(EditorContext.document);
-//     final composer = context.find<DocumentComposer>(EditorContext.composer);
+//     final document = context.find<Document>(DocumentEditor.documentKey);
+//     final composer = context.find<DocumentComposer>(DocumentEditor.composerKey);
 //
 //
 //
@@ -1337,7 +1337,7 @@ class InsertTextCommand implements EditCommand {
 
   @override
   void execute(EditorContext context, CommandExecutor executor) {
-    final document = context.find<Document>(EditorContext.document);
+    final document = context.find<Document>(DocumentEditor.documentKey);
 
     final textNode = document.getNodeById(documentPosition.nodeId);
     if (textNode is! TextNode) {
@@ -1452,7 +1452,7 @@ class ConvertTextNodeToParagraphCommand extends EditCommand {
 
   @override
   void execute(EditorContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(EditorContext.document);
+    final document = context.find<MutableDocument>(DocumentEditor.documentKey);
 
     final extentNode = document.getNodeById(nodeId) as TextNode;
     if (extentNode is ParagraphNode) {
@@ -1482,7 +1482,7 @@ class InsertAttributedTextCommand implements EditCommand {
 
   @override
   void execute(EditorContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(EditorContext.document);
+    final document = context.find<MutableDocument>(DocumentEditor.documentKey);
     final textNode = document.getNodeById(documentPosition.nodeId);
     if (textNode is! TextNode) {
       editorDocLog.shout('ERROR: can\'t insert text in a node that isn\'t a TextNode: $textNode');
@@ -1568,8 +1568,8 @@ class InsertCharacterAtCaretCommand extends EditCommand {
 
   @override
   void execute(EditorContext context, CommandExecutor executor) {
-    final document = context.find<Document>(EditorContext.document);
-    final composer = context.find<DocumentComposer>(EditorContext.composer);
+    final document = context.find<Document>(DocumentEditor.documentKey);
+    final composer = context.find<DocumentComposer>(DocumentEditor.composerKey);
 
     if (composer.selectionComponent.selection == null) {
       return;

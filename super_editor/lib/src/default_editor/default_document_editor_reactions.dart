@@ -24,7 +24,7 @@ import 'multi_node_editing.dart';
 class UnorderedListItemConversionReaction implements EditReaction {
   @override
   void react(EditorContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
-    final document = editorContext.find<Document>(EditorContext.document);
+    final document = editorContext.find<Document>(DocumentEditor.documentKey);
     final didTypeSpaceAtEnd = EditInspector.didTypeSpace(document, changeList);
     if (!didTypeSpaceAtEnd) {
       return;
@@ -63,7 +63,7 @@ class UnorderedListItemConversionReaction implements EditReaction {
 class OrderedListItemConversionReaction implements EditReaction {
   @override
   void react(EditorContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
-    final document = editorContext.find<Document>(EditorContext.document);
+    final document = editorContext.find<Document>(DocumentEditor.documentKey);
     final didTypeSpaceAtEnd = EditInspector.didTypeSpace(document, changeList);
     if (!didTypeSpaceAtEnd) {
       return;
@@ -103,7 +103,7 @@ class OrderedListItemConversionReaction implements EditReaction {
 class BlockquoteConversionReaction implements EditReaction {
   @override
   void react(EditorContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
-    final document = editorContext.find<Document>(EditorContext.document);
+    final document = editorContext.find<Document>(DocumentEditor.documentKey);
     final didTypeSpaceAtEnd = EditInspector.didTypeSpace(document, changeList);
     if (!didTypeSpaceAtEnd) {
       return;
@@ -147,7 +147,7 @@ class BlockquoteConversionReaction implements EditReaction {
 class HorizontalRuleConversionReaction implements EditReaction {
   @override
   void react(EditorContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
-    final document = editorContext.find<Document>(EditorContext.document);
+    final document = editorContext.find<Document>(DocumentEditor.documentKey);
     final didTypeSpaceAtEnd = EditInspector.didTypeSpace(document, changeList);
     if (!didTypeSpaceAtEnd) {
       return;
@@ -215,7 +215,7 @@ class ImageUrlConversionReaction implements EditReaction {
       return;
     }
 
-    final document = editorContext.find<MutableDocument>(EditorContext.document);
+    final document = editorContext.find<MutableDocument>(DocumentEditor.documentKey);
     final previousNode = document.getNodeById(selectionChange.oldSelection!.extent.nodeId);
     if (previousNode is! ParagraphNode) {
       // The intention indicated that the user pressed "enter" from a paragraph
@@ -324,7 +324,7 @@ class ImageUrlConversionReaction implements EditReaction {
 class LinkifyReaction implements EditReaction {
   @override
   void react(EditorContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
-    final document = editorContext.find<Document>(EditorContext.document);
+    final document = editorContext.find<Document>(DocumentEditor.documentKey);
     TextInsertionEvent? linkifyCandidate;
     for (final change in changeList) {
       if (change is TextInsertionEvent && change.text == " ") {

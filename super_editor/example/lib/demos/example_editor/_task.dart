@@ -70,7 +70,7 @@ class CompleteTaskCommand implements EditCommand {
 
   @override
   void execute(EditorContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(EditorContext.document);
+    final document = context.find<MutableDocument>(DocumentEditor.documentKey);
     (document.getNodeById(nodeId) as TaskNode).isComplete = true;
     executor.logChanges([NodeChangeEvent(nodeId)]);
   }

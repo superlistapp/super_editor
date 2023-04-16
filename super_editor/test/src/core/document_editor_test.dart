@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:super_editor/src/test/super_editor_test/supereditor_inspector.dart';
 import 'package:super_editor/super_editor.dart';
 
+import '../../super_editor/document_test_tools.dart';
 import '../../super_editor/test_documents.dart';
 
 void main() {
@@ -12,9 +12,11 @@ void main() {
 
       test('throws exception when there is no command for a given request', () {
         final editor = DocumentEditor(
-          document: MutableDocument(
-            nodes: [ParagraphNode(id: DocumentEditor.createNodeId(), text: AttributedText(text: ""))],
-          ),
+          editables: {
+            DocumentEditor.documentKey: MutableDocument(
+              nodes: [ParagraphNode(id: DocumentEditor.createNodeId(), text: AttributedText(text: ""))],
+            ),
+          },
           requestHandlers: [],
         );
 
@@ -24,7 +26,7 @@ void main() {
       });
 
       test('executes a single command', () {
-        final editor = _createStandardEditor(
+        final editorPieces = _createStandardEditor(
           initialSelection: const DocumentSelection.collapsed(
             position: DocumentPosition(
               nodeId: "1",
@@ -33,11 +35,11 @@ void main() {
           ),
         );
         DocumentChangeLog? changeLog;
-        editor.document.addListener((newChangeLog) {
+        editorPieces.document.addListener((newChangeLog) {
           changeLog = newChangeLog;
         });
 
-        editor.execute([const InsertCharacterAtCaretRequest(character: "a")]);
+        editorPieces.editor.execute([const InsertCharacterAtCaretRequest(character: "a")]);
 
         expect(changeLog, isNotNull);
         expect(changeLog!.changes.length, 2);
@@ -46,7 +48,7 @@ void main() {
       });
 
       test('executes a series of commands', () {
-        final editor = _createStandardEditor(
+        final editorPieces = _createStandardEditor(
           initialSelection: const DocumentSelection.collapsed(
             position: DocumentPosition(
               nodeId: "1",
@@ -56,12 +58,12 @@ void main() {
         );
         int changeLogCount = 0;
         int changeEventCount = 0;
-        editor.document.addListener((newChangeLog) {
+        editorPieces.document.addListener((newChangeLog) {
           changeLogCount += 1;
           changeEventCount += newChangeLog.changes.length;
         });
 
-        editor
+        editorPieces.editor
           ..execute([const InsertCharacterAtCaretRequest(character: "H")])
           ..execute([const InsertCharacterAtCaretRequest(character: "e")])
           ..execute([const InsertCharacterAtCaretRequest(character: "l")])
@@ -70,7 +72,7 @@ void main() {
 
         expect(changeLogCount, 5);
         expect(changeEventCount, 10); // 2 events per character insertion
-        expect((editor.document.getNodeAt(0) as ParagraphNode).text.text, "Hello");
+        expect((editorPieces.document.getNodeAt(0) as ParagraphNode).text.text, "Hello");
       });
 
       test('executes multiple expanding commands', () {
@@ -83,12 +85,7 @@ void main() {
         )..addListener((newLog) {
             changeLog = newLog;
           });
-        final editor = DocumentEditor(
-          document: document,
-          requestHandlers: [
-            (request) => request is _ExpandingCommandRequest ? _ExpandingCommand(request) : null,
-          ],
-        );
+
         final composer = DocumentComposer(
           initialSelection: const DocumentSelection.collapsed(
             position: DocumentPosition(
@@ -97,7 +94,23 @@ void main() {
             ),
           ),
         );
-        editor.context.put(EditorContext.composer, composer);
+        final editor = DocumentEditor(
+          editables: {
+            DocumentEditor.documentKey: document,
+            DocumentEditor.composerKey: composer,
+          },
+          requestHandlers: [
+            (request) => request is _ExpandingCommandRequest ? _ExpandingCommand(request) : null,
+          ],
+          listeners: [
+            FunctionalEditorChangeListener(
+              document.onDocumentChange,
+            ),
+            FunctionalEditorChangeListener(
+              composer.selectionComponent.onEditorChange,
+            ),
+          ],
+        );
 
         editor.execute([
           const _ExpandingCommandRequest(
@@ -143,16 +156,6 @@ void main() {
           nodes: [ParagraphNode(id: DocumentEditor.createNodeId(), text: AttributedText(text: ""))],
         );
 
-        final editor = DocumentEditor(
-          document: document,
-          requestHandlers: defaultRequestHandlers,
-          reactionPipeline: [
-            FunctionalEditReaction((editorContext, requestDispatcher, changeList) {
-              reactionCount += 1;
-            }),
-          ],
-        );
-
         final composer = DocumentComposer(
           initialSelection: const DocumentSelection.collapsed(
             position: DocumentPosition(
@@ -161,7 +164,26 @@ void main() {
             ),
           ),
         );
-        editor.context.put(EditorContext.composer, composer);
+        final editor = DocumentEditor(
+          editables: {
+            DocumentEditor.documentKey: document,
+            DocumentEditor.composerKey: composer,
+          },
+          requestHandlers: defaultRequestHandlers,
+          reactionPipeline: [
+            FunctionalEditReaction((editorContext, requestDispatcher, changeList) {
+              reactionCount += 1;
+            }),
+          ],
+          listeners: [
+            FunctionalEditorChangeListener(
+              document.onDocumentChange,
+            ),
+            FunctionalEditorChangeListener(
+              composer.selectionComponent.onEditorChange,
+            ),
+          ],
+        );
 
         editor.execute([
           InsertTextRequest(
@@ -193,7 +215,10 @@ void main() {
         );
 
         final editor = DocumentEditor(
-          document: document,
+          editables: {
+            DocumentEditor.documentKey: document,
+            DocumentEditor.composerKey: composer,
+          },
           requestHandlers: defaultRequestHandlers,
           reactionPipeline: [
             FunctionalEditReaction((editorContext, requestDispatcher, changeList) {
@@ -225,10 +250,13 @@ void main() {
           ],
           listeners: [
             FunctionalEditorChangeListener(
+              document.onDocumentChange,
+            ),
+            FunctionalEditorChangeListener(
               composer.selectionComponent.onEditorChange,
             ),
           ],
-        )..context.put(EditorContext.composer, composer);
+        );
 
         editor
           ..execute([
@@ -281,7 +309,10 @@ void main() {
         );
 
         final editor = DocumentEditor(
-          document: document,
+          editables: {
+            DocumentEditor.documentKey: document,
+            DocumentEditor.composerKey: composer,
+          },
           requestHandlers: defaultRequestHandlers,
           reactionPipeline: [
             // Reaction 1 causes a change
@@ -327,10 +358,13 @@ void main() {
           ],
           listeners: [
             FunctionalEditorChangeListener(
+              document.onDocumentChange,
+            ),
+            FunctionalEditorChangeListener(
               composer.selectionComponent.onEditorChange,
             ),
           ],
-        )..context.put(EditorContext.composer, composer);
+        );
 
         editor.execute([
           InsertTextRequest(
@@ -347,7 +381,7 @@ void main() {
       });
 
       test('inserts character at caret', () {
-        final editor = _createStandardEditor(
+        final editorPieces = _createStandardEditor(
           initialSelection: const DocumentSelection.collapsed(
             position: DocumentPosition(
               nodeId: "1",
@@ -355,10 +389,8 @@ void main() {
             ),
           ),
         );
-        final document = editor.document;
-        final composer = editor.context.find(EditorContext.composer) as DocumentComposer;
 
-        editor
+        editorPieces.editor
           ..execute([
             InsertTextRequest(
               documentPosition: const DocumentPosition(
@@ -383,10 +415,10 @@ void main() {
           ]);
 
         // Ensure the character was inserted, and the caret moved forward.
-        expect((document.getNodeAt(0) as TextNode).text.text, "H");
-        expect(composer.selectionComponent.selection, isNotNull);
+        expect((editorPieces.document.getNodeAt(0) as TextNode).text.text, "H");
+        expect(editorPieces.composer.selectionComponent.selection, isNotNull);
         expect(
-          composer.selectionComponent.selection,
+          editorPieces.composer.selectionComponent.selection,
           const DocumentSelection.collapsed(
             position: DocumentPosition(
               nodeId: "1",
@@ -397,7 +429,7 @@ void main() {
       });
 
       test('inserts new paragraph node at caret', () {
-        final editor = _createStandardEditor(
+        final editorPieces = _createStandardEditor(
           initialSelection: const DocumentSelection.collapsed(
             position: DocumentPosition(
               nodeId: "1",
@@ -407,13 +439,13 @@ void main() {
         );
         int changeLogCount = 0;
         int changeEventCount = 0;
-        final document = editor.document;
+        final document = editorPieces.document;
         document.addListener((newChangeLog) {
           changeLogCount += 1;
           changeEventCount += newChangeLog.changes.length;
         });
 
-        editor.execute([
+        editorPieces.editor.execute([
           SplitParagraphRequest(
             nodeId: "1",
             splitPosition: const TextNodePosition(offset: 0),
@@ -439,7 +471,7 @@ void main() {
       });
 
       test('moves a document node to a new position', () {
-        final editor = _createStandardEditor(
+        final editorPieces = _createStandardEditor(
           initialDocument: longTextDoc(),
           initialSelection: const DocumentSelection.collapsed(
             position: DocumentPosition(
@@ -450,13 +482,13 @@ void main() {
         );
         int changeLogCount = 0;
         int changeEventCount = 0;
-        final document = editor.document;
+        final document = editorPieces.document;
         document.addListener((newChangeLog) {
           changeLogCount += 1;
           changeEventCount += newChangeLog.changes.length;
         });
 
-        editor.execute([const MoveNodeRequest(nodeId: "1", newIndex: 2)]);
+        editorPieces.editor.execute([const MoveNodeRequest(nodeId: "1", newIndex: 2)]);
 
         // Verify final node indices.
         expect(document.getNodeAt(0)!.id, "2");
@@ -472,7 +504,7 @@ void main() {
 }
 
 // TODO: check how/why this is different from default_document_editor.dart method called createDefaultDocumentEditor()
-DocumentEditor _createStandardEditor({
+StandardEditorPieces _createStandardEditor({
   MutableDocument? initialDocument,
   DocumentSelection? initialSelection,
 }) {
@@ -480,7 +512,10 @@ DocumentEditor _createStandardEditor({
 
   final composer = DocumentComposer(initialSelection: initialSelection);
   final editor = DocumentEditor(
-    document: document,
+    editables: {
+      DocumentEditor.documentKey: document,
+      DocumentEditor.composerKey: composer,
+    },
     requestHandlers: defaultRequestHandlers,
     reactionPipeline: [
       LinkifyReaction(),
@@ -492,12 +527,15 @@ DocumentEditor _createStandardEditor({
     ],
     listeners: [
       FunctionalEditorChangeListener(
+        document.onDocumentChange,
+      ),
+      FunctionalEditorChangeListener(
         composer.selectionComponent.onEditorChange,
       ),
     ],
-  )..context.put(EditorContext.composer, composer);
+  );
 
-  return editor;
+  return StandardEditorPieces(document, composer, editor);
 }
 
 /// Request that runs a command, which spawns more commands, based on the
@@ -539,7 +577,7 @@ class _ExpandingCommand implements EditCommand {
 
   @override
   void execute(EditorContext context, CommandExecutor executor) {
-    final document = context.find<Document>(EditorContext.document);
+    final document = context.find<Document>(DocumentEditor.documentKey);
     final paragraph = document.getNodeAt(0) as ParagraphNode;
 
     executor.executeCommand(

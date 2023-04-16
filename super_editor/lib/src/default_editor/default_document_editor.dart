@@ -15,7 +15,10 @@ DocumentEditor createDefaultDocumentEditor({
   composer ??= DocumentComposer();
 
   final editor = DocumentEditor(
-    document: document,
+    editables: {
+      DocumentEditor.documentKey: document,
+      DocumentEditor.composerKey: composer,
+    },
     requestHandlers: defaultRequestHandlers,
     reactionPipeline: [
       LinkifyReaction(),
@@ -27,12 +30,13 @@ DocumentEditor createDefaultDocumentEditor({
     ],
     listeners: [
       FunctionalEditorChangeListener(
+        document.onDocumentChange,
+      ),
+      FunctionalEditorChangeListener(
         composer.selectionComponent.onEditorChange,
       ),
     ],
   );
-
-  editor.context.put(EditorContext.composer, composer);
 
   return editor;
 }

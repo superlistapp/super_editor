@@ -46,7 +46,10 @@ class _ExampleEditorState extends State<ExampleEditor> {
     _composer = DocumentComposer();
     _composer.selectionComponent.selectionNotifier.addListener(_hideOrShowToolbar);
     _docEditor = DocumentEditor(
-      document: _doc as MutableDocument,
+      editables: {
+        DocumentEditor.documentKey: _doc,
+        DocumentEditor.composerKey: _composer,
+      },
       requestHandlers: [
         (request) => request is CompleteTaskRequest ? CompleteTaskCommand(nodeId: request.nodeId) : null,
         (request) => request is _ChangeImageWidthRequest
@@ -66,10 +69,13 @@ class _ExampleEditorState extends State<ExampleEditor> {
       ],
       listeners: [
         FunctionalEditorChangeListener(
+          (_doc as MutableDocument).onDocumentChange,
+        ),
+        FunctionalEditorChangeListener(
           _composer.selectionComponent.onEditorChange,
         ),
       ],
-    )..context.put("composer", _composer);
+    );
     _docOps = CommonEditorOperations(
       editor: _docEditor,
       composer: _composer,
@@ -469,7 +475,7 @@ class _ChangeImageWidthCommand implements EditCommand {
 
   @override
   void execute(EditorContext context, CommandExecutor executor) {
-    final node = context.find(EditorContext.document).getNodeById(nodeId)!;
+    final node = context.find(DocumentEditor.documentKey).getNodeById(nodeId)!;
     final currentStyles = SingleColumnLayoutComponentStyles.fromMetadata(node);
     SingleColumnLayoutComponentStyles(
       width: imageWidth,

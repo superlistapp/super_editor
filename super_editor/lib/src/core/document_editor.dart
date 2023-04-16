@@ -9,40 +9,56 @@ import 'package:uuid/uuid.dart';
 import 'document.dart';
 import 'document_composer.dart';
 
-/// Editor for a [Document].
+/// Editor for a document editing experience.
 ///
-/// A [DocumentEditor] executes commands that alter the structure of a [Document], and possibly
-/// other structures, too, such as user selection.
+/// A [DocumentEditor] is the entry point for all mutations within a document editing experience.
+/// Such changes might impact a [Document], [DocumentComposer], and any other relevant objects
+/// or data structures associated with a document editing experience.
 ///
-/// Commands are used so that changes can be event-sourced, allowing for undo/redo behavior.
-// TODO: design and implement comprehensive event-sourced editing API (#49)
+/// The following artifacts are involved with making changes to pieces of a document editing
+/// experience:
+///
+///  - [EditRequest] - a desired change.
+///  - [EditCommand] - mutates editables to achieve a change.
+///  - [EditEvent] - describes a change that was made.
+///  - [EditReaction] - (optionally) requests more changes after some original change.
+///  - [EditListener] - is notified of all changes made by a [DocumentEditor].
 class DocumentEditor implements RequestDispatcher {
   static const Uuid _uuid = Uuid();
+
+  /// Service locator key to obtain a [Document] from [find], if a [Document]
+  /// is available in the [EditorContext].
+  static const documentKey = "document";
+
+  /// Service locator key to obtain a [DocumentComposer] from [find], if a
+  /// [DocumentComposer] is available in the [EditorContext].
+  static const composerKey = "composer";
 
   /// Generates a new ID for a [DocumentNode].
   ///
   /// Each generated node ID is universally unique.
   static String createNodeId() => _uuid.v4();
 
+  /// Constructs a [DocumentEditor] with:
+  ///  - [editables], which contains all artifacts that will be mutated by [EditCommand]s, such
+  ///    as a [Document] and [DocumentComposer].
+  ///  - [requestHandlers], which map each [EditRequest] to an [EditCommand].
+  ///  - [reactionPipeline], which contains all possible [EditReaction]s in the order that they will
+  ///    react.
+  ///  - [listeners], which contains an initial set of [EditListener]s.
   DocumentEditor({
-    required MutableDocument document,
+    required Map<String, dynamic> editables,
     required List<EditorRequestHandler> requestHandlers,
     List<EditReaction>? reactionPipeline,
     List<EditListener>? listeners,
-  })  : _document = document,
-        _requestHandlers = requestHandlers,
+  })  : _requestHandlers = requestHandlers,
         _reactionPipeline = reactionPipeline ?? [],
-        _changeListeners = listeners ?? [],
-        context = EditorContext() {
-    context.put("document", document);
+        _changeListeners = listeners ?? [] {
+    _context = EditorContext(editables);
+    assert(_context.findMaybe<Document>(DocumentEditor.documentKey) != null,
+        "Expected a Document in the 'editables' map but it wasn't there");
 
-    _commandExecutor = _DocumentEditorCommandExecutor(context);
-
-    // We always want the document notified of changes so that the
-    // document can notify its own listeners. Also, we want the document
-    // to receive notifications first, because everything else is based
-    // on document structure.
-    _changeListeners.insert(0, FunctionalEditorChangeListener(_document.onDocumentChange));
+    _commandExecutor = _DocumentEditorCommandExecutor(_context);
   }
 
   void dispose() {
@@ -51,14 +67,13 @@ class DocumentEditor implements RequestDispatcher {
   }
 
   /// The [Document] that this [DocumentEditor] edits.
-  Document get document => _document;
-  final MutableDocument _document;
+  Document get document => _context.find<Document>(DocumentEditor.documentKey);
 
   /// Chain of Responsibility that maps a given [EditRequest] to an [EditCommand].
   final List<EditorRequestHandler> _requestHandlers;
 
   /// Service Locator that provides all resources that are relevant for document editing.
-  final EditorContext context;
+  late final EditorContext _context;
 
   /// Executes [EditCommand]s and collects a list of changes.
   late final _DocumentEditorCommandExecutor _commandExecutor;
@@ -67,23 +82,6 @@ class DocumentEditor implements RequestDispatcher {
   /// and get the first opportunity to spawn additional commands before the
   /// change list is dispatched to regular listeners.
   final List<EditReaction> _reactionPipeline;
-
-  /// Adds a [reaction], which is given an opportunity to spawn new [EditorCommands],
-  /// based on the latest series of [EditEvent]s.
-  ///
-  /// Reactions are executed in the order that they're added.
-  void addReaction(EditReaction reaction, {int? index}) {
-    if (index != null) {
-      _reactionPipeline.insert(index, reaction);
-    } else {
-      _reactionPipeline.add(reaction);
-    }
-  }
-
-  /// Removes a [reaction] from the reaction pipeline.
-  void removeReaction(EditReaction reaction) {
-    _reactionPipeline.remove(reaction);
-  }
 
   /// Listeners that are notified of changes in the form of a change list
   /// after all pending [EditCommand]s are executed, and all members of
@@ -195,7 +193,7 @@ class DocumentEditor implements RequestDispatcher {
 
   void _reactToChanges(List<EditEvent> changeList) {
     for (final reaction in _reactionPipeline) {
-      reaction.react(context, this, changeList);
+      reaction.react(_context, this, changeList);
     }
   }
 
@@ -219,15 +217,9 @@ abstract class EditCommand {
 /// All resources that are available when executing [EditCommand]s, such as a document,
 /// composer, etc.
 class EditorContext {
-  /// Service locator key to obtain a [Document] from [find], if a [Document]
-  /// is available in the [EditorContext].
-  static const document = "document";
+  EditorContext(this._resources);
 
-  /// Service locator key to obtain a [DocumentComposer] from [find], if a
-  /// [DocumentComposer] is available in the [EditorContext].
-  static const composer = "composer";
-
-  final _resources = <String, dynamic>{};
+  final Map<String, dynamic> _resources;
 
   T find<T>(String id) {
     if (!_resources.containsKey(id)) {
@@ -241,6 +233,10 @@ class EditorContext {
           "Tried to find an editor resource of type '$T' for ID '$id', but the resource with that ID is of type '${_resources[id].runtimeType}");
     }
 
+    return _resources[id];
+  }
+
+  T? findMaybe<T>(String id) {
     return _resources[id];
   }
 
