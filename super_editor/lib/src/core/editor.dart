@@ -48,7 +48,7 @@ class Editor implements RequestDispatcher {
   ///  - [listeners], which contains an initial set of [EditListener]s.
   Editor({
     required Map<String, Editable> editables,
-    required List<EditorRequestHandler> requestHandlers,
+    required List<EditRequestHandler> requestHandlers,
     List<EditReaction>? reactionPipeline,
     List<EditListener>? listeners,
   })  : _requestHandlers = requestHandlers,
@@ -67,7 +67,7 @@ class Editor implements RequestDispatcher {
   }
 
   /// Chain of Responsibility that maps a given [EditRequest] to an [EditCommand].
-  final List<EditorRequestHandler> _requestHandlers;
+  final List<EditRequestHandler> _requestHandlers;
 
   /// Service Locator that provides all resources that are relevant for document editing.
   late final EditorContext _context;
@@ -374,7 +374,7 @@ class EditorCommandQueue {
 /// Factory method that creates and returns an [EditCommand] that can handle
 /// the given [EditRequest], or `null` if this handler doesn't apply to the given
 /// [EditRequest].
-typedef EditorRequestHandler = EditCommand? Function(EditRequest);
+typedef EditRequestHandler = EditCommand? Function(EditRequest);
 
 /// An action that a [Editor] should execute.
 abstract class EditRequest {
