@@ -236,8 +236,6 @@ class EditorContext {
   T? findMaybe<T>(String id) {
     return _resources[id];
   }
-
-  void put(String id, dynamic resource) => _resources[id] = resource;
 }
 
 /// Executes [EditCommand]s in the order in which they're queued.
