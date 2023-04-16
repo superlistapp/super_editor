@@ -63,6 +63,7 @@ class _MarkdownSerializationDemoState extends State<MarkdownSerializationDemo> {
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: SuperEditor(
               key: _docKey,
+              document: _doc,
               editor: _docEditor,
               stylesheet: defaultStylesheet.copyWith(
                 documentPadding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),

@@ -6,11 +6,13 @@ import 'package:super_text_layout/super_text_layout.dart';
 void main() {
   group('Blockquote', () {
     testWidgets("applies the textStyle from SuperEditor's styleSheet", (WidgetTester tester) async {
+      final document = _singleBlockquoteDoc();
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
             body: SuperEditor(
-              editor: createDefaultDocumentEditor(document: _singleBlockquoteDoc()),
+              document: document,
+              editor: createDefaultDocumentEditor(document: document),
               stylesheet: _styleSheet,
             ),
           ),

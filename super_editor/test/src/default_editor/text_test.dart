@@ -107,7 +107,7 @@ void main() {
         final editContext = _createEditContext();
 
         // Add a paragraph to the document.
-        (editContext.editor.document as MutableDocument).add(
+        (editContext.document as MutableDocument).add(
           ParagraphNode(
             id: 'paragraph',
             text: AttributedText(text: 'This is some text'),
@@ -147,7 +147,7 @@ void main() {
         final editContext = _createEditContext();
 
         // Add a non-text node to the document.
-        (editContext.editor.document as MutableDocument).add(
+        (editContext.document as MutableDocument).add(
           HorizontalRuleNode(id: 'horizontal_rule'),
         );
 
@@ -180,7 +180,7 @@ void main() {
         final editContext = _createEditContext();
 
         // Add a paragraph to the document.
-        (editContext.editor.document as MutableDocument).add(
+        (editContext.document as MutableDocument).add(
           ParagraphNode(
             id: 'paragraph',
             text: AttributedText(text: 'This is some text'),
@@ -233,7 +233,7 @@ void main() {
         final editContext = _createEditContext();
 
         // Add a paragraph to the document.
-        (editContext.editor.document as MutableDocument).add(
+        (editContext.document as MutableDocument).add(
           ParagraphNode(
             id: 'paragraph',
             text: AttributedText(text: 'This is some text'),
@@ -265,7 +265,7 @@ void main() {
         // The handler should insert a character
         expect(result, ExecutionInstruction.haltExecution);
         expect(
-          (editContext.editor.document.nodes.first as TextNode).text.text,
+          (editContext.document.nodes.first as TextNode).text.text,
           'aThis is some text',
         );
       });
@@ -274,7 +274,7 @@ void main() {
         final editContext = _createEditContext();
 
         // Add a paragraph to the document.
-        (editContext.editor.document as MutableDocument).add(
+        (editContext.document as MutableDocument).add(
           ParagraphNode(
             id: 'paragraph',
             text: AttributedText(text: 'This is some text'),
@@ -306,7 +306,7 @@ void main() {
         // The handler should insert a character
         expect(result, ExecutionInstruction.haltExecution);
         expect(
-          (editContext.editor.document.nodes.first as TextNode).text.text,
+          (editContext.document.nodes.first as TextNode).text.text,
           'ßThis is some text',
         );
       });
@@ -394,10 +394,12 @@ EditContext _createEditContext() {
     composer: composer,
   );
   return EditContext(
+    document: document,
     editor: documentEditor,
     getDocumentLayout: () => fakeLayout,
     composer: composer,
     commonOps: CommonEditorOperations(
+      document: document,
       editor: documentEditor,
       composer: composer,
       documentLayoutResolver: () => fakeLayout,

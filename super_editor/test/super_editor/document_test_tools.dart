@@ -232,11 +232,13 @@ class TestDocumentConfigurator {
       // ignore: prefer_function_declarations_over_variables
       final layoutResolver = () => layoutKey.currentState as DocumentLayout;
       final commonOps = CommonEditorOperations(
+        document: _document!,
         editor: editor,
         documentLayoutResolver: layoutResolver,
         composer: composer,
       );
       final editContext = EditContext(
+        document: _document!,
         editor: editor,
         getDocumentLayout: layoutResolver,
         composer: composer,
@@ -255,6 +257,7 @@ class TestDocumentConfigurator {
     final superEditor = _buildContent(
       SuperEditor(
         documentLayoutKey: testDocumentContext.layoutKey,
+        document: testDocumentContext.editContext.document,
         editor: testDocumentContext.editContext.editor,
         composer: testDocumentContext.editContext.composer,
         focusNode: testDocumentContext.focusNode,

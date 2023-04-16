@@ -700,7 +700,7 @@ void main() {
 
           expect(result, ExecutionInstruction.haltExecution);
 
-          final paragraph = editContext.editor.document.nodes.first as ParagraphNode;
+          final paragraph = editContext.document.nodes.first as ParagraphNode;
           expect(paragraph.text.text, 'Text with [] selection');
 
           expect(
@@ -752,7 +752,7 @@ void main() {
 
           expect(result, ExecutionInstruction.haltExecution);
 
-          final paragraph = editContext.editor.document.nodes.first as ParagraphNode;
+          final paragraph = editContext.document.nodes.first as ParagraphNode;
           expect(paragraph.text.text, 'Text with [] selection');
 
           expect(
@@ -807,7 +807,7 @@ void main() {
           // execution so that the character is also entered by another handler.
           expect(result, ExecutionInstruction.continueExecution);
 
-          final paragraph = editContext.editor.document.nodes.first as ParagraphNode;
+          final paragraph = editContext.document.nodes.first as ParagraphNode;
           expect(paragraph.text.text, 'Text with [] selection');
 
           expect(
@@ -860,7 +860,7 @@ void main() {
           expect(result, ExecutionInstruction.haltExecution);
 
           // The text should remain the same
-          final paragraph = editContext.editor.document.nodes.first as ParagraphNode;
+          final paragraph = editContext.document.nodes.first as ParagraphNode;
           expect(paragraph.text.text, 'Text with [SELECTME] selection');
 
           // The selection should be collapsed
@@ -954,7 +954,7 @@ void main() {
         expect(result, ExecutionInstruction.continueExecution);
 
         // The text should remain the same
-        final paragraph = editContext.editor.document.nodes.first as ParagraphNode;
+        final paragraph = editContext.document.nodes.first as ParagraphNode;
         expect(paragraph.text.text, 'This is some text');
 
         // The selection should remain the same
@@ -991,8 +991,9 @@ Future<EditContext> _pumpCaretMovementTestSetup(
       ),
     ),
   );
+  final document = singleParagraphDoc();
   final editContext = createEditContext(
-    document: singleParagraphDoc(),
+    document: document,
     documentComposer: composer,
   );
 
@@ -1002,6 +1003,7 @@ Future<EditContext> _pumpCaretMovementTestSetup(
       home: Scaffold(
         body: SuperEditor(
           focusNode: focusNode,
+          document: document,
           editor: editContext.editor,
           composer: composer,
         ),

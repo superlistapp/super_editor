@@ -34,6 +34,7 @@ class _EmptyDocumentDemoState extends State<EmptyDocumentDemo> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: SuperEditor(
+        document: _doc,
         editor: _docEditor,
         gestureMode: DocumentGestureMode.mouse,
         inputSource: DocumentInputSource.keyboard,

@@ -1516,7 +1516,7 @@ ExecutionInstruction anyCharacterToInsertInTextContent({
     return ExecutionInstruction.continueExecution;
   }
   if (!_isTextEntryNode(
-    document: editContext.editor.document,
+    document: editContext.document,
     selection: editContext.composer.selectionComponent.selection!,
   )) {
     return ExecutionInstruction.continueExecution;
@@ -1916,7 +1916,7 @@ ExecutionInstruction deleteCharacterWhenBackspaceIsPressed({
     return ExecutionInstruction.continueExecution;
   }
   if (!_isTextEntryNode(
-    document: editContext.editor.document,
+    document: editContext.document,
     selection: editContext.composer.selectionComponent.selection!,
   )) {
     return ExecutionInstruction.continueExecution;

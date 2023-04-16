@@ -6,6 +6,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_toolkit/golden_toolkit.dart';
 import 'package:super_editor/super_editor.dart';
 
+import '../../../test/super_editor/document_test_tools.dart';
+
 void main() {
   group('SuperEditor', () {
     group('mobile selection', () {
@@ -732,11 +734,14 @@ void _testParagraphSelection(
 
     final composer = DocumentComposer();
 
+    final editorPieces = _createSingleParagraphEditor(composer: composer);
+
     final content = _buildScaffold(
       dragLine: dragLine,
       child: SuperEditor(
         documentLayoutKey: docKey,
-        editor: _createSingleParagraphEditor(),
+        document: editorPieces.document,
+        editor: editorPieces.editor,
         composer: composer,
         gestureMode: platform,
         stylesheet: Stylesheet(
@@ -790,8 +795,17 @@ TextStyle _textStyleBuilder(attributions) {
   );
 }
 
-DocumentEditor _createSingleParagraphEditor() {
-  return createDefaultDocumentEditor(document: _createSingleParagraphDoc());
+StandardEditorPieces _createSingleParagraphEditor({
+  DocumentComposer? composer,
+}) {
+  final document = _createSingleParagraphDoc();
+  composer ??= DocumentComposer();
+  final editor = createDefaultDocumentEditor(
+    document: document,
+    composer: composer,
+  );
+
+  return StandardEditorPieces(document, composer, editor);
 }
 
 MutableDocument _createSingleParagraphDoc() {

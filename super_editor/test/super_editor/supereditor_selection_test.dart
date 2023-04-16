@@ -68,7 +68,7 @@ void main() {
           .createDocument() //
           .fromMarkdown("This is paragraph one.\nThis is paragraph two.") //
           .pump();
-      final nodeId = testContext.editContext.editor.document.nodes.first.id;
+      final nodeId = testContext.editContext.document.nodes.first.id;
 
       /// Triple tap on the first line in the paragraph node.
       await tester.tripleTapInParagraph(nodeId, 10);
@@ -99,7 +99,7 @@ void main() {
         (tester) async {
       final testContext = await _pumpUnselectableComponentTestApp(tester);
 
-      final firstParagraphId = testContext.editContext.editor.document.nodes.first.id;
+      final firstParagraphId = testContext.editContext.document.nodes.first.id;
 
       // TODO: replace the following direct layout access with a simulated user
       // drag, once we've merged some new dragging tools in #645.
@@ -126,7 +126,7 @@ void main() {
         (tester) async {
       final testContext = await _pumpUnselectableComponentTestApp(tester);
 
-      final secondParagraphId = testContext.editContext.editor.document.nodes.last.id;
+      final secondParagraphId = testContext.editContext.document.nodes.last.id;
 
       // TODO: replace the following direct layout access with a simulated user
       // drag, once we've merged some new dragging tools in #645.
@@ -158,7 +158,7 @@ void main() {
         (tester) async {
       final testContext = await _pumpUnselectableComponentTestApp(tester);
 
-      final secondParagraphId = testContext.editContext.editor.document.nodes.last.id;
+      final secondParagraphId = testContext.editContext.document.nodes.last.id;
 
       // TODO: replace the following direct layout access with a simulated user
       // drag, once we've merged some new dragging tools in #645.
@@ -190,7 +190,7 @@ void main() {
         (tester) async {
       final testContext = await _pumpUnselectableComponentTestApp(tester);
 
-      final firstParagraphId = testContext.editContext.editor.document.nodes.first.id;
+      final firstParagraphId = testContext.editContext.document.nodes.first.id;
 
       // TODO: replace the following direct layout access with a simulated user
       // drag, once we've merged some new dragging tools in #645.
@@ -217,8 +217,8 @@ void main() {
         (tester) async {
       final testContext = await _pumpUnselectableComponentTestApp(tester);
 
-      final firstParagraphId = testContext.editContext.editor.document.nodes.first.id;
-      final secondParagraphId = testContext.editContext.editor.document.nodes.last.id;
+      final firstParagraphId = testContext.editContext.document.nodes.first.id;
+      final secondParagraphId = testContext.editContext.document.nodes.last.id;
 
       // TODO: replace the following direct layout access with a simulated user
       // drag, once we've merged some new dragging tools in #645.
@@ -248,8 +248,8 @@ void main() {
         (tester) async {
       final testContext = await _pumpUnselectableComponentTestApp(tester);
 
-      final firstParagraphId = testContext.editContext.editor.document.nodes.first.id;
-      final secondParagraphId = testContext.editContext.editor.document.nodes.last.id;
+      final firstParagraphId = testContext.editContext.document.nodes.first.id;
+      final secondParagraphId = testContext.editContext.document.nodes.last.id;
 
       // TODO: replace the following direct layout access with a simulated user
       // drag, once we've merged some new dragging tools in #645.

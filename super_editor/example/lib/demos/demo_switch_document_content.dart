@@ -44,6 +44,7 @@ class _SwitchDocumentDemoState extends State<SwitchDocumentDemo> {
           _buildDocSelector(),
           Expanded(
             child: SuperEditor(
+              document: _activeDocumentEditor == _docEditor1 ? _doc1 : _doc2,
               editor: _activeDocumentEditor!,
               stylesheet: defaultStylesheet.copyWith(
                 documentPadding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),

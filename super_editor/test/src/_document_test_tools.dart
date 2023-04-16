@@ -22,11 +22,13 @@ EditContext createEditContext({
   DocumentLayout layoutResolver() => documentLayout ?? FakeDocumentLayout();
 
   return EditContext(
+    document: document,
     editor: editor,
     getDocumentLayout: layoutResolver,
     composer: composer,
     commonOps: commonOps ??
         CommonEditorOperations(
+          document: document,
           editor: editor,
           composer: composer,
           documentLayoutResolver: layoutResolver,

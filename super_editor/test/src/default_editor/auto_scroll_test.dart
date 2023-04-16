@@ -251,6 +251,7 @@ class _SliverTestEditorState extends State<_SliverTestEditor> {
               ),
               SliverToBoxAdapter(
                 child: SuperEditor(
+                  document: _doc,
                   editor: _docEditor,
                   composer: _composer,
                   stylesheet: defaultStylesheet.copyWith(

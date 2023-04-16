@@ -134,6 +134,7 @@ class _DocumentStylesDemoState extends State<DocumentStylesDemo> {
   @override
   Widget build(BuildContext context) {
     return SuperEditor(
+      document: _doc,
       editor: _docEditor,
       stylesheet: _createStyles(),
     );

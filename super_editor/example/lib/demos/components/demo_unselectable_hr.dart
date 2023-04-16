@@ -51,6 +51,7 @@ class _UnselectableHrDemoState extends State<UnselectableHrDemo> {
   @override
   Widget build(BuildContext context) {
     return SuperEditor(
+      document: _doc,
       editor: _docEditor,
       stylesheet: defaultStylesheet.copyWith(
         documentPadding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),

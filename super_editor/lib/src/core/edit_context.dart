@@ -18,11 +18,15 @@ class EditContext {
   /// The [documentLayout] is passed as a [getDocumentLayout] callback that
   /// should return the current layout as it might change.
   EditContext({
+    required this.document,
     required this.editor,
     required DocumentLayout Function() getDocumentLayout,
     required this.composer,
     required this.commonOps,
   }) : _getDocumentLayout = getDocumentLayout;
+
+  /// The [Document] that's being edited.
+  final Document document;
 
   /// The editor of the [Document] that allows executing commands that alter the
   /// structure of the document.

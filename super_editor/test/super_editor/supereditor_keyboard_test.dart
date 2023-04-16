@@ -382,7 +382,7 @@ Future<String> _pumpSingleLineWithCaret(
       .withInputSource(inputSource)
       .pump();
 
-  final nodeId = testContext.editContext.editor.document.nodes.first.id;
+  final nodeId = testContext.editContext.document.nodes.first.id;
 
   await tester.placeCaretInParagraph(nodeId, offset);
 
@@ -400,7 +400,7 @@ Future<String> _pumpDoubleLineWithCaret(WidgetTester tester,
       .fromMarkdown("This is the first paragraph.\nThis is the second paragraph.")
       .pump();
 
-  final nodeId = testContext.editContext.editor.document.nodes.first.id;
+  final nodeId = testContext.editContext.document.nodes.first.id;
 
   await tester.placeCaretInParagraph(nodeId, offset);
 

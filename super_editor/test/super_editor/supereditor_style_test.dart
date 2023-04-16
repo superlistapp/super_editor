@@ -37,7 +37,7 @@ void main() {
           .useStylesheet(_stylesheet)
           .pump();
 
-      final doc = testContext.editContext.editor.document;
+      final doc = testContext.editContext.document;
 
       final firstParagraphId = doc.nodes[0].id;
       final secondParagraphId = doc.nodes[1].id;

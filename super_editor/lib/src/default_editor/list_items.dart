@@ -712,8 +712,7 @@ ExecutionInstruction backspaceToUnIndentListItem({
     return ExecutionInstruction.continueExecution;
   }
 
-  final node =
-      editContext.editor.document.getNodeById(editContext.composer.selectionComponent.selection!.extent.nodeId);
+  final node = editContext.document.getNodeById(editContext.composer.selectionComponent.selection!.extent.nodeId);
   if (node is! ListItemNode) {
     return ExecutionInstruction.continueExecution;
   }
@@ -734,8 +733,7 @@ ExecutionInstruction splitListItemWhenEnterPressed({
     return ExecutionInstruction.continueExecution;
   }
 
-  final node =
-      editContext.editor.document.getNodeById(editContext.composer.selectionComponent.selection!.extent.nodeId);
+  final node = editContext.document.getNodeById(editContext.composer.selectionComponent.selection!.extent.nodeId);
   if (node is! ListItemNode) {
     return ExecutionInstruction.continueExecution;
   }

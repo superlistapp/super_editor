@@ -10,6 +10,22 @@ class AppShortcutsDemo extends StatefulWidget {
 class _AppShortcutsDemoState extends State<AppShortcutsDemo> {
   String _message = '';
 
+  late final MutableDocument _document;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _document = MutableDocument(
+      nodes: [
+        ParagraphNode(
+          id: DocumentEditor.createNodeId(),
+          text: AttributedText(text: 'Random paragraph....'),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return FocusScope(
@@ -33,16 +49,8 @@ class _AppShortcutsDemoState extends State<AppShortcutsDemo> {
               children: [
                 Expanded(
                   child: SuperEditor(
-                    editor: createDefaultDocumentEditor(
-                      document: MutableDocument(
-                        nodes: [
-                          ParagraphNode(
-                            id: DocumentEditor.createNodeId(),
-                            text: AttributedText(text: 'Random paragraph....'),
-                          ),
-                        ],
-                      ),
-                    ),
+                    document: _document,
+                    editor: createDefaultDocumentEditor(document: _document),
                   ),
                 ),
                 const TextField(

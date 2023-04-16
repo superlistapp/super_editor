@@ -13,7 +13,7 @@ void main() {
           .fromMarkdown("This is some text to select.") //
           .useAppTheme(ThemeData(primaryColor: Colors.red)) //
           .pump();
-      final nodeId = testContext.editContext.editor.document.nodes.first.id;
+      final nodeId = testContext.editContext.document.nodes.first.id;
 
       await tester.placeCaretInParagraph(nodeId, 15);
 
@@ -29,7 +29,7 @@ void main() {
           .fromMarkdown("This is some text to select.") //
           .useAppTheme(ThemeData(primaryColor: Colors.red)) //
           .pump();
-      final nodeId = testContext.editContext.editor.document.nodes.first.id;
+      final nodeId = testContext.editContext.document.nodes.first.id;
 
       await tester.doubleTapInParagraph(nodeId, 15);
 
@@ -45,7 +45,7 @@ void main() {
           .fromMarkdown("This is some text to select.") //
           .useAppTheme(ThemeData(primaryColor: Colors.red)) //
           .pump();
-      final nodeId = testContext.editContext.editor.document.nodes.first.id;
+      final nodeId = testContext.editContext.document.nodes.first.id;
 
       await tester.placeCaretInParagraph(nodeId, 15);
 
@@ -61,7 +61,7 @@ void main() {
           .fromMarkdown("This is some text to select.") //
           .useAppTheme(ThemeData(primaryColor: Colors.red)) //
           .pump();
-      final nodeId = testContext.editContext.editor.document.nodes.first.id;
+      final nodeId = testContext.editContext.document.nodes.first.id;
 
       await tester.doubleTapInParagraph(nodeId, 15);
 

@@ -29,6 +29,7 @@ void main() {
           MaterialApp(
             home: Scaffold(
               body: SuperEditor(
+                document: document,
                 editor: editor,
                 composer: composer,
                 gestureMode: DocumentGestureMode.mouse,
@@ -100,6 +101,7 @@ void main() {
           MaterialApp(
             home: Scaffold(
               body: SuperEditor(
+                document: document,
                 editor: editor,
                 composer: composer,
                 gestureMode: DocumentGestureMode.mouse,

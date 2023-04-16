@@ -247,7 +247,7 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor>
       editorImeLog.fine("Syncing IME with Doc and Composer, given composing region: $newComposingRegion");
 
       final newDocSerialization = DocumentImeSerializer(
-        widget.editContext.editor.document,
+        widget.editContext.document,
         selection,
       );
 
@@ -820,11 +820,13 @@ class ImeConfiguration {
 /// Applies software keyboard edits to a document.
 class SoftwareKeyboardHandler {
   const SoftwareKeyboardHandler({
+    required this.document,
     required this.editor,
     required this.composer,
     required this.commonOps,
   });
 
+  final Document document;
   final DocumentEditor editor;
   final DocumentComposer composer;
   final CommonEditorOperations commonOps;
@@ -945,7 +947,7 @@ class SoftwareKeyboardHandler {
     editorImeLog.fine('Inserting "$textInserted" at position "$insertionPosition"');
     editorImeLog.fine("Serializing document to perform IME operation");
     final docSerializer = DocumentImeSerializer(
-      editor.document,
+      document,
       composer.selectionComponent.selection!,
     );
     editorImeLog.fine("Converting IME insertion offset into a DocumentSelection");
@@ -969,7 +971,7 @@ class SoftwareKeyboardHandler {
 
   void replace(TextRange replacedRange, String replacementText) {
     final docSerializer = DocumentImeSerializer(
-      editor.document,
+      document,
       composer.selectionComponent.selection!,
     );
 
@@ -998,7 +1000,7 @@ class SoftwareKeyboardHandler {
   void delete(TextRange deletedRange) {
     final rangeToDelete = deletedRange;
     final docSerializer = DocumentImeSerializer(
-      editor.document,
+      document,
       composer.selectionComponent.selection!,
     );
     final docSelectionToDelete = docSerializer.imeToDocumentSelection(TextSelection(
@@ -1008,7 +1010,7 @@ class SoftwareKeyboardHandler {
     editorImeLog.fine("Doc selection to delete: $docSelectionToDelete");
 
     if (docSelectionToDelete == null) {
-      final selectedNodeIndex = editor.document.getNodeIndexById(
+      final selectedNodeIndex = document.getNodeIndexById(
         composer.selectionComponent.selection!.extent.nodeId,
       );
       if (selectedNodeIndex > 0) {

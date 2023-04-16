@@ -580,6 +580,7 @@ Widget _buildHardwareKeyboardEditor(MutableDocument document, DocumentComposer c
   return MaterialApp(
     home: Scaffold(
       body: SuperEditor(
+        document: document,
         editor: editor,
         composer: composer,
         // Make the text small so that the test paragraphs fit on a single

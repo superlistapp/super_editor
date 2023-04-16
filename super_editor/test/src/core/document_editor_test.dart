@@ -127,7 +127,7 @@ void main() {
         // Each value is "(a.b)" where "a" is the generation, and "b" is the batch ID
         // within the generation. The output should look like a depth first tree
         // traversal.
-        final paragraph = editor.document.getNodeAt(0) as ParagraphNode;
+        final paragraph = document.getNodeAt(0) as ParagraphNode;
         expect(
           paragraph.text.text,
           '''(0.0)

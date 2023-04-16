@@ -17,6 +17,7 @@ class EditorToolbar extends StatefulWidget {
     Key? key,
     required this.anchor,
     required this.editorFocusNode,
+    required this.document,
     required this.editor,
     required this.composer,
     required this.closeToolbar,
@@ -31,6 +32,8 @@ class EditorToolbar extends StatefulWidget {
 
   /// The [FocusNode] attached to the editor to which this toolbar applies.
   final FocusNode editorFocusNode;
+
+  final Document document;
 
   /// The [editor] is used to alter document content, such as
   /// when the user selects a different block format for a
@@ -81,7 +84,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
       return false;
     }
 
-    final selectedNode = widget.editor!.document.getNodeById(selection.extent.nodeId);
+    final selectedNode = widget.document.getNodeById(selection.extent.nodeId);
     return selectedNode is ParagraphNode || selectedNode is ListItemNode;
   }
 
@@ -89,8 +92,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
   ///
   /// Throws an exception if the currently selected node is not a text node.
   _TextType _getCurrentTextType() {
-    final selectedNode =
-        widget.editor!.document.getNodeById(widget.composer.selectionComponent.selection!.extent.nodeId);
+    final selectedNode = widget.document.getNodeById(widget.composer.selectionComponent.selection!.extent.nodeId);
     if (selectedNode is ParagraphNode) {
       final type = selectedNode.getMetadataValue('blockType');
 
@@ -116,8 +118,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
   ///
   /// Throws an exception if the currently selected node is not a text node.
   TextAlign _getCurrentTextAlignment() {
-    final selectedNode =
-        widget.editor!.document.getNodeById(widget.composer.selectionComponent.selection!.extent.nodeId);
+    final selectedNode = widget.document.getNodeById(widget.composer.selectionComponent.selection!.extent.nodeId);
     if (selectedNode is ParagraphNode) {
       final align = selectedNode.getMetadataValue('textAlign');
       switch (align) {
@@ -145,7 +146,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
       return false;
     }
 
-    final selectedNode = widget.editor!.document.getNodeById(selection.extent.nodeId);
+    final selectedNode = widget.document.getNodeById(selection.extent.nodeId);
     return selectedNode is ParagraphNode;
   }
 
@@ -187,8 +188,8 @@ class _EditorToolbarState extends State<EditorToolbar> {
       ]);
     } else {
       // Apply a new block type to an existing paragraph node.
-      final existingNode = widget.editor!.document
-          .getNodeById(widget.composer.selectionComponent.selection!.extent.nodeId)! as ParagraphNode;
+      final existingNode =
+          widget.document.getNodeById(widget.composer.selectionComponent.selection!.extent.nodeId)! as ParagraphNode;
       existingNode.putMetadataValue('blockType', _getBlockTypeAttribution(newType));
     }
   }
@@ -270,7 +271,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
     final selectionEnd = max(baseOffset, extentOffset);
     final selectionRange = SpanRange(start: selectionStart, end: selectionEnd - 1);
 
-    final textNode = widget.editor!.document.getNodeById(selection.extent.nodeId) as TextNode;
+    final textNode = widget.document.getNodeById(selection.extent.nodeId) as TextNode;
     final text = textNode.text;
 
     final overlappingLinkAttributions = text.getAttributionSpansInRange(
@@ -291,7 +292,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
     final selectionEnd = max(baseOffset, extentOffset);
     final selectionRange = SpanRange(start: selectionStart, end: selectionEnd - 1);
 
-    final textNode = widget.editor!.document.getNodeById(selection.extent.nodeId) as TextNode;
+    final textNode = widget.document.getNodeById(selection.extent.nodeId) as TextNode;
     final text = textNode.text;
 
     final overlappingLinkAttributions = text.getAttributionSpansInRange(
@@ -344,7 +345,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
     final selectionEnd = max(baseOffset, extentOffset);
     final selectionRange = TextRange(start: selectionStart, end: selectionEnd - 1);
 
-    final textNode = widget.editor!.document.getNodeById(selection.extent.nodeId) as TextNode;
+    final textNode = widget.document.getNodeById(selection.extent.nodeId) as TextNode;
     final text = textNode.text;
 
     final trimmedRange = _trimTextRangeWhitespace(text, selectionRange);
@@ -405,8 +406,8 @@ class _EditorToolbarState extends State<EditorToolbar> {
         break;
     }
 
-    final selectedNode = widget.editor!.document
-        .getNodeById(widget.composer.selectionComponent.selection!.extent.nodeId) as ParagraphNode;
+    final selectedNode =
+        widget.document.getNodeById(widget.composer.selectionComponent.selection!.extent.nodeId) as ParagraphNode;
     selectedNode.putMetadataValue('textAlign', newAlignmentValue);
   }
 

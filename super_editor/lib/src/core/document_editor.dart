@@ -66,9 +66,6 @@ class DocumentEditor implements RequestDispatcher {
     _changeListeners.clear();
   }
 
-  /// The [Document] that this [DocumentEditor] edits.
-  Document get document => _context.find<Document>(DocumentEditor.documentKey);
-
   /// Chain of Responsibility that maps a given [EditRequest] to an [EditCommand].
   final List<EditorRequestHandler> _requestHandlers;
 

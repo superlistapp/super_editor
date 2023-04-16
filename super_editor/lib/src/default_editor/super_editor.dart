@@ -78,6 +78,7 @@ class SuperEditor extends StatefulWidget {
   SuperEditor.standard({
     Key? key,
     this.focusNode,
+    required this.document,
     required this.editor,
     this.composer,
     this.scrollController,
@@ -105,6 +106,7 @@ class SuperEditor extends StatefulWidget {
   SuperEditor.custom({
     Key? key,
     this.focusNode,
+    required this.document,
     required this.editor,
     this.composer,
     this.scrollController,
@@ -138,6 +140,7 @@ class SuperEditor extends StatefulWidget {
   SuperEditor({
     Key? key,
     this.focusNode,
+    required this.document,
     required this.editor,
     this.composer,
     this.scrollController,
@@ -237,7 +240,10 @@ class SuperEditor extends StatefulWidget {
   /// (probably the entire screen).
   final CustomClipper<Rect> Function(BuildContext overlayContext)? createOverlayControlsClipper;
 
-  /// Contains a [Document] and alters that document as desired.
+  /// The [Document] being edited.
+  final Document document;
+
+  /// The [DocumentEditor], which edits the [document] and other related artifacts.
   final DocumentEditor editor;
 
   /// Layers that are displayed on top of the document layout, aligned
@@ -319,6 +325,7 @@ class SuperEditorState extends State<SuperEditor> {
 
     _softwareKeyboardHandler = widget.softwareKeyboardHandler ??
         SoftwareKeyboardHandler(
+          document: editContext.document,
           editor: editContext.editor,
           composer: editContext.composer,
           commonOps: editContext.commonOps,
@@ -349,6 +356,7 @@ class SuperEditorState extends State<SuperEditor> {
     if (widget.softwareKeyboardHandler != oldWidget.softwareKeyboardHandler) {
       _softwareKeyboardHandler = widget.softwareKeyboardHandler ??
           SoftwareKeyboardHandler(
+            document: editContext.document,
             editor: editContext.editor,
             composer: editContext.composer,
             commonOps: editContext.commonOps,
@@ -386,10 +394,12 @@ class SuperEditorState extends State<SuperEditor> {
 
   void _createEditContext() {
     editContext = EditContext(
+      document: widget.document,
       editor: widget.editor,
       composer: _composer,
       getDocumentLayout: () => _docLayoutKey.currentState as DocumentLayout,
       commonOps: CommonEditorOperations(
+        document: widget.document,
         editor: widget.editor,
         composer: _composer,
         documentLayoutResolver: () => _docLayoutKey.currentState as DocumentLayout,
@@ -402,7 +412,7 @@ class SuperEditorState extends State<SuperEditor> {
       _docLayoutPresenter!.dispose();
     }
 
-    final document = editContext.editor.document;
+    final document = editContext.document;
 
     _docStylesheetStyler = SingleColumnStylesheetStyler(stylesheet: widget.stylesheet);
 
@@ -451,7 +461,7 @@ class SuperEditorState extends State<SuperEditor> {
       return;
     }
 
-    final node = widget.editor.document.getNodeById(_composer.selectionComponent.selection!.extent.nodeId);
+    final node = widget.document.getNodeById(_composer.selectionComponent.selection!.extent.nodeId);
     if (node is! TextNode) {
       return;
     }
@@ -567,7 +577,7 @@ class SuperEditorState extends State<SuperEditor> {
       case DocumentGestureMode.android:
         return AndroidDocumentTouchInteractor(
           focusNode: _focusNode,
-          document: editContext.editor.document,
+          document: editContext.document,
           getDocumentLayout: () => editContext.documentLayout,
           selection: editContext.composer.selectionComponent.selectionNotifier,
           changeSelection: (DocumentSelection? newSelection, SelectionChangeType changeType) {
@@ -586,7 +596,7 @@ class SuperEditorState extends State<SuperEditor> {
       case DocumentGestureMode.iOS:
         return IOSDocumentTouchInteractor(
           focusNode: _focusNode,
-          document: editContext.editor.document,
+          document: editContext.document,
           getDocumentLayout: () => editContext.documentLayout,
           selection: editContext.composer.selectionComponent.selectionNotifier,
           changeSelection: (DocumentSelection? newSelection, SelectionChangeType changeType) {
@@ -634,7 +644,7 @@ class SuperEditorState extends State<SuperEditor> {
               Positioned.fill(
                 child: DocumentMouseInteractor(
                   focusNode: _focusNode,
-                  document: editContext.editor.document,
+                  document: editContext.document,
                   getDocumentLayout: () => editContext.documentLayout,
                   selection: editContext.composer.selectionComponent.selectionNotifier,
                   selectionChanges: editContext.composer.selectionComponent.selectionChanges,
@@ -707,7 +717,7 @@ class DefaultCaretOverlayBuilder implements DocumentLayerBuilder {
       composer: editContext.composer,
       documentLayoutResolver: () => editContext.documentLayout,
       caretStyle: caretStyle,
-      document: editContext.editor.document,
+      document: editContext.document,
     );
   }
 }

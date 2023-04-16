@@ -477,7 +477,7 @@ ExecutionInstruction backspaceToClearParagraphBlockType({
   }
 
   final node =
-      editContext.editor.document.getNodeById(editContext.composer.selectionComponent.selection!.extent.nodeId);
+      editContext.document.getNodeById(editContext.composer.selectionComponent.selection!.extent.nodeId);
   if (node is! ParagraphNode) {
     return ExecutionInstruction.continueExecution;
   }
@@ -519,7 +519,7 @@ ExecutionInstruction moveParagraphSelectionUpWhenBackspaceIsPressed({
   }
 
   final node =
-      editContext.editor.document.getNodeById(editContext.composer.selectionComponent.selection!.extent.nodeId);
+      editContext.document.getNodeById(editContext.composer.selectionComponent.selection!.extent.nodeId);
   if (node is! ParagraphNode) {
     return ExecutionInstruction.continueExecution;
   }
@@ -528,7 +528,7 @@ ExecutionInstruction moveParagraphSelectionUpWhenBackspaceIsPressed({
     return ExecutionInstruction.continueExecution;
   }
 
-  final nodeAbove = editContext.editor.document.getNodeBefore(node);
+  final nodeAbove = editContext.document.getNodeBefore(node);
   if (nodeAbove == null) {
     return ExecutionInstruction.continueExecution;
   }

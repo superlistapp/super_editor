@@ -41,7 +41,7 @@ void main() {
           ),
         ]);
 
-        final listItemNode = editContext.editor.document.nodes.first;
+        final listItemNode = editContext.document.nodes.first;
         expect(listItemNode, isA<ListItemNode>());
         expect((listItemNode as ListItemNode).text.text.isEmpty, isTrue);
       });
@@ -80,7 +80,7 @@ void main() {
           ),
         ]);
 
-        final listItemNode = editContext.editor.document.nodes.first;
+        final listItemNode = editContext.document.nodes.first;
         expect(listItemNode, isA<ListItemNode>());
         expect((listItemNode as ListItemNode).text.text.isEmpty, isTrue);
       });
@@ -112,7 +112,7 @@ void main() {
           ),
         ]);
 
-        final listItemNode = editContext.editor.document.nodes.first;
+        final listItemNode = editContext.document.nodes.first;
         expect(listItemNode, isA<ListItemNode>());
         expect((listItemNode as ListItemNode).text.text.isEmpty, isTrue);
       });
@@ -151,7 +151,7 @@ void main() {
           ),
         ]);
 
-        final listItemNode = editContext.editor.document.nodes.first;
+        final listItemNode = editContext.document.nodes.first;
         expect(listItemNode, isA<ListItemNode>());
         expect((listItemNode as ListItemNode).text.text.isEmpty, isTrue);
       });
@@ -176,7 +176,7 @@ void main() {
           ),
         ]);
 
-        final paragraphNode = editContext.editor.document.nodes.first;
+        final paragraphNode = editContext.document.nodes.first;
         expect(paragraphNode, isA<ParagraphNode>());
         expect((paragraphNode as ParagraphNode).text.text, "1 ");
       });
@@ -208,7 +208,7 @@ void main() {
           ),
         ]);
 
-        final paragraphNode = editContext.editor.document.nodes.first;
+        final paragraphNode = editContext.document.nodes.first;
         expect(paragraphNode, isA<ParagraphNode>());
         expect((paragraphNode as ParagraphNode).text.text, " 1 ");
       });

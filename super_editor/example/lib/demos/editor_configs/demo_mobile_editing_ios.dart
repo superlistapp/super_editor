@@ -31,6 +31,7 @@ class _MobileEditingIOSDemoState extends State<MobileEditingIOSDemo> {
     _docEditor = createDefaultDocumentEditor(document: _doc as MutableDocument);
     _composer = DocumentComposer();
     _docOps = CommonEditorOperations(
+      document: _doc,
       editor: _docEditor,
       composer: _composer,
       documentLayoutResolver: () => _docLayoutKey.currentState as DocumentLayout,
@@ -58,6 +59,7 @@ class _MobileEditingIOSDemoState extends State<MobileEditingIOSDemo> {
             child: SuperEditor(
               focusNode: _editorFocusNode,
               documentLayoutKey: _docLayoutKey,
+              document: _doc,
               editor: _docEditor,
               composer: _composer,
               gestureMode: DocumentGestureMode.iOS,

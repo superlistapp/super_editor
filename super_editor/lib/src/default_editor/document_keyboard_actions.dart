@@ -206,13 +206,12 @@ ExecutionInstruction mergeNodeWithNextWhenDeleteIsPressed({
     return ExecutionInstruction.continueExecution;
   }
 
-  final node =
-      editContext.editor.document.getNodeById(editContext.composer.selectionComponent.selection!.extent.nodeId);
+  final node = editContext.document.getNodeById(editContext.composer.selectionComponent.selection!.extent.nodeId);
   if (node is! TextNode) {
     return ExecutionInstruction.continueExecution;
   }
 
-  final nextNode = editContext.editor.document.getNodeAfter(node);
+  final nextNode = editContext.document.getNodeAfter(node);
   if (nextNode == null) {
     return ExecutionInstruction.continueExecution;
   }

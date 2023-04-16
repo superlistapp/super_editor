@@ -26,7 +26,7 @@ class SuperEditorInspector {
   static Document? findDocument([Finder? finder]) {
     final element = (finder ?? find.byType(SuperEditor)).evaluate().single as StatefulElement;
     final superEditor = element.state as SuperEditorState;
-    return superEditor.editContext.editor.document;
+    return superEditor.editContext.document;
   }
 
   /// Returns the current [DocumentSelection] for the [SuperEditor] matched by

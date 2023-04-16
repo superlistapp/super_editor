@@ -245,9 +245,9 @@ ExecutionInstruction insertNewlineInBlockquote({
   }
 
   final baseNode =
-      editContext.editor.document.getNodeById(editContext.composer.selectionComponent.selection!.base.nodeId)!;
+      editContext.document.getNodeById(editContext.composer.selectionComponent.selection!.base.nodeId)!;
   final extentNode =
-      editContext.editor.document.getNodeById(editContext.composer.selectionComponent.selection!.extent.nodeId)!;
+      editContext.document.getNodeById(editContext.composer.selectionComponent.selection!.extent.nodeId)!;
   if (baseNode.id != extentNode.id) {
     return ExecutionInstruction.continueExecution;
   }
@@ -275,9 +275,9 @@ ExecutionInstruction splitBlockquoteWhenEnterPressed({
   }
 
   final baseNode =
-      editContext.editor.document.getNodeById(editContext.composer.selectionComponent.selection!.base.nodeId)!;
+      editContext.document.getNodeById(editContext.composer.selectionComponent.selection!.base.nodeId)!;
   final extentNode =
-      editContext.editor.document.getNodeById(editContext.composer.selectionComponent.selection!.extent.nodeId)!;
+      editContext.document.getNodeById(editContext.composer.selectionComponent.selection!.extent.nodeId)!;
   if (baseNode.id != extentNode.id) {
     return ExecutionInstruction.continueExecution;
   }

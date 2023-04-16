@@ -43,6 +43,7 @@ void main() {
           composer: composer,
         );
         final commonOps = CommonEditorOperations(
+          document: document,
           editor: editor,
           composer: composer,
           documentLayoutResolver: () => FakeDocumentLayout(),
@@ -50,9 +51,8 @@ void main() {
 
         commonOps.deleteSelection();
 
-        final doc = editor.document;
-        expect(doc.nodes.length, 1);
-        expect(doc.nodes.first.id, "2");
+        expect(document.nodes.length, 1);
+        expect(document.nodes.first.id, "2");
         expect(composer.selectionComponent.selection!.extent.nodeId, "2");
         expect(composer.selectionComponent.selection!.extent.nodePosition, const TextNodePosition(offset: 0));
       });
@@ -84,6 +84,7 @@ void main() {
           composer: composer,
         );
         final commonOps = CommonEditorOperations(
+          document: document,
           editor: editor,
           composer: composer,
           documentLayoutResolver: () => FakeDocumentLayout(),
@@ -91,9 +92,8 @@ void main() {
 
         commonOps.deleteSelection();
 
-        final doc = editor.document;
-        expect(doc.nodes.length, 1);
-        expect(doc.nodes.first.id, "2");
+        expect(document.nodes.length, 1);
+        expect(document.nodes.first.id, "2");
         expect(composer.selectionComponent.selection!.extent.nodeId, "2");
         expect(composer.selectionComponent.selection!.extent.nodePosition, const TextNodePosition(offset: 0));
       });
@@ -125,6 +125,7 @@ void main() {
           composer: composer,
         );
         final commonOps = CommonEditorOperations(
+          document: document,
           editor: editor,
           composer: composer,
           documentLayoutResolver: () => FakeDocumentLayout(),
@@ -132,9 +133,8 @@ void main() {
 
         commonOps.deleteSelection();
 
-        final doc = editor.document;
-        expect(doc.nodes.length, 1);
-        expect(doc.nodes.first.id, "1");
+        expect(document.nodes.length, 1);
+        expect(document.nodes.first.id, "1");
         expect(composer.selectionComponent.selection!.extent.nodeId, "1");
         expect(composer.selectionComponent.selection!.extent.nodePosition, const TextNodePosition(offset: 50));
       });
@@ -161,6 +161,7 @@ void main() {
           composer: composer,
         );
         final commonOps = CommonEditorOperations(
+          document: document,
           editor: editor,
           composer: composer,
           documentLayoutResolver: () => FakeDocumentLayout(),
@@ -168,10 +169,9 @@ void main() {
 
         commonOps.deleteSelection();
 
-        final doc = editor.document;
-        expect(doc.nodes.length, 1);
-        expect(doc.nodes.first, isA<ParagraphNode>());
-        expect(doc.nodes.first.id, "1");
+        expect(document.nodes.length, 1);
+        expect(document.nodes.first, isA<ParagraphNode>());
+        expect(document.nodes.first.id, "1");
         expect(composer.selectionComponent.selection!.extent.nodePosition, const TextNodePosition(offset: 0));
       });
     });

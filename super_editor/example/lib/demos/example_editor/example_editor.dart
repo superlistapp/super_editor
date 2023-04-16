@@ -77,6 +77,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
       ],
     );
     _docOps = CommonEditorOperations(
+      document: _doc,
       editor: _docEditor,
       composer: _composer,
       documentLayoutResolver: () => _docLayoutKey.currentState as DocumentLayout,
@@ -165,6 +166,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
         return EditorToolbar(
           anchor: _textSelectionAnchor,
           editorFocusNode: _editorFocusNode,
+          document: _doc,
           editor: _docEditor,
           composer: _composer,
           closeToolbar: _hideEditorToolbar,
@@ -358,6 +360,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
     return ColoredBox(
       color: _isLight ? _lightBackground : _darkBackground,
       child: SuperEditor(
+        document: _doc,
         editor: _docEditor,
         composer: _composer,
         focusNode: _editorFocusNode,

@@ -33,11 +33,13 @@ class _MobileEditingAndroidDemoState extends State<MobileEditingAndroidDemo> {
     _docEditor = createDefaultDocumentEditor(document: _doc as MutableDocument);
     _composer = DocumentComposer()..addListener(_configureImeActionButton);
     _docOps = CommonEditorOperations(
+      document: _doc,
       editor: _docEditor,
       composer: _composer,
       documentLayoutResolver: () => _docLayoutKey.currentState as DocumentLayout,
     );
     _softwareKeyboardHandler = SoftwareKeyboardHandler(
+      document: _doc,
       editor: _docEditor,
       composer: _composer,
       commonOps: _docOps,
@@ -86,6 +88,7 @@ class _MobileEditingAndroidDemoState extends State<MobileEditingAndroidDemo> {
             child: SuperEditor(
               focusNode: _editorFocusNode,
               documentLayoutKey: _docLayoutKey,
+              document: _doc,
               editor: _docEditor,
               composer: _composer,
               softwareKeyboardHandler: _softwareKeyboardHandler,
@@ -126,6 +129,7 @@ class _MobileEditingAndroidDemoState extends State<MobileEditingAndroidDemo> {
       document: _doc,
       composer: _composer,
       commonOps: CommonEditorOperations(
+        document: _doc,
         editor: _docEditor,
         composer: _composer,
         documentLayoutResolver: () => _docLayoutKey.currentState as DocumentLayout,

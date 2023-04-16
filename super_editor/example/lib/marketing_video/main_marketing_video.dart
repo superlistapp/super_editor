@@ -19,6 +19,7 @@ class MarketingVideo extends StatefulWidget {
 
 class _MarketingVideoState extends State<MarketingVideo> {
   final _docLayoutKey = GlobalKey();
+  late MutableDocument _document;
   late DocumentEditor _editor;
   DocumentComposer? _composer;
 
@@ -26,7 +27,7 @@ class _MarketingVideoState extends State<MarketingVideo> {
   void initState() {
     super.initState();
 
-    final doc = MutableDocument(
+    _document = MutableDocument(
       nodes: [
         ParagraphNode(
           id: DocumentEditor.createNodeId(),
@@ -34,12 +35,12 @@ class _MarketingVideoState extends State<MarketingVideo> {
         ),
       ],
     );
-    _editor = createDefaultDocumentEditor(document: doc);
+    _editor = createDefaultDocumentEditor(document: _document);
     _composer = DocumentComposer(
         initialSelection: DocumentSelection.collapsed(
       position: DocumentPosition(
-        nodeId: doc.nodes.first.id,
-        nodePosition: doc.nodes.first.endPosition,
+        nodeId: _document.nodes.first.id,
+        nodePosition: _document.nodes.first.endPosition,
       ),
     ));
 
@@ -54,6 +55,7 @@ class _MarketingVideoState extends State<MarketingVideo> {
 
   Future<void> _startRobot() async {
     final robot = DocumentEditingRobot(
+      document: _document,
       editor: _editor,
       composer: _composer!,
       documentLayoutFinder: () => _docLayoutKey.currentState as DocumentLayout?,
@@ -195,9 +197,10 @@ class _MarketingVideoState extends State<MarketingVideo> {
         height: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 96, vertical: 48),
         child: SuperEditor(
-          documentLayoutKey: _docLayoutKey,
+          document: _document,
           editor: _editor,
           composer: _composer,
+          documentLayoutKey: _docLayoutKey,
           stylesheet: defaultStylesheet.copyWith(
             documentPadding: const EdgeInsets.all(16),
             addRulesAfter: [
@@ -250,19 +253,21 @@ const headerAttribution = NamedAttribution('header');
 
 class DocumentEditingRobot {
   DocumentEditingRobot({
+    required Document document,
     required DocumentEditor editor,
     required DocumentComposer composer,
     required DocumentLayoutFinder documentLayoutFinder,
     int? randomSeed,
-  })  : _editor = editor,
+  })  : _document = document,
         _composer = composer,
         _editorOps = CommonEditorOperations(
+            document: document,
             editor: editor,
             composer: composer,
             documentLayoutResolver: documentLayoutFinder as DocumentLayout Function()),
         _random = Random(randomSeed);
 
-  final DocumentEditor _editor;
+  final Document _document;
   final DocumentComposer _composer;
   final CommonEditorOperations _editorOps;
   final _actionQueue = <RobotAction>[];
@@ -297,12 +302,12 @@ class DocumentEditingRobot {
           _composer.selectionComponent.updateSelection(
               DocumentSelection(
                 base: DocumentPosition(
-                  nodeId: _editor.document.nodes.first.id,
-                  nodePosition: _editor.document.nodes.first.beginningPosition,
+                  nodeId: _document.nodes.first.id,
+                  nodePosition: _document.nodes.first.beginningPosition,
                 ),
                 extent: DocumentPosition(
-                  nodeId: _editor.document.nodes.last.id,
-                  nodePosition: _editor.document.nodes.last.endPosition,
+                  nodeId: _document.nodes.last.id,
+                  nodePosition: _document.nodes.last.endPosition,
                 ),
               ),
               notifyListeners: true);

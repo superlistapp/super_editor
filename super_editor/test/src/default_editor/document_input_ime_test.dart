@@ -37,11 +37,13 @@ void main() {
         );
         final editor = createDefaultDocumentEditor(document: document, composer: composer);
         final commonOps = CommonEditorOperations(
+          document: document,
           editor: editor,
           composer: composer,
           documentLayoutResolver: () => FakeDocumentLayout(),
         );
         final softwareKeyboardHandler = SoftwareKeyboardHandler(
+          document: document,
           editor: editor,
           composer: composer,
           commonOps: commonOps,
@@ -114,6 +116,7 @@ void main() {
           MaterialApp(
             home: Scaffold(
               body: SuperEditor(
+                document: editContext.document,
                 editor: editContext.editor,
                 composer: editContext.composer,
                 inputSource: DocumentInputSource.ime,
@@ -149,7 +152,7 @@ void main() {
         ]);
 
         // Ensure that the empty paragraph now reads "¨".
-        expect((editContext.editor.document.nodes[1] as ParagraphNode).text.text, "¨");
+        expect((editContext.document.nodes[1] as ParagraphNode).text.text, "¨");
 
         // Ensure that the reported composing region respects the removal of the
         // invisible placeholder characters. THIS IS WHERE THE ORIGINAL BUG HAPPENED.
@@ -168,7 +171,7 @@ void main() {
         ]);
 
         // Ensure that the empty paragraph now reads "ü".
-        expect((editContext.editor.document.nodes[1] as ParagraphNode).text.text, "ü");
+        expect((editContext.document.nodes[1] as ParagraphNode).text.text, "ü");
       });
     });
 
