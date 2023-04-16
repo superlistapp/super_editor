@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:overlord/overlord.dart';
+import 'package:super_editor/src/infrastructure/platforms/ios/colors.dart';
 
 class IOSTextEditingFloatingToolbar extends StatelessWidget {
   const IOSTextEditingFloatingToolbar({
@@ -6,20 +8,40 @@ class IOSTextEditingFloatingToolbar extends StatelessWidget {
     this.onCutPressed,
     this.onCopyPressed,
     this.onPastePressed,
+    required this.focalPoint,
   }) : super(key: key);
 
   final VoidCallback? onCutPressed;
   final VoidCallback? onCopyPressed;
   final VoidCallback? onPastePressed;
 
+  /// The point where the toolbar should point to.
+  ///
+  /// Represented as global coordinates.
+  final Offset focalPoint;
+
   @override
   Widget build(BuildContext context) {
-    return Material(
-      borderRadius: BorderRadius.circular(8),
-      elevation: 3,
-      color: const Color(0xFF222222),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
+    final brightness = Theme.of(context).brightness;
+
+    return Theme(
+      data: ThemeData(
+        colorScheme: brightness == Brightness.light //
+            ? const ColorScheme.light(primary: Colors.black)
+            : const ColorScheme.dark(primary: Colors.white),
+      ),
+      child: CupertinoPopoverToolbar(
+        focalPoint: StationaryMenuFocalPoint(focalPoint),
+        elevation: 8.0,
+        backgroundColor: brightness == Brightness.dark //
+            ? iOSToolbarDarkBackgroundColor
+            : iOSToolbarLightBackgroundColor,
+        activeButtonTextColor: brightness == Brightness.dark //
+            ? iOSToolbarDarkArrowActiveColor
+            : iOSToolbarLightArrowActiveColor,
+        inactiveButtonTextColor: brightness == Brightness.dark //
+            ? iOSToolbarDarkArrowInactiveColor
+            : iOSToolbarLightArrowInactiveColor,
         children: [
           if (onCutPressed != null)
             _buildButton(
@@ -45,23 +67,21 @@ class IOSTextEditingFloatingToolbar extends StatelessWidget {
     required String title,
     required VoidCallback onPressed,
   }) {
-    return SizedBox(
-      height: 36,
-      child: TextButton(
-        onPressed: onPressed,
-        style: TextButton.styleFrom(
-          minimumSize: Size.zero,
-          padding: EdgeInsets.zero,
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12.0),
-          child: Text(
-            title,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 12,
-              fontWeight: FontWeight.w300,
-            ),
+    return TextButton(
+      onPressed: onPressed,
+      style: TextButton.styleFrom(
+        minimumSize: const Size(kMinInteractiveDimension, 0),
+        padding: EdgeInsets.zero,
+        splashFactory: NoSplash.splashFactory,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12.0),
+        child: Text(
+          title,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w300,
           ),
         ),
       ),

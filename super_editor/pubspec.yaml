@@ -30,6 +30,7 @@ dependencies:
   super_text_layout: ^0.1.4
   url_launcher: ^6.1.9
   uuid: ^3.0.3
+  overlord: ^0.0.3
 
   # Dependencies for testing tools that we ship with super_editor
   flutter_test:
@@ -43,6 +44,7 @@ dependency_overrides:
     path: ../attributed_text
   super_text_layout:
     path: ../super_text_layout
+
   flutter_test_robots:
     git:
       url: https://github.com/Flutter-Bounty-Hunters/flutter_test_robots

@@ -20,6 +20,7 @@ import 'package:super_text_layout/super_text_layout.dart';
 
 import '../infrastructure/document_gestures.dart';
 import 'document_gestures_interaction_overrides.dart';
+import '../infrastructure/super_textfield/metrics.dart';
 import 'document_gestures_touch.dart';
 import 'selection_upstream_downstream.dart';
 
@@ -907,7 +908,6 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       return;
     }
 
-    const toolbarGap = 24.0;
     late Rect selectionRect;
     Offset toolbarTopAnchor;
     Offset toolbarBottomAnchor;
@@ -948,8 +948,8 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     //       the left side of the screen. This logic will position the
     //       toolbar near the left side of the content, when the toolbar should
     //       instead be centered across the full width of the document.
-    toolbarTopAnchor = selectionRect.topCenter - const Offset(0, toolbarGap);
-    toolbarBottomAnchor = selectionRect.bottomCenter + const Offset(0, toolbarGap);
+    toolbarTopAnchor = selectionRect.topCenter - const Offset(0, gapBetweenToolbarAndContent);
+    toolbarBottomAnchor = selectionRect.bottomCenter + const Offset(0, gapBetweenToolbarAndContent);
 
     _editingController.positionToolbar(
       topAnchor: toolbarTopAnchor,
@@ -1096,7 +1096,7 @@ class AndroidDocumentTouchEditingControls extends StatefulWidget {
   /// selected text.
   ///
   /// Typically, this bar includes actions like "copy", "cut", "paste", etc.
-  final Widget Function(BuildContext) popoverToolbarBuilder;
+  final WidgetBuilder popoverToolbarBuilder;
 
   final bool showDebugPaint;
 
@@ -1453,6 +1453,7 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
         textFieldGlobalOffset: Offset.zero,
         desiredTopAnchorInTextField: widget.editingController.toolbarTopAnchor!, //toolbarTopAnchor,
         desiredBottomAnchorInTextField: widget.editingController.toolbarBottomAnchor!, //toolbarBottomAnchor,
+        screenPadding: widget.editingController.screenPadding,
       ),
       child: IgnorePointer(
         ignoring: !widget.editingController.shouldDisplayToolbar,

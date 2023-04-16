@@ -23,6 +23,7 @@ import 'package:super_editor/src/default_editor/paragraph.dart';
 import 'package:super_editor/src/default_editor/unknown_component.dart';
 
 import '../infrastructure/platforms/mobile_documents.dart';
+import '../infrastructure/touch_controls.dart';
 import 'read_only_document_android_touch_interactor.dart';
 import 'read_only_document_ios_touch_interactor.dart';
 import 'read_only_document_keyboard_interactor.dart';

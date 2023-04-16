@@ -6,6 +6,7 @@ import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/focus.dart';
 import 'package:super_editor/src/infrastructure/ime_input_owner.dart';
+import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/fill_width_if_constrained.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/hint_text.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/infrastructure/text_scrollview.dart';
@@ -157,6 +158,8 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
 
   late TextScrollController _textScrollController;
 
+  late MagnifierAndToolbarController _overlayController;
+
   // OverlayEntry that displays the toolbar and magnifier, and
   // positions the invisible touch targets for base/extent
   // dragging.
@@ -181,9 +184,12 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
       textController: _textEditingController,
     );
 
+    _overlayController = MagnifierAndToolbarController();
+
     _editingOverlayController = IOSEditingOverlayController(
       textController: _textEditingController,
       magnifierFocalPoint: _magnifierLayerLink,
+      overlayController: _overlayController,
     );
 
     WidgetsBinding.instance.addObserver(this);
@@ -260,6 +266,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
       // Dispose after the current frame so that other widgets have
       // time to remove their listeners.
       _editingOverlayController.dispose();
+      _overlayController.dispose();
     });
 
     _textEditingController
@@ -557,6 +564,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
 
 Widget _defaultPopoverToolbarBuilder(BuildContext context, IOSEditingOverlayController controller) {
   return IOSTextEditingFloatingToolbar(
+    focalPoint: controller.overlayController.toolbarTopAnchor!,
     onCutPressed: () {
       final textController = controller.textController;
       final selection = textController.selection;

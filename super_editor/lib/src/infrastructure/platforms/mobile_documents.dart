@@ -50,6 +50,17 @@ class MagnifierAndToolbarController with ChangeNotifier {
   Offset? get toolbarBottomAnchor => _toolbarBottomAnchor;
   Offset? _toolbarBottomAnchor;
 
+  /// Minimum space from the screen edges.
+  EdgeInsets? get screenPadding => _screenPadding;
+  set screenPadding(EdgeInsets? value) {
+    if (value != _screenPadding) {
+      _screenPadding = value;
+      notifyListeners();
+    }
+  }
+
+  EdgeInsets? _screenPadding;
+
   /// Sets the toolbar's position to the given [topAnchor] and [bottomAnchor].
   ///
   /// Setting the position will not cause the toolbar to be displayed on it's own.
@@ -156,6 +167,9 @@ class GestureEditingController with ChangeNotifier {
   /// It's the clients responsibility to determine whether there's room for the
   /// toolbar below this point. If not, use [toolbarTopAnchor].
   Offset? get toolbarBottomAnchor => _overlayController.toolbarBottomAnchor;
+
+  /// Minimum space from the screen edges.
+  EdgeInsets? get screenPadding => _overlayController.screenPadding;
 
   /// Shows the toolbar, and hides the magnifier.
   void showToolbar() {

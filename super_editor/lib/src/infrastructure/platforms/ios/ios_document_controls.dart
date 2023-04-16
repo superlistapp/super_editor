@@ -82,7 +82,7 @@ class IosDocumentTouchEditingControls extends StatefulWidget {
   /// selected text.
   ///
   /// Typically, this bar includes actions like "copy", "cut", "paste", etc.
-  final Widget Function(BuildContext) popoverToolbarBuilder;
+  final WidgetBuilder popoverToolbarBuilder;
 
   /// Disables all gesture interaction for these editing controls,
   /// allowing gestures to pass through these controls to whatever
@@ -495,6 +495,7 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
         textFieldGlobalOffset: Offset.zero,
         desiredTopAnchorInTextField: widget.editingController.toolbarTopAnchor!,
         desiredBottomAnchorInTextField: widget.editingController.toolbarBottomAnchor!,
+        screenPadding: widget.editingController.screenPadding,
       ),
       child: IgnorePointer(
         ignoring: !widget.editingController.shouldDisplayToolbar,

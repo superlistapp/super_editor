@@ -1,6 +1,6 @@
 import 'package:example/logging.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide ListenableBuilder;
 import 'package:super_editor/super_editor.dart';
 
 import '_example_document.dart';
@@ -29,7 +29,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
 
   final _darkBackground = const Color(0xFF222222);
   final _lightBackground = Colors.white;
-  Brightness _brightness = Brightness.light;
+  ValueNotifier<Brightness> _brightness = ValueNotifier<Brightness>(Brightness.light);
 
   SuperEditorDebugVisualsConfig? _debugConfig;
 
@@ -39,7 +39,8 @@ class _ExampleEditorState extends State<ExampleEditor> {
   OverlayEntry? _imageFormatBarOverlayEntry;
   final _imageSelectionAnchor = ValueNotifier<Offset?>(null);
 
-  final _overlayController = MagnifierAndToolbarController();
+  final _overlayController = MagnifierAndToolbarController() //
+    ..screenPadding = const EdgeInsets.all(20.0);
 
   @override
   void initState() {
@@ -302,27 +303,34 @@ class _ExampleEditorState extends State<ExampleEditor> {
 
   @override
   Widget build(BuildContext context) {
-    return Theme(
-      data: ThemeData(brightness: _brightness),
-      child: Builder(builder: (themedContext) {
-        // This builder captures the new theme
-        return Stack(
-          children: [
-            Column(
-              children: [
-                Expanded(
-                  child: _buildEditor(themedContext),
-                ),
-                if (_isMobile) _buildMountedToolbar(),
-              ],
-            ),
-            Align(
-              alignment: Alignment.bottomRight,
-              child: _buildCornerFabs(),
-            ),
-          ],
+    return ListenableBuilder(
+      listenable: _brightness,
+      builder: (context, _) {
+        return Theme(
+          data: ThemeData(brightness: _brightness.value),
+          child: Builder(
+            builder: (themedContext) {
+              // This builder captures the new theme
+              return Stack(
+                children: [
+                  Column(
+                    children: [
+                      Expanded(
+                        child: _buildEditor(themedContext),
+                      ),
+                      if (_isMobile) _buildMountedToolbar(),
+                    ],
+                  ),
+                  Align(
+                    alignment: Alignment.bottomRight,
+                    child: _buildCornerFabs(),
+                  ),
+                ],
+              );
+            },
+          ),
         );
-      }),
+      },
     );
   }
 
@@ -343,8 +351,8 @@ class _ExampleEditorState extends State<ExampleEditor> {
 
   Widget _buildDebugVisualsToggle() {
     return FloatingActionButton(
-      backgroundColor: _brightness == Brightness.light ? _darkBackground : _lightBackground,
-      foregroundColor: _brightness == Brightness.light ? _lightBackground : _darkBackground,
+      backgroundColor: _brightness.value == Brightness.light ? _darkBackground : _lightBackground,
+      foregroundColor: _brightness.value == Brightness.light ? _lightBackground : _darkBackground,
       elevation: 5,
       onPressed: () {
         setState(() {
@@ -364,15 +372,13 @@ class _ExampleEditorState extends State<ExampleEditor> {
 
   Widget _buildLightAndDarkModeToggle() {
     return FloatingActionButton(
-      backgroundColor: _brightness == Brightness.light ? _darkBackground : _lightBackground,
-      foregroundColor: _brightness == Brightness.light ? _lightBackground : _darkBackground,
+      backgroundColor: _brightness.value == Brightness.light ? _darkBackground : _lightBackground,
+      foregroundColor: _brightness.value == Brightness.light ? _lightBackground : _darkBackground,
       elevation: 5,
       onPressed: () {
-        setState(() {
-          _brightness = _brightness == Brightness.light ? Brightness.dark : Brightness.light;
-        });
+        _brightness.value = _brightness.value == Brightness.light ? Brightness.dark : Brightness.light;
       },
-      child: _brightness == Brightness.light
+      child: _brightness.value == Brightness.light
           ? const Icon(
               Icons.dark_mode,
             )
@@ -418,16 +424,33 @@ class _ExampleEditorState extends State<ExampleEditor> {
           gestureMode: _gestureMode,
           inputSource: _inputSource,
           keyboardActions: _inputSource == TextInputSource.ime ? defaultImeKeyboardActions : defaultKeyboardActions,
-          androidToolbarBuilder: (_) => AndroidTextEditingFloatingToolbar(
-            onCutPressed: _cut,
-            onCopyPressed: _copy,
-            onPastePressed: _paste,
-            onSelectAllPressed: _selectAll,
+          androidToolbarBuilder: (_) => ListenableBuilder(
+            listenable: _brightness,
+            builder: (context, _) {
+              return Theme(
+                data: ThemeData(brightness: _brightness.value),
+                child: AndroidTextEditingFloatingToolbar(
+                  onCutPressed: _cut,
+                  onCopyPressed: _copy,
+                  onPastePressed: _paste,
+                  onSelectAllPressed: _selectAll,
+                ),
+              );
+            },
           ),
-          iOSToolbarBuilder: (_) => IOSTextEditingFloatingToolbar(
-            onCutPressed: _cut,
-            onCopyPressed: _copy,
-            onPastePressed: _paste,
+          iOSToolbarBuilder: (_) => ListenableBuilder(
+            listenable: _brightness,
+            builder: (context, _) {
+              return Theme(
+                data: ThemeData(brightness: _brightness.value),
+                child: IOSTextEditingFloatingToolbar(
+                  onCutPressed: _cut,
+                  onCopyPressed: _copy,
+                  onPastePressed: _paste,
+                  focalPoint: _overlayController.toolbarTopAnchor!,
+                ),
+              );
+            },
           ),
           overlayController: _overlayController,
         ),
