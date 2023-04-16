@@ -201,66 +201,7 @@ class DocumentEditor implements RequestDispatcher {
   }
 }
 
-abstract class RequestDispatcher {
-  void execute(List<EditRequest> request);
-}
-
-/// A command that alters something in a [DocumentEditor].
-abstract class EditCommand {
-  /// Executes this command and logs all changes with the [executor].
-  void execute(EditorContext context, CommandExecutor executor);
-}
-
-/// All resources that are available when executing [EditCommand]s, such as a document,
-/// composer, etc.
-class EditorContext {
-  EditorContext(this._resources);
-
-  final Map<String, dynamic> _resources;
-
-  T find<T>(String id) {
-    if (!_resources.containsKey(id)) {
-      editorLog.shout("Tried to find an editor resource for the ID '$id', but there's no resource with that ID.");
-      throw Exception("Tried to find an editor resource for the ID '$id', but there's no resource with that ID.");
-    }
-    if (_resources[id] is! T) {
-      editorLog.shout(
-          "Tried to find an editor resource of type '$T' for ID '$id', but the resource with that ID is of type '${_resources[id].runtimeType}");
-      throw Exception(
-          "Tried to find an editor resource of type '$T' for ID '$id', but the resource with that ID is of type '${_resources[id].runtimeType}");
-    }
-
-    return _resources[id];
-  }
-
-  T? findMaybe<T>(String id) {
-    return _resources[id];
-  }
-}
-
-/// Executes [EditCommand]s in the order in which they're queued.
-///
-/// Each [EditCommand] is given access to this [CommandExecutor] during
-/// the command's execution. Each [EditCommand] is expected to [logChanges]
-/// with the given [CommandExecutor].
-abstract class CommandExecutor {
-  /// Immediately executes the given [command].
-  ///
-  /// Client's can use this method to run an initial command, or to run
-  /// a sub-command in the middle of an active command.
-  void executeCommand(EditCommand command);
-
-  /// Adds the given [command] to the beginning of the command queue, but
-  /// after any set of commands that are currently executing.
-  void prependCommand(EditCommand command);
-
-  /// Adds the given [command] to the end of the command queue.
-  void appendCommand(EditCommand command);
-
-  /// Log a series of document changes that were just made by the active command.
-  void logChanges(List<EditEvent> changes);
-}
-
+/// An implementation of [CommandExecutor], designed for [DocumentEditor].
 class _DocumentEditorCommandExecutor implements CommandExecutor {
   _DocumentEditorCommandExecutor(this._context);
 
@@ -304,6 +245,71 @@ class _DocumentEditorCommandExecutor implements CommandExecutor {
   void reset() {
     _changeList.clear();
   }
+}
+
+/// An object that processes [EditRequest]s.
+abstract class RequestDispatcher {
+  /// Pushes the given [request] through a [DocumentEditor] pipeline.
+  void execute(List<EditRequest> request);
+}
+
+/// A command that alters something in a [DocumentEditor].
+abstract class EditCommand {
+  /// Executes this command and logs all changes with the [executor].
+  void execute(EditorContext context, CommandExecutor executor);
+}
+
+/// All resources that are available when executing [EditCommand]s, such as a document,
+/// composer, etc.
+class EditorContext {
+  EditorContext(this._resources);
+
+  final Map<String, dynamic> _resources;
+
+  /// Finds an object of type [T] within this [EditorContext], which is identified by the given [id].
+  T find<T>(String id) {
+    if (!_resources.containsKey(id)) {
+      editorLog.shout("Tried to find an editor resource for the ID '$id', but there's no resource with that ID.");
+      throw Exception("Tried to find an editor resource for the ID '$id', but there's no resource with that ID.");
+    }
+    if (_resources[id] is! T) {
+      editorLog.shout(
+          "Tried to find an editor resource of type '$T' for ID '$id', but the resource with that ID is of type '${_resources[id].runtimeType}");
+      throw Exception(
+          "Tried to find an editor resource of type '$T' for ID '$id', but the resource with that ID is of type '${_resources[id].runtimeType}");
+    }
+
+    return _resources[id];
+  }
+
+  /// Finds an object of type [T] within this [EditorContext], which is identified by the given [id], or
+  /// returns `null` if no such object is in this [EditorContext].
+  T? findMaybe<T>(String id) {
+    return _resources[id];
+  }
+}
+
+/// Executes [EditCommand]s in the order in which they're queued.
+///
+/// Each [EditCommand] is given access to this [CommandExecutor] during
+/// the command's execution. Each [EditCommand] is expected to [logChanges]
+/// with the given [CommandExecutor].
+abstract class CommandExecutor {
+  /// Immediately executes the given [command].
+  ///
+  /// Client's can use this method to run an initial command, or to run
+  /// a sub-command in the middle of an active command.
+  void executeCommand(EditCommand command);
+
+  /// Adds the given [command] to the beginning of the command queue, but
+  /// after any set of commands that are currently executing.
+  void prependCommand(EditCommand command);
+
+  /// Adds the given [command] to the end of the command queue.
+  void appendCommand(EditCommand command);
+
+  /// Log a series of document changes that were just made by the active command.
+  void logChanges(List<EditEvent> changes);
 }
 
 class EditorCommandQueue {
@@ -462,6 +468,7 @@ abstract class EditReaction {
   void react(EditorContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList);
 }
 
+/// An [EditReaction] that delegates its reaction to a given callback function.
 class FunctionalEditReaction implements EditReaction {
   FunctionalEditReaction(this._react);
 
@@ -474,7 +481,7 @@ class FunctionalEditReaction implements EditReaction {
 }
 
 /// An object that's notified with a change list from one or more
-/// commands that were just executed.
+/// commands that were just executed within a [DocumentEditor].
 ///
 /// An [EditListener] can propagate secondary effects that are based on
 /// editor changes. However, an [EditListener] shouldn't spawn additional
@@ -485,6 +492,7 @@ abstract class EditListener {
   void onEdit(List<EditEvent> changeList);
 }
 
+/// An [EditListener] that delegates to a callback function.
 class FunctionalEditorChangeListener implements EditListener {
   FunctionalEditorChangeListener(this._onEdit);
 
