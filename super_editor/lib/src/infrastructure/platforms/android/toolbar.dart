@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:super_editor/src/infrastructure/platforms/android/colors.dart';
 
 class AndroidTextEditingFloatingToolbar extends StatelessWidget {
   const AndroidTextEditingFloatingToolbar({
@@ -16,34 +17,44 @@ class AndroidTextEditingFloatingToolbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      borderRadius: BorderRadius.circular(4),
-      elevation: 3,
-      color: Colors.white,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (onCutPressed != null)
-            _buildButton(
-              onPressed: onCutPressed!,
-              title: 'Cut',
-            ),
-          if (onCopyPressed != null)
-            _buildButton(
-              onPressed: onCopyPressed!,
-              title: 'Copy',
-            ),
-          if (onPastePressed != null)
-            _buildButton(
-              onPressed: onPastePressed!,
-              title: 'Paste',
-            ),
-          if (onSelectAllPressed != null)
-            _buildButton(
-              onPressed: onSelectAllPressed!,
-              title: 'Select All',
-            ),
-        ],
+    final brightness = Theme.of(context).brightness;
+    return Theme(
+      data: ThemeData(
+        colorScheme: brightness == Brightness.light //
+            ? const ColorScheme.light(primary: Colors.black)
+            : const ColorScheme.dark(primary: Colors.white),
+      ),
+      child: Material(
+        borderRadius: BorderRadius.circular(1),
+        elevation: 1,
+        color: brightness == Brightness.dark //
+            ? androidToolbarDarkBackgroundColor
+            : androidToolbarLightBackgroundColor,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (onCutPressed != null)
+              _buildButton(
+                onPressed: onCutPressed!,
+                title: 'Cut',
+              ),
+            if (onCopyPressed != null)
+              _buildButton(
+                onPressed: onCopyPressed!,
+                title: 'Copy',
+              ),
+            if (onPastePressed != null)
+              _buildButton(
+                onPressed: onPastePressed!,
+                title: 'Paste',
+              ),
+            if (onSelectAllPressed != null)
+              _buildButton(
+                onPressed: onSelectAllPressed!,
+                title: 'Select All',
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -61,10 +72,7 @@ class AndroidTextEditingFloatingToolbar extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 8.0),
         child: Text(
           title,
-          style: const TextStyle(
-            color: Colors.black,
-            fontSize: 14,
-          ),
+          style: const TextStyle(fontSize: 14),
         ),
       ),
     );

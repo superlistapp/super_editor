@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/src/core/document.dart';
@@ -14,6 +15,8 @@ import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
 import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
+
+import '../infrastructure/super_textfield/metrics.dart';
 
 /// Document gesture interactor that's designed for iOS touch input, e.g.,
 /// drag to scroll, and handles to control selection.
@@ -825,7 +828,6 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
       return;
     }
 
-    const toolbarGap = 24.0;
     late Rect selectionRect;
     Offset toolbarTopAnchor;
     Offset toolbarBottomAnchor;
@@ -857,8 +859,8 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
     //       the left side of the screen. This logic will position the
     //       toolbar near the left side of the content, when the toolbar should
     //       instead be centered across the full width of the document.
-    toolbarTopAnchor = selectionRect.topCenter - const Offset(0, toolbarGap);
-    toolbarBottomAnchor = selectionRect.bottomCenter + const Offset(0, toolbarGap);
+    toolbarTopAnchor = selectionRect.topCenter - const Offset(0, gapBetweenToolbarAndContent);
+    toolbarBottomAnchor = selectionRect.bottomCenter + const Offset(0, gapBetweenToolbarAndContent);
 
     _editingController.positionToolbar(
       topAnchor: toolbarTopAnchor,
