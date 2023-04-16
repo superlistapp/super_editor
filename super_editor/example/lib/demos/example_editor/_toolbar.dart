@@ -39,7 +39,7 @@ class EditorToolbar extends StatefulWidget {
   /// when the user selects a different block format for a
   /// text blob, e.g., paragraph, header, blockquote, or
   /// to apply styles to text.
-  final DocumentEditor? editor;
+  final Editor? editor;
 
   /// The [composer] provides access to the user's current
   /// selection within the document, which dictates the

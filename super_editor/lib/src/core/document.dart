@@ -2,7 +2,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 
-import 'document_editor.dart';
+import 'editor.dart';
 
 /// A document with styled text and multimedia elements.
 ///
@@ -19,7 +19,7 @@ import 'document_editor.dart';
 /// A [Document] has no opinion on the visual presentation of its
 /// content.
 ///
-/// To edit the content of a document, see [DocumentEditor].
+/// To edit the content of a document, see [Editor].
 abstract class Document {
   /// Returns all of the content within the document as a list
   /// of [DocumentNode]s.
@@ -85,7 +85,7 @@ abstract class Document {
 // TODO: we'd like to remove the concept of EditEvent from this class, but it's
 //       used indirectly by the `Document`'s change notification system. See if
 //       there's a way to get it out of here. Maybe move the listener to `MutableDocument`,
-//       which is defined within document_editor.dart
+//       which is defined within editor.dart
 
 /// Listener that's notified when a document changes.
 ///

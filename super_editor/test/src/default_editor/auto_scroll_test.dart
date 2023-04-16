@@ -206,7 +206,7 @@ class _SliverTestEditor extends StatefulWidget {
 
 class _SliverTestEditorState extends State<_SliverTestEditor> {
   late Document _doc;
-  late DocumentEditor _docEditor;
+  late Editor _docEditor;
   late DocumentComposer _composer;
 
   @override

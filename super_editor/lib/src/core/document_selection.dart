@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart';
 
 import 'document.dart';
 import 'document_composer.dart';
-import 'document_editor.dart';
+import 'editor.dart';
 
 /// A selection within a [Document].
 ///

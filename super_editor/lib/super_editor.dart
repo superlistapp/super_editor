@@ -7,7 +7,7 @@ export 'package:super_text_layout/src/caret_layer.dart';
 export 'src/core/document.dart';
 export 'src/core/document_composer.dart';
 export 'src/core/document_debug_paint.dart';
-export 'src/core/document_editor.dart';
+export 'src/core/editor.dart';
 export 'src/core/document_interaction.dart';
 export 'src/core/document_layout.dart';
 export 'src/core/document_selection.dart';

@@ -4,7 +4,7 @@ import 'package:flutter/material.dart' hide SelectableText;
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_debug_paint.dart';
-import 'package:super_editor/src/core/document_editor.dart';
+import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/core/document_interaction.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
@@ -243,8 +243,8 @@ class SuperEditor extends StatefulWidget {
   /// The [Document] being edited.
   final Document document;
 
-  /// The [DocumentEditor], which edits the [document] and other related artifacts.
-  final DocumentEditor editor;
+  /// The [Editor], which edits the [document] and other related artifacts.
+  final Editor editor;
 
   /// Layers that are displayed on top of the document layout, aligned
   /// with the location and size of the document layout.

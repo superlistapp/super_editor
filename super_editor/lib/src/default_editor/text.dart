@@ -8,7 +8,7 @@ import 'package:flutter/material.dart' hide SelectableText;
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
-import 'package:super_editor/src/core/document_editor.dart';
+import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/edit_context.dart';
@@ -917,7 +917,7 @@ class AddTextAttributionsCommand implements EditCommand {
   @override
   void execute(EditorContext context, CommandExecutor executor) {
     editorDocLog.info('Executing AddTextAttributionsCommand');
-    final document = context.find<MutableDocument>(DocumentEditor.documentKey);
+    final document = context.find<MutableDocument>(Editor.documentKey);
     final nodes = document.getNodesInside(documentSelection.base, documentSelection.extent);
     if (nodes.isEmpty) {
       editorDocLog.shout(' - Bad DocumentSelection. Could not get range of nodes. Selection: $documentSelection');
@@ -1025,7 +1025,7 @@ class RemoveTextAttributionsCommand implements EditCommand {
   @override
   void execute(EditorContext context, CommandExecutor executor) {
     editorDocLog.info('Executing RemoveTextAttributionsCommand');
-    final document = context.find<MutableDocument>(DocumentEditor.documentKey);
+    final document = context.find<MutableDocument>(Editor.documentKey);
     final nodes = document.getNodesInside(documentSelection.base, documentSelection.extent);
     if (nodes.isEmpty) {
       editorDocLog.shout(' - Bad DocumentSelection. Could not get range of nodes. Selection: $documentSelection');
@@ -1141,7 +1141,7 @@ class ToggleTextAttributionsCommand implements EditCommand {
   @override
   void execute(EditorContext context, CommandExecutor executor) {
     editorDocLog.info('Executing ToggleTextAttributionsCommand');
-    final document = context.find<Document>(DocumentEditor.documentKey);
+    final document = context.find<Document>(Editor.documentKey);
     final nodes = document.getNodesInside(documentSelection.base, documentSelection.extent);
     if (nodes.isEmpty) {
       editorDocLog.shout(' - Bad DocumentSelection. Could not get range of nodes. Selection: $documentSelection');
@@ -1337,7 +1337,7 @@ class InsertTextCommand implements EditCommand {
 
   @override
   void execute(EditorContext context, CommandExecutor executor) {
-    final document = context.find<Document>(DocumentEditor.documentKey);
+    final document = context.find<Document>(Editor.documentKey);
 
     final textNode = document.getNodeById(documentPosition.nodeId);
     if (textNode is! TextNode) {
@@ -1452,7 +1452,7 @@ class ConvertTextNodeToParagraphCommand extends EditCommand {
 
   @override
   void execute(EditorContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(DocumentEditor.documentKey);
+    final document = context.find<MutableDocument>(Editor.documentKey);
 
     final extentNode = document.getNodeById(nodeId) as TextNode;
     if (extentNode is ParagraphNode) {
@@ -1482,7 +1482,7 @@ class InsertAttributedTextCommand implements EditCommand {
 
   @override
   void execute(EditorContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(DocumentEditor.documentKey);
+    final document = context.find<MutableDocument>(Editor.documentKey);
     final textNode = document.getNodeById(documentPosition.nodeId);
     if (textNode is! TextNode) {
       editorDocLog.shout('ERROR: can\'t insert text in a node that isn\'t a TextNode: $textNode');
@@ -1568,8 +1568,8 @@ class InsertCharacterAtCaretCommand extends EditCommand {
 
   @override
   void execute(EditorContext context, CommandExecutor executor) {
-    final document = context.find<Document>(DocumentEditor.documentKey);
-    final composer = context.find<DocumentComposer>(DocumentEditor.composerKey);
+    final document = context.find<Document>(Editor.documentKey);
+    final composer = context.find<DocumentComposer>(Editor.composerKey);
 
     if (composer.selectionComponent.selection == null) {
       return;
@@ -1763,7 +1763,7 @@ void _insertBlockLevelNewline({
     );
   }
 
-  final newNodeId = DocumentEditor.createNodeId();
+  final newNodeId = Editor.createNodeId();
 
   if (extentNode is ListItemNode) {
     if (extentNode.text.text.isEmpty) {

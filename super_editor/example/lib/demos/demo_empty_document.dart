@@ -16,7 +16,7 @@ class EmptyDocumentDemo extends StatefulWidget {
 
 class _EmptyDocumentDemoState extends State<EmptyDocumentDemo> {
   late Document _doc;
-  late DocumentEditor _docEditor;
+  late Editor _docEditor;
 
   @override
   void initState() {

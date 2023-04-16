@@ -29,7 +29,7 @@ class _TaskAndChatWithCustomScrollViewDemoState extends State<TaskAndChatWithCus
   final _scrollViewportKey = GlobalKey();
 
   late MutableDocument _document;
-  late DocumentEditor _editor;
+  late Editor _editor;
 
   @override
   void initState() {

@@ -76,7 +76,7 @@ class TagUserReaction implements EditReaction {
     userTagsLog.info("Incoming change list:");
     userTagsLog.info(changeList.map((event) => event.runtimeType).toList());
     userTagsLog.info(
-        "Caret position: ${editorContext.find<DocumentComposer>(DocumentEditor.composerKey).selectionComponent.selection?.extent.nodePosition}");
+        "Caret position: ${editorContext.find<DocumentComposer>(Editor.composerKey).selectionComponent.selection?.extent.nodePosition}");
 
     _removeInvalidTags(editorContext, requestDispatcher, changeList);
 
@@ -117,8 +117,8 @@ class TagUserReaction implements EditReaction {
       return;
     }
 
-    final document = editorContext.find<Document>(DocumentEditor.documentKey);
-    final composer = editorContext.find<DocumentComposer>(DocumentEditor.composerKey);
+    final document = editorContext.find<Document>(Editor.documentKey);
+    final composer = editorContext.find<DocumentComposer>(Editor.composerKey);
     final selection = composer.selectionComponent.selection;
     for (final textNodeId in composingTagNodeCandidates) {
       userTagsLog.info("Checking node $textNodeId for composing tags to change");
@@ -213,7 +213,7 @@ class TagUserReaction implements EditReaction {
     RequestDispatcher requestDispatcher,
     List<EditEvent> changeList,
   ) {
-    final composer = editorContext.find<DocumentComposer>(DocumentEditor.composerKey);
+    final composer = editorContext.find<DocumentComposer>(Editor.composerKey);
     if (composer.selectionComponent.selection == null || !composer.selectionComponent.selection!.isCollapsed) {
       // We only tag when the selection is collapsed. Our selection is null or expanded. Return.
       return;
@@ -225,7 +225,7 @@ class TagUserReaction implements EditReaction {
       return;
     }
 
-    final document = editorContext.find<Document>(DocumentEditor.documentKey);
+    final document = editorContext.find<Document>(Editor.documentKey);
     final selectedNode = document.getNodeById(selectionPosition.nodeId);
     if (selectedNode is! TextNode) {
       // Tagging only happens in the middle of text. The selected content isn't text. Return.
@@ -302,7 +302,7 @@ class TagUserReaction implements EditReaction {
 
     // Inspect every TextNode where a text deletion impacted a tag. If a tag no longer contains
     // an "@", remove the attribution.
-    final document = editorContext.find<Document>(DocumentEditor.documentKey);
+    final document = editorContext.find<Document>(Editor.documentKey);
     final removeTagRequests = <EditRequest>{};
     for (final nodeId in nodesToInspect) {
       final textNode = document.getNodeById(nodeId) as TextNode;
@@ -356,7 +356,7 @@ class KeepCaretOutOfTagReaction implements EditReaction {
 
     userTagsLog.info(" - we received just one selection change event. Checking for user tag.");
 
-    final document = editorContext.find<Document>(DocumentEditor.documentKey);
+    final document = editorContext.find<Document>(Editor.documentKey);
     final selectionChangeEvent = changeList.first as SelectionChangeEvent;
 
     final newCaret = selectionChangeEvent.newSelection?.extent;
@@ -481,7 +481,7 @@ class KeepCaretOutOfTagReaction implements EditReaction {
     _TokenAroundCaret tagAroundCaret,
   ) {
     userTagsLog.info("Pushing caret to other side of token - tag around caret: $tagAroundCaret");
-    final Document document = editorContext.find<Document>(DocumentEditor.documentKey);
+    final Document document = editorContext.find<Document>(Editor.documentKey);
 
     final pushDirection = document.getAffinityBetween(
       base: selectionChangeEvent.oldSelection!.extent,

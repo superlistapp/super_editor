@@ -4,7 +4,7 @@ import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
-import 'package:super_editor/src/core/document_editor.dart';
+import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
 import 'package:super_editor/src/default_editor/text.dart';
@@ -35,7 +35,7 @@ class InsertNodeAtIndexCommand extends EditCommand {
 
   @override
   void execute(EditorContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(DocumentEditor.documentKey);
+    final document = context.find<MutableDocument>(Editor.documentKey);
     document.insertNodeAt(nodeIndex, newNode);
     executor.logChanges([NodeInsertedEvent(newNode.id)]);
   }
@@ -62,7 +62,7 @@ class InsertNodeBeforeNodeCommand extends EditCommand {
 
   @override
   void execute(EditorContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(DocumentEditor.documentKey);
+    final document = context.find<MutableDocument>(Editor.documentKey);
     final existingNode = document.getNodeById(existingNodeId)!;
     document.insertNodeBefore(existingNode: existingNode, newNode: newNode);
     executor.logChanges([NodeInsertedEvent(newNode.id)]);
@@ -90,7 +90,7 @@ class InsertNodeAfterNodeCommand extends EditCommand {
 
   @override
   void execute(EditorContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(DocumentEditor.documentKey);
+    final document = context.find<MutableDocument>(Editor.documentKey);
     final existingNode = document.getNodeById(existingNodeId)!;
     document.insertNodeAfter(existingNode: existingNode, newNode: newNode);
     executor.logChanges([NodeInsertedEvent(newNode.id)]);
@@ -114,8 +114,8 @@ class InsertNodeAtCaretCommand extends EditCommand {
 
   @override
   void execute(EditorContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(DocumentEditor.documentKey);
-    final composer = context.find<DocumentComposer>(DocumentEditor.composerKey);
+    final document = context.find<MutableDocument>(Editor.documentKey);
+    final composer = context.find<DocumentComposer>(Editor.composerKey);
 
     if (composer.selectionComponent.selection == null) {
       return;
@@ -164,7 +164,7 @@ class InsertNodeAtCaretCommand extends EditCommand {
       final textBefore = node.text.copyText(0, paragraphPosition.offset);
       final textAfter = node.text.copyText(paragraphPosition.offset);
 
-      final newParagraph = ParagraphNode(id: DocumentEditor.createNodeId(), text: textAfter);
+      final newParagraph = ParagraphNode(id: Editor.createNodeId(), text: textAfter);
 
       node.text = textBefore;
       document
@@ -213,7 +213,7 @@ class MoveNodeCommand extends EditCommand {
 
   @override
   void execute(EditorContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(DocumentEditor.documentKey);
+    final document = context.find<MutableDocument>(Editor.documentKey);
 
     // Log all the move changes that will happen when we move the target node
     // elsewhere in the document.
@@ -266,7 +266,7 @@ class ReplaceNodeCommand extends EditCommand {
 
   @override
   void execute(EditorContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(DocumentEditor.documentKey);
+    final document = context.find<MutableDocument>(Editor.documentKey);
     final oldNode = document.getNodeById(existingNodeId)!;
     document.replaceNode(oldNode: oldNode, newNode: newNode);
 
@@ -304,7 +304,7 @@ class ReplaceNodeWithEmptyParagraphWithCaretCommand implements EditCommand {
 
   @override
   void execute(EditorContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(DocumentEditor.documentKey);
+    final document = context.find<MutableDocument>(Editor.documentKey);
 
     final oldNode = document.getNodeById(nodeId);
     if (oldNode == null) {
@@ -354,7 +354,7 @@ class DeleteSelectionCommand implements EditCommand {
   @override
   void execute(EditorContext context, CommandExecutor executor) {
     _log.log('DeleteSelectionCommand', 'DocumentEditor: deleting selection: $documentSelection');
-    final document = context.find<MutableDocument>(DocumentEditor.documentKey);
+    final document = context.find<MutableDocument>(Editor.documentKey);
     final nodes = document.getNodesInside(documentSelection.base, documentSelection.extent);
 
     if (nodes.length == 1) {
@@ -659,7 +659,7 @@ class DeleteNodeCommand implements EditCommand {
   void execute(EditorContext context, CommandExecutor executor) {
     _log.log('DeleteNodeCommand', 'DocumentEditor: deleting node: $nodeId');
 
-    final document = context.find<MutableDocument>(DocumentEditor.documentKey);
+    final document = context.find<MutableDocument>(Editor.documentKey);
     final node = document.getNodeById(nodeId);
     if (node == null) {
       _log.log('DeleteNodeCommand', 'No such node. Returning.');

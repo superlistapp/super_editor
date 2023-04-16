@@ -3,7 +3,7 @@ import 'package:flutter/painting.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
-import 'package:super_editor/src/core/document_editor.dart';
+import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/default_editor/text.dart';
@@ -212,7 +212,7 @@ class CombineParagraphsCommand implements EditCommand {
   void execute(EditorContext context, CommandExecutor executor) {
     editorDocLog.info('Executing CombineParagraphsCommand');
     editorDocLog.info(' - merging "$firstNodeId" <- "$secondNodeId"');
-    final document = context.find<MutableDocument>(DocumentEditor.documentKey);
+    final document = context.find<MutableDocument>(Editor.documentKey);
     final secondNode = document.getNodeById(secondNodeId);
     if (secondNode is! TextNode) {
       editorDocLog.info('WARNING: Cannot merge node of type: $secondNode into node above.');
@@ -288,7 +288,7 @@ class SplitParagraphCommand implements EditCommand {
   void execute(EditorContext context, CommandExecutor executor) {
     editorDocLog.info('Executing SplitParagraphCommand');
 
-    final document = context.find<MutableDocument>(DocumentEditor.documentKey);
+    final document = context.find<MutableDocument>(Editor.documentKey);
     final node = document.getNodeById(nodeId);
     if (node is! ParagraphNode) {
       editorDocLog.info('WARNING: Cannot split paragraph for node of type: $node.');
@@ -325,7 +325,7 @@ class SplitParagraphCommand implements EditCommand {
     editorDocLog.info(' - inserted new node: ${newNode.id} after old one: ${node.id}');
 
     // Move the caret to the new node.
-    final composer = context.find<DocumentComposer>(DocumentEditor.composerKey);
+    final composer = context.find<DocumentComposer>(Editor.composerKey);
     final oldSelection = composer.selectionComponent.selection;
     final newSelection = DocumentSelection.collapsed(
       position: DocumentPosition(
@@ -441,7 +441,7 @@ class DeleteParagraphCommand implements EditCommand {
   void execute(EditorContext context, CommandExecutor executor) {
     editorDocLog.info('Executing DeleteParagraphCommand');
     editorDocLog.info(' - deleting "$nodeId"');
-    final document = context.find<MutableDocument>(DocumentEditor.documentKey);
+    final document = context.find<MutableDocument>(Editor.documentKey);
     final node = document.getNodeById(nodeId);
     if (node is! TextNode) {
       editorDocLog.shout('WARNING: Cannot delete node of type: $node.');
@@ -476,8 +476,7 @@ ExecutionInstruction backspaceToClearParagraphBlockType({
     return ExecutionInstruction.continueExecution;
   }
 
-  final node =
-      editContext.document.getNodeById(editContext.composer.selectionComponent.selection!.extent.nodeId);
+  final node = editContext.document.getNodeById(editContext.composer.selectionComponent.selection!.extent.nodeId);
   if (node is! ParagraphNode) {
     return ExecutionInstruction.continueExecution;
   }
@@ -518,8 +517,7 @@ ExecutionInstruction moveParagraphSelectionUpWhenBackspaceIsPressed({
     return ExecutionInstruction.continueExecution;
   }
 
-  final node =
-      editContext.document.getNodeById(editContext.composer.selectionComponent.selection!.extent.nodeId);
+  final node = editContext.document.getNodeById(editContext.composer.selectionComponent.selection!.extent.nodeId);
   if (node is! ParagraphNode) {
     return ExecutionInstruction.continueExecution;
   }

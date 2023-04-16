@@ -11,7 +11,7 @@ import 'document_composer.dart';
 
 /// Editor for a document editing experience.
 ///
-/// A [DocumentEditor] is the entry point for all mutations within a document editing experience.
+/// A [Editor] is the entry point for all mutations within a document editing experience.
 /// Such changes might impact a [Document], [DocumentComposer], and any other relevant objects
 /// or data structures associated with a document editing experience.
 ///
@@ -22,8 +22,8 @@ import 'document_composer.dart';
 ///  - [EditCommand] - mutates editables to achieve a change.
 ///  - [EditEvent] - describes a change that was made.
 ///  - [EditReaction] - (optionally) requests more changes after some original change.
-///  - [EditListener] - is notified of all changes made by a [DocumentEditor].
-class DocumentEditor implements RequestDispatcher {
+///  - [EditListener] - is notified of all changes made by a [Editor].
+class Editor implements RequestDispatcher {
   static const Uuid _uuid = Uuid();
 
   /// Service locator key to obtain a [Document] from [find], if a [Document]
@@ -39,14 +39,14 @@ class DocumentEditor implements RequestDispatcher {
   /// Each generated node ID is universally unique.
   static String createNodeId() => _uuid.v4();
 
-  /// Constructs a [DocumentEditor] with:
+  /// Constructs a [Editor] with:
   ///  - [editables], which contains all artifacts that will be mutated by [EditCommand]s, such
   ///    as a [Document] and [DocumentComposer].
   ///  - [requestHandlers], which map each [EditRequest] to an [EditCommand].
   ///  - [reactionPipeline], which contains all possible [EditReaction]s in the order that they will
   ///    react.
   ///  - [listeners], which contains an initial set of [EditListener]s.
-  DocumentEditor({
+  Editor({
     required Map<String, Editable> editables,
     required List<EditorRequestHandler> requestHandlers,
     List<EditReaction>? reactionPipeline,
@@ -55,7 +55,7 @@ class DocumentEditor implements RequestDispatcher {
         _reactionPipeline = reactionPipeline ?? [],
         _changeListeners = listeners ?? [] {
     _context = EditorContext(editables);
-    assert(_context.findMaybe<Document>(DocumentEditor.documentKey) != null,
+    assert(_context.findMaybe<Document>(Editor.documentKey) != null,
         "Expected a Document in the 'editables' map but it wasn't there");
 
     _commandExecutor = _DocumentEditorCommandExecutor(_context);
@@ -92,7 +92,7 @@ class DocumentEditor implements RequestDispatcher {
   /// to be notified ahead of others. Generally, you should avoid that complexity,
   /// if possible, but sometimes its relevant. For example, by default, the
   /// [Document] is the highest priority listener that's registered with this
-  /// [DocumentEditor]. That's because document structure is central to everything
+  /// [Editor]. That's because document structure is central to everything
   /// else, and therefore, we don't want other parts of the system being notified
   /// about changes, before the [Document], itself.
   void addListener(EditListener listener, {int? index}) {
@@ -201,7 +201,7 @@ class DocumentEditor implements RequestDispatcher {
   }
 }
 
-/// An implementation of [CommandExecutor], designed for [DocumentEditor].
+/// An implementation of [CommandExecutor], designed for [Editor].
 class _DocumentEditorCommandExecutor implements CommandExecutor {
   _DocumentEditorCommandExecutor(this._context);
 
@@ -247,9 +247,9 @@ class _DocumentEditorCommandExecutor implements CommandExecutor {
   }
 }
 
-/// An artifact that might be mutated during a request to a [DocumentEditor].
+/// An artifact that might be mutated during a request to a [Editor].
 abstract class Editable {
-  /// A [DocumentEditor] transaction just started, this [Editable] should avoid notifying
+  /// A [Editor] transaction just started, this [Editable] should avoid notifying
   /// any listeners of changes until the transaction ends.
   void onTransactionStart();
 
@@ -260,11 +260,11 @@ abstract class Editable {
 
 /// An object that processes [EditRequest]s.
 abstract class RequestDispatcher {
-  /// Pushes the given [request] through a [DocumentEditor] pipeline.
+  /// Pushes the given [request] through a [Editor] pipeline.
   void execute(List<EditRequest> request);
 }
 
-/// A command that alters something in a [DocumentEditor].
+/// A command that alters something in a [Editor].
 abstract class EditCommand {
   /// Executes this command and logs all changes with the [executor].
   void execute(EditorContext context, CommandExecutor executor);
@@ -376,12 +376,12 @@ class EditorCommandQueue {
 /// [EditRequest].
 typedef EditorRequestHandler = EditCommand? Function(EditRequest);
 
-/// An action that a [DocumentEditor] should execute.
+/// An action that a [Editor] should execute.
 abstract class EditRequest {
   // Marker interface for all editor request types.
 }
 
-/// A change that took place within a [DocumentEditor].
+/// A change that took place within a [Editor].
 abstract class EditEvent {
   // Marker interface for all editor change events.
 }
@@ -492,7 +492,7 @@ class FunctionalEditReaction implements EditReaction {
 }
 
 /// An object that's notified with a change list from one or more
-/// commands that were just executed within a [DocumentEditor].
+/// commands that were just executed within a [Editor].
 ///
 /// An [EditListener] can propagate secondary effects that are based on
 /// editor changes. However, an [EditListener] shouldn't spawn additional

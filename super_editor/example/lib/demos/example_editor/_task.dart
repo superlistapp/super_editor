@@ -70,7 +70,7 @@ class CompleteTaskCommand implements EditCommand {
 
   @override
   void execute(EditorContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(DocumentEditor.documentKey);
+    final document = context.find<MutableDocument>(Editor.documentKey);
     (document.getNodeById(nodeId) as TaskNode).isComplete = true;
     executor.logChanges([NodeChangeEvent(nodeId)]);
   }
@@ -95,7 +95,7 @@ final taskStyles = StyleRule(
 class TaskComponentBuilder implements ComponentBuilder {
   TaskComponentBuilder(this._editor);
 
-  final DocumentEditor _editor;
+  final Editor _editor;
 
   @override
   TaskComponentViewModel? createViewModel(Document document, DocumentNode node) {

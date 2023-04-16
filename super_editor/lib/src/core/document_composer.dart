@@ -6,7 +6,7 @@ import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/default_editor/document_input_ime.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 
-import 'document_editor.dart';
+import 'editor.dart';
 import 'document_selection.dart';
 
 /// Maintains a [DocumentSelection] within a [Document] and
@@ -228,7 +228,7 @@ class ChangeSelectionCommand implements EditCommand {
 
   @override
   void execute(EditorContext context, CommandExecutor executor) {
-    final composer = context.find<DocumentComposer>(DocumentEditor.composerKey);
+    final composer = context.find<DocumentComposer>(Editor.composerKey);
     final initialSelection = composer.selectionComponent.selection;
     composer.selectionComponent.updateSelection(newSelection);
 

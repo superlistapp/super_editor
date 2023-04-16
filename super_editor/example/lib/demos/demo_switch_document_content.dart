@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:super_editor/super_editor.dart';
 
-/// Demo of an [SuperEditor] widget where the [DocumentEditor] changes.
+/// Demo of an [SuperEditor] widget where the [Editor] changes.
 ///
 /// This demo ensures that [SuperEditor] state resets where appropriate
 /// when its content is replaced.
@@ -12,12 +12,12 @@ class SwitchDocumentDemo extends StatefulWidget {
 
 class _SwitchDocumentDemoState extends State<SwitchDocumentDemo> {
   late Document _doc1;
-  DocumentEditor? _docEditor1;
+  Editor? _docEditor1;
 
   late Document _doc2;
-  DocumentEditor? _docEditor2;
+  Editor? _docEditor2;
 
-  DocumentEditor? _activeDocumentEditor;
+  Editor? _activeDocumentEditor;
 
   @override
   void initState() {
@@ -86,7 +86,7 @@ Document _createDocument1() {
   return MutableDocument(
     nodes: [
       ParagraphNode(
-        id: DocumentEditor.createNodeId(),
+        id: Editor.createNodeId(),
         text: AttributedText(
           text: 'Document #1',
         ),
@@ -95,7 +95,7 @@ Document _createDocument1() {
         },
       ),
       ParagraphNode(
-        id: DocumentEditor.createNodeId(),
+        id: Editor.createNodeId(),
         text: AttributedText(
           text:
               'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus sed sagittis urna. Aenean mattis ante justo, quis sollicitudin metus interdum id. Aenean ornare urna ac enim consequat mollis. In aliquet convallis efficitur. Phasellus convallis purus in fringilla scelerisque. Ut ac orci a turpis egestas lobortis. Morbi aliquam dapibus sem, vitae sodales arcu ultrices eu. Duis vulputate mauris quam, eleifend pulvinar quam blandit eget.',
@@ -109,7 +109,7 @@ Document _createDocument2() {
   return MutableDocument(
     nodes: [
       ParagraphNode(
-        id: DocumentEditor.createNodeId(),
+        id: Editor.createNodeId(),
         text: AttributedText(
           text: 'Document #2',
         ),
@@ -118,7 +118,7 @@ Document _createDocument2() {
         },
       ),
       ParagraphNode(
-        id: DocumentEditor.createNodeId(),
+        id: Editor.createNodeId(),
         text: AttributedText(
             text:
                 'Cras vitae sodales nisi. Vivamus dignissim vel purus vel aliquet. Sed viverra diam vel nisi rhoncus pharetra. Donec gravida ut ligula euismod pharetra. Etiam sed urna scelerisque, efficitur mauris vel, semper arcu. Nullam sed vehicula sapien. Donec id tellus volutpat, eleifend nulla eget, rutrum mauris.'),

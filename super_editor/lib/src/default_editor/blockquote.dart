@@ -8,7 +8,7 @@ import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
 
 import '../core/document.dart';
-import '../core/document_editor.dart';
+import '../core/editor.dart';
 import 'layout_single_column/layout_single_column.dart';
 import 'paragraph.dart';
 import 'text.dart';
@@ -215,7 +215,7 @@ class ConvertBlockquoteToParagraphCommand implements EditCommand {
 
   @override
   void execute(EditorContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(DocumentEditor.documentKey);
+    final document = context.find<MutableDocument>(Editor.documentKey);
     final node = document.getNodeById(nodeId);
     final blockquote = node as ParagraphNode;
     final newParagraphNode = ParagraphNode(
@@ -244,8 +244,7 @@ ExecutionInstruction insertNewlineInBlockquote({
     return ExecutionInstruction.continueExecution;
   }
 
-  final baseNode =
-      editContext.document.getNodeById(editContext.composer.selectionComponent.selection!.base.nodeId)!;
+  final baseNode = editContext.document.getNodeById(editContext.composer.selectionComponent.selection!.base.nodeId)!;
   final extentNode =
       editContext.document.getNodeById(editContext.composer.selectionComponent.selection!.extent.nodeId)!;
   if (baseNode.id != extentNode.id) {
@@ -274,8 +273,7 @@ ExecutionInstruction splitBlockquoteWhenEnterPressed({
     return ExecutionInstruction.continueExecution;
   }
 
-  final baseNode =
-      editContext.document.getNodeById(editContext.composer.selectionComponent.selection!.base.nodeId)!;
+  final baseNode = editContext.document.getNodeById(editContext.composer.selectionComponent.selection!.base.nodeId)!;
   final extentNode =
       editContext.document.getNodeById(editContext.composer.selectionComponent.selection!.extent.nodeId)!;
   if (baseNode.id != extentNode.id) {
@@ -305,7 +303,7 @@ class SplitBlockquoteCommand implements EditCommand {
 
   @override
   void execute(EditorContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(DocumentEditor.documentKey);
+    final document = context.find<MutableDocument>(Editor.documentKey);
     final node = document.getNodeById(nodeId);
     final blockquote = node as ParagraphNode;
     final text = blockquote.text;

@@ -11,10 +11,10 @@ void main() {
       //       is based on document structure, not the other way around
 
       test('throws exception when there is no command for a given request', () {
-        final editor = DocumentEditor(
+        final editor = Editor(
           editables: {
-            DocumentEditor.documentKey: MutableDocument(
-              nodes: [ParagraphNode(id: DocumentEditor.createNodeId(), text: AttributedText(text: ""))],
+            Editor.documentKey: MutableDocument(
+              nodes: [ParagraphNode(id: Editor.createNodeId(), text: AttributedText(text: ""))],
             ),
           },
           requestHandlers: [],
@@ -81,7 +81,7 @@ void main() {
         // order is what we expect.
         DocumentChangeLog? changeLog;
         final document = MutableDocument(
-          nodes: [ParagraphNode(id: DocumentEditor.createNodeId(), text: AttributedText(text: ""))],
+          nodes: [ParagraphNode(id: Editor.createNodeId(), text: AttributedText(text: ""))],
         )..addListener((newLog) {
             changeLog = newLog;
           });
@@ -94,10 +94,10 @@ void main() {
             ),
           ),
         );
-        final editor = DocumentEditor(
+        final editor = Editor(
           editables: {
-            DocumentEditor.documentKey: document,
-            DocumentEditor.composerKey: composer,
+            Editor.documentKey: document,
+            Editor.composerKey: composer,
           },
           requestHandlers: [
             (request) => request is _ExpandingCommandRequest ? _ExpandingCommand(request) : null,
@@ -153,7 +153,7 @@ void main() {
         int reactionCount = 0;
 
         final document = MutableDocument(
-          nodes: [ParagraphNode(id: DocumentEditor.createNodeId(), text: AttributedText(text: ""))],
+          nodes: [ParagraphNode(id: Editor.createNodeId(), text: AttributedText(text: ""))],
         );
 
         final composer = DocumentComposer(
@@ -164,10 +164,10 @@ void main() {
             ),
           ),
         );
-        final editor = DocumentEditor(
+        final editor = Editor(
           editables: {
-            DocumentEditor.documentKey: document,
-            DocumentEditor.composerKey: composer,
+            Editor.documentKey: document,
+            Editor.composerKey: composer,
           },
           requestHandlers: defaultRequestHandlers,
           reactionPipeline: [
@@ -214,10 +214,10 @@ void main() {
           ),
         );
 
-        final editor = DocumentEditor(
+        final editor = Editor(
           editables: {
-            DocumentEditor.documentKey: document,
-            DocumentEditor.composerKey: composer,
+            Editor.documentKey: document,
+            Editor.composerKey: composer,
           },
           requestHandlers: defaultRequestHandlers,
           reactionPipeline: [
@@ -308,10 +308,10 @@ void main() {
           ),
         );
 
-        final editor = DocumentEditor(
+        final editor = Editor(
           editables: {
-            DocumentEditor.documentKey: document,
-            DocumentEditor.composerKey: composer,
+            Editor.documentKey: document,
+            Editor.composerKey: composer,
           },
           requestHandlers: defaultRequestHandlers,
           reactionPipeline: [
@@ -511,10 +511,10 @@ StandardEditorPieces _createStandardEditor({
   final document = initialDocument ?? singleParagraphEmptyDoc();
 
   final composer = DocumentComposer(initialSelection: initialSelection);
-  final editor = DocumentEditor(
+  final editor = Editor(
     editables: {
-      DocumentEditor.documentKey: document,
-      DocumentEditor.composerKey: composer,
+      Editor.documentKey: document,
+      Editor.composerKey: composer,
     },
     requestHandlers: defaultRequestHandlers,
     reactionPipeline: [
@@ -542,7 +542,7 @@ StandardEditorPieces _createStandardEditor({
 /// given [newCommandCount] and [levelsOfGeneration].
 ///
 /// This request, and its command, are used to test the command spawning and
-/// ordering behavior of [DocumentEditor] without finding real commands that
+/// ordering behavior of [Editor] without finding real commands that
 /// exemplify the necessary spawning behavior.
 class _ExpandingCommandRequest implements EditRequest {
   const _ExpandingCommandRequest({
@@ -577,7 +577,7 @@ class _ExpandingCommand implements EditCommand {
 
   @override
   void execute(EditorContext context, CommandExecutor executor) {
-    final document = context.find<Document>(DocumentEditor.documentKey);
+    final document = context.find<Document>(Editor.documentKey);
     final paragraph = document.getNodeAt(0) as ParagraphNode;
 
     executor.executeCommand(

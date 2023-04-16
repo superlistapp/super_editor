@@ -6,7 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
-import 'package:super_editor/src/core/document_editor.dart';
+import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/default_editor/list_items.dart';
@@ -27,7 +27,7 @@ import 'text_tools.dart';
 /// [CommonEditorOperations] is intended to provide a simple and
 /// easy to use API for common tasks; it is not intended to operate
 /// as a fundamental document manipulation tool. [CommonEditorOperations]
-/// is built on top of [DocumentEditor], [DocumentLayout], and
+/// is built on top of [Editor], [DocumentLayout], and
 /// [DocumentComposer]. Use those core artifacts to implement any
 /// operations that are not supported by [CommonEditorOperations].
 ///
@@ -49,7 +49,7 @@ class CommonEditorOperations {
   final Document document;
   // Marked as protected for extension methods and subclasses
   @protected
-  final DocumentEditor editor;
+  final Editor editor;
   // Marked as protected for extension methods and subclasses
   @protected
   final DocumentComposer composer;
@@ -1526,7 +1526,7 @@ class CommonEditorOperations {
       _deleteExpandedSelection();
     }
 
-    final newNodeId = DocumentEditor.createNodeId();
+    final newNodeId = Editor.createNodeId();
 
     if (extentNode is ListItemNode) {
       if (extentNode.text.text.isEmpty) {
@@ -1988,7 +1988,7 @@ class CommonEditorOperations {
 
   Future<void> _paste({
     required Document document,
-    required DocumentEditor editor,
+    required Editor editor,
     required DocumentComposer composer,
     required DocumentPosition pastePosition,
   }) async {
@@ -2031,7 +2031,7 @@ class PasteEditorCommand implements EditCommand {
 
   @override
   void execute(EditorContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(DocumentEditor.documentKey);
+    final document = context.find<MutableDocument>(Editor.documentKey);
     final currentNodeWithSelection = document.getNodeById(_pastePosition.nodeId);
     if (currentNodeWithSelection is! ParagraphNode) {
       throw Exception('Can\'t handle pasting text within node of type: $currentNodeWithSelection');
@@ -2057,7 +2057,7 @@ class PasteEditorCommand implements EditCommand {
         SplitParagraphCommand(
           nodeId: currentNodeWithSelection.id,
           splitPosition: TextPosition(offset: pasteTextOffset),
-          newNodeId: DocumentEditor.createNodeId(),
+          newNodeId: Editor.createNodeId(),
           replicateExistingMetadata: true,
         ),
       );
@@ -2171,7 +2171,7 @@ class PasteEditorCommand implements EditCommand {
     return attributedLines.map(
       // TODO: create nodes based on content inspection (e.g., image, list item).
       (pastedLine) => ParagraphNode(
-        id: DocumentEditor.createNodeId(),
+        id: Editor.createNodeId(),
         text: pastedLine,
       ),
     );
@@ -2187,8 +2187,8 @@ class DeleteUpstreamCharacterCommand implements EditCommand {
 
   @override
   void execute(EditorContext context, CommandExecutor executor) {
-    final document = context.find<Document>(DocumentEditor.documentKey);
-    final composer = context.find<DocumentComposer>(DocumentEditor.composerKey);
+    final document = context.find<Document>(Editor.documentKey);
+    final composer = context.find<DocumentComposer>(Editor.composerKey);
     final selection = composer.selectionComponent.selection;
 
     if (selection == null) {
@@ -2249,8 +2249,8 @@ class DeleteDownstreamCharacterCommand implements EditCommand {
 
   @override
   void execute(EditorContext context, CommandExecutor executor) {
-    final document = context.find<Document>(DocumentEditor.documentKey);
-    final composer = context.find<DocumentComposer>(DocumentEditor.composerKey);
+    final document = context.find<Document>(Editor.documentKey);
+    final composer = context.find<DocumentComposer>(Editor.composerKey);
     final selection = composer.selectionComponent.selection;
 
     if (selection == null) {

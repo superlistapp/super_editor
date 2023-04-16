@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
-import 'package:super_editor/src/core/document_editor.dart';
+import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/core/edit_context.dart';
 import 'package:super_editor/src/default_editor/common_editor_operations.dart';
@@ -827,7 +827,7 @@ class SoftwareKeyboardHandler {
   });
 
   final Document document;
-  final DocumentEditor editor;
+  final Editor editor;
   final DocumentComposer composer;
   final CommonEditorOperations commonOps;
 

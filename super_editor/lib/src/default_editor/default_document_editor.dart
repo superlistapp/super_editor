@@ -1,5 +1,5 @@
 import 'package:super_editor/src/core/document_composer.dart';
-import 'package:super_editor/src/core/document_editor.dart';
+import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/default_editor/list_items.dart';
 import 'package:super_editor/src/default_editor/multi_node_editing.dart';
 import 'package:super_editor/src/default_editor/paragraph.dart';
@@ -8,16 +8,16 @@ import 'package:super_editor/src/default_editor/text.dart';
 import 'common_editor_operations.dart';
 import 'default_document_editor_reactions.dart';
 
-DocumentEditor createDefaultDocumentEditor({
+Editor createDefaultDocumentEditor({
   required MutableDocument document,
   DocumentComposer? composer,
 }) {
   composer ??= DocumentComposer();
 
-  final editor = DocumentEditor(
+  final editor = Editor(
     editables: {
-      DocumentEditor.documentKey: document,
-      DocumentEditor.composerKey: composer,
+      Editor.documentKey: document,
+      Editor.composerKey: composer,
     },
     requestHandlers: defaultRequestHandlers,
     reactionPipeline: [

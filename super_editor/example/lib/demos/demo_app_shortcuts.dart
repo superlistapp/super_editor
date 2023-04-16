@@ -19,7 +19,7 @@ class _AppShortcutsDemoState extends State<AppShortcutsDemo> {
     _document = MutableDocument(
       nodes: [
         ParagraphNode(
-          id: DocumentEditor.createNodeId(),
+          id: Editor.createNodeId(),
           text: AttributedText(text: 'Random paragraph....'),
         ),
       ],

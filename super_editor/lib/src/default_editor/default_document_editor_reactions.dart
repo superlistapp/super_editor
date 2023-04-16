@@ -7,7 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:linkify/linkify.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
-import 'package:super_editor/src/core/document_editor.dart';
+import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/default_editor/attributions.dart';
 import 'package:super_editor/src/default_editor/horizontal_rule.dart';
@@ -24,7 +24,7 @@ import 'multi_node_editing.dart';
 class UnorderedListItemConversionReaction implements EditReaction {
   @override
   void react(EditorContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
-    final document = editorContext.find<Document>(DocumentEditor.documentKey);
+    final document = editorContext.find<Document>(Editor.documentKey);
     final didTypeSpaceAtEnd = EditInspector.didTypeSpace(document, changeList);
     if (!didTypeSpaceAtEnd) {
       return;
@@ -63,7 +63,7 @@ class UnorderedListItemConversionReaction implements EditReaction {
 class OrderedListItemConversionReaction implements EditReaction {
   @override
   void react(EditorContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
-    final document = editorContext.find<Document>(DocumentEditor.documentKey);
+    final document = editorContext.find<Document>(Editor.documentKey);
     final didTypeSpaceAtEnd = EditInspector.didTypeSpace(document, changeList);
     if (!didTypeSpaceAtEnd) {
       return;
@@ -103,7 +103,7 @@ class OrderedListItemConversionReaction implements EditReaction {
 class BlockquoteConversionReaction implements EditReaction {
   @override
   void react(EditorContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
-    final document = editorContext.find<Document>(DocumentEditor.documentKey);
+    final document = editorContext.find<Document>(Editor.documentKey);
     final didTypeSpaceAtEnd = EditInspector.didTypeSpace(document, changeList);
     if (!didTypeSpaceAtEnd) {
       return;
@@ -147,7 +147,7 @@ class BlockquoteConversionReaction implements EditReaction {
 class HorizontalRuleConversionReaction implements EditReaction {
   @override
   void react(EditorContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
-    final document = editorContext.find<Document>(DocumentEditor.documentKey);
+    final document = editorContext.find<Document>(Editor.documentKey);
     final didTypeSpaceAtEnd = EditInspector.didTypeSpace(document, changeList);
     if (!didTypeSpaceAtEnd) {
       return;
@@ -166,7 +166,7 @@ class HorizontalRuleConversionReaction implements EditReaction {
       InsertNodeAtIndexRequest(
         nodeIndex: document.getNodeIndexById(paragraph.id),
         newNode: HorizontalRuleNode(
-          id: DocumentEditor.createNodeId(),
+          id: Editor.createNodeId(),
         ),
       ),
       ReplaceNodeRequest(
@@ -215,7 +215,7 @@ class ImageUrlConversionReaction implements EditReaction {
       return;
     }
 
-    final document = editorContext.find<MutableDocument>(DocumentEditor.documentKey);
+    final document = editorContext.find<MutableDocument>(Editor.documentKey);
     final previousNode = document.getNodeById(selectionChange.oldSelection!.extent.nodeId);
     if (previousNode is! ParagraphNode) {
       // The intention indicated that the user pressed "enter" from a paragraph
@@ -324,7 +324,7 @@ class ImageUrlConversionReaction implements EditReaction {
 class LinkifyReaction implements EditReaction {
   @override
   void react(EditorContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
-    final document = editorContext.find<Document>(DocumentEditor.documentKey);
+    final document = editorContext.find<Document>(Editor.documentKey);
     TextInsertionEvent? linkifyCandidate;
     for (final change in changeList) {
       if (change is TextInsertionEvent && change.text == " ") {

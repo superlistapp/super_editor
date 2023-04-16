@@ -20,7 +20,7 @@ class MarketingVideo extends StatefulWidget {
 class _MarketingVideoState extends State<MarketingVideo> {
   final _docLayoutKey = GlobalKey();
   late MutableDocument _document;
-  late DocumentEditor _editor;
+  late Editor _editor;
   DocumentComposer? _composer;
 
   @override
@@ -30,7 +30,7 @@ class _MarketingVideoState extends State<MarketingVideo> {
     _document = MutableDocument(
       nodes: [
         ParagraphNode(
-          id: DocumentEditor.createNodeId(),
+          id: Editor.createNodeId(),
           text: AttributedText(text: ''),
         ),
       ],
@@ -254,7 +254,7 @@ const headerAttribution = NamedAttribution('header');
 class DocumentEditingRobot {
   DocumentEditingRobot({
     required Document document,
-    required DocumentEditor editor,
+    required Editor editor,
     required DocumentComposer composer,
     required DocumentLayoutFinder documentLayoutFinder,
     int? randomSeed,

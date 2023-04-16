@@ -203,7 +203,7 @@ class TestDocumentConfigurator {
 
   /// Pumps a [SuperReader] widget tree with the desired configuration, and returns
   /// a [TestDocumentContext], which includes the artifacts connected to the widget
-  /// tree, e.g., the [DocumentEditor], [DocumentComposer], etc.
+  /// tree, e.g., the [Editor], [DocumentComposer], etc.
   Future<TestDocumentContext> pump() async {
     assert(_document != null);
 

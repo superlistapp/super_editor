@@ -11,7 +11,7 @@ class UnselectableHrDemo extends StatefulWidget {
 
 class _UnselectableHrDemoState extends State<UnselectableHrDemo> {
   late MutableDocument _doc;
-  late DocumentEditor _docEditor;
+  late Editor _docEditor;
 
   @override
   void initState() {
@@ -30,15 +30,15 @@ class _UnselectableHrDemoState extends State<UnselectableHrDemo> {
     return MutableDocument(
       nodes: [
         ParagraphNode(
-          id: DocumentEditor.createNodeId(),
+          id: Editor.createNodeId(),
           text: AttributedText(
             text:
                 "Below is a horizontal rule (HR). Normally in a SuperEditor, the user can tap to select an HR. In this case, you can't select the HR. You can only select around it. Try and find out:",
           ),
         ),
-        HorizontalRuleNode(id: DocumentEditor.createNodeId()),
+        HorizontalRuleNode(id: Editor.createNodeId()),
         ParagraphNode(
-          id: DocumentEditor.createNodeId(),
+          id: Editor.createNodeId(),
           text: AttributedText(
             text:
                 "Duis mollis libero eu scelerisque ullamcorper. Pellentesque eleifend arcu nec augue molestie, at iaculis dui rutrum. Etiam lobortis magna at magna pellentesque ornare. Sed accumsan, libero vel porta molestie, tortor lorem eleifend ante, at egestas leo felis sed nunc. Quisque mi neque, molestie vel dolor a, eleifend tempor odio.",

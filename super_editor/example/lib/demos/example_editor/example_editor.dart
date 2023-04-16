@@ -21,7 +21,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
   final GlobalKey _docLayoutKey = GlobalKey();
   late MutableDocument _doc;
   final _docChangeNotifier = SignalNotifier();
-  late DocumentEditor _docEditor;
+  late Editor _docEditor;
   late DocumentComposer _composer;
   late CommonEditorOperations _docOps;
 
@@ -45,10 +45,10 @@ class _ExampleEditorState extends State<ExampleEditor> {
     _doc = createInitialDocument();
     _composer = DocumentComposer();
     _composer.selectionComponent.selectionNotifier.addListener(_hideOrShowToolbar);
-    _docEditor = DocumentEditor(
+    _docEditor = Editor(
       editables: {
-        DocumentEditor.documentKey: _doc,
-        DocumentEditor.composerKey: _composer,
+        Editor.documentKey: _doc,
+        Editor.composerKey: _composer,
       },
       requestHandlers: [
         (request) => request is CompleteTaskRequest ? CompleteTaskCommand(nodeId: request.nodeId) : null,
@@ -478,7 +478,7 @@ class _ChangeImageWidthCommand implements EditCommand {
 
   @override
   void execute(EditorContext context, CommandExecutor executor) {
-    final node = context.find(DocumentEditor.documentKey).getNodeById(nodeId)!;
+    final node = context.find(Editor.documentKey).getNodeById(nodeId)!;
     final currentStyles = SingleColumnLayoutComponentStyles.fromMetadata(node);
     SingleColumnLayoutComponentStyles(
       width: imageWidth,

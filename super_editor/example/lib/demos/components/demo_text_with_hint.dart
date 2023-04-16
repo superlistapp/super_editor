@@ -20,7 +20,7 @@ class TextWithHintDemo extends StatefulWidget {
 
 class _TextWithHintDemoState extends State<TextWithHintDemo> {
   late MutableDocument _doc;
-  late DocumentEditor _docEditor;
+  late Editor _docEditor;
 
   @override
   void initState() {
@@ -41,22 +41,22 @@ class _TextWithHintDemoState extends State<TextWithHintDemo> {
     return MutableDocument(
       nodes: [
         ParagraphNode(
-          id: DocumentEditor.createNodeId(),
+          id: Editor.createNodeId(),
           text: AttributedText(text: ''),
           metadata: {'blockType': header1Attribution},
         ),
         ParagraphNode(
-          id: DocumentEditor.createNodeId(),
+          id: Editor.createNodeId(),
           text: AttributedText(text: ''),
           metadata: {'blockType': header2Attribution},
         ),
         ParagraphNode(
-          id: DocumentEditor.createNodeId(),
+          id: Editor.createNodeId(),
           text: AttributedText(text: ''),
           metadata: {'blockType': header3Attribution},
         ),
         ParagraphNode(
-          id: DocumentEditor.createNodeId(),
+          id: Editor.createNodeId(),
           text: AttributedText(
             text:
                 'Nam hendrerit vitae elit ut placerat. Maecenas nec congue neque. Fusce eget tortor pulvinar, cursus neque vitae, sagittis lectus. Duis mollis libero eu scelerisque ullamcorper. Pellentesque eleifend arcu nec augue molestie, at iaculis dui rutrum. Etiam lobortis magna at magna pellentesque ornare. Sed accumsan, libero vel porta molestie, tortor lorem eleifend ante, at egestas leo felis sed nunc. Quisque mi neque, molestie vel dolor a, eleifend tempor odio.',

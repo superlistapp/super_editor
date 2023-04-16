@@ -7,7 +7,7 @@ import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
 
 import '../core/document.dart';
-import '../core/document_editor.dart';
+import '../core/editor.dart';
 import 'layout_single_column/layout_single_column.dart';
 import 'paragraph.dart';
 import 'text.dart';
@@ -437,7 +437,7 @@ class IndentListItemCommand implements EditCommand {
 
   @override
   void execute(EditorContext context, CommandExecutor executor) {
-    final document = context.find<Document>(DocumentEditor.documentKey);
+    final document = context.find<Document>(Editor.documentKey);
     final node = document.getNodeById(nodeId);
     final listItem = node as ListItemNode;
     if (listItem.indent >= 6) {
@@ -468,7 +468,7 @@ class UnIndentListItemCommand implements EditCommand {
 
   @override
   void execute(EditorContext context, CommandExecutor executor) {
-    final document = context.find<Document>(DocumentEditor.documentKey);
+    final document = context.find<Document>(Editor.documentKey);
     final node = document.getNodeById(nodeId);
     final listItem = node as ListItemNode;
     if (listItem.indent > 0) {
@@ -508,7 +508,7 @@ class ConvertListItemToParagraphCommand implements EditCommand {
 
   @override
   void execute(EditorContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(DocumentEditor.documentKey);
+    final document = context.find<MutableDocument>(Editor.documentKey);
     final node = document.getNodeById(nodeId);
     final listItem = node as ListItemNode;
 
@@ -544,7 +544,7 @@ class ConvertParagraphToListItemCommand implements EditCommand {
 
   @override
   void execute(EditorContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(DocumentEditor.documentKey);
+    final document = context.find<MutableDocument>(Editor.documentKey);
     final node = document.getNodeById(nodeId);
     final paragraphNode = node as ParagraphNode;
 
@@ -580,7 +580,7 @@ class ChangeListItemTypeCommand implements EditCommand {
 
   @override
   void execute(EditorContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(DocumentEditor.documentKey);
+    final document = context.find<MutableDocument>(Editor.documentKey);
     final existingListItem = document.getNodeById(nodeId) as ListItemNode;
 
     final newListItemNode = ListItemNode(
@@ -619,7 +619,7 @@ class SplitListItemCommand implements EditCommand {
 
   @override
   void execute(EditorContext context, CommandExecutor executor) {
-    final document = context.find<MutableDocument>(DocumentEditor.documentKey);
+    final document = context.find<MutableDocument>(Editor.documentKey);
     final node = document.getNodeById(nodeId);
     final listItemNode = node as ListItemNode;
     final text = listItemNode.text;
