@@ -475,11 +475,7 @@ class SelectionComponent {
 
   void onEditorChange(List<EditEvent> changeList) {
     _selectionNotifier.value = _latestSelectionChange.selection;
-    if (changeList.isNotEmpty) {
-      if (changeList.whereType<SelectionChangeEvent>().isNotEmpty) {
-        notifySelectionListeners();
-      }
-    }
+    notifySelectionListeners();
   }
 }
 

@@ -47,7 +47,7 @@ class DocumentEditor implements RequestDispatcher {
   ///    react.
   ///  - [listeners], which contains an initial set of [EditListener]s.
   DocumentEditor({
-    required Map<String, dynamic> editables,
+    required Map<String, Editable> editables,
     required List<EditorRequestHandler> requestHandlers,
     List<EditReaction>? reactionPipeline,
     List<EditListener>? listeners,
@@ -245,6 +245,17 @@ class _DocumentEditorCommandExecutor implements CommandExecutor {
   void reset() {
     _changeList.clear();
   }
+}
+
+/// An artifact that might be mutated during a request to a [DocumentEditor].
+abstract class Editable {
+  /// A [DocumentEditor] transaction just started, this [Editable] should avoid notifying
+  /// any listeners of changes until the transaction ends.
+  void onTransactionStart();
+
+  /// A transaction that was previously started with [onTransactionStart] has now ended, this
+  /// [Editable] should notify interested parties of changes.
+  void onTransactionEnd();
 }
 
 /// An object that processes [EditRequest]s.
@@ -503,7 +514,7 @@ class FunctionalEditorChangeListener implements EditListener {
 }
 
 /// An in-memory, mutable [Document].
-class MutableDocument implements Document {
+class MutableDocument implements Document, Editable {
   /// Creates an in-memory, mutable version of a [Document].
   ///
   /// Initializes the content of this [MutableDocument] with the given [nodes],
@@ -746,6 +757,16 @@ class MutableDocument implements Document {
     for (final listener in _listeners) {
       listener(changeLog);
     }
+  }
+
+  @override
+  void onTransactionStart() {
+    // no-op
+  }
+
+  @override
+  void onTransactionEnd() {
+    // TODO
   }
 
   /// Updates all the maps which use the node id as the key.

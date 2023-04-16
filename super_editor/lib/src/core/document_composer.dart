@@ -11,7 +11,7 @@ import 'document_selection.dart';
 
 /// Maintains a [DocumentSelection] within a [Document] and
 /// uses that selection to edit the document.
-class DocumentComposer with ChangeNotifier {
+class DocumentComposer with ChangeNotifier implements Editable {
   /// Constructs a [DocumentComposer] with the given [initialSelection].
   ///
   /// The [initialSelection] may be omitted if no initial selection is
@@ -43,6 +43,16 @@ class DocumentComposer with ChangeNotifier {
 
   /// Returns the composition preferences for this composer.
   ComposerPreferences get preferences => _preferences;
+
+  @override
+  void onTransactionStart() {
+    // no-op
+  }
+
+  @override
+  void onTransactionEnd() {
+    selectionComponent.onEditorChange([]);
+  }
 }
 
 /// Holds preferences about user input, to be used for the

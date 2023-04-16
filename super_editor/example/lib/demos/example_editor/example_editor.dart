@@ -19,7 +19,7 @@ class ExampleEditor extends StatefulWidget {
 
 class _ExampleEditorState extends State<ExampleEditor> {
   final GlobalKey _docLayoutKey = GlobalKey();
-  late Document _doc;
+  late MutableDocument _doc;
   final _docChangeNotifier = SignalNotifier();
   late DocumentEditor _docEditor;
   late DocumentComposer _composer;
@@ -69,7 +69,7 @@ class _ExampleEditorState extends State<ExampleEditor> {
       ],
       listeners: [
         FunctionalEditorChangeListener(
-          (_doc as MutableDocument).onDocumentChange,
+          _doc.onDocumentChange,
         ),
         FunctionalEditorChangeListener(
           _composer.selectionComponent.onEditorChange,
