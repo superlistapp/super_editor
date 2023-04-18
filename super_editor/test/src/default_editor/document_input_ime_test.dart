@@ -244,6 +244,90 @@ void main() {
       );
     });
 
+    testWidgetsOnAndroid('applies list of deltas when inserting new lines', (tester) async {
+      // This test simulates inserting a line break in the middle of the text,
+      // followed by a non-text delta placing the selection/composing region on the new line.
+      //
+      // This test runs only on Android, because we only map a \n insertion to a new line on Android.
+
+      await tester //
+          .createDocument()
+          .withSingleEmptyParagraph()
+          .withInputSource(TextInputSource.ime)
+          .pump();
+
+      // Place caret at the start of the document.
+      await tester.placeCaretInParagraph('1', 0);
+
+      // Send initial delta.
+      await tester.ime.sendDeltas(
+        const [
+          TextEditingDeltaInsertion(
+            oldText: '',
+            textInserted: 'Before the line break new line',
+            insertionOffset: 0,
+            selection: TextSelection.collapsed(offset: 30),
+            composing: TextRange(start: 0, end: 30),
+          )
+        ],
+        getter: imeClientGetter,
+      );
+
+      // Place the caret at "Before the line break |new line".
+      await tester.placeCaretInParagraph('1', 22);
+
+      // Add a line break and simulate the OS sending a non-text delta to change the composing region.
+      //
+      // The OS thinks the editing text is "Before the line break \nnew line".
+      //
+      // With the insertion of the line break, the paragraph will be split into two and
+      // our current editing text will be "new line".
+      //
+      // The OS selection in invalid to us, as our editing text changed.
+      await tester.ime.sendDeltas(
+        const [
+          TextEditingDeltaInsertion(
+            oldText: 'Before the line break new line',
+            textInserted: '\n',
+            insertionOffset: 22,
+            selection: TextSelection.collapsed(offset: 23),
+            composing: TextRange(start: -1, end: -1),
+          ),
+          TextEditingDeltaNonTextUpdate(
+            oldText: 'Before the line break \nnew line',
+            selection: TextSelection.collapsed(offset: 23),
+            composing: TextRange(start: 23, end: 26),
+          ),
+        ],
+        getter: imeClientGetter,
+      );
+
+      final doc = SuperEditorInspector.findDocument()!;
+
+      // Ensure the paragraph was split.
+      expect(
+        (doc.nodes[0] as ParagraphNode).text.text,
+        'Before the line break ',
+      );
+
+      // Ensure the paragraph was split.
+      expect(
+        (doc.nodes[1] as ParagraphNode).text.text,
+        'new line',
+      );
+
+      // Ensure the selection is at the beginning of the second node.
+      expect(
+        SuperEditorInspector.findDocumentSelection(),
+        DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: doc.nodes[1].id,
+            nodePosition: const TextNodePosition(offset: 0),
+          ),
+        ),
+      );
+    });
+
     group('delta use-cases', () {
       test('can handle an auto-inserted period', () {
         // On iOS, adding 2 spaces causes the two spaces to be replaced by a
