@@ -45,7 +45,7 @@ class SingleColumnDocumentComponentContext {
 /// something other than the document changes, like the user's selection,
 /// only some of the pipeline phases are re-run. For this reason, the most
 /// volatile phases should be placed at the end of the [pipeline].
-class SingleColumnLayoutPresenter {
+class SingleColumnLayoutPresenter /*implements EditListener*/ {
   SingleColumnLayoutPresenter({
     required Document document,
     required List<ComponentBuilder> componentBuilders,
@@ -55,6 +55,7 @@ class SingleColumnLayoutPresenter {
         _pipeline = pipeline {
     _assemblePipeline();
     _viewModel = _createNewViewModel();
+
     _document.addListener(_onDocumentChange);
   }
 
@@ -168,6 +169,7 @@ class SingleColumnLayoutPresenter {
       final componentViewModels = <SingleColumnLayoutComponentViewModel>[];
       for (int i = 0; i < _document.nodes.length; i += 1) {
         final nodeId = _document.nodes[i].id;
+        // if (_editLog != null && _viewModel._viewModelsByNodeId[nodeId] != null && !_wasNodeChanged(nodeId)) {
         if (_documentChangeLog != null &&
             _viewModel._viewModelsByNodeId[nodeId] != null &&
             !_documentChangeLog!.wasNodeChanged(nodeId)) {

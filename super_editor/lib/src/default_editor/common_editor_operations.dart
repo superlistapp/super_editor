@@ -2083,7 +2083,11 @@ class PasteEditorCommand implements EditCommand {
       );
       previousNode = pastedNode;
 
-      executor.logChanges([NodeInsertedEvent(pastedNode.id)]);
+      executor.logChanges([
+        DocumentEdit(
+          NodeInsertedEvent(pastedNode.id),
+        )
+      ]);
     }
 
     // Place the caret at the end of the pasted content.

@@ -67,14 +67,6 @@ class _ExampleEditorState extends State<ExampleEditor> {
         TagUserReaction(),
         KeepCaretOutOfTagReaction(),
       ],
-      listeners: [
-        FunctionalEditorChangeListener(
-          _doc.onDocumentChange,
-        ),
-        FunctionalEditorChangeListener(
-          _composer.selectionComponent.onEditorChange,
-        ),
-      ],
     );
     _docOps = CommonEditorOperations(
       document: _doc,
@@ -486,7 +478,9 @@ class _ChangeImageWidthCommand implements EditCommand {
     ).applyTo(node);
 
     executor.logChanges([
-      NodeChangeEvent(nodeId),
+      DocumentEdit(
+        NodeChangeEvent(nodeId),
+      ),
     ]);
   }
 }

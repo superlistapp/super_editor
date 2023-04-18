@@ -472,11 +472,6 @@ class SelectionComponent {
     );
     _streamController.sink.add(_latestSelectionChange);
   }
-
-  void onEditorChange(List<EditEvent> changeList) {
-    _selectionNotifier.value = _latestSelectionChange.selection;
-    notifySelectionListeners();
-  }
 }
 
 /// Represents a change of a [DocumentSelection].

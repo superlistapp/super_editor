@@ -714,10 +714,10 @@ class DefaultCaretOverlayBuilder implements DocumentLayerBuilder {
   @override
   Widget build(BuildContext context, EditContext editContext) {
     return CaretDocumentOverlay(
+      editor: editContext.editor,
       composer: editContext.composer,
       documentLayoutResolver: () => editContext.documentLayout,
       caretStyle: caretStyle,
-      document: editContext.document,
     );
   }
 }

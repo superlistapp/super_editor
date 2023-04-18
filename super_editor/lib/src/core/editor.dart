@@ -125,6 +125,13 @@ class Editor implements RequestDispatcher {
   /// of [EditEvent]s.
   @override
   void execute(List<EditRequest> requests) {
+    if (_activeCommandCount == 0) {
+      // This is the start of a new transaction.
+      for (final editable in _context._resources.values) {
+        editable.onTransactionStart();
+      }
+    }
+
     _activeChangeList ??= <EditEvent>[];
     _activeCommandCount += 1;
 
@@ -147,6 +154,11 @@ class Editor implements RequestDispatcher {
 
       // Notify all listeners that care about changes, but won't spawn additional requests.
       _notifyListeners(_activeChangeList!);
+
+      // This is the end of a transaction.
+      for (final editable in _context._resources.values) {
+        editable.onTransactionEnd(_activeChangeList!);
+      }
 
       _activeChangeList = null;
     }
@@ -255,7 +267,7 @@ abstract class Editable {
 
   /// A transaction that was previously started with [onTransactionStart] has now ended, this
   /// [Editable] should notify interested parties of changes.
-  void onTransactionEnd();
+  void onTransactionEnd(List<EditEvent> edits);
 }
 
 /// An object that processes [EditRequest]s.
@@ -275,7 +287,7 @@ abstract class EditCommand {
 class EditorContext {
   EditorContext(this._resources);
 
-  final Map<String, dynamic> _resources;
+  final Map<String, Editable> _resources;
 
   /// Finds an object of type [T] within this [EditorContext], which is identified by the given [id].
   T find<T>(String id) {
@@ -290,13 +302,13 @@ class EditorContext {
           "Tried to find an editor resource of type '$T' for ID '$id', but the resource with that ID is of type '${_resources[id].runtimeType}");
     }
 
-    return _resources[id];
+    return _resources[id] as T;
   }
 
   /// Finds an object of type [T] within this [EditorContext], which is identified by the given [id], or
   /// returns `null` if no such object is in this [EditorContext].
   T? findMaybe<T>(String id) {
-    return _resources[id];
+    return _resources[id] as T?;
   }
 }
 
@@ -386,88 +398,13 @@ abstract class EditEvent {
   // Marker interface for all editor change events.
 }
 
-/// Base class for change events that refer to a [DocumentNode].
-abstract class DocumentNodeEvent implements EditEvent {
-  String get nodeId;
-}
-
-/// A new [DocumentNode] was inserted in the [Document].
-class NodeInsertedEvent implements DocumentNodeEvent {
-  const NodeInsertedEvent(this.nodeId);
-
-  @override
-  final String nodeId;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is NodeInsertedEvent && runtimeType == other.runtimeType && nodeId == other.nodeId;
-
-  @override
-  int get hashCode => nodeId.hashCode;
-}
-
-/// A [DocumentNode] was moved to a new index.
-class NodeMovedEvent implements DocumentNodeEvent {
-  const NodeMovedEvent({
-    required this.nodeId,
-    required this.from,
-    required this.to,
-  });
-
-  @override
-  final String nodeId;
-  final int from;
-  final int to;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is NodeMovedEvent &&
-          runtimeType == other.runtimeType &&
-          nodeId == other.nodeId &&
-          from == other.from &&
-          to == other.to;
-
-  @override
-  int get hashCode => nodeId.hashCode ^ from.hashCode ^ to.hashCode;
-}
-
-/// A [DocumentNode] was removed from the [Document].
-class NodeRemovedEvent implements DocumentNodeEvent {
-  const NodeRemovedEvent(this.nodeId);
-
-  @override
-  final String nodeId;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) || other is NodeRemovedEvent && runtimeType == other.runtimeType && nodeId == other.nodeId;
-
-  @override
-  int get hashCode => nodeId.hashCode;
-}
-
-/// The content of a [DocumentNode] changed.
+/// An [EditEvent] that altered a [Document].
 ///
-/// A node change might signify a content change, such as text changing in a paragraph, or
-/// it might signify a node changing its type of content, such as converting a paragraph
-/// to an image.
-class NodeChangeEvent implements DocumentNodeEvent {
-  const NodeChangeEvent(this.nodeId);
+/// The specific [Document] change is available in [change].
+class DocumentEdit implements EditEvent {
+  DocumentEdit(this.change);
 
-  @override
-  final String nodeId;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) || other is NodeChangeEvent && runtimeType == other.runtimeType && nodeId == other.nodeId;
-
-  @override
-  int get hashCode => nodeId.hashCode;
-
-  @override
-  String toString() => "[NodeChangeEvent] - Node: $nodeId";
+  final DocumentChange change;
 }
 
 /// An object that's notified with a change list from one or more
@@ -504,8 +441,8 @@ abstract class EditListener {
 }
 
 /// An [EditListener] that delegates to a callback function.
-class FunctionalEditorChangeListener implements EditListener {
-  FunctionalEditorChangeListener(this._onEdit);
+class FunctionalEditListener implements EditListener {
+  FunctionalEditListener(this._onEdit);
 
   final void Function(List<EditEvent> changeList) _onEdit;
 
@@ -745,28 +682,22 @@ class MutableDocument implements Document, Editable {
     _listeners.remove(listener);
   }
 
-  void onDocumentChange(List<EditEvent> changes) {
-    if (changes.isEmpty) {
-      return;
-    }
-
-    // TODO: separate the concept of a "document change event" from a generic
-    // "editor change event". We don't want the document dispatching selection
-    // changes or other non-document changes.
-    final changeLog = DocumentChangeLog(changes);
-    for (final listener in _listeners) {
-      listener(changeLog);
-    }
-  }
-
   @override
   void onTransactionStart() {
     // no-op
   }
 
   @override
-  void onTransactionEnd() {
-    // TODO
+  void onTransactionEnd(List<EditEvent> edits) {
+    final documentChanges = edits.whereType<DocumentEdit>().map((edit) => edit.change).toList();
+    if (edits.isEmpty) {
+      return;
+    }
+
+    final changeLog = DocumentChangeLog(documentChanges);
+    for (final listener in _listeners) {
+      listener(changeLog);
+    }
   }
 
   /// Updates all the maps which use the node id as the key.

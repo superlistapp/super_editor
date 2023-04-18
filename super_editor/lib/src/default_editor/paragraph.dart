@@ -247,8 +247,12 @@ class CombineParagraphsCommand implements EditCommand {
     }
 
     executor.logChanges([
-      NodeRemovedEvent(secondNode.id),
-      NodeChangeEvent(nodeAbove.id),
+      DocumentEdit(
+        NodeRemovedEvent(secondNode.id),
+      ),
+      DocumentEdit(
+        NodeChangeEvent(nodeAbove.id),
+      ),
     ]);
   }
 }
@@ -334,14 +338,14 @@ class SplitParagraphCommand implements EditCommand {
       ),
     );
     composer.selectionComponent.updateSelection(newSelection);
-    // composer.selectionComponent.setSelectionWithReason(
-    //   newSelection,
-    //   SelectionReason.userInteraction,
-    // );
 
     final documentChanges = [
-      NodeChangeEvent(node.id),
-      NodeInsertedEvent(newNodeId),
+      DocumentEdit(
+        NodeChangeEvent(node.id),
+      ),
+      DocumentEdit(
+        NodeInsertedEvent(newNodeId),
+      ),
       SelectionChangeEvent(
         oldSelection: oldSelection,
         newSelection: newSelection,
@@ -453,7 +457,11 @@ class DeleteParagraphCommand implements EditCommand {
       editorDocLog.shout('ERROR: Failed to delete node "$node" from the document.');
     }
 
-    executor.logChanges([NodeRemovedEvent(node.id)]);
+    executor.logChanges([
+      DocumentEdit(
+        NodeRemovedEvent(node.id),
+      )
+    ]);
   }
 }
 

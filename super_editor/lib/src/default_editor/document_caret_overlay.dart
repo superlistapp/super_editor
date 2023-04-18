@@ -1,18 +1,20 @@
 import 'package:flutter/widgets.dart';
-import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_layout.dart';
+import 'package:super_editor/src/core/editor.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
 /// Document overlay that paints a caret with the given [caretStyle].
 class CaretDocumentOverlay extends StatefulWidget {
   const CaretDocumentOverlay({
     Key? key,
+    required this.editor,
     required this.composer,
     required this.documentLayoutResolver,
     required this.caretStyle,
-    required this.document,
   }) : super(key: key);
+
+  final Editor editor;
 
   /// The editor's [DocumentComposer], which reports the current selection.
   final DocumentComposer composer;
@@ -21,15 +23,6 @@ class CaretDocumentOverlay extends StatefulWidget {
   /// that the current selection can be mapped to an (x,y) offset and a height.
   final DocumentLayout Function() documentLayoutResolver;
 
-  /// The editor's [Document].
-  ///
-  /// Some operations that affect caret position don't trigger a selection change, e.g.,
-  /// indenting a list item.
-  ///
-  /// We need to listen to all document changes to update the caret position when these
-  /// operations happen.
-  final Document document;
-
   /// The visual style of the caret that this overlay paints.
   final CaretStyle caretStyle;
 
@@ -37,7 +30,9 @@ class CaretDocumentOverlay extends StatefulWidget {
   State<CaretDocumentOverlay> createState() => _CaretDocumentOverlayState();
 }
 
-class _CaretDocumentOverlayState extends State<CaretDocumentOverlay> with SingleTickerProviderStateMixin {
+class _CaretDocumentOverlayState extends State<CaretDocumentOverlay>
+    with SingleTickerProviderStateMixin
+    implements EditListener {
   final _caret = ValueNotifier<Rect?>(null);
   late final BlinkController _blinkController;
   BoxConstraints? _previousConstraints;
@@ -46,7 +41,7 @@ class _CaretDocumentOverlayState extends State<CaretDocumentOverlay> with Single
   void initState() {
     super.initState();
     widget.composer.selectionComponent.selectionNotifier.addListener(_scheduleCaretUpdate);
-    widget.document.addListener(_onDocumentChange);
+    widget.editor.addListener(this);
     _blinkController = BlinkController(tickerProvider: this)..startBlinking();
 
     // If we already have a selection, we need to display the caret.
@@ -59,9 +54,9 @@ class _CaretDocumentOverlayState extends State<CaretDocumentOverlay> with Single
   void didUpdateWidget(CaretDocumentOverlay oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    if (widget.document != oldWidget.document) {
-      oldWidget.document.removeListener(_onDocumentChange);
-      widget.document.addListener(_onDocumentChange);
+    if (widget.editor != oldWidget.editor) {
+      oldWidget.editor.removeListener(this);
+      widget.editor.addListener(this);
     }
 
     if (widget.composer != oldWidget.composer) {
@@ -78,12 +73,13 @@ class _CaretDocumentOverlayState extends State<CaretDocumentOverlay> with Single
   @override
   void dispose() {
     widget.composer.selectionComponent.selectionNotifier.removeListener(_scheduleCaretUpdate);
-    widget.document.removeListener(_onDocumentChange);
+    widget.editor.removeListener(this);
     _blinkController.dispose();
     super.dispose();
   }
 
-  void _onDocumentChange(DocumentChangeLog changes) {
+  @override
+  void onEdit(List<EditEvent> changes) {
     _scheduleCaretUpdate();
   }
 

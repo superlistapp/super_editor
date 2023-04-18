@@ -30,7 +30,8 @@ class UnorderedListItemConversionReaction implements EditReaction {
       return;
     }
 
-    final textInsertionEvent = changeList[changeList.length - 2] as TextInsertionEvent;
+    final edit = changeList[changeList.length - 2] as DocumentEdit;
+    final textInsertionEvent = edit.change as TextInsertionEvent;
     final paragraph = document.getNodeById(textInsertionEvent.nodeId) as ParagraphNode;
     final unorderedListItemMatch = RegExp(r'^\s*[*-]\s+$');
     if (!paragraph.text.text.startsWith(unorderedListItemMatch)) {
@@ -69,7 +70,8 @@ class OrderedListItemConversionReaction implements EditReaction {
       return;
     }
 
-    final textInsertionEvent = changeList[changeList.length - 2] as TextInsertionEvent;
+    final edit = changeList[changeList.length - 2] as DocumentEdit;
+    final textInsertionEvent = edit.change as TextInsertionEvent;
     final paragraph = document.getNodeById(textInsertionEvent.nodeId) as ParagraphNode;
     // We want to match "1. ", " 1. ", "1) ", " 1) ".
     final orderedListItemMatch = RegExp(r'^\s*1[.)]\s+$');
@@ -109,7 +111,8 @@ class BlockquoteConversionReaction implements EditReaction {
       return;
     }
 
-    final textInsertionEvent = changeList[changeList.length - 2] as TextInsertionEvent;
+    final edit = changeList[changeList.length - 2] as DocumentEdit;
+    final textInsertionEvent = edit.change as TextInsertionEvent;
     final paragraph = document.getNodeById(textInsertionEvent.nodeId) as ParagraphNode;
     final blockquoteMatch = RegExp(r'^>\s$');
     if (!paragraph.text.text.startsWith(blockquoteMatch)) {
@@ -153,7 +156,8 @@ class HorizontalRuleConversionReaction implements EditReaction {
       return;
     }
 
-    final textInsertionEvent = changeList[changeList.length - 2] as TextInsertionEvent;
+    final edit = changeList[changeList.length - 2] as DocumentEdit;
+    final textInsertionEvent = edit.change as TextInsertionEvent;
     final paragraph = document.getNodeById(textInsertionEvent.nodeId) as ParagraphNode;
     final hrMatch = RegExp(r'^---*\s$');
     if (!paragraph.text.text.startsWith(hrMatch)) {
@@ -323,30 +327,33 @@ class ImageUrlConversionReaction implements EditReaction {
 
 class LinkifyReaction implements EditReaction {
   @override
-  void react(EditorContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
+  void react(EditorContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> edits) {
     final document = editorContext.find<Document>(Editor.documentKey);
     TextInsertionEvent? linkifyCandidate;
-    for (final change in changeList) {
-      if (change is TextInsertionEvent && change.text == " ") {
-        // Every space insertion might appear after a URL.
-        linkifyCandidate = change;
-      } else if (change is SelectionChangeEvent) {
+    for (final edit in edits) {
+      if (edit is DocumentEdit) {
+        final change = edit.change;
+        if (change is TextInsertionEvent && change.text == " ") {
+          // Every space insertion might appear after a URL.
+          linkifyCandidate = change;
+        }
+      } else if (edit is SelectionChangeEvent) {
         if (linkifyCandidate == null) {
           // There was no text insertion to linkify.
           continue;
         }
 
-        if (change.newSelection == null) {
+        if (edit.newSelection == null) {
           // The editor doesn't have a selection. Don't linkify.
           linkifyCandidate = null;
           continue;
-        } else if (!change.newSelection!.isCollapsed) {
+        } else if (!edit.newSelection!.isCollapsed) {
           // The selection is expanded. Don't linkify.
           linkifyCandidate = null;
           continue;
         }
 
-        final caretPosition = change.newSelection!.extent;
+        final caretPosition = edit.newSelection!.extent;
         if (caretPosition.nodeId != linkifyCandidate.nodeId) {
           // The selection moved to some other node. Don't linkify.
           linkifyCandidate = null;
@@ -418,17 +425,25 @@ class LinkifyReaction implements EditReaction {
 }
 
 class EditInspector {
-  static bool didTypeSpace(Document document, List<EditEvent> changeList) {
-    if (changeList.length < 2) {
+  /// Whether [edits] ends with the user typing a space, i.e., typing a " ".
+  ///
+  /// Typing a space means that a space was inserted, and the caret moved from
+  /// just before the space, to just after the space.
+  static bool didTypeSpace(Document document, List<EditEvent> edits) {
+    if (edits.length < 2) {
       return false;
     }
 
-    final selectionEvent = changeList.last;
+    final selectionEvent = edits.last;
     if (selectionEvent is! SelectionChangeEvent) {
       return false;
     }
 
-    final textInsertionEvent = changeList[changeList.length - 2];
+    final edit = edits[edits.length - 2];
+    if (edit is! DocumentEdit) {
+      return false;
+    }
+    final textInsertionEvent = edit.change;
     if (textInsertionEvent is! TextInsertionEvent) {
       return false;
     }

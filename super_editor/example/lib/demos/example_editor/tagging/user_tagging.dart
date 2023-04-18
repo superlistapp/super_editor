@@ -93,11 +93,16 @@ class TagUserReaction implements EditReaction {
     RequestDispatcher requestDispatcher,
     List<EditEvent> changeList,
   ) {
+    print("_commitCompletedTags()");
+    final document = editorContext.find<Document>(Editor.documentKey);
     final composingTagNodeCandidates = <String>{};
     for (final edit in changeList) {
-      if (edit is TextInsertionEvent || edit is TextDeletedEvent) {
+      print("edit: $edit");
+      if (edit is DocumentEdit && (edit.change is TextInsertionEvent || edit.change is TextDeletedEvent)) {
+        print(" - edit was a change event: ${(edit as NodeChangeEvent).nodeId}");
         composingTagNodeCandidates.add((edit as NodeChangeEvent).nodeId);
       } else if (edit is SelectionChangeEvent) {
+        print(" - edit was a selection change event");
         final oldSelection = edit.oldSelection;
         userTagsLog.info("Selection change event. Old selection: $oldSelection");
         userTagsLog.info("New selection: ${edit.newSelection}");
@@ -106,21 +111,37 @@ class TagUserReaction implements EditReaction {
         }
 
         if (oldSelection.base.nodePosition is TextNodePosition) {
-          composingTagNodeCandidates.add(oldSelection.base.nodeId);
+          // The old selection might belong to a node that was removed. Make sure
+          // the old node exists. If it does, add the node ID as a candidate.
+          final nodeId = oldSelection.base.nodeId;
+          if (document.getNodeById(nodeId) != null) {
+            composingTagNodeCandidates.add(nodeId);
+          }
         }
         if (oldSelection.extent.nodePosition is TextNodePosition) {
-          composingTagNodeCandidates.add(oldSelection.extent.nodeId);
+          // The old selection might belong to a node that was removed. Make sure
+          // the old node exists. If it does, add the node ID as a candidate.
+          final nodeId = oldSelection.extent.nodeId;
+          if (document.getNodeById(nodeId) != null) {
+            composingTagNodeCandidates.add(nodeId);
+          }
         }
+      } else if (edit is DocumentEdit && edit.change is NodeRemovedEvent) {
+        // Make sure we don't try to track a node where text was edited, if that
+        // node was later removed.
+        final change = (edit).change as NodeRemovedEvent;
+        print(" - edit is a node removal. Removing node from candidates: ${change.nodeId}");
+        composingTagNodeCandidates.remove(change.nodeId);
       }
     }
     if (composingTagNodeCandidates.isEmpty) {
       return;
     }
 
-    final document = editorContext.find<Document>(Editor.documentKey);
     final composer = editorContext.find<DocumentComposer>(Editor.composerKey);
     final selection = composer.selectionComponent.selection;
     for (final textNodeId in composingTagNodeCandidates) {
+      print("Inspecting text node: $textNodeId");
       userTagsLog.info("Checking node $textNodeId for composing tags to change");
       final textNode = document.getNodeById(textNodeId) as TextNode;
       final composingTags = _findAllComposingTagsInTextNode(textNode);
@@ -279,8 +300,12 @@ class TagUserReaction implements EditReaction {
   ) {
     userTagsLog.info("Removing invalid tags...");
     final nodesToInspect = <String>{};
-    for (final change in changeList) {
+    for (final edit in changeList) {
       // We only care about deleted text, in case the deletion made an existing tag invalid.
+      if (edit is! DocumentEdit) {
+        continue;
+      }
+      final change = edit.change;
       if (change is! TextDeletedEvent) {
         continue;
       }

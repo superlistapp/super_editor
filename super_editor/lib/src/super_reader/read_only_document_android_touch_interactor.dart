@@ -43,6 +43,7 @@ class ReadOnlyAndroidDocumentTouchInteractor extends StatefulWidget {
   final Document document;
   final GlobalKey documentKey;
   final DocumentLayout Function() getDocumentLayout;
+
   final ValueNotifier<DocumentSelection?> selection;
 
   final ScrollController? scrollController;

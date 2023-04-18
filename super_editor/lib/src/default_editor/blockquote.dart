@@ -224,7 +224,11 @@ class ConvertBlockquoteToParagraphCommand implements EditCommand {
     );
     document.replaceNode(oldNode: blockquote, newNode: newParagraphNode);
 
-    executor.logChanges([NodeChangeEvent(nodeId)]);
+    executor.logChanges([
+      DocumentEdit(
+        NodeChangeEvent(nodeId),
+      )
+    ]);
   }
 }
 
@@ -331,8 +335,12 @@ class SplitBlockquoteCommand implements EditCommand {
     );
 
     executor.logChanges([
-      NodeChangeEvent(nodeId),
-      NodeInsertedEvent(newNodeId),
+      DocumentEdit(
+        NodeChangeEvent(nodeId),
+      ),
+      DocumentEdit(
+        NodeInsertedEvent(newNodeId),
+      ),
     ]);
   }
 }

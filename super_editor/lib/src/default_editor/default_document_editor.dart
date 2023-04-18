@@ -29,12 +29,9 @@ Editor createDefaultDocumentEditor({
       ImageUrlConversionReaction(),
     ],
     listeners: [
-      FunctionalEditorChangeListener(
-        document.onDocumentChange,
-      ),
-      FunctionalEditorChangeListener(
-        composer.selectionComponent.onEditorChange,
-      ),
+      // FunctionalEditListener(
+      //   document.onDocumentChange,
+      // ),
     ],
   );
 

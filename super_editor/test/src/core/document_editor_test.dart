@@ -34,17 +34,18 @@ void main() {
             ),
           ),
         );
-        DocumentChangeLog? changeLog;
-        editorPieces.document.addListener((newChangeLog) {
-          changeLog = newChangeLog;
-        });
+        List<EditEvent>? changeLog;
+        editorPieces.editor.addListener(FunctionalEditListener((changeList) {
+          changeLog = changeList;
+        }));
 
         editorPieces.editor.execute([const InsertCharacterAtCaretRequest(character: "a")]);
 
         expect(changeLog, isNotNull);
-        expect(changeLog!.changes.length, 2);
-        expect(changeLog!.changes.first, isA<NodeChangeEvent>());
-        expect(changeLog!.changes.last, isA<SelectionChangeEvent>());
+        expect(changeLog!.length, 2);
+        expect(changeLog!.first, isA<DocumentEdit>());
+        expect((changeLog!.first as DocumentEdit).change, isA<NodeChangeEvent>());
+        expect(changeLog!.last, isA<SelectionChangeEvent>());
       });
 
       test('executes a series of commands', () {
@@ -58,10 +59,10 @@ void main() {
         );
         int changeLogCount = 0;
         int changeEventCount = 0;
-        editorPieces.document.addListener((newChangeLog) {
+        editorPieces.editor.addListener(FunctionalEditListener((changeList) {
           changeLogCount += 1;
-          changeEventCount += newChangeLog.changes.length;
-        });
+          changeEventCount += changeList.length;
+        }));
 
         editorPieces.editor
           ..execute([const InsertCharacterAtCaretRequest(character: "H")])
@@ -79,12 +80,10 @@ void main() {
         // This test ensures that if one command expands into multiple commands,
         // and those commands expand to additional commands, the overall command
         // order is what we expect.
-        DocumentChangeLog? changeLog;
+        List<EditEvent>? changeList;
         final document = MutableDocument(
           nodes: [ParagraphNode(id: Editor.createNodeId(), text: AttributedText(text: ""))],
-        )..addListener((newLog) {
-            changeLog = newLog;
-          });
+        );
 
         final composer = DocumentComposer(
           initialSelection: const DocumentSelection.collapsed(
@@ -103,12 +102,9 @@ void main() {
             (request) => request is _ExpandingCommandRequest ? _ExpandingCommand(request) : null,
           ],
           listeners: [
-            FunctionalEditorChangeListener(
-              document.onDocumentChange,
-            ),
-            FunctionalEditorChangeListener(
-              composer.selectionComponent.onEditorChange,
-            ),
+            FunctionalEditListener((newChangeList) {
+              changeList = newChangeList;
+            }),
           ],
         );
 
@@ -145,8 +141,8 @@ void main() {
     (2.2)''',
         );
 
-        expect(changeLog, isNotNull);
-        expect(changeLog!.changes.length, 13 * 2); // 13 commands * 2 events per command
+        expect(changeList, isNotNull);
+        expect(changeList!.length, 13 * 2); // 13 commands * 2 events per command
       });
 
       test('runs reactions after a command', () {
@@ -174,14 +170,6 @@ void main() {
             FunctionalEditReaction((editorContext, requestDispatcher, changeList) {
               reactionCount += 1;
             }),
-          ],
-          listeners: [
-            FunctionalEditorChangeListener(
-              document.onDocumentChange,
-            ),
-            FunctionalEditorChangeListener(
-              composer.selectionComponent.onEditorChange,
-            ),
           ],
         );
 
@@ -223,7 +211,11 @@ void main() {
           reactionPipeline: [
             FunctionalEditReaction((editorContext, requestDispatcher, changeList) {
               TextInsertionEvent? insertEEvent;
-              for (final change in changeList) {
+              for (final edit in changeList) {
+                if (edit is! DocumentEdit) {
+                  continue;
+                }
+                final change = edit.change;
                 if (change is! TextInsertionEvent) {
                   continue;
                 }
@@ -247,14 +239,6 @@ void main() {
                 ),
               ]);
             }),
-          ],
-          listeners: [
-            FunctionalEditorChangeListener(
-              document.onDocumentChange,
-            ),
-            FunctionalEditorChangeListener(
-              composer.selectionComponent.onEditorChange,
-            ),
           ],
         );
 
@@ -318,7 +302,11 @@ void main() {
             // Reaction 1 causes a change
             FunctionalEditReaction((editorContext, requestDispatcher, changeList) {
               TextInsertionEvent? insertHEvent;
-              for (final change in changeList) {
+              for (final edit in changeList) {
+                if (edit is! DocumentEdit) {
+                  continue;
+                }
+                final change = edit.change;
                 if (change is! TextInsertionEvent) {
                   continue;
                 }
@@ -345,7 +333,11 @@ void main() {
             // Reaction 2 verifies that it sees the change event from reaction 1.
             FunctionalEditReaction((editorContext, requestDispatcher, changeList) {
               TextInsertionEvent? insertEEvent;
-              for (final change in changeList) {
+              for (final edit in changeList) {
+                if (edit is! DocumentEdit) {
+                  continue;
+                }
+                final change = edit.change;
                 if (change is! TextInsertionEvent) {
                   continue;
                 }
@@ -355,14 +347,6 @@ void main() {
 
               expect(insertEEvent, isNotNull, reason: "Reaction 2 didn't receive the change from reaction 1");
             }),
-          ],
-          listeners: [
-            FunctionalEditorChangeListener(
-              document.onDocumentChange,
-            ),
-            FunctionalEditorChangeListener(
-              composer.selectionComponent.onEditorChange,
-            ),
           ],
         );
 
@@ -440,10 +424,10 @@ void main() {
         int changeLogCount = 0;
         int changeEventCount = 0;
         final document = editorPieces.document;
-        document.addListener((newChangeLog) {
+        editorPieces.editor.addListener(FunctionalEditListener((changeList) {
           changeLogCount += 1;
-          changeEventCount += newChangeLog.changes.length;
-        });
+          changeEventCount += changeList.length;
+        }));
 
         editorPieces.editor.execute([
           SplitParagraphRequest(
@@ -482,18 +466,17 @@ void main() {
         );
         int changeLogCount = 0;
         int changeEventCount = 0;
-        final document = editorPieces.document;
-        document.addListener((newChangeLog) {
+        editorPieces.editor.addListener(FunctionalEditListener((changeList) {
           changeLogCount += 1;
-          changeEventCount += newChangeLog.changes.length;
-        });
+          changeEventCount += changeList.length;
+        }));
 
         editorPieces.editor.execute([const MoveNodeRequest(nodeId: "1", newIndex: 2)]);
 
         // Verify final node indices.
-        expect(document.getNodeAt(0)!.id, "2");
-        expect(document.getNodeAt(1)!.id, "3");
-        expect(document.getNodeAt(2)!.id, "1");
+        expect(editorPieces.document.getNodeAt(0)!.id, "2");
+        expect(editorPieces.document.getNodeAt(1)!.id, "3");
+        expect(editorPieces.document.getNodeAt(2)!.id, "1");
 
         // Verify reported changes.
         expect(changeLogCount, 1);
@@ -524,14 +507,6 @@ StandardEditorPieces _createStandardEditor({
       BlockquoteConversionReaction(),
       HorizontalRuleConversionReaction(),
       ImageUrlConversionReaction(),
-    ],
-    listeners: [
-      FunctionalEditorChangeListener(
-        document.onDocumentChange,
-      ),
-      FunctionalEditorChangeListener(
-        composer.selectionComponent.onEditorChange,
-      ),
     ],
   );
 

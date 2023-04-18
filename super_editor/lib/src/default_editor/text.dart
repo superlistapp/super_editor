@@ -994,7 +994,11 @@ class AddTextAttributionsCommand implements EditCommand {
               end: range.end,
             ),
         );
-        executor.logChanges([NodeChangeEvent(node.id)]);
+        executor.logChanges([
+          DocumentEdit(
+            NodeChangeEvent(node.id),
+          ),
+        ]);
       }
     }
 
@@ -1103,7 +1107,11 @@ class RemoveTextAttributionsCommand implements EditCommand {
             ),
         );
 
-        executor.logChanges([NodeChangeEvent(node.id)]);
+        executor.logChanges([
+          DocumentEdit(
+            NodeChangeEvent(node.id),
+          ),
+        ]);
       }
     }
 
@@ -1226,7 +1234,11 @@ class ToggleTextAttributionsCommand implements EditCommand {
             ),
         );
 
-        executor.logChanges([NodeChangeEvent(node.id)]);
+        executor.logChanges([
+          DocumentEdit(
+            NodeChangeEvent(node.id),
+          ),
+        ]);
       }
     }
 
@@ -1353,11 +1365,13 @@ class InsertTextCommand implements EditCommand {
       applyAttributions: attributions,
     );
     executor.logChanges([
-      TextInsertionEvent(
-        nodeId: textNode.id,
-        offset: textOffset,
-        text: textToInsert,
-      )
+      DocumentEdit(
+        TextInsertionEvent(
+          nodeId: textNode.id,
+          offset: textOffset,
+          text: textToInsert,
+        ),
+      ),
     ]);
 
     executor.executeCommand(
@@ -1467,7 +1481,11 @@ class ConvertTextNodeToParagraphCommand extends EditCommand {
       document.replaceNode(oldNode: extentNode, newNode: newParagraphNode);
     }
 
-    executor.logChanges([NodeChangeEvent(extentNode.id)]);
+    executor.logChanges([
+      DocumentEdit(
+        NodeChangeEvent(extentNode.id),
+      ),
+    ]);
   }
 }
 
@@ -1496,7 +1514,11 @@ class InsertAttributedTextCommand implements EditCommand {
       startOffset: textOffset,
     );
 
-    executor.logChanges([NodeChangeEvent(textNode.id)]);
+    executor.logChanges([
+      DocumentEdit(
+        NodeChangeEvent(textNode.id),
+      ),
+    ]);
   }
 }
 

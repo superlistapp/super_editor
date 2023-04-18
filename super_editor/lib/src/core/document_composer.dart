@@ -50,8 +50,12 @@ class DocumentComposer with ChangeNotifier implements Editable {
   }
 
   @override
-  void onTransactionEnd() {
-    selectionComponent.onEditorChange([]);
+  void onTransactionEnd(List<EditEvent> edits) {
+    if (!edits.any((edit) => edit is SelectionChangeEvent)) {
+      return;
+    }
+
+    selectionComponent.notifySelectionListeners();
   }
 }
 

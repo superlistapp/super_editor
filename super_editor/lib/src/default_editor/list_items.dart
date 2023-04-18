@@ -447,7 +447,11 @@ class IndentListItemCommand implements EditCommand {
 
     listItem.indent += 1;
 
-    executor.logChanges([NodeChangeEvent(nodeId)]);
+    executor.logChanges([
+      DocumentEdit(
+        NodeChangeEvent(nodeId),
+      )
+    ]);
   }
 }
 
@@ -476,7 +480,11 @@ class UnIndentListItemCommand implements EditCommand {
       //       a DocumentEditorTransaction (#67)
       listItem.indent -= 1;
 
-      executor.logChanges([NodeChangeEvent(nodeId)]);
+      executor.logChanges([
+        DocumentEdit(
+          NodeChangeEvent(nodeId),
+        )
+      ]);
     } else {
       executor.executeCommand(
         ConvertListItemToParagraphCommand(
@@ -519,7 +527,11 @@ class ConvertListItemToParagraphCommand implements EditCommand {
     );
     document.replaceNode(oldNode: listItem, newNode: newParagraphNode);
 
-    executor.logChanges([NodeChangeEvent(listItem.id)]);
+    executor.logChanges([
+      DocumentEdit(
+        NodeChangeEvent(listItem.id),
+      )
+    ]);
   }
 }
 
@@ -555,7 +567,11 @@ class ConvertParagraphToListItemCommand implements EditCommand {
     );
     document.replaceNode(oldNode: paragraphNode, newNode: newListItemNode);
 
-    executor.logChanges([NodeChangeEvent(paragraphNode.id)]);
+    executor.logChanges([
+      DocumentEdit(
+        NodeChangeEvent(paragraphNode.id),
+      )
+    ]);
   }
 }
 
@@ -590,7 +606,11 @@ class ChangeListItemTypeCommand implements EditCommand {
     );
     document.replaceNode(oldNode: existingListItem, newNode: newListItemNode);
 
-    executor.logChanges([NodeChangeEvent(existingListItem.id)]);
+    executor.logChanges([
+      DocumentEdit(
+        NodeChangeEvent(existingListItem.id),
+      )
+    ]);
   }
 }
 
@@ -659,8 +679,12 @@ class SplitListItemCommand implements EditCommand {
     _log.log('SplitListItemCommand', ' - inserted new node: ${newNode.id} after old one: ${node.id}');
 
     executor.logChanges([
-      NodeChangeEvent(nodeId),
-      NodeInsertedEvent(newNodeId),
+      DocumentEdit(
+        NodeChangeEvent(nodeId),
+      ),
+      DocumentEdit(
+        NodeInsertedEvent(newNodeId),
+      ),
     ]);
   }
 }
