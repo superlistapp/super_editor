@@ -49,9 +49,6 @@ dependency_overrides:
     git:
       url: https://github.com/Flutter-Bounty-Hunters/flutter_test_robots
 
-executables:
-  goldens:
-
 dev_dependencies:
   flutter_lints: ^2.0.1
   golden_toolkit: ^0.11.0
