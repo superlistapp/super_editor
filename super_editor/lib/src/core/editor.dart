@@ -27,11 +27,11 @@ class Editor implements RequestDispatcher {
   static const Uuid _uuid = Uuid();
 
   /// Service locator key to obtain a [Document] from [find], if a [Document]
-  /// is available in the [EditorContext].
+  /// is available in the [EditContext].
   static const documentKey = "document";
 
   /// Service locator key to obtain a [DocumentComposer] from [find], if a
-  /// [DocumentComposer] is available in the [EditorContext].
+  /// [DocumentComposer] is available in the [EditContext].
   static const composerKey = "composer";
 
   /// Generates a new ID for a [DocumentNode].
@@ -54,7 +54,7 @@ class Editor implements RequestDispatcher {
   })  : _requestHandlers = requestHandlers,
         _reactionPipeline = reactionPipeline ?? [],
         _changeListeners = listeners ?? [] {
-    _context = EditorContext(editables);
+    _context = EditContext(editables);
     assert(_context.findMaybe<Document>(Editor.documentKey) != null,
         "Expected a Document in the 'editables' map but it wasn't there");
 
@@ -70,7 +70,7 @@ class Editor implements RequestDispatcher {
   final List<EditRequestHandler> _requestHandlers;
 
   /// Service Locator that provides all resources that are relevant for document editing.
-  late final EditorContext _context;
+  late final EditContext _context;
 
   /// Executes [EditCommand]s and collects a list of changes.
   late final _DocumentEditorCommandExecutor _commandExecutor;
@@ -217,7 +217,7 @@ class Editor implements RequestDispatcher {
 class _DocumentEditorCommandExecutor implements CommandExecutor {
   _DocumentEditorCommandExecutor(this._context);
 
-  final EditorContext _context;
+  final EditContext _context;
 
   final _commandsBeingProcessed = EditorCommandQueue();
 
@@ -279,17 +279,17 @@ abstract class RequestDispatcher {
 /// A command that alters something in a [Editor].
 abstract class EditCommand {
   /// Executes this command and logs all changes with the [executor].
-  void execute(EditorContext context, CommandExecutor executor);
+  void execute(EditContext context, CommandExecutor executor);
 }
 
 /// All resources that are available when executing [EditCommand]s, such as a document,
 /// composer, etc.
-class EditorContext {
-  EditorContext(this._resources);
+class EditContext {
+  EditContext(this._resources);
 
   final Map<String, Editable> _resources;
 
-  /// Finds an object of type [T] within this [EditorContext], which is identified by the given [id].
+  /// Finds an object of type [T] within this [EditContext], which is identified by the given [id].
   T find<T>(String id) {
     if (!_resources.containsKey(id)) {
       editorLog.shout("Tried to find an editor resource for the ID '$id', but there's no resource with that ID.");
@@ -305,8 +305,8 @@ class EditorContext {
     return _resources[id] as T;
   }
 
-  /// Finds an object of type [T] within this [EditorContext], which is identified by the given [id], or
-  /// returns `null` if no such object is in this [EditorContext].
+  /// Finds an object of type [T] within this [EditContext], which is identified by the given [id], or
+  /// returns `null` if no such object is in this [EditContext].
   T? findMaybe<T>(String id) {
     return _resources[id] as T?;
   }
@@ -413,18 +413,18 @@ class DocumentEdit implements EditEvent {
 /// An [EditReaction] can use the given [executor] to spawn additional
 /// [EditCommand]s that should run in response the [changeList].
 abstract class EditReaction {
-  void react(EditorContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList);
+  void react(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList);
 }
 
 /// An [EditReaction] that delegates its reaction to a given callback function.
 class FunctionalEditReaction implements EditReaction {
   FunctionalEditReaction(this._react);
 
-  final void Function(EditorContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList)
+  final void Function(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList)
       _react;
 
   @override
-  void react(EditorContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) =>
+  void react(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) =>
       _react(editorContext, requestDispatcher, changeList);
 }
 
