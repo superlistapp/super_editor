@@ -126,6 +126,7 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor>
   DeltaTextInputClient get imeClient => this;
 
   void _onFocusChange() {
+    if (!mounted) return;
     if (_focusNode.hasFocus) {
       editorImeLog.info('Gained focus');
       _attachToIme();
