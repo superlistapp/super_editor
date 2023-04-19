@@ -2191,7 +2191,7 @@ class DeleteUpstreamCharacterCommand implements EditCommand {
 
   @override
   void execute(EditorContext context, CommandExecutor executor) {
-    final document = context.find<Document>(Editor.documentKey);
+    final document = context.find<MutableDocument>(Editor.documentKey);
     final composer = context.find<DocumentComposer>(Editor.composerKey);
     final selection = composer.selectionComponent.selection;
 
@@ -2253,7 +2253,7 @@ class DeleteDownstreamCharacterCommand implements EditCommand {
 
   @override
   void execute(EditorContext context, CommandExecutor executor) {
-    final document = context.find<Document>(Editor.documentKey);
+    final document = context.find<MutableDocument>(Editor.documentKey);
     final composer = context.find<DocumentComposer>(Editor.composerKey);
     final selection = composer.selectionComponent.selection;
 

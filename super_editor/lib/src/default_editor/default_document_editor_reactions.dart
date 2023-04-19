@@ -24,7 +24,7 @@ import 'multi_node_editing.dart';
 class UnorderedListItemConversionReaction implements EditReaction {
   @override
   void react(EditorContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
-    final document = editorContext.find<Document>(Editor.documentKey);
+    final document = editorContext.find<MutableDocument>(Editor.documentKey);
     final didTypeSpaceAtEnd = EditInspector.didTypeSpace(document, changeList);
     if (!didTypeSpaceAtEnd) {
       return;
@@ -64,7 +64,7 @@ class UnorderedListItemConversionReaction implements EditReaction {
 class OrderedListItemConversionReaction implements EditReaction {
   @override
   void react(EditorContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
-    final document = editorContext.find<Document>(Editor.documentKey);
+    final document = editorContext.find<MutableDocument>(Editor.documentKey);
     final didTypeSpaceAtEnd = EditInspector.didTypeSpace(document, changeList);
     if (!didTypeSpaceAtEnd) {
       return;
@@ -105,7 +105,7 @@ class OrderedListItemConversionReaction implements EditReaction {
 class BlockquoteConversionReaction implements EditReaction {
   @override
   void react(EditorContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
-    final document = editorContext.find<Document>(Editor.documentKey);
+    final document = editorContext.find<MutableDocument>(Editor.documentKey);
     final didTypeSpaceAtEnd = EditInspector.didTypeSpace(document, changeList);
     if (!didTypeSpaceAtEnd) {
       return;
@@ -150,7 +150,7 @@ class BlockquoteConversionReaction implements EditReaction {
 class HorizontalRuleConversionReaction implements EditReaction {
   @override
   void react(EditorContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
-    final document = editorContext.find<Document>(Editor.documentKey);
+    final document = editorContext.find<MutableDocument>(Editor.documentKey);
     final didTypeSpaceAtEnd = EditInspector.didTypeSpace(document, changeList);
     if (!didTypeSpaceAtEnd) {
       return;
@@ -328,7 +328,7 @@ class ImageUrlConversionReaction implements EditReaction {
 class LinkifyReaction implements EditReaction {
   @override
   void react(EditorContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> edits) {
-    final document = editorContext.find<Document>(Editor.documentKey);
+    final document = editorContext.find<MutableDocument>(Editor.documentKey);
     TextInsertionEvent? linkifyCandidate;
     for (final edit in edits) {
       if (edit is DocumentEdit) {

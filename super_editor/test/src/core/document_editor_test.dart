@@ -552,7 +552,7 @@ class _ExpandingCommand implements EditCommand {
 
   @override
   void execute(EditorContext context, CommandExecutor executor) {
-    final document = context.find<Document>(Editor.documentKey);
+    final document = context.find<MutableDocument>(Editor.documentKey);
     final paragraph = document.getNodeAt(0) as ParagraphNode;
 
     executor.executeCommand(

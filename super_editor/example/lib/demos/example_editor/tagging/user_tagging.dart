@@ -94,7 +94,7 @@ class TagUserReaction implements EditReaction {
     List<EditEvent> changeList,
   ) {
     print("_commitCompletedTags()");
-    final document = editorContext.find<Document>(Editor.documentKey);
+    final document = editorContext.find<MutableDocument>(Editor.documentKey);
     final composingTagNodeCandidates = <String>{};
     for (final edit in changeList) {
       print("edit: $edit");
@@ -246,7 +246,7 @@ class TagUserReaction implements EditReaction {
       return;
     }
 
-    final document = editorContext.find<Document>(Editor.documentKey);
+    final document = editorContext.find<MutableDocument>(Editor.documentKey);
     final selectedNode = document.getNodeById(selectionPosition.nodeId);
     if (selectedNode is! TextNode) {
       // Tagging only happens in the middle of text. The selected content isn't text. Return.
@@ -327,7 +327,7 @@ class TagUserReaction implements EditReaction {
 
     // Inspect every TextNode where a text deletion impacted a tag. If a tag no longer contains
     // an "@", remove the attribution.
-    final document = editorContext.find<Document>(Editor.documentKey);
+    final document = editorContext.find<MutableDocument>(Editor.documentKey);
     final removeTagRequests = <EditRequest>{};
     for (final nodeId in nodesToInspect) {
       final textNode = document.getNodeById(nodeId) as TextNode;
@@ -381,7 +381,7 @@ class KeepCaretOutOfTagReaction implements EditReaction {
 
     userTagsLog.info(" - we received just one selection change event. Checking for user tag.");
 
-    final document = editorContext.find<Document>(Editor.documentKey);
+    final document = editorContext.find<MutableDocument>(Editor.documentKey);
     final selectionChangeEvent = changeList.first as SelectionChangeEvent;
 
     final newCaret = selectionChangeEvent.newSelection?.extent;
@@ -506,7 +506,7 @@ class KeepCaretOutOfTagReaction implements EditReaction {
     _TokenAroundCaret tagAroundCaret,
   ) {
     userTagsLog.info("Pushing caret to other side of token - tag around caret: $tagAroundCaret");
-    final Document document = editorContext.find<Document>(Editor.documentKey);
+    final Document document = editorContext.find<MutableDocument>(Editor.documentKey);
 
     final pushDirection = document.getAffinityBetween(
       base: selectionChangeEvent.oldSelection!.extent,

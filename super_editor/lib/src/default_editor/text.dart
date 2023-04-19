@@ -1149,7 +1149,7 @@ class ToggleTextAttributionsCommand implements EditCommand {
   @override
   void execute(EditorContext context, CommandExecutor executor) {
     editorDocLog.info('Executing ToggleTextAttributionsCommand');
-    final document = context.find<Document>(Editor.documentKey);
+    final document = context.find<MutableDocument>(Editor.documentKey);
     final nodes = document.getNodesInside(documentSelection.base, documentSelection.extent);
     if (nodes.isEmpty) {
       editorDocLog.shout(' - Bad DocumentSelection. Could not get range of nodes. Selection: $documentSelection');
@@ -1272,7 +1272,7 @@ class ToggleTextAttributionsCommand implements EditCommand {
 //
 //   @override
 //   void execute(EditorContext context, CommandExecutor executor) {
-//     final document = context.find<Document>(DocumentEditor.documentKey);
+//     final document = context.find<MutableDocument>(DocumentEditor.documentKey);
 //     final composer = context.find<DocumentComposer>(DocumentEditor.composerKey);
 //
 //
@@ -1349,7 +1349,7 @@ class InsertTextCommand implements EditCommand {
 
   @override
   void execute(EditorContext context, CommandExecutor executor) {
-    final document = context.find<Document>(Editor.documentKey);
+    final document = context.find<MutableDocument>(Editor.documentKey);
 
     final textNode = document.getNodeById(documentPosition.nodeId);
     if (textNode is! TextNode) {
@@ -1590,7 +1590,7 @@ class InsertCharacterAtCaretCommand extends EditCommand {
 
   @override
   void execute(EditorContext context, CommandExecutor executor) {
-    final document = context.find<Document>(Editor.documentKey);
+    final document = context.find<MutableDocument>(Editor.documentKey);
     final composer = context.find<DocumentComposer>(Editor.composerKey);
 
     if (composer.selectionComponent.selection == null) {

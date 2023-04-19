@@ -470,7 +470,7 @@ class _ChangeImageWidthCommand implements EditCommand {
 
   @override
   void execute(EditorContext context, CommandExecutor executor) {
-    final node = context.find(Editor.documentKey).getNodeById(nodeId)!;
+    final node = context.find<MutableDocument>(Editor.documentKey).getNodeById(nodeId)!;
     final currentStyles = SingleColumnLayoutComponentStyles.fromMetadata(node);
     SingleColumnLayoutComponentStyles(
       width: imageWidth,
