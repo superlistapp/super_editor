@@ -1,7 +1,7 @@
 import 'dart:math';
+import 'dart:ui';
 
 import 'package:collection/collection.dart';
-import 'package:flutter/material.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:uuid/uuid.dart';
 
@@ -55,8 +55,6 @@ class Editor implements RequestDispatcher {
         _reactionPipeline = reactionPipeline ?? [],
         _changeListeners = listeners ?? [] {
     _context = EditContext(editables);
-    assert(_context.findMaybe<Document>(Editor.documentKey) != null,
-        "Expected a Document in the 'editables' map but it wasn't there");
 
     _commandExecutor = _DocumentEditorCommandExecutor(_context);
   }
@@ -290,7 +288,7 @@ class EditContext {
   final Map<String, Editable> _resources;
 
   /// Finds an object of type [T] within this [EditContext], which is identified by the given [id].
-  T find<T>(String id) {
+  T find<T extends Editable>(String id) {
     if (!_resources.containsKey(id)) {
       editorLog.shout("Tried to find an editor resource for the ID '$id', but there's no resource with that ID.");
       throw Exception("Tried to find an editor resource for the ID '$id', but there's no resource with that ID.");
@@ -307,7 +305,7 @@ class EditContext {
 
   /// Finds an object of type [T] within this [EditContext], which is identified by the given [id], or
   /// returns `null` if no such object is in this [EditContext].
-  T? findMaybe<T>(String id) {
+  T? findMaybe<T extends Editable>(String id) {
     return _resources[id] as T?;
   }
 }
