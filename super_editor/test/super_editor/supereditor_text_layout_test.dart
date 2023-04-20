@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:super_editor/super_editor_test.dart';
-import 'package:super_text_layout/super_text_layout.dart';
+import 'package:super_text_layout/super_text_layout_inspector.dart';
 
 import '../test_tools.dart';
 import 'document_test_tools.dart';
