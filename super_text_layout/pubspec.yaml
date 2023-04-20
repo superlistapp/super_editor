@@ -14,6 +14,10 @@ dependencies:
   attributed_text: ^0.2.1
   logging: ^1.0.1
 
+  # For inspector
+  flutter_test:
+    sdk: flutter
+
 #dependency_overrides:
 #  # Override to local mono-repo path so devs can test this repo
 #  # against changes that they're making to other mono-repo packages
@@ -22,8 +26,6 @@ dependencies:
 
 dev_dependencies:
   flutter_lints: ^2.0.1
-  flutter_test:
-    sdk: flutter
   golden_toolkit: ^0.11.0
   args: ^2.3.1
 
