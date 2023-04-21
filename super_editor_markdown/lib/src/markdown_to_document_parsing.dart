@@ -453,13 +453,16 @@ class InlineMarkdownToDocument implements md.NodeVisitor {
         ),
       );
     } else if (element.tag == 'a') {
-      styledText.addAttribution(
-        LinkAttribution(url: Uri.parse(element.attributes['href']!)),
-        SpanRange(
-          start: 0,
-          end: styledText.text.length - 1,
-        ),
-      );
+      final url = Uri.tryParse(element.attributes['href']!);
+      if (url != null) {
+        styledText.addAttribution(
+          LinkAttribution(url: url),
+          SpanRange(
+            start: 0,
+            end: styledText.text.length - 1,
+          ),
+        );
+      }
     }
 
     if (textStack.isNotEmpty) {
