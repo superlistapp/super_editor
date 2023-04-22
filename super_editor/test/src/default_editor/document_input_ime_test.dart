@@ -296,6 +296,11 @@ void main() {
           TextEditingDeltaNonTextUpdate(
             oldText: 'Before the line break \nnew line',
             selection: TextSelection.collapsed(offset: 23),
+            composing: TextRange(start: -1, end: -1),
+          ),
+          TextEditingDeltaNonTextUpdate(
+            oldText: 'Before the line break \nnew line',
+            selection: TextSelection.collapsed(offset: 23),
             composing: TextRange(start: 23, end: 26),
           ),
         ],
@@ -323,6 +328,65 @@ void main() {
           position: DocumentPosition(
             nodeId: doc.nodes[1].id,
             nodePosition: const TextNodePosition(offset: 0),
+          ),
+        ),
+      );
+    });
+
+    testWidgetsOnAllPlatforms('maintains correct selection after merging paragraphs', (tester) async {
+      await tester //
+          .createDocument()
+          .fromMarkdown('''
+Paragraph one
+
+Paragraph two
+''')
+          .withInputSource(TextInputSource.ime)
+          .pump();
+
+      final doc = SuperEditorInspector.findDocument()!;
+
+      // Place caret at the start of the second paragraph.
+      await tester.placeCaretInParagraph(doc.nodes[1].id, 0);
+
+      // Sends the deletion delta followed by non-text deltas.
+      //
+      // This deletion will cause the two paragraphs to be merged.
+      await tester.ime.sendDeltas(
+        const [
+          TextEditingDeltaDeletion(
+            oldText: '. Paragraph two',
+            deletedRange: TextRange(start: 1, end: 2),
+            selection: TextSelection.collapsed(offset: 0),
+            composing: TextRange(start: -1, end: -1),
+          ),
+          TextEditingDeltaNonTextUpdate(
+            oldText: 'Paragraph two',
+            selection: TextSelection.collapsed(offset: 0),
+            composing: TextRange(start: -1, end: -1),
+          ),
+          TextEditingDeltaNonTextUpdate(
+            oldText: 'Paragraph two',
+            selection: TextSelection.collapsed(offset: 0),
+            composing: TextRange(start: 0, end: 8),
+          ),
+        ],
+        getter: imeClientGetter,
+      );
+
+      // Ensure the paragraph was merged.
+      expect(
+        (doc.nodes[0] as ParagraphNode).text.text,
+        'Paragraph oneParagraph two',
+      );
+
+      // Ensure the selection is at "Paragraph one|Paragraph two".
+      expect(
+        SuperEditorInspector.findDocumentSelection(),
+        DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: doc.nodes[0].id,
+            nodePosition: const TextNodePosition(offset: 13),
           ),
         ),
       );

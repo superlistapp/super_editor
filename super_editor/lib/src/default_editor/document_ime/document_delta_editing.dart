@@ -1,4 +1,7 @@
+import 'dart:math';
+
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_editor.dart';
@@ -10,7 +13,7 @@ import 'document_serialization.dart';
 
 /// Applies software keyboard text deltas to a document.
 class TextDeltasDocumentEditor {
-  const TextDeltasDocumentEditor({
+  TextDeltasDocumentEditor({
     required this.editor,
     required this.selection,
     required this.composingRegion,
@@ -22,6 +25,21 @@ class TextDeltasDocumentEditor {
   final ValueNotifier<DocumentSelection?> selection;
   final ValueNotifier<DocumentRange?> composingRegion;
   final CommonEditorOperations commonOps;
+
+  /// The composing region in the IME.
+  ///
+  /// Typically, this will be the same composing region we get from the
+  /// last [TextEditingDelta] received.
+  ///
+  /// However, in the cases where we receive a non-text delta in the same
+  /// batch where we receive a text delta, this range might be adjusted
+  /// to match our new content after the text delta is applied. This
+  /// can happen, for example, in a paragraph split or a paragraph merge,
+  /// where our changes to the document causes our editing text
+  /// to be different from what the OS thinks it is.
+  ///
+  /// The composing region is adjusted only when we get non-text deltas.
+  TextRange _imeComposingRegion = const TextRange(start: -1, end: -1);
 
   /// Callback invoked when the client should handle a given [TextInputAction].
   ///
@@ -55,7 +73,7 @@ class TextDeltasDocumentEditor {
       } else if (delta is TextEditingDeltaDeletion) {
         _applyDeletion(delta, serializedDocBeforeDelta);
       } else if (delta is TextEditingDeltaNonTextUpdate) {
-        _applyNonTextChange(delta);
+        _applyNonTextChange(delta, serializedDocBeforeDelta);
       } else {
         editorImeLog.shout("Unknown IME delta type: ${delta.runtimeType}");
       }
@@ -77,12 +95,14 @@ class TextDeltasDocumentEditor {
           ? PrependedCharacterPolicy.include
           : PrependedCharacterPolicy.exclude,
     );
-    editorImeLog.fine("Raw IME delta composing region: ${textEditingDeltas.last.composing}");
-    composingRegion.value = finalSerializedDoc.imeToDocumentRange(textEditingDeltas.last.composing);
+    editorImeLog.fine("Raw IME delta composing region: $_imeComposingRegion");
+    composingRegion.value = finalSerializedDoc.imeToDocumentRange(_imeComposingRegion);
     editorImeLog.fine("Document composing region: ${composingRegion.value}");
   }
 
   void _applyInsertion(TextEditingDeltaInsertion delta, DocumentImeSerializer docSerializer) {
+    _imeComposingRegion = delta.composing;
+
     editorImeLog.fine('Inserted text: "${delta.textInserted}"');
     editorImeLog.fine("Insertion offset: ${delta.insertionOffset}");
     editorImeLog.fine("Selection: ${delta.selection}");
@@ -126,6 +146,8 @@ class TextDeltasDocumentEditor {
   }
 
   void _applyReplacement(TextEditingDeltaReplacement delta, DocumentImeSerializer docSerializer) {
+    _imeComposingRegion = delta.composing;
+
     editorImeLog.fine("Text replaced: '${delta.textReplaced}'");
     editorImeLog.fine("Replacement text: '${delta.replacementText}'");
     editorImeLog.fine("Replaced range: ${delta.replacedRange}");
@@ -156,6 +178,8 @@ class TextDeltasDocumentEditor {
   }
 
   void _applyDeletion(TextEditingDeltaDeletion delta, DocumentImeSerializer docSerializer) {
+    _imeComposingRegion = delta.composing;
+
     editorImeLog.fine("Delete delta:\n"
         "Text deleted: '${delta.textDeleted}'\n"
         "Deleted Range: ${delta.deletedRange}\n"
@@ -168,22 +192,64 @@ class TextDeltasDocumentEditor {
     editorImeLog.fine("Deletion operation complete");
   }
 
-  void _applyNonTextChange(TextEditingDeltaNonTextUpdate delta) {
+  void _applyNonTextChange(TextEditingDeltaNonTextUpdate delta, DocumentImeSerializer docSerializer) {
     editorImeLog.fine("Non-text change:");
     editorImeLog.fine("OS-side selection - ${delta.selection}");
     editorImeLog.fine("OS-side composing - ${delta.composing}");
 
-    final docSelection = DocumentImeSerializer(
-      editor.document,
-      selection.value!,
-      null,
-    ).imeToDocumentSelection(delta.selection);
+    final diff = computeDiff(delta.oldText, docSerializer.toTextEditingValue().text);
+
+    final newSelectionRange = _transformTextRange(delta.selection, diff);
+    final newComposingRange = _transformTextRange(delta.composing, diff);
+
+    // TODO: handle upstream selections.
+    final docSelection = docSerializer.imeToDocumentSelection(
+      delta.selection.copyWith(
+        baseOffset: newSelectionRange.start,
+        extentOffset: newSelectionRange.end,
+      ),
+    );
+
+    _imeComposingRegion = newComposingRange;
+
     if (docSelection != null) {
       // We got a selection from the platform.
       // This could happen in some software keyboards, like GBoard,
       // where the user can swipe over the spacebar to change the selection.
       selection.value = docSelection;
     }
+  }
+
+  /// Transforms a text [range] given a list of [diff] operations that happened.
+  ///
+  /// For example, if text was deleted before the [range], the result subtracts
+  /// the deleted length from the [range].
+  TextRange _transformTextRange(TextRange range, List<TextDiffOperation> diff) {
+    TextRange transformedSelection = range;
+
+    for (final op in diff) {
+      if (op.range.start > range.end) {
+        // The operation happened after the range we care about.
+        // No transformation is needed.
+        continue;
+      }
+
+      // Some characters were added or removed before our range.
+      final diffLength = (op.range.end - op.range.start).abs();
+      final adjustment = op.operation == TextDiffOperationKind.insertion //
+          ? diffLength
+          : -diffLength;
+
+      transformedSelection = TextRange(
+        start: transformedSelection.start + adjustment,
+        end: transformedSelection.end + adjustment,
+      );
+
+      // TODO: handle expanded selections.
+      // TODO: handle upstream selections.
+    }
+
+    return transformedSelection;
   }
 
   void insert(DocumentSelection insertionSelection, String textInserted) {
@@ -269,4 +335,137 @@ class TextDeltasDocumentEditor {
     }
     commonOps.insertBlockLevelNewline();
   }
+}
+
+/// Computes the difference between [oldText] and [newText].
+///
+/// The result can contain a single insertion, a single deletion,
+/// or a deletion followed by an insertion.
+///
+/// Results in an empty list if the two strings are equal.
+@visibleForTesting
+List<TextDiffOperation> computeDiff(String oldText, String newText) {
+  if (oldText == newText) {
+    return <TextDiffOperation>[];
+  }
+
+  final oldTextLength = oldText.length;
+  final newTextLength = newText.length;
+  final shortestTextLength = min(oldTextLength, newTextLength);
+
+  // The number of characters that are present at the start of both oldText and newText.
+  int? commonPrefixLength;
+
+  // The number of characters that are present at the end of both oldText and newText.
+  int? commonSuffixLength;
+
+  // Compute the common prefix.
+  for (int i = 0; i < shortestTextLength; i++) {
+    if (oldText[i] != newText[i]) {
+      commonPrefixLength = i;
+      break;
+    }
+  }
+
+  // When commonPrefixLength is null, it means we don't have any character in the shortest
+  // text that isn't present in the longest text.
+  // Therefore, the whole shortest text is considered the prefix.
+  commonPrefixLength ??= shortestTextLength;
+
+  // Compute the common suffix.
+  for (int i = 1; i <= shortestTextLength; i++) {
+    if (oldText[oldTextLength - i] != newText[newTextLength - i]) {
+      commonSuffixLength = i - 1;
+      break;
+    }
+  }
+
+  // When commonSuffixLength is null, it means we don't have any character in the shortest
+  // text that isn't present in the longest text.
+  // Therefore, the whole shortest text is considered the suffix.
+  commonSuffixLength ??= shortestTextLength;
+
+  if (commonSuffixLength + commonPrefixLength > shortestTextLength) {
+    // We have a common prefix which intersects with the common suffix.
+    //
+    // For example, consider the following sentences:
+    // "Before a new line is found in a new document" and "Before a new document".
+    //
+    // We have a prefix of "Before a new " and a suffix of " a new document".
+    // This would consider the new text as "Before a new  a new document".
+    //
+    // We keep the longest sequence and adjust the other.
+    if (commonPrefixLength > commonSuffixLength) {
+      commonSuffixLength = shortestTextLength - commonPrefixLength;
+    } else {
+      commonPrefixLength = shortestTextLength - commonSuffixLength;
+    }
+  }
+
+  final changes = <TextDiffOperation>[];
+
+  if (commonPrefixLength + commonSuffixLength < oldTextLength) {
+    // Some content was removed.
+    changes.add(
+      TextDiffOperation(
+        operation: TextDiffOperationKind.deletion,
+        range: TextRange(
+          start: commonPrefixLength,
+          end: oldTextLength - commonSuffixLength,
+        ),
+      ),
+    );
+  }
+
+  if (commonPrefixLength + commonSuffixLength < newTextLength) {
+    // Some content was inserted.
+    changes.add(
+      TextDiffOperation(
+        operation: TextDiffOperationKind.insertion,
+        range: TextRange(
+          start: commonPrefixLength,
+          end: newTextLength - commonSuffixLength,
+        ),
+      ),
+    );
+  }
+
+  return changes;
+}
+
+/// An [operation] that changes a text in the given [range].
+@visibleForTesting
+class TextDiffOperation {
+  TextDiffOperation({
+    required this.operation,
+    required this.range,
+  });
+
+  /// An operation which modified the content at the [range].
+  final TextDiffOperationKind operation;
+
+  /// The range where the [operation] happened.
+  final TextRange range;
+
+  @override
+  String toString() {
+    return '[TextDiffOperation] - operation=$operation, range=$range';
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is TextDiffOperation && //
+          runtimeType == other.runtimeType &&
+          operation == other.operation &&
+          range == other.range;
+
+  @override
+  int get hashCode => operation.hashCode ^ range.hashCode;
+}
+
+@visibleForTesting
+enum TextDiffOperationKind {
+  insertion,
+  deletion,
 }

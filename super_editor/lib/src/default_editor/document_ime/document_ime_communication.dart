@@ -199,24 +199,7 @@ class DocumentImeInputClient extends TextInputConnectionDecorator with TextInput
 
     late List<TextEditingDelta> allowedDeltas;
 
-    if (hasTextDeltas) {
-      // The delta list includes deltas which modify the document's content.
-      //
-      // After these deltas are applied, non-text deltas in the same list might point to invalid offsets.
-      //
-      // For example, given we have the following text, where | represents the caret:
-      // "Before the line break |new line"
-      //
-      // Adding a new line causes the OS editing text to be "Before the line break \n|new line".
-      // However, with this insertion we split the paragraph into two, and now our editing text is: "|new line".
-      //
-      // If the OS sends a non-text delta in the same list as the insertion delta, placing the selection at
-      // "Before the line break \n|new line", the OS selection offset (23) can't be mapped to a
-      // document position.
-      //
-      // Ignore non-text deltas.
-      allowedDeltas = textEditingDeltas.where((e) => e is! TextEditingDeltaNonTextUpdate).toList();
-    } else if (!_allowNonTextDeltas) {
+    if (!_allowNonTextDeltas) {
       // After we call setEditingState(), we ignore non-text deltas until the end of the current frame.
       //
       // This is because, in some platforms, we get a TextEditingDeltaNonTextUpdate after this call.
