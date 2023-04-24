@@ -21,6 +21,7 @@ class _MobileEditingAndroidDemoState extends State<MobileEditingAndroidDemo> {
   late DocumentEditor _docEditor;
   late DocumentComposer _composer;
   late CommonEditorOperations _docOps;
+  late MagnifierAndToolbarController _overlayController;
 
   FocusNode? _editorFocusNode;
   SuperEditorImeConfiguration _imeConfiguration = const SuperEditorImeConfiguration();
@@ -37,6 +38,7 @@ class _MobileEditingAndroidDemoState extends State<MobileEditingAndroidDemo> {
       documentLayoutResolver: () => _docLayoutKey.currentState as DocumentLayout,
     );
     _editorFocusNode = FocusNode();
+    _overlayController = MagnifierAndToolbarController();
   }
 
   @override
@@ -73,6 +75,21 @@ class _MobileEditingAndroidDemoState extends State<MobileEditingAndroidDemo> {
     });
   }
 
+  void _cut() {
+    _docOps.cut();
+    _overlayController.hideToolbar();
+  }
+
+  void _copy() {
+    _docOps.copy();
+    _overlayController.hideToolbar();
+  }
+
+  void _paste() {
+    _docOps.paste();
+    _overlayController.hideToolbar();
+  }
+
   @override
   Widget build(BuildContext context) {
     return _buildScaffold(
@@ -84,13 +101,14 @@ class _MobileEditingAndroidDemoState extends State<MobileEditingAndroidDemo> {
               documentLayoutKey: _docLayoutKey,
               editor: _docEditor,
               composer: _composer,
+              overlayController: _overlayController,
               gestureMode: DocumentGestureMode.android,
               inputSource: TextInputSource.ime,
               imeConfiguration: _imeConfiguration,
               androidToolbarBuilder: (_) => AndroidTextEditingFloatingToolbar(
-                onCutPressed: () => _docOps.cut(),
-                onCopyPressed: () => _docOps.copy(),
-                onPastePressed: () => _docOps.paste(),
+                onCutPressed: _cut,
+                onCopyPressed: _copy,
+                onPastePressed: _paste,
                 onSelectAllPressed: () => _docOps.selectAll(),
               ),
               stylesheet: defaultStylesheet.copyWith(
