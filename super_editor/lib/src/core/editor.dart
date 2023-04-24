@@ -117,9 +117,9 @@ class Editor implements RequestDispatcher {
   /// Tracks the number of request executions that are in the process of running.
   int _activeCommandCount = 0;
 
-  /// Executes the given [request].
+  /// Executes the given [requests].
   ///
-  /// Any changes that result from the given [request] are reported to listeners as a series
+  /// Any changes that result from the given [requests] are reported to listeners as a series
   /// of [EditEvent]s.
   @override
   void execute(List<EditRequest> requests) {
@@ -238,12 +238,12 @@ class _DocumentEditorCommandExecutor implements CommandExecutor {
   }
 
   @override
-  void prependCommand(command) {
+  void prependCommand(EditCommand command) {
     _commandsBeingProcessed.prepend(command);
   }
 
   @override
-  void appendCommand(command) {
+  void appendCommand(EditCommand command) {
     _commandsBeingProcessed.append(command);
   }
 
@@ -270,8 +270,8 @@ abstract class Editable {
 
 /// An object that processes [EditRequest]s.
 abstract class RequestDispatcher {
-  /// Pushes the given [request] through a [Editor] pipeline.
-  void execute(List<EditRequest> request);
+  /// Pushes the given [requests] through a [Editor] pipeline.
+  void execute(List<EditRequest> requests);
 }
 
 /// A command that alters something in a [Editor].
@@ -306,7 +306,18 @@ class EditContext {
   /// Finds an object of type [T] within this [EditContext], which is identified by the given [id], or
   /// returns `null` if no such object is in this [EditContext].
   T? findMaybe<T extends Editable>(String id) {
-    return _resources[id] as T?;
+    if (_resources[id] == null) {
+      return null;
+    }
+
+    if (_resources[id] is! T) {
+      editorLog.shout(
+          "Tried to find an editor resource of type '$T' for ID '$id', but the resource with that ID is of type '${_resources[id].runtimeType}");
+      throw Exception(
+          "Tried to find an editor resource of type '$T' for ID '$id', but the resource with that ID is of type '${_resources[id].runtimeType}");
+    }
+
+    return _resources[id] as T;
   }
 }
 
@@ -356,8 +367,8 @@ class EditorCommandQueue {
 
   EditCommand? get activeCommand => _activeCommand;
 
-  void expandActiveCommand(List<EditCommand> replacementCommands) {
-    _activeCommandExpansionQueue.addAll(replacementCommands);
+  void expandActiveCommand(List<EditCommand> additionalCommands) {
+    _activeCommandExpansionQueue.addAll(additionalCommands);
   }
 
   void onCommandExecutionComplete() {
@@ -823,18 +834,23 @@ abstract class NodeDocumentChange implements DocumentChange {
 
 /// A new [DocumentNode] was inserted in the [Document].
 class NodeInsertedEvent implements NodeDocumentChange {
-  const NodeInsertedEvent(this.nodeId);
+  const NodeInsertedEvent(this.nodeId, this.insertionIndex);
 
   @override
   final String nodeId;
 
+  final int insertionIndex;
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is NodeInsertedEvent && runtimeType == other.runtimeType && nodeId == other.nodeId;
+      other is NodeInsertedEvent &&
+          runtimeType == other.runtimeType &&
+          nodeId == other.nodeId &&
+          insertionIndex == other.insertionIndex;
 
   @override
-  int get hashCode => nodeId.hashCode;
+  int get hashCode => nodeId.hashCode ^ insertionIndex.hashCode;
 }
 
 /// A [DocumentNode] was moved to a new index.
